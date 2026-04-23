@@ -48,7 +48,7 @@ Code Builder
 
 ### Status
 
-Completed for bootstrap file creation and path correction. No downstream Builder task has been run through the loop yet.
+Completed for bootstrap file creation, path correction, and Codex CLI path resolver hardening. No downstream Builder task has been run through the loop yet.
 
 ### Next Actions
 
@@ -76,6 +76,14 @@ Completed for bootstrap file creation and path correction. No downstream Builder
 - 승인된 검증에서 `& (Join-Path $env:APPDATA 'npm\codex.cmd') --version` 출력: `codex-cli 0.122.0-alpha.1`
 - `cmd /d /c "call run_codex.bat < NUL"`은 `codex.cmd` 생성 전 오류 경로를 검증했고, `Required default path: C:\Users\t3312\AppData\Roaming\npm\codex.cmd`를 출력했다.
 - `codex_builder_reviewer.ps1`는 PowerShell syntax check를 통과했다.
+- 2026-04-23 `C:\Users\t3312\AppData\Roaming\npm\codex.cmd` 내용은 삭제된 VS Code 확장 경로 `openai.chatgpt-26.415.20818-win32-x64\bin\windows-x86_64\codex.exe`를 가리키고 있었다.
+- 2026-04-23 실제 존재하는 Codex CLI 경로는 `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.417.40842-win32-x64\bin\windows-x86_64\codex.exe`였고 `codex-cli 0.122.0-alpha.13`을 출력했다.
+- 2026-04-23 `run_codex.bat`는 `%APPDATA%\npm\codex.cmd`가 실행 가능하지 않으면 VS Code 확장 폴더의 최신 `codex.exe`를 탐색하도록 수정했다.
+- 2026-04-23 `codex_builder_reviewer.ps1`도 동일하게 Codex CLI 경로를 해석하도록 `Resolve-CodexCommand`를 추가했다.
+- 2026-04-23 수정 후 Codex CLI 경로 탐색은 `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.417.40842-win32-x64\bin\windows-x86_64\codex.exe`를 찾았고 `codex-cli 0.122.0-alpha.13`을 출력했다.
+- 2026-04-23 승인 후 `%APPDATA%\npm\codex.cmd` 래퍼를 현재 존재하는 `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.417.40842-win32-x64\bin\windows-x86_64\codex.exe` 경로로 갱신했고 `codex-cli 0.122.0-alpha.13`을 출력했다.
+- 2026-04-23 수정 후 `codex_builder_reviewer.ps1`는 PowerShell parser syntax check를 통과했다.
+- 2026-04-23 Code Reviewer 외부 검토 로그 `codex_loop_logs\manual_reviewer_20260423_212033.md`는 `REVIEW_RESULT: PASS`를 반환했다.
 
 ### History
 
@@ -85,6 +93,10 @@ Completed for bootstrap file creation and path correction. No downstream Builder
 - 2026-04-19: 네이티브 hook/event가 도움말 출력에서 확인되지 않아 외부 PowerShell 래퍼 방식으로 설계했다.
 - 2026-04-19: `run_codex.bat`, `codex_prompt.txt`, `AGENTS.md`, `BLACKBOARD.md`, `codex_builder_reviewer.ps1`를 생성했다.
 - 2026-04-19: 승인 후 `%APPDATA%\npm\codex.cmd` 래퍼를 생성하고 `--version` 실행으로 검증했다.
+- 2026-04-23: VS Code 확장 업데이트로 `%APPDATA%\npm\codex.cmd`가 가리키는 고정 버전 경로가 깨진 문제를 확인했다.
+- 2026-04-23: `run_codex.bat`와 `codex_builder_reviewer.ps1`를 고정 래퍼 의존에서 실행 가능한 래퍼 우선, 실패 시 최신 VS Code 확장 `codex.exe` 탐색 방식으로 수정했다.
+- 2026-04-23: 승인 후 `%APPDATA%\npm\codex.cmd` 외부 래퍼 자체도 현재 존재하는 Codex CLI 실행 파일로 갱신했다.
+- 2026-04-23: `codex_loop_logs\manual_reviewer_20260423_212033.md`에 Code Reviewer 통과 판정을 기록했다.
 
 ### Builder Reviewer Loop
 
@@ -93,5 +105,5 @@ Completed for bootstrap file creation and path correction. No downstream Builder
 - Git dependency: Not required
 - Max loops: 3
 - Current loop count: 0
-- Last reviewer decision: Not run yet for a downstream Builder task
-- Last log directory: Not created yet by an actual Builder -> Reviewer run
+- Last reviewer decision: PASS for manual reviewer log `codex_loop_logs\manual_reviewer_20260423_212033.md`
+- Last log directory: `codex_loop_logs`

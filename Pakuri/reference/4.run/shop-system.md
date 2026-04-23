@@ -1,0 +1,43 @@
+# 상점 시스템
+
+> 목적: 상점의 골드 사용처, 구조, 예시 상품을 정의한다.
+
+## 1. 인게임 골드
+`골드`는 런 내부에서만 사용하는 소비 재화다.
+
+- 전투 보상과 일부 이벤트로 획득한다.
+- 상점에서 상품을 구매할 때 사용한다.
+- 런 종료 시 남은 골드는 사라진다.
+- 런 외부 성장 재화인 `어둠의 흔적`과는 분리한다.
+
+골드 지급량은 [`combat-reward-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fcombat-reward-system)에서 관리한다.
+상점 등장 일차, 등장 확률, 스테이지당 등장 제한은 [`dungeon-squad-run-structure.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fdungeon-squad-run-structure)에서 관리한다.
+
+## 2. 상점 구조
+상점은 등장 시 아래 상품을 전부 보여준다.
+플레이어는 골드를 지불해 원하는 상품을 구매할 수 있다.
+
+상점 기본 규칙:
+- 유물 상품이 등장할 경우 이미 보유한 유물은 후보에서 제외한다.
+- 구매하지 않은 상품은 다음 상점으로 이월되지 않는다.
+- 한 상품은 1회만 구매할 수 있다.
+
+## 3. 상점 상품 예시
+
+| 상품 | 가격 | 효과 |
+|---|---:|---|
+| 포로 1명 | 25골드 | 무작위 포로 1명을 즉시 획득한다. |
+| 포로 2명 | 45골드 | 무작위 포로 2명을 즉시 획득한다. |
+| 스킬 강화권 | 40골드 | 보유 중인 스킬 3개 중 하나를 선택해 강화한다. |
+| 유물 후보 갱신권 | 35골드 | 다음 유물 보상에서 후보 3개를 1회 갱신할 수 있다. |
+| 희귀 유물 | 90골드 | 보유하지 않은 유물 1개를 즉시 획득한다. |
+| 어둠의 파편 | 30골드 | 어둠의 흔적 20개를 획득한다. |
+
+## 4. 후속 결정 필요 항목
+- 상점 상품을 항상 전부 보여줄지, 일부만 무작위로 보여줄지 여부
+- 스테이지별 상점 가격 상승 여부
+- 상점에서 유물을 판매할 때 시너지 후보를 어느 정도 보정할지 여부
+
+## 5. 관련 문서
+- 이벤트 규칙은 [`event-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fevent-system) 참고.
+- 런 내부 반복 구조는 [`dungeon-squad-run-structure.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fdungeon-squad-run-structure) 참고.

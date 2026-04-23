@@ -2,7 +2,7 @@
 param(
     [string]$Task,
     [string]$TaskFile,
-    [string]$CodexCmd = (Join-Path $env:APPDATA 'npm\codex.cmd'),
+    [string]$CodexCmd,
     [int]$MaxLoops = 3
 )
 
@@ -14,6 +14,44 @@ $Root = $PSScriptRoot
 $BlackboardPath = Join-Path $Root 'BLACKBOARD.md'
 $AgentsPath = Join-Path $Root 'AGENTS.md'
 $LogRoot = Join-Path $Root 'codex_loop_logs'
+
+function Resolve-CodexCommand {
+    if ($CodexCmd) {
+        if (-not (Test-Path -LiteralPath $CodexCmd)) {
+            throw "Codex CLI was not found: $CodexCmd"
+        }
+        return $CodexCmd
+    }
+
+    $wrapper = Join-Path $env:APPDATA 'npm\codex.cmd'
+    try {
+        if (Test-Path -LiteralPath $wrapper) {
+            & $wrapper --version *> $null
+            if ($LASTEXITCODE -eq 0) {
+                return $wrapper
+            }
+        }
+    } catch {
+        # Fall through to the VS Code extension scan below.
+    }
+
+    $extensions = Join-Path $env:USERPROFILE '.vscode\extensions'
+    if (Test-Path -LiteralPath $extensions) {
+        $candidate = Get-ChildItem -LiteralPath $extensions -Directory -Filter 'openai.chatgpt-*' |
+            ForEach-Object { Join-Path $_.FullName 'bin\windows-x86_64\codex.exe' } |
+            Where-Object { Test-Path -LiteralPath $_ } |
+            Sort-Object -Descending |
+            Select-Object -First 1
+
+        if ($candidate) {
+            return $candidate
+        }
+    }
+
+    throw "Codex CLI was not found. Checked $wrapper and $extensions\openai.chatgpt-*\bin\windows-x86_64\codex.exe."
+}
+
+$ResolvedCodexCmd = Resolve-CodexCommand
 
 function Read-Utf8File {
     param([Parameter(Mandatory = $true)][string]$Path)
@@ -42,8 +80,8 @@ function Assert-RequiredFiles {
     if (-not (Test-Path -LiteralPath $BlackboardPath)) {
         throw "BLACKBOARD.md was not found: $BlackboardPath"
     }
-    if (-not (Test-Path -LiteralPath $CodexCmd)) {
-        throw "Codex CLI was not found. Required default path: $CodexCmd"
+    if (-not (Test-Path -LiteralPath $ResolvedCodexCmd)) {
+        throw "Codex CLI was not found: $ResolvedCodexCmd"
     }
 }
 
@@ -140,7 +178,7 @@ function Invoke-CodexExec {
         [Parameter(Mandatory = $true)][string]$OutputPath
     )
 
-    $Prompt | & $CodexCmd exec --full-auto --skip-git-repo-check -C $Root -o $OutputPath -
+    $Prompt | & $ResolvedCodexCmd exec --full-auto --skip-git-repo-check -C $Root -o $OutputPath -
     if ($null -eq $global:LASTEXITCODE) {
         return 0
     }
