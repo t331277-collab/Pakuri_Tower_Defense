@@ -107,3 +107,62 @@ Completed for bootstrap file creation, path correction, and Codex CLI path resol
 - Current loop count: 0
 - Last reviewer decision: PASS for manual reviewer log `codex_loop_logs\manual_reviewer_20260423_212033.md`
 - Last log directory: `codex_loop_logs`
+
+## Task: Unity MCP Bridge Connection
+
+### Task title
+
+Unity MCP bridge 연결 및 등록 확인
+
+### Goals
+
+- 현재 워크스페이스의 Unity 프로젝트 `Pakuri`에서 Unity MCP bridge를 Codex MCP 서버와 연결한다.
+- Codex CLI 쪽 MCP 등록 상태와 Unity Editor 쪽 bridge 실행 상태를 실제 명령 출력으로 구분한다.
+- 사용자가 Unity Editor 내 MCP For Unity 설정을 직접 조작해야 하는 경우, 필요한 항목을 명확히 질문한다.
+
+### Constraints
+
+- 모든 판단은 실제 파일, 패키지 코드, 명령 출력에 근거한다.
+- Unity 프로젝트 파일은 사용자 요청 없이 수정하지 않는다.
+- Unity Editor 내부 bridge 시작은 실제 연결 확인 전까지 완료된 것으로 말하지 않는다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed. Unity Editor-side MCP For Unity bridge is connected to the current Codex MCP server.
+
+### Next Actions
+
+- 이후 Unity MCP가 끊기면 Unity Editor에서 Transport를 `Stdio`로 두고 `Session Active`를 다시 켠 뒤 `manage_scene get_active`로 재검증한다.
+- Unity Test Runner 확인은 `run_tests EditMode` 후 `get_test_job`으로 결과를 확인한다.
+
+### Evidence
+
+- `Pakuri/ProjectSettings/ProjectVersion.txt` 출력: `m_EditorVersion: 6000.3.4f1`
+- `Pakuri/Packages/manifest.json`에는 `com.coplaydev.unity-mcp` 의존성이 있다.
+- `codex mcp get unityMCP` 출력: `enabled: true`, `transport: stdio`, `command: uvx`, `args: --from mcpforunityserver mcp-for-unity --transport stdio`
+- Unity MCP 서버 `debug_request_context` 출력: server version `9.6.6`, `active_instance: null`, `all_keys_in_store: []`
+- `manage_scene get_active` 출력: `No Unity Editor instances found. Please ensure Unity is running with MCP for Unity bridge.`
+- `%USERPROFILE%\.unity-mcp` status directory는 존재하지 않았다.
+- `Test-NetConnection 127.0.0.1:6400`은 TCP 연결 실패로 timeout 됐다.
+- `StdioBridgeHost.cs`에는 `[InitializeOnLoad]`, `StartAutoConnect()`, `WriteHeartbeat()`, `%USERPROFILE%\.unity-mcp\unity-mcp-status-<hash>.json` 작성 코드가 있다.
+- `McpCiBoot.cs`는 `EditorPrefs.SetBool(EditorPrefKeys.UseHttpTransport, false)` 후 `StdioBridgeHost.StartAutoConnect()`를 호출한다.
+- `README.md` Quick start는 `Window > MCP for Unity`, `Auto-Setup`, 필요 시 `Start Bridge`를 안내한다.
+- 사용자 조작 후 `%USERPROFILE%\.unity-mcp\unity-mcp-status-c88ab184.json`이 생성됐고 내용은 `unity_port: 6400`, `reason: ready`, `project_name: Pakuri`, `unity_version: 6000.3.4f1`였다.
+- 사용자 조작 후 Unity MCP 서버 `debug_request_context` 출력은 `active_instance: Pakuri@c88ab184`였다.
+- 사용자 조작 후 `manage_scene get_active` 출력은 `SampleScene`, `Assets/Scenes/SampleScene.unity`, `rootCount: 2`였다.
+- `read_console` 출력에는 `Transport changed to: Stdio`, `StdioBridgeHost started on port 6400. (OS=WindowsEditor, server=9.6.6)`, `SkillSync complete: Added: 3, Updated: 0, Deleted: 0 (C:\Users\t3312\.codex\skills\unity-mcp-skill)`가 있었다.
+- `manage_asset search`는 `Assets`에서 총 11개 에셋을 찾았다.
+- `manage_scene get_hierarchy`는 루트 오브젝트 `Main Camera`, `Global Light 2D`를 반환했다.
+- `run_tests EditMode`는 job `bee66234eeec4e67b238bafff3d63dc9`를 시작했고 `get_test_job` 결과는 `status: succeeded`, `resultState: Passed`, `total: 0`, `passed: 0`, `failed: 0`, `skipped: 0`였다.
+
+### History
+
+- 2026-04-23: Unity 프로젝트 구조, MCP 패키지 설치, Codex CLI MCP 등록 상태를 확인했다.
+- 2026-04-23: Unity MCP 서버는 실행 중이나 Unity Editor bridge 인스턴스가 등록되지 않았음을 확인했다.
+- 2026-04-23: Unity Editor 내부 MCP For Unity 설정/bridge 시작이 필요하다고 판단했다.
+- 2026-04-23: 사용자가 Unity Editor에서 Transport를 `Stdio`로 바꾸고 `Session Active`, Codex client `Configuration`을 수행했다.
+- 2026-04-23: Unity MCP bridge 연결, scene/asset/console/hierarchy 접근, EditMode Test Runner 실행을 검증했다.
