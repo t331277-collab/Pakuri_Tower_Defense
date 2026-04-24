@@ -48,7 +48,7 @@ namespace Pakuri.Combat
             public SpriteRenderer Renderer;
             public Vector3 Direction;
             public float Speed;
-            public float RemainingDistance;
+            public float RemainingLifetime;
             public float HitRadius;
             public float BaseDamage;
         }
@@ -75,8 +75,8 @@ namespace Pakuri.Combat
         [SerializeField] private float eveSpellPower = 30f;
         [SerializeField] private float eveBaseLightningDamage = 24f;
         [SerializeField] private float eveSpellPowerCoefficient = 0.95f;
-        [SerializeField] private float eveAttackRange = 8f;
         [SerializeField] private float eveProjectileSpeed = 15f;
+        [SerializeField] private float eveProjectileLifetime = 5f;
         [SerializeField] private float eveProjectileHitRadius = 0.42f;
         [SerializeField] private int eveMagazineCapacity = 6;
         [SerializeField] private float eveReloadDuration = 4f;
@@ -141,8 +141,8 @@ namespace Pakuri.Combat
             enemySpawnYRange.y = Mathf.Max(enemySpawnYRange.x, enemySpawnYRange.y);
             stageIndex = Mathf.Clamp(stageIndex, 1, 4);
             dayIndex = Mathf.Clamp(dayIndex, 1, 11);
-            eveAttackRange = Mathf.Max(0.5f, eveAttackRange);
             eveProjectileSpeed = Mathf.Max(0.1f, eveProjectileSpeed);
+            eveProjectileLifetime = Mathf.Max(0.1f, eveProjectileLifetime);
             eveProjectileHitRadius = Mathf.Max(0.1f, eveProjectileHitRadius);
 
             if (!isActiveAndEnabled)
@@ -528,7 +528,7 @@ namespace Pakuri.Combat
 
                 var travelDistance = projectile.Speed * Time.deltaTime;
                 projectile.Transform.position += projectile.Direction * travelDistance;
-                projectile.RemainingDistance -= travelDistance;
+                projectile.RemainingLifetime = Mathf.Max(0f, projectile.RemainingLifetime - Time.deltaTime);
 
                 if (TryHitEnemy(projectile, out var enemyHit, out var damageResult))
                 {
@@ -551,12 +551,14 @@ namespace Pakuri.Combat
                     continue;
                 }
 
-                if (projectile.RemainingDistance > 0f && IsInsideBattlefield(projectile.Transform.position))
+                if (projectile.RemainingLifetime > 0f)
                 {
                     continue;
                 }
 
-                statusLabel = "Arc Bolt dissipated before hitting a target.";
+                statusLabel = string.Format(
+                    "Arc Bolt dissipated after {0:0.0}s without hitting a target.",
+                    eveProjectileLifetime);
                 CleanupProjectile(i);
             }
         }
@@ -664,7 +666,7 @@ namespace Pakuri.Combat
                 Renderer = renderer,
                 Direction = direction,
                 Speed = eveProjectileSpeed,
-                RemainingDistance = eveAttackRange,
+                RemainingLifetime = eveProjectileLifetime,
                 HitRadius = eveProjectileHitRadius,
                 BaseDamage = eveBaseLightningDamage + (eveSpellPower * eveSpellPowerCoefficient)
             };
@@ -703,14 +705,6 @@ namespace Pakuri.Combat
             }
 
             projectiles.RemoveAt(index);
-        }
-
-        private bool IsInsideBattlefield(Vector3 worldPoint)
-        {
-            return worldPoint.x >= 0f &&
-                   worldPoint.x <= fieldSize.x &&
-                   worldPoint.y >= 0f &&
-                   worldPoint.y <= fieldSize.y;
         }
 
         private void CheckBattleResolution()
