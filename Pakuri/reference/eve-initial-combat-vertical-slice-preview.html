@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pakuri 이브 초기 전투 완성 모습 프리뷰</title>
+  <style>
+    :root {
+      --bg: #eef3f8;
+      --paper: #ffffff;
+      --ink: #1d2733;
+      --muted: #5f6a78;
+      --line: #d6dee8;
+      --blue: #0f4c81;
+      --cyan: #0f766e;
+      --violet: #5b21b6;
+      --amber: #b45309;
+      --red: #b91c1c;
+      --green: #166534;
+      --soft: #f7fafc;
+      --soft-blue: #edf6ff;
+      --soft-violet: #f3efff;
+      --soft-green: #eefbf3;
+      --soft-amber: #fff7ed;
+      --soft-red: #fff1f2;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, #f8fbff 0, #eef3f8 42%, #e8edf3 100%);
+      color: var(--ink);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 38px 20px 64px;
+    }
+
+    header {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(135deg, #ffffff 0%, #f2f8ff 100%);
+      box-shadow: 0 14px 38px rgba(29, 39, 51, 0.08);
+    }
+
+    h1, h2, h3 { margin: 0; line-height: 1.25; }
+    h1 { font-size: 34px; margin-bottom: 10px; }
+    h2 { font-size: 22px; margin-bottom: 14px; }
+    h3 { font-size: 18px; margin-bottom: 10px; }
+    p { margin: 0 0 12px; }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    a:hover { text-decoration: underline; }
+
+    code {
+      border-radius: 6px;
+      background: #eef3f7;
+      padding: 1px 6px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.95em;
+    }
+
+    .subtitle {
+      max-width: 940px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f6f9fc;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .card {
+      grid-column: span 12;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--paper);
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(29, 39, 51, 0.05);
+    }
+
+    .half { grid-column: span 6; }
+    .third { grid-column: span 4; }
+    .two-third { grid-column: span 8; }
+
+    .accent { border-left: 5px solid var(--blue); }
+    .guide { border-left: 5px solid var(--cyan); background: #f3fbfa; }
+    .warn { border-left: 5px solid var(--amber); background: var(--soft-amber); }
+    .danger { border-left: 5px solid var(--red); background: var(--soft-red); }
+    .good { border-left: 5px solid var(--green); background: var(--soft-green); }
+
+    ul, ol {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    li { margin: 4px 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f2f6fa;
+      font-weight: 700;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
+    .pill.fact { background: #dbeafe; color: #1d4ed8; }
+    .pill.proposal { background: #fef3c7; color: #92400e; }
+    .pill.state { background: #e9d5ff; color: #6d28d9; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .step {
+      min-height: 122px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfdff;
+      padding: 12px;
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--blue);
+    }
+
+    .battle-preview {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: #f8fbfe;
+    }
+
+    .hud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #f6fbff 0%, #ecf5ff 100%);
+    }
+
+    .hud-box {
+      flex: 1 1 140px;
+      min-width: 140px;
+      border: 1px solid #cfe0f2;
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 10px 12px;
+    }
+
+    .hud-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .hud-value {
+      margin-top: 4px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .field {
+      position: relative;
+      min-height: 350px;
+      padding: 18px;
+      background:
+        linear-gradient(180deg, rgba(216, 230, 243, 0.25) 0, rgba(216, 230, 243, 0.25) 1px, transparent 1px, transparent 100%),
+        linear-gradient(90deg, rgba(216, 230, 243, 0.25) 0, rgba(216, 230, 243, 0.25) 1px, transparent 1px, transparent 100%),
+        linear-gradient(180deg, #f7fbff 0%, #eef4f9 100%);
+      background-size: 100% 32px, 32px 100%, cover;
+    }
+
+    .unit {
+      position: absolute;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: white;
+      box-shadow: 0 8px 18px rgba(29, 39, 51, 0.08);
+      width: 170px;
+    }
+
+    .unit h4 {
+      margin: 0 0 4px;
+      font-size: 15px;
+    }
+
+    .unit p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .nexus { left: 28px; top: 132px; background: #fff7ed; border-color: #f3c58a; }
+    .eve { left: 220px; top: 115px; background: #eef6ff; border-color: #9dc2ee; }
+    .target { left: 430px; top: 145px; background: #f3efff; border-color: #cbb7ff; width: 130px; }
+    .enemy { right: 210px; top: 86px; background: #fffef7; border-color: #ead49f; }
+    .boss { right: 18px; top: 190px; background: #fff1f2; border-color: #f0a0ad; }
+
+    .arrow {
+      position: absolute;
+      height: 2px;
+      background: linear-gradient(90deg, #7aa9d6 0%, #0f4c81 100%);
+    }
+
+    .arrow.one { left: 385px; top: 170px; width: 110px; }
+    .arrow.two { left: 555px; top: 170px; width: 210px; }
+
+    .arrow::after {
+      content: "";
+      position: absolute;
+      right: -2px;
+      top: -4px;
+      border-left: 10px solid #0f4c81;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
+
+    .bottom-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 14px;
+      border-top: 1px solid var(--line);
+      background: #fbfdff;
+    }
+
+    .strip-box {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: white;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .mini-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--soft);
+      padding: 14px;
+    }
+
+    .mini-card h4 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      color: var(--blue);
+    }
+
+    .stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .choice {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: white;
+      padding: 12px;
+    }
+
+    .choice strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--violet);
+    }
+
+    .tree {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfdff;
+      padding: 14px;
+    }
+
+    .tree ul { margin-top: 8px; }
+
+    .paths {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .path {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fafcff;
+      padding: 10px 12px;
+      font-size: 13px;
+      word-break: break-word;
+    }
+
+    @media (max-width: 960px) {
+      .half, .third, .two-third { grid-column: span 12; }
+      .flow { grid-template-columns: repeat(2, 1fr); }
+      .split, .bottom-strip, .paths { grid-template-columns: 1fr; }
+      .field { min-height: 620px; }
+      .nexus { left: 18px; top: 170px; }
+      .eve { left: 18px; top: 280px; }
+      .target { left: 18px; top: 390px; }
+      .enemy { right: 18px; top: 60px; }
+      .boss { right: 18px; top: 290px; }
+      .arrow.one, .arrow.two { display: none; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Pakuri 이브 초기 전투 완성 모습 프리뷰</h1>
+    <p class="subtitle">
+      이 문서는 <a href="4.run/dungeon-squad-run-structure.md">런 구조 문서</a>를 중심으로,
+      앞서 제안한 vertical slice 방향을 따라 <strong>이브만 구현했을 때 초기 완성 모습이 실제로 어떻게 보여야 하는지</strong>를 HTML로 정리한 설계 검증 문서다.
+      목표는 “제가 구현 방향을 제대로 이해했는지”를 화면과 흐름 수준에서 확인하는 것이다.
+    </p>
+    <div class="chips">
+      <span class="chip">중심 기준 문서: dungeon-squad-run-structure.md</span>
+      <span class="chip">전투 씬: SampleScene</span>
+      <span class="chip">현재 루트 오브젝트: Main Camera / Global Light 2D</span>
+      <span class="chip">현재 Assets 상태: 기본 URP/InputSystem만 존재</span>
+    </div>
+  </header>
+
+  <section class="grid">
+    <article class="card accent">
+      <h2>제가 이해한 핵심</h2>
+      <p>
+        이 게임의 초기 구현은 “전투 그 자체”보다 <strong>일차 단위 반복 구조</strong>를 먼저 증명해야 한다.
+        따라서 첫 결과물은 단순한 전투 데모가 아니라,
+        <strong>1스테이지 1일차 고정 전투 → 전투 보상 → 포로 기반 강화 선택 → 다음 일차 이동</strong>이 한 번 닫히는 상태여야 한다.
+      </p>
+      <p>
+        이브만 먼저 구현한다면, 전투 로직의 초점은 이브의 <code>아크 볼트</code>로 적을 막아내는 최소 루프에 있고,
+        런 구조의 초점은 “전투 후 선택이 다음 날로 이어지는가”에 있다.
+      </p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card third good">
+      <h2>문서 기반 확정</h2>
+      <ul>
+        <li>1일차는 고정 전투다.</li>
+        <li>전투 후 보상 확인과 포로 기반 선택이 이어진다.</li>
+        <li>이브의 첫 액티브는 `아크 볼트`다.</li>
+        <li>전투 중 플레이어 입력은 공격 지점 지정이다.</li>
+        <li>전장은 32x18, 넥서스는 좌측, 적은 우측에서 온다.</li>
+      </ul>
+    </article>
+
+    <article class="card third warn">
+      <h2>초기 구현용 제안</h2>
+      <ul>
+        <li>1스테이지 전체 적 5종을 한 번에 넣지 않고 일반 적 1종으로 시작한다.</li>
+        <li>가장 단순한 `견습 검사`를 먼저 사용한다.</li>
+        <li>강화 보스 규칙은 `강화된 견습 검사 1개체`로 축소 반영한다.</li>
+        <li>이브는 `아크 볼트`만 사용한다.</li>
+      </ul>
+    </article>
+
+    <article class="card third guide">
+      <h2>현재 상태</h2>
+      <ul>
+        <li>현재 씬은 사실상 비어 있다.</li>
+        <li>게임 전용 스크립트 폴더는 아직 없다.</li>
+        <li>따라서 아래 내용은 “구현 후 보여야 할 완성 모습”이다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>초기 완성 루프</h2>
+      <div class="flow">
+        <div class="step">
+          <strong>1. 런 진입</strong>
+          스테이지 1, 1일차 고정 전투 데이터를 로드한다.
+        </div>
+        <div class="step">
+          <strong>2. 전장 생성</strong>
+          넥서스, 이브, 적 스폰축, HUD를 씬에 배치한다.
+        </div>
+        <div class="step">
+          <strong>3. 전투 진행</strong>
+          적은 좌측 넥서스로 전진하고, 이브는 아크 볼트로 대응한다.
+        </div>
+        <div class="step">
+          <strong>4. 플레이어 입력</strong>
+          플레이어가 누른 지점을 기준으로 이브의 공격 포커스가 정해진다.
+        </div>
+        <div class="step">
+          <strong>5. 승리 보상</strong>
+          포로 1~3명, 골드 10, 어둠의 흔적 10을 보여준다.
+        </div>
+        <div class="step">
+          <strong>6. 강화 선택</strong>
+          포로 기반 강화 1회를 처리하고 다음 일차 버튼으로 이동한다.
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>구현 후 보이게 될 초기 화면</h2>
+      <div class="battle-preview">
+        <div class="hud">
+          <div class="hud-box">
+            <div class="hud-label">Run</div>
+            <div class="hud-value">Stage 1 / Day 1</div>
+          </div>
+          <div class="hud-box">
+            <div class="hud-label">Encounter</div>
+            <div class="hud-value">Fixed Combat</div>
+          </div>
+          <div class="hud-box">
+            <div class="hud-label">Nexus HP</div>
+            <div class="hud-value">100%</div>
+          </div>
+          <div class="hud-box">
+            <div class="hud-label">Eve Magazine</div>
+            <div class="hud-value">6 / 6</div>
+          </div>
+          <div class="hud-box">
+            <div class="hud-label">Reload</div>
+            <div class="hud-value">Idle</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="unit nexus">
+            <h4>넥서스</h4>
+            <p>좌표 기준: <code>(2,8)</code><br>최종 방어 목표</p>
+          </div>
+
+          <div class="unit eve">
+            <h4>이브</h4>
+            <p>배치 기준: 아군 라인<br><code>아크 볼트</code> 발사</p>
+          </div>
+
+          <div class="unit target">
+            <h4>공격 지정점</h4>
+            <p>플레이어가 누른 위치</p>
+          </div>
+
+          <div class="unit enemy">
+            <h4>견습 검사</h4>
+            <p>우측 스폰축에서 전진<br>물리 / 근거리</p>
+          </div>
+
+          <div class="unit boss">
+            <h4>강화 보스 개체</h4>
+            <p>일반 전투 보스 규칙 축소 반영<br>포로 보상 확정 포함</p>
+          </div>
+
+          <div class="arrow one"></div>
+          <div class="arrow two"></div>
+        </div>
+
+        <div class="bottom-strip">
+          <div class="strip-box">
+            <strong>좌측</strong><br>
+            넥서스와 이브가 있는 방어 라인
+          </div>
+          <div class="strip-box">
+            <strong>중앙</strong><br>
+            플레이어 터치 지점과 이브의 공격 집중 구간
+          </div>
+          <div class="strip-box">
+            <strong>우측</strong><br>
+            1스테이지 일반 적이 등장해 좌측으로 압박
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card two-third">
+      <h2>초기 전투 로직을 이렇게 이해했다</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>구간</th>
+            <th>동작</th>
+            <th>근거</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>전투 시작</td>
+            <td>런 상태에서 <code>Stage=1, Day=1</code>를 읽고 고정 전투를 시작한다.</td>
+            <td><span class="pill fact">문서 확정</span> `dungeon-squad-run-structure.md`의 1일차 고정 전투</td>
+          </tr>
+          <tr>
+            <td>전장 구성</td>
+            <td>넥서스를 좌측, 이브를 넥서스 오른쪽, 적을 우측 스폰축에 둔다.</td>
+            <td><span class="pill fact">문서 확정</span> `combat-scene-layout.md`</td>
+          </tr>
+          <tr>
+            <td>아군 구성</td>
+            <td>이브 1명만 존재하고, 액티브는 `아크 볼트`만 사용한다.</td>
+            <td><span class="pill fact">문서 확정</span> `eve-tower.md` / <span class="pill proposal">초기 축소</span> 다른 액티브는 후순위</td>
+          </tr>
+          <tr>
+            <td>적 구성</td>
+            <td>1스테이지 일반 적 1종만 먼저 쓰고, 그 적의 강화 보스 개체 1개를 섞어 일반 전투 보스 규칙을 표현한다.</td>
+            <td><span class="pill proposal">초기 축소</span> `stage-1-enemies.md`의 5종 전체 대신 최소 단위 검증</td>
+          </tr>
+          <tr>
+            <td>플레이어 입력</td>
+            <td>플레이어는 화면을 눌러 공격 지점을 지정하고, 이브는 그 지점에 가장 가까운 적 또는 그 방향을 우선 공격한다.</td>
+            <td><span class="pill fact">문서 확정</span> `dungeon-squad-combat-player-controls.md`</td>
+          </tr>
+          <tr>
+            <td>이브 공격</td>
+            <td><code>24 + 주문력 * 0.95</code>의 번개 피해를 기준으로 아크 볼트를 발사하고, 번개 저항을 적용한 뒤 치명타를 계산한다.</td>
+            <td><span class="pill fact">문서 확정</span> `a-arc-bolt.md` + `combat-attribute-and-damage-system.md`</td>
+          </tr>
+          <tr>
+            <td>전투 종료</td>
+            <td>적이 전멸하면 승리, 넥서스가 파괴되면 패배다.</td>
+            <td><span class="pill proposal">초기 구현 규칙</span> 방어형 전장 구조에 맞춘 최소 승패 조건</td>
+          </tr>
+          <tr>
+            <td>전투 후</td>
+            <td>일반 전투 보상으로 포로 1~3명, 골드 10, 어둠의 흔적 10을 표시한다. 포로에는 강화 보스가 반드시 들어간다.</td>
+            <td><span class="pill fact">문서 확정</span> `combat-reward-system.md`</td>
+          </tr>
+          <tr>
+            <td>다음 단계</td>
+            <td>포로 기반 강화 선택을 1회 진행한 뒤 <code>다음 일차</code> 버튼으로 넘어간다.</td>
+            <td><span class="pill fact">문서 확정</span> `dungeon-squad-run-structure.md`의 전투 후 선택 흐름</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+
+    <article class="card third good">
+      <h2>핵심 포인트</h2>
+      <p>
+        이 초기 구현은 “이브가 적을 쏘는가”만 검증하는 게 아니다.
+      </p>
+      <p>
+        진짜 검증 포인트는 <strong>하루 전투가 보상과 강화 선택까지 이어져 런 구조의 한 칸이 닫히는가</strong>다.
+      </p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>전투 후 보상 화면의 초기 완성 모습</h2>
+      <div class="split">
+        <div class="mini-card">
+          <h4>Victory Panel</h4>
+          <p><span class="pill fact">문서 확정</span> 일반 전투 기준 보상</p>
+          <ul>
+            <li>골드: <code>10</code></li>
+            <li>어둠의 흔적: <code>10</code></li>
+            <li>포로: <code>1~3명</code></li>
+            <li>강화 보스 포로: 반드시 포함</li>
+          </ul>
+        </div>
+
+        <div class="mini-card">
+          <h4>Sacrifice Panel</h4>
+          <p><span class="pill proposal">초기 구현용 제안</span> 이브만 있는 상태이므로 이브 강화만 노출</p>
+          <div class="stack">
+            <div class="choice">
+              <strong>후보 A</strong>
+              아크 볼트 위력 강화
+            </div>
+            <div class="choice">
+              <strong>후보 B</strong>
+              아크 볼트 탄창 강화
+            </div>
+            <div class="choice">
+              <strong>후보 C</strong>
+              재장전 또는 발사 간격 강화
+            </div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top: 14px;">
+        여기서 중요한 점은, 첫 구현에서는 공양/강화 선택이 완전한 메타 시스템이 아니어도 괜찮지만
+        <strong>“전투 승리 → 포로/재화 확인 → 이브 강화 적용 → 다음 날 진입”</strong>의 연결은 반드시 살아 있어야 한다는 것이다.
+      </p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half">
+      <h2>구현 후 예상 씬 계층</h2>
+      <div class="tree">
+        <span class="pill state">예상 Runtime Hierarchy</span>
+        <ul>
+          <li><code>CombatRoot</code></li>
+          <li><code>Nexus</code></li>
+          <li><code>AlliesRoot</code>
+            <ul>
+              <li><code>EveUnit</code></li>
+            </ul>
+          </li>
+          <li><code>EnemiesRoot</code>
+            <ul>
+              <li><code>Enemy_Normal_01</code></li>
+              <li><code>Enemy_Normal_02</code></li>
+              <li><code>Enemy_Boss_01</code></li>
+            </ul>
+          </li>
+          <li><code>CombatUI</code></li>
+          <li><code>RewardUI</code></li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="card half">
+      <h2>구현 후 예상 코드 축</h2>
+      <div class="paths">
+        <div class="path"><code>Assets/Scripts/Run/RunBootstrap.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Run/DayEncounterResolver.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Combat/CombatController.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Combat/EveArcBoltSkill.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Combat/EnemyMover.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Combat/DamageCalculator.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Rewards/RewardResolver.cs</code></div>
+        <div class="path"><code>Assets/Scripts/UI/RewardChoicePanel.cs</code></div>
+      </div>
+      <p style="margin-top: 12px;">
+        위 경로들은 현재 존재하는 파일이 아니라, 이 문서의 완성 모습을 실제 구현으로 옮길 때 필요한 최소 코드 축을 설명하기 위한 제안이다.
+      </p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card warn">
+      <h2>초기 완성 모습에 의도적으로 빠지는 것</h2>
+      <ul>
+        <li>1스테이지 일반 적 5종 전체 랜덤 구성</li>
+        <li>5일/10일 중간보스와 11일 보스전</li>
+        <li>상점 15%, 이벤트 25% 확률 등장 로직</li>
+        <li>이브의 B~E 액티브와 F~J 패시브</li>
+        <li>유물 3택 1 시스템</li>
+        <li>포메이션 재배치 전체 시스템</li>
+      </ul>
+      <p>
+        이유는 단순하다. 이 단계의 목적은 전체 게임 재현이 아니라,
+        <strong>런 구조 문서가 말하는 “하루 단위 반복”이 최소 전투와 보상 선택까지 작동하는지</strong>를 먼저 증명하는 것이기 때문이다.
+      </p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card danger">
+      <h2>이 HTML이 틀렸다면 보통 여기서 어긋난다</h2>
+      <ul>
+        <li>전투 후 강화 선택보다 전투 데모 자체를 더 크게 보는 경우</li>
+        <li>1일차부터 상점/이벤트/유물까지 함께 넣어야 한다고 보는 경우</li>
+        <li>이브 1명 구현인데도 적 5종 전체와 전체 스킬 체계를 동시에 구현해야 한다고 보는 경우</li>
+        <li>플레이어 조작을 직접 이동/직접 공격으로 오해하는 경우</li>
+      </ul>
+      <p>
+        제 현재 이해는 반대다. 첫 구현의 본질은 <strong>이브 단독 전투 + 하루 종료 선택 루프</strong>다.
+      </p>
+    </article>
+  </section>
+</main>
+</body>
+</html>

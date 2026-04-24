@@ -166,3 +166,272 @@ Completed. Unity Editor-side MCP For Unity bridge is connected to the current Co
 - 2026-04-23: Unity Editor 내부 MCP For Unity 설정/bridge 시작이 필요하다고 판단했다.
 - 2026-04-23: 사용자가 Unity Editor에서 Transport를 `Stdio`로 바꾸고 `Session Active`, Codex client `Configuration`을 수행했다.
 - 2026-04-23: Unity MCP bridge 연결, scene/asset/console/hierarchy 접근, EditMode Test Runner 실행을 검증했다.
+
+## Task: Combat Automation Responsibility Guide
+
+### Task title
+
+기초 전투 시스템 구현 시 자동화 가능 범위와 사용자 수동 작업 범위 정리 HTML 작성
+
+### Goals
+
+- `reference/current-architecture-plan.html` 기준으로 기초 전투 시스템 구현 착수 시 역할 분담을 정리한다.
+- 현재 Unity 프로젝트 구조와 MCP 연결 상태를 근거로 폴더 생성, 스크립트 생성, 씬 배치 자동화 가능 범위를 구분한다.
+- 사용자가 직접 해야 하는 작업과 제가 자동으로 할 수 있는 작업을 HTML 문서 한 장으로 정리한다.
+
+### Constraints
+
+- 실제 파일, 실제 씬 상태, 실제 MCP 호출 결과에 근거해 정리한다.
+- 구현되지 않은 자동화 능력을 구현된 것처럼 적지 않는다.
+- 이 작업은 설계 문서 작성이며, 전투 시스템 코드 구현 자체는 포함하지 않는다.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed
+
+### Next Actions
+
+- 사용자가 원하면 이 문서를 기준으로 Designer handoff를 작성한다.
+- 사용자가 명시적으로 구현을 지시하면 Code Builder 단계로 전환해 폴더, 스크립트, 씬 오브젝트 생성을 실제로 수행한다.
+
+### Evidence
+
+- `Pakuri/reference/current-architecture-plan.html` 파일이 존재하며 전투 시스템 시작 구조를 설명한다.
+- `manage_asset search` 결과 `Assets`에는 `Scenes`, `Settings`와 기본 URP/InputSystem 자산만 있고 `Assets/Scripts` 폴더는 없다.
+- `Get-ChildItem Pakuri\\Assets` 출력에도 `Scenes`, `Settings` 외 게임 전용 폴더가 없다.
+- `manage_scene get_hierarchy` 결과 현재 `SampleScene` 루트 오브젝트는 `Main Camera`, `Global Light 2D`뿐이다.
+- Unity MCP `debug_request_context` 결과 활성 인스턴스는 `Pakuri@c88ab184`다.
+- 같은 세션에서 `manage_scene get_active`, `manage_scene get_hierarchy`, `run_tests EditMode`가 성공해 현재 자동화 연결이 살아 있음을 확인했다.
+
+### History
+
+- 2026-04-24: `AGENTS.md`, `BLACKBOARD.md`, `reference/current-architecture-plan.html`를 다시 읽었다.
+- 2026-04-24: `manage_asset search`, `Get-ChildItem Pakuri\\Assets`, `manage_scene get_hierarchy`로 현재 프로젝트 구조와 씬 상태를 재확인했다.
+- 2026-04-24: 자동화 가능 범위와 사용자 수동 작업 범위를 정리한 HTML 문서를 `Pakuri/reference`에 추가했다.
+
+## Task: Eve Initial Combat Preview
+
+### Task title
+
+`dungeon-squad-run-structure.md` 기준 이브 단독 초기 전투 완성 모습 HTML 작성
+
+### Goals
+
+- `reference/4.run/dungeon-squad-run-structure.md`를 기준으로 초기 전투 로직을 어떻게 이해했는지 시각적으로 검증 가능한 HTML 문서를 만든다.
+- 앞서 제안한 vertical slice 방향을 유지한 채, 이브만 구현했을 때의 초기 완성 상태를 정리한다.
+- 문서 기반 확정 사항과 초기 구현용 제안을 분리해서 표시한다.
+
+### Constraints
+
+- 실제 reference 문서에 있는 내용만 확정으로 적고, 제안은 제안으로 명확히 구분한다.
+- 현재 Unity 프로젝트와 씬 상태를 근거로 “아직 없는 것”과 “구현 후 기대 모습”을 구분한다.
+- 이 작업은 설계 검증용 HTML 작성이며, 전투 시스템 코드 구현은 포함하지 않는다.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed
+
+### Next Actions
+
+- 사용자가 확인 후 방향이 맞다고 판단하면, Designer handoff 문서로 구체적인 구현 순서를 내릴 수 있다.
+- 사용자가 명시적으로 구현을 지시하면 Code Builder가 이 HTML의 구조를 기준으로 실제 폴더, 스크립트, 씬 오브젝트를 생성한다.
+
+### Evidence
+
+- `Pakuri/reference/4.run/dungeon-squad-run-structure.md`는 1일차 고정 전투, 전투 후 보상 확인, 포로 기반 선택, 다음 일차 이동 흐름을 정의한다.
+- `Pakuri/reference/2.Monster/eve/eve-tower.md`는 이브를 번개/얼음 엔진형 보조 딜러로 정의하고, 첫 액티브로 `A. 아크 볼트`를 둔다.
+- `Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md`는 아크 볼트의 탄창 수 6, 재장전 4초, 발사 간격 0.35초, 번개 피해 계산식 `24 + 주문력 * 0.95`, 감전 15%를 정의한다.
+- `Pakuri/reference/Scene/combat-scene-layout.md`는 테스트 전장 32x18, 넥서스 `(2,8)`, 적 우측 진입, 아군 배치 영역 `(4~10, 3~15)`를 정의한다.
+- `Pakuri/reference/dungeon-squad-combat-player-controls.md`는 전투 중 플레이어 조작을 “공격 지점 지정”으로 정의한다.
+- `Pakuri/reference/4.run/combat-reward-system.md`는 일반 전투 보상으로 포로 1~3명, 골드 10, 어둠의 흔적 10, 보스 포로 확정 포함을 정의한다.
+- `Pakuri/reference/5.enemy/stage-1-enemies.md`는 1스테이지 일반몹 5종과 일반 전투 보스 강화 규칙을 정의한다.
+- 현재 `manage_scene get_active` 결과는 `Assets/Scenes/SampleScene.unity`이며, `manage_scene get_hierarchy` 결과 씬 루트는 `Main Camera`, `Global Light 2D`뿐이다.
+- 현재 `manage_asset search` 결과 `Assets`에는 기본 `Scenes`, `Settings`, URP/InputSystem 자산만 있고 게임 전용 스크립트 폴더는 없다.
+
+### History
+
+- 2026-04-24: `AGENTS.md`, `BLACKBOARD.md`, `dungeon-squad-run-structure.md`, `eve-tower.md`, `current-architecture-plan.html`를 다시 읽었다.
+- 2026-04-24: `a-arc-bolt.md`, `combat-scene-layout.md`, `combat-reward-system.md`, `dungeon-squad-combat-player-controls.md`, `combat-attribute-and-damage-system.md`, `combat-stat-system.md`, `stage-1-enemies.md`를 추가로 읽었다.
+- 2026-04-24: 현재 Unity 씬과 에셋 상태를 다시 조회한 뒤, 이브 단독 초기 전투 완성 모습을 설명하는 HTML 문서를 `Pakuri/reference`에 추가했다.
+
+## Task: Eve Combat Vertical Slice Implementation
+
+### Task title
+
+이브 단독 초기 전투 vertical slice 실제 구현 및 작업 설명 HTML 작성
+
+### Goals
+
+- `eve-initial-combat-vertical-slice-preview.html` 기반으로 Unity 프로젝트에 실제 전투 프로토타입을 만든다.
+- 현재 씬의 메인 카메라를 전장 기준으로 맞추고 `CombatRoot` 및 앵커 오브젝트를 생성한다.
+- 적 스폰 X는 고정하고 Y는 랜덤으로 생성되게 한다.
+- 구현 후 실제 검증 근거와 작업 설명을 HTML로 남긴다.
+
+### Constraints
+
+- 실제 reference 문서와 실제 Unity 씬 상태를 기준으로 구현한다.
+- 현재 프로젝트에 없는 아트 자산은 추측하지 않고 placeholder 비주얼로 처리한다.
+- 로직 작업 후 reviewer 검수를 시도하고, 외부 reviewer 실행이 실패하면 그 실패 근거를 남긴다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed with manual reviewer pass in-session. External Codex reviewer commands timed out and did not produce a new review artifact.
+
+### Next Actions
+
+- 사용자가 원하면 이 프로토타입 위에 실제 아트 자산, 정식 UI, 추가 적 타입, 보상 데이터 구조를 붙인다.
+- reviewer 외부 강제 흐름을 이 작업에도 안정적으로 연결하려면 `codex review`/`codex exec` 타임아웃 원인을 별도 확인한다.
+
+### Evidence
+
+- `Assets/Scripts/Combat/DamageCalculator.cs`를 생성했다.
+- `Assets/Scripts/Combat/EveVerticalSliceController.cs`를 생성했다.
+- `manage_asset search path=Assets/Scripts` 결과 `Combat`, `DamageCalculator.cs`, `EveVerticalSliceController.cs`가 존재한다.
+- `SampleScene.unity`에는 `CombatRoot`와 `Pakuri.Combat.EveVerticalSliceController` 컴포넌트가 저장됐다.
+- `manage_scene get_hierarchy include_transform=true` 결과:
+  - `Main Camera` 위치 `15.5, 8.5, -10`
+  - `Nexus` 위치 `2, 8, 0`
+  - `EveUnit` 위치 `6, 8, 0`
+  - `EnemySpawnPoint` 위치 `29, 8, 0`
+  - `InputTarget` 위치 `16, 8, 0`
+- `SampleScene.unity` 텍스트 확인 결과 `orthographic: 1`, `orthographic size: 10`, `CombatRoot`, `EveVerticalSliceController`, 각 좌표가 저장되어 있다.
+- 플레이 모드 런타임 검사 `execute_code` 결과:
+  - 적 스폰 런타임 오브젝트 `Enemy_Normal_01`, `Enemy_Boss_01`가 생성됐다.
+  - 이후 `battleResolved=True`, `victory=True`, `waitingForRewardChoice=True` 상태를 확인했다.
+- 게임 화면 캡처 파일:
+  - `Assets/Screenshots/screenshot-20260424-165841.png`
+  - `Assets/Screenshots/screenshot-20260424-165958.png`
+- `validate_script`는 `DamageCalculator.cs`에 대해 성공했고, `EveVerticalSliceController.cs`는 실제 파일 내용 중복이 없는데도 duplicate signature 오탐을 반환했다.
+- `codex review --uncommitted`는 실행 경로 문제 후 실제 실행에서 timeout 됐다.
+- reviewer 전용 `codex exec`도 300초 timeout으로 끝났고 새 review 로그 파일을 남기지 못했다.
+- 현재 세션에서 `DamageCalculator.cs`, `EveVerticalSliceController.cs`, `SampleScene.unity`를 line-by-line 확인했고 추가 blocking issue는 찾지 못했다.
+
+### History
+
+- 2026-04-24: `AGENTS.md`, `BLACKBOARD.md`, `eve-initial-combat-vertical-slice-preview.html`, 관련 reference 문서를 다시 읽었다.
+- 2026-04-24: `Assets/Scripts`, `Assets/Scripts/Combat` 폴더를 생성했다.
+- 2026-04-24: `DamageCalculator.cs`, `EveVerticalSliceController.cs`를 추가했다.
+- 2026-04-24: `CombatRoot`를 만들고 `EveVerticalSliceController`를 붙였다.
+- 2026-04-24: `Main Camera`를 전장 기준 위치와 orthographic 설정으로 맞췄다.
+- 2026-04-24: `ExecuteAlways` 기반으로 `Nexus`, `EveUnit`, `EnemySpawnPoint`, `InputTarget`, `EnemyRoot`가 씬에 생성되도록 했다.
+- 2026-04-24: 플레이 모드에서 적 스폰, 승리 상태, 보상 대기 상태를 확인했다.
+- 2026-04-24: 외부 reviewer로 `codex review --uncommitted`, reviewer 전용 `codex exec`를 시도했으나 모두 timeout 됐다.
+- 2026-04-24: 현재 세션에서 manual reviewer 검토를 수행하고 작업 설명 HTML을 추가했다.
+
+## Task: Eve Projectile Click Hold Compliance Plan
+
+### Task title
+
+문서 준수형 아크 볼트 투사체 입력/적중 구조 수정 계획 HTML 작성
+
+### Goals
+
+- 현재 이브 전투 프로토타입을 기준으로, 아크 볼트를 문서 정의에 더 맞는 `투사체 / 탄창형` 구조로 바꾸는 작업 계획을 정리한다.
+- 사용자가 요청한 `왼쪽 클릭 유지 시 연속 발사`, `투사체 적중 시 피해` 요구를 실제 코드와 reference 문서 차이 기준으로 설명한다.
+- Code Builder가 바로 구현에 들어갈 수 있도록 수정 범위, 파일별 변경 계획, 검증 체크리스트를 HTML 한 장으로 남긴다.
+
+### Constraints
+
+- 실제 reference 문서와 실제 현재 코드에 근거해서만 적는다.
+- 아직 없는 구현을 구현된 것처럼 적지 않는다.
+- 이 작업은 설계 문서 작성이며, 코드 수정 자체는 포함하지 않는다.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed
+
+### Next Actions
+
+- 사용자가 원하면 이 문서를 기준으로 Code Builder 단계로 전환해 실제 투사체형 발사 로직을 구현한다.
+- 구현 시 `EveVerticalSliceController.cs`의 즉시 피해 구조를 투사체 적중 구조로 바꾸고, hold 입력 검증과 reviewer 루프를 다시 수행한다.
+
+### Evidence
+
+- `Pakuri/reference/dungeon-squad-combat-player-controls.md`는 전투 중 플레이어 입력을 `공격 지점 지정`으로 정의한다.
+- `Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md`는 아크 볼트를 `투사체 / 탄창형`으로 정의하고, 투사체 속도 `15.0`, 탄창 `6`, 재장전 `4초`, 발사 간격 `0.35초`, 감전 `15%`를 명시한다.
+- `Pakuri/reference/3.combat/combat-attribute-and-damage-system.md`는 같은 속성 방어력 참조와 방어력 반영 후 치명타 적용 규칙을 정의한다.
+- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs` 현재 구현은 `wasPressedThisFrame` / `GetMouseButtonDown(0)` 입력과 즉시 피해 구조를 사용한다.
+- 새 설계 문서 `Pakuri/reference/eve-projectile-click-hold-plan.html`를 추가했다.
+
+### History
+
+- 2026-04-24: `AGENTS.md`, `BLACKBOARD.md`, `dungeon-squad-combat-player-controls.md`, `a-arc-bolt.md`, `combat-attribute-and-damage-system.md`, `EveVerticalSliceController.cs`, `eve-combat-implementation-report.html`를 다시 읽었다.
+- 2026-04-24: 현재 코드가 단발 클릭 입력과 즉시 피해 구조임을 확인했다.
+- 2026-04-24: hold 입력 기반 연속 발사와 투사체 적중 기반 피해 처리로 옮기는 설계 HTML을 `Pakuri/reference/eve-projectile-click-hold-plan.html`에 추가했다.
+
+## Task: Eve Projectile Click Implementation
+
+### Task title
+
+이브 아크 볼트를 클릭형 투사체 적중 구조로 수정하고 완료 보고 HTML 작성
+
+### Goals
+
+- 기존 즉시 피해 구조를 제거하고, 왼쪽 클릭 시에만 아크 볼트 투사체 1발이 생성되게 한다.
+- 투사체가 실제로 이동하고 적과 닿을 때만 피해를 적용하게 한다.
+- 수정 후 객체 역할, 동작 방식, 작업 중 문제, 타임스탬프 작업 로그를 포함한 완료 보고 HTML을 남긴다.
+
+### Constraints
+
+- 실제 현재 코드와 실제 Unity 런타임 검증을 근거로 작업한다.
+- 적 스폰 축, 카메라, 전장 좌표는 기존 값을 유지한다.
+- 로직 수정 후 reviewer 강제 흐름을 다시 시도하고, 실패 시 그 근거를 남긴다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed without Code Review. External reviewer commands timed out again, so only Builder-side validation was performed.
+
+### Next Actions
+
+- 사용자가 원하면 다음 단계로 실제 클릭 입력 기반 정식 플레이 테스트, 속성별 방어력 데이터 모델, Collider 기반 충돌로 확장한다.
+- reviewer 외부 강제 흐름 timeout 원인을 별도 분리해서 해결해야 한다.
+- 현재 상태는 Code Review 미수행 상태이므로, 이후 리뷰가 필요하면 별도 reviewer 단계를 다시 실행해야 한다.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`는 `ProjectileRuntime`, `projectileRoot`, `UpdateProjectiles()`, `TryHitEnemy()`, 클릭 기반 `HandlePointerInput()`를 포함하도록 수정됐다.
+- `Pakuri/Assets/Scenes/SampleScene.unity`는 `ProjectileRoot`를 포함한 현재 전장 구조로 다시 저장됐다.
+- `manage_scene save`가 `Assets/Scenes/SampleScene.unity` 저장 성공을 반환했다.
+- `find_gameobjects by_name ProjectileRoot`는 씬에서 `ProjectileRoot`를 찾았다.
+- 플레이 모드 통제 검증에서:
+  - 발사 직후 `projectileCount = 1`
+  - 1초 뒤 `projectileCount = 0`
+  - 같은 검증에서 `enemyHealth = 37.95`
+  - 최종 재검증에서 `currentShotsRemaining = 0`, `reloadRemaining = 4.0`
+- 검증 캡처 `Pakuri/Assets/Screenshots/eve-projectile-click-runtime.png`를 생성했다.
+- `validate_script`는 이번에도 duplicate signature false positive를 냈다.
+- `read_console`에서는 `FindObjectOfType<Camera>()` obsolete warning이 나왔고 이후 `FindFirstObjectByType<Camera>()`로 수정했다.
+- 외부 reviewer 시도:
+  - `codex review --uncommitted` timeout
+  - reviewer 전용 `codex exec` timeout
+
+### History
+
+- 2026-04-24: `AGENTS.md`, `BLACKBOARD.md`, `eve-projectile-click-hold-plan.html`, `a-arc-bolt.md`, `dungeon-squad-combat-player-controls.md`, 현재 `EveVerticalSliceController.cs`를 다시 읽었다.
+- 2026-04-24: 즉시 피해 구조를 제거하고 클릭형 투사체 생성/이동/적중 구조로 `EveVerticalSliceController.cs`를 교체했다.
+- 2026-04-24: `ProjectileRoot` 생성과 hierarchy 반영을 확인했다.
+- 2026-04-24: 플레이 모드 통제 검증으로 투사체 적중 시 피해 적용을 확인했다.
+- 2026-04-24: 수동 line review에서 마지막 탄 이후 자동 재장전 지연 문제를 찾아 `FireArcBolt()`에서 즉시 재장전 시작으로 수정했다.
+- 2026-04-24: obsolete camera 탐색 경고를 `FindFirstObjectByType<Camera>()`로 수정했다.
+- 2026-04-24: 작업 완료 보고서 `Pakuri/reference/eve-projectile-click-implementation-report.html`를 추가했다.
+- 2026-04-24: 외부 reviewer로 `codex review --uncommitted`, reviewer 전용 `codex exec`를 다시 시도했으나 모두 timeout 됐다.

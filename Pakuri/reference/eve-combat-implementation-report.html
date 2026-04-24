@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pakuri 이브 전투 프로토타입 구현 보고서</title>
+  <style>
+    :root {
+      --bg: #f2f5f9;
+      --panel: #ffffff;
+      --ink: #1e2933;
+      --muted: #5d6976;
+      --line: #d8e0e8;
+      --blue: #0f4c81;
+      --teal: #0f766e;
+      --amber: #b45309;
+      --green: #166534;
+      --red: #b91c1c;
+      --soft-blue: #eef6ff;
+      --soft-green: #eefbf3;
+      --soft-amber: #fff8ef;
+      --soft-red: #fff3f4;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, #f8fbff 0, #f2f5f9 45%, #e8edf3 100%);
+      color: var(--ink);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 38px 20px 64px;
+    }
+
+    header {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(135deg, #ffffff 0%, #edf6ff 100%);
+      box-shadow: 0 14px 38px rgba(30, 41, 51, 0.08);
+    }
+
+    h1, h2, h3 { margin: 0; line-height: 1.25; }
+    h1 { font-size: 34px; margin-bottom: 10px; }
+    h2 { font-size: 22px; margin-bottom: 14px; }
+    h3 { font-size: 18px; margin-bottom: 10px; }
+    p { margin: 0 0 12px; }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    a:hover { text-decoration: underline; }
+
+    code {
+      border-radius: 6px;
+      background: #eef3f7;
+      padding: 1px 6px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.95em;
+    }
+
+    .subtitle {
+      max-width: 940px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f7fafc;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .card {
+      grid-column: span 12;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(30, 41, 51, 0.05);
+    }
+
+    .half { grid-column: span 6; }
+    .third { grid-column: span 4; }
+    .two-third { grid-column: span 8; }
+
+    .blue { border-left: 5px solid var(--blue); background: var(--soft-blue); }
+    .green { border-left: 5px solid var(--green); background: var(--soft-green); }
+    .amber { border-left: 5px solid var(--amber); background: var(--soft-amber); }
+    .red { border-left: 5px solid var(--red); background: var(--soft-red); }
+
+    ul, ol { margin: 0; padding-left: 22px; }
+    li { margin: 4px 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f2f6fa;
+      font-weight: 700;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
+    .pill.done { background: #dcfce7; color: #166534; }
+    .pill.fact { background: #dbeafe; color: #1d4ed8; }
+    .pill.warn { background: #fef3c7; color: #92400e; }
+    .pill.block { background: #fee2e2; color: #991b1b; }
+
+    .paths {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .path {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fafcff;
+      padding: 10px 12px;
+      font-size: 13px;
+      word-break: break-word;
+    }
+
+    .shots {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    figure {
+      margin: 0;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fbfdff;
+    }
+
+    figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    figcaption {
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 960px) {
+      .half, .third, .two-third { grid-column: span 12; }
+      .paths, .shots { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Pakuri 이브 전투 프로토타입 구현 보고서</h1>
+    <p class="subtitle">
+      이 문서는 실제 Unity 프로젝트에 반영된 이브 단독 초기 전투 vertical slice 작업을 정리한 결과 문서다.
+      설계 HTML이 아니라, 실제로 생성된 스크립트, 씬 오브젝트, 좌표, 런타임 검증 결과를 근거로 작성했다.
+    </p>
+    <div class="chips">
+      <span class="chip">대상 씬: <code>Assets/Scenes/SampleScene.unity</code></span>
+      <span class="chip">중심 스크립트: <code>EveVerticalSliceController.cs</code></span>
+      <span class="chip">카메라: orthographic / size 10</span>
+      <span class="chip">스폰 규칙: 고정 X 29 + 랜덤 Y 6~10</span>
+    </div>
+  </header>
+
+  <section class="grid">
+    <article class="card blue">
+      <h2>짧은 결론</h2>
+      <p>
+        현재 프로젝트에는 <strong>이브 단독 전투 프로토타입이 실제로 들어갔다.</strong>
+        `CombatRoot`와 전장 앵커를 만들었고, 메인 카메라는 전장 전체를 보도록 맞췄다.
+        플레이 모드에서는 이브, 넥서스, 스폰 포인트, 입력 타겟 마커가 보이고, 적은 <strong>X=29 고정 / Y=6~10 랜덤</strong>으로 생성된다.
+      </p>
+      <p>
+        런타임 검증 기준으로는 적 스폰, 전투 진행, 승리 판정, 보상 선택 대기 상태까지 확인했다.
+      </p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card third green">
+      <h2>완료 항목</h2>
+      <ul>
+        <li>전장 카메라 정렬</li>
+        <li>`CombatRoot` 생성</li>
+        <li>`Nexus`, `EveUnit`, `EnemySpawnPoint`, `InputTarget`, `EnemyRoot` 생성</li>
+        <li>이브 아크 볼트 전투 로직</li>
+        <li>일반 적 + 강화 보스 스폰</li>
+        <li>승리 후 보상 패널</li>
+      </ul>
+    </article>
+
+    <article class="card third amber">
+      <h2>프로토타입 범위</h2>
+      <ul>
+        <li>이브만 구현</li>
+        <li>placeholder 비주얼 사용</li>
+        <li>적 타입은 `견습 검사` 단일 축소 버전</li>
+        <li>보상은 이브 강화 3택</li>
+        <li>중간보스/보스는 label과 체력 배율만 단순 반영</li>
+      </ul>
+    </article>
+
+    <article class="card third red">
+      <h2>아직 안 한 것</h2>
+      <ul>
+        <li>정식 아트 자산 연결</li>
+        <li>정식 UI 캔버스 제작</li>
+        <li>1스테이지 적 5종 전체 구현</li>
+        <li>상점/이벤트/유물 시스템</li>
+        <li>이브의 다른 액티브/패시브</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card two-third">
+      <h2>실제 생성물</h2>
+      <div class="paths">
+        <div class="path"><code>Assets/Scripts/Combat/DamageCalculator.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Combat/EveVerticalSliceController.cs</code></div>
+        <div class="path"><code>Assets/Scenes/SampleScene.unity</code></div>
+        <div class="path"><code>Assets/Screenshots/screenshot-20260424-165841.png</code></div>
+        <div class="path"><code>Assets/Screenshots/screenshot-20260424-165958.png</code></div>
+      </div>
+      <p style="margin-top: 12px;">
+        위 파일들은 현재 워크스페이스에서 실제로 생성되거나 수정된 파일이다.
+      </p>
+    </article>
+
+    <article class="card third">
+      <h2>씬 루트</h2>
+      <p><span class="pill done">확인됨</span> 현재 루트 오브젝트는 3개다.</p>
+      <ul>
+        <li><code>Main Camera</code></li>
+        <li><code>Global Light 2D</code></li>
+        <li><code>CombatRoot</code></li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>실제 좌표와 카메라 설정</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>대상</th>
+            <th>값</th>
+            <th>근거</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Main Camera 위치</td>
+            <td><code>(15.5, 8.5, -10)</code></td>
+            <td><code>SampleScene.unity</code> 저장값과 <code>manage_scene get_hierarchy</code> 확인</td>
+          </tr>
+          <tr>
+            <td>Main Camera 투영</td>
+            <td><code>orthographic = true</code>, <code>size = 10</code></td>
+            <td><code>SampleScene.unity</code>의 <code>orthographic</code>, <code>orthographic size</code></td>
+          </tr>
+          <tr>
+            <td>Nexus</td>
+            <td><code>(2, 8, 0)</code></td>
+            <td>런타임 앵커 생성 결과</td>
+          </tr>
+          <tr>
+            <td>EveUnit</td>
+            <td><code>(6, 8, 0)</code></td>
+            <td>런타임 앵커 생성 결과</td>
+          </tr>
+          <tr>
+            <td>EnemySpawnPoint</td>
+            <td><code>(29, 8, 0)</code></td>
+            <td>런타임 앵커 생성 결과</td>
+          </tr>
+          <tr>
+            <td>InputTarget 초기값</td>
+            <td><code>(16, 8, 0)</code></td>
+            <td>씬 저장값</td>
+          </tr>
+          <tr>
+            <td>적 실제 생성 규칙</td>
+            <td><code>X = 29 고정</code>, <code>Y = Random.Range(6, 10)</code></td>
+            <td><code>EveVerticalSliceController.cs</code> 스폰 로직</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half">
+      <h2>전투 로직 요약</h2>
+      <ul>
+        <li>전투 시작 시 `Stage 1 / Day 1 / Fixed Combat` 상태로 초기화한다.</li>
+        <li>이브는 `아크 볼트` 수치 기반으로 번개 피해를 계산한다.</li>
+        <li>적은 넥서스를 향해 직선에 가깝게 이동한다.</li>
+        <li>플레이어는 클릭으로 공격 집중 지점을 바꾼다.</li>
+        <li>탄창이 비면 재장전 후 다시 사격한다.</li>
+        <li>적 전멸 시 승리, 넥서스 HP 0 시 패배다.</li>
+      </ul>
+    </article>
+
+    <article class="card half">
+      <h2>보상 로직 요약</h2>
+      <ul>
+        <li>승리 시 일반 전투 기준 `골드 10`, `어둠의 흔적 10`을 지급한다.</li>
+        <li>포로 수는 `1/2/3명 = 5%/80%/15%` 확률로 결정한다.</li>
+        <li>보스 포로 보장은 `강화된 견습 검사`로 고정했다.</li>
+        <li>보상 패널에서 이브 강화 3택 1을 선택한다.</li>
+        <li>선택 후 다음 프로토타입 일차로 넘어갈 수 있다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>실제 캡처</h2>
+      <div class="shots">
+        <figure>
+          <img src="../Assets/Screenshots/screenshot-20260424-165841.png" alt="전장 전체 캡처">
+          <figcaption>
+            메인 카메라 기준 전장 전체 캡처. 좌측 넥서스와 이브, 중앙 입력 타겟, 우측 스폰축과 적 placeholder가 보인다.
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="../Assets/Screenshots/screenshot-20260424-165758.png" alt="스폰축 근접 캡처">
+          <figcaption>
+            우측 스폰축 근접 캡처. 적이 고정 X 라인에서 생성되는 상태를 확인할 때 사용한 이미지다.
+          </figcaption>
+        </figure>
+      </div>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card blue">
+      <h2>런타임 검증 결과</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>검증 항목</th>
+            <th>실제 결과</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>플레이 모드 진입</td>
+            <td><span class="pill done">성공</span> `manage_editor play` 성공</td>
+          </tr>
+          <tr>
+            <td>런타임 적 생성</td>
+            <td><span class="pill done">성공</span> `Enemy_Normal_01`, `Enemy_Boss_01` 생성 확인</td>
+          </tr>
+          <tr>
+            <td>전투 종료</td>
+            <td><span class="pill done">성공</span> `battleResolved=True`, `victory=True` 확인</td>
+          </tr>
+          <tr>
+            <td>보상 선택 대기</td>
+            <td><span class="pill done">성공</span> `waitingForRewardChoice=True` 확인</td>
+          </tr>
+          <tr>
+            <td>다음 날 초기화</td>
+            <td><span class="pill done">성공</span> reflection 호출로 다음 프로토타입 일차 초기화 확인</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card amber">
+      <h2>검수 상태</h2>
+      <p>
+        외부 reviewer 강제 흐름은 시도했지만 이번 작업에서는 완전히 끝나지 않았다.
+      </p>
+      <ul>
+        <li><code>codex review --uncommitted</code>: timeout</li>
+        <li>reviewer 전용 <code>codex exec</code>: timeout</li>
+        <li>새 external review 로그 파일: 생성되지 않음</li>
+      </ul>
+      <p>
+        대신 현재 세션에서 실제 변경 파일을 다시 읽어 line-by-line 검토했고, 현재 기준으로는 추가 blocking issue를 찾지 못했다.
+      </p>
+    </article>
+
+    <article class="card red">
+      <h2>남은 리스크</h2>
+      <ul>
+        <li>전투 UI는 현재 IMGUI 기반이라 최종 제품 UI로 바로 가져가기는 어렵다.</li>
+        <li>`EveVerticalSliceController.cs`에 로직이 집중돼 있어, 다음 단계에서 스폰/런 상태/보상을 분리하는 리팩터링이 필요하다.</li>
+        <li>Unity MCP의 `validate_script`는 이 파일에 대해 duplicate signature 오탐을 내고 있어, 이후 수정 시 실제 콘솔/플레이 검증을 계속 병행해야 한다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>작업 시간 세분화</h2>
+      <p>
+        이 표는 채팅 메시지 시간이 아니라, 실제 파일 timestamp와 실행 로그에서 확인된 timeout 시간을 기준으로 정리한 관측 기록이다.
+        따라서 "사용자 명령 직후"의 정확한 초 단위 시각이 아니라, 실제 산출물이 만들어지기 시작한 시점부터 완료 보고서가 저장된 시점까지를 근거 기반으로 세분화했다.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>구간</th>
+            <th>근거</th>
+            <th>관측 시간</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>기초 코드 작업 시작</td>
+            <td><code>Assets/Scripts/Combat/DamageCalculator.cs</code> 최종 수정 시각</td>
+            <td>2026-04-24 16:50:26</td>
+            <td>실제 전투 로직 코드 산출물이 생성되기 시작한 첫 확인 지점이다.</td>
+          </tr>
+          <tr>
+            <td>핵심 컨트롤러 작성 반영</td>
+            <td><code>Assets/Scripts/Combat/EveVerticalSliceController.cs</code> 최종 수정 시각</td>
+            <td>2026-04-24 16:53:08</td>
+            <td>이브 전투 진행, 적 스폰, 승패, 보상 대기 상태를 담당하는 메인 스크립트 반영 시점이다.</td>
+          </tr>
+          <tr>
+            <td>씬 배치 완료</td>
+            <td><code>Assets/Scenes/SampleScene.unity</code> 최종 수정 시각</td>
+            <td>2026-04-24 17:00:52</td>
+            <td>카메라 조정과 `CombatRoot` 이하 전장 배치가 씬에 저장된 완료 시점이다.</td>
+          </tr>
+          <tr>
+            <td>실제 코드 작업 시간</td>
+            <td>첫 코드 산출물부터 씬 저장 완료까지</td>
+            <td>약 10분 26초</td>
+            <td><code>16:50:26 -&gt; 17:00:52</code>. 코드 작성, 오브젝트 생성, 씬 값 반영까지 포함한 최소 관측 구간이다.</td>
+          </tr>
+          <tr>
+            <td>플레이 검증 시간</td>
+            <td><code>Assets/Screenshots</code> 내 캡처 4장 timestamp</td>
+            <td>2026-04-24 16:56:58 ~ 16:59:58</td>
+            <td>플레이 모드에서 적 생성, 전투 진행, 승리 상태, 보상 선택 대기 상태를 실제로 확인한 구간이다. 최소 약 3분이 관측된다.</td>
+          </tr>
+          <tr>
+            <td>보고서 정리 시간</td>
+            <td><code>reference/eve-combat-implementation-report.html</code> 최종 수정 시각</td>
+            <td>약 17분 23초</td>
+            <td><code>17:00:52 -&gt; 17:18:15</code>. 씬 저장 이후 구현 결과를 HTML로 정리한 구간으로 추적된다.</td>
+          </tr>
+          <tr>
+            <td>외부 Code Review 시도 시간</td>
+            <td>실행 로그 기준 timeout 3회</td>
+            <td>최소 약 12분 12초</td>
+            <td><code>124초 + 304초 + 304초</code>. reviewer 강제 흐름을 실제로 시도한 시간 합계이며, 모두 timeout으로 끝났다.</td>
+          </tr>
+          <tr>
+            <td>기타 확인 작업</td>
+            <td>콘솔 확인, hierarchy 재조회, 변경 파일 재독</td>
+            <td>독립 분리 불가</td>
+            <td>현재 세션에서 수행됐지만 파일 timestamp만으로 별도 초 단위 구간을 분리할 수 없어 정성 기록으로만 남긴다.</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card red">
+      <h2>마지막 메모: Code Review가 완료되지 않은 이유</h2>
+      <p>
+        외부 Code Review는 시도는 했지만 완료되지 않았다. 실제 근거는 <code>codex review --uncommitted</code> 시도와 reviewer 전용
+        <code>codex exec</code> 시도가 모두 timeout으로 종료됐다는 점이다. 그 결과 외부 reviewer가 남긴 새로운 PASS 기록이나
+        리뷰 산출물이 생성되지 않았다. 따라서 이 문서의 검수 관련 서술은 외부 reviewer 완료 판정이 아니라, 현재 세션에서 변경 파일을
+        다시 읽으며 수행한 수동 line-by-line 확인 결과를 적은 것이다.
+      </p>
+    </article>
+  </section>
+</main>
+</body>
+</html>

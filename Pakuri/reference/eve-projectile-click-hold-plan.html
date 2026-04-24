@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pakuri 아크 볼트 투사체 입력 준수 수정 계획</title>
+  <style>
+    :root {
+      --bg: #f3f6f8;
+      --panel: #ffffff;
+      --ink: #1e2933;
+      --muted: #5b6773;
+      --line: #d8e1e8;
+      --navy: #143b63;
+      --teal: #116466;
+      --amber: #9a5a00;
+      --red: #a52727;
+      --soft-navy: #eef5fc;
+      --soft-teal: #eefaf8;
+      --soft-amber: #fff8ee;
+      --soft-red: #fff3f3;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, #fbfdff 0, #f3f6f8 45%, #e7edf2 100%);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 36px 20px 60px;
+    }
+
+    header {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(135deg, #ffffff 0%, #eef5fc 100%);
+      box-shadow: 0 14px 36px rgba(30, 41, 51, 0.08);
+    }
+
+    h1, h2, h3 { margin: 0; line-height: 1.25; }
+    h1 { font-size: 34px; margin-bottom: 10px; }
+    h2 { font-size: 22px; margin-bottom: 14px; }
+    h3 { font-size: 18px; margin-bottom: 10px; }
+    p { margin: 0 0 12px; }
+
+    code {
+      border-radius: 6px;
+      background: #edf3f7;
+      padding: 1px 6px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.95em;
+    }
+
+    a {
+      color: var(--navy);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    a:hover { text-decoration: underline; }
+
+    .subtitle {
+      max-width: 920px;
+      color: var(--muted);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f7fafc;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .card {
+      grid-column: span 12;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(30, 41, 51, 0.05);
+    }
+
+    .half { grid-column: span 6; }
+    .third { grid-column: span 4; }
+    .navy { border-left: 5px solid var(--navy); background: var(--soft-navy); }
+    .teal { border-left: 5px solid var(--teal); background: var(--soft-teal); }
+    .amber { border-left: 5px solid var(--amber); background: var(--soft-amber); }
+    .red { border-left: 5px solid var(--red); background: var(--soft-red); }
+
+    ul, ol { margin: 0; padding-left: 22px; }
+    li { margin: 4px 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f2f6fa;
+      font-weight: 700;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
+    .fact { background: #dbeafe; color: #1d4ed8; }
+    .gap { background: #fee2e2; color: #991b1b; }
+    .plan { background: #dcfce7; color: #166534; }
+    .scope { background: #fef3c7; color: #92400e; }
+
+    .path-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .path {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fafcff;
+      padding: 10px 12px;
+      font-size: 13px;
+      word-break: break-word;
+    }
+
+    @media (max-width: 960px) {
+      .half, .third { grid-column: span 12; }
+      .path-list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Pakuri 아크 볼트 투사체 입력 준수 수정 계획</h1>
+    <p class="subtitle">
+      이 문서는 현재 구현된 이브 전투 프로토타입을 기준으로, 문서에 맞게 <strong>왼쪽 클릭 유지 기반 연속 발사</strong>와
+      <strong>실제 투사체 충돌 기반 피해 처리</strong>로 수정할 때 어떤 순서와 구조로 작업할지 정리한 설계 문서다.
+      아직 구현한 문서가 아니라, 현재 코드와 reference 문서의 차이를 근거로 만든 변경 계획이다.
+    </p>
+    <div class="chips">
+      <span class="chip">현재 코드 기준: <code>EveVerticalSliceController.cs</code></span>
+      <span class="chip">핵심 reference: <code>dungeon-squad-combat-player-controls.md</code></span>
+      <span class="chip">핵심 스킬 문서: <code>a-arc-bolt.md</code></span>
+      <span class="chip">작성 시각: <code>2026-04-24 19:07:51</code></span>
+    </div>
+  </header>
+
+  <section class="grid">
+    <article class="card navy">
+      <h2>짧은 결론</h2>
+      <p>
+        현재 버전은 <strong>클릭 1회로 공격 집중 지점을 바꾸고, 이브가 즉시 피해를 넣는 자동 타격형</strong>이다.
+        사용자가 요청한 수정 방향은 <strong>왼쪽 클릭 유지 중 연속 발사</strong>, <strong>아크 볼트가 실제 투사체로 이동</strong>,
+        <strong>투사체가 적과 닿을 때만 피해 적용</strong>으로 바뀌어야 한다.
+      </p>
+      <p>
+        따라서 이번 수정의 핵심은 단순 수치 조정이 아니라, <strong>입력 처리</strong>, <strong>발사 처리</strong>,
+        <strong>투사체 런타임</strong>, <strong>충돌 시 피해 처리</strong>를 분리하는 구조 변경이다.
+      </p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half teal">
+      <h2>문서 기준 확정 사항</h2>
+      <ul>
+        <li><span class="pill fact">reference</span> 전투 중 플레이어 입력의 핵심은 <strong>공격 지점 지정</strong>이다. 출처: <a href="./dungeon-squad-combat-player-controls.md">dungeon-squad-combat-player-controls.md</a></li>
+        <li><span class="pill fact">reference</span> 아크 볼트는 <strong>투사체 / 탄창형</strong> 스킬이다. 출처: <a href="./2.Monster/eve/skill/a-arc-bolt.md">a-arc-bolt.md</a></li>
+        <li><span class="pill fact">reference</span> 아크 볼트 기본 수치는 <code>피해 24</code>, <code>주문력 계수 0.95</code>, <code>사거리 8</code>, <code>투사체 속도 15</code>, <code>탄창 6</code>, <code>재장전 4초</code>, <code>발사 간격 0.35초</code>, <code>감전 15%</code>다.</li>
+        <li><span class="pill fact">reference</span> 번개 공격은 번개 방어력만 참조하고, 방어력 반영 후 치명타를 적용한다. 출처: <a href="./3.combat/combat-attribute-and-damage-system.md">combat-attribute-and-damage-system.md</a></li>
+        <li><span class="pill fact">reference</span> 전장 기본 레이아웃은 좌측 넥서스, 우측 적 진입 구조를 유지한다. 출처: <a href="./Scene/combat-scene-layout.md">combat-scene-layout.md</a></li>
+      </ul>
+    </article>
+
+    <article class="card half red">
+      <h2>현재 코드와의 충돌 지점</h2>
+      <ul>
+        <li><span class="pill gap">현재 코드</span> 입력은 <code>wasPressedThisFrame</code> / <code>GetMouseButtonDown(0)</code> 기준이라 <strong>누르고 있는 상태</strong>를 사용하지 않는다.</li>
+        <li><span class="pill gap">현재 코드</span> <code>FireArcBolt(...)</code>가 적을 고른 직후 <code>target.CurrentHealth -= result.FinalDamage</code>를 호출해 <strong>즉시 피해</strong>를 넣는다.</li>
+        <li><span class="pill gap">현재 코드</span> 투사체 런타임 자료구조, 투사체 이동 업데이트, 적과의 충돌 판정 루프가 없다.</li>
+        <li><span class="pill gap">현재 코드</span> <code>InputTarget</code>은 조준 포인트 마커로만 쓰이고 있으며, 발사체 경로 계산과는 직접 연결돼 있지 않다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>이번 수정에서 둘 핵심 해석</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>항목</th>
+            <th>이번 수정 해석</th>
+            <th>근거</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>입력 방식</td>
+            <td>왼쪽 클릭을 누르고 있는 동안 발사 가능 상태를 유지하고, 손을 떼면 신규 발사를 멈춘다.</td>
+            <td>사용자 요청의 "왼쪽 클릭 유지 시 연속 발사" 조건</td>
+          </tr>
+          <tr>
+            <td>공격 지점 지정</td>
+            <td>마우스를 누르고 있는 동안 현재 포인터 위치를 계속 읽어 <code>currentAttackPoint</code>를 갱신한다.</td>
+            <td>reference의 "공격 지점 지정" 개념을 hold 입력으로 확장</td>
+          </tr>
+          <tr>
+            <td>발사 방식</td>
+            <td>이브는 즉시 타격하지 않고, 자신의 위치에서 <code>InputTarget</code> 방향으로 아크 볼트 투사체를 생성한다.</td>
+            <td>아크 볼트가 "투사체 / 탄창형"이라는 문서 정의</td>
+          </tr>
+          <tr>
+            <td>데미지 적용 시점</td>
+            <td>투사체가 적의 충돌 반경에 닿을 때만 피해를 적용한다.</td>
+            <td>사용자 요청의 "투사체에 적이 닿으면 데미지"</td>
+          </tr>
+          <tr>
+            <td>InputTarget 역할</td>
+            <td>없애지 않고 유지한다. 이후에는 "선택 대상"이 아니라 "현재 투사체 발사 방향/집중 지점 표시기"로 쓴다.</td>
+            <td>현재 씬 구조를 최대한 보존하면서 의미만 정리</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half">
+      <h2>수정 후 전투 루프</h2>
+      <ol>
+        <li>플레이어가 왼쪽 클릭을 누르면 현재 마우스 위치를 월드 좌표로 바꾸고 <code>currentAttackPoint</code>를 갱신한다.</li>
+        <li>왼쪽 클릭을 누르고 있는 동안, 이브는 <code>shotCooldown</code>, <code>reloadRemaining</code>, <code>currentShotsRemaining</code> 조건을 검사한다.</li>
+        <li>사격 가능하면 <code>EveUnit</code> 위치에서 아크 볼트 투사체를 1개 생성한다.</li>
+        <li>투사체는 <code>currentAttackPoint - eveAnchor.position</code> 방향으로 정규화된 벡터를 받아 전진한다.</li>
+        <li>투사체는 매 프레임 이동하면서 적 리스트와 충돌 반경을 검사한다.</li>
+        <li>충돌하면 그 순간에만 피해, 치명타, 감전 판정을 적용하고 투사체를 소멸시킨다.</li>
+        <li>아무 적도 맞히지 못하고 최대 사거리 또는 전장 바깥까지 나가면 투사체를 소멸시킨다.</li>
+        <li>마우스를 떼면 새 투사체 생성만 멈추고, 이미 날아간 투사체는 끝까지 진행한다.</li>
+      </ol>
+    </article>
+
+    <article class="card half amber">
+      <h2>현재 프로토타입에서 버릴 로직</h2>
+      <ul>
+        <li>적을 먼저 고른 뒤 즉시 피해를 넣는 <code>SelectTarget() -&gt; FireArcBolt(target)</code> 흐름은 메인 전투 루프에서 제거한다.</li>
+        <li>현재의 "가장 가까운 적을 자동 선별" 로직은 투사체형 1차 준수 패스에서는 우선순위를 낮춘다.</li>
+        <li>즉시 데미지 기반 피격 플래시는 더 이상 발사 시점에 나오지 않고, <strong>투사체 적중 시점</strong>으로 이동한다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>파일별 변경 계획</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>파일</th>
+            <th>현재 상태</th>
+            <th>예정 변경</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Assets/Scripts/Combat/EveVerticalSliceController.cs</code></td>
+            <td>입력, 적, 사격, 보상까지 한 파일에 집중돼 있다.</td>
+            <td>
+              1) hold 입력 상태를 읽는 로직 추가<br>
+              2) <code>ProjectileRuntime</code> 리스트와 업데이트 루프 추가<br>
+              3) <code>FireArcBolt</code>를 즉시 피해 함수가 아니라 투사체 생성 함수로 변경<br>
+              4) <code>UpdateProjectiles()</code>, <code>TryHitEnemy()</code>, <code>CleanupProjectile()</code> 계열 메서드 추가
+            </td>
+          </tr>
+          <tr>
+            <td><code>Assets/Scripts/Combat/DamageCalculator.cs</code></td>
+            <td>현재는 단일 방어 수치를 받아 피해와 치명타를 계산한다.</td>
+            <td>
+              이번 패스에서는 최소 변경으로 유지 가능하다.<br>
+              다만 후속 패스에서 번개 방어력 등 속성별 방어력 입력 구조로 확장할 여지는 남긴다.
+            </td>
+          </tr>
+          <tr>
+            <td><code>Assets/Scenes/SampleScene.unity</code></td>
+            <td><code>CombatRoot</code>, <code>Nexus</code>, <code>EveUnit</code>, <code>EnemySpawnPoint</code>, <code>InputTarget</code>, <code>EnemyRoot</code>가 있다.</td>
+            <td>
+              필요하면 <code>ProjectileRoot</code>를 추가해 런타임 생성 투사체를 정리한다.<br>
+              카메라와 전장 좌표는 그대로 유지한다.
+            </td>
+          </tr>
+          <tr>
+            <td><code>Assets/Scripts/Combat/...</code> 신규 파일</td>
+            <td>현재 투사체 전용 스크립트는 없다.</td>
+            <td>
+              1차 패스는 기존 컨트롤러 내부 런타임 구조체로도 가능하다.<br>
+              다만 가독성이 너무 떨어지면 <code>ArcBoltProjectileView.cs</code> 같은 보조 스크립트를 새로 만드는 선택지를 둔다.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card third teal">
+      <h2>구현 1단계</h2>
+      <ul>
+        <li>hold 입력 판정 추가</li>
+        <li><code>InputTarget</code> 실시간 추적 유지</li>
+        <li>마우스 해제 시 신규 발사 중지</li>
+      </ul>
+    </article>
+
+    <article class="card third teal">
+      <h2>구현 2단계</h2>
+      <ul>
+        <li>투사체 런타임 자료구조 추가</li>
+        <li>발사 간격/탄창/재장전은 기존 수치 유지</li>
+        <li>투사체 속도는 문서값 <code>15.0</code> 반영</li>
+      </ul>
+    </article>
+
+    <article class="card third teal">
+      <h2>구현 3단계</h2>
+      <ul>
+        <li>적 충돌 시 피해 적용</li>
+        <li>감전 15%를 적중 시점으로 이동</li>
+        <li>맞히지 못한 투사체 소멸 처리</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half">
+      <h2>검증 체크리스트</h2>
+      <ul>
+        <li>왼쪽 클릭을 짧게 눌렀을 때 1발만 나가는지 확인</li>
+        <li>왼쪽 클릭을 누르고 있으면 <code>0.35초</code> 간격으로 연속 발사되는지 확인</li>
+        <li>탄창 6발 소모 후 <code>4초</code> 재장전에 들어가는지 확인</li>
+        <li>투사체가 적에 닿기 전에는 피해가 적용되지 않는지 확인</li>
+        <li>투사체가 적과 닿았을 때만 HP 감소와 피격 플래시가 발생하는지 확인</li>
+        <li>전장 밖으로 날아간 투사체가 정상 정리되는지 확인</li>
+      </ul>
+    </article>
+
+    <article class="card half red">
+      <h2>이번 패스에서 일부러 안 묶는 것</h2>
+      <ul>
+        <li>정식 적 히트박스/Collider2D 컴포넌트 기반 물리 충돌</li>
+        <li>문서 전체 수준의 속성별 방어력 데이터 모델 완성</li>
+        <li>분기 번개, 관통, 추가 투사체 같은 상위 특성 효과</li>
+        <li>정식 UI 캔버스 전환</li>
+      </ul>
+      <p style="margin-top: 12px;">
+        이유는 현재 vertical slice의 최소 목표가 <strong>투사체형 발사 준수</strong>이기 때문이다.
+        먼저 입력-발사-충돌-피해의 축을 바로잡고, 그 다음에 속성 저항 테이블과 고급 탄도 로직을 붙이는 편이 리스크가 낮다.
+      </p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card navy">
+      <h2>Code Builder handoff 메모</h2>
+      <ul>
+        <li>현재 즉시 피해 구조를 유지한 채 시각 효과만 추가하는 식으로는 안 된다. 반드시 <strong>투사체 적중 시점</strong>으로 피해 적용 시점을 옮겨야 한다.</li>
+        <li><code>InputTarget</code>은 삭제 대상이 아니다. 이번 수정 후에도 조준 포인트 마커로 계속 유지한다.</li>
+        <li>기존 전장 좌표, 카메라, 적 스폰 X/Y 규칙은 그대로 유지한다.</li>
+        <li>작업 후에는 플레이 모드에서 hold 발사, 탄창/재장전, 적중 시 피해, 미적중 시 소멸을 실제로 검증해야 한다.</li>
+        <li>로직 수정이므로 reviewer 루프 시도와 실패 근거 기록도 다시 남겨야 한다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card amber">
+      <h2>명시적 범위 메모</h2>
+      <p>
+        이 문서는 <strong>설계 문서</strong>다. 현재 프로젝트에는 아직 이 변경이 구현되지 않았다.
+        지금 실제 코드에는 여전히 단발 클릭 입력과 즉시 피해 로직이 남아 있다.
+      </p>
+      <div class="path-list">
+        <div class="path">현재 코드 근거: <code>Assets/Scripts/Combat/EveVerticalSliceController.cs</code></div>
+        <div class="path">현재 보고서 근거: <code>reference/eve-combat-implementation-report.html</code></div>
+        <div class="path">새 설계 문서: <code>reference/eve-projectile-click-hold-plan.html</code></div>
+        <div class="path">핵심 reference: <code>reference/dungeon-squad-combat-player-controls.md</code>, <code>reference/2.Monster/eve/skill/a-arc-bolt.md</code></div>
+      </div>
+    </article>
+  </section>
+</main>
+</body>
+</html>
