@@ -208,6 +208,8 @@ Completed. Unity Editor-side MCP For Unity bridge is connected to the current Co
 ### Evidence
 
 - `Pakuri/ProjectSettings/ProjectVersion.txt` 출력: `m_EditorVersion: 6000.3.4f1`
+- 2026-04-25 재확인 `Pakuri/ProjectSettings/ProjectVersion.txt` 출력: `m_EditorVersion: 6000.3.14f1`
+- 2026-04-25 재확인 `Pakuri/ProjectSettings/ProjectVersion.txt` 출력: `m_EditorVersionWithRevision: 6000.3.14f1 (d68c3f99a318)`
 - `Pakuri/Packages/manifest.json`에는 `com.coplaydev.unity-mcp` 의존성이 있다.
 - `codex mcp get unityMCP` 출력: `enabled: true`, `transport: stdio`, `command: uvx`, `args: --from mcpforunityserver mcp-for-unity --transport stdio`
 - Unity MCP 서버 `debug_request_context` 출력: server version `9.6.6`, `active_instance: null`, `all_keys_in_store: []`
@@ -224,6 +226,7 @@ Completed. Unity Editor-side MCP For Unity bridge is connected to the current Co
 - `manage_asset search`는 `Assets`에서 총 11개 에셋을 찾았다.
 - `manage_scene get_hierarchy`는 루트 오브젝트 `Main Camera`, `Global Light 2D`를 반환했다.
 - `run_tests EditMode`는 job `bee66234eeec4e67b238bafff3d63dc9`를 시작했고 `get_test_job` 결과는 `status: succeeded`, `resultState: Passed`, `total: 0`, `passed: 0`, `failed: 0`, `skipped: 0`였다.
+- 2026-04-25 재확인 Unity MCP 서버 `debug_request_context` 출력은 `active_instance: Pakuri@0c8eeeb5`였다.
 
 ### History
 
@@ -232,6 +235,7 @@ Completed. Unity Editor-side MCP For Unity bridge is connected to the current Co
 - 2026-04-23: Unity Editor 내부 MCP For Unity 설정/bridge 시작이 필요하다고 판단했다.
 - 2026-04-23: 사용자가 Unity Editor에서 Transport를 `Stdio`로 바꾸고 `Session Active`, Codex client `Configuration`을 수행했다.
 - 2026-04-23: Unity MCP bridge 연결, scene/asset/console/hierarchy 접근, EditMode Test Runner 실행을 검증했다.
+- 2026-04-25: 사용자 안내 후 `Pakuri/ProjectSettings/ProjectVersion.txt`를 다시 확인해 Unity 버전이 `6000.3.14f1`로 올라간 것을 기록했고, `debug_request_context`로 현재 MCP 활성 인스턴스가 `Pakuri@0c8eeeb5`인 점을 재확인했다.
 
 ## Task: Combat Automation Responsibility Guide
 
@@ -501,3 +505,63 @@ Completed without Code Review. External reviewer commands timed out again, so on
 - 2026-04-24: obsolete camera 탐색 경고를 `FindFirstObjectByType<Camera>()`로 수정했다.
 - 2026-04-24: 작업 완료 보고서 `Pakuri/reference/eve-projectile-click-implementation-report.html`를 추가했다.
 - 2026-04-24: 외부 reviewer로 `codex review --uncommitted`, reviewer 전용 `codex exec`를 다시 시도했으나 모두 timeout 됐다.
+
+## Task: Monster Select Run UI Expansion Plan
+
+### Task title
+
+몬스터 선택 UI, Run 시작, 전투 후 스킬 강화 흐름 확장 설계 HTML 작성
+
+### Goals
+
+- 현재 구현된 이브 단독 전투 프로토타입을 기준으로, 몬스터 선택 UI와 Run 시작 흐름을 어떻게 일반화할지 정리한다.
+- `2.Monster` 문서군과 `skill-choice-pool-rule.md`, `combat-reward-system.md`를 근거로 몬스터별 시작 스킬 A, 최대 액티브 3개, 최대 패시브 3개, 전투 후 강화 선택 흐름을 설계한다.
+- 구현 전에 필요한 공통 시스템, UI 패널 구조, 열린 질문을 HTML 문서로 남긴다.
+
+### Constraints
+
+- 실제 현재 코드, 실제 씬 상태, 실제 reference 문서에 근거해서만 적는다.
+- 구현되지 않은 UI/런 시스템을 이미 있는 것처럼 적지 않는다.
+- 이 작업은 Designer 설계 문서 작성이며, 실제 코드 구현은 포함하지 않는다.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed
+
+### Next Actions
+
+- 사용자가 원하면 이 설계 문서를 기준으로 Designer handoff를 작성해 Code Builder 구현 범위를 고정한다.
+- 사용자가 명시적으로 구현을 지시하면, 먼저 UI 뼈대와 RunSession 분리부터 들어가는 것이 안전하다.
+- 1차 구현 범위는 문서가 완비된 `아리엘`, `이브`, `세인`, `베가` 4몬스터 우선으로 잡고, `린`은 더미 상태로 둔다.
+- 린의 `g~j` 패시브 문서가 실제 저장소에 없으므로, 린을 플레이 가능 대상으로 올리는 작업은 후속 문서 보강 이후로 미룬다.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/DamageCalculator.cs`, `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`만 현재 게임 전용 스크립트로 존재한다.
+- 현재 활성 씬은 `Assets/Scenes/SampleScene.unity`이며 루트 오브젝트는 `Main Camera`, `Global Light 2D`, `CombatRoot`다.
+- `CombatRoot` 하위에는 `Nexus`, `EveUnit`, `EnemySpawnPoint`, `InputTarget`, `EnemyRoot`, `ProjectileRoot`가 있다.
+- `Pakuri/Assets` 아래에서는 `NO_UI_TOOLKIT_ASSETS`, `NO_UI_NAMED_ASSETS`가 확인돼 별도 UI 자산이 없음을 재확인했다.
+- `Pakuri/reference/2.Monster/monster-basic-rule.md`는 몬스터가 액티브 A를 기본 습득 상태로 시작하고, 런 중 액티브 최대 3개, 패시브 최대 3개를 가진다고 정의한다.
+- `Pakuri/reference/2.Monster/skill-choice-pool-rule.md`는 신규 액티브, 신규 패시브, 액티브 특성, 마스터 스킬을 하나의 선택지 풀로 합쳐 3개를 제시하는 규칙을 정의한다.
+- `Pakuri/reference/4.run/combat-reward-system.md`는 일반 전투/중간보스/보스 전투별 포로, 유물, 골드, 어둠의 흔적 보상 규칙을 정의한다.
+- `Pakuri/reference/2.Monster/ariel/ariel-tower.md`, `eve/eve-tower.md`, `rin/rin-tower.md`, `sein/sein-tower.md`, `vega/vega-tower.md`로 현재 구현 대상 몬스터 5종을 확인했다.
+- 사용자 응답으로 모든 몬스터는 패시브 슬롯 `F~J` 총 5개를 가지며, 런 중 실제로 선택 가능한 패시브는 최대 3개라는 설계 기준을 확정했다.
+- 사용자 응답으로 이번 범위의 포로 보상은 `표시만 하는 정보`로 처리하고, 영입 시스템은 나중에 붙이기로 확정했다.
+- 사용자 응답으로 1차 구현은 문서가 완비된 4몬스터(`아리엘`, `이브`, `세인`, `베가`)부터 진행하고, `린`은 더미 상태로 두기로 확정했다.
+- 실제 저장소 확인 결과 아리엘, 이브, 세인, 베가는 `f~j` 패시브 문서가 모두 존재하지만, 린은 `f-ambidextrous.md`만 있고 `g~j` 패시브 문서는 아직 없다.
+- 새 설계 문서 `Pakuri/reference/monster-select-run-ui-expansion-plan.html`를 추가했다.
+
+### History
+
+- 2026-04-25: `AGENTS.md`, `BLACKBOARD.md`를 다시 읽고 현재 작업 규칙과 기존 작업 블록을 재확인했다.
+- 2026-04-25: `2.Monster` 폴더 전체, `monster-basic-rule.md`, `skill-choice-pool-rule.md`, `combat-reward-system.md`, `dungeon-squad-run-structure.md`, 각 몬스터 타워 문서를 읽었다.
+- 2026-04-25: 현재 코드와 씬 상태를 다시 확인해 현재 구현이 이브 단독 전투 프로토타입과 임시 HUD 수준임을 재확인했다.
+- 2026-04-25: UI 자산 부재, 보상 풀 미구현, 속성/상태 공통 시스템 부족을 현재 확장 작업의 핵심 갭으로 정리했다.
+- 2026-04-25: 몬스터 선택 UI, Run 시작, 전투 후 보상/스킬 선택 흐름을 정리한 설계 HTML `Pakuri/reference/monster-select-run-ui-expansion-plan.html`를 추가했다.
+- 2026-04-25: 사용자 답변을 반영해 패시브는 슬롯 `F~J` 총 5개, 런 중 최대 3개 습득으로 설계를 고정했고, 포로 보상은 우선 표시 전용 정보로 처리하기로 기록했다.
+- 2026-04-25: 실제 저장소에서 린의 `g~j` 패시브 문서가 없음을 다시 확인해, 문서 기반 전체 몬스터 구현 전에 남은 자료 갭으로 기록했다.
+- 2026-04-25: 사용자 답변을 반영해 1차 구현 범위를 `아리엘`, `이브`, `세인`, `베가` 4몬스터 우선으로 고정하고, `린`은 더미 상태로 남기기로 기록했다.

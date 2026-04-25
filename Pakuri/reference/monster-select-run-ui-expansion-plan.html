@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pakuri 몬스터 선택 UI + Run 확장 설계안</title>
+  <style>
+    :root {
+      --bg: #eef3f6;
+      --paper: #ffffff;
+      --ink: #1c2630;
+      --muted: #5e6a77;
+      --line: #d7e0e8;
+      --blue: #0f4c81;
+      --teal: #136f63;
+      --amber: #a35a00;
+      --red: #b42318;
+      --green: #166534;
+      --soft-blue: #edf6ff;
+      --soft-teal: #eefbf8;
+      --soft-amber: #fff7ed;
+      --soft-red: #fff4f4;
+      --soft-green: #eefcf2;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, #f9fcff 0, #eef3f6 42%, #e6edf2 100%);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 36px 20px 64px;
+    }
+
+    header {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(135deg, #ffffff 0%, #eef6ff 100%);
+      box-shadow: 0 14px 38px rgba(28, 38, 48, 0.08);
+    }
+
+    h1, h2, h3 { margin: 0; line-height: 1.25; }
+    h1 { font-size: 34px; margin-bottom: 10px; }
+    h2 { font-size: 22px; margin-bottom: 14px; }
+    h3 { font-size: 18px; margin-bottom: 10px; }
+    p { margin: 0 0 12px; }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    a:hover { text-decoration: underline; }
+
+    code {
+      border-radius: 6px;
+      background: #edf3f8;
+      padding: 1px 6px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.95em;
+    }
+
+    .subtitle {
+      max-width: 980px;
+      color: var(--muted);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f6f9fc;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .card {
+      grid-column: span 12;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--paper);
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(28, 38, 48, 0.05);
+    }
+
+    .half { grid-column: span 6; }
+    .third { grid-column: span 4; }
+    .two-third { grid-column: span 8; }
+
+    .blue { border-left: 5px solid var(--blue); background: var(--soft-blue); }
+    .teal { border-left: 5px solid var(--teal); background: var(--soft-teal); }
+    .amber { border-left: 5px solid var(--amber); background: var(--soft-amber); }
+    .red { border-left: 5px solid var(--red); background: var(--soft-red); }
+    .green { border-left: 5px solid var(--green); background: var(--soft-green); }
+
+    ul, ol { margin: 0; padding-left: 22px; }
+    li { margin: 5px 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f3f7fb;
+      font-weight: 700;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
+    .fact { background: #dbeafe; color: #1d4ed8; }
+    .gap { background: #fee2e2; color: #991b1b; }
+    .plan { background: #dcfce7; color: #166534; }
+    .warn { background: #fef3c7; color: #92400e; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .step {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fafcff;
+      padding: 14px;
+      min-height: 128px;
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--blue);
+    }
+
+    .path-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .path {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fafcff;
+      padding: 10px 12px;
+      font-size: 13px;
+      word-break: break-word;
+    }
+
+    .mono {
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      background: #f7fafc;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    @media (max-width: 980px) {
+      .half, .third, .two-third { grid-column: span 12; }
+      .flow { grid-template-columns: 1fr; }
+      .path-list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Pakuri 몬스터 선택 UI + Run 확장 설계안</h1>
+    <p class="subtitle">
+      이 문서는 현재 구현된 <strong>이브 단독 전투 프로토타입</strong> 위에
+      <strong>몬스터 선택 UI</strong>, <strong>Run 시작</strong>, <strong>전투 종료 후 스킬/보상 선택</strong>을
+      어떻게 확장하는 것이 맞는지 정리한 설계 문서다.
+      아래 내용은 실제 코드와 reference 문서를 다시 확인한 뒤, <strong>현재 있는 것</strong>과
+      <strong>새로 제안하는 구조</strong>를 분리해서 적었다.
+    </p>
+    <div class="chips">
+      <span class="chip">현재 코드: <code>Assets/Scripts/Combat/DamageCalculator.cs</code></span>
+      <span class="chip">현재 코드: <code>Assets/Scripts/Combat/EveVerticalSliceController.cs</code></span>
+      <span class="chip">핵심 규칙: <code>2.Monster/monster-basic-rule.md</code></span>
+      <span class="chip">선택 규칙: <code>2.Monster/skill-choice-pool-rule.md</code></span>
+      <span class="chip">보상 규칙: <code>4.run/combat-reward-system.md</code></span>
+      <span class="chip">작성 시각: <code>2026-04-25 22:21:36 +09:00</code></span>
+    </div>
+  </header>
+
+  <section class="grid">
+    <article class="card blue">
+      <h2>짧은 결론</h2>
+      <p>
+        지금 상태에서 가장 안전한 방향은 <strong>현재 이브 전용 전투 컨트롤러를 바로 덧칠하지 않고</strong>,
+        <strong>Run 상태 관리</strong>, <strong>UI 상태 관리</strong>, <strong>몬스터/스킬 데이터</strong>,
+        <strong>공통 전투 계산</strong>을 먼저 분리하는 것이다.
+      </p>
+      <p>
+        추천 흐름은 <strong>하나의 씬에서 오버레이 UI만 전환</strong>하는 방식이다.
+        즉 <strong>몬스터 선택 패널 → 전투 HUD → 전투 종료 보상 패널</strong>을 같은 런타임 위에 얹고,
+        선택한 몬스터에 따라 전투용 실행기만 바꾸는 구조가 현재 프로젝트 규모와 가장 잘 맞는다.
+      </p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half teal">
+      <h2>현재 확인된 사실</h2>
+      <ul>
+        <li><span class="pill fact">코드</span> 현재 게임 전용 C# 스크립트는 <code>DamageCalculator.cs</code>, <code>EveVerticalSliceController.cs</code> 두 개만 있다.</li>
+        <li><span class="pill fact">씬</span> 현재 활성 씬은 <code>Assets/Scenes/SampleScene.unity</code>이며, 루트 오브젝트는 <code>Main Camera</code>, <code>Global Light 2D</code>, <code>CombatRoot</code> 3개다.</li>
+        <li><span class="pill fact">전투</span> <code>CombatRoot</code> 아래에는 <code>Nexus</code>, <code>EveUnit</code>, <code>EnemySpawnPoint</code>, <code>InputTarget</code>, <code>EnemyRoot</code>, <code>ProjectileRoot</code>가 있다.</li>
+        <li><span class="pill fact">UI</span> <code>Assets</code> 아래에서 <code>.uxml</code>, <code>.uss</code> 파일은 확인되지 않았다. UI 명칭이 붙은 별도 자산도 없다.</li>
+        <li><span class="pill fact">현재 보상</span> <code>EveVerticalSliceController</code>는 승리 시 고정된 이브 전용 보상 버튼 3개를 직접 생성한다. 문서 기반 풀 생성 구조는 아직 없다.</li>
+        <li><span class="pill fact">현재 전투 계산</span> <code>DamageCalculator.Resolve(...)</code>는 단일 <code>defense</code> 값만 받아 계산한다. 문서의 속성별 저항 구조는 아직 반영되지 않았다.</li>
+      </ul>
+    </article>
+
+    <article class="card half red">
+      <h2>지금 바로 막히는 지점</h2>
+      <ul>
+        <li><span class="pill gap">공통화 부족</span> 현재 전투 코드는 변수명과 로직이 <code>eveSpellPower</code>, <code>eveBaseLightningDamage</code>처럼 이브에 강하게 고정돼 있다.</li>
+        <li><span class="pill gap">상태이상 부족</span> 현재 런타임에는 감전 비슷한 단순 스택만 있고, 문서에 있는 추위, 빙결, 취약, 신성 방어막, 축복, 신성 노출, 이름표식, 침묵, 몰살 허가를 공통 처리하는 시스템이 없다.</li>
+        <li><span class="pill gap">보상 규칙 부족</span> 일반/중간보스/보스 전투별 골드, 어둠의 흔적, 포로, 유물 보상 차등 지급과 스테이지 배율이 코드에 없다.</li>
+        <li><span class="pill gap">스킬 선택지 부족</span> 현재는 신규 액티브, 신규 패시브, 액티브 특성, 마스터를 섞는 선택지 풀이 없다.</li>
+        <li><span class="pill gap">범위 제약</span> 린은 현재 실제 폴더에 <code>f-ambidextrous.md</code>만 있고 <code>g~j</code> 패시브 문서가 없다. 따라서 1차 구현에서는 린을 플레이 가능한 선택지로 두기 어렵다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card green">
+      <h2>추천 플레이 흐름</h2>
+      <div class="flow">
+        <div class="step">
+          <strong>1. 시작 패널</strong>
+          Run 메인 창에서 문서가 완비된 4개 몬스터 카드 중 1개를 고른다.
+          린 카드는 보이더라도 <strong>준비 중 더미 상태</strong>로 잠가 둔다.
+          카드에는 역할, 속성 축, 시작 스킬 A 이름을 보여준다.
+        </div>
+        <div class="step">
+          <strong>2. Run 시작</strong>
+          선택한 몬스터를 기준으로 <code>RunSession</code>을 생성한다.
+          초기 습득 스킬은 <code>액티브 A만 보유</code>, 패시브는 없음으로 시작한다.
+        </div>
+        <div class="step">
+          <strong>3. 전투 HUD</strong>
+          전투 중에는 선택 몬스터 정보, 탄창/재장전, 현재 일차/스테이지, 전투 종류, 적 수, 넥서스 체력을 표시한다.
+        </div>
+        <div class="step">
+          <strong>4. 전투 종료 보상</strong>
+          골드, 어둠의 흔적, 포로, 유물 여부를 먼저 보여주고,
+          그 다음 스킬 선택지 3개 중 1개를 고르게 한다.
+        </div>
+        <div class="step">
+          <strong>5. 다음 일차 진행</strong>
+          선택 결과를 현재 RunSession에 반영하고,
+          11일차 구조에 따라 다음 전투 또는 스테이지 전환으로 넘어간다.
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card two-third teal">
+      <h2>UI 구조 제안</h2>
+      <p>
+        현재는 UI 자산이 전혀 없으므로, 저는 <strong>UI Toolkit 기반의 단순 오버레이 UI</strong>를 추천한다.
+        이유는 현재 <code>OnGUI</code>로 임시 HUD를 그리고 있지만, 몬스터 선택 카드 / 런 시작 버튼 / 보상 선택 카드 / 다음 일차 버튼까지 늘어나면
+        즉석 <code>OnGUI</code> 방식은 빠르게 지저분해질 가능성이 높기 때문이다.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>패널</th>
+            <th>목적</th>
+            <th>핵심 요소</th>
+            <th>현재 상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>RunFrontPanel</td>
+            <td>몬스터 선택과 Run 시작</td>
+            <td>몬스터 카드 4개, 역할 요약, 시작 스킬 A, Start 버튼, 린 더미 카드</td>
+            <td>없음</td>
+          </tr>
+          <tr>
+            <td>RunHudPanel</td>
+            <td>전투 중 상태 표시</td>
+            <td>스테이지/일차, 선택 몬스터, HP, 탄창, 현재 스킬 세트</td>
+            <td>현재는 <code>OnGUI</code> 임시 HUD만 있음</td>
+          </tr>
+          <tr>
+            <td>RewardPanel</td>
+            <td>전투 종료 보상 선택</td>
+            <td>골드, 어둠의 흔적, 포로 요약, 유물 3택1, 스킬 선택지 3개</td>
+            <td>현재는 이브 고정 선택지 3개만 있음</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        씬은 우선 하나로 유지하고, 패널 표시 상태만 바꾸는 쪽이 현재 <code>SampleScene</code> 기반 프로토타입과 가장 잘 맞는다.
+      </p>
+    </article>
+
+    <article class="card third amber">
+      <h2>씬 오브젝트 제안</h2>
+      <ul>
+        <li><span class="pill plan">제안</span> <code>CombatRoot/EveUnit</code>는 <code>SelectedMonsterUnit</code> 또는 <code>TowerUnit</code>로 일반화한다.</li>
+        <li><span class="pill plan">제안</span> 선택한 몬스터에 따라 같은 위치에 다른 실행기를 붙인다.</li>
+        <li><span class="pill plan">제안</span> 카메라, 넥서스, 적 스폰 포인트, 투사체 루트는 공통 전장 자산으로 유지한다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card blue">
+      <h2>몬스터 선택 화면에 실릴 최소 정보</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>몬스터</th>
+            <th>문서 근거</th>
+            <th>핵심 역할</th>
+            <th>시작 액티브 A</th>
+            <th>초기 계산 축</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>아리엘</td>
+            <td><code>2.Monster/ariel/ariel-tower.md</code></td>
+            <td>신성 서포터 / 방어막 / 파티 강화</td>
+            <td>심판의 빛</td>
+            <td>주문력 기반, 신성 피해</td>
+          </tr>
+          <tr>
+            <td>이브</td>
+            <td><code>2.Monster/eve/eve-tower.md</code></td>
+            <td>번개·얼음 엔진형 보조 딜러</td>
+            <td>아크 볼트</td>
+            <td>주문력 기반, 번개 피해</td>
+          </tr>
+          <tr>
+            <td>린</td>
+            <td><code>2.Monster/rin/rin-tower.md</code></td>
+            <td>물리 단일 화력 / 짧은 넉백</td>
+            <td>파쇄권</td>
+            <td>공격력 기반, 물리 피해 / 1차 구현은 더미</td>
+          </tr>
+          <tr>
+            <td>세인</td>
+            <td><code>2.Monster/sein/sein-tower.md</code></td>
+            <td>화염 퓨어 딜러 / 화염 저항 감소</td>
+            <td>열풍 화살</td>
+            <td>공격력 기반, 화염 피해</td>
+          </tr>
+          <tr>
+            <td>베가</td>
+            <td><code>2.Monster/vega/vega-tower.md</code></td>
+            <td>물리 검기 / 이름표식 / 침묵 / 처형</td>
+            <td>삼검난무</td>
+            <td>공격력 기반, 물리 피해</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        선택 카드에는 위 정도 정보만 먼저 보여도 충분하다.
+        세부 스킬 설명과 특성/마스터는 보상 선택 단계에서 세부 팝업으로 열어도 된다.
+      </p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half green">
+      <h2>Run 세션 데이터 제안</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>데이터</th>
+            <th>설명</th>
+            <th>초기값</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>selectedMonsterId</code></td>
+            <td>선택한 몬스터 식별자</td>
+            <td>시작 패널 선택값</td>
+          </tr>
+          <tr>
+            <td><code>stageIndex</code></td>
+            <td>현재 스테이지</td>
+            <td>1</td>
+          </tr>
+          <tr>
+            <td><code>dayIndex</code></td>
+            <td>현재 일차</td>
+            <td>1</td>
+          </tr>
+          <tr>
+            <td><code>learnedActives</code></td>
+            <td>현재 런에서 배운 액티브 목록</td>
+            <td>A만 포함</td>
+          </tr>
+          <tr>
+            <td><code>learnedPassives</code></td>
+            <td>현재 런에서 배운 패시브 목록</td>
+            <td>비어 있음</td>
+          </tr>
+          <tr>
+            <td><code>activeTraitPicks</code></td>
+            <td>액티브별 선택한 특성 목록</td>
+            <td>비어 있음</td>
+          </tr>
+          <tr>
+            <td><code>passiveTraitPicks</code></td>
+            <td>패시브별 선택한 특성 목록</td>
+            <td>비어 있음</td>
+          </tr>
+          <tr>
+            <td><code>masterChoices</code></td>
+            <td>액티브별 마스터 선택 결과</td>
+            <td>비어 있음</td>
+          </tr>
+          <tr>
+            <td><code>gold</code></td>
+            <td>런 내부 소비 재화</td>
+            <td>0</td>
+          </tr>
+          <tr>
+            <td><code>darkTrace</code></td>
+            <td>런 외부 장기 성장 재화</td>
+            <td>0</td>
+          </tr>
+          <tr>
+            <td><code>ownedRelics</code></td>
+            <td>현재 런에서 획득한 유물</td>
+            <td>비어 있음</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+
+    <article class="card half teal">
+      <h2>보상 선택지 생성 규칙 제안</h2>
+      <ol>
+        <li>현재 몬스터가 배울 수 있는 신규 액티브를 찾는다. 액티브는 A 포함 최대 3개까지만 허용한다.</li>
+        <li>현재 몬스터가 배울 수 있는 신규 패시브를 찾는다. 패시브는 최대 3개까지만 허용한다.</li>
+        <li>패시브 F는 기본적으로 후보에 넣고, G~J는 대응 액티브를 배웠을 때만 후보에 넣는다.</li>
+        <li>이미 배운 액티브는 남아 있는 특성이 있을 때 특성 후보를 넣는다.</li>
+        <li>액티브 특성 3개를 모두 고른 액티브는 마스터 선택지 2개 중 아직 고르지 않은 후보를 넣는다.</li>
+        <li>모든 후보를 하나의 풀에 모아 섞고, 중복 없이 3개를 보여 준다.</li>
+        <li>선택한 후보는 이후 동일 런에서 다시 후보로 나오지 않게 한다.</li>
+      </ol>
+      <p>
+        이 흐름 자체는 <code>monster-basic-rule.md</code>, <code>skill-choice-pool-rule.md</code>, 그리고 사용자 결정과 맞는다.
+        패시브는 <strong>슬롯 F~J 총 5개가 존재</strong>하고, 런 중 <strong>최대 3개까지 습득</strong>하는 구조로 보는 것이 맞다.
+      </p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half amber">
+      <h2>전투 보상 반영 방식</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>전투 종류</th>
+            <th>보상</th>
+            <th>UI 처리 제안</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>일반 전투</td>
+            <td>포로 1~3명, 골드 10, 어둠의 흔적 10</td>
+            <td>요약 표시 후 스킬 선택지 3개 중 1개</td>
+          </tr>
+          <tr>
+            <td>5일차 중간보스</td>
+            <td>포로 1~3명, 유물 3택1, 골드 30, 어둠의 흔적 20</td>
+            <td>유물 선택 후 스킬 선택지로 이어짐</td>
+          </tr>
+          <tr>
+            <td>10일차 중간보스</td>
+            <td>포로 1~3명, 유물 3택1, 골드 30, 어둠의 흔적 20</td>
+            <td>5일차와 동일</td>
+          </tr>
+          <tr>
+            <td>보스 전투</td>
+            <td>포로 1~3명, 유물 3택1, 골드 50, 어둠의 흔적 50</td>
+            <td>스테이지 종료 연출과 함께 보상 표시</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        어둠의 흔적은 스테이지 배율까지 있으므로,
+        실제 지급 시에는 <code>combat-reward-system.md</code> 표를 기준으로 <strong>전투 종류 × 스테이지 배율</strong>을 계산해야 한다.
+      </p>
+    </article>
+
+    <article class="card half red">
+      <h2>왜 공통 전투 코어가 먼저 필요한가</h2>
+      <ul>
+        <li><span class="pill gap">속성 저항</span> 문서 기준 피해는 물리/화염/번개/얼음/어둠/신성 6속성 저항을 각각 참조한다. 현재 계산기는 이 구조가 없다.</li>
+        <li><span class="pill gap">행동속도</span> 문서 기준 행동속도는 발사 간격과 쿨타임 충전에 영향을 준다. 현재 전투 코드는 이브의 개별 필드만 직접 조절한다.</li>
+        <li><span class="pill gap">상태이상</span> 베가의 이름표식, 아리엘의 방어막, 세인의 화염 저항 감소, 이브의 빙결 계열은 공통 상태 저장소 없이는 누적이 어렵다.</li>
+        <li><span class="pill gap">무기 타입 차이</span> 기본 A 스킬만 봐도 단일 투사체, 3연 검기, 관통, 방어막 시너지, 표식 연계가 모두 다르다. 현재 이브용 투사체 코드만으로는 확장성이 낮다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card blue">
+      <h2>추천 구현 순서</h2>
+      <ol>
+        <li><strong>1단계: Run 상태와 UI 상태 분리</strong><br>현재 <code>EveVerticalSliceController</code>가 함께 들고 있는 전투/보상/일차 상태를 <code>RunSession</code>과 <code>CombatDirector</code>로 나눈다.</li>
+        <li><strong>2단계: UI Toolkit으로 선택 패널, HUD, 보상 패널 뼈대 작성</strong><br>이 단계에서는 먼저 버튼과 텍스트만 동작해도 된다.</li>
+        <li><strong>3단계: 몬스터/스킬 카탈로그 데이터 작성</strong><br>아리엘, 이브, 세인, 베가의 A~J 스킬 메타데이터와 특성/마스터 정의를 먼저 정리하고, 린은 더미 엔트리만 둔다.</li>
+        <li><strong>4단계: 전투 공통 스탯/속성/상태 처리 추가</strong><br>속성별 저항, 치명타 저항, 행동속도, 방어막, 표식, 감전/추위/빙결/침묵 처리 기반을 만든다.</li>
+        <li><strong>5단계: 몬스터별 기본 A 스킬 실행기 구현</strong><br>Run 시작 직후 플레이 가능하려면 최소한 문서가 완비된 4몬스터의 A 스킬은 모두 동작해야 한다. 린은 이 단계에서 더미 유지다.</li>
+        <li><strong>6단계: 보상 선택지 풀 생성기 구현</strong><br>문서 기준으로 신규 액티브, 신규 패시브, 특성, 마스터를 하나의 후보 풀로 만들고 3개를 제시한다.</li>
+        <li><strong>7단계: B~E, F~J 실제 효과 구현</strong><br>보상에서 선택 가능한 항목은 실제 런타임 효과가 있는 것만 노출하는 것이 안전하다.</li>
+        <li><strong>8단계: 포로와 유물의 후속 시스템 연결</strong><br>이 부분은 스킬 강화 UI와 별도로 확장할 수 있다.</li>
+      </ol>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half teal">
+      <h2>추천 파일 구조</h2>
+      <p>아래는 아직 없는 <strong>제안 경로</strong>다.</p>
+      <div class="path-list">
+        <div class="path"><code>Assets/Scripts/Run/RunSession.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Run/RunFlowController.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Run/MonsterCatalog.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Run/SkillChoicePoolBuilder.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Combat/Core/CombatDirector.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Combat/Core/CombatUnitRuntime.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Combat/Core/StatusRuntime.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Combat/Skills/Executors/*.cs</code></div>
+        <div class="path"><code>Assets/UI/RunFrontPanel.uxml</code></div>
+        <div class="path"><code>Assets/UI/RunFrontPanel.uss</code></div>
+        <div class="path"><code>Assets/UI/RewardPanel.uxml</code></div>
+        <div class="path"><code>Assets/UI/RewardPanel.uss</code></div>
+      </div>
+    </article>
+
+    <article class="card half amber">
+      <h2>제가 권하는 구현 원칙</h2>
+      <ul>
+        <li><span class="pill plan">권장</span> 선택지 UI는 먼저 단순하게 만든다. 카드 디자인보다 상태 전환과 데이터 연결이 먼저다.</li>
+        <li><span class="pill plan">권장</span> 몬스터별 A 스킬은 실행기 클래스로 나누고, 현재 이브 코드는 그 첫 사례로 분해한다.</li>
+        <li><span class="pill plan">권장</span> 문서 간 수치 충돌이 있는 항목은 엔진에 상수로 박지 말고 데이터 정의를 그대로 읽게 만든다.</li>
+        <li><span class="pill warn">주의</span> 실제 효과가 없는 스킬을 보상 선택지에 먼저 띄우면 플레이어가 선택 후 결과를 신뢰하지 못하게 된다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half green">
+      <h2>확정된 결정 사항</h2>
+      <ul>
+        <li><span class="pill plan">확정</span> 모든 몬스터는 패시브 슬롯 <code>F~J</code> 총 5개를 가진다.</li>
+        <li><span class="pill plan">확정</span> 런 중 실제로 습득 가능한 패시브는 최대 3개다.</li>
+        <li><span class="pill plan">확정</span> 이번 범위에서 포로 보상은 <strong>표시만 하는 정보</strong>로 처리하고, 영입/합류 시스템은 나중에 붙인다.</li>
+        <li><span class="pill plan">확정</span> 1차 플레이 가능 몬스터는 <strong>아리엘, 이브, 세인, 베가</strong> 4종으로 두고, 린은 더미 상태로 남긴다.</li>
+        <li><span class="pill plan">확정</span> 따라서 첫 구현에서는 <strong>몬스터 선택 → Run 시작 → 전투 → 보상 표시 → 스킬 선택</strong> 흐름을 우선 완성하면 된다.</li>
+      </ul>
+    </article>
+
+    <article class="card half amber">
+      <h2>남은 실제 문서 갭</h2>
+      <ul>
+        <li><span class="pill warn">저장소 확인</span> 아리엘, 이브, 세인, 베가는 실제 폴더에 <code>f~j</code> 패시브 문서가 모두 있다.</li>
+        <li><span class="pill warn">저장소 확인</span> 린은 현재 실제 폴더에 <code>f-ambidextrous.md</code>만 있고 <code>g~j</code> 패시브 문서는 없다.</li>
+        <li><span class="pill warn">의미</span> 사용자 결정에 따라 1차 구현에서는 린을 더미 상태로 두고, 문서가 완비된 4몬스터만 플레이 가능 대상으로 잡는 것이 현재 저장소 상태와 맞다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>한 줄 추천</h2>
+      <p>
+        저는 이 작업을 <strong>“이브 전용 전투 코드에 UI를 얹는 일”</strong>로 보기보다,
+        <strong>“단일 몬스터 Run 프레임을 일반화해서 우선 4개 몬스터를 안정적으로 받게 만들고, 린은 더미로 남겨 후속 확장 여지를 확보하는 일”</strong>로 보는 게 맞다고 생각한다.
+        그래야 몬스터 선택, 스킬 풀, 전투 후 보상, 추후 유물/포로 확장까지 한 번의 구조로 이어진다.
+      </p>
+    </article>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pakuri 몬스터 선택 Run 구현 순서 고정 Handoff</title>
+  <style>
+    :root {
+      --bg: #edf3f6;
+      --paper: #ffffff;
+      --ink: #1d2732;
+      --muted: #5f6b78;
+      --line: #d7e0e8;
+      --blue: #0f4c81;
+      --teal: #156b6c;
+      --green: #166534;
+      --amber: #9a5b00;
+      --red: #b42318;
+      --soft-blue: #eef6ff;
+      --soft-teal: #eefbfb;
+      --soft-green: #eefcf2;
+      --soft-amber: #fff8ee;
+      --soft-red: #fff4f4;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, #f9fcff 0, #edf3f6 42%, #e6edf2 100%);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 36px 20px 64px;
+    }
+
+    header {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(135deg, #ffffff 0%, #eef6ff 100%);
+      box-shadow: 0 14px 38px rgba(29, 39, 50, 0.08);
+    }
+
+    h1, h2, h3 { margin: 0; line-height: 1.25; }
+    h1 { font-size: 34px; margin-bottom: 10px; }
+    h2 { font-size: 22px; margin-bottom: 14px; }
+    h3 { font-size: 18px; margin-bottom: 10px; }
+    p { margin: 0 0 12px; }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    a:hover { text-decoration: underline; }
+
+    code {
+      border-radius: 6px;
+      background: #edf3f8;
+      padding: 1px 6px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.95em;
+    }
+
+    .subtitle {
+      max-width: 980px;
+      color: var(--muted);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f6f9fc;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .card {
+      grid-column: span 12;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--paper);
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(29, 39, 50, 0.05);
+    }
+
+    .half { grid-column: span 6; }
+    .third { grid-column: span 4; }
+    .blue { border-left: 5px solid var(--blue); background: var(--soft-blue); }
+    .teal { border-left: 5px solid var(--teal); background: var(--soft-teal); }
+    .green { border-left: 5px solid var(--green); background: var(--soft-green); }
+    .amber { border-left: 5px solid var(--amber); background: var(--soft-amber); }
+    .red { border-left: 5px solid var(--red); background: var(--soft-red); }
+
+    ul, ol { margin: 0; padding-left: 22px; }
+    li { margin: 5px 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f2f7fb;
+      font-weight: 700;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
+    .fact { background: #dbeafe; color: #1d4ed8; }
+    .gate { background: #dcfce7; color: #166534; }
+    .warn { background: #fef3c7; color: #92400e; }
+    .block { background: #fee2e2; color: #991b1b; }
+
+    .path-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .path {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fafcff;
+      padding: 10px 12px;
+      font-size: 13px;
+      word-break: break-word;
+    }
+
+    @media (max-width: 980px) {
+      .half, .third { grid-column: span 12; }
+      .path-list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Pakuri 몬스터 선택 Run 구현 순서 고정 Handoff</h1>
+    <p class="subtitle">
+      이 문서는 <strong>Code Builder가 실제 구현에 들어갈 때 따라야 할 고정 순서</strong>를 정리한 handoff 문서다.
+      목적은 현재 이브 단독 전투 프로토타입 위에 <strong>몬스터 선택 UI</strong>, <strong>Run 시작</strong>,
+      <strong>전투 후 보상/스킬 선택</strong>을 붙일 때, 중간에 되돌이 리팩터링을 최소화하는 것이다.
+    </p>
+    <div class="chips">
+      <span class="chip">현재 코드 근거: <code>Assets/Scripts/Combat/EveVerticalSliceController.cs</code></span>
+      <span class="chip">현재 코드 근거: <code>Assets/Scripts/Combat/DamageCalculator.cs</code></span>
+      <span class="chip">설계 근거: <code>reference/monster-select-run-ui-expansion-plan.html</code></span>
+      <span class="chip">범위 고정: 4몬스터 우선 / 린 더미</span>
+      <span class="chip">작성 시각: <code>2026-04-25 23:16:23 +09:00</code></span>
+    </div>
+  </header>
+
+  <section class="grid">
+    <article class="card blue">
+      <h2>고정 범위</h2>
+      <ul>
+        <li><span class="pill fact">확정</span> 1차 플레이 가능 몬스터는 <strong>아리엘, 이브, 세인, 베가</strong> 4종이다.</li>
+        <li><span class="pill fact">확정</span> <strong>린은 더미 카드</strong>로 남기고, 선택 불가 상태로 표시한다.</li>
+        <li><span class="pill fact">확정</span> 모든 몬스터는 패시브 슬롯 <code>F~J</code> 총 5개를 가진다고 보되, 런 중 실제 습득은 최대 3개까지만 허용한다.</li>
+        <li><span class="pill fact">확정</span> 포로 보상은 이번 범위에서 <strong>표시만 하는 정보</strong>로 처리하고, 영입 시스템은 구현하지 않는다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half red">
+      <h2>왜 이 순서가 필요한가</h2>
+      <ul>
+        <li><span class="pill block">현재 코드</span> <code>EveVerticalSliceController</code>는 <code>BeginPrototypeDay</code>, <code>ResolveEncounterForDay</code>, <code>PrepareVictoryRewards</code>, <code>ApplyReward</code>, <code>HandlePointerInput</code>, <code>DrawHud</code>, <code>DrawVictoryPanel</code>처럼 <strong>Run 흐름, 전투, 보상, UI</strong>를 한 클래스에 함께 들고 있다.</li>
+        <li><span class="pill block">현재 코드</span> <code>DamageCalculator.Resolve(...)</code>는 단일 <code>defense</code> 값만 받는다. 문서 기준의 속성별 저항 구조와 다르다.</li>
+        <li><span class="pill block">현재 자산</span> <code>.uxml</code>, <code>.uss</code> 파일이 아직 없어 UI도 제로부터 시작해야 한다.</li>
+      </ul>
+      <p>
+        그래서 UI를 먼저 “예쁘게” 만들거나, 4몬스터 스킬을 바로 각개 구현하면 이후에 상태/데이터/전투 코어를 다시 뜯어야 할 가능성이 높다.
+      </p>
+    </article>
+
+    <article class="card half green">
+      <h2>Builder 기본 원칙</h2>
+      <ul>
+        <li><span class="pill gate">원칙</span> 아직 런타임 효과가 없는 스킬/보상은 선택지에 노출하지 않는다.</li>
+        <li><span class="pill gate">원칙</span> 린은 플레이 가능한 엔트리로 승격하지 않는다.</li>
+        <li><span class="pill gate">원칙</span> 새 UI가 동작하기 전까지 기존 <code>OnGUI</code>를 완전히 제거하지 않는다. 전환 확인 후에만 치운다.</li>
+        <li><span class="pill gate">원칙</span> 각 단계는 완료 기준을 만족해야 다음 단계로 넘어간다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card blue">
+      <h2>고정 구현 순서</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>단계</th>
+            <th>목표</th>
+            <th>필수 산출물</th>
+            <th>완료 기준</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Run 상태 분리</td>
+            <td><code>RunSession</code>, <code>RunFlowController</code> 또는 동등 구조</td>
+            <td>일차/스테이지/보상 선택/선택 몬스터 상태가 더 이상 <code>EveVerticalSliceController</code> 한 곳에만 묶여 있지 않다.</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>카탈로그/데이터 뼈대</td>
+            <td>4몬스터 + 린 더미의 몬스터 메타데이터, 스킬 메타데이터</td>
+            <td>UI와 보상 풀이 코드 상수 대신 카탈로그를 참조할 수 있다.</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>UI Toolkit 껍데기</td>
+            <td><code>RunFrontPanel</code>, <code>RunHudPanel</code>, <code>RewardPanel</code></td>
+            <td>4몬스터 선택 버튼이 보이고, 린은 비활성 더미로 표시되며, 패널 전환이 동작한다.</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>공통 전투 코어</td>
+            <td>속성별 계산, 상태 저장소, 공통 유닛 런타임, 스킬 실행 인터페이스</td>
+            <td>이브 외 다른 몬스터도 같은 전투 루프에 연결할 수 있는 구조가 된다.</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>이브 이관</td>
+            <td>현재 이브 전투를 공통 코어 위 실행기로 이전</td>
+            <td>이브 플레이 결과가 기존 프로토타입과 크게 다르지 않게 유지된다.</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>기본 A 스킬 4종</td>
+            <td>아리엘/이브/세인/베가의 A 스킬 실행기</td>
+            <td>몬스터 선택 후 4종 모두 실제 전투 시작이 가능하다.</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>A/F 축 성장 루프</td>
+            <td>A 관련 특성, A 마스터, 대응 F 패시브, 보상 풀 생성기</td>
+            <td>전투 종료 후 <strong>현재 구현된 항목만</strong> 보상 후보로 나오고, 선택 결과가 다음 전투에 반영된다.</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>B/G 축 추가</td>
+            <td>4몬스터의 B 액티브, G 패시브, 관련 특성/마스터</td>
+            <td>B를 실제로 배우고 사용할 수 있을 때만 후보 노출이 열린다.</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td>C/H, D/I, E/J 순차 추가</td>
+            <td>슬롯별 액티브/패시브 구현</td>
+            <td>각 슬롯은 <strong>전 몬스터 공통으로</strong> 한 묶음씩 완료 후 다음 슬롯으로 넘어간다.</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td>보상/표시 마무리</td>
+            <td>전투 종류별 골드/어둠의 흔적/포로/유물 표시 정리</td>
+            <td>일반 전투, 중간보스, 보스 보상 화면이 문서 규칙대로 표시된다. 포로는 표시만 하고 영입은 없다.</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half teal">
+      <h2>단계별 세부 지시</h2>
+      <ol>
+        <li><strong>1단계</strong>에서는 기존 파일을 크게 갈아엎기보다, 상태를 옮길 새 구조를 먼저 만들고 기존 이브 코드가 그 구조를 쓰게 바꾼다.</li>
+        <li><strong>2단계</strong>에서는 최소한 몬스터 이름, 역할, 시작 액티브 A, 패시브 슬롯 구조, 더미 여부가 카탈로그에 들어가야 한다.</li>
+        <li><strong>3단계</strong>에서는 디자인 완성도보다 상태 전환이 중요하다. 버튼/텍스트만 정확히 동작해도 통과다.</li>
+        <li><strong>4단계</strong>에서는 속성별 방어력, 치명타 저항, 행동속도, 감전/추위/빙결/방어막/표식 등 공통 저장 구조를 먼저 만든다.</li>
+        <li><strong>5단계</strong>는 이브를 기준 샘플로 삼는다. 이브가 공통 코어 위에서 다시 동작해야 이후 3몬스터 구현 리스크가 줄어든다.</li>
+      </ol>
+    </article>
+
+    <article class="card half amber">
+      <h2>왜 슬롯 단위로 확장하는가</h2>
+      <ul>
+        <li><span class="pill warn">근거</span> <code>monster-basic-rule.md</code>는 <code>A↔F</code>, <code>B↔G</code>, <code>C↔H</code>, <code>D↔I</code>, <code>E↔J</code> 대응 구조를 정의한다.</li>
+        <li><span class="pill warn">이점</span> 몬스터 하나를 끝까지 파는 방식보다, <strong>슬롯 묶음</strong>으로 가는 쪽이 보상 풀과 해금 규칙을 동시에 맞추기 쉽다.</li>
+        <li><span class="pill warn">이점</span> 예를 들어 <strong>B/G 축</strong>이 열리면, 그 순간부터 신규 액티브 B와 대응 패시브 G를 같은 보상 로직에 자연스럽게 넣을 수 있다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half green">
+      <h2>초기 플레이 가능 기준</h2>
+      <p>Builder는 아래 시점을 <strong>첫 번째 플레이 가능 마일스톤</strong>으로 삼아야 한다.</p>
+      <ul>
+        <li>몬스터 선택 UI에서 아리엘/이브/세인/베가 4개 중 하나를 고를 수 있다.</li>
+        <li>선택 후 전투 HUD로 넘어가고, 각 몬스터의 A 스킬이 실제로 발동한다.</li>
+        <li>전투 종료 후 보상 패널이 뜨고, 현재 구현된 A/F 관련 선택지 중 3개 이하를 보여 준다.</li>
+        <li>선택한 보상이 다음 전투에 반영된다.</li>
+      </ul>
+      <p>
+        여기까지가 되면 Run 프레임은 성립한다.
+        그 다음부터 B/G, C/H, D/I, E/J를 순차 확장하면 된다.
+      </p>
+    </article>
+
+    <article class="card half red">
+      <h2>금지 순서</h2>
+      <ul>
+        <li><span class="pill block">금지</span> UI 스킨 작업을 전투 코어 분리보다 먼저 길게 잡지 않는다.</li>
+        <li><span class="pill block">금지</span> 린을 1차 플레이 가능 카드로 올리지 않는다.</li>
+        <li><span class="pill block">금지</span> B~E, G~J를 구현하지 않은 상태에서 보상 풀에 노출하지 않는다.</li>
+        <li><span class="pill block">금지</span> 속성별 계산 구조 없이 문서 수치를 각 몬스터 클래스에 개별 하드코딩하지 않는다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card blue">
+      <h2>추천 파일 축</h2>
+      <div class="path-list">
+        <div class="path"><code>Assets/Scripts/Run/RunSession.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Run/RunFlowController.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Run/MonsterCatalog.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Run/SkillCatalog.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Run/SkillChoicePoolBuilder.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Combat/Core/CombatDirector.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Combat/Core/CombatUnitRuntime.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Combat/Core/StatusRuntime.cs</code></div>
+        <div class="path"><code>Assets/Scripts/Combat/Skills/Executors/*.cs</code></div>
+        <div class="path"><code>Assets/UI/RunFrontPanel.uxml</code> / <code>.uss</code></div>
+        <div class="path"><code>Assets/UI/RunHudPanel.uxml</code> / <code>.uss</code></div>
+        <div class="path"><code>Assets/UI/RewardPanel.uxml</code> / <code>.uss</code></div>
+      </div>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card teal">
+      <h2>Code Builder explicit handoff</h2>
+      <ul>
+        <li>이 handoff는 <strong>구현 순서를 고정</strong>한다. Builder는 1단계부터 순서대로 진행하고, 각 단계 완료 기준을 만족해야 다음 단계로 넘어간다.</li>
+        <li>첫 구현 마일스톤은 <strong>4몬스터 선택 가능 + 각자의 A 스킬 전투 + A/F 보상 루프</strong>다.</li>
+        <li>린은 현재 더미다. 린 관련 플레이 가능 로직을 추가하지 않는다.</li>
+        <li>후속 B/G, C/H, D/I, E/J는 <strong>슬롯 묶음 단위</strong>로 구현한다.</li>
+        <li>실제 구현 단계로 전환되면, Builder는 이 문서와 <code>reference/monster-select-run-ui-expansion-plan.html</code>을 함께 근거로 삼아야 한다.</li>
+      </ul>
+    </article>
+  </section>
+</main>
+</body>
+</html>
