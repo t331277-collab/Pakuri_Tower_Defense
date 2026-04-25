@@ -48,7 +48,7 @@ Code Builder
 
 ### Status
 
-Completed for bootstrap file creation, path correction, and Codex CLI path resolver hardening. No downstream Builder task has been run through the loop yet.
+Completed for bootstrap file creation, path correction, Codex CLI path resolver hardening, and `codex_prompt.txt` native argument launch fix. No downstream Builder task has been run through the loop yet.
 
 ### Next Actions
 
@@ -84,6 +84,13 @@ Completed for bootstrap file creation, path correction, and Codex CLI path resol
 - 2026-04-23 승인 후 `%APPDATA%\npm\codex.cmd` 래퍼를 현재 존재하는 `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.417.40842-win32-x64\bin\windows-x86_64\codex.exe` 경로로 갱신했고 `codex-cli 0.122.0-alpha.13`을 출력했다.
 - 2026-04-23 수정 후 `codex_builder_reviewer.ps1`는 PowerShell parser syntax check를 통과했다.
 - 2026-04-23 Code Reviewer 외부 검토 로그 `codex_loop_logs\manual_reviewer_20260423_212033.md`는 `REVIEW_RESULT: PASS`를 반환했다.
+- 2026-04-25 `Get-Command codex` 출력은 `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.422.30944-win32-x64\bin\windows-x86_64\codex.exe`를 가리켰고, `codex --version` 출력은 `codex-cli 0.125.0-alpha.3`이었다.
+- 2026-04-25 수정 전 `cmd /d /c "call .\run_codex.bat < NUL"` 출력은 `error: unexpected argument '작업과' found`를 포함했고, `codex_prompt.txt`의 큰따옴표가 시작 프롬프트 인자 전달을 깨뜨리고 있음을 확인했다.
+- 2026-04-25 임시 PowerShell echo 검증은 동일한 Windows 인자 이스케이프 루틴으로 `COUNT=1`과 전체 `codex_prompt.txt` 본문을 `ARG[0]`로 반환했다.
+- 2026-04-25 `run_codex_prompt_launcher.ps1`를 추가했고, `run_codex.bat`는 직접 `& $env:CODEX_CMD --cd ... $prompt`를 호출하지 않고 새 런처 스크립트로 위임하도록 수정했다.
+- 2026-04-25 수정 후 `cmd /d /c "call .\run_codex.bat < NUL"` 출력에서는 `unexpected argument '작업과' found`가 재발하지 않았다.
+- 2026-04-25 같은 검증은 현재 Codex CLI 내부 샌드박스에서만 `Error loading configuration: 액세스가 거부되었습니다. (os error 5)`로 끝났고, `Get-Content -Raw -Encoding UTF8 $env:USERPROFILE\.codex\config.toml`은 실제로 읽혔다.
+- 2026-04-25 외부 Reviewer 시도 `codex review --uncommitted`는 승인 후 60초 timeout이 발생했고, 수동 Reviewer 로그 `codex_loop_logs\manual_reviewer_20260425_195452.md`는 `REVIEW_RESULT: PASS`를 기록했다.
 
 ### History
 
@@ -97,6 +104,10 @@ Completed for bootstrap file creation, path correction, and Codex CLI path resol
 - 2026-04-23: `run_codex.bat`와 `codex_builder_reviewer.ps1`를 고정 래퍼 의존에서 실행 가능한 래퍼 우선, 실패 시 최신 VS Code 확장 `codex.exe` 탐색 방식으로 수정했다.
 - 2026-04-23: 승인 후 `%APPDATA%\npm\codex.cmd` 외부 래퍼 자체도 현재 존재하는 Codex CLI 실행 파일로 갱신했다.
 - 2026-04-23: `codex_loop_logs\manual_reviewer_20260423_212033.md`에 Code Reviewer 통과 판정을 기록했다.
+- 2026-04-25: `run_codex.bat` 실행 실패를 재현했고, 시작 프롬프트 파일 안의 큰따옴표 때문에 `error: unexpected argument '작업과' found`가 발생함을 확인했다.
+- 2026-04-25: Windows 네이티브 인자 이스케이프를 적용하는 `run_codex_prompt_launcher.ps1`를 추가하고, `run_codex.bat`를 새 런처 스크립트 사용 및 `Get-Command codex` 우선 해석 방식으로 수정했다.
+- 2026-04-25: 수정 후 같은 배치 검증에서 프롬프트 파서 오류는 사라졌고, 현재 Codex 내부 샌드박스에서만 interactive Codex의 configuration access denied가 남는 것을 확인했다.
+- 2026-04-25: 외부 `codex review --uncommitted`는 timeout 되었고, 수동 Reviewer 로그 `codex_loop_logs\manual_reviewer_20260425_195452.md`에 PASS를 기록했다.
 
 ### Builder Reviewer Loop
 
@@ -105,7 +116,7 @@ Completed for bootstrap file creation, path correction, and Codex CLI path resol
 - Git dependency: Not required
 - Max loops: 3
 - Current loop count: 0
-- Last reviewer decision: PASS for manual reviewer log `codex_loop_logs\manual_reviewer_20260423_212033.md`
+- Last reviewer decision: PASS for manual reviewer log `codex_loop_logs\manual_reviewer_20260425_195452.md`
 - Last log directory: `codex_loop_logs`
 
 ## Task: Unity MCP Bridge Connection
@@ -132,12 +143,13 @@ Code Builder
 
 ### Status
 
-Completed. Unity Editor-side MCP For Unity bridge is connected to the current Codex MCP server.
+Completed. The Unity package is present in `Pakuri`, and this machine's global Codex `unityMCP` stdio entry has been restored with a working `uvx` command. A fresh Codex session plus Unity Editor bridge activation are still required before Unity tools reappear in-session.
 
 ### Next Actions
 
-- 이후 Unity MCP가 끊기면 Unity Editor에서 Transport를 `Stdio`로 두고 `Session Active`를 다시 켠 뒤 `manage_scene get_active`로 재검증한다.
-- Unity Test Runner 확인은 `run_tests EditMode` 후 `get_test_job`으로 결과를 확인한다.
+- 현재 실행 중인 Codex 세션은 새 MCP 설정을 동적으로 다시 읽지 않으므로, 다음 Unity 작업 전에는 새 Codex 세션을 시작해 `unityMCP` 도구 로드를 확인한다.
+- Unity Editor에서는 `Window > MCP for Unity`에서 Transport를 `Stdio`로 두고 `Session Active`를 켠 뒤 새 Codex 세션에서 연결을 재검증한다.
+- 이후 Unity MCP가 끊기면 `%USERPROFILE%\.unity-mcp` 상태 파일과 `codex mcp get unityMCP` 출력을 먼저 확인한다.
 
 ### Evidence
 
@@ -158,6 +170,17 @@ Completed. Unity Editor-side MCP For Unity bridge is connected to the current Co
 - `manage_asset search`는 `Assets`에서 총 11개 에셋을 찾았다.
 - `manage_scene get_hierarchy`는 루트 오브젝트 `Main Camera`, `Global Light 2D`를 반환했다.
 - `run_tests EditMode`는 job `bee66234eeec4e67b238bafff3d63dc9`를 시작했고 `get_test_job` 결과는 `status: succeeded`, `resultState: Passed`, `total: 0`, `passed: 0`, `failed: 0`, `skipped: 0`였다.
+- 2026-04-25 `Pakuri/Packages/manifest.json` 재확인 결과 `com.coplaydev.unity-mcp = "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main"`가 이미 존재했다.
+- 2026-04-25 공식 `unity-mcp` README는 Python 3.10+와 `uv`를 prerequisite로 두고, Windows stdio 예시는 `uvx ... mcp-for-unity --transport stdio` 구성을 제시했다.
+- 2026-04-25 공식 `uv` 설치 문서는 Windows standalone installer `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`를 안내했고, cache 경로는 `UV_CACHE_DIR`로 override 가능하다고 명시했다.
+- 2026-04-25 승인 후 `UV_NO_MODIFY_PATH=1`로 공식 installer를 실행했고 `C:\Users\t3312\.local\bin`에 `uv.exe`, `uvx.exe`, `uvw.exe`가 설치됐다.
+- 2026-04-25 `& "$env:USERPROFILE\.local\bin\uvx.exe" --version` 출력은 `uvx 0.11.7 (9d177269e 2026-04-15 x86_64-pc-windows-msvc)`였다.
+- 2026-04-25 첫 `uvx --from mcpforunityserver mcp-for-unity --help` 실행은 `%LOCALAPPDATA%\uv\cache` 초기화 실패와 `os error 183`으로 종료됐다.
+- 2026-04-25 `UV_CACHE_DIR=C:\Users\t3312\.uv-cache`와 `UV_PYTHON_INSTALL_DIR=C:\Users\t3312\.uv-python`를 지정한 뒤 같은 `uvx` 도움말 실행이 성공했고 `mcp-for-unity` CLI usage를 출력했다.
+- 2026-04-25 승인 후 `codex mcp add unityMCP --env UV_CACHE_DIR=... --env UV_PYTHON_INSTALL_DIR=... -- C:\Users\t3312\.local\bin\uvx.exe --from mcpforunityserver mcp-for-unity --transport stdio`를 실행해 전역 Codex 설정에 Unity MCP 서버를 다시 등록했다.
+- 2026-04-25 `Get-Content -Raw -Encoding UTF8 $env:USERPROFILE\.codex\config.toml` 결과 `mcp_servers.unityMCP` 블록이 추가됐고, `codex mcp get unityMCP` 출력은 `enabled: true`, `transport: stdio`, `command: C:\Users\t3312\.local\bin\uvx.exe`를 보여줬다.
+- 2026-04-25 현재 실행 중인 Codex 세션에서 `list_mcp_resources`는 빈 배열을 반환했고, 이 세션이 새 MCP 구성을 핫리로드하지 않았음을 확인했다.
+- 2026-04-25 수동 Reviewer 로그 `codex_loop_logs\manual_reviewer_20260425_200654.md`는 `REVIEW_RESULT: PASS`를 기록했다.
 
 ### History
 
@@ -166,6 +189,11 @@ Completed. Unity Editor-side MCP For Unity bridge is connected to the current Co
 - 2026-04-23: Unity Editor 내부 MCP For Unity 설정/bridge 시작이 필요하다고 판단했다.
 - 2026-04-23: 사용자가 Unity Editor에서 Transport를 `Stdio`로 바꾸고 `Session Active`, Codex client `Configuration`을 수행했다.
 - 2026-04-23: Unity MCP bridge 연결, scene/asset/console/hierarchy 접근, EditMode Test Runner 실행을 검증했다.
+- 2026-04-25: `Pakuri/Packages/manifest.json`과 현재 전역 Codex 설정을 다시 확인했고, Unity 패키지는 남아 있지만 `.codex/config.toml`에는 `unityMCP` 항목이 사라져 있음을 확인했다.
+- 2026-04-25: 공식 `unity-mcp` README와 공식 `uv` 문서를 기준으로 Windows에서 `uv` standalone installer와 stdio `uvx` 구성을 다시 적용하기로 결정했다.
+- 2026-04-25: 승인 후 `uv`를 설치했고 `uvx` 실행 중 `%LOCALAPPDATA%\uv\cache` 경로 문제를 `UV_CACHE_DIR`/`UV_PYTHON_INSTALL_DIR` 환경 변수 override로 우회했다.
+- 2026-04-25: `codex mcp add`로 전역 `unityMCP` stdio 엔트리를 복구했고, 현재 세션은 새 구성을 핫리로드하지 않음을 확인했다.
+- 2026-04-25: 수동 Reviewer 로그 `codex_loop_logs\manual_reviewer_20260425_200654.md`에 PASS를 기록했다.
 
 ## Task: Combat Automation Responsibility Guide
 
