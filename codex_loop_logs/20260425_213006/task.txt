@@ -1,0 +1,1 @@
+Smoke test only. Do not modify project files. Code Builder should inspect AGENTS.md and BLACKBOARD.md, then report no code changes are needed. Code Reviewer should verify the no-op result and end with REVIEW_RESULT: PASS.

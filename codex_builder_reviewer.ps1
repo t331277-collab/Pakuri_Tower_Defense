@@ -70,7 +70,17 @@ function Add-BlackboardHistory {
     param([Parameter(Mandatory = $true)][string]$Text)
     $stamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss K'
     $entry = "`r`n- ${stamp}: $Text"
-    [System.IO.File]::AppendAllText($BlackboardPath, $entry, [System.Text.UTF8Encoding]::new($false))
+    $content = Read-Utf8File -Path $BlackboardPath
+    $markers = @("`r`n### Builder Reviewer Loop", "`n### Builder Reviewer Loop")
+    foreach ($marker in $markers) {
+        $index = $content.IndexOf($marker, [System.StringComparison]::Ordinal)
+        if ($index -ge 0) {
+            Write-Utf8File -Path $BlackboardPath -Text ($content.Insert($index, $entry))
+            return
+        }
+    }
+
+    Write-Utf8File -Path $BlackboardPath -Text ($content + $entry)
 }
 
 function Assert-RequiredFiles {
@@ -178,11 +188,21 @@ function Invoke-CodexExec {
         [Parameter(Mandatory = $true)][string]$OutputPath
     )
 
-    $Prompt | & $ResolvedCodexCmd exec --full-auto --skip-git-repo-check -C $Root -o $OutputPath -
-    if ($null -eq $global:LASTEXITCODE) {
+    $consoleOutputPath = "$OutputPath.console.txt"
+    $exitCode = $null
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $Prompt | & $ResolvedCodexCmd exec --full-auto --skip-git-repo-check -C $Root -o $OutputPath - *> $consoleOutputPath
+        $exitCode = $global:LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+
+    if ($null -eq $exitCode) {
         return 0
     }
-    return $global:LASTEXITCODE
+    return [int]$exitCode
 }
 
 Assert-RequiredFiles

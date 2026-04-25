@@ -1,0 +1,1 @@
+Smoke test after reviewer wrapper fix. Do not modify project files except wrapper-managed logs and BLACKBOARD loop history. Code Builder should inspect AGENTS.md and BLACKBOARD.md, then report no code changes are needed. Code Reviewer should verify and end with REVIEW_RESULT: PASS.

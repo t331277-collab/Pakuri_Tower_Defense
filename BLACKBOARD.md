@@ -1,5 +1,50 @@
 # BLACKBOARD.md
 
+## Task: Reviewer Wrapper Smoke Test 2026-04-25 21:40
+
+### Task title
+
+Smoke test after reviewer wrapper fix
+
+### Goals
+
+- Confirm Code Builder can inspect `AGENTS.md` and `BLACKBOARD.md`.
+- Confirm no project code changes are needed for this smoke test.
+- Leave loop history/evidence for the external Reviewer phase.
+
+### Constraints
+
+- Do not modify project files except wrapper-managed logs and `BLACKBOARD.md` loop history.
+- Base claims on actual files and command output.
+- External wrapper will run Code Reviewer next.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder phase completed. No project code changes were needed.
+
+### Next Actions
+
+- External wrapper should run Code Reviewer phase.
+- Code Reviewer should verify this Builder result and end with `REVIEW_RESULT: PASS` if no issue is found.
+
+### Evidence
+
+- 2026-04-25 21:40:30 +09:00 `Get-Location` output: `C:\TowerDefence_Pakuri\Test`.
+- `AGENTS.md` was read with `Get-Content -Raw -LiteralPath AGENTS.md`.
+- `BLACKBOARD.md` was read with `Get-Content -Raw -LiteralPath BLACKBOARD.md`.
+- `git rev-parse --is-inside-work-tree` output: `true`.
+- `git status --short` output before this entry included existing changes: `M BLACKBOARD.md`, `M codex_builder_reviewer.ps1`, `M run_codex.bat`, and untracked `codex_loop_logs/...` entries.
+- Latest wrapper log directory inspection found `codex_loop_logs\20260425_213901` containing `task.txt` and `loop_01_builder.md.console.txt`.
+- No Unity/project source, scene, asset, reference, or wrapper script file was modified by this Builder phase.
+
+### History
+
+- 2026-04-25 21:40:30 +09:00: Builder inspected required files and command outputs, determined the smoke test requires no code changes, and recorded this loop history for Reviewer verification.
+
 ## 운영 규칙
 
 이 파일은 프롬프트 초기화, 세션 재시작, 재부팅 후에도 작업을 이어가기 위한 지속 상태 파일이다.
@@ -48,7 +93,7 @@ Code Builder
 
 ### Status
 
-Completed for bootstrap file creation, path correction, Codex CLI path resolver hardening, and `codex_prompt.txt` native argument launch fix. No downstream Builder task has been run through the loop yet.
+Completed for bootstrap file creation, path correction, and Codex CLI path resolver hardening. No downstream Builder task has been run through the loop yet.
 
 ### Next Actions
 
@@ -84,13 +129,18 @@ Completed for bootstrap file creation, path correction, Codex CLI path resolver 
 - 2026-04-23 승인 후 `%APPDATA%\npm\codex.cmd` 래퍼를 현재 존재하는 `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.417.40842-win32-x64\bin\windows-x86_64\codex.exe` 경로로 갱신했고 `codex-cli 0.122.0-alpha.13`을 출력했다.
 - 2026-04-23 수정 후 `codex_builder_reviewer.ps1`는 PowerShell parser syntax check를 통과했다.
 - 2026-04-23 Code Reviewer 외부 검토 로그 `codex_loop_logs\manual_reviewer_20260423_212033.md`는 `REVIEW_RESULT: PASS`를 반환했다.
-- 2026-04-25 `Get-Command codex` 출력은 `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.422.30944-win32-x64\bin\windows-x86_64\codex.exe`를 가리켰고, `codex --version` 출력은 `codex-cli 0.125.0-alpha.3`이었다.
-- 2026-04-25 수정 전 `cmd /d /c "call .\run_codex.bat < NUL"` 출력은 `error: unexpected argument '작업과' found`를 포함했고, `codex_prompt.txt`의 큰따옴표가 시작 프롬프트 인자 전달을 깨뜨리고 있음을 확인했다.
-- 2026-04-25 임시 PowerShell echo 검증은 동일한 Windows 인자 이스케이프 루틴으로 `COUNT=1`과 전체 `codex_prompt.txt` 본문을 `ARG[0]`로 반환했다.
-- 2026-04-25 `run_codex_prompt_launcher.ps1`를 추가했고, `run_codex.bat`는 직접 `& $env:CODEX_CMD --cd ... $prompt`를 호출하지 않고 새 런처 스크립트로 위임하도록 수정했다.
-- 2026-04-25 수정 후 `cmd /d /c "call .\run_codex.bat < NUL"` 출력에서는 `unexpected argument '작업과' found`가 재발하지 않았다.
-- 2026-04-25 같은 검증은 현재 Codex CLI 내부 샌드박스에서만 `Error loading configuration: 액세스가 거부되었습니다. (os error 5)`로 끝났고, `Get-Content -Raw -Encoding UTF8 $env:USERPROFILE\.codex\config.toml`은 실제로 읽혔다.
-- 2026-04-25 외부 Reviewer 시도 `codex review --uncommitted`는 승인 후 60초 timeout이 발생했고, 수동 Reviewer 로그 `codex_loop_logs\manual_reviewer_20260425_195452.md`는 `REVIEW_RESULT: PASS`를 기록했다.
+- 2026-04-25 sandbox 내부 직접 `codex exec` smoke test는 `액세스가 거부되었습니다. (os error 5)`로 실패했다.
+- 2026-04-25 승인된 외부 실행으로 최신 Codex CLI `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.422.30944-win32-x64\bin\windows-x86_64\codex.exe` reviewer smoke test가 `REVIEW_RESULT: PASS`를 반환했다.
+- 2026-04-25 `codex_builder_reviewer.ps1`의 `Invoke-CodexExec`가 Codex 콘솔 출력을 반환값으로 섞어 `$builderExit`를 문자열로 만드는 문제를 확인했다.
+- 2026-04-25 `Invoke-CodexExec`가 콘솔 출력을 `*.console.txt`로 저장하고 정수 종료 코드만 반환하도록 수정했다.
+- 2026-04-25 Codex CLI stderr 배너가 `$ErrorActionPreference = 'Stop'`에서 `NativeCommandError`를 일으켜, `Invoke-CodexExec` 내부에서만 native stderr 처리를 `Continue`로 완화했다.
+- 2026-04-25 수정 후 `codex_builder_reviewer.ps1`는 PowerShell parser syntax check에서 `PARSE_OK`를 반환했다.
+- 2026-04-25 수정 후 smoke test 래퍼 실행은 `Reviewer PASS at loop 1.`을 반환했고, `codex_loop_logs\20260425_213006\loop_01_reviewer.md`는 `REVIEW_RESULT: PASS`를 포함한다.
+- 2026-04-25 Code Reviewer 직접 검토 `codex_loop_logs\reviewer_restore_fix_review.md`는 `run_codex.bat`의 프롬프트 quote 변형, `BLACKBOARD.md`의 잘못된 history 위치, pre-fix 손상 exit code 기록을 지적하며 `REVIEW_RESULT: NEEDS_CHANGES`를 반환했다.
+- 2026-04-25 `run_codex.bat`는 `codex_prompt.txt` UTF-8 내용을 변형 없이 전달하도록 `.Replace([string][char]34, [string][char]0x201D)`를 제거했다.
+- 2026-04-25 `Add-BlackboardHistory`는 루프 기록을 파일 끝이 아니라 `Codex CLI Bootstrap` 작업의 `Builder Reviewer Loop` 섹션 앞에 삽입하도록 수정했다.
+- 2026-04-25 잘못 붙었던 Eve 작업 하단의 wrapper smoke-test history 기록을 제거했다.
+- 2026-04-25 최종 smoke test 래퍼 실행은 `Reviewer PASS at loop 1.`을 반환했고, `codex_loop_logs\20260425_213901\loop_01_reviewer.md`는 `REVIEW_RESULT: PASS`를 포함한다.
 
 ### History
 
@@ -104,20 +154,25 @@ Completed for bootstrap file creation, path correction, Codex CLI path resolver 
 - 2026-04-23: `run_codex.bat`와 `codex_builder_reviewer.ps1`를 고정 래퍼 의존에서 실행 가능한 래퍼 우선, 실패 시 최신 VS Code 확장 `codex.exe` 탐색 방식으로 수정했다.
 - 2026-04-23: 승인 후 `%APPDATA%\npm\codex.cmd` 외부 래퍼 자체도 현재 존재하는 Codex CLI 실행 파일로 갱신했다.
 - 2026-04-23: `codex_loop_logs\manual_reviewer_20260423_212033.md`에 Code Reviewer 통과 판정을 기록했다.
-- 2026-04-25: `run_codex.bat` 실행 실패를 재현했고, 시작 프롬프트 파일 안의 큰따옴표 때문에 `error: unexpected argument '작업과' found`가 발생함을 확인했다.
-- 2026-04-25: Windows 네이티브 인자 이스케이프를 적용하는 `run_codex_prompt_launcher.ps1`를 추가하고, `run_codex.bat`를 새 런처 스크립트 사용 및 `Get-Command codex` 우선 해석 방식으로 수정했다.
-- 2026-04-25: 수정 후 같은 배치 검증에서 프롬프트 파서 오류는 사라졌고, 현재 Codex 내부 샌드박스에서만 interactive Codex의 configuration access denied가 남는 것을 확인했다.
-- 2026-04-25: 외부 `codex review --uncommitted`는 timeout 되었고, 수동 Reviewer 로그 `codex_loop_logs\manual_reviewer_20260425_195452.md`에 PASS를 기록했다.
+- 2026-04-25: Code Reviewer 강제 흐름 중단 원인이 Codex CLI 실행 실패와 래퍼의 종료 코드 반환 처리 오류임을 확인하고 `codex_builder_reviewer.ps1`를 수정했다.
+- 2026-04-25: 수정 후 Builder -> Reviewer smoke test를 실행해 `codex_loop_logs\20260425_213006\loop_01_reviewer.md`에서 `REVIEW_RESULT: PASS`를 확인했다.
+- 2026-04-25: Code Reviewer가 지적한 `run_codex.bat` 프롬프트 변형과 `BLACKBOARD.md` 기록 위치 문제를 수정한 뒤 `codex_loop_logs\20260425_213901\loop_01_reviewer.md`에서 `REVIEW_RESULT: PASS`를 확인했다.
 
+- 2026-04-25 21:39:01 +09:00: Builder -> Reviewer loop started. Run directory: C:\TowerDefence_Pakuri\Test\codex_loop_logs\20260425_213901
+- 2026-04-25 21:39:27 +09:00: Loop 1 Builder started. Output: C:\TowerDefence_Pakuri\Test\codex_loop_logs\20260425_213901\loop_01_builder.md
+- 2026-04-25 21:41:53 +09:00: Loop 1 Builder finished with exit code 0.
+- 2026-04-25 21:42:22 +09:00: Loop 1 Reviewer started. Output: C:\TowerDefence_Pakuri\Test\codex_loop_logs\20260425_213901\loop_01_reviewer.md
+- 2026-04-25 21:44:07 +09:00: Loop 1 Reviewer finished with exit code 0.
+- 2026-04-25 21:44:07 +09:00: Loop 1 Reviewer decision: PASS. Builder -> Reviewer loop completed.
 ### Builder Reviewer Loop
 
 - Enforcement method: External wrapper script
 - Wrapper file: `codex_builder_reviewer.ps1`
 - Git dependency: Not required
 - Max loops: 3
-- Current loop count: 0
-- Last reviewer decision: PASS for manual reviewer log `codex_loop_logs\manual_reviewer_20260425_195452.md`
-- Last log directory: `codex_loop_logs`
+- Current loop count: 1 in latest smoke test
+- Last reviewer decision: PASS for wrapper log `codex_loop_logs\20260425_213901\loop_01_reviewer.md`
+- Last log directory: `codex_loop_logs\20260425_213901`
 
 ## Task: Unity MCP Bridge Connection
 
@@ -143,13 +198,12 @@ Code Builder
 
 ### Status
 
-Completed. The Unity package is present in `Pakuri`, and this machine's global Codex `unityMCP` stdio entry has been restored with a working `uvx` command. A fresh Codex session plus Unity Editor bridge activation are still required before Unity tools reappear in-session.
+Completed. Unity Editor-side MCP For Unity bridge is connected to the current Codex MCP server.
 
 ### Next Actions
 
-- 현재 실행 중인 Codex 세션은 새 MCP 설정을 동적으로 다시 읽지 않으므로, 다음 Unity 작업 전에는 새 Codex 세션을 시작해 `unityMCP` 도구 로드를 확인한다.
-- Unity Editor에서는 `Window > MCP for Unity`에서 Transport를 `Stdio`로 두고 `Session Active`를 켠 뒤 새 Codex 세션에서 연결을 재검증한다.
-- 이후 Unity MCP가 끊기면 `%USERPROFILE%\.unity-mcp` 상태 파일과 `codex mcp get unityMCP` 출력을 먼저 확인한다.
+- 이후 Unity MCP가 끊기면 Unity Editor에서 Transport를 `Stdio`로 두고 `Session Active`를 다시 켠 뒤 `manage_scene get_active`로 재검증한다.
+- Unity Test Runner 확인은 `run_tests EditMode` 후 `get_test_job`으로 결과를 확인한다.
 
 ### Evidence
 
@@ -170,17 +224,6 @@ Completed. The Unity package is present in `Pakuri`, and this machine's global C
 - `manage_asset search`는 `Assets`에서 총 11개 에셋을 찾았다.
 - `manage_scene get_hierarchy`는 루트 오브젝트 `Main Camera`, `Global Light 2D`를 반환했다.
 - `run_tests EditMode`는 job `bee66234eeec4e67b238bafff3d63dc9`를 시작했고 `get_test_job` 결과는 `status: succeeded`, `resultState: Passed`, `total: 0`, `passed: 0`, `failed: 0`, `skipped: 0`였다.
-- 2026-04-25 `Pakuri/Packages/manifest.json` 재확인 결과 `com.coplaydev.unity-mcp = "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main"`가 이미 존재했다.
-- 2026-04-25 공식 `unity-mcp` README는 Python 3.10+와 `uv`를 prerequisite로 두고, Windows stdio 예시는 `uvx ... mcp-for-unity --transport stdio` 구성을 제시했다.
-- 2026-04-25 공식 `uv` 설치 문서는 Windows standalone installer `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`를 안내했고, cache 경로는 `UV_CACHE_DIR`로 override 가능하다고 명시했다.
-- 2026-04-25 승인 후 `UV_NO_MODIFY_PATH=1`로 공식 installer를 실행했고 `C:\Users\t3312\.local\bin`에 `uv.exe`, `uvx.exe`, `uvw.exe`가 설치됐다.
-- 2026-04-25 `& "$env:USERPROFILE\.local\bin\uvx.exe" --version` 출력은 `uvx 0.11.7 (9d177269e 2026-04-15 x86_64-pc-windows-msvc)`였다.
-- 2026-04-25 첫 `uvx --from mcpforunityserver mcp-for-unity --help` 실행은 `%LOCALAPPDATA%\uv\cache` 초기화 실패와 `os error 183`으로 종료됐다.
-- 2026-04-25 `UV_CACHE_DIR=C:\Users\t3312\.uv-cache`와 `UV_PYTHON_INSTALL_DIR=C:\Users\t3312\.uv-python`를 지정한 뒤 같은 `uvx` 도움말 실행이 성공했고 `mcp-for-unity` CLI usage를 출력했다.
-- 2026-04-25 승인 후 `codex mcp add unityMCP --env UV_CACHE_DIR=... --env UV_PYTHON_INSTALL_DIR=... -- C:\Users\t3312\.local\bin\uvx.exe --from mcpforunityserver mcp-for-unity --transport stdio`를 실행해 전역 Codex 설정에 Unity MCP 서버를 다시 등록했다.
-- 2026-04-25 `Get-Content -Raw -Encoding UTF8 $env:USERPROFILE\.codex\config.toml` 결과 `mcp_servers.unityMCP` 블록이 추가됐고, `codex mcp get unityMCP` 출력은 `enabled: true`, `transport: stdio`, `command: C:\Users\t3312\.local\bin\uvx.exe`를 보여줬다.
-- 2026-04-25 현재 실행 중인 Codex 세션에서 `list_mcp_resources`는 빈 배열을 반환했고, 이 세션이 새 MCP 구성을 핫리로드하지 않았음을 확인했다.
-- 2026-04-25 수동 Reviewer 로그 `codex_loop_logs\manual_reviewer_20260425_200654.md`는 `REVIEW_RESULT: PASS`를 기록했다.
 
 ### History
 
@@ -189,11 +232,6 @@ Completed. The Unity package is present in `Pakuri`, and this machine's global C
 - 2026-04-23: Unity Editor 내부 MCP For Unity 설정/bridge 시작이 필요하다고 판단했다.
 - 2026-04-23: 사용자가 Unity Editor에서 Transport를 `Stdio`로 바꾸고 `Session Active`, Codex client `Configuration`을 수행했다.
 - 2026-04-23: Unity MCP bridge 연결, scene/asset/console/hierarchy 접근, EditMode Test Runner 실행을 검증했다.
-- 2026-04-25: `Pakuri/Packages/manifest.json`과 현재 전역 Codex 설정을 다시 확인했고, Unity 패키지는 남아 있지만 `.codex/config.toml`에는 `unityMCP` 항목이 사라져 있음을 확인했다.
-- 2026-04-25: 공식 `unity-mcp` README와 공식 `uv` 문서를 기준으로 Windows에서 `uv` standalone installer와 stdio `uvx` 구성을 다시 적용하기로 결정했다.
-- 2026-04-25: 승인 후 `uv`를 설치했고 `uvx` 실행 중 `%LOCALAPPDATA%\uv\cache` 경로 문제를 `UV_CACHE_DIR`/`UV_PYTHON_INSTALL_DIR` 환경 변수 override로 우회했다.
-- 2026-04-25: `codex mcp add`로 전역 `unityMCP` stdio 엔트리를 복구했고, 현재 세션은 새 구성을 핫리로드하지 않음을 확인했다.
-- 2026-04-25: 수동 Reviewer 로그 `codex_loop_logs\manual_reviewer_20260425_200654.md`에 PASS를 기록했다.
 
 ## Task: Combat Automation Responsibility Guide
 

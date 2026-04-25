@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Code Reviewer 복구 원인 분석 보고서</title>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --ink: #1f2937;
+      --muted: #64748b;
+      --panel: #ffffff;
+      --line: #d8dee9;
+      --accent: #2563eb;
+      --ok: #047857;
+      --warn: #b45309;
+      --bad: #b91c1c;
+      --code: #111827;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0 56px;
+    }
+
+    header {
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 21px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 20px 0 8px;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    code, pre {
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    code {
+      color: var(--code);
+      background: #eef2f7;
+      border: 1px solid #d8dee9;
+      border-radius: 4px;
+      padding: 1px 5px;
+      word-break: break-word;
+    }
+
+    pre {
+      overflow: auto;
+      margin: 12px 0 0;
+      padding: 14px;
+      color: #e5e7eb;
+      background: #111827;
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin: 18px 0 0;
+    }
+
+    section, .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    section {
+      margin-top: 18px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding: 7px 10px;
+      border: 1px solid #bbf7d0;
+      border-radius: 6px;
+      color: var(--ok);
+      background: #ecfdf5;
+      font-weight: 600;
+    }
+
+    .warning {
+      border-color: #fde68a;
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    .danger {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: var(--bad);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      background: #fff;
+    }
+
+    th, td {
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      width: 22%;
+      background: #f1f5f9;
+      font-weight: 700;
+    }
+
+    ul {
+      margin: 10px 0 0 20px;
+      padding: 0;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 14px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fbfdff;
+    }
+
+    .step strong {
+      color: var(--accent);
+    }
+
+    .evidence-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .evidence {
+      padding: 12px;
+      border-left: 4px solid var(--accent);
+      background: #f8fafc;
+    }
+
+    .label {
+      display: inline-block;
+      min-width: 78px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100% - 20px, 1120px);
+        padding-top: 24px;
+      }
+
+      .grid, .step {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      th {
+        width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Code Reviewer 복구 원인 분석 보고서</h1>
+      <p class="subtitle">작성일: 2026-04-25 · 기준 폴더: <code>C:\TowerDefence_Pakuri\Test</code></p>
+      <div class="status">최종 상태: Builder -> Reviewer 외부 강제 흐름 smoke test PASS</div>
+    </header>
+
+    <section>
+      <h2>요약</h2>
+      <p>
+        Code Reviewer 기능은 역할 자체가 사라진 것이 아니라, 외부 래퍼가 Reviewer 단계까지 도달하지 못해서 중단됐다.
+        실제 원인은 Codex CLI 실행 권한 문제, PowerShell 함수 반환값 오염, native stderr 처리 방식이었다.
+      </p>
+      <p>
+        복구 후 <code>codex_builder_reviewer.ps1</code> 래퍼 smoke test는 <code>Reviewer PASS at loop 1.</code>을 반환했고,
+        최종 Reviewer 로그 <code>codex_loop_logs\reviewer_restore_fix_final_review.md</code>도 <code>REVIEW_RESULT: PASS</code>를 반환했다.
+      </p>
+    </section>
+
+    <div class="grid">
+      <div class="card">
+        <h2>확인된 핵심 파일</h2>
+        <ul>
+          <li><code>AGENTS.md</code>: 역할 규칙과 Reviewer 검토 범위 정의</li>
+          <li><code>BLACKBOARD.md</code>: 복구 이력, smoke test 로그, 최종 판정 기록</li>
+          <li><code>codex_builder_reviewer.ps1</code>: Builder -> Reviewer 강제 실행 래퍼</li>
+          <li><code>run_codex.bat</code>: Codex 시작 배치 파일</li>
+          <li><code>codex_loop_logs\20260425_213901\loop_01_reviewer.md</code>: 최종 wrapper smoke test Reviewer PASS 로그</li>
+          <li><code>codex_loop_logs\reviewer_restore_fix_final_review.md</code>: 복구 코드 자체에 대한 최종 Reviewer PASS 로그</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>최종 판정 근거</h2>
+        <ul>
+          <li><code>codex_builder_reviewer.ps1</code> parser check: <code>PARSE_OK</code></li>
+          <li>최종 래퍼 실행 출력: <code>Reviewer PASS at loop 1.</code></li>
+          <li>최종 Reviewer 판정: <code>REVIEW_RESULT: PASS</code></li>
+          <li>Reviewer 확인 함수: <code>Read-Utf8File</code>, <code>Write-Utf8File</code>, <code>Add-BlackboardHistory</code>, <code>Invoke-CodexExec</code>, <code>Get-FileSnapshot</code>, <code>Compare-FileSnapshots</code>, <code>Get-GitStatusText</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <section>
+      <h2>원래 동작 원리</h2>
+      <table>
+        <tr>
+          <th>1. 작업 입력</th>
+          <td><code>codex_builder_reviewer.ps1 -Task "..."</code>가 사용자 작업을 받아 <code>codex_loop_logs\날짜_시간</code> 디렉터리를 만든다.</td>
+        </tr>
+        <tr>
+          <th>2. Builder 실행</th>
+          <td>래퍼가 Code Builder 프롬프트를 만들고 <code>codex exec</code>로 실행한다. Builder는 실제 파일과 명령 출력 기반으로 작업한다.</td>
+        </tr>
+        <tr>
+          <th>3. 변경 수집</th>
+          <td>Builder 실행 전후 파일 스냅샷을 비교해 <code>loop_01_changed_files.txt</code>와 <code>loop_01_git_status.txt</code>를 만든다.</td>
+        </tr>
+        <tr>
+          <th>4. Reviewer 실행</th>
+          <td>래퍼가 Code Reviewer 프롬프트를 다시 <code>codex exec</code>로 실행한다. Reviewer는 변경 라인, 함수 존재, null 위험, 부작용을 검토한다.</td>
+        </tr>
+        <tr>
+          <th>5. 판정 처리</th>
+          <td><code>REVIEW_RESULT: PASS</code>면 종료하고, <code>NEEDS_CHANGES</code>면 Reviewer 피드백을 Builder에게 넘겨 최대 3회 반복한다.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>실패 원인</h2>
+      <table>
+        <tr>
+          <th>원인 1</th>
+          <td>
+            sandbox 내부에서 직접 <code>codex exec</code>를 실행하면 <code>액세스가 거부되었습니다. (os error 5)</code>로 실패했다.
+            같은 Reviewer smoke test는 승인된 외부 실행에서 <code>REVIEW_RESULT: PASS</code>를 반환했다.
+          </td>
+        </tr>
+        <tr>
+          <th>원인 2</th>
+          <td>
+            <code>Invoke-CodexExec</code>가 Codex 콘솔 출력을 PowerShell 함수 반환값으로 흘려보냈다.
+            그 결과 <code>$builderExit</code>가 정수 <code>0</code>이 아니라 Builder 응답 텍스트와 <code>0</code>이 합쳐진 값이 되어,
+            Builder 성공을 실패로 오판했다.
+          </td>
+        </tr>
+        <tr>
+          <th>원인 3</th>
+          <td>
+            Codex CLI가 stderr로 배너를 출력했고, 스크립트 전체의 <code>$ErrorActionPreference = 'Stop'</code> 설정 때문에
+            PowerShell이 이를 <code>NativeCommandError</code>로 처리했다.
+          </td>
+        </tr>
+        <tr>
+          <th>부가 문제</th>
+          <td>
+            Reviewer가 추가로 <code>run_codex.bat</code>의 프롬프트 따옴표 변형과 <code>BLACKBOARD.md</code> 기록 위치 문제를 지적했다.
+            두 항목은 후속 수정에서 반영됐다.
+          </td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>복구 내용</h2>
+      <div class="timeline">
+        <div class="step">
+          <strong>1단계</strong>
+          <div>
+            <p><code>codex_builder_reviewer.ps1</code>의 <code>Invoke-CodexExec</code>를 수정했다.</p>
+            <pre>$consoleOutputPath = "$OutputPath.console.txt"
+$exitCode = $null
+$previousErrorActionPreference = $ErrorActionPreference
+try {
+    $ErrorActionPreference = 'Continue'
+    $Prompt | & $ResolvedCodexCmd exec --full-auto --skip-git-repo-check -C $Root -o $OutputPath - *&gt; $consoleOutputPath
+    $exitCode = $global:LASTEXITCODE
+} finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+}</pre>
+          </div>
+        </div>
+        <div class="step">
+          <strong>2단계</strong>
+          <div>
+            <p>Codex 콘솔 출력은 <code>*.console.txt</code>로 저장하고, 함수 반환값은 종료 코드만 반환하도록 정리했다.</p>
+            <pre>if ($null -eq $exitCode) {
+    return 0
+}
+return [int]$exitCode</pre>
+          </div>
+        </div>
+        <div class="step">
+          <strong>3단계</strong>
+          <div>
+            <p><code>Add-BlackboardHistory</code>가 루프 기록을 파일 끝이 아니라 <code>### Builder Reviewer Loop</code> 앞에 넣도록 수정했다.</p>
+            <pre>$content = Read-Utf8File -Path $BlackboardPath
+$markers = @("`r`n### Builder Reviewer Loop", "`n### Builder Reviewer Loop")</pre>
+          </div>
+        </div>
+        <div class="step">
+          <strong>4단계</strong>
+          <div>
+            <p><code>run_codex.bat</code>가 <code>codex_prompt.txt</code>의 ASCII 큰따옴표를 스마트 따옴표로 바꾸지 않도록 정리했다.</p>
+            <p>Reviewer 확인 기준: line 34 no longer applies quote replacement.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>검증 로그</h2>
+      <div class="evidence-list">
+        <div class="evidence">
+          <p><span class="label">구문</span><code>codex_builder_reviewer.ps1</code> parser check 결과: <code>PARSE_OK</code></p>
+        </div>
+        <div class="evidence">
+          <p><span class="label">실행</span>최종 래퍼 smoke test 출력: <code>Reviewer PASS at loop 1.</code></p>
+        </div>
+        <div class="evidence">
+          <p><span class="label">로그</span><code>codex_loop_logs\20260425_213901\loop_01_reviewer.md</code>는 <code>REVIEW_RESULT: PASS</code>를 포함한다.</p>
+        </div>
+        <div class="evidence">
+          <p><span class="label">최종검토</span><code>codex_loop_logs\reviewer_restore_fix_final_review.md</code>는 <code>No blocking issues found.</code>와 <code>REVIEW_RESULT: PASS</code>를 포함한다.</p>
+        </div>
+        <div class="evidence">
+          <p><span class="label">Git</span>최종 Reviewer는 <code>git status --short</code>에서 <code>BLACKBOARD.md</code>, <code>codex_builder_reviewer.ps1</code>, <code>run_codex.bat</code> modified 및 log dirs untracked 상태를 확인했다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>최종 Reviewer 판정 요약</h2>
+      <pre>No blocking issues found.
+
+Evidence checked:
+- `git status --short`: `BLACKBOARD.md`, `codex_builder_reviewer.ps1`, `run_codex.bat` modified; log dirs untracked.
+- `git diff`: textual changes only in `BLACKBOARD.md` and `codex_builder_reviewer.ps1`; `run_codex.bat` is modified in status but has no textual diff in the scoped diff.
+- `codex_builder_reviewer.ps1` parser check returned `PARSE_OK`.
+- Prior `NEEDS_CHANGES` items are fixed.
+- Used helpers/functions in `codex_builder_reviewer.ps1` exist in the file.
+- `codex_loop_logs\20260425_213901\loop_01_reviewer.md` ends with `REVIEW_RESULT: PASS`.
+
+REVIEW_RESULT: PASS</pre>
+    </section>
+
+    <section>
+      <h2>남은 주의점</h2>
+      <div class="status warning">승인 없는 sandbox 내부 직접 <code>codex exec</code>는 현재 환경에서 access denied가 재발할 수 있다.</div>
+      <p style="margin-top: 14px;">
+        따라서 Builder -> Reviewer 강제 흐름은 승인된 외부 실행으로 돌릴 때 검증됐다.
+        또한 현재 확인 시점의 <code>BLACKBOARD.md</code>에는 병합 충돌 표식이 실제로 남아 있었다.
+        이 보고서는 별도 HTML 산출물이므로 해당 충돌 표식 자체는 수정하지 않았다.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
