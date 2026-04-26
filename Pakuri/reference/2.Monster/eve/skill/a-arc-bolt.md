@@ -38,7 +38,7 @@
 | 참조 저항 | 번개 저항 |
 | 치명타 적용 순서 | 저항 계산 이후 |
 
-속성 계산은 [`combat-attribute-and-damage-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2Fcombat-attribute-and-damage-system) 참고  
+속성 계산은 [`combat-attribute-and-damage-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F3.combat%2Fcombat-attribute-and-damage-system) 참고  
 감전 상태는 [`buff-debuff.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F3.combat%2Fbuff-debuff) 참고
 
 ## 4. 특성 5종

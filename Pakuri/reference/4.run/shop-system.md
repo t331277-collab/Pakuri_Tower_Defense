@@ -11,7 +11,14 @@
 - 런 외부 성장 재화인 `어둠의 흔적`과는 분리한다.
 
 골드 지급량은 [`combat-reward-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fcombat-reward-system)에서 관리한다.
-상점 등장 일차, 등장 확률, 스테이지당 등장 제한은 [`dungeon-squad-run-structure.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fdungeon-squad-run-structure)에서 관리한다.
+상점 등장일과 일차 진행 규칙은 [`dungeon-squad-run-structure.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fdungeon-squad-run-structure)에서 관리한다.
+
+상점 등장 규칙:
+- 상점은 각 스테이지 6~9일 중 하루에 선택지로 등장한다.
+- 상점은 스테이지당 1회만 등장한다.
+- 상점을 선택하면 해당 일차는 전투 없이 상점 이용만 하고 다음 일차로 넘어간다.
+- 상점 이용일에는 전투 보상을 지급하지 않는다.
+- 상점이 등장한 날에도 일반 전투와 정예 전투 선택지가 함께 보일 수 있다.
 
 ## 2. 상점 구조
 상점은 등장 시 아래 상품을 전부 보여준다.
@@ -39,5 +46,4 @@
 - 상점에서 유물을 판매할 때 시너지 후보를 어느 정도 보정할지 여부
 
 ## 5. 관련 문서
-- 이벤트 규칙은 [`event-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fevent-system) 참고.
 - 런 내부 반복 구조는 [`dungeon-squad-run-structure.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fdungeon-squad-run-structure) 참고.

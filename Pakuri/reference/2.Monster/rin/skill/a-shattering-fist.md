@@ -16,52 +16,45 @@
 
 | 항목 | 값 |
 |---|---:|
-| 기본 물리 피해 | 18 |
+| 기본 물리 피해 | 17 |
 | 공격력 계수 | 1.0 |
 | 주문력 계수 | 0 |
 | 공격 범위 | 7.5 |
 | 투사체 속도 | 13.0 |
 | 관통 수 | 0 |
 | 추가 투사체 수 | 0 |
-| 탄창 수 | 6 |
-| 재장전 시간 | 3.8초 |
-| 발사 간격 | 0.42초 |
+| 탄창 수 | 10 |
+| 재장전 시간 | 4.0초 |
+| 발사 간격 | 0.34초 |
 | 치명타 적용 | 가능 |
 
 ## 3. 피해 계산
 
 | 항목 | 값 |
 |---|---:|
-| 계산식 | `18 + 공격력 * 1.0` |
+| 계산식 | `17 + 공격력 * 1.0` |
 | 참조 방어 | 방어력 |
 | 치명타 적용 순서 | 방어력 계산 이후 |
 
-물리 피해와 방어력 계산은 [`combat-attribute-and-damage-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2Fcombat-attribute-and-damage-system) 참고  
+물리 피해와 방어력 계산은 [`combat-attribute-and-damage-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F3.combat%2Fcombat-attribute-and-damage-system) 참고  
 전투 스탯 정의는 [`combat-stat-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F3.combat%2Fcombat-stat-system) 참고
 
-## 4. 발동 규칙
-- 린은 이동하지 않고 현재 사거리 안의 적을 향해 파쇄권을 발사한다.
-- 파쇄권은 가장 앞선 적을 우선 대상으로 삼는다.
-- 투사체가 적에게 적중하면 물리 피해를 1회 준다.
-- 기본 상태에서는 관통하지 않는다.
-- 탄창을 모두 사용하면 재장전 시간 이후 다시 발사한다.
-
-## 5. 특성 5종
+## 4. 특성 5종
 
 | 특성 | 효과 |
 |---|---|
 | 특성 1 | 위력 +25% |
-| 특성 2 | 탄창 수 +3 |
+| 특성 2 | 탄창 수 +4 |
 | 특성 3 | 재장전 속도 +25% |
 | 특성 4 | 관통 수 +1, 위력 -10% |
 | 특성 5 | 치명타 확률 +10%, 치명타 피해 +25% |
 
-## 6. 마스터 스킬
+## 5. 마스터 스킬
 
 | 선택지 | 효과 |
 |---|---|
-| 철권 연사 | 탄창 수 +4, 발사 간격 -20%, 위력 +15% |
-| 중량 파쇄 | 위력 +70%, 발사 간격 +25%, 적중 시 작은 범위에 35% 물리 피해 |
+| 철권 연사 | 탄창 수 +6, 발사 간격 -18%, 위력 +12% |
+| 뇌격 건틀릿 | 적중 시 40% 번개 추가 피해, 3번째 적중마다 대상 주변 2명에게 번개 연쇄 |
 
-## 7. 대응 패시브
+## 6. 대응 패시브
 - 양손잡이: [`f-ambidextrous.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F2.Monster%2Frin%2Fskill%2Ff-ambidextrous)

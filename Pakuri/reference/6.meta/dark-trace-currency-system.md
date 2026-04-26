@@ -11,16 +11,17 @@
 - 상위 티어 재화는 하위 티어 재화를 일정 수량 모아 승급한다.
 - 티어가 높을수록 영구 성장, 해금, 고난도 콘텐츠 진입 비용에 사용한다.
 - 런 내부 재화인 `골드`와는 완전히 분리한다.
+- 어둠의 흔적은 캐릭터 성장뿐 아니라 게임 전반의 콘텐츠를 여는 해금 트리의 기본 재화로 사용한다.
 
 ## 2. 재화 티어
 
-| 티어 | 이름 | 용도 방향 |
-|---:|---|---|
-| 1 | 어둠의 흔적 | 기본 영구 성장, 저단계 강화 |
-| 2 | 어둠의 결정 | 주요 영구 성장, 캐릭터/기능 해금 |
-| 3 | 어둠의 정수 | 고급 성장 노드, 시너지 강화 해금 |
-| 4 | 어둠의 심핵 | 희귀 해금, 고난도 성장, 특수 슬롯 개방 |
-| 5 | 심연의 성흔 | 최상위 성장, 계정 단위 핵심 해금 |
+|  티어 | 이름     | 용도 방향                   |
+| --: | ------ | ----------------------- |
+|   1 | 어둠의 흔적 | 기본 영구 성장, 저단계 강화        |
+|   2 | 어둠의 결정 | 주요 영구 성장, 캐릭터/기능 해금     |
+|   3 | 어둠의 정수 | 고급 성장 노드, 시너지 강화 해금     |
+|   4 | 어둠의 심핵 | 희귀 해금, 고난도 성장, 특수 슬롯 개방 |
+|   5 | 심연의 성흔 | 최상위 성장, 계정 단위 핵심 해금     |
 
 ## 3. 승급 규칙
 하위 재화 10개를 상위 재화 1개로 승급한다.
@@ -54,27 +55,51 @@
 
 | 사용처 | 주 사용 티어 | 예시 |
 |---|---|---|
-| 기본 능력 강화 | 어둠의 흔적 | 시작 체력, 시작 공격력, 기본 포로 보상 보정 |
+| 캐릭터 스탯 강화 | 어둠의 흔적 | 모든 캐릭터 공통 5단계 스탯 강화 |
+| 캐릭터 액티브 강화 | 어둠의 흔적 | 캐릭터별 액티브 스킬마다 다른 메타 강화 |
+| 해금 트리 | 어둠의 흔적, 어둠의 결정 | 시작 골드, 자동 획득, 유물 선택지, 전투 보조 기능 해금 |
 | 캐릭터 해금 | 어둠의 결정 | 신규 타워/몬스터 해금 |
 | 성장 트리 중급 노드 | 어둠의 결정, 어둠의 정수 | 시작 골드 증가, 상점 상품 슬롯 보정 |
 | 유물/시너지 연구 | 어둠의 정수 | 특정 유물군 해금, 시너지 후보 보정 |
 | 고급 시스템 해금 | 어둠의 심핵 | 시작 유물 선택권, 고난도 모드 보정 |
 | 최상위 계정 해금 | 심연의 성흔 | 새 난이도, 특수 도전, 계정 단위 핵심 기능 |
 
-## 6. 지급 규칙과의 관계
+## 6. 메타 성장 초기화 규칙
+캐릭터별 스탯 강화와 액티브 강화는 `어둠의 흔적`을 직접 사용한다.
+패시브는 메타 성장에서 다루지 않는다.
+강화 초기화는 캐릭터 단위로 진행한다.
+
+| 항목 | 규칙 |
+|---|---|
+| 초기화 단위 | 캐릭터 1명 |
+| 반환 대상 | 해당 캐릭터의 스탯 / 액티브 강화에 투자한 어둠의 흔적 |
+| 반환 비율 | 100% |
+| 고정 수수료 | 어둠의 흔적 50개 |
+| 수수료 반환 | 반환되지 않음 |
+
+예를 들어 한 캐릭터에게 `어둠의 흔적` 300개를 투자했다면, 초기화 시 투자분 300개를 돌려받고 별도로 수수료 50개를 지불한다.
+수수료는 투자량에 비례하지 않으므로 큰 방향 전환은 허용하되, 소규모 반복 초기화는 억제한다.
+
+상세 스탯 성장 노드는 [`meta-growth-node-list.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fmeta-growth-node-list), 액티브 스킬별 강화 노드는 [`active-skill-growth-node-list.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Factive-skill-growth-node-list) 참고.
+
+## 7. 지급 규칙과의 관계
 전투 보상 문서에서는 `어둠의 흔적` 지급량만 정의한다.
 상위 재화는 전투에서 직접 지급하지 않고, 어둠의 흔적을 승급해 획득하는 것을 기본으로 한다.
 
 예외적으로 이벤트나 고난도 보상에서 상위 재화를 직접 지급할 수 있지만, 프로토타입 단계에서는 제외한다.
 
-## 7. 후속 결정 필요 항목
+## 8. 후속 결정 필요 항목
 - 승급 비율을 10:1로 고정할지 여부
 - 상위 난이도에서 어둠의 결정 이상을 직접 지급할지 여부
-- 메타 성장 노드별 정확한 비용
+- 메타 성장 노드 비용의 체감 난이도
+- 초기화 수수료 50개가 적절한지 여부
 - 승급 자동화 UI 제공 시점
 - 심연의 성흔 사용처를 난이도 해금으로 둘지, 최상위 성장으로 둘지
 
-## 8. 관련 문서
+## 9. 관련 문서
 - 메타 성장 콘텐츠 목록은 [`meta-growth-index.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fmeta-growth-index) 참고.
+- 캐릭터별 공통 스탯 강화 노드는 [`meta-growth-node-list.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fmeta-growth-node-list) 참고.
+- 캐릭터별 액티브 강화 노드는 [`active-skill-growth-node-list.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Factive-skill-growth-node-list) 참고.
+- 어둠의 흔적 해금 트리는 [`dark-trace-unlock-tree.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fdark-trace-unlock-tree) 참고.
 - 전투 보상 지급량은 [`combat-reward-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fcombat-reward-system) 참고.
 - 콘텐츠 카탈로그는 [`dungeon-squad-content-catalog.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F1.prototype-goals%2Fdungeon-squad-content-catalog) 참고.

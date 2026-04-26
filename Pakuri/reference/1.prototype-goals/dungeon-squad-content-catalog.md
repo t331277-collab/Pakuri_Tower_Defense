@@ -17,9 +17,9 @@
 ## 3. 영웅 / 적 기능
 일반 영웅, 전투 보스, 중간보스, 보스 영웅, 포로
 
-목표 : 포로 관련 구조는 [`dungeon-squad-combat-levelup-choice-flow.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2Fdungeon-squad-combat-levelup-choice-flow) 참고
+목표 : 포로 관련 구조는 [`prisoner-choice-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fprisoner-choice-system) 참고
 
-스테이지별 적 구성은 [`enemy-stage-index.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F5.enemy%2Fenemy-stage-index) 참고
+스테이지 기본 규칙은 [`stage-basic-rules.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F5.enemy%2Fstage-basic-rules) 참고
 
 
 ## 4. 스탯 / 전투 계산 기능
@@ -43,7 +43,7 @@
 - 포격대
 - 추적자
 
-## 6 전투 보상
+## 6. 전투 보상
 포로, 유물, 골드, 어둠의 흔적
 
 모든 전투 종료 후 포로와 재화를 지급한다.
@@ -60,26 +60,53 @@
 목표 : 어둠신 시스템은 현재 프로토타입 범위에서 제외
 제외 : 후속 콘텐츠로 어둠신 시스템 문서 작성
 
-## 8. 이벤트 기능
-상점 조우, 이벤트 조우, 이벤트 선택, 비용 지불, 보상 변형
+## 8. 진행일 선택 기능
+일반 전투, 정예 전투, 상점, 전투 진입 이벤트
 
-목표 : 프로토타입에는 일반 진행일에 확률적으로 상점과 이벤트가 추가 등장한다.
+목표 : 프로토타입에는 일반 진행일마다 오늘 진행할 콘텐츠를 선택하게 한다.
 
 런 구조 기준:
-- 1일, 5일, 10일, 11일에는 상점과 이벤트가 등장하지 않는다.
-- 2~4일, 6~9일에는 일반 전투가 고정 등장한다.
-- 일반 진행일에는 상점과 이벤트가 추가로 등장할 수 있다.
-- 상점은 일반 진행일마다 15% 확률, 스테이지당 최대 1회
-- 이벤트는 일반 진행일마다 25% 확률, 등장 횟수 제한 없음
+- 1일, 5일, 10일, 11일에는 고정 전투만 등장한다.
+- 2~4일, 6~9일에는 일반 전투가 기본 선택지로 등장한다.
+- 정예 전투는 매 일반 진행일마다 30% 확률로 선택지에 추가된다.
+- 정예 전투를 선택하면 해당 일차 전투 전체에 정예 접두 효과가 적용된다.
+- 정예 전투 추가 보상은 포로 1명이다.
+- 상점은 6~9일 중 하루에 선택지로 등장한다.
+- 상점을 선택하면 해당 일차는 전투 없이 상점 이용만 하고 다음 일차로 넘어간다.
+- 6~9일에는 일반 전투, 정예 전투, 상점 선택지가 한 번에 모두 보일 수 있다.
+- 일반 전투와 정예 전투는 전투 진입 직후 20% 확률로 이벤트가 발생할 수 있다.
+- 이벤트 선택과 결과 처리가 끝나면 원래 전투로 복귀한다.
+
+관련 문서:
+- 런 일차 구조는 [`dungeon-squad-run-structure.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fdungeon-squad-run-structure) 참고
+- 정예 전투 규칙은 [`elite-combat-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Felite-combat-system) 참고
+- 상점 상품과 가격은 [`shop-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fshop-system) 참고
+- 전투 진입 이벤트는 [`event-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fevent-system) 참고
+
+## 9. 상점 기능
+상점 등장일, 상점 이용, 골드 소비
+
+목표 : 각 스테이지 6~9일 중 하루에 상점 선택지를 제공한다.
+
+런 구조 기준:
+- 상점은 6~9일 중 하루가 무작위로 지정된다.
+- 상점은 스테이지당 1회만 존재한다.
+- 상점을 선택하면 해당 일차는 전투 없이 상점 이용만 하고 다음 일차로 넘어간다.
+- 상점 이용일에는 전투 보상을 지급하지 않는다.
+- 상점이 등장한 날에도 일반 전투와 정예 전투 선택지가 함께 보일 수 있다.
 
 관련 문서:
 - 런 일차 구조는 [`dungeon-squad-run-structure.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fdungeon-squad-run-structure) 참고
 - 상점 상품과 가격은 [`shop-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fshop-system) 참고
-- 이벤트 예시는 [`event-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fevent-system) 참고
 
 
-## 9. 진행 / 메타(영구 지속) 기능
+## 10. 진행 / 메타(영구 지속) 기능
 어둠의 흔적, 가이던스 스톤, 시련, 난이도
+
+프로토타입 1차 메타 성장은 `어둠의 흔적`을 사용해 캐릭터별 공통 스탯과 액티브 스킬을 강화하는 구조로 둔다.
+패시브는 메타 성장에서 다루지 않는다.
+강화는 캐릭터 단위로 관리하고, 초기화 시 투자한 `어둠의 흔적`은 전액 반환한다.
+단, 초기화할 때마다 `어둠의 흔적` 50개를 고정 수수료로 소모한다.
 
 어둠 계열 재화는 5단계 티어로 구성한다.
 - 어둠의 흔적
@@ -90,5 +117,7 @@
 
 메타 성장 전체 정리는 [`meta-growth-index.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fmeta-growth-index) 참고
 어둠 계열 재화 티어와 승급 규칙은 [`dark-trace-currency-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fdark-trace-currency-system) 참고
+캐릭터별 공통 스탯 강화 노드는 [`meta-growth-node-list.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fmeta-growth-node-list) 참고
+캐릭터별 액티브 스킬 강화 노드는 [`active-skill-growth-node-list.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Factive-skill-growth-node-list) 참고
 
-추가 예정 : 메타 성장 노드 문서 작성
+추가 예정 : 캐릭터 해금, 난이도 해금, 시작 보너스 문서 작성

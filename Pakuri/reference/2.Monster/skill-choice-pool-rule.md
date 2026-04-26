@@ -3,6 +3,8 @@
 > 목적: 런 중 캐릭터 강화 선택지가 어떻게 구성되는지 정리한다.
 
 ## 1. 전투 보상 선택 규칙
+전투 후 포로를 `공양`에 사용하면 캐릭터 강화 선택지가 열린다.
+포로 사용 방식 전체는 [`prisoner-choice-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fprisoner-choice-system) 참고.
 
 | 항목 | 규칙 |
 |---|---|
@@ -64,3 +66,4 @@
 
 ## 7. 관련 문서
 - 몬스터 기본 구조: [`monster-basic-rule.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F2.Monster%2Fmonster-basic-rule)
+- 포로 선택 시스템: [`prisoner-choice-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fprisoner-choice-system)

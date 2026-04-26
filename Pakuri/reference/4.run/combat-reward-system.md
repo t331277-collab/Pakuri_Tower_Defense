@@ -8,6 +8,7 @@
 | 전투 종류 | 포로 보상 | 유물 보상 | 골드 | 어둠의 흔적 |
 |---|---|---|---|---|
 | 일반 전투 | 1~3명, 전투 보스 확정 포함 | 없음 | 지급 | 지급 |
+| 정예 전투 | 일반 전투 포로 보상 + 포로 1명 | 없음 | 지급 | 지급 |
 | 5일차 중간보스 | 1~3명, 중간보스 확정 포함 | 유물 3택 1 | 지급 | 지급 |
 | 10일차 중간보스 | 1~3명, 중간보스 확정 포함 | 유물 3택 1 | 지급 | 지급 |
 | 보스 전투 | 1~3명, 보스 확정 포함 | 유물 3택 1 | 지급 | 지급 |
@@ -18,6 +19,7 @@
 | 전투 종류 | 보스 개체 |
 |---|---|
 | 일반 전투 | 해당 스테이지 일반몹 중 1종이 랜덤 선택되어 강화 보스로 등장 |
+| 정예 전투 | 해당 스테이지 일반몹 중 1종이 랜덤 선택되어 강화 보스로 등장 |
 | 5일차 중간보스 | 해당 스테이지의 5일차 중간보스 |
 | 10일차 중간보스 | 해당 스테이지의 10일차 중간보스 |
 | 보스 전투 | 5일차 중간보스 + 10일차 중간보스 + 스테이지 보스 |
@@ -46,6 +48,8 @@
 - 포로 목록에는 해당 전투의 보스 개체가 무조건 포함된다.
 - 포로가 1명만 등장하는 경우, 그 1명은 전투 보스다.
 - 포로가 2~3명 등장하는 경우, 전투 보스 1명 + 해당 스테이지의 일반 포로 후보로 구성한다.
+- 정예 전투는 위 포로 보상에 포로 1명을 추가한다.
+- 정예 전투 추가 포로는 해당 스테이지의 일반 포로 후보에서 뽑는다.
 - 11일차 보스전에는 보스 개체가 3명 등장하므로, 포로 보상에는 세 보스 중 최소 1명이 포함된다.
 - 11일차 보스전에서 포로가 2~3명 등장하면, 가능한 한 등장한 보스 개체를 우선 포함한다.
 
@@ -68,6 +72,7 @@
 | 전투 종류 | 골드 지급량 |
 |---|---:|
 | 일반 전투 | 10 |
+| 정예 전투 | 10 |
 | 5일차 중간보스 | 30 |
 | 10일차 중간보스 | 30 |
 | 보스 전투 | 50 |
@@ -84,6 +89,7 @@
 | 전투 종류 | 쉬움 기준 지급량 |
 |---|---:|
 | 일반 전투 | 10 |
+| 정예 전투 | 10 |
 | 5일차 중간보스 | 20 |
 | 10일차 중간보스 | 20 |
 | 보스 전투 | 50 |
@@ -104,5 +110,5 @@
 - 런 내부 반복 구조는 [`dungeon-squad-run-structure.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fdungeon-squad-run-structure) 참고.
 - 유물 시너지와 유물 목록은 [`artifact-synergy-list.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fartifact-synergy-list) 참고.
 - 상점 규칙은 [`shop-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fshop-system) 참고.
-- 이벤트 규칙은 [`event-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fevent-system) 참고.
+- 정예 전투 규칙은 [`elite-combat-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Felite-combat-system) 참고.
 - 어둠 계열 재화 티어와 승급 규칙은 [`dark-trace-currency-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fdark-trace-currency-system) 참고.

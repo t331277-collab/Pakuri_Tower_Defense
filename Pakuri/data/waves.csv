@@ -1,0 +1,15 @@
+wave_id,phase_id,time_sec,enemy_id,count,interval_sec,spawn_group,is_elite,trigger_type,trigger_value
+WAVE_001,PHASE_01,0,ENEMY_001,6,1.2,early_a,false,time,0
+WAVE_001,PHASE_01,12,ENEMY_002,2,2.0,early_break,false,time,12
+WAVE_001,PHASE_02,28,ENEMY_001,8,0.9,early_b,false,time,28
+WAVE_002,PHASE_01,0,ENEMY_001,10,0.8,mid_a,false,time,0
+WAVE_002,PHASE_01,18,ENEMY_003,3,1.8,mid_support,false,time,18
+WAVE_002,PHASE_02,40,ENEMY_004,2,3.0,mid_tank,false,time,40
+WAVE_003,PHASE_01,0,ENEMY_001,12,0.7,late_a,false,time,0
+WAVE_003,PHASE_01,20,ENEMY_005,2,2.5,late_support,false,time,20
+WAVE_003,PHASE_02,38,ENEMY_006,2,3.0,late_summon,false,time,38
+WAVE_003,PHASE_03,60,ENEMY_007,2,2.2,late_flank,false,time,60
+WAVE_004,PHASE_BOSS,0,BOSS_001,1,0,boss,true,time,0
+WAVE_004,PHASE_BOSS,15,ENEMY_008,2,4.0,boss_guard,true,hp,0.75
+WAVE_004,PHASE_BOSS,35,ENEMY_002,4,1.5,boss_break,false,hp,0.50
+WAVE_004,PHASE_BOSS,55,ENEMY_007,3,1.8,boss_flank,false,hp,0.25

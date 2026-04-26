@@ -565,3 +565,162 @@ Completed
 - 2026-04-25: 사용자 답변을 반영해 패시브는 슬롯 `F~J` 총 5개, 런 중 최대 3개 습득으로 설계를 고정했고, 포로 보상은 우선 표시 전용 정보로 처리하기로 기록했다.
 - 2026-04-25: 실제 저장소에서 린의 `g~j` 패시브 문서가 없음을 다시 확인해, 문서 기반 전체 몬스터 구현 전에 남은 자료 갭으로 기록했다.
 - 2026-04-25: 사용자 답변을 반영해 1차 구현 범위를 `아리엘`, `이브`, `세인`, `베가` 4몬스터 우선으로 고정하고, `린`은 더미 상태로 남기기로 기록했다.
+
+## Task: SaveAndLoad Direction Plan
+
+### Task title
+
+Run / Meta 저장 경계와 SaveAndLoad 구조 설계 HTML 작성
+
+### Goals
+
+- 현재 Run 확장 설계와 `reference/4.run`, `reference/6.meta` 문서를 근거로 저장 / 불러오기 방향을 정리한다.
+- 런 내부 저장과 메타 영구 저장의 경계를 분리한다.
+- v1에서 저장할 것, 나중에 미룰 것, 저장하지 않을 런타임 상태를 HTML 문서 한 장으로 정리한다.
+
+### Constraints
+
+- 실제 문서와 실제 현재 코드 구조를 근거로만 적는다.
+- 아직 미작성인 메타 해금 문서를 구현된 것처럼 적지 않는다.
+- 이 작업은 Designer 설계 문서 작성이며, 실제 SaveLoad 코드 구현은 포함하지 않는다.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed
+
+### Next Actions
+
+- 사용자가 원하면 이 문서를 기준으로 Code Builder handoff를 작성해 `RunSession`, `MetaSaveData`, `RunSnapshot`, `SaveLoadService` 구현 순서를 고정한다.
+- 실제 구현은 `GameDataCatalog` 부팅 로드 구조와 `RunSession` 분리 후 체크포인트 저장부터 시작하는 것이 맞다.
+
+### Evidence
+
+- `Pakuri/reference/4.run/dungeon-squad-run-structure.md`는 11일 단위 스테이지, 일반 진행일 선택지, 전투 후 보상, 다음 일차 이동 흐름을 정의한다.
+- `Pakuri/reference/4.run/combat-reward-system.md`는 골드가 런 내부 재화이며 런 종료 시 사라지고, 어둠의 흔적이 런 외부 재화라고 정의한다.
+- `Pakuri/reference/4.run/shop-system.md`는 상점이 스테이지당 1회, 6~9일 중 하루만 등장한다고 정의한다.
+- `Pakuri/reference/4.run/event-system.md`는 일반 / 정예 전투 진입 직후 20% 확률 이벤트와 전투 복귀 흐름을 정의한다.
+- `Pakuri/reference/6.meta/meta-growth-index.md`는 메타 성장에서 현재 확정된 범위와 미작성 범위를 구분한다.
+- `Pakuri/reference/6.meta/meta-growth-node-list.md`는 캐릭터별 공통 스탯 강화와 초기화 규칙을 정의한다.
+- `Pakuri/reference/6.meta/active-skill-growth-node-list.md`는 캐릭터별 액티브 메타 강화 규칙을 정의한다.
+- `Pakuri/reference/6.meta/dark-trace-currency-system.md`는 어둠 계열 재화 티어, 승급, 사용처, 메타 초기화 규칙을 정의한다.
+- `Pakuri/reference/monster-select-run-ui-expansion-plan.html`은 `RunSession` 분리와 Run 세션 데이터 제안을 포함한다.
+- `Pakuri/reference/monster-select-run-ui-builder-handoff.html`은 고정 구현 순서에서 `RunSession` / `RunFlowController` 분리를 먼저 요구한다.
+- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`는 현재 전투, 일차 진행, 보상, UI를 한 클래스에 함께 들고 있다.
+- `Pakuri/data` CSV는 `Assets` 바깥에 있고, 현재 `Assets/Resources`, `Assets/StreamingAssets`, CSV 로더 흔적이 없다.
+- `Pakuri/reference/save-and-load-plan.html`은 이제 저장 구조뿐 아니라 `CSV 저작 원본 -> 런타임 생성 자산 -> 게임 시작 시 1회 로드` 방향까지 포함한다.
+
+### History
+
+- 2026-04-26: `AGENTS.md`, `BLACKBOARD.md`, `monster-select-run-ui-expansion-plan.html`, `monster-select-run-ui-builder-handoff.html`, `reference/4.run`, `reference/6.meta`, 현재 `EveVerticalSliceController.cs`를 다시 읽었다.
+- 2026-04-26: SaveAndLoad를 `MetaSaveData`, `RunSnapshot`, `EphemeralRuntime` 3층으로 나누고, v1은 일차 경계 체크포인트 저장만 지원하는 방향으로 정리한 HTML을 `Pakuri/reference/save-and-load-plan.html`에 추가했다.
+- 2026-04-26: `Pakuri/data` CSV 검토 결과를 반영해 `save-and-load-plan.html`에 정적 게임 데이터 로딩 방향, importer 기반 생성 자산 구조, 부팅 시 1회 로드 방식을 추가했다.
+
+## Task: CSV Data Role And Loading Review
+
+### Task title
+
+`Pakuri/data` CSV 역할 파악 및 게임 로딩 방식 검토
+
+### Goals
+
+- `Pakuri/data` 아래 CSV들의 실제 역할을 파일 구조와 샘플 행 기준으로 분류한다.
+- 현재 프로젝트 코드가 이 CSV들을 실제로 읽고 있는지 확인한다.
+- 게임에서 이 데이터를 언제, 어떤 방식으로 불러오는 것이 맞는지 설계 판단을 남긴다.
+
+### Constraints
+
+- 실제 CSV 내용, 실제 현재 스크립트, 실제 폴더 위치를 근거로만 판단한다.
+- 아직 없는 CSV 로더나 데이터 파이프라인을 이미 있다고 말하지 않는다.
+- 이 작업은 Designer 분석이며, CSV 로더 구현은 포함하지 않는다.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed
+
+### Next Actions
+
+- 사용자가 원하면 이 분석을 기준으로 Code Builder handoff를 작성해 CSV importer 또는 ScriptableObject 생성 파이프라인 구현 범위를 고정한다.
+- 추천 방향은 `Pakuri/data`를 저작 원본으로 유지하고, 빌드용 런타임 데이터는 `Assets` 아래 생성 자산으로 변환하는 방식이다.
+
+### Evidence
+
+- `Pakuri/data` 아래 CSV는 총 22개이며 총 크기는 약 28.22KB다.
+- `ally_units.csv`, `ally_runtime.csv`, `enemies.csv`, `enemy_runtime.csv`는 정적 스탯과 런타임 전투 파라미터가 분리된 구조다.
+- `skills.csv`, `skill_runtime.csv`, `skill_branches.csv`, `levelup_choices.csv`, `levelup_rules.csv`는 스킬 / 분기 / 레벨업 선택지 데이터를 가진다.
+- `waves_chapter1.csv`, `waves_chapter2.csv`, `waves_chapter3.csv`, `waves_runtime.csv`, `boss_patterns.csv`는 웨이브 / 보스 패턴 / 전투 진행 데이터를 가진다.
+- `items.csv`, `status_effects.csv`, `formations.csv`, `balance_targets.csv`는 장비 / 상태이상 / 배치 / 밸런스 목표 데이터를 가진다.
+- `spawn_points.csv`는 2번째 줄에 `적 스폰 좌표는 CSV가 아니라 코드에서 처리한다.`고 적혀 있어 현재 비활성 데이터다.
+- `towers.csv`, `tower_skills.csv`는 `TOWER_001` 중심의 구형 단일 타워 프로토타입 데이터다.
+- `ally_units.csv`는 `ALLY_*` 체계인데 `skills.csv`는 `TOWER_001` 소유 스킬만 가지고 있어 데이터 모델이 혼재되어 있다.
+- 실제 무결성 확인 결과 `ally_units.csv`, `levelup_choices.csv`, `skill_branches.csv`가 참조하는 `SKILL_004` 이상 다수가 `skills.csv`에 없다.
+- `Pakuri/data`는 `Assets` 바깥에 있으며, 현재 `Assets/Resources`, `Assets/StreamingAssets` 디렉터리는 존재하지 않는다.
+- `Pakuri/Assets/Scripts`와 프로젝트 텍스트 파일 검색 결과 CSV 로더나 `TextAsset`, `Resources.Load`, `StreamingAssets` 사용 흔적은 확인되지 않았다.
+
+### History
+
+- 2026-04-26: `AGENTS.md`, `BLACKBOARD.md`를 다시 읽고 `Pakuri/data` 전체 CSV 목록, 헤더, 첫 행 샘플을 확인했다.
+- 2026-04-26: 스킬 참조 무결성을 점검해 `ALLY_*` 기반 데이터와 `TOWER_*` 기반 데이터가 혼재되어 있고, 일부 스킬 참조가 비어 있음을 확인했다.
+- 2026-04-26: 현재 CSV는 빌드 포함 위치에 있지 않고 로더도 없으므로, 런타임 직접 CSV 파싱보다 빌드 전 변환 자산 방식이 더 안전하다고 정리했다.
+- 2026-04-26: 위 판단을 `Pakuri/reference/save-and-load-plan.html` 본문에도 반영해 SaveAndLoad와 정적 데이터 로딩 경계를 함께 문서화했다.
+
+## Task: Run Systems Integration Summary Report
+
+### Task title
+
+`monster-select-run-ui-builder-handoff`, `monster-select-run-ui-expansion-plan`, `save-and-load-plan` 통합 보고서 HTML 작성
+
+### Goals
+
+- 기존 3개 설계 HTML의 공통 결론을 한 장으로 합쳐 현재 프로젝트가 어떤 구조로 작업될지 빠르게 보여준다.
+- 현재 실제 코드 상태와 문서 기준 구조를 함께 정리해, 구현 예정 범위와 아직 이른 범위를 분리한다.
+- 기획서가 아직 부족한 부분과 현재 적용하기 이른 데이터 파이프라인을 명시적으로 `추후 구현 예정`으로 기록한다.
+
+### Constraints
+
+- 실제 존재하는 3개 HTML, 실제 현재 코드, 실제 문서 상태를 근거로만 적는다.
+- 아직 구현되지 않은 UI, 저장, 데이터 importer를 구현된 것처럼 적지 않는다.
+- 이 작업은 Designer 보고서 작성이며, 실제 코드 구현은 포함하지 않는다.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed
+
+### Next Actions
+
+- 사용자가 원하면 이 통합 보고서를 기준으로 Designer가 Code Builder handoff 문서를 더 짧게 다시 정리할 수 있다.
+- 실제 구현은 보고서에 적은 순서대로 `RunSession` 분리, UI 흐름 분리, 정적 데이터 자산, A/F 최소 보상 / 스킬선택, 체크포인트 저장 순으로 들어가는 것이 안전하다.
+
+### Evidence
+
+- `Pakuri/reference/monster-select-run-ui-builder-handoff.html`는 `RunSession`, `RunFlowController` 또는 동등 구조를 먼저 세우는 고정 구현 순서를 제안한다.
+- `Pakuri/reference/monster-select-run-ui-expansion-plan.html`는 몬스터 선택 UI, Run 시작, 전투 후 보상/선택 흐름과 `RunSession` 중심 구조를 설명한다.
+- `Pakuri/reference/save-and-load-plan.html`는 `MetaSaveData`, `RunSnapshot`, `GameDataCatalog` 분리와 부팅 시 1회 데이터 로드를 정의한다.
+- 현재 프로젝트의 게임 전용 스크립트는 `Pakuri/Assets/Scripts/Combat/DamageCalculator.cs`, `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`만 확인된다.
+- 현재 `Pakuri/Assets` 아래에는 `Scenes`, `Screenshots`, `Scripts`, `Settings`만 있고, `Resources`, `StreamingAssets`, `DataGenerated`는 없다.
+- 현재 프로젝트에는 `.uxml`, `.uss` UI Toolkit 자산이 없다.
+- 실제 CSV 원본은 `Pakuri/data`에 있지만 현재 로더와 생성 자산 파이프라인은 없다.
+- 새 통합 문서 `Pakuri/reference/run-systems-integration-summary-report.html`를 추가했고, 문서 안에 현재 구조, 작업 순서, 저장/데이터 방향, `추후 구현 예정` 항목을 함께 정리했다.
+- 2026-04-26 재확인 결과 `Pakuri/reference/2.Monster/rin/rin-tower.md`와 `rin/skill/g~j` 문서가 존재해, 린의 패시브 문서 부족 전제는 더 이상 유효하지 않다.
+- 2026-04-26 재확인 결과 `Pakuri/Assets` 재귀 검색에서 `ScriptableObject`, `CreateAssetMenu`, `GameDataCatalog`, `CsvGameDataImporter`, `Resources.Load`, `TextAsset` 관련 정적 데이터 로더 / 자산 정의는 확인되지 않았다.
+- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`는 현재 보상 패널에서 이브 전용 고정 선택지 3개만 직접 생성한다.
+- `Pakuri/reference/2.Monster/skill-choice-pool-rule.md`와 `Pakuri/reference/4.run/combat-reward-system.md`는 전체 보상 / 스킬선택 규칙을 정의하지만, 현재 구현은 그 전체 범위에 아직 도달하지 않았다.
+
+### History
+
+- 2026-04-26: `AGENTS.md`, `BLACKBOARD.md`, 기존 3개 설계 HTML을 다시 읽고 서로 겹치는 구조와 고정 결론을 추렸다.
+- 2026-04-26: 현재 실제 코드와 자산 상태를 다시 확인해, 아직 없는 UI Toolkit 자산과 데이터 생성 파이프라인을 보고서에 명시적으로 비구현 상태로 적었다.
+- 2026-04-26: `Pakuri/reference/run-systems-integration-summary-report.html`를 추가해 현재 구조, 권장 구현 순서, 데이터/저장 경계, 기획 부족 영역과 이른 데이터 적용 범위를 `추후 구현 예정`으로 분리했다.
+- 2026-04-26: 린 문서 갱신과 데이터 방향 변경을 반영해 `run-systems-integration-summary-report.html`를 수정했고, 린을 5몬스터 범위에 포함시키고 정적 데이터는 CSV importer 전제가 아니라 Unity 프로젝트 내부 정적 자산 기준으로 정리했다.
+- 2026-04-26: 보상 / 스킬선택은 완전히 나중으로 미루지 않고, `RunSession` / UI / 공통 전투 코어 다음 마일스톤에서 A/F 최소 범위를 같이 붙이는 방향으로 `run-systems-integration-summary-report.html`를 다시 수정했다.
