@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55d6af300ba157743b18ec868681b2af, type: 3}
+  m_Name: rin
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.Data.MonsterDefinition
+  MonsterId: rin
+  DisplayName: "\uB9B0"
+  RoleSummary: "\uB9CE\uC740 \uD0C4\uCC3D\uC744 \uD65C\uC6A9\uD55C \uBB3C\uB9AC \uC5F0\uC0AC,
+    \uC9E7\uC740 \uAD11\uC5ED \uCDA9\uACA9\uD30C, \uB109\uBC31 \uBCF4\uC870."
+  ElementLabel: "\uBB3C\uB9AC"
+  ActiveSkillName: "\uD30C\uC1C4\uAD8C"
+  PassiveSkillName: "\uC591\uC190\uC7A1\uC774"
+  UnitColor: {r: 0.95, g: 0.56, b: 0.42, a: 1}
+  ProjectileColor: {r: 1, g: 0.74, b: 0.58, a: 1}
+  MaxHealth: 260
+  PowerStat: 28
+  BaseDamage: 26
+  PowerCoefficient: 1.05
+  ProjectileSpeed: 16
+  ProjectileLifetime: 4
+  ProjectileHitRadius: 0.48
+  MagazineCapacity: 8
+  ReloadDuration: 3.6
+  ShotInterval: 0.28
+  StatusChance: 0
+  StatusEffectLabel: 
+  InitialRewardChoices:
+  - RewardId: rin-a-power
+    Title: "\uD30C\uC1C4\uAD8C \uC99D\uD3ED"
+    Description: "\uD30C\uC1C4\uAD8C \uD53C\uD574 +20%"
+    DamageMultiplier: 1.2
+    MagazineBonus: 0
+    ShotIntervalMultiplier: 1
+    ReloadDurationMultiplier: 1
+    MaxHealthBonus: 0
+    StatusChanceBonus: 0
+  - RewardId: rin-a-magazine
+    Title: "\uC555\uCD95 \uC7A5\uC804"
+    Description: "\uD0C4\uCC3D +3, \uC7AC\uC7A5\uC804 \uBD80\uB2F4 \uC644\uD654"
+    DamageMultiplier: 1
+    MagazineBonus: 3
+    ShotIntervalMultiplier: 1
+    ReloadDurationMultiplier: 0.95
+    MaxHealthBonus: 0
+    StatusChanceBonus: 0
+  - RewardId: rin-f-ambidextrous
+    Title: "\uC591\uC190\uC7A1\uC774"
+    Description: "\uCD5C\uB300 \uCCB4\uB825 +35, \uD30C\uC1C4\uAD8C \uD53C\uD574
+      +12%"
+    DamageMultiplier: 1.12
+    MagazineBonus: 0
+    ShotIntervalMultiplier: 1
+    ReloadDurationMultiplier: 1
+    MaxHealthBonus: 35
+    StatusChanceBonus: 0

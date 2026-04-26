@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55d6af300ba157743b18ec868681b2af, type: 3}
+  m_Name: eve
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.Data.MonsterDefinition
+  MonsterId: eve
+  DisplayName: "\uC774\uBE0C"
+  RoleSummary: "\uBC88\uAC1C/\uC5BC\uC74C \uC18D\uC131 \uC5D4\uC9C4\uD615 + \uC0C1\uD0DC
+    \uC81C\uC5B4 \uBCF4\uC870\uD615 \uD0C0\uC6CC."
+  ElementLabel: "\uBC88\uAC1C"
+  ActiveSkillName: "\uC544\uD06C \uBCFC\uD2B8"
+  PassiveSkillName: "\uC804\uC555 \uBCF4\uC815"
+  UnitColor: {r: 0.41, g: 0.78, b: 1, a: 1}
+  ProjectileColor: {r: 0.61, g: 0.93, b: 1, a: 1}
+  MaxHealth: 220
+  PowerStat: 30
+  BaseDamage: 24
+  PowerCoefficient: 0.95
+  ProjectileSpeed: 15
+  ProjectileLifetime: 5
+  ProjectileHitRadius: 0.42
+  MagazineCapacity: 6
+  ReloadDuration: 4
+  ShotInterval: 0.35
+  StatusChance: 0.15
+  StatusEffectLabel: "\uAC10\uC804"
+  InitialRewardChoices:
+  - RewardId: eve-a-power
+    Title: "\uC544\uD06C \uBCFC\uD2B8 \uC99D\uD3ED"
+    Description: "\uC544\uD06C \uBCFC\uD2B8 \uD53C\uD574 +20%"
+    DamageMultiplier: 1.2
+    MagazineBonus: 0
+    ShotIntervalMultiplier: 1
+    ReloadDurationMultiplier: 1
+    MaxHealthBonus: 0
+    StatusChanceBonus: 0
+  - RewardId: eve-a-magazine
+    Title: "\uCD95\uC804\uC9C0 \uD655\uC7A5"
+    Description: "\uD0C4\uCC3D +2, \uBCF4\uC2A4\uC804 \uC720\uC9C0\uB825 \uC99D\uAC00"
+    DamageMultiplier: 1
+    MagazineBonus: 2
+    ShotIntervalMultiplier: 1
+    ReloadDurationMultiplier: 1
+    MaxHealthBonus: 0
+    StatusChanceBonus: 0
+  - RewardId: eve-f-voltage-calibration
+    Title: "\uC804\uC555 \uBCF4\uC815"
+    Description: "\uBC1C\uC0AC \uAC04\uACA9 -10%, \uC7AC\uC7A5\uC804 -10%, \uAC10\uC804
+      \uD655\uB960 +10%"
+    DamageMultiplier: 1
+    MagazineBonus: 0
+    ShotIntervalMultiplier: 0.9
+    ReloadDurationMultiplier: 0.9
+    MaxHealthBonus: 0
+    StatusChanceBonus: 0.1

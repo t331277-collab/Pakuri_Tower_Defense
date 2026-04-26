@@ -724,3 +724,64 @@ Completed
 - 2026-04-26: `Pakuri/reference/run-systems-integration-summary-report.html`를 추가해 현재 구조, 권장 구현 순서, 데이터/저장 경계, 기획 부족 영역과 이른 데이터 적용 범위를 `추후 구현 예정`으로 분리했다.
 - 2026-04-26: 린 문서 갱신과 데이터 방향 변경을 반영해 `run-systems-integration-summary-report.html`를 수정했고, 린을 5몬스터 범위에 포함시키고 정적 데이터는 CSV importer 전제가 아니라 Unity 프로젝트 내부 정적 자산 기준으로 정리했다.
 - 2026-04-26: 보상 / 스킬선택은 완전히 나중으로 미루지 않고, `RunSession` / UI / 공통 전투 코어 다음 마일스톤에서 A/F 최소 범위를 같이 붙이는 방향으로 `run-systems-integration-summary-report.html`를 다시 수정했다.
+
+## Task: Run Flow UICanvas Prototype Implementation
+
+### Task title
+
+`run-systems-integration-summary-report.html` 기준 첫 구현 슬라이스 착수
+
+### Goals
+
+- 5몬스터 선택, `RunSession`, `RunFlowController`, `UICanvas` 기반 흐름의 첫 구현 슬라이스를 만든다.
+- 정적 데이터는 CSV 런타임 로드 대신 Unity 프로젝트 내부 자산으로 만든다.
+- 현재 `EveVerticalSliceController`를 선택 몬스터 기반 공통 A 스킬 프로토타입 전투와 A/F 최소 보상 루프가 가능한 구조로 연다.
+
+### Constraints
+
+- 사용자의 요청대로 유니티 플레이 실행 검증은 사용자에게 맡기고, 저는 코드/씬/자산 준비와 에디터 상태 확인까지만 한다.
+- UI는 `UICanvas` 기준으로 씬에 직접 배치한다.
+- 현재 사용자의 지시로 외부 Reviewer 단계는 잠시 중지하고, Builder 종료 후에는 간단한 자체 점검만 수행한다.
+- 구현되지 않은 B~E, G~J, 유물 3택1, 전체 혼합 보상 풀은 이번 슬라이스 범위에 넣지 않는다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder changes applied. 외부 Reviewer 1회 결과 반영까지는 완료됐고, 이후 Reviewer 단계는 사용자 지시로 잠시 중지했다. `LegacyRuntime.ttf` 교체와 Unity 재컴파일까지 마쳤고, 현재는 사용자 플레이 검증 대기 상태다.
+
+### Next Actions
+
+- 사용자가 Unity에서 플레이 모드로 `RunUICanvas` 동작, 5몬스터 선택, 전투 진입, 최소 보상 선택, 다음 일차 진행을 검증한다.
+- 검증 중 UI 배치 문제나 입력 문제, 전투 흐름 문제를 확인하면 그 근거를 받아 다음 Builder 수정으로 이어간다.
+- 이후 확장은 `유물 3택1`, `신규 액티브/패시브/특성/마스터 전체 풀`, `B/G, C/H, D/I, E/J` 순으로 간다.
+
+### Evidence
+
+- 새 런타임 데이터 스크립트 `Pakuri/Assets/Scripts/Data/MonsterDefinition.cs`, `GameDataCatalog.cs`를 추가했다.
+- 에디터 시드 스크립트 `Pakuri/Assets/Scripts/Data/Editor/PakuriGameDataSeeder.cs`를 추가했고, Unity 메뉴 `Pakuri/Seed Default Game Data` 실행으로 `Assets/Data/GameData/GameDataCatalog.asset`와 5개 몬스터 자산을 생성했다.
+- 새 런 흐름 스크립트 `Pakuri/Assets/Scripts/Run/RunSession.cs`, `RunFlowState.cs`, `RunFlowController.cs`를 추가했다.
+- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`를 선택 몬스터 기반 공통 A 스킬 프로토타입 전투와 최소 보상 루프를 처리하도록 크게 수정했다.
+- Unity 씬 `Assets/Scenes/SampleScene.unity`에 루트 `RunUICanvas`와 `EventSystem`을 직접 생성하고 저장했다.
+- Unity asset search 결과 `Assets/Data/GameData/GameDataCatalog.asset`와 `Assets/Data/GameData/Monsters/*.asset` 5개가 실제로 생성됐다.
+- Unity root hierarchy 재확인 결과 `RunUICanvas`에는 `Canvas`, `CanvasScaler`, `GraphicRaycaster`, `RunFlowController`가 붙었고, `EventSystem`에는 `EventSystem`, `InputSystemUIInputModule`가 붙었다.
+- 외부 Reviewer 1회 결과는 세 가지 이슈를 지적했다: 보상 효과가 다음 일차에 유지되지 않는 문제, 스테이지 배율이 전투/보상에 반영되지 않는 문제, 플레이 중 버튼 재생성 시 소멸 위험.
+- 그 지적을 반영해 `RunSession`에 누적 보상 수치를 추가하고, `EveVerticalSliceController.BeginConfiguredDay(...)`가 세션 누적 보상을 다시 적용하도록 수정했다.
+- 같은 수정에서 `EveVerticalSliceController`는 `stageIndex` 기반 적 체력 배율과 어둠의 흔적 지급 배율을 반영하도록 수정했다.
+- `RunFlowController.ClearButtons(...)`는 플레이 중 재생성 버튼이 같은 이름으로 재사용되지 않도록 `QueuedForDestroy` 이름 변경 후 제거하도록 수정했다.
+- 2026-04-26 사용자 플레이 검증에서 `RunFlowController.ResolveReferences()`의 `Arial.ttf` 참조가 Unity 내장 폰트 정책과 맞지 않아 `ArgumentException`이 발생했고, 이를 `LegacyRuntime.ttf`로 교체했다.
+- `LegacyRuntime.ttf` 교체 후 Unity 스크립트 재컴파일을 요청했고, 최근 Unity console 20개 로그 재확인에서는 동일한 `Arial.ttf` 예외가 다시 보이지 않았다.
+- 외부 Reviewer 재실행은 10분 타임아웃 안에 끝나지 않았고, 이후 Reviewer 단계는 사용자 지시로 잠시 중지했다.
+
+### History
+
+- 2026-04-26: Designer 기준으로 현재 HTML과 실제 코드/씬 상태를 다시 읽고 첫 Builder 슬라이스 범위를 `정적 데이터 자산 + RunSession/RunFlowController + UICanvas + A/F 최소 보상 루프`로 고정했다.
+- 2026-04-26: `MonsterDefinition`, `GameDataCatalog`, `PakuriGameDataSeeder`, `RunSession`, `RunFlowState`, `RunFlowController`를 새로 추가했다.
+- 2026-04-26: `Pakuri/Seed Default Game Data`를 실행해 5몬스터 기본 자산과 `GameDataCatalog.asset`를 생성했다.
+- 2026-04-26: `RunUICanvas`, `EventSystem`을 씬에 추가하고 저장했다.
+- 2026-04-26: 외부 Reviewer 1회가 보상 유지, 스테이지 배율, 버튼 재생성 문제를 지적했고, Builder가 같은 턴에서 세 이슈를 수정했다.
+- 2026-04-26: 수정 후 Unity console에서는 새 컴파일 오류가 보이지 않았고, 외부 Reviewer 재실행은 시간 초과로 종료됐다.
+- 2026-04-26: 사용자 플레이 검증에서 `Resources.GetBuiltinResource<Font>("Arial.ttf")` 예외가 보고됐고, `RunFlowController`의 기본 폰트를 `LegacyRuntime.ttf`로 교체했다. 같은 시점에 사용자 요청으로 외부 Reviewer 단계는 잠시 중지하고 자체 점검만 유지하기로 했다.
+- 2026-04-26: `LegacyRuntime.ttf` 교체 후 Unity 재컴파일과 최근 콘솔 로그를 다시 확인했고, 동일한 폰트 예외는 재현되지 않았다.
