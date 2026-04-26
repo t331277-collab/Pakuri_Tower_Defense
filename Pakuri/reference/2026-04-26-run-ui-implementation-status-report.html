@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2026-04-26 Run / UI 구현 작업 보고서</title>
+  <style>
+    :root {
+      --bg: #eef3f6;
+      --paper: #ffffff;
+      --ink: #1f2933;
+      --muted: #5d6875;
+      --line: #d8e1ea;
+      --blue: #14558f;
+      --green: #17643a;
+      --amber: #9a5a00;
+      --red: #b42318;
+      --soft-blue: #edf6ff;
+      --soft-green: #eefcf4;
+      --soft-amber: #fff7ed;
+      --soft-red: #fff4f4;
+      --soft-gray: #f7fafc;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 36px 20px 64px;
+    }
+
+    header, section {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--paper);
+      box-shadow: 0 10px 26px rgba(31, 41, 51, 0.06);
+    }
+
+    header {
+      padding: 28px;
+      margin-bottom: 18px;
+      background: linear-gradient(135deg, #ffffff 0%, #eef7ff 100%);
+    }
+
+    section {
+      padding: 22px;
+      margin-top: 18px;
+    }
+
+    h1, h2, h3 { margin: 0; line-height: 1.25; }
+    h1 { font-size: 32px; margin-bottom: 10px; }
+    h2 { font-size: 22px; margin-bottom: 14px; }
+    h3 { font-size: 17px; margin: 14px 0 8px; }
+    p { margin: 0 0 12px; }
+
+    code {
+      border-radius: 6px;
+      background: #edf3f8;
+      padding: 1px 6px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.95em;
+    }
+
+    .subtitle { color: var(--muted); max-width: 980px; }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f6f9fc;
+      color: var(--muted);
+      padding: 6px 10px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--soft-gray);
+      padding: 16px;
+    }
+
+    .half { grid-column: span 6; }
+    .third { grid-column: span 4; }
+    .full { grid-column: span 12; }
+    .blue { border-left: 5px solid var(--blue); background: var(--soft-blue); }
+    .green { border-left: 5px solid var(--green); background: var(--soft-green); }
+    .amber { border-left: 5px solid var(--amber); background: var(--soft-amber); }
+    .red { border-left: 5px solid var(--red); background: var(--soft-red); }
+
+    ul, ol { margin: 0; padding-left: 22px; }
+    li { margin: 5px 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f2f6fa;
+      font-weight: 700;
+    }
+
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
+    .done { background: #dcfce7; color: #166534; }
+    .partial { background: #fef3c7; color: #92400e; }
+    .todo { background: #fee2e2; color: #991b1b; }
+    .fact { background: #dbeafe; color: #1d4ed8; }
+
+    @media (max-width: 900px) {
+      .half, .third { grid-column: span 12; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>2026-04-26 Run / UI 구현 작업 보고서</h1>
+    <p class="subtitle">
+      이 문서는 <code>run-systems-integration-summary-report.html</code>과
+      <code>monster-select-run-ui-expansion-plan.html</code>을 기준으로,
+      오늘 실제 코드와 씬에 반영된 작업, 아직 남은 범위, UI 수정 문제의 원인과 선택한 해결 방향을 정리한 보고서다.
+      모든 판단은 실제 파일, 씬 상태, 빌드 출력, <code>BLACKBOARD.md</code> 기록을 근거로 작성했다.
+    </p>
+    <div class="chips">
+      <span class="chip">작성 기준 시각: 2026-04-26 22:35:18 +09:00</span>
+      <span class="chip">근거 문서: <code>run-systems-integration-summary-report.html</code></span>
+      <span class="chip">근거 문서: <code>monster-select-run-ui-expansion-plan.html</code></span>
+      <span class="chip">검증: <code>dotnet build Pakuri\Assembly-CSharp.csproj --no-restore</code></span>
+    </div>
+  </header>
+
+  <section>
+    <h2>요약</h2>
+    <div class="grid">
+      <article class="card green half">
+        <h3>완료된 핵심</h3>
+        <ul>
+          <li>MainMenuScene과 RunScene을 분리하고, <code>Touch To Start -> 런 버튼 -> 캐릭터 선택 -> RunScene 입장</code> 흐름을 만들었다.</li>
+          <li>5개 몬스터의 정적 데이터 자산과 <code>GameDataCatalog</code>를 만들었다.</li>
+          <li>선택한 몬스터와 <code>RunSession</code>을 RunScene으로 넘기는 구조를 만들었다.</li>
+          <li>RunScene 전투 HUD, 보상 패널, 패배 패널을 <code>RunCombatUiController</code>로 복구했다.</li>
+          <li>UI를 삭제/재생성하는 방향에서, 씬에 존재하는 UI를 토글하고 바인딩하는 방향으로 수정했다.</li>
+        </ul>
+      </article>
+
+      <article class="card amber half">
+        <h3>부분 완료 / 검증 대기</h3>
+        <ul>
+          <li>Run 데이터 구조는 생겼지만, 전체 11일차 런, 상점, 이벤트, 저장/복구까지는 아직 연결되지 않았다.</li>
+          <li>보상은 현재 구현된 후보 중심이며, 문서의 전체 보상/스킬 선택 규칙은 아직 완성 범위가 아니다.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>오늘 완료된 구현</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>영역</th>
+          <th>완료 내용</th>
+          <th>근거 파일 / 상태</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>정적 게임 데이터</td>
+          <td><span class="pill done">완료</span> CSV를 런타임에서 직접 읽는 방식이 아니라, Unity 안에서 만든 <code>MonsterDefinition</code>, <code>GameDataCatalog</code> 자산 데이터를 사용하도록 정했다. 기본 데이터 시더와 5개 몬스터 자산도 생성했다.</td>
+          <td><code>MonsterDefinition.cs</code>, <code>GameDataCatalog.cs</code>, <code>PakuriGameDataSeeder.cs</code>, <code>Assets/Data/GameData/Monsters/*.asset</code></td>
+        </tr>
+        <tr>
+          <td>Run 상태</td>
+          <td><span class="pill done">완료</span> 선택 몬스터, 스테이지, 일차, 누적 보상 값을 담는 <code>RunSession</code>을 추가했다.</td>
+          <td><code>Pakuri/Assets/Scripts/Run/RunSession.cs</code></td>
+        </tr>
+        <tr>
+          <td>씬 분리</td>
+          <td><span class="pill done">완료</span> MainMenuScene은 선택 흐름, RunScene은 전투 전용으로 분리했다.</td>
+          <td><code>MainMenuScene.unity</code>, <code>RunScene.unity</code>, <code>EditorBuildSettings.asset</code></td>
+        </tr>
+        <tr>
+          <td>선택 전달</td>
+          <td><span class="pill done">완료</span> <code>RunStartContext</code>와 <code>RunSceneBootstrap</code>으로 선택한 몬스터와 런 세션을 RunScene에 전달한다.</td>
+          <td><code>RunStartContext.cs</code>, <code>RunSceneBootstrap.cs</code></td>
+        </tr>
+        <tr>
+          <td>MainMenu UI</td>
+          <td><span class="pill done">완료</span> <code>TouchToStartPanel</code>, <code>RunMenuPanel</code>, <code>CharacterSelectPanel</code>을 씬에 남겨 사용자가 한 번에 편집할 수 있게 했다.</td>
+          <td><code>MainMenuFlowController.cs</code>, Unity MCP 씬 확인 기록</td>
+        </tr>
+        <tr>
+          <td>RunScene 전투 UI</td>
+          <td><span class="pill done">완료</span> HUD, 보상 패널, 패배 패널을 RunScene에 복구하고 Edit Mode에서도 보이게 했다.</td>
+          <td><code>RunCombatUiController.cs</code>, <code>RunCombatCanvas</code></td>
+        </tr>
+        <tr>
+          <td>보상 버튼 표시 문제</td>
+          <td><span class="pill done">완료</span> <code>RewardButton_0~2</code> 고정 슬롯을 만들고, <code>RewardButtons</code> 높이 0 문제와 legacy preview 버튼 겹침을 보정했다.</td>
+          <td><code>RunCombatUiController.RebuildRewardButtons()</code>, <code>EnsureRewardButtonSlots()</code></td>
+        </tr>
+        <tr>
+          <td>UI 위치 수정 문제</td>
+          <td><span class="pill done">완료</span> <code>VerticalLayoutGroup</code>, <code>ContentSizeFitter</code>가 Pos X / Pos Y 조작을 막던 문제를 제거 방향으로 바꿨다.</td>
+          <td><code>MainMenuFlowController.EnsureVerticalLayout()</code>, <code>RunCombatUiController.EnsureVerticalLayout()</code></td>
+        </tr>
+        <tr>
+          <td>UI 수정값 유지</td>
+          <td><span class="pill done">완료</span> 기존 UI가 있으면 기본 RectTransform, 텍스트, 스타일을 덮어쓰지 않고 참조/바인딩 중심으로 동작하게 바꿨다.</td>
+          <td><code>EnsureText()</code>, <code>EnsureButton()</code>, <code>CacheUiReferences()</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>설계 문서 대비 미완료 범위</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>문서 기준 목표</th>
+          <th>현재 상태</th>
+          <th>남은 작업</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>11일차 Run 전체 루프</td>
+          <td><span class="pill partial">부분 완료</span> 일차 진행 데이터와 다음 일차 호출은 있으나, 전체 이벤트/상점/보스/스테이지 구조는 아직 완성되지 않았다.</td>
+          <td>11일차 진행표, 전투/상점/이벤트 분기, 보스 종료 처리 연결</td>
+        </tr>
+        <tr>
+          <td>전체 스킬 선택 풀</td>
+          <td><span class="pill partial">부분 완료</span> 몬스터별 초기 보상 후보는 자산에 있으나, A~J 전체 액티브/패시브/특성/마스터 선택 풀 생성기는 없다.</td>
+          <td><code>SkillChoicePoolBuilder</code> 계열 구조와 실제 효과 구현</td>
+        </tr>
+        <tr>
+          <td>속성/상태이상/공통 전투 코어</td>
+          <td><span class="pill partial">부분 완료</span> 기존 <code>EveVerticalSliceController</code> 중심 전투를 선택 몬스터 값으로 확장했지만, 문서의 전체 속성/상태 시스템은 아직 아니다.</td>
+          <td>공통 CombatDirector, 상태 런타임, 속성 저항/피해 계산 확장</td>
+        </tr>
+        <tr>
+          <td>저장/불러오기</td>
+          <td><span class="pill todo">미완료</span> <code>SaveLoadService</code>, <code>MetaSaveData</code>, <code>RunSnapshot</code> 구현은 아직 없다.</td>
+          <td>메타 저장과 Run 체크포인트 저장 구조 구현</td>
+        </tr>
+        <tr>
+          <td>포로 / 유물 / 상점 / 이벤트</td>
+          <td><span class="pill todo">미완료</span> 보상 요약에는 표시 가능하지만 실제 시스템은 아직 연결되지 않았다.</td>
+          <td>포로 선택, 유물 3택, 상점, 이벤트 데이터와 런 흐름 연결</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>UI 수정 문제와 선택한 해결 방향</h2>
+    <div class="grid">
+      <article class="card red half">
+        <h3>발생한 문제</h3>
+        <ul>
+          <li>UI를 직접 수정해도 게임 시작 시 스크립트가 기본값을 다시 적용해서 원래대로 돌아갔다.</li>
+          <li>일부 UI는 <code>VerticalLayoutGroup</code>과 <code>ContentSizeFitter</code> 때문에 RectTransform의 Pos X / Pos Y 이동이 막혔다.</li>
+          <li>MainMenuScene의 화면 전환 UI가 런타임 생성/삭제 방식이면 사용자가 모든 화면을 한 번에 편집할 수 없었다.</li>
+          <li>RunScene 보상 버튼은 레이아웃 제거 이후 슬롯 크기와 루트 높이가 보장되지 않아 보이지 않는 문제가 생겼다.</li>
+        </ul>
+      </article>
+
+      <article class="card green half">
+        <h3>선택한 방법</h3>
+        <ul>
+          <li>UI는 코드가 계속 생성/삭제하지 않고, 씬에 존재하는 authored UI를 원본으로 본다.</li>
+          <li>코드는 누락된 named anchor만 보충하고, 기존 오브젝트가 있으면 참조를 캐싱하고 콜백만 바인딩한다.</li>
+          <li>Edit Mode에서는 모든 주요 패널을 보이게 해서 사용자가 직접 위치와 크기를 편집할 수 있게 한다.</li>
+          <li>Runtime에서는 같은 오브젝트를 <code>SetActive</code>로 전환한다.</li>
+          <li>기본 UI가 필요하면 내가 먼저 씬 안에 Canvas 기반 UI를 만들고, 사용자가 직접 만든 UI가 있으면 그 UI를 수정/바인딩하는 방향으로 간다.</li>
+          <li>보상 버튼은 삭제/재생성 대신 <code>RewardButton_0~2</code> 고정 슬롯을 재사용한다.</li>
+          <li>Text는 현재 프로젝트에 <code>com.unity.ugui</code>만 manifest에 있고, Assets 검색에서 <code>TextMeshPro</code>, <code>TMP_Text</code>, <code>TMPro</code> 사용 흔적이 없어 <code>UnityEngine.UI.Text</code>를 유지했다.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>검증 결과</h2>
+    <ul>
+      <li><span class="pill fact">빌드</span> <code>dotnet build Pakuri\Assembly-CSharp.csproj --no-restore</code>는 오류 0개로 통과했다.</li>
+      <li><span class="pill fact">경고</span> 빌드 경고 2개는 Unity/MCPForUnity 참조의 <code>System.Net.Http</code>, <code>System.IO.Compression</code> 버전 충돌 경고다.</li>
+      <li><span class="pill fact">RunScene</span> Unity MCP 확인에서 <code>RunCombatCanvas</code>와 <code>RunCombatUiController</code>가 존재했다.</li>
+      <li><span class="pill fact">보상 버튼</span> Unity MCP 확인에서 <code>RewardButton_0</code>, <code>RewardButton_1</code>, <code>RewardButton_2</code>가 active 상태이고, legacy <code>RewardPreviewButton</code>은 inactive 상태였다.</li>
+      <li><span class="pill fact">TextMeshPro</span> <code>Pakuri/Packages/manifest.json</code>에는 <code>com.unity.ugui</code>가 있고, <code>com.unity.textmeshpro</code> 항목은 확인되지 않았다.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>다음 우선순위</h2>
+    <ol>
+      <li>검증 중 UI 위치가 다시 밀리면 해당 RectTransform과 부모 오브젝트 이름을 기준으로 고정 레이아웃 잔여물을 확인한다.</li>
+      <li>다음 구현은 전체 시스템 확장보다 먼저 <code>RunSession</code> 기반 런 루프와 보상 선택 결과 누적을 안정화한다.</li>
+      <li>그 다음 문서 기준의 전체 스킬 풀, 유물, 포로, 상점, 이벤트, 저장/복구를 순차적으로 붙인다.</li>
+    </ol>
+  </section>
+</main>
+</body>
+</html>

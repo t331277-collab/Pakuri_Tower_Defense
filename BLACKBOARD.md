@@ -1,5 +1,301 @@
 # BLACKBOARD.md
 
+## Task: 2026-04-26 Run UI Implementation Status Report
+
+### Task title
+
+HTML report for completed and incomplete Run / UI implementation work on 2026-04-26
+
+### Goals
+
+- Compare today's implementation against `run-systems-integration-summary-report.html` and `monster-select-run-ui-expansion-plan.html`.
+- Document completed work, incomplete work, UI editability issues, and chosen UI editing direction.
+
+### Constraints
+
+- All claims must be based on actual files, scene state, command output, or `BLACKBOARD.md` history.
+- Do not include work-time estimates in the report.
+- Reflect the user's decision that game data is made inside Unity and consumed from Unity assets, not from runtime CSV loading.
+- Reflect the user's decision that UI will use editable scene UI: Codex may create a base UI, and user-authored UI should be modified/bound rather than replaced.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- User can open `Pakuri/reference/2026-04-26-run-ui-implementation-status-report.html` to review the report.
+
+### Evidence
+
+- Created `Pakuri/reference/2026-04-26-run-ui-implementation-status-report.html`.
+- The report references actual implementation files including `MainMenuFlowController.cs`, `RunCombatUiController.cs`, `RunSceneBootstrap.cs`, `RunStartContext.cs`, `RunSession.cs`, `MonsterDefinition.cs`, and `GameDataCatalog.cs`.
+- File timestamp check confirmed the report exists under `Pakuri/reference`.
+- Updated the report to remove work-time content, UI Toolkit incomplete-scope content, and user Play Mode verification from the incomplete-scope table.
+- Updated the report to state that CSV is not the runtime data path; Unity-created assets such as `MonsterDefinition` and `GameDataCatalog` are the chosen data source.
+
+### History
+
+- 2026-04-26: User requested an HTML work report based on `run-systems-integration-summary-report.html` and `monster-select-run-ui-expansion-plan.html`.
+- 2026-04-26: Read both source HTML files, implementation file lists, data asset lists, scene file timestamps, manifest TextMeshPro evidence, and generated the report.
+- 2026-04-26: User requested removal of Play Mode verification, work-time content, and UI Toolkit incomplete-scope content; user also fixed the direction to Unity-created data assets and editable scene Canvas UI. Updated the report accordingly.
+
+## Task: RunScene Reward Button Visibility Fix
+
+### Task title
+
+RunScene stage-clear reward buttons are fixed editable slots and visible when rewards exist
+
+### Goals
+
+- Fix the RunScene issue where stage-clear reward buttons did not appear.
+- Keep reward UI objects editable in Edit Mode instead of relying on delete/recreate behavior.
+- Preserve authored button labels where possible, while runtime reward labels are still assigned from actual reward data.
+
+### Constraints
+
+- No external reviewer for this task; perform simple self-review only.
+- Do not run Unity Play Mode; user performs gameplay verification.
+- All claims must be based on actual files, scene state, or command output.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder fix applied and self-reviewed. Waiting for user Play Mode verification.
+
+### Next Actions
+
+- User verifies RunScene stage clear: reward panel appears with reward buttons, selecting a reward enables the continue flow.
+- If reward panel appears but a button is blocked or misplaced, inspect the saved RectTransform values of `RewardPanel`, `RewardButtons`, and `RewardButton_0..2`.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` now uses fixed `RewardButton_0`, `RewardButton_1`, and `RewardButton_2` slots under `RewardButtons`.
+- `RebuildRewardButtons()` clears only the tracked button list, calls `EnsureRewardButtonSlots(false)`, then activates slots based on `combatController.GetRewardChoiceCount()`.
+- `EnsureRewardButtonSlots()` repairs zero-height `RewardButtons`, ensures the three named button slots, and hides non-slot legacy buttons such as `RewardPreviewButton`.
+- Existing nonzero reward button slot RectTransforms keep their authored positions/sizes; default positions are applied only when a slot is newly created or has a broken zero size.
+- `EnsureButton()` now preserves existing non-empty labels unless an overwrite is explicitly requested or a label is newly created/empty.
+- Unity MCP RunScene inspection after `OnEnable` reported `RewardButton_0`, `RewardButton_1`, and `RewardButton_2` active in Edit Mode, and `RewardPreviewButton` inactive.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing Unity/MCPForUnity assembly version warnings.
+- Unity console error check after clearing showed MCP-FOR-UNITY client handler exit logs only, not project script compile errors.
+
+### History
+
+- 2026-04-26: User reported RunScene reward buttons do not appear.
+- 2026-04-26: Scene inspection found `RewardButtons` previously had zero height and fixed reward slots were missing, while monster assets contained reward choice data.
+- 2026-04-26: Added persistent reward slots, repaired reward root sizing, hid legacy preview buttons, and made existing RunScene reward UI visible in Edit Mode.
+
+## Task: MainMenu Persistent Editable Panels
+
+### Task title
+
+MainMenuScene stage-transition UI panels are persistent scene objects
+
+### Goals
+
+- MainMenuScene UI transitions must not create/delete runtime screen UI.
+- Touch To Start, Run menu, and Character Select must all exist in the scene so the user can edit them together in Edit Mode.
+- Future UI direction: authored scene UI is the source of truth; scripts bind callbacks, toggle visibility, and only create missing named anchors.
+
+### Constraints
+
+- No external reviewer for this task; perform simple self-review only.
+- Do not run Unity Play Mode; user performs gameplay verification.
+- All claims must be based on actual files, scene state, or command output.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder changes applied and self-reviewed. Waiting for user Play Mode verification.
+
+### Next Actions
+
+- User verifies MainMenuScene flow: Touch To Start -> Run -> Character Select -> RunScene.
+- If user edits any of `TouchToStartPanel`, `RunMenuPanel`, `CharacterSelectPanel`, or their child labels/buttons, verify those edits persist after entering Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/MainMenuFlowController.cs` now has separate persistent fields for `touchToStartPanel`, `runMenuPanel`, `characterSelectPanel`, and `monsterButtonRoot`.
+- `MainMenuFlowController.OnEnable()` calls `ShowAllPanelsForEditing()` only when `Application.isPlaying` is false, so all panels are visible in Edit Mode.
+- Runtime methods `ShowTouchToStart()`, `ShowRunMenu()`, and `ShowCharacterSelect()` call `SetPanelVisibility(...)` and no longer call `Destroy`, `DestroyImmediate`, or `ClearButtons`.
+- `EnsureText()` and `EnsureButton()` set default text/style only when a component is newly created, preserving existing authored UI text and styling.
+- Unity MCP scene check reported `MainMenuCanvas` child count 3 after cleanup.
+- Unity MCP code execution reported `TouchToStartPanel active=True children=3`, `RunMenuPanel active=True children=3`, and `CharacterSelectPanel active=True children=4`.
+- Unity MCP code execution reported five persistent character buttons under `MonsterButtons`: `MonsterButton_ariel`, `MonsterButton_eve`, `MonsterButton_rin`, `MonsterButton_sein`, and `MonsterButton_vega`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing Unity/MCPForUnity assembly version warnings.
+- Unity console error check showed only MCP-FOR-UNITY client handler exit log entries, not project script compile errors.
+- `Pakuri/Packages/manifest.json` search found `com.unity.ugui` and no `com.unity.textmeshpro` line.
+- Asset search under `Pakuri/Assets` found no `TextMeshPro`, `TMP_Text`, `TMPro`, or `LiberationSans` usage/assets.
+- Generated `Pakuri/Assembly-CSharp.csproj` contains `Unity.TextMeshPro` references, but current project UI scripts and scene-generated UI are still based on `UnityEngine.UI.Text`.
+
+### History
+
+- 2026-04-26: User requested MainMenuScene click-transition screens to be editable at once instead of created/deleted at runtime, and asked why UI text is not TextMeshPro text.
+- 2026-04-26: Replaced the single dynamic `MainMenuPanel` flow with persistent `TouchToStartPanel`, `RunMenuPanel`, and `CharacterSelectPanel` scene objects.
+- 2026-04-26: Removed the obsolete generated `MainMenuPanel` from `MainMenuScene` and saved the scene.
+- 2026-04-26: Verified build, scene hierarchy, persistent character buttons, and console state.
+- 2026-04-26: User reported UI Pos X / Pos Y could not be edited. Actual code and scene checks found `VerticalLayoutGroup` and `ContentSizeFitter` on generated UI containers.
+- 2026-04-26: Updated `MainMenuFlowController` and `RunCombatUiController` so generated UI containers remove `VerticalLayoutGroup` / `ContentSizeFitter` instead of adding them.
+- 2026-04-26: Verified MainMenuScene `TouchToStartPanel`, `RunMenuPanel`, `CharacterSelectPanel`, and `MonsterButtons` report `VLG=False, CSF=False`; also removed and saved those components from RunScene reward/defeat UI containers.
+
+## Task: Preserve Authored UI Layouts
+
+### Task title
+
+사용자 편집 UI가 플레이 시작 시 코드 기본값으로 되돌아가는 문제 수정
+
+### Goals
+
+- 에디터에서 사용자가 수정한 UI 위치, 크기, 색, 폰트 설정이 게임 시작 시 유지되게 한다.
+- `MainMenuFlowController`, `RunCombatUiController`가 기존 UI 계층을 발견하면 재생성/기본값 재적용 대신 참조만 캐싱하게 한다.
+- 새 UI가 없을 때만 기본 UI를 생성한다.
+
+### Constraints
+
+- 외부 Code Reviewer는 호출하지 않고 자체 코드 리뷰만 수행한다.
+- Codex가 Unity 플레이 모드를 실행해 검증하지 않고, 실제 플레이 검증은 사용자에게 맡긴다.
+- 판단과 설명은 실제 파일, 실제 씬, 실제 명령 출력 근거를 기준으로 한다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder changes applied. 자체 빌드/콘솔 확인까지 완료했고, 사용자 플레이 검증 대기 상태다.
+
+### Next Actions
+
+- 사용자가 `MainMenuScene` 또는 `RunScene`에서 UI를 수정한 뒤 플레이를 시작해 위치/크기/색 등 편집값이 유지되는지 검증한다.
+- 만약 특정 버튼이 단계 전환 중 새로 생성되어 스타일이 달라지는 경우, 해당 버튼 이름과 씬을 근거로 받아 고정 UI 패널 방식으로 더 분리한다.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/MainMenuFlowController.cs`는 기존 `MainMenuPanel`이 있으면 `BuildUiScaffold()`를 다시 실행하지 않고 `CacheUiReferences()`로 기존 `Title`, `Summary`, `Buttons` 참조만 잡는다.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs`는 기존 `HudPanel`, `RewardPanel`, `DefeatPanel`이 있으면 `BuildUiScaffold()`를 다시 실행하지 않고 `CacheUiReferences()`로 기존 참조만 잡는다.
+- 두 컨트롤러 모두 새 오브젝트/컴포넌트가 생성된 경우에만 RectTransform 크기, Image 색, Text 폰트/정렬 같은 기본 스타일을 적용하도록 변경했다.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore`는 오류 0개로 통과했다. 남은 경고는 Unity/MCPForUnity 참조의 `System.Net.Http`, `System.IO.Compression` 버전 충돌 경고 2개다.
+- Unity 콘솔 error 조회에서는 새 스크립트 컴파일 오류가 보이지 않았고, MCP client 종료 로그만 확인됐다.
+
+### History
+
+- 2026-04-26: 사용자 검증에서 UI를 수정해도 게임 시작 시 코드 기본값으로 되돌아가는 문제가 보고됐다.
+- 2026-04-26: 실제 코드 확인 결과 `BuildUiScaffold()`, `EnsurePanel()`, `EnsureText()`, `EnsureButton()`이 기존 UI에도 기본 RectTransform/색/텍스트 스타일을 반복 적용하고 있음을 확인했다.
+- 2026-04-26: 기존 UI가 있으면 캐싱만 수행하고, 기본 스타일은 새로 생성된 UI에만 적용하도록 수정했다.
+
+## Task: RunScene Combat UI Restoration And Edit Mode Visibility
+
+### Task title
+
+RunScene 전투 HUD / 보상 UI 복구와 에디터 비실행 UI 표시
+
+### Goals
+
+- `RunScene`에서 스테이지 클리어 후 보상창이 다시 뜨게 한다.
+- 전투 중 타워 HP, 캐릭터 HP, 탄창, 리로드 남은 초, 재화 상태 HUD가 다시 보이게 한다.
+- `MainMenuScene`과 `RunScene`의 UI가 플레이 실행 전 에디터 상태에서도 생성되어 직접 편집 가능하게 한다.
+
+### Constraints
+
+- 외부 Code Reviewer는 호출하지 않고 자체 코드 리뷰만 수행한다.
+- Codex가 Unity 플레이 모드를 실행해 검증하지 않고, 실제 플레이 검증은 사용자에게 맡긴다.
+- 판단과 설명은 실제 파일, 실제 씬, 실제 명령 출력 근거를 기준으로 한다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder changes applied. 자체 빌드/콘솔/씬 계층 확인까지 완료했고, 사용자 플레이 검증 대기 상태다.
+
+### Next Actions
+
+- 사용자가 Unity에서 `MainMenuScene -> RunScene` 흐름을 실행해 전투 HUD와 클리어 후 보상창 표시를 검증한다.
+- 에디터 비실행 상태에서 `MainMenuCanvas`, `RunCombatCanvas` 하위 UI 오브젝트를 직접 선택/편집할 수 있는지 확인한다.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/MainMenuFlowController.cs`에 `[ExecuteAlways]`를 추가하고, 비실행 상태에서도 `Touch To Start` UI를 생성하게 했다.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs`를 추가해 `RunScene` 전투 HUD, 보상 패널, 패배 패널을 담당하게 했다.
+- `RunCombatUiController`는 HUD에 타워 HP, 캐릭터 HP, 탄창, 재장전 남은 시간, 골드, 흔적을 표시한다.
+- `RunCombatUiController`는 전투 승리 후 `EveVerticalSliceController`의 보상 후보를 읽어 보상 버튼을 만들고, 보상 선택 후 다음 일차로 진행한다.
+- `Pakuri/Assets/Scripts/Run/RunSceneBootstrap.cs`는 `ActiveMonster`, `ActiveSession`, `FallbackMonsterId`를 공개해 전투 UI가 현재 런 세션을 읽을 수 있게 했다.
+- Unity MCP 씬 작업으로 `RunScene`에 `RunCombatCanvas`와 `RunCombatUiController`를 추가했고, `CombatRoot` / `GameDataCatalog.asset` 참조를 연결했다.
+- Unity MCP 계층 확인 결과 `MainMenuScene`의 `MainMenuCanvas`에는 자식 UI 1개가 생성됐다.
+- Unity MCP 계층 확인 결과 `RunScene`의 `RunCombatCanvas`에는 자식 UI 3개가 생성됐다.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore`는 오류 0개로 통과했다. 남은 경고는 Unity/MCPForUnity 참조의 `System.Net.Http`, `System.IO.Compression` 버전 충돌 경고 2개다.
+- Unity 콘솔 error 조회에서는 새 스크립트 컴파일 오류가 보이지 않았고, MCP client 종료 로그만 확인됐다.
+
+### History
+
+- 2026-04-26: 사용자 플레이 검증 결과 `RunScene`에 HUD와 클리어 후 보상 UI가 표시되지 않는 문제가 보고됐다.
+- 2026-04-26: 원인은 `RunScene` 분리 과정에서 기존 `RunFlowController`가 제거되며 전투 HUD/보상 UI 담당자가 사라진 것으로 판단했다.
+- 2026-04-26: `RunCombatUiController`를 새로 추가하고 `RunScene`에 `RunCombatCanvas`를 배치했다.
+- 2026-04-26: `MainMenuFlowController`와 `RunCombatUiController`가 에디터 비실행 상태에서도 UI 자식을 만들도록 `[ExecuteAlways]` 기반으로 보정했다.
+
+## Task: Main Menu To RunScene Flow Separation
+
+### Task title
+
+MainMenuScene 단계 전환과 RunScene 전투 전용 진입 분리
+
+### Goals
+
+- `RunScene`에 들어 있던 캐릭터 선택 UI 흐름을 `MainMenuScene`으로 분리한다.
+- `MainMenuScene`은 `Touch To Start -> 런 버튼 -> 캐릭터 선택 -> RunScene 입장` 단계 전환을 담당한다.
+- `RunScene`은 선택된 캐릭터와 `RunSession`을 받아 전투만 시작한다.
+- 씬 간 전달은 확장성을 고려해 `DontDestroyOnLoad` 기반 `RunStartContext`로 처리한다.
+
+### Constraints
+
+- 외부 Code Reviewer는 호출하지 않고 자체 코드 리뷰만 수행한다.
+- Codex가 Unity 플레이 모드를 실행해 검증하지 않고, 실제 플레이 검증은 사용자에게 맡긴다.
+- 판단과 설명은 실제 파일, 실제 씬, 실제 명령 출력 근거를 기준으로 한다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder changes applied. 자체 코드 리뷰와 빌드 확인까지 완료했고, 사용자 플레이 검증 대기 상태다.
+
+### Next Actions
+
+- 사용자가 Unity에서 `MainMenuScene`을 실행해 `Touch To Start -> 런 -> 캐릭터 선택 -> RunScene 전투 진입` 흐름을 검증한다.
+- 검증 중 씬 전환, 입력, 전투 초기화 문제가 있으면 그 근거를 받아 다음 Builder 수정으로 이어간다.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunStartContext.cs`를 추가해 선택 몬스터와 `RunSession`을 `DontDestroyOnLoad` 컨텍스트로 전달하게 했다.
+- `Pakuri/Assets/Scripts/Run/MainMenuFlowController.cs`를 추가해 `Touch To Start`, `런`, 캐릭터 선택 단계를 같은 `MainMenuScene` Canvas 안에서 전환하게 했다.
+- `Pakuri/Assets/Scripts/Run/RunSceneBootstrap.cs`를 추가해 `RunScene`에서 `RunStartContext`를 읽고 `EveVerticalSliceController.BeginConfiguredDay(...)`를 호출하게 했다.
+- `Pakuri/Assets/Scripts/Run/RunSession.cs`에는 누락되어 있던 `using System;`만 정리해 `Serializable`, `StringComparison`, `Math` 사용 근거를 명시했다.
+- Unity MCP 씬 작업으로 `RunScene`에서 `RunUICanvas`가 제거됐고, `RunSceneBootstrap` 루트 오브젝트가 추가됐다.
+- Unity MCP 씬 작업으로 `MainMenuScene`에는 `MainMenuCanvas`와 `MainMenuFlowController`, `EventSystem`이 추가됐다.
+- `Pakuri/ProjectSettings/EditorBuildSettings.asset`는 `Assets/Scenes/MainMenuScene.unity`, `Assets/Scenes/RunScene.unity` 순서로 갱신됐다.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore`는 오류 0개로 통과했다. 남은 경고는 Unity/MCPForUnity 참조의 `System.Net.Http`, `System.IO.Compression` 버전 충돌 경고 2개다.
+- Unity 콘솔 error 조회에서는 새 스크립트 컴파일 오류가 보이지 않았고, MCP client 종료 로그만 확인됐다.
+
+### History
+
+- 2026-04-26: 사용자 지시로 외부 Reviewer 호출 없이 자체 리뷰만 수행하고, 실제 플레이 검증은 사용자에게 맡기기로 확정했다.
+- 2026-04-26: 현재 실제 씬 파일이 `SampleScene.unity`가 아니라 `MainMenuScene.unity`, `RunScene.unity`임을 확인했다.
+- 2026-04-26: `RunScene.unity`에 `RunUICanvas`와 `RunFlowController`가 남아 있어 캐릭터 선택이 전투 씬 안에 묶여 있음을 확인했다.
+- 2026-04-26: `RunStartContext`, `MainMenuFlowController`, `RunSceneBootstrap`를 추가하고 `RunScene` / `MainMenuScene` / Build Settings를 갱신했다.
+- 2026-04-26: 자체 검증으로 `dotnet build`와 Unity 콘솔 확인을 수행했다.
+
 ## Task: Reviewer Wrapper Smoke Test 2026-04-25 21:40
 
 ### Task title
