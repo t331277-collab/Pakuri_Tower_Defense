@@ -18,3 +18,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 74383f1be432e2748bf2c4baaa6ca958, type: 2}
   - {fileID: 11400000, guid: 6bebb91e8abf4634c9f7d8e6a886e2b4, type: 2}
   - {fileID: 11400000, guid: f44edf2859279f74bae6d0f30ae690bb, type: 2}
+  StageOneEnemies:
+  - {fileID: 11400000, guid: 46ba4cc839a93bc4ab575c9b6ff905f2, type: 2}
+  - {fileID: 11400000, guid: 0ab7cedf9caba11448e924fa9ba47c87, type: 2}
+  - {fileID: 11400000, guid: bd66b3f4601f85045b06058e6e4ec691, type: 2}
+  - {fileID: 11400000, guid: 8c32b441d040d5c44be91430823e89c8, type: 2}
+  - {fileID: 11400000, guid: 929597647ccd91e43bca0b9b23967110, type: 2}
+  - {fileID: 11400000, guid: de3fe5efd03e3b449aa67753751466c9, type: 2}
+  - {fileID: 11400000, guid: b87e6d880e43b2242a8262f4d1dd6e45, type: 2}
+  - {fileID: 11400000, guid: 0f41846a0f28958458ff1e066e1dbadb, type: 2}

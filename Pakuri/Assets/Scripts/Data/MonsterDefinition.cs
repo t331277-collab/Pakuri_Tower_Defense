@@ -1,4 +1,5 @@
 using System;
+using Pakuri.Combat;
 using UnityEngine;
 
 namespace Pakuri.Data
@@ -24,8 +25,11 @@ namespace Pakuri.Data
         public string DisplayName = "Monster";
         [TextArea(2, 4)] public string RoleSummary = "Role summary.";
         public string ElementLabel = "Element";
+        public DamageAttribute PrimaryAttribute = DamageAttribute.Physical;
         public string ActiveSkillName = "Skill A";
         public string PassiveSkillName = "Passive F";
+        public CombatStatBlock BaseStats = new CombatStatBlock();
+        public AttributeDefenseSet Defenses = new AttributeDefenseSet();
 
         [Header("Prototype Combat Tuning")]
         public Color UnitColor = Color.white;
@@ -45,5 +49,9 @@ namespace Pakuri.Data
 
         [Header("Initial Reward Loop")]
         public RewardChoiceDefinition[] InitialRewardChoices = Array.Empty<RewardChoiceDefinition>();
+
+        [Header("Full Skill Data")]
+        public SkillDefinition[] ActiveSkills = Array.Empty<SkillDefinition>();
+        public PassiveDefinition[] PassiveSkills = Array.Empty<PassiveDefinition>();
     }
 }

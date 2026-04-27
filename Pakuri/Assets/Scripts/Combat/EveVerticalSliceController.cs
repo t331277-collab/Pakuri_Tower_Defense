@@ -32,10 +32,29 @@ namespace Pakuri.Combat
             public GameObject GameObject;
             public Transform Transform;
             public SpriteRenderer Renderer;
+            public TextMesh Label;
+            public SpriteRenderer HpBarFill;
+            public EnemyDefinition Definition;
+            public AttributeDefenseSet Defenses;
             public float MaxHealth;
             public float CurrentHealth;
             public float MoveSpeed;
             public float ContactDamagePerSecond;
+            public float AttackPower;
+            public float SpellPower;
+            public float CriticalChanceBonus;
+            public float CriticalMultiplierBonus;
+            public float CriticalResistance;
+            public float DamageMultiplier = 1f;
+            public float HealingMultiplier = 1f;
+            public float DamageTakenMultiplier = 1f;
+            public float DamageReductionTimer;
+            public float ShieldValue;
+            public float ActiveCooldownRemaining;
+            public float AttackBuffTimer;
+            public float AttackBuffMultiplier = 1f;
+            public float MoveSpeedBuffTimer;
+            public float MoveSpeedBuffMultiplier = 1f;
             public bool IsBoss;
             public float ShockTimer;
             public int ShockStacks;
@@ -53,6 +72,11 @@ namespace Pakuri.Combat
             public float RemainingLifetime;
             public float HitRadius;
             public float BaseDamage;
+            public DamageAttribute Attribute;
+            public bool IsEnemyProjectile;
+            public EnemyRuntime SourceEnemy;
+            public Transform TargetTransform;
+            public bool TargetsMonster;
         }
 
         public readonly struct RewardChoiceView
@@ -71,6 +95,7 @@ namespace Pakuri.Combat
 
         [Header("Scene References")]
         [SerializeField] private Camera targetCamera;
+        [SerializeField] private GameDataCatalog gameDataCatalog;
         [SerializeField] private Transform nexusAnchor;
         [SerializeField] private Transform eveAnchor;
         [SerializeField] private Transform enemySpawnAnchor;
@@ -109,11 +134,14 @@ namespace Pakuri.Combat
         [SerializeField] private float spawnInterval = 1.05f;
 
         private static Sprite sharedSprite;
+        private static readonly Vector3 DefaultEnemySpawnPosition = new Vector3(29f, 8f, 0f);
+        private static readonly Dictionary<string, EnemyDefinition> fallbackStageOneEnemyCache = new Dictionary<string, EnemyDefinition>(StringComparer.OrdinalIgnoreCase);
 
         private readonly List<EnemyRuntime> enemies = new List<EnemyRuntime>();
         private readonly List<ProjectileRuntime> projectiles = new List<ProjectileRuntime>();
         private readonly List<RewardOption> rewardOptions = new List<RewardOption>();
         private readonly HashSet<string> blockedRewardIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly List<EnemyDefinition> currentNormalEnemyPool = new List<EnemyDefinition>();
 
         private readonly Color nexusColor = new Color(1f, 0.77f, 0.35f, 0.95f);
         private readonly Color spawnMarkerColor = new Color(1f, 0.38f, 0.35f, 0.45f);
@@ -126,6 +154,8 @@ namespace Pakuri.Combat
         private int pendingNormalSpawnCount;
         private int spawnedNormalCount;
         private bool pendingBossSpawn;
+        private int pendingBossSpawnCount;
+        private int spawnedBossCount;
         private float spawnCooldown;
         private int currentShotsRemaining;
         private float shotCooldown;
@@ -153,6 +183,10 @@ namespace Pakuri.Combat
         private string selectedActiveSkillName = "아크 볼트";
         private string selectedPassiveSkillName = "전압 보정";
         private string selectedStatusEffectLabel = "감전";
+        private DamageAttribute selectedDamageAttribute = DamageAttribute.Lightning;
+        private AttributeDefenseSet selectedMonsterDefenses = new AttributeDefenseSet();
+        private TextMesh selectedMonsterLabel;
+        private SpriteRenderer selectedMonsterHpBarFill;
         private Color selectedUnitColor = new Color(0.41f, 0.78f, 1f, 0.95f);
         private Color selectedProjectileColor = new Color(0.61f, 0.93f, 1f, 0.98f);
         private float unitMaxHealthConfigured;
@@ -172,6 +206,10 @@ namespace Pakuri.Combat
         private float lastAppliedReloadDurationMultiplier = 1f;
         private float lastAppliedMaxHealthBonus;
         private float lastAppliedStatusChanceBonus;
+        private EnemyDefinition currentMidbossDefinition;
+        private EnemyDefinition currentDay5MidbossDefinition;
+        private EnemyDefinition currentDay10MidbossDefinition;
+        private EnemyDefinition currentBossDefinition;
 
         public bool HasActiveRun => runInitialized;
         public bool IsBattleResolved => battleResolved;
@@ -256,6 +294,7 @@ namespace Pakuri.Combat
 
             if (battleResolved)
             {
+                UpdateSelectedMonsterStatusVisuals();
                 return;
             }
 
@@ -263,6 +302,7 @@ namespace Pakuri.Combat
             UpdateEnemies();
             UpdateProjectiles();
             UpdateSelectedMonsterCombat();
+            UpdateSelectedMonsterStatusVisuals();
             CheckBattleResolution();
         }
 
@@ -290,11 +330,16 @@ namespace Pakuri.Combat
             }
         }
 
-        public void BeginConfiguredDay(MonsterDefinition monster, RunSession session)
+        public void BeginConfiguredDay(MonsterDefinition monster, RunSession session, GameDataCatalog catalog = null)
         {
             if (session == null)
             {
                 return;
+            }
+
+            if (catalog != null)
+            {
+                gameDataCatalog = catalog;
             }
 
             stageIndex = Mathf.Clamp(session.StageIndex, 1, 4);
@@ -401,7 +446,7 @@ namespace Pakuri.Combat
 
             nexusAnchor = EnsureChild(nexusAnchor, "Nexus", new Vector3(2f, 8f, 0f));
             eveAnchor = EnsureChild(eveAnchor, "EveUnit", new Vector3(6f, 8f, 0f));
-            enemySpawnAnchor = EnsureChild(enemySpawnAnchor, "EnemySpawnPoint", new Vector3(29f, 8f, 0f));
+            enemySpawnAnchor = EnsureChild(enemySpawnAnchor, "EnemySpawnPoint", DefaultEnemySpawnPosition);
             inputTargetAnchor = EnsureChild(inputTargetAnchor, "InputTarget", new Vector3(16f, 8f, 0f));
             enemyRoot = EnsureChild(enemyRoot, "EnemyRoot", Vector3.zero);
             projectileRoot = EnsureChild(projectileRoot, "ProjectileRoot", Vector3.zero);
@@ -416,14 +461,12 @@ namespace Pakuri.Combat
         {
             if (current != null)
             {
-                current.position = worldPosition;
                 return current;
             }
 
             var existing = transform.Find(childName);
             if (existing != null)
             {
-                existing.position = worldPosition;
                 return existing;
             }
 
@@ -464,6 +507,8 @@ namespace Pakuri.Combat
             selectedActiveSkillName = "아크 볼트";
             selectedPassiveSkillName = "전압 보정";
             selectedStatusEffectLabel = "감전";
+            selectedDamageAttribute = DamageAttribute.Lightning;
+            selectedMonsterDefenses = new AttributeDefenseSet();
             selectedUnitColor = new Color(0.41f, 0.78f, 1f, 0.95f);
             selectedProjectileColor = new Color(0.61f, 0.93f, 1f, 0.98f);
             unitMaxHealthConfigured = eveMaxHealth;
@@ -494,6 +539,8 @@ namespace Pakuri.Combat
             selectedActiveSkillName = string.IsNullOrWhiteSpace(monster.ActiveSkillName) ? "기본 스킬" : monster.ActiveSkillName;
             selectedPassiveSkillName = string.IsNullOrWhiteSpace(monster.PassiveSkillName) ? string.Empty : monster.PassiveSkillName;
             selectedStatusEffectLabel = string.IsNullOrWhiteSpace(monster.StatusEffectLabel) ? string.Empty : monster.StatusEffectLabel;
+            selectedDamageAttribute = monster.PrimaryAttribute;
+            selectedMonsterDefenses = monster.Defenses != null ? monster.Defenses.Clone() : new AttributeDefenseSet();
             selectedUnitColor = monster.UnitColor.a <= 0f ? new Color(0.78f, 0.82f, 0.92f, 0.95f) : monster.UnitColor;
             selectedProjectileColor = monster.ProjectileColor.a <= 0f ? new Color(0.95f, 0.95f, 1f, 0.98f) : monster.ProjectileColor;
             unitMaxHealthConfigured = Mathf.Max(1f, monster.MaxHealth);
@@ -531,6 +578,7 @@ namespace Pakuri.Combat
             EnsureSpriteRenderer(eveAnchor, selectedUnitColor, new Vector2(1.25f, 1.25f), 20);
             EnsureSpriteRenderer(enemySpawnAnchor, spawnMarkerColor, new Vector2(0.65f, 0.65f), 5);
             EnsureSpriteRenderer(inputTargetAnchor, inputMarkerColor, new Vector2(0.85f, 0.85f), 10);
+            EnsureSelectedMonsterStatusVisuals();
         }
 
         private SpriteRenderer EnsureSpriteRenderer(Transform target, Color color, Vector2 size, int sortingOrder)
@@ -551,6 +599,73 @@ namespace Pakuri.Combat
             renderer.sortingOrder = sortingOrder;
             target.localScale = new Vector3(size.x, size.y, 1f);
             return renderer;
+        }
+
+        private void EnsureSelectedMonsterStatusVisuals()
+        {
+            if (eveAnchor == null)
+            {
+                return;
+            }
+
+            selectedMonsterLabel = EnsureStatusLabel(
+                eveAnchor,
+                "MonsterHpLabel",
+                new Vector3(0f, 1.05f, 0f),
+                new Vector3(0.12f, 0.12f, 1f),
+                36);
+            selectedMonsterHpBarFill = CreateHpBar(
+                eveAnchor,
+                "MonsterHpBar",
+                new Vector3(0f, 0.83f, 0f),
+                1.3f,
+                0.08f,
+                selectedUnitColor,
+                34);
+            UpdateSelectedMonsterStatusVisuals();
+        }
+
+        private static TextMesh EnsureStatusLabel(Transform parent, string labelName, Vector3 localPosition, Vector3 localScale, int sortingOrder)
+        {
+            var labelTransform = parent.Find(labelName);
+            if (labelTransform == null)
+            {
+                labelTransform = new GameObject(labelName).transform;
+                labelTransform.SetParent(parent, false);
+            }
+
+            labelTransform.localPosition = localPosition;
+            labelTransform.localScale = localScale;
+
+            var label = labelTransform.GetComponent<TextMesh>();
+            if (label == null)
+            {
+                label = labelTransform.gameObject.AddComponent<TextMesh>();
+            }
+
+            label.anchor = TextAnchor.MiddleCenter;
+            label.alignment = TextAlignment.Center;
+            label.fontSize = 32;
+            label.color = Color.white;
+
+            var renderer = label.GetComponent<MeshRenderer>();
+            if (renderer != null)
+            {
+                renderer.sortingOrder = sortingOrder;
+            }
+
+            return label;
+        }
+
+        private void UpdateSelectedMonsterStatusVisuals()
+        {
+            if (selectedMonsterLabel != null)
+            {
+                var current = Application.isPlaying ? unitCurrentHealth : unitMaxHealthConfigured;
+                selectedMonsterLabel.text = $"{selectedMonsterName}\nHP {Mathf.CeilToInt(Mathf.Max(0f, current))}/{Mathf.CeilToInt(unitMaxHealthConfigured)}";
+            }
+
+            UpdateHpBarFill(selectedMonsterHpBarFill, Application.isPlaying ? unitCurrentHealth : unitMaxHealthConfigured, unitMaxHealthConfigured);
         }
 
         private static Sprite GetSharedSprite()
@@ -588,7 +703,10 @@ namespace Pakuri.Combat
             ClearProjectileRuntime();
 
             ResolveEncounterForDay(dayIndex, out pendingNormalSpawnCount, out pendingBossSpawn, out currentBossHealthMultiplier, out encounterLabel);
+            ResolveStageOneEnemyPool(dayIndex);
+            pendingBossSpawnCount = pendingBossSpawn ? (dayIndex == 11 ? 3 : 1) : 0;
             spawnedNormalCount = 0;
+            spawnedBossCount = 0;
             spawnCooldown = 0.2f;
             currentShotsRemaining = magazineCapacityConfigured;
             shotCooldown = 0f;
@@ -598,6 +716,7 @@ namespace Pakuri.Combat
             nextProjectileSequence = 0;
             currentAttackPoint = new Vector3(Mathf.Lerp(eveAnchor.position.x, enemySpawnAnchor.position.x, 0.55f), 8f, 0f);
             inputTargetAnchor.position = currentAttackPoint;
+            UpdateSelectedMonsterStatusVisuals();
             statusLabel = $"{selectedActiveSkillName} 목표 지점을 클릭해 전투를 시작한다.";
         }
 
@@ -634,9 +753,156 @@ namespace Pakuri.Combat
             bossMultiplier = baseBossHealthMultiplier + 2f;
         }
 
+        private void ResolveStageOneEnemyPool(int day)
+        {
+            currentNormalEnemyPool.Clear();
+            currentMidbossDefinition = null;
+            currentDay5MidbossDefinition = null;
+            currentDay10MidbossDefinition = null;
+            currentBossDefinition = null;
+
+            var stageOneEnemies = gameDataCatalog != null ? gameDataCatalog.StageOneEnemies : null;
+            if (stageOneEnemies != null)
+            {
+                for (var i = 0; i < stageOneEnemies.Length; i++)
+                {
+                    var enemy = stageOneEnemies[i];
+                    if (enemy == null)
+                    {
+                        continue;
+                    }
+
+                    switch (enemy.EncounterRole)
+                    {
+                        case EnemyEncounterRole.Day5Midboss:
+                            currentDay5MidbossDefinition = enemy;
+                            currentMidbossDefinition = enemy;
+                            break;
+                        case EnemyEncounterRole.Day10Midboss:
+                            currentDay10MidbossDefinition = enemy;
+                            if (day == 10 || day == 11)
+                            {
+                                currentMidbossDefinition = enemy;
+                            }
+                            break;
+                        case EnemyEncounterRole.StageBoss:
+                            currentBossDefinition = enemy;
+                            break;
+                        default:
+                            currentNormalEnemyPool.Add(enemy);
+                            break;
+                    }
+                }
+            }
+
+            if (currentNormalEnemyPool.Count == 0)
+            {
+                AddFallbackStageOneNormals();
+            }
+
+            if (currentMidbossDefinition == null)
+            {
+                currentMidbossDefinition = day == 10
+                    ? CreateStageOneEnemy("stage1-attack-captain", "공격대장", EnemyEncounterRole.Day10Midboss, EnemyAttackType.Melee, DamageAttribute.Physical, 1.10f, 3200f, 26f, 0f, 12f, 4f, 4f, 4f, 3f, 3f, StageOneEnemySkillKind.ChargeCommand, "돌격 명령", 0f, 12f, 6f, 5f, 0f, "공격 숙련", "물리 피해 12% 증가")
+                    : CreateStageOneEnemy("stage1-guardian-captain", "수호대장", EnemyEncounterRole.Day5Midboss, EnemyAttackType.Melee, DamageAttribute.Physical, 0.85f, 2200f, 18f, 4f, 15f, 5f, 5f, 5f, 4f, 6f, StageOneEnemySkillKind.GuardianFlag, "수호의 깃발", 0f, 10f, 5f, 4f, 100f, "수호 숙련", "받는 피해 12% 감소");
+            }
+
+            if (currentDay5MidbossDefinition == null)
+            {
+                currentDay5MidbossDefinition = CreateStageOneEnemy("stage1-guardian-captain", "수호대장", EnemyEncounterRole.Day5Midboss, EnemyAttackType.Melee, DamageAttribute.Physical, 0.85f, 2200f, 18f, 4f, 15f, 5f, 5f, 5f, 4f, 6f, StageOneEnemySkillKind.GuardianFlag, "수호의 깃발", 0f, 10f, 5f, 4f, 100f, "수호 숙련", "받는 피해 12% 감소");
+            }
+
+            if (currentDay10MidbossDefinition == null)
+            {
+                currentDay10MidbossDefinition = CreateStageOneEnemy("stage1-attack-captain", "공격대장", EnemyEncounterRole.Day10Midboss, EnemyAttackType.Melee, DamageAttribute.Physical, 1.10f, 3200f, 26f, 0f, 12f, 4f, 4f, 4f, 3f, 3f, StageOneEnemySkillKind.ChargeCommand, "돌격 명령", 0f, 12f, 6f, 5f, 0f, "공격 숙련", "물리 피해 12% 증가");
+            }
+
+            if (currentBossDefinition == null)
+            {
+                currentBossDefinition = CreateStageOneEnemy("stage1-hero-karin", "용사 카린", EnemyEncounterRole.StageBoss, EnemyAttackType.MeleeAndRanged, DamageAttribute.Physical, 1.00f, 5000f, 32f, 10f, 16f, 6f, 6f, 6f, 5f, 12f, StageOneEnemySkillKind.SacredSwordWave, "성검기", 2.2f, 9f, 0f, 8f, 0f, "용사의 힘", "물리 피해 15% 증가");
+            }
+        }
+
+        private void AddFallbackStageOneNormals()
+        {
+            currentNormalEnemyPool.Add(CreateStageOneEnemy("stage1-swordsman", "검사", EnemyEncounterRole.Normal, EnemyAttackType.Melee, DamageAttribute.Physical, 1.00f, 100f, 12f, 0f, 5f, 2f, 2f, 2f, 2f, 2f, StageOneEnemySkillKind.Slash, "베기", 1.0f, 2f, 0f, 1.4f, 0f, "검술 숙련", "물리 피해 10% 증가"));
+            currentNormalEnemyPool.Add(CreateStageOneEnemy("stage1-shieldbearer", "방패병", EnemyEncounterRole.Normal, EnemyAttackType.Melee, DamageAttribute.Physical, 0.75f, 180f, 8f, 0f, 12f, 3f, 3f, 3f, 2f, 2f, StageOneEnemySkillKind.ShieldUp, "방패 들기", 0f, 8f, 4f, 0f, 0.25f, "두꺼운 갑옷", "방어력 10% 증가"));
+            currentNormalEnemyPool.Add(CreateStageOneEnemy("stage1-archer", "궁수", EnemyEncounterRole.Normal, EnemyAttackType.Ranged, DamageAttribute.Physical, 0.90f, 80f, 10f, 0f, 3f, 2f, 2f, 2f, 2f, 2f, StageOneEnemySkillKind.AimedShot, "조준 사격", 1.5f, 5f, 0f, 7f, 0f, "정조준", "치명타 확률 8% 증가"));
+            currentNormalEnemyPool.Add(CreateStageOneEnemy("stage1-rogue", "도적", EnemyEncounterRole.Normal, EnemyAttackType.Ranged, DamageAttribute.Physical, 1.00f, 70f, 15f, 0f, 2f, 2f, 2f, 2f, 2f, 2f, StageOneEnemySkillKind.ShurikenThrow, "수리검 투척", 1.4f, 4f, 0f, 6f, 0f, "날카로운 수리검", "치명타 피해 20% 증가"));
+            currentNormalEnemyPool.Add(CreateStageOneEnemy("stage1-priest", "사제", EnemyEncounterRole.Normal, EnemyAttackType.Ranged, DamageAttribute.Holy, 0.80f, 90f, 4f, 12f, 3f, 2f, 2f, 2f, 2f, 8f, StageOneEnemySkillKind.Heal, "치유", 1.2f, 6f, 0f, 5f, 50f, "신성 집중", "치유량 15% 증가"));
+        }
+
+        private static EnemyDefinition CreateStageOneEnemy(
+            string enemyId,
+            string displayName,
+            EnemyEncounterRole encounterRole,
+            EnemyAttackType attackType,
+            DamageAttribute attribute,
+            float moveSpeed,
+            float maxHealth,
+            float attackPower,
+            float spellPower,
+            float physicalDefense,
+            float fireDefense,
+            float lightningDefense,
+            float iceDefense,
+            float darknessDefense,
+            float holyDefense,
+            StageOneEnemySkillKind skillKind,
+            string activeSkillName,
+            float activeCoefficient,
+            float activeCooldown,
+            float activeDuration,
+            float activeRadius,
+            float activeFlatValue,
+            string passiveSkillName,
+            string passiveSummary)
+        {
+            if (!fallbackStageOneEnemyCache.TryGetValue(enemyId, out var enemy) || enemy == null)
+            {
+                enemy = ScriptableObject.CreateInstance<EnemyDefinition>();
+                enemy.hideFlags = HideFlags.DontSave;
+                fallbackStageOneEnemyCache[enemyId] = enemy;
+            }
+
+            enemy.EnemyId = enemyId;
+            enemy.DisplayName = displayName;
+            enemy.EncounterRole = encounterRole;
+            enemy.AttackType = attackType;
+            enemy.Attribute = attribute;
+            enemy.Stats = new CombatStatBlock
+            {
+                MaxHealth = maxHealth,
+                AttackPower = attackPower,
+                SpellPower = spellPower,
+                MoveSpeed = moveSpeed,
+                CriticalChance = DamageCalculator.BaseCriticalChance,
+                CriticalDamage = DamageCalculator.BaseCriticalMultiplier
+            };
+            enemy.Defenses = new AttributeDefenseSet
+            {
+                Physical = physicalDefense,
+                Fire = fireDefense,
+                Lightning = lightningDefense,
+                Ice = iceDefense,
+                Darkness = darknessDefense,
+                Holy = holyDefense
+            };
+            enemy.StageOneSkill = skillKind;
+            enemy.ActiveSkillName = activeSkillName;
+            enemy.ActiveSkillCoefficient = activeCoefficient;
+            enemy.ActiveSkillCooldown = activeCooldown;
+            enemy.ActiveSkillDuration = activeDuration;
+            enemy.ActiveSkillRadius = activeRadius;
+            enemy.ActiveSkillFlatValue = activeFlatValue;
+            enemy.PassiveSkillName = passiveSkillName;
+            enemy.PassiveSummary = passiveSummary;
+            return enemy;
+        }
+
         private void UpdateSpawning()
         {
-            if (spawnedNormalCount >= pendingNormalSpawnCount && !pendingBossSpawn)
+            if (spawnedNormalCount >= pendingNormalSpawnCount && spawnedBossCount >= pendingBossSpawnCount)
             {
                 return;
             }
@@ -655,10 +921,11 @@ namespace Pakuri.Combat
                 return;
             }
 
-            if (pendingBossSpawn)
+            if (spawnedBossCount < pendingBossSpawnCount)
             {
-                pendingBossSpawn = false;
-                SpawnEnemy(true, 1);
+                spawnedBossCount += 1;
+                pendingBossSpawn = spawnedBossCount < pendingBossSpawnCount;
+                SpawnEnemy(true, spawnedBossCount);
                 spawnCooldown = spawnInterval;
             }
         }
@@ -670,31 +937,250 @@ namespace Pakuri.Combat
                 return;
             }
 
-            var enemyObject = new GameObject(isBoss ? "Enemy_Boss_01" : $"Enemy_Normal_{sequence:00}");
+            var definition = ResolveEnemyDefinitionForSpawn(isBoss, sequence);
+            var displayName = definition != null && !string.IsNullOrWhiteSpace(definition.DisplayName)
+                ? definition.DisplayName
+                : (isBoss ? guaranteedPrisonerName : "견습 검사");
+            var enemyObject = new GameObject(isBoss ? $"Enemy_Boss_{displayName}" : $"Enemy_Normal_{sequence:00}_{displayName}");
             enemyObject.transform.SetParent(enemyRoot, false);
-            enemyObject.transform.position = new Vector3(enemySpawnAnchor.position.x, UnityEngine.Random.Range(enemySpawnYRange.x, enemySpawnYRange.y), 0f);
+            var spawnPosition = enemySpawnAnchor.position;
+            spawnPosition.y += UnityEngine.Random.Range(enemySpawnYRange.x, enemySpawnYRange.y) - DefaultEnemySpawnPosition.y;
+            spawnPosition.z = 0f;
+            enemyObject.transform.position = spawnPosition;
             enemyObject.transform.localScale = isBoss ? new Vector3(1.55f, 1.55f, 1f) : new Vector3(1.05f, 1.05f, 1f);
 
             var renderer = enemyObject.AddComponent<SpriteRenderer>();
             renderer.sprite = GetSharedSprite();
             renderer.sortingOrder = isBoss ? 18 : 17;
+            var label = CreateEnemyLabel(enemyObject.transform, displayName, isBoss);
+            var hpBarFill = CreateHpBar(
+                enemyObject.transform,
+                "EnemyHpBar",
+                new Vector3(0f, isBoss ? 1.05f : 0.74f, 0f),
+                isBoss ? 1.35f : 1.05f,
+                0.08f,
+                new Color(0.95f, 0.20f, 0.20f, 0.98f),
+                34);
 
-            var maxHealth = normalEnemyHealth * GetStageValueMultiplier() * (isBoss ? currentBossHealthMultiplier : 1f);
+            var baseStats = definition != null && definition.Stats != null ? definition.Stats : null;
+            var maxHealth = baseStats != null
+                ? baseStats.MaxHealth * GetStageValueMultiplier() * GetEncounterHealthMultiplier(definition, isBoss)
+                : normalEnemyHealth * GetStageValueMultiplier() * (isBoss ? currentBossHealthMultiplier : 1f);
             var runtime = new EnemyRuntime
             {
                 GameObject = enemyObject,
                 Transform = enemyObject.transform,
                 Renderer = renderer,
+                Label = label,
+                HpBarFill = hpBarFill,
+                Definition = definition,
+                Defenses = definition != null && definition.Defenses != null ? definition.Defenses.Clone() : new AttributeDefenseSet(),
                 MaxHealth = maxHealth,
                 CurrentHealth = maxHealth,
-                MoveSpeed = enemyMoveSpeed * (isBoss ? 0.85f : 1f),
+                MoveSpeed = (baseStats != null ? baseStats.MoveSpeed : enemyMoveSpeed) * (isBoss ? 0.85f : 1f),
                 ContactDamagePerSecond = enemyContactDamagePerSecond * (isBoss ? 2.5f : 1f),
+                AttackPower = baseStats != null ? baseStats.AttackPower : 12f,
+                SpellPower = baseStats != null ? baseStats.SpellPower : 0f,
+                CriticalChanceBonus = baseStats != null ? baseStats.CriticalChance - DamageCalculator.BaseCriticalChance : 0f,
+                CriticalMultiplierBonus = baseStats != null ? baseStats.CriticalDamage - DamageCalculator.BaseCriticalMultiplier : 0f,
+                CriticalResistance = baseStats != null ? baseStats.CriticalResistance : 0f,
                 IsBoss = isBoss,
-                DisplayName = isBoss ? guaranteedPrisonerName : "견습 검사"
+                DisplayName = displayName
             };
 
+            ApplyStageOnePassive(runtime);
             enemies.Add(runtime);
             UpdateEnemyColor(runtime);
+            UpdateEnemyLabel(runtime);
+        }
+
+        private static TextMesh CreateEnemyLabel(Transform parent, string displayName, bool isBoss)
+        {
+            var labelObject = new GameObject("EnemyHpLabel");
+            labelObject.transform.SetParent(parent, false);
+            labelObject.transform.localPosition = new Vector3(0f, isBoss ? 1.25f : 0.9f, 0f);
+            labelObject.transform.localScale = new Vector3(0.12f, 0.12f, 1f);
+
+            var label = labelObject.AddComponent<TextMesh>();
+            label.anchor = TextAnchor.MiddleCenter;
+            label.alignment = TextAlignment.Center;
+            label.fontSize = 32;
+            label.color = Color.white;
+            label.text = displayName;
+
+            var renderer = label.GetComponent<MeshRenderer>();
+            if (renderer != null)
+            {
+                renderer.sortingOrder = 35;
+            }
+
+            return label;
+        }
+
+        private static SpriteRenderer CreateHpBar(
+            Transform parent,
+            string barName,
+            Vector3 localPosition,
+            float width,
+            float height,
+            Color fillColor,
+            int sortingOrder)
+        {
+            var root = parent.Find(barName);
+            if (root == null)
+            {
+                root = new GameObject(barName).transform;
+                root.SetParent(parent, false);
+            }
+
+            root.localPosition = localPosition;
+            root.localScale = new Vector3(width, 1f, 1f);
+
+            var background = EnsureHpBarPart(root, "Background", new Color(0f, 0f, 0f, 0.75f), sortingOrder);
+            background.transform.localPosition = Vector3.zero;
+            background.transform.localScale = new Vector3(1f, height, 1f);
+
+            var fill = EnsureHpBarPart(root, "Fill", fillColor, sortingOrder + 1);
+            fill.transform.localScale = new Vector3(1f, height, 1f);
+            fill.transform.localPosition = Vector3.zero;
+            return fill;
+        }
+
+        private static SpriteRenderer EnsureHpBarPart(Transform root, string partName, Color color, int sortingOrder)
+        {
+            var part = root.Find(partName);
+            if (part == null)
+            {
+                part = new GameObject(partName).transform;
+                part.SetParent(root, false);
+            }
+
+            var renderer = part.GetComponent<SpriteRenderer>();
+            if (renderer == null)
+            {
+                renderer = part.gameObject.AddComponent<SpriteRenderer>();
+            }
+
+            renderer.sprite = GetSharedSprite();
+            renderer.color = color;
+            renderer.sortingOrder = sortingOrder;
+            return renderer;
+        }
+
+        private static void UpdateHpBarFill(SpriteRenderer fill, float currentHealth, float maxHealth)
+        {
+            if (fill == null)
+            {
+                return;
+            }
+
+            var ratio = maxHealth > 0f ? Mathf.Clamp01(currentHealth / maxHealth) : 0f;
+            var localScale = fill.transform.localScale;
+            fill.transform.localScale = new Vector3(ratio, localScale.y, 1f);
+            fill.transform.localPosition = new Vector3(-0.5f + (ratio * 0.5f), 0f, -0.01f);
+        }
+
+        private EnemyDefinition ResolveEnemyDefinitionForSpawn(bool isBoss, int sequence)
+        {
+            if (!isBoss)
+            {
+                if (currentNormalEnemyPool.Count == 0)
+                {
+                    AddFallbackStageOneNormals();
+                }
+
+                return currentNormalEnemyPool.Count == 0 ? null : currentNormalEnemyPool[(sequence - 1) % currentNormalEnemyPool.Count];
+            }
+
+            if (dayIndex == 5 || dayIndex == 10)
+            {
+                return currentMidbossDefinition;
+            }
+
+            if (dayIndex == 11)
+            {
+                if (sequence == 1)
+                {
+                    return currentDay5MidbossDefinition;
+                }
+
+                if (sequence == 2)
+                {
+                    return currentDay10MidbossDefinition;
+                }
+
+                return currentBossDefinition;
+            }
+
+            return currentNormalEnemyPool.Count == 0
+                ? currentMidbossDefinition
+                : currentNormalEnemyPool[UnityEngine.Random.Range(0, currentNormalEnemyPool.Count)];
+        }
+
+        private float GetEncounterHealthMultiplier(EnemyDefinition definition, bool isBoss)
+        {
+            if (definition == null)
+            {
+                return isBoss ? currentBossHealthMultiplier : 1f;
+            }
+
+            if (definition.EncounterRole == EnemyEncounterRole.Normal && isBoss)
+            {
+                return currentBossHealthMultiplier;
+            }
+
+            return 1f;
+        }
+
+        private void ApplyStageOnePassive(EnemyRuntime enemy)
+        {
+            if (enemy == null || enemy.Definition == null)
+            {
+                return;
+            }
+
+            switch (enemy.Definition.StageOneSkill)
+            {
+                case StageOneEnemySkillKind.Slash:
+                    enemy.DamageMultiplier *= 1.10f;
+                    break;
+                case StageOneEnemySkillKind.ShieldUp:
+                    MultiplyAllDefenses(enemy.Defenses, 1.10f);
+                    break;
+                case StageOneEnemySkillKind.AimedShot:
+                    enemy.CriticalChanceBonus += 0.08f;
+                    break;
+                case StageOneEnemySkillKind.ShurikenThrow:
+                    enemy.CriticalMultiplierBonus += 0.20f;
+                    break;
+                case StageOneEnemySkillKind.Heal:
+                    enemy.HealingMultiplier *= 1.15f;
+                    break;
+                case StageOneEnemySkillKind.GuardianFlag:
+                    enemy.DamageTakenMultiplier *= 0.88f;
+                    break;
+                case StageOneEnemySkillKind.ChargeCommand:
+                    enemy.DamageMultiplier *= 1.12f;
+                    break;
+                case StageOneEnemySkillKind.SacredSwordWave:
+                    enemy.DamageMultiplier *= 1.15f;
+                    break;
+            }
+        }
+
+        private static void MultiplyAllDefenses(AttributeDefenseSet defenses, float multiplier)
+        {
+            if (defenses == null)
+            {
+                return;
+            }
+
+            defenses.Physical *= multiplier;
+            defenses.Fire *= multiplier;
+            defenses.Lightning *= multiplier;
+            defenses.Ice *= multiplier;
+            defenses.Darkness *= multiplier;
+            defenses.Holy *= multiplier;
         }
 
         private void UpdateEnemies()
@@ -717,19 +1203,46 @@ namespace Pakuri.Combat
 
                 enemy.FlashTimer = Mathf.Max(0f, enemy.FlashTimer - Time.deltaTime);
                 enemy.ShockTimer = Mathf.Max(0f, enemy.ShockTimer - Time.deltaTime);
+                enemy.DamageReductionTimer = Mathf.Max(0f, enemy.DamageReductionTimer - Time.deltaTime);
+                if (Mathf.Approximately(enemy.DamageReductionTimer, 0f))
+                {
+                    enemy.DamageTakenMultiplier = GetBaseDamageTakenMultiplier(enemy);
+                }
 
-                var nexusDistance = Vector2.Distance(enemy.Transform.position, nexusAnchor.position);
-                if (nexusDistance > 1.4f)
+                enemy.AttackBuffTimer = Mathf.Max(0f, enemy.AttackBuffTimer - Time.deltaTime);
+                if (Mathf.Approximately(enemy.AttackBuffTimer, 0f))
+                {
+                    enemy.AttackBuffMultiplier = 1f;
+                }
+
+                enemy.MoveSpeedBuffTimer = Mathf.Max(0f, enemy.MoveSpeedBuffTimer - Time.deltaTime);
+                if (Mathf.Approximately(enemy.MoveSpeedBuffTimer, 0f))
+                {
+                    enemy.MoveSpeedBuffMultiplier = 1f;
+                }
+
+                enemy.ActiveCooldownRemaining = Mathf.Max(0f, enemy.ActiveCooldownRemaining - Time.deltaTime);
+
+                var targetTransform = GetEnemyPriorityTarget();
+                if (targetTransform == null)
+                {
+                    continue;
+                }
+
+                var targetDistance = Vector2.Distance(enemy.Transform.position, targetTransform.position);
+                var attackRange = GetEnemyAttackRange(enemy);
+                if (targetDistance > attackRange)
                 {
                     var speedMultiplier = enemy.ShockTimer > 0f ? Mathf.Max(0.45f, 1f - (enemy.ShockStacks * 0.15f)) : 1f;
-                    enemy.Transform.position = Vector3.MoveTowards(enemy.Transform.position, nexusAnchor.position, enemy.MoveSpeed * speedMultiplier * Time.deltaTime);
+                    enemy.Transform.position = Vector3.MoveTowards(enemy.Transform.position, targetTransform.position, enemy.MoveSpeed * enemy.MoveSpeedBuffMultiplier * speedMultiplier * Time.deltaTime);
                 }
                 else
                 {
-                    nexusCurrentHealth = Mathf.Max(0f, nexusCurrentHealth - (enemy.ContactDamagePerSecond * Time.deltaTime));
+                    TryUseStageOneEnemySkill(enemy);
                 }
 
                 UpdateEnemyColor(enemy);
+                UpdateEnemyLabel(enemy);
             }
         }
 
@@ -757,6 +1270,267 @@ namespace Pakuri.Combat
             enemy.Renderer.color = baseColor;
         }
 
+        private static void UpdateEnemyLabel(EnemyRuntime enemy)
+        {
+            if (enemy == null)
+            {
+                return;
+            }
+
+            if (enemy.Label != null)
+            {
+                enemy.Label.text = $"{enemy.DisplayName}\nHP {Mathf.CeilToInt(Mathf.Max(0f, enemy.CurrentHealth))}/{Mathf.CeilToInt(enemy.MaxHealth)}";
+            }
+
+            UpdateHpBarFill(enemy.HpBarFill, enemy.CurrentHealth, enemy.MaxHealth);
+        }
+
+        private float GetBaseDamageTakenMultiplier(EnemyRuntime enemy)
+        {
+            if (enemy == null || enemy.Definition == null)
+            {
+                return 1f;
+            }
+
+            return enemy.Definition.StageOneSkill == StageOneEnemySkillKind.GuardianFlag ? 0.88f : 1f;
+        }
+
+        private static float GetEnemyAttackRange(EnemyRuntime enemy)
+        {
+            if (enemy == null || enemy.Definition == null)
+            {
+                return 1.4f;
+            }
+
+            switch (enemy.Definition.AttackType)
+            {
+                case EnemyAttackType.Ranged:
+                    return Mathf.Max(5f, enemy.Definition.ActiveSkillRadius);
+                case EnemyAttackType.MeleeAndRanged:
+                    return Mathf.Max(4f, enemy.Definition.ActiveSkillRadius);
+                default:
+                    return 1.4f;
+            }
+        }
+
+        private Transform GetEnemyPriorityTarget()
+        {
+            if (unitCurrentHealth > 0f && eveAnchor != null)
+            {
+                return eveAnchor;
+            }
+
+            return nexusAnchor;
+        }
+
+        private void TryUseStageOneEnemySkill(EnemyRuntime enemy)
+        {
+            if (enemy == null || enemy.Definition == null || enemy.ActiveCooldownRemaining > 0f)
+            {
+                return;
+            }
+
+            var definition = enemy.Definition;
+            enemy.ActiveCooldownRemaining = Mathf.Max(0.1f, definition.ActiveSkillCooldown);
+
+            switch (definition.StageOneSkill)
+            {
+                case StageOneEnemySkillKind.ShieldUp:
+                    enemy.DamageTakenMultiplier = Mathf.Min(enemy.DamageTakenMultiplier, 0.75f);
+                    enemy.DamageReductionTimer = Mathf.Max(enemy.DamageReductionTimer, definition.ActiveSkillDuration);
+                    statusLabel = $"{enemy.DisplayName} {definition.ActiveSkillName}: {definition.ActiveSkillDuration:0.#}초 동안 받는 피해 25% 감소.";
+                    break;
+                case StageOneEnemySkillKind.Heal:
+                    HealLowestStageOneEnemy(enemy);
+                    break;
+                case StageOneEnemySkillKind.GuardianFlag:
+                    ApplyGuardianFlag(enemy);
+                    break;
+                case StageOneEnemySkillKind.ChargeCommand:
+                    ApplyChargeCommand(enemy);
+                    break;
+                default:
+                    if (UsesEnemyProjectile(enemy))
+                    {
+                        FireEnemyProjectile(enemy);
+                    }
+                    else
+                    {
+                        ApplyEnemyDamageToPriorityTarget(enemy);
+                    }
+                    break;
+            }
+        }
+
+        private static bool UsesEnemyProjectile(EnemyRuntime enemy)
+        {
+            if (enemy == null || enemy.Definition == null)
+            {
+                return false;
+            }
+
+            return enemy.Definition.AttackType == EnemyAttackType.Ranged ||
+                enemy.Definition.AttackType == EnemyAttackType.MeleeAndRanged;
+        }
+
+        private void FireEnemyProjectile(EnemyRuntime enemy)
+        {
+            if (enemy == null || enemy.Transform == null || projectileRoot == null)
+            {
+                return;
+            }
+
+            var targetTransform = GetEnemyPriorityTarget();
+            if (targetTransform == null)
+            {
+                return;
+            }
+
+            var direction = targetTransform.position - enemy.Transform.position;
+            direction.z = 0f;
+            if (direction.sqrMagnitude < 0.01f)
+            {
+                ApplyEnemyDamageToPriorityTarget(enemy);
+                return;
+            }
+
+            var targetsMonster = unitCurrentHealth > 0f && targetTransform == eveAnchor;
+            var speed = 7.5f;
+            var distance = direction.magnitude;
+            direction.Normalize();
+
+            var projectileObject = new GameObject($"EnemyProjectile_{enemy.DisplayName}");
+            projectileObject.transform.SetParent(projectileRoot, false);
+            projectileObject.transform.position = enemy.Transform.position;
+            projectileObject.transform.localScale = new Vector3(0.28f, 0.28f, 1f);
+
+            var renderer = projectileObject.AddComponent<SpriteRenderer>();
+            renderer.sprite = GetSharedSprite();
+            renderer.color = enemy.IsBoss ? new Color(1f, 0.25f, 0.25f, 0.98f) : new Color(1f, 0.55f, 0.25f, 0.95f);
+            renderer.sortingOrder = 24;
+
+            projectiles.Add(new ProjectileRuntime
+            {
+                GameObject = projectileObject,
+                Transform = projectileObject.transform,
+                Renderer = renderer,
+                Direction = direction,
+                Speed = speed,
+                RemainingLifetime = Mathf.Max(1f, (distance / speed) + 0.75f),
+                HitRadius = 0.28f,
+                Attribute = enemy.Definition.Attribute,
+                IsEnemyProjectile = true,
+                SourceEnemy = enemy,
+                TargetTransform = targetTransform,
+                TargetsMonster = targetsMonster
+            });
+
+            statusLabel = $"{enemy.DisplayName} {enemy.Definition.ActiveSkillName}: projectile fired.";
+        }
+
+        private void ApplyEnemyDamageToPriorityTarget(EnemyRuntime enemy)
+        {
+            if (enemy == null || enemy.Definition == null)
+            {
+                return;
+            }
+
+            var definition = enemy.Definition;
+            if (unitCurrentHealth > 0f)
+            {
+                var resolution = EnemyAttackResolver.ResolveAgainstMonster(
+                    definition,
+                    enemy.AttackPower,
+                    enemy.DamageMultiplier,
+                    enemy.AttackBuffMultiplier,
+                    enemy.CriticalChanceBonus,
+                    enemy.CriticalMultiplierBonus,
+                    selectedMonsterDefenses);
+                unitCurrentHealth = Mathf.Max(0f, unitCurrentHealth - resolution.FinalDamage);
+                statusLabel = $"{enemy.DisplayName} {definition.ActiveSkillName}: {selectedMonsterName}에게 {resolution.FinalDamage:0.0} {definition.Attribute} 피해.";
+                return;
+            }
+
+            var nexusResolution = EnemyAttackResolver.ResolveAgainstNexus(
+                definition,
+                enemy.AttackPower,
+                enemy.DamageMultiplier,
+                enemy.AttackBuffMultiplier,
+                enemy.CriticalChanceBonus,
+                enemy.CriticalMultiplierBonus);
+            nexusCurrentHealth = Mathf.Max(0f, nexusCurrentHealth - nexusResolution.FinalDamage);
+            statusLabel = $"{enemy.DisplayName} {definition.ActiveSkillName}: Nexus에 {nexusResolution.FinalDamage:0.0} {definition.Attribute} 피해.";
+        }
+
+        private void HealLowestStageOneEnemy(EnemyRuntime caster)
+        {
+            EnemyRuntime target = null;
+            for (var i = 0; i < enemies.Count; i++)
+            {
+                var enemy = enemies[i];
+                if (enemy == null || enemy.CurrentHealth <= 0f || enemy.CurrentHealth >= enemy.MaxHealth)
+                {
+                    continue;
+                }
+
+                if (target == null || enemy.CurrentHealth / enemy.MaxHealth < target.CurrentHealth / target.MaxHealth)
+                {
+                    target = enemy;
+                }
+            }
+
+            if (target == null)
+            {
+                target = caster;
+            }
+
+            var healAmount = (caster.Definition.ActiveSkillFlatValue + caster.SpellPower * caster.Definition.ActiveSkillCoefficient) * caster.HealingMultiplier;
+            target.CurrentHealth = Mathf.Min(target.MaxHealth, target.CurrentHealth + healAmount);
+            statusLabel = $"{caster.DisplayName} {caster.Definition.ActiveSkillName}: {target.DisplayName} {healAmount:0.0} 회복.";
+        }
+
+        private void ApplyGuardianFlag(EnemyRuntime caster)
+        {
+            var shieldAmount = Mathf.Max(0f, caster.Definition.ActiveSkillFlatValue);
+            for (var i = 0; i < enemies.Count; i++)
+            {
+                var enemy = enemies[i];
+                if (enemy == null || enemy.CurrentHealth <= 0f)
+                {
+                    continue;
+                }
+
+                if (Vector2.Distance(caster.Transform.position, enemy.Transform.position) <= Mathf.Max(0.1f, caster.Definition.ActiveSkillRadius))
+                {
+                    enemy.ShieldValue = Mathf.Max(enemy.ShieldValue, shieldAmount);
+                }
+            }
+
+            statusLabel = $"{caster.DisplayName} {caster.Definition.ActiveSkillName}: 주변 적에게 보호막 {shieldAmount:0} 부여.";
+        }
+
+        private void ApplyChargeCommand(EnemyRuntime caster)
+        {
+            for (var i = 0; i < enemies.Count; i++)
+            {
+                var enemy = enemies[i];
+                if (enemy == null || enemy.CurrentHealth <= 0f)
+                {
+                    continue;
+                }
+
+                if (Vector2.Distance(caster.Transform.position, enemy.Transform.position) <= Mathf.Max(0.1f, caster.Definition.ActiveSkillRadius))
+                {
+                    enemy.MoveSpeedBuffMultiplier = 1.20f;
+                    enemy.MoveSpeedBuffTimer = Mathf.Max(enemy.MoveSpeedBuffTimer, caster.Definition.ActiveSkillDuration);
+                    enemy.AttackBuffMultiplier = 1.15f;
+                    enemy.AttackBuffTimer = Mathf.Max(enemy.AttackBuffTimer, caster.Definition.ActiveSkillDuration);
+                }
+            }
+
+            statusLabel = $"{caster.DisplayName} {caster.Definition.ActiveSkillName}: 주변 적 이동속도 20%, 공격력 15% 증가.";
+        }
+
         private void UpdateProjectiles()
         {
             for (var i = projectiles.Count - 1; i >= 0; i--)
@@ -772,9 +1546,27 @@ namespace Pakuri.Combat
                 projectile.Transform.position += projectile.Direction * travelDistance;
                 projectile.RemainingLifetime = Mathf.Max(0f, projectile.RemainingLifetime - Time.deltaTime);
 
+                if (projectile.IsEnemyProjectile)
+                {
+                    if (TryHitEnemyProjectileTarget(projectile, out var targetLabel, out var appliedDamage))
+                    {
+                        statusLabel = $"{projectile.SourceEnemy.DisplayName} {projectile.SourceEnemy.Definition.ActiveSkillName}: {targetLabel} hit {appliedDamage:0.0}.";
+                        CleanupProjectile(i);
+                        continue;
+                    }
+
+                    if (projectile.RemainingLifetime > 0f)
+                    {
+                        continue;
+                    }
+
+                    CleanupProjectile(i);
+                    continue;
+                }
+
                 if (TryHitEnemy(projectile, out var enemyHit, out var damageResult))
                 {
-                    enemyHit.CurrentHealth -= damageResult.FinalDamage;
+                    var appliedDamage = ApplyDamageToEnemy(enemyHit, damageResult.FinalDamage);
                     enemyHit.FlashTimer = 0.08f;
 
                     var appliedStatus = false;
@@ -786,8 +1578,10 @@ namespace Pakuri.Combat
                     }
 
                     statusLabel = appliedStatus
-                        ? $"{selectedActiveSkillName} 적중: {enemyHit.DisplayName}에게 {damageResult.FinalDamage:0.0} {selectedElementLabel} 피해, {selectedStatusEffectLabel} 부여."
-                        : $"{selectedActiveSkillName} 적중: {enemyHit.DisplayName}에게 {damageResult.FinalDamage:0.0} {selectedElementLabel} 피해.";
+                        ? $"{selectedActiveSkillName} 적중: {enemyHit.DisplayName}에게 {appliedDamage:0.0} {selectedElementLabel} 피해, {selectedStatusEffectLabel} 부여."
+                        : $"{selectedActiveSkillName} 적중: {enemyHit.DisplayName}에게 {appliedDamage:0.0} {selectedElementLabel} 피해.";
+
+                    Debug.Log($"[CombatDamage] {selectedMonsterName}.{selectedActiveSkillName} -> {enemyHit.DisplayName}: {damageResult.FormulaLog}; Applied={appliedDamage:0.##}, ShieldLeft={enemyHit.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, enemyHit.CurrentHealth):0.##}");
 
                     CleanupProjectile(i);
                     continue;
@@ -801,6 +1595,63 @@ namespace Pakuri.Combat
                 statusLabel = $"{selectedActiveSkillName} 투사체가 {projectileLifetimeConfigured:0.0}s 후 소멸했다.";
                 CleanupProjectile(i);
             }
+        }
+
+        private bool TryHitEnemyProjectileTarget(ProjectileRuntime projectile, out string targetLabel, out float appliedDamage)
+        {
+            targetLabel = string.Empty;
+            appliedDamage = 0f;
+
+            if (projectile == null || projectile.SourceEnemy == null || projectile.SourceEnemy.Definition == null)
+            {
+                return false;
+            }
+
+            var targetTransform = projectile.TargetTransform;
+            if (targetTransform == null)
+            {
+                return false;
+            }
+
+            var targetRadius = projectile.TargetsMonster ? 0.7f : 1.0f;
+            if (Vector2.Distance(projectile.Transform.position, targetTransform.position) > projectile.HitRadius + targetRadius)
+            {
+                return false;
+            }
+
+            var source = projectile.SourceEnemy;
+            if (projectile.TargetsMonster && unitCurrentHealth > 0f)
+            {
+                var resolution = EnemyAttackResolver.ResolveAgainstMonster(
+                    source.Definition,
+                    source.AttackPower,
+                    source.DamageMultiplier,
+                    source.AttackBuffMultiplier,
+                    source.CriticalChanceBonus,
+                    source.CriticalMultiplierBonus,
+                    selectedMonsterDefenses);
+                appliedDamage = resolution.FinalDamage;
+                unitCurrentHealth = Mathf.Max(0f, unitCurrentHealth - appliedDamage);
+                targetLabel = selectedMonsterName;
+                return true;
+            }
+
+            if (!projectile.TargetsMonster)
+            {
+                var resolution = EnemyAttackResolver.ResolveAgainstNexus(
+                    source.Definition,
+                    source.AttackPower,
+                    source.DamageMultiplier,
+                    source.AttackBuffMultiplier,
+                    source.CriticalChanceBonus,
+                    source.CriticalMultiplierBonus);
+                appliedDamage = resolution.FinalDamage;
+                nexusCurrentHealth = Mathf.Max(0f, nexusCurrentHealth - appliedDamage);
+                targetLabel = "Nexus";
+                return true;
+            }
+
+            return false;
         }
 
         private bool TryHitEnemy(ProjectileRuntime projectile, out EnemyRuntime enemyHit, out DamageResult damageResult)
@@ -823,11 +1674,36 @@ namespace Pakuri.Combat
                 }
 
                 enemyHit = enemy;
-                damageResult = DamageCalculator.Resolve(projectile.BaseDamage, 0f);
+                damageResult = DamageCalculator.Resolve(
+                    projectile.BaseDamage,
+                    projectile.Attribute,
+                    enemy.Defenses,
+                    targetCriticalResistance: enemy.CriticalResistance,
+                    finalDamageMultiplier: enemy.DamageTakenMultiplier);
                 return true;
             }
 
             return false;
+        }
+
+        private static float ApplyDamageToEnemy(EnemyRuntime enemy, float incomingDamage)
+        {
+            if (enemy == null || incomingDamage <= 0f)
+            {
+                return 0f;
+            }
+
+            var remainingDamage = incomingDamage;
+            if (enemy.ShieldValue > 0f)
+            {
+                var absorbed = Mathf.Min(enemy.ShieldValue, remainingDamage);
+                enemy.ShieldValue -= absorbed;
+                remainingDamage -= absorbed;
+            }
+
+            var appliedDamage = Mathf.Min(enemy.CurrentHealth, remainingDamage);
+            enemy.CurrentHealth -= appliedDamage;
+            return appliedDamage;
         }
 
         private static float GetEnemyHitRadius(EnemyRuntime enemy)
@@ -910,7 +1786,8 @@ namespace Pakuri.Combat
                 Speed = projectileSpeedConfigured,
                 RemainingLifetime = projectileLifetimeConfigured,
                 HitRadius = projectileHitRadiusConfigured,
-                BaseDamage = baseDamageConfigured + (powerStatConfigured * powerCoefficientConfigured)
+                BaseDamage = baseDamageConfigured + (powerStatConfigured * powerCoefficientConfigured),
+                Attribute = selectedDamageAttribute
             };
 
             projectiles.Add(projectile);
@@ -954,7 +1831,7 @@ namespace Pakuri.Combat
                 return;
             }
 
-            var allSpawnsFinished = spawnedNormalCount >= pendingNormalSpawnCount && !pendingBossSpawn;
+            var allSpawnsFinished = spawnedNormalCount >= pendingNormalSpawnCount && spawnedBossCount >= pendingBossSpawnCount;
             if (!allSpawnsFinished || enemies.Count > 0)
             {
                 return;

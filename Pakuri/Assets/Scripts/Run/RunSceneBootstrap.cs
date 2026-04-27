@@ -53,7 +53,7 @@ namespace Pakuri.Run
         {
             ActiveMonster = monster;
             ActiveSession = session;
-            combatController.BeginConfiguredDay(monster, session);
+            combatController.BeginConfiguredDay(monster, session, fallbackCatalog);
         }
 
         private MonsterDefinition ResolveFallbackMonster()

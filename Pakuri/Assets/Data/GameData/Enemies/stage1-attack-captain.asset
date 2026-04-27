@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d25148deb98cf94fa750a6ad39cabf1, type: 3}
+  m_Name: stage1-attack-captain
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.Data.EnemyDefinition
+  EnemyId: stage1-attack-captain
+  DisplayName: "\uACF5\uACA9\uB300\uC7A5"
+  EncounterRole: 2
+  AttackType: 0
+  Attribute: 0
+  Stats:
+    MaxHealth: 3200
+    AttackPower: 26
+    SpellPower: 0
+    MoveSpeed: 1.1
+    CriticalChance: 0.05
+    CriticalDamage: 1.5
+    CriticalResistance: 0
+  Defenses:
+    Physical: 12
+    Fire: 4
+    Lightning: 4
+    Ice: 4
+    Darkness: 3
+    Holy: 3
+  StageOneSkill: 6
+  ActiveSkillName: "\uB3CC\uACA9 \uBA85\uB839"
+  ActiveSkillCoefficient: 0
+  ActiveSkillCooldown: 12
+  ActiveSkillDuration: 6
+  ActiveSkillRadius: 5
+  ActiveSkillFlatValue: 0
+  PassiveSkillName: "\uACF5\uACA9 \uC219\uB828"
+  PassiveSummary: "\uBB3C\uB9AC \uD53C\uD574 12% \uC99D\uAC00"

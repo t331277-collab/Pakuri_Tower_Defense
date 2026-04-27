@@ -227,7 +227,7 @@ namespace Pakuri.Run
             currentState = RunFlowState.Combat;
             rewardSummaryApplied = false;
             rewardChoiceCommitted = false;
-            combatController.BeginConfiguredDay(selectedMonster, currentSession);
+            combatController.BeginConfiguredDay(selectedMonster, currentSession, gameDataCatalog);
             frontPanel.SetActive(false);
             hudPanel.SetActive(true);
             rewardPanel.SetActive(false);

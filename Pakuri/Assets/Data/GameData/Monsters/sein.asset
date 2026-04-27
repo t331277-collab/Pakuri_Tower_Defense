@@ -17,8 +17,24 @@ MonoBehaviour:
   RoleSummary: "\uD654\uC5FC \uD0C4\uCC3D \uD654\uB825\uACFC \uD654\uC5FC \uC800\uD56D
     \uAC10\uC18C\uB97C \uC8FC\uCD95\uC73C\uB85C \uD55C \uD654\uC5FC \uC800\uACA9\uC218."
   ElementLabel: "\uD654\uC5FC"
+  PrimaryAttribute: 1
   ActiveSkillName: "\uC5F4\uD48D \uD654\uC0B4"
   PassiveSkillName: "\uAC00\uC5F4 \uC870\uC900"
+  BaseStats:
+    MaxHealth: 210
+    AttackPower: 32
+    SpellPower: 32
+    MoveSpeed: 1
+    CriticalChance: 0.05
+    CriticalDamage: 1.5
+    CriticalResistance: 0
+  Defenses:
+    Physical: 0
+    Fire: 0
+    Lightning: 0
+    Ice: 0
+    Darkness: 0
+    Holy: 0
   UnitColor: {r: 1, g: 0.55, b: 0.26, a: 1}
   ProjectileColor: {r: 1, g: 0.78, b: 0.34, a: 1}
   MaxHealth: 210
@@ -62,3 +78,125 @@ MonoBehaviour:
     ReloadDurationMultiplier: 1
     MaxHealthBonus: 20
     StatusChanceBonus: 0
+  ActiveSkills:
+  - SkillId: sein-a
+    DisplayName: "\uC5F4\uD48D \uD654\uC0B4"
+    Slot: 0
+    RuntimeKind: 0
+    ImplementationState: 2
+    Attribute: 1
+    BaseDamage: 24
+    AttackPowerCoefficient: 0
+    SpellPowerCoefficient: 1
+    Range: 8
+    Radius: 0
+    CooldownSeconds: 1.5
+    MagazineCapacity: 6
+    ReloadSeconds: 4
+    ShotIntervalSeconds: 0.35
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uAE30\uBCF8 \uD0C4\uCC3D\uD615 \uACF5\uACA9"
+  - SkillId: sein-b
+    DisplayName: "\uC791\uC5F4 \uB09C\uC0AC"
+    Slot: 1
+    RuntimeKind: 1
+    ImplementationState: 1
+    Attribute: 1
+    BaseDamage: 30
+    AttackPowerCoefficient: 0.8
+    SpellPowerCoefficient: 0.8
+    Range: 8
+    Radius: 0
+    CooldownSeconds: 7
+    MagazineCapacity: 0
+    ReloadSeconds: 0
+    ShotIntervalSeconds: 0
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uBCF4\uC870 \uC561\uD2F0\uBE0C"
+  - SkillId: sein-c
+    DisplayName: "\uD654\uC5FC\uADA4\uB3C4"
+    Slot: 2
+    RuntimeKind: 3
+    ImplementationState: 1
+    Attribute: 1
+    BaseDamage: 26
+    AttackPowerCoefficient: 0.7
+    SpellPowerCoefficient: 0.9
+    Range: 7
+    Radius: 2.5
+    CooldownSeconds: 8
+    MagazineCapacity: 0
+    ReloadSeconds: 0
+    ShotIntervalSeconds: 0
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uBC94\uC704 \uB610\uB294 \uC81C\uC5B4 \uC561\uD2F0\uBE0C"
+  - SkillId: sein-d
+    DisplayName: "\uCD08\uC5F4 \uC9C0\uB300"
+    Slot: 3
+    RuntimeKind: 4
+    ImplementationState: 1
+    Attribute: 1
+    BaseDamage: 34
+    AttackPowerCoefficient: 0.8
+    SpellPowerCoefficient: 1
+    Range: 7
+    Radius: 2.8
+    CooldownSeconds: 10
+    MagazineCapacity: 0
+    ReloadSeconds: 0
+    ShotIntervalSeconds: 0
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uC9C0\uC18D/\uD45C\uC2DD/\uBCF4\uD638 \uC561\uD2F0\uBE0C"
+  - SkillId: sein-e
+    DisplayName: "\uC885\uB9D0\uC758 \uC0AC\uC120"
+    Slot: 4
+    RuntimeKind: 3
+    ImplementationState: 1
+    Attribute: 1
+    BaseDamage: 58
+    AttackPowerCoefficient: 1.2
+    SpellPowerCoefficient: 1.2
+    Range: 9
+    Radius: 4
+    CooldownSeconds: 15
+    MagazineCapacity: 0
+    ReloadSeconds: 0
+    ShotIntervalSeconds: 0
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uAD11\uC5ED \uB610\uB294 \uACB0\uC804\uAE30"
+  PassiveSkills:
+  - PassiveId: sein-f
+    DisplayName: "\uAC00\uC5F4 \uC870\uC900"
+    Slot: 5
+    RequiredActiveSlot: 0
+    ImplementationState: 1
+    Summary: "A \uB610\uB294 \uAE30\uBCF8 \uC804\uD22C \uC131\uB2A5 \uAC15\uD654"
+  - PassiveId: sein-g
+    DisplayName: "\uBD88\uAF43 \uD0C4\uB9C9"
+    Slot: 6
+    RequiredActiveSlot: 1
+    ImplementationState: 1
+    Summary: "B \uC561\uD2F0\uBE0C \uC2B5\uB4DD \uD6C4 \uD574\uAE08"
+  - PassiveId: sein-h
+    DisplayName: "\uC5F0\uC18C \uADA4\uC801"
+    Slot: 7
+    RequiredActiveSlot: 2
+    ImplementationState: 1
+    Summary: "C \uC561\uD2F0\uBE0C \uC2B5\uB4DD \uD6C4 \uD574\uAE08"
+  - PassiveId: sein-i
+    DisplayName: "\uC5F4\uC555 \uD655\uC0B0"
+    Slot: 8
+    RequiredActiveSlot: 3
+    ImplementationState: 1
+    Summary: "D \uC561\uD2F0\uBE0C \uC2B5\uB4DD \uD6C4 \uD574\uAE08"
+  - PassiveId: sein-j
+    DisplayName: "\uC885\uB9D0 \uC608\uACE0"
+    Slot: 9
+    RequiredActiveSlot: 4
+    ImplementationState: 1
+    Summary: "E \uC561\uD2F0\uBE0C \uC2B5\uB4DD \uD6C4 \uD574\uAE08"

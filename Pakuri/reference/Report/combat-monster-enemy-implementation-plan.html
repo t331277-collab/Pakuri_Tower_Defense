@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Combat / Monster / Enemy Implementation Plan</title>
+  <style>
+    :root {
+      --bg: #f2f5f7;
+      --paper: #ffffff;
+      --ink: #17212b;
+      --muted: #5b6876;
+      --line: #d8e0e7;
+      --blue: #114f7d;
+      --green: #166534;
+      --amber: #9a5b00;
+      --red: #a12a2a;
+      --soft-blue: #edf6ff;
+      --soft-green: #eefbf2;
+      --soft-amber: #fff8eb;
+      --soft-red: #fff1f1;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 36px 20px 64px;
+    }
+
+    header, section {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--paper);
+      box-shadow: 0 10px 28px rgba(23, 33, 43, 0.06);
+    }
+
+    header {
+      padding: 28px;
+      margin-bottom: 18px;
+    }
+
+    section {
+      padding: 24px;
+      margin-top: 16px;
+    }
+
+    h1, h2, h3 { margin: 0; line-height: 1.25; }
+    h1 { font-size: 32px; margin-bottom: 10px; }
+    h2 { font-size: 22px; margin-bottom: 12px; }
+    h3 { font-size: 17px; margin: 18px 0 8px; }
+    p { margin: 0 0 12px; }
+
+    code {
+      border-radius: 5px;
+      background: #edf2f7;
+      padding: 1px 6px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.95em;
+    }
+
+    ul, ol { margin: 8px 0 0 22px; padding: 0; }
+    li { margin: 4px 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 8px 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #f7fafc;
+      color: #253140;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      max-width: 980px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      color: var(--muted);
+      background: #f8fafc;
+      font-size: 13px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .callout {
+      border-left: 4px solid var(--blue);
+      background: var(--soft-blue);
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+
+    .ok { border-left-color: var(--green); background: var(--soft-green); }
+    .warn { border-left-color: var(--amber); background: var(--soft-amber); }
+    .risk { border-left-color: var(--red); background: var(--soft-red); }
+
+    .tag {
+      display: inline-block;
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      background: var(--blue);
+    }
+
+    .tag.green { background: var(--green); }
+    .tag.amber { background: var(--amber); }
+    .tag.red { background: var(--red); }
+
+    @media (max-width: 820px) {
+      main { padding: 20px 12px 44px; }
+      .grid { grid-template-columns: 1fr; }
+      table { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>전투 / 몬스터 스킬 / Stage 1 적 구현 방식</h1>
+    <p class="subtitle">
+      이 문서는 현재 프로젝트 코드와 실제 기획 문서를 기준으로, 속성별 방어력, 액티브 스킬, 기본 능력치, 패시브, Stage 1 적을 어떤 순서와 구조로 구현할지 정리한 Designer 설계 문서다. 실제 C# 구현은 포함하지 않는다.
+    </p>
+    <div class="chips">
+      <span class="chip">Role: Designer</span>
+      <span class="chip">작성일: 2026-04-27</span>
+      <span class="chip">근거: 실제 문서 / CSV / C# 코드</span>
+      <span class="chip">범위: 설계 HTML</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>1. 현재 확인된 근거</h2>
+    <div class="grid">
+      <div class="callout ok">
+        <h3>전투 규칙 문서</h3>
+        <ul>
+          <li><code>Pakuri/reference/3.combat/combat-attribute-and-damage-system.md</code>: 6속성, 속성별 방어력, 방어력 계산 순서, 데미지 공식, 치명타 순서.</li>
+          <li><code>Pakuri/reference/3.combat/combat-stat-system.md</code>: 공격력, 주문력, 생명력, 속성 저항, 행동속도, 쿨다운, 지속시간, 발사 간격 정의.</li>
+          <li><code>Pakuri/reference/3.combat/buff-debuff.md</code>: 감전, 추위, 빙결, 취약, 화염/신성 노출, 방어막, 축복, 이름표식, 침묵, 몰살 허가.</li>
+          <li><code>Pakuri/reference/3.combat/realtime-damage-meter.md</code>: 최종 적용 피해 기준 피해량 집계와 UI 갱신 규칙.</li>
+        </ul>
+      </div>
+      <div class="callout ok">
+        <h3>현재 C# 코드</h3>
+        <ul>
+          <li><code>DamageCalculator.cs</code>는 <code>DamageAttribute</code> 6종 enum과 <code>Resolve(baseDamage, defense, crit...)</code>만 갖고 있다.</li>
+          <li><code>MonsterDefinition.cs</code>는 현재 프로토타입용 단일 스킬 수치와 초기 보상만 갖고, 속성별 방어력/스킬 목록/패시브 목록은 없다.</li>
+          <li><code>EveVerticalSliceController.cs</code>는 선택 몬스터 수치를 받아 투사체를 발사하지만, 적 방어력은 <code>DamageCalculator.Resolve(projectile.BaseDamage, 0f)</code>로 0만 전달한다.</li>
+          <li><code>RunSession.cs</code>는 배운 액티브/패시브 목록과 선택 보상 누적값을 가진다.</li>
+        </ul>
+      </div>
+      <div class="callout ok">
+        <h3>Stage 1 적 문서</h3>
+        <ul>
+          <li><code>stage-1-enemies.md</code>에는 검사, 방패병, 궁수, 도적, 사제, 수호대장, 공격대장, 용사 카린의 액티브, 기본 능력치, 속성별 방어력, 패시브가 있다.</li>
+          <li><code>stage-basic-rules.md</code>와 <code>enemy-stage-index.md</code>는 일반 전투 보스, 5일차, 10일차, 11일차 보스 출현 규칙을 정의한다.</li>
+        </ul>
+      </div>
+      <div class="callout warn">
+        <h3>CSV 상태</h3>
+        <ul>
+          <li><code>Pakuri/data/enemies.csv</code>, <code>enemy_runtime.csv</code>는 적 스탯/런타임 스키마 참고에 유용하지만, 현재 내용은 <code>Imp Grunt</code>, <code>Rush Hound</code> 등 Stage 1 용사길드 문서와 다른 적 세트다.</li>
+          <li><code>skills.csv</code>, <code>skill_runtime.csv</code>는 스킬 데이터 스키마 참고에 유용하지만, 현재 <code>TOWER_001</code> 중심 이브 프로토타입 일부만 있다.</li>
+          <li>현재 프로젝트 코드에서 CSV를 런타임에 읽는 로더는 확인되지 않았다.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. 구현 방향 결론</h2>
+    <div class="callout">
+      <p>
+        구현은 <strong>CSV 런타임 로딩</strong>이 아니라, 문서와 필요한 CSV 스키마를 근거로 <strong>Unity ScriptableObject 정적 자산</strong>을 확장하는 방식이 맞다. 기존 흐름도 <code>GameDataCatalog.asset</code>와 <code>MonsterDefinition.asset</code>을 사용하는 방향으로 이미 잡혀 있다.
+      </p>
+    </div>
+    <ol>
+      <li><strong>공통 전투 모델 먼저 구현</strong>: 유닛 기본 스탯, 속성별 방어력, 버프/디버프, 피해 계산을 공통 타입으로 분리한다.</li>
+      <li><strong>Stage 1 적 데이터 구현</strong>: <code>stage-1-enemies.md</code>의 수치를 기준으로 적 정의 자산을 만든다. CSV의 현재 적 값은 Stage 1 수치로 직접 사용하지 않고 스키마 참고만 한다.</li>
+      <li><strong>Monster 스킬 데이터 구현</strong>: <code>2.Monster</code> 아래 실제 스킬 문서를 데이터화한다. A는 기본 습득, B~E/F~J는 런 중 선택 규칙을 따른다.</li>
+      <li><strong>스킬 실행기 구현</strong>: 탄창형, 쿨타임형, 투사체, 직선, 원형, 전장, 버프, 디버프, 표식/스택 계열을 공통 실행기로 처리한다.</li>
+      <li><strong>기존 프로토타입 교체</strong>: <code>EveVerticalSliceController</code>에 붙어 있는 단일 적/단일 스킬 로직을 새 전투 런타임에 연결한다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>3. 필요한 데이터 모델</h2>
+    <table>
+      <thead>
+      <tr>
+        <th>모델</th>
+        <th>필드</th>
+        <th>근거</th>
+        <th>비고</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td><code>CombatStats</code></td>
+        <td>최대 체력, 공격력, 주문력, 행동속도, 치명타 확률, 치명타 피해, 치명타 저항</td>
+        <td><code>combat-stat-system.md</code>, <code>stage-1-enemies.md</code>, <code>ally_units.csv</code>, <code>enemies.csv</code></td>
+        <td>몬스터/적 공통 스탯으로 사용한다.</td>
+      </tr>
+      <tr>
+        <td><code>AttributeDefenseSet</code></td>
+        <td>물리, 화염, 번개, 얼음, 어둠, 신성 방어력</td>
+        <td><code>combat-attribute-and-damage-system.md</code>, <code>stage-1-enemies.md</code></td>
+        <td>문서의 냉기는 코드/enum에서는 <code>Ice</code> 또는 표시명 얼음으로 통일한다.</td>
+      </tr>
+      <tr>
+        <td><code>SkillDefinition</code></td>
+        <td>스킬 ID, 이름, 슬롯, 타입, 속성, 기본 피해, 공격력 계수, 주문력 계수, 사거리, 반경, 쿨타임, 탄창, 재장전, 상태 부여</td>
+        <td><code>2.Monster/*/skill/*.md</code>, <code>skills.csv</code>, <code>skill_runtime.csv</code></td>
+        <td>CSV는 스키마 참고용이다. 실제 몬스터 스킬 수치는 문서 우선이다.</td>
+      </tr>
+      <tr>
+        <td><code>PassiveDefinition</code></td>
+        <td>패시브 ID, 슬롯, 해금 조건, 적용 대상, 스탯 보정, 상태 대상 보너스, 트리거 규칙</td>
+        <td><code>monster-basic-rule.md</code>, <code>2.Monster/*/skill/f~j</code></td>
+        <td>F는 기본 액티브 A 대응, G~J는 B~E 습득 후 선택지에 들어간다.</td>
+      </tr>
+      <tr>
+        <td><code>StatusEffectDefinition</code></td>
+        <td>상태 ID, 분류, 속성, 지속시간, 최대 스택, 스택 효과, 특수 트리거</td>
+        <td><code>buff-debuff.md</code>, <code>status_effects.csv</code></td>
+        <td>현재 CSV의 영어 상태 ID와 문서의 한국어 상태명을 매핑해야 한다.</td>
+      </tr>
+      <tr>
+        <td><code>EnemyDefinition</code></td>
+        <td>적 ID, 이름, 전투 구분, 공격 타입, 속성, 스탯, 방어력, 액티브, 패시브, 보상 연결</td>
+        <td><code>stage-1-enemies.md</code>, <code>stage-basic-rules.md</code>, <code>enemy_runtime.csv</code></td>
+        <td>1차 구현은 Stage 1만 만든다.</td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. 전투 계산 구현 방식</h2>
+    <h3>4.1 속성별 방어력 계산</h3>
+    <p>
+      현재 <code>DamageCalculator.Resolve</code>는 방어력 숫자 하나만 받는다. 다음 구현에서는 공격의 <code>DamageAttribute</code>와 대상의 <code>AttributeDefenseSet</code>을 받아 대응 방어력을 고른 뒤, 문서 순서대로 고정 증가, 고정 감소, 퍼센트 증가, 퍼센트 감소를 적용한다.
+    </p>
+    <table>
+      <thead>
+      <tr>
+        <th>단계</th>
+        <th>처리</th>
+        <th>근거</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td>1</td>
+        <td>공격 속성에 해당하는 기본 방어력 선택</td>
+        <td>각 공격은 동일 속성 방어력만 참조한다는 전투 속성 문서</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><code>BaseDef + FlatBonus - FlatReduction</code></td>
+        <td>고정 증감이 퍼센트보다 먼저 적용된다는 문서</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><code>* (1 + PercentBonus)</code></td>
+        <td>퍼센트 증가는 고정 증감 이후 곱연산</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><code>* (1 - PercentReduction_1) * ...</code></td>
+        <td>퍼센트 감소는 합산이 아니라 각각 곱연산</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><code>BaseDamage * 100 / (100 + FinalDef)</code></td>
+        <td>방어력은 최종 피해의 퍼센트 경감</td>
+      </tr>
+      </tbody>
+    </table>
+
+    <h3>4.2 치명타</h3>
+    <p>
+      기본 치명타 확률 5%, 치명타 피해 150%를 공통값으로 두고, 공격자 보너스와 대상 치명타 저항을 합연산한 뒤 방어력 반영 이후 치명타 배율을 적용한다. 현재 <code>DamageCalculator</code>의 기본값은 문서와 맞지만, 대상 치명타 저항과 취약 스택에 의한 치명타 피해 증가가 아직 빠져 있다.
+    </p>
+
+    <h3>4.3 최종 피해 이벤트</h3>
+    <p>
+      딜 미터기와 패시브 트리거를 위해 실제 체력에 적용된 피해량 기준 이벤트를 발행한다. 초과 피해는 집계하지 않는다는 <code>realtime-damage-meter.md</code> 규칙을 따른다.
+    </p>
+  </section>
+
+  <section>
+    <h2>5. Stage 1 적 구현 범위</h2>
+    <p>
+      1차 구현은 <code>stage-1-enemies.md</code>에 있는 8종만 만든다. 다른 스테이지 문서는 이번 구현 범위에서 제외한다.
+    </p>
+    <table>
+      <thead>
+      <tr>
+        <th>구분</th>
+        <th>적</th>
+        <th>액티브</th>
+        <th>패시브</th>
+        <th>구현 방식</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td>일반</td>
+        <td>검사</td>
+        <td>베기: 가까운 대상 1명, 공격력 100%, 2.0초</td>
+        <td>검술 숙련: 물리 피해 10% 증가</td>
+        <td>근접 단일 공격 AI의 기준 적</td>
+      </tr>
+      <tr>
+        <td>일반</td>
+        <td>방패병</td>
+        <td>방패 들기: 자신, 4초 동안 받는 피해 25% 감소, 8.0초</td>
+        <td>두꺼운 갑옷: 방어력 10% 증가</td>
+        <td>자기 버프와 피해 감소 테스트용</td>
+      </tr>
+      <tr>
+        <td>일반</td>
+        <td>궁수</td>
+        <td>조준 사격: 가까운 대상 1명, 공격력 150%, 5.0초</td>
+        <td>정조준: 치명타 확률 8% 증가</td>
+        <td>원거리 단발 공격 테스트용</td>
+      </tr>
+      <tr>
+        <td>일반</td>
+        <td>도적</td>
+        <td>수리검 투척: 가까운 대상 1명, 공격력 140%, 4.0초</td>
+        <td>날카로운 수리검: 치명타 피해 20% 증가</td>
+        <td>치명타 피해 보너스 테스트용</td>
+      </tr>
+      <tr>
+        <td>일반</td>
+        <td>사제</td>
+        <td>치유: 주변 적 1명, 주문력 120%, 기본 회복량 50, 6.0초</td>
+        <td>신성 집중: 치유량 15% 증가</td>
+        <td>아군 회복 AI의 최소 구현</td>
+      </tr>
+      <tr>
+        <td>5일차 중간보스</td>
+        <td>수호대장</td>
+        <td>수호의 깃발: 자신 중심 4m, 5초 보호막 100, 10.0초</td>
+        <td>수호 숙련: 받는 피해 12% 감소</td>
+        <td>보호막과 보스급 체력 검증</td>
+      </tr>
+      <tr>
+        <td>10일차 중간보스</td>
+        <td>공격대장</td>
+        <td>돌격 명령: 자신 중심 5m, 이동속도 20%, 공격력 15%, 6초, 12.0초</td>
+        <td>공격 숙련: 물리 피해 12% 증가</td>
+        <td>광역 버프 검증</td>
+      </tr>
+      <tr>
+        <td>보스</td>
+        <td>용사 카린</td>
+        <td>성검기: 전방 직선 8m, 공격력 220%, 9.0초</td>
+        <td>용사의 힘: 물리 피해 15% 증가</td>
+        <td>직선 범위 공격과 보스전 검증</td>
+      </tr>
+      </tbody>
+    </table>
+    <div class="callout warn">
+      <p>
+        <code>enemy-stage-index.md</code>는 Stage 1 중간보스를 검호 레온 / 기사단장 브란으로 적고, <code>stage-1-enemies.md</code>는 수호대장 / 공격대장으로 적는다. 실제 구현 수치가 있는 문서는 <code>stage-1-enemies.md</code>이므로 1차 구현은 수호대장 / 공격대장을 기준으로 한다.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Monster 스킬 구현 방식</h2>
+    <p>
+      Monster 스킬은 현재 <code>MonsterDefinition</code>의 단일 <code>ActiveSkillName</code>, <code>PassiveSkillName</code> 구조로는 담을 수 없다. 몬스터별로 액티브 5개, 패시브 5개, 특성, 마스터 스킬을 데이터화해야 한다.
+    </p>
+    <table>
+      <thead>
+      <tr>
+        <th>몬스터</th>
+        <th>액티브 방향</th>
+        <th>패시브 방향</th>
+        <th>1차 구현 우선순위</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td>아리엘</td>
+        <td>신성 투사체, 방어막, 축복, 신성 노출, 전장 광역</td>
+        <td>아군 신성 피해, 방어막 효율, 축복 강화, 신성 노출 집중 피해</td>
+        <td>방어막과 신성 노출이 공통 시스템 준비 후 구현</td>
+      </tr>
+      <tr>
+        <td>이브</td>
+        <td>번개 투사체, 직선 광선, 얼음 장판, 감전 폭발, 설치형 드론</td>
+        <td>감전/추위/빙결/취약 대상 보너스와 아군 트리거</td>
+        <td>현재 프로토타입이 있어 A부터 공통 시스템으로 이전</td>
+      </tr>
+      <tr>
+        <td>린</td>
+        <td>물리 연사, 행동속도 버프, 직선 넉백, 마무리, 범위 강타</td>
+        <td>물리 피해 강화, 행동속도/공격력 강화, 처치 보상, 방어 약화</td>
+        <td>물리 방어력과 넉백 최소 구현 후 진행</td>
+      </tr>
+      <tr>
+        <td>세인</td>
+        <td>화염 탄창, 다연발, 지연 폭발, 화염 장판, 전장 결전기</td>
+        <td>아군 화염 피해, 화염 트리거, 화염 저항 감소, 화염 노출</td>
+        <td>화염 저항 감소/노출 시스템 후 구현</td>
+      </tr>
+      <tr>
+        <td>베가</td>
+        <td>관통 3연 검기, 침묵, 몰살 허가, 표식 전체 참격, 표식 처형</td>
+        <td>이름표식 대상 피해, 침묵 대상 보너스, 행동속도 강화, 쿨타임 충전</td>
+        <td>이름표식/침묵/몰살 허가 상태 시스템 후 구현</td>
+      </tr>
+      </tbody>
+    </table>
+    <h3>선택지 규칙</h3>
+    <ul>
+      <li>전투 시작 시 액티브 A만 배운 상태로 시작한다.</li>
+      <li>액티브는 최대 3개, 패시브는 최대 3개까지 배운다.</li>
+      <li>F 패시브는 A 대응 패시브이고, G~J는 각각 B~E를 배운 뒤 해금한다.</li>
+      <li>액티브 하나당 특성 5개 중 3개를 고르면 마스터 2택1이 열린다.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>7. 구현 순서</h2>
+    <table>
+      <thead>
+      <tr>
+        <th>순서</th>
+        <th>작업</th>
+        <th>완료 기준</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td>1</td>
+        <td>공통 enum/model 추가: 속성, 스킬 슬롯, 스킬 타입, 스탯, 방어력, 상태 효과</td>
+        <td><code>MonsterDefinition</code>과 신규 <code>EnemyDefinition</code>이 공통 모델을 참조한다.</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><code>DamageCalculator</code> 확장</td>
+        <td>속성별 방어력, 버프/디버프 보정, 치명타 저항, 취약을 계산할 수 있다.</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Stage 1 적 ScriptableObject 생성</td>
+        <td>8종 적의 기본 능력치, 속성별 방어력, 액티브, 패시브가 자산으로 존재한다.</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>스킬 실행기 최소 세트 구현</td>
+        <td>탄창 투사체, 쿨타임 단발, 자기 버프, 광역 버프, 회복, 직선 범위가 동작한다.</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>이브 A 스킬을 공통 실행기로 이전</td>
+        <td>현재 프로토타입 전투가 새 데이터/계산기로 같은 흐름을 유지한다.</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>5몬스터 A~E/F~J 데이터 등록</td>
+        <td>선택지 풀에서 문서 기준 신규 액티브/패시브가 해금 조건에 맞게 나온다.</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>Stage 1 전투 편성 연결</td>
+        <td>일반일, 5일차, 10일차, 11일차가 Stage 1 적 규칙을 사용한다.</td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>8. 리스크와 보류 항목</h2>
+    <div class="callout risk">
+      <ul>
+        <li>현재 <code>EveVerticalSliceController</code>는 많은 책임을 한 클래스에 갖고 있어, 전체 스킬/적 시스템을 그대로 넣으면 유지보수가 어려워진다. 공통 런타임으로 분리해야 한다.</li>
+        <li>CSV의 현재 적/스킬 값은 Stage 1 용사길드 문서와 직접 일치하지 않는다. CSV 값을 그대로 쓰면 문서와 다른 게임이 된다.</li>
+        <li>속성 문서에는 방어력 최소값/상한/최소 피해 보장 여부가 후속 결정 항목으로 남아 있다. 현재 <code>DamageCalculator</code>는 방어력을 <code>-95</code> 이상으로 제한하지만, 문서에 확정된 값은 아니다.</li>
+        <li>딜 미터기 UI는 전투 계산 이벤트가 생긴 뒤 붙이는 것이 맞다. 계산 이벤트 없이 UI부터 만들면 집계 기준이 흔들린다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>9. Builder Handoff</h2>
+    <p>
+      Code Builder에게 넘길 때는 아래 범위로 고정한다.
+    </p>
+    <ol>
+      <li>기존 파일 상태를 다시 읽고 <code>DamageCalculator</code>, <code>MonsterDefinition</code>, <code>GameDataCatalog</code>, <code>EveVerticalSliceController</code>, <code>RunSession</code>의 현재 구조를 확인한다.</li>
+      <li>먼저 데이터 타입과 계산기를 만든다. 이 단계에서는 UI를 건드리지 않는다.</li>
+      <li>다음으로 Stage 1 적 데이터 자산을 만든다. 적 수치는 <code>stage-1-enemies.md</code>를 우선한다.</li>
+      <li>이브 A 스킬을 새 전투 계산기로 이전해 현재 플레이 흐름을 깨지 않는지 확인한다.</li>
+      <li>그 뒤 5몬스터 스킬 전체를 데이터로 등록하고, 스킬 실행기 미지원 타입은 명시적으로 <code>NotImplemented</code> 상태로 표시한다.</li>
+      <li>로직 작업 후에는 AGENTS.md 규칙대로 Code Reviewer 단계로 넘긴다.</li>
+    </ol>
+  </section>
+</main>
+</body>
+</html>

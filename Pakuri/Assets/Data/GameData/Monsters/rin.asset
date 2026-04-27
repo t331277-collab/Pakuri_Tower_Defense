@@ -17,8 +17,24 @@ MonoBehaviour:
   RoleSummary: "\uB9CE\uC740 \uD0C4\uCC3D\uC744 \uD65C\uC6A9\uD55C \uBB3C\uB9AC \uC5F0\uC0AC,
     \uC9E7\uC740 \uAD11\uC5ED \uCDA9\uACA9\uD30C, \uB109\uBC31 \uBCF4\uC870."
   ElementLabel: "\uBB3C\uB9AC"
+  PrimaryAttribute: 0
   ActiveSkillName: "\uD30C\uC1C4\uAD8C"
   PassiveSkillName: "\uC591\uC190\uC7A1\uC774"
+  BaseStats:
+    MaxHealth: 260
+    AttackPower: 28
+    SpellPower: 28
+    MoveSpeed: 1
+    CriticalChance: 0.05
+    CriticalDamage: 1.5
+    CriticalResistance: 0
+  Defenses:
+    Physical: 0
+    Fire: 0
+    Lightning: 0
+    Ice: 0
+    Darkness: 0
+    Holy: 0
   UnitColor: {r: 0.95, g: 0.56, b: 0.42, a: 1}
   ProjectileColor: {r: 1, g: 0.74, b: 0.58, a: 1}
   MaxHealth: 260
@@ -62,3 +78,125 @@ MonoBehaviour:
     ReloadDurationMultiplier: 1
     MaxHealthBonus: 35
     StatusChanceBonus: 0
+  ActiveSkills:
+  - SkillId: rin-a
+    DisplayName: "\uD30C\uC1C4\uAD8C"
+    Slot: 0
+    RuntimeKind: 0
+    ImplementationState: 2
+    Attribute: 0
+    BaseDamage: 24
+    AttackPowerCoefficient: 0
+    SpellPowerCoefficient: 1
+    Range: 8
+    Radius: 0
+    CooldownSeconds: 1.5
+    MagazineCapacity: 6
+    ReloadSeconds: 4
+    ShotIntervalSeconds: 0.35
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uAE30\uBCF8 \uD0C4\uCC3D\uD615 \uACF5\uACA9"
+  - SkillId: rin-b
+    DisplayName: "\uD558\uC6B8\uB9C1"
+    Slot: 1
+    RuntimeKind: 1
+    ImplementationState: 1
+    Attribute: 0
+    BaseDamage: 30
+    AttackPowerCoefficient: 0.8
+    SpellPowerCoefficient: 0.8
+    Range: 8
+    Radius: 0
+    CooldownSeconds: 7
+    MagazineCapacity: 0
+    ReloadSeconds: 0
+    ShotIntervalSeconds: 0
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uBCF4\uC870 \uC561\uD2F0\uBE0C"
+  - SkillId: rin-c
+    DisplayName: "\uCDA9\uACA9\uD30C"
+    Slot: 2
+    RuntimeKind: 3
+    ImplementationState: 1
+    Attribute: 0
+    BaseDamage: 26
+    AttackPowerCoefficient: 0.7
+    SpellPowerCoefficient: 0.9
+    Range: 7
+    Radius: 2.5
+    CooldownSeconds: 8
+    MagazineCapacity: 0
+    ReloadSeconds: 0
+    ShotIntervalSeconds: 0
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uBC94\uC704 \uB610\uB294 \uC81C\uC5B4 \uC561\uD2F0\uBE0C"
+  - SkillId: rin-d
+    DisplayName: "\uC885\uACB0 \uC77C\uACA9"
+    Slot: 3
+    RuntimeKind: 4
+    ImplementationState: 1
+    Attribute: 0
+    BaseDamage: 34
+    AttackPowerCoefficient: 0.8
+    SpellPowerCoefficient: 1
+    Range: 7
+    Radius: 2.8
+    CooldownSeconds: 10
+    MagazineCapacity: 0
+    ReloadSeconds: 0
+    ShotIntervalSeconds: 0
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uC9C0\uC18D/\uD45C\uC2DD/\uBCF4\uD638 \uC561\uD2F0\uBE0C"
+  - SkillId: rin-e
+    DisplayName: "\uBD95\uAD34 \uD0C0\uACA9"
+    Slot: 4
+    RuntimeKind: 3
+    ImplementationState: 1
+    Attribute: 0
+    BaseDamage: 58
+    AttackPowerCoefficient: 1.2
+    SpellPowerCoefficient: 1.2
+    Range: 9
+    Radius: 4
+    CooldownSeconds: 15
+    MagazineCapacity: 0
+    ReloadSeconds: 0
+    ShotIntervalSeconds: 0
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uAD11\uC5ED \uB610\uB294 \uACB0\uC804\uAE30"
+  PassiveSkills:
+  - PassiveId: rin-f
+    DisplayName: "\uC591\uC190\uC7A1\uC774"
+    Slot: 5
+    RequiredActiveSlot: 0
+    ImplementationState: 1
+    Summary: "A \uB610\uB294 \uAE30\uBCF8 \uC804\uD22C \uC131\uB2A5 \uAC15\uD654"
+  - PassiveId: rin-g
+    DisplayName: "\uC804\uC7A5\uC758 \uACF5\uBA85"
+    Slot: 6
+    RequiredActiveSlot: 1
+    ImplementationState: 1
+    Summary: "B \uC561\uD2F0\uBE0C \uC2B5\uB4DD \uD6C4 \uD574\uAE08"
+  - PassiveId: rin-h
+    DisplayName: "\uD30C\uBB38 \uC99D\uD3ED"
+    Slot: 7
+    RequiredActiveSlot: 2
+    ImplementationState: 1
+    Summary: "C \uC561\uD2F0\uBE0C \uC2B5\uB4DD \uD6C4 \uD574\uAE08"
+  - PassiveId: rin-i
+    DisplayName: "\uB9C8\uBB34\uB9AC \uBCF8\uB2A5"
+    Slot: 8
+    RequiredActiveSlot: 3
+    ImplementationState: 1
+    Summary: "D \uC561\uD2F0\uBE0C \uC2B5\uB4DD \uD6C4 \uD574\uAE08"
+  - PassiveId: rin-j
+    DisplayName: "\uBD95\uAD34 \uC5EC\uD30C"
+    Slot: 9
+    RequiredActiveSlot: 4
+    ImplementationState: 1
+    Summary: "E \uC561\uD2F0\uBE0C \uC2B5\uB4DD \uD6C4 \uD574\uAE08"

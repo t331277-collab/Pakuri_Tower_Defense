@@ -17,8 +17,24 @@ MonoBehaviour:
   RoleSummary: "\uBC88\uAC1C/\uC5BC\uC74C \uC18D\uC131 \uC5D4\uC9C4\uD615 + \uC0C1\uD0DC
     \uC81C\uC5B4 \uBCF4\uC870\uD615 \uD0C0\uC6CC."
   ElementLabel: "\uBC88\uAC1C"
+  PrimaryAttribute: 2
   ActiveSkillName: "\uC544\uD06C \uBCFC\uD2B8"
   PassiveSkillName: "\uC804\uC555 \uBCF4\uC815"
+  BaseStats:
+    MaxHealth: 220
+    AttackPower: 30
+    SpellPower: 30
+    MoveSpeed: 1
+    CriticalChance: 0.05
+    CriticalDamage: 1.5
+    CriticalResistance: 0
+  Defenses:
+    Physical: 0
+    Fire: 0
+    Lightning: 0
+    Ice: 0
+    Darkness: 0
+    Holy: 0
   UnitColor: {r: 0.41, g: 0.78, b: 1, a: 1}
   ProjectileColor: {r: 0.61, g: 0.93, b: 1, a: 1}
   MaxHealth: 220
@@ -62,3 +78,125 @@ MonoBehaviour:
     ReloadDurationMultiplier: 0.9
     MaxHealthBonus: 0
     StatusChanceBonus: 0.1
+  ActiveSkills:
+  - SkillId: eve-a
+    DisplayName: "\uC544\uD06C \uBCFC\uD2B8"
+    Slot: 0
+    RuntimeKind: 0
+    ImplementationState: 2
+    Attribute: 2
+    BaseDamage: 24
+    AttackPowerCoefficient: 0
+    SpellPowerCoefficient: 0.95
+    Range: 8
+    Radius: 0
+    CooldownSeconds: 1.4
+    MagazineCapacity: 6
+    ReloadSeconds: 4
+    ShotIntervalSeconds: 0.35
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uAC10\uC804 \uBD80\uC5EC \uAE30\uBCF8 \uD0C4\uCC3D\uD615 \uD22C\uC0AC\uCCB4"
+  - SkillId: eve-b
+    DisplayName: "\uD504\uB9AC\uC998 \uB808\uC774"
+    Slot: 1
+    RuntimeKind: 2
+    ImplementationState: 1
+    Attribute: 2
+    BaseDamage: 30
+    AttackPowerCoefficient: 0
+    SpellPowerCoefficient: 1.1
+    Range: 8.5
+    Radius: 0
+    CooldownSeconds: 7
+    MagazineCapacity: 0
+    ReloadSeconds: 0
+    ShotIntervalSeconds: 0
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uBC88\uAC1C/\uC5BC\uC74C \uC9C1\uC120 \uAD00\uD1B5 \uAD11\uC120"
+  - SkillId: eve-c
+    DisplayName: "\uD504\uB85C\uC2A4\uD2B8 \uD544\uB4DC"
+    Slot: 2
+    RuntimeKind: 4
+    ImplementationState: 1
+    Attribute: 3
+    BaseDamage: 12
+    AttackPowerCoefficient: 0
+    SpellPowerCoefficient: 0.45
+    Range: 7
+    Radius: 2.6
+    CooldownSeconds: 9
+    MagazineCapacity: 0
+    ReloadSeconds: 0
+    ShotIntervalSeconds: 0
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uCD94\uC704\uC640 \uBE59\uACB0\uC744 \uB9CC\uB4DC\uB294 \uC7A5\uD310"
+  - SkillId: eve-d
+    DisplayName: "\uC2A4\uD0DC\uD2F1 \uC624\uBC84\uB77C\uC774\uB4DC"
+    Slot: 3
+    RuntimeKind: 3
+    ImplementationState: 1
+    Attribute: 2
+    BaseDamage: 35
+    AttackPowerCoefficient: 0
+    SpellPowerCoefficient: 1.4
+    Range: 7
+    Radius: 2.2
+    CooldownSeconds: 10
+    MagazineCapacity: 0
+    ReloadSeconds: 0
+    ShotIntervalSeconds: 0
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uAC10\uC804 \uC2A4\uD0DD \uD3ED\uBC1C"
+  - SkillId: eve-e
+    DisplayName: "\uB4DC\uB860 \uBE44\uCEE8"
+    Slot: 4
+    RuntimeKind: 8
+    ImplementationState: 1
+    Attribute: 3
+    BaseDamage: 10
+    AttackPowerCoefficient: 0
+    SpellPowerCoefficient: 0.3
+    Range: 8
+    Radius: 0
+    CooldownSeconds: 13
+    MagazineCapacity: 0
+    ReloadSeconds: 0
+    ShotIntervalSeconds: 0
+    CriticalAllowed: 1
+    StatusEffectId: 
+    Summary: "\uC124\uCE58\uD615 \uBCF4\uC870\uC640 \uCDE8\uC57D \uB204\uC801"
+  PassiveSkills:
+  - PassiveId: eve-f
+    DisplayName: "\uC804\uC555 \uBCF4\uC815"
+    Slot: 5
+    RequiredActiveSlot: 0
+    ImplementationState: 1
+    Summary: "A \uB610\uB294 \uAE30\uBCF8 \uC804\uD22C \uC131\uB2A5 \uAC15\uD654"
+  - PassiveId: eve-g
+    DisplayName: "\uC785\uC790 \uBD84\uB9AC"
+    Slot: 6
+    RequiredActiveSlot: 1
+    ImplementationState: 1
+    Summary: "B \uC561\uD2F0\uBE0C \uC2B5\uB4DD \uD6C4 \uD574\uAE08"
+  - PassiveId: eve-h
+    DisplayName: "\uB0C9\uAC01 \uC54C\uACE0\uB9AC\uC998"
+    Slot: 7
+    RequiredActiveSlot: 2
+    ImplementationState: 1
+    Summary: "C \uC561\uD2F0\uBE0C \uC2B5\uB4DD \uD6C4 \uD574\uAE08"
+  - PassiveId: eve-i
+    DisplayName: "\uACFC\uC804\uB958 \uD68C\uB85C"
+    Slot: 8
+    RequiredActiveSlot: 3
+    ImplementationState: 1
+    Summary: "D \uC561\uD2F0\uBE0C \uC2B5\uB4DD \uD6C4 \uD574\uAE08"
+  - PassiveId: eve-j
+    DisplayName: "\uC57D\uC810 \uBD84\uC11D"
+    Slot: 9
+    RequiredActiveSlot: 4
+    ImplementationState: 1
+    Summary: "E \uC561\uD2F0\uBE0C \uC2B5\uB4DD \uD6C4 \uD574\uAE08"

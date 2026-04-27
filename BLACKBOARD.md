@@ -1,5 +1,395 @@
 # BLACKBOARD.md
 
+## Task: EnemySpawnPoint Editable Position
+
+### Task title
+
+Allow scene-edited `CombatRoot/EnemySpawnPoint` position to persist when starting the game.
+
+### Goals
+
+- Stop runtime scene reference resolution from resetting an existing `EnemySpawnPoint` to the hardcoded default `(29, 8, 0)`.
+- Keep default creation behavior for missing anchors.
+- Make enemy spawn placement use the edited `EnemySpawnPoint` transform position, including vertical movement.
+
+### Constraints
+
+- Role Owner is Code Builder after Designer handoff.
+- User explicitly requested no Code Reviewer stage for this task; proceed with self-review only.
+- All claims must be grounded in actual code and command output.
+- User performs Play Mode verification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation and self-review completed. Waiting for user Play Mode verification.
+
+### Next Actions
+
+- User moves `CombatRoot/EnemySpawnPoint` in `RunScene`, starts Play Mode, and verifies the marker no longer returns to `(29, 8, 0)`.
+- User verifies spawned enemies appear around the edited `EnemySpawnPoint` position.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs` previously called `EnsureChild(enemySpawnAnchor, "EnemySpawnPoint", new Vector3(29f, 8f, 0f))`.
+- `EnsureChild()` previously assigned `current.position = worldPosition` and `existing.position = worldPosition`, which reset existing anchors.
+- Added `DefaultEnemySpawnPosition` and changed `EnsureChild()` so existing `current` or found children are returned without overwriting their position.
+- `SpawnEnemy()` now starts from `enemySpawnAnchor.position` and applies the configured Y random range as an offset from the default spawn Y, so edited spawn point Y also affects spawn placement.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing Unity/MCPForUnity reference warnings.
+- External Code Reviewer command was started but the user interrupted it and instructed to proceed with self-review only.
+
+### History
+
+- 2026-04-28: User reported that editing `Combat Root/EnemySpawnPoint` in the scene is reverted when starting the game.
+- 2026-04-28: Confirmed reset cause in `EveVerticalSliceController.ResolveSceneReferences()` and `EnsureChild()`.
+- 2026-04-28: Changed existing anchor handling to preserve scene-authored positions and adjusted enemy spawn placement to use the anchor transform as the base position.
+- 2026-04-28: Per user instruction, skipped Code Reviewer and kept only Builder self-review plus build verification.
+
+## Task: 2026-04-27 Combat Implementation Status Reports
+
+### Task title
+
+Create HTML reports comparing today's combat / monster / enemy implementation with the implementation plan, and separately summarizing code-review-resolved work.
+
+### Goals
+
+- Compare today's implemented skill, damage calculation, Stage 1 enemy, Monster, projectile, and HP bar work against `Pakuri/reference/Report/combat-monster-enemy-implementation-plan.html`.
+- Generate one HTML report for implementation status.
+- Generate a separate HTML report for work found and resolved through self-review / reviewer-related review flow.
+- Keep external Reviewer status accurate and do not claim a PASS verdict where the reviewer command did not complete.
+
+### Constraints
+
+- Role Owner is Designer.
+- All claims must be grounded in actual files, BLACKBOARD history, and command output.
+- Do not claim Unity Play Mode verification.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- User can open `Pakuri/reference/Report/2026-04-27-combat-monster-enemy-implementation-status.html`.
+- User can open `Pakuri/reference/Report/2026-04-27-code-review-resolved-work.html`.
+
+### Evidence
+
+- Created `Pakuri/reference/Report/2026-04-27-combat-monster-enemy-implementation-status.html`.
+- Created `Pakuri/reference/Report/2026-04-27-code-review-resolved-work.html`.
+- Read `Pakuri/reference/Report/combat-monster-enemy-implementation-plan.html`.
+- Confirmed today's modified scripts with `Get-ChildItem Pakuri\Assets\Scripts -Recurse`.
+- Confirmed actual code symbols with `Select-String` in `CombatStatModels.cs`, `DamageCalculator.cs`, `EnemyDefinition.cs`, `SkillDefinition.cs`, `MonsterDefinition.cs`, `GameDataCatalog.cs`, `PakuriGameDataSeeder.cs`, `EveVerticalSliceController.cs`, and `EnemyAttackResolver.cs`.
+- Confirmed Stage 1 enemy assets exist under `Pakuri/Assets/Data/GameData/Enemies`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing Unity/MCPForUnity reference warnings.
+
+### History
+
+- 2026-04-27: User requested two HTML reports: one comparing today's implementation with the combat-monster-enemy implementation plan, and another for code-review-resolved work.
+- 2026-04-27: Generated both reports and verified their file presence and key headings.
+
+## Task: Monster And Enemy Hp Slider Bars
+
+### Task title
+
+Add overhead HP text and HP slider bars for Stage 1 enemies and the selected Player Monster.
+
+### Goals
+
+- Add a simple HP slider-style bar above enemies using existing/basic Unity-rendered assets.
+- Add the same kind of name, HP text, and HP bar above the selected Player Monster.
+- Keep HP text/bar updates tied to the current runtime health values.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- All claims must be grounded in actual files and command output.
+- Do not import new visual assets for this request; use the existing generated 1x1 shared sprite path in `EveVerticalSliceController`.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation and self-review completed. External Reviewer execution was attempted but could not complete because the Codex CLI reported a usage limit. Waiting for user Play Mode verification.
+
+### Next Actions
+
+- User verifies in Play Mode that enemies show name, HP text, and HP bar above their heads.
+- User verifies in Play Mode that the selected Player Monster shows name, HP text, and HP bar above the Monster.
+- User verifies the bars shrink as HP decreases for both enemies and the selected Player Monster.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs` `EnemyRuntime` now stores `HpBarFill`.
+- `EveVerticalSliceController.cs` now stores `selectedMonsterLabel` and `selectedMonsterHpBarFill`.
+- `EnsureSelectedMonsterStatusVisuals()` creates/reuses `MonsterHpLabel` and `MonsterHpBar` under `eveAnchor`.
+- `SpawnEnemy()` creates `EnemyHpBar` under each spawned enemy, and `UpdateEnemyLabel()` updates both text and bar fill.
+- `CreateHpBar()`, `EnsureHpBarPart()`, and `UpdateHpBarFill()` implement the shared world-space HP bar with `SpriteRenderer` and the existing shared 1x1 sprite.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing Unity/MCPForUnity assembly version warnings.
+- Unity refresh reached idle. Console error query returned MCP-FOR-UNITY client handler entries only, not project script compile errors.
+- External Reviewer command was attempted with `codex.exe exec --skip-git-repo-check`; it failed with a Codex usage-limit message and did not produce a review verdict.
+
+### History
+
+- 2026-04-27: User requested HP Slider Bar using basic assets and the same name/HP display for Player Monster as enemies.
+- 2026-04-27: Implemented world-space SpriteRenderer HP bars for enemies and selected Player Monster in `EveVerticalSliceController.cs`.
+- 2026-04-27: Attempted external Code Reviewer execution. The command exited before review due to Codex usage limit, so only local Builder self-review, build, Unity refresh, and console checks are available for this turn.
+
+## Task: Enemy Target Priority Monster First
+
+### Task title
+
+Enemy combat flow targets the selected Monster before the Nexus.
+
+### Goals
+
+- Enemies should move toward and attack the Monster before attacking the tower/Nexus.
+- If the Monster HP reaches 0, enemies should fall back to the existing Nexus target and Nexus defeat flow.
+- Keep the change grounded in the existing `EveVerticalSliceController` combat flow.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User will run Play Mode verification.
+- Do not claim gameplay verification; only build, Unity refresh, console check, and self-review are performed here.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation and self-review completed. Waiting for user Play Mode verification.
+
+### Next Actions
+
+- User verifies in Play Mode that Stage 1 enemies approach the selected Monster first.
+- User verifies that Monster HP decreases before Nexus HP, and Nexus starts taking damage only after Monster HP reaches 0.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs` now calls `GetEnemyPriorityTarget()` in `UpdateEnemies()` before moving or attacking.
+- `GetEnemyPriorityTarget()` returns `eveAnchor` while `unitCurrentHealth > 0f`, then falls back to `nexusAnchor`.
+- Enemy damage skills now call `ApplyEnemyDamageToPriorityTarget()`, which subtracts from `unitCurrentHealth` first and from `nexusCurrentHealth` only after Monster HP is depleted.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing Unity/MCPForUnity assembly version warnings.
+- Unity refresh reached idle. Console error query showed MCP-FOR-UNITY transport/client handler entries only; no project script compile error was returned.
+
+### History
+
+- 2026-04-27: User requested enemies attack Monsters before hitting the tower.
+- 2026-04-27: Confirmed the existing `UpdateEnemies()` flow targeted only `nexusAnchor` and the existing damage function subtracted only `nexusCurrentHealth`.
+- 2026-04-27: Changed enemy movement and damage target selection to prefer the Monster while alive, with Nexus fallback after Monster HP reaches 0.
+- 2026-04-27: Follow-up self-review fixes applied. Enemy attacks now resolve through `EnemyAttackResolver`, Monster defenses are cloned into runtime target defenses, enemy critical passive bonuses are copied from enemy stats into runtime, and fallback Stage 1 enemy ScriptableObjects are cached with `HideFlags.DontSave`.
+- 2026-04-27: Ranged and melee/ranged enemies now fire enemy projectiles. HP damage is resolved only when those projectiles collide with the Monster or Nexus. Enemies now create a simple overhead `TextMesh` label showing name and HP.
+
+## Task: Enemy Projectile And Overhead HP Display
+
+### Task title
+
+Ranged enemies use projectiles and enemies show simple overhead name/HP labels.
+
+### Goals
+
+- Ranged enemies should no longer damage the Monster or Nexus immediately at attack time.
+- Enemy projectiles should apply HP damage only after touching the Monster or Nexus target.
+- Enemies should show a simple overhead name and HP text.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- All claims must be grounded in actual files and command output.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation and self-review completed. Waiting for user Play Mode verification.
+
+### Next Actions
+
+- User verifies in Play Mode that Archer/Rogue/Hero Karin style ranged attackers spawn visible enemy projectiles.
+- User verifies Monster/Nexus HP changes only when enemy projectiles reach the target.
+- User verifies enemy overhead labels remain readable enough and update HP after taking damage/healing.
+
+### Evidence
+
+- `EveVerticalSliceController.cs` `ProjectileRuntime` now has enemy projectile fields: source enemy, target transform, and Monster/Nexus target flag.
+- `TryUseStageOneEnemySkill()` now routes `EnemyAttackType.Ranged` and `EnemyAttackType.MeleeAndRanged` default attacks through `FireEnemyProjectile()`.
+- `UpdateProjectiles()` now branches enemy projectiles into `TryHitEnemyProjectileTarget()`, which applies Monster or Nexus damage only on collision.
+- `SpawnEnemy()` now creates an overhead `TextMesh` through `CreateEnemyLabel()`, and `UpdateEnemyLabel()` writes enemy name and current/max HP.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing Unity/MCPForUnity assembly version warnings.
+- Unity refresh reached idle. Console error query returned MCP-FOR-UNITY transport/client handler entries only, not project script compile errors.
+
+### History
+
+- 2026-04-27: User requested ranged enemy projectiles with collision-based HP damage and simple overhead enemy name/HP display.
+- 2026-04-27: Implemented enemy projectile runtime path and overhead TextMesh labels in `EveVerticalSliceController.cs`.
+
+## Task: Combat Script Self-Review Fixes
+
+### Task title
+
+Fix self-review findings for Monster defense, enemy critical passives, God Script pressure, and fallback enemy allocation.
+
+### Goals
+
+- Apply Monster attribute defenses when enemies damage the Monster.
+- Make enemy critical chance/damage passive fields participate in damage resolution.
+- Reduce `EveVerticalSliceController` responsibility by moving enemy attack damage resolution into a helper.
+- Avoid creating new fallback Stage 1 enemy ScriptableObjects on every combat initialization.
+- Skip text-encoding changes because user confirmed current text is not an issue.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- All claims must be grounded in actual files and command output.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder fixes and self-review completed. Waiting for user Play Mode verification.
+
+### Next Actions
+
+- User verifies in Play Mode that enemy hits against Monster now use Monster defense and that archer/rogue critical passives can affect damage.
+- Future cleanup should continue splitting `EveVerticalSliceController`; current change only extracts enemy attack damage resolution.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts/Combat/EnemyAttackResolver.cs`.
+- `EveVerticalSliceController.cs` now stores `selectedMonsterDefenses`, clones `monster.Defenses`, and passes them to `EnemyAttackResolver.ResolveAgainstMonster`.
+- Enemy runtime now copies `CriticalChanceBonus` and `CriticalMultiplierBonus` from `CombatStatBlock` deltas and existing Stage 1 passives add onto those fields.
+- Fallback Stage 1 enemy creation now uses static `fallbackStageOneEnemyCache` and `HideFlags.DontSave`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing Unity/MCPForUnity assembly version warnings.
+- Unity initially reported missing `EnemyAttackResolver`; `manage_asset import` for `Assets/Scripts/Combat/EnemyAttackResolver.cs` generated/imported the MonoScript asset, and the later console error query showed only MCP-FOR-UNITY client handler entries.
+
+### History
+
+- 2026-04-27: User asked to fix self-review findings in order, excluding the text-encoding item.
+- 2026-04-27: Implemented enemy attack damage helper, Monster defense application, enemy critical passive participation, and fallback enemy cache.
+
+## Task: Combat Monster Enemy Implementation
+
+### Task title
+
+전투 기본 규칙 기반 Stage 1 적 / Monster 데이터 / 피해 계산 로그 구현
+
+### Goals
+
+- `combat-monster-enemy-implementation-plan.html`의 방향대로 공통 전투 모델, 속성별 방어력 계산, Stage 1 적 데이터와 런타임 효과를 구현한다.
+- Monster 5명의 액티브 A~E, 패시브 F~J 데이터 슬롯을 만든다.
+- Monster가 적에게 피해를 입힐 때 Unity Console `Debug.Log`로 계산식과 적용 피해를 간단히 출력한다.
+
+### Constraints
+
+- Role Owner는 Code Builder다.
+- 사용자가 플레이 실행 검증은 직접 수행한다고 했으므로 Codex는 Play Mode를 실행하지 않는다.
+- 사용자가 자체 리뷰까지만 요청했으므로 외부 Reviewer는 호출하지 않고 Builder 자체 리뷰와 빌드/콘솔 확인까지만 수행했다.
+- 판단은 실제 코드, asset, 명령 출력에 근거한다.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation and self-review completed. Waiting for user Play Mode verification.
+
+### Next Actions
+
+- 사용자가 Unity Play Mode에서 MainMenuScene 또는 RunScene 흐름을 실행해 Stage 1 적 스폰, 적 액티브/패시브, 몬스터 피해 계산 로그를 확인한다.
+- Unity Console에서 `[CombatDamage]` 로그가 공격자, 스킬, 대상, 속성 방어력 공식, 최종 적용 피해를 출력하는지 확인한다.
+
+### Evidence
+
+- 추가한 공통 전투 타입: `Pakuri/Assets/Scripts/Combat/CombatStatModels.cs`.
+- 확장한 피해 계산: `Pakuri/Assets/Scripts/Combat/DamageCalculator.cs`가 속성별 방어력, 고정/퍼센트 방어 보정, 치명타 저항, 최종 배율, `FormulaLog`를 처리한다.
+- 추가한 데이터 타입: `Pakuri/Assets/Scripts/Data/SkillDefinition.cs`, `Pakuri/Assets/Scripts/Data/EnemyDefinition.cs`.
+- 확장한 카탈로그/몬스터 데이터: `GameDataCatalog.cs`에 `StageOneEnemies`, `MonsterDefinition.cs`에 `PrimaryAttribute`, `BaseStats`, `Defenses`, `ActiveSkills`, `PassiveSkills`를 추가했다.
+- 전투 연결: `RunFlowController.cs`, `RunSceneBootstrap.cs`가 `GameDataCatalog`를 `EveVerticalSliceController.BeginConfiguredDay(...)`에 넘긴다.
+- 전투 런타임: `EveVerticalSliceController.cs`가 Stage 1 적 풀을 사용하고, 검사/방패병/궁수/도적/사제/수호대장/공격대장/용사 카린의 액티브/패시브 런타임 효과를 처리한다.
+- 11일차는 Stage 1 규칙대로 수호대장, 공격대장, 용사 카린을 모두 보스 스폰 대상으로 처리하도록 수정했다.
+- 몬스터가 적에게 피해를 줄 때 `Debug.Log("[CombatDamage] ...")`로 속성 방어력 공식, 최종 피해, 실제 적용 피해, 남은 보호막/HP를 출력한다.
+- `Pakuri/Seed Default Game Data` 메뉴 실행 후 `Pakuri/Assets/Data/GameData/Enemies` 아래 Stage 1 적 8종 asset이 생성됐고, `GameDataCatalog.asset`에 `StageOneEnemies` 참조가 기록됐다.
+- `Pakuri/Assets/Data/GameData/Monsters/eve.asset` 확인 결과 `PrimaryAttribute`, `ActiveSkills`, `PassiveSkills`, `ImplementationState`가 기록됐다.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore`는 오류 0개로 통과했다. 남은 경고는 기존 Unity/MCPForUnity `System.Net.Http`, `System.IO.Compression` 버전 충돌 경고 2개다.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore`는 오류 0개로 통과했다. 남은 경고는 동일한 기존 참조 경고 2개다.
+- Unity console error 조회는 MCP-FOR-UNITY client handler exit 로그만 반환했고, 새 프로젝트 컴파일 오류는 확인되지 않았다.
+
+### History
+
+- 2026-04-27: 사용자 지시로 Designer 설계 HTML 기준 구현에 착수했다.
+- 2026-04-27: `AGENTS.md`, `BLACKBOARD.md`, Unity MCP skill 지침을 먼저 확인했다.
+- 2026-04-27: 기존 `EveVerticalSliceController`가 적 방어력을 `0f`로 넘기는 구조임을 확인하고 속성별 방어력 계산을 추가했다.
+- 2026-04-27: Stage 1 적 데이터와 Monster 5명 스킬/패시브 데이터 자산 생성을 위해 `PakuriGameDataSeeder.cs`를 확장하고 메뉴를 실행했다.
+- 2026-04-27: 자체 리뷰 중 11일차 다중 보스 규칙 누락을 발견해 수호대장, 공격대장, 용사 카린이 모두 스폰되도록 수정했다.
+- 2026-04-27: 런타임/에디터 빌드와 Unity 콘솔 error 확인까지 완료했다.
+
+## Task: Combat Monster Enemy Implementation Plan
+
+### Task title
+
+전투 기본 규칙, Monster 스킬, Stage 1 적 구현 방식 HTML 설계
+
+### Goals
+
+- `Pakuri/reference/3.combat` 전투 기본 기획서와 `Pakuri/reference/5.enemy` 적 기획서를 실제 파일 기준으로 읽고 구현 방향을 정리한다.
+- 필요한 경우 `Pakuri/data` CSV의 역할을 확인하되, 실제 문서와 충돌하는 값은 그대로 사용하지 않는다.
+- Monster의 속성별 방어력, 액티브 스킬, 기본 능력치, 패시브와 Stage 1 적 구현 방식을 HTML 문서로 정리한다.
+
+### Constraints
+
+- Role Owner는 Designer이며 실제 C# 구현은 하지 않는다.
+- 모든 판단은 실제 문서, CSV, 현재 C# 코드 내용에 근거한다.
+- 현재 프로젝트에는 CSV 런타임 로더가 확인되지 않았으므로 CSV 직접 로딩을 구현된 것처럼 쓰지 않는다.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- 사용자가 구현을 원하면 이 HTML을 기준으로 Code Builder에게 handoff한다.
+- Builder 단계에서는 공통 전투 데이터 모델, 속성별 방어력 계산, Stage 1 적 자산, 스킬 실행기 순서로 들어간다.
+
+### Evidence
+
+- 읽은 전투 문서: `Pakuri/reference/3.combat/combat-attribute-and-damage-system.md`, `combat-stat-system.md`, `buff-debuff.md`, `realtime-damage-meter.md`.
+- 읽은 적 문서: `Pakuri/reference/5.enemy/stage-basic-rules.md`, `enemy-stage-index.md`, `stage-1-enemies.md`.
+- 읽은 Monster 문서: `Pakuri/reference/2.Monster/monster-basic-rule.md`, `monster-skill-patterns.md`, `skill-choice-pool-rule.md`, 각 Monster tower 문서와 스킬 문서 목록.
+- 확인한 CSV: `Pakuri/data/enemies.csv`, `enemy_runtime.csv`, `skills.csv`, `skill_runtime.csv`, `ally_units.csv`, `ally_runtime.csv`, `status_effects.csv`, `levelup_choices.csv`, `skill_branches.csv`, `levelup_rules.csv`.
+- 확인한 현재 코드: `Pakuri/Assets/Scripts/Combat/DamageCalculator.cs`, `EveVerticalSliceController.cs`, `Pakuri/Assets/Scripts/Data/MonsterDefinition.cs`, `GameDataCatalog.cs`, `Pakuri/Assets/Scripts/Run/RunSession.cs`.
+- 생성한 문서: `Pakuri/reference/Report/combat-monster-enemy-implementation-plan.html`.
+
+### History
+
+- 2026-04-27: AGENTS.md와 BLACKBOARD.md를 먼저 읽었다.
+- 2026-04-27: `rg`가 설치되어 있지 않아 PowerShell `Get-ChildItem`과 `Get-Content`로 실제 파일 목록과 내용을 확인했다.
+- 2026-04-27: `Pakuri/reference/run-systems-integration-summary-report.html`는 BLACKBOARD 기록과 달리 해당 경로에 없고, 실제 파일은 `Pakuri/reference/Report/run-systems-integration-summary-report.html`에 있음을 확인했다.
+- 2026-04-27: Stage 1 적 문서와 CSV의 현재 적 데이터가 직접 일치하지 않으므로 Stage 1 수치는 문서 우선, CSV는 스키마 참고로 정리했다.
+- 2026-04-27: Designer 설계 HTML `Pakuri/reference/Report/combat-monster-enemy-implementation-plan.html`를 추가했다.
+
 ## Task: 2026-04-26 Run UI Implementation Status Report
 
 ### Task title
