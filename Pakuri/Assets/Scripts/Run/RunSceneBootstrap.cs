@@ -1,4 +1,4 @@
-using Pakuri.Combat;
+﻿using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
@@ -7,7 +7,7 @@ namespace Pakuri.Run
     [DisallowMultipleComponent]
     public sealed class RunSceneBootstrap : MonoBehaviour
     {
-        [SerializeField] private EveVerticalSliceController combatController;
+        [SerializeField] private CombatRuntimeController combatController;
         [SerializeField] private GameDataCatalog fallbackCatalog;
         [SerializeField] private string fallbackMonsterId = "eve";
         [SerializeField] private bool allowFallbackRun = true;
@@ -22,12 +22,12 @@ namespace Pakuri.Run
 
             if (combatController == null)
             {
-                combatController = FindFirstObjectByType<EveVerticalSliceController>();
+                combatController = FindFirstObjectByType<CombatRuntimeController>();
             }
 
             if (combatController == null)
             {
-                Debug.LogError("RunSceneBootstrap requires an EveVerticalSliceController in RunScene.");
+                Debug.LogError("RunSceneBootstrap requires a CombatRuntimeController in RunScene.");
                 return;
             }
 

@@ -32,6 +32,8 @@ namespace Pakuri.Data
         public AttributeDefenseSet Defenses = new AttributeDefenseSet();
 
         [Header("Prototype Combat Tuning")]
+        public Sprite UnitSprite;
+        public Sprite ProjectileSprite;
         public Color UnitColor = Color.white;
         public Color ProjectileColor = Color.white;
         public float MaxHealth = 220f;

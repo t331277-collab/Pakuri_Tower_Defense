@@ -1,5 +1,306 @@
 # BLACKBOARD.md
 
+## Task: Combat Visual Sprite Assignment
+
+### Task title
+
+Allow monster/enemy ScriptableObjects and RunScene battlefield background to use editable sprites.
+
+### Goals
+
+- Add editable unit/projectile sprite references to monster and enemy ScriptableObjects under `Assets/Data/GameData`.
+- Use assigned monster sprites for the selected monster and its projectiles at runtime.
+- Use assigned enemy sprites for enemy bodies and enemy projectiles at runtime.
+- Let `RunScene` use an editable battlefield background sprite without forcing the user's manual `BattlefieldBackground` scale.
+- Keep unit body `SpriteRenderer.color` values white so assigned unit sprites are not tinted.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground all claims in actual files and command output.
+- Do not run Unity-MCP Play Mode gameplay verification; user performs Play Mode verification.
+- Preserve unrelated existing worktree changes.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation and local build/Unity console validation completed. User reported Play Mode verification completed. Unit body sprite color preservation was added. External Code Reviewer run was attempted but interrupted by the user and is not completed.
+
+### Next Actions
+
+- User assigns `UnitSprite` and `ProjectileSprite` on monster/enemy assets as needed.
+- User assigns `BattlefieldBackgroundSprite` on `CombatRuntimeController` and adjusts `BattlefieldBackground` Transform Scale manually; keep `Auto Fit Battlefield Background To Field` off when manual scale should be preserved.
+- Run Code Reviewer later if the user wants this visual-support change reviewed.
+
+### Evidence
+
+- `MonsterDefinition.cs` now exposes `UnitSprite` and `ProjectileSprite`.
+- `EnemyDefinition.cs` now exposes `UnitSprite` and `ProjectileSprite`, and `CloneRuntimeCopy()` preserves both references.
+- `CombatRuntimeScene.cs` now reads `MonsterDefinition.UnitSprite` and `MonsterDefinition.ProjectileSprite` into runtime selected sprite fields.
+- `CombatRuntimeEnemies.cs` now uses `EnemyDefinition.UnitSprite` for enemy bodies and `EnemyDefinition.ProjectileSprite` for enemy projectiles, falling back to the generated shared sprite when no sprite is assigned.
+- `CombatRuntimeProjectiles.cs` now uses the selected monster projectile sprite, falling back to the generated shared sprite when no sprite is assigned.
+- `CombatRuntimeController.cs` now exposes `BattlefieldBackgroundAnchor`, `BattlefieldBackgroundSprite`, `BattlefieldBackgroundColor`, and `AutoFitBattlefieldBackgroundToField`.
+- `CombatRuntimeScene.cs` now only rewrites `BattlefieldBackground.localScale` when `autoFitBattlefieldBackgroundToField` is true, so manual scale is preserved by default.
+- `CombatRuntimeScene.cs` now applies `Color.white` to the selected monster body renderer.
+- `CombatRuntimeEnemies.cs` now keeps enemy body renderer colors white in `UpdateEnemyColor()`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and only the existing 2 MCPForUnity/Unity reference warnings.
+- Unity script refresh/compile was requested; console error query returned only MCP-FOR-UNITY client handler exit logs, not project compile errors.
+- User reported Play Mode verification completed before the manual background scale fix.
+
+### History
+
+- 2026-04-28: User requested editable projectile images and monster images on `Assets/Data/GameData` enemy/monster SOs, plus an editable RunScene background image.
+- 2026-04-28: Code Builder added sprite fields to monster/enemy definitions and wired runtime monster/enemy/projectile renderers to use them.
+- 2026-04-28: User reported Play Mode verification completed but found `BattlefieldBackground` scale was forced on game start.
+- 2026-04-28: Code Builder changed background auto-fit scaling to an opt-in serialized bool so manual `BattlefieldBackground` scale is preserved by default.
+- 2026-04-28: User requested unit sprite colors stay white; Code Builder changed selected monster and enemy body renderers to keep `SpriteRenderer.color` white.
+
+## Task: Run Day Combat Type And Material Rewards
+
+### Task title
+
+Implement run day combat type model, actual prisoner/gold/dark trace rewards, and prisoner offering choices.
+
+### Goals
+
+- Add a run day model for day index and combat type.
+- Implement document-based rewards for prisoner, gold, and dark trace.
+- Do not implement artifact effects yet.
+- Show reward buttons by cloning editable templates under `RewardPanel/RewardButtons`.
+- Show prisoner reward types and open the pre-made `PrisonerPanel` for offering choices when a prisoner reward is clicked.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground all claims in actual files and command output.
+- Do not run Unity-MCP Play Mode gameplay verification; user performs Play Mode verification.
+- Run Code Reviewer once only after implementation.
+- Preserve unrelated existing worktree changes.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation and local validation for editable templates, click-to-claim material rewards, always-available ContinueButton, and prisoner offering choice panel completed. User Play Mode verification is complete. User chose to defer the external Code Reviewer run for later.
+
+### Next Actions
+
+- User will run or request the deferred external Code Reviewer review later if needed.
+
+### Evidence
+
+- `Pakuri/reference/4.run/combat-reward-system.md` defines prisoner count chance, boss prisoner guarantee, gold, and dark trace rewards.
+- `Pakuri/reference/4.run/dungeon-squad-run-structure.md` defines day-based combat types for normal, midboss, and boss days.
+- `RunSession.cs` currently stores stage/day/gold/dark trace/prisoner count but has no explicit combat type model.
+- `RunCombatUiController.cs` currently uses fixed `RewardButton_0` to `RewardButton_2` slots under `RewardButtons`.
+- Added `Pakuri/Assets/Scripts/Run/RunDayModel.cs` with `RunCombatType` and day-based combat type resolution.
+- `RunSession.cs` now tracks `CurrentDayModel`, `CurrentCombatType`, and collected prisoner names.
+- `CombatRuntimeController` now builds reward items for prisoners, gold, and dark trace only; artifact rewards and prisoner offering are not implemented.
+- `RunCombatUiController.cs` now clones editable `RewardButton_0`, `RewardButton_1`, and `RewardButton_2` templates for prisoner, artifact, and material/other reward display categories.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and only the 2 existing Unity/MCPForUnity reference warnings.
+- Unity refresh requested script compilation; console error query returned only MCP-FOR-UNITY client handler exit logs, not project script compile errors.
+- `git diff --check` for changed Run/Combat files returned exit code 0 with CRLF warnings only.
+- Unity generated `Pakuri/Assets/Scripts/Run/RunDayModel.cs.meta`.
+- External Code Reviewer one-shot review returned `REVIEW_RESULT: NEEDS_CHANGES` in `codex_loop_logs/run_day_rewards_reviewer_20260428.md`.
+- Reviewer finding: `CombatRuntimeRewards.cs` can duplicate prisoner rewards because `BuildRewardPrisoners()` adds guaranteed boss prisoners and then samples `currentNormalEnemyPool`, which can include the same normal enemy used as `currentNormalBossDefinition`.
+- User accepted the duplicate prisoner finding as acceptable for now and reported Play Mode test completed.
+- `CombatRuntimeController.RewardChoiceView` now carries `PrisonerName`, `GoldAmount`, `DarkTraceAmount`, and `Claimed`.
+- `CombatRuntimeRewards.ApplyRewardChoice()` now marks one reward option as claimed and keeps `IsWaitingForRewardChoice` true until all reward options are claimed.
+- `RunSession.cs` now exposes `ClaimMaterialReward()` and `ClaimPrisonerReward()` for click-to-claim updates.
+- `RunCombatUiController.cs` no longer calls `ApplyPostCombatSummary()` when entering the reward panel; it applies prisoner/material rewards only from clicked reward buttons.
+- `RunCombatUiController.cs` now resolves editable templates named `Prisoner`, `Artifact`, and `Material`.
+- Unity editor check on loaded `RunScene` found `RewardButtons` children: `RewardPreviewButton`, `Prisoner`, `Artifact`, and `Material`; missing component scan returned `missing=0`.
+- Saved `RunScene` after template rename.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and only the 2 existing Unity/MCPForUnity reference warnings.
+- Unity console was cleared and rechecked; error query returned 0 entries.
+- User reported Play Mode verification completed for the click-to-claim reward flow and clarified that `ContinueButton` staying active before all rewards are selected is intentional.
+- `Pakuri/reference/4.run/prisoner-choice-system.md` defines 공양 as spending a prisoner on an existing monster to show up to 3 skill or enhancement choices and choose 1.
+- `Pakuri/reference/2.Monster/skill-choice-pool-rule.md` defines the skill choice pool as unlearned active skills, unlearned passive skills, learned active enhancements, and master skills when conditions exist; candidates under 3 are shown only by remaining count.
+- `Pakuri/reference/2.Monster/monster-basic-rule.md` defines run-time acquisition limits as active skills 3 and passive skills 3.
+- `RunScene.unity` contains a pre-made inactive `PrisonerPanel` with `Choice1`, `Choice2`, and `Choice3`.
+- `MonsterDefinition.cs` contains current data fields available for this prototype: `ActiveSkills`, `PassiveSkills`, and `InitialRewardChoices`; no separate master-skill data model exists yet.
+- `RunSession.cs` now records offering choices and learned active/passive skills through `RecordOfferingChoice()`, `HasLearnedActive()`, and `HasLearnedPassive()`.
+- `RunCombatUiController.cs` now caches `PrisonerPanel`, opens it from prisoner reward buttons, builds up to 3 shuffled offering choices from actual monster data while respecting the current active/passive acquisition limits, hides unused choice buttons, and returns to `RewardPanel` after a choice.
+- `RunCombatUiController.cs` now keeps `ContinueButton` active in reward state so rewards can be skipped.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and only the 2 existing Unity/MCPForUnity reference warnings after the prisoner offering implementation.
+- Unity script refresh completed; console error query returned only MCP-FOR-UNITY client handler exit logs, not project script compile errors.
+- User reported Play Mode verification completed for the prisoner offering choice flow.
+- User reported no notable Play Mode issues and chose not to run Code Reviewer now; user may run Code Reviewer later.
+
+### History
+
+- 2026-04-28: User requested roadmap steps 2 and 3 together, excluding artifact implementation, and requested reward buttons cloned from one editable template per reward category.
+- 2026-04-28: Code Builder implemented the run day combat type model, material reward construction, prisoner display reward items, and template-cloned reward buttons.
+- 2026-04-28: External Code Reviewer one-shot review returned `REVIEW_RESULT: NEEDS_CHANGES`; Code Builder is waiting for user instruction instead of auto-fixing.
+- 2026-04-28: User accepted the duplicate prisoner finding, reported Play Mode test completed, and requested editable `Prisoner`, `Material`, `Artifact` templates plus click-to-claim material rewards.
+- 2026-04-28: Code Builder changed reward acquisition from reward-panel entry to clicked reward buttons, kept artifact as an editable template only, and saved `RunScene` with editable template names.
+- 2026-04-28: User reported Play Mode verification completed and clarified that ContinueButton should remain active even when rewards remain unselected.
+- 2026-04-28: User requested prisoner use through 공양 and a skill choice pool triggered by prisoner reward buttons; Code Builder implemented the `PrisonerPanel` choice flow using the current monster skill and reward-choice data.
+
+- 2026-04-28: User reported Play Mode verification completed for the prisoner offering choice flow.
+
+- 2026-04-28: User reported no notable Play Mode issues and chose to defer the Code Reviewer run until later.
+
+## Task: Combat Runtime Controller Split
+
+### Task title
+
+Rename and split `EveVerticalSliceController` into role-based combat runtime scripts.
+
+### Goals
+
+- Rename `EveVerticalSliceController` to a role-accurate `CombatRuntimeController`.
+- Preserve the existing RunScene component connection by moving the original `.meta` to `CombatRuntimeController.cs.meta`.
+- Split the large combat controller into partial scripts by responsibility without intentionally changing gameplay behavior.
+- Keep current RunScene combat, reward, enemy, projectile, and HUD flows compiling.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground all claims in actual files and command output.
+- Do not run Unity-MCP Play Mode gameplay verification; user performs Play Mode verification.
+- Run Code Reviewer once only after implementation.
+- Preserve unrelated existing worktree changes.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed. Builder implementation, local validation, one external Code Reviewer run, user confirmation for intentional scene marker position, and user Play Mode verification are done.
+
+### Next Actions
+
+- Continue with the next implementation task selected by the user.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs` was 87,832 bytes before the split.
+- `EveVerticalSliceController.cs` was replaced by `CombatRuntimeController.cs` plus role-based partial files: `CombatRuntimeScene.cs`, `CombatRuntimeEnemies.cs`, `CombatRuntimeProjectiles.cs`, `CombatRuntimeRewards.cs`, and `CombatRuntimeHud.cs`.
+- `CombatRuntimeController.cs.meta` uses the original script guid `e1c1fbd89ef220a499bf601ceaf19ced`, preserving the existing Unity MonoScript asset identity for the renamed controller.
+- `RunCombatUiController.cs`, `RunFlowController.cs`, and `RunSceneBootstrap.cs` now reference `CombatRuntimeController`.
+- `RunScene.unity` now records `Assembly-CSharp::Pakuri.Combat.CombatRuntimeController` in the controller component `m_EditorClassIdentifier`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing Unity/MCPForUnity reference warnings.
+- Unity script refresh completed; console error query returned only MCP-FOR-UNITY client handler exit logs, not project script compile errors.
+- `git diff --check` for the changed runtime files returned exit code 0 with CRLF warnings only.
+- External Code Reviewer one-shot review returned `REVIEW_RESULT: NEEDS_CHANGES` in `codex_loop_logs/combat_runtime_split_reviewer_20260428.md`.
+- Reviewer findings 1-2 point at stage-basic spawn-rule changes that were already reviewed as `PASS` in `codex_loop_logs/stage_basic_spawn_reviewer_20260428.md`.
+- `Select-String` confirmed current `RunScene.unity` stores `EnemySpawnPoint` local position at `{x: 34.39, y: 8, z: 0}`.
+- User confirmed the `EnemySpawnPoint` position was manually adjusted and should not be treated as a required fix.
+- User reported Play Mode worked without notable problems after the rename/split.
+
+### History
+
+- 2026-04-28: User requested doing roadmap step 1 first, renaming `EveVerticalSliceController` according to its purpose and splitting scripts by role.
+- 2026-04-28: Code Builder renamed the controller to `CombatRuntimeController`, split the large file into role-based partial scripts, updated runtime references, and completed local validation.
+- 2026-04-28: External Code Reviewer one-shot review returned `REVIEW_RESULT: NEEDS_CHANGES`; Code Builder is waiting for user instruction instead of auto-fixing.
+- 2026-04-28: User confirmed the `EnemySpawnPoint` position was manually adjusted, so the scene marker position finding is accepted as intentional.
+- 2026-04-28: User reported Play Mode worked without notable problems; task marked completed.
+
+## Task: Reference Implementation Roadmap Report
+
+### Task title
+
+Create an HTML report summarizing current implementation status and next implementation order from `reference` Markdown documents.
+
+### Goals
+
+- Read current `AGENTS.md` and relevant `BLACKBOARD.md` state before work.
+- Inspect `Pakuri/reference` Markdown files while treating `dungeon-squad*.md` files as reference-only, not implementation targets.
+- Compare reference documents against actual `Assets` scripts, scenes, and data assets.
+- Create an HTML report under `Pakuri/reference/Report`.
+
+### Constraints
+
+- Role Owner is Designer.
+- Ground all claims in actual files and command output.
+- Do not claim implementation for systems that have no actual script, scene, or asset evidence.
+- This is a design/status report, not gameplay logic implementation.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- If implementation continues, recommended first Builder handoff is combat reward actualization: prisoner count/probability, boss prisoner guarantee display, gold/dark trace accumulation, and `RunSession` persistence within the current run.
+
+### Evidence
+
+- `Get-ChildItem Pakuri\reference -Recurse -Filter *.md` found 105 Markdown files.
+- File count command classified 9 `dungeon-squad*.md` files as reference-only and 96 non-`dungeon-squad*.md` files as implementation reference documents.
+- `Get-ChildItem Pakuri\Assets\Scripts -Recurse -File` confirmed current script folders: `Combat`, `Data`, and `Run`.
+- `Get-ChildItem Pakuri\Assets\Scenes -File` confirmed `MainMenuScene.unity` and `RunScene.unity`.
+- `Get-ChildItem Pakuri\Assets\Data -Recurse -File` confirmed `GameDataCatalog.asset`, 5 monster assets, and 8 stage1 enemy assets.
+- `Select-String` checks found no dedicated runtime script or asset evidence for full `Formation`, `Artifact`, `Shop`, `Meta`, `Guidebook`, `Training`, or `Market` systems beyond existing `.meta` files and unrelated Unity/EventSystem references.
+- Created `Pakuri/reference/Report/2026-04-28-reference-implementation-roadmap.html`.
+
+### History
+
+- 2026-04-28: User requested an HTML summary of current implementation status and future implementation order based on `reference` Markdown files, while treating `dungeon-squad*.md` as reference-only.
+- 2026-04-28: Designer inspected current references, scripts, scenes, and data assets, then created the implementation roadmap HTML report.
+
+## Task: Stage Basic Enemy Spawn Rule Reset
+
+### Task title
+
+Reset RunScene enemy spawn positions to `stage-basic-rules.md`.
+
+### Goals
+
+- Treat the current RunScene battlefield as bottom-left `(0,0)` and top-right `(31,17)`.
+- Treat `EnemySpawnPoint` X as `33`.
+- Spawn normal enemies from X `33` with random Y in `0~17`.
+- Spawn boss enemies from `(33,8)`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground all claims in actual files and command output.
+- Do not run Unity-MCP Play Mode gameplay verification; user performs Play Mode verification.
+- Run Code Reviewer once only after implementation.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation, local validation, and one Code Reviewer PASS completed. Waiting for user Play Mode verification.
+
+### Next Actions
+
+- User verifies in Unity Play Mode that normal enemies spawn along Y `0~17` from X `33`, and bosses spawn near `(33,8)`.
+
+### Evidence
+
+- `Pakuri/reference/5.enemy/stage-basic-rules.md` says screen coordinates are `(0,0)` to `(31,17)`, default spawn X is `33`, normal monster Y is random `0~17`, and boss default point is `(33,8)`.
+- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs` previously serialized `enemySpawnYRange = new Vector2(6f, 10f)`.
+- `SpawnEnemy()` previously used `enemySpawnAnchor.position` and applied the random Y range as an offset from `DefaultEnemySpawnPosition.y`.
+- `EveVerticalSliceController.cs` now serializes `enemySpawnYRange = new Vector2(0f, 17f)`.
+- `EveVerticalSliceController.cs` now defines `EnemySpawnX = 33f`, `BossSpawnY = 8f`, and `DefaultEnemySpawnPosition = new Vector3(EnemySpawnX, BossSpawnY, 0f)`.
+- `ResolveEnemySpawnPosition(bool isBoss)` now forces X to `33`, uses Y `8` for bosses, and uses random Y from `enemySpawnYRange` for normal enemies.
+- `Pakuri/Assets/Scenes/RunScene.unity` now stores `EnemySpawnPoint` at `{x: 33, y: 8, z: 0}` and `enemySpawnYRange: {x: 0, y: 17}`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing Unity/MCPForUnity reference warnings.
+- Unity console error query returned only an MCP-FOR-UNITY client handler exit log, not a project script compile error.
+- External Code Reviewer one-shot review returned `REVIEW_RESULT: PASS` in `codex_loop_logs/stage_basic_spawn_reviewer_20260428.md`.
+
+### History
+
+- 2026-04-28: User requested enemy spawn rules reset based on `Pakuri/reference/5.enemy/stage-basic-rules.md`, treating the RunScene field as `(0,0)` to `(31,17)` and `EnemySpawnPoint` X as `33`.
+- 2026-04-28: Code Builder updated `EveVerticalSliceController.cs` and `RunScene.unity` to match the document rules.
+- 2026-04-28: External Code Reviewer one-shot review returned `REVIEW_RESULT: PASS`; Play Mode gameplay verification remains user-owned.
+
 ## Task: Token Efficient Reviewer Wrapper
 
 ### Task title

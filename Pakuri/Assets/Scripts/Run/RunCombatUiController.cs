@@ -12,15 +12,22 @@ namespace Pakuri.Run
     [DisallowMultipleComponent]
     public sealed class RunCombatUiController : MonoBehaviour
     {
-        private const int RewardButtonSlotCount = 3;
+        private const int RewardButtonTemplateCount = 3;
+        private const string PrisonerTemplateName = "Prisoner";
+        private const string MaterialTemplateName = "Material";
+        private const string ArtifactTemplateName = "Artifact";
         private const float RewardButtonWidth = 620f;
         private const float RewardButtonHeight = 96f;
         private const float RewardButtonSpacing = 16f;
+        private const int OfferingChoiceButtonCount = 3;
+        private const int MaxRunActiveSkillCount = 3;
+        private const int MaxRunPassiveSkillCount = 3;
 
-        [SerializeField] private EveVerticalSliceController combatController;
+        [SerializeField] private CombatRuntimeController combatController;
         [SerializeField] private GameDataCatalog fallbackCatalog;
 
         private readonly List<Button> rewardButtons = new List<Button>();
+        private readonly List<OfferingChoiceView> offeringChoices = new List<OfferingChoiceView>();
 
         private Canvas rootCanvas;
         private CanvasScaler canvasScaler;
@@ -36,19 +43,47 @@ namespace Pakuri.Run
         private GameObject rewardButtonRoot;
         private Button rewardContinueButton;
 
+        private GameObject prisonerPanel;
+        private Text prisonerTitleText;
+        private readonly Button[] prisonerChoiceButtons = new Button[OfferingChoiceButtonCount];
+
         private GameObject defeatPanel;
         private Text defeatSummaryText;
 
         private RunSession currentSession;
         private bool rewardSummaryApplied;
-        private bool rewardChoiceCommitted;
         private bool rewardPanelEntered;
         private bool defeatPanelEntered;
+        private string rewardDetailText = string.Empty;
+
+        private enum OfferingChoiceKind
+        {
+            ActiveSkill,
+            PassiveSkill,
+            Enhancement
+        }
+
+        private sealed class OfferingChoiceView
+        {
+            public string ChoiceId;
+            public string Title;
+            public string Description;
+            public string ActiveSkillName;
+            public string PassiveSkillName;
+            public OfferingChoiceKind ChoiceKind;
+            public float DamageMultiplier = 1f;
+            public int MagazineBonus;
+            public float ShotIntervalMultiplier = 1f;
+            public float ReloadDurationMultiplier = 1f;
+            public float MaxHealthBonus;
+            public float StatusChanceBonus;
+        }
 
         private void OnEnable()
         {
             var hadExistingUi = transform.Find("HudPanel") != null
                 && transform.Find("RewardPanel") != null
+                && transform.Find("PrisonerPanel") != null
                 && transform.Find("DefeatPanel") != null;
             InitializeUi();
 
@@ -116,6 +151,7 @@ namespace Pakuri.Run
 
             if (transform.Find("HudPanel") != null
                 && transform.Find("RewardPanel") != null
+                && transform.Find("PrisonerPanel") != null
                 && transform.Find("DefeatPanel") != null)
             {
                 CacheUiReferences();
@@ -146,6 +182,22 @@ namespace Pakuri.Run
                 }
             }
 
+            prisonerPanel = transform.Find("PrisonerPanel")?.gameObject;
+            if (prisonerPanel != null)
+            {
+                prisonerTitleText = prisonerPanel.transform.Find("Title")?.GetComponent<Text>();
+                for (var i = 0; i < OfferingChoiceButtonCount; i++)
+                {
+                    prisonerChoiceButtons[i] = prisonerPanel.transform.Find($"Choice{i + 1}")?.GetComponent<Button>();
+                    if (prisonerChoiceButtons[i] != null)
+                    {
+                        prisonerChoiceButtons[i].onClick.RemoveAllListeners();
+                    }
+                }
+
+                EnsureVerticalLayout(prisonerPanel.GetComponent<RectTransform>(), 0f, 0f, 0f);
+            }
+
             defeatPanel = transform.Find("DefeatPanel")?.gameObject;
             defeatSummaryText = defeatPanel != null ? defeatPanel.transform.Find("Summary")?.GetComponent<Text>() : null;
             if (defeatPanel != null)
@@ -163,7 +215,7 @@ namespace Pakuri.Run
 
             if (combatController == null)
             {
-                combatController = FindFirstObjectByType<EveVerticalSliceController>();
+                combatController = FindFirstObjectByType<CombatRuntimeController>();
             }
         }
 
@@ -171,7 +223,7 @@ namespace Pakuri.Run
         {
             if (combatController == null)
             {
-                combatController = FindFirstObjectByType<EveVerticalSliceController>();
+                combatController = FindFirstObjectByType<CombatRuntimeController>();
             }
 
             if (currentSession == null)
@@ -232,6 +284,15 @@ namespace Pakuri.Run
             EnsureVerticalLayout(rewardButtonRoot.GetComponent<RectTransform>(), 0f, 0f, 12f);
             EnsureRewardButtonSlots(false);
 
+            prisonerPanel = EnsurePanel("PrisonerPanel", new Color(0.16f, 0.11f, 0.10f, 0.94f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(760f, 520f), Vector2.zero);
+            prisonerTitleText = EnsureText(prisonerPanel.transform, "Title", "포로 공양", 30, TextAnchor.MiddleCenter);
+            for (var i = 0; i < OfferingChoiceButtonCount; i++)
+            {
+                prisonerChoiceButtons[i] = EnsureButton(prisonerPanel.transform, $"Choice{i + 1}", string.Empty, null);
+            }
+
+            EnsureVerticalLayout(prisonerPanel.GetComponent<RectTransform>(), 28f, 28f, 18f);
+
             defeatPanel = EnsurePanel("DefeatPanel", new Color(0.14f, 0.05f, 0.06f, 0.94f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(560f, 300f), new Vector2(-320f, 180f));
             var defeatTitle = EnsureText(defeatPanel.transform, "Title", "Defeat", 32, TextAnchor.MiddleCenter);
             defeatSummaryText = EnsureText(defeatPanel.transform, "Summary", string.Empty, 18, TextAnchor.MiddleCenter);
@@ -243,6 +304,7 @@ namespace Pakuri.Run
         {
             hudPanel.SetActive(true);
             rewardPanel.SetActive(true);
+            prisonerPanel.SetActive(true);
             defeatPanel.SetActive(true);
 
             hudText.text =
@@ -260,25 +322,28 @@ namespace Pakuri.Run
 
             EnsureRewardButtonSlots(true);
             rewardContinueButton.gameObject.SetActive(true);
+            ConfigurePrisonerPanelPreview();
         }
 
         private void ShowEditorUiForEditing()
         {
             hudPanel.SetActive(true);
             rewardPanel.SetActive(true);
+            prisonerPanel.SetActive(true);
             defeatPanel.SetActive(true);
 
             EnsureRewardButtonSlots(true);
             rewardContinueButton.gameObject.SetActive(true);
+            ConfigurePrisonerPanelPreview();
         }
 
         private void ShowRuntimeHudOnly()
         {
             hudPanel.SetActive(true);
             rewardPanel.SetActive(false);
+            prisonerPanel.SetActive(false);
             defeatPanel.SetActive(false);
             rewardSummaryApplied = false;
-            rewardChoiceCommitted = false;
             rewardPanelEntered = false;
             defeatPanelEntered = false;
         }
@@ -292,17 +357,12 @@ namespace Pakuri.Run
 
             if (!rewardSummaryApplied)
             {
-                currentSession.ApplyPostCombatSummary(
-                    combatController.RewardGold,
-                    combatController.RewardDarkTrace,
-                    combatController.RewardPrisonerCount);
                 rewardSummaryApplied = true;
             }
 
             if (!rewardPanelEntered)
             {
                 rewardPanelEntered = true;
-                rewardChoiceCommitted = false;
                 RebuildRewardButtons();
             }
 
@@ -312,13 +372,16 @@ namespace Pakuri.Run
             rewardSummaryText.text =
                 $"일차 {currentSession.DayIndex} / 전투 {combatController.EncounterLabel}\n" +
                 $"골드 +{combatController.RewardGold} / 흔적 +{combatController.RewardDarkTrace}\n" +
-                $"포로 표시 {combatController.RewardPrisonerCount}명 / 보스 포로 {combatController.GuaranteedPrisonerName}\n" +
-                $"현재 구현된 후보만 3개 이하로 노출된다.";
-            rewardContinueButton.gameObject.SetActive(!combatController.IsWaitingForRewardChoice || rewardChoiceCommitted);
+                $"포로 {combatController.RewardPrisonerCount}명: {combatController.RewardPrisonerSummary}\n" +
+                $"보스 포로 확정 기준: {combatController.GuaranteedPrisonerName}\n" +
+                $"각 보상 버튼을 눌러 직접 습득한다. 포로 버튼은 공양 선택지를 연다." +
+                (string.IsNullOrWhiteSpace(rewardDetailText) ? string.Empty : $"\n\n확인: {rewardDetailText}");
+            rewardContinueButton.gameObject.SetActive(true);
         }
 
         private void RebuildRewardButtons()
         {
+            ClearRuntimeRewardButtons();
             rewardButtons.Clear();
 
             if (combatController == null)
@@ -333,60 +396,321 @@ namespace Pakuri.Run
 
             EnsureRewardButtonSlots(false);
             var rewardCount = combatController.GetRewardChoiceCount();
-            for (var i = 0; i < RewardButtonSlotCount; i++)
+            for (var i = 0; i < rewardCount; i++)
             {
-                var button = rewardButtonRoot.transform.Find($"RewardButton_{i}")?.GetComponent<Button>();
-                if (button == null)
-                {
-                    continue;
-                }
-
-                var hasReward = i < rewardCount;
-                button.gameObject.SetActive(hasReward);
-                button.interactable = true;
-                button.onClick.RemoveAllListeners();
-
-                if (!hasReward)
-                {
-                    SetButtonLabel(button, string.Empty);
-                    continue;
-                }
-
                 var index = i;
                 var rewardView = combatController.GetRewardChoiceView(index);
-                SetButtonLabel(button, $"{rewardView.Title}\n{rewardView.Description}");
+                var template = ResolveRewardTemplate(rewardView.RewardKind);
+                if (template == null)
+                {
+                    continue;
+                }
+
+                var buttonObject = Instantiate(template.gameObject, rewardButtonRoot.transform, false);
+                buttonObject.name = $"RewardItem_{i:00}_{rewardView.RewardKind}";
+                var button = buttonObject.GetComponent<Button>();
+                if (button == null)
+                {
+                    Destroy(buttonObject);
+                    continue;
+                }
+
+                var rect = button.GetComponent<RectTransform>();
+                if (rect != null)
+                {
+                    rect.sizeDelta = new Vector2(RewardButtonWidth, RewardButtonHeight);
+                    rect.anchorMin = new Vector2(0.5f, 1f);
+                    rect.anchorMax = new Vector2(0.5f, 1f);
+                    rect.pivot = new Vector2(0.5f, 1f);
+                    rect.anchoredPosition = new Vector2(0f, -i * (RewardButtonHeight + RewardButtonSpacing));
+                }
+
+                buttonObject.SetActive(true);
+                button.onClick.RemoveAllListeners();
+                SetButtonLabel(button, rewardView.Claimed
+                    ? $"{rewardView.Title}\n습득 완료"
+                    : $"{rewardView.Title}\n{rewardView.Description}");
                 button.onClick.AddListener(() => CommitRewardChoice(index));
+                button.interactable = !rewardView.Claimed;
                 rewardButtons.Add(button);
             }
         }
 
         private void CommitRewardChoice(int rewardIndex)
         {
-            if (currentSession == null || combatController == null || rewardChoiceCommitted)
+            if (currentSession == null || combatController == null)
             {
                 return;
             }
 
+            var rewardView = combatController.GetRewardChoiceView(rewardIndex);
             var rewardId = combatController.ApplyRewardChoice(rewardIndex);
             if (string.IsNullOrWhiteSpace(rewardId))
             {
                 return;
             }
 
-            rewardChoiceCommitted = true;
-            currentSession.RecordRewardChoice(
-                rewardId,
-                combatController.LastAppliedRewardUnlockedPassive ? combatController.SelectedMonsterPassiveName : string.Empty);
-            currentSession.AccumulateReward(
-                combatController.LastAppliedDamageMultiplier,
-                combatController.LastAppliedMagazineBonus,
-                combatController.LastAppliedShotIntervalMultiplier,
-                combatController.LastAppliedReloadDurationMultiplier,
-                combatController.LastAppliedMaxHealthBonus,
-                combatController.LastAppliedStatusChanceBonus);
-            rewardSummaryText.text += $"\n\n선택 완료: {combatController.AppliedRewardSummary}";
-            rewardContinueButton.gameObject.SetActive(true);
-            SetButtonsInteractable(rewardButtons, false);
+            ApplyClaimedRewardToSession(rewardView);
+            rewardDetailText = combatController.AppliedRewardSummary;
+            RebuildRewardButtons();
+            if (string.Equals(rewardView.RewardKind, "Prisoner", System.StringComparison.OrdinalIgnoreCase))
+            {
+                OpenPrisonerPanel(rewardView.PrisonerName);
+                return;
+            }
+
+            EnterRewardState();
+        }
+
+        private void ApplyClaimedRewardToSession(CombatRuntimeController.RewardChoiceView rewardView)
+        {
+            if (currentSession == null)
+            {
+                return;
+            }
+
+            if (string.Equals(rewardView.RewardKind, "Prisoner", System.StringComparison.OrdinalIgnoreCase))
+            {
+                currentSession.ClaimPrisonerReward(rewardView.PrisonerName);
+                return;
+            }
+
+            if (string.Equals(rewardView.RewardKind, "Material", System.StringComparison.OrdinalIgnoreCase))
+            {
+                currentSession.ClaimMaterialReward(rewardView.GoldAmount, rewardView.DarkTraceAmount);
+            }
+        }
+
+        private void OpenPrisonerPanel(string prisonerName)
+        {
+            BuildOfferingChoices();
+            if (offeringChoices.Count == 0)
+            {
+                rewardDetailText = "공양 후보가 남아 있지 않다.";
+                EnterRewardState();
+                return;
+            }
+
+            rewardPanel.SetActive(false);
+            prisonerPanel.SetActive(true);
+            if (prisonerTitleText != null)
+            {
+                prisonerTitleText.text = $"{prisonerName} 공양 선택";
+            }
+
+            for (var i = 0; i < OfferingChoiceButtonCount; i++)
+            {
+                var button = prisonerChoiceButtons[i];
+                if (button == null)
+                {
+                    continue;
+                }
+
+                var hasChoice = i < offeringChoices.Count;
+                button.gameObject.SetActive(hasChoice);
+                button.onClick.RemoveAllListeners();
+                if (!hasChoice)
+                {
+                    continue;
+                }
+
+                var choiceIndex = i;
+                var choice = offeringChoices[choiceIndex];
+                SetButtonLabel(button, $"{choice.Title}\n{choice.Description}");
+                button.interactable = true;
+                button.onClick.AddListener(() => CommitOfferingChoice(choiceIndex));
+            }
+        }
+
+        private void BuildOfferingChoices()
+        {
+            offeringChoices.Clear();
+
+            var monster = RunSceneBootstrap.ActiveMonster ?? ResolveFallbackMonster();
+            if (monster == null || currentSession == null)
+            {
+                return;
+            }
+
+            AddActiveSkillOfferingChoices(monster);
+            AddPassiveSkillOfferingChoices(monster);
+            AddEnhancementOfferingChoices(monster);
+            ShuffleOfferingChoices();
+
+            while (offeringChoices.Count > OfferingChoiceButtonCount)
+            {
+                offeringChoices.RemoveAt(offeringChoices.Count - 1);
+            }
+        }
+
+        private void AddActiveSkillOfferingChoices(MonsterDefinition monster)
+        {
+            if (monster.ActiveSkills == null)
+            {
+                return;
+            }
+
+            if (currentSession.LearnedActives.Count >= MaxRunActiveSkillCount)
+            {
+                return;
+            }
+
+            for (var i = 0; i < monster.ActiveSkills.Length; i++)
+            {
+                var skill = monster.ActiveSkills[i];
+                if (skill == null || string.IsNullOrWhiteSpace(skill.DisplayName))
+                {
+                    continue;
+                }
+
+                var choiceId = string.IsNullOrWhiteSpace(skill.SkillId) ? $"active:{skill.DisplayName}" : skill.SkillId;
+                if (currentSession.HasChosenReward(choiceId) || currentSession.HasLearnedActive(skill.DisplayName))
+                {
+                    continue;
+                }
+
+                offeringChoices.Add(new OfferingChoiceView
+                {
+                    ChoiceId = choiceId,
+                    ChoiceKind = OfferingChoiceKind.ActiveSkill,
+                    Title = $"신규 액티브: {skill.DisplayName}",
+                    Description = string.IsNullOrWhiteSpace(skill.Summary) ? "액티브 스킬을 습득한다." : skill.Summary,
+                    ActiveSkillName = skill.DisplayName
+                });
+            }
+        }
+
+        private void AddPassiveSkillOfferingChoices(MonsterDefinition monster)
+        {
+            if (monster.PassiveSkills == null)
+            {
+                return;
+            }
+
+            if (currentSession.LearnedPassives.Count >= MaxRunPassiveSkillCount)
+            {
+                return;
+            }
+
+            for (var i = 0; i < monster.PassiveSkills.Length; i++)
+            {
+                var passive = monster.PassiveSkills[i];
+                if (passive == null || string.IsNullOrWhiteSpace(passive.DisplayName))
+                {
+                    continue;
+                }
+
+                var choiceId = string.IsNullOrWhiteSpace(passive.PassiveId) ? $"passive:{passive.DisplayName}" : passive.PassiveId;
+                if (currentSession.HasChosenReward(choiceId) || currentSession.HasLearnedPassive(passive.DisplayName))
+                {
+                    continue;
+                }
+
+                if (!HasLearnedRequiredActive(monster, passive.RequiredActiveSlot))
+                {
+                    continue;
+                }
+
+                offeringChoices.Add(new OfferingChoiceView
+                {
+                    ChoiceId = choiceId,
+                    ChoiceKind = OfferingChoiceKind.PassiveSkill,
+                    Title = $"신규 패시브: {passive.DisplayName}",
+                    Description = string.IsNullOrWhiteSpace(passive.Summary) ? "패시브 스킬을 습득한다." : passive.Summary,
+                    PassiveSkillName = passive.DisplayName
+                });
+            }
+        }
+
+        private void AddEnhancementOfferingChoices(MonsterDefinition monster)
+        {
+            if (monster.InitialRewardChoices == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < monster.InitialRewardChoices.Length; i++)
+            {
+                var reward = monster.InitialRewardChoices[i];
+                if (reward == null || string.IsNullOrWhiteSpace(reward.RewardId) || currentSession.HasChosenReward(reward.RewardId))
+                {
+                    continue;
+                }
+
+                offeringChoices.Add(new OfferingChoiceView
+                {
+                    ChoiceId = reward.RewardId,
+                    ChoiceKind = OfferingChoiceKind.Enhancement,
+                    Title = $"스킬 강화: {reward.Title}",
+                    Description = reward.Description,
+                    DamageMultiplier = reward.DamageMultiplier,
+                    MagazineBonus = reward.MagazineBonus,
+                    ShotIntervalMultiplier = reward.ShotIntervalMultiplier,
+                    ReloadDurationMultiplier = reward.ReloadDurationMultiplier,
+                    MaxHealthBonus = reward.MaxHealthBonus,
+                    StatusChanceBonus = reward.StatusChanceBonus
+                });
+            }
+        }
+
+        private bool HasLearnedRequiredActive(MonsterDefinition monster, SkillSlot requiredSlot)
+        {
+            if (monster.ActiveSkills == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < monster.ActiveSkills.Length; i++)
+            {
+                var skill = monster.ActiveSkills[i];
+                if (skill != null
+                    && skill.Slot == requiredSlot
+                    && currentSession.HasLearnedActive(skill.DisplayName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void ShuffleOfferingChoices()
+        {
+            for (var i = offeringChoices.Count - 1; i > 0; i--)
+            {
+                var swapIndex = Random.Range(0, i + 1);
+                var current = offeringChoices[i];
+                offeringChoices[i] = offeringChoices[swapIndex];
+                offeringChoices[swapIndex] = current;
+            }
+        }
+
+        private void CommitOfferingChoice(int choiceIndex)
+        {
+            if (currentSession == null || choiceIndex < 0 || choiceIndex >= offeringChoices.Count)
+            {
+                return;
+            }
+
+            var choice = offeringChoices[choiceIndex];
+            currentSession.RecordOfferingChoice(choice.ChoiceId, choice.ActiveSkillName, choice.PassiveSkillName);
+            if (choice.ChoiceKind == OfferingChoiceKind.Enhancement)
+            {
+                currentSession.AccumulateReward(
+                    choice.DamageMultiplier,
+                    choice.MagazineBonus,
+                    choice.ShotIntervalMultiplier,
+                    choice.ReloadDurationMultiplier,
+                    choice.MaxHealthBonus,
+                    choice.StatusChanceBonus);
+            }
+
+            rewardDetailText = $"{choice.Title} 선택 완료";
+            offeringChoices.Clear();
+            prisonerPanel.SetActive(false);
+            rewardPanel.SetActive(true);
+            EnterRewardState();
+            RefreshHud();
         }
 
         private void OnContinueAfterReward()
@@ -398,9 +722,10 @@ namespace Pakuri.Run
 
             currentSession.AdvanceDay();
             rewardSummaryApplied = false;
-            rewardChoiceCommitted = false;
             rewardPanelEntered = false;
+            rewardDetailText = string.Empty;
             rewardPanel.SetActive(false);
+            prisonerPanel.SetActive(false);
             combatController.BeginConfiguredDay(
                 RunSceneBootstrap.ActiveMonster ?? ResolveFallbackMonster(),
                 currentSession);
@@ -417,6 +742,7 @@ namespace Pakuri.Run
             defeatPanelEntered = true;
             defeatPanel.SetActive(true);
             rewardPanel.SetActive(false);
+            prisonerPanel.SetActive(false);
             defeatSummaryText.text = currentSession == null
                 ? "Nexus가 붕괴했다."
                 : $"{currentSession.SelectedMonsterName} run이 일차 {currentSession.DayIndex}에서 실패했다.";
@@ -581,17 +907,24 @@ namespace Pakuri.Run
             var rootRect = rewardButtonRoot.GetComponent<RectTransform>();
             if (rootRect != null && rootRect.sizeDelta.y < 1f)
             {
-                rootRect.sizeDelta = new Vector2(Mathf.Max(rootRect.sizeDelta.x, RewardButtonWidth), (RewardButtonHeight * RewardButtonSlotCount) + (RewardButtonSpacing * (RewardButtonSlotCount - 1)));
+                rootRect.sizeDelta = new Vector2(Mathf.Max(rootRect.sizeDelta.x, RewardButtonWidth), (RewardButtonHeight * RewardButtonTemplateCount) + (RewardButtonSpacing * (RewardButtonTemplateCount - 1)));
             }
 
-            for (var i = 0; i < RewardButtonSlotCount; i++)
+            for (var i = 0; i < RewardButtonTemplateCount; i++)
             {
-                var slotName = $"RewardButton_{i}";
+                var slotName = ResolveTemplateName(i);
+                var legacySlot = rewardButtonRoot.transform.Find($"RewardButton_{i}");
+                if (legacySlot != null && rewardButtonRoot.transform.Find(slotName) == null)
+                {
+                    legacySlot.name = slotName;
+                }
+
                 var existingSlot = rewardButtonRoot.transform.Find(slotName);
+                var templateLabel = ResolveTemplatePreviewLabel(i);
                 var button = EnsureButton(
                     rewardButtonRoot.transform,
                     slotName,
-                    showPreviewLabels ? $"Reward Slot {i + 1}" : string.Empty,
+                    showPreviewLabels ? templateLabel : string.Empty,
                     null);
                 var rect = button.GetComponent<RectTransform>();
                 var shouldApplyDefaultTransform = existingSlot == null || (rect != null && (rect.sizeDelta.x < 1f || rect.sizeDelta.y < 1f));
@@ -610,12 +943,100 @@ namespace Pakuri.Run
             for (var i = 0; i < rewardButtonRoot.transform.childCount; i++)
             {
                 var child = rewardButtonRoot.transform.GetChild(i);
-                if (child == null || child.GetComponent<Button>() == null || IsRewardButtonSlotName(child.name))
+                if (child == null || child.GetComponent<Button>() == null || IsRewardButtonTemplateName(child.name))
                 {
                     continue;
                 }
 
                 child.gameObject.SetActive(false);
+            }
+        }
+
+        private Button ResolveRewardTemplate(string rewardKind)
+        {
+            var index = string.Equals(rewardKind, "Prisoner", System.StringComparison.OrdinalIgnoreCase)
+                ? 0
+                : string.Equals(rewardKind, "Artifact", System.StringComparison.OrdinalIgnoreCase)
+                    ? 1
+                    : 2;
+            return rewardButtonRoot.transform.Find(ResolveTemplateName(index))?.GetComponent<Button>();
+        }
+
+        private void ClearRuntimeRewardButtons()
+        {
+            if (rewardButtonRoot == null)
+            {
+                return;
+            }
+
+            for (var i = rewardButtonRoot.transform.childCount - 1; i >= 0; i--)
+            {
+                var child = rewardButtonRoot.transform.GetChild(i);
+                if (child == null || IsRewardButtonTemplateName(child.name))
+                {
+                    continue;
+                }
+
+                if (!child.name.StartsWith("RewardItem_", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    child.gameObject.SetActive(false);
+                    continue;
+                }
+
+                if (Application.isPlaying)
+                {
+                    Destroy(child.gameObject);
+                }
+                else
+                {
+                    DestroyImmediate(child.gameObject);
+                }
+            }
+        }
+
+        private static string ResolveTemplatePreviewLabel(int index)
+        {
+            switch (index)
+            {
+                case 0:
+                    return "포로 버튼 템플릿";
+                case 1:
+                    return "유물 버튼 템플릿";
+                default:
+                    return "기타 보상 버튼 템플릿";
+            }
+        }
+
+        private static string ResolveTemplateName(int index)
+        {
+            switch (index)
+            {
+                case 0:
+                    return PrisonerTemplateName;
+                case 1:
+                    return ArtifactTemplateName;
+                default:
+                    return MaterialTemplateName;
+            }
+        }
+
+        private void ConfigurePrisonerPanelPreview()
+        {
+            if (prisonerTitleText != null)
+            {
+                prisonerTitleText.text = "포로 공양 선택지";
+            }
+
+            for (var i = 0; i < prisonerChoiceButtons.Length; i++)
+            {
+                if (prisonerChoiceButtons[i] == null)
+                {
+                    continue;
+                }
+
+                prisonerChoiceButtons[i].gameObject.SetActive(true);
+                prisonerChoiceButtons[i].onClick.RemoveAllListeners();
+                SetButtonLabel(prisonerChoiceButtons[i], $"공양 선택지 {i + 1}\nPlay Mode에서 실제 후보로 교체된다.");
             }
         }
 
@@ -628,9 +1049,12 @@ namespace Pakuri.Run
             }
         }
 
-        private static bool IsRewardButtonSlotName(string objectName)
+        private static bool IsRewardButtonTemplateName(string objectName)
         {
-            return objectName == "RewardButton_0"
+            return objectName == PrisonerTemplateName
+                || objectName == ArtifactTemplateName
+                || objectName == MaterialTemplateName
+                || objectName == "RewardButton_0"
                 || objectName == "RewardButton_1"
                 || objectName == "RewardButton_2";
         }

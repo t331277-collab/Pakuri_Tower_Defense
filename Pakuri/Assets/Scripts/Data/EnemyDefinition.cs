@@ -42,6 +42,10 @@ namespace Pakuri.Data
         public CombatStatBlock Stats = new CombatStatBlock();
         public AttributeDefenseSet Defenses = new AttributeDefenseSet();
 
+        [Header("Combat Visuals")]
+        public Sprite UnitSprite;
+        public Sprite ProjectileSprite;
+
         [Header("Stage 1 Skill")]
         public StageOneEnemySkillKind StageOneSkill;
         public string ActiveSkillName;
@@ -72,6 +76,8 @@ namespace Pakuri.Data
                 CriticalResistance = Stats != null ? Stats.CriticalResistance : 0f
             };
             clone.Defenses = Defenses != null ? Defenses.Clone() : new AttributeDefenseSet();
+            clone.UnitSprite = UnitSprite;
+            clone.ProjectileSprite = ProjectileSprite;
             clone.StageOneSkill = StageOneSkill;
             clone.ActiveSkillName = ActiveSkillName;
             clone.ActiveSkillCoefficient = ActiveSkillCoefficient;

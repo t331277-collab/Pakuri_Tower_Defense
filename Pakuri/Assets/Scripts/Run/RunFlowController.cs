@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
@@ -12,7 +12,7 @@ namespace Pakuri.Run
     public class RunFlowController : MonoBehaviour
     {
         [SerializeField] private GameDataCatalog gameDataCatalog;
-        [SerializeField] private EveVerticalSliceController combatController;
+        [SerializeField] private CombatRuntimeController combatController;
 
         private Canvas rootCanvas;
         private CanvasScaler canvasScaler;
@@ -88,7 +88,7 @@ namespace Pakuri.Run
 
             if (combatController == null)
             {
-                combatController = FindFirstObjectByType<EveVerticalSliceController>();
+                combatController = FindFirstObjectByType<CombatRuntimeController>();
             }
         }
 

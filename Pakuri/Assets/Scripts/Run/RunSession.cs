@@ -13,6 +13,8 @@ namespace Pakuri.Run
         public string PassiveSkillName;
         public int StageIndex = 1;
         public int DayIndex = 1;
+        public RunCombatType CurrentCombatType = RunCombatType.Normal;
+        public RunDayModel CurrentDayModel;
         public int Gold;
         public int DarkTrace;
         public int PrisonersSeen;
@@ -25,6 +27,7 @@ namespace Pakuri.Run
         public readonly List<string> LearnedActives = new List<string>();
         public readonly List<string> LearnedPassives = new List<string>();
         public readonly List<string> ChosenRewardIds = new List<string>();
+        public readonly List<string> PrisonerNames = new List<string>();
 
         public static RunSession Begin(MonsterDefinition monster)
         {
@@ -43,6 +46,7 @@ namespace Pakuri.Run
                 session.LearnedActives.Add(session.ActiveSkillName);
             }
 
+            session.RefreshDayModel();
             return session;
         }
 
@@ -77,11 +81,92 @@ namespace Pakuri.Run
             }
         }
 
+        public void RecordOfferingChoice(string choiceId, string activeSkillName, string passiveSkillName)
+        {
+            if (!string.IsNullOrWhiteSpace(choiceId) && !HasChosenReward(choiceId))
+            {
+                ChosenRewardIds.Add(choiceId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(activeSkillName) && !LearnedActives.Contains(activeSkillName))
+            {
+                LearnedActives.Add(activeSkillName);
+            }
+
+            if (!string.IsNullOrWhiteSpace(passiveSkillName) && !LearnedPassives.Contains(passiveSkillName))
+            {
+                LearnedPassives.Add(passiveSkillName);
+            }
+        }
+
+        public bool HasLearnedActive(string activeSkillName)
+        {
+            return ContainsText(LearnedActives, activeSkillName);
+        }
+
+        public bool HasLearnedPassive(string passiveSkillName)
+        {
+            return ContainsText(LearnedPassives, passiveSkillName);
+        }
+
+        private static bool ContainsText(IReadOnlyList<string> values, string target)
+        {
+            if (string.IsNullOrWhiteSpace(target))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < values.Count; i++)
+            {
+                if (string.Equals(values[i], target, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public void ApplyPostCombatSummary(int goldReward, int darkTraceReward, int prisonerCount)
+        {
+            ApplyPostCombatSummary(goldReward, darkTraceReward, prisonerCount, null);
+        }
+
+        public void ApplyPostCombatSummary(int goldReward, int darkTraceReward, int prisonerCount, IReadOnlyList<string> prisonerNames)
         {
             Gold += goldReward;
             DarkTrace += darkTraceReward;
             PrisonersSeen += prisonerCount;
+
+            if (prisonerNames == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < prisonerNames.Count; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(prisonerNames[i]))
+                {
+                    PrisonerNames.Add(prisonerNames[i]);
+                }
+            }
+        }
+
+        public void ClaimMaterialReward(int goldReward, int darkTraceReward)
+        {
+            Gold += Math.Max(0, goldReward);
+            DarkTrace += Math.Max(0, darkTraceReward);
+        }
+
+        public void ClaimPrisonerReward(string prisonerName)
+        {
+            if (string.IsNullOrWhiteSpace(prisonerName))
+            {
+                return;
+            }
+
+            PrisonersSeen += 1;
+            PrisonerNames.Add(prisonerName);
         }
 
         public void AccumulateReward(
@@ -105,11 +190,19 @@ namespace Pakuri.Run
             DayIndex += 1;
             if (DayIndex <= 11)
             {
+                RefreshDayModel();
                 return;
             }
 
             DayIndex = 1;
             StageIndex = Math.Min(StageIndex + 1, 4);
+            RefreshDayModel();
+        }
+
+        public void RefreshDayModel()
+        {
+            CurrentDayModel = RunDayModel.Resolve(StageIndex, DayIndex);
+            CurrentCombatType = CurrentDayModel.CombatType;
         }
     }
 }

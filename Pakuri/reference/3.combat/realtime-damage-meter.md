@@ -123,4 +123,4 @@
 
 ## 관련 문서
 - [`combat-attribute-and-damage-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F3.combat%2Fcombat-attribute-and-damage-system)
-- [`combat-scene-layout.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2FScene%2Fcombat-scene-layout)
+- [`1.Formation-Basic-Rule.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2Fformation%2F1.Formation-Basic-Rule)
