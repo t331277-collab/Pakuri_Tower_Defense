@@ -50,20 +50,35 @@ namespace Pakuri.Combat
                     enemyHit.FlashTimer = 0.08f;
 
                     var appliedStatus = false;
-                    if (statusChanceConfigured > 0f && UnityEngine.Random.value < statusChanceConfigured)
+                    if (string.Equals(projectile.SkillId, "eve-e", StringComparison.OrdinalIgnoreCase))
                     {
-                        enemyHit.ShockStacks = Mathf.Min(enemyHit.ShockStacks + 1, 3);
-                        enemyHit.ShockTimer = 1.25f;
+                        ApplyVulnerable(enemyHit, Mathf.Max(1, projectile.StatusStacks));
+                        appliedStatus = true;
+                    }
+                    var statusChance = projectile.StatusChance > 0f ? projectile.StatusChance : statusChanceConfigured;
+                    if (!appliedStatus && statusChance > 0f && UnityEngine.Random.value < statusChance)
+                    {
+                        ApplyShock(enemyHit, Mathf.Max(1, projectile.StatusStacks), 1.25f);
                         appliedStatus = !string.IsNullOrWhiteSpace(selectedStatusEffectLabel);
                     }
 
+                    var appliedStatusLabel = string.Equals(projectile.SkillId, "eve-e", StringComparison.OrdinalIgnoreCase) ? "취약" : selectedStatusEffectLabel;
                     statusLabel = appliedStatus
-                        ? $"{selectedActiveSkillName} 적중: {enemyHit.DisplayName}에게 {appliedDamage:0.0} {selectedElementLabel} 피해, {selectedStatusEffectLabel} 부여."
+                        ? $"{selectedActiveSkillName} 적중: {enemyHit.DisplayName}에게 {appliedDamage:0.0} {selectedElementLabel} 피해, {appliedStatusLabel} 부여."
                         : $"{selectedActiveSkillName} 적중: {enemyHit.DisplayName}에게 {appliedDamage:0.0} {selectedElementLabel} 피해.";
 
                     Debug.Log($"[CombatDamage] {selectedMonsterName}.{selectedActiveSkillName} -> {enemyHit.DisplayName}: {damageResult.FormulaLog}; Applied={appliedDamage:0.##}, ShieldLeft={enemyHit.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, enemyHit.CurrentHealth):0.##}");
 
-                    CleanupProjectile(i);
+                    projectile.HitEnemies.Add(enemyHit);
+                    if (projectile.RemainingPierce > 0)
+                    {
+                        projectile.RemainingPierce -= 1;
+                    }
+                    else
+                    {
+                        CleanupProjectile(i);
+                    }
+
                     continue;
                 }
 
@@ -148,6 +163,11 @@ namespace Pakuri.Combat
                 }
 
                 var hitDistance = GetEnemyHitRadius(enemy) + projectile.HitRadius;
+                if (projectile.HitEnemies.Contains(enemy))
+                {
+                    continue;
+                }
+
                 if (Vector2.Distance(projectile.Transform.position, enemy.Transform.position) > hitDistance)
                 {
                     continue;
@@ -193,19 +213,26 @@ namespace Pakuri.Combat
 
         private void UpdateSelectedMonsterCombat()
         {
+            UpdateEveSkillCooldowns();
+            shotCooldown = Mathf.Max(0f, shotCooldown - Time.deltaTime);
+
+            if (fireRequestedThisFrame)
+            {
+                TryTriggerEveAutomaticSkills();
+            }
+
             if (reloadRemaining > 0f)
             {
                 reloadRemaining = Mathf.Max(0f, reloadRemaining - Time.deltaTime);
                 if (Mathf.Approximately(reloadRemaining, 0f))
                 {
-                    currentShotsRemaining = magazineCapacityConfigured;
+                    currentShotsRemaining = GetEveArcMagazineCapacity();
                     statusLabel = $"{selectedActiveSkillName} 탄창이 재장전됐다.";
                 }
 
                 return;
             }
 
-            shotCooldown = Mathf.Max(0f, shotCooldown - Time.deltaTime);
             if (!fireRequestedThisFrame)
             {
                 return;
@@ -244,6 +271,12 @@ namespace Pakuri.Combat
             }
 
             direction.Normalize();
+
+            if (IsSelectedEveMonster())
+            {
+                FireManualEveArcBolt(direction);
+                return;
+            }
 
             nextProjectileSequence += 1;
             var safeSkillName = selectedActiveSkillName.Replace(" ", string.Empty);

@@ -24,6 +24,8 @@ namespace Pakuri.Combat
             rewardOptions.Clear();
             ClearEnemyRuntime();
             ClearProjectileRuntime();
+            ClearEveSkillRuntimeObjects();
+            ResetEveSkillCombatTimers();
 
             currentCombatType = RunDayModel.Resolve(stageIndex, dayIndex).CombatType;
             ResolveStageOneEnemyPool(dayIndex);
@@ -33,7 +35,7 @@ namespace Pakuri.Combat
             spawnedNormalCount = 0;
             spawnedBossCount = 0;
             spawnCooldown = 0.2f;
-            currentShotsRemaining = magazineCapacityConfigured;
+            currentShotsRemaining = GetEveArcMagazineCapacity();
             shotCooldown = 0f;
             reloadRemaining = 0f;
             nexusCurrentHealth = nexusMaxHealth;
@@ -339,8 +341,9 @@ namespace Pakuri.Combat
                 new Vector3(0f, isBoss ? 1.05f : 0.74f, 0f),
                 isBoss ? 1.35f : 1.05f,
                 0.08f,
-                Color.white,
+                Color.red,
                 34);
+            var shieldBarFill = CreateShieldBarFill(enemyObject.transform, "EnemyHpBar", 0.08f, 36);
 
             var baseStats = definition != null && definition.Stats != null ? definition.Stats : null;
             var maxHealth = baseStats != null
@@ -353,6 +356,7 @@ namespace Pakuri.Combat
                 Renderer = renderer,
                 Label = label,
                 HpBarFill = hpBarFill,
+                ShieldBarFill = shieldBarFill,
                 Definition = definition,
                 Defenses = definition != null && definition.Defenses != null ? definition.Defenses.Clone() : new AttributeDefenseSet(),
                 MaxHealth = maxHealth,
@@ -416,22 +420,35 @@ namespace Pakuri.Combat
             int sortingOrder)
         {
             var root = parent.Find(barName);
+            var createdRoot = root == null;
             if (root == null)
             {
                 root = new GameObject(barName).transform;
                 root.SetParent(parent, false);
             }
 
-            root.localPosition = localPosition;
-            root.localScale = new Vector3(width, 1f, 1f);
+            if (createdRoot)
+            {
+                root.localPosition = localPosition;
+                root.localScale = new Vector3(width, 1f, 1f);
+            }
 
+            var backgroundExists = root.Find("Background") != null;
             var background = EnsureHpBarPart(root, "Background", Color.white, sortingOrder);
-            background.transform.localPosition = Vector3.zero;
-            background.transform.localScale = new Vector3(1f, height, 1f);
+            if (!backgroundExists)
+            {
+                background.transform.localPosition = Vector3.zero;
+                background.transform.localScale = new Vector3(1f, height, 1f);
+            }
 
+            var fillExists = root.Find("Fill") != null;
             var fill = EnsureHpBarPart(root, "Fill", fillColor, sortingOrder + 1);
-            fill.transform.localScale = new Vector3(1f, height, 1f);
-            fill.transform.localPosition = Vector3.zero;
+            if (!fillExists)
+            {
+                fill.transform.localScale = new Vector3(1f, height, 1f);
+                fill.transform.localPosition = Vector3.zero;
+            }
+
             return fill;
         }
 
@@ -454,6 +471,25 @@ namespace Pakuri.Combat
             renderer.color = color;
             renderer.sortingOrder = sortingOrder;
             return renderer;
+        }
+
+        private static SpriteRenderer CreateShieldBarFill(Transform parent, string barName, float height, int sortingOrder)
+        {
+            var root = parent != null ? parent.Find(barName) : null;
+            if (root == null)
+            {
+                return null;
+            }
+
+            var shieldExists = root.Find("Shield") != null;
+            var shield = EnsureHpBarPart(root, "Shield", Color.white, sortingOrder);
+            if (!shieldExists)
+            {
+                shield.transform.localScale = new Vector3(0f, height * 0.55f, 1f);
+                shield.transform.localPosition = new Vector3(-0.5f, height * 0.9f, -0.02f);
+            }
+
+            return shield;
         }
 
         private static void UpdateHpBarFill(SpriteRenderer fill, float currentHealth, float maxHealth)
@@ -621,6 +657,23 @@ namespace Pakuri.Combat
                 }
 
                 enemy.ActiveCooldownRemaining = Mathf.Max(0f, enemy.ActiveCooldownRemaining - Time.deltaTime);
+                enemy.ChillTimer = Mathf.Max(0f, enemy.ChillTimer - Time.deltaTime);
+                enemy.FreezeTimer = Mathf.Max(0f, enemy.FreezeTimer - Time.deltaTime);
+                enemy.SlowTimer = Mathf.Max(0f, enemy.SlowTimer - Time.deltaTime);
+                if (Mathf.Approximately(enemy.ChillTimer, 0f))
+                {
+                    enemy.ChillStacks = 0;
+                }
+
+                if (Mathf.Approximately(enemy.ShockTimer, 0f))
+                {
+                    enemy.ShockStacks = 0;
+                }
+
+                if (Mathf.Approximately(enemy.SlowTimer, 0f))
+                {
+                    enemy.SlowMultiplier = 1f;
+                }
 
                 var targetTransform = GetEnemyPriorityTarget();
                 if (targetTransform == null)
@@ -633,7 +686,11 @@ namespace Pakuri.Combat
                 if (targetDistance > attackRange)
                 {
                     var speedMultiplier = enemy.ShockTimer > 0f ? Mathf.Max(0.45f, 1f - (enemy.ShockStacks * 0.15f)) : 1f;
-                    enemy.Transform.position = Vector3.MoveTowards(enemy.Transform.position, targetTransform.position, enemy.MoveSpeed * enemy.MoveSpeedBuffMultiplier * speedMultiplier * Time.deltaTime);
+                    if (enemy.FreezeTimer <= 0f)
+                    {
+                        var chillMultiplier = enemy.ChillTimer > 0f ? Mathf.Max(0.55f, 1f - (enemy.ChillStacks * 0.10f)) : 1f;
+                        enemy.Transform.position = Vector3.MoveTowards(enemy.Transform.position, targetTransform.position, enemy.MoveSpeed * enemy.MoveSpeedBuffMultiplier * speedMultiplier * chillMultiplier * enemy.SlowMultiplier * Time.deltaTime);
+                    }
                 }
                 else
                 {
@@ -654,14 +711,14 @@ namespace Pakuri.Combat
 
             var baseColor = Color.white;
 
-            if (enemy.ShockTimer > 0f)
+            if (enemy.ShockTimer > 0f || enemy.ChillTimer > 0f || enemy.FreezeTimer > 0f)
             {
-                baseColor = Color.white;
+                baseColor = new Color(0.68f, 0.84f, 1f, 1f);
             }
 
             if (enemy.FlashTimer > 0f)
             {
-                baseColor = Color.white;
+                baseColor = new Color(0.82f, 0.92f, 1f, 1f);
             }
 
             enemy.Renderer.color = baseColor;
@@ -676,10 +733,40 @@ namespace Pakuri.Combat
 
             if (enemy.Label != null)
             {
-                enemy.Label.text = $"{enemy.DisplayName}\nHP {Mathf.CeilToInt(Mathf.Max(0f, enemy.CurrentHealth))}/{Mathf.CeilToInt(enemy.MaxHealth)}";
+                var status = BuildEnemyStatusText(enemy);
+                enemy.Label.text = string.IsNullOrEmpty(status)
+                    ? $"{enemy.DisplayName}\nHP {Mathf.CeilToInt(Mathf.Max(0f, enemy.CurrentHealth))}/{Mathf.CeilToInt(enemy.MaxHealth)}"
+                    : $"{enemy.DisplayName} {status}\nHP {Mathf.CeilToInt(Mathf.Max(0f, enemy.CurrentHealth))}/{Mathf.CeilToInt(enemy.MaxHealth)}";
             }
 
             UpdateHpBarFill(enemy.HpBarFill, enemy.CurrentHealth, enemy.MaxHealth);
+            UpdateHpBarFill(enemy.ShieldBarFill, enemy.ShieldValue, enemy.MaxHealth);
+        }
+
+        private static string BuildEnemyStatusText(EnemyRuntime enemy)
+        {
+            if (enemy == null)
+            {
+                return string.Empty;
+            }
+
+            var parts = new List<string>();
+            if (enemy.ShockTimer > 0f)
+            {
+                parts.Add($"감전{enemy.ShockStacks}");
+            }
+
+            if (enemy.ChillTimer > 0f)
+            {
+                parts.Add($"빙결{enemy.ChillStacks}");
+            }
+
+            if (enemy.VulnerableStacks > 0)
+            {
+                parts.Add($"취약{enemy.VulnerableStacks}");
+            }
+
+            return parts.Count == 0 ? string.Empty : $"[{string.Join("/", parts)}]";
         }
 
         private float GetBaseDamageTakenMultiplier(EnemyRuntime enemy)

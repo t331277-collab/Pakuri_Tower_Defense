@@ -32,7 +32,7 @@ MonoBehaviour:
     Ice: 2
     Darkness: 2
     Holy: 8
-  UnitSprite: {fileID: 0}
+  UnitSprite: {fileID: 21300000, guid: 8734391ccbebaae48b6a4ab04c78cab3, type: 3}
   ProjectileSprite: {fileID: 0}
   StageOneSkill: 4
   ActiveSkillName: "\uCE58\uC720"

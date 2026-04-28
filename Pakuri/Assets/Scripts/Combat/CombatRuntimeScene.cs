@@ -163,7 +163,7 @@ namespace Pakuri.Combat
 
         private void EnsureAnchorVisuals()
         {
-            EnsureSpriteRenderer(nexusAnchor, nexusColor, new Vector2(1.8f, 1.8f), 15);
+            EnsureSpriteRenderer(nexusAnchor, nexusColor, new Vector2(1.8f, 1.8f), 15, nexusSprite);
             EnsureSpriteRenderer(eveAnchor, Color.white, new Vector2(1.25f, 1.25f), 20, selectedUnitSprite);
             EnsureSpriteRenderer(enemySpawnAnchor, spawnMarkerColor, new Vector2(0.65f, 0.65f), 5);
             EnsureSpriteRenderer(inputTargetAnchor, inputMarkerColor, new Vector2(0.85f, 0.85f), 10);
@@ -181,12 +181,12 @@ namespace Pakuri.Combat
             if (renderer == null)
             {
                 renderer = target.gameObject.AddComponent<SpriteRenderer>();
+                target.localScale = new Vector3(size.x, size.y, 1f);
             }
 
             renderer.sprite = sprite != null ? sprite : GetSharedSprite();
             renderer.color = color;
             renderer.sortingOrder = sortingOrder;
-            target.localScale = new Vector3(size.x, size.y, 1f);
             return renderer;
         }
 
@@ -202,7 +202,6 @@ namespace Pakuri.Combat
                 return;
             }
 
-            battlefieldBackgroundAnchor.position = GetBattlefieldCenter();
             var renderer = battlefieldBackgroundAnchor.GetComponent<SpriteRenderer>();
             if (renderer == null)
             {
@@ -241,7 +240,7 @@ namespace Pakuri.Combat
                 new Vector3(0f, 0.83f, 0f),
                 1.3f,
                 0.08f,
-                selectedUnitColor,
+                Color.red,
                 34);
             UpdateSelectedMonsterStatusVisuals();
         }
@@ -249,14 +248,18 @@ namespace Pakuri.Combat
         private static TextMesh EnsureStatusLabel(Transform parent, string labelName, Vector3 localPosition, Vector3 localScale, int sortingOrder)
         {
             var labelTransform = parent.Find(labelName);
+            var created = labelTransform == null;
             if (labelTransform == null)
             {
                 labelTransform = new GameObject(labelName).transform;
                 labelTransform.SetParent(parent, false);
             }
 
-            labelTransform.localPosition = localPosition;
-            labelTransform.localScale = localScale;
+            if (created)
+            {
+                labelTransform.localPosition = localPosition;
+                labelTransform.localScale = localScale;
+            }
 
             var label = labelTransform.GetComponent<TextMesh>();
             if (label == null)

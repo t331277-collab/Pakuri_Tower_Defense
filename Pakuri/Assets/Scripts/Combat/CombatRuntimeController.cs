@@ -48,6 +48,7 @@ namespace Pakuri.Combat
             public float DamageTakenMultiplier = 1f;
             public float DamageReductionTimer;
             public float ShieldValue;
+            public SpriteRenderer ShieldBarFill;
             public float ActiveCooldownRemaining;
             public float AttackBuffTimer;
             public float AttackBuffMultiplier = 1f;
@@ -56,6 +57,12 @@ namespace Pakuri.Combat
             public bool IsBoss;
             public float ShockTimer;
             public int ShockStacks;
+            public float ChillTimer;
+            public int ChillStacks;
+            public float FreezeTimer;
+            public int VulnerableStacks;
+            public float SlowTimer;
+            public float SlowMultiplier = 1f;
             public float FlashTimer;
             public string DisplayName;
         }
@@ -71,10 +78,52 @@ namespace Pakuri.Combat
             public float HitRadius;
             public float BaseDamage;
             public DamageAttribute Attribute;
+            public string SkillId;
+            public int RemainingPierce;
+            public int StatusStacks;
+            public float StatusChance;
+            public readonly HashSet<EnemyRuntime> HitEnemies = new HashSet<EnemyRuntime>();
             public bool IsEnemyProjectile;
             public EnemyRuntime SourceEnemy;
             public Transform TargetTransform;
             public bool TargetsMonster;
+        }
+
+        private sealed class SkillEffectRuntime
+        {
+            public GameObject GameObject;
+            public Transform Transform;
+            public SpriteRenderer Renderer;
+            public string SkillId;
+            public float RemainingDuration;
+            public float TickRemaining;
+            public float TickInterval;
+            public float BaseDamage;
+            public DamageAttribute Attribute;
+            public Vector3 Origin;
+            public Vector3 Direction;
+            public float Length;
+            public float Width;
+            public float Radius;
+            public int StatusStacks;
+            public float FreezeDuration;
+            public float SlowChance;
+            public float SlowDuration;
+            public readonly HashSet<EnemyRuntime> HitThisTick = new HashSet<EnemyRuntime>();
+        }
+
+        private sealed class DroneRuntime
+        {
+            public GameObject GameObject;
+            public Transform Transform;
+            public SpriteRenderer Renderer;
+            public float RemainingDuration;
+            public float AttackRemaining;
+            public float AttackPeriod;
+            public float Range;
+            public float BaseDamage;
+            public DamageAttribute Attribute;
+            public int VulnerableStacks;
         }
 
         public readonly struct RewardChoiceView
@@ -129,6 +178,10 @@ namespace Pakuri.Combat
         [SerializeField] private Color battlefieldBackgroundColor = Color.white;
         [SerializeField] private bool autoFitBattlefieldBackgroundToField;
 
+        [Header("Nexus Visuals")]
+        [SerializeField] private Sprite nexusSprite;
+        [SerializeField] private Color nexusColor = Color.white;
+
         [Header("Run State")]
         [SerializeField, Min(1)] private int stageIndex = 1;
         [SerializeField, Min(1)] private int dayIndex = 1;
@@ -156,6 +209,7 @@ namespace Pakuri.Combat
         [SerializeField] private float spawnInterval = 1.05f;
 
         private static Sprite sharedSprite;
+        private static Sprite sharedCircleSprite;
         private const float BattlefieldMinY = 0f;
         private const float BattlefieldMaxY = 17f;
         private const float EnemySpawnX = 33f;
@@ -165,13 +219,16 @@ namespace Pakuri.Combat
 
         private readonly List<EnemyRuntime> enemies = new List<EnemyRuntime>();
         private readonly List<ProjectileRuntime> projectiles = new List<ProjectileRuntime>();
+        private readonly List<SkillEffectRuntime> skillEffects = new List<SkillEffectRuntime>();
+        private readonly List<DroneRuntime> drones = new List<DroneRuntime>();
         private readonly List<RewardOption> rewardOptions = new List<RewardOption>();
         private readonly HashSet<string> blockedRewardIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> learnedActiveSkillNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> chosenSkillChoiceIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly List<EnemyDefinition> currentNormalEnemyPool = new List<EnemyDefinition>();
         private readonly List<EnemyDefinition> currentGuaranteedPrisonerDefinitions = new List<EnemyDefinition>();
         private readonly List<string> rewardPrisonerNames = new List<string>();
 
-        private readonly Color nexusColor = Color.white;
         private readonly Color spawnMarkerColor = Color.white;
         private readonly Color inputMarkerColor = Color.white;
 
@@ -263,7 +320,7 @@ namespace Pakuri.Combat
         public float UnitMaxHealth => unitMaxHealthConfigured;
         public float UnitCurrentHealth => unitCurrentHealth;
         public int CurrentShotsRemaining => currentShotsRemaining;
-        public int MagazineCapacity => magazineCapacityConfigured;
+        public int MagazineCapacity => GetEveArcMagazineCapacity();
         public float ReloadRemaining => reloadRemaining;
         public float ShotInterval => shotIntervalConfigured;
         public bool LastAppliedRewardUnlockedPassive => lastAppliedRewardUnlockedPassive;
@@ -336,6 +393,7 @@ namespace Pakuri.Combat
             UpdateSpawning();
             UpdateEnemies();
             UpdateProjectiles();
+            UpdateEveSkillEffects();
             UpdateSelectedMonsterCombat();
             UpdateSelectedMonsterStatusVisuals();
             CheckBattleResolution();
@@ -394,6 +452,8 @@ namespace Pakuri.Combat
                 }
             }
 
+            ConfigureEveSkillSelectionState(session);
+
             runInitialized = true;
             BeginPrototypeDay(session.DayIndex);
         }
@@ -415,6 +475,7 @@ namespace Pakuri.Combat
             statusLabel = "Run controller ready.";
             ClearEnemyRuntime();
             ClearProjectileRuntime();
+            ClearEveSkillRuntimeObjects();
         }
     }
 }
