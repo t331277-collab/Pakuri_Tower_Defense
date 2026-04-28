@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reviewer Wrapper Token Efficiency Change Report</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      line-height: 1.6;
+      color: #1f2933;
+      background: #f7f9fb;
+    }
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 40px 28px 64px;
+    }
+    h1, h2, h3 {
+      line-height: 1.25;
+      color: #102a43;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+    }
+    h2 {
+      margin-top: 34px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #d9e2ec;
+      font-size: 22px;
+    }
+    h3 {
+      margin-top: 24px;
+      font-size: 18px;
+    }
+    p {
+      margin: 10px 0;
+    }
+    code {
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: #e6eef6;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.95em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 24px;
+      background: #ffffff;
+    }
+    th, td {
+      padding: 12px 14px;
+      border: 1px solid #d9e2ec;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #e6eef6;
+      color: #102a43;
+    }
+    ul {
+      padding-left: 22px;
+    }
+    .note {
+      padding: 14px 16px;
+      border-left: 4px solid #2f80ed;
+      background: #edf6ff;
+    }
+    .evidence {
+      padding: 14px 16px;
+      border-left: 4px solid #627d98;
+      background: #ffffff;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Reviewer Wrapper Token Efficiency Change Report</h1>
+  <p>작성일: 2026-04-28</p>
+
+  <section>
+    <h2>작업 목적</h2>
+    <p>
+      기존 Builder -> Reviewer 외부 래퍼가 <code>BLACKBOARD.md</code> 전체 출력과 반복적인
+      파일 확인으로 토큰을 과도하게 쓰던 문제를 줄이되, 저장소 규칙의 근거 기반 판단은 유지하도록
+      <code>codex_builder_reviewer.ps1</code>를 수정했다.
+    </p>
+  </section>
+
+  <section>
+    <h2>수정 전 문제</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>문제</th>
+          <th>근거</th>
+          <th>영향</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>BLACKBOARD.md</code> 전체 출력으로 흐르기 쉬운 프롬프트</td>
+          <td>
+            기존 <code>codex_builder_reviewer.ps1</code>의 Builder/Reviewer 프롬프트는
+            <code>Read AGENTS.md and BLACKBOARD.md before doing any substantive work</code>만
+            지시했다.
+          </td>
+          <td>
+            실제 콘솔 로그에 긴 <code>BLACKBOARD.md</code> 내용이 반복 포함되어 작업과 무관한 과거 이력이
+            모델 컨텍스트에 들어갔다.
+          </td>
+        </tr>
+        <tr>
+          <td>Reviewer가 변경 라인보다 넓은 주변 상태를 반복 확인</td>
+          <td>
+            기존 Reviewer 프롬프트는 snapshot changed files와 git status만 제공했고,
+            실제 변경 diff를 직접 증거로 제공하지 않았다.
+          </td>
+          <td>
+            Reviewer가 변경 라인을 찾기 위해 별도 명령을 반복 실행할 가능성이 커졌다.
+          </td>
+        </tr>
+        <tr>
+          <td>토큰 사용량 과다</td>
+          <td>
+            최근 smoke test 로그에서 <code>loop_01_builder.md.console.txt</code>는
+            <code>tokens used 83,592</code>, <code>loop_01_reviewer.md.console.txt</code>는
+            <code>tokens used 59,645</code>를 기록했다.
+          </td>
+          <td>
+            코드 변경이 없는 검증 작업에도 Builder/Reviewer 합산 10만 토큰 이상이 사용됐다.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>수정 후 방식</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>변경 항목</th>
+          <th>구현 방식</th>
+          <th>해결 효과</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>BLACKBOARD 인덱스 생성</td>
+          <td>
+            <code>Get-BlackboardIndexText</code>를 추가해 <code>## Task:</code>,
+            <code>### Status</code>, <code>### Next Actions</code>, <code>### Evidence</code>,
+            Reviewer/token/timeout 관련 줄만 추출하고 <code>blackboard_index.txt</code>로 저장한다.
+          </td>
+          <td>
+            시작 시 전체 상태 파일을 출력하지 않고 관련 작업 블록을 찾을 수 있다.
+          </td>
+        </tr>
+        <tr>
+          <td>Builder/Reviewer 프롬프트 축소</td>
+          <td>
+            프롬프트를 <code>AGENTS.md</code>는 전체 확인하되 <code>BLACKBOARD.md</code>는
+            생성된 인덱스를 먼저 읽고 관련 블록만 읽도록 바꿨다.
+          </td>
+          <td>
+            저장소의 “관련 작업 블록을 먼저 읽는다”는 규칙을 유지하면서 전체 덤프를 줄인다.
+          </td>
+        </tr>
+        <tr>
+          <td>Git diff 증거 제공</td>
+          <td>
+            <code>Get-GitDiffText</code>를 추가해 변경 파일 기준 <code>git diff --unified=30</code>
+            결과를 <code>loop_XX_git_diff.patch</code>로 저장하고 Reviewer 프롬프트에 excerpt를 제공한다.
+          </td>
+          <td>
+            Reviewer가 변경 라인 검토를 시작할 때 실제 diff를 바로 보므로 불필요한 탐색을 줄인다.
+          </td>
+        </tr>
+        <tr>
+          <td>프롬프트 과대 입력 제한</td>
+          <td>
+            <code>Limit-Text</code>를 추가해 Reviewer 프롬프트에 들어가는 diff excerpt를 30,000자로 제한한다.
+          </td>
+          <td>
+            큰 변경에서도 프롬프트가 과도하게 커지는 일을 제한하고, 추적 중인 변경 diff와 변경 파일 내용 증거는 별도 파일에 남긴다.
+          </td>
+        </tr>
+        <tr>
+          <td>Reviewer 실행 횟수 정책 정리</td>
+          <td>
+            <code>AGENTS.md</code>에 Reviewer는 1번만 실행하고, 문제가 확인되면 자동 수정 루프를 계속 돌지 않고 사용자에게 보고한 뒤 다음 지시를 기다린다고 명시했다.
+          </td>
+          <td>
+            Reviewer 반복 실행으로 생기는 추가 토큰 사용을 막고, 수정 여부 판단을 사용자 결정으로 돌린다.
+          </td>
+        </tr>
+        <tr>
+          <td>Unity-MCP Play Mode 검증 경계 명시</td>
+          <td>
+            <code>AGENTS.md</code>에 Codex는 Unity-MCP로 Play Mode gameplay 검증을 직접 수행하지 않고, 빌드/컴파일/콘솔/에디터 상태 확인까지만 근거로 남긴다고 추가했다.
+          </td>
+          <td>
+            자동화 검증과 실제 플레이 검증의 책임 경계를 분리하고, Play Mode 검증은 사용자 확인으로 남긴다.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>환각 방지 유지 근거</h2>
+    <div class="note">
+      <p>
+        이번 변경은 근거 확인을 생략하지 않는다. 확인 대상을 전체 파일 덤프에서
+        “작업 인덱스, 관련 BLACKBOARD 블록, 실제 변경 diff, 실제 파일 내용”으로 좁힌다.
+      </p>
+    </div>
+    <ul>
+      <li><code>AGENTS.md</code> 전체 확인 지시는 유지했다.</li>
+      <li><code>BLACKBOARD.md</code>는 인덱스 확인 후 관련 작업 블록을 읽도록 명시했다.</li>
+      <li>존재 여부 판단은 targeted file read/search와 명령 결과를 인용하도록 Builder 프롬프트에 추가했다.</li>
+      <li>Reviewer는 changed files, git status, git diff evidence를 기반으로 변경 라인 검토를 계속 수행한다.</li>
+      <li>Git이 추적 중인 변경 diff는 <code>loop_XX_git_diff.patch</code>에 기록되고, 새로 추가된 untracked 파일을 포함한 변경 파일 내용은 <code>loop_XX_changed_file_evidence.txt</code>에 별도 기록된다.</li>
+      <li><code>AGENTS.md</code>에는 Reviewer 1회 실행 정책과 Unity-MCP Play Mode 검증은 사용자에게 맡긴다는 경계를 추가했다.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>검증 결과</h2>
+    <div class="evidence">
+      <p><code>codex_builder_reviewer.ps1</code> 수정 후 PowerShell parser 검증 결과는 <code>PARSE_OK</code>였다.</p>
+      <p><code>git diff -- codex_builder_reviewer.ps1</code>로 실제 변경 라인을 확인했다.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>남은 주의점</h2>
+    <p>
+      이 변경은 래퍼가 다음 실행부터 토큰 사용을 줄이도록 만든 것이다. 실제 절감량은 다음
+      Builder -> Reviewer 래퍼 실행 후 생성되는 <code>*.console.txt</code>의 <code>tokens used</code>
+      값을 기존 로그와 비교해야 확정할 수 있다.
+    </p>
+  </section>
+</main>
+</body>
+</html>

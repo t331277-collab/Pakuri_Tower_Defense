@@ -1,5 +1,60 @@
 # BLACKBOARD.md
 
+## Task: Token Efficient Reviewer Wrapper
+
+### Task title
+
+Reduce unnecessary token use in the external Builder -> Reviewer wrapper while preserving evidence-based review.
+
+### Goals
+
+- Stop wrapper prompts from encouraging full `BLACKBOARD.md` dumps.
+- Keep `AGENTS.md` full-read behavior and preserve related `BLACKBOARD.md` block checks.
+- Provide Reviewer with direct changed-file evidence so it can review changed lines without broad repeated exploration.
+- Create an HTML report explaining the before/after problem and solution.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- All claims must be grounded in actual files and command output.
+- Because this modifies the external reviewer wrapper logic, Code Reviewer review is required after Builder implementation.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation, local validation, Reviewer feedback fixes, and external Code Reviewer PASS completed.
+
+### Next Actions
+
+- On the next actual wrapper run, compare new `*.console.txt` `tokens used` values against the prior 59k-83k token smoke-test logs.
+
+### Evidence
+
+- `codex_builder_reviewer.ps1` now adds `Get-BlackboardIndexText`, `Limit-Text`, `Get-ChangedPathList`, `Get-GitDiffText`, and `Get-AddedFileEvidenceText`.
+- The wrapper now writes `blackboard_index.txt`, `loop_XX_git_diff.patch`, and `loop_XX_changed_file_evidence.txt` for each loop.
+- `loop_XX_git_diff.patch` is git diff evidence for tracked changes; `loop_XX_changed_file_evidence.txt` is the fallback content evidence for existing changed files including untracked additions.
+- Builder and Reviewer prompts now instruct agents to read `AGENTS.md` in full but use `BLACKBOARD.md` through the generated index and related task blocks instead of printing the full file.
+- Reviewer prompts now include git diff evidence and changed file content evidence excerpts.
+- Added `Pakuri/reference/Report/2026-04-28-token-efficient-reviewer-wrapper-report.html`.
+- PowerShell parser validation for `codex_builder_reviewer.ps1` returned `PARSE_OK`.
+- `git status --short` after Builder implementation showed `M codex_builder_reviewer.ps1`, `M BLACKBOARD.md`, and untracked `Pakuri/reference/Report/2026-04-28-token-efficient-reviewer-wrapper-report.html`.
+- External Code Reviewer final rerun returned `REVIEW_RESULT: PASS` in `codex_loop_logs/token_wrapper_reviewer_20260428_rerun2.md`.
+- `AGENTS.md` now says Reviewer runs once only, then reports issues to the user instead of continuing an automatic fix loop.
+- `AGENTS.md` now says Codex does not run Unity-MCP Play Mode gameplay verification; user performs Play Mode verification, while Codex records build/compile/console/editor-state evidence only.
+
+### History
+
+- 2026-04-28: User asked to change the workflow so token use is reduced without weakening evidence-based hallucination prevention, and to create an HTML before/after report.
+- 2026-04-28: Code Builder changed the wrapper to create targeted BLACKBOARD and changed-file evidence, then created the HTML report.
+- 2026-04-28: External Code Reviewer returned `REVIEW_RESULT: NEEDS_CHANGES` because the HTML report overstated `loop_XX_git_diff.patch` as full changed diff evidence for untracked added files.
+- 2026-04-28: Code Builder corrected the HTML report and BLACKBOARD wording to distinguish tracked git diff evidence from changed file content evidence.
+- 2026-04-28: External Code Reviewer rerun still found one remaining HTML sentence that overstated full diff patch evidence; Code Builder corrected that sentence.
+- 2026-04-28: External Code Reviewer final rerun returned `REVIEW_RESULT: PASS`.
+- 2026-04-28: User requested a simple `AGENTS.md` policy update for one Reviewer run only and user-owned Unity-MCP Play Mode verification; Code Builder added the wording to `AGENTS.md` and the HTML report.
+
 ## Task: EnemySpawnPoint Editable Position
 
 ### Task title
