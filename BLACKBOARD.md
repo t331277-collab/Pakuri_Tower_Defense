@@ -1,5 +1,68 @@
 # BLACKBOARD.md
 
+## Task: Monster A-J Skill Data Cleanup
+
+### Task title
+
+Prepare the 5 monster A-J skill data cleanup from reference documents.
+
+### Goals
+
+- Use `Pakuri/reference/Report/2026-04-28-reference-implementation-roadmap.html` step 5 as the implementation direction.
+- Compare the 5 monster A-J skill documents under `Pakuri/reference/2.Monster` against current `Assets/Data/GameData/Monsters/*.asset`.
+- Represent A as the default active skill, B-E as selectable actives, F as a selectable base passive, and G-J as passives unlocked by their matching active skills.
+- Keep this pass focused on data/selection/unlock structure before full runtime effects.
+
+### Constraints
+
+- Role Owner is Designer until explicit Builder handoff.
+- Ground all claims in actual files and command output.
+- Current `SkillDefinition`/`PassiveDefinition` can store base skill/passive fields but has no structured fields for active enhancements, passive enhancements, or master skill branches.
+- Do not run Unity-MCP Play Mode gameplay verification; user performs Play Mode verification.
+- Preserve unrelated existing worktree changes.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed, and the user reported Play Mode verification completed. The required one-shot external Code Reviewer returned `REVIEW_RESULT: NEEDS_CHANGES`; the user chose not to fix that reviewer finding for now. The finding is limited to trailing whitespace in `Pakuri/Assets/Data/GameData/Monsters/eve.asset`.
+
+### Next Actions
+
+- Continue to the next requested design or implementation task.
+- If the user later wants the reviewer finding cleaned, remove the trailing whitespace in `eve.asset`, rerun `git diff --check`, rebuild, and update this block.
+
+### Evidence
+
+- Roadmap report step 5 says to organize monster A-J skill data first, completing selection/unlock structure before all complex effects.
+- `Pakuri/reference/2.Monster` contains `monster-basic-rule.md`, `skill-choice-pool-rule.md`, `monster-skill-patterns.md`, 5 monster tower documents, and 50 A-J skill documents.
+- `SkillDefinition.cs` currently contains `SkillId`, `DisplayName`, `Slot`, `RuntimeKind`, `ImplementationState`, damage/range/cooldown/magazine fields, `StatusEffectId`, and `Summary`.
+- `PassiveDefinition` currently contains `PassiveId`, `DisplayName`, `Slot`, `RequiredActiveSlot`, `ImplementationState`, and `Summary`.
+- `MonsterDefinition.cs` currently stores `InitialRewardChoices`, `ActiveSkills`, and `PassiveSkills`, but no active-enhancement, passive-enhancement, or master-skill structured data.
+- Current monster assets already contain A-E active entries and F-J passive entries; all A entries are `RuntimeImplemented`, B-E and F-J are `DataOnly`.
+- `monster-basic-rule.md` states each monster starts with active A learned, starts with no passives learned, F is selectable without a specific active unlock, and G-J unlock after the matching B-E active is learned.
+- `skill-choice-pool-rule.md` defines active enhancements, passive enhancements, and master skill candidates, but the current SO model has no dedicated structures for these candidates.
+- `SkillDefinition.cs` now adds `SkillChoiceDefinition`, `SkillIcon`, `SkillEffectPrefab`, `DescriptionText`, active `EnhancementChoices`, active `MasterSkillChoices`, passive `EnhancementChoices`, `IsDefaultLearned`, and `IsAvailableWithoutActiveRequirement`.
+- `PakuriGameDataSeeder.cs` now reads `Pakuri/reference/2.Monster/{monster}/skill/*.md` and populates A-E active and F-J passive data from those documents.
+- `RunCombatUiController.cs` now adds structured active enhancements, passive enhancements, and master skill choices to the prisoner offering pool; it bypasses the active requirement only when `PassiveDefinition.IsAvailableWithoutActiveRequirement` is true.
+- After running `Pakuri/Seed Default Game Data`, each monster asset has 5 `SkillId` entries, 5 `PassiveId` entries, 10 `EnhancementChoices` blocks, and 5 `MasterSkillChoices` blocks.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and only the existing 2 Unity/MCP reference warnings.
+- Unity console error query returned only MCP-FOR-UNITY client handler exit logs, not project compile errors.
+- External Code Reviewer returned `REVIEW_RESULT: NEEDS_CHANGES`; verified with `git diff --check -- Pakuri\Assets\Data\GameData\Monsters\eve.asset`, which reports trailing whitespace at lines 225, 238, 288, 301, 352, and 365.
+- Added `Pakuri/reference/Report/2026-04-29-roadmap-implementation-result.html` comparing today's implementation result against `2026-04-28-reference-implementation-roadmap.html`.
+- Added `Pakuri/reference/Report/2026-04-29-token-optimization-savings.html` estimating token savings from document parsing/token reduction based on measured file sizes.
+
+### History
+
+- 2026-04-29: User requested starting roadmap step 5, monster A-J skill data cleanup, and asked for questions if needed.
+- 2026-04-29: User selected the data-structure expansion path, requested per-skill icon/effect/description fields, confirmed reference documents are the conflict source of truth, and confirmed F passive should be selectable from prisoner offering instead of default-granted.
+- 2026-04-29: Code Builder expanded skill data structures, connected structured choices to prisoner offering, seeded monster A-J data from reference documents, and ran build/Unity validation.
+- 2026-04-29: External Code Reviewer one-shot review returned `NEEDS_CHANGES` for trailing whitespace in `eve.asset`; Builder paused for user instruction per AGENTS.md.
+- 2026-04-29: User reported Play Mode verification completed and chose not to fix the reviewer-raised whitespace issue for now.
+- 2026-04-29: Designer added roadmap comparison and token optimization savings HTML reports under `Pakuri/reference/Report`.
+
 ## Task: Combat Visual Sprite Assignment
 
 ### Task title
@@ -13,6 +76,7 @@ Allow monster/enemy ScriptableObjects and RunScene battlefield background to use
 - Use assigned enemy sprites for enemy bodies and enemy projectiles at runtime.
 - Let `RunScene` use an editable battlefield background sprite without forcing the user's manual `BattlefieldBackground` scale.
 - Keep unit body `SpriteRenderer.color` values white so assigned unit sprites are not tinted.
+- Keep projectile, HP bar, marker, camera background, and battlefield background sprite colors white.
 
 ### Constraints
 
@@ -27,7 +91,7 @@ Code Builder
 
 ### Status
 
-Builder implementation and local build/Unity console validation completed. User reported Play Mode verification completed. Unit body sprite color preservation was added. External Code Reviewer run was attempted but interrupted by the user and is not completed.
+Builder implementation and local build/Unity console validation completed. User reported Play Mode verification completed. Unit, projectile, HP bar, marker, camera background, and battlefield background sprite color preservation was added. External Code Reviewer run was attempted but interrupted by the user and is not completed.
 
 ### Next Actions
 
@@ -46,6 +110,10 @@ Builder implementation and local build/Unity console validation completed. User 
 - `CombatRuntimeScene.cs` now only rewrites `BattlefieldBackground.localScale` when `autoFitBattlefieldBackgroundToField` is true, so manual scale is preserved by default.
 - `CombatRuntimeScene.cs` now applies `Color.white` to the selected monster body renderer.
 - `CombatRuntimeEnemies.cs` now keeps enemy body renderer colors white in `UpdateEnemyColor()`.
+- `CombatRuntimeProjectiles.cs` now applies `Color.white` to selected monster projectiles.
+- `CombatRuntimeEnemies.cs` now applies `Color.white` to enemy projectiles and enemy HP bar background/fill sprites.
+- `CombatRuntimeController.cs` now initializes marker and battlefield background color fields as `Color.white`.
+- `CombatRuntimeScene.cs` now applies `Color.white` to the camera background and battlefield background renderer.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and only the existing 2 MCPForUnity/Unity reference warnings.
 - Unity script refresh/compile was requested; console error query returned only MCP-FOR-UNITY client handler exit logs, not project compile errors.
 - User reported Play Mode verification completed before the manual background scale fix.
@@ -57,6 +125,7 @@ Builder implementation and local build/Unity console validation completed. User 
 - 2026-04-28: User reported Play Mode verification completed but found `BattlefieldBackground` scale was forced on game start.
 - 2026-04-28: Code Builder changed background auto-fit scaling to an opt-in serialized bool so manual `BattlefieldBackground` scale is preserved by default.
 - 2026-04-28: User requested unit sprite colors stay white; Code Builder changed selected monster and enemy body renderers to keep `SpriteRenderer.color` white.
+- 2026-04-29: User requested projectile, HP bar, marker, and background colors stay white; Code Builder changed those runtime color assignments to `Color.white`.
 
 ## Task: Run Day Combat Type And Material Rewards
 

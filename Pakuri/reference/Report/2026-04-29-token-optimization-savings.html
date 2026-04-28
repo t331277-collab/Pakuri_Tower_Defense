@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2026-04-29 토큰 최적화 절감 추정</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #607087;
+      --line: #d9e1eb;
+      --panel: #f7f9fc;
+      --accent: #2457c5;
+      --good: #087f5b;
+      --warn: #b46504;
+      --risk: #b42318;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: #fff;
+      line-height: 1.62;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 28px 72px;
+    }
+
+    header {
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 22px;
+      margin-bottom: 28px;
+    }
+
+    h1 { margin: 0 0 10px; font-size: 30px; letter-spacing: 0; }
+    h2 { margin: 34px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 22px; }
+    p { margin: 8px 0; }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      background: #edf2f7;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: .94em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 24px;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+
+    th {
+      background: #eef3f8;
+      text-align: left;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0 24px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 104px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 25px;
+      margin-bottom: 6px;
+    }
+
+    .note {
+      border-left: 4px solid var(--accent);
+      background: var(--panel);
+      padding: 12px 14px;
+      margin: 16px 0;
+    }
+
+    .good { color: var(--good); font-weight: 700; }
+    .warn { color: var(--warn); font-weight: 700; }
+    .risk { color: var(--risk); font-weight: 700; }
+    .small { color: var(--muted); font-size: 13px; }
+
+    @media (max-width: 860px) {
+      main { padding: 28px 16px 48px; }
+      .summary { grid-template-columns: 1fr; }
+      table { table-layout: auto; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>2026-04-29 토큰 최적화 절감 추정</h1>
+    <p>대상 작업: 로드맵 5번 <code>몬스터 A~J 스킬 데이터 정리</code>와 유사한 작업량.</p>
+    <p>결론: 50개 스킬 문서를 모델이 전부 읽는 방식 대신, 문서는 에디터 시더가 파싱하고 모델은 규칙/샘플/검증 요약만 읽는 방식으로 바꾸면 <strong>문서 입력 기준 약 90% 전후</strong>, 전체 구현 턴 기준으로는 <strong>약 35~45% 전후</strong>의 컨텍스트 절감이 가능하다.</p>
+  </header>
+
+  <section>
+    <h2>1. 산정 기준</h2>
+    <div class="note">
+      <p>이 문서는 실제 API billing token 로그가 아니라 저장소 파일 크기와 이번 작업에서 필요한 읽기 범위를 기준으로 한 추정이다. 토큰 환산은 한글/영문/기호가 섞인 프로젝트 문서 특성을 단순화해 <code>대략 4 chars = 1 token</code>으로 계산했다.</p>
+      <p>외부 Code Reviewer 출력에는 <code>tokens used 123,936</code>이 포함되어 있었지만, 그 값은 Reviewer 프로세스의 내부 검토/출력까지 합친 별도 실행값이다. 아래 절감률 계산에는 직접 사용하지 않았다.</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>측정 대상</th>
+          <th>실제 측정값</th>
+          <th>명령/근거</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>BLACKBOARD.md</code></td>
+          <td>130,284 chars</td>
+          <td><code>Get-Item BLACKBOARD.md</code></td>
+        </tr>
+        <tr>
+          <td>로드맵 HTML</td>
+          <td>23,903 chars</td>
+          <td><code>Get-Item 2026-04-28-reference-implementation-roadmap.html</code></td>
+        </tr>
+        <tr>
+          <td><code>reference/2.Monster</code> 전체 Markdown</td>
+          <td>58 files, 103,836 chars</td>
+          <td><code>Get-ChildItem reference/2.Monster -Recurse -Filter *.md | Measure-Object Length -Sum</code></td>
+        </tr>
+        <tr>
+          <td><code>reference/2.Monster/**/skill/*.md</code></td>
+          <td>50 files, 64,150 chars, 평균 1,283 chars/file</td>
+          <td>동일 측정, <code>\skill\</code> 경로 필터</td>
+        </tr>
+        <tr>
+          <td>대표 규칙/샘플 문서 4개</td>
+          <td>10,756 chars</td>
+          <td><code>monster-basic-rule.md</code> 4,306 + <code>skill-choice-pool-rule.md</code> 3,325 + <code>a-arc-bolt.md</code> 2,141 + <code>g-weakness-analysis.md</code> 984</td>
+        </tr>
+        <tr>
+          <td>핵심 코드 3개</td>
+          <td>84,369 chars</td>
+          <td><code>SkillDefinition.cs</code> 2,691 + <code>PakuriGameDataSeeder.cs</code> 33,771 + <code>RunCombatUiController.cs</code> 47,907</td>
+        </tr>
+        <tr>
+          <td>몬스터 SO 5개</td>
+          <td>119,073 chars</td>
+          <td><code>Get-ChildItem Assets/Data/GameData/Monsters -Filter *.asset | Measure-Object Length -Sum</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>2. 비교 모델</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>방식</th>
+          <th>작업 방식</th>
+          <th>모델 컨텍스트에 들어가는 주요 입력</th>
+          <th>추정 입력량</th>
+          <th>추정 토큰</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>최적화 이전</td>
+          <td>모델이 A~J 50개 스킬 문서를 전부 읽고, 각 문서 내용을 바탕으로 SO 구조와 시더를 직접 작성한다.</td>
+          <td>로드맵 23,903 + 2.Monster 전체 103,836 + 핵심 코드 84,369 + 몬스터 SO 확인 일부</td>
+          <td>약 212,108 chars 이상</td>
+          <td>약 53,000 tokens 이상</td>
+        </tr>
+        <tr>
+          <td>최적화 이후</td>
+          <td>모델은 규칙 문서와 대표 샘플만 읽고, 50개 스킬 문서는 <code>PakuriGameDataSeeder</code>가 Unity Editor에서 직접 파싱한다. 모델은 결과 count와 일부 asset 검증만 확인한다.</td>
+          <td>로드맵 핵심 발췌 + 규칙/샘플 10,756 + 핵심 코드 84,369 + asset count 검증 출력</td>
+          <td>약 115,000~135,000 chars</td>
+          <td>약 29,000~34,000 tokens</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="summary">
+      <div class="metric">
+        <strong class="good">약 90%</strong>
+        <span>문서 입력만 볼 때 절감률. 전체 2.Monster 문서 103,836 chars 대신 규칙/샘플 10,756 chars만 모델이 직접 읽는 기준.</span>
+      </div>
+      <div class="metric">
+        <strong class="good">약 95%</strong>
+        <span>스킬 문서 50개만 볼 때 절감률. 64,150 chars 대신 대표 액티브/패시브 샘플 3,125 chars만 읽는 기준.</span>
+      </div>
+      <div class="metric">
+        <strong class="warn">약 35~45%</strong>
+        <span>코드/로드맵/검증 출력까지 포함한 전체 구현 턴 기준 절감 추정.</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. 이번 작업에 적용된 최적화</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>최적화</th>
+          <th>적용 방식</th>
+          <th>효과</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>문서 전체 복사 방지</td>
+          <td>50개 스킬 문서를 모델이 전부 해석하지 않고, 시더가 파일을 직접 읽어 표를 파싱하도록 구현했다.</td>
+          <td>스킬 문서 내용 대부분이 모델 컨텍스트로 들어가지 않는다.</td>
+        </tr>
+        <tr>
+          <td>대표 샘플만 읽기</td>
+          <td><code>a-arc-bolt.md</code>, <code>g-weakness-analysis.md</code> 같은 대표 액티브/패시브 구조만 읽어 파서 요구사항을 정했다.</td>
+          <td>문서 형식 이해에는 충분하면서 전체 50개 문서 입력을 피한다.</td>
+        </tr>
+        <tr>
+          <td>검증은 count 중심</td>
+          <td>생성 후 각 몬스터 asset에서 <code>SkillId</code>, <code>PassiveId</code>, <code>EnhancementChoices</code>, <code>MasterSkillChoices</code> 개수를 검사했다.</td>
+          <td>119,073 chars 규모의 몬스터 SO 전체를 읽지 않고도 구조 반영 여부를 확인할 수 있다.</td>
+        </tr>
+        <tr>
+          <td>빌드/콘솔은 결과 중심</td>
+          <td>빌드 전체 로그는 오류/경고 요약 중심으로 보고, 반복되는 Unity/MCPForUnity 경고는 기존 경고로 분류했다.</td>
+          <td>검증 근거는 유지하면서 대량 로그 재소비를 줄인다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. 한계와 주의점</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th>주의점</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>정확한 billing token 아님</td>
+          <td>저장소에 실제 API billing token 로그가 없다. 따라서 이 문서는 파일 문자 수 기반 추정이며, 모델/토크나이저/출력 길이에 따라 실제 값은 달라진다.</td>
+        </tr>
+        <tr>
+          <td><code>BLACKBOARD.md</code> 시작 규칙</td>
+          <td>AGENTS.md 규칙상 작업 시작 때 <code>BLACKBOARD.md</code>를 확인해야 하므로, 완전한 절감에는 BLACKBOARD를 task block 단위로 빠르게 찾는 운용이 필요하다. 현재 파일은 130,284 chars로 커졌다.</td>
+        </tr>
+        <tr>
+          <td>시더 파서 정확도</td>
+          <td>문서 파싱을 코드로 넘기면 토큰은 줄지만, 문서 표 형식이 바뀔 경우 시더 파서를 함께 수정해야 한다.</td>
+        </tr>
+        <tr>
+          <td>Reviewer 실행</td>
+          <td>외부 Code Reviewer는 자체적으로 파일을 다시 읽고 긴 출력을 낼 수 있다. 이번 Reviewer 출력에는 <code>tokens used 123,936</code>이 보였으며, 이는 구현 턴 최적화와 별개로 관리해야 할 비용이다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>5. 다음 최적화 제안</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>제안</th>
+          <th>예상 효과</th>
+          <th>조건</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>BLACKBOARD.md</code> 작업 블록 색인 추가</td>
+          <td>130k chars 전체 확인 대신 관련 task block 위치를 빠르게 찾을 수 있다.</td>
+          <td>AGENTS.md의 “항상 확인” 규칙을 유지하면서, 상단에 현재 active task index를 둔다.</td>
+        </tr>
+        <tr>
+          <td>Reviewer 프롬프트 범위 축소</td>
+          <td>Reviewer가 전체 diff 대신 지정 파일/라인과 검증 명령 중심으로 보게 하면 별도 reviewer 토큰을 줄일 수 있다.</td>
+          <td>변경 파일 목록과 검증 결과를 사전에 짧게 넘긴다.</td>
+        </tr>
+        <tr>
+          <td>SO 검증 스크립트 추가</td>
+          <td>몬스터 asset 전체 YAML을 읽지 않고, Unity Editor 코드가 요약 JSON/로그로 count와 필수 필드를 출력하게 할 수 있다.</td>
+          <td>검증용 Editor utility 또는 menu item 추가가 필요하다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

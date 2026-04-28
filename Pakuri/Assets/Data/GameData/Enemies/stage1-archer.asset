@@ -32,6 +32,8 @@ MonoBehaviour:
     Ice: 2
     Darkness: 2
     Holy: 2
+  UnitSprite: {fileID: 0}
+  ProjectileSprite: {fileID: 0}
   StageOneSkill: 2
   ActiveSkillName: "\uC870\uC900 \uC0AC\uACA9"
   ActiveSkillCoefficient: 1.5

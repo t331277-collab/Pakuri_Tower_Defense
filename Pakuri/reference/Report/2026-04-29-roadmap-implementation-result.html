@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2026-04-29 로드맵 대비 구현 결과</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #5f6f86;
+      --line: #d8e0ea;
+      --panel: #f7f9fc;
+      --done: #087f5b;
+      --partial: #b46504;
+      --todo: #516070;
+      --risk: #b42318;
+      --accent: #2457c5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: #fff;
+      line-height: 1.62;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 40px 28px 72px;
+    }
+
+    header {
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 22px;
+      margin-bottom: 28px;
+    }
+
+    h1 { margin: 0 0 10px; font-size: 30px; letter-spacing: 0; }
+    h2 { margin: 34px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 22px; }
+    h3 { margin: 22px 0 8px; font-size: 17px; }
+    p { margin: 8px 0; }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      background: #edf2f7;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: .94em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 24px;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+
+    th {
+      background: #eef3f8;
+      text-align: left;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0 24px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 104px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 25px;
+      margin-bottom: 6px;
+    }
+
+    .status {
+      display: inline-block;
+      min-width: 92px;
+      text-align: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+
+    .done { background: var(--done); }
+    .partial { background: var(--partial); }
+    .todo { background: var(--todo); }
+    .risk { background: var(--risk); }
+
+    .note {
+      border-left: 4px solid var(--accent);
+      background: var(--panel);
+      padding: 12px 14px;
+      margin: 16px 0;
+    }
+
+    .small { color: var(--muted); font-size: 13px; }
+
+    @media (max-width: 860px) {
+      main { padding: 28px 16px 48px; }
+      .summary { grid-template-columns: 1fr 1fr; }
+      table { table-layout: auto; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>2026-04-29 로드맵 대비 구현 결과</h1>
+    <p>기준 로드맵: <code>Pakuri/reference/Report/2026-04-28-reference-implementation-roadmap.html</code></p>
+    <p>작성 기준: <code>BLACKBOARD.md</code>, 현재 <code>git status --short</code>, <code>git diff --stat</code>, 빌드/Unity 콘솔 검증 결과.</p>
+    <p class="small">주의: Unity Play Mode 검증은 AGENTS.md 규칙에 따라 사용자가 수행했다. 이 문서는 코드/자산/명령 출력으로 확인 가능한 범위만 구현 결과로 적는다.</p>
+  </header>
+
+  <section>
+    <h2>1. 요약</h2>
+    <div class="summary">
+      <div class="metric">
+        <strong>5번 완료</strong>
+        <span>로드맵 5번 <code>몬스터 A~J 스킬 데이터 정리</code>의 데이터 구조/선택지 기반 구현 완료</span>
+      </div>
+      <div class="metric">
+        <strong>50개</strong>
+        <span><code>reference/2.Monster/**/skill/*.md</code> 문서 기반 A~J 스킬 문서 수</span>
+      </div>
+      <div class="metric">
+        <strong>5종</strong>
+        <span><code>ariel</code>, <code>eve</code>, <code>rin</code>, <code>sein</code>, <code>vega</code> 몬스터 SO 갱신</span>
+      </div>
+      <div class="metric">
+        <strong>0 errors</strong>
+        <span><code>Assembly-CSharp</code>, <code>Assembly-CSharp-Editor</code> 빌드 오류 없음</span>
+      </div>
+    </div>
+
+    <div class="note">
+      <p>오늘 핵심 결과는 로드맵 5번을 데이터 구조까지 확장해서 완료한 것이다. 각 스킬마다 <code>SkillIcon</code>, <code>SkillEffectPrefab</code>, <code>DescriptionText</code>를 담을 수 있게 했고, 액티브 강화, 패시브 강화, 마스터 스킬 선택지도 구조화했다.</p>
+      <p>단, 실제 전투 런타임 효과는 여전히 A 기본 투사체 루프 중심이다. B~E 액티브, F~J 패시브, 강화, 마스터 스킬은 데이터와 선택지 구조까지 준비된 상태이며 효과 구현은 다음 단계다.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. 로드맵 단계별 비교</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>로드맵 단계</th>
+          <th>로드맵 의도</th>
+          <th>현재 결과</th>
+          <th>판정</th>
+          <th>근거</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1. 전투/런 루프 안정화</td>
+          <td>큰 동작 변경 없이 전투/적/보상/HUD 책임을 분리한다.</td>
+          <td><code>EveVerticalSliceController</code>가 <code>CombatRuntimeController</code>와 partial 파일들로 분리된 상태다.</td>
+          <td><span class="status done">완료</span></td>
+          <td><code>BLACKBOARD.md</code>의 <code>Combat Runtime Controller Split</code> 블록. 사용자 Play Mode 검증 완료 기록 있음.</td>
+        </tr>
+        <tr>
+          <td>2. 런 일차/전투 타입 모델</td>
+          <td>일차와 전투 타입을 <code>RunSession</code>에 표현한다.</td>
+          <td><code>RunDayModel</code>, <code>RunCombatType</code>, <code>RunSession.CurrentDayModel</code>, <code>CurrentCombatType</code>가 추가된 상태다.</td>
+          <td><span class="status done">완료</span></td>
+          <td><code>BLACKBOARD.md</code>의 <code>Run Day Combat Type And Material Rewards</code> 블록.</td>
+        </tr>
+        <tr>
+          <td>3. 전투 보상 실제화</td>
+          <td>포로, 골드, 어둠의 흔적 지급을 실제 세션에 반영한다.</td>
+          <td>보상 버튼 클릭으로 재화/포로가 세션에 반영되고, 포로 패널이 열리는 흐름까지 구현됐다.</td>
+          <td><span class="status done">완료</span></td>
+          <td><code>RunSession.ClaimMaterialReward()</code>, <code>ClaimPrisonerReward()</code>, <code>RunCombatUiController</code> 보상 클릭 흐름.</td>
+        </tr>
+        <tr>
+          <td>4. 포로 사용: 공양과 스킬 선택지 풀</td>
+          <td>포로 공양 시 신규 액티브/패시브/강화/마스터 후보를 하나의 풀로 만든다.</td>
+          <td>기존에는 현재 몬스터 데이터와 초기 보상 선택지 중심이었고, 오늘 구조 확장 후 액티브 강화, 패시브 강화, 마스터 스킬 후보가 선택지 풀에 들어갈 수 있게 됐다.</td>
+          <td><span class="status done">완료</span></td>
+          <td><code>RunCombatUiController.AddActiveEnhancementOfferingChoices()</code>, <code>AddPassiveEnhancementOfferingChoices()</code>, <code>AddMasterSkillOfferingChoices()</code>.</td>
+        </tr>
+        <tr>
+          <td>5. 몬스터 A~J 스킬 데이터 정리</td>
+          <td>5종 몬스터의 A~J 데이터, A 기본 습득, B~E/F~J 선택/해금 관계를 정리한다.</td>
+          <td>문서 기준으로 5개 몬스터 SO에 A~E 액티브, F~J 패시브, 강화/마스터 선택지, 설명 텍스트, 아이콘/이펙트 참조 필드가 들어갔다.</td>
+          <td><span class="status done">오늘 완료</span></td>
+          <td><code>SkillDefinition.cs</code>, <code>PakuriGameDataSeeder.cs</code>, <code>Assets/Data/GameData/Monsters/*.asset</code>.</td>
+        </tr>
+        <tr>
+          <td>6. 상태 효과 기반 확장</td>
+          <td>감전, 빙결, 화상, 취약, 신성 방어막 등 상태 효과를 공통 모델로 구현한다.</td>
+          <td>상태 효과 이름과 설명은 데이터에 들어갔지만, 공통 상태 머신과 효과 계산은 아직 구현되지 않았다.</td>
+          <td><span class="status todo">남음</span></td>
+          <td>현재 전투 런타임은 A 투사체 중심이며, B~E/F~J 효과 적용 로직은 없음.</td>
+        </tr>
+        <tr>
+          <td>7. 2~4스테이지 적 데이터</td>
+          <td>스테이지 2~4 적 자산과 스테이지별 후보 풀을 만든다.</td>
+          <td>오늘 작업 범위가 아니다. 현재 diff에는 stage1 enemy asset에 sprite 필드 추가가 보이지만 2~4스테이지 적 생성은 없다.</td>
+          <td><span class="status todo">남음</span></td>
+          <td><code>git status --short</code>와 <code>Assets/Data/GameData/Enemies</code> 변경 범위.</td>
+        </tr>
+        <tr>
+          <td>8. 정예 전투와 이벤트</td>
+          <td>정예 접두/이벤트 판정을 전투 시작 흐름에 연결한다.</td>
+          <td>오늘 작업 범위가 아니다.</td>
+          <td><span class="status todo">남음</span></td>
+          <td>관련 신규 스크립트/자산 변경 없음.</td>
+        </tr>
+        <tr>
+          <td>9. 상점과 유물 후보</td>
+          <td>상점, 유물 후보, 골드 구매를 구현한다.</td>
+          <td>보상 UI에 Artifact 템플릿은 남아 있지만 유물 효과/상점 구현은 아직 없다.</td>
+          <td><span class="status todo">남음</span></td>
+          <td><code>BLACKBOARD.md</code>의 보상 작업 블록에서 artifact 효과 제외가 명시됨.</td>
+        </tr>
+        <tr>
+          <td>10. 포메이션 데이터와 시작 포메이션 선택</td>
+          <td>15개 슬롯과 포메이션 선택을 런 시작에 연결한다.</td>
+          <td>오늘 작업 범위가 아니다.</td>
+          <td><span class="status todo">남음</span></td>
+          <td>포메이션 관련 신규 코드/자산 변경 없음.</td>
+        </tr>
+        <tr>
+          <td>11. 메타 저장과 심연 강화</td>
+          <td>어둠의 흔적 저장, 승급, 메타 노드를 구현한다.</td>
+          <td>오늘 작업 범위가 아니다.</td>
+          <td><span class="status todo">남음</span></td>
+          <td>Save/Meta 관련 신규 코드 변경 없음.</td>
+        </tr>
+        <tr>
+          <td>12. 도감/훈련장/암시장</td>
+          <td>부가 화면과 테스트/상점을 구현한다.</td>
+          <td>오늘 작업 범위가 아니다.</td>
+          <td><span class="status todo">남음</span></td>
+          <td>관련 신규 UI/스크립트 변경 없음.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>3. 오늘 추가된 데이터 구조</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>파일</th>
+          <th>추가/변경 내용</th>
+          <th>의미</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>SkillDefinition.cs</code></td>
+          <td><code>SkillChoiceDefinition</code>, <code>SkillIcon</code>, <code>SkillEffectPrefab</code>, <code>DescriptionText</code>, <code>EnhancementChoices</code>, <code>MasterSkillChoices</code>, <code>IsDefaultLearned</code>, <code>IsAvailableWithoutActiveRequirement</code></td>
+          <td>각 스킬별 아이콘, 이펙트, 설명 텍스트, 강화/마스터 후보를 SO에서 직접 관리할 수 있다.</td>
+        </tr>
+        <tr>
+          <td><code>PakuriGameDataSeeder.cs</code></td>
+          <td><code>reference/2.Monster/{monster}/skill/*.md</code>를 읽어 A~J 데이터를 생성한다.</td>
+          <td>충돌 시 기준을 문서로 본다는 사용자 지시를 시더 흐름에 반영했다.</td>
+        </tr>
+        <tr>
+          <td><code>RunCombatUiController.cs</code></td>
+          <td>포로 공양 선택지에 신규 액티브, 신규 패시브, 액티브 강화, 패시브 강화, 마스터 스킬 후보를 추가한다.</td>
+          <td>로드맵 4번/5번의 선택지 풀 구조가 실제 UI 후보 생성까지 연결됐다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/Data/GameData/Monsters/*.asset</code></td>
+          <td>각 asset에 <code>SkillId</code> 5개, <code>PassiveId</code> 5개, <code>EnhancementChoices</code> 10블록, <code>MasterSkillChoices</code> 5블록이 들어갔다.</td>
+          <td>5종 몬스터 모두 A~J 데이터 정리 대상이 됐다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. 오늘 작업 중 로드맵 외 지원 작업</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>작업</th>
+          <th>결과</th>
+          <th>로드맵과의 관계</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>몬스터/적 SO 이미지 참조</td>
+          <td><code>MonsterDefinition</code>, <code>EnemyDefinition</code>에 유닛/투사체 sprite 참조를 추가하고 런타임 렌더러에서 사용하도록 연결했다.</td>
+          <td>로드맵 5번의 스킬/몬스터 데이터 정리와 직접 맞물리는 표시 데이터 기반 작업이다.</td>
+        </tr>
+        <tr>
+          <td>RunScene 배경 이미지 수정 가능</td>
+          <td><code>CombatRuntimeController</code>에 배경 sprite/color/auto-fit 필드를 추가하고, 수동 scale이 보존되도록 수정했다.</td>
+          <td>로드맵의 핵심 단계는 아니지만 RunScene 검증 편의와 시각 자산 적용 기반이다.</td>
+        </tr>
+        <tr>
+          <td>색상 white 고정</td>
+          <td>유닛, 투사체, HP bar, 마커, 배경 렌더러 색을 white로 유지하도록 수정했다.</td>
+          <td>이미지 자산이 tint 없이 보이게 하는 렌더링 안정화 작업이다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>5. 검증 및 남은 이슈</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>검증</th>
+          <th>결과</th>
+          <th>비고</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>dotnet build Pakuri\Assembly-CSharp.csproj --no-restore</code></td>
+          <td><span class="status done">0 errors</span></td>
+          <td>기존 Unity/MCPForUnity 참조 경고 2개만 반복.</td>
+        </tr>
+        <tr>
+          <td><code>dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore</code></td>
+          <td><span class="status done">0 errors</span></td>
+          <td>Editor 시더 코드까지 컴파일 확인.</td>
+        </tr>
+        <tr>
+          <td>Unity console error query</td>
+          <td><span class="status done">프로젝트 컴파일 오류 없음</span></td>
+          <td>MCP-FOR-UNITY client handler exit log만 확인됨.</td>
+        </tr>
+        <tr>
+          <td>Code Reviewer</td>
+          <td><span class="status risk">NEEDS_CHANGES</span></td>
+          <td><code>eve.asset</code>의 trailing whitespace 6곳. 사용자가 지금은 수정하지 않기로 했다.</td>
+        </tr>
+        <tr>
+          <td>Play Mode</td>
+          <td><span class="status done">사용자 검증 완료</span></td>
+          <td>Codex는 AGENTS.md 규칙에 따라 Play Mode를 직접 실행하지 않았다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>6. 다음 구현 판단</h2>
+    <p>로드맵 기준 다음 큰 단계는 6번 <strong>상태 효과 기반 확장</strong>이다. 현재 데이터는 B~E/F~J와 강화/마스터 후보를 고를 수 있게 되었지만, 실제 효과 계산은 없다.</p>
+    <div class="note">
+      <p>가장 안전한 다음 작업은 한 몬스터를 기준으로 상태 효과와 스킬 효과를 얇게 관통시키는 것이다. 예를 들어 이브의 B/G 또는 아리엘의 방어막 계열처럼 문서와 데이터가 이미 준비된 한 쌍을 골라, 선택지 기록이 실제 전투 효과로 이어지는 첫 경로를 만든다.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>7. 근거 명령</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>명령/파일</th>
+          <th>확인 내용</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>git status --short</code></td>
+          <td>오늘 변경 파일 범위 확인: 몬스터/적 SO, Combat runtime, Data seeder/model, Run UI, BLACKBOARD.</td>
+        </tr>
+        <tr>
+          <td><code>git diff --stat</code></td>
+          <td>21개 tracked 파일 기준 2,791 insertions, 309 deletions. untracked 이미지 폴더는 stat에 포함되지 않음.</td>
+        </tr>
+        <tr>
+          <td><code>Select-String</code> on monster assets</td>
+          <td>각 몬스터 asset에 <code>SkillId</code> 5개, <code>PassiveId</code> 5개, <code>EnhancementChoices</code> 10블록, <code>MasterSkillChoices</code> 5블록 확인.</td>
+        </tr>
+        <tr>
+          <td><code>BLACKBOARD.md</code></td>
+          <td>각 작업의 Builder/Reviewer/Play Mode 상태 확인.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

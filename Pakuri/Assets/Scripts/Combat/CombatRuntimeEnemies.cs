@@ -339,7 +339,7 @@ namespace Pakuri.Combat
                 new Vector3(0f, isBoss ? 1.05f : 0.74f, 0f),
                 isBoss ? 1.35f : 1.05f,
                 0.08f,
-                new Color(0.95f, 0.20f, 0.20f, 0.98f),
+                Color.white,
                 34);
 
             var baseStats = definition != null && definition.Stats != null ? definition.Stats : null;
@@ -425,7 +425,7 @@ namespace Pakuri.Combat
             root.localPosition = localPosition;
             root.localScale = new Vector3(width, 1f, 1f);
 
-            var background = EnsureHpBarPart(root, "Background", new Color(0f, 0f, 0f, 0.75f), sortingOrder);
+            var background = EnsureHpBarPart(root, "Background", Color.white, sortingOrder);
             background.transform.localPosition = Vector3.zero;
             background.transform.localScale = new Vector3(1f, height, 1f);
 
@@ -803,7 +803,7 @@ namespace Pakuri.Combat
 
             var renderer = projectileObject.AddComponent<SpriteRenderer>();
             renderer.sprite = enemy.Definition.ProjectileSprite != null ? enemy.Definition.ProjectileSprite : GetSharedSprite();
-            renderer.color = enemy.IsBoss ? new Color(1f, 0.25f, 0.25f, 0.98f) : new Color(1f, 0.55f, 0.25f, 0.95f);
+            renderer.color = Color.white;
             renderer.sortingOrder = 24;
 
             projectiles.Add(new ProjectileRuntime

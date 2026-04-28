@@ -60,7 +60,8 @@ namespace Pakuri.Run
         {
             ActiveSkill,
             PassiveSkill,
-            Enhancement
+            Enhancement,
+            MasterSkill
         }
 
         private sealed class OfferingChoiceView
@@ -574,7 +575,7 @@ namespace Pakuri.Run
                     ChoiceId = choiceId,
                     ChoiceKind = OfferingChoiceKind.ActiveSkill,
                     Title = $"신규 액티브: {skill.DisplayName}",
-                    Description = string.IsNullOrWhiteSpace(skill.Summary) ? "액티브 스킬을 습득한다." : skill.Summary,
+                    Description = ResolveSkillDescription(skill.Summary, skill.DescriptionText, "액티브 스킬을 습득한다."),
                     ActiveSkillName = skill.DisplayName
                 });
             }
@@ -606,7 +607,7 @@ namespace Pakuri.Run
                     continue;
                 }
 
-                if (!HasLearnedRequiredActive(monster, passive.RequiredActiveSlot))
+                if (!passive.IsAvailableWithoutActiveRequirement && !HasLearnedRequiredActive(monster, passive.RequiredActiveSlot))
                 {
                     continue;
                 }
@@ -616,7 +617,7 @@ namespace Pakuri.Run
                     ChoiceId = choiceId,
                     ChoiceKind = OfferingChoiceKind.PassiveSkill,
                     Title = $"신규 패시브: {passive.DisplayName}",
-                    Description = string.IsNullOrWhiteSpace(passive.Summary) ? "패시브 스킬을 습득한다." : passive.Summary,
+                    Description = ResolveSkillDescription(passive.Summary, passive.DescriptionText, "패시브 스킬을 습득한다."),
                     PassiveSkillName = passive.DisplayName
                 });
             }
@@ -624,6 +625,16 @@ namespace Pakuri.Run
 
         private void AddEnhancementOfferingChoices(MonsterDefinition monster)
         {
+            var structuredChoiceCount = offeringChoices.Count;
+            AddActiveEnhancementOfferingChoices(monster);
+            AddPassiveEnhancementOfferingChoices(monster);
+            AddMasterSkillOfferingChoices(monster);
+
+            if (offeringChoices.Count > structuredChoiceCount)
+            {
+                return;
+            }
+
             if (monster.InitialRewardChoices == null)
             {
                 return;
@@ -651,6 +662,133 @@ namespace Pakuri.Run
                     StatusChanceBonus = reward.StatusChanceBonus
                 });
             }
+        }
+
+        private void AddActiveEnhancementOfferingChoices(MonsterDefinition monster)
+        {
+            if (monster.ActiveSkills == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < monster.ActiveSkills.Length; i++)
+            {
+                var skill = monster.ActiveSkills[i];
+                if (skill == null || skill.EnhancementChoices == null || !currentSession.HasLearnedActive(skill.DisplayName))
+                {
+                    continue;
+                }
+
+                if (CountChosenChoices(skill.EnhancementChoices) >= 3)
+                {
+                    continue;
+                }
+
+                AddChoiceDefinitions(skill.EnhancementChoices, $"액티브 강화: {skill.DisplayName}");
+            }
+        }
+
+        private void AddPassiveEnhancementOfferingChoices(MonsterDefinition monster)
+        {
+            if (monster.PassiveSkills == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < monster.PassiveSkills.Length; i++)
+            {
+                var passive = monster.PassiveSkills[i];
+                if (passive == null || passive.EnhancementChoices == null || !currentSession.HasLearnedPassive(passive.DisplayName))
+                {
+                    continue;
+                }
+
+                if (HasAnyChosenChoice(passive.EnhancementChoices))
+                {
+                    continue;
+                }
+
+                AddChoiceDefinitions(passive.EnhancementChoices, $"패시브 강화: {passive.DisplayName}");
+            }
+        }
+
+        private void AddMasterSkillOfferingChoices(MonsterDefinition monster)
+        {
+            if (monster.ActiveSkills == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < monster.ActiveSkills.Length; i++)
+            {
+                var skill = monster.ActiveSkills[i];
+                if (skill == null || skill.MasterSkillChoices == null || !currentSession.HasLearnedActive(skill.DisplayName))
+                {
+                    continue;
+                }
+
+                if (CountChosenChoices(skill.EnhancementChoices) < 3 || HasAnyChosenChoice(skill.MasterSkillChoices))
+                {
+                    continue;
+                }
+
+                AddChoiceDefinitions(skill.MasterSkillChoices, $"마스터 스킬: {skill.DisplayName}", OfferingChoiceKind.MasterSkill);
+            }
+        }
+
+        private void AddChoiceDefinitions(SkillChoiceDefinition[] choices, string titlePrefix, OfferingChoiceKind kind = OfferingChoiceKind.Enhancement)
+        {
+            for (var i = 0; i < choices.Length; i++)
+            {
+                var choice = choices[i];
+                if (choice == null || string.IsNullOrWhiteSpace(choice.ChoiceId) || currentSession.HasChosenReward(choice.ChoiceId))
+                {
+                    continue;
+                }
+
+                offeringChoices.Add(new OfferingChoiceView
+                {
+                    ChoiceId = choice.ChoiceId,
+                    ChoiceKind = kind,
+                    Title = $"{titlePrefix} - {choice.Title}",
+                    Description = string.IsNullOrWhiteSpace(choice.DescriptionText) ? "강화 효과를 습득한다." : choice.DescriptionText
+                });
+            }
+        }
+
+        private int CountChosenChoices(SkillChoiceDefinition[] choices)
+        {
+            var chosenCount = 0;
+            if (choices == null)
+            {
+                return chosenCount;
+            }
+
+            for (var i = 0; i < choices.Length; i++)
+            {
+                var choice = choices[i];
+                if (choice != null && currentSession.HasChosenReward(choice.ChoiceId))
+                {
+                    chosenCount++;
+                }
+            }
+
+            return chosenCount;
+        }
+
+        private bool HasAnyChosenChoice(SkillChoiceDefinition[] choices)
+        {
+            return CountChosenChoices(choices) > 0;
+        }
+
+        private static string ResolveSkillDescription(string summary, string descriptionText, string fallback)
+        {
+            if (!string.IsNullOrWhiteSpace(descriptionText))
+            {
+                return descriptionText;
+            }
+
+            return string.IsNullOrWhiteSpace(summary) ? fallback : summary;
         }
 
         private bool HasLearnedRequiredActive(MonsterDefinition monster, SkillSlot requiredSlot)

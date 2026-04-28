@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Text.RegularExpressions;
 using Pakuri.Combat;
 using UnityEditor;
 using UnityEngine;
@@ -333,87 +338,88 @@ namespace Pakuri.Data.Editor
 
         private static SkillDefinition[] BuildMonsterActiveSkills(string monsterId)
         {
-            switch (monsterId)
+            var files = GetSkillDocumentPaths(monsterId, 'a', 'e');
+            var skills = new List<SkillDefinition>(files.Count);
+            for (var i = 0; i < files.Count; i++)
             {
-                case "ariel":
-                    return Skills("ariel", DamageAttribute.Holy, "심판의 빛", "성광 방패", "축복의 파동", "천상의 낙인", "대천사의 강림");
-                case "eve":
-                    return new[]
-                    {
-                        Skill("eve-a", "아크 볼트", SkillSlot.A, SkillRuntimeKind.MagazineProjectile, SkillImplementationState.RuntimeImplemented, DamageAttribute.Lightning, 24f, 0f, 0.95f, 8f, 0f, 1.4f, 6, 4f, 0.35f, "감전 부여 기본 탄창형 투사체"),
-                        Skill("eve-b", "프리즘 레이", SkillSlot.B, SkillRuntimeKind.LineAttack, SkillImplementationState.DataOnly, DamageAttribute.Lightning, 30f, 0f, 1.1f, 8.5f, 0f, 7f, 0, 0f, 0f, "번개/얼음 직선 관통 광선"),
-                        Skill("eve-c", "프로스트 필드", SkillSlot.C, SkillRuntimeKind.Field, SkillImplementationState.DataOnly, DamageAttribute.Ice, 12f, 0f, 0.45f, 7f, 2.6f, 9f, 0, 0f, 0f, "추위와 빙결을 만드는 장판"),
-                        Skill("eve-d", "스태틱 오버라이드", SkillSlot.D, SkillRuntimeKind.AreaAttack, SkillImplementationState.DataOnly, DamageAttribute.Lightning, 35f, 0f, 1.4f, 7f, 2.2f, 10f, 0, 0f, 0f, "감전 스택 폭발"),
-                        Skill("eve-e", "드론 비컨", SkillSlot.E, SkillRuntimeKind.Mark, SkillImplementationState.DataOnly, DamageAttribute.Ice, 10f, 0f, 0.3f, 8f, 0f, 13f, 0, 0f, 0f, "설치형 보조와 취약 누적")
-                    };
-                case "rin":
-                    return Skills("rin", DamageAttribute.Physical, "파쇄권", "하울링", "충격파", "종결 일격", "붕괴 타격");
-                case "sein":
-                    return Skills("sein", DamageAttribute.Fire, "열풍 화살", "작열 난사", "화염궤도", "초열 지대", "종말의 사선");
-                case "vega":
-                    return Skills("vega", DamageAttribute.Physical, "삼검난무", "침묵의 대태도", "몰살 허가", "검은 명부 개방", "최종선고");
-                default:
-                    return System.Array.Empty<SkillDefinition>();
+                skills.Add(ParseActiveSkillDocument(monsterId, files[i]));
             }
+
+            return skills.ToArray();
         }
 
         private static PassiveDefinition[] BuildMonsterPassives(string monsterId)
         {
-            switch (monsterId)
+            var files = GetSkillDocumentPaths(monsterId, 'f', 'j');
+            var passives = new List<PassiveDefinition>(files.Count);
+            for (var i = 0; i < files.Count; i++)
             {
-                case "ariel":
-                    return Passives("ariel", "빛의 인도", "수호 교리", "축복 전파", "낙인 계시", "성역 선포");
-                case "eve":
-                    return Passives("eve", "전압 보정", "입자 분리", "냉각 알고리즘", "과전류 회로", "약점 분석");
-                case "rin":
-                    return Passives("rin", "양손잡이", "전장의 공명", "파문 증폭", "마무리 본능", "붕괴 여파");
-                case "sein":
-                    return Passives("sein", "가열 조준", "불꽃 탄막", "연소 궤적", "열압 확산", "종말 예고");
-                case "vega":
-                    return Passives("vega", "각인 심화", "봉인검식", "처형 준비", "연쇄 참결", "사형 집행인");
-                default:
-                    return System.Array.Empty<PassiveDefinition>();
+                passives.Add(ParsePassiveSkillDocument(monsterId, files[i]));
             }
+
+            return passives.ToArray();
         }
 
-        private static SkillDefinition[] Skills(string owner, DamageAttribute attribute, string a, string b, string c, string d, string e)
+        private static List<string> GetSkillDocumentPaths(string monsterId, char firstSlot, char lastSlot)
         {
-            return new[]
+            var skillFolder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "reference", "2.Monster", monsterId, "skill"));
+            var paths = new List<string>();
+            if (!Directory.Exists(skillFolder))
             {
-                Skill($"{owner}-a", a, SkillSlot.A, SkillRuntimeKind.MagazineProjectile, SkillImplementationState.RuntimeImplemented, attribute, 24f, 0f, 1f, 8f, 0f, 1.5f, 6, 4f, 0.35f, "기본 탄창형 공격"),
-                Skill($"{owner}-b", b, SkillSlot.B, SkillRuntimeKind.CooldownProjectile, SkillImplementationState.DataOnly, attribute, 30f, 0.8f, 0.8f, 8f, 0f, 7f, 0, 0f, 0f, "보조 액티브"),
-                Skill($"{owner}-c", c, SkillSlot.C, SkillRuntimeKind.AreaAttack, SkillImplementationState.DataOnly, attribute, 26f, 0.7f, 0.9f, 7f, 2.5f, 8f, 0, 0f, 0f, "범위 또는 제어 액티브"),
-                Skill($"{owner}-d", d, SkillSlot.D, SkillRuntimeKind.Field, SkillImplementationState.DataOnly, attribute, 34f, 0.8f, 1f, 7f, 2.8f, 10f, 0, 0f, 0f, "지속/표식/보호 액티브"),
-                Skill($"{owner}-e", e, SkillSlot.E, SkillRuntimeKind.AreaAttack, SkillImplementationState.DataOnly, attribute, 58f, 1.2f, 1.2f, 9f, 4f, 15f, 0, 0f, 0f, "광역 또는 결전기")
-            };
+                Debug.LogWarning($"Monster skill document folder not found: {skillFolder}");
+                return paths;
+            }
+
+            for (var slot = firstSlot; slot <= lastSlot; slot++)
+            {
+                var matching = Directory.GetFiles(skillFolder, $"{slot}-*.md");
+                Array.Sort(matching, StringComparer.OrdinalIgnoreCase);
+                if (matching.Length > 0)
+                {
+                    paths.Add(matching[0]);
+                }
+                else
+                {
+                    Debug.LogWarning($"Monster skill document not found: {monsterId}/{slot}-*.md");
+                }
+            }
+
+            return paths;
         }
 
-        private static SkillDefinition Skill(
-            string id,
-            string name,
-            SkillSlot slot,
-            SkillRuntimeKind kind,
-            SkillImplementationState state,
-            DamageAttribute attribute,
-            float baseDamage,
-            float attackCoefficient,
-            float spellCoefficient,
-            float range,
-            float radius,
-            float cooldown,
-            int magazine,
-            float reload,
-            float shotInterval,
-            string summary)
+        private static SkillDefinition ParseActiveSkillDocument(string monsterId, string path)
         {
+            var markdown = File.ReadAllText(path);
+            var slot = ParseSlotFromFileName(path);
+            var skillName = ReadTableValue(markdown, "스킬명");
+            if (string.IsNullOrWhiteSpace(skillName))
+            {
+                skillName = ReadNameFromHeading(markdown);
+            }
+
+            var description = ReadLeadQuote(markdown);
+            var skillType = ReadTableValue(markdown, "스킬 타입");
+            var attributeLabel = ReadTableValue(markdown, "피해 속성");
+            var baseDamage = ReadFirstNumericTableValue(markdown, "기본 .* 피해");
+            var attackCoefficient = ReadFirstNumericTableValue(markdown, "공격력 계수");
+            var spellCoefficient = ReadFirstNumericTableValue(markdown, "주문력 계수");
+            var range = ReadFirstNumericTableValue(markdown, "공격 범위|사거리|지정 사거리");
+            var radius = ReadFirstNumericTableValue(markdown, "반경|폭발 반경|파동 반경|참격 반경|타격 범위|피해 범위|범위");
+            var cooldown = ReadFirstNumericTableValue(markdown, "쿨타임|쿨다운|재사용 대기시간");
+            var magazine = Mathf.RoundToInt(ReadFirstNumericTableValue(markdown, "탄창 수|탄창"));
+            var reload = ReadFirstNumericTableValue(markdown, "재장전 시간");
+            var shotInterval = ReadFirstNumericTableValue(markdown, "발사 간격|탄환 간격");
+
             return new SkillDefinition
             {
-                SkillId = id,
-                DisplayName = name,
+                SkillId = $"{monsterId}-{slot.ToString().ToLowerInvariant()}",
+                DisplayName = skillName,
                 Slot = slot,
-                RuntimeKind = kind,
-                ImplementationState = state,
-                Attribute = attribute,
+                RuntimeKind = ParseRuntimeKind(skillType, skillName),
+                ImplementationState = slot == SkillSlot.A ? SkillImplementationState.RuntimeImplemented : SkillImplementationState.DataOnly,
+                IsDefaultLearned = slot == SkillSlot.A,
+                DescriptionText = description,
+                Attribute = ParseAttribute(attributeLabel),
                 BaseDamage = baseDamage,
                 AttackPowerCoefficient = attackCoefficient,
                 SpellPowerCoefficient = spellCoefficient,
@@ -423,34 +429,323 @@ namespace Pakuri.Data.Editor
                 MagazineCapacity = magazine,
                 ReloadSeconds = reload,
                 ShotIntervalSeconds = shotInterval,
-                CriticalAllowed = true,
-                Summary = summary
+                CriticalAllowed = !ReadTableValue(markdown, "치명타 적용").Contains("불가"),
+                StatusEffectId = ReadStatusEffectLabel(markdown),
+                Summary = description,
+                EnhancementChoices = ReadChoiceTable(markdown, $"{monsterId}-{slot.ToString().ToLowerInvariant()}-trait", "특성"),
+                MasterSkillChoices = ReadChoiceTable(markdown, $"{monsterId}-{slot.ToString().ToLowerInvariant()}-master", "마스터 스킬")
             };
         }
 
-        private static PassiveDefinition[] Passives(string owner, string f, string g, string h, string i, string j)
+        private static PassiveDefinition ParsePassiveSkillDocument(string monsterId, string path)
         {
-            return new[]
+            var markdown = File.ReadAllText(path);
+            var slot = ParseSlotFromFileName(path);
+            var passiveName = ReadTableValue(markdown, "패시브명");
+            if (string.IsNullOrWhiteSpace(passiveName))
             {
-                Passive($"{owner}-f", f, SkillSlot.F, SkillSlot.A, "A 또는 기본 전투 성능 강화"),
-                Passive($"{owner}-g", g, SkillSlot.G, SkillSlot.B, "B 액티브 습득 후 해금"),
-                Passive($"{owner}-h", h, SkillSlot.H, SkillSlot.C, "C 액티브 습득 후 해금"),
-                Passive($"{owner}-i", i, SkillSlot.I, SkillSlot.D, "D 액티브 습득 후 해금"),
-                Passive($"{owner}-j", j, SkillSlot.J, SkillSlot.E, "E 액티브 습득 후 해금")
-            };
-        }
+                passiveName = ReadNameFromHeading(markdown);
+            }
 
-        private static PassiveDefinition Passive(string id, string name, SkillSlot slot, SkillSlot requiredActive, string summary)
-        {
+            var description = ReadLeadQuote(markdown);
+            var summary = ReadEffectSummary(markdown);
+            var requiredSlot = GetRequiredActiveSlot(slot);
+
             return new PassiveDefinition
             {
-                PassiveId = id,
-                DisplayName = name,
+                PassiveId = $"{monsterId}-{slot.ToString().ToLowerInvariant()}",
+                DisplayName = passiveName,
                 Slot = slot,
-                RequiredActiveSlot = requiredActive,
+                RequiredActiveSlot = requiredSlot,
+                IsAvailableWithoutActiveRequirement = slot == SkillSlot.F,
                 ImplementationState = SkillImplementationState.DataOnly,
-                Summary = summary
+                DescriptionText = string.IsNullOrWhiteSpace(summary) ? description : $"{description}\n{summary}",
+                Summary = string.IsNullOrWhiteSpace(summary) ? description : summary,
+                EnhancementChoices = ReadChoiceTable(markdown, $"{monsterId}-{slot.ToString().ToLowerInvariant()}-trait", "특성")
             };
+        }
+
+        private static SkillSlot ParseSlotFromFileName(string path)
+        {
+            var fileName = Path.GetFileName(path);
+            if (string.IsNullOrEmpty(fileName))
+            {
+                return SkillSlot.A;
+            }
+
+            switch (char.ToUpperInvariant(fileName[0]))
+            {
+                case 'A':
+                    return SkillSlot.A;
+                case 'B':
+                    return SkillSlot.B;
+                case 'C':
+                    return SkillSlot.C;
+                case 'D':
+                    return SkillSlot.D;
+                case 'E':
+                    return SkillSlot.E;
+                case 'F':
+                    return SkillSlot.F;
+                case 'G':
+                    return SkillSlot.G;
+                case 'H':
+                    return SkillSlot.H;
+                case 'I':
+                    return SkillSlot.I;
+                case 'J':
+                    return SkillSlot.J;
+                default:
+                    return SkillSlot.A;
+            }
+        }
+
+        private static SkillSlot GetRequiredActiveSlot(SkillSlot passiveSlot)
+        {
+            switch (passiveSlot)
+            {
+                case SkillSlot.G:
+                    return SkillSlot.B;
+                case SkillSlot.H:
+                    return SkillSlot.C;
+                case SkillSlot.I:
+                    return SkillSlot.D;
+                case SkillSlot.J:
+                    return SkillSlot.E;
+                default:
+                    return SkillSlot.A;
+            }
+        }
+
+        private static string ReadNameFromHeading(string markdown)
+        {
+            using (var reader = new StringReader(markdown))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (!line.StartsWith("# ", StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    var delimiterIndex = line.LastIndexOf(" - ", StringComparison.Ordinal);
+                    return delimiterIndex >= 0 ? line.Substring(delimiterIndex + 3).Trim() : line.TrimStart('#', ' ');
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static string ReadLeadQuote(string markdown)
+        {
+            using (var reader = new StringReader(markdown))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (line.StartsWith("> ", StringComparison.Ordinal))
+                    {
+                        return line.Substring(2).Trim();
+                    }
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static string ReadTableValue(string markdown, string label)
+        {
+            var pattern = @"^\|\s*" + Regex.Escape(label) + @"\s*\|\s*(.*?)\s*\|";
+            var match = Regex.Match(markdown, pattern, RegexOptions.Multiline);
+            return match.Success ? CleanTableCell(match.Groups[1].Value) : string.Empty;
+        }
+
+        private static float ReadFirstNumericTableValue(string markdown, string labelRegex)
+        {
+            var pattern = @"^\|\s*(?:" + labelRegex + @")\s*\|\s*(.*?)\s*\|";
+            var match = Regex.Match(markdown, pattern, RegexOptions.Multiline);
+            if (!match.Success)
+            {
+                return 0f;
+            }
+
+            return ParseFirstFloat(match.Groups[1].Value);
+        }
+
+        private static float ParseFirstFloat(string value)
+        {
+            var match = Regex.Match(value, @"-?\d+(?:\.\d+)?");
+            if (!match.Success)
+            {
+                return 0f;
+            }
+
+            return float.TryParse(match.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+                ? parsed
+                : 0f;
+        }
+
+        private static string ReadStatusEffectLabel(string markdown)
+        {
+            if (markdown.Contains("감전"))
+            {
+                return "감전";
+            }
+
+            if (markdown.Contains("빙결"))
+            {
+                return "빙결";
+            }
+
+            if (markdown.Contains("화상"))
+            {
+                return "화상";
+            }
+
+            if (markdown.Contains("취약"))
+            {
+                return "취약";
+            }
+
+            return string.Empty;
+        }
+
+        private static string ReadEffectSummary(string markdown)
+        {
+            var rows = ReadRowsUnderSection(markdown, "기본 효과");
+            var summaries = new List<string>();
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var columns = SplitTableRow(rows[i]);
+                if (columns.Length >= 2 && !IsTableHeader(columns))
+                {
+                    summaries.Add($"{columns[0]}: {columns[1]}");
+                }
+            }
+
+            return string.Join("\n", summaries);
+        }
+
+        private static SkillChoiceDefinition[] ReadChoiceTable(string markdown, string idPrefix, string sectionKeyword)
+        {
+            var rows = ReadRowsUnderSection(markdown, sectionKeyword);
+            var choices = new List<SkillChoiceDefinition>();
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var columns = SplitTableRow(rows[i]);
+                if (columns.Length < 2 || IsTableHeader(columns))
+                {
+                    continue;
+                }
+
+                choices.Add(new SkillChoiceDefinition
+                {
+                    ChoiceId = $"{idPrefix}-{choices.Count + 1}",
+                    Title = CleanTableCell(columns[0]),
+                    DescriptionText = CleanTableCell(columns[1])
+                });
+            }
+
+            return choices.ToArray();
+        }
+
+        private static List<string> ReadRowsUnderSection(string markdown, string sectionKeyword)
+        {
+            var rows = new List<string>();
+            var inSection = false;
+            using (var reader = new StringReader(markdown))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (line.StartsWith("## ", StringComparison.Ordinal))
+                    {
+                        if (inSection)
+                        {
+                            break;
+                        }
+
+                        inSection = line.Contains(sectionKeyword);
+                        continue;
+                    }
+
+                    if (inSection && line.StartsWith("|", StringComparison.Ordinal))
+                    {
+                        rows.Add(line);
+                    }
+                }
+            }
+
+            return rows;
+        }
+
+        private static string[] SplitTableRow(string row)
+        {
+            var trimmed = row.Trim().Trim('|');
+            var columns = trimmed.Split('|');
+            for (var i = 0; i < columns.Length; i++)
+            {
+                columns[i] = CleanTableCell(columns[i]);
+            }
+
+            return columns;
+        }
+
+        private static bool IsTableHeader(string[] columns)
+        {
+            if (columns.Length == 0)
+            {
+                return true;
+            }
+
+            return columns[0].Contains("---") || string.Equals(columns[0], "특성", StringComparison.Ordinal)
+                || string.Equals(columns[0], "선택지", StringComparison.Ordinal) || string.Equals(columns[0], "항목", StringComparison.Ordinal);
+        }
+
+        private static string CleanTableCell(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Replace("`", string.Empty).Trim();
+        }
+
+        private static SkillRuntimeKind ParseRuntimeKind(string skillType, string skillName)
+        {
+            if (skillType.Contains("탄창"))
+            {
+                return SkillRuntimeKind.MagazineProjectile;
+            }
+
+            if (skillType.Contains("직선") || skillType.Contains("광선") || skillType.Contains("사선"))
+            {
+                return SkillRuntimeKind.LineAttack;
+            }
+
+            if (skillType.Contains("장판") || skillType.Contains("필드") || skillName.Contains("지대") || skillName.Contains("필드"))
+            {
+                return SkillRuntimeKind.Field;
+            }
+
+            if (skillType.Contains("보호막") || skillName.Contains("방패"))
+            {
+                return SkillRuntimeKind.Shield;
+            }
+
+            if (skillType.Contains("표식") || skillName.Contains("낙인") || skillName.Contains("비컨"))
+            {
+                return SkillRuntimeKind.Mark;
+            }
+
+            if (skillType.Contains("광역") || skillType.Contains("범위"))
+            {
+                return SkillRuntimeKind.AreaAttack;
+            }
+
+            if (skillName.Contains("선고") || skillName.Contains("처형"))
+            {
+                return SkillRuntimeKind.Execute;
+            }
+
+            return SkillRuntimeKind.CooldownProjectile;
         }
 
         private static DamageAttribute ParseAttribute(string elementLabel)

@@ -126,7 +126,7 @@ namespace Pakuri.Combat
         [Header("Battlefield Visuals")]
         [SerializeField] private Transform battlefieldBackgroundAnchor;
         [SerializeField] private Sprite battlefieldBackgroundSprite;
-        [SerializeField] private Color battlefieldBackgroundColor = new Color(0.91f, 0.95f, 1f, 1f);
+        [SerializeField] private Color battlefieldBackgroundColor = Color.white;
         [SerializeField] private bool autoFitBattlefieldBackgroundToField;
 
         [Header("Run State")]
@@ -171,9 +171,9 @@ namespace Pakuri.Combat
         private readonly List<EnemyDefinition> currentGuaranteedPrisonerDefinitions = new List<EnemyDefinition>();
         private readonly List<string> rewardPrisonerNames = new List<string>();
 
-        private readonly Color nexusColor = new Color(1f, 0.77f, 0.35f, 0.95f);
-        private readonly Color spawnMarkerColor = new Color(1f, 0.38f, 0.35f, 0.45f);
-        private readonly Color inputMarkerColor = new Color(0.60f, 0.42f, 1f, 0.35f);
+        private readonly Color nexusColor = Color.white;
+        private readonly Color spawnMarkerColor = Color.white;
+        private readonly Color inputMarkerColor = Color.white;
 
         private float nexusMaxHealth = 500f;
         private float nexusCurrentHealth;

@@ -41,6 +41,16 @@ namespace Pakuri.Data
     }
 
     [Serializable]
+    public class SkillChoiceDefinition
+    {
+        public string ChoiceId;
+        public string Title;
+        public Sprite SkillIcon;
+        public GameObject SkillEffectPrefab;
+        [TextArea(2, 5)] public string DescriptionText;
+    }
+
+    [Serializable]
     public class SkillDefinition
     {
         public string SkillId;
@@ -48,6 +58,10 @@ namespace Pakuri.Data
         public SkillSlot Slot;
         public SkillRuntimeKind RuntimeKind;
         public SkillImplementationState ImplementationState = SkillImplementationState.DataOnly;
+        public bool IsDefaultLearned;
+        public Sprite SkillIcon;
+        public GameObject SkillEffectPrefab;
+        [TextArea(2, 5)] public string DescriptionText;
         public DamageAttribute Attribute;
         public float BaseDamage;
         public float AttackPowerCoefficient;
@@ -61,6 +75,8 @@ namespace Pakuri.Data
         public bool CriticalAllowed = true;
         public string StatusEffectId;
         [TextArea(2, 4)] public string Summary;
+        public SkillChoiceDefinition[] EnhancementChoices = Array.Empty<SkillChoiceDefinition>();
+        public SkillChoiceDefinition[] MasterSkillChoices = Array.Empty<SkillChoiceDefinition>();
     }
 
     [Serializable]
@@ -70,7 +86,12 @@ namespace Pakuri.Data
         public string DisplayName;
         public SkillSlot Slot;
         public SkillSlot RequiredActiveSlot;
+        public bool IsAvailableWithoutActiveRequirement;
         public SkillImplementationState ImplementationState = SkillImplementationState.DataOnly;
+        public Sprite SkillIcon;
+        public GameObject SkillEffectPrefab;
+        [TextArea(2, 5)] public string DescriptionText;
         [TextArea(2, 4)] public string Summary;
+        public SkillChoiceDefinition[] EnhancementChoices = Array.Empty<SkillChoiceDefinition>();
     }
 }

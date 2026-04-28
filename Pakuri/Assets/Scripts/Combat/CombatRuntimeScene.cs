@@ -69,7 +69,7 @@ namespace Pakuri.Combat
 
             targetCamera.orthographic = true;
             targetCamera.clearFlags = CameraClearFlags.SolidColor;
-            targetCamera.backgroundColor = battlefieldBackgroundColor;
+            targetCamera.backgroundColor = Color.white;
 
             var aspect = Mathf.Max(1f, targetCamera.aspect);
             var cameraPosition = targetCamera.transform.position;
@@ -210,7 +210,7 @@ namespace Pakuri.Combat
             }
 
             renderer.sprite = battlefieldBackgroundSprite != null ? battlefieldBackgroundSprite : GetSharedSprite();
-            renderer.color = battlefieldBackgroundColor;
+            renderer.color = Color.white;
             renderer.sortingOrder = -50;
 
             if (autoFitBattlefieldBackgroundToField)

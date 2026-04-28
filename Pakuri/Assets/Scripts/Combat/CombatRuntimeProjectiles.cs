@@ -254,7 +254,7 @@ namespace Pakuri.Combat
 
             var renderer = projectileObject.AddComponent<SpriteRenderer>();
             renderer.sprite = selectedProjectileSprite != null ? selectedProjectileSprite : GetSharedSprite();
-            renderer.color = selectedProjectileColor;
+            renderer.color = Color.white;
             renderer.sortingOrder = 25;
 
             var projectile = new ProjectileRuntime
