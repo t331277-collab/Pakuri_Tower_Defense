@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2026-04-29 다음 작업 정리</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #5f6f86;
+      --line: #d8e0ea;
+      --panel: #f7f9fc;
+      --ready: #087f5b;
+      --next: #2457c5;
+      --later: #516070;
+      --risk: #b42318;
+      --warn: #b46504;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: #fff;
+      line-height: 1.62;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 40px 28px 72px;
+    }
+
+    header {
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 22px;
+      margin-bottom: 28px;
+    }
+
+    h1 { margin: 0 0 10px; font-size: 30px; letter-spacing: 0; }
+    h2 { margin: 34px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 22px; }
+    h3 { margin: 22px 0 8px; font-size: 17px; }
+    p { margin: 8px 0; }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      background: #edf2f7;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: .94em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 24px;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+
+    th {
+      background: #eef3f8;
+      text-align: left;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0 24px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 104px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 25px;
+      margin-bottom: 6px;
+    }
+
+    .status {
+      display: inline-block;
+      min-width: 92px;
+      text-align: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+
+    .ready { background: var(--ready); }
+    .next { background: var(--next); }
+    .later { background: var(--later); }
+    .risk { background: var(--risk); }
+    .warn { background: var(--warn); }
+
+    .note {
+      border-left: 4px solid var(--next);
+      background: var(--panel);
+      padding: 12px 14px;
+      margin: 16px 0;
+    }
+
+    .small { color: var(--muted); font-size: 13px; }
+
+    @media (max-width: 860px) {
+      main { padding: 28px 16px 48px; }
+      .summary { grid-template-columns: 1fr 1fr; }
+      table { table-layout: auto; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>2026-04-29 다음 작업 정리</h1>
+    <p>기준 문서: <code>Pakuri/reference/Report/2026-04-28-reference-implementation-roadmap.html</code>, <code>Pakuri/reference/Report/2026-04-29-roadmap-implementation-result.html</code></p>
+    <p>작성 기준: <code>BLACKBOARD.md</code>에 기록된 완료/보류 상태와 위 두 보고서의 로드맵 단계별 판정.</p>
+    <p class="small">주의: 이 문서는 Designer 산출물이다. 실제 구현은 사용자의 명시 요청 또는 별도 Code Builder handoff 후 진행한다.</p>
+  </header>
+
+  <section>
+    <h2>1. 현재 위치</h2>
+    <div class="summary">
+      <div class="metric">
+        <strong>1~5 완료</strong>
+        <span>전투/런 루프 안정화, 일차/전투 타입, 보상 실제화, 포로 공양 선택지, 몬스터 A~J 데이터 정리</span>
+      </div>
+      <div class="metric">
+        <strong>6번 다음</strong>
+        <span>상태 효과 기반 확장과 선택지 효과의 실제 전투 연결</span>
+      </div>
+      <div class="metric">
+        <strong>1개 보류</strong>
+        <span><code>eve.asset</code> trailing whitespace reviewer finding은 사용자가 보류 선택</span>
+      </div>
+      <div class="metric">
+        <strong>Play Mode 별도</strong>
+        <span>AGENTS.md 기준 Codex는 Play Mode 직접 검증을 하지 않고 사용자 검증으로 분리</span>
+      </div>
+    </div>
+
+    <div class="note">
+      <p>두 보고서를 합치면 다음 작업의 중심은 <strong>데이터로 고를 수 있게 된 스킬/패시브/강화/마스터 후보를 실제 전투 효과로 연결하는 것</strong>이다. 이미 데이터 구조와 선택지 풀은 준비됐으므로, 다음 단계에서 상태 효과와 런타임 스킬 처리의 공통 구조를 먼저 세워야 한다.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. 최우선 작업 큐</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>우선순위</th>
+          <th>작업</th>
+          <th>해야 할 일</th>
+          <th>이번 작업에서 제외</th>
+          <th>완료 기준</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="status next">1순위</span></td>
+          <td>상태 효과 공통 모델 1차</td>
+          <td>감전, 추위/빙결, 슬로우, 취약, 보호막처럼 이미 Eve 런타임에서 다룬 상태를 공통 상태 모델로 정리한다. 상태 지속시간, 스택, 피해 보정, 시각 표시 책임을 어디에 둘지 고정한다.</td>
+          <td>모든 몬스터의 모든 상태를 한 번에 구현하지 않는다. 먼저 Eve 구현에서 이미 등장한 상태와 다음 스킬 쌍에 필요한 상태만 다룬다.</td>
+          <td>선택지 효과가 특정 적에게 상태를 부여하고, 피해 계산 또는 이동/표시 변화에 실제로 반영된다.</td>
+        </tr>
+        <tr>
+          <td><span class="status next">2순위</span></td>
+          <td>한 몬스터 기준 B~E/F~J 런타임 연결</td>
+          <td>5몬스터 전체가 아니라 한 몬스터를 먼저 골라, B~E 액티브와 그에 연결된 G~J 패시브 중 작은 쌍을 실제 전투 효과로 연결한다. 현재 보고서 추천처럼 Eve B/G 또는 Ariel 방어막 계열이 후보가 된다.</td>
+          <td>모든 스킬 연출, 마스터 스킬 전체, 모든 강화 선택지를 동시에 완성하지 않는다.</td>
+          <td>포로 공양 선택지에서 배운 스킬/패시브가 <code>RunSession</code> 선택 기록을 거쳐 전투 중 실제 효과를 낸다.</td>
+        </tr>
+        <tr>
+          <td><span class="status next">3순위</span></td>
+          <td>스킬 효과 디스패처 정리</td>
+          <td>현재 선택지 데이터의 <code>RewardId</code>, <code>SkillId</code>, <code>PassiveId</code>를 전투 런타임 효과로 연결하는 디스패처를 만든다. 몬스터별 하드코딩이 불가피한 부분과 공통 처리 가능한 부분을 분리한다.</td>
+          <td>아직 문서 수치가 모호한 효과를 임의로 추정 구현하지 않는다.</td>
+          <td>새로운 스킬 하나를 추가할 때 UI 선택지, 세션 기록, 전투 효과 연결 위치가 명확하다.</td>
+        </tr>
+        <tr>
+          <td><span class="status warn">4순위</span></td>
+          <td>시각/에셋 적용 점검</td>
+          <td>몬스터/적 SO의 <code>UnitSprite</code>, <code>ProjectileSprite</code>, 스킬별 <code>SkillIcon</code>, <code>SkillEffectPrefab</code> 필드가 런타임/UI에서 어디까지 쓰이는지 점검하고, 누락된 표시 경로를 정리한다.</td>
+          <td>새 이미지 제작이나 전체 UI 리디자인은 제외한다.</td>
+          <td>사용자가 할당한 이미지가 tint 없이 보이고, 아이콘/이펙트 필드의 사용 여부가 명확해진다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>3. 그 다음 작업 큐</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>순서</th>
+          <th>작업</th>
+          <th>근거</th>
+          <th>진입 조건</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>5</td>
+          <td>2~4스테이지 적 데이터 생성</td>
+          <td>2026-04-28 로드맵 7번은 <code>stage-2-enemies.md</code>, <code>stage-3-enemies.md</code>, <code>stage-4-enemies.md</code>를 <code>EnemyDefinition</code> 자산으로 만드는 작업이다.</td>
+          <td>스킬/상태 효과가 최소 한 몬스터에서 실제 전투에 연결된 뒤 진행하는 것이 안전하다.</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td>정예 전투와 이벤트</td>
+          <td>로드맵 8번은 <code>elite-combat-system.md</code>, <code>event-system.md</code>, <code>event-list.md</code> 기반이다.</td>
+          <td>일차/전투 타입 모델과 보상 흐름은 이미 있으므로, 스테이지 적 후보가 늘어난 뒤 붙이는 것이 좋다.</td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td>상점과 유물 후보</td>
+          <td>로드맵 9번은 <code>shop-system.md</code>, <code>artifact-synergy-list.md</code> 기반이다.</td>
+          <td>골드 누적과 보상 선택은 이미 있으나, 유물 효과가 상태/스킬 효과와 충돌할 수 있어 상태 모델 뒤가 적절하다.</td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td>포메이션 데이터와 시작 포메이션 선택</td>
+          <td>로드맵 10번은 <code>formation</code> 문서와 <code>7.UI/3. expedition-start-layout.md</code> 기반이다.</td>
+          <td>현재 Run 시작은 몬스터 선택 중심이므로, 전투 효과 체계가 안정된 뒤 배치 보정으로 확장한다.</td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td>메타 저장과 심연 강화</td>
+          <td>로드맵 11번은 <code>6.meta</code> 문서 기반이며 런 외부 영구 저장이 필요하다.</td>
+          <td>런 종료 보상과 어둠의 흔적 누적이 충분히 검증된 뒤 저장 모델을 붙인다.</td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td>도감/훈련장/암시장</td>
+          <td>로드맵 12번은 <code>7.UI</code> 부가 화면 기반이다.</td>
+          <td>실제 데이터, 전투 효과, 저장 구조가 먼저 있어야 화면이 빈 껍데기가 되지 않는다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. 바로 Builder handoff로 자르기 좋은 단위</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>후보</th>
+          <th>구현 범위</th>
+          <th>검증 범위</th>
+          <th>판정</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Eve B/G 상태 효과 슬라이스</td>
+          <td>Eve의 이미 구현된 감전/취약 계열을 공통 상태 모델로 정리하고, 선택한 B 또는 G가 실제 전투 효과로 이어지게 한다.</td>
+          <td>빌드, Unity 콘솔, 외부 Code Reviewer 1회. Play Mode는 사용자 검증.</td>
+          <td><span class="status ready">가장 추천</span></td>
+        </tr>
+        <tr>
+          <td>Ariel 보호막 슬라이스</td>
+          <td>Ariel의 방어막/신성 계열 하나를 선택지에서 전투 효과로 연결한다.</td>
+          <td>보호막 표시와 피해 흡수 계산 검증 필요.</td>
+          <td><span class="status next">좋음</span></td>
+        </tr>
+        <tr>
+          <td>스킬 효과 디스패처만 선행</td>
+          <td>실제 효과 수는 최소화하고, 선택지 기록에서 몬스터별 효과 핸들러로 가는 구조만 만든다.</td>
+          <td>실제 게임플레이 체감은 작지만 이후 확장 충돌을 줄인다.</td>
+          <td><span class="status warn">구조 우선</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>5. 지금 처리하지 않을 것</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th>보류 이유</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>eve.asset</code> trailing whitespace</td>
+          <td>Code Reviewer가 지적했지만, 사용자가 지금은 수정하지 않기로 선택했다. 추후 요청 시 별도 작은 정리 작업으로 처리한다.</td>
+        </tr>
+        <tr>
+          <td>모든 몬스터 A~J 효과 동시 구현</td>
+          <td>데이터는 준비됐지만 상태/효과 공통 구조가 아직 없다. 한 몬스터 슬라이스로 검증한 뒤 넓히는 편이 안전하다.</td>
+        </tr>
+        <tr>
+          <td>상점/유물/메타/포메이션 동시 구현</td>
+          <td>각각 런 보상, 상태 효과, 저장 구조와 맞물린다. 현재 다음 병목은 스킬 선택지가 실제 전투 효과로 이어지는 경로다.</td>
+        </tr>
+        <tr>
+          <td>Play Mode 자동 검증</td>
+          <td><code>AGENTS.md</code> 규칙상 Codex는 Unity-MCP로 Play Mode gameplay 검증을 직접 실행하지 않는다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>6. 근거 목록</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>근거</th>
+          <th>확인 내용</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>2026-04-28-reference-implementation-roadmap.html</code></td>
+          <td>전체 로드맵은 1~12단계이며, 6번 이후가 상태 효과, 2~4스테이지 적, 정예/이벤트, 상점/유물, 포메이션, 메타 저장, 부가 화면 순서로 정리되어 있다.</td>
+        </tr>
+        <tr>
+          <td><code>2026-04-29-roadmap-implementation-result.html</code></td>
+          <td>로드맵 1~5번은 완료 판정이고, 다음 큰 단계는 6번 상태 효과 기반 확장이라고 명시되어 있다.</td>
+        </tr>
+        <tr>
+          <td><code>BLACKBOARD.md</code></td>
+          <td>Eve active skill runtime은 Reviewer PASS까지 완료됐다. Monster A-J 데이터 정리는 완료됐지만 <code>eve.asset</code> trailing whitespace finding은 사용자 보류 상태다.</td>
+        </tr>
+        <tr>
+          <td><code>AGENTS.md</code></td>
+          <td>Designer는 설계만 담당하며, 구현은 명시적 Code Builder 요청 또는 handoff 이후에 진행한다. 로직 작업 후 Reviewer 1회가 필요하다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

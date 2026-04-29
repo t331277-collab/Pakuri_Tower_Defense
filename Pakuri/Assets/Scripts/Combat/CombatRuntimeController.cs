@@ -82,6 +82,10 @@ namespace Pakuri.Combat
             public int RemainingPierce;
             public int StatusStacks;
             public float StatusChance;
+            public float BranchChance;
+            public float BranchRadius;
+            public float BranchDamageMultiplier = 1f;
+            public int BranchTargetCount;
             public readonly HashSet<EnemyRuntime> HitEnemies = new HashSet<EnemyRuntime>();
             public bool IsEnemyProjectile;
             public EnemyRuntime SourceEnemy;
@@ -123,6 +127,7 @@ namespace Pakuri.Combat
             public float Range;
             public float BaseDamage;
             public DamageAttribute Attribute;
+            public string SkillId;
             public int VulnerableStacks;
         }
 
@@ -224,6 +229,7 @@ namespace Pakuri.Combat
         private readonly List<RewardOption> rewardOptions = new List<RewardOption>();
         private readonly HashSet<string> blockedRewardIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> learnedActiveSkillNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> learnedPassiveSkillNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> chosenSkillChoiceIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly List<EnemyDefinition> currentNormalEnemyPool = new List<EnemyDefinition>();
         private readonly List<EnemyDefinition> currentGuaranteedPrisonerDefinitions = new List<EnemyDefinition>();
@@ -235,6 +241,8 @@ namespace Pakuri.Combat
         private float nexusMaxHealth = 500f;
         private float nexusCurrentHealth;
         private float unitCurrentHealth;
+        private float unitShieldValue;
+        private float unitShieldTimer;
         private float currentBossHealthMultiplier;
         private int pendingNormalSpawnCount;
         private int spawnedNormalCount;
@@ -273,6 +281,7 @@ namespace Pakuri.Combat
         private AttributeDefenseSet selectedMonsterDefenses = new AttributeDefenseSet();
         private TextMesh selectedMonsterLabel;
         private SpriteRenderer selectedMonsterHpBarFill;
+        private SpriteRenderer selectedMonsterShieldBarFill;
         private Color selectedUnitColor = new Color(0.41f, 0.78f, 1f, 0.95f);
         private Color selectedProjectileColor = new Color(0.61f, 0.93f, 1f, 0.98f);
         private Sprite selectedUnitSprite;
@@ -456,6 +465,39 @@ namespace Pakuri.Combat
 
             runInitialized = true;
             BeginPrototypeDay(session.DayIndex);
+        }
+
+        public void ApplyDebugSelection(MonsterDefinition monster, RunSession session, GameDataCatalog catalog = null)
+        {
+            if (session == null)
+            {
+                return;
+            }
+
+            if (catalog != null)
+            {
+                gameDataCatalog = catalog;
+            }
+
+            ConfigureMonster(monster);
+            ApplyPersistedRewardState(session);
+            ConfigureEveSkillSelectionState(session);
+
+            var magazineCapacity = GetEveArcMagazineCapacity();
+            if (currentShotsRemaining > magazineCapacity)
+            {
+                currentShotsRemaining = magazineCapacity;
+            }
+
+            if (!runInitialized)
+            {
+                unitCurrentHealth = unitMaxHealthConfigured;
+                nexusCurrentHealth = nexusMaxHealth;
+                currentShotsRemaining = magazineCapacity;
+            }
+
+            UpdateSelectedMonsterStatusVisuals();
+            statusLabel = $"{selectedMonsterName} debug skill selection updated.";
         }
 
         public void ResetPrototypeState()

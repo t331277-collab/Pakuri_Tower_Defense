@@ -55,7 +55,7 @@ namespace Pakuri.Combat
                         ApplyVulnerable(enemyHit, Mathf.Max(1, projectile.StatusStacks));
                         appliedStatus = true;
                     }
-                    var statusChance = projectile.StatusChance > 0f ? projectile.StatusChance : statusChanceConfigured;
+                    var statusChance = Mathf.Clamp01((projectile.StatusChance > 0f ? projectile.StatusChance : statusChanceConfigured) + GetEveStatusChanceBonus(enemyHit));
                     if (!appliedStatus && statusChance > 0f && UnityEngine.Random.value < statusChance)
                     {
                         ApplyShock(enemyHit, Mathf.Max(1, projectile.StatusStacks), 1.25f);
@@ -68,6 +68,8 @@ namespace Pakuri.Combat
                         : $"{selectedActiveSkillName} 적중: {enemyHit.DisplayName}에게 {appliedDamage:0.0} {selectedElementLabel} 피해.";
 
                     Debug.Log($"[CombatDamage] {selectedMonsterName}.{selectedActiveSkillName} -> {enemyHit.DisplayName}: {damageResult.FormulaLog}; Applied={appliedDamage:0.##}, ShieldLeft={enemyHit.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, enemyHit.CurrentHealth):0.##}");
+                    TryApplyProjectileBranch(projectile, enemyHit, damageResult.FinalDamage);
+                    TryTriggerEveParticleSeparationProc(enemyHit, projectile.Attribute, projectile.SkillId);
 
                     projectile.HitEnemies.Add(enemyHit);
                     if (projectile.RemainingPierce > 0)
@@ -126,7 +128,7 @@ namespace Pakuri.Combat
                     source.CriticalMultiplierBonus,
                     selectedMonsterDefenses);
                 appliedDamage = resolution.FinalDamage;
-                unitCurrentHealth = Mathf.Max(0f, unitCurrentHealth - appliedDamage);
+                appliedDamage = ApplyDamageToSelectedMonster(appliedDamage);
                 targetLabel = selectedMonsterName;
                 return true;
             }
@@ -174,16 +176,92 @@ namespace Pakuri.Combat
                 }
 
                 enemyHit = enemy;
+                var finalMultiplier = GetEveFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId);
                 damageResult = DamageCalculator.Resolve(
                     projectile.BaseDamage,
                     projectile.Attribute,
                     enemy.Defenses,
+                    flatDefenseReduction: GetEveFlatDefenseReduction(enemy, projectile.Attribute),
                     targetCriticalResistance: enemy.CriticalResistance,
-                    finalDamageMultiplier: enemy.DamageTakenMultiplier);
+                    criticalDamageTakenBonus: GetEveCriticalDamageTakenBonus(enemy, projectile.SkillId),
+                    finalDamageMultiplier: enemy.DamageTakenMultiplier * finalMultiplier);
                 return true;
             }
 
             return false;
+        }
+
+        private void TryApplyProjectileBranch(ProjectileRuntime projectile, EnemyRuntime sourceEnemy, float primaryFinalDamage)
+        {
+            if (projectile == null
+                || sourceEnemy == null
+                || sourceEnemy.Transform == null
+                || projectile.BranchTargetCount <= 0
+                || projectile.BranchRadius <= 0f
+                || projectile.BranchChance <= 0f
+                || primaryFinalDamage <= 0f
+                || UnityEngine.Random.value >= projectile.BranchChance)
+            {
+                return;
+            }
+
+            var branchDamage = primaryFinalDamage * Mathf.Max(0f, projectile.BranchDamageMultiplier);
+            if (branchDamage <= 0f)
+            {
+                return;
+            }
+
+            var branchCount = 0;
+            for (var i = 0; i < enemies.Count && branchCount < projectile.BranchTargetCount; i++)
+            {
+                var branchTarget = FindNearestBranchTarget(sourceEnemy, projectile.BranchRadius, projectile);
+                if (branchTarget == null)
+                {
+                    break;
+                }
+
+                var appliedDamage = ApplyDamageToEnemy(branchTarget, branchDamage);
+                branchTarget.FlashTimer = 0.08f;
+                CreateEveArcBranchLine(sourceEnemy.Transform.position, branchTarget.Transform.position);
+                projectile.HitEnemies.Add(branchTarget);
+                branchCount += 1;
+
+                Debug.Log($"[CombatDamage] Eve.ArcBranch -> {branchTarget.DisplayName}: Incoming={branchDamage:0.##}, Applied={appliedDamage:0.##}, ShieldLeft={branchTarget.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, branchTarget.CurrentHealth):0.##}");
+            }
+
+            if (branchCount > 0)
+            {
+                statusLabel = $"Arc Bolt branch hit {branchCount} nearby target(s).";
+            }
+        }
+
+        private EnemyRuntime FindNearestBranchTarget(EnemyRuntime sourceEnemy, float radius, ProjectileRuntime projectile)
+        {
+            EnemyRuntime best = null;
+            var bestDistance = float.MaxValue;
+            for (var i = 0; i < enemies.Count; i++)
+            {
+                var enemy = enemies[i];
+                if (enemy == null
+                    || enemy == sourceEnemy
+                    || enemy.Transform == null
+                    || enemy.CurrentHealth <= 0f
+                    || projectile.HitEnemies.Contains(enemy))
+                {
+                    continue;
+                }
+
+                var distance = Vector2.Distance(sourceEnemy.Transform.position, enemy.Transform.position);
+                if (distance > radius || distance >= bestDistance)
+                {
+                    continue;
+                }
+
+                best = enemy;
+                bestDistance = distance;
+            }
+
+            return best;
         }
 
         private static float ApplyDamageToEnemy(EnemyRuntime enemy, float incomingDamage)
@@ -206,6 +284,26 @@ namespace Pakuri.Combat
             return appliedDamage;
         }
 
+        private float ApplyDamageToSelectedMonster(float incomingDamage)
+        {
+            if (incomingDamage <= 0f)
+            {
+                return 0f;
+            }
+
+            var remainingDamage = incomingDamage;
+            if (unitShieldValue > 0f)
+            {
+                var absorbed = Mathf.Min(unitShieldValue, remainingDamage);
+                unitShieldValue -= absorbed;
+                remainingDamage -= absorbed;
+            }
+
+            var appliedDamage = Mathf.Min(unitCurrentHealth, remainingDamage);
+            unitCurrentHealth = Mathf.Max(0f, unitCurrentHealth - appliedDamage);
+            return appliedDamage;
+        }
+
         private static float GetEnemyHitRadius(EnemyRuntime enemy)
         {
             return enemy != null && enemy.IsBoss ? 0.95f : 0.65f;
@@ -214,7 +312,7 @@ namespace Pakuri.Combat
         private void UpdateSelectedMonsterCombat()
         {
             UpdateEveSkillCooldowns();
-            shotCooldown = Mathf.Max(0f, shotCooldown - Time.deltaTime);
+            shotCooldown = Mathf.Max(0f, shotCooldown - Time.deltaTime * GetEveActionSpeedMultiplier());
 
             if (fireRequestedThisFrame)
             {
@@ -223,7 +321,7 @@ namespace Pakuri.Combat
 
             if (reloadRemaining > 0f)
             {
-                reloadRemaining = Mathf.Max(0f, reloadRemaining - Time.deltaTime);
+                reloadRemaining = Mathf.Max(0f, reloadRemaining - Time.deltaTime * GetEveActionSpeedMultiplier());
                 if (Mathf.Approximately(reloadRemaining, 0f))
                 {
                     currentShotsRemaining = GetEveArcMagazineCapacity();

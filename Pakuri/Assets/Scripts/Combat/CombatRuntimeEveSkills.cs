@@ -15,16 +15,24 @@ namespace Pakuri.Combat
         private const float EveDroneAttackPeriod = 0.8f;
         private const int EveDroneMagazineCapacity = 3;
         private const float EveDroneReloadSeconds = 6f;
+        private const float EveVoltageShieldDuration = 12f;
+        private const float EveParticleSeparationCooldown = 1.5f;
+        private const float EveArcExtraProjectileAngleStep = 3f;
+        private const float EveArcBranchRadius = 4.5f;
+        private const float EveArcBranchLineWidth = 0.06f;
+        private const float EveArcBranchLineDuration = 0.12f;
 
         private float eveBeamCooldownRemaining;
         private float eveFrostCooldownRemaining;
         private float eveStaticCooldownRemaining;
         private float eveDroneReloadRemaining;
+        private float eveParticleSeparationCooldownRemaining;
         private int eveDroneChargesRemaining = EveDroneMagazineCapacity;
 
         private void ConfigureEveSkillSelectionState(RunSession session)
         {
             learnedActiveSkillNames.Clear();
+            learnedPassiveSkillNames.Clear();
             chosenSkillChoiceIds.Clear();
 
             if (session != null && session.LearnedActives != null)
@@ -49,6 +57,17 @@ namespace Pakuri.Combat
                 }
             }
 
+            if (session != null && session.LearnedPassives != null)
+            {
+                for (var i = 0; i < session.LearnedPassives.Count; i++)
+                {
+                    if (!string.IsNullOrWhiteSpace(session.LearnedPassives[i]))
+                    {
+                        learnedPassiveSkillNames.Add(session.LearnedPassives[i]);
+                    }
+                }
+            }
+
             var arcBolt = FindSelectedSkill(SkillSlot.A);
             if (arcBolt != null && !string.IsNullOrWhiteSpace(arcBolt.DisplayName))
             {
@@ -66,21 +85,30 @@ namespace Pakuri.Combat
             eveFrostCooldownRemaining = 0f;
             eveStaticCooldownRemaining = 0f;
             eveDroneReloadRemaining = 0f;
+            eveParticleSeparationCooldownRemaining = 0f;
             eveDroneChargesRemaining = GetEveDroneMagazine();
+            ApplyEveVoltageCalibrationShield();
         }
 
         private void UpdateEveSkillCooldowns()
         {
-            eveBeamCooldownRemaining = Mathf.Max(0f, eveBeamCooldownRemaining - Time.deltaTime);
-            eveFrostCooldownRemaining = Mathf.Max(0f, eveFrostCooldownRemaining - Time.deltaTime);
-            eveStaticCooldownRemaining = Mathf.Max(0f, eveStaticCooldownRemaining - Time.deltaTime);
+            var elapsed = Time.deltaTime * GetEveActionSpeedMultiplier();
+            eveBeamCooldownRemaining = Mathf.Max(0f, eveBeamCooldownRemaining - elapsed);
+            eveFrostCooldownRemaining = Mathf.Max(0f, eveFrostCooldownRemaining - elapsed);
+            eveStaticCooldownRemaining = Mathf.Max(0f, eveStaticCooldownRemaining - elapsed);
+            eveParticleSeparationCooldownRemaining = Mathf.Max(0f, eveParticleSeparationCooldownRemaining - elapsed);
+            unitShieldTimer = Mathf.Max(0f, unitShieldTimer - Time.deltaTime);
+            if (Mathf.Approximately(unitShieldTimer, 0f))
+            {
+                unitShieldValue = 0f;
+            }
 
             if (eveDroneReloadRemaining <= 0f)
             {
                 return;
             }
 
-            eveDroneReloadRemaining = Mathf.Max(0f, eveDroneReloadRemaining - Time.deltaTime);
+            eveDroneReloadRemaining = Mathf.Max(0f, eveDroneReloadRemaining - elapsed);
             if (Mathf.Approximately(eveDroneReloadRemaining, 0f))
             {
                 eveDroneChargesRemaining = GetEveDroneMagazine();
@@ -122,6 +150,10 @@ namespace Pakuri.Combat
             var shotIntervalMultiplier = 1f;
             var reloadMultiplier = 1f;
             var statusChance = statusChanceConfigured;
+            var branchChance = 0f;
+            var branchRadius = 0f;
+            var branchDamageMultiplier = 1f;
+            var branchTargetCount = 0;
 
             if (HasChoice("eve-a-trait-1"))
             {
@@ -130,7 +162,7 @@ namespace Pakuri.Combat
 
             if (HasChoice("eve-a-trait-2"))
             {
-                reloadMultiplier *= 0.70f;
+                reloadMultiplier *= SpeedBonusToIntervalMultiplier(0.30f);
                 pierce += 1;
             }
 
@@ -143,20 +175,49 @@ namespace Pakuri.Combat
             if (HasChoice("eve-a-trait-4"))
             {
                 extraProjectiles += 2;
-                shotIntervalMultiplier *= 1.25f;
+                shotIntervalMultiplier *= SpeedBonusToIntervalMultiplier(-0.25f);
             }
 
             if (HasChoice("eve-a-trait-5"))
             {
                 damageMultiplier *= 1.25f;
-                statusChance += 0.35f;
+                branchChance += 0.35f;
+                branchRadius = EveArcBranchRadius;
+                branchTargetCount = Mathf.Max(branchTargetCount, 1);
+            }
+
+            if (HasChoice("eve-a-master-1"))
+            {
+                damageMultiplier *= 1.35f;
+                branchChance = 1f;
+                branchRadius = EveArcBranchRadius;
+                branchDamageMultiplier = 0.60f;
+                branchTargetCount = Mathf.Max(branchTargetCount, 2);
+            }
+
+            if (HasChoice("eve-a-master-2"))
+            {
+                damageMultiplier *= 1.45f;
+                extraProjectiles += 2;
+                pierce += 2;
+                shotIntervalMultiplier *= SpeedBonusToIntervalMultiplier(-0.20f);
+                statusChance = Mathf.Max(statusChance, 1f);
             }
 
             var projectileCount = 1 + extraProjectiles;
             for (var i = 0; i < projectileCount; i++)
             {
-                var angleOffset = projectileCount <= 1 ? 0f : (i - (projectileCount - 1) * 0.5f) * 4f;
-                FireEveProjectile(baseDirection, pierce, damageMultiplier, angleOffset, statusChance);
+                var angleOffset = projectileCount <= 1 ? 0f : (i - (projectileCount - 1) * 0.5f) * EveArcExtraProjectileAngleStep;
+                FireEveProjectile(
+                    baseDirection,
+                    pierce,
+                    damageMultiplier,
+                    angleOffset,
+                    statusChance,
+                    branchChance,
+                    branchRadius,
+                    branchDamageMultiplier,
+                    branchTargetCount);
             }
 
             currentShotsRemaining -= 1;
@@ -171,7 +232,16 @@ namespace Pakuri.Combat
             statusLabel = $"Arc Bolt manual fire: {projectileCount} shot(s) toward ({currentAttackPoint.x:0.0}, {currentAttackPoint.y:0.0}).";
         }
 
-        private void FireEveProjectile(Vector3 direction, int pierce, float damageMultiplier, float angleOffset, float statusChance)
+        private void FireEveProjectile(
+            Vector3 direction,
+            int pierce,
+            float damageMultiplier,
+            float angleOffset,
+            float statusChance,
+            float branchChance,
+            float branchRadius,
+            float branchDamageMultiplier,
+            int branchTargetCount)
         {
             direction.z = 0f;
             if (direction.sqrMagnitude < 0.01f)
@@ -210,7 +280,11 @@ namespace Pakuri.Combat
                 SkillId = "eve-a",
                 RemainingPierce = Mathf.Max(0, pierce),
                 StatusStacks = 1,
-                StatusChance = Mathf.Clamp01(statusChance)
+                StatusChance = Mathf.Clamp01(statusChance),
+                BranchChance = Mathf.Clamp01(branchChance),
+                BranchRadius = Mathf.Max(0f, branchRadius),
+                BranchDamageMultiplier = Mathf.Max(0f, branchDamageMultiplier),
+                BranchTargetCount = Mathf.Max(0, branchTargetCount)
             });
         }
 
@@ -228,6 +302,17 @@ namespace Pakuri.Combat
                 return false;
             }
 
+            return StartEvePrismRay(target, true, "Prism Ray auto-targeted");
+        }
+
+        private bool StartEvePrismRay(EnemyRuntime target, bool startsActiveCooldown, string statusPrefix)
+        {
+            var skill = FindSelectedSkill(SkillSlot.B);
+            if (skill == null || target == null)
+            {
+                return false;
+            }
+
             var damageMultiplier = 1f;
             var width = 3.2f;
             var duration = EveBeamDuration;
@@ -237,7 +322,7 @@ namespace Pakuri.Combat
             if (HasChoice("eve-b-trait-1"))
             {
                 damageMultiplier *= 1.25f;
-                tickInterval *= 0.75f;
+                tickInterval *= SpeedBonusToIntervalMultiplier(0.25f);
             }
 
             if (HasChoice("eve-b-trait-2"))
@@ -248,7 +333,7 @@ namespace Pakuri.Combat
 
             if (HasChoice("eve-b-trait-3"))
             {
-                cooldown *= 0.65f;
+                cooldown *= SpeedBonusToIntervalMultiplier(0.35f);
                 duration *= 1.15f;
             }
 
@@ -260,8 +345,8 @@ namespace Pakuri.Combat
 
             if (HasChoice("eve-b-trait-5"))
             {
-                cooldown *= 0.70f;
-                tickInterval *= 0.80f;
+                cooldown *= SpeedBonusToIntervalMultiplier(0.30f);
+                tickInterval *= SpeedBonusToIntervalMultiplier(0.20f);
             }
 
             var origin = eveAnchor.position + Vector3.right * 0.65f;
@@ -284,8 +369,12 @@ namespace Pakuri.Combat
             effect.SlowDuration = 2f;
             skillEffects.Add(effect);
 
-            eveBeamCooldownRemaining = cooldown;
-            statusLabel = $"Prism Ray auto-targeted {target.DisplayName}.";
+            if (startsActiveCooldown)
+            {
+                eveBeamCooldownRemaining = cooldown;
+            }
+
+            statusLabel = $"{statusPrefix} {target.DisplayName}.";
             return true;
         }
 
@@ -318,7 +407,7 @@ namespace Pakuri.Combat
 
             if (HasChoice("eve-c-trait-2"))
             {
-                tickInterval *= 0.75f;
+                tickInterval *= SpeedBonusToIntervalMultiplier(0.25f);
                 chillStacks += 1;
             }
 
@@ -347,7 +436,7 @@ namespace Pakuri.Combat
             effect.TickRemaining = 0f;
             effect.Radius = radius;
             effect.StatusStacks = chillStacks;
-            effect.FreezeDuration = HasChoice("eve-c-trait-5") ? 1.0f : 0f;
+            effect.FreezeDuration = HasChoice("eve-c-trait-5") ? 1.0f + GetEveFreezeDurationBonus() : 0f;
             skillEffects.Add(effect);
 
             eveFrostCooldownRemaining = cooldown;
@@ -373,6 +462,11 @@ namespace Pakuri.Combat
             {
                 range *= 1.25f;
                 radius *= 1.15f;
+            }
+
+            if (HasEveOvercurrentCircuit() && HasChoice("eve-i-trait-3"))
+            {
+                radius *= 1.25f;
             }
 
             if (HasChoice("eve-d-trait-2"))
@@ -408,7 +502,7 @@ namespace Pakuri.Combat
                     finalMultiplier *= 1.50f;
                 }
 
-                ApplyEveSkillDamage(enemy, baseDamage, DamageAttribute.Lightning, finalMultiplier);
+                ApplyEveSkillDamage(enemy, baseDamage, DamageAttribute.Lightning, finalMultiplier, "eve-d");
                 if (HasChoice("eve-d-trait-4"))
                 {
                     ApplyShock(enemy, 1, 1.25f);
@@ -452,7 +546,7 @@ namespace Pakuri.Combat
             }
 
             var duration = EveDroneDuration * (HasChoice("eve-e-trait-1") ? 1.20f : 1f);
-            var period = EveDroneAttackPeriod * (HasChoice("eve-e-trait-2") ? 0.75f : 1f);
+            var period = EveDroneAttackPeriod * (HasChoice("eve-e-trait-2") ? SpeedBonusToIntervalMultiplier(0.25f) : 1f);
             var damageMultiplier = HasChoice("eve-e-trait-3") ? 1.30f : 1f;
             var vulnerableStacks = HasChoice("eve-e-trait-2") ? 2 : 1;
 
@@ -477,7 +571,8 @@ namespace Pakuri.Combat
                 Range = float.PositiveInfinity,
                 BaseDamage = (skill.BaseDamage + powerStatConfigured * skill.SpellPowerCoefficient) * damageMultiplier,
                 Attribute = DamageAttribute.Ice,
-                VulnerableStacks = vulnerableStacks
+                VulnerableStacks = vulnerableStacks,
+                SkillId = "eve-e"
             });
 
             eveDroneChargesRemaining -= 1;
@@ -544,7 +639,7 @@ namespace Pakuri.Combat
                     continue;
                 }
 
-                ApplyEveSkillDamage(enemy, effect.BaseDamage, effect.Attribute, 1f);
+                ApplyEveSkillDamage(enemy, effect.BaseDamage, effect.Attribute, 1f, effect.SkillId);
                 if (effect.SkillId == "eve-b" && effect.SlowChance > 0f && UnityEngine.Random.value < effect.SlowChance)
                 {
                     enemy.SlowMultiplier = 0.65f;
@@ -659,6 +754,33 @@ namespace Pakuri.Combat
             };
         }
 
+        private void CreateEveArcBranchLine(Vector3 start, Vector3 end)
+        {
+            if (projectileRoot == null)
+            {
+                return;
+            }
+
+            var direction = end - start;
+            direction.z = 0f;
+            var length = direction.magnitude;
+            if (length <= 0.01f)
+            {
+                return;
+            }
+
+            direction /= length;
+            var effect = CreateLineEffect("ArcBranchLightning", start, direction, length, EveArcBranchLineWidth, EveArcBranchLineDuration);
+            effect.SkillId = "eve-a-branch-visual";
+            if (effect.Renderer != null)
+            {
+                effect.Renderer.color = new Color(0.80f, 0.96f, 1f, 0.95f);
+                effect.Renderer.sortingOrder = 26;
+            }
+
+            skillEffects.Add(effect);
+        }
+
         private SkillEffectRuntime CreateCircleEffect(string name, Vector3 position, float radius, float duration)
         {
             var effectObject = new GameObject(name);
@@ -694,7 +816,7 @@ namespace Pakuri.Combat
             return Vector2.Distance(point, closest) <= (effect.Width * 0.5f);
         }
 
-        private void ApplyEveSkillDamage(EnemyRuntime enemy, float baseDamage, DamageAttribute attribute, float finalMultiplier)
+        private void ApplyEveSkillDamage(EnemyRuntime enemy, float baseDamage, DamageAttribute attribute, float finalMultiplier, string skillId = "")
         {
             var vulnerableMultiplier = 1f + Mathf.Clamp(enemy.VulnerableStacks, 0, 10) * 0.03f;
             if (attribute == DamageAttribute.Ice && HasChoice("eve-e-trait-5") && enemy.VulnerableStacks >= 5)
@@ -702,14 +824,19 @@ namespace Pakuri.Combat
                 vulnerableMultiplier *= 1.40f;
             }
 
+            var passiveMultiplier = GetEveFinalDamageMultiplier(enemy, attribute, skillId);
+
             var result = DamageCalculator.Resolve(
                 baseDamage,
                 attribute,
                 enemy.Defenses,
+                flatDefenseReduction: GetEveFlatDefenseReduction(enemy, attribute),
                 targetCriticalResistance: enemy.CriticalResistance,
-                finalDamageMultiplier: enemy.DamageTakenMultiplier * finalMultiplier * vulnerableMultiplier);
+                criticalDamageTakenBonus: GetEveCriticalDamageTakenBonus(enemy, skillId),
+                finalDamageMultiplier: enemy.DamageTakenMultiplier * finalMultiplier * vulnerableMultiplier * passiveMultiplier);
             var applied = ApplyDamageToEnemy(enemy, result.FinalDamage);
             enemy.FlashTimer = 0.08f;
+            TryTriggerEveParticleSeparationProc(enemy, attribute, skillId);
             Debug.Log($"[CombatDamage] Eve.{attribute} skill -> {enemy.DisplayName}: {result.FormulaLog}; Applied={applied:0.##}, ShieldLeft={enemy.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, enemy.CurrentHealth):0.##}");
         }
 
@@ -810,6 +937,38 @@ namespace Pakuri.Combat
             return !string.IsNullOrWhiteSpace(choiceId) && chosenSkillChoiceIds.Contains(choiceId);
         }
 
+        private bool HasEvePassive(string passiveId, string passiveName)
+        {
+            return IsSelectedEveMonster()
+                && ((string.IsNullOrWhiteSpace(passiveId) == false && chosenSkillChoiceIds.Contains(passiveId))
+                    || (string.IsNullOrWhiteSpace(passiveName) == false && learnedPassiveSkillNames.Contains(passiveName)));
+        }
+
+        private bool HasEveVoltageCalibration()
+        {
+            return HasEvePassive("eve-f", "전압 보정");
+        }
+
+        private bool HasEveParticleSeparation()
+        {
+            return HasEvePassive("eve-g", "입자 분리");
+        }
+
+        private bool HasEveCoolingAlgorithm()
+        {
+            return HasEvePassive("eve-h", "냉각 알고리즘");
+        }
+
+        private bool HasEveOvercurrentCircuit()
+        {
+            return HasEvePassive("eve-i", "과전류 회로");
+        }
+
+        private bool HasEveWeaknessAnalysis()
+        {
+            return HasEvePassive("eve-j", "약점 분석");
+        }
+
         private bool IsSelectedEveMonster()
         {
             return selectedMonster != null &&
@@ -823,12 +982,183 @@ namespace Pakuri.Combat
 
         private int GetEveArcMagazineCapacity()
         {
-            return magazineCapacityConfigured + (HasChoice("eve-a-trait-1") ? 4 : 0);
+            var bonus = 0;
+            if (HasChoice("eve-a-trait-1"))
+            {
+                bonus += 4;
+            }
+
+            if (HasChoice("eve-a-master-1"))
+            {
+                bonus += 2;
+            }
+
+            return magazineCapacityConfigured + bonus;
         }
 
         private float GetEveDroneReloadSeconds()
         {
-            return EveDroneReloadSeconds * (HasChoice("eve-e-trait-4") ? 0.70f : 1f);
+            return EveDroneReloadSeconds * (HasChoice("eve-e-trait-4") ? SpeedBonusToIntervalMultiplier(0.30f) : 1f);
+        }
+
+        private float GetEveActionSpeedMultiplier()
+        {
+            return HasEveVoltageCalibration() && HasChoice("eve-f-trait-3") && unitShieldValue > 0f
+                ? 1.12f
+                : 1f;
+        }
+
+        private float GetEveFreezeDurationBonus()
+        {
+            return HasEveCoolingAlgorithm() && HasChoice("eve-h-trait-2") ? 1.0f : 0f;
+        }
+
+        private static float SpeedBonusToIntervalMultiplier(float speedBonus)
+        {
+            return 1f / Mathf.Max(0.05f, 1f + speedBonus);
+        }
+
+        private void ApplyEveVoltageCalibrationShield()
+        {
+            unitShieldValue = 0f;
+            unitShieldTimer = 0f;
+            if (!HasEveVoltageCalibration())
+            {
+                return;
+            }
+
+            var shield = powerStatConfigured * 1.20f;
+            if (HasChoice("eve-f-trait-1"))
+            {
+                shield *= 1.40f;
+            }
+
+            unitShieldValue = Mathf.Max(0f, shield);
+            unitShieldTimer = EveVoltageShieldDuration;
+        }
+
+        private float GetEveFinalDamageMultiplier(EnemyRuntime enemy, DamageAttribute attribute, string skillId)
+        {
+            if (!IsSelectedEveMonster() || enemy == null)
+            {
+                return 1f;
+            }
+
+            var bonus = 0f;
+            var shocked = enemy.ShockTimer > 0f && enemy.ShockStacks > 0;
+            var chilledOrFrozen = enemy.ChillTimer > 0f || enemy.FreezeTimer > 0f;
+            var vulnerable = enemy.VulnerableStacks > 0;
+
+            if (HasEveVoltageCalibration() && shocked)
+            {
+                bonus += 0.10f + (HasChoice("eve-f-trait-2") ? 0.06f : 0f);
+            }
+
+            if (HasEveParticleSeparation() && (attribute == DamageAttribute.Lightning || attribute == DamageAttribute.Ice))
+            {
+                bonus += 0.08f + (HasChoice("eve-g-trait-2") ? 0.05f : 0f);
+            }
+
+            if (HasEveParticleSeparation()
+                && HasChoice("eve-g-trait-3")
+                && string.Equals(skillId, "eve-b", StringComparison.OrdinalIgnoreCase)
+                && enemy.ShieldValue > 0f)
+            {
+                bonus += 3.0f;
+            }
+
+            if (HasEveCoolingAlgorithm() && chilledOrFrozen)
+            {
+                bonus += 0.14f + (HasChoice("eve-h-trait-1") ? 0.06f : 0f);
+            }
+
+            if (HasEveOvercurrentCircuit() && shocked && attribute == DamageAttribute.Lightning)
+            {
+                bonus += 0.18f + (HasChoice("eve-i-trait-1") ? 0.08f : 0f);
+            }
+
+            if (HasEveWeaknessAnalysis() && vulnerable)
+            {
+                bonus += 0.12f + (HasChoice("eve-j-trait-1") ? 0.06f : 0f);
+            }
+
+            if (HasEveWeaknessAnalysis()
+                && HasChoice("eve-j-trait-3")
+                && string.Equals(skillId, "eve-e", StringComparison.OrdinalIgnoreCase)
+                && enemy.VulnerableStacks >= 5)
+            {
+                bonus += 0.75f;
+            }
+
+            return 1f + bonus;
+        }
+
+        private float GetEveFlatDefenseReduction(EnemyRuntime enemy, DamageAttribute attribute)
+        {
+            if (!IsSelectedEveMonster() || enemy == null)
+            {
+                return 0f;
+            }
+
+            var reduction = 0f;
+            if (HasEveOvercurrentCircuit()
+                && attribute == DamageAttribute.Lightning
+                && enemy.ShockTimer > 0f
+                && enemy.ShockStacks >= 5)
+            {
+                reduction += 12f + (HasChoice("eve-i-trait-2") ? 6f : 0f);
+            }
+
+            if (HasEveWeaknessAnalysis() && enemy.VulnerableStacks > 0)
+            {
+                reduction += 8f + (HasChoice("eve-j-trait-2") ? 4f : 0f);
+            }
+
+            return reduction;
+        }
+
+        private float GetEveCriticalDamageTakenBonus(EnemyRuntime enemy, string skillId)
+        {
+            if (!HasEveWeaknessAnalysis()
+                || !HasChoice("eve-e-master-2")
+                || enemy == null
+                || enemy.VulnerableStacks <= 0)
+            {
+                return 0f;
+            }
+
+            return Mathf.Clamp(enemy.VulnerableStacks, 0, 15) * 0.01f;
+        }
+
+        private float GetEveStatusChanceBonus(EnemyRuntime enemy)
+        {
+            return HasEveCoolingAlgorithm() && enemy != null && (enemy.ChillTimer > 0f || enemy.FreezeTimer > 0f)
+                ? 0.10f
+                : 0f;
+        }
+
+        private void TryTriggerEveParticleSeparationProc(EnemyRuntime sourceEnemy, DamageAttribute attribute, string sourceSkillId)
+        {
+            if (!HasEveParticleSeparation()
+                || eveParticleSeparationCooldownRemaining > 0f
+                || sourceEnemy == null
+                || sourceEnemy.CurrentHealth <= 0f
+                || string.Equals(sourceSkillId, "eve-b", StringComparison.OrdinalIgnoreCase)
+                || (attribute != DamageAttribute.Lightning && attribute != DamageAttribute.Ice))
+            {
+                return;
+            }
+
+            var chance = 0.04f + (HasChoice("eve-g-trait-1") ? 0.03f : 0f);
+            if (UnityEngine.Random.value >= chance)
+            {
+                return;
+            }
+
+            if (StartEvePrismRay(sourceEnemy, false, "Particle Separation triggered Prism Ray on"))
+            {
+                eveParticleSeparationCooldownRemaining = EveParticleSeparationCooldown;
+            }
         }
 
         private void ClearEveSkillRuntimeObjects()

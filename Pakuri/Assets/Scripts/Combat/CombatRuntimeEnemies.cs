@@ -658,6 +658,7 @@ namespace Pakuri.Combat
 
                 enemy.ActiveCooldownRemaining = Mathf.Max(0f, enemy.ActiveCooldownRemaining - Time.deltaTime);
                 enemy.ChillTimer = Mathf.Max(0f, enemy.ChillTimer - Time.deltaTime);
+                var hadFreeze = enemy.FreezeTimer > 0f;
                 enemy.FreezeTimer = Mathf.Max(0f, enemy.FreezeTimer - Time.deltaTime);
                 enemy.SlowTimer = Mathf.Max(0f, enemy.SlowTimer - Time.deltaTime);
                 if (Mathf.Approximately(enemy.ChillTimer, 0f))
@@ -673,6 +674,17 @@ namespace Pakuri.Combat
                 if (Mathf.Approximately(enemy.SlowTimer, 0f))
                 {
                     enemy.SlowMultiplier = 1f;
+                }
+
+                if (hadFreeze && Mathf.Approximately(enemy.FreezeTimer, 0f) && HasEveCoolingAlgorithm() && HasChoice("eve-h-trait-3"))
+                {
+                    ApplyEveSkillDamage(enemy, 16f + powerStatConfigured, DamageAttribute.Ice, 1f);
+                    if (enemy.CurrentHealth <= 0f)
+                    {
+                        UpdateEnemyColor(enemy);
+                        UpdateEnemyLabel(enemy);
+                        continue;
+                    }
                 }
 
                 var targetTransform = GetEnemyPriorityTarget();
@@ -758,7 +770,12 @@ namespace Pakuri.Combat
 
             if (enemy.ChillTimer > 0f)
             {
-                parts.Add($"빙결{enemy.ChillStacks}");
+                parts.Add($"추위{enemy.ChillStacks}");
+            }
+
+            if (enemy.FreezeTimer > 0f)
+            {
+                parts.Add("빙결");
             }
 
             if (enemy.VulnerableStacks > 0)
@@ -930,8 +947,8 @@ namespace Pakuri.Combat
                     enemy.CriticalChanceBonus,
                     enemy.CriticalMultiplierBonus,
                     selectedMonsterDefenses);
-                unitCurrentHealth = Mathf.Max(0f, unitCurrentHealth - resolution.FinalDamage);
-                statusLabel = $"{enemy.DisplayName} {definition.ActiveSkillName}: {selectedMonsterName}에게 {resolution.FinalDamage:0.0} {definition.Attribute} 피해.";
+                var appliedDamage = ApplyDamageToSelectedMonster(resolution.FinalDamage);
+                statusLabel = $"{enemy.DisplayName} {definition.ActiveSkillName}: {selectedMonsterName}에게 {appliedDamage:0.0} {definition.Attribute} 피해.";
                 return;
             }
 

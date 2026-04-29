@@ -242,6 +242,7 @@ namespace Pakuri.Combat
                 0.08f,
                 Color.red,
                 34);
+            selectedMonsterShieldBarFill = CreateShieldBarFill(eveAnchor, "MonsterHpBar", 0.08f, 36);
             UpdateSelectedMonsterStatusVisuals();
         }
 
@@ -286,10 +287,14 @@ namespace Pakuri.Combat
             if (selectedMonsterLabel != null)
             {
                 var current = Application.isPlaying ? unitCurrentHealth : unitMaxHealthConfigured;
-                selectedMonsterLabel.text = $"{selectedMonsterName}\nHP {Mathf.CeilToInt(Mathf.Max(0f, current))}/{Mathf.CeilToInt(unitMaxHealthConfigured)}";
+                var shield = Application.isPlaying ? unitShieldValue : 0f;
+                selectedMonsterLabel.text = shield > 0f
+                    ? $"{selectedMonsterName}\nHP {Mathf.CeilToInt(Mathf.Max(0f, current))}/{Mathf.CeilToInt(unitMaxHealthConfigured)} SH {Mathf.CeilToInt(shield)}"
+                    : $"{selectedMonsterName}\nHP {Mathf.CeilToInt(Mathf.Max(0f, current))}/{Mathf.CeilToInt(unitMaxHealthConfigured)}";
             }
 
             UpdateHpBarFill(selectedMonsterHpBarFill, Application.isPlaying ? unitCurrentHealth : unitMaxHealthConfigured, unitMaxHealthConfigured);
+            UpdateHpBarFill(selectedMonsterShieldBarFill, Application.isPlaying ? unitShieldValue : 0f, unitMaxHealthConfigured);
         }
 
         private static Sprite GetSharedSprite()
