@@ -26,6 +26,7 @@ namespace Pakuri.Combat
             ClearProjectileRuntime();
             ClearEveSkillRuntimeObjects();
             ResetEveSkillCombatTimers();
+            ResetArielSkillCombatTimers();
 
             currentCombatType = RunDayModel.Resolve(stageIndex, dayIndex).CombatType;
             ResolveStageOneEnemyPool(dayIndex);
@@ -35,7 +36,7 @@ namespace Pakuri.Combat
             spawnedNormalCount = 0;
             spawnedBossCount = 0;
             spawnCooldown = 0.2f;
-            currentShotsRemaining = GetEveArcMagazineCapacity();
+            currentShotsRemaining = GetSelectedMonsterMagazineCapacity();
             shotCooldown = 0f;
             reloadRemaining = 0f;
             nexusCurrentHealth = nexusMaxHealth;
@@ -434,7 +435,7 @@ namespace Pakuri.Combat
             }
 
             var backgroundExists = root.Find("Background") != null;
-            var background = EnsureHpBarPart(root, "Background", Color.white, sortingOrder);
+            var background = EnsureHpBarPart(root, "Background", Color.black, sortingOrder);
             if (!backgroundExists)
             {
                 background.transform.localPosition = Vector3.zero;
@@ -485,8 +486,8 @@ namespace Pakuri.Combat
             var shield = EnsureHpBarPart(root, "Shield", Color.white, sortingOrder);
             if (!shieldExists)
             {
-                shield.transform.localScale = new Vector3(0f, height * 0.55f, 1f);
-                shield.transform.localPosition = new Vector3(-0.5f, height * 0.9f, -0.02f);
+                shield.transform.localScale = new Vector3(0f, height, 1f);
+                shield.transform.localPosition = new Vector3(-0.5f, 0f, -0.02f);
             }
 
             return shield;
@@ -503,6 +504,41 @@ namespace Pakuri.Combat
             var localScale = fill.transform.localScale;
             fill.transform.localScale = new Vector3(ratio, localScale.y, 1f);
             fill.transform.localPosition = new Vector3(-0.5f + (ratio * 0.5f), 0f, -0.01f);
+        }
+
+        private static void UpdateHpShieldBarFill(SpriteRenderer hpFill, SpriteRenderer shieldFill, float currentHealth, float maxHealth, float shieldValue)
+        {
+            var health = Mathf.Max(0f, currentHealth);
+            var shield = Mathf.Max(0f, shieldValue);
+
+            if (shield > 0f)
+            {
+                var visualTotal = Mathf.Max(0.001f, health + shield);
+                var hpRatio = Mathf.Clamp01(health / visualTotal);
+                var shieldRatio = Mathf.Clamp01(shield / visualTotal);
+
+                UpdateBarSegment(hpFill, 0f, hpRatio, -0.01f);
+                UpdateBarSegment(shieldFill, hpRatio, shieldRatio, -0.02f);
+                return;
+            }
+
+            var normalRatio = maxHealth > 0f ? Mathf.Clamp01(health / maxHealth) : 0f;
+            UpdateBarSegment(hpFill, 0f, normalRatio, -0.01f);
+            UpdateBarSegment(shieldFill, 0f, 0f, -0.02f);
+        }
+
+        private static void UpdateBarSegment(SpriteRenderer fill, float startRatio, float widthRatio, float z)
+        {
+            if (fill == null)
+            {
+                return;
+            }
+
+            var safeStart = Mathf.Clamp01(startRatio);
+            var safeWidth = Mathf.Clamp01(Mathf.Min(widthRatio, 1f - safeStart));
+            var localScale = fill.transform.localScale;
+            fill.transform.localScale = new Vector3(safeWidth, localScale.y, 1f);
+            fill.transform.localPosition = new Vector3(-0.5f + safeStart + (safeWidth * 0.5f), 0f, z);
         }
 
         private EnemyDefinition ResolveEnemyDefinitionForSpawn(bool isBoss, int sequence)
@@ -661,6 +697,8 @@ namespace Pakuri.Combat
                 var hadFreeze = enemy.FreezeTimer > 0f;
                 enemy.FreezeTimer = Mathf.Max(0f, enemy.FreezeTimer - Time.deltaTime);
                 enemy.SlowTimer = Mathf.Max(0f, enemy.SlowTimer - Time.deltaTime);
+                var hadHolyExposure = enemy.HolyExposureTimer > 0f;
+                enemy.HolyExposureTimer = Mathf.Max(0f, enemy.HolyExposureTimer - Time.deltaTime);
                 if (Mathf.Approximately(enemy.ChillTimer, 0f))
                 {
                     enemy.ChillStacks = 0;
@@ -674,6 +712,11 @@ namespace Pakuri.Combat
                 if (Mathf.Approximately(enemy.SlowTimer, 0f))
                 {
                     enemy.SlowMultiplier = 1f;
+                }
+
+                if (hadHolyExposure && Mathf.Approximately(enemy.HolyExposureTimer, 0f))
+                {
+                    ResolveArielHolyExposureExpired(enemy);
                 }
 
                 if (hadFreeze && Mathf.Approximately(enemy.FreezeTimer, 0f) && HasEveCoolingAlgorithm() && HasChoice("eve-h-trait-3"))
@@ -751,8 +794,7 @@ namespace Pakuri.Combat
                     : $"{enemy.DisplayName} {status}\nHP {Mathf.CeilToInt(Mathf.Max(0f, enemy.CurrentHealth))}/{Mathf.CeilToInt(enemy.MaxHealth)}";
             }
 
-            UpdateHpBarFill(enemy.HpBarFill, enemy.CurrentHealth, enemy.MaxHealth);
-            UpdateHpBarFill(enemy.ShieldBarFill, enemy.ShieldValue, enemy.MaxHealth);
+            UpdateHpShieldBarFill(enemy.HpBarFill, enemy.ShieldBarFill, enemy.CurrentHealth, enemy.MaxHealth, enemy.ShieldValue);
         }
 
         private static string BuildEnemyStatusText(EnemyRuntime enemy)
@@ -781,6 +823,11 @@ namespace Pakuri.Combat
             if (enemy.VulnerableStacks > 0)
             {
                 parts.Add($"취약{enemy.VulnerableStacks}");
+            }
+
+            if (enemy.HolyExposureTimer > 0f)
+            {
+                parts.Add($"신성노출{enemy.HolyExposureStacks}");
             }
 
             return parts.Count == 0 ? string.Empty : $"[{string.Join("/", parts)}]";
@@ -947,7 +994,7 @@ namespace Pakuri.Combat
                     enemy.CriticalChanceBonus,
                     enemy.CriticalMultiplierBonus,
                     selectedMonsterDefenses);
-                var appliedDamage = ApplyDamageToSelectedMonster(resolution.FinalDamage);
+                var appliedDamage = ApplyDamageToSelectedMonster(resolution.FinalDamage, enemy);
                 statusLabel = $"{enemy.DisplayName} {definition.ActiveSkillName}: {selectedMonsterName}에게 {appliedDamage:0.0} {definition.Attribute} 피해.";
                 return;
             }

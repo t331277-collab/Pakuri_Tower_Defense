@@ -63,6 +63,13 @@ namespace Pakuri.Combat
             public int VulnerableStacks;
             public float SlowTimer;
             public float SlowMultiplier = 1f;
+            public float HolyExposureTimer;
+            public int HolyExposureStacks;
+            public float HolyExposureDamageTakenBonus;
+            public float HolyExposureFlatDefenseReduction;
+            public float HolyExposureCriticalDamageTakenBonus;
+            public float HolyExposureDetonationMultiplier;
+            public float HolyExposureAccumulatedDamage;
             public float FlashTimer;
             public string DisplayName;
         }
@@ -86,6 +93,8 @@ namespace Pakuri.Combat
             public float BranchRadius;
             public float BranchDamageMultiplier = 1f;
             public int BranchTargetCount;
+            public float ArielJudgementExplosionDamage;
+            public int ArielJudgementExplosionCount;
             public readonly HashSet<EnemyRuntime> HitEnemies = new HashSet<EnemyRuntime>();
             public bool IsEnemyProjectile;
             public EnemyRuntime SourceEnemy;
@@ -329,7 +338,7 @@ namespace Pakuri.Combat
         public float UnitMaxHealth => unitMaxHealthConfigured;
         public float UnitCurrentHealth => unitCurrentHealth;
         public int CurrentShotsRemaining => currentShotsRemaining;
-        public int MagazineCapacity => GetEveArcMagazineCapacity();
+        public int MagazineCapacity => GetSelectedMonsterMagazineCapacity();
         public float ReloadRemaining => reloadRemaining;
         public float ShotInterval => shotIntervalConfigured;
         public bool LastAppliedRewardUnlockedPassive => lastAppliedRewardUnlockedPassive;
@@ -403,6 +412,7 @@ namespace Pakuri.Combat
             UpdateEnemies();
             UpdateProjectiles();
             UpdateEveSkillEffects();
+            UpdateArielSkillEffects();
             UpdateSelectedMonsterCombat();
             UpdateSelectedMonsterStatusVisuals();
             CheckBattleResolution();
@@ -482,8 +492,9 @@ namespace Pakuri.Combat
             ConfigureMonster(monster);
             ApplyPersistedRewardState(session);
             ConfigureEveSkillSelectionState(session);
+            ResetArielSkillCombatTimers();
 
-            var magazineCapacity = GetEveArcMagazineCapacity();
+            var magazineCapacity = GetSelectedMonsterMagazineCapacity();
             if (currentShotsRemaining > magazineCapacity)
             {
                 currentShotsRemaining = magazineCapacity;
@@ -518,6 +529,7 @@ namespace Pakuri.Combat
             ClearEnemyRuntime();
             ClearProjectileRuntime();
             ClearEveSkillRuntimeObjects();
+            ResetArielSkillCombatTimers();
         }
     }
 }

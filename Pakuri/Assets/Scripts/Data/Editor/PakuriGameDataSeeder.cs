@@ -416,7 +416,7 @@ namespace Pakuri.Data.Editor
                 DisplayName = skillName,
                 Slot = slot,
                 RuntimeKind = ParseRuntimeKind(skillType, skillName),
-                ImplementationState = slot == SkillSlot.A ? SkillImplementationState.RuntimeImplemented : SkillImplementationState.DataOnly,
+                ImplementationState = IsRuntimeImplementedActive(monsterId, slot) ? SkillImplementationState.RuntimeImplemented : SkillImplementationState.DataOnly,
                 IsDefaultLearned = slot == SkillSlot.A,
                 DescriptionText = description,
                 Attribute = ParseAttribute(attributeLabel),
@@ -458,11 +458,32 @@ namespace Pakuri.Data.Editor
                 Slot = slot,
                 RequiredActiveSlot = requiredSlot,
                 IsAvailableWithoutActiveRequirement = slot == SkillSlot.F,
-                ImplementationState = SkillImplementationState.DataOnly,
+                ImplementationState = IsRuntimeImplementedPassive(monsterId, slot) ? SkillImplementationState.RuntimeImplemented : SkillImplementationState.DataOnly,
                 DescriptionText = string.IsNullOrWhiteSpace(summary) ? description : $"{description}\n{summary}",
                 Summary = string.IsNullOrWhiteSpace(summary) ? description : summary,
                 EnhancementChoices = ReadChoiceTable(markdown, $"{monsterId}-{slot.ToString().ToLowerInvariant()}-trait", "특성")
             };
+        }
+
+        private static bool IsRuntimeImplementedActive(string monsterId, SkillSlot slot)
+        {
+            if (slot == SkillSlot.A)
+            {
+                return true;
+            }
+
+            return IsRuntimeImplementedMonster(monsterId) && slot >= SkillSlot.B && slot <= SkillSlot.E;
+        }
+
+        private static bool IsRuntimeImplementedPassive(string monsterId, SkillSlot slot)
+        {
+            return IsRuntimeImplementedMonster(monsterId) && slot >= SkillSlot.F && slot <= SkillSlot.J;
+        }
+
+        private static bool IsRuntimeImplementedMonster(string monsterId)
+        {
+            return string.Equals(monsterId, "eve", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(monsterId, "ariel", StringComparison.OrdinalIgnoreCase);
         }
 
         private static SkillSlot ParseSlotFromFileName(string path)

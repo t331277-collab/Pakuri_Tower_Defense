@@ -48,8 +48,16 @@ namespace Pakuri.Combat
                 {
                     var appliedDamage = ApplyDamageToEnemy(enemyHit, damageResult.FinalDamage);
                     enemyHit.FlashTimer = 0.08f;
+                    TrackArielHolyExposureDamage(enemyHit, projectile.Attribute, damageResult.FinalDamage);
 
                     var appliedStatus = false;
+                    if (string.Equals(projectile.SkillId, "ariel-a", StringComparison.OrdinalIgnoreCase)
+                        && HasChoice("ariel-a-master-2"))
+                    {
+                        ApplyArielHolyExposure(enemyHit, 1, 6f, 0.18f, 0f, 0f, 0f);
+                        appliedStatus = true;
+                    }
+
                     if (string.Equals(projectile.SkillId, "eve-e", StringComparison.OrdinalIgnoreCase))
                     {
                         ApplyVulnerable(enemyHit, Mathf.Max(1, projectile.StatusStacks));
@@ -71,6 +79,12 @@ namespace Pakuri.Combat
                     TryApplyProjectileBranch(projectile, enemyHit, damageResult.FinalDamage);
                     TryTriggerEveParticleSeparationProc(enemyHit, projectile.Attribute, projectile.SkillId);
 
+                    if (TryTriggerArielJudgementLightExplosion(projectile))
+                    {
+                        CleanupProjectile(i);
+                        continue;
+                    }
+
                     projectile.HitEnemies.Add(enemyHit);
                     if (projectile.RemainingPierce > 0)
                     {
@@ -78,6 +92,7 @@ namespace Pakuri.Combat
                     }
                     else
                     {
+                        TryTriggerArielJudgementLightExplosion(projectile);
                         CleanupProjectile(i);
                     }
 
@@ -90,6 +105,7 @@ namespace Pakuri.Combat
                 }
 
                 statusLabel = $"{selectedActiveSkillName} 투사체가 {projectileLifetimeConfigured:0.0}s 후 소멸했다.";
+                TryTriggerArielJudgementLightExplosion(projectile);
                 CleanupProjectile(i);
             }
         }
@@ -128,7 +144,7 @@ namespace Pakuri.Combat
                     source.CriticalMultiplierBonus,
                     selectedMonsterDefenses);
                 appliedDamage = resolution.FinalDamage;
-                appliedDamage = ApplyDamageToSelectedMonster(appliedDamage);
+                appliedDamage = ApplyDamageToSelectedMonster(appliedDamage, source);
                 targetLabel = selectedMonsterName;
                 return true;
             }
@@ -176,14 +192,16 @@ namespace Pakuri.Combat
                 }
 
                 enemyHit = enemy;
-                var finalMultiplier = GetEveFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId);
+                var finalMultiplier = GetEveFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId)
+                    * GetArielFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId);
                 damageResult = DamageCalculator.Resolve(
                     projectile.BaseDamage,
                     projectile.Attribute,
                     enemy.Defenses,
-                    flatDefenseReduction: GetEveFlatDefenseReduction(enemy, projectile.Attribute),
+                    flatDefenseReduction: GetEveFlatDefenseReduction(enemy, projectile.Attribute) + GetArielFlatDefenseReduction(enemy, projectile.Attribute),
+                    criticalChanceBonus: GetArielCriticalChanceBonus(projectile.Attribute),
                     targetCriticalResistance: enemy.CriticalResistance,
-                    criticalDamageTakenBonus: GetEveCriticalDamageTakenBonus(enemy, projectile.SkillId),
+                    criticalDamageTakenBonus: GetEveCriticalDamageTakenBonus(enemy, projectile.SkillId) + GetArielCriticalDamageTakenBonus(enemy, projectile.SkillId),
                     finalDamageMultiplier: enemy.DamageTakenMultiplier * finalMultiplier);
                 return true;
             }
@@ -284,19 +302,20 @@ namespace Pakuri.Combat
             return appliedDamage;
         }
 
-        private float ApplyDamageToSelectedMonster(float incomingDamage)
+        private float ApplyDamageToSelectedMonster(float incomingDamage, EnemyRuntime sourceEnemy = null)
         {
             if (incomingDamage <= 0f)
             {
                 return 0f;
             }
 
-            var remainingDamage = incomingDamage;
+            var remainingDamage = GetArielIncomingDamageAfterReduction(incomingDamage);
             if (unitShieldValue > 0f)
             {
                 var absorbed = Mathf.Min(unitShieldValue, remainingDamage);
                 unitShieldValue -= absorbed;
                 remainingDamage -= absorbed;
+                HandleArielShieldAbsorbed(absorbed, sourceEnemy);
             }
 
             var appliedDamage = Mathf.Min(unitCurrentHealth, remainingDamage);
@@ -311,20 +330,20 @@ namespace Pakuri.Combat
 
         private void UpdateSelectedMonsterCombat()
         {
-            UpdateEveSkillCooldowns();
-            shotCooldown = Mathf.Max(0f, shotCooldown - Time.deltaTime * GetEveActionSpeedMultiplier());
+            UpdateSelectedMonsterSkillCooldowns();
+            shotCooldown = Mathf.Max(0f, shotCooldown - Time.deltaTime * GetSelectedMonsterActionSpeedMultiplier());
 
             if (fireRequestedThisFrame)
             {
-                TryTriggerEveAutomaticSkills();
+                TryTriggerSelectedMonsterAutomaticSkills();
             }
 
             if (reloadRemaining > 0f)
             {
-                reloadRemaining = Mathf.Max(0f, reloadRemaining - Time.deltaTime * GetEveActionSpeedMultiplier());
+                reloadRemaining = Mathf.Max(0f, reloadRemaining - Time.deltaTime * GetSelectedMonsterActionSpeedMultiplier());
                 if (Mathf.Approximately(reloadRemaining, 0f))
                 {
-                    currentShotsRemaining = GetEveArcMagazineCapacity();
+                    currentShotsRemaining = GetSelectedMonsterMagazineCapacity();
                     statusLabel = $"{selectedActiveSkillName} 탄창이 재장전됐다.";
                 }
 
@@ -338,7 +357,7 @@ namespace Pakuri.Combat
 
             if (currentShotsRemaining <= 0)
             {
-                reloadRemaining = reloadDurationConfigured;
+                reloadRemaining = IsSelectedArielMonster() ? GetArielReloadSeconds() : reloadDurationConfigured;
                 currentShotsRemaining = 0;
                 statusLabel = $"{selectedActiveSkillName} 탄창이 비어 재장전 중이다.";
                 return;
@@ -373,6 +392,12 @@ namespace Pakuri.Combat
             if (IsSelectedEveMonster())
             {
                 FireManualEveArcBolt(direction);
+                return;
+            }
+
+            if (IsSelectedArielMonster())
+            {
+                FireManualArielJudgementLight(direction);
                 return;
             }
 

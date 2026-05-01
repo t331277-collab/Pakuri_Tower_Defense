@@ -21,26 +21,43 @@ namespace Pakuri.Combat
             }
 
             Vector2 screenPoint = default;
-            var pointerPressed = false;
+            var pointerHeld = false;
 
 #if ENABLE_INPUT_SYSTEM
             var mouse = Mouse.current;
-            if (mouse != null && mouse.leftButton.wasPressedThisFrame)
+            if (mouse != null && mouse.leftButton.isPressed)
             {
                 screenPoint = mouse.position.ReadValue();
-                pointerPressed = true;
+                pointerHeld = true;
+            }
+
+            var touchscreen = Touchscreen.current;
+            if (!pointerHeld && touchscreen != null && touchscreen.primaryTouch.press.isPressed)
+            {
+                screenPoint = touchscreen.primaryTouch.position.ReadValue();
+                pointerHeld = true;
             }
 #endif
 
 #if ENABLE_LEGACY_INPUT_MANAGER
-            if (!pointerPressed && Input.GetMouseButtonDown(0))
+            if (!pointerHeld && Input.GetMouseButton(0))
             {
                 screenPoint = Input.mousePosition;
-                pointerPressed = true;
+                pointerHeld = true;
+            }
+
+            if (!pointerHeld && Input.touchCount > 0)
+            {
+                var touch = Input.GetTouch(0);
+                if (touch.phase != TouchPhase.Ended && touch.phase != TouchPhase.Canceled)
+                {
+                    screenPoint = touch.position;
+                    pointerHeld = true;
+                }
             }
 #endif
 
-            if (!pointerPressed)
+            if (!pointerHeld)
             {
                 return;
             }

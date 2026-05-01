@@ -10,7 +10,11 @@
 
 ## 시작 규칙
 
-본격적인 응답이나 작업 전에 `AGENTS.md`와 `BLACKBOARD.md`를 먼저 읽는다. `BLACKBOARD.md`에 관련 작업 블록이 있으면 그 상태와 다음 작업을 이어서 확인한다.
+본격적인 응답이나 작업 전에 `AGENTS.md`와 `MDTREE.md`를 먼저 읽는다.
+
+`BLACKBOARD.md`를 무조건 먼저 읽지 않는다. 사용자 요청을 `MDTREE.md`의 라우팅 규칙에 맞춰 분류한 뒤, 관련된 지속 상태 파일만 읽는다.
+
+요청 범위가 불명확하거나 전역 상태 확인이 필요한 경우에만 `BLACKBOARD.md`를 읽는다. `BLACKBOARD.md`는 루트 인덱스이며, 상세 작업 이력은 `boards/` 하위 파일을 우선한다.
 
 첫 응답에서는 다음을 짧게 확인한다.
 - 현재 자신의 롤
@@ -33,9 +37,11 @@ Designer는 설계만 담당하고 구현하지 않는다. 작업을 넓게 보�
 
 Code Builder는 사용자의 명시적 구현 요청 또는 Designer의 명시적 handoff가 있을 때만 구현한다. 구현 전 실제 파일과 명령 출력으로 현재 상태를 확인하고, 구현 후 변경 파일과 검증 결과를 근거로 남긴다.
 
-"로직 작업 후 반드시 코드 리뷰어에게 검수를 받는다. Reviewer는 1번만 실행하고, 문제가 확인되면 사용자에게 보고한 뒤 다음 지시를 기다린다."
+로직 작업 후 Code Reviewer 검수는 사용자의 명시적 허락을 받은 경우에만 실행한다. 허락이 없으면 Reviewer 실행을 보류하고, 빌드/컴파일/콘솔/파일 확인 등 Codex가 수행한 검증 근거만 남긴다.
 
-Builder -> Reviewer 전환은 AI의 기억이나 프롬프트 지시만으로 완료된 것으로 보지 않는다. Codex CLI의 검증된 네이티브 hook/event 기능이 있으면 그 기능을 사용하고, 확인되지 않으면 외부 래퍼 또는 오케스트레이션으로 강제한다.
+Reviewer를 실행할 때는 1번만 실행한다. 문제가 확인되면 사용자에게 보고한 뒤 다음 지시를 기다린다.
+
+Builder -> Reviewer 전환은 AI의 기억이나 프롬프트 지시만으로 완료된 것으로 보지 않는다. Codex CLI의 검증된 네이티브 hook/event 기능이 있으면 그 기능을 사용하고, 확인되지 않으면 외부 래퍼 또는 오케스트레이션으로 강제한다. 단, 실제 Reviewer 실행은 사용자 허락이 있을 때만 한다.
 
 Unity-MCP로 Play Mode를 직접 실행해 gameplay를 검증하지 않는다. Play Mode 검증은 사용자에게 맡기고, Codex는 빌드/컴파일/콘솔/에디터 상태 확인까지만 근거로 남긴다.
 
@@ -55,9 +61,15 @@ Code Reviewer는 구현하지 않는다. 변경 라인을 line-by-line으로 검
 
 Git 저장소라고 가정하지 않는다. Git이 실제로 사용 가능하고 현재 폴더가 Git 작업 트리임이 명령 출력으로 확인될 때만 Git 기반 검토를 사용한다. Git 기반 검토가 불가능하면 변경 파일 목록을 명시적으로 수집하거나 Reviewer 전용 `codex exec` 흐름으로 검토한다.
 
-## BLACKBOARD.md 규칙
+## 지속 상태 파일 규칙
 
-`BLACKBOARD.md`는 프롬프트 초기화나 재부팅 후에도 작업을 이어가기 위한 지속 상태 파일이다. 새 작업이 시작되면 관련 작업 블록을 먼저 읽고 이어서 작업한다.
+`BLACKBOARD.md`는 루트 인덱스다. 프롬프트 초기화나 재부팅 후에도 작업을 이어가기 위한 상세 상태는 `MDTREE.md`에 정의된 `boards/` 하위 파일에 기록한다.
+
+작업을 시작할 때는 다음 순서를 따른다.
+1. `AGENTS.md`를 읽는다.
+2. `MDTREE.md`를 읽는다.
+3. 사용자 요청을 라우팅해 관련 board 파일을 읽는다.
+4. 전역 상태가 필요하거나 라우팅이 애매할 때만 `BLACKBOARD.md`를 읽는다.
 
 각 작업 블록에는 최소한 다음 항목을 둔다.
 - Task title
@@ -69,6 +81,18 @@ Git 저장소라고 가정하지 않는다. Git이 실제로 사용 가능하고
 - Evidence
 - History
 
-작업 블록은 작업이 완료되었거나 사용자가 명시적으로 삭제를 요청했을 때만 제거한다. 별도 저장소가 더 효율적으로 보이면 바로 바꾸지 말고 대안, 트레이드오프, 판단 기준을 먼저 보고한다.
+작업 블록은 작업이 완료되었거나 사용자가 명시적으로 삭제를 요청했을 때만 제거한다. 장기 보존이 필요한 기존 상세 이력은 삭제하지 말고 `boards/ARCHIVE/`에 보존한다.
 
-Builder 단계와 Reviewer 단계가 외부 강제 흐름으로 연결되어 있으면 각 루프 횟수와 마지막 판정을 `BLACKBOARD.md` 또는 별도 로그 파일에 기록한다.
+## 계층 board 동시 갱신 규칙
+
+작업이 여러 계층에 걸치면 관련 board 파일을 같은 작업 안에서 동시에 갱신한다.
+
+예시:
+- Eve 스킬 구현: `boards/MON/MON_BLACKBOARD.md`, `boards/MON/EVE_MONSTER.md`, 필요한 경우 `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md` 또는 `boards/COMBAT/PROJECTILE_BLACKBOARD.md`를 함께 갱신한다.
+- DebugScene UI 수정: `boards/UI/DEBUGSCENE_UI.md`, 몬스터 테스트와 관련되면 `boards/MON/MON_BLACKBOARD.md`, Eve 전용이면 `boards/MON/EVE_MONSTER.md`도 함께 갱신한다.
+- Run 보상 수정: `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, UI가 있으면 `boards/UI/RUNSCENE_UI.md`를 함께 갱신한다.
+- Reviewer/래퍼/자동화 수정: `boards/OPS/REVIEWER_BLACKBOARD.md`, 필요 시 `boards/OPS/CODEX_CLI_BLACKBOARD.md` 또는 `boards/OPS/AUTOMATION_GUIDE.md`를 함께 갱신한다.
+
+동일 내용을 여러 파일에 복사하는 경우, 각 파일의 관점에 맞는 요약과 근거를 남긴다. 서로 다른 결론이 생기지 않도록 같은 명령 출력과 같은 파일 경로를 근거로 기록한다.
+
+Builder 단계와 Reviewer 단계가 외부 강제 흐름으로 연결되어 있으면 각 루프 횟수와 마지막 판정을 관련 `boards/OPS/REVIEWER_BLACKBOARD.md` 또는 별도 로그 파일에 기록한다. 루트 `BLACKBOARD.md`에는 필요한 경우 링크만 남긴다.

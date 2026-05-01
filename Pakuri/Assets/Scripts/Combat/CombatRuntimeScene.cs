@@ -293,8 +293,12 @@ namespace Pakuri.Combat
                     : $"{selectedMonsterName}\nHP {Mathf.CeilToInt(Mathf.Max(0f, current))}/{Mathf.CeilToInt(unitMaxHealthConfigured)}";
             }
 
-            UpdateHpBarFill(selectedMonsterHpBarFill, Application.isPlaying ? unitCurrentHealth : unitMaxHealthConfigured, unitMaxHealthConfigured);
-            UpdateHpBarFill(selectedMonsterShieldBarFill, Application.isPlaying ? unitShieldValue : 0f, unitMaxHealthConfigured);
+            UpdateHpShieldBarFill(
+                selectedMonsterHpBarFill,
+                selectedMonsterShieldBarFill,
+                Application.isPlaying ? unitCurrentHealth : unitMaxHealthConfigured,
+                unitMaxHealthConfigured,
+                Application.isPlaying ? unitShieldValue : 0f);
         }
 
         private static Sprite GetSharedSprite()

@@ -151,7 +151,7 @@ MonoBehaviour:
     DisplayName: "\uC131\uAD11 \uBC29\uD328"
     Slot: 1
     RuntimeKind: 0
-    ImplementationState: 1
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -217,7 +217,7 @@ MonoBehaviour:
     DisplayName: "\uCD95\uBCF5\uC758 \uD30C\uB3D9"
     Slot: 2
     RuntimeKind: 0
-    ImplementationState: 1
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -283,7 +283,7 @@ MonoBehaviour:
     DisplayName: "\uCC9C\uC0C1\uC758 \uB099\uC778"
     Slot: 3
     RuntimeKind: 0
-    ImplementationState: 1
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -349,7 +349,7 @@ MonoBehaviour:
     DisplayName: "\uB300\uCC9C\uC0AC\uC758 \uAC15\uB9BC"
     Slot: 4
     RuntimeKind: 0
-    ImplementationState: 1
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -418,7 +418,7 @@ MonoBehaviour:
     Slot: 5
     RequiredActiveSlot: 0
     IsAvailableWithoutActiveRequirement: 1
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uC2EC\uD310\uC758 \uBE5B \uB300\uC751 \uD328\uC2DC\uBE0C.
@@ -448,7 +448,7 @@ MonoBehaviour:
     Slot: 6
     RequiredActiveSlot: 1
     IsAvailableWithoutActiveRequirement: 0
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uC131\uAD11 \uBC29\uD328 \uB300\uC751 \uD328\uC2DC\uBE0C.
@@ -481,7 +481,7 @@ MonoBehaviour:
     Slot: 7
     RequiredActiveSlot: 2
     IsAvailableWithoutActiveRequirement: 0
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uCD95\uBCF5\uC758 \uD30C\uB3D9 \uB300\uC751 \uD328\uC2DC\uBE0C.
@@ -514,7 +514,7 @@ MonoBehaviour:
     Slot: 8
     RequiredActiveSlot: 3
     IsAvailableWithoutActiveRequirement: 0
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uCC9C\uC0C1\uC758 \uB099\uC778 \uB300\uC751 \uD328\uC2DC\uBE0C.
@@ -545,7 +545,7 @@ MonoBehaviour:
     Slot: 9
     RequiredActiveSlot: 4
     IsAvailableWithoutActiveRequirement: 0
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uB300\uCC9C\uC0AC\uC758 \uAC15\uB9BC \uB300\uC751 \uD328\uC2DC\uBE0C.

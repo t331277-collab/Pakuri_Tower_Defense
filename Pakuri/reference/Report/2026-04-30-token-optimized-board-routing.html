@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>토큰 최적화용 Board Routing 변경 보고서</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #5f6f86;
+      --line: #d6dee9;
+      --panel: #f6f8fb;
+      --accent: #1f5fbf;
+      --ok: #087f5b;
+      --warn: #9a5b00;
+      --code: #edf2f7;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: #fff;
+      line-height: 1.62;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 40px 28px 72px;
+    }
+
+    header {
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 22px;
+      margin-bottom: 28px;
+    }
+
+    h1 { margin: 0 0 10px; font-size: 30px; letter-spacing: 0; }
+    h2 { margin: 34px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 22px; }
+    h3 { margin: 22px 0 8px; font-size: 17px; }
+    p { margin: 8px 0; }
+    ul { margin: 8px 0 16px 22px; padding: 0; }
+    li { margin: 5px 0; }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      background: var(--code);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: .94em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 24px;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+
+    th {
+      background: #eef3f8;
+      text-align: left;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0 24px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 14px 16px;
+    }
+
+    .card strong {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .card span {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .note {
+      border-left: 4px solid var(--accent);
+      background: #f4f7fc;
+      padding: 12px 14px;
+      margin: 14px 0 22px;
+    }
+
+    .ok { color: var(--ok); font-weight: 700; }
+    .warn { color: var(--warn); font-weight: 700; }
+    .muted { color: var(--muted); }
+
+    @media (max-width: 760px) {
+      main { padding: 28px 18px 48px; }
+      .summary { grid-template-columns: 1fr; }
+      table { table-layout: auto; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>토큰 최적화용 Board Routing 변경 보고서</h1>
+    <p class="muted">작성일: 2026-04-30 / 근거 파일: <code>AGENTS.md</code>, <code>MDTREE.md</code>, <code>BLACKBOARD.md</code>, <code>boards/</code></p>
+  </header>
+
+  <section class="summary" aria-label="핵심 요약">
+    <div class="card">
+      <strong>기존 진입점</strong>
+      <span>BLACKBOARD 전체</span>
+    </div>
+    <div class="card">
+      <strong>변경 진입점</strong>
+      <span>AGENTS + MDTREE</span>
+    </div>
+    <div class="card">
+      <strong>상세 상태 위치</strong>
+      <span>boards/</span>
+    </div>
+    <div class="card">
+      <strong>Root Board 역할</strong>
+      <span>Index only</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>변경 목적</h2>
+    <p>
+      이전 방식은 작업 시작 시 <code>BLACKBOARD.md</code> 전체를 읽는 흐름이었다.
+      현재 <code>BLACKBOARD.md</code>에는 장기 작업 이력이 누적되어 있었기 때문에,
+      매 요청마다 전체 상태를 읽으면 실제 작업과 무관한 도메인의 긴 이력까지 컨텍스트에 들어가는 문제가 있었다.
+    </p>
+    <p>
+      새 방식은 <code>AGENTS.md</code>로 최상위 규칙을 확인하고, <code>MDTREE.md</code>로 요청 도메인을 분류한 뒤,
+      해당 도메인의 board 파일만 읽도록 바꾼다. 이 변경은 환각 방지 규칙을 유지하면서 토큰 사용량을 줄이기 위한 것이다.
+    </p>
+  </section>
+
+  <section>
+    <h2>AGENTS.md 변경 내용</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th>이전 방식</th>
+          <th>현재 방식</th>
+          <th>근거</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>시작 규칙</td>
+          <td><code>AGENTS.md</code>와 <code>BLACKBOARD.md</code>를 먼저 읽음.</td>
+          <td><code>AGENTS.md</code>와 <code>MDTREE.md</code>를 먼저 읽음.</td>
+          <td><code>AGENTS.md</code> 시작 규칙 섹션.</td>
+        </tr>
+        <tr>
+          <td>BLACKBOARD 접근</td>
+          <td>항상 root board를 기본 상세 상태 파일로 사용.</td>
+          <td>요청이 불명확하거나 전역 상태 확인이 필요한 경우에만 읽음.</td>
+          <td><code>AGENTS.md</code>의 <code>BLACKBOARD.md</code> 루트 인덱스 설명.</td>
+        </tr>
+        <tr>
+          <td>작업 상태 저장</td>
+          <td>상세 작업 블록을 root board에 누적.</td>
+          <td><code>MDTREE.md</code>에 정의된 <code>boards/</code> 하위 파일에 상세 상태를 기록.</td>
+          <td><code>AGENTS.md</code> 지속 상태 파일 규칙.</td>
+        </tr>
+        <tr>
+          <td>다중 도메인 작업</td>
+          <td>별도 계층 갱신 규칙이 약함.</td>
+          <td>관련 board 파일을 같은 작업 안에서 동시에 갱신.</td>
+          <td><code>AGENTS.md</code> 계층 board 동시 갱신 규칙.</td>
+        </tr>
+        <tr>
+          <td>Reviewer 실행</td>
+          <td>로직 작업 후 Reviewer 검수 문구가 강하게 남아 있었음.</td>
+          <td>사용자의 명시적 허락이 있을 때만 Reviewer를 1회 실행.</td>
+          <td><code>AGENTS.md</code> Code Builder 규칙.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>BLACKBOARD.md 분할 방식</h2>
+    <p>
+      <code>BLACKBOARD.md</code>는 더 이상 상세 작업 로그의 기본 위치가 아니다.
+      현재 파일은 root index와 cross-domain 상태만 담는 작은 파일로 바뀌었고,
+      이전 상세 이력은 <code>boards/ARCHIVE/BLACKBOARD_2026-04-30_PRE_HIERARCHY.md</code>에 보존되었다.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>분류</th>
+          <th>파일</th>
+          <th>역할</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Root</td>
+          <td><code>BLACKBOARD.md</code></td>
+          <td>전역 상태, board tree, 현재 migration task block만 유지.</td>
+        </tr>
+        <tr>
+          <td>Routing</td>
+          <td><code>MDTREE.md</code></td>
+          <td>요청 도메인별로 읽어야 할 board 파일을 지정.</td>
+        </tr>
+        <tr>
+          <td>Archive</td>
+          <td><code>boards/ARCHIVE/BLACKBOARD_2026-04-30_PRE_HIERARCHY.md</code></td>
+          <td>계층화 전 root board 상세 이력 보존.</td>
+        </tr>
+        <tr>
+          <td>Monster</td>
+          <td><code>boards/MON/</code></td>
+          <td>공통 몬스터 규칙과 Eve, Vega, Ariel, Sein, Rin 전용 상태.</td>
+        </tr>
+        <tr>
+          <td>Combat</td>
+          <td><code>boards/COMBAT/</code></td>
+          <td>전투 런타임, 적, 투사체, 상태이상 상태.</td>
+        </tr>
+        <tr>
+          <td>Run</td>
+          <td><code>boards/RUN/</code></td>
+          <td>Run 흐름, 보상, 저장/로드 상태.</td>
+        </tr>
+        <tr>
+          <td>UI</td>
+          <td><code>boards/UI/</code></td>
+          <td>공통 UI, DebugScene, MainMenu, RunScene UI 상태.</td>
+        </tr>
+        <tr>
+          <td>Data</td>
+          <td><code>boards/DATA/</code></td>
+          <td>CSV, Unity 정적 자산, GameData 관련 상태.</td>
+        </tr>
+        <tr>
+          <td>Ops</td>
+          <td><code>boards/OPS/</code></td>
+          <td>Reviewer, Codex CLI, Unity MCP, 자동화 규칙.</td>
+        </tr>
+        <tr>
+          <td>Report</td>
+          <td><code>boards/REPORT/REPORT_BLACKBOARD.md</code></td>
+          <td>HTML 보고서와 문서화 작업 상태.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>작업 방법 변경</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>단계</th>
+          <th>현재 절차</th>
+          <th>토큰 최적화 효과</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1. 규칙 확인</td>
+          <td><code>AGENTS.md</code>를 읽어 role, evidence, Reviewer, Play Mode 규칙을 확인.</td>
+          <td>항상 필요한 최상위 규칙만 고정 비용으로 사용.</td>
+        </tr>
+        <tr>
+          <td>2. 라우팅</td>
+          <td><code>MDTREE.md</code>를 읽고 사용자 요청을 MON, COMBAT, RUN, UI, DATA, OPS, REPORT 등으로 분류.</td>
+          <td>불필요한 도메인 board를 읽지 않음.</td>
+        </tr>
+        <tr>
+          <td>3. 관련 board 읽기</td>
+          <td>요청 도메인에 해당하는 board 파일만 읽음. 전역 질문이면 <code>BLACKBOARD.md</code>도 읽음.</td>
+          <td>상세 이력이 많은 root board 전체 로드를 피함.</td>
+        </tr>
+        <tr>
+          <td>4. 구현 또는 설계</td>
+          <td>Designer/Code Builder/Code Reviewer role 규칙에 맞춰 실제 파일과 명령 출력 근거로 작업.</td>
+          <td>기존 환각 방지 규칙은 유지.</td>
+        </tr>
+        <tr>
+          <td>5. 상태 기록</td>
+          <td>변경된 사실이 걸친 모든 관련 board를 같은 작업 안에서 갱신.</td>
+          <td>상태가 흩어져도 각 도메인별로 다음 작업 시작 비용을 줄임.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>검증한 실제 상태</h2>
+    <ul>
+      <li><code>AGENTS.md</code>는 <code>AGENTS.md</code> + <code>MDTREE.md</code> 우선 읽기와 board routing 규칙을 포함한다.</li>
+      <li><code>MDTREE.md</code>는 MON, COMBAT, RUN, UI, DATA, OPS, REPORT 라우팅을 정의한다.</li>
+      <li><code>BLACKBOARD.md</code>는 root persistent-state index로 축소되었다.</li>
+      <li><code>boards/ARCHIVE/BLACKBOARD_2026-04-30_PRE_HIERARCHY.md</code>가 존재한다.</li>
+      <li><code>boards/</code> 아래에는 MON, COMBAT, RUN, UI, DATA, OPS, REPORT, ARCHIVE 계층 파일들이 존재한다.</li>
+      <li><code>git status --short</code> 기준 현재 uncommitted 변경에는 이 board migration 관련 파일 외에 <code>Pakuri/Assets/Scenes/DebugScene.unity</code> 등 다른 작업 변경도 남아 있다.</li>
+    </ul>
+    <div class="note">
+      <p><strong>주의:</strong> 이 보고서는 토큰 최적화용 문서/board routing 변경을 설명한다. Unity Play Mode gameplay 검증이나 외부 Code Reviewer 실행 결과를 새로 주장하지 않는다.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>결론</h2>
+    <p>
+      현재 구조는 <span class="ok">큰 root board를 매번 읽는 방식에서, 작은 routing index와 도메인별 board를 조합하는 방식</span>으로 바뀌었다.
+      이로 인해 요청 범위가 명확한 작업은 필요한 board만 읽고 시작할 수 있다.
+      동시에 <code>AGENTS.md</code>의 최상위 근거 규칙, role 규칙, Reviewer 허락 규칙, Unity Play Mode 제한 규칙은 유지된다.
+    </p>
+  </section>
+</main>
+</body>
+</html>

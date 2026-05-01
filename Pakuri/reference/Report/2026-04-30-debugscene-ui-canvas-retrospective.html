@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DebugScene UI Canvas 제작 방식 회고</title>
+  <style>
+    :root {
+      --ink: #182234;
+      --muted: #627086;
+      --line: #d7e0ea;
+      --panel: #f7f9fc;
+      --accent: #2457c5;
+      --ok: #087f5b;
+      --warn: #a16207;
+      --bad: #b42318;
+      --code: #eef3f8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: #fff;
+      line-height: 1.65;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 40px 28px 72px;
+    }
+
+    header {
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 22px;
+      margin-bottom: 28px;
+    }
+
+    h1 { margin: 0 0 10px; font-size: 30px; letter-spacing: 0; }
+    h2 { margin: 34px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 22px; }
+    h3 { margin: 22px 0 8px; font-size: 17px; }
+    p { margin: 8px 0; }
+    ul { margin: 8px 0 16px 22px; padding: 0; }
+    li { margin: 5px 0; }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      background: var(--code);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: .94em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 24px;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+
+    th {
+      background: #eef3f8;
+      text-align: left;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0 24px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 110px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .badge {
+      display: inline-block;
+      min-width: 86px;
+      text-align: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--ok);
+    }
+
+    .badge.warn { background: var(--warn); }
+    .badge.bad { background: var(--bad); }
+
+    .note {
+      border-left: 4px solid var(--accent);
+      background: var(--panel);
+      padding: 12px 14px;
+      margin: 16px 0;
+    }
+
+    .small { color: var(--muted); font-size: 13px; }
+
+    @media (max-width: 860px) {
+      main { padding: 28px 18px 56px; }
+      .summary { grid-template-columns: 1fr 1fr; }
+      table { table-layout: auto; }
+    }
+
+    @media (max-width: 560px) {
+      .summary { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>DebugScene UI Canvas 제작 방식 회고</h1>
+    <p class="small">작성일: 2026-04-30 / 근거: <code>BLACKBOARD.md</code> 최근 작업 로그, 현재 <code>DebugSceneController.cs</code>, 현재 <code>DebugScene.unity</code></p>
+  </header>
+
+  <section class="summary">
+    <div class="metric">
+      <strong>초기</strong>
+      <code>DebugSceneController</code>가 실행 중 uGUI 패널과 토글을 만드는 방식이었다.
+    </div>
+    <div class="metric">
+      <strong>전환</strong>
+      사용자 지적 후 씬에 편집 가능한 UI 오브젝트를 저장하고 코드가 바인딩하는 방식으로 바뀌었다.
+    </div>
+    <div class="metric">
+      <strong>현재</strong>
+      <code>Awake()</code>에서 <code>EnsureCanvasShell()</code> 뒤 <code>BindSceneUi()</code>를 호출한다.
+    </div>
+    <div class="metric">
+      <strong>남은 검증</strong>
+      Play Mode gameplay 검증은 AGENTS.md 규칙상 사용자가 수행한다.
+    </div>
+  </section>
+
+  <h2>1. 처음 만든 방식</h2>
+  <p>
+    최초 DebugScene UI는 코드가 런타임에 UI를 조립하는 방향이었다. <code>BLACKBOARD.md</code> 작업 로그에는
+    <code>DebugSceneController.cs</code>가 DebugScene 전용 uGUI 패널을 만들고, 5개 몬스터 버튼, A-J 스킬 토글,
+    강화/마스터 토글, <code>RunSession</code> 재시작 흐름을 제공하도록 추가되었다고 기록되어 있다.
+  </p>
+  <p>
+    이 방식의 장점은 코드만으로 UI를 빠르게 만들 수 있다는 점이었다. 하지만 사용자가 요구한 것은
+    “실행 중 생성되는 UI”가 아니라 “씬에서 직접 보고 수정할 수 있는 UI”였고, 이후 문제들도 대부분 런타임 생성 UI의
+    레이아웃, 활성화 순서, 시각 리소스, 씬 저장 상태와 관련되어 발생했다.
+  </p>
+
+  <h2>2. 사용자 지적과 수정 흐름</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>순서</th>
+        <th>사용자 지적 또는 Reviewer 지적</th>
+        <th>원인 판단</th>
+        <th>해결 방식</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>DebugScene 시작 시 적이 바로 생성되지 않고, 몬스터/스킬을 고른 뒤 Start로 시작해야 한다.</td>
+        <td>초기 흐름은 UI 설정과 전투 시작 책임이 분리되지 않았다.</td>
+        <td><code>CombatRuntimeController.ApplyDebugSelection(...)</code>을 추가해 선택 상태 적용과 <code>BeginConfiguredDay(...)</code> 전투 시작을 분리했다는 작업 로그가 남아 있다.</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><code>SkillDebugPanel</code> 스킬 리스트가 보이지 않는다.</td>
+        <td>패널 활성화 순서와 <code>ScrollRect</code> content 높이가 불안정했다.</td>
+        <td><code>OpenSkillWindow()</code>에서 패널을 먼저 활성화하고, 토글 생성 후 content 높이를 갱신하도록 수정했다는 작업 로그가 있다.</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>그래도 스킬 리스트가 보이지 않으므로, 게임 실행 중 생성 방식 대신 씬에서 편집 가능한 UI로 만들어야 한다.</td>
+        <td>런타임 생성 UI는 사용자가 씬에서 위치, 크기, 자식 구조를 직접 확인하고 조정하기 어렵다.</td>
+        <td>현재 코드는 <code>BuildUi()</code> 호출이 아니라 <code>BindSceneUi()</code>를 호출하고, 씬의 <code>DebugSetupPanel</code>, <code>SkillDebugPanel</code>, <code>EnhancementModal</code>을 직접 찾는다.</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Reviewer가 <code>DebugSetupPanel</code>과 setup controls가 씬에 없다고 실패 판정했다.</td>
+        <td>코드는 씬 오브젝트를 요구하지만 씬 저장 상태가 그 요구와 맞지 않았다.</td>
+        <td>씬에 <code>DebugSetupPanel/Title</code>, <code>Status</code>, <code>CombatText</code>, <code>MonsterButtons</code>, <code>SkillWindowButton</code>, <code>StartButton</code>을 복구했다는 로그가 남아 있다.</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Reviewer가 <code>DebugSceneController</code> 루트 scale이 <code>{0,0,0}</code>이라 UI가 접힐 수 있다고 지적했다.</td>
+        <td>부모 scale이 0이면 자식 UI가 있어도 시각적으로 사라지고 입력도 불안정해진다.</td>
+        <td>현재 <code>EnsureCanvasShell()</code>은 scale이 정확히 <code>Vector3.zero</code>일 때만 <code>Vector3.one</code>으로 복구해, 사용자가 편집한 non-zero scale은 보존한다.</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>토글은 클릭되지만 스킬 설명과 체크박스가 보이지 않는다.</td>
+        <td>토글의 <code>Label</code>, <code>Background</code>, <code>Checkmark</code>, <code>Toggle.graphic</code> 연결이 실제 씬 오브젝트에서 안정적으로 보장되지 않았다.</td>
+        <td><code>ConfigureToggleVisuals(...)</code>가 각 토글 바인딩 시 <code>Background</code>, <code>Checkmark</code>, <code>Label</code>을 재구성하고 <code>toggle.targetGraphic</code>, <code>toggle.graphic</code>을 명시적으로 연결한다.</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td><code>Failed to find UI/Skin/UISprite.psd</code> 오류가 발생했다.</td>
+        <td>Unity 내장 UI skin 경로에 의존한 sprite 로딩이 현재 Unity 환경에서 실패했다.</td>
+        <td>프로젝트 소유 리소스 <code>Assets/Resources/DebugUiSolid.png</code>를 만들고, 현재 코드는 <code>Resources.Load&lt;Sprite&gt;("DebugUiSolid")</code>만 사용한다.</td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td><code>EnhancementModal</code> 자식들도 같은 방식으로 보이고 편집 가능해야 한다.</td>
+        <td>스킬 토글만 정규화하면 강화 선택 UI의 Label/Checkmark 문제가 남을 수 있다.</td>
+        <td>작업 로그 기준으로 <code>EnhancementModal</code>의 <code>Title</code>, <code>Summary</code>, <code>CloseButton</code>, <code>ChoiceScroll/Viewport/Content</code>, <code>Choice_01</code>-<code>Choice_08</code>을 씬 오브젝트로 재생성했다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3. 현재 구조</h2>
+  <p>
+    현재 <code>DebugSceneController.Awake()</code>는 <code>DisableRunSceneControllers()</code>,
+    <code>ResolveReferences()</code>, <code>EnsureCanvasShell()</code>, <code>EnsureEventSystem()</code>,
+    <code>BindSceneUi()</code> 순서로 실행된다. 이 구조는 Canvas shell과 EventSystem 같은 실행 필수 요소는 코드로 보장하되,
+    실제 패널과 토글 슬롯은 씬에 저장된 오브젝트를 바인딩한다.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>구성요소</th>
+        <th>현재 근거</th>
+        <th>역할</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>DebugSetupPanel</code></td>
+        <td><code>DebugSceneController.cs:162-181</code>, <code>DebugScene.unity:1892</code></td>
+        <td>몬스터 선택, 스킬 창 열기, Start 버튼, 상태/전투 텍스트 표시.</td>
+      </tr>
+      <tr>
+        <td><code>SkillDebugPanel</code></td>
+        <td><code>DebugSceneController.cs:182-185</code>, <code>DebugScene.unity:4753</code></td>
+        <td>A-E active, F-J passive 스킬 토글 슬롯을 씬 오브젝트로 보유.</td>
+      </tr>
+      <tr>
+        <td><code>EnhancementModal</code></td>
+        <td><code>DebugSceneController.cs:188-193</code>, <code>DebugScene.unity:429</code></td>
+        <td>강화/마스터 선택지를 별도 모달로 표시하고 닫을 수 있게 한다.</td>
+      </tr>
+      <tr>
+        <td><code>Active_A</code>-<code>Passive_J</code></td>
+        <td><code>DebugSceneController.cs:714-727</code>, <code>DebugScene.unity:7954</code>, <code>DebugScene.unity:6547</code></td>
+        <td>스킬 토글 슬롯. 없으면 코드가 오류 로그를 낸다.</td>
+      </tr>
+      <tr>
+        <td><code>Choice_01</code>-<code>Choice_08</code></td>
+        <td><code>DebugSceneController.cs:765-781</code>, <code>DebugScene.unity:9026</code>, <code>DebugScene.unity:2092</code></td>
+        <td>강화 선택지 토글 슬롯. 모달이 열릴 때 비어 있는 슬롯부터 사용한다.</td>
+      </tr>
+      <tr>
+        <td><code>DebugUiSolid.png</code></td>
+        <td><code>DebugSceneController.cs:111</code>, <code>Assets/Resources/DebugUiSolid.png</code></td>
+        <td>체크박스 배경과 체크 표시용 프로젝트 소유 Sprite 리소스.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. 최종 해결의 핵심</h2>
+  <ul>
+    <li><strong>편집 가능성:</strong> UI의 주요 패널과 토글 슬롯을 씬에 저장해 Unity Editor에서 직접 위치와 크기를 조정할 수 있게 했다.</li>
+    <li><strong>코드 책임 축소:</strong> 코드는 씬 오브젝트를 새로 만드는 주체가 아니라, 존재 여부를 검증하고 이벤트/텍스트/토글 상태를 바인딩하는 주체가 되었다.</li>
+    <li><strong>시각 안정성:</strong> <code>ConfigureToggleVisuals(...)</code>가 <code>Label</code>, <code>Background</code>, <code>Checkmark</code>를 매번 명시적으로 정규화한다.</li>
+    <li><strong>리소스 안정성:</strong> Unity 내장 UI skin sprite 대신 <code>DebugUiSolid.png</code>를 사용해 Unity 버전/환경별 내장 리소스 경로 실패를 피했다.</li>
+    <li><strong>사용자 편집 보존:</strong> root scale은 0일 때만 복구하고, non-zero scale/position은 코드가 덮어쓰지 않는 방향으로 정리했다.</li>
+  </ul>
+
+  <h2>5. 근거 요약</h2>
+  <div class="note">
+    <p>
+      이 문서는 추측이 아니라 다음 실제 확인 결과에 기반한다.
+      <code>Select-String</code> 확인 결과 현재 <code>DebugSceneController.cs</code>에는
+      <code>BindSceneUi</code>, <code>EnsureCanvasShell</code>, <code>ConfigureToggleVisuals</code>,
+      <code>DebugUiSolid</code> 사용 지점이 존재한다.
+      <code>DebugScene.unity</code>에는 <code>DebugSceneController</code>, <code>DebugSetupPanel</code>,
+      <code>SkillDebugPanel</code>, <code>EnhancementModal</code>, <code>Active_A</code>, <code>Passive_J</code>,
+      <code>Choice_01</code>, <code>Choice_08</code> 이름의 씬 오브젝트가 존재한다.
+      <code>Assets/Resources</code>에는 <code>DebugUiSolid.png</code>와 meta 파일이 존재한다.
+    </p>
+  </div>
+
+  <h2>6. 이후 작업 시 주의점</h2>
+  <ul>
+    <li>씬 UI를 다시 수정할 때는 코드에서 생성하는 방식으로 되돌리지 말고, 씬 오브젝트 경로와 <code>BindSceneUi()</code> 요구 경로를 함께 맞춰야 한다.</li>
+    <li>새 토글 슬롯을 추가할 때는 씬에 오브젝트를 먼저 만들고, 코드의 슬롯 바인딩 목록을 실제 이름과 일치시켜야 한다.</li>
+    <li>스프라이트는 Unity 내장 <code>UI/Skin</code> 경로에 의존하지 말고 프로젝트 리소스 또는 명시적 asset reference를 사용해야 한다.</li>
+    <li>Play Mode에서 실제 클릭/표시 검증은 AGENTS.md 규칙에 따라 사용자가 수행하고, Codex는 빌드/컴파일/콘솔/에디터 상태 확인까지만 근거로 남긴다.</li>
+  </ul>
+</main>
+</body>
+</html>
