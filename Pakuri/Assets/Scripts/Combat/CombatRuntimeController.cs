@@ -140,6 +140,16 @@ namespace Pakuri.Combat
             public int VulnerableStacks;
         }
 
+        private sealed class DamagePopupRuntime
+        {
+            public GameObject GameObject;
+            public Transform Transform;
+            public TextMesh Text;
+            public float RemainingDuration;
+            public float TotalDuration;
+            public float RiseSpeed;
+        }
+
         public readonly struct RewardChoiceView
         {
             public RewardChoiceView(
@@ -222,6 +232,36 @@ namespace Pakuri.Combat
         [SerializeField] private float enemyContactDamagePerSecond = 12f;
         [SerializeField] private float spawnInterval = 1.05f;
 
+        [Header("Selected Monster Status Layout")]
+        [SerializeField] private bool autoLayoutSelectedMonsterStatus = true;
+        [SerializeField, Min(0f)] private float selectedMonsterStatusAutoTopPadding = 0.16f;
+        [SerializeField, Min(0f)] private float selectedMonsterStatusAutoHpTextGap = 0.14f;
+        [SerializeField, Min(0f)] private float selectedMonsterStatusAutoNameGap = 0.18f;
+        [SerializeField, Min(0.1f)] private float selectedMonsterStatusAutoBarWidthMultiplier = 0.9f;
+        [SerializeField, Min(0.1f)] private float selectedMonsterStatusAutoMinBarWidth = 0.85f;
+        [SerializeField, Min(0.1f)] private float selectedMonsterStatusAutoMaxBarWidth = 1.15f;
+        [SerializeField, Min(0.01f)] private float selectedMonsterStatusAutoBarHeight = 0.08f;
+        [SerializeField, Min(0.01f)] private float selectedMonsterStatusAutoTextScaleMultiplier = 0.12f;
+        [SerializeField, Min(0.01f)] private float selectedMonsterStatusAutoMinTextScale = 0.11f;
+        [SerializeField, Min(0.01f)] private float selectedMonsterStatusAutoMaxTextScale = 0.16f;
+        [SerializeField] private Vector3 selectedMonsterStatusManualBarLocalPosition = new Vector3(0f, 0.83f, 0f);
+        [SerializeField] private Vector3 selectedMonsterStatusManualHpTextLocalPosition = new Vector3(0f, 1.03f, 0f);
+        [SerializeField] private Vector3 selectedMonsterStatusManualNameLocalPosition = new Vector3(0f, 1.22f, 0f);
+        [SerializeField] private Vector3 selectedMonsterStatusManualTextScale = new Vector3(0.12f, 0.12f, 1f);
+        [SerializeField, Min(0.1f)] private float selectedMonsterStatusManualBarWidth = 1.3f;
+        [SerializeField, Min(0.01f)] private float selectedMonsterStatusManualBarHeight = 0.08f;
+
+        [Header("Enemy Status Layout")]
+        [SerializeField, Min(0f)] private float enemyStatusAutoTopPadding = 0.14f;
+        [SerializeField, Min(0f)] private float enemyStatusAutoLabelGap = 0.12f;
+        [SerializeField, Min(0.1f)] private float enemyStatusAutoBarWidthMultiplier = 0.9f;
+        [SerializeField, Min(0.1f)] private float enemyStatusAutoMinBarWidth = 0.78f;
+        [SerializeField, Min(0.1f)] private float enemyStatusAutoMaxBarWidth = 1.1f;
+        [SerializeField, Min(0.01f)] private float enemyStatusAutoBarHeight = 0.08f;
+        [SerializeField, Min(0.01f)] private float enemyStatusAutoTextScaleMultiplier = 0.11f;
+        [SerializeField, Min(0.01f)] private float enemyStatusAutoMinTextScale = 0.1f;
+        [SerializeField, Min(0.01f)] private float enemyStatusAutoMaxTextScale = 0.13f;
+
         private static Sprite sharedSprite;
         private static Sprite sharedCircleSprite;
         private const float BattlefieldMinY = 0f;
@@ -235,6 +275,7 @@ namespace Pakuri.Combat
         private readonly List<ProjectileRuntime> projectiles = new List<ProjectileRuntime>();
         private readonly List<SkillEffectRuntime> skillEffects = new List<SkillEffectRuntime>();
         private readonly List<DroneRuntime> drones = new List<DroneRuntime>();
+        private readonly List<DamagePopupRuntime> damagePopups = new List<DamagePopupRuntime>();
         private readonly List<RewardOption> rewardOptions = new List<RewardOption>();
         private readonly HashSet<string> blockedRewardIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> learnedActiveSkillNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -288,7 +329,8 @@ namespace Pakuri.Combat
         private string selectedStatusEffectLabel = "감전";
         private DamageAttribute selectedDamageAttribute = DamageAttribute.Lightning;
         private AttributeDefenseSet selectedMonsterDefenses = new AttributeDefenseSet();
-        private TextMesh selectedMonsterLabel;
+        private TextMesh selectedMonsterNameLabel;
+        private TextMesh selectedMonsterHpLabel;
         private SpriteRenderer selectedMonsterHpBarFill;
         private SpriteRenderer selectedMonsterShieldBarFill;
         private Color selectedUnitColor = new Color(0.41f, 0.78f, 1f, 0.95f);
@@ -408,6 +450,7 @@ namespace Pakuri.Combat
 
             HandlePointerInput();
             UpdateMarkerPosition();
+            UpdateDamagePopups();
 
             if (battleResolved)
             {
@@ -536,6 +579,7 @@ namespace Pakuri.Combat
             ClearEnemyRuntime();
             ClearProjectileRuntime();
             ClearEveSkillRuntimeObjects();
+            ClearDamagePopupRuntime();
             ResetArielSkillCombatTimers();
         }
     }

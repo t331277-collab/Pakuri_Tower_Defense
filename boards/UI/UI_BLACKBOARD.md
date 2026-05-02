@@ -5,6 +5,49 @@
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-03 DebugScene Setup Panel Toggle
+
+### Task title
+
+Add a DebugScene button that can hide and show `DebugSetupPanel`.
+
+### Goals
+
+- Let the user collapse `DebugSetupPanel` during DebugScene use.
+- Keep a visible button outside the setup panel so the panel can be shown again after it is hidden.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground the change in the actual `DebugSceneController` code.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly request it for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in DebugScene Play Mode that the new setup toggle button hides and shows `DebugSetupPanel`.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/DebugSceneController.cs:42` adds `setupToggleButton`.
+- `DebugSceneController.cs:187-193` now finds or creates `SetupToggleButton` under the root canvas and binds it to `ToggleSetupPanelVisibility()`.
+- `DebugSceneController.cs:504-511`, `:667-685`, and `:724-732` now toggle `DebugSetupPanel.activeSelf`, refresh the button label between `Hide Setup` and `Show Setup`, and create a top-right fallback button when the scene does not already provide one.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and only the existing Unity/MCP warnings.
+- Unity refresh completed with `resulting_state: idle`; Unity console error query returned only MCP-FOR-UNITY client handler exit logs.
+
+### History
+
+- 2026-05-03: User requested a button in DebugScene that can turn `DebugSetupPanel` off and back on.
+- 2026-05-03: Code Builder added root-level toggle-button binding plus a fallback button creation path and revalidated with build plus Unity refresh evidence.
+
 ## Task: 2026-05-02 Runtime UI Query Contract Unification
 
 ### Task title

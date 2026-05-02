@@ -5,6 +5,201 @@
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-03 Overhead Status Layout Follow-up
+
+### Task title
+
+Shorten the selected Monster HP bar, move enemy HP bars above sprites, and keep the layout tunable from combat controller fields.
+
+### Goals
+
+- Reduce the selected Monster HP bar width from the previous overly long automatic layout.
+- Move enemy HP bars and labels high enough above enemy sprites to avoid overlap.
+- Expose shared tuning values in `CombatRuntimeController` so the user can adjust selected-Monster and enemy overhead layout without another code edit.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground the change in actual combat runtime code.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly request it for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated with build plus Unity refresh/console checks.
+
+### Next Actions
+
+- User verifies in Play Mode that the selected Monster HP bar is no longer excessively wide.
+- User verifies enemy HP bars no longer overlap enemy sprites and instead sit slightly above them.
+- If the layout still needs tuning, user can edit the serialized `Selected Monster Status Layout` and `Enemy Status Layout` fields on `CombatRuntimeController`.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs:235-259` now keeps selected-Monster auto bar width tighter with `selectedMonsterStatusAutoBarWidthMultiplier = 0.9f`, `selectedMonsterStatusAutoMaxBarWidth = 1.15f`, and adds the shared `Enemy Status Layout` tuning block.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeScene.cs:253-260` still rebuilds the selected Monster name/HP/bar stack from a computed layout, and `:344-375` now clamps the auto bar width between explicit min/max values.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEnemies.cs:14-29` adds `EnemyStatusLayout`, while `:357-368` and `:435-455` now compute enemy label/bar positions from sprite bounds and apply them through `CreateEnemyLabel(...)` plus `ConfigureHpBarLayout(...)`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and only the existing Unity/MCP assembly conflict warnings.
+- Unity refresh completed with `resulting_state: idle`; Unity console error query returned MCP-FOR-UNITY client handler exit logs only.
+
+### History
+
+- 2026-05-03: User reported that the selected Monster HP bar was too long and enemy HP bars still overlapped enemy sprites.
+- 2026-05-03: Code Builder tightened the selected-Monster width clamp, added enemy sprite-top layout calculation, and revalidated with build plus Unity refresh evidence.
+
+## Task: 2026-05-03 Selected Monster Overhead Status Layout
+
+### Task title
+
+Separate the selected Monster name, HP text, and HP bar so they do not overlap, and scale their placement from the Monster sprite size.
+
+### Goals
+
+- Stop the selected Monster overhead name, HP text, and HP slider from overlapping each other.
+- Base the overhead stack position and bar width on the current selected Monster sprite size instead of fixed hardcoded offsets only.
+- Expose manual Inspector tuning values so the user can override the automatic layout if a specific sprite still needs hand adjustment.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground the layout change in the current combat runtime scripts.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly request it for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated with build plus Unity refresh/console checks.
+
+### Next Actions
+
+- User verifies in Play Mode that the selected Monster overhead name, HP text, and HP bar no longer overlap for the monsters they test.
+- If a specific sprite still needs hand tuning, user can disable `Auto Layout Selected Monster Status` on `CombatRuntimeController` and edit the exposed manual local-position/scale fields directly in the Inspector.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs:235-251` adds the serialized `Selected Monster Status Layout` tuning block, including automatic layout toggles and manual override fields such as `selectedMonsterStatusManualBarLocalPosition`, `selectedMonsterStatusManualHpTextLocalPosition`, `selectedMonsterStatusManualNameLocalPosition`, and `selectedMonsterStatusManualTextScale`.
+- `CombatRuntimeController.cs:320-321` replaces the old single selected-Monster status label reference with separate `selectedMonsterNameLabel` and `selectedMonsterHpLabel` fields.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeScene.cs:253-283` now creates separate `MonsterNameLabel` and `MonsterHpLabel` TextMesh objects and reapplies bar layout every time the selected Monster status visuals are ensured.
+- `CombatRuntimeScene.cs:324-339` now writes the name and HP text separately instead of one multiline label, while keeping the shared HP/shield bar update path intact.
+- `CombatRuntimeScene.cs:344-380` now resolves selected-Monster overhead layout from the sprite bounds when automatic layout is enabled, and falls back to the serialized manual values when it is disabled.
+- `CombatRuntimeScene.cs:554-585` adds `ConfigureHpBarLayout(...)` so bar position/width/height can be reapplied cleanly after the selected Monster changes.
+- `CombatRuntimeScene.cs:444-469` also moves selected-Monster damage popup anchoring to the new topmost status labels so popup placement still follows the updated overhead stack.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and only the existing Unity/MCP assembly conflict warnings.
+- Unity refresh completed to `resulting_state: idle`; Unity console error query returned MCP-FOR-UNITY client handler exit logs only.
+
+### History
+
+- 2026-05-03: User reported that the selected Monster HP slider, HP text, and name overlap and asked for sprite-size-aware adjustment or a direct manual tuning path.
+- 2026-05-03: Code Builder split the selected Monster overhead stack into separate name/HP labels, added sprite-based automatic layout, exposed manual Inspector overrides, and validated with build plus Unity refresh evidence.
+
+## Task: 2026-05-03 Shared Combat Damage Popup Visual
+
+### Task title
+
+Show floating white damage numbers above both enemies and the selected Monster when they take damage.
+
+### Goals
+
+- Show the applied damage amount above the damaged unit's head for both enemy and player-side runtime targets.
+- Reuse the existing combat TextMesh look instead of introducing a new font asset.
+- Make each damage number rise slightly and fade out over 1 second.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground the implementation in the current combat runtime scripts only.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly request it for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated with build plus Unity refresh/console checks.
+
+### Next Actions
+
+- User verifies in Play Mode that enemies and the selected Monster both show white floating damage numbers on hit.
+- User verifies the numbers rise slightly and fade over about 1 second using the same readable font style already used by the combat labels.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs:143` adds the runtime popup state container, `:248` adds shared popup storage, `:422` updates popups every frame, and `:551` clears popup state during combat reset.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeScene.cs:14` sets popup duration to `1f`; `:307`, `:351`, `:364`, and `:388` implement shared popup update/spawn paths for enemies and the selected Monster.
+- `CombatRuntimeScene.cs:429-452` copies the existing `TextMesh` presentation from the target label template, including the existing font path when available, while keeping popup color white and `fontSize = 32`.
+- `CombatRuntimeScene.cs:470` formats the displayed damage amount as a rounded integer string.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEnemies.cs:392-402` and `CombatRuntimeScene.cs:252-276` remain the existing enemy/selected-Monster label sources that the popup text styling now reuses.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors after sandbox escalation; only the existing Unity/MCP assembly conflict warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
+- Unity script refresh returned `resulting_state: idle`; Unity console error query returned only MCP-FOR-UNITY handler disposal/exit logs, not project compile errors.
+
+### History
+
+- 2026-05-03: User requested visible damage numbers above units on hit, using the existing font, white color, slight upward movement, and a 1-second fade.
+- 2026-05-03: Code Builder added shared combat popup runtime state, wired both damage application paths, and validated the change with build plus Unity refresh evidence.
+
+## Task: 2026-05-03 Ariel J Buff/Shield State Separation
+
+### Task title
+
+Separate Ariel J proclamation timing from the generic blessing timer and track Archangel shield state in combat runtime.
+
+### Goals
+
+- Stop Ariel J from piggybacking on unrelated blessing-state windows.
+- Keep E master 1 damage-reduction timing separate from J post-cast action speed timing.
+- Let combat damage resolution reduce the tracked Archangel shield share when the selected Monster shield absorbs damage.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground the change in the current combat scripts and Ariel reference docs.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder follow-up implemented and locally validated. Code Reviewer has not been rerun because the user did not request another review.
+
+### Next Actions
+
+- User verifies in Play Mode that J holy-damage bonus disappears when the active pooled shield is no longer the E shield.
+- User verifies Ariel E battlefield effect visibility and Ariel C held-input cadence behavior after the combat follow-up.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs:22-24` adds `arielSanctuaryProclamationTimer`, `arielArchangelShieldValue`, and `arielArchangelShieldTimer`.
+- `CombatRuntimeArielSkills.cs:136-143` now updates those states per frame and clears expired Archangel shield tracking.
+- `CombatRuntimeArielSkills.cs:429-451` now starts J proclamation timing directly from E cast, marks Archangel ownership through the shared shield helper, and spawns the missing battlefield-wide E visual.
+- `CombatRuntimeArielSkills.cs:554-580` now resolves pooled-shield ownership inside `ApplyArielUnitShield(...)`, so J can only follow an E shield that actually owns the selected-Monster pooled shield state.
+- `CombatRuntimeArielSkills.cs:592-600` and `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:315-319` still reduce the tracked E shield share during shield absorption.
+- `CombatRuntimeArielSkills.cs:771`, `852`, and `898-900` now keep J holy-damage and action-speed checks on dedicated E/J state instead of generic shield/blessing paths.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:332-356` now gates Ariel automatic support-skill retries to real firing windows, closing the held-input frame retry path behind the reported occasional C barrage.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and only the existing Unity/MCP reference warnings.
+- Unity refresh completed to `resulting_state: idle`; console errors were MCP-FOR-UNITY handler logs only.
+- External Code Reviewer executed once and found that `CombatRuntimeArielSkills.cs:429-431` still recorded full E shield state even when `ApplyArielUnitShield(...)` left a larger older shield active in the pooled runtime value; Builder follow-up moved that decision into the shared shield helper and did not rerun review afterward.
+
+### History
+
+- 2026-05-03: User requested implementing Ariel F-J passive skills.
+- 2026-05-03: Code Builder found the existing J runtime tied to the wrong timer/state and separated the combat-side buff/shield tracking.
+- 2026-05-03: User explicitly requested Code Reviewer execution; Reviewer returned NEEDS_CHANGES for remaining E-shield source tracking leakage.
+- 2026-05-03: User then requested fixing the reviewer finding and also reported missing Ariel E effect plus occasional Ariel C barrage behavior; Code Builder applied the combat follow-up and revalidated with build/refresh evidence.
+
 ## Task: 2026-05-02 Combat Skill Query Expansion
 
 ### Task title

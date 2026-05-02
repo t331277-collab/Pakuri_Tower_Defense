@@ -39,6 +39,7 @@ namespace Pakuri.Run
         private Text combatText;
         private Text modalTitleText;
         private Text modalSummaryText;
+        private Button setupToggleButton;
         private Button startButton;
         private Button skillWindowButton;
         private Button closeSkillWindowButton;
@@ -183,6 +184,13 @@ namespace Pakuri.Run
             monsterButtonRoot = FindDirectChild(setupPanel.transform, "MonsterButtons");
             skillWindowButton = FindButton(setupPanel.transform, "SkillWindowButton");
             startButton = FindButton(setupPanel.transform, "StartButton");
+            setupToggleButton = FindButton(transform, "SetupToggleButton");
+            if (setupToggleButton == null)
+            {
+                setupToggleButton = EnsureSetupToggleButton();
+            }
+
+            BindButton(setupToggleButton, ToggleSetupPanelVisibility);
             BindButton(skillWindowButton, OpenSkillWindow);
             BindButton(startButton, StartCombat);
 
@@ -202,6 +210,7 @@ namespace Pakuri.Run
             BindSkillToggleSlots();
             BindChoiceToggleSlots();
             RefreshStartButtonState();
+            RefreshSetupToggleButtonState();
         }
 
         private void RebuildMonsterButtons()
@@ -492,6 +501,16 @@ namespace Pakuri.Run
             ApplySelectionWithoutRestart();
         }
 
+        private void ToggleSetupPanelVisibility()
+        {
+            if (setupPanel == null)
+            {
+                return;
+            }
+
+            SetSetupPanelVisible(!setupPanel.activeSelf);
+        }
+
         private void StartCombat()
         {
             if (selectedMonster == null)
@@ -645,6 +664,27 @@ namespace Pakuri.Run
             }
         }
 
+        private void RefreshSetupToggleButtonState()
+        {
+            if (setupToggleButton == null)
+            {
+                return;
+            }
+
+            SetButtonLabel(setupToggleButton, setupPanel != null && setupPanel.activeSelf ? "Hide Setup" : "Show Setup");
+        }
+
+        private void SetSetupPanelVisible(bool visible)
+        {
+            if (setupPanel == null)
+            {
+                return;
+            }
+
+            setupPanel.SetActive(visible);
+            RefreshSetupToggleButtonState();
+        }
+
         private void SetStatus(string message)
         {
             if (statusText != null)
@@ -679,6 +719,18 @@ namespace Pakuri.Run
         {
             var target = FindDirectChild(parent, path);
             return target != null ? target.GetComponent<Button>() : null;
+        }
+
+        private Button EnsureSetupToggleButton()
+        {
+            var button = EnsureButton(transform, "SetupToggleButton", "Hide Setup", ToggleSetupPanelVisibility);
+            var rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(1f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(1f, 1f);
+            rect.sizeDelta = new Vector2(180f, 46f);
+            rect.anchoredPosition = new Vector2(-24f, -24f);
+            return button;
         }
 
         private static void BindButton(Button button, UnityEngine.Events.UnityAction onClick)

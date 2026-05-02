@@ -5,6 +5,94 @@
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-03 Damage Application Popup Trigger Wiring
+
+### Task title
+
+Trigger shared floating damage popups from both enemy-hit and selected-Monster-hit damage application paths.
+
+### Goals
+
+- Spawn damage popups when enemies lose shield/HP from projectiles or skill damage.
+- Spawn damage popups when the selected Monster loses shield/HP from enemy hits.
+- Keep the existing damage return values intact while adding visual trigger data.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground the change in actual projectile/damage runtime code.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly request it for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies that direct hits, branch hits, and incoming enemy hits all raise one damage number over the damaged target.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:285-307` now tracks `totalAppliedDamage` across shield absorption plus HP loss in `ApplyDamageToEnemy(...)` and calls `SpawnDamagePopupForEnemy(...)` when the total is positive.
+- `CombatRuntimeProjectiles.cs:313-337` now does the same for `ApplyDamageToSelectedMonster(...)`, calling `SpawnDamagePopupForSelectedMonster(...)`.
+- `CombatRuntimeProjectiles.cs:49`, `:147`, and `:241` still route the shared enemy-hit, selected-Monster-hit, and Eve branch-damage paths through those two centralized damage application functions, so one popup trigger path covers the existing runtime entry points.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeDamagePopups.cs` currently remains an intentionally empty partial stub because the generated Unity C# project still references that file path while the real popup implementation was moved into the already-included `CombatRuntimeScene.cs` partial; keeping the stub avoids the previously observed `CS2001` missing-source failure.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both completed with 0 errors after the stub/file-path cleanup.
+
+### History
+
+- 2026-05-03: User requested visible damage numbers for both sides of combat.
+- 2026-05-03: Code Builder wired popup spawning into the two centralized damage application helpers and kept an empty partial stub file in place to satisfy the current generated project reference.
+
+## Task: 2026-05-03 Ariel Automatic Skill Trigger Cadence Follow-up
+
+### Task title
+
+Gate Ariel automatic support-skill retries to actual firing windows.
+
+### Goals
+
+- Stop held input from retrying Ariel support skills every frame while Ariel A cannot fire.
+- Remove the reported occasional Ariel C barrage symptom without changing Ariel A projectile fire itself.
+- Keep the shared held-input projectile path intact for the other Monsters.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground the fix in actual projectile/combat runtime code.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not rerun because the user did not explicitly request another review.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies that holding attack no longer causes Ariel C to repeatedly trigger while Ariel A is on reload or shot cooldown.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeHud.cs` still keeps `fireRequestedThisFrame` true while left mouse or touch is held.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:332-345` now adds `ShouldTrySelectedMonsterAutomaticSkillsThisFrame()` and keeps the Ariel-specific rule there.
+- `CombatRuntimeProjectiles.cs:349-356` now only calls `TryTriggerSelectedMonsterAutomaticSkills()` for Ariel when `reloadRemaining <= 0f`, `shotCooldown <= 0f`, and `currentShotsRemaining > 0`, instead of retrying on every held-input frame.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the existing Unity/MCP warnings.
+- Unity refresh completed with `resulting_state: idle`; Unity console error query returned MCP-FOR-UNITY handler exit logs only.
+
+### History
+
+- 2026-05-03: User reported that Ariel C sometimes behaves like a barrage during held-input combat.
+- 2026-05-03: Code Builder traced the retry path to `UpdateSelectedMonsterCombat()` and added Ariel-only firing-window gating for automatic support-skill checks.
+
 ## Task: Ariel A Projectile Lifetime Follow-up
 
 ### Task title

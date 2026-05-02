@@ -282,7 +282,7 @@ namespace Pakuri.Combat
             return best;
         }
 
-        private static float ApplyDamageToEnemy(EnemyRuntime enemy, float incomingDamage)
+        private float ApplyDamageToEnemy(EnemyRuntime enemy, float incomingDamage)
         {
             if (enemy == null || incomingDamage <= 0f)
             {
@@ -290,15 +290,23 @@ namespace Pakuri.Combat
             }
 
             var remainingDamage = incomingDamage;
+            var totalAppliedDamage = 0f;
             if (enemy.ShieldValue > 0f)
             {
                 var absorbed = Mathf.Min(enemy.ShieldValue, remainingDamage);
                 enemy.ShieldValue -= absorbed;
                 remainingDamage -= absorbed;
+                totalAppliedDamage += absorbed;
             }
 
             var appliedDamage = Mathf.Min(enemy.CurrentHealth, remainingDamage);
             enemy.CurrentHealth -= appliedDamage;
+            totalAppliedDamage += appliedDamage;
+            if (totalAppliedDamage > 0f)
+            {
+                SpawnDamagePopupForEnemy(enemy, totalAppliedDamage);
+            }
+
             return appliedDamage;
         }
 
@@ -310,16 +318,25 @@ namespace Pakuri.Combat
             }
 
             var remainingDamage = GetArielIncomingDamageAfterReduction(incomingDamage);
+            var totalAppliedDamage = 0f;
             if (unitShieldValue > 0f)
             {
+                var shieldBeforeAbsorb = unitShieldValue;
                 var absorbed = Mathf.Min(unitShieldValue, remainingDamage);
                 unitShieldValue -= absorbed;
                 remainingDamage -= absorbed;
-                HandleArielShieldAbsorbed(absorbed, sourceEnemy);
+                totalAppliedDamage += absorbed;
+                HandleArielShieldAbsorbed(absorbed, shieldBeforeAbsorb, sourceEnemy);
             }
 
             var appliedDamage = Mathf.Min(unitCurrentHealth, remainingDamage);
             unitCurrentHealth = Mathf.Max(0f, unitCurrentHealth - appliedDamage);
+            totalAppliedDamage += appliedDamage;
+            if (totalAppliedDamage > 0f)
+            {
+                SpawnDamagePopupForSelectedMonster(totalAppliedDamage);
+            }
+
             return appliedDamage;
         }
 
@@ -328,12 +345,29 @@ namespace Pakuri.Combat
             return enemy != null && enemy.IsBoss ? 0.95f : 0.65f;
         }
 
+        private bool ShouldTrySelectedMonsterAutomaticSkillsThisFrame()
+        {
+            if (!fireRequestedThisFrame)
+            {
+                return false;
+            }
+
+            // Ariel support skills should align to an actual firing window so held input
+            // does not keep retrying them every Update while the main shot is unavailable.
+            if (IsSelectedArielMonster())
+            {
+                return reloadRemaining <= 0f && shotCooldown <= 0f && currentShotsRemaining > 0;
+            }
+
+            return true;
+        }
+
         private void UpdateSelectedMonsterCombat()
         {
             UpdateSelectedMonsterSkillCooldowns();
             shotCooldown = Mathf.Max(0f, shotCooldown - Time.deltaTime * GetSelectedMonsterActionSpeedMultiplier());
 
-            if (fireRequestedThisFrame)
+            if (ShouldTrySelectedMonsterAutomaticSkillsThisFrame())
             {
                 TryTriggerSelectedMonsterAutomaticSkills();
             }

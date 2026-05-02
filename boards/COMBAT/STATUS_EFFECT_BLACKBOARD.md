@@ -5,6 +5,57 @@
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-03 Ariel Sanctuary Proclamation State Correction
+
+### Task title
+
+Correct Ariel J timed buff and shield-dependent holy bonus state handling.
+
+### Goals
+
+- Keep blessing-derived buffs on `arielBlessingTimer` only.
+- Keep E master 1 `천상의 성역` damage reduction on its own timer.
+- Add a distinct timed state for J `성역 선포` and tie its holy-damage bonus to remaining Archangel shield state.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Current runtime still has one selected allied Monster and one pooled shield value.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder follow-up implemented and locally validated. Code Reviewer has not been rerun because the user did not request another review.
+
+### Next Actions
+
+- User verifies that Ariel J holy-damage bonus ends as soon as the active pooled shield is no longer owned by E.
+- User verifies that Ariel E battlefield effect appears and that Ariel C no longer repeatedly retries during held-input blocked windows.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/ariel/skill/j-sanctuary-proclamation.md:18-19` defines J as a timed post-E action-speed buff plus a shield-remaining holy-damage bonus.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs:136-143` now updates `arielSanctuaryProclamationTimer` and `arielArchangelShieldTimer` independently from `arielBlessingTimer`.
+- `CombatRuntimeArielSkills.cs:429-451` now starts the J proclamation timer on E cast, delegates Archangel shield ownership to the shared shield helper, and spawns the missing E battlefield effect.
+- `CombatRuntimeArielSkills.cs:554-580` now tracks Archangel shield ownership only when the E shield actually becomes the pooled shield owner, and clears it if a stronger non-E shield replaces that owner.
+- `CombatRuntimeArielSkills.cs:592-600` and `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:315-319` now reduce the tracked E shield share when shield absorption happens.
+- `CombatRuntimeArielSkills.cs:771`, `852`, and `898-900` now keep J holy-damage bonus and action-speed bonus bound to dedicated Archangel/proclamation state.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:332-356` now prevents Ariel support-status retries from running every held-input frame while Ariel A is not in a firing window, which addresses the reported occasional C barrage symptom at the trigger level.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and only the existing warnings.
+- External Code Reviewer executed once and found one remaining issue in the prior pass: `CombatRuntimeArielSkills.cs:429-431` could still mark an unapplied E shield as active if a larger non-E shield already occupied the pooled selected-Monster shield state; Builder follow-up corrected that ownership path and did not rerun review afterward.
+
+### History
+
+- 2026-05-03: User requested Ariel passive F-J implementation.
+- 2026-05-03: Code Builder corrected the status-model mismatch in J by separating proclamation timing from blessing timing and by tracking the E shield share explicitly.
+- 2026-05-03: User explicitly requested Code Reviewer execution; Reviewer returned NEEDS_CHANGES for the remaining E-shield source leak.
+- 2026-05-03: User then requested fixing that reviewer finding and also reported missing Ariel E effect plus occasional Ariel C barrage behavior; Code Builder applied the follow-up and revalidated with build and Unity refresh evidence.
+
 ## Task: Shield HP Bar Ratio Visual
 
 ### Task title

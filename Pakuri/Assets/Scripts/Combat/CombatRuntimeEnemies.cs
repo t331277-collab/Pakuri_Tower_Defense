@@ -11,6 +11,24 @@ namespace Pakuri.Combat
 {
     public partial class CombatRuntimeController
     {
+        private readonly struct EnemyStatusLayout
+        {
+            public EnemyStatusLayout(Vector3 barLocalPosition, Vector3 labelLocalPosition, Vector3 textScale, float barWidth, float barHeight)
+            {
+                BarLocalPosition = barLocalPosition;
+                LabelLocalPosition = labelLocalPosition;
+                TextScale = textScale;
+                BarWidth = barWidth;
+                BarHeight = barHeight;
+            }
+
+            public Vector3 BarLocalPosition { get; }
+            public Vector3 LabelLocalPosition { get; }
+            public Vector3 TextScale { get; }
+            public float BarWidth { get; }
+            public float BarHeight { get; }
+        }
+
         private void BeginPrototypeDay(int requestedDay)
         {
             dayIndex = requestedDay > 11 ? 1 : Mathf.Max(1, requestedDay);
@@ -25,6 +43,7 @@ namespace Pakuri.Combat
             ClearEnemyRuntime();
             ClearProjectileRuntime();
             ClearEveSkillRuntimeObjects();
+            ClearDamagePopupRuntime();
             ResetEveSkillCombatTimers();
             ResetArielSkillCombatTimers();
 
@@ -335,16 +354,18 @@ namespace Pakuri.Combat
             var renderer = enemyObject.AddComponent<SpriteRenderer>();
             renderer.sprite = definition != null && definition.UnitSprite != null ? definition.UnitSprite : GetSharedSprite();
             renderer.sortingOrder = isBoss ? 18 : 17;
-            var label = CreateEnemyLabel(enemyObject.transform, displayName, isBoss);
+            var statusLayout = ResolveEnemyStatusLayout(renderer);
+            var label = CreateEnemyLabel(enemyObject.transform, displayName, statusLayout.LabelLocalPosition, statusLayout.TextScale);
             var hpBarFill = CreateHpBar(
                 enemyObject.transform,
                 "EnemyHpBar",
-                new Vector3(0f, isBoss ? 1.05f : 0.74f, 0f),
-                isBoss ? 1.35f : 1.05f,
-                0.08f,
+                statusLayout.BarLocalPosition,
+                statusLayout.BarWidth,
+                statusLayout.BarHeight,
                 Color.red,
                 34);
-            var shieldBarFill = CreateShieldBarFill(enemyObject.transform, "EnemyHpBar", 0.08f, 36);
+            var shieldBarFill = CreateShieldBarFill(enemyObject.transform, "EnemyHpBar", statusLayout.BarHeight, 36);
+            ConfigureHpBarLayout(hpBarFill, statusLayout.BarLocalPosition, statusLayout.BarWidth, statusLayout.BarHeight);
 
             var baseStats = definition != null && definition.Stats != null ? definition.Stats : null;
             var maxHealth = baseStats != null
@@ -388,12 +409,12 @@ namespace Pakuri.Combat
             return spawnPosition;
         }
 
-        private static TextMesh CreateEnemyLabel(Transform parent, string displayName, bool isBoss)
+        private TextMesh CreateEnemyLabel(Transform parent, string displayName, Vector3 localPosition, Vector3 localScale)
         {
             var labelObject = new GameObject("EnemyHpLabel");
             labelObject.transform.SetParent(parent, false);
-            labelObject.transform.localPosition = new Vector3(0f, isBoss ? 1.25f : 0.9f, 0f);
-            labelObject.transform.localScale = new Vector3(0.12f, 0.12f, 1f);
+            labelObject.transform.localPosition = localPosition;
+            labelObject.transform.localScale = localScale;
 
             var label = labelObject.AddComponent<TextMesh>();
             label.anchor = TextAnchor.MiddleCenter;
@@ -409,6 +430,34 @@ namespace Pakuri.Combat
             }
 
             return label;
+        }
+
+        private EnemyStatusLayout ResolveEnemyStatusLayout(SpriteRenderer renderer)
+        {
+            var spriteSize = renderer != null && renderer.sprite != null
+                ? renderer.sprite.bounds.size
+                : Vector3.one;
+            var spriteWidth = Mathf.Max(0.5f, spriteSize.x);
+            var spriteHeight = Mathf.Max(0.5f, spriteSize.y);
+            var textScaleValue = Mathf.Clamp(
+                Mathf.Max(spriteWidth, spriteHeight) * enemyStatusAutoTextScaleMultiplier,
+                enemyStatusAutoMinTextScale,
+                enemyStatusAutoMaxTextScale);
+            var textScale = new Vector3(textScaleValue, textScaleValue, 1f);
+            var barWidth = Mathf.Clamp(
+                spriteWidth * enemyStatusAutoBarWidthMultiplier,
+                enemyStatusAutoMinBarWidth,
+                Mathf.Max(enemyStatusAutoMinBarWidth, enemyStatusAutoMaxBarWidth));
+            var barHeight = Mathf.Max(0.01f, enemyStatusAutoBarHeight);
+            var barY = (spriteHeight * 0.5f) + enemyStatusAutoTopPadding;
+            var labelY = barY + barHeight + enemyStatusAutoLabelGap + textScaleValue;
+
+            return new EnemyStatusLayout(
+                new Vector3(0f, barY, 0f),
+                new Vector3(0f, labelY, 0f),
+                textScale,
+                barWidth,
+                barHeight);
         }
 
         private static SpriteRenderer CreateHpBar(

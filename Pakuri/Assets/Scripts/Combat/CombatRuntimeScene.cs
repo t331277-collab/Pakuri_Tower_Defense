@@ -11,6 +11,35 @@ namespace Pakuri.Combat
 {
     public partial class CombatRuntimeController
     {
+        private readonly struct SelectedMonsterStatusLayout
+        {
+            public SelectedMonsterStatusLayout(
+                Vector3 barLocalPosition,
+                Vector3 hpTextLocalPosition,
+                Vector3 nameLocalPosition,
+                Vector3 textScale,
+                float barWidth,
+                float barHeight)
+            {
+                BarLocalPosition = barLocalPosition;
+                HpTextLocalPosition = hpTextLocalPosition;
+                NameLocalPosition = nameLocalPosition;
+                TextScale = textScale;
+                BarWidth = barWidth;
+                BarHeight = barHeight;
+            }
+
+            public Vector3 BarLocalPosition { get; }
+            public Vector3 HpTextLocalPosition { get; }
+            public Vector3 NameLocalPosition { get; }
+            public Vector3 TextScale { get; }
+            public float BarWidth { get; }
+            public float BarHeight { get; }
+        }
+
+        private const float DamagePopupDuration = 1f;
+        private const float DamagePopupRiseDistance = 0.55f;
+
         private void ResolveSceneReferences()
         {
             if (targetCamera == null)
@@ -228,39 +257,44 @@ namespace Pakuri.Combat
                 return;
             }
 
-            selectedMonsterLabel = EnsureStatusLabel(
+            var layout = ResolveSelectedMonsterStatusLayout();
+
+            selectedMonsterNameLabel = EnsureStatusLabel(
+                eveAnchor,
+                "MonsterNameLabel",
+                layout.NameLocalPosition,
+                layout.TextScale,
+                37);
+            selectedMonsterHpLabel = EnsureStatusLabel(
                 eveAnchor,
                 "MonsterHpLabel",
-                new Vector3(0f, 1.05f, 0f),
-                new Vector3(0.12f, 0.12f, 1f),
+                layout.HpTextLocalPosition,
+                layout.TextScale,
                 36);
             selectedMonsterHpBarFill = CreateHpBar(
                 eveAnchor,
                 "MonsterHpBar",
-                new Vector3(0f, 0.83f, 0f),
-                1.3f,
-                0.08f,
+                layout.BarLocalPosition,
+                layout.BarWidth,
+                layout.BarHeight,
                 Color.red,
                 34);
-            selectedMonsterShieldBarFill = CreateShieldBarFill(eveAnchor, "MonsterHpBar", 0.08f, 36);
+            selectedMonsterShieldBarFill = CreateShieldBarFill(eveAnchor, "MonsterHpBar", layout.BarHeight, 36);
+            ConfigureHpBarLayout(selectedMonsterHpBarFill, layout.BarLocalPosition, layout.BarWidth, layout.BarHeight);
             UpdateSelectedMonsterStatusVisuals();
         }
 
         private static TextMesh EnsureStatusLabel(Transform parent, string labelName, Vector3 localPosition, Vector3 localScale, int sortingOrder)
         {
             var labelTransform = parent.Find(labelName);
-            var created = labelTransform == null;
             if (labelTransform == null)
             {
                 labelTransform = new GameObject(labelName).transform;
                 labelTransform.SetParent(parent, false);
             }
 
-            if (created)
-            {
-                labelTransform.localPosition = localPosition;
-                labelTransform.localScale = localScale;
-            }
+            labelTransform.localPosition = localPosition;
+            labelTransform.localScale = localScale;
 
             var label = labelTransform.GetComponent<TextMesh>();
             if (label == null)
@@ -284,21 +318,283 @@ namespace Pakuri.Combat
 
         private void UpdateSelectedMonsterStatusVisuals()
         {
-            if (selectedMonsterLabel != null)
+            var current = Application.isPlaying ? unitCurrentHealth : unitMaxHealthConfigured;
+            var shield = Application.isPlaying ? unitShieldValue : 0f;
+
+            if (selectedMonsterNameLabel != null)
             {
-                var current = Application.isPlaying ? unitCurrentHealth : unitMaxHealthConfigured;
-                var shield = Application.isPlaying ? unitShieldValue : 0f;
-                selectedMonsterLabel.text = shield > 0f
-                    ? $"{selectedMonsterName}\nHP {Mathf.CeilToInt(Mathf.Max(0f, current))}/{Mathf.CeilToInt(unitMaxHealthConfigured)} SH {Mathf.CeilToInt(shield)}"
-                    : $"{selectedMonsterName}\nHP {Mathf.CeilToInt(Mathf.Max(0f, current))}/{Mathf.CeilToInt(unitMaxHealthConfigured)}";
+                selectedMonsterNameLabel.text = selectedMonsterName;
+            }
+
+            if (selectedMonsterHpLabel != null)
+            {
+                selectedMonsterHpLabel.text = shield > 0f
+                    ? $"HP {Mathf.CeilToInt(Mathf.Max(0f, current))}/{Mathf.CeilToInt(unitMaxHealthConfigured)} SH {Mathf.CeilToInt(shield)}"
+                    : $"HP {Mathf.CeilToInt(Mathf.Max(0f, current))}/{Mathf.CeilToInt(unitMaxHealthConfigured)}";
             }
 
             UpdateHpShieldBarFill(
                 selectedMonsterHpBarFill,
                 selectedMonsterShieldBarFill,
-                Application.isPlaying ? unitCurrentHealth : unitMaxHealthConfigured,
+                current,
                 unitMaxHealthConfigured,
-                Application.isPlaying ? unitShieldValue : 0f);
+                shield);
+        }
+
+        private SelectedMonsterStatusLayout ResolveSelectedMonsterStatusLayout()
+        {
+            if (!autoLayoutSelectedMonsterStatus)
+            {
+                var manualScale = new Vector3(
+                    Mathf.Max(0.01f, selectedMonsterStatusManualTextScale.x),
+                    Mathf.Max(0.01f, selectedMonsterStatusManualTextScale.y),
+                    Mathf.Max(0.01f, selectedMonsterStatusManualTextScale.z));
+                return new SelectedMonsterStatusLayout(
+                    selectedMonsterStatusManualBarLocalPosition,
+                    selectedMonsterStatusManualHpTextLocalPosition,
+                    selectedMonsterStatusManualNameLocalPosition,
+                    manualScale,
+                    Mathf.Max(0.1f, selectedMonsterStatusManualBarWidth),
+                    Mathf.Max(0.01f, selectedMonsterStatusManualBarHeight));
+            }
+
+            var spriteRenderer = eveAnchor != null ? eveAnchor.GetComponent<SpriteRenderer>() : null;
+            var spriteSize = spriteRenderer != null && spriteRenderer.sprite != null
+                ? spriteRenderer.sprite.bounds.size
+                : Vector3.one;
+            var spriteWidth = Mathf.Max(0.5f, spriteSize.x);
+            var spriteHeight = Mathf.Max(0.5f, spriteSize.y);
+            var textScaleValue = Mathf.Clamp(
+                Mathf.Max(spriteWidth, spriteHeight) * selectedMonsterStatusAutoTextScaleMultiplier,
+                selectedMonsterStatusAutoMinTextScale,
+                selectedMonsterStatusAutoMaxTextScale);
+            var textScale = new Vector3(textScaleValue, textScaleValue, 1f);
+            var barWidth = Mathf.Clamp(
+                spriteWidth * selectedMonsterStatusAutoBarWidthMultiplier,
+                selectedMonsterStatusAutoMinBarWidth,
+                Mathf.Max(selectedMonsterStatusAutoMinBarWidth, selectedMonsterStatusAutoMaxBarWidth));
+            var barHeight = Mathf.Max(0.01f, selectedMonsterStatusAutoBarHeight);
+            var barY = (spriteHeight * 0.5f) + selectedMonsterStatusAutoTopPadding;
+            var hpTextY = barY + barHeight + selectedMonsterStatusAutoHpTextGap;
+            var nameY = hpTextY + textScaleValue + selectedMonsterStatusAutoNameGap;
+
+            return new SelectedMonsterStatusLayout(
+                new Vector3(0f, barY, 0f),
+                new Vector3(0f, hpTextY, 0f),
+                new Vector3(0f, nameY, 0f),
+                textScale,
+                barWidth,
+                barHeight);
+        }
+
+        private void UpdateDamagePopups()
+        {
+            for (var i = damagePopups.Count - 1; i >= 0; i--)
+            {
+                var popup = damagePopups[i];
+                if (popup == null || popup.GameObject == null || popup.Transform == null || popup.Text == null)
+                {
+                    damagePopups.RemoveAt(i);
+                    continue;
+                }
+
+                popup.RemainingDuration = Mathf.Max(0f, popup.RemainingDuration - Time.deltaTime);
+                popup.Transform.position += Vector3.up * popup.RiseSpeed * Time.deltaTime;
+
+                var color = popup.Text.color;
+                color.a = popup.TotalDuration > 0f ? Mathf.Clamp01(popup.RemainingDuration / popup.TotalDuration) : 0f;
+                popup.Text.color = color;
+
+                if (popup.RemainingDuration > 0f)
+                {
+                    continue;
+                }
+
+                Destroy(popup.GameObject);
+                damagePopups.RemoveAt(i);
+            }
+        }
+
+        private void ClearDamagePopupRuntime()
+        {
+            for (var i = damagePopups.Count - 1; i >= 0; i--)
+            {
+                var popup = damagePopups[i];
+                if (popup == null || popup.GameObject == null)
+                {
+                    continue;
+                }
+
+                Destroy(popup.GameObject);
+            }
+
+            damagePopups.Clear();
+        }
+
+        private void SpawnDamagePopupForEnemy(EnemyRuntime enemy, float damageAmount)
+        {
+            if (enemy == null || enemy.Transform == null || damageAmount <= 0f)
+            {
+                return;
+            }
+
+            var basePosition = enemy.Label != null
+                ? enemy.Label.transform.position
+                : enemy.Transform.position + Vector3.up * (enemy.IsBoss ? 1.25f : 0.9f);
+            SpawnDamagePopup(basePosition + new Vector3(0f, enemy.IsBoss ? 0.18f : 0.12f, 0f), damageAmount, enemy.Label);
+        }
+
+        private void SpawnDamagePopupForSelectedMonster(float damageAmount)
+        {
+            if (damageAmount <= 0f)
+            {
+                return;
+            }
+
+            Vector3 basePosition;
+            if (selectedMonsterNameLabel != null)
+            {
+                basePosition = selectedMonsterNameLabel.transform.position;
+            }
+            else if (selectedMonsterHpLabel != null)
+            {
+                basePosition = selectedMonsterHpLabel.transform.position;
+            }
+            else if (eveAnchor != null)
+            {
+                basePosition = eveAnchor.position + Vector3.up * 1.05f;
+            }
+            else
+            {
+                return;
+            }
+
+            SpawnDamagePopup(basePosition + new Vector3(0f, 0.14f, 0f), damageAmount, selectedMonsterHpLabel ?? selectedMonsterNameLabel);
+        }
+
+        private void SpawnDamagePopup(Vector3 worldPosition, float damageAmount, TextMesh template)
+        {
+            var parent = projectileRoot != null ? projectileRoot : transform;
+            if (parent == null)
+            {
+                return;
+            }
+
+            var popupObject = new GameObject("DamagePopup");
+            popupObject.transform.SetParent(parent, false);
+            popupObject.transform.position = new Vector3(worldPosition.x, worldPosition.y, 0f);
+            popupObject.transform.localScale = ResolveDamagePopupScale(template);
+
+            var popupText = popupObject.AddComponent<TextMesh>();
+            ConfigureDamagePopupText(popupText, template);
+            popupText.text = FormatDamagePopupAmount(damageAmount);
+            popupText.color = Color.white;
+
+            var renderer = popupText.GetComponent<MeshRenderer>();
+            if (renderer != null)
+            {
+                var templateRenderer = template != null ? template.GetComponent<MeshRenderer>() : null;
+                if (templateRenderer != null && templateRenderer.sharedMaterial != null)
+                {
+                    renderer.sharedMaterial = templateRenderer.sharedMaterial;
+                }
+
+                renderer.sortingOrder = templateRenderer != null ? templateRenderer.sortingOrder + 2 : 38;
+            }
+
+            damagePopups.Add(new DamagePopupRuntime
+            {
+                GameObject = popupObject,
+                Transform = popupObject.transform,
+                Text = popupText,
+                RemainingDuration = DamagePopupDuration,
+                TotalDuration = DamagePopupDuration,
+                RiseSpeed = DamagePopupRiseDistance / DamagePopupDuration
+            });
+        }
+
+        private static void ConfigureDamagePopupText(TextMesh popupText, TextMesh template)
+        {
+            if (popupText == null)
+            {
+                return;
+            }
+
+            if (template != null)
+            {
+                popupText.font = template.font;
+                popupText.fontSize = template.fontSize;
+                popupText.fontStyle = template.fontStyle;
+                popupText.characterSize = template.characterSize;
+                popupText.anchor = template.anchor;
+                popupText.alignment = template.alignment;
+                popupText.tabSize = template.tabSize;
+                popupText.lineSpacing = template.lineSpacing;
+                popupText.richText = template.richText;
+                return;
+            }
+
+            popupText.anchor = TextAnchor.MiddleCenter;
+            popupText.alignment = TextAlignment.Center;
+            popupText.fontSize = 32;
+            popupText.color = Color.white;
+        }
+
+        private static Vector3 ResolveDamagePopupScale(TextMesh template)
+        {
+            if (template != null)
+            {
+                var scale = template.transform.lossyScale;
+                if (scale.x > 0f && scale.y > 0f)
+                {
+                    return new Vector3(scale.x, scale.y, 1f);
+                }
+            }
+
+            return new Vector3(0.12f, 0.12f, 1f);
+        }
+
+        private static void ConfigureHpBarLayout(SpriteRenderer hpFill, Vector3 localPosition, float width, float height)
+        {
+            if (hpFill == null)
+            {
+                return;
+            }
+
+            var root = hpFill.transform.parent;
+            if (root == null)
+            {
+                return;
+            }
+
+            root.localPosition = localPosition;
+            root.localScale = new Vector3(width, 1f, 1f);
+
+            var background = root.Find("Background");
+            if (background != null)
+            {
+                background.localPosition = Vector3.zero;
+                background.localScale = new Vector3(1f, height, 1f);
+            }
+
+            var fill = root.Find("Fill");
+            if (fill != null)
+            {
+                fill.localPosition = new Vector3(fill.localPosition.x, 0f, -0.01f);
+                fill.localScale = new Vector3(fill.localScale.x, height, 1f);
+            }
+
+            var shield = root.Find("Shield");
+            if (shield != null)
+            {
+                shield.localPosition = new Vector3(shield.localPosition.x, 0f, -0.02f);
+                shield.localScale = new Vector3(shield.localScale.x, height, 1f);
+            }
+        }
+
+        private static string FormatDamagePopupAmount(float damageAmount)
+        {
+            return Mathf.Max(1, Mathf.RoundToInt(damageAmount)).ToString();
         }
 
         private static Sprite GetSharedSprite()

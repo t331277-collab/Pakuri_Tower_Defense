@@ -88,13 +88,12 @@ Code Builder
 
 ### Status
 
-Implemented pending validation.
+Completed.
 
 ### Next Actions
 
-- Validate that `AGENTS.md`, `MDTREE.md`, root `BLACKBOARD.md`, and board files exist.
-- Confirm the domain board files contain migrated task blocks.
-- Run build only if code files are changed; this task changes markdown only.
+- Use `AGENTS.md` + `MDTREE.md` routing for future sessions and read `BLACKBOARD.md` only when the routed scope needs global status.
+- Run build only when later tasks change code; this migration itself changed markdown only.
 
 ### Evidence
 
@@ -103,8 +102,13 @@ Implemented pending validation.
 - `AGENTS.md` now says to read `AGENTS.md` and `MDTREE.md` first, then route to related boards.
 - `AGENTS.md` now states Code Reviewer execution requires explicit user permission.
 - `AGENTS.md` keeps Unity-MCP Play Mode gameplay verification assigned to the user.
+- 2026-05-02 validation: `Test-Path` confirmed `AGENTS.md`, `MDTREE.md`, root `BLACKBOARD.md`, the archive file, and all routed board files exist.
+- 2026-05-02 validation: `Get-ChildItem boards -Recurse -File` listed MON, COMBAT, RUN, UI, DATA, OPS, REPORT, and `boards/ARCHIVE/BLACKBOARD_2026-04-30_PRE_HIERARCHY.md`.
+- 2026-05-02 validation: `Select-String` over `boards/` for `## Migrated Task Blocks`, `## Task:`, `### Task title`, and `### Status` confirmed migrated task-block sections exist in the domain boards.
+- 2026-05-02 validation: `run_codex.bat`, `codex_builder_reviewer.ps1`, and `codex_prompt.txt` all exist at the repository root.
 
 ### History
 
 - 2026-04-30: User requested a hierarchical board structure to reduce token use and speed up task routing.
 - 2026-04-30: Created domain board hierarchy under `boards/`, added `MDTREE.md`, and changed `BLACKBOARD.md` into a root index.
+- 2026-05-02: Validated the root files, archived pre-hierarchy log, domain board hierarchy, migrated task-block structure, and reviewer-wrapper artifacts; the task is now complete.

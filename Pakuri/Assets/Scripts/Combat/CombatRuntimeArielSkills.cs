@@ -19,6 +19,9 @@ namespace Pakuri.Combat
         private float arielArchangelCooldownRemaining;
         private float arielBlessingTimer;
         private float arielSanctuaryTimer;
+        private float arielSanctuaryProclamationTimer;
+        private float arielArchangelShieldValue;
+        private float arielArchangelShieldTimer;
         private float arielRadiantShieldBurstDamage;
         private float arielRadiantShieldReflectMultiplier;
 
@@ -30,6 +33,9 @@ namespace Pakuri.Combat
             arielArchangelCooldownRemaining = 0f;
             arielBlessingTimer = 0f;
             arielSanctuaryTimer = 0f;
+            arielSanctuaryProclamationTimer = 0f;
+            arielArchangelShieldValue = 0f;
+            arielArchangelShieldTimer = 0f;
             arielRadiantShieldBurstDamage = 0f;
             arielRadiantShieldReflectMultiplier = 0f;
 
@@ -41,7 +47,7 @@ namespace Pakuri.Combat
                     shield *= 1.40f;
                 }
 
-                ApplyArielUnitShield(shield, ArielRadiantShieldDuration);
+            ApplyArielUnitShield(shield, ArielRadiantShieldDuration);
             }
         }
 
@@ -129,6 +135,12 @@ namespace Pakuri.Combat
 
             arielBlessingTimer = Mathf.Max(0f, arielBlessingTimer - Time.deltaTime);
             arielSanctuaryTimer = Mathf.Max(0f, arielSanctuaryTimer - Time.deltaTime);
+            arielSanctuaryProclamationTimer = Mathf.Max(0f, arielSanctuaryProclamationTimer - Time.deltaTime);
+            arielArchangelShieldTimer = Mathf.Max(0f, arielArchangelShieldTimer - Time.deltaTime);
+            if (Mathf.Approximately(arielArchangelShieldTimer, 0f))
+            {
+                arielArchangelShieldValue = 0f;
+            }
         }
 
         private bool TryTriggerArielAutomaticSkills()
@@ -414,7 +426,7 @@ namespace Pakuri.Combat
             }
 
             var duration = ArielArchangelShieldDuration + (HasChoice("ariel-e-trait-5") ? 3f : 0f);
-            ApplyArielUnitShield(shield, duration);
+            ApplyArielUnitShield(shield, duration, true);
             if (HasChoice("ariel-e-master-1"))
             {
                 arielSanctuaryTimer = Mathf.Max(arielSanctuaryTimer, ArielSanctuaryDuration);
@@ -422,7 +434,22 @@ namespace Pakuri.Combat
 
             if (HasArielSanctuaryProclamation())
             {
-                arielBlessingTimer = Mathf.Max(arielBlessingTimer, ArielSanctuaryDuration);
+                arielSanctuaryProclamationTimer = Mathf.Max(arielSanctuaryProclamationTimer, ArielSanctuaryDuration);
+            }
+
+            if (projectileRoot != null)
+            {
+                var fieldCenter = new Vector3(fieldSize.x * 0.5f, fieldSize.y * 0.5f, 0f);
+                var fieldRadius = Mathf.Sqrt((fieldSize.x * fieldSize.x) + (fieldSize.y * fieldSize.y)) * 0.5f;
+                var effect = CreateCircleEffect("ArchangelDescent", fieldCenter, fieldRadius, 0.45f);
+                effect.SkillId = "ariel-e";
+                if (effect.Renderer != null)
+                {
+                    effect.Renderer.color = new Color(1f, 0.94f, 0.68f, 0.32f);
+                    effect.Renderer.sortingOrder = 20;
+                }
+
+                skillEffects.Add(effect);
             }
 
             arielArchangelCooldownRemaining = GetArielCooldown(skill, 17f, GetArielArchangelCooldownMultiplier());
@@ -524,17 +551,52 @@ namespace Pakuri.Combat
             enemy.HolyExposureAccumulatedDamage += finalDamage;
         }
 
-        private void ApplyArielUnitShield(float shield, float duration)
+        private void ApplyArielUnitShield(float shield, float duration, bool markAsArchangelShield = false)
         {
-            unitShieldValue = Mathf.Max(unitShieldValue, Mathf.Max(0f, shield));
-            unitShieldTimer = Mathf.Max(unitShieldTimer, Mathf.Max(0f, duration));
+            var clampedShield = Mathf.Max(0f, shield);
+            var clampedDuration = Mathf.Max(0f, duration);
+            var previousShield = unitShieldValue;
+            unitShieldValue = Mathf.Max(unitShieldValue, clampedShield);
+            unitShieldTimer = Mathf.Max(unitShieldTimer, clampedDuration);
+
+            if (!IsSelectedArielMonster())
+            {
+                return;
+            }
+
+            if (markAsArchangelShield)
+            {
+                if (clampedShield >= previousShield && clampedShield > 0f)
+                {
+                    arielArchangelShieldValue = clampedShield;
+                    arielArchangelShieldTimer = clampedDuration;
+                }
+
+                return;
+            }
+
+            if (clampedShield > previousShield && arielArchangelShieldValue > 0f)
+            {
+                arielArchangelShieldValue = 0f;
+                arielArchangelShieldTimer = 0f;
+            }
         }
 
-        private void HandleArielShieldAbsorbed(float absorbed, EnemyRuntime sourceEnemy)
+        private void HandleArielShieldAbsorbed(float absorbed, float shieldBeforeAbsorb, EnemyRuntime sourceEnemy)
         {
             if (!IsSelectedArielMonster() || absorbed <= 0f)
             {
                 return;
+            }
+
+            if (shieldBeforeAbsorb > 0f && arielArchangelShieldValue > 0f)
+            {
+                var archangelShare = Mathf.Clamp01(arielArchangelShieldValue / shieldBeforeAbsorb);
+                arielArchangelShieldValue = Mathf.Max(0f, arielArchangelShieldValue - (absorbed * archangelShare));
+                if (Mathf.Approximately(arielArchangelShieldValue, 0f))
+                {
+                    arielArchangelShieldTimer = 0f;
+                }
             }
 
             if (arielRadiantShieldReflectMultiplier > 0f)
@@ -706,7 +768,7 @@ namespace Pakuri.Combat
                 }
             }
 
-            if (HasArielSanctuaryProclamation() && unitShieldValue > 0f)
+            if (HasArielSanctuaryProclamation() && HasArielArchangelShieldActive())
             {
                 bonus += 0.20f + (HasChoice("ariel-j-trait-2") ? 0.10f : 0f);
             }
@@ -787,7 +849,7 @@ namespace Pakuri.Combat
                 bonus += 0.12f + (HasChoice("ariel-c-trait-2") ? 0.06f : 0f);
             }
 
-            if (HasArielSanctuaryProclamation() && arielSanctuaryTimer > 0f)
+            if (HasArielSanctuaryProclamation() && arielSanctuaryProclamationTimer > 0f)
             {
                 bonus += 0.15f + (HasChoice("ariel-j-trait-1") ? 0.07f : 0f);
             }
@@ -831,6 +893,11 @@ namespace Pakuri.Combat
         private int GetArielShieldedAllyCount()
         {
             return unitShieldValue > 0f ? 1 : 0;
+        }
+
+        private bool HasArielArchangelShieldActive()
+        {
+            return arielArchangelShieldTimer > 0f && arielArchangelShieldValue > 0f && unitShieldValue > 0f;
         }
 
         private bool HasArielPassive(string passiveId, string passiveName)

@@ -5,6 +5,55 @@
 
 ## Migrated Task Blocks
 
+## Task: Ariel J Passive Reviewer 2026-05-03
+
+### Task title
+
+Review the latest Ariel J passive correction for timer separation and E-shield-dependent holy-damage gating.
+
+### Goals
+
+- Review the just-completed Ariel correction lines line-by-line.
+- Confirm helper existence and shield-state assumptions against the current pooled selected-Monster shield model.
+- Report whether the J passive correction still leaks onto unrelated shield state.
+
+### Constraints
+
+- Role Owner is Code Reviewer.
+- Do not implement fixes during Reviewer phase.
+- User explicitly permitted one Reviewer execution for this patch.
+- Base findings on actual files, actual command output, and Ariel reference markdown.
+
+### Role Owner
+
+Code Reviewer
+
+### Status
+
+Completed with NEEDS_CHANGES. Builder follow-up has been applied; no second review has been run.
+
+### Next Actions
+
+- Wait for an explicit user request before any new Reviewer run.
+- If another review is requested, inspect the Builder follow-up lines around `CombatRuntimeArielSkills.cs:429`, `554-580`, and `CombatRuntimeProjectiles.cs:332-356` instead of re-reviewing the pre-fix snapshot.
+
+### Evidence
+
+- `git status --short` before review showed the current Ariel correction files plus related board updates in the worktree.
+- Direct `codex review --uncommitted` from PATH failed because `codex.exe` was not on PATH.
+- Actual installed reviewer binary was resolved at `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.429.30905-win32-x64\bin\windows-x86_64\codex.exe`.
+- External Reviewer executed once with that binary and returned one actionable finding.
+- Reviewer finding: `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs:429-431` records the full E shield into `arielArchangelShieldValue` even when `ApplyArielUnitShield(...)` leaves a larger pre-existing non-E shield in `unitShieldValue`, so `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs:860-862` can still let J holy-damage bonus activate while only the older shield remains.
+- Reviewer-side local `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` failed in its environment with `Access to the path 'C:\Users\t3312\AppData\Local\Microsoft SDKs' is denied`, so the reviewer verdict is grounded in code inspection rather than its own successful build.
+- Builder-side evidence for the same patch remains: `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` previously completed with 0 errors under escalated execution, and Unity refresh returned `resulting_state: idle`.
+- Builder follow-up evidence after the review: `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs:429` now routes E through `ApplyArielUnitShield(shield, duration, true)`, `CombatRuntimeArielSkills.cs:554-580` now binds Archangel ownership to the actual pooled shield owner, `CombatRuntimeArielSkills.cs:444-451` adds the missing E battlefield effect, and `CombatRuntimeProjectiles.cs:332-356` gates Ariel support-skill retries to real firing windows. Builder-side `dotnet build` for both assemblies again completed with 0 errors, and Unity refresh returned `resulting_state: idle`.
+
+### History
+
+- 2026-05-03: User explicitly requested Code Reviewer execution for the just-completed Ariel passive correction.
+- 2026-05-03: Code Reviewer ran once through the installed Codex CLI binary and returned NEEDS_CHANGES for remaining J shield-source leakage.
+- 2026-05-03: User then instructed Builder to fix that finding and also repair Ariel E effect omission plus Ariel C barrage behavior; Builder applied the follow-up but did not rerun Reviewer because no new review was explicitly requested.
+
 ## Task: CSV Runtime Refactor Follow-Up Reviewer 2026-05-02
 
 ### Task title

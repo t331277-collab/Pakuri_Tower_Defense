@@ -52,6 +52,148 @@
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-03 Player Monster Overhead Width Follow-up
+
+### Task title
+
+Tighten the selected player Monster HP bar width and keep direct Inspector tuning available.
+
+### Goals
+
+- Reduce the selected Monster HP bar width from the previous auto-layout result.
+- Preserve separate name/HP text stacking and direct manual tuning for the selected Monster.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground the change in the existing selected-Monster combat runtime code.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly request it for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies selected Monster overhead width in Play Mode.
+- If needed, user can still disable `Auto Layout Selected Monster Status` and edit the manual selected-Monster layout fields directly.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs:235-251` now uses a tighter selected-Monster automatic bar-width configuration and still exposes the manual selected-Monster local-position/scale override fields.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeScene.cs:344-375` now clamps selected-Monster automatic bar width to an explicit max value instead of allowing the previous wider result.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and only the existing Unity/MCP warnings.
+
+### History
+
+- 2026-05-03: User reported that the selected Monster HP bar was still too long after the earlier overhead-stack split change.
+- 2026-05-03: Code Builder tightened the automatic selected-Monster width clamp while keeping the manual override path.
+
+## Task: 2026-05-03 Player Monster Overhead Status Layout Tuning
+
+### Task title
+
+Make the selected player Monster overhead name/HP display follow sprite size and expose manual layout overrides.
+
+### Goals
+
+- Keep the selected Monster name readable without overlapping the HP text or HP slider.
+- Adjust the selected Monster overhead stack from the Monster sprite size instead of relying on one fixed offset for all Monsters.
+- Give the user direct manual tuning fields in `CombatRuntimeController` when automatic layout is not enough for a specific Monster sprite.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground the change in the existing selected-Monster combat runtime display code.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly request it for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies the selected Monster overhead layout for the Monsters they care about in Play Mode.
+- If needed, user disables `Auto Layout Selected Monster Status` on the combat controller and edits the manual bar/name/HP text positions and scale fields directly.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs:235-251` adds a dedicated serialized selected-Monster status-layout section so the player Monster overhead display can be tuned without another code edit.
+- `CombatRuntimeController.cs:320-321` now stores separate selected-Monster name/HP text labels instead of one combined multiline label.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeScene.cs:253-283` now creates `MonsterNameLabel` and a separate `MonsterHpLabel`, and repositions the selected Monster HP bar from a computed layout.
+- `CombatRuntimeScene.cs:344-380` computes the automatic layout from the selected Monster sprite bounds, while the manual mode uses the serialized `selectedMonsterStatusManual*` values exactly.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors; only the existing Unity/MCP warnings remained.
+- Unity refresh completed with `resulting_state: idle`, and Unity console error query returned only MCP-FOR-UNITY handler exit logs.
+
+### History
+
+- 2026-05-03: User requested fixing the selected Monster overhead HP slider/text/name overlap and asked for direct editability if automatic tuning was hard.
+- 2026-05-03: Code Builder changed the selected Monster status visuals to separate name/HP labels, sprite-aware layout, and Inspector-visible manual overrides.
+
+## Task: 2026-05-03 Ariel J Passive Runtime Correction
+
+### Task title
+
+Correct Ariel passive J `성역 선포` so its action-speed and holy-damage windows follow the Archangel Descent reference, then close the E-shield source leak and adjacent E/C runtime bugs.
+
+### Goals
+
+- Keep Ariel passive F-I behavior unchanged.
+- Make J action speed trigger after `대천사의 강림` for 5 seconds even when E master 1 is not selected.
+- Make J holy-damage bonus depend on the remaining `대천사의 강림` shield, not any generic shield/buff timer.
+- Ensure `대천사의 강림` shows a visible battlefield effect when cast.
+- Stop Ariel support-skill retries from running every held-input frame while the primary shot is unavailable, which was surfacing as occasional C-skill barrage behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground the correction in actual Ariel reference markdown and current runtime code.
+- User performs Play Mode verification.
+- Code Reviewer was run once earlier for this patch line, and no second review is allowed without a new explicit user request.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder follow-up implemented and locally validated. Code Reviewer has not been rerun because the user did not request another review.
+
+### Next Actions
+
+- User verifies in Play Mode that Ariel J holy-damage bonus drops as soon as the active pooled shield is no longer the E shield.
+- User verifies that Ariel E now shows a visible battlefield effect on cast.
+- User verifies that holding attack no longer causes Ariel C to occasionally barrage while Ariel A is reloading or on shot cooldown.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/ariel/skill/j-sanctuary-proclamation.md:18-19` defines J as `대천사의 강림 이후 모든 아군 행동속도 +15%, 5초` and `대천사의 강림 방어막이 남아있는 아군의 신성 피해 +20%`.
+- `Pakuri/reference/2.Monster/ariel/skill/e-archangel-descent.md:22-24` defines the E shield amount, duration, and cooldown that J depends on, and documents E as a battlefield-wide effect.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs:429` now routes E shield application through `ApplyArielUnitShield(shield, duration, true)`, and `CombatRuntimeArielSkills.cs:554-580` now only marks Archangel shield state when the new shield actually claims the pooled selected-Monster shield slot while clearing it if a stronger non-E shield replaces that slot.
+- `CombatRuntimeArielSkills.cs:592-600` still reduces tracked Archangel shield value on shield absorption, so J holy-damage gating continues to decay with incoming damage.
+- `CombatRuntimeArielSkills.cs:444-451` now creates the missing `ArchangelDescent` battlefield circle effect for Ariel E.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:332-356` now gates Ariel automatic support-skill retries to real firing windows, preventing held-input per-frame retries while Ariel A is blocked by reload or shot cooldown.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and only the existing Unity/MCP reference warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
+- Unity script refresh finished with `resulting_state: idle`, and Unity console error query returned only MCP-FOR-UNITY handler exit logs.
+
+### History
+
+- 2026-05-03: User requested implementing Ariel passive skills F-J from the reference folder.
+- 2026-05-03: Code Builder verified that F-I were already wired, found that J was reusing the wrong timer/state path, and applied a correction pass grounded in the Ariel E/J documents.
+- 2026-05-03: User explicitly requested Code Reviewer execution; Reviewer returned NEEDS_CHANGES for the remaining J shield-source leak.
+- 2026-05-03: User then requested fixing the reviewer finding plus Ariel E effect omission and Ariel C occasional barrage behavior; Code Builder applied the follow-up in runtime shield ownership, E visual spawning, and Ariel-only automatic-skill trigger cadence.
+
 ## Task: Monster Shield Bar Split Visual
 
 ### Task title

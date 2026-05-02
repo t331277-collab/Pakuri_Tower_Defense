@@ -6,6 +6,70 @@ Ariel 전용 몬스터/스킬/런타임 지속 상태 파일.
 
 새 작업 시작 시 `boards/MON/MON_BLACKBOARD.md`를 먼저 읽고, 구현 예시가 필요할 때만 `boards/MON/EVE_MONSTER.md`를 참고한다.
 
+## Task: 2026-05-03 Ariel J Passive Runtime Correction
+
+### Task title
+
+Correct Ariel passive J `성역 선포` runtime to match the current E/J reference documents.
+
+### Source references
+
+- `Pakuri/reference/2.Monster/ariel/skill/e-archangel-descent.md`
+- `Pakuri/reference/2.Monster/ariel/skill/j-sanctuary-proclamation.md`
+
+### Skill slots A-J
+
+- F `ariel-f` / 빛의 인도: unchanged in this pass.
+- G `ariel-g` / 수호 교리: unchanged in this pass.
+- H `ariel-h` / 축복 전파: unchanged in this pass.
+- I `ariel-i` / 낙인 계시: unchanged in this pass.
+- J `ariel-j` / 성역 선포: corrected so post-E action speed uses its own 5-second timer and holy-damage bonus depends on remaining Archangel shield state.
+
+### Runtime implementation status
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs` now separates three Ariel timed states:
+  - `arielBlessingTimer` for blessing-related windows.
+  - `arielSanctuaryTimer` for E master 1 damage reduction.
+  - `arielSanctuaryProclamationTimer` for J post-E action speed.
+- The runtime now also tracks the remaining Archangel shield share through `arielArchangelShieldValue` and `arielArchangelShieldTimer`.
+- The Archangel shield tracking follow-up now only marks E shield state when the new E shield actually becomes the pooled active shield, and clears that state when a stronger non-E Ariel shield replaces it.
+- Ariel E now spawns a battlefield circle effect, and Ariel support-skill retries are now gated to real firing windows so C does not keep retrying every held-input frame while A cannot fire.
+
+### Data asset status
+
+- `Pakuri/Assets/Data/GameData/Monsters/ariel.asset` already contained J passive/trait definitions and did not need asset edits in this correction pass.
+
+### DebugScene test status
+
+Codex did not run Unity Play Mode. User Play Mode verification is still required.
+
+### Code Reviewer status
+
+2026-05-03 Code Reviewer result: NEEDS_CHANGES. Builder follow-up has now been applied, but Code Reviewer was not rerun because the user did not request another review.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/ariel/skill/j-sanctuary-proclamation.md:18-19` requires `대천사의 강림` post-cast action speed for 5 seconds and holy-damage bonus while the E shield remains.
+- `Pakuri/reference/2.Monster/ariel/skill/e-archangel-descent.md:22-24` defines the E shield amount/duration that J should follow and establishes E as the battlefield-wide cast this runtime visual should represent.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs:22-24` adds dedicated J timer / Archangel shield fields.
+- `CombatRuntimeArielSkills.cs:136-143` now decrements and clears those dedicated states independently of the blessing timer.
+- `CombatRuntimeArielSkills.cs:429-451` now starts J proclamation timing from E cast, marks Archangel shield ownership through the shared shield helper, and spawns the missing `ArchangelDescent` battlefield effect.
+- `CombatRuntimeArielSkills.cs:554-580` now keeps Archangel ownership tied to the actual pooled shield owner instead of blindly writing the full E shield amount into tracking state.
+- `CombatRuntimeArielSkills.cs:592-600` and `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:315-319` now reduce the tracked Archangel shield share when incoming damage is absorbed by the selected Monster shield.
+- `CombatRuntimeArielSkills.cs:771`, `852`, and `898-900` now use the dedicated E-shield/J-state checks instead of the generic shield/blessing path.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:332-356` now limits Ariel support-skill retry checks to frames where Ariel A can actually fire, closing the held-input retry path behind the reported occasional C barrage.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and only the existing Unity/MCP warnings.
+- Unity script refresh finished with `resulting_state: idle`; Unity console error query returned only MCP-FOR-UNITY handler exit logs.
+- External Code Reviewer executed once through the installed Codex CLI path `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.429.30905-win32-x64\bin\windows-x86_64\codex.exe` and returned one actionable finding.
+- Reviewer finding: `CombatRuntimeArielSkills.cs:429-431` recorded the full E shield into `arielArchangelShieldValue` even when `ApplyArielUnitShield(...)` kept a larger pre-existing non-E shield; the Builder follow-up moved that ownership decision into `ApplyArielUnitShield(..., true)` and the non-E replacement path.
+
+### History
+
+- 2026-05-03: User requested implementing Ariel passive skills F-J from the reference folder.
+- 2026-05-03: Code Builder confirmed the existing F-I wiring and corrected the incomplete J timer/shield-state implementation.
+- 2026-05-03: User explicitly requested Code Reviewer execution; Reviewer returned NEEDS_CHANGES for remaining J shield-source tracking leakage.
+- 2026-05-03: User requested fixing that reviewer finding and also reported missing Ariel E effect plus occasional Ariel C barrage behavior; Code Builder applied the follow-up and revalidated with build and Unity refresh evidence.
+
 ## Task: Ariel A-E Active And F-J Enhancement Runtime
 
 ### Task title
