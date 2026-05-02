@@ -271,35 +271,31 @@ namespace Pakuri.Run
             passiveSkillStates.Clear();
             choiceStates.Clear();
 
-            if (monster.ActiveSkills != null)
+            var activeSkills = GetActiveSkills(monster);
+            for (var i = 0; i < activeSkills.Length; i++)
             {
-                for (var i = 0; i < monster.ActiveSkills.Length; i++)
+                var skill = activeSkills[i];
+                if (skill == null)
                 {
-                    var skill = monster.ActiveSkills[i];
-                    if (skill == null)
-                    {
-                        continue;
-                    }
-
-                    activeSkillStates[skill.Slot] = skill.Slot == SkillSlot.A || skill.IsDefaultLearned;
-                    RegisterChoiceState(skill.EnhancementChoices);
-                    RegisterChoiceState(skill.MasterSkillChoices);
+                    continue;
                 }
+
+                activeSkillStates[skill.Slot] = skill.Slot == SkillSlot.A || skill.IsDefaultLearned;
+                RegisterChoiceState(skill.EnhancementChoices);
+                RegisterChoiceState(skill.MasterSkillChoices);
             }
 
-            if (monster.PassiveSkills != null)
+            var passiveSkills = GetPassiveSkills(monster);
+            for (var i = 0; i < passiveSkills.Length; i++)
             {
-                for (var i = 0; i < monster.PassiveSkills.Length; i++)
+                var passive = passiveSkills[i];
+                if (passive == null)
                 {
-                    var passive = monster.PassiveSkills[i];
-                    if (passive == null)
-                    {
-                        continue;
-                    }
-
-                    passiveSkillStates[passive.Slot] = false;
-                    RegisterChoiceState(passive.EnhancementChoices);
+                    continue;
                 }
+
+                passiveSkillStates[passive.Slot] = false;
+                RegisterChoiceState(passive.EnhancementChoices);
             }
         }
 
@@ -344,50 +340,46 @@ namespace Pakuri.Run
             isRebuilding = true;
             HideToggleSlots(skillToggles);
 
-            if (selectedMonster != null && selectedMonster.ActiveSkills != null)
+            var activeSkills = GetActiveSkills(selectedMonster);
+            for (var i = 0; i < activeSkills.Length; i++)
             {
-                for (var i = 0; i < selectedMonster.ActiveSkills.Length; i++)
+                var skill = activeSkills[i];
+                if (skill == null)
                 {
-                    var skill = selectedMonster.ActiveSkills[i];
-                    if (skill == null)
-                    {
-                        continue;
-                    }
-
-                    var captured = skill;
-                    ConfigureToggle(
-                        FindSkillToggleSlot(false, skill.Slot),
-                        $"{skill.Slot}: {skill.DisplayName}",
-                        GetState(activeSkillStates, skill.Slot),
-                        true,
-                        value => OnActiveSkillToggle(captured, value));
+                    continue;
                 }
+
+                var captured = skill;
+                ConfigureToggle(
+                    FindSkillToggleSlot(false, skill.Slot),
+                    $"{skill.Slot}: {skill.DisplayName}",
+                    GetState(activeSkillStates, skill.Slot),
+                    true,
+                    value => OnActiveSkillToggle(captured, value));
             }
 
-            if (selectedMonster != null && selectedMonster.PassiveSkills != null)
+            var passiveSkills = GetPassiveSkills(selectedMonster);
+            for (var i = 0; i < passiveSkills.Length; i++)
             {
-                for (var i = 0; i < selectedMonster.PassiveSkills.Length; i++)
+                var passive = passiveSkills[i];
+                if (passive == null)
                 {
-                    var passive = selectedMonster.PassiveSkills[i];
-                    if (passive == null)
-                    {
-                        continue;
-                    }
-
-                    var captured = passive;
-                    var interactable = passive.Slot != SkillSlot.F || GetState(activeSkillStates, SkillSlot.A);
-                    if (!interactable)
-                    {
-                        passiveSkillStates[passive.Slot] = false;
-                    }
-
-                    ConfigureToggle(
-                        FindSkillToggleSlot(true, passive.Slot),
-                        $"{passive.Slot}: {passive.DisplayName}",
-                        GetState(passiveSkillStates, passive.Slot),
-                        interactable,
-                        value => OnPassiveSkillToggle(captured, value));
+                    continue;
                 }
+
+                var captured = passive;
+                var interactable = passive.Slot != SkillSlot.F || GetState(activeSkillStates, SkillSlot.A);
+                if (!interactable)
+                {
+                    passiveSkillStates[passive.Slot] = false;
+                }
+
+                ConfigureToggle(
+                    FindSkillToggleSlot(true, passive.Slot),
+                    $"{passive.Slot}: {passive.DisplayName}",
+                    GetState(passiveSkillStates, passive.Slot),
+                    interactable,
+                    value => OnPassiveSkillToggle(captured, value));
             }
 
             isRebuilding = false;
@@ -547,14 +539,10 @@ namespace Pakuri.Run
 
         private void AddSelectedActives(RunSession session)
         {
-            if (selectedMonster == null || selectedMonster.ActiveSkills == null)
+            var activeSkills = GetActiveSkills(selectedMonster);
+            for (var i = 0; i < activeSkills.Length; i++)
             {
-                return;
-            }
-
-            for (var i = 0; i < selectedMonster.ActiveSkills.Length; i++)
-            {
-                var skill = selectedMonster.ActiveSkills[i];
+                var skill = activeSkills[i];
                 if (skill == null || !GetState(activeSkillStates, skill.Slot) || string.IsNullOrWhiteSpace(skill.DisplayName))
                 {
                     continue;
@@ -566,14 +554,10 @@ namespace Pakuri.Run
 
         private void AddSelectedPassives(RunSession session)
         {
-            if (selectedMonster == null || selectedMonster.PassiveSkills == null)
+            var passiveSkills = GetPassiveSkills(selectedMonster);
+            for (var i = 0; i < passiveSkills.Length; i++)
             {
-                return;
-            }
-
-            for (var i = 0; i < selectedMonster.PassiveSkills.Length; i++)
-            {
-                var passive = selectedMonster.PassiveSkills[i];
+                var passive = passiveSkills[i];
                 if (passive == null || !GetState(passiveSkillStates, passive.Slot))
                 {
                     continue;
@@ -589,6 +573,20 @@ namespace Pakuri.Run
                     session.ChosenRewardIds.Add(passive.PassiveId);
                 }
             }
+        }
+
+        private static SkillDefinition[] GetActiveSkills(MonsterDefinition monster)
+        {
+            return monster == null
+                ? Array.Empty<SkillDefinition>()
+                : PakuriDataManager.Instance.GetActiveSkills(monster.MonsterId, monster);
+        }
+
+        private static PassiveDefinition[] GetPassiveSkills(MonsterDefinition monster)
+        {
+            return monster == null
+                ? Array.Empty<PassiveDefinition>()
+                : PakuriDataManager.Instance.GetPassiveSkills(monster.MonsterId, monster);
         }
 
         private void AddSelectedChoices(RunSession session)

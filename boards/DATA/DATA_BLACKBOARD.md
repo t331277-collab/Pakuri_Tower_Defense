@@ -5,6 +5,56 @@
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-02 Legacy Seeder Removal And Dataset-Level Split
+
+### Task title
+
+Remove the remaining legacy seeder path and split CSV runtime support by dataset responsibility.
+
+### Goals
+
+- Delete the obsolete `PakuriGameDataSeeder` editor-only path now that runtime source-of-truth is CSV.
+- Remove the old bootstrap menu flow tied to `GameDataCatalog.asset`.
+- Split CSV runtime support into dataset-oriented files instead of keeping row/parser support bundled together.
+- Extend `PakuriDataManager` so monster sub-data queries also route through one contract.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground all claims in actual file edits and actual Unity/editor output.
+- Do not run Unity Play Mode verification.
+- Code Reviewer has not run yet for this follow-up phase.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, locally validated, and later reviewed with no discrete actionable bug reported.
+
+### Next Actions
+
+- If later requested, continue by removing dormant legacy `Assets/Data/GameData/*.asset` authoring dependencies outside runtime.
+- If a stricter verification pass is needed later, use Unity compile/console evidence again because reviewer-side `dotnet build` remained blocked by sandboxed SDK path access.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Data/Editor/Legacy/PakuriGameDataSeeder.cs` and its `.meta` file were deleted from the worktree.
+- `Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.Editor.cs` now exposes only `Pakuri/Sync CSV Runtime Catalog Assets` and `Pakuri/Validate CSV Source Data`; the old bootstrap menu is no longer present.
+- `Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.cs` still points runtime source loading at `ImportedSourceAssetRoot = "Assets/CSVdata/source"` and resource catalogs at `Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog` and `Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog`.
+- Added dataset-split files: `PakuriCsvRuntimeData.CsvSupport.cs`, `PakuriCsvRuntimeData.SourceModel.cs`, `PakuriCsvRuntimeData.CatalogDataset.cs`, `PakuriCsvRuntimeData.MonsterDataset.cs`, and `PakuriCsvRuntimeData.EnemyDataset.cs`.
+- `Pakuri/Assets/Scripts/Data/PakuriDataManager.cs` now exposes `GetActiveSkills(...)`, `GetPassiveSkills(...)`, `GetRewardChoices(...)`, `ResolveActiveSkill(...)`, and `ResolvePassiveSkill(...)` in addition to the earlier roster queries.
+- `Select-String` over `Pakuri/Assets/Scripts/Data/*.cs` found the new dataset files and menu strings, and no remaining `PakuriGameDataSeeder` hit under `Pakuri/Assets/Scripts/Data`.
+- After fixing one `System.Random` ambiguity and one missing `using System;` import, Unity refresh completed without C# compile errors, and `Pakuri/Validate CSV Source Data` again logged `PakuriCsvRuntimeData loaded runtime catalog from resource source 'Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog' with 5 monsters and 8 stage-one enemies.`
+- External `codex review --uncommitted` later reviewed the modified runtime-data refactor files and reported no discrete actionable bug introduced by this patch; the reviewer also stated it could not complete a local `dotnet build` because SDK/user sentinel paths were blocked in that environment.
+
+### History
+
+- 2026-05-02: User chose the “remove legacy seeder” direction and then requested implementation of the remaining partial items: dataset-level split and broader query-contract expansion.
+- 2026-05-02: Builder deleted `PakuriGameDataSeeder`, removed the old bootstrap menu path, split row/parser support into dataset files, expanded `PakuriDataManager`, fixed the resulting compile errors, and revalidated the CSV runtime load path in Unity.
+- 2026-05-02: User explicitly requested Code Reviewer execution for the current follow-up, and the external reviewer returned no discrete actionable bug for this patch set.
+
 ## Task: 2026-05-02 Query Contract Unification Around PakuriDataManager
 
 ### Task title

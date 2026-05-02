@@ -45,6 +45,52 @@ Implemented pending validation.
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-02 Report Refresh For Fifth Refactor Phase
+
+### Task title
+
+Refresh the refactor HTML reports so they describe the later legacy-removal, dataset-split, and collection-query expansion phase.
+
+### Goals
+
+- Update the implementation report to reflect the current code after the fifth refactor phase.
+- Update the phased log report so the ordered `N차 개선` history includes the latest step rather than stopping at the earlier partial state.
+- Keep both HTML reports grounded in actual current files, validation logs, and board history.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested HTML updates.
+- Ground every statement in actual current code, actual board history, and actual Unity/editor output.
+- Do not claim a Reviewer PASS before the requested Reviewer run is actually executed.
+- Do not run Unity Play Mode verification for this documentation task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented. Later reviewer execution reported no discrete actionable bug in the associated code changes.
+
+### Next Actions
+
+- If another refactor phase happens later, append `6차 개선` rather than compressing the earlier chronology.
+- If a later reviewer or user validation contradicts the current conclusion, refresh both reports again with that new evidence.
+
+### Evidence
+
+- `Pakuri/reference/Report/2026-05-02-data-structure-refactor-implementation-report.html` now contains `5차 개선: legacy 제거 + dataset 파일 세분화 + collection query 확장` and documents the deletion of `PakuriGameDataSeeder.cs`, the dataset files, and the expanded `PakuriDataManager` API.
+- The same implementation report now lists `GetActiveSkills`, `GetPassiveSkills`, `GetRewardChoices`, `ResolveActiveSkill`, and `ResolvePassiveSkill` in the current file-role section.
+- `Pakuri/reference/Report/2026-05-02-data-structure-refactor-phased-log-report.html` now contains a dedicated `5차 개선` row and a section titled `5차 개선: legacy 제거 + dataset 세분화 + collection query 확장`.
+- `Select-String` against the two HTML files found `PakuriGameDataSeeder`, `dataset`, `세분화`, `조회 계약`, and the new collection query method names in the refreshed sections.
+- The later external reviewer pass on the related uncommitted code changes reported no discrete actionable bug, so the reports still match the current reviewed implementation state.
+
+### History
+
+- 2026-05-02: User asked for the remaining priority items to be implemented and for both refactor HTML reports to be updated to match the new state.
+- 2026-05-02: Builder refreshed both HTML reports so they now include the fifth refactor phase and no longer stop at the earlier partial-implementation stage.
+- 2026-05-02: After the requested reviewer pass completed without actionable findings, the report board was updated to reflect that the current documentation still matches the reviewed code snapshot.
+
 ## Task: 2026-05-02 Data Structure Refactor Phased Log Report
 
 ### Task title
@@ -134,11 +180,13 @@ Completed and refreshed to match both the later `PakuriCsvRuntimeData` split fol
 - Verified `MainMenuFlowController.cs`, `DebugSceneController.cs`, `RunFlowController.cs`, `RunCombatUiController.cs`, `RunSceneBootstrap.cs`, and `CombatRuntimeEnemies.cs` now route their gameplay roster/fallback queries through `PakuriDataManager`.
 - Verified `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog.asset` references the 7 imported CSV TextAssets and `PakuriCsvRuntimeAssetCatalog.asset` contains 11 `AssetPath:` sprite mappings.
 - Re-ran `Pakuri/Validate CSV Source Data`; Unity console logged `PakuriCsvRuntimeData loaded runtime catalog from resource source 'Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog' with 5 monsters and 8 stage-one enemies.`
-- Verified the current legacy bootstrap tool is `Pakuri/Assets/Scripts/Data/Editor/Legacy/PakuriGameDataSeeder.cs`, and it still exposes `Pakuri/Seed Default Game Data`, hardcoded monsters/enemies, and markdown skill-doc parsing.
+- Verified the current codebase no longer contains `Pakuri/Assets/Scripts/Data/Editor/Legacy/PakuriGameDataSeeder.cs`, and the refreshed report now treats that path as removed legacy rather than a current bootstrap tool.
 - Re-read the refreshed HTML with `Get-Content -Encoding UTF8` and confirmed the updated query-contract text, the revised section 6/7 split, and the revised remaining-debt priorities are present.
 - Re-read the refreshed HTML again and confirmed section 6 now closes before a new `<section class="grid">` starts section 7, so the two cards no longer share the same row.
 - Re-read the refreshed HTML again and confirmed a new top card titled `현재 데이터 로드와 SO 적용 원리` now explains that runtime loads CSV `TextAsset` data, validates it, creates in-memory `ScriptableObject` instances, and registers them in `PakuriDataManager`.
 - Re-read the refreshed HTML again and confirmed a new `Before / After: 개선 전과 개선 후 작동 원리` table now compares the old criticized structure against the current runtime flow across source location, load path, SO role, asset binding, validation, and query contract.
+- Re-read the refreshed HTML again and confirmed section 1 now explicitly explains why SO remains as a runtime adapter, how `ResolveCatalogOrFallback(...)` removed the hidden fallback problem, and how startup fatal validation replaced the old warning/fallback-heavy structure.
+- Re-read the refreshed HTML again and confirmed section 6 now explicitly lists current SO drawbacks: Unity-coupled runtime fields, dual maintenance between CSV schema and runtime SO fields, and the remaining SO-based intermediate catalog layer.
 
 ### History
 
@@ -150,6 +198,7 @@ Completed and refreshed to match both the later `PakuriCsvRuntimeData` split fol
 - 2026-05-02: User clarified that the overlap was visual, not content-level, so Builder separated sections 6 and 7 into different grid rows in the HTML layout.
 - 2026-05-02: User then asked for a simple explanation of the current data-load and SO-application principle, so Builder added a new top explanation card above the Executive Summary.
 - 2026-05-02: User then asked for the criticized pre-refactor version and the current runtime principle to be written as a `Before / After` comparison, so Builder added a comparison table near the top of the report.
+- 2026-05-02: User then asked the report to spell out why SO still remains, which old problems that decision now solves, what SO's current role is, and what disadvantages remain, so Builder expanded section 1 and section 6 with that code-grounded explanation.
 
 ## Task: 2026-05-01 Assets Structure Report Update With Data Review Findings
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
@@ -553,19 +554,15 @@ namespace Pakuri.Run
 
         private void AddActiveSkillOfferingChoices(MonsterDefinition monster)
         {
-            if (monster.ActiveSkills == null)
-            {
-                return;
-            }
-
             if (currentSession.LearnedActives.Count >= MaxRunActiveSkillCount)
             {
                 return;
             }
 
-            for (var i = 0; i < monster.ActiveSkills.Length; i++)
+            var activeSkills = GetActiveSkills(monster);
+            for (var i = 0; i < activeSkills.Length; i++)
             {
-                var skill = monster.ActiveSkills[i];
+                var skill = activeSkills[i];
                 if (skill == null || string.IsNullOrWhiteSpace(skill.DisplayName))
                 {
                     continue;
@@ -590,19 +587,15 @@ namespace Pakuri.Run
 
         private void AddPassiveSkillOfferingChoices(MonsterDefinition monster)
         {
-            if (monster.PassiveSkills == null)
-            {
-                return;
-            }
-
             if (currentSession.LearnedPassives.Count >= MaxRunPassiveSkillCount)
             {
                 return;
             }
 
-            for (var i = 0; i < monster.PassiveSkills.Length; i++)
+            var passiveSkills = GetPassiveSkills(monster);
+            for (var i = 0; i < passiveSkills.Length; i++)
             {
-                var passive = monster.PassiveSkills[i];
+                var passive = passiveSkills[i];
                 if (passive == null || string.IsNullOrWhiteSpace(passive.DisplayName))
                 {
                     continue;
@@ -642,14 +635,10 @@ namespace Pakuri.Run
                 return;
             }
 
-            if (monster.InitialRewardChoices == null)
+            var rewardChoices = GetRewardChoices(monster);
+            for (var i = 0; i < rewardChoices.Length; i++)
             {
-                return;
-            }
-
-            for (var i = 0; i < monster.InitialRewardChoices.Length; i++)
-            {
-                var reward = monster.InitialRewardChoices[i];
+                var reward = rewardChoices[i];
                 if (reward == null || string.IsNullOrWhiteSpace(reward.RewardId) || currentSession.HasChosenReward(reward.RewardId))
                 {
                     continue;
@@ -673,14 +662,10 @@ namespace Pakuri.Run
 
         private void AddActiveEnhancementOfferingChoices(MonsterDefinition monster)
         {
-            if (monster.ActiveSkills == null)
+            var activeSkills = GetActiveSkills(monster);
+            for (var i = 0; i < activeSkills.Length; i++)
             {
-                return;
-            }
-
-            for (var i = 0; i < monster.ActiveSkills.Length; i++)
-            {
-                var skill = monster.ActiveSkills[i];
+                var skill = activeSkills[i];
                 if (skill == null || skill.EnhancementChoices == null || !currentSession.HasLearnedActive(skill.DisplayName))
                 {
                     continue;
@@ -697,14 +682,10 @@ namespace Pakuri.Run
 
         private void AddPassiveEnhancementOfferingChoices(MonsterDefinition monster)
         {
-            if (monster.PassiveSkills == null)
+            var passiveSkills = GetPassiveSkills(monster);
+            for (var i = 0; i < passiveSkills.Length; i++)
             {
-                return;
-            }
-
-            for (var i = 0; i < monster.PassiveSkills.Length; i++)
-            {
-                var passive = monster.PassiveSkills[i];
+                var passive = passiveSkills[i];
                 if (passive == null || passive.EnhancementChoices == null || !currentSession.HasLearnedPassive(passive.DisplayName))
                 {
                     continue;
@@ -721,14 +702,10 @@ namespace Pakuri.Run
 
         private void AddMasterSkillOfferingChoices(MonsterDefinition monster)
         {
-            if (monster.ActiveSkills == null)
+            var activeSkills = GetActiveSkills(monster);
+            for (var i = 0; i < activeSkills.Length; i++)
             {
-                return;
-            }
-
-            for (var i = 0; i < monster.ActiveSkills.Length; i++)
-            {
-                var skill = monster.ActiveSkills[i];
+                var skill = activeSkills[i];
                 if (skill == null || skill.MasterSkillChoices == null || !currentSession.HasLearnedActive(skill.DisplayName))
                 {
                     continue;
@@ -800,14 +777,10 @@ namespace Pakuri.Run
 
         private bool HasLearnedRequiredActive(MonsterDefinition monster, SkillSlot requiredSlot)
         {
-            if (monster.ActiveSkills == null)
+            var activeSkills = GetActiveSkills(monster);
+            for (var i = 0; i < activeSkills.Length; i++)
             {
-                return false;
-            }
-
-            for (var i = 0; i < monster.ActiveSkills.Length; i++)
-            {
-                var skill = monster.ActiveSkills[i];
+                var skill = activeSkills[i];
                 if (skill != null
                     && skill.Slot == requiredSlot
                     && currentSession.HasLearnedActive(skill.DisplayName))
@@ -823,7 +796,7 @@ namespace Pakuri.Run
         {
             for (var i = offeringChoices.Count - 1; i > 0; i--)
             {
-                var swapIndex = Random.Range(0, i + 1);
+                var swapIndex = UnityEngine.Random.Range(0, i + 1);
                 var current = offeringChoices[i];
                 offeringChoices[i] = offeringChoices[swapIndex];
                 offeringChoices[swapIndex] = current;
@@ -896,6 +869,27 @@ namespace Pakuri.Run
         private MonsterDefinition ResolveFallbackMonster()
         {
             return PakuriDataManager.Instance.ResolveMonster(RunSceneBootstrap.FallbackMonsterId, fallbackCatalog);
+        }
+
+        private static SkillDefinition[] GetActiveSkills(MonsterDefinition monster)
+        {
+            return monster == null
+                ? Array.Empty<SkillDefinition>()
+                : PakuriDataManager.Instance.GetActiveSkills(monster.MonsterId, monster);
+        }
+
+        private static PassiveDefinition[] GetPassiveSkills(MonsterDefinition monster)
+        {
+            return monster == null
+                ? Array.Empty<PassiveDefinition>()
+                : PakuriDataManager.Instance.GetPassiveSkills(monster.MonsterId, monster);
+        }
+
+        private static MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(MonsterDefinition monster)
+        {
+            return monster == null
+                ? Array.Empty<MonsterDefinition.RewardChoiceDefinition>()
+                : PakuriDataManager.Instance.GetRewardChoices(monster.MonsterId, monster);
         }
 
         private void RefreshHud()

@@ -11,6 +11,9 @@ namespace Pakuri.Data
         private readonly Dictionary<string, PassiveDefinition> passiveSkills = new Dictionary<string, PassiveDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, SkillChoiceDefinition> skillChoices = new Dictionary<string, SkillChoiceDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, MonsterDefinition.RewardChoiceDefinition> rewardChoices = new Dictionary<string, MonsterDefinition.RewardChoiceDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, SkillDefinition[]> activeSkillsByMonster = new Dictionary<string, SkillDefinition[]>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, PassiveDefinition[]> passiveSkillsByMonster = new Dictionary<string, PassiveDefinition[]>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, MonsterDefinition.RewardChoiceDefinition[]> rewardChoicesByMonster = new Dictionary<string, MonsterDefinition.RewardChoiceDefinition[]>(StringComparer.OrdinalIgnoreCase);
 
         private static readonly PakuriDataManager instance = new PakuriDataManager();
 
@@ -31,6 +34,9 @@ namespace Pakuri.Data
             passiveSkills.Clear();
             skillChoices.Clear();
             rewardChoices.Clear();
+            activeSkillsByMonster.Clear();
+            passiveSkillsByMonster.Clear();
+            rewardChoicesByMonster.Clear();
 
             if (catalog == null)
             {
@@ -103,28 +109,33 @@ namespace Pakuri.Data
             return value != null;
         }
 
+        public GameDataCatalog GetCatalog(GameDataCatalog fallbackCatalog = null)
+        {
+            return CurrentCatalog ?? fallbackCatalog;
+        }
+
         public MonsterDefinition[] GetMonsters(GameDataCatalog fallbackCatalog = null)
         {
-            var runtimeMonsters = CurrentCatalog != null ? CurrentCatalog.Monsters : null;
-            if (runtimeMonsters != null && runtimeMonsters.Length > 0)
+            var catalog = GetCatalog(fallbackCatalog);
+            var monstersFromCatalog = catalog != null ? catalog.Monsters : null;
+            if (monstersFromCatalog != null && monstersFromCatalog.Length > 0)
             {
-                return runtimeMonsters;
+                return monstersFromCatalog;
             }
 
-            var fallbackMonsters = fallbackCatalog != null ? fallbackCatalog.Monsters : null;
-            return fallbackMonsters ?? Array.Empty<MonsterDefinition>();
+            return Array.Empty<MonsterDefinition>();
         }
 
         public EnemyDefinition[] GetStageOneEnemies(GameDataCatalog fallbackCatalog = null)
         {
-            var runtimeEnemies = CurrentCatalog != null ? CurrentCatalog.StageOneEnemies : null;
-            if (runtimeEnemies != null && runtimeEnemies.Length > 0)
+            var catalog = GetCatalog(fallbackCatalog);
+            var enemiesFromCatalog = catalog != null ? catalog.StageOneEnemies : null;
+            if (enemiesFromCatalog != null && enemiesFromCatalog.Length > 0)
             {
-                return runtimeEnemies;
+                return enemiesFromCatalog;
             }
 
-            var fallbackEnemies = fallbackCatalog != null ? fallbackCatalog.StageOneEnemies : null;
-            return fallbackEnemies ?? Array.Empty<EnemyDefinition>();
+            return Array.Empty<EnemyDefinition>();
         }
 
         public MonsterDefinition ResolveMonster(string id, GameDataCatalog fallbackCatalog = null)
@@ -151,6 +162,99 @@ namespace Pakuri.Data
             return monsters.Length > 0 ? monsters[0] : null;
         }
 
+        public SkillDefinition[] GetActiveSkills(string monsterId, MonsterDefinition fallbackMonster = null)
+        {
+            if (!string.IsNullOrWhiteSpace(monsterId)
+                && activeSkillsByMonster.TryGetValue(monsterId, out var registeredSkills)
+                && registeredSkills != null
+                && registeredSkills.Length > 0)
+            {
+                return registeredSkills;
+            }
+
+            if (fallbackMonster != null
+                && string.Equals(fallbackMonster.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase)
+                && fallbackMonster.ActiveSkills != null
+                && fallbackMonster.ActiveSkills.Length > 0)
+            {
+                return fallbackMonster.ActiveSkills;
+            }
+
+            return Array.Empty<SkillDefinition>();
+        }
+
+        public PassiveDefinition[] GetPassiveSkills(string monsterId, MonsterDefinition fallbackMonster = null)
+        {
+            if (!string.IsNullOrWhiteSpace(monsterId)
+                && passiveSkillsByMonster.TryGetValue(monsterId, out var registeredPassives)
+                && registeredPassives != null
+                && registeredPassives.Length > 0)
+            {
+                return registeredPassives;
+            }
+
+            if (fallbackMonster != null
+                && string.Equals(fallbackMonster.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase)
+                && fallbackMonster.PassiveSkills != null
+                && fallbackMonster.PassiveSkills.Length > 0)
+            {
+                return fallbackMonster.PassiveSkills;
+            }
+
+            return Array.Empty<PassiveDefinition>();
+        }
+
+        public MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(string monsterId, MonsterDefinition fallbackMonster = null)
+        {
+            if (!string.IsNullOrWhiteSpace(monsterId)
+                && rewardChoicesByMonster.TryGetValue(monsterId, out var registeredRewards)
+                && registeredRewards != null
+                && registeredRewards.Length > 0)
+            {
+                return registeredRewards;
+            }
+
+            if (fallbackMonster != null
+                && string.Equals(fallbackMonster.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase)
+                && fallbackMonster.InitialRewardChoices != null
+                && fallbackMonster.InitialRewardChoices.Length > 0)
+            {
+                return fallbackMonster.InitialRewardChoices;
+            }
+
+            return Array.Empty<MonsterDefinition.RewardChoiceDefinition>();
+        }
+
+        public SkillDefinition ResolveActiveSkill(string monsterId, SkillSlot slot, MonsterDefinition fallbackMonster = null)
+        {
+            var skills = GetActiveSkills(monsterId, fallbackMonster);
+            for (var i = 0; i < skills.Length; i++)
+            {
+                var skill = skills[i];
+                if (skill != null && skill.Slot == slot)
+                {
+                    return skill;
+                }
+            }
+
+            return null;
+        }
+
+        public PassiveDefinition ResolvePassiveSkill(string monsterId, SkillSlot slot, MonsterDefinition fallbackMonster = null)
+        {
+            var passives = GetPassiveSkills(monsterId, fallbackMonster);
+            for (var i = 0; i < passives.Length; i++)
+            {
+                var passive = passives[i];
+                if (passive != null && passive.Slot == slot)
+                {
+                    return passive;
+                }
+            }
+
+            return null;
+        }
+
         private void RegisterMonsters(MonsterDefinition[] catalogMonsters)
         {
             if (catalogMonsters == null)
@@ -167,6 +271,9 @@ namespace Pakuri.Data
                 }
 
                 monsters[monster.MonsterId] = monster;
+                activeSkillsByMonster[monster.MonsterId] = monster.ActiveSkills ?? Array.Empty<SkillDefinition>();
+                passiveSkillsByMonster[monster.MonsterId] = monster.PassiveSkills ?? Array.Empty<PassiveDefinition>();
+                rewardChoicesByMonster[monster.MonsterId] = monster.InitialRewardChoices ?? Array.Empty<MonsterDefinition.RewardChoiceDefinition>();
 
                 if (monster.ActiveSkills != null)
                 {

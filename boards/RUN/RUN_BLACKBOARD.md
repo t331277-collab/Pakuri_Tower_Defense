@@ -5,6 +5,54 @@
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-02 Run Skill And Reward Query Expansion
+
+### Task title
+
+Expand run-scene gameplay queries so monster skill and reward sub-data also flow through `PakuriDataManager`.
+
+### Goals
+
+- Stop run UI/debug consumers from reading `monster.ActiveSkills`, `monster.PassiveSkills`, and `monster.InitialRewardChoices` directly as their primary query path.
+- Reuse the new collection-level query helpers for offering, debug toggles, and fallback skill lookups.
+- Keep current run UI behavior unchanged while moving the lookup contract.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground all claims in actual script edits and actual Unity/editor output.
+- Do not run Unity Play Mode verification.
+- Code Reviewer has not run yet for this follow-up phase.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, locally validated, and later reviewed with no discrete actionable bug reported.
+
+### Next Actions
+
+- User can verify in Play Mode that prisoner offerings, debug skill toggles, and fallback monster skill resolution still behave the same with CSV-backed data.
+- If later requested, move `RunSession` learned-state checks away from `DisplayName` strings to stable ids.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` now resolves active skills, passive skills, and initial reward choices through local helpers that call `PakuriDataManager.Instance.GetActiveSkills(...)`, `GetPassiveSkills(...)`, and `GetRewardChoices(...)`.
+- `RunCombatUiController.cs` still resolves the fallback monster through `PakuriDataManager.Instance.ResolveMonster(...)`.
+- `Pakuri/Assets/Scripts/Run/DebugSceneController.cs` now rebuilds active/passive toggle lists through local helpers that call `PakuriDataManager.Instance.GetActiveSkills(...)` and `GetPassiveSkills(...)`.
+- `MainMenuFlowController.cs`, `RunFlowController.cs`, and `RunSceneBootstrap.cs` still use the previously unified `PakuriDataManager` roster/fallback contract.
+- `Select-String` over `Pakuri/Assets/Scripts/Run/*.cs` found the new `GetActiveSkills`, `GetPassiveSkills`, and `GetRewardChoices` helper calls in `RunCombatUiController.cs` and `DebugSceneController.cs`.
+- After one compile-fix pass, Unity refresh completed without C# compile errors, and the CSV validation menu still loaded the 5-monster / 8-enemy runtime catalog.
+- External `codex review --uncommitted` later covered the modified run-side files (`DebugSceneController`, `RunCombatUiController`) and reported no discrete actionable bug introduced by this patch.
+
+### History
+
+- 2026-05-02: User asked to finish the still-partial query-contract expansion after the earlier roster-level unification.
+- 2026-05-02: Builder moved run combat offering/debug sub-data lookup onto `PakuriDataManager` collection queries and revalidated the scripts in Unity.
+- 2026-05-02: The later reviewer pass inspected the modified run-side query-expansion files and did not raise an actionable follow-up bug.
+
 ## Task: 2026-05-02 Run Query Contract Unification
 
 ### Task title

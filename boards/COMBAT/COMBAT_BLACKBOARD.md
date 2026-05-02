@@ -5,6 +5,52 @@
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-02 Combat Skill Query Expansion
+
+### Task title
+
+Expand combat-side monster skill lookup to the new `PakuriDataManager` collection query contract.
+
+### Goals
+
+- Stop remaining combat consumers from reading selected-monster active skill arrays directly when the manager can resolve them.
+- Reuse the same collection-level query helpers already used by run-scene UI/debug flows.
+- Keep current Eve-specific runtime behavior unchanged while moving the data lookup contract.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground all claims in actual script edits and actual Unity/editor output.
+- Do not run Unity Play Mode verification.
+- Code Reviewer has not run yet for this follow-up phase.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, locally validated, and later reviewed with no discrete actionable bug reported.
+
+### Next Actions
+
+- User can verify in Play Mode that Eve skill selection and runtime dispatch still work with manager-backed active skill lookup.
+- If later requested, continue replacing direct monster-child array traversal in other combat runtime files.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs:923` now gets active skills through `PakuriDataManager.Instance.GetActiveSkills(selectedMonster.MonsterId, selectedMonster)` before resolving the selected slot.
+- `CombatRuntimeEnemies.cs` continues to use `PakuriDataManager.Instance.GetStageOneEnemies(gameDataCatalog)` from the earlier roster-level unification.
+- `Select-String` over `Pakuri/Assets/Scripts/Combat/*.cs` found `PakuriDataManager` query calls in both `CombatRuntimeEnemies.cs` and `CombatRuntimeEveSkills.cs`.
+- After the follow-up compile-fix pass, Unity refresh completed without C# compile errors, and `Pakuri/Validate CSV Source Data` still logged successful runtime catalog loading from `Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog`.
+- External `codex review --uncommitted` later covered the modified combat-side file `CombatRuntimeEveSkills.cs` and reported no discrete actionable bug introduced by this patch.
+
+### History
+
+- 2026-05-02: User asked to finish the still-partial query-contract expansion after the earlier stage-one enemy pool unification.
+- 2026-05-02: Builder changed Eve skill lookup to use the manager-backed active-skill query and revalidated the runtime loader path in Unity.
+- 2026-05-02: The later reviewer pass inspected the modified combat-side query-expansion file and did not raise an actionable follow-up bug.
+
 ## Task: 2026-05-02 Combat Query Contract Unification
 
 ### Task title

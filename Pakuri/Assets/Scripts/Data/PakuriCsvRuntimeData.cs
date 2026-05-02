@@ -9,7 +9,6 @@ namespace Pakuri.Data
 {
     public static partial class PakuriCsvRuntimeData
     {
-        private const string LegacyCatalogAssetPath = "Assets/Data/GameData/GameDataCatalog.asset";
         private const string ImportedSourceAssetRoot = "Assets/CSVdata/source";
         private const string RuntimeResourcesFolderAssetPath = "Assets/Resources/Pakuri/CSVRuntime";
         private const string SourceCatalogAssetPath = RuntimeResourcesFolderAssetPath + "/PakuriCsvRuntimeSourceCatalog.asset";

@@ -228,44 +228,6 @@ namespace Pakuri.Data
             }
         }
 
-        private static void ValidateCatalogEntries<T>(
-            Dictionary<string, CatalogEntryRow> entries,
-            Dictionary<string, T> targetLookup,
-            string tableName,
-            List<string> errors)
-        {
-            if (entries.Count == 0)
-            {
-                errors.Add($"{tableName} has no rows.");
-                return;
-            }
-
-            foreach (var entry in entries.Values)
-            {
-                if (!targetLookup.ContainsKey(entry.RefId))
-                {
-                    errors.Add($"{tableName} entry '{entry.Id}' references unknown id '{entry.RefId}'.");
-                }
-            }
-        }
-
-        private static void ValidateExpectedSlots(
-            string monsterId,
-            HashSet<SkillSlot> slots,
-            SkillSlot first,
-            SkillSlot last,
-            string kindLabel,
-            List<string> errors)
-        {
-            for (var slot = first; slot <= last; slot++)
-            {
-                if (!slots.Contains(slot))
-                {
-                    errors.Add($"Monster '{monsterId}' is missing {kindLabel} slot '{slot}'.");
-                }
-            }
-        }
-
         private static void ValidateRuntimeCatalogOrThrow(GameDataCatalog catalog, SourceModel sourceModel)
         {
             var errors = new List<string>();

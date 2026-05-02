@@ -5,6 +5,51 @@
 
 ## Migrated Task Blocks
 
+## Task: CSV Runtime Refactor Follow-Up Reviewer 2026-05-02
+
+### Task title
+
+Review the post-fix CSV runtime refactor follow-up, including legacy seeder removal, dataset-level split, and expanded `PakuriDataManager` collection queries.
+
+### Goals
+
+- Review the latest uncommitted builder follow-up against actual changed files.
+- Check changed lines for helper existence, null risk, and obvious behavior side effects.
+- Judge whether the latest implementation still fits the reference-guided overall flow without implementing fixes.
+
+### Constraints
+
+- Role Owner is Code Reviewer.
+- Do not implement fixes during Reviewer phase.
+- This is the single explicitly permitted Reviewer execution for the current builder follow-up.
+- Base findings on actual files, actual command output, and the reference/report context already maintained in the repository.
+
+### Role Owner
+
+Code Reviewer
+
+### Status
+
+Completed. Reviewer did not report a discrete actionable bug for the current patch set.
+
+### Next Actions
+
+- No Builder follow-up is required from this reviewer pass.
+- If the user later requests a stricter verification path, pair the existing Unity compile/console evidence with another user-approved review or broader build environment.
+
+### Evidence
+
+- External `codex review --uncommitted` completed on the current uncommitted state after the builder follow-up.
+- The reviewer summary explicitly named the modified runtime-data refactor files: `PakuriDataManager`, the split `PakuriCsvRuntimeData*` partials, `DebugSceneController`, `RunCombatUiController`, and `CombatRuntimeEveSkills`.
+- Reviewer verdict text: it “did not find a discrete, actionable bug that is clearly introduced by this patch.”
+- The same reviewer output also stated that it could not complete a local `dotnet build` because the environment denied access to SDK user-level sentinel/SDK paths, so the reviewer verdict is based on line-by-line code inspection rather than a successful local build.
+- Builder-side Unity evidence from the same patch set remains: Unity refresh completed after compile fixes, console reads showed no C# compile errors, and `Pakuri/Validate CSV Source Data` still logged a successful 5-monster / 8-enemy runtime catalog load from `Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog`.
+
+### History
+
+- 2026-05-02: User explicitly requested that the remaining priority implementation be followed by a Code Reviewer judgment against the overall reference-guided game flow.
+- 2026-05-02: Code Reviewer executed `codex review --uncommitted` once on the current follow-up patch set and returned no discrete actionable bug.
+
 ## Task: CSV Runtime Migration Reviewer 2026-05-02
 
 ### Task title

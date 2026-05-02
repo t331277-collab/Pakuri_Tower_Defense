@@ -915,14 +915,15 @@ namespace Pakuri.Combat
 
         private SkillDefinition FindSelectedSkill(SkillSlot slot)
         {
-            if (selectedMonster == null || selectedMonster.ActiveSkills == null)
+            if (selectedMonster == null)
             {
                 return null;
             }
 
-            for (var i = 0; i < selectedMonster.ActiveSkills.Length; i++)
+            var activeSkills = PakuriDataManager.Instance.GetActiveSkills(selectedMonster.MonsterId, selectedMonster);
+            for (var i = 0; i < activeSkills.Length; i++)
             {
-                var skill = selectedMonster.ActiveSkills[i];
+                var skill = activeSkills[i];
                 if (skill != null && skill.Slot == slot)
                 {
                     return skill;
