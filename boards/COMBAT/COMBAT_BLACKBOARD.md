@@ -5,6 +5,139 @@
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-02 Combat Query Contract Unification
+
+### Task title
+
+Route stage-one enemy pool lookup through `PakuriDataManager`.
+
+### Goals
+
+- Remove direct combat reads of `gameDataCatalog.StageOneEnemies`.
+- Reuse the same data-manager query contract used by run-entry/UI paths.
+- Keep existing Stage 1 fallback enemy creation behavior unchanged.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground all claims in actual script edits and actual Unity/editor output.
+- Do not run Unity Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- If later requested, continue the same pattern by moving more combat data pulls away from serialized catalog fields and toward stable ids or typed query services.
+- User can verify in Play Mode that stage-one encounters still spawn the expected enemy roster.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEnemies.cs:103` now resolves the stage-one enemy pool with `PakuriDataManager.Instance.GetStageOneEnemies(gameDataCatalog)`.
+- `CombatRuntimeEnemies.cs` still keeps the existing in-code fallback creation path for missing Stage 1 midboss/boss definitions, so this pass changed the query contract without changing encounter rules.
+- After the change, the script-tree `Select-String` query for `gameDataCatalog.StageOneEnemies` no longer found combat consumer usage outside `PakuriDataManager`.
+- Unity `read_console` after script refresh showed the CSV runtime catalog load log and no C# compile error entries.
+- `Pakuri/Validate CSV Source Data` still loaded the runtime catalog with 5 monsters and 8 stage-one enemies after this combat-side query change.
+
+### History
+
+- 2026-05-02: User requested implementing the high-priority query-contract unification.
+- 2026-05-02: Builder changed stage-one enemy pool resolution to use `PakuriDataManager` while preserving the current fallback encounter behavior.
+
+## Task: 2026-05-02 Combat Catalog Source Resolution To CSV Runtime Data
+
+### Task title
+
+Switch combat startup catalog resolution to the new CSV runtime loader.
+
+### Goals
+
+- Make combat startup prefer the typed CSV runtime catalog instead of relying only on serialized scene references.
+- Stop combat startup early when CSV parsing or validation fails.
+- Keep current stage-one combat behavior intact while changing the data source path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground all claims in actual combat script edits and actual build/console output.
+- Do not run Unity Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User can verify current combat scenes still start correctly with the CSV-backed catalog.
+- If stage-generalized enemy data is added later, extend the typed CSV source schema and combat loader together.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` now resolves `gameDataCatalog` through `PakuriCsvRuntimeData.ResolveCatalogOrFallback(gameDataCatalog)` before using monster/enemy data.
+- `PakuriCsvRuntimeData.EnsureInitialized()` runs before scene load and calls `Application.Quit()` on fatal CSV source or validation errors.
+- `Pakuri/Validate CSV Source Data` logged `PakuriCsvRuntimeData loaded runtime catalog from '...\\Pakuri\\data\\source' with 5 monsters and 8 stage-one enemies.`
+- The generated typed CSV source set includes stage-one enemy catalog and data tables: `catalog_stage_one_enemies.csv` and `stage_one_enemies.csv`.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and only the existing Unity/MCP warnings.
+
+### History
+
+- 2026-05-02: Code Builder updated the combat runtime controller to prefer the CSV-backed runtime catalog.
+- 2026-05-02: Generated and validated the typed CSV source set used by combat startup.
+
+## Task: 2026-05-01 Combat Structure Expansion Risk Review
+
+### Task title
+
+Review combat runtime structure for adding new monsters, stages, enemy families, and reward content.
+
+### Goals
+
+- Inspect the actual combat runtime scripts under `Pakuri/Assets/Scripts/Combat`.
+- Identify hardcoded structure that will require code edits when content volume grows.
+
+### Constraints
+
+- Role Owner is Designer.
+- Base all findings on actual script content and actual asset references.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- If the user requests implementation planning, split follow-up into stage/enemy data generalization, monster skill runtime strategy, and reward/prisoner subsystem extraction.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEnemies.cs` resolves only `StageOneEnemies`, builds fallback Stage 1 enemies in code, and switches on `StageOneEnemySkillKind`, so enemy content is still Stage 1-specific instead of stage-agnostic.
+- `Pakuri/Assets/Scripts/Data/EnemyDefinition.cs` encodes enemy skills as `StageOneEnemySkillKind` under a `[Header("Stage 1 Skill")]`, which tightly couples the SO model to one stage ruleset.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` routes manual fire through `IsSelectedEveMonster()` and `IsSelectedArielMonster()` before falling back to one generic projectile path, so new monster-specific B-E runtimes cannot be added data-only.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs` and `CombatRuntimeEveSkills.cs` contain monster-ID-specific partial logic; `CombatRuntimeArielSkills.cs` explicitly branches between Eve and Ariel in shared cooldown and automatic-skill entry points.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` clamps `stageIndex` to `1..4`, keeps Eve-flavored default values, and initializes selected-monster runtime state inside one shared controller instance.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRewards.cs` hardcodes gold/dark-trace reward values, stage multipliers, prisoner count rolls, and placeholder prisoner behavior text instead of reading reward data assets.
+- Reward description text in `CombatRuntimeRewards.cs` explicitly says prisoner sub-systems such as `공양/현현/동화/고문` are not implemented yet.
+- Current monster runtime supports one selected monster plus enemy units; party-wide passive descriptions exist in monster assets, but `CombatRuntimeScene.cs` still configures one selected monster only.
+
+### History
+
+- 2026-05-01: Reviewed `CombatRuntimeController.cs`, `CombatRuntimeScene.cs`, `CombatRuntimeEnemies.cs`, `CombatRuntimeProjectiles.cs`, `CombatRuntimeRewards.cs`, `CombatRuntimeEveSkills.cs`, and `CombatRuntimeArielSkills.cs` against current monster/enemy assets.
+
 ## Task: Ariel A Lifetime And Shield Bar Split Visual
 
 ### Task title

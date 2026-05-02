@@ -5,6 +5,67 @@
 
 ## Migrated Task Blocks
 
+## Task: CSV Runtime Migration Reviewer 2026-05-02
+
+### Task title
+
+Review the CSV runtime migration against `2026-05-01-data-structure-review.html`.
+
+### Goals
+
+- Check whether the new CSV runtime migration is faithful to the report's critique and proposed direction.
+- Review changed lines and the new untracked loader file against actual code.
+- Confirm helper existence, null risk, and side effects without implementing fixes.
+
+### Constraints
+
+- Role Owner is Code Reviewer.
+- Do not implement fixes during Reviewer phase.
+- User explicitly permitted one Reviewer execution.
+- Base findings on actual files, actual command output, and the referenced HTML report.
+
+### Role Owner
+
+Code Reviewer
+
+### Status
+
+External Reviewer execution did not complete, the manual Code Reviewer pass returned FAIL, and Builder later applied a follow-up fix set. A new Reviewer pass has not been executed yet.
+
+### Next Actions
+
+- Wait for an explicit user request before running another Reviewer pass.
+- If another review is requested, compare the Builder follow-up against the original 4 findings instead of re-reviewing the pre-fix snapshot.
+
+### Evidence
+
+- Read `Pakuri/reference/Report/2026-05-01-data-structure-review.html`; the proposed direction is at lines 410-427: source-of-truth fixed to CSV, type row, per-dataset data classes/validators, and unified `DataManager.Instance.GetData<T>(id)` lookup.
+- External `codex review --uncommitted` was attempted once with elevated permission and timed out after 124 seconds, so it produced no usable review result.
+- `Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.cs` is currently a single 1990-line static file; `SourceModel`, `MonsterRow`, `SkillRow`, and `EnemyRow` are all nested there at lines 1842-1959.
+- `Select-String` over `Pakuri/Assets/Scripts/**/*.cs` for `class DataManager` and `GetData<` returned no matches.
+- `PakuriCsvRuntimeData.cs` lines 108-119 auto-bootstrap missing source CSV files in editor, and lines 971-997 rebuild them from `Assets/Data/GameData/GameDataCatalog.asset` through `AssetDatabase.LoadAssetAtPath<GameDataCatalog>(...)`.
+- `PakuriCsvRuntimeData.cs` lines 146-148 read runtime source files from `Path.Combine(Application.dataPath, "..", "data", "source")`.
+- `PakuriCsvRuntimeData.cs` lines 843-887 load sprites and prefabs from `Resources` if possible, but outside `UNITY_EDITOR` return `null` for non-Resources asset paths.
+- `Pakuri/data/source/monsters.csv` rows currently contain asset paths such as `Assets/Image/Monster/ariel/Arial_Temp.png`, not `Resources` paths.
+- `Get-ChildItem Pakuri/Assets -Recurse -Directory -Filter StreamingAssets` returned no directories.
+- `Pakuri/Assets/Resources` exists, but sample listing only showed `DebugUiSolid.png`; it does not match the generated monster sprite paths in `Pakuri/data/source/monsters.csv`.
+- `ValidateSourceModelOrThrow(...)` at lines 364-509 validates ids, slot rules, and monster/skill linkage, but it does not validate asset path existence or guarantee non-null asset loads.
+- Builder follow-up evidence: `Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.cs` now uses `ImportedSourceAssetRoot = "Assets/CSVdata/source"` and loads `PakuriCsvRuntimeSourceCatalog` plus `PakuriCsvRuntimeAssetCatalog` from `Assets/Resources/Pakuri/CSVRuntime`.
+- Builder follow-up evidence: added `Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeSourceCatalog.cs`, `PakuriCsvRuntimeAssetCatalog.cs`, `PakuriDataManager.cs`, and `Pakuri/Assets/Scripts/Data/Editor/PakuriCsvRuntimeCatalogPostprocessor.cs`.
+- Builder follow-up evidence: `ValidateSourceModelOrThrow(...)` now validates sprite/prefab path coverage against the runtime asset catalog, and `ValidateRuntimeCatalogOrThrow(...)` now checks non-null bound assets for non-empty CSV paths.
+- Builder follow-up evidence: `RunFlowController.cs`, `RunCombatUiController.cs`, and `RunSceneBootstrap.cs` now use `PakuriDataManager.Instance.GetData<MonsterDefinition>(...)`.
+- Builder follow-up evidence: `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog.asset` and `PakuriCsvRuntimeAssetCatalog.asset` now exist, and the source catalog YAML references all 7 imported CSV TextAssets.
+- Builder follow-up evidence: Unity refresh after the follow-up created the new script `.meta` files, later console reads showed no C# compile errors, and `Pakuri/Validate CSV Source Data` previously logged `5 monsters` and `8 stage-one enemies` from the resource source path.
+
+### History
+
+- 2026-05-02: User explicitly requested Code Reviewer validation for the CSV runtime migration against `2026-05-01-data-structure-review.html`.
+- 2026-05-02: Code Reviewer read `AGENTS.md`, `MDTREE.md`, DATA boards, and `boards/OPS/REVIEWER_BLACKBOARD.md`.
+- 2026-05-02: External `codex review --uncommitted` was attempted once; sandbox execution failed with `os error 5`, and the one elevated execution timed out after 124 seconds.
+- 2026-05-02: Manual Code Reviewer pass found source-of-truth drift, missing query-contract refactor, and non-editor asset/source-path risks; final judgment is FAIL.
+- 2026-05-02: User later imported the typed CSV into `Pakuri/Assets/CSVdata` and asked Builder to fix the Reviewer findings.
+- 2026-05-02: Builder follow-up moved the active source root to `Assets/CSVdata/source`, added resource-backed source/asset catalogs, added `PakuriDataManager`, and revalidated through Unity refresh plus validation-menu execution.
+
 ## Task: Ariel Runtime Code Reviewer 2026-04-30
 
 ### Task title

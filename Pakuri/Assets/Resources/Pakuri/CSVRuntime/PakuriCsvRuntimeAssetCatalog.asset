@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6799f1c10275adb4bb2eb7f14f0c5787, type: 3}
+  m_Name: PakuriCsvRuntimeAssetCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.Data.PakuriCsvRuntimeAssetCatalog
+  Sprites:
+  - AssetPath: Assets/Image/Monster/ariel/Arial_Temp.png
+    Asset: {fileID: 21300000, guid: 7340a02f3fe3cd44199cf5f248a877e2, type: 3}
+  - AssetPath: "Assets/Image/Monster/ariel/ChatGPT Image 2026\uB144 4\uC6D4 30\uC77C
+      \uC624\uD6C4 09_41_42-Photoroom 1.png"
+    Asset: {fileID: 21300000, guid: b7c5627b81613f843bb3624bd5560dcc, type: 3}
+  - AssetPath: Assets/Image/Monster/Eve/Eve_temp 1 (1).png
+    Asset: {fileID: 21300000, guid: 879d93d0c464a4342973c5f3da51fc1a, type: 3}
+  - AssetPath: Assets/Image/Monster/Eve/Shoot.png
+    Asset: {fileID: -3759340608264355816, guid: 6775ae037b7948a4288975129a809850, type: 3}
+  - AssetPath: Assets/Image/Monster/Vega/Vega_Shoot_Temp.png
+    Asset: {fileID: -5566345583153479557, guid: ce56c40b4557c8445af91eae1ed609ba, type: 3}
+  - AssetPath: Assets/Image/Monster/Vega/Vega_Temp (3).png
+    Asset: {fileID: -1788411375355218723, guid: 26facd5c042b4444bb38f80750d15cf0, type: 3}
+  - AssetPath: Assets/Image/Stage1/Enemy/Achor.png
+    Asset: {fileID: 21300000, guid: ef1e124d1928cc54ea59ccf3db8fdfe0, type: 3}
+  - AssetPath: Assets/Image/Stage1/Enemy/Priest.png
+    Asset: {fileID: 21300000, guid: 8734391ccbebaae48b6a4ab04c78cab3, type: 3}
+  - AssetPath: Assets/Image/Stage1/Enemy/Rogue.png
+    Asset: {fileID: 21300000, guid: 91290f9ea0955e84cbf23401ff72fdac, type: 3}
+  - AssetPath: Assets/Image/Stage1/Enemy/Shield.png
+    Asset: {fileID: 21300000, guid: 0caea6bc70c48504bb727429d31f5bc3, type: 3}
+  - AssetPath: Assets/Image/Stage1/Enemy/Warrior.png
+    Asset: {fileID: 21300000, guid: 128ccc7f23263be428abee49b68f0e07, type: 3}
+  Prefabs: []

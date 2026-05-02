@@ -45,6 +45,245 @@ Implemented pending validation.
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-02 Data Structure Refactor Phased Log Report
+
+### Task title
+
+Create an HTML report that reconstructs the data-structure refactor as ordered `N차 개선` phases.
+
+### Goals
+
+- Analyze the actual work records after the user's first data-structure refactor command.
+- Reconstruct the implementation as phased improvements instead of one monolithic change.
+- Mark each phase by `구현됨`, `부분 구현`, and `미구현 / 이월`.
+- Save the result as a UTF-8 Korean HTML report under `Pakuri/reference/Report`.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested a new HTML file.
+- Ground every phase in actual board history, reviewer logs, and current repository code.
+- Distinguish historical evidence from the current code snapshot when describing older phases.
+- Do not claim a new Reviewer PASS or Play Mode verification for this documentation task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Use the phased log report when the user wants to explain that the refactor progressed step-by-step rather than all at once.
+- If another implementation phase happens later, append a new `N차 개선` instead of overwriting the earlier sequence.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-02-data-structure-refactor-phased-log-report.html`.
+- Re-read the HTML with `Get-Content -Encoding UTF8` and confirmed the new sections for `0단계 기준선`, `1차 개선`, `Reviewer 게이트`, `2차 개선`, `3차 개선`, `4차 개선`, and `현재 시점 정리: 구현됨 / 부분 구현 / 미구현`.
+- The report explicitly cites `boards/DATA/DATA_BLACKBOARD.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/OPS/REVIEWER_BLACKBOARD.md`, and the existing `2026-05-02-data-structure-refactor-implementation-report.html` as chronology sources.
+- The report's phase descriptions align with current code files such as `PakuriCsvRuntimeData.cs`, `PakuriCsvRuntimeData.Build.cs`, and `PakuriDataManager.cs`, while older intermediate states are described as historical board/reviewer evidence rather than current snapshot claims.
+
+### History
+
+- 2026-05-02: User requested an HTML document that analyzes the logs and work records after the first data-structure refactor command and expresses the implementation as ordered `N차 개선` phases.
+- 2026-05-02: Builder re-read REPORT/DATA/RUN/COMBAT/REVIEWER boards and the current report before writing the phased log report.
+
+## Task: 2026-05-02 Data Structure Refactor Implementation Report
+
+### Task title
+
+Create an HTML report that connects the `2026-05-01-data-structure-review.html` findings with the actual CSV/runtime refactor implementation.
+
+### Goals
+
+- Summarize which proposal items from the prior data-structure review are now implemented, partially implemented, or still missing.
+- Document the actual implementation path from the first CSV migration through the post-review follow-up.
+- Save the result as a new UTF-8 Korean HTML report under `Pakuri/reference/Report`.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested a file update.
+- Ground every statement in actual current code, current YAML assets, and actual Unity console or command output.
+- Do not claim a fresh Code Reviewer PASS because no new Reviewer run was requested.
+- Do not run Unity Play Mode verification for this documentation task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed and refreshed to match both the later `PakuriCsvRuntimeData` split follow-up and the subsequent `PakuriDataManager` query-contract unification.
+
+### Next Actions
+
+- Use the report when explaining what the data-structure review asked for versus what the current repository actually changed.
+- If the user later requests another Reviewer pass, update the report with that verdict instead of treating the current builder follow-up as final PASS.
+- If the data layer is refactored again, refresh the “remaining debt” and “file roles” sections so they keep matching the repository state.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-02-data-structure-refactor-implementation-report.html`.
+- Re-read the new HTML file with `Get-Content -Encoding UTF8` and confirmed the Korean title/body text was preserved.
+- Verified the prior review document section 8 at `Pakuri/reference/Report/2026-05-01-data-structure-review.html:403-449` still proposes `원본 고정`, `타입 행 도입`, `데이터 클래스 분리`, `조회 계약 통일`.
+- Verified `Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.cs` currently uses `ImportedSourceAssetRoot = "Assets/CSVdata/source"`, `SourceCatalogResourcesPath = "Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog"`, `AssetCatalogResourcesPath = "Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog"`, and registers `PakuriDataManager`.
+- Verified a later follow-up split the old `Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.cs` monolith into `PakuriCsvRuntimeData.cs`, `PakuriCsvRuntimeData.Loader.cs`, `PakuriCsvRuntimeData.Validation.cs`, `PakuriCsvRuntimeData.Build.cs`, `PakuriCsvRuntimeData.Editor.cs`, and `PakuriCsvRuntimeData.Types.cs`.
+- Verified `Pakuri/Assets/Scripts/Data/PakuriDataManager.cs` currently exposes `RegisterCatalog`, `GetData<T>(id)`, `TryGetData<T>(id, out value)`, `GetMonsters(...)`, `GetStageOneEnemies(...)`, and `ResolveMonster(...)`.
+- Verified `MainMenuFlowController.cs`, `DebugSceneController.cs`, `RunFlowController.cs`, `RunCombatUiController.cs`, `RunSceneBootstrap.cs`, and `CombatRuntimeEnemies.cs` now route their gameplay roster/fallback queries through `PakuriDataManager`.
+- Verified `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog.asset` references the 7 imported CSV TextAssets and `PakuriCsvRuntimeAssetCatalog.asset` contains 11 `AssetPath:` sprite mappings.
+- Re-ran `Pakuri/Validate CSV Source Data`; Unity console logged `PakuriCsvRuntimeData loaded runtime catalog from resource source 'Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog' with 5 monsters and 8 stage-one enemies.`
+- Verified the current legacy bootstrap tool is `Pakuri/Assets/Scripts/Data/Editor/Legacy/PakuriGameDataSeeder.cs`, and it still exposes `Pakuri/Seed Default Game Data`, hardcoded monsters/enemies, and markdown skill-doc parsing.
+- Re-read the refreshed HTML with `Get-Content -Encoding UTF8` and confirmed the updated query-contract text, the revised section 6/7 split, and the revised remaining-debt priorities are present.
+- Re-read the refreshed HTML again and confirmed section 6 now closes before a new `<section class="grid">` starts section 7, so the two cards no longer share the same row.
+- Re-read the refreshed HTML again and confirmed a new top card titled `현재 데이터 로드와 SO 적용 원리` now explains that runtime loads CSV `TextAsset` data, validates it, creates in-memory `ScriptableObject` instances, and registers them in `PakuriDataManager`.
+- Re-read the refreshed HTML again and confirmed a new `Before / After: 개선 전과 개선 후 작동 원리` table now compares the old criticized structure against the current runtime flow across source location, load path, SO role, asset binding, validation, and query contract.
+
+### History
+
+- 2026-05-02: User requested an HTML report that combines the original data-structure-review findings with the actual refactor implementation and implementation process.
+- 2026-05-02: Re-read the current report, data boards, runtime loader files, runtime catalog assets, and Unity validation log before writing the summary.
+- 2026-05-02: After the report was first written, Builder split `PakuriCsvRuntimeData` into multiple partial files and revalidated the CSV startup path.
+- 2026-05-02: User requested the report update, and Builder refreshed the HTML so the old monolith/unfinished-split wording no longer contradicts the current repository state.
+- 2026-05-02: User later requested another report update after query-contract unification and pointed out that sections 6 and 7 overlapped; Builder refreshed the HTML to include the `PakuriDataManager` expansion and split section 6 into changed-file roles versus section 7 remaining debt.
+- 2026-05-02: User clarified that the overlap was visual, not content-level, so Builder separated sections 6 and 7 into different grid rows in the HTML layout.
+- 2026-05-02: User then asked for a simple explanation of the current data-load and SO-application principle, so Builder added a new top explanation card above the Executive Summary.
+- 2026-05-02: User then asked for the criticized pre-refactor version and the current runtime principle to be written as a `Before / After` comparison, so Builder added a comparison table near the top of the report.
+
+## Task: 2026-05-01 Assets Structure Report Update With Data Review Findings
+
+### Task title
+
+Expand the assets structure expansion risk HTML report using verified findings from the data structure review.
+
+### Goals
+
+- Read `2026-05-01-data-structure-review.html` and extract only the points that are still backed by actual repository files.
+- Add data-pipeline and validation-contract risks to `2026-05-01-assets-structure-expansion-risk-review.html`.
+- Keep the updated report in Korean and preserve UTF-8 compatibility.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested a file update.
+- Do not copy claims from the reference report unless current files still support them.
+- Keep the existing assets report focused on expansion risk, not a full data-pipeline redesign proposal.
+- Do not run Unity Play Mode validation for this documentation-only change.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Use the expanded assets risk report when a combined explanation of runtime-structure risk and data-pipeline risk is needed.
+
+### Evidence
+
+- Read `Pakuri/reference/Report/2026-05-01-data-structure-review.html`.
+- Verified `Pakuri/Assets/Scripts/Data/Editor/PakuriGameDataSeeder.cs` is 826 lines long.
+- Verified `PakuriGameDataSeeder.cs` reads `Application.dataPath/../reference/2.Monster/.../skill`, creates Stage 1 enemies in code, logs warnings for missing skill docs, returns `0f` on float parse failure, and defaults to `DamageAttribute.Physical` on attribute parse fallback.
+- Verified `RunFlowController.cs`, `DebugSceneController.cs`, and `CombatRuntimeController.cs` serialize or pass `GameDataCatalog`.
+- Verified `Pakuri/data/skills.csv` contains `SKILL_001~003` while `levelup_choices.csv` and `skill_branches.csv` reference `SKILL_004~006`.
+- Updated `Pakuri/reference/Report/2026-05-01-assets-structure-expansion-risk-review.html` to include data-source fragmentation and validation-risk content.
+- Re-read the updated HTML file with `-Encoding UTF8` and confirmed the added Korean section titles and evidence strings were present.
+
+### History
+
+- 2026-05-01: User requested that the assets structure expansion risk report be expanded with content from `2026-05-01-data-structure-review.html`.
+
+## Task: 2026-05-01 Assets Structure Expansion Risk Review Korean Translation
+
+### Task title
+
+Translate the existing assets structure expansion risk HTML report into Korean.
+
+### Goals
+
+- Keep the report content grounded in the already verified repository evidence.
+- Replace the English body copy in `2026-05-01-assets-structure-expansion-risk-review.html` with Korean text.
+- Preserve UTF-8 compatibility for the HTML document.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested a file update.
+- Do not change the report's factual claims beyond translation.
+- Do not introduce claims that were not already supported by the reviewed scripts and assets.
+- Do not run Unity Play Mode validation for this documentation-only change.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Use the translated Korean HTML report as the current readable version unless the user requests a different layout or wording pass.
+
+### Evidence
+
+- Read `Pakuri/reference/Report/2026-05-01-assets-structure-expansion-risk-review.html` before translation.
+- Updated that HTML file so the visible report text is Korean.
+- Kept `<meta charset="UTF-8">` in the document head as the encoding basis requested by the user.
+- Re-read the translated HTML file with `Get-Content -Encoding UTF8` and confirmed the Korean title/body text was preserved.
+
+### History
+
+- 2026-05-01: User requested the generated HTML report to be translated into Korean and to use UTF-8 if encoding issues appeared.
+
+## Task: 2026-05-01 Assets Structure Expansion Risk Review
+
+### Task title
+
+Create an HTML report summarizing content-expansion risks in the current `Pakuri/Assets` structure.
+
+### Goals
+
+- Review actual scripts and ScriptableObject assets under `Pakuri/Assets`.
+- Summarize what will become problematic when adding more stages, monsters, enemies, and reward content.
+- Save the summary as an HTML report under `Pakuri/reference/Report`.
+
+### Constraints
+
+- Role Owner is Designer because the user requested analysis packaging, not gameplay implementation.
+- Every statement must be grounded in actual file contents and actual command output already gathered in this repository.
+- Do not claim missing persistence, stage systems, or authoring tools exist unless code/files confirm them.
+- Do not run Unity Play Mode validation for this documentation task.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- If requested, derive a Designer handoff document that turns the identified risks into a staged refactor order.
+
+### Evidence
+
+- Confirmed 25 C# scripts under `Pakuri/Assets/Scripts`.
+- Confirmed `GameDataCatalog.asset`, 5 monster assets, and 8 enemy assets under `Pakuri/Assets/Data/GameData`.
+- `Pakuri/Assets/Scripts/Data/GameDataCatalog.cs` stores `Monsters` and `StageOneEnemies` only.
+- `Pakuri/Assets/Scripts/Data/EnemyDefinition.cs` uses `StageOneEnemySkillKind`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEnemies.cs` resolves Stage 1 enemy pools and contains fallback enemy creation.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs`, `CombatRuntimeEveSkills.cs`, and `CombatRuntimeArielSkills.cs` contain selected-monster-specific runtime branches.
+- `Pakuri/Assets/Scripts/Run/RunSession.cs`, `RunCombatUiController.cs`, and `DebugSceneController.cs` use `DisplayName` strings for learned skill state checks.
+- Added `Pakuri/reference/Report/2026-05-01-assets-structure-expansion-risk-review.html`.
+
+### History
+
+- 2026-05-01: User requested the previously reported `Pakuri/Assets` structural findings to be organized as HTML.
+
 ## Task: Token Optimized Board Routing Report
 
 ### Task title

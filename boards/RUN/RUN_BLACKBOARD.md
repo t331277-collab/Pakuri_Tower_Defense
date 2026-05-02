@@ -5,6 +5,144 @@
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-02 Run Query Contract Unification
+
+### Task title
+
+Route run-entry and run-UI monster queries through `PakuriDataManager`.
+
+### Goals
+
+- Remove direct `GameDataCatalog.Monsters` reads from MainMenu, RunFlow, and DebugScene gameplay/UI paths.
+- Keep fallback monster resolution in run-scene entry/UI behind one manager contract.
+- Update missing-data messaging to the current CSV runtime source instead of the legacy seeder flow.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground all claims in actual script edits and actual Unity/editor output.
+- Do not run Unity Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User can verify in Play Mode that MainMenu, RunScene fallback entry, and DebugScene still show/select monsters correctly with CSV-backed data.
+- If later requested, move more run-scene setup to stable-id/context contracts so scene scripts no longer carry serialized catalog references at all.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/MainMenuFlowController.cs:165` now builds character-select buttons from `PakuriDataManager.Instance.GetMonsters(gameDataCatalog)`.
+- `Pakuri/Assets/Scripts/Run/DebugSceneController.cs:70` and `:217` now read the monster roster through `PakuriDataManager` and no longer iterate `gameDataCatalog.Monsters` directly.
+- `Pakuri/Assets/Scripts/Run/RunFlowController.cs:188` now resolves the monster list through `PakuriDataManager`, and `RunFlowController.cs:192` changed the missing-data hint to `Assets/CSVdata/source` and `Pakuri/CSVRuntime`.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs:898` now resolves its fallback monster through `PakuriDataManager.Instance.ResolveMonster(...)`.
+- `Pakuri/Assets/Scripts/Run/RunSceneBootstrap.cs:62` now resolves its fallback monster through the same `ResolveMonster(...)` contract.
+- After the change, the script-tree `Select-String` query for `gameDataCatalog.Monsters|gameDataCatalog.StageOneEnemies|fallbackCatalog.Monsters` no longer found run-scene consumer usage.
+- Unity `read_console` after script refresh showed the runtime catalog load log and existing missing-script warnings, but no C# compile error entries.
+
+### History
+
+- 2026-05-02: User requested implementation of the previously identified query-contract unification.
+- 2026-05-02: Builder replaced remaining run-scene monster roster and fallback-monster reads with `PakuriDataManager` helpers.
+- 2026-05-02: Builder also updated the RunFlow missing-data text so it no longer points to the legacy `Pakuri/Seed Default Game Data` menu.
+
+## Task: 2026-05-02 Run Catalog Source Resolution To CSV Runtime Data
+
+### Task title
+
+Switch run-scene catalog resolution to the new CSV runtime loader.
+
+### Goals
+
+- Make run-entry and run-UI scripts consume the typed CSV runtime catalog on startup.
+- Keep serialized `GameDataCatalog` fields only as scene references, not as the hidden runtime source after CSV failure.
+- Use the new query contract for monster-id lookup in run flow entry points.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground all claims in actual script edits and actual build/console output.
+- Do not run Unity Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally revalidated after the CSV Reviewer follow-up.
+
+### Next Actions
+
+- User can verify in Play Mode that MainMenu -> RunScene and DebugScene still enter combat with CSV-backed data.
+- If later requested, replace display-name based learned-skill checks in `RunSession` with stable ids from the CSV source.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/MainMenuFlowController.cs`, `RunFlowController.cs`, `DebugSceneController.cs`, `RunCombatUiController.cs`, and `RunSceneBootstrap.cs` still resolve their catalog through `PakuriCsvRuntimeData.ResolveCatalogOrFallback(...)`.
+- `Pakuri/Assets/Scripts/Run/RunFlowController.cs` now uses `PakuriDataManager.Instance.GetData<MonsterDefinition>(currentSession.SelectedMonsterId)` when starting or retrying combat.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` now resolves the fallback monster through `PakuriDataManager.Instance.GetData<MonsterDefinition>(RunSceneBootstrap.FallbackMonsterId)`.
+- `Pakuri/Assets/Scripts/Run/RunSceneBootstrap.cs` now resolves its fallback monster through `PakuriDataManager.Instance.GetData<MonsterDefinition>(fallbackMonsterId)`.
+- `PakuriCsvRuntimeData` initializes from `[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]`, and on failure now returns `null` instead of silently falling back to the serialized scene catalog.
+- Unity refresh after the follow-up created the new data-script `.meta` files and later console reads showed no C# compile errors.
+- `Pakuri/Validate CSV Source Data` previously logged a successful in-memory load from resource source `Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog`.
+
+### History
+
+- 2026-05-02: Initial builder pass updated run-scene consumers to prefer the runtime CSV catalog while preserving their serialized field.
+- 2026-05-02: Reviewer follow-up request led Builder to add `PakuriDataManager` monster lookup and to block serialized fallback use after CSV initialization failure.
+- 2026-05-02: Unity refresh after the follow-up completed without C# compile errors.
+
+## Task: 2026-05-01 Run Structure Expansion Risk Review
+
+### Task title
+
+Review `RunSession` and run flow scripts for future content expansion risks.
+
+### Goals
+
+- Inspect the actual run-state and run-UI scripts under `Pakuri/Assets/Scripts/Run`.
+- Identify structural issues for adding elite/shop branches, richer reward types, or persistent progression.
+
+### Constraints
+
+- Role Owner is Designer.
+- Base all findings on actual script content and command output.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- If the user requests follow-up design, separate the work into `RunSession` identity cleanup, branchable day-flow design, and UI prefab/template strategy.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunSession.cs` stores learned actives/passives by display name strings, not stable IDs, and `RunCombatUiController.cs` / `DebugSceneController.cs` also check learned state by `skill.DisplayName` / `passive.DisplayName`.
+- `Pakuri/Assets/Scripts/Run/RunDayModel.cs` clamps stages to `1..4` and days to `1..11`; `RunCombatType.Shop` exists in the enum, but `RunDayModel.Resolve(...)` never returns `Shop` or `Elite`.
+- `Select-String` over `Pakuri/Assets/Scripts/**/*.cs` found `HasEliteOption` / `HasShopOption` only in `RunDayModel.cs`, so those branch flags are currently unused.
+- `Pakuri/Assets/Scripts/Run/MainMenuFlowController.cs` moves state to `RunScene` through `RunStartContext` and `DontDestroyOnLoad`; there is no disk-backed save or reload path in `Pakuri/Assets/Scripts`.
+- `Pakuri/Assets/Scripts/Run/RunFlowController.cs` and `RunCombatUiController.cs` both implement reward-state UI and button generation against `CombatRuntimeController`, creating duplicate flow logic.
+- `RunFlowController.cs` explicitly describes the current scope as `5몬스터 A 스킬 전투와 A/F 최소 보상 루프`, confirming the run loop is still prototype-limited.
+- `Get-ChildItem Pakuri/Assets -Recurse -Filter *.prefab`, `*.uxml`, and `*.uss` returned `0`, so run UI is still fully code-built rather than asset-templated.
+
+### History
+
+- 2026-05-01: Reviewed `RunSession.cs`, `RunDayModel.cs`, `RunStartContext.cs`, `MainMenuFlowController.cs`, `RunFlowController.cs`, `RunCombatUiController.cs`, and `DebugSceneController.cs` for content expansion risk.
+
 ## Task: Run Day Combat Type And Material Rewards
 
 ### Task title

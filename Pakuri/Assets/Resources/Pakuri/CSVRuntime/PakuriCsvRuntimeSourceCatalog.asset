@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92f4a8c7192c7da47a137c02232dea62, type: 3}
+  m_Name: PakuriCsvRuntimeSourceCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.Data.PakuriCsvRuntimeSourceCatalog
+  CatalogMonsters: {fileID: 4900000, guid: abe5f4915f4769f49ad025414be4ab88, type: 3}
+  CatalogStageOneEnemies: {fileID: 4900000, guid: c7932caf2af0bbc45936b1ffb535b771, type: 3}
+  Monsters: {fileID: 4900000, guid: b82a4bfc3a7210d4abeca156b90f2ffa, type: 3}
+  MonsterRewardChoices: {fileID: 4900000, guid: 5234ce77ab5502745b8153139d1b5ffc, type: 3}
+  MonsterSkills: {fileID: 4900000, guid: 20eb08c1170616b49b927800f8949b19, type: 3}
+  MonsterSkillChoices: {fileID: 4900000, guid: b5006ccbab3d74b4a9607e9b988c1741, type: 3}
+  StageOneEnemies: {fileID: 4900000, guid: 1350bc84e45480c498a76e6a1b574c0d, type: 3}

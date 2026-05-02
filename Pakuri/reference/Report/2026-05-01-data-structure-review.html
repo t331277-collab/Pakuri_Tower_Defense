@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pakuri Data Structure Review</title>
+  <style>
+    :root {
+      --bg: #f2f5f7;
+      --paper: #ffffff;
+      --ink: #15202b;
+      --muted: #5d6b78;
+      --line: #d8e0e8;
+      --navy: #103b66;
+      --teal: #0f766e;
+      --amber: #9a5b00;
+      --red: #b42318;
+      --green: #166534;
+      --soft-navy: #eef5ff;
+      --soft-teal: #eefbf8;
+      --soft-amber: #fff8ec;
+      --soft-red: #fff4f4;
+      --soft-green: #effcf3;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, #fbfdff 0%, #f2f5f7 45%, #e8edf2 100%);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 20px 72px;
+    }
+
+    header {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 30px;
+      background: linear-gradient(135deg, #ffffff 0%, #eef5ff 100%);
+      box-shadow: 0 16px 36px rgba(21, 32, 43, 0.08);
+    }
+
+    h1, h2, h3 { margin: 0; line-height: 1.24; }
+    h1 { font-size: 36px; margin-bottom: 10px; }
+    h2 { font-size: 23px; margin-bottom: 14px; }
+    h3 { font-size: 18px; margin-bottom: 10px; }
+    p { margin: 0 0 12px; }
+
+    code {
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: #edf3f8;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.95em;
+    }
+
+    .subtitle {
+      max-width: 1020px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f7fafc;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .card {
+      grid-column: span 12;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      background: var(--paper);
+      box-shadow: 0 8px 24px rgba(21, 32, 43, 0.05);
+    }
+
+    .half { grid-column: span 6; }
+    .third { grid-column: span 4; }
+    .two-third { grid-column: span 8; }
+
+    .navy { border-left: 5px solid var(--navy); background: var(--soft-navy); }
+    .teal { border-left: 5px solid var(--teal); background: var(--soft-teal); }
+    .amber { border-left: 5px solid var(--amber); background: var(--soft-amber); }
+    .red { border-left: 5px solid var(--red); background: var(--soft-red); }
+    .green { border-left: 5px solid var(--green); background: var(--soft-green); }
+
+    ul { margin: 0; padding-left: 22px; }
+    li { margin: 6px 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f4f7fb;
+      font-weight: 700;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
+    .fact { background: #dbeafe; color: #1d4ed8; }
+    .risk { background: #fee2e2; color: #991b1b; }
+    .plan { background: #dcfce7; color: #166534; }
+    .note { background: #fef3c7; color: #92400e; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .step {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fbfdff;
+      min-height: 138px;
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--navy);
+    }
+
+    .mono {
+      white-space: pre-wrap;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 13px;
+      background: #f7fafc;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    @media (max-width: 980px) {
+      .half, .third, .two-third { grid-column: span 12; }
+      .flow { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Pakuri 데이터 구조 검토</h1>
+    <p class="subtitle">
+      이 문서는 현재 저장소의 실제 데이터 코드와 파일 구조를 기준으로,
+      왜 현재 데이터 파이프라인이 장기 운영에 불리한지 설명하고
+      회의에서 예상될 수 있는 반론과 그에 대한 재반론, 그리고 개선 작업 방향을
+      비즈니스 톤으로 정리한 HTML 장표다.
+    </p>
+    <div class="chips">
+      <span class="chip">대상: 현재 논의를 처음 보는 팀원</span>
+      <span class="chip">기준일: <code>2026-05-01</code></span>
+      <span class="chip">근거 범위: <code>Pakuri/Assets/Scripts/Data</code>, <code>Pakuri/data</code>, <code>Pakuri/reference/2.Monster</code></span>
+      <span class="chip">핵심 파일: <code>PakuriGameDataSeeder.cs</code></span>
+    </div>
+  </header>
+
+  <section class="grid">
+    <article class="card navy">
+      <h2>1. Executive Summary</h2>
+      <p>
+        현재 구조의 핵심 문제는 <strong>ScriptableObject 자체</strong>보다
+        <strong>데이터 원본이 하나로 고정되어 있지 않다</strong>는 점에 있다.
+      </p>
+      <ul>
+        <li>일부 데이터는 <code>Pakuri/data/*.csv</code>에 있다.</li>
+        <li>일부 데이터는 <code>Pakuri/reference/2.Monster/.../*.md</code>를 파싱한다.</li>
+        <li>일부 데이터는 <code>PakuriGameDataSeeder.cs</code> 내부에 직접 하드코딩되어 있다.</li>
+        <li>런타임은 최종적으로 <code>GameDataCatalog.asset</code> 및 <code>MonsterDefinition</code>, <code>EnemyDefinition</code>만 사용한다.</li>
+      </ul>
+      <p>
+        이 구조는 데이터 작성 경로, 검증 시점, 장애 추적 경로를 분산시킨다.
+        결과적으로 신규 작업자 온보딩, QA, AI 기반 탐색, 데이터 무결성 관리 비용이 커질 가능성이 높다.
+      </p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half teal">
+      <h2>2. 현재 관찰된 구조</h2>
+      <div class="flow">
+        <div class="step">
+          <strong>원본 후보 1</strong>
+          <div><code>Pakuri/data/*.csv</code></div>
+          <div>웨이브, 적, 스킬, 선택지 CSV가 존재한다.</div>
+        </div>
+        <div class="step">
+          <strong>원본 후보 2</strong>
+          <div><code>reference/2.Monster/.../*.md</code></div>
+          <div>몬스터 A~J 스킬 정보는 markdown 문서를 읽어 파싱한다.</div>
+        </div>
+        <div class="step">
+          <strong>변환/생성</strong>
+          <div><code>PakuriGameDataSeeder.cs</code></div>
+          <div>에디터 메뉴로 자산을 생성하고 일부 적/보상 데이터를 코드에 직접 넣는다.</div>
+        </div>
+        <div class="step">
+          <strong>런타임 소비</strong>
+          <div><code>GameDataCatalog</code></div>
+          <div>실제 전투/런 UI는 생성된 ScriptableObject만 읽는다.</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card half amber">
+      <h2>3. 현재 구조에서 보이는 핵심 문제</h2>
+      <ul>
+        <li><strong>단일 진실원본 부재</strong>: CSV, markdown, 하드코딩, asset이 동시에 존재한다.</li>
+        <li><strong>유지보수 경로 불명확</strong>: 어떤 데이터는 어디서 수정해야 하는지 파일만 보고 즉시 알기 어렵다.</li>
+        <li><strong>검증 책임 불명확</strong>: import 단계인지 runtime 단계인지, 어떤 검증이 강제되는지 코드로 보장되지 않는다.</li>
+        <li><strong>확장 비용 증가</strong>: 현재 구조가 런타임 계약 중심에 이미 들어가 있어, 규모가 커질수록 분리 비용이 커진다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card red">
+      <h2>4. 왜 문제라고 판단하는가</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>관찰 사실</th>
+            <th>실제 근거</th>
+            <th>운영 리스크</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>런타임은 이미 <code>GameDataCatalog</code> 중심으로 묶여 있다.</td>
+            <td><code>RunFlowController.cs</code>, <code>DebugSceneController.cs</code>, <code>CombatRuntimeController.cs</code>가 모두 <code>GameDataCatalog</code>를 직렬화 참조한다.</td>
+            <td>현재 구조는 임시 스크립트가 아니라 런타임 계약 중심이다. 이후 구조 변경 비용이 커진다.</td>
+          </tr>
+          <tr>
+            <td><code>PakuriGameDataSeeder.cs</code>는 826줄이다.</td>
+            <td>파일 전체 line count 확인 결과 826줄.</td>
+            <td>도메인 추가 시 한 파일 집중이 심해지고, 탐색성과 리뷰 효율이 계속 낮아진다.</td>
+          </tr>
+          <tr>
+            <td>몬스터 스킬은 markdown 파싱에 의존한다.</td>
+            <td><code>BuildMonsterActiveSkills</code>, <code>BuildMonsterPassives</code>, <code>GetSkillDocumentPaths</code>, <code>ParseActiveSkillDocument</code>, <code>ParsePassiveSkillDocument</code>.</td>
+            <td>코드/문서 포맷 결합이 생기고, 포맷 흔들림이 곧 데이터 오류로 이어질 수 있다.</td>
+          </tr>
+          <tr>
+            <td>Stage 1 적 데이터는 seeder 내부 하드코딩 비중이 높다.</td>
+            <td><code>CreateOrUpdateStageOneEnemies()</code>에서 8개 적 정의를 직접 생성한다.</td>
+            <td>CSV가 있어도 실제 수정 경로가 코드로 회귀한다.</td>
+          </tr>
+          <tr>
+            <td>CSV도 이미 상호 참조 불일치가 보인다.</td>
+            <td><code>levelup_choices.csv</code>와 <code>skill_branches.csv</code>는 <code>SKILL_004</code> 이상을 참조하지만, 현재 <code>skills.csv</code>는 <code>SKILL_001~003</code>만 존재한다.</td>
+            <td>원본 데이터 간 무결성 검사를 체계적으로 하지 않으면 QA에서 뒤늦게 발견된다.</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half red">
+      <h2>5. 가장 큰 잘못된 원인</h2>
+      <p>
+        가장 큰 원인은 <strong>데이터 작성용 원본과 런타임용 자산 사이의 경계를 만들었지만,
+        그 사이를 연결하는 규칙과 검증을 강한 계약으로 만들지 못했다</strong>는 점이다.
+      </p>
+      <ul>
+        <li>원본 후보가 여러 개다.</li>
+        <li>변환 규칙이 한 곳에 길게 누적된다.</li>
+        <li>검증 실패 시 강제 중단보다 경고 또는 기본값 대체로 흘러가는 코드가 있다.</li>
+        <li>그 결과, 구조 의도는 분리되어 있으나 실제 운영은 추적성이 낮아진다.</li>
+      </ul>
+    </article>
+
+    <article class="card half amber">
+      <h2>6. 그렇게 생각한 이유</h2>
+      <ul>
+        <li><code>GetSkillDocumentPaths()</code>는 문서가 없을 때 <code>Debug.LogWarning</code>만 남긴다.</li>
+        <li><code>ParseFirstFloat()</code>는 숫자를 못 읽으면 <code>0f</code>를 반환한다.</li>
+        <li><code>ParseAttribute()</code>는 매칭 실패 시 기본값으로 <code>Physical</code>을 반환한다.</li>
+        <li>즉 현재 구현은 “검증기”보다 “변환기”에 가깝고, 실패를 차단하기보다 흘려보내는 방향이 더 강하다.</li>
+      </ul>
+      <div class="mono">예시
+문서 누락 -> 경고 로그 -> 계속 진행
+숫자 파싱 실패 -> 0f
+속성 파싱 실패 -> Physical
+
+이 방식은 초기 개발에는 편할 수 있지만,
+데이터 드리븐 운영 단계에서는 품질 추적을 어렵게 만든다.</div>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card teal">
+      <h2>7. 예상 반박과 재반박</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>예상 반박</th>
+            <th>재반박</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="pill fact">반박</span>
+              ScriptableObject는 Unity 런타임과 잘 맞고, 런타임은 최종 자산만 읽으면 되므로 안정적이다.
+            </td>
+            <td>
+              <span class="pill risk">재반박</span>
+              원리에는 동의할 수 있다. 문제는 현재 저장소가 “원본 데이터 하나 + 명확한 변환기”가 아니라
+              <code>csv + markdown + 하드코딩 + asset</code> 혼합 상태라는 점이다.
+              즉 SO 사용 자체보다 원본 관리 구조가 더 큰 문제다.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="pill fact">반박</span>
+              단일 seeder는 초기 단계에서는 빠르다.
+            </td>
+            <td>
+              <span class="pill risk">재반박</span>
+              빠를 수는 있다. 다만 현재는 이미 <code>RunFlowController</code>, <code>DebugSceneController</code>, <code>CombatRuntimeController</code>가
+              <code>GameDataCatalog</code> 중심으로 연결되어 있다. 즉 구조적 영향 범위가 작지 않다.
+              826줄짜리 seeder를 중심으로 규모를 더 키우는 것은 미래 분리 비용을 낮추지 않는다.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="pill fact">반박</span>
+              무결성 검사는 런타임이 아니라 import 단계에서 하면 된다.
+            </td>
+            <td>
+              <span class="pill risk">재반박</span>
+              이 방향은 합리적이다. 다만 현재 코드에는 강제 import validation이 충분히 보이지 않는다.
+              지금 구현은 검증 실패를 build blocker로 막기보다 warning 또는 기본값으로 계속 진행하는 쪽에 가깝다.
+              따라서 “에디터 검증으로 충분하다”는 말은 현재 상태 설명이 아니라 미래 목표에 가깝다.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="pill fact">반박</span>
+              CSV를 게임 시작 시 모두 읽는 것은 비효율적일 수 있다.
+            </td>
+            <td>
+              <span class="pill note">재반박</span>
+              성능 이슈는 설계 시 고려해야 한다. 다만 이 논점의 본질은 “런타임에 CSV를 직접 읽을지”보다
+              “원본 데이터와 검증 책임을 어디에 둘지”다.
+              시작 로딩 비용 최적화보다, 데이터 이원화와 추적성 저하로 생기는 QA 비용이 더 클 수 있다.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card green">
+      <h2>8. 제안 작업안</h2>
+      <p>
+        아래 방향은 “현재 구조를 전면 부정”하기보다,
+        <strong>데이터 원본을 하나로 고정하고 검증을 명시적 계약으로 끌어올리는 방향</strong>이다.
+      </p>
+      <div class="flow">
+        <div class="step">
+          <strong>1. 원본 고정</strong>
+          CSV를 저작 원본으로 명확히 지정한다.
+          첫 컬럼은 기본 키 의미의 <code>ID</code>로 통일한다.
+        </div>
+        <div class="step">
+          <strong>2. 타입 행 도입</strong>
+          2행을 타입 정의 행으로 사용한다.
+          기본 타입뿐 아니라 프로젝트용 custom enum도 허용한다.
+        </div>
+        <div class="step">
+          <strong>3. 데이터 클래스 분리</strong>
+          예: <code>waves_chapter1.csv</code>에 대응되는
+          <code>DataWavesChapter1.cs</code>를 두고, partial 클래스로 데이터별 validator를 둔다.
+        </div>
+        <div class="step">
+          <strong>4. 조회 계약 통일</strong>
+          <code>DataManager.Instance.GetData&lt;T&gt;(id)</code>를 기본 조회 계약으로 둔다.
+          필요 시 partial 확장으로 도메인별 custom query를 추가한다.
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half navy">
+      <h2>9. 세부 운영 방향</h2>
+      <ul>
+        <li><strong>수동 등록 선호 가능</strong>: 자동 스캔은 미완성 CSV까지 읽을 수 있으므로, 초기에는 <code>DataManager</code>에 명시 등록하는 방식이 더 안전할 수 있다.</li>
+        <li><strong>데이터셋 병합 허용</strong>: <code>waves_chapter1.csv</code>, <code>waves_chapter2.csv</code>, <code>waves_chapter3.csv</code>처럼 동일 스키마 파일은 내부 시트명 또는 동일 schema group 개념으로 묶어 다룰 수 있다.</li>
+        <li><strong>SO 사용 범위 재정의</strong>: Unity 네이티브 참조가 필요한 sprite, prefab, icon, effect는 별도 자산 참조를 유지할 수 있다. 다만 관계형/밸런스 데이터의 진실원본은 하나로 두는 편이 안정적이다.</li>
+      </ul>
+    </article>
+
+    <article class="card half teal">
+      <h2>10. 기대 효과</h2>
+      <ul>
+        <li>어떤 데이터를 어디서 수정해야 하는지 즉시 설명 가능해진다.</li>
+        <li>검증 로직이 데이터셋별 partial validator에 모여, 데이터 오류의 원인 추적이 쉬워진다.</li>
+        <li>신규 작업자와 AI 도구 모두 탐색 비용이 줄어든다.</li>
+        <li>CSV 원본과 런타임 사용 데이터 사이의 불일치 문제를 구조적으로 줄일 수 있다.</li>
+        <li>장기적으로는 seeder 한 파일의 비대화를 막고, 도메인 단위로 데이터 책임을 나눌 수 있다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card amber">
+      <h2>11. 회의용 결론</h2>
+      <p>
+        현재 구조는 “작동 여부”만 보면 사용할 수 있다.
+        그러나 팀 운영 관점에서는 <strong>데이터 수정 경로가 분산되어 있고,
+        검증 계약이 약하며, 런타임 계약이 이미 그 구조에 깊게 결합되어 있다</strong>는 점이 더 큰 문제다.
+      </p>
+      <p>
+        따라서 이번 논의의 목적은 “SO를 쓸지 말지”가 아니라,
+        <strong>원본 데이터의 단일성, 검증의 강제성, 조회 계약의 일관성</strong>을 재정의하는 데 있어야 한다.
+      </p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>12. 근거 파일 목록</h2>
+      <ul>
+        <li><code>Pakuri/Assets/Scripts/Data/Editor/PakuriGameDataSeeder.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Data/GameDataCatalog.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Data/MonsterDefinition.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Data/EnemyDefinition.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Run/RunFlowController.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Run/DebugSceneController.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs</code></li>
+        <li><code>Pakuri/data/skills.csv</code></li>
+        <li><code>Pakuri/data/levelup_choices.csv</code></li>
+        <li><code>Pakuri/data/skill_branches.csv</code></li>
+        <li><code>Pakuri/data/waves.csv</code></li>
+        <li><code>Pakuri/data/waves_chapter1.csv</code></li>
+        <li><code>Pakuri/data/waves_chapter2.csv</code></li>
+        <li><code>Pakuri/data/waves_chapter3.csv</code></li>
+      </ul>
+    </article>
+  </section>
+</main>
+</body>
+</html>

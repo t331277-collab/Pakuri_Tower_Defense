@@ -35,8 +35,8 @@ MonoBehaviour:
     Ice: 0
     Darkness: 0
     Holy: 0
-  UnitSprite: {fileID: 0}
-  ProjectileSprite: {fileID: 0}
+  UnitSprite: {fileID: 21300000, guid: 7340a02f3fe3cd44199cf5f248a877e2, type: 3}
+  ProjectileSprite: {fileID: 21300000, guid: b7c5627b81613f843bb3624bd5560dcc, type: 3}
   UnitColor: {r: 0.96, g: 0.84, b: 0.42, a: 1}
   ProjectileColor: {r: 1, g: 0.94, b: 0.68, a: 1}
   MaxHealth: 240

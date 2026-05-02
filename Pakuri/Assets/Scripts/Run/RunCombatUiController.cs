@@ -209,6 +209,11 @@ namespace Pakuri.Run
 
         private void ResolveReferences()
         {
+            if (Application.isPlaying)
+            {
+                fallbackCatalog = PakuriCsvRuntimeData.ResolveCatalogOrFallback(fallbackCatalog);
+            }
+
             rootCanvas = GetComponent<Canvas>();
             canvasScaler = GetComponent<CanvasScaler>();
             graphicRaycaster = GetComponent<GraphicRaycaster>();
@@ -222,6 +227,8 @@ namespace Pakuri.Run
 
         private void ResolveRuntimeReferences()
         {
+            fallbackCatalog = PakuriCsvRuntimeData.ResolveCatalogOrFallback(fallbackCatalog);
+
             if (combatController == null)
             {
                 combatController = FindFirstObjectByType<CombatRuntimeController>();
@@ -888,12 +895,7 @@ namespace Pakuri.Run
 
         private MonsterDefinition ResolveFallbackMonster()
         {
-            if (fallbackCatalog == null || fallbackCatalog.Monsters == null || fallbackCatalog.Monsters.Length == 0)
-            {
-                return null;
-            }
-
-            return fallbackCatalog.GetMonsterById(RunSceneBootstrap.FallbackMonsterId) ?? fallbackCatalog.Monsters[0];
+            return PakuriDataManager.Instance.ResolveMonster(RunSceneBootstrap.FallbackMonsterId, fallbackCatalog);
         }
 
         private void RefreshHud()

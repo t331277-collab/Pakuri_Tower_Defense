@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pakuri 데이터 구조 리팩토링 구현 보고서</title>
+  <style>
+    :root {
+      --bg: #f3f5f8;
+      --paper: #ffffff;
+      --ink: #14202b;
+      --muted: #5d6875;
+      --line: #d6dee7;
+      --navy: #123b66;
+      --teal: #0d766e;
+      --amber: #9a5b00;
+      --red: #b42318;
+      --green: #166534;
+      --soft-navy: #eef5ff;
+      --soft-teal: #eefbf8;
+      --soft-amber: #fff8ec;
+      --soft-red: #fff4f4;
+      --soft-green: #effcf3;
+      --shadow: 0 16px 36px rgba(20, 32, 43, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, #fbfdff 0%, #f3f5f8 45%, #e9edf2 100%);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.62;
+    }
+
+    main {
+      max-width: 1260px;
+      margin: 0 auto;
+      padding: 32px 20px 72px;
+    }
+
+    header {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 30px;
+      background: linear-gradient(135deg, #ffffff 0%, #eef5ff 100%);
+      box-shadow: var(--shadow);
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.24;
+    }
+
+    h1 {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 14px;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    code {
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: #edf3f8;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.95em;
+    }
+
+    .subtitle {
+      max-width: 1040px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f7fafc;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .card {
+      grid-column: span 12;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      background: var(--paper);
+      box-shadow: 0 8px 24px rgba(20, 32, 43, 0.05);
+    }
+
+    .half { grid-column: span 6; }
+    .third { grid-column: span 4; }
+    .two-third { grid-column: span 8; }
+
+    .navy { border-left: 5px solid var(--navy); background: var(--soft-navy); }
+    .teal { border-left: 5px solid var(--teal); background: var(--soft-teal); }
+    .amber { border-left: 5px solid var(--amber); background: var(--soft-amber); }
+    .red { border-left: 5px solid var(--red); background: var(--soft-red); }
+    .green { border-left: 5px solid var(--green); background: var(--soft-green); }
+
+    ul {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f4f7fb;
+      font-weight: 700;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
+    .fact { background: #dbeafe; color: #1d4ed8; }
+    .done { background: #dcfce7; color: #166534; }
+    .warn { background: #fef3c7; color: #92400e; }
+    .risk { background: #fee2e2; color: #991b1b; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .step {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fbfdff;
+      min-height: 148px;
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--navy);
+    }
+
+    .mono {
+      white-space: pre-wrap;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 13px;
+      background: #f7fafc;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      background: #fbfdff;
+    }
+
+    .metric-value {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .metric-label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 980px) {
+      .half, .third, .two-third { grid-column: span 12; }
+      .flow { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 640px) {
+      .summary-grid { grid-template-columns: 1fr; }
+      main { padding-left: 14px; padding-right: 14px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Pakuri 데이터 구조 리팩토링 구현 보고서</h1>
+    <p class="subtitle">
+      이 문서는 <code>2026-05-01-data-structure-review.html</code>의 실제 지적사항과
+      그 이후 현재 저장소에 반영된 CSV 중심 리팩토링을 연결해 설명하는 구현 보고서다.
+      목적은 “무엇이 문제였고”, “무엇을 어떻게 고쳤고”, “무엇이 아직 남았는지”를
+      실제 코드와 실제 자산 경로 기준으로 한 번에 정리하는 것이다.
+    </p>
+    <div class="chips">
+      <span class="chip">기준일: <code>2026-05-02</code></span>
+      <span class="chip">기준 문서: <code>Pakuri/reference/Report/2026-05-01-data-structure-review.html</code></span>
+      <span class="chip">현재 원본 경로: <code>Pakuri/Assets/CSVdata/source</code></span>
+      <span class="chip">런타임 카탈로그: <code>Assets/Resources/Pakuri/CSVRuntime</code></span>
+      <span class="chip">검증 범위: 코드, YAML asset, Unity console</span>
+    </div>
+  </header>
+
+  <section class="grid">
+    <article class="card teal">
+      <h2>현재 데이터 로드와 SO 적용 원리</h2>
+      <p>
+        현재 구조는 <strong>기존 <code>Assets/Data/GameData/*.asset</code>를 CSV로 직접 덮어쓰는 방식이 아니다.</strong>
+        게임 시작 시 <code>PakuriCsvRuntimeData</code>가
+        <code>PakuriCsvRuntimeSourceCatalog</code>에서 source CSV <code>TextAsset</code>을 읽고,
+        <code>PakuriCsvRuntimeAssetCatalog</code>에서 <code>asset_path</code>에 대응하는 Sprite/GameObject 참조를 읽는다.
+      </p>
+      <p>
+        그 다음 순서는
+        <code>source 검증 → runtime asset binding 검증 → in-memory GameDataCatalog 생성 → MonsterDefinition/EnemyDefinition 생성 → PakuriDataManager 등록</code>이다.
+        이때 생성되는 <code>GameDataCatalog</code>와 <code>MonsterDefinition</code>은
+        <code>ScriptableObject.CreateInstance&lt;...&gt;</code>로 메모리 안에서 새로 만들어진 runtime object다.
+      </p>
+      <p>
+        즉 현재 SO의 역할은 “CSV 원본을 Unity 런타임이 소비할 수 있는 형태로 담는 컨테이너”에 가깝고,
+        실제 진실원본은 <code>Pakuri/Assets/CSVdata/source/*.csv</code>다.
+        반대로 <code>Assets/Data/GameData/GameDataCatalog.asset</code>와 기존 몬스터/적 asset은
+        현재 기준으로 legacy bootstrap 또는 editor 복구 경로에 더 가깝다.
+      </p>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card amber">
+      <h2>Before / After: 개선 전과 개선 후 작동 원리</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>비교 항목</th>
+            <th>Before: 지적받은 구조</th>
+            <th>After: 현재 구조</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>원본 데이터 위치</td>
+            <td><code>csv + markdown + 하드코딩 + asset</code>가 섞여 있었다. 기준 문서와 legacy seeder 기준으로 <code>PakuriGameDataSeeder.cs</code>가 markdown와 코드 상수를 함께 읽고 <code>GameDataCatalog.asset</code> 계열 자산을 만들었다.</td>
+            <td>실제 진실원본은 <code>Pakuri/Assets/CSVdata/source/*.csv</code>다. source CSV는 <code>PakuriCsvRuntimeSourceCatalog.asset</code>를 통해 런타임이 읽는다.</td>
+          </tr>
+          <tr>
+            <td>런타임 시작 시 로드 방식</td>
+            <td>scene에 직렬화된 <code>GameDataCatalog</code>와 legacy asset 경로 의존이 강했고, 데이터 입력 경로와 런타임 소비 경로가 분리돼 있었다.</td>
+            <td><code>PakuriCsvRuntimeData</code>가 시작 시 source catalog와 asset catalog를 읽고, 검증 후 runtime catalog를 만든다.</td>
+          </tr>
+          <tr>
+            <td>SO의 역할</td>
+            <td>기존 SO asset은 사실상 authoring 산출물과 runtime 소비 모델을 동시에 맡고 있었다.</td>
+            <td>기존 SO asset을 CSV로 덮어쓰지 않고, <code>ScriptableObject.CreateInstance&lt;...&gt;</code>로 in-memory runtime SO를 새로 만든다. 즉 SO는 runtime adapter/container에 가깝다.</td>
+          </tr>
+          <tr>
+            <td>자산 참조 처리</td>
+            <td>문서/코드/asset 경로가 흩어져 있었고, player runtime-safe한 asset binding 계약이 약했다.</td>
+            <td><code>PakuriCsvRuntimeAssetCatalog.asset</code>가 <code>asset_path</code>를 실제 Sprite/GameObject 참조로 들고 있고, validation도 이 catalog를 기준으로 돈다.</td>
+          </tr>
+          <tr>
+            <td>검증 실패 시 동작</td>
+            <td>기준 문서가 지적한 시점에는 warning/fallback 중심이었고, 잘못된 데이터가 조용히 흘러갈 여지가 컸다.</td>
+            <td><code>ValidateSourceModelOrThrow(...)</code>, <code>ValidateRuntimeCatalogOrThrow(...)</code>를 거치며, 치명 오류면 <code>Application.Quit()</code>로 중단한다.</td>
+          </tr>
+          <tr>
+            <td>런타임 조회 계약</td>
+            <td>여러 consumer가 <code>gameDataCatalog.Monsters</code>나 <code>StageOneEnemies</code>를 직접 보거나 scene fallback에 의존했다.</td>
+            <td><code>PakuriDataManager</code>가 runtime catalog를 등록받고, <code>GetData&lt;T&gt;</code>, <code>GetMonsters(...)</code>, <code>GetStageOneEnemies(...)</code>, <code>ResolveMonster(...)</code>로 조회를 모은다.</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card navy">
+      <h2>1. Executive Summary</h2>
+      <p>
+        기준 문서의 핵심 제안은 <strong>원본 데이터 단일화</strong>,
+        <strong>2행 타입 정의</strong>, <strong>조회 계약 통일</strong>,
+        <strong>검증 강제</strong>였다.
+      </p>
+      <p>
+        현재 구현은 이 방향을 일부 실현했다. 구체적으로는
+        <code>Pakuri/Assets/CSVdata/source</code>의 typed CSV를 런타임 원본으로 삼고,
+        이를 <code>PakuriCsvRuntimeSourceCatalog</code>와
+        <code>PakuriCsvRuntimeAssetCatalog</code>를 통해 플레이어 런타임에서 읽도록 바꿨다.
+        또한 CSV 파싱 실패나 asset binding 실패가 나면
+        <code>Application.Quit()</code>로 중단하도록 강제했다.
+      </p>
+      <p>
+        이후 후속 작업으로 기존 <code>PakuriCsvRuntimeData.cs</code> monolith는
+        runtime entry, loader, validation, build, editor, types support partial 파일로 분리됐다.
+        즉 “CSV-first 런타임”뿐 아니라 “기능 축 기준 코드 분해”까지는 반영됐다.
+        다만 <code>PakuriGameDataSeeder.cs</code>는 여전히
+        <code>Assets/Scripts/Data/Editor/Legacy</code> 아래에 남아 있고,
+        조회 계약도 아직 프로젝트 전역으로 확장된 상태는 아니다.
+      </p>
+      <div class="summary-grid">
+        <div class="metric">
+          <div class="metric-value">7</div>
+          <div class="metric-label">현재 source CSV TextAsset 수</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">2</div>
+          <div class="metric-label">Resources 기반 runtime catalog asset 수</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">11</div>
+          <div class="metric-label">현재 asset catalog sprite 매핑 수</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">6</div>
+          <div class="metric-label"><code>PakuriCsvRuntimeData*.cs</code> 분리 파일 수</div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card teal">
+      <h2>2. 기준 문서의 제안 작업안과 현재 대응 상태</h2>
+      <p>
+        기준 문서의 8번 섹션은 다음 4가지를 제안했다:
+        <code>1. 원본 고정</code>, <code>2. 타입 행 도입</code>,
+        <code>3. 데이터 클래스 분리</code>, <code>4. 조회 계약 통일</code>.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>기준 문서 제안</th>
+            <th>현재 구현 상태</th>
+            <th>근거</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>CSV를 저작 원본으로 고정</td>
+            <td><span class="pill done">부분 달성</span> 런타임 원본은 <code>Assets/CSVdata/source</code>로 고정했다.</td>
+            <td><code>PakuriCsvRuntimeData.cs</code>의 <code>ImportedSourceAssetRoot</code>, <code>LoadSourceCatalogOrThrow()</code></td>
+          </tr>
+          <tr>
+            <td>2행 타입 정의 도입</td>
+            <td><span class="pill done">달성</span> 파서는 header + type row가 없으면 실패한다.</td>
+            <td><code>CsvTable.Load(...)</code>, 실제 <code>monsters.csv</code> 2행 type schema</td>
+          </tr>
+          <tr>
+            <td>데이터셋별 데이터 클래스/validator 분리</td>
+            <td><span class="pill warn">부분 달성</span> monolith는 분해됐지만, row model은 아직 <code>PakuriCsvRuntimeData.Types.cs</code>에 함께 모여 있다.</td>
+            <td><code>PakuriCsvRuntimeData.Loader.cs</code>, <code>Validation.cs</code>, <code>Build.cs</code>, <code>Editor.cs</code>, <code>Types.cs</code></td>
+          </tr>
+          <tr>
+            <td><code>PakuriDataManager</code> 조회 계약</td>
+            <td><span class="pill warn">부분 달성</span> <code>GetData&lt;T&gt;(id)</code>에 더해 <code>GetMonsters(...)</code>, <code>GetStageOneEnemies(...)</code>, <code>ResolveMonster(...)</code>를 추가했고 MainMenu/Run/Debug/Combat 진입 경로를 이 계약으로 묶었다.</td>
+            <td><code>PakuriDataManager.cs</code>, <code>MainMenuFlowController.cs</code>, <code>DebugSceneController.cs</code>, <code>RunFlowController.cs</code>, <code>RunCombatUiController.cs</code>, <code>RunSceneBootstrap.cs</code>, <code>CombatRuntimeEnemies.cs</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half amber">
+      <h2>3. 리팩토링 전 문제 구조</h2>
+      <ul>
+        <li><code>Pakuri/reference/Report/2026-05-01-data-structure-review.html</code>는 원본이 <code>csv + markdown + 하드코딩 + asset</code> 혼합 상태라고 지적했다.</li>
+        <li>현재 legacy seeder는 실제로 <code>Assets/Scripts/Data/Editor/Legacy/PakuriGameDataSeeder.cs</code>에 남아 있으며, 5 몬스터와 Stage 1 적을 코드에 직접 들고 있다.</li>
+        <li>같은 파일은 <code>Application.dataPath/../reference/2.Monster/{monster}/skill</code> 아래 markdown를 다시 읽어 skill 데이터를 만든다.</li>
+        <li>이 구조에서는 런타임 소비 모델과 authoring 입력 경로가 분리돼, 데이터 불일치 원인 추적이 어렵다.</li>
+      </ul>
+    </article>
+
+    <article class="card half green">
+      <h2>4. 현재 리팩토링 후 구조</h2>
+      <ul>
+        <li>사용자가 수정하는 source는 <code>Pakuri/Assets/CSVdata/source/*.csv</code>다.</li>
+        <li>에디터는 이 CSV를 <code>PakuriCsvRuntimeSourceCatalog.asset</code>에 TextAsset 참조로 묶는다.</li>
+        <li>동시에 CSV 안의 <code>asset_path</code>를 실제 Sprite/GameObject 참조로 바꿔 <code>PakuriCsvRuntimeAssetCatalog.asset</code>에 저장한다.</li>
+        <li>게임 시작 시 <code>[RuntimeInitializeOnLoadMethod]</code>가 이 두 catalog를 읽고 source 검증, runtime binding 검증, in-memory <code>GameDataCatalog</code> 생성, <code>PakuriDataManager</code> 등록을 수행한다.</li>
+        <li>CSV source가 import되면 postprocessor가 runtime catalog sync를 자동 예약하므로, 일반적인 수치 수정은 source CSV 쪽을 바꾸는 것으로 닫힌다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card navy">
+      <h2>5. 실제 구현 과정</h2>
+      <div class="flow">
+        <div class="step">
+          <strong>1. 기준 보고서 확인</strong>
+          <code>2026-05-01-data-structure-review.html</code>의 8번 제안 작업안에서
+          CSV 원본 고정, 타입 행, 데이터 클래스 분리, 조회 계약 통일을 기준 방향으로 삼았다.
+        </div>
+        <div class="step">
+          <strong>2. 1차 CSV 마이그레이션</strong>
+          초기에는 <code>Pakuri/data/source</code>를 직접 읽는
+          <code>PakuriCsvRuntimeData.cs</code>를 만들고 startup validation + quit 경로를 추가했다.
+        </div>
+        <div class="step">
+          <strong>3. Reviewer 지적 반영</strong>
+          Reviewer는 숨은 asset fallback, unified query 부재, non-Resources asset path 문제를 지적했다.
+          이후 사용자가 CSV를 <code>Assets/CSVdata</code>로 import했다.
+        </div>
+        <div class="step">
+          <strong>4. 2차 구조 보강</strong>
+          source를 TextAsset 기반으로 바꾸고,
+          <code>PakuriCsvRuntimeSourceCatalog</code>,
+          <code>PakuriCsvRuntimeAssetCatalog</code>,
+          <code>PakuriDataManager</code>,
+          postprocessor를 추가했다.
+        </div>
+        <div class="step">
+          <strong>5. 3차 코드 분해, 조회 계약 확장, 재검증</strong>
+          이후 <code>PakuriCsvRuntimeData</code>를 partial 파일들로 분해하고,
+          <code>PakuriDataManager</code>에 collection/fallback query를 추가해
+          MainMenu, RunFlow, DebugScene, RunCombatUi, RunSceneBootstrap, CombatRuntimeEnemies의 direct catalog 접근을 줄였다.
+          그 뒤 full asset refresh와 <code>Pakuri/Validate CSV Source Data</code>를 다시 실행해
+          동일한 <code>5 monsters / 8 stage-one enemies</code> 로그를 재확인했다.
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card two-third">
+      <h2>6. 실제 변경 파일과 역할</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>파일</th>
+            <th>현재 역할</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.cs</code></td>
+            <td>런타임 초기화, catalog resolution, fatal quit 진입점</td>
+            <td>현재 116줄. 분리 후 main entry만 남았다.</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.Loader.cs</code></td>
+            <td>Resources catalog 로드, source model 생성, CSV row parse</td>
+            <td>현재 312줄</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.Validation.cs</code></td>
+            <td>source 무결성 검사, runtime binding 검사</td>
+            <td>현재 506줄</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.Build.cs</code></td>
+            <td>in-memory <code>GameDataCatalog</code>, monster/enemy/skill definition 생성</td>
+            <td>현재 304줄</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.Editor.cs</code></td>
+            <td>bootstrap/export, runtime catalog sync, validate menu, CSV writer</td>
+            <td>현재 794줄. 에디터 전용 작업이 모여 있다.</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.Types.cs</code></td>
+            <td>CSV parser support, source row model, fatal exception 타입</td>
+            <td>현재 479줄. parser 지원 타입과 source row model 집합을 담는다.</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeSourceCatalog.cs</code></td>
+            <td>7개 source CSV TextAsset을 묶는 ScriptableObject</td>
+            <td>플레이어 런타임이 filesystem 대신 이 참조를 읽는다.</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeAssetCatalog.cs</code></td>
+            <td>CSV의 <code>asset_path</code>를 runtime-safe Sprite/GameObject 참조로 변환한 catalog</td>
+            <td>현재 YAML 기준 11 sprite path, prefab 0개</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Data/PakuriDataManager.cs</code></td>
+            <td>runtime registry와 collection/fallback query 계약을 제공하는 data access 레이어</td>
+            <td><code>GetData&lt;T&gt;(id)</code>, <code>GetMonsters(...)</code>, <code>GetStageOneEnemies(...)</code>, <code>ResolveMonster(...)</code>를 제공한다.</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Data/Editor/PakuriCsvRuntimeCatalogPostprocessor.cs</code></td>
+            <td><code>Assets/CSVdata/source</code> 변경 후 runtime catalog sync를 예약</td>
+            <td>에디터 import 후 catalog drift를 줄인다.</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Run/MainMenuFlowController.cs</code></td>
+            <td>메인 메뉴 캐릭터 선택 버튼용 몬스터 roster 조회를 <code>PakuriDataManager</code> 경유로 수행</td>
+            <td>직접 <code>gameDataCatalog.Monsters</code>를 순회하지 않는다.</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Run/DebugSceneController.cs</code></td>
+            <td>DebugScene의 상태 문구와 monster button slot 재구성을 <code>PakuriDataManager</code> 경유로 수행</td>
+            <td>DebugScene roster 조회 계약도 runtime data 경로와 맞췄다.</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Run/RunFlowController.cs</code></td>
+            <td>monster select roster와 전투 시작/재시도 몬스터 lookup을 <code>PakuriDataManager</code> 경유로 변경</td>
+            <td>누락 안내 문구도 legacy seeder가 아니라 <code>Assets/CSVdata/source</code> / <code>Pakuri/CSVRuntime</code> 기준으로 수정했다.</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Run/RunCombatUiController.cs</code></td>
+            <td>fallback monster lookup을 <code>PakuriDataManager</code> 경유로 변경</td>
+            <td><code>ResolveMonster(...)</code>를 통해 fallback id 우선 resolve 후 첫 몬스터로만 내려간다.</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Run/RunSceneBootstrap.cs</code></td>
+            <td>scene bootstrap monster lookup을 <code>PakuriDataManager</code> 경유로 변경</td>
+            <td>RunStartContext가 없을 때도 동일한 fallback contract를 쓴다.</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Combat/CombatRuntimeEnemies.cs</code></td>
+            <td>stage-one enemy pool lookup을 <code>PakuriDataManager</code> 경유로 변경</td>
+            <td>현재 Stage 1 fallback enemy 생성 규칙은 유지한 채 query path만 통일했다.</td>
+          </tr>
+          <tr>
+            <td><code>Pakuri/Assets/Scripts/Data/Editor/Legacy/PakuriGameDataSeeder.cs</code></td>
+            <td>legacy editor bootstrap 도구</td>
+            <td>현재 runtime source-of-truth는 아니고, 에디터 복구용 legacy 경로로만 남아 있다.</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card red">
+      <h2>7. 남아 있는 구조 부채와 우선순위</h2>
+      <p>
+        이 섹션은 실제 후속 작업 후보만 남긴다.
+        의도적으로 하지 않은 항목, 예를 들어 scene controller singleton 확장은 부채 목록에서 제외했다.
+      </p>
+      <ul>
+        <li><strong>1순위: legacy seeder 정리</strong>: <code>PakuriGameDataSeeder.cs</code>는 여전히 5몬스터/8적 하드코딩과 markdown 파싱을 유지한다. 런타임 원본은 이미 CSV로 옮겨졌으므로, 다음 authoring 정리의 중심은 이 legacy 경로를 어떻게 폐기하거나 대체할지다.</li>
+        <li><strong>2순위: dataset 단위 세분화</strong>: monolith 분해는 끝났지만, row model과 parser support 타입은 아직 <code>PakuriCsvRuntimeData.Types.cs</code> 하나에 모여 있다.</li>
+        <li><strong>3순위: 조회 계약의 전면 확장</strong>: 현재 <code>PakuriDataManager</code>는 MainMenu/RunFlow/DebugScene/RunCombatUi/RunSceneBootstrap/CombatRuntimeEnemies까지 확장됐지만, 프로젝트 전체의 모든 data consumer가 stable-id 기반 query service로 통일된 상태는 아니다.</li>
+        <li><strong>legacy CSV 보존</strong>: <code>Pakuri/data/*.csv</code>는 reference로 남아 있다.</li>
+        <li><strong>Reviewer 재검증 미실행</strong>: Builder 수정 후 새로운 Code Reviewer pass는 아직 수행하지 않았다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card amber">
+      <h2>8. 기준 문서 지적별 실제 수정 내용</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>지적 항목</th>
+            <th>수정 내용</th>
+            <th>현재 판정</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>원본 데이터가 csv + markdown + 하드코딩 + asset으로 분산</td>
+            <td>런타임 원본을 <code>Assets/CSVdata/source</code> + Resources catalog로 고정했다. <code>GameDataCatalog.asset</code>는 bootstrap-only로 격하했다.</td>
+            <td><span class="pill done">개선</span></td>
+          </tr>
+          <tr>
+            <td>CSV type row/강한 파서 계약 부재</td>
+            <td>header + type row가 없으면 실패하는 parser를 유지하고, runtime init 경로에 강제했다.</td>
+            <td><span class="pill done">개선</span></td>
+          </tr>
+          <tr>
+            <td>검증이 warning/fallback 중심</td>
+            <td>source validation, runtime binding validation, startup quit 경로를 넣고 asset catalog coverage까지 검증한다.</td>
+            <td><span class="pill done">개선</span></td>
+          </tr>
+          <tr>
+            <td>조회 계약 불일치</td>
+            <td><code>PakuriDataManager</code>에 <code>GetData&lt;T&gt;(id)</code>, <code>GetMonsters(...)</code>, <code>GetStageOneEnemies(...)</code>, <code>ResolveMonster(...)</code>를 두고 MainMenu/RunFlow/DebugScene/RunCombatUi/RunSceneBootstrap/CombatRuntimeEnemies의 direct catalog access를 줄였다.</td>
+            <td><span class="pill warn">부분 개선</span></td>
+          </tr>
+          <tr>
+            <td>asset path가 player runtime에서 안전하지 않음</td>
+            <td><code>PakuriCsvRuntimeAssetCatalog.asset</code>를 생성하고 CSV path를 실제 Sprite/GameObject 참조로 바꿨다.</td>
+            <td><span class="pill done">개선</span></td>
+          </tr>
+          <tr>
+            <td>데이터셋별 클래스/validator 분리 부족</td>
+            <td>기존 monolith를 runtime entry / loader / validation / build / editor / types 파일로 분해했다. 다만 dataset별 model file까지는 아직 아니다.</td>
+            <td><span class="pill warn">부분 개선</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card half green">
+      <h2>9. 실제 검증 근거</h2>
+      <ul>
+        <li>Unity 메뉴 <code>Pakuri/Validate CSV Source Data</code>를 다시 실행했고, 콘솔에 <code>PakuriCsvRuntimeData loaded runtime catalog from resource source 'Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog' with 5 monsters and 8 stage-one enemies.</code> 로그가 남았다.</li>
+        <li><code>Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog.asset</code> YAML은 7개 CSV TextAsset GUID를 실제로 참조한다.</li>
+        <li><code>Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog.asset</code> YAML은 11개 <code>AssetPath:</code> sprite entry를 실제로 가진다.</li>
+        <li>full Unity asset refresh 후 <code>PakuriCsvRuntimeData.Build.cs</code>, <code>Editor.cs</code>, <code>Loader.cs</code>, <code>Types.cs</code>, <code>Validation.cs</code>의 새 <code>.meta</code>가 생성됐고, 이후 콘솔 조회에서 프로젝트 C# compile error는 보이지 않았다.</li>
+        <li><code>Get-ChildItem ... | Select-String 'gameDataCatalog\.Monsters|gameDataCatalog\.StageOneEnemies|fallbackCatalog\.Monsters'</code>를 다시 실행했을 때, 남은 direct 배열 접근은 <code>PakuriDataManager.cs</code> 내부 fallback 처리만 확인됐다.</li>
+      </ul>
+    </article>
+
+    <article class="card half red">
+      <h2>10. 검증 한계</h2>
+      <ul>
+        <li>이번 정리는 Play Mode gameplay 검증을 포함하지 않는다. 저장소 규칙상 Play Mode는 사용자 검증 범위다.</li>
+        <li><code>dotnet build</code>는 현재 sandbox에서 <code>C:\Users\t3312\.dotnet</code>, <code>C:\Users\t3312\AppData\Local\Microsoft SDKs</code> 접근 거부 때문에 최종 검증 수단으로 쓰지 못했다.</li>
+        <li>Builder follow-up 이후 새 Code Reviewer pass는 아직 요청되지 않았으므로, “Reviewer 기준 최종 PASS” 상태는 아니다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid">
+    <article class="card navy">
+      <h2>11. 현 시점 결론</h2>
+      <p>
+        현재 리팩토링의 핵심 성과는
+        <strong>런타임 데이터 원본이 더 이상 markdown parser나 legacy SO 생성기에 매달리지 않게 만들었다</strong>는 점이다.
+        이제 게임 시작 시점의 실제 진실원본은
+        <code>Assets/CSVdata/source</code>에서 import된 typed CSV와,
+        그 CSV를 플레이어 런타임에서 안전하게 읽기 위한
+        <code>PakuriCsvRuntimeSourceCatalog</code>,
+        <code>PakuriCsvRuntimeAssetCatalog</code>다.
+      </p>
+      <p>
+        반면 구조적으로 완전히 끝난 상태는 아니다.
+        다음 리팩토링 우선순위는
+        <strong>1) <code>PakuriGameDataSeeder.cs</code>의 legacy 정리</strong>,
+        <strong>2) row model / validator의 dataset 단위 세분화</strong>,
+        <strong>3) 남아 있는 data consumer의 조회 계약 추가 통일</strong> 순서가 가장 자연스럽다.
+      </p>
+      <div class="mono">기준 문서의 8번 제안 작업안과 비교하면,
+- 원본 고정: 부분 달성
+- 타입 행 도입: 달성
+- 데이터 클래스 분리: 부분 달성
+- 조회 계약 통일: 부분 달성 (gameplay entry/UI와 stage-one enemy pool까지 확대)
+
+즉 현재 상태는 "설계 방향 전환, runtime source 고정, 1차 구조 분해, gameplay 진입부 조회 계약 통일까지는 끝났고,
+legacy authoring 경로 정리와 dataset 세분화가 남아 있는 2단계"로 보는 것이 가장 정확하다.</div>
+    </article>
+  </section>
+</main>
+</body>
+</html>

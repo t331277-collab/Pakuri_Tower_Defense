@@ -63,6 +63,11 @@ namespace Pakuri.Run
 
         private void ResolveReferences()
         {
+            if (Application.isPlaying)
+            {
+                gameDataCatalog = PakuriCsvRuntimeData.ResolveCatalogOrFallback(gameDataCatalog);
+            }
+
             rootCanvas = GetComponent<Canvas>();
             canvasScaler = GetComponent<CanvasScaler>();
             graphicRaycaster = GetComponent<GraphicRaycaster>();
@@ -152,14 +157,15 @@ namespace Pakuri.Run
 
         private void EnsureMonsterButtons()
         {
-            if (monsterButtonRoot == null || gameDataCatalog == null || gameDataCatalog.Monsters == null)
+            if (monsterButtonRoot == null)
             {
                 return;
             }
 
-            for (var i = 0; i < gameDataCatalog.Monsters.Length; i++)
+            var monsters = PakuriDataManager.Instance.GetMonsters(gameDataCatalog);
+            for (var i = 0; i < monsters.Length; i++)
             {
-                var monster = gameDataCatalog.Monsters[i];
+                var monster = monsters[i];
                 if (monster == null)
                 {
                     continue;

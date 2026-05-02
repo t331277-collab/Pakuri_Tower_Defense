@@ -81,6 +81,11 @@ namespace Pakuri.Run
 
         private void ResolveReferences()
         {
+            if (Application.isPlaying)
+            {
+                gameDataCatalog = PakuriCsvRuntimeData.ResolveCatalogOrFallback(gameDataCatalog);
+            }
+
             rootCanvas = GetComponent<Canvas>();
             canvasScaler = GetComponent<CanvasScaler>();
             graphicRaycaster = GetComponent<GraphicRaycaster>();
@@ -180,17 +185,18 @@ namespace Pakuri.Run
             rewardPanel.SetActive(false);
             defeatPanel.SetActive(false);
 
-            if (gameDataCatalog == null || gameDataCatalog.Monsters == null || gameDataCatalog.Monsters.Length == 0)
+            var monsters = PakuriDataManager.Instance.GetMonsters(gameDataCatalog);
+            if (monsters.Length == 0)
             {
-                frontTitleText.text = "GameDataCatalog is missing";
-                frontSummaryText.text = "Pakuri/Seed Default Game Data를 실행해 기본 데이터를 만든 뒤 다시 시도한다.";
+                frontTitleText.text = "Monster data is missing";
+                frontSummaryText.text = "Assets/CSVdata/source와 Pakuri/CSVRuntime 리소스를 확인한 뒤 다시 시도한다.";
                 RebuildMonsterButtons(new MonsterDefinition[0]);
                 return;
             }
 
             frontTitleText.text = "Pakuri Run Prototype";
             frontSummaryText.text = "몬스터를 선택하면 현재 문서 기준의 5몬스터 A 스킬 전투와 A/F 최소 보상 루프가 시작된다.";
-            RebuildMonsterButtons(gameDataCatalog.Monsters);
+            RebuildMonsterButtons(monsters);
         }
 
         private void RebuildMonsterButtons(MonsterDefinition[] monsters)
@@ -325,7 +331,7 @@ namespace Pakuri.Run
             rewardPanel.SetActive(false);
             currentState = RunFlowState.Combat;
             combatController.BeginConfiguredDay(
-                gameDataCatalog.GetMonsterById(currentSession.SelectedMonsterId),
+                PakuriDataManager.Instance.GetData<MonsterDefinition>(currentSession.SelectedMonsterId),
                 currentSession);
             RefreshHud();
         }
@@ -355,7 +361,7 @@ namespace Pakuri.Run
             rewardPanel.SetActive(false);
             currentState = RunFlowState.Combat;
             combatController.BeginConfiguredDay(
-                gameDataCatalog.GetMonsterById(currentSession.SelectedMonsterId),
+                PakuriDataManager.Instance.GetData<MonsterDefinition>(currentSession.SelectedMonsterId),
                 currentSession);
             RefreshHud();
         }

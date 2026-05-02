@@ -1,0 +1,11 @@
+skill_id,cast_type,projectile_speed,range,radius,hit_count,pierce_count,status_apply_id,status_apply_stack,auto_cast_rule,ai_use_condition,crit_allowed,skill_haste_allowed,cooldown_reduction_allowed,range_scaling_allowed,duration_scaling_allowed,power_scaling_allowed,notes
+SKILL_001,projectile,14.0,8.0,0.0,1,0,,0,manual,always,true,true,true,false,false,true,기본 단발 사격
+SKILL_002,projectile,16.0,9.0,0.0,1,1,STATUS_005,1,manual,always,true,true,true,false,false,true,어둠 탄약 연사
+SKILL_003,projectile,10.0,7.5,2.0,1,0,STATUS_001,2,auto,on_dense_enemy,true,true,true,true,false,true,화염 광역 투사체
+SKILL_004,projectile,15.0,9.0,0.0,1,2,STATUS_002,2,auto,on_line_target,true,true,true,false,false,true,냉기 관통 사격
+SKILL_005,direct,0.0,8.0,0.0,1,0,STATUS_005,2,auto,on_elite_or_boss,true,true,true,false,true,true,저주 표식 부여
+SKILL_006,area,0.0,6.0,3.5,5,0,,0,auto,on_ally_hp_low,false,true,true,true,true,false,지원 장막 광역기
+SKILL_007,passive,0.0,0.0,0.0,0,0,STATUS_001,1,passive,always,false,false,false,false,false,false,화염 패시브
+SKILL_008,passive,0.0,0.0,0.0,0,0,STATUS_002,1,passive,always,false,false,false,false,false,false,냉기 패시브
+SKILL_009,passive,0.0,0.0,0.0,0,0,STATUS_005,1,passive,always,false,false,false,false,false,false,어둠 패시브
+SKILL_010,projectile,9.0,8.0,3.5,1,0,STATUS_001,3,auto,on_dense_enemy,true,true,true,true,true,true,화염 마스터 광역기

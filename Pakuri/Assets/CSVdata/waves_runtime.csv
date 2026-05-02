@@ -1,0 +1,25 @@
+wave_id,encounter_id,trigger_target_id,spawn_delay,random_offset_radius,next_phase_condition,max_alive_count,difficulty_tag,notes
+C1_W01,CH1_ENC_01,none,0.0,1.0,time_or_clear,12,early_intro,챕터1 도입 웨이브
+C1_W02,CH1_ENC_02,none,0.0,1.0,time_or_clear,16,early_dense,챕터1 밀집 웨이브
+C1_W03,CH1_ENC_03,none,0.0,1.0,time_or_clear,16,early_tank,챕터1 탱크 도입
+C1_W04,CH1_ENC_04,none,0.0,1.2,time_or_clear,18,early_support,챕터1 지원 적 도입
+C1_W05,CH1_ENC_05,none,0.0,1.2,time_or_clear,20,early_elite,챕터1 엘리트 도입
+C1_W06,CH1_ENC_06,none,0.0,1.4,time_or_clear,22,mid_intro,챕터1 중반 전환
+C1_W07,CH1_ENC_07,none,0.0,1.4,time_or_clear,24,mid_flank,챕터1 측면 압박
+C1_W08,CH1_BOSS_01,BOSS_001,0.0,0.6,boss_hp_trigger,20,boss_ch1,챕터1 보스전
+C2_W01,CH2_ENC_01,none,0.0,1.0,time_or_clear,18,mid_intro,챕터2 도입 웨이브
+C2_W02,CH2_ENC_02,none,0.0,1.2,time_or_clear,20,mid_tank,챕터2 탱커 압박
+C2_W03,CH2_ENC_03,none,0.0,1.2,time_or_clear,22,mid_support,챕터2 지원/소환 혼합
+C2_W04,CH2_ENC_04,none,0.0,1.4,time_or_clear,22,mid_flank,챕터2 측면 교란
+C2_W05,CH2_ENC_05,none,0.0,1.4,time_or_clear,24,mid_elite,챕터2 엘리트 압박
+C2_W06,CH2_ENC_06,none,0.0,1.5,time_or_clear,26,late_intro,챕터2 후반 전환
+C2_W07,CH2_ENC_07,none,0.0,1.5,time_or_clear,28,late_wall,챕터2 벽 조합
+C2_W08,CH2_BOSS_01,BOSS_002,0.0,0.8,boss_hp_trigger,22,boss_ch2,챕터2 보스전
+C3_W01,CH3_ENC_01,none,0.0,1.2,time_or_clear,22,late_intro,챕터3 도입 웨이브
+C3_W02,CH3_ENC_02,none,0.0,1.4,time_or_clear,24,late_flank,챕터3 측면 압박
+C3_W03,CH3_ENC_03,none,0.0,1.4,time_or_clear,26,late_summon,챕터3 소환 압박
+C3_W04,CH3_ENC_04,none,0.0,1.5,time_or_clear,28,late_elite,챕터3 엘리트 혼합
+C3_W05,CH3_ENC_05,none,0.0,1.6,time_or_clear,30,late_peak,챕터3 압박 정점
+C3_W06,CH3_ENC_06,none,0.0,1.6,time_or_clear,30,late_armor,챕터3 방어형 적 강조
+C3_W07,CH3_ENC_07,none,0.0,1.8,time_or_clear,32,late_finale,챕터3 최종 일반전
+C3_W08,CH3_BOSS_01,BOSS_001,0.0,0.8,boss_hp_trigger,24,boss_ch3_placeholder,챕터3 보스전 자리

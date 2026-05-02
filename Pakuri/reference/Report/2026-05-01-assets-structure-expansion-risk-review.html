@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pakuri Assets 구조 확장 리스크 리뷰</title>
+  <style>
+    :root {
+      --bg: #f4efe8;
+      --paper: #fffaf4;
+      --ink: #1e1a16;
+      --muted: #6a5f55;
+      --line: #d7c8b7;
+      --accent: #9d5c2f;
+      --accent-soft: #efe0d1;
+      --high: #8d2f2f;
+      --mid: #9b6a19;
+      --low: #40624b;
+      --shadow: 0 14px 40px rgba(40, 26, 15, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(157, 92, 47, 0.12), transparent 28%),
+        linear-gradient(180deg, #f7f2eb 0%, var(--bg) 100%);
+      color: var(--ink);
+      line-height: 1.65;
+    }
+
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 56px 24px 72px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(157, 92, 47, 0.12), rgba(255, 250, 244, 0.95));
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 36px;
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 16px;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      margin-top: 44px;
+      font-size: 28px;
+      letter-spacing: -0.02em;
+    }
+
+    h3 {
+      font-size: 20px;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    .lede {
+      max-width: 840px;
+      font-size: 18px;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+      margin-top: 28px;
+    }
+
+    .stats {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .two {
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-value {
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .stat-label {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 8px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .high { background: rgba(141, 47, 47, 0.12); color: var(--high); }
+    .mid { background: rgba(155, 106, 25, 0.12); color: var(--mid); }
+    .low { background: rgba(64, 98, 75, 0.12); color: var(--low); }
+
+    .section-note {
+      color: var(--muted);
+      max-width: 860px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 18px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    th, td {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #f0e4d6;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    ul {
+      margin: 8px 0 0 18px;
+      padding: 0;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    code {
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: #f1e8dd;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.95em;
+    }
+
+    .footer {
+      margin-top: 52px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        padding: 28px 16px 48px;
+      }
+
+      .hero, .card {
+        padding: 20px;
+      }
+
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      td {
+        padding: 12px 16px;
+      }
+
+      td::before {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      tr td:nth-child(1)::before { content: "리스크"; }
+      tr td:nth-child(2)::before { content: "근거"; }
+      tr td:nth-child(3)::before { content: "확장 영향"; }
+      tr td:nth-child(4)::before { content: "우선도"; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">자산 리뷰</div>
+      <h1>Pakuri Assets 구조 확장 리스크 리뷰</h1>
+      <p class="lede">
+        이 보고서는 실제 스크립트와 ScriptableObject 자산에서 확인한 저장소 근거만 사용해
+        현재 <code>Pakuri/Assets</code> 구조의 확장 병목을 정리한다.
+        존재하지 않는 시스템, 숨은 헬퍼, 문서화되지 않은 컨텐츠 파이프라인은 가정하지 않았다.
+      </p>
+
+      <div class="grid stats">
+        <article class="card">
+          <div class="stat-value">25</div>
+          <div class="stat-label">검토한 C# 스크립트 수</div>
+        </article>
+        <article class="card">
+          <div class="stat-value">5</div>
+          <div class="stat-label">검토한 몬스터 SO 자산 수</div>
+        </article>
+        <article class="card">
+          <div class="stat-value">8</div>
+          <div class="stat-label">검토한 적 SO 자산 수</div>
+        </article>
+        <article class="card">
+          <div class="stat-value">1</div>
+          <div class="stat-label">검토한 데이터 카탈로그 자산 수</div>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>1. 검토 범위</h2>
+      <p class="section-note">
+        검토 범위는 <code>Pakuri/Assets/Scripts</code>, <code>Pakuri/Assets/Data/GameData</code>,
+        <code>Pakuri/data</code>, <code>Pakuri/reference/2.Monster</code>와
+        이를 연결하는 <code>PakuriGameDataSeeder.cs</code> 하위 실제 파일이다.
+        여기에는 <code>GameDataCatalog.asset</code>, 몬스터 자산 5개, 적 자산 8개도 포함된다.
+      </p>
+      <div class="grid two">
+        <article class="card">
+          <h3>주요 코드 근거</h3>
+          <ul>
+            <li><code>Data/GameDataCatalog.cs</code>는 <code>Monsters</code>와 <code>StageOneEnemies</code>만 가진다.</li>
+            <li><code>Combat/CombatRuntimeEnemies.cs</code>는 Stage 1 적 풀과 fallback 적 생성을 직접 가진다.</li>
+            <li><code>Run/RunSession.cs</code>는 배운 스킬 상태를 문자열로 저장한다.</li>
+            <li><code>Combat/CombatRuntimeProjectiles.cs</code>는 선택 몬스터 타입에 따라 분기한다.</li>
+            <li><code>Data/Editor/PakuriGameDataSeeder.cs</code>는 Stage 1 적 일부를 코드로 만들고, 몬스터 스킬은 <code>reference/2.Monster</code> markdown에서 읽는다.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>주요 자산 근거</h3>
+          <ul>
+            <li>실제 존재하는 몬스터 자산은 Ariel, Eve, Rin, Sein, Vega 총 5개다.</li>
+            <li>실제 존재하는 Stage 1 적 자산은 총 8개다.</li>
+            <li><code>rin.asset</code>과 <code>sein.asset</code>은 <code>UnitSprite</code>, <code>ProjectileSprite</code>가 비어 있다.</li>
+            <li>많은 스킬 슬롯의 <code>SkillIcon</code>, <code>SkillEffectPrefab</code> 참조가 null 상태다.</li>
+            <li><code>Pakuri/data/skills.csv</code>는 현재 <code>SKILL_001~003</code>만 가지지만, <code>levelup_choices.csv</code>와 <code>skill_branches.csv</code>는 <code>SKILL_004~006</code>을 참조한다.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. 전체 판단</h2>
+      <div class="card">
+        <p>
+          현재 구조는 "SO를 더 추가하면 컨텐츠가 자동으로 확장되는 구조"에 가깝지 않다.
+          새 컨텐츠를 넣을 때 ScriptableObject 자산뿐 아니라 전투 런타임 분기,
+          Run 상태 로직, 보상 또는 UI 흐름까지 함께 수정할 가능성이 높다.
+        </p>
+        <p>
+          또한 문제의 축이 SO 스키마만은 아니다.
+          실제 데이터 원본이 <code>csv + markdown + seeder 하드코딩 + 최종 asset</code>으로 나뉘어 있어
+          어떤 파일을 진실원본으로 보고 수정해야 하는지가 한 번에 드러나지 않는다.
+        </p>
+        <p>
+          실제 코드 기준으로 가장 큰 병목은
+          원본 데이터 경로의 분산,
+          Stage 1 전용 적 구조,
+          몬스터별 하드코드 전투 분기,
+          그리고 <code>DisplayName</code> 기반 Run 상태 저장이다.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. 데이터 파이프라인 관점의 추가 리스크</h2>
+      <div class="grid two">
+        <article class="card">
+          <h3>원본 경로가 여러 갈래다</h3>
+          <ul>
+            <li><code>Pakuri/data/*.csv</code>에는 스킬/선택지/웨이브 CSV가 실제 존재한다.</li>
+            <li><code>Pakuri/reference/2.Monster/.../*.md</code>는 몬스터 A~J 스킬 문서 원본으로 쓰인다.</li>
+            <li><code>PakuriGameDataSeeder.cs</code>는 에디터 메뉴에서 자산을 생성하며 Stage 1 적 일부를 코드에 직접 가진다.</li>
+            <li>런타임은 최종적으로 <code>GameDataCatalog</code>, <code>MonsterDefinition</code>, <code>EnemyDefinition</code> 자산만 읽는다.</li>
+          </ul>
+          <p>
+            즉 현재는 "원본 데이터 하나를 변환해 자산을 만든다"보다,
+            여러 원본 후보를 사람이 구분해 동기화해야 하는 구조에 가깝다.
+          </p>
+        </article>
+        <article class="card">
+          <h3>검증보다 변환이 더 강하다</h3>
+          <ul>
+            <li><code>GetSkillDocumentPaths()</code>는 문서 폴더나 문서가 없을 때 <code>Debug.LogWarning</code>만 남긴다.</li>
+            <li><code>ParseFirstFloat()</code>는 숫자를 읽지 못하면 <code>0f</code>를 반환한다.</li>
+            <li><code>ParseAttribute()</code>는 속성 매칭 실패 시 <code>DamageAttribute.Physical</code>로 돌아간다.</li>
+            <li>현재 CSV도 이미 <code>skills.csv</code>와 <code>levelup_choices.csv</code>/<code>skill_branches.csv</code> 사이에 참조 불일치가 있다.</li>
+          </ul>
+          <p>
+            초기 프로토타입 단계에서는 유연할 수 있지만,
+            컨텐츠가 늘어날수록 데이터 오류가 늦게 발견될 가능성을 키운다.
+          </p>
+        </article>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <h3>왜 확장 비용을 더 키우는가</h3>
+          <p>
+            실제 런타임은 이미 <code>RunFlowController</code>, <code>DebugSceneController</code>,
+            <code>CombatRuntimeController</code>가 <code>GameDataCatalog</code>를 직렬화 참조하는 구조다.
+            동시에 <code>PakuriGameDataSeeder.cs</code>는 현재 826줄이며,
+            <code>Application.dataPath/../reference/2.Monster</code> 경로에서 문서를 읽고,
+            Stage 1 적 정의 일부는 코드 내부에서 직접 생성한다.
+          </p>
+          <p>
+            그래서 신규 컨텐츠 추가 비용은 자산 작성만의 문제가 아니라,
+            원본 위치 판별, 변환 경로 추적, 생성 결과 확인까지 함께 커지는 방향으로 누적된다.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. 주요 리스크</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>리스크</th>
+            <th>근거</th>
+            <th>확장 영향</th>
+            <th>우선도</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>원본 데이터 경로 분산과 Seeder 집중</td>
+            <td>
+              <code>PakuriGameDataSeeder.cs</code>는 현재 826줄이며,
+              <code>Application.dataPath/../reference/2.Monster</code>에서 스킬 문서를 읽고,
+              <code>CreateOrUpdateStageOneEnemies()</code>에서 Stage 1 적 일부를 코드로 직접 만든다.
+              런타임은 최종적으로 <code>GameDataCatalog</code> 중심으로 소비된다.
+            </td>
+            <td>
+              신규 컨텐츠를 추가할 때 CSV, markdown, seeder 코드, 최종 asset 중 어디를 먼저 수정해야 하는지 즉시 드러나지 않으며,
+              동기화 실수 가능성이 커진다.
+            </td>
+            <td><span class="pill high">높음</span></td>
+          </tr>
+          <tr>
+            <td>약한 import 검증과 무결성 누수</td>
+            <td>
+              <code>GetSkillDocumentPaths()</code>는 누락 시 warning만 남기고,
+              <code>ParseFirstFloat()</code>는 실패 시 <code>0f</code>,
+              <code>ParseAttribute()</code>는 실패 시 <code>Physical</code>을 반환한다.
+              현재 CSV도 <code>skills.csv</code>의 <code>SKILL_001~003</code>와 별개로
+              <code>levelup_choices.csv</code>, <code>skill_branches.csv</code>가 <code>SKILL_004~006</code>을 참조한다.
+            </td>
+            <td>
+              데이터 누락이나 참조 오탈자가 import 단계에서 강하게 차단되지 않으면,
+              잘못된 기본값이나 부분 생성 자산이 QA 이후에야 드러날 가능성이 높다.
+            </td>
+            <td><span class="pill high">높음</span></td>
+          </tr>
+          <tr>
+            <td>Stage 1 전용 스테이지 및 적 구조</td>
+            <td>
+              <code>GameDataCatalog.cs</code>는 <code>StageOneEnemies</code>만 노출한다.
+              <code>EnemyDefinition.cs</code>는 <code>StageOneEnemySkillKind</code>를 사용한다.
+              <code>CombatRuntimeEnemies.cs</code>는 Stage 1 적 풀 해석과 fallback Stage 1 적 생성을 직접 가진다.
+            </td>
+            <td>
+              새 챕터, 새 적군 계열, 다른 보스 규칙을 추가할 때
+              자산 추가만으로는 부족하고 스키마와 런타임 변경이 함께 필요해질 가능성이 높다.
+            </td>
+            <td><span class="pill high">높음</span></td>
+          </tr>
+          <tr>
+            <td>몬스터별 하드코드 전투 분기</td>
+            <td>
+              <code>CombatRuntimeProjectiles.cs</code>는 Eve와 Ariel을 직접 분기한다.
+              <code>CombatRuntimeEveSkills.cs</code>와 <code>CombatRuntimeArielSkills.cs</code>는
+              몬스터 전용 런타임 로직을 각각 가진다.
+            </td>
+            <td>
+              새 몬스터나 새 스킬 계열은 SO 작성만으로 동작하기 어렵고,
+              추가 런타임 분기 파일이 계속 필요해질 가능성이 높다.
+            </td>
+            <td><span class="pill high">높음</span></td>
+          </tr>
+          <tr>
+            <td><code>DisplayName</code> 문자열 기반 Run 상태 연결</td>
+            <td>
+              <code>RunSession.cs</code>, <code>RunCombatUiController.cs</code>, <code>DebugSceneController.cs</code>,
+              전투 스킬 로직 일부가 배운 스킬 상태 판정을 표시 이름 문자열로 처리한다.
+            </td>
+            <td>
+              스킬 이름 변경, 현지화, 표기 수정이 저장 데이터 또는 해금 판정을 깨뜨릴 수 있다.
+              확장 관점에서는 안정적인 내부 ID 경로가 더 안전하다.
+            </td>
+            <td><span class="pill high">높음</span></td>
+          </tr>
+          <tr>
+            <td>SO 내부의 중복된 기준 데이터</td>
+            <td>
+              <code>MonsterDefinition.cs</code>는 <code>BaseStats</code>와 별도 전투 튜닝 필드를 함께 가진다.
+              <code>CombatRuntimeScene.cs</code>는 주로 top-level 전투 튜닝 필드를 소비한다.
+            </td>
+            <td>
+              동일 몬스터에 여러 기준 스탯 원본이 생겨 밸런스 튜닝 드리프트가 발생하기 쉬워진다.
+            </td>
+            <td><span class="pill mid">중간</span></td>
+          </tr>
+          <tr>
+            <td>프로토타입 성격이 강한 보상 및 진행 규칙</td>
+            <td>
+              <code>RunDayModel.cs</code>는 stage/day 범위를 고정한다.
+              <code>CombatRuntimeRewards.cs</code>는 하드코드 보상 값과 보상 흐름 가정을 직접 가진다.
+            </td>
+            <td>
+              Shop, Elite, 이벤트 노드, 스테이지별 보상 테이블이 늘어날수록
+              데이터 확장보다 런타임 조건 분기가 먼저 커질 수 있다.
+            </td>
+            <td><span class="pill mid">중간</span></td>
+          </tr>
+          <tr>
+            <td>코드와 강하게 결합된 UI 및 authoring 파이프라인</td>
+            <td>
+              실제 자산 검색 기준 <code>Pakuri/Assets</code> 하위에는 <code>*.prefab</code>, <code>*.uxml</code>, <code>*.uss</code>가 없다.
+              현재 메뉴, Run, 디버그 UI는 코드에서 조립된다.
+            </td>
+            <td>
+              컨텐츠가 늘어날수록 UI 변경이 런타임 코드 수정과 함께 움직일 가능성이 높고,
+              자산 누락 검증도 계속 약할 수 있다.
+            </td>
+            <td><span class="pill mid">중간</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>5. 자산 모델 메모</h2>
+      <div class="grid two">
+        <article class="card">
+          <h3>스킬 메타데이터 소비 불균형</h3>
+          <p>
+            <code>SkillDefinition.cs</code>에는 <code>RuntimeKind</code>,
+            <code>ImplementationState</code>, <code>StatusEffectId</code>, <code>SkillEffectPrefab</code> 같은 필드가 있다.
+            실제 코드 사용 기준으로 이들 중 일부는 런타임 소비 지점이 거의 없거나 없다.
+          </p>
+          <p>
+            자산 메타데이터가 풍부해 보여도 런타임 동작이 자동으로 따라오는 구조는 아니라는 뜻이다.
+          </p>
+        </article>
+        <article class="card">
+          <h3>자산 완성도 편차</h3>
+          <p>
+            Ariel 자산은 구현 상태가 표시된 스킬이 상대적으로 많지만,
+            Eve, Rin, Sein, Vega는 훨씬 제한적이다.
+            현재 자산 개수만으로 모든 몬스터가 동일한 준비 상태라고 볼 수는 없다.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>6. 신규 컨텐츠 추가 시 예상 수정 범위</h2>
+      <div class="card">
+        <ul>
+          <li>새 데이터셋 또는 새 저작 규칙은 CSV, markdown, seeder, asset 중 무엇이 진실원본인지부터 정리해야 할 가능성이 높다.</li>
+          <li>새 스테이지는 카탈로그 모델, 적 정의 모델, 적 생성 런타임, 보상 로직을 함께 건드릴 가능성이 높다.</li>
+          <li>새 몬스터는 SO 작성 외에도 투사체 또는 스킬 런타임 분기, UI 또는 해금 판정을 함께 수정할 가능성이 높다.</li>
+          <li>새 보상 타입은 <code>RunDayModel</code>, <code>CombatRuntimeRewards</code>, 보상 표시 코드를 함께 수정할 가능성이 높다.</li>
+          <li>이름 변경이나 현지화는 현재 표시 문자열 기반 연결 때문에 배운 스킬 상태에 직접 영향을 줄 수 있다.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>7. 우선순위 제안</h2>
+      <div class="grid two">
+        <article class="card">
+          <h3>우선 1</h3>
+          <p>
+            원본 데이터의 단일 진실원본을 먼저 정하고,
+            import 단계에서 누락과 참조 불일치를 강하게 차단하는 validation 계약을 세울 필요가 있다.
+          </p>
+          <span class="pill high">데이터 파이프라인</span>
+        </article>
+        <article class="card">
+          <h3>우선 2</h3>
+          <p>
+            적 데이터와 스테이지 데이터를 Stage 1 전용 명명과 런타임 가정에서 분리할 필요가 있다.
+          </p>
+          <span class="pill high">구조</span>
+        </article>
+        <article class="card">
+          <h3>우선 3</h3>
+          <p>
+            배운 스킬 상태 추적을 <code>DisplayName</code> 기반 문자열에서 안정적인 내부 ID 기반으로 바꿔야 한다.
+          </p>
+          <span class="pill high">데이터 안정성</span>
+        </article>
+        <article class="card">
+          <h3>우선 4</h3>
+          <p>
+            몬스터별 직접 분기를 줄이고, 보다 데이터 기반인 전투 런타임 진입 경로를 정의하는 편이 확장 비용을 낮춘다.
+          </p>
+          <span class="pill mid">전투 런타임</span>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>8. 결론</h2>
+      <div class="card">
+        <p>
+          현재 Pakuri 자산 구조는 프로토타입 단계에서는 실용적이지만,
+          새 스테이지, 새 적군 계열, 새 몬스터, 새 보상 타입이 계속 늘어나는 시점에는
+          데이터 확장보다 런타임 전용 분기 비용과 원본 데이터 추적 비용이 더 빠르게 커질 가능성이 높다.
+        </p>
+        <p>
+          저장소 근거 기준으로 가장 먼저 정리할 대상은
+          원본 데이터의 단일화와 import validation 계약 정리,
+          Stage 1 전용 구조 가정 제거,
+          <code>DisplayName</code> 기반 상태 연결 제거,
+          몬스터 전용 전투 분기 축소다.
+        </p>
+      </div>
+    </section>
+
+    <div class="footer">
+      기준일: 2026-05-01<br>
+      근거 범위: <code>Pakuri/Assets/Scripts</code>, <code>Pakuri/Assets/Data/GameData</code>, <code>Pakuri/data</code>, <code>Pakuri/reference/2.Monster</code> 하위 실제 파일
+    </div>
+  </main>
+</body>
+</html>

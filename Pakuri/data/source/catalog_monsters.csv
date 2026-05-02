@@ -1,0 +1,7 @@
+id,monster_id,sort_order
+id,string,int
+catalog-monster-ariel,ariel,0
+catalog-monster-eve,eve,1
+catalog-monster-rin,rin,2
+catalog-monster-sein,sein,3
+catalog-monster-vega,vega,4

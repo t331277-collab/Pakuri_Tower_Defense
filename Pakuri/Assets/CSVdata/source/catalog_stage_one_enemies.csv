@@ -1,0 +1,10 @@
+id,enemy_id,sort_order
+id,string,int
+catalog-stage1-enemy-stage1-swordsman,stage1-swordsman,0
+catalog-stage1-enemy-stage1-shieldbearer,stage1-shieldbearer,1
+catalog-stage1-enemy-stage1-archer,stage1-archer,2
+catalog-stage1-enemy-stage1-rogue,stage1-rogue,3
+catalog-stage1-enemy-stage1-priest,stage1-priest,4
+catalog-stage1-enemy-stage1-guardian-captain,stage1-guardian-captain,5
+catalog-stage1-enemy-stage1-attack-captain,stage1-attack-captain,6
+catalog-stage1-enemy-stage1-hero-karin,stage1-hero-karin,7

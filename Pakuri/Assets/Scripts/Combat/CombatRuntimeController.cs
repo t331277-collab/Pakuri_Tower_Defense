@@ -351,6 +351,11 @@ namespace Pakuri.Combat
 
         private void OnEnable()
         {
+            if (Application.isPlaying)
+            {
+                gameDataCatalog = PakuriCsvRuntimeData.ResolveCatalogOrFallback(gameDataCatalog);
+            }
+
             ResolveSceneReferences();
             ConfigureCamera();
             ApplyFallbackMonsterValues();
@@ -384,6 +389,8 @@ namespace Pakuri.Combat
             {
                 return;
             }
+
+            gameDataCatalog = PakuriCsvRuntimeData.ResolveCatalogOrFallback(gameDataCatalog);
 
             if (autoStartPrototype)
             {

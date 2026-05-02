@@ -18,6 +18,7 @@ namespace Pakuri.Run
 
         private void Start()
         {
+            fallbackCatalog = PakuriCsvRuntimeData.ResolveCatalogOrFallback(fallbackCatalog);
             FallbackMonsterId = fallbackMonsterId;
 
             if (combatController == null)
@@ -58,13 +59,7 @@ namespace Pakuri.Run
 
         private MonsterDefinition ResolveFallbackMonster()
         {
-            if (fallbackCatalog == null || fallbackCatalog.Monsters == null || fallbackCatalog.Monsters.Length == 0)
-            {
-                return null;
-            }
-
-            var monster = fallbackCatalog.GetMonsterById(fallbackMonsterId);
-            return monster != null ? monster : fallbackCatalog.Monsters[0];
+            return PakuriDataManager.Instance.ResolveMonster(fallbackMonsterId, fallbackCatalog);
         }
     }
 }

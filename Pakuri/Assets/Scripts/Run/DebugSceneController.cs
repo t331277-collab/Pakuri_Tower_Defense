@@ -67,9 +67,10 @@ namespace Pakuri.Run
                 combatController.ResetPrototypeState();
             }
 
-            if (gameDataCatalog == null || gameDataCatalog.Monsters == null || gameDataCatalog.Monsters.Length == 0)
+            var monsters = PakuriDataManager.Instance.GetMonsters(gameDataCatalog);
+            if (monsters.Length == 0)
             {
-                SetStatus("GameDataCatalog is not assigned.");
+                SetStatus("No monster data is available.");
                 return;
             }
 
@@ -104,6 +105,11 @@ namespace Pakuri.Run
 
         private void ResolveReferences()
         {
+            if (Application.isPlaying)
+            {
+                gameDataCatalog = PakuriCsvRuntimeData.ResolveCatalogOrFallback(gameDataCatalog);
+            }
+
             rootCanvas = GetComponent<Canvas>();
             canvasScaler = GetComponent<CanvasScaler>();
             graphicRaycaster = GetComponent<GraphicRaycaster>();
@@ -202,21 +208,17 @@ namespace Pakuri.Run
         {
             monsterButtons.Clear();
 
-            if (gameDataCatalog == null || gameDataCatalog.Monsters == null)
-            {
-                return;
-            }
-
             if (monsterButtonRoot == null)
             {
                 Debug.LogError("DebugSceneController requires DebugSetupPanel/MonsterButtons in DebugScene.");
                 return;
             }
 
+            var monsters = PakuriDataManager.Instance.GetMonsters(gameDataCatalog);
             var buttonSlots = monsterButtonRoot.GetComponentsInChildren<Button>(true);
-            for (var i = 0; i < gameDataCatalog.Monsters.Length; i++)
+            for (var i = 0; i < monsters.Length; i++)
             {
-                var monster = gameDataCatalog.Monsters[i];
+                var monster = monsters[i];
                 if (monster == null)
                 {
                     continue;
@@ -237,7 +239,7 @@ namespace Pakuri.Run
                 monsterButtons.Add(button);
             }
 
-            for (var i = gameDataCatalog.Monsters.Length; i < buttonSlots.Length; i++)
+            for (var i = monsters.Length; i < buttonSlots.Length; i++)
             {
                 buttonSlots[i].gameObject.SetActive(false);
             }

@@ -5,6 +5,51 @@
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-02 Runtime UI Query Contract Unification
+
+### Task title
+
+Make runtime-generated monster selection UI read roster data through `PakuriDataManager`.
+
+### Goals
+
+- Align MainMenu, RunFlow, and DebugScene monster-selection UI with the CSV runtime data contract.
+- Remove direct UI-side dependence on `GameDataCatalog.Monsters`.
+- Keep existing code-built UI structure intact while changing only the roster query path and missing-data message.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground all claims in actual script edits and actual Unity/editor output.
+- Do not run Unity Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User can verify in Play Mode that MainMenu, RunFlow, and DebugScene still populate monster buttons correctly.
+- If later requested, the next UI pass can separate scene/UI presentation from data lookup even further, but this task intentionally left the runtime-generated UI structure unchanged.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/MainMenuFlowController.cs:165` now builds its monster buttons from `PakuriDataManager.Instance.GetMonsters(gameDataCatalog)`.
+- `Pakuri/Assets/Scripts/Run/DebugSceneController.cs:70` and `:217` now use the same data-manager roster query for status checks and button-slot rebuilds.
+- `Pakuri/Assets/Scripts/Run/RunFlowController.cs:188` now feeds the front-panel monster buttons from `PakuriDataManager`, and `RunFlowController.cs:192` changed the failure hint to point at `Assets/CSVdata/source` plus `Pakuri/CSVRuntime`.
+- No prefab/UXML/USS assets were introduced in this pass; the change stayed within the existing runtime-generated UI code path.
+- Unity console reads after the script refresh showed the runtime catalog load log and only the pre-existing `The referenced script (Unknown) on this Behaviour is missing!` warnings, not C# compile errors.
+
+### History
+
+- 2026-05-02: User asked Builder to implement query-contract unification.
+- 2026-05-02: Builder updated the runtime-generated monster-selection UI scripts to read roster data through `PakuriDataManager` instead of directly from `GameDataCatalog`.
+
 ## Task: DebugScene UI Canvas Retrospective Report
 
 ### Task title

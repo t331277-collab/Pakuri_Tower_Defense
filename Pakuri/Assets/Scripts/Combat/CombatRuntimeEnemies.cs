@@ -100,8 +100,8 @@ namespace Pakuri.Combat
             currentBossDefinition = null;
             currentNormalBossDefinition = null;
 
-            var stageOneEnemies = gameDataCatalog != null ? gameDataCatalog.StageOneEnemies : null;
-            if (stageOneEnemies != null)
+            var stageOneEnemies = PakuriDataManager.Instance.GetStageOneEnemies(gameDataCatalog);
+            if (stageOneEnemies.Length > 0)
             {
                 for (var i = 0; i < stageOneEnemies.Length; i++)
                 {

@@ -5,6 +5,96 @@
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-02 GameData Catalog CSV Bootstrap Source
+
+### Task title
+
+Keep current ScriptableObject assets as an explicit bootstrap source only, not as a hidden runtime fallback.
+
+### Goals
+
+- Keep existing `Assets/Data/GameData` assets usable as an explicit bootstrap baseline.
+- Export those assets into `Pakuri/Assets/CSVdata/source/*.csv` when the bootstrap menu is used.
+- Prevent `GameDataCatalog.asset` from acting as the runtime source if CSV startup validation fails.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Ground all claims in actual asset files, actual scripts, and actual generated CSV output.
+- Do not claim that the asset catalog is the sole runtime source anymore.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder follow-up implemented and locally revalidated after the Reviewer findings. A later builder pass also split the CSV runtime bootstrap/sync code out of the old `PakuriCsvRuntimeData.cs` monolith. The original Reviewer verdict remains FAIL until another review is explicitly requested.
+
+### Next Actions
+
+- If the team fully commits to CSV-first authoring later, reduce or remove duplicated tuning data between the legacy asset catalog and CSV export source.
+- If stage/reward/shop/event assets are introduced later, add matching typed CSV tables before expanding runtime consumers.
+
+### Evidence
+
+- `PakuriCsvRuntimeData` now keeps `LegacyCatalogAssetPath = "Assets/Data/GameData/GameDataCatalog.asset"` only for the explicit editor bootstrap path.
+- `BootstrapSourceFilesFromCurrentCatalog(...)` still loads `GameDataCatalog.asset` through `AssetDatabase.LoadAssetAtPath<GameDataCatalog>(...)`, but it now writes to `Pakuri/Assets/CSVdata/source`.
+- The editor-only bootstrap and runtime-catalog sync path now lives in `Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.Editor.cs` instead of sharing one file with runtime parse/validation/build logic.
+- Runtime startup no longer reads `GameDataCatalog.asset` or `Pakuri/data/source`; it reads `PakuriCsvRuntimeSourceCatalog` and `PakuriCsvRuntimeAssetCatalog` from `Assets/Resources/Pakuri/CSVRuntime`.
+- `ResolveCatalogOrFallback(...)` now returns `null` when CSV initialization failed, so serialized `GameDataCatalog` scene fields no longer become the runtime data source after a CSV failure.
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog.asset` exists and references the 7 imported `Assets/CSVdata/source/*.csv` TextAssets.
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog.asset` exists and stores the runtime-safe sprite dependency map extracted from current CSV rows.
+- Unity console compile finished without C# errors after the builder follow-up, and `Pakuri/Validate CSV Source Data` previously logged `5 monsters` and `8 stage-one enemies` from the resource-backed CSV runtime source.
+- After the split, Unity generated `.meta` files for the new partial files on full asset refresh and `Pakuri/Validate CSV Source Data` still logged the same 5-monster / 8-enemy runtime catalog summary.
+
+### History
+
+- 2026-05-02: Code Builder added editor bootstrap/export logic so the existing game-data assets can seed the new typed CSV source set.
+- 2026-05-02: Initial migration still allowed the asset catalog to remain a hidden upstream source, and Code Reviewer marked that direction FAIL.
+- 2026-05-02: Builder follow-up demoted `GameDataCatalog.asset` to an explicit bootstrap-only path, moved the active source set to `Assets/CSVdata/source`, and generated resource-backed runtime catalogs from the imported CSV.
+- 2026-05-02: Builder later split the CSV runtime bootstrap/sync/editor code into `PakuriCsvRuntimeData.Editor.cs` while preserving the same asset-bootstrap contract and runtime validation behavior.
+
+## Task: 2026-05-01 Game Data Asset Expansion Risk Review
+
+### Task title
+
+Review current `GameDataCatalog` / monster / enemy asset structure for future content additions.
+
+### Goals
+
+- Check whether current SO assets are sufficient for adding new gameplay content without code changes.
+- Record concrete asset-model gaps found in `Pakuri/Assets/Data/GameData`.
+
+### Constraints
+
+- Role Owner is Designer.
+- Base all findings on actual asset YAML and actual C# definitions.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- If asset-driven expansion is requested later, introduce dedicated stage/run/reward/shop/prisoner config assets before scaling content quantity.
+
+### Evidence
+
+- `Pakuri/Assets/Data/GameData/GameDataCatalog.asset` contains only 2 gameplay groups: `Monsters` and `StageOneEnemies`.
+- `Pakuri/Assets/Data/GameData/Monsters/*.asset` contain full A-J skill/passive payloads, but `SkillDefinition.RuntimeKind`, `SkillImplementationState`, `SkillEffectPrefab`, and `StatusEffectId` are not runtime-driven today.
+- `eve.asset` shows only `eve-a` as `ImplementationState: 2`, while `ariel.asset` shows A-E/F-J as `ImplementationState: 2`; this means content-state metadata is not consistently synced with runtime capability.
+- `rin.asset` and `sein.asset` still have `UnitSprite: {fileID: 0}` and `ProjectileSprite: {fileID: 0}`, so missing visual assignments currently fail soft instead of being validated at authoring time.
+- There are no SO assets under `Pakuri/Assets/Data/GameData` for stage progression, reward tables, shop inventory, event pools, or prisoner behavior.
+
+### History
+
+- 2026-05-01: Reviewed `GameDataCatalog.asset`, sampled `eve.asset`, `rin.asset`, and `stage1-swordsman.asset`, and compared them against `MonsterDefinition.cs`, `SkillDefinition.cs`, and `EnemyDefinition.cs`.
+
 ## Task: Ariel Runtime Implementation State
 
 ### Task title
