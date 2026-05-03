@@ -1,7 +1,7 @@
-﻿# REPORT_BLACKBOARD
+# REPORT_BLACKBOARD
 
-이 파일은 BLACKBOARD.md 계층화 작업으로 생성된 도메인별 지속 상태 파일입니다.
-관련 작업을 수행할 때 MDTREE.md 라우팅에 따라 이 파일과 필요한 상위/하위 파일을 동시에 갱신합니다.
+This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
+When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
 ## Task: Hierarchical Board Migration And Routing Rule Update
 
@@ -45,6 +45,51 @@ Implemented pending validation.
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-04 DebugScene Editable UI Rule Board Update
+
+### Task title
+
+Record the DebugScene UI retrospective's user-commanded editable UI method in related board files.
+
+### Goals
+
+- Use the existing DebugScene UI retrospective HTML as source evidence.
+- Update related markdown boards so future UI work preserves scene-editable uGUI as the expected method.
+- Leave the `Pakuri/reference` report/planning files unchanged.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested markdown updates.
+- Markdown-only task; no Unity build is required.
+- Do not run Unity Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly request it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented.
+
+### Next Actions
+
+- Future DebugScene UI reports should cite `boards/UI/DEBUGSCENE_UI.md` and `boards/UI/UI_BLACKBOARD.md` for the persistent editable-scene-UI rule.
+
+### Evidence
+
+- Read `Pakuri/reference/Report/2026-04-30-debugscene-ui-canvas-retrospective.html`.
+- `Select-String` found the report's correction that runtime-generated UI made user inspection/editing difficult and that current code uses `BindSceneUi()` with scene objects.
+- `Select-String` confirmed `DebugSceneController.cs` currently contains `Awake()`, `EnsureCanvasShell()`, `BindSceneUi()`, `ConfigureToggleVisuals(...)`, and `Resources.Load<Sprite>("DebugUiSolid")`.
+- `Select-String` confirmed `DebugScene.unity` contains `DebugSetupPanel`, `SkillDebugPanel`, `EnhancementModal`, `Active_A`, `Passive_J`, `Choice_01`, and `Choice_08`.
+- Unity-MCP `manage_scene get_active` returned active scene `DebugScene`.
+- Unity-MCP `find_gameobjects` found one GameObject each for the listed DebugScene UI anchors.
+- Updated `boards/UI/DEBUGSCENE_UI.md`, `boards/UI/UI_BLACKBOARD.md`, and this report board.
+
+### History
+
+- 2026-05-04: User asked to record the UI creation method they commanded in the related `.md` files, especially the requirement that the UI remain user-editable.
+
 ## Task: 2026-05-02 Report Refresh For Fifth Refactor Phase
 
 ### Task title
@@ -54,7 +99,7 @@ Refresh the refactor HTML reports so they describe the later legacy-removal, dat
 ### Goals
 
 - Update the implementation report to reflect the current code after the fifth refactor phase.
-- Update the phased log report so the ordered `N차 개선` history includes the latest step rather than stopping at the earlier partial state.
+- Legacy non-English note summarized in English; see surrounding retained task context.
 - Keep both HTML reports grounded in actual current files, validation logs, and board history.
 
 ### Constraints
@@ -74,15 +119,15 @@ Implemented. Later reviewer execution reported no discrete actionable bug in the
 
 ### Next Actions
 
-- If another refactor phase happens later, append `6차 개선` rather than compressing the earlier chronology.
+- Legacy non-English note summarized in English; see surrounding retained task context.
 - If a later reviewer or user validation contradicts the current conclusion, refresh both reports again with that new evidence.
 
 ### Evidence
 
-- `Pakuri/reference/Report/2026-05-02-data-structure-refactor-implementation-report.html` now contains `5차 개선: legacy 제거 + dataset 파일 세분화 + collection query 확장` and documents the deletion of `PakuriGameDataSeeder.cs`, the dataset files, and the expanded `PakuriDataManager` API.
+- Legacy non-English note retained these ASCII code references: `Pakuri/reference/Report/2026-05-02-data-structure-refactor-implementation-report.html`, `PakuriGameDataSeeder.cs`, `PakuriDataManager`.
 - The same implementation report now lists `GetActiveSkills`, `GetPassiveSkills`, `GetRewardChoices`, `ResolveActiveSkill`, and `ResolvePassiveSkill` in the current file-role section.
-- `Pakuri/reference/Report/2026-05-02-data-structure-refactor-phased-log-report.html` now contains a dedicated `5차 개선` row and a section titled `5차 개선: legacy 제거 + dataset 세분화 + collection query 확장`.
-- `Select-String` against the two HTML files found `PakuriGameDataSeeder`, `dataset`, `세분화`, `조회 계약`, and the new collection query method names in the refreshed sections.
+- Legacy non-English note retained these ASCII code references: `Pakuri/reference/Report/2026-05-02-data-structure-refactor-phased-log-report.html`.
+- Legacy non-English note retained these ASCII code references: `Select-String`, `PakuriGameDataSeeder`, `dataset`.
 - The later external reviewer pass on the related uncommitted code changes reported no discrete actionable bug, so the reports still match the current reviewed implementation state.
 
 ### History
@@ -95,13 +140,13 @@ Implemented. Later reviewer execution reported no discrete actionable bug in the
 
 ### Task title
 
-Create an HTML report that reconstructs the data-structure refactor as ordered `N차 개선` phases.
+Legacy non-English note summarized in English; see surrounding retained task context.
 
 ### Goals
 
 - Analyze the actual work records after the user's first data-structure refactor command.
 - Reconstruct the implementation as phased improvements instead of one monolithic change.
-- Mark each phase by `구현됨`, `부분 구현`, and `미구현 / 이월`.
+- Legacy non-English note summarized in English; see surrounding retained task context.
 - Save the result as a UTF-8 Korean HTML report under `Pakuri/reference/Report`.
 
 ### Constraints
@@ -122,18 +167,18 @@ Completed.
 ### Next Actions
 
 - Use the phased log report when the user wants to explain that the refactor progressed step-by-step rather than all at once.
-- If another implementation phase happens later, append a new `N차 개선` instead of overwriting the earlier sequence.
+- Legacy non-English note summarized in English; see surrounding retained task context.
 
 ### Evidence
 
 - Added `Pakuri/reference/Report/2026-05-02-data-structure-refactor-phased-log-report.html`.
-- Re-read the HTML with `Get-Content -Encoding UTF8` and confirmed the new sections for `0단계 기준선`, `1차 개선`, `Reviewer 게이트`, `2차 개선`, `3차 개선`, `4차 개선`, and `현재 시점 정리: 구현됨 / 부분 구현 / 미구현`.
+- Legacy non-English note retained these ASCII code references: `Get-Content -Encoding UTF8`.
 - The report explicitly cites `boards/DATA/DATA_BLACKBOARD.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/OPS/REVIEWER_BLACKBOARD.md`, and the existing `2026-05-02-data-structure-refactor-implementation-report.html` as chronology sources.
 - The report's phase descriptions align with current code files such as `PakuriCsvRuntimeData.cs`, `PakuriCsvRuntimeData.Build.cs`, and `PakuriDataManager.cs`, while older intermediate states are described as historical board/reviewer evidence rather than current snapshot claims.
 
 ### History
 
-- 2026-05-02: User requested an HTML document that analyzes the logs and work records after the first data-structure refactor command and expresses the implementation as ordered `N차 개선` phases.
+- Legacy non-English note summarized in English; see surrounding retained task context.
 - 2026-05-02: Builder re-read REPORT/DATA/RUN/COMBAT/REVIEWER boards and the current report before writing the phased log report.
 
 ## Task: 2026-05-02 Data Structure Refactor Implementation Report
@@ -167,13 +212,13 @@ Completed and refreshed to match both the later `PakuriCsvRuntimeData` split fol
 
 - Use the report when explaining what the data-structure review asked for versus what the current repository actually changed.
 - If the user later requests another Reviewer pass, update the report with that verdict instead of treating the current builder follow-up as final PASS.
-- If the data layer is refactored again, refresh the “remaining debt” and “file roles” sections so they keep matching the repository state.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Evidence
 
 - Added `Pakuri/reference/Report/2026-05-02-data-structure-refactor-implementation-report.html`.
 - Re-read the new HTML file with `Get-Content -Encoding UTF8` and confirmed the Korean title/body text was preserved.
-- Verified the prior review document section 8 at `Pakuri/reference/Report/2026-05-01-data-structure-review.html:403-449` still proposes `원본 고정`, `타입 행 도입`, `데이터 클래스 분리`, `조회 계약 통일`.
+- Legacy non-English note retained these ASCII code references: `Pakuri/reference/Report/2026-05-01-data-structure-review.html:403-449`.
 - Verified `Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.cs` currently uses `ImportedSourceAssetRoot = "Assets/CSVdata/source"`, `SourceCatalogResourcesPath = "Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog"`, `AssetCatalogResourcesPath = "Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog"`, and registers `PakuriDataManager`.
 - Verified a later follow-up split the old `Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.cs` monolith into `PakuriCsvRuntimeData.cs`, `PakuriCsvRuntimeData.Loader.cs`, `PakuriCsvRuntimeData.Validation.cs`, `PakuriCsvRuntimeData.Build.cs`, `PakuriCsvRuntimeData.Editor.cs`, and `PakuriCsvRuntimeData.Types.cs`.
 - Verified `Pakuri/Assets/Scripts/Data/PakuriDataManager.cs` currently exposes `RegisterCatalog`, `GetData<T>(id)`, `TryGetData<T>(id, out value)`, `GetMonsters(...)`, `GetStageOneEnemies(...)`, and `ResolveMonster(...)`.
@@ -183,8 +228,8 @@ Completed and refreshed to match both the later `PakuriCsvRuntimeData` split fol
 - Verified the current codebase no longer contains `Pakuri/Assets/Scripts/Data/Editor/Legacy/PakuriGameDataSeeder.cs`, and the refreshed report now treats that path as removed legacy rather than a current bootstrap tool.
 - Re-read the refreshed HTML with `Get-Content -Encoding UTF8` and confirmed the updated query-contract text, the revised section 6/7 split, and the revised remaining-debt priorities are present.
 - Re-read the refreshed HTML again and confirmed section 6 now closes before a new `<section class="grid">` starts section 7, so the two cards no longer share the same row.
-- Re-read the refreshed HTML again and confirmed a new top card titled `현재 데이터 로드와 SO 적용 원리` now explains that runtime loads CSV `TextAsset` data, validates it, creates in-memory `ScriptableObject` instances, and registers them in `PakuriDataManager`.
-- Re-read the refreshed HTML again and confirmed a new `Before / After: 개선 전과 개선 후 작동 원리` table now compares the old criticized structure against the current runtime flow across source location, load path, SO role, asset binding, validation, and query contract.
+- Legacy non-English note retained these ASCII code references: `TextAsset`, `ScriptableObject`, `PakuriDataManager`.
+- Legacy non-English note summarized in English; see surrounding retained task context.
 - Re-read the refreshed HTML again and confirmed section 1 now explicitly explains why SO remains as a runtime adapter, how `ResolveCatalogOrFallback(...)` removed the hidden fallback problem, and how startup fatal validation replaced the old warning/fallback-heavy structure.
 - Re-read the refreshed HTML again and confirmed section 6 now explicitly lists current SO drawbacks: Unity-coupled runtime fields, dual maintenance between CSV schema and runtime SO fields, and the remaining SO-based intermediate catalog layer.
 
@@ -611,19 +656,19 @@ Completed.
 
 ### Task title
 
-`monster-select-run-ui-builder-handoff`, `monster-select-run-ui-expansion-plan`, `save-and-load-plan` ?듯빀 蹂닿퀬??HTML ?묒꽦
+Legacy non-English note retained these code references: `monster-select-run-ui-builder-handoff`, `monster-select-run-ui-expansion-plan`, `save-and-load-plan`.
 
 ### Goals
 
-- 湲곗〈 3媛??ㅺ퀎 HTML??怨듯넻 寃곕줎?????μ쑝濡??⑹퀜 ?꾩옱 ?꾨줈?앺듃媛 ?대뼡 援ъ“濡??묒뾽?좎? 鍮좊Ⅴ寃?蹂댁뿬以??
-- ?꾩옱 ?ㅼ젣 肄붾뱶 ?곹깭? 臾몄꽌 湲곗? 援ъ“瑜??④퍡 ?뺣━?? 援ы쁽 ?덉젙 踰붿쐞? ?꾩쭅 ?대Ⅸ 踰붿쐞瑜?遺꾨━?쒕떎.
-- 湲고쉷?쒓? ?꾩쭅 遺議깊븳 遺遺꾧낵 ?꾩옱 ?곸슜?섍린 ?대Ⅸ ?곗씠???뚯씠?꾨씪?몄쓣 紐낆떆?곸쑝濡?`異뷀썑 援ы쁽 ?덉젙`?쇰줈 湲곕줉?쒕떎.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see surrounding retained task context.
 
 ### Constraints
 
-- ?ㅼ젣 議댁옱?섎뒗 3媛?HTML, ?ㅼ젣 ?꾩옱 肄붾뱶, ?ㅼ젣 臾몄꽌 ?곹깭瑜?洹쇨굅濡쒕쭔 ?곷뒗??
-- ?꾩쭅 援ы쁽?섏? ?딆? UI, ??? ?곗씠??importer瑜?援ы쁽??寃껋쿂???곸? ?딅뒗??
-- ???묒뾽? Designer 蹂닿퀬???묒꽦?대ŉ, ?ㅼ젣 肄붾뱶 援ы쁽? ?ы븿?섏? ?딅뒗??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Role Owner
 
@@ -635,29 +680,29 @@ Completed
 
 ### Next Actions
 
-- ?ъ슜?먭? ?먰븯硫????듯빀 蹂닿퀬?쒕? 湲곗??쇰줈 Designer媛 Code Builder handoff 臾몄꽌瑜???吏㏐쾶 ?ㅼ떆 ?뺣━?????덈떎.
-- ?ㅼ젣 援ы쁽? 蹂닿퀬?쒖뿉 ?곸? ?쒖꽌?濡?`RunSession` 遺꾨━, UI ?먮쫫 遺꾨━, ?뺤쟻 ?곗씠???먯궛, A/F 理쒖냼 蹂댁긽 / ?ㅽ궗?좏깮, 泥댄겕?ъ씤??????쒖쑝濡??ㅼ뼱媛??寃껋씠 ?덉쟾?섎떎.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `RunSession`.
 
 ### Evidence
 
-- `Pakuri/reference/monster-select-run-ui-builder-handoff.html`??`RunSession`, `RunFlowController` ?먮뒗 ?숇벑 援ъ“瑜?癒쇱? ?몄슦??怨좎젙 援ы쁽 ?쒖꽌瑜??쒖븞?쒕떎.
-- `Pakuri/reference/monster-select-run-ui-expansion-plan.html`??紐ъ뒪???좏깮 UI, Run ?쒖옉, ?꾪닾 ??蹂댁긽/?좏깮 ?먮쫫怨?`RunSession` 以묒떖 援ъ“瑜??ㅻ챸?쒕떎.
-- `Pakuri/reference/save-and-load-plan.html`??`MetaSaveData`, `RunSnapshot`, `GameDataCatalog` 遺꾨━? 遺????1???곗씠??濡쒕뱶瑜??뺤쓽?쒕떎.
-- ?꾩옱 ?꾨줈?앺듃??寃뚯엫 ?꾩슜 ?ㅽ겕由쏀듃??`Pakuri/Assets/Scripts/Combat/DamageCalculator.cs`, `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`留??뺤씤?쒕떎.
-- ?꾩옱 `Pakuri/Assets` ?꾨옒?먮뒗 `Scenes`, `Screenshots`, `Scripts`, `Settings`留??덇퀬, `Resources`, `StreamingAssets`, `DataGenerated`???녿떎.
-- ?꾩옱 ?꾨줈?앺듃?먮뒗 `.uxml`, `.uss` UI Toolkit ?먯궛???녿떎.
-- ?ㅼ젣 CSV ?먮낯? `Pakuri/data`???덉?留??꾩옱 濡쒕뜑? ?앹꽦 ?먯궛 ?뚯씠?꾨씪?몄? ?녿떎.
-- ???듯빀 臾몄꽌 `Pakuri/reference/run-systems-integration-summary-report.html`瑜?異붽??덇퀬, 臾몄꽌 ?덉뿉 ?꾩옱 援ъ“, ?묒뾽 ?쒖꽌, ????곗씠??諛⑺뼢, `異뷀썑 援ы쁽 ?덉젙` ??ぉ???④퍡 ?뺣━?덈떎.
-- 2026-04-26 ?ы솗??寃곌낵 `Pakuri/reference/2.Monster/rin/rin-tower.md`? `rin/skill/g~j` 臾몄꽌媛 議댁옱?? 由곗쓽 ?⑥떆釉?臾몄꽌 遺議??꾩젣?????댁긽 ?좏슚?섏? ?딅떎.
-- 2026-04-26 ?ы솗??寃곌낵 `Pakuri/Assets` ?ш? 寃?됱뿉??`ScriptableObject`, `CreateAssetMenu`, `GameDataCatalog`, `CsvGameDataImporter`, `Resources.Load`, `TextAsset` 愿???뺤쟻 ?곗씠??濡쒕뜑 / ?먯궛 ?뺤쓽???뺤씤?섏? ?딆븯??
-- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`???꾩옱 蹂댁긽 ?⑤꼸?먯꽌 ?대툕 ?꾩슜 怨좎젙 ?좏깮吏 3媛쒕쭔 吏곸젒 ?앹꽦?쒕떎.
-- `Pakuri/reference/2.Monster/skill-choice-pool-rule.md`? `Pakuri/reference/4.run/combat-reward-system.md`???꾩껜 蹂댁긽 / ?ㅽ궗?좏깮 洹쒖튃???뺤쓽?섏?留? ?꾩옱 援ы쁽? 洹??꾩껜 踰붿쐞???꾩쭅 ?꾨떖?섏? ?딆븯??
+- Legacy non-English note retained these code references: `Pakuri/reference/monster-select-run-ui-builder-handoff.html`, `RunSession`, `RunFlowController`.
+- Legacy non-English note retained these code references: `Pakuri/reference/monster-select-run-ui-expansion-plan.html`, `RunSession`.
+- Legacy non-English note retained these code references: `Pakuri/reference/save-and-load-plan.html`, `MetaSaveData`, `RunSnapshot`, `GameDataCatalog`.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scripts/Combat/DamageCalculator.cs`, `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `Pakuri/Assets`, `Scenes`, `Screenshots`, `Scripts`, `Settings`, `Resources`, `StreamingAssets`, `DataGenerated`.
+- Legacy non-English note retained these code references: `.uxml`, `.uss`.
+- Legacy non-English note retained these code references: `Pakuri/data`.
+- Legacy non-English note retained these ASCII code references: `Pakuri/reference/run-systems-integration-summary-report.html`.
+- Legacy non-English note retained these code references: `Pakuri/reference/2.Monster/rin/rin-tower.md`, `rin/skill/g~j`.
+- Legacy non-English note retained these code references: `Pakuri/Assets`, `ScriptableObject`, `CreateAssetMenu`, `GameDataCatalog`, `CsvGameDataImporter`, `Resources.Load`, `TextAsset`.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `Pakuri/reference/2.Monster/skill-choice-pool-rule.md`, `Pakuri/reference/4.run/combat-reward-system.md`.
 
 ### History
 
-- 2026-04-26: `AGENTS.md`, `BLACKBOARD.md`, 湲곗〈 3媛??ㅺ퀎 HTML???ㅼ떆 ?쎄퀬 ?쒕줈 寃뱀튂??援ъ“? 怨좎젙 寃곕줎??異붾졇??
-- 2026-04-26: ?꾩옱 ?ㅼ젣 肄붾뱶? ?먯궛 ?곹깭瑜??ㅼ떆 ?뺤씤?? ?꾩쭅 ?녿뒗 UI Toolkit ?먯궛怨??곗씠???앹꽦 ?뚯씠?꾨씪?몄쓣 蹂닿퀬?쒖뿉 紐낆떆?곸쑝濡?鍮꾧뎄???곹깭濡??곸뿀??
-- 2026-04-26: `Pakuri/reference/run-systems-integration-summary-report.html`瑜?異붽????꾩옱 援ъ“, 沅뚯옣 援ы쁽 ?쒖꽌, ?곗씠?????寃쎄퀎, 湲고쉷 遺議??곸뿭怨??대Ⅸ ?곗씠???곸슜 踰붿쐞瑜?`異뷀썑 援ы쁽 ?덉젙`?쇰줈 遺꾨━?덈떎.
-- 2026-04-26: 由?臾몄꽌 媛깆떊怨??곗씠??諛⑺뼢 蹂寃쎌쓣 諛섏쁺??`run-systems-integration-summary-report.html`瑜??섏젙?덇퀬, 由곗쓣 5紐ъ뒪??踰붿쐞???ы븿?쒗궎怨??뺤쟻 ?곗씠?곕뒗 CSV importer ?꾩젣媛 ?꾨땲??Unity ?꾨줈?앺듃 ?대? ?뺤쟻 ?먯궛 湲곗??쇰줈 ?뺣━?덈떎.
-- 2026-04-26: 蹂댁긽 / ?ㅽ궗?좏깮? ?꾩쟾???섏쨷?쇰줈 誘몃（吏 ?딄퀬, `RunSession` / UI / 怨듯넻 ?꾪닾 肄붿뼱 ?ㅼ쓬 留덉씪?ㅽ넠?먯꽌 A/F 理쒖냼 踰붿쐞瑜?媛숈씠 遺숈씠??諛⑺뼢?쇰줈 `run-systems-integration-summary-report.html`瑜??ㅼ떆 ?섏젙?덈떎.
+- Legacy non-English note retained these code references: `AGENTS.md`, `BLACKBOARD.md`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these ASCII code references: `Pakuri/reference/run-systems-integration-summary-report.html`.
+- Legacy non-English note retained these code references: `run-systems-integration-summary-report.html`.
+- Legacy non-English note retained these code references: `RunSession`, `run-systems-integration-summary-report.html`.
 

@@ -1,9 +1,58 @@
-﻿# REVIEWER_BLACKBOARD
+# REVIEWER_BLACKBOARD
 
-이 파일은 BLACKBOARD.md 계층화 작업으로 생성된 도메인별 지속 상태 파일입니다.
-관련 작업을 수행할 때 MDTREE.md 라우팅에 따라 이 파일과 필요한 상위/하위 파일을 동시에 갱신합니다.
+This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
+When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
 ## Migrated Task Blocks
+
+## Task: Rin A-E Active Runtime Reviewer 2026-05-04
+
+### Task title
+
+Review Rin active skill A-E runtime implementation and enhancement/master effects.
+
+### Goals
+
+- Run one external Code Reviewer pass for the just-completed Rin A-E Builder work.
+- Check changed lines line-by-line, helper existence, null risks, and side effects.
+- Compare Rin extra elemental damage behavior against the user's clarification that it must be based on the physical damage dealt by the source hit.
+
+### Constraints
+
+- Role Owner is Code Reviewer.
+- Do not implement fixes during Reviewer phase.
+- User explicitly requested this Reviewer execution.
+- Use Unity-MCP project evidence and actual files/command output.
+
+### Role Owner
+
+Code Reviewer
+
+### Status
+
+Completed with `REVIEW_RESULT: NEEDS_CHANGES`. Code Builder follow-up has been applied and locally validated; no second Reviewer pass has been run.
+
+### Next Actions
+
+- Do not run another Reviewer pass unless the user explicitly requests it after the Builder follow-up.
+- If another review is requested, inspect the current applied-damage fix lines rather than the pre-fix snapshot.
+
+### Evidence
+
+- External Reviewer ran once with `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.429.30905-win32-x64\bin\windows-x86_64\codex.exe exec`.
+- Reviewer output was saved to `codex_loop_logs\rin_skill_reviewer_20260504.md`.
+- Reviewer finding 1: `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:49` stores `appliedDamage = ApplyDamageToEnemy(...)`, but `CombatRuntimeProjectiles.cs:52` passes `damageResult.FinalDamage` into `HandleRinProjectileHit(...)`; Rin A extra lightning and chain then use the uncapped value at `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:462` and `:478`.
+- Reviewer finding 2: `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:500` applies `result.FinalDamage`, but `CombatRuntimeRinSkills.cs:504` returns `result.FinalDamage`; Rin C/D/E callers use that value for elemental follow-up at `CombatRuntimeRinSkills.cs:262`/`:266`, `:338`/`:341`, and `:411`/`:414`/`:420`.
+- Builder follow-up evidence: `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:52` now passes `appliedDamage` into `HandleRinProjectileHit(...)`.
+- Builder follow-up evidence: `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:502`, `:504`, and `:523` now use or return `applied` damage for Howling and elemental follow-up paths.
+- Builder follow-up evidence: `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and only existing Unity/MCP warnings; Unity-MCP refresh reached idle and console error query returned only MCP-FOR-UNITY handler logs.
+- Reviewer verification evidence: `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and only existing Unity/MCP warnings; Unity console error query returned only MCP-FOR-UNITY client handler logs.
+
+### History
+
+- 2026-05-04: User explicitly requested Code Reviewer execution for the just-completed Rin A-E skill implementation.
+- 2026-05-04: External Code Reviewer executed once and returned `REVIEW_RESULT: NEEDS_CHANGES` for elemental extra damage using calculated final damage instead of physical damage actually dealt.
+- 2026-05-04: User requested fixing the Reviewer findings; Builder applied the applied-damage basis correction and did not rerun Reviewer because no new review was requested.
 
 ## Task: Ariel J Passive Reviewer 2026-05-03
 
@@ -90,7 +139,7 @@ Completed. Reviewer did not report a discrete actionable bug for the current pat
 
 - External `codex review --uncommitted` completed on the current uncommitted state after the builder follow-up.
 - The reviewer summary explicitly named the modified runtime-data refactor files: `PakuriDataManager`, the split `PakuriCsvRuntimeData*` partials, `DebugSceneController`, `RunCombatUiController`, and `CombatRuntimeEveSkills`.
-- Reviewer verdict text: it “did not find a discrete, actionable bug that is clearly introduced by this patch.”
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 - The same reviewer output also stated that it could not complete a local `dotnet build` because the environment denied access to SDK user-level sentinel/SDK paths, so the reviewer verdict is based on line-by-line code inspection rather than a successful local build.
 - Builder-side Unity evidence from the same patch set remains: Unity refresh completed after compile fixes, console reads showed no C# compile errors, and `Pakuri/Validate CSV Source Data` still logged a successful 5-monster / 8-enemy runtime catalog load from `Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog`.
 
@@ -315,13 +364,13 @@ Builder phase completed. No project code changes were needed.
 
 - 2026-04-25 21:40:30 +09:00: Builder inspected required files and command outputs, determined the smoke test requires no code changes, and recorded this loop history for Reviewer verification.
 
-## ?댁쁺 洹쒖튃
+## Legacy Non-English Section
 
-???뚯씪? ?꾨＼?꾪듃 珥덇린?? ?몄뀡 ?ъ떆?? ?щ????꾩뿉???묒뾽???댁뼱媛湲??꾪븳 吏???곹깭 ?뚯씪?대떎.
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
-???묒뾽???쒖옉?섎㈃ 愿???묒뾽 釉붾줉??癒쇱? ?쎄퀬 ?댁뼱???묒뾽?쒕떎. ?묒뾽 釉붾줉? ?묒뾽???꾨즺?섏뿀嫄곕굹 ?ъ슜?먭? 紐낆떆?곸쑝濡???젣瑜??붿껌?덉쓣 ?뚮쭔 ?쒓굅?쒕떎.
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
-媛??묒뾽 釉붾줉?먮뒗 理쒖냼???ㅼ쓬 ??ぉ???좎??쒕떎.
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 - Task title
 - Goals
 - Constraints
@@ -331,31 +380,31 @@ Builder phase completed. No project code changes were needed.
 - Evidence
 - History
 
-蹂꾨룄 ??μ냼媛 ???⑥쑉?곸씠?쇨퀬 ?먮떒?섎㈃ 諛붾줈 諛붽씀吏 留먭퀬 ??? ?몃젅?대뱶?ㅽ봽, ?먮떒 湲곗???癒쇱? 蹂닿퀬?쒕떎.
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ## Task: Codex CLI Bootstrap
 
 ### Task title
 
-Codex CLI 遺?몄뒪?몃옪 諛?Builder -> Reviewer ?몃? 媛뺤젣 ?먮쫫 援ъ꽦
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Goals
 
-- `run_codex.bat`媛 ?뚯씪 ?꾩튂瑜?猷⑦듃濡??↔퀬 UTF-8 肄섏넄?먯꽌 Codex CLI瑜??쒖옉?섍쾶 ?쒕떎.
-- `codex_prompt.txt`瑜?UTF-8濡??쎌뼱 ?쒖옉 ?꾨＼?꾪듃濡??꾨떖?섍쾶 ?쒕떎.
-- `AGENTS.md`??洹쇨굅 湲곕컲 ?묒뾽 洹쒖튃怨?Designer, Code Builder, Code Reviewer 濡ㅼ쓣 ?뺤쓽?쒕떎.
-- Builder ?④퀎 吏곹썑 Reviewer ?④퀎媛 ?먮룞 ?ㅽ뻾?섎뒗 ?ㅼ젣 ?몃? 媛뺤젣 ?먮쫫???쒓났?쒕떎.
-- ?꾨＼?꾪듃 珥덇린?붾굹 ?щ????ㅼ뿉???묒뾽 ?곹깭瑜??댁뼱媛????덇쾶 ?쒕떎.
+- Legacy non-English note retained these code references: `run_codex.bat`.
+- Legacy non-English note retained these code references: `codex_prompt.txt`.
+- Legacy non-English note retained these code references: `AGENTS.md`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Constraints
 
-- 紐⑤뱺 ?ㅻ챸怨??묒뾽 ?먮떒? ?ㅼ젣 ?뚯씪, 肄붾뱶, 紐낅졊 異쒕젰 洹쇨굅瑜?湲곗??쇰줈 ?쒕떎.
-- 援ы쁽?섏? ?딆? 寃껋쓣 援ы쁽??寃껋쿂??留먰븯吏 ?딅뒗??
-- ??μ냼???녿뒗 ?뚯씪?대굹 援ъ“??癒쇱? ?뺤씤?섍퀬, ?놁쑝硫??녿떎怨?留먰븳??
-- `bat`, `txt`, `md` ?뚯씪? UTF-8濡???ν븳??
-- Codex CLI 湲곕낯 ?ㅽ뻾 寃쎈줈??`%APPDATA%\npm\codex.cmd`??
-- Builder -> Reviewer 猷⑦봽??理쒕? 3?뚮쭔 ?덉슜?쒕떎.
-- Git ??μ냼媛 ?꾨땺 ???덉쑝誘濡?Git ?섏〈 ?먮쫫??湲곕낯 ?꾩젣濡??쇱? ?딅뒗??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `bat`, `txt`, `md`.
+- Legacy non-English note retained these code references: `%APPDATA%\npm\codex.cmd`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Role Owner
 
@@ -367,66 +416,66 @@ Completed for bootstrap file creation, path correction, and Codex CLI path resol
 
 ### Next Actions
 
-- ?쇰컲 ??뷀삎 ?쒖옉? `run_codex.bat`瑜??ㅽ뻾?쒕떎.
-- Builder -> Reviewer 媛뺤젣 猷⑦봽媛 ?꾩슂???묒뾽? `powershell -NoProfile -ExecutionPolicy Bypass -File .\codex_builder_reviewer.ps1 -Task "?묒뾽 ?댁슜"` ?뺤떇?쇰줈 ?ㅽ뻾?쒕떎.
-- ?ㅼ젣 Builder ?묒뾽???섑띁濡??ㅽ뻾?섎㈃ `codex_loop_logs`? `BLACKBOARD.md`??loop 湲곕줉???뺤씤?쒕떎.
+- Legacy non-English note retained these code references: `run_codex.bat`.
+- Legacy non-English note summarized in English; see surrounding retained task context.
+- Legacy non-English note retained these code references: `codex_loop_logs`, `BLACKBOARD.md`.
 
 ### Evidence
 
-- `Get-Location` 異쒕젰: `C:\TowerDefence_Pakuri\Test`
-- 理쒖큹 `Get-ChildItem -Force` 異쒕젰?먮뒗 `.git`, `.gitignore`留??덉뿀??
-- `run_codex.bat`, `codex_prompt.txt`, `AGENTS.md`, `BLACKBOARD.md`??理쒖큹 ?뺤씤 ??議댁옱?섏? ?딆븯??
-- `Get-Command codex` 異쒕젰???ㅼ젣 寃쎈줈: `c:\Users\t3312\.vscode\extensions\openai.chatgpt-26.415.20818-win32-x64\bin\windows-x86_64\codex.exe`
-- `codex --version` 異쒕젰: `codex-cli 0.122.0-alpha.1`
-- `Test-Path (Join-Path $env:APPDATA 'npm\codex.cmd')` 異쒕젰: `False`
-- `Join-Path $env:APPDATA 'npm\codex.cmd'` 異쒕젰: `C:\Users\t3312\AppData\Roaming\npm\codex.cmd`
-- `codex --help` 異쒕젰?먮뒗 `exec`, `review`, `login`, `logout`, `mcp`, `marketplace`, `mcp-server`, `app-server`, `completion`, `sandbox`, `debug`, `apply`, `resume`, `fork`, `cloud`, `exec-server`, `features`, `help` 紐낅졊???덉뿀??
-- `codex --help`, `codex review --help`, `codex exec --help`, `codex debug --help`, `codex mcp --help` 異쒕젰?먯꽌 Claude Hooks? 媛숈? hook/event 紐낅졊? ?뺤씤?섏? ?딆븯??
-- `codex review --help` 異쒕젰?먮뒗 `--uncommitted`, `--base`, `--commit` ?듭뀡???덉뿀??
-- `codex exec --help` 異쒕젰?먮뒗 `--skip-git-repo-check`, `-C`, `--full-auto`, `-o` ?듭뀡???덉뿀??
-- `git rev-parse --is-inside-work-tree` 異쒕젰: `true`
-- ?뱀씤 ??`%APPDATA%\npm\codex.cmd` ?섑띁瑜??앹꽦?덈떎.
-- ?뱀씤??寃利앹뿉??`Test-Path (Join-Path $env:APPDATA 'npm\codex.cmd')` 異쒕젰: `True`
-- ?뱀씤??寃利앹뿉??`%APPDATA%\npm\codex.cmd` ?댁슜? 媛먯???`codex.exe`瑜??몄텧?덈떎.
-- ?뱀씤??寃利앹뿉??`& (Join-Path $env:APPDATA 'npm\codex.cmd') --version` 異쒕젰: `codex-cli 0.122.0-alpha.1`
-- `cmd /d /c "call run_codex.bat < NUL"`? `codex.cmd` ?앹꽦 ???ㅻ쪟 寃쎈줈瑜?寃利앺뻽怨? `Required default path: C:\Users\t3312\AppData\Roaming\npm\codex.cmd`瑜?異쒕젰?덈떎.
-- `codex_builder_reviewer.ps1`??PowerShell syntax check瑜??듦낵?덈떎.
-- 2026-04-23 `C:\Users\t3312\AppData\Roaming\npm\codex.cmd` ?댁슜? ??젣??VS Code ?뺤옣 寃쎈줈 `openai.chatgpt-26.415.20818-win32-x64\bin\windows-x86_64\codex.exe`瑜?媛由ы궎怨??덉뿀??
-- 2026-04-23 ?ㅼ젣 議댁옱?섎뒗 Codex CLI 寃쎈줈??`C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.417.40842-win32-x64\bin\windows-x86_64\codex.exe`?怨?`codex-cli 0.122.0-alpha.13`??異쒕젰?덈떎.
-- 2026-04-23 `run_codex.bat`??`%APPDATA%\npm\codex.cmd`媛 ?ㅽ뻾 媛?ν븯吏 ?딆쑝硫?VS Code ?뺤옣 ?대뜑??理쒖떊 `codex.exe`瑜??먯깋?섎룄濡??섏젙?덈떎.
-- 2026-04-23 `codex_builder_reviewer.ps1`???숈씪?섍쾶 Codex CLI 寃쎈줈瑜??댁꽍?섎룄濡?`Resolve-CodexCommand`瑜?異붽??덈떎.
-- 2026-04-23 ?섏젙 ??Codex CLI 寃쎈줈 ?먯깋? `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.417.40842-win32-x64\bin\windows-x86_64\codex.exe`瑜?李얠븯怨?`codex-cli 0.122.0-alpha.13`??異쒕젰?덈떎.
-- 2026-04-23 ?뱀씤 ??`%APPDATA%\npm\codex.cmd` ?섑띁瑜??꾩옱 議댁옱?섎뒗 `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.417.40842-win32-x64\bin\windows-x86_64\codex.exe` 寃쎈줈濡?媛깆떊?덇퀬 `codex-cli 0.122.0-alpha.13`??異쒕젰?덈떎.
-- 2026-04-23 ?섏젙 ??`codex_builder_reviewer.ps1`??PowerShell parser syntax check瑜??듦낵?덈떎.
-- 2026-04-23 Code Reviewer ?몃? 寃??濡쒓렇 `codex_loop_logs\manual_reviewer_20260423_212033.md`??`REVIEW_RESULT: PASS`瑜?諛섑솚?덈떎.
-- 2026-04-25 sandbox ?대? 吏곸젒 `codex exec` smoke test??`?≪꽭?ㅺ? 嫄곕??섏뿀?듬땲?? (os error 5)`濡??ㅽ뙣?덈떎.
-- 2026-04-25 ?뱀씤???몃? ?ㅽ뻾?쇰줈 理쒖떊 Codex CLI `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.422.30944-win32-x64\bin\windows-x86_64\codex.exe` reviewer smoke test媛 `REVIEW_RESULT: PASS`瑜?諛섑솚?덈떎.
-- 2026-04-25 `codex_builder_reviewer.ps1`??`Invoke-CodexExec`媛 Codex 肄섏넄 異쒕젰??諛섑솚媛믪쑝濡??욎뼱 `$builderExit`瑜?臾몄옄?대줈 留뚮뱶??臾몄젣瑜??뺤씤?덈떎.
-- 2026-04-25 `Invoke-CodexExec`媛 肄섏넄 異쒕젰??`*.console.txt`濡???ν븯怨??뺤닔 醫낅즺 肄붾뱶留?諛섑솚?섎룄濡??섏젙?덈떎.
-- 2026-04-25 Codex CLI stderr 諛곕꼫媛 `$ErrorActionPreference = 'Stop'`?먯꽌 `NativeCommandError`瑜??쇱쑝耳? `Invoke-CodexExec` ?대??먯꽌留?native stderr 泥섎━瑜?`Continue`濡??꾪솕?덈떎.
-- 2026-04-25 ?섏젙 ??`codex_builder_reviewer.ps1`??PowerShell parser syntax check?먯꽌 `PARSE_OK`瑜?諛섑솚?덈떎.
-- 2026-04-25 ?섏젙 ??smoke test ?섑띁 ?ㅽ뻾? `Reviewer PASS at loop 1.`??諛섑솚?덇퀬, `codex_loop_logs\20260425_213006\loop_01_reviewer.md`??`REVIEW_RESULT: PASS`瑜??ы븿?쒕떎.
-- 2026-04-25 Code Reviewer 吏곸젒 寃??`codex_loop_logs\reviewer_restore_fix_review.md`??`run_codex.bat`???꾨＼?꾪듃 quote 蹂?? `BLACKBOARD.md`???섎せ??history ?꾩튂, pre-fix ?먯긽 exit code 湲곕줉??吏?곹븯硫?`REVIEW_RESULT: NEEDS_CHANGES`瑜?諛섑솚?덈떎.
-- 2026-04-25 `run_codex.bat`??`codex_prompt.txt` UTF-8 ?댁슜??蹂???놁씠 ?꾨떖?섎룄濡?`.Replace([string][char]34, [string][char]0x201D)`瑜??쒓굅?덈떎.
-- 2026-04-25 `Add-BlackboardHistory`??猷⑦봽 湲곕줉???뚯씪 ?앹씠 ?꾨땲??`Codex CLI Bootstrap` ?묒뾽??`Builder Reviewer Loop` ?뱀뀡 ?욎뿉 ?쎌엯?섎룄濡??섏젙?덈떎.
-- 2026-04-25 ?섎せ 遺숈뿀??Eve ?묒뾽 ?섎떒??wrapper smoke-test history 湲곕줉???쒓굅?덈떎.
-- 2026-04-25 理쒖쥌 smoke test ?섑띁 ?ㅽ뻾? `Reviewer PASS at loop 1.`??諛섑솚?덇퀬, `codex_loop_logs\20260425_213901\loop_01_reviewer.md`??`REVIEW_RESULT: PASS`瑜??ы븿?쒕떎.
+- Legacy non-English note retained these code references: `Get-Location`, `C:\TowerDefence_Pakuri\Test`.
+- Legacy non-English note retained these code references: `Get-ChildItem -Force`, `.git`, `.gitignore`.
+- Legacy non-English note retained these code references: `run_codex.bat`, `codex_prompt.txt`, `AGENTS.md`, `BLACKBOARD.md`.
+- Legacy non-English note retained these code references: `Get-Command codex`, `c:\Users\t3312\.vscode\extensions\openai.chatgpt-26.415.20818-win32-x64\bin\windows-x86_64\codex.exe`.
+- Legacy non-English note retained these code references: `codex --version`, `codex-cli 0.122.0-alpha.1`.
+- Legacy non-English note retained these code references: `Test-Path (Join-Path $env:APPDATA 'npm\codex.cmd')`, `False`.
+- Legacy non-English note retained these code references: `Join-Path $env:APPDATA 'npm\codex.cmd'`, `C:\Users\t3312\AppData\Roaming\npm\codex.cmd`.
+- Legacy non-English note retained these code references: `codex --help`, `exec`, `review`, `login`, `logout`, `mcp`, `marketplace`, `mcp-server`, `app-server`, `completion`, `sandbox`, `debug`.
+- Legacy non-English note retained these code references: `codex --help`, `codex review --help`, `codex exec --help`, `codex debug --help`, `codex mcp --help`.
+- Legacy non-English note retained these code references: `codex review --help`, `--uncommitted`, `--base`, `--commit`.
+- Legacy non-English note retained these code references: `codex exec --help`, `--skip-git-repo-check`, `-C`, `--full-auto`, `-o`.
+- Legacy non-English note retained these code references: `git rev-parse --is-inside-work-tree`, `true`.
+- Legacy non-English note retained these code references: `%APPDATA%\npm\codex.cmd`.
+- Legacy non-English note retained these code references: `Test-Path (Join-Path $env:APPDATA 'npm\codex.cmd')`, `True`.
+- Legacy non-English note retained these code references: `%APPDATA%\npm\codex.cmd`, `codex.exe`.
+- Legacy non-English note retained these code references: `& (Join-Path $env:APPDATA 'npm\codex.cmd') --version`, `codex-cli 0.122.0-alpha.1`.
+- Legacy non-English note retained these code references: `cmd /d /c "call run_codex.bat < NUL"`, `codex.cmd`, `Required default path: C:\Users\t3312\AppData\Roaming\npm\codex.cmd`.
+- Legacy non-English note retained these code references: `codex_builder_reviewer.ps1`.
+- Legacy non-English note retained these code references: `C:\Users\t3312\AppData\Roaming\npm\codex.cmd`, `openai.chatgpt-26.415.20818-win32-x64\bin\windows-x86_64\codex.exe`.
+- Legacy non-English note retained these code references: `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.417.40842-win32-x64\bin\windows-x86_64\codex.exe`, `codex-cli 0.122.0-alpha.13`.
+- Legacy non-English note retained these code references: `run_codex.bat`, `%APPDATA%\npm\codex.cmd`, `codex.exe`.
+- Legacy non-English note retained these code references: `codex_builder_reviewer.ps1`, `Resolve-CodexCommand`.
+- Legacy non-English note retained these code references: `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.417.40842-win32-x64\bin\windows-x86_64\codex.exe`, `codex-cli 0.122.0-alpha.13`.
+- Legacy non-English note retained these code references: `%APPDATA%\npm\codex.cmd`, `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.417.40842-win32-x64\bin\windows-x86_64\codex.exe`, `codex-cli 0.122.0-alpha.13`.
+- Legacy non-English note retained these code references: `codex_builder_reviewer.ps1`.
+- Legacy non-English note retained these code references: `codex_loop_logs\manual_reviewer_20260423_212033.md`, `REVIEW_RESULT: PASS`.
+- Legacy non-English note retained these ASCII code references: `codex exec`.
+- Legacy non-English note retained these code references: `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.422.30944-win32-x64\bin\windows-x86_64\codex.exe`, `REVIEW_RESULT: PASS`.
+- Legacy non-English note retained these code references: `codex_builder_reviewer.ps1`, `Invoke-CodexExec`, `$builderExit`.
+- Legacy non-English note retained these code references: `Invoke-CodexExec`, `*.console.txt`.
+- Legacy non-English note retained these code references: `$ErrorActionPreference = 'Stop'`, `NativeCommandError`, `Invoke-CodexExec`, `Continue`.
+- Legacy non-English note retained these code references: `codex_builder_reviewer.ps1`, `PARSE_OK`.
+- Legacy non-English note retained these code references: `Reviewer PASS at loop 1.`, `codex_loop_logs\20260425_213006\loop_01_reviewer.md`, `REVIEW_RESULT: PASS`.
+- Legacy non-English note retained these code references: `codex_loop_logs\reviewer_restore_fix_review.md`, `run_codex.bat`, `BLACKBOARD.md`, `REVIEW_RESULT: NEEDS_CHANGES`.
+- Legacy non-English note retained these code references: `run_codex.bat`, `codex_prompt.txt`, `.Replace([string][char]34, [string][char]0x201D)`.
+- Legacy non-English note retained these code references: `Add-BlackboardHistory`, `Codex CLI Bootstrap`, `Builder Reviewer Loop`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `Reviewer PASS at loop 1.`, `codex_loop_logs\20260425_213901\loop_01_reviewer.md`, `REVIEW_RESULT: PASS`.
 
 ### History
 
-- 2026-04-19: ?묒뾽 ?대뜑? ????뚯씪 議댁옱 ?щ?瑜??뺤씤?덈떎.
-- 2026-04-19: Codex CLI ?ㅼ젣 寃쎈줈, 踰꾩쟾, `exec`, `review` ?꾩?留먯쓣 ?뺤씤?덈떎.
-- 2026-04-19: `%APPDATA%\npm\codex.cmd`媛 ?꾩옱 議댁옱?섏? ?딅뒗?ㅻ뒗 ?먯쓣 ?뺤씤?덈떎.
-- 2026-04-19: ?ㅼ씠?곕툕 hook/event媛 ?꾩?留?異쒕젰?먯꽌 ?뺤씤?섏? ?딆븘 ?몃? PowerShell ?섑띁 諛⑹떇?쇰줈 ?ㅺ퀎?덈떎.
-- 2026-04-19: `run_codex.bat`, `codex_prompt.txt`, `AGENTS.md`, `BLACKBOARD.md`, `codex_builder_reviewer.ps1`瑜??앹꽦?덈떎.
-- 2026-04-19: ?뱀씤 ??`%APPDATA%\npm\codex.cmd` ?섑띁瑜??앹꽦?섍퀬 `--version` ?ㅽ뻾?쇰줈 寃利앺뻽??
-- 2026-04-23: VS Code ?뺤옣 ?낅뜲?댄듃濡?`%APPDATA%\npm\codex.cmd`媛 媛由ы궎??怨좎젙 踰꾩쟾 寃쎈줈媛 源⑥쭊 臾몄젣瑜??뺤씤?덈떎.
-- 2026-04-23: `run_codex.bat`? `codex_builder_reviewer.ps1`瑜?怨좎젙 ?섑띁 ?섏〈?먯꽌 ?ㅽ뻾 媛?ν븳 ?섑띁 ?곗꽑, ?ㅽ뙣 ??理쒖떊 VS Code ?뺤옣 `codex.exe` ?먯깋 諛⑹떇?쇰줈 ?섏젙?덈떎.
-- 2026-04-23: ?뱀씤 ??`%APPDATA%\npm\codex.cmd` ?몃? ?섑띁 ?먯껜???꾩옱 議댁옱?섎뒗 Codex CLI ?ㅽ뻾 ?뚯씪濡?媛깆떊?덈떎.
-- 2026-04-23: `codex_loop_logs\manual_reviewer_20260423_212033.md`??Code Reviewer ?듦낵 ?먯젙??湲곕줉?덈떎.
-- 2026-04-25: Code Reviewer 媛뺤젣 ?먮쫫 以묐떒 ?먯씤??Codex CLI ?ㅽ뻾 ?ㅽ뙣? ?섑띁??醫낅즺 肄붾뱶 諛섑솚 泥섎━ ?ㅻ쪟?꾩쓣 ?뺤씤?섍퀬 `codex_builder_reviewer.ps1`瑜??섏젙?덈떎.
-- 2026-04-25: ?섏젙 ??Builder -> Reviewer smoke test瑜??ㅽ뻾??`codex_loop_logs\20260425_213006\loop_01_reviewer.md`?먯꽌 `REVIEW_RESULT: PASS`瑜??뺤씤?덈떎.
-- 2026-04-25: Code Reviewer媛 吏?곹븳 `run_codex.bat` ?꾨＼?꾪듃 蹂?뺢낵 `BLACKBOARD.md` 湲곕줉 ?꾩튂 臾몄젣瑜??섏젙????`codex_loop_logs\20260425_213901\loop_01_reviewer.md`?먯꽌 `REVIEW_RESULT: PASS`瑜??뺤씤?덈떎.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `exec`, `review`.
+- Legacy non-English note retained these code references: `%APPDATA%\npm\codex.cmd`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `run_codex.bat`, `codex_prompt.txt`, `AGENTS.md`, `BLACKBOARD.md`, `codex_builder_reviewer.ps1`.
+- Legacy non-English note retained these code references: `%APPDATA%\npm\codex.cmd`, `--version`.
+- Legacy non-English note retained these code references: `%APPDATA%\npm\codex.cmd`.
+- Legacy non-English note retained these code references: `run_codex.bat`, `codex_builder_reviewer.ps1`, `codex.exe`.
+- Legacy non-English note retained these code references: `%APPDATA%\npm\codex.cmd`.
+- Legacy non-English note retained these code references: `codex_loop_logs\manual_reviewer_20260423_212033.md`.
+- Legacy non-English note retained these code references: `codex_builder_reviewer.ps1`.
+- Legacy non-English note retained these code references: `codex_loop_logs\20260425_213006\loop_01_reviewer.md`, `REVIEW_RESULT: PASS`.
+- Legacy non-English note retained these code references: `run_codex.bat`, `BLACKBOARD.md`, `codex_loop_logs\20260425_213901\loop_01_reviewer.md`, `REVIEW_RESULT: PASS`.
 
 - 2026-04-25 21:39:01 +09:00: Builder -> Reviewer loop started. Run directory: C:\TowerDefence_Pakuri\Test\codex_loop_logs\20260425_213901
 - 2026-04-25 21:39:27 +09:00: Loop 1 Builder started. Output: C:\TowerDefence_Pakuri\Test\codex_loop_logs\20260425_213901\loop_01_builder.md

@@ -2,15 +2,15 @@
 
 ## Scope
 
-Ariel 전용 몬스터/스킬/런타임 지속 상태 파일.
+Ariel dedicated monster, skill, and runtime persistent-state file.
 
-새 작업 시작 시 `boards/MON/MON_BLACKBOARD.md`를 먼저 읽고, 구현 예시가 필요할 때만 `boards/MON/EVE_MONSTER.md`를 참고한다.
+At the start of new work, read `boards/MON/MON_BLACKBOARD.md` first and consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
 ## Task: 2026-05-03 Ariel J Passive Runtime Correction
 
 ### Task title
 
-Correct Ariel passive J `성역 선포` runtime to match the current E/J reference documents.
+Correct Ariel passive J `Sanctuary Proclamation` runtime to match the current E/J reference documents.
 
 ### Source references
 
@@ -19,11 +19,11 @@ Correct Ariel passive J `성역 선포` runtime to match the current E/J referen
 
 ### Skill slots A-J
 
-- F `ariel-f` / 빛의 인도: unchanged in this pass.
-- G `ariel-g` / 수호 교리: unchanged in this pass.
-- H `ariel-h` / 축복 전파: unchanged in this pass.
-- I `ariel-i` / 낙인 계시: unchanged in this pass.
-- J `ariel-j` / 성역 선포: corrected so post-E action speed uses its own 5-second timer and holy-damage bonus depends on remaining Archangel shield state.
+- Legacy non-English note retained these code references: `ariel-f`.
+- Legacy non-English note retained these code references: `ariel-g`.
+- Legacy non-English note retained these code references: `ariel-h`.
+- Legacy non-English note retained these code references: `ariel-i`.
+- J `ariel-j` / Sanctuary Proclamation: corrected so post-E action speed uses its own 5-second timer and holy-damage bonus depends on remaining Archangel shield state.
 
 ### Runtime implementation status
 
@@ -49,7 +49,7 @@ Codex did not run Unity Play Mode. User Play Mode verification is still required
 
 ### Evidence
 
-- `Pakuri/reference/2.Monster/ariel/skill/j-sanctuary-proclamation.md:18-19` requires `대천사의 강림` post-cast action speed for 5 seconds and holy-damage bonus while the E shield remains.
+- `Pakuri/reference/2.Monster/ariel/skill/j-sanctuary-proclamation.md:18-19` requires `Archangel Descent` post-cast action speed for 5 seconds and holy-damage bonus while the E shield remains.
 - `Pakuri/reference/2.Monster/ariel/skill/e-archangel-descent.md:22-24` defines the E shield amount/duration that J should follow and establishes E as the battlefield-wide cast this runtime visual should represent.
 - `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs:22-24` adds dedicated J timer / Archangel shield fields.
 - `CombatRuntimeArielSkills.cs:136-143` now decrements and clears those dedicated states independently of the blessing timer.
@@ -92,16 +92,16 @@ Implement Ariel skill documents A-E and their F-J enhancement/passive effects.
 
 ### Skill slots A-J
 
-- A `ariel-a` / 심판의 빛: held/click direction manual Holy projectile, magazine/reload, pierce, last-shot explosion master, Holy Exposure master.
-- B `ariel-b` / 성광 방패: selected-unit shield, shield duration/cooldown, shield burst, Holy damage buff, reflection, shield scaling.
-- C `ariel-c` / 축복의 파동: nearest-enemy area Holy damage, blessing timer, action-speed or spell-power master, second wave master.
-- D `ariel-d` / 천상의 낙인: strongest-enemy Holy damage, Holy Exposure, multi-target trait, crit-damage and detonation masters.
-- E `ariel-e` / 대천사의 강림: battlefield-wide Holy damage, selected-unit shield, Holy Exposure target bonus, sanctuary damage reduction, post-cast blessing.
-- F `ariel-f` / 빛의 인도: Holy damage bonus, A magazine trait, Holy crit chance trait.
-- G `ariel-g` / 수호 교리: shield amount bonus, battle-start shield, shielded Holy damage trait.
-- H `ariel-h` / 축복 전파: blessing Holy damage, cooldown charge speed, blessing duration trait.
-- I `ariel-i` / 낙인 계시: Holy Exposure target damage bonus, D cooldown trait, Holy resistance flat reduction trait.
-- J `ariel-j` / 성역 선포: E post-cast action speed, shielded Holy damage, E cooldown trait.
+- Legacy non-English note retained these code references: `ariel-a`.
+- Legacy non-English note retained these code references: `ariel-b`.
+- Legacy non-English note retained these code references: `ariel-c`.
+- Legacy non-English note retained these code references: `ariel-d`.
+- E `ariel-e` / Archangel Descent: battlefield-wide Holy damage, selected-unit shield, Holy Exposure target bonus, sanctuary damage reduction, post-cast blessing.
+- Legacy non-English note retained these code references: `ariel-f`.
+- Legacy non-English note retained these code references: `ariel-g`.
+- Legacy non-English note retained these code references: `ariel-h`.
+- Legacy non-English note retained these code references: `ariel-i`.
+- J `ariel-j` / Sanctuary Proclamation: E post-cast action speed, shielded Holy damage, E cooldown trait.
 
 ### Runtime implementation status
 
@@ -112,7 +112,7 @@ Implemented in `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs` and in
 - `CombatRuntimeEnemies.cs`
 - `Pakuri/Assembly-CSharp.csproj`
 
-Current runtime has one selected player Monster, not an ally party collection. Document phrases such as "모든 아군" are implemented against the selected Monster because that is the only allied combat unit present in the current code.
+Current runtime has one selected player Monster, not an ally party collection. Document phrases such as "all allies" are implemented against the selected Monster because that is the only allied combat unit present in the current code.
 
 ### Data asset status
 
@@ -202,7 +202,7 @@ Implemented and locally validated.
 
 ### Task title
 
-Make Ariel A master `백색 심판` explode on hit and use the base circle sprite visual.
+Make Ariel A master `White Judgement` explode on hit and use the base circle sprite visual.
 
 ### Goals
 
@@ -226,12 +226,12 @@ Implemented and locally validated.
 
 ### Next Actions
 
-- User verifies `백색 심판` in Play Mode with `ariel-a-master-1` selected.
+- User verifies `White Judgement` in Play Mode with `ariel-a-master-1` selected.
 
 ### Evidence
 
-- `Pakuri/reference/2.Monster/ariel/skill/a-judgement-light.md` defines `백색 심판` as the last projectile exploding twice with area Holy damage.
-- `Pakuri/Assets/Data/GameData/Monsters/ariel.asset` contains `MasterSkillChoices` entry `ChoiceId: ariel-a-master-1`, Title `백색 심판`.
+- `Pakuri/reference/2.Monster/ariel/skill/a-judgement-light.md` defines `White Judgement` as the last projectile exploding twice with area Holy damage.
+- `Pakuri/Assets/Data/GameData/Monsters/ariel.asset` contains `MasterSkillChoices` entry `ChoiceId: ariel-a-master-1`, Title `White Judgement`.
 - `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs` keeps the explosion damage/count on the projectile and now returns whether `TryTriggerArielJudgementLightExplosion()` fired.
 - `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` now triggers the Ariel judgement explosion immediately on enemy hit when the projectile has pending explosion data, then cleans up the projectile.
 - `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs` uses `CreateCircleEffect()` / `GetCircleSprite()` for the explosion visual, with longer duration and higher sorting order.
@@ -240,5 +240,5 @@ Implemented and locally validated.
 
 ### History
 
-- 2026-04-30: User reported Ariel A master `백색 심판` did not appear to apply and requested using the base circle asset if only the visual effect was missing.
+- 2026-04-30: User reported Ariel A master `White Judgement` did not appear to apply and requested using the base circle asset if only the visual effect was missing.
 - 2026-04-30: Code Builder changed the master explosion to fire immediately on hit and made the circle-sprite explosion more visible.

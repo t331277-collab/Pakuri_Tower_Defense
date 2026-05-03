@@ -62,6 +62,12 @@ namespace Pakuri.Combat
             if (IsSelectedArielMonster())
             {
                 UpdateArielSkillCooldowns();
+                return;
+            }
+
+            if (IsSelectedRinMonster())
+            {
+                UpdateRinSkillCooldowns();
             }
         }
 
@@ -75,6 +81,11 @@ namespace Pakuri.Combat
             if (IsSelectedArielMonster())
             {
                 return TryTriggerArielAutomaticSkills();
+            }
+
+            if (IsSelectedRinMonster())
+            {
+                return TryTriggerRinAutomaticSkills();
             }
 
             return false;
@@ -92,6 +103,11 @@ namespace Pakuri.Combat
                 return GetArielJudgementMagazineCapacity();
             }
 
+            if (IsSelectedRinMonster())
+            {
+                return GetRinShatteringFistMagazineCapacity();
+            }
+
             return magazineCapacityConfigured;
         }
 
@@ -105,6 +121,11 @@ namespace Pakuri.Combat
             if (IsSelectedArielMonster())
             {
                 return GetArielActionSpeedMultiplier();
+            }
+
+            if (IsSelectedRinMonster())
+            {
+                return GetRinActionSpeedMultiplier();
             }
 
             return 1f;

@@ -1,9 +1,52 @@
-﻿# PROJECTILE_BLACKBOARD
+# PROJECTILE_BLACKBOARD
 
-이 파일은 BLACKBOARD.md 계층화 작업으로 생성된 도메인별 지속 상태 파일입니다.
-관련 작업을 수행할 때 MDTREE.md 라우팅에 따라 이 파일과 필요한 상위/하위 파일을 동시에 갱신합니다.
+This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
+When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
 ## Migrated Task Blocks
+
+## Task: 2026-05-04 Selected-Monster Projectile X-Edge Cleanup
+
+### Task title
+
+Make selected-Monster projectiles disappear at the battlefield X boundary instead of lifetime expiry.
+
+### Goals
+
+- Stop Rin A and other selected-Monster projectiles from being cleaned up by short configured/computed lifetime while still traveling.
+- Use the common projectile rule requested by the user: delete the projectile when its X coordinate reaches the map end.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly request it for this change.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies projectile cleanup positions in Play Mode.
+- If a future skill intentionally fires with no horizontal direction, revisit whether that skill needs a separate cleanup rule.
+
+### Evidence
+
+- Before this change, `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` decremented player projectile `RemainingLifetime` and cleaned up no-hit selected-Monster projectiles when `RemainingLifetime <= 0f`.
+- `CombatRuntimeProjectiles.cs` now calls `HasPlayerProjectileReachedBattlefieldXEdge(projectile)` and only cleans up selected-Monster projectiles at the battlefield X edge.
+- The status label now reports that the projectile disappeared after reaching the battlefield X boundary.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and only existing Unity/MCP assembly conflict warnings.
+- Unity console error query returned only an MCP-FOR-UNITY client-handler exit log.
+
+### History
+
+- 2026-05-04: User reported Rin A disappearing again after about 0.5 seconds and requested the monster-wide projectile deletion rule be based on reaching the map-end X coordinate.
+- 2026-05-04: Builder changed selected-Monster no-hit projectile cleanup from lifetime expiry to X-edge cleanup.
 
 ## Task: 2026-05-03 Damage Application Popup Trigger Wiring
 
@@ -132,7 +175,7 @@ Implemented and locally validated.
 
 - 2026-04-30: User reported Ariel A is deleted shortly after firing.
 - 2026-04-30: Code Builder changed Ariel A projectile lifetime to respect the configured projectile lifetime minimum.
-- 2026-04-30: User reported `백색 심판` was not applying. Code Builder changed `TryTriggerArielJudgementLightExplosion()` to return a fired flag and made `UpdateProjectiles()` trigger/cleanup the pending Ariel explosion immediately when the marked projectile hits an enemy, while keeping lifetime-expiry fallback.
+- 2026-04-30: User reported `White Judgement` was not applying. Code Builder changed `TryTriggerArielJudgementLightExplosion()` to return a fired flag and made `UpdateProjectiles()` trigger/cleanup the pending Ariel explosion immediately when the marked projectile hits an enemy, while keeping lifetime-expiry fallback.
 
 ## Task: Ariel Judgement Light Projectile Runtime
 
@@ -276,19 +319,19 @@ Builder implementation and self-review completed. Waiting for user Play Mode ver
 
 ### Task title
 
-臾몄꽌 以?섑삎 ?꾪겕 蹂쇳듃 ?ъ궗泥??낅젰/?곸쨷 援ъ“ ?섏젙 怨꾪쉷 HTML ?묒꽦
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Goals
 
-- ?꾩옱 ?대툕 ?꾪닾 ?꾨줈?좏??낆쓣 湲곗??쇰줈, ?꾪겕 蹂쇳듃瑜?臾몄꽌 ?뺤쓽????留욌뒗 `?ъ궗泥?/ ?꾩갹?? 援ъ“濡?諛붽씀???묒뾽 怨꾪쉷???뺣━?쒕떎.
-- ?ъ슜?먭? ?붿껌??`?쇱そ ?대┃ ?좎? ???곗냽 諛쒖궗`, `?ъ궗泥??곸쨷 ???쇳빐` ?붽뎄瑜??ㅼ젣 肄붾뱶? reference 臾몄꽌 李⑥씠 湲곗??쇰줈 ?ㅻ챸?쒕떎.
-- Code Builder媛 諛붾줈 援ы쁽???ㅼ뼱媛????덈룄濡??섏젙 踰붿쐞, ?뚯씪蹂?蹂寃?怨꾪쉷, 寃利?泥댄겕由ъ뒪?몃? HTML ???μ쑝濡??④릿??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see surrounding retained task context.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Constraints
 
-- ?ㅼ젣 reference 臾몄꽌? ?ㅼ젣 ?꾩옱 肄붾뱶??洹쇨굅?댁꽌留??곷뒗??
-- ?꾩쭅 ?녿뒗 援ы쁽??援ы쁽??寃껋쿂???곸? ?딅뒗??
-- ???묒뾽? ?ㅺ퀎 臾몄꽌 ?묒꽦?대ŉ, 肄붾뱶 ?섏젙 ?먯껜???ы븿?섏? ?딅뒗??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Role Owner
 
@@ -300,40 +343,40 @@ Completed
 
 ### Next Actions
 
-- ?ъ슜?먭? ?먰븯硫???臾몄꽌瑜?湲곗??쇰줈 Code Builder ?④퀎濡??꾪솚???ㅼ젣 ?ъ궗泥댄삎 諛쒖궗 濡쒖쭅??援ы쁽?쒕떎.
-- 援ы쁽 ??`EveVerticalSliceController.cs`??利됱떆 ?쇳빐 援ъ“瑜??ъ궗泥??곸쨷 援ъ“濡?諛붽씀怨? hold ?낅젰 寃利앷낵 reviewer 猷⑦봽瑜??ㅼ떆 ?섑뻾?쒕떎.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `EveVerticalSliceController.cs`.
 
 ### Evidence
 
-- `Pakuri/reference/dungeon-squad-combat-player-controls.md`???꾪닾 以??뚮젅?댁뼱 ?낅젰??`怨듦꺽 吏??吏???쇰줈 ?뺤쓽?쒕떎.
-- `Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md`???꾪겕 蹂쇳듃瑜?`?ъ궗泥?/ ?꾩갹???쇰줈 ?뺤쓽?섍퀬, ?ъ궗泥??띾룄 `15.0`, ?꾩갹 `6`, ?ъ옣??`4珥?, 諛쒖궗 媛꾧꺽 `0.35珥?, 媛먯쟾 `15%`瑜?紐낆떆?쒕떎.
-- `Pakuri/reference/3.combat/combat-attribute-and-damage-system.md`??媛숈? ?띿꽦 諛⑹뼱??李몄“? 諛⑹뼱??諛섏쁺 ??移섎챸? ?곸슜 洹쒖튃???뺤쓽?쒕떎.
-- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs` ?꾩옱 援ы쁽? `wasPressedThisFrame` / `GetMouseButtonDown(0)` ?낅젰怨?利됱떆 ?쇳빐 援ъ“瑜??ъ슜?쒕떎.
-- ???ㅺ퀎 臾몄꽌 `Pakuri/reference/eve-projectile-click-hold-plan.html`瑜?異붽??덈떎.
+- Legacy non-English note retained these code references: `Pakuri/reference/dungeon-squad-combat-player-controls.md`.
+- Legacy non-English note retained these ASCII code references: `Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/3.combat/combat-attribute-and-damage-system.md`.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`, `wasPressedThisFrame`, `GetMouseButtonDown(0)`.
+- Legacy non-English note retained these code references: `Pakuri/reference/eve-projectile-click-hold-plan.html`.
 
 ### History
 
-- 2026-04-24: `AGENTS.md`, `BLACKBOARD.md`, `dungeon-squad-combat-player-controls.md`, `a-arc-bolt.md`, `combat-attribute-and-damage-system.md`, `EveVerticalSliceController.cs`, `eve-combat-implementation-report.html`瑜??ㅼ떆 ?쎌뿀??
-- 2026-04-24: ?꾩옱 肄붾뱶媛 ?⑤컻 ?대┃ ?낅젰怨?利됱떆 ?쇳빐 援ъ“?꾩쓣 ?뺤씤?덈떎.
-- 2026-04-24: hold ?낅젰 湲곕컲 ?곗냽 諛쒖궗? ?ъ궗泥??곸쨷 湲곕컲 ?쇳빐 泥섎━濡???린???ㅺ퀎 HTML??`Pakuri/reference/eve-projectile-click-hold-plan.html`??異붽??덈떎.
+- Legacy non-English note retained these code references: `AGENTS.md`, `BLACKBOARD.md`, `dungeon-squad-combat-player-controls.md`, `a-arc-bolt.md`, `combat-attribute-and-damage-system.md`, `EveVerticalSliceController.cs`, `eve-combat-implementation-report.html`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `Pakuri/reference/eve-projectile-click-hold-plan.html`.
 
 ## Task: Eve Projectile Click Implementation
 
 ### Task title
 
-?대툕 ?꾪겕 蹂쇳듃瑜??대┃???ъ궗泥??곸쨷 援ъ“濡??섏젙?섍퀬 ?꾨즺 蹂닿퀬 HTML ?묒꽦
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Goals
 
-- 湲곗〈 利됱떆 ?쇳빐 援ъ“瑜??쒓굅?섍퀬, ?쇱そ ?대┃ ?쒖뿉留??꾪겕 蹂쇳듃 ?ъ궗泥?1諛쒖씠 ?앹꽦?섍쾶 ?쒕떎.
-- ?ъ궗泥닿? ?ㅼ젣濡??대룞?섍퀬 ?곴낵 ?우쓣 ?뚮쭔 ?쇳빐瑜??곸슜?섍쾶 ?쒕떎.
-- ?섏젙 ??媛앹껜 ??븷, ?숈옉 諛⑹떇, ?묒뾽 以?臾몄젣, ??꾩뒪?ы봽 ?묒뾽 濡쒓렇瑜??ы븿???꾨즺 蹂닿퀬 HTML???④릿??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Constraints
 
-- ?ㅼ젣 ?꾩옱 肄붾뱶? ?ㅼ젣 Unity ?고???寃利앹쓣 洹쇨굅濡??묒뾽?쒕떎.
-- ???ㅽ룿 異? 移대찓?? ?꾩옣 醫뚰몴??湲곗〈 媛믪쓣 ?좎??쒕떎.
-- 濡쒖쭅 ?섏젙 ??reviewer 媛뺤젣 ?먮쫫???ㅼ떆 ?쒕룄?섍퀬, ?ㅽ뙣 ??洹?洹쇨굅瑜??④릿??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Role Owner
 
@@ -345,38 +388,38 @@ Completed without Code Review. External reviewer commands timed out again, so on
 
 ### Next Actions
 
-- ?ъ슜?먭? ?먰븯硫??ㅼ쓬 ?④퀎濡??ㅼ젣 ?대┃ ?낅젰 湲곕컲 ?뺤떇 ?뚮젅???뚯뒪?? ?띿꽦蹂?諛⑹뼱???곗씠??紐⑤뜽, Collider 湲곕컲 異⑸룎濡??뺤옣?쒕떎.
-- reviewer ?몃? 媛뺤젣 ?먮쫫 timeout ?먯씤??蹂꾨룄 遺꾨━?댁꽌 ?닿껐?댁빞 ?쒕떎.
-- ?꾩옱 ?곹깭??Code Review 誘몄닔???곹깭?대?濡? ?댄썑 由щ럭媛 ?꾩슂?섎㈃ 蹂꾨룄 reviewer ?④퀎瑜??ㅼ떆 ?ㅽ뻾?댁빞 ?쒕떎.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Evidence
 
-- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`??`ProjectileRuntime`, `projectileRoot`, `UpdateProjectiles()`, `TryHitEnemy()`, ?대┃ 湲곕컲 `HandlePointerInput()`瑜??ы븿?섎룄濡??섏젙?먮떎.
-- `Pakuri/Assets/Scenes/SampleScene.unity`??`ProjectileRoot`瑜??ы븿???꾩옱 ?꾩옣 援ъ“濡??ㅼ떆 ??λ릱??
-- `manage_scene save`媛 `Assets/Scenes/SampleScene.unity` ????깃났??諛섑솚?덈떎.
-- `find_gameobjects by_name ProjectileRoot`???ъ뿉??`ProjectileRoot`瑜?李얠븯??
-- ?뚮젅??紐⑤뱶 ?듭젣 寃利앹뿉??
-  - 諛쒖궗 吏곹썑 `projectileCount = 1`
-  - 1珥???`projectileCount = 0`
-  - 媛숈? 寃利앹뿉??`enemyHealth = 37.95`
-  - 理쒖쥌 ?ш?利앹뿉??`currentShotsRemaining = 0`, `reloadRemaining = 4.0`
-- 寃利?罹≪쿂 `Pakuri/Assets/Screenshots/eve-projectile-click-runtime.png`瑜??앹꽦?덈떎.
-- `validate_script`???대쾲?먮룄 duplicate signature false positive瑜??덈떎.
-- `read_console`?먯꽌??`FindObjectOfType<Camera>()` obsolete warning???섏솕怨??댄썑 `FindFirstObjectByType<Camera>()`濡??섏젙?덈떎.
-- ?몃? reviewer ?쒕룄:
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`, `ProjectileRuntime`, `projectileRoot`, `UpdateProjectiles()`, `TryHitEnemy()`, `HandlePointerInput()`.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scenes/SampleScene.unity`, `ProjectileRoot`.
+- Legacy non-English note retained these code references: `manage_scene save`, `Assets/Scenes/SampleScene.unity`.
+- Legacy non-English note retained these code references: `find_gameobjects by_name ProjectileRoot`, `ProjectileRoot`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+  - Legacy non-English note retained these code references: `projectileCount = 1`.
+  - Legacy non-English note retained these code references: `projectileCount = 0`.
+  - Legacy non-English note retained these code references: `enemyHealth = 37.95`.
+  - Legacy non-English note retained these code references: `currentShotsRemaining = 0`, `reloadRemaining = 4.0`.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Screenshots/eve-projectile-click-runtime.png`.
+- Legacy non-English note retained these code references: `validate_script`.
+- Legacy non-English note retained these code references: `read_console`, `FindObjectOfType<Camera>()`, `FindFirstObjectByType<Camera>()`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
   - `codex review --uncommitted` timeout
-  - reviewer ?꾩슜 `codex exec` timeout
+  - Legacy non-English note retained these code references: `codex exec`.
 
 ### History
 
-- 2026-04-24: `AGENTS.md`, `BLACKBOARD.md`, `eve-projectile-click-hold-plan.html`, `a-arc-bolt.md`, `dungeon-squad-combat-player-controls.md`, ?꾩옱 `EveVerticalSliceController.cs`瑜??ㅼ떆 ?쎌뿀??
-- 2026-04-24: 利됱떆 ?쇳빐 援ъ“瑜??쒓굅?섍퀬 ?대┃???ъ궗泥??앹꽦/?대룞/?곸쨷 援ъ“濡?`EveVerticalSliceController.cs`瑜?援먯껜?덈떎.
-- 2026-04-24: `ProjectileRoot` ?앹꽦怨?hierarchy 諛섏쁺???뺤씤?덈떎.
-- 2026-04-24: ?뚮젅??紐⑤뱶 ?듭젣 寃利앹쑝濡??ъ궗泥??곸쨷 ???쇳빐 ?곸슜???뺤씤?덈떎.
-- 2026-04-24: ?섎룞 line review?먯꽌 留덉?留????댄썑 ?먮룞 ?ъ옣??吏??臾몄젣瑜?李얠븘 `FireArcBolt()`?먯꽌 利됱떆 ?ъ옣???쒖옉?쇰줈 ?섏젙?덈떎.
-- 2026-04-24: obsolete camera ?먯깋 寃쎄퀬瑜?`FindFirstObjectByType<Camera>()`濡??섏젙?덈떎.
-- 2026-04-24: ?묒뾽 ?꾨즺 蹂닿퀬??`Pakuri/reference/eve-projectile-click-implementation-report.html`瑜?異붽??덈떎.
-- 2026-04-24: ?몃? reviewer濡?`codex review --uncommitted`, reviewer ?꾩슜 `codex exec`瑜??ㅼ떆 ?쒕룄?덉쑝??紐⑤몢 timeout ?먮떎.
+- Legacy non-English note retained these code references: `AGENTS.md`, `BLACKBOARD.md`, `eve-projectile-click-hold-plan.html`, `a-arc-bolt.md`, `dungeon-squad-combat-player-controls.md`, `EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `ProjectileRoot`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `FireArcBolt()`.
+- Legacy non-English note retained these code references: `FindFirstObjectByType<Camera>()`.
+- Legacy non-English note retained these code references: `Pakuri/reference/eve-projectile-click-implementation-report.html`.
+- Legacy non-English note retained these code references: `codex review --uncommitted`, `codex exec`.
 
 ## Task: Eve Arc Branch And DebugScene Skill Toggle Runtime
 
@@ -472,10 +515,10 @@ Builder correction pass completed for the prior `eve-a-master-1` findings, Debug
 - User reported that `Content` child skill toggles were clickable but their descriptions and checkmark were invisible.
 - `DebugSceneController.ConfigureToggle(...)` now calls `ConfigureToggleVisuals(...)` to rebuild each scene-bound toggle slot's `Background`, `Checkmark/Glyph`, and `Label` visuals every time the slot is bound.
 - `DebugSceneController.ConfigureToggleVisuals(...)` uses a separate `Checkmark/Glyph` child `Text` as the Toggle graphic, because the existing `Checkmark` object already has an `Image` graphic and Unity did not add a second `Text` graphic to the same GameObject in the runtime inspection.
-- Runtime Unity `execute_code` normalized 10 current skill toggle visuals and confirmed `Active_A` has `toggle.graphic=Text:Checkmark/Glyph`, `labelText=A: ?꾪겕 蹂쇳듃`, `labelAlpha=1`, and `glyphText=??.
+- Legacy non-English note retained these ASCII code references: `execute_code`, `Active_A`, `toggle.graphic=Text:Checkmark/Glyph`, `labelAlpha=1`.
 - Runtime Unity missing-script inspection returned `missingTotal=0`; the visible console still contained older `The referenced script (Unknown) on this Behaviour is missing!` entries with no file/line.
 - User reported the Label skill text and checkbox were still not visible. Builder replaced the Text-glyph checkmark approach with Unity built-in `UISprite` and `Checkmark` sprites in `DebugSceneController.ConfigureToggleVisuals(...)`.
-- Unity Edit Mode scene save normalized the actual `DebugSceneController/SkillDebugPanel/SkillScroll/Viewport/Content` slots `Active_A` through `Passive_J` and saved `DebugScene.unity`; `Active_A` inspection returned `label=A: ?꾪겕 蹂쇳듃`, `labelAlpha=1`, `bgSprite=UISprite`, `checkSprite=Checkmark`, and `toggleGraphic=Checkmark`.
+- Legacy non-English note retained these ASCII code references: `DebugSceneController/SkillDebugPanel/SkillScroll/Viewport/Content`, `Active_A`, `Passive_J`, `DebugScene.unity`, `labelAlpha=1`, `bgSprite=UISprite`, `checkSprite=Checkmark`, `toggleGraphic=Checkmark`.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing Unity/MCP assembly conflict warnings.
 - `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
 - Unity refresh/compile completed with editor state `ready_for_tools=true`; Unity console error query showed only MCP-FOR-UNITY client handler logs and did not show the previous `DebugSceneController requires DebugSetupPanel...` project error.
@@ -483,7 +526,7 @@ Builder correction pass completed for the prior `eve-a-master-1` findings, Debug
 - `Select-String` confirmed the old `UI/Skin` and `GetBuiltinResource<Sprite>` calls were removed from `Pakuri/Assets/Scripts/Run/DebugSceneController.cs`; the only sprite load is now `Resources.Load<Sprite>("DebugUiSolid")`.
 - `Pakuri/Assets/Resources/DebugUiSolid.png` was created as a project-owned 1x1 Sprite resource, avoiding Unity built-in UI skin paths.
 - Unity Edit Mode scene save updated the actual `DebugSceneController/SkillDebugPanel/SkillScroll/Viewport/Content` slots so `Active_A` through `Passive_J` remain editable scene objects and their `Background` / `Background/Checkmark` images use `DebugUiSolid`.
-- Unity read-only `execute_code` confirmed `resourceSprite=DebugUiSolid`, `contentCount=10`, `label=A: ?꾪겕 蹂쇳듃`, `labelAlpha=1`, `bgSprite=DebugUiSolid`, and `checkSprite=DebugUiSolid`.
+- Legacy non-English note retained these ASCII code references: `execute_code`, `resourceSprite=DebugUiSolid`, `contentCount=10`, `labelAlpha=1`, `bgSprite=DebugUiSolid`, `checkSprite=DebugUiSolid`.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the existing Unity/MCP assembly conflict warnings.
 - Unity refresh/compile completed with `resulting_state=idle`; Unity console error query showed only MCP-FOR-UNITY client handler logs and did not show the `Failed to find UI/Skin/UISprite.psd` project error.
 - User requested the same visible/editable rebuild for `EnhancementModal` children.
@@ -511,3 +554,46 @@ Builder correction pass completed for the prior `eve-a-master-1` findings, Debug
 - 2026-04-30: User reported `Failed to find UI/Skin/UISprite.psd` and asked to rebuild `SkillDebugPanel` as visible editable scene UI. Builder removed built-in UI skin sprite usage, created project-owned `Assets/Resources/DebugUiSolid.png`, saved the scene toggle visuals against that sprite, rebuilt, refreshed Unity, checked console, and did not run Code Reviewer because user permission was not granted.
 - 2026-04-30: User requested the same rebuild for `EnhancementModal` children. Builder deleted and recreated the modal children as editable scene uGUI objects using `DebugUiSolid`, verified the first choice label/checkmark state, rebuilt, refreshed Unity, checked console, and did not run Code Reviewer because user permission was not granted.
 
+# Task: 2026-05-04 Rin A Projectile And Extra Elemental Damage
+
+## Task title
+
+Add Rin Shattering Fist projectile behavior and elemental extra-damage hooks.
+
+## Goals
+
+- Route Rin A through a Rin-specific physical projectile path.
+- Apply Rin A trait/master projectile effects, including pierce, magazine/reload/interval changes, critical bonuses, and Thunder Gauntlet extra lightning.
+- Base elemental extra damage on the source physical final damage as clarified by the user.
+
+## Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+## Role Owner
+
+Code Builder
+
+## Status
+
+Implemented, Reviewer findings fixed, and locally validated. Code Reviewer has not been rerun because the user did not request another review.
+
+## Next Actions
+
+- User verifies Rin A projectile and Thunder Gauntlet behavior in Play Mode.
+- Run another Code Reviewer pass only if the user explicitly requests it.
+
+## Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:52` calls Rin projectile-hit handling with the actual `appliedDamage` returned by `ApplyDamageToEnemy(...)`.
+- `CombatRuntimeProjectiles.cs:198` multiplies Rin final-damage modifiers into shared projectile damage resolution, and `:204`/`:205` add Rin critical chance/multiplier bonuses.
+- `CombatRuntimeProjectiles.cs:443` routes selected Rin A fire to `FireManualRinShatteringFist`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:77` creates Rin A projectiles, `:445` handles Rin A master 2 hit behavior, and `:507` applies extra elemental damage from the source physical damage actually applied to the enemy.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and only existing Unity/MCP warnings.
+
+## History
+
+- 2026-05-04: Code Builder added Rin A projectile routing and Rin elemental extra-damage handling.
+- 2026-05-04: Code Builder fixed the Reviewer-reported Rin A follow-up issue by passing applied projectile damage into Thunder Gauntlet and chain handling.

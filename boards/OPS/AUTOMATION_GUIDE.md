@@ -1,7 +1,7 @@
-﻿# AUTOMATION_GUIDE
+# AUTOMATION_GUIDE
 
-이 파일은 BLACKBOARD.md 계층화 작업으로 생성된 도메인별 지속 상태 파일입니다.
-관련 작업을 수행할 때 MDTREE.md 라우팅에 따라 이 파일과 필요한 상위/하위 파일을 동시에 갱신합니다.
+This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
+When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
 ## Task: Hierarchical Board Migration And Routing Rule Update
 
@@ -94,19 +94,19 @@ Completed pending user review.
 
 ### Task title
 
-湲곗큹 ?꾪닾 ?쒖뒪??援ы쁽 ???먮룞??媛??踰붿쐞? ?ъ슜???섎룞 ?묒뾽 踰붿쐞 ?뺣━ HTML ?묒꽦
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Goals
 
-- `reference/current-architecture-plan.html` 湲곗??쇰줈 湲곗큹 ?꾪닾 ?쒖뒪??援ы쁽 李⑹닔 ????븷 遺꾨떞???뺣━?쒕떎.
-- ?꾩옱 Unity ?꾨줈?앺듃 援ъ“? MCP ?곌껐 ?곹깭瑜?洹쇨굅濡??대뜑 ?앹꽦, ?ㅽ겕由쏀듃 ?앹꽦, ??諛곗튂 ?먮룞??媛??踰붿쐞瑜?援щ텇?쒕떎.
-- ?ъ슜?먭? 吏곸젒 ?댁빞 ?섎뒗 ?묒뾽怨??쒓? ?먮룞?쇰줈 ?????덈뒗 ?묒뾽??HTML 臾몄꽌 ???μ쑝濡??뺣━?쒕떎.
+- Legacy non-English note retained these code references: `reference/current-architecture-plan.html`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Constraints
 
-- ?ㅼ젣 ?뚯씪, ?ㅼ젣 ???곹깭, ?ㅼ젣 MCP ?몄텧 寃곌낵??洹쇨굅???뺣━?쒕떎.
-- 援ы쁽?섏? ?딆? ?먮룞???λ젰??援ы쁽??寃껋쿂???곸? ?딅뒗??
-- ???묒뾽? ?ㅺ퀎 臾몄꽌 ?묒꽦?대ŉ, ?꾪닾 ?쒖뒪??肄붾뱶 援ы쁽 ?먯껜???ы븿?섏? ?딅뒗??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Role Owner
 
@@ -118,23 +118,23 @@ Completed
 
 ### Next Actions
 
-- ?ъ슜?먭? ?먰븯硫???臾몄꽌瑜?湲곗??쇰줈 Designer handoff瑜??묒꽦?쒕떎.
-- ?ъ슜?먭? 紐낆떆?곸쑝濡?援ы쁽??吏?쒗븯硫?Code Builder ?④퀎濡??꾪솚???대뜑, ?ㅽ겕由쏀듃, ???ㅻ툕?앺듃 ?앹꽦???ㅼ젣濡??섑뻾?쒕떎.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Evidence
 
-- `Pakuri/reference/current-architecture-plan.html` ?뚯씪??議댁옱?섎ŉ ?꾪닾 ?쒖뒪???쒖옉 援ъ“瑜??ㅻ챸?쒕떎.
-- `manage_asset search` 寃곌낵 `Assets`?먮뒗 `Scenes`, `Settings`? 湲곕낯 URP/InputSystem ?먯궛留??덇퀬 `Assets/Scripts` ?대뜑???녿떎.
-- `Get-ChildItem Pakuri\\Assets` 異쒕젰?먮룄 `Scenes`, `Settings` ??寃뚯엫 ?꾩슜 ?대뜑媛 ?녿떎.
-- `manage_scene get_hierarchy` 寃곌낵 ?꾩옱 `SampleScene` 猷⑦듃 ?ㅻ툕?앺듃??`Main Camera`, `Global Light 2D`肉먯씠??
-- Unity MCP `debug_request_context` 寃곌낵 ?쒖꽦 ?몄뒪?댁뒪??`Pakuri@c88ab184`??
-- 媛숈? ?몄뀡?먯꽌 `manage_scene get_active`, `manage_scene get_hierarchy`, `run_tests EditMode`媛 ?깃났???꾩옱 ?먮룞???곌껐???댁븘 ?덉쓬???뺤씤?덈떎.
+- Legacy non-English note retained these code references: `Pakuri/reference/current-architecture-plan.html`.
+- Legacy non-English note retained these code references: `manage_asset search`, `Assets`, `Scenes`, `Settings`, `Assets/Scripts`.
+- Legacy non-English note retained these code references: `Get-ChildItem Pakuri\\Assets`, `Scenes`, `Settings`.
+- Legacy non-English note retained these code references: `manage_scene get_hierarchy`, `SampleScene`, `Main Camera`, `Global Light 2D`.
+- Legacy non-English note retained these code references: `debug_request_context`, `Pakuri@c88ab184`.
+- Legacy non-English note retained these code references: `manage_scene get_active`, `manage_scene get_hierarchy`, `run_tests EditMode`.
 
 ### History
 
-- 2026-04-24: `AGENTS.md`, `BLACKBOARD.md`, `reference/current-architecture-plan.html`瑜??ㅼ떆 ?쎌뿀??
-- 2026-04-24: `manage_asset search`, `Get-ChildItem Pakuri\\Assets`, `manage_scene get_hierarchy`濡??꾩옱 ?꾨줈?앺듃 援ъ“? ???곹깭瑜??ы솗?명뻽??
-- 2026-04-24: ?먮룞??媛??踰붿쐞? ?ъ슜???섎룞 ?묒뾽 踰붿쐞瑜??뺣━??HTML 臾몄꽌瑜?`Pakuri/reference`??異붽??덈떎.
+- Legacy non-English note retained these code references: `AGENTS.md`, `BLACKBOARD.md`, `reference/current-architecture-plan.html`.
+- Legacy non-English note retained these code references: `manage_asset search`, `Get-ChildItem Pakuri\\Assets`, `manage_scene get_hierarchy`.
+- Legacy non-English note retained these code references: `Pakuri/reference`.
 
 ## Task: Token Efficient Reviewer Wrapper
 

@@ -463,6 +463,7 @@ namespace Pakuri.Combat
             UpdateProjectiles();
             UpdateEveSkillEffects();
             UpdateArielSkillEffects();
+            UpdateRinSkillEffects();
             UpdateSelectedMonsterCombat();
             UpdateSelectedMonsterStatusVisuals();
             CheckBattleResolution();
@@ -543,6 +544,7 @@ namespace Pakuri.Combat
             ApplyPersistedRewardState(session);
             ConfigureEveSkillSelectionState(session);
             ResetArielSkillCombatTimers();
+            ResetRinSkillCombatTimers();
 
             var magazineCapacity = GetSelectedMonsterMagazineCapacity();
             if (currentShotsRemaining > magazineCapacity)
@@ -581,6 +583,7 @@ namespace Pakuri.Combat
             ClearEveSkillRuntimeObjects();
             ClearDamagePopupRuntime();
             ResetArielSkillCombatTimers();
+            ResetRinSkillCombatTimers();
         }
     }
 }

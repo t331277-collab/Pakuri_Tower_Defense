@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Damage Meter Overlay Example</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --gold: #f4c95d;
+      --red: #ff2b32;
+      --blue: #4857d8;
+      --lime: #bdf215;
+      --purple: #ba55ff;
+      --cyan: #55dfff;
+      --yellow: #ffd24a;
+      --line: rgba(255, 255, 255, 0.16);
+      --soft: rgba(255, 255, 255, 0.70);
+    }
+
+    body {
+      margin: 0;
+      width: 3840px;
+      height: 2160px;
+      overflow: hidden;
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+      background: #050608;
+      color: #f5f2e9;
+    }
+
+    .screen {
+      position: relative;
+      width: 3840px;
+      height: 2160px;
+      background-image: url("../base/combat-screen-layout-v3.png");
+      background-size: cover;
+      background-position: center;
+    }
+
+    .scrim {
+      position: absolute;
+      inset: 0;
+      background: rgba(126, 126, 126, 0.50);
+      backdrop-filter: blur(2px);
+    }
+
+    .meter {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 2860px;
+      min-height: 1500px;
+      transform: translate(-50%, -47%);
+      padding: 48px 56px 52px;
+      border: 4px solid rgba(255, 223, 128, 0.34);
+      background:
+        linear-gradient(180deg, rgba(34, 25, 22, 0.96), rgba(10, 11, 16, 0.94)),
+        radial-gradient(circle at 50% 0%, rgba(185, 61, 255, 0.22), transparent 44%);
+      box-shadow: 0 54px 160px rgba(0, 0, 0, 0.72), inset 0 0 0 2px rgba(255, 255, 255, 0.06);
+    }
+
+    .header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 32px;
+      align-items: start;
+      padding-bottom: 28px;
+      border-bottom: 2px solid var(--line);
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 66px;
+      font-weight: 900;
+      color: var(--gold);
+      text-shadow: 0 0 20px rgba(244, 201, 93, 0.24);
+    }
+
+    .title::before {
+      content: "";
+      width: 18px;
+      height: 74px;
+      background: linear-gradient(var(--red), var(--gold));
+      box-shadow: 0 0 24px rgba(255, 43, 50, 0.7);
+    }
+
+    .sub {
+      margin-top: 14px;
+      font-size: 28px;
+      color: var(--soft);
+    }
+
+    .close {
+      width: 74px;
+      height: 74px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      background: rgba(0, 0, 0, 0.36);
+      color: rgba(255, 255, 255, 0.88);
+      font-size: 46px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+    }
+
+    .legend {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      margin: 30px 0 26px;
+      padding: 20px 24px;
+      border: 2px solid rgba(255, 255, 255, 0.10);
+      background: rgba(0, 0, 0, 0.28);
+      font-size: 27px;
+      color: rgba(255, 255, 255, 0.76);
+    }
+
+    .key {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+    }
+
+    .swatch {
+      width: 34px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.20);
+    }
+
+    .rows {
+      display: grid;
+      gap: 24px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 28px;
+      min-height: 222px;
+      padding: 26px;
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      background: rgba(0, 0, 0, 0.30);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    }
+
+    .profile {
+      display: grid;
+      grid-template-columns: 112px 1fr;
+      gap: 20px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .portrait {
+      width: 112px;
+      height: 112px;
+      border: 4px solid rgba(255, 255, 255, 0.30);
+      background:
+        radial-gradient(circle at 50% 32%, rgba(255, 255, 255, 0.40), transparent 12%),
+        linear-gradient(135deg, var(--accent), #191b20 64%);
+      clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+      box-shadow: 0 0 30px color-mix(in srgb, var(--accent) 48%, transparent);
+    }
+
+    .slot {
+      display: inline-block;
+      margin-bottom: 8px;
+      padding: 4px 10px;
+      border: 2px solid rgba(244, 201, 93, 0.34);
+      color: var(--gold);
+      font-size: 22px;
+      font-weight: 900;
+      background: rgba(0, 0, 0, 0.28);
+    }
+
+    .name {
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1.05;
+    }
+
+    .total {
+      margin-top: 12px;
+      font-size: 30px;
+      color: var(--gold);
+      font-weight: 800;
+    }
+
+    .ratio {
+      margin-top: 8px;
+      font-size: 23px;
+      color: rgba(255, 255, 255, 0.58);
+    }
+
+    .bars {
+      display: grid;
+      gap: 18px;
+      align-content: center;
+      min-width: 0;
+    }
+
+    .total-bar {
+      position: relative;
+      height: 70px;
+      width: var(--bar-width);
+      min-width: 168px;
+      display: flex;
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+    }
+
+    .total-bar::after {
+      content: attr(data-label);
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+      font-size: 32px;
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 2px 8px black;
+    }
+
+    .seg {
+      height: 100%;
+      width: var(--w);
+      background: var(--c);
+      border-right: 2px solid rgba(0, 0, 0, 0.36);
+      box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.16);
+    }
+
+    .skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      align-items: center;
+      font-size: 24px;
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    .skill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(255, 255, 255, 0.05);
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 16px;
+      height: 16px;
+      background: var(--c);
+      box-shadow: 0 0 12px color-mix(in srgb, var(--c) 60%, transparent);
+    }
+
+    .skill strong {
+      color: white;
+      font-weight: 900;
+    }
+
+    .footer {
+      margin-top: 26px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 24px;
+      border-top: 2px solid var(--line);
+      font-size: 26px;
+      color: rgba(255, 255, 255, 0.62);
+    }
+
+    .button {
+      padding: 18px 30px;
+      border: 3px solid rgba(255, 255, 255, 0.20);
+      background: rgba(0, 0, 0, 0.44);
+      color: rgba(255, 255, 255, 0.84);
+      font-weight: 900;
+    }
+  </style>
+</head>
+<body>
+  <main class="screen">
+    <div class="scrim"></div>
+    <section class="meter" aria-label="딜량 집계 예시">
+      <div class="header">
+        <div>
+          <div class="title">딜량 집계</div>
+          <div class="sub">편성 1-5 고정 표시 · 보호막 피해 포함 · 최고 총 딜량 기준 막대 길이 보정</div>
+        </div>
+        <div class="close">×</div>
+      </div>
+
+      <div class="legend">
+        <span class="key"><span class="swatch" style="background: var(--red)"></span> 기본 공격</span>
+        <span class="key"><span class="swatch" style="background: var(--blue)"></span> 액티브 A</span>
+        <span class="key"><span class="swatch" style="background: var(--lime)"></span> 액티브 B</span>
+        <span class="key"><span class="swatch" style="background: var(--cyan)"></span> 패시브 추가타 A</span>
+        <span class="key"><span class="swatch" style="background: var(--yellow)"></span> 패시브 추가타 B</span>
+      </div>
+
+      <div class="rows">
+        <article class="row" style="--accent:#ff4248">
+          <div class="profile">
+            <div class="portrait"></div>
+            <div>
+              <div class="slot">편성 1</div>
+              <div class="name">세인</div>
+              <div class="total">총 딜량 1.82M</div>
+              <div class="ratio">최고 기준 100%</div>
+            </div>
+          </div>
+          <div class="bars">
+            <div class="total-bar" style="--bar-width:100%" data-label="1,820,400">
+              <span class="seg" style="--w:38%; --c:var(--red)"></span>
+              <span class="seg" style="--w:29%; --c:var(--blue)"></span>
+              <span class="seg" style="--w:33%; --c:var(--lime)"></span>
+            </div>
+            <div class="skills">
+              <span class="skill"><i class="dot" style="--c:var(--red)"></i><strong>불꽃 화살</strong>692K</span>
+              <span class="skill"><i class="dot" style="--c:var(--blue)"></i><strong>화염 궤적</strong>528K</span>
+              <span class="skill"><i class="dot" style="--c:var(--lime)"></i><strong>파멸선</strong>600K</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="row" style="--accent:#9f59ff">
+          <div class="profile">
+            <div class="portrait"></div>
+            <div>
+              <div class="slot">편성 2</div>
+              <div class="name">이브</div>
+              <div class="total">총 딜량 1.42M</div>
+              <div class="ratio">최고 기준 78%</div>
+            </div>
+          </div>
+          <div class="bars">
+            <div class="total-bar" style="--bar-width:78%" data-label="1,421,900">
+              <span class="seg" style="--w:24%; --c:var(--red)"></span>
+              <span class="seg" style="--w:34%; --c:var(--blue)"></span>
+              <span class="seg" style="--w:18%; --c:var(--lime)"></span>
+              <span class="seg" style="--w:14%; --c:var(--cyan)"></span>
+              <span class="seg" style="--w:10%; --c:var(--yellow)"></span>
+            </div>
+            <div class="skills">
+              <span class="skill"><i class="dot" style="--c:var(--red)"></i><strong>아크 볼트</strong>341K</span>
+              <span class="skill"><i class="dot" style="--c:var(--blue)"></i><strong>프리즘 레이</strong>483K</span>
+              <span class="skill"><i class="dot" style="--c:var(--lime)"></i><strong>냉각장</strong>256K</span>
+              <span class="skill"><i class="dot" style="--c:var(--cyan)"></i><strong>약점 분석</strong>199K</span>
+              <span class="skill"><i class="dot" style="--c:var(--yellow)"></i><strong>입자 분리</strong>142K</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="row" style="--accent:#bdf215">
+          <div class="profile">
+            <div class="portrait"></div>
+            <div>
+              <div class="slot">편성 3</div>
+              <div class="name">린</div>
+              <div class="total">총 딜량 968K</div>
+              <div class="ratio">최고 기준 53%</div>
+            </div>
+          </div>
+          <div class="bars">
+            <div class="total-bar" style="--bar-width:53%" data-label="968,120">
+              <span class="seg" style="--w:47%; --c:var(--red)"></span>
+              <span class="seg" style="--w:21%; --c:var(--blue)"></span>
+              <span class="seg" style="--w:32%; --c:var(--lime)"></span>
+            </div>
+            <div class="skills">
+              <span class="skill"><i class="dot" style="--c:var(--red)"></i><strong>파쇄권</strong>455K</span>
+              <span class="skill"><i class="dot" style="--c:var(--blue)"></i><strong>충격파</strong>203K</span>
+              <span class="skill"><i class="dot" style="--c:var(--lime)"></i><strong>붕괴타</strong>310K</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="row" style="--accent:#5ee8ff">
+          <div class="profile">
+            <div class="portrait"></div>
+            <div>
+              <div class="slot">편성 4</div>
+              <div class="name">베가</div>
+              <div class="total">총 딜량 611K</div>
+              <div class="ratio">최고 기준 34%</div>
+            </div>
+          </div>
+          <div class="bars">
+            <div class="total-bar" style="--bar-width:34%" data-label="611,880">
+              <span class="seg" style="--w:36%; --c:var(--red)"></span>
+              <span class="seg" style="--w:18%; --c:var(--blue)"></span>
+              <span class="seg" style="--w:46%; --c:var(--cyan)"></span>
+            </div>
+            <div class="skills">
+              <span class="skill"><i class="dot" style="--c:var(--red)"></i><strong>삼검 난무</strong>220K</span>
+              <span class="skill"><i class="dot" style="--c:var(--blue)"></i><strong>대검 침묵</strong>110K</span>
+              <span class="skill"><i class="dot" style="--c:var(--cyan)"></i><strong>깊은 각인</strong>281K</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="row" style="--accent:#ffd36c">
+          <div class="profile">
+            <div class="portrait"></div>
+            <div>
+              <div class="slot">편성 5</div>
+              <div class="name">아리엘</div>
+              <div class="total">총 딜량 384K</div>
+              <div class="ratio">최고 기준 21%</div>
+            </div>
+          </div>
+          <div class="bars">
+            <div class="total-bar" style="--bar-width:21%" data-label="384,260">
+              <span class="seg" style="--w:28%; --c:var(--red)"></span>
+              <span class="seg" style="--w:42%; --c:var(--lime)"></span>
+              <span class="seg" style="--w:30%; --c:var(--blue)"></span>
+            </div>
+            <div class="skills">
+              <span class="skill"><i class="dot" style="--c:var(--red)"></i><strong>심판의 빛</strong>108K</span>
+              <span class="skill"><i class="dot" style="--c:var(--lime)"></i><strong>축복 파동</strong>161K</span>
+              <span class="skill"><i class="dot" style="--c:var(--blue)"></i><strong>낙인 계시</strong>115K</span>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="footer">
+        <span>행 순서 고정: 편성 1-5 · 스킬 상세는 이름과 딜량만 표시</span>
+        <span class="button">보호막 피해 포함</span>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

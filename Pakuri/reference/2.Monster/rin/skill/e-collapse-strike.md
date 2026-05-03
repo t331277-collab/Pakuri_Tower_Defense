@@ -49,3 +49,8 @@
 |---|---|
 | 압살 지점 | 피해 범위 -20%, 위력 +100%, 중심부 적중 시 100% 화염 추가 피해 |
 | 균열 확산 | 피해 범위 +50%, 위력 +35%, 적중한 적 이동 속도 2초간 -25%, 45% 어둠 추가 피해 |
+
+## Runtime implementation note
+
+- Rin non-magazine skills use the whole battlefield map as their target/search range.
+- Collapse Strike searches the whole battlefield for its target point; its damage radius remains the skill radius around that target.

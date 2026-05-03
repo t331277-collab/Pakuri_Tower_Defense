@@ -1,7 +1,7 @@
-﻿# SAVELOAD_BLACKBOARD
+# SAVELOAD_BLACKBOARD
 
-이 파일은 BLACKBOARD.md 계층화 작업으로 생성된 도메인별 지속 상태 파일입니다.
-관련 작업을 수행할 때 MDTREE.md 라우팅에 따라 이 파일과 필요한 상위/하위 파일을 동시에 갱신합니다.
+This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
+When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
 ## Migrated Task Blocks
 
@@ -9,19 +9,19 @@
 
 ### Task title
 
-Run / Meta ???寃쎄퀎? SaveAndLoad 援ъ“ ?ㅺ퀎 HTML ?묒꽦
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Goals
 
-- ?꾩옱 Run ?뺤옣 ?ㅺ퀎? `reference/4.run`, `reference/6.meta` 臾몄꽌瑜?洹쇨굅濡????/ 遺덈윭?ㅺ린 諛⑺뼢???뺣━?쒕떎.
-- ???대? ??κ낵 硫뷀? ?곴뎄 ??μ쓽 寃쎄퀎瑜?遺꾨━?쒕떎.
-- v1?먯꽌 ??ν븷 寃? ?섏쨷??誘몃０ 寃? ??ν븯吏 ?딆쓣 ?고????곹깭瑜?HTML 臾몄꽌 ???μ쑝濡??뺣━?쒕떎.
+- Legacy non-English note retained these code references: `reference/4.run`, `reference/6.meta`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Constraints
 
-- ?ㅼ젣 臾몄꽌? ?ㅼ젣 ?꾩옱 肄붾뱶 援ъ“瑜?洹쇨굅濡쒕쭔 ?곷뒗??
-- ?꾩쭅 誘몄옉?깆씤 硫뷀? ?닿툑 臾몄꽌瑜?援ы쁽??寃껋쿂???곸? ?딅뒗??
-- ???묒뾽? Designer ?ㅺ퀎 臾몄꽌 ?묒꽦?대ŉ, ?ㅼ젣 SaveLoad 肄붾뱶 援ы쁽? ?ы븿?섏? ?딅뒗??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Role Owner
 
@@ -33,48 +33,48 @@ Completed
 
 ### Next Actions
 
-- ?ъ슜?먭? ?먰븯硫???臾몄꽌瑜?湲곗??쇰줈 Code Builder handoff瑜??묒꽦??`RunSession`, `MetaSaveData`, `RunSnapshot`, `SaveLoadService` 援ы쁽 ?쒖꽌瑜?怨좎젙?쒕떎.
-- ?ㅼ젣 援ы쁽? `GameDataCatalog` 遺??濡쒕뱶 援ъ“? `RunSession` 遺꾨━ ??泥댄겕?ъ씤????λ????쒖옉?섎뒗 寃껋씠 留욌떎.
+- Legacy non-English note retained these code references: `RunSession`, `MetaSaveData`, `RunSnapshot`, `SaveLoadService`.
+- Legacy non-English note retained these code references: `GameDataCatalog`, `RunSession`.
 
 ### Evidence
 
-- `Pakuri/reference/4.run/dungeon-squad-run-structure.md`??11???⑥쐞 ?ㅽ뀒?댁?, ?쇰컲 吏꾪뻾???좏깮吏, ?꾪닾 ??蹂댁긽, ?ㅼ쓬 ?쇱감 ?대룞 ?먮쫫???뺤쓽?쒕떎.
-- `Pakuri/reference/4.run/combat-reward-system.md`??怨⑤뱶媛 ???대? ?ы솕?대ŉ ??醫낅즺 ???щ씪吏怨? ?대몺???붿쟻?????몃? ?ы솕?쇨퀬 ?뺤쓽?쒕떎.
-- `Pakuri/reference/4.run/shop-system.md`???곸젏???ㅽ뀒?댁???1?? 6~9??以??섎（留??깆옣?쒕떎怨??뺤쓽?쒕떎.
-- `Pakuri/reference/4.run/event-system.md`???쇰컲 / ?뺤삁 ?꾪닾 吏꾩엯 吏곹썑 20% ?뺣쪧 ?대깽?몄? ?꾪닾 蹂듦? ?먮쫫???뺤쓽?쒕떎.
-- `Pakuri/reference/6.meta/meta-growth-index.md`??硫뷀? ?깆옣?먯꽌 ?꾩옱 ?뺤젙??踰붿쐞? 誘몄옉??踰붿쐞瑜?援щ텇?쒕떎.
-- `Pakuri/reference/6.meta/meta-growth-node-list.md`??罹먮┃?곕퀎 怨듯넻 ?ㅽ꺈 媛뺥솕? 珥덇린??洹쒖튃???뺤쓽?쒕떎.
-- `Pakuri/reference/6.meta/active-skill-growth-node-list.md`??罹먮┃?곕퀎 ?≫떚釉?硫뷀? 媛뺥솕 洹쒖튃???뺤쓽?쒕떎.
-- `Pakuri/reference/6.meta/dark-trace-currency-system.md`???대몺 怨꾩뿴 ?ы솕 ?곗뼱, ?밴툒, ?ъ슜泥? 硫뷀? 珥덇린??洹쒖튃???뺤쓽?쒕떎.
-- `Pakuri/reference/monster-select-run-ui-expansion-plan.html`? `RunSession` 遺꾨━? Run ?몄뀡 ?곗씠???쒖븞???ы븿?쒕떎.
-- `Pakuri/reference/monster-select-run-ui-builder-handoff.html`? 怨좎젙 援ы쁽 ?쒖꽌?먯꽌 `RunSession` / `RunFlowController` 遺꾨━瑜?癒쇱? ?붽뎄?쒕떎.
-- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`???꾩옱 ?꾪닾, ?쇱감 吏꾪뻾, 蹂댁긽, UI瑜????대옒?ㅼ뿉 ?④퍡 ?ㅺ퀬 ?덈떎.
-- `Pakuri/data` CSV??`Assets` 諛붽묑???덇퀬, ?꾩옱 `Assets/Resources`, `Assets/StreamingAssets`, CSV 濡쒕뜑 ?붿쟻???녿떎.
-- `Pakuri/reference/save-and-load-plan.html`? ?댁젣 ???援ъ“肉??꾨땲??`CSV ????먮낯 -> ?고????앹꽦 ?먯궛 -> 寃뚯엫 ?쒖옉 ??1??濡쒕뱶` 諛⑺뼢源뚯? ?ы븿?쒕떎.
+- Legacy non-English note retained these code references: `Pakuri/reference/4.run/dungeon-squad-run-structure.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/4.run/combat-reward-system.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/4.run/shop-system.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/4.run/event-system.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/6.meta/meta-growth-index.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/6.meta/meta-growth-node-list.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/6.meta/active-skill-growth-node-list.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/6.meta/dark-trace-currency-system.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/monster-select-run-ui-expansion-plan.html`, `RunSession`.
+- Legacy non-English note retained these code references: `Pakuri/reference/monster-select-run-ui-builder-handoff.html`, `RunSession`, `RunFlowController`.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `Pakuri/data`, `Assets`, `Assets/Resources`, `Assets/StreamingAssets`.
+- Legacy non-English note retained these ASCII code references: `Pakuri/reference/save-and-load-plan.html`.
 
 ### History
 
-- 2026-04-26: `AGENTS.md`, `BLACKBOARD.md`, `monster-select-run-ui-expansion-plan.html`, `monster-select-run-ui-builder-handoff.html`, `reference/4.run`, `reference/6.meta`, ?꾩옱 `EveVerticalSliceController.cs`瑜??ㅼ떆 ?쎌뿀??
-- 2026-04-26: SaveAndLoad瑜?`MetaSaveData`, `RunSnapshot`, `EphemeralRuntime` 3痢듭쑝濡??섎늻怨? v1? ?쇱감 寃쎄퀎 泥댄겕?ъ씤????λ쭔 吏?먰븯??諛⑺뼢?쇰줈 ?뺣━??HTML??`Pakuri/reference/save-and-load-plan.html`??異붽??덈떎.
-- 2026-04-26: `Pakuri/data` CSV 寃??寃곌낵瑜?諛섏쁺??`save-and-load-plan.html`???뺤쟻 寃뚯엫 ?곗씠??濡쒕뵫 諛⑺뼢, importer 湲곕컲 ?앹꽦 ?먯궛 援ъ“, 遺????1??濡쒕뱶 諛⑹떇??異붽??덈떎.
+- Legacy non-English note retained these code references: `AGENTS.md`, `BLACKBOARD.md`, `monster-select-run-ui-expansion-plan.html`, `monster-select-run-ui-builder-handoff.html`, `reference/4.run`, `reference/6.meta`, `EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `MetaSaveData`, `RunSnapshot`, `EphemeralRuntime`, `Pakuri/reference/save-and-load-plan.html`.
+- Legacy non-English note retained these code references: `Pakuri/data`, `save-and-load-plan.html`.
 
 ## Task: Run Systems Integration Summary Report
 
 ### Task title
 
-`monster-select-run-ui-builder-handoff`, `monster-select-run-ui-expansion-plan`, `save-and-load-plan` ?듯빀 蹂닿퀬??HTML ?묒꽦
+Legacy non-English note retained these code references: `monster-select-run-ui-builder-handoff`, `monster-select-run-ui-expansion-plan`, `save-and-load-plan`.
 
 ### Goals
 
-- 湲곗〈 3媛??ㅺ퀎 HTML??怨듯넻 寃곕줎?????μ쑝濡??⑹퀜 ?꾩옱 ?꾨줈?앺듃媛 ?대뼡 援ъ“濡??묒뾽?좎? 鍮좊Ⅴ寃?蹂댁뿬以??
-- ?꾩옱 ?ㅼ젣 肄붾뱶 ?곹깭? 臾몄꽌 湲곗? 援ъ“瑜??④퍡 ?뺣━?? 援ы쁽 ?덉젙 踰붿쐞? ?꾩쭅 ?대Ⅸ 踰붿쐞瑜?遺꾨━?쒕떎.
-- 湲고쉷?쒓? ?꾩쭅 遺議깊븳 遺遺꾧낵 ?꾩옱 ?곸슜?섍린 ?대Ⅸ ?곗씠???뚯씠?꾨씪?몄쓣 紐낆떆?곸쑝濡?`異뷀썑 援ы쁽 ?덉젙`?쇰줈 湲곕줉?쒕떎.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see surrounding retained task context.
 
 ### Constraints
 
-- ?ㅼ젣 議댁옱?섎뒗 3媛?HTML, ?ㅼ젣 ?꾩옱 肄붾뱶, ?ㅼ젣 臾몄꽌 ?곹깭瑜?洹쇨굅濡쒕쭔 ?곷뒗??
-- ?꾩쭅 援ы쁽?섏? ?딆? UI, ??? ?곗씠??importer瑜?援ы쁽??寃껋쿂???곸? ?딅뒗??
-- ???묒뾽? Designer 蹂닿퀬???묒꽦?대ŉ, ?ㅼ젣 肄붾뱶 援ы쁽? ?ы븿?섏? ?딅뒗??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Role Owner
 
@@ -86,29 +86,29 @@ Completed
 
 ### Next Actions
 
-- ?ъ슜?먭? ?먰븯硫????듯빀 蹂닿퀬?쒕? 湲곗??쇰줈 Designer媛 Code Builder handoff 臾몄꽌瑜???吏㏐쾶 ?ㅼ떆 ?뺣━?????덈떎.
-- ?ㅼ젣 援ы쁽? 蹂닿퀬?쒖뿉 ?곸? ?쒖꽌?濡?`RunSession` 遺꾨━, UI ?먮쫫 遺꾨━, ?뺤쟻 ?곗씠???먯궛, A/F 理쒖냼 蹂댁긽 / ?ㅽ궗?좏깮, 泥댄겕?ъ씤??????쒖쑝濡??ㅼ뼱媛??寃껋씠 ?덉쟾?섎떎.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `RunSession`.
 
 ### Evidence
 
-- `Pakuri/reference/monster-select-run-ui-builder-handoff.html`??`RunSession`, `RunFlowController` ?먮뒗 ?숇벑 援ъ“瑜?癒쇱? ?몄슦??怨좎젙 援ы쁽 ?쒖꽌瑜??쒖븞?쒕떎.
-- `Pakuri/reference/monster-select-run-ui-expansion-plan.html`??紐ъ뒪???좏깮 UI, Run ?쒖옉, ?꾪닾 ??蹂댁긽/?좏깮 ?먮쫫怨?`RunSession` 以묒떖 援ъ“瑜??ㅻ챸?쒕떎.
-- `Pakuri/reference/save-and-load-plan.html`??`MetaSaveData`, `RunSnapshot`, `GameDataCatalog` 遺꾨━? 遺????1???곗씠??濡쒕뱶瑜??뺤쓽?쒕떎.
-- ?꾩옱 ?꾨줈?앺듃??寃뚯엫 ?꾩슜 ?ㅽ겕由쏀듃??`Pakuri/Assets/Scripts/Combat/DamageCalculator.cs`, `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`留??뺤씤?쒕떎.
-- ?꾩옱 `Pakuri/Assets` ?꾨옒?먮뒗 `Scenes`, `Screenshots`, `Scripts`, `Settings`留??덇퀬, `Resources`, `StreamingAssets`, `DataGenerated`???녿떎.
-- ?꾩옱 ?꾨줈?앺듃?먮뒗 `.uxml`, `.uss` UI Toolkit ?먯궛???녿떎.
-- ?ㅼ젣 CSV ?먮낯? `Pakuri/data`???덉?留??꾩옱 濡쒕뜑? ?앹꽦 ?먯궛 ?뚯씠?꾨씪?몄? ?녿떎.
-- ???듯빀 臾몄꽌 `Pakuri/reference/run-systems-integration-summary-report.html`瑜?異붽??덇퀬, 臾몄꽌 ?덉뿉 ?꾩옱 援ъ“, ?묒뾽 ?쒖꽌, ????곗씠??諛⑺뼢, `異뷀썑 援ы쁽 ?덉젙` ??ぉ???④퍡 ?뺣━?덈떎.
-- 2026-04-26 ?ы솗??寃곌낵 `Pakuri/reference/2.Monster/rin/rin-tower.md`? `rin/skill/g~j` 臾몄꽌媛 議댁옱?? 由곗쓽 ?⑥떆釉?臾몄꽌 遺議??꾩젣?????댁긽 ?좏슚?섏? ?딅떎.
-- 2026-04-26 ?ы솗??寃곌낵 `Pakuri/Assets` ?ш? 寃?됱뿉??`ScriptableObject`, `CreateAssetMenu`, `GameDataCatalog`, `CsvGameDataImporter`, `Resources.Load`, `TextAsset` 愿???뺤쟻 ?곗씠??濡쒕뜑 / ?먯궛 ?뺤쓽???뺤씤?섏? ?딆븯??
-- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`???꾩옱 蹂댁긽 ?⑤꼸?먯꽌 ?대툕 ?꾩슜 怨좎젙 ?좏깮吏 3媛쒕쭔 吏곸젒 ?앹꽦?쒕떎.
-- `Pakuri/reference/2.Monster/skill-choice-pool-rule.md`? `Pakuri/reference/4.run/combat-reward-system.md`???꾩껜 蹂댁긽 / ?ㅽ궗?좏깮 洹쒖튃???뺤쓽?섏?留? ?꾩옱 援ы쁽? 洹??꾩껜 踰붿쐞???꾩쭅 ?꾨떖?섏? ?딆븯??
+- Legacy non-English note retained these code references: `Pakuri/reference/monster-select-run-ui-builder-handoff.html`, `RunSession`, `RunFlowController`.
+- Legacy non-English note retained these code references: `Pakuri/reference/monster-select-run-ui-expansion-plan.html`, `RunSession`.
+- Legacy non-English note retained these code references: `Pakuri/reference/save-and-load-plan.html`, `MetaSaveData`, `RunSnapshot`, `GameDataCatalog`.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scripts/Combat/DamageCalculator.cs`, `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `Pakuri/Assets`, `Scenes`, `Screenshots`, `Scripts`, `Settings`, `Resources`, `StreamingAssets`, `DataGenerated`.
+- Legacy non-English note retained these code references: `.uxml`, `.uss`.
+- Legacy non-English note retained these code references: `Pakuri/data`.
+- Legacy non-English note retained these ASCII code references: `Pakuri/reference/run-systems-integration-summary-report.html`.
+- Legacy non-English note retained these code references: `Pakuri/reference/2.Monster/rin/rin-tower.md`, `rin/skill/g~j`.
+- Legacy non-English note retained these code references: `Pakuri/Assets`, `ScriptableObject`, `CreateAssetMenu`, `GameDataCatalog`, `CsvGameDataImporter`, `Resources.Load`, `TextAsset`.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `Pakuri/reference/2.Monster/skill-choice-pool-rule.md`, `Pakuri/reference/4.run/combat-reward-system.md`.
 
 ### History
 
-- 2026-04-26: `AGENTS.md`, `BLACKBOARD.md`, 湲곗〈 3媛??ㅺ퀎 HTML???ㅼ떆 ?쎄퀬 ?쒕줈 寃뱀튂??援ъ“? 怨좎젙 寃곕줎??異붾졇??
-- 2026-04-26: ?꾩옱 ?ㅼ젣 肄붾뱶? ?먯궛 ?곹깭瑜??ㅼ떆 ?뺤씤?? ?꾩쭅 ?녿뒗 UI Toolkit ?먯궛怨??곗씠???앹꽦 ?뚯씠?꾨씪?몄쓣 蹂닿퀬?쒖뿉 紐낆떆?곸쑝濡?鍮꾧뎄???곹깭濡??곸뿀??
-- 2026-04-26: `Pakuri/reference/run-systems-integration-summary-report.html`瑜?異붽????꾩옱 援ъ“, 沅뚯옣 援ы쁽 ?쒖꽌, ?곗씠?????寃쎄퀎, 湲고쉷 遺議??곸뿭怨??대Ⅸ ?곗씠???곸슜 踰붿쐞瑜?`異뷀썑 援ы쁽 ?덉젙`?쇰줈 遺꾨━?덈떎.
-- 2026-04-26: 由?臾몄꽌 媛깆떊怨??곗씠??諛⑺뼢 蹂寃쎌쓣 諛섏쁺??`run-systems-integration-summary-report.html`瑜??섏젙?덇퀬, 由곗쓣 5紐ъ뒪??踰붿쐞???ы븿?쒗궎怨??뺤쟻 ?곗씠?곕뒗 CSV importer ?꾩젣媛 ?꾨땲??Unity ?꾨줈?앺듃 ?대? ?뺤쟻 ?먯궛 湲곗??쇰줈 ?뺣━?덈떎.
-- 2026-04-26: 蹂댁긽 / ?ㅽ궗?좏깮? ?꾩쟾???섏쨷?쇰줈 誘몃（吏 ?딄퀬, `RunSession` / UI / 怨듯넻 ?꾪닾 肄붿뼱 ?ㅼ쓬 留덉씪?ㅽ넠?먯꽌 A/F 理쒖냼 踰붿쐞瑜?媛숈씠 遺숈씠??諛⑺뼢?쇰줈 `run-systems-integration-summary-report.html`瑜??ㅼ떆 ?섏젙?덈떎.
+- Legacy non-English note retained these code references: `AGENTS.md`, `BLACKBOARD.md`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these ASCII code references: `Pakuri/reference/run-systems-integration-summary-report.html`.
+- Legacy non-English note retained these code references: `run-systems-integration-summary-report.html`.
+- Legacy non-English note retained these code references: `RunSession`, `run-systems-integration-summary-report.html`.
 

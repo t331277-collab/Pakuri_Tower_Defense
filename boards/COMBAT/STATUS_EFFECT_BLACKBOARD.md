@@ -1,7 +1,7 @@
-﻿# STATUS_EFFECT_BLACKBOARD
+# STATUS_EFFECT_BLACKBOARD
 
-이 파일은 BLACKBOARD.md 계층화 작업으로 생성된 도메인별 지속 상태 파일입니다.
-관련 작업을 수행할 때 MDTREE.md 라우팅에 따라 이 파일과 필요한 상위/하위 파일을 동시에 갱신합니다.
+This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
+When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
 ## Migrated Task Blocks
 
@@ -14,8 +14,8 @@ Correct Ariel J timed buff and shield-dependent holy bonus state handling.
 ### Goals
 
 - Keep blessing-derived buffs on `arielBlessingTimer` only.
-- Keep E master 1 `천상의 성역` damage reduction on its own timer.
-- Add a distinct timed state for J `성역 선포` and tie its holy-damage bonus to remaining Archangel shield state.
+- Keep E master 1 `Heavenly Sanctuary` damage reduction on its own timer.
+- Add a distinct timed state for J `Sanctuary Proclamation` and tie its holy-damage bonus to remaining Archangel shield state.
 
 ### Constraints
 
@@ -133,7 +133,7 @@ Implemented and locally validated. Code Reviewer returned FAIL for Radiant Shiel
 
 - `EnemyRuntime` now stores `HolyExposureTimer`, `HolyExposureStacks`, damage taken bonus, Holy flat defense reduction, critical damage taken bonus, detonation multiplier, and accumulated Holy damage.
 - `CombatRuntimeEnemies.UpdateEnemies()` decrements Holy Exposure and resolves expiry detonation.
-- `BuildEnemyStatusText()` displays `신성노출{stacks}` while active.
+- `BuildEnemyStatusText()` displays `Holy Exposure{stacks}` while active.
 - `CombatRuntimeArielSkills.cs` applies Holy Exposure from Ariel A master 2 and Ariel D, and uses Ariel I passive/traits for target damage and Holy resistance reduction.
 - `CombatRuntimeArielSkills.cs` manages Ariel shield, blessing, sanctuary, action speed, cooldown charge speed, and Holy damage buff timers.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
@@ -355,3 +355,45 @@ Builder implementation and self-review completed. External Reviewer execution wa
 - 2026-04-27: Implemented world-space SpriteRenderer HP bars for enemies and selected Player Monster in `EveVerticalSliceController.cs`.
 - 2026-04-27: Attempted external Code Reviewer execution. The command exited before review due to Codex usage limit, so only local Builder self-review, build, Unity refresh, and console checks are available for this turn.
 
+# Task: 2026-05-04 Rin Shockwave And Collapse Slow Effects
+
+## Task title
+
+Use existing combat slow and knockback state for Rin active skill effects.
+
+## Goals
+
+- Implement Rin C knockback and master 2 slow.
+- Implement Rin E master 2 slow.
+- Reuse existing `EnemyRuntime.SlowTimer` and `SlowMultiplier` so enemy movement already respects the effect.
+
+## Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+## Role Owner
+
+Code Builder
+
+## Status
+
+Implemented and locally validated.
+
+## Next Actions
+
+- User verifies Rin C knockback and Rin C/E slow effects in Play Mode.
+
+## Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:266` applies Rin C master 1 lightning extra damage, while `:272` applies Rin C master 2 slow.
+- `CombatRuntimeRinSkills.cs:420` applies Rin E master 2 slow and dark extra damage.
+- `CombatRuntimeRinSkills.cs:661` moves hit enemies for Rin C knockback and clamps them inside the battlefield bounds.
+- `CombatRuntimeRinSkills.cs:676` writes slow state through the existing `EnemyRuntime.SlowMultiplier` and `SlowTimer`.
+- Existing `Pakuri/Assets/Scripts/Combat/CombatRuntimeEnemies.cs` already decrements `SlowTimer`, resets `SlowMultiplier`, and multiplies enemy movement by `SlowMultiplier`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and only existing Unity/MCP warnings.
+
+## History
+
+- 2026-05-04: Code Builder implemented Rin C/E slow and C knockback using current combat status-effect fields.

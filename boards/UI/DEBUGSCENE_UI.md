@@ -1,9 +1,62 @@
-﻿# DEBUGSCENE_UI
+# DEBUGSCENE_UI
 
-이 파일은 BLACKBOARD.md 계층화 작업으로 생성된 도메인별 지속 상태 파일입니다.
-관련 작업을 수행할 때 MDTREE.md 라우팅에 따라 이 파일과 필요한 상위/하위 파일을 동시에 갱신합니다.
+This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
+When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
+
+## DebugScene UI Authoring Rule
+
+- DebugScene UI must be authored as editable scene uGUI objects whenever the user needs to adjust position, size, text, child hierarchy, checkmarks, or labels in the Unity Editor.
+- Runtime code may ensure required infrastructure such as `Canvas`, `EventSystem`, root shell state, and missing visual bindings, but it must bind existing scene objects instead of replacing user-editable panels with runtime-only generated UI.
+- `DebugSceneController.Awake()` should keep the current pattern: `DisableRunSceneControllers()`, `ResolveReferences()`, `EnsureCanvasShell()`, `EnsureEventSystem()`, then `BindSceneUi()`.
+- `DebugSetupPanel`, `SkillDebugPanel`, `EnhancementModal`, `Active_A` through `Passive_J`, and `Choice_01` through `Choice_08` are scene-authored UI anchors. If a future task changes this structure, update this board and the shared UI board in the same task.
+- Use project-owned UI sprites such as `Assets/Resources/DebugUiSolid.png`; do not depend on Unity built-in skin paths such as `UI/Skin/UISprite.psd`.
 
 ## Migrated Task Blocks
+
+## Task: 2026-05-04 DebugScene Editable UI Authoring Rule
+
+### Task title
+
+Record the user-commanded DebugScene UI authoring rule in the related board files.
+
+### Goals
+
+- Preserve the user's rule that DebugScene UI should remain editable by the user in the Unity Editor.
+- Tie the rule to the existing retrospective report and current `DebugSceneController` / `DebugScene.unity` evidence.
+- Clarify that runtime code should bind and repair scene-authored UI, not replace it with runtime-only generated panels.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested markdown updates.
+- Do not modify `Pakuri/reference` planning/report files for this task.
+- Do not run Unity Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly request it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented as a markdown-only board update.
+
+### Next Actions
+
+- Apply this rule to future DebugScene UI changes before editing `DebugSceneController.cs` or `Assets/Scenes/DebugScene.unity`.
+- If a future UI task affects shared UI policy, update `boards/UI/UI_BLACKBOARD.md` together with this file.
+
+### Evidence
+
+- `Pakuri/reference/Report/2026-04-30-debugscene-ui-canvas-retrospective.html:195-197` states the user correction: runtime-generated UI made position, size, and child hierarchy hard to inspect/edit, and the current code calls `BindSceneUi()` instead of `BuildUi()`.
+- The same report at `:233-237` states that code guarantees the Canvas shell and EventSystem while binding panels and toggle slots saved in the scene.
+- `Pakuri/Assets/Scripts/Run/DebugSceneController.cs:50-56` currently calls `EnsureCanvasShell()`, `EnsureEventSystem()`, and `BindSceneUi()` from `Awake()`.
+- `Select-String` confirmed `DebugScene.unity` contains `DebugSetupPanel`, `SkillDebugPanel`, `EnhancementModal`, `Active_A`, `Passive_J`, `Choice_01`, and `Choice_08`.
+- Unity-MCP `manage_scene get_active` returned active scene `DebugScene` at `Assets/Scenes/DebugScene.unity`.
+- Unity-MCP `find_gameobjects` found one object each for `DebugSetupPanel`, `SkillDebugPanel`, `EnhancementModal`, `Active_A`, `Passive_J`, `Choice_01`, and `Choice_08`.
+
+### History
+
+- 2026-05-04: User asked to record in the related `.md` files the UI creation method they commanded in the retrospective report, including that UI must be editable by the user.
 
 ## Task: 2026-05-03 DebugSetupPanel Show/Hide Toggle
 
@@ -187,10 +240,10 @@ Builder correction pass completed for the prior `eve-a-master-1` findings, Debug
 - User reported that `Content` child skill toggles were clickable but their descriptions and checkmark were invisible.
 - `DebugSceneController.ConfigureToggle(...)` now calls `ConfigureToggleVisuals(...)` to rebuild each scene-bound toggle slot's `Background`, `Checkmark/Glyph`, and `Label` visuals every time the slot is bound.
 - `DebugSceneController.ConfigureToggleVisuals(...)` uses a separate `Checkmark/Glyph` child `Text` as the Toggle graphic, because the existing `Checkmark` object already has an `Image` graphic and Unity did not add a second `Text` graphic to the same GameObject in the runtime inspection.
-- Runtime Unity `execute_code` normalized 10 current skill toggle visuals and confirmed `Active_A` has `toggle.graphic=Text:Checkmark/Glyph`, `labelText=A: ?꾪겕 蹂쇳듃`, `labelAlpha=1`, and `glyphText=??.
+- Legacy non-English note retained these ASCII code references: `execute_code`, `Active_A`, `toggle.graphic=Text:Checkmark/Glyph`, `labelAlpha=1`.
 - Runtime Unity missing-script inspection returned `missingTotal=0`; the visible console still contained older `The referenced script (Unknown) on this Behaviour is missing!` entries with no file/line.
 - User reported the Label skill text and checkbox were still not visible. Builder replaced the Text-glyph checkmark approach with Unity built-in `UISprite` and `Checkmark` sprites in `DebugSceneController.ConfigureToggleVisuals(...)`.
-- Unity Edit Mode scene save normalized the actual `DebugSceneController/SkillDebugPanel/SkillScroll/Viewport/Content` slots `Active_A` through `Passive_J` and saved `DebugScene.unity`; `Active_A` inspection returned `label=A: ?꾪겕 蹂쇳듃`, `labelAlpha=1`, `bgSprite=UISprite`, `checkSprite=Checkmark`, and `toggleGraphic=Checkmark`.
+- Legacy non-English note retained these ASCII code references: `DebugSceneController/SkillDebugPanel/SkillScroll/Viewport/Content`, `Active_A`, `Passive_J`, `DebugScene.unity`, `labelAlpha=1`, `bgSprite=UISprite`, `checkSprite=Checkmark`, `toggleGraphic=Checkmark`.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing Unity/MCP assembly conflict warnings.
 - `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
 - Unity refresh/compile completed with editor state `ready_for_tools=true`; Unity console error query showed only MCP-FOR-UNITY client handler logs and did not show the previous `DebugSceneController requires DebugSetupPanel...` project error.
@@ -198,7 +251,7 @@ Builder correction pass completed for the prior `eve-a-master-1` findings, Debug
 - `Select-String` confirmed the old `UI/Skin` and `GetBuiltinResource<Sprite>` calls were removed from `Pakuri/Assets/Scripts/Run/DebugSceneController.cs`; the only sprite load is now `Resources.Load<Sprite>("DebugUiSolid")`.
 - `Pakuri/Assets/Resources/DebugUiSolid.png` was created as a project-owned 1x1 Sprite resource, avoiding Unity built-in UI skin paths.
 - Unity Edit Mode scene save updated the actual `DebugSceneController/SkillDebugPanel/SkillScroll/Viewport/Content` slots so `Active_A` through `Passive_J` remain editable scene objects and their `Background` / `Background/Checkmark` images use `DebugUiSolid`.
-- Unity read-only `execute_code` confirmed `resourceSprite=DebugUiSolid`, `contentCount=10`, `label=A: ?꾪겕 蹂쇳듃`, `labelAlpha=1`, `bgSprite=DebugUiSolid`, and `checkSprite=DebugUiSolid`.
+- Legacy non-English note retained these ASCII code references: `execute_code`, `resourceSprite=DebugUiSolid`, `contentCount=10`, `labelAlpha=1`, `bgSprite=DebugUiSolid`, `checkSprite=DebugUiSolid`.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the existing Unity/MCP assembly conflict warnings.
 - Unity refresh/compile completed with `resulting_state=idle`; Unity console error query showed only MCP-FOR-UNITY client handler logs and did not show the `Failed to find UI/Skin/UISprite.psd` project error.
 - User requested the same visible/editable rebuild for `EnhancementModal` children.

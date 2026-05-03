@@ -49,6 +49,7 @@ namespace Pakuri.Combat
                     var appliedDamage = ApplyDamageToEnemy(enemyHit, damageResult.FinalDamage);
                     enemyHit.FlashTimer = 0.08f;
                     TrackArielHolyExposureDamage(enemyHit, projectile.Attribute, damageResult.FinalDamage);
+                    HandleRinProjectileHit(projectile, enemyHit, appliedDamage);
 
                     var appliedStatus = false;
                     if (string.Equals(projectile.SkillId, "ariel-a", StringComparison.OrdinalIgnoreCase)
@@ -99,15 +100,38 @@ namespace Pakuri.Combat
                     continue;
                 }
 
-                if (projectile.RemainingLifetime > 0f)
+                if (!HasPlayerProjectileReachedBattlefieldXEdge(projectile))
                 {
                     continue;
                 }
 
-                statusLabel = $"{selectedActiveSkillName} 투사체가 {projectileLifetimeConfigured:0.0}s 후 소멸했다.";
+                statusLabel = $"{selectedActiveSkillName} 투사체가 전장 X 경계에 닿아 소멸했다.";
                 TryTriggerArielJudgementLightExplosion(projectile);
                 CleanupProjectile(i);
             }
+        }
+
+        private bool HasPlayerProjectileReachedBattlefieldXEdge(ProjectileRuntime projectile)
+        {
+            if (projectile == null || projectile.Transform == null)
+            {
+                return true;
+            }
+
+            var x = projectile.Transform.position.x;
+            var minX = 0f;
+            var maxX = Mathf.Max(minX, fieldSize.x);
+            if (projectile.Direction.x < -0.01f)
+            {
+                return x <= minX;
+            }
+
+            if (projectile.Direction.x > 0.01f)
+            {
+                return x >= maxX;
+            }
+
+            return x <= minX || x >= maxX;
         }
 
         private bool TryHitEnemyProjectileTarget(ProjectileRuntime projectile, out string targetLabel, out float appliedDamage)
@@ -193,13 +217,15 @@ namespace Pakuri.Combat
 
                 enemyHit = enemy;
                 var finalMultiplier = GetEveFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId)
-                    * GetArielFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId);
+                    * GetArielFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId)
+                    * GetRinFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId);
                 damageResult = DamageCalculator.Resolve(
                     projectile.BaseDamage,
                     projectile.Attribute,
                     enemy.Defenses,
                     flatDefenseReduction: GetEveFlatDefenseReduction(enemy, projectile.Attribute) + GetArielFlatDefenseReduction(enemy, projectile.Attribute),
-                    criticalChanceBonus: GetArielCriticalChanceBonus(projectile.Attribute),
+                    criticalChanceBonus: GetArielCriticalChanceBonus(projectile.Attribute) + GetRinCriticalChanceBonus(enemy, projectile.Attribute, projectile.SkillId),
+                    criticalMultiplierBonus: GetRinCriticalMultiplierBonus(enemy, projectile.Attribute, projectile.SkillId),
                     targetCriticalResistance: enemy.CriticalResistance,
                     criticalDamageTakenBonus: GetEveCriticalDamageTakenBonus(enemy, projectile.SkillId) + GetArielCriticalDamageTakenBonus(enemy, projectile.SkillId),
                     finalDamageMultiplier: enemy.DamageTakenMultiplier * finalMultiplier);
@@ -432,6 +458,12 @@ namespace Pakuri.Combat
             if (IsSelectedArielMonster())
             {
                 FireManualArielJudgementLight(direction);
+                return;
+            }
+
+            if (IsSelectedRinMonster())
+            {
+                FireManualRinShatteringFist(direction);
                 return;
             }
 

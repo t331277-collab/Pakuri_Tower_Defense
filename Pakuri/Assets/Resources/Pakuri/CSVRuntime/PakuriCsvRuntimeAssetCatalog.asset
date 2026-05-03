@@ -22,6 +22,14 @@ MonoBehaviour:
     Asset: {fileID: 21300000, guid: 879d93d0c464a4342973c5f3da51fc1a, type: 3}
   - AssetPath: Assets/Image/Monster/Eve/Shoot.png
     Asset: {fileID: -3759340608264355816, guid: 6775ae037b7948a4288975129a809850, type: 3}
+  - AssetPath: Assets/Image/Monster/Rin/Rin_Shoot.png
+    Asset: {fileID: 21300000, guid: 910fd4f0185802b44bd67baedc519844, type: 3}
+  - AssetPath: Assets/Image/Monster/Rin/Rin_Temp (2).png
+    Asset: {fileID: 21300000, guid: 0d2ed2f29d1d0894bba06e3472baffd7, type: 3}
+  - AssetPath: Assets/Image/Monster/Sein/Sein_Shoot.png
+    Asset: {fileID: 1311808531117767923, guid: 9f975ebffed428b4ab2b35f00b5c45d4, type: 3}
+  - AssetPath: Assets/Image/Monster/Sein/Sein_Temp.png
+    Asset: {fileID: 491488020924605794, guid: 2105790930a66bb4f819d0915e5dddba, type: 3}
   - AssetPath: Assets/Image/Monster/Vega/Vega_Shoot_Temp.png
     Asset: {fileID: -5566345583153479557, guid: ce56c40b4557c8445af91eae1ed609ba, type: 3}
   - AssetPath: Assets/Image/Monster/Vega/Vega_Temp (3).png

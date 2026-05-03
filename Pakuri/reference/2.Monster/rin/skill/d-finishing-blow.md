@@ -51,3 +51,10 @@
 |---|---|
 | 확정 종결 | 처형 대상에게 치명타 확률 +50%, 처치 시 쿨다운 완전 초기화, 처치 순간 대상 주변에 90% 신성 피해 폭발 |
 | 파멸권 | 위력 +90%, 처형 기준 체력 -10%, 쿨다운 +25%, 70% 어둠 추가 피해 |
+
+## Runtime implementation note
+
+- Rin non-magazine skills use the whole battlefield map as their target/search range.
+- Finishing Blow searches the whole battlefield, but it only casts on enemies at or below the execution-health threshold.
+- If no enemy is at or below the threshold, Finishing Blow does not fire.
+- The master choice with execution threshold -10% changes the base threshold from 30% max health to 20% max health.

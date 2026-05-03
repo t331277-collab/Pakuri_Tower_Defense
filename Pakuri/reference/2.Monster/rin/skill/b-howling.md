@@ -37,3 +37,8 @@
 |---|---|
 | 전장의 포효 | 행동속도 증가 +15%, 지속시간 +20%, 아군 전체 물리 피해 +18% 추가 |
 | 심연 군가 | 행동속도 증가량 -5%, 아군 전체 물리 피해에 25% 어둠 추가 피해 |
+
+## Runtime implementation note
+
+- Rin non-magazine skills use the whole battlefield map as their target/search range.
+- Howling is a non-magazine self/allied buff skill; it does not require an enemy target in range.

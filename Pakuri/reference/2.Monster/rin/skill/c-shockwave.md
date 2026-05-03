@@ -49,3 +49,8 @@
 |---|---|
 | 압축 충격파 | 폭 -25%, 위력 +80%, 넉백 거리 +50%, 60% 번개 추가 피해 |
 | 광역 진탕 | 폭 +60%, 위력 +25%, 적중한 적에게 1.5초간 이동 속도 -20% |
+
+## Runtime implementation note
+
+- Rin non-magazine skills use the whole battlefield map as their target/search range.
+- Shockwave keeps its beam width and effects, but runtime target acquisition and beam length use the battlefield-wide range.

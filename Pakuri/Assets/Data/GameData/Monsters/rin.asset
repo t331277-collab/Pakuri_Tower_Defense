@@ -35,8 +35,8 @@ MonoBehaviour:
     Ice: 0
     Darkness: 0
     Holy: 0
-  UnitSprite: {fileID: 0}
-  ProjectileSprite: {fileID: 0}
+  UnitSprite: {fileID: 21300000, guid: 0d2ed2f29d1d0894bba06e3472baffd7, type: 3}
+  ProjectileSprite: {fileID: 21300000, guid: 910fd4f0185802b44bd67baedc519844, type: 3}
   UnitColor: {r: 0.95, g: 0.56, b: 0.42, a: 1}
   ProjectileColor: {r: 1, g: 0.74, b: 0.58, a: 1}
   MaxHealth: 260
@@ -152,7 +152,7 @@ MonoBehaviour:
     DisplayName: "\uD558\uC6B8\uB9C1"
     Slot: 1
     RuntimeKind: 0
-    ImplementationState: 1
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -219,7 +219,7 @@ MonoBehaviour:
     DisplayName: "\uCDA9\uACA9\uD30C"
     Slot: 2
     RuntimeKind: 0
-    ImplementationState: 1
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -284,7 +284,7 @@ MonoBehaviour:
     DisplayName: "\uC885\uACB0 \uC77C\uACA9"
     Slot: 3
     RuntimeKind: 0
-    ImplementationState: 1
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -351,7 +351,7 @@ MonoBehaviour:
     DisplayName: "\uBD95\uAD34 \uD0C0\uACA9"
     Slot: 4
     RuntimeKind: 0
-    ImplementationState: 1
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}

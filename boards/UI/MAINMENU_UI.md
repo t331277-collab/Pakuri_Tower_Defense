@@ -1,7 +1,7 @@
-﻿# MAINMENU_UI
+# MAINMENU_UI
 
-이 파일은 BLACKBOARD.md 계층화 작업으로 생성된 도메인별 지속 상태 파일입니다.
-관련 작업을 수행할 때 MDTREE.md 라우팅에 따라 이 파일과 필요한 상위/하위 파일을 동시에 갱신합니다.
+This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
+When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
 ## Migrated Task Blocks
 
@@ -65,20 +65,20 @@ Builder changes applied and self-reviewed. Waiting for user Play Mode verificati
 
 ### Task title
 
-MainMenuScene ?④퀎 ?꾪솚怨?RunScene ?꾪닾 ?꾩슜 吏꾩엯 遺꾨━
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Goals
 
-- `RunScene`???ㅼ뼱 ?덈뜕 罹먮┃???좏깮 UI ?먮쫫??`MainMenuScene`?쇰줈 遺꾨━?쒕떎.
-- `MainMenuScene`? `Touch To Start -> ??踰꾪듉 -> 罹먮┃???좏깮 -> RunScene ?낆옣` ?④퀎 ?꾪솚???대떦?쒕떎.
-- `RunScene`? ?좏깮??罹먮┃?곗? `RunSession`??諛쏆븘 ?꾪닾留??쒖옉?쒕떎.
-- ??媛??꾨떖? ?뺤옣?깆쓣 怨좊젮??`DontDestroyOnLoad` 湲곕컲 `RunStartContext`濡?泥섎━?쒕떎.
+- Legacy non-English note retained these code references: `RunScene`, `MainMenuScene`.
+- Legacy non-English note retained these ASCII code references: `MainMenuScene`.
+- Legacy non-English note retained these code references: `RunScene`, `RunSession`.
+- Legacy non-English note retained these code references: `DontDestroyOnLoad`, `RunStartContext`.
 
 ### Constraints
 
-- ?몃? Code Reviewer???몄텧?섏? ?딄퀬 ?먯껜 肄붾뱶 由щ럭留??섑뻾?쒕떎.
-- Codex媛 Unity ?뚮젅??紐⑤뱶瑜??ㅽ뻾??寃利앺븯吏 ?딄퀬, ?ㅼ젣 ?뚮젅??寃利앹? ?ъ슜?먯뿉寃?留↔릿??
-- ?먮떒怨??ㅻ챸? ?ㅼ젣 ?뚯씪, ?ㅼ젣 ?? ?ㅼ젣 紐낅졊 異쒕젰 洹쇨굅瑜?湲곗??쇰줈 ?쒕떎.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Role Owner
 
@@ -86,50 +86,50 @@ Code Builder
 
 ### Status
 
-Builder changes applied. ?먯껜 肄붾뱶 由щ럭? 鍮뚮뱶 ?뺤씤源뚯? ?꾨즺?덇퀬, ?ъ슜???뚮젅??寃利??湲??곹깭??
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Next Actions
 
-- ?ъ슜?먭? Unity?먯꽌 `MainMenuScene`???ㅽ뻾??`Touch To Start -> ??-> 罹먮┃???좏깮 -> RunScene ?꾪닾 吏꾩엯` ?먮쫫??寃利앺븳??
-- 寃利?以????꾪솚, ?낅젰, ?꾪닾 珥덇린??臾몄젣媛 ?덉쑝硫?洹?洹쇨굅瑜?諛쏆븘 ?ㅼ쓬 Builder ?섏젙?쇰줈 ?댁뼱媛꾨떎.
+- Legacy non-English note retained these ASCII code references: `MainMenuScene`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Evidence
 
-- `Pakuri/Assets/Scripts/Run/RunStartContext.cs`瑜?異붽????좏깮 紐ъ뒪?곗? `RunSession`??`DontDestroyOnLoad` 而⑦뀓?ㅽ듃濡??꾨떖?섍쾶 ?덈떎.
-- `Pakuri/Assets/Scripts/Run/MainMenuFlowController.cs`瑜?異붽???`Touch To Start`, `??, 罹먮┃???좏깮 ?④퀎瑜?媛숈? `MainMenuScene` Canvas ?덉뿉???꾪솚?섍쾶 ?덈떎.
-- `Pakuri/Assets/Scripts/Run/RunSceneBootstrap.cs`瑜?異붽???`RunScene`?먯꽌 `RunStartContext`瑜??쎄퀬 `EveVerticalSliceController.BeginConfiguredDay(...)`瑜??몄텧?섍쾶 ?덈떎.
-- `Pakuri/Assets/Scripts/Run/RunSession.cs`?먮뒗 ?꾨씫?섏뼱 ?덈뜕 `using System;`留??뺣━??`Serializable`, `StringComparison`, `Math` ?ъ슜 洹쇨굅瑜?紐낆떆?덈떎.
-- Unity MCP ???묒뾽?쇰줈 `RunScene`?먯꽌 `RunUICanvas`媛 ?쒓굅?먭퀬, `RunSceneBootstrap` 猷⑦듃 ?ㅻ툕?앺듃媛 異붽??먮떎.
-- Unity MCP ???묒뾽?쇰줈 `MainMenuScene`?먮뒗 `MainMenuCanvas`? `MainMenuFlowController`, `EventSystem`??異붽??먮떎.
-- `Pakuri/ProjectSettings/EditorBuildSettings.asset`??`Assets/Scenes/MainMenuScene.unity`, `Assets/Scenes/RunScene.unity` ?쒖꽌濡?媛깆떊?먮떎.
-- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore`???ㅻ쪟 0媛쒕줈 ?듦낵?덈떎. ?⑥? 寃쎄퀬??Unity/MCPForUnity 李몄“??`System.Net.Http`, `System.IO.Compression` 踰꾩쟾 異⑸룎 寃쎄퀬 2媛쒕떎.
-- Unity 肄섏넄 error 議고쉶?먯꽌?????ㅽ겕由쏀듃 而댄뙆???ㅻ쪟媛 蹂댁씠吏 ?딆븯怨? MCP client 醫낅즺 濡쒓렇留??뺤씤?먮떎.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scripts/Run/RunStartContext.cs`, `RunSession`, `DontDestroyOnLoad`.
+- Legacy non-English note retained these ASCII code references: `Pakuri/Assets/Scripts/Run/MainMenuFlowController.cs`, `Touch To Start`.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scripts/Run/RunSceneBootstrap.cs`, `RunScene`, `RunStartContext`, `EveVerticalSliceController.BeginConfiguredDay(...)`.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scripts/Run/RunSession.cs`, `using System;`, `Serializable`, `StringComparison`, `Math`.
+- Legacy non-English note retained these code references: `RunScene`, `RunUICanvas`, `RunSceneBootstrap`.
+- Legacy non-English note retained these code references: `MainMenuScene`, `MainMenuCanvas`, `MainMenuFlowController`, `EventSystem`.
+- Legacy non-English note retained these code references: `Pakuri/ProjectSettings/EditorBuildSettings.asset`, `Assets/Scenes/MainMenuScene.unity`, `Assets/Scenes/RunScene.unity`.
+- Legacy non-English note retained these code references: `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore`, `System.Net.Http`, `System.IO.Compression`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### History
 
-- 2026-04-26: ?ъ슜??吏?쒕줈 ?몃? Reviewer ?몄텧 ?놁씠 ?먯껜 由щ럭留??섑뻾?섍퀬, ?ㅼ젣 ?뚮젅??寃利앹? ?ъ슜?먯뿉寃?留↔린湲곕줈 ?뺤젙?덈떎.
-- 2026-04-26: ?꾩옱 ?ㅼ젣 ???뚯씪??`SampleScene.unity`媛 ?꾨땲??`MainMenuScene.unity`, `RunScene.unity`?꾩쓣 ?뺤씤?덈떎.
-- 2026-04-26: `RunScene.unity`??`RunUICanvas`? `RunFlowController`媛 ?⑥븘 ?덉뼱 罹먮┃???좏깮???꾪닾 ???덉뿉 臾띠뿬 ?덉쓬???뺤씤?덈떎.
-- 2026-04-26: `RunStartContext`, `MainMenuFlowController`, `RunSceneBootstrap`瑜?異붽??섍퀬 `RunScene` / `MainMenuScene` / Build Settings瑜?媛깆떊?덈떎.
-- 2026-04-26: ?먯껜 寃利앹쑝濡?`dotnet build`? Unity 肄섏넄 ?뺤씤???섑뻾?덈떎.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `SampleScene.unity`, `MainMenuScene.unity`, `RunScene.unity`.
+- Legacy non-English note retained these code references: `RunScene.unity`, `RunUICanvas`, `RunFlowController`.
+- Legacy non-English note retained these code references: `RunStartContext`, `MainMenuFlowController`, `RunSceneBootstrap`, `RunScene`, `MainMenuScene`.
+- Legacy non-English note retained these code references: `dotnet build`.
 
 ## Task: Monster Select Run UI Expansion Plan
 
 ### Task title
 
-紐ъ뒪???좏깮 UI, Run ?쒖옉, ?꾪닾 ???ㅽ궗 媛뺥솕 ?먮쫫 ?뺤옣 ?ㅺ퀎 HTML ?묒꽦
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Goals
 
-- ?꾩옱 援ы쁽???대툕 ?⑤룆 ?꾪닾 ?꾨줈?좏??낆쓣 湲곗??쇰줈, 紐ъ뒪???좏깮 UI? Run ?쒖옉 ?먮쫫???대뼸寃??쇰컲?뷀븷吏 ?뺣━?쒕떎.
-- `2.Monster` 臾몄꽌援곌낵 `skill-choice-pool-rule.md`, `combat-reward-system.md`瑜?洹쇨굅濡?紐ъ뒪?곕퀎 ?쒖옉 ?ㅽ궗 A, 理쒕? ?≫떚釉?3媛? 理쒕? ?⑥떆釉?3媛? ?꾪닾 ??媛뺥솕 ?좏깮 ?먮쫫???ㅺ퀎?쒕떎.
-- 援ы쁽 ?꾩뿉 ?꾩슂??怨듯넻 ?쒖뒪?? UI ?⑤꼸 援ъ“, ?대┛ 吏덈Ц??HTML 臾몄꽌濡??④릿??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `2.Monster`, `skill-choice-pool-rule.md`, `combat-reward-system.md`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Constraints
 
-- ?ㅼ젣 ?꾩옱 肄붾뱶, ?ㅼ젣 ???곹깭, ?ㅼ젣 reference 臾몄꽌??洹쇨굅?댁꽌留??곷뒗??
-- 援ы쁽?섏? ?딆? UI/???쒖뒪?쒖쓣 ?대? ?덈뒗 寃껋쿂???곸? ?딅뒗??
-- ???묒뾽? Designer ?ㅺ퀎 臾몄꽌 ?묒꽦?대ŉ, ?ㅼ젣 肄붾뱶 援ы쁽? ?ы븿?섏? ?딅뒗??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Role Owner
 
@@ -141,35 +141,35 @@ Completed
 
 ### Next Actions
 
-- ?ъ슜?먭? ?먰븯硫????ㅺ퀎 臾몄꽌瑜?湲곗??쇰줈 Designer handoff瑜??묒꽦??Code Builder 援ы쁽 踰붿쐞瑜?怨좎젙?쒕떎.
-- ?ъ슜?먭? 紐낆떆?곸쑝濡?援ы쁽??吏?쒗븯硫? 癒쇱? UI 堉덈?? RunSession 遺꾨━遺???ㅼ뼱媛??寃껋씠 ?덉쟾?섎떎.
-- 1李?援ы쁽 踰붿쐞??臾몄꽌媛 ?꾨퉬??`?꾨━??, `?대툕`, `?몄씤`, `踰좉?` 4紐ъ뒪???곗꽑?쇰줈 ?↔퀬, `由?? ?붾? ?곹깭濡??붾떎.
-- 由곗쓽 `g~j` ?⑥떆釉?臾몄꽌媛 ?ㅼ젣 ??μ냼???놁쑝誘濡? 由곗쓣 ?뚮젅??媛????곸쑝濡??щ━???묒뾽? ?꾩냽 臾몄꽌 蹂닿컯 ?댄썑濡?誘몃，??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these ASCII code references: `, `.
+- Legacy non-English note retained these code references: `g~j`.
 
 ### Evidence
 
-- `Pakuri/Assets/Scripts/Combat/DamageCalculator.cs`, `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`留??꾩옱 寃뚯엫 ?꾩슜 ?ㅽ겕由쏀듃濡?議댁옱?쒕떎.
-- ?꾩옱 ?쒖꽦 ?ъ? `Assets/Scenes/SampleScene.unity`?대ŉ 猷⑦듃 ?ㅻ툕?앺듃??`Main Camera`, `Global Light 2D`, `CombatRoot`??
-- `CombatRoot` ?섏쐞?먮뒗 `Nexus`, `EveUnit`, `EnemySpawnPoint`, `InputTarget`, `EnemyRoot`, `ProjectileRoot`媛 ?덈떎.
-- `Pakuri/Assets` ?꾨옒?먯꽌??`NO_UI_TOOLKIT_ASSETS`, `NO_UI_NAMED_ASSETS`媛 ?뺤씤??蹂꾨룄 UI ?먯궛???놁쓬???ы솗?명뻽??
-- `Pakuri/reference/2.Monster/monster-basic-rule.md`??紐ъ뒪?곌? ?≫떚釉?A瑜?湲곕낯 ?듬뱷 ?곹깭濡??쒖옉?섍퀬, ??以??≫떚釉?理쒕? 3媛? ?⑥떆釉?理쒕? 3媛쒕? 媛吏꾨떎怨??뺤쓽?쒕떎.
-- `Pakuri/reference/2.Monster/skill-choice-pool-rule.md`???좉퇋 ?≫떚釉? ?좉퇋 ?⑥떆釉? ?≫떚釉??뱀꽦, 留덉뒪???ㅽ궗???섎굹???좏깮吏 ?濡??⑹퀜 3媛쒕? ?쒖떆?섎뒗 洹쒖튃???뺤쓽?쒕떎.
-- `Pakuri/reference/4.run/combat-reward-system.md`???쇰컲 ?꾪닾/以묎컙蹂댁뒪/蹂댁뒪 ?꾪닾蹂??щ줈, ?좊Ъ, 怨⑤뱶, ?대몺???붿쟻 蹂댁긽 洹쒖튃???뺤쓽?쒕떎.
-- `Pakuri/reference/2.Monster/ariel/ariel-tower.md`, `eve/eve-tower.md`, `rin/rin-tower.md`, `sein/sein-tower.md`, `vega/vega-tower.md`濡??꾩옱 援ы쁽 ???紐ъ뒪??5醫낆쓣 ?뺤씤?덈떎.
-- ?ъ슜???묐떟?쇰줈 紐⑤뱺 紐ъ뒪?곕뒗 ?⑥떆釉??щ’ `F~J` 珥?5媛쒕? 媛吏硫? ??以??ㅼ젣濡??좏깮 媛?ν븳 ?⑥떆釉뚮뒗 理쒕? 3媛쒕씪???ㅺ퀎 湲곗????뺤젙?덈떎.
-- ?ъ슜???묐떟?쇰줈 ?대쾲 踰붿쐞???щ줈 蹂댁긽? `?쒖떆留??섎뒗 ?뺣낫`濡?泥섎━?섍퀬, ?곸엯 ?쒖뒪?쒖? ?섏쨷??遺숈씠湲곕줈 ?뺤젙?덈떎.
-- ?ъ슜???묐떟?쇰줈 1李?援ы쁽? 臾몄꽌媛 ?꾨퉬??4紐ъ뒪??`?꾨━??, `?대툕`, `?몄씤`, `踰좉?`)遺??吏꾪뻾?섍퀬, `由?? ?붾? ?곹깭濡??먭린濡??뺤젙?덈떎.
-- ?ㅼ젣 ??μ냼 ?뺤씤 寃곌낵 ?꾨━?? ?대툕, ?몄씤, 踰좉???`f~j` ?⑥떆釉?臾몄꽌媛 紐⑤몢 議댁옱?섏?留? 由곗? `f-ambidextrous.md`留??덇퀬 `g~j` ?⑥떆釉?臾몄꽌???꾩쭅 ?녿떎.
-- ???ㅺ퀎 臾몄꽌 `Pakuri/reference/monster-select-run-ui-expansion-plan.html`瑜?異붽??덈떎.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scripts/Combat/DamageCalculator.cs`, `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `Assets/Scenes/SampleScene.unity`, `Main Camera`, `Global Light 2D`, `CombatRoot`.
+- Legacy non-English note retained these code references: `CombatRoot`, `Nexus`, `EveUnit`, `EnemySpawnPoint`, `InputTarget`, `EnemyRoot`, `ProjectileRoot`.
+- Legacy non-English note retained these code references: `Pakuri/Assets`, `NO_UI_TOOLKIT_ASSETS`, `NO_UI_NAMED_ASSETS`.
+- Legacy non-English note retained these code references: `Pakuri/reference/2.Monster/monster-basic-rule.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/2.Monster/skill-choice-pool-rule.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/4.run/combat-reward-system.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/2.Monster/ariel/ariel-tower.md`, `eve/eve-tower.md`, `rin/rin-tower.md`, `sein/sein-tower.md`, `vega/vega-tower.md`.
+- Legacy non-English note retained these code references: `F~J`.
+- Legacy non-English note summarized in English; see surrounding retained task context.
+- Legacy non-English note retained these ASCII code references: `, `.
+- Legacy non-English note retained these code references: `f~j`, `f-ambidextrous.md`, `g~j`.
+- Legacy non-English note retained these code references: `Pakuri/reference/monster-select-run-ui-expansion-plan.html`.
 
 ### History
 
-- 2026-04-25: `AGENTS.md`, `BLACKBOARD.md`瑜??ㅼ떆 ?쎄퀬 ?꾩옱 ?묒뾽 洹쒖튃怨?湲곗〈 ?묒뾽 釉붾줉???ы솗?명뻽??
-- 2026-04-25: `2.Monster` ?대뜑 ?꾩껜, `monster-basic-rule.md`, `skill-choice-pool-rule.md`, `combat-reward-system.md`, `dungeon-squad-run-structure.md`, 媛?紐ъ뒪?????臾몄꽌瑜??쎌뿀??
-- 2026-04-25: ?꾩옱 肄붾뱶? ???곹깭瑜??ㅼ떆 ?뺤씤???꾩옱 援ы쁽???대툕 ?⑤룆 ?꾪닾 ?꾨줈?좏??낃낵 ?꾩떆 HUD ?섏??꾩쓣 ?ы솗?명뻽??
-- 2026-04-25: UI ?먯궛 遺?? 蹂댁긽 ? 誘멸뎄?? ?띿꽦/?곹깭 怨듯넻 ?쒖뒪??遺議깆쓣 ?꾩옱 ?뺤옣 ?묒뾽???듭떖 媛?쑝濡??뺣━?덈떎.
-- 2026-04-25: 紐ъ뒪???좏깮 UI, Run ?쒖옉, ?꾪닾 ??蹂댁긽/?ㅽ궗 ?좏깮 ?먮쫫???뺣━???ㅺ퀎 HTML `Pakuri/reference/monster-select-run-ui-expansion-plan.html`瑜?異붽??덈떎.
-- 2026-04-25: ?ъ슜???듬???諛섏쁺???⑥떆釉뚮뒗 ?щ’ `F~J` 珥?5媛? ??以?理쒕? 3媛??듬뱷?쇰줈 ?ㅺ퀎瑜?怨좎젙?덇퀬, ?щ줈 蹂댁긽? ?곗꽑 ?쒖떆 ?꾩슜 ?뺣낫濡?泥섎━?섍린濡?湲곕줉?덈떎.
-- 2026-04-25: ?ㅼ젣 ??μ냼?먯꽌 由곗쓽 `g~j` ?⑥떆釉?臾몄꽌媛 ?놁쓬???ㅼ떆 ?뺤씤?? 臾몄꽌 湲곕컲 ?꾩껜 紐ъ뒪??援ы쁽 ?꾩뿉 ?⑥? ?먮즺 媛?쑝濡?湲곕줉?덈떎.
-- 2026-04-25: ?ъ슜???듬???諛섏쁺??1李?援ы쁽 踰붿쐞瑜?`?꾨━??, `?대툕`, `?몄씤`, `踰좉?` 4紐ъ뒪???곗꽑?쇰줈 怨좎젙?섍퀬, `由?? ?붾? ?곹깭濡??④린湲곕줈 湲곕줉?덈떎.
+- Legacy non-English note retained these code references: `AGENTS.md`, `BLACKBOARD.md`.
+- Legacy non-English note retained these code references: `2.Monster`, `monster-basic-rule.md`, `skill-choice-pool-rule.md`, `combat-reward-system.md`, `dungeon-squad-run-structure.md`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `Pakuri/reference/monster-select-run-ui-expansion-plan.html`.
+- Legacy non-English note retained these code references: `F~J`.
+- Legacy non-English note retained these code references: `g~j`.
+- Legacy non-English note retained these ASCII code references: `, `.
 

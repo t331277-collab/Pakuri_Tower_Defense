@@ -7,7 +7,6 @@
 - 원작의 가이던스 스톤은 부활, 시작 골드, 전투 시작 효과처럼 간접 전투 보너스를 제공한다.
 - 이 프로젝트에서는 위 구조를 단순화해, 기본 메타 재화인 `어둠의 흔적`으로 캐릭터별 공통 스탯을 직접 강화한다.
 
-관련 재화 구조는 [`dark-trace-currency-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fdark-trace-currency-system) 참고.
 액티브 스킬별 메타 강화는 [`active-skill-growth-node-list.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Factive-skill-growth-node-list) 참고.
 
 ## 1. 기본 규칙
@@ -96,6 +95,5 @@
 
 ## 7. 후속 결정 필요 항목
 
-- 상위 티어 재화도 고레벨 스탯 노드에 사용할지 여부
 - 초기화 수수료 50개가 적절한지 테스트
 - 메타 강화가 런 초반 난이도를 얼마나 낮추는지 검증

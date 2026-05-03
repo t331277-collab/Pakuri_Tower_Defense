@@ -1,0 +1,9 @@
+Findings:
+
+1. Rin elemental extra damage is based on calculated pre-application physical damage, not physical damage actually dealt by the source hit. In the projectile path, [CombatRuntimeProjectiles.cs](</absent>) line evidence from inspected file: `CombatRuntimeProjectiles.cs:49` stores `appliedDamage = ApplyDamageToEnemy(...)`, but `CombatRuntimeProjectiles.cs:52` passes `damageResult.FinalDamage` into `HandleRinProjectileHit(...)`. `ApplyDamageToEnemy(...)` caps actual HP damage at `CombatRuntimeProjectiles.cs:305-313`, so shields or low remaining HP can make actual dealt damage lower than `FinalDamage`. Rin then uses that uncapped value for extra elemental damage at `CombatRuntimeRinSkills.cs:462` and `:478`.
+
+2. The same source-hit damage basis problem exists for Rin C/D/E direct skills. `CombatRuntimeRinSkills.cs:500` applies `result.FinalDamage`, but `CombatRuntimeRinSkills.cs:504` returns `result.FinalDamage` instead of the applied/dealt result. Callers then use that value for elemental follow-up damage at `CombatRuntimeRinSkills.cs:262/266`, `:338/341`, and `:411/414/420`. This conflicts with the user clarification that elemental extra damage is based on the physical damage dealt by the source hit.
+
+Verification evidence: `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both completed with 0 errors and only existing Unity/MCP assembly warnings. Unity console error query returned only an MCP-FOR-UNITY client handler log. Helper searches confirmed referenced helpers exist: `CreateLineEffect`, `CreateCircleEffect`, `IsPointInsideBeam`, `FindNearestEnemy`, and `SpeedBonusToIntervalMultiplier` are defined in `CombatRuntimeEveSkills.cs`; Rin is included in `Assembly-CSharp.csproj:96`.
+
+REVIEW_RESULT: NEEDS_CHANGES

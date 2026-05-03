@@ -7,7 +7,6 @@
 
 관련 문서:
 - 공통 스탯 강화는 [`meta-growth-node-list.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fmeta-growth-node-list) 참고.
-- 어둠의 흔적 재화 구조는 [`dark-trace-currency-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fdark-trace-currency-system) 참고.
 
 ## 1. 기본 규칙
 

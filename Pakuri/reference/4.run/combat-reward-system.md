@@ -83,7 +83,7 @@
 - 모든 전투 종료 후 지급한다.
 - 난이도가 높을수록 더 많이 지급한다.
 - 같은 난이도 안에서는 스테이지가 뒤로 갈수록 지급량이 증가한다.
-- 어둠 계열 재화의 1티어이며, 상위 재화로 승급할 수 있다.
+- 메타 성장과 해금 트리에 사용하는 단일 재화다.
 - 아래 표는 `쉬움` 난이도의 기준 지급량이다.
 
 | 전투 종류 | 쉬움 기준 지급량 |
@@ -111,4 +111,3 @@
 - 유물 시너지와 유물 목록은 [`artifact-synergy-list.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fartifact-synergy-list) 참고.
 - 상점 규칙은 [`shop-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fshop-system) 참고.
 - 정예 전투 규칙은 [`elite-combat-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Felite-combat-system) 참고.
-- 어둠 계열 재화 티어와 승급 규칙은 [`dark-trace-currency-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fdark-trace-currency-system) 참고.

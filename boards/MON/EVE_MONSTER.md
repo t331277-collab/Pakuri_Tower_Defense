@@ -1,13 +1,13 @@
-﻿# EVE_MONSTER
+# EVE_MONSTER
 
-이 파일은 BLACKBOARD.md 계층화 작업으로 생성된 도메인별 지속 상태 파일입니다.
-관련 작업을 수행할 때 MDTREE.md 라우팅에 따라 이 파일과 필요한 상위/하위 파일을 동시에 갱신합니다.
+This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
+When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
 ## Scope
 
-이 파일은 Eve 몬스터의 스킬, 패시브, projectile/status runtime, DebugScene 테스트 이력을 담당한다.
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
-공통 몬스터 생성 규칙은 `boards/MON/MON_BLACKBOARD.md`를 우선한다. Eve 구현은 새 캐릭터 구현 시 참고 예시로 사용할 수 있지만, Eve 전용 번개/얼음/쉴드 동작을 다른 캐릭터에 그대로 적용한다고 가정하지 않는다.
+Legacy non-English note retained these code references: `boards/MON/MON_BLACKBOARD.md`.
 
 ## Eve Runtime Summary
 
@@ -121,10 +121,10 @@ Builder correction pass completed for the prior `eve-a-master-1` findings, Debug
 - User reported that `Content` child skill toggles were clickable but their descriptions and checkmark were invisible.
 - `DebugSceneController.ConfigureToggle(...)` now calls `ConfigureToggleVisuals(...)` to rebuild each scene-bound toggle slot's `Background`, `Checkmark/Glyph`, and `Label` visuals every time the slot is bound.
 - `DebugSceneController.ConfigureToggleVisuals(...)` uses a separate `Checkmark/Glyph` child `Text` as the Toggle graphic, because the existing `Checkmark` object already has an `Image` graphic and Unity did not add a second `Text` graphic to the same GameObject in the runtime inspection.
-- Runtime Unity `execute_code` normalized 10 current skill toggle visuals and confirmed `Active_A` has `toggle.graphic=Text:Checkmark/Glyph`, `labelText=A: ?꾪겕 蹂쇳듃`, `labelAlpha=1`, and `glyphText=??.
+- Legacy non-English note retained these ASCII code references: `execute_code`, `Active_A`, `toggle.graphic=Text:Checkmark/Glyph`, `labelAlpha=1`.
 - Runtime Unity missing-script inspection returned `missingTotal=0`; the visible console still contained older `The referenced script (Unknown) on this Behaviour is missing!` entries with no file/line.
 - User reported the Label skill text and checkbox were still not visible. Builder replaced the Text-glyph checkmark approach with Unity built-in `UISprite` and `Checkmark` sprites in `DebugSceneController.ConfigureToggleVisuals(...)`.
-- Unity Edit Mode scene save normalized the actual `DebugSceneController/SkillDebugPanel/SkillScroll/Viewport/Content` slots `Active_A` through `Passive_J` and saved `DebugScene.unity`; `Active_A` inspection returned `label=A: ?꾪겕 蹂쇳듃`, `labelAlpha=1`, `bgSprite=UISprite`, `checkSprite=Checkmark`, and `toggleGraphic=Checkmark`.
+- Legacy non-English note retained these ASCII code references: `DebugSceneController/SkillDebugPanel/SkillScroll/Viewport/Content`, `Active_A`, `Passive_J`, `DebugScene.unity`, `labelAlpha=1`, `bgSprite=UISprite`, `checkSprite=Checkmark`, `toggleGraphic=Checkmark`.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing Unity/MCP assembly conflict warnings.
 - `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
 - Unity refresh/compile completed with editor state `ready_for_tools=true`; Unity console error query showed only MCP-FOR-UNITY client handler logs and did not show the previous `DebugSceneController requires DebugSetupPanel...` project error.
@@ -132,7 +132,7 @@ Builder correction pass completed for the prior `eve-a-master-1` findings, Debug
 - `Select-String` confirmed the old `UI/Skin` and `GetBuiltinResource<Sprite>` calls were removed from `Pakuri/Assets/Scripts/Run/DebugSceneController.cs`; the only sprite load is now `Resources.Load<Sprite>("DebugUiSolid")`.
 - `Pakuri/Assets/Resources/DebugUiSolid.png` was created as a project-owned 1x1 Sprite resource, avoiding Unity built-in UI skin paths.
 - Unity Edit Mode scene save updated the actual `DebugSceneController/SkillDebugPanel/SkillScroll/Viewport/Content` slots so `Active_A` through `Passive_J` remain editable scene objects and their `Background` / `Background/Checkmark` images use `DebugUiSolid`.
-- Unity read-only `execute_code` confirmed `resourceSprite=DebugUiSolid`, `contentCount=10`, `label=A: ?꾪겕 蹂쇳듃`, `labelAlpha=1`, `bgSprite=DebugUiSolid`, and `checkSprite=DebugUiSolid`.
+- Legacy non-English note retained these ASCII code references: `execute_code`, `resourceSprite=DebugUiSolid`, `contentCount=10`, `labelAlpha=1`, `bgSprite=DebugUiSolid`, `checkSprite=DebugUiSolid`.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the existing Unity/MCP assembly conflict warnings.
 - Unity refresh/compile completed with `resulting_state=idle`; Unity console error query showed only MCP-FOR-UNITY client handler logs and did not show the `Failed to find UI/Skin/UISprite.psd` project error.
 - User requested the same visible/editable rebuild for `EnhancementModal` children.
@@ -322,19 +322,19 @@ Builder implemented the user-approved correction pass for Eve A manual firing, B
 
 ### Task title
 
-`dungeon-squad-run-structure.md` 湲곗? ?대툕 ?⑤룆 珥덇린 ?꾪닾 ?꾩꽦 紐⑥뒿 HTML ?묒꽦
+Legacy non-English note retained these code references: `dungeon-squad-run-structure.md`.
 
 ### Goals
 
-- `reference/4.run/dungeon-squad-run-structure.md`瑜?湲곗??쇰줈 珥덇린 ?꾪닾 濡쒖쭅???대뼸寃??댄빐?덈뒗吏 ?쒓컖?곸쑝濡?寃利?媛?ν븳 HTML 臾몄꽌瑜?留뚮뱺??
-- ?욎꽌 ?쒖븞??vertical slice 諛⑺뼢???좎???梨? ?대툕留?援ы쁽?덉쓣 ?뚯쓽 珥덇린 ?꾩꽦 ?곹깭瑜??뺣━?쒕떎.
-- 臾몄꽌 湲곕컲 ?뺤젙 ?ы빆怨?珥덇린 援ы쁽???쒖븞??遺꾨━?댁꽌 ?쒖떆?쒕떎.
+- Legacy non-English note retained these code references: `reference/4.run/dungeon-squad-run-structure.md`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Constraints
 
-- ?ㅼ젣 reference 臾몄꽌???덈뒗 ?댁슜留??뺤젙?쇰줈 ?곴퀬, ?쒖븞? ?쒖븞?쇰줈 紐낇솗??援щ텇?쒕떎.
-- ?꾩옱 Unity ?꾨줈?앺듃? ???곹깭瑜?洹쇨굅濡??쒖븘吏??녿뒗 寃꺿앷낵 ?쒓뎄????湲곕? 紐⑥뒿?앹쓣 援щ텇?쒕떎.
-- ???묒뾽? ?ㅺ퀎 寃利앹슜 HTML ?묒꽦?대ŉ, ?꾪닾 ?쒖뒪??肄붾뱶 援ы쁽? ?ы븿?섏? ?딅뒗??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Role Owner
 
@@ -346,45 +346,45 @@ Completed
 
 ### Next Actions
 
-- ?ъ슜?먭? ?뺤씤 ??諛⑺뼢??留욌떎怨??먮떒?섎㈃, Designer handoff 臾몄꽌濡?援ъ껜?곸씤 援ы쁽 ?쒖꽌瑜??대┫ ???덈떎.
-- ?ъ슜?먭? 紐낆떆?곸쑝濡?援ы쁽??吏?쒗븯硫?Code Builder媛 ??HTML??援ъ“瑜?湲곗??쇰줈 ?ㅼ젣 ?대뜑, ?ㅽ겕由쏀듃, ???ㅻ툕?앺듃瑜??앹꽦?쒕떎.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Evidence
 
-- `Pakuri/reference/4.run/dungeon-squad-run-structure.md`??1?쇱감 怨좎젙 ?꾪닾, ?꾪닾 ??蹂댁긽 ?뺤씤, ?щ줈 湲곕컲 ?좏깮, ?ㅼ쓬 ?쇱감 ?대룞 ?먮쫫???뺤쓽?쒕떎.
-- `Pakuri/reference/2.Monster/eve/eve-tower.md`???대툕瑜?踰덇컻/?쇱쓬 ?붿쭊??蹂댁“ ?쒕윭濡??뺤쓽?섍퀬, 泥??≫떚釉뚮줈 `A. ?꾪겕 蹂쇳듃`瑜??붾떎.
-- `Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md`???꾪겕 蹂쇳듃???꾩갹 ??6, ?ъ옣??4珥? 諛쒖궗 媛꾧꺽 0.35珥? 踰덇컻 ?쇳빐 怨꾩궛??`24 + 二쇰Ц??* 0.95`, 媛먯쟾 15%瑜??뺤쓽?쒕떎.
-- `Pakuri/reference/Scene/combat-scene-layout.md`???뚯뒪???꾩옣 32x18, ?μ꽌??`(2,8)`, ???곗륫 吏꾩엯, ?꾧뎔 諛곗튂 ?곸뿭 `(4~10, 3~15)`瑜??뺤쓽?쒕떎.
-- `Pakuri/reference/dungeon-squad-combat-player-controls.md`???꾪닾 以??뚮젅?댁뼱 議곗옉???쒓났寃?吏??吏?뺚앹쑝濡??뺤쓽?쒕떎.
-- `Pakuri/reference/4.run/combat-reward-system.md`???쇰컲 ?꾪닾 蹂댁긽?쇰줈 ?щ줈 1~3紐? 怨⑤뱶 10, ?대몺???붿쟻 10, 蹂댁뒪 ?щ줈 ?뺤젙 ?ы븿???뺤쓽?쒕떎.
-- `Pakuri/reference/5.enemy/stage-1-enemies.md`??1?ㅽ뀒?댁? ?쇰컲紐?5醫낃낵 ?쇰컲 ?꾪닾 蹂댁뒪 媛뺥솕 洹쒖튃???뺤쓽?쒕떎.
-- ?꾩옱 `manage_scene get_active` 寃곌낵??`Assets/Scenes/SampleScene.unity`?대ŉ, `manage_scene get_hierarchy` 寃곌낵 ??猷⑦듃??`Main Camera`, `Global Light 2D`肉먯씠??
-- ?꾩옱 `manage_asset search` 寃곌낵 `Assets`?먮뒗 湲곕낯 `Scenes`, `Settings`, URP/InputSystem ?먯궛留??덇퀬 寃뚯엫 ?꾩슜 ?ㅽ겕由쏀듃 ?대뜑???녿떎.
+- Legacy non-English note retained these code references: `Pakuri/reference/4.run/dungeon-squad-run-structure.md`.
+- Legacy non-English note retained these ASCII code references: `Pakuri/reference/2.Monster/eve/eve-tower.md`.
+- Legacy non-English note retained these ASCII code references: `Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/Scene/combat-scene-layout.md`, `(2,8)`, `(4~10, 3~15)`.
+- Legacy non-English note retained these code references: `Pakuri/reference/dungeon-squad-combat-player-controls.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/4.run/combat-reward-system.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/5.enemy/stage-1-enemies.md`.
+- Legacy non-English note retained these code references: `manage_scene get_active`, `Assets/Scenes/SampleScene.unity`, `manage_scene get_hierarchy`, `Main Camera`, `Global Light 2D`.
+- Legacy non-English note retained these code references: `manage_asset search`, `Assets`, `Scenes`, `Settings`.
 
 ### History
 
-- 2026-04-24: `AGENTS.md`, `BLACKBOARD.md`, `dungeon-squad-run-structure.md`, `eve-tower.md`, `current-architecture-plan.html`瑜??ㅼ떆 ?쎌뿀??
-- 2026-04-24: `a-arc-bolt.md`, `combat-scene-layout.md`, `combat-reward-system.md`, `dungeon-squad-combat-player-controls.md`, `combat-attribute-and-damage-system.md`, `combat-stat-system.md`, `stage-1-enemies.md`瑜?異붽?濡??쎌뿀??
-- 2026-04-24: ?꾩옱 Unity ?ш낵 ?먯뀑 ?곹깭瑜??ㅼ떆 議고쉶???? ?대툕 ?⑤룆 珥덇린 ?꾪닾 ?꾩꽦 紐⑥뒿???ㅻ챸?섎뒗 HTML 臾몄꽌瑜?`Pakuri/reference`??異붽??덈떎.
+- Legacy non-English note retained these code references: `AGENTS.md`, `BLACKBOARD.md`, `dungeon-squad-run-structure.md`, `eve-tower.md`, `current-architecture-plan.html`.
+- Legacy non-English note retained these code references: `a-arc-bolt.md`, `combat-scene-layout.md`, `combat-reward-system.md`, `dungeon-squad-combat-player-controls.md`, `combat-attribute-and-damage-system.md`, `combat-stat-system.md`, `stage-1-enemies.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference`.
 
 ## Task: Eve Combat Vertical Slice Implementation
 
 ### Task title
 
-?대툕 ?⑤룆 珥덇린 ?꾪닾 vertical slice ?ㅼ젣 援ы쁽 諛??묒뾽 ?ㅻ챸 HTML ?묒꽦
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Goals
 
-- `eve-initial-combat-vertical-slice-preview.html` 湲곕컲?쇰줈 Unity ?꾨줈?앺듃???ㅼ젣 ?꾪닾 ?꾨줈?좏??낆쓣 留뚮뱺??
-- ?꾩옱 ?ъ쓽 硫붿씤 移대찓?쇰? ?꾩옣 湲곗??쇰줈 留욎텛怨?`CombatRoot` 諛??듭빱 ?ㅻ툕?앺듃瑜??앹꽦?쒕떎.
-- ???ㅽ룿 X??怨좎젙?섍퀬 Y???쒕뜡?쇰줈 ?앹꽦?섍쾶 ?쒕떎.
-- 援ы쁽 ???ㅼ젣 寃利?洹쇨굅? ?묒뾽 ?ㅻ챸??HTML濡??④릿??
+- Legacy non-English note retained these code references: `eve-initial-combat-vertical-slice-preview.html`.
+- Legacy non-English note retained these code references: `CombatRoot`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Constraints
 
-- ?ㅼ젣 reference 臾몄꽌? ?ㅼ젣 Unity ???곹깭瑜?湲곗??쇰줈 援ы쁽?쒕떎.
-- ?꾩옱 ?꾨줈?앺듃???녿뒗 ?꾪듃 ?먯궛? 異붿륫?섏? ?딄퀬 placeholder 鍮꾩＜?쇰줈 泥섎━?쒕떎.
-- 濡쒖쭅 ?묒뾽 ??reviewer 寃?섎? ?쒕룄?섍퀬, ?몃? reviewer ?ㅽ뻾???ㅽ뙣?섎㈃ 洹??ㅽ뙣 洹쇨굅瑜??④릿??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Role Owner
 
@@ -396,62 +396,62 @@ Completed with manual reviewer pass in-session. External Codex reviewer commands
 
 ### Next Actions
 
-- ?ъ슜?먭? ?먰븯硫????꾨줈?좏????꾩뿉 ?ㅼ젣 ?꾪듃 ?먯궛, ?뺤떇 UI, 異붽? ????? 蹂댁긽 ?곗씠??援ъ“瑜?遺숈씤??
-- reviewer ?몃? 媛뺤젣 ?먮쫫?????묒뾽?먮룄 ?덉젙?곸쑝濡??곌껐?섎젮硫?`codex review`/`codex exec` ??꾩븘???먯씤??蹂꾨룄 ?뺤씤?쒕떎.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `codex review`, `codex exec`.
 
 ### Evidence
 
-- `Assets/Scripts/Combat/DamageCalculator.cs`瑜??앹꽦?덈떎.
-- `Assets/Scripts/Combat/EveVerticalSliceController.cs`瑜??앹꽦?덈떎.
-- `manage_asset search path=Assets/Scripts` 寃곌낵 `Combat`, `DamageCalculator.cs`, `EveVerticalSliceController.cs`媛 議댁옱?쒕떎.
-- `SampleScene.unity`?먮뒗 `CombatRoot`? `Pakuri.Combat.EveVerticalSliceController` 而댄룷?뚰듃媛 ??λ릱??
-- `manage_scene get_hierarchy include_transform=true` 寃곌낵:
-  - `Main Camera` ?꾩튂 `15.5, 8.5, -10`
-  - `Nexus` ?꾩튂 `2, 8, 0`
-  - `EveUnit` ?꾩튂 `6, 8, 0`
-  - `EnemySpawnPoint` ?꾩튂 `29, 8, 0`
-  - `InputTarget` ?꾩튂 `16, 8, 0`
-- `SampleScene.unity` ?띿뒪???뺤씤 寃곌낵 `orthographic: 1`, `orthographic size: 10`, `CombatRoot`, `EveVerticalSliceController`, 媛?醫뚰몴媛 ??λ릺???덈떎.
-- ?뚮젅??紐⑤뱶 ?고???寃??`execute_code` 寃곌낵:
-  - ???ㅽ룿 ?고????ㅻ툕?앺듃 `Enemy_Normal_01`, `Enemy_Boss_01`媛 ?앹꽦?먮떎.
-  - ?댄썑 `battleResolved=True`, `victory=True`, `waitingForRewardChoice=True` ?곹깭瑜??뺤씤?덈떎.
-- 寃뚯엫 ?붾㈃ 罹≪쿂 ?뚯씪:
+- Legacy non-English note retained these code references: `Assets/Scripts/Combat/DamageCalculator.cs`.
+- Legacy non-English note retained these code references: `Assets/Scripts/Combat/EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `manage_asset search path=Assets/Scripts`, `Combat`, `DamageCalculator.cs`, `EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `SampleScene.unity`, `CombatRoot`, `Pakuri.Combat.EveVerticalSliceController`.
+- Legacy non-English note retained these code references: `manage_scene get_hierarchy include_transform=true`.
+  - Legacy non-English note retained these code references: `Main Camera`, `15.5, 8.5, -10`.
+  - Legacy non-English note retained these code references: `Nexus`, `2, 8, 0`.
+  - Legacy non-English note retained these code references: `EveUnit`, `6, 8, 0`.
+  - Legacy non-English note retained these code references: `EnemySpawnPoint`, `29, 8, 0`.
+  - Legacy non-English note retained these code references: `InputTarget`, `16, 8, 0`.
+- Legacy non-English note retained these code references: `SampleScene.unity`, `orthographic: 1`, `orthographic size: 10`, `CombatRoot`, `EveVerticalSliceController`.
+- Legacy non-English note retained these code references: `execute_code`.
+  - Legacy non-English note retained these code references: `Enemy_Normal_01`, `Enemy_Boss_01`.
+  - Legacy non-English note retained these code references: `battleResolved=True`, `victory=True`, `waitingForRewardChoice=True`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
   - `Assets/Screenshots/screenshot-20260424-165841.png`
   - `Assets/Screenshots/screenshot-20260424-165958.png`
-- `validate_script`??`DamageCalculator.cs`??????깃났?덇퀬, `EveVerticalSliceController.cs`???ㅼ젣 ?뚯씪 ?댁슜 以묐났???녿뒗?곕룄 duplicate signature ?ㅽ깘??諛섑솚?덈떎.
-- `codex review --uncommitted`???ㅽ뻾 寃쎈줈 臾몄젣 ???ㅼ젣 ?ㅽ뻾?먯꽌 timeout ?먮떎.
-- reviewer ?꾩슜 `codex exec`??300珥?timeout?쇰줈 ?앸궗怨???review 濡쒓렇 ?뚯씪???④린吏 紐삵뻽??
-- ?꾩옱 ?몄뀡?먯꽌 `DamageCalculator.cs`, `EveVerticalSliceController.cs`, `SampleScene.unity`瑜?line-by-line ?뺤씤?덇퀬 異붽? blocking issue??李얠? 紐삵뻽??
+- Legacy non-English note retained these code references: `validate_script`, `DamageCalculator.cs`, `EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `codex review --uncommitted`.
+- Legacy non-English note retained these code references: `codex exec`.
+- Legacy non-English note retained these code references: `DamageCalculator.cs`, `EveVerticalSliceController.cs`, `SampleScene.unity`.
 
 ### History
 
-- 2026-04-24: `AGENTS.md`, `BLACKBOARD.md`, `eve-initial-combat-vertical-slice-preview.html`, 愿??reference 臾몄꽌瑜??ㅼ떆 ?쎌뿀??
-- 2026-04-24: `Assets/Scripts`, `Assets/Scripts/Combat` ?대뜑瑜??앹꽦?덈떎.
-- 2026-04-24: `DamageCalculator.cs`, `EveVerticalSliceController.cs`瑜?異붽??덈떎.
-- 2026-04-24: `CombatRoot`瑜?留뚮뱾怨?`EveVerticalSliceController`瑜?遺숈???
-- 2026-04-24: `Main Camera`瑜??꾩옣 湲곗? ?꾩튂? orthographic ?ㅼ젙?쇰줈 留욎톬??
-- 2026-04-24: `ExecuteAlways` 湲곕컲?쇰줈 `Nexus`, `EveUnit`, `EnemySpawnPoint`, `InputTarget`, `EnemyRoot`媛 ?ъ뿉 ?앹꽦?섎룄濡??덈떎.
-- 2026-04-24: ?뚮젅??紐⑤뱶?먯꽌 ???ㅽ룿, ?밸━ ?곹깭, 蹂댁긽 ?湲??곹깭瑜??뺤씤?덈떎.
-- 2026-04-24: ?몃? reviewer濡?`codex review --uncommitted`, reviewer ?꾩슜 `codex exec`瑜??쒕룄?덉쑝??紐⑤몢 timeout ?먮떎.
-- 2026-04-24: ?꾩옱 ?몄뀡?먯꽌 manual reviewer 寃?좊? ?섑뻾?섍퀬 ?묒뾽 ?ㅻ챸 HTML??異붽??덈떎.
+- Legacy non-English note retained these code references: `AGENTS.md`, `BLACKBOARD.md`, `eve-initial-combat-vertical-slice-preview.html`.
+- Legacy non-English note retained these code references: `Assets/Scripts`, `Assets/Scripts/Combat`.
+- Legacy non-English note retained these code references: `DamageCalculator.cs`, `EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `CombatRoot`, `EveVerticalSliceController`.
+- Legacy non-English note retained these code references: `Main Camera`.
+- Legacy non-English note retained these code references: `ExecuteAlways`, `Nexus`, `EveUnit`, `EnemySpawnPoint`, `InputTarget`, `EnemyRoot`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `codex review --uncommitted`, `codex exec`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ## Task: Eve Projectile Click Hold Compliance Plan
 
 ### Task title
 
-臾몄꽌 以?섑삎 ?꾪겕 蹂쇳듃 ?ъ궗泥??낅젰/?곸쨷 援ъ“ ?섏젙 怨꾪쉷 HTML ?묒꽦
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Goals
 
-- ?꾩옱 ?대툕 ?꾪닾 ?꾨줈?좏??낆쓣 湲곗??쇰줈, ?꾪겕 蹂쇳듃瑜?臾몄꽌 ?뺤쓽????留욌뒗 `?ъ궗泥?/ ?꾩갹?? 援ъ“濡?諛붽씀???묒뾽 怨꾪쉷???뺣━?쒕떎.
-- ?ъ슜?먭? ?붿껌??`?쇱そ ?대┃ ?좎? ???곗냽 諛쒖궗`, `?ъ궗泥??곸쨷 ???쇳빐` ?붽뎄瑜??ㅼ젣 肄붾뱶? reference 臾몄꽌 李⑥씠 湲곗??쇰줈 ?ㅻ챸?쒕떎.
-- Code Builder媛 諛붾줈 援ы쁽???ㅼ뼱媛????덈룄濡??섏젙 踰붿쐞, ?뚯씪蹂?蹂寃?怨꾪쉷, 寃利?泥댄겕由ъ뒪?몃? HTML ???μ쑝濡??④릿??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see surrounding retained task context.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Constraints
 
-- ?ㅼ젣 reference 臾몄꽌? ?ㅼ젣 ?꾩옱 肄붾뱶??洹쇨굅?댁꽌留??곷뒗??
-- ?꾩쭅 ?녿뒗 援ы쁽??援ы쁽??寃껋쿂???곸? ?딅뒗??
-- ???묒뾽? ?ㅺ퀎 臾몄꽌 ?묒꽦?대ŉ, 肄붾뱶 ?섏젙 ?먯껜???ы븿?섏? ?딅뒗??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Role Owner
 
@@ -463,40 +463,40 @@ Completed
 
 ### Next Actions
 
-- ?ъ슜?먭? ?먰븯硫???臾몄꽌瑜?湲곗??쇰줈 Code Builder ?④퀎濡??꾪솚???ㅼ젣 ?ъ궗泥댄삎 諛쒖궗 濡쒖쭅??援ы쁽?쒕떎.
-- 援ы쁽 ??`EveVerticalSliceController.cs`??利됱떆 ?쇳빐 援ъ“瑜??ъ궗泥??곸쨷 援ъ“濡?諛붽씀怨? hold ?낅젰 寃利앷낵 reviewer 猷⑦봽瑜??ㅼ떆 ?섑뻾?쒕떎.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `EveVerticalSliceController.cs`.
 
 ### Evidence
 
-- `Pakuri/reference/dungeon-squad-combat-player-controls.md`???꾪닾 以??뚮젅?댁뼱 ?낅젰??`怨듦꺽 吏??吏???쇰줈 ?뺤쓽?쒕떎.
-- `Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md`???꾪겕 蹂쇳듃瑜?`?ъ궗泥?/ ?꾩갹???쇰줈 ?뺤쓽?섍퀬, ?ъ궗泥??띾룄 `15.0`, ?꾩갹 `6`, ?ъ옣??`4珥?, 諛쒖궗 媛꾧꺽 `0.35珥?, 媛먯쟾 `15%`瑜?紐낆떆?쒕떎.
-- `Pakuri/reference/3.combat/combat-attribute-and-damage-system.md`??媛숈? ?띿꽦 諛⑹뼱??李몄“? 諛⑹뼱??諛섏쁺 ??移섎챸? ?곸슜 洹쒖튃???뺤쓽?쒕떎.
-- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs` ?꾩옱 援ы쁽? `wasPressedThisFrame` / `GetMouseButtonDown(0)` ?낅젰怨?利됱떆 ?쇳빐 援ъ“瑜??ъ슜?쒕떎.
-- ???ㅺ퀎 臾몄꽌 `Pakuri/reference/eve-projectile-click-hold-plan.html`瑜?異붽??덈떎.
+- Legacy non-English note retained these code references: `Pakuri/reference/dungeon-squad-combat-player-controls.md`.
+- Legacy non-English note retained these ASCII code references: `Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md`.
+- Legacy non-English note retained these code references: `Pakuri/reference/3.combat/combat-attribute-and-damage-system.md`.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`, `wasPressedThisFrame`, `GetMouseButtonDown(0)`.
+- Legacy non-English note retained these code references: `Pakuri/reference/eve-projectile-click-hold-plan.html`.
 
 ### History
 
-- 2026-04-24: `AGENTS.md`, `BLACKBOARD.md`, `dungeon-squad-combat-player-controls.md`, `a-arc-bolt.md`, `combat-attribute-and-damage-system.md`, `EveVerticalSliceController.cs`, `eve-combat-implementation-report.html`瑜??ㅼ떆 ?쎌뿀??
-- 2026-04-24: ?꾩옱 肄붾뱶媛 ?⑤컻 ?대┃ ?낅젰怨?利됱떆 ?쇳빐 援ъ“?꾩쓣 ?뺤씤?덈떎.
-- 2026-04-24: hold ?낅젰 湲곕컲 ?곗냽 諛쒖궗? ?ъ궗泥??곸쨷 湲곕컲 ?쇳빐 泥섎━濡???린???ㅺ퀎 HTML??`Pakuri/reference/eve-projectile-click-hold-plan.html`??異붽??덈떎.
+- Legacy non-English note retained these code references: `AGENTS.md`, `BLACKBOARD.md`, `dungeon-squad-combat-player-controls.md`, `a-arc-bolt.md`, `combat-attribute-and-damage-system.md`, `EveVerticalSliceController.cs`, `eve-combat-implementation-report.html`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `Pakuri/reference/eve-projectile-click-hold-plan.html`.
 
 ## Task: Eve Projectile Click Implementation
 
 ### Task title
 
-?대툕 ?꾪겕 蹂쇳듃瑜??대┃???ъ궗泥??곸쨷 援ъ“濡??섏젙?섍퀬 ?꾨즺 蹂닿퀬 HTML ?묒꽦
+Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Goals
 
-- 湲곗〈 利됱떆 ?쇳빐 援ъ“瑜??쒓굅?섍퀬, ?쇱そ ?대┃ ?쒖뿉留??꾪겕 蹂쇳듃 ?ъ궗泥?1諛쒖씠 ?앹꽦?섍쾶 ?쒕떎.
-- ?ъ궗泥닿? ?ㅼ젣濡??대룞?섍퀬 ?곴낵 ?우쓣 ?뚮쭔 ?쇳빐瑜??곸슜?섍쾶 ?쒕떎.
-- ?섏젙 ??媛앹껜 ??븷, ?숈옉 諛⑹떇, ?묒뾽 以?臾몄젣, ??꾩뒪?ы봽 ?묒뾽 濡쒓렇瑜??ы븿???꾨즺 蹂닿퀬 HTML???④릿??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Constraints
 
-- ?ㅼ젣 ?꾩옱 肄붾뱶? ?ㅼ젣 Unity ?고???寃利앹쓣 洹쇨굅濡??묒뾽?쒕떎.
-- ???ㅽ룿 異? 移대찓?? ?꾩옣 醫뚰몴??湲곗〈 媛믪쓣 ?좎??쒕떎.
-- 濡쒖쭅 ?섏젙 ??reviewer 媛뺤젣 ?먮쫫???ㅼ떆 ?쒕룄?섍퀬, ?ㅽ뙣 ??洹?洹쇨굅瑜??④릿??
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Role Owner
 
@@ -508,36 +508,36 @@ Completed without Code Review. External reviewer commands timed out again, so on
 
 ### Next Actions
 
-- ?ъ슜?먭? ?먰븯硫??ㅼ쓬 ?④퀎濡??ㅼ젣 ?대┃ ?낅젰 湲곕컲 ?뺤떇 ?뚮젅???뚯뒪?? ?띿꽦蹂?諛⑹뼱???곗씠??紐⑤뜽, Collider 湲곕컲 異⑸룎濡??뺤옣?쒕떎.
-- reviewer ?몃? 媛뺤젣 ?먮쫫 timeout ?먯씤??蹂꾨룄 遺꾨━?댁꽌 ?닿껐?댁빞 ?쒕떎.
-- ?꾩옱 ?곹깭??Code Review 誘몄닔???곹깭?대?濡? ?댄썑 由щ럭媛 ?꾩슂?섎㈃ 蹂꾨룄 reviewer ?④퀎瑜??ㅼ떆 ?ㅽ뻾?댁빞 ?쒕떎.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 ### Evidence
 
-- `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`??`ProjectileRuntime`, `projectileRoot`, `UpdateProjectiles()`, `TryHitEnemy()`, ?대┃ 湲곕컲 `HandlePointerInput()`瑜??ы븿?섎룄濡??섏젙?먮떎.
-- `Pakuri/Assets/Scenes/SampleScene.unity`??`ProjectileRoot`瑜??ы븿???꾩옱 ?꾩옣 援ъ“濡??ㅼ떆 ??λ릱??
-- `manage_scene save`媛 `Assets/Scenes/SampleScene.unity` ????깃났??諛섑솚?덈떎.
-- `find_gameobjects by_name ProjectileRoot`???ъ뿉??`ProjectileRoot`瑜?李얠븯??
-- ?뚮젅??紐⑤뱶 ?듭젣 寃利앹뿉??
-  - 諛쒖궗 吏곹썑 `projectileCount = 1`
-  - 1珥???`projectileCount = 0`
-  - 媛숈? 寃利앹뿉??`enemyHealth = 37.95`
-  - 理쒖쥌 ?ш?利앹뿉??`currentShotsRemaining = 0`, `reloadRemaining = 4.0`
-- 寃利?罹≪쿂 `Pakuri/Assets/Screenshots/eve-projectile-click-runtime.png`瑜??앹꽦?덈떎.
-- `validate_script`???대쾲?먮룄 duplicate signature false positive瑜??덈떎.
-- `read_console`?먯꽌??`FindObjectOfType<Camera>()` obsolete warning???섏솕怨??댄썑 `FindFirstObjectByType<Camera>()`濡??섏젙?덈떎.
-- ?몃? reviewer ?쒕룄:
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scripts/Combat/EveVerticalSliceController.cs`, `ProjectileRuntime`, `projectileRoot`, `UpdateProjectiles()`, `TryHitEnemy()`, `HandlePointerInput()`.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Scenes/SampleScene.unity`, `ProjectileRoot`.
+- Legacy non-English note retained these code references: `manage_scene save`, `Assets/Scenes/SampleScene.unity`.
+- Legacy non-English note retained these code references: `find_gameobjects by_name ProjectileRoot`, `ProjectileRoot`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+  - Legacy non-English note retained these code references: `projectileCount = 1`.
+  - Legacy non-English note retained these code references: `projectileCount = 0`.
+  - Legacy non-English note retained these code references: `enemyHealth = 37.95`.
+  - Legacy non-English note retained these code references: `currentShotsRemaining = 0`, `reloadRemaining = 4.0`.
+- Legacy non-English note retained these code references: `Pakuri/Assets/Screenshots/eve-projectile-click-runtime.png`.
+- Legacy non-English note retained these code references: `validate_script`.
+- Legacy non-English note retained these code references: `read_console`, `FindObjectOfType<Camera>()`, `FindFirstObjectByType<Camera>()`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
   - `codex review --uncommitted` timeout
-  - reviewer ?꾩슜 `codex exec` timeout
+  - Legacy non-English note retained these code references: `codex exec`.
 
 ### History
 
-- 2026-04-24: `AGENTS.md`, `BLACKBOARD.md`, `eve-projectile-click-hold-plan.html`, `a-arc-bolt.md`, `dungeon-squad-combat-player-controls.md`, ?꾩옱 `EveVerticalSliceController.cs`瑜??ㅼ떆 ?쎌뿀??
-- 2026-04-24: 利됱떆 ?쇳빐 援ъ“瑜??쒓굅?섍퀬 ?대┃???ъ궗泥??앹꽦/?대룞/?곸쨷 援ъ“濡?`EveVerticalSliceController.cs`瑜?援먯껜?덈떎.
-- 2026-04-24: `ProjectileRoot` ?앹꽦怨?hierarchy 諛섏쁺???뺤씤?덈떎.
-- 2026-04-24: ?뚮젅??紐⑤뱶 ?듭젣 寃利앹쑝濡??ъ궗泥??곸쨷 ???쇳빐 ?곸슜???뺤씤?덈떎.
-- 2026-04-24: ?섎룞 line review?먯꽌 留덉?留????댄썑 ?먮룞 ?ъ옣??吏??臾몄젣瑜?李얠븘 `FireArcBolt()`?먯꽌 利됱떆 ?ъ옣???쒖옉?쇰줈 ?섏젙?덈떎.
-- 2026-04-24: obsolete camera ?먯깋 寃쎄퀬瑜?`FindFirstObjectByType<Camera>()`濡??섏젙?덈떎.
-- 2026-04-24: ?묒뾽 ?꾨즺 蹂닿퀬??`Pakuri/reference/eve-projectile-click-implementation-report.html`瑜?異붽??덈떎.
-- 2026-04-24: ?몃? reviewer濡?`codex review --uncommitted`, reviewer ?꾩슜 `codex exec`瑜??ㅼ떆 ?쒕룄?덉쑝??紐⑤몢 timeout ?먮떎.
+- Legacy non-English note retained these code references: `AGENTS.md`, `BLACKBOARD.md`, `eve-projectile-click-hold-plan.html`, `a-arc-bolt.md`, `dungeon-squad-combat-player-controls.md`, `EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `EveVerticalSliceController.cs`.
+- Legacy non-English note retained these code references: `ProjectileRoot`.
+- Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
+- Legacy non-English note retained these code references: `FireArcBolt()`.
+- Legacy non-English note retained these code references: `FindFirstObjectByType<Camera>()`.
+- Legacy non-English note retained these code references: `Pakuri/reference/eve-projectile-click-implementation-report.html`.
+- Legacy non-English note retained these code references: `codex review --uncommitted`, `codex exec`.
 

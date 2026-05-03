@@ -2,9 +2,9 @@
 
 ## Scope
 
-Vega 전용 몬스터/스킬/런타임 지속 상태 파일.
+Vega dedicated monster, skill, and runtime persistent-state file.
 
-새 작업 시작 시 `boards/MON/MON_BLACKBOARD.md`를 먼저 읽고, 구현 예시가 필요할 때만 `boards/MON/EVE_MONSTER.md`를 참고한다.
+At the start of new work, read `boards/MON/MON_BLACKBOARD.md` first and consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
 ## Status
 

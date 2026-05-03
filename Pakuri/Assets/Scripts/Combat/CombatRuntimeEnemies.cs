@@ -46,6 +46,7 @@ namespace Pakuri.Combat
             ClearDamagePopupRuntime();
             ResetEveSkillCombatTimers();
             ResetArielSkillCombatTimers();
+            ResetRinSkillCombatTimers();
 
             currentCombatType = RunDayModel.Resolve(stageIndex, dayIndex).CombatType;
             ResolveStageOneEnemyPool(dayIndex);
