@@ -52,6 +52,195 @@ Legacy non-English note summarized in English; see the surrounding task block fo
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-05 MonsterPanel Active Skill Display
+
+### Task title
+
+Record common MonsterPanel display behavior for selected Monster active skills.
+
+### Goals
+
+- Show only the current 1P Monster in the combat MonsterPanel for now.
+- Activate `Active1` through `Active3` as learned active skills are available.
+- Show current magazine counts for magazine projectile skills and cooldown/reload overlay for unavailable skills.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Future 2P-5P Monster groups remain reserved for later multi-Monster party support.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies MonsterPanel behavior for current selected Monsters in RunScene and DebugScene Play Mode, including per-slot assigned skill cooldowns and current-ammo-only text.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/reference/7.UI/8. combat-screen-layout.md` defines the character skill group as character icon plus three selected active skill icons with reload and bullet-count state.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` now exposes learned selected active skill state through `GetMonsterPanelSkillViews(...)`.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` now binds `MonsterPanel/1PMonster/Active1..3` through `CombatMonsterPanelUiController`.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` now displays magazine ammo through existing TMP text as a single current count, not `current/max`, and does not create `CountText`.
+- The follow-up UI binder still reads cooldown/reload values from each `MonsterPanelSkillView`, which is created from the assigned `SkillDefinition.SkillSlot`.
+- Scene-specific details are recorded in `boards/UI/RUNSCENE_UI.md` and `boards/UI/DEBUGSCENE_UI.md`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+- Follow-up saved-scene and loaded-scene checks found no `CountText` after the cleanup.
+- 2026-05-05 follow-up: `Pakuri/Assets/Data/GameData/Monsters/rin.asset` and `Pakuri/Assets/CSVdata/source/monster_skills.csv` now classify Rin A as `MagazineProjectile`, B as `Buff`, C as `LineAttack`, D as `Execute`, and E as `AreaAttack`.
+- 2026-05-05 follow-up: `CombatRuntimeController.CreateMonsterPanelSkillView(...)` now treats selected active skills as magazine skills only when both `RuntimeKind == MagazineProjectile` and `MagazineCapacity > 0`, preventing zero-magazine skills from showing or following the shared magazine/reload state.
+- 2026-05-05 follow-up: `CombatMonsterPanelUiController` hides the TMP ammo text for non-magazine skills and assigns `DebugUiSolid` to cooldown overlays for visible black-to-white cooldown reveal.
+- 2026-05-05 follow-up validation: `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and sequential `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors; Unity-MCP read-only asset check reported the corrected Rin RuntimeKind values and `DebugUiSolid=DebugUiSolid`.
+- 2026-05-05 Eve/Ariel follow-up: Eve data now imports as A `MagazineProjectile`, B `LineAttack`, C `Field`, D `AreaAttack`, E `MagazineProjectile`, and F-J `Passive`, all `RuntimeImplemented`.
+- 2026-05-05 Eve/Ariel follow-up: Ariel data now imports as A `MagazineProjectile`, B `Shield`, C `AreaAttack`, D `Mark`, E `AreaAttack`, and F-J `Passive`, all `RuntimeImplemented`.
+- 2026-05-05 Eve/Ariel follow-up validation: `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings; Unity-MCP asset import reported the corrected Eve/Ariel skill kinds and implementation states.
+
+### History
+
+- 2026-05-05: User requested current 1PMonster MonsterPanel skill display while preserving future NP/2P-5P Monster slots.
+- 2026-05-05: User requested `Text (TMP)` only for ammo text, current-count display such as `10`, `9`, `8`, and independent Active1-3 cooldown state; Builder updated the shared MonsterPanel binder and removed the old DebugScene `CountText` objects.
+- 2026-05-05: User reported Howling and Shockwave were still treated like magazine skills and followed Active1 cooldown; Builder corrected Rin active skill RuntimeKind data and added a magazine-capacity guard to the shared MonsterPanel snapshot.
+- 2026-05-05: User verified the Rin MonsterPanel fix in Play Mode and requested the same data audit for Eve and Ariel; Builder corrected Eve/Ariel runtime kind and implementation-state metadata.
+
+## Task: 2026-05-05 Rin F Follow-up Visual And Debug Damage Labels
+
+### Task title
+
+Record Rin follow-up visual and common debug damage popup label change.
+
+### Goals
+
+- Keep common monster state aware that combat damage popups now include debug damage-type labels.
+- Record that Rin F follow-up hits have a white circle effect and combined mixed-damage popup text.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The damage-type suffix notation is debugging-only text.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies damage popup readability and Rin F follow-up feedback in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Rin-specific details are recorded in `boards/MON/RIN_MONSTER.md`.
+- Combat popup details are recorded in `boards/COMBAT/COMBAT_BLACKBOARD.md`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeScene.cs` now maps damage attributes to Korean debug labels for popup text.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs` now spawns a white circle for `RinAmbidextrousFollowup`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP console error query returned only MCP-FOR-UNITY client handler logs, not project compile errors; Unity ready wait timed out after the compile request.
+
+### History
+
+- 2026-05-05: User requested Rin F follow-up visual feedback and debug damage-type notation in damage popup text.
+- 2026-05-05: Builder implemented the visual/debug popup change and recorded validation evidence in Rin and combat boards.
+
+## Task: 2026-05-05 Rin F-J Passive Runtime Implementation
+
+### Task title
+
+Record Rin passive F-J runtime implementation in common monster state.
+
+### Goals
+
+- Keep common monster board aware that Rin A-J is now marked runtime implemented.
+- Record the current interpretation that "all ally" wording maps to the current one selected allied Monster runtime model.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Rin F-J in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Rin-specific details are recorded in `boards/MON/RIN_MONSTER.md`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs` now contains passive runtime helpers for `rin-f`, `rin-g`, `rin-h`, `rin-i`, and `rin-j`.
+- `Pakuri/Assets/Data/GameData/Monsters/rin.asset` now marks `rin-f`, `rin-g`, `rin-h`, `rin-i`, and `rin-j` as `ImplementationState: 2`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP assembly conflict warnings.
+- Unity console error query returned only MCP-FOR-UNITY client handler logs.
+
+### History
+
+- 2026-05-05: User requested implementation of Rin passive skills F-J from the Rin reference skill folder.
+
+## Task: 2026-05-05 Monster Skill Runtime Range Rule
+
+### Task title
+
+Define monster skill runtime range as map-wide and projectile cleanup as fixed X-boundary based.
+
+### Goals
+
+- Treat current monster skills as having no practical skill range limit during runtime.
+- Apply map-wide reach to magazine, non-magazine, and area skill implementations unless a later user request explicitly defines an exception.
+- For magazine/projectile skills, keep projectile lifetime from acting as the gameplay range limit and delete the projectile when it reaches the predefined battlefield X coordinate.
+
+### Constraints
+
+- Role Owner is Designer.
+- This is a design rule and implementation handoff note, not a completed code change.
+- User performs Play Mode gameplay verification.
+- Code Reviewer execution requires explicit user permission.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Design rule recorded; Code Builder handoff needed if the current runtime should be made fully common across all monsters.
+
+### Next Actions
+
+- Code Builder should verify all selected-Monster skill implementations and remove skill-range/lifetime behavior that contradicts the map-wide runtime rule.
+- Code Builder should preserve the current X-boundary projectile cleanup behavior and make it the common projectile rule.
+- Run build/compile/console validation after any code change; do not run Unity Play Mode gameplay verification.
+
+### Evidence
+
+- `boards/COMBAT/PROJECTILE_BLACKBOARD.md` records the 2026-05-04 selected-Monster projectile X-edge cleanup task as implemented.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` currently calls `HasPlayerProjectileReachedBattlefieldXEdge(projectile)` for no-hit player projectiles and sets the status label that the projectile disappeared at the battlefield X boundary.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs` currently uses `GetRinMapWideSkillRange()` for Rin C, D, and E target/search range.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs` still computes Rin A projectile `RemainingLifetime` from `skill.Range`, so a Builder pass is needed if the no-range rule should be enforced for all projectile skills.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs` still computes Ariel A projectile lifetime from `skill.Range` and configured lifetime, so a Builder pass is needed if the no-range rule should be enforced for all projectile skills.
+
+### History
+
+- 2026-05-05: User clarified that current monster magazine, non-magazine, and area skills should not have a gameplay range limit; the whole map is the range, and projectile skills disappear when reaching a predefined X coordinate.
+
 ## Task: 2026-05-04 Rin D Execution Target And Hit Effect Fix
 
 ### Task title

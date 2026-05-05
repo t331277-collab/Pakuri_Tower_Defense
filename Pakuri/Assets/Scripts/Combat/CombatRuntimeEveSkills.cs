@@ -834,7 +834,7 @@ namespace Pakuri.Combat
                 targetCriticalResistance: enemy.CriticalResistance,
                 criticalDamageTakenBonus: GetEveCriticalDamageTakenBonus(enemy, skillId),
                 finalDamageMultiplier: enemy.DamageTakenMultiplier * finalMultiplier * vulnerableMultiplier * passiveMultiplier);
-            var applied = ApplyDamageToEnemy(enemy, result.FinalDamage);
+            var applied = ApplyDamageToEnemy(enemy, result.FinalDamage, attribute);
             enemy.FlashTimer = 0.08f;
             TryTriggerEveParticleSeparationProc(enemy, attribute, skillId);
             Debug.Log($"[CombatDamage] Eve.{attribute} skill -> {enemy.DisplayName}: {result.FormulaLog}; Applied={applied:0.##}, ShieldLeft={enemy.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, enemy.CurrentHealth):0.##}");

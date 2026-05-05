@@ -6,6 +6,54 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, read `boards/MON/MON_BLACKBOARD.md` first and consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-05-05 Ariel Skill Data RuntimeKind Audit
+
+### Task title
+
+Align Ariel active skill runtime kinds with non-magazine runtime behavior.
+
+### Goals
+
+- Keep Ariel A as the only Ariel magazine projectile skill.
+- Classify Ariel B-E according to their implemented behavior so MonsterPanel and future data consumers do not treat them as magazine skills.
+- Keep Ariel A-E/F-J implementation-state metadata aligned with existing runtime implementation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Data-only correction; no Play Mode verification was run by Codex.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Ariel Active1-3 MonsterPanel display in Play Mode after learning B-E.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/ariel/skill/b-radiant-shield.md` states Radiant Shield is `비탄창 / 파티 보호 / 방어막`.
+- `Pakuri/reference/2.Monster/ariel/skill/c-blessing-wave.md` states Blessing Wave is `비탄창 / 파티 강화 / 범위 피해`.
+- `Pakuri/reference/2.Monster/ariel/skill/d-celestial-brand.md` states Celestial Brand is `비탄창 / 단일 표식 / 신성 노출`.
+- `Pakuri/reference/2.Monster/ariel/skill/e-archangel-descent.md` states Archangel Descent is `비탄창 / 전장 광역 / 파티 보호 결전기`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs` contains `TryCastArielRadiantShield`, `TryCastArielBlessingWave`, `TryCastArielCelestialBrand`, and `TryCastArielArchangelDescent` with per-skill cooldown fields.
+- `Pakuri/Assets/Data/GameData/Monsters/ariel.asset` now stores Ariel A `MagazineProjectile`, B `Shield`, C `AreaAttack`, D `Mark`, E `AreaAttack`, and F-J `Passive`, all `RuntimeImplemented`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores the same Ariel runtime kinds and `RuntimeImplemented` states.
+- Unity-MCP read-only Editor import reported `ariel-a:MagazineProjectile:RuntimeImplemented`, `ariel-b:Shield:RuntimeImplemented`, `ariel-c:AreaAttack:RuntimeImplemented`, `ariel-d:Mark:RuntimeImplemented`, `ariel-e:AreaAttack:RuntimeImplemented`, and Ariel F-J passives as `RuntimeImplemented`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-05: After verifying the Rin MonsterPanel fix, user requested auditing Eve and Ariel skill data so they apply correctly too.
+- 2026-05-05: Builder corrected Ariel B-E away from `MagazineProjectile` and aligned the data with the implemented non-magazine cooldown skills.
+
 ## Task: 2026-05-03 Ariel J Passive Runtime Correction
 
 ### Task title

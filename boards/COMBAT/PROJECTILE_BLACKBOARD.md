@@ -5,6 +5,49 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-05 Monster Projectile No-Range Cleanup Rule
+
+### Task title
+
+Record current monster projectile cleanup rule as X-boundary based instead of range/lifetime based.
+
+### Goals
+
+- Keep monster projectile skills from using gameplay range as the projectile deletion condition.
+- Delete magazine/projectile skill objects when their X position reaches the predefined battlefield X coordinate.
+- Keep non-projectile skill range decisions recorded in the monster board while this board tracks projectile cleanup behavior.
+
+### Constraints
+
+- Role Owner is Designer.
+- This is a design rule and implementation handoff note, not a completed code change.
+- User performs Play Mode gameplay verification.
+- Code Reviewer execution requires explicit user permission.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Design rule recorded; Code Builder handoff needed if every current projectile path must be normalized.
+
+### Next Actions
+
+- Code Builder should audit all selected-Monster projectile creation paths and make sure `RemainingLifetime` cannot remove player monster projectiles before the battlefield X boundary when no hit occurs.
+- Code Builder should preserve enemy projectile lifetime behavior separately unless the user also changes enemy projectile rules.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` moves projectiles each update and decrements `RemainingLifetime`, but no-hit player projectiles are currently cleaned up through `HasPlayerProjectileReachedBattlefieldXEdge(projectile)`.
+- `HasPlayerProjectileReachedBattlefieldXEdge(projectile)` compares the projectile X coordinate against `0f` and `fieldSize.x`, using projectile direction to decide the relevant edge.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs` still sets Rin A `RemainingLifetime` from `skill.Range / RinShatteringFistProjectileSpeed`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs` still sets Ariel A `RemainingLifetime` from configured lifetime and `skill.Range / speed`.
+
+### History
+
+- 2026-05-05: User clarified that current monster projectile skills should disappear at a predefined X coordinate, not because of skill range.
+
 ## Task: 2026-05-04 Selected-Monster Projectile X-Edge Cleanup
 
 ### Task title

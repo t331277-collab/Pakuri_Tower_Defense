@@ -46,10 +46,12 @@ namespace Pakuri.Combat
 
                 if (TryHitEnemy(projectile, out var enemyHit, out var damageResult))
                 {
-                    var appliedDamage = ApplyDamageToEnemy(enemyHit, damageResult.FinalDamage);
+                    var wasAlive = enemyHit.CurrentHealth > 0f;
+                    var appliedDamage = ApplyDamageToEnemy(enemyHit, damageResult.FinalDamage, damageResult.Attribute);
                     enemyHit.FlashTimer = 0.08f;
                     TrackArielHolyExposureDamage(enemyHit, projectile.Attribute, damageResult.FinalDamage);
                     HandleRinProjectileHit(projectile, enemyHit, appliedDamage);
+                    HandleRinEnemyKilledByDamage(enemyHit, wasAlive);
 
                     var appliedStatus = false;
                     if (string.Equals(projectile.SkillId, "ariel-a", StringComparison.OrdinalIgnoreCase)
@@ -168,7 +170,7 @@ namespace Pakuri.Combat
                     source.CriticalMultiplierBonus,
                     selectedMonsterDefenses);
                 appliedDamage = resolution.FinalDamage;
-                appliedDamage = ApplyDamageToSelectedMonster(appliedDamage, source);
+                appliedDamage = ApplyDamageToSelectedMonster(appliedDamage, source, source.Definition.Attribute);
                 targetLabel = selectedMonsterName;
                 return true;
             }
@@ -224,6 +226,7 @@ namespace Pakuri.Combat
                     projectile.Attribute,
                     enemy.Defenses,
                     flatDefenseReduction: GetEveFlatDefenseReduction(enemy, projectile.Attribute) + GetArielFlatDefenseReduction(enemy, projectile.Attribute),
+                    percentDefenseReductions: GetRinPercentDefenseReductions(enemy, projectile.Attribute),
                     criticalChanceBonus: GetArielCriticalChanceBonus(projectile.Attribute) + GetRinCriticalChanceBonus(enemy, projectile.Attribute, projectile.SkillId),
                     criticalMultiplierBonus: GetRinCriticalMultiplierBonus(enemy, projectile.Attribute, projectile.SkillId),
                     targetCriticalResistance: enemy.CriticalResistance,
@@ -264,7 +267,7 @@ namespace Pakuri.Combat
                     break;
                 }
 
-                var appliedDamage = ApplyDamageToEnemy(branchTarget, branchDamage);
+                var appliedDamage = ApplyDamageToEnemy(branchTarget, branchDamage, DamageAttribute.Lightning);
                 branchTarget.FlashTimer = 0.08f;
                 CreateEveArcBranchLine(sourceEnemy.Transform.position, branchTarget.Transform.position);
                 projectile.HitEnemies.Add(branchTarget);
@@ -308,7 +311,7 @@ namespace Pakuri.Combat
             return best;
         }
 
-        private float ApplyDamageToEnemy(EnemyRuntime enemy, float incomingDamage)
+        private float ApplyDamageToEnemy(EnemyRuntime enemy, float incomingDamage, DamageAttribute? attribute = null, bool spawnPopup = true)
         {
             if (enemy == null || incomingDamage <= 0f)
             {
@@ -328,15 +331,15 @@ namespace Pakuri.Combat
             var appliedDamage = Mathf.Min(enemy.CurrentHealth, remainingDamage);
             enemy.CurrentHealth -= appliedDamage;
             totalAppliedDamage += appliedDamage;
-            if (totalAppliedDamage > 0f)
+            if (spawnPopup && totalAppliedDamage > 0f)
             {
-                SpawnDamagePopupForEnemy(enemy, totalAppliedDamage);
+                SpawnDamagePopupForEnemy(enemy, totalAppliedDamage, attribute);
             }
 
-            return appliedDamage;
+            return totalAppliedDamage;
         }
 
-        private float ApplyDamageToSelectedMonster(float incomingDamage, EnemyRuntime sourceEnemy = null)
+        private float ApplyDamageToSelectedMonster(float incomingDamage, EnemyRuntime sourceEnemy = null, DamageAttribute? attribute = null)
         {
             if (incomingDamage <= 0f)
             {
@@ -360,10 +363,10 @@ namespace Pakuri.Combat
             totalAppliedDamage += appliedDamage;
             if (totalAppliedDamage > 0f)
             {
-                SpawnDamagePopupForSelectedMonster(totalAppliedDamage);
+                SpawnDamagePopupForSelectedMonster(totalAppliedDamage, attribute);
             }
 
-            return appliedDamage;
+            return totalAppliedDamage;
         }
 
         private static float GetEnemyHitRadius(EnemyRuntime enemy)

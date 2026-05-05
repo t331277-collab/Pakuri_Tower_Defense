@@ -70,6 +70,8 @@ namespace Pakuri.Combat
             public float HolyExposureCriticalDamageTakenBonus;
             public float HolyExposureDetonationMultiplier;
             public float HolyExposureAccumulatedDamage;
+            public float RinPhysicalDefenseReductionTimer;
+            public float RinPhysicalDefenseReduction;
             public float FlashTimer;
             public string DisplayName;
         }
@@ -561,6 +563,224 @@ namespace Pakuri.Combat
 
             UpdateSelectedMonsterStatusVisuals();
             statusLabel = $"{selectedMonsterName} debug skill selection updated.";
+        }
+
+        public readonly struct MonsterPanelSkillView
+        {
+            public MonsterPanelSkillView(
+                int panelIndex,
+                SkillDefinition skill,
+                bool isMagazine,
+                int currentAmmo,
+                int maxAmmo,
+                float cooldownRemaining,
+                float cooldownDuration)
+            {
+                PanelIndex = panelIndex;
+                Skill = skill;
+                IsMagazine = isMagazine;
+                CurrentAmmo = currentAmmo;
+                MaxAmmo = maxAmmo;
+                CooldownRemaining = Mathf.Max(0f, cooldownRemaining);
+                CooldownDuration = Mathf.Max(0f, cooldownDuration);
+            }
+
+            public int PanelIndex { get; }
+            public SkillDefinition Skill { get; }
+            public bool IsMagazine { get; }
+            public int CurrentAmmo { get; }
+            public int MaxAmmo { get; }
+            public float CooldownRemaining { get; }
+            public float CooldownDuration { get; }
+            public string DisplayName => Skill != null ? Skill.DisplayName : string.Empty;
+            public Sprite Icon => Skill != null ? Skill.SkillIcon : null;
+            public bool IsCoolingDown => CooldownRemaining > 0f && CooldownDuration > 0f;
+            public float CooldownRemainingRatio => IsCoolingDown ? Mathf.Clamp01(CooldownRemaining / CooldownDuration) : 0f;
+        }
+
+        public int GetMonsterPanelSkillViews(IList<MonsterPanelSkillView> views, int maxSlots = 3)
+        {
+            if (views == null)
+            {
+                return 0;
+            }
+
+            views.Clear();
+            if (selectedMonster == null || maxSlots <= 0)
+            {
+                return 0;
+            }
+
+            var added = 0;
+            for (var slot = SkillSlot.A; slot <= SkillSlot.E && added < maxSlots; slot++)
+            {
+                var skill = FindSelectedSkill(slot);
+                if (skill == null || !HasLearnedActive(slot))
+                {
+                    continue;
+                }
+
+                views.Add(CreateMonsterPanelSkillView(added, skill));
+                added += 1;
+            }
+
+            return added;
+        }
+
+        private MonsterPanelSkillView CreateMonsterPanelSkillView(int panelIndex, SkillDefinition skill)
+        {
+            var isMagazine = skill != null
+                && skill.RuntimeKind == SkillRuntimeKind.MagazineProjectile
+                && skill.MagazineCapacity > 0;
+            var currentAmmo = 0;
+            var maxAmmo = 0;
+            var cooldownRemaining = 0f;
+            var cooldownDuration = 0f;
+
+            if (skill != null)
+            {
+                if (isMagazine)
+                {
+                    currentAmmo = Mathf.Max(0, currentShotsRemaining);
+                    maxAmmo = Mathf.Max(1, GetSelectedMonsterMagazineCapacity());
+                    if (reloadRemaining > 0f)
+                    {
+                        cooldownRemaining = reloadRemaining;
+                        cooldownDuration = GetSelectedMonsterReloadSeconds();
+                    }
+                    else if (shotCooldown > 0f)
+                    {
+                        cooldownRemaining = shotCooldown;
+                        cooldownDuration = Mathf.Max(0.05f, shotIntervalConfigured);
+                    }
+                }
+                else
+                {
+                    cooldownRemaining = GetSelectedMonsterSkillCooldownRemaining(skill.Slot);
+                    cooldownDuration = GetSelectedMonsterSkillCooldownDuration(skill);
+                }
+            }
+
+            return new MonsterPanelSkillView(panelIndex, skill, isMagazine, currentAmmo, maxAmmo, cooldownRemaining, cooldownDuration);
+        }
+
+        private float GetSelectedMonsterReloadSeconds()
+        {
+            if (IsSelectedArielMonster())
+            {
+                return GetArielReloadSeconds();
+            }
+
+            if (IsSelectedRinMonster())
+            {
+                return GetRinShatteringFistReloadSeconds();
+            }
+
+            return Mathf.Max(0.25f, reloadDurationConfigured);
+        }
+
+        private float GetSelectedMonsterSkillCooldownRemaining(SkillSlot slot)
+        {
+            if (IsSelectedEveMonster())
+            {
+                switch (slot)
+                {
+                    case SkillSlot.B:
+                        return eveBeamCooldownRemaining;
+                    case SkillSlot.C:
+                        return eveFrostCooldownRemaining;
+                    case SkillSlot.D:
+                        return eveStaticCooldownRemaining;
+                    case SkillSlot.E:
+                        return eveDroneReloadRemaining;
+                }
+            }
+
+            if (IsSelectedArielMonster())
+            {
+                switch (slot)
+                {
+                    case SkillSlot.B:
+                        return arielRadiantShieldCooldownRemaining;
+                    case SkillSlot.C:
+                        return arielBlessingCooldownRemaining;
+                    case SkillSlot.D:
+                        return arielBrandCooldownRemaining;
+                    case SkillSlot.E:
+                        return arielArchangelCooldownRemaining;
+                }
+            }
+
+            if (IsSelectedRinMonster())
+            {
+                switch (slot)
+                {
+                    case SkillSlot.B:
+                        return rinHowlingCooldownRemaining;
+                    case SkillSlot.C:
+                        return rinShockwaveCooldownRemaining;
+                    case SkillSlot.D:
+                        return rinFinishingBlowCooldownRemaining;
+                    case SkillSlot.E:
+                        return rinCollapseStrikeCooldownRemaining;
+                }
+            }
+
+            return 0f;
+        }
+
+        private float GetSelectedMonsterSkillCooldownDuration(SkillDefinition skill)
+        {
+            if (skill == null)
+            {
+                return 0f;
+            }
+
+            if (IsSelectedEveMonster())
+            {
+                switch (skill.Slot)
+                {
+                    case SkillSlot.B:
+                    case SkillSlot.C:
+                        return Mathf.Max(0.1f, skill.CooldownSeconds);
+                    case SkillSlot.D:
+                        return 7f;
+                    case SkillSlot.E:
+                        return GetEveDroneReloadSeconds();
+                }
+            }
+
+            if (IsSelectedArielMonster())
+            {
+                switch (skill.Slot)
+                {
+                    case SkillSlot.B:
+                        return GetArielCooldown(skill, 9f, HasChoice("ariel-b-trait-3") ? 0.80f : 1f);
+                    case SkillSlot.C:
+                        return GetArielCooldown(skill, 8f, 1f);
+                    case SkillSlot.D:
+                        return GetArielCooldown(skill, 10f, (HasArielBrandRevelation() && HasChoice("ariel-i-trait-2")) ? 0.80f : 1f);
+                    case SkillSlot.E:
+                        return GetArielCooldown(skill, 17f, GetArielArchangelCooldownMultiplier());
+                }
+            }
+
+            if (IsSelectedRinMonster())
+            {
+                switch (skill.Slot)
+                {
+                    case SkillSlot.B:
+                        return GetRinCooldown(skill, 12f, HasChoice("rin-b-trait-3") ? 0.80f : 1f);
+                    case SkillSlot.C:
+                        return GetRinCooldown(skill, 5.5f, HasChoice("rin-c-trait-4") ? 0.80f : 1f);
+                    case SkillSlot.D:
+                        return GetRinCooldown(skill, 9f, HasChoice("rin-d-master-2") ? 1.25f : 1f);
+                    case SkillSlot.E:
+                        return GetRinCooldown(skill, 8f, HasChoice("rin-e-trait-3") ? 0.80f : 1f);
+                }
+            }
+
+            return skill.CooldownSeconds > 0f ? skill.CooldownSeconds : 0f;
         }
 
         public void ResetPrototypeState()

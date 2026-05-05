@@ -17,6 +17,9 @@ namespace Pakuri.Combat
         private const float RinFinishingBlowKillCooldownRefund = 0.35f;
         private const float RinFinishingBlowExplosionRadius = 2.4f;
         private const float RinMapWideSkillRangePadding = 2f;
+        private const float RinWaveAmplificationInternalCooldown = 3f;
+        private const float RinFinisherInstinctDuration = 4f;
+        private const float RinCollapseAftermathDuration = 3f;
 
         private float rinHowlingCooldownRemaining;
         private float rinShockwaveCooldownRemaining;
@@ -24,6 +27,12 @@ namespace Pakuri.Combat
         private float rinCollapseStrikeCooldownRemaining;
         private float rinHowlingTimer;
         private int rinThunderGauntletHitCounter;
+        private int rinWaveAmplificationPhysicalHitCount;
+        private float rinWaveAmplificationCooldownRemaining;
+        private float rinFinisherInstinctActionTimer;
+        private float rinFinisherInstinctCritTimer;
+        private float rinCollapseAftermathActionTimer;
+        private float rinCollapseAftermathAttackTimer;
 
         private void ResetRinSkillCombatTimers()
         {
@@ -33,15 +42,22 @@ namespace Pakuri.Combat
             rinCollapseStrikeCooldownRemaining = 0f;
             rinHowlingTimer = 0f;
             rinThunderGauntletHitCounter = 0;
+            rinWaveAmplificationPhysicalHitCount = 0;
+            rinWaveAmplificationCooldownRemaining = 0f;
+            rinFinisherInstinctActionTimer = 0f;
+            rinFinisherInstinctCritTimer = 0f;
+            rinCollapseAftermathActionTimer = 0f;
+            rinCollapseAftermathAttackTimer = 0f;
         }
 
         private void UpdateRinSkillCooldowns()
         {
-            var elapsed = Time.deltaTime;
+            var elapsed = Time.deltaTime * GetRinActionSpeedMultiplier();
             rinHowlingCooldownRemaining = Mathf.Max(0f, rinHowlingCooldownRemaining - elapsed);
             rinShockwaveCooldownRemaining = Mathf.Max(0f, rinShockwaveCooldownRemaining - elapsed);
             rinFinishingBlowCooldownRemaining = Mathf.Max(0f, rinFinishingBlowCooldownRemaining - elapsed);
             rinCollapseStrikeCooldownRemaining = Mathf.Max(0f, rinCollapseStrikeCooldownRemaining - elapsed);
+            rinWaveAmplificationCooldownRemaining = Mathf.Max(0f, rinWaveAmplificationCooldownRemaining - Time.deltaTime);
         }
 
         private void UpdateRinSkillEffects()
@@ -52,6 +68,10 @@ namespace Pakuri.Combat
             }
 
             rinHowlingTimer = Mathf.Max(0f, rinHowlingTimer - Time.deltaTime);
+            rinFinisherInstinctActionTimer = Mathf.Max(0f, rinFinisherInstinctActionTimer - Time.deltaTime);
+            rinFinisherInstinctCritTimer = Mathf.Max(0f, rinFinisherInstinctCritTimer - Time.deltaTime);
+            rinCollapseAftermathActionTimer = Mathf.Max(0f, rinCollapseAftermathActionTimer - Time.deltaTime);
+            rinCollapseAftermathAttackTimer = Mathf.Max(0f, rinCollapseAftermathAttackTimer - Time.deltaTime);
         }
 
         private bool TryTriggerRinAutomaticSkills()
@@ -171,6 +191,10 @@ namespace Pakuri.Combat
 
             rinHowlingTimer = Mathf.Max(rinHowlingTimer, duration);
             rinHowlingCooldownRemaining = GetRinCooldown(skill, 12f, HasChoice("rin-b-trait-3") ? 0.80f : 1f);
+            if (HasRinBattleResonance() && HasChoice("rin-g-trait-3") && reloadRemaining > 0f)
+            {
+                reloadRemaining *= 0.75f;
+            }
 
             var effect = CreateCircleEffect("RinHowling", eveAnchor.position, 2.2f, 0.45f);
             effect.SkillId = "rin-b";
@@ -340,6 +364,12 @@ namespace Pakuri.Combat
             }
 
             rinFinishingBlowCooldownRemaining = GetRinCooldown(skill, 9f, HasChoice("rin-d-master-2") ? 1.25f : 1f);
+            if (executeTarget && HasRinFinisherInstinct() && HasChoice("rin-i-trait-3"))
+            {
+                var collapseCooldown = GetRinCooldown(FindSelectedSkill(SkillSlot.E), 8f, HasChoice("rin-e-trait-3") ? 0.80f : 1f);
+                rinCollapseStrikeCooldownRemaining = Mathf.Max(0f, rinCollapseStrikeCooldownRemaining - collapseCooldown * 0.12f);
+            }
+
             var killed = wasAlive && target.CurrentHealth <= 0f;
             if (killed)
             {
@@ -407,6 +437,11 @@ namespace Pakuri.Combat
 
                 var targetMultiplier = enemy == target && HasChoice("rin-e-trait-4") ? 1.50f : 1f;
                 var physicalDamage = ApplyRinSkillDamage(enemy, damage, DamageAttribute.Physical, targetMultiplier, "rin-e");
+                if (HasRinCollapseAftermath())
+                {
+                    ApplyRinPhysicalDefenseReduction(enemy);
+                }
+
                 if (enemy == target && HasChoice("rin-e-master-1"))
                 {
                     ApplyRinAdditionalDamage(enemy, physicalDamage, 1.00f, DamageAttribute.Fire, "rin-e-master-1");
@@ -424,6 +459,15 @@ namespace Pakuri.Combat
             if (hitCount >= 3 && HasChoice("rin-e-trait-5"))
             {
                 rinHowlingCooldownRemaining = Mathf.Max(0f, rinHowlingCooldownRemaining - GetRinCooldown(FindSelectedSkill(SkillSlot.B), 12f, 1f) * 0.20f);
+            }
+
+            if (hitCount >= 3 && HasRinCollapseAftermath())
+            {
+                rinCollapseAftermathActionTimer = Mathf.Max(rinCollapseAftermathActionTimer, RinCollapseAftermathDuration);
+                if (HasChoice("rin-j-trait-2"))
+                {
+                    rinCollapseAftermathAttackTimer = Mathf.Max(rinCollapseAftermathAttackTimer, RinCollapseAftermathDuration);
+                }
             }
 
             var effect = CreateCircleEffect("RinCollapseStrike", center, radius, 0.35f);
@@ -451,6 +495,7 @@ namespace Pakuri.Combat
                 return;
             }
 
+            TrackRinPhysicalDamageHit(physicalDamage, "rin-a");
             ApplyRinHowlingDarkAdditionalDamage(enemy, physicalDamage, "rin-a-howling");
             if (!HasChoice("rin-a-master-2"))
             {
@@ -491,18 +536,27 @@ namespace Pakuri.Combat
                 baseDamage,
                 attribute,
                 enemy.Defenses,
+                percentDefenseReductions: GetRinPercentDefenseReductions(enemy, attribute),
                 criticalChanceBonus: GetRinCriticalChanceBonus(enemy, attribute, skillId, executeTarget),
                 criticalMultiplierBonus: GetRinCriticalMultiplierBonus(enemy, attribute, skillId),
                 targetCriticalResistance: enemy.CriticalResistance,
                 finalDamageMultiplier: enemy.DamageTakenMultiplier * Mathf.Max(0f, finalMultiplier) * GetRinFinalDamageMultiplier(enemy, attribute, skillId));
-            var applied = ApplyDamageToEnemy(enemy, result.FinalDamage);
+            var wasAlive = enemy.CurrentHealth > 0f;
+            var applied = ApplyDamageToEnemy(enemy, result.FinalDamage, attribute);
             enemy.FlashTimer = 0.08f;
+            if (attribute == DamageAttribute.Physical)
+            {
+                TrackRinPhysicalDamageHit(applied, skillId);
+                ApplyRinAmbidextrousFollowup(enemy, applied, skillId);
+            }
+
             ApplyRinHowlingDarkAdditionalDamage(enemy, applied, $"{skillId}-howling");
+            HandleRinEnemyKilledByDamage(enemy, wasAlive);
             Debug.Log($"[CombatDamage] Rin.{skillId} -> {enemy.DisplayName}: {result.FormulaLog}; Applied={applied:0.##}, ShieldLeft={enemy.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, enemy.CurrentHealth):0.##}");
             return applied;
         }
 
-        private float ApplyRinAdditionalDamage(EnemyRuntime enemy, float physicalDamage, float multiplier, DamageAttribute attribute, string skillId)
+        private float ApplyRinAdditionalDamage(EnemyRuntime enemy, float physicalDamage, float multiplier, DamageAttribute attribute, string skillId, bool spawnPopup = true)
         {
             if (enemy == null || enemy.CurrentHealth <= 0f || physicalDamage <= 0f || multiplier <= 0f)
             {
@@ -513,10 +567,13 @@ namespace Pakuri.Combat
                 physicalDamage * multiplier,
                 attribute,
                 enemy.Defenses,
+                percentDefenseReductions: GetRinPercentDefenseReductions(enemy, attribute),
                 targetCriticalResistance: enemy.CriticalResistance,
                 finalDamageMultiplier: enemy.DamageTakenMultiplier);
-            var applied = ApplyDamageToEnemy(enemy, result.FinalDamage);
+            var wasAlive = enemy.CurrentHealth > 0f;
+            var applied = ApplyDamageToEnemy(enemy, result.FinalDamage, attribute, spawnPopup);
             enemy.FlashTimer = 0.08f;
+            HandleRinEnemyKilledByDamage(enemy, wasAlive);
             Debug.Log($"[CombatDamage] Rin.{skillId} -> {enemy.DisplayName}: {result.FormulaLog}; Applied={applied:0.##}, ShieldLeft={enemy.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, enemy.CurrentHealth):0.##}");
             return applied;
         }
@@ -533,6 +590,15 @@ namespace Pakuri.Combat
 
         private void HandleRinFinishingBlowKill(EnemyRuntime target, float physicalDamage)
         {
+            if (HasRinFinisherInstinct())
+            {
+                rinFinisherInstinctActionTimer = Mathf.Max(rinFinisherInstinctActionTimer, RinFinisherInstinctDuration);
+                if (HasChoice("rin-i-trait-2"))
+                {
+                    rinFinisherInstinctCritTimer = Mathf.Max(rinFinisherInstinctCritTimer, RinFinisherInstinctDuration);
+                }
+            }
+
             if (HasChoice("rin-d-master-1"))
             {
                 rinFinishingBlowCooldownRemaining = 0f;
@@ -543,6 +609,176 @@ namespace Pakuri.Combat
             var refund = RinFinishingBlowKillCooldownRefund + (HasChoice("rin-d-trait-3") ? 0.20f : 0f);
             var baseCooldown = GetRinCooldown(FindSelectedSkill(SkillSlot.D), 9f, HasChoice("rin-d-master-2") ? 1.25f : 1f);
             rinFinishingBlowCooldownRemaining = Mathf.Max(0f, rinFinishingBlowCooldownRemaining - baseCooldown * refund);
+        }
+
+        private void ApplyRinAmbidextrousFollowup(EnemyRuntime enemy, float sourcePhysicalDamage, string sourceSkillId)
+        {
+            if (!HasRinAmbidextrous()
+                || enemy == null
+                || sourcePhysicalDamage <= 0f
+                || !IsRinAmbidextrousEligibleSkill(sourceSkillId))
+            {
+                return;
+            }
+
+            var multiplier = 0.35f + (HasChoice("rin-f-trait-2") ? 0.15f : 0f);
+            var followupDamage = ApplyRinAdditionalDamage(enemy, sourcePhysicalDamage, multiplier, DamageAttribute.Physical, "rin-f", false);
+            var lightningDamage = 0f;
+            if (HasChoice("rin-f-trait-3"))
+            {
+                lightningDamage = ApplyRinAdditionalDamage(enemy, followupDamage, 0.30f, DamageAttribute.Lightning, "rin-f-trait-3", false);
+            }
+
+            CreateRinAmbidextrousFollowupEffect(enemy, followupDamage, lightningDamage);
+        }
+
+        private bool IsRinAmbidextrousEligibleSkill(string sourceSkillId)
+        {
+            return string.Equals(sourceSkillId, "rin-c", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(sourceSkillId, "rin-d", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(sourceSkillId, "rin-e", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void CreateRinAmbidextrousFollowupEffect(EnemyRuntime enemy, float physicalDamage, float lightningDamage)
+        {
+            if (enemy == null || enemy.Transform == null || physicalDamage <= 0f)
+            {
+                return;
+            }
+
+            var radius = Mathf.Max(0.55f, GetEnemyHitRadius(enemy) + 0.18f);
+            var effect = CreateCircleEffect("RinAmbidextrousFollowup", enemy.Transform.position, radius, 0.22f);
+            effect.SkillId = "rin-f";
+            if (effect.Renderer != null)
+            {
+                effect.Renderer.color = new Color(1f, 1f, 1f, 0.72f);
+                effect.Renderer.sortingOrder = 27;
+            }
+
+            skillEffects.Add(effect);
+
+            var popupText = lightningDamage > 0f
+                ? $"{FormatDamagePopupTerm(physicalDamage, DamageAttribute.Physical)} + {FormatDamagePopupTerm(lightningDamage, DamageAttribute.Lightning)}"
+                : FormatDamagePopupTerm(physicalDamage, DamageAttribute.Physical);
+            SpawnDamagePopupForEnemy(enemy, popupText);
+        }
+
+        private void TrackRinPhysicalDamageHit(float appliedDamage, string sourceSkillId)
+        {
+            if (!HasRinWaveAmplification()
+                || appliedDamage <= 0f
+                || rinWaveAmplificationCooldownRemaining > 0f
+                || string.Equals(sourceSkillId, "rin-h", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            rinWaveAmplificationPhysicalHitCount += 1;
+            var requiredHits = HasChoice("rin-h-trait-1") ? 8 : 10;
+            if (rinWaveAmplificationPhysicalHitCount < requiredHits)
+            {
+                return;
+            }
+
+            rinWaveAmplificationPhysicalHitCount = 0;
+            TryCastRinWaveAmplificationShockwave();
+        }
+
+        private bool TryCastRinWaveAmplificationShockwave()
+        {
+            var skill = FindSelectedSkill(SkillSlot.C);
+            if (skill == null || !HasLearnedActive(SkillSlot.C) || eveAnchor == null)
+            {
+                return false;
+            }
+
+            var mapWideRange = GetRinMapWideSkillRange();
+            var target = FindNearestEnemy(eveAnchor.position, mapWideRange);
+            if (target == null)
+            {
+                return false;
+            }
+
+            var direction = target.Transform.position - eveAnchor.position;
+            direction.z = 0f;
+            if (direction.sqrMagnitude < 0.01f)
+            {
+                direction = Vector3.right;
+            }
+
+            direction.Normalize();
+            var effect = CreateLineEffect("RinWaveAmplification", eveAnchor.position, direction, mapWideRange, RinShockwaveWidth, 0.25f);
+            effect.SkillId = "rin-h";
+            if (effect.Renderer != null)
+            {
+                effect.Renderer.color = new Color(0.62f, 0.86f, 1f, 0.58f);
+                effect.Renderer.sortingOrder = 24;
+            }
+
+            skillEffects.Add(effect);
+            var damageMultiplier = HasChoice("rin-h-trait-2") ? 0.95f : 0.75f;
+            var hitCount = 0;
+            var damage = GetRinSkillBaseDamage(skill) * damageMultiplier;
+            for (var i = 0; i < enemies.Count; i++)
+            {
+                var enemy = enemies[i];
+                if (enemy == null || enemy.CurrentHealth <= 0f || enemy.Transform == null || !IsPointInsideBeam(enemy.Transform.position, effect))
+                {
+                    continue;
+                }
+
+                var physicalDamage = ApplyRinSkillDamage(enemy, damage, DamageAttribute.Physical, 1f, "rin-h");
+                ApplyRinKnockback(enemy, direction, RinShockwaveKnockback);
+                if (HasChoice("rin-h-trait-3"))
+                {
+                    ApplyRinAdditionalDamage(enemy, physicalDamage, 0.30f, DamageAttribute.Lightning, "rin-h-trait-3");
+                }
+
+                hitCount += 1;
+            }
+
+            rinWaveAmplificationCooldownRemaining = RinWaveAmplificationInternalCooldown;
+            statusLabel = $"Wave Amplification auto Shockwave hit {hitCount} enemy(s).";
+            return hitCount > 0;
+        }
+
+        private void ApplyRinPhysicalDefenseReduction(EnemyRuntime enemy)
+        {
+            if (enemy == null)
+            {
+                return;
+            }
+
+            enemy.RinPhysicalDefenseReduction = Mathf.Max(enemy.RinPhysicalDefenseReduction, HasChoice("rin-j-trait-1") ? 0.26f : 0.18f);
+            enemy.RinPhysicalDefenseReductionTimer = Mathf.Max(enemy.RinPhysicalDefenseReductionTimer, 4f);
+        }
+
+        private void HandleRinEnemyKilledByDamage(EnemyRuntime enemy, bool wasAlive)
+        {
+            if (!IsSelectedRinMonster() || enemy == null || !wasAlive || enemy.CurrentHealth > 0f)
+            {
+                return;
+            }
+
+            if (HasRinCollapseAftermath() && HasChoice("rin-j-trait-3") && enemy.RinPhysicalDefenseReductionTimer > 0f)
+            {
+                var finishingCooldown = GetRinCooldown(FindSelectedSkill(SkillSlot.D), 9f, HasChoice("rin-d-master-2") ? 1.25f : 1f);
+                rinFinishingBlowCooldownRemaining = Mathf.Max(0f, rinFinishingBlowCooldownRemaining - finishingCooldown * 0.15f);
+            }
+        }
+
+        private float[] GetRinPercentDefenseReductions(EnemyRuntime enemy, DamageAttribute attribute)
+        {
+            if (!IsSelectedRinMonster()
+                || enemy == null
+                || attribute != DamageAttribute.Physical
+                || enemy.RinPhysicalDefenseReductionTimer <= 0f
+                || enemy.RinPhysicalDefenseReduction <= 0f)
+            {
+                return null;
+            }
+
+            return new[] { enemy.RinPhysicalDefenseReduction };
         }
 
         private void ApplyRinAreaAdditionalDamage(Vector3 center, float radius, float physicalDamage, float multiplier, DamageAttribute attribute, string skillId)
@@ -700,7 +936,17 @@ namespace Pakuri.Combat
             }
 
             var effectivePower = powerStatConfigured;
+            if (rinHowlingTimer > 0f && HasRinBattleResonance())
+            {
+                effectivePower *= 1f + 0.14f + (HasChoice("rin-g-trait-1") ? 0.08f : 0f);
+            }
+
             if (rinHowlingTimer > 0f && HasChoice("rin-b-trait-4"))
+            {
+                effectivePower *= 1.15f;
+            }
+
+            if (rinCollapseAftermathAttackTimer > 0f && HasChoice("rin-j-trait-2"))
             {
                 effectivePower *= 1.15f;
             }
@@ -760,10 +1006,26 @@ namespace Pakuri.Combat
         {
             if (rinHowlingTimer <= 0f)
             {
-                return 1f;
+                var inactiveBonus = 0f;
+                if (rinFinisherInstinctActionTimer > 0f)
+                {
+                    inactiveBonus += 0.10f;
+                }
+
+                if (rinCollapseAftermathActionTimer > 0f)
+                {
+                    inactiveBonus += 0.12f;
+                }
+
+                return 1f + inactiveBonus;
             }
 
             var bonus = 0.20f;
+            if (HasRinBattleResonance())
+            {
+                bonus += 0.08f;
+            }
+
             if (HasChoice("rin-b-trait-2"))
             {
                 bonus += 0.10f;
@@ -779,6 +1041,16 @@ namespace Pakuri.Combat
                 bonus -= 0.05f;
             }
 
+            if (rinFinisherInstinctActionTimer > 0f)
+            {
+                bonus += 0.10f;
+            }
+
+            if (rinCollapseAftermathActionTimer > 0f)
+            {
+                bonus += 0.12f;
+            }
+
             return Mathf.Max(0.1f, 1f + bonus);
         }
 
@@ -790,9 +1062,19 @@ namespace Pakuri.Combat
             }
 
             var bonus = 0f;
+            if (attribute == DamageAttribute.Physical && HasRinAmbidextrous())
+            {
+                bonus += 0.12f + (HasChoice("rin-f-trait-1") ? 0.06f : 0f);
+            }
+
             if (rinHowlingTimer > 0f && attribute == DamageAttribute.Physical && HasChoice("rin-b-master-1"))
             {
                 bonus += 0.18f;
+            }
+
+            if (HasRinFinisherInstinct() && IsRinLowHealthTarget(enemy))
+            {
+                bonus += 0.16f + (HasChoice("rin-i-trait-1") ? 0.08f : 0f);
             }
 
             return 1f + bonus;
@@ -814,6 +1096,11 @@ namespace Pakuri.Combat
             if (rinHowlingTimer > 0f && attribute == DamageAttribute.Physical && HasChoice("rin-b-trait-5"))
             {
                 bonus += 0.08f;
+            }
+
+            if (rinHowlingTimer > 0f && attribute == DamageAttribute.Physical && HasRinBattleResonance() && HasChoice("rin-g-trait-2"))
+            {
+                bonus += 0.06f;
             }
 
             if (executeTarget && string.Equals(skillId, "rin-d", StringComparison.OrdinalIgnoreCase) && HasChoice("rin-d-master-1"))
@@ -842,7 +1129,49 @@ namespace Pakuri.Combat
                 bonus += 0.40f;
             }
 
+            if (rinFinisherInstinctCritTimer > 0f && HasChoice("rin-i-trait-2"))
+            {
+                bonus += 0.25f;
+            }
+
             return bonus;
+        }
+
+        private bool IsRinLowHealthTarget(EnemyRuntime enemy)
+        {
+            return enemy != null && enemy.MaxHealth > 0f && enemy.CurrentHealth / enemy.MaxHealth <= 0.35f;
+        }
+
+        private bool HasRinPassive(string passiveId, string passiveName)
+        {
+            return IsSelectedRinMonster()
+                && ((!string.IsNullOrWhiteSpace(passiveId) && chosenSkillChoiceIds.Contains(passiveId))
+                    || (!string.IsNullOrWhiteSpace(passiveName) && learnedPassiveSkillNames.Contains(passiveName)));
+        }
+
+        private bool HasRinAmbidextrous()
+        {
+            return HasRinPassive("rin-f", "양손잡이");
+        }
+
+        private bool HasRinBattleResonance()
+        {
+            return HasRinPassive("rin-g", "전장의 공명");
+        }
+
+        private bool HasRinWaveAmplification()
+        {
+            return HasRinPassive("rin-h", "파문 증폭");
+        }
+
+        private bool HasRinFinisherInstinct()
+        {
+            return HasRinPassive("rin-i", "마무리 본능");
+        }
+
+        private bool HasRinCollapseAftermath()
+        {
+            return HasRinPassive("rin-j", "붕괴 여파");
         }
 
         private bool IsSelectedRinMonster()

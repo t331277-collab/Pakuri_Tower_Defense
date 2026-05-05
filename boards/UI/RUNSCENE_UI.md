@@ -5,6 +5,59 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-05 RunScene MonsterPanel 1P Skill Status UI
+
+### Task title
+
+Bind RunScene MonsterPanel to 1P selected Monster active skill state.
+
+### Goals
+
+- Use the scene-authored RunScene `MonsterPanel` instead of replacing it with generated UI.
+- Keep `1PMonster` active and future 2P-5P Monster groups inactive for now.
+- Show learned active skills in `Active1` through `Active3`, with current-ammo-only TMP magazine count for magazine skills and a vertical cooldown/reload overlay.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Preserve user-authored RunScene UI layout and images.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies RunScene Play Mode behavior as rewards add active skills, including current-ammo-only text such as `10`, `9`, `8` and per-skill cooldown overlays on Active1-3.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scenes/RunScene.unity` contains `MonsterPanel`, `1PMonster`, and multiple `Active1` / `Active2` / `Active3` names.
+- Unity-MCP loaded-scene inspection found `RunCombatCanvas/MonsterPanel/1PMonster/Active1`, `Active2`, and `Active3`, plus `2PMonster` through `5PMonster`.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` now binds `CombatMonsterPanelUiController` from `RunCombatUiController.InitializeUi()` and runtime `Update()`.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` now binds existing slot `Text (TMP)` descendants through `TMP_Text` and no longer creates `CountText`.
+- `Select-String -LiteralPath Pakuri\Assets\Scenes\RunScene.unity,Pakuri\Assets\Scenes\DebugScene.unity -Pattern "CountText"` found no saved `CountText` after the follow-up cleanup.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` now provides the skill state snapshot used by the panel.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+- Follow-up builds for both projects completed with 0 errors after the TMP ammo binding change.
+- 2026-05-05 follow-up: Rin B/C/D/E are no longer stored as `MagazineProjectile` in `rin.asset` or `monster_skills.csv`; Active slots now classify Rin A as the only Rin magazine skill.
+- 2026-05-05 follow-up: `CombatRuntimeController.CreateMonsterPanelSkillView(...)` now requires `MagazineCapacity > 0` before using ammo/reload state, so Active2/3 non-magazine skills use their own slot cooldowns.
+- 2026-05-05 follow-up: `RunCombatUiController.cs` disables TMP ammo text for non-magazine slots and assigns `DebugUiSolid` to `CooldownOverlay` so the black filled image can visibly drain as cooldown completes.
+- 2026-05-05 follow-up validation: runtime and Editor builds completed with 0 errors after rerunning the Editor build sequentially; Unity-MCP read-only asset check reported `rin-b:Buff`, `rin-c:LineAttack`, `rin-d:Execute`, `rin-e:AreaAttack`, and console errors were only MCP client handler logs.
+
+### History
+
+- 2026-05-05: User requested RunScene MonsterPanel behavior for current 1PMonster active skills, magazine text, and cooldown/reload overlay.
+- 2026-05-05: User requested replacing `CountText` / `10/10` ammo display with a single `Text (TMP)` current-count display and reported copied cooldown behavior; Builder changed the shared UI binder so each slot uses its own snapshot and TMP text.
+- 2026-05-05: User reported Howling/Shockwave Active2/3 still had ammo and Active1-like cooldown; Builder fixed Rin data and the shared MonsterPanel display guard.
+
 ## Task: 2026-04-26 Run UI Implementation Status Report
 
 ### Task title

@@ -150,7 +150,7 @@ MonoBehaviour:
   - SkillId: ariel-b
     DisplayName: "\uC131\uAD11 \uBC29\uD328"
     Slot: 1
-    RuntimeKind: 0
+    RuntimeKind: 6
     ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
@@ -216,7 +216,7 @@ MonoBehaviour:
   - SkillId: ariel-c
     DisplayName: "\uCD95\uBCF5\uC758 \uD30C\uB3D9"
     Slot: 2
-    RuntimeKind: 0
+    RuntimeKind: 3
     ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
@@ -282,7 +282,7 @@ MonoBehaviour:
   - SkillId: ariel-d
     DisplayName: "\uCC9C\uC0C1\uC758 \uB099\uC778"
     Slot: 3
-    RuntimeKind: 0
+    RuntimeKind: 8
     ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
@@ -348,7 +348,7 @@ MonoBehaviour:
   - SkillId: ariel-e
     DisplayName: "\uB300\uCC9C\uC0AC\uC758 \uAC15\uB9BC"
     Slot: 4
-    RuntimeKind: 0
+    RuntimeKind: 3
     ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}

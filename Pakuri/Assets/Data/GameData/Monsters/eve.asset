@@ -153,7 +153,7 @@ MonoBehaviour:
     DisplayName: "\uD504\uB9AC\uC998 \uB808\uC774"
     Slot: 1
     RuntimeKind: 2
-    ImplementationState: 1
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -218,7 +218,7 @@ MonoBehaviour:
     DisplayName: "\uD504\uB85C\uC2A4\uD2B8 \uD544\uB4DC"
     Slot: 2
     RuntimeKind: 4
-    ImplementationState: 1
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -280,8 +280,8 @@ MonoBehaviour:
   - SkillId: eve-d
     DisplayName: "\uC2A4\uD0DC\uD2F1 \uC624\uBC84\uB77C\uC774\uB4DC"
     Slot: 3
-    RuntimeKind: 0
-    ImplementationState: 1
+    RuntimeKind: 3
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -345,7 +345,7 @@ MonoBehaviour:
     DisplayName: "\uB4DC\uB860 \uBE44\uCEE8"
     Slot: 4
     RuntimeKind: 0
-    ImplementationState: 1
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -412,7 +412,7 @@ MonoBehaviour:
     Slot: 5
     RequiredActiveSlot: 0
     IsAvailableWithoutActiveRequirement: 1
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uC544\uD06C \uBCFC\uD2B8 \uB300\uC751 \uD328\uC2DC\uBE0C.
@@ -449,7 +449,7 @@ MonoBehaviour:
     Slot: 6
     RequiredActiveSlot: 1
     IsAvailableWithoutActiveRequirement: 0
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uD504\uB9AC\uC998 \uB808\uC774 \uB300\uC751 \uD328\uC2DC\uBE0C.
@@ -487,7 +487,7 @@ MonoBehaviour:
     Slot: 7
     RequiredActiveSlot: 2
     IsAvailableWithoutActiveRequirement: 0
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uD504\uB85C\uC2A4\uD2B8 \uD544\uB4DC \uB300\uC751 \uD328\uC2DC\uBE0C.
@@ -523,7 +523,7 @@ MonoBehaviour:
     Slot: 8
     RequiredActiveSlot: 3
     IsAvailableWithoutActiveRequirement: 0
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uC2A4\uD0DC\uD2F1 \uC624\uBC84\uB77C\uC774\uB4DC \uB300\uC751
@@ -559,7 +559,7 @@ MonoBehaviour:
     Slot: 9
     RequiredActiveSlot: 4
     IsAvailableWithoutActiveRequirement: 0
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uB4DC\uB860 \uBE44\uCEE8 \uB300\uC751 \uD328\uC2DC\uBE0C.

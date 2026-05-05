@@ -5,6 +5,49 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-05 Rin Collapse Aftermath Physical Defense Reduction
+
+### Task title
+
+Track Rin J physical-defense reduction as a combat status.
+
+### Goals
+
+- Record that Rin J `Collapse Aftermath` now applies a temporary physical-defense reduction to Collapse Strike hit targets.
+- Keep the status board aware of the new enemy status label and timer field.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Collapse Strike hit targets receive the intended physical-defense reduction behavior in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Rin-specific details are recorded in `boards/MON/RIN_MONSTER.md`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` adds `RinPhysicalDefenseReductionTimer` and `RinPhysicalDefenseReduction` to `EnemyRuntime`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEnemies.cs` decrements the timer, clears the reduction when expired, and displays `물방감소` while active.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs` applies the J reduction from Collapse Strike and exposes it to `DamageCalculator.Resolve(...)` through `GetRinPercentDefenseReductions(...)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` includes Rin physical-defense reduction in selected-Monster projectile damage resolution.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-05: User requested Rin F-J passive implementation; Rin J required adding a temporary physical-defense-reduction status path.
+
 ## Task: 2026-05-03 Ariel Sanctuary Proclamation State Correction
 
 ### Task title

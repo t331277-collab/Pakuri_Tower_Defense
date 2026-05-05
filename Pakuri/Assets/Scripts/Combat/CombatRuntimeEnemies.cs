@@ -747,6 +747,7 @@ namespace Pakuri.Combat
                 var hadFreeze = enemy.FreezeTimer > 0f;
                 enemy.FreezeTimer = Mathf.Max(0f, enemy.FreezeTimer - Time.deltaTime);
                 enemy.SlowTimer = Mathf.Max(0f, enemy.SlowTimer - Time.deltaTime);
+                enemy.RinPhysicalDefenseReductionTimer = Mathf.Max(0f, enemy.RinPhysicalDefenseReductionTimer - Time.deltaTime);
                 var hadHolyExposure = enemy.HolyExposureTimer > 0f;
                 enemy.HolyExposureTimer = Mathf.Max(0f, enemy.HolyExposureTimer - Time.deltaTime);
                 if (Mathf.Approximately(enemy.ChillTimer, 0f))
@@ -762,6 +763,11 @@ namespace Pakuri.Combat
                 if (Mathf.Approximately(enemy.SlowTimer, 0f))
                 {
                     enemy.SlowMultiplier = 1f;
+                }
+
+                if (Mathf.Approximately(enemy.RinPhysicalDefenseReductionTimer, 0f))
+                {
+                    enemy.RinPhysicalDefenseReduction = 0f;
                 }
 
                 if (hadHolyExposure && Mathf.Approximately(enemy.HolyExposureTimer, 0f))
@@ -878,6 +884,11 @@ namespace Pakuri.Combat
             if (enemy.HolyExposureTimer > 0f)
             {
                 parts.Add($"신성노출{enemy.HolyExposureStacks}");
+            }
+
+            if (enemy.RinPhysicalDefenseReductionTimer > 0f)
+            {
+                parts.Add("물방감소");
             }
 
             return parts.Count == 0 ? string.Empty : $"[{string.Join("/", parts)}]";
@@ -1044,7 +1055,7 @@ namespace Pakuri.Combat
                     enemy.CriticalChanceBonus,
                     enemy.CriticalMultiplierBonus,
                     selectedMonsterDefenses);
-                var appliedDamage = ApplyDamageToSelectedMonster(resolution.FinalDamage, enemy);
+                var appliedDamage = ApplyDamageToSelectedMonster(resolution.FinalDamage, enemy, definition.Attribute);
                 statusLabel = $"{enemy.DisplayName} {definition.ActiveSkillName}: {selectedMonsterName}에게 {appliedDamage:0.0} {definition.Attribute} 피해.";
                 return;
             }

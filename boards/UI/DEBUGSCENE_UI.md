@@ -13,6 +13,58 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-05 DebugScene MonsterPanel 1P Skill Status UI
+
+### Task title
+
+Bind DebugScene MonsterPanel to debug-selected 1P Monster active skill state.
+
+### Goals
+
+- Use the scene-authored DebugScene `MonsterPanel` as an editable UI object.
+- Keep only `1PMonster` active for the current single-Monster debug flow.
+- Reflect DebugScene active-skill toggles through `Active1` through `Active3`, including current-ammo-only TMP magazine text and cooldown/reload overlay when combat is running.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Preserve user-authored DebugScene UI layout and existing skill debug panels.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies DebugScene Play Mode behavior after selecting a Monster, toggling skills, and pressing Start, including that only `Text (TMP)` shows magazine ammo and each Active slot follows its assigned skill cooldown.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scenes/DebugScene.unity` contains `MonsterPanel`, `1PMonster`, and `Active1` / `Active2` / `Active3` object names.
+- `Pakuri/Assets/Scripts/Run/DebugSceneController.cs` now binds `CombatMonsterPanelUiController` after `BindSceneUi()` and during `Update()`.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` contains the shared `CombatMonsterPanelUiController` used by both RunScene and DebugScene.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` now uses `TMP_Text` for MonsterPanel ammo text, writes only current ammo, and no longer creates `CountText`.
+- Unity-MCP Edit Mode cleanup removed three saved `CountText` objects from `Assets/Scenes/DebugScene.unity`; a loaded-scene check returned `CountTextInLoadedScene=0`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` now exposes selected active skill snapshots that work after `ApplyDebugSelection(...)` updates the selected Monster and learned active set.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+- Follow-up `git diff --check -- Pakuri\Assets\Scripts\Run\RunCombatUiController.cs Pakuri\Assets\Scenes\DebugScene.unity` completed with no whitespace errors and CRLF conversion warnings only.
+- 2026-05-05 follow-up: Rin B/C/D/E runtime kind data was corrected away from `MagazineProjectile`, and the shared MonsterPanel binder now requires `MagazineCapacity > 0` before showing ammo or using the selected Monster's global magazine/reload state.
+- 2026-05-05 follow-up: non-magazine TMP ammo text is disabled per slot, and `CooldownOverlay` receives `DebugUiSolid` so DebugScene's Active1-3 cooldown fill has a visible black overlay while the assigned skill cooldown drains.
+- 2026-05-05 follow-up validation: runtime and Editor dotnet builds completed with 0 errors after rerunning the Editor build sequentially; Unity-MCP asset import reported `rin-b:Buff`, `rin-c:LineAttack`, `rin-d:Execute`, `rin-e:AreaAttack`, and console errors remained limited to MCP client handler logs.
+
+### History
+
+- 2026-05-05: User requested DebugScene MonsterPanel behavior matching the combat-screen-layout character skill group.
+- 2026-05-05: User reported DebugScene MonsterPanel `CountText` duplication and Active2/Active3 copied-state behavior; Builder removed saved `CountText` objects and changed the shared binder to use existing TMP text per slot.
+- 2026-05-05: User reported Howling/Shockwave still showed ammo and followed Active1 cooldown; Builder corrected Rin skill kind data and strengthened the shared MonsterPanel UI binder.
+
 ## Task: 2026-05-04 DebugScene Editable UI Authoring Rule
 
 ### Task title

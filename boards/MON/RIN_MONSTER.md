@@ -20,6 +20,155 @@ Not populated yet.
 - Evidence
 - History
 
+## Task: 2026-05-05 Rin MonsterPanel Skill Kind Correction
+
+### Task title
+
+Correct Rin active skill runtime kinds for MonsterPanel ammo and cooldown display.
+
+### Goals
+
+- Keep Rin A as the only Rin magazine projectile skill for MonsterPanel ammo display.
+- Make Rin B Howling, C Shockwave, D Finishing Blow, and E Collapse Strike use their own cooldown state instead of the shared A-skill magazine/reload state.
+- Preserve the shared MonsterPanel behavior for RunScene and DebugScene.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Rin Active1 shows ammo, while Howling/Shockwave in Active2/3 show no ammo and use their own cooldown overlay timing.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Before this fix, `Pakuri/Assets/Data/GameData/Monsters/rin.asset` stored Rin B, C, D, and E as `RuntimeKind: 0`, which maps to `SkillRuntimeKind.MagazineProjectile`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` also stored `rin-b`, `rin-c`, `rin-d`, and `rin-e` as `MagazineProjectile`.
+- `rin.asset` now stores Rin B as `RuntimeKind: 5` (`Buff`), Rin C as `RuntimeKind: 2` (`LineAttack`), Rin D as `RuntimeKind: 9` (`Execute`), and Rin E as `RuntimeKind: 3` (`AreaAttack`).
+- `monster_skills.csv` now stores `rin-b` as `Buff`, `rin-c` as `LineAttack`, `rin-d` as `Execute`, and `rin-e` as `AreaAttack`, with `RuntimeImplemented`.
+- Unity-MCP read-only Editor code after asset import reported `rin-a:MagazineProjectile:mag=10:cd=0|rin-b:Buff:mag=0:cd=12|rin-c:LineAttack:mag=0:cd=5.5|rin-d:Execute:mag=0:cd=9|rin-e:AreaAttack:mag=0:cd=8`.
+- `CombatRuntimeController.CreateMonsterPanelSkillView(...)` now requires `MagazineCapacity > 0` in addition to `RuntimeKind == MagazineProjectile` before a skill can use ammo/reload state.
+- `CombatMonsterPanelUiController.ApplySlot(...)` now disables ammo text for non-magazine skills and `EnsureCooldownOverlay(...)` assigns `DebugUiSolid` to the overlay image.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and sequential `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+- Unity-MCP console error query returned only MCP-FOR-UNITY client handler logs, not project compile errors.
+
+### History
+
+- 2026-05-05: User reported that adding Howling and Shockwave made Active2/3 appear, but those non-magazine skills still showed ammo, followed Active1 cooldown, and skipped the visible black-to-white cooldown fill.
+- 2026-05-05: Builder found the concrete data cause in Rin skill RuntimeKind values and fixed both the Rin data and the shared MonsterPanel UI guard.
+
+## Task: 2026-05-05 Rin F Follow-up Visual And Debug Damage Labels
+
+### Task title
+
+Add Rin F follow-up visual feedback and debug damage-type labels.
+
+### Goals
+
+- Show a white circle effect when Rin F `Ambidextrous` follow-up damage is applied.
+- Show debug-only damage popup text with the damage attribute after the number, such as `32(물리)` or `34(번개)`.
+- For Rin F mixed follow-up damage, combine the terms with ` + ` in one white popup, such as `32(물리) + 45(번개)`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The popup notation is debugging-only display text.
+- Current code evidence shows `DamageAttribute` has only `Physical`, `Fire`, `Lightning`, `Ice`, `Darkness`, and `Holy`; no additional damage attributes were found in code.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Rin F follow-up hits show the white circle effect.
+- User verifies in Play Mode that damage popups show the debug attribute notation and that mixed Rin F follow-up terms use ` + `.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/DamageCalculator.cs` defines six damage attributes: `Physical`, `Fire`, `Lightning`, `Ice`, `Darkness`, and `Holy`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeScene.cs` now formats typed damage popups through `FormatDamagePopupAmount(...)`, `FormatDamagePopupTerm(...)`, and `GetDamageAttributeKoreanLabel(...)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs` now creates `RinAmbidextrousFollowup` with a white `CreateCircleEffect(...)` result and a combined popup for physical plus optional lightning follow-up damage.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` now returns total applied damage, including shield absorption, so Rin F visual feedback is not skipped when the follow-up is absorbed by shield.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
+- Unity-MCP console error query returned only MCP-FOR-UNITY client handler logs, not project compile errors; Unity ready wait timed out after the compile request.
+- `git diff --check` on changed combat and board files completed with no whitespace errors and CRLF conversion warnings only.
+
+### History
+
+- 2026-05-05: User requested a white circle effect for Rin F follow-up hits and debug damage popup labels such as `32(물리)` and mixed terms like `32(물리) + 45(번개)`.
+- 2026-05-05: Builder implemented the Rin F follow-up visual, typed debug popup labels, mixed popup composition, total-applied-damage return alignment, and local validation.
+
+## Task: 2026-05-05 Rin F-J Passive Runtime Implementation
+
+### Task title
+
+Implement Rin passive skills F-J and their trait effects.
+
+### Goals
+
+- Implement Rin F `Ambidextrous`, G `Battle Resonance`, H `Wave Amplification`, I `Finisher Instinct`, and J `Collapse Aftermath`.
+- Keep passive behavior grounded in `Pakuri/reference/2.Monster/rin/skill/f-ambidextrous.md` through `j-collapse-aftermath.md`.
+- Mark Rin passive definitions F-J as runtime implemented in the Rin monster asset.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Current runtime has one selected allied Monster, so "all ally" passive wording applies to the current selected Monster combat model.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Rin F-J passive behavior in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/rin/skill/f-ambidextrous.md`, `g-battle-resonance.md`, `h-wave-amplification.md`, `i-finisher-instinct.md`, and `j-collapse-aftermath.md` were read with UTF-8 decoding and used as source references.
+- The initially guessed filenames `f-fighting-spirit.md`, `g-berserk-instinct.md`, `h-battle-flow.md`, `i-breaking-strategy.md`, and `j-body-mastery.md` do not exist in the Rin skill folder.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs` now tracks Rin passive timers/counters for H auto shockwave, I kill buffs, and J multi-hit buffs.
+- `CombatRuntimeRinSkills.cs` now implements F physical damage bonus and C/D/E follow-up hit, G Howling attack/action/crit/reload effects, H physical-hit-count auto Shockwave, I low-health target damage and Finishing Blow kill buffs, and J Collapse Strike physical-defense reduction plus 3-hit buffs and kill cooldown charging.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` now stores Rin physical-defense reduction state on `EnemyRuntime`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEnemies.cs` now ticks Rin physical-defense reduction state and displays `물방감소` while active.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` now routes Rin projectile damage through the Rin percent-defense-reduction and kill-trigger helper paths.
+- `Pakuri/Assets/Data/GameData/Monsters/rin.asset` now marks passive F-J `ImplementationState: 2`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
+- Unity refresh returned `resulting_state=idle`; Unity console error query returned only MCP-FOR-UNITY client handler logs, not project compile errors.
+
+### History
+
+- 2026-05-05: User requested implementing Rin passive skills F-J from `Pakuri/reference/2.Monster/rin/skill` and asked to ask questions if terms were unclear.
+- 2026-05-05: Builder verified the actual Rin passive filenames, restored readable Korean text with `Get-Content -Encoding UTF8`, implemented F-J runtime hooks, marked Rin passive data implemented, and validated builds plus Unity console state.
+
 ## Task: 2026-05-04 Rin D Execution Target And Hit Effect Fix
 
 ### Task title

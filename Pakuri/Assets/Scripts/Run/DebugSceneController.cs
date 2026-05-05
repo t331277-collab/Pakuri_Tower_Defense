@@ -44,6 +44,7 @@ namespace Pakuri.Run
         private Button skillWindowButton;
         private Button closeSkillWindowButton;
         private Button closeModalButton;
+        private CombatMonsterPanelUiController monsterPanelUi;
         private MonsterDefinition selectedMonster;
         private bool isRebuilding;
 
@@ -54,6 +55,7 @@ namespace Pakuri.Run
             EnsureCanvasShell();
             EnsureEventSystem();
             BindSceneUi();
+            BindMonsterPanelUi();
         }
 
         private void Start()
@@ -80,6 +82,7 @@ namespace Pakuri.Run
 
         private void Update()
         {
+            BindMonsterPanelUi();
             RefreshCombatText();
         }
 
@@ -120,6 +123,20 @@ namespace Pakuri.Run
             if (combatController == null)
             {
                 combatController = FindFirstObjectByType<CombatRuntimeController>();
+            }
+        }
+
+        private void BindMonsterPanelUi()
+        {
+            monsterPanelUi = GetComponent<CombatMonsterPanelUiController>();
+            if (monsterPanelUi == null && transform.Find("MonsterPanel") != null)
+            {
+                monsterPanelUi = gameObject.AddComponent<CombatMonsterPanelUiController>();
+            }
+
+            if (monsterPanelUi != null)
+            {
+                monsterPanelUi.Bind(combatController);
             }
         }
 

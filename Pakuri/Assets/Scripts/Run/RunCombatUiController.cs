@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
+using TMPro;
 
 namespace Pakuri.Run
 {
@@ -50,6 +52,7 @@ namespace Pakuri.Run
 
         private GameObject defeatPanel;
         private Text defeatSummaryText;
+        private CombatMonsterPanelUiController monsterPanelUi;
 
         private RunSession currentSession;
         private bool rewardSummaryApplied;
@@ -128,6 +131,7 @@ namespace Pakuri.Run
             }
 
             ResolveRuntimeReferences();
+            BindMonsterPanelUi();
             RefreshHud();
 
             if (combatController == null || currentSession == null || !combatController.IsBattleResolved)
@@ -162,6 +166,8 @@ namespace Pakuri.Run
             {
                 BuildUiScaffold();
             }
+
+            BindMonsterPanelUi();
         }
 
         private void CacheUiReferences()
@@ -238,6 +244,20 @@ namespace Pakuri.Run
             if (currentSession == null)
             {
                 currentSession = RunSceneBootstrap.ActiveSession;
+            }
+        }
+
+        private void BindMonsterPanelUi()
+        {
+            monsterPanelUi = GetComponent<CombatMonsterPanelUiController>();
+            if (monsterPanelUi == null && transform.Find("MonsterPanel") != null)
+            {
+                monsterPanelUi = gameObject.AddComponent<CombatMonsterPanelUiController>();
+            }
+
+            if (monsterPanelUi != null)
+            {
+                monsterPanelUi.Bind(combatController);
             }
         }
 
@@ -1279,6 +1299,289 @@ namespace Pakuri.Run
                     buttons[i].interactable = interactable;
                 }
             }
+        }
+    }
+
+    [DisallowMultipleComponent]
+    public sealed class CombatMonsterPanelUiController : MonoBehaviour
+    {
+        private const int SkillSlotCount = 3;
+        private const string PanelName = "MonsterPanel";
+        private const string ActiveMonsterName = "1PMonster";
+
+        [SerializeField] private CombatRuntimeController combatController;
+        [SerializeField] private Color availableColor = Color.white;
+        [SerializeField] private Color cooldownOverlayColor = new Color(0f, 0f, 0f, 0.58f);
+
+        private readonly List<CombatRuntimeController.MonsterPanelSkillView> skillViews = new List<CombatRuntimeController.MonsterPanelSkillView>(SkillSlotCount);
+        private readonly SkillSlotBinding[] slots = new SkillSlotBinding[SkillSlotCount];
+        private GameObject monsterPanel;
+        private GameObject activeMonsterGroup;
+        private Sprite cooldownOverlaySprite;
+
+        private sealed class SkillSlotBinding
+        {
+            public GameObject Root;
+            public Image IconImage;
+            public Image CooldownOverlay;
+            public TMP_Text AmmoText;
+            public TMP_Text NameText;
+            public Sprite DefaultSprite;
+        }
+
+        public void Bind(CombatRuntimeController controller)
+        {
+            combatController = controller;
+            BindPanelHierarchy();
+            Refresh();
+        }
+
+        private void Awake()
+        {
+            BindPanelHierarchy();
+        }
+
+        private void Update()
+        {
+            Refresh();
+        }
+
+        private void BindPanelHierarchy()
+        {
+            monsterPanel = FindDescendant(transform, PanelName)?.gameObject;
+            activeMonsterGroup = monsterPanel != null
+                ? FindDescendant(monsterPanel.transform, ActiveMonsterName)?.gameObject
+                : null;
+
+            if (monsterPanel == null || activeMonsterGroup == null)
+            {
+                return;
+            }
+
+            SetOnlyFirstPlayerMonsterActive();
+            for (var i = 0; i < SkillSlotCount; i++)
+            {
+                slots[i] = BindSkillSlot(i);
+            }
+        }
+
+        private void Refresh()
+        {
+            if (combatController == null)
+            {
+                combatController = FindFirstObjectByType<CombatRuntimeController>();
+            }
+
+            if (monsterPanel == null || activeMonsterGroup == null)
+            {
+                BindPanelHierarchy();
+            }
+
+            if (monsterPanel == null || activeMonsterGroup == null)
+            {
+                return;
+            }
+
+            monsterPanel.SetActive(true);
+            activeMonsterGroup.SetActive(true);
+            SetOnlyFirstPlayerMonsterActive();
+
+            var count = combatController != null
+                ? combatController.GetMonsterPanelSkillViews(skillViews, SkillSlotCount)
+                : 0;
+
+            for (var i = 0; i < SkillSlotCount; i++)
+            {
+                ApplySlot(slots[i], i < count ? skillViews[i] : default, i < count);
+            }
+        }
+
+        private void SetOnlyFirstPlayerMonsterActive()
+        {
+            if (monsterPanel == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < monsterPanel.transform.childCount; i++)
+            {
+                var child = monsterPanel.transform.GetChild(i);
+                if (child == activeMonsterGroup.transform)
+                {
+                    child.gameObject.SetActive(true);
+                }
+                else if (child.name.IndexOf("Monster", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    child.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        private SkillSlotBinding BindSkillSlot(int index)
+        {
+            var slotTransform = FindDescendant(activeMonsterGroup.transform, $"Active{index + 1}");
+            if (slotTransform == null)
+            {
+                return null;
+            }
+
+            var icon = slotTransform.GetComponent<Image>() ?? FindSlotIconImage(slotTransform);
+            var overlay = EnsureCooldownOverlay(slotTransform);
+            var ammoText = FindDescendant(slotTransform, "Text (TMP)")?.GetComponent<TMP_Text>()
+                ?? FindDescendant(slotTransform, "AmmoText")?.GetComponent<TMP_Text>()
+                ?? slotTransform.GetComponentInChildren<TMP_Text>(true);
+            var nameText = FindDescendant(slotTransform, "NameText")?.GetComponent<TMP_Text>();
+
+            if (ammoText != null)
+            {
+                ammoText.transform.SetAsLastSibling();
+            }
+
+            return new SkillSlotBinding
+            {
+                Root = slotTransform.gameObject,
+                IconImage = icon,
+                CooldownOverlay = overlay,
+                AmmoText = ammoText,
+                NameText = nameText,
+                DefaultSprite = icon != null ? icon.sprite : null
+            };
+        }
+
+        private void ApplySlot(SkillSlotBinding slot, CombatRuntimeController.MonsterPanelSkillView view, bool isActive)
+        {
+            if (slot == null || slot.Root == null)
+            {
+                return;
+            }
+
+            slot.Root.SetActive(isActive);
+            if (!isActive)
+            {
+                return;
+            }
+
+            if (slot.IconImage != null)
+            {
+                slot.IconImage.sprite = view.Icon != null ? view.Icon : slot.DefaultSprite;
+                slot.IconImage.color = availableColor;
+            }
+
+            if (slot.NameText != null)
+            {
+                slot.NameText.text = view.DisplayName;
+            }
+
+            if (slot.AmmoText != null)
+            {
+                slot.AmmoText.gameObject.SetActive(view.IsMagazine);
+                slot.AmmoText.text = view.IsMagazine ? Mathf.Max(0, view.CurrentAmmo).ToString(CultureInfo.InvariantCulture) : string.Empty;
+                slot.AmmoText.color = Color.white;
+                slot.AmmoText.transform.SetAsLastSibling();
+            }
+
+            if (slot.CooldownOverlay != null)
+            {
+                slot.CooldownOverlay.gameObject.SetActive(view.IsCoolingDown);
+                slot.CooldownOverlay.color = cooldownOverlayColor;
+                slot.CooldownOverlay.fillAmount = view.IsCoolingDown ? view.CooldownRemainingRatio : 0f;
+            }
+        }
+
+        private Image EnsureCooldownOverlay(Transform slotTransform)
+        {
+            var overlayTransform = FindDescendant(slotTransform, "CooldownOverlay");
+            if (overlayTransform == null)
+            {
+                var overlayObject = new GameObject("CooldownOverlay", typeof(RectTransform), typeof(Image));
+                overlayTransform = overlayObject.transform;
+                overlayTransform.SetParent(slotTransform, false);
+                var rect = overlayObject.GetComponent<RectTransform>();
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+            }
+
+            var overlay = overlayTransform.GetComponent<Image>() ?? overlayTransform.gameObject.AddComponent<Image>();
+            overlay.sprite = GetCooldownOverlaySprite();
+            overlay.raycastTarget = false;
+            overlay.type = Image.Type.Filled;
+            overlay.fillMethod = Image.FillMethod.Vertical;
+            overlay.fillOrigin = (int)Image.OriginVertical.Bottom;
+            overlay.fillAmount = 0f;
+            overlay.color = cooldownOverlayColor;
+            overlayTransform.SetAsLastSibling();
+            return overlay;
+        }
+
+        private Sprite GetCooldownOverlaySprite()
+        {
+            if (cooldownOverlaySprite == null)
+            {
+                cooldownOverlaySprite = Resources.Load<Sprite>("DebugUiSolid");
+            }
+
+            return cooldownOverlaySprite;
+        }
+
+        private static Image FindSlotIconImage(Transform slotTransform)
+        {
+            if (slotTransform == null)
+            {
+                return null;
+            }
+
+            var images = slotTransform.GetComponentsInChildren<Image>(true);
+            for (var i = 0; i < images.Length; i++)
+            {
+                var image = images[i];
+                if (image != null && !IsUnderNamedTransform(image.transform, "CooldownOverlay"))
+                {
+                    return image;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsUnderNamedTransform(Transform transform, string targetName)
+        {
+            while (transform != null)
+            {
+                if (transform.name == targetName)
+                {
+                    return true;
+                }
+
+                transform = transform.parent;
+            }
+
+            return false;
+        }
+
+        private static Transform FindDescendant(Transform root, string targetName)
+        {
+            if (root == null || string.IsNullOrWhiteSpace(targetName))
+            {
+                return null;
+            }
+
+            if (root.name == targetName)
+            {
+                return root;
+            }
+
+            for (var i = 0; i < root.childCount; i++)
+            {
+                var result = FindDescendant(root.GetChild(i), targetName);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null;
         }
     }
 }

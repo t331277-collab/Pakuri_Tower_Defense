@@ -5,6 +5,53 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-05 Eve Ariel Skill Metadata Sync
+
+### Task title
+
+Synchronize Eve and Ariel ScriptableObject/CSV skill metadata with runtime behavior.
+
+### Goals
+
+- Keep `Assets/Data/GameData/Monsters/eve.asset` and `ariel.asset` aligned with `Assets/CSVdata/source/monster_skills.csv`.
+- Prevent non-magazine active skills from being classified as `MagazineProjectile`.
+- Mark runtime-implemented Eve/Ariel skills consistently in both data paths.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Data-only correction; no Play Mode verification was run by Codex.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Eve/Ariel skill display and cooldown behavior in Play Mode.
+- Keep future skill metadata changes synchronized between ScriptableObject assets and `monster_skills.csv`.
+
+### Evidence
+
+- Before this correction, `monster_skills.csv` stored Ariel B-E as `MagazineProjectile` and Eve D as `MagazineProjectile` despite their reference documents describing non-magazine behavior.
+- Before this correction, `eve.asset` stored Eve B-E and F-J as `ImplementationState: 1` even though the board and runtime scripts record Eve A-E/F-J runtime implementation.
+- `monster_skills.csv` now stores Ariel B `Shield`, C `AreaAttack`, D `Mark`, E `AreaAttack`; Eve B `LineAttack`, C `Field`, D `AreaAttack`, E `MagazineProjectile`; and Eve F-J as `Passive`, all `RuntimeImplemented`.
+- `eve.asset` and `ariel.asset` now store the same corrected runtime kinds and runtime-implemented states.
+- Unity-MCP read-only Editor import reported the corrected Eve and Ariel `SkillDefinition.RuntimeKind` and `ImplementationState` values from the ScriptableObject assets.
+- `git diff --check -- Pakuri\Assets\CSVdata\source\monster_skills.csv Pakuri\Assets\Data\GameData\Monsters\eve.asset Pakuri\Assets\Data\GameData\Monsters\ariel.asset` completed with no whitespace errors and CRLF warnings only.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+- Unity refresh completed with `resulting_state=idle`; console error query showed two existing missing-script entries and MCP client handler logs, not project compile errors.
+
+### History
+
+- 2026-05-05: User verified the Rin MonsterPanel data/UI fix in Play Mode and requested checking Eve and Ariel skill data too.
+- 2026-05-05: Builder compared reference documents, runtime skill code, CSV rows, and ScriptableObject assets, then synchronized the metadata.
+
 ## Task: 2026-05-04 Rin/Sein CSV Runtime Sprite Catalog Fix
 
 ### Task title

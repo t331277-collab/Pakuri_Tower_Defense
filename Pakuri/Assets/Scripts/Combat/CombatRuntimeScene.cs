@@ -433,6 +433,11 @@ namespace Pakuri.Combat
 
         private void SpawnDamagePopupForEnemy(EnemyRuntime enemy, float damageAmount)
         {
+            SpawnDamagePopupForEnemy(enemy, damageAmount, null);
+        }
+
+        private void SpawnDamagePopupForEnemy(EnemyRuntime enemy, float damageAmount, DamageAttribute? attribute)
+        {
             if (enemy == null || enemy.Transform == null || damageAmount <= 0f)
             {
                 return;
@@ -441,10 +446,31 @@ namespace Pakuri.Combat
             var basePosition = enemy.Label != null
                 ? enemy.Label.transform.position
                 : enemy.Transform.position + Vector3.up * (enemy.IsBoss ? 1.25f : 0.9f);
-            SpawnDamagePopup(basePosition + new Vector3(0f, enemy.IsBoss ? 0.18f : 0.12f, 0f), damageAmount, enemy.Label);
+            SpawnDamagePopup(
+                basePosition + new Vector3(0f, enemy.IsBoss ? 0.18f : 0.12f, 0f),
+                FormatDamagePopupAmount(damageAmount, attribute),
+                enemy.Label);
+        }
+
+        private void SpawnDamagePopupForEnemy(EnemyRuntime enemy, string popupText)
+        {
+            if (enemy == null || enemy.Transform == null || string.IsNullOrWhiteSpace(popupText))
+            {
+                return;
+            }
+
+            var basePosition = enemy.Label != null
+                ? enemy.Label.transform.position
+                : enemy.Transform.position + Vector3.up * (enemy.IsBoss ? 1.25f : 0.9f);
+            SpawnDamagePopup(basePosition + new Vector3(0f, enemy.IsBoss ? 0.18f : 0.12f, 0f), popupText, enemy.Label);
         }
 
         private void SpawnDamagePopupForSelectedMonster(float damageAmount)
+        {
+            SpawnDamagePopupForSelectedMonster(damageAmount, null);
+        }
+
+        private void SpawnDamagePopupForSelectedMonster(float damageAmount, DamageAttribute? attribute)
         {
             if (damageAmount <= 0f)
             {
@@ -469,10 +495,13 @@ namespace Pakuri.Combat
                 return;
             }
 
-            SpawnDamagePopup(basePosition + new Vector3(0f, 0.14f, 0f), damageAmount, selectedMonsterHpLabel ?? selectedMonsterNameLabel);
+            SpawnDamagePopup(
+                basePosition + new Vector3(0f, 0.14f, 0f),
+                FormatDamagePopupAmount(damageAmount, attribute),
+                selectedMonsterHpLabel ?? selectedMonsterNameLabel);
         }
 
-        private void SpawnDamagePopup(Vector3 worldPosition, float damageAmount, TextMesh template)
+        private void SpawnDamagePopup(Vector3 worldPosition, string popupTextValue, TextMesh template)
         {
             var parent = projectileRoot != null ? projectileRoot : transform;
             if (parent == null)
@@ -487,7 +516,7 @@ namespace Pakuri.Combat
 
             var popupText = popupObject.AddComponent<TextMesh>();
             ConfigureDamagePopupText(popupText, template);
-            popupText.text = FormatDamagePopupAmount(damageAmount);
+            popupText.text = popupTextValue;
             popupText.color = Color.white;
 
             var renderer = popupText.GetComponent<MeshRenderer>();
@@ -595,6 +624,39 @@ namespace Pakuri.Combat
         private static string FormatDamagePopupAmount(float damageAmount)
         {
             return Mathf.Max(1, Mathf.RoundToInt(damageAmount)).ToString();
+        }
+
+        private static string FormatDamagePopupAmount(float damageAmount, DamageAttribute? attribute)
+        {
+            var amount = FormatDamagePopupAmount(damageAmount);
+            // Debug-only attribute suffix for combat damage popup inspection.
+            return attribute.HasValue ? $"{amount}({GetDamageAttributeKoreanLabel(attribute.Value)})" : amount;
+        }
+
+        private static string FormatDamagePopupTerm(float damageAmount, DamageAttribute attribute)
+        {
+            return FormatDamagePopupAmount(damageAmount, attribute);
+        }
+
+        private static string GetDamageAttributeKoreanLabel(DamageAttribute attribute)
+        {
+            switch (attribute)
+            {
+                case DamageAttribute.Physical:
+                    return "물리";
+                case DamageAttribute.Fire:
+                    return "화염";
+                case DamageAttribute.Lightning:
+                    return "번개";
+                case DamageAttribute.Ice:
+                    return "얼음";
+                case DamageAttribute.Darkness:
+                    return "어둠";
+                case DamageAttribute.Holy:
+                    return "신성";
+                default:
+                    return attribute.ToString();
+            }
         }
 
         private static Sprite GetSharedSprite()

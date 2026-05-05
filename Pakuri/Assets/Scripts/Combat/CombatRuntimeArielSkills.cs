@@ -509,7 +509,7 @@ namespace Pakuri.Combat
                 targetCriticalResistance: enemy.CriticalResistance,
                 criticalDamageTakenBonus: GetArielCriticalDamageTakenBonus(enemy, skillId),
                 finalDamageMultiplier: enemy.DamageTakenMultiplier * Mathf.Max(0f, finalMultiplier) * arielMultiplier);
-            var applied = ApplyDamageToEnemy(enemy, result.FinalDamage);
+            var applied = ApplyDamageToEnemy(enemy, result.FinalDamage, attribute);
             enemy.FlashTimer = 0.08f;
             TrackArielHolyExposureDamage(enemy, attribute, result.FinalDamage);
             Debug.Log($"[CombatDamage] Ariel.{skillId} -> {enemy.DisplayName}: {result.FormulaLog}; Applied={applied:0.##}, ShieldLeft={enemy.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, enemy.CurrentHealth):0.##}");

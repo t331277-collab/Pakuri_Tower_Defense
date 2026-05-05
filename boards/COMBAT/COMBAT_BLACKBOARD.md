@@ -5,6 +5,104 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-05 MonsterPanel Skill State Snapshot API
+
+### Task title
+
+Expose selected Monster active skill state for scene MonsterPanel UI.
+
+### Goals
+
+- Provide UI-safe access to the selected Monster's learned active skills.
+- Include skill icon, current magazine count, reload/shot cooldown, and non-magazine skill cooldown state for up to three active slots.
+- Keep the runtime skill state source inside `CombatRuntimeController` instead of duplicating cooldown logic in UI code.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The UI snapshot is read-only from the UI side.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies visual behavior in RunScene and DebugScene Play Mode, including current-ammo-only text and per-assigned-skill cooldown overlays.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` now defines `MonsterPanelSkillView` and `GetMonsterPanelSkillViews(...)`.
+- The snapshot uses existing runtime fields: `currentShotsRemaining`, `shotCooldown`, `reloadRemaining`, Eve/Ariel/Rin skill cooldown timers, and `FindSelectedSkill(...)` / `HasLearnedActive(...)`.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` consumes this snapshot through `CombatMonsterPanelUiController`.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` now formats magazine display from `MonsterPanelSkillView.CurrentAmmo` only and clears text for non-magazine skills.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` keeps cooldown overlay fill driven by each view's `CooldownRemainingRatio`, while icon fallback ignores `CooldownOverlay` images.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+- Unity refresh reached `resulting_state=idle`; Unity console error query returned only MCP-FOR-UNITY client handler logs, not project compile errors.
+- Follow-up builds completed with 0 errors after the TMP ammo text fix, and Unity console error query returned only MCP-FOR-UNITY client handler logs.
+
+### History
+
+- 2026-05-05: User requested MonsterPanel skill icon activation, magazine count, and cooldown/reload visual state.
+- 2026-05-05: User requested the ammo UI to use one `Text (TMP)` current-count display and reported Active2/Active3 copied-state behavior; Builder kept the combat snapshot as the per-skill source and updated the UI consumer to avoid legacy `CountText` and overlay/icon cross-binding.
+
+## Task: 2026-05-05 Debug Damage Attribute Popup Labels
+
+### Task title
+
+Show damage popup values with debug damage-attribute labels.
+
+### Goals
+
+- Make combat damage popups identify the damage attribute beside the damage number.
+- Keep the popup text white, including mixed-damage Rin F follow-up popups.
+- Use ` + ` between multiple damage terms when a combined popup represents mixed damage.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The attribute notation is debugging-only display text.
+- Current `DamageAttribute` code only contains `Physical`, `Fire`, `Lightning`, `Ice`, `Darkness`, and `Holy`; no unknown extra attribute was found.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that enemy and selected-Monster damage popups show labels such as `32(물리)`.
+- User verifies Rin F mixed follow-up popups show combined text such as `32(물리) + 45(번개)`.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/DamageCalculator.cs` defines the complete current `DamageAttribute` enum used for popup labels.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeScene.cs` now has typed popup overloads and Korean label mapping for `Physical`, `Fire`, `Lightning`, `Ice`, `Darkness`, and `Holy`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs`, `CombatRuntimeArielSkills.cs`, `CombatRuntimeEveSkills.cs`, `CombatRuntimeRinSkills.cs`, and `CombatRuntimeEnemies.cs` now pass actual damage attributes into damage popup paths.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` now returns total applied damage, including shield absorption, to keep debug popups and follow-up feedback aligned with applied damage.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
+- Unity-MCP console error query returned only MCP-FOR-UNITY client handler logs, not project compile errors; Unity ready wait timed out after the compile request.
+- `git diff --check` on changed combat and board files completed with no whitespace errors and CRLF conversion warnings only.
+
+### History
+
+- 2026-05-05: User requested readable debug damage-type labels and mixed-damage popup notation.
+- 2026-05-05: Builder implemented typed debug damage popup labels, Rin F mixed popup composition, and local validation.
+
 ## Task: 2026-05-04 Rin D Execute-Only Combat Targeting
 
 ### Task title

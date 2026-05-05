@@ -27,6 +27,52 @@ Legacy non-English note retained these code references: `boards/MON/MON_BLACKBOA
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-05 Eve Skill Data RuntimeKind Audit
+
+### Task title
+
+Align Eve skill data with implemented runtime behavior for MonsterPanel and runtime selection.
+
+### Goals
+
+- Keep Eve active skill `RuntimeKind` values consistent with actual combat code and reference skill documents.
+- Mark Eve A-E and F-J as runtime implemented in both ScriptableObject and CSV source data.
+- Preserve Eve E Drone Beacon as the only non-A Eve active with magazine-style charges/reload display.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Data-only correction; no Play Mode verification was run by Codex.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Eve Active1-3 MonsterPanel display in Play Mode after learning B-E.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/eve/skill/d-static-override.md` states Static Override is `범위 / 비탄창 / 감전 연계`.
+- `Pakuri/reference/2.Monster/eve/skill/e-drone-beacon.md` states Drone Beacon is `탄창 / 드론 / 표식 / 디버프` with magazine count 3 and reload 6 seconds.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs` contains `TryCastEvePrismRay`, `TryCastEveFrostField`, `TryCastEveStaticOverride`, and `TryCastEveDroneBeacon`; Drone Beacon uses `eveDroneChargesRemaining` and `eveDroneReloadRemaining`.
+- `Pakuri/Assets/Data/GameData/Monsters/eve.asset` now stores Eve A `MagazineProjectile`, B `LineAttack`, C `Field`, D `AreaAttack`, E `MagazineProjectile`, and F-J `Passive`, all `ImplementationState: 2`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores the same Eve runtime kinds and `RuntimeImplemented` states.
+- Unity-MCP read-only Editor import reported `eve-a:MagazineProjectile:RuntimeImplemented`, `eve-b:LineAttack:RuntimeImplemented`, `eve-c:Field:RuntimeImplemented`, `eve-d:AreaAttack:RuntimeImplemented`, `eve-e:MagazineProjectile:RuntimeImplemented`, and Eve F-J passives as `RuntimeImplemented`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-05: After verifying the Rin MonsterPanel fix, user requested auditing Eve and Ariel skill data so they apply correctly too.
+- 2026-05-05: Builder corrected Eve Static Override away from `MagazineProjectile`, kept Drone Beacon as a magazine-charge skill, and aligned implementation-state metadata.
+
 ## Task: Eve Arc Branch And DebugScene Skill Toggle Runtime
 
 ### Task title
