@@ -1,4 +1,4 @@
-# 린 스킬 - 종결 일격
+﻿# 린 스킬 - 종결 일격
 
 > 체력이 낮아진 적을 거대한 충격권으로 마무리하는 처형형 물리 스킬.
 
@@ -19,7 +19,6 @@
 | 기본 물리 피해 | 45 |
 | 공격력 계수 | 2.4 |
 | 주문력 계수 | 0 |
-| 사거리 | 7.5 |
 | 쿨다운 | 9.0초 |
 | 처형 기준 체력 | 30% 이하 |
 | 처형 추가 피해 | 80% |
@@ -52,9 +51,11 @@
 | 확정 종결 | 처형 대상에게 치명타 확률 +50%, 처치 시 쿨다운 완전 초기화, 처치 순간 대상 주변에 90% 신성 피해 폭발 |
 | 파멸권 | 위력 +90%, 처형 기준 체력 -10%, 쿨다운 +25%, 70% 어둠 추가 피해 |
 
-## Runtime implementation note
+## 6. 액티브 스킬 각성
 
-- Rin non-magazine skills use the whole battlefield map as their target/search range.
-- Finishing Blow searches the whole battlefield, but it only casts on enemies at or below the execution-health threshold.
-- If no enemy is at or below the threshold, Finishing Blow does not fire.
-- The master choice with execution threshold -10% changes the base threshold from 30% max health to 20% max health.
+각성 후보 2개는 각각 별도로 강화할 수 있다.
+
+| 각성 후보 | 강화되는 항목 | 1단계 | 2단계 | 3단계 | 4단계 | 5단계 |
+|---|---|---|---|---|---|---|
+| 확정 종결 | 처형 보정 / 처치 폭발 | 처형 대상 치명타 확률 +15% | +25% | +35%, 처치 시 45% 폭발 | +45%, 65% 폭발 | +55%, 쿨다운 초기화, 90% 폭발 |
+| 파멸권 | 위력 / 어둠 추가 피해 | 위력 +25% | 위력 +40% | 위력 +55%, 35% 어둠 추가 피해 | 위력 +70%, 50% 어둠 추가 피해 | 위력 +90%, 70% 어둠 추가 피해 |

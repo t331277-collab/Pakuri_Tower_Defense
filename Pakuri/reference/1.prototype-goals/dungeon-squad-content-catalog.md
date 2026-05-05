@@ -28,6 +28,7 @@
 목표 : 스탯 / 전투 계산 구조는 아래 문서를 기준으로 한다.
 - [`combat-stat-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F3.combat%2Fcombat-stat-system)
 - [`combat-attribute-and-damage-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F3.combat%2Fcombat-attribute-and-damage-system)
+- [`aiming-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F3.combat%2Faiming-system)
 
 ## 5. 장비 기능
 기본 장비, 조합 장비, 전설 장비, 장비 슬롯
@@ -103,8 +104,11 @@
 ## 10. 진행 / 메타(영구 지속) 기능
 어둠의 흔적, 가이던스 스톤, 시련, 난이도
 
-프로토타입 1차 메타 성장은 `어둠의 흔적`을 사용해 캐릭터별 공통 스탯과 액티브 스킬을 강화하는 구조로 둔다.
-캐릭터별 공통 스탯과 액티브 스킬 강화는 `심연의 제단` 화면에서 진행한다.
+프로토타입 1차 메타 성장은 `어둠의 흔적`을 사용해 액티브 스킬 각성, 캐릭터 스탯 강화, 액티브 스킬 강화를 진행하는 구조로 둔다.
+액티브 스킬 각성, 캐릭터 스탯 강화, 액티브 스킬 강화는 `심연의 제단` 화면에서 진행한다.
+해금 트리 기준으로는 액티브 스킬 각성을 먼저 열어 스킬의 변주 방향을 정하고, 이후 캐릭터 스탯 강화와 액티브 스킬 강화로 기본 체급과 화력을 키운다.
+모든 캐릭터 강화는 단계별 성공 확률을 가진 확률 강화로 진행하며, 실패해도 강화 단계는 하락하지 않는다.
+모든 캐릭터 강화는 5단계로 통일하고, 시작 단계부터 어둠의 흔적을 많이 요구하는 장기 성장 콘텐츠로 둔다.
 패시브는 메타 성장에서 다루지 않는다.
 강화는 캐릭터 단위로 관리하고, 초기화 시 투자한 `어둠의 흔적`은 전액 반환한다.
 단, 초기화할 때마다 `어둠의 흔적` 50개를 고정 수수료로 소모한다.
@@ -112,8 +116,11 @@
 메타 성장 재화는 `어둠의 흔적`만 사용한다.
 
 메타 성장 전체 정리는 [`meta-growth-index.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fmeta-growth-index) 참고
-캐릭터별 공통 스탯 강화 노드는 [`meta-growth-node-list.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fmeta-growth-node-list) 참고
-캐릭터별 액티브 스킬 강화 노드는 [`active-skill-growth-node-list.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Factive-skill-growth-node-list) 참고
+캐릭터 강화 전체 구조는 [`character-growth-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fcharacter-growth-system) 참고
+강화 성공률과 실패 규칙은 [`enhancement-probability-rule.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fenhancement-probability-rule) 참고
+캐릭터 스탯 강화 노드는 [`meta-growth-node-list.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Fmeta-growth-node-list) 참고
+액티브 스킬 강화 노드는 [`active-skill-growth-node-list.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F6.meta%2Factive-skill-growth-node-list) 참고
+액티브 스킬 각성 후보와 단계별 효과는 각 캐릭터의 액티브 스킬 문서 안에 함께 작성한다.
 심연의 제단 화면은 [`4. abyss-altar-layout.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F7.UI%2F4.%20abyss-altar-layout) 참고
 
 추가 예정 : 캐릭터 해금, 난이도 해금, 시작 보너스 문서 작성
