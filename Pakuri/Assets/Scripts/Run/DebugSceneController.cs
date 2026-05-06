@@ -579,12 +579,12 @@ namespace Pakuri.Run
             for (var i = 0; i < activeSkills.Length; i++)
             {
                 var skill = activeSkills[i];
-                if (skill == null || !GetState(activeSkillStates, skill.Slot) || string.IsNullOrWhiteSpace(skill.DisplayName))
+                if (skill == null || !GetState(activeSkillStates, skill.Slot) || string.IsNullOrWhiteSpace(skill.SkillId))
                 {
                     continue;
                 }
 
-                session.LearnedActives.Add(skill.DisplayName);
+                session.AddLearnedActive(skill.SkillId);
             }
         }
 
@@ -599,13 +599,9 @@ namespace Pakuri.Run
                     continue;
                 }
 
-                if (!string.IsNullOrWhiteSpace(passive.DisplayName))
-                {
-                    session.LearnedPassives.Add(passive.DisplayName);
-                }
-
                 if (!string.IsNullOrWhiteSpace(passive.PassiveId))
                 {
+                    session.AddLearnedPassive(passive.PassiveId);
                     session.ChosenRewardIds.Add(passive.PassiveId);
                 }
             }

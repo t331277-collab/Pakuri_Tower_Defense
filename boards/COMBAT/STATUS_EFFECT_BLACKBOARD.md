@@ -5,6 +5,49 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-06 Sein Fire Resistance Reduction And Heat State
+
+### Task title
+
+Track Sein fire-specific enemy state for active skill interactions.
+
+### Goals
+
+- Record temporary Sein heat state from Scorching Arrow and Superheated Zone.
+- Record temporary fire-defense reduction from Doomsday Line.
+- Ensure fire-defense reduction is applied to Sein fire damage resolution.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This pass adds internal runtime state only; user-facing status labels can be expanded later if requested.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Sein C trait 5, D repeated tick behavior, and E fire-resistance reduction in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` adds `SeinScorchingArrowTimer`, `SeinSuperheatedZoneTimer`, `SeinSuperheatedTickCount`, `SeinFireDefenseReductionTimer`, and `SeinFireDefenseReduction` to `EnemyRuntime`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs` updates those timers, applies D tick count state, and applies E fire-defense reduction.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` includes `GetSeinFlatDefenseReduction(...)` in selected-Monster projectile fire-damage resolution.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP warnings.
+
+### History
+
+- 2026-05-06: Sein A-E active implementation introduced internal heat/fire-defense-reduction state for C/D/E interactions.
+
 ## Task: 2026-05-05 Rin Collapse Aftermath Physical Defense Reduction
 
 ### Task title
@@ -440,3 +483,214 @@ Implemented and locally validated.
 ## History
 
 - 2026-05-04: Code Builder implemented Rin C/E slow and C knockback using current combat status-effect fields.
+
+## Task: 2026-05-06 Sein Passive Debuff State
+
+### Task title
+
+Track Sein H/I/J passive target debuffs and fire resistance changes.
+
+### Goals
+
+- Add enemy runtime timers for Sein H Burning Trajectory, I Thermal Spread, and J Doomsday Omen damage-taken bonuses.
+- Keep Sein fire-resistance reduction and fire damage-taken effects inside existing combat damage resolution.
+- Preserve status-effect evidence for future continuation and review.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This pass adds internal runtime state only; user-facing status label expansion can be done later if requested.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that C, D, and E hits apply the expected follow-up fire damage increases and J kill cooldown charge.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` now adds `SeinBurningTrajectoryTimer`, `SeinBurningTrajectoryDamageTakenBonus`, `SeinThermalSpreadTimer`, `SeinThermalSpreadDamageTakenBonus`, `SeinDoomsdayOmenTimer`, and `SeinDoomsdayOmenDamageTakenBonus` to `EnemyRuntime`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs` now decrements and clears the Sein H/I/J timers, applies H/I/J debuffs from the matching active skill paths, and includes those bonuses in Sein fire damage resolution.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs` now extends D tick speed/radius and E cooldown charge behavior from the I/J passive data.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+- Unity console error query after refresh returned only MCP-FOR-UNITY client handler logs.
+
+### History
+
+- 2026-05-06: Code Builder added internal enemy state for Sein H/I/J passive debuffs during the F-J implementation pass.
+
+## Task: 2026-05-07 Sein C/E Residual Zone Follow-up
+
+### Task title
+
+Track Sein C falling residual and E ash superheated zone placement.
+
+### Goals
+
+- Record that C `Falling Trajectory` now creates a residual fire zone after delayed explosion expiry.
+- Record that E `Ashen Sky` zones are created from actual hit target positions instead of one initial target center.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies C residual zone and E ash zone placement in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs:624` creates `SeinFallingTrajectoryResidual` for `sein-c` when `SeinSpawnResidualOnExpire` is set.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs:762` creates E `SeinAshSuperheatedZone` effects from actual target positions, up to 3 zones.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: User reported C `Falling Trajectory` fire zone not spawning and E ash zones grouping around the first target.
+- 2026-05-07: Code Builder added C residual expiry handling and changed E ash-zone creation to actual hit targets.
+
+## Task: 2026-05-07 Vega Name Mark And Silence State
+
+### Task title
+
+Track Vega `이름표식` and `침묵` combat state added for active skills A-E.
+
+### Goals
+
+- Add enemy runtime state for Vega name marks and silence.
+- Display Vega mark/silence state in enemy labels.
+- Prevent silenced enemies from using their active skill while silence remains.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Vega mark stacks and B silence behavior in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` adds `VegaNameMarkStacks` and `VegaSilenceTimer` to enemy runtime state.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEnemies.cs` decrements `VegaSilenceTimer`, displays `이름표식`/`침묵`, and blocks active skill use while silenced.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs` applies name marks and silence from Vega A/B/D/E active skill paths.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: Code Builder added Vega status state during Vega A-E active skill implementation.
+
+## Task: 2026-05-07 Vega Passive Vulnerability State
+
+### Task title
+
+Track Vega I/J passive target vulnerability state.
+
+### Goals
+
+- Add enemy runtime timers for Vega I `연쇄 참결` area-damage vulnerability.
+- Add enemy runtime timers for Vega J `사형 집행인` survivor damage vulnerability.
+- Display the new temporary vulnerability states in enemy status labels.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Vega D-hit targets show area vulnerability and Final Sentence survivors show survivor vulnerability.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs:88` through `:91` add `VegaBlackLedgerAreaVulnerability*` and `VegaFinalSentenceVulnerability*` fields to `EnemyRuntime`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:83` through `:92` decrement and clear the new Vega vulnerability timers.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:922` applies Vega I area vulnerability after D area hits.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:939` applies Vega J survivor vulnerability after Final Sentence does not kill.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEnemies.cs:909` and `:914` add `참결취약` and `선고취약` labels.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: Code Builder added Vega I/J passive target-vulnerability state during Vega F-J passive implementation.
+
+## Task: 2026-05-07 Vega B Silence Rectangle Source
+
+### Task title
+
+Track Vega B silence application after the target-centered rectangle correction.
+
+### Goals
+
+- Record that Vega B silence still applies after changing B from line damage to target-centered rectangle damage.
+- Keep status-effect history aligned with the Vega combat correction.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that enemies inside Vega B's 3 by 1 target rectangle receive silence as before.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:422` through `:441` now applies `ApplyVegaSilence(...)` in the target-centered rectangle hit loop.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` no longer needs the old delayed `SkillEffectRuntime.VegaSilenceDuration` field after B was made immediate.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: User requested Vega B to apply immediate rectangular area damage on the enemy instead of line damage from Vega.

@@ -68,6 +68,18 @@ namespace Pakuri.Combat
             if (IsSelectedRinMonster())
             {
                 UpdateRinSkillCooldowns();
+                return;
+            }
+
+            if (IsSelectedSeinMonster())
+            {
+                UpdateSeinSkillCooldowns();
+                return;
+            }
+
+            if (IsSelectedVegaMonster())
+            {
+                UpdateVegaSkillCooldowns();
             }
         }
 
@@ -86,6 +98,16 @@ namespace Pakuri.Combat
             if (IsSelectedRinMonster())
             {
                 return TryTriggerRinAutomaticSkills();
+            }
+
+            if (IsSelectedSeinMonster())
+            {
+                return TryTriggerSeinAutomaticSkills();
+            }
+
+            if (IsSelectedVegaMonster())
+            {
+                return TryTriggerVegaAutomaticSkills();
             }
 
             return false;
@@ -108,6 +130,16 @@ namespace Pakuri.Combat
                 return GetRinShatteringFistMagazineCapacity();
             }
 
+            if (IsSelectedSeinMonster())
+            {
+                return GetSeinScorchingArrowMagazineCapacity();
+            }
+
+            if (IsSelectedVegaMonster())
+            {
+                return GetVegaThreeSwordFlurryMagazineCapacity();
+            }
+
             return magazineCapacityConfigured;
         }
 
@@ -126,6 +158,16 @@ namespace Pakuri.Combat
             if (IsSelectedRinMonster())
             {
                 return GetRinActionSpeedMultiplier();
+            }
+
+            if (IsSelectedSeinMonster())
+            {
+                return GetSeinActionSpeedMultiplier();
+            }
+
+            if (IsSelectedVegaMonster())
+            {
+                return GetVegaActionSpeedMultiplier();
             }
 
             return 1f;
@@ -925,7 +967,7 @@ namespace Pakuri.Combat
         {
             return IsSelectedArielMonster()
                 && ((!string.IsNullOrWhiteSpace(passiveId) && chosenSkillChoiceIds.Contains(passiveId))
-                    || (!string.IsNullOrWhiteSpace(passiveName) && learnedPassiveSkillNames.Contains(passiveName)));
+                    || (!string.IsNullOrWhiteSpace(passiveId) && learnedPassiveSkillIds.Contains(passiveId)));
         }
 
         private bool HasArielGuidingLight()

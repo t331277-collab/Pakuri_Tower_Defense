@@ -5,6 +5,48 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-06 Sein Projectile Active Skills
+
+### Task title
+
+Record Sein projectile runtime additions for active skills A and B.
+
+### Goals
+
+- Route Sein A through a dedicated manual fire projectile path.
+- Implement Sein B as a separate click-triggered volley projectile skill.
+- Keep no-hit selected-Monster projectiles on the existing X-boundary cleanup rule.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Sein A and B projectile travel, collision, and cleanup in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` routes selected Sein A fire to `FireManualSeinScorchingArrow(...)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` calls `TrackSeinProjectileHit(...)` after selected-Monster projectile damage is applied.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs` creates Sein A/B projectiles with fire damage, selected projectile sprite fallback, and long lifetime so no-hit cleanup remains X-boundary based.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP warnings.
+
+### History
+
+- 2026-05-06: Sein A-E active implementation added dedicated projectile behavior for Scorching Arrow and Blazing Volley.
+
 ## Task: 2026-05-05 Monster Projectile No-Range Cleanup Rule
 
 ### Task title
@@ -640,3 +682,215 @@ Implemented, Reviewer findings fixed, and locally validated. Code Reviewer has n
 
 - 2026-05-04: Code Builder added Rin A projectile routing and Rin elemental extra-damage handling.
 - 2026-05-04: Code Builder fixed the Reviewer-reported Rin A follow-up issue by passing applied projectile damage into Thunder Gauntlet and chain handling.
+
+## Task: 2026-05-06 Sein Passive Projectile Hooks
+
+### Task title
+
+Add Sein F-J passive projectile modifiers and Flame Barrage proc routing.
+
+### Goals
+
+- Apply Sein passive fire damage, critical chance, critical multiplier, and fire-defense reduction in projectile damage resolution.
+- Route Sein G auto Blazing Volley passive procs from fire projectile hits with an internal cooldown.
+- Keep projectile behavior tied to selected-Monster skill ownership and actual hit events.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Sein G procs only from fire damage hits and respects its cooldown.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` now includes Sein final-damage, critical chance, critical multiplier, flat fire-defense reduction, and projectile-hit tracking hooks in shared projectile resolution.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs` implements `TryTriggerSeinFlameBarrageProc(...)`, `FireSeinFlameBarrageProc(...)`, and passive helper checks for `sein-f` and `sein-g`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` defines the G traits used by the proc chance, proc power, and Scorching Arrow reload reduction logic.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-06: Code Builder added projectile-path support for Sein F fire/crit modifiers and Sein G auto Blazing Volley procs while implementing Sein passive skills F-J.
+
+## Task: 2026-05-07 Sein Active Projectile Corrections
+
+### Task title
+
+Correct Sein active projectile and line targeting behavior.
+
+### Goals
+
+- Support locked-target player projectiles for Sein C.
+- Keep A explosion damage from excluding the original projectile target.
+- Change B volley output from angled fan spread to same-direction magazine fire with separate ammo/reload state.
+- Change E line damage from beam area checks to one target per sky-origin line.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Sein projectile visuals and target-only E behavior in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` added `LockedEnemyTarget`, `SeinExplodesOnLockedTarget`, `SeinExplosionRadius`, and `SeinExplosionDamageMultiplier` to `ProjectileRuntime`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` now calls `UpdateSeinLockedTargetProjectile(...)` and resolves locked projectiles only against their assigned enemy.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs` now launches C through `FireSeinFlameTrajectoryProjectile(...)`, creates E sky-origin lines through `CreateSeinDoomsdayTargetLine(...)`, and includes the A explosion target.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+- `git diff --check` completed with no whitespace errors; it reported only CRLF conversion warnings.
+
+### History
+
+- 2026-05-07: User clarified that Sein C should feel like a target-locked projectile and E should start from the sky and damage only target enemies.
+
+## Task: 2026-05-07 Sein C Projectile Follow-up Correction
+
+### Task title
+
+Track Sein C projectile contact delay and moving path segment behavior.
+
+### Goals
+
+- Route Sein C projectile contact into a delayed explosion effect instead of immediate damage/explosion.
+- Create `Piercing Trajectory` path segments as the projectile moves from previous position to current position.
+- Avoid full-path line damage at cast time.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies C projectile travel, contact delay, and moving path trail in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:25` stores projectile previous position before movement.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:29` calls `CreateSeinFlameTrajectoryPathSegment(...)` after movement.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:52` calls `TryHandleSeinFlameTrajectoryImpact(...)` before normal projectile damage application.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs:484` implements moving path segment visuals/damage for `sein-c-master-2`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs:529` implements delayed impact handling for C contact.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: User clarified C should explode after contact delay and leave path while flying, not draw/apply the path immediately.
+- 2026-05-07: Code Builder implemented travel-time C path segments and delayed impact handling.
+
+## Task: 2026-05-07 Vega Three-Sword Projectile Runtime
+
+### Task title
+
+Track Vega A three-sword projectile and mark application behavior.
+
+### Goals
+
+- Queue three Vega A sword projectiles per manual magazine shot.
+- Apply Vega `이름표식` from projectile hits.
+- Route Vega projectile final damage modifiers through shared projectile damage resolution.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Vega A projectile cadence, piercing behavior, and mark stacks in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs` defines queued Vega pending shots, `FireManualVegaThreeSwordFlurry(...)`, `SpawnVegaSwordProjectile(...)`, and `HandleVegaProjectileHit(...)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` calls Vega projectile hit tracking and includes Vega damage/critical hooks in shared projectile damage resolution.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: Code Builder implemented Vega A projectile runtime as part of Vega A-E active skill implementation.
+
+## Task: 2026-05-07 Vega Projectile Sprite Runtime Source Fix
+
+### Task title
+
+Record Vega projectile visual source correction for the selected-Monster projectile path.
+
+### Goals
+
+- Ensure Vega A projectile rendering uses the intended selected projectile sprite.
+- Record that the projectile path itself was correct and the defect was in runtime data source alignment.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Vega projectile sprite appearance in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeScene.cs:163` assigns `selectedProjectileSprite = monster.ProjectileSprite`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:396` renders Vega projectile sprites from `selectedProjectileSprite` before falling back to `GetSharedSprite()`.
+- `Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.Build.cs:27` builds runtime `MonsterDefinition.ProjectileSprite` from `sourceMonster.ProjectileSpritePath`.
+- Unity-MCP inspection showed the runtime `ProjectileSpritePath` was old before the fix and `Assets/Image/Monster/Vega/Vega_Shoot2.png` after `monsters.csv` was corrected and synced.
+
+### History
+
+- 2026-05-07: User reported Vega projectile visuals still showed the old sprite despite the SO projectile sprite assignment.

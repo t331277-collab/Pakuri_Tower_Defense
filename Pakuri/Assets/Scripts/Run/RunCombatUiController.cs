@@ -73,8 +73,8 @@ namespace Pakuri.Run
             public string ChoiceId;
             public string Title;
             public string Description;
-            public string ActiveSkillName;
-            public string PassiveSkillName;
+            public string ActiveSkillId;
+            public string PassiveSkillId;
             public OfferingChoiceKind ChoiceKind;
             public float DamageMultiplier = 1f;
             public int MagazineBonus;
@@ -589,7 +589,7 @@ namespace Pakuri.Run
                 }
 
                 var choiceId = string.IsNullOrWhiteSpace(skill.SkillId) ? $"active:{skill.DisplayName}" : skill.SkillId;
-                if (currentSession.HasChosenReward(choiceId) || currentSession.HasLearnedActive(skill.DisplayName))
+                if (currentSession.HasChosenReward(choiceId) || currentSession.HasLearnedActive(skill.SkillId))
                 {
                     continue;
                 }
@@ -600,7 +600,7 @@ namespace Pakuri.Run
                     ChoiceKind = OfferingChoiceKind.ActiveSkill,
                     Title = $"신규 액티브: {skill.DisplayName}",
                     Description = ResolveSkillDescription(skill.Summary, skill.DescriptionText, "액티브 스킬을 습득한다."),
-                    ActiveSkillName = skill.DisplayName
+                    ActiveSkillId = skill.SkillId
                 });
             }
         }
@@ -622,7 +622,7 @@ namespace Pakuri.Run
                 }
 
                 var choiceId = string.IsNullOrWhiteSpace(passive.PassiveId) ? $"passive:{passive.DisplayName}" : passive.PassiveId;
-                if (currentSession.HasChosenReward(choiceId) || currentSession.HasLearnedPassive(passive.DisplayName))
+                if (currentSession.HasChosenReward(choiceId) || currentSession.HasLearnedPassive(passive.PassiveId))
                 {
                     continue;
                 }
@@ -638,7 +638,7 @@ namespace Pakuri.Run
                     ChoiceKind = OfferingChoiceKind.PassiveSkill,
                     Title = $"신규 패시브: {passive.DisplayName}",
                     Description = ResolveSkillDescription(passive.Summary, passive.DescriptionText, "패시브 스킬을 습득한다."),
-                    PassiveSkillName = passive.DisplayName
+                    PassiveSkillId = passive.PassiveId
                 });
             }
         }
@@ -686,7 +686,7 @@ namespace Pakuri.Run
             for (var i = 0; i < activeSkills.Length; i++)
             {
                 var skill = activeSkills[i];
-                if (skill == null || skill.EnhancementChoices == null || !currentSession.HasLearnedActive(skill.DisplayName))
+                if (skill == null || skill.EnhancementChoices == null || !currentSession.HasLearnedActive(skill.SkillId))
                 {
                     continue;
                 }
@@ -706,7 +706,7 @@ namespace Pakuri.Run
             for (var i = 0; i < passiveSkills.Length; i++)
             {
                 var passive = passiveSkills[i];
-                if (passive == null || passive.EnhancementChoices == null || !currentSession.HasLearnedPassive(passive.DisplayName))
+                if (passive == null || passive.EnhancementChoices == null || !currentSession.HasLearnedPassive(passive.PassiveId))
                 {
                     continue;
                 }
@@ -726,7 +726,7 @@ namespace Pakuri.Run
             for (var i = 0; i < activeSkills.Length; i++)
             {
                 var skill = activeSkills[i];
-                if (skill == null || skill.MasterSkillChoices == null || !currentSession.HasLearnedActive(skill.DisplayName))
+                if (skill == null || skill.MasterSkillChoices == null || !currentSession.HasLearnedActive(skill.SkillId))
                 {
                     continue;
                 }
@@ -803,7 +803,7 @@ namespace Pakuri.Run
                 var skill = activeSkills[i];
                 if (skill != null
                     && skill.Slot == requiredSlot
-                    && currentSession.HasLearnedActive(skill.DisplayName))
+                    && currentSession.HasLearnedActive(skill.SkillId))
                 {
                     return true;
                 }
@@ -831,7 +831,7 @@ namespace Pakuri.Run
             }
 
             var choice = offeringChoices[choiceIndex];
-            currentSession.RecordOfferingChoice(choice.ChoiceId, choice.ActiveSkillName, choice.PassiveSkillName);
+            currentSession.RecordOfferingChoice(choice.ChoiceId, choice.ActiveSkillId, choice.PassiveSkillId);
             if (choice.ChoiceKind == OfferingChoiceKind.Enhancement)
             {
                 currentSession.AccumulateReward(

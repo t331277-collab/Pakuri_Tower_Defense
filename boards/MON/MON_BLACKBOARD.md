@@ -52,6 +52,50 @@ Legacy non-English note summarized in English; see the surrounding task block fo
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-06 Sein A-E Active Runtime Implementation
+
+### Task title
+
+Record common monster state for Sein active skill runtime implementation.
+
+### Goals
+
+- Keep the common monster board aware that Sein A-E active skills now have runtime behavior.
+- Record that B-E use independent cooldown/panel state rather than the shared A-skill magazine counter.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Detailed Sein behavior is recorded in `boards/MON/SEIN_MONSTER.md`.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Sein A-E in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `boards/MON/SEIN_MONSTER.md` contains the detailed 2026-05-06 Sein A-E task block.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs` now exists and implements Sein active runtime behavior.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs`, `CombatRuntimeController.cs`, and `CombatRuntimeProjectiles.cs` now include Sein in selected-Monster dispatch.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` and `Pakuri/Assets/Data/GameData/Monsters/sein.asset` classify Sein A-E as runtime implemented.
+- Unity-MCP `execute_code` confirmed runtime catalog resolution reports Sein A-E as `RuntimeImplemented`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP warnings.
+
+### History
+
+- 2026-05-06: User requested Sein active skill A-E implementation from the Sein reference skill folder.
+
 ## Task: 2026-05-05 MonsterPanel Active Skill Display
 
 ### Task title
@@ -990,3 +1034,378 @@ Legacy non-English note retained these code references: `LegacyRuntime.ttf`.
 - Legacy non-English note retained these code references: `Resources.GetBuiltinResource<Font>("Arial.ttf")`, `RunFlowController`, `LegacyRuntime.ttf`.
 - Legacy non-English note retained these code references: `LegacyRuntime.ttf`.
 
+## Task: 2026-05-06 Sein F-J Passive Runtime Implementation
+
+### Task title
+
+Track Sein passive F-J runtime implementation across Monster combat data.
+
+### Goals
+
+- Keep the monster board aligned with the Sein-specific passive implementation.
+- Record affected combat systems: projectile hit modifiers, passive procs, and enemy debuff state.
+- Preserve validation evidence for future continuation after session reset.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue future Sein work from `boards/MON/SEIN_MONSTER.md`.
+- Run Code Reviewer only if the user explicitly requests it.
+
+### Evidence
+
+- `boards/MON/SEIN_MONSTER.md` contains the Sein-specific F-J task block and implementation evidence.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs` now contains passive helper paths for `sein-f`, `sein-g`, `sein-h`, `sein-i`, and `sein-j`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` applies Sein passive projectile modifiers and calls Sein projectile-hit tracking.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` and `Pakuri/Assets/Data/GameData/Monsters/sein.asset` mark Sein F-J as `RuntimeImplemented`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+- Unity-MCP runtime catalog inspection confirmed `sein-f` through `sein-j` resolve as `RuntimeImplemented`.
+
+### History
+
+- 2026-05-06: User requested implementation of Sein passive skills F-J after the A-E active skill pass.
+- 2026-05-06: Code Builder implemented the passive runtime behavior and recorded detailed evidence in the Sein, projectile, and status-effect boards.
+
+## Task: 2026-05-07 Sein Active Skill Correction Pass
+
+### Task title
+
+Track Sein A/B/C/E active skill correction pass.
+
+### Goals
+
+- Keep Monster-level history aligned with the Sein-specific correction task.
+- Record that B is now treated as a magazine active skill in source CSV, asset data, and runtime catalog.
+- Record projectile and target-selection behavior changes for future continuation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue details from `boards/MON/SEIN_MONSTER.md`.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `boards/MON/SEIN_MONSTER.md` contains the detailed 2026-05-07 Sein A/B/C/E correction task block.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` and `Pakuri/Assets/Data/GameData/Monsters/sein.asset` now classify `sein-b` as `MagazineProjectile`.
+- Unity-MCP runtime catalog inspection confirmed `sein-b:MagazineProjectile:RuntimeImplemented:mag=4:reload=6:cool=6:interval=0.18`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: User gave four correction requests for Sein A, B, C, and E behavior after the initial implementation.
+- 2026-05-07: Code Builder implemented and validated the correction pass.
+
+## Task: 2026-05-07 Sein C/E Follow-up Correction
+
+### Task title
+
+Track Monster-level evidence for Sein C delayed path/residual and E ash-zone fixes.
+
+### Goals
+
+- Keep Monster-level history aligned with the Sein-specific follow-up correction.
+- Record that C now waits after contact before exploding and creates moving path segments.
+- Record that E `Ashen Sky` now places zones on actual hit targets.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue detailed Sein behavior from `boards/MON/SEIN_MONSTER.md`.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `boards/MON/SEIN_MONSTER.md` contains the detailed 2026-05-07 Sein C/E follow-up correction task block.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:29` now creates C path segments during projectile movement, and `:52` routes C contact into delayed impact handling.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs:529` implements delayed C impact; `:624` creates the C residual fire zone; `:358` and `:762` place E ash zones from actual hit targets.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: User reported follow-up C and E active skill defects after the prior correction pass.
+- 2026-05-07: Code Builder implemented and validated the follow-up correction.
+
+## Task: 2026-05-07 Vega Active Skills A-E Runtime Implementation
+
+### Task title
+
+Track Monster-level evidence for Vega active skills A-E implementation.
+
+### Goals
+
+- Keep Monster-level state aligned with the Vega-specific task block.
+- Record that Vega A-E active skills now have runtime behavior and data state.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue detailed Vega behavior from `boards/MON/VEGA_MONSTER.md`.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `boards/MON/VEGA_MONSTER.md` contains the detailed Vega A-E implementation task block.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs` implements Vega A-E active runtime paths.
+- Unity-MCP runtime catalog inspection confirmed Vega A-E resolve as `RuntimeImplemented`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: User requested Vega active skills A-E implementation from the Vega reference folder.
+- 2026-05-07: Code Builder implemented and validated the runtime behavior and data-state updates.
+
+## Task: 2026-05-07 Vega Passive Skills F-J Runtime Implementation
+
+### Task title
+
+Track Monster-level evidence for Vega passive skills F-J implementation.
+
+### Goals
+
+- Keep Monster-level state aligned with the Vega-specific passive task block.
+- Record that Vega A-J now resolves as runtime implemented in the CSV runtime catalog.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue detailed Vega behavior from `boards/MON/VEGA_MONSTER.md`.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `boards/MON/VEGA_MONSTER.md` contains the detailed Vega F-J implementation task block.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs` now contains passive helper paths for `vega-f`, `vega-g`, `vega-h`, `vega-i`, and `vega-j`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` and `Pakuri/Assets/Data/GameData/Monsters/vega.asset` mark Vega F-J as runtime implemented.
+- Unity-MCP runtime catalog inspection confirmed Vega A-J resolve as `RuntimeImplemented`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: User requested Vega passive skills F-J implementation from the Vega reference folder.
+- 2026-05-07: Code Builder implemented and validated the runtime behavior and data-state updates.
+
+## Task: 2026-05-07 Vega Projectile Sprite CSV Runtime Fix
+
+### Task title
+
+Track Monster-level state for Vega projectile sprite runtime source correction.
+
+### Goals
+
+- Record that Vega projectile visuals are CSV-runtime sourced.
+- Keep common Monster guidance aligned with the Vega-specific sprite fix.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue detailed evidence from `boards/MON/VEGA_MONSTER.md`.
+- Future monster sprite edits should compare SO fields, `monsters.csv`, and Unity runtime catalog output.
+
+### Evidence
+
+- `boards/MON/VEGA_MONSTER.md` contains the detailed Vega projectile sprite fix task block.
+- Unity-MCP inspection showed Vega SO projectile sprite path `Assets/Image/Monster/Vega/Vega_Shoot2.png` but runtime catalog path `Assets/Image/Monster/Vega/Vega_Shoot_Temp.png` before the fix.
+- `Pakuri/Assets/CSVdata/source/monsters.csv:7` and `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog.asset:33` now point Vega projectile resolution at `Assets/Image/Monster/Vega/Vega_Shoot2.png`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: User reported Vega still showed the old projectile sprite after assigning a new projectile sprite in the SO.
+
+## Task: 2026-05-07 Vega B Target Rectangle Correction
+
+### Task title
+
+Track Monster-level state for Vega B target-centered rectangle correction.
+
+### Goals
+
+- Keep common Monster state aligned with the Vega-specific B behavior change.
+- Record that Vega B is no longer a Vega-origin line hit.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue detailed behavior from `boards/MON/VEGA_MONSTER.md`.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `boards/MON/VEGA_MONSTER.md` contains the detailed Vega B target rectangle correction task block.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:207` now uses `ApplyVegaTargetRectangleSlash(...)` instead of the old line slash path.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:422` through `:441` applies Vega B damage, silence, and name marks inside the target-centered 3 by 1 rectangle.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: User requested a Vega B behavior correction after testing the implemented Vega skills.
+
+# Task: 2026-05-07 Character Skill Effect Pipeline Review
+
+### Task title
+
+Monster character creation and skill structure review summary
+
+### Goals
+
+- Preserve monster-side conclusions from the character / skill / effect pipeline review.
+
+### Constraints
+
+- Evidence must come from inspected scripts and Unity-MCP output.
+- Designer review only; no monster runtime implementation was performed.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- See `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html`.
+- Future monster work should prefer stable skill/passive IDs and extracted monster skill runtime modules.
+
+### Evidence
+
+- `CombatRuntimeArielSkills.cs`, `CombatRuntimeEveSkills.cs`, `CombatRuntimeRinSkills.cs`, `CombatRuntimeSeinSkills.cs`, and `CombatRuntimeVegaSkills.cs` were found as `public partial class CombatRuntimeController`, not separate monster runtime classes.
+- `PakuriDataManager.cs` provides monster, active skill, passive skill, and reward lookup dictionaries.
+- Unity-MCP `execute_code` confirmed runtime catalog state: `catalogNull=False, managerSame=True, monsters=5, enemies=8, firstMonster=ariel, firstActive=5, firstPassive=5`.
+- Report created at `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html`.
+
+### History
+
+- 2026-05-07: User requested current structure review for character creation, skills, and effects. Designer created an HTML report with monster-specific structure findings.
+# Task: 2026-05-07 RunSession Learned Skill ID Refactor
+
+### Task title
+
+Monster active/passive learned-state checks use IDs.
+
+### Goals
+
+- Ensure monster skill availability and passive activation are driven by `SkillId`/`PassiveId`, not localized display names.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected code and build/Unity-MCP output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should verify each monster's unlocked active/passive behavior in Play Mode.
+
+### Evidence
+
+- `RunSession.Begin` now learns the default active by `SkillId`; Unity-MCP confirmed Ariel begins with `ariel-a`.
+- `DebugSceneController.BuildDebugSession` now stores selected active/passive IDs.
+- Monster passive helper fallbacks in Ariel, Eve, Rin, Sein, and Vega skill files now check `learnedPassiveSkillIds` by `passiveId`.
+- Unity-MCP `execute_code` confirmed ID behavior: `hasSkillId=True, hasDisplayName=False`.
+
+### History
+
+- 2026-05-07: Code Builder implemented the first-priority report refactor so learned state is no longer display-name based.

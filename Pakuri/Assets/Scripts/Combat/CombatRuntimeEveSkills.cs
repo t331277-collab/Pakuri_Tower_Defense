@@ -31,8 +31,8 @@ namespace Pakuri.Combat
 
         private void ConfigureEveSkillSelectionState(RunSession session)
         {
-            learnedActiveSkillNames.Clear();
-            learnedPassiveSkillNames.Clear();
+            learnedActiveSkillIds.Clear();
+            learnedPassiveSkillIds.Clear();
             chosenSkillChoiceIds.Clear();
 
             if (session != null && session.LearnedActives != null)
@@ -41,7 +41,7 @@ namespace Pakuri.Combat
                 {
                     if (!string.IsNullOrWhiteSpace(session.LearnedActives[i]))
                     {
-                        learnedActiveSkillNames.Add(session.LearnedActives[i]);
+                        learnedActiveSkillIds.Add(session.LearnedActives[i]);
                     }
                 }
             }
@@ -63,19 +63,19 @@ namespace Pakuri.Combat
                 {
                     if (!string.IsNullOrWhiteSpace(session.LearnedPassives[i]))
                     {
-                        learnedPassiveSkillNames.Add(session.LearnedPassives[i]);
+                        learnedPassiveSkillIds.Add(session.LearnedPassives[i]);
                     }
                 }
             }
 
             var arcBolt = FindSelectedSkill(SkillSlot.A);
-            if (arcBolt != null && !string.IsNullOrWhiteSpace(arcBolt.DisplayName))
+            if (arcBolt != null && !string.IsNullOrWhiteSpace(arcBolt.SkillId))
             {
-                learnedActiveSkillNames.Add(arcBolt.DisplayName);
+                learnedActiveSkillIds.Add(arcBolt.SkillId);
             }
-            else if (!string.IsNullOrWhiteSpace(selectedActiveSkillName))
+            else if (!string.IsNullOrWhiteSpace(selectedActiveSkillId))
             {
-                learnedActiveSkillNames.Add(selectedActiveSkillName);
+                learnedActiveSkillIds.Add(selectedActiveSkillId);
             }
         }
 
@@ -616,6 +616,7 @@ namespace Pakuri.Combat
                     continue;
                 }
 
+                TryHandleSkillEffectExpired(effect);
                 Destroy(effect.GameObject);
                 skillEffects.RemoveAt(i);
             }
@@ -631,11 +632,23 @@ namespace Pakuri.Combat
                     continue;
                 }
 
-                var inside = effect.SkillId == "eve-b"
+                var inside = effect.SkillId == "eve-b" || IsVegaLineSkillEffect(effect)
                     ? IsPointInsideBeam(enemy.Transform.position, effect)
                     : Vector2.Distance(enemy.Transform.position, effect.Transform.position) <= effect.Radius + GetEnemyHitRadius(enemy);
                 if (!inside)
                 {
+                    continue;
+                }
+
+                if (IsSeinSkillEffect(effect))
+                {
+                    ApplySeinSkillEffectDamage(effect, enemy);
+                    continue;
+                }
+
+                if (IsVegaSkillEffect(effect))
+                {
+                    ApplyVegaSkillEffectDamage(effect, enemy);
                     continue;
                 }
 
@@ -910,7 +923,7 @@ namespace Pakuri.Combat
                 return false;
             }
 
-            return learnedActiveSkillNames.Contains(skill.DisplayName);
+            return learnedActiveSkillIds.Contains(skill.SkillId);
         }
 
         private SkillDefinition FindSelectedSkill(SkillSlot slot)
@@ -942,7 +955,7 @@ namespace Pakuri.Combat
         {
             return IsSelectedEveMonster()
                 && ((string.IsNullOrWhiteSpace(passiveId) == false && chosenSkillChoiceIds.Contains(passiveId))
-                    || (string.IsNullOrWhiteSpace(passiveName) == false && learnedPassiveSkillNames.Contains(passiveName)));
+                    || (string.IsNullOrWhiteSpace(passiveId) == false && learnedPassiveSkillIds.Contains(passiveId)));
         }
 
         private bool HasEveVoltageCalibration()

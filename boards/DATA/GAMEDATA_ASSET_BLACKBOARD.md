@@ -447,3 +447,121 @@ Implemented and locally validated.
 ## History
 
 - 2026-05-04: Code Builder updated Rin A-E implementation-state flags after adding combat runtime support.
+
+## Task: 2026-05-07 Vega Active Skill Asset Runtime State
+
+### Task title
+
+Mark Vega active skills A-E runtime state in `vega.asset`.
+
+### Goals
+
+- Keep the Vega ScriptableObject asset aligned with the runtime implementation.
+- Record Unity catalog verification for future continuation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Future data work should verify both `Pakuri/Assets/Data/GameData/Monsters/vega.asset` and runtime catalog output.
+
+### Evidence
+
+- `Pakuri/Assets/Data/GameData/Monsters/vega.asset` now marks `vega-a` through `vega-e` as `ImplementationState: 2`.
+- The same asset sets B/C/D/E runtime kinds to `LineAttack`, `Buff`, `AreaAttack`, and `Execute` enum values.
+- Unity-MCP runtime catalog inspection returned `vega-a:MagazineProjectile:RuntimeImplemented`, `vega-b:LineAttack:RuntimeImplemented`, `vega-c:Buff:RuntimeImplemented`, `vega-d:AreaAttack:RuntimeImplemented`, and `vega-e:Execute:RuntimeImplemented`.
+
+### History
+
+- 2026-05-07: Code Builder updated Vega asset runtime state during active skill implementation.
+
+## Task: 2026-05-07 Vega Passive Skill Asset Runtime State
+
+### Task title
+
+Mark Vega passive skills F-J runtime state in `vega.asset`.
+
+### Goals
+
+- Keep the Vega ScriptableObject asset aligned with the passive runtime implementation.
+- Record Unity catalog verification for future continuation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Future data work should verify both `Pakuri/Assets/Data/GameData/Monsters/vega.asset` and runtime catalog output.
+
+### Evidence
+
+- `Pakuri/Assets/Data/GameData/Monsters/vega.asset:434`, `:470`, `:505`, `:540`, and `:579` now mark `vega-f` through `vega-j` as `ImplementationState: 2`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:48` through `:52` mark the same Vega passive rows as `RuntimeImplemented`.
+- Unity-MCP runtime catalog inspection returned `vega-f:RuntimeImplemented`, `vega-g:RuntimeImplemented`, `vega-h:RuntimeImplemented`, `vega-i:RuntimeImplemented`, and `vega-j:RuntimeImplemented`.
+
+### History
+
+- 2026-05-07: Code Builder updated Vega F-J asset runtime state during passive skill implementation.
+
+## Task: 2026-05-07 Vega Projectile Sprite SO/CSV Mismatch
+
+### Task title
+
+Record Vega ProjectileSprite SO assignment versus CSV runtime source mismatch.
+
+### Goals
+
+- Preserve the evidence that the SO had the desired projectile sprite assigned.
+- Record that runtime sprite resolution required a CSV source and generated asset-catalog update.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Do not rely on SO-only sprite assignment for runtime visuals while CSV runtime catalogs are active; mirror changes into `Pakuri/Assets/CSVdata/source/monsters.csv`.
+
+### Evidence
+
+- Unity-MCP `execute_code` reported Vega SO projectile path `Assets/Image/Monster/Vega/Vega_Shoot2.png`.
+- The same inspection reported runtime Vega projectile path `Assets/Image/Monster/Vega/Vega_Shoot_Temp.png` before the CSV fix.
+- After editing `monsters.csv` and syncing catalogs, Unity-MCP `execute_code` reported runtime Vega projectile path `Assets/Image/Monster/Vega/Vega_Shoot2.png`.
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog.asset:33` now contains the generated `Assets/Image/Monster/Vega/Vega_Shoot2.png` sprite entry.
+
+### History
+
+- 2026-05-07: User reported the Vega SO Projectile Sprite assignment did not affect the runtime projectile visual.

@@ -175,3 +175,121 @@ Completed
 - Legacy non-English note retained these code references: `MetaSaveData`, `RunSnapshot`, `EphemeralRuntime`, `Pakuri/reference/save-and-load-plan.html`.
 - Legacy non-English note retained these code references: `Pakuri/data`, `save-and-load-plan.html`.
 
+## Task: 2026-05-07 Vega Active Skill CSV Runtime State
+
+### Task title
+
+Mark Vega active skills A-E runtime state in source CSV.
+
+### Goals
+
+- Keep `monster_skills.csv` aligned with Vega A-E runtime implementation.
+- Classify B/C/D/E with their concrete runtime kinds instead of generic projectile placeholders.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Future Vega data work should compare `monster_skills.csv`, `vega.asset`, and Unity runtime catalog output.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now marks `vega-a` through `vega-e` as `RuntimeImplemented`.
+- The same CSV rows classify `vega-b` as `LineAttack`, `vega-c` as `Buff`, `vega-d` as `AreaAttack`, and `vega-e` as `Execute`.
+- Unity-MCP runtime catalog inspection confirmed Vega A-E resolve with those runtime kinds and `RuntimeImplemented` state.
+
+### History
+
+- 2026-05-07: Code Builder updated Vega A-E CSV runtime state during active skill implementation.
+
+## Task: 2026-05-07 Vega Passive Skill CSV Runtime State
+
+### Task title
+
+Mark Vega passive skills F-J runtime state in source CSV.
+
+### Goals
+
+- Keep `monster_skills.csv` aligned with Vega F-J runtime implementation.
+- Ensure Unity CSV runtime catalog resolves Vega A-J as runtime implemented.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Future Vega data work should compare `monster_skills.csv`, `vega.asset`, and Unity runtime catalog output.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:48` through `:52` now mark `vega-f`, `vega-g`, `vega-h`, `vega-i`, and `vega-j` as `RuntimeImplemented`.
+- Unity-MCP `execute_code` synced CSV runtime catalogs and confirmed Vega F-J resolve as `RuntimeImplemented`.
+- `git diff --check -- Pakuri\Assets\CSVdata\source\monster_skills.csv` completed with CRLF warnings only.
+
+### History
+
+- 2026-05-07: Code Builder updated Vega F-J CSV runtime state during passive skill implementation.
+
+## Task: 2026-05-07 Vega Projectile Sprite CSV Runtime State
+
+### Task title
+
+Update Vega `monsters.csv` projectile sprite path to the new assigned projectile sprite.
+
+### Goals
+
+- Replace the old Vega projectile sprite path in the active CSV source.
+- Regenerate the runtime asset catalog from the corrected CSV source.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Use `Pakuri/Assets/CSVdata/source/monsters.csv` as the normal edit point for future monster unit/projectile sprite changes.
+
+### Evidence
+
+- Before the fix, `Pakuri/Assets/CSVdata/source/monsters.csv:7` contained `Assets/Image/Monster/Vega/Vega_Shoot_Temp.png`.
+- `Pakuri/Assets/CSVdata/source/monsters.csv:7` now contains `Assets/Image/Monster/Vega/Vega_Shoot2.png`.
+- Unity-MCP `execute_code` ran `PakuriCsvRuntimeData.SyncImportedSourceCatalogsForEditor()` and reported `new=True` for `Assets/Image/Monster/Vega/Vega_Shoot2.png` and `old=False` for `Assets/Image/Monster/Vega/Vega_Shoot_Temp.png`.
+- `git diff --check -- Pakuri\Assets\CSVdata\source\monsters.csv Pakuri\Assets\Resources\Pakuri\CSVRuntime\PakuriCsvRuntimeAssetCatalog.asset` completed with CRLF warnings only.
+
+### History
+
+- 2026-05-07: User reported Vega still used the old projectile sprite after assigning a new sprite on the SO.
+

@@ -36,7 +36,7 @@ MonoBehaviour:
     Darkness: 0
     Holy: 0
   UnitSprite: {fileID: -1788411375355218723, guid: 26facd5c042b4444bb38f80750d15cf0, type: 3}
-  ProjectileSprite: {fileID: -5566345583153479557, guid: ce56c40b4557c8445af91eae1ed609ba, type: 3}
+  ProjectileSprite: {fileID: -6777606773706237578, guid: 725f2fe8f2a299540b099f2e8469f36e, type: 3}
   UnitColor: {r: 0.62, g: 0.56, b: 0.98, a: 1}
   ProjectileColor: {r: 0.8, g: 0.72, b: 1, a: 1}
   MaxHealth: 225
@@ -155,8 +155,8 @@ MonoBehaviour:
   - SkillId: vega-b
     DisplayName: "\uCE68\uBB35\uC758 \uB300\uD0DC\uB3C4"
     Slot: 1
-    RuntimeKind: 0
-    ImplementationState: 1
+    RuntimeKind: 2
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -223,8 +223,8 @@ MonoBehaviour:
   - SkillId: vega-c
     DisplayName: "\uBAB0\uC0B4 \uD5C8\uAC00"
     Slot: 2
-    RuntimeKind: 1
-    ImplementationState: 1
+    RuntimeKind: 5
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -292,8 +292,8 @@ MonoBehaviour:
   - SkillId: vega-d
     DisplayName: "\uAC80\uC740 \uBA85\uBD80 \uAC1C\uBC29"
     Slot: 3
-    RuntimeKind: 0
-    ImplementationState: 1
+    RuntimeKind: 3
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -359,8 +359,8 @@ MonoBehaviour:
   - SkillId: vega-e
     DisplayName: "\uCD5C\uC885\uC120\uACE0"
     Slot: 4
-    RuntimeKind: 0
-    ImplementationState: 1
+    RuntimeKind: 9
+    ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
@@ -431,7 +431,7 @@ MonoBehaviour:
     Slot: 5
     RequiredActiveSlot: 0
     IsAvailableWithoutActiveRequirement: 1
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uC0BC\uAC80\uB09C\uBB34 \uB300\uC751 \uD328\uC2DC\uBE0C. \uC774\uB984\uD45C\uC2DD
@@ -467,7 +467,7 @@ MonoBehaviour:
     Slot: 6
     RequiredActiveSlot: 1
     IsAvailableWithoutActiveRequirement: 0
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uCE68\uBB35\uC758 \uB300\uD0DC\uB3C4 \uB300\uC751 \uD328\uC2DC\uBE0C.
@@ -502,7 +502,7 @@ MonoBehaviour:
     Slot: 7
     RequiredActiveSlot: 2
     IsAvailableWithoutActiveRequirement: 0
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uBAB0\uC0B4 \uD5C8\uAC00 \uB300\uC751 \uD328\uC2DC\uBE0C.
@@ -537,7 +537,7 @@ MonoBehaviour:
     Slot: 8
     RequiredActiveSlot: 3
     IsAvailableWithoutActiveRequirement: 0
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uAC80\uC740 \uBA85\uBD80 \uAC1C\uBC29 \uB300\uC751 \uD328\uC2DC\uBE0C.
@@ -576,7 +576,7 @@ MonoBehaviour:
     Slot: 9
     RequiredActiveSlot: 4
     IsAvailableWithoutActiveRequirement: 0
-    ImplementationState: 1
+    ImplementationState: 2
     SkillIcon: {fileID: 0}
     SkillEffectPrefab: {fileID: 0}
     DescriptionText: "\uCD5C\uC885\uC120\uACE0 \uB300\uC751 \uD328\uC2DC\uBE0C. \uCC98\uD615

@@ -72,6 +72,23 @@ namespace Pakuri.Combat
             public float HolyExposureAccumulatedDamage;
             public float RinPhysicalDefenseReductionTimer;
             public float RinPhysicalDefenseReduction;
+            public float SeinScorchingArrowTimer;
+            public float SeinSuperheatedZoneTimer;
+            public int SeinSuperheatedTickCount;
+            public float SeinFireDefenseReductionTimer;
+            public float SeinFireDefenseReduction;
+            public float SeinBurningTrajectoryTimer;
+            public float SeinBurningTrajectoryDamageTakenBonus;
+            public float SeinThermalSpreadTimer;
+            public float SeinThermalSpreadDamageTakenBonus;
+            public float SeinDoomsdayOmenTimer;
+            public float SeinDoomsdayOmenDamageTakenBonus;
+            public int VegaNameMarkStacks;
+            public float VegaSilenceTimer;
+            public float VegaBlackLedgerAreaVulnerabilityTimer;
+            public float VegaBlackLedgerAreaVulnerabilityBonus;
+            public float VegaFinalSentenceVulnerabilityTimer;
+            public float VegaFinalSentenceVulnerabilityBonus;
             public float FlashTimer;
             public string DisplayName;
         }
@@ -102,6 +119,11 @@ namespace Pakuri.Combat
             public EnemyRuntime SourceEnemy;
             public Transform TargetTransform;
             public bool TargetsMonster;
+            public EnemyRuntime LockedEnemyTarget;
+            public bool SeinExplodesOnLockedTarget;
+            public float SeinExplosionRadius;
+            public float SeinExplosionDamageMultiplier = 1f;
+            public int VegaNameMarkStacks;
         }
 
         private sealed class SkillEffectRuntime
@@ -124,6 +146,7 @@ namespace Pakuri.Combat
             public float FreezeDuration;
             public float SlowChance;
             public float SlowDuration;
+            public bool SeinSpawnResidualOnExpire;
             public readonly HashSet<EnemyRuntime> HitThisTick = new HashSet<EnemyRuntime>();
         }
 
@@ -280,8 +303,8 @@ namespace Pakuri.Combat
         private readonly List<DamagePopupRuntime> damagePopups = new List<DamagePopupRuntime>();
         private readonly List<RewardOption> rewardOptions = new List<RewardOption>();
         private readonly HashSet<string> blockedRewardIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private readonly HashSet<string> learnedActiveSkillNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private readonly HashSet<string> learnedPassiveSkillNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> learnedActiveSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> learnedPassiveSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> chosenSkillChoiceIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly List<EnemyDefinition> currentNormalEnemyPool = new List<EnemyDefinition>();
         private readonly List<EnemyDefinition> currentGuaranteedPrisonerDefinitions = new List<EnemyDefinition>();
@@ -326,6 +349,8 @@ namespace Pakuri.Combat
         private MonsterDefinition selectedMonster;
         private string selectedMonsterName = "이브";
         private string selectedElementLabel = "번개";
+        private string selectedActiveSkillId = "eve-a";
+        private string selectedPassiveSkillId = "eve-f";
         private string selectedActiveSkillName = "아크 볼트";
         private string selectedPassiveSkillName = "전압 보정";
         private string selectedStatusEffectLabel = "감전";
@@ -376,6 +401,7 @@ namespace Pakuri.Combat
         public string StatusLabel => statusLabel;
         public string AppliedRewardSummary => appliedRewardSummary;
         public string SelectedMonsterName => selectedMonsterName;
+        public string SelectedMonsterPassiveId => selectedPassiveSkillId;
         public string SelectedMonsterPassiveName => selectedPassiveSkillName;
         public float NexusMaxHealth => nexusMaxHealth;
         public float NexusCurrentHealth => nexusCurrentHealth;
@@ -466,6 +492,8 @@ namespace Pakuri.Combat
             UpdateEveSkillEffects();
             UpdateArielSkillEffects();
             UpdateRinSkillEffects();
+            UpdateSeinSkillEffects();
+            UpdateVegaSkillEffects();
             UpdateSelectedMonsterCombat();
             UpdateSelectedMonsterStatusVisuals();
             CheckBattleResolution();
@@ -547,6 +575,8 @@ namespace Pakuri.Combat
             ConfigureEveSkillSelectionState(session);
             ResetArielSkillCombatTimers();
             ResetRinSkillCombatTimers();
+            ResetSeinSkillCombatTimers();
+            ResetVegaSkillCombatTimers();
 
             var magazineCapacity = GetSelectedMonsterMagazineCapacity();
             if (currentShotsRemaining > magazineCapacity)
@@ -641,17 +671,29 @@ namespace Pakuri.Combat
             {
                 if (isMagazine)
                 {
-                    currentAmmo = Mathf.Max(0, currentShotsRemaining);
-                    maxAmmo = Mathf.Max(1, GetSelectedMonsterMagazineCapacity());
-                    if (reloadRemaining > 0f)
+                    if (IsSelectedSeinMonster() && skill.Slot == SkillSlot.B)
                     {
-                        cooldownRemaining = reloadRemaining;
-                        cooldownDuration = GetSelectedMonsterReloadSeconds();
+                        currentAmmo = GetSeinBlazingVolleyCurrentAmmo();
+                        maxAmmo = GetSeinBlazingVolleyMagazineCapacity();
+                        cooldownRemaining = GetSelectedMonsterSkillCooldownRemaining(skill.Slot);
+                        cooldownDuration = cooldownRemaining > 0f
+                            ? GetSelectedMonsterSkillCooldownDuration(skill)
+                            : 0f;
                     }
-                    else if (shotCooldown > 0f)
+                    else
                     {
-                        cooldownRemaining = shotCooldown;
-                        cooldownDuration = Mathf.Max(0.05f, shotIntervalConfigured);
+                        currentAmmo = Mathf.Max(0, currentShotsRemaining);
+                        maxAmmo = Mathf.Max(1, GetSelectedMonsterMagazineCapacity());
+                        if (reloadRemaining > 0f)
+                        {
+                            cooldownRemaining = reloadRemaining;
+                            cooldownDuration = GetSelectedMonsterReloadSeconds();
+                        }
+                        else if (shotCooldown > 0f)
+                        {
+                            cooldownRemaining = shotCooldown;
+                            cooldownDuration = Mathf.Max(0.05f, shotIntervalConfigured);
+                        }
                     }
                 }
                 else
@@ -674,6 +716,16 @@ namespace Pakuri.Combat
             if (IsSelectedRinMonster())
             {
                 return GetRinShatteringFistReloadSeconds();
+            }
+
+            if (IsSelectedSeinMonster())
+            {
+                return GetSeinScorchingArrowReloadSeconds();
+            }
+
+            if (IsSelectedVegaMonster())
+            {
+                return GetVegaThreeSwordFlurryReloadSeconds();
             }
 
             return Mathf.Max(0.25f, reloadDurationConfigured);
@@ -723,6 +775,36 @@ namespace Pakuri.Combat
                         return rinFinishingBlowCooldownRemaining;
                     case SkillSlot.E:
                         return rinCollapseStrikeCooldownRemaining;
+                }
+            }
+
+            if (IsSelectedSeinMonster())
+            {
+                switch (slot)
+                {
+                    case SkillSlot.B:
+                        return GetSeinBlazingVolleyCooldownRemaining();
+                    case SkillSlot.C:
+                        return seinFlameTrajectoryCooldownRemaining;
+                    case SkillSlot.D:
+                        return seinSuperheatedZoneCooldownRemaining;
+                    case SkillSlot.E:
+                        return seinDoomsdayLineCooldownRemaining;
+                }
+            }
+
+            if (IsSelectedVegaMonster())
+            {
+                switch (slot)
+                {
+                    case SkillSlot.B:
+                        return vegaSilentGreatbladeCooldownRemaining;
+                    case SkillSlot.C:
+                        return vegaExterminationPermitCooldownRemaining;
+                    case SkillSlot.D:
+                        return vegaBlackLedgerCooldownRemaining;
+                    case SkillSlot.E:
+                        return vegaFinalSentenceCooldownRemaining;
                 }
             }
 
@@ -780,6 +862,36 @@ namespace Pakuri.Combat
                 }
             }
 
+            if (IsSelectedSeinMonster())
+            {
+                switch (skill.Slot)
+                {
+                    case SkillSlot.B:
+                        return GetSeinBlazingVolleyCooldownDuration(skill);
+                    case SkillSlot.C:
+                        return GetSeinCooldown(skill, 6.5f, HasChoice("sein-c-trait-3") ? 0.80f : 1f);
+                    case SkillSlot.D:
+                        return GetSeinCooldown(skill, 9f, HasChoice("sein-d-trait-4") ? 0.80f : 1f);
+                    case SkillSlot.E:
+                        return GetSeinCooldown(skill, 16f, GetSeinDoomsdayCooldownMultiplier());
+                }
+            }
+
+            if (IsSelectedVegaMonster())
+            {
+                switch (skill.Slot)
+                {
+                    case SkillSlot.B:
+                        return GetVegaCooldown(skill, 8f, GetVegaSilentGreatbladeCooldownMultiplier());
+                    case SkillSlot.C:
+                        return GetVegaCooldown(skill, 14f, 1f);
+                    case SkillSlot.D:
+                        return GetVegaCooldown(skill, 11f, GetVegaBlackLedgerCooldownMultiplier());
+                    case SkillSlot.E:
+                        return GetVegaCooldown(skill, 15f, HasChoice("vega-e-trait-3") ? 0.80f : 1f);
+                }
+            }
+
             return skill.CooldownSeconds > 0f ? skill.CooldownSeconds : 0f;
         }
 
@@ -804,6 +916,8 @@ namespace Pakuri.Combat
             ClearDamagePopupRuntime();
             ResetArielSkillCombatTimers();
             ResetRinSkillCombatTimers();
+            ResetSeinSkillCombatTimers();
+            ResetVegaSkillCombatTimers();
         }
     }
 }

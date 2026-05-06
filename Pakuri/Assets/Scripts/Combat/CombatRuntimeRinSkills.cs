@@ -1146,7 +1146,7 @@ namespace Pakuri.Combat
         {
             return IsSelectedRinMonster()
                 && ((!string.IsNullOrWhiteSpace(passiveId) && chosenSkillChoiceIds.Contains(passiveId))
-                    || (!string.IsNullOrWhiteSpace(passiveName) && learnedPassiveSkillNames.Contains(passiveName)));
+                    || (!string.IsNullOrWhiteSpace(passiveId) && learnedPassiveSkillIds.Contains(passiveId)));
         }
 
         private bool HasRinAmbidextrous()

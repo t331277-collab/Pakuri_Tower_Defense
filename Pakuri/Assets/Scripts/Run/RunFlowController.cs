@@ -305,7 +305,7 @@ namespace Pakuri.Run
             rewardChoiceCommitted = true;
             currentSession.RecordRewardChoice(
                 rewardId,
-                combatController.LastAppliedRewardUnlockedPassive ? combatController.SelectedMonsterPassiveName : string.Empty);
+                combatController.LastAppliedRewardUnlockedPassive ? combatController.SelectedMonsterPassiveId : string.Empty);
             currentSession.AccumulateReward(
                 combatController.LastAppliedDamageMultiplier,
                 combatController.LastAppliedMagazineBonus,

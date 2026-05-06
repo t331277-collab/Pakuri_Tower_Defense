@@ -9,6 +9,8 @@ namespace Pakuri.Run
     {
         public string SelectedMonsterId;
         public string SelectedMonsterName;
+        public string ActiveSkillId;
+        public string PassiveSkillId;
         public string ActiveSkillName;
         public string PassiveSkillName;
         public int StageIndex = 1;
@@ -35,19 +37,71 @@ namespace Pakuri.Run
             {
                 SelectedMonsterId = monster != null ? monster.MonsterId : string.Empty,
                 SelectedMonsterName = monster != null ? monster.DisplayName : "Unknown",
+                ActiveSkillId = ResolveDefaultActiveSkillId(monster),
+                PassiveSkillId = ResolveDefaultPassiveSkillId(monster),
                 ActiveSkillName = monster != null ? monster.ActiveSkillName : string.Empty,
                 PassiveSkillName = monster != null ? monster.PassiveSkillName : string.Empty,
                 StageIndex = 1,
                 DayIndex = 1
             };
 
-            if (!string.IsNullOrWhiteSpace(session.ActiveSkillName))
+            if (!string.IsNullOrWhiteSpace(session.ActiveSkillId))
             {
-                session.LearnedActives.Add(session.ActiveSkillName);
+                session.AddLearnedActive(session.ActiveSkillId);
             }
 
             session.RefreshDayModel();
             return session;
+        }
+
+        private static string ResolveDefaultActiveSkillId(MonsterDefinition monster)
+        {
+            if (monster == null || monster.ActiveSkills == null)
+            {
+                return string.Empty;
+            }
+
+            for (var i = 0; i < monster.ActiveSkills.Length; i++)
+            {
+                var skill = monster.ActiveSkills[i];
+                if (skill != null && skill.IsDefaultLearned && !string.IsNullOrWhiteSpace(skill.SkillId))
+                {
+                    return skill.SkillId;
+                }
+            }
+
+            for (var i = 0; i < monster.ActiveSkills.Length; i++)
+            {
+                var skill = monster.ActiveSkills[i];
+                if (skill != null && skill.Slot == SkillSlot.A && !string.IsNullOrWhiteSpace(skill.SkillId))
+                {
+                    return skill.SkillId;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static string ResolveDefaultPassiveSkillId(MonsterDefinition monster)
+        {
+            if (monster == null || monster.PassiveSkills == null)
+            {
+                return string.Empty;
+            }
+
+            for (var i = 0; i < monster.PassiveSkills.Length; i++)
+            {
+                var passive = monster.PassiveSkills[i];
+                if (passive != null
+                    && passive.Slot == SkillSlot.F
+                    && passive.IsAvailableWithoutActiveRequirement
+                    && !string.IsNullOrWhiteSpace(passive.PassiveId))
+                {
+                    return passive.PassiveId;
+                }
+            }
+
+            return string.Empty;
         }
 
         public bool HasChosenReward(string rewardId)
@@ -68,45 +122,58 @@ namespace Pakuri.Run
             return false;
         }
 
-        public void RecordRewardChoice(string rewardId, string passiveNameIfUnlocked)
+        public void RecordRewardChoice(string rewardId, string passiveIdIfUnlocked)
         {
             if (!string.IsNullOrWhiteSpace(rewardId) && !HasChosenReward(rewardId))
             {
                 ChosenRewardIds.Add(rewardId);
             }
 
-            if (!string.IsNullOrWhiteSpace(passiveNameIfUnlocked) && !LearnedPassives.Contains(passiveNameIfUnlocked))
-            {
-                LearnedPassives.Add(passiveNameIfUnlocked);
-            }
+            AddLearnedPassive(passiveIdIfUnlocked);
         }
 
-        public void RecordOfferingChoice(string choiceId, string activeSkillName, string passiveSkillName)
+        public void RecordOfferingChoice(string choiceId, string activeSkillId, string passiveSkillId)
         {
             if (!string.IsNullOrWhiteSpace(choiceId) && !HasChosenReward(choiceId))
             {
                 ChosenRewardIds.Add(choiceId);
             }
 
-            if (!string.IsNullOrWhiteSpace(activeSkillName) && !LearnedActives.Contains(activeSkillName))
-            {
-                LearnedActives.Add(activeSkillName);
-            }
-
-            if (!string.IsNullOrWhiteSpace(passiveSkillName) && !LearnedPassives.Contains(passiveSkillName))
-            {
-                LearnedPassives.Add(passiveSkillName);
-            }
+            AddLearnedActive(activeSkillId);
+            AddLearnedPassive(passiveSkillId);
         }
 
-        public bool HasLearnedActive(string activeSkillName)
+        public void AddLearnedActive(string activeSkillId)
         {
-            return ContainsText(LearnedActives, activeSkillName);
+            AddUniqueText(LearnedActives, activeSkillId);
         }
 
-        public bool HasLearnedPassive(string passiveSkillName)
+        public void AddLearnedPassive(string passiveSkillId)
         {
-            return ContainsText(LearnedPassives, passiveSkillName);
+            AddUniqueText(LearnedPassives, passiveSkillId);
+        }
+
+        public bool HasLearnedActive(string activeSkillId)
+        {
+            return ContainsText(LearnedActives, activeSkillId);
+        }
+
+        public bool HasLearnedPassive(string passiveSkillId)
+        {
+            return ContainsText(LearnedPassives, passiveSkillId);
+        }
+
+        private static void AddUniqueText(List<string> values, string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return;
+            }
+
+            if (!ContainsText(values, value))
+            {
+                values.Add(value);
+            }
         }
 
         private static bool ContainsText(IReadOnlyList<string> values, string target)

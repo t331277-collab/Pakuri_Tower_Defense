@@ -118,6 +118,8 @@ namespace Pakuri.Combat
             selectedMonster = null;
             selectedMonsterName = "이브";
             selectedElementLabel = "번개";
+            selectedActiveSkillId = "eve-a";
+            selectedPassiveSkillId = "eve-f";
             selectedActiveSkillName = "아크 볼트";
             selectedPassiveSkillName = "전압 보정";
             selectedStatusEffectLabel = "감전";
@@ -152,6 +154,8 @@ namespace Pakuri.Combat
             selectedMonster = monster;
             selectedMonsterName = string.IsNullOrWhiteSpace(monster.DisplayName) ? "Unknown" : monster.DisplayName;
             selectedElementLabel = string.IsNullOrWhiteSpace(monster.ElementLabel) ? "기본" : monster.ElementLabel;
+            selectedActiveSkillId = ResolveSelectedActiveSkillId(monster);
+            selectedPassiveSkillId = ResolveSelectedPassiveSkillId(monster);
             selectedActiveSkillName = string.IsNullOrWhiteSpace(monster.ActiveSkillName) ? "기본 스킬" : monster.ActiveSkillName;
             selectedPassiveSkillName = string.IsNullOrWhiteSpace(monster.PassiveSkillName) ? string.Empty : monster.PassiveSkillName;
             selectedStatusEffectLabel = string.IsNullOrWhiteSpace(monster.StatusEffectLabel) ? string.Empty : monster.StatusEffectLabel;
@@ -173,6 +177,44 @@ namespace Pakuri.Combat
             shotIntervalConfigured = Mathf.Max(0.05f, monster.ShotInterval);
             statusChanceConfigured = Mathf.Clamp01(monster.StatusChance);
             EnsureAnchorVisuals();
+        }
+
+        private static string ResolveSelectedActiveSkillId(MonsterDefinition monster)
+        {
+            if (monster == null || monster.ActiveSkills == null)
+            {
+                return string.Empty;
+            }
+
+            for (var i = 0; i < monster.ActiveSkills.Length; i++)
+            {
+                var skill = monster.ActiveSkills[i];
+                if (skill != null && skill.Slot == SkillSlot.A && !string.IsNullOrWhiteSpace(skill.SkillId))
+                {
+                    return skill.SkillId;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static string ResolveSelectedPassiveSkillId(MonsterDefinition monster)
+        {
+            if (monster == null || monster.PassiveSkills == null)
+            {
+                return string.Empty;
+            }
+
+            for (var i = 0; i < monster.PassiveSkills.Length; i++)
+            {
+                var passive = monster.PassiveSkills[i];
+                if (passive != null && passive.Slot == SkillSlot.F && !string.IsNullOrWhiteSpace(passive.PassiveId))
+                {
+                    return passive.PassiveId;
+                }
+            }
+
+            return string.Empty;
         }
 
         private void ApplyPersistedRewardState(RunSession session)

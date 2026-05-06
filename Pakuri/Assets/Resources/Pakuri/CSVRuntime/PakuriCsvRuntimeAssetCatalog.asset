@@ -30,8 +30,8 @@ MonoBehaviour:
     Asset: {fileID: 1311808531117767923, guid: 9f975ebffed428b4ab2b35f00b5c45d4, type: 3}
   - AssetPath: Assets/Image/Monster/Sein/Sein_Temp.png
     Asset: {fileID: 491488020924605794, guid: 2105790930a66bb4f819d0915e5dddba, type: 3}
-  - AssetPath: Assets/Image/Monster/Vega/Vega_Shoot_Temp.png
-    Asset: {fileID: -5566345583153479557, guid: ce56c40b4557c8445af91eae1ed609ba, type: 3}
+  - AssetPath: Assets/Image/Monster/Vega/Vega_Shoot2.png
+    Asset: {fileID: -6777606773706237578, guid: 725f2fe8f2a299540b099f2e8469f36e, type: 3}
   - AssetPath: Assets/Image/Monster/Vega/Vega_Temp (3).png
     Asset: {fileID: -1788411375355218723, guid: 26facd5c042b4444bb38f80750d15cf0, type: 3}
   - AssetPath: Assets/Image/Stage1/Enemy/Achor.png

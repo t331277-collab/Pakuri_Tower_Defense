@@ -706,3 +706,87 @@ Completed
 - Legacy non-English note retained these code references: `run-systems-integration-summary-report.html`.
 - Legacy non-English note retained these code references: `RunSession`, `run-systems-integration-summary-report.html`.
 
+# Task: 2026-05-07 Character Skill Effect Pipeline Review
+
+### Task title
+
+Character creation, skill, and effect script structure review report
+
+### Goals
+
+- Inspect the current character creation, skill execution, and effect-related scripts from actual repository files.
+- Check whether related managers/factories exist and whether logic is concentrated in a few controllers.
+- Explain the current structure and document improvement directions in HTML.
+
+### Constraints
+
+- Follow `AGENTS.md`: all claims must be based on inspected code or command output.
+- Role Owner is Designer, so no gameplay code implementation was performed.
+- Do not run Unity Play Mode; use file inspection and Unity-MCP editor checks only.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- User can open `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html`.
+- If implementation is requested later, start with ID-based `RunSession` learned skill state and `CombatEffectFactory` extraction.
+
+### Evidence
+
+- Created `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html`.
+- Read `AGENTS.md`, `MDTREE.md`, and routed through report/monster/combat/data/run board context.
+- Inspected `Pakuri/Assets/Scripts/Data/PakuriDataManager.cs`, `Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.cs`, `Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.Build.cs`, `Pakuri/Assets/Scripts/Run/RunSession.cs`, `Pakuri/Assets/Scripts/Run/RunStartContext.cs`, `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs`, `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs`, and `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs`.
+- `Get-ChildItem Pakuri\Assets\Scripts -Recurse -Filter *.cs` line-count evidence showed large files including `RunCombatUiController.cs` 1372 lines, `DebugSceneController.cs` 1181 lines, `CombatRuntimeSeinSkills.cs` 1125 lines, `CombatRuntimeEveSkills.cs` 1057 lines, `CombatRuntimeEnemies.cs` 1025 lines, `CombatRuntimeVegaSkills.cs` 883 lines, and `CombatRuntimeController.cs` 841 lines.
+- `Select-String` evidence found `PakuriDataManager` and `RunSceneBootstrap` as manager/bootstrap classes, but no `Factory`, `Service`, `Dispatcher`, or skill-specific interface class names under `Pakuri/Assets/Scripts`.
+- Unity-MCP `execute_code` result: `catalogNull=False, managerSame=True, monsters=5, enemies=8, firstMonster=ariel, firstActive=5, firstPassive=5`.
+- Unity-MCP console warning/error check returned two missing script warnings and MCP client handler logs.
+- Test search command `Get-ChildItem Pakuri\Assets -Recurse -Include *Tests*.cs,*Test*.cs` returned no files.
+
+### History
+
+- 2026-05-07: User requested an evidence-based structure review of current character creation, skills, effects, related managers, logic concentration, and pipeline operation, with improvements written as HTML if needed.
+- 2026-05-07: Inspected the actual scripts and Unity-MCP catalog state, then generated the HTML review report.
+# Task: 2026-05-07 Report Priority 1 Refactor Follow-up
+
+### Task title
+
+Implement first-priority recommendation from character / skill / effect pipeline report.
+
+### Goals
+
+- Record that the report's first recommendation, ID-based `RunSession` learned skill state, has been implemented.
+
+### Constraints
+
+- Role Owner is Code Builder for implementation follow-up.
+- Evidence must come from changed files and verification output.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue future report recommendations from `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html`, starting with `CombatEffectFactory` extraction if requested.
+
+### Evidence
+
+- The HTML report `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html` listed ID-based `RunSession` learned state as priority 1.
+- Implemented ID-based learned state in `RunSession.cs`, `RunCombatUiController.cs`, `DebugSceneController.cs`, `RunFlowController.cs`, `CombatRuntimeController.cs`, `CombatRuntimeScene.cs`, and monster combat skill partials.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing Unity/MCPForUnity reference warnings.
+- Unity-MCP `execute_code` result: `monster=ariel, activeSkillId=ariel-a, firstLearnedActive=ariel-a, hasSkillId=True, hasDisplayName=False`.
+
+### History
+
+- 2026-05-07: User requested implementation of the first-priority refactor from the generated structure report.

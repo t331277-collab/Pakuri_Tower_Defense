@@ -603,3 +603,89 @@ Legacy non-English note retained these code references: `LegacyRuntime.ttf`.
 - Legacy non-English note retained these code references: `Resources.GetBuiltinResource<Font>("Arial.ttf")`, `RunFlowController`, `LegacyRuntime.ttf`.
 - Legacy non-English note retained these code references: `LegacyRuntime.ttf`.
 
+# Task: 2026-05-07 Character Skill Effect Pipeline Review
+
+### Task title
+
+Run character selection and session structure review summary
+
+### Goals
+
+- Preserve run-side conclusions from the structure review.
+
+### Constraints
+
+- Evidence must come from inspected scripts and Unity-MCP output.
+- Designer review only; no run code implementation was performed.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- See `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html`.
+- Future run work should move learned active/passive state from display-name strings to stable skill/passive IDs.
+
+### Evidence
+
+- `MainMenuFlowController.StartRun` calls `RunStartContext.Ensure().PrepareNewRun(selectedMonster)`.
+- `RunStartContext.cs` stores `SelectedMonster` and `RunSession`, and keeps the context with `DontDestroyOnLoad`.
+- `RunSceneBootstrap.cs` starts combat from pending context or fallback monster.
+- `RunSession.cs` stores `LearnedActives` and `LearnedPassives` as `List<string>`, and `RunCombatUiController.cs` checks learned actives with `skill.DisplayName`.
+- Report created at `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html`.
+
+### History
+
+- 2026-05-07: User requested current character creation, skill, and effect pipeline review. Designer documented the run selection/session flow and the display-name learned-skill risk.
+# Task: 2026-05-07 RunSession Learned Skill ID Refactor
+
+### Task title
+
+Refactor RunSession learned active/passive state to store stable skill IDs.
+
+### Goals
+
+- Store learned active skills as `SkillDefinition.SkillId` values in `RunSession.LearnedActives`.
+- Store learned passive skills as `PassiveDefinition.PassiveId` values in `RunSession.LearnedPassives`.
+- Keep display text sourced from definitions such as `SkillDefinition.DisplayName` instead of using display names for learned-state logic.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested refactoring implementation.
+- Evidence must come from inspected code, build output, and Unity-MCP output.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should verify in Play Mode that newly offered active/passive choices unlock and enhance the expected skills.
+- Code Reviewer execution remains deferred until explicit user permission.
+
+### Evidence
+
+- Changed `Pakuri/Assets/Scripts/Run/RunSession.cs` to add `ActiveSkillId`/`PassiveSkillId`, resolve default active ID from `IsDefaultLearned` or slot A, and use `AddLearnedActive`/`AddLearnedPassive` with IDs.
+- Changed `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` so offering choices store `ActiveSkillId`/`PassiveSkillId`, and `HasLearnedActive`/`HasLearnedPassive` checks use `skill.SkillId`/`passive.PassiveId`.
+- Changed `Pakuri/Assets/Scripts/Run/DebugSceneController.cs` so debug sessions add selected active/passive IDs instead of display names.
+- Changed `Pakuri/Assets/Scripts/Run/RunFlowController.cs` so passive reward unlock passes `SelectedMonsterPassiveId`.
+- Search evidence after edits found no remaining `HasLearnedActive(skill.DisplayName)`, `HasLearnedPassive(passive.DisplayName)`, `session.LearnedActives.Add(skill.DisplayName)`, or `session.LearnedPassives.Add(passive.DisplayName)` matches under `Pakuri/Assets/Scripts`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing Unity/MCPForUnity reference warnings.
+- Unity-MCP `execute_code` result: `monster=ariel, activeSkillId=ariel-a, firstLearnedActive=ariel-a, hasSkillId=True, hasDisplayName=False`.
+- Unity-MCP console warning/error check after compile returned only MCP client handler logs.
+
+### History
+
+- 2026-05-07: User asked to begin refactoring from the report's first priority: make `RunSession.LearnedActives` and `LearnedPassives` ID based.
+- 2026-05-07: Code Builder implemented the ID-based learned-state path and validated build/editor behavior without Play Mode.

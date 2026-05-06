@@ -1304,6 +1304,219 @@ Completed.
 - Legacy non-English note retained these code references: `Pakuri/Assets/Scripts/Combat/DamageCalculator.cs`, `EveVerticalSliceController.cs`, `Pakuri/Assets/Scripts/Data/MonsterDefinition.cs`, `GameDataCatalog.cs`, `Pakuri/Assets/Scripts/Run/RunSession.cs`.
 - Legacy non-English note retained these code references: `Pakuri/reference/Report/combat-monster-enemy-implementation-plan.html`.
 
+## Task: 2026-05-07 Sein Runtime Correction Pass
+
+### Task title
+
+Record combat-runtime evidence for Sein A/B/C/E correction pass.
+
+### Goals
+
+- Track the shared projectile-runtime changes made for locked-target Sein C projectiles.
+- Track the selected-monster panel/runtime changes needed for Sein B magazine state.
+- Preserve validation evidence for future combat-runtime continuation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Future combat work should check `boards/MON/SEIN_MONSTER.md` and `boards/COMBAT/PROJECTILE_BLACKBOARD.md` for detailed Sein behavior notes.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` now includes locked-target projectile metadata and B magazine panel state handling for Sein.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` now resolves locked-target projectiles through `ResolvePlayerProjectileDamage(...)`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+- Unity-MCP `execute_code` confirmed `sein-b` is read as `MagazineProjectile` in both `sein.asset` and runtime catalog.
+
+### History
+
+- 2026-05-07: Code Builder implemented the Sein A/B/C/E correction pass after user gameplay feedback.
+
+## Task: 2026-05-07 Sein C/E Combat Follow-up Correction
+
+### Task title
+
+Record combat-runtime evidence for Sein C delayed residual and E ash-zone targeting fixes.
+
+### Goals
+
+- Track C delayed skill-effect explosion and residual fire zone expiry behavior.
+- Track E `Ashen Sky` zone placement on actual hit target positions.
+- Preserve build and Unity console evidence.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Future combat work should check `boards/MON/SEIN_MONSTER.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs:529` creates delayed C impact effects with `TickRemaining` set from C delay.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs:624` creates `SeinFallingTrajectoryResidual` after C impact expiry.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs:358` and `:762` create E ash zones from actual hit enemies.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+- Unity-MCP refresh/compile was requested; console error query returned existing missing-script reference errors and MCP client handler logs, not C# compile errors.
+
+### History
+
+- 2026-05-07: User reported C delayed explosion/path/residual issues and E ash-zone placement issue.
+- 2026-05-07: Code Builder implemented and validated combat runtime corrections.
+
+## Task: 2026-05-07 Vega Active Combat Runtime
+
+### Task title
+
+Record combat-runtime evidence for Vega A-E implementation.
+
+### Goals
+
+- Track Vega mark, silence, buff, area slash, and execute behavior in combat runtime.
+- Preserve validation evidence for future Vega continuation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Future Vega combat work should check `boards/MON/VEGA_MONSTER.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs` implements Vega A-E active runtime paths and shared Vega damage/mark helpers.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` adds Vega runtime state fields to `EnemyRuntime`, `ProjectileRuntime`, and `SkillEffectRuntime`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEnemies.cs` decrements Vega silence, displays `이름표식`/`침묵`, and prevents silenced enemies from using active skills.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: Code Builder implemented Vega combat runtime behavior for active skills A-E.
+
+## Task: 2026-05-07 Vega Passive Combat Runtime
+
+### Task title
+
+Record combat-runtime evidence for Vega F-J passive implementation.
+
+### Goals
+
+- Track Vega passive damage modifiers, defense reduction, crit bonus, cooldown charge, and timed vulnerability state.
+- Preserve validation evidence for future Vega continuation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Future Vega combat work should check `boards/MON/VEGA_MONSTER.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, and `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:798` applies Vega passive final-damage modifiers for name-marked, silenced, area-vulnerable, and Final Sentence-vulnerable targets.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:846` applies F physical defense reduction for 10+ name-mark stacks.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:862` applies G critical chance bonus for silenced and marked targets.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:963` charges Vega cooldowns after Final Sentence kills.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: Code Builder implemented Vega combat runtime behavior for passive skills F-J.
+
+## Task: 2026-05-07 Vega B Combat Rectangle Correction
+
+### Task title
+
+Record combat-runtime correction for Vega B target-centered instant rectangle damage.
+
+### Goals
+
+- Replace Vega B's line-beam damage from Vega's position with direct target-centered area damage.
+- Keep the temporary rectangle dimensions at width 3 and height 1.
+- Preserve B's silence/name-mark/damage modifier hooks.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Vega B in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:178` still hosts `TryCastVegaSilentGreatblade()`, but it now chooses a nearest enemy target and centers the area on that target.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:207` and `:210` apply immediate target-centered rectangle damage for the base B hit and B master-1 extra hit.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:422` through `:441` performs the rectangle hit loop and applies damage, silence, and name marks.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeVegaSkills.cs:595` creates the visible rectangle effect by centering a 3 by 1 `CreateLineEffect(...)` visual on the target, not by starting from Vega.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+- Unity-MCP script refresh completed to idle and the console error query returned only MCP client-handler logs.
+
+### History
+
+- 2026-05-07: User clarified Vega B should immediately hit an area on the enemy, not draw a straight line from Vega to the enemy.
+
 ### History
 
 - Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
@@ -1312,3 +1525,82 @@ Completed.
 - Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 - Legacy non-English note retained these code references: `Pakuri/reference/Report/combat-monster-enemy-implementation-plan.html`.
 
+# Task: 2026-05-07 Character Skill Effect Pipeline Review
+
+### Task title
+
+Combat skill and effect structure review summary
+
+### Goals
+
+- Preserve combat-side conclusions from the character / skill / effect pipeline review.
+
+### Constraints
+
+- Evidence must come from inspected scripts and Unity-MCP output.
+- Designer review only; no combat code implementation or Play Mode verification was performed.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- See `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html`.
+- Future implementation should start with `CombatEffectFactory` extraction before larger skill runtime module separation.
+
+### Evidence
+
+- `CombatRuntimeController.cs` contains internal runtime classes for enemies, projectiles, skill effects, drones, and damage popups, plus shared lists including `enemies`, `projectiles`, `skillEffects`, and `drones`.
+- `CombatRuntimeEveSkills.cs` defines shared `CreateLineEffect` and `CreateCircleEffect`; other monster skill files call these helpers and add results to `skillEffects`.
+- `Select-String` under `Pakuri/Assets/Scripts` found `PakuriDataManager` and `RunSceneBootstrap`, but no factory/service/dispatcher class names for combat skill or effect orchestration.
+- Report created at `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html`.
+
+### History
+
+- 2026-05-07: User requested current combat skill/effect pipeline review. Designer documented concentration risk in `CombatRuntimeController` partial files and recommended staged extraction.
+# Task: 2026-05-07 RunSession Learned Skill ID Refactor
+
+### Task title
+
+Combat learned skill checks use stable active/passive IDs.
+
+### Goals
+
+- Align combat skill availability and passive checks with ID-based `RunSession` learned state.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected code and build/Unity-MCP output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify that learned B-E active skills and F-J passives still activate for each monster.
+
+### Evidence
+
+- Changed `CombatRuntimeController.cs` learned-state sets from name-oriented fields to `learnedActiveSkillIds` and `learnedPassiveSkillIds`.
+- Changed `CombatRuntimeScene.cs` to resolve selected slot A active ID and slot F passive ID for the current monster.
+- Changed `CombatRuntimeEveSkills.cs` so `ConfigureEveSkillSelectionState` reads session learned IDs and `HasLearnedActive(SkillSlot)` checks `skill.SkillId`.
+- Changed passive helper fallbacks in `CombatRuntimeArielSkills.cs`, `CombatRuntimeEveSkills.cs`, `CombatRuntimeRinSkills.cs`, `CombatRuntimeSeinSkills.cs`, and `CombatRuntimeVegaSkills.cs` to check `learnedPassiveSkillIds` by `passiveId`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing Unity/MCPForUnity reference warnings.
+- Unity-MCP `execute_code` result: `monster=ariel, activeSkillId=ariel-a, firstLearnedActive=ariel-a, hasSkillId=True, hasDisplayName=False`.
+
+### History
+
+- 2026-05-07: Code Builder updated combat learned-state checks after the user requested the report's first-priority refactor.

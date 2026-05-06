@@ -47,6 +47,8 @@ namespace Pakuri.Combat
             ResetEveSkillCombatTimers();
             ResetArielSkillCombatTimers();
             ResetRinSkillCombatTimers();
+            ResetSeinSkillCombatTimers();
+            ResetVegaSkillCombatTimers();
 
             currentCombatType = RunDayModel.Resolve(stageIndex, dayIndex).CombatType;
             ResolveStageOneEnemyPool(dayIndex);
@@ -743,6 +745,7 @@ namespace Pakuri.Combat
                 }
 
                 enemy.ActiveCooldownRemaining = Mathf.Max(0f, enemy.ActiveCooldownRemaining - Time.deltaTime);
+                enemy.VegaSilenceTimer = Mathf.Max(0f, enemy.VegaSilenceTimer - Time.deltaTime);
                 enemy.ChillTimer = Mathf.Max(0f, enemy.ChillTimer - Time.deltaTime);
                 var hadFreeze = enemy.FreezeTimer > 0f;
                 enemy.FreezeTimer = Mathf.Max(0f, enemy.FreezeTimer - Time.deltaTime);
@@ -891,6 +894,26 @@ namespace Pakuri.Combat
                 parts.Add("물방감소");
             }
 
+            if (enemy.VegaNameMarkStacks > 0)
+            {
+                parts.Add($"이름표식{enemy.VegaNameMarkStacks}");
+            }
+
+            if (enemy.VegaSilenceTimer > 0f)
+            {
+                parts.Add("침묵");
+            }
+
+            if (enemy.VegaBlackLedgerAreaVulnerabilityTimer > 0f)
+            {
+                parts.Add("참결취약");
+            }
+
+            if (enemy.VegaFinalSentenceVulnerabilityTimer > 0f)
+            {
+                parts.Add("선고취약");
+            }
+
             return parts.Count == 0 ? string.Empty : $"[{string.Join("/", parts)}]";
         }
 
@@ -934,7 +957,7 @@ namespace Pakuri.Combat
 
         private void TryUseStageOneEnemySkill(EnemyRuntime enemy)
         {
-            if (enemy == null || enemy.Definition == null || enemy.ActiveCooldownRemaining > 0f)
+            if (enemy == null || enemy.Definition == null || enemy.ActiveCooldownRemaining > 0f || enemy.VegaSilenceTimer > 0f)
             {
                 return;
             }

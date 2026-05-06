@@ -359,3 +359,43 @@ Legacy non-English note retained these code references: `LegacyRuntime.ttf`.
 - Legacy non-English note retained these code references: `Resources.GetBuiltinResource<Font>("Arial.ttf")`, `RunFlowController`, `LegacyRuntime.ttf`.
 - Legacy non-English note retained these code references: `LegacyRuntime.ttf`.
 
+# Task: 2026-05-07 RunSession Learned Skill ID Refactor
+
+### Task title
+
+RunScene offering UI uses skill/passive IDs for learned checks.
+
+### Goals
+
+- Keep RunScene UI display text on `DisplayName` while learned-state logic uses stable IDs.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected code and build/Unity-MCP output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify active/passive offering buttons, enhancement offerings, and master skill offerings.
+
+### Evidence
+
+- Changed `RunCombatUiController.cs` offering view fields from `ActiveSkillName`/`PassiveSkillName` to `ActiveSkillId`/`PassiveSkillId`.
+- `RunCombatUiController.cs` still renders titles with `skill.DisplayName` and `passive.DisplayName`, while learned checks now call `currentSession.HasLearnedActive(skill.SkillId)` and `currentSession.HasLearnedPassive(passive.PassiveId)`.
+- Search evidence after edits found no remaining display-name learned checks under run scripts.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing Unity/MCPForUnity reference warnings.
+- Unity-MCP console warning/error check after compile returned only MCP client handler logs.
+
+### History
+
+- 2026-05-07: Code Builder updated RunScene UI learned-state logic to follow the ID-based `RunSession` refactor.

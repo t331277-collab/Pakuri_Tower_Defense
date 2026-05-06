@@ -22,8 +22,11 @@ namespace Pakuri.Combat
                     continue;
                 }
 
+                var previousPosition = projectile.Transform.position;
+                UpdateSeinLockedTargetProjectile(projectile);
                 var travelDistance = projectile.Speed * Time.deltaTime;
                 projectile.Transform.position += projectile.Direction * travelDistance;
+                CreateSeinFlameTrajectoryPathSegment(projectile, previousPosition, projectile.Transform.position);
                 projectile.RemainingLifetime = Mathf.Max(0f, projectile.RemainingLifetime - Time.deltaTime);
 
                 if (projectile.IsEnemyProjectile)
@@ -46,10 +49,18 @@ namespace Pakuri.Combat
 
                 if (TryHitEnemy(projectile, out var enemyHit, out var damageResult))
                 {
+                    if (TryHandleSeinFlameTrajectoryImpact(projectile, enemyHit))
+                    {
+                        CleanupProjectile(i);
+                        continue;
+                    }
+
                     var wasAlive = enemyHit.CurrentHealth > 0f;
                     var appliedDamage = ApplyDamageToEnemy(enemyHit, damageResult.FinalDamage, damageResult.Attribute);
                     enemyHit.FlashTimer = 0.08f;
                     TrackArielHolyExposureDamage(enemyHit, projectile.Attribute, damageResult.FinalDamage);
+                    TrackSeinProjectileHit(projectile, enemyHit, appliedDamage);
+                    HandleVegaProjectileHit(projectile, enemyHit, appliedDamage, wasAlive);
                     HandleRinProjectileHit(projectile, enemyHit, appliedDamage);
                     HandleRinEnemyKilledByDamage(enemyHit, wasAlive);
 
@@ -198,6 +209,25 @@ namespace Pakuri.Combat
             enemyHit = null;
             damageResult = default;
 
+            if (projectile != null && projectile.LockedEnemyTarget != null)
+            {
+                var lockedEnemy = projectile.LockedEnemyTarget;
+                if (lockedEnemy.Transform == null || lockedEnemy.CurrentHealth <= 0f)
+                {
+                    return false;
+                }
+
+                var lockedHitDistance = GetEnemyHitRadius(lockedEnemy) + projectile.HitRadius;
+                if (Vector2.Distance(projectile.Transform.position, lockedEnemy.Transform.position) > lockedHitDistance)
+                {
+                    return false;
+                }
+
+                enemyHit = lockedEnemy;
+                damageResult = ResolvePlayerProjectileDamage(projectile, lockedEnemy);
+                return true;
+            }
+
             for (var i = 0; i < enemies.Count; i++)
             {
                 var enemy = enemies[i];
@@ -218,24 +248,31 @@ namespace Pakuri.Combat
                 }
 
                 enemyHit = enemy;
-                var finalMultiplier = GetEveFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId)
-                    * GetArielFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId)
-                    * GetRinFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId);
-                damageResult = DamageCalculator.Resolve(
-                    projectile.BaseDamage,
-                    projectile.Attribute,
-                    enemy.Defenses,
-                    flatDefenseReduction: GetEveFlatDefenseReduction(enemy, projectile.Attribute) + GetArielFlatDefenseReduction(enemy, projectile.Attribute),
-                    percentDefenseReductions: GetRinPercentDefenseReductions(enemy, projectile.Attribute),
-                    criticalChanceBonus: GetArielCriticalChanceBonus(projectile.Attribute) + GetRinCriticalChanceBonus(enemy, projectile.Attribute, projectile.SkillId),
-                    criticalMultiplierBonus: GetRinCriticalMultiplierBonus(enemy, projectile.Attribute, projectile.SkillId),
-                    targetCriticalResistance: enemy.CriticalResistance,
-                    criticalDamageTakenBonus: GetEveCriticalDamageTakenBonus(enemy, projectile.SkillId) + GetArielCriticalDamageTakenBonus(enemy, projectile.SkillId),
-                    finalDamageMultiplier: enemy.DamageTakenMultiplier * finalMultiplier);
+                damageResult = ResolvePlayerProjectileDamage(projectile, enemy);
                 return true;
             }
 
             return false;
+        }
+
+        private DamageResult ResolvePlayerProjectileDamage(ProjectileRuntime projectile, EnemyRuntime enemy)
+        {
+            var finalMultiplier = GetEveFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId)
+                * GetArielFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId)
+                * GetRinFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId)
+                * GetSeinFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId)
+                * GetVegaFinalDamageMultiplier(enemy, projectile.Attribute, projectile.SkillId);
+            return DamageCalculator.Resolve(
+                projectile.BaseDamage,
+                projectile.Attribute,
+                enemy.Defenses,
+                flatDefenseReduction: GetEveFlatDefenseReduction(enemy, projectile.Attribute) + GetArielFlatDefenseReduction(enemy, projectile.Attribute) + GetSeinFlatDefenseReduction(enemy, projectile.Attribute) + GetVegaFlatDefenseReduction(enemy, projectile.Attribute),
+                percentDefenseReductions: GetRinPercentDefenseReductions(enemy, projectile.Attribute),
+                criticalChanceBonus: GetArielCriticalChanceBonus(projectile.Attribute) + GetRinCriticalChanceBonus(enemy, projectile.Attribute, projectile.SkillId) + GetSeinCriticalChanceBonus(projectile.Attribute) + GetVegaCriticalChanceBonus(enemy, projectile.Attribute, projectile.SkillId),
+                criticalMultiplierBonus: GetRinCriticalMultiplierBonus(enemy, projectile.Attribute, projectile.SkillId) + GetSeinCriticalMultiplierBonus(projectile.Attribute),
+                targetCriticalResistance: enemy.CriticalResistance,
+                criticalDamageTakenBonus: GetEveCriticalDamageTakenBonus(enemy, projectile.SkillId) + GetArielCriticalDamageTakenBonus(enemy, projectile.SkillId),
+                finalDamageMultiplier: enemy.DamageTakenMultiplier * finalMultiplier);
         }
 
         private void TryApplyProjectileBranch(ProjectileRuntime projectile, EnemyRuntime sourceEnemy, float primaryFinalDamage)
@@ -420,7 +457,7 @@ namespace Pakuri.Combat
 
             if (currentShotsRemaining <= 0)
             {
-                reloadRemaining = IsSelectedArielMonster() ? GetArielReloadSeconds() : reloadDurationConfigured;
+                reloadRemaining = GetSelectedMonsterReloadSeconds();
                 currentShotsRemaining = 0;
                 statusLabel = $"{selectedActiveSkillName} 탄창이 비어 재장전 중이다.";
                 return;
@@ -467,6 +504,18 @@ namespace Pakuri.Combat
             if (IsSelectedRinMonster())
             {
                 FireManualRinShatteringFist(direction);
+                return;
+            }
+
+            if (IsSelectedSeinMonster())
+            {
+                FireManualSeinScorchingArrow(direction);
+                return;
+            }
+
+            if (IsSelectedVegaMonster())
+            {
+                FireManualVegaThreeSwordFlurry(direction);
                 return;
             }
 

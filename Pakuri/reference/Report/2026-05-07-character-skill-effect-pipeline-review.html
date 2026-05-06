@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Character / Skill / Effect Pipeline Review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #18202a;
+      --muted: #647080;
+      --line: #d8dee6;
+      --panel: #f7f9fb;
+      --accent: #2457a6;
+      --warn: #a46000;
+      --bad: #a52929;
+      --good: #1d6b45;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      line-height: 1.62;
+      background: #ffffff;
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 44px 28px 72px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.25;
+    }
+
+    h1 {
+      font-size: 34px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-top: 42px;
+      padding-bottom: 9px;
+      border-bottom: 1px solid var(--line);
+      font-size: 24px;
+    }
+
+    h3 {
+      margin-top: 24px;
+      font-size: 18px;
+    }
+
+    p {
+      margin: 12px 0 0;
+    }
+
+    code {
+      padding: 1px 5px;
+      border: 1px solid #dfe4eb;
+      border-radius: 4px;
+      background: #f4f6f8;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.94em;
+    }
+
+    .meta {
+      margin-top: 10px;
+      color: var(--muted);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .summary-card {
+      min-height: 116px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .summary-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .summary-card.ok strong {
+      color: var(--good);
+    }
+
+    .summary-card.warn strong {
+      color: var(--warn);
+    }
+
+    .summary-card.bad strong {
+      color: var(--bad);
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .flow div {
+      min-height: 88px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .flow b {
+      display: block;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 16px;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      vertical-align: top;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+
+    th {
+      background: #eef3f9;
+      text-align: left;
+    }
+
+    ul {
+      margin: 12px 0 0;
+      padding-left: 22px;
+    }
+
+    li + li {
+      margin-top: 7px;
+    }
+
+    .finding {
+      margin-top: 16px;
+      padding: 16px;
+      border-left: 4px solid var(--warn);
+      background: #fff9ef;
+    }
+
+    .finding.bad {
+      border-left-color: var(--bad);
+      background: #fff4f4;
+    }
+
+    .finding.good {
+      border-left-color: var(--good);
+      background: #f0fbf5;
+    }
+
+    .phase {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-right: 7px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e9f0fb;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 840px) {
+      main {
+        padding: 30px 18px 52px;
+      }
+
+      .summary-grid,
+      .flow {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>캐릭터 생성 / 스킬 / 이펙트 구조 검토</h1>
+  <p class="meta">작성일: 2026-05-07 | 역할: Designer | 기준: 실제 파일 검색, 코드 열람, Unity-MCP 실행 결과</p>
+
+  <section class="summary-grid" aria-label="요약">
+    <div class="summary-card ok">
+      <strong>작동 중인 축</strong>
+      CSV 런타임 데이터는 <code>PakuriCsvRuntimeData</code>에서 로드, 검증, 런타임 <code>ScriptableObject</code> 생성 후 <code>PakuriDataManager</code>에 등록된다.
+    </div>
+    <div class="summary-card warn">
+      <strong>구조상 위험</strong>
+      전투, 스킬, 투사체, 이펙트가 모두 <code>CombatRuntimeController</code> partial 클래스의 private 상태를 공유한다. 파일은 나뉘었지만 책임은 아직 한 클래스에 집중되어 있다.
+    </div>
+    <div class="summary-card bad">
+      <strong>우선 개선 대상</strong>
+      전용 <code>SkillManager</code>, <code>EffectFactory</code>, <code>CharacterFactory</code>가 없고, 런 세션은 학습 스킬을 안정적인 ID가 아니라 표시 이름 문자열로 저장한다.
+    </div>
+  </section>
+
+  <h2>확인한 현재 파이프라인</h2>
+  <div class="flow" aria-label="pipeline">
+    <div>
+      <b>CSV / AssetCatalog</b>
+      <code>Assets/CSVdata/source</code>와 <code>Assets/Resources/Pakuri/CSVRuntime</code> 리소스를 사용한다.
+    </div>
+    <div>
+      <b>Runtime Build</b>
+      <code>PakuriCsvRuntimeData.Build.cs</code>가 몬스터, 적, 액티브, 패시브, 보상 정의를 런타임 SO로 만든다.
+    </div>
+    <div>
+      <b>Data Manager</b>
+      <code>PakuriDataManager.RegisterCatalog</code>가 몬스터, 적, 스킬, 보상 조회용 딕셔너리를 재구성한다.
+    </div>
+    <div>
+      <b>Run Creation</b>
+      <code>MainMenuFlowController</code>, <code>RunStartContext</code>, <code>RunSession</code>, <code>RunSceneBootstrap</code>가 선택 몬스터와 세션을 넘긴다.
+    </div>
+    <div>
+      <b>Combat Runtime</b>
+      <code>CombatRuntimeController</code> partial들이 선택 몬스터, 투사체, 적, 스킬, 이펙트까지 직접 실행한다.
+    </div>
+  </div>
+
+  <h2>근거 요약</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>영역</th>
+        <th>확인한 파일 / 출력</th>
+        <th>판단</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>데이터 로딩</td>
+        <td><code>Pakuri/Assets/Scripts/Data/PakuriCsvRuntimeData.cs</code>에서 <code>RuntimeInitializeOnLoadMethod(BeforeSceneLoad)</code>, <code>LoadAndValidateRuntimeCatalog</code>, <code>PakuriDataManager.Instance.RegisterCatalog(catalog)</code> 확인.</td>
+        <td>런타임 시작 전 데이터 등록 의도는 명확하다. 실패 시 <code>FailAndQuit</code>로 치명 오류 처리도 있다.</td>
+      </tr>
+      <tr>
+        <td>런타임 데이터 생성</td>
+        <td><code>PakuriCsvRuntimeData.Build.cs</code>에서 <code>MonsterDefinition</code>과 <code>EnemyDefinition</code>을 <code>ScriptableObject.CreateInstance</code>로 만들고 <code>UnitSprite</code>, <code>ProjectileSprite</code>, 스킬, 패시브를 채운다.</td>
+        <td>CSV 기반 값을 런타임 SO로 변환하는 어댑터 구조는 존재한다.</td>
+      </tr>
+      <tr>
+        <td>데이터 매니저</td>
+        <td><code>PakuriDataManager.cs</code>에 <code>monsters</code>, <code>stageOneEnemies</code>, <code>activeSkills</code>, <code>passiveSkills</code>, 몬스터별 스킬/보상 딕셔너리 확인.</td>
+        <td>데이터 조회 매니저는 있다. 단, 전투 실행 매니저나 팩토리는 아니다.</td>
+      </tr>
+      <tr>
+        <td>캐릭터 선택 / 생성</td>
+        <td><code>MainMenuFlowController.StartRun</code>은 <code>RunStartContext.Ensure().PrepareNewRun(selectedMonster)</code>를 호출하고, <code>RunSceneBootstrap</code>은 pending context 또는 fallback monster로 <code>BeginCombat</code>을 호출한다.</td>
+        <td>선택 몬스터 전달 흐름은 있다. 하지만 별도 캐릭터 런타임 생성 팩토리는 검색되지 않았다.</td>
+      </tr>
+      <tr>
+        <td>전투 상태 집중</td>
+        <td><code>CombatRuntimeController.cs</code>에 <code>EnemyRuntime</code>, <code>ProjectileRuntime</code>, <code>SkillEffectRuntime</code>, <code>DroneRuntime</code> 내부 클래스와 <code>enemies</code>, <code>projectiles</code>, <code>skillEffects</code> 리스트 확인.</td>
+        <td>전투 도메인 상태가 한 컨트롤러에 몰려 있다.</td>
+      </tr>
+      <tr>
+        <td>스킬 구현 방식</td>
+        <td><code>CombatRuntimeArielSkills.cs</code>, <code>CombatRuntimeEveSkills.cs</code>, <code>CombatRuntimeRinSkills.cs</code>, <code>CombatRuntimeSeinSkills.cs</code>, <code>CombatRuntimeVegaSkills.cs</code>가 모두 <code>public partial class CombatRuntimeController</code>.</td>
+        <td>파일 분리는 되어 있지만 클래스 분리가 아니라서 사이드 이펙트 경계가 약하다.</td>
+      </tr>
+      <tr>
+        <td>이펙트 생성</td>
+        <td><code>CombatRuntimeEveSkills.cs</code>의 <code>CreateLineEffect</code>, <code>CreateCircleEffect</code>가 <code>new GameObject</code>, <code>SpriteRenderer</code>, <code>GetSharedSprite</code>, <code>GetCircleSprite</code>로 즉석 생성한다.</td>
+        <td>공용 이펙트 생성 함수는 있지만 데이터 기반 이펙트 정의, 프리팹 우선 사용, 풀링 매니저는 없다.</td>
+      </tr>
+      <tr>
+        <td>세션 스킬 저장</td>
+        <td><code>RunSession.cs</code>에서 <code>LearnedActives</code>, <code>LearnedPassives</code>가 <code>List&lt;string&gt;</code>이고 <code>HasLearnedActive(skill.DisplayName)</code> 사용처가 <code>RunCombatUiController.cs</code>에 있다.</td>
+        <td>표시 이름 변경, 번역, 중복 이름에 취약하다. <code>SkillId</code>, <code>PassiveId</code> 기반으로 바꾸는 것이 맞다.</td>
+      </tr>
+      <tr>
+        <td>검증 결과</td>
+        <td>Unity-MCP 실행 결과: <code>catalogNull=False, managerSame=True, monsters=5, enemies=8, firstMonster=ariel, firstActive=5, firstPassive=5</code>.</td>
+        <td>현재 에디터 안에서 런타임 카탈로그와 데이터 매니저 등록은 정상 확인됐다.</td>
+      </tr>
+      <tr>
+        <td>자동 테스트</td>
+        <td><code>Get-ChildItem Pakuri\Assets -Recurse -Include *Tests*.cs,*Test*.cs</code> 결과 출력 없음.</td>
+        <td>현재 검색 범위에서는 EditMode/PlayMode 테스트 파일을 찾지 못했다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>현재 구조 설명</h2>
+  <h3>1. 데이터 계층</h3>
+  <p>
+    <code>PakuriCsvRuntimeData</code>는 CSV 소스 카탈로그와 에셋 카탈로그를 리소스에서 읽고, 소스 모델 검증 후 런타임 <code>GameDataCatalog</code>를 만든다.
+    <code>PakuriCsvRuntimeData.Build.cs</code>는 <code>MonsterDefinition</code>, <code>EnemyDefinition</code>, <code>SkillDefinition</code>, <code>PassiveDefinition</code>을 메모리 SO로 조립한다.
+    이후 <code>PakuriDataManager.RegisterCatalog</code>가 조회용 딕셔너리를 채운다.
+  </p>
+
+  <h3>2. 캐릭터 선택과 런 시작</h3>
+  <p>
+    메인 메뉴는 <code>PakuriDataManager.Instance.GetMonsters(gameDataCatalog)</code>로 캐릭터 목록을 만들고,
+    선택 시 <code>RunStartContext.PrepareNewRun</code>으로 몬스터와 <code>RunSession</code>을 보관한다.
+    런 씬에서는 <code>RunSceneBootstrap</code>가 pending context가 있으면 그것으로, 없으면 fallback monster로 전투를 시작한다.
+  </p>
+
+  <h3>3. 전투 / 스킬 / 이펙트</h3>
+  <p>
+    전투 실행은 사실상 <code>CombatRuntimeController</code> 하나가 담당한다.
+    몬스터별 스킬 파일은 partial 파일로 나뉘어 있지만 모두 같은 클래스이므로 <code>enemies</code>, <code>projectiles</code>, <code>skillEffects</code>, 선택 몬스터 상태를 직접 공유한다.
+    이펙트는 공용 <code>CreateLineEffect</code>, <code>CreateCircleEffect</code>를 사용하지만, 별도 이펙트 서비스나 풀링 계층 없이 즉석 GameObject를 생성하고 수명이 끝나면 Destroy한다.
+  </p>
+
+  <h2>구조상 문제</h2>
+  <div class="finding bad">
+    <strong>1. partial 분리는 책임 분리가 아니다.</strong>
+    <p>
+      <code>CombatRuntimeController</code>는 여러 파일로 분할됐지만 하나의 private 상태를 공유한다.
+      새 몬스터 스킬을 추가할 때 다른 몬스터의 상태, 투사체 충돌, 이펙트 수명, 보상/세션 상태까지 건드릴 수 있는 구조다.
+      실제 줄 수 기준으로 <code>CombatRuntimeSeinSkills.cs</code> 1125줄, <code>CombatRuntimeEveSkills.cs</code> 1057줄, <code>CombatRuntimeVegaSkills.cs</code> 883줄, <code>CombatRuntimeController.cs</code> 841줄이었다.
+    </p>
+  </div>
+
+  <div class="finding bad">
+    <strong>2. 스킬 실행이 데이터 기반이 아니라 코드 분기 기반이다.</strong>
+    <p>
+      <code>SkillDefinition</code>에는 <code>SkillId</code>, <code>Slot</code>, <code>RuntimeKind</code>, <code>SkillEffectPrefab</code> 같은 데이터가 들어오지만,
+      실제 실행은 몬스터별 partial 메서드와 하드코딩된 분기에 강하게 묶여 있다. 신규 캐릭터 추가 시 CSV만 추가해서 끝나는 파이프라인은 아니다.
+    </p>
+  </div>
+
+  <div class="finding bad">
+    <strong>3. 이펙트 파이프라인이 임시 생성 중심이다.</strong>
+    <p>
+      현재 공용 이펙트 생성 함수는 SpriteRenderer 직사각형/원형을 빠르게 만들 수 있어 프로토타입에는 유용하다.
+      하지만 <code>SkillEffectPrefab</code> 데이터가 있음에도 이펙트 생성 계층이 없어, 아트 교체와 스킬별 프리팹 적용 경로가 약하다.
+      이전 Vega projectile sprite 문제처럼 CSV, 에셋 카탈로그, 런타임 SO 사이의 동기화가 어긋나면 화면에 예전 리소스가 나올 수 있는 구조다.
+    </p>
+  </div>
+
+  <div class="finding">
+    <strong>4. UI/런 컨트롤러도 비대하다.</strong>
+    <p>
+      줄 수 확인 결과 <code>RunCombatUiController.cs</code>는 1372줄, <code>DebugSceneController.cs</code>는 1181줄이었다.
+      이 파일들은 UI 생성, 바인딩, 보상 처리, 세션 조회, 테스트/디버그 편의 기능을 같이 가진다.
+      UI가 커질수록 전투 로직 수정과 UI 수정이 서로 영향을 줄 가능성이 높다.
+    </p>
+  </div>
+
+  <div class="finding">
+    <strong>5. 학습 스킬 상태가 표시 이름에 의존한다.</strong>
+    <p>
+      <code>RunSession</code>은 기본 액티브를 <code>monster.ActiveSkillName</code>으로 저장하고, UI는 <code>skill.DisplayName</code>으로 학습 여부를 확인한다.
+      이 구조는 이름 변경, 한국어/영어 표기 변경, 같은 이름의 스킬 추가에 취약하다.
+    </p>
+  </div>
+
+  <h2>잘 되어 있는 부분</h2>
+  <div class="finding good">
+    <strong>데이터 로드와 검증 루트는 명확하다.</strong>
+    <p>
+      <code>PakuriCsvRuntimeData</code>는 BeforeSceneLoad 초기화, 소스 검증, 런타임 카탈로그 검증, 데이터 매니저 등록까지 한 경로로 묶여 있다.
+      Unity-MCP 실행에서도 카탈로그가 null이 아니고, 데이터 매니저의 현재 카탈로그와 같은 참조로 등록된 것이 확인됐다.
+    </p>
+  </div>
+
+  <div class="finding good">
+    <strong>프로토타입 확장 속도는 확보되어 있다.</strong>
+    <p>
+      partial 파일 분리와 공용 이펙트 함수 덕분에 새 스킬을 빠르게 붙이기는 쉽다.
+      현재 단계에서 기능 실험에는 장점이 있지만, 캐릭터 수와 이펙트 종류가 늘어나면 유지보수 비용이 급격히 올라갈 수 있다.
+    </p>
+  </div>
+
+  <h2>개선 방향</h2>
+  <div class="phase">
+    <span class="tag">1순위</span><strong>런 세션을 ID 기반으로 바꾸기</strong>
+    <p>
+      <code>RunSession.LearnedActives</code>와 <code>LearnedPassives</code>는 <code>SkillId</code>, <code>PassiveId</code>를 저장해야 한다.
+      UI는 ID로 학습 여부를 확인하고, 표시 텍스트는 <code>SkillDefinition.DisplayName</code>에서 렌더링만 담당하게 분리한다.
+    </p>
+  </div>
+
+  <div class="phase">
+    <span class="tag">2순위</span><strong><code>CombatEffectFactory</code> 또는 <code>CombatEffectService</code> 도입</strong>
+    <p>
+      <code>CreateLineEffect</code>, <code>CreateCircleEffect</code>를 먼저 새 클래스로 옮기고,
+      <code>SkillEffectPrefab</code>이 있으면 프리팹을 사용하고 없으면 현재 임시 SpriteRenderer 이펙트로 fallback하는 구조가 좋다.
+      이후 수명 관리와 풀링을 같은 계층에서 처리하면 Destroy 남발을 줄일 수 있다.
+    </p>
+  </div>
+
+  <div class="phase">
+    <span class="tag">3순위</span><strong>몬스터 스킬 런타임 모듈 분리</strong>
+    <p>
+      <code>CombatRuntimeController</code>가 모든 몬스터 스킬을 직접 소유하지 않도록,
+      <code>IMonsterSkillRuntime</code> 또는 <code>MonsterSkillRuntimeBase</code> 형태로 Ariel/Eve/Rin/Sein/Vega 모듈을 분리한다.
+      컨트롤러는 <code>CombatContext</code>를 넘기고, 모듈은 자신의 스킬 상태만 관리하는 쪽이 안전하다.
+    </p>
+  </div>
+
+  <div class="phase">
+    <span class="tag">4순위</span><strong>캐릭터 런타임 팩토리 도입</strong>
+    <p>
+      선택된 <code>MonsterDefinition</code>을 전투에서 쓰는 체력, 공격력, 스프라이트, 탄창, 쿨다운 상태로 변환하는 <code>MonsterRuntimeFactory</code>를 만든다.
+      그러면 <code>RunStartContext</code>와 <code>RunSceneBootstrap</code>는 선택 전달만 담당하고, 전투 컨트롤러의 초기화 책임을 줄일 수 있다.
+    </p>
+  </div>
+
+  <div class="phase">
+    <span class="tag">5순위</span><strong>검증 자동화 추가</strong>
+    <p>
+      현재 검색한 범위에서는 테스트 파일이 없었다.
+      최소한 CSV/AssetCatalog 동기화, <code>PakuriDataManager</code> 조회, 스킬 ID 중복, 스킬 슬롯 규칙, 이펙트 프리팹 참조 유효성을 EditMode 테스트나 Editor validation 메뉴로 추가하는 것이 좋다.
+    </p>
+  </div>
+
+  <h2>권장 진행 순서</h2>
+  <p>
+    지금 구조를 한 번에 갈아엎는 것은 위험하다. 기능이 이미 여러 몬스터에 퍼져 있으므로,
+    먼저 <code>RunSession</code>의 ID 기반 학습 상태와 <code>CombatEffectFactory</code> 분리처럼 영향 범위가 작고 확인하기 쉬운 변경부터 진행하는 편이 좋다.
+    그 다음 새 몬스터나 대형 스킬 추가 시점에 스킬 런타임 모듈 분리를 적용하면, 기존 기능을 유지하면서 구조를 점진적으로 바꿀 수 있다.
+  </p>
+
+  <h2>검토 한계</h2>
+  <ul>
+    <li>Designer 역할 검토이므로 런타임 코드 수정은 하지 않았다.</li>
+    <li>AGENTS.md 기준에 따라 Play Mode 실행 검증은 하지 않았다.</li>
+    <li>Unity 콘솔의 warning/error 조회 결과에는 missing script 경고 2개와 MCP 연결 로그가 있었다. 해당 missing script는 이번 구조 검토 범위에서 특정 오브젝트까지 추적하지 않았다.</li>
+  </ul>
+</main>
+</body>
+</html>

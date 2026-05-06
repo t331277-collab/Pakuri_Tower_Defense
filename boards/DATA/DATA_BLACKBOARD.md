@@ -436,3 +436,159 @@ Legacy non-English note retained these code references: `LegacyRuntime.ttf`.
 - Legacy non-English note retained these code references: `Resources.GetBuiltinResource<Font>("Arial.ttf")`, `RunFlowController`, `LegacyRuntime.ttf`.
 - Legacy non-English note retained these code references: `LegacyRuntime.ttf`.
 
+## Task: 2026-05-07 Vega Active Skill Data Alignment
+
+### Task title
+
+Track data-layer changes for Vega active skills A-E runtime implementation.
+
+### Goals
+
+- Keep data root state aligned with `CSV_BLACKBOARD.md` and `GAMEDATA_ASSET_BLACKBOARD.md`.
+- Record that Vega A-E runtime implementation state was verified through Unity runtime catalog output.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue detailed data evidence from `boards/DATA/CSV_BLACKBOARD.md` and `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` and `Pakuri/Assets/Data/GameData/Monsters/vega.asset` now align Vega A-E as runtime implemented.
+- Unity-MCP runtime catalog inspection confirmed Vega A-E runtime kinds and implementation states.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: Code Builder updated data state while implementing Vega active skills A-E.
+
+## Task: 2026-05-07 Vega Passive Skill Data Alignment
+
+### Task title
+
+Track data-layer changes for Vega passive skills F-J runtime implementation.
+
+### Goals
+
+- Keep data root state aligned with `CSV_BLACKBOARD.md` and `GAMEDATA_ASSET_BLACKBOARD.md`.
+- Record that Vega A-J runtime implementation state was verified through Unity runtime catalog output.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue detailed data evidence from `boards/DATA/CSV_BLACKBOARD.md` and `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` and `Pakuri/Assets/Data/GameData/Monsters/vega.asset` now align Vega F-J as runtime implemented.
+- Unity-MCP runtime catalog inspection confirmed Vega A-J implementation states.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+
+### History
+
+- 2026-05-07: Code Builder updated data state while implementing Vega passive skills F-J.
+
+## Task: 2026-05-07 Vega Projectile Sprite Data Alignment
+
+### Task title
+
+Align Vega projectile sprite source data with the assigned SO sprite.
+
+### Goals
+
+- Keep the data root aware that Vega's runtime projectile sprite is sourced from CSV runtime catalogs.
+- Record the corrected source CSV path and generated asset-catalog entry.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue detailed data evidence from `boards/DATA/CSV_BLACKBOARD.md` and `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
+
+### Evidence
+
+- Unity-MCP `execute_code` confirmed the mismatch: Vega SO used `Assets/Image/Monster/Vega/Vega_Shoot2.png`, while runtime catalog used `Assets/Image/Monster/Vega/Vega_Shoot_Temp.png`.
+- `Pakuri/Assets/CSVdata/source/monsters.csv:7` now uses `Assets/Image/Monster/Vega/Vega_Shoot2.png`.
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog.asset:33` now maps that sprite path to the Vega projectile sprite asset.
+- Unity-MCP runtime catalog inspection after sync resolved Vega projectile sprite as `Assets/Image/Monster/Vega/Vega_Shoot2.png`.
+
+### History
+
+- 2026-05-07: Code Builder corrected the CSV runtime data after the user reported SO projectile sprite assignment was not reflected at runtime.
+
+# Task: 2026-05-07 Character Skill Effect Pipeline Review
+
+### Task title
+
+Data pipeline review summary for character / skill / effect structure
+
+### Goals
+
+- Preserve data-side conclusions from the structure review.
+
+### Constraints
+
+- Evidence must come from inspected scripts and Unity-MCP output.
+- Designer review only; no data pipeline implementation was performed.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- See `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html`.
+- Future data work should reduce CSV/SO/asset catalog ambiguity and add validation around skill/effect asset references.
+
+### Evidence
+
+- `PakuriCsvRuntimeData.cs` uses `RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)`, loads source and asset catalogs, validates, builds runtime catalog, and calls `PakuriDataManager.Instance.RegisterCatalog(catalog)`.
+- `PakuriCsvRuntimeData.Build.cs` builds `MonsterDefinition.ProjectileSprite`, `SkillDefinition.SkillEffectPrefab`, active skills, passive skills, and reward choices from source rows.
+- Unity-MCP `execute_code` confirmed runtime catalog registration: `catalogNull=False, managerSame=True, monsters=5, enemies=8, firstMonster=ariel, firstActive=5, firstPassive=5`.
+- Report created at `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html`.
+
+### History
+
+- 2026-05-07: User requested current pipeline review. Designer documented that the runtime catalog path works, while asset catalog synchronization and effect prefab usage need clearer validation.
