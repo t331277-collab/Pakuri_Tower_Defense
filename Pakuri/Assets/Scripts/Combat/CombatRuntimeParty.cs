@@ -46,7 +46,19 @@ namespace Pakuri.Combat
             public Vector3 PendingVegaProjectileDirection;
         }
 
+        private sealed class ManifestedDroneRuntime
+        {
+            public ManifestedMonsterRuntime Source;
+            public SkillDefinition Skill;
+            public GameObject GameObject;
+            public Transform Transform;
+            public SpriteRenderer Renderer;
+            public float RemainingDuration;
+            public float AttackCooldownRemaining;
+        }
+
         private readonly List<ManifestedMonsterRuntime> manifestedMonsters = new List<ManifestedMonsterRuntime>();
+        private readonly List<ManifestedDroneRuntime> manifestedDrones = new List<ManifestedDroneRuntime>();
         private readonly Transform[] manifestedMonsterSlots = new Transform[MaxManifestedPartyMonsterCount];
 
         private static readonly string[] ManifestedMonsterSlotNames =
@@ -319,6 +331,8 @@ namespace Pakuri.Combat
                 return;
             }
 
+            UpdateManifestedDrones();
+
             for (var i = 0; i < manifestedMonsters.Count; i++)
             {
                 var runtime = manifestedMonsters[i];
@@ -457,6 +471,10 @@ namespace Pakuri.Combat
             {
                 QueueManifestedVegaThreeSwordFlurry(runtime, skillRuntime, target);
             }
+            else if (IsManifestedEveDroneBeacon(skillRuntime.Skill))
+            {
+                DeployManifestedEveDroneBeacon(runtime, skillRuntime.Skill);
+            }
             else if (IsManifestedProjectileSkill(skillRuntime.Skill))
             {
                 FireManifestedMonsterProjectile(runtime, skillRuntime.Skill, target);
@@ -509,7 +527,7 @@ namespace Pakuri.Combat
                 appliedTotal = ApplyManifestedSkillDamage(runtime, skill, target);
             }
 
-            CreateManifestedAttackVisual(runtime.Transform.position, target.Transform.position, runtime, skill);
+            CreateManifestedSkillVisual(runtime, skill, target);
             statusLabel = $"{runtime.Monster.DisplayName} {skill.DisplayName} hit for {appliedTotal:0.#}.";
         }
 
@@ -528,12 +546,25 @@ namespace Pakuri.Combat
             }
 
             direction.Normalize();
-            FireManifestedMonsterProjectile(runtime, skill, direction, 1f, 0, 1);
+            FireManifestedMonsterProjectile(runtime, skill, runtime.Transform.position, direction, 1f, 0, 1);
         }
 
         private void FireManifestedMonsterProjectile(
             ManifestedMonsterRuntime runtime,
             SkillDefinition skill,
+            Vector3 direction,
+            float damageMultiplier,
+            int remainingPierce,
+            int nameMarkStacks)
+        {
+            var origin = runtime != null && runtime.Transform != null ? runtime.Transform.position : Vector3.zero;
+            FireManifestedMonsterProjectile(runtime, skill, origin, direction, damageMultiplier, remainingPierce, nameMarkStacks);
+        }
+
+        private void FireManifestedMonsterProjectile(
+            ManifestedMonsterRuntime runtime,
+            SkillDefinition skill,
+            Vector3 origin,
             Vector3 direction,
             float damageMultiplier,
             int remainingPierce,
@@ -554,7 +585,7 @@ namespace Pakuri.Combat
             var projectileParent = projectileRoot != null ? projectileRoot : transform;
             var projectileObject = new GameObject(string.IsNullOrWhiteSpace(skill.SkillId) ? "ManifestedProjectile" : $"Manifested_{skill.SkillId}_Projectile");
             projectileObject.transform.SetParent(projectileParent, false);
-            projectileObject.transform.position = runtime.Transform.position;
+            projectileObject.transform.position = origin;
             projectileObject.transform.localScale = Vector3.one * 0.35f;
             projectileObject.transform.right = direction;
 
@@ -730,6 +761,11 @@ namespace Pakuri.Combat
             return skill != null && string.Equals(skill.SkillId, "vega-a", StringComparison.OrdinalIgnoreCase);
         }
 
+        private static bool IsManifestedEveDroneBeacon(SkillDefinition skill)
+        {
+            return skill != null && string.Equals(skill.SkillId, "eve-e", StringComparison.OrdinalIgnoreCase);
+        }
+
         private void QueueManifestedVegaThreeSwordFlurry(ManifestedMonsterRuntime runtime, ManifestedSkillRuntime skillRuntime, EnemyRuntime target)
         {
             if (runtime == null || runtime.Transform == null || skillRuntime == null || skillRuntime.Skill == null || target == null || target.Transform == null)
@@ -773,6 +809,105 @@ namespace Pakuri.Combat
             {
                 skillRuntime.PendingVegaProjectileDelay = VegaThreeSwordBulletInterval;
             }
+        }
+
+        private void DeployManifestedEveDroneBeacon(ManifestedMonsterRuntime runtime, SkillDefinition skill)
+        {
+            if (runtime == null || runtime.Transform == null || runtime.Monster == null || skill == null)
+            {
+                return;
+            }
+
+            var droneParent = projectileRoot != null ? projectileRoot : transform;
+            var droneObject = new GameObject(string.IsNullOrWhiteSpace(skill.SkillId) ? "ManifestedDroneBeacon" : $"Manifested_{skill.SkillId}_Drone");
+            droneObject.transform.SetParent(droneParent, false);
+            droneObject.transform.position = runtime.Transform.position + new Vector3(0.45f, 0.45f, 0f);
+            droneObject.transform.localScale = Vector3.one * 0.42f;
+
+            var renderer = droneObject.AddComponent<SpriteRenderer>();
+            renderer.sprite = runtime.Monster.UnitSprite != null ? runtime.Monster.UnitSprite : GetSharedSprite();
+            renderer.color = runtime.Monster.ProjectileColor.a <= 0f ? new Color(0.75f, 0.95f, 1f, 0.85f) : runtime.Monster.ProjectileColor;
+            renderer.sortingOrder = 26;
+
+            manifestedDrones.Add(new ManifestedDroneRuntime
+            {
+                Source = runtime,
+                Skill = skill,
+                GameObject = droneObject,
+                Transform = droneObject.transform,
+                Renderer = renderer,
+                RemainingDuration = ResolveManifestedSkillVisualDuration(runtime, skill),
+                AttackCooldownRemaining = 0f
+            });
+
+            statusLabel = $"{runtime.Monster.DisplayName} {skill.DisplayName} drone deployed.";
+        }
+
+        private void UpdateManifestedDrones()
+        {
+            var elapsed = Time.deltaTime;
+            for (var i = manifestedDrones.Count - 1; i >= 0; i--)
+            {
+                var drone = manifestedDrones[i];
+                if (drone == null || drone.Transform == null || drone.GameObject == null || drone.Source == null || drone.Source.CurrentHealth <= 0f)
+                {
+                    RemoveManifestedDroneAt(i);
+                    continue;
+                }
+
+                drone.RemainingDuration -= elapsed;
+                if (drone.RemainingDuration <= 0f)
+                {
+                    RemoveManifestedDroneAt(i);
+                    continue;
+                }
+
+                drone.AttackCooldownRemaining = Mathf.Max(0f, drone.AttackCooldownRemaining - elapsed);
+                if (drone.AttackCooldownRemaining > 0f)
+                {
+                    continue;
+                }
+
+                var target = FindNearestManifestedMonsterTarget(drone.Transform.position);
+                if (target == null || target.Transform == null)
+                {
+                    drone.AttackCooldownRemaining = 0.2f;
+                    continue;
+                }
+
+                var direction = target.Transform.position - drone.Transform.position;
+                direction.z = 0f;
+                if (direction.sqrMagnitude <= 0.0001f)
+                {
+                    direction = Vector3.right;
+                }
+
+                FireManifestedMonsterProjectile(drone.Source, drone.Skill, drone.Transform.position, direction, 1f, 0, 1);
+                drone.AttackCooldownRemaining = EveDroneAttackPeriod;
+            }
+        }
+
+        private void RemoveManifestedDroneAt(int index)
+        {
+            if (index < 0 || index >= manifestedDrones.Count)
+            {
+                return;
+            }
+
+            var drone = manifestedDrones[index];
+            if (drone != null && drone.GameObject != null)
+            {
+                if (Application.isPlaying)
+                {
+                    Destroy(drone.GameObject);
+                }
+                else
+                {
+                    DestroyImmediate(drone.GameObject);
+                }
+            }
+
+            manifestedDrones.RemoveAt(index);
         }
 
         private void ResetManifestedSkillRuntime(ManifestedMonsterRuntime runtime, ManifestedSkillRuntime skillRuntime, float initialDelay)
@@ -893,7 +1028,130 @@ namespace Pakuri.Combat
             return Mathf.Max(0f, skillRuntime.CooldownDuration);
         }
 
-        private void CreateManifestedAttackVisual(Vector3 origin, Vector3 target, ManifestedMonsterRuntime runtime, SkillDefinition skill)
+        private void CreateManifestedSkillVisual(ManifestedMonsterRuntime runtime, SkillDefinition skill, EnemyRuntime target)
+        {
+            if (runtime == null || runtime.Transform == null || skill == null || target == null || target.Transform == null)
+            {
+                return;
+            }
+
+            var origin = runtime.Transform.position;
+            var targetPosition = target.Transform.position;
+            var duration = ResolveManifestedSkillVisualDuration(runtime, skill);
+            switch (skill.RuntimeKind)
+            {
+                case SkillRuntimeKind.AreaAttack:
+                case SkillRuntimeKind.Field:
+                    CreateManifestedCircleVisual(
+                        skill,
+                        targetPosition,
+                        Mathf.Max(0.75f, skill.Radius > 0f ? skill.Radius : GetEnemyHitRadius(target) + 0.35f),
+                        new Color(1f, 1f, 1f, 0.58f),
+                        23,
+                        duration);
+                    return;
+                case SkillRuntimeKind.Buff:
+                case SkillRuntimeKind.Shield:
+                    CreateManifestedCircleVisual(
+                        skill,
+                        origin,
+                        Mathf.Max(0.75f, skill.Radius > 0f ? skill.Radius : 0.9f),
+                        new Color(0.78f, 0.95f, 1f, 0.56f),
+                        24,
+                        duration);
+                    return;
+                case SkillRuntimeKind.Execute:
+                case SkillRuntimeKind.Mark:
+                    CreateManifestedCircleVisual(
+                        skill,
+                        targetPosition,
+                        Mathf.Max(0.65f, GetEnemyHitRadius(target) + 0.35f),
+                        new Color(0.92f, 0.82f, 1f, 0.58f),
+                        25,
+                        duration);
+                    return;
+                case SkillRuntimeKind.LineAttack:
+                    CreateManifestedLineSkillVisual(origin, targetPosition, skill, Mathf.Max(0.08f, skill.Radius > 0f ? skill.Radius : 0.28f), duration);
+                    return;
+                default:
+                    CreateManifestedLineSkillVisual(origin, targetPosition, skill, 0.08f, duration);
+                    return;
+            }
+        }
+
+        private float ResolveManifestedSkillVisualDuration(ManifestedMonsterRuntime runtime, SkillDefinition skill)
+        {
+            if (skill == null)
+            {
+                return ManifestedMonsterProjectileLifetime;
+            }
+
+            if (string.Equals(skill.SkillId, "eve-b", StringComparison.OrdinalIgnoreCase))
+            {
+                return EveBeamDuration;
+            }
+
+            if (string.Equals(skill.SkillId, "eve-c", StringComparison.OrdinalIgnoreCase))
+            {
+                return EveFrostFieldDuration;
+            }
+
+            if (string.Equals(skill.SkillId, "eve-e", StringComparison.OrdinalIgnoreCase))
+            {
+                return EveDroneDuration;
+            }
+
+            if (string.Equals(skill.SkillId, "sein-d", StringComparison.OrdinalIgnoreCase))
+            {
+                return SeinSuperheatedZoneDuration;
+            }
+
+            if (string.Equals(skill.SkillId, "vega-c", StringComparison.OrdinalIgnoreCase))
+            {
+                return VegaExterminationPermitDuration;
+            }
+
+            if (string.Equals(skill.SkillId, "ariel-b", StringComparison.OrdinalIgnoreCase))
+            {
+                return ArielRadiantShieldDuration;
+            }
+
+            if (string.Equals(skill.SkillId, "ariel-c", StringComparison.OrdinalIgnoreCase))
+            {
+                return ArielBlessingDuration;
+            }
+
+            switch (skill.RuntimeKind)
+            {
+                case SkillRuntimeKind.Field:
+                    return 4f;
+                case SkillRuntimeKind.Buff:
+                case SkillRuntimeKind.Shield:
+                    return 4f;
+                case SkillRuntimeKind.LineAttack:
+                    return 0.35f;
+                case SkillRuntimeKind.AreaAttack:
+                case SkillRuntimeKind.Execute:
+                case SkillRuntimeKind.Mark:
+                    return 0.28f;
+                default:
+                    return ManifestedMonsterProjectileLifetime;
+            }
+        }
+
+        private void CreateManifestedCircleVisual(SkillDefinition skill, Vector3 position, float radius, Color color, int sortingOrder, float duration)
+        {
+            var effect = CombatEffectFactory.CreateCircle(
+                string.IsNullOrWhiteSpace(skill.SkillId) ? "ManifestedMonsterSkillArea" : $"Manifested_{skill.SkillId}_Area",
+                projectileRoot != null ? projectileRoot : transform,
+                position,
+                Mathf.Max(0.05f, radius),
+                skill.SkillEffectPrefab,
+                GetCircleSprite());
+            ConfigureManifestedVisual(effect, color, sortingOrder, duration);
+        }
+
+        private void CreateManifestedLineSkillVisual(Vector3 origin, Vector3 target, SkillDefinition skill, float width, float duration)
         {
             var direction = target - origin;
             direction.z = 0f;
@@ -904,23 +1162,28 @@ namespace Pakuri.Combat
 
             var distance = direction.magnitude;
             var effect = CombatEffectFactory.CreateLine(
-                string.IsNullOrWhiteSpace(skill.SkillId) ? "ManifestedMonsterSkill" : $"Manifested_{skill.SkillId}",
+                string.IsNullOrWhiteSpace(skill.SkillId) ? "ManifestedMonsterSkillLine" : $"Manifested_{skill.SkillId}_Line",
                 projectileRoot != null ? projectileRoot : transform,
                 origin,
                 direction,
                 distance,
-                0.08f,
+                Mathf.Max(0.05f, width),
                 skill.SkillEffectPrefab,
                 GetSharedSprite());
+            ConfigureManifestedVisual(effect, Color.white, 23, duration);
+        }
+
+        private void ConfigureManifestedVisual(CombatEffectInstance effect, Color color, int sortingOrder, float duration)
+        {
             if (effect.Renderer != null)
             {
-                effect.Renderer.color = Color.white;
-                effect.Renderer.sortingOrder = 23;
+                effect.Renderer.color = color;
+                effect.Renderer.sortingOrder = sortingOrder;
             }
 
             if (effect.GameObject != null)
             {
-                Destroy(effect.GameObject, ManifestedMonsterProjectileLifetime);
+                Destroy(effect.GameObject, Mathf.Max(0.05f, duration));
             }
         }
 
@@ -993,6 +1256,11 @@ namespace Pakuri.Combat
 
         private void ClearManifestedMonsterParty()
         {
+            for (var i = manifestedDrones.Count - 1; i >= 0; i--)
+            {
+                RemoveManifestedDroneAt(i);
+            }
+
             for (var i = manifestedMonsters.Count - 1; i >= 0; i--)
             {
                 var runtime = manifestedMonsters[i];

@@ -1054,3 +1054,82 @@ Implemented and locally validated.
 
 - 2026-05-08: User reported that the first SummonButton + ContinueButton flow appeared not to apply Manifested party state until the next Manifest.
 - 2026-05-08: Code Builder added immediate session-to-party refresh after Manifest success and after Offering choice commit.
+# Task: 2026-05-08 Manifested Offering Skill Effect Follow-up
+
+### Task title
+
+Make Offering-acquired Manifested skills show skill-kind visuals in combat.
+
+### Goals
+
+- Preserve the existing Offering path that grants skills to selected and Manifested party-member states.
+- Ensure Manifested learned skills that fire through combat do not always draw as a generic beam.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that a Manifested monster can receive a skill through Offering, cooldown it, and show the proper non-beam effect when it fires.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs:1246` already refreshes Manifested runtime after Offering choice commit.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:512` now routes non-projectile Manifested casts through `CreateManifestedSkillVisual(...)`.
+- `CombatRuntimeParty.cs:896` uses `SkillRuntimeKind` to choose area/self/execute/line visuals.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User reported Offering acquisition and cooldown worked, but the Manifested monster's own effect did not appear.
+
+# Task: 2026-05-08 RunScene Selected Monster Anchor Confirmation
+
+### Task title
+
+Confirm RunScene applies the selected monster to `EveUnit` and record Manifested duration follow-up.
+
+### Goals
+
+- Answer whether RunScene currently applies the selected monster to `EveUnit`.
+- Keep run-state context aligned with the Manifested sustained skill correction.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies selected 1P monster visual and Manifested sustained skill duration in RunScene Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunSceneBootstrap.cs` calls `combatController.BeginConfiguredDay(monster, session, fallbackCatalog)` from `BeginCombat(...)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` calls `ConfigureMonster(monster)` during `BeginConfiguredDay(...)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeScene.cs` creates or resolves `eveAnchor` as `"EveUnit"`, sets `selectedUnitSprite = monster.UnitSprite`, and applies it through `EnsureSpriteRenderer(eveAnchor, ..., selectedUnitSprite)`.
+- Runtime and Editor builds completed with 0 errors after the Manifested duration fix.
+
+### History
+
+- 2026-05-08: User asked whether the current structure applies the selected monster to `EveUnit` when entering RunScene.

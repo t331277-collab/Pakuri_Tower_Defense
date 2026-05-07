@@ -631,3 +631,44 @@ Implemented and locally validated.
 
 - 2026-05-08: User reported Manifested Eve played the B Prism Ray effect and attacked abnormally instead of firing Arc Bolt.
 - 2026-05-08: Code Builder removed the incorrect `eve-a` CSV effect-prefab reference and changed Manifested projectile handling.
+
+# Task: 2026-05-08 Manifested Eve Sustained Skills Follow-up
+
+### Task title
+
+Keep Manifested Eve Prism Ray, Frost Field, and Drone Beacon visible for their Eve runtime durations.
+
+### Goals
+
+- Use Eve's existing selected-monster duration constants for Manifested Eve sustained visuals.
+- Make Manifested Eve Drone Beacon deploy a timed drone that fires projectiles.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This pass changes the Manifested party runtime path, not the selected 1P Eve runtime path.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested Eve B, C, and E in RunScene Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs` defines `EveBeamDuration = 1.2f`, `EveFrostFieldDuration = 4f`, `EveDroneDuration = 5f`, and `EveDroneAttackPeriod = 0.8f`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` now maps `eve-b`, `eve-c`, and `eve-e` to those durations in `ResolveManifestedSkillVisualDuration(...)`.
+- `CombatRuntimeParty.cs` now routes Manifested `eve-e` through `DeployManifestedEveDroneBeacon(...)` before the generic projectile branch.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User specifically named Eve Drone Beacon, Frost Field, and Prism Ray as sustained skills whose Manifested duration appeared too short.

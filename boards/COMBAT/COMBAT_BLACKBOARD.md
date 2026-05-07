@@ -2029,3 +2029,90 @@ Implemented and locally validated.
 
 - 2026-05-08: User confirmed Manifested A projectiles were applying, but reported Manifested Vega A did not start with Vega's three-projectile basic attack.
 - 2026-05-08: Code Builder added Manifested Vega A-specific projectile burst behavior while preserving generic Manifested projectile handling for other monsters.
+# Task: 2026-05-08 Manifested Skill Visual Runtime Unification Follow-up
+
+### Task title
+
+Route Manifested non-projectile skills through skill-kind effect visual dispatch.
+
+### Goals
+
+- Replace the Manifested-only generic beam visual for non-projectile learned skills.
+- Use the same `CombatEffectFactory` line/circle creation path used by selected monster skill visuals.
+- Preserve Manifested projectile handling and Vega A burst handling.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected combat code, build output, and Unity-MCP output.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify Manifested learned non-projectile skills from Offering.
+
+### Evidence
+
+- Before this change, `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:512` called a Manifested-only line visual helper after all non-projectile skill casts.
+- `CombatRuntimeParty.cs:512` now calls `CreateManifestedSkillVisual(runtime, skill, target)`.
+- `CombatRuntimeParty.cs:896` through `:944` dispatches visual shape by `SkillRuntimeKind`: area/field, buff/shield, execute/mark, line, and default fallback.
+- `CombatRuntimeParty.cs:946` and `:958` create visuals through `CombatEffectFactory.CreateCircle(...)` and `CombatEffectFactory.CreateLine(...)`, matching the selected monster effect factory path.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+- Unity-MCP script refresh reached idle; console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-08: User reported Offering-acquired Manifested skills had cooldowns but showed only a beam instead of the monster-specific effect.
+- 2026-05-08: Code Builder replaced the Manifested generic non-projectile visual with skill-kind dispatch and removed the unused beam helper.
+
+# Task: 2026-05-08 Manifested Sustained Skill Duration Follow-up
+
+### Task title
+
+Keep Manifested sustained skill visuals alive for their real monster skill duration.
+
+### Goals
+
+- Replace short hardcoded Manifested non-projectile effect lifetimes for duration skills.
+- Preserve the existing Manifested projectile path and Vega A three-projectile burst.
+- Give Manifested Eve E a timed drone object instead of only a generic projectile shot.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested Prism Ray, Frost Field, Drone Beacon, and other sustained learned skills in RunScene Play Mode.
+
+### Evidence
+
+- Before this fix, `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` used hardcoded `0.24f`, `0.28f`, and `0.32f` lifetimes in `CreateManifestedSkillVisual(...)`.
+- `CombatRuntimeEveSkills.cs` stores selected Eve durations as `EveBeamDuration = 1.2f`, `EveFrostFieldDuration = 4f`, and `EveDroneDuration = 5f`.
+- `CombatRuntimeParty.cs` now uses `ResolveManifestedSkillVisualDuration(...)` for Manifested line, field, area, buff, shield, execute, and fallback visuals.
+- `CombatRuntimeParty.cs` now adds `ManifestedDroneRuntime`, updates it from `UpdateManifestedMonsterPartyCombat()`, and clears it from `ClearManifestedMonsterParty()`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+- Unity-MCP refresh completed; console warning/error read returned only an MCP client handler log.
+
+### History
+
+- 2026-05-08: User reported sustained Manifested skill effects were ending much earlier than their original monster skill duration.

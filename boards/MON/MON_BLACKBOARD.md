@@ -1723,3 +1723,86 @@ Implemented and locally validated.
 
 - 2026-05-08: User reported first Manifest application delay, asked to recheck Vega A skill reference, and asked to check Offering-acquired Manifested skill firing.
 - 2026-05-08: Code Builder added immediate Manifested party refresh and Manifested Vega A-specific three-projectile behavior.
+# Task: 2026-05-08 Manifested Monster Learned Skill Visual Runtime
+
+### Task title
+
+Use monster skill runtime data for Manifested learned-skill visuals.
+
+### Goals
+
+- Make 2P-5P Manifested monsters use their learned active skill definitions for visual shape.
+- Keep `SkillEffectPrefab` respected for Manifested non-projectile active skills.
+- Avoid the prior one-size generic beam visual for every Manifested learned skill.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected monster/combat scripts and build output.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested monsters that gain B-E active skills through Offering show non-beam effects appropriate to those skills.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatMonsterSkillRuntime.cs` shows the selected 1P monster path delegates to monster-specific runtime classes.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` still owns 2P-5P Manifested runtime state.
+- `CombatRuntimeParty.cs:512` now sends Manifested non-projectile casts to `CreateManifestedSkillVisual(...)`.
+- `CombatRuntimeParty.cs:896` dispatches Manifested visuals by `SkillRuntimeKind` and uses `SkillDefinition.SkillEffectPrefab`.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User asked whether assigning Manifested monsters into 2P-5P slots like the selected 1P unit would remove the current bugs, then requested implementation toward the shared runtime path.
+
+# Task: 2026-05-08 Manifested Sustained Skill Duration Follow-up
+
+### Task title
+
+Track common monster-side sustained Manifested skill duration correction.
+
+### Goals
+
+- Keep 2P-5P Manifested monsters using registered learned skills.
+- Make sustained learned skills show duration-appropriate visuals instead of short fallback effects.
+- Keep Eve-specific sustained examples recorded in `boards/MON/EVE_MONSTER.md`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Detailed combat evidence is recorded in combat boards.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested sustained skills across monsters in RunScene Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` now resolves sustained visual durations for registered monster skill IDs.
+- `CombatRuntimeParty.cs` still syncs Manifested learned active IDs from each `RunSession.RunMonsterState`.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User reported sustained Manifested skills were ending too early after the skill-kind visual fix.

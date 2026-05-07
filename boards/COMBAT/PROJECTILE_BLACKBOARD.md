@@ -980,3 +980,84 @@ Implemented and locally validated.
 
 - 2026-05-08: User reported Manifested Vega A was not using the registered three-projectile basic attack behavior.
 - 2026-05-08: Code Builder added the Manifested Vega A burst queue.
+# Task: 2026-05-08 Manifested Non-Projectile Skill Visual Follow-up
+
+### Task title
+
+Keep Manifested projectile path intact while non-projectile skills stop using projectile-like beam visuals.
+
+### Goals
+
+- Preserve Manifested A/projectile object behavior and Vega A three-projectile burst.
+- Route non-projectile Manifested learned skills to area/line/self visual creation based on `SkillRuntimeKind`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode gameplay verification.
+- Do not run Unity Play Mode from Codex.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested projectile skills still use projectile sprites and non-projectile Offering skills no longer appear as a generic beam.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:512` now calls `CreateManifestedSkillVisual(...)` for non-projectile skills.
+- `CombatRuntimeParty.cs:946` creates area/self/mark visuals through `CombatEffectFactory.CreateCircle(...)`.
+- `CombatRuntimeParty.cs:958` keeps true line skills on `CombatEffectFactory.CreateLine(...)`.
+- `FireManifestedMonsterProjectile(...)` was not changed in this follow-up.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User asked to stop further Manifested-only simple-skill patching and unify the path enough that Offering-acquired skills use their actual runtime effect data.
+
+# Task: 2026-05-08 Manifested Eve Drone Projectile Origin Follow-up
+
+### Task title
+
+Let Manifested Eve Drone Beacon fire timed Manifested projectiles from the drone object.
+
+### Goals
+
+- Preserve Manifested projectile object handling.
+- Support Drone Beacon as a timed projectile source instead of a single immediate shot.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested Eve E creates a visible drone and that its shots originate from the drone position.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` now has an overload of `FireManifestedMonsterProjectile(...)` that accepts an explicit `origin`.
+- `DeployManifestedEveDroneBeacon(...)` creates a `Manifested_eve-e_Drone` object.
+- `UpdateManifestedDrones()` calls `FireManifestedMonsterProjectile(drone.Source, drone.Skill, drone.Transform.position, direction, 1f, 0, 1)`.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User named Eve Drone Beacon as one of the sustained Manifested skills whose duration was wrong.

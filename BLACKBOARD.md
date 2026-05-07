@@ -310,3 +310,86 @@ Implemented and locally validated.
 
 - 2026-05-08: User reported first Manifested application delay, Manifested Vega A missing its three-projectile baseline, and requested checking Offering-acquired Manifested skills.
 - 2026-05-08: Code Builder added immediate Manifested party refresh and Manifested Vega A-specific projectile burst behavior.
+
+## Recent Task: 2026-05-08 Manifested Skill Visual Runtime Unification Follow-up
+
+### Task title
+
+Route Manifested non-projectile skill visuals through skill-kind effect dispatch.
+
+### Goals
+
+- Stop Offering-acquired Manifested non-projectile skills from always rendering as a thin beam.
+- Use `SkillRuntimeKind` and `SkillEffectPrefab` for 2P-5P skill visuals, matching the selected-monster effect factory path where the current code structure allows.
+
+### Constraints
+
+- Detailed evidence is in `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, and `boards/UI/RUNSCENE_UI.md`.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User performs Play Mode verification for Offering-acquired Manifested B-E skills, checking that area/buff/execute skills show non-beam monster effect visuals.
+
+### Evidence
+
+- Changed `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs`.
+- `CombatRuntimeParty.cs:512` now calls `CreateManifestedSkillVisual(...)`.
+- `CombatRuntimeParty.cs:896` dispatches Manifested visuals by `SkillRuntimeKind`.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing System.Net.Http/System.IO.Compression warnings.
+- Unity-MCP script refresh reached idle; console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-08: User requested not to keep patching Manifested-only simple skills and to make 1P selected monsters and 2P-5P Manifested monsters share the monster skill runtime/effect route as much as current code supports.
+
+## Recent Task: 2026-05-08 Manifested Sustained Skill Duration Follow-up
+
+### Task title
+
+Keep Manifested sustained skill visuals alive for their monster runtime duration.
+
+### Goals
+
+- Fix Manifested sustained skills such as Eve Prism Ray, Frost Field, and Drone Beacon ending visually after the short fallback effect lifetime.
+- Keep Manifested projectile and Vega A burst behavior intact.
+- Confirm the current RunScene selected-monster path applies the selected monster to `EveUnit`.
+
+### Constraints
+
+- Detailed evidence is in `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/MON/EVE_MONSTER.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, and `boards/UI/RUNSCENE_UI.md`.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Manifested Eve B lasts about 1.2 seconds, Eve C about 4 seconds, Eve E deploys a 5 second drone, and RunScene still applies the selected 1P monster to `EveUnit`.
+
+### Evidence
+
+- Changed `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs`.
+- `CombatRuntimeParty.cs` now resolves Manifested visual durations by skill ID for `eve-b`, `eve-c`, `eve-e`, `sein-d`, `vega-c`, `ariel-b`, and `ariel-c`.
+- `CombatRuntimeParty.cs` now deploys Manifested Eve Drone Beacon as a timed drone runtime that fires Manifested projectiles every `EveDroneAttackPeriod`.
+- `RunSceneBootstrap.BeginCombat(...)` calls `CombatRuntimeController.BeginConfiguredDay(...)`; `BeginConfiguredDay(...)` calls `ConfigureMonster(monster)`; `ConfigureMonster(...)` sets `selectedUnitSprite`; `EnsureAnchorVisuals()` applies that sprite to `eveAnchor` / `EveUnit`.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing System.Net.Http/System.IO.Compression warnings.
+- Unity-MCP refresh completed; console warning/error read returned only an MCP client handler log.
+
+### History
+
+- 2026-05-08: User reported Manifested skill effect kinds were visible, but sustained skills such as Eve Drone Beacon, Frost Field, and Prism Ray ended far too quickly and asked whether RunScene applies the selected monster to `EveUnit`.

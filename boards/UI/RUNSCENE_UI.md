@@ -789,3 +789,82 @@ Implemented and locally validated.
 
 - 2026-05-08: User reported first Manifested application appeared delayed until a later Manifest.
 - 2026-05-08: Code Builder connected summoner and Offering UI actions to immediate Manifested party refresh.
+# Task: 2026-05-08 Manifested Skill Effect Display Follow-up
+
+### Task title
+
+Display Manifested learned skill effects by skill kind instead of generic beam.
+
+### Goals
+
+- Preserve RunScene prisoner/Offering UI flow.
+- Ensure the combat visuals shown after Offering-acquired Manifested skills match skill runtime kind better than the old beam-only display.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated through combat script changes.
+
+### Next Actions
+
+- User verifies RunScene UI flow plus in-combat visual result for Manifested Offering skills.
+
+### Evidence
+
+- No `RunCombatUiController.cs` edit was required in this follow-up; existing `RunCombatUiController.cs:1246` refreshes the combat party after Offering commit.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:512` now uses `CreateManifestedSkillVisual(...)`.
+- `CombatRuntimeParty.cs:896` dispatches Manifested visual shape by `SkillRuntimeKind`.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User reported the skill acquisition UI and cooldown were working, but the Manifested monster effect display was wrong.
+
+# Task: 2026-05-08 RunScene Manifested Sustained Visual Follow-up
+
+### Task title
+
+Record RunScene UI context for Manifested sustained skill duration correction.
+
+### Goals
+
+- Keep RunScene UI state aware that no UI script change was required for this follow-up.
+- Point verification at in-combat Manifested visuals after Summon/Offering flows.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No RunScene UI file was changed in this pass.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated through combat runtime changes.
+
+### Next Actions
+
+- User verifies RunScene Summon/Offering flow plus the in-combat duration of Manifested sustained effects.
+
+### Evidence
+
+- Existing RunScene UI paths still refresh Manifested party state after Summon and Offering.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` now controls the sustained visual durations and Manifested Eve drone behavior.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User reported the issue through RunScene Manifested/Offering gameplay.

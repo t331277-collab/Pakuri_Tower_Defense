@@ -694,3 +694,42 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-07: User requested Vega B to apply immediate rectangular area damage on the enemy instead of line damage from Vega.
+
+## Task: 2026-05-08 Manifested Sustained Effect Visual Duration
+
+### Task title
+
+Track sustained Manifested field/buff visual duration correction.
+
+### Goals
+
+- Record that this pass corrected visual lifetime for sustained Manifested skill effects.
+- Avoid claiming selected-monster status-effect parity for Manifested skills beyond the inspected change.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This pass changed visual/drone lifetime, not selected-monster status-effect timer semantics.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies sustained Manifested visual duration in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` now maps `eve-c` to `EveFrostFieldDuration`, `sein-d` to `SeinSuperheatedZoneDuration`, `vega-c` to `VegaExterminationPermitDuration`, `ariel-b` to `ArielRadiantShieldDuration`, and `ariel-c` to `ArielBlessingDuration`.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User reported sustained Manifested skill effects were much shorter than the original skills.

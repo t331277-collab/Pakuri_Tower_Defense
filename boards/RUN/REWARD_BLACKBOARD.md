@@ -616,3 +616,82 @@ Implemented and locally validated.
 
 - 2026-05-08: User asked to check whether Offering-acquired skills on Manifested monsters actually fire.
 - 2026-05-08: Code Builder verified the monster-ID Offering path and added immediate Manifested party refresh after Offering.
+# Task: 2026-05-08 Offering-Acquired Manifested Skill Visual Follow-up
+
+### Task title
+
+Record Offering-acquired Manifested skills using skill-kind combat visuals.
+
+### Goals
+
+- Keep Offering target identity and learned-skill commit behavior unchanged.
+- Fix the combat-side visual result of Offering-acquired Manifested skills.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Offering-acquired Manifested active skills in RunScene Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs:1206` records Offering choices against `choice.MonsterId`.
+- `RunCombatUiController.cs:1246` refreshes the Manifested combat runtime after Offering commit.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:896` now creates Manifested non-projectile visuals from `SkillRuntimeKind` and `SkillEffectPrefab`.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User reported the reward/Offering side worked but the resulting Manifested skill visual was still wrong.
+
+# Task: 2026-05-08 Offering-Acquired Manifested Sustained Duration Follow-up
+
+### Task title
+
+Record that Offering-acquired Manifested sustained skills now use longer visual durations.
+
+### Goals
+
+- Preserve the Offering path that grants skills to Manifested monster state.
+- Keep the combat-side sustained visual duration fix tied to Offering-acquired skills.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No reward UI code changed in this pass.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated through combat runtime changes.
+
+### Next Actions
+
+- User verifies Offering-acquired Manifested sustained skills in later combat.
+
+### Evidence
+
+- Existing `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs:1246` refreshes Manifested combat state after Offering commit.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` now uses `ResolveManifestedSkillVisualDuration(...)` for sustained learned skill visuals.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User reported Offering acquisition and cooldown worked, then reported sustained effects were too short.
