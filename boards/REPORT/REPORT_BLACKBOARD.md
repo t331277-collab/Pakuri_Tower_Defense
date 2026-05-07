@@ -790,3 +790,85 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-07: User requested implementation of the first-priority refactor from the generated structure report.
+# Task: 2026-05-07 Remove Completed Priority From Pipeline Report
+
+### Task title
+
+Remove completed RunSession ID refactor recommendation from the HTML structure report.
+
+### Goals
+
+- Update `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html` so it no longer lists the completed RunSession ID refactor as an open recommendation or structural problem.
+
+### Constraints
+
+- Role Owner is Designer because this is report/document maintenance.
+- Evidence must come from the actual HTML file and search output.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- User can reopen `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html`.
+- Remaining first recommendation in the report is now `CombatEffectFactory` / `CombatEffectService` extraction.
+
+### Evidence
+
+- Removed the stale evidence-table row that said `RunSession.LearnedActives` / `LearnedPassives` were display-name based.
+- Removed the stale structural problem block about learned skill state depending on display names.
+- Removed the completed improvement block titled "런 세션을 ID 기반으로 바꾸기".
+- Renumbered remaining improvement directions so `CombatEffectFactory` / `CombatEffectService` is now 1순위.
+- Verification search on the HTML found only remaining priority labels 1순위 through 4순위 and no matches for `LearnedActives`, `HasLearnedActive(skill.DisplayName)`, `학습 스킬 상태`, or `RunSession</code>의 ID`.
+
+### History
+
+- 2026-05-07: User said the first-priority RunSession ID refactor was fixed and asked to delete that content from the HTML report.
+
+# Task: 2026-05-07 Combat Effect Factory Refactor Follow-up
+
+### Task title
+
+Implement the remaining first-priority `CombatEffectFactory` recommendation from the character / skill / effect pipeline report.
+
+### Goals
+
+- Record that the report's remaining first recommendation, `CombatEffectFactory` / `CombatEffectService` extraction, has an initial implementation.
+- Keep the report board aligned with combat runtime evidence.
+
+### Constraints
+
+- Role Owner is Code Builder for implementation follow-up.
+- Evidence must come from changed files and verification output.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- If the HTML report is refreshed later, mark `CombatEffectFactory` extraction as initially implemented and leave pooling/lifetime-service expansion as future work.
+- Continue future report recommendations with monster skill runtime module separation after effect visual parity is confirmed.
+
+### Evidence
+
+- The HTML report `Pakuri/reference/Report/2026-05-07-character-skill-effect-pipeline-review.html` listed `CombatEffectFactory` / `CombatEffectService` as the remaining first recommendation.
+- Added `Pakuri/Assets/Scripts/Combat/CombatEffectFactory.cs` and Unity generated/imported `CombatEffectFactory.cs.meta`.
+- `CombatRuntimeEveSkills.cs` now wraps `CombatEffectFactory.CreateLine(...)` and `CreateCircle(...)` inside the existing `SkillEffectRuntime` return path.
+- Direct active-skill effect calls in Ariel, Eve, Rin, Sein, and Vega skill partials now pass `skill.SkillEffectPrefab` when the current skill definition is available.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing Unity/MCP reference warnings.
+- Unity-MCP console check after importing the new script returned only MCP client handler logs, not project compile errors.
+
+### History
+
+- 2026-05-07: User requested proceeding with the `CombatEffectFactory` / `CombatEffectService` direction described in the pipeline review report.

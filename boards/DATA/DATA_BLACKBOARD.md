@@ -592,3 +592,130 @@ Completed.
 ### History
 
 - 2026-05-07: User requested current pipeline review. Designer documented that the runtime catalog path works, while asset catalog synchronization and effect prefab usage need clearer validation.
+
+## Task: 2026-05-07 Eve D CSV Data Repair
+
+### Task title
+
+Track the data-layer repair for Eve D's `monster_skills.csv` row.
+
+### Goals
+
+- Keep the data board aligned with the CSV row repair.
+- Record why the Unity CSV parser reported `RuntimeImplemented` as an invalid `runtime_kind`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Only `eve-d` was repaired in this task.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally checked; another independent damaged CSV row remains at row 23.
+
+### Next Actions
+
+- Continue detailed row-by-row repair evidence in `boards/DATA/CSV_BLACKBOARD.md`.
+- If requested, repair row 23 (`rin-a`) with the same reference-document workflow.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:16` now reads `eve-d,eve,Active,D,스태틱 오버라이드,AreaAttack,RuntimeImplemented,...`.
+- `Pakuri/reference/2.Monster/eve/skill/d-static-override.md` identifies the skill as `스태틱 오버라이드` and supplies matching damage/cooldown/radius values.
+- Unity-MCP confirmed the imported TextAsset now exposes corrected row 16 text.
+- Unity-MCP CSV sync now advances past row 16 and reports row 23 as the next invalid `runtime_kind` row.
+
+### History
+
+- 2026-05-07: User asked why row 16 failed and requested the problem be fixed.
+
+## Task: 2026-05-07 Monster Skills CSV Parse Repair
+
+### Task title
+
+Track data-layer repair of all parser-blocking `monster_skills.csv` damaged rows.
+
+### Goals
+
+- Keep data-layer state aligned with the CSV source repair.
+- Record that Unity CSV runtime catalog sync no longer fails on enum/column-drift errors.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue row-level detail in `boards/DATA/CSV_BLACKBOARD.md`.
+- If desired, perform a separate readability cleanup for remaining mojibake text that is not currently parser-blocking.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` repaired parser-blocking rows for Rin and Vega skills after earlier Ariel/Eve row repairs.
+- A Unity-like CSV scan found no remaining invalid row structure, runtime-kind, implementation-state, or attribute issues.
+- Unity-MCP `PakuriCsvRuntimeData.SyncImportedSourceCatalogsForEditor()` returned `CSV sync ok`.
+- Unity-MCP console read after clearing showed no Pakuri CSV parse errors.
+
+### History
+
+- 2026-05-07: User requested fixing all remaining erroring CSV rows.
+
+## Task: 2026-05-07 Skill Effect Prefab Export Tool
+
+### Task title
+
+Track data-layer support for exporting Inspector-assigned skill effect prefabs to CSV.
+
+### Goals
+
+- Reduce manual CSV editing for skill effect prefab assignment.
+- Keep the active CSV source and runtime asset catalog compatible with Inspector authoring.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Export is explicit through a menu item or MonsterDefinition Inspector button.
+- Null SO prefab fields do not erase existing CSV paths.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Designers can assign `SkillEffectPrefab` on MonsterDefinition assets and run `Pakuri/Export Skill Effect Prefabs To CSV`.
+- If immediate auto-export on every Inspector change is required later, extend the custom inspector carefully to avoid unexpected CSV churn.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Data/Editor/PakuriSkillEffectPrefabCsvExporter.cs` now contains the exporter and MonsterDefinition custom inspector button.
+- The exporter updates `Pakuri/Assets/CSVdata/source/monster_skills.csv` and `monster_skill_choices.csv` by id, then calls `PakuriCsvRuntimeData.SyncImportedSourceCatalogsForEditor()`.
+- Unity-MCP imported the new script as a MonoScript with guid `6bae28997ffa62349952a464f0ec97c3`.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+- Unity-MCP executed the new menu item successfully; the log reported zero assignments because current Monster SO prefab fields are null.
+
+### History
+
+- 2026-05-07: User requested setting up an editor tool to export `SkillEffectPrefab` Inspector assignments to CSV paths.

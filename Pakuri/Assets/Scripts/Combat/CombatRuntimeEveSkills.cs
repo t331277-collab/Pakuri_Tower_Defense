@@ -359,7 +359,7 @@ namespace Pakuri.Combat
 
             direction.Normalize();
             var length = fieldSize.x + 3f;
-            var effect = CreateLineEffect("PrismRay", origin, direction, length, width, duration);
+            var effect = CreateLineEffect("PrismRay", origin, direction, length, width, duration, skill.SkillEffectPrefab);
             effect.SkillId = "eve-b";
             effect.BaseDamage = (skill.BaseDamage + powerStatConfigured * skill.SpellPowerCoefficient) * damageMultiplier;
             effect.Attribute = DamageAttribute.Lightning;
@@ -428,7 +428,7 @@ namespace Pakuri.Combat
                 damageMultiplier *= 1.20f;
             }
 
-            var effect = CreateCircleEffect("FrostField", target.Transform.position, radius, duration);
+            var effect = CreateCircleEffect("FrostField", target.Transform.position, radius, duration, skill.SkillEffectPrefab);
             effect.SkillId = "eve-c";
             effect.BaseDamage = (skill.BaseDamage + powerStatConfigured * skill.SpellPowerCoefficient) * damageMultiplier;
             effect.Attribute = DamageAttribute.Ice;
@@ -511,7 +511,7 @@ namespace Pakuri.Combat
                 hitCount += 1;
             }
 
-            var effect = CreateCircleEffect("StaticOverride", target.Transform.position, radius, 0.35f);
+            var effect = CreateCircleEffect("StaticOverride", target.Transform.position, radius, 0.35f, skill.SkillEffectPrefab);
             effect.SkillId = "eve-d";
             skillEffects.Add(effect);
 
@@ -741,24 +741,22 @@ namespace Pakuri.Combat
             });
         }
 
-        private SkillEffectRuntime CreateLineEffect(string name, Vector3 origin, Vector3 direction, float length, float width, float duration)
+        private SkillEffectRuntime CreateLineEffect(
+            string name,
+            Vector3 origin,
+            Vector3 direction,
+            float length,
+            float width,
+            float duration,
+            GameObject effectPrefab = null)
         {
-            var effectObject = new GameObject(name);
-            effectObject.transform.SetParent(projectileRoot, false);
-            effectObject.transform.position = origin + direction * (length * 0.5f);
-            effectObject.transform.right = direction;
-            effectObject.transform.localScale = new Vector3(length, width, 1f);
-
-            var renderer = effectObject.AddComponent<SpriteRenderer>();
-            renderer.sprite = GetSharedSprite();
-            renderer.color = Color.white;
-            renderer.sortingOrder = 22;
+            var effect = CombatEffectFactory.CreateLine(name, projectileRoot, origin, direction, length, width, effectPrefab, GetSharedSprite());
 
             return new SkillEffectRuntime
             {
-                GameObject = effectObject,
-                Transform = effectObject.transform,
-                Renderer = renderer,
+                GameObject = effect.GameObject,
+                Transform = effect.Transform,
+                Renderer = effect.Renderer,
                 Origin = origin,
                 Direction = direction,
                 Length = length,
@@ -794,23 +792,20 @@ namespace Pakuri.Combat
             skillEffects.Add(effect);
         }
 
-        private SkillEffectRuntime CreateCircleEffect(string name, Vector3 position, float radius, float duration)
+        private SkillEffectRuntime CreateCircleEffect(
+            string name,
+            Vector3 position,
+            float radius,
+            float duration,
+            GameObject effectPrefab = null)
         {
-            var effectObject = new GameObject(name);
-            effectObject.transform.SetParent(projectileRoot, false);
-            effectObject.transform.position = position;
-            effectObject.transform.localScale = new Vector3(radius * 2f, radius * 2f, 1f);
-
-            var renderer = effectObject.AddComponent<SpriteRenderer>();
-            renderer.sprite = GetCircleSprite();
-            renderer.color = Color.white;
-            renderer.sortingOrder = 21;
+            var effect = CombatEffectFactory.CreateCircle(name, projectileRoot, position, radius, effectPrefab, GetCircleSprite());
 
             return new SkillEffectRuntime
             {
-                GameObject = effectObject,
-                Transform = effectObject.transform,
-                Renderer = renderer,
+                GameObject = effect.GameObject,
+                Transform = effect.Transform,
+                Renderer = effect.Renderer,
                 Radius = radius,
                 RemainingDuration = duration
             };

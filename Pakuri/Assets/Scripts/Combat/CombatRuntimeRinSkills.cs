@@ -196,7 +196,7 @@ namespace Pakuri.Combat
                 reloadRemaining *= 0.75f;
             }
 
-            var effect = CreateCircleEffect("RinHowling", eveAnchor.position, 2.2f, 0.45f);
+            var effect = CreateCircleEffect("RinHowling", eveAnchor.position, 2.2f, 0.45f, skill.SkillEffectPrefab);
             effect.SkillId = "rin-b";
             if (effect.Renderer != null)
             {
@@ -265,7 +265,7 @@ namespace Pakuri.Combat
                 damageMultiplier *= 1.25f;
             }
 
-            var effect = CreateLineEffect("RinShockwave", eveAnchor.position, direction, length, width, 0.25f);
+            var effect = CreateLineEffect("RinShockwave", eveAnchor.position, direction, length, width, 0.25f, skill.SkillEffectPrefab);
             effect.SkillId = "rin-c";
             if (effect.Renderer != null)
             {
@@ -470,7 +470,7 @@ namespace Pakuri.Combat
                 }
             }
 
-            var effect = CreateCircleEffect("RinCollapseStrike", center, radius, 0.35f);
+            var effect = CreateCircleEffect("RinCollapseStrike", center, radius, 0.35f, skill.SkillEffectPrefab);
             effect.SkillId = "rin-e";
             if (effect.Renderer != null)
             {

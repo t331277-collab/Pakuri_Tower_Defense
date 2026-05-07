@@ -387,7 +387,7 @@ namespace Pakuri.Combat
                 ApplyArielAreaDamage(target.Transform.position, radius, damage * 0.60f, "ariel-c", 1f);
             }
 
-            var effect = CreateCircleEffect("BlessingWave", target.Transform.position, radius, 0.35f);
+            var effect = CreateCircleEffect("BlessingWave", target.Transform.position, radius, 0.35f, skill.SkillEffectPrefab);
             effect.SkillId = "ariel-c";
             skillEffects.Add(effect);
 
@@ -504,7 +504,7 @@ namespace Pakuri.Combat
             {
                 var fieldCenter = new Vector3(fieldSize.x * 0.5f, fieldSize.y * 0.5f, 0f);
                 var fieldRadius = Mathf.Sqrt((fieldSize.x * fieldSize.x) + (fieldSize.y * fieldSize.y)) * 0.5f;
-                var effect = CreateCircleEffect("ArchangelDescent", fieldCenter, fieldRadius, 0.45f);
+                var effect = CreateCircleEffect("ArchangelDescent", fieldCenter, fieldRadius, 0.45f, skill.SkillEffectPrefab);
                 effect.SkillId = "ariel-e";
                 if (effect.Renderer != null)
                 {
@@ -695,7 +695,9 @@ namespace Pakuri.Combat
                 ApplyArielAreaDamage(center, ArielJudgementExplosionRadius, baseDamage, "ariel-a-explosion", 1f);
             }
 
-            var effect = CreateCircleEffect("JudgementLightExplosion", center, ArielJudgementExplosionRadius, 0.45f);
+            var skill = FindSelectedSkill(SkillSlot.A);
+            var effectPrefab = skill != null ? skill.SkillEffectPrefab : null;
+            var effect = CreateCircleEffect("JudgementLightExplosion", center, ArielJudgementExplosionRadius, 0.45f, effectPrefab);
             effect.SkillId = "ariel-a-explosion";
             if (effect.Renderer != null)
             {

@@ -44,4 +44,6 @@ MonoBehaviour:
     Asset: {fileID: 21300000, guid: 0caea6bc70c48504bb727429d31f5bc3, type: 3}
   - AssetPath: Assets/Image/Stage1/Enemy/Warrior.png
     Asset: {fileID: 21300000, guid: 128ccc7f23263be428abee49b68f0e07, type: 3}
-  Prefabs: []
+  Prefabs:
+  - AssetPath: Assets/Image/Monster/Eve/Effect_Prefab/Eve_Skill_B.prefab
+    Asset: {fileID: 3843049686398240108, guid: 224f5e7622cd0264b961ee388a015d65, type: 3}

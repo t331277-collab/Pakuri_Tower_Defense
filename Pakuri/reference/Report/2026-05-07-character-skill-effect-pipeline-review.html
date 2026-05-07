@@ -296,11 +296,6 @@
         <td>공용 이펙트 생성 함수는 있지만 데이터 기반 이펙트 정의, 프리팹 우선 사용, 풀링 매니저는 없다.</td>
       </tr>
       <tr>
-        <td>세션 스킬 저장</td>
-        <td><code>RunSession.cs</code>에서 <code>LearnedActives</code>, <code>LearnedPassives</code>가 <code>List&lt;string&gt;</code>이고 <code>HasLearnedActive(skill.DisplayName)</code> 사용처가 <code>RunCombatUiController.cs</code>에 있다.</td>
-        <td>표시 이름 변경, 번역, 중복 이름에 취약하다. <code>SkillId</code>, <code>PassiveId</code> 기반으로 바꾸는 것이 맞다.</td>
-      </tr>
-      <tr>
         <td>검증 결과</td>
         <td>Unity-MCP 실행 결과: <code>catalogNull=False, managerSame=True, monsters=5, enemies=8, firstMonster=ariel, firstActive=5, firstPassive=5</code>.</td>
         <td>현재 에디터 안에서 런타임 카탈로그와 데이터 매니저 등록은 정상 확인됐다.</td>
@@ -371,14 +366,6 @@
     </p>
   </div>
 
-  <div class="finding">
-    <strong>5. 학습 스킬 상태가 표시 이름에 의존한다.</strong>
-    <p>
-      <code>RunSession</code>은 기본 액티브를 <code>monster.ActiveSkillName</code>으로 저장하고, UI는 <code>skill.DisplayName</code>으로 학습 여부를 확인한다.
-      이 구조는 이름 변경, 한국어/영어 표기 변경, 같은 이름의 스킬 추가에 취약하다.
-    </p>
-  </div>
-
   <h2>잘 되어 있는 부분</h2>
   <div class="finding good">
     <strong>데이터 로드와 검증 루트는 명확하다.</strong>
@@ -398,15 +385,7 @@
 
   <h2>개선 방향</h2>
   <div class="phase">
-    <span class="tag">1순위</span><strong>런 세션을 ID 기반으로 바꾸기</strong>
-    <p>
-      <code>RunSession.LearnedActives</code>와 <code>LearnedPassives</code>는 <code>SkillId</code>, <code>PassiveId</code>를 저장해야 한다.
-      UI는 ID로 학습 여부를 확인하고, 표시 텍스트는 <code>SkillDefinition.DisplayName</code>에서 렌더링만 담당하게 분리한다.
-    </p>
-  </div>
-
-  <div class="phase">
-    <span class="tag">2순위</span><strong><code>CombatEffectFactory</code> 또는 <code>CombatEffectService</code> 도입</strong>
+    <span class="tag">1순위</span><strong><code>CombatEffectFactory</code> 또는 <code>CombatEffectService</code> 도입</strong>
     <p>
       <code>CreateLineEffect</code>, <code>CreateCircleEffect</code>를 먼저 새 클래스로 옮기고,
       <code>SkillEffectPrefab</code>이 있으면 프리팹을 사용하고 없으면 현재 임시 SpriteRenderer 이펙트로 fallback하는 구조가 좋다.
@@ -415,7 +394,7 @@
   </div>
 
   <div class="phase">
-    <span class="tag">3순위</span><strong>몬스터 스킬 런타임 모듈 분리</strong>
+    <span class="tag">2순위</span><strong>몬스터 스킬 런타임 모듈 분리</strong>
     <p>
       <code>CombatRuntimeController</code>가 모든 몬스터 스킬을 직접 소유하지 않도록,
       <code>IMonsterSkillRuntime</code> 또는 <code>MonsterSkillRuntimeBase</code> 형태로 Ariel/Eve/Rin/Sein/Vega 모듈을 분리한다.
@@ -424,7 +403,7 @@
   </div>
 
   <div class="phase">
-    <span class="tag">4순위</span><strong>캐릭터 런타임 팩토리 도입</strong>
+    <span class="tag">3순위</span><strong>캐릭터 런타임 팩토리 도입</strong>
     <p>
       선택된 <code>MonsterDefinition</code>을 전투에서 쓰는 체력, 공격력, 스프라이트, 탄창, 쿨다운 상태로 변환하는 <code>MonsterRuntimeFactory</code>를 만든다.
       그러면 <code>RunStartContext</code>와 <code>RunSceneBootstrap</code>는 선택 전달만 담당하고, 전투 컨트롤러의 초기화 책임을 줄일 수 있다.
@@ -432,7 +411,7 @@
   </div>
 
   <div class="phase">
-    <span class="tag">5순위</span><strong>검증 자동화 추가</strong>
+    <span class="tag">4순위</span><strong>검증 자동화 추가</strong>
     <p>
       현재 검색한 범위에서는 테스트 파일이 없었다.
       최소한 CSV/AssetCatalog 동기화, <code>PakuriDataManager</code> 조회, 스킬 ID 중복, 스킬 슬롯 규칙, 이펙트 프리팹 참조 유효성을 EditMode 테스트나 Editor validation 메뉴로 추가하는 것이 좋다.
@@ -442,7 +421,7 @@
   <h2>권장 진행 순서</h2>
   <p>
     지금 구조를 한 번에 갈아엎는 것은 위험하다. 기능이 이미 여러 몬스터에 퍼져 있으므로,
-    먼저 <code>RunSession</code>의 ID 기반 학습 상태와 <code>CombatEffectFactory</code> 분리처럼 영향 범위가 작고 확인하기 쉬운 변경부터 진행하는 편이 좋다.
+    먼저 <code>CombatEffectFactory</code> 분리처럼 영향 범위가 작고 확인하기 쉬운 변경부터 진행하는 편이 좋다.
     그 다음 새 몬스터나 대형 스킬 추가 시점에 스킬 런타임 모듈 분리를 적용하면, 기존 기능을 유지하면서 구조를 점진적으로 바꿀 수 있다.
   </p>
 

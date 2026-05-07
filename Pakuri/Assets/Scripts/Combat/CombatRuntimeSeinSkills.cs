@@ -270,7 +270,7 @@ namespace Pakuri.Combat
             }
 
             var duration = SeinSuperheatedZoneDuration * (HasChoice("sein-d-trait-1") ? 1.25f : 1f);
-            var effect = CreateCircleEffect("SeinSuperheatedZone", target.Transform.position, radius, duration);
+            var effect = CreateCircleEffect("SeinSuperheatedZone", target.Transform.position, radius, duration, skill.SkillEffectPrefab);
             effect.SkillId = "sein-d";
             effect.BaseDamage = GetSeinSkillBaseDamage(skill);
             effect.Attribute = DamageAttribute.Fire;
@@ -339,7 +339,7 @@ namespace Pakuri.Combat
                     break;
                 }
 
-                CreateSeinDoomsdayTargetLine(skyOrigin, enemy.Transform.position);
+                CreateSeinDoomsdayTargetLine(skyOrigin, enemy.Transform.position, skill.SkillEffectPrefab);
                 var targetMultiplier = enemy.SeinSuperheatedZoneTimer > 0f && HasChoice("sein-e-trait-5") ? 1.50f : 1f;
                 var wasAlive = enemy.CurrentHealth > 0f;
                 ApplySeinSkillDamage(enemy, baseDamage, targetMultiplier, "sein-e");
@@ -355,7 +355,7 @@ namespace Pakuri.Combat
 
             if (HasChoice("sein-e-master-2"))
             {
-                CreateSeinDoomsdayAshZones(hitEnemies);
+                CreateSeinDoomsdayAshZones(hitEnemies, skill.SkillEffectPrefab);
             }
 
             seinDoomsdayLineCooldownRemaining = GetSeinCooldown(skill, 16f, GetSeinDoomsdayCooldownMultiplier());
@@ -684,7 +684,7 @@ namespace Pakuri.Combat
             }
         }
 
-        private void CreateSeinDoomsdayTargetLine(Vector3 start, Vector3 end)
+        private void CreateSeinDoomsdayTargetLine(Vector3 start, Vector3 end, GameObject effectPrefab = null)
         {
             var direction = end - start;
             direction.z = 0f;
@@ -695,7 +695,7 @@ namespace Pakuri.Combat
             }
 
             direction /= length;
-            var effect = CreateLineEffect("SeinDoomsdayLine", start, direction, length, SeinDoomsdayLineWidth, 0.4f);
+            var effect = CreateLineEffect("SeinDoomsdayLine", start, direction, length, SeinDoomsdayLineWidth, 0.4f, effectPrefab);
             effect.SkillId = "sein-e";
             if (effect.Renderer != null)
             {
@@ -759,7 +759,7 @@ namespace Pakuri.Combat
             skillEffects.Add(effect);
         }
 
-        private void CreateSeinDoomsdayAshZones(System.Collections.Generic.IEnumerable<EnemyRuntime> targets)
+        private void CreateSeinDoomsdayAshZones(System.Collections.Generic.IEnumerable<EnemyRuntime> targets, GameObject effectPrefab = null)
         {
             if (targets == null)
             {
@@ -776,7 +776,7 @@ namespace Pakuri.Combat
                     continue;
                 }
 
-                var effect = CreateCircleEffect("SeinAshSuperheatedZone", target.Transform.position, 2.4f, 3f);
+                var effect = CreateCircleEffect("SeinAshSuperheatedZone", target.Transform.position, 2.4f, 3f, effectPrefab);
                 effect.SkillId = "sein-e-ash";
                 effect.BaseDamage = damage;
                 effect.Attribute = DamageAttribute.Fire;

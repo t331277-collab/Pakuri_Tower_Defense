@@ -10,8 +10,8 @@ ariel-g,ariel,Passive,G,수호 교리,Passive,RuntimeImplemented,false,false,B,,
 ariel-h,ariel,Passive,H,축복 전파,Passive,RuntimeImplemented,false,false,C,,,축복의 파동 대응 패시브. 축복 효과를 파티의 지속 화력으로 연결한다.\n축복을 받은 아군의 신성 피해: +15%\n축복을 받은 아군의 쿨타임 충전 속도: +10%,축복을 받은 아군의 신성 피해: +15%\n축복을 받은 아군의 쿨타임 충전 속도: +10%,Physical,0,0,0,0,0,0,0,0,0,false,
 ariel-i,ariel,Passive,I,낙인 계시,Passive,RuntimeImplemented,false,false,D,,,천상의 낙인 대응 패시브. 신성 노출 대상에게 파티의 공격을 집중시킨다.\n신성 노출 대상이 모든 아군에게 받는 피해: +10%,신성 노출 대상이 모든 아군에게 받는 피해: +10%,Physical,0,0,0,0,0,0,0,0,0,false,
 ariel-j,ariel,Passive,J,성역 선포,Passive,RuntimeImplemented,false,false,E,,,"대천사의 강림 대응 패시브. 강림 이후 파티가 다시 공세를 이어갈 수 있게 만든다.\n대천사의 강림 이후 모든 아군 행동속도: +15%, 5초\n대천사의 강림 방어막이 남아있는 아군의 신성 피해: +20%","대천사의 강림 이후 모든 아군 행동속도: +15%, 5초\n대천사의 강림 방어막이 남아있는 아군의 신성 피해: +20%",Physical,0,0,0,0,0,0,0,0,0,false,
-eve-a,eve,Active,A,아크 볼트,MagazineProjectile,RuntimeImplemented,true,false,A,,,이브 타워의 기본 액티브 스킬.,이브 타워의 기본 액티브 스킬.,Lightning,24,0,0.95,8,0,0,6,4,0.35,true,감전
-eve-b,eve,Active,B,프리즘 레이,LineAttack,RuntimeImplemented,false,false,A,,,Beholder의 Decomposition Ray 참고.,Beholder의 Decomposition Ray 참고.,Lightning,12,0,1.6,12,0,6.5,0,0,0,true,
+eve-a,eve,Active,A,아크 볼트,MagazineProjectile,RuntimeImplemented,true,false,A,,Assets/Image/Monster/Eve/Effect_Prefab/Eve_Skill_B.prefab,이브 타워의 기본 액티브 스킬.,이브 타워의 기본 액티브 스킬.,Lightning,24,0,0.95,8,0,0,6,4,0.35,true,감전
+eve-b,eve,Active,B,프리즘 레이,LineAttack,RuntimeImplemented,false,false,A,,Assets/Image/Monster/Eve/Effect_Prefab/Eve_Skill_B.prefab,Beholder의 Decomposition Ray 참고.,Beholder의 Decomposition Ray 참고.,Lightning,12,0,1.6,12,0,6.5,0,0,0,true,
 eve-c,eve,Active,C,프로스트 필드,Field,RuntimeImplemented,false,false,A,,,,,Ice,8,0,0.8,0,3.2,8,0,0,0,true,빙결
 eve-d,eve,Active,D,스태틱 오버라이드,AreaAttack,RuntimeImplemented,false,false,A,,,,,Lightning,10,0,0.7,0,3.5,7,0,0,0,true,감전
 eve-e,eve,Active,E,드론 비컨,MagazineProjectile,RuntimeImplemented,false,false,A,,,,,Ice,14,0,0.9,9,0,0,3,6,0,true,취약

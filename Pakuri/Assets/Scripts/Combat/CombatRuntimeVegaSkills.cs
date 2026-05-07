@@ -204,10 +204,10 @@ namespace Pakuri.Combat
                 + (HasChoice("vega-b-trait-2") ? 1f : 0f)
                 + (HasVegaSealingSwordForm() && HasChoice("vega-g-trait-2") ? 1f : 0f);
             var center = target.Transform.position;
-            var hitCount = ApplyVegaTargetRectangleSlash(center, VegaSilentGreatbladeAreaWidth, VegaSilentGreatbladeAreaHeight, GetVegaSkillBaseDamage(skill), damageMultiplier, "vega-b", silenceDuration, GetVegaSilentGreatbladeNameMarkStacks());
+            var hitCount = ApplyVegaTargetRectangleSlash(center, VegaSilentGreatbladeAreaWidth, VegaSilentGreatbladeAreaHeight, GetVegaSkillBaseDamage(skill), damageMultiplier, "vega-b", silenceDuration, GetVegaSilentGreatbladeNameMarkStacks(), skill.SkillEffectPrefab);
             if (HasChoice("vega-b-master-1"))
             {
-                hitCount += ApplyVegaTargetRectangleSlash(center, VegaSilentGreatbladeAreaWidth, VegaSilentGreatbladeAreaHeight, GetVegaSkillBaseDamage(skill) * 0.45f, 1f, "vega-b-second", 1f, 0);
+                hitCount += ApplyVegaTargetRectangleSlash(center, VegaSilentGreatbladeAreaWidth, VegaSilentGreatbladeAreaHeight, GetVegaSkillBaseDamage(skill) * 0.45f, 1f, "vega-b-second", 1f, 0, skill.SkillEffectPrefab);
             }
 
             vegaSilentGreatbladeCooldownRemaining = GetVegaCooldown(skill, 8f, GetVegaSilentGreatbladeCooldownMultiplier());
@@ -299,7 +299,7 @@ namespace Pakuri.Combat
 
                 for (var i = 0; i < slashCount; i++)
                 {
-                    hitCount += ApplyVegaAreaSlash(markedTarget.Transform.position, radius, GetVegaSkillBaseDamage(skill), centerMultiplier, "vega-d", HasChoice("vega-d-trait-5") ? 1 : 0);
+                    hitCount += ApplyVegaAreaSlash(markedTarget.Transform.position, radius, GetVegaSkillBaseDamage(skill), centerMultiplier, "vega-d", HasChoice("vega-d-trait-5") ? 1 : 0, skill.SkillEffectPrefab);
                 }
             }
 
@@ -339,7 +339,7 @@ namespace Pakuri.Combat
             var wasAlive = target.CurrentHealth > 0f;
             var applied = ApplyVegaSkillDamage(target, baseDamage + stackDamage, 1f, "vega-e");
             target.VegaNameMarkStacks = Mathf.Max(0, target.VegaNameMarkStacks - consumedStacks);
-            CreateVegaAreaVisual("VegaFinalSentence", target.Transform.position, Mathf.Max(0.9f, GetEnemyHitRadius(target) + 0.35f), 0.28f, new Color(0.72f, 0.62f, 1f, 0.55f), 26);
+            CreateVegaAreaVisual("VegaFinalSentence", target.Transform.position, Mathf.Max(0.9f, GetEnemyHitRadius(target) + 0.35f), 0.28f, new Color(0.72f, 0.62f, 1f, 0.55f), 26, skill.SkillEffectPrefab);
 
             vegaFinalSentenceCooldownRemaining = GetVegaCooldown(skill, 15f, HasChoice("vega-e-trait-3") ? 0.80f : 1f);
             if (wasAlive && target.CurrentHealth <= 0f)
@@ -419,9 +419,9 @@ namespace Pakuri.Combat
             });
         }
 
-        private int ApplyVegaTargetRectangleSlash(Vector3 center, float width, float height, float baseDamage, float damageMultiplier, string skillId, float silenceDuration, int markStacks)
+        private int ApplyVegaTargetRectangleSlash(Vector3 center, float width, float height, float baseDamage, float damageMultiplier, string skillId, float silenceDuration, int markStacks, GameObject effectPrefab = null)
         {
-            CreateVegaRectangleVisual("VegaSilentGreatbladeArea", center, width, height, 0.24f, new Color(0.70f, 0.62f, 1f, 0.58f), 25);
+            CreateVegaRectangleVisual("VegaSilentGreatbladeArea", center, width, height, 0.24f, new Color(0.70f, 0.62f, 1f, 0.58f), 25, effectPrefab);
             var hitCount = 0;
             for (var i = 0; i < enemies.Count; i++)
             {
@@ -440,9 +440,9 @@ namespace Pakuri.Combat
             return hitCount;
         }
 
-        private int ApplyVegaAreaSlash(Vector3 center, float radius, float baseDamage, float damageMultiplier, string skillId, int markStacks)
+        private int ApplyVegaAreaSlash(Vector3 center, float radius, float baseDamage, float damageMultiplier, string skillId, int markStacks, GameObject effectPrefab = null)
         {
-            CreateVegaAreaVisual("VegaBlackLedgerSlash", center, radius, 0.24f, new Color(0.48f, 0.38f, 0.86f, 0.42f), 24);
+            CreateVegaAreaVisual("VegaBlackLedgerSlash", center, radius, 0.24f, new Color(0.48f, 0.38f, 0.86f, 0.42f), 24, effectPrefab);
             var hitCount = 0;
             for (var i = 0; i < enemies.Count; i++)
             {
@@ -567,7 +567,7 @@ namespace Pakuri.Combat
             }
         }
 
-        private SkillEffectRuntime CreateVegaLineVisual(string name, Vector3 origin, Vector3 direction, float length, float width, float duration, Color color, int sortingOrder)
+        private SkillEffectRuntime CreateVegaLineVisual(string name, Vector3 origin, Vector3 direction, float length, float width, float duration, Color color, int sortingOrder, GameObject effectPrefab = null)
         {
             direction.z = 0f;
             if (direction.sqrMagnitude < 0.01f)
@@ -576,7 +576,7 @@ namespace Pakuri.Combat
             }
 
             direction.Normalize();
-            var effect = CreateLineEffect(name, origin, direction, Mathf.Max(0.1f, length), Mathf.Max(0.05f, width), Mathf.Max(0.05f, duration));
+            var effect = CreateLineEffect(name, origin, direction, Mathf.Max(0.1f, length), Mathf.Max(0.05f, width), Mathf.Max(0.05f, duration), effectPrefab);
             effect.SkillId = name;
             if (effect.Renderer != null)
             {
@@ -588,12 +588,12 @@ namespace Pakuri.Combat
             return effect;
         }
 
-        private SkillEffectRuntime CreateVegaRectangleVisual(string name, Vector3 center, float width, float height, float duration, Color color, int sortingOrder)
+        private SkillEffectRuntime CreateVegaRectangleVisual(string name, Vector3 center, float width, float height, float duration, Color color, int sortingOrder, GameObject effectPrefab = null)
         {
             var clampedWidth = Mathf.Max(0.1f, width);
             var clampedHeight = Mathf.Max(0.05f, height);
             var origin = center - Vector3.right * (clampedWidth * 0.5f);
-            var effect = CreateLineEffect(name, origin, Vector3.right, clampedWidth, clampedHeight, Mathf.Max(0.05f, duration));
+            var effect = CreateLineEffect(name, origin, Vector3.right, clampedWidth, clampedHeight, Mathf.Max(0.05f, duration), effectPrefab);
             effect.SkillId = name;
             if (effect.Renderer != null)
             {
@@ -605,9 +605,9 @@ namespace Pakuri.Combat
             return effect;
         }
 
-        private void CreateVegaAreaVisual(string name, Vector3 center, float radius, float duration, Color color, int sortingOrder)
+        private void CreateVegaAreaVisual(string name, Vector3 center, float radius, float duration, Color color, int sortingOrder, GameObject effectPrefab = null)
         {
-            var effect = CreateCircleEffect(name, center, radius, duration);
+            var effect = CreateCircleEffect(name, center, radius, duration, effectPrefab);
             effect.SkillId = name;
             if (effect.Renderer != null)
             {

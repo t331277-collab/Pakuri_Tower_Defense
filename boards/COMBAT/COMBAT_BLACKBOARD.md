@@ -1604,3 +1604,51 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-07: Code Builder updated combat learned-state checks after the user requested the report's first-priority refactor.
+
+# Task: 2026-05-07 Combat Effect Factory Refactor
+
+### Task title
+
+Extract combat line/circle effect object creation into `CombatEffectFactory`.
+
+### Goals
+
+- Move GameObject/SpriteRenderer creation for line and circle combat effects out of the monster skill partial methods.
+- Use `SkillEffectPrefab` when a skill definition provides one.
+- Preserve the existing temporary SpriteRenderer fallback when no prefab is assigned.
+- Keep current `SkillEffectRuntime` ticking, collision checks, and lifetime behavior unchanged.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected files and build/Unity console output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Ariel/Eve/Rin/Sein/Vega temporary skill effects still appear.
+- Future work can move effect lifetime/pooling into `CombatEffectFactory` after visual parity is confirmed.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts/Combat/CombatEffectFactory.cs` and Unity imported it as a `MonoScript` with guid `37536b92138a46f4b8ec5097ed3dd0a5`.
+- `CombatEffectFactory.CreateLine(...)` and `CreateCircle(...)` instantiate `SkillEffectPrefab` when present, otherwise create the same SpriteRenderer fallback using the shared line/circle sprites.
+- `CombatRuntimeEveSkills.cs` now delegates `CreateLineEffect(...)` and `CreateCircleEffect(...)` object creation to `CombatEffectFactory` while still returning `SkillEffectRuntime`.
+- Ariel, Eve, Rin, Sein, and Vega direct active-skill effect paths now pass `skill.SkillEffectPrefab` into the shared effect creation path where the skill definition is available.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and the existing `System.Net.Http` / `System.IO.Compression` conflict warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
+- Unity-MCP initially reported `CombatEffectFactory` missing before Unity imported the new script; after `manage_asset import` and script compile request, Unity console query returned only MCP client handler logs and no project compile errors.
+
+### History
+
+- 2026-05-07: User requested implementing the current first-priority recommendation from `2026-05-07-character-skill-effect-pipeline-review.html`: introduce `CombatEffectFactory` or `CombatEffectService`.

@@ -565,3 +565,47 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-07: User reported the Vega SO Projectile Sprite assignment did not affect the runtime projectile visual.
+
+## Task: 2026-05-07 Skill Effect Prefab SO Export Workflow
+
+### Task title
+
+Add a ScriptableObject-to-CSV export workflow for skill effect prefab assignments.
+
+### Goals
+
+- Allow `MonsterDefinition` Inspector prefab assignments to feed the active CSV runtime path.
+- Preserve CSV as the runtime source while making SO authoring less manual.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Export is explicit through the Inspector button or menu item.
+- Null prefab fields are ignored to avoid wiping existing CSV paths.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Assign prefabs on `Assets/Data/GameData/Monsters/*.asset`, then click `Export Skill Effect Prefabs To CSV` in the MonsterDefinition Inspector.
+- Confirm generated CSV paths and runtime prefab catalog entries before Play Mode verification.
+
+### Evidence
+
+- `SkillDefinition.SkillEffectPrefab`, `PassiveDefinition.SkillEffectPrefab`, and `SkillChoiceDefinition.SkillEffectPrefab` already existed in `Pakuri/Assets/Scripts/Data/SkillDefinition.cs`.
+- Added `Pakuri/Assets/Scripts/Data/Editor/PakuriSkillEffectPrefabCsvExporter.cs` to scan `Assets/Data/GameData/Monsters` and export non-null prefab object references as asset paths.
+- The same file adds a `MonsterDefinition` custom inspector button below the default Inspector.
+- Unity-MCP menu execution logged `skills=0, choices=0, assignedSkills=0, assignedChoices=0`, matching currently null prefab references in the monster assets.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors.
+
+### History
+
+- 2026-05-07: User requested a less complex effect-assignment workflow based on Inspector object assignment.
