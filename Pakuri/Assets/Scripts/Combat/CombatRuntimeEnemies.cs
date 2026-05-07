@@ -44,11 +44,7 @@ namespace Pakuri.Combat
             ClearProjectileRuntime();
             ClearEveSkillRuntimeObjects();
             ClearDamagePopupRuntime();
-            ResetEveSkillCombatTimers();
-            ResetArielSkillCombatTimers();
-            ResetRinSkillCombatTimers();
-            ResetSeinSkillCombatTimers();
-            ResetVegaSkillCombatTimers();
+            ResetMonsterSkillRuntimes();
 
             currentCombatType = RunDayModel.Resolve(stageIndex, dayIndex).CombatType;
             ResolveStageOneEnemyPool(dayIndex);
@@ -61,6 +57,7 @@ namespace Pakuri.Combat
             currentShotsRemaining = GetSelectedMonsterMagazineCapacity();
             shotCooldown = 0f;
             reloadRemaining = 0f;
+            ResetManifestedMonsterPartyCombat();
             nexusCurrentHealth = nexusMaxHealth;
             unitCurrentHealth = unitMaxHealthConfigured;
             nextProjectileSequence = 0;

@@ -587,3 +587,47 @@ Completed without Code Review. External reviewer commands timed out again, so on
 - Legacy non-English note retained these code references: `Pakuri/reference/eve-projectile-click-implementation-report.html`.
 - Legacy non-English note retained these code references: `codex review --uncommitted`, `codex exec`.
 
+# Task: 2026-05-08 Manifested Eve Arc Bolt Correction
+
+### Task title
+
+Prevent Manifested Eve A from using Prism Ray prefab/line behavior.
+
+### Goals
+
+- Keep Eve A as `MagazineProjectile` and default learned for Manifested Eve.
+- Remove the CSV `eve-a` reference to the Eve B Prism Ray prefab.
+- Route Manifested Eve A through projectile sprite and magazine/reload state.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Eve-specific CSV data and combat behavior must remain evidence-based.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested Eve fires Arc Bolt-style projectiles and does not show the Prism Ray prefab.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:13` now leaves `eve-a` `skill_effect_prefab_path` empty.
+- `monster_skills.csv:14` still keeps `eve-b` pointing at `Assets/Image/Monster/Eve/Effect_Prefab/Eve_Skill_B.prefab`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:465` creates Manifested A projectile visuals from `runtime.Monster.ProjectileSprite`, not `SkillEffectPrefab`.
+- `CombatRuntimeParty.cs:418` through `:463` applies magazine/reload state to Manifested Eve A because `eve-a` is `MagazineProjectile` with `MagazineCapacity=6`.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User reported Manifested Eve played the B Prism Ray effect and attacked abnormally instead of firing Arc Bolt.
+- 2026-05-08: Code Builder removed the incorrect `eve-a` CSV effect-prefab reference and changed Manifested projectile handling.

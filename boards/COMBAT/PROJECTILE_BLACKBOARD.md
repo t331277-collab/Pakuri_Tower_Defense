@@ -894,3 +894,89 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-07: User reported Vega projectile visuals still showed the old sprite despite the SO projectile sprite assignment.
+# Task: 2026-05-08 Manifested A Projectile Runtime
+
+### Task title
+
+Route Manifested projectile skills through projectile objects instead of line effects.
+
+### Goals
+
+- Use each Manifested monster's `ProjectileSprite` for `MagazineProjectile` / `CooldownProjectile` skills.
+- Keep Manifested projectile movement and X-boundary cleanup compatible with the existing player projectile update loop.
+- Avoid applying selected 1P monster projectile labels and passive modifiers to Manifested projectile hits.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode gameplay verification.
+- Do not run Unity Play Mode from Codex.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested A projectile visuals and cleanup in RunScene Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs:124` adds `IsManifestedProjectile` and Manifested source label fields to `ProjectileRuntime`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:50` branches Manifested projectiles before the selected-monster `TryHitEnemy(...)` path.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:465` creates Manifested projectile GameObjects with `runtime.Monster.ProjectileSprite`.
+- `CombatRuntimeParty.cs:552` resolves Manifested projectile hit damage through a dedicated method and `ApplyDamageToEnemy(...)`.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User reported Manifested monsters looked like they were firing abnormal thin beam skills instead of A projectiles.
+- 2026-05-08: Code Builder added a Manifested projectile branch to the shared projectile update loop.
+
+# Task: 2026-05-08 Manifested Vega A Projectile Burst
+
+### Task title
+
+Add Manifested Vega A three-projectile burst behavior.
+
+### Goals
+
+- Make Manifested Vega A fire three sword projectiles per magazine shot instead of one generic projectile.
+- Preserve projectile object movement, hit detection, and X-boundary cleanup through the shared projectile loop.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested Vega A projectile cadence and hit behavior in RunScene Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:728` identifies `vega-a` as the Manifested three-sword skill.
+- `CombatRuntimeParty.cs:733` queues three projectiles for Manifested Vega A.
+- `CombatRuntimeParty.cs:769` fires queued projectiles through the Manifested projectile object path with infinite pierce and per-shot damage multiplier.
+- `CombatRuntimeParty.cs:774` uses `VegaThreeSwordBulletInterval` for the internal projectile spacing.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User reported Manifested Vega A was not using the registered three-projectile basic attack behavior.
+- 2026-05-08: Code Builder added the Manifested Vega A burst queue.

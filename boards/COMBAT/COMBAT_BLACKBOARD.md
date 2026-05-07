@@ -1697,3 +1697,335 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-07: User requested changing the effect factory so prefab animations appear at their original authored scale instead of being resized by line/circle effect dimensions.
+
+# Task: 2026-05-07 Monster Skill Runtime Module Dispatch Refactor
+
+### Task title
+
+Introduce monster skill runtime modules behind `CombatRuntimeController` dispatch.
+
+### Goals
+
+- Stop `CombatRuntimeController` from directly listing Ariel/Eve/Rin/Sein/Vega at every skill runtime update/reset/selection dispatch point.
+- Add an `IMonsterSkillRuntime` and `MonsterSkillRuntimeBase` module layer for Ariel, Eve, Rin, Sein, and Vega.
+- Keep the current proven skill behavior intact while creating a safer boundary for later moving per-monster state out of controller partial files.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected files and build/Unity-MCP output.
+- Do not run Unity Play Mode; user performs gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Ariel/Eve/Rin/Sein/Vega active skill cooldowns, automatic casts, effects, magazine counts, and resets still behave the same.
+- Future refactor can move one monster at a time from the wrapper module into a real standalone state owner, starting with the smallest or least coupled monster.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts/Combat/CombatMonsterSkillRuntime.cs`, imported by Unity as a `MonoScript` with guid `2ab9f9b7913d4c3982f10f2d31d56de0`.
+- `CombatMonsterSkillRuntime.cs` defines `IMonsterSkillRuntime`, `MonsterSkillRuntimeBase`, and Eve/Ariel/Rin/Sein/Vega runtime module classes.
+- `CombatRuntimeController.cs:492` now calls `UpdateMonsterSkillRuntimeEffects()` instead of directly calling all five `Update*SkillEffects()` methods.
+- `CombatRuntimeController.cs:551` and `:571` now call `ConfigureMonsterSkillRuntimeSelectionState(session)` instead of the Eve-named selection-state method directly.
+- `CombatRuntimeController.cs:572`, `:910`, and `CombatRuntimeEnemies.cs:47` now reset through `ResetMonsterSkillRuntimes()`.
+- `CombatRuntimeArielSkills.cs:56`, `:61`, `:66`, and `:72` now dispatch selected-monster cooldown, automatic trigger, magazine capacity, and action-speed lookup through `GetSelectedMonsterSkillRuntime()`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing System.Net.Http/System.IO.Compression warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
+- Unity-MCP imported `Assets/Scripts/Combat/CombatMonsterSkillRuntime.cs`; after script compile request, editor state reported `ready_for_tools=true` and console error query returned only MCP client-handler logs, not project compile errors.
+
+### History
+
+- 2026-05-07: User requested the next refactor step: split monster skill runtime modules so the controller passes context and modules manage their own skill state. Builder implemented the safe first stage by adding the module interface/base and routing controller dispatch through modules while preserving existing partial skill behavior.
+
+# Task: 2026-05-08 Manifested Monster Limited Combat Join
+
+### Task title
+
+Let Manifested party monsters join combat with automatic A/basic attacks only.
+
+### Goals
+
+- Read Manifested party members from `RunSession` at the next combat start.
+- Spawn simple party visuals for Manifested monsters.
+- Run only the Manifested monster's A skill/basic attack on an automatic cooldown.
+- Keep selected monster combat behavior unchanged.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is an initial limited combat join, not a full independent monster runtime.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify target selection, damage timing, and 2P+ panel visibility.
+- Future work can replace the instant line hit with full projectile/effect/runtime-module behavior after the limited join is accepted.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs`.
+- `CombatRuntimeParty.cs` stores Manifested runtime entries separately from `selectedMonster`.
+- `CombatRuntimeParty.cs` uses `PakuriDataManager.Instance.ResolveMonster(...)` against `RunSession.ManifestedMonsterIds`, skips the selected monster, and caps Manifested party members at 4.
+- `CombatRuntimeParty.cs` exposes `PartyMonsterCount` and `GetPartyMonsterPanelSkillViews(...)` for the RunScene MonsterPanel.
+- `CombatRuntimeParty.cs` finds the nearest living enemy and applies A-skill/basic attack damage through `DamageCalculator.Resolve(...)` and `ApplyDamageToEnemy(...)`.
+- `CombatRuntimeController.cs` updates Manifested combat after monster skill effects and clears Manifested party state on prototype reset.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User requested Manifested monsters be read from party state and initially join combat with restricted automatic A/basic behavior.
+
+# Task: 2026-05-08 Manifested Party Baseline HP And Stat State
+
+### Task title
+
+Make Manifested party entries explicitly carry their own HP and stats.
+
+### Goals
+
+- Keep Manifested monsters initialized from their own `MonsterDefinition` stats.
+- Preserve limited automatic A/basic attack behavior.
+- Preserve nearest-living-enemy target selection.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected combat code and build/Unity-MCP output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify Manifested monster target choice and A/basic damage pacing in the next combat after Manifest success.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` already used `ResolveManifestedPrimarySkill(...)` to select `SkillSlot.A`.
+- `CombatRuntimeParty.cs` already used `FindNearestManifestedMonsterTarget(...)` to choose the closest living enemy by `Vector2.Distance`.
+- `CombatRuntimeParty.cs` now stores `MaxHealth`, `CurrentHealth`, `BaseDamage`, and `PowerStat` per Manifested runtime entry from that monster's `MonsterDefinition`.
+- `CombatRuntimeParty.cs` now resets those Manifested HP/stat values at combat reset and uses the stored `PowerStat`/`BaseDamage` in A/basic damage calculation.
+- `CombatRuntimeParty.cs` now displays Manifested monster HP in the party label.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+- Unity-MCP script refresh returned `ready_for_tools=true`; console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-08: User reported Manifested monsters were being created in order but their implementation felt wrong, and clarified they should start from their own stats/HP and A skill while auto-attacking the nearest enemy.
+- 2026-05-08: Code Builder added explicit Manifested HP/stat runtime state while preserving nearest enemy A/basic attack behavior.
+
+# Task: 2026-05-08 Manifested Monsters Use Registered Party Skills
+
+### Task title
+
+Stop Manifested monsters from using fake/unregistered skill behavior.
+
+### Goals
+
+- Build Manifested combat runtime from the monster's run party-member state.
+- Sync learned active skill IDs from `RunSession.RunMonsterState` into actual `SkillDefinition` runtime entries.
+- Auto-cast the Manifested monster's learned skills at the nearest living enemy.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected combat code and build/Unity-MCP output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify that Manifested monsters no longer repeat an unregistered weird skill and instead use their registered learned skill definitions.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:18` stores `RunSession.RunMonsterState State` per Manifested runtime.
+- `CombatRuntimeParty.cs:30` defines `ManifestedSkillRuntime` for actual learned skill runtime entries.
+- `CombatRuntimeParty.cs:229` and `:259` sync learned skills before combat update/label update.
+- `CombatRuntimeParty.cs:280` targets the nearest living enemy with `FindNearestManifestedMonsterTarget(...)`.
+- `CombatRuntimeParty.cs:287` fires the current learned `SkillDefinition` through `FireManifestedMonsterSkill(...)`.
+- `CombatRuntimeParty.cs:321` applies the registered skill's ID/name/effect behavior path.
+- `CombatRuntimeParty.cs:371` resolves base damage from the Manifested monster state and skill data.
+- `CombatRuntimeParty.cs:395` resolves cooldown from the registered skill data and reward modifiers.
+- `CombatRuntimeParty.cs:462` syncs party-member learned active IDs to actual monster `ActiveSkills`.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+- Unity-MCP refresh completed with editor `ready_for_tools=true`; console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-08: User clarified Manifested monsters should behave like added starting monsters and not as users of unregistered weird skills.
+- 2026-05-08: Code Builder replaced the fake single-skill Manifested loop with registered learned-skill syncing and nearest-enemy auto-casting.
+
+# Task: 2026-05-08 Manifested CombatRoot Slots
+
+### Task title
+
+Use authored `CombatRoot` monster slots for Manifested combat.
+
+### Goals
+
+- Use `CombatRoot/2PMonster`, `3PMonster`, `4PMonster`, and `5PMonster` in Manifest order.
+- Preserve nearest-enemy auto attack and registered A/default skill state.
+- Keep scene slots alive and only activate/deactivate them across combat resets.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from Unity-MCP scene inspection, combat code, build output, and console output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify that the first Manifested monster appears in `2PMonster`, the next in `3PMonster`, and unused slots stay inactive during combat.
+
+### Evidence
+
+- Unity-MCP found scene paths `CombatRoot/2PMonster`, `CombatRoot/3PMonster`, `CombatRoot/4PMonster`, and `CombatRoot/5PMonster`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:41` defines the slot name array.
+- `CombatRuntimeParty.cs:139` resolves a slot for each Manifested runtime.
+- `CombatRuntimeParty.cs:160` ensures a label under the chosen slot.
+- `CombatRuntimeParty.cs:285` preserves authored scene-slot positions on combat reset.
+- `CombatRuntimeParty.cs:572` deactivates scene slots instead of destroying them.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+- Unity-MCP console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-08: User corrected the implementation target from generated party objects to authored `2PMonster` through `5PMonster` scene slots.
+- 2026-05-08: Code Builder changed Manifested combat runtime to bind those slots.
+# Task: 2026-05-08 Manifested Monster Projectile Magazine Runtime
+
+### Task title
+
+Make Manifested monster A projectile skills use projectile, magazine, and reload state instead of instant line attacks.
+
+### Goals
+
+- Stop Manifested A skills from rendering as thin beam/line effects.
+- Give Manifested `MagazineProjectile` skills their own ammo, shot interval, and reload state.
+- Keep Manifested projectile damage separate from the selected 1P monster projectile label/passive path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected code, build output, and Unity-MCP console output.
+- Do not run Unity Play Mode; user performs gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify that Manifested Eve fires an Arc Bolt-style projectile with ammo/reload pacing instead of a Prism Ray-like beam.
+- User should verify other Manifested A projectile monsters show projectile sprites and pause for reload after their magazine empties.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:32` now stores Manifested per-skill ammo, magazine capacity, shot cooldown, shot interval, reload remaining, and reload duration.
+- `CombatRuntimeParty.cs:335` updates Manifested skill timers and routes magazine projectile skills through `TryFireManifestedMagazineSkill(...)`.
+- `CombatRuntimeParty.cs:418` through `:463` fires Manifested magazine skills only when not reloading and not between shots, then decrements ammo and starts reload when empty.
+- `CombatRuntimeParty.cs:465` through `:550` creates real Manifested projectile GameObjects using the Manifested monster's `ProjectileSprite` and `ProjectileColor`.
+- `CombatRuntimeProjectiles.cs:50` through `:79` handles `IsManifestedProjectile` separately from selected 1P projectiles.
+- `CombatRuntimeParty.cs:552` through `:611` resolves Manifested projectile hits with `DamageCalculator.Resolve(...)` without selected-monster passive hooks.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing System.Net.Http/System.IO.Compression warnings.
+- Unity-MCP refresh reached `resulting_state=idle`; console warning/error read showed only MCP-FOR-UNITY client handler logs.
+- Unity-MCP `validate_script` reported duplicate-signature diagnostics because it inspected partial class files in isolation; the actual runtime and editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User reported Manifested monsters still fired a thin beam, had no magazine, and behaved like a line skill instead of using each monster's A projectile skill.
+- 2026-05-08: Code Builder added Manifested projectile, ammo, shot interval, reload, and isolated projectile-hit handling.
+
+# Task: 2026-05-08 Manifested Vega A Three-Sword Runtime Follow-up
+
+### Task title
+
+Make Manifested Vega A use the registered three-sword projectile cadence.
+
+### Goals
+
+- Keep Manifested monsters using their registered learned active skills.
+- Add Vega A-specific Manifested runtime behavior: three projectile shots per magazine shot, 0.12 second internal interval, last projectile 2x damage, and name-mark application.
+- Keep the generic Manifested projectile path for other monsters.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Manifested Vega fires three sword projectiles per A attack and that Offering-acquired skills fire for Manifested monsters.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:43` through `:46` adds queued Vega projectile state to `ManifestedSkillRuntime`.
+- `CombatRuntimeParty.cs:456` routes Manifested `vega-a` through `QueueManifestedVegaThreeSwordFlurry(...)` instead of the generic one-projectile path.
+- `CombatRuntimeParty.cs:747` through `:774` queues three projectiles, fires the first immediately, spaces later shots by `VegaThreeSwordBulletInterval`, and applies 2x damage to the third shot.
+- `CombatRuntimeParty.cs:581`, `:625`, and `:627` carry and apply Vega name-mark stacks on Manifested projectiles.
+- Unity-MCP `execute_code` confirmed runtime catalog `vega-a` resolves as `MagazineProjectile`, magazine `5`, shot interval `0.55`, with a non-null projectile sprite.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User confirmed Manifested A projectiles were applying, but reported Manifested Vega A did not start with Vega's three-projectile basic attack.
+- 2026-05-08: Code Builder added Manifested Vega A-specific projectile burst behavior while preserving generic Manifested projectile handling for other monsters.

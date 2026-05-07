@@ -22,9 +22,11 @@ namespace Pakuri.Run
         private const float RewardButtonWidth = 620f;
         private const float RewardButtonHeight = 96f;
         private const float RewardButtonSpacing = 16f;
+        private const int PrisonerChoiceButtonCount = 4;
         private const int OfferingChoiceButtonCount = 3;
         private const int MaxRunActiveSkillCount = 3;
         private const int MaxRunPassiveSkillCount = 3;
+        private const float ManifestSuccessChance = 0.70f;
 
         [SerializeField] private CombatRuntimeController combatController;
         [SerializeField] private GameDataCatalog fallbackCatalog;
@@ -47,8 +49,19 @@ namespace Pakuri.Run
         private Button rewardContinueButton;
 
         private GameObject prisonerPanel;
+        private GameObject prisonerOfferingPanel;
         private Text prisonerTitleText;
         private readonly Button[] prisonerChoiceButtons = new Button[OfferingChoiceButtonCount];
+        private GameObject prisonerChoicePanel;
+        private Text prisonerChoiceTitleText;
+        private readonly Button[] prisonerModeButtons = new Button[PrisonerChoiceButtonCount];
+        private GameObject prisonerSummonerPanel;
+        private Text prisonerSummonerTitleText;
+        private Text prisonerSummonerSummaryText;
+        private Image prisonerSummonerImage;
+        private Button prisonerSummonerButton;
+        private Button prisonerSummonerContinueButton;
+        private Button prisonerSummonerBackButton;
 
         private GameObject defeatPanel;
         private Text defeatSummaryText;
@@ -59,6 +72,8 @@ namespace Pakuri.Run
         private bool rewardPanelEntered;
         private bool defeatPanelEntered;
         private string rewardDetailText = string.Empty;
+        private string activePrisonerName = string.Empty;
+        private MonsterDefinition pendingManifestMonster;
 
         private enum OfferingChoiceKind
         {
@@ -71,6 +86,7 @@ namespace Pakuri.Run
         private sealed class OfferingChoiceView
         {
             public string ChoiceId;
+            public string MonsterId;
             public string Title;
             public string Description;
             public string ActiveSkillId;
@@ -88,12 +104,13 @@ namespace Pakuri.Run
         {
             var hadExistingUi = transform.Find("HudPanel") != null
                 && transform.Find("RewardPanel") != null
-                && transform.Find("PrisonerPanel") != null
+                && transform.Find("PrisonerOfferingPanel") != null
                 && transform.Find("DefeatPanel") != null;
             InitializeUi();
 
             if (Application.isPlaying)
             {
+                ShowRuntimeHudOnly();
                 return;
             }
 
@@ -141,6 +158,11 @@ namespace Pakuri.Run
 
             if (combatController.IsVictory)
             {
+                if (IsRewardModalOpen())
+                {
+                    return;
+                }
+
                 EnterRewardState();
             }
             else
@@ -157,7 +179,7 @@ namespace Pakuri.Run
 
             if (transform.Find("HudPanel") != null
                 && transform.Find("RewardPanel") != null
-                && transform.Find("PrisonerPanel") != null
+                && transform.Find("PrisonerOfferingPanel") != null
                 && transform.Find("DefeatPanel") != null)
             {
                 CacheUiReferences();
@@ -190,21 +212,25 @@ namespace Pakuri.Run
                 }
             }
 
+            prisonerOfferingPanel = transform.Find("PrisonerOfferingPanel")?.gameObject;
             prisonerPanel = transform.Find("PrisonerPanel")?.gameObject;
-            if (prisonerPanel != null)
+            var offeringPanel = prisonerOfferingPanel != null ? prisonerOfferingPanel : prisonerPanel;
+            if (offeringPanel != null)
             {
-                prisonerTitleText = prisonerPanel.transform.Find("Title")?.GetComponent<Text>();
+                prisonerTitleText = offeringPanel.transform.Find("Title")?.GetComponent<Text>();
                 for (var i = 0; i < OfferingChoiceButtonCount; i++)
                 {
-                    prisonerChoiceButtons[i] = prisonerPanel.transform.Find($"Choice{i + 1}")?.GetComponent<Button>();
+                    prisonerChoiceButtons[i] = offeringPanel.transform.Find($"Choice{i + 1}")?.GetComponent<Button>();
                     if (prisonerChoiceButtons[i] != null)
                     {
                         prisonerChoiceButtons[i].onClick.RemoveAllListeners();
                     }
                 }
 
-                EnsureVerticalLayout(prisonerPanel.GetComponent<RectTransform>(), 0f, 0f, 0f);
+                EnsureVerticalLayout(offeringPanel.GetComponent<RectTransform>(), 0f, 0f, 0f);
             }
+
+            EnsurePrisonerChoicePanels();
 
             defeatPanel = transform.Find("DefeatPanel")?.gameObject;
             defeatSummaryText = defeatPanel != null ? defeatPanel.transform.Find("Summary")?.GetComponent<Text>() : null;
@@ -313,14 +339,16 @@ namespace Pakuri.Run
             EnsureVerticalLayout(rewardButtonRoot.GetComponent<RectTransform>(), 0f, 0f, 12f);
             EnsureRewardButtonSlots(false);
 
-            prisonerPanel = EnsurePanel("PrisonerPanel", new Color(0.16f, 0.11f, 0.10f, 0.94f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(760f, 520f), Vector2.zero);
-            prisonerTitleText = EnsureText(prisonerPanel.transform, "Title", "포로 공양", 30, TextAnchor.MiddleCenter);
+            prisonerPanel = transform.Find("PrisonerPanel")?.gameObject;
+            prisonerOfferingPanel = EnsurePanel("PrisonerOfferingPanel", new Color(0.16f, 0.11f, 0.10f, 0.94f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(760f, 520f), Vector2.zero);
+            prisonerTitleText = EnsureText(prisonerOfferingPanel.transform, "Title", "포로 공양", 30, TextAnchor.MiddleCenter);
             for (var i = 0; i < OfferingChoiceButtonCount; i++)
             {
-                prisonerChoiceButtons[i] = EnsureButton(prisonerPanel.transform, $"Choice{i + 1}", string.Empty, null);
+                prisonerChoiceButtons[i] = EnsureButton(prisonerOfferingPanel.transform, $"Choice{i + 1}", string.Empty, null);
             }
 
-            EnsureVerticalLayout(prisonerPanel.GetComponent<RectTransform>(), 28f, 28f, 18f);
+            EnsureVerticalLayout(prisonerOfferingPanel.GetComponent<RectTransform>(), 28f, 28f, 18f);
+            EnsurePrisonerChoicePanels();
 
             defeatPanel = EnsurePanel("DefeatPanel", new Color(0.14f, 0.05f, 0.06f, 0.94f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(560f, 300f), new Vector2(-320f, 180f));
             var defeatTitle = EnsureText(defeatPanel.transform, "Title", "Defeat", 32, TextAnchor.MiddleCenter);
@@ -329,11 +357,54 @@ namespace Pakuri.Run
             defeatTitle.color = Color.white;
         }
 
+        private void EnsurePrisonerChoicePanels()
+        {
+            prisonerChoicePanel = EnsurePanel("PrisonerChoicePanel", new Color(0.12f, 0.10f, 0.16f, 0.96f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(760f, 540f), Vector2.zero);
+            prisonerChoiceTitleText = EnsureText(prisonerChoicePanel.transform, "Title", "Prisoner Choice", 30, TextAnchor.MiddleCenter);
+            prisonerModeButtons[0] = EnsureButton(prisonerChoicePanel.transform, "ManifestButton", "Manifest", () => OpenPrisonerSummonerPanel());
+            prisonerModeButtons[1] = EnsureButton(prisonerChoicePanel.transform, "AssimilateButton", "Assimilate", OnAssimilateClicked);
+            prisonerModeButtons[2] = EnsureButton(prisonerChoicePanel.transform, "OfferingButton", "Offering", () => OpenPrisonerOfferingPanel(activePrisonerName));
+            prisonerModeButtons[3] = EnsureButton(prisonerChoicePanel.transform, "CorruptButton", "Torture / Corrupt", OnCorruptClicked);
+            EnsureVerticalLayout(prisonerChoicePanel.GetComponent<RectTransform>(), 28f, 28f, 18f);
+
+            prisonerSummonerPanel = EnsurePanel("PrisonerSummonerPanel", new Color(0.08f, 0.13f, 0.15f, 0.96f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(820f, 620f), Vector2.zero);
+            prisonerSummonerTitleText = EnsureText(prisonerSummonerPanel.transform, "Title", "Manifest", 30, TextAnchor.MiddleCenter);
+            var imageObject = EnsureChild(prisonerSummonerPanel.transform, "MonsterImage", out var imageCreated);
+            var imageRect = imageObject.GetComponent<RectTransform>();
+            if (imageCreated)
+            {
+                imageRect.sizeDelta = new Vector2(160f, 160f);
+            }
+
+            prisonerSummonerImage = imageObject.GetComponent<Image>();
+            if (prisonerSummonerImage == null)
+            {
+                prisonerSummonerImage = imageObject.AddComponent<Image>();
+                prisonerSummonerImage.color = Color.white;
+                prisonerSummonerImage.preserveAspect = true;
+            }
+
+            prisonerSummonerSummaryText = EnsureText(prisonerSummonerPanel.transform, "Summary", string.Empty, 18, TextAnchor.UpperLeft);
+            prisonerSummonerButton = EnsureButton(prisonerSummonerPanel.transform, "SummonButton", "Try Manifest", TryManifestPrisonerMonster, true);
+            prisonerSummonerContinueButton = EnsureButton(prisonerSummonerPanel.transform, "ContinueButton", "Continue", ClosePrisonerSummonerResult, true);
+            prisonerSummonerBackButton = EnsureButton(prisonerSummonerPanel.transform, "BackButton", "Back to Reward", ClosePrisonerSummonerWithoutManifest, true);
+            EnsureVerticalLayout(prisonerSummonerPanel.GetComponent<RectTransform>(), 28f, 28f, 18f);
+
+            if (!Application.isPlaying)
+            {
+                ConfigurePrisonerChoicePanelPreview();
+                ConfigurePrisonerSummonerPanelPreview();
+            }
+        }
+
         private void ShowEditorPreview()
         {
             hudPanel.SetActive(true);
             rewardPanel.SetActive(true);
-            prisonerPanel.SetActive(true);
+            SetOptionalPanelActive(prisonerPanel, false);
+            SetOptionalPanelActive(prisonerOfferingPanel, true);
+            prisonerChoicePanel.SetActive(true);
+            prisonerSummonerPanel.SetActive(true);
             defeatPanel.SetActive(true);
 
             hudText.text =
@@ -351,6 +422,8 @@ namespace Pakuri.Run
 
             EnsureRewardButtonSlots(true);
             rewardContinueButton.gameObject.SetActive(true);
+            ConfigurePrisonerChoicePanelPreview();
+            ConfigurePrisonerSummonerPanelPreview();
             ConfigurePrisonerPanelPreview();
         }
 
@@ -358,11 +431,16 @@ namespace Pakuri.Run
         {
             hudPanel.SetActive(true);
             rewardPanel.SetActive(true);
-            prisonerPanel.SetActive(true);
+            SetOptionalPanelActive(prisonerPanel, false);
+            SetOptionalPanelActive(prisonerOfferingPanel, true);
+            prisonerChoicePanel.SetActive(true);
+            prisonerSummonerPanel.SetActive(true);
             defeatPanel.SetActive(true);
 
             EnsureRewardButtonSlots(true);
             rewardContinueButton.gameObject.SetActive(true);
+            ConfigurePrisonerChoicePanelPreview();
+            ConfigurePrisonerSummonerPanelPreview();
             ConfigurePrisonerPanelPreview();
         }
 
@@ -370,8 +448,12 @@ namespace Pakuri.Run
         {
             hudPanel.SetActive(true);
             rewardPanel.SetActive(false);
-            prisonerPanel.SetActive(false);
+            SetOptionalPanelActive(prisonerPanel, false);
+            SetOptionalPanelActive(prisonerOfferingPanel, false);
+            prisonerChoicePanel.SetActive(false);
+            prisonerSummonerPanel.SetActive(false);
             defeatPanel.SetActive(false);
+            SetOptionalPanelActive(transform.Find("MonsterPanel")?.gameObject, true);
             rewardSummaryApplied = false;
             rewardPanelEntered = false;
             defeatPanelEntered = false;
@@ -396,6 +478,10 @@ namespace Pakuri.Run
             }
 
             rewardPanel.SetActive(true);
+            SetOptionalPanelActive(prisonerPanel, false);
+            SetOptionalPanelActive(prisonerOfferingPanel, false);
+            prisonerChoicePanel.SetActive(false);
+            prisonerSummonerPanel.SetActive(false);
             defeatPanel.SetActive(false);
             rewardTitleText.text = $"{currentSession.SelectedMonsterName} 보상 선택";
             rewardSummaryText.text =
@@ -481,13 +567,13 @@ namespace Pakuri.Run
 
             ApplyClaimedRewardToSession(rewardView);
             rewardDetailText = combatController.AppliedRewardSummary;
-            RebuildRewardButtons();
-            if (string.Equals(rewardView.RewardKind, "Prisoner", System.StringComparison.OrdinalIgnoreCase))
+            if (IsPrisonerReward(rewardView, rewardId))
             {
-                OpenPrisonerPanel(rewardView.PrisonerName);
+                OpenPrisonerChoicePanel(rewardView.PrisonerName);
                 return;
             }
 
+            RebuildRewardButtons();
             EnterRewardState();
         }
 
@@ -510,6 +596,262 @@ namespace Pakuri.Run
             }
         }
 
+        private void OpenPrisonerChoicePanel(string prisonerName)
+        {
+            activePrisonerName = string.IsNullOrWhiteSpace(prisonerName) ? "Unknown Prisoner" : prisonerName;
+            pendingManifestMonster = null;
+            rewardPanel.SetActive(false);
+            SetOptionalPanelActive(prisonerPanel, false);
+            SetOptionalPanelActive(prisonerOfferingPanel, false);
+            prisonerSummonerPanel.SetActive(false);
+            prisonerChoicePanel.SetActive(true);
+
+            if (prisonerChoiceTitleText != null)
+            {
+                prisonerChoiceTitleText.text = $"{activePrisonerName} prisoner choice";
+            }
+
+            SetButtonLabel(prisonerModeButtons[0], "Manifest\n70% success. On success, a new monster joins from the next combat.");
+            SetButtonLabel(prisonerModeButtons[1], "Assimilate\nNot implemented yet.");
+            SetButtonLabel(prisonerModeButtons[2], "Offering\nOpen the existing skill offering choices.");
+            SetButtonLabel(prisonerModeButtons[3], "Torture / Corrupt\nNot implemented yet.");
+            for (var i = 0; i < prisonerModeButtons.Length; i++)
+            {
+                if (prisonerModeButtons[i] != null)
+                {
+                    prisonerModeButtons[i].interactable = true;
+                    prisonerModeButtons[i].gameObject.SetActive(true);
+                }
+            }
+        }
+
+        private void OpenPrisonerOfferingPanel(string prisonerName)
+        {
+            OpenPrisonerPanel(prisonerName);
+        }
+
+        private void OpenPrisonerSummonerPanel()
+        {
+            pendingManifestMonster = ResolveNextManifestCandidate();
+            prisonerChoicePanel.SetActive(false);
+            SetOptionalPanelActive(prisonerPanel, false);
+            SetOptionalPanelActive(prisonerOfferingPanel, false);
+            prisonerSummonerPanel.SetActive(true);
+            if (prisonerSummonerButton != null)
+            {
+                prisonerSummonerButton.gameObject.SetActive(true);
+                prisonerSummonerButton.interactable = pendingManifestMonster != null;
+            }
+            if (prisonerSummonerContinueButton != null)
+            {
+                prisonerSummonerContinueButton.gameObject.SetActive(false);
+            }
+            if (prisonerSummonerBackButton != null)
+            {
+                prisonerSummonerBackButton.gameObject.SetActive(true);
+                prisonerSummonerBackButton.interactable = true;
+            }
+
+            if (pendingManifestMonster == null)
+            {
+                SetSummonerPanel(null, "No monster is available for Manifest.");
+                ShowPrisonerSummonerContinue();
+                return;
+            }
+
+            SetSummonerPanel(
+                pendingManifestMonster,
+                $"Candidate selected from current monster catalog.\nSuccess chance: {ManifestSuccessChance * 100f:0}%\nPress the button to attempt Manifest.");
+        }
+
+        private void TryManifestPrisonerMonster()
+        {
+            if (currentSession == null)
+            {
+                return;
+            }
+
+            if (pendingManifestMonster == null)
+            {
+                pendingManifestMonster = ResolveNextManifestCandidate();
+            }
+
+            if (pendingManifestMonster == null)
+            {
+                SetSummonerPanel(null, "Manifest failed because no candidate monster exists.");
+                return;
+            }
+
+            var succeeded = UnityEngine.Random.value < ManifestSuccessChance;
+            if (!succeeded)
+            {
+                SetSummonerPanel(pendingManifestMonster, $"Manifest failed.\n{activePrisonerName} was consumed without adding a monster.");
+                if (prisonerSummonerButton != null)
+                {
+                    prisonerSummonerButton.interactable = false;
+                }
+
+                rewardDetailText = $"Manifest failed for {activePrisonerName}.";
+                ShowPrisonerSummonerContinue();
+                return;
+            }
+
+            currentSession.RecordManifestedMonster(pendingManifestMonster);
+            if (combatController != null)
+            {
+                combatController.RefreshManifestedMonsterParty(currentSession);
+            }
+
+            SetSummonerPanel(pendingManifestMonster, $"Manifest succeeded.\n{pendingManifestMonster.DisplayName} will join combat from the next day.");
+            if (prisonerSummonerButton != null)
+            {
+                prisonerSummonerButton.interactable = false;
+            }
+
+            rewardDetailText = $"Manifested {pendingManifestMonster.DisplayName}.";
+            ShowPrisonerSummonerContinue();
+        }
+
+        private void ShowPrisonerSummonerContinue()
+        {
+            if (prisonerSummonerContinueButton != null)
+            {
+                prisonerSummonerContinueButton.gameObject.SetActive(true);
+                prisonerSummonerContinueButton.interactable = true;
+            }
+        }
+
+        private void ClosePrisonerSummonerResult()
+        {
+            prisonerSummonerPanel.SetActive(false);
+            prisonerChoicePanel.SetActive(false);
+            SetOptionalPanelActive(prisonerPanel, false);
+            SetOptionalPanelActive(prisonerOfferingPanel, false);
+            rewardPanel.SetActive(true);
+            rewardPanelEntered = false;
+            EnterRewardState();
+            RefreshHud();
+        }
+
+        private void ClosePrisonerSummonerWithoutManifest()
+        {
+            pendingManifestMonster = null;
+            rewardDetailText = "Manifest skipped.";
+            if (prisonerSummonerButton != null)
+            {
+                prisonerSummonerButton.interactable = false;
+            }
+
+            ClosePrisonerSummonerResult();
+        }
+
+        private void OnAssimilateClicked()
+        {
+            rewardDetailText = "Assimilate is not implemented yet.";
+            if (prisonerChoiceTitleText != null)
+            {
+                prisonerChoiceTitleText.text = $"{activePrisonerName} assimilate is not implemented.";
+            }
+        }
+
+        private void OnCorruptClicked()
+        {
+            rewardDetailText = "Torture / Corrupt is not implemented yet.";
+            if (prisonerChoiceTitleText != null)
+            {
+                prisonerChoiceTitleText.text = $"{activePrisonerName} torture / corrupt is not implemented.";
+            }
+        }
+
+        private MonsterDefinition ResolveNextManifestCandidate()
+        {
+            if (currentSession == null)
+            {
+                return null;
+            }
+
+            var monsters = PakuriDataManager.Instance.GetMonsters(fallbackCatalog);
+            var candidates = new List<MonsterDefinition>();
+            for (var i = 0; i < monsters.Length; i++)
+            {
+                var monster = monsters[i];
+                if (monster == null || string.IsNullOrWhiteSpace(monster.MonsterId) || currentSession.HasManifestedMonster(monster.MonsterId))
+                {
+                    continue;
+                }
+
+                candidates.Add(monster);
+            }
+
+            if (candidates.Count == 0)
+            {
+                return null;
+            }
+
+            return candidates[UnityEngine.Random.Range(0, candidates.Count)];
+        }
+
+        private void SetSummonerPanel(MonsterDefinition monster, string prefix)
+        {
+            if (prisonerSummonerTitleText != null)
+            {
+                prisonerSummonerTitleText.text = monster == null ? "Manifest" : $"Manifest: {monster.DisplayName}";
+            }
+
+            if (prisonerSummonerImage != null)
+            {
+                prisonerSummonerImage.sprite = monster != null ? monster.UnitSprite : null;
+                prisonerSummonerImage.color = monster != null && monster.UnitSprite != null ? Color.white : new Color(1f, 1f, 1f, 0.18f);
+            }
+
+            if (prisonerSummonerSummaryText != null)
+            {
+                prisonerSummonerSummaryText.text = monster == null
+                    ? prefix
+                    : $"{prefix}\n\n{BuildManifestMonsterSummary(monster)}";
+            }
+        }
+
+        private static string BuildManifestMonsterSummary(MonsterDefinition monster)
+        {
+            if (monster == null)
+            {
+                return string.Empty;
+            }
+
+            var primary = FindManifestPrimarySkill(monster);
+            var skillSummary = primary == null
+                ? "A skill: none"
+                : $"A skill: {primary.DisplayName}\n{ResolveSkillDescription(primary.Summary, primary.DescriptionText, "A skill basic attack.")}";
+            return
+                $"Name: {monster.DisplayName}\n" +
+                $"Element: {monster.ElementLabel}\n" +
+                $"HP: {monster.MaxHealth:0}\n" +
+                $"Power: {monster.PowerStat:0}\n" +
+                $"Base damage: {monster.BaseDamage:0}\n" +
+                $"Attribute: {monster.PrimaryAttribute}\n\n" +
+                skillSummary;
+        }
+
+        private static SkillDefinition FindManifestPrimarySkill(MonsterDefinition monster)
+        {
+            if (monster == null || monster.ActiveSkills == null)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < monster.ActiveSkills.Length; i++)
+            {
+                var skill = monster.ActiveSkills[i];
+                if (skill != null && skill.Slot == SkillSlot.A)
+                {
+                    return skill;
+                }
+            }
+
+            return null;
+        }
+
         private void OpenPrisonerPanel(string prisonerName)
         {
             BuildOfferingChoices();
@@ -521,7 +863,10 @@ namespace Pakuri.Run
             }
 
             rewardPanel.SetActive(false);
-            prisonerPanel.SetActive(true);
+            prisonerChoicePanel.SetActive(false);
+            prisonerSummonerPanel.SetActive(false);
+            SetOptionalPanelActive(prisonerPanel, false);
+            SetOptionalPanelActive(prisonerOfferingPanel, true);
             if (prisonerTitleText != null)
             {
                 prisonerTitleText.text = $"{prisonerName} 공양 선택";
@@ -555,15 +900,26 @@ namespace Pakuri.Run
         {
             offeringChoices.Clear();
 
-            var monster = RunSceneBootstrap.ActiveMonster ?? ResolveFallbackMonster();
-            if (monster == null || currentSession == null)
+            if (currentSession == null)
             {
                 return;
             }
 
-            AddActiveSkillOfferingChoices(monster);
-            AddPassiveSkillOfferingChoices(monster);
-            AddEnhancementOfferingChoices(monster);
+            var monsters = ResolveOfferingTargetMonsters();
+            for (var i = 0; i < monsters.Count; i++)
+            {
+                var monster = monsters[i];
+                var memberState = currentSession.EnsurePartyMemberState(monster);
+                if (monster == null || memberState == null)
+                {
+                    continue;
+                }
+
+                AddActiveSkillOfferingChoices(monster, memberState);
+                AddPassiveSkillOfferingChoices(monster, memberState);
+                AddEnhancementOfferingChoices(monster, memberState);
+            }
+
             ShuffleOfferingChoices();
 
             while (offeringChoices.Count > OfferingChoiceButtonCount)
@@ -572,9 +928,45 @@ namespace Pakuri.Run
             }
         }
 
-        private void AddActiveSkillOfferingChoices(MonsterDefinition monster)
+        private List<MonsterDefinition> ResolveOfferingTargetMonsters()
         {
-            if (currentSession.LearnedActives.Count >= MaxRunActiveSkillCount)
+            var monsters = new List<MonsterDefinition>();
+            AddOfferingTargetMonster(monsters, RunSceneBootstrap.ActiveMonster ?? ResolveFallbackMonster());
+
+            if (currentSession == null || currentSession.ManifestedMonsterIds == null)
+            {
+                return monsters;
+            }
+
+            for (var i = 0; i < currentSession.ManifestedMonsterIds.Count; i++)
+            {
+                AddOfferingTargetMonster(monsters, PakuriDataManager.Instance.ResolveMonster(currentSession.ManifestedMonsterIds[i], fallbackCatalog));
+            }
+
+            return monsters;
+        }
+
+        private static void AddOfferingTargetMonster(List<MonsterDefinition> monsters, MonsterDefinition monster)
+        {
+            if (monsters == null || monster == null || string.IsNullOrWhiteSpace(monster.MonsterId))
+            {
+                return;
+            }
+
+            for (var i = 0; i < monsters.Count; i++)
+            {
+                if (monsters[i] != null && string.Equals(monsters[i].MonsterId, monster.MonsterId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+            }
+
+            monsters.Add(monster);
+        }
+
+        private void AddActiveSkillOfferingChoices(MonsterDefinition monster, RunSession.RunMonsterState memberState)
+        {
+            if (memberState == null || memberState.LearnedActives.Count >= MaxRunActiveSkillCount)
             {
                 return;
             }
@@ -589,7 +981,7 @@ namespace Pakuri.Run
                 }
 
                 var choiceId = string.IsNullOrWhiteSpace(skill.SkillId) ? $"active:{skill.DisplayName}" : skill.SkillId;
-                if (currentSession.HasChosenReward(choiceId) || currentSession.HasLearnedActive(skill.SkillId))
+                if (currentSession.HasChosenReward(memberState.MonsterId, choiceId) || currentSession.HasLearnedActive(memberState.MonsterId, skill.SkillId))
                 {
                     continue;
                 }
@@ -597,6 +989,7 @@ namespace Pakuri.Run
                 offeringChoices.Add(new OfferingChoiceView
                 {
                     ChoiceId = choiceId,
+                    MonsterId = memberState.MonsterId,
                     ChoiceKind = OfferingChoiceKind.ActiveSkill,
                     Title = $"신규 액티브: {skill.DisplayName}",
                     Description = ResolveSkillDescription(skill.Summary, skill.DescriptionText, "액티브 스킬을 습득한다."),
@@ -605,9 +998,9 @@ namespace Pakuri.Run
             }
         }
 
-        private void AddPassiveSkillOfferingChoices(MonsterDefinition monster)
+        private void AddPassiveSkillOfferingChoices(MonsterDefinition monster, RunSession.RunMonsterState memberState)
         {
-            if (currentSession.LearnedPassives.Count >= MaxRunPassiveSkillCount)
+            if (memberState == null || memberState.LearnedPassives.Count >= MaxRunPassiveSkillCount)
             {
                 return;
             }
@@ -622,12 +1015,12 @@ namespace Pakuri.Run
                 }
 
                 var choiceId = string.IsNullOrWhiteSpace(passive.PassiveId) ? $"passive:{passive.DisplayName}" : passive.PassiveId;
-                if (currentSession.HasChosenReward(choiceId) || currentSession.HasLearnedPassive(passive.PassiveId))
+                if (currentSession.HasChosenReward(memberState.MonsterId, choiceId) || currentSession.HasLearnedPassive(memberState.MonsterId, passive.PassiveId))
                 {
                     continue;
                 }
 
-                if (!passive.IsAvailableWithoutActiveRequirement && !HasLearnedRequiredActive(monster, passive.RequiredActiveSlot))
+                if (!passive.IsAvailableWithoutActiveRequirement && !HasLearnedRequiredActive(monster, memberState, passive.RequiredActiveSlot))
                 {
                     continue;
                 }
@@ -635,6 +1028,7 @@ namespace Pakuri.Run
                 offeringChoices.Add(new OfferingChoiceView
                 {
                     ChoiceId = choiceId,
+                    MonsterId = memberState.MonsterId,
                     ChoiceKind = OfferingChoiceKind.PassiveSkill,
                     Title = $"신규 패시브: {passive.DisplayName}",
                     Description = ResolveSkillDescription(passive.Summary, passive.DescriptionText, "패시브 스킬을 습득한다."),
@@ -643,12 +1037,12 @@ namespace Pakuri.Run
             }
         }
 
-        private void AddEnhancementOfferingChoices(MonsterDefinition monster)
+        private void AddEnhancementOfferingChoices(MonsterDefinition monster, RunSession.RunMonsterState memberState)
         {
             var structuredChoiceCount = offeringChoices.Count;
-            AddActiveEnhancementOfferingChoices(monster);
-            AddPassiveEnhancementOfferingChoices(monster);
-            AddMasterSkillOfferingChoices(monster);
+            AddActiveEnhancementOfferingChoices(monster, memberState);
+            AddPassiveEnhancementOfferingChoices(monster, memberState);
+            AddMasterSkillOfferingChoices(monster, memberState);
 
             if (offeringChoices.Count > structuredChoiceCount)
             {
@@ -659,7 +1053,7 @@ namespace Pakuri.Run
             for (var i = 0; i < rewardChoices.Length; i++)
             {
                 var reward = rewardChoices[i];
-                if (reward == null || string.IsNullOrWhiteSpace(reward.RewardId) || currentSession.HasChosenReward(reward.RewardId))
+                if (reward == null || string.IsNullOrWhiteSpace(reward.RewardId) || currentSession.HasChosenReward(memberState.MonsterId, reward.RewardId))
                 {
                     continue;
                 }
@@ -667,6 +1061,7 @@ namespace Pakuri.Run
                 offeringChoices.Add(new OfferingChoiceView
                 {
                     ChoiceId = reward.RewardId,
+                    MonsterId = memberState.MonsterId,
                     ChoiceKind = OfferingChoiceKind.Enhancement,
                     Title = $"스킬 강화: {reward.Title}",
                     Description = reward.Description,
@@ -680,72 +1075,72 @@ namespace Pakuri.Run
             }
         }
 
-        private void AddActiveEnhancementOfferingChoices(MonsterDefinition monster)
+        private void AddActiveEnhancementOfferingChoices(MonsterDefinition monster, RunSession.RunMonsterState memberState)
         {
             var activeSkills = GetActiveSkills(monster);
             for (var i = 0; i < activeSkills.Length; i++)
             {
                 var skill = activeSkills[i];
-                if (skill == null || skill.EnhancementChoices == null || !currentSession.HasLearnedActive(skill.SkillId))
+                if (skill == null || skill.EnhancementChoices == null || !currentSession.HasLearnedActive(memberState.MonsterId, skill.SkillId))
                 {
                     continue;
                 }
 
-                if (CountChosenChoices(skill.EnhancementChoices) >= 3)
+                if (CountChosenChoices(skill.EnhancementChoices, memberState) >= 3)
                 {
                     continue;
                 }
 
-                AddChoiceDefinitions(skill.EnhancementChoices, $"액티브 강화: {skill.DisplayName}");
+                AddChoiceDefinitions(skill.EnhancementChoices, memberState, $"{monster.DisplayName} 액티브 강화: {skill.DisplayName}");
             }
         }
 
-        private void AddPassiveEnhancementOfferingChoices(MonsterDefinition monster)
+        private void AddPassiveEnhancementOfferingChoices(MonsterDefinition monster, RunSession.RunMonsterState memberState)
         {
             var passiveSkills = GetPassiveSkills(monster);
             for (var i = 0; i < passiveSkills.Length; i++)
             {
                 var passive = passiveSkills[i];
-                if (passive == null || passive.EnhancementChoices == null || !currentSession.HasLearnedPassive(passive.PassiveId))
+                if (passive == null || passive.EnhancementChoices == null || !currentSession.HasLearnedPassive(memberState.MonsterId, passive.PassiveId))
                 {
                     continue;
                 }
 
-                if (HasAnyChosenChoice(passive.EnhancementChoices))
+                if (HasAnyChosenChoice(passive.EnhancementChoices, memberState))
                 {
                     continue;
                 }
 
-                AddChoiceDefinitions(passive.EnhancementChoices, $"패시브 강화: {passive.DisplayName}");
+                AddChoiceDefinitions(passive.EnhancementChoices, memberState, $"{monster.DisplayName} 패시브 강화: {passive.DisplayName}");
             }
         }
 
-        private void AddMasterSkillOfferingChoices(MonsterDefinition monster)
+        private void AddMasterSkillOfferingChoices(MonsterDefinition monster, RunSession.RunMonsterState memberState)
         {
             var activeSkills = GetActiveSkills(monster);
             for (var i = 0; i < activeSkills.Length; i++)
             {
                 var skill = activeSkills[i];
-                if (skill == null || skill.MasterSkillChoices == null || !currentSession.HasLearnedActive(skill.SkillId))
+                if (skill == null || skill.MasterSkillChoices == null || !currentSession.HasLearnedActive(memberState.MonsterId, skill.SkillId))
                 {
                     continue;
                 }
 
-                if (CountChosenChoices(skill.EnhancementChoices) < 3 || HasAnyChosenChoice(skill.MasterSkillChoices))
+                if (CountChosenChoices(skill.EnhancementChoices, memberState) < 3 || HasAnyChosenChoice(skill.MasterSkillChoices, memberState))
                 {
                     continue;
                 }
 
-                AddChoiceDefinitions(skill.MasterSkillChoices, $"마스터 스킬: {skill.DisplayName}", OfferingChoiceKind.MasterSkill);
+                AddChoiceDefinitions(skill.MasterSkillChoices, memberState, $"{monster.DisplayName} 마스터 스킬: {skill.DisplayName}", OfferingChoiceKind.MasterSkill);
             }
         }
 
-        private void AddChoiceDefinitions(SkillChoiceDefinition[] choices, string titlePrefix, OfferingChoiceKind kind = OfferingChoiceKind.Enhancement)
+        private void AddChoiceDefinitions(SkillChoiceDefinition[] choices, RunSession.RunMonsterState memberState, string titlePrefix, OfferingChoiceKind kind = OfferingChoiceKind.Enhancement)
         {
             for (var i = 0; i < choices.Length; i++)
             {
                 var choice = choices[i];
-                if (choice == null || string.IsNullOrWhiteSpace(choice.ChoiceId) || currentSession.HasChosenReward(choice.ChoiceId))
+                if (choice == null || string.IsNullOrWhiteSpace(choice.ChoiceId) || currentSession.HasChosenReward(memberState.MonsterId, choice.ChoiceId))
                 {
                     continue;
                 }
@@ -753,6 +1148,7 @@ namespace Pakuri.Run
                 offeringChoices.Add(new OfferingChoiceView
                 {
                     ChoiceId = choice.ChoiceId,
+                    MonsterId = memberState.MonsterId,
                     ChoiceKind = kind,
                     Title = $"{titlePrefix} - {choice.Title}",
                     Description = string.IsNullOrWhiteSpace(choice.DescriptionText) ? "강화 효과를 습득한다." : choice.DescriptionText
@@ -760,7 +1156,7 @@ namespace Pakuri.Run
             }
         }
 
-        private int CountChosenChoices(SkillChoiceDefinition[] choices)
+        private int CountChosenChoices(SkillChoiceDefinition[] choices, RunSession.RunMonsterState memberState)
         {
             var chosenCount = 0;
             if (choices == null)
@@ -771,7 +1167,7 @@ namespace Pakuri.Run
             for (var i = 0; i < choices.Length; i++)
             {
                 var choice = choices[i];
-                if (choice != null && currentSession.HasChosenReward(choice.ChoiceId))
+                if (choice != null && currentSession.HasChosenReward(memberState.MonsterId, choice.ChoiceId))
                 {
                     chosenCount++;
                 }
@@ -780,9 +1176,9 @@ namespace Pakuri.Run
             return chosenCount;
         }
 
-        private bool HasAnyChosenChoice(SkillChoiceDefinition[] choices)
+        private bool HasAnyChosenChoice(SkillChoiceDefinition[] choices, RunSession.RunMonsterState memberState)
         {
-            return CountChosenChoices(choices) > 0;
+            return CountChosenChoices(choices, memberState) > 0;
         }
 
         private static string ResolveSkillDescription(string summary, string descriptionText, string fallback)
@@ -795,7 +1191,7 @@ namespace Pakuri.Run
             return string.IsNullOrWhiteSpace(summary) ? fallback : summary;
         }
 
-        private bool HasLearnedRequiredActive(MonsterDefinition monster, SkillSlot requiredSlot)
+        private bool HasLearnedRequiredActive(MonsterDefinition monster, RunSession.RunMonsterState memberState, SkillSlot requiredSlot)
         {
             var activeSkills = GetActiveSkills(monster);
             for (var i = 0; i < activeSkills.Length; i++)
@@ -803,7 +1199,7 @@ namespace Pakuri.Run
                 var skill = activeSkills[i];
                 if (skill != null
                     && skill.Slot == requiredSlot
-                    && currentSession.HasLearnedActive(skill.SkillId))
+                    && currentSession.HasLearnedActive(memberState.MonsterId, skill.SkillId))
                 {
                     return true;
                 }
@@ -831,10 +1227,11 @@ namespace Pakuri.Run
             }
 
             var choice = offeringChoices[choiceIndex];
-            currentSession.RecordOfferingChoice(choice.ChoiceId, choice.ActiveSkillId, choice.PassiveSkillId);
+            currentSession.RecordOfferingChoice(choice.MonsterId, choice.ChoiceId, choice.ActiveSkillId, choice.PassiveSkillId);
             if (choice.ChoiceKind == OfferingChoiceKind.Enhancement)
             {
                 currentSession.AccumulateReward(
+                    choice.MonsterId,
                     choice.DamageMultiplier,
                     choice.MagazineBonus,
                     choice.ShotIntervalMultiplier,
@@ -844,9 +1241,18 @@ namespace Pakuri.Run
             }
 
             rewardDetailText = $"{choice.Title} 선택 완료";
+            if (combatController != null)
+            {
+                combatController.RefreshManifestedMonsterParty(currentSession);
+            }
+
             offeringChoices.Clear();
-            prisonerPanel.SetActive(false);
+            SetOptionalPanelActive(prisonerPanel, false);
+            SetOptionalPanelActive(prisonerOfferingPanel, false);
+            prisonerChoicePanel.SetActive(false);
+            prisonerSummonerPanel.SetActive(false);
             rewardPanel.SetActive(true);
+            rewardPanelEntered = false;
             EnterRewardState();
             RefreshHud();
         }
@@ -863,7 +1269,10 @@ namespace Pakuri.Run
             rewardPanelEntered = false;
             rewardDetailText = string.Empty;
             rewardPanel.SetActive(false);
-            prisonerPanel.SetActive(false);
+            SetOptionalPanelActive(prisonerPanel, false);
+            SetOptionalPanelActive(prisonerOfferingPanel, false);
+            prisonerChoicePanel.SetActive(false);
+            prisonerSummonerPanel.SetActive(false);
             combatController.BeginConfiguredDay(
                 RunSceneBootstrap.ActiveMonster ?? ResolveFallbackMonster(),
                 currentSession);
@@ -880,7 +1289,10 @@ namespace Pakuri.Run
             defeatPanelEntered = true;
             defeatPanel.SetActive(true);
             rewardPanel.SetActive(false);
-            prisonerPanel.SetActive(false);
+            SetOptionalPanelActive(prisonerPanel, false);
+            SetOptionalPanelActive(prisonerOfferingPanel, false);
+            prisonerChoicePanel.SetActive(false);
+            prisonerSummonerPanel.SetActive(false);
             defeatSummaryText.text = currentSession == null
                 ? "Nexus가 붕괴했다."
                 : $"{currentSession.SelectedMonsterName} run이 일차 {currentSession.DayIndex}에서 실패했다.";
@@ -1194,12 +1606,75 @@ namespace Pakuri.Run
             }
         }
 
+        private void ConfigurePrisonerChoicePanelPreview()
+        {
+            if (prisonerChoiceTitleText != null)
+            {
+                prisonerChoiceTitleText.text = "Prisoner Choice";
+            }
+
+            SetButtonLabel(prisonerModeButtons[0], "Manifest\nPreview button");
+            SetButtonLabel(prisonerModeButtons[1], "Assimilate\nPreview button");
+            SetButtonLabel(prisonerModeButtons[2], "Offering\nPreview button");
+            SetButtonLabel(prisonerModeButtons[3], "Torture / Corrupt\nPreview button");
+            for (var i = 0; i < prisonerModeButtons.Length; i++)
+            {
+                if (prisonerModeButtons[i] != null)
+                {
+                    prisonerModeButtons[i].gameObject.SetActive(true);
+                }
+            }
+        }
+
+        private void ConfigurePrisonerSummonerPanelPreview()
+        {
+            if (prisonerSummonerTitleText != null)
+            {
+                prisonerSummonerTitleText.text = "Manifest Preview";
+            }
+
+            if (prisonerSummonerSummaryText != null)
+            {
+                prisonerSummonerSummaryText.text = "Manifest result will show monster image, name, A skill, and basic stats in Play Mode.";
+            }
+
+            if (prisonerSummonerImage != null)
+            {
+                prisonerSummonerImage.color = new Color(1f, 1f, 1f, 0.18f);
+            }
+
+            if (prisonerSummonerButton != null)
+            {
+                SetButtonLabel(prisonerSummonerButton, "Try Manifest");
+            }
+
+            if (prisonerSummonerContinueButton != null)
+            {
+                SetButtonLabel(prisonerSummonerContinueButton, "Continue");
+                prisonerSummonerContinueButton.gameObject.SetActive(true);
+            }
+
+            if (prisonerSummonerBackButton != null)
+            {
+                SetButtonLabel(prisonerSummonerBackButton, "Back to Reward");
+                prisonerSummonerBackButton.gameObject.SetActive(true);
+            }
+        }
+
         private static void SetButtonLabel(Button button, string label)
         {
             var text = button != null ? button.transform.Find("Label")?.GetComponent<Text>() : null;
             if (text != null)
             {
                 text.text = label;
+            }
+        }
+
+        private static void SetOptionalPanelActive(GameObject panel, bool isActive)
+        {
+            if (panel != null)
+            {
+                panel.SetActive(isActive);
             }
         }
 
@@ -1211,6 +1686,25 @@ namespace Pakuri.Run
                 || objectName == "RewardButton_0"
                 || objectName == "RewardButton_1"
                 || objectName == "RewardButton_2";
+        }
+
+        private static bool IsPrisonerReward(CombatRuntimeController.RewardChoiceView rewardView, string rewardId)
+        {
+            return string.Equals(rewardView.RewardKind, "Prisoner", System.StringComparison.OrdinalIgnoreCase)
+                || (!string.IsNullOrWhiteSpace(rewardView.PrisonerName) && rewardId.StartsWith("prisoner:", System.StringComparison.OrdinalIgnoreCase));
+        }
+
+        private bool IsRewardModalOpen()
+        {
+            return IsPanelActive(prisonerChoicePanel)
+                || IsPanelActive(prisonerSummonerPanel)
+                || IsPanelActive(prisonerPanel)
+                || IsPanelActive(prisonerOfferingPanel);
+        }
+
+        private static bool IsPanelActive(GameObject panel)
+        {
+            return panel != null && panel.activeSelf;
         }
 
         private GameObject EnsureChild(Transform parent, string name)
@@ -1306,17 +1800,18 @@ namespace Pakuri.Run
     public sealed class CombatMonsterPanelUiController : MonoBehaviour
     {
         private const int SkillSlotCount = 3;
+        private const int MonsterGroupCount = 5;
         private const string PanelName = "MonsterPanel";
-        private const string ActiveMonsterName = "1PMonster";
+        private static readonly string[] MonsterGroupNames = { "1PMonster", "2PMonster", "3PMonster", "4PMonster", "5PMonster" };
 
         [SerializeField] private CombatRuntimeController combatController;
         [SerializeField] private Color availableColor = Color.white;
         [SerializeField] private Color cooldownOverlayColor = new Color(0f, 0f, 0f, 0.58f);
 
         private readonly List<CombatRuntimeController.MonsterPanelSkillView> skillViews = new List<CombatRuntimeController.MonsterPanelSkillView>(SkillSlotCount);
-        private readonly SkillSlotBinding[] slots = new SkillSlotBinding[SkillSlotCount];
+        private readonly GameObject[] partyMonsterGroups = new GameObject[MonsterGroupCount];
+        private readonly SkillSlotBinding[][] partySlots = new SkillSlotBinding[MonsterGroupCount][];
         private GameObject monsterPanel;
-        private GameObject activeMonsterGroup;
         private Sprite cooldownOverlaySprite;
 
         private sealed class SkillSlotBinding
@@ -1349,19 +1844,25 @@ namespace Pakuri.Run
         private void BindPanelHierarchy()
         {
             monsterPanel = FindDescendant(transform, PanelName)?.gameObject;
-            activeMonsterGroup = monsterPanel != null
-                ? FindDescendant(monsterPanel.transform, ActiveMonsterName)?.gameObject
-                : null;
-
-            if (monsterPanel == null || activeMonsterGroup == null)
+            if (monsterPanel == null)
             {
                 return;
             }
 
-            SetOnlyFirstPlayerMonsterActive();
-            for (var i = 0; i < SkillSlotCount; i++)
+            for (var groupIndex = 0; groupIndex < MonsterGroupCount; groupIndex++)
             {
-                slots[i] = BindSkillSlot(i);
+                var group = FindDescendant(monsterPanel.transform, MonsterGroupNames[groupIndex])?.gameObject;
+                partyMonsterGroups[groupIndex] = group;
+                if (group == null)
+                {
+                    continue;
+                }
+
+                partySlots[groupIndex] = new SkillSlotBinding[SkillSlotCount];
+                for (var slotIndex = 0; slotIndex < SkillSlotCount; slotIndex++)
+                {
+                    partySlots[groupIndex][slotIndex] = BindSkillSlot(group.transform, slotIndex);
+                }
             }
         }
 
@@ -1372,54 +1873,47 @@ namespace Pakuri.Run
                 combatController = FindFirstObjectByType<CombatRuntimeController>();
             }
 
-            if (monsterPanel == null || activeMonsterGroup == null)
+            if (monsterPanel == null)
             {
                 BindPanelHierarchy();
             }
 
-            if (monsterPanel == null || activeMonsterGroup == null)
-            {
-                return;
-            }
-
-            monsterPanel.SetActive(true);
-            activeMonsterGroup.SetActive(true);
-            SetOnlyFirstPlayerMonsterActive();
-
-            var count = combatController != null
-                ? combatController.GetMonsterPanelSkillViews(skillViews, SkillSlotCount)
-                : 0;
-
-            for (var i = 0; i < SkillSlotCount; i++)
-            {
-                ApplySlot(slots[i], i < count ? skillViews[i] : default, i < count);
-            }
-        }
-
-        private void SetOnlyFirstPlayerMonsterActive()
-        {
             if (monsterPanel == null)
             {
                 return;
             }
 
-            for (var i = 0; i < monsterPanel.transform.childCount; i++)
+            monsterPanel.SetActive(true);
+            var partyCount = combatController != null ? Mathf.Clamp(combatController.PartyMonsterCount, 1, MonsterGroupCount) : 1;
+            for (var groupIndex = 0; groupIndex < MonsterGroupCount; groupIndex++)
             {
-                var child = monsterPanel.transform.GetChild(i);
-                if (child == activeMonsterGroup.transform)
+                var group = partyMonsterGroups[groupIndex];
+                if (group == null)
                 {
-                    child.gameObject.SetActive(true);
+                    continue;
                 }
-                else if (child.name.IndexOf("Monster", StringComparison.OrdinalIgnoreCase) >= 0)
+
+                var groupActive = groupIndex < partyCount;
+                group.SetActive(groupActive);
+                if (!groupActive)
                 {
-                    child.gameObject.SetActive(false);
+                    continue;
+                }
+
+                var count = combatController != null
+                    ? combatController.GetPartyMonsterPanelSkillViews(groupIndex, skillViews, SkillSlotCount)
+                    : 0;
+                var slots = partySlots[groupIndex];
+                for (var slotIndex = 0; slotIndex < SkillSlotCount; slotIndex++)
+                {
+                    ApplySlot(slots != null ? slots[slotIndex] : null, slotIndex < count ? skillViews[slotIndex] : default, slotIndex < count);
                 }
             }
         }
 
-        private SkillSlotBinding BindSkillSlot(int index)
+        private SkillSlotBinding BindSkillSlot(Transform monsterGroup, int index)
         {
-            var slotTransform = FindDescendant(activeMonsterGroup.transform, $"Active{index + 1}");
+            var slotTransform = FindDescendant(monsterGroup, $"Active{index + 1}");
             if (slotTransform == null)
             {
                 return null;

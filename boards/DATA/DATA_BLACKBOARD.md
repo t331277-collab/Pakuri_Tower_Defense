@@ -719,3 +719,44 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-07: User requested setting up an editor tool to export `SkillEffectPrefab` Inspector assignments to CSV paths.
+# Task: 2026-05-08 Manifested Eve A CSV Data Alignment
+
+### Task title
+
+Track data-layer correction for Manifested Eve A effect source.
+
+### Goals
+
+- Keep data root state aligned with the CSV correction that removes Eve B's prefab from Eve A.
+- Record that A projectile visuals now rely on monster projectile sprite data in combat runtime.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Detailed CSV evidence is recorded in `boards/DATA/CSV_BLACKBOARD.md`.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue detailed row-level evidence from `boards/DATA/CSV_BLACKBOARD.md`.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:13` now leaves `eve-a` `skill_effect_prefab_path` empty.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:465` creates Manifested projectile visuals from the monster projectile sprite.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User reported Manifested Eve used Prism Ray-like visuals when it should use Arc Bolt A behavior.
+- 2026-05-08: Code Builder aligned data and combat runtime behavior for Manifested Eve A.

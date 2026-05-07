@@ -124,6 +124,11 @@ namespace Pakuri.Combat
             public float SeinExplosionRadius;
             public float SeinExplosionDamageMultiplier = 1f;
             public int VegaNameMarkStacks;
+            public bool IsManifestedProjectile;
+            public string ManifestedSourceName;
+            public string ManifestedSkillName;
+            public string ManifestedElementLabel;
+            public string ManifestedStatusEffectId;
         }
 
         private sealed class SkillEffectRuntime
@@ -489,11 +494,8 @@ namespace Pakuri.Combat
             UpdateSpawning();
             UpdateEnemies();
             UpdateProjectiles();
-            UpdateEveSkillEffects();
-            UpdateArielSkillEffects();
-            UpdateRinSkillEffects();
-            UpdateSeinSkillEffects();
-            UpdateVegaSkillEffects();
+            UpdateMonsterSkillRuntimeEffects();
+            UpdateManifestedMonsterPartyCombat();
             UpdateSelectedMonsterCombat();
             UpdateSelectedMonsterStatusVisuals();
             CheckBattleResolution();
@@ -540,6 +542,7 @@ namespace Pakuri.Combat
             currentCombatType = session.CurrentCombatType;
             ConfigureMonster(monster);
             ApplyPersistedRewardState(session);
+            ConfigureManifestedMonsterParty(session);
             blockedRewardIds.Clear();
             if (session.ChosenRewardIds != null)
             {
@@ -552,7 +555,7 @@ namespace Pakuri.Combat
                 }
             }
 
-            ConfigureEveSkillSelectionState(session);
+            ConfigureMonsterSkillRuntimeSelectionState(session);
 
             runInitialized = true;
             BeginPrototypeDay(session.DayIndex);
@@ -572,11 +575,8 @@ namespace Pakuri.Combat
 
             ConfigureMonster(monster);
             ApplyPersistedRewardState(session);
-            ConfigureEveSkillSelectionState(session);
-            ResetArielSkillCombatTimers();
-            ResetRinSkillCombatTimers();
-            ResetSeinSkillCombatTimers();
-            ResetVegaSkillCombatTimers();
+            ConfigureMonsterSkillRuntimeSelectionState(session);
+            ResetMonsterSkillRuntimes();
 
             var magazineCapacity = GetSelectedMonsterMagazineCapacity();
             if (currentShotsRemaining > magazineCapacity)
@@ -914,10 +914,8 @@ namespace Pakuri.Combat
             ClearProjectileRuntime();
             ClearEveSkillRuntimeObjects();
             ClearDamagePopupRuntime();
-            ResetArielSkillCombatTimers();
-            ResetRinSkillCombatTimers();
-            ResetSeinSkillCombatTimers();
-            ResetVegaSkillCombatTimers();
+            ClearManifestedMonsterParty();
+            ResetMonsterSkillRuntimes();
         }
     }
 }

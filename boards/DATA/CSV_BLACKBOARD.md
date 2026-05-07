@@ -477,3 +477,46 @@ Implemented and locally validated.
 
 - 2026-05-07: User requested an editor workflow so Inspector-assigned `SkillEffectPrefab` values can be exported to CSV paths and then used by runtime effects.
 
+# Task: 2026-05-08 Eve A Skill Effect Prefab CSV Correction
+
+### Task title
+
+Remove the incorrect Eve B effect prefab path from the Eve A CSV row.
+
+### Goals
+
+- Stop runtime CSV data from assigning `Eve_Skill_B.prefab` to `eve-a`.
+- Preserve the Eve B Prism Ray prefab assignment on `eve-b`.
+- Keep A projectile visuals sourced from monster projectile sprite data instead of skill effect prefab data.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Edit scope is `Pakuri/Assets/CSVdata/source/monster_skills.csv`.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested Eve no longer shows the Prism Ray prefab while using A.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:13` now has an empty `skill_effect_prefab_path` cell for `eve-a`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:14` still assigns `Assets/Image/Monster/Eve/Effect_Prefab/Eve_Skill_B.prefab` to `eve-b`.
+- `Select-String` confirmed the post-edit rows for `eve-a` and `eve-b`.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: Investigation found that the CSV runtime source assigned the Eve B effect prefab to `eve-a`.
+- 2026-05-08: Code Builder cleared the `eve-a` prefab path while leaving `eve-b` unchanged.

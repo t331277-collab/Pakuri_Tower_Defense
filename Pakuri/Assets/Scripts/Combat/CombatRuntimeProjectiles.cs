@@ -47,6 +47,36 @@ namespace Pakuri.Combat
                     continue;
                 }
 
+                if (projectile.IsManifestedProjectile)
+                {
+                    if (TryHitManifestedProjectile(projectile, out var manifestedEnemyHit, out var manifestedDamageResult, out var manifestedAppliedDamage))
+                    {
+                        manifestedEnemyHit.FlashTimer = 0.08f;
+                        statusLabel = $"{projectile.ManifestedSourceName} {projectile.ManifestedSkillName}: {manifestedEnemyHit.DisplayName} hit {manifestedAppliedDamage:0.0}.";
+                        Debug.Log($"[CombatDamage] {projectile.ManifestedSourceName}.{projectile.ManifestedSkillName} -> {manifestedEnemyHit.DisplayName}: {manifestedDamageResult.FormulaLog}; Applied={manifestedAppliedDamage:0.##}, ShieldLeft={manifestedEnemyHit.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, manifestedEnemyHit.CurrentHealth):0.##}");
+
+                        projectile.HitEnemies.Add(manifestedEnemyHit);
+                        if (projectile.RemainingPierce > 0)
+                        {
+                            projectile.RemainingPierce -= 1;
+                        }
+                        else
+                        {
+                            CleanupProjectile(i);
+                        }
+
+                        continue;
+                    }
+
+                    if (!HasPlayerProjectileReachedBattlefieldXEdge(projectile))
+                    {
+                        continue;
+                    }
+
+                    CleanupProjectile(i);
+                    continue;
+                }
+
                 if (TryHitEnemy(projectile, out var enemyHit, out var damageResult))
                 {
                     if (TryHandleSeinFlameTrajectoryImpact(projectile, enemyHit))

@@ -214,3 +214,47 @@ Implemented and locally validated.
 
 - 2026-05-07: User reported Vega B should not connect a line from Vega to the enemy and requested an immediate temporary 3 by 1 rectangular effect on the enemy.
 - 2026-05-07: Code Builder changed Vega B to target-centered rectangle damage and removed the leftover delayed line/silence state.
+
+## Task: 2026-05-08 Manifested Vega A Three-Sword Follow-up
+
+### Task title
+
+Make Manifested Vega use `vega-a` as three sequential sword projectiles.
+
+### Goals
+
+- Preserve Vega A reference behavior when Vega is Manifested into the party.
+- Fire three projectiles per A magazine shot.
+- Apply the third projectile's 2x damage and Vega name-mark stacks.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested Vega A in RunScene Play Mode.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/vega/skill/a-three-sword-flurry.md` defines Vega A as three projectiles, 0.12 second bullet interval, third projectile 200% damage, magazine 5, and shot interval 0.55.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:728` detects Manifested `vega-a`.
+- `CombatRuntimeParty.cs:747` through `:774` queues three Manifested Vega projectiles and applies 2x damage to the third projectile.
+- `CombatRuntimeParty.cs:581`, `:625`, and `:627` carry and apply Vega name-mark stacks on Manifested projectile hits.
+- Unity-MCP `execute_code` confirmed runtime catalog `vega-a` resolves as `MagazineProjectile`, magazine `5`, and shot interval `0.55`.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User reported Manifested Vega did not appear to reference Vega A's proper three-projectile basic attack.
+- 2026-05-08: Code Builder added Vega-specific Manifested A projectile burst behavior.

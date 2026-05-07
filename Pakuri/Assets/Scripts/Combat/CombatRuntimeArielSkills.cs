@@ -53,124 +53,23 @@ namespace Pakuri.Combat
 
         private void UpdateSelectedMonsterSkillCooldowns()
         {
-            if (IsSelectedEveMonster())
-            {
-                UpdateEveSkillCooldowns();
-                return;
-            }
-
-            if (IsSelectedArielMonster())
-            {
-                UpdateArielSkillCooldowns();
-                return;
-            }
-
-            if (IsSelectedRinMonster())
-            {
-                UpdateRinSkillCooldowns();
-                return;
-            }
-
-            if (IsSelectedSeinMonster())
-            {
-                UpdateSeinSkillCooldowns();
-                return;
-            }
-
-            if (IsSelectedVegaMonster())
-            {
-                UpdateVegaSkillCooldowns();
-            }
+            GetSelectedMonsterSkillRuntime()?.UpdateCooldowns();
         }
 
         private bool TryTriggerSelectedMonsterAutomaticSkills()
         {
-            if (IsSelectedEveMonster())
-            {
-                return TryTriggerEveAutomaticSkills();
-            }
-
-            if (IsSelectedArielMonster())
-            {
-                return TryTriggerArielAutomaticSkills();
-            }
-
-            if (IsSelectedRinMonster())
-            {
-                return TryTriggerRinAutomaticSkills();
-            }
-
-            if (IsSelectedSeinMonster())
-            {
-                return TryTriggerSeinAutomaticSkills();
-            }
-
-            if (IsSelectedVegaMonster())
-            {
-                return TryTriggerVegaAutomaticSkills();
-            }
-
-            return false;
+            return GetSelectedMonsterSkillRuntime()?.TryTriggerAutomaticSkills() ?? false;
         }
 
         private int GetSelectedMonsterMagazineCapacity()
         {
-            if (IsSelectedEveMonster())
-            {
-                return GetEveArcMagazineCapacity();
-            }
-
-            if (IsSelectedArielMonster())
-            {
-                return GetArielJudgementMagazineCapacity();
-            }
-
-            if (IsSelectedRinMonster())
-            {
-                return GetRinShatteringFistMagazineCapacity();
-            }
-
-            if (IsSelectedSeinMonster())
-            {
-                return GetSeinScorchingArrowMagazineCapacity();
-            }
-
-            if (IsSelectedVegaMonster())
-            {
-                return GetVegaThreeSwordFlurryMagazineCapacity();
-            }
-
-            return magazineCapacityConfigured;
+            return GetSelectedMonsterSkillRuntime()?.GetMagazineCapacity(magazineCapacityConfigured)
+                ?? magazineCapacityConfigured;
         }
 
         private float GetSelectedMonsterActionSpeedMultiplier()
         {
-            if (IsSelectedEveMonster())
-            {
-                return GetEveActionSpeedMultiplier();
-            }
-
-            if (IsSelectedArielMonster())
-            {
-                return GetArielActionSpeedMultiplier();
-            }
-
-            if (IsSelectedRinMonster())
-            {
-                return GetRinActionSpeedMultiplier();
-            }
-
-            if (IsSelectedSeinMonster())
-            {
-                return GetSeinActionSpeedMultiplier();
-            }
-
-            if (IsSelectedVegaMonster())
-            {
-                return GetVegaActionSpeedMultiplier();
-            }
-
-            return 1f;
+            return GetSelectedMonsterSkillRuntime()?.GetActionSpeedMultiplier(1f) ?? 1f;
         }
 
         private void UpdateArielSkillCooldowns()

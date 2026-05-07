@@ -262,3 +262,357 @@ Legacy non-English note retained these code references: `LegacyRuntime.ttf`.
 - Legacy non-English note retained these code references: `Resources.GetBuiltinResource<Font>("Arial.ttf")`, `RunFlowController`, `LegacyRuntime.ttf`.
 - Legacy non-English note retained these code references: `LegacyRuntime.ttf`.
 
+# Task: 2026-05-08 Prisoner Choice Reward Flow
+
+### Task title
+
+Route prisoner rewards through choice UI before Offering or Manifest.
+
+### Goals
+
+- Make prisoner reward selection open `PrisonerChoicePanel` first.
+- Add Manifest, Assimilate, Offering, and Torture/Corrupt choice buttons.
+- Preserve existing Offering behavior through `PrisonerPanel`.
+- Make Assimilate and Torture/Corrupt clickable but non-functional for now.
+- Make Manifest show result data and return to the normal reward-continue flow.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected files and build output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify that each prisoner choice button activates the expected panel or placeholder behavior.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` changed prisoner reward handling from direct `OpenPrisonerPanel(...)` to `OpenPrisonerChoicePanel(...)`.
+- `RunCombatUiController.cs` now creates `PrisonerChoicePanel` with Manifest, Assimilate, Offering, and Torture/Corrupt buttons.
+- `RunCombatUiController.cs` keeps Offering routed to the existing `OpenPrisonerPanel(...)` path.
+- `RunCombatUiController.cs` creates `PrisonerSummonerPanel` and displays monster image, name/title, A skill description, and basic stats on Manifest candidate/result.
+- `RunCombatUiController.cs` adds a Manifest result `ContinueButton` so success/failure returns to `RewardPanel` and the existing continue flow.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User requested prisoner rewards no longer jump directly into Offering and instead open a prisoner choice UI with Manifest/Assimilate/Offering/Torture-Corrupt options.
+
+# Task: 2026-05-08 Reward Panel Runtime Visibility Gate
+
+### Task title
+
+Keep reward and prisoner panels hidden until reward logic activates them.
+
+### Goals
+
+- Hide Reward/Prisoner/Manifest/Offering/Defeat UI on RunScene runtime entry.
+- Preserve reward victory flow as the only path that activates `RewardPanel`.
+- Preserve prisoner reward flow as the only path that activates prisoner choice, Manifest, and Offering panels.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected code and build output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify that reward/prisoner panels do not appear before victory and reward interaction.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs:438` through `:447` hides reward, prisoner, prisoner choice, prisoner summoner, defeat, and `PrisonerOfferingPanel` on runtime HUD-only state.
+- `RunCombatUiController.cs:453` activates `RewardPanel` only in `EnterRewardState()`.
+- `RunCombatUiController.cs:590`, `:624`, and `:823` activate prisoner choice, Manifest, and Offering panels only from prisoner reward interactions.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User asked to check that all non-HUD/Monster UI is hidden at RunScene entry and only opens according to game logic.
+
+# Task: 2026-05-08 Prisoner Reward Click Opens Choice Panel
+
+### Task title
+
+Fix prisoner reward click showing only claimed state without opening prisoner choice UI.
+
+### Goals
+
+- Ensure a prisoner reward click opens `PrisonerChoicePanel`.
+- Avoid rebuilding the reward list into the claimed/completed visual before the prisoner choice panel opens.
+- Make prisoner reward detection robust if one reward view field is inconsistent.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected code, build output, and Unity-MCP output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify that clicking a prisoner reward opens `PrisonerChoicePanel` immediately instead of leaving only the claimed label on `RewardPanel`.
+
+### Evidence
+
+- Before the fix, `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` called `RebuildRewardButtons()` before checking whether the selected reward was prisoner, so the visible reward list could be rebuilt into the claimed state before panel transition.
+- `CombatRuntimeRewards.cs` creates prisoner reward options with `RewardId = "prisoner:..."`, `RewardKind = "Prisoner"`, and `PrisonerName`.
+- `RunCombatUiController.cs` now checks `IsPrisonerReward(rewardView, rewardId)` before rebuilding reward buttons.
+- `RunCombatUiController.cs` now treats a reward as prisoner when `RewardKind == "Prisoner"` or when `PrisonerName` is present and `rewardId` starts with `prisoner:`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing System.Net.Http/System.IO.Compression warnings.
+- Unity-MCP script refresh completed to idle, and console error query returned only MCP client-handler logs.
+
+### History
+
+- 2026-05-08: User reported that clicking a prisoner reward in `RewardPanel` only showed the acquired/completed state and did not open any prisoner choice window.
+
+# Task: 2026-05-08 PrisonerChoicePanel Per-Frame Hide Fix
+
+### Task title
+
+Keep prisoner choice/reward modals open after a prisoner reward click.
+
+### Goals
+
+- Fix the remaining prisoner reward click bug where `PrisonerChoicePanel` was opened and then immediately hidden.
+- Keep non-prisoner reward clicks on the existing claimed-list rebuild path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected code, build output, and Unity-MCP output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify prisoner reward click, Manifest panel open, Offering panel open, and return-to-reward behavior.
+
+### Evidence
+
+- `CombatRuntimeRewards.cs:177` through `:181` creates prisoner rewards with `RewardId = "prisoner:..."`, `RewardKind = "Prisoner"`, and `PrisonerName`.
+- `CombatRuntimeController.cs:178` through `:204` exposes `RewardChoiceView.RewardKind` and `RewardChoiceView.PrisonerName`.
+- `RunCombatUiController.cs:566` through `:568` checks prisoner reward status before reward-button rebuild and opens `OpenPrisonerChoicePanel(...)`.
+- `RunCombatUiController.cs:599` through `:603` activates `PrisonerChoicePanel`.
+- `RunCombatUiController.cs:458` through `:480` shows why the bug persisted: `EnterRewardState()` hides prisoner panels.
+- `RunCombatUiController.cs:157` through `:164` now skips `EnterRewardState()` while a prisoner reward modal is active.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing Unity/MCPForUnity reference warnings.
+- Unity-MCP console read after script refresh showed existing missing-script/MCP entries, not C# compile errors.
+
+### History
+
+- 2026-05-08: User reported that the reward button still did not show `PrisonerChoicePanel`.
+- 2026-05-08: Builder identified the first fix was incomplete because the victory `Update()` loop re-entered reward state every frame and hid the newly opened panel.
+
+# Task: 2026-05-08 Prisoner Offering And Reward Used State Follow-up
+
+### Task title
+
+Route Offering to `PrisonerOfferingPanel` and rebuild reward buttons after prisoner modal returns.
+
+### Goals
+
+- Use the scene-authored `PrisonerOfferingPanel` as the actual Offering UI.
+- Prevent the legacy/generated `PrisonerPanel` from appearing when Offering is clicked.
+- Show the prisoner reward button as used/claimed after returning from Manifest or Offering.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected scene hierarchy, changed code, and build/Unity-MCP output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify Offering and Manifest return behavior from the reward panel.
+
+### Evidence
+
+- Unity-MCP scene inspection found `RunCombatCanvas/PrisonerOfferingPanel` with `Choice1`, `Choice2`, `Choice3`, and `Title`.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` now binds offering title/buttons from `PrisonerOfferingPanel` first, falling back to `PrisonerPanel` only if needed.
+- `RunCombatUiController.cs` now hides `PrisonerPanel` and activates `PrisonerOfferingPanel` in the Offering flow.
+- `RunCombatUiController.cs` resets `rewardPanelEntered = false` after Manifest result close and after committed Offering, so `EnterRewardState()` rebuilds reward buttons and reflects claimed state.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing Unity/MCP reference warnings.
+- Unity-MCP editor state returned `ready_for_tools=true`; console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-08: User reported Offering opened `PrisonerPanel`, and returning from Manifest did not visibly mark the prisoner reward button as used.
+- 2026-05-08: Code Builder routed Offering to `PrisonerOfferingPanel` and forced reward-button refresh after prisoner modal flows.
+
+# Task: 2026-05-08 Offering Rewards Target Party Members
+
+### Task title
+
+Make Offering rewards apply to selected and Manifested monster states.
+
+### Goals
+
+- Generate Offering choices for every current run party member, including Manifested monsters.
+- Track chosen rewards and learned skills per monster ID so one monster's Offering state does not block or overwrite another's.
+- Preserve selected-monster legacy learned lists for existing 1P combat code while adding party-member scoped state.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected Run reward/UI code and build output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify that Offering can give a Manifested monster a new skill/modifier and that the monster uses that learned state in later combat.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs:884` builds Offering choices from `ResolveOfferingTargetMonsters()`.
+- `RunCombatUiController.cs:943`, `:977`, `:1016`, `:1054`, `:1074`, and `:1094` take `RunSession.RunMonsterState` for active, passive, enhancement, and master Offering choices.
+- `RunCombatUiController.cs:968`, `:1007`, `:1040`, and `:1127` store `MonsterId = memberState.MonsterId` on generated choices.
+- `RunCombatUiController.cs:1206` records the selected Offering choice against `choice.MonsterId`.
+- `Pakuri/Assets/Scripts/Run/RunSession.cs:166` records monster-ID scoped Offering choices.
+- `RunSession.cs:218` and `:229` check learned active/passive skills by monster ID.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing Unity reference warnings.
+- `git diff --check` on the changed Run/Combat scripts completed with no whitespace errors, aside from Git LF-to-CRLF normalization warnings.
+
+### History
+
+- 2026-05-08: User clarified Manifested monsters must also grow through Offering after joining the run.
+- 2026-05-08: Code Builder changed Offering generation and commit paths to carry a party-member `MonsterId`.
+
+# Task: 2026-05-08 Summoner Return Without Manifest
+
+### Task title
+
+Add a `PrisonerSummonerPanel` return button.
+
+### Goals
+
+- Let the player leave `PrisonerSummonerPanel` and return to `RewardPanel` without attempting Manifest.
+- Keep the existing result `ContinueButton` for success/failure result close.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Evidence must come from inspected UI code, saved scene YAML, build output, and Unity-MCP output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User should Play Mode verify that `Back to Reward` leaves the summoner panel without adding a Manifested monster.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs:64` declares `prisonerSummonerBackButton`.
+- `RunCombatUiController.cs:390` creates/binds `BackButton` with label `Back to Reward`.
+- `RunCombatUiController.cs:731` clears the pending Manifest candidate and returns to the reward panel.
+- `Pakuri/Assets/Scenes/RunScene.unity:5233` contains `m_Name: BackButton`.
+- `Pakuri/Assets/Scenes/RunScene.unity:8429` contains `m_Text: Back to Reward`.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User requested a button on `PrisonerSummonerPanel` that returns to `RewardPanel` without summoning.
+- 2026-05-08: Code Builder added `BackButton` and wired it to the no-Manifest return path.
+
+# Task: 2026-05-08 Manifested Offering Skill Refresh Follow-up
+
+### Task title
+
+Refresh Manifested party state after Manifest and Offering results.
+
+### Goals
+
+- Ensure the first successful Manifest result is visible to the run/combat party state immediately.
+- Ensure Offering choices that target Manifested monsters update the Manifested skill runtime snapshot.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that a Manifested monster receiving an Offering skill uses that learned skill in later combat.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs:702` refreshes Manifested runtime after Manifest success.
+- `RunCombatUiController.cs:1246` refreshes Manifested runtime after `CommitOfferingChoice(...)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:149` reconfigures Manifested party members from `RunSession`.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User asked to check whether Offering-acquired skills on Manifested monsters actually fire.
+- 2026-05-08: Code Builder verified the monster-ID Offering path and added immediate Manifested party refresh after Offering.
