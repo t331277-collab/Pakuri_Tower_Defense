@@ -37,7 +37,10 @@ namespace Pakuri.Combat
             var effectObject = CreateEffectObject(name, parent, prefab);
             effectObject.transform.position = origin + direction * (length * 0.5f);
             effectObject.transform.right = direction;
-            effectObject.transform.localScale = new Vector3(Mathf.Max(0.01f, length), Mathf.Max(0.01f, width), 1f);
+            if (prefab == null)
+            {
+                effectObject.transform.localScale = new Vector3(Mathf.Max(0.01f, length), Mathf.Max(0.01f, width), 1f);
+            }
 
             var renderer = ResolveRenderer(effectObject, prefab == null, fallbackSprite);
             if (renderer != null && prefab == null)
@@ -60,7 +63,10 @@ namespace Pakuri.Combat
             var diameter = Mathf.Max(0.01f, radius * 2f);
             var effectObject = CreateEffectObject(name, parent, prefab);
             effectObject.transform.position = position;
-            effectObject.transform.localScale = new Vector3(diameter, diameter, 1f);
+            if (prefab == null)
+            {
+                effectObject.transform.localScale = new Vector3(diameter, diameter, 1f);
+            }
 
             var renderer = ResolveRenderer(effectObject, prefab == null, fallbackSprite);
             if (renderer != null && prefab == null)

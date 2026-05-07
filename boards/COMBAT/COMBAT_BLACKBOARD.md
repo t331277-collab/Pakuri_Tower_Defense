@@ -1652,3 +1652,48 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-07: User requested implementing the current first-priority recommendation from `2026-05-07-character-skill-effect-pipeline-review.html`: introduce `CombatEffectFactory` or `CombatEffectService`.
+
+# Task: 2026-05-07 Combat Effect Prefab Scale Preservation
+
+### Task title
+
+Preserve original prefab scale for assigned skill-effect prefabs.
+
+### Goals
+
+- Let animated effect prefabs use their Inspector-authored root scale.
+- Keep the existing line/circle fallback SpriteRenderer scale behavior when no prefab is assigned.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Do not change damage, hit detection, effect lifetime, or fallback visuals.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that assigned animation prefabs render at their authored scale.
+- If per-skill visual scale needs data control later, add an explicit effect scale field rather than using combat range/radius.
+
+### Evidence
+
+- Before the fix, `Pakuri/Assets/Scripts/Combat/CombatEffectFactory.cs` always set line effect scale to `(length, width, 1)` and circle effect scale to `(diameter, diameter, 1)` even when `prefab != null`.
+- `CombatEffectFactory.CreateLine(...)` now applies `(length, width, 1)` only when `prefab == null`.
+- `CombatEffectFactory.CreateCircle(...)` now applies `(diameter, diameter, 1)` only when `prefab == null`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing System.Net.Http/System.IO.Compression warnings.
+- The first parallel `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` failed with `CS2012` because the parallel Assembly-CSharp build locked `obj\Debug\Assembly-CSharp.dll`; the sequential rerun completed with 0 errors and the same existing warnings.
+- Unity-MCP imported `CombatEffectFactory.cs` and refreshed scripts to editor-ready state.
+- Unity-MCP console error read returned only MCP client handler logs, not project compile errors.
+
+### History
+
+- 2026-05-07: User requested changing the effect factory so prefab animations appear at their original authored scale instead of being resized by line/circle effect dimensions.
