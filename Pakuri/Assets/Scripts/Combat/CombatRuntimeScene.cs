@@ -362,6 +362,7 @@ namespace Pakuri.Combat
         {
             var current = Application.isPlaying ? unitCurrentHealth : unitMaxHealthConfigured;
             var shield = Application.isPlaying ? unitShieldValue : 0f;
+            SyncSelectedUnitRuntimeStats();
 
             if (selectedMonsterNameLabel != null)
             {

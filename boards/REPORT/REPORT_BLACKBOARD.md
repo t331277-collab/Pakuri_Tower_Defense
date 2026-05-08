@@ -872,3 +872,44 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-07: User requested proceeding with the `CombatEffectFactory` / `CombatEffectService` direction described in the pipeline review report.
+
+# Task: 2026-05-08 Manifested Unit Runtime Refactor Design Document
+
+### Task title
+
+Create the step 1 design document for manifested unit runtime ownership.
+
+### Goals
+
+- Record the division between unit component ownership and battlefield controller services.
+- Explicitly exclude 1P/EveUnit migration until the user proceeds with step 6.
+- Hand off steps 2-5 to Code Builder.
+
+### Constraints
+
+- Role Owner starts as Designer and hands implementation to Code Builder.
+- Evidence must come from inspected combat/runtime files.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Designer -> Code Builder
+
+### Status
+
+Implemented and locally validated with the code pass.
+
+### Next Actions
+
+- Use `Pakuri/reference/Report/2026-05-08-manifested-unit-runtime-refactor-design.md` as the reference before step 6.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-08-manifested-unit-runtime-refactor-design.md`.
+- The document cites `CombatRuntimeParty.cs`, `CombatRuntimeScene.cs`, `RunSession.ManifestedMonsterIds`, `MonsterDefinition`, `SkillDefinition`, and `RunSession.RunMonsterState` as the basis for the refactor.
+- Code Builder then added `CombatUnitRuntime.cs`, `CombatSkillRuntime.cs`, and updated `CombatRuntimeParty.cs`.
+- Runtime and Editor builds completed with 0 errors; Unity-MCP console error query returned only MCP client-handler logs after importing the new scripts.
+
+### History
+
+- 2026-05-08: User requested steps 1-5 of the object-oriented manifested runtime refactor before step 6.

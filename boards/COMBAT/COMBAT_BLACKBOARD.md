@@ -5,6 +5,98 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-08 Eve Unit Shared Skill Runtime Refactor
+
+### Task title
+
+Route selected and manifested Eve support skills through `CombatUnitRuntime`.
+
+### Goals
+
+- Continue the object-oriented unit runtime refactor requested by the user.
+- Make selected EveUnit and manifested Eve units use `CombatUnitRuntime` plus `CombatSkillRuntime` for Eve B-E automatic skills.
+- Keep Eve skill data sourced from each unit's `MonsterDefinition` and Offering state from each unit's `RunMonsterState`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This pass does not run Unity Play Mode; user verifies gameplay.
+- Code Reviewer was not run because the user did not explicitly permit it.
+- Eve A manual primary fire still has legacy selected-primary UI dependencies; B-E automatic support skills now use the shared caster path.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by build/compile checks.
+
+### Next Actions
+
+- User verifies selected Eve and manifested Eve B-E behavior in Play Mode.
+- Follow-up should move Eve A manual projectile state fully from selected-primary globals into `CombatSkillRuntime`.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` now calls `TryTickEveUnitSkill(...)` before the generic manifested skill path.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs` adds caster-based Eve unit skill methods for Prism Ray, Frost Field, Static Override, and Drone Beacon.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs` now triggers selected Eve automatic skills through `TryTriggerEveUnitAutomaticSkills(selectedUnitRuntime)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` now reads selected Eve panel cooldowns from selected `CombatSkillRuntime` values.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP refresh recovered successfully; Unity console error query reported no compile errors, but did report three existing `The referenced script (Unknown) on this Behaviour is missing!` entries.
+
+### History
+
+- 2026-05-08: User requested steps 1-4 of the refactor so EveUnit and 2P-5P units can own and execute their own skills instead of using separate selected-vs-manifested execution logic.
+
+## Task: 2026-05-08 Manifested Eve Frost Field Runtime Parity
+
+### Task title
+
+Route manifested Eve Frost Field through persistent skill-effect runtime.
+
+### Goals
+
+- Complete step 6 from the manifested unit runtime refactor by binding the selected 1P object to `CombatUnitRuntime`.
+- Make manifested Eve C use the same persistent field tick model as selected Eve C.
+- Preserve manifested unit reward/enhancement state when applying Frost Field radius, duration, tick, damage, cooldown, chill, and freeze modifiers.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Claims must be based on inspected code and command output.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that a manifested Eve using Offering-learned Frost Field applies repeated ice damage and chill/freeze status.
+- Run Code Reviewer only if explicitly requested.
+- Broader all-monster skill parity still requires extracting selected-monster private skill logic into unit-owned executors.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` now attaches/configures `CombatUnitRuntime` on `eveAnchor` for the selected 1P monster and keeps HP/stat fields synchronized.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` now routes manifested `eve-c` field casts into `SkillEffectRuntime` instead of the previous single area-damage path.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs` now detects `SkillEffectRuntime.ManifestedSource` and calls manifested effect damage/status handling before selected-Eve-only damage logic.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` now stores `ManifestedSource` on persistent skill effects.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP script refresh was requested and Unity console error query returned only MCP-FOR-UNITY client handler logs, not project compile errors.
+
+### History
+
+- 2026-05-08: User reported that selected Eve Frost Field applies ongoing chill damage, while manifested Eve Frost Field only deals one initial hit and does not apply chill/DoT.
+
 ## Task: 2026-05-05 MonsterPanel Skill State Snapshot API
 
 ### Task title
@@ -2116,3 +2208,51 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-08: User reported sustained Manifested skill effects were ending much earlier than their original monster skill duration.
+
+# Task: 2026-05-08 Manifested Unit Component Runtime Refactor
+
+### Task title
+
+Move 2P-5P Manifested unit HP and skill runtime state onto unit components.
+
+### Goals
+
+- Keep 1P selected monster behavior unchanged for the later step 6 decision.
+- Attach a `CombatUnitRuntime` component to each manifested `2PMonster` through `5PMonster` slot at runtime.
+- Move manifested per-skill cooldown, magazine, reload, and queued Vega projectile state into `CombatSkillRuntime`.
+- Keep projectile/effect creation and damage application inside `CombatRuntimeController` as the battlefield service.
+
+### Constraints
+
+- Role Owner is Code Builder after Designer handoff.
+- Do not run Unity Play Mode; user performs gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in RunScene Play Mode that 2P-5P Manifested monsters still fire learned skills, apply Offering upgrades, and show HP/ammo/cooldown state.
+- Step 6 can migrate 1P/EveUnit onto the same component pattern if the Play Mode result is acceptable.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-08-manifested-unit-runtime-refactor-design.md`.
+- Added `Pakuri/Assets/Scripts/Combat/CombatSkillRuntime.cs` for per-skill cooldown, magazine, reload, and queued projectile state.
+- Added `Pakuri/Assets/Scripts/Combat/CombatUnitRuntime.cs` as a `MonoBehaviour` owning manifested monster, run state, HP/stat snapshot, and learned skill runtimes.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` now uses `List<CombatUnitRuntime>` for manifested monsters and binds/creates `CombatUnitRuntime` on the manifested slot object.
+- `CombatRuntimeParty.cs` now calls `runtime.TickManifestedCombat(Time.deltaTime)`, and `CombatUnitRuntime` calls `CombatRuntimeController.TickManifestedUnitSkill(...)` for battlefield actions.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
+- Unity-MCP imported `CombatSkillRuntime.cs` and `CombatUnitRuntime.cs` as `MonoScript` assets, forced script refresh to ready, and console error query returned only MCP client-handler logs, not project compile errors.
+
+### History
+
+- 2026-05-08: User asked to perform steps 1-5 of the object-oriented manifested runtime refactor and leave step 6 for later.

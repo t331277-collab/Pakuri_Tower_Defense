@@ -5,6 +5,128 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-08 Manifest Candidate Selected Monster Fix
+
+### Task title
+
+Allow the MainMenu-selected monster to appear as a Manifest candidate.
+
+### Goals
+
+- Fix the Manifest candidate filter that hid Eve when Eve was the selected MainMenu monster.
+- Allow selecting Eve through Manifest to record Eve in `RunSession.ManifestedMonsterIds`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by build/compile checks.
+
+### Next Actions
+
+- User verifies in RunScene Play Mode that Eve appears as a Manifest candidate and is added after a successful Manifest choice.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` filters Manifest candidates through `currentSession.HasManifestedMonster(monster.MonsterId)`.
+- `Pakuri/Assets/Scripts/Run/RunSession.cs` now makes `HasManifestedMonster(...)` check only `ManifestedMonsterIds`, not `SelectedMonsterId`.
+- `Pakuri/Assets/Scripts/Run/RunSession.cs` keeps `RecordManifestedMonster(...)` guarded by `HasManifestedMonster(...)`, so Eve can now be recorded when it is not already in `ManifestedMonsterIds`.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings; Unity refresh returned idle and console error query returned only MCP client handler exit logs.
+
+### History
+
+- 2026-05-08: User reported Eve did not appear in Manifest candidates and selecting Eve did not add Eve.
+
+## Task: 2026-05-08 Eve Unit Offering Runtime Choices
+
+### Task title
+
+Use unit-owned Offering choices in shared Eve skill execution.
+
+### Goals
+
+- Record that Eve B-E shared unit execution reads per-unit Offering choices.
+- Keep selected and manifested Eve skill enhancements aligned with each unit's `RunMonsterState`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by build/compile checks.
+
+### Next Actions
+
+- User verifies Offering-enhanced Eve B-E on selected and manifested Eve in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs` uses `HasManifestedChoice(runtime, ...)` in shared Eve B-E caster methods.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` configures selected and manifested unit runtimes with `RunSession.EnsurePartyMemberState(...)` / per-member `RunMonsterState`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User requested object-oriented skill ownership so Offering-enhanced skills behave the same for selected and manifested units.
+
+## Task: 2026-05-08 Manifested Offering Skill State
+
+### Task title
+
+Use per-monster Offering state when manifested Eve casts Frost Field.
+
+### Goals
+
+- Ensure Offering choices recorded on a manifested Eve affect the manifested Eve skill runtime.
+- Record that Eve C trait choices are read from the manifested unit's `RunMonsterState.ChosenRewardIds`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated for manifested Eve C.
+
+### Next Actions
+
+- User verifies Offering-acquired Frost Field on manifested Eve in RunScene Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `RunSession.RecordOfferingChoice(string monsterId, ...)` already records choices into per-member `RunMonsterState.ChosenRewardIds` for non-selected party members.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` now reads manifested Eve C trait checks from `runtime.State.ChosenRewardIds` via `HasManifestedChoice(...)`.
+- The manifested Eve C persistent effect now applies trait 1 radius/duration, trait 2 tick/chill stacks, trait 3 damage/cooldown, trait 4 radius/damage, and trait 5 damage/freeze duration.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User clarified that Offering-enhanced skills on manifested units should behave like the same skill on the MainMenu-selected unit.
+
 ## Task: Run Day Combat Type And Material Rewards
 
 ### Task title
@@ -695,3 +817,45 @@ Implemented and locally validated through combat runtime changes.
 ### History
 
 - 2026-05-08: User reported Offering acquisition and cooldown worked, then reported sustained effects were too short.
+
+# Task: 2026-05-08 Manifested Offering Runtime Ownership Follow-up
+
+### Task title
+
+Keep Offering-acquired Manifested skills on the Manifested unit component runtime.
+
+### Goals
+
+- Preserve monster-ID scoped Offering commit behavior.
+- Ensure manifested combat reads learned skills from each party member state into that unit's own runtime list.
+- Keep reward UI code unchanged in this pass.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated through combat runtime changes.
+
+### Next Actions
+
+- User verifies that an Offering choice targeting a Manifested monster still upgrades that manifested unit's later combat skill behavior.
+
+### Evidence
+
+- Existing `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs:1206` records Offering choices against `choice.MonsterId`.
+- Existing `RunCombatUiController.cs:1246` refreshes Manifested combat state after Offering commit.
+- `Pakuri/Assets/Scripts/Combat/CombatUnitRuntime.cs` now owns the learned skill runtime list for a manifested unit.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` still syncs `RunSession.RunMonsterState.LearnedActives` into manifested learned skill runtimes, now on `CombatUnitRuntime`.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User asked to perform object-oriented manifested runtime refactor steps 1-5 before later deciding step 6.

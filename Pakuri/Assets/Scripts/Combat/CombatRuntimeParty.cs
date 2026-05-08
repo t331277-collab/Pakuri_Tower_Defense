@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 using Pakuri.Run;
@@ -13,42 +13,9 @@ namespace Pakuri.Combat
         private const float ManifestedMonsterProjectileLifetime = 0.22f;
         private const float ManifestedMonsterProjectileSpeedFallback = 15f;
 
-        private sealed class ManifestedMonsterRuntime
-        {
-            public MonsterDefinition Monster;
-            public RunSession.RunMonsterState State;
-            public GameObject GameObject;
-            public Transform Transform;
-            public SpriteRenderer Renderer;
-            public TextMesh Label;
-            public bool UsesSceneSlot;
-            public float MaxHealth;
-            public float CurrentHealth;
-            public float BaseDamage;
-            public float PowerStat;
-            public readonly List<ManifestedSkillRuntime> Skills = new List<ManifestedSkillRuntime>();
-        }
-
-        private sealed class ManifestedSkillRuntime
-        {
-            public SkillDefinition Skill;
-            public float CooldownRemaining;
-            public float CooldownDuration;
-            public int ShotsRemaining;
-            public int MagazineCapacity;
-            public float ShotCooldownRemaining;
-            public float ShotInterval;
-            public float ReloadRemaining;
-            public float ReloadDuration;
-            public int PendingVegaProjectileCount;
-            public int PendingVegaProjectileIndex;
-            public float PendingVegaProjectileDelay;
-            public Vector3 PendingVegaProjectileDirection;
-        }
-
         private sealed class ManifestedDroneRuntime
         {
-            public ManifestedMonsterRuntime Source;
+            public CombatUnitRuntime Source;
             public SkillDefinition Skill;
             public GameObject GameObject;
             public Transform Transform;
@@ -57,7 +24,7 @@ namespace Pakuri.Combat
             public float AttackCooldownRemaining;
         }
 
-        private readonly List<ManifestedMonsterRuntime> manifestedMonsters = new List<ManifestedMonsterRuntime>();
+        private readonly List<CombatUnitRuntime> manifestedMonsters = new List<CombatUnitRuntime>();
         private readonly List<ManifestedDroneRuntime> manifestedDrones = new List<ManifestedDroneRuntime>();
         private readonly Transform[] manifestedMonsterSlots = new Transform[MaxManifestedPartyMonsterCount];
 
@@ -70,6 +37,44 @@ namespace Pakuri.Combat
         };
 
         public int PartyMonsterCount => 1 + manifestedMonsters.Count;
+
+        private void ConfigureSelectedUnitRuntime(RunSession session)
+        {
+            if (selectedMonster == null || eveAnchor == null)
+            {
+                selectedUnitRuntime = null;
+                return;
+            }
+
+            selectedUnitRuntime = eveAnchor.GetComponent<CombatUnitRuntime>();
+            if (selectedUnitRuntime == null)
+            {
+                selectedUnitRuntime = eveAnchor.gameObject.AddComponent<CombatUnitRuntime>();
+            }
+
+            selectedUnitRuntime.ConfigureSelected(
+                this,
+                selectedMonster,
+                session != null ? session.EnsurePartyMemberState(selectedMonster) : null,
+                eveAnchor.GetComponent<SpriteRenderer>(),
+                selectedMonsterHpLabel);
+            SyncSelectedUnitRuntimeStats();
+            SyncManifestedLearnedSkills(selectedUnitRuntime);
+        }
+
+        private void SyncSelectedUnitRuntimeStats()
+        {
+            if (selectedUnitRuntime == null)
+            {
+                return;
+            }
+
+            selectedUnitRuntime.SyncStats(
+                unitMaxHealthConfigured,
+                unitCurrentHealth,
+                baseDamageConfigured,
+                powerStatConfigured);
+        }
 
         public MonsterDefinition GetPartyMonsterDefinition(int partyIndex)
         {
@@ -153,7 +158,7 @@ namespace Pakuri.Combat
                     continue;
                 }
 
-                manifestedMonsters.Add(CreateManifestedMonsterRuntime(monster, session.EnsurePartyMemberState(monster), added));
+                manifestedMonsters.Add(CreateCombatUnitRuntime(monster, session.EnsurePartyMemberState(monster), added));
                 added += 1;
             }
         }
@@ -164,7 +169,7 @@ namespace Pakuri.Combat
             ResetManifestedMonsterPartyCombat();
         }
 
-        private ManifestedMonsterRuntime CreateManifestedMonsterRuntime(MonsterDefinition monster, RunSession.RunMonsterState state, int index)
+        private CombatUnitRuntime CreateCombatUnitRuntime(MonsterDefinition monster, RunSession.RunMonsterState state, int index)
         {
             var slotTransform = ResolveManifestedMonsterSlot(index);
             var usesSceneSlot = slotTransform != null;
@@ -189,24 +194,18 @@ namespace Pakuri.Combat
 
             var label = EnsureManifestedMonsterLabel(monsterObject.transform);
 
-            var runtime = new ManifestedMonsterRuntime
+            var runtime = monsterObject.GetComponent<CombatUnitRuntime>();
+            if (runtime == null)
             {
-                Monster = monster,
-                State = state,
-                GameObject = monsterObject,
-                Transform = monsterTransform,
-                Renderer = renderer,
-                Label = label,
-                UsesSceneSlot = usesSceneSlot,
-                MaxHealth = Mathf.Max(1f, monster.MaxHealth + (state != null ? state.MaxHealthBonus : 0f)),
-                CurrentHealth = Mathf.Max(1f, monster.MaxHealth + (state != null ? state.MaxHealthBonus : 0f)),
-                BaseDamage = Mathf.Max(1f, monster.BaseDamage),
-                PowerStat = Mathf.Max(0f, monster.PowerStat),
-            };
+                runtime = monsterObject.AddComponent<CombatUnitRuntime>();
+            }
+
+            runtime.ConfigureManifested(this, monster, state, renderer, label, usesSceneSlot, index);
+            runtime.ConfigureStatsFromDefinition();
             SyncManifestedLearnedSkills(runtime);
             for (var i = 0; i < runtime.Skills.Count; i++)
             {
-                ResetManifestedSkillRuntime(runtime, runtime.Skills[i], 0.4f + (index * 0.25f) + (i * 0.15f));
+                ResetCombatSkillRuntime(runtime, runtime.Skills[i], 0.4f + (index * 0.25f) + (i * 0.15f));
             }
 
             UpdateManifestedMonsterLabel(runtime);
@@ -307,7 +306,7 @@ namespace Pakuri.Combat
                 SyncManifestedLearnedSkills(runtime);
                 for (var skillIndex = 0; skillIndex < runtime.Skills.Count; skillIndex++)
                 {
-                    ResetManifestedSkillRuntime(runtime, runtime.Skills[skillIndex], 0.4f + (i * 0.25f) + (skillIndex * 0.15f));
+                    ResetCombatSkillRuntime(runtime, runtime.Skills[skillIndex], 0.4f + (i * 0.25f) + (skillIndex * 0.15f));
                 }
 
                 if (runtime.Transform != null)
@@ -348,46 +347,7 @@ namespace Pakuri.Combat
                     continue;
                 }
 
-                for (var skillIndex = 0; skillIndex < runtime.Skills.Count; skillIndex++)
-                {
-                    var skillRuntime = runtime.Skills[skillIndex];
-                    if (skillRuntime == null || skillRuntime.Skill == null)
-                    {
-                        continue;
-                    }
-
-                    TickManifestedSkillRuntime(runtime, skillRuntime);
-                    if (IsManifestedMagazineSkill(skillRuntime.Skill))
-                    {
-                        TryFireManifestedMagazineSkill(runtime, skillRuntime);
-                        continue;
-                    }
-
-                    if (skillRuntime.CooldownRemaining > 0f)
-                    {
-                        continue;
-                    }
-
-                    var target = FindNearestManifestedMonsterTarget(runtime.Transform.position);
-                    if (target == null)
-                    {
-                        skillRuntime.CooldownRemaining = 0.25f;
-                        continue;
-                    }
-
-                    if (IsManifestedProjectileSkill(skillRuntime.Skill))
-                    {
-                        FireManifestedMonsterProjectile(runtime, skillRuntime.Skill, target);
-                    }
-                    else
-                    {
-                        FireManifestedMonsterSkill(runtime, skillRuntime.Skill, target);
-                    }
-
-                    skillRuntime.CooldownDuration = ResolveManifestedSkillCooldown(runtime, skillRuntime.Skill);
-                    skillRuntime.CooldownRemaining = skillRuntime.CooldownDuration;
-                }
-
+                runtime.TickManifestedCombat(Time.deltaTime);
                 UpdateManifestedMonsterLabel(runtime);
             }
         }
@@ -417,30 +377,63 @@ namespace Pakuri.Combat
             return best;
         }
 
-        private void TickManifestedSkillRuntime(ManifestedMonsterRuntime runtime, ManifestedSkillRuntime skillRuntime)
+        internal void TickManifestedUnitSkill(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime, float elapsed)
+        {
+            if (runtime == null || runtime.Transform == null || skillRuntime == null || skillRuntime.Skill == null)
+            {
+                return;
+            }
+
+            if (TryTickEveUnitSkill(runtime, skillRuntime, elapsed))
+            {
+                return;
+            }
+
+            TickCombatSkillRuntime(runtime, skillRuntime, elapsed);
+            if (IsManifestedMagazineSkill(skillRuntime.Skill))
+            {
+                TryFireManifestedMagazineSkill(runtime, skillRuntime);
+                return;
+            }
+
+            if (skillRuntime.CooldownRemaining > 0f)
+            {
+                return;
+            }
+
+            var target = FindNearestManifestedMonsterTarget(runtime.Transform.position);
+            if (target == null)
+            {
+                skillRuntime.CooldownRemaining = 0.25f;
+                return;
+            }
+
+            if (IsManifestedProjectileSkill(skillRuntime.Skill))
+            {
+                FireManifestedMonsterProjectile(runtime, skillRuntime.Skill, target);
+            }
+            else
+            {
+                FireManifestedMonsterSkill(runtime, skillRuntime.Skill, target);
+            }
+
+            skillRuntime.CooldownDuration = ResolveManifestedSkillCooldown(runtime, skillRuntime.Skill);
+            skillRuntime.CooldownRemaining = skillRuntime.CooldownDuration;
+        }
+
+        private void TickCombatSkillRuntime(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime, float elapsed)
         {
             if (skillRuntime == null)
             {
                 return;
             }
 
-            var elapsed = Time.deltaTime;
-            skillRuntime.CooldownRemaining = Mathf.Max(0f, skillRuntime.CooldownRemaining - elapsed);
-            skillRuntime.ShotCooldownRemaining = Mathf.Max(0f, skillRuntime.ShotCooldownRemaining - elapsed);
+            skillRuntime.Tick(elapsed);
             UpdateManifestedQueuedProjectiles(runtime, skillRuntime, elapsed);
-            if (skillRuntime.ReloadRemaining <= 0f)
-            {
-                return;
-            }
-
-            skillRuntime.ReloadRemaining = Mathf.Max(0f, skillRuntime.ReloadRemaining - elapsed);
-            if (Mathf.Approximately(skillRuntime.ReloadRemaining, 0f))
-            {
-                skillRuntime.ShotsRemaining = Mathf.Max(1, ResolveManifestedMagazineCapacity(runtime, skillRuntime.Skill));
-            }
+            skillRuntime.TickReload(elapsed, ResolveManifestedMagazineCapacity(runtime, skillRuntime.Skill));
         }
 
-        private void TryFireManifestedMagazineSkill(ManifestedMonsterRuntime runtime, ManifestedSkillRuntime skillRuntime)
+        private void TryFireManifestedMagazineSkill(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime)
         {
             if (runtime == null || runtime.Transform == null || skillRuntime == null || skillRuntime.Skill == null)
             {
@@ -495,9 +488,14 @@ namespace Pakuri.Combat
             }
         }
 
-        private void FireManifestedMonsterSkill(ManifestedMonsterRuntime runtime, SkillDefinition skill, EnemyRuntime target)
+        private void FireManifestedMonsterSkill(CombatUnitRuntime runtime, SkillDefinition skill, EnemyRuntime target)
         {
             if (runtime == null || skill == null || target == null || runtime.Transform == null || target.Transform == null)
+            {
+                return;
+            }
+
+            if (TryFireManifestedPersistentSkill(runtime, skill, target))
             {
                 return;
             }
@@ -531,7 +529,7 @@ namespace Pakuri.Combat
             statusLabel = $"{runtime.Monster.DisplayName} {skill.DisplayName} hit for {appliedTotal:0.#}.";
         }
 
-        private void FireManifestedMonsterProjectile(ManifestedMonsterRuntime runtime, SkillDefinition skill, EnemyRuntime target)
+        private void FireManifestedMonsterProjectile(CombatUnitRuntime runtime, SkillDefinition skill, EnemyRuntime target)
         {
             if (runtime == null || runtime.Monster == null || skill == null || target == null || runtime.Transform == null || target.Transform == null)
             {
@@ -550,7 +548,7 @@ namespace Pakuri.Combat
         }
 
         private void FireManifestedMonsterProjectile(
-            ManifestedMonsterRuntime runtime,
+            CombatUnitRuntime runtime,
             SkillDefinition skill,
             Vector3 direction,
             float damageMultiplier,
@@ -562,7 +560,7 @@ namespace Pakuri.Combat
         }
 
         private void FireManifestedMonsterProjectile(
-            ManifestedMonsterRuntime runtime,
+            CombatUnitRuntime runtime,
             SkillDefinition skill,
             Vector3 origin,
             Vector3 direction,
@@ -671,21 +669,21 @@ namespace Pakuri.Combat
             }
 
             var statusId = projectile.ManifestedStatusEffectId ?? string.Empty;
-            if (statusId.Contains("감전") || string.Equals(statusId, "shock", StringComparison.OrdinalIgnoreCase))
+            if (statusId.Contains("媛먯쟾") || string.Equals(statusId, "shock", StringComparison.OrdinalIgnoreCase))
             {
                 ApplyShock(enemy, Mathf.Max(1, projectile.StatusStacks), 1.25f);
             }
-            else if (statusId.Contains("빙결") || statusId.Contains("냉기") || string.Equals(statusId, "chill", StringComparison.OrdinalIgnoreCase))
+            else if (statusId.Contains("鍮숆껐") || statusId.Contains("?됯린") || string.Equals(statusId, "chill", StringComparison.OrdinalIgnoreCase))
             {
                 ApplyChill(enemy, Mathf.Max(1, projectile.StatusStacks), 2.5f);
             }
-            else if (statusId.Contains("취약") || string.Equals(statusId, "vulnerable", StringComparison.OrdinalIgnoreCase))
+            else if (statusId.Contains("痍⑥빟") || string.Equals(statusId, "vulnerable", StringComparison.OrdinalIgnoreCase))
             {
                 ApplyVulnerable(enemy, Mathf.Max(1, projectile.StatusStacks));
             }
         }
 
-        private float ApplyManifestedSkillDamage(ManifestedMonsterRuntime runtime, SkillDefinition skill, EnemyRuntime target)
+        private float ApplyManifestedSkillDamage(CombatUnitRuntime runtime, SkillDefinition skill, EnemyRuntime target)
         {
             var baseDamage = ResolveManifestedBaseDamage(runtime, skill);
             var damageResult = DamageCalculator.Resolve(
@@ -699,7 +697,109 @@ namespace Pakuri.Combat
             return applied;
         }
 
-        private float ResolveManifestedBaseDamage(ManifestedMonsterRuntime runtime, SkillDefinition skill)
+        private void ApplyManifestedSkillEffectDamage(SkillEffectRuntime effect, EnemyRuntime target)
+        {
+            if (effect == null || effect.ManifestedSource == null || target == null || target.CurrentHealth <= 0f)
+            {
+                return;
+            }
+
+            var damageResult = DamageCalculator.Resolve(
+                effect.BaseDamage,
+                effect.Attribute,
+                target.Defenses,
+                targetCriticalResistance: target.CriticalResistance,
+                finalDamageMultiplier: target.DamageTakenMultiplier);
+            ApplyDamageToEnemy(target, damageResult.FinalDamage, damageResult.Attribute);
+            target.FlashTimer = 0.08f;
+
+            if (string.Equals(effect.SkillId, "eve-c", StringComparison.OrdinalIgnoreCase))
+            {
+                ApplyChill(target, Mathf.Max(1, effect.StatusStacks), 2.5f);
+                if (effect.FreezeDuration > 0f)
+                {
+                    target.FreezeTimer = Mathf.Max(target.FreezeTimer, effect.FreezeDuration);
+                }
+            }
+        }
+
+        private bool TryFireManifestedPersistentSkill(CombatUnitRuntime runtime, SkillDefinition skill, EnemyRuntime target)
+        {
+            if (runtime == null || skill == null || target == null)
+            {
+                return false;
+            }
+
+            if (skill.RuntimeKind != SkillRuntimeKind.Field)
+            {
+                return false;
+            }
+
+            if (string.Equals(skill.SkillId, "eve-c", StringComparison.OrdinalIgnoreCase))
+            {
+                CreateManifestedEveFrostField(runtime, skill, target);
+                return true;
+            }
+
+            return false;
+        }
+
+        private void CreateManifestedEveFrostField(CombatUnitRuntime runtime, SkillDefinition skill, EnemyRuntime target)
+        {
+            var radius = Mathf.Max(0.5f, skill.Radius);
+            var duration = EveFrostFieldDuration;
+            var tickInterval = EveFrostFieldTickInterval;
+            var damageMultiplier = 1f;
+            var chillStacks = 1;
+
+            if (HasManifestedChoice(runtime, "eve-c-trait-1"))
+            {
+                radius *= 1.25f;
+                duration *= 1.15f;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-c-trait-2"))
+            {
+                tickInterval = Mathf.Max(0.1f, tickInterval * 0.75f);
+                chillStacks += 1;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-c-trait-3"))
+            {
+                damageMultiplier *= 1.30f;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-c-trait-4"))
+            {
+                radius *= 0.80f;
+                damageMultiplier *= 1.80f;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-c-trait-5"))
+            {
+                damageMultiplier *= 1.20f;
+            }
+
+            var effect = CreateCircleEffect("ManifestedFrostField", target.Transform.position, radius, duration, skill.SkillEffectPrefab);
+            effect.SkillId = "eve-c";
+            effect.ManifestedSource = runtime;
+            effect.BaseDamage = (skill.BaseDamage + (runtime.PowerStat * skill.SpellPowerCoefficient))
+                * damageMultiplier
+                * ResolveManifestedDamageMultiplier(runtime);
+            effect.Attribute = DamageAttribute.Ice;
+            effect.TickInterval = Mathf.Max(0.05f, tickInterval);
+            effect.TickRemaining = 0f;
+            effect.Radius = radius;
+            effect.StatusStacks = chillStacks;
+            effect.FreezeDuration = HasManifestedChoice(runtime, "eve-c-trait-5")
+                ? 1.0f + GetManifestedEveFreezeDurationBonus(runtime)
+                : 0f;
+            skillEffects.Add(effect);
+
+            statusLabel = $"{runtime.Monster.DisplayName} {skill.DisplayName} frost field deployed.";
+        }
+
+        private float ResolveManifestedBaseDamage(CombatUnitRuntime runtime, SkillDefinition skill)
         {
             if (runtime == null || runtime.Monster == null)
             {
@@ -716,14 +816,53 @@ namespace Pakuri.Combat
             return Mathf.Max(1f, (skill.BaseDamage + (runtime.PowerStat * coefficient)) * ResolveManifestedDamageMultiplier(runtime));
         }
 
-        private float ResolveManifestedDamageMultiplier(ManifestedMonsterRuntime runtime)
+        private float ResolveManifestedDamageMultiplier(CombatUnitRuntime runtime)
         {
             return runtime != null && runtime.State != null && runtime.State.DamageMultiplier > 0f
                 ? runtime.State.DamageMultiplier
                 : 1f;
         }
 
-        private float ResolveManifestedSkillCooldown(ManifestedMonsterRuntime runtime, SkillDefinition skill)
+        private static bool HasManifestedChoice(CombatUnitRuntime runtime, string choiceId)
+        {
+            return ContainsManifestedRuntimeText(runtime != null && runtime.State != null ? runtime.State.ChosenRewardIds : null, choiceId);
+        }
+
+        private static bool HasManifestedPassive(CombatUnitRuntime runtime, string passiveId)
+        {
+            return ContainsManifestedRuntimeText(runtime != null && runtime.State != null ? runtime.State.LearnedPassives : null, passiveId);
+        }
+
+        private static bool ContainsManifestedRuntimeText(IReadOnlyList<string> values, string target)
+        {
+            if (values == null || string.IsNullOrWhiteSpace(target))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < values.Count; i++)
+            {
+                if (string.Equals(values[i], target, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private float GetManifestedEveFreezeDurationBonus(CombatUnitRuntime runtime)
+        {
+            var bonus = 0f;
+            if (HasManifestedPassive(runtime, "eve-h") && HasManifestedChoice(runtime, "eve-h-trait-2"))
+            {
+                bonus += 0.5f;
+            }
+
+            return bonus;
+        }
+
+        private float ResolveManifestedSkillCooldown(CombatUnitRuntime runtime, SkillDefinition skill)
         {
             if (skill == null)
             {
@@ -740,7 +879,13 @@ namespace Pakuri.Combat
 
             if (skill.CooldownSeconds > 0f)
             {
-                return Mathf.Max(0.45f, skill.CooldownSeconds);
+                var cooldown = skill.CooldownSeconds;
+                if (string.Equals(skill.SkillId, "eve-c", StringComparison.OrdinalIgnoreCase) && HasManifestedChoice(runtime, "eve-c-trait-3"))
+                {
+                    cooldown *= 0.85f;
+                }
+
+                return Mathf.Max(0.45f, cooldown);
             }
 
             return Mathf.Max(0.75f, runtime != null && runtime.Monster != null ? runtime.Monster.ShotInterval : ManifestedMonsterAttackInterval);
@@ -766,7 +911,7 @@ namespace Pakuri.Combat
             return skill != null && string.Equals(skill.SkillId, "eve-e", StringComparison.OrdinalIgnoreCase);
         }
 
-        private void QueueManifestedVegaThreeSwordFlurry(ManifestedMonsterRuntime runtime, ManifestedSkillRuntime skillRuntime, EnemyRuntime target)
+        private void QueueManifestedVegaThreeSwordFlurry(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime, EnemyRuntime target)
         {
             if (runtime == null || runtime.Transform == null || skillRuntime == null || skillRuntime.Skill == null || target == null || target.Transform == null)
             {
@@ -787,7 +932,7 @@ namespace Pakuri.Combat
             UpdateManifestedQueuedProjectiles(runtime, skillRuntime, 0f);
         }
 
-        private void UpdateManifestedQueuedProjectiles(ManifestedMonsterRuntime runtime, ManifestedSkillRuntime skillRuntime, float elapsed)
+        private void UpdateManifestedQueuedProjectiles(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime, float elapsed)
         {
             if (runtime == null || skillRuntime == null || skillRuntime.Skill == null || skillRuntime.PendingVegaProjectileCount <= 0)
             {
@@ -811,7 +956,7 @@ namespace Pakuri.Combat
             }
         }
 
-        private void DeployManifestedEveDroneBeacon(ManifestedMonsterRuntime runtime, SkillDefinition skill)
+        private void DeployManifestedEveDroneBeacon(CombatUnitRuntime runtime, SkillDefinition skill)
         {
             if (runtime == null || runtime.Transform == null || runtime.Monster == null || skill == null)
             {
@@ -910,7 +1055,7 @@ namespace Pakuri.Combat
             manifestedDrones.RemoveAt(index);
         }
 
-        private void ResetManifestedSkillRuntime(ManifestedMonsterRuntime runtime, ManifestedSkillRuntime skillRuntime, float initialDelay)
+        private void ResetCombatSkillRuntime(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime, float initialDelay)
         {
             if (skillRuntime == null)
             {
@@ -931,7 +1076,7 @@ namespace Pakuri.Combat
             skillRuntime.PendingVegaProjectileDirection = Vector3.zero;
         }
 
-        private int ResolveManifestedMagazineCapacity(ManifestedMonsterRuntime runtime, SkillDefinition skill)
+        private int ResolveManifestedMagazineCapacity(CombatUnitRuntime runtime, SkillDefinition skill)
         {
             var baseCapacity = skill != null && skill.MagazineCapacity > 0
                 ? skill.MagazineCapacity
@@ -940,7 +1085,7 @@ namespace Pakuri.Combat
             return Mathf.Max(1, baseCapacity + bonus);
         }
 
-        private float ResolveManifestedReloadDuration(ManifestedMonsterRuntime runtime, SkillDefinition skill)
+        private float ResolveManifestedReloadDuration(CombatUnitRuntime runtime, SkillDefinition skill)
         {
             var reload = skill != null && skill.ReloadSeconds > 0f
                 ? skill.ReloadSeconds
@@ -951,7 +1096,7 @@ namespace Pakuri.Combat
             return Mathf.Max(0.25f, reload * multiplier);
         }
 
-        private float ResolveManifestedShotInterval(ManifestedMonsterRuntime runtime, SkillDefinition skill)
+        private float ResolveManifestedShotInterval(CombatUnitRuntime runtime, SkillDefinition skill)
         {
             var interval = skill != null && skill.ShotIntervalSeconds > 0f
                 ? skill.ShotIntervalSeconds
@@ -962,14 +1107,14 @@ namespace Pakuri.Combat
             return Mathf.Max(0.05f, interval * multiplier);
         }
 
-        private float ResolveManifestedProjectileSpeed(ManifestedMonsterRuntime runtime)
+        private float ResolveManifestedProjectileSpeed(CombatUnitRuntime runtime)
         {
             return runtime != null && runtime.Monster != null && runtime.Monster.ProjectileSpeed > 0f
                 ? runtime.Monster.ProjectileSpeed
                 : ManifestedMonsterProjectileSpeedFallback;
         }
 
-        private float ResolveManifestedProjectileLifetime(ManifestedMonsterRuntime runtime, SkillDefinition skill)
+        private float ResolveManifestedProjectileLifetime(CombatUnitRuntime runtime, SkillDefinition skill)
         {
             if (runtime != null && runtime.Monster != null && runtime.Monster.ProjectileLifetime > 0f)
             {
@@ -980,21 +1125,21 @@ namespace Pakuri.Combat
             return Mathf.Max(0.5f, range / ResolveManifestedProjectileSpeed(runtime));
         }
 
-        private float ResolveManifestedProjectileHitRadius(ManifestedMonsterRuntime runtime)
+        private float ResolveManifestedProjectileHitRadius(CombatUnitRuntime runtime)
         {
             return runtime != null && runtime.Monster != null && runtime.Monster.ProjectileHitRadius > 0f
                 ? runtime.Monster.ProjectileHitRadius
                 : 0.42f;
         }
 
-        private float ResolveManifestedStatusChance(ManifestedMonsterRuntime runtime)
+        private float ResolveManifestedStatusChance(CombatUnitRuntime runtime)
         {
             var chance = runtime != null && runtime.Monster != null ? runtime.Monster.StatusChance : 0f;
             chance += runtime != null && runtime.State != null ? runtime.State.StatusChanceBonus : 0f;
             return Mathf.Clamp01(chance);
         }
 
-        private static float GetManifestedSkillCooldownRemaining(ManifestedSkillRuntime skillRuntime)
+        private static float GetManifestedSkillCooldownRemaining(CombatSkillRuntime skillRuntime)
         {
             if (skillRuntime == null)
             {
@@ -1011,7 +1156,7 @@ namespace Pakuri.Combat
             return Mathf.Max(0f, skillRuntime.CooldownRemaining);
         }
 
-        private static float GetManifestedSkillCooldownDuration(ManifestedSkillRuntime skillRuntime)
+        private static float GetManifestedSkillCooldownDuration(CombatSkillRuntime skillRuntime)
         {
             if (skillRuntime == null)
             {
@@ -1028,7 +1173,7 @@ namespace Pakuri.Combat
             return Mathf.Max(0f, skillRuntime.CooldownDuration);
         }
 
-        private void CreateManifestedSkillVisual(ManifestedMonsterRuntime runtime, SkillDefinition skill, EnemyRuntime target)
+        private void CreateManifestedSkillVisual(CombatUnitRuntime runtime, SkillDefinition skill, EnemyRuntime target)
         {
             if (runtime == null || runtime.Transform == null || skill == null || target == null || target.Transform == null)
             {
@@ -1079,7 +1224,7 @@ namespace Pakuri.Combat
             }
         }
 
-        private float ResolveManifestedSkillVisualDuration(ManifestedMonsterRuntime runtime, SkillDefinition skill)
+        private float ResolveManifestedSkillVisualDuration(CombatUnitRuntime runtime, SkillDefinition skill)
         {
             if (skill == null)
             {
@@ -1187,7 +1332,7 @@ namespace Pakuri.Combat
             }
         }
 
-        private void UpdateManifestedMonsterLabel(ManifestedMonsterRuntime runtime)
+        private void UpdateManifestedMonsterLabel(CombatUnitRuntime runtime)
         {
             if (runtime == null || runtime.Label == null || runtime.Monster == null)
             {
@@ -1200,7 +1345,7 @@ namespace Pakuri.Combat
             runtime.Label.text = $"{runtime.Monster.DisplayName}\nHP {Mathf.CeilToInt(Mathf.Max(0f, runtime.CurrentHealth))}/{Mathf.CeilToInt(runtime.MaxHealth)}\n{skillLine}";
         }
 
-        private void SyncManifestedLearnedSkills(ManifestedMonsterRuntime runtime)
+        private void SyncManifestedLearnedSkills(CombatUnitRuntime runtime)
         {
             if (runtime == null || runtime.Monster == null || runtime.State == null)
             {
@@ -1217,13 +1362,13 @@ namespace Pakuri.Combat
                     continue;
                 }
 
-                if (FindManifestedSkillRuntime(runtime, skill.SkillId) != null)
+                if (FindCombatSkillRuntime(runtime, skill.SkillId) != null)
                 {
                     continue;
                 }
 
                 var initialDelay = 0.25f + (runtime.Skills.Count * 0.15f);
-                runtime.Skills.Add(new ManifestedSkillRuntime
+                runtime.Skills.Add(new CombatSkillRuntime
                 {
                     Skill = skill,
                     CooldownDuration = ResolveManifestedSkillCooldown(runtime, skill),
@@ -1240,7 +1385,7 @@ namespace Pakuri.Combat
             runtime.Skills.Sort((left, right) => left.Skill.Slot.CompareTo(right.Skill.Slot));
         }
 
-        private static ManifestedSkillRuntime FindManifestedSkillRuntime(ManifestedMonsterRuntime runtime, string skillId)
+        private static CombatSkillRuntime FindCombatSkillRuntime(CombatUnitRuntime runtime, string skillId)
         {
             for (var i = 0; i < runtime.Skills.Count; i++)
             {

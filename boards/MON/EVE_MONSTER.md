@@ -27,6 +27,138 @@ Legacy non-English note retained these code references: `boards/MON/MON_BLACKBOA
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-08 Eve Manifest Candidate Availability
+
+### Task title
+
+Allow selected Eve to be added as a manifested Eve party member.
+
+### Goals
+
+- Fix the case where Eve does not appear as a Manifest candidate when Eve is also the MainMenu-selected unit.
+- Allow Manifest selection to add Eve to the manifested party list.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This pass changes RunSession manifest duplicate logic, not Eve skill runtime behavior.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by build/compile checks.
+
+### Next Actions
+
+- User verifies Eve appears in the Manifest candidate panel and is added after selection.
+- Follow-up may still be needed if selected Eve and manifested Eve must have independent Offering state while sharing the same `MonsterId`.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` gets Manifest candidates from monster data and excludes ids only through `currentSession.HasManifestedMonster(monster.MonsterId)`.
+- `Pakuri/Assets/Scripts/Run/RunSession.cs` now makes `HasManifestedMonster(...)` return true only when `monsterId` is in `ManifestedMonsterIds`.
+- `Pakuri/Assets/Scripts/Run/RunSession.cs` keeps `RecordManifestedMonster(...)` adding `monster.MonsterId` to `ManifestedMonsterIds`.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings; Unity refresh returned idle and console error query returned only MCP client handler exit logs.
+
+### History
+
+- 2026-05-08: User reported Eve did not show in Manifest candidates and selecting Eve did not add Eve.
+
+## Task: 2026-05-08 Eve B-E Shared Unit Runtime
+
+### Task title
+
+Move Eve automatic support skills onto a shared caster-based unit runtime path.
+
+### Goals
+
+- Make selected EveUnit and manifested Eve use the same caster-based execution functions for Eve B-E.
+- Read skill source data from `CombatSkillRuntime.Skill`.
+- Read Offering choices from the caster's `RunMonsterState.ChosenRewardIds`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Eve A manual primary fire still needs a separate follow-up to move fully out of selected-primary globals.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by build/compile checks.
+
+### Next Actions
+
+- User verifies selected Eve and manifested Eve Prism Ray, Frost Field, Static Override, and Drone Beacon in Play Mode.
+- Follow-up migrates Arc Bolt manual projectile runtime into the same caster path.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs` now has `TryTriggerEveUnitAutomaticSkills(...)`, `TryTickEveUnitSkill(...)`, `TryCastEveUnitPrismRay(...)`, `TryCastEveUnitFrostField(...)`, `TryCastEveUnitStaticOverride(...)`, and `TryCastEveUnitDroneBeacon(...)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs` selected Eve automatic triggering now calls `TryTriggerEveUnitAutomaticSkills(selectedUnitRuntime)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` calls `TryTickEveUnitSkill(...)` for manifested Eve units before the older generic manifested path.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` reads selected Eve cooldown display from selected Eve `CombatSkillRuntime`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User requested unit-owned skill behavior rather than copying the visual EveUnit object.
+
+## Task: 2026-05-08 Manifested Eve Frost Field Parity
+
+### Task title
+
+Make manifested Eve C follow selected Eve Frost Field tick and status behavior.
+
+### Goals
+
+- Ensure manifested Eve Frost Field is not a one-shot area hit.
+- Apply repeated ice damage, chill stacks, and freeze duration from Eve C traits while using the manifested Eve unit's Offering state.
+- Keep manifested Eve damage resolution separate from selected-Eve-only passive checks.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in RunScene Play Mode that manifested Eve C applies repeated damage and chill/freeze effects after Offering acquisition.
+- Consider follow-up extraction of Eve A/B/D/E selected-skill code into unit-owned executors if exact manifested parity is required for all Eve skills.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Selected Eve C in `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs` uses `CreateCircleEffect(...)`, `skillEffects.Add(effect)`, `TickSkillEffect(...)`, and applies `ApplyChill(...)` for `SkillId == "eve-c"`.
+- Before this pass, `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` handled manifested `SkillRuntimeKind.Field` by applying `ApplyManifestedSkillDamage(...)` once in the radius and then creating only a visual.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` now creates a `ManifestedFrostField` persistent effect with Eve C trait modifiers from `runtime.State.ChosenRewardIds`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs` now routes manifested persistent effects to `ApplyManifestedSkillEffectDamage(...)`, which applies ice damage plus `ApplyChill(...)` and freeze duration for `eve-c`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User provided the repro: selected Eve Frost Field applies ongoing freeze/chill damage, but manifested Eve Frost Field only deals the first hit.
+
 ## Task: 2026-05-05 Eve Skill Data RuntimeKind Audit
 
 ### Task title

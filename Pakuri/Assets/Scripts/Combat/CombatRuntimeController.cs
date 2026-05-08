@@ -152,6 +152,7 @@ namespace Pakuri.Combat
             public float SlowChance;
             public float SlowDuration;
             public bool SeinSpawnResidualOnExpire;
+            public CombatUnitRuntime ManifestedSource;
             public readonly HashSet<EnemyRuntime> HitThisTick = new HashSet<EnemyRuntime>();
         }
 
@@ -363,6 +364,7 @@ namespace Pakuri.Combat
         private AttributeDefenseSet selectedMonsterDefenses = new AttributeDefenseSet();
         private TextMesh selectedMonsterNameLabel;
         private TextMesh selectedMonsterHpLabel;
+        private CombatUnitRuntime selectedUnitRuntime;
         private SpriteRenderer selectedMonsterHpBarFill;
         private SpriteRenderer selectedMonsterShieldBarFill;
         private Color selectedUnitColor = new Color(0.41f, 0.78f, 1f, 0.95f);
@@ -542,6 +544,7 @@ namespace Pakuri.Combat
             currentCombatType = session.CurrentCombatType;
             ConfigureMonster(monster);
             ApplyPersistedRewardState(session);
+            ConfigureSelectedUnitRuntime(session);
             ConfigureManifestedMonsterParty(session);
             blockedRewardIds.Clear();
             if (session.ChosenRewardIds != null)
@@ -575,6 +578,7 @@ namespace Pakuri.Combat
 
             ConfigureMonster(monster);
             ApplyPersistedRewardState(session);
+            ConfigureSelectedUnitRuntime(session);
             ConfigureMonsterSkillRuntimeSelectionState(session);
             ResetMonsterSkillRuntimes();
 
@@ -735,17 +739,7 @@ namespace Pakuri.Combat
         {
             if (IsSelectedEveMonster())
             {
-                switch (slot)
-                {
-                    case SkillSlot.B:
-                        return eveBeamCooldownRemaining;
-                    case SkillSlot.C:
-                        return eveFrostCooldownRemaining;
-                    case SkillSlot.D:
-                        return eveStaticCooldownRemaining;
-                    case SkillSlot.E:
-                        return eveDroneReloadRemaining;
-                }
+                return GetSelectedEveUnitSkillCooldownRemaining(slot);
             }
 
             if (IsSelectedArielMonster())
@@ -820,16 +814,7 @@ namespace Pakuri.Combat
 
             if (IsSelectedEveMonster())
             {
-                switch (skill.Slot)
-                {
-                    case SkillSlot.B:
-                    case SkillSlot.C:
-                        return Mathf.Max(0.1f, skill.CooldownSeconds);
-                    case SkillSlot.D:
-                        return 7f;
-                    case SkillSlot.E:
-                        return GetEveDroneReloadSeconds();
-                }
+                return GetSelectedEveUnitSkillCooldownDuration(skill);
             }
 
             if (IsSelectedArielMonster())

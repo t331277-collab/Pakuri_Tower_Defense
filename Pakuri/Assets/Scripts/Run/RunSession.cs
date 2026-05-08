@@ -312,11 +312,6 @@ namespace Pakuri.Run
                 return false;
             }
 
-            if (string.Equals(SelectedMonsterId, monsterId, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
             return ContainsText(ManifestedMonsterIds, monsterId);
         }
 

@@ -93,6 +93,7 @@ namespace Pakuri.Combat
         private void UpdateEveSkillCooldowns()
         {
             var elapsed = Time.deltaTime * GetEveActionSpeedMultiplier();
+            TickSelectedEveUnitSkillRuntimes(elapsed);
             eveBeamCooldownRemaining = Mathf.Max(0f, eveBeamCooldownRemaining - elapsed);
             eveFrostCooldownRemaining = Mathf.Max(0f, eveFrostCooldownRemaining - elapsed);
             eveStaticCooldownRemaining = Mathf.Max(0f, eveStaticCooldownRemaining - elapsed);
@@ -123,11 +124,7 @@ namespace Pakuri.Combat
                 return false;
             }
 
-            var castAny = false;
-            castAny |= TryCastEvePrismRay();
-            castAny |= TryCastEveFrostField();
-            castAny |= TryCastEveStaticOverride();
-            castAny |= TryCastEveDroneBeacon();
+            var castAny = TryTriggerEveUnitAutomaticSkills(selectedUnitRuntime);
 
             if (!castAny)
             {
@@ -135,6 +132,424 @@ namespace Pakuri.Combat
             }
 
             return true;
+        }
+
+        private void TickSelectedEveUnitSkillRuntimes(float elapsed)
+        {
+            if (!IsEveCombatUnit(selectedUnitRuntime))
+            {
+                return;
+            }
+
+            SyncManifestedLearnedSkills(selectedUnitRuntime);
+            for (var i = 0; i < selectedUnitRuntime.Skills.Count; i++)
+            {
+                var skillRuntime = selectedUnitRuntime.Skills[i];
+                if (skillRuntime == null || skillRuntime.Skill == null)
+                {
+                    continue;
+                }
+
+                skillRuntime.Tick(elapsed);
+                skillRuntime.TickReload(elapsed, ResolveManifestedMagazineCapacity(selectedUnitRuntime, skillRuntime.Skill));
+            }
+        }
+
+        private bool TryTriggerEveUnitAutomaticSkills(CombatUnitRuntime runtime)
+        {
+            if (!IsEveCombatUnit(runtime))
+            {
+                return false;
+            }
+
+            SyncManifestedLearnedSkills(runtime);
+            var castAny = false;
+            for (var i = 0; i < runtime.Skills.Count; i++)
+            {
+                var skillRuntime = runtime.Skills[i];
+                if (skillRuntime == null || skillRuntime.Skill == null || skillRuntime.Skill.Slot == SkillSlot.A)
+                {
+                    continue;
+                }
+
+                castAny |= TryCastEveUnitSkill(runtime, skillRuntime);
+            }
+
+            return castAny;
+        }
+
+        private bool TryTickEveUnitSkill(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime, float elapsed)
+        {
+            if (!IsEveCombatUnit(runtime))
+            {
+                return false;
+            }
+
+            TickCombatSkillRuntime(runtime, skillRuntime, elapsed * GetEveUnitActionSpeedMultiplier(runtime));
+            skillRuntime.TickReload(elapsed * GetEveUnitActionSpeedMultiplier(runtime), ResolveManifestedMagazineCapacity(runtime, skillRuntime.Skill));
+            if (skillRuntime.Skill.Slot == SkillSlot.A)
+            {
+                TryFireManifestedMagazineSkill(runtime, skillRuntime);
+                return true;
+            }
+
+            TryCastEveUnitSkill(runtime, skillRuntime);
+            return true;
+        }
+
+        private bool TryCastEveUnitSkill(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime)
+        {
+            if (!IsEveCombatUnit(runtime) || skillRuntime == null || skillRuntime.Skill == null || skillRuntime.CooldownRemaining > 0f)
+            {
+                return false;
+            }
+
+            switch (skillRuntime.Skill.Slot)
+            {
+                case SkillSlot.B:
+                    return TryCastEveUnitPrismRay(runtime, skillRuntime);
+                case SkillSlot.C:
+                    return TryCastEveUnitFrostField(runtime, skillRuntime);
+                case SkillSlot.D:
+                    return TryCastEveUnitStaticOverride(runtime, skillRuntime);
+                case SkillSlot.E:
+                    return TryCastEveUnitDroneBeacon(runtime, skillRuntime);
+                default:
+                    return false;
+            }
+        }
+
+        private bool IsEveCombatUnit(CombatUnitRuntime runtime)
+        {
+            return runtime != null
+                && runtime.Monster != null
+                && string.Equals(runtime.Monster.MonsterId, "eve", StringComparison.OrdinalIgnoreCase)
+                && runtime.Transform != null
+                && runtime.CurrentHealth > 0f;
+        }
+
+        private CombatSkillRuntime FindSelectedEveUnitSkillRuntime(SkillSlot slot)
+        {
+            if (!IsEveCombatUnit(selectedUnitRuntime))
+            {
+                return null;
+            }
+
+            SyncManifestedLearnedSkills(selectedUnitRuntime);
+            for (var i = 0; i < selectedUnitRuntime.Skills.Count; i++)
+            {
+                var skillRuntime = selectedUnitRuntime.Skills[i];
+                if (skillRuntime != null && skillRuntime.Skill != null && skillRuntime.Skill.Slot == slot)
+                {
+                    return skillRuntime;
+                }
+            }
+
+            return null;
+        }
+
+        private float GetSelectedEveUnitSkillCooldownRemaining(SkillSlot slot)
+        {
+            var skillRuntime = FindSelectedEveUnitSkillRuntime(slot);
+            if (skillRuntime == null)
+            {
+                return 0f;
+            }
+
+            if (slot == SkillSlot.E && skillRuntime.ReloadRemaining > 0f)
+            {
+                return skillRuntime.ReloadRemaining;
+            }
+
+            return skillRuntime.CooldownRemaining;
+        }
+
+        private float GetSelectedEveUnitSkillCooldownDuration(SkillDefinition skill)
+        {
+            if (skill == null)
+            {
+                return 0f;
+            }
+
+            var skillRuntime = FindSelectedEveUnitSkillRuntime(skill.Slot);
+            if (skillRuntime != null)
+            {
+                if (skill.Slot == SkillSlot.E && skillRuntime.ReloadRemaining > 0f)
+                {
+                    return Mathf.Max(0.05f, skillRuntime.ReloadDuration);
+                }
+
+                return Mathf.Max(0.05f, skillRuntime.CooldownDuration);
+            }
+
+            switch (skill.Slot)
+            {
+                case SkillSlot.B:
+                case SkillSlot.C:
+                    return Mathf.Max(0.1f, skill.CooldownSeconds);
+                case SkillSlot.D:
+                    return 7f;
+                case SkillSlot.E:
+                    return GetEveDroneReloadSeconds();
+                default:
+                    return 0f;
+            }
+        }
+
+        private bool IsSelectedCombatUnit(CombatUnitRuntime runtime)
+        {
+            return runtime != null && runtime == selectedUnitRuntime;
+        }
+
+        private float GetEveUnitActionSpeedMultiplier(CombatUnitRuntime runtime)
+        {
+            return IsSelectedCombatUnit(runtime) ? GetEveActionSpeedMultiplier() : 1f;
+        }
+
+        private bool TryCastEveUnitPrismRay(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime)
+        {
+            var skill = skillRuntime.Skill;
+            var target = FindNearestEnemy(runtime.Transform.position, float.PositiveInfinity);
+            if (target == null)
+            {
+                return false;
+            }
+
+            var damageMultiplier = 1f;
+            var width = 3.2f;
+            var duration = EveBeamDuration;
+            var tickInterval = EveBeamTickInterval;
+            var cooldown = Mathf.Max(0.1f, skill.CooldownSeconds);
+
+            if (HasManifestedChoice(runtime, "eve-b-trait-1"))
+            {
+                damageMultiplier *= 1.25f;
+                tickInterval *= SpeedBonusToIntervalMultiplier(0.25f);
+            }
+
+            if (HasManifestedChoice(runtime, "eve-b-trait-2"))
+            {
+                damageMultiplier *= 1.30f;
+                width *= 1.30f;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-b-trait-3"))
+            {
+                cooldown *= SpeedBonusToIntervalMultiplier(0.35f);
+                duration *= 1.15f;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-b-trait-4"))
+            {
+                damageMultiplier *= 2.0f;
+                duration *= 0.5f;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-b-trait-5"))
+            {
+                cooldown *= SpeedBonusToIntervalMultiplier(0.30f);
+                tickInterval *= SpeedBonusToIntervalMultiplier(0.20f);
+            }
+
+            var origin = runtime.Transform.position + Vector3.right * 0.65f;
+            var direction = target.Transform.position - origin;
+            direction.z = 0f;
+            if (direction.sqrMagnitude < 0.01f)
+            {
+                direction = Vector3.right;
+            }
+
+            direction.Normalize();
+            var effect = CreateLineEffect("EveUnitPrismRay", origin, direction, fieldSize.x + 3f, width, duration, skill.SkillEffectPrefab);
+            effect.SkillId = "eve-b";
+            effect.ManifestedSource = IsSelectedCombatUnit(runtime) ? null : runtime;
+            effect.BaseDamage = (skill.BaseDamage + runtime.PowerStat * skill.SpellPowerCoefficient) * damageMultiplier * ResolveManifestedDamageMultiplier(runtime);
+            effect.Attribute = DamageAttribute.Lightning;
+            effect.TickInterval = Mathf.Max(0.05f, tickInterval);
+            effect.TickRemaining = 0f;
+            effect.SlowChance = 0.20f;
+            effect.SlowDuration = 2f;
+            skillEffects.Add(effect);
+
+            skillRuntime.CooldownDuration = cooldown;
+            skillRuntime.CooldownRemaining = cooldown;
+            statusLabel = $"{runtime.Monster.DisplayName} Prism Ray auto-targeted {target.DisplayName}.";
+            return true;
+        }
+
+        private bool TryCastEveUnitFrostField(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime)
+        {
+            var target = FindNearestEnemy(runtime.Transform.position, float.PositiveInfinity);
+            if (target == null)
+            {
+                return false;
+            }
+
+            var cooldown = CreateEveUnitFrostField(runtime, skillRuntime.Skill, target);
+            skillRuntime.CooldownDuration = cooldown;
+            skillRuntime.CooldownRemaining = cooldown;
+            return true;
+        }
+
+        private float CreateEveUnitFrostField(CombatUnitRuntime runtime, SkillDefinition skill, EnemyRuntime target)
+        {
+            var radius = Mathf.Max(0.1f, skill.Radius);
+            var duration = EveFrostFieldDuration;
+            var tickInterval = EveFrostFieldTickInterval;
+            var damageMultiplier = 1f;
+            var cooldown = Mathf.Max(0.1f, skill.CooldownSeconds);
+            var chillStacks = 1;
+
+            if (HasManifestedChoice(runtime, "eve-c-trait-1"))
+            {
+                radius *= 1.25f;
+                duration *= 1.15f;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-c-trait-2"))
+            {
+                tickInterval *= SpeedBonusToIntervalMultiplier(0.25f);
+                chillStacks += 1;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-c-trait-3"))
+            {
+                damageMultiplier *= 1.30f;
+                cooldown *= 0.85f;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-c-trait-4"))
+            {
+                radius *= 0.80f;
+                damageMultiplier *= 1.80f;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-c-trait-5"))
+            {
+                damageMultiplier *= 1.20f;
+            }
+
+            var effect = CreateCircleEffect("EveUnitFrostField", target.Transform.position, radius, duration, skill.SkillEffectPrefab);
+            effect.SkillId = "eve-c";
+            effect.ManifestedSource = IsSelectedCombatUnit(runtime) ? null : runtime;
+            effect.BaseDamage = (skill.BaseDamage + runtime.PowerStat * skill.SpellPowerCoefficient) * damageMultiplier * ResolveManifestedDamageMultiplier(runtime);
+            effect.Attribute = DamageAttribute.Ice;
+            effect.TickInterval = Mathf.Max(0.05f, tickInterval);
+            effect.TickRemaining = 0f;
+            effect.Radius = radius;
+            effect.StatusStacks = chillStacks;
+            effect.FreezeDuration = HasManifestedChoice(runtime, "eve-c-trait-5") ? 1.0f + GetManifestedEveFreezeDurationBonus(runtime) : 0f;
+            skillEffects.Add(effect);
+
+            statusLabel = $"{runtime.Monster.DisplayName} Frost Field auto-targeted {target.DisplayName}.";
+            return cooldown;
+        }
+
+        private bool TryCastEveUnitStaticOverride(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime)
+        {
+            var skill = skillRuntime.Skill;
+            var radius = 1.8f;
+            var damageMultiplier = 1f;
+            var stackBonus = 0.35f;
+            var cooldown = 7f;
+
+            if (HasManifestedChoice(runtime, "eve-d-trait-1"))
+            {
+                radius *= 1.15f;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-d-trait-2"))
+            {
+                stackBonus += 0.15f;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-d-trait-3"))
+            {
+                cooldown *= 0.80f;
+                damageMultiplier *= 1.15f;
+            }
+
+            var target = FindNearestEnemy(runtime.Transform.position, float.PositiveInfinity, enemy => enemy.ShockTimer > 0f && enemy.ShockStacks > 0);
+            if (target == null)
+            {
+                return false;
+            }
+
+            var baseDamage = (skill.BaseDamage + runtime.PowerStat * skill.SpellPowerCoefficient) * damageMultiplier * ResolveManifestedDamageMultiplier(runtime);
+            var hitCount = 0;
+            for (var i = 0; i < enemies.Count; i++)
+            {
+                var enemy = enemies[i];
+                if (enemy == null || enemy.CurrentHealth <= 0f || Vector2.Distance(enemy.Transform.position, target.Transform.position) > radius)
+                {
+                    continue;
+                }
+
+                var finalMultiplier = 1f + target.ShockStacks * stackBonus;
+                if (HasManifestedChoice(runtime, "eve-d-trait-5") && target.ShockStacks >= 3)
+                {
+                    finalMultiplier *= 1.50f;
+                }
+
+                ApplyEveUnitSkillDamage(runtime, enemy, baseDamage, DamageAttribute.Lightning, finalMultiplier, "eve-d");
+                if (HasManifestedChoice(runtime, "eve-d-trait-4"))
+                {
+                    ApplyShock(enemy, 1, 1.25f);
+                }
+
+                hitCount += 1;
+            }
+
+            var effect = CreateCircleEffect("EveUnitStaticOverride", target.Transform.position, radius, 0.35f, skill.SkillEffectPrefab);
+            effect.SkillId = "eve-d";
+            skillEffects.Add(effect);
+
+            skillRuntime.CooldownDuration = cooldown;
+            skillRuntime.CooldownRemaining = cooldown;
+            statusLabel = $"{runtime.Monster.DisplayName} Static Override hit {hitCount}.";
+            return true;
+        }
+
+        private bool TryCastEveUnitDroneBeacon(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime)
+        {
+            if (skillRuntime.ReloadRemaining > 0f || skillRuntime.ShotsRemaining <= 0)
+            {
+                return false;
+            }
+
+            if (IsSelectedCombatUnit(runtime))
+            {
+                return TryCastEveDroneBeacon();
+            }
+
+            DeployManifestedEveDroneBeacon(runtime, skillRuntime.Skill);
+            skillRuntime.ShotsRemaining -= 1;
+            if (skillRuntime.ShotsRemaining <= 0)
+            {
+                skillRuntime.ReloadDuration = ResolveManifestedReloadDuration(runtime, skillRuntime.Skill);
+                skillRuntime.ReloadRemaining = skillRuntime.ReloadDuration;
+            }
+
+            statusLabel = $"{runtime.Monster.DisplayName} Drone Beacon deployed.";
+            return true;
+        }
+
+        private void ApplyEveUnitSkillDamage(CombatUnitRuntime runtime, EnemyRuntime enemy, float baseDamage, DamageAttribute attribute, float finalMultiplier, string skillId)
+        {
+            if (IsSelectedCombatUnit(runtime))
+            {
+                ApplyEveSkillDamage(enemy, baseDamage, attribute, finalMultiplier, skillId);
+                return;
+            }
+
+            var damageResult = DamageCalculator.Resolve(
+                baseDamage,
+                attribute,
+                enemy.Defenses,
+                targetCriticalResistance: enemy.CriticalResistance,
+                finalDamageMultiplier: enemy.DamageTakenMultiplier * Mathf.Max(0f, finalMultiplier));
+            ApplyDamageToEnemy(enemy, damageResult.FinalDamage, damageResult.Attribute);
+            enemy.FlashTimer = 0.08f;
         }
 
         private void FireManualEveArcBolt(Vector3 baseDirection)
@@ -649,6 +1064,12 @@ namespace Pakuri.Combat
                 if (IsVegaSkillEffect(effect))
                 {
                     ApplyVegaSkillEffectDamage(effect, enemy);
+                    continue;
+                }
+
+                if (effect.ManifestedSource != null)
+                {
+                    ApplyManifestedSkillEffectDamage(effect, enemy);
                     continue;
                 }
 

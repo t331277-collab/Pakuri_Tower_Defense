@@ -5,6 +5,87 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-08 Eve Unit Caster Status Effects
+
+### Task title
+
+Track Eve B-E status behavior through shared unit caster execution.
+
+### Goals
+
+- Keep status-board evidence for Eve Frost Field and Static Override moving to caster-based runtime.
+- Ensure manifested Eve status effects remain tied to the manifested unit source.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by build/compile checks.
+
+### Next Actions
+
+- User verifies chill/freeze and shock behavior from selected and manifested Eve in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs` creates caster-based Eve Frost Field effects and sets `SkillEffectRuntime.ManifestedSource` only for non-selected units.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs` applies Static Override damage through `ApplyEveUnitSkillDamage(...)`, which separates selected and manifested damage paths.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: Eve C status parity was first fixed for manifested units, then Eve B-E execution moved to shared unit caster functions.
+
+## Task: 2026-05-08 Manifested Eve Frost Field Chill
+
+### Task title
+
+Apply chill/freeze status from manifested Eve Frost Field persistent ticks.
+
+### Goals
+
+- Record that manifested Eve C now applies status through the persistent field tick path.
+- Keep status application tied to the manifested source unit rather than selected-Eve-only checks.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies manifested Eve C chill/freeze behavior in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` added `SkillEffectRuntime.ManifestedSource`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs` checks `effect.ManifestedSource != null` inside `TickSkillEffect(...)` and routes those ticks to manifested effect handling.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` applies `ApplyChill(target, Mathf.Max(1, effect.StatusStacks), 2.5f)` and `target.FreezeTimer` for manifested `eve-c` effects.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User reported that manifested Eve Frost Field was missing chill status and ongoing damage.
+
 ## Task: 2026-05-06 Sein Fire Resistance Reduction And Heat State
 
 ### Task title

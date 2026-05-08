@@ -52,6 +52,136 @@ Legacy non-English note summarized in English; see the surrounding task block fo
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-08 Selected Monster Manifest Candidate Fix
+
+### Task title
+
+Permit selected monsters to be manifested as separate party members.
+
+### Goals
+
+- Record the common monster-side impact of allowing Eve or another selected monster to appear in Manifest candidate selection.
+- Keep Manifest duplicate checks tied to actual manifested ids, not the MainMenu selected monster id.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Detailed Eve notes are recorded in `boards/MON/EVE_MONSTER.md`.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by build/compile checks.
+
+### Next Actions
+
+- User verifies selected Eve can still appear as a Manifest candidate and can be added through Manifest.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs` uses `currentSession.HasManifestedMonster(monster.MonsterId)` to exclude only already manifested candidate ids.
+- `Pakuri/Assets/Scripts/Run/RunSession.cs` now makes `HasManifestedMonster(...)` check `ManifestedMonsterIds` without treating `SelectedMonsterId` as manifested.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings; Unity refresh returned idle and console error query returned only MCP client handler exit logs.
+
+### History
+
+- 2026-05-08: User reported selected Eve was unavailable in Manifest candidate selection.
+
+## Task: 2026-05-08 Unit-Owned Eve Skill Runtime Refactor
+
+### Task title
+
+Record shared Eve unit skill runtime progress for selected and manifested monsters.
+
+### Goals
+
+- Track the move from controller-selected skill execution toward unit-owned skill execution.
+- Use the same `CombatUnitRuntime`/`CombatSkillRuntime` state model for selected EveUnit and manifested Eve units.
+- Keep the common monster board aware that only Eve B-E support skills are on the shared caster path in this pass.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Detailed Eve behavior is recorded in `boards/MON/EVE_MONSTER.md`.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated for Eve B-E automatic skills.
+
+### Next Actions
+
+- User verifies selected Eve and manifested Eve B-E in Play Mode.
+- Follow-up should migrate Eve A manual primary fire fully into the unit skill runtime.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` synchronizes selected `CombatUnitRuntime` skills and routes manifested Eve ticks to Eve unit skill execution before generic manifested execution.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs` contains caster-based Eve unit execution methods for slots B, C, D, and E.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs` reads selected Eve B-E cooldowns from `CombatSkillRuntime`.
+- Builds for `Assembly-CSharp.csproj` and `Assembly-CSharp-Editor.csproj` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User asked whether EveUnit and 2P-5P units could each own skills as objects, then requested refactoring steps 1-4.
+
+## Task: 2026-05-08 Manifested Unit Skill Runtime Parity
+
+### Task title
+
+Track selected and manifested monsters as combat unit runtime owners.
+
+### Goals
+
+- Record step 6 of the object-oriented combat-unit refactor.
+- Keep selected 1P and manifested 2P-5P monsters represented by `CombatUnitRuntime` components.
+- Fix the concrete Eve C parity bug where manifested Frost Field did not use persistent field ticks/status.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Detailed Eve status behavior is recorded in `boards/MON/EVE_MONSTER.md` and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated for the selected 1P runtime binding and manifested Eve C parity path.
+
+### Next Actions
+
+- User verifies manifested Eve C in RunScene Play Mode after Offering acquisition.
+- Decide separately whether to extract every selected-monster skill implementation into reusable unit-owned executors for full all-monster parity.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatUnitRuntime.cs` now exposes `ConfigureSelected(...)` and `SyncStats(...)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` configures `selectedUnitRuntime` from `eveAnchor`, `selectedMonster`, and `RunSession.EnsurePartyMemberState(...)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeScene.cs` calls `SyncSelectedUnitRuntimeStats()` from `UpdateSelectedMonsterStatusVisuals()`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` creates manifested Eve Frost Field persistent effects from the manifested unit runtime and its `RunMonsterState`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User clarified that object-oriented correction means a manifested unit should use the same skill behavior as the MainMenu-selected unit, including Offering enhancements.
+
 ## Task: 2026-05-06 Sein A-E Active Runtime Implementation
 
 ### Task title
@@ -1806,3 +1936,47 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-08: User reported sustained Manifested skills were ending too early after the skill-kind visual fix.
+
+# Task: 2026-05-08 Manifested Monsters Own Component Runtime
+
+### Task title
+
+Track 2P-5P Manifested monsters as component-owned monster runtimes.
+
+### Goals
+
+- Preserve each Manifested monster's `MonsterDefinition` and `RunSession.RunMonsterState`.
+- Keep Offering-acquired active skills synced into that monster's own skill runtime list.
+- Leave selected 1P migration for the later step 6.
+
+### Constraints
+
+- Role Owner is Code Builder after Designer handoff.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested monster behavior in Play Mode, especially Offering-acquired skill enhancement and HP/skill panel state.
+- If accepted, step 6 can apply the same component ownership pattern to `EveUnit` / selected 1P runtime.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatUnitRuntime.cs` stores the manifested `MonsterDefinition`, `RunSession.RunMonsterState`, HP/stat snapshot, and `List<CombatSkillRuntime>`.
+- `CombatUnitRuntime.ConfigureManifested(...)` clears stale skill runtimes when the slot is rebound to a different monster or run state.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` binds manifested monsters to `CombatUnitRuntime` components on the `2PMonster` through `5PMonster` objects.
+- `Pakuri/Assets/Scripts/Combat/CombatSkillRuntime.cs` stores each learned active skill's cooldown, magazine, reload, and queued Vega projectile state.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+- Unity-MCP imported both new scripts and the console error query returned only MCP client-handler logs after forced refresh.
+
+### History
+
+- 2026-05-08: User requested the object-oriented 2P-5P manifested runtime direction so each unit owns its own skill runtime state while SO data remains the source.
