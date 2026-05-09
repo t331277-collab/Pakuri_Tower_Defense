@@ -3,11 +3,186 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-08 Manifested HP Bar Runtime Sprite Repair
+
+### Task title
+
+Track common manifested monster HP bar visibility repair.
+
+### Goals
+
+- Ensure common manifested monster slots can display HP bars after runtime binding.
+- Keep the repair independent of a specific monster identity.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode visual verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies any manifested monster in 2P-5P slots shows a visible HP bar.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:2029` now repairs null HP fill sprites during manifested status updates.
+- Runtime and Editor builds completed with 0 errors and existing warnings.
+- Unity-MCP refresh reached idle; console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-08: User reported the live 2P-5P `MonsterHpBar/Fill` sprite references were still null.
+
 ## Scope
 
 Legacy non-English note summarized in English; see the surrounding task block for retained status and evidence.
 
 Legacy non-English note retained these code references: `{NAME}_MONSTER.md`.
+
+## Task: 2026-05-08 Rin Unit Runtime And Manifested Slot UI
+
+### Task title
+
+Continue manifested monster parity by applying the shared unit runtime approach to Rin first.
+
+### Goals
+
+- Record that Rin selected 1P and manifested 2P-5P execution now share `CombatUnitRuntime` plus `CombatSkillRuntime` paths for Rin B/C/D/E.
+- Record that RunScene slot status children are reused for manifested monsters instead of creating duplicate generated labels.
+- Preserve Rin A and existing generic manifested projectile paths.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This pass is Rin-first, not a full Sein/Ariel/Vega extraction.
+- Unity Play Mode verification is user-owned.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Rin selected/manifested skill parity in Play Mode.
+- Continue the same runtime extraction pattern for Sein, Ariel, Vega, or other monsters only after Rin is accepted.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:128` invokes unit-owned Rin automatic skills using a `CombatUnitRuntime` argument.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:492` checks `TryTickRinUnitSkill(runtime, skillRuntime, elapsed)` before the generic manifested skill path.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:195` resolves scene-authored manifested status views before configuring the runtime.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:1870` updates separate name label, HP label, HP bar fill, and shield bar fill when present.
+- `Pakuri/Assets/Scripts/Combat/CombatUnitRuntime.cs:15` through `:18` stores the separate status view references.
+- C# diff whitespace check over `CombatRuntimeParty.cs`, `CombatRuntimeRinSkills.cs`, and `CombatUnitRuntime.cs` completed with exit code 0.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User asked to resume interrupted Rin-first runtime parity work and avoid duplicated status UI objects for manifested 2P-5P monsters.
+
+## Task: 2026-05-08 Manifested Monster Skill Runtime Parity Fix
+
+### Task title
+
+Fix manifested monster A-skill pierce and Rin C selected-runtime side effects.
+
+### Goals
+
+- Confirm the reported manifested Rin C and Sein A behavior against actual combat code.
+- Fix manifested Rin C to use beam hit, knockback, and Rin C choice side effects.
+- Fix the common manifested projectile path so A-skill pierce data is not lost for Sein, Ariel, and Rin.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This pass does not claim full selected-monster private runtime extraction for every skill.
+- Unity Play Mode verification is user-owned.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies manifested Rin C, Sein A, Ariel A, and Rin A in Play Mode.
+- Continue extracting remaining monster-private side effects into unit-owned manifested paths when future mismatches are found.
+
+### Evidence
+
+- Before this fix, `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs` generic manifested projectile fire passed hardcoded pierce instead of selected A-skill pierce rules.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:499` now routes manifested Rin C into a Rin-specific manifested shockwave method.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:545` implements manifested Rin C with beam hit checks, knockback, master slow, master lightning follow-up, and trait reload reduction.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:677` resolves manifested A-skill pierce for Ariel A, Sein A, and Rin A.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeController.cs:128` stores manifested projectile source runtime for source-choice hit effects.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+- Unity-MCP script refresh reached idle and console warning/error query returned only MCP client handler logs.
+
+### History
+
+- 2026-05-08: User reported manifested Rin C did not knock enemies back and manifested Sein A did not have selected Sein A's pierce.
+
+## Task: 2026-05-08 Manifested Runtime Structure Report
+
+### Task title
+
+Document the current manifested monster runtime structure and prior skill-abnormality cause.
+
+### Goals
+
+- Explain that earlier manifested skill issues came from common party-side execution and generic visuals/projectiles rather than unit-owned skill runtime.
+- Record the current structure: `RunMonsterState`, `CombatUnitRuntime`, `CombatSkillRuntime`, and `CombatRuntimeParty` slot binding.
+- Record current selected-monster duplicate Manifest guard for all monsters.
+
+### Constraints
+
+- Role Owner is Designer for report documentation.
+- Detailed code changes already exist in prior Code Builder task blocks.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as report documentation.
+
+### Next Actions
+
+- User verifies manifested monster behavior in Play Mode.
+- If a specific monster still diverges, inspect that monster's selected-runtime implementation versus the manifested common/unit path.
+
+### Evidence
+
+- `RunSession.cs` stores `SelectedMonsterId`, `ManifestedMonsterIds`, and party member state via `EnsurePartyMemberState(...)`.
+- `CombatUnitRuntime.cs` stores the current unit's `Monster`, `RunSession.RunMonsterState`, HP/stat snapshot, and `List<CombatSkillRuntime>`.
+- `CombatSkillRuntime.cs` stores cooldown, magazine, reload, and Vega queued projectile state.
+- `CombatRuntimeParty.cs` uses `CombatUnitRuntime` for manifested monsters, binds them to `2PMonster` through `5PMonster`, and skips IDs matching the selected monster.
+- `RunCombatUiController.cs:791`, `RunSession.cs:321` / `:334`, and `CombatRuntimeParty.cs:156` together prevent the currently selected monster from being manifested again.
+- Report saved as `Pakuri/reference/Report/2026-05-08-runscene-manifest-ui-and-runtime-status.html`.
+
+### History
+
+- 2026-05-08: User asked why manifested monster skills were abnormal since yesterday and requested current structure explanation as HTML.
 
 ## Common Terms
 
@@ -51,6 +226,49 @@ Legacy non-English note summarized in English; see the surrounding task block fo
 - History
 
 ## Migrated Task Blocks
+
+## Task: 2026-05-08 Manifested Monster Skill Runtime Parity Pass
+
+### Task title
+
+Record manifested Eve, Ariel, Sein, Vega, and Rin skill runtime parity work.
+
+### Goals
+
+- Keep manifested units using their own `CombatUnitRuntime` and `CombatSkillRuntime`.
+- Make manifested Eve A use Eve A-specific auto-target projectile logic and Offering choices.
+- Improve manifested Ariel, Sein, Vega, and Rin common skill execution through SO skill data and each unit's `RunMonsterState`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Detailed combat notes are recorded in `boards/COMBAT/COMBAT_BLACKBOARD.md`.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies each manifested monster in RunScene Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs:650` implements manifested Eve A as a unit-owned auto-target Arc Bolt path.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:866`, `:991`, `:1250`, `:1278`, and `:1310` apply manifested monster Offering choices in shared damage, cooldown, magazine, reload, and shot-interval calculations.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+- Unity-MCP refresh returned idle and console error query returned only MCP client handler logs.
+
+### History
+
+- 2026-05-08: User requested the manifested monsters to behave like their own objects using the same skill data and upgrade state as selected monsters.
 
 ## Task: 2026-05-08 Selected Monster Manifest Candidate Fix
 
@@ -1980,3 +2198,90 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-08: User requested the object-oriented 2P-5P manifested runtime direction so each unit owns its own skill runtime state while SO data remains the source.
+
+# Task: 2026-05-08 Manifest Candidate Duplicate Guard
+
+### Task title
+
+Exclude the selected monster from Manifest candidates and recorded Manifested state.
+
+### Goals
+
+- Prevent Eve or any other currently selected 1P monster from appearing again as a Manifested 2P+ monster.
+- Keep already Manifested IDs excluded as before.
+- Keep selected-monster state separate from Manifested party-member state.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Detailed Run/UI evidence is recorded in run and UI boards.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies that no currently selected monster can be duplicated by Manifest.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs:791` excludes `currentSession.SelectedMonsterId` from Manifest candidates.
+- `Pakuri/Assets/Scripts/Run/RunSession.cs:321` and `:334` reject selected-monster IDs in both `RecordManifestedMonster(...)` overloads.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:156` skips selected-monster IDs when configuring Manifested combat slots, covering already-bad session state.
+- Runtime and Editor builds completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User reported that using Manifest while Eve already exists caused another Eve to appear and asked whether other monsters had the same problem.
+
+## Task: 2026-05-08 Manifested Monster Damage Target And Rin Passive Follow-up
+
+### Task title
+
+Record manifested monster HP bar fallback and enemy target participation.
+
+### Goals
+
+- Ensure manifested monsters without scene HP bar children receive a generated HP bar fallback.
+- Allow enemies to select living manifested monsters as attack targets.
+- Record that Rin-specific manifested passive parity was extended in the Rin board.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Detailed Rin evidence is recorded in `boards/MON/RIN_MONSTER.md`.
+- Detailed combat target evidence is recorded in `boards/COMBAT/COMBAT_BLACKBOARD.md`.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies RunScene manifested 2P-5P units show a single HP bar/name/HP text and can be attacked by enemies.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:285` calls `EnsureManifestedHpBar(...)` when a manifested slot has no resolved HP fill renderer.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:298` creates the fallback `MonsterHpBar` object and its `Background`, `Fill`, and `Shield` renderers.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEnemies.cs:945` chooses enemy priority targets from selected 1P and living manifested monsters.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:455` applies enemy damage to manifested units and updates their label/bar.
+- Runtime and Editor builds completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User reported manifested monsters had no HP slide bar and enemies only attacked the selected unit.

@@ -17,6 +17,8 @@ The full pre-hierarchy task history is preserved at:
 - `BLACKBOARD.md` should stay small and contain only routing, global status, and cross-domain notes.
 - Code Reviewer execution requires explicit user permission.
 - Unity-MCP Play Mode gameplay verification remains user-owned; Codex records build/compile/console/editor-state evidence only.
+- 2026-05-08 recent cross-domain task: Rin-first shared `CombatUnitRuntime` plus `CombatSkillRuntime` parity was implemented for selected 1P and manifested 2P-5P Rin B/C/D/E, and manifested slot status UI now reuses existing scene children when present. Detailed records are in `boards/MON/RIN_MONSTER.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, and `boards/RUN/REWARD_BLACKBOARD.md`.
+- 2026-05-08 recent cross-domain task: Manifested 2P-5P HP bar live sprite repair was implemented so already-bound `MonsterHpBar/Fill` renderers with `sprite=null` are normalized during HP/status refresh. Detailed records are in `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/RUN/RUN_BLACKBOARD.md`, and `boards/MON/MON_BLACKBOARD.md`.
 
 ## Board Tree
 
@@ -393,3 +395,44 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-08: User reported Manifested skill effect kinds were visible, but sustained skills such as Eve Drone Beacon, Frost Field, and Prism Ray ended far too quickly and asked whether RunScene applies the selected monster to `EveUnit`.
+
+## Recent Task: 2026-05-08 Manifest Candidate Duplicate And Failure Popup
+
+### Task title
+
+Fix Manifest duplicate selected monsters, non-Vega mark leakage, and Manifest failure popup.
+
+### Goals
+
+- Track the global status of the Run/Reward/UI/Combat/Projectile/Monster/Vega Manifest follow-up.
+
+### Constraints
+
+- Detailed evidence is in `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, `boards/MON/MON_BLACKBOARD.md`, and `boards/MON/VEGA_MONSTER.md`.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User performs Play Mode verification for ManifestButton roll timing, failure popup, no selected-monster duplicate Manifest, and non-Vega Manifested A attacks not applying Vega name marks.
+
+### Evidence
+
+- Changed `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs`, `Pakuri/Assets/Scripts/Run/RunSession.cs`, and `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs`.
+- `RunCombatUiController.cs:367` binds `ManifestButton` to the roll method; `:391` no longer binds `SummonButton` to the roll method.
+- `RunCombatUiController.cs:396` creates `PrisonerManifestFailurePopup`; `:657` and `:665` show it for failure cases.
+- `RunCombatUiController.cs:791`, `RunSession.cs:321`, `RunSession.cs:334`, and `CombatRuntimeParty.cs:156` prevent selected-monster duplicate Manifest candidates/records/combat slots.
+- `CombatRuntimeParty.cs:554`, `:617`, and `:1120` through `:1121` restrict Vega name-mark stacks to Manifested Vega A.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+- Unity-MCP refresh reached idle; console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-08: User reported non-Vega Manifested A attacks appeared to leave Vega marks, Eve could be duplicated by Manifest, and requested Manifest chance roll on `ManifestButton` with failure popup.

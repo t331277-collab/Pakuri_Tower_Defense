@@ -10,6 +10,46 @@ At the start of new work, read `boards/MON/MON_BLACKBOARD.md` first and consult 
 
 Vega active skills A-E and passive skills F-J are implemented and locally validated.
 
+## Task: 2026-05-08 Manifested Vega Common Runtime Parity
+
+### Task title
+
+Apply Vega Offering choices through manifested projectile and common skill runtime.
+
+### Goals
+
+- Preserve manifested Vega A three-sword cadence.
+- Apply Vega manifested Offering choices to damage, cooldown, magazine, reload, and name-mark projectile state.
+- Keep Vega field/area skills on shared manifested SO-driven execution.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is common manifested runtime work, not a full line-by-line copy of selected Vega private skill code.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies manifested Vega A and Offering-upgraded skills in RunScene Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:1073` applies Vega A damage and mark-stack choices inside the manifested queued projectile update.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:866` includes Vega skill-specific damage multipliers.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:991` includes Vega cooldown choice handling.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:1250` and `:1278` include Vega A magazine/reload choice handling.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
 ## Required Sections For Future Work
 
 - Source references
@@ -258,3 +298,43 @@ Implemented and locally validated.
 
 - 2026-05-08: User reported Manifested Vega did not appear to reference Vega A's proper three-projectile basic attack.
 - 2026-05-08: Code Builder added Vega-specific Manifested A projectile burst behavior.
+
+## Task: 2026-05-08 Manifested Vega Name-Mark Guard
+
+### Task title
+
+Keep Manifested Vega A name marks while blocking non-Vega mark leakage.
+
+### Goals
+
+- Preserve Manifested Vega A's name-mark application from queued sword projectiles.
+- Ensure the shared Manifested projectile path does not give non-Vega monsters Vega name marks.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested Vega A still applies marks, and non-Vega Manifested A attacks do not.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:554` passes 0 name-mark stacks for generic Manifested projectile fire.
+- `CombatRuntimeParty.cs:617` gates stored `VegaNameMarkStacks` behind `IsManifestedVegaThreeSwordFlurry(skill)`.
+- `CombatRuntimeParty.cs:1120` and `:1121` keep Manifested Vega A queued projectiles passing mark stacks.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User reported non-Vega Manifested A attacks appeared to leave Vega name marks.

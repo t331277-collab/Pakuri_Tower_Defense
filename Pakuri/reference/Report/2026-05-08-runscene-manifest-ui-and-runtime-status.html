@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>RunScene 현현 UI 및 현현 몬스터 런타임 상태 점검</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #5d667a;
+      --line: #d9deea;
+      --accent: #2c6fbb;
+      --warn: #a95d00;
+      --bad: #a53131;
+      --ok: #187048;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 36px 28px 56px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+    }
+    h2 {
+      margin: 34px 0 14px;
+      font-size: 22px;
+      border-left: 5px solid var(--accent);
+      padding-left: 12px;
+    }
+    h3 {
+      margin: 22px 0 8px;
+      font-size: 17px;
+    }
+    p, li {
+      font-size: 15px;
+    }
+    .lead {
+      color: var(--muted);
+      margin-top: 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .card, section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: 0 1px 2px rgba(20, 30, 50, 0.04);
+    }
+    section {
+      margin-top: 18px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 9px 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef3fa;
+      font-weight: 700;
+    }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      background: #eef1f6;
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+    .ok { color: var(--ok); font-weight: 700; }
+    .warn { color: var(--warn); font-weight: 700; }
+    .bad { color: var(--bad); font-weight: 700; }
+    .evidence {
+      color: var(--muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>RunScene 현현 UI 및 현현 몬스터 런타임 상태 점검</h1>
+  <p class="lead">작성일: 2026-05-08. 이 문서는 실제 Unity-MCP 씬 검사, 현재 C# 코드, 관련 board 기록을 근거로 작성했다.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h3>결론</h3>
+      <p><span class="ok">필수 패널과 버튼은 현재 로드된 RunScene에 정확한 이름으로 존재한다.</span> 코드가 찾는 주요 이름은 <code>RewardPanel</code>, <code>PrisonerChoicePanel</code>, <code>PrisonerSummonerPanel</code>, <code>PrisonerOfferingPanel</code>, <code>PrisonerManifestFailurePopup</code>이다.</p>
+      <p><span class="warn">단, <code>PrisonerOfferingPanel</code> 안에 <code>DefeatPanel</code> 자식과 중복 <code>Title</code>이 남아 있다.</span> 이것은 바인딩 실패는 아니지만 화면이 이상하게 보일 수 있는 실제 씬 구조 문제다.</p>
+    </div>
+    <div class="card">
+      <h3>현재 역할</h3>
+      <p>Designer 관점의 점검 및 보고서 작성이다. 이번 요청에서는 C# 로직이나 씬 계층을 고치지 않고, 실제 상태를 HTML로 정리했다.</p>
+    </div>
+  </div>
+
+  <h2>1. RunCombatCanvas UI 연결 점검</h2>
+  <section>
+    <p>Unity-MCP 검사 시 활성 씬은 <code>RunScene</code>이며, <code>RunCombatCanvas</code>에는 <code>Canvas</code>, <code>CanvasScaler</code>, <code>GraphicRaycaster</code>, <code>RunCombatUiController</code>가 모두 있었다.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>대상</th>
+          <th>현재 씬 검사 결과</th>
+          <th>코드 바인딩 기준</th>
+          <th>판정</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>RewardPanel</code></td>
+          <td>존재. 자식 <code>Title</code>, <code>Summary</code>, <code>RewardButtons</code>, <code>ContinueButton</code> 존재. <code>RewardButtons/Prisoner</code>, <code>Artifact</code>, <code>Material</code> 모두 <code>Button</code>과 <code>Label</code> 텍스트 보유.</td>
+          <td><code>CacheUiReferences()</code>가 <code>RewardPanel</code>, <code>RewardButtons</code>, <code>ContinueButton</code>을 찾고, 보상 버튼 슬롯은 <code>EnsureRewardButtonSlots(...)</code>로 확인한다.</td>
+          <td class="ok">연결 가능</td>
+        </tr>
+        <tr>
+          <td><code>PrisonerChoicePanel</code></td>
+          <td>존재. <code>ManifestButton</code>, <code>AssimilateButton</code>, <code>OfferingButton</code>, <code>CorruptButton</code> 모두 <code>Button</code>과 <code>Label</code> 텍스트 보유.</td>
+          <td><code>EnsurePrisonerChoicePanels()</code>에서 <code>ManifestButton</code>은 <code>TryManifestPrisonerMonster</code>에 연결된다.</td>
+          <td class="ok">연결 가능</td>
+        </tr>
+        <tr>
+          <td><code>PrisonerSummonerPanel</code></td>
+          <td>존재. <code>MonsterImage</code>, <code>Summary</code>, <code>SummonButton</code>, <code>ContinueButton</code>, <code>BackButton</code>, <code>Title</code> 존재.</td>
+          <td><code>SummonButton</code>과 <code>ContinueButton</code>은 현재 결과 닫기인 <code>ClosePrisonerSummonerResult</code>에 연결된다. 현현 성공/실패 굴림은 더 이상 <code>SummonButton</code>에서 하지 않는다.</td>
+          <td class="ok">연결 가능</td>
+        </tr>
+        <tr>
+          <td><code>PrisonerOfferingPanel</code></td>
+          <td>존재. <code>Choice1</code>, <code>Choice2</code>, <code>Choice3</code> 모두 <code>Button</code>과 <code>Label</code> 텍스트 보유. 그러나 자식으로 <code>DefeatPanel</code>이 있고, <code>Title</code>이 두 개다.</td>
+          <td><code>CacheUiReferences()</code>는 <code>PrisonerOfferingPanel</code>을 우선 사용하고 <code>Choice1..3</code>을 공양 선택 버튼으로 바인딩한다.</td>
+          <td class="warn">버튼 연결은 가능하지만 계층 정리 필요</td>
+        </tr>
+        <tr>
+          <td><code>PrisonerManifestFailurePopup</code></td>
+          <td>존재. <code>Title</code>, <code>Summary</code>, <code>CloseButton</code> 존재. <code>CloseButton</code>은 <code>Button</code>과 <code>Label</code> 텍스트 보유.</td>
+          <td><code>ShowManifestFailurePopup(...)</code>이 이 패널을 켜고, <code>CloseButton</code>은 <code>ClosePrisonerManifestFailurePopup</code>에 연결된다.</td>
+          <td class="ok">연결 가능</td>
+        </tr>
+        <tr>
+          <td>사용자 메시지의 오탈자 이름</td>
+          <td><code>PrisoneChoicePanel</code>, <code>PrisonerOffringPanel</code>, <code>ProsonerManifextFaailurePopUP</code>는 현재 씬에 존재하지 않았다.</td>
+          <td>현재 C# 코드는 오탈자 이름을 찾지 않고 정확한 이름만 사용한다.</td>
+          <td class="ok">오탈자 패널 잔존 없음</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="evidence">근거: Unity-MCP <code>execute_code</code> 씬 검사 결과. <code>RunCombatCanvas</code> 직접 자식은 <code>HudPanel</code>, <code>MonsterPanel</code>, <code>RewardPanel</code>, <code>PrisonerChoicePanel</code>, <code>PrisonerSummonerPanel</code>, <code>PrisonerOfferingPanel</code>, <code>PrisonerManifestFailurePopup</code>, <code>DefeatPanel</code>이었다.</p>
+  </section>
+
+  <h2>2. 지금 보이는 UI 이상 현상의 실제 구조 원인</h2>
+  <section>
+    <p>현재 검사에서 가장 눈에 띄는 문제는 <code>PrisonerOfferingPanel</code> 내부에 <code>DefeatPanel</code>이 들어가 있는 점이다. 루트에도 별도의 <code>RunCombatCanvas/DefeatPanel</code>이 있으므로, Offering 패널 아래의 <code>DefeatPanel</code>은 의도한 바인딩 대상이 아니다.</p>
+    <p>또한 <code>PrisonerOfferingPanel</code> 안에 <code>Title</code>이 두 개 있다. <code>RunCombatUiController</code>는 <code>offeringPanel.transform.Find("Title")</code>로 첫 번째 <code>Title</code>만 잡기 때문에, 중복 제목은 화면 겹침이나 편집 혼동을 만들 수 있다.</p>
+    <p class="evidence">근거: Unity-MCP 검사에서 <code>PANEL_CHILD|PrisonerOfferingPanel|4|DefeatPanel</code>, <code>PANEL_CHILD|PrisonerOfferingPanel|3|Title</code>, <code>PANEL_CHILD|PrisonerOfferingPanel|5|Title</code>가 확인됐다.</p>
+  </section>
+
+  <h2>3. 현현 성공/실패 흐름의 현재 구조</h2>
+  <section>
+    <table>
+      <thead>
+        <tr>
+          <th>단계</th>
+          <th>현재 코드 동작</th>
+          <th>근거</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>포로 보상 클릭</td>
+          <td>포로 보상이면 보상 버튼을 다시 그리기 전에 <code>OpenPrisonerChoicePanel(...)</code>로 이동한다.</td>
+          <td><code>RunCombatUiController.cs</code>의 포로 보상 처리와 <code>OpenPrisonerChoicePanel</code>.</td>
+        </tr>
+        <tr>
+          <td>현현 버튼</td>
+          <td><code>ManifestButton</code>이 <code>TryManifestPrisonerMonster</code>에 연결되어 현현 후보 선정과 성공/실패 굴림을 수행한다.</td>
+          <td><code>RunCombatUiController.cs:367</code>, <code>:647</code>.</td>
+        </tr>
+        <tr>
+          <td>성공</td>
+          <td><code>PrisonerSummonerPanel</code>을 열고, 현현 결과를 보여준 뒤 결과 닫기 버튼으로 보상 화면에 돌아온다.</td>
+          <td><code>RunCombatUiController.cs:669-673</code>, <code>:734-743</code>.</td>
+        </tr>
+        <tr>
+          <td>실패</td>
+          <td><code>PrisonerManifestFailurePopup</code>을 열고, 닫으면 보상 화면으로 돌아온다.</td>
+          <td><code>RunCombatUiController.cs:700-722</code>.</td>
+        </tr>
+        <tr>
+          <td>SummonButton</td>
+          <td>현재는 현현 굴림이 아니라 결과 닫기 흐름에 연결되어 있다.</td>
+          <td><code>RunCombatUiController.cs:391</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <h2>4. Eve 중복 현현과 다른 몬스터 중복 문제의 현재 상태</h2>
+  <section>
+    <p>현재 구조는 Eve 전용으로 막는 방식이 아니다. 선택된 1P 몬스터의 <code>MonsterId</code>를 기준으로 후보 선정, 세션 기록, 전투 파티 구성 세 곳에서 모두 차단한다. 따라서 Eve뿐 아니라 현재 선택된 Ariel, Rin, Sein, Vega도 같은 방식으로 중복 현현이 차단된다.</p>
+    <ul>
+      <li><code>ResolveNextManifestCandidate()</code>는 <code>monster.MonsterId == currentSession.SelectedMonsterId</code>이면 후보에서 제외한다.</li>
+      <li><code>RunSession.RecordManifestedMonster(...)</code>는 <code>IsSelectedMonster(...)</code>이면 기록하지 않는다.</li>
+      <li><code>CombatRuntimeParty.ConfigureManifestedMonsterParty(...)</code>는 이미 세션에 잘못 들어간 선택 몬스터 ID도 전투 슬롯 구성에서 건너뛴다.</li>
+    </ul>
+    <p class="evidence">근거: <code>RunCombatUiController.cs:791</code>, <code>RunSession.cs:321</code>/<code>:334</code>, <code>CombatRuntimeParty.cs:156</code>.</p>
+  </section>
+
+  <h2>5. 현현 몬스터 스킬이 어색했던 이유</h2>
+  <section>
+    <p>어제부터 현현 몬스터 스킬이 이상했던 핵심 이유는, 처음 현현 몬스터가 “실제 몬스터 한 유닛이 자기 스킬 런타임을 소유하는 구조”가 아니었기 때문이다. 과거 구현은 선택된 1P 몬스터와 별도로 <code>CombatRuntimeParty</code> 쪽에서 현현 몬스터를 순회하며 공통 처리했고, 일부 스킬은 등록된 몬스터별 구현 대신 단순 선/빔 또는 단발 효과처럼 보이는 공통 경로를 탔다.</p>
+    <p>그 결과 A 스킬이 projectile/magazine/reload를 가져야 하는 몬스터도 빔처럼 보이거나, Offering으로 얻은 스킬이 쿨다운은 도는데 실제 스킬 종류에 맞는 효과가 아니거나, Eve Frost Field 같은 지속 스킬이 한 번만 타격하는 문제가 생겼다.</p>
+    <p>현재 수정 방향은 <code>RunSession.RunMonsterState</code>로 각 파티 멤버의 성장 상태를 분리하고, <code>CombatUnitRuntime</code>과 <code>CombatSkillRuntime</code>으로 2P-5P 현현 유닛이 자기 몬스터, HP/스탯, 배운 스킬, 탄창/쿨다운/재장전 상태를 소유하게 만든 것이다. 전장 오브젝트 생성, 피해 적용, projectile/effect 생성은 여전히 <code>CombatRuntimeController</code> 계열 서비스가 담당한다.</p>
+  </section>
+
+  <h2>6. 현재 현현 런타임 구조</h2>
+  <section>
+    <table>
+      <thead>
+        <tr>
+          <th>계층</th>
+          <th>현재 책임</th>
+          <th>실제 파일 근거</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>RunSession</code></td>
+          <td>선택 몬스터 ID, 현현 몬스터 ID 목록, 파티 멤버별 <code>RunMonsterState</code>, Offering 선택/학습 스킬을 보관한다.</td>
+          <td><code>RunSession.cs</code>: <code>SelectedMonsterId</code>, <code>RecordManifestedMonster</code>, <code>EnsurePartyMemberState</code>.</td>
+        </tr>
+        <tr>
+          <td><code>RunCombatUiController</code></td>
+          <td>보상 UI, 포로 선택, 현현 성공/실패 UI, 공양 UI를 바인딩하고 세션 변경 뒤 전투 파티를 갱신한다.</td>
+          <td><code>RunCombatUiController.cs</code>: <code>EnsurePrisonerChoicePanels</code>, <code>TryManifestPrisonerMonster</code>, <code>IsRewardModalOpen</code>.</td>
+        </tr>
+        <tr>
+          <td><code>CombatUnitRuntime</code></td>
+          <td>각 전투 유닛 컴포넌트가 몬스터 정의, 런 세션 상태, HP/스탯, 스킬 런타임 목록을 가진다.</td>
+          <td><code>CombatUnitRuntime.cs</code>: <code>Monster</code>, <code>State</code>, <code>Skills</code>, <code>ConfigureManifested</code>, <code>ConfigureSelected</code>.</td>
+        </tr>
+        <tr>
+          <td><code>CombatSkillRuntime</code></td>
+          <td>스킬별 쿨다운, 탄창 수, 재장전, 사격 간격, Vega A 예약 발사 상태를 가진다.</td>
+          <td><code>CombatSkillRuntime.cs</code>: <code>CooldownRemaining</code>, <code>ShotsRemaining</code>, <code>ReloadRemaining</code>, <code>PendingVegaProjectileCount</code>.</td>
+        </tr>
+        <tr>
+          <td><code>CombatRuntimeParty</code></td>
+          <td>현현 몬스터를 <code>CombatRoot/2PMonster</code>부터 <code>5PMonster</code> 슬롯에 연결하고, 각 유닛의 스킬 실행을 전장 서비스로 연결한다.</td>
+          <td><code>CombatRuntimeParty.cs</code>: <code>manifestedMonsters</code>, <code>CreateCombatUnitRuntime</code>, <code>TickManifestedUnitSkill</code>.</td>
+        </tr>
+        <tr>
+          <td>Eve 특수 경로</td>
+          <td>현현 Eve A는 자동 조준 Arc Bolt projectile 경로를 사용하고, Eve B-E는 unit runtime 기반 공유 캐스터 경로를 사용한다.</td>
+          <td><code>CombatRuntimeEveSkills.cs</code>: <code>TryTickEveUnitSkill</code>, <code>TryFireEveUnitArcBolt</code>, <code>ManifestedSource</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <h2>7. Vega 이름표식 문제의 현재 상태</h2>
+  <section>
+    <p>현재 코드는 일반 현현 projectile에는 이름표식 스택을 0으로 넘기고, projectile runtime 저장 시에도 <code>IsManifestedVegaThreeSwordFlurry(skill)</code>가 참일 때만 <code>VegaNameMarkStacks</code>를 유지한다. 따라서 비-Vega 현현 A 공격에 Vega 이름표식이 붙는 문제는 현재 코드 기준으로 차단되어 있다.</p>
+    <p>Vega A는 예외다. <code>vega-a</code>는 현현 상태에서도 세 검 투사체 큐를 사용하고, 그 projectile에만 이름표식을 실어 보낸다.</p>
+    <p class="evidence">근거: <code>CombatRuntimeParty.cs:554</code>, <code>:617</code>, <code>:1064</code>, <code>:1120-1121</code>.</p>
+  </section>
+
+  <h2>8. 남은 확인 항목</h2>
+  <section>
+    <ul>
+      <li><span class="warn">씬 정리 필요:</span> <code>PrisonerOfferingPanel/DefeatPanel</code> 자식과 중복 <code>Title</code>은 수동 정리 또는 별도 수정 요청 대상이다.</li>
+      <li><span class="warn">Play Mode 필요:</span> 버튼 클릭 후 실제 화면 전환, 현현 성공/실패 확률, 전투 중 현현 몬스터 스킬 발동은 AGENTS.md 규칙상 사용자가 Play Mode에서 확인해야 한다.</li>
+      <li><span class="ok">코드 기준 연결:</span> 현재 필수 버튼 오브젝트는 모두 <code>Button</code> 컴포넌트와 <code>Label</code> 텍스트를 보유하고 있어 <code>EnsureButton</code> 기반 바인딩 조건을 충족한다.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

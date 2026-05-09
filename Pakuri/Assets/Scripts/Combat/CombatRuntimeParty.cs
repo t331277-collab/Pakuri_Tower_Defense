@@ -192,7 +192,10 @@ namespace Pakuri.Combat
             renderer.color = Color.white;
             renderer.sortingOrder = 19 - index;
 
-            var label = EnsureManifestedMonsterLabel(monsterObject.transform);
+            var statusViews = ResolveManifestedMonsterStatusViews(monsterObject.transform, usesSceneSlot);
+            var label = statusViews.HpLabel != null
+                ? statusViews.HpLabel
+                : usesSceneSlot ? null : EnsureManifestedMonsterLabel(monsterObject.transform);
 
             var runtime = monsterObject.GetComponent<CombatUnitRuntime>();
             if (runtime == null)
@@ -200,7 +203,18 @@ namespace Pakuri.Combat
                 runtime = monsterObject.AddComponent<CombatUnitRuntime>();
             }
 
-            runtime.ConfigureManifested(this, monster, state, renderer, label, usesSceneSlot, index);
+            runtime.ConfigureManifested(
+                this,
+                monster,
+                state,
+                renderer,
+                label,
+                statusViews.NameLabel,
+                statusViews.HpLabel,
+                statusViews.HpBarFill,
+                statusViews.ShieldBarFill,
+                usesSceneSlot,
+                index);
             runtime.ConfigureStatsFromDefinition();
             SyncManifestedLearnedSkills(runtime);
             for (var i = 0; i < runtime.Skills.Count; i++)
@@ -237,6 +251,220 @@ namespace Pakuri.Combat
             monsterObject.transform.SetParent(transform, false);
             monsterObject.transform.localScale = Vector3.one;
             return monsterObject;
+        }
+
+        private readonly struct ManifestedMonsterStatusViews
+        {
+            public ManifestedMonsterStatusViews(TextMesh nameLabel, TextMesh hpLabel, SpriteRenderer hpBarFill, SpriteRenderer shieldBarFill)
+            {
+                NameLabel = nameLabel;
+                HpLabel = hpLabel;
+                HpBarFill = hpBarFill;
+                ShieldBarFill = shieldBarFill;
+            }
+
+            public TextMesh NameLabel { get; }
+            public TextMesh HpLabel { get; }
+            public SpriteRenderer HpBarFill { get; }
+            public SpriteRenderer ShieldBarFill { get; }
+        }
+
+        private ManifestedMonsterStatusViews ResolveManifestedMonsterStatusViews(Transform monsterTransform, bool preferSceneChildren)
+        {
+            if (monsterTransform == null)
+            {
+                return default;
+            }
+
+            var nameLabel = FindManifestedTextMesh(monsterTransform, "MonsterNameLabel", "Name Label", "NameLabel");
+            var hpLabel = FindManifestedTextMesh(monsterTransform, "MonsterHpLabel", "HPLabel", "HPLable", "HP Label");
+            var hpBar = FindManifestedSpriteRenderer(monsterTransform, "MonsterHpBar/Fill", "HPBar/Fill", "HpBar/Fill");
+            var shieldBar = FindManifestedSpriteRenderer(monsterTransform, "MonsterHpBar/Shield", "HPBar/Shield", "HpBar/Shield");
+            if (hpBar == null)
+            {
+                var generatedBar = EnsureManifestedHpBar(monsterTransform);
+                hpBar = generatedBar.HpBarFill;
+                shieldBar = shieldBar != null ? shieldBar : generatedBar.ShieldBarFill;
+            }
+            else
+            {
+                var normalizedBar = NormalizeManifestedHpBar(hpBar);
+                hpBar = normalizedBar.HpBarFill != null ? normalizedBar.HpBarFill : hpBar;
+                shieldBar = shieldBar != null ? shieldBar : normalizedBar.ShieldBarFill;
+            }
+
+            if (preferSceneChildren)
+            {
+                return new ManifestedMonsterStatusViews(nameLabel, hpLabel, hpBar, shieldBar);
+            }
+
+            return new ManifestedMonsterStatusViews(nameLabel, hpLabel, hpBar, shieldBar);
+        }
+
+        private static ManifestedMonsterStatusViews EnsureManifestedHpBar(Transform monsterTransform)
+        {
+            if (monsterTransform == null)
+            {
+                return default;
+            }
+
+            var barTransform = monsterTransform.Find("MonsterHpBar");
+            if (barTransform == null)
+            {
+                var barObject = new GameObject("MonsterHpBar");
+                barTransform = barObject.transform;
+                barTransform.SetParent(monsterTransform, false);
+                barTransform.localPosition = new Vector3(0f, 0.66f, 0f);
+                barTransform.localScale = new Vector3(0.90f, 1f, 1f);
+            }
+
+            var background = EnsureManifestedBarRenderer(barTransform, "Background", Color.black, 34);
+            if (background != null)
+            {
+                background.transform.localPosition = Vector3.zero;
+                background.transform.localScale = new Vector3(1f, 0.08f, 1f);
+            }
+
+            var fill = EnsureManifestedBarRenderer(barTransform, "Fill", Color.red, 35);
+            if (fill != null)
+            {
+                fill.transform.localPosition = new Vector3(0f, 0f, -0.01f);
+                fill.transform.localScale = new Vector3(1f, 0.08f, 1f);
+            }
+
+            var shield = EnsureManifestedBarRenderer(barTransform, "Shield", Color.white, 36);
+            if (shield != null)
+            {
+                shield.transform.localPosition = new Vector3(-0.5f, 0f, -0.02f);
+                shield.transform.localScale = new Vector3(0f, 0.08f, 1f);
+            }
+
+            return new ManifestedMonsterStatusViews(null, null, fill, shield);
+        }
+
+        private static ManifestedMonsterStatusViews NormalizeManifestedHpBar(SpriteRenderer hpBarFill)
+        {
+            if (hpBarFill == null || hpBarFill.transform == null || hpBarFill.transform.parent == null)
+            {
+                return default;
+            }
+
+            var barTransform = hpBarFill.transform.parent;
+            if (barTransform.localScale == Vector3.zero)
+            {
+                barTransform.localScale = new Vector3(0.90f, 1f, 1f);
+            }
+
+            var background = EnsureManifestedBarRenderer(barTransform, "Background", Color.black, 34);
+            if (background != null)
+            {
+                background.transform.localPosition = Vector3.zero;
+                if (Mathf.Approximately(background.transform.localScale.y, 0f))
+                {
+                    background.transform.localScale = new Vector3(1f, 0.08f, 1f);
+                }
+            }
+
+            var fill = EnsureManifestedBarRenderer(barTransform, hpBarFill.transform.name, Color.red, 35);
+            if (fill != null)
+            {
+                if (Mathf.Approximately(fill.transform.localScale.y, 0f))
+                {
+                    fill.transform.localScale = new Vector3(1f, 0.08f, 1f);
+                }
+
+                fill.transform.localPosition = new Vector3(fill.transform.localPosition.x, fill.transform.localPosition.y, -0.01f);
+            }
+
+            var shield = EnsureManifestedBarRenderer(barTransform, "Shield", Color.white, 36);
+            if (shield != null)
+            {
+                if (Mathf.Approximately(shield.transform.localScale.y, 0f))
+                {
+                    shield.transform.localScale = new Vector3(0f, 0.08f, 1f);
+                }
+
+                shield.transform.localPosition = new Vector3(shield.transform.localPosition.x, shield.transform.localPosition.y, -0.02f);
+            }
+
+            return new ManifestedMonsterStatusViews(null, null, fill, shield);
+        }
+
+        private static SpriteRenderer EnsureManifestedBarRenderer(Transform parent, string childName, Color color, int sortingOrder)
+        {
+            if (parent == null || string.IsNullOrWhiteSpace(childName))
+            {
+                return null;
+            }
+
+            var child = parent.Find(childName);
+            if (child == null)
+            {
+                var childObject = new GameObject(childName);
+                child = childObject.transform;
+                child.SetParent(parent, false);
+            }
+
+            var renderer = child.GetComponent<SpriteRenderer>();
+            if (renderer == null)
+            {
+                renderer = child.gameObject.AddComponent<SpriteRenderer>();
+            }
+
+            renderer.sprite = GetSharedSprite();
+            renderer.color = color;
+            renderer.sortingOrder = sortingOrder;
+            return renderer;
+        }
+
+        private static TextMesh FindManifestedTextMesh(Transform root, params string[] relativePaths)
+        {
+            if (root == null || relativePaths == null)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < relativePaths.Length; i++)
+            {
+                var child = root.Find(relativePaths[i]);
+                if (child == null)
+                {
+                    continue;
+                }
+
+                var text = child.GetComponent<TextMesh>();
+                if (text != null)
+                {
+                    return text;
+                }
+            }
+
+            return null;
+        }
+
+        private static SpriteRenderer FindManifestedSpriteRenderer(Transform root, params string[] relativePaths)
+        {
+            if (root == null || relativePaths == null)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < relativePaths.Length; i++)
+            {
+                var child = root.Find(relativePaths[i]);
+                if (child == null)
+                {
+                    continue;
+                }
+
+                var renderer = child.GetComponent<SpriteRenderer>();
+                if (renderer != null)
+                {
+                    return renderer;
+                }
+            }
+
+            return null;
         }
 
         private TextMesh EnsureManifestedMonsterLabel(Transform monsterTransform)
@@ -389,6 +617,11 @@ namespace Pakuri.Combat
                 return;
             }
 
+            if (TryTickRinUnitSkill(runtime, skillRuntime, elapsed))
+            {
+                return;
+            }
+
             TickCombatSkillRuntime(runtime, skillRuntime, elapsed);
             if (IsManifestedMagazineSkill(skillRuntime.Skill))
             {
@@ -414,7 +647,7 @@ namespace Pakuri.Combat
             }
             else
             {
-                FireManifestedMonsterSkill(runtime, skillRuntime.Skill, target);
+                FireManifestedMonsterSkill(runtime, skillRuntime, target);
             }
 
             skillRuntime.CooldownDuration = ResolveManifestedSkillCooldown(runtime, skillRuntime.Skill);
@@ -474,7 +707,7 @@ namespace Pakuri.Combat
             }
             else
             {
-                FireManifestedMonsterSkill(runtime, skillRuntime.Skill, target);
+                FireManifestedMonsterSkill(runtime, skillRuntime, target);
             }
 
             skillRuntime.ShotsRemaining -= 1;
@@ -488,15 +721,28 @@ namespace Pakuri.Combat
             }
         }
 
-        private void FireManifestedMonsterSkill(CombatUnitRuntime runtime, SkillDefinition skill, EnemyRuntime target)
+        private void FireManifestedMonsterSkill(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime, EnemyRuntime target)
         {
+            var skill = skillRuntime != null ? skillRuntime.Skill : null;
             if (runtime == null || skill == null || target == null || runtime.Transform == null || target.Transform == null)
+            {
+                return;
+            }
+
+            if (TryFireManifestedRinShockwave(runtime, skillRuntime, target))
             {
                 return;
             }
 
             if (TryFireManifestedPersistentSkill(runtime, skill, target))
             {
+                return;
+            }
+
+            if (skill.RuntimeKind == SkillRuntimeKind.Buff || skill.RuntimeKind == SkillRuntimeKind.Shield)
+            {
+                CreateManifestedSkillVisual(runtime, skill, target);
+                statusLabel = $"{runtime.Monster.DisplayName} {skill.DisplayName} activated.";
                 return;
             }
 
@@ -529,6 +775,124 @@ namespace Pakuri.Combat
             statusLabel = $"{runtime.Monster.DisplayName} {skill.DisplayName} hit for {appliedTotal:0.#}.";
         }
 
+        private bool TryFireManifestedRinShockwave(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime, EnemyRuntime target)
+        {
+            var skill = skillRuntime != null ? skillRuntime.Skill : null;
+            if (runtime == null || skill == null || target == null || runtime.Transform == null || target.Transform == null)
+            {
+                return false;
+            }
+
+            if (!string.Equals(skill.SkillId, "rin-c", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            var direction = target.Transform.position - runtime.Transform.position;
+            direction.z = 0f;
+            if (direction.sqrMagnitude < 0.01f)
+            {
+                direction = Vector3.right;
+            }
+
+            direction.Normalize();
+            var length = GetRinMapWideSkillRange();
+            var width = RinShockwaveWidth;
+            var knockback = RinShockwaveKnockback;
+
+            if (HasRinUnitChoice(runtime, "rin-c-trait-2"))
+            {
+                width *= 1.25f;
+            }
+
+            if (HasRinUnitChoice(runtime, "rin-c-trait-3"))
+            {
+                knockback *= 1.40f;
+            }
+
+            if (HasRinUnitChoice(runtime, "rin-c-master-1"))
+            {
+                width *= 0.75f;
+                knockback *= 1.50f;
+            }
+
+            if (HasRinUnitChoice(runtime, "rin-c-master-2"))
+            {
+                width *= 1.60f;
+            }
+
+            var effect = CreateLineEffect("ManifestedRinShockwave", runtime.Transform.position, direction, length, width, 0.25f, skill.SkillEffectPrefab);
+            effect.SkillId = "rin-c";
+            if (effect.Renderer != null)
+            {
+                effect.Renderer.color = new Color(1f, 0.88f, 0.56f, 0.68f);
+                effect.Renderer.sortingOrder = 24;
+            }
+
+            skillEffects.Add(effect);
+
+            var hitCount = 0;
+            var appliedTotal = 0f;
+            for (var i = 0; i < enemies.Count; i++)
+            {
+                var enemy = enemies[i];
+                if (enemy == null || enemy.CurrentHealth <= 0f || enemy.Transform == null || !IsPointInsideBeam(enemy.Transform.position, effect))
+                {
+                    continue;
+                }
+
+                var damageMultiplier = 1f;
+                damageMultiplier *= HasRinUnitChoice(runtime, "rin-c-trait-1") ? 1.25f : 1f;
+                damageMultiplier *= HasRinUnitChoice(runtime, "rin-c-master-1") ? 1.80f : 1f;
+                damageMultiplier *= HasRinUnitChoice(runtime, "rin-c-master-2") ? 1.25f : 1f;
+                var physicalDamage = ApplyRinUnitSkillDamage(runtime, skill, enemy, damageMultiplier, "rin-c");
+                appliedTotal += physicalDamage;
+                ApplyRinKnockback(enemy, direction, knockback);
+
+                if (HasRinUnitChoice(runtime, "rin-c-master-1"))
+                {
+                    ApplyRinUnitAdditionalDamage(runtime, enemy, physicalDamage, 0.60f, DamageAttribute.Lightning, "rin-c-master-1");
+                }
+
+                if (HasRinUnitChoice(runtime, "rin-c-master-2"))
+                {
+                    ApplyRinSlow(enemy, 0.80f, 1.5f);
+                }
+
+                hitCount += 1;
+            }
+
+            if (hitCount > 0 && HasRinUnitChoice(runtime, "rin-c-trait-5"))
+            {
+                ReduceManifestedSkillReload(runtime, "rin-a", hitCount * 0.25f);
+            }
+
+            statusLabel = $"{runtime.Monster.DisplayName} {skill.DisplayName} shockwave hit {hitCount} enemy(s) for {appliedTotal:0.#}.";
+            return true;
+        }
+
+        private static void ReduceManifestedSkillReload(CombatUnitRuntime runtime, string skillId, float amount)
+        {
+            if (runtime == null || string.IsNullOrWhiteSpace(skillId) || amount <= 0f)
+            {
+                return;
+            }
+
+            for (var i = 0; i < runtime.Skills.Count; i++)
+            {
+                var skillRuntime = runtime.Skills[i];
+                if (skillRuntime == null
+                    || skillRuntime.Skill == null
+                    || !string.Equals(skillRuntime.Skill.SkillId, skillId, StringComparison.OrdinalIgnoreCase)
+                    || skillRuntime.ReloadRemaining <= 0f)
+                {
+                    continue;
+                }
+
+                skillRuntime.ReloadRemaining = Mathf.Max(0f, skillRuntime.ReloadRemaining - amount);
+            }
+        }
+
         private void FireManifestedMonsterProjectile(CombatUnitRuntime runtime, SkillDefinition skill, EnemyRuntime target)
         {
             if (runtime == null || runtime.Monster == null || skill == null || target == null || runtime.Transform == null || target.Transform == null)
@@ -544,7 +908,38 @@ namespace Pakuri.Combat
             }
 
             direction.Normalize();
-            FireManifestedMonsterProjectile(runtime, skill, runtime.Transform.position, direction, 1f, 0, 1);
+            FireManifestedMonsterProjectile(runtime, skill, runtime.Transform.position, direction, 1f, ResolveManifestedProjectilePierce(runtime, skill), 0);
+        }
+
+        private int ResolveManifestedProjectilePierce(CombatUnitRuntime runtime, SkillDefinition skill)
+        {
+            if (skill == null)
+            {
+                return 0;
+            }
+
+            var skillId = skill.SkillId ?? string.Empty;
+            if (string.Equals(skillId, "ariel-a", StringComparison.OrdinalIgnoreCase))
+            {
+                var pierce = 1;
+                pierce += HasManifestedChoice(runtime, "ariel-a-trait-4") ? 1 : 0;
+                return Mathf.Max(0, pierce);
+            }
+
+            if (string.Equals(skillId, "sein-a", StringComparison.OrdinalIgnoreCase))
+            {
+                var pierce = 1;
+                pierce += HasManifestedChoice(runtime, "sein-a-trait-4") ? 1 : 0;
+                pierce += HasManifestedChoice(runtime, "sein-a-master-1") ? 1 : 0;
+                return Mathf.Max(0, pierce);
+            }
+
+            if (string.Equals(skillId, "rin-a", StringComparison.OrdinalIgnoreCase))
+            {
+                return HasManifestedChoice(runtime, "rin-a-trait-4") ? 1 : 0;
+            }
+
+            return 0;
         }
 
         private void FireManifestedMonsterProjectile(
@@ -607,8 +1002,9 @@ namespace Pakuri.Combat
                 RemainingPierce = Mathf.Max(0, remainingPierce),
                 StatusStacks = 1,
                 StatusChance = ResolveManifestedStatusChance(runtime),
-                VegaNameMarkStacks = Mathf.Max(0, nameMarkStacks),
+                VegaNameMarkStacks = IsManifestedVegaThreeSwordFlurry(skill) ? Mathf.Max(0, nameMarkStacks) : 0,
                 IsManifestedProjectile = true,
+                ManifestedSource = runtime,
                 ManifestedSourceName = runtime.Monster.DisplayName,
                 ManifestedSkillName = skill.DisplayName,
                 ManifestedElementLabel = runtime.Monster.ElementLabel,
@@ -643,14 +1039,20 @@ namespace Pakuri.Combat
                 }
 
                 enemyHit = enemy;
-                damageResult = DamageCalculator.Resolve(
-                    projectile.BaseDamage,
-                    projectile.Attribute,
-                    enemy.Defenses,
-                    targetCriticalResistance: enemy.CriticalResistance,
-                    finalDamageMultiplier: enemy.DamageTakenMultiplier);
-                appliedDamage = ApplyDamageToEnemy(enemy, damageResult.FinalDamage, damageResult.Attribute);
+                if (!TryApplyRinUnitProjectileHit(projectile, enemy, out damageResult, out appliedDamage))
+                {
+                    damageResult = DamageCalculator.Resolve(
+                        projectile.BaseDamage,
+                        projectile.Attribute,
+                        enemy.Defenses,
+                        targetCriticalResistance: enemy.CriticalResistance,
+                        finalDamageMultiplier: enemy.DamageTakenMultiplier);
+                    appliedDamage = ApplyDamageToEnemy(enemy, damageResult.FinalDamage, damageResult.Attribute);
+                }
+
                 ApplyManifestedProjectileStatus(projectile, enemy);
+                TryApplyProjectileBranch(projectile, enemy, damageResult.FinalDamage);
+                ApplyManifestedProjectileSourceEffects(projectile, enemy, appliedDamage);
                 if (projectile.VegaNameMarkStacks > 0)
                 {
                     AddVegaNameMarks(enemy, projectile.VegaNameMarkStacks);
@@ -661,6 +1063,75 @@ namespace Pakuri.Combat
             return false;
         }
 
+        private void ApplyManifestedProjectileSourceEffects(ProjectileRuntime projectile, EnemyRuntime enemy, float appliedDamage)
+        {
+            if (projectile == null || enemy == null || appliedDamage <= 0f)
+            {
+                return;
+            }
+
+            if (string.Equals(projectile.SkillId, "sein-a", StringComparison.OrdinalIgnoreCase))
+            {
+                enemy.SeinScorchingArrowTimer = Mathf.Max(enemy.SeinScorchingArrowTimer, 4f);
+                if (HasManifestedChoice(projectile.ManifestedSource, "sein-a-master-2"))
+                {
+                    ApplyManifestedAreaDamage(enemy.Transform.position, 1.35f, projectile.BaseDamage * 0.50f, DamageAttribute.Fire);
+                }
+            }
+        }
+
+        private void ApplyManifestedAreaDamage(Vector3 center, float radius, float baseDamage, DamageAttribute attribute)
+        {
+            if (baseDamage <= 0f || radius <= 0f)
+            {
+                return;
+            }
+
+            for (var i = 0; i < enemies.Count; i++)
+            {
+                var enemy = enemies[i];
+                if (enemy == null || enemy.Transform == null || enemy.CurrentHealth <= 0f)
+                {
+                    continue;
+                }
+
+                if (Vector2.Distance(center, enemy.Transform.position) > radius + GetEnemyHitRadius(enemy))
+                {
+                    continue;
+                }
+
+                var damageResult = DamageCalculator.Resolve(
+                    baseDamage,
+                    attribute,
+                    enemy.Defenses,
+                    targetCriticalResistance: enemy.CriticalResistance,
+                    finalDamageMultiplier: enemy.DamageTakenMultiplier);
+                ApplyDamageToEnemy(enemy, damageResult.FinalDamage, damageResult.Attribute);
+                enemy.FlashTimer = 0.08f;
+            }
+        }
+
+        private void CreateManifestedGenericField(CombatUnitRuntime runtime, SkillDefinition skill, EnemyRuntime target)
+        {
+            if (runtime == null || skill == null || target == null || target.Transform == null)
+            {
+                return;
+            }
+
+            var radius = Mathf.Max(0.5f, skill.Radius > 0f ? skill.Radius : 2f);
+            var duration = ResolveManifestedSkillVisualDuration(runtime, skill);
+            var effect = CreateCircleEffect("ManifestedField", target.Transform.position, radius, duration, skill.SkillEffectPrefab);
+            effect.SkillId = skill.SkillId;
+            effect.ManifestedSource = runtime;
+            effect.BaseDamage = ResolveManifestedBaseDamage(runtime, skill);
+            effect.Attribute = skill.Attribute;
+            effect.TickInterval = 0.5f;
+            effect.TickRemaining = 0f;
+            effect.Radius = radius;
+            skillEffects.Add(effect);
+            statusLabel = $"{runtime.Monster.DisplayName} {skill.DisplayName} field active.";
+        }
+
         private void ApplyManifestedProjectileStatus(ProjectileRuntime projectile, EnemyRuntime enemy)
         {
             if (projectile == null || enemy == null || projectile.StatusChance <= 0f || UnityEngine.Random.value >= Mathf.Clamp01(projectile.StatusChance))
@@ -669,15 +1140,15 @@ namespace Pakuri.Combat
             }
 
             var statusId = projectile.ManifestedStatusEffectId ?? string.Empty;
-            if (statusId.Contains("媛먯쟾") || string.Equals(statusId, "shock", StringComparison.OrdinalIgnoreCase))
+            if (statusId.Contains("媛먯쟾") || statusId.Contains("감전") || string.Equals(statusId, "shock", StringComparison.OrdinalIgnoreCase))
             {
                 ApplyShock(enemy, Mathf.Max(1, projectile.StatusStacks), 1.25f);
             }
-            else if (statusId.Contains("鍮숆껐") || statusId.Contains("?됯린") || string.Equals(statusId, "chill", StringComparison.OrdinalIgnoreCase))
+            else if (statusId.Contains("鍮숆껐") || statusId.Contains("?됯린") || statusId.Contains("빙결") || string.Equals(statusId, "chill", StringComparison.OrdinalIgnoreCase))
             {
                 ApplyChill(enemy, Mathf.Max(1, projectile.StatusStacks), 2.5f);
             }
-            else if (statusId.Contains("痍⑥빟") || string.Equals(statusId, "vulnerable", StringComparison.OrdinalIgnoreCase))
+            else if (statusId.Contains("痍⑥빟") || statusId.Contains("취약") || string.Equals(statusId, "vulnerable", StringComparison.OrdinalIgnoreCase))
             {
                 ApplyVulnerable(enemy, Mathf.Max(1, projectile.StatusStacks));
             }
@@ -685,13 +1156,23 @@ namespace Pakuri.Combat
 
         private float ApplyManifestedSkillDamage(CombatUnitRuntime runtime, SkillDefinition skill, EnemyRuntime target)
         {
+            return ApplyManifestedSkillDamage(runtime, skill, target, 1f);
+        }
+
+        private float ApplyManifestedSkillDamage(CombatUnitRuntime runtime, SkillDefinition skill, EnemyRuntime target, float finalMultiplier)
+        {
+            if (target == null || skill == null)
+            {
+                return 0f;
+            }
+
             var baseDamage = ResolveManifestedBaseDamage(runtime, skill);
             var damageResult = DamageCalculator.Resolve(
                 baseDamage,
                 skill.Attribute,
                 target.Defenses,
                 targetCriticalResistance: target.CriticalResistance,
-                finalDamageMultiplier: target.DamageTakenMultiplier);
+                finalDamageMultiplier: target.DamageTakenMultiplier * Mathf.Max(0f, finalMultiplier));
             var applied = ApplyDamageToEnemy(target, damageResult.FinalDamage, damageResult.Attribute);
             target.FlashTimer = 0.08f;
             return applied;
@@ -721,6 +1202,13 @@ namespace Pakuri.Combat
                     target.FreezeTimer = Mathf.Max(target.FreezeTimer, effect.FreezeDuration);
                 }
             }
+
+            if (string.Equals(effect.SkillId, "sein-d", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(effect.SkillId, "sein-d-residual", StringComparison.OrdinalIgnoreCase))
+            {
+                target.SeinSuperheatedZoneTimer = Mathf.Max(target.SeinSuperheatedZoneTimer, 0.7f);
+                target.SeinSuperheatedTickCount += 1;
+            }
         }
 
         private bool TryFireManifestedPersistentSkill(CombatUnitRuntime runtime, SkillDefinition skill, EnemyRuntime target)
@@ -741,7 +1229,8 @@ namespace Pakuri.Combat
                 return true;
             }
 
-            return false;
+            CreateManifestedGenericField(runtime, skill, target);
+            return true;
         }
 
         private void CreateManifestedEveFrostField(CombatUnitRuntime runtime, SkillDefinition skill, EnemyRuntime target)
@@ -813,7 +1302,74 @@ namespace Pakuri.Combat
             }
 
             var coefficient = Mathf.Max(skill.AttackPowerCoefficient, skill.SpellPowerCoefficient);
-            return Mathf.Max(1f, (skill.BaseDamage + (runtime.PowerStat * coefficient)) * ResolveManifestedDamageMultiplier(runtime));
+            return Mathf.Max(1f, (skill.BaseDamage + (runtime.PowerStat * coefficient)) * ResolveManifestedDamageMultiplier(runtime) * ResolveManifestedSkillDamageMultiplier(runtime, skill));
+        }
+
+        private float ResolveManifestedSkillDamageMultiplier(CombatUnitRuntime runtime, SkillDefinition skill)
+        {
+            if (skill == null)
+            {
+                return 1f;
+            }
+
+            var multiplier = 1f;
+            var skillId = skill.SkillId ?? string.Empty;
+            if (string.Equals(skillId, "ariel-a", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "ariel-a-trait-1") ? 1.25f : 1f;
+                multiplier *= HasManifestedChoice(runtime, "ariel-a-trait-5") ? 1.06f : 1f;
+            }
+            else if (string.Equals(skillId, "ariel-c", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "ariel-c-trait-1") ? 1.25f : 1f;
+            }
+            else if (string.Equals(skillId, "ariel-d", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "ariel-d-trait-1") ? 1.30f : 1f;
+                multiplier *= HasManifestedChoice(runtime, "ariel-d-trait-4") ? 0.80f : 1f;
+            }
+            else if (string.Equals(skillId, "ariel-e", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "ariel-e-trait-1") ? 1.30f : 1f;
+                multiplier *= HasManifestedChoice(runtime, "ariel-e-master-2") ? 1.70f : 1f;
+            }
+            else if (string.Equals(skillId, "sein-a", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "sein-a-trait-1") ? 1.25f : 1f;
+                multiplier *= HasManifestedChoice(runtime, "sein-a-trait-4") ? 1.10f : 1f;
+                multiplier *= HasManifestedChoice(runtime, "sein-a-trait-5") ? 0.90f : 1f;
+                multiplier *= HasManifestedChoice(runtime, "sein-a-master-1") ? 1.55f : 1f;
+            }
+            else if (string.Equals(skillId, "sein-b", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "sein-b-trait-2") ? 1.25f : 1f;
+                multiplier *= HasManifestedChoice(runtime, "sein-b-master-1") ? 0.80f : 1f;
+                multiplier *= HasManifestedChoice(runtime, "sein-b-master-2") ? 1.90f : 1f;
+            }
+            else if (string.Equals(skillId, "rin-a", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "rin-a-trait-1") ? 1.25f : 1f;
+                multiplier *= HasManifestedChoice(runtime, "rin-a-trait-4") ? 0.90f : 1f;
+                multiplier *= HasManifestedChoice(runtime, "rin-a-master-1") ? 1.12f : 1f;
+            }
+
+            else if (string.Equals(skillId, "vega-b", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "vega-b-trait-1") ? 1.25f : 1f;
+                multiplier *= HasManifestedChoice(runtime, "vega-b-master-2") ? 1.70f : 1f;
+            }
+            else if (string.Equals(skillId, "vega-d", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "vega-d-trait-1") ? 1.25f : 1f;
+                multiplier *= HasManifestedChoice(runtime, "vega-d-master-2") ? 1.30f : 1f;
+            }
+            else if (string.Equals(skillId, "vega-e", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "vega-e-trait-1") ? 1.25f : 1f;
+                multiplier *= HasManifestedChoice(runtime, "vega-e-master-2") ? 0.80f : 1f;
+            }
+
+            return Mathf.Max(0f, multiplier);
         }
 
         private float ResolveManifestedDamageMultiplier(CombatUnitRuntime runtime)
@@ -826,6 +1382,18 @@ namespace Pakuri.Combat
         private static bool HasManifestedChoice(CombatUnitRuntime runtime, string choiceId)
         {
             return ContainsManifestedRuntimeText(runtime != null && runtime.State != null ? runtime.State.ChosenRewardIds : null, choiceId);
+        }
+
+        private bool HasRinUnitChoice(CombatUnitRuntime runtime, string choiceId)
+        {
+            return IsSelectedCombatUnit(runtime) ? HasChoice(choiceId) : HasManifestedChoice(runtime, choiceId);
+        }
+
+        private static bool IsManifestedMonster(CombatUnitRuntime runtime, string monsterId)
+        {
+            return runtime != null
+                && runtime.Monster != null
+                && string.Equals(runtime.Monster.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool HasManifestedPassive(CombatUnitRuntime runtime, string passiveId)
@@ -880,9 +1448,43 @@ namespace Pakuri.Combat
             if (skill.CooldownSeconds > 0f)
             {
                 var cooldown = skill.CooldownSeconds;
-                if (string.Equals(skill.SkillId, "eve-c", StringComparison.OrdinalIgnoreCase) && HasManifestedChoice(runtime, "eve-c-trait-3"))
+                var skillId = skill.SkillId ?? string.Empty;
+                if (string.Equals(skillId, "eve-c", StringComparison.OrdinalIgnoreCase) && HasManifestedChoice(runtime, "eve-c-trait-3"))
                 {
                     cooldown *= 0.85f;
+                }
+                else if (string.Equals(skillId, "ariel-b", StringComparison.OrdinalIgnoreCase) && HasManifestedChoice(runtime, "ariel-b-trait-3"))
+                {
+                    cooldown *= 0.80f;
+                }
+                else if (string.Equals(skillId, "ariel-e", StringComparison.OrdinalIgnoreCase) && HasManifestedChoice(runtime, "ariel-e-trait-3"))
+                {
+                    cooldown *= 0.80f;
+                }
+                else if (string.Equals(skillId, "sein-c", StringComparison.OrdinalIgnoreCase) && HasManifestedChoice(runtime, "sein-c-trait-3"))
+                {
+                    cooldown *= 0.80f;
+                }
+                else if (string.Equals(skillId, "sein-d", StringComparison.OrdinalIgnoreCase) && HasManifestedChoice(runtime, "sein-d-trait-4"))
+                {
+                    cooldown *= 0.80f;
+                }
+                else if (string.Equals(skillId, "vega-b", StringComparison.OrdinalIgnoreCase) && HasManifestedChoice(runtime, "vega-b-trait-3"))
+                {
+                    cooldown *= 0.80f;
+                }
+                else if (string.Equals(skillId, "vega-d", StringComparison.OrdinalIgnoreCase))
+                {
+                    cooldown *= HasManifestedChoice(runtime, "vega-d-trait-3") ? 0.80f : 1f;
+                    cooldown *= HasManifestedChoice(runtime, "vega-d-master-2") ? 1.20f : 1f;
+                }
+                else if (string.Equals(skillId, "vega-e", StringComparison.OrdinalIgnoreCase) && HasManifestedChoice(runtime, "vega-e-trait-3"))
+                {
+                    cooldown *= 0.80f;
+                }
+                else if (string.Equals(skillId, "rin-c", StringComparison.OrdinalIgnoreCase) && HasManifestedChoice(runtime, "rin-c-trait-4"))
+                {
+                    cooldown *= 0.80f;
                 }
 
                 return Mathf.Max(0.45f, cooldown);
@@ -947,7 +1549,18 @@ namespace Pakuri.Combat
 
             var projectileIndex = skillRuntime.PendingVegaProjectileIndex;
             var damageMultiplier = projectileIndex >= 2 ? 2f : 1f;
-            FireManifestedMonsterProjectile(runtime, skillRuntime.Skill, skillRuntime.PendingVegaProjectileDirection, damageMultiplier, 999, 1);
+            if (HasManifestedChoice(runtime, "vega-a-trait-1"))
+            {
+                damageMultiplier *= 1.20f;
+            }
+
+            if (projectileIndex >= 2 && HasManifestedChoice(runtime, "vega-a-trait-4"))
+            {
+                damageMultiplier += 0.50f;
+            }
+
+            var markStacks = 1 + (HasManifestedChoice(runtime, "vega-f-trait-3") ? 1 : 0);
+            FireManifestedMonsterProjectile(runtime, skillRuntime.Skill, skillRuntime.PendingVegaProjectileDirection, damageMultiplier, 999, markStacks);
             skillRuntime.PendingVegaProjectileIndex += 1;
             skillRuntime.PendingVegaProjectileCount -= 1;
             if (skillRuntime.PendingVegaProjectileCount > 0)
@@ -1082,6 +1695,25 @@ namespace Pakuri.Combat
                 ? skill.MagazineCapacity
                 : runtime != null && runtime.Monster != null ? runtime.Monster.MagazineCapacity : 1;
             var bonus = runtime != null && runtime.State != null ? runtime.State.MagazineBonus : 0;
+            if (string.Equals(skill != null ? skill.SkillId : string.Empty, "eve-a", StringComparison.OrdinalIgnoreCase))
+            {
+                bonus += HasManifestedChoice(runtime, "eve-a-trait-1") ? 4 : 0;
+                bonus += HasManifestedChoice(runtime, "eve-a-master-1") ? 2 : 0;
+            }
+            else if (string.Equals(skill != null ? skill.SkillId : string.Empty, "ariel-a", StringComparison.OrdinalIgnoreCase))
+            {
+                bonus += HasManifestedChoice(runtime, "ariel-a-trait-2") ? 3 : 0;
+                bonus += HasManifestedChoice(runtime, "ariel-f-trait-2") ? 2 : 0;
+            }
+            else if (string.Equals(skill != null ? skill.SkillId : string.Empty, "rin-a", StringComparison.OrdinalIgnoreCase))
+            {
+                bonus += HasManifestedChoice(runtime, "rin-a-trait-2") ? 4 : 0;
+                bonus += HasManifestedChoice(runtime, "rin-a-master-1") ? 6 : 0;
+            }
+            else if (string.Equals(skill != null ? skill.SkillId : string.Empty, "vega-a", StringComparison.OrdinalIgnoreCase))
+            {
+                bonus += HasManifestedChoice(runtime, "vega-a-trait-2") ? 2 : 0;
+            }
             return Mathf.Max(1, baseCapacity + bonus);
         }
 
@@ -1093,6 +1725,27 @@ namespace Pakuri.Combat
             var multiplier = runtime != null && runtime.State != null && runtime.State.ReloadDurationMultiplier > 0f
                 ? runtime.State.ReloadDurationMultiplier
                 : 1f;
+            if (string.Equals(skill != null ? skill.SkillId : string.Empty, "eve-a", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "eve-a-trait-2") ? SpeedBonusToIntervalMultiplier(0.30f) : 1f;
+                multiplier *= HasManifestedChoice(runtime, "eve-a-trait-3") ? 1.20f : 1f;
+            }
+            else if (string.Equals(skill != null ? skill.SkillId : string.Empty, "ariel-a", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "ariel-a-trait-3") ? 0.80f : 1f;
+            }
+            else if (string.Equals(skill != null ? skill.SkillId : string.Empty, "rin-a", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "rin-a-trait-3") ? SpeedBonusToIntervalMultiplier(0.25f) : 1f;
+            }
+            else if (string.Equals(skill != null ? skill.SkillId : string.Empty, "sein-a", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "sein-a-trait-3") ? SpeedBonusToIntervalMultiplier(0.30f) : 1f;
+            }
+            else if (string.Equals(skill != null ? skill.SkillId : string.Empty, "vega-a", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "vega-a-trait-3") ? SpeedBonusToIntervalMultiplier(0.25f) : 1f;
+            }
             return Mathf.Max(0.25f, reload * multiplier);
         }
 
@@ -1104,6 +1757,19 @@ namespace Pakuri.Combat
             var multiplier = runtime != null && runtime.State != null && runtime.State.ShotIntervalMultiplier > 0f
                 ? runtime.State.ShotIntervalMultiplier
                 : 1f;
+            if (string.Equals(skill != null ? skill.SkillId : string.Empty, "eve-a", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "eve-a-trait-4") ? SpeedBonusToIntervalMultiplier(-0.25f) : 1f;
+                multiplier *= HasManifestedChoice(runtime, "eve-a-master-2") ? SpeedBonusToIntervalMultiplier(-0.20f) : 1f;
+            }
+            else if (string.Equals(skill != null ? skill.SkillId : string.Empty, "rin-a", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "rin-a-master-1") ? 0.82f : 1f;
+            }
+            else if (string.Equals(skill != null ? skill.SkillId : string.Empty, "sein-a", StringComparison.OrdinalIgnoreCase))
+            {
+                multiplier *= HasManifestedChoice(runtime, "sein-a-trait-5") ? 0.80f : 1f;
+            }
             return Mathf.Max(0.05f, interval * multiplier);
         }
 
@@ -1334,15 +2000,49 @@ namespace Pakuri.Combat
 
         private void UpdateManifestedMonsterLabel(CombatUnitRuntime runtime)
         {
-            if (runtime == null || runtime.Label == null || runtime.Monster == null)
+            if (runtime == null || runtime.Monster == null)
             {
                 return;
             }
 
-            var skillLine = runtime.Skills.Count > 0 && runtime.Skills[0] != null && runtime.Skills[0].Skill != null
-                ? $"{runtime.Skills[0].Skill.DisplayName} {Mathf.CeilToInt(Mathf.Max(0f, runtime.Skills[0].CooldownRemaining))}"
-                : "No learned active";
-            runtime.Label.text = $"{runtime.Monster.DisplayName}\nHP {Mathf.CeilToInt(Mathf.Max(0f, runtime.CurrentHealth))}/{Mathf.CeilToInt(runtime.MaxHealth)}\n{skillLine}";
+            var hpText = $"HP {Mathf.CeilToInt(Mathf.Max(0f, runtime.CurrentHealth))}/{Mathf.CeilToInt(runtime.MaxHealth)}";
+            if (runtime.NameLabel != null)
+            {
+                runtime.NameLabel.text = runtime.Monster.DisplayName;
+            }
+
+            if (runtime.HpLabel != null)
+            {
+                runtime.HpLabel.text = hpText;
+            }
+            else if (runtime.Label != null)
+            {
+                var skillLine = runtime.Skills.Count > 0 && runtime.Skills[0] != null && runtime.Skills[0].Skill != null
+                    ? $"{runtime.Skills[0].Skill.DisplayName} {Mathf.CeilToInt(Mathf.Max(0f, runtime.Skills[0].CooldownRemaining))}"
+                    : "No learned active";
+                runtime.Label.text = $"{runtime.Monster.DisplayName}\n{hpText}\n{skillLine}";
+            }
+
+            UpdateManifestedHpShieldBarFill(runtime, runtime.CurrentHealth, runtime.MaxHealth, 0f);
+        }
+
+        private static void UpdateManifestedHpShieldBarFill(CombatUnitRuntime runtime, float currentHealth, float maxHealth, float shieldValue)
+        {
+            if (runtime == null)
+            {
+                return;
+            }
+
+            var hpBarFill = runtime.HpBarFill;
+            var shieldBarFill = runtime.ShieldBarFill;
+            if (hpBarFill != null && hpBarFill.sprite == null)
+            {
+                var normalizedBar = NormalizeManifestedHpBar(hpBarFill);
+                hpBarFill = normalizedBar.HpBarFill != null ? normalizedBar.HpBarFill : hpBarFill;
+                shieldBarFill = shieldBarFill != null ? shieldBarFill : normalizedBar.ShieldBarFill;
+            }
+
+            UpdateHpShieldBarFill(hpBarFill, shieldBarFill, currentHealth, maxHealth, shieldValue);
         }
 
         private void SyncManifestedLearnedSkills(CombatUnitRuntime runtime)
@@ -1421,6 +2121,13 @@ namespace Pakuri.Combat
                     {
                         runtime.Label.text = string.Empty;
                     }
+
+                    if (runtime.NameLabel != null)
+                    {
+                        runtime.NameLabel.text = string.Empty;
+                    }
+
+                    UpdateManifestedHpShieldBarFill(runtime, 0f, runtime.MaxHealth, 0f);
 
                     continue;
                 }

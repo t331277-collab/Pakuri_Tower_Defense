@@ -200,6 +200,22 @@ namespace Pakuri.Combat
             }
 
             var source = projectile.SourceEnemy;
+            if (projectile.TargetManifestedUnit != null && projectile.TargetManifestedUnit.CurrentHealth > 0f && projectile.TargetManifestedUnit.Monster != null)
+            {
+                var resolution = EnemyAttackResolver.ResolveAgainstMonster(
+                    source.Definition,
+                    source.AttackPower,
+                    source.DamageMultiplier,
+                    source.AttackBuffMultiplier,
+                    source.CriticalChanceBonus,
+                    source.CriticalMultiplierBonus,
+                    projectile.TargetManifestedUnit.Monster.Defenses);
+                appliedDamage = resolution.FinalDamage;
+                appliedDamage = ApplyDamageToManifestedUnit(projectile.TargetManifestedUnit, appliedDamage, source, source.Definition.Attribute);
+                targetLabel = projectile.TargetManifestedUnit.Monster.DisplayName;
+                return true;
+            }
+
             if (projectile.TargetsMonster && unitCurrentHealth > 0f)
             {
                 var resolution = EnemyAttackResolver.ResolveAgainstMonster(
@@ -434,6 +450,30 @@ namespace Pakuri.Combat
             }
 
             return totalAppliedDamage;
+        }
+
+        private float ApplyDamageToManifestedUnit(CombatUnitRuntime runtime, float incomingDamage, EnemyRuntime sourceEnemy = null, DamageAttribute? attribute = null)
+        {
+            if (runtime == null || incomingDamage <= 0f || runtime.CurrentHealth <= 0f)
+            {
+                return 0f;
+            }
+
+            var appliedDamage = Mathf.Min(runtime.CurrentHealth, incomingDamage);
+            runtime.CurrentHealth = Mathf.Max(0f, runtime.CurrentHealth - appliedDamage);
+            UpdateManifestedMonsterLabel(runtime);
+            if (appliedDamage > 0f && runtime.Transform != null)
+            {
+                var popupAnchor = runtime.HpLabel != null
+                    ? runtime.HpLabel.transform.position
+                    : runtime.NameLabel != null
+                        ? runtime.NameLabel.transform.position
+                        : runtime.Transform.position + Vector3.up * 1.05f;
+                var popupTemplate = runtime.HpLabel != null ? runtime.HpLabel : runtime.NameLabel != null ? runtime.NameLabel : runtime.Label;
+                SpawnDamagePopup(popupAnchor + new Vector3(0f, 0.14f, 0f), FormatDamagePopupAmount(appliedDamage, attribute), popupTemplate);
+            }
+
+            return appliedDamage;
         }
 
         private static float GetEnemyHitRadius(EnemyRuntime enemy)

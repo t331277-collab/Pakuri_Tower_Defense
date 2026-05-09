@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>몬스터 객체 지향 리팩토링 및 현현 런타임 현황 보고서</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #20242a;
+      --muted: #667085;
+      --line: #d9dee7;
+      --accent: #2563eb;
+      --good: #15803d;
+      --warn: #b45309;
+      --bad: #b42318;
+      --code: #eef2f7;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      line-height: 1.65;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 36px 24px 64px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.25;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 32px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-top: 34px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 22px;
+    }
+
+    h3 {
+      margin-top: 22px;
+      font-size: 17px;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    ul, ol {
+      margin: 10px 0 0 20px;
+      padding: 0;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    code {
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: var(--code);
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.94em;
+    }
+
+    .hero {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .meta {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 16px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .done {
+      background: #dcfce7;
+      color: var(--good);
+    }
+
+    .partial {
+      background: #fef3c7;
+      color: var(--warn);
+    }
+
+    .risk {
+      background: #fee2e2;
+      color: var(--bad);
+    }
+
+    table {
+      width: 100%;
+      margin-top: 14px;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      background: #eef2f7;
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .evidence {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent);
+      background: #eff6ff;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <h1>몬스터 객체 지향 리팩토링 및 현현 런타임 현황 보고서</h1>
+    <p class="meta">작성일: 2026-05-08 / 역할: Designer / 기준: 실제 코드, 보드 기록, 빌드 및 Unity-MCP 콘솔 증거</p>
+    <p>
+      이 문서는 현재 작업 내용, 몬스터 객체 지향 리팩토링의 구조 변화, 현현 몬스터 스킬 이관 상태,
+      아직 남은 몬스터별 작업, 그리고 리팩토링 전 구조의 문제점을 정리한다.
+    </p>
+  </section>
+
+  <h2>1. 현재 작업 내용 요약</h2>
+  <div class="grid">
+    <section class="card">
+      <h3>현현 Rin 패시브 이관</h3>
+      <p><span class="status done">구현됨</span></p>
+      <p>
+        현현 Rin의 스킬 피해 경로가 Rin 전용 unit helper를 타도록 확장됐다.
+        <code>TryApplyRinUnitProjectileHit(...)</code>, <code>ApplyRinUnitSkillDamage(...)</code>,
+        <code>GetRinUnitActionSpeedMultiplier(...)</code>가 그 근거다.
+      </p>
+    </section>
+    <section class="card">
+      <h3>현현 HP SlideBar</h3>
+      <p><span class="status done">구현됨</span></p>
+      <p>
+        현현 슬롯에 HP bar fill renderer가 없으면 <code>EnsureManifestedHpBar(...)</code>가
+        <code>MonsterHpBar</code>, <code>Background</code>, <code>Fill</code>, <code>Shield</code>를 보강한다.
+      </p>
+    </section>
+    <section class="card">
+      <h3>적의 현현 몬스터 공격</h3>
+      <p><span class="status done">구현됨</span></p>
+      <p>
+        적 타겟 선택이 선택 1P만 보지 않고 살아있는 현현 유닛을 후보로 포함한다.
+        원거리 투사체도 <code>TargetManifestedUnit</code>을 저장해 현현 유닛에게 피해를 적용한다.
+      </p>
+    </section>
+  </div>
+
+  <h2>2. 리팩토링 전 구조의 문제점</h2>
+  <p>
+    이전 현현 구조의 핵심 문제는 "선택 몬스터 전용 런타임"과 "현현 몬스터 공통 런타임"이 분리되어 있었다는 점이다.
+    선택 몬스터는 각 몬스터 전용 partial script 안의 세부 로직을 탔지만, 현현 몬스터는
+    <code>CombatRuntimeParty</code>의 공통 피해/쿨다운/시각효과 계산을 주로 탔다.
+  </p>
+  <ul>
+    <li>선택 몬스터 전용 로직에는 몬스터별 패시브, 내부 타이머, 추가 피해, 특수 투사체, 특수 상태가 들어 있었다.</li>
+    <li>현현 공통 로직은 <code>SkillDefinition</code>과 Offering 선택 일부를 반영했지만, 몬스터별 private helper와 완전히 같지는 않았다.</li>
+    <li>그 결과 Rin C 넉백, Sein A 관통, Eve C 지속 장판, Vega A 3연속 투사체처럼 선택 몬스터에서는 되지만 현현에서는 빠지는 차이가 생겼다.</li>
+    <li>현현 UI도 슬롯 하위 오브젝트를 재사용하지 못하거나 HP bar가 없을 때 fallback이 부족해 이름/HP/바 표현이 흔들렸다.</li>
+    <li>전투 대상 구조도 선택 몬스터 중심이어서, 적이 현현 몬스터를 동일한 아군 전투 유닛으로 취급하지 못했다.</li>
+  </ul>
+
+  <h2>3. 현재 구조</h2>
+  <h3>3.1 RunSession 상태</h3>
+  <p>
+    <code>RunSession</code>은 선택 몬스터와 현현 파티 상태를 분리해서 보관한다.
+    <code>ManifestedMonsterIds</code>, <code>EnsurePartyMemberState(...)</code>,
+    <code>RunMonsterState.LearnedActives</code>, <code>RunMonsterState.ChosenRewardIds</code>가 근거다.
+    즉 현현 몬스터도 Offering으로 획득한 액티브와 강화 선택을 자기 상태로 가질 수 있다.
+  </p>
+
+  <h3>3.2 CombatUnitRuntime</h3>
+  <p>
+    <code>CombatUnitRuntime</code>은 현현 몬스터가 붙는 단위 컴포넌트다.
+    여기에는 <code>MonsterDefinition</code>, <code>RunMonsterState</code>, HP/공격 스탯, UI 참조,
+    그리고 <code>List&lt;CombatSkillRuntime&gt;</code>가 묶인다.
+  </p>
+
+  <h3>3.3 CombatSkillRuntime</h3>
+  <p>
+    <code>CombatSkillRuntime</code>은 스킬 하나의 쿨다운, 탄창, 발사 간격, 재장전 상태를 가진다.
+    현현 몬스터가 여러 스킬을 가져도 각 스킬이 독립된 런타임 상태를 가질 수 있게 만든 구조다.
+  </p>
+
+  <h3>3.4 CombatRuntimeParty</h3>
+  <p>
+    <code>CombatRuntimeParty</code>는 <code>2PMonster</code>부터 <code>5PMonster</code>까지의 씬 슬롯에
+    <code>CombatUnitRuntime</code>을 바인딩하고, 각 유닛의 <code>TickManifestedCombat(...)</code>을 통해 스킬 실행을 위임한다.
+    또한 Eve/Rin처럼 unit executor가 있는 몬스터는 공통 경로보다 먼저 전용 unit 경로로 보낸다.
+  </p>
+
+  <h3>3.5 전투 서비스와 책임 분리</h3>
+  <p>
+    현재 구조에서 <code>CombatUnitRuntime</code>은 유닛 상태를 소유하고,
+    <code>CombatRuntimeController</code> partial들은 전장 서비스 역할을 한다.
+    투사체 생성, 피해 계산, 이펙트 생성, 적 상태 변경은 여전히 컨트롤러 partial에 있다.
+    이 방식은 유닛 상태와 전장 행위를 나누지만, 아직 모든 몬스터가 unit executor로 완전히 넘어간 상태는 아니다.
+  </p>
+
+  <h2>4. 몬스터별 현재 이관 상태</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>몬스터</th>
+        <th>선택 몬스터 스킬 구현</th>
+        <th>현현/Unit Runtime 상태</th>
+        <th>남은 판단</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Eve</td>
+        <td>A-E/F-J 구현 기록 있음.</td>
+        <td><span class="status done">가장 많이 이관됨</span><br>
+          <code>TryTickEveUnitSkill(...)</code>, <code>TryFireEveUnitArcBolt(...)</code>,
+          <code>TryCastEveUnitPrismRay/FrostField/StaticOverride/DroneBeacon(...)</code>가 존재한다.
+        </td>
+        <td>선택 Eve A의 수동 입력 의존성까지 완전히 unit-owned로 통일할지는 후속 설계 대상이다.</td>
+      </tr>
+      <tr>
+        <td>Rin</td>
+        <td>A-E/F-J 구현 기록 있음.</td>
+        <td><span class="status done">최근 확장됨</span><br>
+          B-E unit cast와 A projectile passive hit 경로가 있으며, Rin F-J용 unit timer/counter가 추가됐다.
+        </td>
+        <td>Play Mode에서 현현 Rin 패시브와 선택 Rin의 체감 수치가 같은지 확인해야 한다.</td>
+      </tr>
+      <tr>
+        <td>Sein</td>
+        <td>A-E/F-J 구현 기록 있음.</td>
+        <td><span class="status partial">부분 이관</span><br>
+          현현 공통 경로에서 A 관통, D field state, 일부 Offering multiplier는 반영된다.
+          그러나 <code>CombatRuntimeSeinSkills.cs</code>에서 unit executor 메서드는 검색되지 않았다.
+        </td>
+        <td>C target-lock/delayed explosion/path residual, B magazine volley, E sky-line target logic을 unit path로 옮기는 것이 다음 핵심이다.</td>
+      </tr>
+      <tr>
+        <td>Ariel</td>
+        <td>A-E/F-J 구현 기록 있음.</td>
+        <td><span class="status partial">부분 이관</span><br>
+          현현 공통 경로에서 damage/cooldown/magazine/reload 및 shield/buff 안전 처리는 있다.
+          그러나 Ariel 전용 unit executor 메서드는 검색되지 않았다.
+        </td>
+        <td>Radiant Shield, Holy Exposure, Archangel shield ownership, J timer 같은 선택 전용 상태를 unit path로 옮겨야 한다.</td>
+      </tr>
+      <tr>
+        <td>Vega</td>
+        <td>A-E/F-J 구현 기록 있음.</td>
+        <td><span class="status partial">부분 이관</span><br>
+          현현 Vega A 3연속 투사체와 이름표식 guard는 구현됐다.
+          그러나 Vega B-E/F-J 전체가 선택 Vega와 같은 unit executor로 통합된 상태는 아니다.
+        </td>
+        <td>mark/silence/execute/vulnerability/cooldown charge를 unit-owned로 정리해야 한다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>5. 앞으로 해야 할 작업 순서</h2>
+  <ol>
+    <li>
+      <strong>Play Mode 검증 기준 확정:</strong>
+      현현 Rin, Eve를 기준으로 선택 1P와 현현 2P-5P의 피해, 쿨다운, 패시브, 이펙트, HP bar, 적 타겟팅을 먼저 확인한다.
+    </li>
+    <li>
+      <strong>Sein unit executor 이관:</strong>
+      현재 선택 Sein은 특수 projectile/field/line 구조가 많다. 현현 common multiplier만으로는 완전 동일성이 어렵기 때문에 Sein을 다음 후보로 보는 것이 합리적이다.
+    </li>
+    <li>
+      <strong>Vega unit executor 이관:</strong>
+      Vega는 이름표식, 침묵, 처형, 취약, 쿨다운 충전처럼 상태 연동이 많다. A는 일부 맞췄지만 B-E/F-J를 unit 기반으로 묶어야 한다.
+    </li>
+    <li>
+      <strong>Ariel unit executor 이관:</strong>
+      Ariel은 shield ownership과 Holy Exposure가 핵심이다. 단순 피해보다 보호막 소유/소모/반사/성역 상태를 unit별로 분리해야 한다.
+    </li>
+    <li>
+      <strong>공통 Manifested fallback 축소:</strong>
+      각 몬스터가 unit executor를 갖게 되면 <code>CombatRuntimeParty</code>의 몬스터별 multiplier 표와 generic skill fallback은 보조 경로로 줄여야 한다.
+    </li>
+    <li>
+      <strong>1P 완전 통합 여부 결정:</strong>
+      Eve/Rin처럼 선택 1P도 <code>selectedUnitRuntime</code>을 통해 자동 스킬을 많이 쓰기 시작했다.
+      모든 몬스터를 이 방식으로 통일할지, 수동 A 입력은 기존 글로벌 입력 경로에 남길지 결정해야 한다.
+    </li>
+  </ol>
+
+  <h2>6. 구조상 남은 리스크</h2>
+  <ul>
+    <li>
+      <strong>동일한 이름의 두 경로:</strong>
+      같은 스킬이 선택 몬스터 전용 함수와 현현 공통 함수에 나뉘어 있으면, 한쪽 수정이 다른 쪽에 반영되지 않는 문제가 반복될 수 있다.
+    </li>
+    <li>
+      <strong>몬스터별 상태의 위치:</strong>
+      Rin timer 일부는 <code>CombatUnitRuntime</code>에 올라갔지만, 다른 몬스터의 선택 전용 private field는 아직 각 partial controller에 남아 있다.
+    </li>
+    <li>
+      <strong>공통 multiplier 표의 한계:</strong>
+      <code>ResolveManifestedSkillDamageMultiplier(...)</code> 같은 표는 단순 수치 강화에는 맞지만, delayed projectile, shield ownership, mark consume 같은 행동 차이는 표현하기 어렵다.
+    </li>
+    <li>
+      <strong>검증 범위:</strong>
+      Codex는 AGENTS 규칙상 Play Mode를 직접 검증하지 않는다. 빌드/컴파일/콘솔 증거는 통과했지만, 실제 전투 체감 검증은 사용자가 수행해야 한다.
+    </li>
+  </ul>
+
+  <h2>7. 근거 파일</h2>
+  <div class="evidence">
+    <ul>
+      <li><code>boards/MON/RIN_MONSTER.md</code>: Rin unit runtime, 현현 Rin 패시브, HP bar, 적 타겟팅 작업 기록.</li>
+      <li><code>boards/MON/EVE_MONSTER.md</code>: Eve unit runtime 및 manifest Eve A/B-E 이관 기록.</li>
+      <li><code>boards/MON/SEIN_MONSTER.md</code>: Sein 선택 스킬 구현 및 현현 common parity 기록.</li>
+      <li><code>boards/MON/ARIEL_MONSTER.md</code>: Ariel 선택 스킬 구현 및 현현 common parity 기록.</li>
+      <li><code>boards/MON/VEGA_MONSTER.md</code>: Vega 선택 스킬 구현, 현현 Vega A/이름표식 guard 기록.</li>
+      <li><code>boards/COMBAT/COMBAT_BLACKBOARD.md</code>: 현현 unit refactor, 적 타겟팅, combat runtime 변경 기록.</li>
+      <li><code>Pakuri/Assets/Scripts/Combat/CombatUnitRuntime.cs</code>: unit 상태 컴포넌트.</li>
+      <li><code>Pakuri/Assets/Scripts/Combat/CombatSkillRuntime.cs</code>: 스킬별 쿨다운/탄창/재장전 상태.</li>
+      <li><code>Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs</code>: 현현 파티 슬롯, skill tick, common manifested fallback.</li>
+      <li><code>Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs</code>: Eve unit executor 존재.</li>
+      <li><code>Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs</code>: Rin unit executor 및 최근 passive extension.</li>
+      <li><code>Pakuri/Assets/Scripts/Run/RunSession.cs</code>: selected/manifested run state와 Offering 선택 저장.</li>
+    </ul>
+  </div>
+
+  <h2>8. 결론</h2>
+  <p>
+    현재 구조는 현현 몬스터를 단순 복제 오브젝트가 아니라 <code>CombatUnitRuntime</code>을 가진 파티 유닛으로 다루는 방향으로 바뀌었다.
+    Eve와 Rin은 이 방향이 실제 코드에 가장 많이 적용된 상태다. 반면 Sein, Ariel, Vega는 선택 몬스터용 구현이 존재하고
+    현현 common parity도 일부 들어갔지만, 선택 몬스터와 완전히 같은 스킬 로직을 보장하려면 각 몬스터 전용 unit executor를 추가로 만들어야 한다.
+  </p>
+</main>
+</body>
+</html>

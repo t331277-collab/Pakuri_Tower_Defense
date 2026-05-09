@@ -3,7 +3,132 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-08 Manifested Projectile Pierce Parity
+
+### Task title
+
+Apply selected projectile pierce rules to manifested projectile skills.
+
+### Goals
+
+- Stop manifested Sein A from losing its selected base pierce value.
+- Apply the same class of A-skill pierce rules to manifested Ariel A and Rin A.
+- Keep non-Vega manifested projectiles from receiving Vega name-mark stacks.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies manifested Sein A pierces one extra enemy by default and gains extra pierce from `sein-a-trait-4` / `sein-a-master-1`.
+- User verifies manifested Ariel A and Rin A pierce choices in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs:1057` shows selected Sein A pierce starts at `1`, adds `sein-a-trait-4`, and adds `sein-a-master-1`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs:133` shows selected Ariel A pierce starts at `1`, and `:146` adds `ariel-a-trait-4`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:116` shows selected Rin A pierce starts at `0`, and `:119` adds one pierce for `rin-a-trait-4`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:674` now passes `ResolveManifestedProjectilePierce(...)` into generic manifested projectile creation.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:677` implements the manifested Ariel A, Sein A, and Rin A pierce calculations.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:768` still stores `VegaNameMarkStacks` only when `IsManifestedVegaThreeSwordFlurry(skill)` is true.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User reported selected Sein A pierced correctly, while manifested Sein A did not.
+
+## Task: 2026-05-08 Manifested Name-Mark Guard Report
+
+### Task title
+
+Record current report evidence for manifested projectile Vega name-mark guard.
+
+### Goals
+
+- Confirm report evidence that non-Vega manifested projectiles do not carry Vega name marks.
+- Preserve Manifested Vega A three-sword mark behavior.
+
+### Constraints
+
+- Role Owner is Designer for documentation.
+- No projectile code change was made in this task.
+- User performs Play Mode verification.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as report documentation.
+
+### Next Actions
+
+- User verifies non-Vega manifested projectile hits and Manifested Vega A hits in Play Mode.
+
+### Evidence
+
+- `CombatRuntimeParty.cs:554` sends generic manifested projectile fire with 0 name-mark stacks.
+- `CombatRuntimeParty.cs:617` stores `VegaNameMarkStacks` only when `IsManifestedVegaThreeSwordFlurry(skill)` is true.
+- `CombatRuntimeParty.cs:1064` defines the Vega check as `skill.SkillId == "vega-a"`.
+- Report saved as `Pakuri/reference/Report/2026-05-08-runscene-manifest-ui-and-runtime-status.html`.
+
+### History
+
+- 2026-05-08: User asked to check whether non-Vega manifested A attacks were leaving Vega name marks.
+
 ## Migrated Task Blocks
+
+## Task: 2026-05-08 Manifested Eve A Projectile Branch Parity
+
+### Task title
+
+Make manifested Eve A projectiles carry Eve Arc Bolt branch/status state.
+
+### Goals
+
+- Let manifested Eve A projectiles use Eve A auto-target firing while preserving branch lightning choices.
+- Keep manifested projectile handling separate from selected 1P projectile passive handling.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies manifested Eve A branch lightning and projectile upgrades in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs:780` creates manifested Arc Bolt projectiles with branch, status, pierce, and lightning fields.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:661` calls `TryApplyProjectileBranch(...)` after manifested projectile hit damage/status resolution.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User requested manifested Eve A to use the original Eve A path with automatic aiming.
 
 ## Task: 2026-05-06 Sein Projectile Active Skills
 
@@ -1061,3 +1186,43 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-08: User named Eve Drone Beacon as one of the sustained Manifested skills whose duration was wrong.
+
+# Task: 2026-05-08 Manifested Projectile Name-Mark Guard
+
+### Task title
+
+Restrict manifested projectile Vega name-mark stacks to Vega A.
+
+### Goals
+
+- Stop generic Manifested A/projectile skills from carrying Vega name-mark stacks.
+- Preserve Manifested Vega A's queued three-projectile mark behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies non-Vega Manifested A projectile hits do not add `이름표식`, while Manifested Vega A still does.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:554` passes 0 name-mark stacks for generic Manifested projectiles.
+- `CombatRuntimeParty.cs:617` only writes `VegaNameMarkStacks` when the skill is Manifested `vega-a`.
+- `CombatRuntimeParty.cs:1120` and `:1121` still pass mark stacks from the Manifested Vega A queued-projectile path.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User reported a possible bug where Manifested A attacks left name marks even when the Manifested monster was not Vega.

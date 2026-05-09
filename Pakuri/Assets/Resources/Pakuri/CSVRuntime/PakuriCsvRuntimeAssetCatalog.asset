@@ -47,3 +47,5 @@ MonoBehaviour:
   Prefabs:
   - AssetPath: Assets/Image/Monster/Eve/Effect_Prefab/Eve_Skill_B.prefab
     Asset: {fileID: 3843049686398240108, guid: 224f5e7622cd0264b961ee388a015d65, type: 3}
+  - AssetPath: Assets/Image/Monster/Rin/Effect_Prefab/Rin_Skill_C.prefab
+    Asset: {fileID: 8767310348598417902, guid: c17e18be6f4f31b49a083bf1ce120f0d, type: 3}

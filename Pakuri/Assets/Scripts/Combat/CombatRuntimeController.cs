@@ -119,12 +119,14 @@ namespace Pakuri.Combat
             public EnemyRuntime SourceEnemy;
             public Transform TargetTransform;
             public bool TargetsMonster;
+            public CombatUnitRuntime TargetManifestedUnit;
             public EnemyRuntime LockedEnemyTarget;
             public bool SeinExplodesOnLockedTarget;
             public float SeinExplosionRadius;
             public float SeinExplosionDamageMultiplier = 1f;
             public int VegaNameMarkStacks;
             public bool IsManifestedProjectile;
+            public CombatUnitRuntime ManifestedSource;
             public string ManifestedSourceName;
             public string ManifestedSkillName;
             public string ManifestedElementLabel;

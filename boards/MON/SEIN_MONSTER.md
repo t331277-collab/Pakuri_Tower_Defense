@@ -10,6 +10,89 @@ At the start of new work, read `boards/MON/MON_BLACKBOARD.md` first and consult 
 
 Not populated yet.
 
+## Task: 2026-05-08 Manifested Sein A Pierce And Hit-State Fix
+
+### Task title
+
+Make manifested Sein A keep selected Sein A pierce and hit-state behavior.
+
+### Goals
+
+- Fix manifested Sein A base pierce being lost in the generic manifested projectile path.
+- Apply manifested Sein A pierce upgrades from `sein-a-trait-4` and `sein-a-master-1`.
+- Preserve Sein A hit-state behavior by setting `SeinScorchingArrowTimer` from manifested projectile hits.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies manifested Sein A pierces one enemy by default and more when the relevant choices are learned.
+- User verifies manifested Sein A heat-state interactions in RunScene Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeSeinSkills.cs:1057` shows selected Sein A pierce starts at `1`, adds `sein-a-trait-4`, and adds `sein-a-master-1`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:674` now sends generic manifested projectiles through `ResolveManifestedProjectilePierce(...)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:688` through `:694` implements manifested Sein A pierce as selected base `1`, plus trait 4 and master 1.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:825` sets `enemy.SeinScorchingArrowTimer` on manifested Sein A hits and checks `sein-a-master-2` via the projectile's `ManifestedSource`.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User reported selected Sein A had one pierce, but manifested Sein A had no pierce.
+
+## Task: 2026-05-08 Manifested Sein Common Runtime Parity
+
+### Task title
+
+Apply Sein Offering choices and field status through the manifested common skill runtime.
+
+### Goals
+
+- Keep manifested Sein skills sourced from `SkillDefinition` data.
+- Apply Sein manifested Offering choices in shared damage, cooldown, reload, and shot interval paths.
+- Let manifested Sein D field ticks mark superheated zone state.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is common manifested runtime work, not a full line-by-line copy of selected Sein private skill code.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies manifested Sein skills and Offering upgrades in RunScene Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:760` applies Sein D manifested field tick superheated-zone state.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:866` includes Sein skill-specific damage multipliers.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:991` includes Sein cooldown choice handling.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:1278` and `:1310` include Sein reload and shot-interval choice handling.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
 ## Required Sections For Future Work
 
 - Source references

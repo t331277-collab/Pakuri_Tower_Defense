@@ -3,7 +3,93 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-08 Manifested Rin C And Sein A Source Effects
+
+### Task title
+
+Carry manifested skill source effects for Rin C slow/knockback and Sein A heat state.
+
+### Goals
+
+- Apply manifested Rin C knockback and master slow through the same enemy state fields used by selected Rin.
+- Keep manifested Sein A hit state aligned with selected Sein A's `SeinScorchingArrowTimer`.
+- Let manifested projectile source effects read the actual manifested unit's Offering choices.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that manifested Rin C pushes enemies and manifested Rin C master slow applies if learned.
+- User verifies manifested Sein A heat interactions after successful hits.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:545` implements manifested Rin C beam hit handling and calls selected-runtime helpers `ApplyRinKnockback(...)` and `ApplyRinSlow(...)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:770` stores the originating manifested `CombatUnitRuntime` on projectile runtime.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:814` invokes `ApplyManifestedProjectileSourceEffects(...)` after manifested projectile damage is applied.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:825` sets `enemy.SeinScorchingArrowTimer` on manifested Sein A hits and checks `sein-a-master-2` through the projectile's manifested source.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+- Unity-MCP console warning/error query returned only MCP-FOR-UNITY client handler logs.
+
+### History
+
+- 2026-05-08: User reported manifested skills appeared to use visuals but not selected-monster runtime side effects.
+
 ## Migrated Task Blocks
+
+## Task: 2026-05-08 Manifested Projectile And Field Status Parity
+
+### Task title
+
+Apply manifested projectile status IDs and Sein field tick state through common runtime.
+
+### Goals
+
+- Recognize Korean status IDs from manifested projectile skill data.
+- Keep shock, chill, and vulnerable status application available to manifested projectile paths.
+- Apply manifested Sein D field tick state for superheated-zone behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies manifested projectile status effects and Sein field behavior in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:693` applies manifested projectile status from `ManifestedStatusEffectId`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:701`, `:705`, and `:709` recognize `감전`, `빙결`, and `취약` status IDs in addition to existing ids.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:760` applies Sein D manifested field tick state.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User requested manifested monsters to use the same skill data and upgrade behavior as selected monsters.
 
 ## Task: 2026-05-08 Eve Unit Caster Status Effects
 
@@ -814,3 +900,43 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-08: User reported sustained Manifested skill effects were much shorter than the original skills.
+
+# Task: 2026-05-08 Manifested Vega Name-Mark Source Guard
+
+### Task title
+
+Prevent non-Vega Manifested projectiles from applying Vega name marks.
+
+### Goals
+
+- Keep Vega name-mark status application tied to Manifested Vega A.
+- Avoid non-Vega Manifested A projectile hits adding `VegaNameMarkStacks`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This pass changes source gating for an existing status, not the status display/timer model.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies enemy status labels after non-Vega Manifested A hits and Manifested Vega A hits.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:617` now assigns `VegaNameMarkStacks` only when `IsManifestedVegaThreeSwordFlurry(skill)` is true.
+- `CombatRuntimeParty.cs:662` through `:664` still applies name marks only when the projectile carries positive `VegaNameMarkStacks`.
+- Runtime and Editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-08: User reported non-Vega Manifested A attacks appeared to leave Vega name-mark status.

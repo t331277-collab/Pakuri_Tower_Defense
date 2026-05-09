@@ -3,6 +3,102 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-08 Monster OOP Refactor And Manifested Work Status Report
+
+### Task title
+
+Create an HTML report explaining current monster OOP refactor, skill migration, manifested work, and remaining monster tasks.
+
+### Goals
+
+- Summarize the current work after manifested Rin passive, HP bar, and enemy targeting changes.
+- Explain the pre-refactor structural problem: selected monster private runtime paths versus generic manifested runtime paths.
+- Explain the current structure around `RunSession`, `CombatUnitRuntime`, `CombatSkillRuntime`, and `CombatRuntimeParty`.
+- Identify remaining monster work before further manifested parity implementation.
+- Save the result as an HTML report under `Pakuri/reference/Report`.
+
+### Constraints
+
+- Role Owner is Designer because this is inspection and documentation, not gameplay implementation.
+- Claims are based on inspected boards and code search output.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because this documentation task did not have explicit Reviewer permission.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- User can open `Pakuri/reference/Report/2026-05-08-monster-oop-refactor-manifested-work-status.html`.
+- If implementation continues, prioritize the next unit-executor migration from the report's remaining-work section.
+
+### Evidence
+
+- `Test-Path` confirmed `Pakuri/reference/Report/2026-05-08-monster-oop-refactor-manifested-work-status.html` exists.
+- `Select-String` confirmed the report contains sections for current work, pre-refactor structure problems, monster migration status, next work order, and conclusion.
+- Inspected `boards/MON/RIN_MONSTER.md`, `boards/MON/EVE_MONSTER.md`, `boards/MON/SEIN_MONSTER.md`, `boards/MON/ARIEL_MONSTER.md`, `boards/MON/VEGA_MONSTER.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/RUN/RUN_BLACKBOARD.md`, and root `BLACKBOARD.md`.
+- `Select-String` confirmed `CombatRuntimeEveSkills.cs` has Eve unit executor methods including `TryTickEveUnitSkill(...)`, `TryFireEveUnitArcBolt(...)`, and Eve B-E unit cast methods.
+- `Select-String` confirmed `CombatRuntimeRinSkills.cs` has Rin unit executor methods including `TryTickRinUnitSkill(...)`, Rin B-E unit cast methods, `TryApplyRinUnitProjectileHit(...)`, and `GetRinUnitActionSpeedMultiplier(...)`.
+- `Select-String` over Sein, Ariel, and Vega skill scripts found no `TryTick*Unit` or `TryCast*Unit` methods matching the Eve/Rin unit-executor pattern.
+- `Select-String` confirmed `CombatRuntimeParty.cs` owns `manifestedMonsters`, binds manifested slots, and dispatches Eve/Rin unit tick before generic manifested fallback.
+
+### History
+
+- 2026-05-08: User requested an HTML explanation of current work, monster OOP refactor, skill migration, manifested work, remaining monsters, pre-work structure problems, and current structure.
+
+## Task: 2026-05-08 RunScene Manifest UI And Runtime Status Report
+
+### Task title
+
+Create an HTML report for current RunScene prisoner Manifest UI wiring and manifested monster runtime structure.
+
+### Goals
+
+- Check the current loaded `RunScene` `RunCombatCanvas` hierarchy after the user's UI cleanup.
+- Compare required panels/buttons against the actual `RunCombatUiController` binding names.
+- Explain why manifested monster skills were previously abnormal and what current unit-runtime structure now exists.
+- Save the result as an HTML report under `Pakuri/reference/Report`.
+
+### Constraints
+
+- Role Owner is Designer because this is inspection and documentation, not a gameplay code fix.
+- Use Unity-MCP and inspected files as evidence.
+- Do not run Unity Play Mode.
+- Do not execute Code Reviewer because no implementation review permission was requested.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- User can open `Pakuri/reference/Report/2026-05-08-runscene-manifest-ui-and-runtime-status.html`.
+- If the user wants the suspicious `PrisonerOfferingPanel` child hierarchy fixed, handle it as a separate scene-edit task.
+
+### Evidence
+
+- Unity-MCP `manage_scene get_active` first reported active scene `MainMenuScene`, then `manage_scene load path=Assets/Scenes/RunScene.unity` loaded `RunScene` for inspection.
+- Unity-MCP `execute_code` found `RunCombatCanvas` with `Canvas`, `CanvasScaler`, `GraphicRaycaster`, and `RunCombatUiController`.
+- Unity-MCP `execute_code` found required panels `RewardPanel`, `PrisonerChoicePanel`, `PrisonerSummonerPanel`, `PrisonerOfferingPanel`, and `PrisonerManifestFailurePopup`.
+- Unity-MCP `execute_code` found required buttons under those panels with `Button` components and `Label` text children.
+- Unity-MCP `execute_code` did not find misspelled panel names `PrisoneChoicePanel`, `PrisonerOffringPanel`, or `ProsonerManifextFaailurePopUP`.
+- Unity-MCP `execute_code` found suspicious scene structure under `RunCombatCanvas/PrisonerOfferingPanel`: a child `DefeatPanel` and two `Title` children.
+- Inspected `RunCombatUiController.cs`, `RunSession.cs`, `CombatRuntimeParty.cs`, `CombatUnitRuntime.cs`, `CombatSkillRuntime.cs`, and `CombatRuntimeEveSkills.cs`.
+- Added `Pakuri/reference/Report/2026-05-08-runscene-manifest-ui-and-runtime-status.html`.
+
+### History
+
+- 2026-05-08: User said they reorganized `RunCombatCanvas` children and asked to check panel/button wiring, then requested an HTML explanation of the manifested monster skill issue, the structural fix, and the current structure.
+
 ## Task: Hierarchical Board Migration And Routing Rule Update
 
 ### Task title

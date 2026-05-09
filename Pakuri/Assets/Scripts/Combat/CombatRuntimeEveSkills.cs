@@ -189,7 +189,7 @@ namespace Pakuri.Combat
             skillRuntime.TickReload(elapsed * GetEveUnitActionSpeedMultiplier(runtime), ResolveManifestedMagazineCapacity(runtime, skillRuntime.Skill));
             if (skillRuntime.Skill.Slot == SkillSlot.A)
             {
-                TryFireManifestedMagazineSkill(runtime, skillRuntime);
+                TryFireEveUnitArcBolt(runtime, skillRuntime);
                 return true;
             }
 
@@ -645,6 +645,204 @@ namespace Pakuri.Combat
             }
 
             statusLabel = $"Arc Bolt manual fire: {projectileCount} shot(s) toward ({currentAttackPoint.x:0.0}, {currentAttackPoint.y:0.0}).";
+        }
+
+        private void TryFireEveUnitArcBolt(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime)
+        {
+            if (!IsEveCombatUnit(runtime)
+                || IsSelectedCombatUnit(runtime)
+                || runtime.Transform == null
+                || skillRuntime == null
+                || skillRuntime.Skill == null)
+            {
+                return;
+            }
+
+            if (skillRuntime.ReloadRemaining > 0f || skillRuntime.ShotCooldownRemaining > 0f)
+            {
+                return;
+            }
+
+            if (skillRuntime.ShotsRemaining <= 0)
+            {
+                skillRuntime.ShotsRemaining = 0;
+                skillRuntime.ReloadDuration = ResolveManifestedReloadDuration(runtime, skillRuntime.Skill);
+                skillRuntime.ReloadRemaining = skillRuntime.ReloadDuration;
+                return;
+            }
+
+            var target = FindNearestEnemy(runtime.Transform.position, float.PositiveInfinity);
+            if (target == null || target.Transform == null)
+            {
+                skillRuntime.ShotCooldownRemaining = 0.25f;
+                return;
+            }
+
+            var baseDirection = target.Transform.position - runtime.Transform.position;
+            baseDirection.z = 0f;
+            if (baseDirection.sqrMagnitude < 0.01f)
+            {
+                baseDirection = Vector3.right;
+            }
+
+            baseDirection.Normalize();
+            var extraProjectiles = 0;
+            var pierce = 0;
+            var damageMultiplier = 1f;
+            var shotIntervalMultiplier = 1f;
+            var reloadMultiplier = 1f;
+            var statusChance = Mathf.Clamp01(runtime.Monster != null ? runtime.Monster.StatusChance : statusChanceConfigured);
+            var branchChance = 0f;
+            var branchRadius = 0f;
+            var branchDamageMultiplier = 1f;
+            var branchTargetCount = 0;
+
+            if (HasManifestedChoice(runtime, "eve-a-trait-1"))
+            {
+                damageMultiplier *= 1.20f;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-a-trait-2"))
+            {
+                reloadMultiplier *= SpeedBonusToIntervalMultiplier(0.30f);
+                pierce += 1;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-a-trait-3"))
+            {
+                extraProjectiles += 1;
+                reloadMultiplier *= 1.20f;
+            }
+
+            if (HasManifestedChoice(runtime, "eve-a-trait-4"))
+            {
+                extraProjectiles += 2;
+                shotIntervalMultiplier *= SpeedBonusToIntervalMultiplier(-0.25f);
+            }
+
+            if (HasManifestedChoice(runtime, "eve-a-trait-5"))
+            {
+                damageMultiplier *= 1.25f;
+                branchChance += 0.35f;
+                branchRadius = EveArcBranchRadius;
+                branchTargetCount = Mathf.Max(branchTargetCount, 1);
+            }
+
+            if (HasManifestedChoice(runtime, "eve-a-master-1"))
+            {
+                damageMultiplier *= 1.35f;
+                branchChance = 1f;
+                branchRadius = EveArcBranchRadius;
+                branchDamageMultiplier = 0.60f;
+                branchTargetCount = Mathf.Max(branchTargetCount, 2);
+            }
+
+            if (HasManifestedChoice(runtime, "eve-a-master-2"))
+            {
+                damageMultiplier *= 1.45f;
+                extraProjectiles += 2;
+                pierce += 2;
+                shotIntervalMultiplier *= SpeedBonusToIntervalMultiplier(-0.20f);
+                statusChance = Mathf.Max(statusChance, 1f);
+            }
+
+            var projectileCount = 1 + extraProjectiles;
+            for (var i = 0; i < projectileCount; i++)
+            {
+                var angleOffset = projectileCount <= 1 ? 0f : (i - (projectileCount - 1) * 0.5f) * EveArcExtraProjectileAngleStep;
+                FireEveUnitArcBoltProjectile(
+                    runtime,
+                    skillRuntime.Skill,
+                    baseDirection,
+                    pierce,
+                    damageMultiplier,
+                    angleOffset,
+                    statusChance,
+                    branchChance,
+                    branchRadius,
+                    branchDamageMultiplier,
+                    branchTargetCount);
+            }
+
+            skillRuntime.ShotsRemaining -= 1;
+            skillRuntime.ShotInterval = ResolveManifestedShotInterval(runtime, skillRuntime.Skill) * shotIntervalMultiplier;
+            skillRuntime.ShotCooldownRemaining = Mathf.Max(0.05f, skillRuntime.ShotInterval);
+            if (skillRuntime.ShotsRemaining <= 0)
+            {
+                skillRuntime.ShotsRemaining = 0;
+                skillRuntime.ReloadDuration = Mathf.Max(0.25f, ResolveManifestedReloadDuration(runtime, skillRuntime.Skill) * reloadMultiplier);
+                skillRuntime.ReloadRemaining = skillRuntime.ReloadDuration;
+            }
+
+            statusLabel = $"{runtime.Monster.DisplayName} Arc Bolt auto-fired {projectileCount} shot(s).";
+        }
+
+        private void FireEveUnitArcBoltProjectile(
+            CombatUnitRuntime runtime,
+            SkillDefinition skill,
+            Vector3 direction,
+            int pierce,
+            float damageMultiplier,
+            float angleOffset,
+            float statusChance,
+            float branchChance,
+            float branchRadius,
+            float branchDamageMultiplier,
+            int branchTargetCount)
+        {
+            if (runtime == null || runtime.Transform == null || skill == null || projectileRoot == null)
+            {
+                return;
+            }
+
+            direction.z = 0f;
+            if (direction.sqrMagnitude < 0.01f)
+            {
+                direction = Vector3.right;
+            }
+
+            direction.Normalize();
+            if (Mathf.Abs(angleOffset) > 0.01f)
+            {
+                direction = Quaternion.Euler(0f, 0f, angleOffset) * direction;
+            }
+
+            nextProjectileSequence += 1;
+            var projectileObject = new GameObject($"ManifestedArcBolt_{nextProjectileSequence:00}");
+            projectileObject.transform.SetParent(projectileRoot, false);
+            projectileObject.transform.position = runtime.Transform.position + direction * 0.2f;
+            projectileObject.transform.localScale = Vector3.one * ResolveManifestedProjectileHitRadius(runtime);
+
+            var renderer = projectileObject.AddComponent<SpriteRenderer>();
+            renderer.sprite = runtime.Monster != null && runtime.Monster.ProjectileSprite != null ? runtime.Monster.ProjectileSprite : GetSharedSprite();
+            renderer.color = runtime.Monster != null && runtime.Monster.ProjectileColor.a > 0f ? runtime.Monster.ProjectileColor : Color.white;
+            renderer.sortingOrder = 24;
+
+            projectiles.Add(new ProjectileRuntime
+            {
+                GameObject = projectileObject,
+                Transform = projectileObject.transform,
+                Renderer = renderer,
+                Direction = direction,
+                Speed = ResolveManifestedProjectileSpeed(runtime),
+                RemainingLifetime = ResolveManifestedProjectileLifetime(runtime, skill),
+                HitRadius = ResolveManifestedProjectileHitRadius(runtime),
+                BaseDamage = ResolveManifestedBaseDamage(runtime, skill) * damageMultiplier,
+                Attribute = DamageAttribute.Lightning,
+                SkillId = "eve-a",
+                RemainingPierce = Mathf.Max(0, pierce),
+                StatusStacks = 1,
+                StatusChance = Mathf.Clamp01(statusChance),
+                BranchChance = Mathf.Clamp01(branchChance),
+                BranchRadius = Mathf.Max(0f, branchRadius),
+                BranchDamageMultiplier = Mathf.Max(0f, branchDamageMultiplier),
+                BranchTargetCount = Mathf.Max(0, branchTargetCount),
+                IsManifestedProjectile = true,
+                ManifestedSourceName = runtime.Monster.DisplayName,
+                ManifestedSkillName = skill.DisplayName,
+                ManifestedElementLabel = runtime.Monster.ElementLabel,
+                ManifestedStatusEffectId = skill.StatusEffectId
+            });
         }
 
         private void FireEveProjectile(

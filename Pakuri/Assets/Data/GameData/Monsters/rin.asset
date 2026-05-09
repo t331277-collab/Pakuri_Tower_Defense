@@ -222,7 +222,7 @@ MonoBehaviour:
     ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
-    SkillEffectPrefab: {fileID: 0}
+    SkillEffectPrefab: {fileID: 8767310348598417902, guid: c17e18be6f4f31b49a083bf1ce120f0d, type: 3}
     DescriptionText: "\uD30C\uC1C4\uAD8C\uBCF4\uB2E4 \uBB35\uC9C1\uD55C \uC9C1\uC120
       \uCDA9\uACA9\uD30C\uB97C \uBC1C\uC0AC\uD574 \uC801\uC744 \uC0B4\uC9DD \uB4A4\uB85C
       \uBC00\uC5B4\uB0B8\uB2E4."

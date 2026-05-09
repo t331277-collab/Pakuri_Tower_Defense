@@ -3,6 +3,137 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-08 Manifested HP Bar Runtime Sprite Repair
+
+### Task title
+
+Repair 2P-5P Monster HP bar fill sprites during HP label refresh.
+
+### Goals
+
+- Make authored `2PMonster` through `5PMonster` HP bars visible even if their `Fill` renderer is already bound with `sprite=null`.
+- Keep existing scene-authored `MonsterHpBar/Fill` children instead of replacing UI objects.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Play Mode visual verification remains user-owned.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies 2P-5P manifested HP bars in RunScene Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:2026` updates manifested HP bars through the new runtime repair helper.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:2029` normalizes a live `HpBarFill` when its `sprite` is null, then immediately uses the normalized renderer for the bar fill update.
+- Runtime and Editor builds completed with 0 errors and existing warnings.
+- Unity-MCP refresh reached idle; console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-08: User found that the live scene instances `2PMonster/MonsterHpBar/Fill` through `5PMonster/MonsterHpBar/Fill` still had null sprites after the earlier party-rebuild fix.
+
+## Task: 2026-05-08 Manifested Slot Status View Reuse
+
+### Task title
+
+Reuse existing RunScene 2P-5P monster status children for manifested monsters.
+
+### Goals
+
+- Avoid generated duplicate status labels when scene-authored status children already exist.
+- Keep manifested monsters aligned with Eve-style one name label, one HP text, and one HP bar presentation.
+- Support observed scene names and the user's reported `HPLable`, `HPBar`, and `Name Label` variants.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Scene hierarchy was inspected through Unity-MCP; Play Mode was not run.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies visual overlap in RunScene Play Mode with manifested 2P-5P monsters.
+- If any slot uses a different child name, add that exact scene name to the resolver after inspection.
+
+### Evidence
+
+- Unity-MCP scene hierarchy inspection found `MonsterHpLabel`, `MonsterHpBar/Fill`, `MonsterHpBar/Shield`, and `MonsterNameLabel` under inspected RunScene monster slot objects.
+- Unity-MCP `find_gameobjects` did not find literal `HPLable`, `HPLabel`, `HPBar`, `Name Label`, or `NameLabel` objects, so the implementation supports both observed and reported names.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:272` resolves `MonsterNameLabel`, `Name Label`, `NameLabel`, `MonsterHpLabel`, `HPLabel`, `HPLable`, `HP Label`, and HP/shield bar fill paths.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:1870` updates separate status views and only falls back to the generated combined label when no HP label exists.
+- C# diff whitespace check over the touched combat files completed with exit code 0.
+
+### History
+
+- 2026-05-08: User asked that RunScene 2P-5P monsters use already existing child status objects and not recreate overlapping HP/name UI when manifested.
+
+## Task: 2026-05-08 RunCombatCanvas Prisoner UI Wiring Inspection
+
+### Task title
+
+Inspect current RunScene prisoner Manifest UI wiring after manual `RunCombatCanvas` cleanup.
+
+### Goals
+
+- Confirm whether the current scene has the exact panel names that `RunCombatUiController` binds.
+- Confirm whether required child buttons have `Button` and label text objects.
+- Identify suspicious hierarchy issues without modifying the scene.
+
+### Constraints
+
+- Role Owner is Designer for inspection/reporting.
+- Do not modify scene hierarchy in this task.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed with one scene-structure warning.
+
+### Next Actions
+
+- If requested, clean `PrisonerOfferingPanel` so it contains only intended Offering UI children and does not contain a nested `DefeatPanel` or duplicate `Title`.
+- User verifies click flow in Play Mode.
+
+### Evidence
+
+- Unity-MCP loaded `Assets/Scenes/RunScene.unity` and inspected `RunCombatCanvas`.
+- Found exact panels: `RewardPanel`, `PrisonerChoicePanel`, `PrisonerSummonerPanel`, `PrisonerOfferingPanel`, `PrisonerManifestFailurePopup`, and root `DefeatPanel`.
+- Found `RewardPanel/RewardButtons/Prisoner`, `Artifact`, and `Material` with `Button=True` and `LabelText=True`.
+- Found `PrisonerChoicePanel/ManifestButton`, `AssimilateButton`, `OfferingButton`, and `CorruptButton` with `Button=True` and `LabelText=True`.
+- Found `PrisonerSummonerPanel/MonsterImage`, `Summary`, `SummonButton`, `ContinueButton`, and `BackButton`.
+- Found `PrisonerOfferingPanel/Choice1`, `Choice2`, and `Choice3` with `Button=True` and `LabelText=True`.
+- Found `PrisonerManifestFailurePopup/Summary` and `CloseButton`; `CloseButton` has `Button=True` and `LabelText=True`.
+- Did not find misspelled names `PrisoneChoicePanel`, `PrisonerOffringPanel`, or `ProsonerManifextFaailurePopUP`.
+- Warning: Unity-MCP found `PrisonerOfferingPanel` contains child `DefeatPanel` and two `Title` children.
+- Report saved as `Pakuri/reference/Report/2026-05-08-runscene-manifest-ui-and-runtime-status.html`.
+
+### History
+
+- 2026-05-08: User manually reorganized `RunCombatCanvas` and asked for panel/button connection inspection.
+
 ## Migrated Task Blocks
 
 ## Task: 2026-05-05 RunScene MonsterPanel 1P Skill Status UI
@@ -51,6 +182,49 @@ Implemented and locally validated.
 - 2026-05-05 follow-up: `CombatRuntimeController.CreateMonsterPanelSkillView(...)` now requires `MagazineCapacity > 0` before using ammo/reload state, so Active2/3 non-magazine skills use their own slot cooldowns.
 - 2026-05-05 follow-up: `RunCombatUiController.cs` disables TMP ammo text for non-magazine slots and assigns `DebugUiSolid` to `CooldownOverlay` so the black filled image can visibly drain as cooldown completes.
 - 2026-05-05 follow-up validation: runtime and Editor builds completed with 0 errors after rerunning the Editor build sequentially; Unity-MCP read-only asset check reported `rin-b:Buff`, `rin-c:LineAttack`, `rin-d:Execute`, `rin-e:AreaAttack`, and console errors were only MCP client handler logs.
+
+## Task: 2026-05-08 Manifested HP Slide Bar Fallback
+
+### Task title
+
+Ensure manifested monsters have a visible HP slide bar even when scene children are missing.
+
+### Goals
+
+- Keep using existing RunScene status children when present.
+- Generate one fallback `MonsterHpBar` with `Background`, `Fill`, and `Shield` children only when no HP bar fill renderer is found.
+- Keep manifested monsters to one name label, one HP text, and one HP bar set.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- UI verification in Play Mode is user-owned.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies 2P-5P manifested monster HP slide bars in RunScene Play Mode.
+- If a specific scene child has a different name, inspect that exact child name and add it to the resolver.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:285` falls back to `EnsureManifestedHpBar(...)` only when no HP bar fill renderer is resolved.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:298` creates a fallback `MonsterHpBar`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:1946` updates manifested monster name text, HP text, and HP/shield bar fill values.
+- Runtime and Editor builds completed with 0 errors and existing warnings.
+- `git diff --check` over touched combat files completed with exit code 0 and CRLF warnings only.
+
+### History
+
+- 2026-05-08: User reported manifested monsters did not have an HP SlideBar.
 
 ### History
 
@@ -868,3 +1042,46 @@ Implemented and locally validated through combat runtime changes.
 ### History
 
 - 2026-05-08: User reported the issue through RunScene Manifested/Offering gameplay.
+
+# Task: 2026-05-08 Manifest Failure Popup UI
+
+### Task title
+
+Add RunScene prisoner Manifest failure popup and update Manifest button routing.
+
+### Goals
+
+- Add a failure popup panel for failed Manifest attempts.
+- Keep the popup as a reward modal so the per-frame reward state does not immediately hide it.
+- Ensure `ManifestButton` owns the roll action while `SummonButton` no longer performs it.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- UI remains generated/bound through existing `RunCombatUiController` uGUI helpers.
+- Do not run Unity Play Mode; user verifies the visual flow.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies `PrisonerManifestFailurePopup` visibility and return-to-reward behavior in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs:65` adds failure popup fields.
+- `RunCombatUiController.cs:396` creates `PrisonerManifestFailurePopup` with title, summary, and close button.
+- `RunCombatUiController.cs:466`, `:497`, `:620`, and `:738` hide the popup during normal runtime transitions.
+- `RunCombatUiController.cs:1715` includes the failure popup in `IsRewardModalOpen()`.
+- Runtime and Editor builds completed with 0 errors and existing warnings; Unity-MCP console read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-08: User requested a summon-failure popup when Manifest fails.

@@ -786,7 +786,7 @@ namespace Pakuri.Combat
                     }
                 }
 
-                var targetTransform = GetEnemyPriorityTarget();
+                var targetTransform = GetEnemyPriorityTarget(enemy.Transform.position, out _, out _);
                 if (targetTransform == null)
                 {
                     continue;
@@ -942,14 +942,41 @@ namespace Pakuri.Combat
             }
         }
 
-        private Transform GetEnemyPriorityTarget()
+        private Transform GetEnemyPriorityTarget(Vector3 origin, out CombatUnitRuntime manifestedTarget, out bool targetsSelectedMonster)
         {
+            manifestedTarget = null;
+            targetsSelectedMonster = false;
+            Transform bestTransform = null;
+            var bestDistance = float.MaxValue;
+
             if (unitCurrentHealth > 0f && eveAnchor != null)
             {
-                return eveAnchor;
+                bestTransform = eveAnchor;
+                bestDistance = Vector2.Distance(origin, eveAnchor.position);
+                targetsSelectedMonster = true;
             }
 
-            return nexusAnchor;
+            for (var i = 0; i < manifestedMonsters.Count; i++)
+            {
+                var runtime = manifestedMonsters[i];
+                if (runtime == null || runtime.Transform == null || runtime.CurrentHealth <= 0f)
+                {
+                    continue;
+                }
+
+                var distance = Vector2.Distance(origin, runtime.Transform.position);
+                if (distance >= bestDistance)
+                {
+                    continue;
+                }
+
+                bestTransform = runtime.Transform;
+                bestDistance = distance;
+                manifestedTarget = runtime;
+                targetsSelectedMonster = false;
+            }
+
+            return bestTransform != null ? bestTransform : nexusAnchor;
         }
 
         private void TryUseStageOneEnemySkill(EnemyRuntime enemy)
@@ -1009,7 +1036,7 @@ namespace Pakuri.Combat
                 return;
             }
 
-            var targetTransform = GetEnemyPriorityTarget();
+            var targetTransform = GetEnemyPriorityTarget(enemy.Transform.position, out var manifestedTarget, out var targetsSelectedMonster);
             if (targetTransform == null)
             {
                 return;
@@ -1023,7 +1050,7 @@ namespace Pakuri.Combat
                 return;
             }
 
-            var targetsMonster = unitCurrentHealth > 0f && targetTransform == eveAnchor;
+            var targetsMonster = targetsSelectedMonster || manifestedTarget != null;
             var speed = 7.5f;
             var distance = direction.magnitude;
             direction.Normalize();
@@ -1051,7 +1078,8 @@ namespace Pakuri.Combat
                 IsEnemyProjectile = true,
                 SourceEnemy = enemy,
                 TargetTransform = targetTransform,
-                TargetsMonster = targetsMonster
+                TargetsMonster = targetsMonster,
+                TargetManifestedUnit = manifestedTarget
             });
 
             statusLabel = $"{enemy.DisplayName} {enemy.Definition.ActiveSkillName}: projectile fired.";
@@ -1065,7 +1093,8 @@ namespace Pakuri.Combat
             }
 
             var definition = enemy.Definition;
-            if (unitCurrentHealth > 0f)
+            GetEnemyPriorityTarget(enemy.Transform != null ? enemy.Transform.position : Vector3.zero, out var manifestedTarget, out var targetsSelectedMonster);
+            if (targetsSelectedMonster && unitCurrentHealth > 0f)
             {
                 var resolution = EnemyAttackResolver.ResolveAgainstMonster(
                     definition,
@@ -1077,6 +1106,21 @@ namespace Pakuri.Combat
                     selectedMonsterDefenses);
                 var appliedDamage = ApplyDamageToSelectedMonster(resolution.FinalDamage, enemy, definition.Attribute);
                 statusLabel = $"{enemy.DisplayName} {definition.ActiveSkillName}: {selectedMonsterName}에게 {appliedDamage:0.0} {definition.Attribute} 피해.";
+                return;
+            }
+
+            if (manifestedTarget != null && manifestedTarget.CurrentHealth > 0f && manifestedTarget.Monster != null)
+            {
+                var resolution = EnemyAttackResolver.ResolveAgainstMonster(
+                    definition,
+                    enemy.AttackPower,
+                    enemy.DamageMultiplier,
+                    enemy.AttackBuffMultiplier,
+                    enemy.CriticalChanceBonus,
+                    enemy.CriticalMultiplierBonus,
+                    manifestedTarget.Monster.Defenses);
+                var appliedDamage = ApplyDamageToManifestedUnit(manifestedTarget, resolution.FinalDamage, enemy, definition.Attribute);
+                statusLabel = $"{enemy.DisplayName} {definition.ActiveSkillName}: {manifestedTarget.Monster.DisplayName}에게 {appliedDamage:0.0} {definition.Attribute} 피해.";
                 return;
             }
 

@@ -3,6 +3,92 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-08 Manifested Runtime Resume Reward Context
+
+### Task title
+
+Record that this Rin-first runtime pass did not change reward selection code.
+
+### Goals
+
+- Keep reward board aligned because manifested monsters are acquired through prisoner Manifest flow.
+- Record that this pass changed combat/runtime status binding, not reward candidate or Offering selection code.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Play Mode verification was run by Codex.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Context recorded; no reward code changes were made in this pass.
+
+### Next Actions
+
+- User verifies Manifest acquisition plus manifested Rin skill behavior in Play Mode.
+- If reward candidate or Offering choice behavior is wrong, inspect `RunCombatUiController` and `RunSession` in a separate focused pass.
+
+### Evidence
+
+- `git status --short` showed modified reward/run files already existed in the worktree, but this pass changed combat runtime files and board records only.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:195` and `:1870` contain the manifested slot status-view reuse work.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:128` contains the Rin unit-runtime dispatch work.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User resumed a manifested monster runtime task whose acquisition context is RunScene Manifest flow, but the requested fix was combat/runtime parity and status UI reuse.
+
+## Task: 2026-05-08 Manifest UI Wiring Status Report
+
+### Task title
+
+Record current prisoner Manifest reward UI wiring inspection.
+
+### Goals
+
+- Keep reward/prisoner modal state aligned with the current scene inspection.
+- Record that `ManifestButton` owns the Manifest roll and failure popup path in current code.
+- Record the UI hierarchy warning found in `PrisonerOfferingPanel`.
+
+### Constraints
+
+- Role Owner is Designer for documentation.
+- No gameplay code or scene edits were made.
+- User performs Play Mode verification.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- User verifies reward -> prisoner choice -> Manifest success/failure flow in Play Mode.
+- If UI is visually wrong, first inspect or clean the nested `PrisonerOfferingPanel/DefeatPanel` and duplicate `Title`.
+
+### Evidence
+
+- `RunCombatUiController.cs:367` binds `ManifestButton` to `TryManifestPrisonerMonster`.
+- `RunCombatUiController.cs:391` binds `SummonButton` to result close rather than the Manifest roll.
+- `RunCombatUiController.cs:396` through `:400` creates/binds `PrisonerManifestFailurePopup`.
+- `RunCombatUiController.cs:1711` through `:1717` includes the failure popup and prisoner panels in `IsRewardModalOpen()`.
+- Unity-MCP scene inspection found all required prisoner reward panels and buttons present with button components and label text.
+- Unity-MCP scene inspection found `PrisonerOfferingPanel` has an unexpected child `DefeatPanel` and duplicate `Title`.
+- Report saved as `Pakuri/reference/Report/2026-05-08-runscene-manifest-ui-and-runtime-status.html`.
+
+### History
+
+- 2026-05-08: User requested current panel/button connection inspection and an HTML summary of current Manifest runtime structure.
+
 ## Migrated Task Blocks
 
 ## Task: 2026-05-08 Manifest Candidate Selected Monster Fix
@@ -859,3 +945,45 @@ Implemented and locally validated through combat runtime changes.
 ### History
 
 - 2026-05-08: User asked to perform object-oriented manifested runtime refactor steps 1-5 before later deciding step 6.
+
+# Task: 2026-05-08 Manifest Button Roll And Failure Popup
+
+### Task title
+
+Move prisoner Manifest roll to the choice button and display failure popup.
+
+### Goals
+
+- Make `ManifestButton` perform the success/failure roll directly.
+- Keep successful Manifest using the existing reward-return flow.
+- Show a distinct failure popup when Manifest fails.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user performs gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies prisoner reward -> Manifest success/failure UI in RunScene Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs:367` binds `PrisonerChoicePanel/ManifestButton` to `TryManifestPrisonerMonster`.
+- `RunCombatUiController.cs:391` binds `PrisonerSummonerPanel/SummonButton` to result close instead of the roll method.
+- `RunCombatUiController.cs:396` through `:400` creates `PrisonerManifestFailurePopup`.
+- `RunCombatUiController.cs:700` through `:722` implements failure popup display and close behavior.
+- Runtime and Editor builds completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User requested the Manifest chance to happen on `ManifestButton` rather than `SummonButton`, with a popup on failure.

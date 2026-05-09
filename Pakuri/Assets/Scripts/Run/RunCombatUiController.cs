@@ -62,6 +62,9 @@ namespace Pakuri.Run
         private Button prisonerSummonerButton;
         private Button prisonerSummonerContinueButton;
         private Button prisonerSummonerBackButton;
+        private GameObject prisonerManifestFailurePopup;
+        private Text prisonerManifestFailureText;
+        private Button prisonerManifestFailureCloseButton;
 
         private GameObject defeatPanel;
         private Text defeatSummaryText;
@@ -361,7 +364,7 @@ namespace Pakuri.Run
         {
             prisonerChoicePanel = EnsurePanel("PrisonerChoicePanel", new Color(0.12f, 0.10f, 0.16f, 0.96f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(760f, 540f), Vector2.zero);
             prisonerChoiceTitleText = EnsureText(prisonerChoicePanel.transform, "Title", "Prisoner Choice", 30, TextAnchor.MiddleCenter);
-            prisonerModeButtons[0] = EnsureButton(prisonerChoicePanel.transform, "ManifestButton", "Manifest", () => OpenPrisonerSummonerPanel());
+            prisonerModeButtons[0] = EnsureButton(prisonerChoicePanel.transform, "ManifestButton", "Manifest", TryManifestPrisonerMonster);
             prisonerModeButtons[1] = EnsureButton(prisonerChoicePanel.transform, "AssimilateButton", "Assimilate", OnAssimilateClicked);
             prisonerModeButtons[2] = EnsureButton(prisonerChoicePanel.transform, "OfferingButton", "Offering", () => OpenPrisonerOfferingPanel(activePrisonerName));
             prisonerModeButtons[3] = EnsureButton(prisonerChoicePanel.transform, "CorruptButton", "Torture / Corrupt", OnCorruptClicked);
@@ -385,10 +388,16 @@ namespace Pakuri.Run
             }
 
             prisonerSummonerSummaryText = EnsureText(prisonerSummonerPanel.transform, "Summary", string.Empty, 18, TextAnchor.UpperLeft);
-            prisonerSummonerButton = EnsureButton(prisonerSummonerPanel.transform, "SummonButton", "Try Manifest", TryManifestPrisonerMonster, true);
+            prisonerSummonerButton = EnsureButton(prisonerSummonerPanel.transform, "SummonButton", "Manifest Resolved", ClosePrisonerSummonerResult, true);
             prisonerSummonerContinueButton = EnsureButton(prisonerSummonerPanel.transform, "ContinueButton", "Continue", ClosePrisonerSummonerResult, true);
             prisonerSummonerBackButton = EnsureButton(prisonerSummonerPanel.transform, "BackButton", "Back to Reward", ClosePrisonerSummonerWithoutManifest, true);
             EnsureVerticalLayout(prisonerSummonerPanel.GetComponent<RectTransform>(), 28f, 28f, 18f);
+
+            prisonerManifestFailurePopup = EnsurePanel("PrisonerManifestFailurePopup", new Color(0.15f, 0.06f, 0.07f, 0.97f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(620f, 320f), Vector2.zero);
+            EnsureText(prisonerManifestFailurePopup.transform, "Title", "Manifest Failed", 30, TextAnchor.MiddleCenter);
+            prisonerManifestFailureText = EnsureText(prisonerManifestFailurePopup.transform, "Summary", string.Empty, 18, TextAnchor.MiddleCenter);
+            prisonerManifestFailureCloseButton = EnsureButton(prisonerManifestFailurePopup.transform, "CloseButton", "Return to Reward", ClosePrisonerManifestFailurePopup, true);
+            EnsureVerticalLayout(prisonerManifestFailurePopup.GetComponent<RectTransform>(), 28f, 28f, 18f);
 
             if (!Application.isPlaying)
             {
@@ -405,6 +414,7 @@ namespace Pakuri.Run
             SetOptionalPanelActive(prisonerOfferingPanel, true);
             prisonerChoicePanel.SetActive(true);
             prisonerSummonerPanel.SetActive(true);
+            prisonerManifestFailurePopup.SetActive(true);
             defeatPanel.SetActive(true);
 
             hudText.text =
@@ -435,6 +445,7 @@ namespace Pakuri.Run
             SetOptionalPanelActive(prisonerOfferingPanel, true);
             prisonerChoicePanel.SetActive(true);
             prisonerSummonerPanel.SetActive(true);
+            prisonerManifestFailurePopup.SetActive(true);
             defeatPanel.SetActive(true);
 
             EnsureRewardButtonSlots(true);
@@ -452,6 +463,7 @@ namespace Pakuri.Run
             SetOptionalPanelActive(prisonerOfferingPanel, false);
             prisonerChoicePanel.SetActive(false);
             prisonerSummonerPanel.SetActive(false);
+            prisonerManifestFailurePopup.SetActive(false);
             defeatPanel.SetActive(false);
             SetOptionalPanelActive(transform.Find("MonsterPanel")?.gameObject, true);
             rewardSummaryApplied = false;
@@ -482,6 +494,7 @@ namespace Pakuri.Run
             SetOptionalPanelActive(prisonerOfferingPanel, false);
             prisonerChoicePanel.SetActive(false);
             prisonerSummonerPanel.SetActive(false);
+            prisonerManifestFailurePopup.SetActive(false);
             defeatPanel.SetActive(false);
             rewardTitleText.text = $"{currentSession.SelectedMonsterName} 보상 선택";
             rewardSummaryText.text =
@@ -604,6 +617,7 @@ namespace Pakuri.Run
             SetOptionalPanelActive(prisonerPanel, false);
             SetOptionalPanelActive(prisonerOfferingPanel, false);
             prisonerSummonerPanel.SetActive(false);
+            prisonerManifestFailurePopup.SetActive(false);
             prisonerChoicePanel.SetActive(true);
 
             if (prisonerChoiceTitleText != null)
@@ -630,40 +644,6 @@ namespace Pakuri.Run
             OpenPrisonerPanel(prisonerName);
         }
 
-        private void OpenPrisonerSummonerPanel()
-        {
-            pendingManifestMonster = ResolveNextManifestCandidate();
-            prisonerChoicePanel.SetActive(false);
-            SetOptionalPanelActive(prisonerPanel, false);
-            SetOptionalPanelActive(prisonerOfferingPanel, false);
-            prisonerSummonerPanel.SetActive(true);
-            if (prisonerSummonerButton != null)
-            {
-                prisonerSummonerButton.gameObject.SetActive(true);
-                prisonerSummonerButton.interactable = pendingManifestMonster != null;
-            }
-            if (prisonerSummonerContinueButton != null)
-            {
-                prisonerSummonerContinueButton.gameObject.SetActive(false);
-            }
-            if (prisonerSummonerBackButton != null)
-            {
-                prisonerSummonerBackButton.gameObject.SetActive(true);
-                prisonerSummonerBackButton.interactable = true;
-            }
-
-            if (pendingManifestMonster == null)
-            {
-                SetSummonerPanel(null, "No monster is available for Manifest.");
-                ShowPrisonerSummonerContinue();
-                return;
-            }
-
-            SetSummonerPanel(
-                pendingManifestMonster,
-                $"Candidate selected from current monster catalog.\nSuccess chance: {ManifestSuccessChance * 100f:0}%\nPress the button to attempt Manifest.");
-        }
-
         private void TryManifestPrisonerMonster()
         {
             if (currentSession == null)
@@ -671,29 +651,34 @@ namespace Pakuri.Run
                 return;
             }
 
+            pendingManifestMonster = ResolveNextManifestCandidate();
             if (pendingManifestMonster == null)
             {
-                pendingManifestMonster = ResolveNextManifestCandidate();
-            }
-
-            if (pendingManifestMonster == null)
-            {
-                SetSummonerPanel(null, "Manifest failed because no candidate monster exists.");
+                ShowManifestFailurePopup("Manifest failed because no candidate monster exists.");
                 return;
             }
 
             var succeeded = UnityEngine.Random.value < ManifestSuccessChance;
             if (!succeeded)
             {
-                SetSummonerPanel(pendingManifestMonster, $"Manifest failed.\n{activePrisonerName} was consumed without adding a monster.");
-                if (prisonerSummonerButton != null)
-                {
-                    prisonerSummonerButton.interactable = false;
-                }
-
                 rewardDetailText = $"Manifest failed for {activePrisonerName}.";
-                ShowPrisonerSummonerContinue();
+                ShowManifestFailurePopup($"{activePrisonerName} Manifest failed.\nNo monster joined.");
                 return;
+            }
+
+            prisonerChoicePanel.SetActive(false);
+            SetOptionalPanelActive(prisonerPanel, false);
+            SetOptionalPanelActive(prisonerOfferingPanel, false);
+            prisonerManifestFailurePopup.SetActive(false);
+            prisonerSummonerPanel.SetActive(true);
+            if (prisonerSummonerButton != null)
+            {
+                prisonerSummonerButton.gameObject.SetActive(false);
+                prisonerSummonerButton.interactable = false;
+            }
+            if (prisonerSummonerBackButton != null)
+            {
+                prisonerSummonerBackButton.gameObject.SetActive(false);
             }
 
             currentSession.RecordManifestedMonster(pendingManifestMonster);
@@ -712,6 +697,31 @@ namespace Pakuri.Run
             ShowPrisonerSummonerContinue();
         }
 
+        private void ShowManifestFailurePopup(string message)
+        {
+            prisonerChoicePanel.SetActive(false);
+            prisonerSummonerPanel.SetActive(false);
+            SetOptionalPanelActive(prisonerPanel, false);
+            SetOptionalPanelActive(prisonerOfferingPanel, false);
+            prisonerManifestFailurePopup.SetActive(true);
+            if (prisonerManifestFailureText != null)
+            {
+                prisonerManifestFailureText.text = message;
+            }
+
+            if (prisonerManifestFailureCloseButton != null)
+            {
+                prisonerManifestFailureCloseButton.gameObject.SetActive(true);
+                prisonerManifestFailureCloseButton.interactable = true;
+            }
+        }
+
+        private void ClosePrisonerManifestFailurePopup()
+        {
+            prisonerManifestFailurePopup.SetActive(false);
+            ClosePrisonerSummonerResult();
+        }
+
         private void ShowPrisonerSummonerContinue()
         {
             if (prisonerSummonerContinueButton != null)
@@ -725,6 +735,7 @@ namespace Pakuri.Run
         {
             prisonerSummonerPanel.SetActive(false);
             prisonerChoicePanel.SetActive(false);
+            prisonerManifestFailurePopup.SetActive(false);
             SetOptionalPanelActive(prisonerPanel, false);
             SetOptionalPanelActive(prisonerOfferingPanel, false);
             rewardPanel.SetActive(true);
@@ -775,7 +786,10 @@ namespace Pakuri.Run
             for (var i = 0; i < monsters.Length; i++)
             {
                 var monster = monsters[i];
-                if (monster == null || string.IsNullOrWhiteSpace(monster.MonsterId) || currentSession.HasManifestedMonster(monster.MonsterId))
+                if (monster == null
+                    || string.IsNullOrWhiteSpace(monster.MonsterId)
+                    || string.Equals(monster.MonsterId, currentSession.SelectedMonsterId, StringComparison.OrdinalIgnoreCase)
+                    || currentSession.HasManifestedMonster(monster.MonsterId))
                 {
                     continue;
                 }
@@ -1698,6 +1712,7 @@ namespace Pakuri.Run
         {
             return IsPanelActive(prisonerChoicePanel)
                 || IsPanelActive(prisonerSummonerPanel)
+                || IsPanelActive(prisonerManifestFailurePopup)
                 || IsPanelActive(prisonerPanel)
                 || IsPanelActive(prisonerOfferingPanel);
         }

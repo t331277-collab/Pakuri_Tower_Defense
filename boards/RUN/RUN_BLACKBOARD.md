@@ -3,6 +3,133 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-08 Manifested HP Bar Runtime Sprite Repair
+
+### Task title
+
+Record RunScene impact of manifested HP bar live sprite repair.
+
+### Goals
+
+- Keep Run board aligned with the 2P-5P manifested HP bar visibility fix.
+- Record that the fix targets already-bound runtime instances, not only party reconstruction.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs RunScene Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested party slots show HP bars during RunScene combat.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:2029` repairs `HpBarFill.sprite == null` during manifested HP/status refresh.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:2130` uses the same repair-aware path when deactivating scene slots.
+- Runtime and Editor builds completed with 0 errors and existing warnings.
+- Unity-MCP refresh reached idle and console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-08: User asked to resume after an interrupted fix for invisible 2P-5P HP bars.
+
+## Task: 2026-05-08 RunScene Manifested Rin Runtime Resume
+
+### Task title
+
+Record RunScene impact of Rin-first manifested runtime parity.
+
+### Goals
+
+- Keep Run board aligned with the Rin-first combat runtime change.
+- Record that 2P-5P scene slots reuse existing status children when configured as manifested monster runtimes.
+- Record verification boundaries for RunScene Play Mode.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Play Mode verification was run by Codex.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by build and Unity-MCP editor checks.
+
+### Next Actions
+
+- User verifies manifested Rin in 2P-5P slots during RunScene Play Mode.
+- User checks that one name label, one HP label, and one HP bar are visible per manifested slot.
+
+### Evidence
+
+- Unity-MCP scene hierarchy inspection found `CombatRoot/2PMonster`, `3PMonster`, `4PMonster`, `5PMonster`, and `EveUnit`.
+- Unity-MCP scene hierarchy inspection found slot status children named `MonsterHpLabel`, `MonsterHpBar`, and `MonsterNameLabel`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:195` resolves existing slot status views during manifested runtime creation.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:1870` writes monster name, HP text, HP fill, and shield fill to the resolved views.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User reported 2P-5P monsters already have child HP/name objects and asked that manifestation reuse them rather than spawning overlapping duplicates.
+
+## Task: 2026-05-08 RunScene Manifest UI And Party Runtime Report
+
+### Task title
+
+Record the Run-level status of Manifest UI wiring and manifested party runtime documentation.
+
+### Goals
+
+- Keep Run board aligned with the current HTML report.
+- Record that the selected monster duplicate guard applies at run-session and combat-party boundaries.
+- Record the current RunScene UI inspection warning.
+
+### Constraints
+
+- Role Owner is Designer for documentation.
+- No gameplay code or scene edits were made in this task.
+- User performs Play Mode verification.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- User verifies Manifest success/failure UI and manifested party behavior in Play Mode.
+- If requested, clean `RunCombatCanvas/PrisonerOfferingPanel` hierarchy in a separate edit task.
+
+### Evidence
+
+- `RunCombatUiController.cs:791` excludes `currentSession.SelectedMonsterId` from Manifest candidates.
+- `RunSession.cs:321` and `:334` reject selected-monster IDs when recording Manifested monsters.
+- `CombatRuntimeParty.cs:156` skips selected-monster IDs even if bad session state exists.
+- Unity-MCP scene inspection found all required RunScene prisoner/reward panels and buttons present.
+- Unity-MCP scene inspection found `PrisonerOfferingPanel` has an unexpected child `DefeatPanel` and duplicate `Title`.
+- Report saved as `Pakuri/reference/Report/2026-05-08-runscene-manifest-ui-and-runtime-status.html`.
+
+### History
+
+- 2026-05-08: User requested RunScene panel/button wiring inspection and current manifested monster structure explanation as HTML.
+
 ## Migrated Task Blocks
 
 ## Task: 2026-05-02 Run Skill And Reward Query Expansion
@@ -1133,3 +1260,48 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-08: User asked whether the current structure applies the selected monster to `EveUnit` when entering RunScene.
+
+# Task: 2026-05-08 Manifest Candidate Duplicate And Failure Popup
+
+### Task title
+
+Prevent selected-monster duplicate Manifest and move Manifest chance to `ManifestButton`.
+
+### Goals
+
+- Stop the current 1P selected monster, including Eve, from being added again through Manifest.
+- Roll Manifest success/failure from `PrisonerChoicePanel/ManifestButton`, not `PrisonerSummonerPanel/SummonButton`.
+- Show a Manifest failure popup when the roll fails.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested behavior changes.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that the selected monster is excluded from Manifest candidates, Manifest rolls immediately on `ManifestButton`, success still adds a new monster, and failure opens the popup.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs:367` binds `ManifestButton` to `TryManifestPrisonerMonster`.
+- `Pakuri/Assets/Scripts/Run/RunCombatUiController.cs:391` no longer binds `SummonButton` to the Manifest roll path.
+- `RunCombatUiController.cs:396` creates `PrisonerManifestFailurePopup`, and `:657` / `:665` show it for no-candidate or failed rolls.
+- `RunCombatUiController.cs:791` excludes `currentSession.SelectedMonsterId` from Manifest candidates.
+- `Pakuri/Assets/Scripts/Run/RunSession.cs:321` and `:334` reject direct attempts to record the selected monster as Manifested.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing System.Net.Http/System.IO.Compression warnings.
+- Unity-MCP script refresh reached idle; console warning/error read returned only MCP client handler logs.
+- `git diff --check` on the changed Run/Combat scripts completed with no whitespace errors, aside from Git LF-to-CRLF normalization warnings.
+
+### History
+
+- 2026-05-08: User reported Eve could be Manifested again while already present and requested the Manifest success chance move from `SummonButton` to `ManifestButton` with a failure popup.

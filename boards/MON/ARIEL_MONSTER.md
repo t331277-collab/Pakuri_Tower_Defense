@@ -6,6 +6,46 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, read `boards/MON/MON_BLACKBOARD.md` first and consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-05-08 Manifested Ariel Common Runtime Parity
+
+### Task title
+
+Apply Ariel Offering choices through the manifested common skill runtime.
+
+### Goals
+
+- Keep manifested Ariel skills sourced from `SkillDefinition` data.
+- Apply Ariel manifested Offering choices in shared damage, cooldown, magazine, reload, and shield/buff-safe paths.
+- Avoid treating Ariel shield/buff runtime kinds as damaging attacks.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is common manifested runtime work, not a full line-by-line copy of selected Ariel private timers.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies manifested Ariel skills and Offering upgrades in RunScene Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:503` prevents manifested buff/shield skills from applying enemy damage.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:866` includes Ariel skill-specific damage multipliers.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:991` includes Ariel cooldown choice handling.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:1250` and `:1278` include Ariel A magazine/reload choice handling.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
 ## Task: 2026-05-05 Ariel Skill Data RuntimeKind Audit
 
 ### Task title

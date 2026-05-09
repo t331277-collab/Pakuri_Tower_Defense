@@ -317,7 +317,9 @@ namespace Pakuri.Run
 
         public void RecordManifestedMonster(string monsterId)
         {
-            if (string.IsNullOrWhiteSpace(monsterId) || HasManifestedMonster(monsterId))
+            if (string.IsNullOrWhiteSpace(monsterId)
+                || IsSelectedMonster(monsterId)
+                || HasManifestedMonster(monsterId))
             {
                 return;
             }
@@ -327,7 +329,10 @@ namespace Pakuri.Run
 
         public void RecordManifestedMonster(MonsterDefinition monster)
         {
-            if (monster == null || string.IsNullOrWhiteSpace(monster.MonsterId) || HasManifestedMonster(monster.MonsterId))
+            if (monster == null
+                || string.IsNullOrWhiteSpace(monster.MonsterId)
+                || IsSelectedMonster(monster.MonsterId)
+                || HasManifestedMonster(monster.MonsterId))
             {
                 return;
             }

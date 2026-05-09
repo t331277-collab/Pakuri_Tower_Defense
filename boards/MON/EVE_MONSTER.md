@@ -27,6 +27,50 @@ Legacy non-English note retained these code references: `boards/MON/MON_BLACKBOA
 
 ## Migrated Task Blocks
 
+## Task: 2026-05-08 Manifested Eve A Auto-Target Runtime
+
+### Task title
+
+Move manifested Eve A onto Eve Arc Bolt-specific unit runtime execution.
+
+### Goals
+
+- Use the original Eve A projectile/enhancement logic for manifested Eve.
+- Add only automatic target/direction selection for the manifested unit.
+- Keep Eve A magazine, reload, projectile count, pierce, branch, status, and damage choices sourced from the manifested Eve `RunMonsterState`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Selected Eve manual fire is not Play Mode verified by Codex.
+- User performs gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies manifested Eve A auto-fire, branching, pierce, magazine, reload, and Offering upgrades in RunScene Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs:192` routes Eve unit A runtime to `TryFireEveUnitArcBolt(...)`.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs:650` computes target direction from the manifested unit position to the nearest enemy and applies Eve A choices.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEveSkills.cs:780` creates manifested Arc Bolt projectiles with lightning attribute, status, pierce, and branch fields.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:661` applies manifested projectile branch logic on hit.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-08: User asked why manifested Eve A could not simply use original Eve A with auto aim and then requested that path to be implemented.
+
 ## Task: 2026-05-08 Eve Manifest Candidate Availability
 
 ### Task title
