@@ -21,6 +21,9 @@ The full pre-hierarchy task history is preserved at:
 - 2026-05-08 recent cross-domain task: Manifested 2P-5P HP bar live sprite repair was implemented so already-bound `MonsterHpBar/Fill` renderers with `sprite=null` are normalized during HP/status refresh. Detailed records are in `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/RUN/RUN_BLACKBOARD.md`, and `boards/MON/MON_BLACKBOARD.md`.
 - 2026-05-09 recent cross-domain task: `Pakuri/Assets/Scripts` was reorganized into clearer Combat, Data, and Run subfolders without code-behavior changes. Detailed records are in `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/DATA/DATA_BLACKBOARD.md`, and `boards/REPORT/REPORT_BLACKBOARD.md`.
 - 2026-05-09 recent cross-domain task: Interrupted Sein unit executor migration was resumed so manifested Sein A-E dispatch through Sein-specific `CombatUnitRuntime` paths and Sein projectile/effect damage reads unit F-J passive state. Detailed records are in `boards/MON/SEIN_MONSTER.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, and `boards/REPORT/REPORT_BLACKBOARD.md`.
+- 2026-05-10 recent cross-domain task: Vega unit executor migration was implemented so Manifested Vega A-E dispatch through Vega-specific `CombatUnitRuntime` paths and Vega projectile/skill damage reads unit F-J passive state. Detailed records are in `boards/MON/VEGA_MONSTER.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
+- 2026-05-10 recent cross-domain task: Ariel unit executor migration was implemented so Manifested Ariel A-E dispatch through Ariel-specific `CombatUnitRuntime` paths, and Ariel B/E shields now apply to selected plus manifested party units. Detailed records are in `boards/MON/ARIEL_MONSTER.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
+- 2026-05-10 recent cross-domain task: Ariel selected-unit shield expiry and Archangel Descent visual follow-up was implemented so 1P shields granted by 2P-5P Ariel tick outside selected-Ariel-only cooldown logic, selected/Manifested Ariel E use a dedicated battlefield-wide effect path, and selected/manifested shield timers now skip decay on the application frame to align duration semantics. Detailed records are in `boards/MON/ARIEL_MONSTER.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
 ## Board Tree
 
@@ -438,3 +441,45 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-08: User reported non-Vega Manifested A attacks appeared to leave Vega marks, Eve could be duplicated by Manifest, and requested Manifest chance roll on `ManifestButton` with failure popup.
+
+## Recent Task: 2026-05-10 Monster Shield Skill Review
+
+### Task title
+
+Review and fix Ariel/Eve shield runtime behavior.
+
+### Goals
+
+- Track global status for shield skill review across monster reference, combat, and status boards.
+- Fix Eve F shield timing and application to lightning-skill allies.
+
+### Constraints
+
+- Detailed evidence is in `boards/MON/EVE_MONSTER.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Ariel B/E and Eve F shield behavior in RunScene Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Changed `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs` for Eve F.
+- Existing shield changes in `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeArielSkills.cs`, `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs`, `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs`, and `Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs` were inspected for Ariel selected/manifested shield timing and first-frame handling.
+- Reference search found concrete shield skills for Ariel B/E and Eve F under `Pakuri/reference/2.Monster`; other shield mentions were generic pattern notes or enemy shield-target damage text.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+- Unity-MCP refresh reached idle; console error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-10: User asked to inspect all monster shield logic under `Pakuri/reference/2.Monster`, noting Eve shield appeared not to apply correctly.

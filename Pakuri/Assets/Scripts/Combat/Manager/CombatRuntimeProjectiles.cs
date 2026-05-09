@@ -62,6 +62,7 @@ namespace Pakuri.Combat
                         }
                         else
                         {
+                            TryTriggerArielJudgementLightExplosion(projectile);
                             CleanupProjectile(i);
                         }
 
@@ -73,6 +74,7 @@ namespace Pakuri.Combat
                         continue;
                     }
 
+                    TryTriggerArielJudgementLightExplosion(projectile);
                     CleanupProjectile(i);
                     continue;
                 }
@@ -459,10 +461,23 @@ namespace Pakuri.Combat
                 return 0f;
             }
 
-            var appliedDamage = Mathf.Min(runtime.CurrentHealth, incomingDamage);
+            var remainingDamage = GetArielUnitIncomingDamageAfterReduction(runtime, incomingDamage);
+            var totalAppliedDamage = 0f;
+            if (runtime.ShieldValue > 0f)
+            {
+                var shieldBeforeAbsorb = runtime.ShieldValue;
+                var absorbed = Mathf.Min(runtime.ShieldValue, remainingDamage);
+                runtime.ShieldValue = Mathf.Max(0f, runtime.ShieldValue - absorbed);
+                remainingDamage -= absorbed;
+                totalAppliedDamage += absorbed;
+                HandleArielUnitShieldAbsorbed(runtime, absorbed, shieldBeforeAbsorb, sourceEnemy);
+            }
+
+            var appliedDamage = Mathf.Min(runtime.CurrentHealth, remainingDamage);
             runtime.CurrentHealth = Mathf.Max(0f, runtime.CurrentHealth - appliedDamage);
+            totalAppliedDamage += appliedDamage;
             UpdateManifestedMonsterLabel(runtime);
-            if (appliedDamage > 0f && runtime.Transform != null)
+            if (totalAppliedDamage > 0f && runtime.Transform != null)
             {
                 var popupAnchor = runtime.HpLabel != null
                     ? runtime.HpLabel.transform.position
@@ -470,10 +485,10 @@ namespace Pakuri.Combat
                         ? runtime.NameLabel.transform.position
                         : runtime.Transform.position + Vector3.up * 1.05f;
                 var popupTemplate = runtime.HpLabel != null ? runtime.HpLabel : runtime.NameLabel != null ? runtime.NameLabel : runtime.Label;
-                SpawnDamagePopup(popupAnchor + new Vector3(0f, 0.14f, 0f), FormatDamagePopupAmount(appliedDamage, attribute), popupTemplate);
+                SpawnDamagePopup(popupAnchor + new Vector3(0f, 0.14f, 0f), FormatDamagePopupAmount(totalAppliedDamage, attribute), popupTemplate);
             }
 
-            return appliedDamage;
+            return totalAppliedDamage;
         }
 
         private static float GetEnemyHitRadius(EnemyRuntime enemy)
@@ -500,6 +515,7 @@ namespace Pakuri.Combat
 
         private void UpdateSelectedMonsterCombat()
         {
+            UpdateSelectedUnitShieldTimer(Time.deltaTime);
             UpdateSelectedMonsterSkillCooldowns();
             shotCooldown = Mathf.Max(0f, shotCooldown - Time.deltaTime * GetSelectedMonsterActionSpeedMultiplier());
 

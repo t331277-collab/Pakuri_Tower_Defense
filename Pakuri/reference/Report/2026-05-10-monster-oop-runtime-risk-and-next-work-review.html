@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>몬스터 OOP 런타임 진행 현황과 구조 리스크 검토</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #20242c;
+      --muted: #5f6b7a;
+      --line: #d7dde8;
+      --blue: #2563eb;
+      --green: #15803d;
+      --amber: #b45309;
+      --red: #b42318;
+      --code: #eef2f7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      line-height: 1.65;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 36px 24px 64px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 32px;
+    }
+
+    h2 {
+      margin-top: 34px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 22px;
+    }
+
+    h3 {
+      margin-top: 22px;
+      font-size: 17px;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    ul, ol {
+      margin: 10px 0 0 20px;
+      padding: 0;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    code {
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: var(--code);
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.94em;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 14px;
+      border-collapse: collapse;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      background: #edf2f8;
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .hero,
+    .card,
+    .callout {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .meta {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .card {
+      padding: 16px;
+    }
+
+    .callout {
+      margin-top: 16px;
+      padding: 16px;
+      border-left: 4px solid var(--blue);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .good {
+      background: #dcfce7;
+      color: var(--green);
+    }
+
+    .warn {
+      background: #fef3c7;
+      color: var(--amber);
+    }
+
+    .bad {
+      background: #fee2e2;
+      color: var(--red);
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <h1>몬스터 OOP 런타임 진행 현황과 구조 리스크 검토</h1>
+    <p class="meta">작성일: 2026-05-10 / 역할: Designer / 기준: 실제 코드, 보드 기록, 기존 2026-05-08 HTML 보고서</p>
+    <p>
+      이 문서는 <code>2026-05-08-monster-oop-refactor-manifested-work-status.html</code> 이후의 실제 코드 상태를 다시 점검해,
+      남은 작업을 지금 꼭 해야 하는지, 현재 구조의 리스크가 무엇인지, 그리고 향후 밸런스 조정, 이펙트 적용, meta 전역 강화,
+      몬스터 배치 변경에 얼마나 버틸 수 있는지를 판단한다.
+    </p>
+  </section>
+
+  <h2>1. 결론</h2>
+  <div class="grid">
+    <section class="card">
+      <h3>지금 꼭 해야 하는가</h3>
+      <p><span class="badge warn">일부만 지금 권장</span></p>
+      <p>
+        현재 플레이 검증과 소규모 밸런스 조정은 진행 가능하다. 다만 meta 전역 강화, 배치 시스템, 새 몬스터 추가를 본격화하기 전에는
+        수치 적용 계층과 배치 데이터화를 먼저 정리하는 것이 낫다.
+      </p>
+    </section>
+    <section class="card">
+      <h3>구조 리스크</h3>
+      <p><span class="badge warn">중간 리스크</span></p>
+      <p>
+        2P~5P는 <code>CombatUnitRuntime</code> 중심으로 많이 옮겨졌지만, 선택 1P 전용 전역 필드와 몬스터별 partial service가 아직 강하게 남아 있다.
+      </p>
+    </section>
+    <section class="card">
+      <h3>완전한 OOP인가</h3>
+      <p><span class="badge bad">아직 아님</span></p>
+      <p>
+        현재는 “유닛 상태를 객체가 들고, 실행은 중앙 컨트롤러 partial이 맡는 하이브리드 구조”다. 완전한 몬스터 객체 지향 구조라고 보기는 어렵다.
+      </p>
+    </section>
+  </div>
+
+  <h2>2. 기존 리포트 이후 진행된 작업</h2>
+  <p>
+    2026-05-08 보고서 시점에는 Sein, Vega, Ariel의 unit executor가 남은 작업으로 보였지만, 현재 보드와 코드 기준으로는 세 몬스터 모두
+    manifested unit executor가 추가되어 있다.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>항목</th>
+        <th>현재 상태</th>
+        <th>코드 근거</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Eve</td>
+        <td><span class="badge good">unit executor 있음</span></td>
+        <td><code>CombatRuntimeParty.cs:618</code>에서 <code>TryTickEveUnitSkill</code> 호출. <code>CombatRuntimeEveSkills.cs:176</code>부터 Eve unit tick 경로 존재.</td>
+      </tr>
+      <tr>
+        <td>Rin</td>
+        <td><span class="badge good">unit executor 있음</span></td>
+        <td><code>CombatRuntimeParty.cs:623</code>에서 <code>TryTickRinUnitSkill</code> 호출. <code>CombatRuntimeRinSkills.cs:185</code>부터 Rin unit tick 경로 존재.</td>
+      </tr>
+      <tr>
+        <td>Sein</td>
+        <td><span class="badge good">unit executor 있음</span></td>
+        <td><code>CombatRuntimeParty.cs:628</code>에서 <code>TryTickSeinUnitSkill</code> 호출. 보드에는 <code>CombatRuntimeSeinSkills.cs:127</code> dispatcher가 기록되어 있다.</td>
+      </tr>
+      <tr>
+        <td>Vega</td>
+        <td><span class="badge good">unit executor 있음</span></td>
+        <td><code>CombatRuntimeParty.cs:633</code>에서 <code>TryTickVegaUnitSkill</code> 호출. 보드에는 <code>CombatRuntimeVegaSkills.cs:139</code> dispatcher가 기록되어 있다.</td>
+      </tr>
+      <tr>
+        <td>Ariel</td>
+        <td><span class="badge good">unit executor 있음</span></td>
+        <td><code>CombatRuntimeParty.cs:638</code>에서 <code>TryTickArielUnitSkill</code> 호출. <code>CombatRuntimeArielSkills.cs:453</code>부터 Ariel unit tick 경로 존재.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3. 현재 구조가 잘 된 부분</h2>
+  <ul>
+    <li>
+      <code>CombatUnitRuntime</code>가 <code>MonsterDefinition</code>, <code>RunMonsterState</code>, HP, 공격력, 주문력, 보호막, 몬스터별 지속 상태,
+      <code>List&lt;CombatSkillRuntime&gt;</code>를 보유한다. 즉 2P~5P가 단순 복제 오브젝트가 아니라 전투 상태를 가진 유닛으로 바뀌었다.
+    </li>
+    <li>
+      <code>CombatSkillRuntime</code>가 스킬별 쿨다운, 탄창, 재장전, 발사 간격, Vega 예약 투사체 상태를 가진다.
+      스킬별 런타임 상태를 유닛 단위로 분리한 점은 향후 밸런스 조정에 유리하다.
+    </li>
+    <li>
+      <code>RunSession.RunMonsterState</code>는 몬스터별 <code>LearnedActives</code>, <code>LearnedPassives</code>, <code>ChosenRewardIds</code>,
+      <code>DamageMultiplier</code>, <code>MagazineBonus</code>, <code>ShotIntervalMultiplier</code>, <code>ReloadDurationMultiplier</code>,
+      <code>MaxHealthBonus</code>, <code>StatusChanceBonus</code>를 가진다. 수치 보상과 Offering 상태를 1P와 파티 멤버에 나눠 적용할 기반은 있다.
+    </li>
+    <li>
+      이펙트는 <code>SkillDefinition.SkillEffectPrefab</code>와 <code>CombatEffectFactory</code> 경로가 생겼다.
+      프리팹 기반 이펙트를 붙이는 방향은 맞다.
+    </li>
+  </ul>
+
+  <h2>4. 완전한 객체 지향 구조가 아닌 이유</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>근거</th>
+        <th>판단</th>
+        <th>리스크</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>CombatUnitRuntime.TickManifestedCombat</code>는 결국 <code>Owner.TickManifestedUnitSkill(this, ...)</code>를 호출한다.</td>
+        <td>유닛이 실행 주체처럼 보이지만 실제 스킬 실행 책임은 중앙 컨트롤러 partial에 있다.</td>
+        <td>몬스터가 늘수록 <code>CombatRuntimeController</code> partial들이 계속 비대해진다.</td>
+      </tr>
+      <tr>
+        <td><code>CombatRuntimeParty.cs:611</code>부터 Eve, Rin, Sein, Vega, Ariel 순서로 전용 tick을 직접 호출한다.</td>
+        <td>다형성 dispatch가 아니라 if-chain dispatcher다.</td>
+        <td>새 몬스터 추가 때 공통 dispatcher를 계속 수정해야 한다.</td>
+      </tr>
+      <tr>
+        <td><code>selectedUnitRuntime</code>는 있지만 <code>SyncSelectedUnitRuntimeStats</code>에서 1P 전역 필드를 mirror한다.</td>
+        <td>1P는 아직 완전한 unit-owned 상태가 아니다.</td>
+        <td>1P와 2P~5P 사이의 보호막, 쿨다운, 패시브 차이가 다시 생길 수 있다.</td>
+      </tr>
+      <tr>
+        <td><code>ResolveManifestedSkillDamageMultiplier</code>는 skill id 문자열로 여러 몬스터 보정을 한곳에서 처리한다.</td>
+        <td>이전 fallback 보정 로직이 남아 있다.</td>
+        <td>전용 unit executor와 fallback 보정이 중복 적용되거나 누락될 위험이 있다.</td>
+      </tr>
+      <tr>
+        <td><code>CombatUnitRuntime</code>에 Rin, Sein, Ariel, Vega 상태 필드가 직접 추가되어 있다.</td>
+        <td>상태는 유닛으로 옮겨졌지만 몬스터별 상태 타입으로 분리되지는 않았다.</td>
+        <td>몬스터가 많아지면 공통 유닛 클래스가 모든 몬스터 전용 필드로 커진다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>5. 남은 작업을 지금 해야 하는지</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>작업</th>
+        <th>지금 필요성</th>
+        <th>이유</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>모든 몬스터 unit executor 추가</td>
+        <td><span class="badge good">이미 주요 범위 완료</span></td>
+        <td>Eve/Rin/Sein/Vega/Ariel 모두 <code>TickManifestedUnitSkill</code>에서 전용 경로가 호출된다.</td>
+      </tr>
+      <tr>
+        <td>1P 선택 유닛 완전 unit-owned 전환</td>
+        <td><span class="badge warn">콘텐츠 확장 전 권장</span></td>
+        <td>지금 당장 소규모 밸런스에는 필수는 아니지만, 1P와 2P~5P 차이 버그를 줄이려면 필요하다.</td>
+      </tr>
+      <tr>
+        <td>몬스터별 skill executor 인터페이스 분리</td>
+        <td><span class="badge warn">새 몬스터 대량 추가 전 권장</span></td>
+        <td>현재는 중앙 dispatcher가 몬스터별 함수를 직접 안다. 새 몬스터가 늘면 구조 비용이 커진다.</td>
+      </tr>
+      <tr>
+        <td>배치/포메이션 데이터화</td>
+        <td><span class="badge bad">배치 변경 기능 전 필수</span></td>
+        <td>현재 2P~5P 슬롯 이름과 fallback 좌표가 <code>CombatRuntimeParty</code>에 하드코딩되어 있다.</td>
+      </tr>
+      <tr>
+        <td>meta 전역 강화 적용 계층</td>
+        <td><span class="badge bad">meta 구현 전 필수</span></td>
+        <td>현재 검색한 스크립트에는 명시적인 meta/global upgrade 계층이 확인되지 않았다. RunSession 수치 보정은 있지만 영구 전역 강화 시스템은 별도 설계가 필요하다.</td>
+      </tr>
+      <tr>
+        <td>이펙트 서비스 확장과 풀링</td>
+        <td><span class="badge warn">이펙트 양 증가 전 권장</span></td>
+        <td><code>CombatEffectFactory</code>는 프리팹 생성 경로를 제공하지만 lifetime, pooling, 레이어 정책까지 독립 서비스화된 것은 아니다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>6. 향후 작업별 적용성 판단</h2>
+  <h3>6.1 수치 밸런스 조정</h3>
+  <p>
+    현재 구조에서 비교적 잘 된다. <code>SkillDefinition</code>, <code>RunSession.RunMonsterState</code>, <code>CombatSkillRuntime</code>가 있으므로
+    데미지, 쿨다운, 탄창, 재장전, 상태 확률 같은 수치는 조정 경로가 있다.
+    단, 일부 몬스터별 trait 계산이 코드 상수와 문자열 id 분기로 남아 있어, 대규모 밸런스 작업에서는 “데이터 수정만으로 끝나는 수치”와
+    “코드 수정이 필요한 trait”가 섞일 수 있다.
+  </p>
+
+  <h3>6.2 이펙트 적용</h3>
+  <p>
+    현재 구조에서 가능하다. <code>SkillEffectPrefab</code> 필드와 <code>CombatEffectFactory</code>가 있고, Eve/Rin/Sein/Vega/Ariel 스킬 경로에서
+    프리팹을 전달하는 코드가 확인된다. 다만 아직 모든 시각 효과의 생성, 지속시간, 정리, 풀링 정책이 하나의 effect service로 통합된 상태는 아니다.
+    이펙트 수가 많아지면 성능과 정리 누락 리스크가 생긴다.
+  </p>
+
+  <h3>6.3 meta 전역 강화</h3>
+  <p>
+    현재 구조만으로는 “일부 가능, 완전 적용은 별도 계층 필요”다. <code>RunSession</code>에는 전역처럼 보이는 보정 필드와 몬스터별 보정 필드가 있다.
+    하지만 실제 스크립트 검색에서 명시적인 meta 영구 강화 클래스나 전역 강화 resolver는 확인되지 않았다.
+    meta를 넣을 때는 <code>RunSession</code>에 직접 계속 누적하기보다, 전투 시작 시 selected/party unit에 적용되는
+    <code>CombatStatModifier</code> 또는 유사한 resolver 계층을 두는 편이 안전하다.
+  </p>
+
+  <h3>6.4 몬스터 배치 변경</h3>
+  <p>
+    현재 구조에서 가장 약한 부분이다. 2P~5P 슬롯은 <code>ManifestedMonsterSlotNames</code>와 <code>ResolveManifestedMonsterPosition</code>의
+    하드코딩에 묶여 있다. 단순히 RunScene의 기존 슬롯 위치를 조금 바꾸는 것은 가능하지만, 전투 중 배치 변경, 포메이션 보너스,
+    드래그 재배치, 행/열 전술 같은 기능은 데이터 모델과 UI, 저장 구조가 추가되어야 한다.
+  </p>
+
+  <h2>7. 권장 의사결정</h2>
+  <ol>
+    <li>
+      지금 당장 모든 구조 리팩터링을 계속 밀 필요는 없다. 최근 수정한 Ariel/Eve 보호막, Sein/Vega/Ariel unit executor는 먼저 Play Mode로 체감 검증하는 것이 맞다.
+    </li>
+    <li>
+      단, meta 전역 강화나 배치 변경을 곧 할 계획이면 그 전에 구조 작업을 멈추면 안 된다. 그 두 기능은 현재 구조의 약한 부분을 직접 건드린다.
+    </li>
+    <li>
+      다음 구조 작업 1순위는 “배치 데이터화” 또는 “전투 시작 stat modifier resolver”다. 둘 중 어떤 기능을 먼저 할지에 따라 순서가 갈린다.
+    </li>
+    <li>
+      새 몬스터를 추가하기 전에 monster skill executor 인터페이스를 분리하는 것이 좋다. 지금처럼 <code>CombatRuntimeParty</code> dispatcher에
+      몬스터 이름별 tick 함수를 계속 추가하면 확장 비용이 누적된다.
+    </li>
+  </ol>
+
+  <h2>8. 근거 목록</h2>
+  <div class="callout">
+    <ul>
+      <li><code>Pakuri/reference/Report/2026-05-08-monster-oop-refactor-manifested-work-status.html</code>: 기존 manifested OOP 작업 현황 리포트.</li>
+      <li><code>boards/MON/MON_BLACKBOARD.md</code>: 2026-05-09 Sein, 2026-05-10 Vega/Ariel unit executor 진행 기록.</li>
+      <li><code>boards/COMBAT/COMBAT_BLACKBOARD.md</code>: combat runtime dispatch, 보호막, unit executor 검증 기록.</li>
+      <li><code>Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs</code>: 유닛 상태 보유와 <code>Owner.TickManifestedUnitSkill</code> 호출.</li>
+      <li><code>Pakuri/Assets/Scripts/Combat/Skill/CombatSkillRuntime.cs</code>: 스킬별 쿨다운, 탄창, 재장전 상태.</li>
+      <li><code>Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs</code>: 2P~5P 슬롯, 유닛 생성, 몬스터별 unit executor dispatch, fallback multiplier.</li>
+      <li><code>Pakuri/Assets/Scripts/Run/Session/RunSession.cs</code>: selected/party member state와 reward stat accumulation.</li>
+      <li><code>Pakuri/Assets/Scripts/Combat/Skill/CombatEffectFactory.cs</code>: line/circle effect 생성과 prefab fallback 경로.</li>
+    </ul>
+  </div>
+</main>
+</body>
+</html>

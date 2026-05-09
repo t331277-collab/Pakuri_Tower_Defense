@@ -74,6 +74,9 @@ namespace Pakuri.Combat
                 unitCurrentHealth,
                 baseDamageConfigured,
                 powerStatConfigured);
+            selectedUnitRuntime.ShieldValue = unitShieldValue;
+            selectedUnitRuntime.ShieldTimer = unitShieldTimer;
+            selectedUnitRuntime.ShieldAppliedFrame = unitShieldAppliedFrame;
         }
 
         public MonsterDefinition GetPartyMonsterDefinition(int partyIndex)
@@ -627,6 +630,16 @@ namespace Pakuri.Combat
                 return;
             }
 
+            if (TryTickVegaUnitSkill(runtime, skillRuntime, elapsed))
+            {
+                return;
+            }
+
+            if (TryTickArielUnitSkill(runtime, skillRuntime, elapsed))
+            {
+                return;
+            }
+
             TickCombatSkillRuntime(runtime, skillRuntime, elapsed);
             if (IsManifestedMagazineSkill(skillRuntime.Skill))
             {
@@ -1045,7 +1058,9 @@ namespace Pakuri.Combat
 
                 enemyHit = enemy;
                 if (!TryApplyRinUnitProjectileHit(projectile, enemy, out damageResult, out appliedDamage)
-                    && !TryApplySeinUnitProjectileHit(projectile, enemy, out damageResult, out appliedDamage))
+                    && !TryApplySeinUnitProjectileHit(projectile, enemy, out damageResult, out appliedDamage)
+                    && !TryApplyVegaUnitProjectileHit(projectile, enemy, out damageResult, out appliedDamage)
+                    && !TryApplyArielUnitProjectileHit(projectile, enemy, out damageResult, out appliedDamage))
                 {
                     damageResult = DamageCalculator.Resolve(
                         projectile.BaseDamage,
@@ -1538,7 +1553,7 @@ namespace Pakuri.Combat
                 direction = Vector3.right;
             }
 
-            skillRuntime.PendingVegaProjectileCount = 3;
+            skillRuntime.PendingVegaProjectileCount = HasVegaUnitChoice(runtime, "vega-a-master-1") ? 4 : 3;
             skillRuntime.PendingVegaProjectileIndex = 0;
             skillRuntime.PendingVegaProjectileDelay = 0f;
             skillRuntime.PendingVegaProjectileDirection = direction.normalized;
@@ -1559,18 +1574,9 @@ namespace Pakuri.Combat
             }
 
             var projectileIndex = skillRuntime.PendingVegaProjectileIndex;
-            var damageMultiplier = projectileIndex >= 2 ? 2f : 1f;
-            if (HasManifestedChoice(runtime, "vega-a-trait-1"))
-            {
-                damageMultiplier *= 1.20f;
-            }
-
-            if (projectileIndex >= 2 && HasManifestedChoice(runtime, "vega-a-trait-4"))
-            {
-                damageMultiplier += 0.50f;
-            }
-
-            var markStacks = 1 + (HasManifestedChoice(runtime, "vega-f-trait-3") ? 1 : 0);
+            var isAfterimage = projectileIndex >= 3;
+            var damageMultiplier = isAfterimage ? 0.45f : GetVegaUnitThreeSwordDamageMultiplier(runtime, projectileIndex >= 2);
+            var markStacks = isAfterimage ? 1 : GetVegaUnitThreeSwordNameMarkStacks(runtime);
             FireManifestedMonsterProjectile(runtime, skillRuntime.Skill, skillRuntime.PendingVegaProjectileDirection, damageMultiplier, 999, markStacks);
             skillRuntime.PendingVegaProjectileIndex += 1;
             skillRuntime.PendingVegaProjectileCount -= 1;
@@ -2016,7 +2022,8 @@ namespace Pakuri.Combat
                 return;
             }
 
-            var hpText = $"HP {Mathf.CeilToInt(Mathf.Max(0f, runtime.CurrentHealth))}/{Mathf.CeilToInt(runtime.MaxHealth)}";
+            var shieldText = runtime.ShieldValue > 0f ? $" SH {Mathf.CeilToInt(runtime.ShieldValue)}" : string.Empty;
+            var hpText = $"HP {Mathf.CeilToInt(Mathf.Max(0f, runtime.CurrentHealth))}/{Mathf.CeilToInt(runtime.MaxHealth)}{shieldText}";
             if (runtime.NameLabel != null)
             {
                 runtime.NameLabel.text = runtime.Monster.DisplayName;
@@ -2034,7 +2041,7 @@ namespace Pakuri.Combat
                 runtime.Label.text = $"{runtime.Monster.DisplayName}\n{hpText}\n{skillLine}";
             }
 
-            UpdateManifestedHpShieldBarFill(runtime, runtime.CurrentHealth, runtime.MaxHealth, 0f);
+            UpdateManifestedHpShieldBarFill(runtime, runtime.CurrentHealth, runtime.MaxHealth, runtime.ShieldValue);
         }
 
         private static void UpdateManifestedHpShieldBarFill(CombatUnitRuntime runtime, float currentHealth, float maxHealth, float shieldValue)

@@ -30,6 +30,21 @@ namespace Pakuri.Combat
         public float RinCollapseAftermathActionTimer { get; set; }
         public float RinCollapseAftermathAttackTimer { get; set; }
         public float SeinFlameBarrageProcCooldownRemaining { get; set; }
+        public float ShieldValue { get; set; }
+        public float ShieldTimer { get; set; }
+        public int ShieldAppliedFrame { get; set; }
+        public CombatUnitRuntime ArielShieldSource { get; set; }
+        public float ArielBlessingTimer { get; set; }
+        public float ArielSanctuaryTimer { get; set; }
+        public float ArielSanctuaryProclamationTimer { get; set; }
+        public float ArielArchangelShieldValue { get; set; }
+        public float ArielArchangelShieldTimer { get; set; }
+        public float ArielRadiantShieldBurstDamage { get; set; }
+        public float ArielRadiantShieldReflectMultiplier { get; set; }
+        public float VegaExterminationPermitTimer { get; set; }
+        public float VegaExterminationActionSpeedBonus { get; set; }
+        public float VegaExterminationAttackBonus { get; set; }
+        public float VegaBlackLedgerAreaChargeCooldownRemaining { get; set; }
         public GameObject GameObject => gameObject;
         public Transform Transform => transform;
         public List<CombatSkillRuntime> Skills { get; } = new List<CombatSkillRuntime>();
@@ -74,6 +89,21 @@ namespace Pakuri.Combat
                 RinCollapseAftermathActionTimer = 0f;
                 RinCollapseAftermathAttackTimer = 0f;
                 SeinFlameBarrageProcCooldownRemaining = 0f;
+                ShieldValue = 0f;
+                ShieldTimer = 0f;
+                ShieldAppliedFrame = -1;
+                ArielShieldSource = null;
+                ArielBlessingTimer = 0f;
+                ArielSanctuaryTimer = 0f;
+                ArielSanctuaryProclamationTimer = 0f;
+                ArielArchangelShieldValue = 0f;
+                ArielArchangelShieldTimer = 0f;
+                ArielRadiantShieldBurstDamage = 0f;
+                ArielRadiantShieldReflectMultiplier = 0f;
+                VegaExterminationPermitTimer = 0f;
+                VegaExterminationActionSpeedBonus = 0f;
+                VegaExterminationAttackBonus = 0f;
+                VegaBlackLedgerAreaChargeCooldownRemaining = 0f;
             }
         }
 
@@ -127,6 +157,37 @@ namespace Pakuri.Combat
             RinCollapseAftermathActionTimer = Mathf.Max(0f, RinCollapseAftermathActionTimer - delta);
             RinCollapseAftermathAttackTimer = Mathf.Max(0f, RinCollapseAftermathAttackTimer - delta);
             SeinFlameBarrageProcCooldownRemaining = Mathf.Max(0f, SeinFlameBarrageProcCooldownRemaining - delta);
+            if (ShieldAppliedFrame != Time.frameCount)
+            {
+                ShieldTimer = Mathf.Max(0f, ShieldTimer - delta);
+            }
+
+            if (Mathf.Approximately(ShieldTimer, 0f))
+            {
+                ShieldValue = 0f;
+                ShieldAppliedFrame = -1;
+                ArielShieldSource = null;
+                ArielRadiantShieldBurstDamage = 0f;
+                ArielRadiantShieldReflectMultiplier = 0f;
+            }
+
+            ArielBlessingTimer = Mathf.Max(0f, ArielBlessingTimer - delta);
+            ArielSanctuaryTimer = Mathf.Max(0f, ArielSanctuaryTimer - delta);
+            ArielSanctuaryProclamationTimer = Mathf.Max(0f, ArielSanctuaryProclamationTimer - delta);
+            ArielArchangelShieldTimer = Mathf.Max(0f, ArielArchangelShieldTimer - delta);
+            if (Mathf.Approximately(ArielArchangelShieldTimer, 0f))
+            {
+                ArielArchangelShieldValue = 0f;
+            }
+
+            VegaExterminationPermitTimer = Mathf.Max(0f, VegaExterminationPermitTimer - delta);
+            if (Mathf.Approximately(VegaExterminationPermitTimer, 0f))
+            {
+                VegaExterminationActionSpeedBonus = 0f;
+                VegaExterminationAttackBonus = 0f;
+            }
+
+            VegaBlackLedgerAreaChargeCooldownRemaining = Mathf.Max(0f, VegaBlackLedgerAreaChargeCooldownRemaining - delta);
             for (var i = 0; i < Skills.Count; i++)
             {
                 Owner.TickManifestedUnitSkill(this, Skills[i], elapsed);
@@ -158,6 +219,21 @@ namespace Pakuri.Combat
             RinCollapseAftermathActionTimer = 0f;
             RinCollapseAftermathAttackTimer = 0f;
             SeinFlameBarrageProcCooldownRemaining = 0f;
+            ShieldValue = 0f;
+            ShieldTimer = 0f;
+            ShieldAppliedFrame = -1;
+            ArielShieldSource = null;
+            ArielBlessingTimer = 0f;
+            ArielSanctuaryTimer = 0f;
+            ArielSanctuaryProclamationTimer = 0f;
+            ArielArchangelShieldValue = 0f;
+            ArielArchangelShieldTimer = 0f;
+            ArielRadiantShieldBurstDamage = 0f;
+            ArielRadiantShieldReflectMultiplier = 0f;
+            VegaExterminationPermitTimer = 0f;
+            VegaExterminationActionSpeedBonus = 0f;
+            VegaExterminationAttackBonus = 0f;
+            VegaBlackLedgerAreaChargeCooldownRemaining = 0f;
             Skills.Clear();
         }
     }

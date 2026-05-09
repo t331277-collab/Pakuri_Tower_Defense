@@ -6,6 +6,109 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, read `boards/MON/MON_BLACKBOARD.md` first and consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-05-10 Ariel Manifested Shield Expiry And Archangel Effect Fix
+
+### Task title
+
+Fix 2P-5P Ariel shield expiry on 1P and make Archangel Descent effect visible through the shared Ariel path.
+
+### Goals
+
+- Make shields granted to the selected 1P monster by Manifested Ariel B/E expire when their duration ends, even when the selected 1P monster is not Ariel.
+- Make Ariel E `Archangel Descent` use an explicit battlefield-wide visual path for selected and Manifested Ariel casts.
+- Explain the bug from inspected runtime code.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user performs gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in RunScene Play Mode that Manifested Ariel shields on 1P disappear after their duration.
+- User verifies selected and Manifested Ariel E show the battlefield-wide Archangel Descent effect.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Before the fix, `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeArielSkills.cs:83` through `:88` decremented `unitShieldTimer` inside `UpdateArielSkillCooldowns()`, which only runs for the selected monster's Ariel runtime.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:518` now calls `UpdateSelectedUnitShieldTimer(Time.deltaTime)` from the common selected-unit combat update.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeArielSkills.cs:86` now defines `UpdateSelectedUnitShieldTimer(...)`, clearing selected shield state and mirrored `selectedUnitRuntime` shield/Ariel fields when the timer expires.
+- `CombatRuntimeArielSkills.cs:12` defines `ArielArchangelEffectDuration`; `:438` and `:693` call `CreateArielArchangelDescentEffect(skill)` for selected and unit-owned Ariel E casts.
+- `CombatRuntimeArielSkills.cs:700` creates the battlefield-wide `ArchangelDescent` circle with stronger alpha/sorting and adds it to `skillEffects`.
+- Follow-up: `Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs:35` adds `ShieldAppliedFrame`; `:160` through `:163` skip manifested shield timer decay on the frame the shield was applied.
+- Follow-up: `CombatRuntimeArielSkills.cs:28` adds `unitShieldAppliedFrame`; `:95` through `:98` skip selected 1P shield timer decay on the frame the shield was applied.
+- Follow-up: `CombatRuntimeArielSkills.cs:831` and `:902` stamp selected and manifested shield application with `Time.frameCount`; `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:79` mirrors the selected shield frame into `selectedUnitRuntime`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Follow-up `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
+- `git diff --check -- Pakuri\Assets\Scripts\Combat\Skill\CombatRuntimeArielSkills.cs Pakuri\Assets\Scripts\Combat\Manager\CombatRuntimeProjectiles.cs` completed with only LF-to-CRLF warnings.
+- Unity-MCP script refresh recovered to ready; console warning/error read returned only MCP client handler logs, not C# compile errors.
+- Follow-up `git diff --check` over `CombatUnitRuntime.cs`, `CombatRuntimeArielSkills.cs`, and `CombatRuntimeParty.cs` completed with only LF-to-CRLF warnings; Unity-MCP console read returned only MCP client handler/timeout logs, not C# compile errors.
+
+### History
+
+- 2026-05-10: User reported Manifested 2P-5P Ariel shields remain on selected 1P after Ariel's shield duration ends, and Ariel E's effect is not visible.
+- 2026-05-10: Code Builder moved selected-unit shield timer ticking out of selected-Ariel-only cooldown logic and routed Ariel E selected/unit casts through a dedicated battlefield visual helper.
+- 2026-05-10: User reported 1P shield duration now appeared shorter than 2P-5P after Ariel shield casts; Builder aligned selected and manifested shield timers by skipping decay on the frame a shield is applied.
+
+## Task: 2026-05-10 Ariel Unit Executor Migration And Team Shield
+
+### Task title
+
+Move Manifested Ariel A-E onto Ariel unit executor paths and make Ariel shield skills protect party units.
+
+### Goals
+
+- Dispatch Manifested Ariel skills through Ariel-specific `CombatUnitRuntime` logic before the generic manifested fallback.
+- Keep Ariel A projectile damage, Holy Exposure, and White Judgement explosion source-aware for manifested Ariel.
+- Make Ariel B `Radiant Shield` and Ariel E `Archangel Descent` apply shield state to selected 1P plus living manifested 2P-5P party units.
+- Confirm the prior MainMenu-selected Ariel shield behavior against actual code and correct it.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by C# builds, Unity-MCP refresh, console check, and `git diff --check`.
+
+### Next Actions
+
+- User verifies selected Ariel B/E shields on 2P-5P teammates in RunScene Play Mode.
+- User verifies Manifested Ariel A-E and Holy Exposure interactions in RunScene Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Before this change, `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeArielSkills.cs:516` used selected-only `unitShieldValue` in `ApplyArielUnitShield(...)`, `CombatRuntimeProjectiles.cs:455` applied manifested damage directly to HP, and `CombatRuntimeParty.cs:2034` passed `0f` as manifested shield value.
+- `Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs:33` through `:42` now stores per-unit shield and Ariel blessing/sanctuary/Archangel shield state.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:637` dispatches `TryTickArielUnitSkill(...)` before generic manifested fallback.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeArielSkills.cs:422` through `:681` implements Ariel unit A-E execution paths.
+- `CombatRuntimeArielSkills.cs:808` applies Ariel team shields to selected plus manifested units; `:1300` handles Ariel unit projectile hits.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:464` through `:473` applies shield absorption to manifested unit damage before HP loss.
+- Runtime and Editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP script refresh reached idle; console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-10: User requested the Ariel unit executor migration from the remaining-work report and asked whether MainMenu-selected Ariel shield skills protect teammates.
+- 2026-05-10: Code inspection confirmed selected Ariel shields did not protect manifested teammates before this pass; Builder added party shield state and Ariel unit executor dispatch.
+
 ## Task: 2026-05-08 Manifested Ariel Common Runtime Parity
 
 ### Task title

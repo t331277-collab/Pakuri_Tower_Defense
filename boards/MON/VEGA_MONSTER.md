@@ -10,6 +10,55 @@ At the start of new work, read `boards/MON/MON_BLACKBOARD.md` first and consult 
 
 Vega active skills A-E and passive skills F-J are implemented and locally validated.
 
+## Task: 2026-05-10 Vega Unit Executor Migration
+
+### Task title
+
+Move Manifested Vega skill execution onto Vega unit executor paths.
+
+### Goals
+
+- Dispatch Manifested Vega A-E through Vega-specific `CombatUnitRuntime` / `CombatSkillRuntime` paths instead of the generic manifested fallback.
+- Keep Vega A three-sword behavior while adding unit-owned Extermination Permit state.
+- Make Manifested Vega B-E/F-J read the source Vega unit's Offering/passive state for silence, name marks, execute, vulnerability, critical, defense reduction, and cooldown charge.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Do not run Unity Play Mode from Codex.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by C# builds and Unity-MCP compile/console checks.
+
+### Next Actions
+
+- User verifies Manifested Vega A-E and F-J interactions in RunScene Play Mode, especially B silence/name marks, C action/attack buff, D area vulnerability/cooldown charge, E mark consumption/survivor vulnerability/kill cooldown charge, and A master afterimage.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:630` dispatches Manifested Vega through `TryTickVegaUnitSkill(...)` before the generic manifested fallback.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeVegaSkills.cs:139` implements the Vega unit skill dispatcher.
+- `CombatRuntimeVegaSkills.cs:445`, `:507`, `:548`, and `:616` implement unit-owned Vega B/C/D/E active paths.
+- `CombatRuntimeVegaSkills.cs:1068` implements `TryApplyVegaUnitProjectileHit(...)` for Vega projectile passive damage/critical/defense behavior.
+- `Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs:33` through `:36` store Vega unit buff/charge state.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing System.Net.Http/System.IO.Compression warnings after a first parallel run hit only an `obj\Debug\Assembly-CSharp.dll` file lock.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+- `git diff --check` over the three changed scripts completed with exit code 0 and only LF-to-CRLF warnings.
+- Unity-MCP script refresh reached `resulting_state=idle`; console warning/error read returned only MCP-FOR-UNITY client handler logs.
+
+### History
+
+- 2026-05-10: User requested Vega unit executor migration based on section 4 of `Pakuri/reference/Report/2026-05-08-monster-oop-refactor-manifested-work-status.html`.
+- 2026-05-10: Code Builder added Vega unit dispatch, state, active paths, projectile hit damage hooks, and validation evidence.
+
 ## Task: 2026-05-08 Manifested Vega Common Runtime Parity
 
 ### Task title

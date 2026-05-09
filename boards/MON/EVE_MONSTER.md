@@ -848,3 +848,48 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-08: User specifically named Eve Drone Beacon, Frost Field, and Prism Ray as sustained skills whose Manifested duration appeared too short.
+
+## Task: 2026-05-10 Eve Voltage Calibration Shield Review
+
+### Task title
+
+Fix Eve F shield timing and ally application.
+
+### Goals
+
+- Review monster reference files under `Pakuri/reference/2.Monster` for shield-bearing skills.
+- Make Eve F apply its battle-start shield to lightning-skill allies, not only the selected 1P unit.
+- Prevent selected Eve's shield timer from being decremented by both Eve-specific and shared shield timer paths.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Eve F in RunScene Play Mode with selected Eve and manifested lightning-skill allies.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Reference search found concrete shield skills in `Pakuri/reference/2.Monster/ariel/ariel-tower.md`, `Pakuri/reference/2.Monster/eve/eve-tower.md`, and `Pakuri/reference/2.Monster/eve/skill/f-voltage-calibration.md`.
+- `Pakuri/reference/2.Monster/eve/skill/f-voltage-calibration.md:18` defines the shield as Eve power 120% for 12 seconds on lightning-skill allies.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:93` through `:108` no longer decrements `unitShieldTimer`; selected shield duration is handled by the shared shield timer path.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1558` through `:1594` checks selected and manifested units for lightning skills.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1682` through `:1732` applies Eve F shield to the selected lightning unit and manifested lightning-skill allies, stamps `ShieldAppliedFrame`, and updates manifested labels.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing System.Net.Http/System.IO.Compression warnings.
+- Unity-MCP script refresh reached idle; console error read returned only MCP-FOR-UNITY client handler logs.
+
+### History
+
+- 2026-05-10: User asked to review shield logic among monsters under `Pakuri/reference/2.Monster`, specifically noting Eve shield seemed not to apply correctly.

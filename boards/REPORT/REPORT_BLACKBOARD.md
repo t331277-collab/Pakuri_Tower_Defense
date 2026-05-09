@@ -1094,3 +1094,46 @@ Implemented and locally validated with the code pass.
 ### History
 
 - 2026-05-08: User requested steps 1-5 of the object-oriented manifested runtime refactor before step 6.
+
+# Task: 2026-05-10 Monster OOP Runtime Risk Review HTML
+
+### Task title
+
+Create a current-state HTML review for monster OOP runtime risks and remaining work priority.
+
+### Goals
+
+- Reassess the old `2026-05-08-monster-oop-refactor-manifested-work-status.html` against the current code.
+- Explain whether remaining structural work must be done now.
+- Evaluate risks for balance tuning, effect hookup, meta global upgrades, and monster placement changes.
+- State whether the current structure is fully object-oriented.
+
+### Constraints
+
+- Role Owner is Designer.
+- Evidence must come from inspected files and command output.
+- This report does not change gameplay code.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- User can open `Pakuri/reference/Report/2026-05-10-monster-oop-runtime-risk-and-next-work-review.html`.
+- If meta global upgrades or formation/placement changes are implemented next, use this report's risk sections as the design starting point.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-10-monster-oop-runtime-risk-and-next-work-review.html`.
+- The report cites `CombatUnitRuntime.cs`, `CombatSkillRuntime.cs`, `CombatRuntimeParty.cs`, `RunSession.cs`, `CombatEffectFactory.cs`, `boards/MON/MON_BLACKBOARD.md`, and `boards/COMBAT/COMBAT_BLACKBOARD.md`.
+- File check confirmed `Pakuri/reference/Report/2026-05-10-monster-oop-runtime-risk-and-next-work-review.html` exists and has length 16834 bytes.
+- Search confirmed the report contains sections for `지금 꼭 해야 하는가`, `완전한 OOP인가`, `meta 전역 강화`, and `몬스터 배치 변경`.
+
+### History
+
+- 2026-05-10: User asked for an HTML report based on the 2026-05-08 manifested OOP work-status report, considering current progress, remaining work priority, structural risks, OOP completeness, balance, effects, meta upgrades, and placement changes.

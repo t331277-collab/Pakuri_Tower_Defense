@@ -98,11 +98,6 @@ namespace Pakuri.Combat
             eveFrostCooldownRemaining = Mathf.Max(0f, eveFrostCooldownRemaining - elapsed);
             eveStaticCooldownRemaining = Mathf.Max(0f, eveStaticCooldownRemaining - elapsed);
             eveParticleSeparationCooldownRemaining = Mathf.Max(0f, eveParticleSeparationCooldownRemaining - elapsed);
-            unitShieldTimer = Mathf.Max(0f, unitShieldTimer - Time.deltaTime);
-            if (Mathf.Approximately(unitShieldTimer, 0f))
-            {
-                unitShieldValue = 0f;
-            }
 
             if (eveDroneReloadRemaining <= 0f)
             {
@@ -1560,6 +1555,44 @@ namespace Pakuri.Combat
             return null;
         }
 
+        private bool HasSelectedLightningSkill()
+        {
+            return HasSelectedLightningSkill(SkillSlot.A)
+                || HasSelectedLightningSkill(SkillSlot.B)
+                || HasSelectedLightningSkill(SkillSlot.C)
+                || HasSelectedLightningSkill(SkillSlot.D)
+                || HasSelectedLightningSkill(SkillSlot.E);
+        }
+
+        private bool HasSelectedLightningSkill(SkillSlot slot)
+        {
+            var skill = FindSelectedSkill(slot);
+            return skill != null
+                && learnedActiveSkillIds.Contains(skill.SkillId)
+                && skill.Attribute == DamageAttribute.Lightning;
+        }
+
+        private static bool HasLightningSkill(CombatUnitRuntime runtime)
+        {
+            if (runtime == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < runtime.Skills.Count; i++)
+            {
+                var skillRuntime = runtime.Skills[i];
+                if (skillRuntime != null
+                    && skillRuntime.Skill != null
+                    && skillRuntime.Skill.Attribute == DamageAttribute.Lightning)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private bool HasChoice(string choiceId)
         {
             return !string.IsNullOrWhiteSpace(choiceId) && chosenSkillChoiceIds.Contains(choiceId);
@@ -1650,6 +1683,7 @@ namespace Pakuri.Combat
         {
             unitShieldValue = 0f;
             unitShieldTimer = 0f;
+            unitShieldAppliedFrame = -1;
             if (!HasEveVoltageCalibration())
             {
                 return;
@@ -1661,8 +1695,40 @@ namespace Pakuri.Combat
                 shield *= 1.40f;
             }
 
-            unitShieldValue = Mathf.Max(0f, shield);
-            unitShieldTimer = EveVoltageShieldDuration;
+            var shieldValue = Mathf.Max(0f, shield);
+            if (shieldValue <= 0f)
+            {
+                return;
+            }
+
+            var appliedFrame = Time.frameCount;
+            if (HasSelectedLightningSkill())
+            {
+                unitShieldValue = shieldValue;
+                unitShieldTimer = EveVoltageShieldDuration;
+                unitShieldAppliedFrame = appliedFrame;
+
+                if (selectedUnitRuntime != null)
+                {
+                    selectedUnitRuntime.ShieldValue = unitShieldValue;
+                    selectedUnitRuntime.ShieldTimer = unitShieldTimer;
+                    selectedUnitRuntime.ShieldAppliedFrame = unitShieldAppliedFrame;
+                }
+            }
+
+            for (var i = 0; i < manifestedMonsters.Count; i++)
+            {
+                var runtime = manifestedMonsters[i];
+                if (runtime == null || runtime.CurrentHealth <= 0f || !HasLightningSkill(runtime))
+                {
+                    continue;
+                }
+
+                runtime.ShieldValue = Mathf.Max(runtime.ShieldValue, shieldValue);
+                runtime.ShieldTimer = Mathf.Max(runtime.ShieldTimer, EveVoltageShieldDuration);
+                runtime.ShieldAppliedFrame = appliedFrame;
+                UpdateManifestedMonsterLabel(runtime);
+            }
         }
 
         private float GetEveFinalDamageMultiplier(EnemyRuntime enemy, DamageAttribute attribute, string skillId)

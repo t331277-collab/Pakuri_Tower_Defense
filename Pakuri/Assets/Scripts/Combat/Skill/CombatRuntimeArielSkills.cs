@@ -9,6 +9,7 @@ namespace Pakuri.Combat
         private const float ArielRadiantShieldDuration = 5f;
         private const float ArielBlessingDuration = 4f;
         private const float ArielArchangelShieldDuration = 6f;
+        private const float ArielArchangelEffectDuration = 1.2f;
         private const float ArielSanctuaryDuration = 5f;
         private const float ArielJudgementExplosionRadius = 2.2f;
         private const float ArielJudgementProjectileSpeed = 17f;
@@ -24,6 +25,7 @@ namespace Pakuri.Combat
         private float arielArchangelShieldTimer;
         private float arielRadiantShieldBurstDamage;
         private float arielRadiantShieldReflectMultiplier;
+        private int unitShieldAppliedFrame = -1;
 
         private void ResetArielSkillCombatTimers()
         {
@@ -38,6 +40,7 @@ namespace Pakuri.Combat
             arielArchangelShieldTimer = 0f;
             arielRadiantShieldBurstDamage = 0f;
             arielRadiantShieldReflectMultiplier = 0f;
+            unitShieldAppliedFrame = -1;
 
             if (IsSelectedArielMonster() && HasArielGuardianDoctrine())
             {
@@ -47,7 +50,7 @@ namespace Pakuri.Combat
                     shield *= 1.40f;
                 }
 
-            ApplyArielUnitShield(shield, ArielRadiantShieldDuration);
+                ApplyArielUnitShield(shield, ArielRadiantShieldDuration);
             }
         }
 
@@ -80,11 +83,52 @@ namespace Pakuri.Combat
             arielBrandCooldownRemaining = Mathf.Max(0f, arielBrandCooldownRemaining - elapsed);
             arielArchangelCooldownRemaining = Mathf.Max(0f, arielArchangelCooldownRemaining - elapsed);
 
-            unitShieldTimer = Mathf.Max(0f, unitShieldTimer - Time.deltaTime);
+        }
+
+        private void UpdateSelectedUnitShieldTimer(float elapsed)
+        {
+            if (unitShieldTimer <= 0f && unitShieldValue <= 0f)
+            {
+                return;
+            }
+
+            if (unitShieldAppliedFrame != Time.frameCount)
+            {
+                unitShieldTimer = Mathf.Max(0f, unitShieldTimer - Mathf.Max(0f, elapsed));
+            }
+
             if (Mathf.Approximately(unitShieldTimer, 0f) && unitShieldValue > 0f)
             {
                 unitShieldValue = 0f;
-                TriggerArielRadiantShieldBurst();
+                unitShieldAppliedFrame = -1;
+                arielArchangelShieldValue = 0f;
+                arielArchangelShieldTimer = 0f;
+
+                if (selectedUnitRuntime != null && selectedUnitRuntime.ArielRadiantShieldBurstDamage > 0f)
+                {
+                    TriggerArielUnitRadiantShieldBurst(selectedUnitRuntime);
+                }
+                else
+                {
+                    TriggerArielRadiantShieldBurst();
+                }
+
+                if (selectedUnitRuntime != null)
+                {
+                    selectedUnitRuntime.ShieldValue = 0f;
+                    selectedUnitRuntime.ShieldTimer = 0f;
+                    selectedUnitRuntime.ShieldAppliedFrame = -1;
+                    selectedUnitRuntime.ArielShieldSource = null;
+                    selectedUnitRuntime.ArielArchangelShieldValue = 0f;
+                    selectedUnitRuntime.ArielArchangelShieldTimer = 0f;
+                    selectedUnitRuntime.ArielRadiantShieldBurstDamage = 0f;
+                    selectedUnitRuntime.ArielRadiantShieldReflectMultiplier = 0f;
+                }
+            }
+            else if (selectedUnitRuntime != null)
+            {
+                selectedUnitRuntime.ShieldValue = unitShieldValue;
+                selectedUnitRuntime.ShieldTimer = unitShieldTimer;
             }
         }
 
@@ -399,24 +443,283 @@ namespace Pakuri.Combat
                 arielSanctuaryProclamationTimer = Mathf.Max(arielSanctuaryProclamationTimer, ArielSanctuaryDuration);
             }
 
-            if (projectileRoot != null)
-            {
-                var fieldCenter = new Vector3(fieldSize.x * 0.5f, fieldSize.y * 0.5f, 0f);
-                var fieldRadius = Mathf.Sqrt((fieldSize.x * fieldSize.x) + (fieldSize.y * fieldSize.y)) * 0.5f;
-                var effect = CreateCircleEffect("ArchangelDescent", fieldCenter, fieldRadius, 0.45f, skill.SkillEffectPrefab);
-                effect.SkillId = "ariel-e";
-                if (effect.Renderer != null)
-                {
-                    effect.Renderer.color = new Color(1f, 0.94f, 0.68f, 0.32f);
-                    effect.Renderer.sortingOrder = 20;
-                }
-
-                skillEffects.Add(effect);
-            }
+            CreateArielArchangelDescentEffect(skill);
 
             arielArchangelCooldownRemaining = GetArielCooldown(skill, 17f, GetArielArchangelCooldownMultiplier());
             statusLabel = $"Archangel Descent hit {hitCount} enemy(s), shield {shield:0}.";
             return true;
+        }
+
+        private bool TryTickArielUnitSkill(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime, float elapsed)
+        {
+            if (!IsArielCombatUnit(runtime) || skillRuntime == null || skillRuntime.Skill == null)
+            {
+                return false;
+            }
+
+            var scaledElapsed = Mathf.Max(0f, elapsed) * GetArielUnitCooldownChargeMultiplier(runtime);
+            skillRuntime.Tick(scaledElapsed);
+            switch (skillRuntime.Skill.Slot)
+            {
+                case SkillSlot.A:
+                    skillRuntime.TickReload(elapsed * GetArielUnitActionSpeedMultiplier(runtime), ResolveManifestedMagazineCapacity(runtime, skillRuntime.Skill));
+                    TryFireArielUnitJudgementLight(runtime, skillRuntime);
+                    return true;
+                case SkillSlot.B:
+                    TryCastArielUnitRadiantShield(runtime, skillRuntime);
+                    return true;
+                case SkillSlot.C:
+                    TryCastArielUnitBlessingWave(runtime, skillRuntime);
+                    return true;
+                case SkillSlot.D:
+                    TryCastArielUnitCelestialBrand(runtime, skillRuntime);
+                    return true;
+                case SkillSlot.E:
+                    TryCastArielUnitArchangelDescent(runtime, skillRuntime);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private bool TryFireArielUnitJudgementLight(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime)
+        {
+            var skill = skillRuntime != null ? skillRuntime.Skill : null;
+            if (!IsArielCombatUnit(runtime)
+                || skill == null
+                || runtime.Transform == null
+                || skillRuntime.ReloadRemaining > 0f
+                || skillRuntime.ShotCooldownRemaining > 0f)
+            {
+                return false;
+            }
+
+            if (skillRuntime.ShotsRemaining <= 0)
+            {
+                skillRuntime.ShotsRemaining = 0;
+                skillRuntime.ReloadDuration = ResolveManifestedReloadDuration(runtime, skill);
+                skillRuntime.ReloadRemaining = skillRuntime.ReloadDuration;
+                return false;
+            }
+
+            var target = FindNearestManifestedMonsterTarget(runtime.Transform.position);
+            if (target == null || target.Transform == null)
+            {
+                skillRuntime.ShotCooldownRemaining = 0.25f;
+                return false;
+            }
+
+            var direction = target.Transform.position - runtime.Transform.position;
+            direction.z = 0f;
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                direction = Vector3.right;
+            }
+
+            var damageMultiplier = 1f;
+            if (HasArielUnitChoice(runtime, "ariel-a-trait-1"))
+            {
+                damageMultiplier *= 1.25f;
+            }
+
+            if (HasArielUnitChoice(runtime, "ariel-a-trait-5"))
+            {
+                damageMultiplier *= 1f + GetArielUnitShieldedAllyCount() * 0.06f;
+            }
+
+            var isLastShot = skillRuntime.ShotsRemaining <= 1;
+            FireManifestedMonsterProjectile(runtime, skill, runtime.Transform.position, direction, damageMultiplier, ResolveManifestedProjectilePierce(runtime, skill), 0);
+            if (isLastShot && HasArielUnitChoice(runtime, "ariel-a-master-1") && projectiles.Count > 0)
+            {
+                var projectile = projectiles[projectiles.Count - 1];
+                if (projectile != null && projectile.ManifestedSource == runtime && string.Equals(projectile.SkillId, "ariel-a", StringComparison.OrdinalIgnoreCase))
+                {
+                    projectile.ArielJudgementExplosionDamage = projectile.BaseDamage;
+                    projectile.ArielJudgementExplosionCount = 2;
+                }
+            }
+
+            skillRuntime.ShotsRemaining -= 1;
+            skillRuntime.ShotInterval = ResolveManifestedShotInterval(runtime, skill);
+            skillRuntime.ShotCooldownRemaining = skillRuntime.ShotInterval;
+            if (skillRuntime.ShotsRemaining <= 0)
+            {
+                skillRuntime.ShotsRemaining = 0;
+                skillRuntime.ReloadDuration = ResolveManifestedReloadDuration(runtime, skill);
+                skillRuntime.ReloadRemaining = skillRuntime.ReloadDuration;
+            }
+
+            return true;
+        }
+
+        private bool TryCastArielUnitRadiantShield(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime)
+        {
+            var skill = skillRuntime != null ? skillRuntime.Skill : null;
+            if (!IsArielCombatUnit(runtime) || skill == null || skillRuntime.CooldownRemaining > 0f)
+            {
+                return false;
+            }
+
+            var shield = (35f + runtime.PowerStat * Mathf.Max(0f, skill.SpellPowerCoefficient)) * GetArielUnitShieldMultiplier(runtime);
+            shield *= HasArielUnitChoice(runtime, "ariel-b-trait-1") ? 1.30f : 1f;
+            shield *= HasArielUnitChoice(runtime, "ariel-b-master-1") ? 1.50f : 1f;
+
+            var duration = ArielRadiantShieldDuration + (HasArielUnitChoice(runtime, "ariel-b-trait-2") ? 2f : 0f);
+            var burstDamage = HasArielUnitChoice(runtime, "ariel-b-trait-4") ? shield * 0.60f : 0f;
+            var reflectMultiplier = HasArielUnitChoice(runtime, "ariel-b-master-2") ? 0.35f : 0f;
+            ApplyArielTeamShield(runtime, shield, duration, false, burstDamage, reflectMultiplier);
+            if (HasArielUnitChoice(runtime, "ariel-b-trait-5"))
+            {
+                runtime.ArielBlessingTimer = Mathf.Max(runtime.ArielBlessingTimer, 5f);
+            }
+
+            skillRuntime.CooldownDuration = GetArielUnitCooldown(runtime, skill, 9f, HasArielUnitChoice(runtime, "ariel-b-trait-3") ? 0.80f : 1f);
+            skillRuntime.CooldownRemaining = skillRuntime.CooldownDuration;
+            CreateManifestedSkillVisual(runtime, skill, FindNearestManifestedMonsterTarget(runtime.Transform.position));
+            statusLabel = $"{runtime.Monster.DisplayName} Radiant Shield applied {shield:0} shield to party.";
+            return true;
+        }
+
+        private bool TryCastArielUnitBlessingWave(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime)
+        {
+            var skill = skillRuntime != null ? skillRuntime.Skill : null;
+            if (!IsArielCombatUnit(runtime) || skill == null || runtime.Transform == null || skillRuntime.CooldownRemaining > 0f)
+            {
+                return false;
+            }
+
+            var target = FindNearestManifestedMonsterTarget(runtime.Transform.position);
+            if (target == null || target.Transform == null)
+            {
+                skillRuntime.CooldownRemaining = 0.25f;
+                return false;
+            }
+
+            var radius = Mathf.Max(0.1f, skill.Radius);
+            radius *= HasArielUnitChoice(runtime, "ariel-c-trait-4") ? 1.25f : 1f;
+            var duration = ArielBlessingDuration
+                + (HasArielUnitChoice(runtime, "ariel-c-trait-3") ? 2f : 0f)
+                + (HasArielUnitPassive(runtime, "ariel-h") && HasArielUnitChoice(runtime, "ariel-h-trait-3") ? 2f : 0f);
+            runtime.ArielBlessingTimer = Mathf.Max(runtime.ArielBlessingTimer, duration);
+
+            var damage = GetArielUnitSkillBaseDamage(runtime, skill);
+            damage *= HasArielUnitChoice(runtime, "ariel-c-trait-1") ? 1.25f : 1f;
+            ApplyArielUnitAreaDamage(runtime, target.Transform.position, radius, damage, "ariel-c", 1f);
+            if (HasArielUnitChoice(runtime, "ariel-c-master-2"))
+            {
+                ApplyArielUnitAreaDamage(runtime, target.Transform.position, radius, damage * 0.60f, "ariel-c", 1f);
+            }
+
+            CreateManifestedSkillVisual(runtime, skill, target);
+            skillRuntime.CooldownDuration = GetArielUnitCooldown(runtime, skill, 8f, 1f);
+            skillRuntime.CooldownRemaining = skillRuntime.CooldownDuration;
+            statusLabel = $"{runtime.Monster.DisplayName} Blessing Wave hit around {target.DisplayName}.";
+            return true;
+        }
+
+        private bool TryCastArielUnitCelestialBrand(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime)
+        {
+            var skill = skillRuntime != null ? skillRuntime.Skill : null;
+            if (!IsArielCombatUnit(runtime) || skill == null || skillRuntime.CooldownRemaining > 0f)
+            {
+                return false;
+            }
+
+            var targetCount = HasArielUnitChoice(runtime, "ariel-d-trait-4") ? 2 : 1;
+            var damageMultiplier = 1f;
+            damageMultiplier *= HasArielUnitChoice(runtime, "ariel-d-trait-1") ? 1.30f : 1f;
+            damageMultiplier *= HasArielUnitChoice(runtime, "ariel-d-trait-4") ? 0.80f : 1f;
+            var exposureBonus = 0.18f + (HasArielUnitChoice(runtime, "ariel-d-trait-2") ? 0.08f : 0f);
+            var duration = 6f + (HasArielUnitChoice(runtime, "ariel-d-trait-3") ? 3f : 0f);
+            var hitCount = 0;
+            for (var i = 0; i < targetCount; i++)
+            {
+                var target = FindStrongestUnbrandedArielTarget();
+                if (target == null)
+                {
+                    break;
+                }
+
+                ApplyArielUnitSkillDamage(runtime, target, GetArielUnitSkillBaseDamage(runtime, skill), DamageAttribute.Holy, damageMultiplier, "ariel-d");
+                ApplyArielHolyExposure(
+                    target,
+                    1,
+                    duration,
+                    exposureBonus,
+                    HasArielUnitPassive(runtime, "ariel-i") && HasArielUnitChoice(runtime, "ariel-i-trait-3") ? 8f : 0f,
+                    HasArielUnitChoice(runtime, "ariel-d-master-1") ? 0.25f : 0f,
+                    HasArielUnitChoice(runtime, "ariel-d-master-2") ? 0.20f : 0f);
+                hitCount += 1;
+            }
+
+            skillRuntime.CooldownDuration = GetArielUnitCooldown(runtime, skill, 10f, HasArielUnitPassive(runtime, "ariel-i") && HasArielUnitChoice(runtime, "ariel-i-trait-2") ? 0.80f : 1f);
+            skillRuntime.CooldownRemaining = skillRuntime.CooldownDuration;
+            statusLabel = $"{runtime.Monster.DisplayName} Celestial Brand marked {hitCount} target(s).";
+            return hitCount > 0;
+        }
+
+        private bool TryCastArielUnitArchangelDescent(CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime)
+        {
+            var skill = skillRuntime != null ? skillRuntime.Skill : null;
+            if (!IsArielCombatUnit(runtime) || skill == null || skillRuntime.CooldownRemaining > 0f)
+            {
+                return false;
+            }
+
+            var damageMultiplier = 1f;
+            damageMultiplier *= HasArielUnitChoice(runtime, "ariel-e-trait-1") ? 1.30f : 1f;
+            damageMultiplier *= HasArielUnitChoice(runtime, "ariel-e-master-2") ? 1.70f : 1f;
+            var hitCount = 0;
+            for (var i = 0; i < enemies.Count; i++)
+            {
+                var enemy = enemies[i];
+                if (enemy == null || enemy.CurrentHealth <= 0f)
+                {
+                    continue;
+                }
+
+                var targetMultiplier = enemy.HolyExposureTimer > 0f && HasArielUnitChoice(runtime, "ariel-e-trait-4") ? 1.50f : 1f;
+                ApplyArielUnitSkillDamage(runtime, enemy, GetArielUnitSkillBaseDamage(runtime, skill), DamageAttribute.Holy, damageMultiplier * targetMultiplier, "ariel-e");
+                hitCount += 1;
+            }
+
+            var shield = (50f + runtime.PowerStat * 1.6f) * GetArielUnitShieldMultiplier(runtime);
+            shield *= HasArielUnitChoice(runtime, "ariel-e-trait-2") ? 1.30f : 1f;
+            shield *= HasArielUnitChoice(runtime, "ariel-e-master-2") ? 0.70f : 1f;
+            var duration = ArielArchangelShieldDuration + (HasArielUnitChoice(runtime, "ariel-e-trait-5") ? 3f : 0f);
+            ApplyArielTeamShield(runtime, shield, duration, true, 0f, 0f);
+            if (HasArielUnitChoice(runtime, "ariel-e-master-1"))
+            {
+                runtime.ArielSanctuaryTimer = Mathf.Max(runtime.ArielSanctuaryTimer, ArielSanctuaryDuration);
+            }
+
+            if (HasArielUnitPassive(runtime, "ariel-j"))
+            {
+                runtime.ArielSanctuaryProclamationTimer = Mathf.Max(runtime.ArielSanctuaryProclamationTimer, ArielSanctuaryDuration);
+            }
+
+            CreateArielArchangelDescentEffect(skill);
+            skillRuntime.CooldownDuration = GetArielUnitCooldown(runtime, skill, 17f, GetArielUnitArchangelCooldownMultiplier(runtime));
+            skillRuntime.CooldownRemaining = skillRuntime.CooldownDuration;
+            statusLabel = $"{runtime.Monster.DisplayName} Archangel Descent hit {hitCount} enemy(s), shield {shield:0}.";
+            return true;
+        }
+
+        private void CreateArielArchangelDescentEffect(SkillDefinition skill)
+        {
+            var fieldCenter = new Vector3(fieldSize.x * 0.5f, fieldSize.y * 0.5f, 0f);
+            var fieldRadius = Mathf.Max(
+                1f,
+                Mathf.Sqrt((fieldSize.x * fieldSize.x) + (fieldSize.y * fieldSize.y)) * 0.5f);
+            var effect = CreateCircleEffect("ArchangelDescent", fieldCenter, fieldRadius, ArielArchangelEffectDuration, skill != null ? skill.SkillEffectPrefab : null);
+            effect.SkillId = "ariel-e";
+            if (effect.Renderer != null)
+            {
+                effect.Renderer.color = new Color(1f, 0.94f, 0.68f, 0.52f);
+                effect.Renderer.sortingOrder = 28;
+            }
+
+            skillEffects.Add(effect);
         }
 
         private void ApplyArielAreaDamage(Vector3 center, float radius, float baseDamage, string skillId, float finalMultiplier)
@@ -515,11 +818,17 @@ namespace Pakuri.Combat
 
         private void ApplyArielUnitShield(float shield, float duration, bool markAsArchangelShield = false)
         {
+            ApplyArielTeamShield(selectedUnitRuntime, shield, duration, markAsArchangelShield, arielRadiantShieldBurstDamage, arielRadiantShieldReflectMultiplier);
+        }
+
+        private void ApplyArielSelectedShield(float shield, float duration, bool markAsArchangelShield = false)
+        {
             var clampedShield = Mathf.Max(0f, shield);
             var clampedDuration = Mathf.Max(0f, duration);
             var previousShield = unitShieldValue;
             unitShieldValue = Mathf.Max(unitShieldValue, clampedShield);
             unitShieldTimer = Mathf.Max(unitShieldTimer, clampedDuration);
+            unitShieldAppliedFrame = Time.frameCount;
 
             if (!IsSelectedArielMonster())
             {
@@ -542,6 +851,74 @@ namespace Pakuri.Combat
                 arielArchangelShieldValue = 0f;
                 arielArchangelShieldTimer = 0f;
             }
+        }
+
+        private void ApplyArielTeamShield(
+            CombatUnitRuntime source,
+            float shield,
+            float duration,
+            bool markAsArchangelShield,
+            float burstDamage,
+            float reflectMultiplier)
+        {
+            ApplyArielSelectedShield(shield, duration, markAsArchangelShield);
+            if (selectedUnitRuntime != null)
+            {
+                selectedUnitRuntime.ShieldValue = unitShieldValue;
+                selectedUnitRuntime.ShieldTimer = unitShieldTimer;
+                selectedUnitRuntime.ShieldAppliedFrame = unitShieldAppliedFrame;
+                selectedUnitRuntime.ArielShieldSource = source;
+                selectedUnitRuntime.ArielArchangelShieldValue = arielArchangelShieldValue;
+                selectedUnitRuntime.ArielArchangelShieldTimer = arielArchangelShieldTimer;
+                selectedUnitRuntime.ArielRadiantShieldBurstDamage = burstDamage;
+                selectedUnitRuntime.ArielRadiantShieldReflectMultiplier = reflectMultiplier;
+            }
+
+            for (var i = 0; i < manifestedMonsters.Count; i++)
+            {
+                ApplyArielRuntimeShield(manifestedMonsters[i], source, shield, duration, markAsArchangelShield, burstDamage, reflectMultiplier);
+            }
+        }
+
+        private void ApplyArielRuntimeShield(
+            CombatUnitRuntime target,
+            CombatUnitRuntime source,
+            float shield,
+            float duration,
+            bool markAsArchangelShield,
+            float burstDamage,
+            float reflectMultiplier)
+        {
+            if (target == null || target.CurrentHealth <= 0f)
+            {
+                return;
+            }
+
+            var clampedShield = Mathf.Max(0f, shield);
+            var clampedDuration = Mathf.Max(0f, duration);
+            var previousShield = target.ShieldValue;
+            target.ShieldValue = Mathf.Max(target.ShieldValue, clampedShield);
+            target.ShieldTimer = Mathf.Max(target.ShieldTimer, clampedDuration);
+            target.ShieldAppliedFrame = Time.frameCount;
+            target.ArielShieldSource = source;
+            target.ArielRadiantShieldBurstDamage = burstDamage;
+            target.ArielRadiantShieldReflectMultiplier = reflectMultiplier;
+
+            if (markAsArchangelShield)
+            {
+                if (clampedShield >= previousShield && clampedShield > 0f)
+                {
+                    target.ArielArchangelShieldValue = clampedShield;
+                    target.ArielArchangelShieldTimer = clampedDuration;
+                }
+            }
+            else if (clampedShield > previousShield && target.ArielArchangelShieldValue > 0f)
+            {
+                target.ArielArchangelShieldValue = 0f;
+                target.ArielArchangelShieldTimer = 0f;
+            }
+
+            UpdateManifestedMonsterLabel(target);
         }
 
         private void HandleArielShieldAbsorbed(float absorbed, float shieldBeforeAbsorb, EnemyRuntime sourceEnemy)
@@ -575,6 +952,41 @@ namespace Pakuri.Combat
             }
         }
 
+        private void HandleArielUnitShieldAbsorbed(CombatUnitRuntime target, float absorbed, float shieldBeforeAbsorb, EnemyRuntime sourceEnemy)
+        {
+            if (target == null || absorbed <= 0f)
+            {
+                return;
+            }
+
+            if (IsSelectedCombatUnit(target))
+            {
+                HandleArielShieldAbsorbed(absorbed, shieldBeforeAbsorb, sourceEnemy);
+                return;
+            }
+
+            if (shieldBeforeAbsorb > 0f && target.ArielArchangelShieldValue > 0f)
+            {
+                var archangelShare = Mathf.Clamp01(target.ArielArchangelShieldValue / shieldBeforeAbsorb);
+                target.ArielArchangelShieldValue = Mathf.Max(0f, target.ArielArchangelShieldValue - (absorbed * archangelShare));
+                if (Mathf.Approximately(target.ArielArchangelShieldValue, 0f))
+                {
+                    target.ArielArchangelShieldTimer = 0f;
+                }
+            }
+
+            var source = target.ArielShieldSource != null ? target.ArielShieldSource : target;
+            if (target.ArielRadiantShieldReflectMultiplier > 0f && sourceEnemy != null && sourceEnemy.CurrentHealth > 0f)
+            {
+                ApplyArielUnitSkillDamage(source, sourceEnemy, absorbed * target.ArielRadiantShieldReflectMultiplier, DamageAttribute.Holy, 1f, "ariel-b-reflect");
+            }
+
+            if (target.ShieldValue <= 0f)
+            {
+                TriggerArielUnitRadiantShieldBurst(target);
+            }
+        }
+
         private void TriggerArielRadiantShieldBurst()
         {
             if (!IsSelectedArielMonster() || arielRadiantShieldBurstDamage <= 0f || eveAnchor == null)
@@ -585,6 +997,23 @@ namespace Pakuri.Combat
 
             ApplyArielAreaDamage(eveAnchor.position, 3f, arielRadiantShieldBurstDamage, "ariel-b-burst", 1f);
             arielRadiantShieldBurstDamage = 0f;
+        }
+
+        private void TriggerArielUnitRadiantShieldBurst(CombatUnitRuntime target)
+        {
+            if (target == null || target.ArielRadiantShieldBurstDamage <= 0f || target.Transform == null)
+            {
+                if (target != null)
+                {
+                    target.ArielRadiantShieldBurstDamage = 0f;
+                }
+
+                return;
+            }
+
+            var source = target.ArielShieldSource != null ? target.ArielShieldSource : target;
+            ApplyArielUnitAreaDamage(source, target.Transform.position, 3f, target.ArielRadiantShieldBurstDamage, "ariel-b-burst", 1f);
+            target.ArielRadiantShieldBurstDamage = 0f;
         }
 
         private void ExplodeArielJudgementLight(Vector3 center, float baseDamage, int explosions)
@@ -607,6 +1036,28 @@ namespace Pakuri.Combat
             skillEffects.Add(effect);
         }
 
+        private void ExplodeArielUnitJudgementLight(CombatUnitRuntime runtime, Vector3 center, float baseDamage, int explosions)
+        {
+            if (!IsArielCombatUnit(runtime))
+            {
+                return;
+            }
+
+            for (var i = 0; i < Mathf.Max(1, explosions); i++)
+            {
+                ApplyArielUnitAreaDamage(runtime, center, ArielJudgementExplosionRadius, baseDamage, "ariel-a-explosion", 1f);
+            }
+
+            var skill = FindArielUnitSkill(runtime, SkillSlot.A);
+            CreateManifestedCircleVisual(
+                skill,
+                center,
+                ArielJudgementExplosionRadius,
+                new Color(1f, 1f, 1f, 0.65f),
+                29,
+                0.45f);
+        }
+
         private bool TryTriggerArielJudgementLightExplosion(ProjectileRuntime projectile)
         {
             if (projectile == null
@@ -622,7 +1073,14 @@ namespace Pakuri.Combat
             var count = projectile.ArielJudgementExplosionCount;
             projectile.ArielJudgementExplosionDamage = 0f;
             projectile.ArielJudgementExplosionCount = 0;
-            ExplodeArielJudgementLight(center, damage, count);
+            if (IsArielCombatUnit(projectile.ManifestedSource))
+            {
+                ExplodeArielUnitJudgementLight(projectile.ManifestedSource, center, damage, count);
+            }
+            else
+            {
+                ExplodeArielJudgementLight(center, damage, count);
+            }
             return true;
         }
 
@@ -856,12 +1314,377 @@ namespace Pakuri.Combat
 
         private int GetArielShieldedAllyCount()
         {
-            return unitShieldValue > 0f ? 1 : 0;
+            return GetArielUnitShieldedAllyCount();
+        }
+
+        private int GetArielUnitShieldedAllyCount()
+        {
+            var count = unitShieldValue > 0f ? 1 : 0;
+            for (var i = 0; i < manifestedMonsters.Count; i++)
+            {
+                var runtime = manifestedMonsters[i];
+                if (runtime != null && runtime.ShieldValue > 0f)
+                {
+                    count += 1;
+                }
+            }
+
+            return count;
         }
 
         private bool HasArielArchangelShieldActive()
         {
             return arielArchangelShieldTimer > 0f && arielArchangelShieldValue > 0f && unitShieldValue > 0f;
+        }
+
+        private bool HasArielUnitArchangelShieldActive(CombatUnitRuntime runtime)
+        {
+            if (IsSelectedCombatUnit(runtime))
+            {
+                return HasArielArchangelShieldActive();
+            }
+
+            return runtime != null && runtime.ArielArchangelShieldTimer > 0f && runtime.ArielArchangelShieldValue > 0f && runtime.ShieldValue > 0f;
+        }
+
+        private bool TryApplyArielUnitProjectileHit(ProjectileRuntime projectile, EnemyRuntime enemy, out DamageResult damageResult, out float appliedDamage)
+        {
+            damageResult = default;
+            appliedDamage = 0f;
+            var runtime = projectile != null ? projectile.ManifestedSource : null;
+            if (!IsArielCombatUnit(runtime)
+                || projectile == null
+                || enemy == null
+                || enemy.CurrentHealth <= 0f
+                || !string.Equals(projectile.SkillId, "ariel-a", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            damageResult = ResolveArielUnitDamage(runtime, projectile.BaseDamage, projectile.Attribute, enemy, 1f, projectile.SkillId);
+            appliedDamage = ApplyDamageToEnemy(enemy, damageResult.FinalDamage, damageResult.Attribute);
+            TrackArielHolyExposureDamage(enemy, projectile.Attribute, damageResult.FinalDamage);
+            if (HasArielUnitChoice(runtime, "ariel-a-master-2"))
+            {
+                ApplyArielHolyExposure(enemy, 1, 6f, 0.18f, 0f, 0f, 0f);
+            }
+
+            return true;
+        }
+
+        private void ApplyArielUnitAreaDamage(CombatUnitRuntime runtime, Vector3 center, float radius, float baseDamage, string skillId, float finalMultiplier)
+        {
+            for (var i = 0; i < enemies.Count; i++)
+            {
+                var enemy = enemies[i];
+                if (enemy == null || enemy.CurrentHealth <= 0f || Vector2.Distance(enemy.Transform.position, center) > radius + GetEnemyHitRadius(enemy))
+                {
+                    continue;
+                }
+
+                ApplyArielUnitSkillDamage(runtime, enemy, baseDamage, DamageAttribute.Holy, finalMultiplier, skillId);
+            }
+        }
+
+        private float ApplyArielUnitSkillDamage(CombatUnitRuntime runtime, EnemyRuntime enemy, float baseDamage, DamageAttribute attribute, float finalMultiplier, string skillId)
+        {
+            if (!IsArielCombatUnit(runtime) || enemy == null || enemy.CurrentHealth <= 0f || baseDamage <= 0f)
+            {
+                return 0f;
+            }
+
+            var result = ResolveArielUnitDamage(runtime, baseDamage, attribute, enemy, finalMultiplier, skillId);
+            var applied = ApplyDamageToEnemy(enemy, result.FinalDamage, attribute);
+            enemy.FlashTimer = 0.08f;
+            TrackArielHolyExposureDamage(enemy, attribute, result.FinalDamage);
+            Debug.Log($"[CombatDamage] {runtime.Monster.DisplayName}.{skillId} -> {enemy.DisplayName}: {result.FormulaLog}; Applied={applied:0.##}, ShieldLeft={enemy.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, enemy.CurrentHealth):0.##}");
+            return applied;
+        }
+
+        private DamageResult ResolveArielUnitDamage(CombatUnitRuntime runtime, float baseDamage, DamageAttribute attribute, EnemyRuntime enemy, float finalMultiplier, string skillId)
+        {
+            return DamageCalculator.Resolve(
+                baseDamage,
+                attribute,
+                enemy.Defenses,
+                flatDefenseReduction: GetArielUnitFlatDefenseReduction(runtime, enemy, attribute),
+                criticalChanceBonus: GetArielUnitCriticalChanceBonus(runtime, attribute),
+                targetCriticalResistance: enemy.CriticalResistance,
+                criticalDamageTakenBonus: GetArielUnitCriticalDamageTakenBonus(runtime, enemy, skillId),
+                finalDamageMultiplier: enemy.DamageTakenMultiplier * Mathf.Max(0f, finalMultiplier) * GetArielUnitFinalDamageMultiplier(runtime, enemy, attribute, skillId));
+        }
+
+        private float GetArielUnitSkillBaseDamage(CombatUnitRuntime runtime, SkillDefinition skill)
+        {
+            if (IsSelectedCombatUnit(runtime))
+            {
+                return GetArielSkillBaseDamage(skill);
+            }
+
+            if (runtime == null || skill == null)
+            {
+                return 0f;
+            }
+
+            var effectivePower = runtime.PowerStat;
+            if (runtime.ArielBlessingTimer > 0f && HasArielUnitChoice(runtime, "ariel-c-master-1"))
+            {
+                effectivePower *= 1.18f;
+            }
+
+            return skill.BaseDamage + effectivePower * skill.SpellPowerCoefficient;
+        }
+
+        private float GetArielUnitCooldown(CombatUnitRuntime runtime, SkillDefinition skill, float fallback, float multiplier)
+        {
+            var cooldown = skill != null && skill.CooldownSeconds > 0f ? skill.CooldownSeconds : fallback;
+            return Mathf.Max(0.1f, cooldown * Mathf.Max(0.05f, multiplier));
+        }
+
+        private float GetArielUnitHolyDamageMultiplier(CombatUnitRuntime runtime)
+        {
+            if (IsSelectedCombatUnit(runtime))
+            {
+                return GetArielHolyDamageMultiplier();
+            }
+
+            var bonus = 0f;
+            if (HasArielUnitPassive(runtime, "ariel-f"))
+            {
+                bonus += 0.12f + (HasArielUnitChoice(runtime, "ariel-f-trait-1") ? 0.06f : 0f);
+            }
+
+            var hasShield = IsSelectedCombatUnit(runtime) ? unitShieldValue > 0f : runtime != null && runtime.ShieldValue > 0f;
+            if (HasArielUnitPassive(runtime, "ariel-g") && HasArielUnitChoice(runtime, "ariel-g-trait-3") && hasShield)
+            {
+                bonus += 0.10f;
+            }
+
+            if (runtime != null && runtime.ArielBlessingTimer > 0f)
+            {
+                if (HasArielUnitChoice(runtime, "ariel-b-trait-5"))
+                {
+                    bonus += 0.12f;
+                }
+
+                if (HasArielUnitPassive(runtime, "ariel-h"))
+                {
+                    bonus += 0.15f + (HasArielUnitChoice(runtime, "ariel-h-trait-1") ? 0.07f : 0f);
+                }
+
+                if (HasArielUnitChoice(runtime, "ariel-c-trait-5") && hasShield)
+                {
+                    bonus += 0.10f;
+                }
+            }
+
+            if (HasArielUnitPassive(runtime, "ariel-j") && HasArielUnitArchangelShieldActive(runtime))
+            {
+                bonus += 0.20f + (HasArielUnitChoice(runtime, "ariel-j-trait-2") ? 0.10f : 0f);
+            }
+
+            return 1f + bonus;
+        }
+
+        private float GetArielUnitFinalDamageMultiplier(CombatUnitRuntime runtime, EnemyRuntime enemy, DamageAttribute attribute, string skillId)
+        {
+            if (IsSelectedCombatUnit(runtime))
+            {
+                return GetArielFinalDamageMultiplier(enemy, attribute, skillId);
+            }
+
+            if (!IsArielCombatUnit(runtime) || enemy == null)
+            {
+                return 1f;
+            }
+
+            var bonus = attribute == DamageAttribute.Holy ? GetArielUnitHolyDamageMultiplier(runtime) - 1f : 0f;
+            var hasShield = IsSelectedCombatUnit(runtime) ? unitShieldValue > 0f : runtime.ShieldValue > 0f;
+            if (enemy.HolyExposureTimer > 0f)
+            {
+                bonus += enemy.HolyExposureDamageTakenBonus;
+                if (HasArielUnitPassive(runtime, "ariel-i"))
+                {
+                    bonus += 0.10f + (HasArielUnitChoice(runtime, "ariel-i-trait-1") ? 0.05f : 0f);
+                }
+
+                if (HasArielUnitChoice(runtime, "ariel-d-trait-5") && hasShield)
+                {
+                    bonus += 0.10f;
+                }
+            }
+
+            return 1f + bonus;
+        }
+
+        private float GetArielUnitFlatDefenseReduction(CombatUnitRuntime runtime, EnemyRuntime enemy, DamageAttribute attribute)
+        {
+            if (IsSelectedCombatUnit(runtime))
+            {
+                return GetArielFlatDefenseReduction(enemy, attribute);
+            }
+
+            if (!IsArielCombatUnit(runtime) || enemy == null || attribute != DamageAttribute.Holy || enemy.HolyExposureTimer <= 0f)
+            {
+                return 0f;
+            }
+
+            return enemy.HolyExposureFlatDefenseReduction;
+        }
+
+        private float GetArielUnitCriticalDamageTakenBonus(CombatUnitRuntime runtime, EnemyRuntime enemy, string skillId)
+        {
+            if (IsSelectedCombatUnit(runtime))
+            {
+                return GetArielCriticalDamageTakenBonus(enemy, skillId);
+            }
+
+            if (!IsArielCombatUnit(runtime) || enemy == null || enemy.HolyExposureTimer <= 0f)
+            {
+                return 0f;
+            }
+
+            return enemy.HolyExposureCriticalDamageTakenBonus;
+        }
+
+        private float GetArielUnitCriticalChanceBonus(CombatUnitRuntime runtime, DamageAttribute attribute)
+        {
+            if (IsSelectedCombatUnit(runtime))
+            {
+                return GetArielCriticalChanceBonus(attribute);
+            }
+
+            return IsArielCombatUnit(runtime)
+                && attribute == DamageAttribute.Holy
+                && HasArielUnitPassive(runtime, "ariel-f")
+                && HasArielUnitChoice(runtime, "ariel-f-trait-3")
+                ? 0.08f
+                : 0f;
+        }
+
+        private float GetArielUnitIncomingDamageAfterReduction(CombatUnitRuntime runtime, float incomingDamage)
+        {
+            if (IsSelectedCombatUnit(runtime))
+            {
+                return GetArielIncomingDamageAfterReduction(incomingDamage);
+            }
+
+            if (!IsArielCombatUnit(runtime) || runtime.ArielSanctuaryTimer <= 0f || !HasArielUnitChoice(runtime, "ariel-e-master-1"))
+            {
+                return incomingDamage;
+            }
+
+            return incomingDamage * 0.82f;
+        }
+
+        private float GetArielUnitActionSpeedMultiplier(CombatUnitRuntime runtime)
+        {
+            if (IsSelectedCombatUnit(runtime))
+            {
+                return GetArielActionSpeedMultiplier();
+            }
+
+            var bonus = 0f;
+            if (runtime != null && runtime.ArielBlessingTimer > 0f && !HasArielUnitChoice(runtime, "ariel-c-master-1"))
+            {
+                bonus += 0.12f + (HasArielUnitChoice(runtime, "ariel-c-trait-2") ? 0.06f : 0f);
+            }
+
+            if (HasArielUnitPassive(runtime, "ariel-j") && runtime != null && runtime.ArielSanctuaryProclamationTimer > 0f)
+            {
+                bonus += 0.15f + (HasArielUnitChoice(runtime, "ariel-j-trait-1") ? 0.07f : 0f);
+            }
+
+            return 1f + bonus;
+        }
+
+        private float GetArielUnitCooldownChargeMultiplier(CombatUnitRuntime runtime)
+        {
+            if (IsSelectedCombatUnit(runtime))
+            {
+                return GetArielCooldownChargeMultiplier();
+            }
+
+            var bonus = 0f;
+            if (HasArielUnitPassive(runtime, "ariel-h") && runtime != null && runtime.ArielBlessingTimer > 0f)
+            {
+                bonus += 0.10f + (HasArielUnitChoice(runtime, "ariel-h-trait-2") ? 0.05f : 0f);
+            }
+
+            return 1f + bonus;
+        }
+
+        private float GetArielUnitShieldMultiplier(CombatUnitRuntime runtime)
+        {
+            var bonus = 0f;
+            if (HasArielUnitPassive(runtime, "ariel-g"))
+            {
+                bonus += 0.18f + (HasArielUnitChoice(runtime, "ariel-g-trait-1") ? 0.08f : 0f);
+            }
+
+            return 1f + bonus;
+        }
+
+        private float GetArielUnitArchangelCooldownMultiplier(CombatUnitRuntime runtime)
+        {
+            var multiplier = HasArielUnitChoice(runtime, "ariel-e-trait-3") ? 0.80f : 1f;
+            if (HasArielUnitPassive(runtime, "ariel-j") && HasArielUnitChoice(runtime, "ariel-j-trait-3"))
+            {
+                multiplier *= 0.85f;
+            }
+
+            return multiplier;
+        }
+
+        private SkillDefinition FindArielUnitSkill(CombatUnitRuntime runtime, SkillSlot slot)
+        {
+            if (IsSelectedCombatUnit(runtime))
+            {
+                return FindSelectedSkill(slot);
+            }
+
+            if (runtime == null)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < runtime.Skills.Count; i++)
+            {
+                var skillRuntime = runtime.Skills[i];
+                if (skillRuntime != null && skillRuntime.Skill != null && skillRuntime.Skill.Slot == slot)
+                {
+                    return skillRuntime.Skill;
+                }
+            }
+
+            return null;
+        }
+
+        private bool HasArielUnitChoice(CombatUnitRuntime runtime, string choiceId)
+        {
+            if (IsSelectedCombatUnit(runtime))
+            {
+                return HasChoice(choiceId);
+            }
+
+            return HasManifestedChoice(runtime, choiceId);
+        }
+
+        private bool HasArielUnitPassive(CombatUnitRuntime runtime, string passiveId)
+        {
+            if (IsSelectedCombatUnit(runtime))
+            {
+                return HasArielPassive(passiveId, string.Empty);
+            }
+
+            return HasManifestedPassive(runtime, passiveId);
+        }
+
+        private bool IsArielCombatUnit(CombatUnitRuntime runtime)
+        {
+            return runtime != null
+                && runtime.Monster != null
+                && string.Equals(runtime.Monster.MonsterId, "ariel", StringComparison.OrdinalIgnoreCase);
         }
 
         private bool HasArielPassive(string passiveId, string passiveName)
