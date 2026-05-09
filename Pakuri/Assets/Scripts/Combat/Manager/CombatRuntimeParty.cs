@@ -622,6 +622,11 @@ namespace Pakuri.Combat
                 return;
             }
 
+            if (TryTickSeinUnitSkill(runtime, skillRuntime, elapsed))
+            {
+                return;
+            }
+
             TickCombatSkillRuntime(runtime, skillRuntime, elapsed);
             if (IsManifestedMagazineSkill(skillRuntime.Skill))
             {
@@ -1039,7 +1044,8 @@ namespace Pakuri.Combat
                 }
 
                 enemyHit = enemy;
-                if (!TryApplyRinUnitProjectileHit(projectile, enemy, out damageResult, out appliedDamage))
+                if (!TryApplyRinUnitProjectileHit(projectile, enemy, out damageResult, out appliedDamage)
+                    && !TryApplySeinUnitProjectileHit(projectile, enemy, out damageResult, out appliedDamage))
                 {
                     damageResult = DamageCalculator.Resolve(
                         projectile.BaseDamage,
@@ -1066,6 +1072,11 @@ namespace Pakuri.Combat
         private void ApplyManifestedProjectileSourceEffects(ProjectileRuntime projectile, EnemyRuntime enemy, float appliedDamage)
         {
             if (projectile == null || enemy == null || appliedDamage <= 0f)
+            {
+                return;
+            }
+
+            if (IsSeinCombatUnit(projectile.ManifestedSource))
             {
                 return;
             }

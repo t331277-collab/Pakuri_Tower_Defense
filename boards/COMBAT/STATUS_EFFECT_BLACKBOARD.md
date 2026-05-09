@@ -3,6 +3,48 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-09 Sein Unit Status And Passive Runtime Resume
+
+### Task title
+
+Carry manifested Sein heat, fire-defense, and passive debuff state through unit source effects.
+
+### Goals
+
+- Make manifested Sein projectile/effect damage apply heat and fire debuff behavior from the source unit.
+- Make Sein H/I/J passive debuff checks use selected or manifested unit state.
+- Preserve existing enemy runtime status fields.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode status verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by C# builds.
+
+### Next Actions
+
+- User verifies manifested Sein heat, Superheated Zone tick state, Burning Trajectory, Thermal Spread, and Doomsday Omen behavior in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeSeinSkills.cs:1050` applies D/Superheated tick state through either selected or manifested source logic.
+- `CombatRuntimeSeinSkills.cs:1060` routes manifested Sein skill-effect damage through `ApplySeinUnitRawFireDamage(...)`.
+- `CombatRuntimeSeinSkills.cs:1065` applies C Burning Trajectory through `ApplySeinUnitBurningTrajectory(...)` when the effect has a manifested source.
+- `CombatRuntimeSeinSkills.cs:2147`, `:2162`, and `:2175` implement unit versions of Burning Trajectory, Thermal Spread, and Doomsday Omen.
+- Runtime and Editor builds completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-09: Sein unit executor resume extended status/passive behavior beyond the earlier common manifested fallback.
+
 ## Task: 2026-05-08 Manifested Rin C And Sein A Source Effects
 
 ### Task title

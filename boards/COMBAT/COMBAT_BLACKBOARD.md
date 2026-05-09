@@ -3,6 +3,98 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-09 Sein Unit Executor Migration Resume
+
+### Task title
+
+Add Sein-specific unit executor dispatch to combat runtime.
+
+### Goals
+
+- Dispatch manifested Sein skills through Sein unit executor code before generic manifested fallback.
+- Resolve manifested Sein projectile and effect damage through source-unit passive/choice state.
+- Preserve existing selected 1P Sein manual A behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode.
+- Unity-MCP refresh was unavailable because no Unity Editor instance was connected.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by C# builds.
+
+### Next Actions
+
+- User verifies RunScene Play Mode behavior for manifested Sein A-E and F-J passive interactions.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:625` inserts `TryTickSeinUnitSkill(...)` after Eve/Rin unit dispatch and before generic fallback.
+- `CombatRuntimeParty.cs:1048` inserts `TryApplySeinUnitProjectileHit(...)` into manifested projectile damage resolution.
+- `CombatRuntimeParty.cs:1079` skips old fallback source effects for Sein unit projectiles to prevent duplicate A heat/master explosion handling.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeSeinSkills.cs:127` through `:156` dispatches A-E by `SkillSlot`.
+- `CombatRuntimeSeinSkills.cs:1325` through `:1389` resolves unit Sein fire damage, critical, passive, and projectile hit effects.
+- Runtime and Editor builds completed with 0 errors and existing warnings.
+- `git diff --check` over the two changed scripts completed with exit code 0.
+
+### History
+
+- 2026-05-09: Resumed the interrupted Sein unit executor migration and connected combat runtime dispatch/damage hooks.
+
+## Task: 2026-05-09 Assets Scripts Folder Organization
+
+### Task title
+
+Organize Combat scripts under responsibility-based subfolders.
+
+### Goals
+
+- Make the Combat script structure easier to scan from the folder tree.
+- Keep combat behavior unchanged by moving files only, with `.cs.meta` files moved together.
+
+### Constraints
+
+- Role Owner is Designer -> Code Builder.
+- Do not change C# class names, namespaces, serialized field names, or gameplay logic.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Designer -> Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Use `Pakuri/Assets/Scripts/Combat/Manager`, `Monster`, and `Skill` as the current Combat script map.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Added design document `Pakuri/reference/Report/2026-05-09-assets-scripts-folder-organization-design.md`.
+- Moved combat controller/service partials to `Pakuri/Assets/Scripts/Combat/Manager`.
+- Moved combat unit/stat files to `Pakuri/Assets/Scripts/Combat/Monster`.
+- Moved combat skill/effect/damage files to `Pakuri/Assets/Scripts/Combat/Skill`.
+- Moved `.cs.meta` files with their matching `.cs` files to preserve Unity script GUIDs.
+- Unity-MCP `refresh_unity` reached idle after script refresh.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing System.Net.Http/System.IO.Compression warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings after rerunning it alone; the earlier parallel editor build failed only because the runtime build held an `obj\Debug` cache file lock.
+- Unity-MCP console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-09: User requested organizing `Assets/Scripts` by clearer folders such as Combat subfolders for Monster, Skill, and Manager.
+
 ## Task: 2026-05-08 Manifested HP Bar Runtime Sprite Repair
 
 ### Task title

@@ -3,6 +3,49 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-09 Sein Unit Projectile Runtime Resume
+
+### Task title
+
+Route manifested Sein projectile hits through Sein unit projectile logic.
+
+### Goals
+
+- Keep manifested Sein A/B/C projectiles as projectile objects.
+- Resolve manifested Sein projectile damage through the source `CombatUnitRuntime` and F-J passive state.
+- Avoid duplicate generic Sein A source-effect handling after unit projectile handling.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode projectile verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by C# builds.
+
+### Next Actions
+
+- User verifies manifested Sein A/B/C projectile behavior, pierce, delayed C impact, and Flame Barrage passive procs in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:1048` checks `TryApplySeinUnitProjectileHit(...)` during manifested projectile hit resolution.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeSeinSkills.cs:160` fires manifested Sein A from the unit executor.
+- `CombatRuntimeSeinSkills.cs:211` fires manifested Sein B volley projectiles from the unit executor.
+- `CombatRuntimeSeinSkills.cs:593` and `:659` create unit-owned Sein A/B and C projectiles with `ManifestedSource`.
+- `CombatRuntimeSeinSkills.cs:946` and `:991` make C path and delayed impact read projectile source choices.
+- Runtime and Editor builds completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-09: Sein A-J unit executor resume added projectile-specific unit hooks for manifested Sein.
+
 ## Task: 2026-05-08 Manifested Projectile Pierce Parity
 
 ### Task title

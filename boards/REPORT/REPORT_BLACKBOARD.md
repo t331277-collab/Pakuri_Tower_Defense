@@ -3,6 +3,91 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-09 Sein Unit Executor Migration Design And Resume
+
+### Task title
+
+Record the Sein unit executor migration design and resumed implementation.
+
+### Goals
+
+- Preserve the design handoff that identified the missing Sein unit executor.
+- Record that Code Builder resumed the implementation from the report's remaining-work section.
+
+### Constraints
+
+- Role Owner is Designer -> Code Builder.
+- This task updated code after the design handoff; gameplay verification remains user-owned.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Designer -> Code Builder
+
+### Status
+
+Implemented and locally validated by C# builds.
+
+### Next Actions
+
+- Use `Pakuri/reference/Report/2026-05-09-sein-unit-executor-migration-design.md` as the design note for the current Sein migration.
+- User performs Play Mode verification before continuing Vega/Ariel unit executor migration.
+
+### Evidence
+
+- `Pakuri/reference/Report/2026-05-09-sein-unit-executor-migration-design.md` exists and states that Code Builder should add Sein unit executor methods and call them before generic manifested fallback.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:625` now calls `TryTickSeinUnitSkill(...)`.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeSeinSkills.cs:127` implements the new Sein unit executor dispatcher.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+- Unity-MCP refresh could not run because no Unity Editor instance was connected.
+
+### History
+
+- 2026-05-09: User resumed the interrupted Sein unit executor migration from `2026-05-08-monster-oop-refactor-manifested-work-status.html` and the current design handoff.
+
+## Task: 2026-05-09 Assets Scripts Folder Organization Design
+
+### Task title
+
+Create design evidence for `Assets/Scripts` folder organization.
+
+### Goals
+
+- Record the intended folder map before Code Builder moves scripts.
+- Keep the design grounded in the inspected current script tree.
+
+### Constraints
+
+- Role Owner is Designer -> Code Builder.
+- The document is Markdown, not an HTML report.
+- Do not claim gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Designer -> Code Builder
+
+### Status
+
+Implemented and locally validated with the file move.
+
+### Next Actions
+
+- Use `Pakuri/reference/Report/2026-05-09-assets-scripts-folder-organization-design.md` as the reference for this structure pass.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-09-assets-scripts-folder-organization-design.md`.
+- The document records the inspected pre-change state: flat `Combat`, flat `Run`, and `Data` with only `Editor` as a subfolder.
+- The document records the target structure: Combat `Manager/Monster/Skill`, Data `Definition/Runtime/Runtime/Csv`, and Run `Flow/Session/UI`.
+- Code Builder implemented the design by moving `.cs` and `.cs.meta` files together.
+- Runtime and Editor `dotnet build` commands completed with 0 errors after the move.
+- Unity-MCP console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-09: User requested organizing scripts under clearer folders, and Designer created the handoff document before Builder implementation.
+
 ## Task: 2026-05-08 Monster OOP Refactor And Manifested Work Status Report
 
 ### Task title

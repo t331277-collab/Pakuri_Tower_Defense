@@ -3,6 +3,50 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-09 Sein Unit Executor Migration Resume
+
+### Task title
+
+Track common monster impact of the Sein unit executor migration.
+
+### Goals
+
+- Continue the monster OOP/unit-runtime parity work after Eve and Rin by adding Sein-specific unit execution.
+- Keep manifested Sein in `CombatUnitRuntime`/`CombatSkillRuntime` instead of relying only on the generic manifested fallback.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Detailed Sein behavior is recorded in `boards/MON/SEIN_MONSTER.md`.
+- User performs Play Mode verification.
+- Code Reviewer was not run because the user did not explicitly permit it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by C# builds.
+
+### Next Actions
+
+- User verifies manifested Sein skill parity in RunScene Play Mode.
+- Continue Vega/Ariel unit executor migration only after Sein behavior is accepted.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:625` now calls `TryTickSeinUnitSkill(...)` before the generic manifested fallback.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeSeinSkills.cs:127` implements the Sein unit tick dispatcher.
+- `CombatRuntimeSeinSkills.cs:160`, `:211`, `:277`, `:301`, and `:369` implement unit-owned A/B/C/D/E active paths.
+- `CombatRuntimeSeinSkills.cs:2064` lets Sein F-J passive checks read selected or manifested unit state.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
+- Unity-MCP refresh could not run because no Unity Editor instance was connected.
+
+### History
+
+- 2026-05-09: User resumed the interrupted Sein unit executor migration from the remaining-work report.
+
 ## Task: 2026-05-08 Manifested HP Bar Runtime Sprite Repair
 
 ### Task title

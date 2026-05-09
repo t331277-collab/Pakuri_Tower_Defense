@@ -29,6 +29,7 @@ namespace Pakuri.Combat
         public float RinFinisherInstinctCritTimer { get; set; }
         public float RinCollapseAftermathActionTimer { get; set; }
         public float RinCollapseAftermathAttackTimer { get; set; }
+        public float SeinFlameBarrageProcCooldownRemaining { get; set; }
         public GameObject GameObject => gameObject;
         public Transform Transform => transform;
         public List<CombatSkillRuntime> Skills { get; } = new List<CombatSkillRuntime>();
@@ -72,6 +73,7 @@ namespace Pakuri.Combat
                 RinFinisherInstinctCritTimer = 0f;
                 RinCollapseAftermathActionTimer = 0f;
                 RinCollapseAftermathAttackTimer = 0f;
+                SeinFlameBarrageProcCooldownRemaining = 0f;
             }
         }
 
@@ -124,6 +126,7 @@ namespace Pakuri.Combat
             RinFinisherInstinctCritTimer = Mathf.Max(0f, RinFinisherInstinctCritTimer - delta);
             RinCollapseAftermathActionTimer = Mathf.Max(0f, RinCollapseAftermathActionTimer - delta);
             RinCollapseAftermathAttackTimer = Mathf.Max(0f, RinCollapseAftermathAttackTimer - delta);
+            SeinFlameBarrageProcCooldownRemaining = Mathf.Max(0f, SeinFlameBarrageProcCooldownRemaining - delta);
             for (var i = 0; i < Skills.Count; i++)
             {
                 Owner.TickManifestedUnitSkill(this, Skills[i], elapsed);
@@ -154,6 +157,7 @@ namespace Pakuri.Combat
             RinFinisherInstinctCritTimer = 0f;
             RinCollapseAftermathActionTimer = 0f;
             RinCollapseAftermathAttackTimer = 0f;
+            SeinFlameBarrageProcCooldownRemaining = 0f;
             Skills.Clear();
         }
     }
