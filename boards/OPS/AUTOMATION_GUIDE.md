@@ -3,6 +3,199 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-12 Role Folder Move
+
+### Task title
+
+Move role-related markdown files under `AGENTS_ROLE/` and update role-routing paths.
+
+### Goals
+
+- Reduce root `Test/` markdown clutter by moving role-related `GAME*.md` files under `AGENTS_ROLE/`.
+- Update `AGENTS.md` role entry points to use `AGENTS_ROLE/...` paths.
+- Update `MDTREE.md` root file references to use `AGENTS_ROLE/...` paths.
+- Update role entry files so track-specific reads point to `AGENTS_ROLE/...` paths.
+- Verify which files are read for refactoring, implementation, and structure-design commands.
+- Measure the fixed minimum startup/role-route text as line counts.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested file movement and routing updates.
+- Preserve the highest absolute evidence rule.
+- Preserve the default Designer role behavior.
+- Preserve the rule that Code Reviewer execution requires explicit user permission.
+- Preserve the Unity Play Mode boundary: user owns gameplay verification, Codex records build/compile/console/editor-state evidence only.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified.
+
+### Next Actions
+
+- Future role work should read `AGENTS.md`, `MDTREE.md`, then the role entry file under `AGENTS_ROLE/`, then only the matching track file under `AGENTS_ROLE/`.
+
+### Evidence
+
+- Before the move, `Get-ChildItem -Force -Name GAME*.md` listed root role files including `GAMEBULIDER.md`, `GAMEBULIDER_IMPLEMENTATION.md`, `GAMEBULIDER_REFACT.md`, `GAMEBULIDER_STRUCTURE.md`, `GAMEDESIGNER.md`, `GAMEDESIGNER_REFACT.md`, and `GAMEREVIWER.md`.
+- Moved root `GAME*.md` files into `AGENTS_ROLE/`.
+- Updated `AGENTS.md` so Designer reads `AGENTS_ROLE/GAMEDESIGNER.md`, Code Builder reads `AGENTS_ROLE/GAMEBULIDER.md`, and Code Reviewer reads `AGENTS_ROLE/GAMEREVIWER.md`.
+- Updated `MDTREE.md` root file descriptions to list `AGENTS_ROLE/GAMEDESIGNER_*`, `AGENTS_ROLE/GAMEBULIDER_*`, and `AGENTS_ROLE/GAMEREVIWER.md`.
+- Updated `AGENTS_ROLE/GAMEDESIGNER.md` and `AGENTS_ROLE/GAMEBULIDER.md` track routing entries to point to `AGENTS_ROLE/...` files.
+- After the move, `Get-ChildItem -Force -Name GAME*.md` at the repository root returned no role markdown files.
+- `Get-ChildItem -Force -LiteralPath AGENTS_ROLE` listed the moved role markdown files under `AGENTS_ROLE/`.
+- `Test-Path` confirmed `AGENTS.md`, `MDTREE.md`, `AGENTS_ROLE/GAMEDESIGNER.md`, `AGENTS_ROLE/GAMEDESIGNER_REFACT.md`, `AGENTS_ROLE/GAMEDESIGNER_STRUCTURE.md`, `AGENTS_ROLE/GAMEBULIDER.md`, `AGENTS_ROLE/GAMEBULIDER_IMPLEMENTATION.md`, `AGENTS_ROLE/GAMEBULIDER_REFACT.md`, and `AGENTS_ROLE/GAMEBULIDER_STRUCTURE.md` exist.
+- `Select-String` confirmed `AGENTS.md`, `MDTREE.md`, `AGENTS_ROLE/GAMEDESIGNER.md`, and `AGENTS_ROLE/GAMEBULIDER.md` now route role reads through `AGENTS_ROLE/...` paths.
+- Fixed minimum line-count checks returned 183 lines for refactor-design routing, 183 lines for implementation routing, 182 lines for structure-design routing, 180 lines for Builder refactor-implementation routing, and 183 lines for Builder structure-support routing, excluding domain boards and target code files.
+
+### History
+
+- 2026-05-12: User requested moving role-related markdown files out of the root `Test/` folder into `AGENTS_ROLE/`, updating `AGENTS.md` paths, verifying task-command routing, and reporting which paths and minimum fixed line counts are used for refactoring, implementation, and structure-design commands.
+
+## Task: 2026-05-12 Role Track File Split
+
+### Task title
+
+Split Designer and Code Builder role rules into lightweight entry files and track-specific files.
+
+### Goals
+
+- Keep `GAMEDESIGNER.md` and `GAMEBULIDER.md` light.
+- Move detailed Designer structure, implementation handoff, refactoring, gameplay, and handoff rules into separate `GAMEDESIGNER_*` files.
+- Move detailed Code Builder structure, implementation, refactoring, quality, UI, and verification rules into separate `GAMEBULIDER_*` files.
+- Make each role entry file explain which detailed file to read for each work type.
+- Update routing/global status references so future sessions know the track files exist.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested markdown file restructuring.
+- Preserve the highest absolute evidence rule.
+- Preserve the default Designer role behavior.
+- Preserve the rule that Code Reviewer execution requires explicit user permission.
+- Preserve the Unity Play Mode boundary: user owns gameplay verification, Codex records build/compile/console/editor-state evidence only.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified.
+
+### Next Actions
+
+- Future Designer work should read `AGENTS_ROLE/GAMEDESIGNER.md`, then only the needed `AGENTS_ROLE/GAMEDESIGNER_*` track files.
+- Future Code Builder work should read `AGENTS_ROLE/GAMEBULIDER.md`, then only the needed `AGENTS_ROLE/GAMEBULIDER_*` track files.
+
+### Evidence
+
+- Before the split, `Get-ChildItem -Force -Name GAME*.md` listed only `GAMEBULIDER.md`, `GAMEDESIGNER.md`, and `GAMEREVIWER.md`.
+- Replaced `GAMEDESIGNER.md` with a lightweight entry point routing to `GAMEDESIGNER_STRUCTURE.md`, `GAMEDESIGNER_IMPLEMENTATION.md`, `GAMEDESIGNER_REFACT.md`, `GAMEDESIGNER_GAMEPLAY.md`, and `GAMEDESIGNER_HANDOFF.md`.
+- Replaced `GAMEBULIDER.md` with a lightweight entry point routing to `GAMEBULIDER_STRUCTURE.md`, `GAMEBULIDER_IMPLEMENTATION.md`, `GAMEBULIDER_REFACT.md`, `GAMEBULIDER_QUALITY.md`, `GAMEBULIDER_UI.md`, and `GAMEBULIDER_VERIFICATION.md`.
+- Updated `MDTREE.md` root file descriptions to list the new track files.
+- Updated root `BLACKBOARD.md` current global status with the role-track split note.
+
+### History
+
+- 2026-05-12: User requested subdividing the refactoring, implementation, and structure-design content in `GAMEBULIDER.md` and `GAMEDESIGNER.md` into files such as `GAMEDESIGNER_REFACT.md` and `GAMEBULIDER_REFACT.md`, while leaving the original role files as light routing entry points.
+
+## Task: 2026-05-12 Role File Split
+
+### Task title
+
+Split `AGENTS.md` role rules into dedicated role files.
+
+### Goals
+
+- Move Designer-specific instructions from `AGENTS.md` into `GAMEDESIGNER.md`.
+- Move Code Builder-specific instructions from `AGENTS.md` into `GAMEBULIDER.md`.
+- Move Code Reviewer-specific instructions from `AGENTS.md` into `GAMEREVIWER.md`.
+- Leave `AGENTS.md` focused on startup, evidence, routing, persistent-state, and role entry-point rules.
+- Update routing/global status references so future sessions know the role files exist.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested file restructuring.
+- Preserve the highest absolute evidence rule.
+- Preserve the default Designer role behavior.
+- Preserve the rule that Code Reviewer execution requires explicit user permission.
+- Preserve the Unity Play Mode boundary: user owns gameplay verification, Codex records build/compile/console/editor-state evidence only.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified.
+
+### Next Actions
+
+- Future sessions should read `AGENTS.md` and `MDTREE.md`, then read the active role file named by `AGENTS.md`.
+- If the user wants corrected English spellings, create a separate migration from `AGENTS_ROLE/GAMEBULIDER.md` / `AGENTS_ROLE/GAMEREVIWER.md` to corrected filenames and update every reference together.
+
+### Evidence
+
+- Before the split, `Get-ChildItem -Force -Name GAMEDESIGNER.md,GAMEBULIDER.md,GAMEREVIWER.md,GAMEBUILDER.md,GAMEREVIEWER.md` reported that none of those files existed.
+- Added `GAMEDESIGNER.md`, `GAMEBULIDER.md`, and `GAMEREVIWER.md`.
+- Replaced `AGENTS.md` so it now points Designer to `GAMEDESIGNER.md`, Code Builder to `GAMEBULIDER.md`, and Code Reviewer to `GAMEREVIWER.md`.
+- Updated `MDTREE.md` root file descriptions to list the new role files.
+- Updated root `BLACKBOARD.md` current global status with the role-file split note.
+
+### History
+
+- 2026-05-12: User requested separating the current `AGENTS.md` role functions into `GAMEDESIGNER.md`, `GAMEBULIDER.md`, and `GAMEREVIWER.md`, with `AGENTS.md` only pointing to the role files when each role is performed.
+
+## Task: 2026-05-12 Blackboard Seven-Day Archive Pass
+
+### Task title
+
+Compact `boards/**/*BLACKBOARD.md` files and archive older task blocks by seven-day ranges.
+
+### Goals
+
+- Keep each active `*BLACKBOARD.md` file to only the newest dated day of task blocks.
+- Move older or undated task blocks into `boards/ARCHIVE/`.
+- Group dated archived task blocks into seven-day archive files.
+- Add a Code Builder rule asking whether completed or no-longer-needed active task blocks should be archived.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested file restructuring.
+- Preserve task block content instead of deleting history.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified.
+
+### Next Actions
+
+- Future board maintenance can use the archive files under `boards/ARCHIVE/` for older task history.
+- When a user says a task is done, or Builder determines a task no longer needs active context, Builder should ask whether to archive it.
+
+### Evidence
+
+- `Get-ChildItem -Path boards -Recurse -File -Filter *BLACKBOARD.md` found 16 active `*BLACKBOARD.md` files outside `boards/ARCHIVE/`.
+- Reparse summary after deduplication showed active files retain only their latest dated day: for example `boards/COMBAT/COMBAT_BLACKBOARD.md` keeps four `2026-05-10` blocks, `boards/REPORT/REPORT_BLACKBOARD.md` keeps one `2026-05-12` block, and undated-only files keep no task blocks.
+- Created or rewrote `boards/ARCHIVE/BLACKBOARD_2026-04-20_to_2026-04-26_ARCHIVE_2026-05-12.md`.
+- Created or rewrote `boards/ARCHIVE/BLACKBOARD_2026-04-27_to_2026-05-03_ARCHIVE_2026-05-12.md`.
+- Created or rewrote `boards/ARCHIVE/BLACKBOARD_2026-05-04_to_2026-05-10_ARCHIVE_2026-05-12.md`.
+- Created or rewrote `boards/ARCHIVE/BLACKBOARD_UNDATED_ARCHIVE_2026-05-12.md`.
+- Updated `GAMEBULIDER.md` with the rule to ask before moving completed or no-longer-needed active task blocks to `boards/ARCHIVE/`.
+
+### History
+
+- 2026-05-12: User said category `*BLACKBOARD.md` files under `boards/` were too large and requested keeping only one latest day in each file, moving the rest under `boards/ARCHIVE/` in seven-day units, and adding a simple Builder rule to ask about archiving completed or unnecessary task blocks.
+
 ## Task: Hierarchical Board Migration And Routing Rule Update
 
 ### Task title

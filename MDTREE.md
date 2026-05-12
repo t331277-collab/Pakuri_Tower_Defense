@@ -8,7 +8,21 @@ Start every session by reading `AGENTS.md` and this file. Do not read the full `
 
 ## Root Files
 
-- `AGENTS.md`: global role, evidence, Unity-MCP, Reviewer permission, and board update rules.
+- `AGENTS.md`: global startup, evidence, routing, and role entry-point rules.
+- `AGENTS_ROLE/GAMEDESIGNER.md`: Designer role entry point and track routing.
+- `AGENTS_ROLE/GAMEDESIGNER_STRUCTURE.md`: Designer structure-design rules.
+- `AGENTS_ROLE/GAMEDESIGNER_IMPLEMENTATION.md`: Designer implementation-handoff rules.
+- `AGENTS_ROLE/GAMEDESIGNER_REFACT.md`: Designer refactoring-design rules.
+- `AGENTS_ROLE/GAMEDESIGNER_GAMEPLAY.md`: Designer gameplay-facing design rules.
+- `AGENTS_ROLE/GAMEDESIGNER_HANDOFF.md`: Designer Unity evidence and Code Builder handoff rules.
+- `AGENTS_ROLE/GAMEBULIDER.md`: Code Builder role entry point and track routing.
+- `AGENTS_ROLE/GAMEBULIDER_STRUCTURE.md`: Code Builder structure-support rules.
+- `AGENTS_ROLE/GAMEBULIDER_IMPLEMENTATION.md`: Code Builder direct implementation rules.
+- `AGENTS_ROLE/GAMEBULIDER_REFACT.md`: Code Builder refactoring rules.
+- `AGENTS_ROLE/GAMEBULIDER_QUALITY.md`: Code Builder code-quality rules.
+- `AGENTS_ROLE/GAMEBULIDER_UI.md`: Code Builder Unity UI implementation rules.
+- `AGENTS_ROLE/GAMEBULIDER_VERIFICATION.md`: Code Builder verification, Reviewer transition, and board-update rules.
+- `AGENTS_ROLE/GAMEREVIWER.md`: Code Reviewer role rules.
 - `MDTREE.md`: this routing tree.
 - `BLACKBOARD.md`: root index and current global status only.
 - `boards/ARCHIVE/BLACKBOARD_2026-04-30_PRE_HIERARCHY.md`: full pre-hierarchy detailed task archive.
