@@ -4,6 +4,222 @@
 - This file keeps only task blocks dated 2026-05-10 based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/MON/MON_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Manifested Party Damage Projectile Helper Split
+
+### Task title
+
+Track common monster impact of manifested damage/projectile helper separation.
+
+### Goals
+
+- Preserve manifested monster-specific projectile hook order for Rin, Sein, Vega, and Ariel.
+- Preserve generic Offering-learned manifested skill damage and projectile behavior after moving helper methods out of the party partial.
+- Keep monster-specific special formulas such as Rin shockwave and Eve frost field in place for this slice.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution was explicitly requested by the user for Phase 2 and will run once after Builder verification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated. Phase 2 Code Reviewer completed with `REVIEW_RESULT: PASS`.
+
+### Next Actions
+
+- Do not run another Reviewer pass for Phase 2 unless the user explicitly requests it.
+- User verifies Manifested Rin, Sein, Vega, Ariel projectile hooks and generic Offering-learned damage in RunScene Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDamage.cs:184` owns manifested projectile hit resolution and preserves Rin, Sein, Vega, and Ariel projectile hook order before the generic damage fallback.
+- `CombatRuntimeManifestedPartyDamage.cs:311`, `:316`, `:335`, `:368`, and `:451` own generic manifested skill damage, effect damage, base damage, and damage multiplier helpers.
+- `CombatRuntimeManifestedPartyDamage.cs:63`, `:81`, `:112`, and `:124` own manifested projectile fire and pierce helper methods.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:351`, `:490`, and `:512` retain Rin shockwave, persistent skill routing, and Eve frost field special behavior in the party partial.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+- External Phase 2 Code Reviewer output was saved to `codex_loop_logs\phase2_manifested_party_reviewer_20260513.md` and ended with `REVIEW_RESULT: PASS`.
+
+### History
+
+- 2026-05-13: Builder separated generic manifested damage and projectile-fire helpers after the runtime, view binder, skill dispatcher, drone lifecycle, and visual helper Phase 2 slices.
+- 2026-05-13: External Code Reviewer returned `REVIEW_RESULT: PASS` for the Phase 2 manifested party refactor.
+
+## Task: 2026-05-13 Manifested Party Skill Visual Helper Split
+
+### Task title
+
+Track common monster impact of manifested skill visual helper separation.
+
+### Goals
+
+- Preserve Manifested monster-specific skill visual shape and duration behavior.
+- Preserve generic Offering-learned manifested skill visuals after moving helper methods out of the party partial.
+- Avoid changing monster damage formulas, skill dispatch order, or projectile firing in this slice.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested Eve, Sein, Vega, Ariel, and generic Offering-learned skill visuals in RunScene Play Mode.
+- Future Phase 2 work should move remaining formula or projectile-fire responsibilities in small slices with monster-specific evidence.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyVisuals.cs:60` keeps manifested visual duration resolution after the split.
+- `CombatRuntimeManifestedPartyVisuals.cs:67`, `:82`, `:87`, and `:97` preserve existing `eve-b`, `sein-d`, `vega-c`, and `ariel-c` duration cases.
+- `CombatRuntimeManifestedPartyVisuals.cs:120`, `:132`, and `:154` preserve circle, line, and shared visual configuration helpers.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:371`, `:401`, and `:757` remain call sites for the moved helpers, so monster skill dispatch and damage formulas were not changed by this slice.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Builder separated manifested non-drone skill visual helpers after the runtime, view binder, skill dispatcher, and drone lifecycle Phase 2 slices.
+
+## Task: 2026-05-13 Manifested Party Drone Lifecycle Split
+
+### Task title
+
+Track common monster impact of manifested Eve drone lifecycle separation.
+
+### Goals
+
+- Preserve Manifested Eve drone beacon deployment, lifetime, target lookup, and firing cadence.
+- Keep `manifestedDrones` owned through the manifested party runtime service-backed list.
+- Avoid changing non-Eve monster unit dispatch or damage formulas in this slice.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested Eve drone beacon behavior in RunScene Play Mode.
+- Future Phase 2 work should keep remaining monster-specific formula moves in small slices.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs:19` through `:48` preserves Manifested Eve drone object creation and registration.
+- `CombatRuntimeManifestedPartyDrones.cs:51` through `:92` preserves drone duration ticking, nearest-target lookup, projectile fire, and `EveDroneAttackPeriod` cadence.
+- `CombatRuntimeManifestedPartyDrones.cs:95` through `:115` preserves play/edit-mode cleanup behavior.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:1586` still clears manifested drones during party clear.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Builder separated manifested Eve drone lifecycle after the runtime, view binder, and skill dispatcher Phase 2 slices.
+
+## Task: 2026-05-13 Manifested Party Skill Dispatcher Split
+
+### Task title
+
+Track common monster impact of manifested party skill dispatch separation.
+
+### Goals
+
+- Preserve manifested monster-specific unit dispatch for Eve, Rin, Sein, Vega, and Ariel.
+- Preserve generic Offering-learned manifested skill fallback, cooldown, reload, and magazine behavior.
+- Keep `CombatUnitRuntime` skill ticking callback stable while the dispatcher moves behind the manifested party runtime service.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested Eve/Rin/Sein/Vega/Ariel A-E paths and generic Offering-learned skill firing in RunScene Play Mode.
+- Future Phase 2 work should avoid moving monster-specific damage formulas together with unrelated state-owner changes.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartySkills.cs:17`, `:22`, `:27`, `:32`, and `:37` preserve the Eve, Rin, Sein, Vega, and Ariel unit dispatch order before generic fallback.
+- `CombatRuntimeManifestedPartySkills.cs:42` through `:71` preserves fallback cooldown target selection and projectile/non-projectile dispatch.
+- `CombatRuntimeManifestedPartySkills.cs:86` through `:139` preserves manifested magazine firing, Vega three-sword flurry, Eve drone beacon, reload, and shot cooldown behavior.
+- `Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs:193` still calls `Owner.TickManifestedUnitSkill(...)`, so this slice does not require monster runtime call-site migration.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Builder separated manifested party skill dispatch after the runtime and view binder Phase 2 slices.
+
+## Task: 2026-05-13 Manifested Party View Binder Split
+
+### Task title
+
+Track common monster impact of manifested party view binding separation.
+
+### Goals
+
+- Preserve Manifested monster name, HP, shield, fallback label, and scene slot status display behavior.
+- Keep monster-specific `CombatUnitRuntime` skill/state behavior unchanged.
+- Avoid changing Offering-learned active skill synchronization or monster-specific unit dispatch in this slice.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Manifested monster labels, HP/shield bars, and learned skill display in RunScene Play Mode.
+- Future Phase 2 skill-dispatch extraction should preserve Eve/Rin/Sein/Vega/Ariel unit paths.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyView.cs:23` through `:52` keeps support for `MonsterNameLabel`, `Name Label`, `NameLabel`, `MonsterHpLabel`, `HPLabel`, `HPLable`, `HP Label`, and HP/shield bar paths.
+- `CombatRuntimeManifestedPartyView.cs:256` through `:302` preserves manifested name, HP text, shield text, fallback combined label, and HP/shield bar refresh.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:194`, `:197`, `:224`, `:300`, and `:334` still call the view helpers during unit creation/reset/tick.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Builder separated manifested party view binding after the initial manifested party runtime service boundary.
+
 ## Task: 2026-05-13 Manifested Party Runtime Boundary
 
 ### Task title

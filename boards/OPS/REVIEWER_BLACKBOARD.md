@@ -4,6 +4,53 @@
 - This file keeps only task blocks dated `2026-05-04` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/OPS/REVIEWER_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Phase 2 Manifested Party Reviewer
+
+### Task title
+
+Run Code Reviewer for Phase 2 `Manifested Party` refactor.
+
+### Goals
+
+- Review the Phase 2 manifested party refactor once after Phase 2-E.
+- Check moved partial methods, helper existence, null risks, private partial access, behavior preservation, dependency direction, and side effects.
+- Record the Reviewer decision and log path.
+
+### Constraints
+
+- Role Owner is Code Reviewer.
+- User explicitly requested this Reviewer execution.
+- Reviewer must not edit files.
+- Do not run Unity Play Mode; user owns gameplay verification.
+
+### Role Owner
+
+Code Reviewer
+
+### Status
+
+Completed with `REVIEW_RESULT: PASS`.
+
+### Next Actions
+
+- Do not run another Reviewer pass for this Phase 2 work unless the user explicitly requests it.
+- User performs RunScene Play Mode verification for manifested party skills, projectiles, drones, visuals, and status effects.
+
+### Evidence
+
+- First Reviewer command attempt used an invalid local path and failed before Reviewer execution.
+- Second external Reviewer attempt failed with socket/network permission error `os error 10013`.
+- Escalated external Reviewer command ran once with `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.506.31421-win32-x64\bin\windows-x86_64\codex.exe exec`.
+- Reviewer output was saved to `codex_loop_logs\phase2_manifested_party_reviewer_20260513.md`.
+- `Select-String -Path codex_loop_logs\phase2_manifested_party_reviewer_20260513.md -Pattern "REVIEW_RESULT: PASS","Findings: none","CombatRuntimeManifestedPartyDamage.cs:9-488"` found all three expected markers.
+- Reviewer evidence said `CombatRuntimeManifestedPartyRuntime.cs:64-71` delegates unit-skill ticking, `CombatRuntimeManifestedPartySkills.cs:10-71` preserves monster dispatch order, `CombatRuntimeManifestedPartyDrones.cs:19-115` preserves drone flow, `CombatRuntimeManifestedPartyVisuals.cs:9-166` preserves visual helpers, and `CombatRuntimeManifestedPartyDamage.cs:9-488` preserves generic skill/projectile damage helpers.
+- Reviewer evidence said `CombatRuntimeProjectiles.cs:50-79` still calls `TryHitManifestedProjectile`, `CombatUnitRuntime.cs:191-193` still calls `Owner.TickManifestedUnitSkill`, and the current ignored `Pakuri/Assembly-CSharp.csproj` includes the new Phase 2 partial scripts.
+
+### History
+
+- 2026-05-13: User requested Code Reviewer execution for Phase 2 after Phase 2-E implementation.
+- 2026-05-13: External Reviewer returned `REVIEW_RESULT: PASS` with no findings.
+
 ## Task: 2026-05-13 Phase 1 Battlefield Facade Reviewer
 
 ### Task title

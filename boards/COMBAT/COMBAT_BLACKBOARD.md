@@ -4,6 +4,244 @@
 - This file keeps active combat task blocks after the 2026-05-12 archive pass; newer combat tasks may be appended above older retained context.
 - Source file: `boards/COMBAT/COMBAT_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Manifested Party Damage Projectile Helper Split
+
+### Task title
+
+Separate generic manifested damage and projectile-fire helper methods from the party manager partial.
+
+### Goals
+
+- Move generic manifested skill fire, projectile fire, projectile hit/status, generic damage application, and damage/projectile resolver helpers out of `CombatRuntimeParty.cs`.
+- Preserve existing `CombatUnitRuntime` skill dispatch, manifested projectile registration, hit resolution, status application, and damage calculation behavior.
+- Keep monster-specific special formulas, including Rin shockwave and Eve frost field, in the existing party partial for this slice.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution was explicitly requested by the user for Phase 2 and will run once after Builder verification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated. Phase 2 Code Reviewer completed with `REVIEW_RESULT: PASS`.
+
+### Next Actions
+
+- Do not run another Reviewer pass for Phase 2 unless the user explicitly requests it.
+- User verifies manifested projectile fire, projectile hit/status behavior, generic Offering-learned skill damage, Rin shockwave, Eve frost field, and Vega queued projectile behavior in RunScene Play Mode.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDamage.cs`.
+- `CombatRuntimeManifestedPartyDamage.cs:9` owns generic manifested non-projectile skill fire.
+- `CombatRuntimeManifestedPartyDamage.cs:63`, `:81`, `:112`, and `:124` own manifested projectile fire entry points, pierce resolution, and projectile object/runtime creation.
+- `CombatRuntimeManifestedPartyDamage.cs:184`, `:236`, `:258`, and `:289` own manifested projectile hit resolution, source follow-up effects, area follow-up damage, and projectile status application.
+- `CombatRuntimeManifestedPartyDamage.cs:311`, `:316`, `:335`, `:368`, `:451`, `:458`, `:465`, `:476`, and `:483` own generic manifested skill damage, effect damage, base damage, damage multiplier, projectile speed, projectile lifetime, projectile hit radius, and status chance helpers.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:351`, `:490`, `:512`, and `:739` retain monster-specific Rin shockwave, persistent field, Eve frost field, and queued Vega projectile call-site behavior.
+- `Pakuri/Assembly-CSharp.csproj:81` includes the new script in the C# project.
+- Runtime and Editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP imported the new script with guid `87b85aa0eb1d47849e4ae88329a740ef`; editor state returned `ready_for_tools=true`, and console warning/error read returned only MCP client handler logs after refresh.
+- `git diff --check` completed with no whitespace errors and LF-to-CRLF warnings only.
+- External Phase 2 Code Reviewer output was saved to `codex_loop_logs\phase2_manifested_party_reviewer_20260513.md` and ended with `REVIEW_RESULT: PASS`.
+- Reviewer evidence found no missing referenced helper, duplicate method definition, new null-risk regression, or behavior-order regression in the moved Phase 2 code.
+
+### History
+
+- 2026-05-13: User explicitly assigned Code Builder and asked to perform Phase 2-E `Manifested Party Damage / Projectile Fire Helper` split and run Code Reviewer for Phase 2.
+- 2026-05-13: External Code Reviewer returned `REVIEW_RESULT: PASS` for the Phase 2 manifested party refactor.
+
+## Task: 2026-05-13 Manifested Party Skill Visual Helper Split
+
+### Task title
+
+Separate manifested non-drone skill visual and scene-object helper methods from the party manager partial.
+
+### Goals
+
+- Move manifested skill visual duration, circle visual, line visual, and shared visual configuration helpers out of `CombatRuntimeParty.cs`.
+- Preserve existing skill-fire call sites, damage formulas, projectile behavior, and monster-specific visual durations.
+- Keep the slice limited to non-drone visual helper responsibility after the Phase 2-C drone lifecycle split.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue Phase 2 by moving remaining manifested damage/formula or projectile/skill-fire helpers only in separate reviewable slices.
+- User verifies Manifested Offering-learned and monster-specific skill visuals in RunScene Play Mode.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyVisuals.cs`.
+- `CombatRuntimeManifestedPartyVisuals.cs:9` owns manifested non-drone skill visual dispatch.
+- `CombatRuntimeManifestedPartyVisuals.cs:60` owns manifested skill visual duration resolution.
+- `CombatRuntimeManifestedPartyVisuals.cs:120`, `:132`, and `:154` own circle visual creation, line visual creation, and shared visual configuration.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:371`, `:401`, and `:757` remain call sites for the moved helpers.
+- `Pakuri/Assembly-CSharp.csproj:85` includes the new script in the C# project.
+- Runtime and Editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP imported the new script with guid `6f30f996b52c4bb4ea62492d3b619c4c`; after script refresh, console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-13: User explicitly assigned Code Builder and asked to start Phase 2-D `Manifested Party Skill Visual / Scene Object Helper` split.
+
+## Task: 2026-05-13 Manifested Party Drone Lifecycle Split
+
+### Task title
+
+Separate manifested Eve drone runtime and lifecycle helpers from the party manager partial.
+
+### Goals
+
+- Move `ManifestedDroneRuntime` out of `CombatRuntimeParty.cs`.
+- Move manifested Eve drone deployment, ticking, projectile firing, and cleanup into a dedicated partial.
+- Preserve existing manifested drone list storage through `ManifestedPartyRuntime`.
+- Keep non-drone manifested damage formulas and skill visuals unchanged in this slice.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue Phase 2 by moving remaining manifested damage/formula or non-drone scene-object helpers only in separate reviewable slices.
+- User verifies Manifested Eve drone beacon lifetime, firing cadence, cleanup, and projectile behavior in RunScene Play Mode.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs`.
+- `CombatRuntimeManifestedPartyDrones.cs:8` through `:16` owns `ManifestedDroneRuntime`.
+- `CombatRuntimeManifestedPartyDrones.cs:19` through `:48` owns manifested Eve drone deployment and `manifestedDrones.Add(...)`.
+- `CombatRuntimeManifestedPartyDrones.cs:51` through `:92` owns manifested drone ticking and projectile firing.
+- `CombatRuntimeManifestedPartyDrones.cs:95` through `:115` owns manifested drone cleanup.
+- `CombatRuntimeParty.cs:16` now starts at `ManifestedMonsterSlotNames`, so the drone runtime type is no longer in that file.
+- `CombatRuntimeParty.cs:1586` still calls `RemoveManifestedDroneAt(i)` during party clear.
+- Runtime and Editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP imported the new script and console warning/error read returned only MCP client handler logs after refresh.
+
+### History
+
+- 2026-05-13: User explicitly assigned Code Builder and asked to start the remaining Phase 2 work.
+
+## Task: 2026-05-13 Manifested Party Skill Dispatcher Split
+
+### Task title
+
+Separate manifested party unit skill dispatch from the party manager partial.
+
+### Goals
+
+- Move manifested party unit skill dispatch and fallback cooldown/magazine ticking out of `CombatRuntimeParty.cs`.
+- Keep `CombatUnitRuntime`'s existing `Owner.TickManifestedUnitSkill(...)` callback stable for this slice.
+- Preserve Eve, Rin, Sein, Vega, Ariel, and generic manifested fallback dispatch order.
+- Leave manifested damage formulas and scene object firing methods in the existing party partial for behavior preservation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue Phase 2 by narrowing remaining manifested party callbacks or moving later formula/spawn responsibilities only in separate reviewable slices.
+- User verifies Manifested Eve/Rin/Sein/Vega/Ariel skills and generic Offering-learned skills in RunScene Play Mode.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartySkills.cs`.
+- `CombatRuntimeManifestedPartySkills.cs:5` preserves the existing `TickManifestedUnitSkill(...)` callback used by `CombatUnitRuntime`.
+- `CombatRuntimeManifestedPartySkills.cs:10` through `:71` owns manifested unit skill dispatch order: Eve, Rin, Sein, Vega, Ariel, then generic fallback.
+- `CombatRuntimeManifestedPartySkills.cs:74` through `:139` owns fallback ticking, queued projectile ticking, reload ticking, and magazine fire dispatch.
+- `CombatRuntimeManifestedPartyRuntime.cs:64` through `:71` routes per-skill dispatch through `ManifestedPartyRuntime.TickUnitSkill(...)`.
+- `CombatRuntimeParty.cs:362` now starts at `FireManifestedMonsterSkill(...)`, so damage/formula and object firing methods stayed in the existing party partial.
+- `CombatUnitRuntime.cs:193` still calls `Owner.TickManifestedUnitSkill(this, Skills[i], elapsed)`.
+- Runtime and Editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP imported the new script and console warning/error read returned only MCP client handler logs after refresh.
+
+### History
+
+- 2026-05-13: User explicitly assigned Code Builder and asked to perform Phase 2-B `Manifested Party Skill Dispatcher` split.
+
+## Task: 2026-05-13 Manifested Party View Binder Split
+
+### Task title
+
+Separate manifested party view binding and HP/shield refresh helpers.
+
+### Goals
+
+- Move manifested party status-view binding out of `CombatRuntimeParty.cs`.
+- Keep scene-authored 2P-5P slot child names and fallback HP/shield bar behavior unchanged.
+- Preserve combat skill dispatch, damage formulas, and RunScene UI-facing APIs.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue Phase 2 with manifested party skill dispatch extraction in a separate slice.
+- User verifies manifested name/HP/shield labels and bars in RunScene Play Mode.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyView.cs`.
+- `CombatRuntimeManifestedPartyView.cs:23` through `:52` resolves scene-authored manifested status children.
+- `CombatRuntimeManifestedPartyView.cs:55` through `:141` owns fallback and live HP/shield bar repair helpers.
+- `CombatRuntimeManifestedPartyView.cs:256` through `:302` owns manifested name, HP text, fallback label, and HP/shield bar refresh.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:194`, `:197`, `:224`, `:300`, `:334`, and `:1851` still call the same helper names from the party flow.
+- Runtime and Editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP imported the new script and console warning/error read returned only MCP client handler logs after refresh.
+
+### History
+
+- 2026-05-13: User explicitly assigned Code Builder and asked to perform Phase 2-A `Manifested Party View Binder` split.
+
 ## Task: 2026-05-13 Manifested Party Runtime Split Phase 2 Start
 
 ### Task title

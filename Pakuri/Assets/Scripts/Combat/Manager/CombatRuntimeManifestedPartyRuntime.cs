@@ -60,6 +60,16 @@ namespace Pakuri.Combat
                     owner.UpdateManifestedPartyUnitView(runtime);
                 }
             }
+
+            public void TickUnitSkill(CombatRuntimeController owner, CombatUnitRuntime runtime, CombatSkillRuntime skillRuntime, float elapsed)
+            {
+                if (owner == null)
+                {
+                    return;
+                }
+
+                owner.DispatchManifestedPartyUnitSkill(runtime, skillRuntime, elapsed);
+            }
         }
     }
 }

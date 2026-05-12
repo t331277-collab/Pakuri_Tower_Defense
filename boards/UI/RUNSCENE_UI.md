@@ -3,6 +3,52 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-13 Manifested Party Skill Visual Helper Split
+
+### Task title
+
+Record RunScene visual impact of the Phase 2-D manifested skill visual helper split.
+
+### Goals
+
+- Keep existing RunScene UI scripts and scene-authored MonsterPanel objects unchanged.
+- Preserve manifested non-drone combat visual scene-object behavior while moving helper methods into a dedicated partial.
+- Keep Play Mode visual verification assigned to the user.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns UI and visual verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented through combat visual helper partial changes only. Phase 2 Code Reviewer completed with `REVIEW_RESULT: PASS`.
+
+### Next Actions
+
+- User verifies Manifested Offering-learned and monster-specific skill visuals in RunScene Play Mode.
+- Future Phase 2 slices should keep `RunCombatUiController` and scene-authored MonsterPanel binding stable unless the task explicitly targets UI.
+
+### Evidence
+
+- No `Pakuri/Assets/Scripts/Run/UI/RunCombatUiController.cs` edit was required in this slice.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyVisuals.cs:9` now owns manifested non-drone skill visual dispatch.
+- `CombatRuntimeManifestedPartyVisuals.cs:120`, `:132`, and `:154` own circle visual creation, line visual creation, and shared visual configuration.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:371`, `:401`, and `:757` remain call sites for the moved visual helpers.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP imported the new script and console warning/error read returned only MCP client handler logs after refresh.
+- External Phase 2 Code Reviewer output was saved to `codex_loop_logs\phase2_manifested_party_reviewer_20260513.md` and ended with `REVIEW_RESULT: PASS`.
+
+### History
+
+- 2026-05-13: Builder split manifested skill visual helper methods without changing RunScene UI scripts or scene objects.
+- 2026-05-13: External Code Reviewer returned `REVIEW_RESULT: PASS` for the Phase 2 manifested party refactor.
+
 ## Task: 2026-05-13 Manifested Party Runtime UI Boundary
 
 ### Task title
@@ -27,12 +73,12 @@ Code Builder
 
 ### Status
 
-Implemented through combat runtime changes only.
+Implemented through combat runtime and view-binder partial changes only.
 
 ### Next Actions
 
 - User verifies RunScene MonsterPanel 2P-5P skill snapshots, HP/shield labels, and active group count in Play Mode.
-- Future Phase 2 UI slices should keep scene-authored child binding names stable.
+- Future Phase 2 skill-dispatch slices should keep scene-authored child binding names stable.
 
 ### Evidence
 
@@ -40,11 +86,15 @@ Implemented through combat runtime changes only.
 - `Pakuri/Assets/Scripts/Run/UI/RunCombatUiController.cs:1902` still reads `combatController.PartyMonsterCount`.
 - `RunCombatUiController.cs:1918` through `:1919` still reads `combatController.GetPartyMonsterPanelSkillViews(...)`.
 - `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:35` keeps `PartyMonsterCount` available while routing its manifested count through `manifestedParty.MonsterCount`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyView.cs:23` through `:52` now owns RunScene manifested status child binding names.
+- `CombatRuntimeManifestedPartyView.cs:55` through `:141` now owns fallback and live HP/shield bar repair helpers.
+- `CombatRuntimeManifestedPartyView.cs:256` through `:302` now owns manifested name/HP/shield label and bar refresh.
 - Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
 
 ### History
 
 - 2026-05-13: Builder started Phase 2 without changing RunScene UI script or scene objects; UI-facing combat APIs remain stable.
+- 2026-05-13: Builder split manifested status view binding into `CombatRuntimeManifestedPartyView.cs` without changing `RunCombatUiController.cs` or scene objects.
 
 ## Task: 2026-05-08 Manifested HP Bar Runtime Sprite Repair
 

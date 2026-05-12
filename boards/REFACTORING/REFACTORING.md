@@ -33,11 +33,11 @@ Designer
 
 ### Status
 
-Phase 1 battlefield facade boundary implemented. Phase 2 implementation has started with a manifested party runtime service boundary.
+Phase 1 battlefield facade boundary implemented. Phase 2 manifested party runtime, view binder, skill dispatcher, drone lifecycle, skill visual helper, and damage/projectile helper boundaries are implemented. User-requested Phase 2 Code Reviewer completed with `REVIEW_RESULT: PASS`.
 
 ### Next Actions
 
-- Continue Phase 2 by moving more manifested party view binding and skill dispatch code behind `ManifestedPartyRuntime` in reviewable slices.
+- Continue Phase 2 only if a smaller remaining manifested party formula or field-effect slice is identified by inspected code; otherwise prepare Phase 3 projectile/effect/drone simulation split.
 - Do not start by extracting every monster skill executor or by moving all HP/shield/status state into `CombatTargetModel`.
 - After each implementation slice, run runtime/editor builds and update this board plus the affected combat/projectile/status/monster/report board files.
 
@@ -60,6 +60,54 @@ Phase 1 battlefield facade boundary implemented. Phase 2 implementation has star
 - `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyRuntime.cs:8` through `:12` adds the `manifestedParty` service and routes existing `manifestedMonsters`, `manifestedDrones`, and `manifestedMonsterSlots` accessors through it.
 - `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyRuntime.cs:42` through `:60` owns the manifested party combat tick loop and separates unit skill sync, combat ticking, and view refresh calls.
 - `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:553` through `:583` now delegates `UpdateManifestedMonsterPartyCombat()` to `manifestedParty.TickCombat(...)` and splits unit validity, skill sync, combat tick, and view refresh into separate helper methods.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyView.cs:7` through `:19` owns `ManifestedMonsterStatusViews`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyView.cs:23` through `:52` resolves scene-authored manifested name, HP, HP-bar, and shield-bar children.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyView.cs:55` through `:141` owns fallback and live HP/shield bar repair helpers.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyView.cs:256` through `:302` owns manifested label and HP/shield bar refresh.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:194`, `:197`, `:224`, `:300`, `:334`, and `:1851` now call the view binder helpers from the party/runtime flow.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartySkills.cs:5` keeps the existing `CombatUnitRuntime` callback name as a compatibility wrapper.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartySkills.cs:10` through `:71` owns manifested unit skill dispatch order, preserving Eve, Rin, Sein, Vega, Ariel, then generic fallback.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartySkills.cs:74` through `:139` owns fallback manifested skill ticking, queued projectile ticking, reload ticking, and magazine fire dispatch.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyRuntime.cs:64` through `:71` routes per-skill dispatch through `ManifestedPartyRuntime.TickUnitSkill(...)`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:362` now starts at `FireManifestedMonsterSkill(...)`, so the dispatcher block was moved out while damage/formula and scene-object firing methods remain in the existing party partial.
+- `Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs:193` still calls `Owner.TickManifestedUnitSkill(...)`, preserving the current public callback path for this slice.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs:8` through `:16` now owns `ManifestedDroneRuntime`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs:19` through `:48` now owns manifested Eve drone deployment and registration into `manifestedDrones`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs:51` through `:92` now owns manifested drone ticking, target lookup, and projectile firing.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs:95` through `:115` now owns manifested drone cleanup.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:16` now starts at `ManifestedMonsterSlotNames`, so the drone runtime type moved out of the party partial.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:1586` still calls `RemoveManifestedDroneAt(i)` from party clear, preserving cleanup behavior.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyVisuals.cs:9` now owns manifested non-drone skill visual dispatch.
+- `CombatRuntimeManifestedPartyVisuals.cs:60` now owns manifested skill visual duration resolution while preserving existing monster-specific skill ID durations.
+- `CombatRuntimeManifestedPartyVisuals.cs:120`, `:132`, and `:154` now own manifested circle visual creation, line visual creation, and shared visual configuration.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:371`, `:401`, and `:757` remain call sites for the moved visual helpers, preserving skill-fire behavior while reducing the party partial surface.
+- `Pakuri/Assembly-CSharp.csproj:85` includes `Assets\Scripts\Combat\Manager\CombatRuntimeManifestedPartyVisuals.cs`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDamage.cs:9` now owns generic manifested non-projectile skill fire.
+- `CombatRuntimeManifestedPartyDamage.cs:63`, `:81`, `:112`, and `:124` now own manifested projectile fire entry points, pierce resolution, and projectile object/runtime creation.
+- `CombatRuntimeManifestedPartyDamage.cs:184`, `:236`, `:258`, and `:289` now own manifested projectile hit resolution, source follow-up effects, area follow-up damage, and projectile status application.
+- `CombatRuntimeManifestedPartyDamage.cs:311`, `:316`, `:335`, `:368`, `:451`, `:458`, `:465`, `:476`, and `:483` now own generic manifested skill damage, effect damage, base damage, damage multiplier, projectile speed, projectile lifetime, projectile hit radius, and status chance helpers.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:351`, `:490`, `:512`, and `:739` now retain only the monster-specific Rin shockwave, persistent field, Eve frost field, and queued Vega projectile call sites in the party partial.
+- `Pakuri/Assembly-CSharp.csproj:81` includes `Assets\Scripts\Combat\Manager\CombatRuntimeManifestedPartyDamage.cs`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing assembly reference warnings after the Phase 2-E damage/projectile helper slice.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing assembly reference warnings after the Phase 2-E damage/projectile helper slice.
+- Unity-MCP imported `Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDamage.cs` as a `UnityEditor.MonoScript` with guid `87b85aa0eb1d47849e4ae88329a740ef`; after forced script refresh, editor state returned `ready_for_tools=true`, and console warning/error read returned only MCP-FOR-UNITY client handler logs, not C# compile errors.
+- `git diff --check` completed with no whitespace errors and LF-to-CRLF warnings only after the Phase 2-E damage/projectile helper slice.
+- External Phase 2 Code Reviewer output was saved to `codex_loop_logs\phase2_manifested_party_reviewer_20260513.md` and ended with `REVIEW_RESULT: PASS`.
+- Reviewer evidence found no missing referenced helper, duplicate method definition, new null-risk regression, or behavior-order regression in the moved Phase 2 code.
+- `Pakuri/reference/Report/2026-05-13-combat-runtime-controller-phase2e-alignment-report.html` records the Phase 2-E alignment check against section 9 of `Pakuri/reference/Report/2026-05-10-combat-runtime-controller-ai-token-refactor-proposal.html`.
+- The Phase 2-E alignment report concludes that Phase 2 follows the proposal direction for state ownership, Manifested Party first, and no runtime-state singleton migration, while Phase 3 `Projectile / Effect / Drone Simulation Split`, Phase 4 `Enemy Simulation Split`, Phase 5 `Selected Unit Combat Split`, Phase 6 adapter narrowing, and Phase 7 common target/effect migration remain.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing assembly reference warnings after the Phase 2-D visual helper slice.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing assembly reference warnings after the Phase 2-D visual helper slice.
+- Unity-MCP imported `Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyVisuals.cs` as a `UnityEditor.MonoScript` with guid `6f30f996b52c4bb4ea62492d3b619c4c`; after forced script refresh, console warning/error read returned only MCP-FOR-UNITY client handler logs, not C# compile errors.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing assembly reference warnings after the Phase 2-C drone lifecycle slice.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing assembly reference warnings after the Phase 2-C drone lifecycle slice.
+- Unity-MCP imported `Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs` as a `UnityEditor.MonoScript`; after forced script refresh, editor state returned `ready_for_tools=true`, and console warning/error read returned only MCP-FOR-UNITY client handler logs, not C# compile errors.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing assembly reference warnings after the Phase 2-B skill dispatcher slice.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing assembly reference warnings after the Phase 2-B skill dispatcher slice.
+- Unity-MCP imported `Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartySkills.cs` as a `UnityEditor.MonoScript`; after forced script refresh, editor state returned `ready_for_tools=true`, and console warning/error read returned only MCP-FOR-UNITY client handler logs, not C# compile errors.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing assembly reference warnings after the Phase 2-A view binder slice.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing assembly reference warnings after the Phase 2-A view binder slice.
+- Unity-MCP imported `Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyView.cs` as a `UnityEditor.MonoScript`; after forced script refresh, console warning/error read returned only MCP-FOR-UNITY client handler logs, not C# compile errors.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing assembly reference warnings after the Phase 2 service slice.
 - `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing assembly reference warnings after the Phase 2 service slice.
 - Unity-MCP imported `Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyRuntime.cs` as a `UnityEditor.MonoScript`; after forced script refresh, console warning/error read returned only MCP-FOR-UNITY client handler logs, not C# compile errors.
@@ -74,6 +122,13 @@ Phase 1 battlefield facade boundary implemented. Phase 2 implementation has star
 - 2026-05-13: User asked to start Phase 0, `State Ownership Map`; Designer created `boards/REFACTORING/COMBAT_STATE_OWNERSHIP_MAP.md` without runtime C# changes.
 - 2026-05-13: User explicitly assigned Code Builder and asked to start Phase 1 `Battlefield Facade Boundary`; Builder added the battlefield facade partial under `Assets/Scripts/Combat/Battlefield` and routed battlefield list registration through facade methods.
 - 2026-05-13: User explicitly assigned Code Builder and asked to start Phase 2 `Manifested Party Runtime Split`; Builder added a manifested party runtime service boundary while preserving existing selected/manifested combat behavior paths.
+- 2026-05-13: User explicitly assigned Code Builder and asked to perform Phase 2-A `Manifested Party View Binder`; Builder moved manifested party status view binding and label/bar refresh helpers into a new partial script.
+- 2026-05-13: User explicitly assigned Code Builder and asked to perform Phase 2-B `Manifested Party Skill Dispatcher`; Builder moved manifested skill dispatch and fallback cooldown/magazine ticking into a new partial script behind the manifested party runtime service.
+- 2026-05-13: User explicitly assigned Code Builder and asked to start the remaining Phase 2 work; Builder moved manifested Eve drone runtime, deployment, ticking, and cleanup into a new partial script as Phase 2-C.
+- 2026-05-13: User explicitly assigned Code Builder and asked to start Phase 2-D `Manifested Party Skill Visual / Scene Object Helper`; Builder moved manifested non-drone skill visual duration and visual object helper methods into a new partial script.
+- 2026-05-13: User explicitly assigned Code Builder and asked to perform Phase 2-E `Manifested Party Damage / Projectile Fire Helper` and run Code Reviewer for Phase 2; Builder moved generic manifested damage/projectile helper methods into a new partial script before Reviewer execution.
+- 2026-05-13: External Code Reviewer returned `REVIEW_RESULT: PASS` for the Phase 2 manifested party refactor.
+- 2026-05-13: User asked for a Phase 2-E status report comparing the current refactor with the 2026-05-10 proposal's section 9 recommendations; Designer added `Pakuri/reference/Report/2026-05-13-combat-runtime-controller-phase2e-alignment-report.html`.
 
 ## Current Refactor Order
 
@@ -147,7 +202,12 @@ Status:
 
 - Started as `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyRuntime.cs`.
 - The first slice moves manifested party list/slot storage and top-level party tick orchestration behind a service boundary.
-- Skill dispatch, damage formulas, view binding helpers, and scene object creation remain in existing controller partials for behavior preservation.
+- Phase 2-A moves manifested party status view binding and label/bar refresh helpers into `CombatRuntimeManifestedPartyView.cs`.
+- Phase 2-B moves manifested party skill dispatch and fallback cooldown/magazine ticking into `CombatRuntimeManifestedPartySkills.cs`.
+- Phase 2-C moves manifested Eve drone lifecycle into `CombatRuntimeManifestedPartyDrones.cs`.
+- Phase 2-D moves manifested non-drone skill visual and scene-object helper methods into `CombatRuntimeManifestedPartyVisuals.cs`.
+- Phase 2-E moves generic manifested damage and projectile-fire helper methods into `CombatRuntimeManifestedPartyDamage.cs`.
+- Monster-specific special formulas such as Rin shockwave and Eve frost field remain in existing controller partials for behavior preservation.
 
 Purpose:
 

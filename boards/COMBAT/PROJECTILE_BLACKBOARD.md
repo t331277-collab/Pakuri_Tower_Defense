@@ -4,6 +4,54 @@
 - This file keeps only task blocks dated `2026-05-10` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/COMBAT/PROJECTILE_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Manifested Party Projectile Fire Helper Split
+
+### Task title
+
+Track projectile impact of manifested party damage/projectile helper separation.
+
+### Goals
+
+- Preserve manifested projectile object creation, facade registration, speed/lifetime/hit-radius/status setup, hit resolution, pierce, and source follow-up behavior.
+- Keep projectile simulation and cleanup in existing projectile runtime files for this Phase 2 slice.
+- Preserve monster-specific projectile hook order for Rin, Sein, Vega, and Ariel.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns projectile gameplay verification.
+- Code Reviewer execution was explicitly requested by the user for Phase 2 and will run once after Builder verification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated. Phase 2 Code Reviewer completed with `REVIEW_RESULT: PASS`.
+
+### Next Actions
+
+- Do not run another Reviewer pass for Phase 2 unless the user explicitly requests it.
+- User verifies manifested projectile fire, pierce, status application, and monster-specific projectile hit hooks in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDamage.cs:63`, `:81`, `:112`, and `:124` own manifested projectile fire entry points, pierce resolution, and projectile object/runtime creation.
+- `CombatRuntimeManifestedPartyDamage.cs:163` through `:175` sets speed, lifetime, hit radius, base damage, status chance, manifested source data, and status effect ID on `ProjectileRuntime`.
+- `CombatRuntimeManifestedPartyDamage.cs:184` owns manifested projectile hit resolution and preserves Rin, Sein, Vega, and Ariel projectile hook order.
+- `CombatRuntimeManifestedPartyDamage.cs:223` through `:229` preserves projectile status, branch, source effects, and Vega mark application after a manifested hit.
+- `CombatRuntimeManifestedPartyDamage.cs:258` and `:289` own area follow-up damage and manifested projectile status application.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:739` still fires queued Vega projectiles through `FireManifestedMonsterProjectile(...)`.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP imported the new script and console warning/error read returned only MCP client handler logs after refresh.
+- External Phase 2 Code Reviewer output was saved to `codex_loop_logs\phase2_manifested_party_reviewer_20260513.md` and ended with `REVIEW_RESULT: PASS`.
+
+### History
+
+- 2026-05-13: Builder moved generic manifested projectile fire and hit helper methods into `CombatRuntimeManifestedPartyDamage.cs` as Phase 2-E.
+- 2026-05-13: External Code Reviewer returned `REVIEW_RESULT: PASS` for the Phase 2 manifested party refactor.
+
 ## Task: 2026-05-13 Battlefield Facade Projectile Registration
 
 ### Task title
