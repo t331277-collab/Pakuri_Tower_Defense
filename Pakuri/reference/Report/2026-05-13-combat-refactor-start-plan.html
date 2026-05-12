@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Combat Runtime Full Refactor Start Plan</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #5c667a;
+      --line: #d8deea;
+      --panel: #f7f9fc;
+      --accent: #146c94;
+      --accent-2: #7a4b12;
+      --ok: #1e7b4f;
+      --warn: #a15c00;
+      --bad: #a33a3a;
+      --code: #101828;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      line-height: 1.62;
+    }
+    header, main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+    header {
+      padding-top: 44px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 32px;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin-top: 36px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+      font-size: 23px;
+    }
+    h3 {
+      margin-top: 24px;
+      font-size: 18px;
+    }
+    .lead {
+      max-width: 900px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .meta div, .callout, .phase, .evidence, .decision {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 6px;
+      padding: 14px 16px;
+    }
+    .label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 4px;
+    }
+    code {
+      font-family: Consolas, "Cascadia Mono", monospace;
+      color: var(--code);
+      background: #eef2f7;
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+    pre {
+      overflow: auto;
+      padding: 14px;
+      background: #111827;
+      color: #f9fafb;
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 22px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+    }
+    th {
+      background: #eef3f8;
+      text-align: left;
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e7f2f6;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 6px;
+    }
+    .warn { color: var(--warn); font-weight: 600; }
+    .bad { color: var(--bad); font-weight: 600; }
+    .ok { color: var(--ok); font-weight: 600; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    ol, ul { padding-left: 22px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>전투 런타임 전면 리팩토링 시작 설계안</h1>
+    <p class="lead">
+      이 문서는 기존 두 보고서와 현재 코드 상태를 근거로, 전투 구조를 크게 뜯어고칠 때 무엇부터 시작해야 하는지 정리한 리팩토링 설계 문서다.
+      결론부터 말하면 첫 작업은 새 타깃 모델을 전면 도입하는 것이 아니라, 현재 공유 상태의 소유권과 접근 경계를 고정하는 것이다.
+    </p>
+    <div class="meta">
+      <div><span class="label">작성일</span>2026-05-13</div>
+      <div><span class="label">역할</span>Designer / Refactoring Design</div>
+      <div><span class="label">출력물</span><code>2026-05-13-combat-refactor-start-plan.html</code></div>
+      <div><span class="label">검증 범위</span>파일/코드/보고서 근거. Unity Play Mode 제외.</div>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>1. 근거로 사용한 파일</h2>
+      <div class="evidence">
+        <ul>
+          <li><code>Pakuri/reference/Report/2026-05-10-shared-combat-target-and-temporary-effect-design.html</code>: 공통 전투 대상 모델과 재사용 가능한 임시효과 설계안.</li>
+          <li><code>Pakuri/reference/Report/2026-05-10-combat-runtime-controller-ai-token-refactor-proposal.html</code>: <code>CombatRuntimeController</code> partial 구조 분리 제안서.</li>
+          <li><code>Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs</code>: 현재 <code>EnemyRuntime</code>, projectile/effect/drone 리스트, 선택 유닛 상태, Update orchestrator가 모여 있는 핵심 파일.</li>
+          <li><code>Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs</code>: Manifested party 구성, 전투, UI 갱신, shield/hp 표시가 섞인 가장 큰 manager partial.</li>
+          <li><code>Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs</code>: Manifested unit 상태와 일부 몬스터별 임시 상태를 보유하는 MonoBehaviour.</li>
+          <li><code>Pakuri/Assets/Scripts/Combat/Skill/CombatRuntime*Skills.cs</code>: 몬스터별 스킬 executor가 controller의 공유 리스트와 상태를 직접 다루는 위치.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. 현재 문제 인식</h2>
+      <h3>2-1. partial 분리는 됐지만 상태 소유권은 아직 분리되지 않았다</h3>
+      <p>
+        현재 <code>CombatRuntimeController</code> partial 총량은 실제 검사 기준 <strong>14개 partial 파일, 14,022 lines, 668,782 chars</strong>다.
+        파일이 나뉘었지만 핵심 mutable state는 여전히 한 class 안에 있다.
+      </p>
+      <table>
+        <thead>
+          <tr><th>근거</th><th>현재 의미</th><th>리팩토링상 문제</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>CombatRuntimeController.cs:307-310</code></td>
+            <td><code>enemies</code>, <code>projectiles</code>, <code>skillEffects</code>, <code>drones</code> 리스트가 controller private field다.</td>
+            <td>스킬, projectile, enemy, party partial이 같은 전장 리스트를 직접 읽고 쓴다.</td>
+          </tr>
+          <tr>
+            <td><code>CombatRuntimeController.cs:326-378</code></td>
+            <td>선택 1P 유닛의 HP, shield, stat, skill id, sprite, projectile 설정이 controller field다.</td>
+            <td>선택 유닛 상태 owner가 명확하지 않아 <code>selectedUnitRuntime</code>과 controller field 동기화가 계속 필요하다.</td>
+          </tr>
+          <tr>
+            <td><code>CombatRuntimeController.cs:481-505</code></td>
+            <td>하나의 <code>Update()</code>가 spawn, enemies, projectiles, skill effects, manifested party, selected unit, HUD, battle resolution을 순서대로 호출한다.</td>
+            <td>실행 순서가 controller 내부 지식으로만 유지되어 시스템 단위 검증이 어렵다.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>2-2. 전투 대상이 세 종류의 서로 다른 상태 저장소로 존재한다</h3>
+      <p>
+        기존 shared target/effect 보고서의 핵심 지적은 현재도 유효하다. 선택 아군은 controller field, 소환 아군은 <code>CombatUnitRuntime</code>,
+        적군은 nested <code>EnemyRuntime</code>에 상태가 흩어져 있다.
+      </p>
+      <table>
+        <thead>
+          <tr><th>대상</th><th>현재 저장 위치</th><th>증상</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>선택 1P 유닛</td>
+            <td><code>CombatRuntimeController.cs:326-378</code> plus <code>selectedUnitRuntime</code></td>
+            <td><code>CombatRuntimeParty.cs:65-80</code>이 controller field를 다시 runtime으로 mirror한다.</td>
+          </tr>
+          <tr>
+            <td>Manifested 2P-5P 유닛</td>
+            <td><code>CombatUnitRuntime.cs:21-50</code></td>
+            <td>Rin, Sein, Ariel, Vega 상태 field가 같은 MonoBehaviour에 계속 추가된다.</td>
+          </tr>
+          <tr>
+            <td>Enemy</td>
+            <td><code>CombatRuntimeController.cs:28-94</code> nested <code>EnemyRuntime</code></td>
+            <td>shield, damage multiplier, buff timer, status timer, monster별 상태가 enemy 내부 field로 직접 누적된다.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>2-3. 임시효과가 공통 객체가 아니라 직접 field 수정이다</h3>
+      <p>
+        현재 action speed, shield, chill, shock, vulnerable, enemy buff 같은 전투 중 임시 효과는 공통 active-effect list가 아니라 대상별 field와 timer로 흩어져 있다.
+      </p>
+      <ul>
+        <li><code>CombatRuntimeProjectiles.cs:516-529</code>: 선택 유닛 shot/reload 감소가 <code>GetSelectedMonsterActionSpeedMultiplier()</code>에 직접 의존한다.</li>
+        <li><code>CombatRuntimeEnemies.cs:724-765</code>: enemy의 shock, damage reduction, attack buff, move buff, chill/freeze/slow timer를 직접 감소시킨다.</li>
+        <li><code>CombatRuntimeEnemies.cs:1165-1204</code>: Guardian/Charge enemy skill이 enemy shield와 buff timer field를 직접 수정한다.</li>
+        <li><code>CombatRuntimeEveSkills.cs:1465-1495</code>: Eve status helper가 enemy의 shock/chill/vulnerable field를 직접 수정한다.</li>
+        <li><code>CombatRuntimeEveSkills.cs:1682-1731</code>: Eve F shield가 selected controller field와 manifested runtime field를 각각 따로 갱신한다.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>3. 리팩토링 목표</h2>
+      <div class="grid">
+        <div class="decision">
+          <span class="tag">Goal 1</span>
+          <h3>상태 소유권 고정</h3>
+          <p>각 전투 상태를 누가 소유하는지 먼저 고정한다. controller는 직접 상태를 소유하는 곳이 아니라 scene wiring과 update 순서를 조율하는 얇은 orchestrator로 남긴다.</p>
+        </div>
+        <div class="decision">
+          <span class="tag">Goal 2</span>
+          <h3>전장 리스트 접근 통제</h3>
+          <p><code>enemies</code>, <code>projectiles</code>, <code>skillEffects</code>, <code>drones</code>를 직접 수정하지 않고 service/facade API를 통해서만 조작하게 만든다.</p>
+        </div>
+        <div class="decision">
+          <span class="tag">Goal 3</span>
+          <h3>공통 타깃 모델 도입 준비</h3>
+          <p>처음부터 모든 상태를 <code>CombatTargetModel</code>로 옮기지 않는다. wrapper와 adapter를 둔 뒤 읽기 경로부터 공통화한다.</p>
+        </div>
+        <div class="decision">
+          <span class="tag">Goal 4</span>
+          <h3>TemporaryEffect 계층화</h3>
+          <p>shield/action speed/status처럼 중복 구현이 많은 임시효과부터 active-effect 모델로 옮긴다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. 무엇부터 시작해야 하는가</h2>
+      <div class="callout">
+        <p><strong>첫 작업:</strong> <code>CombatRuntimeController</code>의 상태 소유권 지도를 문서화하고, <code>BattlefieldRuntime</code> 또는 <code>CombatBattlefield</code> 계층을 만들어 전장 리스트 접근 API를 먼저 고정한다.</p>
+        <p>
+          이유는 단순하다. 지금 바로 <code>CombatTargetModel</code>을 만들면 기존 skill partial들이 여전히 <code>enemies</code>, <code>projectiles</code>, <code>skillEffects</code>, controller selected fields를 직접 만진다.
+          그러면 새 모델과 기존 field가 병존하고, 동기화 지점만 늘어난다.
+        </p>
+      </div>
+
+      <h3>권장 시작 순서</h3>
+      <ol>
+        <li><strong>State Ownership Map 작성:</strong> controller field, <code>CombatUnitRuntime</code> field, <code>EnemyRuntime</code> field를 owner별로 분류한다.</li>
+        <li><strong>Battlefield facade 추출:</strong> enemies/projectiles/effects/drones list를 감싸는 읽기/쓰기 API를 만든다. 첫 단계에서는 내부 리스트를 그대로 쓰되 직접 접근을 줄인다.</li>
+        <li><strong>Projectile/Effect/Drone simulation 분리:</strong> 전장 object lifecycle을 controller에서 떼어내고 skill executor는 facade에 spawn 요청만 하게 한다.</li>
+        <li><strong>Manifested Party runtime 분리:</strong> 가장 큰 manager partial인 <code>CombatRuntimeParty.cs</code>를 party state, party combat, party UI adapter로 나눈다.</li>
+        <li><strong>CombatTargetModel adapter 도입:</strong> selected, manifested, enemy 순서로 공통 target read model을 붙인다. 처음에는 mirror/read-only로 시작한다.</li>
+        <li><strong>TemporaryEffect registry 도입:</strong> action speed, shield, shock/chill/vulnerable 순서로 직접 field 수정 경로를 effect application API로 옮긴다.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>5. 단계별 구조 설계</h2>
+      <div class="phase">
+        <h3>Phase 0. 소유권 지도와 금지 규칙</h3>
+        <p><span class="ok">목표:</span> 코드를 거의 바꾸지 않고 어떤 상태를 어느 시스템이 소유할지 먼저 고정한다.</p>
+        <ul>
+          <li>출력물: <code>Pakuri/reference/Report/combat-state-ownership-map.html</code> 또는 markdown.</li>
+          <li>분류: battlefield objects, selected unit state, manifested unit state, enemy state, skill runtime state, reward/result state, HUD state.</li>
+          <li>금지 규칙: 새 code에서는 skill executor가 battlefield list를 직접 <code>Add</code>/<code>Remove</code>하지 않는다.</li>
+          <li>검증: 문서와 코드 검색 결과가 일치해야 한다.</li>
+        </ul>
+      </div>
+
+      <div class="phase">
+        <h3>Phase 1. Battlefield facade</h3>
+        <p><span class="ok">목표:</span> 기존 리스트를 유지하되 접근 경로를 하나로 묶는다.</p>
+        <pre><code>proposed sealed class CombatBattlefield
+{
+    IReadOnlyList&lt;EnemyRuntime&gt; Enemies { get; }
+    ProjectileHandle SpawnProjectile(ProjectileSpawnRequest request);
+    CombatEffectInstance SpawnEffect(EffectSpawnRequest request);
+    DroneHandle SpawnDrone(DroneSpawnRequest request);
+    EnemyRuntime FindNearestEnemy(Vector3 origin, float range, Predicate&lt;EnemyRuntime&gt; filter);
+}</code></pre>
+        <p>
+          이 단계에서는 <code>EnemyRuntime</code>을 public model로 승격하지 않아도 된다. 먼저 controller partial 내부에서 facade를 만들고,
+          직접 리스트 조작을 facade method로 바꾸는 식으로 시작한다.
+        </p>
+        <p><span class="warn">주의:</span> 첫 PR에서 모든 projectile/effect 생성 지점을 바꾸지 말고, Eve나 Manifested Party처럼 호출 빈도가 높은 한 구간만 선택한다.</p>
+      </div>
+
+      <div class="phase">
+        <h3>Phase 2. Projectile / Effect / Drone simulation service</h3>
+        <p><span class="ok">목표:</span> <code>UpdateProjectiles()</code>, <code>UpdateMonsterSkillRuntimeEffects()</code>, drone update를 별도 simulation service로 이동한다.</p>
+        <ul>
+          <li>controller는 <code>projectileSystem.Tick(delta)</code>처럼 호출만 한다.</li>
+          <li>skill files는 <code>projectiles.Add(...)</code> 대신 spawn request를 보낸다.</li>
+          <li>damage application은 아직 controller method를 호출해도 된다. 이 단계의 목표는 list ownership 분리다.</li>
+        </ul>
+      </div>
+
+      <div class="phase">
+        <h3>Phase 3. Manifested Party runtime 분리</h3>
+        <p><span class="ok">목표:</span> <code>CombatRuntimeParty.cs</code>의 party state, party combat tick, party UI 표시를 분리한다.</p>
+        <table>
+          <thead>
+            <tr><th>새 책임</th><th>옮길 내용</th><th>남길 내용</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ManifestedPartyRuntime</code></td>
+              <td>2P-5P 슬롯, party member runtime list, skill runtime sync, tick loop.</td>
+              <td>scene object lookup은 controller/scene binder에 남겨도 된다.</td>
+            </tr>
+            <tr>
+              <td><code>ManifestedPartyViewAdapter</code></td>
+              <td>HP/shield bar, label, fallback UI update.</td>
+              <td>전투 계산과 damage application은 넣지 않는다.</td>
+            </tr>
+            <tr>
+              <td><code>ManifestedSkillExecutor</code></td>
+              <td>Eve/Rin/Sein/Vega/Ariel unit dispatch 선택과 generic fallback.</td>
+              <td>몬스터별 상세 damage 공식은 기존 skill files에 남겨 점진 분리한다.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="phase">
+        <h3>Phase 4. CombatTargetModel read adapter</h3>
+        <p><span class="ok">목표:</span> 선택 아군, 소환 아군, 적군을 같은 read interface로 다룬다.</p>
+        <pre><code>proposed interface ICombatTarget
+{
+    string Id { get; }
+    CombatTargetSide Side { get; }
+    Transform Transform { get; }
+    CombatResourceState Resources { get; }
+    CombatModifierState Modifiers { get; }
+    TemporaryEffectCollection Effects { get; }
+}</code></pre>
+        <p>
+          처음부터 모든 field를 옮기면 위험하다. 우선 <code>SelectedUnitTargetAdapter</code>, <code>ManifestedUnitTargetAdapter</code>,
+          <code>EnemyTargetAdapter</code>를 만들어 읽기 경로를 통합한다. 쓰기 경로는 shield/status처럼 작은 효과부터 이동한다.
+        </p>
+      </div>
+
+      <div class="phase">
+        <h3>Phase 5. TemporaryEffect layer</h3>
+        <p><span class="ok">목표:</span> 임시효과를 대상별 field가 아니라 effect instance로 관리한다.</p>
+        <table>
+          <thead>
+            <tr><th>먼저 옮길 효과</th><th>선정 이유</th><th>수용 기준</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Action speed modifier</td>
+              <td>선택/소환/적에서 각각 다른 multiplier 경로가 있다.</td>
+              <td>선택 유닛 shot/reload와 manifested unit cooldown이 같은 modifier API를 읽는다.</td>
+            </tr>
+            <tr>
+              <td>Shield</td>
+              <td>Ariel/Eve/Enemy guardian에서 반복 구현되고 first-frame decay 같은 규칙이 민감하다.</td>
+              <td>selected, manifested, enemy shield가 같은 resource API와 timer 정책을 쓴다.</td>
+            </tr>
+            <tr>
+              <td>Shock/Chill/Vulnerable</td>
+              <td>Eve와 enemy update에서 직접 field/timer를 만진다.</td>
+              <td>stack cap, duration refresh, expiration reset이 effect layer에서 재현된다.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>6. 하지 말아야 할 시작점</h2>
+      <ul>
+        <li><span class="bad">금지:</span> <code>CombatRuntimeController</code>를 한 번에 여러 MonoBehaviour로 쪼개기. Unity serialized reference와 scene wiring 위험이 크다.</li>
+        <li><span class="bad">금지:</span> <code>CombatTargetModel</code>을 만들자마자 모든 HP/shield/status field를 옮기기. 기존 controller field와 이중 source of truth가 된다.</li>
+        <li><span class="bad">금지:</span> monster skill files를 먼저 전면 OOP화하기. 현재 skill files가 battlefield list와 target state를 직접 만지므로, service 경계 없이 옮기면 wrapper만 늘어난다.</li>
+        <li><span class="bad">금지:</span> 전투 중 mutable state를 singleton으로 빼기. 기존 보고서도 runtime battle state는 singleton 대상이 아니라고 판단했다.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>7. Code Builder handoff</h2>
+      <h3>첫 구현 티켓</h3>
+      <div class="callout">
+        <p><strong>Task:</strong> 전장 리스트 직접 접근을 줄이기 위한 <code>CombatBattlefield</code> facade 1차 도입.</p>
+        <p><strong>Scope:</strong> 새 facade class 또는 partial-local helper를 만들고, projectile/effect spawn 중 한 영역만 facade API로 전환한다. 추천 시작 지점은 <code>CombatRuntimeParty.cs</code> manifested visual/projectile spawn 또는 <code>CombatRuntimeEveSkills.cs</code>의 projectile/effect spawn 중 하나다.</p>
+      </div>
+
+      <h3>변경하지 말아야 할 동작</h3>
+      <ul>
+        <li>선택 1P와 Manifested 2P-5P의 기존 damage, cooldown, reload, shield 동작.</li>
+        <li>현재 `Update()` 호출 순서: spawn → enemies → projectiles → skill effects → manifested party → selected unit → HUD → resolution.</li>
+        <li>Unity Play Mode 검증 범위는 사용자 담당으로 유지.</li>
+      </ul>
+
+      <h3>필수 검증</h3>
+      <ul>
+        <li><code>dotnet build Pakuri\Assembly-CSharp.csproj --no-restore</code></li>
+        <li><code>dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore</code></li>
+        <li><code>git diff --check</code></li>
+        <li>Unity-MCP refresh/console check, 단 Play Mode gameplay 검증은 하지 않는다.</li>
+      </ul>
+
+      <h3>관련 board 업데이트</h3>
+      <ul>
+        <li><code>boards/COMBAT/COMBAT_BLACKBOARD.md</code></li>
+        <li><code>boards/COMBAT/PROJECTILE_BLACKBOARD.md</code> if projectile/effect/drone simulation changes.</li>
+        <li><code>boards/MON/MON_BLACKBOARD.md</code> and relevant monster board if a monster skill executor changes.</li>
+        <li><code>boards/REPORT/REPORT_BLACKBOARD.md</code> for this design report.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>8. 최종 판단</h2>
+      <p>
+        지금 바로 시작할 가장 좋은 리팩토링은 <strong>Battlefield/state ownership 경계 만들기</strong>다.
+        이는 두 기존 보고서의 결론을 합친 시작점이다. controller token 문제는 파일 크기만의 문제가 아니라 shared mutable state 문제이고,
+        shared target/effect 문제는 대상 모델 부재만의 문제가 아니라 상태 접근 경계 부재 문제다.
+      </p>
+      <p>
+        따라서 첫 구현은 작아야 한다. <code>CombatBattlefield</code> facade로 리스트 접근을 줄이고, 그 다음 projectile/effect/drone simulation과 Manifested Party runtime을 분리한다.
+        그 후에야 <code>CombatTargetModel</code>과 <code>TemporaryEffectInstance</code>를 안정적으로 도입할 수 있다.
+      </p>
+    </section>
+
+    <section>
+      <h2>9. 제안서 목표 충족 여부 재검증</h2>
+      <p>
+        2026-05-13 재검증 결과, 이 문서의 순서만으로 첫 구현 티켓 하나가 모든 목표를 끝내지는 않는다.
+        다만 전체 phase를 끝까지 적용하면 두 2026-05-10 제안서의 핵심 목표인 스킬 재사용, 공통 대상 모델, 임시효과 재사용, God Class 해소로 갈 수 있다.
+        단, <strong>공통 상위 클래스 상속</strong>은 첫 설계의 필수 조건으로 두지 않는다. 현재 코드에서는 <code>EnemyRuntime</code>이 private nested class이고
+        <code>CombatUnitRuntime</code>은 MonoBehaviour라서, 바로 상속 계층으로 묶으면 scene/runtime 결합이 커진다.
+        먼저 <code>ICombatTarget</code> / adapter를 만들고, 그 뒤 중복이 안정적으로 드러나는 부분만 <code>CombatActorBase</code> 같은 base class로 승격하는 순서가 안전하다.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>목표</th>
+            <th>현재 HTML 순서로 해결 가능한가</th>
+            <th>필요한 보강 조건</th>
+            <th>근거</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>God Class 문제 해결</td>
+            <td><span class="ok">가능</span>. 단기적으로는 완화, 전체 phase 완료 시 실질 해결.</td>
+            <td><code>CombatRuntimeController</code>가 list/state owner가 아니라 orchestrator만 맡도록 facade, simulation service, party runtime을 실제로 분리해야 한다.</td>
+            <td><code>CombatRuntimeController.cs:307-310</code>, <code>:326-378</code>, <code>:481-505</code>가 현재 집중 지점이다.</td>
+          </tr>
+          <tr>
+            <td>스킬 재사용</td>
+            <td><span class="ok">가능</span>. 하지만 첫 단계가 아니라 service 경계와 target/effect layer 이후 가능하다.</td>
+            <td>몬스터별 skill executor가 <code>projectiles.Add</code>, <code>skillEffects.Add</code>, enemy field 직접 수정을 하지 않고 spawn/effect request를 보내야 한다.</td>
+            <td><code>CombatRuntimeEveSkills.cs</code>와 다른 monster skill partial들이 battlefield list와 enemy 상태를 직접 다룬다.</td>
+          </tr>
+          <tr>
+            <td>공통 전투 대상 모델</td>
+            <td><span class="ok">가능</span>. Phase 4의 <code>ICombatTarget</code> / <code>CombatTargetModel</code> adapter가 해당 목표다.</td>
+            <td>selected, manifested, enemy 순서로 read model을 붙이고, shield/status 같은 작은 write path부터 이관해야 한다.</td>
+            <td>기존 shared target 보고서가 <code>CombatTargetModel selectedTarget</code>, <code>CombatUnitRuntime.Target</code>, <code>EnemyRuntime.Target</code> 연결을 제안한다.</td>
+          </tr>
+          <tr>
+            <td>재사용 가능한 임시효과</td>
+            <td><span class="ok">가능</span>. Phase 5가 이 목표다.</td>
+            <td>처음에는 action speed, shield처럼 공통성과 검증 지점이 명확한 효과부터 옮기고, shock/chill/vulnerable은 후속으로 옮긴다.</td>
+            <td><code>CombatRuntimeEnemies.cs:724-765</code>, <code>CombatRuntimeEveSkills.cs:1465-1495</code>, <code>:1682-1731</code>이 직접 field 수정 근거다.</td>
+          </tr>
+          <tr>
+            <td>Monster / Enemy 객체화</td>
+            <td><span class="warn">부분 가능</span>. 이 HTML은 객체화를 직접 첫 단계로 삼지 않고, 객체화 가능한 경계를 먼저 만든다.</td>
+            <td><code>EnemyRuntime</code>을 controller nested class에서 빼고, <code>CombatUnitRuntime</code>과 공통으로 읽히는 <code>ICombatTarget</code>를 먼저 적용해야 한다.</td>
+            <td><code>CombatRuntimeController.cs:28-94</code>의 <code>EnemyRuntime</code>은 private nested class이고, <code>CombatUnitRuntime.cs:8</code>은 별도 MonoBehaviour다.</td>
+          </tr>
+          <tr>
+            <td>공통 상위 클래스 상속</td>
+            <td><span class="warn">현재 HTML만으로는 미완</span>. 명시적 base-class migration 단계가 추가되어야 한다.</td>
+            <td>1차는 interface/adapter로 통합하고, 공통 resource/modifier/effect가 안정화된 뒤 <code>CombatActorBase</code> 또는 순수 모델 base class를 도입한다.</td>
+            <td>기존 shared target 보고서는 proposed <code>CombatTargetModel</code> 순수 런타임 객체를 제안하며, 상속 자체를 첫 조건으로 두지는 않는다.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>보강된 최종 마이그레이션 기준</h3>
+      <ol>
+        <li><code>CombatBattlefield</code> facade가 전장 리스트 직접 접근을 대체한다.</li>
+        <li><code>Projectile / Effect / Drone</code>, <code>Manifested Party</code>, <code>Enemy Simulation</code>이 controller 밖의 책임 단위로 분리된다.</li>
+        <li><code>SelectedUnitTargetAdapter</code>, <code>ManifestedUnitTargetAdapter</code>, <code>EnemyTargetAdapter</code>가 같은 <code>ICombatTarget</code> 계약을 제공한다.</li>
+        <li><code>TemporaryEffectInstance</code>와 modifier/resource API가 action speed, shield, status 계열을 처리한다.</li>
+        <li>위 단계가 안정화된 후, 중복된 target/resource/effect 구현을 <code>CombatActorBase</code> 또는 순수 <code>CombatTargetModel</code> base로 올릴지 결정한다.</li>
+      </ol>
+
+      <div class="callout">
+        <p><strong>재검증 결론:</strong> 이 HTML의 리팩토링 순서는 두 제안서의 방향과 충돌하지 않는다. 다만 사용자가 말한 “공통 상위 클래스로 상속받아 Monster, Enemy 객체화”까지 보장하려면,
+        기존 문서의 phase 뒤에 base-class 승격 단계를 명시적으로 추가해야 한다. 따라서 구현을 시작한다면 먼저 facade/adapter/effect layer를 만들고,
+        그 다음 상속 구조를 선택하는 것이 현재 코드 근거상 더 안전하다.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

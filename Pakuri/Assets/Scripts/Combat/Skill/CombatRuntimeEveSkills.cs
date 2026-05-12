@@ -364,7 +364,7 @@ namespace Pakuri.Combat
             effect.TickRemaining = 0f;
             effect.SlowChance = 0.20f;
             effect.SlowDuration = 2f;
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
 
             skillRuntime.CooldownDuration = cooldown;
             skillRuntime.CooldownRemaining = cooldown;
@@ -434,7 +434,7 @@ namespace Pakuri.Combat
             effect.Radius = radius;
             effect.StatusStacks = chillStacks;
             effect.FreezeDuration = HasManifestedChoice(runtime, "eve-c-trait-5") ? 1.0f + GetManifestedEveFreezeDurationBonus(runtime) : 0f;
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
 
             statusLabel = $"{runtime.Monster.DisplayName} Frost Field auto-targeted {target.DisplayName}.";
             return cooldown;
@@ -497,7 +497,7 @@ namespace Pakuri.Combat
 
             var effect = CreateCircleEffect("EveUnitStaticOverride", target.Transform.position, radius, 0.35f, skill.SkillEffectPrefab);
             effect.SkillId = "eve-d";
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
 
             skillRuntime.CooldownDuration = cooldown;
             skillRuntime.CooldownRemaining = cooldown;
@@ -813,7 +813,7 @@ namespace Pakuri.Combat
             renderer.color = runtime.Monster != null && runtime.Monster.ProjectileColor.a > 0f ? runtime.Monster.ProjectileColor : Color.white;
             renderer.sortingOrder = 24;
 
-            projectiles.Add(new ProjectileRuntime
+            AddBattlefieldProjectile(new ProjectileRuntime
             {
                 GameObject = projectileObject,
                 Transform = projectileObject.transform,
@@ -874,7 +874,7 @@ namespace Pakuri.Combat
             renderer.color = Color.white;
             renderer.sortingOrder = 25;
 
-            projectiles.Add(new ProjectileRuntime
+            AddBattlefieldProjectile(new ProjectileRuntime
             {
                 GameObject = projectileObject,
                 Transform = projectileObject.transform,
@@ -975,7 +975,7 @@ namespace Pakuri.Combat
             effect.TickRemaining = 0f;
             effect.SlowChance = 0.20f;
             effect.SlowDuration = 2f;
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
 
             if (startsActiveCooldown)
             {
@@ -1045,7 +1045,7 @@ namespace Pakuri.Combat
             effect.Radius = radius;
             effect.StatusStacks = chillStacks;
             effect.FreezeDuration = HasChoice("eve-c-trait-5") ? 1.0f + GetEveFreezeDurationBonus() : 0f;
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
 
             eveFrostCooldownRemaining = cooldown;
             statusLabel = $"Frost Field auto-targeted {target.DisplayName}.";
@@ -1121,7 +1121,7 @@ namespace Pakuri.Combat
 
             var effect = CreateCircleEffect("StaticOverride", target.Transform.position, radius, 0.35f, skill.SkillEffectPrefab);
             effect.SkillId = "eve-d";
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
 
             eveStaticCooldownRemaining = cooldown;
             statusLabel = $"Static Override detonated around shocked target {target.DisplayName}; hit {hitCount}.";
@@ -1168,7 +1168,7 @@ namespace Pakuri.Combat
             renderer.color = Color.white;
             renderer.sortingOrder = 23;
 
-            drones.Add(new DroneRuntime
+            AddBattlefieldDrone(new DroneRuntime
             {
                 GameObject = droneObject,
                 Transform = droneObject.transform,
@@ -1339,7 +1339,7 @@ namespace Pakuri.Combat
             renderer.color = Color.white;
             renderer.sortingOrder = 25;
 
-            projectiles.Add(new ProjectileRuntime
+            AddBattlefieldProjectile(new ProjectileRuntime
             {
                 GameObject = projectileObject,
                 Transform = projectileObject.transform,
@@ -1403,7 +1403,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 26;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
         }
 
         private SkillEffectRuntime CreateCircleEffect(

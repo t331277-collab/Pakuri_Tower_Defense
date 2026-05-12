@@ -70,6 +70,20 @@ Then narrow by topic:
 - Shock, chill, freeze, shield, vulnerability, slow: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`
 - Monster-specific combat: relevant `boards/MON/{NAME}_MONSTER.md`
 
+### Refactoring / Architecture Work
+
+Read:
+- `boards/REFACTORING/REFACTORING.md`
+
+Then also read the affected domain board:
+- Combat state ownership map: `boards/REFACTORING/COMBAT_STATE_OWNERSHIP_MAP.md`
+- Combat runtime refactor: `boards/COMBAT/COMBAT_BLACKBOARD.md`
+- Projectile/effect/drone refactor: `boards/COMBAT/PROJECTILE_BLACKBOARD.md`
+- Enemy simulation refactor: `boards/COMBAT/ENEMY_BLACKBOARD.md`
+- Status/effect refactor: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`
+- Monster skill executor refactor: `boards/MON/MON_BLACKBOARD.md` and relevant `boards/MON/{NAME}_MONSTER.md`
+- UI-impacting refactor: related `boards/UI/*.md`
+
 ### Run / Reward / Save Work
 
 Read:

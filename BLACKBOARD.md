@@ -20,6 +20,10 @@ The full pre-hierarchy task history is preserved at:
 - 2026-05-12 global policy task: role-specific content was split out of `AGENTS.md` into `GAMEDESIGNER.md`, `GAMEBULIDER.md`, and `GAMEREVIWER.md`; `AGENTS.md` now keeps startup, evidence, routing, and role entry-point rules. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-12 global policy task: `GAMEDESIGNER.md` and `GAMEBULIDER.md` were compacted into lightweight role entry points, with detailed Designer and Code Builder track rules split into `GAMEDESIGNER_*` and `GAMEBULIDER_*` files. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-12 global policy task: role-related `GAME*.md` files were moved under `AGENTS_ROLE/`, and `AGENTS.md` / `MDTREE.md` role references now point to `AGENTS_ROLE/...` paths. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
+- 2026-05-13 refactoring policy task: `boards/REFACTORING/REFACTORING.md` was added to track broad architecture/refactoring plans, starting with the `CombatRuntimeController` structure split sequence from the 2026-05-10 proposal.
+- 2026-05-13 implementation status: Phase 1 `Battlefield Facade Boundary` is implemented by `Pakuri/Assets/Scripts/Combat/Battlefield/CombatRuntimeBattlefield.cs`; runtime/editor builds passed with existing warnings.
+- 2026-05-13 implementation status: Phase 2 `Manifested Party Runtime Split` has started with `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyRuntime.cs`; runtime/editor builds passed with existing warnings and Unity-MCP console showed only MCP client handler logs after import.
+- 2026-05-12 board maintenance task: `boards/MON/*.md` files were compacted to each file's latest dated task blocks, with older or undated MON task blocks archived to `boards/ARCHIVE/MON_DETAIL_ARCHIVE_2026-05-12.md`. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-12 board maintenance task: active `boards/**/*BLACKBOARD.md` files were compacted to latest dated task blocks, and older task blocks were archived under `boards/ARCHIVE/` in seven-day ranges plus an undated archive. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-08 recent cross-domain task: Rin-first shared `CombatUnitRuntime` plus `CombatSkillRuntime` parity was implemented for selected 1P and manifested 2P-5P Rin B/C/D/E, and manifested slot status UI now reuses existing scene children when present. Detailed records are in `boards/MON/RIN_MONSTER.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, and `boards/RUN/REWARD_BLACKBOARD.md`.
 - 2026-05-08 recent cross-domain task: Manifested 2P-5P HP bar live sprite repair was implemented so already-bound `MonsterHpBar/Fill` renderers with `sprite=null` are normalized during HP/status refresh. Detailed records are in `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/RUN/RUN_BLACKBOARD.md`, and `boards/MON/MON_BLACKBOARD.md`.
@@ -73,6 +77,11 @@ The full pre-hierarchy task history is preserved at:
 ### Reports
 
 - `boards/REPORT/REPORT_BLACKBOARD.md`: HTML/report work history.
+
+### Refactoring
+
+- `boards/REFACTORING/REFACTORING.md`: broad architecture refactor plans and implementation phase ordering.
+- `boards/REFACTORING/COMBAT_STATE_OWNERSHIP_MAP.md`: Phase 0 combat mutable-state ownership map for the `CombatRuntimeController` structure split.
 
 ## Current Task Block
 

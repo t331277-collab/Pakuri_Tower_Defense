@@ -1,8 +1,92 @@
 ## Archive Note
 
-- Older task blocks were moved to `boards/ARCHIVE/` on 2026-05-12.
-- This file keeps only task blocks dated `2026-05-10` based on the date in each `## Task:` / `## Recent Task:` heading.
+- Older task blocks were moved to `boards/ARCHIVE/MON_DETAIL_ARCHIVE_2026-05-12.md` on 2026-05-12.
+- This file keeps only task blocks dated 2026-05-10 based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/MON/MON_BLACKBOARD.md`.
+
+## Task: 2026-05-13 Manifested Party Runtime Boundary
+
+### Task title
+
+Track common monster impact of the Phase 2 manifested party runtime boundary.
+
+### Goals
+
+- Preserve Manifested monster `CombatUnitRuntime` skill/state behavior while moving party collection ownership behind a runtime service.
+- Keep monster-specific unit dispatch for Eve, Rin, Sein, Vega, and Ariel on the existing controller paths for this slice.
+- Keep Offering-learned active skill synchronization behavior unchanged.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Future Phase 2 slices may move monster unit dispatch behind the service after a separate verification pass.
+- User verifies Manifested monsters still cast learned skills and maintain HP/shield state in RunScene Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyRuntime.cs:8` through `:12` now stores manifested party list access behind the `manifestedParty` service.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyRuntime.cs:58` through `:60` calls separate skill sync, combat tick, and view refresh helpers for each manifested unit.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:566` through `:583` keeps the existing `SyncManifestedLearnedSkills(...)`, `CombatUnitRuntime.TickManifestedCombat(...)`, and label refresh calls intact behind separate helper methods.
+- `CombatUnitRuntime.cs:145` through `:193` still owns per-unit timer ticking and still calls `Owner.TickManifestedUnitSkill(...)`; this slice did not rewrite monster-specific dispatch.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Builder started Phase 2 with a service boundary before moving monster-specific unit dispatch or shared target/effect logic.
+
+## Task: 2026-05-13 Monster Skill Battlefield Facade Registration
+
+### Task title
+
+Route monster skill battlefield object registration through the Phase 1 facade.
+
+### Goals
+
+- Keep monster skill behavior unchanged while replacing direct projectile/effect/drone list registration writes.
+- Prepare later monster runtime adapter narrowing by giving skill files a single battlefield registration boundary.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Detailed monster-specific notes are recorded in each monster board.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by build and Unity-MCP console checks.
+
+### Next Actions
+
+- User verifies selected and manifested monster skill behavior in Play Mode if needed.
+- Future Phase 6 should narrow monster skill adapters after battlefield, party, enemy, and selected-unit boundaries stabilize.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Battlefield/CombatRuntimeBattlefield.cs:22` through `:39` adds facade methods for enemy, projectile, skill-effect, and drone registration.
+- `Select-String` after implementation found 52 `AddBattlefield*` call sites across manager and monster skill files.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Code Builder implemented Phase 1 battlefield facade registration for Eve, Ariel, Rin, Sein, Vega, party, enemy, and selected projectile paths.
 
 ## Task: 2026-05-10 Ariel Manifested Shield Expiry And Archangel Effect Fix
 

@@ -703,7 +703,7 @@ namespace Pakuri.Combat
             renderer.sortingOrder = 25;
 
             var skill = FindSelectedSkill(SkillSlot.A);
-            projectiles.Add(new ProjectileRuntime
+            AddBattlefieldProjectile(new ProjectileRuntime
             {
                 GameObject = projectileObject,
                 Transform = projectileObject.transform,
@@ -885,7 +885,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = sortingOrder;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
             return effect;
         }
 
@@ -902,7 +902,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = sortingOrder;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
             return effect;
         }
 
@@ -916,7 +916,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = sortingOrder;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
         }
 
         private Vector3 GetVegaAimDirection()

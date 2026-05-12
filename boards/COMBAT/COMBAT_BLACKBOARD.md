@@ -1,8 +1,111 @@
 ## Archive Note
 
 - Older task blocks were moved to `boards/ARCHIVE/` on 2026-05-12.
-- This file keeps only task blocks dated `2026-05-10` based on the date in each `## Task:` / `## Recent Task:` heading.
+- This file keeps active combat task blocks after the 2026-05-12 archive pass; newer combat tasks may be appended above older retained context.
 - Source file: `boards/COMBAT/COMBAT_BLACKBOARD.md`.
+
+## Task: 2026-05-13 Manifested Party Runtime Split Phase 2 Start
+
+### Task title
+
+Start Phase 2 by adding a manifested party runtime service boundary.
+
+### Goals
+
+- Begin separating manifested party state and combat tick orchestration from `CombatRuntimeParty.cs`.
+- Preserve existing selected/manifested combat behavior, scene slot binding, monster skill dispatch, and RunScene MonsterPanel data flow.
+- Keep the first Phase 2 slice small enough to build and review before moving more logic.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented as the first Phase 2 slice and locally validated.
+
+### Next Actions
+
+- Continue Phase 2 by moving view binding or unit skill dispatch behind the new runtime service in separate slices.
+- User performs Play Mode verification for manifested party slot activation, skill firing, HP/shield labels, and MonsterPanel snapshots.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyRuntime.cs`.
+- `CombatRuntimeManifestedPartyRuntime.cs:8` through `:12` owns `manifestedParty` plus compatibility accessors for existing manifested monster, drone, and slot users.
+- `CombatRuntimeManifestedPartyRuntime.cs:42` through `:60` owns the manifested party top-level tick loop and separates per-unit skill sync, combat tick, and view refresh calls.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:553` through `:583` delegates `UpdateManifestedMonsterPartyCombat()` into the service and keeps unit validity, skill sync, combat tick, and view refresh isolated in separate helpers.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP imported the new script and console warning/error read returned only MCP client handler logs after refresh.
+
+### History
+
+- 2026-05-13: User explicitly assigned Code Builder and asked to start Phase 2 from `boards/REFACTORING/REFACTORING.md`.
+- 2026-05-13: Builder added a manifested party service boundary without changing the combat update order or selected/manifested skill dispatch behavior.
+
+## Task: 2026-05-13 Combat Refactor Start Plan
+
+### Task title
+
+Design the starting order for a full combat runtime refactor.
+
+### Goals
+
+- Reconcile the shared target / temporary effect design with the CombatRuntimeController token/refactor proposal.
+- Confirm the current combat code still has shared mutable state and target/effect ownership problems.
+- Choose the safest first implementation step for a large refactor.
+
+### Constraints
+
+- Role Owner is Designer.
+- Preserve current player-facing combat behavior until Code Builder receives an explicit implementation handoff.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Phase 1 battlefield facade boundary implemented.
+
+### Next Actions
+
+- First battlefield/state ownership facade is in place; next implementation should either extend facade read/query methods or begin manifested party runtime split.
+- Use `boards/REFACTORING/COMBAT_STATE_OWNERSHIP_MAP.md` as the Phase 0 ownership source before Phase 1 implementation.
+- Code Builder should verify runtime and editor builds after any implementation slice.
+- Use `boards/REFACTORING/REFACTORING.md` as the phase-order source for the `CombatRuntimeController` structure split.
+
+### Evidence
+
+- `CombatRuntimeController.cs:307` through `:310` still owns `enemies`, `projectiles`, `skillEffects`, and `drones` lists.
+- `CombatRuntimeController.cs:326` through `:378` still owns selected-unit HP, shield, stats, monster skill ids, and projectile configuration fields.
+- `CombatRuntimeController.cs:481` through `:505` still orchestrates spawning, enemies, projectiles, skill effects, manifested party combat, selected unit combat, HUD, and battle resolution from one update loop.
+- `CombatUnitRuntime.cs:21` through `:50` stores manifested unit combat state plus monster-specific timers and shield state.
+- `CombatRuntimeEnemies.cs:724` through `:765` directly decrements enemy status/buff timers.
+- `CombatRuntimeEveSkills.cs:1682` through `:1731` directly applies Eve F shield to selected controller fields and manifested runtime fields separately.
+- Added design report `Pakuri/reference/Report/2026-05-13-combat-refactor-start-plan.html`.
+- 2026-05-13 follow-up verification: current code search found `CombatRuntimeController.cs:28` defines `EnemyRuntime` as a private nested class, while `CombatUnitRuntime.cs:8` defines manifested units as a separate `MonoBehaviour`; therefore direct common base-class inheritance should come after `ICombatTarget` / adapter and effect-layer stabilization.
+- 2026-05-13 follow-up verification: updated `Pakuri/reference/Report/2026-05-13-combat-refactor-start-plan.html` to state that the current plan enables God Class reduction, skill reuse, common target model, and temporary effects, but explicit common base-class inheritance needs a later migration phase.
+- 2026-05-13 follow-up planning: added `boards/REFACTORING/REFACTORING.md` with the phase order from `Pakuri/reference/Report/2026-05-10-combat-runtime-controller-ai-token-refactor-proposal.html`.
+- 2026-05-13 Phase 0 start: added `boards/REFACTORING/COMBAT_STATE_OWNERSHIP_MAP.md`, mapping current mutable combat-state owners and proposed next owners before code extraction.
+- 2026-05-13 Phase 1 implementation: added `Pakuri/Assets/Scripts/Combat/Battlefield/CombatRuntimeBattlefield.cs`, routed enemy/projectile/skill-effect/drone battlefield list registration through `AddBattlefield*` methods, and preserved existing update order.
+- `Select-String` after implementation found 52 `AddBattlefield*` call sites and no remaining raw battlefield list registration writes except non-battlefield hit-set additions and `manifestedDrones`.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings; Unity-MCP console read after import/refresh showed only MCP client handler logs.
+
+### History
+
+- 2026-05-13: User requested a structural refactor plan based on the two existing 2026-05-10 reports before starting a major combat rewrite.
+- 2026-05-13: User asked to re-verify whether the plan satisfies the two proposal goals including skill reuse, Monster/Enemy objectification, common inheritance, and God Class cleanup.
+- 2026-05-13: User asked to record the `CombatRuntimeController` structure split work order under `boards/REFACTORING/REFACTORING.md`.
+- 2026-05-13: User asked to start the refactor from Phase 0, `State Ownership Map`.
+- 2026-05-13: User explicitly assigned Code Builder and asked to start Phase 1 `Battlefield Facade Boundary`.
 
 ## Task: 2026-05-10 Ariel Selected Shield Timer And Archangel Visual Fix
 

@@ -395,7 +395,7 @@ namespace Pakuri.Combat
             };
 
             ApplyStageOnePassive(runtime);
-            enemies.Add(runtime);
+            AddBattlefieldEnemy(runtime);
             UpdateEnemyColor(runtime);
             UpdateEnemyLabel(runtime);
         }
@@ -1065,7 +1065,7 @@ namespace Pakuri.Combat
             renderer.color = Color.white;
             renderer.sortingOrder = 24;
 
-            projectiles.Add(new ProjectileRuntime
+            AddBattlefieldProjectile(new ProjectileRuntime
             {
                 GameObject = projectileObject,
                 Transform = projectileObject.transform,

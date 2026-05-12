@@ -1,3 +1,9 @@
+## Archive Note
+
+- Older task blocks were moved to `boards/ARCHIVE/MON_DETAIL_ARCHIVE_2026-05-12.md` on 2026-05-12.
+- This file keeps only task blocks dated 2026-05-10 based on the date in each `## Task:` / `## Recent Task:` heading.
+- Source file: `boards/MON/ARIEL_MONSTER.md`.
+
 # ARIEL_MONSTER
 
 ## Scope
@@ -5,6 +11,45 @@
 Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, read `boards/MON/MON_BLACKBOARD.md` first and consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
+
+## Task: 2026-05-13 Ariel Battlefield Facade Registration
+
+### Task title
+
+Route Ariel battlefield projectile and effect registration through the Phase 1 facade.
+
+### Goals
+
+- Preserve Ariel skill behavior while replacing direct battlefield list registration writes.
+- Keep Ariel projectile/effect creation behind the new battlefield registration boundary.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Ariel skills in Play Mode if needed.
+
+### Evidence
+
+- `CombatRuntimeArielSkills.cs:244` now calls `AddBattlefieldProjectile(...)`.
+- `CombatRuntimeArielSkills.cs:335`, `:722`, and `:1036` now call `AddBattlefieldSkillEffect(...)`.
+- Runtime and Editor builds completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-13: Phase 1 battlefield facade boundary routed Ariel battlefield object registration through facade methods.
 
 ## Task: 2026-05-10 Ariel Manifested Shield Expiry And Archangel Effect Fix
 
@@ -108,328 +153,3 @@ Implemented and locally validated by C# builds, Unity-MCP refresh, console check
 
 - 2026-05-10: User requested the Ariel unit executor migration from the remaining-work report and asked whether MainMenu-selected Ariel shield skills protect teammates.
 - 2026-05-10: Code inspection confirmed selected Ariel shields did not protect manifested teammates before this pass; Builder added party shield state and Ariel unit executor dispatch.
-
-## Task: 2026-05-08 Manifested Ariel Common Runtime Parity
-
-### Task title
-
-Apply Ariel Offering choices through the manifested common skill runtime.
-
-### Goals
-
-- Keep manifested Ariel skills sourced from `SkillDefinition` data.
-- Apply Ariel manifested Offering choices in shared damage, cooldown, magazine, reload, and shield/buff-safe paths.
-- Avoid treating Ariel shield/buff runtime kinds as damaging attacks.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- This is common manifested runtime work, not a full line-by-line copy of selected Ariel private timers.
-- User performs Play Mode verification.
-- Code Reviewer was not run because the user did not explicitly permit it.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and locally validated.
-
-### Next Actions
-
-- User verifies manifested Ariel skills and Offering upgrades in RunScene Play Mode.
-- Run Code Reviewer only if explicitly requested.
-
-### Evidence
-
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:503` prevents manifested buff/shield skills from applying enemy damage.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:866` includes Ariel skill-specific damage multipliers.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:991` includes Ariel cooldown choice handling.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:1250` and `:1278` include Ariel A magazine/reload choice handling.
-- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
-
-## Task: 2026-05-05 Ariel Skill Data RuntimeKind Audit
-
-### Task title
-
-Align Ariel active skill runtime kinds with non-magazine runtime behavior.
-
-### Goals
-
-- Keep Ariel A as the only Ariel magazine projectile skill.
-- Classify Ariel B-E according to their implemented behavior so MonsterPanel and future data consumers do not treat them as magazine skills.
-- Keep Ariel A-E/F-J implementation-state metadata aligned with existing runtime implementation.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- Data-only correction; no Play Mode verification was run by Codex.
-- Code Reviewer was not run because the user did not explicitly permit it.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and locally validated.
-
-### Next Actions
-
-- User verifies Ariel Active1-3 MonsterPanel display in Play Mode after learning B-E.
-- Run Code Reviewer only if explicitly requested.
-
-### Evidence
-
-- `Pakuri/reference/2.Monster/ariel/skill/b-radiant-shield.md` states Radiant Shield is `비탄창 / 파티 보호 / 방어막`.
-- `Pakuri/reference/2.Monster/ariel/skill/c-blessing-wave.md` states Blessing Wave is `비탄창 / 파티 강화 / 범위 피해`.
-- `Pakuri/reference/2.Monster/ariel/skill/d-celestial-brand.md` states Celestial Brand is `비탄창 / 단일 표식 / 신성 노출`.
-- `Pakuri/reference/2.Monster/ariel/skill/e-archangel-descent.md` states Archangel Descent is `비탄창 / 전장 광역 / 파티 보호 결전기`.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs` contains `TryCastArielRadiantShield`, `TryCastArielBlessingWave`, `TryCastArielCelestialBrand`, and `TryCastArielArchangelDescent` with per-skill cooldown fields.
-- `Pakuri/Assets/Data/GameData/Monsters/ariel.asset` now stores Ariel A `MagazineProjectile`, B `Shield`, C `AreaAttack`, D `Mark`, E `AreaAttack`, and F-J `Passive`, all `RuntimeImplemented`.
-- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores the same Ariel runtime kinds and `RuntimeImplemented` states.
-- Unity-MCP read-only Editor import reported `ariel-a:MagazineProjectile:RuntimeImplemented`, `ariel-b:Shield:RuntimeImplemented`, `ariel-c:AreaAttack:RuntimeImplemented`, `ariel-d:Mark:RuntimeImplemented`, `ariel-e:AreaAttack:RuntimeImplemented`, and Ariel F-J passives as `RuntimeImplemented`.
-- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
-
-### History
-
-- 2026-05-05: After verifying the Rin MonsterPanel fix, user requested auditing Eve and Ariel skill data so they apply correctly too.
-- 2026-05-05: Builder corrected Ariel B-E away from `MagazineProjectile` and aligned the data with the implemented non-magazine cooldown skills.
-
-## Task: 2026-05-03 Ariel J Passive Runtime Correction
-
-### Task title
-
-Correct Ariel passive J `Sanctuary Proclamation` runtime to match the current E/J reference documents.
-
-### Source references
-
-- `Pakuri/reference/2.Monster/ariel/skill/e-archangel-descent.md`
-- `Pakuri/reference/2.Monster/ariel/skill/j-sanctuary-proclamation.md`
-
-### Skill slots A-J
-
-- Legacy non-English note retained these code references: `ariel-f`.
-- Legacy non-English note retained these code references: `ariel-g`.
-- Legacy non-English note retained these code references: `ariel-h`.
-- Legacy non-English note retained these code references: `ariel-i`.
-- J `ariel-j` / Sanctuary Proclamation: corrected so post-E action speed uses its own 5-second timer and holy-damage bonus depends on remaining Archangel shield state.
-
-### Runtime implementation status
-
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs` now separates three Ariel timed states:
-  - `arielBlessingTimer` for blessing-related windows.
-  - `arielSanctuaryTimer` for E master 1 damage reduction.
-  - `arielSanctuaryProclamationTimer` for J post-E action speed.
-- The runtime now also tracks the remaining Archangel shield share through `arielArchangelShieldValue` and `arielArchangelShieldTimer`.
-- The Archangel shield tracking follow-up now only marks E shield state when the new E shield actually becomes the pooled active shield, and clears that state when a stronger non-E Ariel shield replaces it.
-- Ariel E now spawns a battlefield circle effect, and Ariel support-skill retries are now gated to real firing windows so C does not keep retrying every held-input frame while A cannot fire.
-
-### Data asset status
-
-- `Pakuri/Assets/Data/GameData/Monsters/ariel.asset` already contained J passive/trait definitions and did not need asset edits in this correction pass.
-
-### DebugScene test status
-
-Codex did not run Unity Play Mode. User Play Mode verification is still required.
-
-### Code Reviewer status
-
-2026-05-03 Code Reviewer result: NEEDS_CHANGES. Builder follow-up has now been applied, but Code Reviewer was not rerun because the user did not request another review.
-
-### Evidence
-
-- `Pakuri/reference/2.Monster/ariel/skill/j-sanctuary-proclamation.md:18-19` requires `Archangel Descent` post-cast action speed for 5 seconds and holy-damage bonus while the E shield remains.
-- `Pakuri/reference/2.Monster/ariel/skill/e-archangel-descent.md:22-24` defines the E shield amount/duration that J should follow and establishes E as the battlefield-wide cast this runtime visual should represent.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs:22-24` adds dedicated J timer / Archangel shield fields.
-- `CombatRuntimeArielSkills.cs:136-143` now decrements and clears those dedicated states independently of the blessing timer.
-- `CombatRuntimeArielSkills.cs:429-451` now starts J proclamation timing from E cast, marks Archangel shield ownership through the shared shield helper, and spawns the missing `ArchangelDescent` battlefield effect.
-- `CombatRuntimeArielSkills.cs:554-580` now keeps Archangel ownership tied to the actual pooled shield owner instead of blindly writing the full E shield amount into tracking state.
-- `CombatRuntimeArielSkills.cs:592-600` and `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:315-319` now reduce the tracked Archangel shield share when incoming damage is absorbed by the selected Monster shield.
-- `CombatRuntimeArielSkills.cs:771`, `852`, and `898-900` now use the dedicated E-shield/J-state checks instead of the generic shield/blessing path.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs:332-356` now limits Ariel support-skill retry checks to frames where Ariel A can actually fire, closing the held-input retry path behind the reported occasional C barrage.
-- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and only the existing Unity/MCP warnings.
-- Unity script refresh finished with `resulting_state: idle`; Unity console error query returned only MCP-FOR-UNITY handler exit logs.
-- External Code Reviewer executed once through the installed Codex CLI path `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.429.30905-win32-x64\bin\windows-x86_64\codex.exe` and returned one actionable finding.
-- Reviewer finding: `CombatRuntimeArielSkills.cs:429-431` recorded the full E shield into `arielArchangelShieldValue` even when `ApplyArielUnitShield(...)` kept a larger pre-existing non-E shield; the Builder follow-up moved that ownership decision into `ApplyArielUnitShield(..., true)` and the non-E replacement path.
-
-### History
-
-- 2026-05-03: User requested implementing Ariel passive skills F-J from the reference folder.
-- 2026-05-03: Code Builder confirmed the existing F-I wiring and corrected the incomplete J timer/shield-state implementation.
-- 2026-05-03: User explicitly requested Code Reviewer execution; Reviewer returned NEEDS_CHANGES for remaining J shield-source tracking leakage.
-- 2026-05-03: User requested fixing that reviewer finding and also reported missing Ariel E effect plus occasional Ariel C barrage behavior; Code Builder applied the follow-up and revalidated with build and Unity refresh evidence.
-
-## Task: Ariel A-E Active And F-J Enhancement Runtime
-
-### Task title
-
-Implement Ariel skill documents A-E and their F-J enhancement/passive effects.
-
-### Source references
-
-- `Pakuri/reference/2.Monster/ariel/ariel-tower.md`
-- `Pakuri/reference/2.Monster/ariel/skill/a-judgement-light.md`
-- `Pakuri/reference/2.Monster/ariel/skill/b-radiant-shield.md`
-- `Pakuri/reference/2.Monster/ariel/skill/c-blessing-wave.md`
-- `Pakuri/reference/2.Monster/ariel/skill/d-celestial-brand.md`
-- `Pakuri/reference/2.Monster/ariel/skill/e-archangel-descent.md`
-- `Pakuri/reference/2.Monster/ariel/skill/f-guiding-light.md`
-- `Pakuri/reference/2.Monster/ariel/skill/g-guardian-doctrine.md`
-- `Pakuri/reference/2.Monster/ariel/skill/h-spread-blessing.md`
-- `Pakuri/reference/2.Monster/ariel/skill/i-brand-revelation.md`
-- `Pakuri/reference/2.Monster/ariel/skill/j-sanctuary-proclamation.md`
-
-### Skill slots A-J
-
-- Legacy non-English note retained these code references: `ariel-a`.
-- Legacy non-English note retained these code references: `ariel-b`.
-- Legacy non-English note retained these code references: `ariel-c`.
-- Legacy non-English note retained these code references: `ariel-d`.
-- E `ariel-e` / Archangel Descent: battlefield-wide Holy damage, selected-unit shield, Holy Exposure target bonus, sanctuary damage reduction, post-cast blessing.
-- Legacy non-English note retained these code references: `ariel-f`.
-- Legacy non-English note retained these code references: `ariel-g`.
-- Legacy non-English note retained these code references: `ariel-h`.
-- Legacy non-English note retained these code references: `ariel-i`.
-- J `ariel-j` / Sanctuary Proclamation: E post-cast action speed, shielded Holy damage, E cooldown trait.
-
-### Runtime implementation status
-
-Implemented in `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs` and integrated into:
-
-- `CombatRuntimeController.cs`
-- `CombatRuntimeProjectiles.cs`
-- `CombatRuntimeEnemies.cs`
-- `Pakuri/Assembly-CSharp.csproj`
-
-Current runtime has one selected player Monster, not an ally party collection. Document phrases such as "all allies" are implemented against the selected Monster because that is the only allied combat unit present in the current code.
-
-### Data asset status
-
-- `Pakuri/Assets/Data/GameData/Monsters/ariel.asset` now marks Ariel A-E and F-J `ImplementationState: 2`.
-- `Pakuri/Assets/Scripts/Data/Editor/PakuriGameDataSeeder.cs` now marks Eve and Ariel A-E/F-J as runtime implemented when seeding from skill documents.
-
-### DebugScene test status
-
-Codex did not run Unity Play Mode. User Play Mode verification is still required.
-
-### Code Reviewer status
-
-2026-04-30 Code Reviewer result: FAIL. Code Builder applied fixes for the reported findings; a follow-up Code Reviewer run has not been executed yet.
-
-### Evidence
-
-- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and the existing 2 Unity/MCP reference warnings.
-- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
-- Unity refresh/compile completed; `mcpforunity://editor/state` returned `ready_for_tools=true`.
-- Unity console error query returned MCP-FOR-UNITY handler logs only, not Ariel project compile errors.
-- `git diff --check` for Ariel changed files returned exit code 0 with CRLF warnings only.
-- External Reviewer execution returned `REVIEW_RESULT: FAIL`.
-- Reviewer evidence: `CombatRuntimeArielSkills.cs:234` uses monster top-level runtime damage fields for Ariel A, while `ariel.asset:96-104` and `a-judgement-light.md:19-34` define different A skill values.
-- Reviewer evidence: `CombatRuntimeArielSkills.cs:193` explodes White Judgement at `currentAttackPoint`; `a-judgement-light.md:52` describes the last projectile exploding.
-- Reviewer evidence: `CombatRuntimeProjectiles.cs:310` passes absorbed shield damage without attacker context, and `CombatRuntimeArielSkills.cs:539-542` reflects to nearest enemy; `b-radiant-shield.md:48` says reflect to the attacker.
-- Reviewer evidence: Holy damage multipliers are pre-applied in Ariel cast paths and then applied again through final damage calculation.
-- Builder fix evidence: `CombatRuntimeArielSkills.cs:201-240` now creates Ariel A projectiles from `ariel-a` skill damage/range, uses projectile speed `17`, and stores last-shot explosion data on the projectile.
-- Builder fix evidence: `CombatRuntimeProjectiles.cs:89` and `CombatRuntimeProjectiles.cs:102` now trigger Ariel A master explosion at projectile cleanup position, not immediately at click point.
-- Builder fix evidence: `CombatRuntimeProjectiles.cs:141`, `CombatRuntimeProjectiles.cs:299-312`, `CombatRuntimeEnemies.cs:963`, and `CombatRuntimeArielSkills.cs:533-544` now pass the source enemy into selected-Monster damage and reflect Radiant Shield damage back to that attacker.
-- Builder fix evidence: `CombatRuntimeArielSkills.cs:164`, `303`, `333`, and `380` no longer pre-apply the shared Holy damage multiplier before final damage calculation.
-- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and the existing Unity/MCP reference warnings.
-- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
-- Unity refresh/compile completed with editor `ready_for_tools=true`; console error query returned MCP-FOR-UNITY handler logs only.
-
-### History
-
-- 2026-04-30: User requested reading Ariel Monster skill markdown files under `Pakuri/reference/2.Monster/ariel` and implementing skills A-E plus enhancement effects.
-- 2026-04-30: Code Builder read the Ariel tower and A-J skill documents, confirmed the existing Ariel asset and combat runtime structure, implemented Ariel runtime effects, updated data implementation states, and completed build/Unity validation.
-- 2026-04-30: Code Reviewer reviewed the Ariel runtime implementation and returned FAIL with behavior mismatches that require Builder fixes.
-- 2026-04-30: User instructed Builder to fix the Reviewer findings; Builder applied Ariel A data/last-shot explosion, Radiant Shield attacker reflection, and Holy multiplier duplication fixes, then rebuilt and checked Unity console.
-
-## Task: Ariel A Lifetime And Shield Bar Split Visual
-
-### Task title
-
-Fix Ariel A early cleanup and display HP/shield as one fixed-width split bar.
-
-### Goals
-
-- Prevent Ariel A projectiles from disappearing too soon after firing.
-- Keep actual HP and shield values unchanged.
-- Display shielded Monster HP as a single fixed-width bar split between red HP and white shield.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- User performs Play Mode gameplay verification.
-- Code Reviewer was not run because the latest request did not explicitly permit it.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and locally validated.
-
-### Next Actions
-
-- User verifies Ariel A projectile lifetime and shield bar ratio visuals in Play Mode.
-
-### Evidence
-
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs` now computes Ariel A projectile lifetime as the maximum of the configured projectile lifetime and `range / ArielJudgementProjectileSpeed`, preventing the previous `8.5 / 17 = 0.5` second cleanup path from dominating.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeEnemies.cs` now has `UpdateHpShieldBarFill()` and `UpdateBarSegment()` to draw red HP and white shield as adjacent segments inside the same bar width when shield is present.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeScene.cs` now uses the shared HP/shield split visual for the selected Monster bar.
-- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and the existing 2 Unity/MCP reference warnings.
-- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
-- Unity editor state showed Play Mode active, so Codex did not force script refresh or Play Mode changes. Console error query returned MCP-FOR-UNITY handler logs only, not project compile errors.
-
-### History
-
-- 2026-04-30: User reported Ariel A projectiles disappear soon after firing and requested League-style HP/shield bar ratio visuals where actual HP and shield values remain unchanged.
-- 2026-04-30: Code Builder fixed Ariel A lifetime calculation and changed the shared selected-Monster shield bar visual to a fixed-width HP/shield split.
-
-## Task: Ariel White Judgement Hit Explosion Visual
-
-### Task title
-
-Make Ariel A master `White Judgement` explode on hit and use the base circle sprite visual.
-
-### Goals
-
-- Ensure `ariel-a-master-1` visibly and mechanically triggers when the marked last projectile hits.
-- Keep fallback explosion on projectile lifetime expiry if the last projectile hits nothing.
-- Use the existing generated circle sprite for the explosion visual.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- User performs Play Mode gameplay verification.
-- Code Reviewer was not run because the latest request did not explicitly permit it.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and locally validated.
-
-### Next Actions
-
-- User verifies `White Judgement` in Play Mode with `ariel-a-master-1` selected.
-
-### Evidence
-
-- `Pakuri/reference/2.Monster/ariel/skill/a-judgement-light.md` defines `White Judgement` as the last projectile exploding twice with area Holy damage.
-- `Pakuri/Assets/Data/GameData/Monsters/ariel.asset` contains `MasterSkillChoices` entry `ChoiceId: ariel-a-master-1`, Title `White Judgement`.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs` keeps the explosion damage/count on the projectile and now returns whether `TryTriggerArielJudgementLightExplosion()` fired.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeProjectiles.cs` now triggers the Ariel judgement explosion immediately on enemy hit when the projectile has pending explosion data, then cleans up the projectile.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeArielSkills.cs` uses `CreateCircleEffect()` / `GetCircleSprite()` for the explosion visual, with longer duration and higher sorting order.
-- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the existing Unity/MCP warnings.
-- Unity refresh/compile completed with editor `ready_for_tools=true`; console error query returned MCP-FOR-UNITY handler logs only.
-
-### History
-
-- 2026-04-30: User reported Ariel A master `White Judgement` did not appear to apply and requested using the base circle asset if only the visual effect was missing.
-- 2026-04-30: Code Builder changed the master explosion to fire immediately on hit and made the circle-sprite explosion more visible.

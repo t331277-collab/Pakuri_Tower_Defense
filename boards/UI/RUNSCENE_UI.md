@@ -3,6 +3,49 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-13 Manifested Party Runtime UI Boundary
+
+### Task title
+
+Record RunScene UI impact of the Phase 2 manifested party runtime service boundary.
+
+### Goals
+
+- Keep existing RunScene MonsterPanel 1P-5P binding behavior unchanged during the first Phase 2 split.
+- Preserve `PartyMonsterCount` and `GetPartyMonsterPanelSkillViews(...)` as the UI-facing combat API.
+- Avoid modifying scene-authored RunScene UI in this slice.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns UI verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented through combat runtime changes only.
+
+### Next Actions
+
+- User verifies RunScene MonsterPanel 2P-5P skill snapshots, HP/shield labels, and active group count in Play Mode.
+- Future Phase 2 UI slices should keep scene-authored child binding names stable.
+
+### Evidence
+
+- No `Pakuri/Assets/Scripts/Run/UI/RunCombatUiController.cs` edit was required in this slice.
+- `Pakuri/Assets/Scripts/Run/UI/RunCombatUiController.cs:1902` still reads `combatController.PartyMonsterCount`.
+- `RunCombatUiController.cs:1918` through `:1919` still reads `combatController.GetPartyMonsterPanelSkillViews(...)`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:35` keeps `PartyMonsterCount` available while routing its manifested count through `manifestedParty.MonsterCount`.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Builder started Phase 2 without changing RunScene UI script or scene objects; UI-facing combat APIs remain stable.
+
 ## Task: 2026-05-08 Manifested HP Bar Runtime Sprite Repair
 
 ### Task title

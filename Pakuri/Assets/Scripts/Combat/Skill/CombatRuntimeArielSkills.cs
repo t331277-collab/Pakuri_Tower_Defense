@@ -241,7 +241,7 @@ namespace Pakuri.Combat
             var lifetime = Mathf.Max(projectileLifetimeConfigured, range / Mathf.Max(0.1f, speed));
             var baseDamage = GetArielSkillBaseDamage(skill) * damageMultiplier;
 
-            projectiles.Add(new ProjectileRuntime
+            AddBattlefieldProjectile(new ProjectileRuntime
             {
                 GameObject = projectileObject,
                 Transform = projectileObject.transform,
@@ -332,7 +332,7 @@ namespace Pakuri.Combat
 
             var effect = CreateCircleEffect("BlessingWave", target.Transform.position, radius, 0.35f, skill.SkillEffectPrefab);
             effect.SkillId = "ariel-c";
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
 
             arielBlessingCooldownRemaining = GetArielCooldown(skill, 8f, 1f);
             statusLabel = $"Blessing Wave hit enemies around {target.DisplayName}; blessing {duration:0.#}s.";
@@ -719,7 +719,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 28;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
         }
 
         private void ApplyArielAreaDamage(Vector3 center, float radius, float baseDamage, string skillId, float finalMultiplier)
@@ -1033,7 +1033,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 29;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
         }
 
         private void ExplodeArielUnitJudgementLight(CombatUnitRuntime runtime, Vector3 center, float baseDamage, int explosions)

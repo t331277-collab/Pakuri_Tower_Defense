@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CombatRuntimeController 구조 분리 제안서</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f1ea;
+      --paper: #fffdf8;
+      --ink: #22201b;
+      --muted: #6e6559;
+      --line: #ddd3c3;
+      --accent: #174c6b;
+      --accent-soft: #e4eff5;
+      --warn: #9a4d00;
+      --warn-soft: #fff1df;
+      --good: #1e5c39;
+      --good-soft: #e8f5ed;
+      --bad: #8a1f1f;
+      --bad-soft: #fdeaea;
+      --code: #f3efe7;
+      --shadow: 0 20px 50px rgba(35, 29, 19, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(23, 76, 107, 0.08), transparent 28%),
+        linear-gradient(180deg, #efe8db 0%, var(--bg) 22%, #f8f5ef 100%);
+      color: var(--ink);
+      font-family: "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      line-height: 1.7;
+    }
+
+    main {
+      width: min(1160px, calc(100% - 40px));
+      margin: 28px auto 60px;
+      padding: 0;
+    }
+
+    .hero,
+    section,
+    .appendix {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 40px 42px 32px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -80px auto;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(23, 76, 107, 0.16), transparent 70%);
+      pointer-events: none;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.25;
+    }
+
+    h1 {
+      font-size: 34px;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin: 10px 0 0;
+    }
+
+    section,
+    .appendix {
+      padding: 28px 30px 30px;
+      margin-bottom: 20px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .summary {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px 18px;
+      background: linear-gradient(180deg, rgba(23, 76, 107, 0.04), rgba(23, 76, 107, 0));
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric .value {
+      margin-top: 8px;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .metric .sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .callout {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: #fcfaf5;
+    }
+
+    .callout.warn {
+      border-color: #f0c997;
+      background: var(--warn-soft);
+    }
+
+    .callout.good {
+      border-color: #b9ddc8;
+      background: var(--good-soft);
+    }
+
+    .callout.bad {
+      border-color: #efb6b6;
+      background: var(--bad-soft);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 12px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    ul {
+      margin: 12px 0 0 20px;
+      padding: 0;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    code {
+      background: var(--code);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.94em;
+    }
+
+    pre {
+      margin: 14px 0 0;
+      padding: 16px 18px;
+      overflow: auto;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: var(--code);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px 18px 16px;
+      background: #fffdfa;
+    }
+
+    .card h3 {
+      margin-bottom: 8px;
+    }
+
+    .caption {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .path {
+      display: inline-block;
+      margin-top: 10px;
+      color: var(--accent);
+      font-size: 13px;
+      word-break: break-all;
+    }
+
+    .appendix h2 {
+      margin-bottom: 10px;
+    }
+
+    .footnote {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 860px) {
+      .summary,
+      .grid-2,
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .hero,
+      section,
+      .appendix {
+        padding: 22px 20px 24px;
+        border-radius: 20px;
+      }
+
+      main {
+        width: min(100% - 20px, 1000px);
+        margin-top: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="hero">
+      <div class="eyebrow">Structure Proposal</div>
+      <h1>CombatRuntimeController 구조 분리 제안서</h1>
+      <p>
+        이 문서는 현재 전투 런타임 구조를 "파일이 많다"는 인상 수준이 아니라,
+        실제 코드 소유권, AI 작업 비용, 토큰 소비, 컨텍스트 윈도우 낭비, 그리고
+        실제 프로그래머의 가독성 관점에서 재검토하기 위한 설득 자료다.
+      </p>
+      <div class="summary">
+        <div class="metric">
+          <div class="label">CombatRuntimeController partial 총량</div>
+          <div class="value">14,022 lines</div>
+          <div class="sub">14 partial files / 636,366 chars</div>
+        </div>
+        <div class="metric">
+          <div class="label">대표 교차 작업 읽기량</div>
+          <div class="value">220,819 chars</div>
+          <div class="sub">core + party + projectiles + Eve skill</div>
+        </div>
+        <div class="metric">
+          <div class="label">대략적 토큰 추정</div>
+          <div class="value">55k ~ 159k</div>
+          <div class="sub">4 chars / token 가정의 거친 추정치</div>
+        </div>
+      </div>
+      <div class="callout warn">
+        핵심 결론: 지금 구조는 "partial로 나뉜 큰 클래스"가 아니라,
+        사실상 <strong>하나의 거대한 shared-state 전투 객체</strong>에 가깝다.
+        그래서 사람도 읽기 어렵고, AI 에이전트는 더 비싸게 작업하게 된다.
+      </div>
+    </div>
+
+    <section>
+      <h2>1. 현재 구조가 실제로 어떤 상태인지</h2>
+      <p>
+        문제는 단순히 <code>CombatRuntimeController.cs</code> 한 파일이 크다는 점이 아니다.
+        전투 상태의 핵심 필드가 여전히 한 클래스에 모여 있고, 각 partial 파일이 그 상태를 같이 읽고 쓰기 때문에
+        실제 책임 분리가 끝나지 않았다.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>파일</th>
+            <th>규모</th>
+            <th>관찰 포인트</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>CombatRuntimeController.cs</code></td>
+            <td>829 lines / 37,230 chars</td>
+            <td>공유 필드, Unity lifecycle, 메인 update 루프</td>
+          </tr>
+          <tr>
+            <td><code>CombatRuntimeParty.cs</code></td>
+            <td>1,890 lines / 87,732 chars</td>
+            <td>Manifested 파티 구성, 상태 UI, 일부 전투 로직까지 포함</td>
+          </tr>
+          <tr>
+            <td><code>CombatRuntimeProjectiles.cs</code></td>
+            <td>570 lines / 27,483 chars</td>
+            <td>투사체 진행, 충돌, 파생 효과 처리</td>
+          </tr>
+          <tr>
+            <td><code>CombatRuntimeEveSkills.cs</code></td>
+            <td>1,645 lines / 68,374 chars</td>
+            <td>몬스터 스킬 파일이면서 shared list를 직접 조작</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="grid-2">
+        <div class="card">
+          <h3>공유 상태 집중</h3>
+          <pre><code>CombatRuntimeController.cs
+307: private readonly List&lt;EnemyRuntime&gt; enemies = ...
+308: private readonly List&lt;ProjectileRuntime&gt; projectiles = ...
+309: private readonly List&lt;SkillEffectRuntime&gt; skillEffects = ...
+310: private readonly List&lt;DroneRuntime&gt; drones = ...
+312: private readonly List&lt;RewardOption&gt; rewardOptions = ...
+357: private MonsterDefinition selectedMonster;
+369: private CombatUnitRuntime selectedUnitRuntime;</code></pre>
+        </div>
+        <div class="card">
+          <h3>단일 update 루프 집중</h3>
+          <pre><code>CombatRuntimeController.cs
+481: private void Update()
+498: UpdateSpawning();
+499: UpdateEnemies();
+500: UpdateProjectiles();
+501: UpdateMonsterSkillRuntimeEffects();
+502: UpdateManifestedMonsterPartyCombat();
+503: UpdateSelectedMonsterCombat();
+504: UpdateSelectedMonsterStatusVisuals();
+505: CheckBattleResolution();</code></pre>
+        </div>
+      </div>
+      <div class="callout bad">
+        즉, 파일은 나뉘어 있지만 "한 클래스가 거의 모든 mutable 전투 상태를 가진다"는 사실은 바뀌지 않았다.
+      </div>
+    </section>
+
+    <section>
+      <h2>2. 왜 나눠야 하는가: AI 프로그래밍, 토큰 절약, 컨텍스트 윈도우 관점</h2>
+      <div class="cards">
+        <div class="card">
+          <h3>2-1. 읽기 비용이 작업 비용이 된다</h3>
+          <p>
+            AI 에이전트는 필요한 코드 조각만 읽으면 싸게 끝나지만,
+            공유 상태가 크고 숨은 결합이 많으면 안전하게 수정하기 위해 더 넓은 범위를 다시 읽어야 한다.
+          </p>
+          <p>
+            예를 들어 core + party + projectiles + Eve skill만 읽어도
+            약 <code>220,819 chars</code>, 대략 <code>55,205 tokens</code> 수준이다.
+            여기에 지시문, 보드 문서, diff, 빌드 로그, 연관 파일이 추가되면 금방 커진다.
+          </p>
+        </div>
+        <div class="card">
+          <h3>2-2. 컨텍스트 윈도우 낭비가 생긴다</h3>
+          <p>
+            진짜 필요한 로직은 "Eve B 지속시간 조정" 같은 작은 변경일 수 있다.
+            그런데 그 변경이 <code>projectiles</code>, <code>skillEffects</code>,
+            <code>manifestedMonsters</code>, <code>selectedUnitRuntime</code>와 엮여 있으면
+            관련 partial을 통째로 다시 올려야 한다.
+          </p>
+          <p>
+            이것은 정보량이 아니라 <strong>결합도 때문에 발생하는 컨텍스트 낭비</strong>다.
+          </p>
+        </div>
+        <div class="card">
+          <h3>2-3. 수정 누락 위험이 커진다</h3>
+          <p>
+            shared-state 구조에서는 동일한 상태를 여러 partial이 직접 만진다.
+            그러면 한 경로만 고치고 다른 경로를 놓치기 쉽다.
+          </p>
+          <pre><code>CombatRuntimeEveSkills.cs
+367: skillEffects.Add(effect);
+475: for (var i = 0; i &lt; enemies.Count; i++)
+816: projectiles.Add(new ProjectileRuntime
+1151: if (drones.Count &gt;= maxBeacons)
+1719: for (var i = 0; i &lt; manifestedMonsters.Count; i++)</code></pre>
+        </div>
+        <div class="card">
+          <h3>2-4. "분리된 것처럼 보이지만 실제로는 덜 분리됨"</h3>
+          <p>
+            몬스터 runtime adapter도 완전한 독립 모듈이 아니다.
+            현재 구조는 controller를 잡고 메서드를 다시 forwarding하는 형태다.
+          </p>
+          <pre><code>CombatMonsterSkillRuntime.cs
+29: protected CombatRuntimeController Controller { get; }
+128: new EveMonsterSkillRuntime(this)
+154: return monsterSkillRuntimeLookup.TryGetValue(...)</code></pre>
+          <p>
+            즉, 파일 구조는 나뉘어도 AI는 여전히 controller 전체를 이해해야 안전하다.
+          </p>
+        </div>
+      </div>
+      <div class="callout warn">
+        토큰 최적화 관점에서 가장 비싼 구조는 "코드가 많은 구조"보다
+        "작은 변경에도 큰 범위를 다시 읽게 만드는 구조"다.
+        현재 구조는 후자에 가깝다.
+      </div>
+    </section>
+
+    <section>
+      <h2>3. 왜 나눠야 하는가: 실제 프로그래머의 가독성과 유지보수 관점</h2>
+      <ul>
+        <li>책임 경계가 흐리면 새 작업자가 "어디를 고쳐야 하는지"보다 "어디까지 읽어야 안전한지"부터 고민하게 된다.</li>
+        <li>update 순서가 하나의 메서드에 모이면, 특정 하위 시스템 변경이 다른 하위 시스템 타이밍에 미치는 영향이 커진다.</li>
+        <li>partial이 많아도 shared private field를 같이 쓰면 IDE 탐색 결과가 곧바로 책임 분리로 이어지지 않는다.</li>
+        <li>버그 수정이 "한 기능 수정"이 아니라 "이 상태를 건드리는 모든 경로 찾기" 작업으로 바뀐다.</li>
+        <li>코드 리뷰 역시 파일 단위가 아니라 시스템 단위 검토가 필요해져 검토 범위가 불필요하게 커진다.</li>
+      </ul>
+      <div class="callout good">
+        반대로 기능 단위로 나누면 "읽는 범위"와 "수정 범위"가 비슷해진다.
+        이것은 사람에게도 좋고, AI 에이전트에게는 훨씬 더 중요하다.
+      </div>
+    </section>
+
+    <section>
+      <h2>4. 어떻게 나눌 수 있는가: 실제 기능 단위 분해안</h2>
+      <p>
+        전체를 한 번에 갈아엎는 방식보다, 현재 코드 소유권을 좁히는 순서로 단계적으로 분해하는 편이 안전하다.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>분해 단위</th>
+            <th>현재 근거</th>
+            <th>분리 이유</th>
+            <th>분리 후 역할</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Battle Orchestrator</strong></td>
+            <td><code>CombatRuntimeController.cs:481-505</code></td>
+            <td>현재는 lifecycle + 모든 서브시스템 호출이 섞여 있음</td>
+            <td>Unity lifecycle, update 순서, scene wiring만 담당</td>
+          </tr>
+          <tr>
+            <td><strong>Selected Unit Combat</strong></td>
+            <td><code>selectedMonster</code>, <code>selectedUnitRuntime</code>, 탄창/재장전 필드</td>
+            <td>1P 상태가 전역 controller 필드와 너무 밀착됨</td>
+            <td>1P 발사, 재장전, 자동 스킬, 방어막 동기화 담당</td>
+          </tr>
+          <tr>
+            <td><strong>Manifested Party Runtime</strong></td>
+            <td><code>CombatRuntimeParty.cs</code> 1,890 lines</td>
+            <td>파티 구성, UI, 일부 전투 로직이 한 파일에 섞여 있음</td>
+            <td>2P~5P 슬롯 구성, 파티 상태, manifested 전투 틱 담당</td>
+          </tr>
+          <tr>
+            <td><strong>Projectile / Effect / Drone Simulation</strong></td>
+            <td><code>projectiles</code>, <code>skillEffects</code>, <code>drones</code></td>
+            <td>여러 스킬 partial이 같은 전장 오브젝트 리스트를 직접 수정</td>
+            <td>투사체 진행, 충돌, 지속 이펙트, 드론 틱을 한곳에서 담당</td>
+          </tr>
+          <tr>
+            <td><strong>Enemy Simulation</strong></td>
+            <td><code>CombatRuntimeEnemies.cs</code>, <code>GetStageOneEnemies</code></td>
+            <td>적 스폰/이동/타겟팅은 독립적인 서브시스템 성격이 강함</td>
+            <td>적 생성, 이동, 타겟 우선순위, 적 공격 담당</td>
+          </tr>
+          <tr>
+            <td><strong>Reward / Combat Result Flow</strong></td>
+            <td><code>rewardOptions</code>, 승패 상태, 보상 상태</td>
+            <td>전투 시뮬레이션과 보상 UI 흐름은 관심사가 다름</td>
+            <td>전투 종료 판단 이후의 보상 생성/적용 담당</td>
+          </tr>
+          <tr>
+            <td><strong>HUD / Status View</strong></td>
+            <td><code>UpdateSelectedMonsterStatusVisuals()</code>, HUD partial</td>
+            <td>계산 로직과 뷰 갱신을 분리해야 읽기 비용이 줄어듦</td>
+            <td>상태 표시, HP/Shield 바, 텍스트 갱신 담당</td>
+          </tr>
+          <tr>
+            <td><strong>Monster Skill Executors</strong></td>
+            <td><code>CombatRuntimeEveSkills.cs</code> 등</td>
+            <td>현재는 스킬 파일이 shared list를 직접 수정함</td>
+            <td>전장 서비스 인터페이스를 통해서만 발사/이펙트 생성 요청</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        핵심은 "파일을 더 만드는 것"이 아니라, <strong>누가 어떤 상태를 소유하는지 명확히 바꾸는 것</strong>이다.
+        그래야 AI와 사람이 모두 작은 범위만 읽고도 안전하게 수정할 수 있다.
+      </div>
+    </section>
+
+    <section>
+      <h2>5. 실제 분해 순서 제안</h2>
+      <ol>
+        <li>먼저 전투 상태 소유권을 문서로 고정한다. 무엇이 selected-unit 소유인지, 무엇이 party 소유인지, 무엇이 projectile system 소유인지 먼저 정한다.</li>
+        <li><code>Manifested Party</code>를 먼저 분리한다. 현재 가장 큰 manager partial이고, 파티/상태 UI/전투가 교차한다.</li>
+        <li><code>Projectile / Effect / Drone</code>를 분리한다. shared battlefield list를 한곳으로 모은다.</li>
+        <li><code>Enemy Simulation</code>을 분리한다. 타겟팅과 스폰 정책을 selected-unit 로직에서 떼어낸다.</li>
+        <li><code>Selected Unit Combat</code>을 분리한다. 1P 재장전, 자동 스킬, 실드 미러링을 controller에서 꺼낸다.</li>
+        <li>마지막에 monster runtime adapter가 controller 전체를 보지 않도록 인터페이스를 좁힌다.</li>
+      </ol>
+      <div class="callout warn">
+        순서를 거꾸로 잡으면 안 된다. 예를 들어 selected-unit만 먼저 뽑아도 projectile/effect shared state가 그대로면
+        결국 controller 재의존이 다시 생긴다.
+      </div>
+    </section>
+
+    <section>
+      <h2>6. 무엇을 싱글톤화할 수 있는가</h2>
+      <p>
+        싱글톤은 "어디서나 접근 가능"하다는 장점이 있지만, 그 장점은 <strong>진짜 전역 데이터</strong>에만 써야 한다.
+        이미 저장소 안에도 그 방향의 예시가 있다.
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>이미 좋은 전역 예시 1: PakuriDataManager</h3>
+          <pre><code>PakuriDataManager.cs
+18: private static readonly PakuriDataManager instance = new PakuriDataManager();
+24: public static PakuriDataManager Instance => instance;
+26: public GameDataCatalog CurrentCatalog { get; private set; }
+28: public void RegisterCatalog(GameDataCatalog catalog)</code></pre>
+          <p>
+            이 객체는 몬스터/적/스킬/보상 정의 lookup을 관리한다.
+            읽기 중심 전역 데이터 저장소이기 때문에 싱글톤 성격이 잘 맞는다.
+          </p>
+        </div>
+        <div class="card">
+          <h3>이미 좋은 전역 예시 2: RunStartContext</h3>
+          <pre><code>RunStartContext.cs
+9:  public static RunStartContext Instance { get; private set; }
+15: public static RunStartContext Ensure()
+24: DontDestroyOnLoad(contextObject);
+40: private void Awake()
+49: DontDestroyOnLoad(gameObject);</code></pre>
+          <p>
+            씬을 넘겨야 하는 "실행 컨텍스트"는 전역 1개만 존재하면 되는 성격이므로
+            singleton-style MonoBehaviour가 합리적이다.
+          </p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>싱글톤 후보</th>
+            <th>왜 괜찮은가</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>데이터 카탈로그 / 정의 조회 게이트웨이</strong></td>
+            <td>전투 인스턴스마다 새로 생길 필요가 없고, 대부분 read-mostly 데이터다.</td>
+            <td><code>PakuriDataManager</code>가 이미 같은 역할을 수행 중</td>
+          </tr>
+          <tr>
+            <td><strong>CSV / 런타임 데이터 초기화 서비스</strong></td>
+            <td>프로세스 단위로 1회 초기화되는 편이 자연스럽다.</td>
+            <td><code>PakuriCsvRuntimeData</code>가 static partial로 이미 존재</td>
+          </tr>
+          <tr>
+            <td><strong>씬 간 Run 시작 컨텍스트</strong></td>
+            <td>단일 실행 문맥을 씬 사이에 전달하는 역할이다.</td>
+            <td><code>RunStartContext</code>가 이미 해당 패턴 사용</td>
+          </tr>
+          <tr>
+            <td><strong>읽기 전용 전투 규칙/설정 레지스트리</strong></td>
+            <td>여러 시스템이 같은 룰 테이블을 참조한다면 전역 1개 접근점이 편하다.</td>
+            <td>단, mutable battle state를 넣으면 안 됨</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout good">
+        싱글톤의 장점은 <strong>참조 배선 비용을 줄이고, 단일 진실 공급원(single source of truth)</strong>을 만들 수 있다는 점이다.
+        다만 그 장점은 전역 정의/설정/컨텍스트에 한정해서 써야 한다.
+      </div>
+    </section>
+
+    <section>
+      <h2>7. 무엇을 싱글톤화하면 안 되는가</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>대상</th>
+            <th>왜 안 되는가</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>enemies</code>, <code>projectiles</code>, <code>skillEffects</code>, <code>drones</code></td>
+            <td>이것들은 현재 전투 인스턴스의 상태다. 전역화하면 오히려 숨은 결합이 커지고 테스트/리셋도 더 어려워진다.</td>
+          </tr>
+          <tr>
+            <td><code>selectedMonster</code>, <code>selectedUnitRuntime</code>, 탄창/쿨다운/실드 상태</td>
+            <td>1회 전투의 mutable runtime state다. 전역보다 인스턴스 소유가 명확해야 한다.</td>
+          </tr>
+          <tr>
+            <td><code>manifestedMonsters</code>와 그 파생 상태</td>
+            <td>전투 단위 파티 상태다. 싱글톤으로 올리면 현재 controller가 가진 문제를 다른 전역 객체로 옮기는 것뿐이다.</td>
+          </tr>
+          <tr>
+            <td><code>rewardOptions</code>, 승패/보상 대기 상태</td>
+            <td>전투 결과 플로우의 임시 상태이므로 battle session에 묶여 있어야 한다.</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout bad">
+        정리하면, 지금 문제를 "전역 접근이 필요하니 싱글톤으로 빼자"로 풀면 안 된다.
+        그 방식은 controller의 복잡도를 다른 이름의 전역 상태로 옮기는 것에 불과할 수 있다.
+      </div>
+    </section>
+
+    <section>
+      <h2>8. 싱글톤 패턴 자체의 장점과 참고 코드</h2>
+      <p>
+        외부 참고 코드 <code>D:\Unity\lost-library-PC\WorkShop_Sad\Assets\Scripts\Common\Core\Singleton.cs</code>는
+        전형적인 non-MonoBehaviour generic singleton 패턴을 보여준다.
+      </p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>참고 코드의 핵심 구조</h3>
+          <pre><code>Singleton.cs
+25: public static T Instance
+36: protected virtual void Init() { }
+42: protected Singleton() { }
+43: internal void InternalInit()
+65: internal static class SingletonAllocator
+74: CreateInstance(typeof(T));
+111: singleton.InternalInit();</code></pre>
+          <p>
+            장점은 접근점이 단일하고, 생성 시점과 초기화 지점을 통제할 수 있으며,
+            scene object 유무와 무관하게 앱 전역 서비스처럼 쓸 수 있다는 점이다.
+          </p>
+        </div>
+        <div class="card">
+          <h3>이 패턴이 잘 맞는 경우</h3>
+          <ul>
+            <li>전역 데이터 레지스트리</li>
+            <li>정적 규칙 테이블 캐시</li>
+            <li>씬 비의존 앱 서비스</li>
+            <li>읽기 중심 카탈로그 조회</li>
+          </ul>
+          <h3 style="margin-top:16px;">이 패턴이 안 맞는 경우</h3>
+          <ul>
+            <li>매 전투마다 리셋되어야 하는 runtime state</li>
+            <li>scene instance와 결합된 오브젝트 리스트</li>
+            <li>하나의 전투 안에서만 유효한 임시 상태</li>
+          </ul>
+        </div>
+      </div>
+      <pre><code>// 예시: 읽기 전용 전투 정의 게이트웨이
+// 아래 예시는 "이런 종류의 전역 데이터"에만 singleton을 쓰자는 예시이며,
+// 현재 저장소에 존재하는 구현이 아니라 설계 예시다.
+
+using Common.Core;
+using Pakuri.Data;
+
+public sealed class CombatDefinitionGateway : Singleton&lt;CombatDefinitionGateway&gt;
+{
+    protected override void Init()
+    {
+        Catalog = PakuriDataManager.Instance.CurrentCatalog;
+    }
+
+    public GameDataCatalog Catalog { get; private set; }
+
+    public MonsterDefinition ResolveMonster(string id)
+    {
+        return PakuriDataManager.Instance.ResolveMonster(id, Catalog);
+    }
+}</code></pre>
+      <p class="caption">
+        위 예시처럼 전역 조회 게이트웨이는 singleton이 어울리지만,
+        <code>CurrentBattleState</code> 같은 mutable runtime state를 이런 형태로 올리는 것은 권장하지 않는다.
+      </p>
+    </section>
+
+    <section>
+      <h2>9. 권장 결론</h2>
+      <ul>
+        <li><code>CombatRuntimeController</code>는 지금도 동작은 가능하지만, AI 협업과 장기 유지보수 관점에서는 이미 비용이 높은 구조다.</li>
+        <li>지금 분리해야 하는 이유는 "예쁘게 만들기 위해서"가 아니라, 작은 작업을 작은 컨텍스트 안에서 끝낼 수 있게 만들기 위해서다.</li>
+        <li>파일 분리보다 중요한 것은 상태 소유권 분리다.</li>
+        <li>싱글톤은 전역 정의/설정/씬 간 컨텍스트에는 유효하지만, 전투 runtime state 문제의 해법은 아니다.</li>
+        <li>가장 먼저 손댈 곳은 <code>Manifested Party</code>, <code>Projectile / Effect / Drone</code>, <code>Enemy Simulation</code> 경계다.</li>
+      </ul>
+      <div class="callout warn">
+        이 구조 개선의 목표는 "클래스를 잘게 쪼개기"가 아니다.
+        <strong>작업자가 필요한 만큼만 읽어도 안전하게 수정할 수 있는 구조</strong>를 만드는 것이다.
+      </div>
+    </section>
+
+    <div class="appendix">
+      <h2>부록: 직접 확인한 코드 위치</h2>
+      <ul>
+        <li><code>Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeEnemies.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeArielSkills.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Combat/Skill/CombatMonsterSkillRuntime.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Data/Runtime/PakuriDataManager.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Data/Runtime/Csv/PakuriCsvRuntimeData.cs</code></li>
+        <li><code>Pakuri/Assets/Scripts/Run/Flow/RunStartContext.cs</code></li>
+        <li><code>D:\Unity\lost-library-PC\WorkShop_Sad\Assets\Scripts\Common\Core\Singleton.cs</code></li>
+      </ul>
+      <p class="footnote">
+        토큰 수치는 모델/토크나이저에 따라 달라질 수 있으므로 정확값이 아니라 거친 추정치다.
+        다만 상대 비교 기준으로는 충분히 유효하다.
+      </p>
+    </div>
+  </main>
+</body>
+</html>

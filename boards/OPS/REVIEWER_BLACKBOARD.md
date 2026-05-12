@@ -4,6 +4,51 @@
 - This file keeps only task blocks dated `2026-05-04` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/OPS/REVIEWER_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Phase 1 Battlefield Facade Reviewer
+
+### Task title
+
+Run Code Reviewer for Phase 1 `Battlefield Facade Boundary`.
+
+### Goals
+
+- Review the Phase 1 battlefield facade refactor once.
+- Check changed lines, helper existence, null risks, behavior preservation, dependency direction, and side effects.
+- Record the Reviewer decision and log path.
+
+### Constraints
+
+- Role Owner is Code Reviewer.
+- User explicitly requested this Reviewer execution.
+- Reviewer must not edit files.
+- Do not run Unity Play Mode; user owns gameplay verification.
+
+### Role Owner
+
+Code Reviewer
+
+### Status
+
+Completed with `REVIEW_RESULT: PASS`.
+
+### Next Actions
+
+- Do not run another Reviewer pass for this Phase 1 work unless the user explicitly requests it.
+- User performs Play Mode gameplay verification if needed.
+
+### Evidence
+
+- First external Reviewer attempt failed with socket/network permission error `os error 10013`.
+- Escalated external Reviewer command ran once with `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.506.31421-win32-x64\bin\windows-x86_64\codex.exe exec`.
+- Reviewer output was saved to `codex_loop_logs\phase1_battlefield_facade_reviewer_20260513.md`.
+- `Select-String -Path codex_loop_logs\phase1_battlefield_facade_reviewer_20260513.md -Pattern 'REVIEW_RESULT: PASS','Findings: none','Reviewed track'` found all three expected markers.
+- Reviewer evidence said helper methods exist in `Pakuri/Assets/Scripts/Combat/Battlefield/CombatRuntimeBattlefield.cs:22`, same-list `.Add(...)` calls remain at `:63`, `:68`, `:73`, and `:78`, update order remains at `CombatRuntimeController.cs:498` through `:505`, and runtime/editor builds completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-13: User requested Code Reviewer execution for the Phase 1 `Battlefield Facade Boundary` implementation.
+- 2026-05-13: External Reviewer returned `REVIEW_RESULT: PASS` with no findings.
+
 ## Task: Rin A-E Active Runtime Reviewer 2026-05-04
 
 ### Task title

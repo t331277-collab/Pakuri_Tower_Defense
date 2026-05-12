@@ -1,8 +1,59 @@
 ## Archive Note
 
 - Older task blocks were moved to `boards/ARCHIVE/` on 2026-05-12.
-- This file keeps only task blocks dated `2026-05-12` based on the date in each `## Task:` / `## Recent Task:` heading.
+- This file keeps active report task blocks after the 2026-05-12 archive pass; newer report tasks may be appended above older retained context.
 - Source file: `boards/REPORT/REPORT_BLACKBOARD.md`.
+
+## Task: 2026-05-13 Combat Refactor Start Plan HTML
+
+### Task title
+
+Create a refactoring start plan from the two 2026-05-10 combat reports.
+
+### Goals
+
+- Read the existing shared combat target / temporary effect design report.
+- Read the existing CombatRuntimeController AI-token refactor proposal report.
+- Inspect current combat runtime code to confirm whether the reported problems still exist.
+- Produce a new HTML design report that identifies what problem to solve first and what order to use for the broader refactor.
+
+### Constraints
+
+- Role Owner is Designer because the user requested refactoring structure design and an HTML report.
+- Base all conclusions on inspected files and command output.
+- Do not run Unity Play Mode.
+- No code implementation is included in this design report.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- If implementation starts, begin with a Code Builder task for a small `CombatBattlefield` / battlefield facade extraction before introducing full `CombatTargetModel` state ownership.
+
+### Evidence
+
+- Read `Pakuri/reference/Report/2026-05-10-shared-combat-target-and-temporary-effect-design.html`.
+- Read `Pakuri/reference/Report/2026-05-10-combat-runtime-controller-ai-token-refactor-proposal.html`.
+- Inspected `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs`, `CombatRuntimeParty.cs`, `CombatRuntimeProjectiles.cs`, `CombatRuntimeEnemies.cs`, `CombatUnitRuntime.cs`, and `CombatSkillRuntime.cs`.
+- Current partial `CombatRuntimeController` files total 14 files, 14,022 lines, and 668,782 characters by command output.
+- Added `Pakuri/reference/Report/2026-05-13-combat-refactor-start-plan.html`.
+- 2026-05-13 follow-up verification: user-provided `C:\Users\t3312\Downloads\2026-05-10-shared-combat-target-and-temporary-effect-design.html` did not exist by `Test-Path`, so the same local report under `Pakuri/reference/Report/` was used as inspected evidence.
+- 2026-05-13 follow-up verification: updated `Pakuri/reference/Report/2026-05-13-combat-refactor-start-plan.html` with a goal-by-goal verification matrix covering God Class, skill reuse, common target model, temporary effects, Monster/Enemy objectification, and common base-class inheritance.
+- 2026-05-13 planning follow-up: added `boards/REFACTORING/REFACTORING.md` as the phase-order board for the `CombatRuntimeController` structure split described by `Pakuri/reference/Report/2026-05-10-combat-runtime-controller-ai-token-refactor-proposal.html`.
+- 2026-05-13 Phase 0 follow-up: added `boards/REFACTORING/COMBAT_STATE_OWNERSHIP_MAP.md` as the concrete state ownership map required before the first code extraction slice.
+
+### History
+
+- 2026-05-13: User asked to recognize the current structural problem from the two 2026-05-10 reports and create an HTML plan for which refactor work should start first.
+- 2026-05-13: User asked whether following the new HTML would actually satisfy the two proposals' goals such as skill reuse, common Monster/Enemy objectification, inheritance, and God Class removal; Designer verified and amended the report with explicit coverage and gaps.
+- 2026-05-13: User asked to record the `CombatRuntimeController` structure split implementation order in `boards/REFACTORING/REFACTORING.md`.
+- 2026-05-13: User asked to start from Phase 0, `State Ownership Map`; Designer created the ownership map as a refactoring board artifact.
 
 ## Task: 2026-05-12 Boards Korean Translation Export
 

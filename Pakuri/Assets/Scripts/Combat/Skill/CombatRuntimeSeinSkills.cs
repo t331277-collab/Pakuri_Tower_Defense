@@ -359,7 +359,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 23;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
             skillRuntime.CooldownDuration = GetSeinUnitCooldown(runtime, skill, 9f, HasSeinUnitChoice(runtime, "sein-d-trait-4") ? 0.80f : 1f);
             skillRuntime.CooldownRemaining = skillRuntime.CooldownDuration;
             statusLabel = $"{runtime.Monster.DisplayName} Superheated Zone active for {duration:0.#}s.";
@@ -596,7 +596,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 23;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
             seinSuperheatedZoneCooldownRemaining = GetSeinCooldown(skill, 9f, HasChoice("sein-d-trait-4") ? 0.80f : 1f);
             statusLabel = $"Superheated Zone active for {duration:0.#}s.";
             return true;
@@ -701,7 +701,7 @@ namespace Pakuri.Combat
             renderer.color = Color.white;
             renderer.sortingOrder = 25;
 
-            projectiles.Add(new ProjectileRuntime
+            AddBattlefieldProjectile(new ProjectileRuntime
             {
                 GameObject = projectileObject,
                 Transform = projectileObject.transform,
@@ -754,7 +754,7 @@ namespace Pakuri.Combat
             renderer.color = runtime.Monster.ProjectileColor.a <= 0f ? Color.white : runtime.Monster.ProjectileColor;
             renderer.sortingOrder = 25;
 
-            projectiles.Add(new ProjectileRuntime
+            AddBattlefieldProjectile(new ProjectileRuntime
             {
                 GameObject = projectileObject,
                 Transform = projectileObject.transform,
@@ -811,7 +811,7 @@ namespace Pakuri.Combat
             renderer.color = new Color(1f, 0.48f, 0.12f, 1f);
             renderer.sortingOrder = 25;
 
-            projectiles.Add(new ProjectileRuntime
+            AddBattlefieldProjectile(new ProjectileRuntime
             {
                 GameObject = projectileObject,
                 Transform = projectileObject.transform,
@@ -868,7 +868,7 @@ namespace Pakuri.Combat
             renderer.color = new Color(1f, 0.48f, 0.12f, 1f);
             renderer.sortingOrder = 25;
 
-            projectiles.Add(new ProjectileRuntime
+            AddBattlefieldProjectile(new ProjectileRuntime
             {
                 GameObject = projectileObject,
                 Transform = projectileObject.transform,
@@ -942,7 +942,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 24;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
             for (var i = 0; i < enemies.Count; i++)
             {
                 var enemy = enemies[i];
@@ -993,7 +993,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 24;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
             statusLabel = $"Flame Trajectory impacts {enemy.DisplayName}; explosion in {delay:0.#}s.";
             return true;
         }
@@ -1094,7 +1094,7 @@ namespace Pakuri.Combat
                     fallingResidual.Renderer.sortingOrder = 22;
                 }
 
-                skillEffects.Add(fallingResidual);
+                AddBattlefieldSkillEffect(fallingResidual);
                 return;
             }
 
@@ -1111,7 +1111,7 @@ namespace Pakuri.Combat
                 residual.Renderer.sortingOrder = 22;
             }
 
-            skillEffects.Add(residual);
+            AddBattlefieldSkillEffect(residual);
         }
 
         private void ApplySeinLineDamage(Vector3 start, Vector3 end, float baseDamage, float width, string skillId)
@@ -1133,7 +1133,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 24;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
             for (var i = 0; i < enemies.Count; i++)
             {
                 var enemy = enemies[i];
@@ -1165,7 +1165,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 25;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
         }
 
         private EnemyRuntime FindNearestSeinDoomsdayTarget(Vector3 skyOrigin, System.Collections.Generic.HashSet<EnemyRuntime> excluded)
@@ -1218,7 +1218,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 25;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
         }
 
         private void CreateSeinDoomsdayAshZones(System.Collections.Generic.IEnumerable<EnemyRuntime> targets, GameObject effectPrefab = null)
@@ -1250,7 +1250,7 @@ namespace Pakuri.Combat
                     effect.Renderer.sortingOrder = 22;
                 }
 
-                skillEffects.Add(effect);
+                AddBattlefieldSkillEffect(effect);
                 created += 1;
             }
         }
@@ -1285,7 +1285,7 @@ namespace Pakuri.Combat
                     effect.Renderer.sortingOrder = 22;
                 }
 
-                skillEffects.Add(effect);
+                AddBattlefieldSkillEffect(effect);
                 created += 1;
             }
         }

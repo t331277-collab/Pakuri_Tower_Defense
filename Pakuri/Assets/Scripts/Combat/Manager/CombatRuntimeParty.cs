@@ -24,10 +24,6 @@ namespace Pakuri.Combat
             public float AttackCooldownRemaining;
         }
 
-        private readonly List<CombatUnitRuntime> manifestedMonsters = new List<CombatUnitRuntime>();
-        private readonly List<ManifestedDroneRuntime> manifestedDrones = new List<ManifestedDroneRuntime>();
-        private readonly Transform[] manifestedMonsterSlots = new Transform[MaxManifestedPartyMonsterCount];
-
         private static readonly string[] ManifestedMonsterSlotNames =
         {
             "2PMonster",
@@ -36,7 +32,7 @@ namespace Pakuri.Combat
             "5PMonster"
         };
 
-        public int PartyMonsterCount => 1 + manifestedMonsters.Count;
+        public int PartyMonsterCount => 1 + manifestedParty.MonsterCount;
 
         private void ConfigureSelectedUnitRuntime(RunSession session)
         {
@@ -161,7 +157,7 @@ namespace Pakuri.Combat
                     continue;
                 }
 
-                manifestedMonsters.Add(CreateCombatUnitRuntime(monster, session.EnsurePartyMemberState(monster), added));
+                manifestedParty.AddMonster(CreateCombatUnitRuntime(monster, session.EnsurePartyMemberState(monster), added));
                 added += 1;
             }
         }
@@ -556,31 +552,35 @@ namespace Pakuri.Combat
 
         private void UpdateManifestedMonsterPartyCombat()
         {
-            if (manifestedMonsters.Count == 0 || battleResolved)
+            manifestedParty.TickCombat(this, Time.deltaTime, battleResolved);
+        }
+
+        private bool CanTickManifestedPartyUnit(CombatUnitRuntime runtime)
+        {
+            return runtime != null
+                && runtime.Transform != null
+                && runtime.Monster != null
+                && runtime.CurrentHealth > 0f;
+        }
+
+        private void SyncManifestedPartyUnitSkills(CombatUnitRuntime runtime)
+        {
+            SyncManifestedLearnedSkills(runtime);
+        }
+
+        private void TickManifestedPartyUnitCombat(CombatUnitRuntime runtime, float elapsed)
+        {
+            if (runtime.Skills.Count == 0)
             {
                 return;
             }
 
-            UpdateManifestedDrones();
+            runtime.TickManifestedCombat(elapsed);
+        }
 
-            for (var i = 0; i < manifestedMonsters.Count; i++)
-            {
-                var runtime = manifestedMonsters[i];
-                if (runtime == null || runtime.Transform == null || runtime.Monster == null || runtime.CurrentHealth <= 0f)
-                {
-                    continue;
-                }
-
-                SyncManifestedLearnedSkills(runtime);
-                if (runtime.Skills.Count == 0)
-                {
-                    UpdateManifestedMonsterLabel(runtime);
-                    continue;
-                }
-
-                runtime.TickManifestedCombat(Time.deltaTime);
-                UpdateManifestedMonsterLabel(runtime);
-            }
+        private void UpdateManifestedPartyUnitView(CombatUnitRuntime runtime)
+        {
+            UpdateManifestedMonsterLabel(runtime);
         }
 
         private EnemyRuntime FindNearestManifestedMonsterTarget(Vector3 origin)
@@ -847,7 +847,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 24;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
 
             var hitCount = 0;
             var appliedTotal = 0f;
@@ -1005,7 +1005,7 @@ namespace Pakuri.Combat
             renderer.color = runtime.Monster.ProjectileColor.a <= 0f ? Color.white : runtime.Monster.ProjectileColor;
             renderer.sortingOrder = 24;
 
-            projectiles.Add(new ProjectileRuntime
+            AddBattlefieldProjectile(new ProjectileRuntime
             {
                 GameObject = projectileObject,
                 Transform = projectileObject.transform,
@@ -1154,7 +1154,7 @@ namespace Pakuri.Combat
             effect.TickInterval = 0.5f;
             effect.TickRemaining = 0f;
             effect.Radius = radius;
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
             statusLabel = $"{runtime.Monster.DisplayName} {skill.DisplayName} field active.";
         }
 
@@ -1309,7 +1309,7 @@ namespace Pakuri.Combat
             effect.FreezeDuration = HasManifestedChoice(runtime, "eve-c-trait-5")
                 ? 1.0f + GetManifestedEveFreezeDurationBonus(runtime)
                 : 0f;
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
 
             statusLabel = $"{runtime.Monster.DisplayName} {skill.DisplayName} frost field deployed.";
         }
@@ -2160,7 +2160,7 @@ namespace Pakuri.Combat
                 }
             }
 
-            manifestedMonsters.Clear();
+            manifestedParty.ClearMonsters();
             CacheManifestedMonsterSlots();
             for (var i = 0; i < manifestedMonsterSlots.Length; i++)
             {

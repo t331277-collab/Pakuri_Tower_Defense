@@ -3,6 +3,51 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-12 MON Detail Board Compaction
+
+### Task title
+
+Compact `boards/MON/*.md` files under the active-board cleanup rule.
+
+### Goals
+
+- Apply the active board cleanup pattern to every markdown file under `boards/MON/`.
+- Keep only each MON file's latest dated task blocks in the active file.
+- Preserve older or undated MON task blocks under `boards/ARCHIVE/`.
+- Fix the previously observed MON task block structure problem by removing malformed or older blocks from active files while preserving them in archive.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested file restructuring.
+- Preserve all moved task history under `boards/ARCHIVE/`.
+- Do not run Unity Play Mode.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified.
+
+### Next Actions
+
+- Future MON work should read `boards/MON/MON_BLACKBOARD.md` and only the relevant active monster file selected by `MDTREE.md`.
+- Older MON task history is available in `boards/ARCHIVE/MON_DETAIL_ARCHIVE_2026-05-12.md`.
+
+### Evidence
+
+- Before compaction, `Get-ChildItem -Force -File -LiteralPath boards\MON` listed `ARIEL_MONSTER.md`, `EVE_MONSTER.md`, `MON_BLACKBOARD.md`, `RIN_MONSTER.md`, `SEIN_MONSTER.md`, and `VEGA_MONSTER.md`.
+- Before compaction, line/task counts were `ARIEL_MONSTER.md` 292 lines / 8 task blocks, `EVE_MONSTER.md` 631 lines / 13 task headings, `MON_BLACKBOARD.md` 111 lines / 4 task blocks, `RIN_MONSTER.md` 360 lines / 11 task blocks, `SEIN_MONSTER.md` 254 lines / 8 task blocks, and `VEGA_MONSTER.md` 248 lines / 8 task blocks.
+- Compaction kept latest dated task blocks by file: `ARIEL_MONSTER.md` kept two `2026-05-10` blocks, `EVE_MONSTER.md` kept one `2026-05-10` block, `MON_BLACKBOARD.md` kept four `2026-05-10` blocks, `RIN_MONSTER.md` kept four `2026-05-08` blocks, `SEIN_MONSTER.md` kept one `2026-05-09` block, and `VEGA_MONSTER.md` kept one `2026-05-10` block.
+- Moved 39 older or undated MON task blocks to `boards/ARCHIVE/MON_DETAIL_ARCHIVE_2026-05-12.md`.
+- Added archive notes to every active `boards/MON/*.md` file pointing to `boards/ARCHIVE/MON_DETAIL_ARCHIVE_2026-05-12.md`.
+
+### History
+
+- 2026-05-12: User asked to clean `C:\TowerDefence_Pakuri\Test\boards\MON` markdown files so they follow the `BLACKBOARD.md` cleanup rules.
+
 ## Task: 2026-05-12 Role Folder Move
 
 ### Task title

@@ -4,6 +4,47 @@
 - This file keeps only task blocks dated `2026-05-10` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Battlefield Facade Skill Effect Registration
+
+### Task title
+
+Route skill-effect registration through the Phase 1 battlefield facade.
+
+### Goals
+
+- Replace direct battlefield `skillEffects.Add(...)` registration writes with facade calls.
+- Preserve existing effect timers, status application, visual duration, and tick behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by build and Unity-MCP console checks.
+
+### Next Actions
+
+- Future Phase 3 can move effect ticking/lifetime ownership behind the facade.
+- Future Phase 7 can migrate transferable status/shield effects into common temporary-effect APIs.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Battlefield/CombatRuntimeBattlefield.cs:32` through `:35` adds `AddBattlefieldSkillEffect(...)`.
+- `Select-String` after implementation found skill-effect registration calls routed through `AddBattlefieldSkillEffect(...)` in party and monster skill files.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP console warning/error read after script import/refresh returned only MCP-FOR-UNITY client handler logs.
+
+### History
+
+- 2026-05-13: Code Builder implemented Phase 1 battlefield facade boundary and routed skill-effect registration writes through it.
+
 ## Task: 2026-05-10 Ariel Selected Shield Expiry Status Fix
 
 ### Task title

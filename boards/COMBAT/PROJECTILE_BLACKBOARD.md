@@ -4,6 +4,47 @@
 - This file keeps only task blocks dated `2026-05-10` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/COMBAT/PROJECTILE_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Battlefield Facade Projectile Registration
+
+### Task title
+
+Route projectile registration through the Phase 1 battlefield facade.
+
+### Goals
+
+- Replace direct battlefield `projectiles.Add(...)` registration writes with facade calls.
+- Preserve projectile update, hit, cleanup, lifetime, and damage behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by build and Unity-MCP console checks.
+
+### Next Actions
+
+- User verifies projectile behavior in Play Mode if needed.
+- Future Phase 3 can move projectile ticking/lifetime ownership behind the facade.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Battlefield/CombatRuntimeBattlefield.cs:27` through `:30` adds `AddBattlefieldProjectile(...)`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:633` now registers the default selected projectile through `AddBattlefieldProjectile(projectile)`.
+- `Select-String` found projectile facade calls in enemy, party, Ariel, Eve, Rin, Sein, and Vega projectile spawn paths.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Code Builder implemented Phase 1 battlefield facade boundary and routed projectile registration writes through it.
+
 ## Task: 2026-05-10 Ariel Unit Projectile Runtime
 
 ### Task title

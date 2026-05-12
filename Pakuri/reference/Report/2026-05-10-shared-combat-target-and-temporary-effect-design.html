@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shared Combat Target And Temporary Effect Design</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f2eb;
+      --paper: #fffdf9;
+      --ink: #22211d;
+      --muted: #685f52;
+      --line: #ddd5c7;
+      --accent: #185a7a;
+      --accent-soft: #e8f2f7;
+      --good: #1d5f3a;
+      --good-soft: #e7f4eb;
+      --warn: #9a5200;
+      --warn-soft: #fff1df;
+      --bad: #8b2222;
+      --bad-soft: #fdeaea;
+      --code: #f3efe7;
+      --shadow: 0 20px 48px rgba(31, 24, 16, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(24, 90, 122, 0.08), transparent 28%),
+        linear-gradient(180deg, #efe8da 0%, var(--bg) 18%, #f8f5ef 100%);
+      color: var(--ink);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.72;
+    }
+    main {
+      width: min(1180px, calc(100% - 40px));
+      margin: 30px auto 60px;
+    }
+    .hero, section, .appendix {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+    .hero { padding: 42px; margin-bottom: 24px; }
+    section, .appendix { padding: 30px 32px; margin-bottom: 20px; }
+    h1, h2, h3 { margin: 0; line-height: 1.28; }
+    h1 { font-size: 34px; margin-bottom: 12px; }
+    h2 { font-size: 24px; margin-bottom: 16px; }
+    h3 { font-size: 18px; margin: 22px 0 10px; }
+    p { margin: 0 0 12px; }
+    ul, ol { margin: 0 0 12px 22px; padding: 0; }
+    li { margin-bottom: 8px; }
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      background: var(--code);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: 0.96em;
+    }
+    pre code {
+      display: block;
+      padding: 16px;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+    .summary {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 920px;
+    }
+    .callout {
+      border: 1px solid var(--line);
+      border-left: 6px solid var(--accent);
+      background: #fbfaf7;
+      border-radius: 16px;
+      padding: 16px 18px;
+      margin: 16px 0;
+    }
+    .good { border-left-color: var(--good); background: var(--good-soft); }
+    .warn { border-left-color: var(--warn); background: var(--warn-soft); }
+    .bad { border-left-color: var(--bad); background: var(--bad-soft); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      background: #fffdfa;
+    }
+    .step {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px 18px 14px;
+      margin-bottom: 14px;
+      background: #fffdfa;
+    }
+    .step-number {
+      display: inline-block;
+      min-width: 34px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .evidence-list li { margin-bottom: 10px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 15px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #f4efe7; font-weight: 700; }
+    .mono { font-family: Consolas, "Courier New", monospace; font-size: 0.95em; }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .hero, section, .appendix { padding: 24px 20px; }
+      main { width: min(100%, calc(100% - 20px)); margin: 18px auto 40px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <article class="hero">
+      <div class="eyebrow">Designer Report · 2026-05-10</div>
+      <h1>공통 전투 대상 모델과 재사용 가능한 임시효과 설계안</h1>
+      <p class="summary">
+        현재 전투 코드는 선택 아군, 소환 아군, 적군이 서로 다른 상태 저장소를 사용한다.
+        그 결과 같은 의미의 임시효과를 양쪽에 공통 적용하기 어렵고, 구현이 누적될수록 아군용과 적군용 작업이 다시 분기된다.
+        이 문서는 inspected code 기준으로 왜 공통 전투 대상 모델이 필요한지, 왜 임시효과를 재사용 가능하게 만들어야 하는지, 그리고 현재 코드를 무리 없이 옮기는 단계별 방법이 무엇인지 정리한다.
+      </p>
+    </article>
+
+    <section>
+      <h2>1. 왜 공통 전투 대상 모델이 필요한가</h2>
+      <div class="callout bad">
+        현재 구조의 핵심 문제는 임시효과가 전투 대상에 붙는 것이 아니라, 전투 대상마다 다른 필드 집합에 흩어져 저장된다는 점이다.
+      </div>
+      <div class="grid">
+        <div class="card">
+          <h3>선택 아군</h3>
+          <p>선택 아군 상태는 <code>CombatUnitRuntime</code>에 완전히 수렴하지 않았다. 실제 HP, 기본 공격력, 주문력, 방어, 보호막의 일부가 아직도 <code>CombatRuntimeController</code> 필드에 있다.</p>
+          <ul class="evidence-list">
+            <li><code>CombatRuntimeController.cs:326-378</code>가 <code>unitCurrentHealth</code>, <code>selectedMonsterDefenses</code>, <code>unitMaxHealthConfigured</code>, <code>powerStatConfigured</code>, <code>baseDamageConfigured</code>를 소유한다.</li>
+            <li><code>CombatRuntimeParty.cs:72-79</code>는 위 컨트롤러 필드를 다시 <code>selectedUnitRuntime</code>로 미러링한다.</li>
+            <li><code>CombatRuntimeArielSkills.cs:21-28</code>은 선택 아군 전용 축복/성역/보호막 타이머를 컨트롤러 partial 필드로 별도 유지한다.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>소환 아군</h3>
+          <p>소환 아군은 <code>CombatUnitRuntime</code>를 사용하지만, 선택 아군과 같은 의미의 효과를 항상 같은 경로로 처리하지 않는다.</p>
+          <ul class="evidence-list">
+            <li><code>CombatUnitRuntime.cs:25-46</code>가 <code>ShieldValue</code>, <code>ArielBlessingTimer</code>, <code>VegaExterminationPermitTimer</code>, <code>RinHowlingTimer</code> 같은 필드를 가진다.</li>
+            <li><code>CombatUnitRuntime.cs:152-190</code>이 위 타이머를 자체 감소시킨다.</li>
+            <li><code>CombatRuntimeArielSkills.cs:856-922</code>는 선택 아군과 소환 아군 보호막을 각각 다른 필드 세트에 기록한다.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>적군</h3>
+          <p>적은 <code>CombatUnitRuntime</code>가 아니라 <code>EnemyRuntime</code>라는 private nested class로 관리된다. 즉 아군과 같은 런타임 타입 계층 자체가 없다.</p>
+          <ul class="evidence-list">
+            <li><code>CombatRuntimeController.cs:28-94</code>가 <code>EnemyRuntime</code>를 정의한다.</li>
+            <li><code>EnemyRuntime</code>는 <code>DamageTakenMultiplier</code>, <code>AttackBuffMultiplier</code>, <code>MoveSpeedBuffMultiplier</code>, <code>ShockTimer</code>, <code>ChillTimer</code>, <code>FreezeTimer</code>, <code>VulnerableStacks</code>를 직접 가진다.</li>
+            <li><code>CombatRuntimeEnemies.cs:725-766</code>은 적 전용 타이머 감소와 만료 복구를 수행한다.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>결과</h3>
+          <p>같은 의미의 “임시 전투 효과”가 이미 세 갈래 저장소에 분산돼 있다. 이 상태에서는 효과를 추가할 때마다 “선택 아군용”, “소환 아군용”, “적군용”을 따로 생각하게 된다.</p>
+          <ul class="evidence-list">
+            <li><code>CombatRuntimeArielSkills.cs:1266-1279</code>는 선택 Ariel 전용 행동속도 계산을 별도 함수로 둔다.</li>
+            <li><code>CombatRuntimeVegaSkills.cs:1329-1331</code>는 소환 Vega 전용 행동속도 계산을 별도 함수로 둔다.</li>
+            <li><code>CombatRuntimeEnemies.cs:1197-1200</code>는 적군의 이동/공격 버프를 또 다른 방식으로 기록한다.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. 왜 임시효과를 재사용 가능하게 만들어야 하는가</h2>
+      <div class="callout good">
+        영구 성장치와 전투 중 임시효과는 다르다. 이 문서의 대상은 <code>"3초간 공격속도 20% 증가"</code>처럼 수명과 적용 대상을 갖는 전투 중 효과다.
+      </div>
+      <h3>2-1. 지금은 같은 효과를 한 번 만들어 두 번 쓰기 어렵다</h3>
+      <p>현재 선택 아군의 행동속도는 <code>GetSelectedMonsterActionSpeedMultiplier()</code>와 각 몬스터별 selected 함수에서 읽고, 소환 아군은 각 <code>Get...UnitActionSpeedMultiplier(runtime)</code>에서 읽으며, 적은 공통 행동속도 축이 아예 없다.</p>
+      <ul class="evidence-list">
+        <li><code>CombatRuntimeProjectiles.cs:516-529</code>는 선택 아군 사격/재장전에 <code>GetSelectedMonsterActionSpeedMultiplier()</code>를 사용한다.</li>
+        <li><code>CombatRuntimeArielSkills.cs:1580-1584</code>, <code>CombatRuntimeVegaSkills.cs:1329-1331</code>, <code>CombatRuntimeRinSkills.cs:1848-1852</code>는 소환 아군용 별도 action speed 함수를 둔다.</li>
+        <li><code>CombatRuntimeEnemies.cs:744</code>는 적의 <code>ActiveCooldownRemaining</code>을 그냥 <code>Time.deltaTime</code>로 줄인다. 적용 가능한 공용 행동속도 계수가 아직 없다.</li>
+      </ul>
+      <h3>2-2. 지금은 공통 버프 객체가 아니라 직접 필드 수정이다</h3>
+      <p>현재 효과는 대부분 스킬 함수가 대상 필드를 직접 수정하고, 별도 업데이트 루프가 타이머를 감소시키는 구조다. 이 방식은 단기 구현에는 빠르지만, 같은 효과를 양쪽에 공유하기 어렵다.</p>
+      <ul class="evidence-list">
+        <li><code>CombatRuntimeArielSkills.cs:824-922</code>가 보호막을 selected/controller 필드와 manifested runtime 필드에 직접 쓴다.</li>
+        <li><code>CombatRuntimeEnemies.cs:1165-1200</code>가 적 보호막/공격 버프/이동 버프를 적 필드에 직접 쓴다.</li>
+        <li><code>CombatRuntimeEveSkills.cs:1465-1495</code>가 감전/추위/취약을 <code>EnemyRuntime</code> 필드에 직접 쓴다.</li>
+      </ul>
+      <h3>2-3. 재사용 가능 구조의 이점</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>이점</th>
+            <th>현재 구조의 문제</th>
+            <th>공용 임시효과 구조에서 얻는 것</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>확장성</td><td>효과 추가 때마다 대상별 분기 구현이 필요하다.</td><td>효과 정의 1개 + 적용 대상 선택만으로 재사용 가능하다.</td></tr>
+          <tr><td>일관성</td><td>선택 아군, 소환 아군, 적군의 만료/중첩 규칙이 코드 위치마다 흩어진다.</td><td>만료, 중첩, 갱신 규칙을 공용 효과 레이어에서 통일할 수 있다.</td></tr>
+          <tr><td>디버깅</td><td>왜 속도가 빨라졌는지 한 눈에 보이지 않는다.</td><td>대상의 active effects 목록만 보면 원인을 추적할 수 있다.</td></tr>
+          <tr><td>양산성</td><td>비슷한 효과가 몬스터별 helper로 계속 복제된다.</td><td>공용 effect spec만 추가하고 데이터만 바꾸는 방향으로 이동할 수 있다.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>3. 어떻게 만들 수 있는가</h2>
+      <div class="callout warn">
+        아래 순서는 “처음부터 전부 갈아엎는” 방식이 아니라, 현재 코드를 유지하면서 공통 모델로 점진 이동하는 순서다. 특히 선택 아군의 controller-owned 상태를 먼저 공통 모델로 끌어내리는 것이 핵심이다.
+      </div>
+
+      <div class="step">
+        <div class="step-number">Step 0</div>
+        <h3>범위를 분리한다</h3>
+        <p>먼저 영구 성장치와 전투 중 임시효과를 분리한다. 현재 세션/보상 누적치인 <code>DamageMultiplier</code>, <code>MaxHealthBonus</code>, <code>StatusChanceBonus</code>는 계속 <code>RunSession</code> 계층에 남긴다.</p>
+        <ul class="evidence-list">
+          <li><code>RunSession.cs:344-386</code>는 세션/파티 멤버 누적 보상치를 관리한다.</li>
+          <li><code>CombatRuntimeScene.cs:227-232</code>는 전투 시작 시 그 누적치를 현재 전투 설정에 반영한다.</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Step 1</div>
+        <h3>공통 전투 대상 모델을 순수 런타임 객체로 정의한다</h3>
+<pre><code>proposed class CombatTargetModel
+{
+    string Id;
+    CombatTargetSide Side;
+    CombatTargetRole Role;
+    CombatStatBlock BaseStats;
+    AttributeDefenseSet BaseDefenses;
+    CombatResourceState Resources;
+    CombatModifierState Modifiers;
+    List&lt;TemporaryEffectInstance&gt; ActiveEffects;
+}</code></pre>
+        <p>이 모델은 <code>MonoBehaviour</code>일 필요가 없다. 현재 적도 <code>MonoBehaviour</code>가 아니므로, pure runtime model이 양쪽을 묶기 쉽다.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Step 2</div>
+        <h3>현재 세 가지 저장소를 공통 모델에 연결한다</h3>
+        <ol>
+          <li>선택 아군용 <code>CombatTargetModel selectedTarget</code>를 추가한다.</li>
+          <li><code>unitCurrentHealth</code>, <code>unitMaxHealthConfigured</code>, <code>selectedMonsterDefenses</code>, <code>unitShieldValue</code> 같은 값을 이 모델에 복제한다.</li>
+          <li><code>selectedUnitRuntime</code>는 시각/씬 표현체로만 남기고, 전투 상태의 owner는 점차 <code>selectedTarget</code>로 옮긴다.</li>
+          <li>소환 아군은 <code>CombatUnitRuntime</code> 내부에 <code>CombatTargetModel Target</code> 참조를 추가한다.</li>
+          <li>적은 <code>EnemyRuntime</code> 내부에 <code>CombatTargetModel Target</code> 참조를 추가한다.</li>
+        </ol>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Step 3</div>
+        <h3>공통 전투 중 스탯 채널을 정한다</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>채널</th>
+              <th>현재 사용 근거</th>
+              <th>양측 공통화 이유</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>ActionSpeedMultiplier</code></td><td>선택/소환 아군에 이미 존재, 적은 없음</td><td><code>"3초간 공격속도 20% 증가"</code>의 대표 채널</td></tr>
+            <tr><td><code>MoveSpeedMultiplier</code></td><td>적은 <code>MoveSpeedBuffMultiplier</code>, 느려짐/빙결도 존재</td><td>양측 공통 이동 버프/디버프 채널</td></tr>
+            <tr><td><code>DamageDealtMultiplier</code></td><td>적은 <code>DamageMultiplier</code>, 아군은 스킬별 보정 다수</td><td>공통 피해 증가 계층 필요</td></tr>
+            <tr><td><code>DamageTakenMultiplier</code></td><td>적은 이미 존재</td><td>피해감소/취약 같은 효과의 공통 채널</td></tr>
+            <tr><td><code>ShieldPool</code></td><td>양측 모두 보호막 수치 존재</td><td>별도 시스템 분리 후보</td></tr>
+            <tr><td><code>StatusApplicationChance</code></td><td>아군 투사체/효과가 사용</td><td>공통 상태이상 확률 버프용</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Step 4</div>
+        <h3>임시효과 객체를 만든다</h3>
+<pre><code>proposed class TemporaryEffectInstance
+{
+    string EffectId;
+    string SourceId;
+    float RemainingDuration;
+    StackingPolicy Stacking;
+    List&lt;StatModifier&gt; Modifiers;
+    List&lt;EffectTag&gt; Tags;
+}</code></pre>
+<pre><code>proposed class StatModifier
+{
+    CombatStatChannel Channel;
+    ModifierOperation Operation;
+    float Value;
+}</code></pre>
+        <p><code>"3초간 공격속도 20% 증가"</code>는 <code>RemainingDuration = 3f</code>, <code>Channel = ActionSpeedMultiplier</code>, <code>Operation = Multiply</code>, <code>Value = 1.2f</code>로 표현된다.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Step 5</div>
+        <h3>버프 적용 API를 공통화한다</h3>
+        <ol>
+          <li><code>ApplyTemporaryEffect(CombatTargetModel target, TemporaryEffectInstance effect)</code></li>
+          <li>필요한 경우에만 별도 시스템 트리거: 예를 들어 <code>GrantShield(target, amount, duration)</code></li>
+        </ol>
+        <p>즉 “효과가 단독으로 끝나는 경우”와 “효과가 다른 시스템을 깨우는 경우”를 동시에 지원한다. shield 분리 방향은 여기서 자연스럽게 들어간다.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Step 6</div>
+        <h3>Shield는 공통 시스템으로 따로 뺀다</h3>
+        <ul class="evidence-list">
+          <li><code>CombatRuntimeProjectiles.cs:427-490</code>는 선택/소환 아군 피해 흡수 로직을 별도로 가진다.</li>
+          <li><code>CombatRuntimeProjectiles.cs:399-425</code>는 적 보호막 흡수 로직을 또 별도로 가진다.</li>
+          <li><code>CombatRuntimeArielSkills.cs:924-984</code>는 Ariel 계열 보호막 흡수 후속 로직을 가진다.</li>
+        </ul>
+        <p>첫 단계에서는 <code>CombatTargetModel.Resources.Shield</code>만 공통화하고, 이후 필요 시 shield stack, source, reactive hooks를 확장한다.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Step 7</div>
+        <h3>읽기 지점을 공통 채널로 바꾼다</h3>
+        <ol>
+          <li>선택 아군: <code>CombatRuntimeProjectiles.cs:516-529</code>의 action speed 계산을 <code>selectedTarget.Modifiers.ActionSpeedMultiplier</code>로 교체한다.</li>
+          <li>소환 아군: <code>Get...UnitActionSpeedMultiplier(runtime)</code> 계열을 공통 modifier read + 캐릭터 고유 보정으로 분리한다.</li>
+          <li>적군: <code>ActiveCooldownRemaining</code>, 이동, 공격 계산에 공통 modifier를 읽게 만든다.</li>
+        </ol>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Step 8</div>
+        <h3>첫 마이그레이션 대상은 공통성이 높은 효과부터 고른다</h3>
+        <ol>
+          <li><strong>3초 공격속도 증가</strong></li>
+          <li><strong>이동속도 증가/감소</strong></li>
+          <li><strong>피해량 증가 / 받는 피해 증가</strong></li>
+          <li><strong>보호막</strong></li>
+        </ol>
+        <p>반대로 감전/빙결/신성노출/이름표식처럼 후속 로직이 많은 상태는 1차 공통화 뒤에 옮기는 것이 안전하다.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Step 9</div>
+        <h3>기존 개별 필드를 제거하는 기준을 정한다</h3>
+        <ul>
+          <li>선택 아군, 소환 아군, 적군 모두가 공통 채널을 통해 값을 읽는다.</li>
+          <li>효과 적용, 갱신, 만료, 스택 규칙이 공통 effect layer에서 재현된다.</li>
+          <li>기존 스킬 helper는 effect 생성기 역할만 남고, 대상 필드를 직접 수정하지 않는다.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. 이 설계를 현재 코드에 맞게 적용할 때의 권장 순서</h2>
+      <ol>
+        <li>선택 아군의 상태 owner를 점진적으로 <code>CombatRuntimeController</code> 필드에서 <code>selectedTarget</code>으로 옮긴다.</li>
+        <li>소환 아군 <code>CombatUnitRuntime</code>에 <code>CombatTargetModel</code> 참조를 붙인다.</li>
+        <li><code>EnemyRuntime</code>에 <code>CombatTargetModel</code> 참조를 붙인다.</li>
+        <li>공통 modifier aggregator를 만든다.</li>
+        <li><code>ActionSpeedMultiplier</code> 임시효과 하나를 양측 공통 효과로 먼저 이관한다.</li>
+        <li><code>MoveSpeedMultiplier</code>, <code>DamageTakenMultiplier</code>, <code>DamageDealtMultiplier</code>를 같은 방식으로 이관한다.</li>
+        <li>Shield subsystem을 분리한다.</li>
+        <li>상태이상 계열을 마지막에 옮긴다.</li>
+      </ol>
+      <div class="callout good">
+        이 순서를 따르면 “현재 전투를 깨지 않고 공통 임시효과 계층을 먼저 세운 뒤, 개별 스킬 로직을 점진 이동”하는 방식으로 갈 수 있다.
+      </div>
+    </section>
+
+    <section>
+      <h2>5. 최종 판단</h2>
+      <p>현재 inspected code 기준으로, 공통 전투 대상 모델과 재사용 가능한 임시효과 구조는 <strong>필요하다</strong>. 그리고 그것은 <strong>현재 코드 위에서 단계적으로 만들 수 있다</strong>.</p>
+      <p>다만 지금 구조를 보면 바로 “버프 객체를 넣는다”보다 먼저 해야 할 일은 <strong>선택 아군 / 소환 아군 / 적군의 전투 중 상태를 한 레이어에서 읽을 수 있게 만드는 것</strong>이다. 그 공통 대상 모델이 생긴 뒤에야 <code>"3초간 공격속도 20% 증가"</code> 같은 임시효과를 한 번 구현해 양쪽에 안전하게 재사용할 수 있다.</p>
+    </section>
+
+    <aside class="appendix">
+      <h2>Appendix A. 주요 inspected evidence</h2>
+      <ul class="evidence-list">
+        <li><span class="mono">Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:28-94</span> `EnemyRuntime` 상태 필드</li>
+        <li><span class="mono">Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:326-378</span> 선택 아군 controller-owned 상태</li>
+        <li><span class="mono">Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs:25-46</span> 소환 아군 임시효과 상태 필드</li>
+        <li><span class="mono">Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs:152-190</span> 소환 아군 타이머 감소/만료</li>
+        <li><span class="mono">Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeArielSkills.cs:21-28</span> 선택 Ariel 전용 임시효과 필드</li>
+        <li><span class="mono">Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeArielSkills.cs:824-922</span> selected/manifested 보호막 직접 기록</li>
+        <li><span class="mono">Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeVegaSkills.cs:34-36, 521-540</span> Vega action speed / attack bonus 직접 기록</li>
+        <li><span class="mono">Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1465-1495</span> 적 전용 감전/추위/취약 적용</li>
+        <li><span class="mono">Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeEnemies.cs:725-766</span> 적 타이머 감소/만료</li>
+        <li><span class="mono">Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeEnemies.cs:982-1007</span> 적 액티브 스킬의 피해감소 적용</li>
+        <li><span class="mono">Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeEnemies.cs:1165-1200</span> 적 보호막/공격/이동 버프 직접 적용</li>
+        <li><span class="mono">Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:516-529</span> 선택 아군 action speed 소비 지점</li>
+        <li><span class="mono">Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:1737-1822</span> 소환 아군 재장전/발사 간격/상태 확률 소비 지점</li>
+        <li><span class="mono">Pakuri/Assets/Scripts/Run/Session/RunSession.cs:344-386</span> 세션 영구 성장치 누적 경로</li>
+      </ul>
+    </aside>
+  </main>
+</body>
+</html>

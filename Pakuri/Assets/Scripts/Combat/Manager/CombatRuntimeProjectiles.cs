@@ -630,7 +630,7 @@ namespace Pakuri.Combat
                 Attribute = selectedDamageAttribute
             };
 
-            projectiles.Add(projectile);
+            AddBattlefieldProjectile(projectile);
             currentShotsRemaining -= 1;
             shotCooldown = shotIntervalConfigured;
             if (currentShotsRemaining <= 0)

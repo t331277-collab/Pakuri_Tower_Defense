@@ -280,7 +280,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 24;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
             skillRuntime.CooldownDuration = GetRinCooldown(skill, 12f, HasRinUnitChoice(runtime, "rin-b-trait-3") ? 0.80f : 1f);
             skillRuntime.CooldownRemaining = skillRuntime.CooldownDuration;
             if (IsSelectedCombatUnit(runtime))
@@ -511,7 +511,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 24;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
             skillRuntime.CooldownDuration = GetRinCooldown(skill, 8f, HasRinUnitChoice(runtime, "rin-e-trait-3") ? 0.80f : 1f);
             skillRuntime.CooldownRemaining = skillRuntime.CooldownDuration;
             if (IsSelectedCombatUnit(runtime))
@@ -572,7 +572,7 @@ namespace Pakuri.Combat
 
             var range = skill.Range > 0f ? skill.Range : 7.5f;
             var lifetime = range / RinShatteringFistProjectileSpeed;
-            projectiles.Add(new ProjectileRuntime
+            AddBattlefieldProjectile(new ProjectileRuntime
             {
                 GameObject = projectileObject,
                 Transform = projectileObject.transform,
@@ -632,7 +632,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 24;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
             statusLabel = $"Howling active for {duration:0.#}s.";
             return true;
         }
@@ -701,7 +701,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 24;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
 
             var hitCount = 0;
             var damage = GetRinSkillBaseDamage(skill) * damageMultiplier;
@@ -906,7 +906,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 24;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
             rinCollapseStrikeCooldownRemaining = GetRinCooldown(skill, 8f, HasChoice("rin-e-trait-3") ? 0.80f : 1f);
             statusLabel = $"Collapse Strike hit {hitCount} enemy(s).";
             return hitCount > 0;
@@ -1237,7 +1237,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 27;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
 
             var popupText = lightningDamage > 0f
                 ? $"{FormatDamagePopupTerm(physicalDamage, DamageAttribute.Physical)} + {FormatDamagePopupTerm(lightningDamage, DamageAttribute.Lightning)}"
@@ -1324,7 +1324,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 24;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
             var damageMultiplier = HasChoice("rin-h-trait-2") ? 0.95f : 0.75f;
             var hitCount = 0;
             var damage = GetRinSkillBaseDamage(skill) * damageMultiplier;
@@ -1392,7 +1392,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 24;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
             var damageMultiplier = HasRinUnitChoice(runtime, "rin-h-trait-2") ? 0.95f : 0.75f;
             var hitCount = 0;
             for (var i = 0; i < enemies.Count; i++)
@@ -1536,7 +1536,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 25;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
         }
 
         private EnemyRuntime FindNearestRinBranchTarget(EnemyRuntime sourceEnemy, float radius, ProjectileRuntime projectile)
@@ -1648,7 +1648,7 @@ namespace Pakuri.Combat
                 effect.Renderer.sortingOrder = 26;
             }
 
-            skillEffects.Add(effect);
+            AddBattlefieldSkillEffect(effect);
         }
 
         private void ApplyRinKnockback(EnemyRuntime enemy, Vector3 direction, float distance)
