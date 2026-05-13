@@ -4,6 +4,368 @@ This file is the Phase 0 output for the `CombatRuntimeController` structure spli
 
 It records current mutable combat-state owners before code extraction starts. No runtime C# behavior is changed by this phase.
 
+## Task: 2026-05-13 Phase 3-H Ownership Closeout
+
+### Task title
+
+Close Phase 3 combat-state ownership verification.
+
+### Goals
+
+- Record final Phase 3 ownership boundaries for projectile, skill-effect, and drone lifecycle state.
+- Confirm selected and manifested drone runtime types remain separate by design in Phase 3.
+- Identify enemy simulation state as the next ownership area.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not claim shared combat-target or temporary-effect ownership has been implemented.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed. Phase 3 ownership boundaries are recorded and Phase 4 enemy ownership is the next default split.
+
+### Next Actions
+
+- Start Phase 4 by separating enemy spawn/update/lifecycle ownership from `CombatRuntimeEnemies.cs`.
+- Defer common target and temporary-effect ownership until later planned phases.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectileSimulation.cs:7` through `:25` establishes the projectile simulation owner field, boundary, and `UpdateProjectiles()` entry.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeSkillEffectSimulation.cs:7` through `:25` establishes the skill-effect simulation owner field, boundary, and persistent-effect entry.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeDroneSimulation.cs:7` through `:35` establishes the drone simulation owner field plus selected/manifested drone update and cleanup entries.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs:8` through `:17` keeps the manifested drone runtime type separate from selected `DroneRuntime`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:28` still defines `EnemyRuntime` as a private nested class, and `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeEnemies.cs:306`, `:336`, and `:706` still own enemy spawn/update flow.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP import/refresh completed, and console read showed only MCP client connection/client-handler logs.
+
+### History
+
+- 2026-05-13: Builder closed Phase 3 ownership verification after Phase 3-A through Phase 3-G were implemented.
+
+## Task: 2026-05-13 Phase 3-G Manifested Drone Simulation Ownership Update
+
+### Task title
+
+Record manifested drone simulation boundary alignment.
+
+### Goals
+
+- Record that manifested drone lifecycle ticking now routes through the shared drone simulation boundary.
+- Preserve `ManifestedDroneRuntime` definition and deployment in the manifested party drone partial.
+- Preserve manifested party service-backed `manifestedDrones` list ownership.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not claim selected and manifested drone runtime types are unified.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented as a manifested-drone boundary alignment step.
+
+### Next Actions
+
+- Phase 3-H should close out projectile/effect/drone ownership verification and identify Phase 4 as the next default implementation phase.
+- Keep common target/effect ownership and broad monster skill reuse for later phases.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeDroneSimulation.cs:27` through `:35` owns manifested drone update/cleanup boundary entries.
+- `CombatRuntimeDroneSimulation.cs:118` through `:160` owns manifested drone ticking and projectile fire cadence.
+- `CombatRuntimeDroneSimulation.cs:162` through `:183` owns manifested drone cleanup and list removal.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs:8` through `:17` still owns the `ManifestedDroneRuntime` type.
+- `CombatRuntimeManifestedPartyDrones.cs:19` through `:49` still owns manifested Eve drone deployment and registration.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyRuntime.cs:49` still calls the same `UpdateManifestedDrones()` compatibility entry.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP import/refresh completed, and console read showed only MCP client connection/client-handler logs.
+
+### History
+
+- 2026-05-13: Code Builder implemented Phase 3-G by moving manifested drone lifecycle ticking and cleanup into the drone simulation boundary.
+
+## Task: 2026-05-13 Phase 3-F Selected Drone Simulation Ownership Update
+
+### Task title
+
+Record selected Eve drone simulation boundary ownership.
+
+### Goals
+
+- Record that selected Eve `drones` lifecycle ticking now sits behind `CombatRuntimeDroneSimulation.cs`.
+- Preserve `DroneRuntime` storage on `CombatRuntimeController` and selected Eve drone creation in `CombatRuntimeEveSkills.cs`.
+- Keep manifested drone ownership unchanged for Phase 3-G.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not claim manifested drone simulation alignment is complete.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented as a selected-drone lifecycle boundary step.
+
+### Next Actions
+
+- Phase 3-G may align manifested `ManifestedDroneRuntime` ticking behind a comparable boundary or adapter.
+- Keep common target/effect ownership and broad monster skill reuse for later phases.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeDroneSimulation.cs:22` through `:25` owns the selected drone update boundary entry point.
+- `CombatRuntimeDroneSimulation.cs:36` through `:63` owns selected `drones` lifecycle ticking and cleanup.
+- `CombatRuntimeDroneSimulation.cs:65` through `:105` owns selected drone projectile creation and battlefield projectile registration.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1171` through `:1184` still owns selected Eve drone creation and registration values.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs` was not changed in this slice, so manifested drone lifecycle remains separate.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP import/refresh completed, and console warning/error read showed only MCP client connection/client-handler logs.
+
+### History
+
+- 2026-05-13: Code Builder implemented Phase 3-F by moving selected Eve drone lifecycle ticking and projectile spawning into a drone simulation boundary.
+
+## Task: 2026-05-13 Phase 3-E Skill Effect Routing Ownership Update
+
+### Task title
+
+Record Phase 3-E skill-effect hit and expiry routing split.
+
+### Goals
+
+- Record that skill-effect shape checks, hit routing, Eve fallback effect handling, and expiry dispatch are now named helpers in the effect simulation boundary.
+- Keep monster-specific formulas in existing skill helper methods.
+- Keep `skillEffects` storage and common temporary-effect ownership unchanged.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not claim shared target or common temporary-effect ownership moved in Phase 3-E.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented as an effect-routing readability step.
+
+### Next Actions
+
+- Phase 3-F may start selected Eve drone lifecycle boundary work.
+- Keep `TemporaryEffectInstance` and common target/effect ownership for Phase 7.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeSkillEffectSimulation.cs:41` through `:56` owns skill-effect enemy validity and shape checks.
+- `CombatRuntimeSkillEffectSimulation.cs:58` through `:79` owns skill-effect hit routing order.
+- `CombatRuntimeSkillEffectSimulation.cs:99` through `:102` owns expiry routing and delegates to the narrowed Sein expiry helper.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeSeinSkills.cs:1075` now owns `TryHandleSeinSkillEffectExpired(...)`, so residual spawn formulas stayed in the Sein skill file.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeVegaSkills.cs:772` and `:1523` still own Vega effect damage and classification helpers.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP import/refresh completed, and console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-13: Code Builder implemented Phase 3-E by splitting skill-effect hit and expiry routing helpers without moving formulas into a common temporary-effect layer.
+
+## Task: 2026-05-13 Phase 3-D Skill Effect Simulation Ownership Update
+
+### Task title
+
+Record Phase 3-D skill-effect simulation boundary ownership.
+
+### Goals
+
+- Record that skill-effect lifetime/tick/removal behavior now sits behind a named simulation boundary.
+- Keep effect damage routing, shape checks, and expiry-spawn routing owned by existing callbacks until Phase 3-E.
+- Keep `skillEffects` storage on `CombatRuntimeController` for this boundary shell.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not claim common temporary-effect ownership moved in Phase 3-D.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented as a lifecycle-boundary ownership step.
+
+### Next Actions
+
+- Phase 3-E may split effect hit and expiry routing.
+- Keep `TemporaryEffectInstance` and common target/effect ownership for Phase 7.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeSkillEffectSimulation.cs:22` through `:25` owns the `UpdatePersistentSkillEffects()` boundary entry point.
+- `CombatRuntimeSkillEffectSimulation.cs:36` through `:64` owns the shared skill-effect lifetime/tick/expiry/removal loop.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1202` still owns `TickSkillEffect(...)`, so effect hit routing did not move yet.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeSeinSkills.cs:1075` still owns `TryHandleSkillEffectExpired(...)`, so expiry-spawn routing did not move yet.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP imported the new simulation script with guid `f572c8fd58d31864c8a7db4a9f131701`, and console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-13: Code Builder implemented Phase 3-D by moving skill-effect lifecycle ticking behind `CombatRuntimeSkillEffectSimulation.cs`.
+
+## Task: 2026-05-13 Phase 3-C Projectile Hit Routing Ownership Update
+
+### Task title
+
+Record Phase 3-C projectile hit routing helper split.
+
+### Goals
+
+- Record that projectile hit routing is now split into source-specific helper methods.
+- Keep damage API ownership unchanged.
+- Keep projectile list, cleanup, lifetime, and X-edge ownership behind the projectile simulation boundary from Phase 3-B.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not claim common target ownership or damage state moved in Phase 3-C.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented as a hit-routing readability step.
+
+### Next Actions
+
+- Phase 3-D may start the skill-effect simulation boundary.
+- Keep `ApplyDamageToEnemy`, `ApplyDamageToSelectedMonster`, and `ApplyDamageToManifestedUnit` in current owner until a later phase.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:31` through `:43` routes projectiles by source type to separate helper methods.
+- `CombatRuntimeProjectiles.cs:47` through `:62` handles enemy projectile routing.
+- `CombatRuntimeProjectiles.cs:64` through `:93` handles manifested projectile routing.
+- `CombatRuntimeProjectiles.cs:95` through `:175` handles selected/player projectile routing and selected enemy-hit follow-up.
+- `CombatRuntimeProjectiles.cs:394`, `:422`, and `:452` still own the three existing damage application methods.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP editor state returned `ready_for_tools=true`, and console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-13: Code Builder implemented Phase 3-C by extracting source-specific projectile hit routing helpers.
+
+## Task: 2026-05-13 Phase 3-B Projectile Cleanup Ownership Update
+
+### Task title
+
+Record Phase 3-B projectile cleanup and lifetime ownership movement.
+
+### Goals
+
+- Record that projectile cleanup and lifetime/edge-removal responsibility now sit behind the projectile simulation boundary.
+- Keep projectile hit routing, damage application, and projectile creation ownership unchanged.
+- Preserve reverse iteration and list-removal behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not claim projectile damage routing or target ownership moved in Phase 3-B.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented as a cleanup/lifetime ownership step.
+
+### Next Actions
+
+- Phase 3-C may split source-specific projectile hit routing.
+- Keep `ApplyDamageToEnemy`, `ApplyDamageToSelectedMonster`, and `ApplyDamageToManifestedUnit` in their current owner until a later phase.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectileSimulation.cs:41` through `:51` owns projectile reverse-iteration index support and lookup.
+- `CombatRuntimeProjectileSimulation.cs:53` through `:66` owns missing projectile removal.
+- `CombatRuntimeProjectileSimulation.cs:68` through `:80` owns lifetime ticking and remaining-lifetime checks.
+- `CombatRuntimeProjectileSimulation.cs:83` through `:104` owns player projectile X-edge detection.
+- `CombatRuntimeProjectileSimulation.cs:106` through `:120` owns projectile destruction and `projectiles.RemoveAt(index)`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:31` through `:154` still owns projectile hit branch order and damage/status routing calls.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP editor state returned `ready_for_tools=true`, and console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-13: Code Builder implemented Phase 3-B by moving cleanup, lifetime ticking, and X-edge checks behind the projectile simulation boundary.
+
+## Task: 2026-05-13 Phase 3-A Projectile Boundary Ownership Update
+
+### Task title
+
+Record Phase 3-A projectile simulation boundary ownership.
+
+### Goals
+
+- Record that projectile ticking now has a named simulation boundary shell.
+- Keep physical projectile list ownership and cleanup ownership unchanged until later Phase 3 slices.
+- Preserve the top-level update order from `CombatRuntimeController.Update()`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not claim projectile cleanup, hit routing, damage APIs, or target ownership moved in Phase 3-A.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented as a boundary-only ownership step.
+
+### Next Actions
+
+- Phase 3-B may move projectile cleanup/lifetime responsibility behind the boundary.
+- Phase 3-C may split source-specific projectile hit routing after cleanup ownership is stable.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectileSimulation.cs`.
+- `CombatRuntimeProjectileSimulation.cs:20` through `:22` owns the `UpdateProjectiles()` boundary entry point.
+- `CombatRuntimeProjectileSimulation.cs:34` through `:36` delegates to the existing projectile loop body through `UpdateProjectilesCore()`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:14` now names the existing projectile loop body `UpdateProjectilesCore()`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:647` still owns `CleanupProjectile(int index)`, so cleanup/lifetime ownership has not moved yet.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:500` still calls `UpdateProjectiles()` in the same top-level order.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP imported the new script with guid `57f2745c5878a53408874be4db5a95fc`; final console read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-13: Code Builder implemented Phase 3-A as a wrapper-level projectile simulation boundary without changing list storage, cleanup ownership, or hit behavior.
+
 ## Task: 2026-05-13 Phase 3 Ownership Slice Plan
 
 ### Task title

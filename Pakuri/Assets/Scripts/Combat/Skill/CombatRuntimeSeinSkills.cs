@@ -1072,7 +1072,7 @@ namespace Pakuri.Combat
             }
         }
 
-        private void TryHandleSkillEffectExpired(SkillEffectRuntime effect)
+        private void TryHandleSeinSkillEffectExpired(SkillEffectRuntime effect)
         {
             if (effect == null || !effect.SeinSpawnResidualOnExpire)
             {

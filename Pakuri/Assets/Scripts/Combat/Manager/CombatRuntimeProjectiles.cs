@@ -11,14 +11,13 @@ namespace Pakuri.Combat
 {
     public partial class CombatRuntimeController
     {
-        private void UpdateProjectiles()
+        private void UpdateProjectilesCore()
         {
-            for (var i = projectiles.Count - 1; i >= 0; i--)
+            for (var i = ProjectileSimulationBoundary.LastProjectileIndex; i >= 0; i--)
             {
-                var projectile = projectiles[i];
-                if (projectile == null || projectile.GameObject == null)
+                var projectile = ProjectileSimulationBoundary.GetProjectileAt(i);
+                if (ProjectileSimulationBoundary.RemoveMissingProjectileAt(i, projectile))
                 {
-                    projectiles.RemoveAt(i);
                     continue;
                 }
 
@@ -27,156 +26,152 @@ namespace Pakuri.Combat
                 var travelDistance = projectile.Speed * Time.deltaTime;
                 projectile.Transform.position += projectile.Direction * travelDistance;
                 CreateSeinFlameTrajectoryPathSegment(projectile, previousPosition, projectile.Transform.position);
-                projectile.RemainingLifetime = Mathf.Max(0f, projectile.RemainingLifetime - Time.deltaTime);
+                ProjectileSimulationBoundary.TickLifetime(projectile, Time.deltaTime);
 
                 if (projectile.IsEnemyProjectile)
                 {
-                    if (TryHitEnemyProjectileTarget(projectile, out var targetLabel, out var appliedDamage))
-                    {
-                        statusLabel = $"{projectile.SourceEnemy.DisplayName} {projectile.SourceEnemy.Definition.ActiveSkillName}: {targetLabel} hit {appliedDamage:0.0}.";
-                        CleanupProjectile(i);
-                        continue;
-                    }
-
-                    if (projectile.RemainingLifetime > 0f)
-                    {
-                        continue;
-                    }
-
-                    CleanupProjectile(i);
+                    ProcessEnemyProjectile(i, projectile);
                     continue;
                 }
 
                 if (projectile.IsManifestedProjectile)
                 {
-                    if (TryHitManifestedProjectile(projectile, out var manifestedEnemyHit, out var manifestedDamageResult, out var manifestedAppliedDamage))
-                    {
-                        manifestedEnemyHit.FlashTimer = 0.08f;
-                        statusLabel = $"{projectile.ManifestedSourceName} {projectile.ManifestedSkillName}: {manifestedEnemyHit.DisplayName} hit {manifestedAppliedDamage:0.0}.";
-                        Debug.Log($"[CombatDamage] {projectile.ManifestedSourceName}.{projectile.ManifestedSkillName} -> {manifestedEnemyHit.DisplayName}: {manifestedDamageResult.FormulaLog}; Applied={manifestedAppliedDamage:0.##}, ShieldLeft={manifestedEnemyHit.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, manifestedEnemyHit.CurrentHealth):0.##}");
-
-                        projectile.HitEnemies.Add(manifestedEnemyHit);
-                        if (projectile.RemainingPierce > 0)
-                        {
-                            projectile.RemainingPierce -= 1;
-                        }
-                        else
-                        {
-                            TryTriggerArielJudgementLightExplosion(projectile);
-                            CleanupProjectile(i);
-                        }
-
-                        continue;
-                    }
-
-                    if (!HasPlayerProjectileReachedBattlefieldXEdge(projectile))
-                    {
-                        continue;
-                    }
-
-                    TryTriggerArielJudgementLightExplosion(projectile);
-                    CleanupProjectile(i);
+                    ProcessManifestedProjectile(i, projectile);
                     continue;
                 }
 
-                if (TryHitEnemy(projectile, out var enemyHit, out var damageResult))
-                {
-                    if (TryHandleSeinFlameTrajectoryImpact(projectile, enemyHit))
-                    {
-                        CleanupProjectile(i);
-                        continue;
-                    }
-
-                    var wasAlive = enemyHit.CurrentHealth > 0f;
-                    var appliedDamage = ApplyDamageToEnemy(enemyHit, damageResult.FinalDamage, damageResult.Attribute);
-                    enemyHit.FlashTimer = 0.08f;
-                    TrackArielHolyExposureDamage(enemyHit, projectile.Attribute, damageResult.FinalDamage);
-                    TrackSeinProjectileHit(projectile, enemyHit, appliedDamage);
-                    HandleVegaProjectileHit(projectile, enemyHit, appliedDamage, wasAlive);
-                    HandleRinProjectileHit(projectile, enemyHit, appliedDamage);
-                    HandleRinEnemyKilledByDamage(enemyHit, wasAlive);
-
-                    var appliedStatus = false;
-                    if (string.Equals(projectile.SkillId, "ariel-a", StringComparison.OrdinalIgnoreCase)
-                        && HasChoice("ariel-a-master-2"))
-                    {
-                        ApplyArielHolyExposure(enemyHit, 1, 6f, 0.18f, 0f, 0f, 0f);
-                        appliedStatus = true;
-                    }
-
-                    if (string.Equals(projectile.SkillId, "eve-e", StringComparison.OrdinalIgnoreCase))
-                    {
-                        ApplyVulnerable(enemyHit, Mathf.Max(1, projectile.StatusStacks));
-                        appliedStatus = true;
-                    }
-                    var statusChance = Mathf.Clamp01((projectile.StatusChance > 0f ? projectile.StatusChance : statusChanceConfigured) + GetEveStatusChanceBonus(enemyHit));
-                    if (!appliedStatus && statusChance > 0f && UnityEngine.Random.value < statusChance)
-                    {
-                        ApplyShock(enemyHit, Mathf.Max(1, projectile.StatusStacks), 1.25f);
-                        appliedStatus = !string.IsNullOrWhiteSpace(selectedStatusEffectLabel);
-                    }
-
-                    var appliedStatusLabel = string.Equals(projectile.SkillId, "eve-e", StringComparison.OrdinalIgnoreCase) ? "취약" : selectedStatusEffectLabel;
-                    statusLabel = appliedStatus
-                        ? $"{selectedActiveSkillName} 적중: {enemyHit.DisplayName}에게 {appliedDamage:0.0} {selectedElementLabel} 피해, {appliedStatusLabel} 부여."
-                        : $"{selectedActiveSkillName} 적중: {enemyHit.DisplayName}에게 {appliedDamage:0.0} {selectedElementLabel} 피해.";
-
-                    Debug.Log($"[CombatDamage] {selectedMonsterName}.{selectedActiveSkillName} -> {enemyHit.DisplayName}: {damageResult.FormulaLog}; Applied={appliedDamage:0.##}, ShieldLeft={enemyHit.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, enemyHit.CurrentHealth):0.##}");
-                    TryApplyProjectileBranch(projectile, enemyHit, damageResult.FinalDamage);
-                    TryTriggerEveParticleSeparationProc(enemyHit, projectile.Attribute, projectile.SkillId);
-
-                    if (TryTriggerArielJudgementLightExplosion(projectile))
-                    {
-                        CleanupProjectile(i);
-                        continue;
-                    }
-
-                    projectile.HitEnemies.Add(enemyHit);
-                    if (projectile.RemainingPierce > 0)
-                    {
-                        projectile.RemainingPierce -= 1;
-                    }
-                    else
-                    {
-                        TryTriggerArielJudgementLightExplosion(projectile);
-                        CleanupProjectile(i);
-                    }
-
-                    continue;
-                }
-
-                if (!HasPlayerProjectileReachedBattlefieldXEdge(projectile))
-                {
-                    continue;
-                }
-
-                statusLabel = $"{selectedActiveSkillName} 투사체가 전장 X 경계에 닿아 소멸했다.";
-                TryTriggerArielJudgementLightExplosion(projectile);
-                CleanupProjectile(i);
+                ProcessSelectedProjectile(i, projectile);
             }
         }
 
-        private bool HasPlayerProjectileReachedBattlefieldXEdge(ProjectileRuntime projectile)
+        private void ProcessEnemyProjectile(int index, ProjectileRuntime projectile)
         {
-            if (projectile == null || projectile.Transform == null)
+            if (TryHitEnemyProjectileTarget(projectile, out var targetLabel, out var appliedDamage))
             {
-                return true;
+                statusLabel = $"{projectile.SourceEnemy.DisplayName} {projectile.SourceEnemy.Definition.ActiveSkillName}: {targetLabel} hit {appliedDamage:0.0}.";
+                ProjectileSimulationBoundary.CleanupProjectileAt(index);
+                return;
             }
 
-            var x = projectile.Transform.position.x;
-            var minX = 0f;
-            var maxX = Mathf.Max(minX, fieldSize.x);
-            if (projectile.Direction.x < -0.01f)
+            if (ProjectileSimulationBoundary.HasRemainingLifetime(projectile))
             {
-                return x <= minX;
+                return;
             }
 
-            if (projectile.Direction.x > 0.01f)
+            ProjectileSimulationBoundary.CleanupProjectileAt(index);
+        }
+
+        private void ProcessManifestedProjectile(int index, ProjectileRuntime projectile)
+        {
+            if (TryHitManifestedProjectile(projectile, out var manifestedEnemyHit, out var manifestedDamageResult, out var manifestedAppliedDamage))
             {
-                return x >= maxX;
+                manifestedEnemyHit.FlashTimer = 0.08f;
+                statusLabel = $"{projectile.ManifestedSourceName} {projectile.ManifestedSkillName}: {manifestedEnemyHit.DisplayName} hit {manifestedAppliedDamage:0.0}.";
+                Debug.Log($"[CombatDamage] {projectile.ManifestedSourceName}.{projectile.ManifestedSkillName} -> {manifestedEnemyHit.DisplayName}: {manifestedDamageResult.FormulaLog}; Applied={manifestedAppliedDamage:0.##}, ShieldLeft={manifestedEnemyHit.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, manifestedEnemyHit.CurrentHealth):0.##}");
+
+                projectile.HitEnemies.Add(manifestedEnemyHit);
+                if (projectile.RemainingPierce > 0)
+                {
+                    projectile.RemainingPierce -= 1;
+                }
+                else
+                {
+                    TryTriggerArielJudgementLightExplosion(projectile);
+                    ProjectileSimulationBoundary.CleanupProjectileAt(index);
+                }
+
+                return;
             }
 
-            return x <= minX || x >= maxX;
+            if (!ProjectileSimulationBoundary.HasPlayerProjectileReachedBattlefieldXEdge(projectile))
+            {
+                return;
+            }
+
+            TryTriggerArielJudgementLightExplosion(projectile);
+            ProjectileSimulationBoundary.CleanupProjectileAt(index);
+        }
+
+        private void ProcessSelectedProjectile(int index, ProjectileRuntime projectile)
+        {
+            if (TryHitEnemy(projectile, out var enemyHit, out var damageResult))
+            {
+                ProcessSelectedProjectileEnemyHit(index, projectile, enemyHit, damageResult);
+                return;
+            }
+
+            if (!ProjectileSimulationBoundary.HasPlayerProjectileReachedBattlefieldXEdge(projectile))
+            {
+                return;
+            }
+
+            statusLabel = $"{selectedActiveSkillName} 투사체가 전장 X 경계에 닿아 소멸했다.";
+            TryTriggerArielJudgementLightExplosion(projectile);
+            ProjectileSimulationBoundary.CleanupProjectileAt(index);
+        }
+
+        private void ProcessSelectedProjectileEnemyHit(int index, ProjectileRuntime projectile, EnemyRuntime enemyHit, DamageResult damageResult)
+        {
+            if (TryHandleSeinFlameTrajectoryImpact(projectile, enemyHit))
+            {
+                ProjectileSimulationBoundary.CleanupProjectileAt(index);
+                return;
+            }
+
+            var wasAlive = enemyHit.CurrentHealth > 0f;
+            var appliedDamage = ApplyDamageToEnemy(enemyHit, damageResult.FinalDamage, damageResult.Attribute);
+            enemyHit.FlashTimer = 0.08f;
+            TrackArielHolyExposureDamage(enemyHit, projectile.Attribute, damageResult.FinalDamage);
+            TrackSeinProjectileHit(projectile, enemyHit, appliedDamage);
+            HandleVegaProjectileHit(projectile, enemyHit, appliedDamage, wasAlive);
+            HandleRinProjectileHit(projectile, enemyHit, appliedDamage);
+            HandleRinEnemyKilledByDamage(enemyHit, wasAlive);
+
+            var appliedStatus = false;
+            if (string.Equals(projectile.SkillId, "ariel-a", StringComparison.OrdinalIgnoreCase)
+                && HasChoice("ariel-a-master-2"))
+            {
+                ApplyArielHolyExposure(enemyHit, 1, 6f, 0.18f, 0f, 0f, 0f);
+                appliedStatus = true;
+            }
+
+            if (string.Equals(projectile.SkillId, "eve-e", StringComparison.OrdinalIgnoreCase))
+            {
+                ApplyVulnerable(enemyHit, Mathf.Max(1, projectile.StatusStacks));
+                appliedStatus = true;
+            }
+            var statusChance = Mathf.Clamp01((projectile.StatusChance > 0f ? projectile.StatusChance : statusChanceConfigured) + GetEveStatusChanceBonus(enemyHit));
+            if (!appliedStatus && statusChance > 0f && UnityEngine.Random.value < statusChance)
+            {
+                ApplyShock(enemyHit, Mathf.Max(1, projectile.StatusStacks), 1.25f);
+                appliedStatus = !string.IsNullOrWhiteSpace(selectedStatusEffectLabel);
+            }
+
+            var appliedStatusLabel = string.Equals(projectile.SkillId, "eve-e", StringComparison.OrdinalIgnoreCase) ? "취약" : selectedStatusEffectLabel;
+            statusLabel = appliedStatus
+                ? $"{selectedActiveSkillName} 적중: {enemyHit.DisplayName}에게 {appliedDamage:0.0} {selectedElementLabel} 피해, {appliedStatusLabel} 부여."
+                : $"{selectedActiveSkillName} 적중: {enemyHit.DisplayName}에게 {appliedDamage:0.0} {selectedElementLabel} 피해.";
+
+            Debug.Log($"[CombatDamage] {selectedMonsterName}.{selectedActiveSkillName} -> {enemyHit.DisplayName}: {damageResult.FormulaLog}; Applied={appliedDamage:0.##}, ShieldLeft={enemyHit.ShieldValue:0.##}, HpLeft={Mathf.Max(0f, enemyHit.CurrentHealth):0.##}");
+            TryApplyProjectileBranch(projectile, enemyHit, damageResult.FinalDamage);
+            TryTriggerEveParticleSeparationProc(enemyHit, projectile.Attribute, projectile.SkillId);
+
+            if (TryTriggerArielJudgementLightExplosion(projectile))
+            {
+                ProjectileSimulationBoundary.CleanupProjectileAt(index);
+                return;
+            }
+
+            projectile.HitEnemies.Add(enemyHit);
+            if (projectile.RemainingPierce > 0)
+            {
+                projectile.RemainingPierce -= 1;
+            }
+            else
+            {
+                TryTriggerArielJudgementLightExplosion(projectile);
+                ProjectileSimulationBoundary.CleanupProjectileAt(index);
+            }
         }
 
         private bool TryHitEnemyProjectileTarget(ProjectileRuntime projectile, out string targetLabel, out float appliedDamage)
@@ -644,20 +639,5 @@ namespace Pakuri.Combat
             statusLabel = $"{selectedActiveSkillName} 발사: ({currentAttackPoint.x:0.0}, {currentAttackPoint.y:0.0})";
         }
 
-        private void CleanupProjectile(int index)
-        {
-            if (index < 0 || index >= projectiles.Count)
-            {
-                return;
-            }
-
-            var projectile = projectiles[index];
-            if (projectile != null && projectile.GameObject != null)
-            {
-                Destroy(projectile.GameObject);
-            }
-
-            projectiles.RemoveAt(index);
-        }
     }
 }

@@ -4,6 +4,377 @@
 - This file keeps active combat task blocks after the 2026-05-12 archive pass; newer combat tasks may be appended above older retained context.
 - Source file: `boards/COMBAT/COMBAT_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Phase 3-H Combat Simulation Closeout
+
+### Task title
+
+Close combat-side Phase 3 projectile/effect/drone refactoring.
+
+### Goals
+
+- Verify combat update order still reaches projectile, effect, manifested party, and selected unit logic.
+- Confirm Phase 3 simulation boundaries are present for projectile, persistent skill-effect, selected drone, and manifested drone lifecycle.
+- Mark enemy simulation as the next combat runtime split.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Do not run Code Reviewer without explicit user permission.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed and locally validated. Phase 3 combat-side refactoring is complete in Builder scope.
+
+### Next Actions
+
+- Begin Phase 4 `Enemy Simulation Split` when requested.
+- User verifies RunScene combat behavior in Play Mode for projectiles, persistent effects, selected drones, and manifested drones.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:498` through `:505` still updates spawning, enemies, projectiles, monster skill runtime effects, manifested party combat, selected monster combat, selected status visuals, and battle resolution in order.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectileSimulation.cs:22` through `:25` now owns the projectile update boundary.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeSkillEffectSimulation.cs:22` through `:25` now owns the persistent skill-effect update boundary.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeDroneSimulation.cs:22` through `:35` now owns selected and manifested drone update/cleanup boundaries.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyRuntime.cs:49` still calls `owner.UpdateManifestedDrones()` before manifested unit combat ticking.
+- Runtime and Editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP imported all Phase 3 touched scripts, refreshed scripts to idle, and console read showed only MCP-FOR-UNITY connection/client-handler logs.
+
+### History
+
+- 2026-05-13: User asked Code Builder to start Phase 3-H and determine whether Phase 3 refactoring is finished.
+- 2026-05-13: Builder verified combat-side boundaries and concluded Phase 3 is complete in Builder scope.
+
+## Task: 2026-05-13 Phase 3-G Manifested Drone Simulation Alignment
+
+### Task title
+
+Move manifested drone combat ticking behind the drone simulation boundary.
+
+### Goals
+
+- Preserve manifested party combat update order while aligning manifested drone lifecycle ticking with `CombatRuntimeDroneSimulation`.
+- Preserve manifested Eve drone target lookup, projectile firing, cooldown, duration, and cleanup behavior.
+- Keep selected and manifested drone runtime classes separate.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Do not merge selected and manifested drone runtimes.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue to Phase 3-H as a separate closeout/ownership verification slice.
+- User verifies manifested Eve Drone Beacon behavior in Play Mode if needed.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeDroneSimulation.cs:27` through `:35` keeps manifested drone update and cleanup compatibility entries.
+- `CombatRuntimeDroneSimulation.cs:118` through `:160` preserves manifested drone reverse iteration, validity checks, duration, cooldown, target lookup, no-target retry, projectile fire, and cooldown reset.
+- `CombatRuntimeDroneSimulation.cs:162` through `:183` preserves manifested drone cleanup and list removal.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs:19` through `:49` still owns manifested Eve drone deployment and registration.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyRuntime.cs:49` still calls `owner.UpdateManifestedDrones()` before manifested unit combat ticking.
+- Runtime and Editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP imported the touched scripts and final console read returned only MCP-FOR-UNITY client connection/client-handler logs.
+
+### History
+
+- 2026-05-13: User assigned Code Builder and requested Phase 3-G.
+- 2026-05-13: Builder moved manifested drone ticking/projectile/cleanup behavior into `CombatRuntimeDroneSimulation.cs` while leaving deployment in the manifested party drone partial.
+
+## Task: 2026-05-13 Phase 3-F Selected Drone Simulation Boundary
+
+### Task title
+
+Move selected Eve drone combat ticking behind a boundary.
+
+### Goals
+
+- Preserve combat update order while moving selected Eve drone lifecycle ticking into `CombatRuntimeDroneSimulation`.
+- Preserve Drone Beacon firing cadence, projectile creation, and cleanup behavior.
+- Keep manifested drone work for Phase 3-G.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Do not merge selected and manifested drone runtimes.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue to Phase 3-G as a separate manifested drone simulation alignment slice.
+- User verifies selected Eve Drone Beacon behavior in Play Mode if needed.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeDroneSimulation.cs:22` through `:25` keeps `UpdateDrones()` as the selected drone update entry.
+- `CombatRuntimeDroneSimulation.cs:36` through `:63` preserves reverse iteration, missing-drone removal, duration ticking, attack-period ticking, fire timing, destruction, and removal.
+- `CombatRuntimeDroneSimulation.cs:65` through `:105` preserves selected drone projectile creation and `AddBattlefieldProjectile(...)` registration.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1196` through `:1200` still runs persistent effects before selected Eve drone ticking.
+- Runtime and Editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP imported the touched scripts and final console read returned only MCP-FOR-UNITY client connection/client-handler logs.
+
+### History
+
+- 2026-05-13: User assigned Code Builder and requested Phase 3-F.
+- 2026-05-13: Builder moved selected Eve drone ticking and projectile creation into `CombatRuntimeDroneSimulation.cs` while leaving manifested drones unchanged.
+
+## Task: 2026-05-13 Phase 3-E Skill Effect Hit / Expiry Routing
+
+### Task title
+
+Split combat skill-effect hit and expiry routing helpers.
+
+### Goals
+
+- Make combat skill-effect hit routing readable without changing formulas or update order.
+- Preserve Eve, Sein, Vega, and manifested effect behavior.
+- Keep common temporary-effect migration out of this slice.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Do not move enemy simulation, selected-unit combat state, damage APIs, common targets, or common temporary effects.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue to Phase 3-F as a separate selected Eve drone simulation boundary slice.
+- User verifies skill-effect behavior in Play Mode if needed.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeSkillEffectSimulation.cs:27` through `:39` now owns the skill-effect enemy tick dispatcher.
+- `CombatRuntimeSkillEffectSimulation.cs:41` through `:56` separates enemy validity and shape checks.
+- `CombatRuntimeSkillEffectSimulation.cs:58` through `:79` preserves hit routing order: Sein, Vega, manifested, Eve fallback.
+- `CombatRuntimeSkillEffectSimulation.cs:81` through `:97` preserves Eve B slow and Eve C chill/freeze handling after Eve effect damage.
+- `CombatRuntimeSkillEffectSimulation.cs:99` through `:102` separates expiry routing from the lifecycle loop.
+- Runtime and Editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP imported the touched scripts and final console warning/error read returned only MCP-FOR-UNITY client handler logs.
+
+### History
+
+- 2026-05-13: User assigned Code Builder and requested Phase 3-E.
+- 2026-05-13: Builder split skill-effect hit/expiry routing helpers while preserving combat behavior.
+
+## Task: 2026-05-13 Phase 3-D Skill Effect Simulation Boundary Shell
+
+### Task title
+
+Move combat skill-effect lifecycle ticking behind a boundary.
+
+### Goals
+
+- Preserve combat update order while moving skill-effect lifecycle ticking behind `CombatRuntimeSkillEffectSimulation`.
+- Preserve effect duration, tick interval, hit-set clearing, expiry handling, destruction, and removal behavior.
+- Keep skill-specific damage/status callbacks unchanged for this slice.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Do not move enemy simulation, selected-unit combat state, damage APIs, common targets, or common temporary effects.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue to Phase 3-E as a separate skill-effect hit/expiry routing split.
+- User verifies skill-effect behavior in Play Mode if needed.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:500` through `:503` still calls projectiles, monster skill runtime effects, manifested party combat, and selected combat in the same order.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeSkillEffectSimulation.cs:22` through `:25` keeps the existing persistent effect update entry point and routes it through the new boundary.
+- `CombatRuntimeSkillEffectSimulation.cs:36` through `:64` owns the moved `skillEffects` lifecycle loop and preserves `HitThisTick.Clear()`, callback, expiry, destroy, and remove order.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1196` through `:1200` still updates persistent effects before selected Eve drones.
+- Runtime and Editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP imported the new script and final console warning/error read returned only MCP-FOR-UNITY client handler logs.
+
+### History
+
+- 2026-05-13: User assigned Code Builder and requested Phase 3-D.
+- 2026-05-13: Builder moved skill-effect lifecycle ticking behind a boundary while preserving combat update order.
+
+## Task: 2026-05-13 Phase 3-C Projectile Hit Routing Helpers
+
+### Task title
+
+Split combat projectile hit routing by source type.
+
+### Goals
+
+- Make projectile hit routing readable by separating enemy, manifested, and selected/player projectile paths.
+- Preserve combat update order, projectile cleanup/lifetime boundary, and all damage/status behavior.
+- Keep damage application APIs and common target ownership unchanged.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Do not move enemy simulation, selected-unit combat state, damage APIs, or common target/effect state.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue to Phase 3-D as a separate skill-effect simulation boundary slice.
+- User verifies projectile behavior in Play Mode if needed.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:31` through `:43` dispatches projectile processing by source type.
+- `CombatRuntimeProjectiles.cs:47` through `:62` handles enemy projectile routing.
+- `CombatRuntimeProjectiles.cs:64` through `:93` handles manifested projectile routing.
+- `CombatRuntimeProjectiles.cs:95` through `:175` handles selected/player projectile routing and enemy-hit follow-up.
+- `CombatRuntimeProjectiles.cs:394`, `:422`, and `:452` still own enemy, selected, and manifested damage application methods.
+- Runtime and Editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP editor state returned `ready_for_tools=true`; final console warning/error read returned only MCP-FOR-UNITY client handler logs.
+
+### History
+
+- 2026-05-13: User assigned Code Builder and requested Phase 3-C.
+- 2026-05-13: Builder split projectile hit routing helpers while preserving combat update order and damage ownership.
+
+## Task: 2026-05-13 Phase 3-B Projectile Cleanup Lifetime Ownership
+
+### Task title
+
+Move projectile cleanup, lifetime, and X-edge checks behind the projectile simulation boundary.
+
+### Goals
+
+- Keep combat update order stable while moving projectile cleanup/lifetime responsibility into the Phase 3 projectile boundary.
+- Preserve current projectile hit routing, status application, pierce handling, and damage calls.
+- Keep the slice limited to cleanup/lifetime/edge ownership.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Do not move enemy simulation, selected-unit combat, damage APIs, or common target/effect state.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue to Phase 3-C as a separate source-specific projectile hit routing split.
+- User verifies projectile behavior in Play Mode if needed.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectileSimulation.cs:53` through `:66` owns missing projectile removal.
+- `CombatRuntimeProjectileSimulation.cs:68` through `:80` owns lifetime ticking and remaining-lifetime checks.
+- `CombatRuntimeProjectileSimulation.cs:83` through `:104` owns projectile X-edge checks.
+- `CombatRuntimeProjectileSimulation.cs:106` through `:120` owns cleanup, `Object.Destroy`, and list removal.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:31` through `:154` still preserves enemy, manifested, and selected/player hit branch order.
+- Runtime and Editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP editor state returned `ready_for_tools=true`; final console warning/error read returned only MCP-FOR-UNITY client handler logs.
+
+### History
+
+- 2026-05-13: User assigned Code Builder and requested Phase 3-B after Phase 3-A.
+- 2026-05-13: Builder moved projectile cleanup/lifetime/edge responsibilities behind the projectile boundary while preserving combat update and hit branch order.
+
+## Task: 2026-05-13 Phase 3-A Projectile Simulation Boundary Shell
+
+### Task title
+
+Add a combat-runtime projectile simulation boundary shell.
+
+### Goals
+
+- Keep the combat update order stable while introducing the first Phase 3 projectile simulation boundary.
+- Preserve current projectile movement, collision, hit routing, status application, pierce, and cleanup behavior.
+- Keep Phase 3-A limited to a wrapper-level boundary.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Do not move enemy simulation, selected-unit combat, damage APIs, or common target/effect state.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue to Phase 3-B only as a separate cleanup/lifetime ownership slice.
+- User verifies projectile behavior in Play Mode if needed.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectileSimulation.cs`.
+- `CombatRuntimeProjectileSimulation.cs:20` through `:22` keeps the `UpdateProjectiles()` call target and routes it through `ProjectileSimulationBoundary.Tick()`.
+- `CombatRuntimeProjectileSimulation.cs:34` through `:36` calls `owner.UpdateProjectilesCore()`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:14` keeps the old projectile loop as `UpdateProjectilesCore()`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:500` still places projectile ticking after `UpdateEnemies()` and before `UpdateMonsterSkillRuntimeEffects()`.
+- Runtime and Editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP editor state returned `ready_for_tools=true`; final console warning/error read returned only MCP-FOR-UNITY client handler logs.
+
+### History
+
+- 2026-05-13: User assigned Code Builder and requested Phase 3-A start from the refactoring board.
+- 2026-05-13: Builder added the projectile boundary shell and preserved the existing combat update order.
+
 ## Task: 2026-05-13 Phase 3 Combat Runtime Work Breakdown
 
 ### Task title

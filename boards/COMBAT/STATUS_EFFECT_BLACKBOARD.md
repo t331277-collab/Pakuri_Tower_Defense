@@ -4,6 +4,141 @@
 - This file keeps only task blocks dated `2026-05-10` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Phase 3-H Status Effect Boundary Closeout
+
+### Task title
+
+Verify skill-effect lifecycle and status routing after Phase 3.
+
+### Goals
+
+- Confirm persistent skill-effect lifecycle ownership is behind `CombatRuntimeSkillEffectSimulation.cs`.
+- Confirm status/effect hit dispatch remains explicit for Eve, Sein, Vega, and manifested sources.
+- Keep common temporary effect migration deferred.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not introduce `TemporaryEffectInstance`.
+- Do not change shield/status formulas in this closeout.
+- User performs Play Mode status/effect verification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed and locally validated.
+
+### Next Actions
+
+- User verifies Eve/Sein/Vega/manifested persistent effects in Play Mode if needed.
+- Keep shared temporary-effect migration for the later planned phase.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeSkillEffectSimulation.cs:22` through `:25` routes persistent effects through `SkillEffectSimulationBoundary`.
+- `CombatRuntimeSkillEffectSimulation.cs:51` through `:56` preserves beam versus radius shape checks.
+- `CombatRuntimeSkillEffectSimulation.cs:58` through `:79` preserves Sein, Vega, manifested, then Eve fallback dispatch order.
+- `CombatRuntimeSkillEffectSimulation.cs:81` through `:97` preserves Eve B slow and Eve C chill/freeze handling.
+- `CombatRuntimeSkillEffectSimulation.cs:99` through `:101` routes expiry handling to `TryHandleSeinSkillEffectExpired(...)`.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Builder verified that Phase 3 status/effect ownership is complete without changing status formulas in Phase 3-H.
+
+## Task: 2026-05-13 Phase 3-E Skill Effect Hit And Expiry Routing
+
+### Task title
+
+Separate skill-effect shape, damage dispatch, and expiry dispatch helpers.
+
+### Goals
+
+- Preserve status/effect outcomes while splitting the shared effect hit path into named helpers.
+- Keep Eve B slow, Eve C chill/freeze, Sein residual spawn, Vega marks, and manifested effect damage formulas unchanged.
+- Leave common reusable temporary effects for Phase 7.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not introduce `TemporaryEffectInstance`.
+- Do not migrate shield/status modifiers into a common layer.
+- User performs Play Mode status/effect verification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Eve/Sein/Vega/manifested effect behavior in Play Mode if needed.
+- Continue Phase 3-F only after accepting this slice.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeSkillEffectSimulation.cs:51` through `:56` preserves beam versus radius shape checks.
+- `CombatRuntimeSkillEffectSimulation.cs:58` through `:79` preserves effect dispatch order.
+- `CombatRuntimeSkillEffectSimulation.cs:81` through `:97` preserves Eve B slow and Eve C chill/freeze status handling.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeSeinSkills.cs:1031` through `:1073` still owns Sein effect damage/status formulas.
+- `CombatRuntimeSeinSkills.cs:1075` through `:1114` still owns residual effect spawn on expiry.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeVegaSkills.cs:772` through `:783` still owns Vega effect hit damage and name-mark behavior.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Builder implemented Phase 3-E skill-effect hit and expiry routing split without changing status/effect formulas.
+
+## Task: 2026-05-13 Phase 3-D Skill Effect Lifecycle Boundary
+
+### Task title
+
+Move skill-effect duration and tick lifecycle behind a boundary.
+
+### Goals
+
+- Preserve status/effect behavior while moving the shared skill-effect lifecycle loop out of the Eve skill file.
+- Keep status and damage helper callbacks unchanged.
+- Leave common reusable temporary effects for Phase 7.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not introduce `TemporaryEffectInstance`.
+- Do not migrate shield/status modifiers into a common layer.
+- User performs Play Mode status/effect verification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Phase 3-E may separate effect shape checks, hit routing, and expiry routing.
+- User verifies Eve/Sein/Vega/manifested effect behavior in Play Mode if needed.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeSkillEffectSimulation.cs:47` through `:53` preserves duration ticking, tick remaining decrement, `HitThisTick.Clear()`, effect tick callback, and tick interval reset.
+- `CombatRuntimeSkillEffectSimulation.cs:61` through `:63` preserves expiry callback, object destruction, and list removal order.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1222`, `:1228`, and `:1234` still route effect damage through existing Sein, Vega, and manifested callbacks.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeSeinSkills.cs:1075` still owns skill-effect expiry handling.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Builder implemented Phase 3-D skill-effect lifecycle boundary without changing status/effect formulas.
+
 ## Task: 2026-05-13 Phase 3 Skill Effect Slice Plan
 
 ### Task title

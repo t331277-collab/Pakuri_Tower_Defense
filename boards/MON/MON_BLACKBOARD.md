@@ -4,6 +4,222 @@
 - This file keeps only task blocks dated 2026-05-10 based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/MON/MON_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Phase 3-H Monster Skill Boundary Closeout
+
+### Task title
+
+Close monster-skill impact of Phase 3 projectile/effect/drone split.
+
+### Goals
+
+- Confirm monster-specific formulas and executor reuse were not broadened during Phase 3-H.
+- Confirm Eve selected and manifested drone lifecycle ownership is readable after Phase 3.
+- Keep broad monster skill reuse deferred to Phase 6.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; monster skill verification remains user-owned.
+- Do not change non-Eve monster executors in this closeout.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed and locally validated.
+
+### Next Actions
+
+- User verifies Eve selected/manifested drone and persistent effect behavior in Play Mode if needed.
+- Keep broad monster skill reuse and same-type skill grouping for Phase 6.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1171` still creates selected Eve `DroneRuntime` values through `AddBattlefieldDrone(...)`.
+- `CombatRuntimeEveSkills.cs:1196` through `:1199` still calls `UpdatePersistentSkillEffects()` before `UpdateDrones()`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs:8` through `:17` still defines `ManifestedDroneRuntime`.
+- `CombatRuntimeManifestedPartyDrones.cs:19` through `:49` still owns manifested Eve drone deployment and registration.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeDroneSimulation.cs:46` through `:72` owns selected drone ticking, and `:118` through `:183` owns manifested drone ticking and cleanup.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Builder closed Phase 3 monster-skill impact verification after the selected and manifested Eve drone boundary slices.
+
+## Task: 2026-05-13 Phase 3-G Manifested Monster Drone Boundary
+
+### Task title
+
+Track monster-skill impact of manifested drone simulation alignment.
+
+### Goals
+
+- Preserve Manifested Eve Drone Beacon behavior while aligning lifecycle ticking with the drone simulation boundary.
+- Keep `ManifestedDroneRuntime` separate from selected `DroneRuntime`.
+- Defer broad monster skill reuse and drone class unification to later phases.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; monster skill verification remains user-owned.
+- Do not change non-Eve monster executors in this slice.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue with Phase 3-H closeout verification.
+- Keep broad monster skill reuse for Phase 6.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs:8` through `:17` still defines `ManifestedDroneRuntime`.
+- `CombatRuntimeManifestedPartyDrones.cs:19` through `:49` still deploys manifested Eve drones and registers them in `manifestedDrones`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeDroneSimulation.cs:118` through `:160` now owns manifested Eve drone duration, attack cadence, target lookup, and projectile fire.
+- `CombatRuntimeDroneSimulation.cs:162` through `:183` now owns manifested drone cleanup.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Builder aligned manifested Eve drone lifecycle with `CombatRuntimeDroneSimulation.cs` without touching other monster executors.
+
+## Task: 2026-05-13 Phase 3-F Monster Drone Boundary
+
+### Task title
+
+Track monster-skill impact of selected Eve drone simulation boundary.
+
+### Goals
+
+- Preserve selected Eve Drone Beacon behavior while moving lifecycle ticking out of the Eve skill file.
+- Keep selected `DroneRuntime` and manifested `ManifestedDroneRuntime` separate.
+- Defer broad monster skill reuse and drone class unification to later phases.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; monster skill verification remains user-owned.
+- Do not change non-Eve monster executors in this slice.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue with Phase 3-G only as manifested drone alignment.
+- Keep broad monster skill reuse for Phase 6.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1171` through `:1184` still creates selected Eve `DroneRuntime` values from the Eve E skill path.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeDroneSimulation.cs:36` through `:63` now owns selected Eve drone duration, attack cadence, and cleanup.
+- `CombatRuntimeDroneSimulation.cs:65` through `:105` now owns selected Eve drone projectile spawning.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs` was not changed in this slice, preserving manifested Eve drone behavior for Phase 3-G.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Builder moved selected Eve drone lifecycle and projectile creation into `CombatRuntimeDroneSimulation.cs` without touching other monster executors.
+
+## Task: 2026-05-13 Phase 3-E Monster Skill Effect Routing
+
+### Task title
+
+Track monster-skill impact of the skill-effect hit/expiry routing split.
+
+### Goals
+
+- Preserve monster-specific skill effect formulas while effect routing moves into named simulation helpers.
+- Keep Sein, Vega, manifested, and Eve effect behavior dispatching in the existing order.
+- Defer same-type skill reuse and common temporary effects to later phases.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; monster skill verification remains user-owned.
+- Do not rewrite monster skill executors or merge effect types in Phase 3-E.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Continue with selected Eve drone lifecycle boundary in Phase 3-F only as a separate slice.
+- Keep broad monster skill reuse for Phase 6.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeSkillEffectSimulation.cs:58` through `:79` routes skill effects to Sein, Vega, manifested, then Eve fallback.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeSeinSkills.cs:1031` through `:1075` keeps Sein effect damage and narrowed expiry helper ownership in the Sein skill file.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeVegaSkills.cs:772` through `:783` keeps Vega effect damage/name-mark behavior in the Vega skill file.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1196` through `:1200` still preserves persistent effect update before selected Eve drones.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Builder split skill-effect routing helpers and left monster-specific formulas in their current skill files.
+
+## Task: 2026-05-13 Phase 3-D Monster Skill Effect Boundary
+
+### Task title
+
+Track monster-skill impact of the skill-effect simulation boundary.
+
+### Goals
+
+- Preserve selected and manifested monster skill effect behavior while lifecycle ticking moves behind a boundary.
+- Keep monster-specific effect damage and expiry callbacks unchanged for this slice.
+- Defer same-type skill reuse and common temporary effects to later phases.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; monster skill verification remains user-owned.
+- Do not merge or rewrite monster skill executors during Phase 3-D.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Phase 3-E may make effect hit and expiry routing easier to read.
+- Keep broad monster skill reuse for Phase 6.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatMonsterSkillRuntime.cs:177` through `:184` still drives monster runtime effect updates through the existing adapter loop.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1196` through `:1200` still calls persistent effect updates before selected Eve drone ticking.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeSkillEffectSimulation.cs:36` through `:64` now owns the moved shared skill-effect lifecycle loop.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1202` still owns `TickSkillEffect(...)`, preserving monster-specific effect damage routing in skill files for this slice.
+- Runtime and Editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-13: Builder moved shared skill-effect lifecycle ticking behind a boundary and left monster skill damage/expiry callbacks in place.
+
 ## Task: 2026-05-13 Phase 3 Monster Skill And Drone Boundary Plan
 
 ### Task title

@@ -11,6 +11,49 @@ When doing related work, follow MDTREE.md routing and update this file together 
 - Existing task blocks were moved to `boards/ARCHIVE/BLACKBOARD_UNDATED_ARCHIVE_2026-05-12.md` on 2026-05-12.
 - Source file: `boards/COMBAT/ENEMY_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Phase 4 Enemy Simulation Handoff
+
+### Task title
+
+Record enemy-side handoff after Phase 3 closeout.
+
+### Goals
+
+- Confirm Phase 3 closeout did not implement enemy simulation.
+- Identify current enemy owner locations for the next refactoring phase.
+- Preserve the existing Phase 4 sequencing.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not change enemy runtime C# behavior in Phase 3-H.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Ready for Phase 4 planning/implementation. No enemy code was changed in Phase 3-H.
+
+### Next Actions
+
+- Start Phase 4 `Enemy Simulation Split` by inspecting and separating enemy spawn, update, movement/attack, status, and cleanup ownership.
+- Keep common target model migration for the later planned target/effect phase.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:28` still defines `EnemyRuntime` as a private nested class.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeEnemies.cs:306` owns `UpdateSpawning()`.
+- `CombatRuntimeEnemies.cs:336` owns `SpawnEnemy(...)`.
+- `CombatRuntimeEnemies.cs:706` owns `UpdateEnemies()`.
+- Phase 3-H build and Unity-MCP verification passed without changing enemy simulation code.
+
+### History
+
+- 2026-05-13: Builder closed Phase 3 and recorded that Phase 4 enemy simulation is the next default implementation phase.
+
 ## Task: 2026-05-13 Enemy Common Target And Prefab Timing Note
 
 ### Task title
