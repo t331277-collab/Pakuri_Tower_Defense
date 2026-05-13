@@ -4,6 +4,222 @@ This board records broad refactoring plans that cut across combat, monster runti
 
 When doing related work, follow `MDTREE.md` routing and update this file together with the affected domain boards.
 
+## Task: 2026-05-13 Phase 3 Projectile Effect Drone Split Work Breakdown
+
+### Task title
+
+Define Phase 3-A through Phase 3-H before implementation.
+
+### Goals
+
+- Split Phase 3 `Projectile / Effect / Drone Simulation Split` into reviewable implementation slices.
+- Preserve current projectile hit order, effect tick behavior, drone cadence, cleanup timing, and `CombatRuntimeController.Update()` order.
+- Avoid starting Phase 6 skill reuse or Phase 7 common target / temporary effect migration during Phase 3.
+- Provide Code Builder with a clear sequence before any runtime C# edit starts.
+
+### Constraints
+
+- Role Owner is Designer.
+- Do not change runtime C# behavior in this planning task.
+- Phase 3 must keep damage application APIs stable until Phase 7.
+- Do not move selected-unit combat, enemy simulation, or common target ownership in Phase 3.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution requires explicit user permission.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as a pre-implementation work breakdown. Phase 3 should be split into 3-A through 3-H.
+
+### Next Actions
+
+- If implementation starts, begin with Phase 3-A only.
+- After each slice, Code Builder should run runtime/editor builds, `git diff --check`, Unity-MCP refresh/console evidence where relevant, and update affected boards.
+- Do not start Phase 3-D or later until Phase 3-A through 3-C have preserved projectile behavior.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:496` through `:506` still calls `UpdateProjectiles()`, `UpdateMonsterSkillRuntimeEffects()`, `UpdateManifestedMonsterPartyCombat()`, and `UpdateSelectedMonsterCombat()` in a fixed order.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:14` through `:154` currently owns projectile ticking, movement, selected/manifested/enemy hit routing, status application, pierce, edge cleanup, and projectile cleanup calls in one loop.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:649` through `:660` owns `CleanupProjectile(int index)`.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1196` through `:1230` owns `UpdateEveSkillEffects()` and the shared `skillEffects` lifetime/tick loop even though later checks dispatch to Sein, Vega, and manifested effect damage.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1233` through `:1283` owns `TickSkillEffect(...)`, including Eve, Sein, Vega, and manifested effect damage routing.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1286` through `:1342` owns selected Eve `drones` ticking and drone projectile fire.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs:8` through `:115` owns a separate `ManifestedDroneRuntime` list and lifecycle, not the same `DroneRuntime` list used by selected Eve.
+- `Pakuri/Assets/Scripts/Combat/Battlefield/CombatRuntimeBattlefield.cs:7` through `:79` already provides Phase 1 registration facade methods for projectile, skill effect, and drone additions while the underlying lists still live on `CombatRuntimeController`.
+
+### Phase 3 Slices
+
+| Slice | Name | Scope | Keep out of scope | Acceptance criteria |
+| --- | --- | --- | --- | --- |
+| 3-A | Projectile Simulation Boundary Shell | Add a narrow projectile simulation boundary and route the existing `UpdateProjectiles()` entry through it while keeping current helper calls and update order. | Do not change damage formulas, hit logic, pierce logic, or projectile creation sites. | `CombatRuntimeController.Update()` still reaches projectile ticking at the same point, and behavior is a wrapper-level move only. |
+| 3-B | Projectile Cleanup / Lifetime Ownership | Move projectile cleanup and lifetime/edge-removal responsibility behind the projectile boundary. | Do not split selected/manifested/enemy damage resolution yet. | Cleanup remains reverse-iteration safe; destroyed GameObjects and `projectiles.RemoveAt(i)` behavior are preserved. |
+| 3-C | Projectile Hit Routing Helpers | Split the projectile loop into source-specific handlers for enemy projectile, manifested projectile, and selected/player projectile paths. | Do not move `ApplyDamageToEnemy`, `ApplyDamageToSelectedMonster`, `ApplyDamageToManifestedUnit`, or common target state. | Hit order, status labels, pierce consumption, Ariel explosion trigger, Sein/Vega/Rin hooks, and status application remain in the same observable order. |
+| 3-D | Skill Effect Simulation Boundary Shell | Move the `skillEffects` lifetime/tick loop behind an effect simulation boundary while keeping existing damage/status helper callbacks. | Do not introduce `TemporaryEffectInstance`; that is Phase 7. | Effect duration, tick interval, `HitThisTick.Clear()`, expiry handling, and removal timing are preserved. |
+| 3-E | Skill Effect Hit / Expiry Routing | Separate effect shape checks, hit routing, and expiry-spawn routing enough that Eve/Sein/Vega/Manifested effect handlers are readable boundaries. | Do not migrate shield/status modifiers into common temporary effects. | Eve B/C, Sein residual spawn, Vega line/area effects, and manifested effect damage still dispatch through existing formulas. |
+| 3-F | Selected Drone Simulation Boundary | Move selected Eve `drones` ticking and `FireDroneProjectile(...)` behind a drone simulation boundary. | Do not merge manifested drones yet and do not redesign drone skills. | Drone duration, attack period, nearest-target lookup, projectile creation, and cleanup remain unchanged. |
+| 3-G | Manifested Drone Simulation Alignment | Give `ManifestedDroneRuntime` ticking a comparable simulation boundary or adapter while preserving its party-source runtime and list ownership. | Do not force `DroneRuntime` and `ManifestedDroneRuntime` into one class unless implementation evidence shows it is a safe no-behavior slice. | Manifested Eve drone deployment, cooldown, target lookup, projectile fire, and cleanup stay behaviorally identical. |
+| 3-H | Phase 3 Closeout / Ownership Verification | Verify projectile/effect/drone lifecycle owners are readable, board state is updated, and Phase 4 Enemy Simulation can start. | Do not perform Phase 4 enemy split in the same slice. | Builds pass, `git diff --check` passes, Unity-MCP console has no C# compile errors, and boards identify Phase 4 as the next default phase. |
+
+### History
+
+- 2026-05-13: User explicitly asked Designer to decide how far to split Phase 3 into `3-[A-Z]` before work starts and record it on the boards.
+
+## Task: 2026-05-13 Roadmap Amendment For Shared Target, Temporary Effect, And Skill Reuse
+
+### Task title
+
+Add explicit timing for shared target, reusable temporary effects, same-type skill reuse, and Monster / Enemy actor commonization.
+
+### Goals
+
+- Reconcile the 2026-05-10 shared combat target / temporary effect proposal with the post-Phase-2-E roadmap.
+- State that same-type skill reuse is a Phase 6 decision after Phase 3 lifecycle and adapter boundaries.
+- State that common target / temporary effect migration belongs in Phase 7.
+- State that Monster / Enemy inheritance or prefab-based common authoring belongs after Phase 7 stabilization, primarily as a Phase 8 view/component decision.
+
+### Constraints
+
+- Role Owner is Designer.
+- Do not change runtime C# behavior.
+- Preserve the current Phase 3 next-step recommendation.
+- Keep prefab authoring separate from combat-state ownership until target/effect APIs are proven.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Start implementation with Phase 3 `Projectile / Effect / Drone Simulation Split` unless the user asks for another design-only pass.
+- During Phase 6, decide the exact same-type grouping scope with the user: projectile, beam / line / area / field, summon / drone, and any exceptions.
+- During Phase 7, introduce read adapters before moving state ownership into `CombatTargetModel`.
+- During Phase 8, evaluate prefab/view commonization only after Phase 7 target/effect behavior is stable.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-13-combat-runtime-refactor-roadmap-after-phase2e.html` with section `7. 2026-05-10 공통 대상 / 임시효과 제안 반영 여부`.
+- `Pakuri/reference/Report/2026-05-10-shared-combat-target-and-temporary-effect-design.html:401` through `:402` says selected ally, summoned ally, and enemy combat state must first be readable from one layer before common temporary effects can be safely reused.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatMonsterSkillRuntime.cs:53`, `:68`, `:83`, `:98`, and `:113` still route monster action-speed reads through controller methods, so broad skill reuse should wait for adapter narrowing.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:28` defines `EnemyRuntime` as private nested class, while `Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs:8` is a `MonoBehaviour`; this supports adapter/model-first commonization before base-class inheritance.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeEnemies.cs:354`, `:419`, and `:517` show enemy scene object composition with `AddComponent`, so prefab authoring should be evaluated as a view/component phase rather than as the first combat model step.
+
+### History
+
+- 2026-05-13: User requested an amendment explaining whether the 2026-05-10 shared combat target / temporary effect proposal is included in the roadmap and where to place same-type skill reuse, common parent/prefab creation, and temporary-effect reuse.
+
+## Task: 2026-05-13 Phase 2 Manifested Party Closeout Verification
+
+### Task title
+
+Verify whether Phase 2 `Manifested Party` should close after Phase 2-E.
+
+### Goals
+
+- Inspect the remaining Phase 2 candidate code in `CombatRuntimeParty.cs`.
+- Decide whether a small independent Phase 2-F formula or field-effect slice exists.
+- Confirm the current code still compiles after the Phase 2-E state.
+- Record whether the next default implementation phase should be Phase 3.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not change runtime C# behavior for this verification task.
+- Preserve current player-facing combat behavior.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Do not run Code Reviewer without explicit user permission.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed. Phase 2 is closable; no small independent Phase 2-F slice was identified from inspected code.
+
+### Next Actions
+
+- Start Phase 3 `Projectile / Effect / Drone Simulation Split` as the next default implementation phase.
+- Keep Rin shockwave, generic/persistent field routing, Eve frost field, and Vega queued projectile call-site behavior in place until Phase 3 or Phase 6 provides a better owner boundary.
+- Run Code Reviewer only if the user explicitly requests another review pass.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:351` through `:443` contains `TryFireManifestedRinShockwave(...)`, which combines Rin-specific choice checks, line effect creation, direct enemy iteration, Rin damage hooks, knockback, slow, and reload reduction; it is not a small generic helper slice.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:469` through `:508` contains generic field routing and `TryFireManifestedPersistentSkill(...)`, which remains directly called by `CombatRuntimeManifestedPartyDamage.cs:22`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:512` through `:564` contains `CreateManifestedEveFrostField(...)`, which combines Eve-specific radius/duration/tick/chill/freeze choices and effect registration; it should wait for Phase 3 effect simulation or later skill-adapter work rather than becoming a standalone Phase 2-F slice.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeParty.cs:701` through `:744` contains Vega queued projectile setup/ticking, and `CombatRuntimeManifestedPartySkills.cs:82` and `:115` still call `UpdateManifestedQueuedProjectiles(...)` and `QueueManifestedVegaThreeSwordFlurry(...)`; this is tied to `CombatSkillRuntime` magazine ticking rather than an independent closeout slice.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDamage.cs:9` through `:22` already owns the generic manifested skill fire entry point and delegates the remaining special cases before generic damage.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and 2 existing `System.Net.Http` / `System.IO.Compression` assembly reference warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing assembly reference warnings.
+- Unity-MCP `refresh_unity` returned `success=true`, `refresh_triggered=false`, `resulting_state=idle`.
+- Unity-MCP console warning/error read returned only MCP-FOR-UNITY client handler disposed/exited logs, not C# compile errors.
+
+### History
+
+- 2026-05-13: User explicitly assigned Code Builder and asked to perform the Phase 2 closeout verification.
+
+## Task: 2026-05-13 Combat Runtime Refactor Roadmap After Phase 2-E
+
+### Task title
+
+Create the post-Phase-2-E combat runtime refactor roadmap.
+
+### Goals
+
+- Confirm Phase 2 closeout criteria after the Phase 2-E manifested party damage/projectile helper split.
+- Record the remaining full roadmap from Phase 3 through Phase 7 and the later common actor/base-class decision point.
+- Place skill reuse refactoring at the correct timing relative to projectile/effect/drone simulation and monster runtime adapter narrowing.
+- Place common combat target and Monster/Enemy common base proposals at the correct timing relative to `ICombatTarget`, `TemporaryEffect`, and state-owner stabilization.
+
+### Constraints
+
+- Role Owner is Designer for this roadmap/report task.
+- Preserve the existing implementation order unless inspected code provides a stronger reason to change it.
+- Do not change runtime C# behavior.
+- Do not run Unity Play Mode.
+- Code Reviewer execution requires explicit user permission and is not part of this report task.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Treat Phase 2 as closable unless Code Builder identifies a small independent remaining manifested formula/field-effect slice in inspected code.
+- Prepare Phase 3 `Projectile / Effect / Drone Simulation Split` as the next default implementation phase.
+- Delay broad skill-executor reuse until Phase 6 adapter narrowing, using Phase 3 to prepare projectile/effect/drone lifecycle boundaries.
+- Delay common combat target migration until Phase 7 and delay common base-class inheritance until after `ICombatTarget` / temporary-effect behavior is verified.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-13-combat-runtime-refactor-roadmap-after-phase2e.html`.
+- `Pakuri/reference/Report/2026-05-13-combat-runtime-controller-phase2e-alignment-report.html:319` through `:321` says Phase 2 should only continue if a smaller formula/field-effect slice is identified.
+- `Pakuri/reference/Report/2026-05-13-combat-runtime-controller-phase2e-alignment-report.html:324` through `:345` records Phase 3 projectile/effect/drone, Phase 4 enemy, Phase 5 selected-unit, Phase 6 adapter narrowing, and Phase 7 combat target / temporary-effect migration.
+- `Pakuri/reference/Report/2026-05-10-combat-runtime-controller-ai-token-refactor-proposal.html:546` through `:550` proposes Manifested Party, Projectile / Effect / Drone, Enemy Simulation, Selected Unit Combat, then monster runtime adapter narrowing.
+- `Pakuri/reference/Report/2026-05-10-shared-combat-target-and-temporary-effect-design.html:401` through `:402` says common target and reusable temporary effects are needed, but first selected ally, summoned ally, and enemy combat state must be readable from one layer.
+- `Pakuri/reference/Report/2026-05-13-combat-refactor-start-plan.html:451` through `:453` says common base-class inheritance should come after `ICombatTarget` / adapter and effect-layer stabilization.
+- Code search confirmed `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:307` through `:310` still owns battlefield lists and `:498` through `:503` still owns top-level update calls.
+- Code search confirmed `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:14` still owns `UpdateProjectiles()` and `:516` still owns selected-unit combat.
+- Code search confirmed `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeEnemies.cs:306`, `:706`, and `:945` still own enemy spawn/update/target priority.
+- Code search confirmed `Pakuri/Assets/Scripts/Combat/Skill/CombatMonsterSkillRuntime.cs:29` still exposes a full `CombatRuntimeController` reference.
+- Code search confirmed `Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs:8` is a `MonoBehaviour` and `:193` still calls back through `Owner.TickManifestedUnitSkill(...)`.
+
+### History
+
+- 2026-05-13: User requested a detailed evidence-based HTML roadmap from Phase 2 closure verification through the remaining refactor phases, including the timing for skill reuse and common combat model proposals.
+
 ## Task: 2026-05-13 CombatRuntimeController Structure Split Plan
 
 ### Task title

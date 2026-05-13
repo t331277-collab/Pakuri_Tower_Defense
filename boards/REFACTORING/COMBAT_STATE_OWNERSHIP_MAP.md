@@ -4,6 +4,96 @@ This file is the Phase 0 output for the `CombatRuntimeController` structure spli
 
 It records current mutable combat-state owners before code extraction starts. No runtime C# behavior is changed by this phase.
 
+## Task: 2026-05-13 Phase 3 Ownership Slice Plan
+
+### Task title
+
+Record planned ownership movement for Phase 3 projectile/effect/drone simulation.
+
+### Goals
+
+- Clarify how projectile, skill-effect, and drone lifecycle ownership should move in Phase 3.
+- Preserve the existing top-level update order while ownership boundaries are introduced.
+- Keep target/damage state ownership unchanged until later phases.
+
+### Constraints
+
+- Role Owner is Designer.
+- Planning only; no runtime C# behavior changes.
+- Do not move enemy simulation, selected-unit combat state, or common target/effect model in Phase 3.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Use Phase 3-A through 3-H from `boards/REFACTORING/REFACTORING.md` as the implementation sequence.
+- Update this ownership map after each Code Builder slice if the physical owner of projectiles, skill effects, or drones changes.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:96` through `:174` defines `ProjectileRuntime`, `SkillEffectRuntime`, and `DroneRuntime` as private nested runtime classes.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:308` through `:310` stores `projectiles`, `skillEffects`, and `drones` on the controller.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:14` through `:154` owns projectile loop behavior.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1196` through `:1230` owns skill-effect lifetime loop behavior.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1286` through `:1342` owns selected Eve drone lifecycle behavior.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs:51` through `:92` owns manifested drone lifecycle behavior.
+
+### History
+
+- 2026-05-13: User asked Designer to decide and record how Phase 3 should be split before implementation.
+
+## Task: 2026-05-13 Phase 2 Closeout Ownership Verification
+
+### Task title
+
+Confirm Phase 2 closeout against the combat state ownership map.
+
+### Goals
+
+- Verify that Phase 2 manifested party ownership slices reached a stable closeout point.
+- Confirm remaining special-case methods are better handled by later projectile/effect/drone simulation or adapter phases.
+- Keep the ownership map aligned with the next default phase.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not change runtime C# behavior for this verification task.
+- Do not move state owners during closeout verification.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed. Phase 2 closeout is verified; the next default owner migration is Phase 3 projectile/effect/drone simulation ownership.
+
+### Next Actions
+
+- Use Phase 3 to move projectile/effect/drone lifecycle ownership behind a simulation boundary.
+- Keep `CombatRuntimeController.Update()` order unchanged until a later phase explicitly moves orchestration.
+- Do not introduce `CombatTargetModel` or common base-class inheritance before adapter/effect behavior is verified.
+
+### Evidence
+
+- `CombatRuntimeManifestedPartyRuntime.cs:8` through `:12` owns the manifested party service and compatibility accessors.
+- `CombatRuntimeManifestedPartyRuntime.cs:42` through `:60` owns the manifested party top-level combat tick.
+- `CombatRuntimeManifestedPartyView.cs:23` through `:302`, `CombatRuntimeManifestedPartySkills.cs:5` through `:139`, `CombatRuntimeManifestedPartyDrones.cs:8` through `:115`, `CombatRuntimeManifestedPartyVisuals.cs:9` through `:154`, and `CombatRuntimeManifestedPartyDamage.cs:9` through `:483` cover the Phase 2 manifested party runtime, view, skill, drone, visual, damage, and projectile helper boundaries.
+- `CombatRuntimeParty.cs:351` through `:564` and `:701` through `:744` retain Rin shockwave, persistent/frost field, and Vega queued projectile special cases that depend on monster-specific formulas, `enemies`, skill effects, and `CombatSkillRuntime` state.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP refresh reached idle and console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-13: Code Builder inspected the remaining Phase 2 candidate code and verified that no independent Phase 2-F ownership slice should block Phase 3.
+
 ## Task: 2026-05-13 CombatRuntimeController State Ownership Map
 
 ### Task title

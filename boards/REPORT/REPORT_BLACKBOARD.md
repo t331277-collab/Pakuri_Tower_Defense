@@ -4,6 +4,101 @@
 - This file keeps active report task blocks after the 2026-05-12 archive pass; newer report tasks may be appended above older retained context.
 - Source file: `boards/REPORT/REPORT_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Roadmap Shared Target And Skill Reuse Amendment
+
+### Task title
+
+Amend the post-Phase-2-E roadmap with explicit coverage of the 2026-05-10 shared target / temporary effect proposal.
+
+### Goals
+
+- Confirm whether the 2026-05-10 shared combat target and temporary effect proposal is covered by the 2026-05-13 roadmap.
+- Add missing timing details for same-type skill reuse, common target model, temporary effects, Monster / Enemy common base, and prefab-based actor authoring.
+- Keep the output as an HTML report amendment without runtime C# changes.
+
+### Constraints
+
+- Role Owner is Designer.
+- Base every conclusion on inspected reports, board records, or current code search.
+- Do not change runtime C# behavior.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Treat `Pakuri/reference/Report/2026-05-13-combat-runtime-refactor-roadmap-after-phase2e.html` as the amended roadmap.
+- Keep same-type skill reuse scope open until Phase 6 begins.
+- Keep prefab-based Monster / Enemy common authoring as a Phase 8 view/component question, not a replacement for Phase 7 target/effect model migration.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-13-combat-runtime-refactor-roadmap-after-phase2e.html` with section `7. 2026-05-10 공통 대상 / 임시효과 제안 반영 여부`.
+- `Pakuri/reference/Report/2026-05-10-shared-combat-target-and-temporary-effect-design.html:258` through `:268` proposes `CombatTargetModel` with `ActiveEffects`.
+- `Pakuri/reference/Report/2026-05-10-shared-combat-target-and-temporary-effect-design.html:330` through `:346` proposes `ApplyTemporaryEffect(...)`, `GrantShield(...)`, and shield subsystem separation.
+- `Pakuri/reference/Report/2026-05-10-shared-combat-target-and-temporary-effect-design.html:385` through `:392` lists the migration checklist for selected target, `CombatUnitRuntime`, `EnemyRuntime`, modifier aggregator, action speed, movement/damage multipliers, shield, and status effects.
+- Current code search confirmed `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:28` defines `EnemyRuntime` as a private nested class and `Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs:8` defines manifested units as a `MonoBehaviour`.
+- Current code search confirmed enemy objects are composed through `AddComponent` calls in `CombatRuntimeEnemies.cs:354`, `:419`, and `:517`; no `enemyPrefab` / `Instantiate` path was found in the searched enemy creation code.
+
+### History
+
+- 2026-05-13: User asked whether the 2026-05-10 shared target / temporary effect improvement proposal was included in the newly created roadmap and asked to amend the HTML with skill reuse, common parent/prefab, and temporary-effect timing.
+
+## Task: 2026-05-13 Combat Runtime Refactor Roadmap After Phase 2-E
+
+### Task title
+
+Create an evidence-based HTML roadmap from Phase 2 closure through the remaining combat runtime refactor.
+
+### Goals
+
+- Confirm whether Phase 2 should be closed after Phase 2-E.
+- Explain the remaining Phase 3 through Phase 7 sequence with inspected-code and board evidence.
+- Place the user's proposed skill reuse refactor and common combat target / Monster-Enemy base model proposal at the safest timing.
+- Save the result as an HTML report.
+
+### Constraints
+
+- Role Owner is Designer because this is design/report work, not runtime implementation.
+- Base every conclusion on inspected files, board records, existing HTML reports, or command output.
+- Do not change runtime C# behavior.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Use `Pakuri/reference/Report/2026-05-13-combat-runtime-refactor-roadmap-after-phase2e.html` as the current roadmap before starting Phase 3.
+- If implementation starts, begin with a small Phase 3 projectile/effect/drone simulation boundary slice rather than common target model or full skill-executor reuse.
+
+### Evidence
+
+- Read `boards/REFACTORING/REFACTORING.md`, `boards/REFACTORING/COMBAT_STATE_OWNERSHIP_MAP.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, `boards/COMBAT/ENEMY_BLACKBOARD.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
+- Inspected `Pakuri/reference/Report/2026-05-13-combat-runtime-controller-phase2e-alignment-report.html`, `Pakuri/reference/Report/2026-05-10-combat-runtime-controller-ai-token-refactor-proposal.html`, `Pakuri/reference/Report/2026-05-10-shared-combat-target-and-temporary-effect-design.html`, and `Pakuri/reference/Report/2026-05-13-combat-refactor-start-plan.html`.
+- Code search confirmed `CombatRuntimeController.cs:307` through `:310` still owns `enemies`, `projectiles`, `skillEffects`, and `drones`.
+- Code search confirmed `CombatRuntimeController.cs:498` through `:503` still calls `UpdateSpawning()`, `UpdateEnemies()`, `UpdateProjectiles()`, `UpdateMonsterSkillRuntimeEffects()`, `UpdateManifestedMonsterPartyCombat()`, and `UpdateSelectedMonsterCombat()` directly.
+- Code search confirmed `CombatRuntimeProjectiles.cs:14` still owns `UpdateProjectiles()` and `CombatRuntimeProjectiles.cs:516` still owns `UpdateSelectedMonsterCombat()`.
+- Code search confirmed `CombatRuntimeEnemies.cs:306`, `:706`, and `:945` still own enemy spawning, enemy update, and enemy target priority.
+- Code search confirmed `CombatMonsterSkillRuntime.cs:29` still exposes the full `CombatRuntimeController` reference to monster runtime adapters.
+- Code search confirmed `CombatUnitRuntime.cs:8` is a `MonoBehaviour` and `CombatUnitRuntime.cs:193` still calls `Owner.TickManifestedUnitSkill(...)`.
+- Added `Pakuri/reference/Report/2026-05-13-combat-runtime-refactor-roadmap-after-phase2e.html`.
+
+### History
+
+- 2026-05-13: User asked to create a detailed evidence-based HTML roadmap starting from Phase 2 closure verification, including the timing for skill reuse and common combat model / Monster-Enemy base-class proposals.
+
 ## Task: 2026-05-13 Combat Runtime Phase 2-E Alignment Report
 
 ### Task title

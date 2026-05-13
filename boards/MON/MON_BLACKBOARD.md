@@ -4,6 +4,138 @@
 - This file keeps only task blocks dated 2026-05-10 based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/MON/MON_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Phase 3 Monster Skill And Drone Boundary Plan
+
+### Task title
+
+Record monster-skill impact of Phase 3 projectile/effect/drone simulation split.
+
+### Goals
+
+- Preserve monster-specific projectile, effect, and drone behavior while lifecycle ownership moves.
+- Keep same-type skill reuse for Phase 6, not Phase 3.
+- Identify that selected Eve drones and manifested Eve drones are separate runtime types today.
+
+### Constraints
+
+- Role Owner is Designer.
+- Do not change monster runtime C# behavior.
+- Do not merge selected and manifested drone runtime classes unless Code Builder later proves it is a safe behavior-preserving slice.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed. Monster-domain Phase 3 impact is recorded.
+
+### Next Actions
+
+- Phase 3-F should handle selected Eve `DroneRuntime` lifecycle.
+- Phase 3-G should align manifested `ManifestedDroneRuntime` lifecycle with the new simulation boundary without forcing class unification.
+- Keep exact same-type skill executor reuse decisions until Phase 6.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatMonsterSkillRuntime.cs:177` through `:184` calls each monster runtime adapter's `UpdateEffects()`.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1286` through `:1342` owns selected Eve drone ticking and projectile creation through `DroneRuntime`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs:8` through `:16` defines separate `ManifestedDroneRuntime` fields for source unit, skill, GameObject, duration, and cooldown.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDrones.cs:51` through `:92` ticks manifested drones and fires manifested monster projectiles.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyRuntime.cs:49` calls `owner.UpdateManifestedDrones()` as part of manifested party combat ticking.
+
+### History
+
+- 2026-05-13: Designer recorded that Phase 3 should move lifecycle ownership while deferring broad monster skill reuse to Phase 6.
+
+## Task: 2026-05-13 Monster Skill Reuse And Common Actor Timing Note
+
+### Task title
+
+Record monster-domain timing for same-type skill reuse and Monster / Enemy actor commonization.
+
+### Goals
+
+- Keep monster skill reuse as a Phase 6 adapter-narrowing topic.
+- Preserve the user's proposed grouping direction: projectile, beam / line / area / field, and summon / drone skill families.
+- Leave the exact same-type grouping scope undecided until Phase 6 starts.
+- Place Monster / Enemy shared parent or prefab actor work after common target/effect stabilization.
+
+### Constraints
+
+- Role Owner is Designer.
+- Do not change monster runtime C# behavior.
+- Do not decide exact skill grouping before adapter and lifecycle ownership evidence exists.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Revisit monster skill reuse during Phase 6 with current code evidence and user-selected grouping scope.
+- Keep Phase 3 focused on projectile/effect/drone lifecycle ownership, not a full monster skill executor reclassification.
+- Evaluate Monster / Enemy common actor inheritance or prefab view component only after Phase 7 target/effect APIs stabilize.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-13-combat-runtime-refactor-roadmap-after-phase2e.html` with explicit same-type skill reuse timing and scope deferral.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatMonsterSkillRuntime.cs:53`, `:68`, `:83`, `:98`, and `:113` show monster-specific runtime adapters still calling controller action-speed helpers.
+- `Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs:8` is currently a `MonoBehaviour`, while `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:28` defines enemy runtime as a private nested class; this supports interface/model-first commonization before a common parent class.
+
+### History
+
+- 2026-05-13: User asked to amend the roadmap with the proposed same-type skill reuse approach and Monster / Enemy common parent or prefab direction.
+
+## Task: 2026-05-13 Phase 2 Monster Special-Case Closeout Verification
+
+### Task title
+
+Verify common monster impact of Phase 2 manifested party closeout.
+
+### Goals
+
+- Check whether remaining manifested monster special cases should be split before Phase 3.
+- Preserve monster-specific formulas and behavior during closeout verification.
+- Record why broad skill reuse should wait for later adapter/simulation phases.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not change runtime C# behavior.
+- Do not run Unity Play Mode; monster skill verification remains user-owned.
+- Do not run Code Reviewer without explicit user permission.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed. No monster-specific Phase 2-F split is recommended before Phase 3.
+
+### Next Actions
+
+- Keep Rin shockwave, Eve frost field, and Vega queued projectile special cases in place for now.
+- Revisit monster skill reuse during Phase 6 adapter narrowing after Phase 3 projectile/effect/drone and Phase 4-5 state owners are more stable.
+
+### Evidence
+
+- `CombatRuntimeParty.cs:351` through `:443` contains Manifested Rin C shockwave behavior with Rin choice checks, Rin damage helpers, knockback, slow, and reload reduction.
+- `CombatRuntimeParty.cs:512` through `:564` contains Manifested Eve C frost field behavior with Eve choice checks, damage multiplier, chill stacks, freeze duration, and skill-effect registration.
+- `CombatRuntimeParty.cs:701` through `:744` contains Manifested Vega A queued projectile sequencing and source-specific damage/mark stack resolution.
+- `CombatRuntimeManifestedPartyDamage.cs:9` through `:22` already centralizes generic manifested skill fire and delegates these special cases before generic damage.
+- Runtime and Editor `dotnet build` commands completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP refresh reached idle and console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-13: Code Builder inspected remaining manifested monster special cases and concluded they should not block Phase 2 closeout.
+
 ## Task: 2026-05-13 Manifested Party Damage Projectile Helper Split
 
 ### Task title

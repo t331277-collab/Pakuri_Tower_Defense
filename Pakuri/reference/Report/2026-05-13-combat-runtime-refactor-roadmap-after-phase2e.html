@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Combat Runtime Refactor Roadmap After Phase 2-E</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --paper: #ffffff;
+      --ink: #1f2933;
+      --muted: #5d6673;
+      --line: #d8dee6;
+      --accent: #2563eb;
+      --ok: #0f766e;
+      --warn: #b45309;
+      --risk: #b91c1c;
+      --code: #eef2f7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      line-height: 1.65;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 40px 28px 72px;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.25;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 34px;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-size: 23px;
+      margin-top: 38px;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
+    }
+
+    h3 {
+      font-size: 18px;
+      margin-top: 22px;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    ul, ol {
+      margin: 10px 0 0 24px;
+      padding: 0;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    code {
+      background: var(--code);
+      border: 1px solid #dfe6ef;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      background: var(--paper);
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #eef3fb;
+      font-weight: 700;
+    }
+
+    .sheet {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 10px 24px rgba(31, 41, 51, 0.06);
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+      margin: 18px 0 26px;
+    }
+
+    .meta div, .callout, .phase, .evidence {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+      padding: 12px 14px;
+    }
+
+    .label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .callout {
+      border-left: 5px solid var(--accent);
+      background: #f4f8ff;
+      margin: 18px 0;
+    }
+
+    .status-ok {
+      color: var(--ok);
+      font-weight: 700;
+    }
+
+    .status-warn {
+      color: var(--warn);
+      font-weight: 700;
+    }
+
+    .status-risk {
+      color: var(--risk);
+      font-weight: 700;
+    }
+
+    .phase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .phase h3 {
+      color: var(--accent);
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section class="sheet">
+    <h1>Phase 2-E 이후 Combat Runtime 리팩토링 로드맵</h1>
+    <p class="small">
+      이 문서는 Phase 2 마감 여부 확인부터 Phase 3-7 및 이후 base-class 승격 판단까지의 순서를
+      현재 보드, 기존 HTML 보고서, 실제 코드 검색 결과에 근거해 정리한다.
+      2026-05-13 보강판에서는 2026-05-10 공통 전투 대상 / 임시효과 제안서의 항목별 반영 여부와
+      스킬 타입별 재사용, 프리팹 기반 actor 공통화 제안의 타이밍을 명시한다.
+    </p>
+
+    <div class="meta">
+      <div><span class="label">작성일</span>2026-05-13</div>
+      <div><span class="label">Role Owner</span>Designer</div>
+      <div><span class="label">범위</span>CombatRuntimeController 구조 분리 로드맵</div>
+      <div><span class="label">결론</span>Phase 2는 원칙상 마감하고 Phase 3 준비로 이동</div>
+    </div>
+
+    <div class="callout">
+      <strong>핵심 판단:</strong>
+      Phase 2-E까지의 Manifested Party 분리는 원 제안의 순서와 맞다.
+      현재 남은 작업은 더 큰 Phase 2 확장이 아니라
+      <code>Projectile / Effect / Drone Simulation</code>,
+      <code>Enemy Simulation</code>,
+      <code>Selected Unit Combat</code>,
+      <code>Monster Runtime Adapter</code>,
+      <code>CombatTarget / TemporaryEffect</code> 순서로 진행하는 것이 안전하다.
+    </div>
+
+    <h2>1. 사용한 근거</h2>
+    <table>
+      <thead>
+      <tr>
+        <th>근거 파일</th>
+        <th>확인한 내용</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td><code>boards/REFACTORING/REFACTORING.md</code></td>
+        <td>
+          Phase 0-2-E 완료 상태, Phase 3-7 순서, Phase 2 추가 진행 조건,
+          구현 게이트를 확인했다.
+        </td>
+      </tr>
+      <tr>
+        <td><code>boards/REFACTORING/COMBAT_STATE_OWNERSHIP_MAP.md</code></td>
+        <td>
+          현재 mutable combat state owner와 proposed owner를 확인했다.
+          <code>projectiles</code>, <code>skillEffects</code>, <code>drones</code>는 Phase 3,
+          enemy runtime/spawn/targeting은 Phase 4, selected unit state는 Phase 5,
+          monster adapters와 common target/effect는 Phase 6-7로 지정돼 있다.
+        </td>
+      </tr>
+      <tr>
+        <td><code>boards/COMBAT/COMBAT_BLACKBOARD.md</code></td>
+        <td>
+          Phase 2-E <code>CombatRuntimeManifestedPartyDamage.cs</code> 추가,
+          runtime/editor build 통과, Unity-MCP console 확인,
+          Phase 2 Code Reviewer <code>REVIEW_RESULT: PASS</code> 기록을 확인했다.
+        </td>
+      </tr>
+      <tr>
+        <td><code>boards/COMBAT/PROJECTILE_BLACKBOARD.md</code></td>
+        <td>
+          Phase 2-E는 manifested projectile helper 분리까지만 완료했고,
+          projectile simulation과 cleanup은 기존 projectile runtime 파일에 남겨둔 상태임을 확인했다.
+        </td>
+      </tr>
+      <tr>
+        <td><code>boards/COMBAT/ENEMY_BLACKBOARD.md</code></td>
+        <td>
+          현재 활성 enemy simulation 리팩토링 task block이 없고,
+          Phase 4가 아직 시작되지 않았음을 확인했다.
+        </td>
+      </tr>
+      <tr>
+        <td><code>boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md</code></td>
+        <td>
+          Phase 1 skill-effect registration facade는 완료됐지만,
+          effect ticking/lifetime ownership과 temporary-effect migration은 아직 남아 있음을 확인했다.
+        </td>
+      </tr>
+      <tr>
+        <td><code>Pakuri/reference/Report/2026-05-10-combat-runtime-controller-ai-token-refactor-proposal.html</code></td>
+        <td>
+          원 제안의 순서가 state ownership, Manifested Party,
+          Projectile / Effect / Drone, Enemy Simulation, Selected Unit Combat,
+          monster runtime adapter narrowing임을 확인했다.
+        </td>
+      </tr>
+      <tr>
+        <td><code>Pakuri/reference/Report/2026-05-10-shared-combat-target-and-temporary-effect-design.html</code></td>
+        <td>
+          공통 전투 대상 모델과 <code>TemporaryEffectInstance</code>가 필요하지만,
+          먼저 선택 아군/소환 아군/적군 상태를 한 레이어에서 읽을 수 있게 만들어야 한다는 결론을 확인했다.
+        </td>
+      </tr>
+      <tr>
+        <td><code>Pakuri/reference/Report/2026-05-13-combat-runtime-controller-phase2e-alignment-report.html</code></td>
+        <td>
+          Phase 2-E까지는 방향이 맞고,
+          Phase 3 이후가 남아 있어 전체 권장 결론은 진행 중이라는 판단을 확인했다.
+        </td>
+      </tr>
+      <tr>
+        <td><code>Pakuri/reference/Report/2026-05-13-combat-refactor-start-plan.html</code></td>
+        <td>
+          공통 상위 클래스 상속은 첫 단계가 아니라
+          <code>ICombatTarget</code> / adapter와 effect layer 안정화 이후 판단해야 한다는 결론을 확인했다.
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <h2>2. 현재 코드 기준 남은 결합 지점</h2>
+    <table>
+      <thead>
+      <tr>
+        <th>현재 코드 위치</th>
+        <th>의미</th>
+        <th>로드맵상 처리 시점</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td><code>CombatRuntimeController.cs:307-310</code></td>
+        <td>
+          <code>enemies</code>, <code>projectiles</code>, <code>skillEffects</code>, <code>drones</code>
+          battlefield list가 여전히 controller에 있다.
+        </td>
+        <td>Phase 3에서 projectile/effect/drone simulation owner 분리, Phase 4에서 enemy owner 분리.</td>
+      </tr>
+      <tr>
+        <td><code>CombatRuntimeController.cs:498-503</code></td>
+        <td>
+          top-level update가 spawn, enemies, projectiles, monster skill effects,
+          manifested party, selected combat을 직접 순서대로 호출한다.
+        </td>
+        <td>Phase 3-5 동안 호출 대상만 좁히고, 순서는 보존한다.</td>
+      </tr>
+      <tr>
+        <td><code>CombatRuntimeProjectiles.cs:14</code></td>
+        <td><code>UpdateProjectiles()</code>가 아직 projectile simulation entry point다.</td>
+        <td>Phase 3의 첫 핵심 후보.</td>
+      </tr>
+      <tr>
+        <td><code>CombatRuntimeProjectiles.cs:516</code></td>
+        <td><code>UpdateSelectedMonsterCombat()</code>가 projectile partial 안에 남아 있다.</td>
+        <td>Phase 5에서 selected-unit combat boundary로 이동.</td>
+      </tr>
+      <tr>
+        <td><code>CombatRuntimeEnemies.cs:306</code>, <code>:706</code>, <code>:945</code></td>
+        <td>
+          enemy spawn, enemy update, enemy target priority가 같은 partial에 남아 있고 controller state를 읽는다.
+        </td>
+        <td>Phase 4에서 EnemySimulation boundary로 이동.</td>
+      </tr>
+      <tr>
+        <td><code>CombatMonsterSkillRuntime.cs:29</code></td>
+        <td>
+          monster runtime adapter가 아직 <code>CombatRuntimeController</code> 전체 참조를 가진다.
+        </td>
+        <td>Phase 6에서 target query, damage, battlefield spawn, temporary effect 인터페이스로 축소.</td>
+      </tr>
+      <tr>
+        <td><code>CombatUnitRuntime.cs:8</code>, <code>:193</code></td>
+        <td>
+          manifested unit은 <code>MonoBehaviour</code>이고,
+          skill tick은 여전히 <code>Owner.TickManifestedUnitSkill(...)</code> callback을 사용한다.
+        </td>
+        <td>Phase 6-7에서 adapter와 common target path가 안정된 뒤 축소.</td>
+      </tr>
+      <tr>
+        <td><code>CombatRuntimeBattlefield.cs:22-39</code></td>
+        <td>
+          battlefield 등록 facade는 이미 존재한다:
+          enemy, projectile, skill effect, drone add method.
+        </td>
+        <td>Phase 3에서 registration facade를 simulation owner로 확장.</td>
+      </tr>
+      </tbody>
+    </table>
+
+    <h2>3. Phase 2 마감 여부 확인</h2>
+    <div class="callout">
+      <strong>판단:</strong>
+      현재 Phase 2는 마감 처리하고 Phase 3 준비로 넘어가는 것이 맞다.
+      단, Code Builder가 구현 전에 <code>CombatRuntimeParty.cs</code>에 남은
+      Rin shockwave, persistent field, Eve frost field, Vega queued projectile call-site 중
+      독립적이고 작은 slice를 새로 식별하면 그때만 Phase 2-F로 분리한다.
+    </div>
+
+    <table>
+      <thead>
+      <tr>
+        <th>확인 항목</th>
+        <th>근거</th>
+        <th>판단</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td>Manifested party state/service boundary</td>
+        <td>
+          <code>CombatRuntimeManifestedPartyRuntime.cs:8-12</code>,
+          <code>:42-60</code>가 party list/accessor와 top-level party tick을 담당한다고 기록돼 있다.
+        </td>
+        <td><span class="status-ok">완료</span></td>
+      </tr>
+      <tr>
+        <td>View binder</td>
+        <td>
+          <code>CombatRuntimeManifestedPartyView.cs:23-141</code>,
+          <code>:256-302</code>가 2P-5P label/HP/shield view 책임을 담당한다.
+        </td>
+        <td><span class="status-ok">완료</span></td>
+      </tr>
+      <tr>
+        <td>Skill dispatcher</td>
+        <td>
+          <code>CombatRuntimeManifestedPartySkills.cs:5-71</code>이 기존 callback을 유지하면서
+          Eve, Rin, Sein, Vega, Ariel, generic fallback 순서를 분리했다.
+        </td>
+        <td><span class="status-ok">완료</span></td>
+      </tr>
+      <tr>
+        <td>Drone lifecycle</td>
+        <td>
+          <code>CombatRuntimeManifestedPartyDrones.cs:8-115</code>가 manifested drone runtime,
+          배치, ticking, projectile fire, cleanup을 담당한다.
+        </td>
+        <td><span class="status-ok">완료</span></td>
+      </tr>
+      <tr>
+        <td>Skill visual helper</td>
+        <td>
+          <code>CombatRuntimeManifestedPartyVisuals.cs:9</code>, <code>:60</code>, <code>:120-154</code>가
+          visual dispatch, duration, circle/line creation을 담당한다.
+        </td>
+        <td><span class="status-ok">완료</span></td>
+      </tr>
+      <tr>
+        <td>Damage / projectile helper</td>
+        <td>
+          <code>CombatRuntimeManifestedPartyDamage.cs:9</code>, <code>:63-184</code>,
+          <code>:236-483</code>이 generic manifested damage, projectile fire,
+          hit/status, resolver helper를 담당한다.
+        </td>
+        <td><span class="status-ok">완료</span></td>
+      </tr>
+      <tr>
+        <td>검증 상태</td>
+        <td>
+          보드에는 runtime/editor build 0 errors,
+          Unity-MCP console에 compile error 없음,
+          external Phase 2 reviewer <code>REVIEW_RESULT: PASS</code>가 기록돼 있다.
+        </td>
+        <td><span class="status-ok">Phase 2 마감 가능</span></td>
+      </tr>
+      <tr>
+        <td>남은 Phase 2 후보</td>
+        <td>
+          Phase 2-E alignment report는 <code>CombatRuntimeParty.cs</code>에 남은
+          Rin shockwave, persistent field, Eve frost field, Vega queued projectile call-site를
+          더 쪼갤지 결정하라고 기록한다.
+        </td>
+        <td><span class="status-warn">작고 독립적인 slice가 확인될 때만 진행</span></td>
+      </tr>
+      </tbody>
+    </table>
+
+    <h2>4. 전체 리팩토링 로드맵</h2>
+    <div class="phase-grid">
+      <div class="phase">
+        <h3>Phase 0. State Ownership Map</h3>
+        <p><strong>상태:</strong> 완료.</p>
+        <p>
+          <code>boards/REFACTORING/COMBAT_STATE_OWNERSHIP_MAP.md</code>가
+          현재 owner, proposed owner, move phase, compatibility rule을 기록한다.
+        </p>
+        <p><strong>다시 하지 않는다.</strong> 이후 phase에서 새 owner 누락이 발견될 때만 보완한다.</p>
+      </div>
+
+      <div class="phase">
+        <h3>Phase 1. Battlefield Facade Boundary</h3>
+        <p><strong>상태:</strong> 완료.</p>
+        <p>
+          <code>CombatRuntimeBattlefield.cs:22-39</code>가
+          enemy/projectile/effect/drone 등록 facade를 제공한다.
+        </p>
+        <p>
+          아직 simulation owner는 아니다.
+          Phase 3에서 이 facade를 lifecycle owner 방향으로 확장한다.
+        </p>
+      </div>
+
+      <div class="phase">
+        <h3>Phase 2. Manifested Party Runtime Split</h3>
+        <p><strong>상태:</strong> Phase 2-E까지 완료, 마감 가능.</p>
+        <p>
+          party runtime, view, skill dispatcher, drone lifecycle,
+          visual, generic damage/projectile helper가 분리됐다.
+        </p>
+        <p>
+          Phase 2-F는 기본 작업이 아니다.
+          더 작은 formula/field-effect slice가 코드에서 명확히 확인될 때만 추가한다.
+        </p>
+      </div>
+
+      <div class="phase">
+        <h3>Phase 3. Projectile / Effect / Drone Simulation Split</h3>
+        <p><strong>상태:</strong> 다음 기본 작업.</p>
+        <p>
+          <code>UpdateProjectiles()</code>, skill effect ticking,
+          battlefield drone ticking/cleanup을 simulation boundary로 옮긴다.
+        </p>
+        <p>
+          목표는 등록 facade를 넘어 projectile/effect/drone lifecycle을
+          controller partial에서 읽지 않아도 되는 단위로 만드는 것이다.
+        </p>
+      </div>
+
+      <div class="phase">
+        <h3>Phase 4. Enemy Simulation Split</h3>
+        <p><strong>상태:</strong> Phase 3 이후.</p>
+        <p>
+          <code>UpdateSpawning()</code>, <code>UpdateEnemies()</code>,
+          <code>GetEnemyPriorityTarget(...)</code>를 enemy simulation boundary로 옮긴다.
+        </p>
+        <p>
+          <code>EnemyRuntime</code> private nested class를 밖으로 빼거나 adapter로 감싸는 작업은
+          이 단계에서 검토한다.
+        </p>
+      </div>
+
+      <div class="phase">
+        <h3>Phase 5. Selected Unit Combat Split</h3>
+        <p><strong>상태:</strong> Phase 4 이후.</p>
+        <p>
+          1P HP, shield, ammo, reload, automatic skill trigger,
+          selected status visuals와의 결합을 selected-unit combat boundary로 좁힌다.
+        </p>
+        <p>
+          기존 HUD, public read path, <code>selectedUnitRuntime</code> mirror는
+          한 번에 제거하지 않는다.
+        </p>
+      </div>
+
+      <div class="phase">
+        <h3>Phase 6. Monster Runtime Adapter Interface Narrowing</h3>
+        <p><strong>상태:</strong> Phase 5 이후.</p>
+        <p>
+          <code>CombatMonsterSkillRuntime.cs:29</code>의 full controller 참조를
+          target query, damage, battlefield spawn, temporary effect 계약으로 나눈다.
+        </p>
+        <p>
+          스킬 재사용 리팩토링은 이 단계에서 본격화한다.
+        </p>
+      </div>
+
+      <div class="phase">
+        <h3>Phase 7. CombatTarget / TemporaryEffect Migration</h3>
+        <p><strong>상태:</strong> Phase 6 이후.</p>
+        <p>
+          selected unit, manifested unit, enemy를
+          <code>ICombatTarget</code> 또는 adapter로 읽을 수 있게 만든 뒤
+          action speed, shield, status 계열을 공통 temporary effect path로 옮긴다.
+        </p>
+        <p>
+          바로 모든 HP/shield/status field를 <code>CombatTargetModel</code>로 옮기면
+          source of truth가 둘로 갈라질 위험이 있다.
+        </p>
+      </div>
+
+      <div class="phase">
+        <h3>Phase 8. Common Actor/Base-Class 승격 판단</h3>
+        <p><strong>상태:</strong> Phase 7 안정화 이후에만 검토.</p>
+        <p>
+          현재 <code>EnemyRuntime</code>은 controller private nested class이고,
+          <code>CombatUnitRuntime</code>은 <code>MonoBehaviour</code>다.
+          바로 상속 계층으로 묶으면 scene/runtime 결합이 커진다.
+        </p>
+        <p>
+          <code>ICombatTarget</code>, resource/modifier/effect API가 안정된 뒤
+          중복이 명확한 부분만 <code>CombatActorBase</code> 또는 순수 model base로 승격한다.
+        </p>
+      </div>
+    </div>
+
+    <h2>5. 스킬 재사용 리팩토링의 적절한 타이밍</h2>
+    <table>
+      <thead>
+      <tr>
+        <th>제안</th>
+        <th>권장 타이밍</th>
+        <th>이유</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td>투사체 스킬끼리 재사용 구조화</td>
+        <td>
+          Phase 3에서 기반을 만들고,
+          Phase 6에서 본격적으로 executor/interface화한다.
+        </td>
+        <td>
+          현재 <code>CombatRuntimeProjectiles.cs:14</code>가 projectile update를 갖고 있고,
+          Phase 1 facade는 등록만 감싼 상태다.
+          먼저 projectile lifecycle boundary가 있어야 projectile skill executor가 안정적으로 공유된다.
+        </td>
+      </tr>
+      <tr>
+        <td>광선 / line / 지속 효과 공격끼리 재사용 구조화</td>
+        <td>
+          Phase 3에서 skill effect ticking/lifetime을 분리한 뒤,
+          Phase 6-7에서 target/effect API와 결합한다.
+        </td>
+        <td>
+          <code>CombatRuntimeManifestedPartyVisuals.cs</code>는 manifested visual helper만 분리한 상태다.
+          전체 skill effect simulation owner와 temporary effect path는 아직 없다.
+        </td>
+      </tr>
+      <tr>
+        <td>소환 / drone / field object 스킬끼리 재사용 구조화</td>
+        <td>
+          Phase 3에서 drone/effect object lifecycle을 simulation boundary로 옮긴 뒤,
+          Phase 6에서 skill adapter가 controller 전체를 보지 않게 만들 때 정리한다.
+        </td>
+        <td>
+          Phase 2-C는 manifested Eve drone lifecycle만 분리했다.
+          battlefield drone list 자체는 아직 controller list/facade 구조에 묶여 있다.
+        </td>
+      </tr>
+      <tr>
+        <td>몬스터별 스킬 파일을 전면 재분류</td>
+        <td>Phase 6 이전에는 피한다.</td>
+        <td>
+          <code>CombatMonsterSkillRuntime.cs:29</code>가 full controller 참조를 유지하는 동안
+          전면 재분류를 하면 파일만 바뀌고 dependency는 그대로 남을 위험이 크다.
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <h2>6. 공통 전투 대상 모델과 Monster / Enemy 상속 타이밍</h2>
+    <table>
+      <thead>
+      <tr>
+        <th>항목</th>
+        <th>권장 타이밍</th>
+        <th>근거 기반 판단</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td><code>ICombatTarget</code> / read adapter</td>
+        <td>Phase 7 초입</td>
+        <td>
+          <code>shared-combat-target-and-temporary-effect-design.html</code>은
+          selected target, <code>CombatUnitRuntime.Target</code>,
+          <code>EnemyRuntime.Target</code> 연결을 제안한다.
+          그러나 <code>combat-refactor-start-plan.html</code>은 먼저 wrapper/adapter로 읽기 경로부터
+          공통화하라고 제한한다.
+        </td>
+      </tr>
+      <tr>
+        <td><code>CombatTargetModel</code></td>
+        <td>Phase 7에서 adapter 검증 후</td>
+        <td>
+          현재 selected HP/shield/ammo, manifested unit state, enemy status가 서로 다른 저장소에 있다.
+          즉시 model로 옮기면 기존 field와 model이 동시에 source of truth가 될 수 있다.
+        </td>
+      </tr>
+      <tr>
+        <td><code>TemporaryEffectInstance</code></td>
+        <td>Phase 7 중후반</td>
+        <td>
+          shared target 보고서는 action speed, shield 같은 공통성이 높은 효과부터 옮기고,
+          shock/chill/vulnerable처럼 후속 로직이 많은 상태는 뒤로 미루라고 한다.
+        </td>
+      </tr>
+      <tr>
+        <td>Monster / Enemy 공통 상위 클래스 상속</td>
+        <td>Phase 8, 즉 Phase 7 안정화 이후</td>
+        <td>
+          현재 <code>EnemyRuntime</code>은 private nested class이고
+          <code>CombatUnitRuntime</code>은 <code>MonoBehaviour</code>다.
+          따라서 바로 common base class를 만들기보다
+          <code>ICombatTarget</code> / adapter와 effect layer가 안정된 뒤
+          중복이 실제로 보이는 부분만 승격한다.
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <h2>7. 2026-05-10 공통 대상 / 임시효과 제안 반영 여부</h2>
+    <div class="callout">
+      <strong>판단:</strong>
+      기존 로드맵에는 큰 단계로는 포함되어 있었다. 다만 항목별 타이밍,
+      같은 스킬 타입끼리 묶는 리팩토링 범위 보류, 그리고 프리팹 기반 Monster / Enemy 공통화의 위치가
+      충분히 분리되어 있지 않았으므로 이 섹션을 추가한다.
+    </div>
+    <table>
+      <thead>
+      <tr>
+        <th>2026-05-10 제안 항목</th>
+        <th>기존 로드맵 포함 여부</th>
+        <th>보강 후 타이밍</th>
+        <th>근거와 이유</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td><code>CombatTargetModel</code> / 공통 전투 대상</td>
+        <td>포함됨. Phase 7로 배치되어 있었다.</td>
+        <td>
+          Phase 7-A: <code>ICombatTarget</code> / read adapter 먼저 도입.<br>
+          Phase 7-B: selected / manifested / enemy 상태를 공통 read 경로로 검증.<br>
+          Phase 7-C 이후: <code>CombatTargetModel</code>을 owner 후보로 승격.
+        </td>
+        <td>
+          2026-05-10 보고서는 selected, <code>CombatUnitRuntime</code>, <code>EnemyRuntime</code>에
+          공통 target 연결을 제안한다. 현재 코드는 <code>CombatRuntimeController.cs:327-328</code>의 selected shield,
+          <code>CombatUnitRuntime.cs:33-45</code>의 manifested shield / action-speed buff,
+          <code>CombatRuntimeController.cs:28</code>의 private <code>EnemyRuntime</code>가 서로 다른 저장소다.
+          따라서 model을 바로 owner로 만들기보다 read adapter로 먼저 한 레이어에서 읽히는지 검증한다.
+        </td>
+      </tr>
+      <tr>
+        <td><code>TemporaryEffectInstance</code> / 임시효과 재사용</td>
+        <td>포함됨. Phase 7의 핵심 작업으로 적혀 있었다.</td>
+        <td>
+          Phase 7-C: <code>ActionSpeedMultiplier</code> 같은 읽기형 modifier 1개부터 이관.<br>
+          Phase 7-D: shield grant / absorb API 분리.<br>
+          Phase 7-E: move speed, damage taken/dealt, status chance.<br>
+          Phase 7-F 이후: shock, chill, freeze, vulnerable, holy exposure, name mark처럼 후속 로직이 많은 상태.
+        </td>
+        <td>
+          2026-05-10 보고서는 <code>ApplyTemporaryEffect(...)</code>, <code>GrantShield(...)</code>,
+          <code>ActionSpeedMultiplier</code>, <code>ShieldPool</code>을 제안한다.
+          현재 enemy 쪽은 <code>CombatRuntimeEnemies.cs:738</code>, <code>:747</code>, <code>:825</code>,
+          <code>:1178</code>, <code>:1198</code>처럼 timer / shield / buff가 직접 필드에 기록된다.
+          manifested 쪽은 <code>CombatUnitRuntime.cs:145-186</code>가 자체 타이머를 감소시킨다.
+          그래서 단순 multiplier, shield, 복합 상태 순서가 안전하다.
+        </td>
+      </tr>
+      <tr>
+        <td>스킬 재사용 리팩토링: 같은 스킬 타입끼리 묶기</td>
+        <td>부분 포함. Phase 6에서 본격화한다고 되어 있었지만 범위 보류가 명확하지 않았다.</td>
+        <td>
+          Phase 3: projectile / effect / drone lifecycle owner를 먼저 만든다.<br>
+          Phase 6: adapter를 좁힌 뒤 projectile 계열, beam / line / area / field 계열, summon / drone 계열로 executor 후보를 나눈다.<br>
+          실제 어떤 스킬을 같은 타입으로 묶을지는 Phase 6 리팩토링 시작 시 사용자와 함께 다시 결정한다.
+        </td>
+        <td>
+          현재 <code>CombatMonsterSkillRuntime.cs:53</code>, <code>:68</code>, <code>:83</code>, <code>:98</code>,
+          <code>:113</code>은 각 몬스터 adapter가 여전히 controller의 action-speed 함수를 직접 호출한다.
+          또 <code>CombatRuntimeEnemies.cs:1063</code>과 Phase 2 manifested projectile helper는 서로 다른 생성 경로를 가진다.
+          타입별 재사용은 맞는 방향이지만, 지금 묶으면 projectile/effect/drone owner와 adapter interface가 동시에 흔들린다.
+        </td>
+      </tr>
+      <tr>
+        <td>Monster / Enemy를 같은 부모 클래스에서 생성</td>
+        <td>포함됨. Phase 8의 common actor/base-class 판단으로 배치되어 있었다.</td>
+        <td>
+          Phase 8-A: 먼저 pure model / interface 공통화 결과를 평가.<br>
+          Phase 8-B: scene-facing 표현만 <code>CombatActorView</code> 같은 공통 MonoBehaviour / prefab component로 분리할지 판단.<br>
+          Phase 8-C: 그래도 중복이 남을 때만 <code>CombatActorBase</code> 같은 상속 기반을 검토.
+        </td>
+        <td>
+          현재 <code>CombatUnitRuntime.cs:8</code>은 <code>MonoBehaviour</code>이고,
+          enemy는 <code>CombatRuntimeController.cs:28</code>의 private nested class다.
+          적 GameObject도 <code>CombatRuntimeEnemies.cs:354</code>, <code>:419</code>, <code>:517</code>에서
+          <code>AddComponent</code>로 구성되고, 검색한 범위에서 <code>enemyPrefab</code> / <code>Instantiate</code> 경로가 확인되지 않았다.
+          따라서 부모 클래스 상속을 먼저 강제하면 runtime model, scene view, prefab authoring이 섞일 위험이 크다.
+        </td>
+      </tr>
+      <tr>
+        <td>프리팹 기반 Enemy / Monster 생성 제안</td>
+        <td>기존 로드맵에는 명시 부족.</td>
+        <td>
+          Phase 4 이후 enemy simulation이 분리된 뒤 검토하고, 실제 적용은 Phase 8의 actor view 공통화에서 결정한다.
+        </td>
+        <td>
+          프리팹은 scene-facing 표현, collider, label, HP/shield bar 조립을 안정화하는 데 유리하다.
+          하지만 공통 전투 상태의 정답은 prefab 상속보다 <code>ICombatTarget</code> / <code>CombatTargetModel</code> 쪽이어야 한다.
+          그래서 제안 방향은 "전투 상태는 pure model / interface, 표시와 씬 구성은 prefab component"로 분리하는 것이 더 안전하다.
+        </td>
+      </tr>
+      <tr>
+        <td>임시 효과 재사용</td>
+        <td>포함됨. 하지만 shield와 복합 상태의 순서를 더 명확히 해야 했다.</td>
+        <td>
+          Phase 7-C의 action speed 1개 성공 후 Phase 7-D shield, Phase 7-E 일반 modifier,
+          Phase 7-F 복합 상태 순서로 진행한다.
+        </td>
+        <td>
+          2026-05-10 보고서의 성공 기준은 선택 아군, 소환 아군, 적군 모두가 공통 채널을 읽고,
+          적용/갱신/만료/스택 규칙을 공통 effect layer에서 재현하는 것이다.
+          현재 shield와 status는 선택/소환/적군 코드에 직접 기록되므로, 가장 단순한 modifier로 공통 layer를 검증한 뒤 확장한다.
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <h3>보강된 권장 방향</h3>
+    <ul>
+      <li>
+        사용자가 제안한 "투사체는 투사체끼리, 광선 공격은 광선 공격끼리, 소환 스킬은 소환 스킬끼리" 묶기는 방향이 맞다.
+        다만 이 범위는 지금 확정하지 않고, Phase 3에서 lifecycle owner를 만든 뒤 Phase 6에서 adapter interface를 좁힐 때 같이 결정한다.
+      </li>
+      <li>
+        Monster / Enemy 공통화는 "부모 클래스 상속"보다 "공통 target interface + pure combat model + scene-facing prefab/view component" 순서가 더 안전하다.
+        이 방식은 현재 enemy가 private runtime이고, manifested unit만 <code>MonoBehaviour</code>인 코드 차이를 흡수할 수 있다.
+      </li>
+      <li>
+        프리팹은 버리지 않는다. 다만 전투 상태의 공통 정답으로 쓰지 말고,
+        enemy / monster 표시물, label, HP/shield bar, collider, sprite 구성의 공통 view 조립 도구로 Phase 8에서 검토한다.
+      </li>
+    </ul>
+
+    <h2>8. Phase 3 Code Builder handoff 초안</h2>
+    <div class="callout">
+      <strong>다음 구현 요청의 제목 후보:</strong>
+      Phase 3-A Projectile Simulation Boundary Start.
+    </div>
+    <table>
+      <thead>
+      <tr>
+        <th>구분</th>
+        <th>내용</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td>목표</td>
+        <td>
+          <code>UpdateProjectiles()</code>의 top-level ticking, movement, lifetime,
+          hit cleanup 책임을 projectile simulation boundary로 옮긴다.
+        </td>
+      </tr>
+      <tr>
+        <td>보존해야 할 행동</td>
+        <td>
+          projectile hit order, lifetime, pierce/hit set,
+          selected/manifested/enemy damage application,
+          monster-specific projectile hook order를 변경하지 않는다.
+        </td>
+      </tr>
+      <tr>
+        <td>첫 slice 제한</td>
+        <td>
+          첫 구현은 projectile simulation entry point만 좁힌다.
+          enemy simulation, selected-unit combat, common target/effect migration을 같은 slice에 섞지 않는다.
+        </td>
+      </tr>
+      <tr>
+        <td>검증</td>
+        <td>
+          <code>dotnet build Pakuri\Assembly-CSharp.csproj --no-restore</code>,
+          <code>dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore</code>,
+          <code>git diff --check</code>,
+          Unity-MCP refresh/console evidence.
+          Play Mode gameplay verification은 user-owned로 남긴다.
+        </td>
+      </tr>
+      <tr>
+        <td>보드 업데이트</td>
+        <td>
+          <code>boards/REFACTORING/REFACTORING.md</code>,
+          <code>boards/COMBAT/COMBAT_BLACKBOARD.md</code>,
+          <code>boards/COMBAT/PROJECTILE_BLACKBOARD.md</code>,
+          필요 시 <code>boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md</code>.
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <h2>9. 금지 / 보류 규칙</h2>
+    <ul>
+      <li>
+        Phase 3에서 <code>CombatTargetModel</code>을 만들고 모든 HP/shield/status field를 옮기지 않는다.
+        이는 기존 controller field와 이중 source of truth를 만든다.
+      </li>
+      <li>
+        Phase 3에서 monster skill executor 전체를 투사체/광선/소환으로 전면 재분류하지 않는다.
+        adapter가 아직 full controller를 본다.
+      </li>
+      <li>
+        Phase 4 전에 enemy target model 상속 구조를 확정하지 않는다.
+        enemy spawn/update/targeting ownership이 먼저 분리되어야 한다.
+      </li>
+      <li>
+        Phase 7 전에 common base class를 강제하지 않는다.
+        현재 <code>EnemyRuntime</code>과 <code>CombatUnitRuntime</code>의 runtime 형태가 다르다.
+      </li>
+      <li>
+        같은 스킬 타입끼리 묶는 리팩토링 범위를 지금 확정하지 않는다.
+        projectile / effect / drone owner와 adapter interface가 먼저 안정되어야 한다.
+      </li>
+      <li>
+        enemy prefab화를 common combat model의 대체물로 쓰지 않는다.
+        prefab은 scene-facing view / authoring 문제를 풀고, target/effect owner는 pure model / adapter 쪽에서 푼다.
+      </li>
+      <li>
+        runtime combat state를 singleton/static global state로 올리지 않는다.
+        기존 제안은 mutable battle state singleton을 권장하지 않는다.
+      </li>
+    </ul>
+
+    <h2>10. 최종 결론</h2>
+    <p>
+      Phase 2-E까지의 작업은 Manifested Party 분리 목표를 달성했고,
+      reviewer 결과까지 통과했으므로 현재 기준으로는 Phase 2를 마감해도 된다.
+      다음 기본 작업은 Phase 3 <code>Projectile / Effect / Drone Simulation Split</code>이다.
+    </p>
+    <p>
+      사용자가 제안한 스킬 재사용 리팩토링은 방향이 맞지만,
+      즉시 전면 적용할 단계는 아니다.
+      Phase 3에서 projectile/effect/drone lifecycle 기반을 만들고,
+      Phase 6에서 monster runtime adapter를 좁힌 뒤
+      투사체, 광선/line/field, 소환/drone 계열 executor로 재사용 구조를 잡는 순서가 안전하다.
+      이때 어떤 스킬을 어느 타입으로 묶을지는 아직 확정하지 않고,
+      실제 Phase 6 리팩토링 시작 시 사용자와 함께 다시 범위를 정한다.
+    </p>
+    <p>
+      공통 전투 대상 모델은 Phase 7에서 <code>ICombatTarget</code> / adapter로 시작한다.
+      Monster / Enemy 공통 상위 클래스 상속은 Phase 7의 target/effect layer가 안정된 후,
+      실제 중복이 분명한 부분만 Phase 8로 승격하는 것이 현재 코드 근거상 가장 안전하다.
+      프리팹 기반 공통화는 Phase 4 이후 enemy simulation 경계가 생긴 뒤,
+      Phase 8에서 scene-facing view / authoring component로 검토하는 쪽을 권장한다.
+    </p>
+  </section>
+</main>
+</body>
+</html>

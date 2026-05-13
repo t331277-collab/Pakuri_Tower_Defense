@@ -4,6 +4,94 @@
 - This file keeps only task blocks dated `2026-05-10` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/COMBAT/PROJECTILE_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Phase 3 Projectile Slice Plan
+
+### Task title
+
+Define projectile-specific Phase 3 slices before implementation.
+
+### Goals
+
+- Start Phase 3 with projectile simulation ownership before skill effects and drones.
+- Keep projectile hit behavior stable while making the loop readable in smaller boundaries.
+- Preserve selected, manifested, enemy, and monster-specific projectile hooks.
+
+### Constraints
+
+- Role Owner is Designer.
+- Do not change projectile runtime C# behavior.
+- Do not move damage application APIs or common target model in Phase 3.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed. Projectile work should occupy Phase 3-A through Phase 3-C.
+
+### Next Actions
+
+- Phase 3-A: introduce the projectile simulation boundary shell.
+- Phase 3-B: move cleanup/lifetime/edge-removal responsibility behind the boundary.
+- Phase 3-C: split hit routing into enemy projectile, manifested projectile, and selected/player projectile handlers without changing damage formulas.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:14` through `:154` currently combines projectile iteration, movement, enemy projectile target hits, manifested projectile hits, selected/player projectile hits, status application, pierce decrement, edge checks, and cleanup calls.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:182` through `:245` owns enemy projectile hit resolution against manifested units, selected monster, and nexus.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:255` through `:301` owns selected/player projectile enemy hit detection.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectiles.cs:649` through `:660` owns projectile cleanup and list removal.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDamage.cs:184` owns manifested projectile hit resolution and must remain behaviorally compatible during Phase 3-C.
+- `Pakuri/Assets/Scripts/Combat/Battlefield/CombatRuntimeBattlefield.cs:27` through `:30` already routes projectile registration through `AddBattlefieldProjectile(...)`.
+
+### History
+
+- 2026-05-13: Designer split Phase 3 projectile work into 3-A through 3-C before Code Builder implementation.
+
+## Task: 2026-05-13 Phase 2 Projectile Closeout Verification
+
+### Task title
+
+Confirm manifested projectile helper closeout before Phase 3 projectile simulation work.
+
+### Goals
+
+- Verify that Phase 2-E already moved generic manifested projectile fire and hit helpers.
+- Confirm remaining Vega queued projectile behavior is not an independent Phase 2-F projectile helper split.
+- Preserve projectile gameplay behavior before Phase 3 simulation ownership work.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not change runtime C# behavior.
+- Do not run Unity Play Mode; projectile gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed. Phase 2 projectile helper closeout is verified; next projectile work belongs to Phase 3 simulation ownership.
+
+### Next Actions
+
+- Start Phase 3 by moving projectile ticking/lifetime/collision cleanup behind a simulation boundary.
+- Preserve Vega queued projectile cadence and hit hook order during Phase 3.
+
+### Evidence
+
+- `CombatRuntimeManifestedPartyDamage.cs:63`, `:81`, `:112`, `:124`, and `:184` already own manifested projectile fire, pierce, object/runtime creation, and hit resolution.
+- `CombatRuntimeParty.cs:701` through `:744` keeps Vega queued projectile setup and ticking because it depends on `CombatSkillRuntime.PendingVegaProjectileCount`, `PendingVegaProjectileIndex`, `PendingVegaProjectileDelay`, and `PendingVegaProjectileDirection`.
+- `CombatRuntimeManifestedPartySkills.cs:82` ticks queued projectiles together with skill runtime ticking, and `:115` queues Vega flurry from magazine skill firing.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP refresh reached idle and console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-13: Code Builder verified that no additional manifested projectile helper split should block Phase 3.
+
 ## Task: 2026-05-13 Manifested Party Projectile Fire Helper Split
 
 ### Task title

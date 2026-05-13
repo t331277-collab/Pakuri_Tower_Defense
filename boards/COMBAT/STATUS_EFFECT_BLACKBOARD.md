@@ -4,6 +4,94 @@
 - This file keeps only task blocks dated `2026-05-10` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Phase 3 Skill Effect Slice Plan
+
+### Task title
+
+Define skill-effect Phase 3 slices before implementation.
+
+### Goals
+
+- Move skill-effect lifecycle ownership behind a simulation boundary after projectile slices.
+- Preserve current effect tick interval, expiry, residual spawn, shape hit checks, and damage routing.
+- Keep reusable temporary-effect migration reserved for Phase 7.
+
+### Constraints
+
+- Role Owner is Designer.
+- Do not change runtime C# behavior.
+- Do not introduce `TemporaryEffectInstance` in Phase 3.
+- Do not migrate shield/status modifiers into a common layer during this phase.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed. Skill-effect work should occupy Phase 3-D and Phase 3-E.
+
+### Next Actions
+
+- Phase 3-D: move the shared skill-effect lifetime/tick loop behind a simulation boundary.
+- Phase 3-E: separate shape checks, effect damage dispatch, and expiry-spawn routing while preserving Eve, Sein, Vega, and manifested behavior.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1196` through `:1230` owns `UpdateEveSkillEffects()` and `UpdatePersistentSkillEffects()` over the shared `skillEffects` list.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1233` through `:1283` owns `TickSkillEffect(...)`, which dispatches to Sein, Vega, manifested, and Eve effect damage/status behavior.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeEveSkills.cs:1428` owns beam shape checks for effects.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeSeinSkills.cs:1026` through `:1114` owns Sein effect detection, damage, and residual effect spawning on expiry.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatRuntimeVegaSkills.cs:772` through `:813` owns Vega effect damage/name-mark behavior, and `:1523` through `:1533` owns Vega effect classification helpers.
+- `Pakuri/Assets/Scripts/Combat/Battlefield/CombatRuntimeBattlefield.cs:32` through `:35` already routes skill-effect registration through `AddBattlefieldSkillEffect(...)`.
+
+### History
+
+- 2026-05-13: Designer split Phase 3 skill-effect lifecycle work into 3-D and 3-E before Code Builder implementation.
+
+## Task: 2026-05-13 Temporary Effect Reuse Roadmap Timing
+
+### Task title
+
+Record the timing for moving status, shield, and modifier effects into a common temporary-effect layer.
+
+### Goals
+
+- Clarify that temporary-effect reuse is a Phase 7 migration, not a Phase 3 implementation task.
+- Start common temporary effects with a simple modifier such as action speed.
+- Move shield next, then move/damage/status-chance modifiers, and leave complex statuses for later.
+
+### Constraints
+
+- Role Owner is Designer.
+- Do not change runtime C# behavior.
+- Preserve existing shield and status behavior until Code Builder receives a specific implementation task.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Phase 7-C: verify one common modifier effect.
+- Phase 7-D: split shield grant / absorb APIs.
+- Phase 7-E/F: migrate broader modifiers and complex statuses only after the simple effect path is proven.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-13-combat-runtime-refactor-roadmap-after-phase2e.html` to order temporary-effect migration as action speed, shield, general modifiers, then complex status effects.
+- `Pakuri/reference/Report/2026-05-10-shared-combat-target-and-temporary-effect-design.html:330` through `:346` proposes `ApplyTemporaryEffect(...)`, `GrantShield(...)`, and shield subsystem separation.
+- `Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs:145` through `:186` currently ticks manifested shield and timed buffs locally.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeEnemies.cs:738` through `:748` currently ticks enemy move buff, freeze, slow, shock, and chill state directly.
+
+### History
+
+- 2026-05-13: User asked to amend the roadmap with temporary-effect reuse timing, including reusable shield/effect direction from the 2026-05-10 proposal.
+
 ## Task: 2026-05-13 Battlefield Facade Skill Effect Registration
 
 ### Task title
