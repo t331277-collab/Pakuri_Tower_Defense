@@ -4,6 +4,49 @@
 - This file keeps only task blocks dated `2026-05-08` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Combat V2 Data Compatibility Note
+
+### Task title
+
+Record data-asset compatibility requirements for Combat V2.
+
+### Goals
+
+- Keep current CSV/Data loading and ScriptableObject definitions as the source of combat data.
+- Use `SkillDefinition` data plus reusable skill executors rather than hardcoding every skill into one controller.
+- Treat `SkillEffectPrefab` as presentation data, not as the owner of skill logic.
+
+### Constraints
+
+- Role Owner is Designer.
+- No data asset or CSV edits in this task.
+- Combat V2 implementation must preserve current data compatibility unless a later task explicitly migrates data schema.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as design context.
+
+### Next Actions
+
+- Code Builder should reuse `MonsterDefinition`, `EnemyDefinition`, `SkillDefinition`, `PassiveDefinition`, and `RunSession.RunMonsterState` in the first Combat V2 implementation slice.
+- Any new executor mapping should be additive and should not require changing existing CSV rows first.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-13-combat-v2-foundation-architecture.html`.
+- `Pakuri/Assets/Scripts/Data/Definition/MonsterDefinition.cs` already exposes combat tuning, active skills, passive skills, and reward choices.
+- `Pakuri/Assets/Scripts/Data/Definition/EnemyDefinition.cs` already exposes stats, defenses, attack type, Stage 1 skill kind, and active skill values.
+- `Pakuri/Assets/Scripts/Data/Definition/SkillDefinition.cs` already exposes `SkillRuntimeKind`, `SkillEffectPrefab`, coefficients, cooldown, magazine, reload, status ID, and enhancement/master choices.
+- User requested skill management that is reusable and avoids hardcoding as much as possible.
+
+### History
+
+- 2026-05-13: User confirmed Combat V2 should preserve existing CSV/Data loading and use a flexible reusable skill structure.
+
 ## Task: 2026-05-08 Rin F-J CSV/SO Runtime State Alignment
 
 ### Task title

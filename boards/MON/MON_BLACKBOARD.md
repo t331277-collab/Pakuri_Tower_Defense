@@ -4,6 +4,50 @@
 - This file keeps only task blocks dated 2026-05-10 based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/MON/MON_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Combat V2 Monster Unit And Skill Foundation
+
+### Task title
+
+Record monster-domain decisions for Combat V2 unit and skill reuse.
+
+### Goals
+
+- Make selected 1P and manifested 2P-5P monsters share the same `MonsterUnitActor`.
+- Keep monster identity data-driven instead of creating one C# subclass per monster just for identification.
+- Make selected and manifested units use the same learned-choice lookup and skill execution path.
+- Provide default-on auto attack for selected and manifested units, with per-unit toggles.
+
+### Constraints
+
+- Role Owner is Designer.
+- No monster runtime implementation in this task.
+- Do not create `Eve_Unit`, `Sein_Unit`, or similar classes unless a later implementation task proves a real unique behavior/component need.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as design/report work.
+
+### Next Actions
+
+- Use `UnitRuntimeModel` plus `MonsterUnitActor` as the starting point for Combat V2 monster implementation.
+- Keep character-specific logic in skill executors or character state buckets, not in identity-only subclasses.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-13-combat-v2-foundation-architecture.html`.
+- `Pakuri/Assets/Scripts/Data/Definition/MonsterDefinition.cs` contains monster ID, display name, role/element labels, base stats, defenses, combat tuning, active skills, passive skills, and reward choices.
+- `Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs` currently handles selected/manifested monster runtime configuration and stores per-unit learned-skill runtime state.
+- User confirmed that manifested monsters should use the exact same `MonsterUnitActor` and skill enhancement lookup as the 1P monster.
+
+### History
+
+- 2026-05-13: User proposed a `Base_Unit` root and per-monster scripts.
+- 2026-05-13: Designer recommended data-based identity and only using individual C# classes when unique behavior requires it; user accepted the recommendation.
+
 ## Task: 2026-05-13 Phase 3-H Monster Skill Boundary Closeout
 
 ### Task title

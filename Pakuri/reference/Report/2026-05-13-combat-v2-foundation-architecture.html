@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Combat V2 Foundation Architecture</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2933;
+      --muted: #617083;
+      --line: #d8dee8;
+      --panel: #f7f9fc;
+      --accent: #2f6f8f;
+      --accent-soft: #e7f2f6;
+      --warn: #8a5a13;
+      --warn-soft: #fff4d8;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      color: var(--ink);
+      background: #ffffff;
+      line-height: 1.58;
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 38px 28px 64px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      line-height: 1.25;
+    }
+
+    h2 {
+      margin: 34px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--line);
+      font-size: 22px;
+    }
+
+    h3 {
+      margin: 22px 0 8px;
+      font-size: 17px;
+    }
+
+    p {
+      margin: 8px 0;
+    }
+
+    code {
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.95em;
+      background: #eef2f7;
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 22px;
+      table-layout: fixed;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 9px 10px;
+      vertical-align: top;
+      word-break: keep-all;
+    }
+
+    th {
+      background: var(--panel);
+      text-align: left;
+    }
+
+    ul,
+    ol {
+      margin: 8px 0 12px 22px;
+      padding: 0;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    .summary {
+      margin: 18px 0 22px;
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .warning {
+      margin: 16px 0;
+      padding: 12px 14px;
+      border-left: 4px solid var(--warn);
+      background: var(--warn-soft);
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Combat V2 Foundation Architecture</h1>
+  <p class="small">작성일: 2026-05-13 / 역할: Designer / 범위: 새 전투 씬과 새 전투 런타임의 기초 구조 설계</p>
+
+  <section class="summary">
+    <p><strong>결론:</strong> 기존 Run UI Flow, <code>RunSession</code>, CSV/Data 로딩 방식은 유지하고, 전투만 <code>CombatV2</code> 계층과 새 전투 씬에서 병렬 구축한다.</p>
+    <p><strong>핵심 결정:</strong> 전투 계산 모델은 프리팹/애니메이션과 분리한다. 유닛 프리팹에는 얇은 <code>MonsterUnitActor</code> 또는 <code>EnemyUnitActor</code>가 붙고, 실제 전투 상태는 순수 런타임 모델이 소유한다.</p>
+  </section>
+
+  <h2>1. 근거로 확인한 현재 구조</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>확인 항목</th>
+        <th>근거</th>
+        <th>Combat V2 설계 반영</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Run 시작 계약</td>
+        <td><code>RunSceneBootstrap.BeginCombat(...)</code>가 <code>MonsterDefinition</code>, <code>RunSession</code>, <code>GameDataCatalog</code>를 <code>CombatRuntimeController.BeginConfiguredDay(...)</code>로 전달한다.</td>
+        <td>새 전투도 같은 입력 계약을 받는 <code>CombatV2Controller.BeginConfiguredDay(...)</code>를 제공한다.</td>
+      </tr>
+      <tr>
+        <td>몬스터 데이터</td>
+        <td><code>MonsterDefinition</code>은 <code>BaseStats</code>, <code>Defenses</code>, <code>MaxHealth</code>, <code>PowerStat</code>, <code>BaseDamage</code>, 탄창, 재장전, 투사체 값을 가진다.</td>
+        <td>몬스터 프리팹은 데이터를 중복 저장하지 않고 <code>MonsterDefinition</code>에서 런타임 모델을 구성한다.</td>
+      </tr>
+      <tr>
+        <td>적 데이터</td>
+        <td><code>EnemyDefinition</code>은 <code>Stats</code>, <code>Defenses</code>, <code>AttackType</code>, <code>StageOneSkill</code>, 액티브 스킬 튜닝 값을 가진다.</td>
+        <td>적 프리팹도 <code>EnemyDefinition</code> 기반으로 구성하며, 스폰 매니저가 정의와 프리팹을 결합한다.</td>
+      </tr>
+      <tr>
+        <td>공통 스탯</td>
+        <td><code>CombatStatBlock</code>에는 최대 HP, 공격력, 주문력, 이동속도, 치명 확률, 치명 피해, 치명 저항이 있다. <code>AttributeDefenseSet</code>에는 물리/화염/전격/빙결/어둠/신성 방어가 있다.</td>
+        <td><code>UnitRuntimeModel</code>의 기본 스탯/방어 데이터로 직접 채택한다.</td>
+      </tr>
+      <tr>
+        <td>현재 적 상태</td>
+        <td>현재 <code>EnemyRuntime</code>은 HP, 쉴드, 이동/공격 버프, 쇼크, 칠, 빙결, 취약, 슬로우, 성흔, Rin/Sein/Vega 전용 상태를 함께 가진 private nested class이다.</td>
+        <td>V2에서는 공통 상태는 <code>StatusEffectController</code>와 <code>ShieldController</code>로 이동하고, 캐릭터 전용 상태는 전용 state bucket으로 분리한다.</td>
+      </tr>
+      <tr>
+        <td>스킬 데이터</td>
+        <td><code>SkillDefinition</code>에는 <code>RuntimeKind</code>, <code>SkillEffectPrefab</code>, 피해 계수, 범위, 반경, 쿨다운, 탄창, 상태 ID, 강화 선택 배열이 있다.</td>
+        <td>스킬은 데이터/실행기/시각 프리팹을 분리한다. 프리팹은 로직 소유자가 아니라 표현 리소스다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>2. 사용자 결정 반영</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>질문</th>
+        <th>결정</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>전투 상태와 프리팹 결합 방식</td>
+        <td>순수 런타임 모델을 만들고 프리팹에는 얇은 Actor/View만 둔다.</td>
+      </tr>
+      <tr>
+        <td>개별 유닛 클래스</td>
+        <td><code>Eve_Unit</code>, <code>Stage1_Warrior</code> 같은 개별 C# 클래스는 고유 행동이 있을 때만 둔다. 식별은 데이터로 처리한다.</td>
+      </tr>
+      <tr>
+        <td>스킬 관리 방식</td>
+        <td>하드코딩을 줄이고 수정/관리가 자유롭도록 데이터 기반 구조를 우선한다.</td>
+      </tr>
+      <tr>
+        <td>현현 유닛</td>
+        <td>1P와 2P-5P는 같은 <code>MonsterUnitActor</code>를 사용한다. 스킬 강화도 같은 유닛 상태를 조회한다.</td>
+      </tr>
+      <tr>
+        <td>자동 공격</td>
+        <td>1P와 현현 유닛 모두 자동 공격 기능을 가진다. 기본은 켜짐이며 유닛별로 끌 수 있어야 한다.</td>
+      </tr>
+      <tr>
+        <td>UI 연결</td>
+        <td>지금은 새 UI/기존 UI 연결을 구현하지 않는다. 새 전투가 먼저 나온 뒤 연결한다.</td>
+      </tr>
+      <tr>
+        <td>강화 저장</td>
+        <td>스킬 자체를 변형하지 않고 유닛 상태에 learned choices를 저장한 뒤 스킬 실행 시 조회한다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3. 권장 폴더 구조</h2>
+  <pre><code>Assets/Scripts/CombatV2/
+  Core/
+    CombatV2Controller.cs
+    CombatV2Context.cs
+    CombatClock.cs
+    CombatTeam.cs
+  Units/
+    UnitRuntimeModel.cs
+    UnitIdentity.cs
+    UnitStatsRuntime.cs
+    UnitResourceRuntime.cs
+    MonsterUnitActor.cs
+    EnemyUnitActor.cs
+    UnitAnimationBridge.cs
+  Status/
+    StatusEffectController.cs
+    ShieldController.cs
+    TemporaryEffectInstance.cs
+    StatusEffectDefinition.cs
+  Skills/
+    SkillRuntimeInstance.cs
+    SkillExecutionContext.cs
+    SkillExecutor.cs
+    ProjectileSkillExecutor.cs
+    LineSkillExecutor.cs
+    AreaSkillExecutor.cs
+    FieldSkillExecutor.cs
+    BuffSkillExecutor.cs
+    ShieldSkillExecutor.cs
+    HealSkillExecutor.cs
+    MarkSkillExecutor.cs
+    ExecuteSkillExecutor.cs
+    SummonSkillExecutor.cs
+  Battlefield/
+    CombatTargetRegistry.cs
+    TargetQueryService.cs
+    ProjectileSimulation.cs
+    SkillEffectSimulation.cs
+    SummonSimulation.cs
+    SpawnManagerV2.cs
+  Presentation/
+    SkillEffectPresenter.cs
+    ProjectilePresenter.cs
+    UnitStatusPresenter.cs
+    DamagePopupPresenter.cs</code></pre>
+
+  <h2>4. UnitRuntimeModel</h2>
+  <p><code>Base_Unit</code>라는 이름의 MonoBehaviour 루트를 바로 만들기보다, 전투 계산을 담당하는 <code>UnitRuntimeModel</code>을 최상위 모델로 둔다. Unity 프리팹은 이 모델을 표시하고 입력/애니메이션을 전달하는 Actor다.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>영역</th>
+        <th>필드 / 책임</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>식별</td>
+        <td><code>UnitRuntimeId</code>, <code>DefinitionId</code>, <code>DisplayName</code>, <code>Team</code>, <code>UnitKind</code>, <code>MonsterId</code> 또는 <code>EnemyId</code></td>
+      </tr>
+      <tr>
+        <td>생명력</td>
+        <td><code>MaxHealth</code>, <code>CurrentHealth</code>, <code>IsAlive</code>, <code>IsTargetable</code></td>
+      </tr>
+      <tr>
+        <td>쉴드</td>
+        <td><code>ShieldController</code>가 쉴드 값, 지속시간, 적용 프레임, 흡수/반사/폭발 옵션을 소유한다.</td>
+      </tr>
+      <tr>
+        <td>스탯</td>
+        <td><code>CombatStatBlock</code> 기반 최대 HP, 공격력, 주문력, 이동속도, 치명 확률, 치명 피해, 치명 저항</td>
+      </tr>
+      <tr>
+        <td>방어</td>
+        <td><code>AttributeDefenseSet</code> 기반 물리, 화염, 전격, 빙결, 어둠, 신성 방어</td>
+      </tr>
+      <tr>
+        <td>행동</td>
+        <td><code>ActionSpeedMultiplier</code>, <code>AutoAttackEnabled</code>, <code>AutoSkillEnabled</code>, 기본 공격 타이머</td>
+      </tr>
+      <tr>
+        <td>스킬</td>
+        <td><code>SkillRuntimeInstance</code> 리스트, learned active/passive, learned choices 조회 포인터</td>
+      </tr>
+      <tr>
+        <td>상태</td>
+        <td><code>StatusEffectController</code>가 shock, chill, freeze, slow, vulnerable, silence, mark, holy exposure, 방어 감소, 피해 증가 등을 소유한다.</td>
+      </tr>
+      <tr>
+        <td>전용 상태</td>
+        <td>Rin, Sein, Vega, Ariel 같은 캐릭터 전용 타이머는 <code>CharacterStateBucket</code> 또는 캐릭터별 state object로 분리한다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="warning">
+    <strong>주의:</strong> <code>Eve_Unit</code>, <code>Sein_Unit</code>, <code>Stage1_Warrior</code> 같은 클래스를 식별만 위해 만들면 클래스 수만 늘어난다. 식별은 데이터로 처리하고, 특수한 AI/스킬/애니메이션 훅이 필요할 때만 전용 컴포넌트를 붙인다.
+  </div>
+
+  <h2>5. Actor / View 계층</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>컴포넌트</th>
+        <th>책임</th>
+        <th>소유하지 말아야 할 것</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>MonsterUnitActor</code></td>
+        <td>1P와 현현 2P-5P가 공통으로 쓰는 프리팹 Actor. 위치, Renderer, Collider, AnimationBridge, StatusPresenter를 바인딩한다.</td>
+        <td>피해 공식, 강화 판정, 스킬 쿨다운 계산</td>
+      </tr>
+      <tr>
+        <td><code>EnemyUnitActor</code></td>
+        <td>적 프리팹 Actor. SpawnManager가 생성하고 런타임 모델과 바인딩한다.</td>
+        <td>스폰 정책, 타겟 우선순위, 피해 공식</td>
+      </tr>
+      <tr>
+        <td><code>UnitAnimationBridge</code></td>
+        <td>런타임 상태를 Animator 파라미터로 변환한다. Idle, Move, Attack, Cast, Hit, Dead 같은 상태를 표현한다.</td>
+        <td>전투 상태를 직접 변경하는 권한</td>
+      </tr>
+      <tr>
+        <td><code>UnitStatusPresenter</code></td>
+        <td>HP bar, Shield bar, 상태 텍스트, 이름표 갱신</td>
+        <td>HP/Shield 계산</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>6. 스킬 구조</h2>
+  <p>스킬은 세 조각으로 분리한다.</p>
+  <ol>
+    <li><code>SkillDefinition</code>: CSV/SO에서 온 데이터. ID, 슬롯, 타입, 계수, 쿨다운, 탄창, 반경, 프리팹, 강화 선택을 가진다.</li>
+    <li><code>SkillExecutor</code>: 실제 판정과 효과 적용 로직. 가능한 한 타입별 공통 executor를 재사용한다.</li>
+    <li><code>SkillEffectPrefab</code>: 시각 효과, 투사체 외형, 장판 외형, 소환체 외형. 로직의 소유자가 아니다.</li>
+  </ol>
+
+  <h3>스킬 타입 제안</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>타입</th>
+        <th>용도</th>
+        <th>현재 구조 근거</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>MagazineProjectile</code></td>
+        <td>탄창/재장전 기반 기본 공격 또는 연사형 투사체</td>
+        <td>기존 <code>SkillRuntimeKind.MagazineProjectile</code>, <code>CombatSkillRuntime</code>의 탄창/재장전 필드</td>
+      </tr>
+      <tr>
+        <td><code>CooldownProjectile</code></td>
+        <td>쿨다운마다 단발/다중 투사체 발사</td>
+        <td>기존 <code>SkillRuntimeKind.CooldownProjectile</code></td>
+      </tr>
+      <tr>
+        <td><code>LineAttack</code></td>
+        <td>광선, 직선 참격, 레이저</td>
+        <td>기존 <code>CombatEffectFactory.CreateLine(...)</code>, <code>SkillRuntimeKind.LineAttack</code></td>
+      </tr>
+      <tr>
+        <td><code>AreaAttack</code></td>
+        <td>즉발 원형/사각형 범위 피해</td>
+        <td>기존 <code>SkillRuntimeKind.AreaAttack</code></td>
+      </tr>
+      <tr>
+        <td><code>Field</code></td>
+        <td>지속 장판, 반복 tick 피해, 상태 누적</td>
+        <td>기존 <code>SkillEffectRuntime</code>의 지속시간, tick interval, radius</td>
+      </tr>
+      <tr>
+        <td><code>Summon</code> / <code>Drone</code></td>
+        <td>드론, 소환체, 독립 발사체 생성기</td>
+        <td>기존 <code>DroneRuntime</code>, manifested drone 경로</td>
+      </tr>
+      <tr>
+        <td><code>Buff</code></td>
+        <td>행동 속도, 공격력, 피해량, 방어력 변화</td>
+        <td>기존 <code>SkillRuntimeKind.Buff</code>, enemy/unit buff timer들</td>
+      </tr>
+      <tr>
+        <td><code>Shield</code></td>
+        <td>쉴드 부여, 흡수, 반사, 폭발</td>
+        <td>기존 <code>SkillRuntimeKind.Shield</code>, Ariel/Eve shield 구현</td>
+      </tr>
+      <tr>
+        <td><code>Heal</code></td>
+        <td>아군 회복 또는 적 사제 회복</td>
+        <td>기존 <code>SkillRuntimeKind.Heal</code>, <code>StageOneEnemySkillKind.Heal</code></td>
+      </tr>
+      <tr>
+        <td><code>Mark</code></td>
+        <td>표식, 이름 각인, 성흔 같은 누적 상태</td>
+        <td>기존 <code>SkillRuntimeKind.Mark</code>, Vega name mark, Ariel holy exposure</td>
+      </tr>
+      <tr>
+        <td><code>Execute</code></td>
+        <td>조건부 처형, 마무리 피해</td>
+        <td>기존 <code>SkillRuntimeKind.Execute</code></td>
+      </tr>
+      <tr>
+        <td><code>Passive</code></td>
+        <td>항상 적용되거나 특정 이벤트에서 발동하는 패시브</td>
+        <td>기존 <code>PassiveDefinition</code>, <code>SkillRuntimeKind.Passive</code></td>
+      </tr>
+      <tr>
+        <td><code>Chain</code> / <code>Branch</code></td>
+        <td>분기 투사체, 연쇄 피해, 사망 시 전이</td>
+        <td>기존 <code>ProjectileRuntime.BranchChance</code>, <code>BranchRadius</code>, Vega mark transfer</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>7. 강화 / learned choices 모델</h2>
+  <p>강화는 스킬 정의를 직접 변경하지 않는다. 현재 <code>RunSession.RunMonsterState</code>가 유닛별 learned actives/passives와 chosen rewards를 저장하므로, V2도 이 흐름을 유지한다.</p>
+  <ul>
+    <li><code>UnitRuntimeModel</code>은 자신의 <code>RunMonsterState</code> 참조 또는 읽기 전용 스냅샷을 가진다.</li>
+    <li><code>SkillExecutionContext</code>는 <code>HasLearnedActive</code>, <code>HasLearnedPassive</code>, <code>HasChoice</code> 같은 조회 API를 제공한다.</li>
+    <li>1P와 현현 유닛은 같은 조회 방식으로 강화 효과를 받는다.</li>
+    <li>Offering으로 추가된 스킬도 유닛 상태에 기록되고, 스킬 실행 시 해당 유닛의 상태에서 조회한다.</li>
+  </ul>
+
+  <h2>8. 자동 공격 정책</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>항목</th>
+        <th>정책</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>기본값</td>
+        <td>1P와 현현 유닛 모두 <code>AutoAttackEnabled = true</code>로 시작한다.</td>
+      </tr>
+      <tr>
+        <td>토글</td>
+        <td>유닛별로 자동 공격을 켜고 끌 수 있다. UI 연결은 나중 단계에서 한다.</td>
+      </tr>
+      <tr>
+        <td>수동/자동 공존</td>
+        <td>1P는 자동 공격을 켜도 나중에 수동 스킬 입력을 받을 수 있게 한다. 자동 공격은 기본 A/기본 공격 cadence를 담당한다.</td>
+      </tr>
+      <tr>
+        <td>현현 유닛</td>
+        <td>현현 유닛도 같은 <code>MonsterUnitActor</code>와 같은 스킬 실행기를 쓰며, 기본 행동은 자동 공격이다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>9. 전투 실행 순서</h2>
+  <ol>
+    <li><code>CombatV2Controller.BeginConfiguredDay(...)</code>가 RunSession과 데이터 카탈로그를 받는다.</li>
+    <li><code>CombatV2Context</code>가 전투 하루치 설정, 난이도, 스테이지, 보상 결과 콜백을 구성한다.</li>
+    <li><code>UnitFactory</code>가 1P와 현현 유닛을 같은 <code>MonsterUnitActor</code> 프리팹으로 생성/바인딩한다.</li>
+    <li><code>SpawnManagerV2</code>가 적 정의와 스폰 규칙에 따라 <code>EnemyUnitActor</code>를 생성한다.</li>
+    <li>매 tick마다 상태효과, 스킬 쿨다운, 자동 공격, 소환체, 투사체, 장판, 적 AI, 승패 판정을 순서대로 실행한다.</li>
+    <li>결과는 UI가 아니라 <code>CombatResultModel</code>로 먼저 반환한다.</li>
+  </ol>
+
+  <h2>10. 구현하지 않을 것</h2>
+  <ul>
+    <li>이 단계에서는 기존 <code>RunCombatUiController</code> 연결을 구현하지 않는다.</li>
+    <li>기존 <code>CombatRuntimeController</code>를 삭제하지 않는다.</li>
+    <li>모든 캐릭터 스킬을 한 번에 V2로 이식하지 않는다.</li>
+    <li>스킬 프리팹에 피해 계산, 타겟 탐색, 쿨다운 소유권을 넣지 않는다.</li>
+    <li>식별 목적만으로 유닛별 C# 클래스를 대량 생성하지 않는다.</li>
+  </ul>
+
+  <h2>11. 권장 구현 순서</h2>
+  <ol>
+    <li><strong>V2 계약 정의:</strong> <code>CombatV2Controller.BeginConfiguredDay(...)</code>, <code>CombatResultModel</code>, <code>UnitRuntimeModel</code> 골격만 만든다.</li>
+    <li><strong>데이터 연결:</strong> <code>MonsterDefinition</code>, <code>EnemyDefinition</code>, <code>RunSession.RunMonsterState</code>를 읽어 런타임 모델을 생성한다.</li>
+    <li><strong>단일 전투 세로 조각:</strong> 1P 몬스터 1명과 적 1종을 새 씬에서 스폰하고 자동 공격만 구현한다.</li>
+    <li><strong>공통 피해/쉴드/상태:</strong> HP, 쉴드, 피해 적용, 방어 계산, 기본 상태효과 컨트롤러를 붙인다.</li>
+    <li><strong>스킬 executor:</strong> projectile, line, area, field, summon/drone 순서로 타입별 executor를 추가한다.</li>
+    <li><strong>현현 유닛:</strong> 같은 <code>MonsterUnitActor</code>로 2P-5P를 추가하고 자동 공격 토글을 공유한다.</li>
+    <li><strong>강화 조회:</strong> learned choices를 유닛 상태에서 조회해 1P와 현현 유닛이 같은 강화 결과를 받게 한다.</li>
+    <li><strong>UI 연결:</strong> 새 전투가 독립적으로 검증된 후에 기존 UI 어댑터 또는 <code>RunCombatUiControllerV2</code>를 설계한다.</li>
+  </ol>
+
+  <h2>12. 수용 기준</h2>
+  <ul>
+    <li>새 전투 V2는 기존 CSV/Data 로딩 코드를 변경하지 않고 <code>MonsterDefinition</code>, <code>EnemyDefinition</code>, <code>SkillDefinition</code>을 읽는다.</li>
+    <li>1P와 현현 몬스터가 같은 <code>MonsterUnitActor</code> 프리팹과 같은 스킬 실행 경로를 사용한다.</li>
+    <li>자동 공격은 1P와 현현 유닛 모두 기본 활성화이며 유닛별로 끌 수 있다.</li>
+    <li>스킬 강화는 유닛별 learned state를 조회하며 스킬 데이터 자산을 런타임에 변형하지 않는다.</li>
+    <li>투사체, 광선, 장판, 소환/드론, 버프, 쉴드, 힐, 표식, 처형, 패시브 계열은 타입별 executor로 분리된다.</li>
+    <li>프리팹은 표시와 충돌/애니메이션 연결만 담당하고 전투 공식의 소유자가 되지 않는다.</li>
+  </ul>
+
+  <h2>13. 관련 보드</h2>
+  <ul>
+    <li><code>boards/REFACTORING/REFACTORING.md</code></li>
+    <li><code>boards/COMBAT/COMBAT_BLACKBOARD.md</code></li>
+    <li><code>boards/MON/MON_BLACKBOARD.md</code></li>
+    <li><code>boards/RUN/RUN_BLACKBOARD.md</code></li>
+    <li><code>boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md</code></li>
+    <li><code>boards/REPORT/REPORT_BLACKBOARD.md</code></li>
+  </ul>
+</main>
+</body>
+</html>

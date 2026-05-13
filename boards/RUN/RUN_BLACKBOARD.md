@@ -4,6 +4,48 @@
 - This file keeps only task blocks dated `2026-05-09` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/RUN/RUN_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Combat V2 RunSession Compatibility Note
+
+### Task title
+
+Record Run-domain compatibility decisions for Combat V2.
+
+### Goals
+
+- Keep current Run UI Flow and `RunSession` data ownership while new combat runtime is built.
+- Store skill enhancement/learned-choice state on unit state and let Combat V2 read it during skill execution.
+- Defer `RunCombatUiController` integration until a minimal new combat loop exists.
+
+### Constraints
+
+- Role Owner is Designer.
+- Do not implement UI or Run flow changes in this task.
+- Existing RunScene remains current until a later Code Builder task wires Combat V2.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as design context.
+
+### Next Actions
+
+- Combat V2 implementation should consume `RunSession` and `RunSession.RunMonsterState` without changing Run flow first.
+- UI integration should be designed only after Combat V2 can run a minimal battle independently.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-13-combat-v2-foundation-architecture.html`.
+- `Pakuri/Assets/Scripts/Run/Flow/RunSceneBootstrap.cs:53` through `:57` shows the current combat entry receives `MonsterDefinition`, `RunSession`, and `GameDataCatalog`.
+- `Pakuri/Assets/Scripts/Run/Session/RunSession.cs` stores `SelectedMonsterId`, learned actives/passives, party members, manifested monster records, and per-monster learned state.
+- User confirmed that learned choices should remain stored on unit state and be queried at skill execution time.
+
+### History
+
+- 2026-05-13: User decided not to implement UI integration yet and to keep learned-choice storage on unit state for Combat V2.
+
 ## Task: 2026-05-09 Assets Scripts Folder Organization
 
 ### Task title

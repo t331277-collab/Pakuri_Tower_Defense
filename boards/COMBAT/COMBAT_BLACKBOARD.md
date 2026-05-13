@@ -4,6 +4,49 @@
 - This file keeps active combat task blocks after the 2026-05-12 archive pass; newer combat tasks may be appended above older retained context.
 - Source file: `boards/COMBAT/COMBAT_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Combat V2 Foundation Architecture
+
+### Task title
+
+Record combat-domain foundation design for the new Combat V2 runtime.
+
+### Goals
+
+- Define combat ownership for a new runtime without changing existing combat C#.
+- Separate unit runtime state, Actor/View presentation, skill executors, status effects, projectile/effect/summon simulation, and spawn management.
+- Keep 1P and manifested units on the same `MonsterUnitActor` path, with default-on auto attack that can be toggled per unit.
+
+### Constraints
+
+- Role Owner is Designer.
+- No C# implementation or Unity scene edits in this task.
+- Existing `CombatRuntimeController` remains the current runtime until a Code Builder task implements V2.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as design/report work.
+
+### Next Actions
+
+- Code Builder should start with a minimal Combat V2 vertical slice: model contracts, one monster actor, one enemy actor, and auto attack only.
+- UI integration with `RunCombatUiController` remains deferred.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-13-combat-v2-foundation-architecture.html`.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:28` through the nested runtime definitions show current enemy/projectile/effect/drone runtime state is embedded in the old controller partial.
+- `Pakuri/Assets/Scripts/Combat/Monster/CombatUnitRuntime.cs` currently stores manifested unit HP, base damage, power stat, shield, Ariel/Vega/Rin/Sein timers, and skill runtimes.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatSkillRuntime.cs` currently stores skill cooldown, magazine, shot cooldown, reload, and queued Vega projectile state.
+- `Pakuri/Assets/Scripts/Combat/Skill/CombatEffectFactory.cs` already separates line/circle visual object creation from skill definitions, supporting V2 visual/logic separation.
+
+### History
+
+- 2026-05-13: User confirmed Combat V2 should use model/view separation, shared 1P/manifested monster actor, auto attack toggles, and learned-choice lookup from unit state.
+
 ## Task: 2026-05-13 Phase 3-H Combat Simulation Closeout
 
 ### Task title

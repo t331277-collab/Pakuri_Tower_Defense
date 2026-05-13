@@ -4,6 +4,54 @@
 - This file keeps active report task blocks after the 2026-05-12 archive pass; newer report tasks may be appended above older retained context.
 - Source file: `boards/REPORT/REPORT_BLACKBOARD.md`.
 
+## Task: 2026-05-13 Combat V2 Foundation Architecture HTML
+
+### Task title
+
+Create a foundation architecture report for a new Combat V2 scene/runtime.
+
+### Goals
+
+- Record the user's confirmed direction for a new combat-only scene/runtime while preserving current Run UI Flow, `RunSession`, and CSV/Data loading.
+- Define the foundation structure for reusable units, skill executors, learned choices, auto attack, status effects, and prefab/view separation.
+- Save the design as an HTML report without runtime C# implementation.
+
+### Constraints
+
+- Role Owner is Designer.
+- Do not implement new runtime C# or Unity scene changes in this task.
+- Base the structure on inspected current code and user decisions.
+- Keep existing `RunCombatUiController` integration out of scope for now.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Use `Pakuri/reference/Report/2026-05-13-combat-v2-foundation-architecture.html` as the foundation handoff before Combat V2 implementation.
+- First Code Builder slice should define only the V2 contracts/model skeleton and avoid UI integration.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-13-combat-v2-foundation-architecture.html`.
+- Inspected `Pakuri/Assets/Scripts/Data/Definition/MonsterDefinition.cs`, `EnemyDefinition.cs`, `SkillDefinition.cs`, `CombatStatModels.cs`, `CombatUnitRuntime.cs`, `CombatRuntimeController.cs`, `CombatSkillRuntime.cs`, `CombatMonsterSkillRuntime.cs`, and `CombatEffectFactory.cs`.
+- `MonsterDefinition.cs` currently exposes monster stats, defenses, health/damage/projectile tuning, active skills, passive skills, and reward choices.
+- `EnemyDefinition.cs` currently exposes enemy stats, defenses, attack type, Stage 1 skill kind, active skill values, and passive summary.
+- `SkillDefinition.cs` currently exposes `SkillRuntimeKind`, `SkillEffectPrefab`, damage coefficients, cooldown, magazine, reload, status ID, and enhancement/master choices.
+- `CombatRuntimeController.cs` currently keeps `EnemyRuntime`, `ProjectileRuntime`, `SkillEffectRuntime`, and `DroneRuntime` as private nested runtime classes.
+- User selected model/view separation, data-based unit identity, reusable skill management, shared `MonsterUnitActor` for 1P and manifested units, auto attack toggles, deferred UI integration, and learned-choice lookup from unit state.
+
+### History
+
+- 2026-05-13: User proposed a rough new combat architecture with `Base_Unit`, Monster/Enemy prefabs, skill families, animation controller, and skill effect separation.
+- 2026-05-13: Designer asked six structural questions after inspecting current code.
+- 2026-05-13: User confirmed the major design choices; Designer created the foundation HTML report.
+
 ## Task: 2026-05-13 Roadmap Shared Target And Skill Reuse Amendment
 
 ### Task title

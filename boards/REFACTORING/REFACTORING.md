@@ -4,6 +4,56 @@ This board records broad refactoring plans that cut across combat, monster runti
 
 When doing related work, follow `MDTREE.md` routing and update this file together with the affected domain boards.
 
+## Task: 2026-05-13 Combat V2 Foundation Architecture
+
+### Task title
+
+Design a new Combat V2 foundation instead of continuing only the existing combat partial split.
+
+### Goals
+
+- Preserve current Run UI Flow, `RunSession`, and CSV/Data loading while building a new combat runtime/scene in parallel.
+- Use model/view separation: pure unit runtime models plus thin Unity Actor/View components.
+- Make 1P and manifested units share the same `MonsterUnitActor`, skill execution, learned-choice lookup, and auto-attack capability.
+- Keep `RunCombatUiController` integration deferred until the new combat loop exists.
+
+### Constraints
+
+- Role Owner is Designer.
+- No runtime C# implementation in this design task.
+- No Unity scene edits in this design task.
+- Evidence must come from inspected code and the user's confirmed decisions.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as an HTML foundation report.
+
+### Next Actions
+
+- Start Combat V2 implementation with contract/model skeleton only: `CombatV2Controller`, `CombatV2Context`, `UnitRuntimeModel`, and result contracts.
+- Do not start UI integration until the new combat loop can spawn units and resolve a minimal battle independently.
+- Keep existing `CombatRuntimeController` as the comparison/rollback path during V2 development.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-13-combat-v2-foundation-architecture.html`.
+- `Pakuri/Assets/Scripts/Run/Flow/RunSceneBootstrap.cs:53` through `:57` shows the current combat entry uses `MonsterDefinition`, `RunSession`, and `GameDataCatalog`.
+- `Pakuri/Assets/Scripts/Data/Definition/MonsterDefinition.cs` exposes monster stats, defenses, health/damage/projectile tuning, active skills, passive skills, and reward choices.
+- `Pakuri/Assets/Scripts/Data/Definition/EnemyDefinition.cs` exposes enemy stats, defenses, attack type, Stage 1 skill kind, active skill values, and passive summary.
+- `Pakuri/Assets/Scripts/Data/Definition/SkillDefinition.cs` exposes `SkillRuntimeKind`, `SkillEffectPrefab`, cooldown, magazine, status, and enhancement/master choice data.
+- `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeController.cs:28` still defines current `EnemyRuntime` as a private nested class, supporting the decision to build V2 beside the old runtime rather than further entangling it.
+- User confirmed model/view separation, data-based identity, reusable skill management, shared `MonsterUnitActor`, auto-attack toggles, deferred UI integration, and learned-choice lookup from unit state.
+
+### History
+
+- 2026-05-13: After Phase 3 refactor completion, user proposed replacing the old combat path with a new combat scene/runtime while retaining Run/Data flows.
+- 2026-05-13: Designer recommended a parallel Combat V2 approach.
+- 2026-05-13: User provided rough unit/skill/prefab/animation structure and confirmed the final choices after Designer questions.
+
 ## Task: 2026-05-13 Phase 3-H Closeout / Ownership Verification
 
 ### Task title
