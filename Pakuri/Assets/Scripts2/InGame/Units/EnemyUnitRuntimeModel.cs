@@ -8,5 +8,7 @@ namespace Pakuri.InGame
         public EnemyEncounterRole EncounterRole;
         public EnemyAttackType AttackType;
         public DamageAttribute Attribute;
+        public float AttackAttemptRange;
+        public float AttackAttemptCooldownSeconds;
     }
 }

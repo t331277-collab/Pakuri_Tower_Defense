@@ -389,51 +389,88 @@
       </tr>
       <tr>
         <td>Phase2-B</td>
-        <td><span class="tag hold">부분 완료</span></td>
-        <td>사용자 작성 프리팹에 <code>MonsterUnitActor</code>, <code>EnemyUnitActor</code> 모델 바인딩 최소 구현</td>
-        <td>몬스터 5종은 사용자가 만든 프리팹과 직접 조정한 <code>MonsterHpBar</code> Scale을 기준으로 Actor/Model 바인딩을 진행한다. 프리팹은 코드로 생성하지 않고, HP 바 크기는 프리팹 Transform 소유로 둔다. 남은 범위는 Enemy 프리팹/Actor 바인딩과 이후 실제 전투 HP 갱신 연결이다.</td>
+        <td><span class="tag done">완료</span></td>
+        <td>사용자 작성 프리팹에 <code>MonsterUnitActor</code>, <code>EnemyUnitActor</code> 모델 바인딩 최소 구현과 첫 적 스폰 연결</td>
+        <td>몬스터 5종은 사용자가 만든 프리팹과 직접 조정한 <code>MonsterHpBar</code> Scale을 기준으로 Actor/Model 바인딩을 진행한다. <code>Stage1_Warrior_Unit.prefab</code>은 <code>SpawnPoint.x</code>와 Y <code>-5~+5</code> 범위에서 1개 스폰하고, <code>stage1-swordsman</code>의 <code>EnemyUnitRuntimeModel</code>을 <code>EnemyUnitActor</code>에 바인딩한다. 프리팹은 코드로 생성하지 않고, HP 바 크기는 프리팹 Transform 소유로 둔다. 실제 이동, 타겟팅, 공격, 데미지 적용, 실시간 HP 감소는 Phase3 이후 전투 루프에서 처리한다.</td>
       </tr>
       <tr>
         <td>Phase2-C</td>
-        <td><span class="tag next">대기</span></td>
+        <td><span class="tag done">완료</span></td>
         <td>InGame 테스트 씬 또는 테스트 부트스트랩 작성</td>
-        <td>기존 <code>RunSceneBootstrap</code>과 분리된 경로에서 선택 몬스터와 적을 스폰할 수 있다.</td>
+        <td><code>NewRunSceneEntryManager</code>가 기존 <code>RunSceneBootstrap</code>과 분리된 경로에서 선택 몬스터와 첫 적을 스폰한다. Play Mode에서 실제 화면 출현 여부는 사용자 검증 영역이다.</td>
       </tr>
       <tr>
         <td>Phase3-A</td>
-        <td><span class="tag next">대기</span></td>
-        <td>타겟 레지스트리와 전투 대상 모델 작성</td>
-        <td>스킬 실행기가 유닛/적을 직접 찾지 않고 레지스트리에서 타겟 후보를 받는다.</td>
+        <td><span class="tag done">완료</span></td>
+        <td>전투 런타임 소유권 분리: <code>InGameCombatManager</code>는 루프 지휘자, 세부 전투 로직은 시스템으로 분리</td>
+        <td><code>InGameCombatManager</code>는 <code>UnitRosterService</code>를 소유하고, <code>NewRunSceneEntryManager</code>가 스폰한 선택 몬스터와 첫 적을 manager roster에 등록한다. 이동, 타겟팅, 공격, 버프/보호막, 데미지, Actor refresh 세부 구현은 아직 넣지 않았고 Phase3-B/C 시스템으로 분리한다. 이후 100명 이상 적을 위해 per-frame 씬 검색과 각 Actor 개별 전투 <code>Update()</code>에 의존하지 않는 구조를 기준으로 둔다.</td>
       </tr>
       <tr>
         <td>Phase3-B</td>
         <td><span class="tag next">대기</span></td>
-        <td>피해, 상태이상, 보호막 서비스 분리</td>
-        <td>피해 계산과 상태 적용이 액터/스킬 개별 클래스에 흩어지지 않는다.</td>
+        <td>적 이동, 타겟팅, 기본 공격 시스템 작성</td>
+        <td><code>MovementSystem</code>, <code>TargetingSystem</code>, <code>BasicAttackSystem</code> 또는 동등한 시스템을 분리한다. 근접 적, 원거리 적, 보호막 지원 적은 <code>InGameCombatManager</code>의 타입별 if문이 아니라 행동/공격/지원 시스템에서 역할별로 처리한다. 타겟 탐색은 캐시된 roster를 사용하고, 필요하면 retarget 주기 제한이나 공간 분할로 확장할 수 있어야 한다.</td>
+      </tr>
+      <tr>
+        <td>Phase3-C</td>
+        <td><span class="tag next">대기</span></td>
+        <td>피해, 상태이상, 보호막, Actor refresh 서비스 분리</td>
+        <td><code>DamageService</code> 또는 동등한 단일 진입점이 HP/Shield 감소와 사망 처리를 담당한다. 보호막 부여 적은 <code>BuffOrShieldSystem</code>에서 아군 적에게 shield를 부여하고, 데미지는 shield를 먼저 소모한 뒤 HP에 반영한다. Actor HP UI refresh는 모든 유닛 매 프레임 전체 갱신이 아니라 데미지/회복/보호막 변경 시점의 dirty 갱신으로 연결한다. HP 실시간 감소 테스트는 Monster 스킬과 적 공격 구현 이후 진행한다.</td>
       </tr>
       <tr>
         <td>Phase4-A</td>
-        <td><span class="tag next">대기</span></td>
-        <td><code>SkillRuntimeInstance</code> 작성</td>
-        <td>쿨다운, 탄창, 재장전, 지속시간 상태가 <code>SkillData</code>와 분리되어 런타임에 유지된다.</td>
+        <td><span class="tag done">완료</span></td>
+        <td><code>SkillRuntimeInstance</code>와 유닛별 스킬 런타임 보관소 작성</td>
+        <td>
+          <code>SkillData</code>는 설계도 상태로 유지하고, 쿨다운, 캐스팅, 탄창, 재장전, 지속시간, 틱 간격 같은 전투 중 값은
+          <code>SkillRuntimeInstance</code>가 별도로 가진다. 전투 시작 또는 유닛 등록 시
+          <code>InGameSkillCatalog</code>가 스킬 데이터를 조회하고, <code>MonsterUnitRuntimeModel.State.LearnedActiveSkillIds</code>에
+          포함된 active skill만 runtime instance로 활성화한다. Phase4-A는 상태 생성과 <code>Tick(deltaTime)</code>까지만 구현하며,
+          투사체 생성, 피해 적용, 보호막 부여 같은 실제 효과 실행은 하지 않는다.
+          구현 파일은 <code>Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs</code>,
+          <code>UnitSkillRuntimeSet.cs</code>, <code>SkillRuntimeFactory.cs</code>이고,
+          <code>BaseUnitRuntimeModel.SkillRuntime</code>가 유닛별 런타임 보관소를 가진다.
+        </td>
       </tr>
       <tr>
         <td>Phase4-B</td>
         <td><span class="tag next">대기</span></td>
-        <td>스킬 실행기 인터페이스와 레지스트리 작성</td>
-        <td>Projectile, Beam, Zone, Buff, Shield, Passive 실행기가 같은 호출 계약을 가진다.</td>
+        <td>스킬 실행기 인터페이스, 레지스트리, 선택지 해석 경계 작성</td>
+        <td>
+          Projectile, Beam, Zone, Buff, Shield, Passive 실행기가 같은 호출 계약을 가진다. 실행 직전에는
+          <code>SkillData</code> 원본을 수정하지 않고, 유닛의 <code>ChosenChoiceIds</code>와
+          <code>SkillData.EnhancementChoices</code> / <code>MasterChoices</code>를 대조해 계산된 실행 스냅샷을 만든다.
+          공통 배율, 범위, 지속시간, 추가 상태 태그는 재사용 resolver에서 처리하고, 특정 스킬 전용 예외는 executor 내부의
+          <code>if skillId == ...</code> 누적이 아니라 별도 custom executor 또는 behavior hook으로 격리한다.
+          Projectile, Beam, Zone처럼 공간 충돌 신호가 필요한 스킬은 프리팹의 trigger collider가 접촉 신호만 전달하고,
+          실제 데미지, 상태이상, 중복 히트, 관통, 틱 판정은 executor/runtime system이 처리하는 <code>SkillHitboxRelay</code> 계약을 둔다.
+        </td>
       </tr>
       <tr>
         <td>Phase4-C</td>
         <td><span class="tag next">대기</span></td>
         <td>최소 실행 스킬 2종 구현</td>
-        <td><code>eve-a</code> 투사체와 <code>ariel-b</code> 보호막이 샘플 Blueprint 데이터로 동작한다.</td>
+        <td>
+          <code>eve-a</code> 투사체와 <code>ariel-b</code> 보호막이 샘플 Blueprint 데이터로 동작한다.
+          <code>eve-a</code>는 executor를 통해 타겟/히트 결과를 만들고 <code>InGameCombatManager.ApplyDamage(...)</code>를 호출한다.
+          <code>ariel-b</code>는 아군 대상에게 <code>InGameCombatManager.GrantShield(...)</code>를 호출한다.
+          HP/Shield 감소와 표시 갱신은 Phase3-C의 리소스 변경 파이프라인을 통과해야 하며, 스킬 실행 코드가 Actor 표시를 직접 조작하지 않는다.
+          Beam 계열은 길쭉한 trigger collider를 가진 빔 프리팹을 기본 방향으로 하며, 런타임에서 길이, 회전, 지속시간을 맞춘 뒤
+          trigger 신호를 executor/runtime system으로 넘긴다.
+        </td>
       </tr>
       <tr>
         <td>Phase5-A</td>
         <td><span class="tag next">대기</span></td>
-        <td>유닛 상태의 learned choices 조회 연결</td>
-        <td>1P와 현현 유닛이 같은 <code>MonsterUnitActor</code> 경로에서 같은 선택지 조회 규칙을 쓴다.</td>
+        <td>런 중 스킬 학습/강화 상태를 InGame 실행 규칙에 연결</td>
+        <td>
+          기존 <code>RunSession.RecordOfferingChoice(...)</code>와 <code>RecordRewardChoice(...)</code>가 저장한
+          <code>LearnedActives</code>, <code>LearnedPassives</code>, <code>ChosenRewardIds</code>는
+          <code>UnitFactory</code>를 통해 <code>UnitStateBucket</code>의 <code>LearnedActiveSkillIds</code>,
+          <code>LearnedPassiveSkillIds</code>, <code>ChosenChoiceIds</code>로 복사된다. 1P와 현현 유닛은 같은 유닛 상태 조회 규칙을 쓰며,
+          새로 배운 active skill은 다음 전투 진입 또는 스킬 runtime rebuild 시 <code>SkillRuntimeInstance</code>로 추가된다.
+          강화 선택지는 실행 직전 resolved spec에 반영하고, 데이터 에셋이나 <code>SkillData</code> 원본을 런타임 선택 상태로 변형하지 않는다.
+        </td>
       </tr>
       <tr>
         <td>Phase5-B</td>
@@ -451,7 +488,11 @@
         <td>Phase7-A</td>
         <td><span class="tag hold">보류</span></td>
         <td>전체 스킬 데이터 확장</td>
-        <td>5명 x 10개 스킬을 샘플 검증된 규칙으로 확장한다. Rin-D, Vega-E 같은 예외는 별도 Custom executor로 분리한다.</td>
+        <td>
+          5명 x 10개 스킬을 샘플 검증된 규칙으로 확장한다. 최소 25개 이상 스킬이 들어와도 기본 Projectile, Beam, Zone,
+          Buff, Shield, Passive executor와 choice resolver를 재사용한다. Rin-D, Vega-E처럼 기본 데이터 조합으로 표현하기 어려운 예외는
+          별도 Custom executor 또는 behavior hook으로 분리하고, 공통 executor에 스킬 ID 분기문을 계속 추가하지 않는다.
+        </td>
       </tr>
       <tr>
         <td>Phase8-A</td>
@@ -461,6 +502,97 @@
       </tr>
     </tbody>
   </table>
+
+  <h3>3-1. Monster 스킬 사용 흐름</h3>
+  <ol>
+    <li>전투 진입 시 <code>InGameSkillCatalog</code>가 몬스터 ID와 슬롯으로 <code>SkillData</code>를 조회한다.</li>
+    <li><code>SkillRuntimeInstance</code>가 조회된 <code>SkillData</code>를 감싸고, 쿨다운, 탄창, 재장전, 지속시간 같은 전투 중 상태를 따로 가진다.</li>
+    <li>매 프레임 스킬 시스템은 runtime instance의 <code>Tick(deltaTime)</code>을 호출해 시간 상태만 갱신한다.</li>
+    <li><code>AutoSkillEnabled</code>가 켜져 있고 <code>CanCast</code>가 참이면, <code>SkillData.Targeting</code>과 roster를 사용해 대상 후보를 고른다.</li>
+    <li><code>TryBeginCast()</code> 또는 동등한 API가 탄창, 쿨다운, 캐스팅, 재장전 상태를 소비한다.</li>
+    <li>Phase4-B 이후 <code>SkillExecutorRegistry</code>가 <code>SkillData</code> 타입에 맞는 executor를 고른다.</li>
+    <li>executor는 실제 결과만 만든다. 피해와 보호막은 각각 <code>InGameCombatManager.ApplyDamage(...)</code>, <code>GrantShield(...)</code>를 호출한다.</li>
+    <li>HP/Shield 표시 갱신은 Phase3-C의 리소스 변경 파이프라인이 변경된 유닛 Actor만 refresh하는 방식으로 처리한다.</li>
+  </ol>
+
+  <h3>3-2. Skill hitbox / prefab 판정 방향</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>스킬 형태</th>
+        <th>프리팹 책임</th>
+        <th>런타임 책임</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Projectile</td>
+        <td><code>ProjectilePrefab</code>은 Sprite, Animator, trigger collider, 선택적 relay component를 가진다. Trigger는 접촉 신호만 전달한다.</td>
+        <td>속도, 이전 위치와 현재 위치 사이의 cast 보정, 타겟 필터, 관통, 중복 히트, 데미지/상태이상 적용은 projectile runtime과 executor가 처리한다.</td>
+      </tr>
+      <tr>
+        <td>Beam</td>
+        <td>길쭉한 trigger collider를 가진 빔 프리팹을 기본 방향으로 쓴다. 프리팹은 시각 표현과 접촉 신호 전달만 담당한다.</td>
+        <td>대상 방향에 맞춘 회전, 길이/폭 조절, 지속시간, tick 또는 1회 hit 정책, 데미지/상태이상 적용은 beam runtime과 executor가 처리한다.</td>
+      </tr>
+      <tr>
+        <td>Zone</td>
+        <td>원형 또는 영역 trigger collider를 가진 장판 프리팹을 사용한다. Enter, Stay, Exit 신호는 relay를 통해 전달한다.</td>
+        <td>대상 목록, tick interval, 지속시간, 중복 적용 제한, 버프/디버프/데미지 적용은 zone runtime과 executor가 처리한다.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>
+    이 구조에서 프리팹 collider는 최종 판정 로직을 소유하지 않는다. 프리팹은 디버깅 가능한 접촉 신호를 제공하고,
+    실제 게임 판정은 <code>SkillExecutionSnapshot</code>, executor, runtime system이 데이터 기반으로 결정한다.
+    빠른 투사체는 trigger 신호만 믿지 않고 이전 위치와 현재 위치 사이를 <code>LineCast</code> 또는 <code>CircleCast</code> 계열로 보정한다.
+  </p>
+
+  <h3>3-3. 런 중 스킬 학습과 강화 흐름</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>단계</th>
+        <th>소유 데이터</th>
+        <th>InGame에서 쓰는 방식</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>런 보상 / 공양 선택</td>
+        <td><code>RunSession</code>, <code>RunMonsterState</code></td>
+        <td><code>RecordOfferingChoice(...)</code>와 <code>RecordRewardChoice(...)</code>가 배운 active/passive와 선택한 choice ID를 몬스터별로 기록한다.</td>
+      </tr>
+      <tr>
+        <td>전투 진입</td>
+        <td><code>UnitFactory</code>, <code>UnitStateBucket</code></td>
+        <td><code>RunMonsterState</code>의 <code>LearnedActives</code>, <code>LearnedPassives</code>, <code>ChosenRewardIds</code>를 유닛 runtime state로 복사한다.</td>
+      </tr>
+      <tr>
+        <td>스킬 runtime 생성</td>
+        <td><code>SkillRuntimeInstance</code></td>
+        <td><code>LearnedActiveSkillIds</code>에 있는 active skill만 사용 가능 runtime으로 만든다. 아직 배우지 않은 스킬은 데이터가 있어도 실행되지 않는다.</td>
+      </tr>
+      <tr>
+        <td>스킬 실행 직전</td>
+        <td>resolved skill spec</td>
+        <td><code>ChosenChoiceIds</code>와 <code>EnhancementChoices</code> / <code>MasterChoices</code>를 대조해 배율, 범위, 지속시간, 추가 상태 효과를 계산한다.</td>
+      </tr>
+      <tr>
+        <td>스킬 실행</td>
+        <td>executor</td>
+        <td>계산된 spec만 사용해 투사체, 장판, 보호막, 버프, 피해를 처리한다. <code>SkillData</code> 원본은 런타임 선택 상태로 수정하지 않는다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <strong>확장성 기준:</strong>
+    25개 이상 스킬을 처리할 때 기본 executor는 타입별 재사용 구조를 유지한다.
+    공통 선택지 효과는 choice resolver에서 처리하고, 기본 데이터로 표현하기 어려운 예외만 custom executor 또는 behavior hook으로 분리한다.
+    Projectile, Beam, Zone의 프리팹 trigger는 공통 relay 계약으로 묶고, 데미지/상태이상/틱/관통 같은 판정은 데이터 기반 runtime system이 처리한다.
+    이 기준을 지키지 않으면 Phase7에서 스킬 ID별 조건문이 누적되어 유지보수 비용이 커진다.
+  </div>
 
   <h2>4. 다음 Code Builder 작업 추천</h2>
   <div class="grid">
@@ -502,7 +634,7 @@
     <li>Phase2-B~Phase2-C 직전 또는 병행으로 새 InGame CSV loader/catalog를 만들고, Phase4-A~4-C 이전에는 <code>SkillData.csv</code> 기반 <code>SkillData</code> 매핑을 완료한다.</li>
     <li>전체 스킬 데이터는 Phase4-C의 최소 실행 스킬 검증 이후 확장한다.</li>
     <li>기존 <code>SkillDefinition</code>은 버리지 않고 Phase6-A에서 호환 브리지 대상으로 둔다.</li>
-    <li><code>SkillEffectPrefab</code>과 <code>ProjectilePrefab</code>은 프레젠테이션/시각 자료로만 사용하고, 스킬 판정 로직을 프리팹에 숨기지 않는다.</li>
+    <li><code>SkillEffectPrefab</code>과 <code>ProjectilePrefab</code>은 프레젠테이션/시각 자료와 trigger 신호 전달에 사용하고, 스킬 판정 로직을 프리팹에 숨기지 않는다.</li>
     <li>Code Builder는 프리팹을 자동 생성하지 않는다. 사용자가 Unity Editor에서 프리팹을 만든 뒤, Code Builder가 제공한 Actor/바인딩 컴포넌트를 붙이는 흐름을 기본 계약으로 둔다.</li>
     <li><code>MonsterHpBar</code>의 위치, Scale, 표시 크기, 자식 SpriteRenderer 배치는 사용자 프리팹 작성 영역이다. 런타임 코드는 HP 비율과 텍스트 갱신만 담당하고, 사용자가 조정한 Scale 값을 덮어쓰지 않는다.</li>
     <li>선택지 효과는 유닛 상태의 learned choices를 실행 시점에 조회한다. 데이터 에셋이 런타임 선택 상태를 직접 보유하지 않는다.</li>

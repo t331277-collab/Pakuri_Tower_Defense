@@ -16,7 +16,8 @@ namespace Pakuri.Data
     {
         Melee,
         Ranged,
-        MeleeAndRanged
+        MeleeAndRanged,
+        Buffer
     }
 
     public enum StageOneEnemySkillKind

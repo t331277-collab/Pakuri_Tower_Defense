@@ -3,6 +3,280 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-15 Phase3-C Resource Mutation Pipeline
+
+### Task title
+
+Implement the InGame damage/shield/HP mutation pipeline without connecting it to enemy attack attempts yet.
+
+### Goals
+
+- Add a single runtime service for future enemy/monster skill code to mutate HP and Shield.
+- Keep Phase3-B enemy attack attempts from applying real damage until monster and enemy skill execution exists.
+- Refresh only the changed unit actor when HP or Shield changes.
+- Represent HP and Shield as adjacent segments inside the same HP bar background.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not connect Phase3-B attack attempts to actual HP loss in this slice.
+- Do not implement monster skills, enemy skills, projectiles, support behavior, death animation, reward logic, or Play Mode gameplay verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified up to C# build, Unity script refresh, script validation for the new service, and file checks.
+
+### Next Actions
+
+- User verifies in Play Mode only that existing Phase3-B movement/attack-attempt behavior remains intact if needed.
+- Later monster/enemy skill execution should call `InGameCombatManager.ApplyDamage(...)`, `GrantShield(...)`, or `SetShield(...)`.
+- Later skill implementation should verify real HP/Shield decrease and death behavior in Play Mode.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts2/InGame/Core/UnitResourceMutationService.cs` and `.meta`.
+- `UnitResourceMutationService.ApplyDamage(...)` applies defense, consumes `CurrentShield` first, then reduces `CurrentHealth`.
+- `UnitResourceMutationService.GrantShield(...)` and `SetShield(...)` mutate `UnitResourceRuntime.CurrentShield`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now exposes `ApplyDamage(...)`, `GrantShield(...)`, `SetShield(...)`, and `RefreshUnitActor(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSimulationSystem.cs` was not connected to damage application in this slice.
+- `Pakuri/Assembly-CSharp.csproj` includes `Assets\Scripts2\InGame\Core\UnitResourceMutationService.cs`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing System.Net.Http/System.IO.Compression warnings after rerunning alone because a prior parallel build hit an output DLL file lock.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing warnings.
+- Unity-MCP `validate_script` passed with 0 diagnostics for `UnitResourceMutationService.cs`; validation reported duplicate-method diagnostics for actor/manager files, but direct `Select-String` found only one definition each for the reported methods and both builds passed.
+- Unity-MCP `execute_code` could not run because MCP's mono command failed with the existing Windows path-length error.
+- `git diff --check` over the changed scripts and csproj passed with only LF-to-CRLF normalization warnings.
+
+### History
+
+- 2026-05-15: User completed Phase3-B Play Mode verification and asked whether Phase3-C should avoid real damage until monster/enemy skills exist.
+- 2026-05-15: User directed Code Builder to implement only the Phase3-C damage/shield/HP pipeline and same-bar HP/Shield representation.
+
+## Task: 2026-05-15 Phase3-B Enemy Movement Targeting Basic Attack Attempt
+
+### Task title
+
+Implement the first roster-driven enemy movement, targeting, and basic attack attempt loop.
+
+### Goals
+
+- Keep `InGameCombatManager` as the orchestrator and avoid putting all enemy behavior directly inside it.
+- Use `UnitRosterService` player/enemy lists for target selection instead of scene searches.
+- Move alive enemy entries toward the nearest alive player entry when outside attack-attempt range.
+- When in range, record a basic attack attempt with cooldown, without applying damage or reducing HP.
+- Keep the implementation compatible with `Melee`, `Ranged`, `MeleeAndRanged`, and `Buffer` attack types.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This slice does not implement projectiles, melee hit timing, damage application, shield/heal/buff support behavior, skill execution, or live HP mutation.
+- Basic attack attempt ranges/cooldowns are temporary runtime model fields derived from current enemy definition values until a dedicated basic-attack data schema exists.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified up to compile, Unity refresh, script validation, and file checks. Play Mode behavior verification remains user-owned.
+
+### Next Actions
+
+- User verifies in Play Mode that spawned enemies move toward the selected player monster and stop/attempt attacks when in range.
+- Later Phase3-C should replace attack attempts with a damage/shield/status service and Actor refresh.
+- Later support behavior should make `Buffer` target allies for heal/shield/buff instead of using the current player-targeting attack-attempt placeholder.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSimulationSystem.cs`, which ticks `roster.Enemies`, finds nearest alive player targets from `roster.Players`, moves enemies with `Vector3.MoveTowards`, and increments attack-attempt state when in range.
+- Updated `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` so `Update()` calls `enemyCombatSimulation.Tick(roster, Time.deltaTime, logEnemyAttackAttempts)`.
+- Updated `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitRuntimeModel.cs` with `AttackAttemptRange` and `AttackAttemptCooldownSeconds`.
+- Updated `Pakuri/Assets/Scripts2/InGame/Units/UnitFactory.cs` so enemy model creation derives attempt range/cooldown from `EnemyDefinition.AttackType`, `ActiveSkillRadius`, and `ActiveSkillCooldown`.
+- `UnitFactory.cs` maps `Ranged` to `Math.Max(5f, ActiveSkillRadius)`, `MeleeAndRanged` to `Math.Max(4f, ActiveSkillRadius)`, `Buffer` to `Math.Max(5f, ActiveSkillRadius)`, and default melee to `1.4f`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` serializes `enemyCombatSimulationEnabled: 1` and `logEnemyAttackAttempts: 0` on `InGameCombatManager`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and the same existing warnings.
+- Unity-MCP `refresh_unity` force refresh cleared the initial `EnemyCombatSimulationSystem` not found compile error after the new file was imported.
+- Unity-MCP `validate_script` passed with 0 diagnostics for `InGameCombatManager.cs` and `EnemyCombatSimulationSystem.cs`.
+- Unity-MCP `validate_script` reported a duplicate-method diagnostic for `UnitFactory.cs`, but direct `Select-String` found only one `CreateMonster(...)` definition and both runtime/editor builds passed.
+- Unity-MCP `execute_code` verification could not run because MCP's mono invocation failed with `파일 이름이나 확장명이 너무 깁니다`; no Play Mode verification was attempted.
+- `git diff --check` over the changed combat scripts and scene passed with only LF-to-CRLF normalization warnings.
+
+### History
+
+- 2026-05-15: User explicitly requested Code Builder to implement enemy movement, targeting, and basic attack "attempt".
+
+## Task: 2026-05-15 Stage1 Enemy Type CSV And Triple Spawn Entry
+
+### Task title
+
+Record stage-one Melee/Ranged/Buffer enemy data and NewRunScene triple enemy entry spawning.
+
+### Goals
+
+- Keep using the existing `attack_type` column for enemy behavior grouping.
+- Standardize current stage-one enemy types as `Melee`, `Ranged`, and `Buffer`.
+- Record stage-one swordsman, rogue, and priest rows from the inspected enemy reference.
+- Spawn the three stage-one enemy prefabs in NewRunScene at one-second intervals.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User explicitly confirmed Rogue is `Ranged` and Priest is `Buffer`.
+- Do not implement movement, attack, targeting, shield/heal/buff behavior, damage, or live HP mutation in this slice.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified up to build, scene serialization, prefab inspection, and console checks.
+
+### Next Actions
+
+- User verifies in Play Mode that `NewRunScene` spawns Warrior, Rogue, and Priest in order, one second apart.
+- Phase3-B movement/targeting/basic attack work should consume `InGameCombatManager.Roster` and read `EnemyDefinition.AttackType`.
+- Later shield/heal/buff logic should treat `Buffer` as behavior data, not as a separate hardcoded prefab path.
+
+### Evidence
+
+- `Pakuri/reference/5.enemy/stage-1-enemies.md` was inspected for swordsman, rogue, and priest stats, defenses, active skills, and passives.
+- `Pakuri/Assets/CSVData/EnemyStat.csv` now contains `stage1-swordsman` as `Melee`, `stage1-rogue` as `Ranged`, and `stage1-priest` as `Buffer`.
+- `Import-Csv Pakuri\Assets\CSVData\EnemyStat.csv` returned the three rows with HP `100`, `70`, and `90`, and skill radii `1.4`, `6`, and `5`.
+- `Pakuri/Assets/Legacy/Scripts/Data/Definition/EnemyDefinition.cs` now defines `EnemyAttackType.Buffer`.
+- `Pakuri/Assets/Legacy/CSVdata/source/stage_one_enemies.csv` now stores `stage1-priest` with `attack_type` `Buffer`.
+- `Pakuri/Assets/Legacy/Data/GameData/Enemies/stage1-priest.asset` now stores `AttackType: 3`, matching the new `Buffer` enum position.
+- `Pakuri/Assets/Legacy/Scripts/Combat/Manager/CombatRuntimeEnemies.cs` fallback stage-one priest data now creates priest with `EnemyAttackType.Buffer`.
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` starts `SpawnInitialEnemySequence()` and calls swordsman, rogue, and priest spawn methods separated by `WaitForSeconds(enemySpawnIntervalSeconds)`.
+- `NewRunSceneEntryManager.cs` spawns each enemy at `enemySpawnPoint.position.x` and `UnityEngine.Random.Range(enemySpawnMinY, enemySpawnMaxY)` for Y.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now serializes Warrior, Rogue, and Priest enemy prefab GUIDs and IDs: `stage1-swordsman`, `stage1-rogue`, and `stage1-priest`, with `enemySpawnIntervalSeconds: 1`.
+- Unity-MCP `manage_prefabs get_hierarchy` confirmed `Stage1_Rogue_Unit.prefab` and `Stage1_Priest_Unit.prefab` have root `Pakuri.InGame.EnemyUnitActor`, `MonsterHpBar`, `Fill`, `Shield`, `MonsterHpLabel`, and `MonsterNameLabel`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and the same existing warnings.
+- Unity-MCP console warning/error read showed only MCP client handler logs after the scene save.
+- Unity-MCP `validate_script` passed for `EnemyDefinition.cs`; it reported duplicate-method diagnostics for `NewRunSceneEntryManager.cs`, but direct `Select-String` found only one relevant method definition each and both runtime/editor builds passed.
+
+### History
+
+- 2026-05-15: User rejected adding a new behavior column and directed Code Builder to keep existing `attack_type`, using `Melee`, `Ranged`, and `Buffer`; user also said Priest is `Buffer` and Rogue is `Ranged`.
+- 2026-05-15: User said the three enemy-type prefabs were added under `Assets/Prefab/Enemy` and requested CSV data entry plus one-second triple spawn on NewRunScene entry.
+
+## Task: 2026-05-15 InGame Phase3-A Combat Roster Ownership
+
+### Task title
+
+Implement the Phase3-A combat runtime ownership boundary for spawned monsters and enemies.
+
+### Goals
+
+- Make `InGameCombatManager` the owner of a runtime unit roster rather than a direct movement/targeting/attack/damage implementation class.
+- Make `UnitRosterService` store active player and enemy registrations for later movement, targeting, and attack systems.
+- Register the selected player monster and first spawned enemy from the current `NewRunSceneEntryManager` spawn path.
+- Keep this slice behavior-preserving for Phase2-B spawn; do not implement movement, attacks, targeting, wave cadence, damage, or HP mutation yet.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Avoid per-frame scene searches and per-Actor combat `Update()` ownership in this slice.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Phase3-B should add enemy movement, target selection, and basic attack systems using the roster instead of scene searches.
+- Phase3-C should add damage/shield/status services and dirty Actor refresh.
+- User verifies in Play Mode that Phase2-B spawning still works with the new manager component on `GameManager`.
+
+### Evidence
+
+- Updated `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` so it owns a `UnitRosterService` and exposes `RegisterPlayerMonster(...)`, `RegisterEnemy(...)`, and active unit counts.
+- Updated `Pakuri/Assets/Scripts2/InGame/Units/UnitRosterService.cs` with active unit registration lists for all entries, players, and enemies, plus duplicate-safe register/unregister/clear behavior.
+- Updated `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` with a serialized `combatManager`, `[RequireComponent(typeof(InGameCombatManager))]`, and registration calls after spawned player/enemy Actor binding.
+- Updated `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` so `GameManager` has `Pakuri.InGame.InGameCombatManager`, and `NewRunSceneEntryManager.combatManager` references it.
+- Unity-MCP component read showed `GameManager` has `Transform`, `Pakuri.InGame.NewRunSceneEntryManager`, and `Pakuri.InGame.InGameCombatManager`; the entry manager's `combatManager` field references the manager component.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors after rerunning outside the sandbox because the sandbox blocked `C:\Users\t3312\AppData\Local\Microsoft SDKs`; existing `System.Net.Http` / `System.IO.Compression` warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and the same existing warnings.
+- Unity-MCP `validate_script` passed with 0 diagnostics for `InGameCombatManager.cs` and `UnitRosterService.cs`.
+- Unity-MCP `validate_script` reported duplicate-method diagnostics for `NewRunSceneEntryManager.cs`, but direct `Select-String` found only one definition each for `SpawnSelectedPlayerUnit`, `ResolveCatalog`, `ResolveSpawnPoint`, and `ResolveEnemySpawnPoint`; the runtime/editor builds passed.
+- Unity-MCP console read showed the existing CSV auto-sync warning for missing legacy `Assets/CSVdata/source/catalog_monsters.csv` and an MCP object-converter warning while inspecting `InGameCombatManager`; no compile error was reported.
+- `git diff --check` over the changed scripts and scene passed with only LF-to-CRLF normalization warnings after cleaning Unity YAML trailing whitespace.
+
+### History
+
+- 2026-05-15: User asked Code Builder to start Phase3-A after the roadmap was updated to make `InGameCombatManager` a loop orchestrator rather than the direct owner of all combat details.
+
+## Task: 2026-05-15 NewRunScene Phase2-B Enemy Spawn Handoff
+
+### Task title
+
+Design the next Phase2-B slice for spawning the first stage-one enemy prefab in NewRunScene.
+
+### Goals
+
+- Spawn `Assets/Prefab/Enemy/Stage1_Warrior_Unit.prefab` from the authored `NewRunScene` enemy `SpawnPoint`.
+- Create an `EnemyUnitRuntimeModel` from `stage1-swordsman` data through the existing `UnitFactory.CreateEnemy(...)` path.
+- Bind that model into `EnemyUnitActor` so HP/name/debug children can refresh like the monster actor path.
+- Keep this slice to spawn and actor/model binding only; movement, attacks, targeting, wave cadence, and damage exchange remain later combat-loop work.
+
+### Constraints
+
+- Role Owner is Designer for this handoff; no runtime C# or scene changes were made in this task.
+- Current user-authored spawn rule is: X comes from the `SpawnPoint` transform X, and Y is randomized from -5 to +5.
+- Do not overwrite user-authored prefab HP bar transform/visual layout.
+- Do not run Unity Play Mode; user owns gameplay verification.
+
+### Role Owner
+
+Designer -> Code Builder
+
+### Status
+
+Builder implementation completed and locally verified. Phase2-B enemy spawn/model/actor-binding scope is complete; movement, attacks, targeting, wave cadence, and damage exchange remain later combat-loop work.
+
+### Next Actions
+
+- User verifies in Play Mode that one `Stage1_Warrior_Unit` appears at `SpawnPoint.x` with randomized Y in the -5 to +5 range.
+- Later Code Builder work should implement enemy movement, attacks, targeting, wave cadence, damage exchange, and live HP mutation.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Enemy/Stage1_Warrior_Unit.prefab` exists; Unity-MCP `manage_asset get_info` returned asset type `UnityEngine.GameObject`, name `Stage1_Warrior_Unit`, and GUID `f2892daa44e860e49b1ea2b17f8682dc`.
+- Unity-MCP `manage_prefabs get_hierarchy` found root `Stage1_Warrior_Unit` with components `Transform`, `SpriteRenderer`, and `Pakuri.InGame.EnemyUnitActor`, plus `MonsterHpBar/Background`, `Fill`, `Shield`, `MonsterHpLabel`, and `MonsterNameLabel` children.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs:5` currently defines `EnemyUnitActor` as an empty `MonoBehaviour`.
+- `Pakuri/Assets/Scripts2/InGame/Units/UnitFactory.cs:29` defines `CreateEnemy(EnemyDefinition definition, int slotIndex = 0)`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:924` contains `m_Name: SpawnPoint`, and the inspected transform block has `m_LocalPosition: {x: 9.43, y: 0, z: 0}`.
+- Updated `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` with `SpawnInitialEnemyUnit()`, `TryCreateEnemyModel(...)`, `ResolveEnemyDefinition(...)`, `BindSpawnedEnemyActor(...)`, and `UnityEngine.Random.Range(enemySpawnMinY, enemySpawnMaxY)` for the Y range.
+- Updated `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` with `Initialize(EnemyUnitRuntimeModel)`, `RefreshDebugView()`, model storage, label lookup, and HP/shield fill scaling.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:679` now assigns `enemySpawnPoint`, `:686` assigns `stageOneEnemyPrefab` to GUID `f2892daa44e860e49b1ea2b17f8682dc`, `:687` sets `initialEnemyId: stage1-swordsman`, and `:688` through `:689` set Y range `-5` to `5`.
+- 2026-05-15 build evidence: `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors after rerunning with approval because the sandbox blocked `C:\Users\t3312\AppData\Local\Microsoft SDKs`; existing `System.Net.Http` / `System.IO.Compression` warnings remained.
+- 2026-05-15 build evidence: `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and the same existing warnings.
+- Unity-MCP `manage_components set_property` succeeded for `enemySpawnPoint`, `stageOneEnemyPrefab`, `initialEnemyId`, `enemySpawnMinY`, and `enemySpawnMaxY`; `manage_scene save` saved `Assets/Scenes/NewScene/NewRunScene.unity`.
+- Unity-MCP console warning/error read showed MCP client handler logs and an existing CSV auto-sync warning for missing legacy `Assets/CSVdata/source/catalog_monsters.csv`; no new compile error was reported.
+- `git diff --check` on the changed scripts, scene, and boards completed with exit code 0, aside from LF-to-CRLF normalization warnings.
+
+### History
+
+- 2026-05-15: User stated that `Stage1_Warrior_Unit.prefab` now has HP and `EnemyUnitActor.cs` assigned, `NewRunScene` has the enemy `SpawnPoint` assigned, and the spawn range should use the spawn point X with Y from -5 to +5.
+- 2026-05-15: Code Builder implemented the one-enemy spawn/model/actor-binding slice and verified it with builds, Unity-MCP field assignment/save evidence, console read, and diff check.
+
 ## Migrated Task Blocks
 
 ## Archive Note

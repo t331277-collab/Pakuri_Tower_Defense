@@ -4,6 +4,366 @@
 - This file keeps active report task blocks after the 2026-05-12 archive pass; newer report tasks may be appended above older retained context.
 - Source file: `boards/REPORT/REPORT_BLACKBOARD.md`.
 
+## Task: 2026-05-15 InGame Verification Section Reorder And Structure Tree
+
+### Task title
+
+Reorder the InGame implementation verification report and add a visual monster/enemy structure tree.
+
+### Goals
+
+- Move the 2026-05-10 structure proposal comparison section from section 7 to section 1.
+- Add a section 2 visual structure tree using `|_` notation for monster, enemy, combat manager, service, and planned skill paths.
+- Remove the top summary card that labels Play Mode verification as the user area.
+- Keep unimplemented skill executor / relay / projectile / beam / zone / shield / temporary effect items visible as planned future work.
+
+### Constraints
+
+- Role Owner is Designer.
+- No C# implementation, scene edit, prefab edit, or Play Mode verification in this task.
+- Claims must stay based on the report and inspected InGame files.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as an HTML report amendment.
+
+### Next Actions
+
+- Use the reordered report as the first-read structure summary before Phase4-B.
+- Code Builder should treat the section 2 tree as documentation of current boundaries and planned skill boundaries, not as proof that planned skill files already exist.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-15-ingame-implemented-structure-verification.html`.
+- The report now has section `1. 2026-05-10 구조 제안 대비 검증`.
+- The report now has section `2. 몬스터와 적 구조 시각화` with `|_` tree notation for `NewRunSceneEntryManager`, `MonsterUnitActor`, `MonsterUnitRuntimeModel`, `EnemyUnitActor`, `EnemyUnitRuntimeModel`, `InGameCombatManager`, `UnitRosterService`, `EnemyCombatSimulationSystem`, `UnitResourceMutationService`, and planned skill executor/relay/effect items.
+- Removed the top summary card containing `Play Mode 검증`, `사용자 영역`, and `Codex는 Play Mode를 실행하지 않는다...`.
+- `Select-String` confirmed no remaining top-level `Play Mode 검증`, `사용자 영역`, or `Codex는 Play Mode` card text in the h2/h3 scan output.
+
+### History
+
+- 2026-05-15: User asked to move section 7 to section 1, add a visual `|_` monster/enemy structure expression as section 2, pre-mark unimplemented skills as planned, and delete the Play Mode verification user-area block.
+
+## Task: 2026-05-15 InGame Verification God Class And Shared Target Amendment
+
+### Task title
+
+Amend the InGame implementation verification report with God Class and shared target / temporary effect checks.
+
+### Goals
+
+- Compare the current implemented InGame structure against `2026-05-10-combat-runtime-controller-ai-token-refactor-proposal.html`.
+- Check whether the current InGame structure has the shared target / temporary effect problems described by `2026-05-10-shared-combat-target-and-temporary-effect-design.html`.
+- Keep the conclusion grounded in inspected code and report files.
+
+### Constraints
+
+- Role Owner is Designer.
+- No C# implementation, scene edit, prefab edit, or Play Mode verification in this task.
+- Do not claim absent executor/effect/modifier files exist.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as an HTML report amendment.
+
+### Next Actions
+
+- Phase4-B should keep skill executor, relay, temporary effect, and modifier responsibilities outside `InGameCombatManager` and `NewRunSceneEntryManager`.
+- If wave spawning, pooling, run reward, or skill load logic expands, split `NewRunSceneEntryManager` into narrower bootstrap/spawn/data-resolve services.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-15-ingame-implemented-structure-verification.html`.
+- Inspected `Pakuri/reference/Report/2026-05-10-combat-runtime-controller-ai-token-refactor-proposal.html`; it identifies the old `CombatRuntimeController` as a shared-state combat object and recommends state ownership, projectile/effect/drone, enemy simulation, selected unit combat, and adapter-boundary separation.
+- Inspected `Pakuri/reference/Report/2026-05-10-shared-combat-target-and-temporary-effect-design.html`; it proposes `CombatTargetModel.ActiveEffects`, `TemporaryEffectInstance`, common modifier aggregation, `ApplyTemporaryEffect(...)`, `GrantShield(...)`, and shield subsystem separation.
+- Inspected `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs`; it owns `UnitRosterService`, `EnemyCombatSimulationSystem`, and `UnitResourceMutationService`, and delegates resource mutation / actor refresh rather than directly owning all detailed logic.
+- Inspected `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs`; it currently owns bootstrap, selected monster spawn, three enemy spawn sequence, catalog/definition resolve, prefab resolve, and combat manager registration, so it is a future growth-risk boundary.
+- Inspected `Pakuri/Assets/Scripts2/InGame/Core/UnitResourceMutationService.cs`, `BaseUnitRuntimeModel.cs`, `UnitStateBucket.cs`, `MonsterUnitActor.cs`, and `EnemyUnitActor.cs`; current resource/shield display is common, but active temporary effects and modifier aggregation are not implemented.
+- `Select-String` over `Scripts2/InGame` found no current `ActiveEffects`, `TemporaryEffect`, `StatModifier`, `ModifierState`, `SkillExecutorRegistry`, `SkillExecutionSnapshot`, or `SkillHitboxRelay` implementation.
+
+### History
+
+- 2026-05-15: User asked to include whether the implemented structure has the God Class problem from the 2026-05-10 controller proposal and whether it still has the shared combat target / temporary effect problems from the 2026-05-10 shared-target proposal.
+
+## Task: 2026-05-15 InGame Implemented Structure Verification HTML
+
+### Task title
+
+Create an evidence-based HTML verification report for the current InGame implementation structure.
+
+### Goals
+
+- Verify current data loading and assignment flow.
+- Verify current monster and enemy runtime/model/actor structure.
+- Verify what skill work is implemented and what remains future work.
+- Clearly separate current implementation from planned Phase4-B/C direction.
+
+### Constraints
+
+- Role Owner is Designer.
+- No C# implementation, scene edit, prefab edit, or Play Mode verification in this task.
+- Claims must be based on inspected files and command output.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as a new HTML verification report.
+
+### Next Actions
+
+- Use the report before Phase4-B implementation to confirm the current boundaries.
+- Code Builder should keep CSVData source-of-truth migration separate from skill executor implementation unless explicitly requested.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-15-ingame-implemented-structure-verification.html`.
+- Inspected `NewRunSceneEntryManager.cs`, `InGameCombatManager.cs`, `EnemyCombatSimulationSystem.cs`, `UnitResourceMutationService.cs`, `UnitFactory.cs`, `UnitRosterService.cs`, monster/enemy runtime model files, monster/enemy actor files, InGame skill data files, and Phase4-A skill runtime files.
+- `Import-Csv` over `Pakuri/Assets/CSVData/MonsterStat.csv`, `EnemyStat.csv`, and `SkillData.csv` showed Eve/Ariel, Warrior/Rogue/Priest, and `eve-a`/`ariel-b` sample rows.
+- `Select-String` over `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` confirmed serialized fallback catalog, five monster prefab fields, three enemy prefab fields, enemy IDs, Y spawn range, spawn interval, and enemy combat simulation flags.
+- `Get-ChildItem Pakuri/Assets/Prefab/Monster -Filter *.prefab` listed five monster prefabs; `Get-ChildItem Pakuri/Assets/Prefab/Enemy -Filter *.prefab` listed three stage-one enemy prefabs.
+- `Test-Path Pakuri/Assets/CSVdata/source` returned `False`, so the report records legacy CSV auto-sync risk separately from current fallback catalog usage.
+
+### History
+
+- 2026-05-15: User requested an HTML that verifies the structures implemented so far, covering data load/assignment, monster/enemy structure, and current/future skill implementation.
+
+## Task: 2026-05-15 InGame Roadmap Skill Hitbox Relay Amendment
+
+### Task title
+
+Update the InGame build roadmap with projectile, beam, and zone hitbox relay direction.
+
+### Goals
+
+- Record that skill prefabs may use trigger colliders for contact signals.
+- Keep actual damage, status, pierce, tick, and duplicate-hit logic outside prefabs.
+- Set Beam direction to a long trigger-collider beam prefab whose runtime adjusts length, rotation, and duration.
+- Preserve the no-hardcoded-skill-ID scaling rule for 25+ skills.
+
+### Constraints
+
+- Role Owner is Designer.
+- No C# implementation, scene edit, prefab edit, or Play Mode verification in this task.
+- Claims must stay grounded in the current roadmap and inspected InGame skill data/runtime files.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as an HTML report amendment.
+
+### Next Actions
+
+- Code Builder Phase4-B should add the relay/executor contract without applying actual skill effects.
+- Code Builder Phase4-C should use the relay/runtime path when implementing minimum projectile and shield samples.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html`.
+- Phase4-B now states that Projectile, Beam, and Zone prefabs use trigger colliders only to send contact signals through a `SkillHitboxRelay`-style contract.
+- Phase4-C now states that Beam uses a long trigger-collider beam prefab, with runtime-controlled length, rotation, and duration.
+- Added section `3-2. Skill hitbox / prefab 판정 방향` describing Projectile, Beam, and Zone prefab responsibilities versus runtime responsibilities.
+- The data principle now states that `SkillEffectPrefab` and `ProjectilePrefab` are for presentation and trigger-signal relay, not hidden skill logic.
+
+### History
+
+- 2026-05-15: User chose the Beam implementation direction as a long trigger-collider prefab and asked to update the InGame build roadmap.
+
+## Task: 2026-05-15 InGame Roadmap Phase4-A Completion Update
+
+### Task title
+
+Update the InGame build roadmap after Code Builder implemented Phase4-A skill runtime state.
+
+### Goals
+
+- Mark Phase4-A as completed in `3. Phase별 작업`.
+- Record the implemented files for skill runtime state.
+- Keep Phase4-B/C marked as pending because executor/effect behavior is not implemented yet.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Report claims must match inspected implementation files and build output.
+- Do not claim projectile, damage, shield, target query, or Play Mode skill behavior was implemented.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed as an HTML report amendment.
+
+### Next Actions
+
+- Use the Phase4-B row as the next implementation target for executor interface/registry and choice snapshot resolution.
+- Keep minimum `eve-a` and `ariel-b` effect execution in Phase4-C.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html`.
+- Section `3. Phase별 작업` now marks `Phase4-A` as completed.
+- The Phase4-A row now cites `Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs`, `UnitSkillRuntimeSet.cs`, `SkillRuntimeFactory.cs`, and `BaseUnitRuntimeModel.SkillRuntime`.
+- Runtime and editor builds completed with 0 errors and existing warnings.
+- Unity-MCP console read after force refresh showed only MCP client handler logs.
+
+### History
+
+- 2026-05-15: Code Builder implemented Phase4-A and amended the roadmap status.
+
+## Task: 2026-05-15 InGame Roadmap Skill Runtime And Learning Amendment
+
+### Task title
+
+Update the InGame build roadmap with Phase4-A skill runtime, run learning, enhancement, and scalable executor guidance.
+
+### Goals
+
+- Expand section `3. Phase별 작업` in the InGame roadmap with the planned monster skill-use flow.
+- Clarify that Phase4-A creates `SkillRuntimeInstance` state, not actual skill effects.
+- Clarify how `RunSession` learned/choice state flows into `UnitStateBucket` and affects skill runtime/execution.
+- Record the no-hardcoded-skill-ID scaling rule for 25+ skills.
+
+### Constraints
+
+- Role Owner is Designer.
+- No C# implementation, scene edit, prefab edit, data edit, or Play Mode verification in this task.
+- Claims must be grounded in inspected current files and the amended report.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as an HTML report amendment.
+
+### Next Actions
+
+- Use the updated Phase4-A row as the next Code Builder handoff when skill runtime work starts.
+- Keep actual damage/shield effects for Phase4-C executor work, not Phase4-A runtime-state work.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html`.
+- Section `3. Phase별 작업` now expands `Phase4-A` to create `SkillRuntimeInstance` and a unit skill runtime storage path for cooldown, casting, magazine, reload, active duration, and tick state.
+- Section `3. Phase별 작업` now expands `Phase4-B` to include executor registry plus choice resolution through a calculated execution snapshot instead of mutating `SkillData`.
+- Section `3. Phase별 작업` now expands `Phase4-C` to route `eve-a` damage and `ariel-b` shield through `InGameCombatManager.ApplyDamage(...)` and `GrantShield(...)`.
+- Section `3. Phase별 작업` now expands `Phase5-A` to describe `RunSession` / `RunMonsterState` learned and chosen choice state flowing into `UnitStateBucket`.
+- Added subsections `3-1. Monster 스킬 사용 흐름` and `3-2. 런 중 스킬 학습과 강화 흐름`.
+- Added an `확장성 기준` note stating that 25+ skills should reuse type-based executors and isolate exceptions through custom executor or behavior hook paths rather than accumulating skill-ID conditionals.
+- Current evidence files inspected for the design include `RunSession.cs`, `UnitStateBucket.cs`, `SkillChoiceEffectSpec.cs`, `SkillData.cs`, `SkillBlueprintSpecs.cs`, and `InGameSkillCatalog.cs`.
+- `git diff --check` on the amended HTML passed with only LF-to-CRLF normalization warnings.
+
+### History
+
+- 2026-05-15: User asked how run-time skill learning/enhancement should work and whether the structure can support at least 25 skills without hardcoding.
+- 2026-05-15: User asked to update `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html` and add the details to section `3. Phase별 작업`.
+
+## Task: 2026-05-15 InGame Roadmap Phase3-A Completion Update
+
+### Task title
+
+Update the InGame build roadmap after Code Builder implemented Phase3-A combat roster ownership.
+
+### Goals
+
+- Mark Phase3-A as completed in the roadmap.
+- Record the implemented owner boundary: `InGameCombatManager` owns `UnitRosterService`, while movement/targeting/attack/damage remain later systems.
+- Keep the report aligned with actual changed files and scene wiring.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not claim gameplay success; Play Mode verification is user-owned.
+- Do not mark Phase3-B or Phase3-C complete.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed as an HTML report amendment.
+
+### Next Actions
+
+- Use the roadmap Phase3-B row as the next implementation target for movement, targeting, and basic attacks.
+- Keep HP decrease testing deferred until Monster skills and enemy attacks exist.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html`.
+- Section `3. Phase별 작업` now marks `Phase3-A` as completed.
+- The Phase3-A row now states that `InGameCombatManager` owns `UnitRosterService`, and `NewRunSceneEntryManager` registers the spawned selected monster and first enemy into the manager roster.
+- The Phase3-A row keeps movement, targeting, attack, buff/shield, damage, and Actor refresh details deferred to Phase3-B/C.
+- Implementation evidence exists in `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs`, `Pakuri/Assets/Scripts2/InGame/Units/UnitRosterService.cs`, `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs`, and `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity`.
+
+### History
+
+- 2026-05-15: Code Builder implemented the Phase3-A roster ownership boundary and updated the roadmap completion status.
+
+## Task: 2026-05-15 InGame Roadmap Phase3 Combat Loop Amendment
+
+### Task title
+
+Update the InGame build roadmap Phase table after Phase2-B enemy spawn/model/actor binding and the Phase3 combat-loop structure decision.
+
+### Goals
+
+- Mark Phase2-B enemy spawn/model/actor-binding scope as completed in the roadmap.
+- Mark the separated NewRunScene test entry path as completed for the current selected monster plus first enemy spawn scope.
+- Record that `InGameCombatManager` should orchestrate the combat loop but not directly own movement, targeting, attack, damage, shield, and Actor refresh details.
+- Record Phase3 work slices for roster ownership, enemy movement/targeting/basic attack, damage/shield services, and dirty Actor refresh.
+
+### Constraints
+
+- Role Owner is Designer.
+- No C# implementation, scene edit, prefab edit, or Play Mode verification in this task.
+- The HP real-time decrease path is documented as a later test after Monster skills and enemy attacks exist.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as an HTML report amendment.
+
+### Next Actions
+
+- Future Code Builder work should start Phase3-A by separating combat runtime ownership before implementing enemy movement/attack logic.
+- User verifies Phase2-B/Phase2-C gameplay appearance in Unity Play Mode.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html`.
+- Section `3. Phase별 작업` now marks `Phase2-B` as completed and states that `Stage1_Warrior_Unit.prefab` spawns at `SpawnPoint.x` with Y `-5~+5` and binds `stage1-swordsman` `EnemyUnitRuntimeModel` to `EnemyUnitActor`.
+- Section `3. Phase별 작업` now marks `Phase2-C` as completed for the current `NewRunSceneEntryManager` path separated from `RunSceneBootstrap`.
+- Section `3. Phase별 작업` now defines `Phase3-A` as combat runtime ownership separation where `InGameCombatManager` is the loop orchestrator and detailed logic belongs to systems/roster.
+- Section `3. Phase별 작업` now defines `Phase3-B` as enemy movement, targeting, and basic attack systems, including melee, ranged, and shield-support enemies.
+- Section `3. Phase별 작업` now adds `Phase3-C` for damage, status, shield, and Actor refresh services, including dirty HP UI refresh and later HP decrease testing after Monster skills/enemy attacks are implemented.
+
+### History
+
+- 2026-05-15: User asked whether `InGameCombatManager` should own all monster/enemy movement, targeting, basic attack, damage, and Actor refresh for future 100+ enemies.
+- 2026-05-15: User clarified that enemies can include ranged attackers and shield-support enemies, and that HP decrease testing should wait until Monster skills and enemy attacks are implemented.
+- 2026-05-15: User asked to update the corresponding Phase section in `2026-05-14-combat-v2-build-roadmap.html`.
+
 ## Task: 2026-05-14 InGame Roadmap MonsterHpBar Scale Amendment
 
 ### Task title

@@ -49,6 +49,8 @@ namespace Pakuri.InGame
                 EncounterRole = definition.EncounterRole,
                 AttackType = definition.AttackType,
                 Attribute = definition.Attribute,
+                AttackAttemptRange = ResolveEnemyAttackAttemptRange(definition),
+                AttackAttemptCooldownSeconds = ResolveEnemyAttackAttemptCooldown(definition),
                 Stats = MapStats(stats, maxHealth, 0f),
                 Defenses = UnitDefenseRuntime.FromDefinition(definition.Defenses),
                 Resources = new UnitResourceRuntime
@@ -149,6 +151,36 @@ namespace Pakuri.InGame
             }
 
             return definition.MaxHealth > 0f ? definition.MaxHealth : 100f;
+        }
+
+        private static float ResolveEnemyAttackAttemptRange(EnemyDefinition definition)
+        {
+            if (definition == null)
+            {
+                return 1.4f;
+            }
+
+            switch (definition.AttackType)
+            {
+                case EnemyAttackType.Ranged:
+                    return Math.Max(5f, definition.ActiveSkillRadius);
+                case EnemyAttackType.MeleeAndRanged:
+                    return Math.Max(4f, definition.ActiveSkillRadius);
+                case EnemyAttackType.Buffer:
+                    return Math.Max(5f, definition.ActiveSkillRadius);
+                default:
+                    return 1.4f;
+            }
+        }
+
+        private static float ResolveEnemyAttackAttemptCooldown(EnemyDefinition definition)
+        {
+            if (definition == null)
+            {
+                return 1f;
+            }
+
+            return Math.Max(0.1f, definition.ActiveSkillCooldown);
         }
 
         private static void ApplyRunState(UnitStateBucket target, RunSession.RunMonsterState runState)

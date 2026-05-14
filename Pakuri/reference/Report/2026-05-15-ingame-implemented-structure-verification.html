@@ -1,0 +1,581 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2026-05-15 InGame 구현 구조 검증</title>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #607089;
+      --line: #d9e0ea;
+      --ok: #1f7a4d;
+      --warn: #9a5b00;
+      --todo: #5b5f74;
+      --bad: #a83232;
+      --code: #eef2f7;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.55;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 24px 56px;
+    }
+    h1, h2, h3 {
+      line-height: 1.25;
+      margin: 0 0 14px;
+    }
+    h1 {
+      font-size: 30px;
+      margin-bottom: 8px;
+    }
+    h2 {
+      margin-top: 34px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      font-size: 22px;
+    }
+    h3 {
+      margin-top: 22px;
+      font-size: 18px;
+    }
+    p {
+      margin: 8px 0 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      margin: 14px 0 24px;
+      border: 1px solid var(--line);
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #edf2f8;
+      font-weight: 700;
+    }
+    code {
+      background: var(--code);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.94em;
+    }
+    ul, ol {
+      margin: 8px 0 18px 22px;
+      padding: 0;
+    }
+    li {
+      margin: 5px 0;
+    }
+    .lead {
+      color: var(--muted);
+      font-size: 15px;
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 14px;
+      margin: 22px 0;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .tag {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .ok { background: var(--ok); }
+    .warn { background: var(--warn); }
+    .todo { background: var(--todo); }
+    .bad { background: var(--bad); }
+    .note {
+      background: #fff8e8;
+      border-left: 4px solid #d59626;
+      padding: 12px 14px;
+      margin: 16px 0 24px;
+    }
+    .evidence {
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>InGame 구현 구조 검증</h1>
+  <p class="lead">
+    작성일: 2026-05-15. 이 문서는 현재 저장소에서 검사한 실제 파일과 명령 출력만 근거로,
+    데이터 로드 및 할당 방식, 몬스터/적 구조, 스킬 구현 상태와 다음 구현 방향을 검증한다.
+  </p>
+
+  <div class="summary">
+    <div class="card">
+      <h3>데이터 로드</h3>
+      <p><span class="tag warn">부분 구현</span></p>
+      <p>새 <code>Assets/CSVData</code> CSV는 존재하지만, 현재 NewRunScene 런타임은 아직 기존 <code>GameDataCatalog</code>, <code>PakuriDataManager</code>, fallback catalog 경로를 사용한다.</p>
+    </div>
+    <div class="card">
+      <h3>몬스터/적 구조</h3>
+      <p><span class="tag ok">기반 구현</span></p>
+      <p>공통 모델, 몬스터/적 모델, Actor 바인딩, 로스터 등록, 적 이동/공격 시도 루프, HP/Shield 표시 갱신 파이프라인이 있다.</p>
+    </div>
+    <div class="card">
+      <h3>스킬</h3>
+      <p><span class="tag warn">Phase4-A까지</span></p>
+      <p>Blueprint 데이터, 기존 데이터 매퍼, learned active runtime 상태는 있다. Executor, hitbox relay, 실제 투사체/빔/장판/데미지/보호막 실행은 아직 없다.</p>
+    </div>
+  </div>
+
+  <h2>1. 2026-05-10 구조 제안 대비 검증</h2>
+  <h3>1-1. God Class 위험 검증</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>2026-05-10 제안의 문제 기준</th>
+        <th>현재 InGame 구현 근거</th>
+        <th>판정</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>CombatRuntimeController</code>가 enemies, projectiles, skillEffects, drones 같은 mutable runtime state와 update loop를 한곳에서 공유하던 문제</td>
+        <td><code>InGameCombatManager</code>는 <code>UnitRosterService</code>, <code>EnemyCombatSimulationSystem</code>, <code>UnitResourceMutationService</code>를 필드로 두고, <code>Update()</code>에서는 enemy simulation tick만 위임한다.</td>
+        <td><span class="tag ok">현재 범위에서는 God Class 아님</span> 전투 roster, 적 simulation, resource mutation이 별도 클래스로 나뉘어 있다.</td>
+      </tr>
+      <tr>
+        <td>Enemy Simulation은 selected-unit 로직에서 떼어내야 한다는 제안</td>
+        <td><code>EnemyCombatSimulationSystem</code>이 enemy state dictionary, 이동, target 선택, attack attempt loop를 가진다. 실제 damage 호출은 아직 연결하지 않았다.</td>
+        <td><span class="tag ok">방향 일치</span> 적 simulation 책임은 manager 본문에 직접 누적되지 않았다.</td>
+      </tr>
+      <tr>
+        <td>Shield/damage/resource 변경이 여러 skill partial에 흩어지는 문제</td>
+        <td><code>UnitResourceMutationService.ApplyDamage</code>, <code>GrantShield</code>, <code>SetShield</code>가 shield 우선 흡수와 HP 갱신 결과를 만든다. <code>InGameCombatManager</code>는 결과가 바뀐 경우 Actor refresh만 호출한다.</td>
+        <td><span class="tag ok">현재 구현은 분리됨</span> 단, duration shield나 reactive hook은 아직 없다.</td>
+      </tr>
+      <tr>
+        <td>Controller 대신 다른 전역 singleton으로 mutable battle state를 옮기는 것은 해법이 아니라는 경고</td>
+        <td>현재 새 InGame runtime state는 <code>InGameCombatManager</code> 인스턴스 내부 service와 unit model에 있다. <code>NewRunSceneEntryManager.ResolveCatalog()</code>는 데이터 조회용으로 <code>PakuriDataManager.Instance</code>를 사용하지만, battle state 저장소로 쓰지는 않는다.</td>
+        <td><span class="tag ok">전역 상태 이전 문제는 보이지 않음</span> 데이터 catalog singleton 의존은 별도 CSVData 전환 리스크다.</td>
+      </tr>
+      <tr>
+        <td>새 기능이 한 entry/controller에 계속 붙으면 다시 큰 클래스가 될 수 있음</td>
+        <td><code>NewRunSceneEntryManager</code>는 현재 Start, selected monster spawn, 3종 enemy spawn sequence, catalog/definition resolve, prefab resolve, combat manager registration까지 담당한다.</td>
+        <td><span class="tag warn">성장 위험 있음</span> 지금은 NewRunScene bootstrap으로 허용 가능하지만, wave policy, run reward, skill load, pooling까지 추가하면 split 대상이다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>1-2. Shared Combat Target / Temporary Effect 제안 문제 검증</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>2026-05-10 제안 항목</th>
+        <th>현재 InGame 구현 근거</th>
+        <th>현재 구조에 같은 문제가 있는지</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>선택 아군, 소환 아군, 적이 공통 target/resource 모델을 통해 처리되어야 함</td>
+        <td><code>BaseUnitRuntimeModel</code>이 identity, stats, defenses, resources, <code>SkillRuntime</code>을 공통으로 가진다. <code>MonsterUnitRuntimeModel</code>과 <code>EnemyUnitRuntimeModel</code>은 이를 상속한다.</td>
+        <td><span class="tag ok">기본 문제는 완화됨</span> 현재 새 InGame 구조는 Monster/Enemy가 같은 base model/resource 경로를 쓴다.</td>
+      </tr>
+      <tr>
+        <td><code>CombatTargetModel.ActiveEffects</code>와 <code>TemporaryEffectInstance</code>가 필요함</td>
+        <td><code>UnitStateBucket</code>은 learned active/passive skill id와 chosen choice id만 가진다. <code>Scripts2/InGame</code> 검색에서 <code>ActiveEffects</code>, <code>TemporaryEffect</code>, <code>StatModifier</code>, <code>ModifierState</code> 파일/타입은 확인되지 않았다.</td>
+        <td><span class="tag todo">아직 미구현</span> 이전 구조의 중복 타이머 문제를 새 구조로 옮긴 증거는 없지만, 공통 temporary effect 계층도 아직 없다.</td>
+      </tr>
+      <tr>
+        <td>Shield는 공통 subsystem으로 분리해야 함</td>
+        <td><code>UnitResourceMutationService</code>가 현재 shield grant/set과 damage 시 shield 우선 흡수를 처리한다. <code>MonsterUnitActor</code>, <code>EnemyUnitActor</code>는 HP와 shield를 같은 bar의 segment로 표시한다.</td>
+        <td><span class="tag warn">부분 해결</span> 수치형 shield pipeline은 공통화됐지만, duration, stack, source, refresh rule, reactive hook은 아직 skill executor 이후 과제다.</td>
+      </tr>
+      <tr>
+        <td>ActionSpeed, MoveSpeed, DamageTaken, DamageDealt 같은 modifier aggregator가 필요함</td>
+        <td><code>Scripts2/InGame</code> 검색에서 <code>ActionSpeedMultiplier</code>, <code>MoveSpeedMultiplier</code>, <code>DamageTakenMultiplier</code>, <code>DamageDealtMultiplier</code> 공통 modifier 경로는 확인되지 않았다.</td>
+        <td><span class="tag todo">아직 미구현</span> Phase4-B/C에서 실제 효과를 붙이기 전에 modifier/effect owner를 정해야 한다.</td>
+      </tr>
+      <tr>
+        <td>Skill executor가 target/effect/resource 경로를 재사용해야 함</td>
+        <td>현재 Phase4-A 파일은 <code>SkillRuntimeInstance</code>, <code>UnitSkillRuntimeSet</code>, <code>SkillRuntimeFactory</code>까지다. <code>SkillExecutorRegistry</code>, <code>SkillExecutionSnapshot</code>, <code>SkillHitboxRelay</code>는 아직 존재하지 않는다.</td>
+        <td><span class="tag warn">구현 전 위험 지점</span> executor를 manager에 직접 누적하면 2026-05-10의 shared-state controller 문제가 재발할 수 있다.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="note">
+    결론적으로, 현재 새 InGame 구현 범위에서는 2026-05-10 보고서가 지적한 거대한 shared-state controller 문제는 재현되지 않았다.
+    다만 공통 temporary effect, modifier aggregator, skill executor/relay가 아직 없기 때문에, 다음 구현에서 이 책임을 <code>InGameCombatManager</code>나 <code>NewRunSceneEntryManager</code>에 직접 누적하지 않는 것이 핵심이다.
+  </div>
+
+  <h2>2. 몬스터와 적 구조 시각화</h2>
+  <pre><code>InGame runtime
+|_ NewRunSceneEntryManager
+   |_ ResolveCatalog / ResolveMonsterDefinition / ResolveEnemyDefinition
+   |_ SpawnSelectedPlayerUnit
+   |  |_ Monster prefab instance
+   |  |_ MonsterUnitActor
+   |  |_ MonsterUnitRuntimeModel
+   |     |_ BaseUnitRuntimeModel
+   |        |_ Identity / Stats / Defenses / Resources / SkillRuntime
+   |     |_ UnitStateBucket
+   |        |_ LearnedActiveSkillIds / LearnedPassiveSkillIds / ChosenChoiceIds
+   |_ SpawnInitialEnemySequence
+      |_ Enemy prefab instance x3
+      |_ EnemyUnitActor
+      |_ EnemyUnitRuntimeModel
+         |_ BaseUnitRuntimeModel
+         |  |_ Identity / Stats / Defenses / Resources / SkillRuntime
+         |_ EncounterRole / AttackType / AttackAttemptRange / AttackCooldown
+
+InGameCombatManager
+|_ UnitRosterService
+|  |_ player entries: MonsterUnitRuntimeModel + MonsterUnitActor
+|  |_ enemy entries: EnemyUnitRuntimeModel + EnemyUnitActor
+|_ EnemyCombatSimulationSystem
+|  |_ nearest player target search
+|  |_ enemy movement
+|  |_ attack attempt count/log
+|_ UnitResourceMutationService
+   |_ ApplyDamage
+   |_ GrantShield
+   |_ SetShield
+   |_ returns InGameResourceChangeResult
+
+Skill path
+|_ Implemented now
+|  |_ SkillData / SkillBlueprintSpecs
+|  |_ InGameSkillCatalog / InGameSkillDefinitionMapper
+|  |_ SkillRuntimeInstance / UnitSkillRuntimeSet / SkillRuntimeFactory
+|_ Not implemented yet, but planned
+   |_ SkillExecutorRegistry
+   |_ SkillExecutionSnapshot
+   |_ SkillHitboxRelay
+   |_ Projectile executor
+   |_ Beam executor
+   |_ Zone executor
+   |_ Shield executor
+   |_ TemporaryEffect / ActiveEffects / Modifier aggregator</code></pre>
+
+  <h2>3. 검증 범위와 판정</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>영역</th>
+        <th>현재 판정</th>
+        <th>근거 요약</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>NewRunScene 데이터 진입</td>
+        <td><span class="tag ok">동작 경로 있음</span></td>
+        <td><code>NewRunSceneEntryManager</code>가 선택 몬스터 ID, fallback catalog, prefab 필드, 적 ID를 사용해 런타임 모델과 Actor를 만든다.</td>
+      </tr>
+      <tr>
+        <td>새 CSVData 원천화</td>
+        <td><span class="tag warn">전환 전</span></td>
+        <td><code>MonsterStat.csv</code>, <code>EnemyStat.csv</code>, <code>SkillData.csv</code>에는 샘플 행이 있지만, <code>Scripts2/InGame</code> 검색 결과 아직 기존 <code>Pakuri.Data</code> 타입과 로더 참조가 남아 있다.</td>
+      </tr>
+      <tr>
+        <td>몬스터/적 모델 구조</td>
+        <td><span class="tag ok">구현됨</span></td>
+        <td><code>BaseUnitRuntimeModel</code>, <code>MonsterUnitRuntimeModel</code>, <code>EnemyUnitRuntimeModel</code>, <code>UnitFactory</code>가 분리되어 있다.</td>
+      </tr>
+      <tr>
+        <td>Actor 표시 구조</td>
+        <td><span class="tag ok">구현됨</span></td>
+        <td><code>MonsterUnitActor</code>와 <code>EnemyUnitActor</code>가 모델을 보유하고 HP/Shield segment를 같은 bar 안에서 갱신한다.</td>
+      </tr>
+      <tr>
+        <td>적 행동</td>
+        <td><span class="tag warn">공격 시도까지</span></td>
+        <td><code>EnemyCombatSimulationSystem</code>은 target search, 이동, attack attempt count/log만 처리한다. 실제 피해나 적 스킬은 연결되지 않았다.</td>
+      </tr>
+      <tr>
+        <td>HP/Shield 변경</td>
+        <td><span class="tag ok">파이프라인 구현</span></td>
+        <td><code>InGameCombatManager.ApplyDamage</code>, <code>GrantShield</code>, <code>SetShield</code>가 <code>UnitResourceMutationService</code>를 거쳐 Actor refresh를 호출한다.</td>
+      </tr>
+      <tr>
+        <td>스킬 실행</td>
+        <td><span class="tag todo">미구현</span></td>
+        <td>Phase4-A runtime state는 있으나 <code>SkillExecutorRegistry</code>, <code>SkillExecutionSnapshot</code>, <code>SkillHitboxRelay</code>, Projectile/Beam/Zone executor는 아직 파일로 존재하지 않는다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. 데이터 로드 및 할당 방식 검증</h2>
+  <h3>4-1. 현재 NewRunScene 런타임 데이터 흐름</h3>
+  <ol>
+    <li><code>NewRunSceneEntryManager.Start()</code>가 <code>ResolveCombatManager()</code>, <code>SpawnSelectedPlayerUnit()</code>, <code>SpawnInitialEnemySequence()</code>를 호출한다.</li>
+    <li>선택 몬스터 ID는 <code>NewRunStartContext.SelectedMonsterId</code> 또는 Eve fallback에서 결정된다.</li>
+    <li><code>ResolveCatalog()</code>는 <code>PakuriDataManager.Instance.CurrentCatalog</code>, serialized <code>fallbackCatalog</code>, <code>PakuriCsvRuntimeData.ResolveCatalogOrFallback(null)</code> 순서로 catalog를 얻는다.</li>
+    <li><code>ResolveMonsterDefinition(...)</code>과 <code>ResolveEnemyDefinition(...)</code>은 <code>PakuriDataManager</code> 등록 데이터 또는 <code>GameDataCatalog</code> lookup을 사용한다.</li>
+    <li><code>UnitFactory</code>가 <code>MonsterDefinition</code>, <code>EnemyDefinition</code>, <code>RunSession.RunMonsterState</code>를 런타임 모델로 복사한다.</li>
+  </ol>
+
+  <table>
+    <thead>
+      <tr>
+        <th>확인 항목</th>
+        <th>실제 근거</th>
+        <th>판정</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Scene serialized assignment</td>
+        <td><code>NewRunScene.unity</code>에 <code>fallbackCatalog</code>, 5개 몬스터 prefab, 3개 적 prefab, <code>initialEnemyId</code>/<code>rangedEnemyId</code>/<code>bufferEnemyId</code>, Y 범위, spawn interval이 저장되어 있다.</td>
+        <td><span class="tag ok">확인됨</span></td>
+      </tr>
+      <tr>
+        <td>현재 샘플 CSVData</td>
+        <td><code>MonsterStat.csv</code>에는 Eve/Ariel, <code>EnemyStat.csv</code>에는 Warrior/Rogue/Priest, <code>SkillData.csv</code>에는 <code>eve-a</code>/<code>ariel-b</code> 샘플 행이 있다.</td>
+        <td><span class="tag ok">파일 존재</span></td>
+      </tr>
+      <tr>
+        <td>CSVData authoritative 여부</td>
+        <td><code>Scripts2/InGame</code> 검색 결과 <code>PakuriCsvRuntimeData</code>, <code>PakuriDataManager</code>, <code>GameDataCatalog</code>, <code>MonsterDefinition</code>, <code>EnemyDefinition</code>, <code>SkillDefinition</code> 참조가 남아 있다.</td>
+        <td><span class="tag warn">아직 아님</span></td>
+      </tr>
+      <tr>
+        <td>Legacy CSV source path</td>
+        <td><code>Test-Path Pakuri\Assets\CSVdata\source</code> 결과는 <code>False</code>였다.</td>
+        <td><span class="tag warn">자동 sync 위험</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    결론: 현재 InGame은 NewRunScene 테스트를 위해 기존 데이터 catalog/fallback 흐름을 계속 사용한다.
+    새 <code>Assets/CSVData</code> 파일은 구조 전환용 샘플 데이터로 존재하지만, 아직 런타임 source of truth는 아니다.
+    나중에 CSVData loader/catalog가 들어오면 <code>NewRunSceneEntryManager</code>, <code>UnitFactory</code>, <code>InGameSkillCatalog</code>의 기존 데이터 의존을 줄이는 순서로 전환해야 한다.
+  </div>
+
+  <h2>5. 몬스터와 적 구조 검증</h2>
+  <h3>5-1. 모델 계층</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>파일</th>
+        <th>역할</th>
+        <th>현재 구현 상태</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>BaseUnitRuntimeModel.cs</code></td>
+        <td>공통 identity, stats, defense, resources, skill runtime, auto flags 보유</td>
+        <td><span class="tag ok">구현됨</span></td>
+      </tr>
+      <tr>
+        <td><code>MonsterUnitRuntimeModel.cs</code></td>
+        <td>몬스터 전용 <code>UnitStateBucket</code> 보유</td>
+        <td><span class="tag ok">구현됨</span></td>
+      </tr>
+      <tr>
+        <td><code>EnemyUnitRuntimeModel.cs</code></td>
+        <td>적 encounter role, attack type, attribute, attack attempt range/cooldown 보유</td>
+        <td><span class="tag ok">구현됨</span></td>
+      </tr>
+      <tr>
+        <td><code>UnitStateBucket.cs</code></td>
+        <td>learned active/passive skill IDs와 chosen choice IDs 보유</td>
+        <td><span class="tag ok">구현됨</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>5-2. Actor와 HP/Shield 표시</h3>
+  <p>
+    <code>MonsterUnitActor</code>와 <code>EnemyUnitActor</code>는 각각 모델을 저장하고,
+    <code>MonsterNameLabel</code>, <code>MonsterHpLabel</code>, <code>MonsterHpBar/Background</code>, <code>Fill</code>, <code>Shield</code>를 찾아 표시한다.
+    HP와 Shield는 <code>maxHealth</code>와 <code>currentHealth + currentShield</code> 중 큰 값을 분모로 삼아 하나의 background 안에서 segment로 나뉜다.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>예시</th>
+        <th>현재 계산 방식</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>HP 100 / Shield 0 / BG X 20</td>
+        <td>분모 100, HP segment X 20, Shield inactive</td>
+      </tr>
+      <tr>
+        <td>HP 100 / Shield 100 / BG X 20</td>
+        <td>분모 200, HP segment X 10, Shield segment X 10, 둘이 BG 전체를 채움</td>
+      </tr>
+      <tr>
+        <td>HP 50 / Shield 50 / MaxHP 100 / BG X 20</td>
+        <td>분모 100, HP segment X 10, Shield segment X 10</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>5-3. 로스터와 적 combat attempt</h3>
+  <p>
+    <code>InGameCombatManager</code>는 <code>UnitRosterService</code>를 소유하고, 등록된 player/enemy 리스트를 기준으로
+    <code>EnemyCombatSimulationSystem.Tick(...)</code>을 호출한다. 적 simulation은 살아 있는 player target을 찾고,
+    거리가 attack attempt range보다 멀면 이동하며, 범위 안이면 cooldown 후 attack attempt count를 올린다.
+  </p>
+  <p>
+    현재 적 attack attempt는 실제 <code>ApplyDamage(...)</code>를 호출하지 않는다. 이 결정은 몬스터/적 스킬 구현 전까지 HP 감소와 death 검증을 보류하기 위한 구조와 일치한다.
+  </p>
+
+  <h2>6. 스킬 구현 상태 검증</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>스킬 계층</th>
+        <th>현재 파일/상태</th>
+        <th>구현 범위</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Blueprint data</td>
+        <td><code>SkillData.cs</code>, <code>SkillBlueprintSpecs.cs</code>, 각 하위 <code>*SkillData.cs</code></td>
+        <td><span class="tag ok">데이터 구조 구현</span> Timing, targeting, damage, status, projectile, area, buff, shield, passive spec이 있다.</td>
+      </tr>
+      <tr>
+        <td>기존 데이터 bridge</td>
+        <td><code>InGameSkillCatalog.cs</code>, <code>InGameSkillDefinitionMapper.cs</code></td>
+        <td><span class="tag ok">임시 bridge 구현</span> 기존 <code>SkillDefinition</code>을 transient <code>SkillData</code>로 만든다.</td>
+      </tr>
+      <tr>
+        <td>검증 도구</td>
+        <td><code>InGameSkillDataValidator.cs</code>, editor menu</td>
+        <td><span class="tag ok">구조 검증 구현</span> 카탈로그/스킬 매핑 검증용. 실행 검증은 아니다.</td>
+      </tr>
+      <tr>
+        <td>Runtime state</td>
+        <td><code>SkillRuntimeInstance.cs</code>, <code>UnitSkillRuntimeSet.cs</code>, <code>SkillRuntimeFactory.cs</code></td>
+        <td><span class="tag ok">Phase4-A 완료</span> learned active skill만 runtime instance로 만들고 cooldown/cast/duration/tick/magazine/reload를 관리한다.</td>
+      </tr>
+      <tr>
+        <td>Executor / registry</td>
+        <td>예정: <code>SkillExecutionSnapshot</code>, <code>SkillChoiceResolver</code>, <code>IInGameSkillExecutor</code>, <code>SkillExecutorRegistry</code></td>
+        <td><span class="tag todo">Phase4-B 예정</span> 아직 파일 없음. 실제 효과 없이 호출 계약과 선택지 snapshot만 먼저 만든다.</td>
+      </tr>
+      <tr>
+        <td>Hitbox relay</td>
+        <td>예정: <code>SkillHitboxRelay</code>, Projectile/Beam/Zone runtime</td>
+        <td><span class="tag todo">Phase4-B/C 예정</span> 프리팹 trigger는 신호만 전달하고 판정 로직은 runtime/executor가 소유한다.</td>
+      </tr>
+      <tr>
+        <td>실제 효과</td>
+        <td>예정: Projectile/Shield 최소 executor</td>
+        <td><span class="tag todo">Phase4-C 예정</span> <code>eve-a</code> 데미지와 <code>ariel-b</code> 보호막을 최소 샘플로 연결한다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>7. 앞으로의 스킬 구현 방향</h2>
+  <ol>
+    <li><strong>Phase4-B:</strong> executor 인터페이스, registry, execution context, choice resolver, execution snapshot을 추가한다. 이 단계에서는 <code>ApplyDamage</code>, <code>GrantShield</code>, prefab instantiate를 호출하지 않는다.</li>
+    <li><strong>Phase4-B hitbox 계약:</strong> <code>SkillHitboxRelay</code>를 설계해 Projectile/Beam/Zone 프리팹 collider가 접촉 신호만 전달하게 한다. 게임 판정은 runtime system이 처리한다.</li>
+    <li><strong>Phase4-C projectile:</strong> <code>ProjectileSkillData.Projectile.ProjectilePrefab</code>을 우선 사용하고, 없으면 <code>SkillEffectPrefab</code> fallback을 검토한다. 빠른 투사체는 trigger 신호만 믿지 않고 이전 위치와 현재 위치 사이를 cast로 보정한다.</li>
+    <li><strong>Phase4-C beam:</strong> Beam은 길쭉한 trigger collider를 가진 프리팹 방향으로 간다. 런타임이 길이, 회전, 지속시간을 맞추고 trigger 신호를 executor/runtime으로 넘긴다.</li>
+    <li><strong>Phase4-C zone:</strong> Zone은 원형/영역 trigger collider 프리팹을 사용하고 Enter/Stay/Exit 신호를 relay한다. 대상 목록, tick interval, 지속시간, 중복 적용 제한은 zone runtime이 관리한다.</li>
+    <li><strong>Phase5 이후:</strong> Run 중 배운 active/passive와 choice state를 runtime rebuild 또는 다음 전투 진입 때 반영한다. <code>SkillData</code> 원본은 런타임 선택 상태로 수정하지 않는다.</li>
+  </ol>
+
+  <h2>8. 리스크와 확인 필요 항목</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>리스크</th>
+        <th>근거</th>
+        <th>권장 조치</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>새 CSVData와 현재 런타임 데이터 경로가 다름</td>
+        <td>CSVData 샘플 파일은 존재하지만 <code>Scripts2/InGame</code>은 기존 <code>Pakuri.Data</code> 경로를 사용한다.</td>
+        <td>CSVData loader/catalog를 별도 phase로 구현하고, 기존 fallback 경로와 비교 검증한 뒤 전환한다.</td>
+      </tr>
+      <tr>
+        <td>Legacy CSV source path 누락</td>
+        <td><code>Pakuri\Assets\CSVdata\source</code>가 존재하지 않는다.</td>
+        <td>현재 fallback catalog로 NewRunScene 테스트가 가능한지 유지하되, auto-sync 오류가 반복되면 legacy sync 경로 또는 CSVData 전환 정책을 정리한다.</td>
+      </tr>
+      <tr>
+        <td>스킬 실제 효과 미구현</td>
+        <td>executor, relay, projectile/beam/zone runtime 파일이 아직 없다.</td>
+        <td>Phase4-B에서 계약을 먼저 만들고, Phase4-C에서 최소 샘플만 연결해 구조를 검증한다.</td>
+      </tr>
+      <tr>
+        <td>죽음/보상/제거 미구현</td>
+        <td><code>UnitResourceMutationService</code>는 <code>IsDead</code>를 반환하지만 제거/보상 흐름은 없다.</td>
+        <td>실제 데미지 연결 후 death 처리, roster unregister, Actor 제거, reward 조건을 별도 phase로 추가한다.</td>
+      </tr>
+      <tr>
+        <td>대량 적 성능</td>
+        <td>현재 적 simulation은 roster list를 순회하고 nearest player를 선형 검색한다.</td>
+        <td>100+ enemies Play Mode 검증 후 필요하면 spatial partition 또는 target cache를 검토한다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>9. 검사한 주요 근거</h2>
+  <ul class="evidence">
+    <li><code>Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs</code></li>
+    <li><code>Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs</code></li>
+    <li><code>Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSimulationSystem.cs</code></li>
+    <li><code>Pakuri/Assets/Scripts2/InGame/Core/UnitResourceMutationService.cs</code></li>
+    <li><code>Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs</code>, <code>MonsterUnitRuntimeModel.cs</code>, <code>EnemyUnitRuntimeModel.cs</code>, <code>UnitFactory.cs</code>, <code>UnitRosterService.cs</code></li>
+    <li><code>Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs</code>, <code>EnemyUnitActor.cs</code></li>
+    <li><code>Pakuri/Assets/Scripts2/InGame/Skills/Data/SkillData.cs</code>, <code>SkillBlueprintSpecs.cs</code>, <code>InGameSkillCatalog.cs</code>, <code>InGameSkillDefinitionMapper.cs</code></li>
+    <li><code>Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs</code>, <code>UnitSkillRuntimeSet.cs</code>, <code>SkillRuntimeFactory.cs</code></li>
+    <li><code>Pakuri/Assets/CSVData/MonsterStat.csv</code>, <code>EnemyStat.csv</code>, <code>SkillData.csv</code></li>
+    <li><code>Pakuri/Assets/Scenes/NewScene/NewRunScene.unity</code></li>
+    <li><code>Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html</code></li>
+    <li><code>Pakuri/reference/Report/2026-05-10-combat-runtime-controller-ai-token-refactor-proposal.html</code></li>
+    <li><code>Pakuri/reference/Report/2026-05-10-shared-combat-target-and-temporary-effect-design.html</code></li>
+    <li><code>Scripts2/InGame</code> 검색 결과: <code>ActiveEffects</code>, <code>TemporaryEffect</code>, <code>StatModifier</code>, <code>ModifierState</code>, <code>SkillExecutorRegistry</code>, <code>SkillExecutionSnapshot</code>, <code>SkillHitboxRelay</code>는 현재 확인되지 않음.</li>
+  </ul>
+
+  <h2>10. 최종 결론</h2>
+  <p>
+    현재 구조는 NewRunScene 기준으로 선택 몬스터와 3종 적 prefab을 runtime model/Actor/roster에 연결하고,
+    적 이동 및 attack attempt, HP/Shield mutation/display pipeline, learned active skill runtime state까지 구현되어 있다.
+    그러나 새 CSVData source of truth, 스킬 executor/relay, 실제 projectile/beam/zone/shield/damage 실행, death/reward 처리는 아직 다음 단계다.
+  </p>
+  <p>
+    2026-05-10 두 제안 기준으로 보면, 현재 InGame 구현은 <code>InGameCombatManager</code>가 모든 전투 상태와 실행 로직을 직접 보유하는 God Class 형태는 아니다.
+    하지만 <code>NewRunSceneEntryManager</code>는 bootstrap 책임이 이미 넓고, 공통 temporary effect / modifier / skill executor 계층은 아직 없으므로 Phase4-B 이후에는 이 경계를 별도 service로 유지해야 한다.
+  </p>
+  <p>
+    다음 구현은 Phase4-B에서 실행 계약과 relay 구조를 먼저 만들고, Phase4-C에서 <code>eve-a</code>와 <code>ariel-b</code>만 최소 샘플로 연결하는 순서가 가장 안전하다.
+  </p>
+</main>
+</body>
+</html>
+

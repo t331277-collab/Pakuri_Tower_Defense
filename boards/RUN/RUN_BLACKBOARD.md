@@ -4,6 +4,289 @@
 - This file keeps only task blocks dated `2026-05-09` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/RUN/RUN_BLACKBOARD.md`.
 
+## Task: 2026-05-15 NewRunScene Phase4-A Skill Runtime State
+
+### Task title
+
+Record Phase4-A learned active skill runtime state creation.
+
+### Goals
+
+- Add unit-owned skill runtime storage for learned active skills.
+- Keep `SkillData` as immutable blueprint data during combat.
+- Track cooldown, cast, active duration, tick interval, magazine, and reload state per runtime instance.
+- Do not execute projectiles, damage, shield grants, targeting, or skill effects in Phase4-A.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Play Mode verification by Codex.
+- `SkillRuntimeFactory` activates only skills already present in `MonsterUnitRuntimeModel.State.LearnedActiveSkillIds`.
+- Actual skill executor, target query, projectile creation, `ApplyDamage(...)`, and `GrantShield(...)` remain Phase4-B/C work.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Phase4-B should add executor interfaces/registry and choice-resolution snapshots.
+- Phase4-C should connect minimum sample effects such as `eve-a` damage and `ariel-b` shield through the Phase3-C resource mutation APIs.
+- User performs Play Mode verification only after skill execution is connected.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs` for cooldown, cast, active duration, tick interval, magazine, and reload state.
+- Added `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/UnitSkillRuntimeSet.cs` for unit-owned active skill runtime storage, lookup, and ticking.
+- Added `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeFactory.cs` to build learned active skill runtime instances from `InGameSkillCatalog` and `UnitStateBucket.LearnedActiveSkillIds`.
+- Updated `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs` with `SkillRuntime`.
+- Updated `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html` to mark Phase4-A complete.
+- Runtime and editor builds passed with 0 errors and existing assembly reference warnings.
+- Unity-MCP force refresh cleared the initial missing new-script import error; console read then showed only MCP client handler logs.
+- Unity-MCP `execute_code` runtime construction check failed with the known Windows mono path-length error, not a C# compile error.
+
+### History
+
+- 2026-05-15: User explicitly requested Code Builder to perform Phase4-A work.
+
+## Task: 2026-05-15 NewRunScene Phase3-C Resource Pipeline
+
+### Task title
+
+Record NewRunScene Phase3-C resource mutation and actor refresh pipeline.
+
+### Goals
+
+- Keep the current NewRunScene Phase3-B enemy movement and attack-attempt loop intact.
+- Add a manager-owned route for future skill systems to apply damage or shields to registered units.
+- Refresh HP/Shield actor visuals only when a registered unit resource changes.
+- Avoid declaring Play Mode HP loss or death behavior complete before monster and enemy skills exist.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Play Mode verification by Codex.
+- No monster skill, enemy skill, actual attack damage connection, death handling, or reward handling was implemented.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User can continue using Play Mode to verify Phase3-B movement/attack attempt behavior.
+- Later skill implementation should call `InGameCombatManager` resource APIs and then verify HP/Shield decrease and death behavior in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` owns a `UnitResourceMutationService` and exposes `ApplyDamage(...)`, `GrantShield(...)`, `SetShield(...)`, and `RefreshUnitActor(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Units/UnitRosterService.cs` now exposes `Find(BaseUnitRuntimeModel model)` so the manager can refresh the changed registered actor.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs` and `EnemyUnitActor.cs` update HP and Shield segments from the same `Background` width.
+- `EnemyCombatSimulationSystem.cs` remains attack-attempt only and does not call the new damage API.
+- Runtime and editor builds passed with 0 errors and existing warnings.
+- Unity-MCP script refresh reached idle after the script changes.
+- Unity-MCP console read showed only MCP client handler logs and the expected MCP `execute_code` path-length failure from the attempted non-PlayMode calculation check, not C# compile errors.
+
+### History
+
+- 2026-05-15: User stated Phase3-B was implemented and Play Mode verified, then directed Code Builder to implement Phase3-C only as a resource pipeline because skills are not implemented yet.
+
+## Task: 2026-05-15 NewRunScene Enemy Combat Attempt Loop
+
+### Task title
+
+Record NewRunScene activation of the first enemy movement/target/attack-attempt loop.
+
+### Goals
+
+- Keep NewRunScene entry spawning intact.
+- Enable the `InGameCombatManager` enemy combat simulation loop on `GameManager`.
+- Leave attack-attempt logs disabled by default so 100+ enemy tests do not spam the console.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Play Mode verification from Codex.
+- This is not yet damage, HP reduction, ranged projectile, support heal/shield/buff, or skill execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies in Play Mode that NewRunScene enemies move toward the selected monster and stop/attempt attacks in range.
+- If visual debugging is needed, set `logEnemyAttackAttempts` on `InGameCombatManager` to true temporarily.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now owns an `EnemyCombatSimulationSystem` instance and ticks it from `Update()`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now stores `enemyCombatSimulationEnabled: 1` and `logEnemyAttackAttempts: 0` on `InGameCombatManager`.
+- Runtime and editor `dotnet build` checks completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP console initially showed a new-script import error for `EnemyCombatSimulationSystem`, then a force refresh completed and later console reads no longer showed that compile error.
+- Unity-MCP `execute_code` edit-mode simulation verification failed because MCP's mono command hit a Windows path-length error, so gameplay behavior still needs user Play Mode verification.
+
+### History
+
+- 2026-05-15: User requested Code Builder to implement enemy movement, targeting, and basic attack "attempt".
+
+## Task: 2026-05-15 NewRunScene Triple Enemy Entry Spawn
+
+### Task title
+
+Spawn the three current stage-one enemy prefabs during NewRunScene entry.
+
+### Goals
+
+- Keep selected player monster spawning intact.
+- Spawn stage-one Warrior, Rogue, and Priest enemy units after NewRunScene entry.
+- Space the three enemy spawns by one second.
+- Preserve the authored enemy spawn rule: X from `SpawnPoint`, Y from `-5` to `5`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is entry spawning only, not wave cadence, movement, targeting, attacks, damage, or skill execution.
+- Do not run Unity Play Mode; user owns gameplay verification.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies NewRunScene in Play Mode: selected monster spawns, then Warrior, Rogue, and Priest spawn one second apart at `SpawnPoint.x` with randomized Y in `-5~5`.
+- Later Phase3-B should move from entry-only spawning into roster-driven enemy simulation systems.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` now starts `SpawnInitialEnemySequence()` after `SpawnSelectedPlayerUnit()`.
+- `SpawnInitialEnemySequence()` calls `SpawnInitialEnemyUnit()`, waits `enemySpawnIntervalSeconds`, calls `SpawnRangedEnemyUnit()`, waits again, and calls `SpawnBufferEnemyUnit()`.
+- `TrySpawnEnemyUnit(...)` creates an `EnemyUnitRuntimeModel`, instantiates the configured prefab, binds `EnemyUnitActor`, and registers the model/actor with `InGameCombatManager`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` stores `initialEnemyId: stage1-swordsman`, `rangedEnemyId: stage1-rogue`, `bufferEnemyId: stage1-priest`, `enemySpawnMinY: -5`, `enemySpawnMaxY: 5`, and `enemySpawnIntervalSeconds: 1`.
+- Unity-MCP scene save reported `Scene 'NewRunScene' saved successfully to 'Assets/Scenes/NewScene/NewRunScene.unity'`.
+- Runtime and editor `dotnet build` checks completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP console warning/error read showed only MCP client handler logs after the scene save.
+
+### History
+
+- 2026-05-15: User requested NewRunScene entry spawning for the three current enemy types after adding the prefabs under `Assets/Prefab/Enemy`.
+
+## Task: 2026-05-15 NewRunScene Phase3-A Combat Manager Registration
+
+### Task title
+
+Record NewRunScene entry registration into the Phase3-A combat manager roster.
+
+### Goals
+
+- Keep the current NewRunScene selected monster and first enemy spawn path intact.
+- Add an explicit `InGameCombatManager` component to `GameManager`.
+- Register the spawned selected monster and spawned enemy with the combat manager roster after Actor/model binding.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Play Mode verification; user verifies actual spawned visuals and runtime gameplay.
+- Do not change NewMainMenu selection flow or legacy `RunSceneBootstrap` production path in this slice.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies NewRunScene in Play Mode: selected monster and first enemy still spawn after `GameManager` gained `InGameCombatManager`.
+- Later Phase3-B work should consume `InGameCombatManager.Roster` for movement/targeting/basic attack rather than searching the scene.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` now has a serialized `combatManager` field and `CombatManager` property.
+- `NewRunSceneEntryManager.cs` now calls `RegisterSpawnedPlayer()` after selected monster Actor binding and `RegisterSpawnedEnemy()` after enemy Actor binding.
+- `NewRunSceneEntryManager.cs` uses `ResolveCombatManager()` to get or add `InGameCombatManager` on the same `GameManager`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now contains an `InGameCombatManager` component on `GameManager`, and `NewRunSceneEntryManager.combatManager` references that component.
+- Unity-MCP component read confirmed the scene component state and serialized reference.
+- Runtime and editor `dotnet build` checks completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-15: Code Builder implemented Phase3-A combat manager roster registration after the user requested Phase3-A work.
+
+## Task: 2026-05-15 NewRunScene Enemy Spawn Entry Handoff
+
+### Task title
+
+Record the NewRunScene entry-side requirements for first enemy spawning.
+
+### Goals
+
+- Extend the current NewRunScene entry flow after selected 1P monster spawn so one `stage1-swordsman` enemy can be spawned from the authored enemy `SpawnPoint`.
+- Preserve the current selected-monster flow and existing `NewRunSceneEntryManager` 1P prefab binding behavior.
+
+### Constraints
+
+- Role Owner is Designer for this handoff; no scene or code changes were made.
+- `NewRunSceneEntryManager` currently owns 1P selected monster spawning; no active enemy spawn field or enemy spawn method exists in the inspected file.
+- Do not change NewMainMenu selection flow or current RunSession handoff in this slice.
+
+### Role Owner
+
+Designer -> Code Builder
+
+### Status
+
+Builder implementation completed and locally verified. Phase2-B entry-side spawn/model/actor-binding scope is complete.
+
+### Next Actions
+
+- User verifies NewRunScene in Play Mode: selected 1P monster still spawns, one enemy spawns from the authored `SpawnPoint` X, and enemy Y is in the -5 to +5 range.
+- Later combat work should move beyond entry spawning into enemy movement, target search, attack timing, and HP mutation.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs:39` defines `SpawnSelectedPlayerUnit()`.
+- `NewRunSceneEntryManager.cs:70` through `:75` instantiates the selected monster prefab at `playerSpawnPoint` and binds the spawned actor.
+- `NewRunSceneEntryManager.cs:194` through `:204` resolves `1PSpawnPoint` by name only when the serialized field is missing.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:5` currently defines an empty `InGameCombatManager`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:677` through `:685` shows `GameManager` has `NewRunSceneEntryManager` with `playerSpawnPoint`, `fallbackCatalog`, and five monster prefab fields, but no enemy spawn/prefab fields in the current component.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:924` contains the authored `SpawnPoint`.
+- Code Builder kept the temporary Phase2-B enemy entry spawn in `NewRunSceneEntryManager` rather than activating the currently empty `InGameCombatManager`.
+- `NewRunSceneEntryManager.cs:46` calls `SpawnInitialEnemyUnit()` after `SpawnSelectedPlayerUnit()`, and `:90` defines the one-enemy spawn method.
+- `NewRunSceneEntryManager.cs:113` uses `UnityEngine.Random.Range(enemySpawnMinY, enemySpawnMaxY)` while preserving X from `enemySpawnPoint.position`.
+- `NewRunSceneEntryManager.cs:316` through `:325` falls back to `GameObject.Find("SpawnPoint")` if the serialized spawn point is missing.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:679`, `:686`, and `:687` through `:689` show the saved enemy spawn point, enemy prefab, enemy ID, and Y-range fields.
+- Runtime and editor `dotnet build` checks completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP `refresh_unity` reached idle after external file sync; final editor state reported `ready_for_tools=true`, `is_playing=false`, and no asset update in progress.
+
+### History
+
+- 2026-05-15: Designer inspected the current NewRunScene entry path and recorded the enemy spawn handoff scope after the user finished assigning the enemy prefab and spawn point.
+- 2026-05-15: Code Builder implemented the enemy entry spawn in `NewRunSceneEntryManager`, connected scene fields, and verified build/editor state without running Play Mode.
+
 ## Task: 2026-05-14 Five Monster NewRunScene Prefab Binding Fix
 
 ### Task title

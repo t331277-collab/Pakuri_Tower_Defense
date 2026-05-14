@@ -4,6 +4,51 @@
 - This file keeps only task blocks dated `2026-05-09` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/DATA/DATA_BLACKBOARD.md`.
 
+## Task: 2026-05-15 Stage1 Enemy CSV Type Expansion
+
+### Task title
+
+Track the stage-one enemy CSV expansion for Melee, Ranged, and Buffer enemies.
+
+### Goals
+
+- Fill `Assets/CSVData/EnemyStat.csv` with the current three enemy rows needed by NewRunScene tests.
+- Keep the existing `attack_type` column as the behavior grouping field.
+- Preserve loader compatibility by also aligning the legacy stage-one source row and current priest asset.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User explicitly confirmed Rogue is `Ranged` and Priest is `Buffer`.
+- The new `Assets/CSVData/EnemyStat.csv` rows are data-entry groundwork; current `Scripts2/InGame` still resolves enemies through the existing legacy catalog/data manager path.
+- No new CSV loader was implemented in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and CSV parsing verified.
+
+### Next Actions
+
+- Later CSVData loader work should map `EnemyStat.csv.attack_type` values `Melee`, `Ranged`, and `Buffer` into `EnemyDefinition.AttackType`.
+- Do not claim the new CSVData path is authoritative until `Scripts2/InGame` no longer depends on legacy `Pakuri.Data` resolution.
+
+### Evidence
+
+- `Pakuri/Assets/CSVData/EnemyStat.csv` now contains `stage1-swordsman`, `stage1-rogue`, and `stage1-priest`.
+- `Import-Csv Pakuri\Assets\CSVData\EnemyStat.csv` returned attack types `Melee`, `Ranged`, and `Buffer`.
+- `Pakuri/Assets/Legacy/CSVdata/source/stage_one_enemies.csv` now stores `stage1-priest` as `Buffer`.
+- `Pakuri/Assets/Legacy/Data/GameData/Enemies/stage1-priest.asset` now stores `AttackType: 3`.
+- `Pakuri/Assets/Legacy/Scripts/Data/Definition/EnemyDefinition.cs` now defines `EnemyAttackType.Buffer`.
+- Runtime and editor `dotnet build` checks completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-15: User directed Code Builder to keep the existing CSV column and standardize stage-one types as `Melee`, `Ranged`, and `Buffer`.
+
 ## Task: 2026-05-14 CSVData Source Transition Roadmap
 
 ### Task title

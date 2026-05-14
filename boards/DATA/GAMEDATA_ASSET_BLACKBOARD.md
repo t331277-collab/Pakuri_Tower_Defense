@@ -4,6 +4,190 @@
 - This file keeps only task blocks dated `2026-05-08` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
 
+## Task: 2026-05-15 InGame Phase4-A Skill Blueprint Runtime Split
+
+### Task title
+
+Record the data/runtime split for Phase4-A skill runtime state.
+
+### Goals
+
+- Keep `SkillData` and its subclasses as blueprint data.
+- Store combat-time mutable skill state outside the `SkillData` objects.
+- Activate only learned active skill IDs copied from run state into `UnitStateBucket`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV rows, ScriptableObject assets, prefab assets, or scene assets were changed in this slice.
+- `InGameSkillCatalog` remains the current bridge from existing data definitions into transient InGame `SkillData`.
+- No skill effects, projectile assets, damage values, or shield formulas were executed.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Phase4-B should keep `SkillData` unmutated and calculate choice-modified execution snapshots from `ChosenChoiceIds`.
+- Phase4-C should verify sample skills through `InGameCombatManager.ApplyDamage(...)` and `GrantShield(...)`.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/SkillData.cs` already exposes `Timing`, `Targeting`, `EnhancementChoices`, and `MasterChoices`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/ProjectileSkillData.cs` exposes `Projectile.MagazineSize` and `Projectile.ReloadTime`.
+- Added `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs`, `UnitSkillRuntimeSet.cs`, and `SkillRuntimeFactory.cs`.
+- `SkillRuntimeInstance` reads timing and projectile magazine/reload data but does not call damage, shield, projectile, or effect APIs.
+- `SkillRuntimeFactory` uses `InGameSkillCatalog.TryGetActiveSkill(...)` and `UnitStateBucket.LearnedActiveSkillIds` to decide which active skills become runtime instances.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-15: Phase4-A created runtime state around the existing skill blueprint data bridge without changing source data.
+
+## Task: 2026-05-15 Stage1 Enemy Data And Prefab Binding Expansion
+
+### Task title
+
+Record data and asset-side changes for stage-one Warrior, Rogue, and Priest enemy entry spawning.
+
+### Goals
+
+- Store Rogue and Priest data alongside the existing stage-one swordsman row.
+- Align current legacy data with the user-confirmed `Buffer` priest type.
+- Bind the newly authored Rogue and Priest prefabs to NewRunScene entry spawning.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Prefab visual authoring remains user-owned; Code Builder only verified and serialized references.
+- No enemy behavior execution for ranged attacks, heals, shields, buffs, or damage was implemented.
+- Do not run Unity Play Mode.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies in Play Mode that all three enemy prefabs appear and initialize their actor HP/name views.
+- Later data-loader work should bridge `Assets/CSVData/EnemyStat.csv` into runtime definitions before declaring the new CSVData path authoritative.
+
+### Evidence
+
+- `Pakuri/Assets/CSVData/EnemyStat.csv` has rows for `stage1-swordsman`, `stage1-rogue`, and `stage1-priest` using `Melee`, `Ranged`, and `Buffer`.
+- `Pakuri/Assets/Legacy/Data/GameData/Enemies/stage1-priest.asset` now stores `AttackType: 3`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` serializes `stageOneEnemyPrefab` as GUID `f2892daa44e860e49b1ea2b17f8682dc`, `stageOneRangedEnemyPrefab` as GUID `41679be8164df3d4fa09bc87aa4c1fb7`, and `stageOneBufferEnemyPrefab` as GUID `1fd46dd360e001847b2d0e89ded130d9`.
+- Unity-MCP `manage_prefabs get_hierarchy` confirmed `Assets/Prefab/Enemy/Stage1_Rogue_Unit.prefab` and `Assets/Prefab/Enemy/Stage1_Priest_Unit.prefab` include `Pakuri.InGame.EnemyUnitActor` and the expected HP/name child objects.
+- Runtime and editor `dotnet build` checks completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-15: User stated that melee, Ranged, and buffer type enemy prefabs were added under `Assets/Prefab/Enemy` and requested they be connected through CSV data and NewRunScene entry spawning.
+
+## Task: 2026-05-15 CSV Skill Numeric Map-Scale Contract
+
+### Task title
+
+Record how future CSV skill numeric fields should map to the visible NewRunScene coordinate scale.
+
+### Goals
+
+- Treat future CSV skill numeric tuning values as values authored for the visible map scale, not arbitrary screen pixels.
+- Use X `0~31` and Y `0~17` as the current camera-visible coordinate baseline.
+- Make CSV radius/range/area-width values line up with actual map distances during skill implementation.
+- Preserve authored scene object `Transform` values as direct world/scene coordinates.
+
+### Constraints
+
+- Role Owner is Designer.
+- No CSV row edits, data loader edits, ScriptableObject edits, scene edits, or runtime implementation in this task.
+- Do not retroactively claim current CSV skill radius values are correct; this only records the required tuning baseline for future implementation.
+- If a later CSV field needs a different unit, the field name or mapper must document that exception explicitly.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Recorded as data tuning contract for future skill implementation.
+
+### Next Actions
+
+- When Code Builder implements CSVData Phase5 or skill execution, map fields such as radius, range, beam width, zone size, projectile travel distance, and enemy attack range to the X `0~31`, Y `0~17` visible-map scale.
+- Keep fields derived from actual scene object positions, such as spawn point X/Y or target `Transform.position`, as raw Transform reads.
+- Future validation or debug tools should report skill radii/ranges in map-coordinate units so Play Mode verification can compare them to the 31 by 17 visible area.
+
+### Evidence
+
+- User stated on 2026-05-15 that the current camera-visible map basis is X `0~31` and Y `0~17`.
+- User stated that camera right edge should be treated as X `31`, and camera bottom-to-top height should be treated as Y `17`.
+- User excluded actual object `Transform` reads from the CSV numeric tuning conversion rule.
+- User specifically cited CSV skill radius-like numeric values as the kind of data that must be tuned to actual map coordinates during skill implementation.
+
+### History
+
+- 2026-05-15: User asked to record the visible-map coordinate baseline on the board before future skill implementation.
+
+## Task: 2026-05-15 Stage1 Warrior Enemy Prefab Binding Handoff
+
+### Task title
+
+Record asset-side readiness for the first InGame enemy prefab binding.
+
+### Goals
+
+- Treat `Assets/Prefab/Enemy/Stage1_Warrior_Unit.prefab` as the first enemy presentation prefab for Phase2-B residual enemy binding.
+- Keep enemy stats sourced from the existing `stage1-swordsman` data path, not from prefab-authored combat values.
+- Preserve user-authored HP bar and label children as presentation assets.
+
+### Constraints
+
+- Role Owner is Designer for this handoff; no prefab, data, or code edits were made.
+- Prefab authoring is user-owned; Code Builder should add binding APIs and runtime model injection only.
+- Movement/attack/skill tuning remains later skill/combat-loop work.
+
+### Role Owner
+
+Designer -> Code Builder
+
+### Status
+
+Builder implementation completed and locally verified for Phase2-B enemy prefab/model binding.
+
+### Next Actions
+
+- User verifies in Play Mode that the authored enemy prefab presentation appears and the HP/name debug display initializes.
+- Later combat work should mutate `EnemyUnitRuntimeModel.Resources` and call `EnemyUnitActor.RefreshDebugView()` after damage/shield changes.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Enemy/Stage1_Warrior_Unit.prefab:530` contains `m_Name: Stage1_Warrior_Unit`.
+- `Pakuri/Assets/Prefab/Enemy/Stage1_Warrior_Unit.prefab:624` contains `m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.EnemyUnitActor`.
+- Unity-MCP `manage_prefabs get_hierarchy` found `MonsterHpBar/Background`, `MonsterHpBar/Fill`, inactive `MonsterHpBar/Shield`, `MonsterHpLabel`, and `MonsterNameLabel` under the enemy prefab.
+- `boards/COMBAT/ENEMY_BLACKBOARD.md` already records `stage1-swordsman` seed data in `EnemyStat.csv` with HP `100`, attack `12`, and physical defense `5`.
+- `Pakuri/Assets/Scripts2/InGame/Units/UnitFactory.cs:29` defines the existing enemy model creation API.
+- Updated `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` so the prefab actor stores `EnemyUnitRuntimeModel`, resolves `MonsterNameLabel`, `MonsterHpLabel`, `MonsterHpBar/Background`, `Fill`, and `Shield`, and updates text/fill scale from model identity/resources.
+- Updated `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` so the enemy prefab is a serialized `stageOneEnemyPrefab` reference and the enemy model is created from `initialEnemyId`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:686` stores `stageOneEnemyPrefab` as `Stage1_Warrior_Unit.prefab` GUID `f2892daa44e860e49b1ea2b17f8682dc`.
+- Runtime and editor `dotnet build` checks completed with 0 errors and existing assembly reference warnings.
+- `git diff --check` on changed scripts, scene, and boards completed with exit code 0, aside from LF-to-CRLF normalization warnings.
+
+### History
+
+- 2026-05-15: User stated the enemy prefab now has HP and `EnemyUnitActor.cs` assigned and is ready for Phase2-B enemy spawn work.
+- 2026-05-15: Code Builder implemented enemy actor/model binding and serialized prefab linkage for the first NewRunScene enemy spawn.
+
 ## Task: 2026-05-14 Five Monster Prefab HP Bar Asset Binding
 
 ### Task title

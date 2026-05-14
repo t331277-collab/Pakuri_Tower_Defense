@@ -15,7 +15,7 @@ MonoBehaviour:
   EnemyId: stage1-priest
   DisplayName: "\uC0AC\uC81C"
   EncounterRole: 0
-  AttackType: 1
+  AttackType: 3
   Attribute: 5
   Stats:
     MaxHealth: 90

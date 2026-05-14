@@ -55,8 +55,7 @@ namespace Pakuri.InGame
                     : $"HP {FormatValue(currentHealth)}/{FormatValue(maxHealth)}";
             }
 
-            SetFillScale(hpFill, hpBackground, maxHealth > 0f ? currentHealth / maxHealth : 0f);
-            SetFillScale(shieldFill, hpBackground, maxHealth > 0f ? Mathf.Min(currentShield / maxHealth, 1f) : 0f);
+            SetResourceFillSegments(currentHealth, currentShield, maxHealth);
             if (shieldFill != null)
             {
                 shieldFill.gameObject.SetActive(currentShield > 0f);
@@ -116,7 +115,22 @@ namespace Pakuri.InGame
             return null;
         }
 
-        private static void SetFillScale(Transform target, Transform background, float normalizedValue)
+        private void SetResourceFillSegments(float currentHealth, float currentShield, float maxHealth)
+        {
+            var totalVisibleResource = Mathf.Max(maxHealth, currentHealth + currentShield);
+            var safeTotal = totalVisibleResource > 0f ? totalVisibleResource : 1f;
+            var healthRatio = Mathf.Clamp01(currentHealth / safeTotal);
+            var shieldRatio = Mathf.Clamp01(currentShield / safeTotal);
+
+            SetSegmentScaleAndPosition(hpFill, hpBackground, 0f, healthRatio);
+            SetSegmentScaleAndPosition(shieldFill, hpBackground, healthRatio, shieldRatio);
+        }
+
+        private static void SetSegmentScaleAndPosition(
+            Transform target,
+            Transform background,
+            float leftRatio,
+            float widthRatio)
         {
             if (target == null)
             {
@@ -124,9 +138,18 @@ namespace Pakuri.InGame
             }
 
             var baseScaleX = background != null ? background.localScale.x : target.localScale.x;
+            var backgroundCenterX = background != null ? background.localPosition.x : 0f;
+            var backgroundWidth = Mathf.Abs(baseScaleX);
+            var segmentWidth = backgroundWidth * Mathf.Clamp01(widthRatio);
             var scale = target.localScale;
-            scale.x = baseScaleX * Mathf.Clamp01(normalizedValue);
+            scale.x = segmentWidth;
             target.localScale = scale;
+
+            var position = target.localPosition;
+            position.x = backgroundCenterX - (backgroundWidth * 0.5f)
+                + (backgroundWidth * Mathf.Clamp01(leftRatio))
+                + (segmentWidth * 0.5f);
+            target.localPosition = position;
         }
 
         private static string FormatValue(float value)

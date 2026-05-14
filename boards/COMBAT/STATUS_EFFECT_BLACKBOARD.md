@@ -4,6 +4,96 @@
 - This file keeps only task blocks dated `2026-05-10` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
+## Task: 2026-05-15 InGame HP Shield Bar Segment Rule
+
+### Task title
+
+Record and implement the InGame same-bar HP and Shield representation rule.
+
+### Goals
+
+- Show current HP and current Shield as adjacent segments inside one `MonsterHpBar` background.
+- Preserve the authored background scale, such as X scale `20`, as the total visible bar width.
+- When HP is `100` and Shield is `100`, set HP fill width to `10` and Shield width to `10`.
+- Keep Shield hidden when current Shield is `0`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This slice changes actor display math only; it does not implement shield skills, timed shield expiry, or skill-driven shield grants.
+- Runtime skill tuning and Play Mode gameplay verification remain later tasks.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified by build and code inspection.
+
+### Next Actions
+
+- Later shield skill code should call the InGame resource mutation API, then rely on changed-unit actor refresh.
+- User verifies the visual ratio in Play Mode after a skill or debug path grants Shield.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs` now calls `SetResourceFillSegments(currentHealth, currentShield, maxHealth)`.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` now calls the same segment-style method.
+- Segment denominator is `Mathf.Max(maxHealth, currentHealth + currentShield)`.
+- Segment widths use the authored `Background.localScale.x`; HP starts at the background left edge and Shield starts after the HP segment.
+- Existing prefab inspection found `Background` X scale `20`, `Fill` X scale `20`, and `Shield` X scale `0` under both monster and enemy HP bars before the code change.
+- Runtime and editor builds passed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-15: User specified that HP `100` plus Shield `100` should fill one HP bar background by showing HP fill scale `10` and Shield scale `10` when the background X scale is `20`.
+
+## Task: 2026-05-15 InGame Skill Coordinate Tuning Rule
+
+### Task title
+
+Record the NewRunScene visible-map coordinate baseline for future skill radius and area tuning.
+
+### Goals
+
+- Use the current visible camera/map design baseline as X `0~31` and Y `0~17`.
+- Treat the camera right edge as X `31` and the camera top edge as Y `17`.
+- Require future skill numeric values from CSV, such as radius, area size, projectile distance, range, and targeting width, to be tuned in this actual map-coordinate scale.
+- Keep real scene object positions from `Transform` as actual Unity/world coordinates and do not remap them through CSV scaling.
+
+### Constraints
+
+- Role Owner is Designer.
+- No code, CSV, scene, prefab, or Play Mode changes in this task.
+- This is a future implementation constraint for skill execution and tuning; it does not validate any current skill radius visually.
+- Object positions read from actual `Transform` values remain authoritative for spawned units, spawn points, Nexus, and authored scene objects.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Recorded as a future skill implementation constraint.
+
+### Next Actions
+
+- Future Code Builder skill implementation must interpret CSV numeric tuning values against the X `0~31`, Y `0~17` visible-map baseline unless a value is explicitly authored as a raw Transform/world coordinate.
+- When implementing projectile, zone, shield, buff, or enemy attack ranges, document which CSV fields are map-scale tuning values and which values come from actual scene `Transform` reads.
+- User should verify final perceived range/radius in Play Mode after skill implementation.
+
+### Evidence
+
+- User stated on 2026-05-15 that the current visible camera basis should be treated as X `0~31` and Y `0~17`.
+- User stated that the camera far right should be considered `31`, and the bottom-to-top visible height should be considered `17`.
+- User stated that actual object `Transform` reads are excluded from this conversion rule.
+- User stated that CSV numeric values such as skill radius should be tuned to match actual map coordinates during skill implementation.
+
+### History
+
+- 2026-05-15: User provided the visible-map coordinate baseline and asked to record it on the board for future skill implementation.
+
 ## Task: 2026-05-13 Phase 3-H Status Effect Boundary Closeout
 
 ### Task title
