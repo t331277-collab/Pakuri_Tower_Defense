@@ -1,0 +1,6 @@
+stage_band,player_expected_dps,squad_expected_dps,total_expected_dps,normal_enemy_hp,elite_enemy_hp,boss_hp,spawn_density_per_10s,notes
+early,18,32,50,35,120,0,8,fast level up and stable intro
+mid,28,65,93,65,220,0,12,need first synergy and control
+late,40,110,150,110,360,0,16,need shred and status synergy
+boss_ch1,35,95,130,0,260,1800,10,boss with add pressure
+boss_ch2,42,120,162,0,340,2400,12,higher phase pressure

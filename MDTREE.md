@@ -41,47 +41,55 @@ Use when:
 
 ### Monster / Player Monster / Skill Work
 
-Always read:
-- `boards/MON/MON_BLACKBOARD.md`
+Read the relevant active monster file when it exists:
+- Eve: `boards/MON/EVE_MONSTER.md`
+- Ariel: `boards/MON/ARIEL_MONSTER.md`
+- Rin: `boards/MON/RIN_MONSTER.md`
+- Sein: `boards/MON/SEIN_MONSTER.md`
+- Vega: `boards/MON/VEGA_MONSTER.md`
 
-If the work is about Eve, also read:
-- `boards/MON/EVE_MONSTER.md`
+Common monster history from before the 2026-05-14 board cleanup is archived at:
+- `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`
 
 If creating a new monster such as Vega, Ariel, Sein, or Rin:
-- Read `boards/MON/MON_BLACKBOARD.md`.
 - Read that monster's file if it exists.
 - If it does not exist, create `boards/MON/{NAME}_MONSTER.md`.
 - Use `boards/MON/EVE_MONSTER.md` only as an implementation reference when a concrete example is needed.
 
 Related boards:
 - Status effects: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`
-- Projectiles: `boards/COMBAT/PROJECTILE_BLACKBOARD.md`
-- DebugScene monster testing: `boards/UI/DEBUGSCENE_UI.md`
+- Projectiles: older projectile history is archived at `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`; create a new active projectile board only if new projectile work resumes.
+- DebugScene monster testing: use `boards/UI/UI_BLACKBOARD.md`; older DebugScene UI history is archived at `boards/ARCHIVE/DEBUGSCENE_UI_ARCHIVE_2026-05-14.md`.
 - Game data assets: `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`
 
 ### Combat Runtime Work
 
-Read:
-- `boards/COMBAT/COMBAT_BLACKBOARD.md`
+Common combat history from before the 2026-05-14 board cleanup is archived at:
+- `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`
+
+For new active combat work, read only the relevant active narrow board below, or create a new active board if the topic no longer has one.
 
 Then narrow by topic:
 - Enemy spawn, target priority, enemy stats: `boards/COMBAT/ENEMY_BLACKBOARD.md`
-- Projectile behavior: `boards/COMBAT/PROJECTILE_BLACKBOARD.md`
+- Projectile behavior: older history is archived at `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`
 - Shock, chill, freeze, shield, vulnerability, slow: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`
 - Monster-specific combat: relevant `boards/MON/{NAME}_MONSTER.md`
 
 ### Refactoring / Architecture Work
 
-Read:
-- `boards/REFACTORING/REFACTORING.md`
+The former refactoring board folder was archived on 2026-05-14:
+- `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`
+- `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/COMBAT_STATE_OWNERSHIP_MAP.md`
+
+For new architecture work, route by the affected domain board and create a new active board only when the work needs persistent state beyond the existing domain files.
 
 Then also read the affected domain board:
-- Combat state ownership map: `boards/REFACTORING/COMBAT_STATE_OWNERSHIP_MAP.md`
-- Combat runtime refactor: `boards/COMBAT/COMBAT_BLACKBOARD.md`
-- Projectile/effect/drone refactor: `boards/COMBAT/PROJECTILE_BLACKBOARD.md`
+- Combat state ownership map: archived at `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/COMBAT_STATE_OWNERSHIP_MAP.md`
+- Combat runtime refactor: archived common history at `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`
+- Projectile/effect/drone refactor: archived projectile history at `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`
 - Enemy simulation refactor: `boards/COMBAT/ENEMY_BLACKBOARD.md`
 - Status/effect refactor: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`
-- Monster skill executor refactor: `boards/MON/MON_BLACKBOARD.md` and relevant `boards/MON/{NAME}_MONSTER.md`
+- Monster skill executor refactor: relevant `boards/MON/{NAME}_MONSTER.md`; archived common history at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`
 - UI-impacting refactor: related `boards/UI/*.md`
 
 ### Run / Reward / Save Work
@@ -93,7 +101,7 @@ Then narrow by topic:
 - Rewards and skill choices: `boards/RUN/REWARD_BLACKBOARD.md`
 - Save/load or checkpoint design: `boards/RUN/SAVELOAD_BLACKBOARD.md`
 - Run UI: `boards/UI/RUNSCENE_UI.md`
-- Monster selection: `boards/MON/MON_BLACKBOARD.md` and `boards/UI/MAINMENU_UI.md`
+- Monster selection: relevant `boards/MON/{NAME}_MONSTER.md` and `boards/UI/UI_BLACKBOARD.md`; older MainMenu UI history is archived at `boards/ARCHIVE/MAINMENU_UI_ARCHIVE_2026-05-14.md`.
 
 ### UI Work
 
@@ -101,12 +109,11 @@ Read:
 - `boards/UI/UI_BLACKBOARD.md`
 
 Then narrow by topic:
-- DebugScene UI: `boards/UI/DEBUGSCENE_UI.md`
-- Main menu UI: `boards/UI/MAINMENU_UI.md`
+- DebugScene UI: `boards/UI/UI_BLACKBOARD.md`; older DebugScene UI history is archived at `boards/ARCHIVE/DEBUGSCENE_UI_ARCHIVE_2026-05-14.md`.
+- Main menu UI: `boards/UI/UI_BLACKBOARD.md`; older MainMenu UI history is archived at `boards/ARCHIVE/MAINMENU_UI_ARCHIVE_2026-05-14.md`.
 - RunScene UI: `boards/UI/RUNSCENE_UI.md`
 
 If UI is tied to monster testing, also read:
-- `boards/MON/MON_BLACKBOARD.md`
 - Relevant `boards/MON/{NAME}_MONSTER.md`
 
 ### Data / Asset / CSV Work
@@ -115,9 +122,9 @@ Read:
 - `boards/DATA/DATA_BLACKBOARD.md`
 
 Then narrow by topic:
-- CSV source data: `boards/DATA/CSV_BLACKBOARD.md`
+- CSV source data: older CSV board history is archived at `boards/ARCHIVE/CSV_BLACKBOARD_ARCHIVE_2026-05-14.md`; use `boards/DATA/DATA_BLACKBOARD.md` for active CSVData transition state.
 - Unity ScriptableObject/static assets: `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`
-- Monster data: `boards/MON/MON_BLACKBOARD.md`
+- Monster data: relevant `boards/MON/{NAME}_MONSTER.md`; archived common history at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`
 
 ### Reviewer / Codex / Unity-MCP / Automation Work
 
@@ -143,7 +150,7 @@ If the report is about a specific domain, also read that domain board.
 When a task changes facts in more than one domain, update every related board in the same turn.
 
 Examples:
-- Eve projectile change: update `boards/MON/EVE_MONSTER.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, and if it affects common monster rules, `boards/MON/MON_BLACKBOARD.md`.
-- DebugScene Eve skill toggle change: update `boards/UI/DEBUGSCENE_UI.md`, `boards/MON/EVE_MONSTER.md`, and `boards/MON/MON_BLACKBOARD.md`.
+- Eve projectile change: update `boards/MON/EVE_MONSTER.md`; consult `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md` and `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md` only when older projectile/common monster history is needed.
+- DebugScene Eve skill toggle change: update `boards/UI/UI_BLACKBOARD.md` and `boards/MON/EVE_MONSTER.md`; consult `boards/ARCHIVE/DEBUGSCENE_UI_ARCHIVE_2026-05-14.md` only when older UI history is needed.
 - Run reward UI change: update `boards/RUN/REWARD_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, and `boards/RUN/RUN_BLACKBOARD.md`.
-- New character creation: update `boards/MON/MON_BLACKBOARD.md`, create/update `boards/MON/{NAME}_MONSTER.md`, and update data/combat/UI boards if implementation touches those domains.
+- New character creation: create/update `boards/MON/{NAME}_MONSTER.md` and update data/combat/UI boards if implementation touches those domains.

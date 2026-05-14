@@ -10,7 +10,7 @@
 
 Ariel dedicated monster, skill, and runtime persistent-state file.
 
-At the start of new work, read `boards/MON/MON_BLACKBOARD.md` first and consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
+At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
 ## Task: 2026-05-13 Ariel Battlefield Facade Registration
 

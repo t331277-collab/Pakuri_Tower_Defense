@@ -1,0 +1,11 @@
+enemy_id,detect_range,attack_range,attack_cooldown,damage_ratio,core_attack_damage,collision_radius,chase_limit,poise,status_resist_profile,xp_reward,kill_reward,skill_haste_bonus,range_bonus,cooldown_reduction,duration_power,crit_chance_bonus,crit_damage_bonus,power_bonus,notes
+ENEMY_001,6.0,1.2,1.6,1.0,4,0.45,12.0,0,normal,5,1,0,0,0,0,0,0,0,기본 보병 런타임
+ENEMY_002,7.0,1.0,1.2,1.2,6,0.40,16.0,10,breaker,6,1,0.05,0,0,0,0,0,0.05,돌파형 런타임
+ENEMY_003,8.5,7.0,2.4,1.1,3,0.35,14.0,0,ranged,7,1,0,0.25,0,0,0,0,0,원거리 사격형 런타임
+ENEMY_004,6.5,1.5,2.2,1.8,10,0.70,10.0,20,tank,12,2,0,0,0,0,0,0,0.08,탱커 런타임
+ENEMY_005,7.5,6.0,3.0,0.6,2,0.40,12.0,0,support,10,2,0,0.25,0.05,0.1,0,0,0,지원형 런타임
+ENEMY_006,7.0,5.5,3.2,0.8,5,0.50,12.0,0,summoner,12,2,0,0,0,0.1,0,0,0,소환형 런타임
+ENEMY_007,8.0,1.0,1.1,1.3,8,0.35,18.0,15,flanker,11,2,0.05,0,0,0,0.05,0,0.05,암살형 런타임
+ENEMY_008,7.0,1.4,1.8,2.0,12,0.75,14.0,30,elite,20,4,0,0,0,0,0.05,0.1,0.1,엘리트 런타임
+BOSS_001,10.0,2.0,2.4,3.0,18,1.20,30.0,50,boss_march,100,0,0,0,0,0,0.05,0.25,0.15,행군 군주 보스 런타임
+BOSS_002,10.0,8.0,2.6,2.8,16,1.10,28.0,40,boss_frost,100,0,0,0.5,0.05,0.15,0.05,0.25,0.15,빙결 예언자 보스 런타임

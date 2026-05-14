@@ -1,0 +1,678 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>InGame Final Ingame Structure</title>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #5b6776;
+      --line: #d7dee8;
+      --panel: #f7f9fc;
+      --panel-strong: #edf5f2;
+      --accent: #2f6f73;
+      --warn: #8a5a24;
+      --danger: #9b2c2c;
+      --ok: #2f6f44;
+      --code-bg: #edf2f7;
+      --code-border: #d1dae6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #fff;
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.62;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 44px 28px 72px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h1 { font-size: 34px; margin-bottom: 12px; }
+    h2 {
+      font-size: 24px;
+      margin: 40px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--line);
+    }
+    h3 { font-size: 18px; margin: 24px 0 10px; }
+    p { margin: 10px 0; }
+
+    code {
+      color: #172033;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.94em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 24px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th { background: #edf3f8; color: #263848; }
+    ul, ol { padding-left: 22px; }
+    li { margin: 6px 0; }
+
+    .hero {
+      border-left: 6px solid var(--accent);
+      background: linear-gradient(90deg, #edf7f6, #fff);
+      padding: 24px 26px;
+      border-radius: 8px;
+      margin-bottom: 26px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .note {
+      border-left: 5px solid var(--warn);
+      background: #fff8eb;
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin: 18px 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 18px 0;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .card.strong { background: var(--panel-strong); }
+
+    .tag {
+      display: inline-block;
+      margin-right: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .current { color: var(--ok); }
+    .planned { color: var(--accent); }
+    .missing { color: var(--danger); }
+
+    .diagram {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .lane {
+      display: grid;
+      grid-template-columns: 1.1fr 0.18fr 1.1fr 0.18fr 1.1fr;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      min-height: 76px;
+    }
+
+    .box strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 20px;
+    }
+
+    .small { color: var(--muted); font-size: 13px; }
+
+    @media (max-width: 880px) {
+      main { padding: 32px 18px 54px; }
+      h1 { font-size: 28px; }
+      .grid { grid-template-columns: 1fr; }
+      .lane { grid-template-columns: 1fr; }
+      .arrow { min-height: 18px; transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <div class="eyebrow">InGame Target Structure</div>
+    <h1>InGame 완성 후 인게임 구조와 클래스 책임</h1>
+    <p>
+      이 문서는 <code>2026-05-14-combat-v2-build-roadmap.html</code>의 Phase1-D부터 Phase8-A까지 끝까지 구현된다는 전제에서,
+      인게임이 어떤 흐름으로 실행되고 어떤 클래스가 무엇을 담당해야 하는지 정리한 구조 보고서다.
+      현재 저장소에 존재하는 클래스와 아직 제안 단계인 클래스를 분리해서 표시한다.
+    </p>
+  </section>
+
+  <h2>1. 완성 목표: 공통 유닛 상속과 Blueprint 스킬 구조</h2>
+  <div class="grid">
+    <div class="card strong">
+      <h3>공통 유닛 상속/대상 구조</h3>
+      <p>
+        InGame이 완성되면 플레이어 유닛, 적 유닛, 넥서스처럼 전투 대상이 되는 객체는 공통 부모 또는 공통 대상 계약을 공유한다.
+        버프, 행동속도, 쉴드, 상태이상, 피해 증감은 각 유닛 클래스가 따로 들고 있는 개별 필드가 아니라 공통 전투 대상 모델의
+        modifier/effect 레이어에 동일하게 적용된다.
+      </p>
+      <p>
+        이 방향은 <code>2026-05-10-shared-combat-target-and-temporary-effect-design.html</code>에서 제기한 문제,
+        즉 selected unit, manifested unit, enemy가 서로 다른 상태 필드와 타이머를 가져 임시 효과를 재사용하기 어려웠던 문제를 해결하기 위한 구조다.
+      </p>
+    </div>
+
+    <div class="card strong">
+      <h3>재사용 가능한 스킬 Blueprint 구조</h3>
+      <p>
+        스킬은 <code>C:\TowerDefence_Pakuri\towerdefense_pakuri_docs\docs\dev\skill-class-design.md</code>의 설계에 맞춰
+        <code>SkillData</code> 추상 ScriptableObject와 projectile, beam, zone, buff, shield, passive, status 계열 데이터로 분리한다.
+        실행 코드는 데이터 Blueprint를 읽는 executor/registry 쪽으로 모아, 이전 스킬 하드코딩 문제를 해결한다.
+      </p>
+      <p>
+        최종 구조는 Blueprint를 참고해 스킬 데이터를 재사용 가능하고 확장 가능한 형식으로 완성하는 것을 목표로 한다.
+        공통 데이터로 표현되지 않는 예외 스킬은 Blueprint 계약을 유지한 상태에서 전용 executor 또는 custom hook으로만 분리한다.
+      </p>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>문제</th>
+        <th>완성 구조</th>
+        <th>기대 효과</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>유닛 종류별 버프/상태/행동속도 적용 경로가 달라지는 문제</td>
+        <td>공통 전투 대상 부모/계약과 공통 temporary effect 적용 레이어</td>
+        <td>선택 유닛, 소환 유닛, 적, 넥서스에 같은 방식으로 버프와 행동속도 보정이 적용된다.</td>
+      </tr>
+      <tr>
+        <td>스킬별 로직이 코드에 직접 박혀 재사용과 확장이 어려운 문제</td>
+        <td><code>SkillData</code> 계열 Blueprint 데이터와 executor/registry 분리</td>
+        <td>새 projectile, beam, zone, buff, shield, passive 스킬을 데이터 중심으로 추가하고, 예외만 별도 실행기로 확장한다.</td>
+      </tr>
+      <tr>
+        <td>임시 효과와 스킬 효과가 서로 다른 구조로 누적되는 문제</td>
+        <td><code>StatusEffectData</code>, modifier, action speed multiplier, shield pool을 공통 전투 대상 모델에 연결</td>
+        <td>일시 버프, 디버프, 실드, 피해 보정이 동일한 갱신/만료 규칙을 따른다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>2. 최종 인게임 실행 흐름</h2>
+  <div class="diagram">
+    <div class="lane">
+      <div class="box">
+        <strong>RunStartContext / RunSession</strong>
+        MainMenu에서 선택된 <code>MonsterDefinition</code>과 런 진행 상태를 보관한다.
+      </div>
+      <div class="arrow">→</div>
+      <div class="box">
+        <strong>NewRunScene / GameManager</strong>
+        <code>NewRunScene</code>의 <code>GameManager</code>가 InGame 진입점을 가진다.
+      </div>
+      <div class="arrow">→</div>
+      <div class="box">
+        <strong>InGameCombatManager</strong>
+        전투 세션 생성, 서비스 구성, Tick 순서, 결과 반환을 총괄한다.
+      </div>
+    </div>
+    <div class="lane">
+      <div class="box">
+        <strong>PakuriDataManager / GameDataCatalog</strong>
+        CSV 기반 <code>MonsterDefinition</code>, <code>EnemyDefinition</code>, <code>SkillDefinition</code>을 제공한다.
+      </div>
+      <div class="arrow">→</div>
+      <div class="box">
+        <strong>UnitFactory / InGameSkillCatalog</strong>
+        기존 정의를 InGame 런타임 모델과 <code>SkillData</code>로 변환한다.
+      </div>
+      <div class="arrow">→</div>
+      <div class="box">
+        <strong>Actors / Services / Executors</strong>
+        유닛 표시, 대상 탐색, 피해/상태, 스킬 실행, 투사체/효과 시뮬레이션을 분리해서 처리한다.
+      </div>
+    </div>
+  </div>
+
+  <h3>전투 1프레임의 목표 Tick 순서</h3>
+  <ol>
+    <li><code>InGameCombatManager</code>가 전투 상태가 진행 중인지 확인한다.</li>
+    <li><code>UnitRosterService</code>와 대상 레지스트리가 살아 있는 아군/적/넥서스 대상을 갱신한다.</li>
+    <li>자동 공격과 자동 스킬 시스템이 <code>UnitRuntimeModel.AutoAttackEnabled</code>, <code>AutoSkillEnabled</code>, learned skill 상태를 확인한다.</li>
+    <li><code>SkillRuntimeInstance</code>들이 쿨다운, 재장전, 지속시간, 내부 쿨다운을 Tick한다.</li>
+    <li><code>SkillExecutorRegistry</code>가 <code>SkillData</code> 타입에 맞는 실행기(projectile, beam, zone, buff, shield, passive)를 호출한다.</li>
+    <li>실행기는 직접 유닛 리스트를 뒤지지 않고 <code>TargetQueryService</code>, <code>DamageService</code>, <code>StatusEffectService</code>, <code>ProjectileSimulation</code>, <code>SkillEffectSimulation</code>에 요청한다.</li>
+    <li><code>MonsterUnitActor</code>, <code>EnemyUnitActor</code>, 투사체/이펙트 프리팹 뷰가 모델 상태를 표시한다.</li>
+    <li>넥서스 파괴, 적 전멸, 제한시간 등 종료 조건이 충족되면 <code>InGameResultManager</code>를 만들고 Run/UI 계층으로 넘긴다.</li>
+  </ol>
+
+  <h2>3. 계층별 책임</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>계층</th>
+        <th>주요 클래스</th>
+        <th>담당</th>
+        <th>소유하면 안 되는 것</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Run / 진입</td>
+        <td><code>RunStartContext</code>, <code>RunSession</code>, 제안 <code>InGameSceneBootstrap</code></td>
+        <td>선택 몬스터, 파티 멤버, learned skills, reward choices, 런 일차/스테이지 상태를 InGame 입력으로 전달한다.</td>
+        <td>전투 피해 계산, 타겟 탐색, 스킬 실행, 투사체 Tick을 소유하지 않는다.</td>
+      </tr>
+      <tr>
+        <td>전투 오케스트레이션</td>
+        <td><code>InGameCombatManager</code>, <code>InGameContextManager</code>, <code>InGameResultManager</code></td>
+        <td>전투 시작/종료, 서비스 생성, 프레임별 Tick 순서, 결과 생성만 담당한다.</td>
+        <td>개별 스킬 공식, 개별 상태이상 공식, 프리팹 내부 표시 로직을 직접 갖지 않는다.</td>
+      </tr>
+      <tr>
+        <td>데이터</td>
+        <td><code>PakuriCsvRuntimeData</code>, <code>GameDataCatalog</code>, <code>PakuriDataManager</code>, <code>InGameSkillCatalog</code></td>
+        <td>기존 CSV/Data 흐름을 유지하고, InGame에서 필요한 몬스터/적/스킬 데이터를 조회한다.</td>
+        <td>전투 중 체력, 쿨다운, 위치, 상태이상 인스턴스 같은 런타임 상태를 소유하지 않는다.</td>
+      </tr>
+      <tr>
+        <td>유닛 모델</td>
+        <td><code>UnitRuntimeModel</code>, <code>UnitIdentity</code>, <code>UnitStatsRuntime</code>, <code>UnitResourceRuntime</code>, <code>UnitStateBucket</code></td>
+        <td>아군/적/소환체의 런타임 ID, 스탯, HP/쉴드, learned state, 자동 전투 플래그를 소유한다.</td>
+        <td>Unity 렌더링 컴포넌트나 프리팹 생성 정책을 직접 소유하지 않는다.</td>
+      </tr>
+      <tr>
+        <td>유닛 뷰/액터</td>
+        <td><code>MonsterUnitActor</code>, <code>EnemyUnitActor</code>, 제안 <code>CombatActorView</code></td>
+        <td>모델을 Unity 오브젝트, SpriteRenderer, 애니메이션, 위치, HP 표시로 반영한다.</td>
+        <td>피해 공식, 스킬 쿨다운, learned choice 판정을 직접 소유하지 않는다.</td>
+      </tr>
+      <tr>
+        <td>스킬 데이터</td>
+        <td><code>SkillData</code>, <code>ProjectileSkillData</code>, <code>BeamSkillData</code>, <code>ZoneSkillData</code>, <code>BuffSkillData</code>, <code>ShieldSkillData</code>, <code>PassiveSkillData</code></td>
+        <td>스킬의 정적 설정, 타이밍, 타겟팅, 데미지 계수, 프리팹 참조, 선택지 데이터를 가진다.</td>
+        <td>쿨다운 잔여시간, 현재 탄창, 이번 전투 중 히트 수 같은 실행 인스턴스 상태를 소유하지 않는다.</td>
+      </tr>
+      <tr>
+        <td>스킬 런타임</td>
+        <td>제안 <code>SkillRuntimeInstance</code>, 제안 <code>SkillRuntimeSet</code></td>
+        <td>스킬별 쿨다운, 재장전, 지속시간, 내부 쿨다운, 현재 탄창, 예약 발사 같은 전투 중 상태를 소유한다.</td>
+        <td>데이터 원본이나 프리팹 표시 방식을 소유하지 않는다.</td>
+      </tr>
+      <tr>
+        <td>스킬 실행</td>
+        <td>제안 <code>SkillExecutorRegistry</code>, 제안 <code>ProjectileSkillExecutor</code>, <code>ShieldSkillExecutor</code>, <code>ZoneSkillExecutor</code> 등</td>
+        <td><code>SkillData</code> 타입별로 실행 방식을 선택하고, 대상/피해/상태/투사체 서비스에 요청을 보낸다.</td>
+        <td>전체 전투 상태 리스트를 직접 순회하거나 RunSession을 직접 수정하지 않는다.</td>
+      </tr>
+      <tr>
+        <td>전투 서비스</td>
+        <td>제안 <code>TargetQueryService</code>, <code>DamageService</code>, <code>StatusEffectService</code>, <code>ShieldService</code></td>
+        <td>공통 대상 탐색, 피해 계산/적용, 상태이상/쉴드 적용, 임시 효과 갱신을 담당한다.</td>
+        <td>스킬별 고유 선택지 데이터나 UI 패널 상태를 소유하지 않는다.</td>
+      </tr>
+      <tr>
+        <td>시뮬레이션</td>
+        <td>제안 <code>ProjectileSimulation</code>, <code>SkillEffectSimulation</code>, <code>SpawnSimulation</code></td>
+        <td>투사체 이동/충돌/수명, 장판/빔/소환 이펙트 수명, 적 스폰 주기를 처리한다.</td>
+        <td>스킬 데이터 변환이나 Run 보상 상태를 소유하지 않는다.</td>
+      </tr>
+      <tr>
+        <td>프리팹/에셋</td>
+        <td><code>Assets/Prefab/Monster</code>, <code>Assets/Prefab/Enemy</code>, <code>Assets/Prefab/Skill</code>, <code>Assets/SO</code></td>
+        <td>유닛/적/스킬 시각 프리팹과 향후 ScriptableObject 데이터를 보관한다.</td>
+        <td>프리팹 자체가 전투 판정의 최종 소유자가 되지 않는다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. 클래스 참조 방향</h2>
+  <div class="grid">
+    <div class="card strong">
+      <h3>허용되는 큰 방향</h3>
+      <ul>
+        <li><code>InGameCombatManager</code>는 서비스와 모델을 만든다.</li>
+        <li>서비스는 <code>UnitRuntimeModel</code>, <code>SkillRuntimeInstance</code>, <code>SkillData</code>를 읽고 변경한다.</li>
+        <li>액터는 모델을 참조해서 화면에 표시한다.</li>
+        <li>스킬 실행기는 <code>TargetQueryService</code>와 <code>DamageService</code> 같은 좁은 서비스만 참조한다.</li>
+        <li>Run 계층은 전투 입력과 결과만 주고받는다.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>피해야 할 방향</h3>
+      <ul>
+        <li><code>SkillData</code>가 직접 씬 오브젝트를 찾거나 전투 상태를 바꾸면 안 된다.</li>
+        <li><code>MonsterUnitActor</code>가 직접 <code>RunSession</code>을 수정하면 안 된다.</li>
+        <li>개별 스킬 실행기가 모든 유닛 리스트를 직접 소유하면 안 된다.</li>
+        <li><code>RunCombatUiController</code>가 최소 전투 루프 이전에 InGame 내부 서비스에 직접 붙으면 안 된다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>참조 관계 표</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>클래스/모듈</th>
+        <th>참조 대상</th>
+        <th>참조 목적</th>
+        <th>현재 구현 상태</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>InGameCombatManager</code></td>
+        <td><code>InGameContextManager</code>, <code>UnitFactory</code>, <code>UnitRosterService</code>, 전투 서비스들</td>
+        <td>전투 시작 시 서비스를 구성하고 매 프레임 Tick 순서를 호출한다.</td>
+        <td><span class="tag current">현재 존재</span><span class="tag missing">동작 없음</span></td>
+      </tr>
+      <tr>
+        <td><code>InGameContextManager</code></td>
+        <td><code>MonsterDefinition</code>, <code>RunSession</code>, <code>GameDataCatalog</code>, 스폰 포인트</td>
+        <td>전투 시작 입력과 씬 앵커를 하나의 컨텍스트로 전달한다.</td>
+        <td><span class="tag current">현재 존재</span><span class="tag missing">필드 없음</span></td>
+      </tr>
+      <tr>
+        <td><code>UnitFactory</code></td>
+        <td><code>MonsterDefinition</code>, <code>EnemyDefinition</code>, <code>RunSession.RunMonsterState</code></td>
+        <td>데이터 정의와 런 상태를 <code>UnitRuntimeModel</code>로 변환한다.</td>
+        <td><span class="tag current">현재 존재</span><span class="tag missing">동작 없음</span></td>
+      </tr>
+      <tr>
+        <td><code>UnitRosterService</code></td>
+        <td><code>UnitRuntimeModel</code>, <code>MonsterUnitActor</code>, <code>EnemyUnitActor</code></td>
+        <td>전투 중 모든 유닛 모델과 액터 바인딩을 보관한다.</td>
+        <td><span class="tag current">현재 존재</span><span class="tag missing">동작 없음</span></td>
+      </tr>
+      <tr>
+        <td><code>InGameSkillCatalog</code></td>
+        <td><code>PakuriCsvRuntimeData</code>, <code>PakuriDataManager</code>, <code>InGameSkillDefinitionMapper</code></td>
+        <td>기존 데이터 흐름에서 몬스터 ID/슬롯 기반 InGame 스킬 데이터를 얻는다.</td>
+        <td><span class="tag current">현재 존재</span><span class="tag current">Phase1-C 구현됨</span></td>
+      </tr>
+      <tr>
+        <td><code>InGameSkillDefinitionMapper</code></td>
+        <td><code>SkillDefinition</code>, <code>PassiveDefinition</code>, InGame <code>SkillData</code> 하위 클래스</td>
+        <td>기존 스킬 정의를 projectile, beam, zone, buff, shield, passive 데이터로 변환한다.</td>
+        <td><span class="tag current">현재 존재</span><span class="tag current">Phase1-C 구현됨</span></td>
+      </tr>
+      <tr>
+        <td>제안 <code>SkillRuntimeInstance</code></td>
+        <td><code>SkillData</code>, <code>UnitRuntimeModel</code></td>
+        <td>정적 데이터와 전투 중 쿨다운/탄창/지속 상태를 분리한다.</td>
+        <td><span class="tag planned">제안/완성 목표</span><span class="tag missing">현재 없음</span></td>
+      </tr>
+      <tr>
+        <td>제안 <code>SkillExecutorRegistry</code></td>
+        <td>타입별 executor</td>
+        <td><code>SkillData</code>의 실제 타입에 맞는 실행기를 선택한다.</td>
+        <td><span class="tag planned">제안/완성 목표</span><span class="tag missing">현재 없음</span></td>
+      </tr>
+      <tr>
+        <td>제안 <code>TargetQueryService</code></td>
+        <td><code>UnitRosterService</code>, 넥서스 대상 모델</td>
+        <td>가장 가까운 적, 최저 HP, 특정 상태 스택 대상, Owner 대상 등을 공통 조회한다.</td>
+        <td><span class="tag planned">제안/완성 목표</span><span class="tag missing">현재 없음</span></td>
+      </tr>
+      <tr>
+        <td>제안 <code>DamageService</code></td>
+        <td><code>UnitRuntimeModel</code>, 방어/치명/쉴드/임시효과 서비스</td>
+        <td>모든 피해 적용을 한 곳으로 모아 몬스터/적/넥서스 대상에 동일한 규칙을 적용한다.</td>
+        <td><span class="tag planned">제안/완성 목표</span><span class="tag missing">현재 없음</span></td>
+      </tr>
+      <tr>
+        <td>제안 <code>StatusEffectService</code></td>
+        <td><code>StatusEffectData</code>, 유닛 상태 버킷</td>
+        <td>쇼크, 둔화, 빙결, 취약, 버프, 임시효과를 공통 갱신한다.</td>
+        <td><span class="tag planned">제안/완성 목표</span><span class="tag missing">현재 없음</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>5. 인게임 구성 요소별 동작</h2>
+  <h3>5.1 아군 몬스터 1P / 2P-5P</h3>
+  <p>
+    완성 구조에서 1P 선택 몬스터와 2P-5P Manifested 몬스터는 같은 <code>MonsterUnitActor</code>와 같은
+    <code>UnitRuntimeModel</code> 구조를 사용한다. 차이는 <code>UnitIdentity.SlotIndex</code>와
+    <code>RunSession.RunMonsterState</code>에 연결되는 learned state다.
+  </p>
+  <ul>
+    <li><code>1PSpawnPoint</code>는 선택 몬스터의 스폰 위치다.</li>
+    <li><code>2PSpawnPoint</code>부터 <code>5PSpawnPoint</code>는 manifested party의 스폰 위치다.</li>
+    <li>각 유닛은 <code>UnitStateBucket.LearnedActiveSkillIds</code>, <code>LearnedPassiveSkillIds</code>, <code>ChosenChoiceIds</code>를 가진다.</li>
+    <li>자동 공격/자동 스킬은 <code>AutoAttackEnabled</code>, <code>AutoSkillEnabled</code>가 켜져 있을 때만 실행된다.</li>
+  </ul>
+
+  <h3>5.2 적과 넥서스</h3>
+  <p>
+    적은 <code>EnemyDefinition</code>에서 <code>EnemyUnitActor</code>와 <code>UnitRuntimeModel</code>로 생성된다.
+    <code>Nexus</code>는 보드상 넥서스 구조물로 기록되어 있으므로, 완성 단계에서는 유닛과 같은 대상 인터페이스를 가진 별도 목표 모델로 다루는 것이 맞다.
+  </p>
+  <ul>
+    <li>적 스폰 정책은 제안 <code>SpawnSimulation</code>이 담당한다.</li>
+    <li>적의 이동/공격 대상은 <code>TargetQueryService</code>가 제공한다.</li>
+    <li>넥서스 HP/피해 판정은 제안 <code>NexusTargetModel</code> 또는 <code>ICombatTarget</code> 구현체가 담당한다.</li>
+  </ul>
+
+  <h3>5.3 스킬</h3>
+  <p>
+    스킬은 데이터, 런타임 상태, 실행기, 시각 표현으로 나뉜다. 현재 <code>SkillData</code> 계열은 데이터 구조만 가지고 있고,
+    실행기는 아직 없다. 완성 구조에서는 같은 스킬 데이터가 1P와 2P-5P 모두에서 재사용된다.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>스킬 계층</th>
+        <th>담당 클래스</th>
+        <th>설명</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>정적 데이터</td>
+        <td><code>SkillData</code> 및 하위 클래스</td>
+        <td>쿨다운 기준값, 범위, 반경, 데미지 계수, 상태 ID, 프리팹 참조, 선택지를 보관한다.</td>
+      </tr>
+      <tr>
+        <td>런타임 상태</td>
+        <td>제안 <code>SkillRuntimeInstance</code></td>
+        <td>남은 쿨다운, 탄창, 재장전, 지속 시간, 내부 쿨다운을 보관한다.</td>
+      </tr>
+      <tr>
+        <td>실행 선택</td>
+        <td>제안 <code>SkillExecutorRegistry</code></td>
+        <td>스킬 데이터 타입에 따라 projectile, beam, zone, buff, shield, passive executor를 호출한다.</td>
+      </tr>
+      <tr>
+        <td>판정 요청</td>
+        <td>제안 executor들</td>
+        <td>대상 탐색, 피해 적용, 상태 적용, 투사체 생성, 장판 생성 요청을 서비스로 보낸다.</td>
+      </tr>
+      <tr>
+        <td>표현</td>
+        <td><code>SkillEffectPrefab</code>, 제안 visual/effect actor</td>
+        <td>프리팹은 시각 표현을 담당하고, 스킬 판정 로직의 소유자가 되지 않는다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>6. 완성 단계별 구조 변화</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Phase</th>
+        <th>완성 후 추가/안정화되는 구조</th>
+        <th>인게임에서 보이는 변화</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Phase1-D</td>
+        <td>제안 <code>InGameSkillDataValidator</code>가 중복 ID, 빈 ID, 슬롯/캐릭터 불일치, 필수 대상값 누락을 잡는다.</td>
+        <td>잘못된 스킬 데이터가 실행기로 들어가기 전에 차단된다.</td>
+      </tr>
+      <tr>
+        <td>Phase2-A/B/C</td>
+        <td><code>UnitFactory</code>, <code>MonsterUnitActor</code>, <code>EnemyUnitActor</code>, 씬 부트스트랩이 실제 모델/액터 바인딩을 수행한다.</td>
+        <td><code>NewRunScene</code>에서 1P 몬스터와 테스트 적이 스폰된다.</td>
+      </tr>
+      <tr>
+        <td>Phase3</td>
+        <td><code>TargetQueryService</code>, <code>DamageService</code>, <code>StatusEffectService</code>, <code>ShieldService</code>가 만들어진다.</td>
+        <td>스킬 실행기가 직접 대상 목록을 뒤지지 않고 공통 판정 서비스를 사용한다.</td>
+      </tr>
+      <tr>
+        <td>Phase4</td>
+        <td><code>SkillRuntimeInstance</code>, <code>SkillExecutorRegistry</code>, 최소 executor가 동작한다.</td>
+        <td><code>eve-a</code> 투사체와 <code>ariel-b</code> 쉴드 같은 최소 샘플 스킬이 InGame 구조에서 실행된다.</td>
+      </tr>
+      <tr>
+        <td>Phase5</td>
+        <td>learned choice 조회와 자동 공격/자동 스킬 조건이 유닛 상태와 연결된다.</td>
+        <td>1P와 manifested 몬스터가 같은 규칙으로 배운 스킬을 자동 사용한다.</td>
+      </tr>
+      <tr>
+        <td>Phase6</td>
+        <td>기존 Run/Data 흐름과 InGame 컨텍스트가 안정적으로 연결된다.</td>
+        <td>MainMenu 선택, RunSession, Manifested party 상태가 InGame 전투 입력으로 들어온다.</td>
+      </tr>
+      <tr>
+        <td>Phase7</td>
+        <td>전체 5명 x 10개 스킬 데이터가 검증된 규칙으로 확장되고, Rin-D/Vega-E 같은 예외는 custom executor로 분리된다.</td>
+        <td>대부분의 스킬은 데이터/공통 executor로 실행되고, 예외만 별도 코드로 처리된다.</td>
+      </tr>
+      <tr>
+        <td>Phase8</td>
+        <td>Run UI Flow와 <code>NewRunScene</code>의 최종 교체 경로가 연결된다.</td>
+        <td>기존 전투 대신 InGame이 실제 인게임 전투 루프로 쓰인다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>7. 최소 최종 파일 구조 제안</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>폴더</th>
+        <th>클래스</th>
+        <th>상태</th>
+        <th>책임</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>Core</code></td>
+        <td><code>InGameCombatManager</code>, <code>InGameContextManager</code>, <code>InGameResultManager</code>, 제안 <code>InGameSceneBootstrap</code></td>
+        <td>일부 현재 존재</td>
+        <td>전투 시작/종료, 씬 입력, 결과 전달</td>
+      </tr>
+      <tr>
+        <td><code>Units</code></td>
+        <td><code>UnitRuntimeModel</code>, <code>UnitFactory</code>, <code>UnitRosterService</code>, <code>MonsterUnitActor</code>, <code>EnemyUnitActor</code></td>
+        <td>현재 존재, 일부 빈 셸</td>
+        <td>유닛 모델 생성과 액터 바인딩</td>
+      </tr>
+      <tr>
+        <td><code>Skills/Data</code></td>
+        <td><code>SkillData</code> 계열, <code>InGameSkillCatalog</code>, <code>InGameSkillDefinitionMapper</code></td>
+        <td>현재 존재</td>
+        <td>스킬 데이터와 기존 데이터 호환 브리지</td>
+      </tr>
+      <tr>
+        <td><code>Skills/Runtime</code></td>
+        <td>제안 <code>SkillRuntimeInstance</code>, <code>SkillRuntimeSet</code></td>
+        <td>현재 없음</td>
+        <td>쿨다운/탄창/지속시간 상태</td>
+      </tr>
+      <tr>
+        <td><code>Skills/Executors</code></td>
+        <td>제안 <code>SkillExecutorRegistry</code>, 타입별 executor, custom executor</td>
+        <td>현재 없음</td>
+        <td>스킬 타입별 실행</td>
+      </tr>
+      <tr>
+        <td><code>Services</code></td>
+        <td>제안 <code>TargetQueryService</code>, <code>DamageService</code>, <code>StatusEffectService</code>, <code>ShieldService</code></td>
+        <td>현재 없음</td>
+        <td>전투 공통 판정</td>
+      </tr>
+      <tr>
+        <td><code>Simulation</code></td>
+        <td>제안 <code>ProjectileSimulation</code>, <code>SkillEffectSimulation</code>, <code>SpawnSimulation</code></td>
+        <td>현재 없음</td>
+        <td>전장 오브젝트 생명주기</td>
+      </tr>
+      <tr>
+        <td><code>Validation</code> 또는 <code>Editor</code></td>
+        <td>제안 <code>InGameSkillDataValidator</code></td>
+        <td>현재 없음</td>
+        <td>데이터 품질 검증</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>8. 검증 기준</h2>
+  <ul>
+    <li>기존 CSV/Data 로딩을 중복 구현하지 않고 <code>PakuriCsvRuntimeData</code>, <code>GameDataCatalog</code>, <code>PakuriDataManager</code> 흐름을 재사용한다.</li>
+    <li><code>InGameCombatManager</code>가 전투 오케스트레이션만 담당하고 개별 스킬 공식이 들어가지 않는다.</li>
+    <li>1P와 2P-5P는 같은 <code>MonsterUnitActor</code> / <code>UnitRuntimeModel</code> 경로를 쓴다.</li>
+    <li>스킬 데이터, 스킬 런타임 상태, 스킬 실행기, 시각 프리팹 책임이 분리된다.</li>
+    <li>피해/쉴드/상태이상은 공통 서비스에서 처리되어 몬스터/적/넥서스 대상에 같은 규칙으로 적용된다.</li>
+    <li>Run UI 통합은 최소 전투 루프가 안정화된 뒤 Phase8에서 연결한다.</li>
+    <li>Unity Play Mode gameplay 검증은 사용자 소유이고, Code Builder는 빌드/컴파일/Unity-MCP 콘솔 근거를 남긴다.</li>
+  </ul>
+</main>
+</body>
+</html>

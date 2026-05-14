@@ -4,6 +4,92 @@
 - This file keeps only task blocks dated `2026-05-09` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/RUN/RUN_BLACKBOARD.md`.
 
+## Task: 2026-05-14 Combat V2 Final Run Integration Target
+
+### Task title
+
+Record the completed Run-to-Combat V2 integration structure.
+
+### Goals
+
+- Preserve MainMenuScene / `RunStartContext` / `RunSession` data timing until Combat V2 is ready to replace the old combat entry.
+- Define how final V2 ingame flow receives selected monster, session state, party state, learned choices, and catalog data.
+- Keep Run UI integration deferred until a minimum V2 combat loop is stable.
+
+### Constraints
+
+- Role Owner is Designer.
+- No Run flow implementation, UI wiring, scene edit, or Play Mode verification in this task.
+- Existing `RunSceneBootstrap` still starts the old `CombatRuntimeController` path until a later Code Builder task changes it.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as Run integration architecture context.
+
+### Next Actions
+
+- Future Code Builder work should introduce a V2 scene/bootstrap handoff only after Phase1-D validation and Phase2-A unit mapping are implemented.
+- When production flow is rewired, preserve `RunStartContext` and `RunSession` ownership of selected monster and learned-state data.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-14-combat-v2-final-ingame-structure.html`.
+- `Pakuri/Assets/Scripts/Run/Flow/RunSceneBootstrap.cs` currently resolves the catalog and calls `CombatRuntimeController.BeginConfiguredDay(monster, session, fallbackCatalog)`.
+- `Pakuri/Assets/Scripts/Run/Flow/RunStartContext.cs` stores `SelectedMonster`, `Session`, and `HasPendingRun`.
+- `Pakuri/Assets/Scripts/Run/Session/RunSession.cs` stores selected monster ID/name, learned active/passive IDs, chosen rewards, manifested monster IDs, and `PartyMembers`.
+- Scene YAML confirms `NewRunScene` contains `GameManager`, `1PSpawnPoint` through `5PSpawnPoint`, and `Nexus`.
+
+### History
+
+- 2026-05-14: Designer documented the final Run integration target for completed Combat V2 ingame flow.
+
+## Task: 2026-05-14 NewRunScene Run And Combat Scene Contract
+
+### Task title
+
+Record `NewRunScene` as the intended in-game scene for future Run/Combat V2 flow.
+
+### Goals
+
+- Treat `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` as the scene used for Combat V2 tests and the future main in-game scene.
+- Preserve the current MainMenuScene / RunStartContext production data handoff until explicitly rewired.
+- Record scene object roles for future RunScene integration.
+
+### Constraints
+
+- Role Owner is Designer.
+- No Run flow, scene, UI, or bootstrap code changes in this task.
+- Existing `RunSceneBootstrap` and current runtime flow remain unchanged until a Code Builder task rewires them.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Recorded as Run/scene context.
+
+### Next Actions
+
+- Future Code Builder work should connect Combat V2 to `NewRunScene` only after the current test-only data bootstrap and sample skill bridge are validated.
+- When production flow is wired, preserve MainMenuScene selection and `RunStartContext` data timing unless the user explicitly changes it.
+
+### Evidence
+
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` exists.
+- Scene YAML contains `BG`, `1PSpawnPoint`, `2PSpawnPoint`, `3PSpawnPoint`, `4PSpawnPoint`, `5PSpawnPoint`, `GameManager`, and `Nexus`.
+- User stated that `NewRunScene` is both the test scene and intended final in-game scene.
+- User stated that `1P~5PSpawnPoint` are the player and manifested monster spawn points.
+- User stated that `GameManager` is for the game's core logic and `Nexus` is the nexus.
+
+### History
+
+- 2026-05-14: User clarified the intended role of existing objects in `NewRunScene`.
+
 ## Task: 2026-05-13 Combat V2 RunSession Compatibility Note
 
 ### Task title

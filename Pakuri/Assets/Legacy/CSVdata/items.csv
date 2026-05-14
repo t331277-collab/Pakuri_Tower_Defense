@@ -1,0 +1,11 @@
+item_id,item_name,rarity,slot_type,category,effect_summary,atk_bonus,spell_power_bonus,life_bonus,physical_def_bonus,fire_def_bonus,lightning_def_bonus,cold_def_bonus,dark_def_bonus,holy_def_bonus,crit_chance_bonus,crit_damage_bonus,power_bonus,physical_amp_bonus,fire_amp_bonus,lightning_amp_bonus,cold_amp_bonus,dark_amp_bonus,holy_amp_bonus,skill_haste_bonus,range_bonus,cooldown_reduction_bonus,duration_power_bonus,special_rule,tags,notes
+ITEM_001,Longsword,common,weapon,stat,기본 공격력 증가,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,none,physical|basic,기본 재료 아이템
+ITEM_002,Ring,common,accessory,stat,기본 주문력 증가,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,none,magic|basic,기본 재료 아이템
+ITEM_003,Ruby,common,core,stat,기본 생명력 증가,3,0,30,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,none,life|basic,기본 재료 아이템
+ITEM_004,Greatsword,rare,weapon,combined,물리 스킬 수에 비례한 공격력 증가,18,0,0,0,0,0,0,0,0,0,0,0,0.08,0,0,0,0,0,0,0,0,physical_skill_scaling,physical|combined,조합 장비 예시
+ITEM_005,Magic Shield,rare,shield,combined,전투 시작 시 아군 전체 배리어 부여,3,15,0,6,6,6,6,6,6,0,0,0,0,0,0,0,0,0,0,0,0,start_barrier,barrier|support,보호막 조합 장비
+ITEM_006,Ancient Tome,rare,book,combined,아군 탄약 증가 및 리로드 속도 증가,0,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.12,0,0.1,ammo_up_reload_up,ammo|reload,탄약형 빌드 핵심
+ITEM_007,Golden Shield,rare,shield,combined,화염/번개/신성 저항 및 피해 강화,9,9,0,0,10,10,0,0,10,0,0,35,0,0.12,0.12,0,0,0.12,0,0,0,tri_element_boost,fire|lightning|holy,원소 특화 장비
+ITEM_008,Precarious Space,legendary,legendary,legendary,주기적으로 사거리와 원거리 피해 변동,15,0,0,0,0,0,0,0,0,0.05,0.25,0,0.08,0,0,0,0,0,0,1.5,0,0,oscillating_range_power,ranged|legendary,전설 장비
+ITEM_009,Time Key,legendary,legendary,legendary,아군은 느려지지만 적 전체 행동속도 감소,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.08,0,0.1,global_time_slow,control|legendary,전술 제어형 전설 장비
+ITEM_010,Lifestone,rare,core,combined,생존 기반 전체 배리어 생성,12,0,80,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,anima_barrier,survival|combined,생존형 조합 장비

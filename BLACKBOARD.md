@@ -20,7 +20,7 @@ The full pre-hierarchy task history is preserved at:
 - 2026-05-12 global policy task: role-specific content was split out of `AGENTS.md` into `GAMEDESIGNER.md`, `GAMEBULIDER.md`, and `GAMEREVIWER.md`; `AGENTS.md` now keeps startup, evidence, routing, and role entry-point rules. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-12 global policy task: `GAMEDESIGNER.md` and `GAMEBULIDER.md` were compacted into lightweight role entry points, with detailed Designer and Code Builder track rules split into `GAMEDESIGNER_*` and `GAMEBULIDER_*` files. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-12 global policy task: role-related `GAME*.md` files were moved under `AGENTS_ROLE/`, and `AGENTS.md` / `MDTREE.md` role references now point to `AGENTS_ROLE/...` paths. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
-- 2026-05-13 refactoring policy task: `boards/REFACTORING/REFACTORING.md` was added to track broad architecture/refactoring plans, starting with the `CombatRuntimeController` structure split sequence from the 2026-05-10 proposal.
+- 2026-05-13 refactoring policy task: `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md` was added to track broad architecture/refactoring plans, starting with the `CombatRuntimeController` structure split sequence from the 2026-05-10 proposal.
 - 2026-05-13 implementation status: Phase 1 `Battlefield Facade Boundary` is implemented by `Pakuri/Assets/Scripts/Combat/Battlefield/CombatRuntimeBattlefield.cs`; runtime/editor builds passed with existing warnings.
 - 2026-05-13 implementation status: Phase 2 `Manifested Party Runtime Split` has started with `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyRuntime.cs`; runtime/editor builds passed with existing warnings and Unity-MCP console showed only MCP client handler logs after import.
 - 2026-05-13 implementation status: Phase 2-A `Manifested Party View Binder` split moved manifested party status-view binding and HP/shield label/bar refresh into `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyView.cs`; runtime/editor builds passed with existing warnings and Unity-MCP console showed only MCP client handler logs after import.
@@ -29,9 +29,9 @@ The full pre-hierarchy task history is preserved at:
 - 2026-05-13 implementation status: Phase 2-D `Manifested Party Skill Visual / Scene Object Helper` split moved manifested non-drone skill visual duration, circle effect, line effect, and shared visual configuration helpers into `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyVisuals.cs`; runtime/editor builds passed with existing warnings and Unity-MCP console showed only MCP client handler logs after import.
 - 2026-05-13 implementation status: Phase 2-E `Manifested Party Damage / Projectile Fire Helper` split moved generic manifested skill fire, projectile fire, projectile hit/status, generic damage application, and damage/projectile resolver helpers into `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeManifestedPartyDamage.cs`; runtime/editor builds passed with existing warnings and Unity-MCP console showed only MCP client handler logs after import.
 - 2026-05-13 reviewer status: user-requested external Code Reviewer for Phase 2 `Manifested Party` refactor completed with `REVIEW_RESULT: PASS`; detailed record is in `boards/OPS/REVIEWER_BLACKBOARD.md` and `codex_loop_logs/phase2_manifested_party_reviewer_20260513.md`.
-- 2026-05-13 Code Builder closeout status: Phase 2 `Manifested Party` closeout was verified with code inspection, runtime/editor builds, and Unity-MCP refresh/console evidence; no small independent Phase 2-F slice was identified, so the next default implementation phase is Phase 3 `Projectile / Effect / Drone Simulation Split`. Detailed records are in `boards/REFACTORING/REFACTORING.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, and `boards/MON/MON_BLACKBOARD.md`.
-- 2026-05-13 roadmap status: `Pakuri/reference/Report/2026-05-13-combat-runtime-refactor-roadmap-after-phase2e.html` was amended to explicitly map the 2026-05-10 shared target / temporary effect proposal into Phase 7, same-type skill reuse into Phase 6, and prefab/view commonization into Phase 8 after target/effect stabilization. Detailed records are in `boards/REPORT/REPORT_BLACKBOARD.md`, `boards/REFACTORING/REFACTORING.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, `boards/COMBAT/ENEMY_BLACKBOARD.md`, and `boards/MON/MON_BLACKBOARD.md`.
-- 2026-05-13 Phase 3 planning status: Designer split `Projectile / Effect / Drone Simulation Split` into Phase 3-A through 3-H before implementation: projectile boundary, projectile cleanup/lifetime, projectile hit routing, skill-effect boundary, skill-effect hit/expiry routing, selected drone boundary, manifested drone alignment, and closeout verification. Detailed records are in `boards/REFACTORING/REFACTORING.md`, `boards/REFACTORING/COMBAT_STATE_OWNERSHIP_MAP.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, and `boards/MON/MON_BLACKBOARD.md`.
+- 2026-05-13 Code Builder closeout status: Phase 2 `Manifested Party` closeout was verified with code inspection, runtime/editor builds, and Unity-MCP refresh/console evidence; no small independent Phase 2-F slice was identified, so the next default implementation phase is Phase 3 `Projectile / Effect / Drone Simulation Split`. Detailed records are in `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`.
+- 2026-05-13 roadmap status: `Pakuri/reference/Report/2026-05-13-combat-runtime-refactor-roadmap-after-phase2e.html` was amended to explicitly map the 2026-05-10 shared target / temporary effect proposal into Phase 7, same-type skill reuse into Phase 6, and prefab/view commonization into Phase 8 after target/effect stabilization. Detailed records are in `boards/REPORT/REPORT_BLACKBOARD.md`, `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, `boards/COMBAT/ENEMY_BLACKBOARD.md`, and `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`.
+- 2026-05-13 Phase 3 planning status: Designer split `Projectile / Effect / Drone Simulation Split` into Phase 3-A through 3-H before implementation: projectile boundary, projectile cleanup/lifetime, projectile hit routing, skill-effect boundary, skill-effect hit/expiry routing, selected drone boundary, manifested drone alignment, and closeout verification. Detailed records are in `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`, `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/COMBAT_STATE_OWNERSHIP_MAP.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, and `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - 2026-05-13 implementation status: Phase 3-A `Projectile Simulation Boundary Shell` is implemented by `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeProjectileSimulation.cs`; `UpdateProjectiles()` now routes through a boundary shell into the unchanged projectile loop body renamed to `UpdateProjectilesCore()`. Runtime/editor builds passed with existing warnings and Unity-MCP console showed only MCP client handler logs after import.
 - 2026-05-13 implementation status: Phase 3-B `Projectile Cleanup / Lifetime Ownership` moved projectile lookup, missing-runtime removal, lifetime ticking, X-edge checks, and cleanup/destruction behind `CombatRuntimeProjectileSimulation.cs`; projectile hit and damage routing remains in `CombatRuntimeProjectiles.cs`. Runtime/editor builds passed with existing warnings and Unity-MCP console showed only MCP client handler logs after import.
 - 2026-05-13 implementation status: Phase 3-C `Projectile Hit Routing Helpers` split the projectile loop into enemy, manifested, and selected/player projectile handlers in `CombatRuntimeProjectiles.cs`; damage APIs and formulas remain in place. Runtime/editor builds passed with existing warnings and Unity-MCP console showed only MCP client handler logs after import.
@@ -40,30 +40,40 @@ The full pre-hierarchy task history is preserved at:
 - 2026-05-13 implementation status: Phase 3-F `Selected Drone Simulation Boundary` moved selected Eve `DroneRuntime` ticking and drone projectile creation into `Pakuri/Assets/Scripts/Combat/Manager/CombatRuntimeDroneSimulation.cs`; selected Eve drone deployment remains in `CombatRuntimeEveSkills.cs`, and manifested drones remain separate for Phase 3-G. Runtime/editor builds passed with existing warnings and Unity-MCP console showed only MCP client handler logs after import.
 - 2026-05-13 implementation status: Phase 3-G `Manifested Drone Simulation Alignment` moved manifested drone ticking, projectile fire cadence, and cleanup behind `CombatRuntimeDroneSimulation.cs` while leaving `ManifestedDroneRuntime` definition and deployment in `CombatRuntimeManifestedPartyDrones.cs`. Runtime/editor builds passed with existing warnings and Unity-MCP console showed only MCP client handler logs after import.
 - 2026-05-13 closeout status: Phase 3-H `Phase 3 Closeout / Ownership Verification` completed. Phase 3 `Projectile / Effect / Drone Simulation Split` is complete in Code Builder scope; next default implementation phase is Phase 4 `Enemy Simulation Split`. User-owned Play Mode verification and optional Code Reviewer remain outside this Builder closeout.
-- 2026-05-13 Combat V2 design status: Designer created `Pakuri/reference/Report/2026-05-13-combat-v2-foundation-architecture.html` for a new combat-only runtime/scene direction that preserves Run UI Flow, `RunSession`, and CSV/Data loading while using model/view separation, shared `MonsterUnitActor` for selected and manifested units, default-on auto attack toggles, reusable skill executors, and learned-choice lookup from unit state. Detailed records are in `boards/REFACTORING/REFACTORING.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`, and `boards/REPORT/REPORT_BLACKBOARD.md`.
+- 2026-05-13 Combat V2 design status: Designer created `Pakuri/reference/Report/2026-05-13-combat-v2-foundation-architecture.html` for a new combat-only runtime/scene direction that preserves Run UI Flow, `RunSession`, and CSV/Data loading while using model/view separation, shared `MonsterUnitActor` for selected and manifested units, default-on auto attack toggles, reusable skill executors, and learned-choice lookup from unit state. Detailed records are in `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`, and `boards/REPORT/REPORT_BLACKBOARD.md`.
+- 2026-05-14 implementation status: Code Builder created minimal compileable Combat V2 skeleton scripts under `Pakuri/Assets/Scripts2/CombatV2` for core context/result/controller, shared unit shells, and Blueprint-first skill data shells. `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing assembly reference warnings. Detailed records are in `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
+- 2026-05-14 Phase1-B implementation status: Code Builder expanded Combat V2 Blueprint skill data files under `Pakuri/Assets/Scripts2/CombatV2/Skills/Data`, adding reusable spec classes and data-only ScriptableObject fields. Runtime build passed with 0 errors; Unity-MCP force refresh showed no Combat V2 compile errors after import. Detailed records are in `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
+- 2026-05-14 Phase1-C implementation status: Code Builder added a Combat V2 data bridge that reuses existing `PakuriCsvRuntimeData` / `PakuriDataManager` instead of adding a new CSV loader. `ariel-a` and `ariel-b` mapped to `ProjectileSkillData` and `ShieldSkillData` in Unity-MCP editor code execution. `CombatV2TestDataBootstrap.Awake()` is marked test-only; production data timing remains the MainMenuScene / RunStartContext handoff. Detailed records are in `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
+- 2026-05-14 scene contract: User declared `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` as the Combat V2 test scene and intended final in-game scene. Scene YAML confirms named objects `BG`, `1PSpawnPoint` through `5PSpawnPoint`, `GameManager`, and `Nexus`; user-defined roles are BG = background sprite, spawn points = player/manifested monster anchors, GameManager = core logic host, Nexus = nexus. Detailed records are in `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/RUN/RUN_BLACKBOARD.md`, and `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`.
+- 2026-05-14 asset storage contract: `Pakuri/Assets/Prefab` exists with `Enemy`, `Monster`, and `Skill` subfolders and will store future enemy, monster/player-unit, and skill prefabs. `Pakuri/Assets/SO` exists and will store ScriptableObject data assets. Detailed records are in `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`.
+- 2026-05-14 Phase2-A implementation status: Code Builder split InGame unit runtime models into `BaseUnitRuntimeModel`, `MonsterUnitRuntimeModel`, and `EnemyUnitRuntimeModel`; `UnitFactory` now creates Eve as `MonsterUnitRuntimeModel` and `stage1-swordsman` as `EnemyUnitRuntimeModel`. Code Builder does not generate prefabs by code; the user creates prefabs in Unity Editor and later attaches provided Actor/binding components. Definition skill/projectile tuning remains deferred to later SkillData mapper work. A required Reviewer attempt ran once and returned a P2 fix request in the broader uncommitted set at `InGameSkillDataValidator.cs:363-365`, not a Phase2-A unit model pass. Detailed records are in `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/DATA/DATA_BLACKBOARD.md`, `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/REPORT/REPORT_BLACKBOARD.md`, and `boards/OPS/REVIEWER_BLACKBOARD.md`.
+- 2026-05-14 Eve-E data status: Code Builder changed Eve-E from `MagazineProjectile` to `Field` in source CSV and Eve asset data so the InGame mapper resolves it as `ZoneSkillData`; Unity-MCP Editor code execution returned `mapped=ZoneSkillData|zone=True|errors=0|warnings=0`. Eve-E zone radius remains a later tuning gap because the inspected reference did not provide a numeric radius. Detailed records are in `boards/MON/EVE_MONSTER.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/DATA/DATA_BLACKBOARD.md`, `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`.
+- 2026-05-14 Combat V2 target structure status: Designer added `Pakuri/reference/Report/2026-05-14-combat-v2-final-ingame-structure.html`, describing the final ingame class responsibilities and reference directions if the Combat V2 build roadmap is completed. Current shells are separated from proposed future services. Detailed records are in `boards/REPORT/REPORT_BLACKBOARD.md`, `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`, and `boards/RUN/RUN_BLACKBOARD.md`.
 - 2026-05-12 board maintenance task: `boards/MON/*.md` files were compacted to each file's latest dated task blocks, with older or undated MON task blocks archived to `boards/ARCHIVE/MON_DETAIL_ARCHIVE_2026-05-12.md`. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-12 board maintenance task: active `boards/**/*BLACKBOARD.md` files were compacted to latest dated task blocks, and older task blocks were archived under `boards/ARCHIVE/` in seven-day ranges plus an undated archive. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
-- 2026-05-08 recent cross-domain task: Rin-first shared `CombatUnitRuntime` plus `CombatSkillRuntime` parity was implemented for selected 1P and manifested 2P-5P Rin B/C/D/E, and manifested slot status UI now reuses existing scene children when present. Detailed records are in `boards/MON/RIN_MONSTER.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, and `boards/RUN/REWARD_BLACKBOARD.md`.
-- 2026-05-08 recent cross-domain task: Manifested 2P-5P HP bar live sprite repair was implemented so already-bound `MonsterHpBar/Fill` renderers with `sprite=null` are normalized during HP/status refresh. Detailed records are in `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/RUN/RUN_BLACKBOARD.md`, and `boards/MON/MON_BLACKBOARD.md`.
-- 2026-05-09 recent cross-domain task: `Pakuri/Assets/Scripts` was reorganized into clearer Combat, Data, and Run subfolders without code-behavior changes. Detailed records are in `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/DATA/DATA_BLACKBOARD.md`, and `boards/REPORT/REPORT_BLACKBOARD.md`.
-- 2026-05-09 recent cross-domain task: Interrupted Sein unit executor migration was resumed so manifested Sein A-E dispatch through Sein-specific `CombatUnitRuntime` paths and Sein projectile/effect damage reads unit F-J passive state. Detailed records are in `boards/MON/SEIN_MONSTER.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, and `boards/REPORT/REPORT_BLACKBOARD.md`.
-- 2026-05-10 recent cross-domain task: Vega unit executor migration was implemented so Manifested Vega A-E dispatch through Vega-specific `CombatUnitRuntime` paths and Vega projectile/skill damage reads unit F-J passive state. Detailed records are in `boards/MON/VEGA_MONSTER.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
-- 2026-05-10 recent cross-domain task: Ariel unit executor migration was implemented so Manifested Ariel A-E dispatch through Ariel-specific `CombatUnitRuntime` paths, and Ariel B/E shields now apply to selected plus manifested party units. Detailed records are in `boards/MON/ARIEL_MONSTER.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
-- 2026-05-10 recent cross-domain task: Ariel selected-unit shield expiry and Archangel Descent visual follow-up was implemented so 1P shields granted by 2P-5P Ariel tick outside selected-Ariel-only cooldown logic, selected/Manifested Ariel E use a dedicated battlefield-wide effect path, and selected/manifested shield timers now skip decay on the application frame to align duration semantics. Detailed records are in `boards/MON/ARIEL_MONSTER.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
+- 2026-05-14 board maintenance task: `boards/UI/DEBUGSCENE_UI.md` and `boards/UI/MAINMENU_UI.md` were moved to `boards/ARCHIVE/DEBUGSCENE_UI_ARCHIVE_2026-05-14.md` and `boards/ARCHIVE/MAINMENU_UI_ARCHIVE_2026-05-14.md` because their latest internal dates were before 2026-05-12. Active routing now uses `boards/UI/UI_BLACKBOARD.md` for DebugScene/MainMenu UI work and consults those archived files only for older history.
+- 2026-05-14 board maintenance task: per user request, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/CSV_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, and the full `boards/REFACTORING` folder were moved under `boards/ARCHIVE`. Active routing now uses narrower remaining boards and consults these archived files only for older history.
+- 2026-05-08 recent cross-domain task: Rin-first shared `CombatUnitRuntime` plus `CombatSkillRuntime` parity was implemented for selected 1P and manifested 2P-5P Rin B/C/D/E, and manifested slot status UI now reuses existing scene children when present. Detailed records are in `boards/MON/RIN_MONSTER.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, and `boards/RUN/REWARD_BLACKBOARD.md`.
+- 2026-05-08 recent cross-domain task: Manifested 2P-5P HP bar live sprite repair was implemented so already-bound `MonsterHpBar/Fill` renderers with `sprite=null` are normalized during HP/status refresh. Detailed records are in `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/UI/RUNSCENE_UI.md`, `boards/RUN/RUN_BLACKBOARD.md`, and `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`.
+- 2026-05-09 recent cross-domain task: `Pakuri/Assets/Scripts` was reorganized into clearer Combat, Data, and Run subfolders without code-behavior changes. Detailed records are in `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/DATA/DATA_BLACKBOARD.md`, and `boards/REPORT/REPORT_BLACKBOARD.md`.
+- 2026-05-09 recent cross-domain task: Interrupted Sein unit executor migration was resumed so manifested Sein A-E dispatch through Sein-specific `CombatUnitRuntime` paths and Sein projectile/effect damage reads unit F-J passive state. Detailed records are in `boards/MON/SEIN_MONSTER.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, and `boards/REPORT/REPORT_BLACKBOARD.md`.
+- 2026-05-10 recent cross-domain task: Vega unit executor migration was implemented so Manifested Vega A-E dispatch through Vega-specific `CombatUnitRuntime` paths and Vega projectile/skill damage reads unit F-J passive state. Detailed records are in `boards/MON/VEGA_MONSTER.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
+- 2026-05-10 recent cross-domain task: Ariel unit executor migration was implemented so Manifested Ariel A-E dispatch through Ariel-specific `CombatUnitRuntime` paths, and Ariel B/E shields now apply to selected plus manifested party units. Detailed records are in `boards/MON/ARIEL_MONSTER.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
+- 2026-05-10 recent cross-domain task: Ariel selected-unit shield expiry and Archangel Descent visual follow-up was implemented so 1P shields granted by 2P-5P Ariel tick outside selected-Ariel-only cooldown logic, selected/Manifested Ariel E use a dedicated battlefield-wide effect path, and selected/manifested shield timers now skip decay on the application frame to align duration semantics. Detailed records are in `boards/MON/ARIEL_MONSTER.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
 ## Board Tree
 
 ### Monster
 
-- `boards/MON/MON_BLACKBOARD.md`: common monster/player-monster creation rules, terms, skill-slot rules, and monster data history.
+- `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`: archived common monster/player-monster creation rules, terms, skill-slot rules, and monster data history.
 - `boards/MON/EVE_MONSTER.md`: Eve-specific skill/runtime implementation history.
-- Future character files: `boards/MON/VEGA_MONSTER.md`, `boards/MON/ARIEL_MONSTER.md`, `boards/MON/SEIN_MONSTER.md`, `boards/MON/RIN_MONSTER.md`.
+- Character files: `boards/MON/VEGA_MONSTER.md`, `boards/MON/ARIEL_MONSTER.md`, `boards/MON/SEIN_MONSTER.md`, `boards/MON/RIN_MONSTER.md`.
 
 ### Combat
 
-- `boards/COMBAT/COMBAT_BLACKBOARD.md`: common combat runtime.
+- `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`: archived common combat runtime.
 - `boards/COMBAT/ENEMY_BLACKBOARD.md`: enemy spawn, target priority, enemy HP/projectiles.
-- `boards/COMBAT/PROJECTILE_BLACKBOARD.md`: player/enemy projectile behavior.
+- `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`: archived player/enemy projectile behavior.
 - `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`: shock, freeze, chill, slow, vulnerability, shield, and other status effects.
 
 ### Run
@@ -75,14 +85,15 @@ The full pre-hierarchy task history is preserved at:
 ### UI
 
 - `boards/UI/UI_BLACKBOARD.md`: shared UI layout/edit-mode policy.
-- `boards/UI/DEBUGSCENE_UI.md`: DebugScene UI canvas, skill panel, enhancement modal, editable scene UI.
-- `boards/UI/MAINMENU_UI.md`: main menu and monster selection UI.
+- `boards/UI/UI_BLACKBOARD.md`: shared UI layout/edit-mode policy, including active DebugScene/MainMenu UI routing after 2026-05-14 archive cleanup.
+- `boards/ARCHIVE/DEBUGSCENE_UI_ARCHIVE_2026-05-14.md`: older DebugScene UI canvas, skill panel, enhancement modal, editable scene UI history.
+- `boards/ARCHIVE/MAINMENU_UI_ARCHIVE_2026-05-14.md`: older main menu and monster selection UI history.
 - `boards/UI/RUNSCENE_UI.md`: RunScene combat/reward UI.
 
 ### Data
 
 - `boards/DATA/DATA_BLACKBOARD.md`: data pipeline overview.
-- `boards/DATA/CSV_BLACKBOARD.md`: CSV source data role and limitations.
+- `boards/ARCHIVE/CSV_BLACKBOARD_ARCHIVE_2026-05-14.md`: archived CSV source data role and limitations.
 - `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`: Unity static assets, `GameDataCatalog`, `MonsterDefinition`.
 
 ### Ops
@@ -98,8 +109,8 @@ The full pre-hierarchy task history is preserved at:
 
 ### Refactoring
 
-- `boards/REFACTORING/REFACTORING.md`: broad architecture refactor plans and implementation phase ordering.
-- `boards/REFACTORING/COMBAT_STATE_OWNERSHIP_MAP.md`: Phase 0 combat mutable-state ownership map for the `CombatRuntimeController` structure split.
+- `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`: archived broad architecture refactor plans and implementation phase ordering.
+- `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/COMBAT_STATE_OWNERSHIP_MAP.md`: archived Phase 0 combat mutable-state ownership map for the `CombatRuntimeController` structure split.
 
 ## Current Task Block
 
@@ -163,7 +174,7 @@ RunScene prisoner choice, Manifest result storage, and limited Manifested party 
 
 ### Constraints
 
-- Detailed evidence is in `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/MON/MON_BLACKBOARD.md`, and `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
+- Detailed evidence is in `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
 - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
 
 ### Role Owner
@@ -199,7 +210,7 @@ Fix RunScene prisoner Offering panel routing and Manifested party baseline state
 
 ### Constraints
 
-- Detailed evidence is in `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, and `boards/MON/MON_BLACKBOARD.md`.
+- Detailed evidence is in `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
 
 ### Role Owner
@@ -237,7 +248,7 @@ Make Manifested monsters behave as growable party-member monster states.
 
 ### Constraints
 
-- Detailed evidence is in `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, and `boards/MON/MON_BLACKBOARD.md`.
+- Detailed evidence is in `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
 
 ### Role Owner
@@ -279,7 +290,7 @@ Use authored NPMonster slots and add summoner return.
 
 ### Constraints
 
-- Detailed evidence is in `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, and `boards/MON/MON_BLACKBOARD.md`.
+- Detailed evidence is in `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
 
 ### Role Owner
@@ -320,7 +331,7 @@ Fix first Manifested summon synchronization and Manifested Vega A three-projecti
 
 ### Constraints
 
-- Detailed evidence is in `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, `boards/MON/MON_BLACKBOARD.md`, and `boards/MON/VEGA_MONSTER.md`.
+- Detailed evidence is in `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/MON/VEGA_MONSTER.md`.
 - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
 
 ### Role Owner
@@ -362,7 +373,7 @@ Route Manifested non-projectile skill visuals through skill-kind effect dispatch
 
 ### Constraints
 
-- Detailed evidence is in `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, and `boards/UI/RUNSCENE_UI.md`.
+- Detailed evidence is in `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, and `boards/UI/RUNSCENE_UI.md`.
 - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
 
 ### Role Owner
@@ -403,7 +414,7 @@ Keep Manifested sustained skill visuals alive for their monster runtime duration
 
 ### Constraints
 
-- Detailed evidence is in `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/MON/EVE_MONSTER.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, and `boards/UI/RUNSCENE_UI.md`.
+- Detailed evidence is in `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/MON/EVE_MONSTER.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, and `boards/UI/RUNSCENE_UI.md`.
 - Do not run Unity Play Mode; user owns gameplay verification.
 - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
 
@@ -444,7 +455,7 @@ Fix Manifest duplicate selected monsters, non-Vega mark leakage, and Manifest fa
 
 ### Constraints
 
-- Detailed evidence is in `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, `boards/COMBAT/PROJECTILE_BLACKBOARD.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, `boards/MON/MON_BLACKBOARD.md`, and `boards/MON/VEGA_MONSTER.md`.
+- Detailed evidence is in `boards/RUN/RUN_BLACKBOARD.md`, `boards/RUN/REWARD_BLACKBOARD.md`, `boards/UI/RUNSCENE_UI.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/MON/VEGA_MONSTER.md`.
 - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
 
 ### Role Owner
@@ -486,7 +497,7 @@ Review and fix Ariel/Eve shield runtime behavior.
 
 ### Constraints
 
-- Detailed evidence is in `boards/MON/EVE_MONSTER.md`, `boards/MON/MON_BLACKBOARD.md`, `boards/COMBAT/COMBAT_BLACKBOARD.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
+- Detailed evidence is in `boards/MON/EVE_MONSTER.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 - User performs Play Mode verification.
 - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
 

@@ -1,0 +1,22 @@
+wave_id,chapter_id,phase_id,time_sec,enemy_id,count,interval_sec,spawn_group,is_elite,trigger_type,trigger_value,notes
+C2_W01,CH2,PHASE_01,0,ENEMY_001,12,0.8,grunt_start,false,time,0,chapter 2 baseline
+C2_W01,CH2,PHASE_02,18,ENEMY_003,4,1.5,ranged_mix,false,time,18,early projectile pressure
+C2_W02,CH2,PHASE_01,0,ENEMY_001,14,0.7,grunt_dense,false,time,0,higher density
+C2_W02,CH2,PHASE_02,20,ENEMY_004,3,2.8,tank_mix,false,time,20,more tank pressure
+C2_W03,CH2,PHASE_01,0,ENEMY_001,12,0.7,grunt_pack,false,time,0,stable front
+C2_W03,CH2,PHASE_02,16,ENEMY_005,3,2.2,support_mix,false,time,16,support cluster
+C2_W03,CH2,PHASE_03,34,ENEMY_006,2,2.8,summon_mix,false,time,34,summoner pressure
+C2_W04,CH2,PHASE_01,0,ENEMY_001,14,0.6,grunt_dense,false,time,0,front stress
+C2_W04,CH2,PHASE_02,18,ENEMY_007,3,2.0,flank_mix,false,time,18,side disruption
+C2_W05,CH2,PHASE_01,0,ENEMY_001,16,0.6,grunt_dense,false,time,0,pre elite ramp
+C2_W05,CH2,PHASE_02,24,ENEMY_008,2,4.0,elite_pair,true,time,24,double elite pressure
+C2_W06,CH2,PHASE_01,0,ENEMY_001,18,0.55,grunt_peak,false,time,0,density peak
+C2_W06,CH2,PHASE_02,14,ENEMY_002,5,1.3,breaker_rush,false,time,14,breaker spike
+C2_W06,CH2,PHASE_03,32,ENEMY_007,3,1.8,flank_follow,false,time,32,follow-up flank
+C2_W07,CH2,PHASE_01,0,ENEMY_004,4,2.5,tank_wall,false,time,0,armor wall
+C2_W07,CH2,PHASE_02,20,ENEMY_005,3,2.0,support_wall,false,time,20,protected frontline
+C2_W07,CH2,PHASE_03,38,ENEMY_006,3,2.4,summon_wall,false,time,38,summoned clutter
+C2_W08,CH2,PHASE_BOSS,0,BOSS_002,1,0,boss,true,time,0,boss start
+C2_W08,CH2,PHASE_BOSS,18,ENEMY_003,4,1.8,boss_ranged,false,hp,0.75,phase 2 ranged adds
+C2_W08,CH2,PHASE_BOSS,36,ENEMY_007,3,1.8,boss_flank,false,hp,0.50,phase 3 flank adds
+C2_W08,CH2,PHASE_BOSS,54,ENEMY_008,2,4.0,boss_elite,true,hp,0.25,phase 4 elite support

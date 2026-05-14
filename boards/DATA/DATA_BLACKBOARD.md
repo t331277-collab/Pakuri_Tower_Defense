@@ -4,6 +4,172 @@
 - This file keeps only task blocks dated `2026-05-09` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/DATA/DATA_BLACKBOARD.md`.
 
+## Task: 2026-05-14 CSVData Source Transition Roadmap
+
+### Task title
+
+Track the planned data-source transition from legacy CSV/Data scripts to new `Assets/CSVData` files.
+
+### Goals
+
+- Treat `Assets/CSVData/MonsterStat.csv`, `EnemyStat.csv`, and `SkillData.csv` as the intended future source of monster, enemy, and skill numeric data.
+- Keep `Assets/Legacy` as reference-only after the actual runtime compile/reference path is removed.
+- Record that reference documents under `Pakuri/reference/2.Monster` and `Pakuri/reference/5.enemy` are the manual source for filling the new CSV rows.
+
+### Constraints
+
+- Role Owner is Designer.
+- No CSV contents were added and no runtime C# was changed in this task.
+- Legacy is not considered disabled until compile targets and runtime references are removed or isolated.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as a design roadmap.
+
+### Next Actions
+
+- Implement new CSV schema and loader before changing prefab or skill execution work to depend on `Assets/CSVData`.
+- Remove `Scripts2/InGame` dependencies on legacy `Pakuri.Data` types before claiming the new CSV path is authoritative.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-14-csvdata-transition-roadmap.html`.
+- `Assets/CSVData/EnemyStat.csv`, `MonsterStat.csv`, and `SkillData.csv` exist and are currently empty.
+- `Assets/Legacy/CSVdata`, `Assets/Legacy/Data`, and `Assets/Legacy/Scripts` exist.
+- `Assembly-CSharp.csproj` still includes `Assets\Legacy\Scripts\...` compile items.
+- `Scripts2/InGame` still references legacy `Pakuri.Data`, `MonsterDefinition`, `SkillDefinition`, `PakuriCsvRuntimeData`, and `PakuriDataManager` in inspected search results.
+
+### History
+
+- 2026-05-14: User proposed making the new `Assets/CSVData` files the future runtime source and using legacy files only as reference.
+
+## Task: 2026-05-14 Eve-E Field Data Implementation
+
+### Task title
+
+Track data-layer Eve-E field classification implementation.
+
+### Goals
+
+- Record that Eve-E now leaves projectile classification and enters field/zone classification.
+- Keep detailed asset evidence in `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No scene, prefab, combat executor, or Play Mode changes.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Use `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md` for the detailed changed-file evidence.
+
+### Evidence
+
+- `monster_skills.csv` and `eve.asset` now classify Eve-E as `Field`.
+- Unity-MCP Editor code execution confirmed Eve-E maps to `ZoneSkillData` with validation `errors=0|warnings=0`.
+- Runtime and editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-14: User explicitly assigned Code Builder to change Eve-E `RuntimeKind` from `MagazineProjectile` to `Field`.
+
+## Task: 2026-05-14 InGame Phase2-A Definition To Unit Model Mapping
+
+### Task title
+
+Track data-layer Phase2-A definition to base unit model mapping.
+
+### Goals
+
+- Record that Phase2-A reads existing monster/enemy data and creates InGame `BaseUnitRuntimeModel` family models.
+- Keep CSV/Data source unchanged.
+- Keep skill/projectile tuning in the existing definitions until later SkillData mapper work.
+- Keep detailed evidence in `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV edits, asset generation, code-generated prefab changes, scene edits, or Play Mode verification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Use `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md` for data mapping details.
+- Continue using existing data loading for later InGame phases.
+- Build Phase2-B around user-authored prefabs rather than generated prefab assets.
+
+### Evidence
+
+- `UnitFactory` resolves Eve and stage-one enemy definitions through the existing catalog/data manager flow.
+- `UnitFactory` creates Eve as `MonsterUnitRuntimeModel` and `stage1-swordsman` as `EnemyUnitRuntimeModel`.
+- Added `BaseUnitRuntimeModel.cs`, `MonsterUnitRuntimeModel.cs`, and `EnemyUnitRuntimeModel.cs`.
+- Unity-MCP Editor code execution returned `ok=True|monster=eve|monsterHp=220|learnedA=1|enemy=stage1-swordsman|enemyHp=100`.
+- Runtime and editor `dotnet build` checks completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-14: Phase2-A mapped existing data definitions into InGame unit models.
+- 2026-05-14: User confirmed prefabs are created manually and Definition skill/projectile tuning should be split later during skill implementation.
+
+## Task: 2026-05-14 InGame Phase1-D Skill Data Validation
+
+### Task title
+
+Track data-layer Phase1-D validation for InGame skill mapping.
+
+### Goals
+
+- Ensure skill data validation exists before full skill data expansion.
+- Keep existing CSV/Data loading as the source of truth.
+- Record the validation-only implementation without changing CSV rows or assets.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV edits, ScriptableObject asset creation, prefab edits, scene edits, or Play Mode verification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Use the detailed data/asset task in `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md` for validation evidence.
+- Run the Unity Editor menu `Pakuri/InGame/Validate Skill Data` when Unity is available.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDataValidator.cs`.
+- Added `Pakuri/Assets/Scripts2/InGame/Editor/InGameSkillDataValidationMenu.cs`.
+- Runtime and editor `dotnet build` checks completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-14: Code Builder implemented Phase1-D validation for InGame skill data mapping.
+
 ## Task: 2026-05-09 Assets Scripts Folder Organization
 
 ### Task title

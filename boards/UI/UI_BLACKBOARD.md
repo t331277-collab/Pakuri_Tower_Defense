@@ -4,6 +4,50 @@
 - This file keeps only task blocks dated `2026-05-05` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/UI/UI_BLACKBOARD.md`.
 
+## Task: 2026-05-14 Pre-2026-05-12 UI Board Archive Cleanup
+
+### Task title
+
+Archive UI detail board files whose latest internal date is before 2026-05-12.
+
+### Goals
+
+- Move UI detail board files that only contain pre-2026-05-12 history into `boards/ARCHIVE`.
+- Keep active UI routing on `boards/UI/UI_BLACKBOARD.md`.
+- Preserve older DebugScene and MainMenu history in archive files instead of deleting it.
+
+### Constraints
+
+- Role Owner is Designer.
+- Do not delete board history.
+- Move only files whose latest discovered date is earlier than 2026-05-12.
+- Update routing references that previously pointed at the moved active files.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- For new DebugScene or MainMenu UI work, update `boards/UI/UI_BLACKBOARD.md`.
+- Consult archived files only when older DebugScene or MainMenu UI history is needed.
+
+### Evidence
+
+- Date scan over non-archive `boards/**/*.md` found `boards/UI/MAINMENU_UI.md` latest date `2026-04-26`.
+- Date scan over non-archive `boards/**/*.md` found `boards/UI/DEBUGSCENE_UI.md` latest date `2026-05-05`.
+- Moved `boards/UI/DEBUGSCENE_UI.md` to `boards/ARCHIVE/DEBUGSCENE_UI_ARCHIVE_2026-05-14.md`.
+- Moved `boards/UI/MAINMENU_UI.md` to `boards/ARCHIVE/MAINMENU_UI_ARCHIVE_2026-05-14.md`.
+- Updated `MDTREE.md`, `BLACKBOARD.md`, and `boards/MON/EVE_MONSTER.md` references to use `boards/UI/UI_BLACKBOARD.md` for active UI routing and archived files for older history.
+
+### History
+
+- 2026-05-14: User asked to move board Markdown files that seemed unnecessary because they were from before 2026-05-12 into `boards/ARCHIVE`.
+
 ## Task: 2026-05-05 MonsterPanel 1P Skill Status UI
 
 ### Task title

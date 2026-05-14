@@ -16,14 +16,14 @@
 | B. 프리즘 레이 | 번개 / 얼음 | 직선 관통 광선 / 속성 트리거 대상 | 작성 |
 | C. 프로스트 필드 | 얼음 | 장판 제어 / 추위와 빙결 | 작성 |
 | D. 스태틱 오버라이드 | 번개 | 감전 스택 폭발 / 중첩 광역 | 작성 |
-| E. 드론 비컨 | 얼음 | 설치형 보조 / 취약 누적 | 작성 |
+| E. 플라즈마 필드 | 번개 | 전격 필드 전개 / 취약 누적 | 작성 |
 
 ## 3. 스킬 문서
 - A. 아크 볼트: [`a-arc-bolt.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F2.Monster%2Feve%2Fskill%2Fa-arc-bolt)
 - B. 프리즘 레이: [`b-prism-ray.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F2.Monster%2Feve%2Fskill%2Fb-prism-ray)
 - C. 프로스트 필드: [`c-frost-field.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F2.Monster%2Feve%2Fskill%2Fc-frost-field)
 - D. 스태틱 오버라이드: [`d-static-override.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F2.Monster%2Feve%2Fskill%2Fd-static-override)
-- E. 드론 비컨: [`e-drone-beacon.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F2.Monster%2Feve%2Fskill%2Fe-drone-beacon)
+- E. 플라즈마 필드: [`e-drone-beacon.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F2.Monster%2Feve%2Fskill%2Fe-drone-beacon)
 - F. 전압 보정: [`f-voltage-calibration.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F2.Monster%2Feve%2Fskill%2Ff-voltage-calibration)
 - G. 입자 분리: [`g-weakness-analysis.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F2.Monster%2Feve%2Fskill%2Fg-weakness-analysis)
 - H. 냉각 알고리즘: [`h-particle-separation.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F2.Monster%2Feve%2Fskill%2Fh-particle-separation)
@@ -38,7 +38,7 @@
 | G. 입자 분리 | B. 프리즘 레이 | 아군 번개/얼음 피해 시 프리즘 레이 자동 발동 | 작성 |
 | H. 냉각 알고리즘 | C. 프로스트 필드 | 추위/빙결 대상 피해 및 상태이상 확률 강화 | 작성 |
 | I. 과전류 회로 | D. 스태틱 오버라이드 | 감전 대상 번개 피해 강화 / 번개 저항 감소 | 작성 |
-| J. 약점 분석 | E. 드론 비컨 | 취약 대상 피해 증가 / 모든 저항 감소 | 작성 |
+| J. 약점 분석 | E. 플라즈마 필드 | 취약 대상 피해 증가 / 모든 저항 감소 | 작성 |
 
 ## 5. 패시브 비율
 

@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Combat V2 Unit / Skill Component Architecture</title>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #627184;
+      --line: #d9e2ec;
+      --panel: #f7f9fc;
+      --panel-2: #eef4fb;
+      --accent: #2f6f73;
+      --accent-2: #8a5a24;
+      --danger: #9b2c2c;
+      --ok: #2f6f44;
+      --code: #172033;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #ffffff;
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.58;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 48px 28px 72px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.22;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 34px;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin: 42px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--line);
+    }
+
+    h3 {
+      font-size: 18px;
+      margin: 24px 0 10px;
+    }
+
+    p { margin: 10px 0; }
+
+    code {
+      color: var(--code);
+      background: #eef2f7;
+      border: 1px solid #d6dee9;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.94em;
+    }
+
+    pre {
+      overflow-x: auto;
+      color: #e9f2ff;
+      background: #172033;
+      border-radius: 8px;
+      padding: 18px;
+      line-height: 1.48;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 24px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #edf3f8;
+      color: #263848;
+    }
+
+    ul, ol { padding-left: 23px; }
+
+    li { margin: 6px 0; }
+
+    .hero {
+      border-left: 6px solid var(--accent);
+      background: linear-gradient(90deg, #edf7f6, #ffffff);
+      padding: 24px 26px;
+      margin-bottom: 28px;
+      border-radius: 8px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 22px 0 8px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .card strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #213548;
+    }
+
+    .note {
+      border-left: 4px solid var(--accent-2);
+      background: #fff8ed;
+      padding: 14px 16px;
+      border-radius: 6px;
+      margin: 16px 0;
+    }
+
+    .warning {
+      border-left: 4px solid var(--danger);
+      background: #fff5f5;
+      padding: 14px 16px;
+      border-radius: 6px;
+      margin: 16px 0;
+    }
+
+    .ok {
+      border-left: 4px solid var(--ok);
+      background: #f1fbf4;
+      padding: 14px 16px;
+      border-radius: 6px;
+      margin: 16px 0;
+    }
+
+    .diagram {
+      border: 1px solid var(--line);
+      background: #fbfdff;
+      border-radius: 8px;
+      padding: 18px;
+      margin: 16px 0 26px;
+      overflow-x: auto;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(160px, 1fr));
+      gap: 12px;
+      min-width: 900px;
+      align-items: stretch;
+    }
+
+    .flow.four {
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      min-width: 820px;
+    }
+
+    .node {
+      border: 1px solid #b8c6d6;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 96px;
+      position: relative;
+    }
+
+    .node:after {
+      content: "->";
+      position: absolute;
+      right: -19px;
+      top: 42%;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .node:last-child:after { content: ""; }
+
+    .node h4 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      color: #19324a;
+    }
+
+    .node p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .matrix {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 16px 0 24px;
+    }
+
+    .matrix .card {
+      background: #ffffff;
+    }
+
+    .tag {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--muted);
+      margin: 2px 3px 2px 0;
+    }
+
+    .caption {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: -10px;
+    }
+
+    @media (max-width: 860px) {
+      main { padding: 30px 18px 48px; }
+      .summary, .matrix { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <div class="eyebrow">Designer Report / Proposed Architecture</div>
+    <h1>Combat V2 유닛 생성 관리와 스킬 구현 구조</h1>
+    <p>
+      이 문서는 새 Combat V2를 구현할 때 유닛 생성, 런타임 상태, 스킬 데이터, 스킬 실행기,
+      시각 프리팹을 어떻게 나눌지 정리한 설계 산출물이다. 여기서 제안하는 파일과 클래스는
+      아직 구현물이 아니라 <strong>proposed</strong> 구조다.
+    </p>
+  </section>
+
+  <section class="summary">
+    <div class="card">
+      <strong>유닛 생성</strong>
+      <p><code>UnitRuntimeModel</code>이 전투 상태를 소유하고, <code>MonsterUnitActor</code> / <code>EnemyUnitActor</code>는 표시와 씬 연결만 맡는다.</p>
+    </div>
+    <div class="card">
+      <strong>스킬 구현</strong>
+      <p><code>skill-class-design.md</code>의 <code>SkillData</code> 계층을 스킬 데이터 스키마 기준으로 삼되, 기존 <code>SkillDefinition</code> 호환 어댑터를 먼저 둔다.</p>
+    </div>
+    <div class="card">
+      <strong>관리 원칙</strong>
+      <p>수치와 조건은 데이터, 현재 쿨다운/탄창은 런타임, 실제 판정은 executor, 이펙트 외형은 prefab/presenter가 소유한다.</p>
+    </div>
+  </section>
+
+  <h2>1. 확인한 근거</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>근거</th>
+        <th>확인한 내용</th>
+        <th>설계 반영</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>RunSceneBootstrap.cs:53-57</code></td>
+        <td>현재 전투 시작은 <code>MonsterDefinition</code>, <code>RunSession</code>, <code>GameDataCatalog</code>를 전투 컨트롤러로 전달한다.</td>
+        <td>V2도 같은 입력 계약을 받는 <code>CombatV2Controller.BeginConfiguredDay(...)</code>를 둔다.</td>
+      </tr>
+      <tr>
+        <td><code>MonsterDefinition.cs:56-57</code></td>
+        <td>몬스터는 <code>ActiveSkills</code>와 <code>PassiveSkills</code>를 가진다.</td>
+        <td>1P와 현현 유닛은 같은 몬스터 정의와 같은 유닛 상태 조회 경로를 사용한다.</td>
+      </tr>
+      <tr>
+        <td><code>SkillDefinition.cs:28</code>, <code>:54</code>, <code>:63</code>, <code>:78-79</code></td>
+        <td>현재 스킬 데이터는 <code>RuntimeKind</code>, <code>SkillEffectPrefab</code>, 강화/마스터 선택 배열을 가진다.</td>
+        <td>초기 V2에서는 이 데이터를 버리지 않고 <code>SkillSpecAdapter</code>로 새 스킬 스펙에 연결한다.</td>
+      </tr>
+      <tr>
+        <td><code>skill-class-design.md:11-20</code></td>
+        <td><code>SkillData</code> 추상 SO와 <code>Projectile</code>, <code>Beam</code>, <code>Zone</code>, <code>Buff</code>, <code>Shield</code>, <code>Passive</code> 계층을 제안한다.</td>
+        <td>스킬 타입 분류와 필드 구조의 목표 모델로 채택한다.</td>
+      </tr>
+      <tr>
+        <td><code>skill-class-design.md:177-178</code>, <code>:306</code></td>
+        <td>Rin-D, Vega-E 같은 처형기는 공통 데이터 클래스로 무리하게 추상화하지 않는 예외로 둔다.</td>
+        <td>공통 executor로 표현할 수 없는 스킬은 <code>CustomSkillExecutor</code> 예외 경로를 허용한다.</td>
+      </tr>
+      <tr>
+        <td><code>2026-05-13-combat-v2-foundation-architecture.html:119-120</code></td>
+        <td>Run/Data는 유지하고 전투 계산 모델은 프리팹/애니메이션과 분리한다.</td>
+        <td>이 문서도 기존 Run UI Flow와 CSV/Data 호환을 전제로 한다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>2. 제안 파일 구조</h2>
+  <p>
+    아래 경로는 아직 저장소에 존재한다고 주장하는 것이 아니다. Code Builder가 V2 구현을 시작할 때
+    만들 수 있는 <strong>proposed</strong> 파일 구조다.
+  </p>
+  <pre><code>Pakuri/Assets/Scripts/CombatV2/
+  Core/
+    CombatV2Controller.cs
+    CombatV2Context.cs
+    CombatV2TickLoop.cs
+    CombatResultModel.cs
+    CombatEventBus.cs
+
+  Units/
+    UnitRuntimeModel.cs
+    UnitIdentity.cs
+    UnitResourceRuntime.cs
+    UnitStatsRuntime.cs
+    UnitStateBucket.cs
+    UnitRosterService.cs
+    UnitFactory.cs
+    MonsterUnitActor.cs
+    EnemyUnitActor.cs
+    UnitAnimationBridge.cs
+    UnitStatusPresenter.cs
+
+  Spawning/
+    SpawnManagerV2.cs
+    UnitSpawnPointSet.cs
+    EnemyWaveRuntime.cs
+
+  Skills/
+    Data/
+      SkillData.cs
+      ProjectileSkillData.cs
+      BeamSkillData.cs
+      ZoneSkillData.cs
+      BuffSkillData.cs
+      ShieldSkillData.cs
+      PassiveSkillData.cs
+      StatusEffectData.cs
+      SkillChoiceEffectSpec.cs
+      SkillSpecAdapter.cs
+    Runtime/
+      SkillRuntimeInstance.cs
+      SkillExecutionContext.cs
+      PassiveRuntimeInstance.cs
+      PassiveTriggerSystem.cs
+      SkillExecutorRegistry.cs
+    Executors/
+      ISkillExecutor.cs
+      ProjectileSkillExecutor.cs
+      BeamSkillExecutor.cs
+      ZoneSkillExecutor.cs
+      BuffSkillExecutor.cs
+      ShieldSkillExecutor.cs
+      PassiveLinkedCastExecutor.cs
+      CustomSkillExecutor.cs
+    Presentation/
+      SkillEffectPresenter.cs
+      ProjectilePresenter.cs
+      ZonePresenter.cs
+
+  Status/
+    StatusEffectController.cs
+    ShieldController.cs
+    TemporaryEffectInstance.cs
+    ModifierAggregator.cs
+
+  Battlefield/
+    CombatTargetRegistry.cs
+    TargetQueryService.cs
+    DamageResolver.cs
+    ProjectileSimulation.cs
+    ZoneSimulation.cs
+    SummonSimulation.cs
+
+  AI/
+    AutoAttackController.cs
+    EnemyAiController.cs</code></pre>
+
+  <h2>3. 유닛 생성 관리 다이어그램</h2>
+  <div class="diagram">
+    <div class="flow">
+      <div class="node">
+        <h4>Run 입력</h4>
+        <p><code>MonsterDefinition</code>, <code>RunSession</code>, <code>GameDataCatalog</code>를 기존 흐름에서 받는다.</p>
+      </div>
+      <div class="node">
+        <h4>CombatV2Controller</h4>
+        <p>전투 하루치 컨텍스트를 만들고 유닛/스폰/스킬 시스템 초기화를 지시한다.</p>
+      </div>
+      <div class="node">
+        <h4>UnitFactory</h4>
+        <p>선택 1P, 현현 2P-5P, 적 정의를 <code>UnitRuntimeModel</code>로 변환한다.</p>
+      </div>
+      <div class="node">
+        <h4>Actor Binding</h4>
+        <p><code>MonsterUnitActor</code> 또는 <code>EnemyUnitActor</code> 프리팹을 생성하고 모델에 연결한다.</p>
+      </div>
+      <div class="node">
+        <h4>Roster / Registry</h4>
+        <p><code>UnitRosterService</code>와 <code>CombatTargetRegistry</code>가 대상 조회와 생존 상태를 관리한다.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>유닛 책임 경계</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>컴포넌트</th>
+        <th>소유한다</th>
+        <th>소유하지 않는다</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>UnitRuntimeModel</code></td>
+        <td>HP, 실드, 스탯, 방어, auto attack 토글, learned state 참조, 상태효과 컨트롤러, 스킬 런타임 목록</td>
+        <td>SpriteRenderer, Animator, Collider, Unity Transform 직접 조작</td>
+      </tr>
+      <tr>
+        <td><code>MonsterUnitActor</code></td>
+        <td>1P와 현현 몬스터 공통 프리팹 표시, 위치, 애니메이션 브리지, 피격/상태 표시 연결</td>
+        <td>스킬 수치, 강화 판정, HP 계산, 고유 캐릭터 로직</td>
+      </tr>
+      <tr>
+        <td><code>EnemyUnitActor</code></td>
+        <td>적 프리팹 표시, 이동 표현, 피격 표시, 사망 연출 연결</td>
+        <td>AI 판단, 피해 공식, 스폰 정책</td>
+      </tr>
+      <tr>
+        <td><code>UnitFactory</code></td>
+        <td>데이터 정의와 RunSession 상태를 읽어 모델/Actor를 생성하고 바인딩</td>
+        <td>전투 tick 실행, 스킬 판정, UI 보상 처리</td>
+      </tr>
+      <tr>
+        <td><code>UnitRosterService</code></td>
+        <td>아군/적 목록, 1P/현현 슬롯, 생존 유닛 조회</td>
+        <td>프리팹 Instantiate 세부 처리, 피해 계산</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. 스킬 구현 컴포넌트 다이어그램</h2>
+  <div class="diagram">
+    <div class="flow four">
+      <div class="node">
+        <h4>Data Source</h4>
+        <p><code>SkillDefinition</code> / <code>PassiveDefinition</code> 또는 최종 <code>SkillData</code> SO.</p>
+      </div>
+      <div class="node">
+        <h4>SkillSpecAdapter</h4>
+        <p>기존 데이터와 <code>skill-class-design.md</code> 스키마를 V2 실행용 spec으로 정규화한다.</p>
+      </div>
+      <div class="node">
+        <h4>SkillRuntimeInstance</h4>
+        <p>쿨다운, 탄창, 재장전, 내부 쿨다운, 런타임 스택처럼 전투 중 변하는 값만 가진다.</p>
+      </div>
+      <div class="node">
+        <h4>SkillExecutor</h4>
+        <p>타입별 공통 실행기가 타겟 조회, 피해 요청, 상태 요청, 프리젠테이션 요청을 발행한다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram">
+    <div class="flow four">
+      <div class="node">
+        <h4>CombatEventBus</h4>
+        <p>OnCast, OnHit, OnKill, OnDamage, OnStatusStack 같은 이벤트를 기록한다.</p>
+      </div>
+      <div class="node">
+        <h4>PassiveTriggerSystem</h4>
+        <p><code>PassiveSkillData.triggerType</code>과 <code>linkedSkillId</code>를 해석한다.</p>
+      </div>
+      <div class="node">
+        <h4>Damage / Status / Shield</h4>
+        <p><code>DamageResolver</code>, <code>StatusEffectController</code>, <code>ShieldController</code>가 실제 적용을 담당한다.</p>
+      </div>
+      <div class="node">
+        <h4>Presentation</h4>
+        <p><code>SkillEffectPrefab</code>과 presenter는 외형만 담당하고 전투 공식은 소유하지 않는다.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>스킬 데이터 계층 채택 방식</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>skill-class-design.md 기준</th>
+        <th>V2 실행 컴포넌트</th>
+        <th>관리 방식</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>ProjectileSkillData</code></td>
+        <td><code>ProjectileSkillExecutor</code> + <code>ProjectileSimulation</code></td>
+        <td>탄창, 재장전, 투사체 수, 속도, 관통, on-hit 상태를 데이터로 관리한다.</td>
+      </tr>
+      <tr>
+        <td><code>BeamSkillData</code></td>
+        <td><code>BeamSkillExecutor</code> + tick query</td>
+        <td>지속시간, tick 간격, 폭, 상태 적용 확률을 데이터로 관리한다.</td>
+      </tr>
+      <tr>
+        <td><code>ZoneSkillData</code></td>
+        <td><code>ZoneSkillExecutor</code> + <code>ZoneSimulation</code></td>
+        <td>장판 반경, 전체 필드 여부, tick 피해, 아군 부가효과를 데이터로 관리한다.</td>
+      </tr>
+      <tr>
+        <td><code>BuffSkillData</code></td>
+        <td><code>BuffSkillExecutor</code> + <code>ModifierAggregator</code></td>
+        <td>행동속도, 공격력, 태그, 동반 피해 같은 효과를 modifier/effect request로 바꾼다.</td>
+      </tr>
+      <tr>
+        <td><code>ShieldSkillData</code></td>
+        <td><code>ShieldSkillExecutor</code> + <code>ShieldController</code></td>
+        <td><code>Replace</code>, <code>TakeHighest</code>, <code>Stack</code> 갱신 규칙을 shield 시스템에서 처리한다.</td>
+      </tr>
+      <tr>
+        <td><code>PassiveSkillData</code></td>
+        <td><code>PassiveTriggerSystem</code> + <code>CombatEventBus</code></td>
+        <td>상시 효과는 전투 시작 1회 적용, 이벤트 기반 효과는 이벤트 버스에서 조건을 확인한다.</td>
+      </tr>
+      <tr>
+        <td>Rin-D / Vega-E 예외</td>
+        <td><code>CustomSkillExecutor</code></td>
+        <td>공통 데이터로 표현하기 어려운 처형 조건만 별도 코드로 격리한다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>5. 스킬 3중 구현 방지 규칙</h2>
+  <div class="warning">
+    <p>
+      <code>SkillData</code>, <code>SkillExecutor</code>, <code>SkillEffectPrefab</code> 세 가지가 존재해도
+      이것은 3중 구현이 아니다. 다만 같은 수치와 조건을 세 곳에 중복하면 3중 구현이 된다.
+    </p>
+  </div>
+
+  <div class="matrix">
+    <div class="card">
+      <strong>데이터가 소유</strong>
+      <p>피해 계수, 쿨다운, 반경, 지속시간, tick 간격, 상태 태그, shield 갱신 규칙, linked skill ID.</p>
+    </div>
+    <div class="card">
+      <strong>런타임이 소유</strong>
+      <p>현재 HP, 현재 실드, 남은 쿨다운, 남은 탄창, 내부 쿨다운, 현재 상태 스택, learned choice 조회 결과.</p>
+    </div>
+    <div class="card">
+      <strong>프리젠테이션이 소유</strong>
+      <p>prefab, sprite, animation trigger, line/circle/zone 표시, projectile 외형, popup 위치.</p>
+    </div>
+  </div>
+
+  <h3>금지할 구현 패턴</h3>
+  <ul>
+    <li><code>SkillEffectPrefab</code>에 피해량, tick 간격, 상태 확률을 넣지 않는다.</li>
+    <li><code>MonsterUnitActor</code>나 <code>EnemyUnitActor</code>가 스킬 공식이나 강화 판정을 직접 소유하지 않는다.</li>
+    <li>일반 스킬을 <code>EveBExecutor</code>, <code>SeinDExecutor</code>처럼 스킬 ID별 클래스로 먼저 만들지 않는다.</li>
+    <li>강화 선택을 executor 내부의 문자열 분기만으로 계속 추가하지 않는다. 기본값은 <code>SkillChoiceEffectSpec</code>로 해석한다.</li>
+  </ul>
+
+  <h3>허용할 예외</h3>
+  <ul>
+    <li>문서가 이미 예외로 둔 Rin-D, Vega-E 처형 로직은 <code>CustomSkillExecutor</code>로 격리할 수 있다.</li>
+    <li>공통 executor와 effect spec으로 표현하면 오히려 더 복잡해지는 보스/특수 스킬은 별도 executor를 허용한다.</li>
+    <li>단, 예외 executor도 damage/status/shield/presentation 직접 적용은 하지 않고 request API를 사용한다.</li>
+  </ul>
+
+  <h2>6. 실행 순서</h2>
+  <ol>
+    <li><code>CombatV2Controller.BeginConfiguredDay(...)</code>가 기존 Run 입력을 받는다.</li>
+    <li><code>SkillSpecAdapter</code>가 기존 <code>SkillDefinition</code> / <code>PassiveDefinition</code>을 V2 실행 spec으로 변환한다.</li>
+    <li><code>UnitFactory</code>가 1P와 현현 몬스터의 <code>UnitRuntimeModel</code>을 생성하고 같은 <code>MonsterUnitActor</code> 계열에 바인딩한다.</li>
+    <li><code>SpawnManagerV2</code>가 적 스폰 규칙에 따라 <code>EnemyUnitActor</code>와 적 모델을 생성한다.</li>
+    <li>전투 tick은 상태효과 tick, passive event 처리, auto attack/auto skill 판단, skill executor 실행, projectile/zone/summon simulation, damage/status/shield resolve, death/reward 판정 순서로 실행한다.</li>
+    <li>전투 결과는 UI에 직접 쓰지 않고 <code>CombatResultModel</code>로 반환한다.</li>
+  </ol>
+
+  <h2>7. 구현 단계 제안</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>단계</th>
+        <th>내용</th>
+        <th>완료 기준</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1. 계약 / 모델</td>
+        <td><code>CombatV2Controller</code>, <code>CombatV2Context</code>, <code>UnitRuntimeModel</code>, <code>CombatResultModel</code> 골격</td>
+        <td>기존 Run 입력을 받을 수 있고 UI 연결 없이 최소 전투 컨텍스트를 생성한다.</td>
+      </tr>
+      <tr>
+        <td>2. 유닛 생성</td>
+        <td><code>UnitFactory</code>, <code>MonsterUnitActor</code>, <code>EnemyUnitActor</code>, <code>UnitRosterService</code></td>
+        <td>1P 1명과 적 1종을 새 씬에서 생성하고 모델/Actor 바인딩을 확인한다.</td>
+      </tr>
+      <tr>
+        <td>3. 스킬 기반</td>
+        <td><code>SkillSpecAdapter</code>, <code>SkillRuntimeInstance</code>, <code>ProjectileSkillExecutor</code></td>
+        <td>기존 <code>SkillDefinition</code> 데이터를 읽어 기본 자동 공격을 실행한다.</td>
+      </tr>
+      <tr>
+        <td>4. 상태 / 쉴드</td>
+        <td><code>StatusEffectData</code>, <code>StatusEffectController</code>, <code>ShieldController</code>, <code>ModifierAggregator</code></td>
+        <td>상태와 쉴드가 1P/현현/적 중 두 종류 이상에 같은 API로 적용된다.</td>
+      </tr>
+      <tr>
+        <td>5. 스킬 다양화</td>
+        <td><code>Beam</code>, <code>Zone</code>, <code>Buff</code>, <code>Shield</code> executor 추가</td>
+        <td>공통 executor 추가만으로 여러 스킬이 실행되고 prefab은 표시만 담당한다.</td>
+      </tr>
+      <tr>
+        <td>6. 패시브</td>
+        <td><code>PassiveSkillData</code>, <code>CombatEventBus</code>, <code>PassiveTriggerSystem</code></td>
+        <td>Always, OnTargetStatus, DuringBuff, AfterSkill, OnEvent가 각각 최소 1개 케이스로 검증된다.</td>
+      </tr>
+      <tr>
+        <td>7. 예외 스킬</td>
+        <td>Rin-D, Vega-E, Rin-F 이중 패시브, name_mark 소모 같은 고급 케이스</td>
+        <td>예외 로직이 공통 damage/status/shield/presentation API를 우회하지 않는다.</td>
+      </tr>
+      <tr>
+        <td>8. UI 연결</td>
+        <td>기존 UI 어댑터 또는 <code>RunCombatUiControllerV2</code></td>
+        <td>새 전투가 독립 검증된 뒤 Run UI Flow에 연결된다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>8. 수용 기준</h2>
+  <ul>
+    <li>새 Combat V2는 기존 <code>MonsterDefinition</code>, <code>EnemyDefinition</code>, <code>SkillDefinition</code>, <code>PassiveDefinition</code>, <code>RunSession</code>을 읽을 수 있어야 한다.</li>
+    <li>1P와 현현 몬스터는 같은 <code>MonsterUnitActor</code> 계열과 같은 스킬 실행 경로를 사용해야 한다.</li>
+    <li>스킬 수치 변경은 기본적으로 데이터 변경으로 가능해야 하며, 일반 스킬마다 새 C# executor를 만들지 않아야 한다.</li>
+    <li><code>SkillEffectPrefab</code>은 표시 리소스이며 전투 공식의 소유자가 아니어야 한다.</li>
+    <li>패시브는 <code>PassiveSkillData</code>와 이벤트 기반 시스템으로 처리하고, <code>linkedSkillId</code>는 기존 액티브 스킬 데이터를 재사용해야 한다.</li>
+    <li>Rin-D / Vega-E 같은 예외 스킬은 명시적 예외 executor로 격리하고 공통 request API를 통해 피해와 상태를 적용해야 한다.</li>
+    <li>UI 연결은 새 전투 loop가 독립적으로 유닛 생성, 자동 공격, 피해, 승패 판정을 수행한 뒤 진행해야 한다.</li>
+  </ul>
+
+  <h2>9. 관련 보드</h2>
+  <ul>
+    <li><code>boards/REFACTORING/REFACTORING.md</code>: Combat V2 구조와 구현 단계.</li>
+    <li><code>boards/COMBAT/COMBAT_BLACKBOARD.md</code>: 전투 런타임, 스킬 실행, 상태/쉴드 책임.</li>
+    <li><code>boards/MON/MON_BLACKBOARD.md</code>: 1P/현현 공통 몬스터 Actor와 learned choice 규칙.</li>
+    <li><code>boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md</code>: 기존 데이터 자산 호환과 스킬 데이터 이관 규칙.</li>
+    <li><code>boards/REPORT/REPORT_BLACKBOARD.md</code>: HTML 보고서 생성 이력.</li>
+  </ul>
+
+  <div class="ok">
+    <p>
+      최종 결론: 몬스터/적 유닛 생성은 사용자가 제안한 모델/Actor 구조를 따르고,
+      스킬은 <code>skill-class-design.md</code>를 최종 스키마 기준으로 삼되,
+      첫 구현은 기존 <code>SkillDefinition</code> 호환 어댑터를 통해 시작하는 것이 가장 안전하다.
+    </p>
+  </div>
+</main>
+</body>
+</html>

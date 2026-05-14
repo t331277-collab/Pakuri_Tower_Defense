@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>InGame Build Roadmap</title>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #627184;
+      --line: #d9e2ec;
+      --panel: #f7f9fc;
+      --panel-2: #eef4fb;
+      --accent: #2f6f73;
+      --warn: #8a5a24;
+      --danger: #9b2c2c;
+      --ok: #2f6f44;
+      --code: #172033;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #fff;
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.58;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 48px 28px 72px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.24;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 34px;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin: 42px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--line);
+    }
+
+    h3 {
+      font-size: 18px;
+      margin: 24px 0 10px;
+    }
+
+    p { margin: 10px 0; }
+
+    code {
+      color: var(--code);
+      background: #eef2f7;
+      border: 1px solid #d6dee9;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.94em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 24px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #edf3f8;
+      color: #263848;
+    }
+
+    ul, ol { padding-left: 23px; }
+    li { margin: 6px 0; }
+
+    .hero {
+      border-left: 6px solid var(--accent);
+      background: linear-gradient(90deg, #edf7f6, #fff);
+      padding: 24px 26px;
+      margin-bottom: 28px;
+      border-radius: 8px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin: 18px 0;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+    }
+
+    .done { color: var(--ok); }
+    .next { color: var(--accent); }
+    .hold { color: var(--warn); }
+    .risk { color: var(--danger); }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .step {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 116px;
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .note {
+      border-left: 5px solid var(--warn);
+      background: #fff8eb;
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin: 18px 0;
+    }
+
+    @media (max-width: 860px) {
+      main { padding: 32px 18px 54px; }
+      h1 { font-size: 28px; }
+      .grid, .flow { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <div class="eyebrow">InGame Roadmap</div>
+    <h1>InGame 구현 순서 로드맵</h1>
+    <p>
+      이 문서는 현재 작성된 <code>Assets/Scripts2/InGame</code> 스크립트와 기존
+      <code>SkillDefinition</code>, <code>MonsterDefinition</code>, <code>RunSceneBootstrap</code>
+      구조를 기준으로 다음 작업 순서를 고정한다. 결론은 전체 스킬 데이터 50개를 먼저 채우는 방식이 아니라,
+      샘플 Blueprint 데이터로 연결을 검증한 뒤 골격을 안정화하고 전체 데이터를 확장하는 순서다.
+    </p>
+  </section>
+
+  <h2>1. 현재 근거</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>영역</th>
+        <th>확인된 파일</th>
+        <th>판단 근거</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>InGame 껍데기</td>
+        <td><code>Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs</code></td>
+        <td><code>InGameCombatManager</code>는 현재 빈 <code>MonoBehaviour</code>다. 아직 전투 시작, 스폰, 업데이트 루프가 없다.</td>
+      </tr>
+      <tr>
+        <td>유닛 모델</td>
+        <td><code>Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs</code>, <code>MonsterUnitRuntimeModel.cs</code>, <code>EnemyUnitRuntimeModel.cs</code></td>
+        <td><code>BaseUnitRuntimeModel</code>은 유닛 공통 identity/stat/defense/resource/auto flag만 가진다. 몬스터 learned state는 <code>MonsterUnitRuntimeModel</code>, 적 분류 정보는 <code>EnemyUnitRuntimeModel</code>에 둔다.</td>
+      </tr>
+      <tr>
+        <td>Blueprint 스킬 데이터</td>
+        <td><code>Pakuri/Assets/Scripts2/InGame/Skills/Data/SkillData.cs</code>, <code>SkillBlueprintSpecs.cs</code></td>
+        <td>스킬 ID, 캐릭터, 슬롯, 타이밍, 타겟팅, 선택지, 타입별 스펙을 담는 데이터 구조가 있다. 실행기는 없다.</td>
+      </tr>
+      <tr>
+        <td>기존 스킬 데이터</td>
+        <td><code>Pakuri/Assets/Scripts/Data/Definition/SkillDefinition.cs</code></td>
+        <td>기존 구조는 <code>SkillId</code>, <code>RuntimeKind</code>, 피해량, 쿨다운, 탄창, 상태이상 ID, 선택지 배열을 이미 가진다.</td>
+      </tr>
+      <tr>
+        <td>기존 몬스터 데이터</td>
+        <td><code>Pakuri/Assets/Scripts/Data/Definition/MonsterDefinition.cs</code></td>
+        <td>몬스터는 현재 <code>ActiveSkills</code>, <code>PassiveSkills</code>로 기존 <code>SkillDefinition</code> 계열을 참조한다.</td>
+      </tr>
+      <tr>
+        <td>기존 Run 진입</td>
+        <td><code>Pakuri/Assets/Scripts/Run/Flow/RunSceneBootstrap.cs</code></td>
+        <td>현재 RunScene은 <code>CombatRuntimeController.BeginConfiguredDay(monster, session, fallbackCatalog)</code>로 기존 전투에 진입한다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <strong>핵심 판단:</strong>
+    테스트에는 데이터가 필요하지만, 전체 데이터를 먼저 채우면 연결 방식이 바뀔 때 수정 비용이 커진다.
+    따라서 Phase1-C에서 샘플 Blueprint 데이터 1~2개만 만들고, 참조 경로와 런타임 골격을 검증한 뒤 전체 데이터를 확장한다.
+  </div>
+
+  <div class="note">
+    <strong>CSV/Data 로드 결정:</strong>
+    InGame 전용 CSV 로더를 새로 만들지 않는다. 현재 <code>PakuriCsvRuntimeData</code>가 CSV를 읽어
+    <code>GameDataCatalog</code>, <code>MonsterDefinition</code>, <code>SkillDefinition</code>으로 구성하고,
+    <code>PakuriDataManager</code>가 ID/슬롯 조회를 제공한다. Phase1-C는 이 기존 흐름을 원천으로 삼고,
+    InGame에는 기존 <code>SkillDefinition</code>을 새 <code>SkillData</code> 계열로 해석하는 얇은 매퍼 또는 브리지만 둔다.
+  </div>
+
+  <div class="note">
+    <strong>Prefab 작성 결정:</strong>
+    Code Builder는 유닛/적/스킬 프리팹을 코드로 직접 생성하지 않는다. 사용자가 Unity Editor에서
+    <code>Pakuri/Assets/Prefab/Monster</code>, <code>Pakuri/Assets/Prefab/Enemy</code>,
+    <code>Pakuri/Assets/Prefab/Skill</code> 아래에 프리팹을 만들고, Code Builder는 해당 프리팹에 붙일
+    <code>MonsterUnitActor</code>, <code>EnemyUnitActor</code> 및 이후 필요한 바인딩 컴포넌트/API만 제공한다.
+  </div>
+
+  <h2>2. 전체 순서</h2>
+  <div class="flow">
+    <div class="step">
+      <strong>Phase1</strong>
+      데이터 그릇과 샘플 데이터 연결 검증
+    </div>
+    <div class="step">
+      <strong>Phase2</strong>
+      유닛 생성, 액터 바인딩, 테스트 씬 진입
+    </div>
+    <div class="step">
+      <strong>Phase3</strong>
+      타겟, 피해, 상태, 보호막 공통 서비스
+    </div>
+    <div class="step">
+      <strong>Phase4</strong>
+      스킬 런타임, 실행기, 최소 스킬 동작
+    </div>
+    <div class="step">
+      <strong>Phase5</strong>
+      학습 선택지, 자동 공격/자동 스킬, 몬스터별 확장
+    </div>
+    <div class="step">
+      <strong>Phase6</strong>
+      기존 Run/Data 흐름과 호환 브리지
+    </div>
+    <div class="step">
+      <strong>Phase7</strong>
+      전체 스킬 데이터 확장과 예외 스킬 처리
+    </div>
+    <div class="step">
+      <strong>Phase8</strong>
+      UI/씬 통합, 회귀 검증, 기존 전투 대체 판단
+    </div>
+  </div>
+
+  <h2>3. Phase별 작업</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Phase</th>
+        <th>상태</th>
+        <th>작업</th>
+        <th>완료 기준</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Phase1-A</td>
+        <td><span class="tag done">완료</span></td>
+        <td><code>Assets/Scripts2/InGame</code> 하위 최소 컴파일 가능 스크립트 껍데기 생성</td>
+        <td>Core, Units, Skills/Data 파일이 존재하고 런타임 어셈블리 빌드가 통과한다.</td>
+      </tr>
+      <tr>
+        <td>Phase1-B</td>
+        <td><span class="tag done">완료</span></td>
+        <td>Blueprint 스킬 데이터 구조 작성</td>
+        <td><code>SkillBlueprintSpecs.cs</code>와 타입별 <code>SkillData</code> 하위 클래스가 컴파일된다.</td>
+      </tr>
+      <tr>
+        <td>Phase1-C</td>
+        <td><span class="tag done">완료</span></td>
+        <td>기존 CSV/Data 흐름을 참조하는 <code>InGameSkillCatalog</code>와 <code>InGameSkillDefinitionMapper</code> 추가</td>
+        <td>기존 <code>SkillDefinition</code>의 <code>ariel-a</code>, <code>ariel-b</code>를 각각 <code>ProjectileSkillData</code>, <code>ShieldSkillData</code>로 조회 확인했다.</td>
+      </tr>
+      <tr>
+        <td>Phase1-D</td>
+        <td><span class="tag done">완료</span></td>
+        <td>Blueprint 데이터 검증 규칙 작성</td>
+        <td><code>InGameSkillDataValidator</code>와 에디터 메뉴가 중복 <code>SkillId</code>, 빈 ID, 캐릭터/슬롯 불일치, 필수 타이밍 값 누락을 감지한다.</td>
+      </tr>
+      <tr>
+        <td>Phase2-A</td>
+        <td><span class="tag done">완료</span></td>
+        <td>기존 Definition에서 유닛 공통 스탯만 추출해 <code>BaseUnitRuntimeModel</code> 계열 생성</td>
+        <td><code>UnitFactory</code>가 Eve 선택 몬스터를 <code>MonsterUnitRuntimeModel</code>, <code>stage1-swordsman</code> 테스트 적을 <code>EnemyUnitRuntimeModel</code>로 생성한다. 스킬/투사체 튜닝은 이후 스킬 구현 단계의 <code>SkillData</code> 매퍼로 분리한다.</td>
+      </tr>
+      <tr>
+        <td>Phase2-B</td>
+        <td><span class="tag next">대기</span></td>
+        <td>사용자 작성 프리팹에 <code>MonsterUnitActor</code>, <code>EnemyUnitActor</code> 모델 바인딩 최소 구현</td>
+        <td>프리팹은 코드로 생성하지 않는다. 사용자가 만든 Monster/Enemy 프리팹에 Actor 컴포넌트를 붙이고, 액터가 모델 ID, HP, 자동 공격 플래그를 바인딩해 인스펙터/로그에서 확인 가능하게 한다.</td>
+      </tr>
+      <tr>
+        <td>Phase2-C</td>
+        <td><span class="tag next">대기</span></td>
+        <td>InGame 테스트 씬 또는 테스트 부트스트랩 작성</td>
+        <td>기존 <code>RunSceneBootstrap</code>과 분리된 경로에서 선택 몬스터와 적을 스폰할 수 있다.</td>
+      </tr>
+      <tr>
+        <td>Phase3-A</td>
+        <td><span class="tag next">대기</span></td>
+        <td>타겟 레지스트리와 전투 대상 모델 작성</td>
+        <td>스킬 실행기가 유닛/적을 직접 찾지 않고 레지스트리에서 타겟 후보를 받는다.</td>
+      </tr>
+      <tr>
+        <td>Phase3-B</td>
+        <td><span class="tag next">대기</span></td>
+        <td>피해, 상태이상, 보호막 서비스 분리</td>
+        <td>피해 계산과 상태 적용이 액터/스킬 개별 클래스에 흩어지지 않는다.</td>
+      </tr>
+      <tr>
+        <td>Phase4-A</td>
+        <td><span class="tag next">대기</span></td>
+        <td><code>SkillRuntimeInstance</code> 작성</td>
+        <td>쿨다운, 탄창, 재장전, 지속시간 상태가 <code>SkillData</code>와 분리되어 런타임에 유지된다.</td>
+      </tr>
+      <tr>
+        <td>Phase4-B</td>
+        <td><span class="tag next">대기</span></td>
+        <td>스킬 실행기 인터페이스와 레지스트리 작성</td>
+        <td>Projectile, Beam, Zone, Buff, Shield, Passive 실행기가 같은 호출 계약을 가진다.</td>
+      </tr>
+      <tr>
+        <td>Phase4-C</td>
+        <td><span class="tag next">대기</span></td>
+        <td>최소 실행 스킬 2종 구현</td>
+        <td><code>eve-a</code> 투사체와 <code>ariel-b</code> 보호막이 샘플 Blueprint 데이터로 동작한다.</td>
+      </tr>
+      <tr>
+        <td>Phase5-A</td>
+        <td><span class="tag next">대기</span></td>
+        <td>유닛 상태의 learned choices 조회 연결</td>
+        <td>1P와 현현 유닛이 같은 <code>MonsterUnitActor</code> 경로에서 같은 선택지 조회 규칙을 쓴다.</td>
+      </tr>
+      <tr>
+        <td>Phase5-B</td>
+        <td><span class="tag next">대기</span></td>
+        <td>자동 공격/자동 스킬 토글 연결</td>
+        <td><code>UnitRuntimeModel.AutoAttackEnabled</code>, <code>AutoSkillEnabled</code>가 실제 실행 조건에 반영된다.</td>
+      </tr>
+      <tr>
+        <td>Phase6-A</td>
+        <td><span class="tag hold">보류</span></td>
+        <td>기존 <code>SkillDefinition</code> 호환 브리지 작성</td>
+        <td>기존 데이터로도 InGame 테스트가 가능하고, 새 Blueprint 데이터와 충돌하지 않는다.</td>
+      </tr>
+      <tr>
+        <td>Phase7-A</td>
+        <td><span class="tag hold">보류</span></td>
+        <td>전체 스킬 데이터 확장</td>
+        <td>5명 x 10개 스킬을 샘플 검증된 규칙으로 확장한다. Rin-D, Vega-E 같은 예외는 별도 Custom executor로 분리한다.</td>
+      </tr>
+      <tr>
+        <td>Phase8-A</td>
+        <td><span class="tag hold">보류</span></td>
+        <td>Run UI Flow 통합과 기존 전투 대체 판단</td>
+        <td>새 전투가 독립 테스트에서 안정화된 뒤 기존 <code>RunSceneBootstrap</code> 진입 경로와 연결한다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. 다음 Code Builder 작업 추천</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>1순위: Phase1-C</h3>
+      <p>
+        기존 <code>Assets/Scripts/Data</code> 로드 흐름을 원천으로 삼는 <code>InGameSkillCatalog</code> 또는
+        <code>SkillDefinition</code> -&gt; <code>SkillData</code> 매퍼를 만들고, 샘플 스킬 1~2개만 연결한다.
+        이 단계는 전투 로직 없이 데이터 참조와 변환만 검증하므로 구조 변경 비용이 작다.
+      </p>
+    </div>
+    <div class="card">
+      <h3>2순위: Phase1-D</h3>
+      <p>
+        데이터 검증기를 붙인다. 샘플 데이터가 잘못된 상태로 후속 Phase에 넘어가는 것을 막는다.
+      </p>
+    </div>
+    <div class="card">
+      <h3>3순위: Phase2-A</h3>
+      <p>
+        몬스터/적 정의를 <code>UnitRuntimeModel</code>로 매핑한다. 이때부터 유닛 생성 테스트가 가능해진다.
+      </p>
+    </div>
+    <div class="card">
+      <h3>보류: 전체 50개 데이터 작성</h3>
+      <p>
+        전체 데이터는 실행기와 검증 규칙이 확정된 뒤 작성한다. 지금 작성하면 구조 변경 시 데이터 수정 비용이 커진다.
+      </p>
+    </div>
+  </div>
+
+  <h2>5. 데이터 연결 원칙</h2>
+  <ul>
+    <li>테스트에는 데이터가 필요하므로 Phase1-C에서 기존 CSV/Data 기반 샘플 스킬 1~2개를 바로 연결한다.</li>
+    <li>CSV 파싱과 카탈로그 구성은 새로 만들지 않고 <code>PakuriCsvRuntimeData</code>, <code>GameDataCatalog</code>, <code>PakuriDataManager</code> 흐름을 재사용한다.</li>
+    <li>Phase1-C의 데이터 로딩 타이밍은 테스트 전용 <code>InGameTestDataManager.Awake()</code>다. 운영 흐름은 기존처럼 <code>MainMenuScene</code> / <code>RunStartContext</code> 데이터 전달을 유지한다.</li>
+    <li>전체 스킬 데이터는 Phase4-C의 최소 실행 스킬 검증 이후 확장한다.</li>
+    <li>기존 <code>SkillDefinition</code>은 버리지 않고 Phase6-A에서 호환 브리지 대상으로 둔다.</li>
+    <li><code>SkillEffectPrefab</code>과 <code>ProjectilePrefab</code>은 프레젠테이션/시각 자료로만 사용하고, 스킬 판정 로직을 프리팹에 숨기지 않는다.</li>
+    <li>Code Builder는 프리팹을 자동 생성하지 않는다. 사용자가 Unity Editor에서 프리팹을 만든 뒤, Code Builder가 제공한 Actor/바인딩 컴포넌트를 붙이는 흐름을 기본 계약으로 둔다.</li>
+    <li>선택지 효과는 유닛 상태의 learned choices를 실행 시점에 조회한다. 데이터 에셋이 런타임 선택 상태를 직접 보유하지 않는다.</li>
+  </ul>
+
+  <h2>6. Code Builder 인수 기준</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>다음 작업</th>
+        <th>수정 예상 파일</th>
+        <th>검증</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Phase1-C</td>
+        <td>
+          <code>Assets/Scripts2/InGame/Skills/Data/InGameSkillCatalog.cs</code><br>
+          <code>Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs</code>
+        </td>
+        <td>
+          런타임 빌드, Unity-MCP 리프레시/콘솔, 기존 <code>SkillDefinition</code>에서 샘플 ID 1~2개를 InGame 데이터 형태로 조회 확인.
+        </td>
+      </tr>
+      <tr>
+        <td>Phase1-D</td>
+        <td>
+          <code>Assets/Scripts2/InGame/Skills/Data/InGameSkillDataValidator.cs</code><br>
+          <code>Assets/Scripts2/InGame/Editor/InGameSkillDataValidationMenu.cs</code>
+        </td>
+        <td>
+          런타임/에디터 어셈블리 빌드와 에디터 메뉴 <code>Pakuri/InGame/Validate Skill Data</code>로 확인.
+        </td>
+      </tr>
+      <tr>
+        <td>Phase2-A</td>
+        <td>
+          <code>UnitFactory.cs</code>, <code>BaseUnitRuntimeModel.cs</code>, <code>MonsterUnitRuntimeModel.cs</code>, <code>EnemyUnitRuntimeModel.cs</code>, <code>UnitDefenseRuntime.cs</code>, <code>InGameTestDataManager.cs</code>
+        </td>
+        <td>
+          런타임/에디터 어셈블리 빌드와 Unity-MCP Editor 코드 실행으로 Eve <code>MonsterUnitRuntimeModel</code>과 <code>stage1-swordsman</code> <code>EnemyUnitRuntimeModel</code> 생성 확인.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</main>
+</body>
+</html>

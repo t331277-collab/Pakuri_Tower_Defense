@@ -1,0 +1,25 @@
+﻿using UnityEngine;
+
+namespace Pakuri.InGame
+{
+    [CreateAssetMenu(menuName = "Pakuri/InGame/Projectile Skill Data", fileName = "ProjectileSkillData")]
+    public sealed class ProjectileSkillData : SkillData
+    {
+        [Header("Projectile")]
+        public ProjectileBlueprintSpec Projectile = new ProjectileBlueprintSpec();
+
+        [Header("Damage")]
+        public SkillDamageSpec Damage = new SkillDamageSpec();
+        public StatusApplicationSpec OnHitStatus = new StatusApplicationSpec();
+
+        [Header("Consecutive Hit")]
+        public float ConsecutiveHitBonusRate;
+        public float ConsecutiveHitMax;
+
+        [Header("Impact Area")]
+        public bool HasImpactArea;
+        public AreaBlueprintSpec ImpactArea = new AreaBlueprintSpec();
+        public SkillDamageSpec ImpactDamage = new SkillDamageSpec();
+        public StatusApplicationSpec ImpactStatus = new StatusApplicationSpec();
+    }
+}

@@ -1,6 +1,6 @@
 # 이브 패시브 - 약점 분석
 
-> 드론 비컨 대응 패시브. 취약 대상을 아군 전체의 집중 공격 목표로 만든다.
+> 플라즈마 필드 대응 패시브. 취약 대상을 아군 전체의 집중 공격 목표로 만든다.
 
 ## 1. 기본 정보
 
@@ -8,8 +8,8 @@
 |---|---|
 | 패시브명 | 약점 분석 |
 | 슬롯 | J |
-| 대응 액티브 | 드론 비컨 |
-| 해금 조건 | 드론 비컨 습득 |
+| 대응 액티브 | 플라즈마 필드 |
+| 해금 조건 | 플라즈마 필드 습득 |
 
 ## 2. 기본 효과
 
@@ -18,7 +18,7 @@
 | 모든 아군이 취약 대상에게 주는 피해 | +12% |
 | 취약 대상의 모든 저항 | -8 |
 
-드론 비컨은 [`e-drone-beacon.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F2.Monster%2Feve%2Fskill%2Fe-drone-beacon) 참고
+플라즈마 필드는 [`e-drone-beacon.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F2.Monster%2Feve%2Fskill%2Fe-drone-beacon) 참고
 
 ## 3. 특성 3종
 
@@ -26,4 +26,4 @@
 |---|---|
 | 특성 1 | 모든 아군이 취약 대상에게 주는 피해 +6% |
 | 특성 2 | 취약 대상의 모든 저항 추가 -4 |
-| 특성 3 | 드론 비컨이 취약 5스택 이상 대상에게 주는 피해 +75% |
+| 특성 3 | 플라즈마 필드가 취약 5스택 이상 대상에게 주는 피해 +75% |

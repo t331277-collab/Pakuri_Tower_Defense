@@ -3,6 +3,52 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-14 Board Archive Expansion
+
+### Task title
+
+Archive user-specified common combat, projectile, CSV, monster, and refactoring board files.
+
+### Goals
+
+- Move user-specified board files and the full refactoring board folder under `boards/ARCHIVE`.
+- Preserve all board history instead of deleting it.
+- Update active routing so future work does not read moved files as active boards.
+
+### Constraints
+
+- Role Owner is Designer.
+- Preserve files by moving them into `boards/ARCHIVE`.
+- Verify resolved move targets stay under the workspace archive directory before moving.
+- Do not change runtime code, Unity scenes, or gameplay assets.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Use `MDTREE.md` for active routing after the archive expansion.
+- Consult the newly archived files only when older history is needed.
+
+### Evidence
+
+- Moved `boards/COMBAT/COMBAT_BLACKBOARD.md` to `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`.
+- Moved `boards/COMBAT/PROJECTILE_BLACKBOARD.md` to `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`.
+- Moved `boards/DATA/CSV_BLACKBOARD.md` to `boards/ARCHIVE/CSV_BLACKBOARD_ARCHIVE_2026-05-14.md`.
+- Moved `boards/MON/MON_BLACKBOARD.md` to `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`.
+- Moved `boards/REFACTORING` to `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14`.
+- Updated `MDTREE.md` and `BLACKBOARD.md` active routing/index references.
+- Updated active monster board references that previously pointed to `boards/MON/MON_BLACKBOARD.md`.
+
+### History
+
+- 2026-05-14: User explicitly requested judging and archiving `COMBAT_BLACKBOARD.md`, `PROJECTILE_BLACKBOARD.md`, `CSV_BLACKBOARD.md`, `MON_BLACKBOARD.md`, and moving the whole `boards/REFACTORING` folder into `boards/ARCHIVE`.
+
 ## Task: 2026-05-12 MON Detail Board Compaction
 
 ### Task title
@@ -33,7 +79,7 @@ Implemented and locally verified.
 
 ### Next Actions
 
-- Future MON work should read `boards/MON/MON_BLACKBOARD.md` and only the relevant active monster file selected by `MDTREE.md`.
+- Future MON work should read only the relevant active monster file selected by `MDTREE.md`; common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - Older MON task history is available in `boards/ARCHIVE/MON_DETAIL_ARCHIVE_2026-05-12.md`.
 
 ### Evidence
@@ -230,7 +276,7 @@ Implemented and locally verified.
 ### Evidence
 
 - `Get-ChildItem -Path boards -Recurse -File -Filter *BLACKBOARD.md` found 16 active `*BLACKBOARD.md` files outside `boards/ARCHIVE/`.
-- Reparse summary after deduplication showed active files retain only their latest dated day: for example `boards/COMBAT/COMBAT_BLACKBOARD.md` keeps four `2026-05-10` blocks, `boards/REPORT/REPORT_BLACKBOARD.md` keeps one `2026-05-12` block, and undated-only files keep no task blocks.
+- Reparse summary after deduplication showed active files retain only their latest dated day: for example `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md` keeps four `2026-05-10` blocks, `boards/REPORT/REPORT_BLACKBOARD.md` keeps one `2026-05-12` block, and undated-only files keep no task blocks.
 - Created or rewrote `boards/ARCHIVE/BLACKBOARD_2026-04-20_to_2026-04-26_ARCHIVE_2026-05-12.md`.
 - Created or rewrote `boards/ARCHIVE/BLACKBOARD_2026-04-27_to_2026-05-03_ARCHIVE_2026-05-12.md`.
 - Created or rewrote `boards/ARCHIVE/BLACKBOARD_2026-05-04_to_2026-05-10_ARCHIVE_2026-05-12.md`.
