@@ -32,8 +32,15 @@ Completed as a design roadmap.
 
 ### Next Actions
 
-- Implement new CSV schema and loader before changing prefab or skill execution work to depend on `Assets/CSVData`.
+- CSVData Phase0~2 header and minimum sample rows are implemented in `Assets/CSVData`; continue with the new CSV loader and mapping work before skill execution depends on unit data.
+- Implement the new CSV loader and unit model mapping around Phase2-B / Phase2-C before skill execution depends on unit data.
+- Implement `SkillData.csv` to `SkillData` subclass mapping before InGame Phase4-A through Phase4-C skill execution.
 - Remove `Scripts2/InGame` dependencies on legacy `Pakuri.Data` types before claiming the new CSV path is authoritative.
+
+### Phase0~2 Implementation Update
+
+- `Pakuri/Assets/CSVData/MonsterStat.csv`, `EnemyStat.csv`, and `SkillData.csv` now contain Phase0~2 headers and minimum rows for Eve, Ariel, `stage1-swordsman`, `eve-a`, and `ariel-b`.
+- `Import-Csv` checks over all three CSVData files parsed the new rows and returned expected IDs and key values.
 
 ### Evidence
 
@@ -42,10 +49,13 @@ Completed as a design roadmap.
 - `Assets/Legacy/CSVdata`, `Assets/Legacy/Data`, and `Assets/Legacy/Scripts` exist.
 - `Assembly-CSharp.csproj` still includes `Assets\Legacy\Scripts\...` compile items.
 - `Scripts2/InGame` still references legacy `Pakuri.Data`, `MonsterDefinition`, `SkillDefinition`, `PakuriCsvRuntimeData`, and `PakuriDataManager` in inspected search results.
+- `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html` now includes section `2-1. CSVData 파이프라인 삽입 타이밍`, placing CSVData Phase0~2 before deep Phase2-B binding, CSVData Phase3~4 around Phase2-B/Phase2-C, CSVData Phase5 before Phase4 skill execution, and Legacy deactivation before Phase8-A Run integration.
 
 ### History
 
 - 2026-05-14: User proposed making the new `Assets/CSVData` files the future runtime source and using legacy files only as reference.
+- 2026-05-14: Designer amended the InGame build roadmap to show exactly when CSVData pipeline work should be inserted into the InGame implementation order.
+- 2026-05-14: Code Builder implemented CSVData Phase0~2 headers and minimum seed rows.
 
 ## Task: 2026-05-14 Eve-E Field Data Implementation
 

@@ -4,6 +4,94 @@
 - This file keeps only task blocks dated `2026-05-05` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/UI/UI_BLACKBOARD.md`.
 
+## Task: 2026-05-14 NewMainMenu UIManager Flow Implementation
+
+### Task title
+
+Implement logic-only `NewMainMenu` UI flow binding.
+
+### Goals
+
+- Keep user-authored `NewMainMenu` UI layout untouched.
+- Attach `UIManager` to `NewMainMenu/Manager`.
+- Connect `Intro` -> `MainMenuUI` -> `MosterSelectUI`.
+- Store the selected monster ID and load `Assets/Scenes/NewScene/NewRunScene.unity`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not restyle or regenerate UI objects.
+- Code Reviewer was explicitly skipped by the user for this task.
+- Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies Play Mode click flow: Intro `GameStart`, `RunBtn`, monster select, monster-select `GameStart`.
+- Next Code Builder task should expand prefab mapping beyond Eve when Ariel/Sein/Vega/Rin unit prefabs exist.
+
+### Evidence
+
+- Updated `Pakuri/Assets/Scripts2/UI/UIManager.cs`.
+- `UIManager` resolves inactive scene UI by name and binds `Intro`, `MainMenuUI`, `MosterSelectUI`, `RunBtn`, character buttons, and `GameStart`.
+- Unity-MCP loaded `Assets/Scenes/NewScene/NewMainMenu.unity` and read-only code returned `manager=True|uiManager=True|scene=Assets/Scenes/NewScene/NewMainMenu.unity`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-14: User explicitly assigned Code Builder to connect selected monster data from NewMainMenu to NewRunScene and skip Code Reviewer.
+
+## Task: 2026-05-14 NewMainMenu UIManager Flow Handoff
+
+### Task title
+
+Plan logic-only binding for user-authored `NewMainMenu` UI.
+
+### Goals
+
+- Preserve the user-authored UI objects in `Pakuri/Assets/Scenes/NewScene/NewMainMenu.unity`.
+- Implement logic in `Pakuri/Assets/Scripts2/UI/UIManager.cs` instead of generating or restyling UI.
+- Bind Intro -> MainMenuUI -> MosterSelectUI flow and monster selection buttons to Run scene loading.
+
+### Constraints
+
+- Role Owner is Designer.
+- Do not change UI layout, styling, or object hierarchy for this design handoff.
+- Actual implementation should be a Code Builder task.
+- Scene evidence currently uses `MosterSelectUI`, not `MonsterSelectUI`; Code Builder should bind the inspected object name unless the user renames it.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Ready for Code Builder handoff.
+
+### Next Actions
+
+- Code Builder should replace the empty `UIManager.cs` shell with binding logic and attach it to `Manager` in `NewMainMenu`.
+- Code Builder should keep all panel references serialized and also support name-based fallback for `Intro`, `MainMenuUI`, `MosterSelectUI`, `RunBtn`, character buttons, and `GameStart`.
+- User should verify the final click flow in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/UI/UIManager.cs` exists and is currently an empty `MonoBehaviour` shell.
+- `Pakuri/Assets/Scenes/NewScene/NewMainMenu.unity` contains `Manager`, `Intro`, `MainMenuUI`, `MosterSelectUI`, `RunBtn`, two `GameStart` objects, and character buttons `Ariel`, `Eve`, `Sein`, `Vega`, and `Rin`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` contains `BG`, `1PSpawnPoint` through `5PSpawnPoint`, `GameManager`, and `Nexus`.
+- Existing legacy `MainMenuFlowController.StartRun(...)` prepares `RunStartContext` and calls `SceneManager.LoadScene(...)`.
+
+### History
+
+- 2026-05-14: User described the desired NewMainMenu flow and asked when to apply the UIManager logic connection relative to the next work.
+
 ## Task: 2026-05-14 Pre-2026-05-12 UI Board Archive Cleanup
 
 ### Task title

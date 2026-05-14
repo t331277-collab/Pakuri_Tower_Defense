@@ -4,6 +4,182 @@
 - This file keeps only task blocks dated `2026-05-08` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
 
+## Task: 2026-05-14 Five Monster Prefab HP Bar Asset Binding
+
+### Task title
+
+Record five monster prefab HP bar sprite and fallback catalog binding.
+
+### Goals
+
+- Give `MonsterHpBar` SpriteRenderers a real sprite asset so they are visible.
+- Store all five player-unit prefab references on the NewRunScene entry manager.
+- Use an assigned `GameDataCatalog` fallback when CSV runtime source loading is unavailable.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV row or monster definition value changes.
+- No Play Mode verification from Codex.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Keep `MonsterHpBarPixel.png` as a shared placeholder presentation asset until final UI art is available.
+- If CSV runtime source import is restored, reconfirm the fallback path still resolves the same five monster IDs.
+
+### Evidence
+
+- Added `Pakuri/Assets/Prefab/Monster/MonsterHpBarPixel.png` with sprite importer metadata.
+- `Select-String` over the five prefabs found `Background`, `Fill`, and `Shield` SpriteRenderers with non-empty `m_Sprite` references, sorting orders 34/35/36, and visible HP/shield colors.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now references `Assets/Legacy/Data/GameData/GameDataCatalog.asset` as `fallbackCatalog`.
+- Unity-MCP verification returned `modelOk=True` and exact model IDs for `ariel`, `eve`, `sein`, `vega`, and `rin`.
+
+### History
+
+- 2026-05-14: User reported `MonsterHpBar` was not visible and asked to verify all five prefab bindings.
+
+## Task: 2026-05-14 NewRunScene Phase2-B Runtime Model Binding
+
+### Task title
+
+Record data and asset ownership for selected monster actor/model binding.
+
+### Goals
+
+- Keep selected monster stats and learned state sourced from the existing CSV/Data runtime catalog and `RunSession`.
+- Keep unit prefabs as presentation/scene assets.
+- Bind the runtime model to the prefab actor after instantiation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV rows, ScriptableObject data assets, or prefab contents were edited in this slice.
+- `MonsterUnitRuntimeModel` is not a prefab-assignable `MonoBehaviour`; it is created from runtime data and passed to `MonsterUnitActor`.
+- Code Reviewer was not run because the user did not explicitly request Reviewer execution for this slice.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User assigns Ariel/Sein/Vega/Rin prefab fields on `NewRunSceneEntryManager` manually, as requested.
+- Later data work should continue using `PakuriCsvRuntimeData.ResolveCatalogOrFallback(...)` for selected monster definitions.
+- Combat HP/shield mutation should update the bound runtime model, then refresh the actor debug view.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` resolves `GameDataCatalog`, `MonsterDefinition`, `RunSession`, and `MonsterUnitRuntimeModel` before prefab actor initialization.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs` stores the `MonsterUnitRuntimeModel` and reads `Identity`, `Stats`, and `Resources` for debug display.
+- Unity-MCP editor code execution returned `modelMonster=eve|modelHp=220|learnedA=1` while inspecting `Assets/Scenes/NewScene/NewRunScene.unity` and `Assets/Prefab/Monster/Eve_Unit.prefab`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-14: User asked to start Phase2-B after adding Eve prefab debug HP/name children and `MonsterUnitActor`.
+
+## Task: 2026-05-14 Eve Unit Prefab Entry Binding
+
+### Task title
+
+Bind the existing Eve unit prefab to the NewRunScene entry manager.
+
+### Goals
+
+- Use the current `Assets/Prefab/Monster/Eve_Unit.prefab` as the first NewRunScene 1P prefab.
+- Store the binding on the scene manager component instead of hardcoding an asset load path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No prefab content editing, model binding, combat behavior, or Play Mode verification.
+- Code Reviewer was explicitly skipped by the user.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Add prefab bindings for Ariel, Sein, Vega, and Rin after their prefabs exist under `Assets/Prefab/Monster`.
+- Bind spawned prefabs to InGame actor/model scripts in the next implementation slice.
+
+### Evidence
+
+- `Get-ChildItem Pakuri\Assets\Prefab\Monster` found `Eve_Unit.prefab`.
+- `Pakuri/Assets/Prefab/Monster/Eve_Unit.prefab.meta` has prefab GUID `768bb9d217c3cc64a84cd7059fe5e154`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` references that prefab GUID in `NewRunSceneEntryManager.eveUnitPrefab`.
+- Unity-MCP read-only component inspection returned `prefab=Eve_Unit`.
+
+### History
+
+- 2026-05-14: User requested spawning the existing Eve shell prefab at `1PSpawnPoint` during NewRunScene entry.
+
+## Task: 2026-05-14 CSVData Phase0-2 Seed Rows
+
+### Task title
+
+Implement CSVData Phase0~2 headers and minimum seed rows.
+
+### Goals
+
+- Define the first schema headers for `MonsterStat.csv`, `EnemyStat.csv`, and `SkillData.csv`.
+- Add minimum seed rows for Eve, Ariel, `stage1-swordsman`, `eve-a`, and `ariel-b`.
+- Preserve evidence for values that come from reference documents and values copied from current project data because the reference page does not list them.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No C# loader, ScriptableObject asset, prefab, scene, or Play Mode changes.
+- Values must be traceable to inspected reference files, inspected current project data, or explicit `source_notes` in the CSV rows.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and CSV parsing verified.
+
+### Next Actions
+
+- Implement the CSVData loader and unit/skill mapping in the later CSVData Phase3~5 slices.
+- Before making CSVData authoritative, remove or isolate `Scripts2/InGame` references to legacy `Pakuri.Data` types.
+- Revisit monster base stat source ownership because Eve and Ariel reference pages do not list base HP values; the current seed rows mark those values as current project data.
+
+### Evidence
+
+- Updated `Pakuri/Assets/CSVData/MonsterStat.csv` with Eve and Ariel rows.
+- Updated `Pakuri/Assets/CSVData/EnemyStat.csv` with `stage1-swordsman`.
+- Updated `Pakuri/Assets/CSVData/SkillData.csv` with `eve-a` and `ariel-b`.
+- `Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md` provides `eve-a` damage, coefficient, projectile, magazine, reload, and status values.
+- `Pakuri/reference/2.Monster/ariel/skill/b-radiant-shield.md` provides `ariel-b` shield, coefficient, duration, cooldown, target, and refresh values.
+- `Pakuri/reference/5.enemy/stage-1-enemies.md` provides `stage1-swordsman` stat, defense, active skill, and passive values.
+- `Pakuri/reference/3.combat/combat-stat-system.md` and `combat-attribute-and-damage-system.md` provide default attack/spell and critical baseline context.
+- `Import-Csv Pakuri\Assets\CSVData\MonsterStat.csv` returned rows for `eve` and `ariel`.
+- `Import-Csv Pakuri\Assets\CSVData\EnemyStat.csv` returned `stage1-swordsman` with HP `100`, attack `12`, physical defense `5`, and active skill `베기`.
+- `Import-Csv Pakuri\Assets\CSVData\SkillData.csv` returned `eve-a` as `ProjectileSkillData` and `ariel-b` as `ShieldSkillData`.
+
+### History
+
+- 2026-05-14: User explicitly assigned Code Builder to proceed with CSVData Phase0~2 and use `reference/2.Monster`, `reference/5.enemy`, and `reference/3.combat` for minimum sample names and values.
+
 ## Task: 2026-05-14 Eve-E Field Data Implementation
 
 ### Task title

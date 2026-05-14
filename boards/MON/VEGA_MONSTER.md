@@ -16,6 +16,46 @@ At the start of new work, use this active Vega file. Common monster history is a
 
 Vega active skills A-E and passive skills F-J are implemented and locally validated.
 
+## Task: 2026-05-14 Vega NewRunScene Prefab Binding And HP Bar
+
+### Task title
+
+Confirm Vega prefab actor/model binding and HP bar sprite visibility.
+
+### Goals
+
+- Bind `Vega_Unit` through `NewRunSceneEntryManager`.
+- Verify Vega creates an exact `vega` runtime model and initializes `MonsterUnitActor`.
+- Make Vega's `MonsterHpBar` render through the shared HP bar pixel sprite.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Vega combat execution or Play Mode verification in this slice.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies Vega selection and HP bar visibility in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` references `Vega_Unit.prefab` in `vegaUnitPrefab`.
+- Unity-MCP verification returned `vega:prefab=Vega_Unit|modelOk=True|model=vega|actor=True|actorModel=True|hpText=HP 225/225|bgSprite=True|fillSprite=True|shieldSprite=True`.
+- 2026-05-14 follow-up: `MonsterUnitActor` now scales HP fill against `Background.localScale.x`; Unity-MCP editor code returned `Vega_Unit:bgX=20|beforeFillX=20|fullFillX=20|halfFillX=10`.
+
+### History
+
+- 2026-05-14: User asked to verify all five selectable prefab bindings and fix invisible `MonsterHpBar`.
+- 2026-05-14: User reported `HpFill` was forced to `1` on scene entry; Builder changed fill scaling to use the background width.
+
 ## Task: 2026-05-13 Vega Battlefield Facade Registration
 
 ### Task title

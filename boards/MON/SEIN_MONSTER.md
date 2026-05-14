@@ -16,6 +16,46 @@ At the start of new work, use this active Sein file. Common monster history is a
 
 Not populated yet.
 
+## Task: 2026-05-14 Sein NewRunScene Prefab Binding And HP Bar
+
+### Task title
+
+Confirm Sein prefab actor/model binding and HP bar sprite visibility.
+
+### Goals
+
+- Bind `Sein_Unit` through `NewRunSceneEntryManager`.
+- Verify Sein creates an exact `sein` runtime model and initializes `MonsterUnitActor`.
+- Make Sein's `MonsterHpBar` render through the shared HP bar pixel sprite.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Sein combat execution or Play Mode verification in this slice.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies Sein selection and HP bar visibility in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` references `Sein_Unit.prefab` in `seinUnitPrefab`.
+- Unity-MCP verification returned `sein:prefab=Sein_Unit|modelOk=True|model=sein|actor=True|actorModel=True|hpText=HP 210/210|bgSprite=True|fillSprite=True|shieldSprite=True`.
+- 2026-05-14 follow-up: `MonsterUnitActor` now scales HP fill against `Background.localScale.x`; Unity-MCP editor code returned `Sein_Unit:bgX=20|beforeFillX=20|fullFillX=20|halfFillX=10`.
+
+### History
+
+- 2026-05-14: User asked to verify all five selectable prefab bindings and fix invisible `MonsterHpBar`.
+- 2026-05-14: User reported `HpFill` was forced to `1` on scene entry; Builder changed fill scaling to use the background width.
+
 ## Task: 2026-05-13 Sein Battlefield Facade Registration
 
 ### Task title

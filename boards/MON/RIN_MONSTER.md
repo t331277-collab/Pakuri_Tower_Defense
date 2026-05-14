@@ -16,6 +16,46 @@ At the start of new work, use this active Rin file. Common monster history is ar
 
 Not populated yet.
 
+## Task: 2026-05-14 Rin NewRunScene Prefab Binding And HP Bar
+
+### Task title
+
+Confirm Rin prefab actor/model binding and HP bar sprite visibility.
+
+### Goals
+
+- Bind `Rin_Unit` through `NewRunSceneEntryManager`.
+- Verify Rin creates an exact `rin` runtime model and initializes `MonsterUnitActor`.
+- Make Rin's `MonsterHpBar` render through the shared HP bar pixel sprite.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Rin combat execution or Play Mode verification in this slice.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies Rin selection and HP bar visibility in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` references `Rin_Unit.prefab` in `rinUnitPrefab`.
+- Unity-MCP verification returned `rin:prefab=Rin_Unit|modelOk=True|model=rin|actor=True|actorModel=True|hpText=HP 260/260|bgSprite=True|fillSprite=True|shieldSprite=True`.
+- 2026-05-14 follow-up: `MonsterUnitActor` now scales HP fill against `Background.localScale.x`; Unity-MCP editor code returned `Rin_Unit:bgX=20|beforeFillX=20|fullFillX=20|halfFillX=10`.
+
+### History
+
+- 2026-05-14: User asked to verify all five selectable prefab bindings and fix invisible `MonsterHpBar`.
+- 2026-05-14: User reported `HpFill` was forced to `1` on scene entry; Builder changed fill scaling to use the background width.
+
 ## Task: 2026-05-13 Rin Battlefield Facade Registration
 
 ### Task title

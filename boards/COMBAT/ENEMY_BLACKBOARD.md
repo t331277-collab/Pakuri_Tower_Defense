@@ -11,6 +11,45 @@ When doing related work, follow MDTREE.md routing and update this file together 
 - Existing task blocks were moved to `boards/ARCHIVE/BLACKBOARD_UNDATED_ARCHIVE_2026-05-12.md` on 2026-05-12.
 - Source file: `boards/COMBAT/ENEMY_BLACKBOARD.md`.
 
+## Task: 2026-05-14 Stage1 Swordsman CSVData Phase0-2 Seed Row
+
+### Task title
+
+Record `stage1-swordsman` row added to the new CSVData enemy file.
+
+### Goals
+
+- Seed the first enemy row in `EnemyStat.csv`.
+- Preserve stage-one swordsman stats, defenses, active skill, and passive summary from the inspected enemy reference.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No enemy runtime behavior, prefab, scene, or Play Mode changes.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and CSV parsing verified.
+
+### Next Actions
+
+- Later CSVData mapping should read `stage1-swordsman` from `EnemyStat.csv`.
+- Enemy prefab binding remains a later InGame actor/scene task.
+
+### Evidence
+
+- `Pakuri/Assets/CSVData/EnemyStat.csv` now contains `stage1-swordsman`.
+- `Pakuri/reference/5.enemy/stage-1-enemies.md` provides the inspected HP 100, attack 12, spell 0, move speed 1.00, physical defense 5, elemental defenses 2, active skill `베기`, cooldown 2.0, coefficient 100%, and passive `검술 숙련`.
+- `Import-Csv Pakuri\Assets\CSVData\EnemyStat.csv` returned `stage1-swordsman` with HP `100`, attack `12`, physical defense `5`, and active skill `베기`.
+
+### History
+
+- 2026-05-14: Code Builder added the stage-one swordsman seed row as part of CSVData Phase0~2.
+
 ## Task: 2026-05-13 Phase 4 Enemy Simulation Handoff
 
 ### Task title

@@ -4,6 +4,97 @@
 - This file keeps active report task blocks after the 2026-05-12 archive pass; newer report tasks may be appended above older retained context.
 - Source file: `boards/REPORT/REPORT_BLACKBOARD.md`.
 
+## Task: 2026-05-14 InGame Roadmap MonsterHpBar Scale Amendment
+
+### Task title
+
+Reflect user-authored `MonsterHpBar` Scale ownership in the InGame build roadmap.
+
+### Goals
+
+- Record that the visible `MonsterHpBar` size is controlled by the user's prefab Transform values, not by Code Builder runtime logic.
+- Update Phase2-B wording so Code Builder preserves user-authored HP bar Scale while continuing Actor/Model binding work.
+- Keep the report evidence-based against inspected prefab YAML and the existing roadmap.
+
+### Constraints
+
+- Role Owner is Designer.
+- No C# implementation, scene edit, prefab edit, or Play Mode verification in this task.
+- Do not claim visual success beyond inspected prefab YAML values.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as an HTML report amendment.
+
+### Next Actions
+
+- Future Code Builder work must not reset `MonsterHpBar` Transform Scale while updating HP ratio/text logic.
+- User verifies the visual result in Unity Play Mode or Scene View.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html`.
+- `Select-String` over `Pakuri/Assets/Prefab/Monster/Ariel_Unit.prefab`, `Eve_Unit.prefab`, `Sein_Unit.prefab`, `Vega_Unit.prefab`, and `Rin_Unit.prefab` found `MonsterHpBar` root scales around `{x: 3.3, y: 1.7, z: 1.35}`.
+- The same prefab search found `Background` and `Fill` scales of `{x: 20, y: 2.5, z: 1}` and sprite renderer sorting orders `34`, `35`, and `36`.
+- The roadmap now states that `MonsterHpBar` position, Scale, visible size, and child SpriteRenderer layout are user-authored prefab responsibility, while runtime code should only update HP ratio/text.
+
+### History
+
+- 2026-05-14: User said they directly modified the Scale values and asked to update `2026-05-14-combat-v2-build-roadmap.html`.
+
+## Task: 2026-05-14 InGame Roadmap CSVData Timing Amendment
+
+### Task title
+
+Reflect CSVData pipeline timing in the InGame build roadmap report.
+
+### Goals
+
+- Add the timing relationship between `2026-05-14-csvdata-transition-roadmap.html` and `2026-05-14-combat-v2-build-roadmap.html`.
+- Make clear that CSVData schema/sample rows should be fixed before deeper Phase2-B prefab binding.
+- Make clear that the new CSV loader/unit mapping should happen around Phase2-B/Phase2-C and that `SkillData.csv` mapping is required before Phase4 skill execution.
+
+### Constraints
+
+- Role Owner is Designer.
+- No C# implementation, CSV data entry, scene edits, prefab edits, or Play Mode verification in this task.
+- Claims must be based on inspected HTML reports, current CSV file length checks, and current `Scripts2/InGame` dependency search results.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as an HTML report amendment.
+
+### Next Actions
+
+- CSVData Phase0~2 header/schema and minimum sample rows are implemented; Code Builder should proceed toward Phase2-B actor binding while keeping bindings ID-based.
+- Follow Phase2-B with CSVData Phase3~5 loader, unit mapping, and `SkillData.csv` mapping before Phase4 skill execution.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html`.
+- Added section `2-1. CSVData 파이프라인 삽입 타이밍`.
+- Updated section `4. 다음 Code Builder 작업 추천` so the next recommendation is CSVData Phase0~2, then Phase2-B, then CSVData Phase3~4, with CSVData Phase5 required before Phase4.
+- Updated section `5. 데이터 연결 원칙` to state Phase1-C, Phase1-D, and Phase2-A are completed bridge validations and the CSVData transition is now inserted between later InGame phases.
+- Updated section `6. Code Builder 인수 기준` to list CSVData Phase0~2, Phase2-B, and CSVData Phase3~5 acceptance criteria.
+- `Get-Item Pakuri/Assets/CSVData/EnemyStat.csv, MonsterStat.csv, SkillData.csv` returned all three files with length `0`.
+- `Get-ChildItem Pakuri/Assets/Scripts2/InGame -Recurse -File -Filter *.cs | Select-String -Pattern "PakuriCsvRuntimeData|PakuriDataManager|MonsterDefinition|EnemyDefinition|SkillDefinition|Pakuri\.Data"` found current InGame legacy data dependencies.
+- 2026-05-14 Code Builder follow-up: `Pakuri/Assets/CSVData/MonsterStat.csv`, `EnemyStat.csv`, and `SkillData.csv` now contain Phase0~2 headers and minimum rows.
+- `Import-Csv` over the three CSVData files returned Eve/Ariel monster rows, `stage1-swordsman`, `eve-a`, and `ariel-b`.
+
+### History
+
+- 2026-05-14: User asked how to time the CSVData pipeline work against the existing InGame build roadmap.
+- 2026-05-14: User asked to reflect that timing in `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html`; Designer amended the HTML report and recorded the evidence.
+- 2026-05-14: Code Builder implemented the CSVData Phase0~2 seed files referenced by this roadmap amendment.
+
 ## Task: 2026-05-14 CSVData Source Transition Roadmap HTML
 
 ### Task title

@@ -12,6 +12,88 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-05-14 Ariel NewRunScene Prefab Binding And HP Bar
+
+### Task title
+
+Confirm Ariel prefab actor/model binding and HP bar sprite visibility.
+
+### Goals
+
+- Bind `Ariel_Unit` through `NewRunSceneEntryManager`.
+- Verify Ariel creates an exact `ariel` runtime model and initializes `MonsterUnitActor`.
+- Make Ariel's `MonsterHpBar` render through the shared HP bar pixel sprite.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Ariel combat execution or Play Mode verification in this slice.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies Ariel selection and HP bar visibility in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` references `Ariel_Unit.prefab` in `arielUnitPrefab`.
+- Unity-MCP verification returned `ariel:prefab=Ariel_Unit|modelOk=True|model=ariel|actor=True|actorModel=True|hpText=HP 240/240|bgSprite=True|fillSprite=True|shieldSprite=True`.
+- 2026-05-14 follow-up: `MonsterUnitActor` now scales HP fill against `Background.localScale.x`; Unity-MCP editor code returned `Ariel_Unit:bgX=20|beforeFillX=20|fullFillX=20|halfFillX=10`.
+
+### History
+
+- 2026-05-14: User asked to verify all five selectable prefab bindings and fix invisible `MonsterHpBar`.
+- 2026-05-14: User reported `HpFill` was forced to `1` on scene entry; Builder changed fill scaling to use the background width.
+
+## Task: 2026-05-14 Ariel CSVData Phase0-2 Seed Rows
+
+### Task title
+
+Record Ariel rows added to the new CSVData files.
+
+### Goals
+
+- Seed Ariel identity/stat data in `MonsterStat.csv` so the shield sample skill has an owner row.
+- Seed Ariel-B Radiant Shield in `SkillData.csv`.
+- Preserve the no-damage shield attribute distinction in CSV fields.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Ariel runtime behavior, prefab, scene, or Play Mode changes.
+- `ariel-b` stores `skill_element` as Holy and `damage_element` as None because the inspected reference says the shield has no damage attribute.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and CSV parsing verified.
+
+### Next Actions
+
+- Later CSVData mapping should handle `damage_element=None` for non-damage support skills.
+- Reconfirm Ariel base HP ownership before CSVData becomes the authoritative source because `ariel-tower.md` does not list HP.
+
+### Evidence
+
+- `Pakuri/Assets/CSVData/MonsterStat.csv` now contains the `ariel` row with current project stat values and source notes.
+- `Pakuri/Assets/CSVData/SkillData.csv` now contains `ariel-b` as `ShieldSkillData`.
+- `Pakuri/reference/2.Monster/ariel/skill/b-radiant-shield.md` provides shield 35, spell coefficient 1.4, duration 5.0, cooldown 9.0, all-allies targeting, and highest-value refresh.
+- `Import-Csv Pakuri\Assets\CSVData\SkillData.csv` returned `ariel-b` with `damage_element` None and `shield_base` 35.
+
+### History
+
+- 2026-05-14: Code Builder added Ariel seed data as part of CSVData Phase0~2.
+
 ## Task: 2026-05-13 Ariel Battlefield Facade Registration
 
 ### Task title

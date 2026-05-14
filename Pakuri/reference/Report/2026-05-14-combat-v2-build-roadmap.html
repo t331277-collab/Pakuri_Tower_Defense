@@ -243,12 +243,33 @@
     InGame에는 기존 <code>SkillDefinition</code>을 새 <code>SkillData</code> 계열로 해석하는 얇은 매퍼 또는 브리지만 둔다.
   </div>
 
+  <div class="note warning">
+    <strong>2026-05-14 CSVData 전환 반영:</strong>
+    <code>Pakuri/reference/Report/2026-05-14-csvdata-transition-roadmap.html</code>의 새 원본 전환 계획은
+    이 InGame 로드맵을 대체하지 않고 중간에 끼워 넣는다. 현재 확인된 상태에서
+    <code>Pakuri/Assets/CSVData/EnemyStat.csv</code>, <code>MonsterStat.csv</code>, <code>SkillData.csv</code>는 존재하지만
+    모두 0 byte이고, <code>Assets/Scripts2/InGame</code>은 아직
+    <code>PakuriCsvRuntimeData</code>, <code>PakuriDataManager</code>, <code>MonsterDefinition</code>,
+    <code>EnemyDefinition</code>, <code>SkillDefinition</code>을 참조한다. 따라서 다음 구현은
+    Phase2-B 프리팹 바인딩을 깊게 진행하기 전에 CSVData 스키마와 최소 샘플 행을 먼저 고정해야 한다.
+  </div>
+
   <div class="note">
     <strong>Prefab 작성 결정:</strong>
     Code Builder는 유닛/적/스킬 프리팹을 코드로 직접 생성하지 않는다. 사용자가 Unity Editor에서
     <code>Pakuri/Assets/Prefab/Monster</code>, <code>Pakuri/Assets/Prefab/Enemy</code>,
     <code>Pakuri/Assets/Prefab/Skill</code> 아래에 프리팹을 만들고, Code Builder는 해당 프리팹에 붙일
     <code>MonsterUnitActor</code>, <code>EnemyUnitActor</code> 및 이후 필요한 바인딩 컴포넌트/API만 제공한다.
+  </div>
+
+  <div class="note">
+    <strong>2026-05-14 MonsterHpBar Scale 결정:</strong>
+    <code>Ariel_Unit.prefab</code>, <code>Eve_Unit.prefab</code>, <code>Sein_Unit.prefab</code>,
+    <code>Vega_Unit.prefab</code>, <code>Rin_Unit.prefab</code>의 <code>MonsterHpBar</code> 시각 크기는
+    사용자가 Unity Editor에서 직접 조정한 프리팹 Transform 값을 기준으로 한다. 현재 확인된 YAML 기준으로
+    <code>MonsterHpBar</code> 루트는 대략 <code>{x: 3.3, y: 1.7, z: 1.35}</code>,
+    <code>Background</code>와 <code>Fill</code>은 <code>{x: 20, y: 2.5, z: 1}</code> 스케일을 가진다.
+    Code Builder는 이후 Actor/Model 바인딩이나 HP 갱신 로직을 수정하더라도 이 표시용 Scale을 코드에서 재설정하거나 덮어쓰지 않는다.
   </div>
 
   <h2>2. 전체 순서</h2>
@@ -286,6 +307,44 @@
       UI/씬 통합, 회귀 검증, 기존 전투 대체 판단
     </div>
   </div>
+
+  <h2>2-1. CSVData 파이프라인 삽입 타이밍</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>InGame 타이밍</th>
+        <th>먼저 또는 병행할 CSVData 작업</th>
+        <th>이유 / 완료 기준</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Phase2-B 시작 전</td>
+        <td>CSVData Phase0~2: Legacy 격리 기준, <code>MonsterStat.csv</code> / <code>EnemyStat.csv</code> / <code>SkillData.csv</code> 컬럼 확정, Eve + <code>stage1-swordsman</code> + 샘플 스킬 1~2개 입력</td>
+        <td>프리팹 Actor가 어떤 ID와 필드를 바인딩할지 먼저 고정한다. 이 단계는 런타임 전환이 아니라 데이터 계약 고정이다.</td>
+      </tr>
+      <tr>
+        <td>Phase2-B~Phase2-C 직전 또는 병행</td>
+        <td>CSVData Phase3~4: 새 InGame CSV loader / row model / catalog 구현, <code>UnitFactory</code>의 새 CSV 기반 유닛 모델 생성 경로 추가</td>
+        <td>테스트 씬에서 프리팹을 붙인 뒤 다시 데이터 원천을 바꾸는 일을 피한다. 완료 기준은 <code>MonsterDefinition</code>, <code>EnemyDefinition</code>, <code>PakuriDataManager</code> 없이 샘플 유닛 모델을 만들 수 있는 것이다.</td>
+      </tr>
+      <tr>
+        <td>Phase4-A~Phase4-C 이전</td>
+        <td>CSVData Phase5: <code>SkillData.csv</code>를 <code>ProjectileSkillData</code>, <code>ZoneSkillData</code>, <code>BuffSkillData</code>, <code>ShieldSkillData</code>, <code>PassiveSkillData</code>로 매핑</td>
+        <td>스킬 실행기를 만들기 전에 스킬 수치의 최종 원천을 새 CSVData로 돌린다. 최소 실행 샘플인 <code>eve-a</code>, <code>ariel-b</code>가 새 CSVData 기반 <code>SkillData</code>로 조회되어야 한다.</td>
+      </tr>
+      <tr>
+        <td>Phase4-C 최소 실행 검증 후</td>
+        <td>전체 스킬/몬스터/적 데이터 확장</td>
+        <td>실행기와 검증 규칙이 확정된 뒤 5명 x 10개 스킬로 확장한다. 먼저 전체 50개를 입력하면 구조 변경 때 데이터 수정 비용이 커진다.</td>
+      </tr>
+      <tr>
+        <td>Phase8-A Run 통합 직전</td>
+        <td>CSVData Phase8: Legacy 비활성화 검증</td>
+        <td><code>Scripts2/InGame</code>에서 <code>Pakuri.Data</code> 참조 제거, <code>Assembly-CSharp.csproj</code>의 Legacy compile 항목 제거 또는 격리, 씬/Resources/초기화 참조 확인을 끝내야 CSVData를 실제 원본이라고 말할 수 있다.</td>
+      </tr>
+    </tbody>
+  </table>
 
   <h2>3. Phase별 작업</h2>
   <table>
@@ -330,9 +389,9 @@
       </tr>
       <tr>
         <td>Phase2-B</td>
-        <td><span class="tag next">대기</span></td>
+        <td><span class="tag hold">부분 완료</span></td>
         <td>사용자 작성 프리팹에 <code>MonsterUnitActor</code>, <code>EnemyUnitActor</code> 모델 바인딩 최소 구현</td>
-        <td>프리팹은 코드로 생성하지 않는다. 사용자가 만든 Monster/Enemy 프리팹에 Actor 컴포넌트를 붙이고, 액터가 모델 ID, HP, 자동 공격 플래그를 바인딩해 인스펙터/로그에서 확인 가능하게 한다.</td>
+        <td>몬스터 5종은 사용자가 만든 프리팹과 직접 조정한 <code>MonsterHpBar</code> Scale을 기준으로 Actor/Model 바인딩을 진행한다. 프리팹은 코드로 생성하지 않고, HP 바 크기는 프리팹 Transform 소유로 둔다. 남은 범위는 Enemy 프리팹/Actor 바인딩과 이후 실제 전투 HP 갱신 연결이다.</td>
       </tr>
       <tr>
         <td>Phase2-C</td>
@@ -406,42 +465,46 @@
   <h2>4. 다음 Code Builder 작업 추천</h2>
   <div class="grid">
     <div class="card">
-      <h3>1순위: Phase1-C</h3>
+      <h3>1순위: CSVData Phase0~2</h3>
       <p>
-        기존 <code>Assets/Scripts/Data</code> 로드 흐름을 원천으로 삼는 <code>InGameSkillCatalog</code> 또는
-        <code>SkillDefinition</code> -&gt; <code>SkillData</code> 매퍼를 만들고, 샘플 스킬 1~2개만 연결한다.
-        이 단계는 전투 로직 없이 데이터 참조와 변환만 검증하므로 구조 변경 비용이 작다.
+        Phase2-B 프리팹 Actor 바인딩 전에 <code>Assets/CSVData</code>의 세 CSV 헤더와 최소 샘플 행을 확정한다.
+        현재 세 CSV 파일은 존재하지만 0 byte이므로, 먼저 ID와 컬럼 계약을 고정해야 한다.
       </p>
     </div>
     <div class="card">
-      <h3>2순위: Phase1-D</h3>
+      <h3>2순위: Phase2-B 잔여</h3>
       <p>
-        데이터 검증기를 붙인다. 샘플 데이터가 잘못된 상태로 후속 Phase에 넘어가는 것을 막는다.
+        사용자 작성 몬스터 프리팹의 Scale과 HP 바 자식 구조는 프리팹 소유로 유지한다. Code Builder는
+        <code>MonsterUnitActor</code>의 모델 ID/HP 표시 갱신과 이후 <code>EnemyUnitActor</code> 바인딩을 ID 기반으로만 연결하고,
+        사용자가 조정한 <code>MonsterHpBar</code> Transform을 코드에서 초기화하지 않는다.
       </p>
     </div>
     <div class="card">
-      <h3>3순위: Phase2-A</h3>
+      <h3>3순위: CSVData Phase3~4</h3>
       <p>
-        몬스터/적 정의를 <code>UnitRuntimeModel</code>로 매핑한다. 이때부터 유닛 생성 테스트가 가능해진다.
+        새 InGame CSV loader와 row model을 만들고, <code>UnitFactory</code>가 새 CSV catalog로 샘플 유닛 모델을 만들 수 있게 한다.
+        이 경로가 통과해야 이후 테스트 씬과 스킬 실행이 새 데이터 원천을 기준으로 움직인다.
       </p>
     </div>
     <div class="card">
-      <h3>보류: 전체 50개 데이터 작성</h3>
+      <h3>Phase4 이전 필수: CSVData Phase5</h3>
       <p>
-        전체 데이터는 실행기와 검증 규칙이 확정된 뒤 작성한다. 지금 작성하면 구조 변경 시 데이터 수정 비용이 커진다.
+        <code>SkillData.csv</code>에서 <code>SkillData</code> 하위 클래스를 직접 만들 수 있게 한 뒤 스킬 실행기로 들어간다.
+        전체 50개 스킬 입력은 Phase4-C 최소 실행 스킬 검증 뒤로 계속 보류한다.
       </p>
     </div>
   </div>
 
   <h2>5. 데이터 연결 원칙</h2>
   <ul>
-    <li>테스트에는 데이터가 필요하므로 Phase1-C에서 기존 CSV/Data 기반 샘플 스킬 1~2개를 바로 연결한다.</li>
-    <li>CSV 파싱과 카탈로그 구성은 새로 만들지 않고 <code>PakuriCsvRuntimeData</code>, <code>GameDataCatalog</code>, <code>PakuriDataManager</code> 흐름을 재사용한다.</li>
-    <li>Phase1-C의 데이터 로딩 타이밍은 테스트 전용 <code>InGameTestDataManager.Awake()</code>다. 운영 흐름은 기존처럼 <code>MainMenuScene</code> / <code>RunStartContext</code> 데이터 전달을 유지한다.</li>
+    <li>Phase1-C, Phase1-D, Phase2-A는 기존 CSV/Data 브리지로 완료된 연결 검증이다. 이후 작업은 <code>2026-05-14-csvdata-transition-roadmap.html</code>의 CSVData 전환 단계를 InGame Phase 사이에 삽입한다.</li>
+    <li>Phase2-B 전에 새 <code>Assets/CSVData</code> CSV 헤더와 최소 샘플 행을 확정한다. 현재 세 CSV 파일은 0 byte이므로 런타임 로더보다 데이터 계약 확정이 먼저다.</li>
+    <li>Phase2-B~Phase2-C 직전 또는 병행으로 새 InGame CSV loader/catalog를 만들고, Phase4-A~4-C 이전에는 <code>SkillData.csv</code> 기반 <code>SkillData</code> 매핑을 완료한다.</li>
     <li>전체 스킬 데이터는 Phase4-C의 최소 실행 스킬 검증 이후 확장한다.</li>
     <li>기존 <code>SkillDefinition</code>은 버리지 않고 Phase6-A에서 호환 브리지 대상으로 둔다.</li>
     <li><code>SkillEffectPrefab</code>과 <code>ProjectilePrefab</code>은 프레젠테이션/시각 자료로만 사용하고, 스킬 판정 로직을 프리팹에 숨기지 않는다.</li>
     <li>Code Builder는 프리팹을 자동 생성하지 않는다. 사용자가 Unity Editor에서 프리팹을 만든 뒤, Code Builder가 제공한 Actor/바인딩 컴포넌트를 붙이는 흐름을 기본 계약으로 둔다.</li>
+    <li><code>MonsterHpBar</code>의 위치, Scale, 표시 크기, 자식 SpriteRenderer 배치는 사용자 프리팹 작성 영역이다. 런타임 코드는 HP 비율과 텍스트 갱신만 담당하고, 사용자가 조정한 Scale 값을 덮어쓰지 않는다.</li>
     <li>선택지 효과는 유닛 상태의 learned choices를 실행 시점에 조회한다. 데이터 에셋이 런타임 선택 상태를 직접 보유하지 않는다.</li>
   </ul>
 
@@ -456,32 +519,35 @@
     </thead>
     <tbody>
       <tr>
-        <td>Phase1-C</td>
+        <td>CSVData Phase0~2</td>
         <td>
-          <code>Assets/Scripts2/InGame/Skills/Data/InGameSkillCatalog.cs</code><br>
-          <code>Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs</code>
+          <code>Assets/CSVData/MonsterStat.csv</code><br>
+          <code>Assets/CSVData/EnemyStat.csv</code><br>
+          <code>Assets/CSVData/SkillData.csv</code>
         </td>
         <td>
-          런타임 빌드, Unity-MCP 리프레시/콘솔, 기존 <code>SkillDefinition</code>에서 샘플 ID 1~2개를 InGame 데이터 형태로 조회 확인.
-        </td>
-      </tr>
-      <tr>
-        <td>Phase1-D</td>
-        <td>
-          <code>Assets/Scripts2/InGame/Skills/Data/InGameSkillDataValidator.cs</code><br>
-          <code>Assets/Scripts2/InGame/Editor/InGameSkillDataValidationMenu.cs</code>
-        </td>
-        <td>
-          런타임/에디터 어셈블리 빌드와 에디터 메뉴 <code>Pakuri/InGame/Validate Skill Data</code>로 확인.
+          CSV 파일이 0 byte가 아니고, Eve / <code>stage1-swordsman</code> / 샘플 스킬 1~2개의 ID와 필수 수치가 들어 있는지 확인한다.
         </td>
       </tr>
       <tr>
-        <td>Phase2-A</td>
+        <td>Phase2-B</td>
         <td>
-          <code>UnitFactory.cs</code>, <code>BaseUnitRuntimeModel.cs</code>, <code>MonsterUnitRuntimeModel.cs</code>, <code>EnemyUnitRuntimeModel.cs</code>, <code>UnitDefenseRuntime.cs</code>, <code>InGameTestDataManager.cs</code>
+          <code>Assets/Scripts2/InGame/Units/MonsterUnitActor.cs</code><br>
+          <code>Assets/Scripts2/InGame/Units/EnemyUnitActor.cs</code>
         </td>
         <td>
-          런타임/에디터 어셈블리 빌드와 Unity-MCP Editor 코드 실행으로 Eve <code>MonsterUnitRuntimeModel</code>과 <code>stage1-swordsman</code> <code>EnemyUnitRuntimeModel</code> 생성 확인.
+          사용자 작성 프리팹에 Actor를 붙였을 때 모델 ID, HP, 자동 공격 플래그가 인스펙터 또는 로그에서 확인되는지 검증한다. <code>MonsterHpBar</code>는 현재 프리팹 YAML의 사용자 조정 Scale을 유지하고, 코드 검증은 해당 Transform을 덮어쓰지 않는지도 확인한다.
+        </td>
+      </tr>
+      <tr>
+        <td>CSVData Phase3~5</td>
+        <td>
+          새 <code>Assets/Scripts2/InGame</code> CSV loader / row model / catalog 파일<br>
+          <code>UnitFactory.cs</code><br>
+          <code>InGameSkillCatalog.cs</code>
+        </td>
+        <td>
+          <code>PakuriCsvRuntimeData</code>, <code>PakuriDataManager</code>, <code>MonsterDefinition</code>, <code>EnemyDefinition</code>, <code>SkillDefinition</code> 없이 샘플 유닛과 샘플 <code>SkillData</code>를 조회할 수 있는지 확인한다.
         </td>
       </tr>
     </tbody>

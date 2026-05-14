@@ -183,7 +183,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -100
   m_MaskInteraction: 0
   m_Sprite: {fileID: -984862673681950353, guid: 17831ddd6ff5ad54594649889fa008c4, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -226,7 +226,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!212 &294275803
 SpriteRenderer:
   serializedVersion: 2
@@ -317,7 +317,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!212 &905432075
 SpriteRenderer:
   serializedVersion: 2
@@ -408,7 +408,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!212 &1100510380
 SpriteRenderer:
   serializedVersion: 2
@@ -499,7 +499,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!212 &1137822057
 SpriteRenderer:
   serializedVersion: 2
@@ -583,6 +583,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1427799826}
+  - component: {fileID: 1427799827}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -605,6 +606,26 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1427799827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1427799825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6ff00e786df7fb46ae905aa63bee059, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.NewRunSceneEntryManager
+  playerSpawnPoint: {fileID: 1137822058}
+  fallbackCatalog: {fileID: 11400000, guid: ec4cdda7274c34242a052d3ed1cd9914, type: 2}
+  arielUnitPrefab: {fileID: 4596420534878418281, guid: 6cab17e3f2f1775429ecb9a204438d9a, type: 3}
+  eveUnitPrefab: {fileID: 4596420534878418281, guid: 768bb9d217c3cc64a84cd7059fe5e154, type: 3}
+  rinUnitPrefab: {fileID: 4596420534878418281, guid: 45d446ad22f4f2f4d94f4ab1039c5b0a, type: 3}
+  seinUnitPrefab: {fileID: 4596420534878418281, guid: d827bb1e48cabef4abeed838d6bb8e05, type: 3}
+  vegaUnitPrefab: {fileID: 4596420534878418281, guid: a1e586738d1b9b64a97d0caba4cd449c, type: 3}
+  allowEveFallback: 1
 --- !u!1 &1747029712
 GameObject:
   m_ObjectHideFlags: 0
@@ -849,7 +870,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!212 &1994287392
 SpriteRenderer:
   serializedVersion: 2

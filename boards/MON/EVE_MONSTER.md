@@ -31,6 +31,173 @@ Legacy non-English note retained these code references: `boards/ARCHIVE/MON_BLAC
 - Eve data asset changes: update this file and `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
 - Reports about Eve implementation: update this file and `boards/REPORT/REPORT_BLACKBOARD.md`.
 
+## Task: 2026-05-14 Eve Prefab HP Bar Visibility And Binding Fix
+
+### Task title
+
+Confirm Eve prefab actor/model binding and HP bar sprite visibility.
+
+### Goals
+
+- Keep `Eve_Unit` on the same `MonsterUnitActor` / `MonsterUnitRuntimeModel` entry path as the other selectable monsters.
+- Make Eve's `MonsterHpBar` render through the shared HP bar pixel sprite.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Eve combat execution or Play Mode verification in this slice.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies Eve selection and HP bar visibility in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Monster/Eve_Unit.prefab` now has sprite references on HP bar `Background`, `Fill`, and `Shield`.
+- Unity-MCP verification returned `eve:prefab=Eve_Unit|modelOk=True|model=eve|actor=True|actorModel=True|hpText=HP 220/220|bgSprite=True|fillSprite=True|shieldSprite=True`.
+- 2026-05-14 follow-up: `MonsterUnitActor` now scales HP fill against `Background.localScale.x`; Unity-MCP editor code returned `Eve_Unit:bgX=20|beforeFillX=20|fullFillX=20|halfFillX=10`.
+
+### History
+
+- 2026-05-14: User asked to fix invisible `MonsterHpBar` and verify five selectable prefab bindings.
+- 2026-05-14: User reported `HpFill` was forced to `1` on scene entry; Builder changed fill scaling to use the background width.
+
+## Task: 2026-05-14 Eve Phase2-B Actor Model Binding
+
+### Task title
+
+Bind Eve's `Eve_Unit` prefab actor to the selected player runtime model.
+
+### Goals
+
+- Use the user-authored `Assets/Prefab/Monster/Eve_Unit.prefab` debug HP/name children.
+- Initialize the prefab's `MonsterUnitActor` with Eve's `MonsterUnitRuntimeModel` after spawn.
+- Display Eve's current HP/max HP and name through the prefab debug labels.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Eve combat execution, projectile execution, damage loop, or Play Mode verification in this slice.
+- `MonsterUnitRuntimeModel` is not a Unity component and therefore is created at runtime rather than assigned to the prefab in the Inspector.
+- Code Reviewer was not run because the user did not explicitly request Reviewer execution for this slice.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies Eve 1P spawn and debug HP/name display in Play Mode.
+- Later combat slices should call `MonsterUnitActor.RefreshDebugView()` after HP/shield changes.
+- Keep Eve skill execution work deferred until the actor/model entry binding is confirmed in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Monster/Eve_Unit.prefab` contains `MonsterUnitActor`, `MonsterHpLabel`, `MonsterHpBar`, `MonsterNameLabel`, `Fill`, and `Shield`.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs` now exposes `Initialize(MonsterUnitRuntimeModel)` and resolves the Eve debug child objects by name.
+- Unity-MCP editor code execution returned `evePrefab=True|actor=True|initialize=True|refresh=True|nameLabel=True|hpLabel=True|hpFill=True|shieldFill=True|modelMonster=eve|modelHp=220|learnedA=1`.
+- Runtime and editor `dotnet build` checks completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP console warning/error read returned only MCP-FOR-UNITY client handler logs.
+
+### History
+
+- 2026-05-14: User confirmed Eve prefab has HP SlideBar, debug HP/name labels, and `MonsterUnitActor`, then requested Phase2-B.
+
+## Task: 2026-05-14 Eve NewRunScene 1P Prefab Spawn
+
+### Task title
+
+Record Eve shell prefab spawning through the new run entry flow.
+
+### Goals
+
+- Use `Assets/Prefab/Monster/Eve_Unit.prefab` as the current 1P visual shell for NewRunScene entry.
+- Spawn the prefab at `1PSpawnPoint`.
+- Keep combat behavior and skill execution out of this slice.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Eve combat execution, skill behavior, HP binding, or Play Mode verification.
+- Code Reviewer was explicitly skipped by the user.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Bind the spawned Eve shell to `MonsterUnitActor` and `MonsterUnitRuntimeModel` in the next Phase2-B slice.
+- User verifies Play Mode scene entry and visible 1P spawn.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Monster/Eve_Unit.prefab` exists and has root object name `Eve_Unit`.
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` maps selected monster ID `eve` to `eveUnitPrefab`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` stores `eveUnitPrefab` as the prefab GUID for `Eve_Unit` and `playerSpawnPoint` as `1PSpawnPoint`.
+- Unity-MCP read-only code returned `spawn=1PSpawnPoint|prefab=Eve_Unit`.
+
+### History
+
+- 2026-05-14: User requested spawning the Eve shell prefab as 1P during NewRunScene entry.
+
+## Task: 2026-05-14 Eve CSVData Phase0-2 Seed Rows
+
+### Task title
+
+Record Eve rows added to the new CSVData files.
+
+### Goals
+
+- Seed Eve identity/stat data in `MonsterStat.csv`.
+- Seed Eve-A Arc Bolt in `SkillData.csv`.
+- Keep source notes clear where values come from current project data instead of the Eve reference page.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Eve runtime behavior, prefab, scene, or Play Mode changes.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and CSV parsing verified.
+
+### Next Actions
+
+- Later CSVData mapping should read `eve` from `MonsterStat.csv` and `eve-a` from `SkillData.csv`.
+- Reconfirm Eve base HP ownership before CSVData becomes the authoritative source because `eve-tower.md` does not list HP.
+
+### Evidence
+
+- `Pakuri/Assets/CSVData/MonsterStat.csv` now contains the `eve` row with `max_health` 220, attack 30, spell 30, and default skill IDs.
+- `Pakuri/Assets/CSVData/SkillData.csv` now contains `eve-a` with Arc Bolt projectile, damage, coefficient, magazine, reload, interval, and shock values.
+- `Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md` provides the inspected Arc Bolt numeric values used by `eve-a`.
+- `Import-Csv Pakuri\Assets\CSVData\SkillData.csv` returned `eve-a` as `ProjectileSkillData` with `damage_element` Lightning and `base_damage` 24.
+
+### History
+
+- 2026-05-14: Code Builder added Eve seed data as part of CSVData Phase0~2.
+
 ## Task: 2026-05-14 Eve-E Field Data Implementation
 
 ### Task title
