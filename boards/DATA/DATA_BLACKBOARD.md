@@ -4,6 +4,55 @@
 - This file keeps only task blocks dated `2026-05-09` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/DATA/DATA_BLACKBOARD.md`.
 
+## Task: 2026-05-15 Eve-A Skill Choice Modifier CSV Seed
+
+### Task title
+
+Create first CSVData choice and modifier seed rows for Eve-A.
+
+### Goals
+
+- Add a structured `SkillChoiceData.csv` file for Eve-A enhancement and master choices.
+- Add a structured `SkillChoiceModifierData.csv` file that uses explicit modifier columns instead of a generic `value` column.
+- Keep this as data groundwork only; do not implement a loader, resolver, executor, projectile branch runtime, or Play Mode behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Scope is Eve-A Arc Bolt only: five enhancement choices and two master choices from the inspected Eve reference.
+- Non-applicable modifier columns are represented as `null` strings for the future parser/validator to treat as not applied.
+- Reload speed and fire speed modifiers that are expressed as speed changes in the reference are stored as derived time/interval multipliers with source notes.
+- The current Unity auto-sync warning for missing `Assets/CSVdata/source/catalog_monsters.csv` remains outside this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and CSV parsing verified.
+
+### Next Actions
+
+- Later CSVData loader work should parse `SkillChoiceData.csv` and `SkillChoiceModifierData.csv`.
+- Phase4-B should use these rows through `SkillChoiceResolver` / `SkillExecutionSnapshot` without mutating source `SkillData`.
+- Projectile branch runtime remains later work after minimum Phase4-C skill execution is proven.
+
+### Evidence
+
+- Added `Pakuri/Assets/CSVdata/SkillChoiceData.csv` with seven Eve-A rows: `eve-a-trait-1` through `eve-a-trait-5`, `eve-a-master-1`, and `eve-a-master-2`.
+- Added `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv` with explicit columns including `damage_multiplier`, `magazine_bonus`, `additional_projectile_bonus`, `pierce_bonus`, `reload_time_multiplier`, `shot_interval_multiplier`, `branch_chance_bonus`, `branch_chance_set`, `branch_count`, `branch_damage_multiplier`, `branch_search_radius`, `status_tag`, and `status_stacks_set`.
+- Added `.meta` files for both CSV assets.
+- `Import-Csv Pakuri\Assets\CSVdata\SkillChoiceData.csv` returned seven rows with five `ActiveEnhancement` choices and two `ActiveMaster` choices.
+- `Import-Csv Pakuri\Assets\CSVdata\SkillChoiceModifierData.csv` returned seven rows and the choice/modifier ID check reported `ChoiceRows=7`, `ModifierRows=7`, and no missing modifiers.
+- `git diff --check -- Pakuri\Assets\CSVdata\SkillChoiceData.csv Pakuri\Assets\CSVdata\SkillChoiceModifierData.csv Pakuri\Assets\CSVdata\SkillChoiceData.csv.meta Pakuri\Assets\CSVdata\SkillChoiceModifierData.csv.meta` completed with no output.
+- Unity-MCP `refresh_unity` returned `success=true`, `resulting_state=idle`.
+- Unity-MCP console warning/error read showed the existing `Pakuri CSV runtime catalog auto-sync failed` message because `Test-Path Pakuri\Assets\CSVdata\source\catalog_monsters.csv` returned `False`; this task did not change that source folder state.
+
+### History
+
+- 2026-05-15: User directed Code Builder to create `SkillChoiceData.csv` and `SkillChoiceModifierData.csv` for Eve first, using explicit modifier columns such as projectile, power, width/radius, reload time, fire speed, and pierce count instead of a generic `value` column.
+
 ## Task: 2026-05-15 Stage1 Enemy CSV Type Expansion
 
 ### Task title

@@ -4,6 +4,216 @@
 - This file keeps only task blocks dated `2026-05-09` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/RUN/RUN_BLACKBOARD.md`.
 
+## Task: 2026-05-15 NewRunScene Stage-One Enemy Skill MVP
+
+### Task title
+
+Connect NewRunScene's three spawned stage-one enemies to their first skill behavior.
+
+### Goals
+
+- Keep the existing NewRunScene triple enemy spawn and roster registration path.
+- Use the three authored enemy skill prefabs assigned on `GameManager` / `InGameCombatManager`.
+- Let Warrior and Rogue damage the player monster through runtime relay/resource services.
+- Let Priest heal injured enemy allies through the same resource refresh path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Unity Play Mode gameplay verification was run by Codex.
+- This task does not implement Stage Flow, rewards, prisoner rewards, later enemy waves, or boss/midboss skills.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies in NewRunScene Play Mode that the already-spawned Warrior, Rogue, and Priest use their skill prefabs and mutate HP/heal values correctly.
+- Stage Flow and prisoner reward work should start only after this enemy-skill MVP is accepted in Play Mode.
+
+### Evidence
+
+- `NewRunScene.unity` now serializes `warriorSkillPrefab`, `rogueSkillPrefab`, and `priestSkillPrefab` on `InGameCombatManager`.
+- `EnemyCombatSimulationSystem.cs` keeps the existing movement/targeting/cooldown loop and calls enemy skill execution from that point.
+- `Warrior_Skill.prefab`, `Achor_Skill.prefab`, and `Preist_Skill.prefab` under `Assets/Prefab/Enemy/Skill` are the assigned visual/trigger prefabs for the three current enemies.
+- `InGameEnemySkillHitboxActor.cs` relays Warrior slash hits and `InGameProjectileActor.cs` relays Rogue shuriken hits into `InGameCombatManager.ApplyDamage(...)`.
+- `UnitResourceMutationService.cs` and `InGameCombatManager.cs` now expose `Heal(...)` for Priest healing and actor refresh.
+- Runtime/editor builds passed with 0 errors after rerunning the Editor build alone because the first parallel attempt hit the known output DLL file lock.
+- Unity-MCP console warning/error read showed no C# compile errors after the new script import.
+
+### History
+
+- 2026-05-15: User requested Code Builder implementation of the three current enemy skills using prefabs from `Assets/Prefab/Enemy/Skill`.
+
+## Task: 2026-05-15 NewRunScene Phase4-C Damage Visibility Follow-up
+
+### Task title
+
+Record NewRunScene projectile hit HP display and deletion fix.
+
+### Goals
+
+- Fix the Phase4-C projectile-hit path so HP decrease is visible as rounded whole-number HP.
+- Delete dead enemy/monster Actor GameObjects through the combat manager after resource mutation reports death.
+- Make HPBar `Fill` decrease as a left-anchored slide rather than shrinking from both sides.
+- Display hit damage through the prefab `Damage` TextMesh, rising about 1 local Y unit and fading out.
+- Keep the left-anchored `Fill` calculation inside the actual rendered `Background` sprite bounds.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Unity Play Mode gameplay verification was run by Codex.
+- This follow-up does not implement new skills, wave logic, reward logic, or timed status expiry.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies NewRunScene Play Mode: projectile hit reduces enemy HP, HP Fill remains visually inside the Background, and enemies are removed at 0 HP.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs` was inspected and already calls `combatManager.ApplyDamage(...)` on valid enemy hits.
+- `Pakuri/Assets/Scripts2/InGame/Core/UnitResourceMutationService.cs` now rounds defense-adjusted damage and stored resource values.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now unregisters and destroys a unit Actor when `ApplyDamage(...)` returns `IsDead`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now calls `ShowDamageIfChanged(result)` and delays dead Actor destruction by `0.95f` seconds after immediate roster unregister.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` and `MonsterUnitActor.cs` now use left-anchored HP `Fill` positioning so the left edge stays fixed while the right edge shrinks.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` and `MonsterUnitActor.cs` now resolve prefab `Damage` TextMesh children and expose `ShowDamage(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` and `MonsterUnitActor.cs` now compute HP/Shield segment positions from SpriteRenderer rendered width, using `sprite.bounds.size.x * localScale.x`, so movement is based on the visible `Background` width rather than raw scale values.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` contains the `InGameDamageTextPopup` helper used by both Actor files; it displays `N(Damage)`, rises by `1f` local Y over `0.9f` seconds, and fades out.
+- Prefab inspection found `Damage` TextMesh children in all current monster and enemy unit prefabs before the code change.
+- Runtime/editor builds passed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP refresh/console evidence showed no remaining C# compile errors after moving the popup helper into the already-compiled Actor file.
+- Follow-up runtime/editor builds passed with 0 errors after switching segment math to SpriteRenderer rendered-width units and changing damage text format to `N(Damage)`.
+- Unity-MCP script refresh reached idle and console warning/error read showed only MCP client handler logs after the follow-up.
+- `git diff --check` on the changed scripts passed with only LF-to-CRLF normalization warnings.
+
+### History
+
+- 2026-05-15: User reported projectile firing works, but HP decrease, monster deletion, and enemy HPBar Fill position were broken after hits.
+- 2026-05-15: Code Builder fixed rounded HP mutation, death cleanup, and Fill coordinate stabilization.
+- 2026-05-15: User clarified that HP should slide down from left to right and requested Damage Text feedback; Code Builder added prefab `Damage` Text popup animation and left-anchored HP Fill shrink.
+- 2026-05-15: User reported Fill still escaped BG and requested `number(Damage)` text format; Code Builder changed segment math to actual rendered sprite width and changed popup text to `N(Damage)`.
+
+## Task: 2026-05-15 NewRunScene Phase4-C-0 Skill Actor Minimum Execution
+
+### Task title
+
+Record the first NewRunScene Phase4-C skill effect execution slice.
+
+### Goals
+
+- Move Phase4 from no-effect executor contracts into minimum visible/effective execution for sample skills.
+- Connect Eve-A projectile prefab spawning, movement, damage relay, and spawn-point X destruction.
+- Connect Ariel-B shield grant and attached visual prefab spawning.
+- Connect 1P A manual mouse firing and `Canvas/AutoBtn` auto-route toggle.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Unity Play Mode gameplay verification was run by Codex.
+- Full 2P-5P party spawning is not implemented by this slice; non-first roster entries will auto-route if present.
+- Eve-A shock, branch lightning, broad skill data expansion, projectile fan-out, and Ariel-B timed shield expiry remain pending.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified by compile/editor checks.
+
+### Next Actions
+
+- User verifies NewRunScene Play Mode: Eve-A manual hold fire, AutoBtn auto toggle, projectile hit/destroy behavior, and Ariel-B when learned.
+- Add a timed status/effect layer before claiming shield duration or shock duration behavior.
+- Add reusable branch/multi-projectile behavior after the base projectile actor path is accepted.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- Added `InGameProjectileActor.cs`, `InGameAttachedSkillEffectActor.cs`, and `InGameAutoSkillButton.cs` under `Pakuri/Assets/Scripts2/InGame/Skills/Execution`.
+- `SkillExecutionSystem.cs` now supports `TryExecuteManual(...)` and an auto-route predicate.
+- `SkillExecutionContext.cs` now carries optional manual aim direction.
+- `SkillExecutors.cs` now executes projectile and shield sample effects instead of returning no-effect results.
+- `InGameCombatManager.cs` now resolves skill effect prefabs, handles 1P manual A input, exposes AutoBtn manual-to-auto switching, and resolves projectile destroy boundary X.
+- `NewRunScene.unity` serializes `eveAProjectilePrefab`, `arielBShieldEffectPrefab`, `projectileDestroyBoundary`, and `Canvas/AutoBtn`'s `InGameAutoSkillButton` reference.
+- Runtime/editor builds passed with 0 errors and existing assembly reference warnings.
+- Unity-MCP refresh reached idle and console warning/error read showed no C# compile errors.
+- 2026-05-15 follow-up: `InGameCombatManager.cs` no longer calls `UnityEngine.Input.GetMouseButton(0)` or `Input.mousePosition`; manual 1P A input now uses `UnityEngine.InputSystem.Mouse.current`.
+- 2026-05-15 follow-up: Runtime/editor builds passed with 0 errors after the Input System API replacement, and Unity-MCP script refresh reached idle.
+
+### History
+
+- 2026-05-15: User requested Code Builder to implement Phase4-C-0 as a common actor component slice connected to Eve-A and Ariel-B minimum execution.
+- 2026-05-15: User reported the NewRunScene Play Mode error caused by `UnityEngine.Input` while the project uses the Input System package; Builder replaced the manual A-skill mouse read with Input System API.
+
+## Task: 2026-05-15 NewRunScene Phase4-B Skill Execution Contract
+
+### Task title
+
+Record Phase4-B skill execution contract, registry, choice snapshot, and NewRunScene wiring.
+
+### Goals
+
+- Add a skill execution system that routes learned active skill runtime instances through type-based executors.
+- Build execution snapshots from unit chosen choice IDs without mutating source `SkillData`.
+- Connect NewRunScene-selected monster models to learned active skill runtime instances.
+- Keep actual damage, shield, status, projectile prefab creation, trigger relay, pierce, duplicate-hit, and tick-hit behavior out of Phase4-B.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Unity Play Mode verification by Codex.
+- Code Reviewer execution requires explicit user permission and was not run.
+- Phase4-B executors are no-effect contract executors only.
+- The Unity-MCP `execute_code` construction check remained blocked by the known Windows mono path-length issue.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Phase4-C should connect minimum sample effects such as `eve-a` damage and `ariel-b` shield through `InGameCombatManager.ApplyDamage(...)` and `GrantShield(...)`.
+- Later projectile/beam/zone work should add trigger relay/runtime behavior without putting hit logic in prefabs.
+- User performs Play Mode verification only after actual Phase4-C effects are connected.
+
+### Evidence
+
+- Added execution contract files under `Pakuri/Assets/Scripts2/InGame/Skills/Execution`.
+- `InGameCombatManager.cs` now owns a `SkillExecutionSystem`, ticks it from `Update()`, exposes routed/rejected counts, and parses an optional `skillChoiceModifierCsv` TextAsset.
+- `NewRunSceneEntryManager.cs` now calls `SkillRuntimeFactory.RebuildLearnedActiveSet(...)` after creating the selected monster model.
+- `InGameTestDataManager.cs` also rebuilds learned active skill runtime for its loaded sample monster model.
+- `SkillRuntimeInstance.CanCast` now respects positive `Timing.TickInterval` as a cast interval gate.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` stores `skillExecutionEnabled: 1`, `logSkillExecutionContracts: 0`, and `skillChoiceModifierCsv` referencing `SkillChoiceModifierData.csv` GUID `6c4e1bb3fa254e02a749fb55f6d685d7`.
+- Runtime and editor `dotnet build` checks completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP refresh reached idle after script import.
+- Unity-MCP console warning/error read showed only the known existing CSV auto-sync warning and MCP client handler logs.
+
+### History
+
+- 2026-05-15: User directed Code Builder to start Phase4-B after Eve-A choice modifier CSV seed creation.
+
 ## Task: 2026-05-15 NewRunScene Phase4-A Skill Runtime State
 
 ### Task title

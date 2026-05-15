@@ -1,0 +1,8 @@
+choice_id,owner_id,skill_id,choice_type,choice_index,display_name,description,source_status,source_notes
+eve-a-trait-1,eve,eve-a,ActiveEnhancement,0,특성 1,"탄창 수 +4, 위력 +20%",ReferenceDirect,"Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md section 4 lists trait 1 as magazine +4 and power +20%."
+eve-a-trait-2,eve,eve-a,ActiveEnhancement,1,특성 2,"재장전 속도 +30%, 관통 수 +1",ReferenceDirect,"Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md section 4 lists trait 2 as reload speed +30% and pierce +1."
+eve-a-trait-3,eve,eve-a,ActiveEnhancement,2,특성 3,"추가 투사체 수 +1, 재장전 시간 +20%",ReferenceDirect,"Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md section 4 lists trait 3 as additional projectile +1 and reload time +20%."
+eve-a-trait-4,eve,eve-a,ActiveEnhancement,3,특성 4,"추가 투사체 수 +2, 발사 속도 -25%",ReferenceDirect,"Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md section 4 lists trait 4 as additional projectile +2 and fire speed -25%."
+eve-a-trait-5,eve,eve-a,ActiveEnhancement,4,특성 5,"위력 +25%, 번개 분기 확률 +35%",ReferenceDirect,"Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md section 4 lists trait 5 as power +25% and lightning branch chance +35%."
+eve-a-master-1,eve,eve-a,ActiveMaster,0,분기 회로,"적중 시 갈래 번개 2개 생성, 갈래 피해 60%, 추적 반경 4.5, 위력 +35%, 탄창 수 +2",ReferenceDirect,"Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md section 5 lists Branch Circuit as on-hit two branch lightning projectiles, 60% branch damage, 4.5 search radius, power +35%, and magazine +2."
+eve-a-master-2,eve,eve-a,ActiveMaster,1,과충전 일제사격,"관통 수 +2, 추가 투사체 수 +2, 발사 속도 -20%, 위력 +45%, 적중 시 감전 2스택",ReferenceDirect,"Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md section 5 lists Overcharged Barrage as pierce +2, additional projectile +2, fire speed -20%, power +45%, and shock 2 stacks on hit."

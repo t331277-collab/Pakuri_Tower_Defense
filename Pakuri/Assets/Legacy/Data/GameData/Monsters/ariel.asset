@@ -158,7 +158,7 @@ MonoBehaviour:
     DescriptionText: "\uBAA8\uB4E0 \uC544\uAD70\uC5D0\uAC8C \uC9E7\uC740 \uC2DC\uAC04
       \uC720\uC9C0\uB418\uB294 \uC2E0\uC131 \uBC29\uC5B4\uB9C9\uC744 \uBD80\uC5EC\uD55C\uB2E4."
     Attribute: 0
-    BaseDamage: 0
+    BaseDamage: 35
     AttackPowerCoefficient: 0
     SpellPowerCoefficient: 1.4
     Range: 0

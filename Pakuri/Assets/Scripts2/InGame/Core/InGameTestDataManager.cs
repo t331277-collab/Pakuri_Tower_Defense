@@ -46,6 +46,10 @@ namespace Pakuri.InGame
                 sampleEnemyId);
             LoadedSampleMonsterModel = monsterModel;
             LoadedSampleEnemyModel = enemyModel;
+            if (LoadedSampleMonsterModel != null)
+            {
+                SkillRuntimeFactory.RebuildLearnedActiveSet(LoadedSampleMonsterModel, SkillCatalog);
+            }
 
             LoadedSampleActiveSkills = new SkillData[sampleActiveSlots != null ? sampleActiveSlots.Length : 0];
             var loadedCount = 0;

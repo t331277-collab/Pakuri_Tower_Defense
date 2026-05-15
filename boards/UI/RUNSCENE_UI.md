@@ -3,6 +3,52 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-15 NewRunScene AutoBtn 1P A-Skill Auto Toggle
+
+### Task title
+
+Connect `Canvas/AutoBtn` to the InGame 1P A-skill manual-to-auto toggle.
+
+### Goals
+
+- Keep 1P A skill manual by default for mouse-directed firing.
+- Let `Canvas/AutoBtn` switch the selected 1P A skill to automatic combat firing.
+- Preserve automatic skill routing for non-first player units from the combat manager route.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Unity Play Mode UI click verification was run by Codex.
+- The current implementation is in `NewRunScene`, not the older `RunScene` UI controller path.
+- The route supports 2P-5P entries if they exist in the InGame roster, but this slice does not implement full 2P-5P spawn/party acquisition.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and editor wiring verified.
+
+### Next Actions
+
+- User verifies in Play Mode that clicking `Canvas/AutoBtn` disables manual 1P A aiming and allows auto firing.
+- If the button needs visual state feedback, add a text/icon/selected-state update in a later UI task.
+- Verify 2P-5P auto attack after their InGame roster spawning flow is implemented.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameAutoSkillButton.cs`.
+- `NewRunScene.unity` has `Canvas/AutoBtn` with `Pakuri.InGame.InGameAutoSkillButton` and its `combatManager` reference assigned to `GameManager`.
+- `InGameAutoSkillButton.cs` calls `InGameCombatManager.EnableSelectedPlayerPrimarySkillAuto()` on button click.
+- `InGameCombatManager.cs` skips automatic routing only for the first player's A skill while `selectedPlayerPrimarySkillManual` is true.
+- `InGameCombatManager.cs` handles held left-mouse input for first-player A skill manual fire.
+- Runtime/editor builds passed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-15: User requested `Canvas/AutoBtn` to switch 1P A from manual mouse firing to automatic attack.
+
 ## Task: 2026-05-13 Manifested Party Skill Visual Helper Split
 
 ### Task title

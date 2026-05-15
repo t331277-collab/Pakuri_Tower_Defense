@@ -4,6 +4,101 @@
 - This file keeps only task blocks dated `2026-05-10` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
+## Task: 2026-05-15 InGame Rounded Resource Mutation Follow-up
+
+### Task title
+
+Round InGame HP/Shield mutation values and stabilize HP Fill positioning.
+
+### Goals
+
+- Ensure InGame damage results are whole-number HP/Shield values instead of fractional values.
+- Make HP `Fill` shrink from left to right during actor refresh after HP changes without leaving the authored `Background` sprite bounds.
+- Show the final rounded damage through the prefab `Damage` TextMesh in `N(Damage)` format.
+- Preserve the current shield grant API path while rounding shield resources too.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No timed shield/status expiry was implemented in this follow-up.
+- No Unity Play Mode verification was run by Codex.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified by builds and inspection.
+
+### Next Actions
+
+- User verifies NewRunScene Play Mode HP/Shield display behavior after projectile hits and shield grants.
+- Timed shield/status expiry remains a later InGame status-effect slice.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/UnitResourceMutationService.cs` now rounds defense-adjusted damage with `Mathf.Round(...)`.
+- `UnitResourceMutationService.cs` now stores rounded current HP and shield values through `RoundResource(...)` in damage, grant shield, and set shield paths.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs` and `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` now use left-anchored HP `Fill` positioning so HP decreases from left to right visually.
+- `MonsterUnitActor.cs` and `EnemyUnitActor.cs` now calculate HP/Shield segment placement from actual local rendered sprite width, `sprite.bounds.size.x * localScale.x`, and convert the desired rendered segment width back into each target sprite scale.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now shows the rounded applied damage through Actor `ShowDamage(...)` calls after resource mutation.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` contains `InGameDamageTextPopup`, which displays damage as `N(Damage)`, animates the prefab `Damage` TextMesh up by `1f` local Y over `0.9f` seconds, and fades it out.
+- Runtime/editor builds passed with 0 errors and existing assembly reference warnings; the first parallel runtime build failure was a known file-lock retry case and the standalone runtime build passed.
+- Follow-up runtime/editor builds passed with 0 errors after the Damage Text popup integration; Unity-MCP console warning/error read showed no remaining C# compile errors.
+
+### History
+
+- 2026-05-15: User requested Code Builder to fix HP decrease as rounded values and correct HPBar `Fill` coordinate drift after damage.
+- 2026-05-15: User clarified HP should shrink like a left-to-right slide and requested animated Damage Text feedback; Code Builder updated the Actor fill math and damage popup path.
+- 2026-05-15: User reported the `Fill` still left the `BG` and requested `N(Damage)` text format; Code Builder changed segment math to use actual SpriteRenderer rendered width and changed popup text formatting.
+
+## Task: 2026-05-15 Phase4-C-0 Shield Grant Visual Without Timed Expiry
+
+### Task title
+
+Record Ariel-B minimum shield grant and the remaining shield/status gap.
+
+### Goals
+
+- Connect Ariel-B to `InGameCombatManager.GrantShield(...)` through the new shield executor path.
+- Show a temporary attached shield visual through `InGameAttachedSkillEffectActor`.
+- Keep the current InGame HP/Shield bar resource refresh path as the visible shield presentation owner.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Play Mode gameplay verification was run by Codex.
+- Timed shield resource expiry is still not implemented in the InGame Phase4-C-0 path.
+- Eve-A shock/status application is not implemented in this slice, even though Eve-A data carries status-related fields.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed for minimum shield grant/visual; timed status behavior remains pending.
+
+### Next Actions
+
+- Add a common timed resource/status effect layer before declaring Ariel-B shield duration complete.
+- Connect Eve-A shock through a reusable status application path in a later Phase4-C subtask.
+- User verifies visual shield grant in Play Mode when Ariel-B is learned and cast.
+
+### Evidence
+
+- `SkillExecutors.cs` now makes `ShieldSkillExecutor` call `context.CombatManager.GrantShield(...)`.
+- `SkillExecutors.cs` also instantiates `ariel-b` shield visual prefabs and initializes `InGameAttachedSkillEffectActor`.
+- `InGameAttachedSkillEffectActor.cs` destroys only the attached visual after its duration; it does not remove shield resources.
+- `InGameCombatManager.cs` already exposes the `GrantShield(...)` resource mutation API used by the executor.
+- Runtime/editor builds passed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-15: Phase4-C-0 connected Ariel-B minimum shield grant and visual effect while explicitly leaving timed shield/status expiration for a later slice.
+
 ## Task: 2026-05-15 InGame HP Shield Bar Segment Rule
 
 ### Task title

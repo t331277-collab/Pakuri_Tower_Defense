@@ -10,12 +10,15 @@ namespace Pakuri.InGame
         private const string HpBackgroundObjectName = "Background";
         private const string HpFillObjectName = "Fill";
         private const string ShieldFillObjectName = "Shield";
+        private const string DamageTextObjectName = "Damage";
 
         [SerializeField] private TextMesh monsterNameLabel;
         [SerializeField] private TextMesh monsterHpLabel;
+        [SerializeField] private TextMesh damageTextLabel;
         [SerializeField] private Transform hpBackground;
         [SerializeField] private Transform hpFill;
         [SerializeField] private Transform shieldFill;
+        [SerializeField] private InGameDamageTextPopup damageTextPopup;
 
         public MonsterUnitRuntimeModel Model { get; private set; }
 
@@ -24,6 +27,14 @@ namespace Pakuri.InGame
             Model = model;
             ResolveDebugViewReferences();
             RefreshDebugView();
+        }
+
+        public void ShowDamage(float damageAmount)
+        {
+            if (damageTextPopup != null)
+            {
+                damageTextPopup.Show(damageAmount);
+            }
         }
 
         public void RefreshDebugView()
@@ -72,6 +83,22 @@ namespace Pakuri.InGame
             if (monsterHpLabel == null)
             {
                 monsterHpLabel = FindTextMesh(HpLabelObjectName);
+            }
+
+            if (damageTextLabel == null)
+            {
+                damageTextLabel = FindTextMesh(DamageTextObjectName);
+            }
+
+            if (damageTextPopup == null && damageTextLabel != null)
+            {
+                damageTextPopup = damageTextLabel.GetComponent<InGameDamageTextPopup>();
+                if (damageTextPopup == null)
+                {
+                    damageTextPopup = damageTextLabel.gameObject.AddComponent<InGameDamageTextPopup>();
+                }
+
+                damageTextPopup.Initialize(damageTextLabel);
             }
 
             if (hpBackground == null)
@@ -139,10 +166,10 @@ namespace Pakuri.InGame
 
             var baseScaleX = background != null ? background.localScale.x : target.localScale.x;
             var backgroundCenterX = background != null ? background.localPosition.x : 0f;
-            var backgroundWidth = Mathf.Abs(baseScaleX);
+            var backgroundWidth = ResolveLocalRenderedWidth(background, Mathf.Abs(baseScaleX));
             var segmentWidth = backgroundWidth * Mathf.Clamp01(widthRatio);
             var scale = target.localScale;
-            scale.x = segmentWidth;
+            scale.x = ResolveScaleXForRenderedWidth(target, segmentWidth, baseScaleX);
             target.localScale = scale;
 
             var position = target.localPosition;
@@ -150,6 +177,40 @@ namespace Pakuri.InGame
                 + (backgroundWidth * Mathf.Clamp01(leftRatio))
                 + (segmentWidth * 0.5f);
             target.localPosition = position;
+        }
+
+        private static float ResolveLocalRenderedWidth(Transform target, float fallbackWidth)
+        {
+            if (target == null)
+            {
+                return Mathf.Max(0f, fallbackWidth);
+            }
+
+            var spriteRenderer = target.GetComponent<SpriteRenderer>();
+            var sprite = spriteRenderer != null ? spriteRenderer.sprite : null;
+            if (sprite == null)
+            {
+                return Mathf.Abs(target.localScale.x);
+            }
+
+            return Mathf.Abs(target.localScale.x) * Mathf.Max(0.0001f, sprite.bounds.size.x);
+        }
+
+        private static float ResolveScaleXForRenderedWidth(Transform target, float renderedWidth, float fallbackSignSource)
+        {
+            if (target == null)
+            {
+                return renderedWidth;
+            }
+
+            var spriteRenderer = target.GetComponent<SpriteRenderer>();
+            var sprite = spriteRenderer != null ? spriteRenderer.sprite : null;
+            var unitWidth = sprite != null ? Mathf.Max(0.0001f, sprite.bounds.size.x) : 1f;
+            var signSource = !Mathf.Approximately(target.localScale.x, 0f)
+                ? target.localScale.x
+                : fallbackSignSource;
+            var sign = signSource < 0f ? -1f : 1f;
+            return sign * Mathf.Max(0f, renderedWidth) / unitWidth;
         }
 
         private static string FormatValue(float value)

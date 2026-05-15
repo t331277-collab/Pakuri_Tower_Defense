@@ -434,16 +434,17 @@
       </tr>
       <tr>
         <td>Phase4-B</td>
-        <td><span class="tag next">대기</span></td>
+        <td><span class="tag done">완료</span></td>
         <td>스킬 실행기 인터페이스, 레지스트리, 선택지 해석 경계 작성</td>
         <td>
-          Projectile, Beam, Zone, Buff, Shield, Passive 실행기가 같은 호출 계약을 가진다. 실행 직전에는
-          <code>SkillData</code> 원본을 수정하지 않고, 유닛의 <code>ChosenChoiceIds</code>와
-          <code>SkillData.EnhancementChoices</code> / <code>MasterChoices</code>를 대조해 계산된 실행 스냅샷을 만든다.
-          공통 배율, 범위, 지속시간, 추가 상태 태그는 재사용 resolver에서 처리하고, 특정 스킬 전용 예외는 executor 내부의
-          <code>if skillId == ...</code> 누적이 아니라 별도 custom executor 또는 behavior hook으로 격리한다.
-          Projectile, Beam, Zone처럼 공간 충돌 신호가 필요한 스킬은 프리팹의 trigger collider가 접촉 신호만 전달하고,
-          실제 데미지, 상태이상, 중복 히트, 관통, 틱 판정은 executor/runtime system이 처리하는 <code>SkillHitboxRelay</code> 계약을 둔다.
+          <code>Assets/Scripts2/InGame/Skills/Execution</code> 아래에 execution context, result, snapshot,
+          choice modifier CSV parser/library/record, choice resolver, executor registry, 타입별 no-effect executor,
+          skill execution system이 추가됐다. <code>InGameCombatManager</code>는 이 system을 tick만 호출하고,
+          <code>NewRunSceneEntryManager</code>는 선택된 몬스터 모델 생성 뒤 learned active runtime set을 구성한다.
+          <code>NewRunScene.unity</code>의 <code>InGameCombatManager.skillChoiceModifierCsv</code>는
+          <code>Assets/CSVdata/SkillChoiceModifierData.csv</code>를 참조한다.
+          이 단계는 라우팅 계약과 snapshot 계산까지만 완료한다. 실제 데미지, 보호막, 상태이상, projectile/beam/zone prefab 생성,
+          trigger relay, 중복 히트, 관통, tick 판정은 아직 Phase4-C 이후 작업이다.
         </td>
       </tr>
       <tr>

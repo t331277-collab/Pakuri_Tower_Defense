@@ -12,6 +12,54 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-05-15 Ariel-B Phase4-C-0 Shield Effect Minimum Execution
+
+### Task title
+
+Connect Ariel-B to the first shared InGame attached effect actor path.
+
+### Goals
+
+- Add a reusable attached skill-effect actor that follows a target transform for a configured duration.
+- Connect Ariel-B shield execution through the shared `ShieldSkillExecutor`.
+- Use the user-authored `Assets/Prefab/Skill/Ariel/Ariel_B.prefab` as the current Ariel-B visual prefab.
+- Keep shield resource mutation in `InGameCombatManager.GrantShield(...)`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Play Mode gameplay verification was run by Codex.
+- This slice grants shield values and expires the visual actor only; timed shield resource expiry is not implemented here.
+- `Assets/Prefab/Skill/Ariel/Airel_A.prefab` exists with the typo `Airel_A`, but `SkillData.csv` currently has no `ariel-a` row in the inspected minimum data set, so Ariel-A was not connected in this slice.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and compile/editor-refresh verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Ariel-B shield visual appears on player units when Ariel-B is learned and cast.
+- Add a timed shield resource-expiry system before declaring support-shield duration behavior complete.
+- Add Ariel-A only after a matching skill data row and execution target are confirmed.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameAttachedSkillEffectActor.cs`.
+- `SkillExecutors.cs` now makes `ShieldSkillExecutor` call `GrantShield(...)` and instantiate a shield visual using `InGameAttachedSkillEffectActor`.
+- `NewRunScene.unity` assigns `arielBShieldEffectPrefab` to `Assets/Prefab/Skill/Ariel/Ariel_B.prefab`.
+- `Assets/Prefab/Skill/Ariel/Ariel_B.prefab` has `Pakuri.InGame.InGameAttachedSkillEffectActor`.
+- `Pakuri/Assets/Legacy/Data/GameData/Monsters/ariel.asset` stores `ariel-b` `BaseDamage: 35`, matching the inspected `SkillData.csv` shield base value.
+- Runtime and editor builds passed with 0 errors and existing assembly reference warnings.
+- Unity-MCP refresh reached idle and console warning/error read showed no C# compile errors.
+
+### History
+
+- 2026-05-15: User asked Code Builder to create the common projectile/effect actor component and connect Ariel-B minimum execution as the first Phase4-C subtask.
+
 ## Task: 2026-05-14 Ariel NewRunScene Prefab Binding And HP Bar
 
 ### Task title

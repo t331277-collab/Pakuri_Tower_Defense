@@ -8,6 +8,10 @@ namespace Pakuri.InGame
         public EnemyEncounterRole EncounterRole;
         public EnemyAttackType AttackType;
         public DamageAttribute Attribute;
+        public StageOneEnemySkillKind StageOneSkill;
+        public float ActiveSkillCoefficient;
+        public float ActiveSkillRadius;
+        public float ActiveSkillFlatValue;
         public float AttackAttemptRange;
         public float AttackAttemptCooldownSeconds;
     }

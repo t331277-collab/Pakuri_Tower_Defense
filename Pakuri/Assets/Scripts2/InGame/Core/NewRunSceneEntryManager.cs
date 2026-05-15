@@ -172,6 +172,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
+            SkillRuntimeFactory.RebuildLearnedActiveSet(model, new InGameSkillCatalog(catalog));
             return true;
         }
 

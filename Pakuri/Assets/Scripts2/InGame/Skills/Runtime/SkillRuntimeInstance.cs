@@ -35,7 +35,8 @@ namespace Pakuri.InGame
             && CooldownRemaining <= 0f
             && !IsCasting
             && !IsReloading
-            && HasMagazine;
+            && HasMagazine
+            && IsCastIntervalReady();
 
         public void ResetRuntimeState()
         {
@@ -115,6 +116,12 @@ namespace Pakuri.InGame
         private static float TickDown(float value, float deltaTime)
         {
             return value > 0f ? Mathf.Max(0f, value - deltaTime) : 0f;
+        }
+
+        private bool IsCastIntervalReady()
+        {
+            var timing = Data != null ? Data.Timing : null;
+            return timing == null || timing.TickInterval <= 0f || TickRemaining <= 0f;
         }
 
         private static int ResolveMaxMagazineSize(SkillData data)

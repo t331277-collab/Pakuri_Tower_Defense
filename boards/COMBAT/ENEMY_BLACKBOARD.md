@@ -3,6 +3,129 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-15 InGame Stage-One Enemy Skill MVP
+
+### Task title
+
+Implement Warrior, Rogue, and Priest enemy skill execution through existing combat services.
+
+### Goals
+
+- Reuse `EnemyCombatSimulationSystem` movement, targeting, range, and cooldown flow.
+- Make Warrior `Slash` spawn the authored `Warrior_Skill` prefab and deal physical damage through a trigger/fallback hitbox relay.
+- Make Rogue `ShurikenThrow` spawn the authored `Achor_Skill` prefab and deal physical projectile damage through `InGameProjectileActor`.
+- Make Priest `Heal` restore the lowest-health nearby enemy ally and spawn the authored `Preist_Skill` visual prefab.
+- Keep actual damage/heal mutation inside `InGameCombatManager` and `UnitResourceMutationService`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Unity Play Mode gameplay verification was run by Codex.
+- Prefab Trigger/Collider objects relay contact only; damage, heal, side filtering, duplicate-hit blocking, and resource mutation stay in runtime code.
+- This MVP covers the three currently spawned stage-one enemy prefabs only: `stage1-swordsman`, `stage1-rogue`, and `stage1-priest`.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified by builds, Unity-MCP import/scene evidence, console read, and file checks.
+
+### Next Actions
+
+- User verifies in NewRunScene Play Mode that Warrior slash damages the player monster, Rogue shuriken damages the player monster, and Priest heals injured enemy allies.
+- Later enemy work can add ShieldUp, AimedShot, GuardianFlag, ChargeCommand, and SacredSwordWave after their prefabs/data/spawn roles exist.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Enemy/Skill/Warrior_Skill.prefab`, `Achor_Skill.prefab`, and `Preist_Skill.prefab` exist.
+- Prefab inspection found `Warrior_Skill` and `Achor_Skill` have `BoxCollider2D`; runtime relay code sets the collider to trigger on the instantiated object.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitRuntimeModel.cs` now stores `StageOneSkill`, `ActiveSkillCoefficient`, `ActiveSkillRadius`, and `ActiveSkillFlatValue`.
+- `Pakuri/Assets/Scripts2/InGame/Units/UnitFactory.cs` copies those fields from `EnemyDefinition` into `EnemyUnitRuntimeModel`.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSimulationSystem.cs` now executes `Slash`, `ShurikenThrow`, and `Heal` at the existing enemy cooldown/range execution point.
+- `EnemyCombatSimulationSystem.cs` spawns `InGameEnemySkillHitboxActor` for slash, `InGameProjectileActor` for shuriken, and the priest visual prefab after calling heal.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameEnemySkillHitboxActor.cs` was added for short-lived melee/trigger relay hits with same-side filtering and duplicate-hit blocking.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs` now supports left-moving projectile X-boundary destruction as well as the existing right-moving path.
+- `Pakuri/Assets/Scripts2/InGame/Core/UnitResourceMutationService.cs` and `InGameCombatManager.cs` now expose `Heal(...)`, clamped to `Stats.MaxHealth` and routed through existing actor refresh.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` assigns `warriorSkillPrefab` to GUID `86d2cf796a0668f48bf01d312cceb7dc`, `rogueSkillPrefab` to GUID `c68a14297d96473499a2c4d10658a55f`, and `priestSkillPrefab` to GUID `8d0e9d69f614e534ca717c247f2f7c9b`.
+- Runtime build `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Editor build passed after rerunning alone; the first parallel Editor build failed only with the recurring `obj\Debug\Assembly-CSharp.dll` file lock.
+- Unity-MCP script refresh imported the new script; console warning/error read showed MCP client messages and no C# compile errors.
+- `git diff --check` on the changed scripts and scene passed with only LF-to-CRLF normalization warnings after trimming Unity scene trailing whitespace.
+
+### History
+
+- 2026-05-15: User approved implementing the three current enemy skills through the existing structure and confirmed skill prefabs are under `Assets/Prefab/Enemy/Skill`.
+- 2026-05-15: Code Builder implemented the three-skill MVP while keeping damage/heal resource mutation outside the prefabs.
+
+## Task: 2026-05-15 InGame Projectile Damage / Enemy Removal Fix
+
+### Task title
+
+Fix NewRunScene projectile HP mutation visibility and dead enemy removal.
+
+### Goals
+
+- Make projectile-applied damage mutate HP as rounded whole-number values after defense calculation.
+- Remove dead units from the InGame roster and destroy their Actor GameObject when HP reaches zero.
+- Make enemy HP `Fill` decrease like a left-anchored slide, with the left edge fixed and the right edge shrinking.
+- Show damage feedback through the prefab-authored `Damage` TextMesh, moving upward by about 1 local Y unit while fading out.
+- Keep `Fill` inside the actual rendered `Background` sprite bounds during the left-anchored slide.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Unity Play Mode verification was run by Codex; user verifies projectile hit, HP bar behavior, and enemy deletion in Play Mode.
+- Keep the existing Phase4-C projectile actor hit route through `InGameCombatManager.ApplyDamage(...)`.
+- Do not alter user-authored prefab HP bar transforms.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified by code inspection, builds, Unity refresh/console, and file checks.
+
+### Next Actions
+
+- User verifies in NewRunScene Play Mode that Eve-A projectile hits decrease enemy HP in rounded whole numbers, `Fill` stays aligned with `Background`, and enemies disappear when HP reaches zero.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs` already routes hits through `combatManager.ApplyDamage(target.Model, damage, damageAttribute)`.
+- `Pakuri/Assets/Scripts2/InGame/Core/UnitResourceMutationService.cs` now rounds defense-adjusted damage with `Mathf.Round(...)` and stores rounded HP/Shield resources through `RoundResource(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now calls `RemoveUnitIfDead(result)` after damage refresh; the helper finds the roster entry, unregisters the model, and destroys the Actor GameObject.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now calls `ShowDamageIfChanged(result)` after damage refresh, before death cleanup.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` unregisters dead units immediately but delays Actor GameObject destruction by `0.95f` seconds so the killing hit's Damage text can appear.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` now resolves the prefab-authored `Damage` TextMesh and routes `ShowDamage(...)` into an `InGameDamageTextPopup` component added to that child object at runtime.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` now updates HP `Fill` with left-anchored segment positioning: `backgroundCenterX - backgroundWidth * 0.5f + segmentWidth * 0.5f`.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` now computes segment positions from actual SpriteRenderer local rendered width: `sprite.bounds.size.x * localScale.x`, instead of treating `localScale.x` itself as displayed width.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` now converts desired rendered segment width back into target sprite scale via `ResolveScaleXForRenderedWidth(...)`, so `Fill` remains inside `Background` even when sprite bounds are not 1 world unit wide.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` contains `InGameDamageTextPopup`, which displays `N(Damage)`, moves from the authored local position to `+1` local Y over `0.9` seconds, and fades alpha to 0.
+- Prefab inspection with `Select-String` found enemy `Background` local position `{x: 0, y: 0, z: 0}` and `Fill` local position `{x: 0, y: 0, z: -0.01}` with X scale `20` in all three stage-one enemy prefabs before this code change.
+- Prefab inspection with `Select-String` found `Damage` TextMesh children in all three stage-one enemy prefabs, with authored local position `{x: 0, y: 3.52, z: 0}` and text `00`.
+- Runtime build `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings after rerunning alone because the first parallel build hit an `obj\Debug\Assembly-CSharp.dll` file lock.
+- Editor build `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and the same existing warnings.
+- Follow-up runtime/editor builds passed with 0 errors after integrating the Damage Text popup and left-anchored HP Fill change.
+- Follow-up runtime/editor builds passed with 0 errors after switching Fill math to actual SpriteRenderer rendered width and changing the damage text format to `N(Damage)`. The first parallel runtime build failed only with the recurring `obj\Debug\Assembly-CSharp.dll` file lock; standalone runtime build passed.
+- Unity-MCP script refresh reached idle; console warning/error read showed only MCP client handler logs after this follow-up.
+- Unity-MCP script refresh reached idle; console warning/error read no longer showed the temporary `InGameDamageTextPopup` type-missing compile errors after the helper class was moved into the already-compiled Actor file.
+- Unity-MCP `validate_script` reported known duplicate-method false positives; direct `Select-String` found one `RoundResource(...)` definition, one `RemoveUnitIfDead(...)` definition, and one `ResolveDebugViewReferences(...)` definition per Actor file while builds passed.
+- `git diff --check` on the changed scripts passed with only LF-to-CRLF normalization warnings.
+
+### History
+
+- 2026-05-15: User reported projectile firing worked, but HP decrease and monster deletion did not proceed, and enemy HPBar `Fill` moved away from `Background` after the first hit.
+- 2026-05-15: Code Builder inspected the current projectile hit, resource mutation, manager refresh, Actor HPBar, and prefab HPBar transform evidence, then implemented rounded damage, death removal, and HP Fill position stabilization.
+- 2026-05-15: User clarified HP should decrease from left to right like a slide and requested prefab `Damage` Text feedback that rises by about 1 Y and fades out; Code Builder implemented left-anchored Fill shrink and runtime Damage Text popup behavior.
+- 2026-05-15: User reported `Fill` still escaped `Background` and requested damage text as `number(Damage)` rather than `Damage(number)`; Code Builder changed Fill width/position calculations to SpriteRenderer rendered-width units and changed popup format to `N(Damage)`.
+
 ## Task: 2026-05-15 Phase3-C Resource Mutation Pipeline
 
 ### Task title

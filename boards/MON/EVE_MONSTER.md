@@ -31,6 +31,144 @@ Legacy non-English note retained these code references: `boards/ARCHIVE/MON_BLAC
 - Eve data asset changes: update this file and `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
 - Reports about Eve implementation: update this file and `boards/REPORT/REPORT_BLACKBOARD.md`.
 
+## Task: 2026-05-15 Eve-A Phase4-C-0 Projectile Actor Minimum Execution
+
+### Task title
+
+Connect Eve-A to the first shared InGame projectile actor path.
+
+### Goals
+
+- Add a reusable projectile actor that moves a spawned skill prefab and relays damage hits to `InGameCombatManager`.
+- Connect Eve-A projectile execution through the shared `ProjectileSkillExecutor`.
+- Support 1P manual Eve-A firing by held left mouse input and AutoBtn switching 1P A to automatic fire.
+- Destroy Eve-A projectiles when they move past the assigned `SpawnPoint` X boundary.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Play Mode gameplay verification was run by Codex.
+- Eve-A shock/status application, branch lightning, additional projectile fan-out, and master-skill branch behavior are not implemented in this slice.
+- Enemy prefabs currently lack colliders, so the projectile actor includes a temporary roster-distance hit fallback in addition to trigger hits.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and compile/editor-refresh verified.
+
+### Next Actions
+
+- User verifies in Play Mode that 1P Eve-A fires toward the mouse while held, then fires automatically after `Canvas/AutoBtn` is clicked.
+- Add reusable status/branch projectile behavior in a later Phase4-C subtask instead of hardcoding Eve-A branch logic.
+- Add enemy colliders or replace the roster-distance fallback with the final hit-detection contract.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs`.
+- `InGameProjectileActor.cs` contains the required `Canvas/AutoBtn` comment and destroys the projectile when `transform.position.x > destroyBeyondX`.
+- `SkillExecutors.cs` now makes `ProjectileSkillExecutor` instantiate a projectile prefab and initialize `InGameProjectileActor`.
+- `InGameCombatManager.cs` now routes first-player A skill manual mouse input through `TryExecuteManual(...)` while other skill routes remain automatic.
+- `NewRunScene.unity` assigns `eveAProjectilePrefab` to `Assets/Prefab/Skill/Eve/Eve_A.prefab` and `projectileDestroyBoundary` to `SpawnPoint`.
+- `Assets/Prefab/Skill/Eve/Eve_A.prefab` has `Pakuri.InGame.InGameProjectileActor` and its `BoxCollider2D` is serialized as trigger.
+- Runtime and editor builds passed with 0 errors and existing assembly reference warnings.
+- Unity-MCP refresh reached idle and console warning/error read showed no C# compile errors.
+
+### History
+
+- 2026-05-15: User asked Code Builder to create the common projectile/effect actor component and connect Eve-A minimum execution as the first Phase4-C subtask.
+
+## Task: 2026-05-15 Eve-A Phase4-B Execution Contract Wiring
+
+### Task title
+
+Record Eve-A reaching the Phase4-B no-effect execution contract path.
+
+### Goals
+
+- Ensure selected Eve's learned A skill can be built as a `SkillRuntimeInstance` during NewRunScene entry.
+- Route projectile-type skills through a type-based no-effect executor contract.
+- Apply Eve-A choice modifier data to snapshots when matching choice IDs are present.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Eve-A projectile prefab, branch projectile, damage, shock application, pierce, or Play Mode gameplay behavior was implemented.
+- Branch Circuit remains data/snapshot only in this slice.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Phase4-C should connect base Eve-A damage through `ApplyDamage(...)` before branch behavior.
+- Branch projectile behavior should remain reusable projectile behavior and not become an Eve-specific code path.
+
+### Evidence
+
+- `NewRunSceneEntryManager.cs` calls `SkillRuntimeFactory.RebuildLearnedActiveSet(...)` after selected monster model creation.
+- `SkillExecutionSystem.cs` ticks unit skill runtime sets and routes cast-ready skills through `SkillExecutorRegistry`.
+- `SkillExecutorRegistry.cs` registers `ProjectileSkillExecutor`, so Eve-A's `ProjectileSkillData` routes through a projectile executor contract.
+- `SkillChoiceModifierData.csv` rows for `eve-a-master-1` and `eve-a-master-2` are parsed through the new modifier parser/library path when assigned as `skillChoiceModifierCsv`.
+- Runtime/editor builds passed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-15: Phase4-B implementation connected Eve-A data/runtime setup to a no-effect execution contract.
+
+## Task: 2026-05-15 Eve-A Choice Modifier CSV Seed
+
+### Task title
+
+Record Eve-A enhancement and master choice modifier data seed.
+
+### Goals
+
+- Represent Eve-A Arc Bolt enhancement and master choice effects in new structured CSVData files.
+- Capture Branch Circuit as data fields for a future reusable projectile branch behavior rather than an Eve-only hardcoded exception.
+- Capture Overcharged Barrage as pierce, additional projectile, shot interval, damage, and shock stack fields.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Eve skill execution, projectile spawning, branch projectile runtime, status application, or Play Mode verification was implemented.
+- Branch behavior is data-only in this slice.
+- Fire speed/reload speed wording from the reference is stored as derived interval/time multipliers with notes.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and CSV parsing verified.
+
+### Next Actions
+
+- Phase4-B should read these rows into a choice resolver/snapshot path.
+- Branch projectile runtime should remain a reusable projectile behavior, not an Eve-A-specific executor branch.
+- User verifies gameplay only after later executor/runtime work connects these modifiers to actual skill behavior.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md` lists five traits and two master skills for Arc Bolt.
+- Added `Pakuri/Assets/CSVdata/SkillChoiceData.csv` with Eve-A trait/master rows.
+- Added `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv` with explicit modifier columns and Eve-A rows.
+- `SkillChoiceModifierData.csv` records `eve-a-master-1` with `damage_multiplier=1.35`, `magazine_bonus=2`, `branch_chance_set=1`, `branch_count=2`, `branch_damage_multiplier=0.6`, and `branch_search_radius=4.5`.
+- `SkillChoiceModifierData.csv` records `eve-a-master-2` with `damage_multiplier=1.45`, `additional_projectile_bonus=2`, `pierce_bonus=2`, `shot_interval_multiplier=1.2`, `status_tag=감전`, and `status_stacks_set=2`.
+- PowerShell `Import-Csv` parsed both CSV files and the ID consistency check found seven choices and seven modifiers with no missing modifier rows.
+
+### History
+
+- 2026-05-15: User asked to create Eve-first skill choice CSV files before full Phase4-B implementation, using explicit columns instead of a generic `value` field.
+
 ## Task: 2026-05-14 Eve Prefab HP Bar Visibility And Binding Fix
 
 ### Task title

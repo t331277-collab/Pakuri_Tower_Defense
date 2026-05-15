@@ -4,6 +4,143 @@
 - This file keeps only task blocks dated `2026-05-08` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
 
+## Task: 2026-05-15 Phase4-C-0 Skill Prefab Actor Asset Wiring
+
+### Task title
+
+Record skill prefab actor components and NewRunScene serialized references for Phase4-C-0.
+
+### Goals
+
+- Attach the shared projectile actor component to the Eve-A skill prefab.
+- Attach the shared attached-effect actor component to the Ariel-B skill prefab.
+- Serialize NewRunScene prefab references for Eve-A projectile and Ariel-B shield visual.
+- Keep prefabs as presentation/runtime actor carriers, not owners of skill formulas.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User-authored prefab/image assets under `Assets/Prefab/Skill` and `Assets/Image/Monster` are preserved as authored assets.
+- No broad ScriptableObject migration or new generated skill data asset was created.
+- Ariel-A was not connected because the inspected minimum `SkillData.csv` rows include `eve-a` and `ariel-b`, not `ariel-a`.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Keep future skill prefabs under `Pakuri/Assets/Prefab/Skill/{Monster}` and attach shared actor components where needed.
+- Add data validation that reports a missing prefab reference before skill execution falls back to direct damage.
+- Add final collider/hitbox authoring rules after enemy prefab colliders are decided.
+
+### Evidence
+
+- `Assets/Prefab/Skill/Eve/Eve_A.prefab` has `Pakuri.InGame.InGameProjectileActor` and a trigger `BoxCollider2D`.
+- `Assets/Prefab/Skill/Ariel/Ariel_B.prefab` has `Pakuri.InGame.InGameAttachedSkillEffectActor`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` serializes `eveAProjectilePrefab`, `arielBShieldEffectPrefab`, and `projectileDestroyBoundary` on `GameManager`'s `InGameCombatManager`.
+- `Pakuri/Assets/Legacy/Data/GameData/Monsters/ariel.asset` updates `ariel-b` `BaseDamage` to `35` so the current legacy bridge supplies the same shield base as the CSV seed row.
+- Runtime/editor builds passed with 0 errors and existing assembly reference warnings.
+- Unity-MCP refresh reached idle and console warning/error read showed no C# compile errors.
+
+### History
+
+- 2026-05-15: Phase4-C-0 connected user-authored Eve-A and Ariel-B skill prefabs to the new shared actor components and NewRunScene references.
+
+## Task: 2026-05-15 InGame Phase4-B Skill Choice Snapshot Data Flow
+
+### Task title
+
+Record Phase4-B use of choice modifier CSV data in the skill execution contract.
+
+### Goals
+
+- Parse optional `SkillChoiceModifierData.csv` text into runtime modifier records.
+- Apply modifier records to `SkillExecutionSnapshot` only when the unit has matching `ChosenChoiceIds`.
+- Keep base `SkillData` and CSV source rows immutable during execution.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- `SkillChoiceData.csv` remains metadata only in this slice; runtime code currently parses modifier rows only.
+- No actual skill effects, projectile assets, ScriptableObject assets, or data migration were implemented.
+- New broad character choice data entry is still deferred.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Add validation around modifier column ranges before broad data entry.
+- Connect minimum Phase4-C effect execution after confirming snapshot values drive executor behavior.
+
+### Evidence
+
+- Added `SkillChoiceModifierCsvParser.cs`, `SkillChoiceModifierLibrary.cs`, and `SkillChoiceModifierRecord.cs`.
+- `SkillExecutionSnapshot.cs` stores explicit choice-modified fields including damage, magazine, additional projectile, pierce, reload/shot interval multipliers, branch fields, and status fields.
+- `SkillChoiceResolver.cs` applies both existing `SkillData.EnhancementChoices` / `MasterChoices` and parsed `SkillChoiceModifierRecord` rows from chosen choice IDs.
+- `NewRunScene.unity` links `InGameCombatManager.skillChoiceModifierCsv` to `Assets/CSVdata/SkillChoiceModifierData.csv`.
+- Runtime and editor builds passed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-15: Phase4-B connected the Eve-A choice modifier CSV seed to the execution snapshot path.
+
+## Task: 2026-05-15 Eve-A Skill Choice Data Assets
+
+### Task title
+
+Record Eve-A CSVData skill choice and modifier asset additions.
+
+### Goals
+
+- Add asset-side CSV files that describe Eve-A enhancement/master choices and numeric modifiers.
+- Keep `SkillData.csv` as the base Eve-A skill row and store choice deltas separately.
+- Preserve explicit modifier columns for future authoring and validation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- CSV assets only; no ScriptableObject assets, prefabs, scene assets, loader code, or executor code were changed.
+- `null` marks unused modifier fields until a parser/validator is implemented.
+- Current `Scripts2/InGame` still uses the existing legacy data bridge and does not yet consume the new choice modifier CSV files.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and CSV parsing verified.
+
+### Next Actions
+
+- Implement parser/validator support before making these choice modifier files authoritative.
+- Keep broad 5-character choice data expansion deferred until the Eve-A sample schema is exercised by Phase4-B/C.
+
+### Evidence
+
+- Added `Pakuri/Assets/CSVdata/SkillChoiceData.csv`.
+- Added `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv`.
+- Added `Pakuri/Assets/CSVdata/SkillChoiceData.csv.meta` and `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv.meta`.
+- `SkillChoiceData.csv` contains Eve-A choices from `Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md` sections 4 and 5.
+- `SkillChoiceModifierData.csv` contains the structured Eve-A deltas for damage, magazine, reload multiplier, shot interval multiplier, pierce, additional projectiles, branch chance/count/damage/radius, and shock stack set.
+- PowerShell `Import-Csv` parsed both files and confirmed seven choice rows and seven modifier rows.
+- Unity-MCP asset refresh completed with editor state idle.
+
+### History
+
+- 2026-05-15: User approved explicit modifier columns and requested Code Builder to create the Eve-targeted choice CSV files.
+
 ## Task: 2026-05-15 InGame Phase4-A Skill Blueprint Runtime Split
 
 ### Task title

@@ -4,6 +4,47 @@
 - This file keeps active report task blocks after the 2026-05-12 archive pass; newer report tasks may be appended above older retained context.
 - Source file: `boards/REPORT/REPORT_BLACKBOARD.md`.
 
+## Task: 2026-05-15 InGame Roadmap Phase4-B Completion Update
+
+### Task title
+
+Update the InGame build roadmap after Code Builder implemented Phase4-B skill execution contracts.
+
+### Goals
+
+- Mark Phase4-B as completed in the roadmap.
+- Record that execution contracts, choice modifier snapshot flow, registry, and no-effect executors exist.
+- Keep actual damage, shield, status, projectile/beam/zone runtime, and trigger relay marked as future work.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Report claims must match inspected implementation and build evidence.
+- Do not claim Play Mode skill behavior is implemented.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed as an HTML report amendment.
+
+### Next Actions
+
+- Use the Phase4-C row as the next implementation target for minimum Eve-A damage and Ariel-B shield behavior.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html`.
+- The Phase4-B row now uses `<span class="tag done">완료</span>`.
+- The row cites `Assets/Scripts2/InGame/Skills/Execution`, `InGameCombatManager`, `NewRunSceneEntryManager`, and `NewRunScene.unity` choice modifier CSV wiring.
+- Runtime/editor builds completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-15: Code Builder implemented Phase4-B and amended the roadmap completion status.
+
 ## Task: 2026-05-15 InGame Verification Section Reorder And Structure Tree
 
 ### Task title
