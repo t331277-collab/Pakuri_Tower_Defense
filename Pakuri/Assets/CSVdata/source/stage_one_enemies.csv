@@ -1,0 +1,10 @@
+enemy_id,display_name,encounter_role,attack_type,attribute,unit_sprite_path,projectile_sprite_path,max_health,attack_power,spell_power,move_speed,crit_chance,crit_damage,crit_resistance,def_physical,def_fire,def_lightning,def_ice,def_darkness,def_holy,stage_one_skill,active_skill_name,active_skill_coefficient,active_skill_cooldown,active_skill_duration,active_skill_radius,active_skill_flat_value,passive_skill_name,passive_summary
+id,string,enum:EnemyEncounterRole,enum:EnemyAttackType,enum:DamageAttribute,asset_path,asset_path,float,float,float,float,float,float,float,float,float,float,float,float,float,enum:StageOneEnemySkillKind,string,float,float,float,float,float,string,string
+stage1-swordsman,검사,Normal,Melee,Physical,Assets/Image/Stage1/Enemy/Warrior.png,,100,12,0,1,0.05,1.5,0,5,2,2,2,2,2,Slash,베기,1,2,0,1.4,0,검술 숙련,물리 피해 10% 증가
+stage1-shieldbearer,방패병,Normal,Melee,Physical,Assets/Image/Stage1/Enemy/Shield.png,,180,8,0,0.75,0.05,1.5,0,12,3,3,3,2,2,ShieldUp,방패 들기,0,8,4,0,0.25,두꺼운 갑옷,방어력 10% 증가
+stage1-archer,궁수,Normal,Ranged,Physical,Assets/Image/Stage1/Enemy/Achor.png,,80,10,0,0.9,0.05,1.5,0,3,2,2,2,2,2,AimedShot,조준 사격,1.5,5,0,7,0,정조준,치명타 확률 8% 증가
+stage1-rogue,도적,Normal,Ranged,Physical,Assets/Image/Stage1/Enemy/Rogue.png,,70,15,0,1,0.05,1.5,0,2,2,2,2,2,2,ShurikenThrow,수리검 투척,1.4,4,0,6,0,날카로운 수리검,치명타 피해 20% 증가
+stage1-priest,사제,Normal,Buffer,Holy,Assets/Image/Stage1/Enemy/Priest.png,,90,4,12,0.8,0.05,1.5,0,3,2,2,2,2,8,Heal,치유,1.2,6,0,5,50,신성 집중,치유량 15% 증가
+stage1-guardian-captain,수호대장,Day5Midboss,Melee,Physical,Assets/Image/Stage1/Enemy/Shield.png,,2200,18,4,0.85,0.05,1.5,0,15,5,5,5,4,6,GuardianFlag,수호의 깃발,0,10,5,4,100,수호 숙련,받는 피해 12% 감소
+stage1-attack-captain,공격대장,Day10Midboss,Melee,Physical,Assets/Image/Stage1/Enemy/Warrior.png,,3200,26,0,1.1,0.05,1.5,0,12,4,4,4,3,3,ChargeCommand,돌격 명령,0,12,6,5,0,공격 숙련,물리 피해 12% 증가
+stage1-hero-karin,용사 카린,StageBoss,MeleeAndRanged,Physical,Assets/Image/Stage1/Enemy/Warrior.png,,5000,32,10,1,0.05,1.5,0,16,6,6,6,5,12,SacredSwordWave,성검기,2.2,9,0,8,0,용사의 힘,물리 피해 15% 증가

@@ -30,8 +30,6 @@ namespace Pakuri.InGame
         public int PierceBonus { get; private set; }
         public float ReloadTimeMultiplier { get; private set; }
         public float ShotIntervalMultiplier { get; private set; }
-        public float RangeMultiplier { get; private set; } = 1f;
-        public float RangeBonus { get; private set; }
         public float RadiusBonus { get; private set; }
         public float DurationBonus { get; private set; }
         public float BranchChanceBonus { get; private set; }
@@ -106,13 +104,6 @@ namespace Pakuri.InGame
             {
                 ShotIntervalMultiplier *= PositiveOrDefault(record.ShotIntervalMultiplier, 1f);
             }
-
-            if (record.HasRangeMultiplier)
-            {
-                RangeMultiplier *= PositiveOrDefault(record.RangeMultiplier, 1f);
-            }
-
-            RangeBonus += record.RangeBonus;
 
             if (record.HasRadiusMultiplier)
             {

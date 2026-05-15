@@ -59,38 +59,40 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var target = FindNearestPlayerTarget(enemyEntry, roster);
-            if (target == null)
-            {
-                return;
-            }
+            TickTemporaryEnemyModifiers(enemyModel, deltaTime);
 
             var state = GetState(enemyModel);
-            state.TargetUnitId = target.Model != null && target.Model.Identity != null
-                ? target.Model.Identity.UnitId
-                : null;
+            var target = FindNearestPlayerTarget(enemyEntry, roster);
+            var cooldownAlreadyTicked = false;
+            if (target != null)
+            {
+                state.TargetUnitId = target.Model != null && target.Model.Identity != null
+                    ? target.Model.Identity.UnitId
+                    : null;
+            }
 
-            if (enemyModel.StageOneSkill == StageOneEnemySkillKind.Heal)
+            if (IsCooldownDrivenSelfOrAllySkill(enemyModel.StageOneSkill))
             {
                 state.AttackCooldownRemaining = Mathf.Max(0f, state.AttackCooldownRemaining - deltaTime);
+                cooldownAlreadyTicked = true;
                 if (state.AttackCooldownRemaining <= 0f
-                    && FindLowestHealthEnemyAlly(enemyEntry, roster, Mathf.Max(0.1f, enemyModel.ActiveSkillRadius)) != null)
+                    && CanExecuteCooldownDrivenSelfOrAllySkill(enemyModel.StageOneSkill, roster))
                 {
                     state.AttackCooldownRemaining = Mathf.Max(0.1f, enemyModel.AttackAttemptCooldownSeconds);
                     state.AttackAttemptCount++;
                     LastAttackAttemptCount++;
-                    ExecuteHeal(enemyEntry, enemyModel, roster, combatManager);
+                    ExecuteEnemySkill(enemyEntry, enemyModel, target, roster, combatManager);
                 }
 
-                if (logAttackAttempts && state.AttackCooldownRemaining > 0f)
+                if (logAttackAttempts && target != null && state.AttackCooldownRemaining > 0f)
                 {
                     Debug.Log(BuildAttackAttemptLog(enemyModel, target));
                 }
+            }
 
-                if (state.AttackCooldownRemaining > 0f)
-                {
-                    return;
-                }
+            if (target == null)
+            {
+                return;
             }
 
             var distance = Vector2.Distance(enemyEntry.Transform.position, target.Transform.position);
@@ -98,11 +100,19 @@ namespace Pakuri.InGame
             if (distance > attackRange)
             {
                 MoveToward(enemyEntry, target, enemyModel, deltaTime);
-                state.AttackCooldownRemaining = Mathf.Max(0f, state.AttackCooldownRemaining - deltaTime);
+                if (!cooldownAlreadyTicked)
+                {
+                    state.AttackCooldownRemaining = Mathf.Max(0f, state.AttackCooldownRemaining - deltaTime);
+                }
+
                 return;
             }
 
-            state.AttackCooldownRemaining = Mathf.Max(0f, state.AttackCooldownRemaining - deltaTime);
+            if (!cooldownAlreadyTicked)
+            {
+                state.AttackCooldownRemaining = Mathf.Max(0f, state.AttackCooldownRemaining - deltaTime);
+            }
+
             if (state.AttackCooldownRemaining > 0f)
             {
                 return;
@@ -142,6 +152,21 @@ namespace Pakuri.InGame
                 case StageOneEnemySkillKind.Heal:
                     ExecuteHeal(enemyEntry, enemyModel, roster, combatManager);
                     break;
+                case StageOneEnemySkillKind.ShieldUp:
+                    ExecuteShieldUp(enemyEntry, enemyModel, combatManager);
+                    break;
+                case StageOneEnemySkillKind.AimedShot:
+                    ExecuteAimedShot(enemyEntry, enemyModel, target, combatManager);
+                    break;
+                case StageOneEnemySkillKind.GuardianFlag:
+                    ExecuteGuardianFlag(enemyEntry, enemyModel, roster, combatManager);
+                    break;
+                case StageOneEnemySkillKind.ChargeCommand:
+                    ExecuteChargeCommand(enemyEntry, enemyModel, roster, combatManager);
+                    break;
+                case StageOneEnemySkillKind.SacredSwordWave:
+                    ExecuteSacredSwordWave(enemyEntry, enemyModel, target, combatManager);
+                    break;
             }
         }
 
@@ -173,7 +198,7 @@ namespace Pakuri.InGame
             }
 
             var origin = enemyEntry.Transform.position + direction.normalized * Mathf.Min(radius * 0.5f, 0.75f);
-            var instance = Object.Instantiate(prefab, origin, ResolveRotation(direction));
+            var instance = combatManager.InstantiateSkillPrefab(prefab, origin, ResolveRotation(direction));
             var actor = instance.GetComponent<InGameEnemySkillHitboxActor>();
             if (actor == null)
             {
@@ -204,7 +229,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var instance = Object.Instantiate(prefab, enemyEntry.Transform.position, ResolveRotation(direction));
+            var instance = combatManager.InstantiateSkillPrefab(prefab, enemyEntry.Transform.position, ResolveRotation(direction));
             var actor = instance.GetComponent<InGameProjectileActor>();
             if (actor == null)
             {
@@ -223,13 +248,64 @@ namespace Pakuri.InGame
                 2.5f);
         }
 
+        private static void ExecuteAimedShot(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterEntry target,
+            InGameCombatManager combatManager)
+        {
+            ExecuteEnemyProjectile(enemyEntry, enemyModel, target, combatManager, 10f, 2.5f);
+        }
+
+        private static void ExecuteEnemyProjectile(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterEntry target,
+            InGameCombatManager combatManager,
+            float projectileSpeed,
+            float lifetimeSeconds)
+        {
+            if (target == null || target.Transform == null || enemyEntry.Transform == null)
+            {
+                return;
+            }
+
+            var damage = ResolveAttackDamage(enemyModel);
+            var direction = target.Transform.position - enemyEntry.Transform.position;
+            direction.z = 0f;
+            var prefab = combatManager.ResolveEnemySkillPrefab(enemyModel);
+            if (prefab == null)
+            {
+                combatManager.ApplyDamage(target.Model, damage, enemyModel.Attribute);
+                return;
+            }
+
+            var instance = combatManager.InstantiateSkillPrefab(prefab, enemyEntry.Transform.position, ResolveRotation(direction));
+            var actor = instance.GetComponent<InGameProjectileActor>();
+            if (actor == null)
+            {
+                actor = instance.AddComponent<InGameProjectileActor>();
+            }
+
+            actor.Initialize(
+                combatManager,
+                enemyModel,
+                direction,
+                projectileSpeed,
+                damage,
+                enemyModel.Attribute,
+                0,
+                ResolveEnemyProjectileBoundaryX(enemyEntry.Transform.position, direction),
+                lifetimeSeconds);
+        }
+
         private static void ExecuteHeal(
             UnitRosterEntry enemyEntry,
             EnemyUnitRuntimeModel enemyModel,
             UnitRosterService roster,
             InGameCombatManager combatManager)
         {
-            var target = FindLowestHealthEnemyAlly(enemyEntry, roster, Mathf.Max(0.1f, enemyModel.ActiveSkillRadius));
+            var target = FindLowestHealthEnemyAlly(roster);
             if (target == null)
             {
                 return;
@@ -237,14 +313,82 @@ namespace Pakuri.InGame
 
             var healAmount = Mathf.Max(
                 0f,
-                enemyModel.ActiveSkillFlatValue + ResolveSpellPower(enemyModel) * Mathf.Max(0f, enemyModel.ActiveSkillCoefficient));
+                (enemyModel.ActiveSkillFlatValue + ResolveSpellPower(enemyModel) * Mathf.Max(0f, enemyModel.ActiveSkillCoefficient))
+                * Mathf.Max(0f, enemyModel.PassiveHealingMultiplier));
             combatManager.Heal(target.Model, healAmount);
 
             var prefab = combatManager.ResolveEnemySkillPrefab(enemyModel);
             if (prefab != null && target.Transform != null)
             {
-                Object.Instantiate(prefab, target.Transform.position, Quaternion.identity);
+                var instance = combatManager.InstantiateSkillPrefab(prefab, target.Transform.position, Quaternion.identity);
+                var actor = instance.GetComponent<InGameAttachedSkillEffectActor>();
+                if (actor == null)
+                {
+                    actor = instance.AddComponent<InGameAttachedSkillEffectActor>();
+                }
+
+                actor.Initialize(target.Transform, 0.8f, Vector3.zero);
             }
+        }
+
+        private static void ExecuteShieldUp(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            InGameCombatManager combatManager)
+        {
+            enemyModel.IncomingDamageMultiplier = Mathf.Clamp01(1f - Mathf.Max(0f, enemyModel.ActiveSkillFlatValue));
+            enemyModel.IncomingDamageMultiplierRemainingSeconds = Mathf.Max(0.1f, enemyModel.ActiveSkillDuration);
+            SpawnAttachedEnemySkillEffect(enemyEntry, enemyModel, combatManager, enemyModel.ActiveSkillDuration);
+        }
+
+        private static void ExecuteGuardianFlag(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterService roster,
+            InGameCombatManager combatManager)
+        {
+            var allies = FindEnemyAlliesInRadius(enemyEntry, roster, Mathf.Max(0f, enemyModel.ActiveSkillRadius));
+            var shield = Mathf.Max(0f, enemyModel.ActiveSkillFlatValue);
+            for (var i = 0; i < allies.Count; i++)
+            {
+                combatManager.GrantShield(allies[i].Model, shield);
+            }
+
+            SpawnAttachedEnemySkillEffect(enemyEntry, enemyModel, combatManager, enemyModel.ActiveSkillDuration);
+        }
+
+        private static void ExecuteChargeCommand(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterService roster,
+            InGameCombatManager combatManager)
+        {
+            var allies = FindEnemyAlliesInRadius(enemyEntry, roster, Mathf.Max(0f, enemyModel.ActiveSkillRadius));
+            var duration = Mathf.Max(0.1f, enemyModel.ActiveSkillDuration);
+            for (var i = 0; i < allies.Count; i++)
+            {
+                var ally = allies[i].Model as EnemyUnitRuntimeModel;
+                if (ally == null)
+                {
+                    continue;
+                }
+
+                ally.MoveSpeedMultiplier = 1.2f;
+                ally.MoveSpeedMultiplierRemainingSeconds = duration;
+                ally.OutgoingDamageMultiplier = 1.15f;
+                ally.OutgoingDamageMultiplierRemainingSeconds = duration;
+            }
+
+            SpawnAttachedEnemySkillEffect(enemyEntry, enemyModel, combatManager, duration);
+        }
+
+        private static void ExecuteSacredSwordWave(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterEntry target,
+            InGameCombatManager combatManager)
+        {
+            ExecuteEnemyProjectile(enemyEntry, enemyModel, target, combatManager, 12f, 4f);
         }
 
         private static UnitRosterEntry FindNearestPlayerTarget(UnitRosterEntry enemyEntry, UnitRosterService roster)
@@ -277,16 +421,11 @@ namespace Pakuri.InGame
             return best;
         }
 
-        private static UnitRosterEntry FindLowestHealthEnemyAlly(
-            UnitRosterEntry enemyEntry,
-            UnitRosterService roster,
-            float range)
+        private static UnitRosterEntry FindLowestHealthEnemyAlly(UnitRosterService roster)
         {
             var enemies = roster.Enemies;
             UnitRosterEntry best = null;
             var bestHealthRatio = float.MaxValue;
-            var origin = enemyEntry.Transform.position;
-            var rangeSq = range * range;
 
             for (var i = 0; i < enemies.Count; i++)
             {
@@ -299,13 +438,6 @@ namespace Pakuri.InGame
                 var resources = candidate.Model.Resources;
                 var stats = candidate.Model.Stats;
                 if (resources == null || stats == null || stats.MaxHealth <= 0f)
-                {
-                    continue;
-                }
-
-                var offset = candidate.Transform.position - origin;
-                offset.z = 0f;
-                if (offset.sqrMagnitude > rangeSq)
                 {
                     continue;
                 }
@@ -330,6 +462,7 @@ namespace Pakuri.InGame
             float deltaTime)
         {
             var moveSpeed = enemyModel.Stats != null ? Mathf.Max(0f, enemyModel.Stats.MoveSpeed) : 0f;
+            moveSpeed *= ResolveMoveSpeedMultiplier(enemyModel);
             if (moveSpeed <= 0f)
             {
                 return;
@@ -360,7 +493,7 @@ namespace Pakuri.InGame
 
         private static float ResolveAttackDamage(EnemyUnitRuntimeModel enemyModel)
         {
-            return Mathf.Max(0f, ResolveAttackPower(enemyModel) * Mathf.Max(0f, enemyModel.ActiveSkillCoefficient));
+            return Mathf.Max(0f, ResolveAttackPower(enemyModel) * Mathf.Max(0f, enemyModel.ActiveSkillCoefficient) * ResolveOutgoingDamageMultiplier(enemyModel));
         }
 
         private static float ResolveAttackPower(EnemyUnitRuntimeModel enemyModel)
@@ -371,6 +504,139 @@ namespace Pakuri.InGame
         private static float ResolveSpellPower(EnemyUnitRuntimeModel enemyModel)
         {
             return enemyModel != null && enemyModel.Stats != null ? enemyModel.Stats.SpellPower : 0f;
+        }
+
+        private static float ResolveOutgoingDamageMultiplier(EnemyUnitRuntimeModel enemyModel)
+        {
+            if (enemyModel == null)
+            {
+                return 1f;
+            }
+
+            var multiplier = Mathf.Max(0f, enemyModel.PassiveOutgoingDamageMultiplier);
+            if (enemyModel.OutgoingDamageMultiplierRemainingSeconds > 0f)
+            {
+                multiplier *= Mathf.Max(0f, enemyModel.OutgoingDamageMultiplier);
+            }
+
+            return multiplier;
+        }
+
+        private static float ResolveMoveSpeedMultiplier(EnemyUnitRuntimeModel enemyModel)
+        {
+            return enemyModel != null && enemyModel.MoveSpeedMultiplierRemainingSeconds > 0f
+                ? Mathf.Max(0f, enemyModel.MoveSpeedMultiplier)
+                : 1f;
+        }
+
+        private static void TickTemporaryEnemyModifiers(EnemyUnitRuntimeModel enemyModel, float deltaTime)
+        {
+            TickTemporaryMultiplier(ref enemyModel.IncomingDamageMultiplierRemainingSeconds, ref enemyModel.IncomingDamageMultiplier, deltaTime);
+            TickTemporaryMultiplier(ref enemyModel.OutgoingDamageMultiplierRemainingSeconds, ref enemyModel.OutgoingDamageMultiplier, deltaTime);
+            TickTemporaryMultiplier(ref enemyModel.MoveSpeedMultiplierRemainingSeconds, ref enemyModel.MoveSpeedMultiplier, deltaTime);
+        }
+
+        private static void TickTemporaryMultiplier(ref float remainingSeconds, ref float multiplier, float deltaTime)
+        {
+            if (remainingSeconds <= 0f)
+            {
+                multiplier = 1f;
+                return;
+            }
+
+            remainingSeconds = Mathf.Max(0f, remainingSeconds - deltaTime);
+            if (remainingSeconds <= 0f)
+            {
+                multiplier = 1f;
+            }
+        }
+
+        private static bool IsCooldownDrivenSelfOrAllySkill(StageOneEnemySkillKind skillKind)
+        {
+            switch (skillKind)
+            {
+                case StageOneEnemySkillKind.Heal:
+                case StageOneEnemySkillKind.ShieldUp:
+                case StageOneEnemySkillKind.GuardianFlag:
+                case StageOneEnemySkillKind.ChargeCommand:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static bool CanExecuteCooldownDrivenSelfOrAllySkill(
+            StageOneEnemySkillKind skillKind,
+            UnitRosterService roster)
+        {
+            return skillKind != StageOneEnemySkillKind.Heal || FindLowestHealthEnemyAlly(roster) != null;
+        }
+
+        private static List<UnitRosterEntry> FindEnemyAlliesInRadius(
+            UnitRosterEntry source,
+            UnitRosterService roster,
+            float radius)
+        {
+            var result = new List<UnitRosterEntry>();
+            if (source == null || source.Transform == null || roster == null)
+            {
+                return result;
+            }
+
+            var radiusSq = radius > 0f ? radius * radius : 0f;
+            var origin = source.Transform.position;
+            var enemies = roster.Enemies;
+            for (var i = 0; i < enemies.Count; i++)
+            {
+                var candidate = enemies[i];
+                if (!IsActive(candidate) || candidate.Model == null || candidate.Transform == null)
+                {
+                    continue;
+                }
+
+                var offset = candidate.Transform.position - origin;
+                offset.z = 0f;
+                if (radius <= 0f && candidate != source)
+                {
+                    continue;
+                }
+
+                if (radius > 0f && offset.sqrMagnitude > radiusSq)
+                {
+                    continue;
+                }
+
+                result.Add(candidate);
+            }
+
+            return result;
+        }
+
+        private static void SpawnAttachedEnemySkillEffect(
+            UnitRosterEntry target,
+            EnemyUnitRuntimeModel enemyModel,
+            InGameCombatManager combatManager,
+            float duration)
+        {
+            if (target == null || target.Transform == null || combatManager == null)
+            {
+                return;
+            }
+
+            var prefab = combatManager.ResolveEnemySkillPrefab(enemyModel);
+            if (prefab == null)
+            {
+                return;
+            }
+
+            var instance = combatManager.InstantiateSkillPrefab(prefab, target.Transform.position, Quaternion.identity);
+            var actor = instance.GetComponent<InGameAttachedSkillEffectActor>();
+            if (actor == null)
+            {
+                actor = instance.AddComponent<InGameAttachedSkillEffectActor>();
+            }
+
+            actor.Initialize(target.Transform, Mathf.Max(0.1f, duration), Vector3.zero);
         }
 
         private static Quaternion ResolveRotation(Vector3 direction)

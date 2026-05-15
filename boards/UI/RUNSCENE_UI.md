@@ -3,17 +3,18 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
-## Task: 2026-05-15 NewRunScene AutoBtn 1P A-Skill Auto Toggle
+## Task: 2026-05-15 NewRunScene AutoBtn Player Auto Route Toggle
 
 ### Task title
 
-Connect `Canvas/AutoBtn` to the InGame 1P A-skill manual-to-auto toggle.
+Connect `Canvas/AutoBtn` to the InGame player auto skill route.
 
 ### Goals
 
 - Keep 1P A skill manual by default for mouse-directed firing.
-- Let `Canvas/AutoBtn` switch the selected 1P A skill to automatic combat firing.
-- Preserve automatic skill routing for non-first player units from the combat manager route.
+- Let `Canvas/AutoBtn` enable the same automatic combat skill routing used by non-first player units.
+- Make the selected 1P A skill join automatic target selection once player auto skill mode is enabled.
+- Remove the previous `selectedPlayerPrimarySkillManual` API/serialized field naming so AutoBtn is no longer described as a selected-primary-only toggle.
 
 ### Constraints
 
@@ -28,11 +29,11 @@ Code Builder
 
 ### Status
 
-Builder implementation completed and editor wiring verified.
+Builder implementation updated and editor compile verified.
 
 ### Next Actions
 
-- User verifies in Play Mode that clicking `Canvas/AutoBtn` disables manual 1P A aiming and allows auto firing.
+- User verifies in Play Mode that clicking `Canvas/AutoBtn` makes 1P A use automatic target selection through the same skill execution route as 2P-5P entries.
 - If the button needs visual state feedback, add a text/icon/selected-state update in a later UI task.
 - Verify 2P-5P auto attack after their InGame roster spawning flow is implemented.
 
@@ -40,14 +41,25 @@ Builder implementation completed and editor wiring verified.
 
 - Added `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameAutoSkillButton.cs`.
 - `NewRunScene.unity` has `Canvas/AutoBtn` with `Pakuri.InGame.InGameAutoSkillButton` and its `combatManager` reference assigned to `GameManager`.
-- `InGameAutoSkillButton.cs` calls `InGameCombatManager.EnableSelectedPlayerPrimarySkillAuto()` on button click.
-- `InGameCombatManager.cs` skips automatic routing only for the first player's A skill while `selectedPlayerPrimarySkillManual` is true.
-- `InGameCombatManager.cs` handles held left-mouse input for first-player A skill manual fire.
+- `InGameAutoSkillButton.cs` now calls `InGameCombatManager.EnablePlayerAutoSkillMode()` on button click.
+- `InGameCombatManager.cs` now stores `playerAutoSkillEnabled` and exposes `PlayerAutoSkillEnabled`.
+- `InGameCombatManager.cs` skips automatic routing only for the first player's A skill while `playerAutoSkillEnabled` is false.
+- `InGameCombatManager.cs` handles held left-mouse input for first-player A skill only while player auto skill mode is false.
+- Repository search found no remaining `selectedPlayerPrimarySkillManual`, `SelectedPlayerPrimarySkillManual`, `EnableSelectedPlayerPrimarySkillAuto`, or `SetSelectedPlayerPrimarySkillManual` references.
+- `ProjectileSkillExecutor` now rejects automatic projectile execution when no target direction exists instead of firing `Vector2.right`.
+- `SkillExecutionSystem` now consumes cast runtime state only after an executor returns `Routed`, so no-target automatic attempts do not spend A-skill magazine/cooldown.
+- `SkillExecutionUtility.FindNearestTarget(...)` now ignores `Targeting.Range` and chooses from the full map-side roster, so AutoBtn automatic targeting is no longer limited to nearby enemies.
+- `InGameSkillDefinitionMapper`, `InGameSkillDataValidator`, `SkillChoiceModifierRecord`, and `SkillExecutionSnapshot` now ignore source/modifier range values for the InGame skill route.
 - Runtime/editor builds passed with 0 errors and existing assembly reference warnings.
+- Unity-MCP script refresh reached idle after compile request; console warning/error read returned only MCP client handler logs.
+- `git diff --check` passed for the touched scene/script files with only LF-to-CRLF warnings.
 
 ### History
 
 - 2026-05-15: User requested `Canvas/AutoBtn` to switch 1P A from manual mouse firing to automatic attack.
+- 2026-05-16: User requested AutoBtn to use the same automatic targeting/skill route as 2P-5P monsters and to remove the old selected-primary-only AutoBtn logic.
+- 2026-05-16: User reported AutoBtn initially fired straight and also fired with no enemies; Builder fixed automatic projectile no-target rejection and deferred runtime state consumption until routed execution.
+- 2026-05-16: User clarified Auto must target the whole map and all skills should ignore range; Builder removed the Auto target range filter from the InGame execution utility.
 
 ## Task: 2026-05-13 Manifested Party Skill Visual Helper Split
 
@@ -1224,3 +1236,44 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-08: User requested a summon-failure popup when Manifest fails.
+## Task: 2026-05-16 NewRunScene Reward UI Manager
+
+### Task title
+
+Attach a dedicated InGame UI manager to NewRunScene reward panels.
+
+### Goals
+
+- Keep user-authored UI panels and buttons while adding runtime binding logic.
+- Show `RewardPanel` after combat clear and route prisoner, Offering, Manifest success, and Manifest failure panels.
+- Update `Canvas/Info/StageInfo`, `Goldinfo`, and `Darkinfo`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not redesign UI layout; the user will author the final UI.
+- No Unity Play Mode verification by Codex.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by script build, Unity import, and scene component inspection.
+
+### Next Actions
+
+- User verifies visual layout, popup stacking, and button disabled coloring in Play Mode.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs`.
+- Unity-MCP component inspection of `Canvas` showed `Pakuri.InGame.InGameUIManager` attached with auto-resolved references.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` was saved after adding the manager to `Canvas`.
+- `git diff --check` on the changed scene/script/CSV set completed with no whitespace errors after trimming Unity YAML trailing spaces.
+
+### History
+
+- 2026-05-16: User recommended a new `InGameUIManager` because more UI flow will be added later.
+- 2026-05-16: Builder created the manager and bound the existing NewRunScene panel hierarchy.

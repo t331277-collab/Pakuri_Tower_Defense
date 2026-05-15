@@ -4,6 +4,203 @@
 - This file keeps only task blocks dated `2026-05-09` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/RUN/RUN_BLACKBOARD.md`.
 
+## Task: 2026-05-16 NewRunScene Stage Flow Data Handoff
+
+### Task title
+
+Design the CSV boundary for NewRunScene Stage/Day/Reward flow.
+
+### Goals
+
+- Start `NewRunScene` at Stage 1 Day 1 without hardcoding long-term Stage Flow rules in code.
+- Use data for day combat type, encounter enemy composition, reward payout, and prisoner candidate rules.
+- Keep event and shop flow out of the first implementation slice per user direction.
+
+### Constraints
+
+- Role Owner is Designer.
+- No implementation was done in this task.
+- Existing `RunSession` already has `StageIndex`, `DayIndex`, `Gold`, `DarkTrace`, `ManifestedMonsterIds`, `PartyMembers`, `ApplyPostCombatSummary(...)`, and `AdvanceDay()`.
+- Existing `RunDayModel.Resolve(...)` already models 5일/10일/11일 combat-type timing, but it is C# logic rather than CSV-authored data.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Ready for Code Builder handoff after the user confirms implementation scope.
+
+### Next Actions
+
+- Create active Stage Flow CSVs for `StageDay`, `StageEncounter`, and reward payout before replacing the current NewRunScene fixed enemy sequence.
+- Implement a Stage Flow manager that reads those CSVs, spawns the encounter, waits for `InGameCombatManager.ActiveEnemyCount == 0`, opens the user-authored reward UI, applies prisoner/gold/dark trace outcomes, and advances the day.
+- Defer event and shop CSV/routes until after the combat-reward-prisoner loop is stable.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` currently starts `SpawnInitialEnemySequence()` in `Start()` and spawns the fixed Stage 1 enemy list.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` exposes `ActiveEnemyCount`, registers enemies, and unregisters dead units through `RemoveUnitIfDead(...)`.
+- `Pakuri/Assets/Legacy/Scripts/Run/Session/RunSession.cs` stores run progression and economy fields and has `AdvanceDay()`.
+- `Pakuri/Assets/Legacy/Scripts/Run/Session/RunDayModel.cs` resolves Day 5, Day 10, and Day 11 combat types.
+- `Pakuri/reference/4.run/combat-reward-system.md` defines prisoner count odds, boss prisoner inclusion, gold payouts, and dark trace payouts.
+- `Pakuri/reference/4.run/prisoner-choice-system.md` defines Manifest and Offering as current prisoner uses; torture/corrupt is future scope.
+
+### History
+
+- 2026-05-16: User asked how to proceed with StageManager, Stage/Round flow, monster spawning, reward UI, Manifest, Offering, gold, and dark trace, while excluding event and shop implementation for now.
+
+## Task: 2026-05-16 NewRunScene Stage Flow CSV Seed Implementation
+
+### Task title
+
+Seed active Stage Flow CSV data for NewRunScene implementation.
+
+### Goals
+
+- Provide data rows for Stage 1 Day 1 through Day 11 progression.
+- Link each day to an encounter and a reward rule.
+- Keep event and shop disabled for the first active Stage Flow implementation slice.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This task only creates data files; no StageManager or UI flow code was implemented yet.
+- Active CSVs cover Stage 1 only because current enemy data and prefabs are Stage 1 focused.
+- No Unity Play Mode verification was run by Codex.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and CSV consistency verified.
+
+### Next Actions
+
+- Implement Stage Flow manager/parser code using the new CSV files.
+- Connect user-authored reward UI after enemy-clear detection.
+- User verifies Play Mode behavior after the Stage Flow manager is implemented.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/StageDay.csv` includes `stage1-day1` through `stage1-day11`.
+- `StageDay.csv` maps Day 5 to `Day5Midboss`, Day 10 to `Day10Midboss`, and Day 11 to `Boss`.
+- `StageDay.csv` has `shop_option_enabled=false` and `event_roll_enabled=false` for all active rows.
+- `StageEncounter.csv` contains `stage1-day11-boss` rows for `stage1-guardian-captain`, `stage1-attack-captain`, and `stage1-hero-karin`.
+- `StageReward.csv` contains gold/dark trace values matching the inspected Stage 1 reward rules: normal `10/10`, midboss `30/20`, boss `50/50`.
+- CSV consistency check returned no missing encounter, reward, or enemy references.
+
+### History
+
+- 2026-05-16: User requested Code Builder implementation of the new active CSV files for date progression, combat composition, and reward rules.
+
+## Task: 2026-05-16 NewRunScene StageManager Flow Implementation
+
+### Task title
+
+Implement the first CSV-driven NewRunScene StageManager flow.
+
+### Goals
+
+- Add a StageManager that reads active Stage CSV TextAssets.
+- Start Stage 1 Day 1 from `RunSession`.
+- Spawn encounter rows through the existing `NewRunSceneEntryManager` enemy prefab/model/registration path.
+- Wait for `InGameCombatManager.ActiveEnemyCount` to reach zero.
+- Prepare reward state with gold, dark trace, and prisoner candidates.
+- Expose a `ContinueToNextDay()` API for the future user-authored reward UI button.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Play Mode verification was run by Codex.
+- This implementation does not create the reward UI, Manifest UI, Offering UI, artifact UI, event flow, or shop flow.
+- `NewRunStageManager` currently applies post-combat summary when reward becomes ready; future UI work should decide how to present and consume pending prisoner IDs.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified by builds, CSV checks, scene serialization, Unity refresh, and console read.
+
+### Next Actions
+
+- User creates or finalizes the reward UI objects.
+- Code Builder connects the reward UI to `NewRunStageManager.Pending*` properties and `ContinueToNextDay()`.
+- Future work should connect Manifest/Offering buttons to the pending prisoner IDs and party state.
+- User performs NewRunScene Play Mode verification.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts2/InGame/Core/NewRunStageManager.cs`.
+- Added `Pakuri/Assets/Scripts2/InGame/Core/NewRunStageManager.cs.meta`.
+- `NewRunStageManager` parses `StageDay.csv`, `StageEncounter.csv`, and `StageReward.csv`, then drives states `Spawning`, `Combat`, `RewardReady`, and `Error`.
+- `NewRunStageManager` exposes `PendingPrisonerEnemyIds`, `PendingGoldReward`, `PendingDarkTraceReward`, `PendingPrisonerCount`, `CurrentEncounterId`, `CurrentRewardRuleId`, and `ContinueToNextDay()`.
+- Updated `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` with `spawnInitialEnemySequenceOnStart=false` by default and public `SpawnEnemyById(...)`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now has `Pakuri.InGame.NewRunStageManager` on `GameManager`.
+- Scene YAML confirms `NewRunStageManager` references `StageDay.csv`, `StageEncounter.csv`, and `StageReward.csv`, and `NewRunSceneEntryManager.spawnInitialEnemySequenceOnStart: 0`.
+- Runtime build `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Editor build `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and the same existing warnings.
+- Unity-MCP refresh completed to idle, and after clearing the console the warning/error read showed only MCP client handler logs.
+- `git diff --check` passed for the changed CSV, script, meta, and scene files, with only LF-to-CRLF normalization warnings for a script.
+
+### History
+
+- 2026-05-16: User asked Code Builder to make StageManager and explain how the InGame flow proceeds.
+
+## Task: 2026-05-16 NewRunScene Stage-One Enemy Spawn Expansion
+
+### Task title
+
+Spawn the requested stage-one enemy prefabs in NewRunScene at one-second intervals.
+
+### Goals
+
+- Keep the existing `NewRunSceneEntryManager` spawn coroutine and expand it instead of adding a separate wave system.
+- Spawn Swordsman, Shield, Rogue, Priest, Guardian Captain, Attack Captain, and Hero Karin in order.
+- Keep spawned enemies under `RunTimeObject/RunTimeEnemy`, player/party monsters under `RunTimeObject/RunTimeMonster`, and skill instances under `RunTimeSkill`.
+- Serialize the new enemy prefab and skill prefab references in `NewRunScene.unity`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Unity Play Mode gameplay verification was run by Codex.
+- This is not the full Stage Flow system; it is the requested NewRunScene entry spawn expansion.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified by scene serialization checks and builds.
+
+### Next Actions
+
+- User verifies NewRunScene Play Mode spawn order and one-second cadence.
+- Later Stage Flow work can replace this entry test sequence with day/wave scheduling.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` now defines spawn fields and methods for Shield, Guardian Captain, Attack Captain, and Hero Karin.
+- `NewRunSceneEntryManager.cs` calls the expanded sequence with `WaitForSeconds(enemySpawnIntervalSeconds)` between each spawn and scene value `enemySpawnIntervalSeconds: 1`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` serializes `stageOneShieldEnemyPrefab`, `stageOneGuardianCaptainPrefab`, `stageOneAttackCaptainPrefab`, and `stageOneHeroKarinPrefab`.
+- `NewRunScene.unity` serializes enemy IDs `stage1-shieldbearer`, `stage1-guardian-captain`, `stage1-attack-captain`, and `stage1-hero-karin`.
+- `NewRunScene.unity` serializes skill prefab fields for Shield, Archer, Rogue, Shield King, Warrior King, and Karin.
+- Runtime/editor builds passed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-16: User confirmed the remaining enemy prefabs and skill effect prefabs exist under `Assets/Prefab/Enemy` and `Assets/Prefab/Enemy/Skill`, then requested Code Builder to spawn the enemies in `NewRunScene` at one-second intervals.
+
 ## Task: 2026-05-15 NewRunScene Stage-One Enemy Skill MVP
 
 ### Task title
@@ -16,12 +213,15 @@ Connect NewRunScene's three spawned stage-one enemies to their first skill behav
 - Use the three authored enemy skill prefabs assigned on `GameManager` / `InGameCombatManager`.
 - Let Warrior and Rogue damage the player monster through runtime relay/resource services.
 - Let Priest heal injured enemy allies through the same resource refresh path.
+- Destroy the Priest heal visual after one short playback.
+- Route runtime enemies, skills, and monsters under the scene's requested runtime hierarchy roots.
 
 ### Constraints
 
 - Role Owner is Code Builder.
 - No Unity Play Mode gameplay verification was run by Codex.
 - This task does not implement Stage Flow, rewards, prisoner rewards, later enemy waves, or boss/midboss skills.
+- Runtime hierarchy routing uses `RunTimeObject`, `RunTimeEnemy`, `RunTimeSkill`, and `RunTimeMonster` scene objects when present.
 - Code Reviewer execution requires explicit user permission and was not run.
 
 ### Role Owner
@@ -35,6 +235,7 @@ Builder implementation completed and locally verified.
 ### Next Actions
 
 - User verifies in NewRunScene Play Mode that the already-spawned Warrior, Rogue, and Priest use their skill prefabs and mutate HP/heal values correctly.
+- User verifies `Preist_Skill` destroys after one short playback, enemies spawn under `RunTimeObject/RunTimeEnemy`, skill visuals/projectiles under `RunTimeSkill`, and monsters under `RunTimeObject/RunTimeMonster`.
 - Stage Flow and prisoner reward work should start only after this enemy-skill MVP is accepted in Play Mode.
 
 ### Evidence
@@ -44,12 +245,18 @@ Builder implementation completed and locally verified.
 - `Warrior_Skill.prefab`, `Achor_Skill.prefab`, and `Preist_Skill.prefab` under `Assets/Prefab/Enemy/Skill` are the assigned visual/trigger prefabs for the three current enemies.
 - `InGameEnemySkillHitboxActor.cs` relays Warrior slash hits and `InGameProjectileActor.cs` relays Rogue shuriken hits into `InGameCombatManager.ApplyDamage(...)`.
 - `UnitResourceMutationService.cs` and `InGameCombatManager.cs` now expose `Heal(...)` for Priest healing and actor refresh.
+- `EnemyCombatSimulationSystem.cs` now attaches `InGameAttachedSkillEffectActor` to Priest heal visuals with a `0.8f` lifetime.
+- `NewRunSceneEntryManager.cs` now parents player monsters to `RunTimeMonster` and stage-one enemies to `RunTimeEnemy`.
+- `InGameCombatManager.cs` now parents skill prefab instances to `RunTimeSkill` through `InstantiateSkillPrefab(...)`.
+- `NewRunScene.unity` serializes the runtime root references on `GameManager`.
 - Runtime/editor builds passed with 0 errors after rerunning the Editor build alone because the first parallel attempt hit the known output DLL file lock.
 - Unity-MCP console warning/error read showed no C# compile errors after the new script import.
+- Follow-up runtime/editor builds passed with 0 errors after the lifetime/hierarchy changes; the first parallel Editor build again failed only with the known output DLL file lock before the standalone retry passed.
 
 ### History
 
 - 2026-05-15: User requested Code Builder implementation of the three current enemy skills using prefabs from `Assets/Prefab/Enemy/Skill`.
+- 2026-05-15: User reported `Preist_Skill` kept replaying and requested runtime hierarchy organization; Code Builder added short visual lifetime destruction and runtime root parenting.
 
 ## Task: 2026-05-15 NewRunScene Phase4-C Damage Visibility Follow-up
 
@@ -140,7 +347,7 @@ Builder implementation completed and locally verified by compile/editor checks.
 
 ### Next Actions
 
-- User verifies NewRunScene Play Mode: Eve-A manual hold fire, AutoBtn auto toggle, projectile hit/destroy behavior, and Ariel-B when learned.
+- User verifies NewRunScene Play Mode: Eve-A manual hold fire, AutoBtn enabling 1P automatic target selection through the shared auto skill route, projectile hit/destroy behavior, and Ariel-B when learned.
 - Add a timed status/effect layer before claiming shield duration or shock duration behavior.
 - Add reusable branch/multi-projectile behavior after the base projectile actor path is accepted.
 - Run Code Reviewer only when explicitly permitted by the user.
@@ -151,17 +358,30 @@ Builder implementation completed and locally verified by compile/editor checks.
 - `SkillExecutionSystem.cs` now supports `TryExecuteManual(...)` and an auto-route predicate.
 - `SkillExecutionContext.cs` now carries optional manual aim direction.
 - `SkillExecutors.cs` now executes projectile and shield sample effects instead of returning no-effect results.
-- `InGameCombatManager.cs` now resolves skill effect prefabs, handles 1P manual A input, exposes AutoBtn manual-to-auto switching, and resolves projectile destroy boundary X.
+- `InGameCombatManager.cs` now resolves skill effect prefabs, handles 1P manual A input while player auto skill mode is off, exposes AutoBtn player auto skill mode, and resolves projectile destroy boundary X.
 - `NewRunScene.unity` serializes `eveAProjectilePrefab`, `arielBShieldEffectPrefab`, `projectileDestroyBoundary`, and `Canvas/AutoBtn`'s `InGameAutoSkillButton` reference.
 - Runtime/editor builds passed with 0 errors and existing assembly reference warnings.
 - Unity-MCP refresh reached idle and console warning/error read showed no C# compile errors.
 - 2026-05-15 follow-up: `InGameCombatManager.cs` no longer calls `UnityEngine.Input.GetMouseButton(0)` or `Input.mousePosition`; manual 1P A input now uses `UnityEngine.InputSystem.Mouse.current`.
 - 2026-05-15 follow-up: Runtime/editor builds passed with 0 errors after the Input System API replacement, and Unity-MCP script refresh reached idle.
+- 2026-05-16 follow-up: `InGameAutoSkillButton.cs` now calls `InGameCombatManager.EnablePlayerAutoSkillMode()`, `InGameCombatManager.cs` uses `playerAutoSkillEnabled`, and repository search found no remaining `selectedPlayerPrimarySkillManual` / selected-primary AutoBtn API references.
+- 2026-05-16 follow-up: Runtime/editor builds passed with 0 errors, Unity-MCP script refresh reached idle, and console warning/error read returned only MCP client handler logs after the AutoBtn route update.
+- 2026-05-16 follow-up: `ProjectileSkillExecutor` no longer converts missing automatic targets into `Vector2.right`; automatic projectile execution is rejected when no target direction exists.
+- 2026-05-16 follow-up: `SkillExecutionSystem` now calls `SkillRuntimeInstance.TryBeginCast()` only after an executor returns `Routed`, so rejected no-target automatic attempts do not consume magazine, cooldown, cast, active, tick, or reload state.
+- 2026-05-16 follow-up: Runtime/editor builds passed with 0 errors after the no-target auto projectile fix; Unity-MCP script refresh reached idle and console warning/error read returned only MCP client handler logs.
+- 2026-05-16 follow-up: `SkillExecutionUtility.FindNearestTarget(...)` now selects the nearest valid target from the full target-side roster without comparing distance against `Targeting.Range`.
+- 2026-05-16 follow-up: `InGameSkillDefinitionMapper` now maps source skill range to ignored `Targeting.Range = 0f`, `InGameSkillDataValidator` no longer requires projectile range, and `SkillData.csv` no longer contains a `range` column.
+- 2026-05-16 follow-up: `SkillChoiceModifierRecord` and `SkillExecutionSnapshot` no longer parse/apply range modifiers, so future `range_multiplier` / `range_bonus` CSV columns are ignored by the InGame runtime path.
+- 2026-05-16 follow-up: `EnemyCombatSimulationSystem` Priest healing now searches injured enemy allies across the full enemy roster instead of filtering by `ActiveSkillRadius`.
+- 2026-05-16 follow-up: Runtime/editor builds passed with 0 errors after the map-wide targeting change; Unity-MCP refresh reached idle and console warning/error read returned only MCP client handler logs.
 
 ### History
 
 - 2026-05-15: User requested Code Builder to implement Phase4-C-0 as a common actor component slice connected to Eve-A and Ariel-B minimum execution.
 - 2026-05-15: User reported the NewRunScene Play Mode error caused by `UnityEngine.Input` while the project uses the Input System package; Builder replaced the manual A-skill mouse read with Input System API.
+- 2026-05-16: User requested Code Builder to change AutoBtn so 1P uses the same automatic targeting/skill route as future 2P-5P monsters and to remove the old selected-primary-only AutoBtn logic.
+- 2026-05-16: User reported the first AutoBtn activation and no-enemy state fired straight projectiles before later shots aimed correctly; Builder found and fixed the auto projectile no-target fallback and premature runtime resource consumption.
+- 2026-05-16: User clarified all skills should have no range concept and Auto should target across the whole map; Builder removed the InGame range filter and deleted the `range` column from `SkillData.csv`.
 
 ## Task: 2026-05-15 NewRunScene Phase4-B Skill Execution Contract
 
@@ -860,3 +1080,90 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-09: User requested organizing `Assets/Scripts` so Run and other domains are clearer from the folder structure.
+## Task: 2026-05-16 NewRunScene Stage Reward UI Flow
+
+### Task title
+
+Implement NewRunScene stage reward UI handoff and prisoner use flow.
+
+### Goals
+
+- Show `Canvas/RewardPanel` when `NewRunStageManager` reaches `RewardReady`.
+- Let reward buttons claim gold, dark trace, and prisoner-use actions instead of applying all rewards immediately.
+- Spawn manifested monsters into `2PSpawnPoint` through `5PSpawnPoint` after successful prisoner Manifest choice.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User owns Play Mode gameplay/visual verification.
+- Code Reviewer was executed once and returned fix requests; Builder fixed the reported issues without a second Reviewer pass.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by builds, CSV checks, Unity import, and one Reviewer pass with follow-up fixes.
+
+### Next Actions
+
+- User verifies in Play Mode: enemy clear opens `RewardPanel`, resource buttons update `Goldinfo`/`Darkinfo`, prisoner Offering/Manifest popups route correctly, and successful Manifest spawns a 2P-5P unit.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` and attached `Pakuri.InGame.InGameUIManager` to `Canvas` in `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity`.
+- Changed `Pakuri/Assets/Scripts2/InGame/Core/NewRunStageManager.cs` so reward state exposes pending rewards and no longer applies post-combat rewards before UI clicks.
+- Changed `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` to spawn manifested monsters at authored `2P~5PSpawnPoint` objects and register them as player monsters.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing System.Net.Http/System.IO.Compression warnings.
+- CSV check returned `RewardRows=5; ManifestChanceColumn=True; BadManifestChanceRows=0; MissingRewardRefs=0; EncounterRows=30`.
+- Code Reviewer command using `openai.chatgpt-26.513.21555...\codex.exe review --uncommitted` returned two P2 findings; Builder fixed boss health multiplier application and prisoner duplicate sampling.
+
+### History
+
+- 2026-05-16: User requested Code Builder implementation for NewRunScene reward UI flow after all monsters are defeated.
+- 2026-05-16: Builder added `InGameUIManager`, wired the scene, moved reward claiming to button clicks, added Manifest success/failure routing, and fixed Reviewer-reported stage reward issues.
+
+## Task: 2026-05-16 NewRunScene Entry Spawn Bug
+
+### Task title
+
+Fix NewRunScene entry stage spawn visibility and startup CSV catalog error.
+
+### Goals
+
+- Ensure the NewRunScene stage flow can spawn visible stage 1-1 enemies.
+- Remove the project-code CSV catalog auto-sync error caused by missing active source CSV imports.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies the NewRunScene start flow in Play Mode.
+- If the UnityEditor.Graphs NullReferenceException remains, treat it as a separate editor-internal graph issue unless a project-code stack frame appears.
+
+### Evidence
+
+- Active scene inspection showed `NewRunScene` contains `GameManager` with `NewRunSceneEntryManager`, `InGameCombatManager`, and `NewRunStageManager`.
+- `NewRunStageManager` references `StageDay.csv`, `StageEncounter.csv`, and `StageReward.csv`; `startFlowOnStart` is enabled.
+- `SpawnPoint` is authored at `x=9.02, y=0, z=0`; `StageEncounter.csv` is now aligned to that coordinate space.
+- User-pasted NullReferenceException stack contains only `UnityEditor.Graphs.Edge.WakeUp`, `UnityEditor.Graphs.Graph`, and no project script path.
+- Unity console also showed a project-code CSV error from `PakuriCsvRuntimeData.Editor.cs:89` because `Assets/CSVdata/source/catalog_monsters.csv` was missing.
+- Added active source CSV copies under `Pakuri/Assets/CSVdata/source`; after console clear and Unity asset refresh, the CSV auto-sync error did not reappear.
+- Runtime/editor builds completed with 0 errors.
+
+### History
+
+- 2026-05-16: User reported no enemies visible on NewRunScene entry and shared a UnityEditor.Graphs NullReferenceException.
+- 2026-05-16: Builder fixed active encounter spawn coordinates and restored the CSV source import folder expected by runtime catalog code.

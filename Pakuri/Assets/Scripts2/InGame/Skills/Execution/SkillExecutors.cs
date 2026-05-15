@@ -40,6 +40,11 @@ namespace Pakuri.InGame
 
             if (direction.sqrMagnitude <= 0.0001f)
             {
+                if (!context.HasManualAimDirection)
+                {
+                    return new SkillExecutionResult(SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
+                }
+
                 direction = Vector2.right;
             }
 
@@ -64,7 +69,7 @@ namespace Pakuri.InGame
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
             }
 
-            var instance = Object.Instantiate(prefab, origin, Quaternion.identity);
+            var instance = context.CombatManager.InstantiateSkillPrefab(prefab, origin, Quaternion.identity);
             var actor = instance.GetComponent<InGameProjectileActor>();
             if (actor == null)
             {
@@ -139,7 +144,7 @@ namespace Pakuri.InGame
                 context.CombatManager.GrantShield(target.Model, shield);
                 if (prefab != null && target.Transform != null)
                 {
-                    var instance = Object.Instantiate(prefab, target.Transform.position, Quaternion.identity);
+                    var instance = context.CombatManager.InstantiateSkillPrefab(prefab, target.Transform.position, Quaternion.identity);
                     var actor = instance.GetComponent<InGameAttachedSkillEffectActor>();
                     if (actor == null)
                     {
@@ -173,7 +178,6 @@ namespace Pakuri.InGame
             }
 
             var candidates = ResolveTargetList(caster, roster, targeting);
-            var range = targeting != null && targeting.Range > 0f ? targeting.Range : float.MaxValue;
             UnitRosterEntry best = null;
             var bestDistanceSq = float.MaxValue;
             var origin = caster.Transform.position;
@@ -189,7 +193,7 @@ namespace Pakuri.InGame
                 var offset = candidate.Transform.position - origin;
                 offset.z = 0f;
                 var distanceSq = offset.sqrMagnitude;
-                if (distanceSq > range * range || distanceSq >= bestDistanceSq)
+                if (distanceSq >= bestDistanceSq)
                 {
                     continue;
                 }
@@ -248,10 +252,8 @@ namespace Pakuri.InGame
         {
             var projectile = skill != null ? skill.Projectile : null;
             var speed = projectile != null ? Mathf.Max(0.1f, projectile.ProjectileSpeed) : 1f;
-            var range = skill != null && skill.Targeting != null && skill.Targeting.Range > 0f
-                ? skill.Targeting.Range
-                : 31f;
-            return Mathf.Max(0.25f, range / speed + 0.5f);
+            const float battlefieldTravelDistance = 31f;
+            return Mathf.Max(0.25f, battlefieldTravelDistance / speed + 0.5f);
         }
 
         public static DamageAttribute MapAttribute(ElementType element)

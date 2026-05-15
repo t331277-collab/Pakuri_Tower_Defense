@@ -17,9 +17,6 @@ namespace Pakuri.InGame
         public float ReloadTimeMultiplier { get; set; }
         public bool HasShotIntervalMultiplier { get; set; }
         public float ShotIntervalMultiplier { get; set; }
-        public bool HasRangeMultiplier { get; set; }
-        public float RangeMultiplier { get; set; }
-        public float RangeBonus { get; set; }
         public bool HasRadiusMultiplier { get; set; }
         public float RadiusMultiplier { get; set; }
         public float RadiusBonus { get; set; }
@@ -64,9 +61,6 @@ namespace Pakuri.InGame
             record.ReloadTimeMultiplier = reloadTimeMultiplier;
             record.HasShotIntervalMultiplier = TryGetFloat(row, "shot_interval_multiplier", out var shotIntervalMultiplier);
             record.ShotIntervalMultiplier = shotIntervalMultiplier;
-            record.HasRangeMultiplier = TryGetFloat(row, "range_multiplier", out var rangeMultiplier);
-            record.RangeMultiplier = rangeMultiplier;
-            record.RangeBonus = GetFloat(row, "range_bonus");
             record.HasRadiusMultiplier = TryGetFloat(row, "radius_multiplier", out var radiusMultiplier);
             record.RadiusMultiplier = radiusMultiplier;
             record.RadiusBonus = GetFloat(row, "radius_bonus");

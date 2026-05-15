@@ -1,0 +1,12 @@
+stage,day,day_key,combat_type,encounter_id,reward_rule_id,elite_option_chance,shop_option_enabled,event_roll_enabled,notes
+1,1,stage1-day1,Normal,stage1-day1-normal,reward-stage1-normal,0,false,false,Stage 1 opening combat; no event or shop in current active scope.
+1,2,stage1-day2,Normal,stage1-day2-normal,reward-stage1-normal,0,false,false,Normal progression day; elite/shop deferred.
+1,3,stage1-day3,Normal,stage1-day3-normal,reward-stage1-normal,0,false,false,Normal progression day; elite/shop deferred.
+1,4,stage1-day4,Normal,stage1-day4-normal,reward-stage1-normal,0,false,false,Normal progression day; elite/shop deferred.
+1,5,stage1-day5,Day5Midboss,stage1-day5-midboss,reward-stage1-midboss,0,false,false,Fixed Stage 1 day 5 midboss combat.
+1,6,stage1-day6,Normal,stage1-day6-normal,reward-stage1-normal,0,false,false,Normal progression day; shop and elite deferred.
+1,7,stage1-day7,Normal,stage1-day7-normal,reward-stage1-normal,0,false,false,Normal progression day; shop and elite deferred.
+1,8,stage1-day8,Normal,stage1-day8-normal,reward-stage1-normal,0,false,false,Normal progression day; shop and elite deferred.
+1,9,stage1-day9,Normal,stage1-day9-normal,reward-stage1-normal,0,false,false,Normal progression day; shop and elite deferred.
+1,10,stage1-day10,Day10Midboss,stage1-day10-midboss,reward-stage1-day10-midboss,0,false,false,Fixed Stage 1 day 10 midboss combat.
+1,11,stage1-day11,Boss,stage1-day11-boss,reward-stage1-boss,0,false,false,Stage 1 boss combat; includes both midbosses and stage boss.

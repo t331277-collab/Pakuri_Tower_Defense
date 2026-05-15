@@ -3,6 +3,118 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-16 Stage Encounter CSV Seed
+
+### Task title
+
+Create active Stage encounter composition rows using current Stage 1 enemy IDs.
+
+### Goals
+
+- Store Stage 1 day encounter enemy composition outside the current fixed spawn coroutine.
+- Reference only enemy IDs that exist in the current active `EnemyStat.csv`.
+- Include spawn order, count, interval, right-edge spawn coordinates, boss candidate flags, guaranteed boss flags, and guaranteed prisoner flags.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- CSV data only; no enemy spawn code, prefab assignment, or Play Mode verification was changed.
+- Stage 2~4 encounters were not seeded because their active `EnemyStat.csv` rows do not exist yet.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and CSV consistency verified.
+
+### Next Actions
+
+- Future Stage Flow implementation should spawn encounters from `StageEncounter.csv`.
+- Replace the existing fixed Stage 1 spawn sequence only after the parser/loader is implemented and verified.
+
+### Evidence
+
+- Added `Pakuri/Assets/CSVdata/StageEncounter.csv` with 30 rows.
+- `StageEncounter.csv` references current enemy IDs `stage1-swordsman`, `stage1-shieldbearer`, `stage1-rogue`, `stage1-priest`, `stage1-guardian-captain`, `stage1-attack-captain`, and `stage1-hero-karin`.
+- `StageEncounter.csv` stores right-edge spawn X as `31`, normal Y range `0~17`, and boss Y fixed at `8`, matching the inspected Stage basic rules.
+- Cross-file consistency check returned `MissingEnemyRefs=0` against `Pakuri/Assets/CSVdata/EnemyStat.csv`.
+- `NewRunSceneEntryManager.SpawnEnemyById(...)` now lets `NewRunStageManager` spawn these enemy IDs from CSV rows through the existing prefab/model/roster path.
+- `NewRunSceneEntryManager.spawnInitialEnemySequenceOnStart` is false in `NewRunScene.unity`, so the old fixed enemy sequence no longer competes with StageManager-driven encounter spawning.
+
+### History
+
+- 2026-05-16: User requested active CSV files for combat composition as part of the StageManager preparation.
+- 2026-05-16: Code Builder connected Stage encounter rows to a new StageManager spawn path without changing enemy skill behavior.
+
+## Task: 2026-05-16 Stage-One Remaining Enemy Skills And Spawn Expansion
+
+### Task title
+
+Implement Shield, Guardian Captain, Attack Captain, and Hero Karin enemy skill behavior through the existing InGame combat structure.
+
+### Goals
+
+- Add the remaining requested stage-one enemy rows to `Assets/CSVData/EnemyStat.csv`.
+- Reuse `EnemyCombatSimulationSystem`, `InGameCombatManager`, projectile/hitbox actors, and resource mutation services for the new enemy skills.
+- Connect `ShieldUp`, `GuardianFlag`, `ChargeCommand`, and `SacredSwordWave` to authored skill prefabs under `Assets/Prefab/Enemy/Skill`.
+- Keep Rogue `ShurikenThrow` connected to the authored `Rogue_Skill` prefab.
+- Spawn the requested enemies in `NewRunScene` at one-second intervals through the existing entry manager sequence.
+- Make Karin's `SacredSwordWave` use the enemy projectile actor path instead of the short stationary hitbox path.
+- Make self/ally enemy skills such as `GuardianFlag` and `ChargeCommand` execute from cooldown rather than waiting for melee attack range.
+- Add simple stage-one enemy passive stat application to the new InGame runtime.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Unity Play Mode gameplay verification was run by Codex.
+- Skill prefabs remain visual/trigger relays; HP/shield/damage/buff logic stays in runtime code.
+- `ActiveSkillRadius` is used for area effects such as Guardian Captain shield and Attack Captain command, not as global targeting range.
+- Stage-one enemy passives in the new InGame runtime are numeric stat adjustments only; no event-driven passive system was introduced.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified by code search, CSV parsing, scene serialization checks, Unity refresh, and builds.
+
+### Next Actions
+
+- User verifies in NewRunScene Play Mode that Shield, Rogue, Priest, Guardian Captain, Attack Captain, and Karin spawn in the expected one-second cadence after the swordsman.
+- User verifies `ShieldUp`, cooldown-based `GuardianFlag`, cooldown-based `ChargeCommand`, projectile-based `SacredSwordWave`, and Rogue skill prefab behavior in Play Mode.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- `Pakuri/reference/5.enemy/stage-1-enemies.md` was inspected for Shield, Rogue, Guardian Captain, Attack Captain, and Hero Karin stats and skill values.
+- `Pakuri/Assets/CSVData/EnemyStat.csv` now contains `stage1-shieldbearer`, `stage1-guardian-captain`, `stage1-attack-captain`, and `stage1-hero-karin`; `stage1-rogue` already existed and remains `ShurikenThrow`.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSimulationSystem.cs` has switch cases for `ShieldUp`, `AimedShot`, `GuardianFlag`, `ChargeCommand`, and `SacredSwordWave`.
+- `EnemyCombatSimulationSystem.cs` implements `ExecuteShieldUp`, `ExecuteAimedShot`, `ExecuteGuardianFlag`, `ExecuteChargeCommand`, and `ExecuteSacredSwordWave`.
+- `EnemyCombatSimulationSystem.cs` now routes `SacredSwordWave` through `ExecuteEnemyProjectile(...)`, which uses `InGameProjectileActor`.
+- `EnemyCombatSimulationSystem.cs` now treats `Heal`, `ShieldUp`, `GuardianFlag`, and `ChargeCommand` as cooldown-driven self/ally skills before the melee distance gate.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` maps `ShieldUp`, `AimedShot`, `ShurikenThrow`, `GuardianFlag`, `ChargeCommand`, and `SacredSwordWave` to serialized enemy skill prefab fields.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitRuntimeModel.cs` now stores temporary incoming damage, outgoing damage, and move-speed multipliers plus active skill duration.
+- `EnemyUnitRuntimeModel.cs` now separates passive outgoing damage, incoming damage, and healing multipliers from temporary skill buff multipliers.
+- Added `Pakuri/Assets/Scripts2/InGame/Units/StageOneEnemyPassiveStatApplier.cs`, which applies stage-one enemy numeric passives when `UnitFactory.CreateEnemy(...)` creates the enemy model.
+- `StageOneEnemyPassiveStatApplier.cs` mirrors the inspected legacy `ApplyStageOnePassive(...)` numeric effects: Slash damage, ShieldUp defenses, AimedShot crit chance, ShurikenThrow crit damage, Heal healing, GuardianFlag incoming damage, ChargeCommand damage, and SacredSwordWave damage.
+- `Pakuri/Assets/Scripts2/InGame/Core/UnitResourceMutationService.cs` applies the enemy incoming-damage multiplier before rounded damage is committed.
+- `UnitResourceMutationService.cs` now multiplies passive incoming damage and temporary incoming damage separately.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` serializes skill prefab references for Shield, Archer, Rogue, Shield King, Warrior King, and Karin skill prefabs.
+- Runtime build `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Editor build `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and the same existing warnings.
+- Follow-up runtime/editor builds passed with 0 errors after the Karin projectile, cooldown-driven support skill, and passive stat applier changes.
+- Unity-MCP refresh reached idle after the follow-up script changes.
+
+### History
+
+- 2026-05-16: User confirmed remaining enemy unit and skill prefabs exist, identified `Shield`, `Shield_King`, `Warrior_King`, and `Karin`, and requested Code Builder to assign data, implement skills, and spawn each enemy one second apart in `NewRunScene`.
+- 2026-05-16: User reported Karin's skill looked wrong, Guardian Captain and Attack Captain were not attacking/using skills as expected, and asked Code Builder to switch Karin to projectile behavior, make Guardian/Attack Captain use cooldown-based self/ally skills, and add simple stage-one enemy passive stat application.
+
 ## Task: 2026-05-15 InGame Stage-One Enemy Skill MVP
 
 ### Task title
@@ -14,7 +126,9 @@ Implement Warrior, Rogue, and Priest enemy skill execution through existing comb
 - Reuse `EnemyCombatSimulationSystem` movement, targeting, range, and cooldown flow.
 - Make Warrior `Slash` spawn the authored `Warrior_Skill` prefab and deal physical damage through a trigger/fallback hitbox relay.
 - Make Rogue `ShurikenThrow` spawn the authored `Achor_Skill` prefab and deal physical projectile damage through `InGameProjectileActor`.
-- Make Priest `Heal` restore the lowest-health nearby enemy ally and spawn the authored `Preist_Skill` visual prefab.
+- Make Priest `Heal` restore the lowest-health enemy ally and spawn the authored `Preist_Skill` visual prefab.
+- Destroy the Priest heal visual after one short playback instead of leaving the prefab looping in the scene.
+- Parent runtime enemy, skill, and monster objects under the scene's runtime hierarchy roots.
 - Keep actual damage/heal mutation inside `InGameCombatManager` and `UnitResourceMutationService`.
 
 ### Constraints
@@ -22,6 +136,7 @@ Implement Warrior, Rogue, and Priest enemy skill execution through existing comb
 - Role Owner is Code Builder.
 - No Unity Play Mode gameplay verification was run by Codex.
 - Prefab Trigger/Collider objects relay contact only; damage, heal, side filtering, duplicate-hit blocking, and resource mutation stay in runtime code.
+- Runtime hierarchy routing uses existing scene roots when available: `RunTimeObject`, `RunTimeEnemy`, `RunTimeSkill`, and `RunTimeMonster`.
 - This MVP covers the three currently spawned stage-one enemy prefabs only: `stage1-swordsman`, `stage1-rogue`, and `stage1-priest`.
 - Code Reviewer execution requires explicit user permission and was not run.
 
@@ -35,7 +150,8 @@ Builder implementation completed and locally verified by builds, Unity-MCP impor
 
 ### Next Actions
 
-- User verifies in NewRunScene Play Mode that Warrior slash damages the player monster, Rogue shuriken damages the player monster, and Priest heals injured enemy allies.
+- User verifies in NewRunScene Play Mode that Warrior slash damages the player monster, Rogue shuriken damages the player monster, Priest heals injured enemy allies, and `Preist_Skill` is destroyed after one short playback.
+- User verifies spawned enemies appear under `RunTimeObject/RunTimeEnemy`, skill instances under `RunTimeSkill`, and player/party monsters under `RunTimeObject/RunTimeMonster`.
 - Later enemy work can add ShieldUp, AimedShot, GuardianFlag, ChargeCommand, and SacredSwordWave after their prefabs/data/spawn roles exist.
 - Run Code Reviewer only when explicitly permitted by the user.
 
@@ -47,6 +163,12 @@ Builder implementation completed and locally verified by builds, Unity-MCP impor
 - `Pakuri/Assets/Scripts2/InGame/Units/UnitFactory.cs` copies those fields from `EnemyDefinition` into `EnemyUnitRuntimeModel`.
 - `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSimulationSystem.cs` now executes `Slash`, `ShurikenThrow`, and `Heal` at the existing enemy cooldown/range execution point.
 - `EnemyCombatSimulationSystem.cs` spawns `InGameEnemySkillHitboxActor` for slash, `InGameProjectileActor` for shuriken, and the priest visual prefab after calling heal.
+- `EnemyCombatSimulationSystem.cs` now attaches `InGameAttachedSkillEffectActor` to `Preist_Skill` instances with a `0.8f` lifetime, so the heal visual follows the target briefly and then destroys itself.
+- `EnemyCombatSimulationSystem.cs` Priest healing now calls `FindLowestHealthEnemyAlly(roster)` without an `ActiveSkillRadius` distance filter, so the heal target search covers the full enemy roster.
+- `InGameCombatManager.cs` now exposes `InstantiateSkillPrefab(...)`, which parents skill instances under `RunTimeSkill`.
+- `SkillExecutors.cs` now uses `InGameCombatManager.InstantiateSkillPrefab(...)` for player skill projectile/shield visuals as well.
+- `NewRunSceneEntryManager.cs` now instantiates the selected player monster under `RunTimeMonster` and stage-one enemies under `RunTimeEnemy`, creating/finding those roots under `RunTimeObject` when needed.
+- `NewRunScene.unity` serializes `runtimeObjectRoot`, `runtimeEnemyRoot`, `runtimeMonsterRoot`, and `runtimeSkillRoot` references on `GameManager` components.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameEnemySkillHitboxActor.cs` was added for short-lived melee/trigger relay hits with same-side filtering and duplicate-hit blocking.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs` now supports left-moving projectile X-boundary destruction as well as the existing right-moving path.
 - `Pakuri/Assets/Scripts2/InGame/Core/UnitResourceMutationService.cs` and `InGameCombatManager.cs` now expose `Heal(...)`, clamped to `Stats.MaxHealth` and routed through existing actor refresh.
@@ -55,11 +177,16 @@ Builder implementation completed and locally verified by builds, Unity-MCP impor
 - Editor build passed after rerunning alone; the first parallel Editor build failed only with the recurring `obj\Debug\Assembly-CSharp.dll` file lock.
 - Unity-MCP script refresh imported the new script; console warning/error read showed MCP client messages and no C# compile errors.
 - `git diff --check` on the changed scripts and scene passed with only LF-to-CRLF normalization warnings after trimming Unity scene trailing whitespace.
+- Follow-up runtime build passed with 0 errors and existing warnings; the first parallel Editor build hit the recurring output DLL file lock and the standalone Editor build passed.
+- Unity-MCP console warning/error read showed MCP client handler messages and no C# compile errors after the hierarchy/lifetime follow-up.
+- Follow-up runtime/editor builds passed with 0 errors after removing the Priest heal target distance filter; Unity-MCP refresh reached idle and console warning/error read returned only MCP client handler logs.
 
 ### History
 
 - 2026-05-15: User approved implementing the three current enemy skills through the existing structure and confirmed skill prefabs are under `Assets/Prefab/Enemy/Skill`.
 - 2026-05-15: Code Builder implemented the three-skill MVP while keeping damage/heal resource mutation outside the prefabs.
+- 2026-05-15: User reported `Preist_Skill` continued replaying and requested runtime hierarchy routing; Code Builder added short lifetime destruction for the priest visual and routed runtime enemies/skills/monsters to the requested roots.
+- 2026-05-16: User clarified all skills should have no range concept; Code Builder removed the Priest heal target distance filter while leaving melee/projectile movement and prefab hit behavior intact.
 
 ## Task: 2026-05-15 InGame Projectile Damage / Enemy Removal Fix
 
@@ -532,3 +659,87 @@ Completed.
 ### History
 
 - 2026-05-13: User proposed prefab-based Monster / Enemy creation and asked where it belongs in the amended roadmap.
+## Task: 2026-05-16 NewRunStage Boss Encounter Runtime
+
+### Task title
+
+Apply active StageEncounter boss selection and health multipliers.
+
+### Goals
+
+- Make normal encounters select one boss candidate from active encounter rows.
+- Make guaranteed boss rows always spawn as boss rows.
+- Apply `boss_health_multiplier_min/max` to spawned enemy runtime health.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not alter enemy prefab assets in this task.
+- User owns Play Mode validation of actual combat pacing.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented after Reviewer fix request.
+
+### Next Actions
+
+- User verifies in Play Mode that normal combat has one tougher boss enemy and midboss/boss days keep their guaranteed boss enemies.
+
+### Evidence
+
+- `Pakuri/reference/5.enemy/stage-basic-rules.md` states normal combat randomly chooses one normal enemy as the boss and Stage 1 normal boss health is 10~20x.
+- `Pakuri/Assets/CSVdata/StageEncounter.csv` has `is_boss_candidate`, `is_guaranteed_boss`, and `boss_health_multiplier_min/max` columns.
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunStageManager.cs` now selects boss rows and passes a health multiplier to enemy spawning.
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` now applies the health multiplier to `EnemyUnitRuntimeModel.Stats.MaxHealth` and `Resources.CurrentHealth`.
+- Reviewer reported missing boss modifier application; Builder fixed it and reran runtime/editor builds with 0 errors.
+
+### History
+
+- 2026-05-16: Code Reviewer found StageEncounter boss health columns were parsed but not applied at spawn time.
+- 2026-05-16: Builder connected boss row selection and enemy health multiplier application.
+
+## Task: 2026-05-16 NewRunScene Enemy Spawn Visibility Fix
+
+### Task title
+
+Align active StageEncounter enemy spawn coordinates to NewRunScene.
+
+### Goals
+
+- Make 1-1 stage enemies spawn at the authored NewRunScene enemy spawn point area.
+- Keep encounter positioning controlled by CSV data instead of hardcoded spawn overrides.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode; user owns gameplay verification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies that `NewRunScene` stage 1-1 enemies are visible after entering the scene.
+
+### Evidence
+
+- Unity-MCP scene inspection found `SpawnPoint` at `x=9.02, y=0, z=0`.
+- Unity-MCP scene inspection found `NewRunStageManager` on `GameManager` references `Assets/CSVdata/StageEncounter.csv`.
+- Unity-MCP prefab inspection confirmed stage 1 enemy prefabs have `Pakuri.InGame.EnemyUnitActor`.
+- Active `Pakuri/Assets/CSVdata/StageEncounter.csv` now uses `spawn_x=9.02` for 30 rows, normal `spawn_y=-5..5`, and guaranteed boss `spawn_y=0..0`.
+- CSV check returned `Rows=30; SpawnX=9.02; MinY=-5; MaxY=5`.
+- Runtime and editor `dotnet build` commands completed with 0 errors.
+
+### History
+
+- 2026-05-16: User reported enemies were not spawning after entering `NewRunScene`.
+- 2026-05-16: Builder verified scene references and prefabs, then corrected off-screen active encounter coordinates.

@@ -108,7 +108,7 @@ namespace Pakuri.InGame
 
             skill.Timing.Cooldown = source.CooldownSeconds;
             skill.Timing.TickInterval = source.ShotIntervalSeconds;
-            skill.Targeting.Range = source.Range;
+            skill.Targeting.Range = 0f;
             skill.Targeting.Radius = source.Radius;
             skill.Targeting.Shape = MapShape(source.RuntimeKind);
             skill.Targeting.CoverAll = source.RuntimeKind == SkillRuntimeKind.Field;
@@ -129,7 +129,7 @@ namespace Pakuri.InGame
 
             if (skill is BeamSkillData beam)
             {
-                beam.BeamLength = source.Range;
+                beam.BeamLength = 0f;
                 beam.BeamWidth = source.Radius;
                 MapDamage(beam.DamagePerTick, source);
                 beam.OnHitStatus = CreateStatusApplication(source.StatusEffectId);

@@ -4,6 +4,53 @@
 - This file keeps only task blocks dated `2026-05-08` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/RUN/REWARD_BLACKBOARD.md`.
 
+## Task: 2026-05-16 Stage Reward CSV Seed
+
+### Task title
+
+Create active Stage reward rule CSV rows for NewRunScene Stage Flow.
+
+### Goals
+
+- Store Stage 1 reward payout rules outside code.
+- Include prisoner count probabilities, gold, dark trace, elite bonus prisoner count, and artifact choice count.
+- Keep artifact UI implementation deferred while preserving data columns for later use.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- CSV data only; no reward UI or prisoner flow code was changed.
+- Event, shop, and artifact UI behavior remain unimplemented in this slice.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and CSV consistency verified.
+
+### Next Actions
+
+- Future Stage Flow implementation should read `StageReward.csv` and apply rewards to `RunSession`.
+- User-authored reward UI should display the parsed prisoner/gold/dark trace result after enemy clear.
+
+### Evidence
+
+- Added `Pakuri/Assets/CSVdata/StageReward.csv`.
+- `StageReward.csv` has rows for `reward-stage1-normal`, `reward-stage1-elite`, `reward-stage1-midboss`, `reward-stage1-day10-midboss`, and `reward-stage1-boss`.
+- `StageReward.csv` stores prisoner count odds `0.05`, `0.80`, and `0.15`, matching `Pakuri/reference/4.run/combat-reward-system.md`.
+- `StageReward.csv` stores Stage 1 gold/dark trace values normal `10/10`, midboss `30/20`, and boss `50/50`.
+- `Import-Csv` and cross-file consistency checks reported no missing reward references from `StageDay.csv`.
+- `NewRunStageManager` reads `StageReward.csv` and exposes pending gold, dark trace, prisoner count, and prisoner IDs when the flow reaches `RewardReady`.
+- Reward UI, Manifest UI, Offering UI, and artifact reward UI were not implemented in this slice.
+
+### History
+
+- 2026-05-16: User requested active CSV files including reward rules for the next StageManager implementation.
+- 2026-05-16: Code Builder added StageManager reward-ready state and pending reward properties for future UI wiring.
+
 ## Task: 2026-05-08 Manifested Runtime Resume Reward Context
 
 ### Task title
@@ -213,3 +260,46 @@ Implemented and locally validated for manifested Eve C.
 ### History
 
 - 2026-05-08: User clarified that Offering-enhanced skills on manifested units should behave like the same skill on the MainMenu-selected unit.
+## Task: 2026-05-16 NewRunScene Reward Buttons And Prisoner Flow
+
+### Task title
+
+Drive NewRunScene rewards through RewardPanel buttons.
+
+### Goals
+
+- Clone reward buttons from `RewardBtnContainer` according to pending gold, dark trace, and prisoner rewards.
+- Apply gold/dark trace only when their buttons are clicked.
+- Use prisoner buttons for Offering or Manifest, then disable the consumed prisoner button.
+- Store Manifest success chance in active reward CSV data.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User-authored UI hierarchy is used as-is: `RewardPanel`, `PrisonerChoicePopUp`, `OfferingPanel`, `MenifestedFailPopUp`, and `MenifestedSuccessPopUp`.
+- User performs Play Mode verification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies reward button count/spacing, resource counts, prisoner button disabled state, Offering choice application, and Manifest success/failure popups in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` creates reward buttons from `PrisonerBtn`, `GoldBtn`, and `DarkBtn`, updates `Goldinfo`, `Darkinfo`, and `StageInfo`, and binds Offering/Manifest popup buttons.
+- `Pakuri/Assets/CSVdata/StageReward.csv` now has `manifest_success_chance` with `0.70` in all active reward rows.
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunStageManager.cs` exposes `PendingManifestSuccessChance`, `PendingGoldReward`, `PendingDarkTraceReward`, and `PendingPrisonerEnemyIds` for the UI.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing warnings.
+- Reviewer reported duplicate prisoner sampling from one encounter row; Builder fixed candidate selection to sample without exceeding spawned row `Count`.
+
+### History
+
+- 2026-05-16: User specified the reward UI click flow and 70/30 Manifest probability from the prisoner-choice reference.
+- 2026-05-16: Builder implemented the reward UI controller and CSV-backed Manifest probability.

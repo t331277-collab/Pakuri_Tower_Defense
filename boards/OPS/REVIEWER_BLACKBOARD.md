@@ -228,3 +228,46 @@ Completed with `REVIEW_RESULT: NEEDS_CHANGES`. Code Builder follow-up has been a
 - 2026-05-04: User explicitly requested Code Reviewer execution for the just-completed Rin A-E skill implementation.
 - 2026-05-04: External Code Reviewer executed once and returned `REVIEW_RESULT: NEEDS_CHANGES` for elemental extra damage using calculated final damage instead of physical damage actually dealt.
 - 2026-05-04: User requested fixing the Reviewer findings; Builder applied the applied-damage basis correction and did not rerun Reviewer because no new review was requested.
+## Task: 2026-05-16 NewRunScene Reward UI Reviewer
+
+### Task title
+
+Run Code Reviewer after NewRunScene reward UI implementation.
+
+### Goals
+
+- Execute one Reviewer pass after Builder implemented `InGameUIManager`, reward CSV probability, and stage reward flow changes.
+- Record Reviewer output and Builder follow-up.
+
+### Constraints
+
+- Role Owner is Code Reviewer.
+- Reviewer must not edit files.
+- Do not run Unity Play Mode.
+- Per Reviewer role rules, do not run a second Reviewer pass unless the user explicitly asks.
+
+### Role Owner
+
+Code Reviewer
+
+### Status
+
+Reviewer executed once and returned fix requests; Builder fixed the reported issues.
+
+### Next Actions
+
+- Do not rerun Reviewer for this task unless explicitly requested.
+- User performs Play Mode verification of reward UI and stage boss behavior.
+
+### Evidence
+
+- `codex review --uncommitted` on PATH failed because `codex.exe` was not found.
+- The old approved VS Code extension path `openai.chatgpt-26.422.30944...` failed because the executable no longer exists.
+- `Get-ChildItem` found `C:\Users\t3312\.vscode\extensions\openai.chatgpt-26.513.21555-win32-x64\bin\windows-x86_64\codex.exe`.
+- Escalated Reviewer command using that executable completed and reported two P2 findings: missing StageEncounter boss modifier application and duplicate prisoner rewards from one row.
+- Builder fixed both in `Pakuri/Assets/Scripts2/InGame/Core/NewRunStageManager.cs` and `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs`, then reran runtime/editor builds with 0 errors.
+
+### History
+
+- 2026-05-16: Builder ran the required Reviewer transition after implementation.
+- 2026-05-16: Reviewer returned P2 fix requests; Builder addressed them within the same task.

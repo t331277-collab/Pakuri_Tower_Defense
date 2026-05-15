@@ -338,18 +338,13 @@ namespace Pakuri.InGame
         private static void ValidateTiming(string monsterId, SkillDefinition source, InGameSkillDataValidationReport report)
         {
             var slot = source.Slot.ToString();
-            if (source.Range < 0f || source.Radius < 0f || source.CooldownSeconds < 0f || source.ReloadSeconds < 0f || source.ShotIntervalSeconds < 0f || source.MagazineCapacity < 0)
+            if (source.Radius < 0f || source.CooldownSeconds < 0f || source.ReloadSeconds < 0f || source.ShotIntervalSeconds < 0f || source.MagazineCapacity < 0)
             {
-                AddError(report, "TimingNegative", "Timing, range, radius, reload, interval, and magazine values must not be negative.", monsterId, source.SkillId, slot);
+                AddError(report, "TimingNegative", "Timing, radius, reload, interval, and magazine values must not be negative.", monsterId, source.SkillId, slot);
             }
 
             if (source.RuntimeKind == SkillRuntimeKind.MagazineProjectile || source.RuntimeKind == SkillRuntimeKind.CooldownProjectile)
             {
-                if (source.Range <= 0f)
-                {
-                    AddError(report, "RangeMissing", "Projectile skill requires a positive range.", monsterId, source.SkillId, slot);
-                }
-
                 if (source.MagazineCapacity <= 0)
                 {
                     AddError(report, "MagazineMissing", "Projectile skill requires a positive magazine capacity.", monsterId, source.SkillId, slot);

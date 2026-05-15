@@ -75,10 +75,13 @@ Builder implementation completed and compile/editor-refresh verified.
 - `Assets/Prefab/Skill/Eve/Eve_A.prefab` has `Pakuri.InGame.InGameProjectileActor` and its `BoxCollider2D` is serialized as trigger.
 - Runtime and editor builds passed with 0 errors and existing assembly reference warnings.
 - Unity-MCP refresh reached idle and console warning/error read showed no C# compile errors.
+- 2026-05-16 follow-up: `SkillExecutionUtility.FindNearestTarget(...)` now ignores `Targeting.Range`, so AutoBtn-routed Eve-A targets the full enemy roster instead of only enemies inside the former range value.
+- 2026-05-16 follow-up: `SkillData.csv` no longer contains the `range` column for `eve-a`; `InGameSkillDefinitionMapper` maps source range to ignored `Targeting.Range = 0f`.
 
 ### History
 
 - 2026-05-15: User asked Code Builder to create the common projectile/effect actor component and connect Eve-A minimum execution as the first Phase4-C subtask.
+- 2026-05-16: User requested all skills to ignore range and Auto targeting to cover the whole map; Builder removed the InGame range filter affecting Eve-A auto targeting.
 
 ## Task: 2026-05-15 Eve-A Phase4-B Execution Contract Wiring
 

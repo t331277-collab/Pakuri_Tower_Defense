@@ -1,0 +1,6 @@
+reward_rule_id,combat_type,stage,gold,dark_trace,prisoner_count_1_chance,prisoner_count_2_chance,prisoner_count_3_chance,manifest_success_chance,elite_bonus_prisoners,artifact_choice_count,guaranteed_prisoner_source,notes
+reward-stage1-normal,Normal,1,10,10,0.05,0.80,0.15,0.70,0,0,EncounterBoss,Normal combat reward; boss prisoner must be included.
+reward-stage1-elite,Elite,1,10,10,0.05,0.80,0.15,0.70,1,0,EncounterBoss,Elite reward row kept for future option routing; elite selection is disabled in active StageDay rows.
+reward-stage1-midboss,Day5Midboss,1,30,20,0.05,0.80,0.15,0.70,0,3,GuaranteedBoss,Stage 1 midboss reward; artifact UI not implemented yet.
+reward-stage1-day10-midboss,Day10Midboss,1,30,20,0.05,0.80,0.15,0.70,0,3,GuaranteedBoss,Stage 1 day 10 midboss reward; artifact UI not implemented yet.
+reward-stage1-boss,Boss,1,50,50,0.05,0.80,0.15,0.70,0,3,GuaranteedBossPool,Stage 1 boss reward; includes midbosses and stage boss as guaranteed boss pool.

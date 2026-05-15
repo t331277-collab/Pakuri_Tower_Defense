@@ -35,7 +35,7 @@ namespace Pakuri.InGame
 
             var stats = definition.Stats;
             var maxHealth = stats != null ? stats.MaxHealth : 100f;
-            return new EnemyUnitRuntimeModel
+            var model = new EnemyUnitRuntimeModel
             {
                 Identity = new UnitIdentity
                 {
@@ -51,6 +51,7 @@ namespace Pakuri.InGame
                 Attribute = definition.Attribute,
                 StageOneSkill = definition.StageOneSkill,
                 ActiveSkillCoefficient = definition.ActiveSkillCoefficient,
+                ActiveSkillDuration = definition.ActiveSkillDuration,
                 ActiveSkillRadius = definition.ActiveSkillRadius,
                 ActiveSkillFlatValue = definition.ActiveSkillFlatValue,
                 AttackAttemptRange = ResolveEnemyAttackAttemptRange(definition),
@@ -65,6 +66,9 @@ namespace Pakuri.InGame
                 AutoAttackEnabled = true,
                 AutoSkillEnabled = true
             };
+
+            StageOneEnemyPassiveStatApplier.Apply(model);
+            return model;
         }
 
         public bool TryCreatePhase2ATestModels(

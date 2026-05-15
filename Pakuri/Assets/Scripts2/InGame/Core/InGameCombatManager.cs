@@ -18,15 +18,21 @@ namespace Pakuri.InGame
         [SerializeField] private bool logEnemyAttackAttempts;
         [SerializeField] private bool logSkillExecutionContracts;
         [SerializeField] private TextAsset skillChoiceModifierCsv;
-        [SerializeField] private bool selectedPlayerPrimarySkillManual = true;
+        [SerializeField] private bool playerAutoSkillEnabled;
         [SerializeField] private Camera inputCamera;
         [SerializeField] private Transform projectileDestroyBoundary;
         [SerializeField] private float projectileDestroyBoundaryFallbackX = 31f;
         [SerializeField] private GameObject eveAProjectilePrefab;
         [SerializeField] private GameObject arielBShieldEffectPrefab;
         [SerializeField] private GameObject warriorSkillPrefab;
+        [SerializeField] private GameObject shieldSkillPrefab;
+        [SerializeField] private GameObject archerSkillPrefab;
         [SerializeField] private GameObject rogueSkillPrefab;
         [SerializeField] private GameObject priestSkillPrefab;
+        [SerializeField] private GameObject shieldKingSkillPrefab;
+        [SerializeField] private GameObject warriorKingSkillPrefab;
+        [SerializeField] private GameObject karinSkillPrefab;
+        [SerializeField] private Transform runtimeSkillRoot;
 
         public UnitRosterService Roster => roster;
 
@@ -37,7 +43,7 @@ namespace Pakuri.InGame
         public int LastSkillExecutionRoutedCount => skillExecution.LastRoutedCount;
         public int LastSkillExecutionRejectedCount => skillExecution.LastRejectedCount;
         public int SkillChoiceModifierRecordCount => skillExecution.ModifierRecordCount;
-        public bool SelectedPlayerPrimarySkillManual => selectedPlayerPrimarySkillManual;
+        public bool PlayerAutoSkillEnabled => playerAutoSkillEnabled;
 
         private void Awake()
         {
@@ -113,14 +119,9 @@ namespace Pakuri.InGame
             return result;
         }
 
-        public void EnableSelectedPlayerPrimarySkillAuto()
+        public void EnablePlayerAutoSkillMode()
         {
-            selectedPlayerPrimarySkillManual = false;
-        }
-
-        public void SetSelectedPlayerPrimarySkillManual(bool manual)
-        {
-            selectedPlayerPrimarySkillManual = manual;
+            playerAutoSkillEnabled = true;
         }
 
         public GameObject ResolveSkillEffectPrefab(string skillId)
@@ -143,6 +144,13 @@ namespace Pakuri.InGame
                 : projectileDestroyBoundaryFallbackX;
         }
 
+        public GameObject InstantiateSkillPrefab(GameObject prefab, Vector3 position, Quaternion rotation)
+        {
+            return prefab != null
+                ? Instantiate(prefab, position, rotation, ResolveRuntimeSkillRoot())
+                : null;
+        }
+
         public GameObject ResolveEnemySkillPrefab(EnemyUnitRuntimeModel enemy)
         {
             if (enemy == null)
@@ -154,13 +162,42 @@ namespace Pakuri.InGame
             {
                 case Pakuri.Data.StageOneEnemySkillKind.Slash:
                     return warriorSkillPrefab;
+                case Pakuri.Data.StageOneEnemySkillKind.ShieldUp:
+                    return shieldSkillPrefab;
+                case Pakuri.Data.StageOneEnemySkillKind.AimedShot:
+                    return archerSkillPrefab;
                 case Pakuri.Data.StageOneEnemySkillKind.ShurikenThrow:
                     return rogueSkillPrefab;
                 case Pakuri.Data.StageOneEnemySkillKind.Heal:
                     return priestSkillPrefab;
+                case Pakuri.Data.StageOneEnemySkillKind.GuardianFlag:
+                    return shieldKingSkillPrefab;
+                case Pakuri.Data.StageOneEnemySkillKind.ChargeCommand:
+                    return warriorKingSkillPrefab;
+                case Pakuri.Data.StageOneEnemySkillKind.SacredSwordWave:
+                    return karinSkillPrefab;
                 default:
                     return null;
             }
+        }
+
+        private Transform ResolveRuntimeSkillRoot()
+        {
+            if (runtimeSkillRoot != null)
+            {
+                return runtimeSkillRoot;
+            }
+
+            var root = GameObject.Find("RunTimeSkill");
+            if (root != null)
+            {
+                runtimeSkillRoot = root.transform;
+                return runtimeSkillRoot;
+            }
+
+            var created = new GameObject("RunTimeSkill");
+            runtimeSkillRoot = created.transform;
+            return runtimeSkillRoot;
         }
 
         public UnitRosterEntry FindUnitByCollider(Collider2D collider)
@@ -205,7 +242,7 @@ namespace Pakuri.InGame
 
         private void HandleSelectedPlayerPrimarySkillInput()
         {
-            if (!selectedPlayerPrimarySkillManual || !IsPrimaryMouseHeld() || IsPointerOverUi())
+            if (playerAutoSkillEnabled || !IsPrimaryMouseHeld() || IsPointerOverUi())
             {
                 return;
             }
@@ -230,7 +267,7 @@ namespace Pakuri.InGame
 
         private bool ShouldAutoRouteSkill(UnitRosterEntry entry, SkillRuntimeInstance runtime)
         {
-            return !IsSelectedPlayerPrimarySkill(entry, runtime) || !selectedPlayerPrimarySkillManual;
+            return !IsSelectedPlayerPrimarySkill(entry, runtime) || playerAutoSkillEnabled;
         }
 
         private bool IsSelectedPlayerPrimarySkill(UnitRosterEntry entry, SkillRuntimeInstance runtime)

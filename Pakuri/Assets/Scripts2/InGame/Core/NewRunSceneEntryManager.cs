@@ -16,14 +16,24 @@ namespace Pakuri.InGame
         private const string SeinMonsterId = "sein";
         private const string VegaMonsterId = "vega";
         private const string DefaultInitialEnemyId = "stage1-swordsman";
+        private const string DefaultShieldEnemyId = "stage1-shieldbearer";
         private const string DefaultRangedEnemyId = "stage1-rogue";
         private const string DefaultBufferEnemyId = "stage1-priest";
+        private const string DefaultGuardianCaptainEnemyId = "stage1-guardian-captain";
+        private const string DefaultAttackCaptainEnemyId = "stage1-attack-captain";
+        private const string DefaultHeroKarinEnemyId = "stage1-hero-karin";
+        private const string RuntimeObjectRootName = "RunTimeObject";
+        private const string RuntimeEnemyRootName = "RunTimeEnemy";
+        private const string RuntimeMonsterRootName = "RunTimeMonster";
 
         private readonly UnitFactory unitFactory = new UnitFactory();
 
         [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private Transform playerSpawnPoint;
         [SerializeField] private Transform enemySpawnPoint;
+        [SerializeField] private Transform runtimeObjectRoot;
+        [SerializeField] private Transform runtimeEnemyRoot;
+        [SerializeField] private Transform runtimeMonsterRoot;
         [SerializeField] private GameDataCatalog fallbackCatalog;
         [SerializeField] private GameObject arielUnitPrefab;
         [SerializeField] private GameObject eveUnitPrefab;
@@ -31,20 +41,33 @@ namespace Pakuri.InGame
         [SerializeField] private GameObject seinUnitPrefab;
         [SerializeField] private GameObject vegaUnitPrefab;
         [SerializeField] private GameObject stageOneEnemyPrefab;
+        [SerializeField] private GameObject stageOneShieldEnemyPrefab;
         [SerializeField] private GameObject stageOneRangedEnemyPrefab;
         [SerializeField] private GameObject stageOneBufferEnemyPrefab;
+        [SerializeField] private GameObject stageOneGuardianCaptainPrefab;
+        [SerializeField] private GameObject stageOneAttackCaptainPrefab;
+        [SerializeField] private GameObject stageOneHeroKarinPrefab;
         [SerializeField] private string initialEnemyId = DefaultInitialEnemyId;
+        [SerializeField] private string shieldEnemyId = DefaultShieldEnemyId;
         [SerializeField] private string rangedEnemyId = DefaultRangedEnemyId;
         [SerializeField] private string bufferEnemyId = DefaultBufferEnemyId;
+        [SerializeField] private string guardianCaptainEnemyId = DefaultGuardianCaptainEnemyId;
+        [SerializeField] private string attackCaptainEnemyId = DefaultAttackCaptainEnemyId;
+        [SerializeField] private string heroKarinEnemyId = DefaultHeroKarinEnemyId;
         [SerializeField] private float enemySpawnMinY = -5f;
         [SerializeField] private float enemySpawnMaxY = 5f;
         [SerializeField] private float enemySpawnIntervalSeconds = 1f;
+        [SerializeField] private bool spawnInitialEnemySequenceOnStart;
         [SerializeField] private bool allowEveFallback = true;
 
         private GameObject spawnedPlayerUnit;
         private GameObject spawnedEnemyUnit;
+        private GameObject spawnedShieldEnemyUnit;
         private GameObject spawnedRangedEnemyUnit;
         private GameObject spawnedBufferEnemyUnit;
+        private GameObject spawnedGuardianCaptainEnemyUnit;
+        private GameObject spawnedAttackCaptainEnemyUnit;
+        private GameObject spawnedHeroKarinEnemyUnit;
         private Coroutine enemySpawnSequence;
 
         public MonsterUnitActor SpawnedPlayerActor { get; private set; }
@@ -58,7 +81,10 @@ namespace Pakuri.InGame
         {
             ResolveCombatManager();
             SpawnSelectedPlayerUnit();
-            enemySpawnSequence = StartCoroutine(SpawnInitialEnemySequence());
+            if (spawnInitialEnemySequenceOnStart)
+            {
+                enemySpawnSequence = StartCoroutine(SpawnInitialEnemySequence());
+            }
         }
 
         public void SpawnSelectedPlayerUnit()
@@ -94,7 +120,7 @@ namespace Pakuri.InGame
 
             var spawnPosition = playerSpawnPoint != null ? playerSpawnPoint.position : Vector3.zero;
             var spawnRotation = playerSpawnPoint != null ? playerSpawnPoint.rotation : Quaternion.identity;
-            spawnedPlayerUnit = Instantiate(prefab, spawnPosition, spawnRotation);
+            spawnedPlayerUnit = Instantiate(prefab, spawnPosition, spawnRotation, ResolveRuntimeMonsterRoot());
             spawnedPlayerUnit.name = $"{prefab.name}_1P";
             SpawnedPlayerModel = model;
             BindSpawnedActor(spawnedPlayerUnit, model);
@@ -120,7 +146,17 @@ namespace Pakuri.InGame
                 return;
             }
 
-            TrySpawnEnemyUnit(stageOneRangedEnemyPrefab, rangedEnemyId, 1, out spawnedRangedEnemyUnit);
+            TrySpawnEnemyUnit(stageOneRangedEnemyPrefab, rangedEnemyId, 2, out spawnedRangedEnemyUnit);
+        }
+
+        public void SpawnShieldEnemyUnit()
+        {
+            if (spawnedShieldEnemyUnit != null)
+            {
+                return;
+            }
+
+            TrySpawnEnemyUnit(stageOneShieldEnemyPrefab, shieldEnemyId, 1, out spawnedShieldEnemyUnit);
         }
 
         public void SpawnBufferEnemyUnit()
@@ -130,7 +166,123 @@ namespace Pakuri.InGame
                 return;
             }
 
-            TrySpawnEnemyUnit(stageOneBufferEnemyPrefab, bufferEnemyId, 2, out spawnedBufferEnemyUnit);
+            TrySpawnEnemyUnit(stageOneBufferEnemyPrefab, bufferEnemyId, 3, out spawnedBufferEnemyUnit);
+        }
+
+        public void SpawnGuardianCaptainEnemyUnit()
+        {
+            if (spawnedGuardianCaptainEnemyUnit != null)
+            {
+                return;
+            }
+
+            TrySpawnEnemyUnit(stageOneGuardianCaptainPrefab, guardianCaptainEnemyId, 4, out spawnedGuardianCaptainEnemyUnit);
+        }
+
+        public void SpawnAttackCaptainEnemyUnit()
+        {
+            if (spawnedAttackCaptainEnemyUnit != null)
+            {
+                return;
+            }
+
+            TrySpawnEnemyUnit(stageOneAttackCaptainPrefab, attackCaptainEnemyId, 5, out spawnedAttackCaptainEnemyUnit);
+        }
+
+        public void SpawnHeroKarinEnemyUnit()
+        {
+            if (spawnedHeroKarinEnemyUnit != null)
+            {
+                return;
+            }
+
+            TrySpawnEnemyUnit(stageOneHeroKarinPrefab, heroKarinEnemyId, 6, out spawnedHeroKarinEnemyUnit);
+        }
+
+        public bool SpawnEnemyById(
+            string enemyId,
+            int spawnIndex,
+            float spawnX,
+            float spawnYMin,
+            float spawnYMax,
+            out GameObject spawnedUnit)
+        {
+            return SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, 1f, out spawnedUnit);
+        }
+
+        public bool SpawnEnemyById(
+            string enemyId,
+            int spawnIndex,
+            float spawnX,
+            float spawnYMin,
+            float spawnYMax,
+            float healthMultiplier,
+            out GameObject spawnedUnit)
+        {
+            var prefab = ResolveEnemyPrefab(enemyId);
+            return TrySpawnEnemyUnit(prefab, enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, out spawnedUnit);
+        }
+
+        public bool SpawnManifestedMonster(
+            MonsterDefinition monster,
+            int partySlotIndex,
+            out GameObject spawnedUnit)
+        {
+            spawnedUnit = null;
+            ResolveCombatManager();
+
+            if (monster == null || string.IsNullOrWhiteSpace(monster.MonsterId))
+            {
+                Debug.LogWarning("NewRunSceneEntryManager cannot manifest a monster because monster data is missing.");
+                return false;
+            }
+
+            if (ActiveSession == null)
+            {
+                Debug.LogWarning("NewRunSceneEntryManager cannot manifest a monster because no active session exists.");
+                return false;
+            }
+
+            var prefab = ResolvePrefab(monster.MonsterId);
+            if (prefab == null)
+            {
+                Debug.LogWarning($"No NewRunScene prefab is configured for manifested monster '{monster.MonsterId}'.");
+                return false;
+            }
+
+            var clampedSlotIndex = Mathf.Clamp(partySlotIndex, 1, 4);
+            var runState = ActiveSession.EnsurePartyMemberState(monster);
+            var model = unitFactory.CreateManifestedMonster(monster, runState, clampedSlotIndex);
+            if (model == null)
+            {
+                Debug.LogError($"NewRunSceneEntryManager could not create manifested monster runtime model for '{monster.MonsterId}'.");
+                return false;
+            }
+
+            SkillRuntimeFactory.RebuildLearnedActiveSet(model, new InGameSkillCatalog(ResolveCatalog()));
+
+            var spawnPoint = ResolveManifestSpawnPoint(clampedSlotIndex);
+            var spawnPosition = spawnPoint != null ? spawnPoint.position : new Vector3(-4f, -1.5f + clampedSlotIndex, 0f);
+            var spawnRotation = spawnPoint != null ? spawnPoint.rotation : Quaternion.identity;
+            spawnedUnit = Instantiate(prefab, spawnPosition, spawnRotation, ResolveRuntimeMonsterRoot());
+            spawnedUnit.name = $"{prefab.name}_{clampedSlotIndex + 1}P";
+
+            var actor = spawnedUnit.GetComponentInChildren<MonsterUnitActor>(true);
+            if (actor == null)
+            {
+                Debug.LogWarning($"Manifested monster unit '{spawnedUnit.name}' has no MonsterUnitActor component.");
+            }
+            else
+            {
+                actor.Initialize(model);
+            }
+
+            if (combatManager != null)
+            {
+                combatManager.RegisterPlayerMonster(model, actor);
+            }
+
+            return true;
         }
 
         private IEnumerator SpawnInitialEnemySequence()
@@ -138,10 +290,22 @@ namespace Pakuri.InGame
             SpawnInitialEnemyUnit();
 
             yield return new WaitForSeconds(Mathf.Max(0f, enemySpawnIntervalSeconds));
+            SpawnShieldEnemyUnit();
+
+            yield return new WaitForSeconds(Mathf.Max(0f, enemySpawnIntervalSeconds));
             SpawnRangedEnemyUnit();
 
             yield return new WaitForSeconds(Mathf.Max(0f, enemySpawnIntervalSeconds));
             SpawnBufferEnemyUnit();
+
+            yield return new WaitForSeconds(Mathf.Max(0f, enemySpawnIntervalSeconds));
+            SpawnGuardianCaptainEnemyUnit();
+
+            yield return new WaitForSeconds(Mathf.Max(0f, enemySpawnIntervalSeconds));
+            SpawnAttackCaptainEnemyUnit();
+
+            yield return new WaitForSeconds(Mathf.Max(0f, enemySpawnIntervalSeconds));
+            SpawnHeroKarinEnemyUnit();
 
             enemySpawnSequence = null;
         }
@@ -257,6 +421,33 @@ namespace Pakuri.InGame
 
         private bool TrySpawnEnemyUnit(GameObject prefab, string enemyId, int spawnIndex, out GameObject spawnedUnit)
         {
+            ResolveEnemySpawnPoint();
+            var basePosition = enemySpawnPoint != null ? enemySpawnPoint.position : Vector3.zero;
+            return TrySpawnEnemyUnit(prefab, enemyId, spawnIndex, basePosition.x, enemySpawnMinY, enemySpawnMaxY, out spawnedUnit);
+        }
+
+        private bool TrySpawnEnemyUnit(
+            GameObject prefab,
+            string enemyId,
+            int spawnIndex,
+            float spawnX,
+            float spawnYMin,
+            float spawnYMax,
+            out GameObject spawnedUnit)
+        {
+            return TrySpawnEnemyUnit(prefab, enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, 1f, out spawnedUnit);
+        }
+
+        private bool TrySpawnEnemyUnit(
+            GameObject prefab,
+            string enemyId,
+            int spawnIndex,
+            float spawnX,
+            float spawnYMin,
+            float spawnYMax,
+            float healthMultiplier,
+            out GameObject spawnedUnit)
+        {
             spawnedUnit = null;
             ResolveEnemySpawnPoint();
 
@@ -271,13 +462,13 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var basePosition = enemySpawnPoint != null ? enemySpawnPoint.position : Vector3.zero;
+            ApplyEnemyHealthMultiplier(model, healthMultiplier);
             var spawnPosition = new Vector3(
-                basePosition.x,
-                UnityEngine.Random.Range(enemySpawnMinY, enemySpawnMaxY),
-                basePosition.z);
+                spawnX,
+                UnityEngine.Random.Range(spawnYMin, spawnYMax),
+                enemySpawnPoint != null ? enemySpawnPoint.position.z : 0f);
             var spawnRotation = enemySpawnPoint != null ? enemySpawnPoint.rotation : Quaternion.identity;
-            spawnedUnit = Instantiate(prefab, spawnPosition, spawnRotation);
+            spawnedUnit = Instantiate(prefab, spawnPosition, spawnRotation, ResolveRuntimeEnemyRoot());
             spawnedUnit.name = $"{prefab.name}_Enemy_{spawnIndex}";
             SpawnedEnemyModel = model;
             SpawnedEnemyActor = BindSpawnedEnemyActor(spawnedUnit, model);
@@ -311,6 +502,24 @@ namespace Pakuri.InGame
             }
 
             return true;
+        }
+
+        private static void ApplyEnemyHealthMultiplier(EnemyUnitRuntimeModel model, float healthMultiplier)
+        {
+            if (model == null || healthMultiplier <= 0f || Mathf.Approximately(healthMultiplier, 1f))
+            {
+                return;
+            }
+
+            if (model.Stats != null)
+            {
+                model.Stats.MaxHealth *= healthMultiplier;
+            }
+
+            if (model.Resources != null)
+            {
+                model.Resources.CurrentHealth *= healthMultiplier;
+            }
         }
 
         private EnemyUnitActor BindSpawnedEnemyActor(GameObject spawnedUnit, EnemyUnitRuntimeModel model)
@@ -380,6 +589,46 @@ namespace Pakuri.InGame
             return null;
         }
 
+        private GameObject ResolveEnemyPrefab(string enemyId)
+        {
+            if (string.Equals(enemyId, initialEnemyId, StringComparison.OrdinalIgnoreCase))
+            {
+                return stageOneEnemyPrefab;
+            }
+
+            if (string.Equals(enemyId, shieldEnemyId, StringComparison.OrdinalIgnoreCase))
+            {
+                return stageOneShieldEnemyPrefab;
+            }
+
+            if (string.Equals(enemyId, rangedEnemyId, StringComparison.OrdinalIgnoreCase))
+            {
+                return stageOneRangedEnemyPrefab;
+            }
+
+            if (string.Equals(enemyId, bufferEnemyId, StringComparison.OrdinalIgnoreCase))
+            {
+                return stageOneBufferEnemyPrefab;
+            }
+
+            if (string.Equals(enemyId, guardianCaptainEnemyId, StringComparison.OrdinalIgnoreCase))
+            {
+                return stageOneGuardianCaptainPrefab;
+            }
+
+            if (string.Equals(enemyId, attackCaptainEnemyId, StringComparison.OrdinalIgnoreCase))
+            {
+                return stageOneAttackCaptainPrefab;
+            }
+
+            if (string.Equals(enemyId, heroKarinEnemyId, StringComparison.OrdinalIgnoreCase))
+            {
+                return stageOneHeroKarinPrefab;
+            }
+
+            return null;
+        }
+
         private void ResolveSpawnPoint()
         {
             if (playerSpawnPoint != null)
@@ -406,6 +655,46 @@ namespace Pakuri.InGame
             {
                 enemySpawnPoint = spawnPointObject.transform;
             }
+        }
+
+        private static Transform ResolveManifestSpawnPoint(int partySlotIndex)
+        {
+            var spawnPointObject = GameObject.Find($"{partySlotIndex + 1}PSpawnPoint");
+            return spawnPointObject != null ? spawnPointObject.transform : null;
+        }
+
+        private Transform ResolveRuntimeMonsterRoot()
+        {
+            runtimeMonsterRoot = ResolveRuntimeRoot(runtimeMonsterRoot, RuntimeMonsterRootName, true);
+            return runtimeMonsterRoot;
+        }
+
+        private Transform ResolveRuntimeEnemyRoot()
+        {
+            runtimeEnemyRoot = ResolveRuntimeRoot(runtimeEnemyRoot, RuntimeEnemyRootName, true);
+            return runtimeEnemyRoot;
+        }
+
+        private Transform ResolveRuntimeObjectRoot()
+        {
+            runtimeObjectRoot = ResolveRuntimeRoot(runtimeObjectRoot, RuntimeObjectRootName, false);
+            return runtimeObjectRoot;
+        }
+
+        private Transform ResolveRuntimeRoot(Transform cachedRoot, string rootName, bool parentUnderRuntimeObject)
+        {
+            if (cachedRoot == null)
+            {
+                var existing = GameObject.Find(rootName);
+                cachedRoot = existing != null ? existing.transform : new GameObject(rootName).transform;
+            }
+
+            if (parentUnderRuntimeObject && cachedRoot.parent == null)
+            {
+                cachedRoot.SetParent(ResolveRuntimeObjectRoot(), true);
+            }
+
+            return cachedRoot;
         }
 
         private void ResolveCombatManager()

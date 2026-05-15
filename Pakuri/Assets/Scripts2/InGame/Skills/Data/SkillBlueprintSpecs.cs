@@ -97,6 +97,7 @@ namespace Pakuri.InGame
         public SkillTargetSide TargetSide = SkillTargetSide.Enemy;
         public SkillTargetSelection Selection = SkillTargetSelection.Nearest;
         public SkillTargetShape Shape = SkillTargetShape.Single;
+        [Tooltip("Deprecated. InGame skills target the whole battlefield; runtime ignores this value.")]
         [Min(0f)] public float Range;
         [Min(0f)] public float Radius;
         public bool CoverAll;

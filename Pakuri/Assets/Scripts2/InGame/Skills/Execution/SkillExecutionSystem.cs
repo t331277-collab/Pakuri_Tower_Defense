@@ -114,11 +114,6 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            if (!runtime.TryBeginCast())
-            {
-                return false;
-            }
-
             var context = new SkillExecutionContext(
                 combatManager,
                 roster,
@@ -131,6 +126,11 @@ namespace Pakuri.InGame
             var result = executor.Execute(context, snapshot);
             if (result.Routed)
             {
+                if (!runtime.TryBeginCast())
+                {
+                    return false;
+                }
+
                 LastRoutedCount++;
                 if (logRoutedContracts)
                 {

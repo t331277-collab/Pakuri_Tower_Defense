@@ -4,6 +4,55 @@
 - This file keeps active report task blocks after the 2026-05-12 archive pass; newer report tasks may be appended above older retained context.
 - Source file: `boards/REPORT/REPORT_BLACKBOARD.md`.
 
+## Task: 2026-05-16 InGame Roadmap Current Implementation Refresh
+
+### Task title
+
+Refresh the Combat V2 InGame build roadmap against the current implemented files.
+
+### Goals
+
+- Compare `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html` with the current InGame implementation.
+- Remove stale claims that CSVData files are 0 byte or that already-implemented Phase3/Phase4/Stage/Reward work is still pending.
+- Record completed, partial, and remaining roadmap areas using inspected file and CSV evidence.
+
+### Constraints
+
+- Role Owner is Designer.
+- Documentation-only update; no C# script, scene, prefab, or CSV behavior was changed.
+- Claims must stay grounded in inspected code, CSV rows, scene YAML, and command output.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as an HTML report refresh.
+
+### Next Actions
+
+- Use the refreshed roadmap before planning the next InGame work slice.
+- Recommended next design/implementation focus is temporary effect/status layering, Beam/Zone/Buff executor expansion, CSVdata/CSVData source-of-truth cleanup, and user Play Mode acceptance checks.
+
+### Evidence
+
+- Rewrote `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html`.
+- `Get-ChildItem Pakuri\Assets\Scripts2\InGame -Recurse -Filter *.cs` listed current Core, Units, Skills/Data, Skills/Execution, Skills/Runtime, and UI scripts including `NewRunStageManager.cs`, `InGameUIManager.cs`, `SkillExecutors.cs`, and `InGameProjectileActor.cs`.
+- `Import-Csv Pakuri\Assets\CSVdata\StageDay.csv`, `StageEncounter.csv`, and `StageReward.csv` returned 11, 30, and 5 rows.
+- `Import-Csv Pakuri\Assets\CSVdata\EnemyStat.csv` returned Stage 1 enemy rows for swordsman, shieldbearer, rogue, priest, guardian captain, attack captain, and hero Karin.
+- `Import-Csv Pakuri\Assets\CSVdata\SkillData.csv` returned sample rows `eve-a` and `ariel-b`.
+- `Select-String` over `NewRunScene.unity` found `NewRunSceneEntryManager`, `InGameCombatManager`, `NewRunStageManager`, `InGameUIManager`, `RewardPanel`, and Stage CSV TextAsset references.
+- `Select-String` over `InGameCombatManager.cs` found `ApplyDamage`, `GrantShield`, `Heal`, `RemoveUnitIfDead`, and `ShowDamageIfChanged`.
+- `Select-String` over `EnemyCombatSimulationSystem.cs` found Stage 1 enemy skill execution paths for `Slash`, `ShurikenThrow`, `Heal`, `ShieldUp`, `GuardianFlag`, `ChargeCommand`, and `SacredSwordWave`.
+- `Select-String` over `SkillExecutors.cs` found `ProjectileSkillExecutor`, `ShieldSkillExecutor`, `ApplyDamage`, and `GrantShield` calls.
+
+### History
+
+- 2026-05-16: User asked to compare current implementation against the 2026-05-14 Combat V2 build roadmap and update that HTML report.
+- 2026-05-16: Designer refreshed the roadmap as a current implementation status and next-work guide.
+
 ## Task: 2026-05-15 InGame Roadmap Phase4-B Completion Update
 
 ### Task title

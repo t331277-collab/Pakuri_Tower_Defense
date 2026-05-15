@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92f4a8c7192c7da47a137c02232dea62, type: 3}
   m_Name: PakuriCsvRuntimeSourceCatalog
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.Data.PakuriCsvRuntimeSourceCatalog
-  CatalogMonsters: {fileID: 4900000, guid: abe5f4915f4769f49ad025414be4ab88, type: 3}
-  CatalogStageOneEnemies: {fileID: 4900000, guid: c7932caf2af0bbc45936b1ffb535b771, type: 3}
-  Monsters: {fileID: 4900000, guid: b82a4bfc3a7210d4abeca156b90f2ffa, type: 3}
-  MonsterRewardChoices: {fileID: 4900000, guid: 5234ce77ab5502745b8153139d1b5ffc, type: 3}
-  MonsterSkills: {fileID: 4900000, guid: 20eb08c1170616b49b927800f8949b19, type: 3}
-  MonsterSkillChoices: {fileID: 4900000, guid: b5006ccbab3d74b4a9607e9b988c1741, type: 3}
-  StageOneEnemies: {fileID: 4900000, guid: 1350bc84e45480c498a76e6a1b574c0d, type: 3}
+  CatalogMonsters: {fileID: 4900000, guid: cdbdbe4e32ac3784aa7948bdf22f8bac, type: 3}
+  CatalogStageOneEnemies: {fileID: 4900000, guid: b12a03e0e05eadf429a9c68fa0f4a796, type: 3}
+  Monsters: {fileID: 4900000, guid: 3dce2014d8aeb774db75ef4d8d8575da, type: 3}
+  MonsterRewardChoices: {fileID: 4900000, guid: 5c98206d33552d840a1db6db4b1743da, type: 3}
+  MonsterSkills: {fileID: 4900000, guid: bbc492c5e4ae3cf44a6aeab4ded27b5b, type: 3}
+  MonsterSkillChoices: {fileID: 4900000, guid: 5b5f094e9fbfaef4593518ad6d855917, type: 3}
+  StageOneEnemies: {fileID: 4900000, guid: 61c9eb99d31ad914fb1fa849d1a30a96, type: 3}
