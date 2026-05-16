@@ -51,6 +51,49 @@ Builder implementation completed and locally verified.
 
 - 2026-05-15: Phase4-C-0 connected user-authored Eve-A and Ariel-B skill prefabs to the new shared actor components and NewRunScene references.
 
+## Task: 2026-05-17 Eve A-J Runtime Catalog Source Data Alignment
+
+### Task title
+
+Align Eve CSV source rows used by the runtime catalog bridge.
+
+### Goals
+
+- Make the existing `PakuriCsvRuntimeData` source files contain Eve A-J skill rows and Eve skill choice rows from the Eve reference folder.
+- Keep `SkillChoiceModifierData.csv` rows linked to the same choice IDs stored in runtime source choices and Offering rewards.
+- Avoid creating new ScriptableObject assets for this slice.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No prefab or ScriptableObject asset instance was changed.
+- Unity-MCP `execute_code` catalog inspection was blocked by the known Windows Mono path-length error, so catalog-level validation is deferred to Play Mode/editor inspection outside `execute_code`.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by CSV parsing, builds, Unity refresh, and console read.
+
+### Next Actions
+
+- If Unity-MCP `execute_code` becomes usable, inspect `PakuriCsvRuntimeData.ResolveCatalogOrFallback(null)` to confirm generated Eve catalog counts from inside Unity.
+- User verifies Offering acquisition/enhancement in Play Mode.
+
+### Evidence
+
+- `PakuriCsvRuntimeData.Build.cs` was inspected and confirmed it builds active skills, passive skills, skill choices, and reward choices from `monster_skills.csv`, `monster_skill_choices.csv`, and `monster_reward_choices.csv`.
+- Changed `Pakuri/Assets/CSVdata/source/monster_skills.csv`, `monster_skill_choices.csv`, and `monster_reward_choices.csv`.
+- Changed `Pakuri/Assets/CSVdata/SkillChoiceData.csv` and `SkillChoiceModifierData.csv`.
+- CSV consistency check returned 10 Eve skill rows, 50 Eve source choice rows, 50 modifier rows, and 50 Eve reward rows with no missing links.
+- Runtime/editor builds completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-17: User requested Code Builder to enter Eve A-J data and validate the data/Offering path before implementing full Eve active/passive runtime effects.
+
 ## Task: 2026-05-15 InGame Phase4-B Skill Choice Snapshot Data Flow
 
 ### Task title

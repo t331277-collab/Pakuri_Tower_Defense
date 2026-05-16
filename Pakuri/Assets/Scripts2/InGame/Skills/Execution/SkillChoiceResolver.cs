@@ -28,7 +28,7 @@ namespace Pakuri.InGame
 
             ApplyChoices(snapshot, chosenChoiceIds, skillData.EnhancementChoices);
             ApplyChoices(snapshot, chosenChoiceIds, skillData.MasterChoices);
-            ApplyModifierRecords(snapshot, chosenChoiceIds);
+            ApplyModifierRecords(snapshot, chosenChoiceIds, skillData);
             return snapshot;
         }
 
@@ -54,20 +54,52 @@ namespace Pakuri.InGame
 
         private void ApplyModifierRecords(
             SkillExecutionSnapshot snapshot,
-            ICollection<string> chosenChoiceIds)
+            ICollection<string> chosenChoiceIds,
+            SkillData skillData)
         {
-            if (snapshot == null || chosenChoiceIds == null || modifierLibrary == null)
+            if (snapshot == null || chosenChoiceIds == null || modifierLibrary == null || skillData == null)
             {
                 return;
             }
 
             foreach (var choiceId in chosenChoiceIds)
             {
-                if (modifierLibrary.TryGet(choiceId, out var record))
+                if (IsChoiceForSkill(choiceId, skillData)
+                    && modifierLibrary.TryGet(choiceId, out var record))
                 {
                     snapshot.ApplyModifierRecord(record);
                 }
             }
+        }
+
+        private static bool IsChoiceForSkill(string choiceId, SkillData skillData)
+        {
+            if (string.IsNullOrWhiteSpace(choiceId) || skillData == null)
+            {
+                return false;
+            }
+
+            return ContainsChoice(skillData.EnhancementChoices, choiceId)
+                || ContainsChoice(skillData.MasterChoices, choiceId);
+        }
+
+        private static bool ContainsChoice(SkillChoiceEffectSpec[] choices, string choiceId)
+        {
+            if (choices == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < choices.Length; i++)
+            {
+                var choice = choices[i];
+                if (choice != null && string.Equals(choice.ChoiceId, choiceId, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

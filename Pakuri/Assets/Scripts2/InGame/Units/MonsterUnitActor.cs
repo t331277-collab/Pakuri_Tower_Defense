@@ -50,6 +50,7 @@ namespace Pakuri.InGame
             var displayName = identity != null && !string.IsNullOrWhiteSpace(identity.DisplayName)
                 ? identity.DisplayName
                 : identity != null ? identity.DefinitionId : string.Empty;
+            displayName = AppendStatusDisplay(displayName, Model);
             var maxHealth = stats != null ? Mathf.Max(0f, stats.MaxHealth) : 0f;
             var currentHealth = resources != null ? Mathf.Clamp(resources.CurrentHealth, 0f, maxHealth) : 0f;
             var currentShield = resources != null ? Mathf.Max(0f, resources.CurrentShield) : 0f;
@@ -218,6 +219,14 @@ namespace Pakuri.InGame
             return Mathf.Approximately(value, Mathf.Round(value))
                 ? Mathf.RoundToInt(value).ToString()
                 : value.ToString("0.##");
+        }
+
+        private static string AppendStatusDisplay(string displayName, BaseUnitRuntimeModel model)
+        {
+            var suffix = model != null && model.Statuses != null
+                ? StatusEffectUtility.BuildDisplaySuffix(model.Statuses.ActiveStatuses)
+                : string.Empty;
+            return string.IsNullOrWhiteSpace(suffix) ? displayName : $"{displayName}{suffix}";
         }
     }
 }

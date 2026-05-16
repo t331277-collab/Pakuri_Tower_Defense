@@ -69,6 +69,8 @@ namespace Pakuri.InGame
             {
                 enemyCombatSimulation.Tick(roster, this, Time.deltaTime, logEnemyAttackAttempts);
             }
+
+            TickUnitStatuses(Time.deltaTime);
         }
 
         public UnitRosterEntry RegisterPlayerMonster(MonsterUnitRuntimeModel model, MonsterUnitActor actor)
@@ -117,6 +119,97 @@ namespace Pakuri.InGame
             var result = resourceMutations.Heal(target, amount);
             RefreshActorIfChanged(result);
             return result;
+        }
+
+        public UnitStatusRuntime ApplyStatus(
+            BaseUnitRuntimeModel target,
+            string statusTag,
+            int stacks,
+            float durationSeconds,
+            int maxStacks = 0,
+            bool permanent = false,
+            bool refreshDuration = true)
+        {
+            return StatusEffectUtility.TryParse(statusTag, out var kind)
+                ? ApplyStatus(target, kind, stacks, durationSeconds, maxStacks, permanent, refreshDuration)
+                : null;
+        }
+
+        public UnitStatusRuntime ApplyStatus(
+            BaseUnitRuntimeModel target,
+            StatusEffectKind kind,
+            int stacks,
+            float durationSeconds,
+            int maxStacks = 0,
+            bool permanent = false,
+            bool refreshDuration = true)
+        {
+            if (target == null || target.Statuses == null || kind == StatusEffectKind.None)
+            {
+                return null;
+            }
+
+            var status = target.Statuses.Apply(
+                kind,
+                stacks,
+                durationSeconds,
+                maxStacks,
+                permanent,
+                refreshDuration);
+            RefreshUnitActor(target);
+            return status;
+        }
+
+        public bool HasStatus(BaseUnitRuntimeModel target, string statusTag)
+        {
+            return target != null && target.Statuses != null && target.Statuses.Has(statusTag);
+        }
+
+        public bool HasStatus(BaseUnitRuntimeModel target, StatusEffectKind kind)
+        {
+            return target != null && target.Statuses != null && target.Statuses.Has(kind);
+        }
+
+        public int GetStatusStacks(BaseUnitRuntimeModel target, string statusTag)
+        {
+            return target != null && target.Statuses != null ? target.Statuses.GetStacks(statusTag) : 0;
+        }
+
+        public int GetStatusStacks(BaseUnitRuntimeModel target, StatusEffectKind kind)
+        {
+            return target != null && target.Statuses != null ? target.Statuses.GetStacks(kind) : 0;
+        }
+
+        public bool RemoveStatus(BaseUnitRuntimeModel target, string statusTag)
+        {
+            if (target == null || target.Statuses == null)
+            {
+                return false;
+            }
+
+            var removed = target.Statuses.Remove(statusTag);
+            if (removed)
+            {
+                RefreshUnitActor(target);
+            }
+
+            return removed;
+        }
+
+        public bool RemoveStatus(BaseUnitRuntimeModel target, StatusEffectKind kind)
+        {
+            if (target == null || target.Statuses == null)
+            {
+                return false;
+            }
+
+            var removed = target.Statuses.Remove(kind);
+            if (removed)
+            {
+                RefreshUnitActor(target);
+            }
+
+            return removed;
         }
 
         public void EnablePlayerAutoSkillMode()
@@ -276,6 +369,29 @@ namespace Pakuri.InGame
                 && runtime != null
                 && runtime.Slot == InGameSkillSlot.A
                 && entry == GetSelectedPlayerEntry();
+        }
+
+        private void TickUnitStatuses(float deltaTime)
+        {
+            if (deltaTime <= 0f)
+            {
+                return;
+            }
+
+            var entries = roster.Entries;
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var model = entries[i] != null ? entries[i].Model : null;
+                if (model == null || model.Statuses == null)
+                {
+                    continue;
+                }
+
+                if (model.Statuses.Tick(deltaTime))
+                {
+                    RefreshUnitActor(model);
+                }
+            }
         }
 
         private UnitRosterEntry GetSelectedPlayerEntry()

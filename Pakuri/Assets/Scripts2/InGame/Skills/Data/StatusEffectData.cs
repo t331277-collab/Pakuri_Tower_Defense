@@ -6,6 +6,7 @@ namespace Pakuri.InGame
     public sealed class StatusEffectData : ScriptableObject
     {
         [Header("Identity")]
+        public StatusEffectKind Kind = StatusEffectKind.None;
         public string StatusTag;
         public string StatusName;
 

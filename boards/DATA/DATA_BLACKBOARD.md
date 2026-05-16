@@ -547,6 +547,59 @@ Implemented and locally checked.
 - 2026-05-16: User requested the 70% Manifest success probability be recorded in CSV.
 - 2026-05-16: Builder added the CSV column and parser exposure for UI use.
 
+## Task: 2026-05-17 Eve A-J CSV Choice Expansion
+
+### Task title
+
+Expand active CSV data for Eve A-J skills and Offering choices.
+
+### Goals
+
+- Enter Eve A-J skill rows from `Pakuri/reference/2.Monster/eve/skill`.
+- Keep runtime source choices, metadata choices, modifier rows, and Offering reward rows ID-consistent.
+- Record unsupported modifier semantics explicitly instead of silently inventing runtime fields.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The current modifier schema supports damage, magazine, projectiles, pierce, reload/shot interval, radius, duration, branch, and status fields; passive conditional damage, resistance debuffs, cooldown modifiers, freeze duration, and vulnerable-stack conditions are recorded as unsupported notes.
+- No Play Mode verification was run by Codex.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Add explicit runtime/data fields for cooldown modifiers, resistance debuffs, passive conditional damage, freeze duration, vulnerable-stack conditions, and shield/action-speed effects before claiming those effects are fully executable.
+- User verifies Offering choice flow in Play Mode.
+
+### Evidence
+
+- Changed `Pakuri/Assets/CSVdata/source/monster_skills.csv`.
+- Changed `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv`.
+- Changed `Pakuri/Assets/CSVdata/source/monster_reward_choices.csv`.
+- Changed `Pakuri/Assets/CSVdata/SkillChoiceData.csv`.
+- Changed `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv`.
+- CSV consistency check returned `EveSkillRows=10; Active=5; Passive=5; ChoiceData=50; SourceChoices=50; Modifiers=50; EveRewards=50; MissingChoiceMods=0; MissingRewardChoices=0; MissingSourceChoices=0; BadEveRewards=0; BadNumeric=0`.
+- Runtime/editor builds completed with 0 errors and existing assembly reference warnings.
+- 2026-05-17 follow-up: Fixed malformed Eve A-J `monster_skills.csv` rows that had shifted columns and caused Unity CSV enum errors such as row 43 `attribute='?꾩갹 6'`.
+- Follow-up CSV validation returned `Headers=26; Rows=50; EveRows=10; Bad=0; EveAAttribute=Lightning; EveABaseDamage=24; EveDImplementation=RuntimeImplemented; EveDRequiredSlot=A`.
+- Follow-up runtime/editor builds completed with 0 errors and existing assembly reference warnings; Unity refresh reached idle and console showed only MCP client logs.
+- 2026-05-17 follow-up: Fixed Eve default skill name validation by changing `monster_skills.csv` Eve slot A `display_name` to `아크 볼트` and slot F `display_name` to `전압 보정`, matching `monsters.csv` `active_skill_name` and `passive_skill_name`.
+- Follow-up exact-name check returned `ANameMatch=True`, `FNameMatch=True`; quote-aware CSV parsing returned `ExpectedColumns=26`, `TotalRows=52`, `BadRows=0`.
+- Follow-up runtime/editor builds completed with 0 errors and existing assembly reference warnings; Unity refresh reached idle and console showed no `Pakuri CSV source validation failed` errors.
+
+### History
+
+- 2026-05-17: User asked Code Builder to fill Eve A-J data first so skill acquisition and enhancement can be mapped through Offering.
+- 2026-05-17: User reported Unity CSV enum errors from malformed Eve rows; Builder replaced Eve A-J rows with fresh 26-column records.
+- 2026-05-17: User reported Eve active/passive default skill display-name validation errors; Builder aligned Eve A/F display names with `monsters.csv`.
+
 ## Task: 2026-05-16 NewRunScene CSV Spawn And Runtime Source Fix
 
 ### Task title

@@ -4,6 +4,136 @@
 - This file keeps only task blocks dated `2026-05-09` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/RUN/RUN_BLACKBOARD.md`.
 
+## Task: 2026-05-17 NewRunScene Status Enum And Name Label Display
+
+### Task title
+
+Route NewRunScene status runtime through enum definitions and refresh labels when statuses change.
+
+### Goals
+
+- Keep NewRunScene status application/query/removal under one enum-backed runtime system.
+- Refresh unit actors when status state changes so visible labels stay current.
+- Preserve existing run flow, reward, spawn, and scene behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No StageManager, reward UI, Offering UI, scene object, or Play Mode workflow change was made.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies in NewRunScene Play Mode that status labels update on apply and when timed statuses expire.
+- Future NewRunScene skills should apply statuses through `InGameCombatManager.ApplyStatus(..., StatusEffectKind, ...)`.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:159` refreshes the actor after applying a status, `:209` refreshes after removal, and `:390` refreshes when `TickUnitStatuses(...)` detects expiry.
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs:70` returns status tick changes for actor refresh decisions.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs:120` generates slash-separated suffix display strings from active statuses.
+- Runtime/editor builds completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP refresh reached idle; console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-17: User requested Code Builder to centralize status enum handling and make active statuses visible on `MonsterNameLabel`.
+
+## Task: 2026-05-17 NewRunScene Eve-A Projectile Modifier Runtime
+
+### Task title
+
+Expose Eve-A Offering projectile modifiers through NewRunScene InGame execution.
+
+### Goals
+
+- Make already-recorded Offering choices influence the NewRunScene Eve-A runtime when the skill executes.
+- Keep the reward UI and run progression code unchanged while improving the combat execution path that consumes chosen choice IDs.
+- Preserve user-owned Play Mode verification for actual visual/gameplay confirmation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No reward UI, Offering UI, scene, prefab, or StageManager changes were made in this slice.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies in NewRunScene Play Mode that acquired Eve-A choices affect firing behavior after Offering.
+- Later Run-facing work should connect Eve B-E/F-J runtime behavior without changing the reward storage contract unless data needs expand.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutionSystem.cs:112` now checks cast readiness after resolving chosen-choice modifier snapshots.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs:73` through `:90` lets magazine, reload, shot interval, and cooldown modifier values affect runtime gating and cast start.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:82` and `:87` consume projectile count and branch modifier fields that come from Eve-A Offering choice rows.
+- Runtime/editor builds completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP script refresh reached idle and console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-17: User asked Code Builder to implement step 2 after Eve A-J data and status foundation work.
+
+## Task: 2026-05-17 NewRunScene InGame Status Runtime Foundation
+
+### Task title
+
+Add unit status runtime storage to the NewRunScene InGame combat loop.
+
+### Goals
+
+- Track the Run/NewRunScene-facing impact of adding status state to `BaseUnitRuntimeModel`.
+- Make the current `InGameCombatManager` tick unit statuses each frame so future Eve and other monster skills can use timed/stacked conditions.
+- Preserve the current StageManager, reward UI, enemy spawn, projectile, and resource mutation behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Run flow UI, reward, StageManager, scene, prefab, or Play Mode gameplay verification was changed in this slice.
+- Status APIs are available, but no visible RunScene skill currently applies them yet.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Future skill execution tasks should apply statuses through `InGameCombatManager.ApplyStatus(...)` rather than adding per-skill ad hoc state.
+- User verifies Play Mode only after a follow-up skill task connects the status store to Eve-A/B/C/D/E behavior.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now ticks statuses through `TickUnitStatuses(Time.deltaTime)` during `Update()`.
+- `InGameCombatManager.cs` now exposes status apply/query/remove APIs for future skill and passive execution.
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs` now includes `UnitStatusRuntimeSet Statuses`.
+- Runtime/editor builds completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP refresh reached idle and console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-17: Eve A-J implementation began with the shared status runtime foundation used by NewRunScene's InGame combat loop.
+
 ## Task: 2026-05-16 NewRunScene Stage Flow Data Handoff
 
 ### Task title
@@ -1167,3 +1297,97 @@ Implemented and locally validated.
 
 - 2026-05-16: User reported no enemies visible on NewRunScene entry and shared a UnityEditor.Graphs NullReferenceException.
 - 2026-05-16: Builder fixed active encounter spawn coordinates and restored the CSV source import folder expected by runtime catalog code.
+
+## Task: 2026-05-17 NewRunScene Entry SpawnManager Refactor
+
+### Task title
+
+Extract NewRunScene unit spawning from EntryManager into a dedicated SpawnManager.
+
+### Goals
+
+- Keep `NewRunStageManager` as the owner of Stage/Day/Encounter/Reward flow.
+- Move NewRunScene prefab resolution, runtime model creation, Instantiate, Actor binding, runtime-root parenting, and combat roster registration out of `NewRunSceneEntryManager`.
+- Preserve existing `NewRunStageManager` and `InGameUIManager` calls through the existing `NewRunSceneEntryManager` public wrapper APIs.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is intended as behavior-preserving refactoring; no stage CSV, reward logic, enemy skill behavior, or Play Mode gameplay behavior was intentionally changed.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified.
+
+### Next Actions
+
+- User verifies NewRunScene Play Mode: selected 1P monster spawns, StageManager-driven enemies spawn, reward flow still reaches RewardReady, and Manifest success spawns 2P-5P units.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts2/InGame/Core/NewRunUnitSpawnManager.cs`.
+- `NewRunUnitSpawnManager` now owns selected monster spawning, enemy spawning by ID, configured test enemy spawning, manifested monster spawning, catalog lookup, model creation, Actor initialization, runtime-root parenting, and combat roster registration.
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` now keeps scene-entry/session-facing wrapper APIs and delegates spawn work to `NewRunUnitSpawnManager`.
+- `NewRunStageManager` was not replaced; its existing encounter flow still calls `NewRunSceneEntryManager.SpawnEnemyById(...)`, which delegates to `NewRunUnitSpawnManager`.
+- `InGameUIManager` was not changed; its Manifest success path still calls `NewRunSceneEntryManager.SpawnManifestedMonster(...)`, which delegates to `NewRunUnitSpawnManager`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now has `Pakuri.InGame.NewRunUnitSpawnManager` on `GameManager`, and `NewRunSceneEntryManager.unitSpawnManager` references it.
+- Scene YAML confirms `NewRunUnitSpawnManager` references `1PSpawnPoint`, `SpawnPoint`, `RunTimeObject`, `RunTimeEnemy`, `RunTimeMonster`, `GameDataCatalog.asset`, five monster prefabs, and seven stage-one enemy prefabs.
+- Runtime build `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Editor build `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and the same existing warnings.
+- Unity-MCP console warning/error read after clearing showed only MCP client handler logs.
+- `git diff --check` passed for the changed scripts and scene, with only LF-to-CRLF normalization warnings.
+- Unity-MCP `execute_code` scene-wiring attempt failed with the known Windows mono path-length issue, so scene component wiring was completed with Unity-MCP component/property tools instead.
+
+### History
+
+- 2026-05-17: User asked Code Builder to keep `NewRunStageManager` and refactor spawn/prefab/model binding responsibilities out of `NewRunSceneEntryManager` into a SpawnManager.
+
+## Task: 2026-05-17 Eve Offering Data Application Prep
+
+### Task title
+
+Prepare NewRunScene Offering data application for Eve A-J.
+
+### Goals
+
+- Let the run Offering flow store Eve skill choice IDs that match modifier data.
+- Keep enhancement choices gated by learned active/passive state.
+- Preserve existing reward UI flow while expanding Eve data.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Play Mode verification was run by Codex.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies NewRunScene Offering acquisition/enhancement application in Play Mode.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- `InGameUIManager.CommitOfferingChoice(...)` still records `choice.ChoiceId` through `RunSession.RecordOfferingChoice(...)`; the expanded Eve reward rows now use IDs that match `SkillChoiceModifierData.csv`.
+- `InGameUIManager.cs` now filters Eve skill-choice reward IDs by learned active/passive state before showing Offering enhancements.
+- `SkillChoiceResolver.cs` now prevents chosen modifiers from unrelated learned Eve skills from applying to the current skill snapshot.
+- CSV consistency check returned no missing links among Eve choice data, source choices, modifiers, and reward rows.
+- Runtime/editor builds completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-17: User confirmed data cleanup and Offering mapping should be first, then requested Code Builder implementation.

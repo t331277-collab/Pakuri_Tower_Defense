@@ -200,6 +200,11 @@ namespace Pakuri.InGame
             }
 
             var status = CreateTransient<StatusEffectData>(statusEffectId);
+            if (StatusEffectUtility.TryParse(statusEffectId, out var kind))
+            {
+                status.Kind = kind;
+            }
+
             status.StatusTag = statusEffectId;
             status.StatusName = statusEffectId;
             application.Status = status;

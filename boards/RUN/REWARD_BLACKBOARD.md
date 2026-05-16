@@ -51,6 +51,50 @@ Builder implementation completed and CSV consistency verified.
 - 2026-05-16: User requested active CSV files including reward rules for the next StageManager implementation.
 - 2026-05-16: Code Builder added StageManager reward-ready state and pending reward properties for future UI wiring.
 
+## Task: 2026-05-17 Eve Offering Skill Choice Reward Mapping
+
+### Task title
+
+Map Eve skill choice IDs into NewRunScene Offering rewards.
+
+### Goals
+
+- Let Offering rewards store the same Eve choice IDs used by `SkillChoiceModifierData.csv`.
+- Avoid showing B-E active enhancements before the corresponding active skill is learned.
+- Avoid showing F-J passive enhancements before the corresponding passive is learned.
+- Prevent selected modifiers for one skill from mutating another skill's execution snapshot.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- NewRunScene UI layout was not redesigned.
+- User performs Play Mode verification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Offering order and random choice feel in Play Mode.
+- Later passive runtime work should consume the `DataOnlyUnsupported` passive trait rows.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_reward_choices.csv` now contains 50 Eve reward rows matching the 50 Eve choice/modifier IDs.
+- `InGameUIManager.cs` filters skill-choice reward IDs by learned active/passive ownership before adding enhancement choices to the Offering popup.
+- `SkillChoiceResolver.cs` filters modifier records against the current skill's `EnhancementChoices` and `MasterChoices`, preventing cross-skill modifier leakage.
+- CSV consistency check returned no missing reward, source choice, or modifier links for Eve choice IDs.
+- Runtime/editor builds completed with 0 errors and existing warnings.
+
+### History
+
+- 2026-05-17: User said data cleanup and Offering mapping should come first before Eve full skill implementation, then asked Code Builder to perform that work.
+
 ## Task: 2026-05-08 Manifested Runtime Resume Reward Context
 
 ### Task title

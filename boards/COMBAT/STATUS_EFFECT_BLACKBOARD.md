@@ -4,6 +4,149 @@
 - This file keeps only task blocks dated `2026-05-10` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 
+## Task: 2026-05-17 Status Effect Enum Centralization And Label Display
+
+### Task title
+
+Centralize InGame status effects under `StatusEffectKind` and show active statuses on unit name labels.
+
+### Goals
+
+- Replace the runtime status key with a shared enum so skills and combat APIs do not own ad hoc string status logic.
+- Keep existing CSV/string boundary fields compatible by parsing them into the enum.
+- Show active status display names on each unit's `MonsterNameLabel`, for example `검사[감전]` and `검사[감전/취약]`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Existing string fields remain at CSV/serialized boundaries for compatibility.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies in NewRunScene Play Mode that Eve-A shock displays as `[감전]` and combined statuses display in slash-separated order.
+- Later status additions should add enum definitions in `StatusEffectKind.cs` instead of adding new hardcoded runtime strings.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs:5` defines the shared `StatusEffectKind` enum, and `:89` centralizes id/display/duration/stack defaults through `StatusEffectUtility.GetDefinition(...)`.
+- `StatusEffectKind.cs:120` builds the label suffix from active statuses.
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs:37` applies statuses by `StatusEffectKind`, `:70` returns whether ticking removed statuses, and `:159` stores `UnitStatusRuntime.Kind`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:159`, `:193`, and `:209` refresh unit actors after status apply/remove, and `:390` refreshes when status ticking changes the active set.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs:53` and `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs:53` append active status display suffixes to the unit name label.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing assembly reference warnings.
+- Unity-MCP refresh reached idle; console warning/error read showed only MCP client handler logs.
+- `git diff --check` passed for the status-enum touched files; full worktree `git diff --check` is still blocked by unrelated trailing whitespace in `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:5269`.
+
+### History
+
+- 2026-05-17: User requested Code Builder to centralize status effects as an enum and append active statuses to `MonsterNameLabel`.
+- 2026-05-17: User requested active status labels to include stack counts; `StatusEffectUtility.BuildDisplaySuffix(...)` now formats each active status as `DisplayName +Stacks`.
+
+## Task: 2026-05-17 Eve-A Projectile Shock Application
+
+### Task title
+
+Apply Eve-A shock through the shared InGame projectile hit path.
+
+### Goals
+
+- Use the status runtime foundation from step 1 for the first visible Eve-A status application.
+- Normalize the Eve-A shock tag from CSV/reference values into the shared `shock` runtime tag.
+- Keep shock as a projectile hit effect rather than a separate Eve-only enemy state.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This slice applies/refreshes status state only; shock damage/passive damage amplification hooks remain future work.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Implement Eve D/F/I passive and skill damage calculations against `HasStatus(..., "shock")` and `GetStatusStacks(..., "shock")` in later slices.
+- User verifies in Play Mode that Eve-A hits can create shock stacks before those stacks are consumed by later skills.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:158` resolves projectile hit status specs and normalizes `shock`, `감전`, and the current mojibake CSV value into `shock`.
+- `SkillExecutors.cs:177` sets Eve-A shock chance to 15% when the normalized tag is `shock`.
+- `SkillExecutors.cs:194` builds `ProjectileStatusHitSpec` with stack, duration, max-stack, permanent, and refresh-duration fields.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs:164` through `:182` applies the status through `InGameCombatManager.ApplyStatus(...)`.
+- `Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md:29` through `:30` define shock chance 15% and 1 stack.
+- Runtime/editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-17: Step 2 connected Eve-A's first status application after the shared status runtime foundation was implemented.
+
+## Task: 2026-05-17 InGame Unit Status Runtime Foundation
+
+### Task title
+
+Add the first shared InGame unit status runtime store.
+
+### Goals
+
+- Give `BaseUnitRuntimeModel` a shared status container for Eve shock, chill, freeze, vulnerable, slow, and later conditional passive checks.
+- Expose combat-manager APIs that later skill executors can call to apply, query, stack, tick, and remove statuses.
+- Keep this slice as a foundation only; do not connect Eve-A projectile hits or Eve B-E effect executors yet.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Unity Play Mode verification was run by Codex.
+- This slice does not implement resistance modifiers, damage modifiers, visual status labels, Eve-A shock application, Eve B-E execution, or F-J passive hooks.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Connect Eve-A projectile hits to `InGameCombatManager.ApplyStatus(...)` for `shock` after status duration/chance ownership is confirmed.
+- Extend damage/resistance calculation to query `HasStatus(...)` and `GetStatusStacks(...)` before implementing Eve F-J passive bonuses.
+- User verifies Play Mode behavior only after the status store is connected to a visible skill effect.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs` now has `UnitStatusRuntimeSet Statuses`.
+- `BaseUnitRuntimeModel.cs` now defines `UnitStatusRuntimeSet` with `Apply(...)`, `Tick(...)`, `Has(...)`, `GetStacks(...)`, `Remove(...)`, and `Clear()`.
+- `BaseUnitRuntimeModel.cs` now defines `UnitStatusRuntime` with normalized `Tag`, `Stacks`, `DurationRemaining`, `Permanent`, stack capping, duration setting, and expiry ticking.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now exposes `ApplyStatus(...)`, `HasStatus(...)`, `GetStatusStacks(...)`, and `RemoveStatus(...)`.
+- `InGameCombatManager.Update()` now calls `TickUnitStatuses(Time.deltaTime)` after skill and enemy simulation ticks.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- The first parallel editor build hit the known `obj\Debug\Assembly-CSharp.dll` file-lock case; standalone `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
+- Unity-MCP refresh returned idle; console warning/error read returned only MCP client handler logs.
+- `git diff --check` on the changed scripts passed with only LF-to-CRLF normalization warnings.
+
+### History
+
+- 2026-05-17: User approved starting Eve A-J implementation from step 1, the common status runtime foundation.
+
 ## Task: 2026-05-15 InGame Rounded Resource Mutation Follow-up
 
 ### Task title

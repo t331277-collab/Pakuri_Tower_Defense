@@ -103,7 +103,13 @@ namespace Pakuri.InGame
             bool hasManualAimDirection,
             Vector2 manualAimDirection)
         {
-            if (runtime == null || !runtime.CanCast)
+            if (runtime == null)
+            {
+                return false;
+            }
+
+            var snapshot = choiceResolver.Resolve(entry != null ? entry.Model : null, runtime);
+            if (!runtime.CanCastWithSnapshot(snapshot))
             {
                 return false;
             }
@@ -122,11 +128,10 @@ namespace Pakuri.InGame
                 deltaTime,
                 hasManualAimDirection,
                 manualAimDirection);
-            var snapshot = choiceResolver.Resolve(entry.Model, runtime);
             var result = executor.Execute(context, snapshot);
             if (result.Routed)
             {
-                if (!runtime.TryBeginCast())
+                if (!runtime.TryBeginCast(snapshot))
                 {
                     return false;
                 }

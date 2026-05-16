@@ -1,3 +1,4 @@
+using System;
 using Pakuri.Combat;
 using UnityEngine;
 
@@ -58,44 +59,213 @@ namespace Pakuri.InGame
                     : context.CombatManager.ResolveSkillEffectPrefab(skill.SkillId);
             }
 
+            var statusSpec = ResolveProjectileStatusSpec(skill, snapshot);
             if (prefab == null)
             {
                 if (target != null)
                 {
                     context.CombatManager.ApplyDamage(target.Model, damage, attribute);
+                    TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec);
                     return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
                 }
 
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
             }
 
-            var instance = context.CombatManager.InstantiateSkillPrefab(prefab, origin, Quaternion.identity);
-            var actor = instance.GetComponent<InGameProjectileActor>();
-            if (actor == null)
-            {
-                actor = instance.AddComponent<InGameProjectileActor>();
-            }
-
             var projectile = skill.Projectile;
             var speed = projectile != null ? projectile.ProjectileSpeed : 0f;
             var pierce = projectile != null ? projectile.PierceCount : 0;
+            var projectileCount = projectile != null ? Math.Max(1, projectile.ProjectilesPerShot) : 1;
             if (snapshot != null)
             {
                 pierce += snapshot.PierceBonus;
+                projectileCount += snapshot.AdditionalProjectileBonus;
             }
 
-            actor.Initialize(
-                context.CombatManager,
-                context.Caster,
-                direction,
-                speed,
-                damage,
-                attribute,
-                pierce,
-                context.CombatManager.ResolveProjectileDestroyBoundaryX(),
-                SkillExecutionUtility.ResolveProjectileLifetime(skill));
+            projectileCount = Math.Max(1, projectileCount);
+            pierce = Math.Max(0, pierce);
+            var branchSpec = ResolveBranchSpec(snapshot, prefab);
+            var lifetime = SkillExecutionUtility.ResolveProjectileLifetime(skill);
+            var boundary = context.CombatManager.ResolveProjectileDestroyBoundaryX();
+            for (var i = 0; i < projectileCount; i++)
+            {
+                var spreadDirection = ResolveProjectileSpreadDirection(direction, i, projectileCount);
+                var instance = context.CombatManager.InstantiateSkillPrefab(
+                    prefab,
+                    origin,
+                    ResolveRotation(spreadDirection));
+                var actor = instance.GetComponent<InGameProjectileActor>();
+                if (actor == null)
+                {
+                    actor = instance.AddComponent<InGameProjectileActor>();
+                }
+
+                actor.Initialize(
+                    context.CombatManager,
+                    context.Caster,
+                    spreadDirection,
+                    speed,
+                    damage,
+                    attribute,
+                    pierce,
+                    boundary,
+                    lifetime,
+                    statusSpec,
+                    branchSpec);
+            }
 
             return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
+        }
+
+        private static Vector2 ResolveProjectileSpreadDirection(Vector2 direction, int index, int count)
+        {
+            if (count <= 1)
+            {
+                return direction;
+            }
+
+            const float angleStep = 10f;
+            var offset = (index - (count - 1) * 0.5f) * angleStep;
+            return RotateDirection(direction, offset);
+        }
+
+        private static Vector2 RotateDirection(Vector2 direction, float degrees)
+        {
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                return Vector2.right;
+            }
+
+            var radians = degrees * Mathf.Deg2Rad;
+            var cos = Mathf.Cos(radians);
+            var sin = Mathf.Sin(radians);
+            return new Vector2(
+                direction.x * cos - direction.y * sin,
+                direction.x * sin + direction.y * cos).normalized;
+        }
+
+        private static Quaternion ResolveRotation(Vector2 direction)
+        {
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                return Quaternion.identity;
+            }
+
+            var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            return Quaternion.Euler(0f, 0f, angle);
+        }
+
+        private static ProjectileStatusHitSpec ResolveProjectileStatusSpec(
+            ProjectileSkillData skill,
+            SkillExecutionSnapshot snapshot)
+        {
+            var baseStatus = skill != null ? skill.OnHitStatus : null;
+            var statusData = baseStatus != null ? baseStatus.Status : null;
+            var snapshotTag = snapshot != null ? snapshot.StatusTag : null;
+            var tag = !string.IsNullOrWhiteSpace(snapshotTag)
+                ? snapshotTag
+                : statusData != null ? statusData.StatusTag : null;
+            var kind = statusData != null ? statusData.Kind : StatusEffectKind.None;
+            if (!StatusEffectUtility.TryParse(tag, out var parsedKind) && kind == StatusEffectKind.None)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(snapshotTag) || kind == StatusEffectKind.None)
+            {
+                kind = parsedKind;
+            }
+
+            var stacks = baseStatus != null ? Math.Max(0, baseStatus.Stacks) : 1;
+            var chance = baseStatus != null ? Mathf.Clamp01(baseStatus.Chance) : 1f;
+            if (skill != null && skill.SkillId == "eve-a" && kind == StatusEffectKind.Shock)
+            {
+                chance = 0.15f;
+            }
+
+            if (snapshot != null)
+            {
+                chance = Mathf.Clamp01(chance + snapshot.StatusChanceBonus);
+                stacks = snapshot.HasStatusStacksSet
+                    ? Math.Max(0, snapshot.StatusStacksSet)
+                    : Math.Max(0, stacks + snapshot.StatusStacksBonus);
+            }
+
+            if (stacks <= 0 || chance <= 0f)
+            {
+                return null;
+            }
+
+            var definition = StatusEffectUtility.GetDefinition(kind);
+            var duration = statusData != null && statusData.Duration > 0f
+                ? statusData.Duration
+                : definition.DefaultDurationSeconds;
+            var maxStacks = statusData != null && statusData.MaxStacks > 0
+                ? statusData.MaxStacks
+                : definition.DefaultMaxStacks;
+            var permanent = definition.Permanent && (statusData == null || statusData.Duration <= 0f);
+            return new ProjectileStatusHitSpec
+            {
+                Enabled = true,
+                Kind = kind,
+                Chance = chance,
+                Stacks = stacks,
+                DurationSeconds = duration,
+                MaxStacks = maxStacks,
+                Permanent = permanent,
+                RefreshDuration = baseStatus == null || baseStatus.RefreshDuration
+            };
+        }
+
+        private static ProjectileBranchHitSpec ResolveBranchSpec(SkillExecutionSnapshot snapshot, GameObject prefab)
+        {
+            if (snapshot == null || !snapshot.HasBranchBehavior || prefab == null)
+            {
+                return null;
+            }
+
+            var chance = snapshot.HasBranchChanceSet ? snapshot.BranchChanceSet : snapshot.BranchChanceBonus;
+            var count = snapshot.HasBranchCount ? snapshot.BranchCount : chance > 0f ? 1 : 0;
+            var radius = snapshot.HasBranchSearchRadius ? snapshot.BranchSearchRadius : 4.5f;
+            if (chance <= 0f || count <= 0 || radius <= 0f)
+            {
+                return null;
+            }
+
+            return new ProjectileBranchHitSpec
+            {
+                Enabled = true,
+                ProjectilePrefab = prefab,
+                Chance = Mathf.Clamp01(chance),
+                Count = Math.Max(1, count),
+                DamageMultiplier = snapshot.HasBranchDamageMultiplier ? Mathf.Max(0f, snapshot.BranchDamageMultiplier) : 1f,
+                SearchRadius = Mathf.Max(0f, radius)
+            };
+        }
+
+        private static void TryApplyDirectStatus(
+            InGameCombatManager combatManager,
+            BaseUnitRuntimeModel target,
+            ProjectileStatusHitSpec statusSpec)
+        {
+            if (combatManager == null || target == null || statusSpec == null || !statusSpec.Enabled)
+            {
+                return;
+            }
+
+            if (UnityEngine.Random.value > Mathf.Clamp01(statusSpec.Chance))
+            {
+                return;
+            }
+
+            combatManager.ApplyStatus(
+                target,
+                statusSpec.Kind,
+                statusSpec.Stacks,
+                statusSpec.DurationSeconds,
+                statusSpec.MaxStacks,
+                statusSpec.Permanent,
+                statusSpec.RefreshDuration);
         }
     }
 

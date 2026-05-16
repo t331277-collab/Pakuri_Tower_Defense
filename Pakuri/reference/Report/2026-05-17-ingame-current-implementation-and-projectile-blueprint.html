@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>InGame Current Implementation And Projectile Blueprint</title>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #5c6b7a;
+      --line: #d8e0ea;
+      --panel: #f7f9fc;
+      --panel-strong: #edf4f8;
+      --accent: #286d73;
+      --ok: #276749;
+      --warn: #8a5a24;
+      --risk: #9b2c2c;
+      --code: #172033;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #ffffff;
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 44px 0 72px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h1 { font-size: 34px; margin-bottom: 12px; }
+    h2 {
+      font-size: 24px;
+      margin: 42px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--line);
+    }
+    h3 { font-size: 18px; margin: 24px 0 10px; }
+    p { margin: 10px 0; }
+
+    code {
+      color: var(--code);
+      background: #eef2f7;
+      border: 1px solid #d4dde8;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.94em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 24px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th { background: #edf3f8; color: #263848; }
+    ul, ol { padding-left: 22px; }
+    li { margin: 6px 0; }
+
+    .hero {
+      border-left: 6px solid var(--accent);
+      background: linear-gradient(90deg, #edf7f6, #ffffff);
+      padding: 24px 26px;
+      margin-bottom: 28px;
+      border-radius: 8px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin: 18px 0;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .note {
+      border-left: 5px solid var(--warn);
+      background: #fff8eb;
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin: 18px 0;
+    }
+
+    .oknote {
+      border-left-color: var(--ok);
+      background: #eefaf1;
+    }
+
+    .risknote {
+      border-left-color: var(--risk);
+      background: #fff1f1;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+    }
+
+    .done { color: var(--ok); font-weight: 700; }
+    .partial { color: var(--warn); font-weight: 700; }
+    .todo { color: var(--risk); font-weight: 700; }
+
+    .flow {
+      white-space: pre-wrap;
+      background: #f3f6fa;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 860px) {
+      main { width: min(100% - 32px, 1180px); padding: 32px 0 54px; }
+      h1 { font-size: 28px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <div class="eyebrow">2026-05-17 Current Report</div>
+    <h1>InGame 구현 현황과 투사체 스킬 Blueprint</h1>
+    <p>
+      이 문서는 <code>2026-05-14-combat-v2-build-roadmap.html</code>의 현재 로드맵을 기준으로
+      2026-05-17까지 실제 코드에 들어간 변경을 보강한 최신 구현 보고서다.
+      핵심 추가 내용은 Eve-A 실행 경로, 상태이상 enum 중앙화와 라벨 표시, <code>NewRunUnitSpawnManager</code> 분리,
+      그리고 이후 Vega-A, Ariel-A 같은 투사체형 A 스킬을 구현할 때 사용할 projectile blueprint다.
+    </p>
+  </section>
+
+  <h2>1. 기존 로드맵 대비 갱신 요약</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>항목</th>
+        <th>기존 로드맵의 상태</th>
+        <th>현재 갱신 상태</th>
+        <th>근거</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Projectile 실행</td>
+        <td>Projectile/Shield 최소 실행 경로가 존재하고 Beam/Zone/상태이상은 확장 과제로 남아 있었다.</td>
+        <td><span class="done">확장됨.</span> Projectile은 피해, pierce, 추가 투사체, on-hit 상태이상, branch projectile까지 공통 경로를 갖는다.</td>
+        <td><code>SkillExecutors.cs:22</code>, <code>:62</code>, <code>:81</code>, <code>:87</code>, <code>:158</code>, <code>:220</code>; <code>InGameProjectileActor.cs:155</code>~<code>:157</code></td>
+      </tr>
+      <tr>
+        <td>Eve-A</td>
+        <td>샘플 projectile 스킬과 Eve-A choice/modifier 데이터가 존재하는 단계였다.</td>
+        <td><span class="done">기본 A와 주요 강화 경로 구현됨.</span> 기본 피해/탄창/재장전/발사간격/감전, 선택지 기반 magazine/reload/pierce/additional projectile/branch/status stack이 실행 경로에 연결됐다.</td>
+        <td><code>monster_skills.csv:43</code>, <code>monster_skill_choices.csv:203</code>~<code>:209</code>, <code>SkillChoiceModifierData.csv:2</code>~<code>:8</code>, <code>SkillExecutionSnapshot.cs:94</code>~<code>:158</code></td>
+      </tr>
+      <tr>
+        <td>상태이상</td>
+        <td>상태효과/임시효과 계층은 다음 우선순위로 남아 있었다.</td>
+        <td><span class="partial">1차 구현됨.</span> <code>StatusEffectKind</code> enum, runtime status set, apply/query/remove API, 시간 만료 tick, 유닛 라벨 suffix가 존재한다. 다만 모든 스킬/패시브 소비 로직까지 완료된 것은 아니다.</td>
+        <td><code>StatusEffectKind.cs:5</code>, <code>:89</code>, <code>:120</code>; <code>BaseUnitRuntimeModel.cs:37</code>, <code>:96</code>, <code>:107</code>; <code>InGameCombatManager.cs:138</code>, <code>:374</code></td>
+      </tr>
+      <tr>
+        <td>NewRunSceneEntryManager 책임</td>
+        <td>선택 몬스터, 현현 몬스터, 적 스폰 진입점이 <code>NewRunSceneEntryManager</code> 중심으로 설명됐다.</td>
+        <td><span class="done">분리됨.</span> EntryManager는 세션/진입 조율자에 가깝고, 실제 유닛 생성/프리팹 선택/런타임 루트/등록은 <code>NewRunUnitSpawnManager</code>가 맡는다.</td>
+        <td><code>NewRunSceneEntryManager.cs:10</code>, <code>:16</code>, <code>:73</code>, <code>:208</code>, <code>:237</code>; <code>NewRunUnitSpawnManager.cs:10</code>, <code>:103</code>, <code>:153</code>, <code>:419</code>, <code>:428</code></td>
+      </tr>
+      <tr>
+        <td>후속 A 스킬 구현 방식</td>
+        <td>Rin-D, Vega-E 등 예외 스킬은 custom executor 또는 hook 필요로 남아 있었다.</td>
+        <td><span class="partial">투사체형 A의 blueprint 확립.</span> <code>MagazineProjectile</code> 기본형은 데이터만 바꿔 재사용 가능하다. 마지막 탄환, 처치 트리거, 지연 잔상, 다중 폭발 같은 특수 조건은 modifier 필드나 hook 추가가 필요하다.</td>
+        <td><code>monster_skills.csv:3</code>, <code>:33</code>, <code>:43</code>; <code>monster_skill_choices.csv:3</code>~<code>:9</code>, <code>:153</code>~<code>:159</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>2. 현재 InGame 책임 구조</h2>
+  <div class="flow">NewRunScene
+|_ GameManager
+   |_ NewRunSceneEntryManager
+   |  |_ Start / selected monster session entry
+   |  |_ StageManager-facing SpawnEnemyById(...) facade
+   |  |_ Offering/Manifest-facing SpawnManifestedMonster(...) facade
+   |  |_ NewRunUnitSpawnManager reference and fallback add component
+   |
+   |_ NewRunUnitSpawnManager
+   |  |_ selected 1P monster spawn
+   |  |_ manifested 2P~5P monster spawn
+   |  |_ Stage enemy spawn by enemyId
+   |  |_ prefab resolution, runtime roots, spawn points
+   |  |_ UnitFactory model creation
+   |  |_ InGameCombatManager.RegisterPlayerMonster / RegisterEnemy
+   |
+   |_ NewRunStageManager
+   |  |_ StageDay / StageEncounter / StageReward CSV
+   |  |_ SpawnEncounterRows -> EntryManager.SpawnEnemyById
+   |  |_ enemy clear wait through ActiveEnemyCount
+   |
+   |_ InGameCombatManager
+      |_ roster / combat mutation facade
+      |_ skill execution tick
+      |_ enemy simulation tick
+      |_ status tick and actor refresh</div>
+
+  <div class="note oknote">
+    <strong>분리 결론:</strong> <code>NewRunSceneEntryManager</code>는 아직 public spawn facade를 제공하지만,
+    실제 생성 책임은 <code>NewRunUnitSpawnManager</code>로 옮겨졌다. 따라서 앞으로 스폰 규칙, 프리팹 선택,
+    런타임 루트, 파티 슬롯 배치, 적 모델 생성 로직은 EntryManager가 아니라 UnitSpawnManager에서 확장하는 것이 맞다.
+  </div>
+
+  <h2>3. Eve-A 구현 상태</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>기능</th>
+        <th>상태</th>
+        <th>근거</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>기본 projectile A</td>
+        <td><span class="done">구현됨.</span> <code>eve-a</code>는 <code>MagazineProjectile</code>, 기본 습득, Lightning, 피해 24 + SP 0.95, 탄창 6, 재장전 4초, 발사 간격 0.35초, <code>status_effect_id=shock</code>다.</td>
+        <td><code>monster_skills.csv:43</code>, <code>InGameSkillDefinitionMapper.cs:64</code>~<code>:66</code>, <code>:119</code>~<code>:126</code></td>
+      </tr>
+      <tr>
+        <td>선택지 modifier snapshot</td>
+        <td><span class="done">구현됨.</span> 선택된 choice ID를 snapshot으로 해석하고 damage/magazine/projectile/pierce/reload/shot interval/branch/status stack을 반영한다.</td>
+        <td><code>SkillChoiceResolver.cs:16</code>, <code>:31</code>, <code>:70</code>; <code>SkillExecutionSnapshot.cs:94</code>~<code>:158</code></td>
+      </tr>
+      <tr>
+        <td>투사체 생성</td>
+        <td><span class="done">구현됨.</span> executor가 prefab을 만들고 <code>InGameProjectileActor.Initialize(...)</code>로 속도, 피해, 속성, 관통, 수명, 상태이상, 분기 spec을 전달한다.</td>
+        <td><code>SkillExecutors.cs:93</code>, <code>:103</code>; <code>InGameProjectileActor.cs:26</code>, <code>:53</code></td>
+      </tr>
+      <tr>
+        <td>on-hit 감전</td>
+        <td><span class="done">구현됨.</span> Eve-A shock는 <code>StatusEffectKind.Shock</code>로 해석되고 projectile hit 시 <code>ApplyStatus</code>로 적용된다.</td>
+        <td><code>SkillExecutors.cs:158</code>, <code>:181</code>, <code>:207</code>; <code>InGameProjectileActor.cs:156</code>, <code>:167</code></td>
+      </tr>
+      <tr>
+        <td>branch lightning</td>
+        <td><span class="done">구현됨.</span> snapshot의 branch 설정이 있으면 hit target 주변에서 branch target을 찾고 추가 projectile을 생성한다.</td>
+        <td><code>SkillExecutors.cs:87</code>, <code>:220</code>, <code>:235</code>; <code>InGameProjectileActor.cs:189</code>, <code>:212</code>, <code>:269</code></td>
+      </tr>
+      <tr>
+        <td>패시브 F-J와 감전 소비</td>
+        <td><span class="todo">미완료.</span> 상태 저장/조회 API는 있으나 Eve F/J/I 같은 패시브 damage modifier가 모든 damage calculation에 통합된 것은 아니다.</td>
+        <td><code>InGameCombatManager.cs:168</code>, <code>:178</code>에 조회 API는 존재한다. 패시브 소비는 별도 후속 작업이다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. 상태이상 enum과 라벨 표시</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>중앙 enum</h3>
+      <p>
+        <code>StatusEffectKind.cs:5</code>에서 <code>Shock</code>, <code>Chill</code>,
+        <code>Freeze</code>, <code>Slow</code>, <code>Vulnerable</code>, <code>Shield</code>를 정의한다.
+        <code>StatusEffectUtility.GetDefinition(...)</code>은 id, 표시명, 기본 지속시간, 최대 stack, permanent 여부를 반환한다.
+      </p>
+    </div>
+    <div class="card">
+      <h3>런타임 저장소</h3>
+      <p>
+        <code>BaseUnitRuntimeModel</code>은 <code>UnitStatusRuntimeSet Statuses</code>를 가진다.
+        <code>Apply</code>, <code>Tick</code>, <code>Has</code>, <code>GetStacks</code>, <code>Remove</code>가 enum 기반으로 동작한다.
+      </p>
+    </div>
+    <div class="card">
+      <h3>표시 형식</h3>
+      <p>
+        <code>StatusEffectUtility.BuildDisplaySuffix(...)</code>는 활성 상태를 <code>[감전 +4/취약 +2]</code> 형식으로 만든다.
+        Actor는 이름 뒤에 이 suffix를 붙인다.
+      </p>
+    </div>
+    <div class="card">
+      <h3>갱신 타이밍</h3>
+      <p>
+        <code>InGameCombatManager.ApplyStatus</code>, <code>RemoveStatus</code>, <code>TickUnitStatuses</code>는 상태가 바뀌면
+        <code>RefreshUnitActor</code>를 호출한다. 따라서 적용, 제거, 만료 시 라벨이 갱신된다.
+      </p>
+    </div>
+  </div>
+
+  <h2>5. Projectile Blueprint</h2>
+  <p>
+    현재 projectile 구조는 "데이터 -> 런타임 스킬 데이터 -> 선택지 snapshot -> executor -> projectile actor -> combat mutation"의
+    6단계로 정리된다. 이후 나머지 투사체형 스킬은 이 경로를 먼저 태우고, 경로 밖 동작만 hook 또는 새 modifier 필드로 분리한다.
+  </p>
+  <div class="flow">CSV source row
+  monster_skills.csv
+  - runtime_kind = MagazineProjectile or CooldownProjectile
+  - base_damage / coefficient / attribute / magazine / reload / shot_interval / status_effect_id
+
+InGameSkillDefinitionMapper
+  - CreateTransient&lt;ProjectileSkillData&gt;(...)
+  - Projectile.MagazineSize / ReloadTime / ProjectilesPerShot / ProjectileSpeed
+  - Damage spec
+  - OnHitStatus = CreateStatusApplication(...)
+
+SkillRuntimeFactory / SkillRuntimeInstance
+  - learned active set
+  - magazine, reload, cooldown, tick interval
+  - CanCastWithSnapshot(...)
+  - TryBeginCast(snapshot)
+
+SkillChoiceResolver / SkillExecutionSnapshot
+  - chosen choice IDs
+  - modifier rows by choice_id
+  - damage multiplier, magazine, additional projectile, pierce
+  - reload / shot interval
+  - branch chance/count/damage/search radius
+  - status tag/chance/stacks
+
+ProjectileSkillExecutor
+  - resolve target and direction
+  - resolve damage
+  - resolve projectile count and pierce
+  - resolve on-hit status spec
+  - resolve branch spec
+  - instantiate projectile prefab or direct fallback damage
+
+InGameProjectileActor
+  - moves projectile
+  - detects hit through relay/collider path
+  - ApplyDamage(target)
+  - TryApplyStatus(target)
+  - TrySpawnBranches(hitTarget)</div>
+
+  <h3>데이터만으로 가능한 경우</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>원하는 효과</th>
+        <th>현재 사용 가능한 필드</th>
+        <th>예시</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>기본 피해/계수/속성 변경</td>
+        <td><code>base_damage</code>, <code>attack_power_coefficient</code>, <code>spell_power_coefficient</code>, <code>attribute</code></td>
+        <td>Ariel-A: Holy projectile, Vega-A: Physical projectile, Eve-A: Lightning projectile</td>
+      </tr>
+      <tr>
+        <td>탄창, 재장전, 발사 간격</td>
+        <td><code>magazine_capacity</code>, <code>reload_seconds</code>, <code>shot_interval_seconds</code>, choice modifier의 <code>magazine_bonus</code>, <code>reload_time_multiplier</code>, <code>shot_interval_multiplier</code></td>
+        <td>Eve-A trait 1~4</td>
+      </tr>
+      <tr>
+        <td>추가 투사체와 관통</td>
+        <td><code>additional_projectile_bonus</code>, <code>pierce_bonus</code></td>
+        <td>Eve-A trait 2~4, Eve-A master 2</td>
+      </tr>
+      <tr>
+        <td>on-hit 상태이상</td>
+        <td><code>status_effect_id</code>, choice modifier의 <code>status_tag</code>, <code>status_chance_bonus</code>, <code>status_stacks_set</code></td>
+        <td>Eve-A shock, Eve-A master 2 shock 2 stacks</td>
+      </tr>
+      <tr>
+        <td>분기 투사체</td>
+        <td><code>branch_chance_bonus</code>, <code>branch_chance_set</code>, <code>branch_count</code>, <code>branch_damage_multiplier</code>, <code>branch_search_radius</code></td>
+        <td>Eve-A trait 5, Eve-A master 1</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>새 hook 또는 새 modifier 필드가 필요한 경우</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>요구 효과</th>
+        <th>왜 현재 데이터만으로 부족한가</th>
+        <th>권장 구현 방식</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>마지막 탄환만 강화</td>
+        <td>현재 snapshot은 전체 cast/shot에 같은 multiplier를 적용한다. magazine의 "마지막 탄환" 판별 조건이 없다.</td>
+        <td><code>SkillRuntimeInstance</code> 또는 projectile spec에 shot index / magazine remaining 정보를 전달하고 <code>last_shot_damage_multiplier</code> 필드를 추가한다.</td>
+      </tr>
+      <tr>
+        <td>지연 잔상 투사체</td>
+        <td>현재 branch는 on-hit 시 주변 target을 찾아 즉시 projectile을 만든다. 발사 후 같은 궤도에 delay spawn하는 개념은 없다.</td>
+        <td><code>ProjectileSkillExecutor</code>에 delayed projectile spawn spec을 추가하거나 별도 <code>DelayedProjectileSkillEffectActor</code>를 둔다.</td>
+      </tr>
+      <tr>
+        <td>처치 시 표식 이전</td>
+        <td>현재 projectile actor는 hit 처리 후 damage/status/branch를 수행하지만 on-kill event hook은 없다.</td>
+        <td><code>ApplyDamage</code> 결과 또는 death cleanup에서 killer/source skill context를 전달하는 on-kill hook을 추가한다.</td>
+      </tr>
+      <tr>
+        <td>마지막 탄환 2회 폭발</td>
+        <td>현재 projectile actor는 단일 hit 피해와 branch projectile 중심이다. 범위 폭발, 반복 폭발, 마지막 탄환 조건이 없다.</td>
+        <td>projectile impact AoE spec, explosion count, last shot predicate를 공통화한다. Ariel-A master 1은 이 hook을 사용한다.</td>
+      </tr>
+      <tr>
+        <td>보유 shield 수에 따른 피해 증가</td>
+        <td>현재 damage snapshot은 owner/party의 shield 상태를 조건으로 읽는 dynamic modifier가 없다.</td>
+        <td>damage calculation 단계에 runtime condition modifier를 추가하고, <code>BaseUnitRuntimeModel.Resources.Shield</code> 또는 party roster를 조회한다.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>6. Vega-A, Ariel-A 적용 방식</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Vega-A 기본형</h3>
+      <p>
+        <code>monster_skills.csv:33</code>의 <code>vega-a</code>는 이미 <code>MagazineProjectile</code>이고
+        Physical, base damage 9, attack coefficient 0.4, magazine 5, reload 4.8, shot interval 0.55다.
+        기본 발사는 Eve-A와 같은 projectile executor를 사용한다.
+      </p>
+      <p>
+        다만 <code>monster_skill_choices.csv:156</code>~<code>:159</code>의 마지막 탄환 강화,
+        지연 잔상, 처치 시 표식 이전은 현재 공통 modifier만으로는 부족하다.
+      </p>
+    </div>
+    <div class="card">
+      <h3>Ariel-A 기본형</h3>
+      <p>
+        <code>monster_skills.csv:3</code>의 <code>ariel-a</code>는 <code>MagazineProjectile</code>이고
+        Holy, base damage 18, spell coefficient 1, magazine 7, reload 4.6, shot interval 0.36이다.
+        기본 신성 투사체는 Eve-A blueprint를 그대로 사용 가능하다.
+      </p>
+      <p>
+        <code>monster_skill_choices.csv:8</code>~<code>:9</code>의 마지막 탄환 2회 폭발, 신성 노출은
+        impact AoE / status enum 확장 또는 새 status kind가 필요하다.
+      </p>
+    </div>
+  </div>
+
+  <h2>7. 구현 우선순위</h2>
+  <ol>
+    <li>
+      <strong>공통 projectile 조건 필드 확장:</strong>
+      last shot, delayed echo, impact AoE, on-kill trigger처럼 Vega/Ariel도 공유할 수 있는 조건을 먼저 설계한다.
+    </li>
+    <li>
+      <strong>상태이상 enum 확장:</strong>
+      Ariel의 신성 노출, Vega의 이름표식처럼 실제 런타임에 남아야 하는 효과는 <code>StatusEffectKind</code>에 추가하고
+      display name / stack / duration 정책을 중앙화한다.
+    </li>
+    <li>
+      <strong>damage calculation modifier 층:</strong>
+      shock target damage, shield count damage, status stack damage 같은 조건부 피해 증폭은 projectile actor 내부가 아니라
+      공통 damage 계산 단계에서 처리한다.
+    </li>
+    <li>
+      <strong>NewRunUnitSpawnManager 책임 유지:</strong>
+      이후 스폰 관련 기능은 EntryManager로 되돌리지 않고 UnitSpawnManager 또는 Stage-owned lifecycle service로 확장한다.
+    </li>
+  </ol>
+
+  <h2>8. 검증 근거</h2>
+  <ul>
+    <li><code>Select-String</code>으로 <code>NewRunSceneEntryManager.cs</code>의 <code>RequireComponent(typeof(NewRunUnitSpawnManager))</code>, <code>unitSpawnManager</code> 필드, <code>SpawnEnemyById</code>, <code>SpawnManifestedMonster</code> 위임을 확인했다.</li>
+    <li><code>Select-String</code>으로 <code>NewRunUnitSpawnManager.cs</code>의 selected player spawn, manifested monster spawn, enemy spawn, <code>RegisterPlayerMonster</code>, <code>RegisterEnemy</code>, runtime root resolution을 확인했다.</li>
+    <li><code>Select-String</code>으로 <code>SkillExecutors.cs</code>와 <code>InGameProjectileActor.cs</code>의 projectile damage/status/branch 실행 경로를 확인했다.</li>
+    <li><code>Select-String</code>으로 <code>StatusEffectKind.cs</code>, <code>BaseUnitRuntimeModel.cs</code>, <code>InGameCombatManager.cs</code>, <code>MonsterUnitActor.cs</code>, <code>EnemyUnitActor.cs</code>의 enum 상태이상, stack label, actor refresh 경로를 확인했다.</li>
+    <li><code>Select-String</code>으로 <code>monster_skills.csv</code>, <code>monster_skill_choices.csv</code>, <code>SkillChoiceModifierData.csv</code>의 Eve-A, Vega-A, Ariel-A 행과 modifier columns를 확인했다.</li>
+    <li><code>Select-String</code>으로 <code>NewRunScene.unity</code>의 <code>NewRunUnitSpawnManager</code>, <code>NewRunSceneEntryManager</code>, <code>NewRunStageManager</code>, <code>InGameCombatManager</code>, spawn point, runtime root references를 확인했다.</li>
+  </ul>
+
+  <div class="note risknote">
+    <strong>검증 경계:</strong> 이 문서는 파일과 명령 출력 근거로 작성한 구현 보고서다.
+    Unity Play Mode에서 projectile 체감, branch target 선택, 상태이상 라벨 시각 표시, Vega/Ariel 후속 구현의 실제 플레이 검증은 사용자 검증 영역이다.
+  </div>
+</main>
+</body>
+</html>

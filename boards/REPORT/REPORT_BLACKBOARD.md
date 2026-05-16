@@ -4,6 +4,95 @@
 - This file keeps active report task blocks after the 2026-05-12 archive pass; newer report tasks may be appended above older retained context.
 - Source file: `boards/REPORT/REPORT_BLACKBOARD.md`.
 
+## Task: 2026-05-17 InGame Current Implementation And Projectile Blueprint Report
+
+### Task title
+
+Create an updated HTML report comparing the Combat V2 roadmap with current InGame implementation and projectile blueprint work.
+
+### Goals
+
+- Compare the current implementation against `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html`.
+- Document newly implemented Eve-A runtime, status enum/label work, and `NewRunUnitSpawnManager` split.
+- Add a projectile blueprint section explaining how later projectile skills such as Vega-A and Ariel-A should be implemented.
+
+### Constraints
+
+- Role Owner is Designer.
+- Documentation-only update; no C# script, scene, prefab, or CSV behavior was changed.
+- Claims must be based on inspected code, CSV rows, scene YAML, and command output.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as a new HTML report.
+
+### Next Actions
+
+- Use `Pakuri/reference/Report/2026-05-17-ingame-current-implementation-and-projectile-blueprint.html` as the current projectile-skill implementation guide.
+- Before implementing Vega-A or Ariel-A special master effects, design shared hooks for last-shot, delayed projectile, impact AoE, and on-kill behavior.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-17-ingame-current-implementation-and-projectile-blueprint.html`.
+- `Select-String` confirmed the report contains sections for roadmap comparison, `NewRunUnitSpawnManager`, Eve-A implementation, status enum labels, projectile blueprint, Vega-A/Ariel-A application, priorities, and evidence.
+- `Select-String` over `NewRunSceneEntryManager.cs` found `RequireComponent(typeof(NewRunUnitSpawnManager))`, `unitSpawnManager`, `SpawnEnemyById(...)`, and `SpawnManifestedMonster(...)` delegation.
+- `Select-String` over `NewRunUnitSpawnManager.cs` found selected player spawn, manifested monster spawn, enemy spawn, `RegisterPlayerMonster`, `RegisterEnemy`, spawn point resolution, and runtime root resolution.
+- `Select-String` over `SkillExecutors.cs` and `InGameProjectileActor.cs` found projectile damage, status, branch, additional projectile, and pierce execution paths.
+- `Select-String` over `StatusEffectKind.cs`, `BaseUnitRuntimeModel.cs`, `InGameCombatManager.cs`, `MonsterUnitActor.cs`, and `EnemyUnitActor.cs` found enum status runtime, stack label suffix, and actor refresh paths.
+- `Select-String` over `monster_skills.csv`, `monster_skill_choices.csv`, and `SkillChoiceModifierData.csv` found Eve-A, Vega-A, Ariel-A skill and modifier data.
+- `git diff --check -- Pakuri\reference\Report\2026-05-17-ingame-current-implementation-and-projectile-blueprint.html` passed.
+
+### History
+
+- 2026-05-17: User requested a new HTML report that compares current implementation with the 2026-05-14 roadmap, adds missing implementation updates, documents the NewRunUnitSpawnManager split, and records a projectile blueprint for future projectile skills.
+
+## Task: 2026-05-16 InGame Roadmap Enemy Ownership Amendment
+
+### Task title
+
+Add StageManager enemy spawn and enemy-management ownership direction to the InGame roadmap.
+
+### Goals
+
+- Record that Stage encounter selection and enemy spawn scheduling already run through `NewRunStageManager`.
+- Record that active enemy registration/count, death cleanup, and enemy simulation tick still have responsibilities inside `InGameCombatManager`.
+- Add the roadmap direction that enemy lifecycle ownership should move toward StageManager or a Stage-owned enemy lifecycle service, while `InGameCombatManager` narrows to combat rule APIs and roster/query facade.
+
+### Constraints
+
+- Role Owner is Designer.
+- Documentation-only update; no C# script, scene, prefab, or CSV behavior was changed.
+- Claims must distinguish current implementation from target ownership direction.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as an HTML report amendment.
+
+### Next Actions
+
+- Before expanding Stage waves, design or implement a Stage-owned enemy lifecycle boundary so `InGameCombatManager` does not keep growing as the owner of enemy spawn/clear/update concerns.
+
+### Evidence
+
+- Updated `Pakuri/reference/Report/2026-05-14-combat-v2-build-roadmap.html`.
+- `Select-String` over `InGameCombatManager.cs` found `ActiveEnemyCount`, `RegisterEnemy`, `UnregisterUnit`, `RemoveUnitIfDead`, internal `UnitRosterService`, and `EnemyCombatSimulationSystem.Tick(...)`.
+- `Select-String` over `NewRunStageManager.cs` found `SpawnEncounterRows(...)`, `entryManager.SpawnEnemyById(...)`, `WaitForEnemyClear()`, `SelectBossRows()`, and boss health multiplier handling.
+- The roadmap now has section `4. 적 스폰 / 적 관리 책임 이관 방향`.
+
+### History
+
+- 2026-05-16: User requested adding to the Combat V2 roadmap that enemy spawning and enemy management currently associated with `InGameCombatManager.cs` should be transferred to StageManager.
+- 2026-05-16: Designer amended the roadmap while separating current evidence from the target responsibility direction.
+
 ## Task: 2026-05-16 InGame Roadmap Current Implementation Refresh
 
 ### Task title

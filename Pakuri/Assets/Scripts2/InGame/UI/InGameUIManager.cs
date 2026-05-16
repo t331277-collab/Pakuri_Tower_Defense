@@ -464,6 +464,11 @@ namespace Pakuri.InGame
                     continue;
                 }
 
+                if (!IsRewardChoiceAvailableForState(session, monster, state, reward.RewardId))
+                {
+                    continue;
+                }
+
                 offeringChoices.Add(new OfferingChoiceView
                 {
                     Kind = OfferingChoiceKind.Enhancement,
@@ -479,6 +484,112 @@ namespace Pakuri.InGame
                     StatusChanceBonus = reward.StatusChanceBonus
                 });
             }
+        }
+
+        private static bool IsRewardChoiceAvailableForState(
+            RunSession session,
+            MonsterDefinition monster,
+            RunSession.RunMonsterState state,
+            string rewardId)
+        {
+            if (session == null || monster == null || state == null || string.IsNullOrWhiteSpace(rewardId))
+            {
+                return false;
+            }
+
+            if (IsRewardForLearnedActive(session, monster, state, rewardId))
+            {
+                return true;
+            }
+
+            if (IsRewardForLearnedPassive(session, monster, state, rewardId))
+            {
+                return true;
+            }
+
+            return !LooksLikeSkillChoiceReward(monster, rewardId);
+        }
+
+        private static bool IsRewardForLearnedActive(
+            RunSession session,
+            MonsterDefinition monster,
+            RunSession.RunMonsterState state,
+            string rewardId)
+        {
+            var skills = monster.ActiveSkills ?? Array.Empty<SkillDefinition>();
+            for (var i = 0; i < skills.Length; i++)
+            {
+                var skill = skills[i];
+                if (skill == null || string.IsNullOrWhiteSpace(skill.SkillId))
+                {
+                    continue;
+                }
+
+                if (RewardIdTargetsSkill(rewardId, skill.SkillId)
+                    && session.HasLearnedActive(state.MonsterId, skill.SkillId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsRewardForLearnedPassive(
+            RunSession session,
+            MonsterDefinition monster,
+            RunSession.RunMonsterState state,
+            string rewardId)
+        {
+            var passives = monster.PassiveSkills ?? Array.Empty<PassiveDefinition>();
+            for (var i = 0; i < passives.Length; i++)
+            {
+                var passive = passives[i];
+                if (passive == null || string.IsNullOrWhiteSpace(passive.PassiveId))
+                {
+                    continue;
+                }
+
+                if (RewardIdTargetsSkill(rewardId, passive.PassiveId)
+                    && session.HasLearnedPassive(state.MonsterId, passive.PassiveId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool LooksLikeSkillChoiceReward(MonsterDefinition monster, string rewardId)
+        {
+            var skills = monster.ActiveSkills ?? Array.Empty<SkillDefinition>();
+            for (var i = 0; i < skills.Length; i++)
+            {
+                var skill = skills[i];
+                if (skill != null && RewardIdTargetsSkill(rewardId, skill.SkillId))
+                {
+                    return true;
+                }
+            }
+
+            var passives = monster.PassiveSkills ?? Array.Empty<PassiveDefinition>();
+            for (var i = 0; i < passives.Length; i++)
+            {
+                var passive = passives[i];
+                if (passive != null && RewardIdTargetsSkill(rewardId, passive.PassiveId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool RewardIdTargetsSkill(string rewardId, string skillId)
+        {
+            return !string.IsNullOrWhiteSpace(rewardId)
+                && !string.IsNullOrWhiteSpace(skillId)
+                && rewardId.StartsWith(skillId + "-", StringComparison.OrdinalIgnoreCase);
         }
 
         private List<MonsterDefinition> ResolveOfferingTargets(RunSession session)

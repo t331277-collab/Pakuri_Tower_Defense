@@ -3,6 +3,50 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-17 NewRunScene Unit Label Status Suffix
+
+### Task title
+
+Append active status names to unit `MonsterNameLabel` text in NewRunScene actors.
+
+### Goals
+
+- Show active status names directly on the existing unit name label.
+- Use central status display names so UI text follows the enum status source.
+- Support multiple statuses in slash-separated form, for example `검사[감전/취약]`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This task updates actor label text only; no Canvas, prefab, or scene hierarchy changes were made.
+- Unity Play Mode visual verification remains user-owned.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies in NewRunScene Play Mode that the name label changes to `이름[상태]` while statuses are active and returns to the base name after timed status expiry.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs:53` appends active status suffixes before assigning `MonsterNameLabel.text`.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs:53` applies the same suffix path to enemy-side actors.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs:120` centralizes suffix construction and de-duplicates active status display names.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:159`, `:209`, and `:390` refresh actors after status apply/remove/expiry so the label can update.
+- Runtime/editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-17: User requested labels such as `검사[감전]` and `검사[감전/취약]` when units have active statuses.
+- 2026-05-17: User requested active status stack counts in the suffix; `StatusEffectKind.cs:140` now adds `DisplayName +Stacks`, so a 4-stack status appears like `검사[감전 +4]`.
+
 ## Task: 2026-05-15 NewRunScene AutoBtn Player Auto Route Toggle
 
 ### Task title
@@ -60,6 +104,47 @@ Builder implementation updated and editor compile verified.
 - 2026-05-16: User requested AutoBtn to use the same automatic targeting/skill route as 2P-5P monsters and to remove the old selected-primary-only AutoBtn logic.
 - 2026-05-16: User reported AutoBtn initially fired straight and also fired with no enemies; Builder fixed automatic projectile no-target rejection and deferred runtime state consumption until routed execution.
 - 2026-05-16: User clarified Auto must target the whole map and all skills should ignore range; Builder removed the Auto target range filter from the InGame execution utility.
+
+## Task: 2026-05-17 NewRunScene Offering Enhancement Availability Filter
+
+### Task title
+
+Filter Eve skill-choice enhancements by learned active/passive state.
+
+### Goals
+
+- Keep `OfferingPanel` from listing future Eve B-E enhancements before their active skills are learned.
+- Keep Eve F-J passive trait enhancements hidden until each passive is learned.
+- Preserve generic non-skill reward choices for other monsters.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No scene hierarchy or visual layout change was made.
+- User performs Play Mode verification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in NewRunScene Play Mode that Offering choices are gated by learned Eve skills and passives.
+
+### Evidence
+
+- `InGameUIManager.cs` now checks `IsRewardChoiceAvailableForState(...)` before adding enhancement choices.
+- The filter treats reward IDs that start with an active/passive skill ID plus `-` as skill-choice rewards and requires the target skill/passive to be learned.
+- Runtime/editor builds completed with 0 errors and existing warnings.
+- Unity-MCP refresh reached idle and console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-17: Eve A-J Offering data expansion required UI-side gating so bulk skill-choice reward rows do not appear too early.
 
 ## Task: 2026-05-13 Manifested Party Skill Visual Helper Split
 

@@ -23,23 +23,26 @@ namespace Pakuri.InGame
         public float ReloadRemaining { get; private set; }
         public int MagazineRemaining { get; private set; }
 
+        private int effectiveMaxMagazineSize;
+        private float effectiveReloadDuration;
+        private float effectiveTickInterval;
+        private float effectiveCooldownDuration;
+
         public bool IsCasting => CastRemaining > 0f;
         public bool IsActive => ActiveDurationRemaining > 0f;
         public bool IsReloading => ReloadRemaining > 0f;
-        public int MaxMagazineSize => ResolveMaxMagazineSize(Data);
-        public float ReloadDuration => ResolveReloadDuration(Data);
+        public int MaxMagazineSize => effectiveMaxMagazineSize;
+        public float ReloadDuration => effectiveReloadDuration;
         public bool UsesMagazine => MaxMagazineSize > 0;
         public bool HasMagazine => !UsesMagazine || MagazineRemaining > 0;
-        public bool CanCast => Data != null
-            && Data.IsActive
-            && CooldownRemaining <= 0f
-            && !IsCasting
-            && !IsReloading
-            && HasMagazine
-            && IsCastIntervalReady();
+        public bool CanCast => CanCastWithSnapshot(null);
 
         public void ResetRuntimeState()
         {
+            effectiveMaxMagazineSize = ResolveMaxMagazineSize(Data);
+            effectiveReloadDuration = ResolveReloadDuration(Data);
+            effectiveTickInterval = ResolveTickInterval(Data);
+            effectiveCooldownDuration = ResolveCooldownDuration(Data);
             CooldownRemaining = 0f;
             CastRemaining = 0f;
             ActiveDurationRemaining = 0f;
@@ -67,9 +70,26 @@ namespace Pakuri.InGame
             }
         }
 
+        public bool CanCastWithSnapshot(SkillExecutionSnapshot snapshot)
+        {
+            RefreshRuntimeModifiers(snapshot);
+            return Data != null
+                && Data.IsActive
+                && CooldownRemaining <= 0f
+                && !IsCasting
+                && !IsReloading
+                && HasMagazine
+                && IsCastIntervalReady();
+        }
+
         public bool TryBeginCast()
         {
-            if (!CanCast)
+            return TryBeginCast(null);
+        }
+
+        public bool TryBeginCast(SkillExecutionSnapshot snapshot)
+        {
+            if (!CanCastWithSnapshot(snapshot))
             {
                 return false;
             }
@@ -80,10 +100,10 @@ namespace Pakuri.InGame
             }
 
             var timing = Data.Timing;
-            CooldownRemaining = timing != null ? Mathf.Max(0f, timing.Cooldown) : 0f;
+            CooldownRemaining = effectiveCooldownDuration;
             CastRemaining = timing != null ? Mathf.Max(0f, timing.CastTime) : 0f;
             ActiveDurationRemaining = timing != null ? Mathf.Max(0f, timing.ActiveDuration) : 0f;
-            TickRemaining = timing != null ? Mathf.Max(0f, timing.TickInterval) : 0f;
+            TickRemaining = effectiveTickInterval;
 
             if (UsesMagazine && MagazineRemaining <= 0)
             {
@@ -109,8 +129,7 @@ namespace Pakuri.InGame
 
         public void ResetTickInterval()
         {
-            var timing = Data != null ? Data.Timing : null;
-            TickRemaining = timing != null ? Mathf.Max(0f, timing.TickInterval) : 0f;
+            TickRemaining = effectiveTickInterval;
         }
 
         private static float TickDown(float value, float deltaTime)
@@ -120,8 +139,50 @@ namespace Pakuri.InGame
 
         private bool IsCastIntervalReady()
         {
-            var timing = Data != null ? Data.Timing : null;
-            return timing == null || timing.TickInterval <= 0f || TickRemaining <= 0f;
+            return effectiveTickInterval <= 0f || TickRemaining <= 0f;
+        }
+
+        private void RefreshRuntimeModifiers(SkillExecutionSnapshot snapshot)
+        {
+            var previousMax = effectiveMaxMagazineSize;
+            var nextMax = ResolveMaxMagazineSize(Data);
+            effectiveReloadDuration = ResolveReloadDuration(Data);
+            effectiveTickInterval = ResolveTickInterval(Data);
+            effectiveCooldownDuration = ResolveCooldownDuration(Data);
+
+            if (snapshot != null)
+            {
+                nextMax = Math.Max(0, nextMax + snapshot.MagazineBonus);
+                effectiveReloadDuration *= Mathf.Max(0f, snapshot.ReloadTimeMultiplier);
+                effectiveTickInterval *= Mathf.Max(0f, snapshot.ShotIntervalMultiplier);
+                effectiveCooldownDuration *= Mathf.Max(0f, snapshot.CooldownMultiplier);
+            }
+
+            effectiveMaxMagazineSize = nextMax;
+            if (previousMax == effectiveMaxMagazineSize)
+            {
+                return;
+            }
+
+            if (effectiveMaxMagazineSize <= 0)
+            {
+                MagazineRemaining = 0;
+                ReloadRemaining = 0f;
+                return;
+            }
+
+            if (previousMax <= 0)
+            {
+                MagazineRemaining = effectiveMaxMagazineSize;
+                return;
+            }
+
+            var delta = effectiveMaxMagazineSize - previousMax;
+            MagazineRemaining = Mathf.Clamp(MagazineRemaining + delta, 0, effectiveMaxMagazineSize);
+            if (MagazineRemaining > 0)
+            {
+                ReloadRemaining = 0f;
+            }
         }
 
         private static int ResolveMaxMagazineSize(SkillData data)
@@ -138,6 +199,18 @@ namespace Pakuri.InGame
             return projectile != null && projectile.Projectile != null
                 ? Mathf.Max(0f, projectile.Projectile.ReloadTime)
                 : 0f;
+        }
+
+        private static float ResolveTickInterval(SkillData data)
+        {
+            var timing = data != null ? data.Timing : null;
+            return timing != null ? Mathf.Max(0f, timing.TickInterval) : 0f;
+        }
+
+        private static float ResolveCooldownDuration(SkillData data)
+        {
+            var timing = data != null ? data.Timing : null;
+            return timing != null ? Mathf.Max(0f, timing.Cooldown) : 0f;
         }
     }
 }

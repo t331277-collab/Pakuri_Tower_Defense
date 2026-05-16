@@ -223,6 +223,11 @@
         <td><code>NewRunStageManager</code>가 CSV를 읽어 Stage 1 Day 1~11 전투를 스폰하고, 적 전멸 후 reward ready 상태를 만든다. <code>InGameUIManager</code>가 RewardPanel, Offering, Manifest 성공/실패 흐름을 연결한다.</td>
         <td><code>NewRunStageManager.cs</code>, <code>InGameUIManager.cs</code>, <code>NewRunScene.unity</code></td>
       </tr>
+      <tr>
+        <td>적 스폰 / 적 관리 책임</td>
+        <td>스폰 순서, 보스 선정, 보스 HP 배율, encounter clear 대기는 이미 <code>NewRunStageManager</code>가 담당한다. 다음 구조 목표는 적의 wave/lifecycle 관리도 StageManager 쪽으로 더 끌어올리고, <code>InGameCombatManager</code>는 전투 실행 API와 roster 조회 경계로 좁히는 것이다.</td>
+        <td><code>NewRunStageManager.SpawnEncounterRows</code>, <code>WaitForEnemyClear</code>, <code>InGameCombatManager.ActiveEnemyCount</code>, <code>RegisterEnemy</code>, <code>RemoveUnitIfDead</code></td>
+      </tr>
     </tbody>
   </table>
 
@@ -239,14 +244,15 @@
    |  |_ 선택 몬스터 스폰: 1PSpawnPoint
    |  |_ 현현 몬스터 스폰: 2PSpawnPoint~5PSpawnPoint
    |  |_ 적 스폰: StageEncounter row -> SpawnEnemyById(...)
-   |_ InGameCombatManager
+|_ InGameCombatManager
    |  |_ UnitRosterService
-   |  |_ EnemyCombatSimulationSystem
+   |  |_ EnemyCombatSimulationSystem (이후 StageManager 소유/호출 경계로 이관 검토)
    |  |_ SkillExecutionSystem
    |  |_ UnitResourceMutationService
    |_ NewRunStageManager
       |_ StageDay.csv / StageEncounter.csv / StageReward.csv
       |_ boss row selection / boss HP multiplier
+      |_ enemy spawn scheduling / enemy-clear wait
       |_ reward ready state / pending reward values
 
 Canvas
@@ -399,7 +405,57 @@ Runtime Units
     </tbody>
   </table>
 
-  <h2>4. 데이터와 런타임 원칙</h2>
+  <h2>4. 적 스폰 / 적 관리 책임 이관 방향</h2>
+  <div class="note oknote">
+    <strong>현재 구현 기준:</strong>
+    <code>NewRunStageManager</code>는 이미 <code>StageDay.csv</code>와 <code>StageEncounter.csv</code>를 읽고,
+    <code>SelectBossRows()</code>로 보스 row를 고른 뒤 <code>SpawnEncounterRows(...)</code>에서
+    <code>NewRunSceneEntryManager.SpawnEnemyById(...)</code>를 호출한다. 또한
+    <code>WaitForEnemyClear()</code>에서 <code>InGameCombatManager.ActiveEnemyCount</code>를 보고 reward 전환 시점을 결정한다.
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>책임</th>
+        <th>현재 위치</th>
+        <th>로드맵 방향</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>전투 구성 선택</td>
+        <td><code>NewRunStageManager</code></td>
+        <td>유지. Stage/Day/Encounter CSV와 보스 선정은 StageManager 책임으로 둔다.</td>
+      </tr>
+      <tr>
+        <td>적 스폰 스케줄</td>
+        <td><code>NewRunStageManager.SpawnEncounterRows(...)</code>가 <code>NewRunSceneEntryManager.SpawnEnemyById(...)</code>를 호출</td>
+        <td>StageManager 책임으로 유지하고 강화한다. 이후 wave, reinforcements, elite option, event combat도 StageManager 또는 Stage 하위 enemy lifecycle service로 확장한다.</td>
+      </tr>
+      <tr>
+        <td>적 등록 / 활성 수 조회</td>
+        <td><code>InGameCombatManager.RegisterEnemy(...)</code>, <code>ActiveEnemyCount</code>, 내부 <code>UnitRosterService</code></td>
+        <td>단기적으로는 CombatManager API를 사용한다. 중장기적으로 StageManager가 적 lifecycle owner가 되고, CombatManager는 combat query / mutation API 또는 readonly roster facade만 제공하는 방향으로 좁힌다.</td>
+      </tr>
+      <tr>
+        <td>적 사망 / 제거</td>
+        <td><code>InGameCombatManager.RemoveUnitIfDead(...)</code>가 roster unregister와 Actor destroy를 처리</td>
+        <td>사망 판정은 resource mutation 결과를 유지하되, encounter 진행/보상 후보/clear 집계는 StageManager가 받는 이벤트나 명시적 callback으로 이관한다.</td>
+      </tr>
+      <tr>
+        <td>적 행동 tick</td>
+        <td><code>InGameCombatManager.Update()</code>가 <code>EnemyCombatSimulationSystem.Tick(...)</code> 호출</td>
+        <td>StageManager가 적 wave/lifecycle을 소유하게 되면 enemy simulation tick의 호출 위치도 StageManager 하위 전투 단계 또는 별도 EnemyRuntimeSystem으로 분리한다. CombatManager가 모든 전투 세부 루프를 직접 호출하는 구조는 더 줄인다.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>
+    이 방향은 <code>InGameCombatManager</code>를 "전투의 모든 것을 아는 관리자"로 키우지 않기 위한 구조 조정이다.
+    <code>InGameCombatManager</code>는 피해/보호막/회복, 스킬 실행, 충돌 대상 조회처럼 전투 규칙 API를 제공하고,
+    StageManager는 어떤 적을 언제 만들고 언제 전투가 끝났는지 판단하는 Stage 진행 책임을 가진다.
+  </p>
+
+  <h2>5. 데이터와 런타임 원칙</h2>
   <ul>
     <li><code>Assets/CSVdata</code>는 현재 <code>NewRunStageManager</code>와 scene TextAsset 참조에서 쓰이는 활성 Stage Flow 데이터 경로다.</li>
     <li><code>Assets/CSVData</code>에도 같은 이름의 CSV 파일들이 존재하지만, 현재 InGame 코드가 이 폴더만을 단일 원천으로 삼는다고 말할 근거는 없다.</li>
@@ -409,8 +465,15 @@ Runtime Units
     <li>현재 Stage 1 normal boss HP multiplier는 <code>StageEncounter.csv</code>의 <code>boss_health_multiplier_min/max</code>와 <code>NewRunStageManager.SelectBossRows()</code> / <code>ApplyEnemyHealthMultiplier(...)</code> 경로로 적용된다.</li>
   </ul>
 
-  <h2>5. 다음 작업 추천</h2>
+  <h2>6. 다음 작업 추천</h2>
   <div class="grid">
+    <div class="card">
+      <h3>0순위: 적 lifecycle owner 정리</h3>
+      <p>
+        <code>InGameCombatManager</code> 안의 적 활성 수, 사망 제거, enemy simulation tick 책임을 StageManager 또는 Stage 하위 enemy lifecycle service로
+        옮기는 설계를 먼저 잡는다. CombatManager는 전투 규칙 API와 roster facade로 축소한다.
+      </p>
+    </div>
     <div class="card">
       <h3>1순위: 전체 스킬 확장 전 상태효과/임시효과 계층</h3>
       <p>
@@ -441,7 +504,7 @@ Runtime Units
     </div>
   </div>
 
-  <h2>6. 검증 근거</h2>
+  <h2>7. 검증 근거</h2>
   <ul>
     <li><code>Get-ChildItem Pakuri/Assets/Scripts2/InGame -Recurse -Filter *.cs</code>로 Core, Units, Skills/Data, Skills/Execution, Skills/Runtime, UI 파일 존재를 확인했다.</li>
     <li><code>Import-Csv Pakuri/Assets/CSVdata/StageDay.csv</code>는 11 rows, <code>StageEncounter.csv</code>는 30 rows, <code>StageReward.csv</code>는 5 rows를 반환했다.</li>
@@ -451,6 +514,8 @@ Runtime Units
     <li><code>Select-String</code>으로 <code>InGameCombatManager.ApplyDamage</code>, <code>GrantShield</code>, <code>Heal</code>, <code>RemoveUnitIfDead</code>, <code>ShowDamageIfChanged</code> 존재를 확인했다.</li>
     <li><code>Select-String</code>으로 <code>EnemyCombatSimulationSystem</code>의 Stage 1 enemy skill 실행 메서드들을 확인했다.</li>
     <li><code>Select-String</code>으로 <code>SkillExecutors</code>의 <code>ProjectileSkillExecutor</code>, <code>ShieldSkillExecutor</code>, <code>ApplyDamage</code>, <code>GrantShield</code> 호출을 확인했다.</li>
+    <li><code>Select-String</code>으로 <code>InGameCombatManager.cs</code>의 <code>ActiveEnemyCount</code>, <code>RegisterEnemy</code>, <code>UnregisterUnit</code>, <code>RemoveUnitIfDead</code>, <code>EnemyCombatSimulationSystem.Tick</code> 호출을 확인했다.</li>
+    <li><code>Select-String</code>으로 <code>NewRunStageManager.cs</code>의 <code>SpawnEncounterRows</code>, <code>SpawnEnemyById</code>, <code>SelectBossRows</code>, <code>WaitForEnemyClear</code>를 확인했다.</li>
   </ul>
 </main>
 </body>

@@ -31,6 +31,202 @@ Legacy non-English note retained these code references: `boards/ARCHIVE/MON_BLAC
 - Eve data asset changes: update this file and `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
 - Reports about Eve implementation: update this file and `boards/REPORT/REPORT_BLACKBOARD.md`.
 
+## Task: 2026-05-17 Eve Status Enum And Visible Shock Label
+
+### Task title
+
+Move Eve-facing status runtime checks to `StatusEffectKind` and surface active statuses in name labels.
+
+### Goals
+
+- Ensure Eve-A shock uses the shared status enum path instead of local hardcoded string behavior.
+- Preserve existing Eve skill data strings by parsing them into `StatusEffectKind`.
+- Make Eve-applied statuses visible on the affected unit label.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This task does not implement Eve B-E executor behavior or Eve F-J passive damage hooks.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies in NewRunScene Play Mode that Eve-A hit shock appears as `[감전]` on the target label.
+- Continue Eve B-E/F-J implementation against `StatusEffectKind` after this status path is accepted.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:168` reads `StatusEffectData.Kind`, `:169` parses string data with `StatusEffectUtility.TryParse(...)`, and `:181` handles Eve-A shock chance through `StatusEffectKind.Shock`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs:203` maps status data strings into enum kind data.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectData.cs:9` adds the serialized enum field while retaining the existing string field.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs:360` stores projectile hit status kind as `StatusEffectKind`.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs:53` and `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs:53` append the central status display suffix to labels.
+- Runtime/editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+
+### History
+
+- 2026-05-17: User requested status enum centralization and visible status label output after asking whether Eve-A shock was still hardcoded.
+
+## Task: 2026-05-17 Eve A-J Runtime Step 2 Projectile Modifier Execution
+
+### Task title
+
+Connect Eve-A projectile runtime modifiers, shock, and branch lightning to the shared InGame projectile execution path.
+
+### Goals
+
+- Make Eve-A chosen modifier snapshot fields affect actual projectile runtime behavior.
+- Apply additional projectiles, pierce, magazine bonus, reload multiplier, and shot interval multiplier from selected Eve-A choices.
+- Apply Eve-A shock on hit through the shared status runtime.
+- Spawn branch lightning projectiles from modifier data instead of an Eve-only hardcoded executor branch.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This slice targets the common projectile executor and Eve-A data behavior only.
+- Eve B-E Beam/Zone behavior and Eve F-J passive hooks remain pending.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies in NewRunScene Play Mode that Eve-A shock, additional projectile fan-out, pierce, branch lightning, magazine, reload, and shot interval choices behave as expected after Offering choices are acquired.
+- Implement Eve B-E Beam/Zone executor behavior after projectile behavior is accepted.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs:73` now exposes `CanCastWithSnapshot(...)`, and `:90` exposes `TryBeginCast(SkillExecutionSnapshot)` so magazine/reload/shot interval modifiers can affect cast gating and cast cost.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutionSystem.cs:112` resolves the choice snapshot before cast gating and passes the same snapshot into `TryBeginCast(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:82` consumes `AdditionalProjectileBonus`, while `:87` resolves branch behavior, and `:158` resolves on-hit status behavior.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs:153` applies status on hit and `:154` routes branch spawning.
+- `Pakuri/reference/2.Monster/eve/skill/a-arc-bolt.md:29` through `:30` define Eve-A shock chance 15% and 1 stack; `:47` through `:58` define Eve-A magazine, reload, pierce, additional projectile, branch, and shock-stack enhancements.
+- `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv:2` through `:8` contain the Eve-A modifier rows consumed by the snapshot path.
+- Runtime/editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP script refresh reached idle and console warning/error read returned only MCP client handler logs.
+- `git diff --check` on changed runtime scripts passed with only LF-to-CRLF normalization warnings.
+
+### History
+
+- 2026-05-17: User asked Code Builder to implement step 2 after the shared status runtime foundation was completed.
+
+## Task: 2026-05-17 Eve A-J Runtime Step 1 Status Foundation
+
+### Task title
+
+Prepare the shared InGame status runtime foundation for Eve A-J execution.
+
+### Goals
+
+- Start Eve A-J implementation from the required status runtime layer before wiring individual skills.
+- Provide a common unit status store for Eve A shock, B slow/resistance follow-up, C chill/freeze, D shock-stack checks, E vulnerable, and F-J passive conditions.
+- Keep individual Eve skill behavior unchanged until each executor path consumes the status APIs.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Eve-A hit status application, Eve B-E executor behavior, Eve F-J passive bonus, or Play Mode verification was implemented in this slice.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- Implement Eve-A shock application through the projectile hit path after deciding status duration/chance from data/reference.
+- Implement Beam/Zone executor consumption for Eve B-E after the status store is proven.
+- Later implement F-J passive hooks through damage/resistance calculation using status queries.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs` now stores `Statuses = new UnitStatusRuntimeSet()`.
+- `UnitStatusRuntimeSet` supports applying normalized status tags, stack accumulation/capping, timed or permanent duration, ticking, querying, and removal.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now exposes `ApplyStatus(...)`, `HasStatus(...)`, `GetStatusStacks(...)`, and `RemoveStatus(...)`.
+- `InGameCombatManager.Update()` now ticks unit statuses every frame through `TickUnitStatuses(Time.deltaTime)`.
+- Runtime/editor builds completed with 0 errors and existing assembly reference warnings; Unity-MCP refresh reached idle and console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-17: User accepted the Designer plan and asked Code Builder to begin with item 1, the common status runtime foundation.
+
+## Task: 2026-05-17 Eve A-J Data And Offering Mapping
+
+### Task title
+
+Fill Eve A-J skill, choice, modifier, and Offering reward data from the Eve skill reference folder.
+
+### Goals
+
+- Align Eve A-E active and F-J passive rows with `Pakuri/reference/2.Monster/eve/skill`.
+- Add Eve A-E trait/master and F-J passive trait metadata and modifier rows.
+- Make Offering enhancement reward IDs match the skill choice modifier IDs.
+- Prevent chosen Eve skill modifiers from applying to unrelated active skill snapshots.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Passive F-J trait rows are data-entered, but their conditional passive effects remain `DataOnlyUnsupported` where the current InGame executor/schema lacks support.
+- No Play Mode verification was run by Codex.
+- Unity-MCP `execute_code` catalog inspection failed with the known Windows Mono path-length error, so verification used CSV parsing, Unity refresh/console, and dotnet builds.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Offering initially shows Eve-A enhancements, later shows B-E enhancements only after the corresponding active is learned, and shows F-J passive traits only after each passive is learned.
+- Later implementation should add the missing passive/status/resistance/conditional-damage runtime fields currently marked `DataOnlyUnsupported`.
+
+### Evidence
+
+- Updated `Pakuri/Assets/CSVdata/source/monster_skills.csv` with 10 Eve A-J rows from the Eve skill reference folder.
+- Updated `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv`, `Pakuri/Assets/CSVdata/SkillChoiceData.csv`, and `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv` to 50 Eve choice/modifier rows.
+- Updated `Pakuri/Assets/CSVdata/source/monster_reward_choices.csv` to 50 Eve Offering reward rows whose IDs match `SkillChoiceModifierData.csv`.
+- CSV consistency check returned `EveSkillRows=10; Active=5; Passive=5; ChoiceData=50; SourceChoices=50; Modifiers=50; EveRewards=50; MissingChoiceMods=0; MissingRewardChoices=0; MissingSourceChoices=0; BadEveRewards=0; BadNumeric=0`.
+- `SkillChoiceResolver.cs` now applies modifier records only when the chosen ID belongs to the current skill's `EnhancementChoices` or `MasterChoices`.
+- `InGameUIManager.cs` now filters skill-choice reward IDs so they appear only after the target active/passive skill is learned.
+- Runtime/editor builds completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Unity-MCP refresh reached idle and console warning/error read showed only MCP client handler logs.
+- 2026-05-17 follow-up: Replaced the malformed Eve A-J `monster_skills.csv` records with fresh 26-column rows after Unity reported row 43 invalid `attribute`.
+- Follow-up validation returned `Headers=26; Rows=50; EveRows=10; Bad=0; EveAAttribute=Lightning; EveABaseDamage=24; EveDImplementation=RuntimeImplemented; EveDRequiredSlot=A`.
+- Follow-up Unity refresh reached idle and console warning/error read showed only MCP client handler logs.
+- 2026-05-17 follow-up: Changed Eve slot A `display_name` from `Arc Bolt` to `아크 볼트` and Eve slot F `display_name` from `Voltage Calibration` to `전압 보정` in `monster_skills.csv` to match `monsters.csv`.
+- Follow-up exact-name validation returned `ANameMatch=True`, `FNameMatch=True`; quote-aware CSV parsing returned `ExpectedColumns=26`, `TotalRows=52`, `BadRows=0`.
+- Follow-up runtime/editor builds completed with 0 errors and existing assembly reference warnings; Unity refresh reached idle and console showed no Eve default skill name validation errors.
+
+### History
+
+- 2026-05-17: User asked Code Builder to enter Eve A-J data using `Pakuri/reference/2.Monster/eve/skill` and perform the earlier data/Offering validation work first.
+- 2026-05-17: User reported CSV row 43 enum errors; Builder fixed the Eve A-J source rows so Unity's CSV parser can read the expected columns.
+- 2026-05-17: User reported Eve active/passive representative name mismatch errors; Builder aligned Eve A/F display names with the monster row.
+
 ## Task: 2026-05-15 Eve-A Phase4-C-0 Projectile Actor Minimum Execution
 
 ### Task title

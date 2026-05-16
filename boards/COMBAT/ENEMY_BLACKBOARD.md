@@ -743,3 +743,50 @@ Implemented and locally validated.
 
 - 2026-05-16: User reported enemies were not spawning after entering `NewRunScene`.
 - 2026-05-16: Builder verified scene references and prefabs, then corrected off-screen active encounter coordinates.
+
+## Task: 2026-05-17 NewRunScene Enemy Spawn Boundary Refactor
+
+### Task title
+
+Move enemy prefab/model/Actor spawn binding behind `NewRunUnitSpawnManager`.
+
+### Goals
+
+- Keep `NewRunStageManager` responsible for encounter row selection, boss row selection, spawn timing, enemy-clear waiting, and reward preparation.
+- Move enemy prefab lookup, enemy model creation, boss health multiplier application, Instantiate, `EnemyUnitActor.Initialize(...)`, runtime root parenting, and combat roster registration out of `NewRunSceneEntryManager`.
+- Preserve the existing `NewRunStageManager -> NewRunSceneEntryManager.SpawnEnemyById(...)` call surface for compatibility.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No enemy CSV rows, skill execution logic, passive logic, or combat simulation behavior was intentionally changed.
+- User owns Play Mode validation of enemy spawn and combat pacing.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified.
+
+### Next Actions
+
+- User verifies NewRunScene Play Mode enemy spawn visibility, StageManager encounter progression, boss health multiplier behavior, and combat clear detection.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- Added `Pakuri/Assets/Scripts2/InGame/Core/NewRunUnitSpawnManager.cs`.
+- `NewRunUnitSpawnManager.SpawnEnemyById(...)` now resolves stage-one enemy prefabs, creates `EnemyUnitRuntimeModel` through `UnitFactory.CreateEnemy(...)`, applies health multipliers, parents spawned enemies under `RunTimeEnemy`, initializes `EnemyUnitActor`, and registers enemies with `InGameCombatManager`.
+- `NewRunSceneEntryManager.SpawnEnemyById(...)` remains as a compatibility wrapper and delegates to `NewRunUnitSpawnManager`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` serializes `NewRunUnitSpawnManager` on `GameManager` with the existing stage-one enemy prefab references.
+- Runtime build `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing warnings.
+- Editor build `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing warnings.
+- Unity-MCP console warning/error read after clearing showed only MCP client handler logs.
+- `git diff --check` passed for the changed scripts and scene, with only LF-to-CRLF normalization warnings.
+
+### History
+
+- 2026-05-17: User asked whether `NewRunSceneEntryManager` had a god-class problem and then requested Code Builder implementation of the SpawnManager refactor while keeping `NewRunStageManager`.
