@@ -4,6 +4,134 @@
 - This file keeps only task blocks dated `2026-05-05` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/UI/UI_BLACKBOARD.md`.
 
+## Task: 2026-05-17 NewMainMenu Legacy Flow Removal Phase3-4 Progress
+
+### Task title
+
+Record UI-side impact after the Run session/state migration and the Phase 4 Legacy/Data closure check.
+
+### Goals
+
+- Preserve `NewMainMenu.unity` + `UIManager.cs` as the surviving menu entry flow during the Run-session migration.
+- Record that the new menu flow still does not depend on old `RunStartContext` or old Legacy menu/run controllers.
+- Keep old UI/controller deletion deferred until the old-scene cleanup phase.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No UI scene hierarchy, button binding, popup logic, or scene YAML was changed in this task.
+- `RunStartContext.cs`, `MainMenuFlowController.cs`, `RunCombatUiController.cs`, and `DebugSceneController.cs` still exist under Legacy for the old scene path.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+New UI flow remains Scripts2-owned after the Run-session migration; old UI/controller cleanup is still pending.
+
+### Next Actions
+
+- Keep `UIManager.cs` and `NewRunStartContext` as the only new menu-to-new-run handoff path.
+- Remove old menu/run UI controllers only in the final old-scene cleanup slice.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/UI/UIManager.cs` still uses `NewRunStartContext.Prepare(monsterId)` and does not reference `RunStartContext`.
+- Repository `Select-String` results showed `RunStartContext` references only in Legacy `MainMenuFlowController.cs` and `RunSceneBootstrap.cs`, not in Scripts2 UI flow code.
+- `Pakuri/Assets/Scripts2/InGame/Run/RunSession.cs` and `RunDayModel.cs` now live under Scripts2-owned folders, reducing the new flow's remaining dependence on Legacy.
+- Runtime and editor builds passed after the move, so the new menu-to-new-run compile path remained valid.
+
+### History
+
+- 2026-05-17: Code Builder completed the Run-session migration and recorded that the new UI flow still bypasses the old Legacy menu/run handoff path.
+
+## Task: 2026-05-17 NewMainMenu Legacy Flow Removal Phase1-2 Progress
+
+### Task title
+
+Record UI-side migration progress after the shared Legacy combat/data foundation moved under Scripts2.
+
+### Goals
+
+- Preserve `NewMainMenu.unity` and `UIManager.cs` as the surviving menu entry flow while shared non-UI Legacy files move away from `Legacy/Scripts`.
+- Confirm that the Phase 1-2 move did not reintroduce any dependency from the new menu flow back to old Legacy menu/run controllers.
+- Keep old Legacy UI/controller deletion deferred until the remaining Run migration is finished.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No UI hierarchy, button binding, or scene YAML was changed in this task.
+- Old Legacy menu/run UI controller files still exist and were not deleted in this phase.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Shared combat/data migration completed; new menu flow remains Scripts2-owned, while old UI/controller deletion stays pending.
+
+### Next Actions
+
+- Keep `UIManager.cs` on the new scene path while Phase 3 migrates the remaining `Pakuri.Run` files.
+- After Phase 3, remove old menu/run UI controllers only when the old scenes no longer need to be preserved.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/UI/UIManager.cs` still calls `NewRunStartContext.Prepare(monsterId)` and keeps `newRunScenePath = "Assets/Scenes/NewScene/NewRunScene.unity"` as the new flow owner.
+- Phase 1-2 moved shared non-UI dependencies used by the new flow into `Pakuri/Assets/Scripts2/InGame/Combat` and `Pakuri/Assets/Scripts2/InGame/Data`.
+- `Pakuri/Assets/Legacy/Scripts/Run/Flow/MainMenuFlowController.cs`, `Pakuri/Assets/Legacy/Scripts/Run/UI/RunCombatUiController.cs`, and `Pakuri/Assets/Legacy/Scripts/Run/UI/DebugSceneController.cs` still exist, so deletion of the old UI/controller path has not happened yet.
+- Runtime and editor builds passed after the move, so the new menu-to-new-run compile path remained valid.
+
+### History
+
+- 2026-05-17: Code Builder completed Phase 1-2 and recorded that the new menu flow stayed on Scripts2-owned UI code while old UI/controller cleanup remains pending.
+
+## Task: 2026-05-17 NewMainMenu Legacy Flow Removal Constraint
+
+### Task title
+
+Record the UI-side constraint for deleting old Legacy menu/run controllers.
+
+### Goals
+
+- Preserve `NewMainMenu.unity` + `UIManager.cs` as the surviving menu entry flow.
+- Prevent accidental dependency on old `MainMenuScene` / `RunScene` UI controllers during Legacy cleanup.
+- Keep the UI-side migration boundary explicit for Code Builder.
+
+### Constraints
+
+- Role Owner is Designer.
+- No UI object, scene hierarchy, or script was changed.
+- `UIManager.cs` already owns the new menu flow, but old Legacy scene controllers still exist and still have serialized references in old scenes.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Constraint recorded; ready for Code Builder handoff.
+
+### Next Actions
+
+- Do not route new menu/run behavior back into `MainMenuFlowController` or `RunCombatUiController`.
+- During Legacy cleanup, validate that `NewMainMenu.unity` keeps only `Scripts2` menu flow ownership and does not gain new Legacy controller dependencies.
+- Remove old menu/run UI controllers only after the shared Legacy base/runtime types have been migrated out.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/UI/UIManager.cs` stores `newRunScenePath = "Assets/Scenes/NewScene/NewRunScene.unity"` and loads the new run scene.
+- `Pakuri/Assets/Scenes/NewScene/NewMainMenu.unity` is the new scene file present under `Assets/Scenes/NewScene`.
+- Legacy UI/flow controller files still exist for the old path: `MainMenuFlowController.cs`, `RunCombatUiController.cs`, and `DebugSceneController.cs`.
+
+### History
+
+- 2026-05-17: User asked how to retire Legacy scripts and controllers while keeping the new Scripts2 menu/run scene path.
+
 ## Task: 2026-05-14 NewMainMenu UIManager Flow Implementation
 
 ### Task title

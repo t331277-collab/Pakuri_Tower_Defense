@@ -4,6 +4,139 @@
 - This file keeps only task blocks dated `2026-05-09` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/RUN/RUN_BLACKBOARD.md`.
 
+## Task: 2026-05-17 New Scene Legacy Controller Retirement Phase3-4 Progress
+
+### Task title
+
+Move the Run session/state foundation into Scripts2-owned folders and close the remaining Phase 4 check.
+
+### Goals
+
+- Complete Phase 3 by moving the `Pakuri.Run` session/state files that the new Scripts2 flow actually uses.
+- Keep old-scene controller deletion deferred until only old-scene-only scripts remain under Legacy.
+- Complete Phase 4 by confirming there are no Legacy/Data `.cs` files left to relocate.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This slice was a behavior-preserving migration only; no run progression logic, reward logic, UI behavior, scene wiring, or old-scene controller deletion was intentionally changed.
+- `RunStartContext.cs` was not moved because the inspected references show it is still used only by the old Legacy `MainMenuFlowController` and `RunSceneBootstrap` path, while Scripts2 uses `NewRunStartContext`.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 3 implemented; Phase 4 verified complete with no remaining Legacy/Data scripts.
+
+### Next Actions
+
+- Phase 5: remove old-scene-only controllers after checking scene-level serialized references and confirming the old scenes are no longer needed.
+- When deleting old controllers, treat `RunStartContext.cs`, `MainMenuFlowController.cs`, `RunSceneBootstrap.cs`, `RunCombatUiController.cs`, and `DebugSceneController.cs` as one cleanup cluster tied to the old Run/MainMenu flow.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Run/RunSession.cs` and `Pakuri/Assets/Scripts2/InGame/Run/RunDayModel.cs` now exist with their matching `.meta` files.
+- The old session paths `Pakuri/Assets/Legacy/Scripts/Run/Session/RunSession.cs` and `RunDayModel.cs` no longer exist on disk.
+- `Pakuri/Assembly-CSharp.csproj` now includes `Assets\Scripts2\InGame\Run\RunSession.cs` and `Assets\Scripts2\InGame\Run\RunDayModel.cs`.
+- `Select-String` over repository C# files showed `RunStartContext` references only in `Pakuri/Assets/Legacy/Scripts/Run/Flow/MainMenuFlowController.cs` and `RunSceneBootstrap.cs`, while `Pakuri/Assets/Scripts2/UI/UIManager.cs` still uses `NewRunStartContext`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both completed with 0 errors and the existing `System.Net.Http` / `System.IO.Compression` warnings.
+
+### History
+
+- 2026-05-17: User explicitly assigned Code Builder to continue with Phase 3 through Phase 4 of the Legacy-to-Scripts2 migration.
+
+## Task: 2026-05-17 New Scene Legacy Controller Retirement Phase1-2 Progress
+
+### Task title
+
+Record Run-domain progress after shared Legacy combat/data files were moved into Scripts2-owned folders.
+
+### Goals
+
+- Keep the old-scene retirement order grounded in the current migration state.
+- Record that the shared foundation needed by the new Run flow is no longer entirely rooted under `Legacy/Scripts`.
+- Keep old Run/MainMenu controller deletion blocked until the remaining Run-session migration is complete.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This task records migration progress only; it did not delete old scenes, old Run controllers, or `Pakuri.Run` session files.
+- `RunSession`, `RunDayModel`, `RunStartContext`, `MainMenuFlowController`, `RunSceneBootstrap`, `RunCombatUiController`, and `DebugSceneController` still exist under `Pakuri/Assets/Legacy/Scripts/Run`.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 1-2 foundation migration completed; Run/controller retirement remains blocked on Phase 3.
+
+### Next Actions
+
+- Move `Pakuri.Run` session/state files into a Scripts2-owned folder without breaking the current new scene flow.
+- Re-check old-scene serialized references after the Run migration.
+- Delete old-scene-only controllers only after the shared Run session foundation is moved and builds still pass.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs`, `NewRunStageManager.cs`, `NewRunUnitSpawnManager.cs`, `UnitFactory.cs`, and `InGameUIManager.cs` still contain `using Pakuri.Run;` and `RunSession` references.
+- Shared combat/data files that those Run-facing systems also depend on were moved out of Legacy and now exist under `Pakuri/Assets/Scripts2/InGame/Combat` and `Pakuri/Assets/Scripts2/InGame/Data`.
+- `Pakuri/Assets/Legacy/Scripts/Run/Flow/MainMenuFlowController.cs`, `RunSceneBootstrap.cs`, `RunStartContext.cs`, `Pakuri/Assets/Legacy/Scripts/Run/Session/RunSession.cs`, `RunDayModel.cs`, and `Pakuri/Assets/Legacy/Scripts/Run/UI/RunCombatUiController.cs` still exist on disk.
+- Runtime and editor builds still passed after the Phase 1-2 move, so the new Run scene flow remains compile-valid with the remaining Legacy Run files.
+
+### History
+
+- 2026-05-17: Code Builder completed Phase 1-2 of the shared Legacy migration and recorded that old Run/MainMenu controller retirement is still waiting on the Run-session move.
+
+## Task: 2026-05-17 New Scene Legacy Controller Retirement Design
+
+### Task title
+
+Define the removal order for old Run/MainMenu scene controllers after Scripts2 migration.
+
+### Goals
+
+- Keep `Pakuri/Assets/Scenes/NewScene/NewMainMenu.unity` and `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` as the surviving flow.
+- Prevent accidental deletion of still-required Legacy shared runtime code while retiring truly old-scene-only controllers.
+- Separate "shared base scripts to migrate" from "old scene/controller scripts to delete".
+
+### Constraints
+
+- Role Owner is Designer.
+- This task records design only; no scene or script file was edited.
+- Current serialized Legacy scene-controller references still exist in `MainMenuScene.unity`, `RunScene.unity`, and `DebugScene.unity`.
+- `NewRunSceneEntryManager` and related Scripts2 runtime currently still depend on Legacy shared types and cannot survive a full Legacy deletion yet.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Retirement order defined; ready for Code Builder handoff.
+
+### Next Actions
+
+- Keep Legacy shared base/runtime scripts until the Scripts2 data/run/combat foundation is migrated and builds cleanly.
+- After the shared foundation migration, remove old-scene-only controllers first: `MainMenuFlowController`, `RunSceneBootstrap`, `RunCombatUiController`, `DebugSceneController`, and other old `RunScene` / `MainMenuScene` / `DebugScene` control scripts.
+- Delete or archive `MainMenuScene.unity`, `RunScene.unity`, and `DebugScene.unity` only after scene-level missing-script checks confirm that the new flow no longer references them.
+- Leave `NewRunSceneEntryManager`, `NewRunStageManager`, `NewRunUnitSpawnManager`, `InGameCombatManager`, and `UIManager` as the surviving Scripts2 flow owners.
+
+### Evidence
+
+- `NewMainMenu` flow is owned by `Pakuri/Assets/Scripts2/UI/UIManager.cs`, which loads `Assets/Scenes/NewScene/NewRunScene.unity`.
+- `NewRunScene` flow is owned by `NewRunSceneEntryManager`, `NewRunUnitSpawnManager`, `NewRunStageManager`, `InGameCombatManager`, and `InGameUIManager`.
+- Old-scene controllers remain in Legacy script files: `MainMenuFlowController.cs`, `RunSceneBootstrap.cs`, `RunCombatUiController.cs`, and `DebugSceneController.cs`.
+- Serialized-reference scan found Legacy script GUID references in `MainMenuScene.unity`, `RunScene.unity`, and `DebugScene.unity`.
+
+### History
+
+- 2026-05-17: User asked how to remove old controllers and scenes while preserving the new Scripts2 scene flow.
+
 ## Task: 2026-05-17 NewRunScene Status Enum And Name Label Display
 
 ### Task title

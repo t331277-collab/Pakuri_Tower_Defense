@@ -4,6 +4,146 @@
 - This file keeps only task blocks dated `2026-05-09` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/DATA/DATA_BLACKBOARD.md`.
 
+## Task: 2026-05-17 Scripts2 Legacy Core Migration Phase3-4
+
+### Task title
+
+Move the remaining Scripts2-used Run session/state files and verify that Legacy/Data code migration is complete.
+
+### Goals
+
+- Complete Phase 3 by relocating `RunSession` and `RunDayModel` into a Scripts2-owned folder.
+- Keep Phase 3 scoped to the Run session/state files that the current Scripts2 flow actually uses.
+- Complete Phase 4 by proving there are no remaining `Pakuri/Assets/Legacy/Scripts/Data/**/*.cs` files left to move.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV source, ScriptableObject asset, runtime catalog behavior, or new menu/run scene logic was intentionally changed.
+- `RunStartContext.cs` and old controller files were left in Legacy because they belong to the old scene flow and are not part of the new Scripts2 Run session/state dependency.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 3 implemented; Phase 4 closed with no remaining Legacy/Data code files.
+
+### Next Actions
+
+- Proceed to Phase 5 old-scene controller cleanup after scene-reference verification.
+- Do not claim `Legacy/Scripts` is fully removable yet; `RunStartContext` and old scene/controller scripts still remain.
+
+### Evidence
+
+- New Scripts2-owned Run files now exist at `Pakuri/Assets/Scripts2/InGame/Run/RunSession.cs` and `RunDayModel.cs`, with the old Legacy session paths removed.
+- `Pakuri/Assembly-CSharp.csproj` now points to `Assets\Scripts2\InGame\Run\RunSession.cs` and `Assets\Scripts2\InGame\Run\RunDayModel.cs`.
+- `Get-ChildItem Pakuri\Assets\Legacy\Scripts\Data -Recurse -Filter *.cs | Measure-Object` returned `Count=0`, confirming there are no remaining Legacy/Data `.cs` files.
+- `Pakuri/Assembly-CSharp-Editor.csproj` now contains only Scripts2-owned data editor includes for `PakuriSkillEffectPrefabCsvExporter.cs` and `PakuriCsvRuntimeCatalogPostprocessor.cs`; no `Assets\Legacy\Scripts\Data\...` compile include remains.
+- Runtime/editor builds completed with 0 errors and the existing assembly reference warnings.
+
+### History
+
+- 2026-05-17: Code Builder completed Phase 3 Run-session migration and verified that Phase 4 had no remaining Legacy/Data code to move.
+
+## Task: 2026-05-17 Scripts2 Legacy Core Migration Phase1-2
+
+### Task title
+
+Move the shared Legacy combat/data foundation used by Scripts2 into Scripts2-owned folders.
+
+### Goals
+
+- Complete Phase 1 by moving the shared combat base files that define `DamageAttribute`, `DamageCalculator`, `CombatStatBlock`, and `AttributeDefenseSet`.
+- Complete Phase 2 by moving the shared `Pakuri.Data` definitions, runtime catalog/manager files, and supporting editor CSV sync scripts into a Scripts2-owned structure.
+- Preserve namespaces, serialized script GUIDs, and current New scene runtime behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This slice is behavior-preserving migration only; no gameplay logic, scene hierarchy, prefab binding, CSV values, or runtime API contract was intentionally changed.
+- `.cs.meta` files had to move with their `.cs` files to keep Unity serialized references valid.
+- `Pakuri.Run` files such as `RunSession`, `RunDayModel`, and old Run/MainMenu controllers were not moved in this phase.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 1 and Phase 2 implemented and locally verified.
+
+### Next Actions
+
+- Phase 3: move `Pakuri.Run` session/state files still used by `NewRunSceneEntryManager`, `NewRunStageManager`, `NewRunUnitSpawnManager`, `UnitFactory`, and `InGameUIManager`.
+- Phase 4: confirm whether any remaining Legacy-side editor/runtime support files still need relocation after the Run migration.
+- Phase 5: after Run migration and Unity missing-script checks, remove old-scene-only controllers and then delete the remaining Legacy scripts.
+
+### Evidence
+
+- New Scripts2-owned combat files now exist at `Pakuri/Assets/Scripts2/InGame/Combat/CombatStatModels.cs` and `Pakuri/Assets/Scripts2/InGame/Combat/DamageCalculator.cs`; the old Legacy paths `Pakuri/Assets/Legacy/Scripts/Combat/Monster/CombatStatModels.cs` and `Pakuri/Assets/Legacy/Scripts/Combat/Skill/DamageCalculator.cs` no longer exist.
+- New Scripts2-owned data definition files now exist at `Pakuri/Assets/Scripts2/InGame/Data/Definition/EnemyDefinition.cs`, `GameDataCatalog.cs`, `MonsterDefinition.cs`, and `SkillDefinition.cs`.
+- New Scripts2-owned runtime files now exist at `Pakuri/Assets/Scripts2/InGame/Data/Runtime/PakuriDataManager.cs`, `PakuriCsvRuntimeAssetCatalog.cs`, `PakuriCsvRuntimeSourceCatalog.cs`, and `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData*.cs`.
+- New Scripts2-owned editor support files now exist at `Pakuri/Assets/Scripts2/InGame/Data/Editor/PakuriCsvRuntimeCatalogPostprocessor.cs` and `PakuriSkillEffectPrefabCsvExporter.cs`.
+- `Pakuri/Assembly-CSharp.csproj` now includes Scripts2-owned compile paths such as `Assets\Scripts2\InGame\Combat\CombatStatModels.cs`, `Assets\Scripts2\InGame\Combat\DamageCalculator.cs`, `Assets\Scripts2\InGame\Data\Definition\GameDataCatalog.cs`, `Assets\Scripts2\InGame\Data\Runtime\PakuriDataManager.cs`, and `Assets\Scripts2\InGame\Data\Runtime\Csv\PakuriCsvRuntimeData.cs`.
+- `Pakuri/Assembly-CSharp-Editor.csproj` now includes `Assets\Scripts2\InGame\Data\Editor\PakuriSkillEffectPrefabCsvExporter.cs` and `PakuriCsvRuntimeCatalogPostprocessor.cs`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and the existing `System.Net.Http` / `System.IO.Compression` warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
+- `git diff --check -- Pakuri/Assembly-CSharp.csproj Pakuri/Assembly-CSharp-Editor.csproj Pakuri/Assets/Scripts2/InGame/Combat Pakuri/Assets/Scripts2/InGame/Data ...` completed with no output.
+
+### History
+
+- 2026-05-17: User explicitly assigned Code Builder to execute Phase 1 through Phase 2 of the Legacy-to-Scripts2 migration.
+
+## Task: 2026-05-17 Scripts2 Legacy Core Migration Design
+
+### Task title
+
+Plan the safe migration of core Legacy data/run/combat base scripts into the Scripts2-owned structure.
+
+### Goals
+
+- Remove the current hard dependency from `Scripts2` onto `Pakuri/Assets/Legacy/Scripts` before deleting Legacy scripts.
+- Preserve `NewMainMenu.unity` and `NewRunScene.unity` behavior while moving shared base types, catalog loading, and run state into a Scripts2-owned location.
+- Keep Unity serialized references valid during the migration.
+
+### Constraints
+
+- Role Owner is Designer.
+- This task records migration design only; no C# script, `.meta`, scene, prefab, or asset file was changed.
+- Current `Scripts2` runtime still directly references Legacy-defined types such as `GameDataCatalog`, `MonsterDefinition`, `EnemyDefinition`, `SkillDefinition`, `PassiveDefinition`, `RunSession`, `PakuriDataManager`, `PakuriCsvRuntimeData`, `DamageAttribute`, `CombatStatBlock`, `AttributeDefenseSet`, and `DamageCalculator`.
+- `Assembly-CSharp.csproj` still includes Legacy scripts, and Unity scenes/assets still serialize Legacy script GUID references.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Migration order defined; ready for Code Builder handoff.
+
+### Next Actions
+
+- Phase 1: move shared base types from Legacy into a Scripts2-owned folder while preserving `.meta` GUIDs and keeping namespaces stable.
+- Phase 2: move `Pakuri.Data` runtime catalog/definition/manager files into a Scripts2-owned data folder, again preserving `.meta` GUIDs.
+- Phase 3: move `Pakuri.Run` session/state files needed by `NewRunSceneEntryManager`, `NewRunStageManager`, `NewRunUnitSpawnManager`, `UnitFactory`, and `InGameUIManager`.
+- Phase 4: move Legacy editor CSV sync/validation scripts that support the runtime catalog assets.
+- Phase 5: only after builds and Unity serialized-reference checks pass, remove old-scene-only controllers and then delete the remaining Legacy scripts.
+
+### Evidence
+
+- `Scripts2` dependency scan found 22 files referencing `Pakuri.Data`, `Pakuri.Combat`, or `Pakuri.Run`, with 258 reference matches across those files.
+- `Assembly-CSharp.csproj` still includes Legacy compile items such as `Assets\Legacy\Scripts\Data\Runtime\Csv\PakuriCsvRuntimeData.cs`, `Assets\Legacy\Scripts\Data\Definition\MonsterDefinition.cs`, `Assets\Legacy\Scripts\Data\Definition\EnemyDefinition.cs`, and `Assets\Legacy\Scripts\Run\Session\RunSession.cs`.
+- Legacy script definitions currently own the shared types used by `Scripts2`: `GameDataCatalog`, `MonsterDefinition`, `EnemyDefinition`, `SkillDefinition`, `PassiveDefinition`, `PakuriDataManager`, `PakuriCsvRuntimeData`, `DamageAttribute`, `DamageCalculator`, `AttributeDefenseSet`, and `CombatStatBlock`.
+- Serialized-reference scan found 24 Legacy script GUID references remaining in Unity assets, including `MainMenuScene.unity`, `RunScene.unity`, `DebugScene.unity`, `Legacy/Data/GameData/*.asset`, and `Resources/Pakuri/CSVRuntime/*.asset`.
+
+### History
+
+- 2026-05-17: User asked how to migrate and delete Legacy scripts while keeping the Scripts2-owned New scene flow.
+
 ## Task: 2026-05-17 EnemySkillData CSV Runtime Split
 
 ### Task title
