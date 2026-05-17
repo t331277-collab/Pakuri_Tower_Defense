@@ -4,6 +4,51 @@
 - This file keeps active report task blocks after the 2026-05-12 archive pass; newer report tasks may be appended above older retained context.
 - Source file: `boards/REPORT/REPORT_BLACKBOARD.md`.
 
+## Task: 2026-05-17 Projectile Blueprint Markdown
+
+### Task title
+
+Create a standalone Markdown projectile blueprint for future InGame projectile skills.
+
+### Goals
+
+- Provide an AI-first implementation guide so future projectile skill work can start from a narrow, evidence-based file list instead of rereading the whole codebase.
+- Mark common projectile behavior as supported, partial, or unsupported.
+- Explicitly state that Vega-A timed three-projectile behavior, branch variants, bounce, homing, installed projectiles, multi-hitbox projectiles, and mark payloads require deliberate exceptions or reusable extensions.
+
+### Constraints
+
+- Role Owner is Designer.
+- Documentation-only update; no C# script, scene, prefab, or CSV behavior was changed.
+- Claims are based on inspected InGame projectile scripts, CSV rows, scene YAML, prefab YAML, and existing report-board evidence.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed as a new Markdown guide.
+
+### Next Actions
+
+- Use `Pakuri/reference/Report/2026-05-17-projectile-blueprint.md` before implementing additional projectile skills.
+- Code Builder should classify each new projectile behavior as common, partial, or exceptional before editing runtime code.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-05-17-projectile-blueprint.md`.
+- `SkillExecutors.cs` contains `ProjectileSkillExecutor`, additional projectile, pierce, status, branch, prefab instantiate, and common target resolution paths.
+- `InGameProjectileActor.cs` contains movement, trigger/distance hit, damage, status, branch spawn, pierce depletion, and destroy-boundary behavior.
+- `InGameCombatManager.cs` contains `ResolveSkillEffectPrefab("eve-a")`, `InstantiateSkillPrefab(...)`, `ResolveProjectileDestroyBoundaryX()`, `ApplyDamage(...)`, and `ApplyStatus(...)`.
+- `StatusEffectKind.cs`, `BaseUnitRuntimeModel.cs`, `MonsterUnitActor.cs`, and `EnemyUnitActor.cs` contain shared status enum, status runtime storage, ticking, and name-label display paths.
+- `SkillData.csv`, `monster_skills.csv`, `SkillChoiceModifierData.csv`, `NewRunScene.unity`, and `Eve_A.prefab` were inspected for Eve-A projectile data, modifier data, scene prefab assignment, and actor/collider setup.
+
+### History
+
+- 2026-05-17: User asked for a Markdown projectile blueprint and requested explicit support/partial/unsupported marking plus special-behavior exception guidance.
+
 ## Task: 2026-05-17 InGame Current Implementation And Projectile Blueprint Report
 
 ### Task title

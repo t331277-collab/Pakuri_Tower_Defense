@@ -1,9 +1,0 @@
-boss_id,phase_id,hp_threshold,pattern_id,pattern_type,cooldown_sec,summon_group,core_attack_bias,danger_zone_type,notes
-BOSS_001,PHASE_01,1.00,MLORD_SLAM,front_pressure,8.0,none,0.2,cone,frontline test
-BOSS_001,PHASE_02,0.75,MLORD_CHARGE,breakthrough,10.0,guard_small,0.4,line,force reposition
-BOSS_001,PHASE_03,0.50,MLORD_GUARDCALL,summon,12.0,guard_heavy,0.5,none,line collapse test
-BOSS_001,PHASE_04,0.25,MLORD_FINAL_PUSH,core_pressure,9.0,flank_mix,0.8,cone,final defense test
-BOSS_002,PHASE_01,1.00,FPROPHET_ICEBOLT,projectile,7.0,none,0.2,circle,movement test
-BOSS_002,PHASE_02,0.75,FPROPHET_FROSTZONE,zone_control,10.0,ranged_support,0.3,frozen_area,split movement
-BOSS_002,PHASE_03,0.50,FPROPHET_WEAKEN,debuff,11.0,backline_mix,0.5,wide_zone,remove safe space
-BOSS_002,PHASE_04,0.25,FPROPHET_BLIZZARD,burst_zone,9.0,dual_side,0.7,global_cold,late pressure

@@ -1,8 +1,0 @@
-status_id,status_name,status_type,element_type,max_stack,duration_sec,tick_interval,damage_ratio,resist_stat,resist_shred_type,can_refresh_duration,special_trigger,affected_stat,flat_bonus,percent_bonus,percent_reduction,flat_reduction,notes
-STATUS_001,Burn,dot,Fire,10,4.0,1.0,0.25,fire_def,fire_shred,true,explode_on_high_stack,none,0,0,0,0,화염 지속 피해
-STATUS_002,Chill,slow,Cold,5,3.0,0,0,cold_def,cold_shred,true,freeze_at_max,skill_haste,0,0,0.15,0,냉기 둔화
-STATUS_003,Freeze,hard_cc,Cold,1,1.2,0,0,cold_def,none,false,break_on_hit_rule,action_lock,0,0,1,0,빙결 구속
-STATUS_004,Shock,burst_amp,Lightning,6,4.0,0,0,lightning_def,lightning_shred,true,chain_bonus,crit_damage,0,0.1,0,0,번개 폭딜 보조
-STATUS_005,Curse,debuff,Dark,8,5.0,0,0,dark_def,dark_shred,true,bonus_damage_taken,power_taken,0,0.08,0,0,어둠 피해 증폭 표식
-STATUS_006,Corrode,defense_down,Physical,8,5.0,1.0,0.10,physical_def,physical_shred,true,armor_break_at_max,physical_def,0,0,0.15,4,방어력 침식
-STATUS_007,Sanctified,anti_heal,Holy,3,4.0,0,0,holy_def,holy_shred,true,heal_block,healing_received,0,0,0.25,0,신성 회복 차단

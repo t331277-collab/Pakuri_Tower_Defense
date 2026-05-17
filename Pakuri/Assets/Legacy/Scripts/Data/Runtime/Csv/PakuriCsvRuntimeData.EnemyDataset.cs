@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Pakuri.Combat;
 
 namespace Pakuri.Data
@@ -37,6 +38,20 @@ namespace Pakuri.Data
             public string PassiveSummary;
         }
 
+        private sealed class EnemySkillRow
+        {
+            public string Id;
+            public string DisplayName;
+            public StageOneEnemySkillKind StageOneSkill;
+            public string SkillEffectPrefabPath;
+            public float AttackPowerCoefficient;
+            public float SpellPowerCoefficient;
+            public float Radius;
+            public float CooldownSeconds;
+            public float ActiveDuration;
+            public float FlatValue;
+        }
+
         private static EnemyRow ParseEnemyRow(CsvRecord record)
         {
             return new EnemyRow
@@ -62,15 +77,54 @@ namespace Pakuri.Data
                 DarknessDefense = record.ReadFloat("def_darkness"),
                 HolyDefense = record.ReadFloat("def_holy"),
                 StageOneSkill = record.ReadEnum<StageOneEnemySkillKind>("stage_one_skill"),
-                ActiveSkillName = record.ReadString("active_skill_name"),
-                ActiveSkillCoefficient = record.ReadFloat("active_skill_coefficient"),
-                ActiveSkillCooldown = record.ReadFloat("active_skill_cooldown"),
-                ActiveSkillDuration = record.ReadFloat("active_skill_duration"),
-                ActiveSkillRadius = record.ReadFloat("active_skill_radius"),
-                ActiveSkillFlatValue = record.ReadFloat("active_skill_flat_value"),
                 PassiveSkillName = record.ReadString("passive_skill_name"),
                 PassiveSummary = record.ReadString("passive_summary")
             };
+        }
+
+        private static EnemySkillRow ParseEnemySkillRow(CsvRecord record)
+        {
+            return new EnemySkillRow
+            {
+                Id = record.ReadRequiredString("skill_id"),
+                DisplayName = record.ReadRequiredString("display_name"),
+                StageOneSkill = record.ReadEnum<StageOneEnemySkillKind>("stage_one_skill"),
+                SkillEffectPrefabPath = record.ReadString("skill_effect_prefab_path"),
+                AttackPowerCoefficient = record.ReadFloat("attack_power_coefficient"),
+                SpellPowerCoefficient = record.ReadFloat("spell_power_coefficient"),
+                Radius = record.ReadFloat("radius"),
+                CooldownSeconds = record.ReadFloat("cooldown_seconds"),
+                ActiveDuration = record.ReadFloat("active_duration"),
+                FlatValue = record.ReadFloat("flat_value")
+            };
+        }
+
+        private static void ApplyEnemySkillRow(
+            EnemyRow enemy,
+            Dictionary<string, EnemySkillRow> enemySkills,
+            CsvRecord enemyRecord)
+        {
+            var skillId = enemy.StageOneSkill.ToString();
+            if (!enemySkills.TryGetValue(skillId, out var skill))
+            {
+                throw new CsvFatalException(
+                    $"CSV row {enemyRecord.RowNumber} in '{enemyRecord.TableName}' references unknown enemy skill '{skillId}'.");
+            }
+
+            if (skill.StageOneSkill != enemy.StageOneSkill)
+            {
+                throw new CsvFatalException(
+                    $"Enemy skill '{skill.Id}' stage_one_skill '{skill.StageOneSkill}' does not match enemy '{enemy.Id}' stage_one_skill '{enemy.StageOneSkill}'.");
+            }
+
+            enemy.ActiveSkillName = skill.DisplayName;
+            enemy.ActiveSkillCoefficient = skill.AttackPowerCoefficient > 0f
+                ? skill.AttackPowerCoefficient
+                : skill.SpellPowerCoefficient;
+            enemy.ActiveSkillCooldown = skill.CooldownSeconds;
+            enemy.ActiveSkillDuration = skill.ActiveDuration;
+            enemy.ActiveSkillRadius = skill.Radius;
+            enemy.ActiveSkillFlatValue = skill.FlatValue;
         }
     }
 }

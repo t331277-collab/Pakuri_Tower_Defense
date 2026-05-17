@@ -12,6 +12,57 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-05-17 Ariel-A Common Projectile Runtime Connection
+
+### Task title
+
+Connect Ariel-A Judgement Light through the shared InGame projectile path.
+
+### Goals
+
+- Route `ariel-a` to the shared `ProjectileSkillExecutor` / `InGameProjectileActor` path.
+- Use the user-authored `Assets/Prefab/Skill/Ariel/Airel_A.prefab` as the Ariel-A projectile visual.
+- Record which Ariel-A reference behavior is covered by the common projectile path and which behavior remains unsupported.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Play Mode gameplay verification was run by Codex.
+- Current runtime source schema does not expose per-skill base pierce count or per-skill projectile speed, so Ariel-A base pierce `1` and projectile speed `17` are mapped explicitly in `InGameSkillDefinitionMapper` from `Pakuri/reference/2.Monster/ariel/skill/a-judgement-light.md`.
+- The common projectile path covers the base straight projectile, damage, magazine, reload, shot interval, prefab instantiation, and pierce. It does not implement Ariel-A critical rolls, shielded-ally damage scaling, White Judgement last-shot explosions, or Guiding Light holy exposure.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and local non-gameplay checks passed.
+
+### Next Actions
+
+- User verifies in NewRunScene Play Mode that Ariel-A fires `Airel_A.prefab`, damages enemies, and pierces one extra target.
+- Add data/source schema fields for per-skill projectile speed and base pierce if more skills need those values without skill-ID-specific mapper exceptions.
+- Implement separate runtime support before claiming Ariel-A master effects or shielded-ally scaling are active.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores `ariel-a` `skill_effect_prefab_path=Assets/Prefab/Skill/Ariel/Airel_A.prefab`.
+- `Pakuri/Assets/CSVData/SkillData.csv` now includes the Ariel-A reference row with base damage `18`, spell coefficient `1`, magazine `7`, reload `4.6`, shot interval `0.36`, pierce `1`, and projectile speed `17`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now serializes `arielAProjectilePrefab` and resolves `"ariel-a"` to it.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` assigns `arielAProjectilePrefab` to `Assets/Prefab/Skill/Ariel/Airel_A.prefab` GUID `66fcb365022930d4681ad320e5fff520`.
+- `Pakuri/Assets/Prefab/Skill/Ariel/Airel_A.prefab` now has trigger `BoxCollider2D` and `Pakuri.InGame.InGameProjectileActor`.
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog.asset` now includes `Assets/Prefab/Skill/Ariel/Airel_A.prefab`.
+- CSV check returned `UpperA=ariel-a`, `Pierce=1`, `Speed=17`, `SourcePrefab=Assets/Prefab/Skill/Ariel/Airel_A.prefab`, `SourceMagazine=7`, `SourceReload=4.6`, and `SourceShot=0.36`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings; an earlier parallel runtime build failed only from an `obj\Debug\Assembly-CSharp.dll` file lock, then passed when rerun alone.
+- Unity-MCP refresh reached idle; console warning/error read showed only MCP client handler logs, not C# compile errors.
+
+### History
+
+- 2026-05-17: User asked Code Builder to implement Ariel-A using `Assets/Prefab/Skill/Ariel/Airel_A.prefab` and to report any information the blueprint alone could not provide.
+
 ## Task: 2026-05-15 Ariel-B Phase4-C-0 Shield Effect Minimum Execution
 
 ### Task title

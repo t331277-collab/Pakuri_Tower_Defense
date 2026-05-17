@@ -49,3 +49,21 @@ MonoBehaviour:
     Asset: {fileID: 3843049686398240108, guid: 224f5e7622cd0264b961ee388a015d65, type: 3}
   - AssetPath: Assets/Image/Monster/Rin/Effect_Prefab/Rin_Skill_C.prefab
     Asset: {fileID: 8767310348598417902, guid: c17e18be6f4f31b49a083bf1ce120f0d, type: 3}
+  - AssetPath: Assets/Prefab/Enemy/Skill/Achor_Skill.prefab
+    Asset: {fileID: 1147205142547571635, guid: c68a14297d96473499a2c4d10658a55f, type: 3}
+  - AssetPath: Assets/Prefab/Enemy/Skill/Karin_Skill 1.prefab
+    Asset: {fileID: 3517001639107925163, guid: d3fbe1e58b0383e4cbcbc791d4961f91, type: 3}
+  - AssetPath: Assets/Prefab/Enemy/Skill/Preist_Skill.prefab
+    Asset: {fileID: 6438375768576846172, guid: 8d0e9d69f614e534ca717c247f2f7c9b, type: 3}
+  - AssetPath: Assets/Prefab/Enemy/Skill/Rogue_Skill.prefab
+    Asset: {fileID: 1147205142547571635, guid: 05d06cc4129dc644d82b626e836e8725, type: 3}
+  - AssetPath: Assets/Prefab/Enemy/Skill/Shield_King_Skill.prefab
+    Asset: {fileID: 164523631160746866, guid: 2afa29e429995274bb2e0aad73060428, type: 3}
+  - AssetPath: Assets/Prefab/Enemy/Skill/Shield_Skill.prefab
+    Asset: {fileID: 685893937165172827, guid: d67ed66d9d3234c4980ece0c391d33d3, type: 3}
+  - AssetPath: Assets/Prefab/Enemy/Skill/Warrior_King_Skill 1.prefab
+    Asset: {fileID: 164523631160746866, guid: fffbdda407858a9488e6e01ad38eadb3, type: 3}
+  - AssetPath: Assets/Prefab/Enemy/Skill/Warrior_Skill.prefab
+    Asset: {fileID: 6711210013456624539, guid: 86d2cf796a0668f48bf01d312cceb7dc, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Ariel/Airel_A.prefab
+    Asset: {fileID: 3285557362087739772, guid: 66fcb365022930d4681ad320e5fff520, type: 3}

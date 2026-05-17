@@ -1,2 +1,0 @@
-tower_id,tower_name,role,element_type,cost,base_range,attack_rate,base_damage,targeting,skill_id,trait_tags,atk,spell_power,life,physical_def,fire_def,lightning_def,cold_def,dark_def,holy_def,crit_chance,crit_damage,power,physical_amp,fire_amp,lightning_amp,cold_amp,dark_amp,holy_amp,skill_haste,range_bonus,cooldown_reduction,duration_power,notes
-TOWER_001,이브 타워,magic_ranged,Lightning,120,8.0,0.7,24,frontmost,SKILL_001,eve|lightning|cold|prototype,0,28,180,6,6,12,10,6,6,0.05,1.5,0,0,0,0.12,0.04,0,0,0.12,0,0,0,프로토타입용 이브 단독 타워

@@ -49,6 +49,10 @@ namespace Pakuri.Data
             {
                 missingAssets.Add(StageOneEnemiesFileName);
             }
+            if (sourceCatalog.EnemySkills == null)
+            {
+                missingAssets.Add(EnemySkillDataFileName);
+            }
 
             if (missingAssets.Count > 0)
             {
@@ -91,6 +95,7 @@ namespace Pakuri.Data
             var skillTable = CsvTable.Load(sourceCatalog.MonsterSkills, MonsterSkillsFileName);
             var skillChoiceTable = CsvTable.Load(sourceCatalog.MonsterSkillChoices, MonsterSkillChoicesFileName);
             var enemyTable = CsvTable.Load(sourceCatalog.StageOneEnemies, StageOneEnemiesFileName);
+            var enemySkillTable = CsvTable.Load(sourceCatalog.EnemySkills, EnemySkillDataFileName);
 
             foreach (var record in catalogMonsterTable.Records)
             {
@@ -128,9 +133,16 @@ namespace Pakuri.Data
                 AddUnique(model.SkillChoices, row.Id, row, record);
             }
 
+            foreach (var record in enemySkillTable.Records)
+            {
+                var row = ParseEnemySkillRow(record);
+                AddUnique(model.EnemySkills, row.Id, row, record);
+            }
+
             foreach (var record in enemyTable.Records)
             {
                 var row = ParseEnemyRow(record);
+                ApplyEnemySkillRow(row, model.EnemySkills, record);
                 AddUnique(model.StageOneEnemies, row.Id, row, record);
             }
 

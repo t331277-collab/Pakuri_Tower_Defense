@@ -1,4 +1,0 @@
-skill_id,owner_id,skill_name,skill_type,element_type,target_type,base_damage,atk_ratio,spell_ratio,crit_allowed,crit_chance_bonus,crit_damage_bonus,cooldown_sec,cooldown_reduction_allowed,skill_haste_allowed,power_ratio,physical_amp_ratio,fire_amp_ratio,lightning_amp_ratio,cold_amp_ratio,dark_amp_ratio,holy_amp_ratio,range_scale,duration_scale,ammo_count,reload_sec,status_effect_id,upgrade_branch_id,master_unlock_condition,notes
-SKILL_001,TOWER_001,Arc Bolt,active,Lightning,single,24,0,0.95,true,0,0,1.4,true,true,0.0,0,0,0.12,0.04,0,0,3.0,0.0,6,4.0,STATUS_004,EVE_ARC_BOLT,none,이브 메인 번개 투사체 스킬
-SKILL_002,TOWER_001,Arc Bolt Split,active,Lightning,single,24,0,0.95,true,0,0.15,1.4,true,true,0.25,0,0,0.18,0.04,0,0,3.5,0.0,8,3.8,STATUS_004,EVE_ARC_SPLIT,master_a,분기 강화 버전
-SKILL_003,TOWER_001,Arc Bolt Saturation,active,Lightning,line,28,0,1.0,true,0,0.1,1.8,true,true,0.35,0,0,0.22,0.05,0,0,3.0,0.0,8,4.5,STATUS_004,EVE_ARC_SATURATION,master_b,관통/다중 투사체 강화 버전

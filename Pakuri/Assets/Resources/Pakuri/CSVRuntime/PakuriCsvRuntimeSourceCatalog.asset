@@ -19,3 +19,4 @@ MonoBehaviour:
   MonsterSkills: {fileID: 4900000, guid: bbc492c5e4ae3cf44a6aeab4ded27b5b, type: 3}
   MonsterSkillChoices: {fileID: 4900000, guid: 5b5f094e9fbfaef4593518ad6d855917, type: 3}
   StageOneEnemies: {fileID: 4900000, guid: 61c9eb99d31ad914fb1fa849d1a30a96, type: 3}
+  EnemySkills: {fileID: 4900000, guid: d1e6867e2c874365ab3bfedbd0117a42, type: 3}

@@ -3,6 +3,55 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-17 Enemy Skill CSV Runtime Split
+
+### Task title
+
+Move Stage 1 enemy active skill tuning out of enemy rows.
+
+### Goals
+
+- Keep Stage 1 enemy skill execution behavior unchanged while moving per-skill tuning to `EnemySkillData.csv`.
+- Preserve current source-only Archer `AimedShot` support without adding an Archer row to active `EnemyStat.csv`.
+- Keep enemy runtime model fields populated through the existing `EnemyDefinition -> UnitFactory -> EnemyUnitRuntimeModel` path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Enemy skill execution code in `EnemyCombatSimulationSystem.cs` was not behavior-refactored in this task.
+- `InGameCombatManager.ResolveEnemySkillPrefab(...)` still resolves prefabs by `StageOneEnemySkillKind`; CSV prefab paths are now included in the runtime asset catalog but are not yet the execution-time prefab resolver.
+- No Play Mode verification was run by Codex.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies Stage 1 enemy skill behavior in NewRunScene Play Mode.
+- Later enemy skill data work should decide whether prefab resolution also moves from `InGameCombatManager` serialized fields into CSV/runtime catalog lookup.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/EnemySkillData.csv` contains the 8 current Stage 1 skill IDs, including source-only `AimedShot`.
+- `Pakuri/Assets/CSVdata/EnemyStat.csv` now keeps the 7 active enemy rows with `active_skill_id` references and no `active_skill_coefficient` column.
+- `Pakuri/Assets/CSVdata/source/stage_one_enemies.csv` keeps 8 enemy rows and now references skill behavior only through `stage_one_skill`.
+- `Pakuri/Assets/Legacy/Scripts/Data/Runtime/Csv/PakuriCsvRuntimeData.EnemyDataset.cs` applies `EnemySkillRow` data to `EnemyRow.ActiveSkillName`, `ActiveSkillCoefficient`, `ActiveSkillCooldown`, `ActiveSkillDuration`, `ActiveSkillRadius`, and `ActiveSkillFlatValue`.
+- `Pakuri/Assets/Legacy/Scripts/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs` still builds `EnemyDefinition` from those populated `EnemyRow` fields, preserving the existing downstream runtime path.
+- CSV check returned `EnemySkillRows=8`, `StageEnemyRows=8`, and no missing `stage_one_skill` references.
+- Runtime/editor `dotnet build` commands completed with 0 errors and existing assembly reference warnings.
+- Unity CSV validation menu produced no CSV validation errors in the warning/error console read.
+
+### History
+
+- 2026-05-17: User requested Enemy skill CSV separation after discussing that Enemy skills should be managed like Monster skills.
+
 ## Task: 2026-05-16 Stage Encounter CSV Seed
 
 ### Task title

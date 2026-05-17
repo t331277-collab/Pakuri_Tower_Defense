@@ -4,6 +4,145 @@
 - This file keeps only task blocks dated `2026-05-09` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/DATA/DATA_BLACKBOARD.md`.
 
+## Task: 2026-05-17 EnemySkillData CSV Runtime Split
+
+### Task title
+
+Split Stage 1 enemy active skill tuning into `EnemySkillData.csv`.
+
+### Goals
+
+- Create an enemy skill CSV with the current seven active Stage 1 enemy skills plus source-only Archer `AimedShot`.
+- Keep `EnemySkillData.csv` close to the existing monster skill CSV shape while adding only enemy-specific runtime fields needed by the current loader.
+- Change the runtime CSV loader so `stage_one_enemies.csv` carries the enemy row and skill ID, while skill name, coefficient, cooldown, duration, radius, and flat value come from `EnemySkillData.csv`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active `EnemyStat.csv` still has seven enemy rows; Archer was not added there because it is only present in runtime source data.
+- Active `EnemyStat.csv` now keeps `active_skill_id` references but no longer keeps enemy active skill tuning columns such as `active_skill_coefficient`.
+- `ChargeCommand` duration/radius/cooldown moved into CSV, but its current speed and outgoing damage multipliers remain hardcoded in `EnemyCombatSimulationSystem.ExecuteChargeCommand(...)`.
+- No Play Mode verification was run by Codex.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Stage 1 enemies still execute their skills with the same behavior.
+- If enemy skill behavior grows beyond the current fields, add explicit CSV columns before moving more hardcoded runtime constants.
+- Run Code Reviewer only when explicitly permitted by the user.
+
+### Evidence
+
+- Added `Pakuri/Assets/CSVdata/EnemySkillData.csv` with 8 rows: `Slash`, `ShieldUp`, `AimedShot`, `ShurikenThrow`, `Heal`, `GuardianFlag`, `ChargeCommand`, and `SacredSwordWave`.
+- `Import-Csv Pakuri\Assets\CSVdata\EnemySkillData.csv | Select-Object -Skip 1` returned `EnemySkillRows=8`.
+- `Import-Csv Pakuri\Assets\CSVdata\EnemyStat.csv` returned `ActiveEnemyRows=7`, `ActiveHasSkillCoefficientColumn=False`, and skill IDs `Slash`, `ShieldUp`, `ShurikenThrow`, `Heal`, `GuardianFlag`, `ChargeCommand`, and `SacredSwordWave`; no Archer row was added to active `EnemyStat.csv`.
+- `Pakuri/Assets/CSVdata/source/stage_one_enemies.csv` now has 8 enemy rows with `stage_one_skill` references only and no active skill tuning columns.
+- CSV consistency check returned `MissingStageSkillRefs=` empty and all 8 `EnemySkillData.csv` prefab paths existed under `Pakuri/Assets/Prefab/Enemy/Skill`.
+- `PakuriCsvRuntimeData.Loader.cs` now loads `EnemySkillData.csv` through `PakuriCsvRuntimeSourceCatalog.EnemySkills` and applies the matching skill row while parsing enemy rows.
+- `PakuriCsvRuntimeData.EnemyDataset.cs` now parses `EnemySkillRow` and copies skill name, coefficient, cooldown, duration, radius, and flat value into `EnemyRow`.
+- Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` regenerated `PakuriCsvRuntimeAssetCatalog.asset` with the 8 enemy skill prefab paths.
+- Runtime build `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
+- Editor build `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
+- Unity menu `Pakuri/Validate CSV Source Data` produced no CSV validation errors in the warning/error console read; only MCP client handler logs remained.
+
+### History
+
+- 2026-05-17: User asked Code Builder to create `EnemySkillData.csv`, migrate the seven active enemy skills plus source-only `AimedShot`, and change the loader without adding absent enemy rows.
+
+## Task: 2026-05-17 Projectile Blueprint Numeric Evidence Priority
+
+### Task title
+
+Record fallback order for projectile and enemy numeric evidence.
+
+### Goals
+
+- Update the projectile blueprint so future projectile implementation does not invent missing tuning numbers.
+- Require active CSV checks before reference-document fallback when the user does not provide exact values.
+- Record current monster skill CSV coverage.
+
+### Constraints
+
+- Role Owner is Designer.
+- Documentation and evidence check only; no C# script, prefab, scene, or CSV data values were changed in this task.
+- Active `SkillData.csv` coverage and runtime source `monster_skills.csv` coverage are different and must not be conflated.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Blueprint update completed and file checks passed.
+
+### Next Actions
+
+- Code Builder should follow `boards/SkillBluePrint/projectile-blueprint.md` numeric evidence priority before future projectile edits.
+- Add missing active `SkillData.csv` rows later when broad monster skill data entry resumes.
+
+### Evidence
+
+- `boards/SkillBluePrint/projectile-blueprint.md` now says to check `Pakuri/Assets/CSVdata/SkillData.csv` for skill values and `Pakuri/Assets/CSVdata/EnemyStat.csv` for enemy values first, then runtime source CSV files, then `Pakuri/reference/2.Monster` or `Pakuri/reference/5.enemy`.
+- Reference monster skill file scan found `ReferenceMonsterSkillFiles=50`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` check returned `SourceMonsterSkillRows=50`, with `ariel:10`, `eve:10`, `rin:10`, `sein:10`, and `vega:10`, and no missing IDs from the 50 reference skill files.
+- `Pakuri/Assets/CSVdata/SkillData.csv` and `Pakuri/Assets/CSVData/SkillData.csv` each currently contain only `eve-a`, `ariel-a`, and `ariel-b`, so 47 of the 50 monster skill IDs are not present in the active SkillData tables.
+- `Pakuri/Assets/CSVdata/EnemyStat.csv` and `Pakuri/Assets/CSVData/EnemyStat.csv` each contain 7 Stage 1 enemy rows with active skill IDs `Slash`, `ShieldUp`, `ShurikenThrow`, `Heal`, `GuardianFlag`, `ChargeCommand`, and `SacredSwordWave`.
+
+### History
+
+- 2026-05-17: User asked to update the projectile blueprint with CSV-first numeric evidence lookup and asked whether current monster skills lack CSV data.
+
+## Task: 2026-05-17 Ariel-A Projectile Data Alignment
+
+### Task title
+
+Record Ariel-A active skill data and runtime source prefab path.
+
+### Goals
+
+- Add Ariel-A to the active `SkillData.csv` skill table.
+- Connect the runtime source `monster_skills.csv` row to the authored Ariel-A prefab path.
+- Keep the data record clear about unsupported Ariel-A special/master behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Current runtime still resolves skill definitions through `PakuriCsvRuntimeData` / `monster_skills.csv`; the active `SkillData.csv` row is alignment and future-source data, not the only current runtime source.
+- Current source schema has no base pierce-count or per-skill projectile-speed columns, so the runtime mapper uses an Ariel-A-specific mapping for pierce `1` and speed `17`.
+- No Play Mode verification was run by Codex.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally checked.
+
+### Next Actions
+
+- Add first-class source schema fields for base pierce count and per-skill projectile speed before broad projectile data entry depends on those values.
+- Add modifier/runtime support before treating Ariel-A White Judgement explosions, holy exposure, or shielded-ally damage scaling as implemented.
+
+### Evidence
+
+- `Pakuri/Assets/CSVData/SkillData.csv` now includes `ariel-a` with `ProjectileSkillData`, `MagazineProjectile`, Holy damage, base damage `18`, spell coefficient `1`, magazine `7`, reload `4.6`, shot interval `0.36`, pierce `1`, projectile speed `17`, and source notes from `Pakuri/reference/2.Monster/ariel/skill/a-judgement-light.md`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores `ariel-a` `skill_effect_prefab_path=Assets/Prefab/Skill/Ariel/Airel_A.prefab`.
+- CSV check returned `SkillDataUpperRows=3`, `UpperA=ariel-a`, `Pierce=1`, `Speed=17`, `SourcePrefab=Assets/Prefab/Skill/Ariel/Airel_A.prefab`, `SourceMagazine=7`, `SourceReload=4.6`, and `SourceShot=0.36`.
+- Runtime/editor builds completed with 0 errors and existing assembly reference warnings.
+
+### History
+
+- 2026-05-17: User asked Code Builder to implement Ariel-A and supplied the `Airel_A.prefab` path.
+
 ## Task: 2026-05-16 NewRunScene Stage CSV Design Check
 
 ### Task title

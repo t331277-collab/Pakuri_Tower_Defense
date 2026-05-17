@@ -1,6 +1,0 @@
-ally_id,ally_name,role_type,element_focus,life_count,max_hp,atk,spell_power,base_range,action_speed,anchor_role,target_priority_profile,signature_skill_id,physical_def,fire_def,lightning_def,cold_def,dark_def,holy_def,crit_chance,crit_damage,power,physical_amp,fire_amp,lightning_amp,cold_amp,dark_amp,holy_amp,skill_haste,range_bonus,cooldown_reduction,duration_power,notes
-ALLY_001,Flame Servitor,frontline,Fire,1,120,18,12,3.0,1.0,front,breaker_first,SKILL_003,8,10,6,6,6,6,0.05,1.5,0,0,0.08,0,0,0,0,0,0,0,0,화염 전열 서번트
-ALLY_002,Frost Watcher,ranged,Cold,1,85,10,18,6.5,0.9,midline,ranged_then_dense,SKILL_004,5,5,5,10,5,5,0.05,1.5,0,0,0,0,0.08,0,0,0,0,0,0,냉기 원거리 감시자
-ALLY_003,Hex Binder,debuffer,Dark,1,80,8,20,5.5,0.8,midline,elite_then_marked,SKILL_005,4,4,4,4,10,4,0.05,1.5,0,0,0,0,0,0.08,0,0,0,0,0,어둠 저주 결속자
-ALLY_004,Sanctum Herald,support,Holy,1,95,6,16,5.0,0.8,backline,ally_support_first,SKILL_006,6,6,6,6,6,10,0.05,1.5,0,0,0,0,0,0,0.08,0,0,0,0,신성 지원 전령
-ALLY_005,Ash Spawn,summoner,Fire,1,90,12,16,4.5,0.9,midline,dense_group,SKILL_010,6,8,5,5,5,5,0.05,1.5,0,0,0.08,0,0,0,0,0,0,0,0,화염 소환형 개체

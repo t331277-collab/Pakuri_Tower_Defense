@@ -19,6 +19,11 @@ namespace Pakuri.Data
                 errors.Add("stage_one_enemies.csv has no enemy rows.");
             }
 
+            if (model.EnemySkills.Count == 0)
+            {
+                errors.Add("EnemySkillData.csv has no enemy skill rows.");
+            }
+
             ValidateCatalogEntries(model.CatalogMonsters, model.Monsters, "catalog_monsters.csv", errors);
             ValidateCatalogEntries(model.CatalogStageOneEnemies, model.StageOneEnemies, "catalog_stage_one_enemies.csv", errors);
 
@@ -75,6 +80,14 @@ namespace Pakuri.Data
                 if (skill.SkillKind == PakuriCsvSkillKind.Passive && choice.ChoiceGroup != PakuriCsvChoiceGroup.PassiveEnhancement)
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses active choice group on passive skill '{choice.SkillId}'.");
+                }
+            }
+
+            foreach (var enemy in model.StageOneEnemies.Values)
+            {
+                if (!model.EnemySkills.ContainsKey(enemy.StageOneSkill.ToString()))
+                {
+                    errors.Add($"Enemy '{enemy.Id}' references unknown enemy skill '{enemy.StageOneSkill}'.");
                 }
             }
 
@@ -185,6 +198,11 @@ namespace Pakuri.Data
             {
                 ValidateSpritePath(assetCatalog, choice.SkillIconPath, $"Skill choice '{choice.Id}' skill_icon_path", errors);
                 ValidatePrefabPath(assetCatalog, choice.SkillEffectPrefabPath, $"Skill choice '{choice.Id}' skill_effect_prefab_path", errors);
+            }
+
+            foreach (var skill in model.EnemySkills.Values)
+            {
+                ValidatePrefabPath(assetCatalog, skill.SkillEffectPrefabPath, $"Enemy skill '{skill.Id}' skill_effect_prefab_path", errors);
             }
 
             foreach (var enemy in model.StageOneEnemies.Values)

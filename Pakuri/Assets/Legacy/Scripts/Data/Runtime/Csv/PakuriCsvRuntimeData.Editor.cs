@@ -43,6 +43,9 @@ namespace Pakuri.Data
             sourceCatalog.MonsterSkills = LoadImportedSourceTextAssetOrThrow(MonsterSkillsFileName);
             sourceCatalog.MonsterSkillChoices = LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesFileName);
             sourceCatalog.StageOneEnemies = LoadImportedSourceTextAssetOrThrow(StageOneEnemiesFileName);
+            sourceCatalog.EnemySkills = LoadTextAssetOrThrow(
+                EnemySkillDataAssetPath,
+                "Create EnemySkillData.csv under Assets/CSVdata before validation.");
             EditorUtility.SetDirty(sourceCatalog);
 
             var sourceModel = LoadSourceModel(sourceCatalog);
@@ -83,12 +86,19 @@ namespace Pakuri.Data
         private static TextAsset LoadImportedSourceTextAssetOrThrow(string fileName)
         {
             var assetPath = $"{ImportedSourceAssetRoot}/{fileName}";
+            return LoadTextAssetOrThrow(
+                assetPath,
+                "Import the source CSV into Assets/CSVdata/source before validation.");
+        }
+
+        private static TextAsset LoadTextAssetOrThrow(string assetPath, string instruction)
+        {
             var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
             if (asset == null)
             {
                 throw new CsvFatalException(
                     $"Required imported CSV TextAsset is missing at '{assetPath}'.",
-                    new List<string> { "Import the source CSV into Assets/CSVdata/source before validation." });
+                    new List<string> { instruction });
             }
 
             return asset;
@@ -150,6 +160,11 @@ namespace Pakuri.Data
             foreach (var choice in sourceModel.SkillChoices.Values)
             {
                 AddAssetPath(paths, choice.SkillEffectPrefabPath);
+            }
+
+            foreach (var skill in sourceModel.EnemySkills.Values)
+            {
+                AddAssetPath(paths, skill.SkillEffectPrefabPath);
             }
 
             var entries = new List<PakuriCsvRuntimeAssetCatalog.PrefabEntry>();

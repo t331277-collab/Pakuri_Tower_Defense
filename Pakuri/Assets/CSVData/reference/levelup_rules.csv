@@ -1,9 +1,0 @@
-rule_id,rule_name,rule_value,description
-RULE_001,choice_count,3,Default number of level-up choices shown
-RULE_002,pause_mode,full_pause,Pause combat fully while choosing in MVP
-RULE_003,recent_choice_exclude_count,1,Exclude last seen choice set from immediate reroll
-RULE_004,min_generic_fallback,1,Ensure at least one broadly useful fallback choice
-RULE_005,allow_reroll,false,No reroll in initial prototype
-RULE_006,exclusive_group_duplicate,false,Do not show same exclusive group twice in one set
-RULE_007,master_min_level,5,Master choices can appear from level 5
-RULE_008,master_weight_multiplier,0.5,Master choice appears at lower weight than normal upgrades

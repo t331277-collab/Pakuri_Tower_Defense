@@ -3,6 +3,48 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-17 Projectile Skill Builder Flow
+
+### Task title
+
+Require Code Builder to read the projectile blueprint before projectile skill implementation.
+
+### Goals
+
+- Make future projectile-related implementation commands start from `boards/SkillBluePrint/projectile-blueprint.md`.
+- Ensure Code Builder classifies requested projectile behavior as supported, partial, or unsupported before editing code/data/assets.
+- Prevent unsupported special behavior such as Vega-A timed three-projectile sequences, branch variants, bounce, homing, installed projectiles, multi-hitbox projectiles, mark payloads, or impact-area projectiles from being treated as already supported common behavior.
+
+### Constraints
+
+- Role Owner is Designer because this is workflow and documentation policy, not runtime implementation.
+- No C# script, scene, prefab, or CSV gameplay behavior was changed.
+- Claims are based on inspected `AGENTS_ROLE/GAMEBULIDER.md`, `boards/SkillBluePrint/projectile-blueprint.md`, and routing files.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- On future projectile skill implementation commands, Code Builder reads `AGENTS.md`, `MDTREE.md`, routed boards, `AGENTS_ROLE/GAMEBULIDER.md`, the matching Builder track files, and then `boards/SkillBluePrint/projectile-blueprint.md` before editing.
+- Code Builder records whether the requested projectile behavior is common, partial, or exceptional in the implementation summary and related board update.
+
+### Evidence
+
+- `boards/SkillBluePrint/projectile-blueprint.md` exists and contains the current InGame projectile path, supported/partial/unsupported matrix, special behavior rule, new projectile skill checklist, and Code Builder verification expectations.
+- Updated `AGENTS_ROLE/GAMEBULIDER.md` with `Projectile Skill Blueprint Rule`.
+- The new rule requires reading `boards/SkillBluePrint/projectile-blueprint.md` before projectile-related skill implementation edits.
+- The new rule names exceptional behaviors that must not be assumed to be supported by the common projectile path.
+
+### History
+
+- 2026-05-17: User requested that future projectile skill implementation commands make Code Builder refer to `boards/SkillBluePrint/projectile-blueprint.md` and asked how the work flow should be modified.
+
 ## Task: 2026-05-14 Board Archive Expansion
 
 ### Task title

@@ -23,6 +23,7 @@ namespace Pakuri.InGame
         [SerializeField] private Transform projectileDestroyBoundary;
         [SerializeField] private float projectileDestroyBoundaryFallbackX = 31f;
         [SerializeField] private GameObject eveAProjectilePrefab;
+        [SerializeField] private GameObject arielAProjectilePrefab;
         [SerializeField] private GameObject arielBShieldEffectPrefab;
         [SerializeField] private GameObject warriorSkillPrefab;
         [SerializeField] private GameObject shieldSkillPrefab;
@@ -223,6 +224,8 @@ namespace Pakuri.InGame
             {
                 case "eve-a":
                     return eveAProjectilePrefab;
+                case "ariel-a":
+                    return arielAProjectilePrefab;
                 case "ariel-b":
                     return arielBShieldEffectPrefab;
                 default:

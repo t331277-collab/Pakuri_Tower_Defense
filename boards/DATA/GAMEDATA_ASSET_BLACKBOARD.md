@@ -4,6 +4,49 @@
 - This file keeps only task blocks dated `2026-05-08` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
 
+## Task: 2026-05-17 Ariel-A Skill Prefab Runtime Wiring
+
+### Task title
+
+Record Ariel-A projectile prefab component and NewRunScene serialized reference.
+
+### Goals
+
+- Make `Assets/Prefab/Skill/Ariel/Airel_A.prefab` a runtime projectile actor carrier.
+- Serialize the Ariel-A prefab on `InGameCombatManager` in `NewRunScene`.
+- Ensure the CSV runtime asset catalog can resolve the prefab path from source data.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Prefab art and animation are user-authored; Code Builder only connected runtime component/collider/reference data.
+- No Play Mode verification was run by Codex.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and local non-gameplay verification passed.
+
+### Next Actions
+
+- User verifies in Play Mode that the projectile appears from Ariel-A and follows the intended visual orientation.
+- Add authoring rules later if final projectile hitbox dimensions need to differ from the current prefab collider.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Skill/Ariel/Airel_A.prefab` now has `Pakuri.InGame.InGameProjectileActor` and a trigger `BoxCollider2D`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` serializes `arielAProjectilePrefab` as GUID `66fcb365022930d4681ad320e5fff520` with root fileID `3285557362087739772`.
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog.asset` now includes `Assets/Prefab/Skill/Ariel/Airel_A.prefab`.
+- `InGameCombatManager.ResolveSkillEffectPrefab("ariel-a")` returns `arielAProjectilePrefab`.
+- Unity-MCP refresh reached idle and console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-17: User supplied `Assets/Prefab/Skill/Ariel/Airel_A.prefab` for Ariel-A implementation.
+
 ## Task: 2026-05-15 Phase4-C-0 Skill Prefab Actor Asset Wiring
 
 ### Task title

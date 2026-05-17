@@ -1,6 +1,0 @@
-ally_id,detect_range,attack_range,attack_cooldown,chase_limit,retreat_threshold_hp,collision_radius,formation_weight,defense_bias,support_bias,status_resist_profile,skill_haste_bonus,range_bonus,cooldown_reduction,duration_power,crit_chance_bonus,crit_damage_bonus,power_bonus,notes
-ALLY_001,7.0,3.0,1.4,8.0,0.30,0.55,0.9,0.8,0.1,frontline,0,0,0,0,0,0,0,전열 화염 근접형
-ALLY_002,8.5,6.5,1.8,6.0,0.25,0.40,0.7,0.4,0.2,ranged,0.05,0.5,0,0,0,0,0,원거리 냉기 견제형
-ALLY_003,8.0,5.5,2.0,6.5,0.25,0.40,0.7,0.3,0.4,debuffer,0,0,0.05,0.1,0,0,0,저주/디버프 운용형
-ALLY_004,7.5,5.0,2.4,5.5,0.35,0.45,0.6,0.3,0.9,support,0,0.25,0.05,0.15,0,0,0,지원/유지력 강화형
-ALLY_005,7.0,4.5,2.1,6.0,0.28,0.48,0.8,0.5,0.3,summoner,0,0,0,0.1,0,0,0,소환/광역 화염형

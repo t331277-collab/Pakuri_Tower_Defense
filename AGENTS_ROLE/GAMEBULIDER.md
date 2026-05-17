@@ -32,6 +32,14 @@ Read only the track files that match the request:
 
 If multiple tracks apply, read the smallest set that covers the task.
 
+## Projectile Skill Blueprint Rule
+
+When the user gives an implementation command for projectile-related skills, Code Builder must read `boards/SkillBluePrint/projectile-blueprint.md` before editing scripts, prefabs, scenes, or CSV data.
+
+Use that blueprint to classify the requested projectile behavior as supported, partial, or unsupported by the current common projectile path. Then inspect the specific code and data files listed by the blueprint before implementing.
+
+If the requested behavior is exceptional, such as Vega-A timed three-projectile behavior, branch-lightning variants, bounce, homing, installed/trap projectiles, multi-hitbox projectiles, mark payloads, or impact-area projectiles, do not assume the common projectile path supports it. Either implement a deliberate exception with explicit evidence and verification, or create a reusable extension point when the behavior is expected to be shared by multiple skills.
+
 ## Persistent State
 
 When implementation changes facts, update all related board files selected through `MDTREE.md`.

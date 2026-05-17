@@ -1,4 +1,0 @@
-tower_skill_id,tower_id,skill_id,skill_name,skill_type,description,cooldown_sec,energy_cost,crit_allowed,skill_haste_allowed,cooldown_reduction_allowed,notes
-TOWER_SKILL_001,TOWER_001,SKILL_001,Arc Bolt,active,주문력 기반 번개 투사체를 발사한다,1.4,0,true,true,true,기본 프로토타입 스킬
-TOWER_SKILL_002,TOWER_001,SKILL_002,Arc Bolt Master A,master,적중 시 번개가 갈라져 근처 적을 추적한다,1.4,0,true,true,true,마스터 선택지 A
-TOWER_SKILL_003,TOWER_001,SKILL_003,Arc Bolt Master B,master,관통과 추가 투사체가 강화된 포화형 사격,1.8,0,true,true,true,마스터 선택지 B

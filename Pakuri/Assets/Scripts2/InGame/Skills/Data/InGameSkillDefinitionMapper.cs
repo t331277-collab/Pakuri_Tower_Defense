@@ -121,7 +121,8 @@ namespace Pakuri.InGame
                 projectile.Projectile.MagazineSize = source.MagazineCapacity;
                 projectile.Projectile.ReloadTime = source.ReloadSeconds;
                 projectile.Projectile.ProjectilesPerShot = 1;
-                projectile.Projectile.ProjectileSpeed = monster != null ? monster.ProjectileSpeed : 0f;
+                projectile.Projectile.PierceCount = ResolveBasePierceCount(source);
+                projectile.Projectile.ProjectileSpeed = ResolveProjectileSpeed(monster, source);
                 MapDamage(projectile.Damage, source);
                 projectile.OnHitStatus = CreateStatusApplication(source.StatusEffectId);
                 return;
@@ -236,6 +237,36 @@ namespace Pakuri.InGame
             }
 
             return mapped;
+        }
+
+        private static float ResolveProjectileSpeed(MonsterDefinition monster, SkillDefinition source)
+        {
+            if (source != null && !string.IsNullOrWhiteSpace(source.SkillId))
+            {
+                switch (source.SkillId.ToLowerInvariant())
+                {
+                    case "ariel-a":
+                        return 17f;
+                }
+            }
+
+            return monster != null ? monster.ProjectileSpeed : 0f;
+        }
+
+        private static int ResolveBasePierceCount(SkillDefinition source)
+        {
+            if (source == null || string.IsNullOrWhiteSpace(source.SkillId))
+            {
+                return 0;
+            }
+
+            switch (source.SkillId.ToLowerInvariant())
+            {
+                case "ariel-a":
+                    return 1;
+                default:
+                    return 0;
+            }
         }
 
         private static CharacterType MapCharacter(string monsterId)
