@@ -76,6 +76,7 @@ namespace Pakuri.InGame
             SkillRuntimeKind.CooldownProjectile,
             SkillRuntimeKind.LineAttack,
             SkillRuntimeKind.AreaAttack,
+            SkillRuntimeKind.SingleAttack,
             SkillRuntimeKind.Field,
             SkillRuntimeKind.Buff,
             SkillRuntimeKind.Shield,

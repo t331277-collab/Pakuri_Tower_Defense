@@ -40,6 +40,14 @@ Use that blueprint to classify the requested projectile behavior as supported, p
 
 If the requested behavior is exceptional, such as Vega-A timed three-projectile behavior, branch-lightning variants, bounce, homing, installed/trap projectiles, multi-hitbox projectiles, mark payloads, or impact-area projectiles, do not assume the common projectile path supports it. Either implement a deliberate exception with explicit evidence and verification, or create a reusable extension point when the behavior is expected to be shared by multiple skills.
 
+## BeamSkill Blueprint Rule
+
+When the user gives an implementation command for BeamSkill, beam, laser, ray, slash-line, or `LineAttack` skills, Code Builder must read `boards/SkillBluePrint/BeamSkill-blueprint.md` before editing scripts, prefabs, scenes, or CSV data.
+
+Use that blueprint to classify the requested BeamSkill behavior as supported, partial, or unsupported by the current common BeamSkill / LineAttack path. Then inspect the specific code and data files listed by the blueprint before implementing.
+
+If the requested behavior is exceptional, such as width/duration choice modifiers, stop-at-first-target behavior, knockback, resistance reduction, forked/chained/curved/sweeping beams, delayed telegraph damage, or custom per-target tick rules, do not assume the common BeamSkill path supports it. Either implement a deliberate exception with explicit evidence and verification, or create a reusable extension point when the behavior is expected to be shared by multiple skills.
+
 ## Persistent State
 
 When implementation changes facts, update all related board files selected through `MDTREE.md`.

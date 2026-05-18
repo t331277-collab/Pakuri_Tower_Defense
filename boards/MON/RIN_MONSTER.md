@@ -63,6 +63,45 @@ Builder implementation completed and locally verified. 2026-05-18 Rin active ski
 - 2026-05-18: Code Builder moved Rin projectile/status tuning into the skill CSV row and filled Rin-C width from the reference document.
 - 2026-05-18: Code Builder normalized Rin design-only status labels to chance 0 and added supported status-label fallback/CSV sync batch support.
 
+## Task: 2026-05-18 Rin-E SingleAttack Runtime Kind
+
+### Task title
+
+Route Rin-E collapse strike through the new SingleAttack runtime kind.
+
+### Goals
+
+- Keep Rin-E as one-shot area damage rather than sustained `AreaAttack`.
+- Preserve CSV-authored damage, coefficient, radius, and cooldown.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Rin-E applies one immediate area hit.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/rin/skill/e-collapse-strike.md` names Rin-E `붕괴 타격`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now has `rin-e runtime_kind=SingleAttack`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/SingleAttackData.cs` and `SkillExecutors.cs` provide the data and executor path.
+- Runtime/editor builds passed with 0 errors; Unity-MCP skill validator returned 0 errors and 0 warnings.
+
+### History
+
+- 2026-05-18: User listed CSV row 17 as a one-shot area attack skill for the new `SingleAttack` type.
+
 ## Task: 2026-05-13 Rin Battlefield Facade Registration
 
 ### Task title

@@ -56,3 +56,112 @@ Current active `NewRunScene` UI rules summarized and retained for future work. 2
 - 2026-05-15: AutoBtn manual/auto routing became part of the active baseline.
 - 2026-05-17: Status suffix display and Offering enhancement availability filtering were added to that active baseline.
 - 2026-05-18: Code Builder split `InGameUIManager` into `OfferingUI.cs` and `MenifestUI.cs`, and commonized `MonsterUnitActor`/`EnemyUnitActor` presentation through `UnitActorView.cs`.
+
+## Task: 2026-05-18 NewRunScene DebugUI and MonsterPanel Skill UI
+
+### Task title
+
+Add `DebugUI` skill-learn buttons and `MonsterPanel` selected-monster skill status UI to `NewRunScene`.
+
+### Goals
+
+- `Canvas/DebugUIBtn` opens `Canvas/DebugUI`, and `Canvas/DebugUI/Close` closes it.
+- `DebugUI` A-E buttons learn the selected 1P monster's A-E active skills when the skill exists and is not already learned.
+- Missing or unavailable skills return without side effects.
+- `MonsterPanel/1PMonster` shows the selected monster image and up to three learned active skill slots.
+- Magazine skills show current magazine count in each Active slot text.
+- Cooldown/reload waits are visualized through each slot's `CooldownOverlay` image using a vertical filled overlay.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User explicitly requested no Code Reviewer stage for this task.
+- Unity Play Mode verification remains user-owned.
+- Debug skill acquisition must use the same session/offering record path as Offering active-skill acquisition.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and scene-wired. `DebugUIBtn` was renamed from the actual scene object `DebugBtn` after inspection showed the user-requested `DebugUIBtn` name did not exist yet. 2026-05-18 follow-up fixed `MonsterPanelUI` so it runs from always-active `Canvas`, forces `MonsterPanel/1PMonster` visible, binds serialized `Active1`-`Active3` slot view objects to the real child GameObjects, and uses remaining cooldown ratio for `CooldownOverlay.fillAmount`. A later 2026-05-18 follow-up changed Active slot Text so only magazine skills show `current/max`; non-magazine learned skills keep their Text object inactive and empty.
+
+### Next Actions
+
+- User verifies in Play Mode that `DebugUIBtn`, `Close`, A-E learn buttons, magazine counts, and vertical cooldown overlay timing match expected UX.
+- If more than three learned active skills must be visible at once, expand the current `MonsterPanel` slot count beyond `Active1`-`Active3`.
+
+### Evidence
+
+- Unity scene hierarchy inspection showed `Canvas/DebugUI` with `Close`, `ABtn`, `BBtn`, `CBtn`, `DBtn`, `EBtn`, and showed `Canvas/DebugBtn` instead of `DebugUIBtn`.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs` records debug skill acquisition through `RunSession.RecordOfferingChoice(monsterId, string.Empty, string.Empty, sourceSkill.SkillId, string.Empty)`.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs` synchronizes the selected player model `UnitStateBucket` from `RunSession` and rebuilds active runtime skills with `SkillRuntimeFactory.RebuildLearnedActiveSet`.
+- `Pakuri/Assets/Scripts2/InGame/UI/MonsterPanelUI.cs` resolves `MonsterPanel/1PMonster/Monster Image`, `Active1`, `Active2`, `Active3`, their `Text (TMP)` children, and their `CooldownOverlay` images.
+- 2026-05-18 follow-up evidence: Unity-MCP `find_gameobjects` found `Pakuri.InGame.MonsterPanelUI` on `Canvas` only, and `Canvas/MonsterPanel` exists as the controlled panel.
+- 2026-05-18 follow-up evidence: Unity-MCP editor code simulation with Eve default learned state returned `runtimeSkills=1; panel=True; oneP=True; active1=True; active1Text=6/6; active2=False; active3=False; overlayFill=0.00; overlayActive=False`.
+- 2026-05-18 follow-up evidence: Unity-MCP editor code simulation after learning `eve-b` and `eve-e` returned `runtimeSkills=3; Active1=True:6/6; Active2=True:프리즘 레이; Active3=True:플라즈마 필드`.
+- 2026-05-18 follow-up evidence: after the Active Text policy change, Unity-MCP editor code simulation after learning `eve-b` and `eve-e` returned `runtimeSkills=3; A1=True:textActive=True:text='6/6'; A2=True:textActive=False:text=''; A3=True:textActive=False:text=''`.
+- 2026-05-18 prisoner label diagnosis: `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` line 85 contains the hardcoded label `?щ줈\n{prisoners[i]}`, while CSV search found `stage1-swordsman` in source CSV as ASCII enemy id data. The observed `?щ줈\nstage1-swordsman` therefore comes from code-side label mojibake, not from the prisoner id CSV value.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now hides `PrisonerChoicePopUp` immediately after `OfferingBtn` or `Menifested` is clicked.
+- `Pakuri/Assets/Scripts2/InGame/UI/OfferingUI.cs` now performs the same `RunSession` -> `MonsterUnitRuntimeModel.State` sync before rebuilding learned active skills.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` has `Pakuri.InGame.DebugUI` and `Pakuri.InGame.MonsterPanelUI` on `Canvas`, with `Canvas/MonsterPanel` as the controlled panel, and the scene was saved through Unity MCP.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing MSB3277 assembly-version warnings remain.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 assembly-version warnings remain.
+- Unity console after compile still showed only the pre-existing MCP client handler logs and `UnityEditor.Graphs.Edge.WakeUp` `NullReferenceException`; no new C# compile errors were reported.
+
+### History
+
+- 2026-05-18: Code Builder inspected `NewRunScene` UI hierarchy, implemented `DebugUI.cs` and `MonsterPanelUI.cs`, patched Offering runtime-state sync, wired components into `NewRunScene`, saved the scene, and verified runtime/editor builds with 0 errors.
+- 2026-05-18 follow-up: User clarified that only learned runtime skills should fill up to `Active1`-`Active3`. Code Builder found the serialized `ActiveSkillSlotView[]` entries were non-null but unbound to child GameObjects, so `ResolveSlot` skipped binding and left authored placeholder text/visibility unchanged. `MonsterPanelUI.cs` now rebinds unbound slot views and the scene now drives `MonsterPanelUI` from `Canvas`.
+- 2026-05-18 follow-up: User clarified that Active slot Text should not show skill names and should only show magazine count for magazine skills. Code Builder changed `MonsterPanelUI.cs` accordingly and added `PrisonerChoicePopUp` hiding wrappers for Offering/Menifested clicks in `InGameUIManager.cs`.
+
+## Task: 2026-05-18 NewRunScene Reward/Offering Mojibake Cleanup
+
+### Task title
+
+Remove broken hardcoded reward and Offering labels from the active `NewRunScene` UI path.
+
+### Goals
+
+- Stop prisoner reward buttons from showing mojibake plus raw enemy IDs such as `stage1-swordsman`.
+- Resolve prisoner display names through the runtime CSV catalog built from `stage_one_enemies.csv`.
+- Remove broken hardcoded Korean fragments from Offering choice titles and fallback descriptions.
+- Keep Offering titles/descriptions driven by monster, skill, passive, and reward data fields that originate from the current CSV runtime catalog.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- CSV data itself was not changed because `stage1-swordsman` already exists as a valid ASCII enemy ID and `stage_one_enemies.csv` already provides `display_name`.
+- No authoritative CSV for static UI category labels such as Reward, Prisoner, Gold, or Dark Trace was found during this task, so those static labels remain code-side English placeholders.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that reward prisoner buttons show the CSV enemy display name, for example `Prisoner` / `검사` for `stage1-swordsman`.
+- If Korean/static UI labels should be data-driven too, add or identify a dedicated UI localization CSV for labels such as Reward, Prisoner, Gold, Dark Trace, Active, Passive, and Enhancement.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/stage_one_enemies.csv` contains `stage1-swordsman,검사`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs` maps source enemy `DisplayName` into `EnemyDefinition.DisplayName`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/GameDataCatalog.cs` exposes `GetStageOneEnemyById(string enemyId)`.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now calls `ResolvePrisonerDisplayName(prisonerId)` and uses `GameDataCatalog.GetStageOneEnemyById(...)` before falling back to the raw ID.
+- `Pakuri/Assets/Scripts2/InGame/UI/OfferingUI.cs` now builds active/passive/enhancement titles from CSV-backed `monster.DisplayName`, `skill.DisplayName`, `passive.DisplayName`, and `reward.Title`, and falls back to CSV-backed IDs instead of mojibake fallback prose.
+- `Get-ChildItem -Path Pakuri\Assets\Scripts2\InGame\UI -Recurse -Filter *.cs | Select-String -SimpleMatch ...` found 0 remaining matches for the inspected mojibake fragments after the change.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
+- Unity-MCP console read after compile showed only the existing MCP client handler log and existing `UnityEditor.Graphs.Edge.WakeUp` `NullReferenceException`; no new C# compile errors were reported.
+
+### History
+
+- 2026-05-18: User clarified the `stage1-swordsman` problem was not CSV corruption, but broken hardcoded UI strings in `InGameUIManager.cs` and `OfferingUI.cs`. Code Builder inspected the CSV/runtime catalog path, replaced the broken code-side strings, and verified builds.

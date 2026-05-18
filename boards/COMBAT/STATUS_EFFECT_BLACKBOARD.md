@@ -141,3 +141,44 @@ Retained as an active display rule that still affects current combat/runtime wor
 
 - 2026-05-15: Rounded HP/shield mutation and stable HP fill positioning were recorded as the current baseline.
 - 2026-05-18: Code Builder moved shared HP/shield fill and damage-popup presentation from separate actor scripts into `UnitActorView.cs`.
+
+## Task: 2026-05-18 Area Skill Status Application
+
+### Task title
+
+Route AreaAttack and SingleAttack status application through the shared status runtime.
+
+### Goals
+
+- Apply Eve C chill and Eve E vulnerable from CSV-driven area ticks.
+- Apply one-shot area statuses through the same shared status helper path.
+- Keep unsupported design-only labels at `status_chance=0` unless `StatusEffectKind` supports them.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Status id/chance/label values are read from `monster_skills.csv`.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Eve C applies chill per tick and Eve E applies vulnerable per tick.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameZoneSkillActor.cs` applies statuses through `InGameCombatManager.ApplyStatus(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` reuses `ProjectileSkillExecutor.ResolveStatusSpec(...)` for `ZoneSkillExecutor` and `SingleAttackSkillExecutor`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` has `eve-c status_effect_id=chill status_chance=1` and `eve-e status_effect_id=vulnerable status_chance=1`.
+- Unity-MCP `InGameSkillDataValidator.ValidateCatalog()` returned `valid=True; errors=0; warnings=0`.
+
+### History
+
+- 2026-05-18: Code Builder added area-status routing while adding AreaAttack and SingleAttack runtime execution.

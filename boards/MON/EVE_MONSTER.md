@@ -119,3 +119,48 @@ Implemented and locally validated by runtime/editor builds, Unity CSV sync, and 
 ### History
 
 - 2026-05-18: User requested Eve skill CSV Korean translation and Eve-B LineAttack implementation using `monster_skills.csv` tuning and `BeamSkillData.cs` as the reference structure.
+
+## Task: 2026-05-18 Eve C/D/E Runtime Kind And Names
+
+### Task title
+
+Correct Eve C/D/E names and AreaAttack/SingleAttack runtime kinds from reference files.
+
+### Goals
+
+- Keep Eve C named `프로스트 필드`, not translated as `서리 지대`.
+- Keep Eve D named `스태틱 오버라이드`, not translated as `정전기 과부하`.
+- Route Eve C/E as sustained `AreaAttack` and Eve D as one-shot `SingleAttack`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Eve C/D/E names are grounded in `Pakuri/reference/2.Monster/eve/skill`.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Eve C ticks for 4 seconds, Eve E ticks for 5 seconds, and Eve D performs a one-shot area hit.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/eve/skill/c-frost-field.md` lists `스킬명 | 프로스트 필드`.
+- `Pakuri/reference/2.Monster/eve/skill/d-static-override.md` lists `스킬명 | 스태틱 오버라이드`.
+- `Pakuri/reference/2.Monster/eve/skill/e-drone-beacon.md` lists `스킬명 | 플라즈마 필드`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now has `eve-c` display `프로스트 필드`, runtime `AreaAttack`, tick interval `0.5`, and active duration `4`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now has `eve-d` display `스태틱 오버라이드` and runtime `SingleAttack`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now has `eve-e` runtime `AreaAttack`, tick interval `0.8`, and active duration `5`.
+- Eve passive descriptions in `monster_skills.csv` now refer to `프로스트 필드` and `스태틱 오버라이드`.
+- Runtime/editor builds passed with 0 errors; Unity-MCP skill validator returned 0 errors and 0 warnings.
+
+### History
+
+- 2026-05-18: User reported that the issue was not CSV corruption but wrong translated/hardcoded skill naming and requested Code Builder correction.

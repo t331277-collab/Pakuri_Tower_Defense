@@ -1,5 +1,3 @@
-using Pakuri.Data;
-
 namespace Pakuri.InGame
 {
     internal static class StageOneEnemyPassiveStatApplier
@@ -11,39 +9,39 @@ namespace Pakuri.InGame
                 return;
             }
 
-            switch (enemy.StageOneSkill)
+            var value = System.Math.Max(0f, enemy.PassiveSkillValue);
+            if (string.IsNullOrWhiteSpace(enemy.PassiveSkillId) || value <= 0f)
             {
-                case StageOneEnemySkillKind.Slash:
-                    enemy.PassiveOutgoingDamageMultiplier *= 1.10f;
+                return;
+            }
+
+            switch (enemy.PassiveSkillId.Trim().ToLowerInvariant())
+            {
+                case "physicaldamageup":
+                    enemy.PassivePhysicalDamageMultiplier *= 1f + value;
                     break;
-                case StageOneEnemySkillKind.ShieldUp:
-                    MultiplyDefenses(enemy.Defenses, 1.10f);
+                case "defenseup":
+                    MultiplyDefenses(enemy.Defenses, 1f + value);
                     break;
-                case StageOneEnemySkillKind.AimedShot:
+                case "critchanceup":
                     if (enemy.Stats != null)
                     {
-                        enemy.Stats.CriticalChance += 0.08f;
+                        enemy.Stats.CriticalChance += value;
                     }
 
                     break;
-                case StageOneEnemySkillKind.ShurikenThrow:
+                case "critdamageup":
                     if (enemy.Stats != null)
                     {
-                        enemy.Stats.CriticalDamage += 0.20f;
+                        enemy.Stats.CriticalDamage += value;
                     }
 
                     break;
-                case StageOneEnemySkillKind.Heal:
-                    enemy.PassiveHealingMultiplier *= 1.15f;
+                case "healingup":
+                    enemy.PassiveHealingMultiplier *= 1f + value;
                     break;
-                case StageOneEnemySkillKind.GuardianFlag:
-                    enemy.PassiveIncomingDamageMultiplier *= 0.88f;
-                    break;
-                case StageOneEnemySkillKind.ChargeCommand:
-                    enemy.PassiveOutgoingDamageMultiplier *= 1.12f;
-                    break;
-                case StageOneEnemySkillKind.SacredSwordWave:
-                    enemy.PassiveOutgoingDamageMultiplier *= 1.15f;
+                case "incomingdamagedown":
+                    enemy.PassiveIncomingDamageMultiplier *= System.Math.Max(0f, 1f - value);
                     break;
             }
         }

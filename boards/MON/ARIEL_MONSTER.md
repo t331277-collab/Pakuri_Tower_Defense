@@ -72,6 +72,47 @@ Builder implementation completed and local non-gameplay checks passed. 2026-05-1
 - 2026-05-18: Code Builder moved Ariel-A projectile speed/pierce from mapper hardcoding into the skill CSV row and filled Ariel-B shield base from the reference document.
 - 2026-05-18: Code Builder added status-label fallback and CSV runtime sync batch support so supported status edits in `monster_skills.csv` can be synced without code changes.
 
+## Task: 2026-05-18 Ariel One-Shot Area Runtime Kind
+
+### Task title
+
+Route Ariel C/E through the new SingleAttack runtime kind.
+
+### Goals
+
+- Make Ariel C and Ariel E one-shot area attacks instead of sustained `AreaAttack` rows.
+- Keep the existing CSV numeric values unchanged.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Ariel C/E apply one immediate area hit through the shared executor.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/ariel/skill/c-blessing-wave.md` names Ariel C `축복의 파동`.
+- `Pakuri/reference/2.Monster/ariel/skill/e-archangel-descent.md` names Ariel E `대천사의 강림`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now has `ariel-c runtime_kind=SingleAttack`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now has `ariel-e runtime_kind=SingleAttack`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/SingleAttackData.cs` and `SkillExecutors.cs` provide the data and executor path.
+- Runtime/editor builds passed with 0 errors; Unity-MCP skill validator returned 0 errors and 0 warnings.
+
+### History
+
+- 2026-05-18: User listed CSV rows 5 and 7 as one-shot area attack skills for the new `SingleAttack` type.
+
 ## Task: 2026-05-15 Ariel-B Phase4-C-0 Shield Effect Minimum Execution
 
 ### Task title

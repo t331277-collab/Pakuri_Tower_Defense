@@ -144,6 +144,8 @@ namespace Pakuri.Data
                 {
                     errors.Add($"Enemy '{enemy.Id}' references unknown basic enemy skill '{enemy.BasicSkill}'.");
                 }
+
+                ValidateEnemyPassiveColumns(enemy, errors);
             }
 
             foreach (var monster in model.Monsters.Values)
@@ -254,6 +256,45 @@ namespace Pakuri.Data
                 errors.Add(
                     $"Skill '{skill.Id}' uses unsupported runtime status '{statusKey}'. Add it to StatusEffectKind or set status_chance to 0 for design-only labels.");
             }
+        }
+
+        private static void ValidateEnemyPassiveColumns(EnemyRow enemy, List<string> errors)
+        {
+            if (enemy == null)
+            {
+                return;
+            }
+
+            var passiveId = enemy.PassiveSkillId != null ? enemy.PassiveSkillId.Trim() : string.Empty;
+            if (string.IsNullOrWhiteSpace(passiveId))
+            {
+                if (enemy.PassiveSkillValue > 0f)
+                {
+                    errors.Add($"Enemy '{enemy.Id}' has passive_skill_value '{enemy.PassiveSkillValue}' but no passive_skill_id.");
+                }
+
+                return;
+            }
+
+            if (!IsSupportedEnemyPassiveId(passiveId))
+            {
+                errors.Add($"Enemy '{enemy.Id}' uses unsupported passive_skill_id '{passiveId}'.");
+            }
+
+            if (enemy.PassiveSkillValue <= 0f)
+            {
+                errors.Add($"Enemy '{enemy.Id}' passive_skill_id '{passiveId}' requires a positive passive_skill_value.");
+            }
+        }
+
+        private static bool IsSupportedEnemyPassiveId(string passiveId)
+        {
+            return string.Equals(passiveId, "PhysicalDamageUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "DefenseUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "CritChanceUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "CritDamageUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "HealingUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "IncomingDamageDown", StringComparison.OrdinalIgnoreCase);
         }
 
         private static void ValidateReferencedAssetCoverage(

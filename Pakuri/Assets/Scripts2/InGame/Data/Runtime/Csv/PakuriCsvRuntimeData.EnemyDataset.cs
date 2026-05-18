@@ -51,6 +51,8 @@ namespace Pakuri.Data
             public float ActiveSkillMoveSpeedMultiplier = 1f;
             public float ActiveSkillOutgoingDamageMultiplier = 1f;
             public string PassiveSkillName;
+            public string PassiveSkillId;
+            public float PassiveSkillValue;
             public string PassiveSummary;
         }
 
@@ -97,6 +99,8 @@ namespace Pakuri.Data
                 HolyDefense = record.ReadFloat("def_holy"),
                 StageOneSkill = record.ReadEnum<StageOneEnemySkillKind>("stage_one_skill"),
                 PassiveSkillName = record.ReadString("passive_skill_name"),
+                PassiveSkillId = record.ReadString("passive_skill_id"),
+                PassiveSkillValue = record.ReadFloat("passive_skill_value"),
                 PassiveSummary = record.ReadString("passive_summary")
             };
 

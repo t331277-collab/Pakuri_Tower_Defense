@@ -178,8 +178,8 @@ namespace Pakuri.InGame
                     Kind = OfferingChoiceKind.ActiveSkill,
                     MonsterId = state.MonsterId,
                     ActiveSkillId = skill.SkillId,
-                    Title = $"{monster.DisplayName} ?좉퇋 ?≫떚釉? {skill.DisplayName}",
-                    Description = ResolveDescription(skill.Summary, skill.DescriptionText, "?≫떚釉??ㅽ궗???듬뱷?쒕떎.")
+                    Title = $"{monster.DisplayName}\n{skill.DisplayName}",
+                    Description = ResolveDescription(skill.Summary, skill.DescriptionText, skill.SkillId)
                 });
             }
         }
@@ -210,8 +210,8 @@ namespace Pakuri.InGame
                     Kind = OfferingChoiceKind.PassiveSkill,
                     MonsterId = state.MonsterId,
                     PassiveSkillId = passive.PassiveId,
-                    Title = $"{monster.DisplayName} ?좉퇋 ?⑥떆釉? {passive.DisplayName}",
-                    Description = ResolveDescription(passive.Summary, passive.DescriptionText, "?⑥떆釉??ㅽ궗???듬뱷?쒕떎.")
+                    Title = $"{monster.DisplayName}\n{passive.DisplayName}",
+                    Description = ResolveDescription(passive.Summary, passive.DescriptionText, passive.PassiveId)
                 });
             }
         }
@@ -245,8 +245,8 @@ namespace Pakuri.InGame
                     LinkedChoiceId = reward.LinkedChoiceId,
                     ActiveSkillId = reward.ActiveSkillId,
                     PassiveSkillId = reward.PassiveSkillId,
-                    Title = $"{monster.DisplayName} ?ㅽ궗 媛뺥솕: {reward.Title}",
-                    Description = reward.Description,
+                    Title = $"{monster.DisplayName}\n{reward.Title}",
+                    Description = ResolveDescription(null, reward.Description, reward.RewardId),
                     DamageMultiplier = reward.DamageMultiplier,
                     MagazineBonus = reward.MagazineBonus,
                     ShotIntervalMultiplier = reward.ShotIntervalMultiplier,
@@ -314,7 +314,8 @@ namespace Pakuri.InGame
         private void RefreshRuntimeSkillModels()
         {
             var combatManager = resolveCombatManager?.Invoke();
-            if (combatManager == null)
+            var session = resolveSession?.Invoke();
+            if (combatManager == null || session == null)
             {
                 return;
             }
@@ -326,8 +327,55 @@ namespace Pakuri.InGame
                 var model = players[i] != null ? players[i].Model as MonsterUnitRuntimeModel : null;
                 if (model != null)
                 {
+                    SyncModelStateFromSession(session, model);
                     SkillRuntimeFactory.RebuildLearnedActiveSet(model, skillCatalog);
                     combatManager.RefreshUnitActor(model);
+                }
+            }
+        }
+
+        private static void SyncModelStateFromSession(RunSession session, MonsterUnitRuntimeModel model)
+        {
+            if (session == null || model == null || model.Identity == null)
+            {
+                return;
+            }
+
+            var monsterId = model.Identity.DefinitionId;
+            if (string.IsNullOrWhiteSpace(monsterId))
+            {
+                return;
+            }
+
+            var state = session.GetPartyMemberState(monsterId);
+            if (state == null)
+            {
+                return;
+            }
+
+            if (model.State == null)
+            {
+                model.State = new UnitStateBucket();
+            }
+
+            CopyListToSet(state.LearnedActives, model.State.LearnedActiveSkillIds);
+            CopyListToSet(state.LearnedPassives, model.State.LearnedPassiveSkillIds);
+            CopyListToSet(state.ChosenChoiceIds, model.State.ChosenChoiceIds);
+        }
+
+        private static void CopyListToSet(IReadOnlyList<string> source, ISet<string> target)
+        {
+            if (source == null || target == null)
+            {
+                return;
+            }
+
+            target.Clear();
+            for (var i = 0; i < source.Count; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(source[i]))
+                {
+                    target.Add(source[i]);
                 }
             }
         }

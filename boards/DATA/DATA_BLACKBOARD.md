@@ -101,3 +101,133 @@ Implemented and synced through Unity-MCP CSV runtime catalog validation.
 ### History
 
 - 2026-05-18: Added `active_duration_seconds` to support Eve-B without hardcoded duration values.
+
+## Task: 2026-05-18 Prisoner/Offering UI Data Source Check
+
+### Task title
+
+Confirm CSV-backed display fields used by reward and Offering UI cleanup.
+
+### Goals
+
+- Confirm `stage1-swordsman` is valid enemy ID data, not corrupted CSV text.
+- Keep player-facing prisoner names sourced from `stage_one_enemies.csv` display names through the runtime catalog.
+- Keep Offering choice labels sourced from current monster skill, passive, and reward definition display fields.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV file was changed in this task.
+- No authoritative UI localization CSV was found for static UI labels such as Reward, Prisoner, Gold, Dark Trace, Active, Passive, or Enhancement.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Confirmed and code path updated.
+
+### Next Actions
+
+- If static UI labels need localization, create or identify a dedicated UI string CSV before replacing the remaining English placeholder labels.
+
+### Evidence
+
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\stage_one_enemies.csv | Where-Object { $_.enemy_id -eq 'stage1-swordsman' }` returned `display_name : 검사`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs` assigns `enemy.DisplayName = sourceEnemy.DisplayName`.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now resolves prisoner display text through `GameDataCatalog.GetStageOneEnemyById(...)`.
+- `Pakuri/Assets/Scripts2/InGame/UI/OfferingUI.cs` now uses CSV-backed `DisplayName`, `Title`, `DescriptionText`, `Summary`, and IDs for Offering choice text instead of broken hardcoded fragments.
+
+### History
+
+- 2026-05-18: Code Builder inspected CSV and runtime data definitions after the user reported code-side mojibake, then removed the broken hardcoded UI string fragments without changing CSV source data.
+
+## Task: 2026-05-18 Monster AreaAttack And SingleAttack Runtime Data
+
+### Task title
+
+Split sustained AreaAttack rows from one-shot SingleAttack rows in monster skill CSV data.
+
+### Goals
+
+- Keep Eve C/E as sustained `AreaAttack` skills backed by `ZoneSkillData`.
+- Add `SingleAttack` for one-shot area damage skills listed by the user.
+- Correct Eve C/D display names against the Eve reference skill files.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Numeric skill values stay in `monster_skills.csv`.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Eve C/E tick over their authored durations and that SingleAttack skills apply one immediate area hit.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/eve/skill/c-frost-field.md` names Eve C as `프로스트 필드`; `d-static-override.md` names Eve D as `스태틱 오버라이드`; `e-drone-beacon.md` names Eve E as `플라즈마 필드`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` rows for `ariel-c`, `ariel-e`, `rin-e`, `vega-b`, and `eve-d` now use `runtime_kind=SingleAttack`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` rows for `eve-c` and `eve-e` now use `runtime_kind=AreaAttack`; Eve C has `active_duration_seconds=4`, and Eve E has `active_duration_seconds=5`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs` defines `SkillRuntimeKind.SingleAttack`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/SingleAttackData.cs` defines the new one-shot area SkillData type.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` maps `SingleAttack` to `SingleAttackData` and keeps `AreaAttack` mapped to `ZoneSkillData`.
+- Unity-MCP `InGameSkillDataValidator.ValidateCatalog()` returned `valid=True; errors=0; warnings=0`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+
+### History
+
+- 2026-05-18: User clarified that Eve C/E should be `AreaAttack`, that row 46 and rows 5/7/17/34 should be one-shot area attacks, and requested Code Builder implementation.
+
+## Task: 2026-05-18 Stage1 Enemy Passive CSV Fields
+
+### Task title
+
+Move Stage 1 enemy passive effect values into CSV-backed fields.
+
+### Goals
+
+- Add reusable passive IDs and numeric values beside the existing passive display name.
+- Keep same-effect passive variants reusable through one ID with different values.
+- Keep Physical damage passives represented as `PhysicalDamageUp`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User explicitly requested no Code Reviewer stage for this task.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and editor-verified.
+
+### Next Actions
+
+- Future Stage 1 enemy passive rows should set `passive_skill_id` and `passive_skill_value` rather than adding skill-kind-specific branches.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/stage_one_enemies.csv` now has `passive_skill_id` and `passive_skill_value` columns.
+- The supported passive IDs are validated in `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Validation.cs`: `PhysicalDamageUp`, `DefenseUp`, `CritChanceUp`, `CritDamageUp`, `HealingUp`, and `IncomingDamageDown`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.EnemyDataset.cs`, `PakuriCsvRuntimeData.Build.cs`, and `EnemyDefinition.cs` now carry the passive ID/value from CSV into runtime definitions.
+- Unity-MCP editor execution of `PakuriCsvRuntimeData.SyncAndValidateCsvRuntimeCatalogsForEditor()` followed by `UnitFactory.CreateEnemy(...)` returned `sword=PhysicalDamageUp:0.1:phys=1.1:out=1;priest=HealingUp:0.15:heal=1.15:phys=1;captain=PhysicalDamageUp:0.12:phys=1.12`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+- `git diff --check --` on the changed passive-related files passed with only line-ending warnings.
+
+### History
+
+- 2026-05-18: Code Builder added CSV-backed enemy passive IDs/values and synced them into runtime enemy models.

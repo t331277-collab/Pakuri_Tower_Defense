@@ -55,6 +55,99 @@ Current active run/runtime authority summarized and retained for future work. 20
 - 2026-05-18: Code Builder split Offering and Menifest UI flows into `OfferingUI.cs` and `MenifestUI.cs` while keeping `InGameUIManager.cs` as the scene-binding facade.
 - 2026-05-18: Code Builder consolidated monster projectile/status tuning into skill rows and verified runtime/editor builds with 0 errors.
 
+## Task: 2026-05-18 NewRunScene Debug Skill Acquisition Runtime Sync
+
+### Task title
+
+Keep debug skill acquisition and Offering skill acquisition synchronized with active runtime models.
+
+### Goals
+
+- Debug A-E skill buttons must add the selected 1P monster's active skill through the Offering/session acquisition path.
+- The active in-scene `MonsterUnitRuntimeModel` must receive the newly learned skill state before active runtime skills are rebuilt.
+- Offering active-skill acquisition must use the same runtime-state synchronization so future Offering picks become usable immediately in the current combat scene.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User explicitly requested no Code Reviewer stage for this task.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented. Debug acquisition records the choice in `RunSession`, syncs the 1P runtime model's `UnitStateBucket`, rebuilds learned active skills, and refreshes the actor. 2026-05-18 follow-up verified the learned runtime-skill count drives `MonsterPanel` slot activation: one default learned skill activates `Active1`, and three learned skills activate `Active1`-`Active3`. Active slot Text now displays magazine count only for magazine skills.
+
+### Next Actions
+
+- User verifies in Play Mode that DebugUI skill acquisition immediately appears in the selected monster runtime and can be used by normal skill execution.
+- If other runtime acquisition paths are added, keep the `RunSession` state and `MonsterUnitRuntimeModel.State` synchronization explicit.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs` uses `RunSession.RecordOfferingChoice(...)`, `SkillRuntimeFactory.RebuildLearnedActiveSet(...)`, and `InGameCombatManager.RefreshUnitActor(...)` for debug active-skill acquisition.
+- `Pakuri/Assets/Scripts2/InGame/UI/MonsterPanelUI.cs` reads `MonsterUnitRuntimeModel.SkillRuntime.ActiveSkills`, not all source-defined monster skills, so `Active1`-`Active3` represent the learned runtime skill list.
+- Unity-MCP editor code simulation after registering an Eve model with only default `eve-a` returned `runtimeSkills=1`, `Active1=True`, `Active1Text=6/6`, `Active2=False`, and `Active3=False`.
+- Unity-MCP editor code simulation after adding `eve-b` and `eve-e` to the same session path returned `runtimeSkills=3`, with `Active1=True:6/6`, `Active2=True:프리즘 레이`, and `Active3=True:플라즈마 필드`.
+- Unity-MCP editor code simulation after the Active Text policy change returned `runtimeSkills=3; A1=True:textActive=True:text='6/6'; A2=True:textActive=False:text=''; A3=True:textActive=False:text=''`.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now routes `PrisonerChoicePopUp/OfferingBtn` through `OpenOfferingFromPrisonerChoice()` and `PrisonerChoicePopUp/Menifested` through `TryManifestFromPrisonerChoice()`, both of which set `prisonerChoicePopUp` inactive after click.
+- `Pakuri/Assets/Scripts2/InGame/UI/OfferingUI.cs` now copies `RunSession.RunMonsterState.LearnedActives`, `LearnedPassives`, and `ChosenChoiceIds` into `MonsterUnitRuntimeModel.State` before rebuilding learned active skills.
+- `Pakuri/Assets/Scripts2/InGame/Run/RunSession.cs` remains the persistent source for learned active/passive skill IDs.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeFactory.cs` remains the runtime authority for rebuilding learned active skill instances from `MonsterUnitRuntimeModel.State`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing MSB3277 assembly-version warnings remain.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 assembly-version warnings remain.
+
+### History
+
+- 2026-05-18: Code Builder added DebugUI active-skill acquisition and patched OfferingUI runtime-state sync after inspecting that `RunSession` and `MonsterUnitRuntimeModel.State` are separate data structures.
+- 2026-05-18 follow-up: Code Builder moved `MonsterPanelUI` runtime driver to always-active `Canvas`, fixed unbound serialized slot view binding, and verified learned-skill slot activation without running Play Mode.
+- 2026-05-18 follow-up: Code Builder changed Active slot Text to magazine-count-only and made Offering/Menifested prisoner choice buttons close `PrisonerChoicePopUp` immediately.
+
+## Task: 2026-05-18 Reward Prisoner Display Name Source Fix
+
+### Task title
+
+Use runtime enemy display names for prisoner reward UI.
+
+### Goals
+
+- Keep reward prisoner IDs as internal IDs while showing player-facing enemy display names in the reward UI.
+- Preserve the active `NewRunScene` reward and prisoner choice flow.
+- Avoid treating `stage1-swordsman` as bad CSV data when the inspected CSV row is valid.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- CSV rows were inspected but not changed.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that prisoner reward buttons still open `PrisonerChoicePopUp`, then Offering/Menifested flows consume the same `RewardButtonView.PrisonerId`.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/stage_one_enemies.csv` has `enemy_id=stage1-swordsman` and `display_name=검사`.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` still stores `RewardButtonView.PrisonerId` as the original prisoner ID, but displays `ResolvePrisonerDisplayName(prisonerId)` on the button label.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` resolves display names through `ResolveCatalog()` and `GameDataCatalog.GetStageOneEnemyById(...)`.
+- Runtime and Editor `dotnet build` commands passed with 0 errors and existing MSB3277 warnings.
+
+### History
+
+- 2026-05-18: User reported that the visible `stage1-swordsman` issue came from code-side mojibake. Code Builder kept the ID as runtime state and moved the visible name to the CSV-backed display name path.
+
 ## Task: 2026-05-17 Surviving New Scene Flow Baseline
 
 ### Task title
@@ -96,3 +189,85 @@ Retained as the active new-scene flow baseline.
 ### History
 
 - 2026-05-17: Legacy scene/controller cleanup, status label runtime, and Eve-A projectile modifier runtime were recorded against the surviving new-scene flow.
+
+## Task: 2026-05-18 AreaAttack And SingleAttack Execution Runtime
+
+### Task title
+
+Add NewRunScene runtime executors for sustained area skills and one-shot area skills.
+
+### Goals
+
+- Make `ZoneSkillData` execute sustained area ticks instead of only routing.
+- Add `SingleAttackData` execution for one immediate area hit.
+- Keep targeting, damage, and status application on shared `InGameCombatManager` and roster paths.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that selected/learned monster skills with `AreaAttack` and `SingleAttack` route through the new executors.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutorRegistry.cs` registers `SingleAttackSkillExecutor` and `ZoneSkillExecutor`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now implements `ZoneSkillExecutor.Execute(...)` and `SingleAttackSkillExecutor.Execute(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameZoneSkillActor.cs` applies area ticks through `InGameCombatManager.ApplyDamage(...)` and `ApplyStatus(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` maps Area duration from `active_duration_seconds` when present.
+- Runtime/editor builds passed with 0 errors; existing MSB3277 warnings remain.
+
+### History
+
+- 2026-05-18: Code Builder added reusable area execution after the user requested Eve C/E AreaAttack and new SingleAttack support.
+
+## Task: 2026-05-18 Enemy Passive Runtime CSV Sync
+
+### Task title
+
+Keep Stage 1 enemy passive runtime state synchronized from CSV.
+
+### Goals
+
+- Ensure runtime enemy creation copies CSV passive ID/value fields into `EnemyUnitRuntimeModel`.
+- Keep physical-damage passive effects separate from generic outgoing damage effects.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User explicitly requested no Code Reviewer stage for this task.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and editor-verified.
+
+### Next Actions
+
+- User verifies in Play Mode once enemy prefab assignment and runtime combat behavior are exercised.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Units/UnitFactory.cs` now copies `EnemyDefinition.PassiveSkillId` and `PassiveSkillValue` to `EnemyUnitRuntimeModel`.
+- `StageOneEnemyPassiveStatApplier.Apply(...)` is still called from `UnitFactory.CreateEnemy(...)`, now using the copied passive ID/value fields.
+- Unity-MCP editor code synced CSV runtime catalogs and created stage-one enemies through `UnitFactory`, returning `sword=PhysicalDamageUp:0.1:phys=1.1:out=1;priest=HealingUp:0.15:heal=1.15:phys=1;captain=PhysicalDamageUp:0.12:phys=1.12`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+
+### History
+
+- 2026-05-18: Code Builder verified CSV passive ID/value data reaches created runtime enemy models through the current runtime catalog and unit factory path.

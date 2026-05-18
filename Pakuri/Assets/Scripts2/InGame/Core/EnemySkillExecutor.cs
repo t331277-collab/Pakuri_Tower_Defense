@@ -266,7 +266,8 @@ namespace Pakuri.InGame
 
         private static float ResolveAttackDamage(EnemyUnitRuntimeModel enemyModel, EnemyResolvedSkillData skillData)
         {
-            return Mathf.Max(0f, ResolveAttackPower(enemyModel) * Mathf.Max(0f, skillData.Coefficient) * ResolveOutgoingDamageMultiplier(enemyModel));
+            var attribute = enemyModel != null ? enemyModel.Attribute : DamageAttribute.Physical;
+            return Mathf.Max(0f, ResolveAttackPower(enemyModel) * Mathf.Max(0f, skillData.Coefficient) * ResolveOutgoingDamageMultiplier(enemyModel, attribute));
         }
 
         private static float ResolveAttackPower(EnemyUnitRuntimeModel enemyModel)
@@ -279,7 +280,7 @@ namespace Pakuri.InGame
             return enemyModel != null && enemyModel.Stats != null ? enemyModel.Stats.SpellPower : 0f;
         }
 
-        private static float ResolveOutgoingDamageMultiplier(EnemyUnitRuntimeModel enemyModel)
+        private static float ResolveOutgoingDamageMultiplier(EnemyUnitRuntimeModel enemyModel, DamageAttribute attribute)
         {
             if (enemyModel == null)
             {
@@ -287,6 +288,11 @@ namespace Pakuri.InGame
             }
 
             var multiplier = Mathf.Max(0f, enemyModel.PassiveOutgoingDamageMultiplier);
+            if (attribute == DamageAttribute.Physical)
+            {
+                multiplier *= Mathf.Max(0f, enemyModel.PassivePhysicalDamageMultiplier);
+            }
+
             if (enemyModel.OutgoingDamageMultiplierRemainingSeconds > 0f)
             {
                 multiplier *= Mathf.Max(0f, enemyModel.OutgoingDamageMultiplier);

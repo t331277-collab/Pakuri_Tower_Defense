@@ -63,3 +63,46 @@ Current active enemy runtime state summarized and retained for future work. 2026
 - 2026-05-17: Enemy skill tuning was split out of enemy rows into `EnemySkillData.csv`.
 - 2026-05-18: Dual-skill enemy runtime and scene-owned effect authority became the active baseline.
 - 2026-05-18: Code Builder split `EnemyCombatSimulationSystem` into orchestration, cooldown, targeting, execution, and shared runtime-data files.
+
+## Task: 2026-05-18 CSV-Backed Stage1 Enemy Passives
+
+### Task title
+
+Apply Stage 1 enemy passives from CSV passive ID/value fields.
+
+### Goals
+
+- Remove Stage 1 enemy passive stat changes from `StageOneSkill` hardcoded branches.
+- Apply `PhysicalDamageUp` only to Physical damage.
+- Keep existing defense, crit, healing, and incoming-damage passive behavior through reusable passive IDs.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User explicitly requested no Code Reviewer stage for this task.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and editor-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Physical enemy passive buffs affect only Physical attacks and do not affect non-Physical enemy damage.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Units/StageOneEnemyPassiveStatApplier.cs` now switches on `EnemyUnitRuntimeModel.PassiveSkillId` instead of `StageOneSkill`.
+- `StageOneEnemyPassiveStatApplier.cs` maps `PhysicalDamageUp` to `PassivePhysicalDamageMultiplier`, `DefenseUp` to all defense stats, `CritChanceUp`, `CritDamageUp`, `HealingUp`, and `IncomingDamageDown`.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitRuntimeModel.cs` now stores `PassiveSkillId`, `PassiveSkillValue`, and `PassivePhysicalDamageMultiplier`.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemySkillExecutor.cs` multiplies `PassivePhysicalDamageMultiplier` only when the resolved damage attribute is `DamageAttribute.Physical`.
+- Unity-MCP editor execution after CSV sync returned `sword=PhysicalDamageUp:0.1:phys=1.1:out=1`, confirming the old generic outgoing multiplier stays at `1` for the swordsman passive.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+
+### History
+
+- 2026-05-18: Code Builder changed Stage 1 enemy passive application from skill-kind hardcoding to CSV passive ID/value application.

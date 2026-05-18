@@ -72,6 +72,8 @@ namespace Pakuri.Data
         public float ActiveSkillMoveSpeedMultiplier = 1f;
         public float ActiveSkillOutgoingDamageMultiplier = 1f;
         public string PassiveSkillName;
+        public string PassiveSkillId;
+        public float PassiveSkillValue;
         [TextArea(2, 4)] public string PassiveSummary;
 
         public EnemyDefinition CloneRuntimeCopy()
@@ -119,6 +121,8 @@ namespace Pakuri.Data
             clone.ActiveSkillMoveSpeedMultiplier = ActiveSkillMoveSpeedMultiplier;
             clone.ActiveSkillOutgoingDamageMultiplier = ActiveSkillOutgoingDamageMultiplier;
             clone.PassiveSkillName = PassiveSkillName;
+            clone.PassiveSkillId = PassiveSkillId;
+            clone.PassiveSkillValue = PassiveSkillValue;
             clone.PassiveSummary = PassiveSummary;
             return clone;
         }

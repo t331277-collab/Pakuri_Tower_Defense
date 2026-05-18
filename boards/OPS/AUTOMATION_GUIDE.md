@@ -87,6 +87,49 @@ Completed.
 
 - 2026-05-17: User requested that future projectile skill implementation commands make Code Builder refer to `boards/SkillBluePrint/projectile-blueprint.md` and asked how the work flow should be modified.
 
+## Task: 2026-05-18 BeamSkill Builder Flow
+
+### Task title
+
+Require Code Builder to read the BeamSkill blueprint before BeamSkill / LineAttack implementation.
+
+### Goals
+
+- Make future BeamSkill, beam, laser, ray, slash-line, or `LineAttack` implementation commands start from `boards/SkillBluePrint/BeamSkill-blueprint.md`.
+- Ensure Code Builder classifies requested BeamSkill behavior as supported, partial, or unsupported before editing code/data/assets.
+- Prevent unsupported special behavior such as width/duration choice modifiers, stop-at-first-target, knockback, resistance reduction, chained/curved/sweeping beams, telegraph delay, or custom per-target tick rules from being treated as already supported common behavior.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested markdown creation and Code Builder rule wiring.
+- No C# script, scene, prefab, or CSV gameplay behavior was changed.
+- Claims are based on inspected `AGENTS_ROLE/GAMEBULIDER.md`, `boards/SkillBluePrint/projectile-blueprint.md`, current BeamSkill runtime scripts, current CSV rows, and the newly added `boards/SkillBluePrint/BeamSkill-blueprint.md`.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified by targeted file checks.
+
+### Next Actions
+
+- On future BeamSkill / LineAttack implementation commands, Code Builder reads `AGENTS.md`, `MDTREE.md`, routed boards, `AGENTS_ROLE/GAMEBULIDER.md`, the matching Builder track files, and then `boards/SkillBluePrint/BeamSkill-blueprint.md` before editing.
+- Code Builder records whether the requested BeamSkill behavior is common, partial, or exceptional in the implementation summary and related board update.
+
+### Evidence
+
+- `boards/SkillBluePrint/projectile-blueprint.md` existed before this task and established the prior projectile blueprint pattern.
+- `boards/SkillBluePrint/BeamSkill-blueprint.md` now exists and contains the current InGame BeamSkill / LineAttack path, supported/partial/unsupported matrix, special behavior rule, new BeamSkill checklist, extension points, Eve-B evidence summary, and verification expectations.
+- Updated `AGENTS_ROLE/GAMEBULIDER.md` with `BeamSkill Blueprint Rule`.
+- The new rule requires reading `boards/SkillBluePrint/BeamSkill-blueprint.md` before BeamSkill, beam, laser, ray, slash-line, or `LineAttack` implementation edits.
+- Inspected `Pakuri/Assets/Scripts2/InGame/Skills/Data/BeamSkillData.cs`, `InGameSkillDefinitionMapper.cs`, `SkillExecutors.cs`, `InGameLineAttackActor.cs`, `SkillExecutionSnapshot.cs`, `SkillRuntimeInstance.cs`, `SkillExecutorRegistry.cs`, `Pakuri/Assets/CSVdata/source/monster_skills.csv`, `Pakuri/Assets/CSVdata/source/monster_reward_choices.csv`, and `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv` for blueprint evidence.
+
+### History
+
+- 2026-05-18: User requested a BeamSkill blueprint like the existing projectile blueprint and asked to make Code Builder refer to it.
+
 ## Task: 2026-05-14 Board Archive Expansion
 
 ### Task title

@@ -422,6 +422,228 @@ namespace Pakuri.InGame
 
     public sealed class ZoneSkillExecutor : TypedSkillExecutor<ZoneSkillData>
     {
+        public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
+        {
+            var skill = context != null ? context.SkillData as ZoneSkillData : null;
+            if (skill == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
+            {
+                return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
+            }
+
+            var center = ResolveAreaCenter(context, skill.Targeting, skill.Area);
+            var radius = ResolveRadius(skill, snapshot);
+            var duration = ResolveDuration(skill, snapshot);
+            var tickInterval = ResolveTickInterval(skill, snapshot);
+            var damage = SkillExecutionUtility.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
+            var attribute = SkillExecutionUtility.MapAttribute(skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element);
+            var statusSpec = ProjectileSkillExecutor.ResolveStatusSpec(skill.OnTickStatus, snapshot);
+            var coverAll = (skill.Area != null && skill.Area.CoverAll)
+                || (skill.Targeting != null && skill.Targeting.CoverAll);
+            var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
+                ? snapshot.SkillEffectPrefab
+                : context.CombatManager.Effects != null
+                    ? context.CombatManager.Effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId)
+                    : null;
+
+            GameObject instance = null;
+            if (prefab != null && context.CombatManager.Effects != null)
+            {
+                instance = context.CombatManager.Effects.InstantiateSkillPrefab(prefab, center, Quaternion.identity);
+            }
+
+            if (instance == null)
+            {
+                instance = new GameObject(string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameZoneSkill" : $"InGameZoneSkill_{skill.SkillId}");
+                instance.transform.position = center;
+            }
+
+            var actor = instance.GetComponent<InGameZoneSkillActor>();
+            if (actor == null)
+            {
+                actor = instance.AddComponent<InGameZoneSkillActor>();
+            }
+
+            actor.Initialize(
+                context.CombatManager,
+                context.CasterEntry,
+                context.Roster,
+                skill.Targeting,
+                center,
+                radius,
+                coverAll,
+                duration,
+                tickInterval,
+                damage,
+                attribute,
+                statusSpec);
+            return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
+        }
+
+        private static Vector2 ResolveAreaCenter(
+            SkillExecutionContext context,
+            SkillTargetingSpec targeting,
+            AreaBlueprintSpec area)
+        {
+            var origin = context.CasterEntry != null && context.CasterEntry.Transform != null
+                ? context.CasterEntry.Transform.position
+                : Vector3.zero;
+            if (context.HasManualAimDirection && context.ManualAimDirection.sqrMagnitude > 0.0001f)
+            {
+                var radius = area != null && area.Radius > 0f
+                    ? area.Radius
+                    : targeting != null ? targeting.Radius : 1f;
+                return (Vector2)origin + context.ManualAimDirection.normalized * Mathf.Max(1f, radius);
+            }
+
+            var target = SkillExecutionUtility.FindNearestTarget(context.CasterEntry, context.Roster, targeting);
+            return target != null && target.Transform != null
+                ? (Vector2)target.Transform.position
+                : (Vector2)origin;
+        }
+
+        private static float ResolveRadius(ZoneSkillData skill, SkillExecutionSnapshot snapshot)
+        {
+            var area = skill != null ? skill.Area : null;
+            var targeting = skill != null ? skill.Targeting : null;
+            var radius = area != null && area.Radius > 0f
+                ? area.Radius
+                : targeting != null ? targeting.Radius : 0f;
+            if (snapshot != null)
+            {
+                radius = radius * Mathf.Max(0f, snapshot.RadiusMultiplier) + snapshot.RadiusBonus;
+            }
+
+            return Mathf.Max(0f, radius);
+        }
+
+        private static float ResolveDuration(ZoneSkillData skill, SkillExecutionSnapshot snapshot)
+        {
+            var area = skill != null ? skill.Area : null;
+            var timing = skill != null ? skill.Timing : null;
+            var duration = area != null && area.Duration > 0f
+                ? area.Duration
+                : timing != null ? timing.ActiveDuration : 0f;
+            if (duration <= 0f)
+            {
+                duration = ResolveTickInterval(skill, snapshot);
+            }
+
+            if (snapshot != null)
+            {
+                duration = duration * Mathf.Max(0f, snapshot.DurationMultiplier) + snapshot.DurationBonus;
+            }
+
+            return Mathf.Max(0.05f, duration);
+        }
+
+        private static float ResolveTickInterval(ZoneSkillData skill, SkillExecutionSnapshot snapshot)
+        {
+            var area = skill != null ? skill.Area : null;
+            var timing = skill != null ? skill.Timing : null;
+            var interval = area != null && area.TickInterval > 0f
+                ? area.TickInterval
+                : timing != null && timing.TickInterval > 0f ? timing.TickInterval : 1f;
+            if (snapshot != null)
+            {
+                interval *= Mathf.Max(0.05f, snapshot.ShotIntervalMultiplier);
+            }
+
+            return Mathf.Max(0.05f, interval);
+        }
+    }
+
+    public sealed class SingleAttackSkillExecutor : TypedSkillExecutor<SingleAttackData>
+    {
+        public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
+        {
+            var skill = context != null ? context.SkillData as SingleAttackData : null;
+            if (skill == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
+            {
+                return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
+            }
+
+            var center = ResolveAreaCenter(context, skill.Targeting, skill.Area);
+            var radius = ResolveRadius(skill, snapshot);
+            var coverAll = (skill.Area != null && skill.Area.CoverAll)
+                || (skill.Targeting != null && skill.Targeting.CoverAll);
+            var damage = SkillExecutionUtility.ResolveDamage(context.Caster, skill.Damage, snapshot);
+            var attribute = SkillExecutionUtility.MapAttribute(skill.Damage != null ? skill.Damage.Element : skill.Element);
+            var statusSpec = ProjectileSkillExecutor.ResolveStatusSpec(skill.OnHitStatus, snapshot);
+            var routed = InGameZoneSkillActor.ApplyAreaTick(
+                context.CombatManager,
+                context.CasterEntry,
+                context.Roster,
+                skill.Targeting,
+                center,
+                radius,
+                coverAll,
+                damage,
+                attribute,
+                statusSpec);
+
+            SpawnVisual(context, snapshot, skill, center);
+            return new SkillExecutionResult(routed ? SkillExecutionStatus.Routed : SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
+        }
+
+        private static Vector2 ResolveAreaCenter(
+            SkillExecutionContext context,
+            SkillTargetingSpec targeting,
+            AreaBlueprintSpec area)
+        {
+            var origin = context.CasterEntry != null && context.CasterEntry.Transform != null
+                ? context.CasterEntry.Transform.position
+                : Vector3.zero;
+            if (context.HasManualAimDirection && context.ManualAimDirection.sqrMagnitude > 0.0001f)
+            {
+                var radius = area != null && area.Radius > 0f
+                    ? area.Radius
+                    : targeting != null ? targeting.Radius : 1f;
+                return (Vector2)origin + context.ManualAimDirection.normalized * Mathf.Max(1f, radius);
+            }
+
+            var target = SkillExecutionUtility.FindNearestTarget(context.CasterEntry, context.Roster, targeting);
+            return target != null && target.Transform != null
+                ? (Vector2)target.Transform.position
+                : (Vector2)origin;
+        }
+
+        private static float ResolveRadius(SingleAttackData skill, SkillExecutionSnapshot snapshot)
+        {
+            var area = skill != null ? skill.Area : null;
+            var targeting = skill != null ? skill.Targeting : null;
+            var radius = area != null && area.Radius > 0f
+                ? area.Radius
+                : targeting != null ? targeting.Radius : 0f;
+            if (snapshot != null)
+            {
+                radius = radius * Mathf.Max(0f, snapshot.RadiusMultiplier) + snapshot.RadiusBonus;
+            }
+
+            return Mathf.Max(0f, radius);
+        }
+
+        private static void SpawnVisual(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SingleAttackData skill,
+            Vector2 center)
+        {
+            var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
+                ? snapshot.SkillEffectPrefab
+                : context.CombatManager.Effects != null
+                    ? context.CombatManager.Effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId)
+                    : null;
+            if (prefab == null || context.CombatManager.Effects == null)
+            {
+                return;
+            }
+
+            var instance = context.CombatManager.Effects.InstantiateSkillPrefab(prefab, center, Quaternion.identity);
+            if (instance != null)
+            {
+                UnityEngine.Object.Destroy(instance, 1f);
+            }
+        }
     }
 
     public sealed class BuffSkillExecutor : TypedSkillExecutor<BuffSkillData>

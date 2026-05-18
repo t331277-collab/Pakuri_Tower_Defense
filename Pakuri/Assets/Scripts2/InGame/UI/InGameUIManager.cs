@@ -73,7 +73,7 @@ namespace Pakuri.InGame
 
             if (rewardSummaryText != null)
             {
-                rewardSummaryText.text = $"Stage {stageManager.CurrentStage}-{stageManager.CurrentDay} 蹂댁긽";
+                rewardSummaryText.text = $"Stage {stageManager.CurrentStage}-{stageManager.CurrentDay} Reward";
             }
 
             var order = 0;
@@ -81,9 +81,10 @@ namespace Pakuri.InGame
             for (var i = 0; i < prisoners.Count; i++)
             {
                 var capturedIndex = i;
+                var prisonerId = prisoners[i];
                 var button = CreateRewardButton(prisonerTemplateButton, "PrisonerReward", order++);
-                SetButtonLabel(button, $"?щ줈\n{prisoners[i]}");
-                var view = RegisterRewardButton(button, RewardKind.Prisoner, 0, prisoners[i]);
+                SetButtonLabel(button, $"Prisoner\n{ResolvePrisonerDisplayName(prisonerId)}");
+                var view = RegisterRewardButton(button, RewardKind.Prisoner, 0, prisonerId);
                 button.onClick.AddListener(() => OpenPrisonerChoice(view, capturedIndex));
             }
 
@@ -91,7 +92,7 @@ namespace Pakuri.InGame
             {
                 var amount = stageManager.PendingGoldReward;
                 var button = CreateRewardButton(goldTemplateButton, "GoldReward", order++);
-                SetButtonLabel(button, $"怨⑤뱶\n+{amount}");
+                SetButtonLabel(button, $"Gold\n+{amount}");
                 var view = RegisterRewardButton(button, RewardKind.Gold, amount, string.Empty);
                 button.onClick.AddListener(() => ClaimMaterialReward(view, amount, 0));
             }
@@ -100,7 +101,7 @@ namespace Pakuri.InGame
             {
                 var amount = stageManager.PendingDarkTraceReward;
                 var button = CreateRewardButton(darkTemplateButton, "DarkTraceReward", order++);
-                SetButtonLabel(button, $"?대몺???붿쟻\n+{amount}");
+                SetButtonLabel(button, $"Dark Trace\n+{amount}");
                 var view = RegisterRewardButton(button, RewardKind.DarkTrace, amount, string.Empty);
                 button.onClick.AddListener(() => ClaimMaterialReward(view, 0, amount));
             }
@@ -255,8 +256,20 @@ namespace Pakuri.InGame
         private void BindStaticButtons()
         {
             BindButton(nextButton, ContinueToNextDay);
-            BindButton(offeringButton, () => offeringUI?.OpenOfferingPanel());
-            BindButton(menifestedButton, () => menifestUI?.TryManifestPrisoner());
+            BindButton(offeringButton, OpenOfferingFromPrisonerChoice);
+            BindButton(menifestedButton, TryManifestFromPrisonerChoice);
+        }
+
+        private void OpenOfferingFromPrisonerChoice()
+        {
+            offeringUI?.OpenOfferingPanel();
+            SetActive(prisonerChoicePopUp, false);
+        }
+
+        private void TryManifestFromPrisonerChoice()
+        {
+            menifestUI?.TryManifestPrisoner();
+            SetActive(prisonerChoicePopUp, false);
         }
 
         private void HideTransientPanels()
@@ -361,6 +374,18 @@ namespace Pakuri.InGame
         {
             var catalog = PakuriDataManager.Instance.CurrentCatalog;
             return catalog != null ? catalog : PakuriCsvRuntimeData.ResolveCatalogOrFallback(null);
+        }
+
+        private string ResolvePrisonerDisplayName(string prisonerId)
+        {
+            var catalog = ResolveCatalog();
+            var enemy = catalog != null ? catalog.GetStageOneEnemyById(prisonerId) : null;
+            if (enemy != null && !string.IsNullOrWhiteSpace(enemy.DisplayName))
+            {
+                return enemy.DisplayName;
+            }
+
+            return string.IsNullOrWhiteSpace(prisonerId) ? "Unknown" : prisonerId;
         }
 
         private InGameCombatManager ResolveCombatManager()

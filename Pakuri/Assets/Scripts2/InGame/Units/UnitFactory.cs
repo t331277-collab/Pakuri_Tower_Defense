@@ -72,6 +72,8 @@ namespace Pakuri.InGame
                 ActiveSkillCooldownSeconds = definition.ActiveSkillCooldown,
                 AttackAttemptRange = ResolveEnemyAttackAttemptRange(definition),
                 AttackAttemptCooldownSeconds = ResolveEnemyAttackAttemptCooldown(definition),
+                PassiveSkillId = definition.PassiveSkillId,
+                PassiveSkillValue = definition.PassiveSkillValue,
                 Stats = MapStats(stats, maxHealth, 0f),
                 Defenses = UnitDefenseRuntime.FromDefinition(definition.Defenses),
                 Resources = new UnitResourceRuntime

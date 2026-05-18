@@ -66,6 +66,8 @@ namespace Pakuri.InGame
                     return CreateTransient<ProjectileSkillData>(source.SkillId);
                 case SkillRuntimeKind.LineAttack:
                     return CreateTransient<BeamSkillData>(source.SkillId);
+                case SkillRuntimeKind.SingleAttack:
+                    return CreateTransient<SingleAttackData>(source.SkillId);
                 case SkillRuntimeKind.AreaAttack:
                 case SkillRuntimeKind.Field:
                 case SkillRuntimeKind.Mark:
@@ -112,7 +114,8 @@ namespace Pakuri.InGame
             skill.Targeting.Range = 0f;
             skill.Targeting.Radius = source.Radius;
             skill.Targeting.Shape = MapShape(source.RuntimeKind);
-            skill.Targeting.CoverAll = source.RuntimeKind == SkillRuntimeKind.Field;
+            skill.Targeting.CoverAll = source.RuntimeKind == SkillRuntimeKind.Field
+                || (source.RuntimeKind == SkillRuntimeKind.SingleAttack && source.Radius <= 0f);
         }
 
         private static void MapActiveFields(SkillData skill, MonsterDefinition monster, SkillDefinition source)
@@ -141,11 +144,24 @@ namespace Pakuri.InGame
             if (skill is ZoneSkillData zone)
             {
                 zone.Area.Radius = source.Radius;
-                zone.Area.Duration = source.CooldownSeconds;
+                zone.Area.Duration = source.ActiveDurationSeconds > 0f
+                    ? source.ActiveDurationSeconds
+                    : source.CooldownSeconds;
                 zone.Area.TickInterval = source.ShotIntervalSeconds;
                 zone.Area.CoverAll = source.RuntimeKind == SkillRuntimeKind.Field;
                 MapDamage(zone.DamagePerTick, source);
                 zone.OnTickStatus = CreateStatusApplication(source.StatusEffectId, source.StatusChance, source.StatusEffectLabel);
+                return;
+            }
+
+            if (skill is SingleAttackData single)
+            {
+                single.Area.Radius = source.Radius;
+                single.Area.Duration = 0f;
+                single.Area.TickInterval = 0f;
+                single.Area.CoverAll = source.Radius <= 0f;
+                MapDamage(single.Damage, source);
+                single.OnHitStatus = CreateStatusApplication(source.StatusEffectId, source.StatusChance, source.StatusEffectLabel);
                 return;
             }
 
@@ -287,6 +303,7 @@ namespace Pakuri.InGame
                 case SkillRuntimeKind.LineAttack:
                     return SkillTargetShape.Line;
                 case SkillRuntimeKind.AreaAttack:
+                case SkillRuntimeKind.SingleAttack:
                 case SkillRuntimeKind.Field:
                 case SkillRuntimeKind.Mark:
                 case SkillRuntimeKind.Execute:

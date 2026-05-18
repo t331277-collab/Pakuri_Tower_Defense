@@ -45,6 +45,7 @@ namespace Pakuri.InGame
         {
             Register(new ProjectileSkillExecutor());
             Register(new BeamSkillExecutor());
+            Register(new SingleAttackSkillExecutor());
             Register(new ZoneSkillExecutor());
             Register(new BuffSkillExecutor());
             Register(new ShieldSkillExecutor());

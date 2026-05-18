@@ -65,6 +65,45 @@ Builder implementation completed and locally verified. 2026-05-18 Vega active sk
 - 2026-05-18: Code Builder moved Vega projectile/status tuning into skill CSV rows and encoded the reference infinite pierce as `pierce_count=999` for the current finite common projectile runtime.
 - 2026-05-18: Code Builder normalized Vega design-only status labels to chance 0 and added supported status-label fallback/CSV sync batch support.
 
+## Task: 2026-05-18 Vega-B SingleAttack Runtime Kind
+
+### Task title
+
+Route Vega-B through the new SingleAttack runtime kind for one-shot area damage.
+
+### Goals
+
+- Move Vega-B out of `LineAttack` because the requested CSV row belongs to one-shot `SingleAttack`.
+- Preserve existing CSV-authored damage, coefficient, radius, and cooldown.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Vega-B now behaves as a one-shot area hit in the current shared executor path.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/vega/skill/b-silent-greatblade.md` names Vega-B `침묵의 대태도`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now has `vega-b runtime_kind=SingleAttack`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/SingleAttackData.cs` and `SkillExecutors.cs` provide the data and executor path.
+- Runtime/editor builds passed with 0 errors; Unity-MCP skill validator returned 0 errors and 0 warnings.
+
+### History
+
+- 2026-05-18: User listed CSV row 34 as a one-shot area attack skill for the new `SingleAttack` type.
+
 ## Task: 2026-05-13 Vega Battlefield Facade Registration
 
 ### Task title

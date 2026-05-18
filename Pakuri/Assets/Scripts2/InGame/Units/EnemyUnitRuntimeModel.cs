@@ -31,6 +31,9 @@ namespace Pakuri.InGame
         public float ActiveSkillCooldownSeconds;
         public float AttackAttemptRange;
         public float AttackAttemptCooldownSeconds;
+        public string PassiveSkillId;
+        public float PassiveSkillValue;
+        public float PassivePhysicalDamageMultiplier = 1f;
         public float PassiveOutgoingDamageMultiplier = 1f;
         public float PassiveIncomingDamageMultiplier = 1f;
         public float PassiveHealingMultiplier = 1f;

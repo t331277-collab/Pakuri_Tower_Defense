@@ -31,6 +31,7 @@ namespace Pakuri.Data
         CooldownProjectile,
         LineAttack,
         AreaAttack,
+        SingleAttack,
         Field,
         Buff,
         Shield,

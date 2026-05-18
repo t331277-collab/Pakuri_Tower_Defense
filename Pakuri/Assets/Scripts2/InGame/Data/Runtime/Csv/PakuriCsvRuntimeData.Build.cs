@@ -107,6 +107,8 @@ namespace Pakuri.Data
                 enemy.ActiveSkillMoveSpeedMultiplier = sourceEnemy.ActiveSkillMoveSpeedMultiplier;
                 enemy.ActiveSkillOutgoingDamageMultiplier = sourceEnemy.ActiveSkillOutgoingDamageMultiplier;
                 enemy.PassiveSkillName = sourceEnemy.PassiveSkillName;
+                enemy.PassiveSkillId = sourceEnemy.PassiveSkillId;
+                enemy.PassiveSkillValue = sourceEnemy.PassiveSkillValue;
                 enemy.PassiveSummary = sourceEnemy.PassiveSummary;
                 enemies.Add(enemy);
             }
