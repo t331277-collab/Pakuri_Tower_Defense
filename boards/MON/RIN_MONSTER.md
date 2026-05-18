@@ -16,6 +16,53 @@ At the start of new work, use this active Rin file. Common monster history is ar
 
 Not populated yet.
 
+## Task: 2026-05-19 Rin-A Shared Projectile Wiring
+
+### Task title
+
+Wire `rin-a` into the current shared projectile runtime and common modifier table.
+
+### Goals
+
+- Bind `rin-a` base projectile visuals through the active `EffectManager` scene mapping.
+- Keep `rin-a` on the shared `MagazineProjectile` runtime path.
+- Add the common projectile-compatible Rin-A choice modifiers to `SkillChoiceModifierData.csv`.
+- Leave unsupported crit-only or sequence-state behavior explicitly unsupported instead of guessing new monster-only runtime logic.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Claims are based on inspected Scripts2 runtime code, active scene YAML, active modifier CSV, and the inspected `Rin_A.prefab` asset path provided by the user.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated by file inspection and build.
+
+### Next Actions
+
+- User verifies in Play Mode that `rin-a` now spawns `Rin_A.prefab` through the shared projectile path.
+- If full `rin-a-trait-5` crit modifiers or `rin-a-master-2` extra lightning / every-third-hit chain are required in Scripts2 runtime, request a shared extension or a one-off approved exception before implementing.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Skill/Rin/Rin_A.prefab` exists and its prefab GUID is `19bfba788239eba498a44cb67c2622c6`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now maps monster `rin` skill `rin-a` to `Rin_A.prefab` through the `EffectManager` `monsterSkillEffects` list.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` already maps projectile active rows into `ProjectileSkillData`, including magazine size, reload, shot interval, projectile speed, pierce count, and on-hit status.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` already routes `ProjectileSkillData` through `ProjectileSkillExecutor`, resolves base visuals through `EffectManager.ResolveMonsterSkillEffectPrefab(...)`, and applies modifier snapshot bonuses for additional projectiles and pierce.
+- `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv` now includes common-path `rin-a` rows for trait 1/2/3/4 and master 1, while trait 5 and master 2 are marked `DataOnlyUnsupported` because current shared projectile runtime has no crit modifier fields and no built-in every-third-hit chain behavior.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+
+### History
+
+- 2026-05-19: User requested Code Builder implementation of `rin-a`.
+- 2026-05-19: User clarified the base effect prefab path as `Assets/Prefab/Skill/Rin/Rin_A.prefab`.
+
 ## Task: 2026-05-14 Rin NewRunScene Prefab Binding And HP Bar
 
 ### Task title

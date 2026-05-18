@@ -255,7 +255,17 @@ namespace Pakuri.InGame
                     Title = choice != null ? choice.Title : string.Empty,
                     Description = choice != null ? choice.DescriptionText : string.Empty,
                     Icon = choice != null ? choice.SkillIcon : null,
-                    SkillEffectPrefab = choice != null ? choice.SkillEffectPrefab : null
+                    SkillEffectPrefab = choice != null ? choice.SkillEffectPrefab : null,
+                    HasDamageMultiplier = choice != null && choice.HasDamageMultiplier,
+                    DamageMultiplier = choice != null && choice.HasDamageMultiplier ? choice.DamageMultiplier : 1f,
+                    HasMagazineBonus = choice != null && choice.HasMagazineBonus,
+                    MagazineBonus = choice != null ? choice.MagazineBonus : 0,
+                    HasReloadTimeMultiplier = choice != null && choice.HasReloadDurationMultiplier,
+                    ReloadTimeMultiplier = choice != null && choice.HasReloadDurationMultiplier ? choice.ReloadDurationMultiplier : 1f,
+                    HasShotIntervalMultiplier = choice != null && choice.HasShotIntervalMultiplier,
+                    ShotIntervalMultiplier = choice != null && choice.HasShotIntervalMultiplier ? choice.ShotIntervalMultiplier : 1f,
+                    HasStatusChanceBonus = choice != null && choice.HasStatusChanceBonus,
+                    StatusChanceBonus = choice != null ? choice.StatusChanceBonus : 0f
                 };
             }
 

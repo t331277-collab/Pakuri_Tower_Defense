@@ -42,6 +42,7 @@ Current active CSV authority summarized and retained for future work. 2026-05-18
 - `Pakuri/Assets/CSVdata/EnemySkillData.csv` carries active enemy skill tuning rows.
 - `Pakuri/Assets/CSVdata/source/monster_reward_choices.csv` explicitly carries reward target skill fields plus `linked_choice_id`.
 - `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv` remains the active runtime modifier table after dead range columns were removed.
+- `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv` now includes shared-projectile-compatible `rin-a` modifier rows for trait 1/2/3/4 and master 1; `rin-a-trait-5` and `rin-a-master-2` are intentionally marked `DataOnlyUnsupported` because current Scripts2 projectile runtime has no crit modifier fields and no sequence-state chain behavior.
 - `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.*` files remain the active runtime load/build/validation path.
 - `Pakuri/Assets/Scripts2/InGame/Core/EffectManager.cs` plus `Assets/Scenes/NewScene/NewRunScene.unity` now own base monster/enemy skill effect prefab authority instead of `monster_skills.csv` / `EnemySkillData.csv`.
 - `Pakuri/reference/Archive/InactiveRootCsv/` now stores archived inactive root CSV files that are no longer part of the active runtime path.
@@ -60,6 +61,7 @@ Current active CSV authority summarized and retained for future work. 2026-05-18
 - 2026-05-18: EffectManager scene authority, reward/choice separation, enemy dual-skill CSV authority, and inactive root CSV archiving were recorded as the current active data baseline.
 - 2026-05-18: Code Builder consolidated monster projectile/status tuning into `monster_skills.csv`, removed duplicate/visual projectile columns from `monsters.csv`, and removed Ariel-A/Eve-A hardcoded projectile/status values from the shared mapper/executor path.
 - 2026-05-18: Code Builder added `SyncCsvRuntimeCatalogs.bat`, exposed `PakuriCsvRuntimeData.SyncAndValidateCsvRuntimeCatalogsForEditor()` for Unity batchmode, normalized unsupported design-only monster status labels to `status_chance=0`, and verified sync/validation through the open Unity Editor.
+- 2026-05-19: Code Builder added `rin-a` common modifier rows to `SkillChoiceModifierData.csv` and left crit-only / every-third-hit chain behavior explicitly unsupported in the current shared projectile contract.
 
 ## Task: 2026-05-18 Monster Skill Active Duration CSV Field
 

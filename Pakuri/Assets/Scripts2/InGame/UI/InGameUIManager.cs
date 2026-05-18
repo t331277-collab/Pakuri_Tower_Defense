@@ -764,6 +764,13 @@ namespace Pakuri.InGame
                     continue;
                 }
 
+                var linkedChoice = ResolveLinkedChoice(reward.LinkedChoiceId);
+                var title = linkedChoice != null && !string.IsNullOrWhiteSpace(linkedChoice.Title)
+                    ? linkedChoice.Title
+                    : reward.Title;
+                var description = linkedChoice != null && !string.IsNullOrWhiteSpace(linkedChoice.DescriptionText)
+                    ? linkedChoice.DescriptionText
+                    : reward.Description;
                 offeringChoices.Add(new OfferingChoiceView
                 {
                     Kind = OfferingChoiceKind.Enhancement,
@@ -772,16 +779,104 @@ namespace Pakuri.InGame
                     LinkedChoiceId = reward.LinkedChoiceId,
                     ActiveSkillId = reward.ActiveSkillId,
                     PassiveSkillId = reward.PassiveSkillId,
-                    Title = $"{monster.DisplayName}\n{reward.Title}",
-                    Description = ResolveDescription(null, reward.Description, reward.RewardId),
-                    DamageMultiplier = reward.DamageMultiplier,
-                    MagazineBonus = reward.MagazineBonus,
-                    ShotIntervalMultiplier = reward.ShotIntervalMultiplier,
-                    ReloadDurationMultiplier = reward.ReloadDurationMultiplier,
-                    MaxHealthBonus = reward.MaxHealthBonus,
-                    StatusChanceBonus = reward.StatusChanceBonus
+                    Title = $"{monster.DisplayName}\n{title}",
+                    Description = ResolveDescription(null, description, linkedChoice != null ? linkedChoice.ChoiceId : reward.RewardId),
+                    DamageMultiplier = ResolveDamageMultiplier(reward, linkedChoice),
+                    MagazineBonus = ResolveMagazineBonus(reward, linkedChoice),
+                    ShotIntervalMultiplier = ResolveShotIntervalMultiplier(reward, linkedChoice),
+                    ReloadDurationMultiplier = ResolveReloadDurationMultiplier(reward, linkedChoice),
+                    MaxHealthBonus = ResolveMaxHealthBonus(reward, linkedChoice),
+                    StatusChanceBonus = ResolveStatusChanceBonus(reward, linkedChoice)
                 });
             }
+        }
+
+        private static SkillChoiceDefinition ResolveLinkedChoice(string linkedChoiceId)
+        {
+            if (string.IsNullOrWhiteSpace(linkedChoiceId))
+            {
+                return null;
+            }
+
+            var manager = PakuriDataManager.Instance;
+            if (manager == null || !manager.TryGetData(linkedChoiceId, out SkillChoiceDefinition linkedChoice))
+            {
+                return null;
+            }
+
+            return linkedChoice;
+        }
+
+        private static float ResolveDamageMultiplier(
+            MonsterDefinition.RewardChoiceDefinition reward,
+            SkillChoiceDefinition linkedChoice)
+        {
+            if (linkedChoice != null && linkedChoice.HasDamageMultiplier)
+            {
+                return linkedChoice.DamageMultiplier;
+            }
+
+            return reward != null && reward.DamageMultiplier > 0f ? reward.DamageMultiplier : 1f;
+        }
+
+        private static int ResolveMagazineBonus(
+            MonsterDefinition.RewardChoiceDefinition reward,
+            SkillChoiceDefinition linkedChoice)
+        {
+            if (linkedChoice != null && linkedChoice.HasMagazineBonus)
+            {
+                return linkedChoice.MagazineBonus;
+            }
+
+            return reward != null ? reward.MagazineBonus : 0;
+        }
+
+        private static float ResolveShotIntervalMultiplier(
+            MonsterDefinition.RewardChoiceDefinition reward,
+            SkillChoiceDefinition linkedChoice)
+        {
+            if (linkedChoice != null && linkedChoice.HasShotIntervalMultiplier)
+            {
+                return linkedChoice.ShotIntervalMultiplier;
+            }
+
+            return reward != null && reward.ShotIntervalMultiplier > 0f ? reward.ShotIntervalMultiplier : 1f;
+        }
+
+        private static float ResolveReloadDurationMultiplier(
+            MonsterDefinition.RewardChoiceDefinition reward,
+            SkillChoiceDefinition linkedChoice)
+        {
+            if (linkedChoice != null && linkedChoice.HasReloadDurationMultiplier)
+            {
+                return linkedChoice.ReloadDurationMultiplier;
+            }
+
+            return reward != null && reward.ReloadDurationMultiplier > 0f ? reward.ReloadDurationMultiplier : 1f;
+        }
+
+        private static float ResolveMaxHealthBonus(
+            MonsterDefinition.RewardChoiceDefinition reward,
+            SkillChoiceDefinition linkedChoice)
+        {
+            if (linkedChoice != null && linkedChoice.HasMaxHealthBonus)
+            {
+                return linkedChoice.MaxHealthBonus;
+            }
+
+            return reward != null ? reward.MaxHealthBonus : 0f;
+        }
+
+        private static float ResolveStatusChanceBonus(
+            MonsterDefinition.RewardChoiceDefinition reward,
+            SkillChoiceDefinition linkedChoice)
+        {
+            if (linkedChoice != null && linkedChoice.HasStatusChanceBonus)
+            {
+                return linkedChoice.StatusChanceBonus;
+            }
+
+            return reward != null ? reward.StatusChanceBonus : 0f;
         }
 
         private static bool IsRewardChoiceAvailableForState(

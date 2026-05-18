@@ -270,7 +270,19 @@ namespace Pakuri.Data
                     Title = choice.Title,
                     SkillIcon = LoadSprite(choice.SkillIconPath),
                     SkillEffectPrefab = LoadPrefab(choice.SkillEffectPrefabPath),
-                    DescriptionText = choice.DescriptionText
+                    DescriptionText = choice.DescriptionText,
+                    HasDamageMultiplier = choice.HasDamageMultiplier,
+                    DamageMultiplier = choice.HasDamageMultiplier ? choice.DamageMultiplier : 1f,
+                    HasMagazineBonus = choice.HasMagazineBonus,
+                    MagazineBonus = choice.MagazineBonus,
+                    HasShotIntervalMultiplier = choice.HasShotIntervalMultiplier,
+                    ShotIntervalMultiplier = choice.HasShotIntervalMultiplier ? choice.ShotIntervalMultiplier : 1f,
+                    HasReloadDurationMultiplier = choice.HasReloadDurationMultiplier,
+                    ReloadDurationMultiplier = choice.HasReloadDurationMultiplier ? choice.ReloadDurationMultiplier : 1f,
+                    HasMaxHealthBonus = choice.HasMaxHealthBonus,
+                    MaxHealthBonus = choice.MaxHealthBonus,
+                    HasStatusChanceBonus = choice.HasStatusChanceBonus,
+                    StatusChanceBonus = choice.StatusChanceBonus
                 };
             }
 

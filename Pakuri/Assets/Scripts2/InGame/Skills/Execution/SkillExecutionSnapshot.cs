@@ -62,10 +62,34 @@ namespace Pakuri.InGame
                 return;
             }
 
-            DamageMultiplier *= PositiveOrDefault(spec.DamageMultiplier, 1f);
+            if (spec.HasDamageMultiplier)
+            {
+                DamageMultiplier *= PositiveOrDefault(spec.DamageMultiplier, 1f);
+            }
+
             CooldownMultiplier *= PositiveOrDefault(spec.CooldownMultiplier, 1f);
             RadiusMultiplier *= PositiveOrDefault(spec.RadiusMultiplier, 1f);
             DurationMultiplier *= PositiveOrDefault(spec.DurationMultiplier, 1f);
+
+            if (spec.HasMagazineBonus)
+            {
+                MagazineBonus += spec.MagazineBonus;
+            }
+
+            if (spec.HasReloadTimeMultiplier)
+            {
+                ReloadTimeMultiplier *= PositiveOrDefault(spec.ReloadTimeMultiplier, 1f);
+            }
+
+            if (spec.HasShotIntervalMultiplier)
+            {
+                ShotIntervalMultiplier *= PositiveOrDefault(spec.ShotIntervalMultiplier, 1f);
+            }
+
+            if (spec.HasStatusChanceBonus)
+            {
+                StatusChanceBonus += spec.StatusChanceBonus;
+            }
 
             if (!string.IsNullOrWhiteSpace(spec.AddedStatusTag))
             {

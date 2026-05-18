@@ -10461,6 +10461,8 @@ MonoBehaviour:
       Prefab: {fileID: 3843049686398240108, guid: 224f5e7622cd0264b961ee388a015d65, type: 3}
   - MonsterId: rin
     SkillEffects:
+    - SkillId: rin-a
+      Prefab: {fileID: 7968378587265563361, guid: 19bfba788239eba498a44cb67c2622c6, type: 3}
     - SkillId: rin-c
       Prefab: {fileID: 8767310348598417902, guid: c17e18be6f4f31b49a083bf1ce120f0d, type: 3}
   - MonsterId: sein

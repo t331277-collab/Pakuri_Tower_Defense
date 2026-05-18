@@ -49,3 +49,6 @@ eve-i-trait-3,null,null,null,null,null,null,null,null,null,null,null,null,null,n
 eve-j-trait-1,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Overcurrent Circuit trait 1 unsupported.
 eve-j-trait-2,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Overcurrent Circuit trait 2 unsupported.
 eve-j-trait-3,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Overcurrent Circuit trait 3 unsupported.
+rin-a-trait-4,null,null,null,null,1,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,ReferenceDirect,Shattering Fist trait 4 pierce bonus; damage scalar moved to monster_skill_choices.csv.
+rin-a-trait-5,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Shattering Fist trait 5 crit modifiers unsupported in current shared projectile runtime.
+rin-a-master-2,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Shattering Fist master 2 lightning extra-hit and every-third-hit chain are outside the current shared projectile contract.

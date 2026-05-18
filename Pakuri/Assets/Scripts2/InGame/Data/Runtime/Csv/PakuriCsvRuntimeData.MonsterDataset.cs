@@ -95,6 +95,18 @@ namespace Pakuri.Data
             public string DescriptionText;
             public string SkillIconPath;
             public string SkillEffectPrefabPath;
+            public bool HasDamageMultiplier;
+            public float DamageMultiplier = 1f;
+            public bool HasMagazineBonus;
+            public int MagazineBonus;
+            public bool HasShotIntervalMultiplier;
+            public float ShotIntervalMultiplier = 1f;
+            public bool HasReloadDurationMultiplier;
+            public float ReloadDurationMultiplier = 1f;
+            public bool HasMaxHealthBonus;
+            public float MaxHealthBonus;
+            public bool HasStatusChanceBonus;
+            public float StatusChanceBonus;
         }
 
         private static MonsterRow ParseMonsterRow(CsvRecord record)
@@ -186,7 +198,7 @@ namespace Pakuri.Data
 
         private static SkillChoiceRow ParseSkillChoiceRow(CsvRecord record)
         {
-            return new SkillChoiceRow
+            var row = new SkillChoiceRow
             {
                 Id = record.ReadRequiredString("choice_id"),
                 MonsterId = record.ReadRequiredString("monster_id"),
@@ -198,6 +210,46 @@ namespace Pakuri.Data
                 SkillIconPath = record.ReadString("skill_icon_path"),
                 SkillEffectPrefabPath = record.ReadString("skill_effect_prefab_path")
             };
+
+            row.HasDamageMultiplier = TryReadFloat(record, "damage_multiplier", out var damageMultiplier);
+            row.DamageMultiplier = damageMultiplier;
+            row.HasMagazineBonus = TryReadInt(record, "magazine_bonus", out var magazineBonus);
+            row.MagazineBonus = magazineBonus;
+            row.HasShotIntervalMultiplier = TryReadFloat(record, "shot_interval_multiplier", out var shotIntervalMultiplier);
+            row.ShotIntervalMultiplier = shotIntervalMultiplier;
+            row.HasReloadDurationMultiplier = TryReadFloat(record, "reload_duration_multiplier", out var reloadDurationMultiplier);
+            row.ReloadDurationMultiplier = reloadDurationMultiplier;
+            row.HasMaxHealthBonus = TryReadFloat(record, "max_health_bonus", out var maxHealthBonus);
+            row.MaxHealthBonus = maxHealthBonus;
+            row.HasStatusChanceBonus = TryReadFloat(record, "status_chance_bonus", out var statusChanceBonus);
+            row.StatusChanceBonus = statusChanceBonus;
+            return row;
+        }
+
+        private static bool TryReadFloat(CsvRecord record, string columnName, out float value)
+        {
+            var raw = record.ReadString(columnName);
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                value = 0f;
+                return false;
+            }
+
+            value = record.ReadFloat(columnName);
+            return true;
+        }
+
+        private static bool TryReadInt(CsvRecord record, string columnName, out int value)
+        {
+            var raw = record.ReadString(columnName);
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                value = 0;
+                return false;
+            }
+
+            value = record.ReadInt(columnName);
+            return true;
         }
 
         private static void ValidateExpectedSlots(

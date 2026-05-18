@@ -49,6 +49,18 @@ namespace Pakuri.Data
         public Sprite SkillIcon;
         public GameObject SkillEffectPrefab;
         [TextArea(2, 5)] public string DescriptionText;
+        public bool HasDamageMultiplier;
+        public float DamageMultiplier = 1f;
+        public bool HasMagazineBonus;
+        public int MagazineBonus;
+        public bool HasShotIntervalMultiplier;
+        public float ShotIntervalMultiplier = 1f;
+        public bool HasReloadDurationMultiplier;
+        public float ReloadDurationMultiplier = 1f;
+        public bool HasMaxHealthBonus;
+        public float MaxHealthBonus;
+        public bool HasStatusChanceBonus;
+        public float StatusChanceBonus;
     }
 
     [Serializable]
