@@ -3,6 +3,53 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-19 Projectile Blueprint Parsed-Input And Stop-Ask Rewrite
+
+### Task title
+
+Rewrite the projectile blueprint around parsed input and stop-and-ask rules.
+
+### Goals
+
+- Change `boards/SkillBluePrint/projectile-blueprint.md` from a search-oriented guide into a blueprint-first contract for common projectile work.
+- Make future projectile implementation tasks consume caller-provided parsed runtime inputs instead of rediscovering numbers from CSV or reference files.
+- Make Builder stop and ask the user whenever a requested projectile behavior falls outside the current common projectile path.
+- Remove overly heavy file-inventory style guidance when the real rule is "feed parsed data into the shared projectile runtime."
+
+### Constraints
+
+- Role Owner is Designer because this task changes implementation design policy, not runtime code.
+- No C# script, scene, prefab, or CSV gameplay behavior was changed.
+- Claims are based on the inspected current shared projectile runtime explanation already grounded in `InGameSkillDefinitionMapper.cs`, `SkillExecutors.cs`, `InGameProjectileActor.cs`, `SkillExecutionSystem.cs`, and the previous projectile blueprint text.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Future projectile implementation tasks should treat `boards/SkillBluePrint/projectile-blueprint.md` as the primary contract and should not reopen CSV/reference sources unless the user explicitly instructs that.
+- If a task request does not include the required parsed input fields, Code Builder should stop and report the missing fields instead of searching for them.
+- If a task requests timed burst, homing, bounce, last-shot explosion, trap/install, impact-area, mark payload, or other special projectile behavior, Code Builder should stop and ask the user instead of guessing.
+
+### Evidence
+
+- The previous `boards/SkillBluePrint/projectile-blueprint.md` explicitly redirected Builder toward large CSV/reference rediscovery and then toward a heavy `Fixed Implementation Surface` file list.
+- The rewritten `boards/SkillBluePrint/projectile-blueprint.md` now centers on `Core Rule`, `Builder Working Mode`, `Required Parsed Input`, `Common Projectile Contract`, `Stop And Ask User Rule`, and `Preferred Builder Response Pattern`.
+- The rewritten blueprint now states that projectile numbers and behavior intent must come from caller-provided parsed input, that shared projectile runtime is the default path, and that unsupported special behavior must trigger a user question instead of an inferred implementation.
+- 2026-05-19 follow-up: `Optional but common fields` was narrowed to `ChoiceModifierSpecs`, `OnHitStatusId`, `OnHitStatusChance`, `ProjectilePrefabSource`, and `SkillEffectPrefabOverride`; fields such as `ProjectileCount`, `LifetimeSeconds`, `MaxTravelDistance`, `DestroyBoundaryPolicy`, `HitRadius`, `OnHitStatusStacks`, and `OnHitStatusDurationSeconds` were moved out of the current common projectile input contract.
+- 2026-05-19 follow-up header check showed the active `Pakuri/Assets/CSVdata/source/monster_skills.csv` does not currently contain those removed fields, while `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` still contains `skill_effect_prefab_path`, so no active CSV column deletion was required for this follow-up.
+
+### History
+
+- 2026-05-19: User said the current projectile blueprint relies too much on other CSV/C# sources and requested a redesign so Builder can implement projectile skills by reading the blueprint alone.
+- 2026-05-19: User then clarified that the blueprint should be understandable to AI, should favor parsed-data-to-common-runtime flow, and should stop and ask when a projectile requires special behavior such as timed firing, homing, or last-shot explosion.
+- 2026-05-19: User requested shrinking the optional parsed-field list further and asked to remove unsupported field expectations while keeping prefab path support.
+
 ## Task: 2026-05-18 CSV Runtime Catalog Sync Batch
 
 ### Task title
