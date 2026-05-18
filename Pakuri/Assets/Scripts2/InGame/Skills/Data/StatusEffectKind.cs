@@ -56,12 +56,11 @@ namespace Pakuri.InGame
             {
                 case "shock":
                 case "감전":
-                case "媛먯쟾":
                     kind = StatusEffectKind.Shock;
                     return true;
                 case "chill":
                 case "추위":
-                case "異붿쐞":
+                case "냉기":
                     kind = StatusEffectKind.Chill;
                     return true;
                 case "freeze":
@@ -74,11 +73,10 @@ namespace Pakuri.InGame
                     return true;
                 case "vulnerable":
                 case "취약":
-                case "痍⑥빟":
                     kind = StatusEffectKind.Vulnerable;
                     return true;
                 case "shield":
-                case "보호막":
+                case "방어막":
                     kind = StatusEffectKind.Shield;
                     return true;
                 default:
@@ -101,7 +99,7 @@ namespace Pakuri.InGame
                 case StatusEffectKind.Vulnerable:
                     return new StatusEffectDefinition(kind, "vulnerable", "취약", 0f, 10, true);
                 case StatusEffectKind.Shield:
-                    return new StatusEffectDefinition(kind, "shield", "보호막", 0f, 0, false);
+                    return new StatusEffectDefinition(kind, "shield", "방어막", 0f, 0, false);
                 default:
                     return NoneDefinition;
             }

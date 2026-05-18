@@ -8,6 +8,7 @@ namespace Pakuri.Data
     internal sealed class PakuriCsvRuntimeCatalogPostprocessor : AssetPostprocessor
     {
         private const string ImportedSourceAssetPrefix = "Assets/CSVdata/source/";
+        private const string EnemySkillDataAssetPath = "Assets/CSVdata/EnemySkillData.csv";
         private static bool syncQueued;
 
         [InitializeOnLoadMethod]
@@ -43,8 +44,17 @@ namespace Pakuri.Data
             for (var i = 0; i < assetPaths.Length; i++)
             {
                 var assetPath = assetPaths[i];
-                if (!string.IsNullOrWhiteSpace(assetPath)
-                    && assetPath.StartsWith(ImportedSourceAssetPrefix, StringComparison.OrdinalIgnoreCase)
+                if (string.IsNullOrWhiteSpace(assetPath))
+                {
+                    continue;
+                }
+
+                if (string.Equals(assetPath, EnemySkillDataAssetPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                if (assetPath.StartsWith(ImportedSourceAssetPrefix, StringComparison.OrdinalIgnoreCase)
                     && assetPath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
                 {
                     return true;

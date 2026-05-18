@@ -4,6 +4,56 @@ This board records broad refactoring plans that cut across combat, monster runti
 
 When doing related work, follow `MDTREE.md` routing and update this file together with the affected domain boards.
 
+## Task: 2026-05-18 InGame God Class Split Follow-up
+
+### Task title
+
+Split current InGame oversized UI, enemy combat, and unit actor responsibilities.
+
+### Goals
+
+- Split Offering and Menifest behavior out of `InGameUIManager` while preserving the current `NewRunScene` scene-binding path.
+- Split `EnemyCombatSimulationSystem` into enemy orchestration, cooldown, targeting, execution, and shared skill-runtime data responsibilities.
+- Commonize duplicated `MonsterUnitActor` and `EnemyUnitActor` presentation behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Preserve serialized field names and public scene-facing entry points where the current actor/UI scripts expose them.
+- Preserve player-facing behavior unless the user explicitly approves behavior changes.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Builder implementation completed and locally compiled.
+
+### Next Actions
+
+- User verifies Offering, Menifest, enemy skill cadence, and unit actor presentation in Unity Play Mode.
+- Run Code Reviewer only after explicit user permission.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now keeps top-level UI lookup/binding and delegates split behavior to `OfferingUI.cs` and `MenifestUI.cs`.
+- `Pakuri/Assets/Scripts2/InGame/UI/OfferingUI.cs` owns Offering choice generation, learned-skill enhancement filtering, and choice commit behavior.
+- `Pakuri/Assets/Scripts2/InGame/UI/MenifestUI.cs` owns Menifest candidate, fail, success, commit, and skip popup behavior.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSimulationSystem.cs` now orchestrates enemy ticks and delegates skill details to `EnemySkillCooldown.cs`, `EnemyTargeting.cs`, `EnemySkillExecutor.cs`, and `EnemySkillRuntime.cs`.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs` and `EnemyUnitActor.cs` now share name/status/HP/shield/damage-popup presentation through `UnitActorView.cs`.
+- `Pakuri/Assembly-CSharp.csproj` includes the new compile entries for `UnitActorView.cs`, `OfferingUI.cs`, `MenifestUI.cs`, `EnemySkillRuntime.cs`, `EnemyTargeting.cs`, `EnemySkillCooldown.cs`, and `EnemySkillExecutor.cs`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `System.Net.Http` and `System.IO.Compression` MSB3277 warnings remain.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing `System.Net.Http` and `System.IO.Compression` MSB3277 warnings remain.
+- `git diff --check -- Pakuri/Assets/Scripts2/InGame Pakuri/Assembly-CSharp.csproj boards/RUN/RUN_BLACKBOARD.md boards/UI/RUNSCENE_UI.md boards/COMBAT/ENEMY_BLACKBOARD.md boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md` returned no whitespace-error lines; Git reported only line-ending normalization warnings.
+
+### History
+
+- 2026-05-18: User asked Code Builder to perform the identified God Class/duplication refactors for `InGameUIManager`, `EnemyCombatSimulationSystem`, and `MonsterUnitActor`/`EnemyUnitActor`.
+- 2026-05-18: Code Builder completed the split and updated related Run/UI/Enemy/Status boards with compile evidence.
+
 ## Task: 2026-05-14 InGame Phase2-A Eve Unit Model Mapping
 
 ### Task title

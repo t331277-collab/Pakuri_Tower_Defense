@@ -38,7 +38,7 @@ Code Builder
 
 ### Status
 
-Builder implementation completed and local non-gameplay checks passed.
+Builder implementation completed and local non-gameplay checks passed. 2026-05-18 Ariel-A projectile speed and pierce are now owned by `monster_skills.csv` instead of skill-ID-specific mapper code. 2026-05-18 supported runtime status labels can now be edited directly in CSV when `status_effect_id` is blank.
 
 ### Next Actions
 
@@ -48,7 +48,7 @@ Builder implementation completed and local non-gameplay checks passed.
 
 ### Evidence
 
-- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores `ariel-a` `skill_effect_prefab_path=Assets/Prefab/Skill/Ariel/Airel_A.prefab`.
+- `Pakuri/Assets/Scripts2/InGame/Core/EffectManager.cs` plus `NewRunScene.unity` now own the Ariel-A prefab mapping; `monster_skills.csv` no longer stores a base `skill_effect_prefab_path` column.
 - `Pakuri/Assets/CSVData/SkillData.csv` now includes the Ariel-A reference row with base damage `18`, spell coefficient `1`, magazine `7`, reload `4.6`, shot interval `0.36`, pierce `1`, and projectile speed `17`.
 - `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now serializes `arielAProjectilePrefab` and resolves `"ariel-a"` to it.
 - `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` assigns `arielAProjectilePrefab` to `Assets/Prefab/Skill/Ariel/Airel_A.prefab` GUID `66fcb365022930d4681ad320e5fff520`.
@@ -58,10 +58,19 @@ Builder implementation completed and local non-gameplay checks passed.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
 - `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing warnings; an earlier parallel runtime build failed only from an `obj\Debug\Assembly-CSharp.dll` file lock, then passed when rerun alone.
 - Unity-MCP refresh reached idle; console warning/error read showed only MCP client handler logs, not C# compile errors.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores `ariel-a` `projectile_speed=17`, `pierce_count=1`, `status_chance=0`, and `status_effect_label=없음`; the CSV `range` column was removed.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` no longer has `ResolveProjectileSpeed(...)` or `ResolveBasePierceCount(...)` Ariel-A special cases.
+- `ariel-b` `base_damage` in `monster_skills.csv` is now `35`, matching `Pakuri/reference/2.Monster/ariel/skill/b-radiant-shield.md`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` keeps Ariel design-only labels such as `방어막`, `축복`, and `신성 노출` with `status_chance=0`; if `ariel-a` is edited to `status_effect_label=감전`, `status_chance=1`, and `pierce_count=999`, the mapper can resolve the label to the supported `shock` status.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs` parses Korean runtime labels including `감전`, and `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` falls back from blank `status_effect_id` to parseable `status_effect_label`.
+- `SyncCsvRuntimeCatalogs.bat` was added for Unity batchmode sync; when the project was already open, Unity batchmode rejected duplicate project open, then Unity-MCP invoked `Pakuri.Data.PakuriCsvRuntimeData.SyncAndValidateCsvRuntimeCatalogsForEditor()` and the console logged successful sync/validation.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
 
 ### History
 
 - 2026-05-17: User asked Code Builder to implement Ariel-A using `Assets/Prefab/Skill/Ariel/Airel_A.prefab` and to report any information the blueprint alone could not provide.
+- 2026-05-18: Code Builder moved Ariel-A projectile speed/pierce from mapper hardcoding into the skill CSV row and filled Ariel-B shield base from the reference document.
+- 2026-05-18: Code Builder added status-label fallback and CSV runtime sync batch support so supported status edits in `monster_skills.csv` can be synced without code changes.
 
 ## Task: 2026-05-15 Ariel-B Phase4-C-0 Shield Effect Minimum Execution
 

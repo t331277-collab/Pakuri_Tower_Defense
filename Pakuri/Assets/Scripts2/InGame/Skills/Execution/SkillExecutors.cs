@@ -54,12 +54,13 @@ namespace Pakuri.InGame
             var prefab = skill.Projectile != null ? skill.Projectile.ProjectilePrefab : null;
             if (prefab == null)
             {
+                var effects = context.CombatManager.Effects;
                 prefab = snapshot != null && snapshot.SkillEffectPrefab != null
                     ? snapshot.SkillEffectPrefab
-                    : context.CombatManager.ResolveSkillEffectPrefab(skill.SkillId);
+                    : effects != null ? effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId) : null;
             }
 
-            var statusSpec = ResolveProjectileStatusSpec(skill, snapshot);
+            var statusSpec = ResolveStatusSpec(skill.OnHitStatus, snapshot);
             if (prefab == null)
             {
                 if (target != null)
@@ -90,10 +91,33 @@ namespace Pakuri.InGame
             for (var i = 0; i < projectileCount; i++)
             {
                 var spreadDirection = ResolveProjectileSpreadDirection(direction, i, projectileCount);
-                var instance = context.CombatManager.InstantiateSkillPrefab(
+                var effects = context.CombatManager.Effects;
+                if (effects == null)
+                {
+                    if (target != null)
+                    {
+                        context.CombatManager.ApplyDamage(target.Model, damage, attribute);
+                        TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec);
+                    }
+
+                    continue;
+                }
+
+                var instance = effects.InstantiateSkillPrefab(
                     prefab,
                     origin,
                     ResolveRotation(spreadDirection));
+                if (instance == null)
+                {
+                    if (target != null)
+                    {
+                        context.CombatManager.ApplyDamage(target.Model, damage, attribute);
+                        TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec);
+                    }
+
+                    continue;
+                }
+
                 var actor = instance.GetComponent<InGameProjectileActor>();
                 if (actor == null)
                 {
@@ -155,11 +179,10 @@ namespace Pakuri.InGame
             return Quaternion.Euler(0f, 0f, angle);
         }
 
-        private static ProjectileStatusHitSpec ResolveProjectileStatusSpec(
-            ProjectileSkillData skill,
+        internal static ProjectileStatusHitSpec ResolveStatusSpec(
+            StatusApplicationSpec baseStatus,
             SkillExecutionSnapshot snapshot)
         {
-            var baseStatus = skill != null ? skill.OnHitStatus : null;
             var statusData = baseStatus != null ? baseStatus.Status : null;
             var snapshotTag = snapshot != null ? snapshot.StatusTag : null;
             var tag = !string.IsNullOrWhiteSpace(snapshotTag)
@@ -178,11 +201,6 @@ namespace Pakuri.InGame
 
             var stacks = baseStatus != null ? Math.Max(0, baseStatus.Stacks) : 1;
             var chance = baseStatus != null ? Mathf.Clamp01(baseStatus.Chance) : 1f;
-            if (skill != null && skill.SkillId == "eve-a" && kind == StatusEffectKind.Shock)
-            {
-                chance = 0.15f;
-            }
-
             if (snapshot != null)
             {
                 chance = Mathf.Clamp01(chance + snapshot.StatusChanceBonus);
@@ -271,6 +289,135 @@ namespace Pakuri.InGame
 
     public sealed class BeamSkillExecutor : TypedSkillExecutor<BeamSkillData>
     {
+        private const float DefaultBeamLength = 31f;
+
+        public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
+        {
+            var skill = context != null ? context.SkillData as BeamSkillData : null;
+            if (skill == null || context.CombatManager == null || context.CasterEntry == null)
+            {
+                return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
+            }
+
+            var origin = context.CasterEntry.Transform != null
+                ? context.CasterEntry.Transform.position
+                : Vector3.zero;
+            var target = context.HasManualAimDirection
+                ? null
+                : SkillExecutionUtility.FindNearestTarget(context.CasterEntry, context.Roster, skill.Targeting);
+            var direction = context.HasManualAimDirection
+                ? context.ManualAimDirection
+                : SkillExecutionUtility.DirectionToTarget(origin, target);
+
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                return new SkillExecutionResult(SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
+            }
+
+            direction.Normalize();
+            var damage = SkillExecutionUtility.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
+            var attribute = SkillExecutionUtility.MapAttribute(skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element);
+            var statusSpec = ProjectileSkillExecutor.ResolveStatusSpec(skill.OnHitStatus, snapshot);
+            var length = ResolveBeamLength(skill, origin, direction, context.CombatManager);
+            var width = Mathf.Max(0.1f, skill.BeamWidth);
+            var duration = ResolveDuration(skill);
+            var tickInterval = ResolveTickInterval(skill);
+            var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
+                ? snapshot.SkillEffectPrefab
+                : context.CombatManager.Effects != null
+                    ? context.CombatManager.Effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId)
+                    : null;
+
+            if (prefab == null || context.CombatManager.Effects == null)
+            {
+                var routed = InGameLineAttackActor.ApplyLineTick(
+                    context.CombatManager,
+                    context.CasterEntry,
+                    context.Roster,
+                    skill.Targeting,
+                    origin,
+                    direction,
+                    length,
+                    width,
+                    damage,
+                    attribute,
+                    statusSpec);
+                return new SkillExecutionResult(routed ? SkillExecutionStatus.Routed : SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
+            }
+
+            var instance = context.CombatManager.Effects.InstantiateSkillPrefab(
+                prefab,
+                origin + (Vector3)(direction * (length * 0.5f)),
+                ResolveRotation(direction));
+            if (instance == null)
+            {
+                return new SkillExecutionResult(SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
+            }
+
+            var actor = instance.GetComponent<InGameLineAttackActor>();
+            if (actor == null)
+            {
+                actor = instance.AddComponent<InGameLineAttackActor>();
+            }
+
+            actor.Initialize(
+                context.CombatManager,
+                context.CasterEntry,
+                context.Roster,
+                skill.Targeting,
+                origin,
+                direction,
+                length,
+                width,
+                duration,
+                tickInterval,
+                damage,
+                attribute,
+                statusSpec);
+            return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
+        }
+
+        private static float ResolveBeamLength(BeamSkillData skill, Vector3 origin, Vector2 direction, InGameCombatManager manager)
+        {
+            if (skill != null && skill.BeamLength > 0f)
+            {
+                return skill.BeamLength;
+            }
+
+            if (manager != null && Mathf.Abs(direction.x) > 0.0001f)
+            {
+                var boundary = manager.ResolveProjectileDestroyBoundaryX();
+                var distance = Mathf.Abs((boundary - origin.x) / direction.x);
+                if (distance > 0.1f)
+                {
+                    return Mathf.Max(1f, distance);
+                }
+            }
+
+            return DefaultBeamLength;
+        }
+
+        private static float ResolveDuration(BeamSkillData skill)
+        {
+            var timing = skill != null ? skill.Timing : null;
+            return timing != null && timing.ActiveDuration > 0f
+                ? timing.ActiveDuration
+                : ResolveTickInterval(skill);
+        }
+
+        private static float ResolveTickInterval(BeamSkillData skill)
+        {
+            var timing = skill != null ? skill.Timing : null;
+            return timing != null && timing.TickInterval > 0f
+                ? timing.TickInterval
+                : 0.1f;
+        }
+
+        private static Quaternion ResolveRotation(Vector2 direction)
+        {
+            var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            return Quaternion.Euler(0f, 0f, angle);
+        }
     }
 
     public sealed class ZoneSkillExecutor : TypedSkillExecutor<ZoneSkillData>
@@ -299,7 +446,9 @@ namespace Pakuri.InGame
             }
             var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
-                : context.CombatManager.ResolveSkillEffectPrefab(skill.SkillId);
+                : context.CombatManager.Effects != null
+                    ? context.CombatManager.Effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId)
+                    : null;
 
             var targets = context.Roster.Players;
             var routed = false;
@@ -312,16 +461,19 @@ namespace Pakuri.InGame
                 }
 
                 context.CombatManager.GrantShield(target.Model, shield);
-                if (prefab != null && target.Transform != null)
+                if (prefab != null && target.Transform != null && context.CombatManager.Effects != null)
                 {
-                    var instance = context.CombatManager.InstantiateSkillPrefab(prefab, target.Transform.position, Quaternion.identity);
-                    var actor = instance.GetComponent<InGameAttachedSkillEffectActor>();
-                    if (actor == null)
+                    var instance = context.CombatManager.Effects.InstantiateSkillPrefab(prefab, target.Transform.position, Quaternion.identity);
+                    if (instance != null)
                     {
-                        actor = instance.AddComponent<InGameAttachedSkillEffectActor>();
-                    }
+                        var actor = instance.GetComponent<InGameAttachedSkillEffectActor>();
+                        if (actor == null)
+                        {
+                            actor = instance.AddComponent<InGameAttachedSkillEffectActor>();
+                        }
 
-                    actor.Initialize(target.Transform, duration, Vector3.zero);
+                        actor.Initialize(target.Transform, duration, Vector3.zero);
+                    }
                 }
 
                 routed = true;
@@ -442,11 +594,16 @@ namespace Pakuri.InGame
             return source == StatSource.Attack ? stats.AttackPower : stats.SpellPower;
         }
 
-        private static System.Collections.Generic.IReadOnlyList<UnitRosterEntry> ResolveTargetList(
+        public static System.Collections.Generic.IReadOnlyList<UnitRosterEntry> ResolveTargetList(
             UnitRosterEntry caster,
             UnitRosterService roster,
             SkillTargetingSpec targeting)
         {
+            if (caster == null || roster == null)
+            {
+                return System.Array.Empty<UnitRosterEntry>();
+            }
+
             var side = targeting != null ? targeting.TargetSide : SkillTargetSide.Enemy;
             if (side == SkillTargetSide.Ally || side == SkillTargetSide.AllAllies || side == SkillTargetSide.Self)
             {

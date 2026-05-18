@@ -39,7 +39,7 @@ Code Builder
 
 ### Status
 
-Builder implementation completed and locally verified.
+Builder implementation completed and locally verified. 2026-05-18 Rin active skill CSV rows were updated to the new skill-owned projectile/status schema. 2026-05-18 Rin design-only labels remain non-runtime statuses with `status_chance=0`.
 
 ### Next Actions
 
@@ -50,11 +50,18 @@ Builder implementation completed and locally verified.
 - `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` references `Rin_Unit.prefab` in `rinUnitPrefab`.
 - Unity-MCP verification returned `rin:prefab=Rin_Unit|modelOk=True|model=rin|actor=True|actorModel=True|hpText=HP 260/260|bgSprite=True|fillSprite=True|shieldSprite=True`.
 - 2026-05-14 follow-up: `MonsterUnitActor` now scales HP fill against `Background.localScale.x`; Unity-MCP editor code returned `Rin_Unit:bgX=20|beforeFillX=20|fullFillX=20|halfFillX=10`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores `rin-a` `projectile_speed=13`, `pierce_count=0`, `magazine_capacity=10`, `reload_seconds=4`, and `shot_interval_seconds=0.34`, matching `Pakuri/reference/2.Monster/rin/skill/a-shattering-fist.md`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores `rin-c` `radius=1.6` and `status_effect_label=넉백`, matching `Pakuri/reference/2.Monster/rin/skill/c-shockwave.md`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores Rin design-only labels `행동속도 증가` and `넉백` with `status_chance=0`; runtime CSV validation rejects positive chance on unsupported status labels.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` can still resolve supported labels such as `감전` from `status_effect_label` if a Rin row is intentionally edited to use a supported status later.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
 
 ### History
 
 - 2026-05-14: User asked to verify all five selectable prefab bindings and fix invisible `MonsterHpBar`.
 - 2026-05-14: User reported `HpFill` was forced to `1` on scene entry; Builder changed fill scaling to use the background width.
+- 2026-05-18: Code Builder moved Rin projectile/status tuning into the skill CSV row and filled Rin-C width from the reference document.
+- 2026-05-18: Code Builder normalized Rin design-only status labels to chance 0 and added supported status-label fallback/CSV sync batch support.
 
 ## Task: 2026-05-13 Rin Battlefield Facade Registration
 

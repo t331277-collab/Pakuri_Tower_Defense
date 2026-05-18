@@ -33,7 +33,6 @@ namespace Pakuri.InGame
         [SerializeField] private Transform runtimeObjectRoot;
         [SerializeField] private Transform runtimeEnemyRoot;
         [SerializeField] private Transform runtimeMonsterRoot;
-        [SerializeField] private GameDataCatalog fallbackCatalog;
         [SerializeField] private GameObject arielUnitPrefab;
         [SerializeField] private GameObject eveUnitPrefab;
         [SerializeField] private GameObject rinUnitPrefab;
@@ -324,12 +323,6 @@ namespace Pakuri.InGame
                 return registeredCatalog;
             }
 
-            if (fallbackCatalog != null)
-            {
-                PakuriDataManager.Instance.RegisterCatalog(fallbackCatalog);
-                return fallbackCatalog;
-            }
-
             return PakuriCsvRuntimeData.ResolveCatalogOrFallback(null);
         }
 
@@ -352,9 +345,7 @@ namespace Pakuri.InGame
                 return fromCatalog;
             }
 
-            return fallbackCatalog != null && fallbackCatalog != catalog
-                ? fallbackCatalog.GetMonsterById(monsterId)
-                : null;
+            return null;
         }
 
         private EnemyDefinition ResolveEnemyDefinition(string enemyId, GameDataCatalog catalog)
@@ -376,9 +367,7 @@ namespace Pakuri.InGame
                 return fromCatalog;
             }
 
-            return fallbackCatalog != null && fallbackCatalog != catalog
-                ? fallbackCatalog.GetStageOneEnemyById(enemyId)
-                : null;
+            return null;
         }
 
         private MonsterUnitActor BindMonsterActor(GameObject spawnedUnit, MonsterUnitRuntimeModel model)

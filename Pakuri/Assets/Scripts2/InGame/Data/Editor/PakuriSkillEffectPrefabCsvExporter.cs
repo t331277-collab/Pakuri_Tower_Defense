@@ -11,9 +11,7 @@ namespace Pakuri.Data
     internal static class PakuriSkillEffectPrefabCsvExporter
     {
         private const string MonsterAssetFolder = "Assets/Data/GameData/Monsters";
-        private const string MonsterSkillsCsvPath = "Assets/CSVdata/source/monster_skills.csv";
         private const string MonsterSkillChoicesCsvPath = "Assets/CSVdata/source/monster_skill_choices.csv";
-        private const string IdColumnName = "skill_id";
         private const string ChoiceIdColumnName = "choice_id";
         private const string SkillEffectPrefabPathColumnName = "skill_effect_prefab_path";
 
@@ -23,40 +21,28 @@ namespace Pakuri.Data
             var result = ExportAllAssignedEffectPrefabsToCsv();
             Debug.Log(
                 "Pakuri skill effect prefab export completed. "
-                + $"skills={result.SkillRowsUpdated}, choices={result.ChoiceRowsUpdated}, "
-                + $"assignedSkills={result.AssignedSkillPrefabCount}, assignedChoices={result.AssignedChoicePrefabCount}");
+                + $"choices={result.ChoiceRowsUpdated}, assignedChoices={result.AssignedChoicePrefabCount}");
         }
 
         public static ExportResult ExportAllAssignedEffectPrefabsToCsv()
         {
-            var assignedSkillPrefabPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             var assignedChoicePrefabPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            CollectAssignedPrefabPaths(assignedSkillPrefabPaths, assignedChoicePrefabPaths);
-
-            var skillRowsUpdated = UpdateCsvPrefabPathColumn(
-                MonsterSkillsCsvPath,
-                IdColumnName,
-                assignedSkillPrefabPaths);
+            CollectAssignedPrefabPaths(assignedChoicePrefabPaths);
             var choiceRowsUpdated = UpdateCsvPrefabPathColumn(
                 MonsterSkillChoicesCsvPath,
                 ChoiceIdColumnName,
                 assignedChoicePrefabPaths);
 
-            AssetDatabase.ImportAsset(MonsterSkillsCsvPath);
             AssetDatabase.ImportAsset(MonsterSkillChoicesCsvPath);
             PakuriCsvRuntimeData.SyncImportedSourceCatalogsForEditor();
 
             return new ExportResult(
-                assignedSkillPrefabPaths.Count,
                 assignedChoicePrefabPaths.Count,
-                skillRowsUpdated,
                 choiceRowsUpdated);
         }
 
-        private static void CollectAssignedPrefabPaths(
-            Dictionary<string, string> skillPrefabPaths,
-            Dictionary<string, string> choicePrefabPaths)
+        private static void CollectAssignedPrefabPaths(Dictionary<string, string> choicePrefabPaths)
         {
             var monsterGuids = AssetDatabase.FindAssets("t:MonsterDefinition", new[] { MonsterAssetFolder });
             foreach (var guid in monsterGuids)
@@ -68,14 +54,13 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                CollectActiveSkillPrefabPaths(monster.ActiveSkills, skillPrefabPaths, choicePrefabPaths, monsterAssetPath);
-                CollectPassiveSkillPrefabPaths(monster.PassiveSkills, skillPrefabPaths, choicePrefabPaths, monsterAssetPath);
+                CollectActiveSkillPrefabPaths(monster.ActiveSkills, choicePrefabPaths, monsterAssetPath);
+                CollectPassiveSkillPrefabPaths(monster.PassiveSkills, choicePrefabPaths, monsterAssetPath);
             }
         }
 
         private static void CollectActiveSkillPrefabPaths(
             SkillDefinition[] skills,
-            Dictionary<string, string> skillPrefabPaths,
             Dictionary<string, string> choicePrefabPaths,
             string ownerAssetPath)
         {
@@ -91,7 +76,6 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                AddPrefabPath(skillPrefabPaths, skill.SkillId, skill.SkillEffectPrefab, ownerAssetPath);
                 CollectChoicePrefabPaths(skill.EnhancementChoices, choicePrefabPaths, ownerAssetPath);
                 CollectChoicePrefabPaths(skill.MasterSkillChoices, choicePrefabPaths, ownerAssetPath);
             }
@@ -99,7 +83,6 @@ namespace Pakuri.Data
 
         private static void CollectPassiveSkillPrefabPaths(
             PassiveDefinition[] passives,
-            Dictionary<string, string> skillPrefabPaths,
             Dictionary<string, string> choicePrefabPaths,
             string ownerAssetPath)
         {
@@ -115,7 +98,6 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                AddPrefabPath(skillPrefabPaths, passive.PassiveId, passive.SkillEffectPrefab, ownerAssetPath);
                 CollectChoicePrefabPaths(passive.EnhancementChoices, choicePrefabPaths, ownerAssetPath);
             }
         }
@@ -341,20 +323,14 @@ namespace Pakuri.Data
         public readonly struct ExportResult
         {
             public ExportResult(
-                int assignedSkillPrefabCount,
                 int assignedChoicePrefabCount,
-                int skillRowsUpdated,
                 int choiceRowsUpdated)
             {
-                AssignedSkillPrefabCount = assignedSkillPrefabCount;
                 AssignedChoicePrefabCount = assignedChoicePrefabCount;
-                SkillRowsUpdated = skillRowsUpdated;
                 ChoiceRowsUpdated = choiceRowsUpdated;
             }
 
-            public int AssignedSkillPrefabCount { get; }
             public int AssignedChoicePrefabCount { get; }
-            public int SkillRowsUpdated { get; }
             public int ChoiceRowsUpdated { get; }
         }
     }
@@ -372,8 +348,7 @@ namespace Pakuri.Data
                 var result = PakuriSkillEffectPrefabCsvExporter.ExportAllAssignedEffectPrefabsToCsv();
                 Debug.Log(
                     "Pakuri skill effect prefab export completed from MonsterDefinition inspector. "
-                    + $"skills={result.SkillRowsUpdated}, choices={result.ChoiceRowsUpdated}, "
-                    + $"assignedSkills={result.AssignedSkillPrefabCount}, assignedChoices={result.AssignedChoicePrefabCount}");
+                    + $"choices={result.ChoiceRowsUpdated}, assignedChoices={result.AssignedChoicePrefabCount}");
             }
         }
     }

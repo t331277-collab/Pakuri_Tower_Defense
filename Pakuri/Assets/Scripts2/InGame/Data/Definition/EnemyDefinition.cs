@@ -48,6 +48,18 @@ namespace Pakuri.Data
         public Sprite ProjectileSprite;
 
         [Header("Stage 1 Skill")]
+        public bool HasBasicSkill;
+        public StageOneEnemySkillKind BasicSkill;
+        public string BasicSkillName;
+        public float BasicSkillCoefficient = 1f;
+        public float BasicSkillCooldown = 2f;
+        public float BasicSkillDuration;
+        public float BasicSkillRadius;
+        public float BasicSkillFlatValue;
+        public float BasicSkillProjectileSpeed;
+        public float BasicSkillProjectileLifetime;
+        public float BasicSkillMoveSpeedMultiplier = 1f;
+        public float BasicSkillOutgoingDamageMultiplier = 1f;
         public StageOneEnemySkillKind StageOneSkill;
         public string ActiveSkillName;
         public float ActiveSkillCoefficient = 1f;
@@ -55,6 +67,10 @@ namespace Pakuri.Data
         public float ActiveSkillDuration;
         public float ActiveSkillRadius;
         public float ActiveSkillFlatValue;
+        public float ActiveSkillProjectileSpeed;
+        public float ActiveSkillProjectileLifetime;
+        public float ActiveSkillMoveSpeedMultiplier = 1f;
+        public float ActiveSkillOutgoingDamageMultiplier = 1f;
         public string PassiveSkillName;
         [TextArea(2, 4)] public string PassiveSummary;
 
@@ -79,6 +95,18 @@ namespace Pakuri.Data
             clone.Defenses = Defenses != null ? Defenses.Clone() : new AttributeDefenseSet();
             clone.UnitSprite = UnitSprite;
             clone.ProjectileSprite = ProjectileSprite;
+            clone.HasBasicSkill = HasBasicSkill;
+            clone.BasicSkill = BasicSkill;
+            clone.BasicSkillName = BasicSkillName;
+            clone.BasicSkillCoefficient = BasicSkillCoefficient;
+            clone.BasicSkillCooldown = BasicSkillCooldown;
+            clone.BasicSkillDuration = BasicSkillDuration;
+            clone.BasicSkillRadius = BasicSkillRadius;
+            clone.BasicSkillFlatValue = BasicSkillFlatValue;
+            clone.BasicSkillProjectileSpeed = BasicSkillProjectileSpeed;
+            clone.BasicSkillProjectileLifetime = BasicSkillProjectileLifetime;
+            clone.BasicSkillMoveSpeedMultiplier = BasicSkillMoveSpeedMultiplier;
+            clone.BasicSkillOutgoingDamageMultiplier = BasicSkillOutgoingDamageMultiplier;
             clone.StageOneSkill = StageOneSkill;
             clone.ActiveSkillName = ActiveSkillName;
             clone.ActiveSkillCoefficient = ActiveSkillCoefficient;
@@ -86,6 +114,10 @@ namespace Pakuri.Data
             clone.ActiveSkillDuration = ActiveSkillDuration;
             clone.ActiveSkillRadius = ActiveSkillRadius;
             clone.ActiveSkillFlatValue = ActiveSkillFlatValue;
+            clone.ActiveSkillProjectileSpeed = ActiveSkillProjectileSpeed;
+            clone.ActiveSkillProjectileLifetime = ActiveSkillProjectileLifetime;
+            clone.ActiveSkillMoveSpeedMultiplier = ActiveSkillMoveSpeedMultiplier;
+            clone.ActiveSkillOutgoingDamageMultiplier = ActiveSkillOutgoingDamageMultiplier;
             clone.PassiveSkillName = PassiveSkillName;
             clone.PassiveSummary = PassiveSummary;
             return clone;

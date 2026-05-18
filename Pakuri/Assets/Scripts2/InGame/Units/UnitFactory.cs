@@ -49,11 +49,27 @@ namespace Pakuri.InGame
                 EncounterRole = definition.EncounterRole,
                 AttackType = definition.AttackType,
                 Attribute = definition.Attribute,
+                HasBasicSkill = definition.HasBasicSkill,
+                BasicSkill = definition.BasicSkill,
+                BasicSkillCoefficient = definition.BasicSkillCoefficient,
+                BasicSkillDuration = definition.BasicSkillDuration,
+                BasicSkillRadius = definition.BasicSkillRadius,
+                BasicSkillFlatValue = definition.BasicSkillFlatValue,
+                BasicSkillProjectileSpeed = definition.BasicSkillProjectileSpeed,
+                BasicSkillProjectileLifetime = definition.BasicSkillProjectileLifetime,
+                BasicSkillMoveSpeedMultiplier = definition.BasicSkillMoveSpeedMultiplier,
+                BasicSkillOutgoingDamageMultiplier = definition.BasicSkillOutgoingDamageMultiplier,
+                BasicSkillCooldownSeconds = definition.BasicSkillCooldown,
                 StageOneSkill = definition.StageOneSkill,
                 ActiveSkillCoefficient = definition.ActiveSkillCoefficient,
                 ActiveSkillDuration = definition.ActiveSkillDuration,
                 ActiveSkillRadius = definition.ActiveSkillRadius,
                 ActiveSkillFlatValue = definition.ActiveSkillFlatValue,
+                ActiveSkillProjectileSpeed = definition.ActiveSkillProjectileSpeed,
+                ActiveSkillProjectileLifetime = definition.ActiveSkillProjectileLifetime,
+                ActiveSkillMoveSpeedMultiplier = definition.ActiveSkillMoveSpeedMultiplier,
+                ActiveSkillOutgoingDamageMultiplier = definition.ActiveSkillOutgoingDamageMultiplier,
+                ActiveSkillCooldownSeconds = definition.ActiveSkillCooldown,
                 AttackAttemptRange = ResolveEnemyAttackAttemptRange(definition),
                 AttackAttemptCooldownSeconds = ResolveEnemyAttackAttemptCooldown(definition),
                 Stats = MapStats(stats, maxHealth, 0f),
@@ -69,30 +85,6 @@ namespace Pakuri.InGame
 
             StageOneEnemyPassiveStatApplier.Apply(model);
             return model;
-        }
-
-        public bool TryCreatePhase2ATestModels(
-            GameDataCatalog fallbackCatalog,
-            out MonsterUnitRuntimeModel eveModel,
-            out EnemyUnitRuntimeModel enemyModel,
-            string monsterId = DefaultPhase2AMonsterId,
-            string enemyId = null)
-        {
-            eveModel = null;
-            enemyModel = null;
-
-            var catalog = PakuriCsvRuntimeData.ResolveCatalogOrFallback(fallbackCatalog);
-            var resolvedMonsterId = string.IsNullOrWhiteSpace(monsterId) ? DefaultPhase2AMonsterId : monsterId;
-            var eve = PakuriDataManager.Instance.ResolveMonster(resolvedMonsterId, catalog);
-            if (eve == null)
-            {
-                return false;
-            }
-
-            var session = RunSession.Begin(eve);
-            eveModel = CreateSelectedMonster(eve, session.GetPartyMemberState(eve.MonsterId), 0);
-            enemyModel = CreateEnemy(ResolveEnemy(catalog, enemyId), 0);
-            return eveModel != null && enemyModel != null;
         }
 
         private static MonsterUnitRuntimeModel CreateMonster(
@@ -168,14 +160,29 @@ namespace Pakuri.InGame
                 return 1.4f;
             }
 
-            switch (definition.AttackType)
+            if (definition.HasBasicSkill && definition.BasicSkill != definition.StageOneSkill)
+            {
+                return ResolveEnemySkillAttemptRange(definition.AttackType, definition.BasicSkillRadius);
+            }
+
+            return ResolveEnemySkillAttemptRange(definition.AttackType, definition.ActiveSkillRadius);
+        }
+
+        private static float ResolveEnemySkillAttemptRange(EnemyAttackType attackType, float authoredRange)
+        {
+            if (authoredRange > 0f)
+            {
+                return Math.Max(0.1f, authoredRange);
+            }
+
+            switch (attackType)
             {
                 case EnemyAttackType.Ranged:
-                    return Math.Max(5f, definition.ActiveSkillRadius);
+                    return 5f;
                 case EnemyAttackType.MeleeAndRanged:
-                    return Math.Max(4f, definition.ActiveSkillRadius);
+                    return 4f;
                 case EnemyAttackType.Buffer:
-                    return Math.Max(5f, definition.ActiveSkillRadius);
+                    return 5f;
                 default:
                     return 1.4f;
             }
@@ -186,6 +193,11 @@ namespace Pakuri.InGame
             if (definition == null)
             {
                 return 1f;
+            }
+
+            if (definition.HasBasicSkill && definition.BasicSkill != definition.StageOneSkill)
+            {
+                return Math.Max(0.1f, definition.BasicSkillCooldown);
             }
 
             return Math.Max(0.1f, definition.ActiveSkillCooldown);
@@ -200,7 +212,7 @@ namespace Pakuri.InGame
 
             AddRange(target.LearnedActiveSkillIds, runState.LearnedActives);
             AddRange(target.LearnedPassiveSkillIds, runState.LearnedPassives);
-            AddRange(target.ChosenChoiceIds, runState.ChosenRewardIds);
+            AddRange(target.ChosenChoiceIds, runState.ChosenChoiceIds);
         }
 
         private static void AddRange(HashSet<string> target, IReadOnlyList<string> source)

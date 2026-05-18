@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stage1 Enemy CSV Skill Runtime Explained</title>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #5c6b7a;
+      --line: #d8e0ea;
+      --panel: #f7f9fc;
+      --panel-strong: #edf4f8;
+      --accent: #1f6f5f;
+      --accent-2: #24578f;
+      --warn: #8a5a24;
+      --code: #172033;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #ffffff;
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 44px 0 72px;
+    }
+
+    h1, h2, h3 { margin: 0; line-height: 1.25; }
+    h1 { font-size: 34px; margin-bottom: 12px; }
+    h2 {
+      font-size: 24px;
+      margin: 42px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--line);
+    }
+    h3 { font-size: 18px; margin: 22px 0 10px; }
+    p { margin: 10px 0; }
+    ul, ol { padding-left: 22px; }
+    li { margin: 6px 0; }
+
+    code {
+      color: var(--code);
+      background: #eef2f7;
+      border: 1px solid #d4dde8;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.94em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 24px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #edf3f8;
+      color: #263848;
+    }
+
+    .hero {
+      border-left: 6px solid var(--accent);
+      background: linear-gradient(90deg, #edf7f4, #ffffff);
+      padding: 24px 26px;
+      margin-bottom: 28px;
+      border-radius: 8px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 14px 0;
+    }
+
+    .flow {
+      border: 1px solid #cbd7e3;
+      background: #fbfdff;
+      border-radius: 8px;
+      padding: 18px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      white-space: pre-wrap;
+      font-size: 13px;
+      color: #24364a;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid #c9d6e4;
+      background: #f2f7fb;
+      color: #31485f;
+      white-space: nowrap;
+    }
+
+    .pill-accent {
+      background: #edf7f4;
+      border-color: #bfe1d8;
+      color: #1f6f5f;
+    }
+
+    .pill-blue {
+      background: #eef4ff;
+      border-color: #bfd2ef;
+      color: #24578f;
+    }
+
+    .pill-warn {
+      background: #fff8eb;
+      border-color: #ead6b5;
+      color: var(--warn);
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div class="eyebrow">Implementation Snapshot</div>
+      <h1>Stage1 Enemy CSV Skill Runtime Explained</h1>
+      <p>이 문서는 2026-05-18 기준으로 <code>Stage1 Enemy</code> 스킬이 현재 어떤 CSV와 어떤 코드 경로를 통해 인게임에서 동작하는지 설명한다.</p>
+      <p>설명 대상은 새로 추가된 <code>basic_skill</code> 과 기존 <code>stage_one_skill</code> 의 2슬롯 구조, 그리고 scene-owned <code>EffectManager</code> 를 통한 enemy skill effect prefab 연결이다.</p>
+    </section>
+
+    <h2>1. 한 줄 결론</h2>
+    <div class="card">
+      <p>현재 Stage1 Enemy 스킬 구조는 다음처럼 나뉜다.</p>
+      <ul>
+        <li><code>stage_one_enemies.csv</code> 가 각 적이 어떤 <strong>basic skill</strong> 과 어떤 <strong>special skill</strong> 을 가지는지 결정한다.</li>
+        <li><code>EnemySkillData.csv</code> 가 각 skill id 의 <strong>runtime kind</strong>, 계수, 쿨다운, 반경, 투사체 속도/수명 같은 수치를 공급한다.</li>
+        <li><code>EffectManager</code> 가 각 enemy id 와 skill kind 조합의 <strong>effect prefab</strong> 을 scene 에서 직접 연결한다.</li>
+        <li><code>EnemyCombatSimulationSystem</code> 이 support special, offensive special, offensive basic 중 어떤 것을 언제 쓸지 결정한다.</li>
+      </ul>
+    </div>
+
+    <h2>2. 입력층 역할 분리</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>입력층</th>
+          <th>현재 책임</th>
+          <th>근거</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Assets/CSVdata/source/stage_one_enemies.csv</code></td>
+          <td>enemy id, attack type, 기본 스탯, <code>stage_one_skill</code>, <code>basic_skill</code>, passive text</td>
+          <td>헤더와 각 row가 실제로 <code>basic_skill</code> 을 포함한다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/CSVdata/EnemySkillData.csv</code></td>
+          <td>skill id 별 runtime kind, coefficient, radius, cooldown, projectile_speed, projectile_lifetime, buff multiplier</td>
+          <td><code>Slash</code>, <code>AimedShot</code>, <code>ShurikenThrow</code>, <code>Heal</code>, <code>GuardianFlag</code>, <code>ChargeCommand</code>, <code>SacredSwordWave</code> row가 존재한다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/Scenes/NewScene/NewRunScene.unity</code> 의 <code>EffectManager</code></td>
+          <td>enemy별 skill effect prefab authoring</td>
+          <td>Unity-MCP로 현재 enemy skill effect group을 직접 읽어 확인했다.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>3. 현재 CSV Authoring 결과</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Enemy</th>
+          <th>attack_type</th>
+          <th>special</th>
+          <th>basic</th>
+          <th>현재 의미</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>stage1-swordsman</code></td>
+          <td><code>Melee</code></td>
+          <td><code>Slash</code></td>
+          <td><code>Slash</code></td>
+          <td>중복이므로 런타임에서는 사실상 1스킬만 사용한다.</td>
+        </tr>
+        <tr>
+          <td><code>stage1-shieldbearer</code></td>
+          <td><code>Melee</code></td>
+          <td><code>ShieldUp</code></td>
+          <td><code>Slash</code></td>
+          <td>방어 버프 special + 근접 basic</td>
+        </tr>
+        <tr>
+          <td><code>stage1-archer</code></td>
+          <td><code>Ranged</code></td>
+          <td><code>AimedShot</code></td>
+          <td><code>AimedShot</code></td>
+          <td>중복이므로 런타임에서는 1스킬만 사용한다.</td>
+        </tr>
+        <tr>
+          <td><code>stage1-rogue</code></td>
+          <td><code>Ranged</code></td>
+          <td><code>ShurikenThrow</code></td>
+          <td><code>AimedShot</code></td>
+          <td>투사체 special + 투사체 basic</td>
+        </tr>
+        <tr>
+          <td><code>stage1-priest</code></td>
+          <td><code>Buffer</code></td>
+          <td><code>Heal</code></td>
+          <td><code>AimedShot</code></td>
+          <td>힐 special + 투사체 basic</td>
+        </tr>
+        <tr>
+          <td><code>stage1-guardian-captain</code></td>
+          <td><code>Melee</code></td>
+          <td><code>GuardianFlag</code></td>
+          <td><code>Slash</code></td>
+          <td>실드 special + 근접 basic</td>
+        </tr>
+        <tr>
+          <td><code>stage1-attack-captain</code></td>
+          <td><code>Melee</code></td>
+          <td><code>ChargeCommand</code></td>
+          <td><code>Slash</code></td>
+          <td>버프 special + 근접 basic</td>
+        </tr>
+        <tr>
+          <td><code>stage1-hero-karin</code></td>
+          <td><code>MeleeAndRanged</code></td>
+          <td><code>SacredSwordWave</code></td>
+          <td><code>Slash</code></td>
+          <td>투사체 special + 근접 basic</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="small">근거: <code>stage_one_enemies.csv</code> row 3~10</p>
+
+    <h2>4. 현재 Skill Data 결과</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Skill Id</th>
+          <th>runtime_kind</th>
+          <th>대표 수치</th>
+          <th>근거 row</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Slash</code></td>
+          <td><span class="pill pill-accent">AreaAttack</span></td>
+          <td>attack coefficient <code>1</code>, radius <code>1.4</code>, cooldown <code>2</code></td>
+          <td><code>EnemySkillData.csv:3</code></td>
+        </tr>
+        <tr>
+          <td><code>AimedShot</code></td>
+          <td><span class="pill pill-blue">CooldownProjectile</span></td>
+          <td>attack coefficient <code>1.5</code>, radius <code>7</code>, cooldown <code>5</code>, projectile speed <code>10</code>, lifetime <code>2.5</code></td>
+          <td><code>EnemySkillData.csv:5</code></td>
+        </tr>
+        <tr>
+          <td><code>ShurikenThrow</code></td>
+          <td><span class="pill pill-blue">CooldownProjectile</span></td>
+          <td>attack coefficient <code>1.4</code>, radius <code>6</code>, cooldown <code>4</code>, projectile speed <code>9</code>, lifetime <code>2.5</code></td>
+          <td><code>EnemySkillData.csv:6</code></td>
+        </tr>
+        <tr>
+          <td><code>Heal</code></td>
+          <td><span class="pill">Heal</span></td>
+          <td>spell coefficient <code>1.2</code>, radius <code>5</code>, cooldown <code>6</code>, flat value <code>50</code></td>
+          <td><code>EnemySkillData.csv:7</code></td>
+        </tr>
+        <tr>
+          <td><code>GuardianFlag</code></td>
+          <td><span class="pill">Shield</span></td>
+          <td>radius <code>4</code>, cooldown <code>10</code>, duration <code>5</code>, flat value <code>100</code></td>
+          <td><code>EnemySkillData.csv:8</code></td>
+        </tr>
+        <tr>
+          <td><code>ChargeCommand</code></td>
+          <td><span class="pill">Buff</span></td>
+          <td>radius <code>5</code>, cooldown <code>12</code>, duration <code>6</code>, move speed multiplier <code>1.2</code>, outgoing damage multiplier <code>1.15</code></td>
+          <td><code>EnemySkillData.csv:9</code></td>
+        </tr>
+        <tr>
+          <td><code>SacredSwordWave</code></td>
+          <td><span class="pill pill-blue">CooldownProjectile</span></td>
+          <td>attack coefficient <code>2.2</code>, radius <code>8</code>, cooldown <code>9</code>, projectile speed <code>12</code>, lifetime <code>4</code></td>
+          <td><code>EnemySkillData.csv:10</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>5. 런타임 흐름</h2>
+    <div class="flow">stage_one_enemies.csv
+  -> PakuriCsvRuntimeData.ParseEnemyRow(...)
+  -> basic_skill / stage_one_skill 분리 저장
+  -> ApplyEnemySkillAssignment(...)
+  -> EnemyDefinition
+  -> UnitFactory.CreateEnemy(...)
+  -> EnemyUnitRuntimeModel
+  -> EnemyCombatSimulationSystem
+  -> EffectManager.ResolveEnemySkillEffectPrefab(enemyId, skillKind)
+  -> 실제 이펙트 prefab instantiate</div>
+
+    <h2>6. 코드가 실제로 어떻게 해석하는가</h2>
+
+    <h3>6-1. CSV 파싱</h3>
+    <div class="card">
+      <p><code>PakuriCsvRuntimeData.EnemyDataset.cs</code> 는 <code>basic_skill</code> 을 optional enum 으로 읽는다.</p>
+      <ul>
+        <li><code>TryReadOptionalStageOneSkill(record, "basic_skill", ...)</code> 호출이 있고, 값이 있으면 <code>row.HasBasicSkill = true</code> 로 표기한다.</li>
+        <li>그 다음 <code>ApplyEnemySkillAssignment(...)</code> 를 두 번 호출해서 special payload와 basic payload를 각각 채운다.</li>
+      </ul>
+      <p class="small">근거: <code>PakuriCsvRuntimeData.EnemyDataset.cs:103</code>, <code>:105</code>, <code>:137</code>, <code>:159</code>, <code>:183</code>, <code>:204</code></p>
+    </div>
+
+    <h3>6-2. Definition 과 Runtime Model</h3>
+    <div class="card">
+      <p><code>EnemyDefinition</code> 과 <code>EnemyUnitRuntimeModel</code> 둘 다 이제 basic skill용 필드를 따로 가진다.</p>
+      <ul>
+        <li><code>EnemyDefinition</code> 에는 <code>HasBasicSkill</code>, <code>BasicSkill</code>, <code>BasicSkillName</code>, coefficient/cooldown/radius/projectile 관련 필드가 추가되어 있다.</li>
+        <li><code>EnemyUnitRuntimeModel</code> 에는 basic/special cooldown을 분리하기 위한 <code>BasicSkillCooldownSeconds</code>, <code>ActiveSkillCooldownSeconds</code> 가 있다.</li>
+      </ul>
+      <p class="small">근거: <code>EnemyDefinition.cs:51-62</code>, <code>EnemyUnitRuntimeModel.cs:11-33</code></p>
+    </div>
+
+    <h3>6-3. 기본 사거리와 기본 쿨다운</h3>
+    <div class="card">
+      <p><code>UnitFactory</code> 는 적이 basic skill을 가지고 있고 basic과 special이 다르면, 기본 공격 리듬을 basic 기준으로 잡는다.</p>
+      <ul>
+        <li>사거리: <code>ResolveEnemySkillAttemptRange(...)</code> 에 authored radius가 있으면 그것을 사용하고, 없으면 <code>attack_type</code> fallback을 쓴다.</li>
+        <li>기본 쿨다운: <code>ResolveEnemyAttackAttemptCooldown(...)</code> 에서 basic/special 중 실제 기본 공격으로 쓸 쪽의 cooldown을 반환한다.</li>
+      </ul>
+      <p class="small">근거: <code>UnitFactory.cs:163-171</code>, <code>:191-198</code></p>
+    </div>
+
+    <h3>6-4. 전투 우선순위</h3>
+    <div class="card">
+      <p><code>EnemyCombatSimulationSystem</code> 은 현재 다음 순서로 판단한다.</p>
+      <ol>
+        <li>먼저 special skill을 <code>ResolveSpecialSkill(...)</code> 로 만든다.</li>
+        <li>special이 <code>Heal</code>, <code>ShieldUp</code>, <code>GuardianFlag</code>, <code>ChargeCommand</code> 같은 support skill이면, 타깃 사거리 판단 전에 쿨다운만 맞으면 먼저 시도한다.</li>
+        <li>그 다음 offensive skill 선택은 <code>ResolvePreferredOffensiveSkill(...)</code> 가 맡는다.</li>
+        <li>special이 공격형이고 준비되어 있으면 special을 우선 사용한다.</li>
+        <li>special이 support이거나 쿨다운 중이면 basic 공격형 스킬을 본다.</li>
+      </ol>
+      <p class="small">근거: <code>EnemyCombatSimulationSystem.cs:98-114</code>, <code>:144</code>, <code>:534</code>, <code>:558</code>, <code>:582</code></p>
+    </div>
+
+    <h3>6-5. 중복 스킬 처리</h3>
+    <div class="card">
+      <p><code>basic_skill == stage_one_skill</code> 인 경우는 source CSV는 그대로 유지하지만, 런타임은 basic을 무효로 취급한다.</p>
+      <ul>
+        <li><code>ResolveBasicSkill(...)</code> 안에 <code>enemyModel.BasicSkill == enemyModel.StageOneSkill</code> 이면 기본값을 반환하는 가드가 있다.</li>
+        <li>그래서 swordsman 과 archer는 authored row에는 2칸이 차 있지만 실제 전투에서는 1종류 스킬만 돈다.</li>
+      </ul>
+      <p class="small">근거: <code>EnemyCombatSimulationSystem.cs:558</code>, <code>:560</code></p>
+    </div>
+
+    <h3>6-6. 쿨다운 분리</h3>
+    <div class="card">
+      <p>기존 1스킬 구조와 달리, 지금은 basic과 special 쿨다운이 분리되어 있다.</p>
+      <ul>
+        <li><code>EnemyCombatState</code> 는 <code>BasicSkillCooldownRemaining</code> 과 <code>SpecialSkillCooldownRemaining</code> 을 각각 가진다.</li>
+        <li>tick 시에도 둘을 따로 감소시키고, 발동 시에도 slot type 기준으로 별도 세팅한다.</li>
+      </ul>
+      <p class="small">근거: <code>EnemyCombatSimulationSystem.cs:688-714</code>, <code>:884-885</code></p>
+    </div>
+
+    <h2>7. Effect Prefab 은 어디서 붙는가</h2>
+    <div class="card">
+      <p>enemy skill effect prefab은 더 이상 CSV path가 아니라 <code>EffectManager</code> 가 scene에서 직접 연결한다.</p>
+      <ul>
+        <li><code>EffectManager.ResolveEnemySkillEffectPrefab(EnemyUnitRuntimeModel enemy, StageOneEnemySkillKind skillKind)</code> 가 explicit overload로 추가되어 있다.</li>
+        <li><code>EnemyCombatSimulationSystem</code> 은 실제 발사 중인 <code>skillData.SkillKind</code> 를 넘겨서 prefab을 해석한다.</li>
+      </ul>
+      <p class="small">근거: <code>EffectManager.cs:84</code>, <code>EffectManager.cs:95</code>, <code>EnemyCombatSimulationSystem.cs:239</code>, <code>:301</code>, <code>:353</code>, <code>:819</code></p>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Enemy</th>
+          <th>현재 scene effect mapping</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>stage1-swordsman</code></td>
+          <td><code>Slash -> Warrior_Skill</code></td>
+        </tr>
+        <tr>
+          <td><code>stage1-shieldbearer</code></td>
+          <td><code>ShieldUp -> Shield_Skill</code>, <code>Slash -> Warrior_Skill</code></td>
+        </tr>
+        <tr>
+          <td><code>stage1-archer</code></td>
+          <td><code>AimedShot -> Achor_Skill</code></td>
+        </tr>
+        <tr>
+          <td><code>stage1-rogue</code></td>
+          <td><code>ShurikenThrow -> Rogue_Skill</code>, <code>AimedShot -> Achor_Skill</code></td>
+        </tr>
+        <tr>
+          <td><code>stage1-priest</code></td>
+          <td><code>Heal -> Preist_Skill</code>, <code>AimedShot -> Achor_Skill</code></td>
+        </tr>
+        <tr>
+          <td><code>stage1-guardian-captain</code></td>
+          <td><code>GuardianFlag -> Shield_King_Skill</code>, <code>Slash -> Warrior_Skill</code></td>
+        </tr>
+        <tr>
+          <td><code>stage1-attack-captain</code></td>
+          <td><code>ChargeCommand -> Warrior_King_Skill 1</code>, <code>Slash -> Warrior_Skill</code></td>
+        </tr>
+        <tr>
+          <td><code>stage1-hero-karin</code></td>
+          <td><code>SacredSwordWave -> Karin_Skill 1</code>, <code>Slash -> Warrior_Skill</code></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="small">근거: Unity-MCP로 active <code>NewRunScene</code> 의 <code>EffectManager.enemySkillEffects</code> 를 직접 읽은 결과</p>
+
+    <h2>8. 현재 구조에서 중요한 해석 포인트</h2>
+    <div class="card">
+      <ul>
+        <li><code>attack_type</code> 는 이제 “어떤 basic skill을 가져야 하는가” 를 강제하지 않는다. 실제 skill assignment authority는 CSV row의 <code>basic_skill</code> 값이다.</li>
+        <li>그래서 <code>Buffer</code> 도 지금은 <code>AimedShot</code> basic을 가진다. 이건 코드가 Buffer라서 정한 게 아니라 CSV가 그렇게 적혀 있어서다.</li>
+        <li>scene effect prefab과 CSV skill assignment는 서로 다른 책임이다. 어떤 skill을 쓸지는 CSV가 결정하고, 그 skill이 어떤 prefab을 쓰는지는 scene <code>EffectManager</code> 가 결정한다.</li>
+        <li>중복 authored pair는 허용된다. 다만 런타임은 2개로 세지 않고 1개만 쓴다.</li>
+      </ul>
+    </div>
+
+    <h2>9. 아직 알아야 할 제한</h2>
+    <div class="card">
+      <ul>
+        <li>Codex는 Play Mode를 돌리지 않았기 때문에, 실제 체감 리듬과 발동 빈도는 사용자 검증이 남아 있다.</li>
+        <li>special 우선/ basic 보조 정책은 현재 코드 정책이다. 나중에 디자인이 바뀌면 <code>ResolvePreferredOffensiveSkill(...)</code> 쪽을 다시 조정해야 한다.</li>
+        <li>현재 문서는 “지금 코드가 어떻게 동작하는가” 설명이지, “이 구조가 최종적으로 가장 좋은가” 판단 문서는 아니다.</li>
+      </ul>
+    </div>
+
+    <h2>10. 근거</h2>
+    <ul>
+      <li><code>Pakuri/Assets/CSVdata/source/stage_one_enemies.csv:3-10</code></li>
+      <li><code>Pakuri/Assets/CSVdata/EnemySkillData.csv:3-10</code></li>
+      <li><code>Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.EnemyDataset.cs:103-105, 137-164, 183-204</code></li>
+      <li><code>Pakuri/Assets/Scripts2/InGame/Data/Definition/EnemyDefinition.cs:51-64, 98-111</code></li>
+      <li><code>Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitRuntimeModel.cs:11-33</code></li>
+      <li><code>Pakuri/Assets/Scripts2/InGame/Units/UnitFactory.cs:52-74, 163-171, 191-198</code></li>
+      <li><code>Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSimulationSystem.cs:98-114, 144, 239, 301, 353, 534-587, 688-714, 819, 884-885</code></li>
+      <li><code>Pakuri/Assets/Scripts2/InGame/Core/EffectManager.cs:84-95</code></li>
+      <li>Unity-MCP scene inspection result: <code>stage1-shieldbearer=>[ShieldUp:Shield_Skill,Slash:Warrior_Skill]</code>, <code>stage1-rogue=>[ShurikenThrow:Rogue_Skill,AimedShot:Achor_Skill]</code>, <code>stage1-priest=>[Heal:Preist_Skill,AimedShot:Achor_Skill]</code>, <code>stage1-hero-karin=>[SacredSwordWave:Karin_Skill 1,Slash:Warrior_Skill]</code> 등</li>
+    </ul>
+  </main>
+</body>
+</html>

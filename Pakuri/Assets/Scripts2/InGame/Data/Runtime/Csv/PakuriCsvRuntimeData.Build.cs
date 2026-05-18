@@ -23,22 +23,10 @@ namespace Pakuri.Data
                 monster.PrimaryAttribute = sourceMonster.PrimaryAttribute;
                 monster.ActiveSkillName = sourceMonster.ActiveSkillName;
                 monster.PassiveSkillName = sourceMonster.PassiveSkillName;
-                monster.UnitSprite = LoadSprite(sourceMonster.UnitSpritePath);
-                monster.ProjectileSprite = LoadSprite(sourceMonster.ProjectileSpritePath);
-                monster.UnitColor = sourceMonster.UnitColor;
-                monster.ProjectileColor = sourceMonster.ProjectileColor;
                 monster.MaxHealth = sourceMonster.MaxHealth;
                 monster.PowerStat = sourceMonster.PowerStat;
                 monster.BaseDamage = sourceMonster.BaseDamage;
                 monster.PowerCoefficient = sourceMonster.PowerCoefficient;
-                monster.ProjectileSpeed = sourceMonster.ProjectileSpeed;
-                monster.ProjectileLifetime = sourceMonster.ProjectileLifetime;
-                monster.ProjectileHitRadius = sourceMonster.ProjectileHitRadius;
-                monster.MagazineCapacity = sourceMonster.MagazineCapacity;
-                monster.ReloadDuration = sourceMonster.ReloadDuration;
-                monster.ShotInterval = sourceMonster.ShotInterval;
-                monster.StatusChance = sourceMonster.StatusChance;
-                monster.StatusEffectLabel = sourceMonster.StatusEffectLabel;
                 monster.BaseStats = new CombatStatBlock
                 {
                     MaxHealth = sourceMonster.MaxHealth,
@@ -95,6 +83,18 @@ namespace Pakuri.Data
                     Darkness = sourceEnemy.DarknessDefense,
                     Holy = sourceEnemy.HolyDefense
                 };
+                enemy.HasBasicSkill = sourceEnemy.HasBasicSkill;
+                enemy.BasicSkill = sourceEnemy.BasicSkill;
+                enemy.BasicSkillName = sourceEnemy.BasicSkillName;
+                enemy.BasicSkillCoefficient = sourceEnemy.BasicSkillCoefficient;
+                enemy.BasicSkillCooldown = sourceEnemy.BasicSkillCooldown;
+                enemy.BasicSkillDuration = sourceEnemy.BasicSkillDuration;
+                enemy.BasicSkillRadius = sourceEnemy.BasicSkillRadius;
+                enemy.BasicSkillFlatValue = sourceEnemy.BasicSkillFlatValue;
+                enemy.BasicSkillProjectileSpeed = sourceEnemy.BasicSkillProjectileSpeed;
+                enemy.BasicSkillProjectileLifetime = sourceEnemy.BasicSkillProjectileLifetime;
+                enemy.BasicSkillMoveSpeedMultiplier = sourceEnemy.BasicSkillMoveSpeedMultiplier;
+                enemy.BasicSkillOutgoingDamageMultiplier = sourceEnemy.BasicSkillOutgoingDamageMultiplier;
                 enemy.StageOneSkill = sourceEnemy.StageOneSkill;
                 enemy.ActiveSkillName = sourceEnemy.ActiveSkillName;
                 enemy.ActiveSkillCoefficient = sourceEnemy.ActiveSkillCoefficient;
@@ -102,6 +102,10 @@ namespace Pakuri.Data
                 enemy.ActiveSkillDuration = sourceEnemy.ActiveSkillDuration;
                 enemy.ActiveSkillRadius = sourceEnemy.ActiveSkillRadius;
                 enemy.ActiveSkillFlatValue = sourceEnemy.ActiveSkillFlatValue;
+                enemy.ActiveSkillProjectileSpeed = sourceEnemy.ActiveSkillProjectileSpeed;
+                enemy.ActiveSkillProjectileLifetime = sourceEnemy.ActiveSkillProjectileLifetime;
+                enemy.ActiveSkillMoveSpeedMultiplier = sourceEnemy.ActiveSkillMoveSpeedMultiplier;
+                enemy.ActiveSkillOutgoingDamageMultiplier = sourceEnemy.ActiveSkillOutgoingDamageMultiplier;
                 enemy.PassiveSkillName = sourceEnemy.PassiveSkillName;
                 enemy.PassiveSummary = sourceEnemy.PassiveSummary;
                 enemies.Add(enemy);
@@ -132,6 +136,9 @@ namespace Pakuri.Data
                 definitions[i] = new MonsterDefinition.RewardChoiceDefinition
                 {
                     RewardId = reward.Id,
+                    ActiveSkillId = reward.ActiveSkillId,
+                    PassiveSkillId = reward.PassiveSkillId,
+                    LinkedChoiceId = reward.LinkedChoiceId,
                     Title = reward.Title,
                     Description = reward.Description,
                     DamageMultiplier = reward.DamageMultiplier,
@@ -173,20 +180,23 @@ namespace Pakuri.Data
                     ImplementationState = skill.ImplementationState,
                     IsDefaultLearned = skill.IsDefaultLearned,
                     SkillIcon = LoadSprite(skill.SkillIconPath),
-                    SkillEffectPrefab = LoadPrefab(skill.SkillEffectPrefabPath),
                     DescriptionText = skill.DescriptionText,
                     Attribute = skill.Attribute,
                     BaseDamage = skill.BaseDamage,
                     AttackPowerCoefficient = skill.AttackPowerCoefficient,
                     SpellPowerCoefficient = skill.SpellPowerCoefficient,
-                    Range = skill.Range,
                     Radius = skill.Radius,
                     CooldownSeconds = skill.CooldownSeconds,
+                    ActiveDurationSeconds = skill.ActiveDurationSeconds,
                     MagazineCapacity = skill.MagazineCapacity,
                     ReloadSeconds = skill.ReloadSeconds,
                     ShotIntervalSeconds = skill.ShotIntervalSeconds,
+                    ProjectileSpeed = skill.ProjectileSpeed,
+                    PierceCount = skill.PierceCount,
                     CriticalAllowed = skill.CriticalAllowed,
                     StatusEffectId = skill.StatusEffectId,
+                    StatusChance = skill.StatusChance,
+                    StatusEffectLabel = skill.StatusEffectLabel,
                     Summary = skill.Summary,
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.ActiveEnhancement),
                     MasterSkillChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.ActiveMaster)
@@ -223,7 +233,6 @@ namespace Pakuri.Data
                     IsAvailableWithoutActiveRequirement = skill.IsAvailableWithoutActiveRequirement,
                     ImplementationState = skill.ImplementationState,
                     SkillIcon = LoadSprite(skill.SkillIconPath),
-                    SkillEffectPrefab = LoadPrefab(skill.SkillEffectPrefabPath),
                     DescriptionText = skill.DescriptionText,
                     Summary = skill.Summary,
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.PassiveEnhancement)

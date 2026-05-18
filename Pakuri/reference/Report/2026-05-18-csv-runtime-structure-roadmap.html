@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CSV Runtime Structure Roadmap</title>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #5c6b7a;
+      --line: #d8e0ea;
+      --panel: #f7f9fc;
+      --panel-strong: #edf4f8;
+      --accent: #286d73;
+      --keep: #276749;
+      --merge: #2b6cb0;
+      --delete: #8a5a24;
+      --fix: #9b2c2c;
+      --code: #172033;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #ffffff;
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      width: min(1240px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 44px 0 72px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h1 { font-size: 34px; margin-bottom: 12px; }
+    h2 {
+      font-size: 24px;
+      margin: 42px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--line);
+    }
+    h3 { font-size: 18px; margin: 24px 0 10px; }
+    p { margin: 10px 0; }
+    ul { padding-left: 22px; }
+    li { margin: 6px 0; }
+
+    code {
+      color: var(--code);
+      background: #eef2f7;
+      border: 1px solid #d4dde8;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.94em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 24px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th { background: #edf3f8; color: #263848; }
+
+    .hero {
+      border-left: 6px solid var(--accent);
+      background: linear-gradient(90deg, #edf7f6, #ffffff);
+      padding: 24px 26px;
+      margin-bottom: 28px;
+      border-radius: 8px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 14px 0;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .keep { color: var(--keep); border-color: #b8e0c4; background: #eefaf1; }
+    .merge { color: var(--merge); border-color: #bdd2f0; background: #eef4ff; }
+    .delete { color: var(--delete); border-color: #ead6b5; background: #fff8eb; }
+    .fix { color: var(--fix); border-color: #efc1c1; background: #fff1f1; }
+
+    .small { color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div class="eyebrow">Working Roadmap</div>
+      <h1>CSV Runtime Structure Review And Cleanup Roadmap</h1>
+      <p>이 문서는 현재 <code>NewRunScene</code> 기준 CSV 로드 구조, 실제 적용 경로, 과도기 상태의 문제, 하드코딩 지점, 정리 우선순위를 작업용 로드맵으로 정리한 것이다.</p>
+      <p>모든 판단은 2026-05-18 기준 실제 코드, 씬 YAML, CSV 파일, 그리고 현재 남아 있는 데이터 자산 참조를 근거로 한다.</p>
+    </section>
+
+    <h2>1. 결론</h2>
+    <div class="card">
+      <p>현재 구조는 <strong>CSV 중심</strong>이지만 <strong>단일 CSV 원본 구조는 아니다</strong>.</p>
+      <ul>
+        <li>몬스터/적 런타임 카탈로그는 주로 <code>Assets/CSVdata/source/*.csv</code>와 <code>Assets/CSVdata/EnemySkillData.csv</code>를 읽는다.</li>
+        <li>스테이지는 <code>StageDay.csv</code>, <code>StageEncounter.csv</code>, <code>StageReward.csv</code>를 직접 읽는다.</li>
+        <li>스킬 강화 modifier는 <code>SkillChoiceModifierData.csv</code>를 별도로 읽는다.</li>
+        <li>반면 <code>MonsterStat.csv</code>, <code>SkillData.csv</code>, <code>EnemyStat.csv</code>, <code>SkillChoiceData.csv</code>는 현재 <code>Scripts2</code> 런타임 직접 원본으로 확인되지 않았다.</li>
+        <li>추가로 <code>NewRunScene</code>에는 아직 <code>Legacy/Data/GameData/GameDataCatalog.asset</code> fallback 참조가 남아 있다.</li>
+      </ul>
+    </div>
+
+    <h2>2. 현재 실제 원본 계층</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>영역</th>
+          <th>현재 실제 원본</th>
+          <th>현재 분류</th>
+          <th>근거</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>몬스터 스탯/스킬/보상</td>
+          <td><code>Assets/CSVdata/source/monsters.csv</code>, <code>monster_skills.csv</code>, <code>monster_reward_choices.csv</code>, <code>monster_skill_choices.csv</code></td>
+          <td><span class="tag keep">유지 대상</span></td>
+          <td><code>PakuriCsvRuntimeData</code>가 source catalog를 구성하고 runtime catalog를 빌드한다.</td>
+        </tr>
+        <tr>
+          <td>적 스탯/스킬</td>
+          <td><code>Assets/CSVdata/source/stage_one_enemies.csv</code> + <code>Assets/CSVdata/EnemySkillData.csv</code></td>
+          <td><span class="tag keep">유지 대상</span></td>
+          <td>적 row와 적 skill row를 따로 읽은 뒤 <code>ApplyEnemySkillRow(...)</code>로 합친다.</td>
+        </tr>
+        <tr>
+          <td>스테이지 진행</td>
+          <td><code>StageDay.csv</code>, <code>StageEncounter.csv</code>, <code>StageReward.csv</code></td>
+          <td><span class="tag keep">유지 대상</span></td>
+          <td><code>NewRunStageManager</code>가 씬 직렬화된 <code>TextAsset</code>으로 직접 읽는다.</td>
+        </tr>
+        <tr>
+          <td>스킬 강화 세부 수치</td>
+          <td><code>SkillChoiceModifierData.csv</code></td>
+          <td><span class="tag keep">유지 대상</span></td>
+          <td><code>InGameCombatManager.skillChoiceModifierCsv</code>가 parser를 통해 로드한다.</td>
+        </tr>
+        <tr>
+          <td>씬 fallback 데이터</td>
+          <td><code>Legacy/Data/GameData/GameDataCatalog.asset</code></td>
+          <td><span class="tag fix">즉시 수정 대상</span></td>
+          <td><code>NewRunScene.unity</code>에 아직 <code>fallbackCatalog</code>로 연결돼 있다.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>3. CSV 파일별 분류</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>파일</th>
+          <th>현재 상태</th>
+          <th>권고 분류</th>
+          <th>판단</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Assets/CSVdata/source/monsters.csv</code></td>
+          <td>런타임 원본</td>
+          <td><span class="tag keep">유지 대상</span></td>
+          <td>runtime catalog의 몬스터 기본 데이터 공급원이다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/CSVdata/source/monster_skills.csv</code></td>
+          <td>런타임 원본</td>
+          <td><span class="tag keep">유지 대상</span></td>
+          <td>active/passive skill 정의와 effect prefab path를 제공한다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/CSVdata/source/monster_skill_choices.csv</code></td>
+          <td>런타임 원본</td>
+          <td><span class="tag merge">통합 대상</span></td>
+          <td>choice 메타데이터는 쓰지만, reward/modifier CSV와 분리돼 관리 비용이 높다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/CSVdata/source/monster_reward_choices.csv</code></td>
+          <td>런타임 원본</td>
+          <td><span class="tag merge">통합 대상</span></td>
+          <td>Offering 후보와 누적 보너스를 갖지만 choice 구조가 분산돼 있다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/CSVdata/source/stage_one_enemies.csv</code></td>
+          <td>런타임 원본</td>
+          <td><span class="tag keep">유지 대상</span></td>
+          <td>적 기본 능력치와 <code>stage_one_skill</code> 키를 제공한다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/CSVdata/EnemySkillData.csv</code></td>
+          <td>런타임 원본</td>
+          <td><span class="tag fix">즉시 수정 대상</span></td>
+          <td>현재는 일부 컬럼만 실제 적용되고, effect prefab path는 실행부에 연결되지 않는다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/CSVdata/StageDay.csv</code></td>
+          <td>런타임 원본</td>
+          <td><span class="tag keep">유지 대상</span></td>
+          <td>새 런 흐름에 직접 연결된 stage table이다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/CSVdata/StageEncounter.csv</code></td>
+          <td>런타임 원본</td>
+          <td><span class="tag keep">유지 대상</span></td>
+          <td>새 런 흐름에 직접 연결된 encounter table이다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/CSVdata/StageReward.csv</code></td>
+          <td>런타임 원본</td>
+          <td><span class="tag keep">유지 대상</span></td>
+          <td>새 런 흐름에 직접 연결된 reward table이다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/CSVdata/SkillChoiceModifierData.csv</code></td>
+          <td>런타임 원본</td>
+          <td><span class="tag fix">즉시 수정 대상</span></td>
+          <td>현재 parser가 읽지 않는 <code>range_multiplier</code>, <code>range_bonus</code> 컬럼이 남아 있다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/CSVdata/MonsterStat.csv</code></td>
+          <td>현행 런타임 직접 참조 없음</td>
+          <td><span class="tag merge">통합 대상</span></td>
+          <td>미래 source-of-truth 후보이지만, 지금은 active runtime 입력으로 연결돼 있지 않다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/CSVdata/SkillData.csv</code></td>
+          <td>현행 런타임 직접 참조 없음</td>
+          <td><span class="tag merge">통합 대상</span></td>
+          <td>현재 runtime은 이 파일 대신 <code>monster_skills.csv</code>를 사용한다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/CSVdata/EnemyStat.csv</code></td>
+          <td>현행 런타임 직접 참조 없음</td>
+          <td><span class="tag merge">통합 대상</span></td>
+          <td>현재 runtime은 이 파일 대신 <code>stage_one_enemies.csv</code>를 사용한다.</td>
+        </tr>
+        <tr>
+          <td><code>Assets/CSVdata/SkillChoiceData.csv</code></td>
+          <td>현행 런타임 직접 참조 없음</td>
+          <td><span class="tag merge">통합 대상</span></td>
+          <td>현재 runtime choice 연결은 <code>monster_skill_choices.csv</code> 기반이다.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>4. 구조 이슈와 조치 분류</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>이슈</th>
+          <th>설명</th>
+          <th>분류</th>
+          <th>우선순위</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>원본 CSV 이중화</td>
+          <td><code>source/*.csv</code>와 루트 <code>CSVdata/*.csv</code>가 공존하지만 역할이 분리되지 않아 오해를 만든다.</td>
+          <td><span class="tag merge">통합 대상</span></td>
+          <td>상</td>
+        </tr>
+        <tr>
+          <td>씬 fallback asset 잔존</td>
+          <td><code>NewRunScene</code>가 아직 <code>GameDataCatalog.asset</code> fallback을 들고 있어 pure-CSV 구조가 아니다.</td>
+          <td><span class="tag fix">즉시 수정 대상</span></td>
+          <td>상</td>
+        </tr>
+        <tr>
+          <td>적 스킬 prefab path 미적용</td>
+          <td><code>EnemySkillData.csv</code>의 <code>skill_effect_prefab_path</code>를 읽지만 런타임 적 정의로 넘기지 않는다.</td>
+          <td><span class="tag fix">즉시 수정 대상</span></td>
+          <td>상</td>
+        </tr>
+        <tr>
+          <td>선택지 데이터 3중 분리</td>
+          <td><code>monster_reward_choices.csv</code>, <code>monster_skill_choices.csv</code>, <code>SkillChoiceModifierData.csv</code>가 같은 choice id를 다른 목적에 나눠 가진다.</td>
+          <td><span class="tag merge">통합 대상</span></td>
+          <td>상</td>
+        </tr>
+        <tr>
+          <td>실행부 적 수치 하드코딩</td>
+          <td>적 projectile speed, duration, charge buff multiplier가 코드 상수로 남아 있다.</td>
+          <td><span class="tag fix">즉시 수정 대상</span></td>
+          <td>상</td>
+        </tr>
+        <tr>
+          <td>몬스터 스킬 일부 하드코딩</td>
+          <td>Ariel-A projectile speed와 pierce가 mapper에서 별도 하드코딩된다.</td>
+          <td><span class="tag fix">즉시 수정 대상</span></td>
+          <td>상</td>
+        </tr>
+        <tr>
+          <td>미사용 modifier 컬럼 잔존</td>
+          <td><code>range_multiplier</code>, <code>range_bonus</code>는 현재 parser/applier에서 소비되지 않는다.</td>
+          <td><span class="tag delete">삭제 대상</span></td>
+          <td>중</td>
+        </tr>
+        <tr>
+          <td>prototype combat 필드 잔존</td>
+          <td><code>MonsterDefinition</code>의 일부 prototype 필드는 빌드되지만 실제 실행 사용처가 거의 없다.</td>
+          <td><span class="tag merge">통합 대상</span></td>
+          <td>중</td>
+        </tr>
+        <tr>
+          <td>테스트성 helper 잔존</td>
+          <td><code>UnitFactory.TryCreatePhase2ATestModels(...)</code>는 현재 실제 런 흐름 핵심이 아니다.</td>
+          <td><span class="tag delete">삭제 대상</span></td>
+          <td>중</td>
+        </tr>
+        <tr>
+          <td>CSV 자동 sync 감시 범위 불완전</td>
+          <td>postprocessor는 <code>Assets/CSVdata/source/*.csv</code>만 감지하고 루트 <code>EnemySkillData.csv</code>는 직접 감시하지 않는다.</td>
+          <td><span class="tag fix">즉시 수정 대상</span></td>
+          <td>중</td>
+        </tr>
+        <tr>
+          <td>비실행 skill executor 존재</td>
+          <td><code>Beam</code>, <code>Zone</code>, <code>Buff</code>, <code>Passive</code> executor는 데이터는 받지만 실제 효과 구현이 비어 있다.</td>
+          <td><span class="tag keep">유지 대상</span></td>
+          <td>별도 기능 구현 항목</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>5. 하드코딩된 부분</h2>
+    <h3>5-1. 데이터 적용 이전 또는 브리지 단계</h3>
+    <ul>
+      <li>몬스터 prefab 선택이 <code>ResolveMonsterPrefab(...)</code>의 ID 비교 체인에 고정돼 있다.</li>
+      <li>적 prefab 선택이 <code>ResolveEnemyPrefab(...)</code>의 ID 비교 체인에 고정돼 있다.</li>
+      <li>씬 구조 루트 이름 <code>RunTimeObject</code>, <code>RunTimeEnemy</code>, <code>RunTimeMonster</code>와 spawn point 이름이 코드 문자열에 고정돼 있다.</li>
+      <li>Offering 최대 개수 <code>3</code>, 최대 active/passive 보유 수 <code>5</code>가 상수다.</li>
+    </ul>
+
+    <h3>5-2. 몬스터 스킬 실행 단계</h3>
+    <ul>
+      <li><code>Targeting.Range = 0f</code>로 source skill range를 무시한다.</li>
+      <li>Ariel-A는 projectile speed <code>17f</code>, pierce <code>1</code>을 코드에서 별도로 준다.</li>
+      <li>projectile lifetime은 CSV value 대신 전장 폭 기반 계산식으로 다시 정한다.</li>
+    </ul>
+
+    <h3>5-3. 적 스킬 실행 단계</h3>
+    <ul>
+      <li>적 skill prefab은 CSV path가 아니라 <code>ResolveEnemySkillPrefab(...)</code> switch로 정한다.</li>
+      <li><code>ShurikenThrow</code>, <code>AimedShot</code>, <code>SacredSwordWave</code>의 projectile speed/lifetime이 상수다.</li>
+      <li><code>ChargeCommand</code>의 이동속도/공격력 배율이 <code>1.2f</code>, <code>1.15f</code> 상수다.</li>
+      <li><code>StageOneEnemyPassiveStatApplier</code>도 skill kind 기준의 패시브 배율을 코드에 고정한다.</li>
+    </ul>
+
+    <h2>6. 불필요하거나 정리 대상인 코드</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>대상</th>
+          <th>현재 판단</th>
+          <th>분류</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>MonsterStat.csv</code>, <code>SkillData.csv</code>, <code>EnemyStat.csv</code>, <code>SkillChoiceData.csv</code>를 전제한 과거 전환 문맥</td>
+          <td>현재 NewRunScene 런타임 직접 입력이 아니라 혼선만 준다.</td>
+          <td><span class="tag merge">통합 대상</span></td>
+        </tr>
+        <tr>
+          <td><code>SkillChoiceModifierData.csv</code>의 <code>range_multiplier</code>, <code>range_bonus</code></td>
+          <td>현재 parser/applier와 개념 모델에서 죽은 컬럼이다.</td>
+          <td><span class="tag delete">삭제 대상</span></td>
+        </tr>
+        <tr>
+          <td><code>UnitFactory.TryCreatePhase2ATestModels(...)</code></td>
+          <td>실제 런 경로 핵심이 아닌 테스트성 helper로 보인다.</td>
+          <td><span class="tag delete">삭제 대상</span></td>
+        </tr>
+        <tr>
+          <td><code>MonsterDefinition</code>의 prototype combat 필드 일부</td>
+          <td>현재 skill-based runtime와 중복되는 필드가 있다. 즉시 삭제보다 schema 정리 후 통합이 맞다.</td>
+          <td><span class="tag merge">통합 대상</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>7. 즉시 수정 대상 상세</h2>
+    <ol>
+      <li><strong>fallback catalog 제거 또는 교체</strong><br>
+        <span class="small">현재 NewRunScene이 여전히 <code>Legacy/Data/GameData/GameDataCatalog.asset</code>를 참조한다. 먼저 이 참조를 제거하거나 새 Scripts2-owned asset으로 교체해야 한다.</span>
+      </li>
+      <li><strong>EnemySkillData prefab path를 실제 실행에 연결</strong><br>
+        <span class="small"><code>EnemyDefinition</code> 또는 별도 enemy skill runtime 정의에 prefab reference를 실어 <code>ResolveEnemySkillPrefab(...)</code> switch를 제거해야 한다.</span>
+      </li>
+      <li><strong>적 하드코딩 수치를 CSV로 올리기</strong><br>
+        <span class="small">projectile speed, lifetime, charge buff multiplier, passive multiplier를 명시 컬럼으로 이동해야 한다.</span>
+      </li>
+      <li><strong>Ariel-A 특례 제거</strong><br>
+        <span class="small">projectile speed와 pierce를 skill CSV에 정식 필드로 올리고 mapper 특례를 제거해야 한다.</span>
+      </li>
+      <li><strong>CSV auto-sync 감시 범위 확대</strong><br>
+        <span class="small">루트 <code>EnemySkillData.csv</code>와 필요한 루트 CSV를 postprocessor 감시 범위에 포함해야 한다.</span>
+      </li>
+    </ol>
+
+    <h2>8. 통합 대상 상세</h2>
+    <ol>
+      <li><strong>CSV source-of-truth를 하나로 정하기</strong><br>
+        <span class="small">현 구조를 유지할지, 루트 <code>MonsterStat.csv</code>/<code>SkillData.csv</code>/<code>EnemyStat.csv</code>/<code>SkillChoiceData.csv</code>로 승격할지 먼저 결정해야 한다.</span>
+      </li>
+      <li><strong>선택지 구조 단일화</strong><br>
+        <span class="small">현재는 reward candidate, choice metadata, choice modifier가 셋으로 갈라져 있다. 최소한 공통 행 키를 가진 단일 schema 또는 명확한 2단 구조로 줄여야 한다.</span>
+      </li>
+      <li><strong>prototype 필드와 skill definition 필드 정리</strong><br>
+        <span class="small"><code>MonsterDefinition</code> 내부 중복 전투 필드를 어떤 계층이 최종 권위를 갖는지 명확히 정리해야 한다.</span>
+      </li>
+    </ol>
+
+    <h2>9. 삭제 대상 상세</h2>
+    <ol>
+      <li><strong><code>range_multiplier</code>, <code>range_bonus</code> 컬럼</strong><br>
+        <span class="small">현재 range 개념을 사용하지 않고, 코드도 이 값을 소비하지 않는다.</span>
+      </li>
+      <li><strong>불필요한 test helper</strong><br>
+        <span class="small"><code>TryCreatePhase2ATestModels(...)</code>가 더 이상 유지가치가 없으면 제거 후보로 보는 것이 맞다.</span>
+      </li>
+      <li><strong>통합 완료 후 비활성 루트 CSV</strong><br>
+        <span class="small">루트 <code>MonsterStat.csv</code> 계열을 실제 원본으로 승격하지 않을 경우, 최종 구조 정리 후 삭제 후보가 된다. 지금 즉시 삭제는 아니다.</span>
+      </li>
+    </ol>
+
+    <h2>10. 권장 작업 순서</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>순서</th>
+          <th>작업</th>
+          <th>기대 효과</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><code>fallbackCatalog</code> 제거 또는 교체</td>
+          <td>새 흐름을 CSV/runtime catalog 기준으로 단일화할 수 있다.</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>적 skill prefab/speed/buff 수치를 CSV에 완전 연결</td>
+          <td>적 스킬이 CSV 기반이라는 말을 실제 코드와 맞출 수 있다.</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>choice/reward/modifier CSV 구조 정리</td>
+          <td>UI 선택과 실제 수치 적용의 분리 위험을 줄인다.</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>루트 <code>CSVdata/*.csv</code>의 지위 결정</td>
+          <td>문서와 실제 런타임 원본이 엇갈리는 문제를 없앤다.</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>죽은 컬럼과 helper 정리</td>
+          <td>유지보수 비용과 오해를 줄인다.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>11. 근거</h2>
+    <ul>
+      <li><code>Assets/CSVdata/source</code>와 <code>EnemySkillData.csv</code>를 runtime source로 읽는 경로: <code>PakuriCsvRuntimeData.cs</code>, <code>PakuriCsvRuntimeData.Loader.cs</code>, <code>PakuriCsvRuntimeData.Build.cs</code></li>
+      <li>적 skill row의 prefab path가 실제 enemy definition으로 전달되지 않는 경로: <code>PakuriCsvRuntimeData.EnemyDataset.cs</code>, <code>EnemyDefinition.cs</code>, <code>InGameCombatManager.cs</code></li>
+      <li>씬 fallback 및 Stage CSV 직렬화 참조: <code>NewRunScene.unity</code></li>
+      <li>Offering과 reward 적용 경로: <code>InGameUIManager.cs</code>, <code>RunSession.cs</code></li>
+      <li>modifier CSV 로드 및 적용 경로: <code>InGameCombatManager.cs</code>, <code>SkillChoiceModifierCsvParser.cs</code>, <code>SkillChoiceModifierRecord.cs</code>, <code>SkillChoiceResolver.cs</code>, <code>SkillExecutionSnapshot.cs</code></li>
+      <li>몬스터/적 prefab과 스킬 실행 하드코딩 경로: <code>NewRunUnitSpawnManager.cs</code>, <code>InGameCombatManager.cs</code>, <code>EnemyCombatSimulationSystem.cs</code>, <code>InGameSkillDefinitionMapper.cs</code></li>
+    </ul>
+  </main>
+</body>
+</html>

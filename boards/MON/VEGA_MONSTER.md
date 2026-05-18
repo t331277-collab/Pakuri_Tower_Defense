@@ -39,7 +39,7 @@ Code Builder
 
 ### Status
 
-Builder implementation completed and locally verified.
+Builder implementation completed and locally verified. 2026-05-18 Vega active skill CSV rows were updated to the new skill-owned projectile/status schema. 2026-05-18 Vega design-only labels remain non-runtime statuses with `status_chance=0`.
 
 ### Next Actions
 
@@ -50,11 +50,20 @@ Builder implementation completed and locally verified.
 - `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` references `Vega_Unit.prefab` in `vegaUnitPrefab`.
 - Unity-MCP verification returned `vega:prefab=Vega_Unit|modelOk=True|model=vega|actor=True|actorModel=True|hpText=HP 225/225|bgSprite=True|fillSprite=True|shieldSprite=True`.
 - 2026-05-14 follow-up: `MonsterUnitActor` now scales HP fill against `Background.localScale.x`; Unity-MCP editor code returned `Vega_Unit:bgX=20|beforeFillX=20|fullFillX=20|halfFillX=10`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores `vega-a` `projectile_speed=16`, `magazine_capacity=5`, `reload_seconds=4.8`, and `shot_interval_seconds=0.55`, matching `Pakuri/reference/2.Monster/vega/skill/a-three-sword-flurry.md`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` stores `vega-a` `pierce_count=999` as the current finite-runtime sentinel for the reference document's `무한 관통`, because `InGameProjectileActor` currently consumes integer pierce counts.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` records Vega labels `이름표식`, `침묵`, `몰살 허가`, and `이름표식 연계`; these are design labels because the current `StatusEffectKind` enum does not include those Vega-specific statuses.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores `vega-b` `radius=1.8`, matching `Pakuri/reference/2.Monster/vega/skill/b-silent-greatblade.md`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now keeps Vega design labels `이름표식`, `침묵`, `몰살 허가`, and `이름표식 연계` with `status_chance=0`; runtime CSV validation rejects positive chance on unsupported status labels.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` can resolve supported labels from `status_effect_label` if a Vega row is intentionally edited to a supported status such as `감전` later.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
 
 ### History
 
 - 2026-05-14: User asked to verify all five selectable prefab bindings and fix invisible `MonsterHpBar`.
 - 2026-05-14: User reported `HpFill` was forced to `1` on scene entry; Builder changed fill scaling to use the background width.
+- 2026-05-18: Code Builder moved Vega projectile/status tuning into skill CSV rows and encoded the reference infinite pierce as `pierce_count=999` for the current finite common projectile runtime.
+- 2026-05-18: Code Builder normalized Vega design-only status labels to chance 0 and added supported status-label fallback/CSV sync batch support.
 
 ## Task: 2026-05-13 Vega Battlefield Facade Registration
 

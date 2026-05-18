@@ -3,6 +3,48 @@
 This is a domain-specific persistent state file created by the BLACKBOARD.md hierarchy migration.
 When doing related work, follow MDTREE.md routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-18 CSV Runtime Catalog Sync Batch
+
+### Task title
+
+Provide a one-command batch path for syncing and validating CSV runtime catalogs.
+
+### Goals
+
+- Let CSV authors edit `Pakuri/Assets/CSVdata/source/*.csv`, then regenerate the runtime CSV catalogs without navigating Unity menus.
+- Reuse the existing Unity editor sync path instead of duplicating catalog generation logic in a script.
+- Keep batchmode behavior explicit when the project is already open in Unity.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not run Unity Play Mode.
+- Claims are based on inspected `PakuriCsvRuntimeData.Editor.cs`, `PakuriCsvRuntimeCatalogPostprocessor.cs`, command output, and Unity console output.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified up to Unity editor sync/validation. Batchmode launch itself was blocked by Unity's duplicate-project-open guard because the project was already open.
+
+### Next Actions
+
+- If Unity is closed, run `SyncCsvRuntimeCatalogs.bat` from the repository root to execute Unity batchmode sync/validation.
+- If Unity is already open, use the menu `Pakuri/Sync CSV Runtime Catalog Assets` or invoke `Pakuri.Data.PakuriCsvRuntimeData.SyncAndValidateCsvRuntimeCatalogsForEditor()` through Unity-MCP/editor tooling.
+
+### Evidence
+
+- `SyncCsvRuntimeCatalogs.bat` exists at the repository root and calls `Unity.exe -batchmode -quit -projectPath "%REPO_DIR%Pakuri" -executeMethod Pakuri.Data.PakuriCsvRuntimeData.SyncAndValidateCsvRuntimeCatalogsForEditor`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Editor.cs` exposes the public static `SyncAndValidateCsvRuntimeCatalogsForEditor()` method used by the batch file.
+- Running `cmd /c SyncCsvRuntimeCatalogs.bat` found `C:\Program Files\Unity\Hub\Editor\6000.3.14f1\Editor\Unity.exe` and failed only because another Unity instance already had `C:/TowerDefence_Pakuri/Test/Pakuri` open.
+- Unity-MCP invocation of `Pakuri.Data.PakuriCsvRuntimeData.SyncAndValidateCsvRuntimeCatalogsForEditor()` logged successful runtime catalog load with 5 monsters and 8 stage-one enemies, then logged successful sync/validation from `Assets/CSVdata/source` to `Assets/Resources/Pakuri/CSVRuntime`.
+
+### History
+
+- 2026-05-18: User requested a `.bat` to make CSV runtime catalog/source sync/regeneration easy after editing `monster_skills.csv`.
+
 ## Task: 2026-05-17 Projectile Skill Builder Flow
 
 ### Task title

@@ -276,10 +276,21 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var instance = combatManager.InstantiateSkillPrefab(
+            var effects = combatManager.Effects;
+            if (effects == null)
+            {
+                return;
+            }
+
+            var instance = effects.InstantiateSkillPrefab(
                 branchOnHit.ProjectilePrefab,
                 origin,
                 ResolveRotation(directionToTarget));
+            if (instance == null)
+            {
+                return;
+            }
+
             var actor = instance.GetComponent<InGameProjectileActor>();
             if (actor == null)
             {

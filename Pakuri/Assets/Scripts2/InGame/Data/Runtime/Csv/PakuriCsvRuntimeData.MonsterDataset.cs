@@ -15,22 +15,10 @@ namespace Pakuri.Data
             public DamageAttribute PrimaryAttribute;
             public string ActiveSkillName;
             public string PassiveSkillName;
-            public string UnitSpritePath;
-            public string ProjectileSpritePath;
-            public Color UnitColor;
-            public Color ProjectileColor;
             public float MaxHealth;
             public float PowerStat;
             public float BaseDamage;
             public float PowerCoefficient;
-            public float ProjectileSpeed;
-            public float ProjectileLifetime;
-            public float ProjectileHitRadius;
-            public int MagazineCapacity;
-            public float ReloadDuration;
-            public float ShotInterval;
-            public float StatusChance;
-            public string StatusEffectLabel;
             public float BaseAttackPower;
             public float BaseSpellPower;
             public float BaseMoveSpeed;
@@ -49,6 +37,9 @@ namespace Pakuri.Data
         {
             public string Id;
             public string MonsterId;
+            public string ActiveSkillId;
+            public string PassiveSkillId;
+            public string LinkedChoiceId;
             public int SortOrder;
             public string Title;
             public string Description;
@@ -73,21 +64,24 @@ namespace Pakuri.Data
             public bool IsAvailableWithoutActiveRequirement;
             public SkillSlot RequiredActiveSlot;
             public string SkillIconPath;
-            public string SkillEffectPrefabPath;
             public string DescriptionText;
             public string Summary;
             public DamageAttribute Attribute;
             public float BaseDamage;
             public float AttackPowerCoefficient;
             public float SpellPowerCoefficient;
-            public float Range;
             public float Radius;
             public float CooldownSeconds;
+            public float ActiveDurationSeconds;
             public int MagazineCapacity;
             public float ReloadSeconds;
             public float ShotIntervalSeconds;
+            public float ProjectileSpeed;
+            public int PierceCount;
             public bool CriticalAllowed;
             public string StatusEffectId;
+            public float StatusChance;
+            public string StatusEffectLabel;
         }
 
         private sealed class SkillChoiceRow
@@ -114,22 +108,10 @@ namespace Pakuri.Data
                 PrimaryAttribute = record.ReadEnum<DamageAttribute>("primary_attribute"),
                 ActiveSkillName = record.ReadString("active_skill_name"),
                 PassiveSkillName = record.ReadString("passive_skill_name"),
-                UnitSpritePath = record.ReadString("unit_sprite_path"),
-                ProjectileSpritePath = record.ReadString("projectile_sprite_path"),
-                UnitColor = record.ReadColor("unit_color"),
-                ProjectileColor = record.ReadColor("projectile_color"),
                 MaxHealth = record.ReadFloat("max_health"),
                 PowerStat = record.ReadFloat("power_stat"),
                 BaseDamage = record.ReadFloat("base_damage"),
                 PowerCoefficient = record.ReadFloat("power_coefficient"),
-                ProjectileSpeed = record.ReadFloat("projectile_speed"),
-                ProjectileLifetime = record.ReadFloat("projectile_lifetime"),
-                ProjectileHitRadius = record.ReadFloat("projectile_hit_radius"),
-                MagazineCapacity = record.ReadInt("magazine_capacity"),
-                ReloadDuration = record.ReadFloat("reload_duration"),
-                ShotInterval = record.ReadFloat("shot_interval"),
-                StatusChance = record.ReadFloat("status_chance"),
-                StatusEffectLabel = record.ReadString("status_effect_label"),
                 BaseAttackPower = record.ReadFloat("base_attack_power"),
                 BaseSpellPower = record.ReadFloat("base_spell_power"),
                 BaseMoveSpeed = record.ReadFloat("base_move_speed"),
@@ -151,6 +133,9 @@ namespace Pakuri.Data
             {
                 Id = record.ReadRequiredString("choice_id"),
                 MonsterId = record.ReadRequiredString("monster_id"),
+                ActiveSkillId = record.ReadString("active_skill_id"),
+                PassiveSkillId = record.ReadString("passive_skill_id"),
+                LinkedChoiceId = record.ReadString("linked_choice_id"),
                 SortOrder = record.ReadInt("sort_order"),
                 Title = record.ReadRequiredString("title"),
                 Description = record.ReadString("description"),
@@ -178,21 +163,24 @@ namespace Pakuri.Data
                 IsAvailableWithoutActiveRequirement = record.ReadBool("is_available_without_active_requirement"),
                 RequiredActiveSlot = record.ReadEnum<SkillSlot>("required_active_slot"),
                 SkillIconPath = record.ReadString("skill_icon_path"),
-                SkillEffectPrefabPath = record.ReadString("skill_effect_prefab_path"),
                 DescriptionText = record.ReadString("description_text"),
                 Summary = record.ReadString("summary"),
                 Attribute = record.ReadEnum<DamageAttribute>("attribute"),
                 BaseDamage = record.ReadFloat("base_damage"),
                 AttackPowerCoefficient = record.ReadFloat("attack_power_coefficient"),
                 SpellPowerCoefficient = record.ReadFloat("spell_power_coefficient"),
-                Range = record.ReadFloat("range"),
                 Radius = record.ReadFloat("radius"),
                 CooldownSeconds = record.ReadFloat("cooldown_seconds"),
+                ActiveDurationSeconds = record.ReadFloat("active_duration_seconds"),
                 MagazineCapacity = record.ReadInt("magazine_capacity"),
                 ReloadSeconds = record.ReadFloat("reload_seconds"),
                 ShotIntervalSeconds = record.ReadFloat("shot_interval_seconds"),
+                ProjectileSpeed = record.ReadFloat("projectile_speed"),
+                PierceCount = record.ReadInt("pierce_count"),
                 CriticalAllowed = record.ReadBool("critical_allowed"),
-                StatusEffectId = record.ReadString("status_effect_id")
+                StatusEffectId = record.ReadString("status_effect_id"),
+                StatusChance = record.ReadFloat("status_chance"),
+                StatusEffectLabel = record.ReadString("status_effect_label")
             };
         }
 

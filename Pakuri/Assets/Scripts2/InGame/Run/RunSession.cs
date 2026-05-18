@@ -15,6 +15,7 @@ namespace Pakuri.Run
             public readonly List<string> LearnedActives = new List<string>();
             public readonly List<string> LearnedPassives = new List<string>();
             public readonly List<string> ChosenRewardIds = new List<string>();
+            public readonly List<string> ChosenChoiceIds = new List<string>();
             public float DamageMultiplier = 1f;
             public int MagazineBonus;
             public float ShotIntervalMultiplier = 1f;
@@ -45,6 +46,7 @@ namespace Pakuri.Run
         public readonly List<string> LearnedActives = new List<string>();
         public readonly List<string> LearnedPassives = new List<string>();
         public readonly List<string> ChosenRewardIds = new List<string>();
+        public readonly List<string> ChosenChoiceIds = new List<string>();
         public readonly List<string> PrisonerNames = new List<string>();
         public readonly List<string> ManifestedMonsterIds = new List<string>();
         public readonly List<RunMonsterState> PartyMembers = new List<RunMonsterState>();
@@ -158,22 +160,34 @@ namespace Pakuri.Run
             AddLearnedPassive(passiveIdIfUnlocked);
         }
 
-        public void RecordOfferingChoice(string choiceId, string activeSkillId, string passiveSkillId)
+        public void RecordOfferingChoice(string rewardId, string linkedChoiceId, string activeSkillId, string passiveSkillId)
         {
-            RecordOfferingChoice(SelectedMonsterId, choiceId, activeSkillId, passiveSkillId);
+            RecordOfferingChoice(SelectedMonsterId, rewardId, linkedChoiceId, activeSkillId, passiveSkillId);
         }
 
-        public void RecordOfferingChoice(string monsterId, string choiceId, string activeSkillId, string passiveSkillId)
+        public void RecordOfferingChoice(
+            string monsterId,
+            string rewardId,
+            string linkedChoiceId,
+            string activeSkillId,
+            string passiveSkillId)
         {
             var member = GetPartyMemberState(monsterId);
             var chosenRewards = member != null ? member.ChosenRewardIds : ChosenRewardIds;
-            if (!string.IsNullOrWhiteSpace(choiceId) && !HasChosenReward(monsterId, choiceId))
+            if (!string.IsNullOrWhiteSpace(rewardId) && !HasChosenReward(monsterId, rewardId))
             {
-                AddUniqueText(chosenRewards, choiceId);
+                AddUniqueText(chosenRewards, rewardId);
                 if (IsSelectedMonster(monsterId))
                 {
-                    AddUniqueText(ChosenRewardIds, choiceId);
+                    AddUniqueText(ChosenRewardIds, rewardId);
                 }
+            }
+
+            var chosenChoices = member != null ? member.ChosenChoiceIds : ChosenChoiceIds;
+            AddUniqueText(chosenChoices, linkedChoiceId);
+            if (IsSelectedMonster(monsterId))
+            {
+                AddUniqueText(ChosenChoiceIds, linkedChoiceId);
             }
 
             AddLearnedActive(monsterId, activeSkillId);
@@ -413,6 +427,7 @@ namespace Pakuri.Run
                 CopyUnique(LearnedActives, state.LearnedActives);
                 CopyUnique(LearnedPassives, state.LearnedPassives);
                 CopyUnique(ChosenRewardIds, state.ChosenRewardIds);
+                CopyUnique(ChosenChoiceIds, state.ChosenChoiceIds);
             }
 
             return state;

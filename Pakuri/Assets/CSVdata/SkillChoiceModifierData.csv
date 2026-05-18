@@ -1,51 +1,51 @@
-﻿"choice_id","damage_multiplier","base_damage_bonus","magazine_bonus","additional_projectile_bonus","pierce_bonus","reload_time_multiplier","shot_interval_multiplier","range_multiplier","range_bonus","radius_multiplier","radius_bonus","duration_multiplier","duration_bonus","branch_chance_bonus","branch_chance_set","branch_count","branch_damage_multiplier","branch_search_radius","status_tag","status_chance_bonus","status_stacks_bonus","status_stacks_set","source_status","source_notes"
-"eve-a-trait-1","1.2","null","4","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","ReferenceDirect","Arc Bolt trait 1."
-"eve-a-trait-2","null","null","null","null","1","0.76923","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DerivedFromReference","Arc Bolt trait 2."
-"eve-a-trait-3","null","null","null","1","null","1.2","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","ReferenceDirect","Arc Bolt trait 3."
-"eve-a-trait-4","null","null","null","2","null","null","1.25","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DerivedFromReference","Arc Bolt trait 4."
-"eve-a-trait-5","1.25","null","null","null","null","null","null","null","null","null","null","null","null","0.35","null","null","null","null","null","null","null","null","ReferenceDirect","Arc Bolt trait 5."
-"eve-a-master-1","1.35","null","2","null","null","null","null","null","null","null","null","null","null","null","1","2","0.6","4.5","null","null","null","null","ReferenceDirect","Branch Circuit."
-"eve-a-master-2","1.45","null","null","2","2","null","1.2","null","null","null","null","null","null","null","null","null","null","null","媛먯쟾","null","null","2","DerivedFromReference","Overcharged Barrage."
-"eve-b-trait-1","1.25","null","null","null","null","null","0.8","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DerivedFromReference","Prism Ray trait 1."
-"eve-b-trait-2","1.3","null","null","null","null","null","null","null","null","1.3","null","null","null","null","null","null","null","null","null","null","null","null","ReferenceDirect","Prism Ray trait 2."
-"eve-b-trait-3","null","null","null","null","null","null","null","null","null","null","null","1.15","null","null","null","null","null","null","null","null","null","null","PartialRuntimeSupport","Prism Ray trait 3."
-"eve-b-trait-4","2","null","null","null","null","null","null","null","null","null","null","0.5","null","null","null","null","null","null","null","null","null","null","ReferenceDirect","Prism Ray trait 4."
-"eve-b-trait-5","null","null","null","null","null","null","0.83333","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","PartialRuntimeSupport","Prism Ray trait 5."
-"eve-b-master-1","1.75","null","null","null","null","null","0.57143","null","null","null","null","0.55","null","null","null","null","null","null","null","null","null","null","DerivedFromReference","Focused Ray."
-"eve-b-master-2","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Decomposition Spectrum unsupported."
-"eve-c-trait-1","null","null","null","null","null","null","null","null","null","1.25","null","1.15","null","null","null","null","null","null","null","null","null","null","ReferenceDirect","Frost Field trait 1."
-"eve-c-trait-2","null","null","null","null","null","null","0.8","null","null","null","null","null","null","null","null","null","null","null","異붿쐞","null","1","null","DerivedFromReference","Frost Field trait 2."
-"eve-c-trait-3","1.3","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","PartialRuntimeSupport","Frost Field trait 3."
-"eve-c-trait-4","1.8","null","null","null","null","null","null","null","null","0.8","null","null","null","null","null","null","null","null","null","null","null","null","ReferenceDirect","Frost Field trait 4."
-"eve-c-trait-5","1.2","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","PartialRuntimeSupport","Frost Field trait 5."
-"eve-c-master-1","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Absolute Zero Zone unsupported."
-"eve-c-master-2","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Crystal Storm unsupported."
-"eve-d-trait-1","null","null","null","null","null","null","null","null","null","1.25","null","null","null","null","null","null","null","null","null","null","null","null","PartialRuntimeSupport","Static Override trait 1."
-"eve-d-trait-2","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Static Override trait 2 unsupported."
-"eve-d-trait-3","1.15","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","PartialRuntimeSupport","Static Override trait 3."
-"eve-d-trait-4","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","媛먯쟾","null","1","null","ReferenceDirect","Static Override trait 4."
-"eve-d-trait-5","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Static Override trait 5 unsupported."
-"eve-d-master-1","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","1","0.5","null","null","null","null","null","PartialRuntimeSupport","Chain Overload."
-"eve-d-master-2","null","null","null","null","null","null","null","null","null","1.4","null","null","null","null","null","null","null","null","null","null","null","null","PartialRuntimeSupport","Electromagnetic Collapse."
-"eve-e-trait-1","null","null","1","null","null","null","null","null","null","null","null","1.2","null","null","null","null","null","null","null","null","null","null","ReferenceDirect","Plasma Field trait 1."
-"eve-e-trait-2","null","null","null","null","null","null","0.8","null","null","null","null","null","null","null","null","null","null","null","痍⑥빟","null","1","null","DerivedFromReference","Plasma Field trait 2."
-"eve-e-trait-3","1.3","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","ReferenceDirect","Plasma Field trait 3."
-"eve-e-trait-4","null","null","null","null","null","0.76923","null","null","null","null","null","null","null","null","null","1","null","null","null","null","null","null","PartialRuntimeSupport","Plasma Field trait 4."
-"eve-e-trait-5","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Plasma Field trait 5 unsupported."
-"eve-e-master-1","null","null","null","null","null","null","0.76923","null","null","null","null","null","null","null","null","2","null","null","null","null","null","null","PartialRuntimeSupport","Surveillance Drone Network."
-"eve-e-master-2","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Weakness Lock unsupported."
-"eve-f-trait-1","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Voltage Calibration trait 1 unsupported."
-"eve-f-trait-2","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Voltage Calibration trait 2 unsupported."
-"eve-f-trait-3","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Voltage Calibration trait 3 unsupported."
-"eve-g-trait-1","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Weakness Analysis trait 1 unsupported."
-"eve-g-trait-2","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Weakness Analysis trait 2 unsupported."
-"eve-g-trait-3","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Weakness Analysis trait 3 unsupported."
-"eve-h-trait-1","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Particle Separation trait 1 unsupported."
-"eve-h-trait-2","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Particle Separation trait 2 unsupported."
-"eve-h-trait-3","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Particle Separation trait 3 unsupported."
-"eve-i-trait-1","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Cooling Algorithm trait 1 unsupported."
-"eve-i-trait-2","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Cooling Algorithm trait 2 unsupported."
-"eve-i-trait-3","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Cooling Algorithm trait 3 unsupported."
-"eve-j-trait-1","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Overcurrent Circuit trait 1 unsupported."
-"eve-j-trait-2","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Overcurrent Circuit trait 2 unsupported."
-"eve-j-trait-3","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","null","DataOnlyUnsupported","Overcurrent Circuit trait 3 unsupported."
+choice_id,damage_multiplier,base_damage_bonus,magazine_bonus,additional_projectile_bonus,pierce_bonus,reload_time_multiplier,shot_interval_multiplier,radius_multiplier,radius_bonus,duration_multiplier,duration_bonus,branch_chance_bonus,branch_chance_set,branch_count,branch_damage_multiplier,branch_search_radius,status_tag,status_chance_bonus,status_stacks_bonus,status_stacks_set,source_status,source_notes
+eve-a-trait-1,1.2,null,4,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,ReferenceDirect,Arc Bolt trait 1.
+eve-a-trait-2,null,null,null,null,1,0.76923,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DerivedFromReference,Arc Bolt trait 2.
+eve-a-trait-3,null,null,null,1,null,1.2,null,null,null,null,null,null,null,null,null,null,null,null,null,null,ReferenceDirect,Arc Bolt trait 3.
+eve-a-trait-4,null,null,null,2,null,null,1.25,null,null,null,null,null,null,null,null,null,null,null,null,null,DerivedFromReference,Arc Bolt trait 4.
+eve-a-trait-5,1.25,null,null,null,null,null,null,null,null,null,null,0.35,null,null,null,null,null,null,null,null,ReferenceDirect,Arc Bolt trait 5.
+eve-a-master-1,1.35,null,2,null,null,null,null,null,null,null,null,null,1,2,0.6,4.5,null,null,null,null,ReferenceDirect,Branch Circuit.
+eve-a-master-2,1.45,null,null,2,2,null,1.2,null,null,null,null,null,null,null,null,null,媛먯쟾,null,null,2,DerivedFromReference,Overcharged Barrage.
+eve-b-trait-1,1.25,null,null,null,null,null,0.8,null,null,null,null,null,null,null,null,null,null,null,null,null,DerivedFromReference,Prism Ray trait 1.
+eve-b-trait-2,1.3,null,null,null,null,null,null,1.3,null,null,null,null,null,null,null,null,null,null,null,null,ReferenceDirect,Prism Ray trait 2.
+eve-b-trait-3,null,null,null,null,null,null,null,null,null,1.15,null,null,null,null,null,null,null,null,null,null,PartialRuntimeSupport,Prism Ray trait 3.
+eve-b-trait-4,2,null,null,null,null,null,null,null,null,0.5,null,null,null,null,null,null,null,null,null,null,ReferenceDirect,Prism Ray trait 4.
+eve-b-trait-5,null,null,null,null,null,null,0.83333,null,null,null,null,null,null,null,null,null,null,null,null,null,PartialRuntimeSupport,Prism Ray trait 5.
+eve-b-master-1,1.75,null,null,null,null,null,0.57143,null,null,0.55,null,null,null,null,null,null,null,null,null,null,DerivedFromReference,Focused Ray.
+eve-b-master-2,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Decomposition Spectrum unsupported.
+eve-c-trait-1,null,null,null,null,null,null,null,1.25,null,1.15,null,null,null,null,null,null,null,null,null,null,ReferenceDirect,Frost Field trait 1.
+eve-c-trait-2,null,null,null,null,null,null,0.8,null,null,null,null,null,null,null,null,null,異붿쐞,null,1,null,DerivedFromReference,Frost Field trait 2.
+eve-c-trait-3,1.3,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,PartialRuntimeSupport,Frost Field trait 3.
+eve-c-trait-4,1.8,null,null,null,null,null,null,0.8,null,null,null,null,null,null,null,null,null,null,null,null,ReferenceDirect,Frost Field trait 4.
+eve-c-trait-5,1.2,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,PartialRuntimeSupport,Frost Field trait 5.
+eve-c-master-1,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Absolute Zero Zone unsupported.
+eve-c-master-2,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Crystal Storm unsupported.
+eve-d-trait-1,null,null,null,null,null,null,null,1.25,null,null,null,null,null,null,null,null,null,null,null,null,PartialRuntimeSupport,Static Override trait 1.
+eve-d-trait-2,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Static Override trait 2 unsupported.
+eve-d-trait-3,1.15,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,PartialRuntimeSupport,Static Override trait 3.
+eve-d-trait-4,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,媛먯쟾,null,1,null,ReferenceDirect,Static Override trait 4.
+eve-d-trait-5,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Static Override trait 5 unsupported.
+eve-d-master-1,null,null,null,null,null,null,null,null,null,null,null,null,null,1,0.5,null,null,null,null,null,PartialRuntimeSupport,Chain Overload.
+eve-d-master-2,null,null,null,null,null,null,null,1.4,null,null,null,null,null,null,null,null,null,null,null,null,PartialRuntimeSupport,Electromagnetic Collapse.
+eve-e-trait-1,null,null,1,null,null,null,null,null,null,1.2,null,null,null,null,null,null,null,null,null,null,ReferenceDirect,Plasma Field trait 1.
+eve-e-trait-2,null,null,null,null,null,null,0.8,null,null,null,null,null,null,null,null,null,痍⑥빟,null,1,null,DerivedFromReference,Plasma Field trait 2.
+eve-e-trait-3,1.3,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,ReferenceDirect,Plasma Field trait 3.
+eve-e-trait-4,null,null,null,null,null,0.76923,null,null,null,null,null,null,null,1,null,null,null,null,null,null,PartialRuntimeSupport,Plasma Field trait 4.
+eve-e-trait-5,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Plasma Field trait 5 unsupported.
+eve-e-master-1,null,null,null,null,null,null,0.76923,null,null,null,null,null,null,2,null,null,null,null,null,null,PartialRuntimeSupport,Surveillance Drone Network.
+eve-e-master-2,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Weakness Lock unsupported.
+eve-f-trait-1,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Voltage Calibration trait 1 unsupported.
+eve-f-trait-2,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Voltage Calibration trait 2 unsupported.
+eve-f-trait-3,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Voltage Calibration trait 3 unsupported.
+eve-g-trait-1,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Weakness Analysis trait 1 unsupported.
+eve-g-trait-2,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Weakness Analysis trait 2 unsupported.
+eve-g-trait-3,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Weakness Analysis trait 3 unsupported.
+eve-h-trait-1,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Particle Separation trait 1 unsupported.
+eve-h-trait-2,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Particle Separation trait 2 unsupported.
+eve-h-trait-3,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Particle Separation trait 3 unsupported.
+eve-i-trait-1,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Cooling Algorithm trait 1 unsupported.
+eve-i-trait-2,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Cooling Algorithm trait 2 unsupported.
+eve-i-trait-3,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Cooling Algorithm trait 3 unsupported.
+eve-j-trait-1,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Overcurrent Circuit trait 1 unsupported.
+eve-j-trait-2,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Overcurrent Circuit trait 2 unsupported.
+eve-j-trait-3,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,DataOnlyUnsupported,Overcurrent Circuit trait 3 unsupported.

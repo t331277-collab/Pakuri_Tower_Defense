@@ -22,20 +22,10 @@ namespace Pakuri.InGame
         [SerializeField] private Camera inputCamera;
         [SerializeField] private Transform projectileDestroyBoundary;
         [SerializeField] private float projectileDestroyBoundaryFallbackX = 31f;
-        [SerializeField] private GameObject eveAProjectilePrefab;
-        [SerializeField] private GameObject arielAProjectilePrefab;
-        [SerializeField] private GameObject arielBShieldEffectPrefab;
-        [SerializeField] private GameObject warriorSkillPrefab;
-        [SerializeField] private GameObject shieldSkillPrefab;
-        [SerializeField] private GameObject archerSkillPrefab;
-        [SerializeField] private GameObject rogueSkillPrefab;
-        [SerializeField] private GameObject priestSkillPrefab;
-        [SerializeField] private GameObject shieldKingSkillPrefab;
-        [SerializeField] private GameObject warriorKingSkillPrefab;
-        [SerializeField] private GameObject karinSkillPrefab;
-        [SerializeField] private Transform runtimeSkillRoot;
+        [SerializeField] private EffectManager effectManager;
 
         public UnitRosterService Roster => roster;
+        public EffectManager Effects => ResolveEffectManager();
 
         public int ActiveUnitCount => roster.Count;
         public int ActivePlayerCount => roster.PlayerCount;
@@ -218,82 +208,11 @@ namespace Pakuri.InGame
             playerAutoSkillEnabled = true;
         }
 
-        public GameObject ResolveSkillEffectPrefab(string skillId)
-        {
-            switch (skillId)
-            {
-                case "eve-a":
-                    return eveAProjectilePrefab;
-                case "ariel-a":
-                    return arielAProjectilePrefab;
-                case "ariel-b":
-                    return arielBShieldEffectPrefab;
-                default:
-                    return null;
-            }
-        }
-
         public float ResolveProjectileDestroyBoundaryX()
         {
             return projectileDestroyBoundary != null
                 ? projectileDestroyBoundary.position.x
                 : projectileDestroyBoundaryFallbackX;
-        }
-
-        public GameObject InstantiateSkillPrefab(GameObject prefab, Vector3 position, Quaternion rotation)
-        {
-            return prefab != null
-                ? Instantiate(prefab, position, rotation, ResolveRuntimeSkillRoot())
-                : null;
-        }
-
-        public GameObject ResolveEnemySkillPrefab(EnemyUnitRuntimeModel enemy)
-        {
-            if (enemy == null)
-            {
-                return null;
-            }
-
-            switch (enemy.StageOneSkill)
-            {
-                case Pakuri.Data.StageOneEnemySkillKind.Slash:
-                    return warriorSkillPrefab;
-                case Pakuri.Data.StageOneEnemySkillKind.ShieldUp:
-                    return shieldSkillPrefab;
-                case Pakuri.Data.StageOneEnemySkillKind.AimedShot:
-                    return archerSkillPrefab;
-                case Pakuri.Data.StageOneEnemySkillKind.ShurikenThrow:
-                    return rogueSkillPrefab;
-                case Pakuri.Data.StageOneEnemySkillKind.Heal:
-                    return priestSkillPrefab;
-                case Pakuri.Data.StageOneEnemySkillKind.GuardianFlag:
-                    return shieldKingSkillPrefab;
-                case Pakuri.Data.StageOneEnemySkillKind.ChargeCommand:
-                    return warriorKingSkillPrefab;
-                case Pakuri.Data.StageOneEnemySkillKind.SacredSwordWave:
-                    return karinSkillPrefab;
-                default:
-                    return null;
-            }
-        }
-
-        private Transform ResolveRuntimeSkillRoot()
-        {
-            if (runtimeSkillRoot != null)
-            {
-                return runtimeSkillRoot;
-            }
-
-            var root = GameObject.Find("RunTimeSkill");
-            if (root != null)
-            {
-                runtimeSkillRoot = root.transform;
-                return runtimeSkillRoot;
-            }
-
-            var created = new GameObject("RunTimeSkill");
-            runtimeSkillRoot = created.transform;
-            return runtimeSkillRoot;
         }
 
         public UnitRosterEntry FindUnitByCollider(Collider2D collider)
@@ -532,6 +451,16 @@ namespace Pakuri.InGame
             }
 
             return false;
+        }
+
+        private EffectManager ResolveEffectManager()
+        {
+            if (effectManager == null)
+            {
+                effectManager = GetComponent<EffectManager>();
+            }
+
+            return effectManager;
         }
     }
 }

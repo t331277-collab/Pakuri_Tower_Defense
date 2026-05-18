@@ -13,27 +13,6 @@ MonoBehaviour:
   m_Name: PakuriCsvRuntimeAssetCatalog
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.Data.PakuriCsvRuntimeAssetCatalog
   Sprites:
-  - AssetPath: Assets/Image/Monster/ariel/Arial_Temp.png
-    Asset: {fileID: 21300000, guid: 7340a02f3fe3cd44199cf5f248a877e2, type: 3}
-  - AssetPath: "Assets/Image/Monster/ariel/ChatGPT Image 2026\uB144 4\uC6D4 30\uC77C
-      \uC624\uD6C4 09_41_42-Photoroom 1.png"
-    Asset: {fileID: 21300000, guid: b7c5627b81613f843bb3624bd5560dcc, type: 3}
-  - AssetPath: Assets/Image/Monster/Eve/Eve_temp 1 (1).png
-    Asset: {fileID: 21300000, guid: 879d93d0c464a4342973c5f3da51fc1a, type: 3}
-  - AssetPath: Assets/Image/Monster/Eve/Shoot.png
-    Asset: {fileID: -3759340608264355816, guid: 6775ae037b7948a4288975129a809850, type: 3}
-  - AssetPath: Assets/Image/Monster/Rin/Rin_Shoot.png
-    Asset: {fileID: 21300000, guid: 910fd4f0185802b44bd67baedc519844, type: 3}
-  - AssetPath: Assets/Image/Monster/Rin/Rin_Temp (2).png
-    Asset: {fileID: 21300000, guid: 0d2ed2f29d1d0894bba06e3472baffd7, type: 3}
-  - AssetPath: Assets/Image/Monster/Sein/Sein_Shoot.png
-    Asset: {fileID: 1311808531117767923, guid: 9f975ebffed428b4ab2b35f00b5c45d4, type: 3}
-  - AssetPath: Assets/Image/Monster/Sein/Sein_Temp.png
-    Asset: {fileID: 491488020924605794, guid: 2105790930a66bb4f819d0915e5dddba, type: 3}
-  - AssetPath: Assets/Image/Monster/Vega/Vega_Shoot2.png
-    Asset: {fileID: -6777606773706237578, guid: 725f2fe8f2a299540b099f2e8469f36e, type: 3}
-  - AssetPath: Assets/Image/Monster/Vega/Vega_Temp (3).png
-    Asset: {fileID: -1788411375355218723, guid: 26facd5c042b4444bb38f80750d15cf0, type: 3}
   - AssetPath: Assets/Image/Stage1/Enemy/Achor.png
     Asset: {fileID: 21300000, guid: ef1e124d1928cc54ea59ccf3db8fdfe0, type: 3}
   - AssetPath: Assets/Image/Stage1/Enemy/Priest.png
@@ -44,26 +23,4 @@ MonoBehaviour:
     Asset: {fileID: 21300000, guid: 0caea6bc70c48504bb727429d31f5bc3, type: 3}
   - AssetPath: Assets/Image/Stage1/Enemy/Warrior.png
     Asset: {fileID: 21300000, guid: 128ccc7f23263be428abee49b68f0e07, type: 3}
-  Prefabs:
-  - AssetPath: Assets/Image/Monster/Eve/Effect_Prefab/Eve_Skill_B.prefab
-    Asset: {fileID: 3843049686398240108, guid: 224f5e7622cd0264b961ee388a015d65, type: 3}
-  - AssetPath: Assets/Image/Monster/Rin/Effect_Prefab/Rin_Skill_C.prefab
-    Asset: {fileID: 8767310348598417902, guid: c17e18be6f4f31b49a083bf1ce120f0d, type: 3}
-  - AssetPath: Assets/Prefab/Enemy/Skill/Achor_Skill.prefab
-    Asset: {fileID: 1147205142547571635, guid: c68a14297d96473499a2c4d10658a55f, type: 3}
-  - AssetPath: Assets/Prefab/Enemy/Skill/Karin_Skill 1.prefab
-    Asset: {fileID: 3517001639107925163, guid: d3fbe1e58b0383e4cbcbc791d4961f91, type: 3}
-  - AssetPath: Assets/Prefab/Enemy/Skill/Preist_Skill.prefab
-    Asset: {fileID: 6438375768576846172, guid: 8d0e9d69f614e534ca717c247f2f7c9b, type: 3}
-  - AssetPath: Assets/Prefab/Enemy/Skill/Rogue_Skill.prefab
-    Asset: {fileID: 1147205142547571635, guid: 05d06cc4129dc644d82b626e836e8725, type: 3}
-  - AssetPath: Assets/Prefab/Enemy/Skill/Shield_King_Skill.prefab
-    Asset: {fileID: 164523631160746866, guid: 2afa29e429995274bb2e0aad73060428, type: 3}
-  - AssetPath: Assets/Prefab/Enemy/Skill/Shield_Skill.prefab
-    Asset: {fileID: 685893937165172827, guid: d67ed66d9d3234c4980ece0c391d33d3, type: 3}
-  - AssetPath: Assets/Prefab/Enemy/Skill/Warrior_King_Skill 1.prefab
-    Asset: {fileID: 164523631160746866, guid: fffbdda407858a9488e6e01ad38eadb3, type: 3}
-  - AssetPath: Assets/Prefab/Enemy/Skill/Warrior_Skill.prefab
-    Asset: {fileID: 6711210013456624539, guid: 86d2cf796a0668f48bf01d312cceb7dc, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Ariel/Airel_A.prefab
-    Asset: {fileID: 3285557362087739772, guid: 66fcb365022930d4681ad320e5fff520, type: 3}
+  Prefabs: []

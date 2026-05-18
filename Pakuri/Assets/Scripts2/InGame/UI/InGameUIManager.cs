@@ -11,12 +11,7 @@ namespace Pakuri.InGame
     [DisallowMultipleComponent]
     public sealed class InGameUIManager : MonoBehaviour
     {
-        private const int MaxOfferingChoices = 3;
-        private const int MaxRunActiveSkillCount = 5;
-        private const int MaxRunPassiveSkillCount = 5;
-
         private readonly List<RewardButtonView> rewardButtons = new List<RewardButtonView>();
-        private readonly List<OfferingChoiceView> offeringChoices = new List<OfferingChoiceView>();
 
         [SerializeField] private NewRunStageManager stageManager;
         [SerializeField] private NewRunSceneEntryManager entryManager;
@@ -29,32 +24,17 @@ namespace Pakuri.InGame
         private Button darkTemplateButton;
         private Button nextButton;
         private TMP_Text rewardSummaryText;
-
         private GameObject prisonerChoicePopUp;
         private Button offeringButton;
-        private Button manifestedButton;
-
-        private GameObject offeringPanel;
-        private readonly Button[] offeringChoiceButtons = new Button[MaxOfferingChoices];
-
-        private GameObject manifestedFailPopUp;
-        private Button manifestedFailBackButton;
-
-        private GameObject manifestedSuccessPopUp;
-        private Button dontChoiceButton;
-        private Button choiceButton;
-        private TMP_Text monsterNameText;
-        private TMP_Text monsterDescText;
-        private Image monsterImage;
-
+        private Button menifestedButton;
         private TMP_Text stageInfoText;
         private TMP_Text goldInfoText;
         private TMP_Text darkInfoText;
-
         private int shownStage = -1;
         private int shownDay = -1;
         private RewardButtonView activePrisonerButton;
-        private MonsterDefinition pendingManifestMonster;
+        private OfferingUI offeringUI;
+        private MenifestUI menifestUI;
 
         private void Awake()
         {
@@ -89,14 +69,11 @@ namespace Pakuri.InGame
             HideTransientPanels();
             ClearClonedRewardButtons();
 
-            if (rewardPanel != null)
-            {
-                rewardPanel.SetActive(true);
-            }
+            SetActive(rewardPanel, true);
 
             if (rewardSummaryText != null)
             {
-                rewardSummaryText.text = $"Stage {stageManager.CurrentStage}-{stageManager.CurrentDay} 보상";
+                rewardSummaryText.text = $"Stage {stageManager.CurrentStage}-{stageManager.CurrentDay} 蹂댁긽";
             }
 
             var order = 0;
@@ -105,7 +82,7 @@ namespace Pakuri.InGame
             {
                 var capturedIndex = i;
                 var button = CreateRewardButton(prisonerTemplateButton, "PrisonerReward", order++);
-                SetButtonLabel(button, $"포로\n{prisoners[i]}");
+                SetButtonLabel(button, $"?щ줈\n{prisoners[i]}");
                 var view = RegisterRewardButton(button, RewardKind.Prisoner, 0, prisoners[i]);
                 button.onClick.AddListener(() => OpenPrisonerChoice(view, capturedIndex));
             }
@@ -114,7 +91,7 @@ namespace Pakuri.InGame
             {
                 var amount = stageManager.PendingGoldReward;
                 var button = CreateRewardButton(goldTemplateButton, "GoldReward", order++);
-                SetButtonLabel(button, $"골드\n+{amount}");
+                SetButtonLabel(button, $"怨⑤뱶\n+{amount}");
                 var view = RegisterRewardButton(button, RewardKind.Gold, amount, string.Empty);
                 button.onClick.AddListener(() => ClaimMaterialReward(view, amount, 0));
             }
@@ -123,7 +100,7 @@ namespace Pakuri.InGame
             {
                 var amount = stageManager.PendingDarkTraceReward;
                 var button = CreateRewardButton(darkTemplateButton, "DarkTraceReward", order++);
-                SetButtonLabel(button, $"어둠의 흔적\n+{amount}");
+                SetButtonLabel(button, $"?대몺???붿쟻\n+{amount}");
                 var view = RegisterRewardButton(button, RewardKind.DarkTrace, amount, string.Empty);
                 button.onClick.AddListener(() => ClaimMaterialReward(view, 0, amount));
             }
@@ -142,187 +119,7 @@ namespace Pakuri.InGame
             }
 
             activePrisonerButton = view;
-            if (prisonerChoicePopUp != null)
-            {
-                prisonerChoicePopUp.SetActive(true);
-            }
-        }
-
-        private void OpenOfferingPanel()
-        {
-            if (activePrisonerButton == null || activePrisonerButton.Consumed)
-            {
-                return;
-            }
-
-            BuildOfferingChoices();
-            if (offeringPanel != null)
-            {
-                offeringPanel.SetActive(true);
-            }
-
-            for (var i = 0; i < offeringChoiceButtons.Length; i++)
-            {
-                var button = offeringChoiceButtons[i];
-                if (button == null)
-                {
-                    continue;
-                }
-
-                button.onClick.RemoveAllListeners();
-                var hasChoice = i < offeringChoices.Count;
-                button.gameObject.SetActive(hasChoice);
-                button.interactable = hasChoice;
-                if (!hasChoice)
-                {
-                    continue;
-                }
-
-                var capturedIndex = i;
-                var choice = offeringChoices[i];
-                SetButtonLabel(button, $"{choice.Title}\n{choice.Description}");
-                button.onClick.AddListener(() => CommitOfferingChoice(capturedIndex));
-            }
-        }
-
-        private void CommitOfferingChoice(int choiceIndex)
-        {
-            var session = ResolveSession();
-            if (session == null || choiceIndex < 0 || choiceIndex >= offeringChoices.Count)
-            {
-                return;
-            }
-
-            var choice = offeringChoices[choiceIndex];
-            session.ClaimPrisonerReward(activePrisonerButton.PrisonerId);
-            session.RecordOfferingChoice(choice.MonsterId, choice.ChoiceId, choice.ActiveSkillId, choice.PassiveSkillId);
-            if (choice.Kind == OfferingChoiceKind.Enhancement)
-            {
-                session.AccumulateReward(
-                    choice.MonsterId,
-                    choice.DamageMultiplier,
-                    choice.MagazineBonus,
-                    choice.ShotIntervalMultiplier,
-                    choice.ReloadDurationMultiplier,
-                    choice.MaxHealthBonus,
-                    choice.StatusChanceBonus);
-            }
-
-            RefreshRuntimeSkillModels();
-            ConsumePrisonerButton();
-            if (offeringPanel != null)
-            {
-                offeringPanel.SetActive(false);
-            }
-
-            if (prisonerChoicePopUp != null)
-            {
-                prisonerChoicePopUp.SetActive(false);
-            }
-
-            if (rewardPanel != null)
-            {
-                rewardPanel.SetActive(true);
-            }
-
-            RefreshInfo();
-        }
-
-        private void TryManifestPrisoner()
-        {
-            var session = ResolveSession();
-            if (session == null || activePrisonerButton == null || activePrisonerButton.Consumed)
-            {
-                return;
-            }
-
-            session.ClaimPrisonerReward(activePrisonerButton.PrisonerId);
-            ConsumePrisonerButton();
-            if (prisonerChoicePopUp != null)
-            {
-                prisonerChoicePopUp.SetActive(false);
-            }
-
-            pendingManifestMonster = ResolveNextManifestCandidate(session);
-            var succeeded = pendingManifestMonster != null && UnityEngine.Random.value < stageManager.PendingManifestSuccessChance;
-            if (!succeeded)
-            {
-                if (manifestedFailPopUp != null)
-                {
-                    manifestedFailPopUp.SetActive(true);
-                }
-
-                return;
-            }
-
-            ShowManifestSuccessPopup(pendingManifestMonster);
-        }
-
-        private void ShowManifestSuccessPopup(MonsterDefinition monster)
-        {
-            if (manifestedSuccessPopUp != null)
-            {
-                manifestedSuccessPopUp.SetActive(true);
-            }
-
-            if (monsterNameText != null)
-            {
-                monsterNameText.text = monster != null ? monster.DisplayName : "Unknown";
-            }
-
-            if (monsterDescText != null)
-            {
-                monsterDescText.text = BuildManifestDescription(monster);
-            }
-
-            if (monsterImage != null)
-            {
-                monsterImage.sprite = monster != null ? monster.UnitSprite : null;
-                monsterImage.color = monster != null && monster.UnitSprite != null ? Color.white : new Color(0f, 0f, 0f, 0.3f);
-            }
-        }
-
-        private void SkipManifestChoice()
-        {
-            pendingManifestMonster = null;
-            if (manifestedSuccessPopUp != null)
-            {
-                manifestedSuccessPopUp.SetActive(false);
-            }
-
-            if (prisonerChoicePopUp != null)
-            {
-                prisonerChoicePopUp.SetActive(false);
-            }
-        }
-
-        private void CommitManifestChoice()
-        {
-            var session = ResolveSession();
-            if (session == null || pendingManifestMonster == null)
-            {
-                return;
-            }
-
-            session.RecordManifestedMonster(pendingManifestMonster);
-            var slotIndex = Mathf.Clamp(session.ManifestedMonsterIds.Count, 1, 4);
-            if (entryManager != null)
-            {
-                entryManager.SpawnManifestedMonster(pendingManifestMonster, slotIndex, out _);
-            }
-
-            pendingManifestMonster = null;
-            if (manifestedSuccessPopUp != null)
-            {
-                manifestedSuccessPopUp.SetActive(false);
-            }
-
-            if (prisonerChoicePopUp != null)
-            {
-                prisonerChoicePopUp.SetActive(false);
-            }
-
-            RefreshInfo();
+            SetActive(prisonerChoicePopUp, true);
         }
 
         private void ClaimMaterialReward(RewardButtonView view, int gold, int darkTrace)
@@ -346,11 +143,7 @@ namespace Pakuri.InGame
         private void ContinueToNextDay()
         {
             HideTransientPanels();
-            if (rewardPanel != null)
-            {
-                rewardPanel.SetActive(false);
-            }
-
+            SetActive(rewardPanel, false);
             ClearClonedRewardButtons();
             shownStage = -1;
             shownDay = -1;
@@ -358,308 +151,6 @@ namespace Pakuri.InGame
             if (stageManager != null)
             {
                 stageManager.ContinueToNextDay();
-            }
-        }
-
-        private void BuildOfferingChoices()
-        {
-            offeringChoices.Clear();
-            var session = ResolveSession();
-            if (session == null)
-            {
-                return;
-            }
-
-            var targets = ResolveOfferingTargets(session);
-            for (var i = 0; i < targets.Count; i++)
-            {
-                var monster = targets[i];
-                var state = session.EnsurePartyMemberState(monster);
-                AddActiveSkillChoices(session, monster, state);
-                AddPassiveSkillChoices(session, monster, state);
-                AddEnhancementChoices(session, monster, state);
-            }
-
-            ShuffleOfferingChoices();
-            while (offeringChoices.Count > MaxOfferingChoices)
-            {
-                offeringChoices.RemoveAt(offeringChoices.Count - 1);
-            }
-        }
-
-        private void AddActiveSkillChoices(RunSession session, MonsterDefinition monster, RunSession.RunMonsterState state)
-        {
-            if (monster == null || state == null || state.LearnedActives.Count >= MaxRunActiveSkillCount)
-            {
-                return;
-            }
-
-            var skills = PakuriDataManager.Instance.GetActiveSkills(monster.MonsterId, monster);
-            for (var i = 0; i < skills.Length; i++)
-            {
-                var skill = skills[i];
-                if (skill == null || string.IsNullOrWhiteSpace(skill.SkillId) || session.HasLearnedActive(state.MonsterId, skill.SkillId))
-                {
-                    continue;
-                }
-
-                offeringChoices.Add(new OfferingChoiceView
-                {
-                    Kind = OfferingChoiceKind.ActiveSkill,
-                    MonsterId = state.MonsterId,
-                    ChoiceId = skill.SkillId,
-                    ActiveSkillId = skill.SkillId,
-                    Title = $"{monster.DisplayName} 신규 액티브: {skill.DisplayName}",
-                    Description = ResolveDescription(skill.Summary, skill.DescriptionText, "액티브 스킬을 습득한다.")
-                });
-            }
-        }
-
-        private void AddPassiveSkillChoices(RunSession session, MonsterDefinition monster, RunSession.RunMonsterState state)
-        {
-            if (monster == null || state == null || state.LearnedPassives.Count >= MaxRunPassiveSkillCount)
-            {
-                return;
-            }
-
-            var passives = PakuriDataManager.Instance.GetPassiveSkills(monster.MonsterId, monster);
-            for (var i = 0; i < passives.Length; i++)
-            {
-                var passive = passives[i];
-                if (passive == null || string.IsNullOrWhiteSpace(passive.PassiveId) || session.HasLearnedPassive(state.MonsterId, passive.PassiveId))
-                {
-                    continue;
-                }
-
-                if (!passive.IsAvailableWithoutActiveRequirement && !HasLearnedRequiredActive(session, monster, state, passive.RequiredActiveSlot))
-                {
-                    continue;
-                }
-
-                offeringChoices.Add(new OfferingChoiceView
-                {
-                    Kind = OfferingChoiceKind.PassiveSkill,
-                    MonsterId = state.MonsterId,
-                    ChoiceId = passive.PassiveId,
-                    PassiveSkillId = passive.PassiveId,
-                    Title = $"{monster.DisplayName} 신규 패시브: {passive.DisplayName}",
-                    Description = ResolveDescription(passive.Summary, passive.DescriptionText, "패시브 스킬을 습득한다.")
-                });
-            }
-        }
-
-        private void AddEnhancementChoices(RunSession session, MonsterDefinition monster, RunSession.RunMonsterState state)
-        {
-            if (monster == null || state == null)
-            {
-                return;
-            }
-
-            var rewards = PakuriDataManager.Instance.GetRewardChoices(monster.MonsterId, monster);
-            for (var i = 0; i < rewards.Length; i++)
-            {
-                var reward = rewards[i];
-                if (reward == null || string.IsNullOrWhiteSpace(reward.RewardId) || session.HasChosenReward(state.MonsterId, reward.RewardId))
-                {
-                    continue;
-                }
-
-                if (!IsRewardChoiceAvailableForState(session, monster, state, reward.RewardId))
-                {
-                    continue;
-                }
-
-                offeringChoices.Add(new OfferingChoiceView
-                {
-                    Kind = OfferingChoiceKind.Enhancement,
-                    MonsterId = state.MonsterId,
-                    ChoiceId = reward.RewardId,
-                    Title = $"{monster.DisplayName} 스킬 강화: {reward.Title}",
-                    Description = reward.Description,
-                    DamageMultiplier = reward.DamageMultiplier,
-                    MagazineBonus = reward.MagazineBonus,
-                    ShotIntervalMultiplier = reward.ShotIntervalMultiplier,
-                    ReloadDurationMultiplier = reward.ReloadDurationMultiplier,
-                    MaxHealthBonus = reward.MaxHealthBonus,
-                    StatusChanceBonus = reward.StatusChanceBonus
-                });
-            }
-        }
-
-        private static bool IsRewardChoiceAvailableForState(
-            RunSession session,
-            MonsterDefinition monster,
-            RunSession.RunMonsterState state,
-            string rewardId)
-        {
-            if (session == null || monster == null || state == null || string.IsNullOrWhiteSpace(rewardId))
-            {
-                return false;
-            }
-
-            if (IsRewardForLearnedActive(session, monster, state, rewardId))
-            {
-                return true;
-            }
-
-            if (IsRewardForLearnedPassive(session, monster, state, rewardId))
-            {
-                return true;
-            }
-
-            return !LooksLikeSkillChoiceReward(monster, rewardId);
-        }
-
-        private static bool IsRewardForLearnedActive(
-            RunSession session,
-            MonsterDefinition monster,
-            RunSession.RunMonsterState state,
-            string rewardId)
-        {
-            var skills = monster.ActiveSkills ?? Array.Empty<SkillDefinition>();
-            for (var i = 0; i < skills.Length; i++)
-            {
-                var skill = skills[i];
-                if (skill == null || string.IsNullOrWhiteSpace(skill.SkillId))
-                {
-                    continue;
-                }
-
-                if (RewardIdTargetsSkill(rewardId, skill.SkillId)
-                    && session.HasLearnedActive(state.MonsterId, skill.SkillId))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool IsRewardForLearnedPassive(
-            RunSession session,
-            MonsterDefinition monster,
-            RunSession.RunMonsterState state,
-            string rewardId)
-        {
-            var passives = monster.PassiveSkills ?? Array.Empty<PassiveDefinition>();
-            for (var i = 0; i < passives.Length; i++)
-            {
-                var passive = passives[i];
-                if (passive == null || string.IsNullOrWhiteSpace(passive.PassiveId))
-                {
-                    continue;
-                }
-
-                if (RewardIdTargetsSkill(rewardId, passive.PassiveId)
-                    && session.HasLearnedPassive(state.MonsterId, passive.PassiveId))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool LooksLikeSkillChoiceReward(MonsterDefinition monster, string rewardId)
-        {
-            var skills = monster.ActiveSkills ?? Array.Empty<SkillDefinition>();
-            for (var i = 0; i < skills.Length; i++)
-            {
-                var skill = skills[i];
-                if (skill != null && RewardIdTargetsSkill(rewardId, skill.SkillId))
-                {
-                    return true;
-                }
-            }
-
-            var passives = monster.PassiveSkills ?? Array.Empty<PassiveDefinition>();
-            for (var i = 0; i < passives.Length; i++)
-            {
-                var passive = passives[i];
-                if (passive != null && RewardIdTargetsSkill(rewardId, passive.PassiveId))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool RewardIdTargetsSkill(string rewardId, string skillId)
-        {
-            return !string.IsNullOrWhiteSpace(rewardId)
-                && !string.IsNullOrWhiteSpace(skillId)
-                && rewardId.StartsWith(skillId + "-", StringComparison.OrdinalIgnoreCase);
-        }
-
-        private List<MonsterDefinition> ResolveOfferingTargets(RunSession session)
-        {
-            var targets = new List<MonsterDefinition>();
-            AddOfferingTarget(targets, PakuriDataManager.Instance.ResolveMonster(session.SelectedMonsterId, ResolveCatalog()));
-            for (var i = 0; i < session.ManifestedMonsterIds.Count; i++)
-            {
-                AddOfferingTarget(targets, PakuriDataManager.Instance.ResolveMonster(session.ManifestedMonsterIds[i], ResolveCatalog()));
-            }
-
-            return targets;
-        }
-
-        private static void AddOfferingTarget(List<MonsterDefinition> targets, MonsterDefinition monster)
-        {
-            if (targets == null || monster == null || string.IsNullOrWhiteSpace(monster.MonsterId))
-            {
-                return;
-            }
-
-            for (var i = 0; i < targets.Count; i++)
-            {
-                if (targets[i] != null && string.Equals(targets[i].MonsterId, monster.MonsterId, StringComparison.OrdinalIgnoreCase))
-                {
-                    return;
-                }
-            }
-
-            targets.Add(monster);
-        }
-
-        private MonsterDefinition ResolveNextManifestCandidate(RunSession session)
-        {
-            var monsters = PakuriDataManager.Instance.GetMonsters(ResolveCatalog());
-            var candidates = new List<MonsterDefinition>();
-            for (var i = 0; i < monsters.Length; i++)
-            {
-                var monster = monsters[i];
-                if (monster == null
-                    || string.IsNullOrWhiteSpace(monster.MonsterId)
-                    || string.Equals(monster.MonsterId, session.SelectedMonsterId, StringComparison.OrdinalIgnoreCase)
-                    || session.HasManifestedMonster(monster.MonsterId))
-                {
-                    continue;
-                }
-
-                candidates.Add(monster);
-            }
-
-            return candidates.Count > 0 ? candidates[UnityEngine.Random.Range(0, candidates.Count)] : null;
-        }
-
-        private void RefreshRuntimeSkillModels()
-        {
-            if (combatManager == null)
-            {
-                return;
-            }
-
-            var skillCatalog = new InGameSkillCatalog(ResolveCatalog());
-            var players = combatManager.Roster.Players;
-            for (var i = 0; i < players.Count; i++)
-            {
-                var model = players[i] != null ? players[i].Model as MonsterUnitRuntimeModel : null;
-                if (model != null)
-                {
-                    SkillRuntimeFactory.RebuildLearnedActiveSet(model, skillCatalog);
-                    combatManager.RefreshUnitActor(model);
-                }
             }
         }
 
@@ -716,22 +207,45 @@ namespace Pakuri.InGame
 
             prisonerChoicePopUp = FindChildObject("PrisonerChoicePopUp");
             offeringButton = FindButton("PrisonerChoicePopUp/OfferingBtn");
-            manifestedButton = FindButton("PrisonerChoicePopUp/Menifested");
+            menifestedButton = FindButton("PrisonerChoicePopUp/Menifested");
 
-            offeringPanel = FindChildObject("OfferingPanel");
-            offeringChoiceButtons[0] = FindButton("OfferingPanel/Choice1");
-            offeringChoiceButtons[1] = FindButton("OfferingPanel/Choice2");
-            offeringChoiceButtons[2] = FindButton("OfferingPanel/Choice3");
+            var offeringPanel = FindChildObject("OfferingPanel");
+            var offeringChoiceButtons = new[]
+            {
+                FindButton("OfferingPanel/Choice1"),
+                FindButton("OfferingPanel/Choice2"),
+                FindButton("OfferingPanel/Choice3")
+            };
 
-            manifestedFailPopUp = FindChildObject("MenifestedFailPopUp");
-            manifestedFailBackButton = FindButton("MenifestedFailPopUp/Back");
+            offeringUI = new OfferingUI(
+                offeringPanel,
+                offeringChoiceButtons,
+                prisonerChoicePopUp,
+                rewardPanel,
+                ResolveSession,
+                ResolveCatalog,
+                ResolveCombatManager,
+                () => activePrisonerButton,
+                ConsumePrisonerButton,
+                RefreshInfo);
 
-            manifestedSuccessPopUp = FindChildObject("MenifestedSuccessPopUp");
-            dontChoiceButton = FindButton("MenifestedSuccessPopUp/DontChoiceBtn");
-            choiceButton = FindButton("MenifestedSuccessPopUp/ChoiceBtn");
-            monsterNameText = FindText("MenifestedSuccessPopUp/MonsterName");
-            monsterDescText = FindText("MenifestedSuccessPopUp/MonsterDesc");
-            monsterImage = FindImage("MenifestedSuccessPopUp/MonsterImage");
+            menifestUI = new MenifestUI(
+                FindChildObject("MenifestedFailPopUp"),
+                FindButton("MenifestedFailPopUp/Back"),
+                FindChildObject("MenifestedSuccessPopUp"),
+                FindButton("MenifestedSuccessPopUp/DontChoiceBtn"),
+                FindButton("MenifestedSuccessPopUp/ChoiceBtn"),
+                FindText("MenifestedSuccessPopUp/MonsterName"),
+                FindText("MenifestedSuccessPopUp/MonsterDesc"),
+                FindImage("MenifestedSuccessPopUp/MonsterImage"),
+                prisonerChoicePopUp,
+                ResolveSession,
+                ResolveCatalog,
+                ResolveStageManager,
+                ResolveEntryManager,
+                () => activePrisonerButton,
+                ConsumePrisonerButton,
+                RefreshInfo);
 
             stageInfoText = FindText("Info/StageInfo");
             goldInfoText = FindText("Info/Goldinfo");
@@ -741,26 +255,16 @@ namespace Pakuri.InGame
         private void BindStaticButtons()
         {
             BindButton(nextButton, ContinueToNextDay);
-            BindButton(offeringButton, OpenOfferingPanel);
-            BindButton(manifestedButton, TryManifestPrisoner);
-            BindButton(manifestedFailBackButton, () =>
-            {
-                if (manifestedFailPopUp != null)
-                {
-                    manifestedFailPopUp.SetActive(false);
-                }
-            });
-            BindButton(dontChoiceButton, SkipManifestChoice);
-            BindButton(choiceButton, CommitManifestChoice);
+            BindButton(offeringButton, () => offeringUI?.OpenOfferingPanel());
+            BindButton(menifestedButton, () => menifestUI?.TryManifestPrisoner());
         }
 
         private void HideTransientPanels()
         {
             SetActive(rewardPanel, false);
             SetActive(prisonerChoicePopUp, false);
-            SetActive(offeringPanel, false);
-            SetActive(manifestedFailPopUp, false);
-            SetActive(manifestedSuccessPopUp, false);
+            offeringUI?.Hide();
+            menifestUI?.Hide();
         }
 
         private Button CreateRewardButton(Button template, string namePrefix, int order)
@@ -859,54 +363,22 @@ namespace Pakuri.InGame
             return catalog != null ? catalog : PakuriCsvRuntimeData.ResolveCatalogOrFallback(null);
         }
 
-        private bool HasLearnedRequiredActive(RunSession session, MonsterDefinition monster, RunSession.RunMonsterState state, SkillSlot slot)
+        private InGameCombatManager ResolveCombatManager()
         {
-            var skills = PakuriDataManager.Instance.GetActiveSkills(monster.MonsterId, monster);
-            for (var i = 0; i < skills.Length; i++)
-            {
-                var skill = skills[i];
-                if (skill != null && skill.Slot == slot && session.HasLearnedActive(state.MonsterId, skill.SkillId))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            ResolveReferences();
+            return combatManager;
         }
 
-        private void ShuffleOfferingChoices()
+        private NewRunStageManager ResolveStageManager()
         {
-            for (var i = offeringChoices.Count - 1; i > 0; i--)
-            {
-                var swapIndex = UnityEngine.Random.Range(0, i + 1);
-                var current = offeringChoices[i];
-                offeringChoices[i] = offeringChoices[swapIndex];
-                offeringChoices[swapIndex] = current;
-            }
+            ResolveReferences();
+            return stageManager;
         }
 
-        private static string BuildManifestDescription(MonsterDefinition monster)
+        private NewRunSceneEntryManager ResolveEntryManager()
         {
-            if (monster == null)
-            {
-                return string.Empty;
-            }
-
-            return
-                $"{monster.RoleSummary}\n" +
-                $"속성: {monster.ElementLabel}\n" +
-                $"HP: {monster.MaxHealth:0} / 공격: {monster.PowerStat:0}\n" +
-                $"A: {monster.ActiveSkillName} / F: {monster.PassiveSkillName}";
-        }
-
-        private static string ResolveDescription(string summary, string description, string fallback)
-        {
-            if (!string.IsNullOrWhiteSpace(description))
-            {
-                return description;
-            }
-
-            return string.IsNullOrWhiteSpace(summary) ? fallback : summary;
+            ResolveReferences();
+            return entryManager;
         }
 
         private GameObject FindChildObject(string path)
@@ -994,7 +466,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        private sealed class RewardButtonView
+        internal sealed class RewardButtonView
         {
             private readonly Color originalColor;
 
@@ -1029,35 +501,11 @@ namespace Pakuri.InGame
             }
         }
 
-        private enum RewardKind
+        internal enum RewardKind
         {
             Prisoner,
             Gold,
             DarkTrace
-        }
-
-        private enum OfferingChoiceKind
-        {
-            ActiveSkill,
-            PassiveSkill,
-            Enhancement
-        }
-
-        private sealed class OfferingChoiceView
-        {
-            public OfferingChoiceKind Kind;
-            public string MonsterId;
-            public string ChoiceId;
-            public string ActiveSkillId;
-            public string PassiveSkillId;
-            public string Title;
-            public string Description;
-            public float DamageMultiplier = 1f;
-            public int MagazineBonus;
-            public float ShotIntervalMultiplier = 1f;
-            public float ReloadDurationMultiplier = 1f;
-            public float MaxHealthBonus;
-            public float StatusChanceBonus;
         }
     }
 }

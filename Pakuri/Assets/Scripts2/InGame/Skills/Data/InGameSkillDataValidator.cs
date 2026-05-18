@@ -338,9 +338,17 @@ namespace Pakuri.InGame
         private static void ValidateTiming(string monsterId, SkillDefinition source, InGameSkillDataValidationReport report)
         {
             var slot = source.Slot.ToString();
-            if (source.Radius < 0f || source.CooldownSeconds < 0f || source.ReloadSeconds < 0f || source.ShotIntervalSeconds < 0f || source.MagazineCapacity < 0)
+            if (source.Radius < 0f
+                || source.CooldownSeconds < 0f
+                || source.ReloadSeconds < 0f
+                || source.ShotIntervalSeconds < 0f
+                || source.MagazineCapacity < 0
+                || source.ProjectileSpeed < 0f
+                || source.PierceCount < 0
+                || source.StatusChance < 0f
+                || source.StatusChance > 1f)
             {
-                AddError(report, "TimingNegative", "Timing, radius, reload, interval, and magazine values must not be negative.", monsterId, source.SkillId, slot);
+                AddError(report, "TimingNegative", "Timing, radius, reload, interval, magazine, projectile, pierce, and status chance values must be valid non-negative values.", monsterId, source.SkillId, slot);
             }
 
             if (source.RuntimeKind == SkillRuntimeKind.MagazineProjectile || source.RuntimeKind == SkillRuntimeKind.CooldownProjectile)
@@ -358,6 +366,11 @@ namespace Pakuri.InGame
                 if (source.ShotIntervalSeconds <= 0f)
                 {
                     AddError(report, "ShotIntervalMissing", "Projectile skill requires a positive shot interval.", monsterId, source.SkillId, slot);
+                }
+
+                if (source.ProjectileSpeed <= 0f)
+                {
+                    AddError(report, "ProjectileSpeedMissing", "Projectile skill requires a positive projectile speed.", monsterId, source.SkillId, slot);
                 }
 
                 return;

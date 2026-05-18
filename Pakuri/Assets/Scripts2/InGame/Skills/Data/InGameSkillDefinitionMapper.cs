@@ -107,6 +107,7 @@ namespace Pakuri.InGame
             skill.MasterChoices = MapChoices(source.MasterSkillChoices);
 
             skill.Timing.Cooldown = source.CooldownSeconds;
+            skill.Timing.ActiveDuration = source.ActiveDurationSeconds;
             skill.Timing.TickInterval = source.ShotIntervalSeconds;
             skill.Targeting.Range = 0f;
             skill.Targeting.Radius = source.Radius;
@@ -121,10 +122,10 @@ namespace Pakuri.InGame
                 projectile.Projectile.MagazineSize = source.MagazineCapacity;
                 projectile.Projectile.ReloadTime = source.ReloadSeconds;
                 projectile.Projectile.ProjectilesPerShot = 1;
-                projectile.Projectile.PierceCount = ResolveBasePierceCount(source);
-                projectile.Projectile.ProjectileSpeed = ResolveProjectileSpeed(monster, source);
+                projectile.Projectile.PierceCount = source.PierceCount;
+                projectile.Projectile.ProjectileSpeed = source.ProjectileSpeed;
                 MapDamage(projectile.Damage, source);
-                projectile.OnHitStatus = CreateStatusApplication(source.StatusEffectId);
+                projectile.OnHitStatus = CreateStatusApplication(source.StatusEffectId, source.StatusChance, source.StatusEffectLabel);
                 return;
             }
 
@@ -133,7 +134,7 @@ namespace Pakuri.InGame
                 beam.BeamLength = 0f;
                 beam.BeamWidth = source.Radius;
                 MapDamage(beam.DamagePerTick, source);
-                beam.OnHitStatus = CreateStatusApplication(source.StatusEffectId);
+                beam.OnHitStatus = CreateStatusApplication(source.StatusEffectId, source.StatusChance, source.StatusEffectLabel);
                 return;
             }
 
@@ -144,7 +145,7 @@ namespace Pakuri.InGame
                 zone.Area.TickInterval = source.ShotIntervalSeconds;
                 zone.Area.CoverAll = source.RuntimeKind == SkillRuntimeKind.Field;
                 MapDamage(zone.DamagePerTick, source);
-                zone.OnTickStatus = CreateStatusApplication(source.StatusEffectId);
+                zone.OnTickStatus = CreateStatusApplication(source.StatusEffectId, source.StatusChance, source.StatusEffectLabel);
                 return;
             }
 
@@ -155,7 +156,7 @@ namespace Pakuri.InGame
                 buff.HasAttachedDamage = source.BaseDamage > 0f;
                 MapDamage(buff.AttachedDamage, source);
                 buff.AttachedDamageRadius = source.Radius;
-                buff.AttachedStatus = CreateStatusApplication(source.StatusEffectId);
+                buff.AttachedStatus = CreateStatusApplication(source.StatusEffectId, source.StatusChance, source.StatusEffectLabel);
                 return;
             }
 
@@ -191,25 +192,31 @@ namespace Pakuri.InGame
             return source.AttackPowerCoefficient;
         }
 
-        private static StatusApplicationSpec CreateStatusApplication(string statusEffectId)
+        private static StatusApplicationSpec CreateStatusApplication(string statusEffectId, float chance, string statusEffectLabel)
         {
             var application = new StatusApplicationSpec();
-            if (string.IsNullOrWhiteSpace(statusEffectId))
+            var statusKey = !string.IsNullOrWhiteSpace(statusEffectId)
+                ? statusEffectId.Trim()
+                : statusEffectLabel != null ? statusEffectLabel.Trim() : string.Empty;
+            if (string.IsNullOrWhiteSpace(statusKey))
             {
                 application.Chance = 0f;
                 return application;
             }
 
-            var status = CreateTransient<StatusEffectData>(statusEffectId);
-            if (StatusEffectUtility.TryParse(statusEffectId, out var kind))
+            if (!StatusEffectUtility.TryParse(statusKey, out var kind))
             {
-                status.Kind = kind;
+                application.Chance = 0f;
+                return application;
             }
 
-            status.StatusTag = statusEffectId;
-            status.StatusName = statusEffectId;
+            var definition = StatusEffectUtility.GetDefinition(kind);
+            var status = CreateTransient<StatusEffectData>(definition.Id);
+            status.Kind = kind;
+            status.StatusTag = definition.Id;
+            status.StatusName = string.IsNullOrWhiteSpace(statusEffectLabel) ? definition.DisplayName : statusEffectLabel;
             application.Status = status;
-            application.Chance = 1f;
+            application.Chance = Mathf.Clamp01(chance);
             application.Stacks = 1;
             application.RefreshDuration = true;
             return application;
@@ -237,36 +244,6 @@ namespace Pakuri.InGame
             }
 
             return mapped;
-        }
-
-        private static float ResolveProjectileSpeed(MonsterDefinition monster, SkillDefinition source)
-        {
-            if (source != null && !string.IsNullOrWhiteSpace(source.SkillId))
-            {
-                switch (source.SkillId.ToLowerInvariant())
-                {
-                    case "ariel-a":
-                        return 17f;
-                }
-            }
-
-            return monster != null ? monster.ProjectileSpeed : 0f;
-        }
-
-        private static int ResolveBasePierceCount(SkillDefinition source)
-        {
-            if (source == null || string.IsNullOrWhiteSpace(source.SkillId))
-            {
-                return 0;
-            }
-
-            switch (source.SkillId.ToLowerInvariant())
-            {
-                case "ariel-a":
-                    return 1;
-                default:
-                    return 0;
-            }
         }
 
         private static CharacterType MapCharacter(string monsterId)

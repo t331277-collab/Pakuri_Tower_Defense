@@ -39,7 +39,7 @@ Code Builder
 
 ### Status
 
-Builder implementation completed and locally verified.
+Builder implementation completed and locally verified. 2026-05-18 Sein active skill CSV rows were updated to the new skill-owned projectile/status schema. 2026-05-18 Sein design-only labels remain non-runtime statuses with `status_chance=0`.
 
 ### Next Actions
 
@@ -50,11 +50,19 @@ Builder implementation completed and locally verified.
 - `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` references `Sein_Unit.prefab` in `seinUnitPrefab`.
 - Unity-MCP verification returned `sein:prefab=Sein_Unit|modelOk=True|model=sein|actor=True|actorModel=True|hpText=HP 210/210|bgSprite=True|fillSprite=True|shieldSprite=True`.
 - 2026-05-14 follow-up: `MonsterUnitActor` now scales HP fill against `Background.localScale.x`; Unity-MCP editor code returned `Sein_Unit:bgX=20|beforeFillX=20|fullFillX=20|halfFillX=10`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores `sein-a` `projectile_speed=18`, `pierce_count=1`, `magazine_capacity=8`, `reload_seconds=4.4`, and `shot_interval_seconds=0.32`, matching `Pakuri/reference/2.Monster/sein/skill/a-scorching-arrow.md`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores `sein-b` `projectile_speed=20`, `pierce_count=0`, `magazine_capacity=4`, `reload_seconds=6`, and `shot_interval_seconds=0.18`, matching `Pakuri/reference/2.Monster/sein/skill/b-blazing-volley.md`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` records `sein-d` label `초열 지대` and `sein-e` label `화염 저항 감소`; these are design labels because the current `StatusEffectKind` enum does not include Sein-specific fire-resistance statuses.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now keeps Sein design labels `초열 지대` and `화염 저항 감소` with `status_chance=0`; runtime CSV validation rejects positive chance on unsupported status labels.
+- Supported labels can still be introduced later through CSV because `StatusEffectKind.cs` and `InGameSkillDefinitionMapper.cs` now parse supported Korean labels from `status_effect_label` when `status_effect_id` is blank.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
 
 ### History
 
 - 2026-05-14: User asked to verify all five selectable prefab bindings and fix invisible `MonsterHpBar`.
 - 2026-05-14: User reported `HpFill` was forced to `1` on scene entry; Builder changed fill scaling to use the background width.
+- 2026-05-18: Code Builder moved Sein projectile/status tuning into skill CSV rows using the reference documents for A/B projectile values and D/E status labels.
+- 2026-05-18: Code Builder normalized Sein design-only status labels to chance 0 and added supported status-label fallback/CSV sync batch support.
 
 ## Task: 2026-05-13 Sein Battlefield Facade Registration
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Pakuri.InGame;
 
 namespace Pakuri.Data
 {
@@ -33,6 +34,53 @@ namespace Pakuri.Data
                 {
                     errors.Add($"Reward choice '{reward.Id}' references unknown monster '{reward.MonsterId}'.");
                 }
+
+                if (!string.IsNullOrWhiteSpace(reward.ActiveSkillId))
+                {
+                    if (!model.Skills.TryGetValue(reward.ActiveSkillId, out var activeSkill))
+                    {
+                        errors.Add($"Reward choice '{reward.Id}' references unknown active skill '{reward.ActiveSkillId}'.");
+                    }
+                    else if (!string.Equals(activeSkill.MonsterId, reward.MonsterId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        errors.Add(
+                            $"Reward choice '{reward.Id}' active skill '{reward.ActiveSkillId}' belongs to '{activeSkill.MonsterId}', not '{reward.MonsterId}'.");
+                    }
+                    else if (activeSkill.SkillKind != PakuriCsvSkillKind.Active)
+                    {
+                        errors.Add($"Reward choice '{reward.Id}' targets non-active skill '{reward.ActiveSkillId}'.");
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(reward.PassiveSkillId))
+                {
+                    if (!model.Skills.TryGetValue(reward.PassiveSkillId, out var passiveSkill))
+                    {
+                        errors.Add($"Reward choice '{reward.Id}' references unknown passive skill '{reward.PassiveSkillId}'.");
+                    }
+                    else if (!string.Equals(passiveSkill.MonsterId, reward.MonsterId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        errors.Add(
+                            $"Reward choice '{reward.Id}' passive skill '{reward.PassiveSkillId}' belongs to '{passiveSkill.MonsterId}', not '{reward.MonsterId}'.");
+                    }
+                    else if (passiveSkill.SkillKind != PakuriCsvSkillKind.Passive)
+                    {
+                        errors.Add($"Reward choice '{reward.Id}' targets non-passive skill '{reward.PassiveSkillId}'.");
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(reward.LinkedChoiceId))
+                {
+                    if (!model.SkillChoices.TryGetValue(reward.LinkedChoiceId, out var linkedChoice))
+                    {
+                        errors.Add($"Reward choice '{reward.Id}' references unknown linked choice '{reward.LinkedChoiceId}'.");
+                    }
+                    else if (!string.Equals(linkedChoice.MonsterId, reward.MonsterId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        errors.Add(
+                            $"Reward choice '{reward.Id}' linked choice '{reward.LinkedChoiceId}' belongs to '{linkedChoice.MonsterId}', not '{reward.MonsterId}'.");
+                    }
+                }
             }
 
             foreach (var skill in model.Skills.Values)
@@ -51,6 +99,8 @@ namespace Pakuri.Data
                 {
                     errors.Add($"Passive skill '{skill.Id}' uses active slot '{skill.Slot}'.");
                 }
+
+                ValidateRuntimeStatusColumns(skill, errors);
             }
 
             foreach (var choice in model.SkillChoices.Values)
@@ -88,6 +138,11 @@ namespace Pakuri.Data
                 if (!model.EnemySkills.ContainsKey(enemy.StageOneSkill.ToString()))
                 {
                     errors.Add($"Enemy '{enemy.Id}' references unknown enemy skill '{enemy.StageOneSkill}'.");
+                }
+
+                if (enemy.HasBasicSkill && !model.EnemySkills.ContainsKey(enemy.BasicSkill.ToString()))
+                {
+                    errors.Add($"Enemy '{enemy.Id}' references unknown basic enemy skill '{enemy.BasicSkill}'.");
                 }
             }
 
@@ -171,6 +226,36 @@ namespace Pakuri.Data
             }
         }
 
+        private static void ValidateRuntimeStatusColumns(SkillRow skill, List<string> errors)
+        {
+            if (skill == null)
+            {
+                return;
+            }
+
+            var statusKey = !string.IsNullOrWhiteSpace(skill.StatusEffectId)
+                ? skill.StatusEffectId.Trim()
+                : skill.StatusEffectLabel != null ? skill.StatusEffectLabel.Trim() : string.Empty;
+            var hasStatusKey = !string.IsNullOrWhiteSpace(statusKey)
+                && !string.Equals(statusKey, "none", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(statusKey, "없음", StringComparison.OrdinalIgnoreCase);
+            if (!hasStatusKey)
+            {
+                if (skill.StatusChance > 0f)
+                {
+                    errors.Add($"Skill '{skill.Id}' has status_chance '{skill.StatusChance}' but no runtime status id or parseable label.");
+                }
+
+                return;
+            }
+
+            if (skill.StatusChance > 0f && !StatusEffectUtility.TryParse(statusKey, out _))
+            {
+                errors.Add(
+                    $"Skill '{skill.Id}' uses unsupported runtime status '{statusKey}'. Add it to StatusEffectKind or set status_chance to 0 for design-only labels.");
+            }
+        }
+
         private static void ValidateReferencedAssetCoverage(
             SourceModel model,
             PakuriCsvRuntimeAssetCatalog assetCatalog,
@@ -182,27 +267,15 @@ namespace Pakuri.Data
                 return;
             }
 
-            foreach (var monster in model.Monsters.Values)
-            {
-                ValidateSpritePath(assetCatalog, monster.UnitSpritePath, $"Monster '{monster.Id}' unit_sprite_path", errors);
-                ValidateSpritePath(assetCatalog, monster.ProjectileSpritePath, $"Monster '{monster.Id}' projectile_sprite_path", errors);
-            }
-
             foreach (var skill in model.Skills.Values)
             {
                 ValidateSpritePath(assetCatalog, skill.SkillIconPath, $"Skill '{skill.Id}' skill_icon_path", errors);
-                ValidatePrefabPath(assetCatalog, skill.SkillEffectPrefabPath, $"Skill '{skill.Id}' skill_effect_prefab_path", errors);
             }
 
             foreach (var choice in model.SkillChoices.Values)
             {
                 ValidateSpritePath(assetCatalog, choice.SkillIconPath, $"Skill choice '{choice.Id}' skill_icon_path", errors);
                 ValidatePrefabPath(assetCatalog, choice.SkillEffectPrefabPath, $"Skill choice '{choice.Id}' skill_effect_prefab_path", errors);
-            }
-
-            foreach (var skill in model.EnemySkills.Values)
-            {
-                ValidatePrefabPath(assetCatalog, skill.SkillEffectPrefabPath, $"Enemy skill '{skill.Id}' skill_effect_prefab_path", errors);
             }
 
             foreach (var enemy in model.StageOneEnemies.Values)
@@ -302,16 +375,6 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                if (!string.IsNullOrWhiteSpace(sourceMonster.UnitSpritePath) && monster.UnitSprite == null)
-                {
-                    errors.Add($"Runtime monster '{monster.MonsterId}' is missing UnitSprite for '{sourceMonster.UnitSpritePath}'.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(sourceMonster.ProjectileSpritePath) && monster.ProjectileSprite == null)
-                {
-                    errors.Add($"Runtime monster '{monster.MonsterId}' is missing ProjectileSprite for '{sourceMonster.ProjectileSpritePath}'.");
-                }
-
                 ValidateRuntimeActiveSkillAssets(monster.ActiveSkills, sourceModel, monster.MonsterId, errors);
                 ValidateRuntimePassiveSkillAssets(monster.PassiveSkills, sourceModel, monster.MonsterId, errors);
             }
@@ -389,11 +452,6 @@ namespace Pakuri.Data
                     errors.Add($"Runtime skill '{skillId}' is missing SkillIcon for '{sourceSkill.SkillIconPath}'.");
                 }
 
-                if (!string.IsNullOrWhiteSpace(sourceSkill.SkillEffectPrefabPath) && skill.SkillEffectPrefab == null)
-                {
-                    errors.Add($"Runtime skill '{skillId}' is missing SkillEffectPrefab for '{sourceSkill.SkillEffectPrefabPath}'.");
-                }
-
                 var enhancementChoices = skill.EnhancementChoices;
                 if (enhancementChoices != null)
                 {
@@ -435,11 +493,6 @@ namespace Pakuri.Data
                 if (!string.IsNullOrWhiteSpace(sourceSkill.SkillIconPath) && skill.SkillIcon == null)
                 {
                     errors.Add($"Runtime passive '{skill.PassiveId}' is missing SkillIcon for '{sourceSkill.SkillIconPath}'.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(sourceSkill.SkillEffectPrefabPath) && skill.SkillEffectPrefab == null)
-                {
-                    errors.Add($"Runtime passive '{skill.PassiveId}' is missing SkillEffectPrefab for '{sourceSkill.SkillEffectPrefabPath}'.");
                 }
 
                 ValidateRuntimeSkillChoiceAssets(skill.EnhancementChoices, sourceModel, skill.PassiveId, errors);

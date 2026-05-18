@@ -15,6 +15,15 @@ namespace Pakuri.Data
             ResetRuntimeState();
         }
 
+        public static void SyncAndValidateCsvRuntimeCatalogsForEditor()
+        {
+            SyncImportedSourceCatalogsForEditor();
+            var catalog = LoadAndValidateRuntimeCatalog();
+            Debug.Log(FormatRuntimeCatalogSummary(catalog));
+            Debug.Log(
+                $"Pakuri CSV runtime catalogs synced and validated from '{ImportedSourceAssetRoot}' to '{RuntimeResourcesFolderAssetPath}'.");
+        }
+
         [MenuItem("Pakuri/Sync CSV Runtime Catalog Assets")]
         private static void SyncRuntimeCatalogAssetsMenu()
         {
@@ -107,12 +116,6 @@ namespace Pakuri.Data
         private static PakuriCsvRuntimeAssetCatalog.SpriteEntry[] BuildSpriteEntries(SourceModel sourceModel)
         {
             var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var monster in sourceModel.Monsters.Values)
-            {
-                AddAssetPath(paths, monster.UnitSpritePath);
-                AddAssetPath(paths, monster.ProjectileSpritePath);
-            }
-
             foreach (var skill in sourceModel.Skills.Values)
             {
                 AddAssetPath(paths, skill.SkillIconPath);
@@ -152,19 +155,9 @@ namespace Pakuri.Data
         private static PakuriCsvRuntimeAssetCatalog.PrefabEntry[] BuildPrefabEntries(SourceModel sourceModel)
         {
             var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var skill in sourceModel.Skills.Values)
-            {
-                AddAssetPath(paths, skill.SkillEffectPrefabPath);
-            }
-
             foreach (var choice in sourceModel.SkillChoices.Values)
             {
                 AddAssetPath(paths, choice.SkillEffectPrefabPath);
-            }
-
-            foreach (var skill in sourceModel.EnemySkills.Values)
-            {
-                AddAssetPath(paths, skill.SkillEffectPrefabPath);
             }
 
             var entries = new List<PakuriCsvRuntimeAssetCatalog.PrefabEntry>();
