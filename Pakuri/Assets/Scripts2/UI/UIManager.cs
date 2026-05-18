@@ -100,7 +100,7 @@ public class UIManager : MonoBehaviour
     private void StartSelectedMonsterRun()
     {
         var monsterId = string.IsNullOrWhiteSpace(selectedMonsterId) ? defaultMonsterId : selectedMonsterId;
-        NewRunStartContext.Prepare(monsterId);
+            StartContext.Prepare(monsterId);
 
         if (string.IsNullOrWhiteSpace(newRunScenePath))
         {

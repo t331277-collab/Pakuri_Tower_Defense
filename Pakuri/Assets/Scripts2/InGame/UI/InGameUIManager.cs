@@ -13,8 +13,8 @@ namespace Pakuri.InGame
     {
         private readonly List<RewardButtonView> rewardButtons = new List<RewardButtonView>();
 
-        [SerializeField] private NewRunStageManager stageManager;
-        [SerializeField] private NewRunSceneEntryManager entryManager;
+        [SerializeField] private StageManager stageManager;
+        [SerializeField] private SceneEntryManager entryManager;
         [SerializeField] private InGameCombatManager combatManager;
 
         private GameObject rewardPanel;
@@ -49,7 +49,7 @@ namespace Pakuri.InGame
             ResolveReferences();
             RefreshInfo();
 
-            if (stageManager == null || stageManager.State != NewRunStageState.RewardReady)
+            if (stageManager == null || stageManager.State != StageState.RewardReady)
             {
                 return;
             }
@@ -182,12 +182,12 @@ namespace Pakuri.InGame
         {
             if (stageManager == null)
             {
-                stageManager = FindSceneObject<NewRunStageManager>();
+                stageManager = FindSceneObject<StageManager>();
             }
 
             if (entryManager == null)
             {
-                entryManager = FindSceneObject<NewRunSceneEntryManager>();
+                entryManager = FindSceneObject<SceneEntryManager>();
             }
 
             if (combatManager == null)
@@ -394,13 +394,13 @@ namespace Pakuri.InGame
             return combatManager;
         }
 
-        private NewRunStageManager ResolveStageManager()
+        private StageManager ResolveStageManager()
         {
             ResolveReferences();
             return stageManager;
         }
 
-        private NewRunSceneEntryManager ResolveEntryManager()
+        private SceneEntryManager ResolveEntryManager()
         {
             ResolveReferences();
             return entryManager;

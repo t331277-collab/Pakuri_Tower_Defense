@@ -10347,7 +10347,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b6ff00e786df7fb46ae905aa63bee059, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.NewRunSceneEntryManager
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.SceneEntryManager
   combatManager: {fileID: 1427799828}
   unitSpawnManager: {fileID: 1427799830}
   enemySpawnIntervalSeconds: 1
@@ -10386,7 +10386,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c2fbcf1f36342aca23eac2221b2c1e8, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.NewRunStageManager
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.StageManager
   entryManager: {fileID: 1427799827}
   combatManager: {fileID: 1427799828}
   stageDayCsv: {fileID: 4900000, guid: 1f0de32c2b7b4d2da2e4b9340af2db31, type: 3}
@@ -10405,7 +10405,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fa013f8b8851bec4882efe505f98b801, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.NewRunUnitSpawnManager
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.EnemySpawnManger
   combatManager: {fileID: 1427799828}
   playerSpawnPoint: {fileID: 1137822058}
   enemySpawnPoint: {fileID: 1902957069}

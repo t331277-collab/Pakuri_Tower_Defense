@@ -21,8 +21,8 @@ namespace Pakuri.InGame
         private readonly GameObject prisonerChoicePopUp;
         private readonly Func<RunSession> resolveSession;
         private readonly Func<GameDataCatalog> resolveCatalog;
-        private readonly Func<NewRunStageManager> resolveStageManager;
-        private readonly Func<NewRunSceneEntryManager> resolveEntryManager;
+        private readonly Func<StageManager> resolveStageManager;
+        private readonly Func<SceneEntryManager> resolveEntryManager;
         private readonly Func<InGameUIManager.RewardButtonView> resolveActivePrisonerButton;
         private readonly Action consumePrisonerButton;
         private readonly Action refreshInfo;
@@ -41,8 +41,8 @@ namespace Pakuri.InGame
             GameObject prisonerChoicePopUp,
             Func<RunSession> resolveSession,
             Func<GameDataCatalog> resolveCatalog,
-            Func<NewRunStageManager> resolveStageManager,
-            Func<NewRunSceneEntryManager> resolveEntryManager,
+            Func<StageManager> resolveStageManager,
+            Func<SceneEntryManager> resolveEntryManager,
             Func<InGameUIManager.RewardButtonView> resolveActivePrisonerButton,
             Action consumePrisonerButton,
             Action refreshInfo)

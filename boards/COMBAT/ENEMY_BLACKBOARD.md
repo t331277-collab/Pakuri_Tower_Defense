@@ -9,6 +9,95 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - Older broad combat/enemy history remains in `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current Stage 1 enemy runtime authority and verification baseline.
 
+## Task: 2026-05-18 NewRun Prefix Removal Follow-up
+
+### Task title
+
+Keep enemy spawn references aligned after removing `NewRun` from runtime script names.
+
+### Goals
+
+- Keep enemy spawn manager records aligned with the renamed scene entry type.
+- Preserve the existing `EnemySpawnManger` script GUID and scene component reference.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Behavior must remain unchanged.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode only if they want runtime spawn behavior confirmation.
+
+### Evidence
+
+- The previous `NewRunSceneEntryManager.cs` script is now `Pakuri/Assets/Scripts2/InGame/Core/SceneEntryManager.cs`.
+- `SceneEntryManager.cs` references `EnemySpawnManger` for configured enemy spawns.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` records `Pakuri.InGame.SceneEntryManager`, `Pakuri.InGame.StageManager`, and `Pakuri.InGame.EnemySpawnManger`.
+- Search found no remaining `NewRunSceneEntryManager`, `NewRunStageManager`, `NewRunStartContext`, or `NewRunStageState` references in scripts, scene assets, prefab assets, asset files, or `Assembly-CSharp.csproj`.
+- Runtime/editor builds passed with 0 errors and existing MSB3277 warnings.
+
+### History
+
+- 2026-05-18: Code Builder removed the `NewRun` prefix from the remaining `NewRun*.cs` runtime scripts after the earlier `EnemySpawnManger` rename.
+
+## Task: 2026-05-18 Enemy Spawn Manager Rename
+
+### Task title
+
+Rename the current NewRunScene spawn manager script to `EnemySpawnManger`.
+
+### Goals
+
+- Rename the existing spawn manager script and class used by `NewRunScene`.
+- Preserve Unity scene/component compatibility by keeping the existing script `.meta` GUID.
+- Keep `SceneEntryManager` references compiling against the renamed type.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Requested source file `NewRunStageSpawnManager.cs` was not present in `Pakuri/Assets`; the existing wired spawn manager was the former `Pakuri/Assets/Scripts2/InGame/Core/NewRunUnitSpawnManager.cs`, now `EnemySpawnManger.cs`.
+- This was a behavior-preserving rename only.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode only if they want to confirm scene component behavior after the Unity script rename.
+
+### Evidence
+
+- The former `Pakuri/Assets/Scripts2/InGame/Core/NewRunUnitSpawnManager.cs` and `.meta` were moved to `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs` and `.meta`.
+- `EnemySpawnManger.cs.meta` keeps GUID `fa013f8b8851bec4882efe505f98b801`.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs` now declares `public sealed class EnemySpawnManger : MonoBehaviour`.
+- `Pakuri/Assets/Scripts2/InGame/Core/SceneEntryManager.cs` now references `EnemySpawnManger`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` still references GUID `fa013f8b8851bec4882efe505f98b801` and now has `m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.EnemySpawnManger`.
+- `Pakuri/Assembly-CSharp.csproj` now compiles `Assets\Scripts2\InGame\Core\EnemySpawnManger.cs`.
+- Search after the rename found no remaining `NewRunUnitSpawnManager` or `NewRunStageSpawnManager` references in scripts, scene assets, or `Assembly-CSharp.csproj`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings when rerun alone after a parallel-build file-lock attempt.
+- Unity-MCP force refresh cleared the stale missing-file compile error; console warning/error read showed MCP client handler logs and a UnityEditor.Graphs `NullReferenceException`, not a C# compile error.
+
+### History
+
+- 2026-05-18: User requested Code Builder rename `NewRunStageSpawnManager.cs` to `EnemySpawnManger.cs`; Code Builder inspected the project, found no `NewRunStageSpawnManager.cs`, and applied the rename to the actual wired spawn manager `NewRunUnitSpawnManager.cs`.
+
 ## Task: 2026-05-18 Stage1 Enemy Runtime Authority
 
 ### Task title

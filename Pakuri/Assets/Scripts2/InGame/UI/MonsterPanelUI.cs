@@ -14,8 +14,8 @@ namespace Pakuri.InGame
         [SerializeField] private Transform selectedMonsterRoot;
         [SerializeField] private Image monsterImage;
         [SerializeField] private ActiveSkillSlotView[] activeSlots = new ActiveSkillSlotView[MaxVisibleActiveSlots];
-        [SerializeField] private NewRunStageManager stageManager;
-        [SerializeField] private NewRunSceneEntryManager entryManager;
+        [SerializeField] private StageManager stageManager;
+        [SerializeField] private SceneEntryManager entryManager;
         [SerializeField] private InGameCombatManager combatManager;
 
         private string lastMonsterId;
@@ -115,12 +115,12 @@ namespace Pakuri.InGame
         {
             if (stageManager == null)
             {
-                stageManager = FindSceneObject<NewRunStageManager>();
+                stageManager = FindSceneObject<StageManager>();
             }
 
             if (entryManager == null)
             {
-                entryManager = FindSceneObject<NewRunSceneEntryManager>();
+                entryManager = FindSceneObject<SceneEntryManager>();
             }
 
             if (combatManager == null)

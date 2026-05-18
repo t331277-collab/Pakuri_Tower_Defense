@@ -4,6 +4,98 @@
 - Older run/combat flow history remains in that snapshot and earlier archives.
 - This active file now keeps only the current `NewRunScene` authority split and the surviving new-scene flow baseline.
 
+## Task: 2026-05-18 Remove NewRun Prefix From Runtime Script Names
+
+### Task title
+
+Remove the `NewRun` prefix from current run-flow script filenames and matching type names.
+
+### Goals
+
+- Rename `NewRunSceneEntryManager.cs`, `NewRunStageManager.cs`, and `NewRunStartContext.cs` by removing the `NewRun` prefix.
+- Keep Unity component compatibility by moving each `.meta` file with its script.
+- Update C# references, scene class identifiers, and project compile paths.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Behavior must remain unchanged; this is a naming refactor only.
+- Unity Play Mode verification remains user-owned.
+- Existing scene name/path strings such as `NewRunScene.unity` were not renamed because the request was limited to script filenames.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode only if they want runtime scene behavior confirmation after the script rename.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunSceneEntryManager.cs` and `.meta` were moved to `Pakuri/Assets/Scripts2/InGame/Core/SceneEntryManager.cs` and `.meta`; GUID `b6ff00e786df7fb46ae905aa63bee059` was preserved.
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunStageManager.cs` and `.meta` were moved to `Pakuri/Assets/Scripts2/InGame/Core/StageManager.cs` and `.meta`; GUID `7c2fbcf1f36342aca23eac2221b2c1e8` was preserved.
+- `Pakuri/Assets/Scripts2/InGame/Core/NewRunStartContext.cs` and `.meta` were moved to `Pakuri/Assets/Scripts2/InGame/Core/StartContext.cs` and `.meta`; GUID `11eb246df33aa9b4388af02ec8175fd4` was preserved.
+- `SceneEntryManager.cs`, `StageManager.cs`, and `StartContext.cs` now declare `SceneEntryManager`, `StageManager`, and `StartContext`; `NewRunStageState` was renamed to `StageState`.
+- `DebugUI.cs`, `InGameUIManager.cs`, `MenifestUI.cs`, `MonsterPanelUI.cs`, and `UIManager.cs` now reference the renamed runtime types.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now records `Pakuri.InGame.SceneEntryManager` and `Pakuri.InGame.StageManager`.
+- `Pakuri/Assembly-CSharp.csproj` now compiles `SceneEntryManager.cs`, `StageManager.cs`, and `StartContext.cs`.
+- `Get-ChildItem -Path Pakuri\Assets -Recurse -File -Filter 'NewRun*.cs'` returned no files after the rename.
+- Search found no remaining `NewRunSceneEntryManager`, `NewRunStageManager`, `NewRunStartContext`, or `NewRunStageState` references in scripts, scene assets, prefab assets, asset files, or `Assembly-CSharp.csproj`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
+- Unity-MCP refresh reached idle; console warning/error read showed MCP client handler logs and the existing UnityEditor.Graphs `NullReferenceException`, not a C# compile error.
+
+### History
+
+- 2026-05-18: User asked to remove `NewRun` from all filenames that currently start with `NewRun`; Code Builder renamed the three inspected scripts and their matching C# types.
+
+## Task: 2026-05-18 Enemy Spawn Manager Rename
+
+### Task title
+
+Keep scene entry flow wired after renaming the spawn manager to `EnemySpawnManger`.
+
+### Goals
+
+- Preserve `SceneEntryManager` spawning and manifest entry points after the script rename.
+- Preserve the existing scene MonoBehaviour reference by retaining the script GUID.
+- Keep the current new-scene runtime authority behavior unchanged.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Requested source file `NewRunStageSpawnManager.cs` did not exist; the inspected scene and scripts used the former `NewRunUnitSpawnManager.cs`, now `EnemySpawnManger.cs`.
+- This task changed naming and references only, not spawn behavior.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode if runtime spawn behavior needs visual confirmation after the rename.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/SceneEntryManager.cs` uses `[RequireComponent(typeof(EnemySpawnManger))]`, a serialized `EnemySpawnManger unitSpawnManager`, and `GetComponent<EnemySpawnManger>()` / `AddComponent<EnemySpawnManger>()`.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs` preserves the previous spawn APIs, including selected player unit, manifested monster, and enemy spawn methods.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` continues to reference script GUID `fa013f8b8851bec4882efe505f98b801` and now records `Pakuri.InGame.EnemySpawnManger`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and a standalone `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors and existing MSB3277 warnings.
+- Unity-MCP refresh reached idle; after clearing stale console output, no C# compile error remained.
+
+### History
+
+- 2026-05-18: Code Builder renamed the actual scene spawn manager file/class from `NewRunUnitSpawnManager` to `EnemySpawnManger` because the user-requested `NewRunStageSpawnManager.cs` was not present in the repository.
+
 ## Task: 2026-05-18 NewRunScene Current Runtime Authority
 
 ### Task title
@@ -43,7 +135,7 @@ Current active run/runtime authority summarized and retained for future work. 20
 - `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` keeps the top-level reward/UI binding and delegates Offering choice handling to `Pakuri/Assets/Scripts2/InGame/UI/OfferingUI.cs`.
 - `Pakuri/Assets/Scripts2/InGame/UI/OfferingUI.cs` passes `rewardId` plus `linkedChoiceId` separately into the session and owns active/passive/enhancement Offering choice construction.
 - `Pakuri/Assets/Scripts2/InGame/UI/MenifestUI.cs` owns Menifest candidate, fail, success, commit, and skip popup flow while preserving the `InGameUIManager` scene-binding entry point.
-- `Pakuri/Assets/Scripts2/InGame/Core/NewRunUnitSpawnManager.cs` and `InGameTestDataManager.cs` no longer keep the retained `fallbackCatalog` scene dependency.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs` and `InGameTestDataManager.cs` no longer keep the retained `fallbackCatalog` scene dependency.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `System.Net.Http` and `System.IO.Compression` MSB3277 warnings remain.
 - `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing `System.Net.Http` and `System.IO.Compression` MSB3277 warnings remain.
 - `Pakuri/Assets/CSVdata/source/monster_skills.csv` now owns per-skill projectile speed, pierce count, status chance, and status label; `monsters.csv` no longer owns those duplicate projectile/status columns.

@@ -76,16 +76,6 @@ Use archives only when older implementation history is needed:
 - `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`
 - `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`
 
-### Refactoring Or Architecture Work
-
-Read:
-- The affected active domain board first.
-
-Then add only the needed archive/reference files:
-- `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`
-- `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/COMBAT_STATE_OWNERSHIP_MAP.md`
-- Related active domain boards under `boards/COMBAT`, `boards/MON`, `boards/RUN`, `boards/UI`, or `boards/DATA`
-
 ### Run / Reward / Save Work
 
 Read:

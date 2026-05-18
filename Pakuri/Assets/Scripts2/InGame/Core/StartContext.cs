@@ -1,6 +1,6 @@
 namespace Pakuri.InGame
 {
-    public static class NewRunStartContext
+    public static class StartContext
     {
         public static string SelectedMonsterId { get; private set; }
         public static bool HasPendingRun => !string.IsNullOrWhiteSpace(SelectedMonsterId);

@@ -7,13 +7,13 @@ namespace Pakuri.InGame
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(InGameCombatManager))]
-    [RequireComponent(typeof(NewRunUnitSpawnManager))]
-    public sealed class NewRunSceneEntryManager : MonoBehaviour
+    [RequireComponent(typeof(EnemySpawnManger))]
+    public sealed class SceneEntryManager : MonoBehaviour
     {
         private const string EveMonsterId = "eve";
 
         [SerializeField] private InGameCombatManager combatManager;
-        [SerializeField] private NewRunUnitSpawnManager unitSpawnManager;
+        [SerializeField] private EnemySpawnManger unitSpawnManager;
         [SerializeField] private float enemySpawnIntervalSeconds = 1f;
         [SerializeField] private bool spawnInitialEnemySequenceOnStart;
         [SerializeField] private bool allowEveFallback = true;
@@ -34,7 +34,7 @@ namespace Pakuri.InGame
         public EnemyUnitRuntimeModel SpawnedEnemyModel { get; private set; }
         public RunSession ActiveSession { get; private set; }
         public InGameCombatManager CombatManager => combatManager;
-        public NewRunUnitSpawnManager UnitSpawnManager => unitSpawnManager;
+        public EnemySpawnManger UnitSpawnManager => unitSpawnManager;
 
         private void Start()
         {
@@ -54,19 +54,19 @@ namespace Pakuri.InGame
             }
 
             ResolveReferences();
-            var selectedMonsterId = NewRunStartContext.HasPendingRun
-                ? NewRunStartContext.SelectedMonsterId
+            var selectedMonsterId = StartContext.HasPendingRun
+                ? StartContext.SelectedMonsterId
                 : (allowEveFallback ? EveMonsterId : string.Empty);
 
             if (string.IsNullOrWhiteSpace(selectedMonsterId))
             {
-                Debug.LogWarning("NewRunSceneEntryManager started without selected monster data.");
+                Debug.LogWarning("SceneEntryManager started without selected monster data.");
                 return;
             }
 
             if (unitSpawnManager == null)
             {
-                Debug.LogError("NewRunSceneEntryManager cannot spawn the selected monster because NewRunUnitSpawnManager is missing.");
+                Debug.LogError("SceneEntryManager cannot spawn the selected monster because EnemySpawnManger is missing.");
                 return;
             }
 
@@ -83,7 +83,7 @@ namespace Pakuri.InGame
             SpawnedPlayerModel = model;
             SpawnedPlayerActor = actor;
             ActiveSession = session;
-            NewRunStartContext.Clear();
+            StartContext.Clear();
         }
 
         public void SpawnInitialEnemyUnit()
@@ -201,7 +201,7 @@ namespace Pakuri.InGame
             ResolveReferences();
             if (unitSpawnManager == null)
             {
-                Debug.LogError("NewRunSceneEntryManager cannot spawn enemies because NewRunUnitSpawnManager is missing.");
+                Debug.LogError("SceneEntryManager cannot spawn enemies because EnemySpawnManger is missing.");
                 return false;
             }
 
@@ -230,7 +230,7 @@ namespace Pakuri.InGame
             ResolveReferences();
             if (unitSpawnManager == null)
             {
-                Debug.LogError("NewRunSceneEntryManager cannot manifest monsters because NewRunUnitSpawnManager is missing.");
+                Debug.LogError("SceneEntryManager cannot manifest monsters because EnemySpawnManger is missing.");
                 return false;
             }
 
@@ -262,14 +262,14 @@ namespace Pakuri.InGame
             enemySpawnSequence = null;
         }
 
-        private delegate bool ConfiguredEnemySpawn(NewRunUnitSpawnManager spawner);
+        private delegate bool ConfiguredEnemySpawn(EnemySpawnManger spawner);
 
         private bool TrySpawnConfiguredEnemy(ConfiguredEnemySpawn spawn)
         {
             ResolveReferences();
             if (unitSpawnManager == null)
             {
-                Debug.LogError("NewRunSceneEntryManager cannot spawn configured enemies because NewRunUnitSpawnManager is missing.");
+                Debug.LogError("SceneEntryManager cannot spawn configured enemies because EnemySpawnManger is missing.");
                 return false;
             }
 
@@ -302,12 +302,12 @@ namespace Pakuri.InGame
 
             if (unitSpawnManager == null)
             {
-                unitSpawnManager = GetComponent<NewRunUnitSpawnManager>();
+                unitSpawnManager = GetComponent<EnemySpawnManger>();
             }
 
             if (unitSpawnManager == null)
             {
-                unitSpawnManager = gameObject.AddComponent<NewRunUnitSpawnManager>();
+                unitSpawnManager = gameObject.AddComponent<EnemySpawnManger>();
             }
         }
     }

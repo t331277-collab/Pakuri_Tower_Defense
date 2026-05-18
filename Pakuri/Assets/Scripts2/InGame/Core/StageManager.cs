@@ -8,9 +8,9 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(NewRunSceneEntryManager))]
+    [RequireComponent(typeof(SceneEntryManager))]
     [RequireComponent(typeof(InGameCombatManager))]
-    public sealed class NewRunStageManager : MonoBehaviour
+    public sealed class StageManager : MonoBehaviour
     {
         private const float DefaultClearCheckInterval = 0.25f;
 
@@ -18,7 +18,7 @@ namespace Pakuri.InGame
         private readonly List<string> pendingPrisonerEnemyIds = new List<string>();
         private readonly List<string> prisonerCandidatePool = new List<string>();
 
-        [SerializeField] private NewRunSceneEntryManager entryManager;
+        [SerializeField] private SceneEntryManager entryManager;
         [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private TextAsset stageDayCsv;
         [SerializeField] private TextAsset stageEncounterCsv;
@@ -32,7 +32,7 @@ namespace Pakuri.InGame
         private StageRewardRow currentReward;
         private RunSession activeSession;
 
-        public NewRunStageState State { get; private set; } = NewRunStageState.NotStarted;
+        public StageState State { get; private set; } = StageState.NotStarted;
         public int CurrentStage => activeSession != null ? activeSession.StageIndex : 1;
         public int CurrentDay => activeSession != null ? activeSession.DayIndex : 1;
         public IReadOnlyList<string> PendingPrisonerEnemyIds => pendingPrisonerEnemyIds;
@@ -67,15 +67,15 @@ namespace Pakuri.InGame
 
         public void ContinueToNextDay()
         {
-            if (State != NewRunStageState.RewardReady)
+            if (State != StageState.RewardReady)
             {
-                Debug.LogWarning("NewRunStageManager cannot continue because reward state is not ready.");
+                Debug.LogWarning("StageManager cannot continue because reward state is not ready.");
                 return;
             }
 
             if (activeSession == null)
             {
-                Debug.LogWarning("NewRunStageManager cannot continue because no active run session exists.");
+                Debug.LogWarning("StageManager cannot continue because no active run session exists.");
                 return;
             }
 
@@ -98,44 +98,44 @@ namespace Pakuri.InGame
             activeSession = entryManager != null ? entryManager.ActiveSession : null;
             if (activeSession == null)
             {
-                State = NewRunStageState.Error;
-                Debug.LogError("NewRunStageManager could not start because NewRunSceneEntryManager has no active session.");
+                State = StageState.Error;
+                Debug.LogError("StageManager could not start because SceneEntryManager has no active session.");
                 yield break;
             }
 
             currentDay = table.FindDay(activeSession.StageIndex, activeSession.DayIndex);
             if (currentDay == null)
             {
-                State = NewRunStageState.Error;
-                Debug.LogError($"NewRunStageManager has no StageDay row for stage {activeSession.StageIndex}, day {activeSession.DayIndex}.");
+                State = StageState.Error;
+                Debug.LogError($"StageManager has no StageDay row for stage {activeSession.StageIndex}, day {activeSession.DayIndex}.");
                 yield break;
             }
 
             currentReward = table.FindReward(currentDay.RewardRuleId);
             if (currentReward == null)
             {
-                State = NewRunStageState.Error;
-                Debug.LogError($"NewRunStageManager has no StageReward row for '{currentDay.RewardRuleId}'.");
+                State = StageState.Error;
+                Debug.LogError($"StageManager has no StageReward row for '{currentDay.RewardRuleId}'.");
                 yield break;
             }
 
             table.FindEncounterRows(currentDay.EncounterId, activeEncounterRows);
             if (activeEncounterRows.Count == 0)
             {
-                State = NewRunStageState.Error;
-                Debug.LogError($"NewRunStageManager has no StageEncounter rows for '{currentDay.EncounterId}'.");
+                State = StageState.Error;
+                Debug.LogError($"StageManager has no StageEncounter rows for '{currentDay.EncounterId}'.");
                 yield break;
             }
 
             SelectBossRows();
-            State = NewRunStageState.Spawning;
+            State = StageState.Spawning;
             yield return SpawnEncounterRows(activeEncounterRows);
 
-            State = NewRunStageState.Combat;
+            State = StageState.Combat;
             yield return WaitForEnemyClear();
 
             PrepareReward();
-            State = NewRunStageState.RewardReady;
+            State = StageState.RewardReady;
             flowCoroutine = null;
         }
 
@@ -298,7 +298,7 @@ namespace Pakuri.InGame
         {
             if (entryManager == null)
             {
-                entryManager = GetComponent<NewRunSceneEntryManager>();
+                entryManager = GetComponent<SceneEntryManager>();
             }
 
             if (combatManager == null)
@@ -313,7 +313,7 @@ namespace Pakuri.InGame
         }
     }
 
-    public enum NewRunStageState
+    public enum StageState
     {
         NotStarted,
         Spawning,

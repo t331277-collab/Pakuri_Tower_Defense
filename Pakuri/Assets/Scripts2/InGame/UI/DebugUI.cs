@@ -23,8 +23,8 @@ namespace Pakuri.InGame
         [SerializeField] private Button openButton;
         [SerializeField] private Button closeButton;
         [SerializeField] private Button[] skillButtons = new Button[5];
-        [SerializeField] private NewRunStageManager stageManager;
-        [SerializeField] private NewRunSceneEntryManager entryManager;
+        [SerializeField] private StageManager stageManager;
+        [SerializeField] private SceneEntryManager entryManager;
         [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private MonsterPanelUI monsterPanelUI;
 
@@ -212,12 +212,12 @@ namespace Pakuri.InGame
         {
             if (stageManager == null)
             {
-                stageManager = FindSceneObject<NewRunStageManager>();
+                stageManager = FindSceneObject<StageManager>();
             }
 
             if (entryManager == null)
             {
-                entryManager = FindSceneObject<NewRunSceneEntryManager>();
+                entryManager = FindSceneObject<SceneEntryManager>();
             }
 
             if (combatManager == null)

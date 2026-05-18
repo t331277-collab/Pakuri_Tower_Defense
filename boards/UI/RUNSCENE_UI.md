@@ -9,6 +9,47 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - Older RunScene/Manifested UI history remains in that snapshot and earlier archive files.
 - This active file now keeps only the current `NewRunScene` UI behavior still relevant to active work.
 
+## Task: 2026-05-18 NewRun Prefix Removal UI Reference Update
+
+### Task title
+
+Update UI scripts after removing `NewRun` from runtime manager script names.
+
+### Goals
+
+- Keep UI references compiling after `NewRunSceneEntryManager` became `SceneEntryManager`.
+- Keep UI references compiling after `NewRunStageManager` became `StageManager` and `NewRunStageState` became `StageState`.
+- Preserve existing UI behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is a behavior-preserving naming refactor.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode only if they want UI behavior confirmation after the rename.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs`, `InGameUIManager.cs`, `MenifestUI.cs`, and `MonsterPanelUI.cs` now reference `StageManager` and/or `SceneEntryManager`.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now checks `StageState.RewardReady`.
+- Search found no remaining `NewRunSceneEntryManager`, `NewRunStageManager`, `NewRunStartContext`, or `NewRunStageState` references in scripts, scene assets, prefab assets, asset files, or `Assembly-CSharp.csproj`.
+- Runtime/editor builds passed with 0 errors and existing MSB3277 warnings.
+
+### History
+
+- 2026-05-18: Code Builder updated UI script references as part of removing `NewRun` from current runtime script filenames and type names.
+
 ## Task: 2026-05-17 NewRunScene Active UI Rules
 
 ### Task title

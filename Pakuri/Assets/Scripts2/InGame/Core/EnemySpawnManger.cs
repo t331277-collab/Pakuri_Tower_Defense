@@ -7,7 +7,7 @@ namespace Pakuri.InGame
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(InGameCombatManager))]
-    public sealed class NewRunUnitSpawnManager : MonoBehaviour
+    public sealed class EnemySpawnManger : MonoBehaviour
     {
         private const string ArielMonsterId = "ariel";
         private const string EveMonsterId = "eve";
@@ -74,7 +74,7 @@ namespace Pakuri.InGame
             ResolveSpawnPoint();
             if (string.IsNullOrWhiteSpace(selectedMonsterId))
             {
-                Debug.LogWarning("NewRunUnitSpawnManager cannot spawn a selected monster because monster data is missing.");
+                Debug.LogWarning("EnemySpawnManger cannot spawn a selected monster because monster data is missing.");
                 return false;
             }
 
@@ -110,13 +110,13 @@ namespace Pakuri.InGame
 
             if (monster == null || string.IsNullOrWhiteSpace(monster.MonsterId))
             {
-                Debug.LogWarning("NewRunUnitSpawnManager cannot manifest a monster because monster data is missing.");
+                Debug.LogWarning("EnemySpawnManger cannot manifest a monster because monster data is missing.");
                 return false;
             }
 
             if (activeSession == null)
             {
-                Debug.LogWarning("NewRunUnitSpawnManager cannot manifest a monster because no active session exists.");
+                Debug.LogWarning("EnemySpawnManger cannot manifest a monster because no active session exists.");
                 return false;
             }
 
@@ -132,7 +132,7 @@ namespace Pakuri.InGame
             var model = unitFactory.CreateManifestedMonster(monster, runState, clampedSlotIndex);
             if (model == null)
             {
-                Debug.LogError($"NewRunUnitSpawnManager could not create manifested monster runtime model for '{monster.MonsterId}'.");
+                Debug.LogError($"EnemySpawnManger could not create manifested monster runtime model for '{monster.MonsterId}'.");
                 return false;
             }
 
@@ -226,14 +226,14 @@ namespace Pakuri.InGame
             var catalog = ResolveCatalog();
             if (catalog == null)
             {
-                Debug.LogError("NewRunUnitSpawnManager could not resolve a game data catalog for the selected monster.");
+                Debug.LogError("EnemySpawnManger could not resolve a game data catalog for the selected monster.");
                 return false;
             }
 
             var monster = ResolveMonsterDefinition(monsterId, catalog);
             if (monster == null)
             {
-                Debug.LogError($"NewRunUnitSpawnManager could not resolve selected monster data for '{monsterId}'.");
+                Debug.LogError($"EnemySpawnManger could not resolve selected monster data for '{monsterId}'.");
                 return false;
             }
 
@@ -241,7 +241,7 @@ namespace Pakuri.InGame
             model = unitFactory.CreateSelectedMonster(monster, session.GetPartyMemberState(monster.MonsterId), 0);
             if (model == null)
             {
-                Debug.LogError($"NewRunUnitSpawnManager could not create a runtime unit model for '{monsterId}'.");
+                Debug.LogError($"EnemySpawnManger could not create a runtime unit model for '{monsterId}'.");
                 return false;
             }
 
@@ -294,21 +294,21 @@ namespace Pakuri.InGame
             var catalog = ResolveCatalog();
             if (catalog == null)
             {
-                Debug.LogError("NewRunUnitSpawnManager could not resolve a game data catalog for the enemy.");
+                Debug.LogError("EnemySpawnManger could not resolve a game data catalog for the enemy.");
                 return false;
             }
 
             var enemy = ResolveEnemyDefinition(enemyId, catalog);
             if (enemy == null)
             {
-                Debug.LogError($"NewRunUnitSpawnManager could not resolve enemy data for '{enemyId}'.");
+                Debug.LogError($"EnemySpawnManger could not resolve enemy data for '{enemyId}'.");
                 return false;
             }
 
             model = unitFactory.CreateEnemy(enemy, slotIndex);
             if (model == null)
             {
-                Debug.LogError($"NewRunUnitSpawnManager could not create an enemy runtime unit model for '{enemyId}'.");
+                Debug.LogError($"EnemySpawnManger could not create an enemy runtime unit model for '{enemyId}'.");
                 return false;
             }
 
