@@ -41,7 +41,7 @@ Implemented and locally validated.
 - `Pakuri/Assets/Scripts2/InGame/Core/NewRunStageManager.cs` and `.meta` were moved to `Pakuri/Assets/Scripts2/InGame/Core/StageManager.cs` and `.meta`; GUID `7c2fbcf1f36342aca23eac2221b2c1e8` was preserved.
 - `Pakuri/Assets/Scripts2/InGame/Core/NewRunStartContext.cs` and `.meta` were moved to `Pakuri/Assets/Scripts2/InGame/Core/StartContext.cs` and `.meta`; GUID `11eb246df33aa9b4388af02ec8175fd4` was preserved.
 - `SceneEntryManager.cs`, `StageManager.cs`, and `StartContext.cs` now declare `SceneEntryManager`, `StageManager`, and `StartContext`; `NewRunStageState` was renamed to `StageState`.
-- `DebugUI.cs`, `InGameUIManager.cs`, `MenifestUI.cs`, `MonsterPanelUI.cs`, and `UIManager.cs` now reference the renamed runtime types.
+- `DebugUI.cs`, `InGameUIManager.cs`, `MonsterPanelUI.cs`, and `UIManager.cs` now reference the renamed runtime types; the Menifest flow now lives inside `InGameUIManager.cs`.
 - `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now records `Pakuri.InGame.SceneEntryManager` and `Pakuri.InGame.StageManager`.
 - `Pakuri/Assembly-CSharp.csproj` now compiles `SceneEntryManager.cs`, `StageManager.cs`, and `StartContext.cs`.
 - `Get-ChildItem -Path Pakuri\Assets -Recurse -File -Filter 'NewRun*.cs'` returned no files after the rename.
@@ -121,7 +121,7 @@ Code Builder
 
 ### Status
 
-Current active run/runtime authority summarized and retained for future work. 2026-05-18 Code Builder refactor keeps the same runtime authority while moving Offering and Menifest UI logic out of `InGameUIManager`. 2026-05-18 monster projectile/status runtime tuning is now skill-row based.
+Current active run/runtime authority summarized and retained for future work. 2026-05-18 Code Builder refactor keeps the same runtime authority while retaining Offering and Menifest flow helpers inside `InGameUIManager.cs`. 2026-05-18 monster projectile/status runtime tuning is now skill-row based.
 
 ### Next Actions
 
@@ -132,9 +132,9 @@ Current active run/runtime authority summarized and retained for future work. 20
 
 - `Pakuri/Assets/Scripts2/InGame/Core/EffectManager.cs` plus `Assets/Scenes/NewScene/NewRunScene.unity` own the current monster/enemy skill visual registry path.
 - `Pakuri/Assets/Scripts2/InGame/Run/RunSession.cs` now keeps `ChosenRewardIds` and `ChosenChoiceIds` separately.
-- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` keeps the top-level reward/UI binding and delegates Offering choice handling to `Pakuri/Assets/Scripts2/InGame/UI/OfferingUI.cs`.
-- `Pakuri/Assets/Scripts2/InGame/UI/OfferingUI.cs` passes `rewardId` plus `linkedChoiceId` separately into the session and owns active/passive/enhancement Offering choice construction.
-- `Pakuri/Assets/Scripts2/InGame/UI/MenifestUI.cs` owns Menifest candidate, fail, success, commit, and skip popup flow while preserving the `InGameUIManager` scene-binding entry point.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` keeps the top-level reward/UI binding and now contains the Offering and Menifest flow helper types directly in the same file.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` still passes `rewardId` plus `linkedChoiceId` separately into the session and owns active/passive/enhancement Offering choice construction through its integrated helper types.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` still owns Menifest candidate, fail, success, commit, and skip popup flow while preserving the same scene-binding entry points.
 - `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs` and `InGameTestDataManager.cs` no longer keep the retained `fallbackCatalog` scene dependency.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `System.Net.Http` and `System.IO.Compression` MSB3277 warnings remain.
 - `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing `System.Net.Http` and `System.IO.Compression` MSB3277 warnings remain.
@@ -144,7 +144,8 @@ Current active run/runtime authority summarized and retained for future work. 20
 ### History
 
 - 2026-05-18: EffectManager scene authority, reward/choice separation, and removal of the serialized fallback catalog became the active run/runtime baseline.
-- 2026-05-18: Code Builder split Offering and Menifest UI flows into `OfferingUI.cs` and `MenifestUI.cs` while keeping `InGameUIManager.cs` as the scene-binding facade.
+- 2026-05-18: Code Builder split Offering and Menifest UI flows into separate helpers while keeping `InGameUIManager.cs` as the scene-binding facade.
+- 2026-05-18: Code Builder later merged `OfferingUI.cs` and `MenifestUI.cs` back into `InGameUIManager.cs` during the repository-wide high-integration consolidation pass, keeping the same flow ownership in one file.
 - 2026-05-18: Code Builder consolidated monster projectile/status tuning into skill rows and verified runtime/editor builds with 0 errors.
 
 ## Task: 2026-05-18 NewRunScene Debug Skill Acquisition Runtime Sync
@@ -186,7 +187,7 @@ Implemented. Debug acquisition records the choice in `RunSession`, syncs the 1P 
 - Unity-MCP editor code simulation after adding `eve-b` and `eve-e` to the same session path returned `runtimeSkills=3`, with `Active1=True:6/6`, `Active2=True:프리즘 레이`, and `Active3=True:플라즈마 필드`.
 - Unity-MCP editor code simulation after the Active Text policy change returned `runtimeSkills=3; A1=True:textActive=True:text='6/6'; A2=True:textActive=False:text=''; A3=True:textActive=False:text=''`.
 - `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now routes `PrisonerChoicePopUp/OfferingBtn` through `OpenOfferingFromPrisonerChoice()` and `PrisonerChoicePopUp/Menifested` through `TryManifestFromPrisonerChoice()`, both of which set `prisonerChoicePopUp` inactive after click.
-- `Pakuri/Assets/Scripts2/InGame/UI/OfferingUI.cs` now copies `RunSession.RunMonsterState.LearnedActives`, `LearnedPassives`, and `ChosenChoiceIds` into `MonsterUnitRuntimeModel.State` before rebuilding learned active skills.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now copies `RunSession.RunMonsterState.LearnedActives`, `LearnedPassives`, and `ChosenChoiceIds` into `MonsterUnitRuntimeModel.State` before rebuilding learned active skills through its integrated Offering flow helper.
 - `Pakuri/Assets/Scripts2/InGame/Run/RunSession.cs` remains the persistent source for learned active/passive skill IDs.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeFactory.cs` remains the runtime authority for rebuilding learned active skill instances from `MonsterUnitRuntimeModel.State`.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing MSB3277 assembly-version warnings remain.
@@ -356,7 +357,7 @@ Implemented and editor-verified.
 ### Evidence
 
 - `Pakuri/Assets/Scripts2/InGame/Units/UnitFactory.cs` now copies `EnemyDefinition.PassiveSkillId` and `PassiveSkillValue` to `EnemyUnitRuntimeModel`.
-- `StageOneEnemyPassiveStatApplier.Apply(...)` is still called from `UnitFactory.CreateEnemy(...)`, now using the copied passive ID/value fields.
+- `Pakuri/Assets/Scripts2/InGame/Units/UnitFactory.cs` now applies Stage 1 enemy passive multipliers through its integrated private helper methods instead of a separate `StageOneEnemyPassiveStatApplier.cs` file.
 - Unity-MCP editor code synced CSV runtime catalogs and created stage-one enemies through `UnitFactory`, returning `sword=PhysicalDamageUp:0.1:phys=1.1:out=1;priest=HealingUp:0.15:heal=1.15:phys=1;captain=PhysicalDamageUp:0.12:phys=1.12`.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
 

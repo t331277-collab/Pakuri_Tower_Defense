@@ -2,7 +2,7 @@
 
 ## Unity Evidence
 
-Designer uses Unity-MCP tools, not MSW-MCP tools, to check whether Unity project evidence is clear.
+Designer uses Unity-MCP tools to check whether Unity project evidence is clear.
 
 Designer does not directly run Play Mode to verify gameplay. Play Mode verification belongs to the user.
 

@@ -1,5 +1,50 @@
+using System;
+
 namespace Pakuri.InGame
 {
+    public enum UnitSide
+    {
+        Player,
+        Enemy
+    }
+
+    public enum UnitRole
+    {
+        Monster,
+        Enemy,
+        Summon
+    }
+
+    [Serializable]
+    public sealed class UnitIdentity
+    {
+        public string UnitId;
+        public string DefinitionId;
+        public string DisplayName;
+        public UnitSide Side;
+        public UnitRole Role;
+        public int SlotIndex;
+    }
+
+    [Serializable]
+    public sealed class UnitStatsRuntime
+    {
+        public float MaxHealth;
+        public float AttackPower;
+        public float SpellPower;
+        public float MoveSpeed;
+        public float CriticalChance;
+        public float CriticalDamage;
+        public float CriticalResistance;
+    }
+
+    [Serializable]
+    public sealed class UnitResourceRuntime
+    {
+        public float CurrentHealth;
+        public float CurrentShield;
+    }
+
     public class BaseUnitRuntimeModel
     {
         public UnitIdentity Identity = new UnitIdentity();
@@ -10,6 +55,10 @@ namespace Pakuri.InGame
         public UnitStatusRuntimeSet Statuses = new UnitStatusRuntimeSet();
         public bool AutoAttackEnabled = true;
         public bool AutoSkillEnabled = true;
+    }
+
+    public class UnitRuntimeModel : BaseUnitRuntimeModel
+    {
     }
 
     public sealed class UnitStatusRuntimeSet

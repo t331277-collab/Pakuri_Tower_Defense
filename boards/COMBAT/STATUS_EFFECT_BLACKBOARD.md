@@ -133,7 +133,7 @@ Retained as an active display rule that still affects current combat/runtime wor
 
 ### Evidence
 
-- `Pakuri/Assets/Scripts2/InGame/Core/UnitResourceMutationService.cs` rounds applied damage, HP, and shield values.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now contains the integrated resource-mutation helper that rounds applied damage, HP, and shield values.
 - `Pakuri/Assets/Scripts2/InGame/Units/UnitActorView.cs` owns the shared left-anchored HP/shield fill presentation used by `MonsterUnitActor.cs` and `EnemyUnitActor.cs`.
 - `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` still routes rounded damage popup display through the actor layer.
 

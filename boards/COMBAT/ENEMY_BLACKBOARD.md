@@ -124,7 +124,7 @@ Code Builder
 
 ### Status
 
-Current active enemy runtime state summarized and retained for future work. 2026-05-18 Code Builder refactor keeps behavior in the same runtime path while splitting enemy skill targeting, cooldown, and execution into dedicated helper classes.
+Current active enemy runtime state summarized and retained for future work. 2026-05-18 Code Builder refactor keeps behavior in the same runtime path while now co-locating enemy skill execution with the enemy combat loop and keeping cooldown helpers in adjacent files.
 
 ### Next Actions
 
@@ -134,11 +134,9 @@ Current active enemy runtime state summarized and retained for future work. 2026
 
 ### Evidence
 
-- `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSimulationSystem.cs` now owns enemy tick orchestration and delegates skill details to `EnemySkillCooldown`, `EnemyTargeting`, and `EnemySkillExecutor`.
-- `Pakuri/Assets/Scripts2/InGame/Core/EnemySkillCooldown.cs` owns basic/special skill resolution, attack range, support-skill readiness, cooldown ticking, and temporary enemy modifier ticking.
-- `Pakuri/Assets/Scripts2/InGame/Core/EnemyTargeting.cs` owns nearest-player target lookup and enemy-ally support target lookup.
-- `Pakuri/Assets/Scripts2/InGame/Core/EnemySkillExecutor.cs` owns enemy skill execution and visual/effect dispatch for the current enemy skill set.
-- `Pakuri/Assets/Scripts2/InGame/Core/EnemySkillRuntime.cs` owns shared enemy skill slot and resolved-skill data types.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSimulationSystem.cs` now owns enemy tick orchestration and also contains the integrated `EnemySkillExecutor` helper for enemy skill execution and visual/effect dispatch.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemySkillCooldown.cs` owns basic/special skill resolution, attack range, support-skill readiness, cooldown ticking, temporary enemy modifier ticking, and the integrated resolved-skill contract types.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemyTargeting.cs` still owns nearest-player target lookup and enemy-ally support target lookup.
 - `EnemyCombatState` stores separate `BasicSkillCooldownRemaining` and `SpecialSkillCooldownRemaining`.
 - `Pakuri/Assets/Scripts2/InGame/Core/EffectManager.cs` and `Assets/Scenes/NewScene/NewRunScene.unity` own enemy skill visual prefab mappings.
 - `Pakuri/Assets/CSVdata/source/stage_one_enemies.csv` carries the current `basic_skill` plus `stage_one_skill` authored split.
@@ -152,6 +150,7 @@ Current active enemy runtime state summarized and retained for future work. 2026
 - 2026-05-17: Enemy skill tuning was split out of enemy rows into `EnemySkillData.csv`.
 - 2026-05-18: Dual-skill enemy runtime and scene-owned effect authority became the active baseline.
 - 2026-05-18: Code Builder split `EnemyCombatSimulationSystem` into orchestration, cooldown, targeting, execution, and shared runtime-data files.
+- 2026-05-18: Code Builder later merged `EnemySkillExecutor.cs` into `EnemyCombatSimulationSystem.cs` and merged `EnemySkillRuntime.cs` into `EnemySkillCooldown.cs` during the repository-wide high-integration consolidation pass.
 
 ## Task: 2026-05-18 CSV-Backed Stage1 Enemy Passives
 
@@ -185,10 +184,10 @@ Implemented and editor-verified.
 
 ### Evidence
 
-- `Pakuri/Assets/Scripts2/InGame/Units/StageOneEnemyPassiveStatApplier.cs` now switches on `EnemyUnitRuntimeModel.PassiveSkillId` instead of `StageOneSkill`.
-- `StageOneEnemyPassiveStatApplier.cs` maps `PhysicalDamageUp` to `PassivePhysicalDamageMultiplier`, `DefenseUp` to all defense stats, `CritChanceUp`, `CritDamageUp`, `HealingUp`, and `IncomingDamageDown`.
+- `Pakuri/Assets/Scripts2/InGame/Units/UnitFactory.cs` now contains the integrated Stage 1 enemy passive application helper and switches on `EnemyUnitRuntimeModel.PassiveSkillId` instead of `StageOneSkill`.
+- `Pakuri/Assets/Scripts2/InGame/Units/UnitFactory.cs` maps `PhysicalDamageUp` to `PassivePhysicalDamageMultiplier`, `DefenseUp` to all defense stats, `CritChanceUp`, `CritDamageUp`, `HealingUp`, and `IncomingDamageDown`.
 - `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitRuntimeModel.cs` now stores `PassiveSkillId`, `PassiveSkillValue`, and `PassivePhysicalDamageMultiplier`.
-- `Pakuri/Assets/Scripts2/InGame/Core/EnemySkillExecutor.cs` multiplies `PassivePhysicalDamageMultiplier` only when the resolved damage attribute is `DamageAttribute.Physical`.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSimulationSystem.cs` multiplies `PassivePhysicalDamageMultiplier` only when the resolved damage attribute is `DamageAttribute.Physical`.
 - Unity-MCP editor execution after CSV sync returned `sword=PhysicalDamageUp:0.1:phys=1.1:out=1`, confirming the old generic outgoing multiplier stays at `1` for the swordsman passive.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
 

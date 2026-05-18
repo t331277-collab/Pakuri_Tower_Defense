@@ -41,7 +41,7 @@ Implemented and locally validated.
 
 ### Evidence
 
-- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs`, `InGameUIManager.cs`, `MenifestUI.cs`, and `MonsterPanelUI.cs` now reference `StageManager` and/or `SceneEntryManager`.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs`, `InGameUIManager.cs`, and `MonsterPanelUI.cs` now reference `StageManager` and/or `SceneEntryManager`; the Menifest flow now lives inside `InGameUIManager.cs`.
 - `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now checks `StageState.RewardReady`.
 - Search found no remaining `NewRunSceneEntryManager`, `NewRunStageManager`, `NewRunStartContext`, or `NewRunStageState` references in scripts, scene assets, prefab assets, asset files, or `Assembly-CSharp.csproj`.
 - Runtime/editor builds passed with 0 errors and existing MSB3277 warnings.
@@ -75,7 +75,7 @@ Code Builder
 
 ### Status
 
-Current active `NewRunScene` UI rules summarized and retained for future work. 2026-05-18 Code Builder refactor splits Offering/Menifest behavior out of `InGameUIManager` and centralizes shared unit actor display logic.
+Current active `NewRunScene` UI rules summarized and retained for future work. 2026-05-18 Code Builder refactor centralizes shared unit actor display logic and now keeps Offering/Menifest behavior inside `InGameUIManager.cs` through integrated helper types.
 
 ### Next Actions
 
@@ -87,16 +87,16 @@ Current active `NewRunScene` UI rules summarized and retained for future work. 2
 - `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs` and `EnemyUnitActor.cs` now delegate shared name/status/HP/shield/damage-popup presentation to `Pakuri/Assets/Scripts2/InGame/Units/UnitActorView.cs`.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameAutoSkillButton.cs` plus `InGameCombatManager.cs` own the current AutoBtn behavior.
 - `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` keeps `Canvas/AutoBtn` wired to `Pakuri.InGame.InGameAutoSkillButton`.
-- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` owns top-level `NewRunScene` UI lookup/binding and delegates Offering/Menifest flows.
-- `Pakuri/Assets/Scripts2/InGame/UI/OfferingUI.cs` owns the current learned-skill Offering enhancement filter and Offering choice commit path.
-- `Pakuri/Assets/Scripts2/InGame/UI/MenifestUI.cs` owns Menifest popup state, candidate commit, and skip behavior.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` owns top-level `NewRunScene` UI lookup/binding and now contains the Offering/Menifest flow helper types directly in the same file.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` still owns the learned-skill Offering enhancement filter, Offering choice commit path, Menifest popup state, candidate commit, and skip behavior through those integrated helper types.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only existing MSB3277 assembly-version warnings remain.
 
 ### History
 
 - 2026-05-15: AutoBtn manual/auto routing became part of the active baseline.
 - 2026-05-17: Status suffix display and Offering enhancement availability filtering were added to that active baseline.
-- 2026-05-18: Code Builder split `InGameUIManager` into `OfferingUI.cs` and `MenifestUI.cs`, and commonized `MonsterUnitActor`/`EnemyUnitActor` presentation through `UnitActorView.cs`.
+- 2026-05-18: Code Builder split `InGameUIManager` into Offering and Menifest helper flows, and commonized `MonsterUnitActor`/`EnemyUnitActor` presentation through `UnitActorView.cs`.
+- 2026-05-18: Code Builder later re-merged the Offering and Menifest helper files into `InGameUIManager.cs` during the repository-wide high-integration consolidation pass.
 
 ## Task: 2026-05-18 NewRunScene DebugUI and MonsterPanel Skill UI
 
@@ -145,7 +145,7 @@ Implemented and scene-wired. `DebugUIBtn` was renamed from the actual scene obje
 - 2026-05-18 follow-up evidence: after the Active Text policy change, Unity-MCP editor code simulation after learning `eve-b` and `eve-e` returned `runtimeSkills=3; A1=True:textActive=True:text='6/6'; A2=True:textActive=False:text=''; A3=True:textActive=False:text=''`.
 - 2026-05-18 prisoner label diagnosis: `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` line 85 contains the hardcoded label `?щ줈\n{prisoners[i]}`, while CSV search found `stage1-swordsman` in source CSV as ASCII enemy id data. The observed `?щ줈\nstage1-swordsman` therefore comes from code-side label mojibake, not from the prisoner id CSV value.
 - `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now hides `PrisonerChoicePopUp` immediately after `OfferingBtn` or `Menifested` is clicked.
-- `Pakuri/Assets/Scripts2/InGame/UI/OfferingUI.cs` now performs the same `RunSession` -> `MonsterUnitRuntimeModel.State` sync before rebuilding learned active skills.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now performs the same `RunSession` -> `MonsterUnitRuntimeModel.State` sync before rebuilding learned active skills through its integrated Offering flow helper.
 - `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` has `Pakuri.InGame.DebugUI` and `Pakuri.InGame.MonsterPanelUI` on `Canvas`, with `Canvas/MonsterPanel` as the controlled panel, and the scene was saved through Unity MCP.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing MSB3277 assembly-version warnings remain.
 - `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 assembly-version warnings remain.
@@ -197,7 +197,7 @@ Implemented and locally validated.
 - `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs` maps source enemy `DisplayName` into `EnemyDefinition.DisplayName`.
 - `Pakuri/Assets/Scripts2/InGame/Data/Definition/GameDataCatalog.cs` exposes `GetStageOneEnemyById(string enemyId)`.
 - `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now calls `ResolvePrisonerDisplayName(prisonerId)` and uses `GameDataCatalog.GetStageOneEnemyById(...)` before falling back to the raw ID.
-- `Pakuri/Assets/Scripts2/InGame/UI/OfferingUI.cs` now builds active/passive/enhancement titles from CSV-backed `monster.DisplayName`, `skill.DisplayName`, `passive.DisplayName`, and `reward.Title`, and falls back to CSV-backed IDs instead of mojibake fallback prose.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now builds active/passive/enhancement titles from CSV-backed `monster.DisplayName`, `skill.DisplayName`, `passive.DisplayName`, and `reward.Title`, and falls back to CSV-backed IDs instead of mojibake fallback prose through its integrated Offering flow helper.
 - `Get-ChildItem -Path Pakuri\Assets\Scripts2\InGame\UI -Recurse -Filter *.cs | Select-String -SimpleMatch ...` found 0 remaining matches for the inspected mojibake fragments after the change.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
 - `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
@@ -205,4 +205,4 @@ Implemented and locally validated.
 
 ### History
 
-- 2026-05-18: User clarified the `stage1-swordsman` problem was not CSV corruption, but broken hardcoded UI strings in `InGameUIManager.cs` and `OfferingUI.cs`. Code Builder inspected the CSV/runtime catalog path, replaced the broken code-side strings, and verified builds.
+- 2026-05-18: User clarified the `stage1-swordsman` problem was not CSV corruption, but broken hardcoded UI strings in the active reward and Offering code path. Code Builder inspected the CSV/runtime catalog path, replaced the broken code-side strings, and verified builds.
