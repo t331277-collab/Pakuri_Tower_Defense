@@ -19,7 +19,7 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - Status work: update this file and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 - Data/catalog/Offering work: update this file together with `boards/DATA/DATA_BLACKBOARD.md` and `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`.
 - NewRunScene UI or Offering gating changes: update this file and `boards/UI/RUNSCENE_UI.md`.
-- Eve reports: update this file and `boards/REPORT/REPORT_BLACKBOARD.md`.
+- Eve reports: update this file when a report changes active Eve facts. There is no active report board.
 
 ## Task: 2026-05-17 Eve A-J Active Runtime Baseline
 

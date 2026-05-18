@@ -403,7 +403,7 @@ Implemented and locally verified.
 ### Evidence
 
 - `Get-ChildItem -Path boards -Recurse -File -Filter *BLACKBOARD.md` found 16 active `*BLACKBOARD.md` files outside `boards/ARCHIVE/`.
-- Reparse summary after deduplication showed active files retain only their latest dated day: for example `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md` keeps four `2026-05-10` blocks, `boards/REPORT/REPORT_BLACKBOARD.md` keeps one `2026-05-12` block, and undated-only files keep no task blocks.
+- Reparse summary after deduplication showed active files retain only their latest dated day: for example `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md` keeps four `2026-05-10` blocks, the then-active report board kept one `2026-05-12` block, and undated-only files kept no task blocks.
 - Created or rewrote `boards/ARCHIVE/BLACKBOARD_2026-04-20_to_2026-04-26_ARCHIVE_2026-05-12.md`.
 - Created or rewrote `boards/ARCHIVE/BLACKBOARD_2026-04-27_to_2026-05-03_ARCHIVE_2026-05-12.md`.
 - Created or rewrote `boards/ARCHIVE/BLACKBOARD_2026-05-04_to_2026-05-10_ARCHIVE_2026-05-12.md`.
@@ -457,6 +457,95 @@ Implemented pending validation.
 ### History
 
 - 2026-04-30: User requested hierarchical board routing and simultaneous related board updates to avoid drift.
+
+## Task: 2026-05-18 Report Board Removal And CSV UTF-8 Policy
+
+### Task title
+
+Remove the active REPORT board from routing and add explicit report/CSV authoring rules.
+
+### Goals
+
+- Delete the active report board so agents no longer route report work through it.
+- Add a short English Designer rule for HTML report structure.
+- Add an explicit Code Builder rule that CSV creation/editing must use UTF-8.
+- Check current CSV files and convert them only if they are not already valid UTF-8.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested markdown and policy file changes.
+- Keep report history in archive files instead of reviving an active report board.
+- Base the CSV encoding conclusion on inspected file bytes, not editor assumptions.
+- Do not rewrite already valid UTF-8 CSV files only to change BOM style.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified by file inspection.
+
+### Next Actions
+
+- Future report or HTML tasks should route through the relevant active domain board plus the referenced source files, not through an active report board.
+- Future CSV edits should preserve the current schema/content and stay UTF-8.
+
+### Evidence
+
+- The active report board existed before this task as the only file under the removed report-board folder.
+- `MDTREE.md` now states there is no active report board and that report/documentation work reads the related active domain board only.
+- `AGENTS_ROLE/GAMEDESIGNER.md` now includes a short English HTML report structure rule.
+- `AGENTS_ROLE/GAMEBULIDER.md` now includes a `CSV Encoding Rule` that requires UTF-8 and forbids BOM-only rewrites unless the user asks.
+- Active cross-board references in `boards/DATA/DATA_BLACKBOARD.md`, `boards/MON/EVE_MONSTER.md`, and `BLACKBOARD.md` were updated so they no longer point at an active report board.
+- Byte validation over every current `Pakuri/Assets/**/*.csv` file reported `Utf8Valid=True`; no inspected CSV required data-preserving UTF-8 conversion in this task.
+
+### History
+
+- 2026-05-18: User requested deleting the active REPORT board, stopping future routing through it, adding report-format guidance to the Designer role file, and adding a UTF-8 CSV rule to the Code Builder role file.
+
+## Task: 2026-05-18 SimpelWorker Role
+
+### Task title
+
+Add a minimal SimpelWorker role for very simple path-based work.
+
+### Goals
+
+- Add a `SimpelWorker` role entry to `AGENTS.md`.
+- Create a dedicated role file for simple file-rename or information-extraction tasks.
+- Keep SimpelWorker from reading extra markdown files after the required startup reads.
+- Make SimpelWorker fall back to Designer when no exact work path is provided.
+
+### Constraints
+
+- Role Owner is Code Builder because the user explicitly requested markdown policy changes.
+- Preserve the existing startup rule that `AGENTS.md` and `MDTREE.md` must be read first.
+- Keep the new role lightweight and path-bounded.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified by file inspection.
+
+### Next Actions
+
+- Use `SimpelWorker` only for clearly bounded simple tasks with an exact work path.
+- Use Designer when the task path is missing or the scope expands beyond a trivial operation.
+
+### Evidence
+
+- `AGENTS.md` now lists `SimpelWorker: read AGENTS_ROLE/SIMPELWORKER.md`.
+- `AGENTS.md` now states that SimpelWorker is for very simple work, reads no additional markdown after `AGENTS.md` and `MDTREE.md`, and falls back to Designer when no exact work path is provided.
+- `AGENTS_ROLE/SIMPELWORKER.md` now exists and defines the role scope, markdown read rule, fallback rule, and scope limit.
+- `MDTREE.md` now lists `AGENTS_ROLE/SIMPELWORKER.md` in the role entry-point section.
+
+### History
+
+- 2026-05-18: User requested adding a SimpelWorker role for very simple tasks and making it auto-fall back to Designer when no exact work path is given.
 
 ## Migrated Task Blocks
 

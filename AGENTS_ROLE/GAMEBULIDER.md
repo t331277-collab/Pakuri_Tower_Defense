@@ -48,6 +48,14 @@ Use that blueprint to classify the requested BeamSkill behavior as supported, pa
 
 If the requested behavior is exceptional, such as width/duration choice modifiers, stop-at-first-target behavior, knockback, resistance reduction, forked/chained/curved/sweeping beams, delayed telegraph damage, or custom per-target tick rules, do not assume the common BeamSkill path supports it. Either implement a deliberate exception with explicit evidence and verification, or create a reusable extension point when the behavior is expected to be shared by multiple skills.
 
+## CSV Encoding Rule
+
+When Code Builder creates or edits CSV files, store them as UTF-8 so text does not break across tools or sessions.
+
+If the inspected target CSV is not valid UTF-8, convert it to UTF-8 while preserving the current data shape and field content before or during the requested CSV change.
+
+If the inspected target CSV is already valid UTF-8, do not rewrite it only to change BOM style unless the user explicitly asks for that normalization.
+
 ## Persistent State
 
 When implementation changes facts, update all related board files selected through `MDTREE.md`.

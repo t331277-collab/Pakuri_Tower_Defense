@@ -1,6 +1,8 @@
 using System;
 using Pakuri.Combat;
 using UnityEngine;
+using AttributeDefenseSet = Pakuri.Combat.DamageCalculator.AttributeDefenseSet;
+using CombatStatBlock = Pakuri.Combat.DamageCalculator.CombatStatBlock;
 
 namespace Pakuri.Data
 {

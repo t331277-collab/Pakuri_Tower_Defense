@@ -32,6 +32,11 @@ When performing a role, read and follow that role file:
 - Designer: read `AGENTS_ROLE/GAMEDESIGNER.md`.
 - Code Builder: read `AGENTS_ROLE/GAMEBULIDER.md`.
 - Code Reviewer: read `AGENTS_ROLE/GAMEREVIWER.md`.
+- SimpelWorker: read `AGENTS_ROLE/SIMPELWORKER.md`.
+
+`SimpelWorker` is for very simple work such as file renames or information extraction. After the required startup reads of `AGENTS.md` and `MDTREE.md`, `SimpelWorker` does not read additional markdown files.
+
+If an exact work path is not provided for `SimpelWorker`, automatically switch to the Designer role.
 
 ## Shared Persistent-State Rules
 

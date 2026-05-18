@@ -332,10 +332,8 @@ function Get-MediumPlan(
 )
 {
     $map = @{
-        "Pakuri\Assets\Scripts2\InGame\Combat\CombatStatModels.cs" = "Absorb into DamageCalculator.cs as nested support models, or keep both inside a single Combat.Types.cs file."
-        "Pakuri\Assets\Scripts2\InGame\Combat\DamageCalculator.cs" = "Keep this as the anchor file and absorb CombatStatModels.cs into it if file count matters more than separation."
-        "Pakuri\Assets\Scripts2\InGame\Core\EnemySkillCooldown.cs" = "Fold into EnemyCombatSimulationSystem.cs as a cooldown rules helper, or move to EnemyCombat.Types.cs."
-        "Pakuri\Assets\Scripts2\InGame\Core\EnemyTargeting.cs" = "Fold into EnemyCombatSimulationSystem.cs as a targeting helper."
+        "Pakuri\Assets\Scripts2\InGame\Combat\DamageCalculator.cs" = "Keep this as the anchor file; the former CombatStatModels.cs support types are already nested inside it."
+        "Pakuri\Assets\Scripts2\InGame\Core\EnemyTargeting.cs" = "Fold into EnemyCombatSystem.cs as a targeting helper."
         "Pakuri\Assets\Scripts2\InGame\Skills\Runtime\SkillRuntimeFactory.cs" = "Bundle with UnitSkillRuntimeSet and SkillRuntimeInstance under a smaller SkillRuntime.cs family."
         "Pakuri\Assets\Scripts2\InGame\Skills\Runtime\SkillRuntimeInstance.cs" = "Move next to SkillRuntimeFactory.cs in a runtime bundle, leaving only the public factory surface separate."
         "Pakuri\Assets\Scripts2\InGame\Skills\Runtime\UnitSkillRuntimeSet.cs" = "Merge into SkillRuntimeFactory.cs or a SkillRuntime.Types.cs companion."
@@ -436,6 +434,7 @@ $completedHighIntegrations = @(
     [pscustomobject]@{ Removed = "RunDayModel.cs"; Owner = "RunSession.cs"; Note = "RunSession now owns the run-day value type directly." }
     [pscustomobject]@{ Removed = "UnitIdentity.cs / UnitStatsRuntime.cs / UnitResourceRuntime.cs / UnitRuntimeModel.cs"; Owner = "BaseUnitRuntimeModel.cs"; Note = "Identity, stats, resource state, and the derived runtime alias were bundled into the runtime base file." }
     [pscustomobject]@{ Removed = "StageOneEnemyPassiveStatApplier.cs"; Owner = "UnitFactory.cs"; Note = "The CreateEnemy-only helper moved into UnitFactory private static methods." }
+    [pscustomobject]@{ Removed = "CombatStatModels.cs"; Owner = "DamageCalculator.cs"; Note = "AttributeDefenseSet, CombatStatBlock, and DefenseBreakdown were absorbed into DamageCalculator.cs as nested support types." }
     [pscustomobject]@{ Removed = "BuffSkillData.cs / SkillBlueprintSpecs.cs"; Owner = "SkillData.cs"; Note = "Skill schema and concrete data leaf types are now in one bundle." }
     [pscustomobject]@{ Removed = "StatusEffectData.cs"; Owner = "StatusEffectKind.cs"; Note = "Status-effect kind and transient status-effect data are now co-located." }
     [pscustomobject]@{ Removed = "SkillChoiceModifierCsvParser.cs"; Owner = "SkillChoiceModifierLibrary.cs"; Note = "The CSV loader moved into the modifier library file." }
@@ -443,8 +442,8 @@ $completedHighIntegrations = @(
     [pscustomobject]@{ Removed = "InGameSkillDataValidationMenu.cs"; Owner = "InGameSkillDataValidator.cs"; Note = "Validator logic and the editor menu entry now live together." }
     [pscustomobject]@{ Removed = "StartContext.cs / InGameContextManager.cs / InGameResultManager.cs"; Owner = "SceneEntryManager.cs"; Note = "The scene-entry handoff and empty placeholder files were pulled into the scene-entry owner." }
     [pscustomobject]@{ Removed = "UnitResourceMutationService.cs"; Owner = "InGameCombatManager.cs"; Note = "Resource mutation helpers now live next to the combat-manager public API." }
-    [pscustomobject]@{ Removed = "EnemySkillRuntime.cs"; Owner = "EnemySkillCooldown.cs"; Note = "Enemy skill resolved-contract types moved into the cooldown rules file." }
-    [pscustomobject]@{ Removed = "EnemySkillExecutor.cs"; Owner = "EnemyCombatSimulationSystem.cs"; Note = "Enemy combat execution logic now lives next to the enemy combat loop." }
+    [pscustomobject]@{ Removed = "EnemySkillRuntime.cs / EnemySkillCooldown.cs"; Owner = "EnemyCombatSystem.cs"; Note = "Enemy skill resolved-contract types and cooldown-rule helpers now live inside EnemyCombatSystem.cs." }
+    [pscustomobject]@{ Removed = "EnemySkillExecutor.cs / EnemyCombatSimulationSystem.cs"; Owner = "EnemyCombatSystem.cs"; Note = "Enemy combat execution logic and the enemy combat loop were consolidated into the shorter EnemyCombatSystem.cs owner." }
     [pscustomobject]@{ Removed = "OfferingUI.cs / MenifestUI.cs"; Owner = "InGameUIManager.cs"; Note = "Run-scene UI flow helpers now live next to the owning UI manager." }
 )
 

@@ -33,6 +33,10 @@ Read only the track files that match the request:
 
 If multiple tracks apply, read the smallest set that covers the task.
 
+## Report Output Rule
+
+When the user asks for an HTML report, write the core topic and the user-requested points briefly near the top. Move the more complex or technical explanation to the lower sections so the report stays easy to scan first and detailed later.
+
 ## Persistent State
 
 When a Designer decision changes task state, update the related board files selected through `MDTREE.md`.

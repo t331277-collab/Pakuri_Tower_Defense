@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 using Pakuri.Run;
+using CombatStatBlock = Pakuri.Combat.DamageCalculator.CombatStatBlock;
 
 namespace Pakuri.InGame
 {

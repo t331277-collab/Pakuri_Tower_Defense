@@ -1,5 +1,6 @@
 using System;
 using Pakuri.Combat;
+using AttributeDefenseSet = Pakuri.Combat.DamageCalculator.AttributeDefenseSet;
 
 namespace Pakuri.InGame
 {

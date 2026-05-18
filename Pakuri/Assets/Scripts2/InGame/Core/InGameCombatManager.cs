@@ -9,7 +9,7 @@ namespace Pakuri.InGame
     public sealed class InGameCombatManager : MonoBehaviour
     {
         private readonly UnitRosterService roster = new UnitRosterService();
-        private readonly EnemyCombatSimulationSystem enemyCombatSimulation = new EnemyCombatSimulationSystem();
+        private readonly EnemyCombatSystem enemyCombatSystem = new EnemyCombatSystem();
         private readonly UnitResourceMutationService resourceMutations = new UnitResourceMutationService();
         private readonly SkillExecutionSystem skillExecution = new SkillExecutionSystem();
 
@@ -30,7 +30,7 @@ namespace Pakuri.InGame
         public int ActiveUnitCount => roster.Count;
         public int ActivePlayerCount => roster.PlayerCount;
         public int ActiveEnemyCount => roster.EnemyCount;
-        public int LastEnemyAttackAttemptCount => enemyCombatSimulation.LastAttackAttemptCount;
+        public int LastEnemyAttackAttemptCount => enemyCombatSystem.LastAttackAttemptCount;
         public int LastSkillExecutionRoutedCount => skillExecution.LastRoutedCount;
         public int LastSkillExecutionRejectedCount => skillExecution.LastRejectedCount;
         public int SkillChoiceModifierRecordCount => skillExecution.ModifierRecordCount;
@@ -39,7 +39,7 @@ namespace Pakuri.InGame
         private void Awake()
         {
             roster.Clear();
-            enemyCombatSimulation.Clear();
+            enemyCombatSystem.Clear();
             ReloadSkillChoiceModifierData();
         }
 
@@ -58,7 +58,7 @@ namespace Pakuri.InGame
 
             if (enemyCombatSimulationEnabled)
             {
-                enemyCombatSimulation.Tick(roster, this, Time.deltaTime, logEnemyAttackAttempts);
+                enemyCombatSystem.Tick(roster, this, Time.deltaTime, logEnemyAttackAttempts);
             }
 
             TickUnitStatuses(Time.deltaTime);

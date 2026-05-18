@@ -29,6 +29,7 @@ Role entry points and track files:
 - Code Builder UI: `AGENTS_ROLE/GAMEBULIDER_UI.md`
 - Code Builder verification: `AGENTS_ROLE/GAMEBULIDER_VERIFICATION.md`
 - Code Reviewer: `AGENTS_ROLE/GAMEREVIWER.md`
+- SimpelWorker: `AGENTS_ROLE/SIMPELWORKER.md`
 
 ## Routing Rules
 
@@ -132,9 +133,12 @@ Reminder:
 ### Report / Documentation Work
 
 Read:
-- `boards/REPORT/REPORT_BLACKBOARD.md`
+- The related active domain board only.
 
-Also read the related active domain board when the report is about a specific system.
+Rules:
+- There is no active report board anymore.
+- Do not route report or HTML work through a dedicated report board.
+- When a report is about a specific system, read the matching active domain board and the referenced source files that the report must summarize.
 
 ## Update Rules
 

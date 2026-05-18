@@ -34,7 +34,7 @@ Current active CSV authority summarized and retained for future work. 2026-05-18
 ### Next Actions
 
 - If future cleanup resumes, continue from this active runtime-authority split instead of reviving archived duplicate CSV tables.
-- When CSV ownership changes, update this file together with `boards/RUN/RUN_BLACKBOARD.md`, `boards/COMBAT/ENEMY_BLACKBOARD.md`, and `boards/REPORT/REPORT_BLACKBOARD.md`.
+- When CSV ownership changes, update this file together with `boards/RUN/RUN_BLACKBOARD.md` and `boards/COMBAT/ENEMY_BLACKBOARD.md`.
 
 ### Evidence
 
