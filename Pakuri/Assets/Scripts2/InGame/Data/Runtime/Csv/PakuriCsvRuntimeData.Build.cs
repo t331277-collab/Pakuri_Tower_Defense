@@ -141,16 +141,7 @@ namespace Pakuri.Data
                 {
                     RewardId = reward.Id,
                     ActiveSkillId = reward.ActiveSkillId,
-                    PassiveSkillId = reward.PassiveSkillId,
-                    LinkedChoiceId = reward.LinkedChoiceId,
-                    Title = reward.Title,
-                    Description = reward.Description,
-                    DamageMultiplier = reward.DamageMultiplier,
-                    MagazineBonus = reward.MagazineBonus,
-                    ShotIntervalMultiplier = reward.ShotIntervalMultiplier,
-                    ReloadDurationMultiplier = reward.ReloadDurationMultiplier,
-                    MaxHealthBonus = reward.MaxHealthBonus,
-                    StatusChanceBonus = reward.StatusChanceBonus
+                    PassiveSkillId = reward.PassiveSkillId
                 };
             }
 
@@ -267,26 +258,69 @@ namespace Pakuri.Data
                 definitions[i] = new SkillChoiceDefinition
                 {
                     ChoiceId = choice.Id,
+                    MonsterId = choice.MonsterId,
+                    SkillId = choice.SkillId,
+                    TargetSkillId = string.IsNullOrWhiteSpace(choice.TargetSkillId) ? choice.SkillId : choice.TargetSkillId,
+                    ChoiceGroup = MapChoiceGroup(choice.ChoiceGroup),
                     Title = choice.Title,
                     SkillIcon = LoadSprite(choice.SkillIconPath),
                     SkillEffectPrefab = LoadPrefab(choice.SkillEffectPrefabPath),
                     DescriptionText = choice.DescriptionText,
                     HasDamageMultiplier = choice.HasDamageMultiplier,
                     DamageMultiplier = choice.HasDamageMultiplier ? choice.DamageMultiplier : 1f,
+                    BaseDamageBonus = choice.BaseDamageBonus,
+                    HasCooldownMultiplier = choice.HasCooldownMultiplier,
+                    CooldownMultiplier = choice.HasCooldownMultiplier ? choice.CooldownMultiplier : 1f,
                     HasMagazineBonus = choice.HasMagazineBonus,
                     MagazineBonus = choice.MagazineBonus,
+                    AdditionalProjectileBonus = choice.AdditionalProjectileBonus,
+                    PierceBonus = choice.PierceBonus,
                     HasShotIntervalMultiplier = choice.HasShotIntervalMultiplier,
                     ShotIntervalMultiplier = choice.HasShotIntervalMultiplier ? choice.ShotIntervalMultiplier : 1f,
-                    HasReloadDurationMultiplier = choice.HasReloadDurationMultiplier,
-                    ReloadDurationMultiplier = choice.HasReloadDurationMultiplier ? choice.ReloadDurationMultiplier : 1f,
+                    HasReloadTimeMultiplier = choice.HasReloadTimeMultiplier,
+                    ReloadTimeMultiplier = choice.HasReloadTimeMultiplier ? choice.ReloadTimeMultiplier : 1f,
+                    HasRadiusMultiplier = choice.HasRadiusMultiplier,
+                    RadiusMultiplier = choice.HasRadiusMultiplier ? choice.RadiusMultiplier : 1f,
+                    RadiusBonus = choice.RadiusBonus,
+                    HasDurationMultiplier = choice.HasDurationMultiplier,
+                    DurationMultiplier = choice.HasDurationMultiplier ? choice.DurationMultiplier : 1f,
+                    DurationBonus = choice.DurationBonus,
+                    BranchChanceBonus = choice.BranchChanceBonus,
+                    HasBranchChanceSet = choice.HasBranchChanceSet,
+                    BranchChanceSet = choice.BranchChanceSet,
+                    HasBranchCount = choice.HasBranchCount,
+                    BranchCount = choice.BranchCount,
+                    HasBranchDamageMultiplier = choice.HasBranchDamageMultiplier,
+                    BranchDamageMultiplier = choice.HasBranchDamageMultiplier ? choice.BranchDamageMultiplier : 1f,
+                    HasBranchSearchRadius = choice.HasBranchSearchRadius,
+                    BranchSearchRadius = choice.BranchSearchRadius,
                     HasMaxHealthBonus = choice.HasMaxHealthBonus,
                     MaxHealthBonus = choice.MaxHealthBonus,
+                    StatusTag = choice.StatusTag,
                     HasStatusChanceBonus = choice.HasStatusChanceBonus,
-                    StatusChanceBonus = choice.StatusChanceBonus
+                    StatusChanceBonus = choice.StatusChanceBonus,
+                    StatusStacksBonus = choice.StatusStacksBonus,
+                    HasStatusStacksSet = choice.HasStatusStacksSet,
+                    StatusStacksSet = choice.StatusStacksSet,
+                    RuntimeSupportState = choice.RuntimeSupportState,
+                    RuntimeSupportNotes = choice.RuntimeSupportNotes
                 };
             }
 
             return definitions;
+        }
+
+        private static SkillChoiceGroup MapChoiceGroup(PakuriCsvChoiceGroup group)
+        {
+            switch (group)
+            {
+                case PakuriCsvChoiceGroup.ActiveMaster:
+                    return SkillChoiceGroup.ActiveMaster;
+                case PakuriCsvChoiceGroup.PassiveEnhancement:
+                    return SkillChoiceGroup.PassiveEnhancement;
+                default:
+                    return SkillChoiceGroup.ActiveEnhancement;
+            }
         }
 
         private static IEnumerable<CatalogEntryRow> SortCatalogEntries(Dictionary<string, CatalogEntryRow> entries)

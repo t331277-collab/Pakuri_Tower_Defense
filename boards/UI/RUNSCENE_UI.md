@@ -9,6 +9,51 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - Older RunScene/Manifested UI history remains in that snapshot and earlier archive files.
 - This active file now keeps only the current `NewRunScene` UI behavior still relevant to active work.
 
+## Task: 2026-05-19 Offering Choice1-3 Data Binding Refresh
+
+### Task title
+
+Bind Offering `Choice1`-`Choice3` UI from the unified monster choice CSV path.
+
+### Goals
+
+- Show title, description, and icon from the unified `monster_skill_choices.csv` choice rows.
+- Keep Offering availability driven by the slim `monster_modifier_skill_choice.csv` gate rows plus learned-skill state.
+- Remove the old one-line button label fallback for enhancement Offering rows.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- UI conclusions must stay tied to inspected scene hierarchy and inspected `InGameUIManager.cs`.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution was deferred because explicit user permission was not given in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified. The active Offering panel now binds icon/title/description from exact choice rows instead of the removed reward text columns.
+
+### Next Actions
+
+- User verifies in Play Mode that `OfferingPanel/Choice1`-`Choice3` show the intended icon, title, and description for active, passive, and enhancement offerings.
+- If later UI localization is added, keep these bindings data-driven through the unified choice rows.
+
+### Evidence
+
+- Scene hierarchy inspection confirmed `Canvas/OfferingPanel/Choice1`, `Choice2`, and `Choice3` each contain child objects named `Icon`, `Text (TMP)`, and `Desc`.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now resolves those child bindings once through `ResolveButtonViews(...)` and writes icon/title/description through `BindChoiceButton(...)`.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now resolves enhancement offerings through `ResolveChoice(reward.RewardId)` instead of the removed reward-row `linked_choice_id` / `title` / `description` fields.
+- Active and passive Offering rows now use the monster plus learned skill/passive display name and their skill icons; enhancement rows use the exact choice row title/description plus `ResolveChoiceIcon(...)`.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now enforces learned-choice availability by exact `choice_id`, with active enhancements capped at three per skill, active masters unlocked after three active enhancements, and passive enhancements capped at one per passive skill.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-19: Code Builder rewired the Offering panel so `Choice1`-`Choice3` bind `Icon`, `Text (TMP)`, and `Desc` from unified choice rows and no longer depend on the removed reward-row title/description/modifier columns.
+
 ## Task: 2026-05-18 NewRun Prefix Removal UI Reference Update
 
 ### Task title
@@ -197,7 +242,7 @@ Implemented and locally validated.
 - `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs` maps source enemy `DisplayName` into `EnemyDefinition.DisplayName`.
 - `Pakuri/Assets/Scripts2/InGame/Data/Definition/GameDataCatalog.cs` exposes `GetStageOneEnemyById(string enemyId)`.
 - `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now calls `ResolvePrisonerDisplayName(prisonerId)` and uses `GameDataCatalog.GetStageOneEnemyById(...)` before falling back to the raw ID.
-- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now builds active/passive/enhancement titles from CSV-backed `monster.DisplayName`, `skill.DisplayName`, `passive.DisplayName`, and `reward.Title`, and falls back to CSV-backed IDs instead of mojibake fallback prose through its integrated Offering flow helper.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now builds active/passive Offering titles from CSV-backed `monster.DisplayName`, `skill.DisplayName`, and `passive.DisplayName`, and enhancement Offering titles/descriptions from the exact `monster_skill_choices.csv` row resolved by `reward.RewardId`.
 - `Get-ChildItem -Path Pakuri\Assets\Scripts2\InGame\UI -Recurse -Filter *.cs | Select-String -SimpleMatch ...` found 0 remaining matches for the inspected mojibake fragments after the change.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
 - `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.

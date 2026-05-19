@@ -4,6 +4,138 @@
 - Older run/combat flow history remains in that snapshot and earlier archives.
 - This active file now keeps only the current `NewRunScene` authority split and the surviving new-scene flow baseline.
 
+## Task: 2026-05-19 Selected 1P A-Skill Entry Policy And Sein Visual Wiring
+
+### Task title
+
+Keep the selected 1P primary-skill entry policy explicit while restoring the missing Sein projectile visual mapping.
+
+### Goals
+
+- Record that the selected 1P slot `A` does not auto-route on scene entry unless `playerAutoSkillEnabled` is enabled.
+- Restore the missing `sein-a` visual prefab mapping in `NewRunScene` so manual fire or `AutoBtn` uses the expected projectile visual.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Runtime conclusions must stay tied to the inspected Scripts2 combat manager and actual `NewRunScene` serialization.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution was deferred because explicit user permission was not given in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Scene visual wiring was restored. The run-flow policy remains unchanged: selected 1P slot `A` starts in manual fire mode until `AutoBtn` enables auto fire.
+
+### Next Actions
+
+- If the user wants selected 1P `A` to auto-fire immediately on scene entry, treat that as a separate global run/combat policy change and update this board together with the relevant combat/UI boards.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` uses `ShouldAutoRouteSkill(...)` to suppress automatic routing for the selected player slot `A` unless `playerAutoSkillEnabled` is true.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` routes selected player slot `A` through `HandleSelectedPlayerPrimarySkillInput()` only while the primary mouse button is held and the pointer is not over UI.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:10373` serializes `playerAutoSkillEnabled: 0`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameAutoSkillButton.cs` and `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:14188-14189` show `AutoBtn` enables `InGameCombatManager.EnablePlayerAutoSkillMode()`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:10468-10471` now serializes the `sein-a` prefab entry under the `EffectManager` `sein` group.
+
+### History
+
+- 2026-05-19: User reported that Sein appeared not to attack in-game and also noted the missing `EffectManager` Sein prefab assignment.
+- 2026-05-19: Code Builder confirmed the selected 1P `A` manual-fire entry policy, restored the missing `sein-a` visual prefab mapping, and left the global auto-fire policy unchanged.
+
+## Task: 2026-05-19 Offering Choice Runtime Path Unification
+
+### Task title
+
+Use exact choice IDs for Offering gating and resolve runtime modifiers from unified choice definitions.
+
+### Goals
+
+- Keep Offering enhancement picks keyed by exact `choice_id`.
+- Remove the old separate `SkillChoiceModifierData.csv` combat path.
+- Let passive-linked choice rows target active skills through merged choice metadata.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Runtime conclusions must stay tied to inspected Scripts2 code and verified builds.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution was deferred because explicit user permission was not given in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified. Offering and combat runtime now resolve monster choice effects from one unified `SkillChoiceDefinition` path.
+
+### Next Actions
+
+- If later combat work adds new special-case choice behaviors, extend `SkillExecutionSnapshot` / executors from the rows already marked unsupported or partial in `monster_skill_choices.csv`.
+- Keep this file aligned with `boards/DATA/DATA_BLACKBOARD.md` whenever choice/runtime ownership changes again.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now commits enhancement Offering picks with `choice.ChoiceId`, which is the exact row ID from `monster_modifier_skill_choice.csv` / `monster_skill_choices.csv`.
+- `Pakuri/Assets/Scripts2/InGame/Run/RunSession.cs` still persists `ChosenRewardIds` and `ChosenChoiceIds` separately, so the gate row ID and runtime choice ID remain explicit even though enhancement picks now use the same exact `choice_id`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutionSystem.cs` no longer uses `SkillChoiceModifierLibrary`; it resolves each chosen choice globally through `PakuriDataManager.TryGetData(choiceId, out SkillChoiceDefinition choice)` and applies it when `choice.TargetSkillId` or `choice.SkillId` matches the executing skill.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutionSnapshot.cs` now applies merged choice fields such as `CooldownMultiplier`, `RadiusMultiplier`, `DurationMultiplier`, `AdditionalProjectileBonus`, `PierceBonus`, branch fields, and status stack fields directly from `SkillChoiceDefinition`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now consumes snapshot radius/duration modifiers for beam skills, which is why rechecked Eve beam rows could be upgraded from unsupported to direct support.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` no longer exposes `skillChoiceModifierCsv`, and `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv` was deleted in this task.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-19: Code Builder removed the separate choice-modifier CSV runtime path, switched combat resolution to unified `SkillChoiceDefinition` data, and kept exact `choice_id` persistence through Offering commit and runtime execution.
+
+## Task: 2026-05-19 Remove Unused InGame Test Data Bootstrap
+
+### Task title
+
+Remove the unused `InGameTestDataManager` test bootstrap from the active `InGame` runtime.
+
+### Goals
+
+- Delete the unused test-only `InGameTestDataManager.cs` script and its `.meta`.
+- Remove the explicit `Assembly-CSharp.csproj` compile entry for the deleted script.
+- Keep the active `NewRunScene` runtime authority summary aligned with the actual surviving files.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The deletion must stay evidence-based: only remove the script after confirming there is no active scene/prefab/asset reference in the inspected repository.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified by file inspection and build.
+
+### Next Actions
+
+- User verifies in Unity only if they want editor-side confirmation that no scene object was intentionally meant to use this removed test bootstrap.
+
+### Evidence
+
+- `Get-ChildItem Pakuri/Assets -Recurse -Include *.unity,*.prefab,*.asset | Select-String -Pattern 'b80e67b6202c23b46bf0867afa0f8b4e|InGameTestDataManager'` returned no active asset reference to the script class or GUID before deletion.
+- `Pakuri/Assembly-CSharp.csproj` explicitly included `Assets\Scripts2\InGame\Core\InGameTestDataManager.cs` before this task, so the compile item had to be removed together with the file.
+- Deleted `Pakuri/Assets/Scripts2/InGame/Core/InGameTestDataManager.cs` and `Pakuri/Assets/Scripts2/InGame/Core/InGameTestDataManager.cs.meta`.
+- `Pakuri/Assets/Scripts2/InGame/Core/SceneEntryManager.cs`, `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs`, and `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` remain the inspected active runtime entry/spawn/UI owners for the surviving `NewRunScene` flow.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
+
+### History
+
+- 2026-05-19: User asked to delete `Pakuri/Assets/Scripts2/InGame/Core/InGameTestDataManager.cs` after reviewing its role as an unused test bootstrap rather than an active runtime manager.
+
 ## Task: 2026-05-18 Remove NewRun Prefix From Runtime Script Names
 
 ### Task title
@@ -134,9 +266,9 @@ Current active run/runtime authority summarized and retained for future work. 20
 - `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now owns `EnemyCombatSystem`, and `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSystem.cs` now holds both the enemy combat loop and the former cooldown-rule helper logic used during `NewRunScene` combat ticks.
 - `Pakuri/Assets/Scripts2/InGame/Run/RunSession.cs` now keeps `ChosenRewardIds` and `ChosenChoiceIds` separately.
 - `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` keeps the top-level reward/UI binding and now contains the Offering and Menifest flow helper types directly in the same file.
-- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` still passes `rewardId` plus `linkedChoiceId` separately into the session and owns active/passive/enhancement Offering choice construction through its integrated helper types.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now passes `rewardId` plus the exact enhancement `choiceId` into the session and owns active/passive/enhancement Offering choice construction through its integrated helper types.
 - `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` still owns Menifest candidate, fail, success, commit, and skip popup flow while preserving the same scene-binding entry points.
-- `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs` and `InGameTestDataManager.cs` no longer keep the retained `fallbackCatalog` scene dependency.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs` no longer keeps the retained `fallbackCatalog` scene dependency.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `System.Net.Http` and `System.IO.Compression` MSB3277 warnings remain.
 - `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing `System.Net.Http` and `System.IO.Compression` MSB3277 warnings remain.
 - `Pakuri/Assets/CSVdata/source/monster_skills.csv` now owns per-skill projectile speed, pierce count, status chance, and status label; `monsters.csv` no longer owns those duplicate projectile/status columns.

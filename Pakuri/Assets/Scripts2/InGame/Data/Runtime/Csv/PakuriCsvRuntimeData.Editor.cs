@@ -105,12 +105,49 @@ namespace Pakuri.Data
             var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
             if (asset == null)
             {
+                TryImportTextAsset(assetPath);
+                asset = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
+            }
+
+            if (asset == null)
+            {
                 throw new CsvFatalException(
                     $"Required imported CSV TextAsset is missing at '{assetPath}'.",
                     new List<string> { instruction });
             }
 
             return asset;
+        }
+
+        private static void TryImportTextAsset(string assetPath)
+        {
+            if (string.IsNullOrWhiteSpace(assetPath))
+            {
+                return;
+            }
+
+            var absolutePath = GetAbsoluteAssetPath(assetPath);
+            if (!File.Exists(absolutePath))
+            {
+                return;
+            }
+
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            AssetDatabase.ImportAsset(
+                assetPath,
+                ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+        }
+
+        private static string GetAbsoluteAssetPath(string assetPath)
+        {
+            const string assetsPrefix = "Assets/";
+            if (!assetPath.StartsWith(assetsPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return assetPath;
+            }
+
+            var relativePath = assetPath.Substring(assetsPrefix.Length).Replace('/', Path.DirectorySeparatorChar);
+            return Path.Combine(Application.dataPath, relativePath);
         }
 
         private static PakuriCsvRuntimeAssetCatalog.SpriteEntry[] BuildSpriteEntries(SourceModel sourceModel)

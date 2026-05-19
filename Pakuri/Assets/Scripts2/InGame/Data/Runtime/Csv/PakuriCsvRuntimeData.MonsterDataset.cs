@@ -39,16 +39,7 @@ namespace Pakuri.Data
             public string MonsterId;
             public string ActiveSkillId;
             public string PassiveSkillId;
-            public string LinkedChoiceId;
             public int SortOrder;
-            public string Title;
-            public string Description;
-            public float DamageMultiplier;
-            public int MagazineBonus;
-            public float ShotIntervalMultiplier;
-            public float ReloadDurationMultiplier;
-            public float MaxHealthBonus;
-            public float StatusChanceBonus;
         }
 
         private sealed class SkillRow
@@ -89,6 +80,7 @@ namespace Pakuri.Data
             public string Id;
             public string MonsterId;
             public string SkillId;
+            public string TargetSkillId;
             public PakuriCsvChoiceGroup ChoiceGroup;
             public int SortOrder;
             public string Title;
@@ -97,16 +89,42 @@ namespace Pakuri.Data
             public string SkillEffectPrefabPath;
             public bool HasDamageMultiplier;
             public float DamageMultiplier = 1f;
+            public float BaseDamageBonus;
+            public bool HasCooldownMultiplier;
+            public float CooldownMultiplier = 1f;
             public bool HasMagazineBonus;
             public int MagazineBonus;
+            public int AdditionalProjectileBonus;
+            public int PierceBonus;
             public bool HasShotIntervalMultiplier;
             public float ShotIntervalMultiplier = 1f;
-            public bool HasReloadDurationMultiplier;
-            public float ReloadDurationMultiplier = 1f;
+            public bool HasReloadTimeMultiplier;
+            public float ReloadTimeMultiplier = 1f;
+            public bool HasRadiusMultiplier;
+            public float RadiusMultiplier = 1f;
+            public float RadiusBonus;
+            public bool HasDurationMultiplier;
+            public float DurationMultiplier = 1f;
+            public float DurationBonus;
+            public float BranchChanceBonus;
+            public bool HasBranchChanceSet;
+            public float BranchChanceSet;
+            public bool HasBranchCount;
+            public int BranchCount;
+            public bool HasBranchDamageMultiplier;
+            public float BranchDamageMultiplier = 1f;
+            public bool HasBranchSearchRadius;
+            public float BranchSearchRadius;
             public bool HasMaxHealthBonus;
             public float MaxHealthBonus;
+            public string StatusTag;
             public bool HasStatusChanceBonus;
             public float StatusChanceBonus;
+            public int StatusStacksBonus;
+            public bool HasStatusStacksSet;
+            public int StatusStacksSet;
+            public string RuntimeSupportState;
+            public string RuntimeSupportNotes;
         }
 
         private static MonsterRow ParseMonsterRow(CsvRecord record)
@@ -147,16 +165,7 @@ namespace Pakuri.Data
                 MonsterId = record.ReadRequiredString("monster_id"),
                 ActiveSkillId = record.ReadString("active_skill_id"),
                 PassiveSkillId = record.ReadString("passive_skill_id"),
-                LinkedChoiceId = record.ReadString("linked_choice_id"),
-                SortOrder = record.ReadInt("sort_order"),
-                Title = record.ReadRequiredString("title"),
-                Description = record.ReadString("description"),
-                DamageMultiplier = record.ReadFloat("damage_multiplier"),
-                MagazineBonus = record.ReadInt("magazine_bonus"),
-                ShotIntervalMultiplier = record.ReadFloat("shot_interval_multiplier"),
-                ReloadDurationMultiplier = record.ReadFloat("reload_duration_multiplier"),
-                MaxHealthBonus = record.ReadFloat("max_health_bonus"),
-                StatusChanceBonus = record.ReadFloat("status_chance_bonus")
+                SortOrder = record.ReadInt("sort_order")
             };
         }
 
@@ -203,27 +212,64 @@ namespace Pakuri.Data
                 Id = record.ReadRequiredString("choice_id"),
                 MonsterId = record.ReadRequiredString("monster_id"),
                 SkillId = record.ReadRequiredString("skill_id"),
+                TargetSkillId = record.ReadString("target_skill_id"),
                 ChoiceGroup = record.ReadEnum<PakuriCsvChoiceGroup>("choice_group"),
                 SortOrder = record.ReadInt("sort_order"),
                 Title = record.ReadRequiredString("title"),
                 DescriptionText = record.ReadString("description_text"),
                 SkillIconPath = record.ReadString("skill_icon_path"),
-                SkillEffectPrefabPath = record.ReadString("skill_effect_prefab_path")
+                SkillEffectPrefabPath = record.ReadString("skill_effect_prefab_path"),
+                StatusTag = record.ReadString("status_tag"),
+                RuntimeSupportState = record.ReadString("runtime_support_state"),
+                RuntimeSupportNotes = record.ReadString("runtime_support_notes")
             };
 
             row.HasDamageMultiplier = TryReadFloat(record, "damage_multiplier", out var damageMultiplier);
             row.DamageMultiplier = damageMultiplier;
+            row.BaseDamageBonus = ReadOptionalFloat(record, "base_damage_bonus");
+            row.HasCooldownMultiplier = TryReadFloat(record, "cooldown_multiplier", out var cooldownMultiplier);
+            row.CooldownMultiplier = cooldownMultiplier;
             row.HasMagazineBonus = TryReadInt(record, "magazine_bonus", out var magazineBonus);
             row.MagazineBonus = magazineBonus;
+            row.AdditionalProjectileBonus = ReadOptionalInt(record, "additional_projectile_bonus");
+            row.PierceBonus = ReadOptionalInt(record, "pierce_bonus");
             row.HasShotIntervalMultiplier = TryReadFloat(record, "shot_interval_multiplier", out var shotIntervalMultiplier);
             row.ShotIntervalMultiplier = shotIntervalMultiplier;
-            row.HasReloadDurationMultiplier = TryReadFloat(record, "reload_duration_multiplier", out var reloadDurationMultiplier);
-            row.ReloadDurationMultiplier = reloadDurationMultiplier;
+            row.HasReloadTimeMultiplier = TryReadFloat(record, "reload_time_multiplier", out var reloadTimeMultiplier);
+            row.ReloadTimeMultiplier = reloadTimeMultiplier;
+            row.HasRadiusMultiplier = TryReadFloat(record, "radius_multiplier", out var radiusMultiplier);
+            row.RadiusMultiplier = radiusMultiplier;
+            row.RadiusBonus = ReadOptionalFloat(record, "radius_bonus");
+            row.HasDurationMultiplier = TryReadFloat(record, "duration_multiplier", out var durationMultiplier);
+            row.DurationMultiplier = durationMultiplier;
+            row.DurationBonus = ReadOptionalFloat(record, "duration_bonus");
+            row.BranchChanceBonus = ReadOptionalFloat(record, "branch_chance_bonus");
+            row.HasBranchChanceSet = TryReadFloat(record, "branch_chance_set", out var branchChanceSet);
+            row.BranchChanceSet = branchChanceSet;
+            row.HasBranchCount = TryReadInt(record, "branch_count", out var branchCount);
+            row.BranchCount = branchCount;
+            row.HasBranchDamageMultiplier = TryReadFloat(record, "branch_damage_multiplier", out var branchDamageMultiplier);
+            row.BranchDamageMultiplier = branchDamageMultiplier;
+            row.HasBranchSearchRadius = TryReadFloat(record, "branch_search_radius", out var branchSearchRadius);
+            row.BranchSearchRadius = branchSearchRadius;
             row.HasMaxHealthBonus = TryReadFloat(record, "max_health_bonus", out var maxHealthBonus);
             row.MaxHealthBonus = maxHealthBonus;
             row.HasStatusChanceBonus = TryReadFloat(record, "status_chance_bonus", out var statusChanceBonus);
             row.StatusChanceBonus = statusChanceBonus;
+            row.StatusStacksBonus = ReadOptionalInt(record, "status_stacks_bonus");
+            row.HasStatusStacksSet = TryReadInt(record, "status_stacks_set", out var statusStacksSet);
+            row.StatusStacksSet = statusStacksSet;
             return row;
+        }
+
+        private static float ReadOptionalFloat(CsvRecord record, string columnName)
+        {
+            return TryReadFloat(record, columnName, out var value) ? value : 0f;
+        }
+
+        private static int ReadOptionalInt(CsvRecord record, string columnName)
+        {
+            return TryReadInt(record, columnName, out var value) ? value : 0;
         }
 
         private static bool TryReadFloat(CsvRecord record, string columnName, out float value)

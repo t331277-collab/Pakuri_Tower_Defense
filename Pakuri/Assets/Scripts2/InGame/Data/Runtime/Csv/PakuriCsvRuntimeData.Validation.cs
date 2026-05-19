@@ -35,6 +35,18 @@ namespace Pakuri.Data
                     errors.Add($"Reward choice '{reward.Id}' references unknown monster '{reward.MonsterId}'.");
                 }
 
+                 if (!model.SkillChoices.TryGetValue(reward.Id, out var rewardChoice))
+                 {
+                     errors.Add($"Reward choice '{reward.Id}' has no matching skill choice row with the same choice_id.");
+                     continue;
+                 }
+
+                 if (!string.Equals(rewardChoice.MonsterId, reward.MonsterId, StringComparison.OrdinalIgnoreCase))
+                 {
+                     errors.Add(
+                         $"Reward choice '{reward.Id}' monster mismatch: reward monster '{reward.MonsterId}', choice monster '{rewardChoice.MonsterId}'.");
+                 }
+
                 if (!string.IsNullOrWhiteSpace(reward.ActiveSkillId))
                 {
                     if (!model.Skills.TryGetValue(reward.ActiveSkillId, out var activeSkill))
@@ -49,6 +61,15 @@ namespace Pakuri.Data
                     else if (activeSkill.SkillKind != PakuriCsvSkillKind.Active)
                     {
                         errors.Add($"Reward choice '{reward.Id}' targets non-active skill '{reward.ActiveSkillId}'.");
+                    }
+                    else if (!string.Equals(rewardChoice.SkillId, reward.ActiveSkillId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        errors.Add(
+                            $"Reward choice '{reward.Id}' active gate '{reward.ActiveSkillId}' does not match choice skill '{rewardChoice.SkillId}'.");
+                    }
+                    else if (rewardChoice.ChoiceGroup == PakuriCsvChoiceGroup.PassiveEnhancement)
+                    {
+                        errors.Add($"Reward choice '{reward.Id}' points passive choice group through active_skill_id.");
                     }
                 }
 
@@ -67,19 +88,20 @@ namespace Pakuri.Data
                     {
                         errors.Add($"Reward choice '{reward.Id}' targets non-passive skill '{reward.PassiveSkillId}'.");
                     }
-                }
-
-                if (!string.IsNullOrWhiteSpace(reward.LinkedChoiceId))
-                {
-                    if (!model.SkillChoices.TryGetValue(reward.LinkedChoiceId, out var linkedChoice))
-                    {
-                        errors.Add($"Reward choice '{reward.Id}' references unknown linked choice '{reward.LinkedChoiceId}'.");
-                    }
-                    else if (!string.Equals(linkedChoice.MonsterId, reward.MonsterId, StringComparison.OrdinalIgnoreCase))
+                    else if (!string.Equals(rewardChoice.SkillId, reward.PassiveSkillId, StringComparison.OrdinalIgnoreCase))
                     {
                         errors.Add(
-                            $"Reward choice '{reward.Id}' linked choice '{reward.LinkedChoiceId}' belongs to '{linkedChoice.MonsterId}', not '{reward.MonsterId}'.");
+                            $"Reward choice '{reward.Id}' passive gate '{reward.PassiveSkillId}' does not match choice skill '{rewardChoice.SkillId}'.");
                     }
+                    else if (rewardChoice.ChoiceGroup != PakuriCsvChoiceGroup.PassiveEnhancement)
+                    {
+                        errors.Add($"Reward choice '{reward.Id}' points active choice group through passive_skill_id.");
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(reward.ActiveSkillId) && string.IsNullOrWhiteSpace(reward.PassiveSkillId))
+                {
+                    errors.Add($"Reward choice '{reward.Id}' must target either active_skill_id or passive_skill_id.");
                 }
             }
 

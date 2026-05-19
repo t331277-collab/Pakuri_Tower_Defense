@@ -15,7 +15,7 @@ MonoBehaviour:
   CatalogMonsters: {fileID: 4900000, guid: cdbdbe4e32ac3784aa7948bdf22f8bac, type: 3}
   CatalogStageOneEnemies: {fileID: 4900000, guid: b12a03e0e05eadf429a9c68fa0f4a796, type: 3}
   Monsters: {fileID: 4900000, guid: 3dce2014d8aeb774db75ef4d8d8575da, type: 3}
-  MonsterRewardChoices: {fileID: 4900000, guid: 5c98206d33552d840a1db6db4b1743da, type: 3}
+  MonsterRewardChoices: {fileID: 4900000, guid: 2f9229f6de8506a4fae1fad9c093e347, type: 3}
   MonsterSkills: {fileID: 4900000, guid: bbc492c5e4ae3cf44a6aeab4ded27b5b, type: 3}
   MonsterSkillChoices: {fileID: 4900000, guid: 5b5f094e9fbfaef4593518ad6d855917, type: 3}
   StageOneEnemies: {fileID: 4900000, guid: 61c9eb99d31ad914fb1fa849d1a30a96, type: 3}

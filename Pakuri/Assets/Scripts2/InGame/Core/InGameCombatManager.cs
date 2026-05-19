@@ -17,7 +17,6 @@ namespace Pakuri.InGame
         [SerializeField] private bool skillExecutionEnabled = true;
         [SerializeField] private bool logEnemyAttackAttempts;
         [SerializeField] private bool logSkillExecutionContracts;
-        [SerializeField] private TextAsset skillChoiceModifierCsv;
         [SerializeField] private bool playerAutoSkillEnabled;
         [SerializeField] private Camera inputCamera;
         [SerializeField] private Transform projectileDestroyBoundary;
@@ -33,14 +32,13 @@ namespace Pakuri.InGame
         public int LastEnemyAttackAttemptCount => enemyCombatSystem.LastAttackAttemptCount;
         public int LastSkillExecutionRoutedCount => skillExecution.LastRoutedCount;
         public int LastSkillExecutionRejectedCount => skillExecution.LastRejectedCount;
-        public int SkillChoiceModifierRecordCount => skillExecution.ModifierRecordCount;
+        public int SkillChoiceModifierRecordCount => 0;
         public bool PlayerAutoSkillEnabled => playerAutoSkillEnabled;
 
         private void Awake()
         {
             roster.Clear();
             enemyCombatSystem.Clear();
-            ReloadSkillChoiceModifierData();
         }
 
         private void Update()
@@ -245,14 +243,6 @@ namespace Pakuri.InGame
         {
             var entry = roster.Find(model);
             return RefreshUnitActor(entry);
-        }
-
-        public void ReloadSkillChoiceModifierData()
-        {
-            var library = skillChoiceModifierCsv != null
-                ? SkillChoiceModifierCsvParser.ParseLibrary(skillChoiceModifierCsv.text)
-                : new SkillChoiceModifierLibrary();
-            skillExecution.SetChoiceModifierLibrary(library);
         }
 
         private void HandleSelectedPlayerPrimarySkillInput()

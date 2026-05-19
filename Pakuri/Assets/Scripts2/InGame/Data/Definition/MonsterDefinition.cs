@@ -15,15 +15,6 @@ namespace Pakuri.Data
             public string RewardId = "reward-id";
             public string ActiveSkillId = string.Empty;
             public string PassiveSkillId = string.Empty;
-            public string LinkedChoiceId = string.Empty;
-            public string Title = "Reward";
-            [TextArea(2, 4)] public string Description = "Reward description.";
-            public float DamageMultiplier = 1f;
-            public int MagazineBonus;
-            public float ShotIntervalMultiplier = 1f;
-            public float ReloadDurationMultiplier = 1f;
-            public float MaxHealthBonus;
-            public float StatusChanceBonus;
         }
 
         public string MonsterId = "monster-id";

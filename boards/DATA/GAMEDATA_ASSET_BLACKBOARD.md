@@ -4,6 +4,46 @@
 - Older broad data/asset history remains in `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md` and other archive files under `boards/ARCHIVE/`.
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 
+## Task: 2026-05-19 Sein-A EffectManager Scene Wiring
+
+### Task title
+
+Restore the missing `NewRunScene` `EffectManager` prefab mapping for `sein-a`.
+
+### Goals
+
+- Keep active monster projectile visuals wired through scene-owned `EffectManager` entries.
+- Restore the `sein-a` projectile prefab link without adding a parallel prefab-resolution route.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The fix must stay grounded in inspected prefab files and actual scene serialization.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented in scene serialization and file-verified.
+
+### Next Actions
+
+- If future Sein active skills gain retained visuals, add them to the same `EffectManager` group instead of moving prefab-path authority back into CSV.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Skill/Sein/Sein_A.prefab` exists and `Pakuri/Assets/Prefab/Skill/Sein/Sein_A.prefab.meta` stores GUID `256552cb82ec9c2499fc2e0e01d20dd2`.
+- Before this task, `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:10468-10469` serialized `MonsterId: sein` with `SkillEffects: []`.
+- After this task, `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:10468-10471` serializes `SkillId: sein-a` and the `Sein_A.prefab` GUID under the `sein` `EffectManager` group.
+
+### History
+
+- 2026-05-19: User reported that the in-game Sein check showed no assigned Sein prefab effect in `EffectManager`.
+- 2026-05-19: Code Builder restored the `sein-a` scene mapping to `Assets/Prefab/Skill/Sein/Sein_A.prefab`.
+
 ## Task: 2026-05-17 Active Runtime Skill Asset Wiring
 
 ### Task title
@@ -58,6 +98,45 @@ Current active asset-wiring baseline summarized and retained for future work. 20
 - 2026-05-18: Monster visual sprite/color source columns were removed from `monsters.csv`; current skill visual authority remains `EffectManager` plus scene/prefab wiring.
 - 2026-05-18: CSV runtime catalog sync/validation was exposed as a public editor method and wrapped by `SyncCsvRuntimeCatalogs.bat`.
 - 2026-05-19: Rin-A prefab wiring was added to the active `EffectManager` scene mapping using `Assets/Prefab/Skill/Rin/Rin_A.prefab`.
+
+## Task: 2026-05-19 CSV Source Asset Import Recovery
+
+### Task title
+
+Harden runtime source catalog sync against not-yet-imported CSV assets.
+
+### Goals
+
+- Keep `PakuriCsvRuntimeSourceCatalog.asset` sync resilient when a source CSV exists on disk but Unity has not yet produced the `TextAsset`.
+- Preserve the active `Assets/CSVdata/source` to `Assets/Resources/Pakuri/CSVRuntime` sync path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Asset conclusions must stay grounded in inspected editor sync code, actual source files, and Unity console evidence.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and editor-verified.
+
+### Next Actions
+
+- Reuse this recovery path for future externally-edited CSV assets instead of adding manual pre-import steps.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Editor.cs` now refreshes and imports a source CSV asset synchronously when `AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath)` initially returns `null`.
+- `Pakuri/Assets/CSVdata/source/monster_modifier_skill_choice.csv` and its `.meta` existed on disk while the user-facing auto-sync stack trace still reported the imported `TextAsset` as missing, confirming the failure lived in asset import state rather than in the file path string.
+- Unity-MCP menu execution of `Pakuri/Sync CSV Runtime Catalog Assets` after the fix logged a successful sync to `Assets/Resources/Pakuri/CSVRuntime` and did not reproduce the previous missing-TextAsset fatal exception.
+
+### History
+
+- 2026-05-19: Code Builder added a synchronous refresh/import retry path so runtime source catalog sync can recover from externally-created or freshly-renamed CSV assets that are present on disk but not yet imported into Unity's AssetDatabase.
 
 ## Task: 2026-05-18 Eve-B EffectManager Wiring Evidence
 

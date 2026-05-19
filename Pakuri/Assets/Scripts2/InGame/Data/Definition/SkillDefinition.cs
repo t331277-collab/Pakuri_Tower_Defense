@@ -25,6 +25,13 @@ namespace Pakuri.Data
         RuntimeImplemented
     }
 
+    public enum SkillChoiceGroup
+    {
+        ActiveEnhancement,
+        ActiveMaster,
+        PassiveEnhancement
+    }
+
     public enum SkillRuntimeKind
     {
         MagazineProjectile,
@@ -45,22 +52,52 @@ namespace Pakuri.Data
     public class SkillChoiceDefinition
     {
         public string ChoiceId;
+        public string MonsterId;
+        public string SkillId;
+        public string TargetSkillId;
+        public SkillChoiceGroup ChoiceGroup;
         public string Title;
         public Sprite SkillIcon;
         public GameObject SkillEffectPrefab;
         [TextArea(2, 5)] public string DescriptionText;
         public bool HasDamageMultiplier;
         public float DamageMultiplier = 1f;
+        public float BaseDamageBonus;
+        public bool HasCooldownMultiplier;
+        public float CooldownMultiplier = 1f;
         public bool HasMagazineBonus;
         public int MagazineBonus;
+        public int AdditionalProjectileBonus;
+        public int PierceBonus;
         public bool HasShotIntervalMultiplier;
         public float ShotIntervalMultiplier = 1f;
-        public bool HasReloadDurationMultiplier;
-        public float ReloadDurationMultiplier = 1f;
+        public bool HasReloadTimeMultiplier;
+        public float ReloadTimeMultiplier = 1f;
+        public bool HasRadiusMultiplier;
+        public float RadiusMultiplier = 1f;
+        public float RadiusBonus;
+        public bool HasDurationMultiplier;
+        public float DurationMultiplier = 1f;
+        public float DurationBonus;
+        public float BranchChanceBonus;
+        public bool HasBranchChanceSet;
+        public float BranchChanceSet;
+        public bool HasBranchCount;
+        public int BranchCount;
+        public bool HasBranchDamageMultiplier;
+        public float BranchDamageMultiplier = 1f;
+        public bool HasBranchSearchRadius;
+        public float BranchSearchRadius;
         public bool HasMaxHealthBonus;
         public float MaxHealthBonus;
+        public string StatusTag;
         public bool HasStatusChanceBonus;
         public float StatusChanceBonus;
+        public int StatusStacksBonus;
+        public bool HasStatusStacksSet;
+        public int StatusStacksSet;
+        public string RuntimeSupportState;
+        [TextArea(2, 5)] public string RuntimeSupportNotes;
     }
 
     [Serializable]

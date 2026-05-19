@@ -543,6 +543,7 @@ namespace Pakuri.InGame
         private readonly System.Collections.Generic.List<OfferingChoiceView> offeringChoices =
             new System.Collections.Generic.List<OfferingChoiceView>();
         private readonly Button[] offeringChoiceButtons;
+        private readonly OfferingButtonView[] offeringButtonViews;
         private readonly GameObject offeringPanel;
         private readonly GameObject prisonerChoicePopUp;
         private readonly GameObject rewardPanel;
@@ -567,6 +568,7 @@ namespace Pakuri.InGame
         {
             this.offeringPanel = offeringPanel;
             this.offeringChoiceButtons = offeringChoiceButtons ?? Array.Empty<Button>();
+            offeringButtonViews = ResolveButtonViews(this.offeringChoiceButtons);
             this.prisonerChoicePopUp = prisonerChoicePopUp;
             this.rewardPanel = rewardPanel;
             this.resolveSession = resolveSession;
@@ -590,7 +592,8 @@ namespace Pakuri.InGame
 
             for (var i = 0; i < offeringChoiceButtons.Length; i++)
             {
-                var button = offeringChoiceButtons[i];
+                var buttonView = i < offeringButtonViews.Length ? offeringButtonViews[i] : null;
+                var button = buttonView != null ? buttonView.Button : null;
                 if (button == null)
                 {
                     continue;
@@ -607,7 +610,7 @@ namespace Pakuri.InGame
 
                 var capturedIndex = i;
                 var choice = offeringChoices[i];
-                SetButtonLabel(button, $"{choice.Title}\n{choice.Description}");
+                BindChoiceButton(buttonView, choice);
                 button.onClick.AddListener(() => CommitOfferingChoice(capturedIndex));
             }
         }
@@ -635,7 +638,7 @@ namespace Pakuri.InGame
             session.RecordOfferingChoice(
                 choice.MonsterId,
                 choice.RewardId,
-                choice.LinkedChoiceId,
+                choice.ChoiceId,
                 choice.ActiveSkillId,
                 choice.PassiveSkillId);
             if (choice.Kind == OfferingChoiceKind.Enhancement)
@@ -705,8 +708,9 @@ namespace Pakuri.InGame
                     Kind = OfferingChoiceKind.ActiveSkill,
                     MonsterId = state.MonsterId,
                     ActiveSkillId = skill.SkillId,
-                    Title = $"{monster.DisplayName}\n{skill.DisplayName}",
-                    Description = ResolveDescription(skill.Summary, skill.DescriptionText, skill.SkillId)
+                    Title = $"{monster.DisplayName} · {skill.DisplayName}",
+                    Description = ResolveDescription(skill.Summary, skill.DescriptionText, skill.SkillId),
+                    Icon = skill.SkillIcon
                 });
             }
         }
@@ -737,8 +741,9 @@ namespace Pakuri.InGame
                     Kind = OfferingChoiceKind.PassiveSkill,
                     MonsterId = state.MonsterId,
                     PassiveSkillId = passive.PassiveId,
-                    Title = $"{monster.DisplayName}\n{passive.DisplayName}",
-                    Description = ResolveDescription(passive.Summary, passive.DescriptionText, passive.PassiveId)
+                    Title = $"{monster.DisplayName} · {passive.DisplayName}",
+                    Description = ResolveDescription(passive.Summary, passive.DescriptionText, passive.PassiveId),
+                    Icon = passive.SkillIcon
                 });
             }
         }
@@ -759,147 +764,122 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                if (!IsRewardChoiceAvailableForState(session, state, reward))
+                var choiceData = ResolveChoice(reward.RewardId);
+                if (choiceData == null
+                    || !IsRewardChoiceAvailableForState(session, state, reward, choiceData))
                 {
                     continue;
                 }
 
-                var linkedChoice = ResolveLinkedChoice(reward.LinkedChoiceId);
-                var title = linkedChoice != null && !string.IsNullOrWhiteSpace(linkedChoice.Title)
-                    ? linkedChoice.Title
-                    : reward.Title;
-                var description = linkedChoice != null && !string.IsNullOrWhiteSpace(linkedChoice.DescriptionText)
-                    ? linkedChoice.DescriptionText
-                    : reward.Description;
                 offeringChoices.Add(new OfferingChoiceView
                 {
                     Kind = OfferingChoiceKind.Enhancement,
                     MonsterId = state.MonsterId,
                     RewardId = reward.RewardId,
-                    LinkedChoiceId = reward.LinkedChoiceId,
+                    ChoiceId = reward.RewardId,
                     ActiveSkillId = reward.ActiveSkillId,
                     PassiveSkillId = reward.PassiveSkillId,
-                    Title = $"{monster.DisplayName}\n{title}",
-                    Description = ResolveDescription(null, description, linkedChoice != null ? linkedChoice.ChoiceId : reward.RewardId),
-                    DamageMultiplier = ResolveDamageMultiplier(reward, linkedChoice),
-                    MagazineBonus = ResolveMagazineBonus(reward, linkedChoice),
-                    ShotIntervalMultiplier = ResolveShotIntervalMultiplier(reward, linkedChoice),
-                    ReloadDurationMultiplier = ResolveReloadDurationMultiplier(reward, linkedChoice),
-                    MaxHealthBonus = ResolveMaxHealthBonus(reward, linkedChoice),
-                    StatusChanceBonus = ResolveStatusChanceBonus(reward, linkedChoice)
+                    Title = $"{monster.DisplayName} · {choiceData.Title}",
+                    Description = ResolveDescription(null, choiceData.DescriptionText, choiceData.ChoiceId),
+                    Icon = ResolveChoiceIcon(choiceData),
+                    DamageMultiplier = choiceData.HasDamageMultiplier ? choiceData.DamageMultiplier : 1f,
+                    MagazineBonus = choiceData.HasMagazineBonus ? choiceData.MagazineBonus : 0,
+                    ShotIntervalMultiplier = choiceData.HasShotIntervalMultiplier ? choiceData.ShotIntervalMultiplier : 1f,
+                    ReloadDurationMultiplier = choiceData.HasReloadTimeMultiplier ? choiceData.ReloadTimeMultiplier : 1f,
+                    MaxHealthBonus = choiceData.HasMaxHealthBonus ? choiceData.MaxHealthBonus : 0f,
+                    StatusChanceBonus = choiceData.HasStatusChanceBonus ? choiceData.StatusChanceBonus : 0f
                 });
             }
         }
 
-        private static SkillChoiceDefinition ResolveLinkedChoice(string linkedChoiceId)
+        private static SkillChoiceDefinition ResolveChoice(string choiceId)
         {
-            if (string.IsNullOrWhiteSpace(linkedChoiceId))
+            if (string.IsNullOrWhiteSpace(choiceId))
             {
                 return null;
             }
 
             var manager = PakuriDataManager.Instance;
-            if (manager == null || !manager.TryGetData(linkedChoiceId, out SkillChoiceDefinition linkedChoice))
+            if (manager == null || !manager.TryGetData(choiceId, out SkillChoiceDefinition choice))
             {
                 return null;
             }
 
-            return linkedChoice;
+            return choice;
         }
 
-        private static float ResolveDamageMultiplier(
-            MonsterDefinition.RewardChoiceDefinition reward,
-            SkillChoiceDefinition linkedChoice)
+        private static Sprite ResolveChoiceIcon(SkillChoiceDefinition choice)
         {
-            if (linkedChoice != null && linkedChoice.HasDamageMultiplier)
+            if (choice == null)
             {
-                return linkedChoice.DamageMultiplier;
+                return null;
             }
 
-            return reward != null && reward.DamageMultiplier > 0f ? reward.DamageMultiplier : 1f;
-        }
-
-        private static int ResolveMagazineBonus(
-            MonsterDefinition.RewardChoiceDefinition reward,
-            SkillChoiceDefinition linkedChoice)
-        {
-            if (linkedChoice != null && linkedChoice.HasMagazineBonus)
+            if (choice.SkillIcon != null)
             {
-                return linkedChoice.MagazineBonus;
+                return choice.SkillIcon;
             }
 
-            return reward != null ? reward.MagazineBonus : 0;
-        }
-
-        private static float ResolveShotIntervalMultiplier(
-            MonsterDefinition.RewardChoiceDefinition reward,
-            SkillChoiceDefinition linkedChoice)
-        {
-            if (linkedChoice != null && linkedChoice.HasShotIntervalMultiplier)
+            var manager = PakuriDataManager.Instance;
+            if (manager == null || string.IsNullOrWhiteSpace(choice.SkillId))
             {
-                return linkedChoice.ShotIntervalMultiplier;
+                return null;
             }
 
-            return reward != null && reward.ShotIntervalMultiplier > 0f ? reward.ShotIntervalMultiplier : 1f;
-        }
-
-        private static float ResolveReloadDurationMultiplier(
-            MonsterDefinition.RewardChoiceDefinition reward,
-            SkillChoiceDefinition linkedChoice)
-        {
-            if (linkedChoice != null && linkedChoice.HasReloadDurationMultiplier)
+            if (manager.TryGetData(choice.SkillId, out SkillDefinition activeSkill) && activeSkill != null)
             {
-                return linkedChoice.ReloadDurationMultiplier;
+                return activeSkill.SkillIcon;
             }
 
-            return reward != null && reward.ReloadDurationMultiplier > 0f ? reward.ReloadDurationMultiplier : 1f;
-        }
-
-        private static float ResolveMaxHealthBonus(
-            MonsterDefinition.RewardChoiceDefinition reward,
-            SkillChoiceDefinition linkedChoice)
-        {
-            if (linkedChoice != null && linkedChoice.HasMaxHealthBonus)
+            if (manager.TryGetData(choice.SkillId, out PassiveDefinition passiveSkill) && passiveSkill != null)
             {
-                return linkedChoice.MaxHealthBonus;
+                return passiveSkill.SkillIcon;
             }
 
-            return reward != null ? reward.MaxHealthBonus : 0f;
-        }
-
-        private static float ResolveStatusChanceBonus(
-            MonsterDefinition.RewardChoiceDefinition reward,
-            SkillChoiceDefinition linkedChoice)
-        {
-            if (linkedChoice != null && linkedChoice.HasStatusChanceBonus)
-            {
-                return linkedChoice.StatusChanceBonus;
-            }
-
-            return reward != null ? reward.StatusChanceBonus : 0f;
+            return null;
         }
 
         private static bool IsRewardChoiceAvailableForState(
             RunSession session,
             RunSession.RunMonsterState state,
-            MonsterDefinition.RewardChoiceDefinition reward)
+            MonsterDefinition.RewardChoiceDefinition reward,
+            SkillChoiceDefinition choice)
         {
-            if (session == null || state == null || reward == null)
+            if (session == null || state == null || reward == null || choice == null)
             {
                 return false;
             }
 
-            if (!string.IsNullOrWhiteSpace(reward.ActiveSkillId))
+            if (!string.IsNullOrWhiteSpace(reward.ActiveSkillId)
+                && !session.HasLearnedActive(state.MonsterId, reward.ActiveSkillId))
             {
-                return session.HasLearnedActive(state.MonsterId, reward.ActiveSkillId);
+                return false;
             }
 
-            if (!string.IsNullOrWhiteSpace(reward.PassiveSkillId))
+            if (!string.IsNullOrWhiteSpace(reward.PassiveSkillId)
+                && !session.HasLearnedPassive(state.MonsterId, reward.PassiveSkillId))
             {
-                return session.HasLearnedPassive(state.MonsterId, reward.PassiveSkillId);
+                return false;
             }
 
-            return true;
+            var targetSkillId = !string.IsNullOrWhiteSpace(choice.SkillId)
+                ? choice.SkillId
+                : !string.IsNullOrWhiteSpace(reward.ActiveSkillId)
+                    ? reward.ActiveSkillId
+                    : reward.PassiveSkillId;
+
+            switch (choice.ChoiceGroup)
+            {
+                case SkillChoiceGroup.ActiveEnhancement:
+                    return CountChosenChoices(state, targetSkillId, SkillChoiceGroup.ActiveEnhancement) < 3;
+                case SkillChoiceGroup.ActiveMaster:
+                    return CountChosenChoices(state, targetSkillId, SkillChoiceGroup.ActiveEnhancement) >= 3
+                        && CountChosenChoices(state, targetSkillId, SkillChoiceGroup.ActiveMaster) < 1;
+                case SkillChoiceGroup.PassiveEnhancement:
+                    return CountChosenChoices(state, targetSkillId, SkillChoiceGroup.PassiveEnhancement) < 1;
+                default:
+                    return true;
+            }
         }
 
         private System.Collections.Generic.List<MonsterDefinition> ResolveOfferingTargets(RunSession session)
@@ -1038,17 +1018,77 @@ namespace Pakuri.InGame
             return string.IsNullOrWhiteSpace(summary) ? fallback : summary;
         }
 
-        private static void SetButtonLabel(Button button, string text)
+        private static int CountChosenChoices(
+            RunSession.RunMonsterState state,
+            string skillId,
+            SkillChoiceGroup group)
         {
-            if (button == null)
+            if (state == null || string.IsNullOrWhiteSpace(skillId))
+            {
+                return 0;
+            }
+
+            var count = 0;
+            for (var i = 0; i < state.ChosenChoiceIds.Count; i++)
+            {
+                var chosen = ResolveChoice(state.ChosenChoiceIds[i]);
+                if (chosen != null
+                    && chosen.ChoiceGroup == group
+                    && string.Equals(chosen.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static OfferingButtonView[] ResolveButtonViews(Button[] buttons)
+        {
+            if (buttons == null || buttons.Length == 0)
+            {
+                return Array.Empty<OfferingButtonView>();
+            }
+
+            var views = new OfferingButtonView[buttons.Length];
+            for (var i = 0; i < buttons.Length; i++)
+            {
+                views[i] = OfferingButtonView.FromButton(buttons[i]);
+            }
+
+            return views;
+        }
+
+        private static void BindChoiceButton(OfferingButtonView view, OfferingChoiceView choice)
+        {
+            if (view == null || view.Button == null || choice == null)
             {
                 return;
             }
 
-            var label = button.GetComponentInChildren<TMP_Text>(true);
-            if (label != null)
+            if (view.TitleLabel != null)
             {
-                label.text = text;
+                view.TitleLabel.text = choice.Title;
+            }
+
+            if (view.DescriptionLabel != null)
+            {
+                view.DescriptionLabel.text = choice.Description;
+            }
+
+            if (view.FallbackLabel != null && view.DescriptionLabel == null)
+            {
+                view.FallbackLabel.text = $"{choice.Title}\n{choice.Description}";
+            }
+
+            if (view.IconImage != null)
+            {
+                view.IconImage.sprite = choice.Icon;
+                view.IconImage.enabled = choice.Icon != null;
+                if (view.IconImage.gameObject != null)
+                {
+                    view.IconImage.gameObject.SetActive(choice.Icon != null);
+                }
             }
         }
 
@@ -1072,17 +1112,71 @@ namespace Pakuri.InGame
             public OfferingChoiceKind Kind;
             public string MonsterId;
             public string RewardId;
-            public string LinkedChoiceId;
+            public string ChoiceId;
             public string ActiveSkillId;
             public string PassiveSkillId;
             public string Title;
             public string Description;
+            public Sprite Icon;
             public float DamageMultiplier = 1f;
             public int MagazineBonus;
             public float ShotIntervalMultiplier = 1f;
             public float ReloadDurationMultiplier = 1f;
             public float MaxHealthBonus;
             public float StatusChanceBonus;
+        }
+
+        private sealed class OfferingButtonView
+        {
+            public Button Button;
+            public TMP_Text TitleLabel;
+            public TMP_Text DescriptionLabel;
+            public TMP_Text FallbackLabel;
+            public Image IconImage;
+
+            public static OfferingButtonView FromButton(Button button)
+            {
+                if (button == null)
+                {
+                    return null;
+                }
+
+                var view = new OfferingButtonView
+                {
+                    Button = button,
+                    TitleLabel = FindChildComponent<TMP_Text>(button.transform, "Text (TMP)"),
+                    DescriptionLabel = FindChildComponent<TMP_Text>(button.transform, "Desc"),
+                    IconImage = FindChildComponent<Image>(button.transform, "Icon")
+                };
+                view.FallbackLabel = view.TitleLabel;
+                return view;
+            }
+
+            private static T FindChildComponent<T>(Transform root, string childName)
+                where T : Component
+            {
+                if (root == null || string.IsNullOrWhiteSpace(childName))
+                {
+                    return null;
+                }
+
+                var transforms = root.GetComponentsInChildren<Transform>(true);
+                for (var i = 0; i < transforms.Length; i++)
+                {
+                    var candidate = transforms[i];
+                    if (candidate != null
+                        && string.Equals(candidate.name, childName, StringComparison.Ordinal))
+                    {
+                        var component = candidate.GetComponent<T>();
+                        if (component != null)
+                        {
+                            return component;
+                        }
+                    }
+                }
+
+                return null;
+            }
         }
     }
 

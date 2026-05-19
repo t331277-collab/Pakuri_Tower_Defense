@@ -319,9 +319,9 @@ namespace Pakuri.InGame
             var attribute = SkillExecutionUtility.MapAttribute(skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element);
             var statusSpec = ProjectileSkillExecutor.ResolveStatusSpec(skill.OnHitStatus, snapshot);
             var length = ResolveBeamLength(skill, origin, direction, context.CombatManager);
-            var width = Mathf.Max(0.1f, skill.BeamWidth);
-            var duration = ResolveDuration(skill);
-            var tickInterval = ResolveTickInterval(skill);
+            var width = ResolveBeamWidth(skill, snapshot);
+            var duration = ResolveDuration(skill, snapshot);
+            var tickInterval = ResolveTickInterval(skill, snapshot);
             var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
                 : context.CombatManager.Effects != null
@@ -397,12 +397,40 @@ namespace Pakuri.InGame
             return DefaultBeamLength;
         }
 
-        private static float ResolveDuration(BeamSkillData skill)
+        private static float ResolveDuration(BeamSkillData skill, SkillExecutionSnapshot snapshot)
         {
             var timing = skill != null ? skill.Timing : null;
-            return timing != null && timing.ActiveDuration > 0f
+            var duration = timing != null && timing.ActiveDuration > 0f
                 ? timing.ActiveDuration
-                : ResolveTickInterval(skill);
+                : ResolveTickInterval(skill, snapshot);
+            if (snapshot != null)
+            {
+                duration = duration * Mathf.Max(0f, snapshot.DurationMultiplier) + snapshot.DurationBonus;
+            }
+
+            return Mathf.Max(0.05f, duration);
+        }
+
+        private static float ResolveBeamWidth(BeamSkillData skill, SkillExecutionSnapshot snapshot)
+        {
+            var width = skill != null ? skill.BeamWidth : 0f;
+            if (snapshot != null)
+            {
+                width = width * Mathf.Max(0f, snapshot.RadiusMultiplier) + snapshot.RadiusBonus;
+            }
+
+            return Mathf.Max(0.1f, width);
+        }
+
+        private static float ResolveTickInterval(BeamSkillData skill, SkillExecutionSnapshot snapshot)
+        {
+            var interval = ResolveTickInterval(skill);
+            if (snapshot != null)
+            {
+                interval *= Mathf.Max(0.05f, snapshot.ShotIntervalMultiplier);
+            }
+
+            return Mathf.Max(0.05f, interval);
         }
 
         private static float ResolveTickInterval(BeamSkillData skill)

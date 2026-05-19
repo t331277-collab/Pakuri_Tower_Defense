@@ -1,3 +1,4 @@
+using Pakuri.Data;
 using UnityEngine;
 
 namespace Pakuri.InGame
@@ -67,14 +68,34 @@ namespace Pakuri.InGame
                 DamageMultiplier *= PositiveOrDefault(spec.DamageMultiplier, 1f);
             }
 
-            CooldownMultiplier *= PositiveOrDefault(spec.CooldownMultiplier, 1f);
-            RadiusMultiplier *= PositiveOrDefault(spec.RadiusMultiplier, 1f);
-            DurationMultiplier *= PositiveOrDefault(spec.DurationMultiplier, 1f);
+            BaseDamageBonus += spec.BaseDamageBonus;
+
+            if (spec.HasCooldownMultiplier)
+            {
+                CooldownMultiplier *= PositiveOrDefault(spec.CooldownMultiplier, 1f);
+            }
+
+            if (spec.HasRadiusMultiplier)
+            {
+                RadiusMultiplier *= PositiveOrDefault(spec.RadiusMultiplier, 1f);
+            }
+
+            RadiusBonus += spec.RadiusBonus;
+
+            if (spec.HasDurationMultiplier)
+            {
+                DurationMultiplier *= PositiveOrDefault(spec.DurationMultiplier, 1f);
+            }
+
+            DurationBonus += spec.DurationBonus;
 
             if (spec.HasMagazineBonus)
             {
                 MagazineBonus += spec.MagazineBonus;
             }
+
+            AdditionalProjectileBonus += spec.AdditionalProjectileBonus;
+            PierceBonus += spec.PierceBonus;
 
             if (spec.HasReloadTimeMultiplier)
             {
@@ -91,9 +112,42 @@ namespace Pakuri.InGame
                 StatusChanceBonus += spec.StatusChanceBonus;
             }
 
-            if (!string.IsNullOrWhiteSpace(spec.AddedStatusTag))
+            BranchChanceBonus += spec.BranchChanceBonus;
+
+            if (spec.HasBranchChanceSet)
             {
-                StatusTag = spec.AddedStatusTag;
+                HasBranchChanceSet = true;
+                BranchChanceSet = spec.BranchChanceSet;
+            }
+
+            if (spec.HasBranchCount)
+            {
+                HasBranchCount = true;
+                BranchCount = spec.BranchCount;
+            }
+
+            if (spec.HasBranchDamageMultiplier)
+            {
+                HasBranchDamageMultiplier = true;
+                BranchDamageMultiplier = spec.BranchDamageMultiplier;
+            }
+
+            if (spec.HasBranchSearchRadius)
+            {
+                HasBranchSearchRadius = true;
+                BranchSearchRadius = spec.BranchSearchRadius;
+            }
+
+            if (!string.IsNullOrWhiteSpace(spec.StatusTag))
+            {
+                StatusTag = spec.StatusTag;
+            }
+
+            StatusStacksBonus += spec.StatusStacksBonus;
+            if (spec.HasStatusStacksSet)
+            {
+                HasStatusStacksSet = true;
+                StatusStacksSet = spec.StatusStacksSet;
             }
 
             if (spec.SkillEffectPrefab != null)
@@ -102,85 +156,57 @@ namespace Pakuri.InGame
             }
         }
 
-        public void ApplyModifierRecord(SkillChoiceModifierRecord record)
+        public void ApplyChoiceDefinition(SkillChoiceDefinition choice)
         {
-            if (record == null)
+            if (choice == null)
             {
                 return;
             }
 
-            if (record.HasDamageMultiplier)
+            ApplyChoiceSpec(new SkillChoiceEffectSpec
             {
-                DamageMultiplier *= PositiveOrDefault(record.DamageMultiplier, 1f);
-            }
-
-            BaseDamageBonus += record.BaseDamageBonus;
-            MagazineBonus += record.MagazineBonus;
-            AdditionalProjectileBonus += record.AdditionalProjectileBonus;
-            PierceBonus += record.PierceBonus;
-
-            if (record.HasReloadTimeMultiplier)
-            {
-                ReloadTimeMultiplier *= PositiveOrDefault(record.ReloadTimeMultiplier, 1f);
-            }
-
-            if (record.HasShotIntervalMultiplier)
-            {
-                ShotIntervalMultiplier *= PositiveOrDefault(record.ShotIntervalMultiplier, 1f);
-            }
-
-            if (record.HasRadiusMultiplier)
-            {
-                RadiusMultiplier *= PositiveOrDefault(record.RadiusMultiplier, 1f);
-            }
-
-            RadiusBonus += record.RadiusBonus;
-
-            if (record.HasDurationMultiplier)
-            {
-                DurationMultiplier *= PositiveOrDefault(record.DurationMultiplier, 1f);
-            }
-
-            DurationBonus += record.DurationBonus;
-            BranchChanceBonus += record.BranchChanceBonus;
-
-            if (record.HasBranchChanceSet)
-            {
-                HasBranchChanceSet = true;
-                BranchChanceSet = record.BranchChanceSet;
-            }
-
-            if (record.HasBranchCount)
-            {
-                HasBranchCount = true;
-                BranchCount = record.BranchCount;
-            }
-
-            if (record.HasBranchDamageMultiplier)
-            {
-                HasBranchDamageMultiplier = true;
-                BranchDamageMultiplier = record.BranchDamageMultiplier;
-            }
-
-            if (record.HasBranchSearchRadius)
-            {
-                HasBranchSearchRadius = true;
-                BranchSearchRadius = record.BranchSearchRadius;
-            }
-
-            if (!string.IsNullOrWhiteSpace(record.StatusTag))
-            {
-                StatusTag = record.StatusTag;
-            }
-
-            StatusChanceBonus += record.StatusChanceBonus;
-            StatusStacksBonus += record.StatusStacksBonus;
-
-            if (record.HasStatusStacksSet)
-            {
-                HasStatusStacksSet = true;
-                StatusStacksSet = record.StatusStacksSet;
-            }
+                ChoiceId = choice.ChoiceId,
+                Title = choice.Title,
+                Description = choice.DescriptionText,
+                Icon = choice.SkillIcon,
+                SkillEffectPrefab = choice.SkillEffectPrefab,
+                HasDamageMultiplier = choice.HasDamageMultiplier,
+                DamageMultiplier = choice.DamageMultiplier,
+                BaseDamageBonus = choice.BaseDamageBonus,
+                HasCooldownMultiplier = choice.HasCooldownMultiplier,
+                CooldownMultiplier = choice.CooldownMultiplier,
+                HasRadiusMultiplier = choice.HasRadiusMultiplier,
+                RadiusMultiplier = choice.RadiusMultiplier,
+                RadiusBonus = choice.RadiusBonus,
+                HasDurationMultiplier = choice.HasDurationMultiplier,
+                DurationMultiplier = choice.DurationMultiplier,
+                DurationBonus = choice.DurationBonus,
+                HasMagazineBonus = choice.HasMagazineBonus,
+                MagazineBonus = choice.MagazineBonus,
+                AdditionalProjectileBonus = choice.AdditionalProjectileBonus,
+                PierceBonus = choice.PierceBonus,
+                HasReloadTimeMultiplier = choice.HasReloadTimeMultiplier,
+                ReloadTimeMultiplier = choice.ReloadTimeMultiplier,
+                HasShotIntervalMultiplier = choice.HasShotIntervalMultiplier,
+                ShotIntervalMultiplier = choice.ShotIntervalMultiplier,
+                HasStatusChanceBonus = choice.HasStatusChanceBonus,
+                StatusChanceBonus = choice.StatusChanceBonus,
+                BranchChanceBonus = choice.BranchChanceBonus,
+                HasBranchChanceSet = choice.HasBranchChanceSet,
+                BranchChanceSet = choice.BranchChanceSet,
+                HasBranchCount = choice.HasBranchCount,
+                BranchCount = choice.BranchCount,
+                HasBranchDamageMultiplier = choice.HasBranchDamageMultiplier,
+                BranchDamageMultiplier = choice.BranchDamageMultiplier,
+                HasBranchSearchRadius = choice.HasBranchSearchRadius,
+                BranchSearchRadius = choice.BranchSearchRadius,
+                HasMaxHealthBonus = choice.HasMaxHealthBonus,
+                MaxHealthBonus = choice.MaxHealthBonus,
+                StatusTag = choice.StatusTag,
+                StatusStacksBonus = choice.StatusStacksBonus,
+                HasStatusStacksSet = choice.HasStatusStacksSet,
+                StatusStacksSet = choice.StatusStacksSet
+            });
         }
 
         private static float PositiveOrDefault(float value, float fallback)

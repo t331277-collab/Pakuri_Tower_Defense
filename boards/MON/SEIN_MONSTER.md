@@ -16,6 +16,52 @@ At the start of new work, use this active Sein file. Common monster history is a
 
 Not populated yet.
 
+## Task: 2026-05-19 Sein-A Auto Fire Clarification And Effect Wiring
+
+### Task title
+
+Clarify why selected Sein-A appears idle on scene entry and restore the missing `EffectManager` prefab mapping.
+
+### Goals
+
+- Confirm from inspected runtime code whether selected `sein-a` is supposed to auto-fire on scene entry.
+- Restore the missing `NewRunScene` `EffectManager` mapping for `sein-a`.
+- Keep the result grounded in the current Scripts2 runtime and actual scene/prefab assets.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Unity Play Mode verification remains user-owned.
+- Do not claim Sein-specific attack logic is broken without code evidence.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+`sein-a` visual mapping was restored in `NewRunScene`. The inspected runtime still keeps selected 1P slot `A` on manual fire by default until `AutoBtn` enables `playerAutoSkillEnabled`.
+
+### Next Actions
+
+- User verifies in Play Mode that `AutoBtn` or held primary mouse input now shows the `Sein_A` projectile visual.
+- If the user wants the selected 1P default `A` skill to auto-fire immediately on scene entry for all monsters, that is a separate global combat-policy change.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` routes the selected 1P slot `A` through `HandleSelectedPlayerPrimarySkillInput()` when `playerAutoSkillEnabled` is false and only auto-routes that skill after `EnablePlayerAutoSkillMode()`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:10373` serializes `playerAutoSkillEnabled: 0`, so the default scene state keeps selected 1P `A` on manual fire until the user clicks `AutoBtn`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameAutoSkillButton.cs` and `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:14188` show `AutoBtn` exists and is wired to `InGameCombatManager.EnablePlayerAutoSkillMode()`.
+- `Pakuri/Assets/Prefab/Skill/Sein/Sein_A.prefab` exists in the repository and its `.meta` GUID is `256552cb82ec9c2499fc2e0e01d20dd2`.
+- Before this task, `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:10468` serialized `MonsterId: sein` with `SkillEffects: []`.
+- After this task, `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:10468-10471` serializes `MonsterId: sein`, `SkillId: sein-a`, and prefab GUID `256552cb82ec9c2499fc2e0e01d20dd2`.
+
+### History
+
+- 2026-05-19: User reported that Sein did not appear to attack in-game and noted the missing `EffectManager` Sein prefab assignment.
+- 2026-05-19: Code Builder confirmed the missing scene mapping, restored the `sein-a` prefab entry, and recorded that selected 1P `A` remains manual by default unless `AutoBtn` enables auto fire.
+
 ## Task: 2026-05-14 Sein NewRunScene Prefab Binding And HP Bar
 
 ### Task title
