@@ -6,6 +6,27 @@ This document is the first-read implementation contract for InGame BeamSkill / L
 
 It is not a replacement for code inspection. Its role is to reduce the amount of code a Code Builder must inspect before implementing another beam, laser, ray, slash-line, or straight line tick skill. New BeamSkill work should start from this document, then verify the listed files and the specific skill data being changed.
 
+## What Builder May Read
+
+Default mandatory markdown read set for BeamSkill implementation:
+
+- `AGENTS.md`
+- `MDTREE.md`
+- `AGENTS_ROLE/GAMEBULIDER.md`
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md`
+- this blueprint
+
+Conditional markdown reads only when explicitly justified:
+
+- MON boards only when the user names a specific monster or an inspected failure path names it
+- DATA or asset boards only when the user or inspected failure explicitly touches CSV, prefab, scene serialization, runtime catalog, or `EffectManager` wiring
+- RUN boards only when the user or inspected failure explicitly touches `RunSession`, Offering, Menifest, or `NewRunScene` runtime ownership
+- UI boards only when the user or inspected failure explicitly names UI objects, buttons, canvases, TMP, UXML, or USS
+
+Do not read extra markdown files for BeamSkill work just to gather general background.
+
+Reading the current runtime scripts is still allowed when this blueprint requires code evidence for implementation or verification.
+
 ## Numeric Evidence Priority
 
 Do not invent BeamSkill numbers when the user does not provide exact numeric evidence.

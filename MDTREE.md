@@ -6,6 +6,28 @@
 
 Start every session by reading `AGENTS.md` and this file. Read `BLACKBOARD.md` only when the request is global, ambiguous, or specifically about board policy/status.
 
+## Minimal Read Set Rule
+
+Treat routing as a reduction step, not as permission to read broadly.
+
+Apply this order:
+1. Read the mandatory startup files.
+2. Pick the one primary domain that matches the user request.
+3. Add conditional boards only when the request or the inspected failure path explicitly touches that axis.
+4. Skip every other markdown file.
+
+Conditional reads must be justified by one of these:
+- the user explicitly asked for that domain;
+- the inspected error message names that domain;
+- the inspected code path being edited directly crosses into that domain.
+
+Do not add a board only because it "might be related."
+
+Examples of exclusions:
+- Do not read UI boards for a projectile-runtime task unless the user or the inspected failure names UI objects, buttons, canvases, TMP, UXML, or USS.
+- Do not read DATA or asset boards for a runtime logic task unless the user or the inspected failure names CSV, prefab, scene serialization, catalog, or asset wiring.
+- Do not read RUN boards for a monster implementation task unless the request or inspected path explicitly touches `RunSession`, Offering, Menifest, or `NewRunScene` flow ownership.
+
 ## Root Files
 
 - `AGENTS.md`: startup, evidence, routing, and role entry-point rules.
@@ -22,8 +44,10 @@ Role entry points and track files:
 - Designer gameplay: `AGENTS_ROLE/GAMEDESIGNER_GAMEPLAY.md`
 - Designer handoff/evidence: `AGENTS_ROLE/GAMEDESIGNER_HANDOFF.md`
 - Code Builder: `AGENTS_ROLE/GAMEBULIDER.md`
+- Skill Builder: `AGENTS_ROLE/GAMEBULIDER.md` then `AGENTS_ROLE/GAMEBULIDER_SKILL.md`
 - Code Builder structure: `AGENTS_ROLE/GAMEBULIDER_STRUCTURE.md`
 - Code Builder implementation: `AGENTS_ROLE/GAMEBULIDER_IMPLEMENTATION.md`
+- Code Builder Skill Builder: `AGENTS_ROLE/GAMEBULIDER_SKILL.md`
 - Code Builder refactoring: `AGENTS_ROLE/GAMEBULIDER_REFACT.md`
 - Code Builder quality: `AGENTS_ROLE/GAMEBULIDER_QUALITY.md`
 - Code Builder UI: `AGENTS_ROLE/GAMEBULIDER_UI.md`
@@ -43,6 +67,11 @@ Use when:
 - The user asks about overall status.
 - The user asks about board structure, routing, or global policy.
 
+When the task edits root routing or role-policy markdown such as `AGENTS.md`, `MDTREE.md`, `AGENTS_ROLE/*.md`, or `boards/SkillBluePrint/*.md`, also read:
+- `boards/OPS/AUTOMATION_GUIDE.md`
+
+Do not pull MON, RUN, UI, or DATA boards for that policy task unless the policy change is specifically about their routing.
+
 ### Monster Work
 
 Read the relevant active monster board:
@@ -58,6 +87,8 @@ Use related boards only when needed:
 - NewRunScene UI/Offering: `boards/UI/RUNSCENE_UI.md`
 - General UI/new-scene flow: `boards/UI/UI_BLACKBOARD.md`
 
+Do not read those related boards unless the user request or the inspected failing code/error explicitly crosses into that domain.
+
 Use archives only when older history is actually needed:
 - `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`
 - `boards/ARCHIVE/MON_DETAIL_ARCHIVE_2026-05-12.md`
@@ -72,6 +103,8 @@ Read the narrow active combat board first:
 Also read:
 - Relevant monster board when the work is monster-specific.
 - `boards/RUN/RUN_BLACKBOARD.md` when combat ownership touches `NewRunScene` flow.
+
+Do not add RUN boards for isolated combat logic when `NewRunScene` ownership is not part of the active request or inspected failure.
 
 Use archives only when older implementation history is needed:
 - `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`
@@ -89,6 +122,8 @@ Then narrow only if needed:
 - Menu/new-scene flow: `boards/UI/UI_BLACKBOARD.md`
 - Monster-specific run behavior: relevant `boards/MON/{NAME}_MONSTER.md`
 
+Do not add monster, UI, or save/load boards unless the request or inspected path explicitly requires that slice.
+
 ### UI Work
 
 Read:
@@ -96,6 +131,8 @@ Read:
 - `boards/UI/RUNSCENE_UI.md` for active `NewRunScene` UI behavior.
 
 Also read the relevant monster board when the UI work is monster-specific.
+
+Do not read UI boards for non-UI runtime work just because the affected feature eventually appears on screen.
 
 Use archives only when older deleted-scene or older RunScene history is needed:
 - `boards/ARCHIVE/UI_BLACKBOARD_ARCHIVE_2026-05-18.md`
@@ -112,6 +149,8 @@ Read:
 Also read:
 - Relevant monster board when the work is monster-specific.
 - `boards/RUN/RUN_BLACKBOARD.md` when the data change affects `NewRunScene` runtime ownership.
+
+Do not add RUN boards for isolated CSV/schema changes unless the change directly affects `NewRunScene` ownership or flow.
 
 Use archives only when older transition history is needed:
 - `boards/ARCHIVE/CSV_BLACKBOARD_ARCHIVE_2026-05-14.md`

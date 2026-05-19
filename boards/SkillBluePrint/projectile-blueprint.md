@@ -40,12 +40,31 @@ Builder should assume this workflow:
 
 ## What Builder May Read
 
+Default mandatory markdown read set for projectile implementation:
+
+- `AGENTS.md`
+- `MDTREE.md`
+- `AGENTS_ROLE/GAMEBULIDER.md`
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md`
+- this blueprint
+
+Conditional markdown reads only when explicitly justified:
+
+- the relevant monster board when the user names a specific monster or the inspected failure path names it
+- DATA or asset boards only when the user or inspected failure explicitly touches CSV, prefab, scene serialization, runtime catalog, or `EffectManager` wiring
+- RUN boards only when the user or inspected failure explicitly touches `RunSession`, Offering, Menifest, or `NewRunScene` runtime ownership
+- UI boards only when the user or inspected failure explicitly names UI objects, buttons, canvases, TMP, UXML, or USS
+
+Do not read extra markdown files for projectile work just to gather general background.
+
 Allowed:
 
 - this blueprint
 - `AGENTS.md`
 - `MDTREE.md`
-- routed board files required by current task scope
+- `AGENTS_ROLE/GAMEBULIDER.md`
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md`
+- the routed board files that are explicitly justified by the active request or inspected failure path
 - the current runtime scripts that must be edited or compiled
 
 Not allowed as value-discovery sources unless the user explicitly asks:
@@ -54,6 +73,7 @@ Not allowed as value-discovery sources unless the user explicitly asks:
 - `Pakuri/reference/2.Monster/**`
 - `Pakuri/reference/5.enemy/**`
 - old monster-specific implementations used only to infer behavior
+- unrelated board markdown such as UI, RUN, DATA, OPS, or other monster boards when the request and inspected failure path do not explicitly touch those domains
 
 Important:
 Reading the current runtime scripts is still allowed.

@@ -16,6 +16,15 @@ Do not always read `BLACKBOARD.md` first. Classify the user request through the 
 
 Read `BLACKBOARD.md` only when the request scope is unclear or when global state is required. `BLACKBOARD.md` is the root index; detailed task history should prefer files under `boards/`.
 
+After reading `AGENTS.md` and `MDTREE.md`, decide the smallest markdown read set before opening any additional markdown files.
+
+Separate that decision into:
+- mandatory reads;
+- conditional reads that are justified by the user request or by an inspected error/code path;
+- excluded reads that are intentionally skipped because that axis was not requested.
+
+Do not read extra markdown files "just in case." If a domain such as UI, DATA, RUN, OPS, or a monster-specific board was not requested and is not named by the inspected failure path, leave it unread.
+
 In the first response, briefly confirm:
 - the current role;
 - that the highest absolute rule is understood;
@@ -31,8 +40,11 @@ When performing a role, read and follow that role file:
 
 - Designer: read `AGENTS_ROLE/GAMEDESIGNER.md`.
 - Code Builder: read `AGENTS_ROLE/GAMEBULIDER.md`.
+- Skill Builder: read `AGENTS_ROLE/GAMEBULIDER.md`, then `AGENTS_ROLE/GAMEBULIDER_SKILL.md`.
 - Code Reviewer: read `AGENTS_ROLE/GAMEREVIWER.md`.
 - SimpelWorker: read `AGENTS_ROLE/SIMPELWORKER.md`.
+
+`Skill Builder` is a Code Builder track for skill implementation work.
 
 `SimpelWorker` is for very simple work such as file renames or information extraction. After the required startup reads of `AGENTS.md` and `MDTREE.md`, `SimpelWorker` does not read additional markdown files.
 
@@ -45,8 +57,13 @@ If an exact work path is not provided for `SimpelWorker`, automatically switch t
 At the start of work, follow this order:
 1. Read `AGENTS.md`.
 2. Read `MDTREE.md`.
-3. Route the user request and read the related board files.
+3. Route the user request, define the minimal markdown read set, and read only those related board files.
 4. Read `BLACKBOARD.md` only when global state is required or routing is ambiguous.
+
+When practical, state a short routing decision before broader work begins. Include:
+- request class;
+- markdown files that will be read next;
+- markdown files intentionally not read when that exclusion prevents over-reading.
 
 Each task block must contain at least:
 - Task title

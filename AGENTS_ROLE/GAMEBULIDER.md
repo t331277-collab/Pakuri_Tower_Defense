@@ -13,6 +13,8 @@ Code Builder is responsible for implementation, file changes, and local non-game
 - this file
 - the board files routed by `MDTREE.md`
 
+Do not treat that last bullet as permission to read many boards. Builder must still reduce the markdown set to the smallest justified read list for the active task.
+
 ## Highest Absolute Rule
 
 "Every task and every discussion must be based on evidence from the code that was written or inspected."
@@ -25,6 +27,7 @@ Read only the track files that match the request:
 
 - Structure support, class boundaries, module boundaries, interface contracts, data flow, or file organization: read `AGENTS_ROLE/GAMEBULIDER_STRUCTURE.md`.
 - Direct feature implementation or bug fix: read `AGENTS_ROLE/GAMEBULIDER_IMPLEMENTATION.md`.
+- Skill implementation, skill runtime wiring, skill prefab/effect connection, or user-invoked "Skill Builder" work: read `AGENTS_ROLE/GAMEBULIDER_SKILL.md`.
 - Refactoring or behavior-preserving migration: read `AGENTS_ROLE/GAMEBULIDER_REFACT.md`.
 - Code quality, API stability, static state, hardcoding, complexity, or reviewability standards: read `AGENTS_ROLE/GAMEBULIDER_QUALITY.md`.
 - Unity UI implementation: read `AGENTS_ROLE/GAMEBULIDER_UI.md`.
@@ -32,21 +35,32 @@ Read only the track files that match the request:
 
 If multiple tracks apply, read the smallest set that covers the task.
 
-## Projectile Skill Blueprint Rule
+### Minimal Builder Read Set
 
-When the user gives an implementation command for projectile-related skills, Code Builder must read `boards/SkillBluePrint/projectile-blueprint.md` before editing scripts, prefabs, scenes, or CSV data.
+For most Builder tasks, the mandatory markdown set is:
+- `AGENTS.md`
+- `MDTREE.md`
+- `AGENTS_ROLE/GAMEBULIDER.md`
+- one primary Builder track file
+- one primary routed board when `MDTREE.md` requires it
 
-Use that blueprint to classify the requested projectile behavior as supported, partial, or unsupported by the current common projectile path. Then inspect the specific code and data files listed by the blueprint before implementing.
+Add more markdown files only under these conditions:
+- Read a monster board only when the user names that monster or the inspected failure path names it.
+- Read DATA boards only when the user or the inspected failure explicitly touches CSV, prefab, scene serialization, runtime catalog, or asset wiring.
+- Read RUN boards only when the user or the inspected failure explicitly touches `RunSession`, Offering, Menifest, or `NewRunScene` flow ownership.
+- Read `AGENTS_ROLE/GAMEBULIDER_UI.md` or UI boards only when the user or the inspected failure explicitly touches UI objects, canvases, buttons, TMP, UXML, USS, focus, or navigation.
+- Read `AGENTS_ROLE/GAMEBULIDER_VERIFICATION.md` when build/editor/reviewer/automation constraints are part of the task, not by default for every small code edit.
 
-If the requested behavior is exceptional, such as Vega-A timed three-projectile behavior, branch-lightning variants, bounce, homing, installed/trap projectiles, multi-hitbox projectiles, mark payloads, or impact-area projectiles, do not assume the common projectile path supports it. Either implement a deliberate exception with explicit evidence and verification, or create a reusable extension point when the behavior is expected to be shared by multiple skills.
+Do not read a domain markdown file only because it might become relevant later.
 
-## BeamSkill Blueprint Rule
+### Routing Decision Log
 
-When the user gives an implementation command for BeamSkill, beam, laser, ray, slash-line, or `LineAttack` skills, Code Builder must read `boards/SkillBluePrint/BeamSkill-blueprint.md` before editing scripts, prefabs, scenes, or CSV data.
+Before reading additional markdown beyond the mandatory startup set, Builder should state a short routing decision in commentary.
 
-Use that blueprint to classify the requested BeamSkill behavior as supported, partial, or unsupported by the current common BeamSkill / LineAttack path. Then inspect the specific code and data files listed by the blueprint before implementing.
-
-If the requested behavior is exceptional, such as width/duration choice modifiers, stop-at-first-target behavior, knockback, resistance reduction, forked/chained/curved/sweeping beams, delayed telegraph damage, or custom per-target tick rules, do not assume the common BeamSkill path supports it. Either implement a deliberate exception with explicit evidence and verification, or create a reusable extension point when the behavior is expected to be shared by multiple skills.
+Use this format or equivalent:
+- request class
+- markdown files to read next
+- markdown files intentionally not read because that axis was not requested and is not named by the inspected failure path
 
 ## CSV Encoding Rule
 
