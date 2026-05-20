@@ -10,8 +10,7 @@ Use this file when the user explicitly invokes "Skill Builder" or asks Code Buil
 
 For Skill Builder work, read only:
 
-- `AGENTS.md`
-- `MDTREE.md`
+- `AGENTS_ROLE/COMMON.md`
 - `AGENTS_ROLE/GAMEBULIDER.md`
 - this file
 - exactly one matching `boards/SkillBluePrint/*-blueprint.md`

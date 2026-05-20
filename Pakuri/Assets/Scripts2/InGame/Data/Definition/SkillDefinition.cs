@@ -122,6 +122,7 @@ namespace Pakuri.Data
         public int MagazineCapacity;
         public float ReloadSeconds;
         public float ShotIntervalSeconds;
+        public int ProjectileBurstCount;
         public float ProjectileSpeed;
         public int PierceCount;
         public bool CriticalAllowed = true;

@@ -4,6 +4,46 @@
 - Older broad data/asset history remains in `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md` and other archive files under `boards/ARCHIVE/`.
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 
+## Task: 2026-05-20 Sein-B EffectManager Scene Wiring
+
+### Task title
+
+Wire Sein-B to the requested shared Sein projectile prefab.
+
+### Goals
+
+- Keep active monster skill visuals scene-owned through `EffectManager`.
+- Reuse `Assets/Prefab/Skill/Sein/Sein_A.prefab` for `sein-b` as requested.
+- Avoid adding a parallel CSV prefab-path route for base monster skill visuals.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- User-authored prefab content is preserved.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and file-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Sein-B projectiles use the requested `Sein_A` visual.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Skill/Sein/Sein_A.prefab` exists and its `.meta` GUID is `256552cb82ec9c2499fc2e0e01d20dd2`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now serializes `sein-b` under the `sein` `EffectManager` group with prefab GUID `256552cb82ec9c2499fc2e0e01d20dd2`.
+- `Pakuri/Assets/Scripts2/InGame/Core/EffectManager.cs` resolves monster skill visuals through `ResolveMonsterSkillEffectPrefab(monsterId, skillId)`.
+
+### History
+
+- 2026-05-20: User requested `Sein-b` to use `Assets/Prefab/Skill/Sein/Sein_A.prefab`; Code Builder added the scene mapping.
+
 ## Task: 2026-05-19 Sein-A EffectManager Scene Wiring
 
 ### Task title

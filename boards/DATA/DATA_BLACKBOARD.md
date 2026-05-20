@@ -4,6 +4,50 @@
 - Older CSV-transition history remains in `boards/ARCHIVE/CSV_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 
+## Task: 2026-05-20 Projectile Burst Count CSV Field
+
+### Task title
+
+Add shared projectile burst count data to active monster skill CSV.
+
+### Goals
+
+- Add a reusable CSV field for sequential projectile burst count.
+- Keep `monster_skills.csv` as the source of Sein-B numeric runtime behavior.
+- Keep existing simultaneous projectile modifiers compatible by using the existing `additional_projectile_bonus` column for burst skills.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- CSV stays UTF-8.
+- Existing non-burst projectile skills should keep burst count 1.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and validated through build plus Unity runtime mapping inspection.
+
+### Next Actions
+
+- Future projectile skills that need sequential volleys should set `projectile_burst_count` instead of adding monster-specific runtime branches.
+- If a future skill needs both sequential burst count and simultaneous fan count independently modified by choices, add a separate choice column instead of overloading `additional_projectile_bonus`.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now includes `projectile_burst_count`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs` parses `projectile_burst_count` into `SkillRow.ProjectileBurstCount`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs` copies `SkillRow.ProjectileBurstCount` into `SkillDefinition.ProjectileBurstCount`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` maps `SkillDefinition.ProjectileBurstCount` into `ProjectileSkillData.Projectile.BurstProjectileCount`.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skills.csv` returned `sein-b` with display name `작열 난사` and `projectile_burst_count=5`.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv` returned `sein-b-trait-1 additional_projectile_bonus=2`, `sein-b-master-1 additional_projectile_bonus=4`, and `sein-b-master-2 additional_projectile_bonus=-2`.
+
+### History
+
+- 2026-05-20: Code Builder added the field for Sein-B and kept it generic for future projectile skills.
+
 ## Task: 2026-05-19 Monster Choice CSV Unification
 
 ### Task title

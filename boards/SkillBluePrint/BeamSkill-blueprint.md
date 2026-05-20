@@ -12,6 +12,7 @@ Default mandatory markdown read set for BeamSkill implementation:
 
 - `AGENTS.md`
 - `MDTREE.md`
+- `AGENTS_ROLE/COMMON.md`
 - `AGENTS_ROLE/GAMEBULIDER.md`
 - `AGENTS_ROLE/GAMEBULIDER_SKILL.md`
 - this blueprint

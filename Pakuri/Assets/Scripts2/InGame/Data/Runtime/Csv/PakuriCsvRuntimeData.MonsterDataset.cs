@@ -67,6 +67,7 @@ namespace Pakuri.Data
             public int MagazineCapacity;
             public float ReloadSeconds;
             public float ShotIntervalSeconds;
+            public int ProjectileBurstCount;
             public float ProjectileSpeed;
             public int PierceCount;
             public bool CriticalAllowed;
@@ -196,6 +197,7 @@ namespace Pakuri.Data
                 MagazineCapacity = record.ReadInt("magazine_capacity"),
                 ReloadSeconds = record.ReadFloat("reload_seconds"),
                 ShotIntervalSeconds = record.ReadFloat("shot_interval_seconds"),
+                ProjectileBurstCount = record.ReadInt("projectile_burst_count"),
                 ProjectileSpeed = record.ReadFloat("projectile_speed"),
                 PierceCount = record.ReadInt("pierce_count"),
                 CriticalAllowed = record.ReadBool("critical_allowed"),

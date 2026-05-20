@@ -186,6 +186,7 @@ namespace Pakuri.Data
                     MagazineCapacity = skill.MagazineCapacity,
                     ReloadSeconds = skill.ReloadSeconds,
                     ShotIntervalSeconds = skill.ShotIntervalSeconds,
+                    ProjectileBurstCount = skill.ProjectileBurstCount,
                     ProjectileSpeed = skill.ProjectileSpeed,
                     PierceCount = skill.PierceCount,
                     CriticalAllowed = skill.CriticalAllowed,

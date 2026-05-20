@@ -38,6 +38,7 @@ The default role is Designer.
 
 When performing a role, read and follow that role file:
 
+- Common role rules: read `AGENTS_ROLE/COMMON.md` before Designer, Code Builder, Skill Builder, or Code Reviewer role files.
 - Designer: read `AGENTS_ROLE/GAMEDESIGNER.md`.
 - Code Builder: read `AGENTS_ROLE/GAMEBULIDER.md`.
 - Skill Builder: read `AGENTS_ROLE/GAMEBULIDER.md`, then `AGENTS_ROLE/GAMEBULIDER_SKILL.md`.
@@ -46,7 +47,7 @@ When performing a role, read and follow that role file:
 
 `Skill Builder` is a Code Builder track for skill implementation work.
 
-`SimpelWorker` is for very simple work such as file renames or information extraction. After the required startup reads of `AGENTS.md` and `MDTREE.md`, `SimpelWorker` does not read additional markdown files.
+`SimpelWorker` is for very simple work such as file renames or information extraction. After the required startup reads of `AGENTS.md` and `MDTREE.md`, `SimpelWorker` does not read additional markdown files, including `AGENTS_ROLE/COMMON.md`.
 
 If an exact work path is not provided for `SimpelWorker`, automatically switch to the Designer role.
 

@@ -16,8 +16,3 @@ UI work should check:
 - localization keys instead of hardcoded player-facing strings;
 - pooling or virtualization for repeated list/grid elements;
 - accessibility basics such as text scaling, colorblind-safe indicators, touch target size, and subtitle requirements where relevant.
-
-## Boundary
-
-Do not run Unity Play Mode for gameplay verification. User performs Play Mode verification.
-

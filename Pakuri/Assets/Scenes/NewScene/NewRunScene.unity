@@ -10469,6 +10469,8 @@ MonoBehaviour:
     SkillEffects:
     - SkillId: sein-a
       Prefab: {fileID: 2052659690808381238, guid: 256552cb82ec9c2499fc2e0e01d20dd2, type: 3}
+    - SkillId: sein-b
+      Prefab: {fileID: 2052659690808381238, guid: 256552cb82ec9c2499fc2e0e01d20dd2, type: 3}
   - MonsterId: vega
     SkillEffects: []
   enemySkillEffects:

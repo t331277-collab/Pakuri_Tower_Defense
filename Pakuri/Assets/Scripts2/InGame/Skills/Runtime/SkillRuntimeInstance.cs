@@ -24,13 +24,16 @@ namespace Pakuri.InGame
         public int MagazineRemaining { get; private set; }
 
         private int effectiveMaxMagazineSize;
+        private int effectiveBurstProjectileCount;
         private float effectiveReloadDuration;
         private float effectiveTickInterval;
         private float effectiveCooldownDuration;
+        private int queuedBurstShotsRemaining;
 
         public bool IsCasting => CastRemaining > 0f;
         public bool IsActive => ActiveDurationRemaining > 0f;
         public bool IsReloading => ReloadRemaining > 0f;
+        public bool IsBursting => queuedBurstShotsRemaining > 0;
         public int MaxMagazineSize => effectiveMaxMagazineSize;
         public float ReloadDuration => effectiveReloadDuration;
         public bool UsesMagazine => MaxMagazineSize > 0;
@@ -40,6 +43,7 @@ namespace Pakuri.InGame
         public void ResetRuntimeState()
         {
             effectiveMaxMagazineSize = ResolveMaxMagazineSize(Data);
+            effectiveBurstProjectileCount = ResolveBurstProjectileCount(Data);
             effectiveReloadDuration = ResolveReloadDuration(Data);
             effectiveTickInterval = ResolveTickInterval(Data);
             effectiveCooldownDuration = ResolveCooldownDuration(Data);
@@ -49,6 +53,7 @@ namespace Pakuri.InGame
             TickRemaining = 0f;
             ReloadRemaining = 0f;
             MagazineRemaining = MaxMagazineSize;
+            queuedBurstShotsRemaining = 0;
         }
 
         public void Tick(float deltaTime)
@@ -64,7 +69,11 @@ namespace Pakuri.InGame
             TickRemaining = TickDown(TickRemaining, deltaTime);
             ReloadRemaining = TickDown(ReloadRemaining, deltaTime);
 
-            if (UsesMagazine && MagazineRemaining <= 0 && ReloadRemaining <= 0f)
+            if (UsesMagazine
+                && MagazineRemaining <= 0
+                && ReloadRemaining <= 0f
+                && CooldownRemaining <= 0f
+                && !IsBursting)
             {
                 MagazineRemaining = MaxMagazineSize;
             }
@@ -73,13 +82,22 @@ namespace Pakuri.InGame
         public bool CanCastWithSnapshot(SkillExecutionSnapshot snapshot)
         {
             RefreshRuntimeModifiers(snapshot);
-            return Data != null
-                && Data.IsActive
-                && CooldownRemaining <= 0f
-                && !IsCasting
+            if (Data == null
+                || !Data.IsActive
+                || IsCasting
+                || !IsCastIntervalReady())
+            {
+                return false;
+            }
+
+            if (IsBursting)
+            {
+                return !IsReloading;
+            }
+
+            return CooldownRemaining <= 0f
                 && !IsReloading
-                && HasMagazine
-                && IsCastIntervalReady();
+                && HasMagazine;
         }
 
         public bool TryBeginCast()
@@ -89,6 +107,19 @@ namespace Pakuri.InGame
 
         public bool TryBeginCast(SkillExecutionSnapshot snapshot)
         {
+            RefreshRuntimeModifiers(snapshot);
+            if (IsBursting)
+            {
+                queuedBurstShotsRemaining = Math.Max(0, queuedBurstShotsRemaining - 1);
+                TickRemaining = effectiveTickInterval;
+                if (!IsBursting)
+                {
+                    BeginRecoveryIfNeeded();
+                }
+
+                return true;
+            }
+
             if (!CanCastWithSnapshot(snapshot))
             {
                 return false;
@@ -100,22 +131,14 @@ namespace Pakuri.InGame
             }
 
             var timing = Data.Timing;
-            CooldownRemaining = effectiveCooldownDuration;
             CastRemaining = timing != null ? Mathf.Max(0f, timing.CastTime) : 0f;
             ActiveDurationRemaining = timing != null ? Mathf.Max(0f, timing.ActiveDuration) : 0f;
             TickRemaining = effectiveTickInterval;
+            queuedBurstShotsRemaining = Math.Max(0, effectiveBurstProjectileCount - 1);
 
-            if (UsesMagazine && MagazineRemaining <= 0)
+            if (!IsBursting)
             {
-                var reload = ReloadDuration;
-                if (reload > 0f)
-                {
-                    ReloadRemaining = reload;
-                }
-                else
-                {
-                    MagazineRemaining = MaxMagazineSize;
-                }
+                BeginRecoveryIfNeeded();
             }
 
             return true;
@@ -146,6 +169,7 @@ namespace Pakuri.InGame
         {
             var previousMax = effectiveMaxMagazineSize;
             var nextMax = ResolveMaxMagazineSize(Data);
+            var nextBurst = ResolveBurstProjectileCount(Data);
             effectiveReloadDuration = ResolveReloadDuration(Data);
             effectiveTickInterval = ResolveTickInterval(Data);
             effectiveCooldownDuration = ResolveCooldownDuration(Data);
@@ -153,12 +177,18 @@ namespace Pakuri.InGame
             if (snapshot != null)
             {
                 nextMax = Math.Max(0, nextMax + snapshot.MagazineBonus);
+                if (nextBurst > 1)
+                {
+                    nextBurst += snapshot.AdditionalProjectileBonus;
+                }
+
                 effectiveReloadDuration *= Mathf.Max(0f, snapshot.ReloadTimeMultiplier);
                 effectiveTickInterval *= Mathf.Max(0f, snapshot.ShotIntervalMultiplier);
                 effectiveCooldownDuration *= Mathf.Max(0f, snapshot.CooldownMultiplier);
             }
 
             effectiveMaxMagazineSize = nextMax;
+            effectiveBurstProjectileCount = Math.Max(1, nextBurst);
             if (previousMax == effectiveMaxMagazineSize)
             {
                 return;
@@ -193,6 +223,14 @@ namespace Pakuri.InGame
                 : 0;
         }
 
+        private static int ResolveBurstProjectileCount(SkillData data)
+        {
+            var projectile = data as ProjectileSkillData;
+            return projectile != null && projectile.Projectile != null
+                ? Math.Max(1, projectile.Projectile.BurstProjectileCount)
+                : 1;
+        }
+
         private static float ResolveReloadDuration(SkillData data)
         {
             var projectile = data as ProjectileSkillData;
@@ -211,6 +249,32 @@ namespace Pakuri.InGame
         {
             var timing = data != null ? data.Timing : null;
             return timing != null ? Mathf.Max(0f, timing.Cooldown) : 0f;
+        }
+
+        private void BeginRecoveryIfNeeded()
+        {
+            if (!UsesMagazine)
+            {
+                CooldownRemaining = effectiveCooldownDuration;
+                return;
+            }
+
+            if (MagazineRemaining > 0)
+            {
+                return;
+            }
+
+            CooldownRemaining = effectiveCooldownDuration;
+            if (ReloadDuration > 0f)
+            {
+                ReloadRemaining = ReloadDuration;
+                return;
+            }
+
+            if (CooldownRemaining <= 0f)
+            {
+                MagazineRemaining = MaxMagazineSize;
+            }
         }
     }
 }

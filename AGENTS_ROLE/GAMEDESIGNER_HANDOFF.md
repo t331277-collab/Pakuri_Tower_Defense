@@ -4,16 +4,6 @@
 
 Designer uses Unity-MCP tools to check whether Unity project evidence is clear.
 
-Designer does not directly run Play Mode to verify gameplay. Play Mode verification belongs to the user.
-
-## Evidence Rules
-
-All design judgments must be based on real files, code, Unity-MCP output, and command output.
-
-If a command cannot be executed or a file cannot be read, state that fact first.
-
-Do not assume this is a Git repository. Use Git-based evidence only when command output confirms that Git is available and the current folder is a Git work tree.
-
 ## Handoff Rules
 
 When handing off to Code Builder, include:
@@ -30,4 +20,3 @@ When handing off to Code Builder, include:
 - acceptance criteria;
 - verification expected from Code Builder;
 - related board files that must be updated.
-

@@ -166,6 +166,7 @@ namespace Pakuri.InGame
     {
         [Min(0)] public int MagazineSize;
         [Min(0f)] public float ReloadTime;
+        [Min(1)] public int BurstProjectileCount = 1;
         [Min(1)] public int ProjectilesPerShot = 1;
         [Min(0)] public int PierceCount;
         [Min(0f)] public float ProjectileSpeed;

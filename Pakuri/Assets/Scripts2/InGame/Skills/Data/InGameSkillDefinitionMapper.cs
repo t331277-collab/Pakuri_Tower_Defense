@@ -124,6 +124,7 @@ namespace Pakuri.InGame
             {
                 projectile.Projectile.MagazineSize = source.MagazineCapacity;
                 projectile.Projectile.ReloadTime = source.ReloadSeconds;
+                projectile.Projectile.BurstProjectileCount = Math.Max(1, source.ProjectileBurstCount);
                 projectile.Projectile.ProjectilesPerShot = 1;
                 projectile.Projectile.PierceCount = source.PierceCount;
                 projectile.Projectile.ProjectileSpeed = source.ProjectileSpeed;

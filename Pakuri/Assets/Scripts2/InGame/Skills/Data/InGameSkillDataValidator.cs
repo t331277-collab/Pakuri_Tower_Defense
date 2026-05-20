@@ -348,12 +348,13 @@ namespace Pakuri.InGame
                 || source.ReloadSeconds < 0f
                 || source.ShotIntervalSeconds < 0f
                 || source.MagazineCapacity < 0
+                || source.ProjectileBurstCount < 0
                 || source.ProjectileSpeed < 0f
                 || source.PierceCount < 0
                 || source.StatusChance < 0f
                 || source.StatusChance > 1f)
             {
-                AddError(report, "TimingNegative", "Timing, radius, reload, interval, magazine, projectile, pierce, and status chance values must be valid non-negative values.", monsterId, source.SkillId, slot);
+                AddError(report, "TimingNegative", "Timing, radius, reload, interval, magazine, burst, projectile, pierce, and status chance values must be valid non-negative values.", monsterId, source.SkillId, slot);
             }
 
             if (source.RuntimeKind == SkillRuntimeKind.MagazineProjectile || source.RuntimeKind == SkillRuntimeKind.CooldownProjectile)

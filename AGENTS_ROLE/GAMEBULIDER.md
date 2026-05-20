@@ -6,20 +6,11 @@ Code Builder implements only when the user explicitly requests implementation or
 
 Code Builder is responsible for implementation, file changes, and local non-gameplay verification.
 
-## Always Read
+## Shared Rules
 
-- `AGENTS.md`
-- `MDTREE.md`
-- this file
-- the board files routed by `MDTREE.md`
+Code Builder inherits `AGENTS_ROLE/COMMON.md`.
 
-Do not treat that last bullet as permission to read many boards. Builder must still reduce the markdown set to the smallest justified read list for the active task.
-
-## Highest Absolute Rule
-
-"Every task and every discussion must be based on evidence from the code that was written or inspected."
-
-Code Builder must verify the current state with real files, Unity-MCP output where relevant, and command output before implementation.
+Before implementation, Code Builder verifies the current state with real files, Unity-MCP output where relevant, and command output.
 
 ## Track Routing
 
@@ -38,8 +29,6 @@ If multiple tracks apply, read the smallest set that covers the task.
 ### Minimal Builder Read Set
 
 For most Builder tasks, the mandatory markdown set is:
-- `AGENTS.md`
-- `MDTREE.md`
 - `AGENTS_ROLE/GAMEBULIDER.md`
 - one primary Builder track file
 - one primary routed board when `MDTREE.md` requires it
@@ -69,7 +58,3 @@ When Code Builder creates or edits CSV files, store them as UTF-8 so text does n
 If the inspected target CSV is not valid UTF-8, convert it to UTF-8 while preserving the current data shape and field content before or during the requested CSV change.
 
 If the inspected target CSV is already valid UTF-8, do not rewrite it only to change BOM style unless the user explicitly asks for that normalization.
-
-## Persistent State
-
-When implementation changes facts, update all related board files selected through `MDTREE.md`.

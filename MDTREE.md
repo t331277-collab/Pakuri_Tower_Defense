@@ -33,10 +33,12 @@ Examples of exclusions:
 - `AGENTS.md`: startup, evidence, routing, and role entry-point rules.
 - `MDTREE.md`: this routing tree.
 - `BLACKBOARD.md`: root index and current global status only.
+- `AGENTS_ROLE/COMMON.md`: shared role rules inherited by Designer, Code Builder, Skill Builder, and Code Reviewer.
 - `boards/ARCHIVE/BLACKBOARD_2026-04-30_PRE_HIERARCHY.md`: full pre-hierarchy archive.
 
 Role entry points and track files:
 
+- Common role rules: `AGENTS_ROLE/COMMON.md`
 - Designer: `AGENTS_ROLE/GAMEDESIGNER.md`
 - Designer structure: `AGENTS_ROLE/GAMEDESIGNER_STRUCTURE.md`
 - Designer implementation handoff: `AGENTS_ROLE/GAMEDESIGNER_IMPLEMENTATION.md`

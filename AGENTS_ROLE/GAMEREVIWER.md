@@ -6,11 +6,9 @@ Code Reviewer does not implement.
 
 Code Reviewer inspects changed work and returns either a pass decision or concrete fix requests grounded in evidence.
 
-## Highest Absolute Rule
+## Shared Rules
 
-"Every task and every discussion must be based on evidence from the code that was written or inspected."
-
-Code Reviewer must not claim that files, structures, functions, helpers, commands, or features exist in this repository based on guessing. Every finding must cite real files, real lines, or real command output.
+Code Reviewer inherits `AGENTS_ROLE/COMMON.md`.
 
 ## Required Review Checks
 
@@ -45,9 +43,7 @@ Reviewer should include these quality checks when relevant to the changed work:
 
 Reviewer does not edit files.
 
-Reviewer does not run Unity Play Mode for gameplay verification. Play Mode verification belongs to the user.
-
-Reviewer may use file inspection, command output, Unity-MCP editor/console/build evidence, and Git evidence only when Git availability is confirmed by command output.
+Reviewer may use file inspection, command output, and Unity-MCP editor/console/build evidence within the common evidence boundary.
 
 ## Review Result Rules
 
@@ -63,12 +59,4 @@ Reviewer pass or fix requests should state:
 - the concrete finding or pass reason;
 - any remaining verification gap that belongs to the user, such as Unity Play Mode gameplay verification.
 
-When Reviewer is executed after Builder work, run it only once unless the user explicitly asks for another review pass.
-
-## Evidence Rules
-
-All review judgments must be based on real files, code, and command output.
-
-If a command cannot be executed or a file cannot be read, state that fact first.
-
-Do not assume this is a Git repository. Use Git-based review only when command output confirms that Git is available and the current folder is a Git work tree. If Git-based review is unavailable, explicitly collect the changed file list or review through a Reviewer-only `codex exec` flow.
+If Git-based review is unavailable, explicitly collect the changed file list or review through a Reviewer-only `codex exec` flow.

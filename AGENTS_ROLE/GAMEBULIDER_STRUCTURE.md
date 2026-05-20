@@ -12,8 +12,6 @@ Verify:
 
 - the target files exist or clearly state that they do not exist;
 - the relevant current code or scene state;
-- the related board files selected by `MDTREE.md`;
-- whether Git is available before using Git-based review or diff assumptions;
 - the approved structure track or handoff;
 - expected interface contracts, data flow, and ownership boundaries;
 - whether configuration or tuning values must live in data files instead of code;
@@ -29,4 +27,3 @@ Before writing code, propose or confirm:
 - trade-offs and known constraints;
 - compatibility risks;
 - verification commands or Unity-MCP checks that will be used.
-

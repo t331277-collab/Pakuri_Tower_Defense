@@ -76,11 +76,15 @@ namespace Pakuri.InGame
             var projectile = skill.Projectile;
             var speed = projectile != null ? projectile.ProjectileSpeed : 0f;
             var pierce = projectile != null ? projectile.PierceCount : 0;
+            var burstProjectileCount = projectile != null ? Math.Max(1, projectile.BurstProjectileCount) : 1;
             var projectileCount = projectile != null ? Math.Max(1, projectile.ProjectilesPerShot) : 1;
             if (snapshot != null)
             {
                 pierce += snapshot.PierceBonus;
-                projectileCount += snapshot.AdditionalProjectileBonus;
+                if (burstProjectileCount <= 1)
+                {
+                    projectileCount += snapshot.AdditionalProjectileBonus;
+                }
             }
 
             projectileCount = Math.Max(1, projectileCount);

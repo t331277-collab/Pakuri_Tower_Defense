@@ -44,6 +44,7 @@ Default mandatory markdown read set for projectile implementation:
 
 - `AGENTS.md`
 - `MDTREE.md`
+- `AGENTS_ROLE/COMMON.md`
 - `AGENTS_ROLE/GAMEBULIDER.md`
 - `AGENTS_ROLE/GAMEBULIDER_SKILL.md`
 - this blueprint
@@ -62,6 +63,7 @@ Allowed:
 - this blueprint
 - `AGENTS.md`
 - `MDTREE.md`
+- `AGENTS_ROLE/COMMON.md`
 - `AGENTS_ROLE/GAMEBULIDER.md`
 - `AGENTS_ROLE/GAMEBULIDER_SKILL.md`
 - the routed board files that are explicitly justified by the active request or inspected failure path
@@ -95,6 +97,7 @@ Minimum required fields:
 - `ProjectileSpeed`
 - `PierceCount`
 - `ShotIntervalSeconds`
+- `BurstProjectileCount`
 - `CooldownSeconds`
 - `MagazineSize`
 - `ReloadSeconds`
@@ -115,7 +118,6 @@ If any required field is missing, Builder must stop and report it.
 
 Not part of the current common projectile input contract:
 
-- `ProjectileCount`
 - `LifetimeSeconds`
 - `MaxTravelDistance`
 - `DestroyBoundaryPolicy`
@@ -126,6 +128,9 @@ Not part of the current common projectile input contract:
 Do not require those fields for normal projectile work.
 If a request truly depends on one of them, Builder should treat that as a special case and ask the user.
 
+Use `BurstProjectileCount` for sequential same-direction projectiles fired within one magazine cycle.
+Use the existing shared `ProjectilesPerShot`/additional-projectile path only for simultaneous fan/spread projectiles.
+
 ## Common Projectile Contract
 
 The following behavior is considered normal shared projectile work.
@@ -134,6 +139,7 @@ If the requested skill fits this list, Builder should implement it without askin
 - straight projectile travel
 - one-shot projectile spawn
 - simultaneous multi-projectile fan spread
+- sequential burst projectiles fired at `ShotIntervalSeconds` within one magazine cycle
 - cooldown-based cast gating
 - magazine and reload behavior
 - shot interval gating
@@ -171,7 +177,7 @@ When a parsed projectile skill is implemented, Builder should wire the provided 
 - parsed identity -> runtime skill identity
 - parsed damage values -> shared projectile damage spec
 - parsed cooldown / interval / magazine / reload -> shared runtime timing and ammo state
-- parsed projectile speed / pierce / count -> shared projectile blueprint spec
+- parsed projectile speed / pierce / burst count / simultaneous count -> shared projectile blueprint spec
 - parsed targeting flags -> shared auto/manual direction behavior
 - parsed status values -> shared on-hit status spec
 - parsed prefab info -> shared projectile visual binding path
@@ -187,7 +193,7 @@ Builder must stop and ask the user when the request contains behavior outside th
 
 Stop-and-ask examples:
 
-- timed burst or delayed repeated firing
+- delayed repeated firing that is not a uniform `BurstProjectileCount` sequence
 - homing or guided projectile
 - bounce or ricochet
 - trap, install, mine, or stationary projectile

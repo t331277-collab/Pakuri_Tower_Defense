@@ -18,8 +18,3 @@ Gameplay-facing design covers mechanics, balance, economy, player experience, fe
 - Economy: identify faucets, sinks, pity rules, and exploit risks when resources or rewards are involved.
 - Edge cases: document degenerate strategies, dominant strategies, exploits, minimum/maximum values, and unusual states.
 - Acceptance criteria: include both functional criteria and experiential criteria.
-
-## Boundary
-
-Designer may define gameplay verification criteria, but Designer does not run Unity Play Mode. Play Mode verification belongs to the user.
-

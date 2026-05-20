@@ -16,6 +16,52 @@ At the start of new work, use this active Sein file. Common monster history is a
 
 Not populated yet.
 
+## Task: 2026-05-20 Sein-B Shared Burst Projectile Implementation
+
+### Task title
+
+Implement Sein-B through the shared projectile burst extension.
+
+### Goals
+
+- Add a shared sequential burst count path instead of a Sein-only projectile branch.
+- Make `sein-b` fire 5 projectiles per cycle at `shot_interval_seconds`, repeat that cycle `magazine_capacity` times, then wait on cooldown/reload.
+- Wire `sein-b` to the requested `Assets/Prefab/Skill/Sein/Sein_A.prefab` visual through `EffectManager`.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- Unity Play Mode gameplay verification remains user-owned.
+- Keep the implementation reusable for future projectile skills such as Vega.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and non-gameplay verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Sein-B emits 5 sequential projectiles per cycle and repeats for 4 magazine cycles before the 6 second recovery.
+- If Sein-B crit-chance master behavior is required, implement that as a separate choice-modifier extension because the current shared choice path still lacks crit chance modifiers.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/sein/skill/b-blazing-volley.md` defines `탄환 수 5`, `탄창 수 4`, `재장전 시간 6.0초`, `발사 간격 0.18초`, base fire damage `14`, attack coefficient `0.65`, and projectile speed `20.0`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now has `projectile_burst_count`; the `sein-b` row maps to `projectile_burst_count=5`, `magazine_capacity=4`, `shot_interval_seconds=0.18`, `cooldown_seconds=6`, `reload_seconds=6`, `projectile_speed=20`, and `pierce_count=0`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs` now tracks queued burst shots and starts recovery only after the queued burst completes and the magazine is exhausted.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` keeps `AdditionalProjectileBonus` as simultaneous fan-spread only when `BurstProjectileCount <= 1`; burst skills use that bonus in runtime burst count instead.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now maps `sein-b` to prefab GUID `256552cb82ec9c2499fc2e0e01d20dd2`, the existing `Assets/Prefab/Skill/Sein/Sein_A.prefab`.
+- `PakuriCsvRuntimeData.SyncAndValidateCsvRuntimeCatalogsForEditor()` followed by runtime mapping inspection returned `sein-b:burst=5;mag=4;interval=0.18;cooldown=6;reload=6;speed=20`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained. A first parallel runtime build hit only an `Assembly-CSharp.dll` file lock and passed when rerun alone.
+- Unity-MCP console after refresh still contained MCP client-exit and `UnityEditor.Graphs` exceptions, but no `Pakuri` skill/CSV error was reported in the retrieved entries.
+
+### History
+
+- 2026-05-20: User approved an exact shared implementation for the Sein-B 5-shot burst cycle instead of the approximate existing magazine projectile behavior.
+
 ## Task: 2026-05-19 Sein-A Auto Fire Clarification And Effect Wiring
 
 ### Task title

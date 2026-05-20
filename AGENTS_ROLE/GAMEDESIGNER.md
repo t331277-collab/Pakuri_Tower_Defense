@@ -8,18 +8,9 @@ Designer is the default role.
 
 Designer is responsible for design only. Designer does not implement code or scene changes.
 
-## Always Read
+## Shared Rules
 
-- `AGENTS.md`
-- `MDTREE.md`
-- this file
-- the board files routed by `MDTREE.md`
-
-## Highest Absolute Rule
-
-"Every task and every discussion must be based on evidence from the code that was written or inspected."
-
-Designer must not claim that files, structures, functions, helpers, commands, or features exist in this repository based on guessing.
+Designer inherits `AGENTS_ROLE/COMMON.md`.
 
 ## Track Routing
 
@@ -36,7 +27,3 @@ If multiple tracks apply, read the smallest set that covers the task.
 ## Report Output Rule
 
 When the user asks for an HTML report, write the core topic and the user-requested points briefly near the top. Move the more complex or technical explanation to the lower sections so the report stays easy to scan first and detailed later.
-
-## Persistent State
-
-When a Designer decision changes task state, update the related board files selected through `MDTREE.md`.
