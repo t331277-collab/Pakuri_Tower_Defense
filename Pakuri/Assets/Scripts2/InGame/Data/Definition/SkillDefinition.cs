@@ -96,6 +96,8 @@ namespace Pakuri.Data
         public int StatusStacksBonus;
         public bool HasStatusStacksSet;
         public int StatusStacksSet;
+        public bool HasStatusElementDamageTakenBonus;
+        public float StatusElementDamageTakenBonus;
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
     }
@@ -129,6 +131,20 @@ namespace Pakuri.Data
         public string StatusEffectId;
         [Range(0f, 1f)] public float StatusChance;
         public string StatusEffectLabel;
+        public float StatusDurationSeconds;
+        public int StatusMaxStacks;
+        public int StatusStackAmount;
+        public string StatusTargetScope;
+        public string StatusMergePolicy;
+        public string ShieldAmountRefreshPolicy;
+        public float StatusActionSpeedBonus;
+        public float StatusMoveSpeedBonus;
+        public float StatusAttackPowerBonus;
+        public float StatusDamageTakenBonus;
+        public float StatusCriticalDamageTakenBonus;
+        public float StatusCriticalResistanceBonus;
+        public float StatusElementResistReduction;
+        public float StatusElementDamageTakenBonus;
         [TextArea(2, 4)] public string Summary;
         public SkillChoiceDefinition[] EnhancementChoices = Array.Empty<SkillChoiceDefinition>();
         public SkillChoiceDefinition[] MasterSkillChoices = Array.Empty<SkillChoiceDefinition>();

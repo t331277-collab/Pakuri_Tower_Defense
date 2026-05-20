@@ -63,10 +63,11 @@ namespace Pakuri.InGame
                 return;
             }
 
-            CooldownRemaining = TickDown(CooldownRemaining, deltaTime);
-            CastRemaining = TickDown(CastRemaining, deltaTime);
+            var actionDeltaTime = deltaTime * StatusEffectRuntime.ResolveActionSpeedMultiplier(Owner);
+            CooldownRemaining = TickDown(CooldownRemaining, actionDeltaTime);
+            CastRemaining = TickDown(CastRemaining, actionDeltaTime);
             ActiveDurationRemaining = TickDown(ActiveDurationRemaining, deltaTime);
-            TickRemaining = TickDown(TickRemaining, deltaTime);
+            TickRemaining = TickDown(TickRemaining, actionDeltaTime);
             ReloadRemaining = TickDown(ReloadRemaining, deltaTime);
 
             if (UsesMagazine

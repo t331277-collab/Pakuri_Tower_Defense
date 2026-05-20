@@ -4,6 +4,49 @@
 - Older broad data/asset history remains in `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md` and other archive files under `boards/ARCHIVE/`.
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 
+## Task: 2026-05-20 Shield And Buff Runtime Catalog Asset Sync
+
+### Task title
+
+Resync runtime CSV catalog assets after the shield/buff schema change.
+
+### Goals
+
+- Make Unity reimport the edited CSV source assets before runtime catalog sync.
+- Confirm the runtime source catalog accepts the new shield/buff schema and canonical shield row.
+- Record the asset-side evidence because this task changed runtime catalog content, not only code.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This task changes runtime CSV catalog assets, not scene prefab wiring.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed after source-asset refresh and one data-row fix.
+
+### Next Actions
+
+- If another external CSV edit appears to be ignored by catalog sync, refresh/import the source asset before assuming the source file contents are wrong.
+- Keep this board aligned with `boards/DATA/DATA_BLACKBOARD.md` whenever runtime catalog source shape changes again.
+
+### Evidence
+
+- `git status --short -- Pakuri/Assets/Resources/Pakuri/CSVRuntime/* Pakuri/Assets/CSVdata/source/monster_skills.csv Pakuri/Assets/CSVdata/source/status_effects.csv` showed `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog.asset` modified after the schema work and sync path.
+- Unity menu execution of `Pakuri/Sync CSV Runtime Catalog Assets` first surfaced real asset/data-state failures rather than silent success: `CSV table 'monster_skills.csv' is missing required column 'status_target_scope'` before source asset refresh, then `CSV file 'status_effects.csv' row 10 has 2 columns but expected 19` before the shield-row quote fix.
+- `Pakuri/Assets/CSVdata/source/status_effects.csv:10` now has a valid canonical shield row, which removed the row-shape failure during sync.
+- Unity `refresh_unity` with `mode=force scope=assets` completed successfully, and the next `Pakuri/Sync CSV Runtime Catalog Assets` invocation logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-20: Code Builder changed source CSV schema/content for shield/buff unification and then used Unity-side refresh plus catalog sync to propagate those edits into runtime assets.
+- 2026-05-20: The asset sync verification exposed a stale-import problem and a malformed shield row, both of which were fixed before the final successful sync.
+
 ## Task: 2026-05-20 Sein-B EffectManager Scene Wiring
 
 ### Task title

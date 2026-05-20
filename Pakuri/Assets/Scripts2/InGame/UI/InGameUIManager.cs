@@ -16,6 +16,10 @@ namespace Pakuri.InGame
         [SerializeField] private StageManager stageManager;
         [SerializeField] private SceneEntryManager entryManager;
         [SerializeField] private InGameCombatManager combatManager;
+        [SerializeField] private Vector2 rewardButtonFirstColumnPosition = new Vector2(-321.97855f, 295f);
+        [SerializeField] private float rewardButtonColumnSpacingX = 533.97855f;
+        [SerializeField] private float rewardButtonRowSpacingY = 122f;
+        [SerializeField] private int rewardButtonRowsPerColumn = 3;
 
         private GameObject rewardPanel;
         private Transform rewardButtonContainer;
@@ -311,27 +315,16 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var spacing = ResolveRewardButtonSpacing(baseRect);
             rect.anchorMin = baseRect.anchorMin;
             rect.anchorMax = baseRect.anchorMax;
             rect.pivot = baseRect.pivot;
             rect.sizeDelta = baseRect.sizeDelta;
-            rect.anchoredPosition = baseRect.anchoredPosition + new Vector2(0f, -spacing * order);
-        }
-
-        private float ResolveRewardButtonSpacing(RectTransform baseRect)
-        {
-            var referenceRect = goldTemplateButton != null ? goldTemplateButton.transform as RectTransform : null;
-            if (referenceRect != null)
-            {
-                var delta = Mathf.Abs(baseRect.anchoredPosition.y - referenceRect.anchoredPosition.y);
-                if (delta > 1f)
-                {
-                    return delta;
-                }
-            }
-
-            return Mathf.Max(1f, baseRect.sizeDelta.y + 16f);
+            var rowsPerColumn = Mathf.Max(1, rewardButtonRowsPerColumn);
+            var column = order / rowsPerColumn;
+            var row = order % rowsPerColumn;
+            var x = rewardButtonFirstColumnPosition.x + (rewardButtonColumnSpacingX * column);
+            var y = rewardButtonFirstColumnPosition.y - (rewardButtonRowSpacingY * row);
+            rect.anchoredPosition = new Vector2(x, y);
         }
 
         private void ClearClonedRewardButtons()
@@ -1353,8 +1346,8 @@ namespace Pakuri.InGame
 
             return
                 $"{monster.RoleSummary}\n" +
-                $"??욧쉐: {monster.ElementLabel}\n" +
-                $"HP: {monster.MaxHealth:0} / ?⑤벀爰? {monster.PowerStat:0}\n" +
+                $"속성: {monster.ElementLabel}\n" +
+                $"HP: {monster.MaxHealth:0} / 전투력: {monster.PowerStat:0}\n" +
                 $"A: {monster.ActiveSkillName} / F: {monster.PassiveSkillName}";
         }
 

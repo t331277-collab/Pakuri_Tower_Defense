@@ -97,6 +97,21 @@ namespace Pakuri.InGame
         Self
     }
 
+    public enum StatusTargetScope
+    {
+        Unspecified,
+        AllAllies,
+        Self
+    }
+
+    public enum StatusMergePolicy
+    {
+        Unspecified,
+        SameSourceTakeHighest,
+        SameSourceRefresh,
+        AlwaysStack
+    }
+
     public enum ShieldRefreshRule
     {
         Replace,

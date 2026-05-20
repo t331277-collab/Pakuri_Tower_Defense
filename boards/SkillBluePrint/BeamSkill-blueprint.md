@@ -2,9 +2,41 @@
 
 ## Purpose
 
-This document is the first-read implementation contract for InGame BeamSkill / LineAttack skills.
+This document is the primary implementation contract for InGame BeamSkill / LineAttack skills.
 
-It is not a replacement for code inspection. Its role is to reduce the amount of code a Code Builder must inspect before implementing another beam, laser, ray, slash-line, or straight line tick skill. New BeamSkill work should start from this document, then verify the listed files and the specific skill data being changed.
+The intended workflow is simple:
+
+- the caller provides already parsed beam skill data
+- Code Builder reads this blueprint first
+- if the skill fits the common BeamSkill path, Builder implements it through the shared line-attack runtime
+- if the skill does not fit the common BeamSkill path, Builder stops and asks the user
+
+This blueprint is not a data-discovery guide.
+It should let an AI understand when BeamSkill work is straightforward, what inputs are required, what common behavior already exists, and when work must stop for clarification.
+
+## Core Rule
+
+For BeamSkill implementation work, do not search CSV files, monster reference files, or old monster-specific code just to rediscover numbers or behavior.
+
+The caller owns parsed input.
+Code Builder owns runtime wiring.
+
+If a required value or behavior decision is missing, Builder must stop and report the missing item instead of guessing.
+
+## Builder Working Mode
+
+When the user says something like:
+
+- implement `eve-b`
+- implement a new beam skill
+- connect this parsed `LineAttack` skill to runtime
+
+Builder should assume this workflow:
+
+1. the parsed skill values are already provided by the caller or task context
+2. Builder does not re-open CSV files to find numbers
+3. Builder uses the shared BeamSkill / line-attack runtime
+4. Builder asks the user only when the requested behavior is outside the common BeamSkill contract
 
 ## What Builder May Read
 
@@ -19,196 +51,248 @@ Default mandatory markdown read set for BeamSkill implementation:
 
 Conditional markdown reads only when explicitly justified:
 
-- MON boards only when the user names a specific monster or an inspected failure path names it
+- the relevant monster board when the user names a specific monster or the inspected failure path names it
 - DATA or asset boards only when the user or inspected failure explicitly touches CSV, prefab, scene serialization, runtime catalog, or `EffectManager` wiring
 - RUN boards only when the user or inspected failure explicitly touches `RunSession`, Offering, Menifest, or `NewRunScene` runtime ownership
 - UI boards only when the user or inspected failure explicitly names UI objects, buttons, canvases, TMP, UXML, or USS
 
 Do not read extra markdown files for BeamSkill work just to gather general background.
 
-Reading the current runtime scripts is still allowed when this blueprint requires code evidence for implementation or verification.
+Allowed:
 
-## Numeric Evidence Priority
+- this blueprint
+- `AGENTS.md`
+- `MDTREE.md`
+- `AGENTS_ROLE/COMMON.md`
+- `AGENTS_ROLE/GAMEBULIDER.md`
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md`
+- the routed board files that are explicitly justified by the active request or inspected failure path
+- the current runtime scripts that must be edited or compiled
 
-Do not invent BeamSkill numbers when the user does not provide exact numeric evidence.
+Not allowed as value-discovery sources unless the user explicitly asks:
 
-When BeamSkill implementation needs numeric values, inspect evidence in this order:
+- `Pakuri/Assets/CSVdata/**/*.csv`
+- `Pakuri/reference/2.Monster/**`
+- `Pakuri/reference/5.enemy/**`
+- old monster-specific implementations used only to infer behavior
+- unrelated board markdown such as UI, RUN, DATA, OPS, or other monster boards when the request and inspected failure path do not explicitly touch those domains
 
-1. Active CSV data first.
-   - Monster skill runtime source: `Pakuri/Assets/CSVdata/source/monster_skills.csv`
-   - Monster skill choice runtime source: `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv`
-   - Monster reward choice runtime source: `Pakuri/Assets/CSVdata/source/monster_reward_choices.csv`
-   - Shared runtime modifier source: `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv`
+Important:
+Reading the current runtime scripts is still allowed.
+Builder may inspect the current shared BeamSkill runtime to confirm where parsed values are wired.
+That is different from searching old data files for missing numbers.
 
-2. Runtime script mapping next, when the CSV field meaning is unclear.
-   - `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs`
-   - `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs`
-   - `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs`
+## Required Parsed Input
 
-3. Original reference documents last, when CSV data does not contain the needed value.
-   - Monster original data: `Pakuri/reference/2.Monster`
+Builder should expect the caller to provide a parsed BeamSkill package.
 
-If none of these files contains the value, state that the value is missing and ask for a design decision. Record which file supplied each non-obvious tuning value, especially when a mapper or executor needs a skill-ID-specific exception because the current CSV schema has no matching field.
+Minimum required fields:
 
-## Current Common Beam / LineAttack Path
+- `SkillId`
+- `RuntimeKind`
+- `BaseDamage`
+- `DamageAttribute`
+- `PowerStat`
+- `PowerCoefficient`
+- `BeamWidth`
+- `ActiveDurationSeconds`
+- `TickIntervalSeconds`
+- `CooldownSeconds`
+- `TargetingMode`
+- `CanManualAim`
+- `CanAutoTarget`
+- `HasBeamPrefab`
 
-The current InGame BeamSkill path is the `Scripts2/InGame` path.
+Optional but common fields:
 
-1. Data defines the skill.
-   - `Pakuri/Assets/CSVdata/source/monster_skills.csv`
-   - `runtime_kind=LineAttack` maps to BeamSkill runtime data.
-   - Current relevant fields include `base_damage`, coefficients, `radius`, `cooldown_seconds`, `shot_interval_seconds`, status fields, and `active_duration_seconds`.
+- `OnHitStatusId`
+- `OnHitStatusChance`
+- `ChoiceModifierSpecs`
+- `BeamLengthOverride`
+- `SkillEffectPrefabOverride`
 
-2. Skill data is mapped into runtime data.
-   - `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs`
-   - `SkillRuntimeKind.LineAttack` maps to `BeamSkillData`.
-   - `source.Radius` maps to `BeamSkillData.BeamWidth`.
-   - `source.ActiveDurationSeconds` maps to `skill.Timing.ActiveDuration`.
-   - `source.ShotIntervalSeconds` maps to `skill.Timing.TickInterval`.
-   - `BeamSkillData.BeamLength` is currently mapped to `0f`, so runtime resolves length from battlefield boundary or default length.
-   - Damage and on-hit status map to `BeamSkillData.DamagePerTick` and `BeamSkillData.OnHitStatus`.
+If any required field is missing, Builder must stop and report it.
 
-3. Learned active skills become runtime instances.
-   - `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeFactory.cs`
-   - `SkillRuntimeFactory.RebuildLearnedActiveSet(...)` adds learned active skills to `UnitSkillRuntimeSet`.
+Not part of the current common BeamSkill input contract:
 
-4. Runtime gating checks whether the skill can cast.
-   - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutionSystem.cs`
-   - `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs`
-   - `CanCastWithSnapshot(...)` checks cooldown, cast state, reload state, magazine, and cast interval.
-   - For non-magazine BeamSkill rows, `shot_interval_seconds` currently affects the cast interval through `SkillRuntimeInstance` and the line tick interval through `BeamSkillExecutor`.
+- `ChargeDelaySeconds`
+- `GroundWarningSeconds`
+- `StopAtFirstTarget`
+- `PushDistance`
+- `ResistanceReductionSpec`
+- `PerTargetHitCooldownSeconds`
+- `CurvedPathSpec`
+- `ForkSpec`
+- `ReflectSpec`
 
-5. The Beam executor resolves target direction and creates or routes the line attack.
-   - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutorRegistry.cs`
-   - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs`
-   - `BeamSkillExecutor` resolves origin, manual or nearest-target direction, damage, status, line length, width, duration, tick interval, and prefab.
-   - If no prefab or `EffectManager` is available, it immediately routes one line tick without a persistent visual actor.
+Do not require those fields for normal BeamSkill work.
+If a request truly depends on one of them, Builder should treat that as a special case and ask the user.
 
-6. LineAttack actor ticks damage while alive.
-   - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameLineAttackActor.cs`
-   - `Initialize(...)` configures visual scale, then applies an immediate line tick.
-   - `Update()` repeats line ticks on interval while duration remains.
-   - Each tick hits each candidate unit at most once for that tick, applies damage, then applies status by chance.
-   - The actor destroys itself when duration ends or when its combat manager is missing.
+## Common BeamSkill Contract
 
-7. Combat manager owns shared combat APIs.
-   - `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs`
-   - Relevant APIs: `ApplyDamage(...)`, `ApplyStatus(...)`, `ResolveProjectileDestroyBoundaryX()`, and skill effect instantiation through `EffectManager`.
+The following behavior is considered normal shared BeamSkill work.
+If the requested skill fits this list, Builder should implement it without asking extra design questions.
 
-## Supported / Partial / Unsupported Matrix
+- straight static line projection
+- one cast creates one line-attack actor or one routed fallback tick
+- immediate first tick on creation
+- repeated tick damage at a fixed interval while duration remains
+- width from parsed `BeamWidth`
+- duration from parsed `ActiveDurationSeconds`
+- length from parsed `BeamLengthOverride` when explicitly provided, otherwise from the shared battlefield-boundary fallback
+- cooldown-based cast gating
+- nearest-target automatic direction
+- manual aim when the current input flow already supports it
+- prefab-based visual spawn through the current `EffectManager` / skill effect path
+- on-hit damage
+- on-hit status application
+- choice-driven damage, width, duration, and tick-interval modifiers when the provided modifier data fits the current shared snapshot fields
 
-| Behavior | Current status | Evidence / implementation note |
-|---|---|---|
-| `LineAttack` runtime kind mapping to BeamSkillData | Supported | `InGameSkillDefinitionMapper.CreateConcreteActiveSkill(...)` returns `BeamSkillData` for `SkillRuntimeKind.LineAttack`. |
-| CSV-driven damage per tick | Supported | `MapDamage(beam.DamagePerTick, source)` maps base damage, attribute, and coefficients. |
-| CSV-driven width | Supported | `beam.BeamWidth = source.Radius`; executor clamps width to at least `0.1f`. |
-| CSV-driven active duration | Supported | `active_duration_seconds` maps to `Timing.ActiveDuration`; executor uses it when > 0. |
-| CSV-driven tick interval | Supported | `shot_interval_seconds` maps to `Timing.TickInterval`; executor falls back to `0.1f`. |
-| Immediate first tick | Supported | `InGameLineAttackActor.Initialize(...)` calls `ApplyLineTick(...)` before the first `Update()`. |
-| Repeated tick damage | Supported | `InGameLineAttackActor.Update()` repeats `ApplyLineTick(...)` while duration remains. |
-| On-hit status chance | Supported | `BeamSkillData.OnHitStatus` maps from CSV status fields and `TryApplyStatus(...)` calls `InGameCombatManager.ApplyStatus(...)`. |
-| Manual 1P A-skill direction | Partial | `BeamSkillExecutor` accepts `context.HasManualAimDirection`; broader per-skill manual input is still owned by `SkillExecutionSystem` / combat input flow. |
-| Auto target nearest enemy | Partial | Executor uses `SkillExecutionUtility.FindNearestTarget(...)`; no priority rules beyond current utility behavior are guaranteed. |
-| Length to battlefield boundary | Partial | `ResolveBeamLength(...)` uses `ResolveProjectileDestroyBoundaryX()` only when direction has a meaningful X component; otherwise it falls back to `31f`. |
-| Prefab visual scaling | Partial | `InGameLineAttackActor.ConfigureVisual()` scales a `SpriteRenderer` by line length and width. Complex child effects are not proven to scale correctly. |
-| Fallback no-prefab behavior | Partial | Without prefab or `EffectManager`, executor applies a single tick and returns; no persistent visual or repeated ticking occurs. |
-| Choice damage multiplier | Supported | `SkillExecutionUtility.ResolveDamage(...)` consumes snapshot damage/base-damage modifiers. |
-| Choice shot interval multiplier | Partial | Runtime gating and executor tick interval can receive multiplier effects through snapshot/runtime, but confirm the current execution path before claiming a specific trait is fully supported. |
-| Choice duration multiplier / duration bonus | Partial | `SkillExecutionSnapshot` stores duration modifiers, but inspected `BeamSkillExecutor.ResolveDuration(...)` currently reads `skill.Timing.ActiveDuration` directly. Do not claim Beam duration modifiers work until this is verified or implemented. |
-| Choice radius/width multiplier | Unsupported in current Beam executor | `SkillExecutionSnapshot` stores radius modifiers, but inspected `BeamSkillExecutor` uses `skill.BeamWidth` directly. |
-| Stop at first target | Unsupported in current executor | `BeamSkillData.StopAtFirstTarget` exists, but `InGameLineAttackActor.ApplyLineTick(...)` does not read it. |
-| Pushback / knockback | Unsupported in current line actor | Damage/status are applied, but no displacement API is invoked. |
-| Resistance reduction from a Beam hit | Unsupported as common behavior | Status can apply, but direct resistance reduction like Eve-B master wording needs an implemented status/damage-layer contract. |
-| Multi-segment, forked, reflected, or chained beams | Unsupported | Current actor owns one origin, direction, length, and width. |
-| Curved or sweeping beams | Unsupported | Current hit test is a static rectangular line projection per tick. |
-| Per-target persistent hit cooldown across ticks | Unsupported | Duplicate prevention is per tick only through a local `HashSet`; the same target can be hit again on the next tick. |
-| Ground warning / charge delay / telegraph | Unsupported | `BeamSkillExecutor` instantiates immediately and `InGameLineAttackActor.Initialize(...)` immediately applies damage. |
+In short:
+If the skill is "data goes in, common straight ticking beam comes out," Builder should proceed.
 
-## Special Behavior Rule
+## Minimal Runtime Understanding
 
-Do not assume special BeamSkill behavior is supported just because it is described in a monster reference file or CSV row.
+Builder does not need to rediscover the whole project.
+It only needs to understand this minimal runtime contract:
 
-The following behavior must be implemented as an explicit exception or as a deliberate reusable extension before a skill can rely on it:
+- parsed active skill data becomes runtime skill data
+- `LineAttack` runtime kind maps to `BeamSkillData`
+- learned active skills become runtime instances through the shared runtime factory
+- Beam skills execute through `BeamSkillExecutor`
+- persistent line damage and repeated ticks happen in `InGameLineAttackActor`
+- shared damage and status application go through `InGameCombatManager`
+- choice modifiers apply through `SkillExecutionSnapshot`
+- prefab lookup uses the current effect/prefab binding path
 
-- Beam width or duration modifiers from choice data.
-- Stop at first target.
-- Knockback or pushback line attacks.
-- Resistance reduction or other non-status debuffs on line hit.
-- Multi-segment, forked, reflected, chained, curved, or sweeping beams.
-- Charge-up, warning zone, delayed damage, or telegraph phases.
-- Persistent per-target hit cooldown independent of tick interval.
-- Beam visuals that require child hitboxes or non-sprite scaling.
+Builder may confirm these current connection points in code, but should not turn the task into a broad code exploration.
 
-If a special behavior will be reused by several skills, prefer a new shared BeamSkill extension point rather than a monster-only hardcoded branch. If the behavior is unique and urgent, record it as a deliberate exception with the owning skill ID, affected files, and Play Mode acceptance criteria.
+## Common Mapping Responsibility
 
-## New BeamSkill Checklist
+When a parsed BeamSkill is implemented, Builder should wire the provided values into the shared BeamSkill path in this shape:
 
-Before implementing a new BeamSkill / LineAttack skill:
+- parsed identity -> runtime skill identity
+- parsed damage values -> shared beam tick damage spec
+- parsed cooldown -> shared runtime timing state
+- parsed width / duration / tick interval / optional beam length -> shared BeamSkill timing and geometry
+- parsed targeting flags -> shared auto/manual direction behavior
+- parsed status values -> shared on-hit status spec
+- parsed prefab info -> shared line-attack visual binding path
+- parsed choice modifiers -> shared snapshot modifier path
 
-1. Confirm the skill row exists in data.
-   - Check `Pakuri/Assets/CSVdata/source/monster_skills.csv`.
-   - Confirm `runtime_kind=LineAttack`.
-   - Confirm width source (`radius`), duration source (`active_duration_seconds`), tick source (`shot_interval_seconds`), damage fields, and status fields.
+The important rule is not the exact property names.
+The important rule is:
+do not invent new monster-only logic when the shared BeamSkill path already supports the requested behavior.
 
-2. Confirm the mapped runtime type.
-   - `LineAttack` should map to `BeamSkillData`.
-   - If it maps to `ProjectileSkillData`, `ZoneSkillData`, `ShieldSkillData`, or `BuffSkillData`, do not implement it through `InGameLineAttackActor` without a design decision.
+## Stop And Ask User Rule
 
-3. Confirm prefab ownership.
-   - Check whether the skill has `SkillEffectPrefab` or `EffectManager` mapping.
-   - Current scene evidence: `NewRunScene.unity` maps monster `eve-b` to `Assets/Prefab/Skill/Eve/Eve_B.prefab`.
-   - `BeamSkillExecutor` can route one no-prefab tick, but persistent visuals and repeated ticks require an instantiated actor.
+Builder must stop and ask the user when the request contains behavior outside the common BeamSkill contract.
 
-4. Confirm status behavior.
-   - Supported statuses are centralized in `StatusEffectKind` and applied through `InGameCombatManager.ApplyStatus(...)`.
-   - Add new status kinds before relying on new runtime status names.
-   - Do not claim resistance reduction, knockback, or damage amplification exists unless the relevant runtime service implements it.
+Stop-and-ask examples:
 
-5. Confirm modifier behavior.
-   - `SkillChoiceModifierData.csv` may contain damage, shot interval, radius, and duration rows.
-   - Before claiming a modifier works for BeamSkill, inspect whether `BeamSkillExecutor` consumes the corresponding `SkillExecutionSnapshot` field.
-   - At the time this document was written, damage modifiers are supported, shot interval is partial, and radius/duration modifiers are not consumed directly by `BeamSkillExecutor`.
+- charge-up, warning zone, or delayed activation before the first damaging tick
+- stop at first target
+- knockback or pushback
+- direct resistance reduction or other non-status debuffs outside the current shared status path
+- curved, sweeping, forked, reflected, chained, or multi-segment beams
+- persistent repeated ticking when no beam prefab / actor path is available
+- per-target persistent hit cooldown independent of the beam tick interval
+- a special effect that depends on "last tick", "third tick", "only the first hit", or similar sequence state
 
-6. Decide whether the skill is common or exceptional.
-   - Common: static straight line, nearest/manual direction, immediate first tick, repeated tick damage/status, width from CSV radius, duration from CSV active duration.
-   - Exceptional: anything involving charge delay, knockback, stop-first-target, resistance reduction, width/duration modifiers, sweeping/curved/forking line shapes, or custom per-target tick rules.
+When this happens, Builder should not try a best guess.
+Builder should stop with a short question describing exactly which unsupported behavior was requested.
 
-## Recommended Extension Points
+## Preferred Builder Response Pattern
 
-| Need | Recommended direction |
-|---|---|
-| Width modifiers | Apply `snapshot.RadiusMultiplier` / `RadiusBonus` when resolving Beam width, and document accepted CSV fields. |
-| Duration modifiers | Apply `snapshot.DurationMultiplier` / `DurationBonus` when resolving Beam duration, and verify runtime `ActiveDurationRemaining` display if used. |
-| Stop at first target | Make `InGameLineAttackActor.ApplyLineTick(...)` honor `BeamSkillData.StopAtFirstTarget` or a new hit policy enum. |
-| Knockback / pushback | Add a shared movement/displacement service call after damage/status instead of embedding monster-specific movement in the actor. |
-| Resistance reduction | Add a status/effect type that the damage layer can read, or a clear stat-modifier runtime service. |
-| Charge delay / telegraph | Add a delayed activation state to the actor, separating visual warning from damage ticking. |
-| Curved/sweeping beam | Add a new actor or shape mode; do not overload the current rectangular line projection silently. |
+When the request is normal:
 
-## Eve-B Current Evidence Summary
+- say it fits the common BeamSkill path
+- implement it through the shared BeamSkill runtime
+- report which parsed fields were consumed
 
-Eve-B is the current reference implementation for the BeamSkill path.
+When the request is not normal:
 
-- `Pakuri/Assets/CSVdata/source/monster_skills.csv` defines `eve-b` as `LineAttack`, `RuntimeImplemented`, display name `프리즘 레이`, base damage `12`, spell coefficient `1.6`, width/radius `3.2`, cooldown `6.5`, tick interval `0.15`, status `slow`, status chance `0.2`, and active duration `1.2`.
-- `Pakuri/Assets/CSVdata/source/monster_reward_choices.csv` defines Eve-B trait/master rows with damage, shot interval, and duration wording.
-- `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv` contains Eve-B modifier rows; some are marked `PartialRuntimeSupport` or `DataOnlyUnsupported`.
-- `InGameSkillDefinitionMapper` maps `LineAttack` to `BeamSkillData`.
-- `SkillExecutorRegistry` registers `BeamSkillExecutor`.
-- `BeamSkillExecutor` creates or routes a line attack and attaches `InGameLineAttackActor` when a prefab is instantiated.
-- `InGameLineAttackActor` applies immediate and interval line ticks.
-- `NewRunScene.unity` maps `eve-b` to `Assets/Prefab/Skill/Eve/Eve_B.prefab`.
+- say it does not fit the common BeamSkill path
+- name the unsupported behavior
+- ask the user whether to:
+  - define a one-off exception, or
+  - design a reusable shared extension
+
+## Example Interpretation
+
+Example 1:
+User says "Implement `eve-b`."
+
+If the provided parsed values describe a normal straight line-attack with common damage, duration, tick, and status behavior, this blueprint should be enough for Builder to proceed through the shared BeamSkill path.
+
+Example 2:
+User says "Implement `eve-b`, and stop the beam at the first enemy it touches."
+
+This blueprint is still enough for Builder to understand the situation, but Builder must stop and ask the user because stop-first-target is not part of the current common BeamSkill contract.
+
+Example 3:
+User says "Implement `eve-b`, but make it charge for 1 second and then sweep in an arc."
+
+Builder must stop and ask the user because charge delay and sweeping beam behavior are not common BeamSkill behavior.
+
+## Builder Checklist
+
+Before implementation:
+
+1. Confirm the parsed input package exists.
+2. Confirm `RuntimeKind` is BeamSkill-compatible.
+3. Confirm the request fits the common BeamSkill contract.
+4. Stop immediately if the request contains unsupported special behavior.
+
+During implementation:
+
+1. Use the shared BeamSkill runtime.
+2. Wire only the provided parsed values.
+3. Keep behavior common unless the user approved an exception.
+4. Avoid monster-only hardcoded branches unless the user explicitly approved a one-off rule.
+
+After implementation:
+
+1. compile
+2. refresh Unity scripts if available
+3. check console errors/warnings
+4. report whether the implementation stayed inside the common BeamSkill path
+
+## Required Builder Output
+
+For each BeamSkill task, Builder should report:
+
+- skill ID
+- whether the request fit the common BeamSkill path
+- which parsed fields were consumed
+- whether any requested behavior forced a stop-and-ask decision
+- which runtime scripts were edited
+- compile and console verification results
 
 ## Verification Expected From Code Builder
 
 For documentation-only changes:
 
-- Run a targeted markdown/file existence check.
-- Do not run Play Mode.
+- run a targeted markdown/file existence check
+- do not run Play Mode
 
-For code changes implementing BeamSkill behavior:
+For code changes:
 
-- Run `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore`.
-- Run `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` when editor scripts or Unity serialization may be affected.
-- Refresh Unity scripts if Unity is available, then check console errors/warnings.
-- Record whether the requested BeamSkill behavior is common, partial, or exceptional.
-- Leave Play Mode gameplay verification to the user.
+- run `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore`
+- run `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` when editor scripts or serialization may be affected
+- refresh Unity scripts if Unity is available
+- check console errors/warnings
+- leave Play Mode gameplay verification to the user
+
+## Final Designer Intent
+
+This blueprint is intentionally opinionated.
+
+It is designed so that:
+
+- Builder does not waste time rediscovering BeamSkill numbers in CSV files
+- Builder does not over-read unrelated scripts
+- Builder uses the common BeamSkill runtime by default
+- Builder stops and asks when a skill needs special behavior
+
+That is the desired behavior.

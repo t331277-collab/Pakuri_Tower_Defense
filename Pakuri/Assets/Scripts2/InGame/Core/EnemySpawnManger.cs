@@ -149,6 +149,58 @@ namespace Pakuri.InGame
             return true;
         }
 
+        public bool RespawnSelectedPlayerUnit(
+            RunSession activeSession,
+            out GameObject spawnedUnit,
+            out MonsterUnitRuntimeModel model,
+            out MonsterUnitActor actor)
+        {
+            spawnedUnit = null;
+            model = null;
+            actor = null;
+            ResolveCombatManager();
+            ResolveSpawnPoint();
+
+            if (activeSession == null || string.IsNullOrWhiteSpace(activeSession.SelectedMonsterId))
+            {
+                Debug.LogWarning("EnemySpawnManger cannot respawn the selected monster because no active session exists.");
+                return false;
+            }
+
+            var catalog = ResolveCatalog();
+            var monster = ResolveMonsterDefinition(activeSession.SelectedMonsterId, catalog);
+            if (monster == null)
+            {
+                Debug.LogError($"EnemySpawnManger could not resolve selected monster data for '{activeSession.SelectedMonsterId}' during respawn.");
+                return false;
+            }
+
+            var prefab = ResolveMonsterPrefab(monster.MonsterId);
+            if (prefab == null)
+            {
+                Debug.LogWarning($"No NewRunScene prefab is configured for selected monster '{monster.MonsterId}' during respawn.");
+                return false;
+            }
+
+            var runState = activeSession.GetPartyMemberState(monster.MonsterId) ?? activeSession.EnsurePartyMemberState(monster);
+            model = unitFactory.CreateSelectedMonster(monster, runState, 0);
+            if (model == null)
+            {
+                Debug.LogError($"EnemySpawnManger could not recreate a runtime unit model for '{monster.MonsterId}' during respawn.");
+                return false;
+            }
+
+            SkillRuntimeFactory.RebuildLearnedActiveSet(model, new InGameSkillCatalog(catalog));
+
+            var spawnPosition = playerSpawnPoint != null ? playerSpawnPoint.position : Vector3.zero;
+            var spawnRotation = playerSpawnPoint != null ? playerSpawnPoint.rotation : Quaternion.identity;
+            spawnedUnit = Instantiate(prefab, spawnPosition, spawnRotation, ResolveRuntimeMonsterRoot());
+            spawnedUnit.name = $"{prefab.name}_1P";
+            actor = BindMonsterActor(spawnedUnit, model);
+            RegisterPlayer(model, actor);
+            return true;
+        }
+
         public bool SpawnEnemyById(
             string enemyId,
             int spawnIndex,

@@ -75,7 +75,7 @@ namespace Pakuri.InGame
             }
 
             skillRuntime.Tick(deltaTime);
-            if (model == null || !model.AutoSkillEnabled || !entry.IsAlive)
+            if (model == null || !model.AutoSkillEnabled || !entry.IsAlive || !StatusEffectRuntime.CanAct(model))
             {
                 return;
             }
@@ -103,7 +103,7 @@ namespace Pakuri.InGame
             bool hasManualAimDirection,
             Vector2 manualAimDirection)
         {
-            if (runtime == null)
+            if (runtime == null || entry == null || !StatusEffectRuntime.CanAct(entry.Model))
             {
                 return false;
             }

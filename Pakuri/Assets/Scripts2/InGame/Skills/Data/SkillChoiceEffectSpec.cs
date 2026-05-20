@@ -47,6 +47,8 @@ namespace Pakuri.InGame
         public int StatusStacksBonus;
         public bool HasStatusStacksSet;
         public int StatusStacksSet;
+        public bool HasStatusElementDamageTakenBonus;
+        public float StatusElementDamageTakenBonus;
         public bool HasMaxHealthBonus;
         public float MaxHealthBonus;
 

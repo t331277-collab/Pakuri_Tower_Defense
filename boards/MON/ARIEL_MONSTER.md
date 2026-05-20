@@ -12,6 +12,55 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-05-20 Ariel-A Master 2 Holy Exposure Runtime Wiring
+
+### Task title
+
+Route `ariel-a-master-2` through the shared on-hit status runtime and allow a choice-specific Holy damage taken bonus.
+
+### Goals
+
+- Make `ariel-a-master-2` apply `holy-exposure` through the existing projectile hit path.
+- Let `ariel-a-master-2` supply its own Holy damage taken bonus instead of being forced to share one global `holy-exposure` status-row value.
+- Keep the effect data-authored in `monster_skill_choices.csv` rather than adding Ariel-only executor logic.
+- Reuse the current shared `StatusEffectKind.HolyExposure` parse/display path already present in the working tree.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Play Mode gameplay verification was run by Codex.
+- `ariel-a-trait-5` and `ariel-a-master-1` remain unsupported and were not changed in this task.
+- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented at the CSV/runtime-data and shared projectile-status runtime level, and non-gameplay verified.
+
+### Next Actions
+
+- User verifies in `NewRunScene` Play Mode that `ariel-a-master-2` now applies 1 stack of Holy Exposure on hit and increases incoming Holy damage by 15%.
+- If later Ariel-A still appears to miss the debuff in gameplay, inspect whether the active choice is actually recorded in the current `RunSession`.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now sets `ariel-a-master-2` `status_tag=holy-exposure`, `status_stacks_set=1`, `status_element_damage_taken_bonus=0.15`, and `runtime_support_state=ReferenceDirect`.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv | Where-Object { $_.choice_id -eq 'ariel-a-master-2' }` returned `status_tag : holy-exposure`, `status_stacks_set : 1`, `status_element_damage_taken_bonus : 0.15`, and `runtime_support_state : ReferenceDirect`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` still has `ariel-a` `status_effect_id` blank and `status_chance=0`, so the master choice must provide the status tag itself.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs`, `PakuriCsvRuntimeData.MonsterDataset.cs`, `PakuriCsvRuntimeData.Build.cs`, `SkillChoiceEffectSpec.cs`, `InGameSkillDefinitionMapper.cs`, and `SkillExecutionSnapshot.cs` now carry the new choice field `status_element_damage_taken_bonus` through the shared projectile choice path.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:191-241` now resolves a choice-provided `snapshot.StatusTag`, defaults new choice-only statuses to `chance=1f` and `stacks=1`, and clones the resolved `StatusEffectData` when a choice-specific `StatusElementDamageTakenBonus` override is present.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs:115-117` and `:174-175` already contain the current working-tree `holy-exposure` / `신성 노출` parse and display strings used by the shared status runtime.
+- Unity-MCP menu execution of `Pakuri/Sync CSV Runtime Catalog Assets` returned `success:true` for this task; no new sync log line was captured afterward in the inspected console window.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; a first parallel editor build failed only from `Assembly-CSharp.dll` file lock contention, and a standalone `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` then passed with 0 errors. Existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-20: User asked Code Builder to apply the previously explained `holy-exposure` fix path for `ariel-a-master-2`.
+- 2026-05-20: User then required per-skill Holy damage taken values, so Code Builder extended the shared projectile choice status path with a choice-level `status_element_damage_taken_bonus` override and set Ariel-A master 2 to `0.15`.
+
 ## Task: 2026-05-17 Ariel-A Common Projectile Runtime Connection
 
 ### Task title

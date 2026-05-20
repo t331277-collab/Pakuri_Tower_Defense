@@ -63,7 +63,8 @@ namespace Pakuri.InGame
             EnemyCombatRules.TickTemporaryEnemyModifiers(enemyModel, deltaTime);
 
             var state = GetState(enemyModel);
-            EnemyCombatRules.TickEnemyCooldowns(state, deltaTime);
+            var actionDeltaTime = deltaTime * StatusEffectRuntime.ResolveActionSpeedMultiplier(enemyModel);
+            EnemyCombatRules.TickEnemyCooldowns(state, actionDeltaTime);
 
             var target = EnemyTargeting.FindNearestPlayerTarget(enemyEntry, roster);
             if (target != null)
@@ -74,7 +75,9 @@ namespace Pakuri.InGame
             }
 
             var specialSkill = EnemyCombatRules.ResolveSpecialSkill(enemyModel);
-            var executedSupportSkill = TryExecuteCooldownDrivenSpecialSkill(
+            var canAct = StatusEffectRuntime.CanAct(enemyModel);
+            var canUseSpecialSkill = canAct && StatusEffectRuntime.CanUseSpecialSkill(enemyModel);
+            var executedSupportSkill = canUseSpecialSkill && TryExecuteCooldownDrivenSpecialSkill(
                 enemyEntry,
                 enemyModel,
                 roster,
@@ -90,6 +93,11 @@ namespace Pakuri.InGame
             }
 
             var offensiveSkill = EnemyCombatRules.ResolvePreferredOffensiveSkill(enemyModel, state, specialSkill);
+            if (offensiveSkill.SlotType == EnemySkillSlotType.Special && !canUseSpecialSkill)
+            {
+                offensiveSkill = EnemyCombatRules.ResolveBasicSkill(enemyModel);
+            }
+
             if (!offensiveSkill.IsAssigned)
             {
                 return;
@@ -99,11 +107,15 @@ namespace Pakuri.InGame
             var attackRange = EnemyCombatRules.ResolveAttackAttemptRange(enemyModel, offensiveSkill);
             if (distance > attackRange)
             {
-                MoveToward(enemyEntry, target, enemyModel, deltaTime);
+                if (StatusEffectRuntime.CanMove(enemyModel))
+                {
+                    MoveToward(enemyEntry, target, enemyModel, deltaTime);
+                }
+
                 return;
             }
 
-            if (executedSupportSkill || !EnemyCombatRules.IsSkillReady(state, offensiveSkill.SlotType))
+            if (!canAct || executedSupportSkill || !EnemyCombatRules.IsSkillReady(state, offensiveSkill.SlotType))
             {
                 return;
             }
@@ -158,6 +170,7 @@ namespace Pakuri.InGame
         {
             var moveSpeed = enemyModel.Stats != null ? Mathf.Max(0f, enemyModel.Stats.MoveSpeed) : 0f;
             moveSpeed *= EnemyCombatRules.ResolveMoveSpeedMultiplier(enemyModel);
+            moveSpeed *= StatusEffectRuntime.ResolveMoveSpeedMultiplier(enemyModel);
             if (moveSpeed <= 0f)
             {
                 return;

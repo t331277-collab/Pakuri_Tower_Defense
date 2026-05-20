@@ -9,6 +9,7 @@ namespace Pakuri.Data
         private readonly Dictionary<string, EnemyDefinition> stageOneEnemies = new Dictionary<string, EnemyDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, SkillDefinition> activeSkills = new Dictionary<string, SkillDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, PassiveDefinition> passiveSkills = new Dictionary<string, PassiveDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, StatusEffectDefinitionData> statusEffects = new Dictionary<string, StatusEffectDefinitionData>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, SkillChoiceDefinition> skillChoices = new Dictionary<string, SkillChoiceDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, MonsterDefinition.RewardChoiceDefinition> rewardChoices = new Dictionary<string, MonsterDefinition.RewardChoiceDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, SkillDefinition[]> activeSkillsByMonster = new Dictionary<string, SkillDefinition[]>(StringComparer.OrdinalIgnoreCase);
@@ -32,6 +33,7 @@ namespace Pakuri.Data
             stageOneEnemies.Clear();
             activeSkills.Clear();
             passiveSkills.Clear();
+            statusEffects.Clear();
             skillChoices.Clear();
             rewardChoices.Clear();
             activeSkillsByMonster.Clear();
@@ -45,6 +47,7 @@ namespace Pakuri.Data
 
             RegisterMonsters(catalog.Monsters);
             RegisterEnemies(catalog.StageOneEnemies);
+            RegisterStatusEffects(catalog.StatusEffects);
         }
 
         public T GetData<T>(string id)
@@ -88,6 +91,11 @@ namespace Pakuri.Data
             {
                 passiveSkills.TryGetValue(id, out var passiveSkill);
                 resolved = passiveSkill;
+            }
+            else if (targetType == typeof(StatusEffectDefinitionData))
+            {
+                statusEffects.TryGetValue(id, out var statusEffect);
+                resolved = statusEffect;
             }
             else if (targetType == typeof(SkillChoiceDefinition))
             {
@@ -323,6 +331,25 @@ namespace Pakuri.Data
                 }
 
                 stageOneEnemies[enemy.EnemyId] = enemy;
+            }
+        }
+
+        private void RegisterStatusEffects(StatusEffectDefinitionData[] catalogStatusEffects)
+        {
+            if (catalogStatusEffects == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < catalogStatusEffects.Length; i++)
+            {
+                var status = catalogStatusEffects[i];
+                if (status == null || string.IsNullOrWhiteSpace(status.StatusEffectId))
+                {
+                    continue;
+                }
+
+                statusEffects[status.StatusEffectId] = status;
             }
         }
 

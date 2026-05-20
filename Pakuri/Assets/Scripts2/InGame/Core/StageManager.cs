@@ -25,6 +25,7 @@ namespace Pakuri.InGame
         [SerializeField] private TextAsset stageRewardCsv;
         [SerializeField] private bool startFlowOnStart = true;
         [SerializeField] private float clearCheckInterval = DefaultClearCheckInterval;
+        [SerializeField] private bool restorePlayerHealthOnDayAdvance = true;
 
         private StageFlowTable table = new StageFlowTable();
         private Coroutine flowCoroutine;
@@ -84,7 +85,47 @@ namespace Pakuri.InGame
             PendingDarkTraceReward = 0;
             PendingPrisonerCount = 0;
             activeSession.AdvanceDay();
+            RestorePlayerHealthForNextDay();
             StartCurrentDay();
+        }
+
+        private void RestorePlayerHealthForNextDay()
+        {
+            if (!restorePlayerHealthOnDayAdvance)
+            {
+                return;
+            }
+
+            if (entryManager != null)
+            {
+                entryManager.RestorePlayerPartyFromSession();
+            }
+
+            if (combatManager == null)
+            {
+                return;
+            }
+
+            var players = combatManager.Roster != null ? combatManager.Roster.Players : null;
+            if (players == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < players.Count; i++)
+            {
+                var entry = players[i];
+                var model = entry != null ? entry.Model : null;
+                var resources = model != null ? model.Resources : null;
+                var stats = model != null ? model.Stats : null;
+                if (resources == null || stats == null)
+                {
+                    continue;
+                }
+
+                resources.CurrentHealth = Mathf.Max(0f, stats.MaxHealth);
+                combatManager.RefreshUnitActor(model);
+            }
         }
 
         private IEnumerator RunCurrentDayFlow()

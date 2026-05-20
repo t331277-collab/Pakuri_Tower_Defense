@@ -23,6 +23,7 @@ The full pre-hierarchy task history is preserved at:
 - 2026-05-18 cross-domain UI/RUN status: `NewRunScene` now has `DebugUI.cs` on `Canvas`, `MonsterPanelUI.cs` on `Canvas/MonsterPanel`, and Offering/debug active-skill acquisition now syncs `RunSession` learned state into active `MonsterUnitRuntimeModel.State` before rebuilding runtime skills. Detailed records are in `boards/UI/RUNSCENE_UI.md` and `boards/RUN/RUN_BLACKBOARD.md`.
 - 2026-05-18 cross-domain UI/RUN/DATA status: `InGameUIManager.cs` now resolves prisoner reward display names from the CSV-backed runtime enemy catalog instead of showing mojibake plus raw enemy IDs, and `OfferingUI.cs` now uses CSV-backed monster/skill/passive/reward fields for choice titles/descriptions. Detailed records are in `boards/UI/RUNSCENE_UI.md`, `boards/RUN/RUN_BLACKBOARD.md`, and `boards/DATA/DATA_BLACKBOARD.md`.
 - 2026-05-18 automation status: `boards/SkillBluePrint/BeamSkill-blueprint.md` was added and `AGENTS_ROLE/GAMEBULIDER.md` now requires Code Builder to read it before BeamSkill / LineAttack implementation edits. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
+- 2026-05-21 routing/policy status: `boards/SkillBluePrint/BeamSkill-blueprint.md` was rewritten to match the projectile blueprint contract style, so BeamSkill work now defaults to parsed-input-to-shared-runtime flow and stops to ask on unsupported special beam behavior. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-18 routing/policy status: the active report board was removed from routing, report work now reads the related active domain board only, `AGENTS_ROLE/GAMEDESIGNER.md` now includes a short HTML report structure rule, and inspected `Pakuri/Assets/**/*.csv` files were all already valid UTF-8 so no CSV data rewrite was needed. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-18 routing/policy status: `AGENTS.md` now defines a `SimpelWorker` role for very simple path-based work, `AGENTS_ROLE/SIMPELWORKER.md` was added, SimpelWorker reads no extra markdown after `AGENTS.md` and `MDTREE.md`, and it automatically falls back to Designer when no exact work path is provided. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-19 routing/policy status: `AGENTS.md`, `MDTREE.md`, `AGENTS_ROLE/GAMEBULIDER.md`, and `boards/SkillBluePrint/projectile-blueprint.md` now require a smallest-possible markdown read set, explicit exclusions for unrelated domains, and a short routing decision log. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
@@ -540,3 +541,7 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-10: User asked to inspect all monster shield logic under `Pakuri/reference/2.Monster`, noting Eve shield appeared not to apply correctly.
+
+- 2026-05-21 01:31:09 +09:00: Builder -> Reviewer loop started. Run directory: C:\TowerDefence_Pakuri\Test\codex_loop_logs\20260521_013109
+- 2026-05-21 01:31:44 +09:00: Loop 1 Builder started. Output: C:\TowerDefence_Pakuri\Test\codex_loop_logs\20260521_013109\loop_01_builder.md
+- 2026-05-21 01:32:16 +09:00: Loop 1 Builder finished with exit code 1.

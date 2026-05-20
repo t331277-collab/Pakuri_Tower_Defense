@@ -8,6 +8,7 @@ namespace Pakuri.Data
     {
         public MonsterDefinition[] Monsters = Array.Empty<MonsterDefinition>();
         public EnemyDefinition[] StageOneEnemies = Array.Empty<EnemyDefinition>();
+        public StatusEffectDefinitionData[] StatusEffects = Array.Empty<StatusEffectDefinitionData>();
 
         public MonsterDefinition GetMonsterById(string monsterId)
         {
@@ -51,6 +52,30 @@ namespace Pakuri.Data
                 if (string.Equals(enemy.EnemyId, enemyId, StringComparison.OrdinalIgnoreCase))
                 {
                     return enemy;
+                }
+            }
+
+            return null;
+        }
+
+        public StatusEffectDefinitionData GetStatusEffectById(string statusEffectId)
+        {
+            if (string.IsNullOrWhiteSpace(statusEffectId) || StatusEffects == null)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < StatusEffects.Length; i++)
+            {
+                var status = StatusEffects[i];
+                if (status == null)
+                {
+                    continue;
+                }
+
+                if (string.Equals(status.StatusEffectId, statusEffectId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return status;
                 }
             }
 

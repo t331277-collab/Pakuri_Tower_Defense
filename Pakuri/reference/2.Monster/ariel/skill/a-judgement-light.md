@@ -62,3 +62,4 @@
 
 ## 7. 대응 패시브
 - 빛의 인도: [`f-guiding-light.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F2.Monster%2Fariel%2Fskill%2Ff-guiding-light)
+- 관련 디버프: [신성 노출](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F3.combat%2Fbuff-debuff)

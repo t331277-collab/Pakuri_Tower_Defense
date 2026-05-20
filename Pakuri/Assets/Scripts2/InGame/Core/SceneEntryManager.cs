@@ -237,6 +237,18 @@ namespace Pakuri.InGame
             return unitSpawnManager.SpawnManifestedMonster(monster, ActiveSession, partySlotIndex, out spawnedUnit);
         }
 
+        public void RestorePlayerPartyFromSession()
+        {
+            ResolveReferences();
+            if (ActiveSession == null || combatManager == null || unitSpawnManager == null)
+            {
+                return;
+            }
+
+            RestoreSelectedPlayerFromSession();
+            RestoreManifestedPlayersFromSession();
+        }
+
         private IEnumerator SpawnInitialEnemySequence()
         {
             SpawnInitialEnemyUnit();
@@ -286,6 +298,96 @@ namespace Pakuri.InGame
             var lastEntry = combatManager.Roster.Enemies[combatManager.Roster.Enemies.Count - 1];
             SpawnedEnemyModel = lastEntry.Model as EnemyUnitRuntimeModel;
             SpawnedEnemyActor = lastEntry.Actor as EnemyUnitActor;
+        }
+
+        private void RestoreSelectedPlayerFromSession()
+        {
+            var selectedEntry = FindPlayerEntryBySlot(0);
+            if (selectedEntry != null)
+            {
+                CaptureSelectedPlayerSpawn(selectedEntry);
+                return;
+            }
+
+            if (!unitSpawnManager.RespawnSelectedPlayerUnit(
+                    ActiveSession,
+                    out spawnedPlayerUnit,
+                    out var model,
+                    out var actor))
+            {
+                spawnedPlayerUnit = null;
+                SpawnedPlayerModel = null;
+                SpawnedPlayerActor = null;
+                return;
+            }
+
+            SpawnedPlayerModel = model;
+            SpawnedPlayerActor = actor;
+        }
+
+        private void RestoreManifestedPlayersFromSession()
+        {
+            var catalog = PakuriDataManager.Instance.CurrentCatalog;
+            if (catalog == null)
+            {
+                catalog = PakuriCsvRuntimeData.ResolveCatalogOrFallback(null);
+            }
+
+            for (var i = 0; i < ActiveSession.ManifestedMonsterIds.Count; i++)
+            {
+                var slotIndex = Mathf.Clamp(i + 1, 1, 4);
+                if (FindPlayerEntryBySlot(slotIndex) != null)
+                {
+                    continue;
+                }
+
+                var monsterId = ActiveSession.ManifestedMonsterIds[i];
+                var monster = PakuriDataManager.Instance.ResolveMonster(monsterId, catalog);
+                if (monster == null)
+                {
+                    Debug.LogWarning($"SceneEntryManager could not resolve manifested monster '{monsterId}' for day-advance restore.");
+                    continue;
+                }
+
+                unitSpawnManager.SpawnManifestedMonster(monster, ActiveSession, slotIndex, out _);
+            }
+        }
+
+        private void CaptureSelectedPlayerSpawn(UnitRosterEntry entry)
+        {
+            if (entry == null)
+            {
+                spawnedPlayerUnit = null;
+                SpawnedPlayerModel = null;
+                SpawnedPlayerActor = null;
+                return;
+            }
+
+            var actor = entry.Actor as MonsterUnitActor;
+            spawnedPlayerUnit = actor != null ? actor.gameObject : null;
+            SpawnedPlayerModel = entry.Model as MonsterUnitRuntimeModel;
+            SpawnedPlayerActor = actor;
+        }
+
+        private UnitRosterEntry FindPlayerEntryBySlot(int slotIndex)
+        {
+            if (combatManager == null || combatManager.Roster == null)
+            {
+                return null;
+            }
+
+            var players = combatManager.Roster.Players;
+            for (var i = 0; i < players.Count; i++)
+            {
+                var entry = players[i];
+                var identity = entry != null && entry.Model != null ? entry.Model.Identity : null;
+                if (identity != null && identity.Side == UnitSide.Player && identity.SlotIndex == slotIndex)
+                {
+                    return entry;
+                }
+            }
+
+            return null;
         }
 
         private void ResolveReferences()

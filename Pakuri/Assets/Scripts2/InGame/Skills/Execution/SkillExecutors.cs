@@ -219,17 +219,19 @@ namespace Pakuri.InGame
             }
 
             var definition = StatusEffectUtility.GetDefinition(kind);
-            var duration = statusData != null && statusData.Duration > 0f
-                ? statusData.Duration
+            var resolvedStatusData = ResolveStatusData(statusData, kind, snapshot);
+            var duration = resolvedStatusData != null && resolvedStatusData.Duration > 0f
+                ? resolvedStatusData.Duration
                 : definition.DefaultDurationSeconds;
-            var maxStacks = statusData != null && statusData.MaxStacks > 0
-                ? statusData.MaxStacks
+            var maxStacks = resolvedStatusData != null && resolvedStatusData.MaxStacks > 0
+                ? resolvedStatusData.MaxStacks
                 : definition.DefaultMaxStacks;
-            var permanent = definition.Permanent && (statusData == null || statusData.Duration <= 0f);
+            var permanent = definition.Permanent && (resolvedStatusData == null || resolvedStatusData.Duration <= 0f);
             return new ProjectileStatusHitSpec
             {
                 Enabled = true,
                 Kind = kind,
+                StatusData = resolvedStatusData,
                 Chance = chance,
                 Stacks = stacks,
                 DurationSeconds = duration,
@@ -237,6 +239,28 @@ namespace Pakuri.InGame
                 Permanent = permanent,
                 RefreshDuration = baseStatus == null || baseStatus.RefreshDuration
             };
+        }
+
+        private static StatusEffectData ResolveStatusData(
+            StatusEffectData statusData,
+            StatusEffectKind kind,
+            SkillExecutionSnapshot snapshot)
+        {
+            var needsChoiceElementDamageOverride = snapshot != null && snapshot.HasStatusElementDamageTakenBonus;
+            if (statusData == null || statusData.Kind != kind)
+            {
+                statusData = StatusEffectRuntime.CreateStatusData(kind, null);
+            }
+
+            if (statusData == null || !needsChoiceElementDamageOverride)
+            {
+                return statusData;
+            }
+
+            var overriddenStatus = UnityEngine.Object.Instantiate(statusData);
+            overriddenStatus.hideFlags = HideFlags.DontSave;
+            overriddenStatus.ElementDamageTakenBonus = snapshot.StatusElementDamageTakenBonus;
+            return overriddenStatus;
         }
 
         private static ProjectileBranchHitSpec ResolveBranchSpec(SkillExecutionSnapshot snapshot, GameObject prefab)
@@ -282,7 +306,7 @@ namespace Pakuri.InGame
 
             combatManager.ApplyStatus(
                 target,
-                statusSpec.Kind,
+                statusSpec.StatusData,
                 statusSpec.Stacks,
                 statusSpec.DurationSeconds,
                 statusSpec.MaxStacks,
@@ -680,31 +704,26 @@ namespace Pakuri.InGame
 
     public sealed class BuffSkillExecutor : TypedSkillExecutor<BuffSkillData>
     {
-    }
-
-    public sealed class ShieldSkillExecutor : TypedSkillExecutor<ShieldSkillData>
-    {
         public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
         {
-            var skill = context != null ? context.SkillData as ShieldSkillData : null;
-            if (skill == null || context.CombatManager == null || context.Roster == null)
+            var skill = context != null ? context.SkillData as BuffSkillData : null;
+            if (skill == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
             {
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
             }
 
-            var shield = SkillExecutionUtility.ResolveShield(context.Caster, skill);
-            var duration = Mathf.Max(skill.ShieldDuration, skill.Timing != null ? skill.Timing.ActiveDuration : 0f);
-            if (duration <= 0f)
+            var statusSpec = ResolveBuffStatusSpec(skill, snapshot);
+            if (statusSpec == null)
             {
-                duration = 5f;
+                return new SkillExecutionResult(SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
             }
+
+            var targets = ResolveBuffTargets(context.CasterEntry, context.Roster, skill.Target);
             var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
                 : context.CombatManager.Effects != null
                     ? context.CombatManager.Effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId)
                     : null;
-
-            var targets = context.Roster.Players;
             var routed = false;
             for (var i = 0; i < targets.Count; i++)
             {
@@ -714,7 +733,154 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                context.CombatManager.GrantShield(target.Model, shield);
+                if (UnityEngine.Random.value > Mathf.Clamp01(statusSpec.Chance))
+                {
+                    continue;
+                }
+
+                context.CombatManager.ApplyStatus(
+                    target.Model,
+                    statusSpec.StatusData,
+                    statusSpec.Stacks,
+                    statusSpec.DurationSeconds,
+                    statusSpec.MaxStacks,
+                    statusSpec.Permanent,
+                    statusSpec.RefreshDuration);
+
+                if (prefab != null && target.Transform != null && context.CombatManager.Effects != null)
+                {
+                    var instance = context.CombatManager.Effects.InstantiateSkillPrefab(prefab, target.Transform.position, Quaternion.identity);
+                    if (instance != null)
+                    {
+                        var actor = instance.GetComponent<InGameAttachedSkillEffectActor>();
+                        if (actor == null)
+                        {
+                            actor = instance.AddComponent<InGameAttachedSkillEffectActor>();
+                        }
+
+                        actor.Initialize(target.Transform, Mathf.Max(0.1f, statusSpec.DurationSeconds), Vector3.zero);
+                    }
+                }
+
+                routed = true;
+            }
+
+            return new SkillExecutionResult(routed ? SkillExecutionStatus.Routed : SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
+        }
+
+        private static ProjectileStatusHitSpec ResolveBuffStatusSpec(BuffSkillData skill, SkillExecutionSnapshot snapshot)
+        {
+            if (skill == null)
+            {
+                return null;
+            }
+
+            var spec = ProjectileSkillExecutor.ResolveStatusSpec(skill.AttachedStatus, snapshot);
+            if (spec != null)
+            {
+                return spec;
+            }
+
+            if (!string.IsNullOrWhiteSpace(skill.ApplyStatusTag)
+                && StatusEffectUtility.TryParse(skill.ApplyStatusTag, out var kind))
+            {
+                var statusData = StatusEffectRuntime.CreateStatusData(kind, skill.ApplyStatusTag);
+                if (statusData != null)
+                {
+                    statusData.SourceSkillId = skill.SkillId;
+                    statusData.TargetScope = skill.Target == BuffTarget.Self
+                        ? StatusTargetScope.Self
+                        : StatusTargetScope.AllAllies;
+                    statusData.MergePolicy = StatusMergePolicy.SameSourceRefresh;
+                }
+
+                return new ProjectileStatusHitSpec
+                {
+                    Enabled = true,
+                    Kind = kind,
+                    StatusData = statusData,
+                    Chance = 1f,
+                    Stacks = statusData != null ? Math.Max(1, statusData.BaseStackAmount) : 1,
+                    DurationSeconds = statusData != null ? statusData.Duration : 0f,
+                    MaxStacks = statusData != null ? statusData.MaxStacks : 0,
+                    Permanent = statusData != null && statusData.Permanent,
+                    RefreshDuration = true
+                };
+            }
+
+            return null;
+        }
+
+        internal static System.Collections.Generic.IReadOnlyList<UnitRosterEntry> ResolveBuffTargets(
+            UnitRosterEntry caster,
+            UnitRosterService roster,
+            BuffTarget targetMode)
+        {
+            if (targetMode == BuffTarget.Self)
+            {
+                return caster != null
+                    ? new[] { caster }
+                    : System.Array.Empty<UnitRosterEntry>();
+            }
+
+            return SkillExecutionUtility.ResolveTargetList(
+                caster,
+                roster,
+                new SkillTargetingSpec
+                {
+                    TargetSide = SkillTargetSide.AllAllies,
+                    Selection = SkillTargetSelection.Owner,
+                    Shape = SkillTargetShape.Battlefield,
+                    CoverAll = true
+                });
+        }
+    }
+
+    public sealed class ShieldSkillExecutor : TypedSkillExecutor<ShieldSkillData>
+    {
+        public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
+        {
+            var skill = context != null ? context.SkillData as ShieldSkillData : null;
+            if (skill == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
+            {
+                return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
+            }
+
+            var shield = SkillExecutionUtility.ResolveShield(context.Caster, skill);
+            var duration = skill.ShieldDuration > 0f
+                ? skill.ShieldDuration
+                : skill.ShieldStatus != null ? skill.ShieldStatus.Duration : 0f;
+            var statusData = skill.ShieldStatus;
+            if (statusData == null || duration <= 0f)
+            {
+                return new SkillExecutionResult(SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
+            }
+
+            var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
+                ? snapshot.SkillEffectPrefab
+                : context.CombatManager.Effects != null
+                    ? context.CombatManager.Effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId)
+                    : null;
+
+            var targets = BuffSkillExecutor.ResolveBuffTargets(context.CasterEntry, context.Roster, skill.Target);
+            var routed = false;
+            for (var i = 0; i < targets.Count; i++)
+            {
+                var target = targets[i];
+                if (target == null || !target.IsAlive || target.Model == null)
+                {
+                    continue;
+                }
+
+                context.CombatManager.ApplyShieldStatus(
+                    target.Model,
+                    statusData,
+                    shield,
+                    duration,
+                    1,
+                    0,
+                    false,
+                    true);
                 if (prefab != null && target.Transform != null && context.CombatManager.Effects != null)
                 {
                     var instance = context.CombatManager.Effects.InstantiateSkillPrefab(prefab, target.Transform.position, Quaternion.identity);
@@ -845,7 +1011,12 @@ namespace Pakuri.InGame
                 return 0f;
             }
 
-            return source == StatSource.Attack ? stats.AttackPower : stats.SpellPower;
+            if (source == StatSource.Attack)
+            {
+                return stats.AttackPower * StatusEffectRuntime.ResolveAttackPowerMultiplier(caster);
+            }
+
+            return stats.SpellPower;
         }
 
         public static System.Collections.Generic.IReadOnlyList<UnitRosterEntry> ResolveTargetList(

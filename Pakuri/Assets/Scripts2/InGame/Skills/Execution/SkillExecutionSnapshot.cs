@@ -47,6 +47,8 @@ namespace Pakuri.InGame
         public int StatusStacksBonus { get; private set; }
         public bool HasStatusStacksSet { get; private set; }
         public int StatusStacksSet { get; private set; }
+        public bool HasStatusElementDamageTakenBonus { get; private set; }
+        public float StatusElementDamageTakenBonus { get; private set; }
         public GameObject SkillEffectPrefab { get; private set; }
 
         public bool HasBranchBehavior =>
@@ -150,6 +152,12 @@ namespace Pakuri.InGame
                 StatusStacksSet = spec.StatusStacksSet;
             }
 
+            if (spec.HasStatusElementDamageTakenBonus)
+            {
+                HasStatusElementDamageTakenBonus = true;
+                StatusElementDamageTakenBonus = spec.StatusElementDamageTakenBonus;
+            }
+
             if (spec.SkillEffectPrefab != null)
             {
                 SkillEffectPrefab = spec.SkillEffectPrefab;
@@ -205,7 +213,9 @@ namespace Pakuri.InGame
                 StatusTag = choice.StatusTag,
                 StatusStacksBonus = choice.StatusStacksBonus,
                 HasStatusStacksSet = choice.HasStatusStacksSet,
-                StatusStacksSet = choice.StatusStacksSet
+                StatusStacksSet = choice.StatusStacksSet,
+                HasStatusElementDamageTakenBonus = choice.HasStatusElementDamageTakenBonus,
+                StatusElementDamageTakenBonus = choice.StatusElementDamageTakenBonus
             });
         }
 

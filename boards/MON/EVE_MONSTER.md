@@ -21,6 +21,53 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - NewRunScene UI or Offering gating changes: update this file and `boards/UI/RUNSCENE_UI.md`.
 - Eve reports: update this file when a report changes active Eve facts. There is no active report board.
 
+## Task: 2026-05-21 Eve-A Recursive Branch Projectile Rule
+
+### Task title
+
+Implement Eve-A Arc Bolt branch recursion, branch damage falloff, and fallback branch directions on the shared projectile path.
+
+### Goals
+
+- Let Eve-A branch projectiles apply the same shared shock-on-hit rule as the parent projectile.
+- Let branch projectiles branch again through the same shared projectile path.
+- Keep branch damage falloff data-owned at 70% per generation.
+- Keep trait 5 and master 1 branch chance as additive choice data instead of forced 100% set values.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Keep the code change minimal and inside the existing shared projectile runtime.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution still requires explicit user permission and was not run in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented in the shared projectile actor and choice CSV, then compile-verified.
+
+### Next Actions
+
+- User verifies in `NewRunScene` Play Mode that Eve-A branch hits can recursively branch, apply shock, and fall off as `100 -> 70 -> 49`.
+- If live tuning shows branch spread is too tight or too wide, tune only the fallback random-right angle range instead of adding Eve-only executor branches.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs` now lets `TrySpawnBranches(...)` keep spawning up to `branchOnHit.Count`, use nearest enemies first, and fall back to `SpawnFallbackBranchProjectile(...)` when nearby targets are missing.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs` now initializes child branch projectiles with the parent `statusOnHit` and `branchOnHit.CloneForChild()` instead of `null`, which keeps shock application and recursive branch checks on the shared path.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs` still scales child damage by `damage * branchOnHit.DamageMultiplier`, so `branch_damage_multiplier=0.7` yields the requested chained falloff.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now sets `eve-a-trait-5` to `branch_chance_bonus=0.35`, blank `branch_chance_set`, `branch_count=2`, and `branch_damage_multiplier=0.7`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now sets `eve-a-master-1` to `branch_chance_bonus=0.6`, blank `branch_chance_set`, `branch_count=2`, `branch_damage_multiplier=0.7`, and `branch_search_radius=4.5`.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv` returned `eve-a-trait-5 0.35 / blank / 2 / 0.7` and `eve-a-master-1 0.6 / blank / 2 / 0.7 / 4.5` for the branch fields after the edit.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors after the edit; existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-21: User required the new Arc Bolt branch rule to be implemented as minimal shared runtime code plus CSV tuning instead of an Eve-only special-case executor.
+
 ## Task: 2026-05-17 Eve A-J Active Runtime Baseline
 
 ### Task title
@@ -57,7 +104,7 @@ Current active Eve baseline summarized and retained for future work. 2026-05-18 
 
 ### Evidence
 
-- `Pakuri/Assets/CSVdata/source/monster_skills.csv`, `monster_skill_choices.csv`, `monster_reward_choices.csv`, and `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv` hold the retained Eve A-J source rows and choice/modifier mappings.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv`, `monster_skill_choices.csv`, and `monster_modifier_skill_choice.csv` hold the retained Eve A-J source rows and active choice/modifier mappings.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs`, `SkillExecutionSystem.cs`, `SkillRuntimeInstance.cs`, and `InGameProjectileActor.cs` own the current Eve-A projectile modifier, branch, and shock execution path.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectData.cs`, `StatusEffectKind.cs`, `InGameSkillDefinitionMapper.cs`, and `BaseUnitRuntimeModel.cs` own the retained shared status foundation used by Eve work.
 - `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` was recorded as the current Offering gating point for learned active/passive Eve reward choices.

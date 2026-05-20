@@ -25,6 +25,11 @@ namespace Pakuri.Data
                 errors.Add("EnemySkillData.csv has no enemy skill rows.");
             }
 
+            if (model.StatusEffects.Count == 0)
+            {
+                errors.Add("status_effects.csv has no status rows.");
+            }
+
             ValidateCatalogEntries(model.CatalogMonsters, model.Monsters, "catalog_monsters.csv", errors);
             ValidateCatalogEntries(model.CatalogStageOneEnemies, model.StageOneEnemies, "catalog_stage_one_enemies.csv", errors);
 
@@ -122,7 +127,12 @@ namespace Pakuri.Data
                     errors.Add($"Passive skill '{skill.Id}' uses active slot '{skill.Slot}'.");
                 }
 
-                ValidateRuntimeStatusColumns(skill, errors);
+                ValidateRuntimeStatusColumns(skill, model.StatusEffects, errors);
+            }
+
+            foreach (var status in model.StatusEffects.Values)
+            {
+                ValidateStatusEffectRow(status, errors);
             }
 
             foreach (var choice in model.SkillChoices.Values)
@@ -250,7 +260,10 @@ namespace Pakuri.Data
             }
         }
 
-        private static void ValidateRuntimeStatusColumns(SkillRow skill, List<string> errors)
+        private static void ValidateRuntimeStatusColumns(
+            SkillRow skill,
+            Dictionary<string, StatusEffectRow> statusEffects,
+            List<string> errors)
         {
             if (skill == null)
             {
@@ -273,10 +286,81 @@ namespace Pakuri.Data
                 return;
             }
 
-            if (skill.StatusChance > 0f && !StatusEffectUtility.TryParse(statusKey, out _))
+            var hasSupportedStatus = StatusEffectUtility.TryParse(statusKey, out var kind);
+            if (skill.StatusChance > 0f && !hasSupportedStatus)
             {
                 errors.Add(
                     $"Skill '{skill.Id}' uses unsupported runtime status '{statusKey}'. Add it to StatusEffectKind or set status_chance to 0 for design-only labels.");
+            }
+
+            if (skill.StatusChance > 0f && hasSupportedStatus)
+            {
+                var statusId = StatusEffectUtility.ToId(kind);
+                if (!string.IsNullOrWhiteSpace(statusId)
+                    && (statusEffects == null || !statusEffects.ContainsKey(statusId)))
+                {
+                    errors.Add($"Skill '{skill.Id}' uses status '{statusId}' but status_effects.csv has no matching row.");
+                }
+            }
+
+            if (skill.RuntimeKind == SkillRuntimeKind.Buff || skill.RuntimeKind == SkillRuntimeKind.Shield)
+            {
+                if (!StatusEffectRuntime.TryParseStatusTargetScope(skill.StatusTargetScope, out _))
+                {
+                    errors.Add($"Skill '{skill.Id}' requires supported status_target_scope for {skill.RuntimeKind}. Expected self or all_allies.");
+                }
+
+                if (!StatusEffectRuntime.TryParseStatusMergePolicy(skill.StatusMergePolicy, out _))
+                {
+                    errors.Add($"Skill '{skill.Id}' requires supported status_merge_policy for {skill.RuntimeKind}.");
+                }
+            }
+
+            if (skill.RuntimeKind == SkillRuntimeKind.Shield)
+            {
+                if (!string.Equals(skill.StatusEffectId, "shield", StringComparison.OrdinalIgnoreCase))
+                {
+                    errors.Add($"Shield skill '{skill.Id}' must use canonical status_effect_id 'shield'.");
+                }
+
+                if (!StatusEffectRuntime.TryParseShieldRefreshPolicy(skill.ShieldAmountRefreshPolicy, out _))
+                {
+                    errors.Add($"Shield skill '{skill.Id}' requires supported shield_amount_refresh_policy.");
+                }
+
+                if (skill.StatusDurationSeconds <= 0f)
+                {
+                    errors.Add($"Shield skill '{skill.Id}' requires positive status_duration_seconds.");
+                }
+            }
+        }
+
+        private static void ValidateStatusEffectRow(StatusEffectRow status, List<string> errors)
+        {
+            if (status == null)
+            {
+                return;
+            }
+
+            if (!StatusEffectUtility.TryParse(status.Id, out var kind) || kind == StatusEffectKind.None)
+            {
+                errors.Add($"Status effect '{status.Id}' is not supported by StatusEffectKind.");
+            }
+
+            if (kind == StatusEffectKind.Shield
+                && !string.Equals(status.Id, "shield", StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add($"Shield status row '{status.Id}' must use canonical id 'shield'.");
+            }
+
+            if (status.BaseStackAmount <= 0)
+            {
+                errors.Add($"Status effect '{status.Id}' requires base_stack_amount greater than 0.");
+            }
+
+            if (!status.IsPermanent && status.DefaultDurationSeconds < 0f)
+            {
+                errors.Add($"Status effect '{status.Id}' has negative default_duration_seconds.");
             }
         }
 
@@ -399,6 +483,11 @@ namespace Pakuri.Data
                 if (catalog.StageOneEnemies == null || catalog.StageOneEnemies.Length == 0)
                 {
                     errors.Add("Runtime GameDataCatalog has no stage-one enemies.");
+                }
+
+                if (catalog.StatusEffects == null || catalog.StatusEffects.Length == 0)
+                {
+                    errors.Add("Runtime GameDataCatalog has no status effects.");
                 }
             }
 

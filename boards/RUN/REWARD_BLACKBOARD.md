@@ -4,6 +4,50 @@
 - This file keeps only task blocks dated `2026-05-08` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/RUN/REWARD_BLACKBOARD.md`.
 
+## Task: 2026-05-20 Reward Button Grid Inspector Controls
+
+### Task title
+
+Switch RewardPanel button placement from inferred spacing to inspector-driven grid layout.
+
+### Goals
+
+- Keep the first reward column starting at the inspected `PrisonerBtn` baseline.
+- Use `122` Y spacing per row and move the fourth reward into the next column by X offset instead of pushing all rewards down one column.
+- Let the scene owner tune reward button start position and spacing directly from the controlling UI script inspector.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Reward layout conclusions must stay tied to inspected `InGameUIManager.cs` and inspected `NewRunScene.unity` `RewardBtnContainer` button RectTransforms.
+- Reward claim, Offering, and Manifest button behavior must remain unchanged.
+- Code Reviewer execution was deferred because explicit user permission was not given in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified. Reward buttons now place by column/row grid math using serialized inspector fields instead of template delta inference.
+
+### Next Actions
+
+- User verifies in Play Mode that 1-3 rewards stay in the left column, the 4th reward starts the next column, and inspector edits move the clones without changing template buttons.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now serializes `rewardButtonFirstColumnPosition`, `rewardButtonColumnSpacingX`, `rewardButtonRowSpacingY`, and `rewardButtonRowsPerColumn`.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` `ArrangeRewardButton()` now keeps template anchors/size but places clones by `column = order / rowsPerColumn` and `row = order % rowsPerColumn`.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` no longer uses `ResolveRewardButtonSpacing(...)`, so reward spacing is no longer inferred from template button deltas.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` serializes `PrisonerBtn` at `(-321.97855, 295)`, `DarkBtn` at `(-321.98, 122)`, and `GoldBtn` at `(-321.98, -53)`, which is the inspected source for the default first-column anchor and `122` row spacing.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-20: User requested the RewardPanel cloned buttons use fixed row/column placement and that X/Y layout values be adjustable from the controlling script inspector.
+
 ## Task: 2026-05-16 Stage Reward CSV Seed
 
 ### Task title

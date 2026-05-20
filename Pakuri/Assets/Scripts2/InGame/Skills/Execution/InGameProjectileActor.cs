@@ -178,7 +178,7 @@ namespace Pakuri.InGame
 
             combatManager.ApplyStatus(
                 target,
-                statusOnHit.Kind,
+                statusOnHit.StatusData,
                 statusOnHit.Stacks,
                 statusOnHit.DurationSeconds,
                 statusOnHit.MaxStacks,
@@ -204,18 +204,21 @@ namespace Pakuri.InGame
             for (var i = 0; i < branchOnHit.Count; i++)
             {
                 var target = FindNearestBranchTarget(candidates, hitTarget, radiusSq);
-                if (target == null || target.Transform == null)
+                if (target != null && target.Transform != null)
                 {
-                    break;
+                    SpawnBranchProjectile(hitTarget, target);
+                    spawned++;
+                    var targetId = target.Model != null && target.Model.Identity != null ? target.Model.Identity.UnitId : null;
+                    if (!string.IsNullOrWhiteSpace(targetId))
+                    {
+                        branchOnHit.MarkBranchedTarget(targetId);
+                    }
+
+                    continue;
                 }
 
-                SpawnBranchProjectile(hitTarget, target);
+                SpawnFallbackBranchProjectile(hitTarget, i);
                 spawned++;
-                var targetId = target.Model != null && target.Model.Identity != null ? target.Model.Identity.UnitId : null;
-                if (!string.IsNullOrWhiteSpace(targetId))
-                {
-                    branchOnHit.MarkBranchedTarget(targetId);
-                }
             }
 
             if (spawned > 0)
@@ -276,6 +279,32 @@ namespace Pakuri.InGame
                 return;
             }
 
+            SpawnBranchProjectile(hitTarget, directionToTarget);
+        }
+
+        private void SpawnFallbackBranchProjectile(UnitRosterEntry hitTarget, int branchIndex)
+        {
+            if (hitTarget == null || hitTarget.Transform == null)
+            {
+                return;
+            }
+
+            var baseAngle = branchOnHit.Count > 1
+                ? Mathf.Lerp(-18f, 18f, branchIndex / (float)(branchOnHit.Count - 1))
+                : 0f;
+            var jitter = Random.Range(-12f, 12f);
+            var directionToTarget = Quaternion.Euler(0f, 0f, baseAngle + jitter) * Vector2.right;
+            SpawnBranchProjectile(hitTarget, directionToTarget);
+        }
+
+        private void SpawnBranchProjectile(UnitRosterEntry hitTarget, Vector2 branchDirection)
+        {
+            if (hitTarget == null || hitTarget.Transform == null || branchDirection.sqrMagnitude <= 0.0001f)
+            {
+                return;
+            }
+
+            var origin = hitTarget.Transform.position;
             var effects = combatManager.Effects;
             if (effects == null)
             {
@@ -285,7 +314,7 @@ namespace Pakuri.InGame
             var instance = effects.InstantiateSkillPrefab(
                 branchOnHit.ProjectilePrefab,
                 origin,
-                ResolveRotation(directionToTarget));
+                ResolveRotation(branchDirection));
             if (instance == null)
             {
                 return;
@@ -303,15 +332,15 @@ namespace Pakuri.InGame
             actor.Initialize(
                 combatManager,
                 owner,
-                directionToTarget,
+                branchDirection,
                 speed,
                 damage * Mathf.Max(0f, branchOnHit.DamageMultiplier),
                 damageAttribute,
                 0,
                 destroyBeyondX,
                 Mathf.Max(0.1f, maxLifetime),
-                null,
-                null,
+                statusOnHit,
+                branchOnHit.CloneForChild(),
                 ignoredUnitId);
         }
 
@@ -369,6 +398,7 @@ namespace Pakuri.InGame
     {
         public bool Enabled;
         public StatusEffectKind Kind;
+        public StatusEffectData StatusData;
         public float Chance;
         public int Stacks;
         public float DurationSeconds;
@@ -404,6 +434,19 @@ namespace Pakuri.InGame
         public void ClearBranchedTargets()
         {
             branchedTargets.Clear();
+        }
+
+        public ProjectileBranchHitSpec CloneForChild()
+        {
+            return new ProjectileBranchHitSpec
+            {
+                Enabled = Enabled,
+                ProjectilePrefab = ProjectilePrefab,
+                Chance = Chance,
+                Count = Count,
+                DamageMultiplier = DamageMultiplier,
+                SearchRadius = SearchRadius
+            };
         }
     }
 }

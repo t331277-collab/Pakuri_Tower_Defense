@@ -211,7 +211,7 @@ namespace Pakuri.InGame
 
             manager.ApplyStatus(
                 target,
-                status.Kind,
+                status.StatusData,
                 status.Stacks,
                 status.DurationSeconds,
                 status.MaxStacks,

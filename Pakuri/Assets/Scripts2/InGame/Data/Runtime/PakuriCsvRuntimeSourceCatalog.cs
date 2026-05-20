@@ -11,6 +11,7 @@ namespace Pakuri.Data
         public TextAsset MonsterRewardChoices;
         public TextAsset MonsterSkills;
         public TextAsset MonsterSkillChoices;
+        public TextAsset StatusEffects;
         public TextAsset StageOneEnemies;
         public TextAsset EnemySkills;
     }

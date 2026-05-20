@@ -7,6 +7,50 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 Older OPS automation and role-policy task blocks were archived to `boards/ARCHIVE/OPS_AUTOMATION_ARCHIVE_2026-05-19.md`.
 
+## Task: 2026-05-21 Beam Blueprint Contract Rewrite
+
+### Task title
+
+Rewrite the BeamSkill blueprint to match the parsed-input contract style of the projectile blueprint.
+
+### Goals
+
+- Make `boards/SkillBluePrint/BeamSkill-blueprint.md` a blueprint-first contract instead of a value-rediscovery guide.
+- Align BeamSkill routing, read-set boundaries, stop-and-ask behavior, and Builder output expectations with `boards/SkillBluePrint/projectile-blueprint.md`.
+- Keep the BeamSkill blueprint grounded in the currently inspected shared `LineAttack` runtime path.
+
+### Constraints
+
+- Role Owner is Designer because this task changes workflow/design policy, not runtime gameplay code.
+- No C# script, scene, prefab, or CSV gameplay behavior was changed.
+- Claims must stay grounded in inspected Beam runtime scripts and the current projectile blueprint text.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Implemented and locally verified by markdown and targeted code-path inspection.
+
+### Next Actions
+
+- Future BeamSkill implementation requests should treat this blueprint as the first-read contract and should not reopen CSV/reference files for ordinary numeric rediscovery.
+- If future Beam behavior requires charge phases, sweep arcs, stop-first-target, or other unsupported line behavior, extend the shared contract deliberately instead of weakening the stop-and-ask rule.
+
+### Evidence
+
+- `boards/SkillBluePrint/projectile-blueprint.md` is the active parsed-input contract reference that now defines the desired structure: `Purpose`, `Core Rule`, `Builder Working Mode`, `What Builder May Read`, `Required Parsed Input`, `Common ... Contract`, `Stop And Ask User Rule`, and `Required Builder Output`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs:67-68` maps `SkillRuntimeKind.LineAttack` to `BeamSkillData`, and `:112-113` plus `:139` map active duration, tick interval, and beam width from runtime data.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:318-388` shows `BeamSkillExecutor` as the shared Beam path; `:428-469` confirms duration, width, and tick interval are resolved through shared helpers and snapshot modifiers.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameLineAttackActor.cs:25-56` shows immediate first tick on initialization, and `:119-149` shows repeated ticking until duration ends.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameLineAttackActor.cs:70-117` applies shared damage and status through `InGameCombatManager` but does not own special stop-first-target, knockback, or curved/sweeping behavior.
+- `boards/SkillBluePrint/BeamSkill-blueprint.md` now follows the projectile-style contract and no longer tells Builder to rediscover numbers from CSV/reference files by default.
+
+### History
+
+- 2026-05-21: User explicitly asked to modify `BeamSkill-blueprint.md` like `projectile-blueprint.md`, verify routing, and perform the work in the Designer role.
+
 ## Task: 2026-05-20 Projectile Blueprint Burst Contract Update
 
 ### Task title

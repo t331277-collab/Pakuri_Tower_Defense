@@ -235,9 +235,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.MonsterUnitActor
   monsterNameLabel: {fileID: 0}
   monsterHpLabel: {fileID: 0}
+  damageTextLabel: {fileID: 0}
   hpBackground: {fileID: 0}
   hpFill: {fileID: 0}
   shieldFill: {fileID: 0}
+  damageTextPopup: {fileID: 0}
 --- !u!1 &4865726361391834785
 GameObject:
   m_ObjectHideFlags: 0
@@ -264,7 +266,7 @@ Transform:
   m_GameObject: {fileID: 4865726361391834785}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.09, z: -0.02}
+  m_LocalPosition: {x: 0, y: 0, z: -0.02}
   m_LocalScale: {x: 0, y: 0.08, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

@@ -145,6 +145,61 @@ namespace Pakuri.InGame
                 maxStacks,
                 permanent,
                 refreshDuration);
+            resourceMutations.SynchronizeShieldView(target);
+            RefreshUnitActor(target);
+            return status;
+        }
+
+        public UnitStatusRuntime ApplyStatus(
+            BaseUnitRuntimeModel target,
+            StatusEffectData statusData,
+            int stacks,
+            float durationSeconds,
+            int maxStacks = 0,
+            bool permanent = false,
+            bool refreshDuration = true)
+        {
+            if (target == null || target.Statuses == null || statusData == null || statusData.Kind == StatusEffectKind.None)
+            {
+                return null;
+            }
+
+            var status = target.Statuses.Apply(
+                statusData,
+                stacks,
+                durationSeconds,
+                maxStacks,
+                permanent,
+                refreshDuration);
+            resourceMutations.SynchronizeShieldView(target);
+            RefreshUnitActor(target);
+            return status;
+        }
+
+        public UnitStatusRuntime ApplyShieldStatus(
+            BaseUnitRuntimeModel target,
+            StatusEffectData statusData,
+            float shieldAmount,
+            float durationSeconds,
+            int stacks = 1,
+            int maxStacks = 0,
+            bool permanent = false,
+            bool refreshDuration = true)
+        {
+            if (target == null || target.Statuses == null || statusData == null || statusData.Kind != StatusEffectKind.Shield)
+            {
+                return null;
+            }
+
+            var status = target.Statuses.Apply(
+                statusData,
+                stacks,
+                durationSeconds,
+                maxStacks,
+                permanent,
+                refreshDuration,
+                shieldAmount);
+            resourceMutations.SynchronizeShieldView(target);
             RefreshUnitActor(target);
             return status;
         }
@@ -179,6 +234,7 @@ namespace Pakuri.InGame
             var removed = target.Statuses.Remove(statusTag);
             if (removed)
             {
+                resourceMutations.SynchronizeShieldView(target);
                 RefreshUnitActor(target);
             }
 
@@ -195,6 +251,7 @@ namespace Pakuri.InGame
             var removed = target.Statuses.Remove(kind);
             if (removed)
             {
+                resourceMutations.SynchronizeShieldView(target);
                 RefreshUnitActor(target);
             }
 
@@ -301,6 +358,7 @@ namespace Pakuri.InGame
 
                 if (model.Statuses.Tick(deltaTime))
                 {
+                    resourceMutations.SynchronizeShieldView(model);
                     RefreshUnitActor(model);
                 }
             }
@@ -468,13 +526,17 @@ namespace Pakuri.InGame
 
             var resources = target.Resources;
             var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
-            var beforeShield = Mathf.Max(0f, resources.CurrentShield);
-            var finalDamage = Mathf.Round(ResolveDamageAfterDefense(target, baseDamage, attribute) * ResolveIncomingDamageMultiplier(target));
-            var shieldDamage = Mathf.Min(beforeShield, finalDamage);
-            var remainingDamage = Mathf.Max(0f, finalDamage - shieldDamage);
+            var beforeShield = ComputeTotalShield(target);
+            var finalDamage = Mathf.Round(ResolveDamageAfterDefense(target, baseDamage, attribute) * ResolveIncomingDamageMultiplier(target, attribute));
+            var statusShieldDamage = target.Statuses != null ? target.Statuses.ConsumeShield(finalDamage) : 0f;
+            var damageAfterStatusShield = Mathf.Max(0f, finalDamage - statusShieldDamage);
+            var directShieldBefore = Mathf.Max(0f, resources.DirectShield);
+            var directShieldDamage = Mathf.Min(directShieldBefore, damageAfterStatusShield);
+            var remainingDamage = Mathf.Max(0f, damageAfterStatusShield - directShieldDamage);
 
-            resources.CurrentShield = RoundResource(Mathf.Max(0f, beforeShield - shieldDamage));
+            resources.DirectShield = RoundResource(Mathf.Max(0f, directShieldBefore - directShieldDamage));
             resources.CurrentHealth = RoundResource(Mathf.Max(0f, beforeHealth - remainingDamage));
+            SynchronizeShieldView(target);
 
             return new InGameResourceChangeResult(
                 target,
@@ -495,9 +557,10 @@ namespace Pakuri.InGame
 
             var resources = target.Resources;
             var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
-            var beforeShield = Mathf.Max(0f, resources.CurrentShield);
+            var beforeShield = ComputeTotalShield(target);
             resources.CurrentHealth = RoundResource(beforeHealth);
-            resources.CurrentShield = RoundResource(beforeShield + amount);
+            resources.DirectShield = RoundResource(Mathf.Max(0f, resources.DirectShield) + amount);
+            SynchronizeShieldView(target);
 
             return new InGameResourceChangeResult(
                 target,
@@ -518,9 +581,10 @@ namespace Pakuri.InGame
 
             var resources = target.Resources;
             var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
-            var beforeShield = Mathf.Max(0f, resources.CurrentShield);
+            var beforeShield = ComputeTotalShield(target);
             resources.CurrentHealth = RoundResource(beforeHealth);
-            resources.CurrentShield = RoundResource(Mathf.Max(0f, amount));
+            resources.DirectShield = RoundResource(Mathf.Max(0f, amount));
+            SynchronizeShieldView(target);
 
             return new InGameResourceChangeResult(
                 target,
@@ -541,10 +605,10 @@ namespace Pakuri.InGame
 
             var resources = target.Resources;
             var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
-            var beforeShield = Mathf.Max(0f, resources.CurrentShield);
+            var beforeShield = ComputeTotalShield(target);
             var maxHealth = Mathf.Max(0f, target.Stats.MaxHealth);
             resources.CurrentHealth = RoundResource(Mathf.Min(maxHealth, beforeHealth + amount));
-            resources.CurrentShield = RoundResource(beforeShield);
+            SynchronizeShieldView(target);
 
             return new InGameResourceChangeResult(
                 target,
@@ -562,16 +626,19 @@ namespace Pakuri.InGame
             DamageAttribute attribute)
         {
             var defense = target.Defenses != null ? target.Defenses.Get(attribute) : 0f;
+            var statusReduction = StatusEffectRuntime.ResolveElementResistReduction(target, attribute);
+            defense *= Mathf.Clamp01(1f - statusReduction);
             var safeDefense = Mathf.Max(-95f, defense);
             return Mathf.Max(0f, baseDamage) * (100f / (100f + safeDefense));
         }
 
-        private static float ResolveIncomingDamageMultiplier(BaseUnitRuntimeModel target)
+        private static float ResolveIncomingDamageMultiplier(BaseUnitRuntimeModel target, DamageAttribute attribute)
         {
+            var statusMultiplier = StatusEffectRuntime.ResolveIncomingDamageMultiplier(target, attribute);
             var enemy = target as EnemyUnitRuntimeModel;
             if (enemy == null)
             {
-                return 1f;
+                return statusMultiplier;
             }
 
             var multiplier = Mathf.Max(0f, enemy.PassiveIncomingDamageMultiplier);
@@ -580,7 +647,30 @@ namespace Pakuri.InGame
                 multiplier *= Mathf.Max(0f, enemy.IncomingDamageMultiplier);
             }
 
-            return multiplier;
+            return multiplier * statusMultiplier;
+        }
+
+        public void SynchronizeShieldView(BaseUnitRuntimeModel target)
+        {
+            if (target == null || target.Resources == null)
+            {
+                return;
+            }
+
+            target.Resources.DirectShield = RoundResource(Mathf.Max(0f, target.Resources.DirectShield));
+            target.Resources.CurrentShield = ComputeTotalShield(target);
+        }
+
+        private static float ComputeTotalShield(BaseUnitRuntimeModel target)
+        {
+            if (target == null || target.Resources == null)
+            {
+                return 0f;
+            }
+
+            var directShield = Mathf.Max(0f, target.Resources.DirectShield);
+            var timedShield = target.Statuses != null ? Mathf.Max(0f, target.Statuses.GetTotalShieldAmount()) : 0f;
+            return RoundResource(directShield + timedShield);
         }
 
         private static float RoundResource(float value)

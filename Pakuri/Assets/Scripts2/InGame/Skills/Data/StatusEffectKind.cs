@@ -11,7 +11,16 @@ namespace Pakuri.InGame
         Freeze,
         Slow,
         Vulnerable,
-        Shield
+        FireResistDown,
+        FireExposure,
+        Shield,
+        Blessing,
+        HolyExposure,
+        HolyResistDown,
+        NameMark,
+        Silence,
+        SlaughterPermit,
+        ActionSpeedUp
     }
 
     public readonly struct StatusEffectDefinition
@@ -57,28 +66,83 @@ namespace Pakuri.InGame
             {
                 case "shock":
                 case "감전":
+                case "媛먯쟾":
                     kind = StatusEffectKind.Shock;
                     return true;
                 case "chill":
                 case "추위":
-                case "냉기":
+                case "異붿쐞":
                     kind = StatusEffectKind.Chill;
                     return true;
                 case "freeze":
                 case "빙결":
+                case "鍮숆껐":
                     kind = StatusEffectKind.Freeze;
                     return true;
                 case "slow":
                 case "둔화":
+                case "?뷀솕":
                     kind = StatusEffectKind.Slow;
                     return true;
                 case "vulnerable":
                 case "취약":
+                case "痍⑥빟":
                     kind = StatusEffectKind.Vulnerable;
                     return true;
+                case "fire-resist-down":
+                case "화염 저항 감소":
+                case "?붿뿼 ???媛먯냼":
+                    kind = StatusEffectKind.FireResistDown;
+                    return true;
+                case "fire-exposure":
+                case "화염 노출":
+                case "?붿뿼 ?몄텧":
+                    kind = StatusEffectKind.FireExposure;
+                    return true;
                 case "shield":
+                case "holy-shield":
+                case "신성 방어막":
                 case "방어막":
+                case "?좎꽦 諛⑹뼱留?":
+                case "諛⑹뼱留?":
                     kind = StatusEffectKind.Shield;
+                    return true;
+                case "blessing":
+                case "축복":
+                case "異뺣났":
+                    kind = StatusEffectKind.Blessing;
+                    return true;
+                case "holy-exposure":
+                case "신성 노출":
+                case "?좎꽦 ?몄텧":
+                    kind = StatusEffectKind.HolyExposure;
+                    return true;
+                case "holy-resist-down":
+                case "신성 저항 감소":
+                case "?좎꽦 ???媛먯냼":
+                    kind = StatusEffectKind.HolyResistDown;
+                    return true;
+                case "name-mark":
+                case "이름표식":
+                case "이름표식 연계":
+                case "?대쫫?쒖떇":
+                    kind = StatusEffectKind.NameMark;
+                    return true;
+                case "silence":
+                case "침묵":
+                case "移⑤У":
+                    kind = StatusEffectKind.Silence;
+                    return true;
+                case "slaughter-permit":
+                case "몰살 허가":
+                case "紐곗궡 ?덇?":
+                    kind = StatusEffectKind.SlaughterPermit;
+                    return true;
+                case "action-speed-up":
+                case "행동속도 증가":
+                case "행동속도":
+                case "?됰룞?띾룄 利앷?":
+                    kind = StatusEffectKind.ActionSpeedUp;
                     return true;
                 default:
                     return false;
@@ -90,17 +154,35 @@ namespace Pakuri.InGame
             switch (kind)
             {
                 case StatusEffectKind.Shock:
-                    return new StatusEffectDefinition(kind, "shock", "감전", 1.25f, 10, false);
+                    return new StatusEffectDefinition(kind, "shock", "감전", 4f, 5, false);
                 case StatusEffectKind.Chill:
-                    return new StatusEffectDefinition(kind, "chill", "추위", 2.5f, 10, false);
+                    return new StatusEffectDefinition(kind, "chill", "추위", 3f, 5, false);
                 case StatusEffectKind.Freeze:
-                    return new StatusEffectDefinition(kind, "freeze", "빙결", 0f, 0, false);
+                    return new StatusEffectDefinition(kind, "freeze", "빙결", 2f, 1, false);
                 case StatusEffectKind.Slow:
-                    return new StatusEffectDefinition(kind, "slow", "둔화", 0f, 0, false);
+                    return new StatusEffectDefinition(kind, "slow", "둔화", 3f, 5, false);
                 case StatusEffectKind.Vulnerable:
                     return new StatusEffectDefinition(kind, "vulnerable", "취약", 0f, 10, true);
+                case StatusEffectKind.FireResistDown:
+                    return new StatusEffectDefinition(kind, "fire-resist-down", "화염 저항 감소", 0f, 0, false);
+                case StatusEffectKind.FireExposure:
+                    return new StatusEffectDefinition(kind, "fire-exposure", "화염 노출", 0f, 0, false);
                 case StatusEffectKind.Shield:
-                    return new StatusEffectDefinition(kind, "shield", "방어막", 0f, 0, false);
+                    return new StatusEffectDefinition(kind, "shield", "신성 방어막", 0f, 0, false);
+                case StatusEffectKind.Blessing:
+                    return new StatusEffectDefinition(kind, "blessing", "축복", 0f, 1, false);
+                case StatusEffectKind.HolyExposure:
+                    return new StatusEffectDefinition(kind, "holy-exposure", "신성 노출", 0f, 0, false);
+                case StatusEffectKind.HolyResistDown:
+                    return new StatusEffectDefinition(kind, "holy-resist-down", "신성 저항 감소", 0f, 0, false);
+                case StatusEffectKind.NameMark:
+                    return new StatusEffectDefinition(kind, "name-mark", "이름표식", 0f, 0, true);
+                case StatusEffectKind.Silence:
+                    return new StatusEffectDefinition(kind, "silence", "침묵", 0f, 1, false);
+                case StatusEffectKind.SlaughterPermit:
+                    return new StatusEffectDefinition(kind, "slaughter-permit", "몰살 허가", 6f, 1, false);
+                case StatusEffectKind.ActionSpeedUp:
+                    return new StatusEffectDefinition(kind, "action-speed-up", "행동속도 증가", 6f, 1, false);
                 default:
                     return NoneDefinition;
             }
@@ -124,7 +206,8 @@ namespace Pakuri.InGame
             }
 
             var names = new List<string>();
-            var addedKinds = new HashSet<StatusEffectKind>();
+            var totals = new Dictionary<StatusEffectKind, int>();
+            var labels = new Dictionary<StatusEffectKind, string>();
             for (var i = 0; i < statuses.Count; i++)
             {
                 var status = statuses[i];
@@ -133,10 +216,28 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var displayName = ToDisplayName(status.Kind);
-                if (!string.IsNullOrWhiteSpace(displayName) && addedKinds.Add(status.Kind))
+                var displayName = status.DisplayName;
+                if (string.IsNullOrWhiteSpace(displayName))
                 {
-                    names.Add($"{displayName} +{status.Stacks}");
+                    displayName = ToDisplayName(status.Kind);
+                }
+
+                if (string.IsNullOrWhiteSpace(displayName))
+                {
+                    continue;
+                }
+
+                totals[status.Kind] = totals.TryGetValue(status.Kind, out var currentStacks)
+                    ? currentStacks + status.Stacks
+                    : status.Stacks;
+                labels[status.Kind] = displayName;
+            }
+
+            foreach (var pair in totals)
+            {
+                if (labels.TryGetValue(pair.Key, out var displayName))
+                {
+                    names.Add($"{displayName} +{pair.Value}");
                 }
             }
 
@@ -151,15 +252,34 @@ namespace Pakuri.InGame
         public StatusEffectKind Kind = StatusEffectKind.None;
         public string StatusTag;
         public string StatusName;
+        public string SourceSkillId;
+        public StatusTargetScope TargetScope = StatusTargetScope.Unspecified;
+        public StatusMergePolicy MergePolicy = StatusMergePolicy.Unspecified;
+        public ShieldRefreshRule ShieldAmountRefreshPolicy = ShieldRefreshRule.TakeHighest;
 
         [Header("Stacking")]
         public bool IsStackable;
         public int MaxStacks;
         public float Duration;
+        public bool Permanent;
+        public int BaseStackAmount = 1;
+
+        [Header("Action Rules")]
+        public bool CanMove = true;
+        public bool CanAct = true;
+        public bool CanUseSpecialSkill = true;
 
         [Header("Effect")]
         public float TickDamageBase;
         public float MovementSlowRate;
+        public float MoveSpeedBonus;
+        public float CriticalDamageTakenBonus;
+        public float CriticalResistanceBonus;
+        public float DamageTakenBonus;
+        public float ElementResistReduction;
+        public float ElementDamageTakenBonus;
+        public ElementType ElementModifierTarget;
+        public bool HasElementModifierTarget;
         public bool IsControlEffect;
         public BuffModifierSpec Modifiers = new BuffModifierSpec();
 

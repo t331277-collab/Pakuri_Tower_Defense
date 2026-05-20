@@ -8,17 +8,14 @@ namespace Pakuri.InGame
     [DisallowMultipleComponent]
     public sealed class MonsterPanelUI : MonoBehaviour
     {
+        private const int MaxPartySlots = 5;
         private const int MaxVisibleActiveSlots = 3;
 
         [SerializeField] private Transform monsterPanelRoot;
-        [SerializeField] private Transform selectedMonsterRoot;
-        [SerializeField] private Image monsterImage;
-        [SerializeField] private ActiveSkillSlotView[] activeSlots = new ActiveSkillSlotView[MaxVisibleActiveSlots];
+        [SerializeField] private MonsterPanelSlotView[] monsterSlots = new MonsterPanelSlotView[MaxPartySlots];
         [SerializeField] private StageManager stageManager;
         [SerializeField] private SceneEntryManager entryManager;
         [SerializeField] private InGameCombatManager combatManager;
-
-        private string lastMonsterId;
 
         private void Awake()
         {
@@ -44,71 +41,54 @@ namespace Pakuri.InGame
             ResolveSceneUi();
             SetPanelVisible(true);
 
-            var entry = ResolveSelectedPlayerEntry();
-            var model = entry != null ? entry.Model as MonsterUnitRuntimeModel : null;
-            if (model == null && entryManager != null)
+            var modelsBySlot = ResolvePlayerModelsBySlot();
+            var catalog = ResolveCatalog();
+            for (var i = 0; i < monsterSlots.Length; i++)
             {
-                model = entryManager.SpawnedPlayerModel;
-            }
-
-            var monsterId = model != null && model.Identity != null ? model.Identity.DefinitionId : string.Empty;
-            if (string.IsNullOrWhiteSpace(monsterId))
-            {
-                SetSlotsActive(0);
-                return;
-            }
-
-            if (selectedMonsterRoot != null)
-            {
-                selectedMonsterRoot.gameObject.SetActive(true);
-            }
-
-            RefreshMonsterImage(monsterId);
-            RefreshActiveSlots(model);
-        }
-
-        private void RefreshMonsterImage(string monsterId)
-        {
-            if (monsterImage == null || string.Equals(lastMonsterId, monsterId, System.StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
-            lastMonsterId = monsterId;
-            var monster = PakuriDataManager.Instance.ResolveMonster(monsterId, ResolveCatalog());
-            if (monster != null && monster.UnitSprite != null)
-            {
-                monsterImage.sprite = monster.UnitSprite;
-                monsterImage.enabled = true;
-            }
-        }
-
-        private void RefreshActiveSlots(MonsterUnitRuntimeModel model)
-        {
-            var runtimes = model != null && model.SkillRuntime != null ? model.SkillRuntime.ActiveSkills : null;
-            var runtimeCount = runtimes != null ? runtimes.Count : 0;
-            for (var i = 0; i < activeSlots.Length && i < MaxVisibleActiveSlots; i++)
-            {
-                var view = activeSlots[i];
-                if (view == null)
+                var slotView = monsterSlots[i];
+                if (slotView == null)
                 {
                     continue;
                 }
 
-                var runtime = i < runtimeCount ? runtimes[i] : null;
-                view.SetRuntime(runtime);
+                slotView.SetRuntime(modelsBySlot[i], catalog);
             }
         }
 
-        private void SetSlotsActive(int count)
+        private MonsterUnitRuntimeModel[] ResolvePlayerModelsBySlot()
         {
-            for (var i = 0; i < activeSlots.Length; i++)
+            var models = new MonsterUnitRuntimeModel[MaxPartySlots];
+            var players = combatManager != null && combatManager.Roster != null
+                ? combatManager.Roster.Players
+                : null;
+            if (players != null)
             {
-                if (activeSlots[i] != null)
+                for (var i = 0; i < players.Count; i++)
                 {
-                    activeSlots[i].SetVisible(i < count);
+                    var entry = players[i];
+                    var model = entry != null ? entry.Model as MonsterUnitRuntimeModel : null;
+                    var identity = model != null ? model.Identity : null;
+                    if (identity == null || identity.Side != UnitSide.Player)
+                    {
+                        continue;
+                    }
+
+                    var slotIndex = identity.SlotIndex;
+                    if (slotIndex < 0 || slotIndex >= models.Length)
+                    {
+                        continue;
+                    }
+
+                    models[slotIndex] = model;
                 }
             }
+
+            if (models[0] == null && entryManager != null)
+            {
+                models[0] = entryManager.SpawnedPlayerModel;
+            }
+
+            return models;
         }
 
         private void ResolveReferences()
@@ -144,44 +124,27 @@ namespace Pakuri.InGame
             }
 
             monsterPanelRoot.gameObject.SetActive(true);
-
-            if (selectedMonsterRoot == null)
+            EnsureMonsterSlotArray();
+            for (var i = 0; i < monsterSlots.Length; i++)
             {
-                selectedMonsterRoot = monsterPanelRoot.Find("1PMonster");
+                ResolveMonsterSlot(i);
             }
-
-            if (selectedMonsterRoot == null)
-            {
-                return;
-            }
-
-            selectedMonsterRoot.gameObject.SetActive(true);
-
-            if (monsterImage == null)
-            {
-                monsterImage = FindImage(selectedMonsterRoot, "Monster Image");
-            }
-
-            EnsureSlotArray();
-            ResolveSlot(0, "Active1");
-            ResolveSlot(1, "Active2");
-            ResolveSlot(2, "Active3");
         }
 
-        private void ResolveSlot(int index, string childName)
+        private void ResolveMonsterSlot(int slotIndex)
         {
-            if (index < 0 || index >= activeSlots.Length || selectedMonsterRoot == null)
+            if (slotIndex < 0 || slotIndex >= monsterSlots.Length || monsterPanelRoot == null)
             {
                 return;
             }
 
-            var existing = activeSlots[index];
+            var existing = monsterSlots[slotIndex];
             if (existing != null && existing.IsBound)
             {
                 return;
             }
 
-            var slotRoot = selectedMonsterRoot.Find(childName);
+            var slotRoot = monsterPanelRoot.Find(string.Format("{0}PMonster", slotIndex + 1));
             if (slotRoot == null)
             {
                 return;
@@ -189,25 +152,19 @@ namespace Pakuri.InGame
 
             if (existing == null)
             {
-                activeSlots[index] = new ActiveSkillSlotView(slotRoot.gameObject);
+                monsterSlots[slotIndex] = new MonsterPanelSlotView(slotRoot);
                 return;
             }
 
-            existing.Bind(slotRoot.gameObject);
+            existing.Bind(slotRoot);
         }
 
-        private void EnsureSlotArray()
+        private void EnsureMonsterSlotArray()
         {
-            if (activeSlots == null || activeSlots.Length != MaxVisibleActiveSlots)
+            if (monsterSlots == null || monsterSlots.Length != MaxPartySlots)
             {
-                activeSlots = new ActiveSkillSlotView[MaxVisibleActiveSlots];
+                monsterSlots = new MonsterPanelSlotView[MaxPartySlots];
             }
-        }
-
-        private UnitRosterEntry ResolveSelectedPlayerEntry()
-        {
-            var manager = combatManager;
-            return manager != null && manager.Roster.Players.Count > 0 ? manager.Roster.Players[0] : null;
         }
 
         private GameDataCatalog ResolveCatalog()
@@ -228,11 +185,6 @@ namespace Pakuri.InGame
             {
                 monsterPanelRoot.gameObject.SetActive(visible);
             }
-
-            if (selectedMonsterRoot != null)
-            {
-                selectedMonsterRoot.gameObject.SetActive(visible);
-            }
         }
 
         private static T FindSceneObject<T>() where T : UnityEngine.Object
@@ -248,6 +200,163 @@ namespace Pakuri.InGame
             }
 
             return null;
+        }
+
+        [System.Serializable]
+        private sealed class MonsterPanelSlotView
+        {
+            [SerializeField] private GameObject root;
+            [SerializeField] private Image monsterImage;
+            [SerializeField] private ActiveSkillSlotView[] activeSlots = new ActiveSkillSlotView[MaxVisibleActiveSlots];
+
+            private string lastMonsterId;
+
+            public bool IsBound => root != null;
+
+            public MonsterPanelSlotView(Transform rootTransform)
+            {
+                Bind(rootTransform);
+            }
+
+            public void Bind(Transform rootTransform)
+            {
+                root = rootTransform != null ? rootTransform.gameObject : null;
+                monsterImage = null;
+                activeSlots = new ActiveSkillSlotView[MaxVisibleActiveSlots];
+                lastMonsterId = string.Empty;
+                ResolveChildren();
+            }
+
+            public void SetRuntime(MonsterUnitRuntimeModel model, GameDataCatalog catalog)
+            {
+                ResolveChildren();
+                if (root == null)
+                {
+                    return;
+                }
+
+                var monsterId = model != null && model.Identity != null ? model.Identity.DefinitionId : string.Empty;
+                if (string.IsNullOrWhiteSpace(monsterId))
+                {
+                    SetVisible(false);
+                    SetSlotsActive(0);
+                    return;
+                }
+
+                SetVisible(true);
+                RefreshMonsterImage(monsterId, catalog);
+                RefreshActiveSlots(model);
+            }
+
+            private void RefreshMonsterImage(string monsterId, GameDataCatalog catalog)
+            {
+                if (monsterImage == null || string.Equals(lastMonsterId, monsterId, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
+                lastMonsterId = monsterId;
+                var monster = PakuriDataManager.Instance.ResolveMonster(monsterId, catalog);
+                if (monster != null && monster.UnitSprite != null)
+                {
+                    monsterImage.sprite = monster.UnitSprite;
+                    monsterImage.enabled = true;
+                    return;
+                }
+
+                monsterImage.sprite = null;
+                monsterImage.enabled = false;
+            }
+
+            private void RefreshActiveSlots(MonsterUnitRuntimeModel model)
+            {
+                var runtimes = model != null && model.SkillRuntime != null ? model.SkillRuntime.ActiveSkills : null;
+                var runtimeCount = runtimes != null ? runtimes.Count : 0;
+                for (var i = 0; i < activeSlots.Length && i < MaxVisibleActiveSlots; i++)
+                {
+                    var view = activeSlots[i];
+                    if (view == null)
+                    {
+                        continue;
+                    }
+
+                    var runtime = i < runtimeCount ? runtimes[i] : null;
+                    view.SetRuntime(runtime);
+                }
+            }
+
+            private void SetSlotsActive(int count)
+            {
+                for (var i = 0; i < activeSlots.Length; i++)
+                {
+                    if (activeSlots[i] != null)
+                    {
+                        activeSlots[i].SetVisible(i < count);
+                    }
+                }
+            }
+
+            private void SetVisible(bool visible)
+            {
+                if (root != null)
+                {
+                    root.SetActive(visible);
+                }
+            }
+
+            private void ResolveChildren()
+            {
+                if (root == null)
+                {
+                    return;
+                }
+
+                if (monsterImage == null)
+                {
+                    monsterImage = FindImage(root.transform, "Monster Image");
+                }
+
+                EnsureSlotArray();
+                ResolveSlot(0, "Active1");
+                ResolveSlot(1, "Active2");
+                ResolveSlot(2, "Active3");
+            }
+
+            private void ResolveSlot(int index, string childName)
+            {
+                if (index < 0 || index >= activeSlots.Length || root == null)
+                {
+                    return;
+                }
+
+                var existing = activeSlots[index];
+                if (existing != null && existing.IsBound)
+                {
+                    return;
+                }
+
+                var slotRoot = root.transform.Find(childName);
+                if (slotRoot == null)
+                {
+                    return;
+                }
+
+                if (existing == null)
+                {
+                    activeSlots[index] = new ActiveSkillSlotView(slotRoot.gameObject);
+                    return;
+                }
+
+                existing.Bind(slotRoot.gameObject);
+            }
+
+            private void EnsureSlotArray()
+            {
+                if (activeSlots == null || activeSlots.Length != MaxVisibleActiveSlots)
+                {
+                    activeSlots = new ActiveSkillSlotView[MaxVisibleActiveSlots];
+                }
+            }
         }
 
         [System.Serializable]

@@ -1,0 +1,63 @@
+18: - Code Reviewer execution requires explicit user permission.
+31: - 2026-05-19 routing/policy status: `AGENTS_ROLE/COMMON.md` now contains shared evidence, Unity Play Mode, Git, Reviewer, and board-update boundaries for Designer, Code Builder, Skill Builder, and Code Reviewer; role/track files were compacted to avoid repeating root/common rules. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
+32: - 2026-05-19 OPS maintenance status: active OPS boards were compacted; older automation and reviewer task blocks were moved to `boards/ARCHIVE/OPS_AUTOMATION_ARCHIVE_2026-05-19.md` and `boards/ARCHIVE/OPS_REVIEWER_ARCHIVE_2026-05-19.md`. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
+43: - 2026-05-13 reviewer status: user-requested external Code Reviewer for Phase 2 `Manifested Party` refactor completed with `REVIEW_RESULT: PASS`; detailed record is in `boards/OPS/REVIEWER_BLACKBOARD.md` and `codex_loop_logs/phase2_manifested_party_reviewer_20260513.md`.
+54: - 2026-05-13 closeout status: Phase 3-H `Phase 3 Closeout / Ownership Verification` completed. Phase 3 `Projectile / Effect / Drone Simulation Split` is complete in Code Builder scope; next default implementation phase is Phase 4 `Enemy Simulation Split`. User-owned Play Mode verification and optional Code Reviewer remain outside this Builder closeout.
+65: - 2026-05-14 Phase2-A implementation status: Code Builder split InGame unit runtime models into `BaseUnitRuntimeModel`, `MonsterUnitRuntimeModel`, and `EnemyUnitRuntimeModel`; `UnitFactory` now creates Eve as `MonsterUnitRuntimeModel` and `stage1-swordsman` as `EnemyUnitRuntimeModel`. Code Builder does not generate prefabs by code; the user creates prefabs in Unity Editor and later attaches provided Actor/binding components. Definition skill/projectile tuning remains deferred to later SkillData mapper work. A required Reviewer attempt ran once and returned a P2 fix request in the broader uncommitted set at `InGameSkillDataValidator.cs:363-365`, not a Phase2-A unit model pass. Detailed records are in `boards/ARCHIVE/REFACTORING_ARCHIVE_2026-05-14/REFACTORING.md`, `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/DATA/DATA_BLACKBOARD.md`, `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`, `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`, `boards/ARCHIVE/REPORT_BLACKBOARD_ARCHIVE_2026-05-18.md`, and `boards/OPS/REVIEWER_BLACKBOARD.md`.
+117: - `boards/OPS/REVIEWER_BLACKBOARD.md`: reviewer wrapper and review flow.
+119: - `boards/OPS/UNITY_MCP_BLACKBOARD.md`: Unity MCP bridge and usage notes.
+148: - Do not run Code Reviewer without user permission.
+154: ### Status
+158: ### Next Actions
+163: ### Evidence
+168: - `AGENTS.md` now states Code Reviewer execution requires explicit user permission.
+173: - 2026-05-02 validation: `run_codex.bat`, `codex_builder_reviewer.ps1`, and `codex_prompt.txt` all exist at the repository root.
+175: ### History
+177: - 2026-04-30: User requested a hierarchical board structure to reduce token use and speed up task routing.
+179: - 2026-05-02: Validated the root files, archived pre-hierarchy log, domain board hierarchy, migrated task-block structure, and reviewer-wrapper artifacts; the task is now complete.
+194: - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+200: ### Status
+204: ### Next Actions
+208: ### Evidence
+213: ### History
+230: - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+236: ### Status
+240: ### Next Actions
+244: ### Evidence
+251: ### History
+268: - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+274: ### Status
+278: ### Next Actions
+282: ### Evidence
+292: ### History
+310: - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+316: ### Status
+320: ### Next Actions
+324: ### Evidence
+333: ### History
+351: - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+357: ### Status
+361: ### Next Actions
+365: ### Evidence
+374: ### History
+393: - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+399: ### Status
+403: ### Next Actions
+407: ### Evidence
+415: ### History
+435: - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+441: ### Status
+445: ### Next Actions
+449: ### Evidence
+458: ### History
+475: - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+481: ### Status
+485: ### Next Actions
+489: ### Evidence
+499: ### History
+518: - Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+524: ### Status
+528: ### Next Actions
+531: - Run Code Reviewer only if explicitly requested.
+533: ### Evidence
+541: ### History

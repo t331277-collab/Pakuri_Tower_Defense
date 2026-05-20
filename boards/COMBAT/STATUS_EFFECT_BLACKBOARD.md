@@ -4,6 +4,186 @@
 - Older broad combat/status history remains in `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 
+## Task: 2026-05-21 Eve-A Recursive Branch Shared Shock Path
+
+### Task title
+
+Keep Eve-A recursive branch hits on the same shared projectile status path as the parent hit.
+
+### Goals
+
+- Ensure a branch projectile can still apply Eve-A shock through the shared projectile status helper.
+- Ensure recursive branch hits reuse the shared projectile branch contract instead of adding a second Eve-only shock or branch path.
+- Keep the branch damage falloff and branch chance tuning owned by the current choice CSV rows.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The implementation must stay inside the current shared projectile/status runtime.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution still requires explicit user permission and was not run in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that branch-generated hits still show the same shock application behavior as the base Arc Bolt hit.
+- If a later status rule needs branch-only behavior, extend the shared projectile status spec first instead of forking Eve-A logic.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs` still applies projectile statuses only through `TryApplyStatus(...)`, and branch children are now initialized with the same `statusOnHit` spec instead of `null`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs` now passes `branchOnHit.CloneForChild()` into branch child initialization, so recursive branch hits continue through the same shared branch/status path without sharing transient branched-target state.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now keeps Eve-A branch tuning in choice data with `eve-a-trait-5 branch_damage_multiplier=0.7` and `eve-a-master-1 branch_damage_multiplier=0.7`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors after the edit; existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-21: Code Builder changed the shared projectile actor so Eve-A branch hits inherit status and branch specs, which keeps recursive branch shock on the common status path.
+
+## Task: 2026-05-20 Shield And Buff Source-Aware Status Runtime
+
+### Task title
+
+Implement the shield/buff unification blueprint on the shared runtime status path.
+
+### Goals
+
+- Move player-skill shield application from raw `CurrentShield += amount` authority to timed status instances with mutable absorb payload.
+- Make buff/shield merge identity source-aware by `status kind + source skill + merge policy`.
+- Keep same-source refresh and different-source coexistence grounded in CSV-owned fields.
+- Remove the hardcoded shield-duration fallback from runtime execution.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution still requires explicit user permission and was not run in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified by build, editor-side deterministic execution, and CSV runtime sync.
+
+### Next Actions
+
+- User verifies in Play Mode that Ariel-B shield lifetime and VFX lifetime match the CSV duration in live combat.
+- If reviewer permission is given later, run the enforced Builder -> Reviewer flow instead of treating prompt memory as completion.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:179-202` adds `ApplyShieldStatus(...)` so shield now enters combat through the shared status path instead of only through raw resource grant.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:533-539` consumes `target.Statuses.ConsumeShield(finalDamage)` before direct shield and health, and `:653-673` derives `CurrentShield` from `DirectShield + timed shield`.
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs:118-153` merges source-aware statuses by `SourceSkillId` and `MergePolicy`; `:245-277` sums and consumes timed shield instances; `:347-455` stores mutable shield payload including `MergePolicy`, `RemainingShieldAmount`, and refresh behavior.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:850-875` resolves shield duration from `skill.ShieldDuration` or `skill.ShieldStatus.Duration` and applies shield through `context.CombatManager.ApplyShieldStatus(...)`; the previous hardcoded `5f` fallback path is gone.
+- Unity editor `execute_code` returned `shieldAfterDamage=6;healthAfterDamage=100;sameSourceShieldCount=1;sameSourceShieldRemaining=8;differentSourceShieldCount=2;totalShieldAfterDifferentSource=15;sameSourceBuffCount=1;differentSourceBuffCount=2;totalBuffStacks=2;expiredShieldCount=0;shieldAfterExpire=0`, which proves same-source refresh, different-source coexistence, timed shield consumption, and timed shield expiration on the edited runtime classes.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the pre-existing `System.Net.Http` / `System.IO.Compression` MSB3277 warnings remained.
+
+### History
+
+- 2026-05-20: Code Builder implemented the blueprint by extending status identity, moving timed shield ownership into the shared status runtime, and synchronizing `CurrentShield` from active runtime state.
+- 2026-05-20: Initial editor sync exposed two real data issues during verification: `monster_skills.csv` had not yet been reimported into Unity, and `status_effects.csv` shield row had a broken quote that collapsed row 10 to 2 columns.
+- 2026-05-20: After asset refresh plus the `status_effects.csv` quote fix, `Pakuri/Sync CSV Runtime Catalog Assets` completed successfully.
+
+## Task: 2026-05-20 Shield And Buff Source-Aware Status Unification Design Handoff
+
+### Task title
+
+Prepare a Code Builder handoff for converting timed ally shield/buff skills onto a source-aware runtime status model.
+
+### Goals
+
+- Ground the requested shield/buff redesign in inspected runtime and CSV evidence.
+- Record why shield cannot stay on the current raw `GrantShield += amount` path.
+- Hand Code Builder one implementation contract for CSV schema, runtime identity, shield payload, and verification expectations.
+
+### Constraints
+
+- Role Owner is Designer.
+- This task creates a handoff document only; it does not implement runtime code.
+- Unity Play Mode verification remains user-owned.
+- The handoff must stay grounded in inspected files and current runtime behavior.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Implementation handoff written for Code Builder.
+
+### Next Actions
+
+- Code Builder reads `boards/SkillBluePrint/shield-buff-status-unification-blueprint.md` before implementation.
+- If Builder changes shield canonical id ownership or runtime identity names, record that exact migration choice here when implementation lands.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:840-845` shows shield duration currently falls back to hardcoded `5f`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:862` applies shield through `GrantShield(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:514-535` stores shield only as `CurrentShield`, with no duration/source tracking.
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs:114` stores statuses by `StatusEffectKind` only.
+- `boards/SkillBluePrint/shield-buff-status-unification-blueprint.md` contains the current Builder contract for the redesign.
+
+### History
+
+- 2026-05-20: User asked whether shield should be buff/status-unified with per-skill merge rules.
+- 2026-05-20: Designer confirmed the direction is viable but requires a source-aware runtime identity model and a mutable shield payload, then wrote the Builder handoff blueprint.
+
+## Task: 2026-05-20 Ariel-A Master 2 Holy Exposure Shared Status Use
+
+### Task title
+
+Activate Ariel-A master 2 through the shared Holy Exposure status path, including a choice-level Holy damage taken override.
+
+### Goals
+
+- Reuse the shared `StatusEffectKind.HolyExposure` parse/display contract for Ariel-A master 2.
+- Confirm that a choice-only status can apply without a base skill status row.
+- Confirm that a choice-only status can override its own incoming Holy damage multiplier without changing the shared catalog row for every other user.
+- Keep the shared executor rules explicit for future active choice debuffs.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No gameplay verification was run by Codex.
+- This task did not add a new status kind; it reused the current working-tree Holy Exposure support.
+- Code Reviewer execution requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Confirmed and activated through existing shared status runtime with choice-level override support.
+
+### Next Actions
+
+- Future choice-only debuffs should populate `status_tag`, set stacks explicitly when deterministic one-stack behavior is required, and use choice-level override fields when one status kind needs different values per skill.
+- If another debuff still appears missing in gameplay, inspect the active choice state before adding new runtime status code.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:191-241` shows the shared status resolver prefers `snapshot.StatusTag`, defaults missing base status chance to `1f`, applies `StatusStacksSet`, and clones the resolved status data when a choice-specific `StatusElementDamageTakenBonus` override is present.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs:115-117` parses `holy-exposure` and `신성 노출`; `:174-175` defines the shared display label `신성 노출`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` keeps `ariel-a` with no base status, which makes `ariel-a-master-2` a choice-only shared status case.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now sets `ariel-a-master-2` `status_tag=holy-exposure`, `status_stacks_set=1`, and `status_element_damage_taken_bonus=0.15`.
+
+### History
+
+- 2026-05-20: User asked Code Builder to apply the previously explained Ariel-A master 2 Holy Exposure fix through the shared status path.
+- 2026-05-20: User then required per-skill values, so Code Builder extended the shared status path with a choice-level `StatusElementDamageTakenBonus` override and set Ariel-A master 2 to `0.15`.
+
 ## Task: 2026-05-17 InGame Shared Status Runtime Baseline
 
 ### Task title

@@ -43,6 +43,7 @@ namespace Pakuri.InGame
     {
         public float CurrentHealth;
         public float CurrentShield;
+        public float DirectShield;
     }
 
     public class BaseUnitRuntimeModel
@@ -75,10 +76,11 @@ namespace Pakuri.InGame
             float durationSeconds,
             int maxStacks = 0,
             bool permanent = false,
-            bool refreshDuration = true)
+            bool refreshDuration = true,
+            float shieldAmount = 0f)
         {
             return StatusEffectUtility.TryParse(tag, out var kind)
-                ? Apply(kind, stacks, durationSeconds, maxStacks, permanent, refreshDuration)
+                ? Apply(kind, stacks, durationSeconds, maxStacks, permanent, refreshDuration, shieldAmount)
                 : null;
         }
 
@@ -88,29 +90,67 @@ namespace Pakuri.InGame
             float durationSeconds,
             int maxStacks = 0,
             bool permanent = false,
-            bool refreshDuration = true)
+            bool refreshDuration = true,
+            float shieldAmount = 0f)
         {
-            if (kind == StatusEffectKind.None)
+            var statusData = StatusEffectRuntime.CreateStatusData(kind, null);
+            return Apply(statusData, stacks, durationSeconds, maxStacks, permanent, refreshDuration, shieldAmount);
+        }
+
+        public UnitStatusRuntime Apply(
+            StatusEffectData statusData,
+            int stacks,
+            float durationSeconds,
+            int maxStacks = 0,
+            bool permanent = false,
+            bool refreshDuration = true,
+            float shieldAmount = 0f)
+        {
+            if (statusData == null || statusData.Kind == StatusEffectKind.None)
             {
                 return null;
             }
 
-            var definition = StatusEffectUtility.GetDefinition(kind);
-            var resolvedDuration = durationSeconds > 0f ? durationSeconds : definition.DefaultDurationSeconds;
-            var resolvedMaxStacks = maxStacks > 0 ? maxStacks : definition.DefaultMaxStacks;
-            var resolvedPermanent = permanent || definition.Permanent;
-            var status = Find(kind);
-            if (status == null)
+            var resolvedDuration = durationSeconds > 0f ? durationSeconds : statusData.Duration;
+            var resolvedMaxStacks = maxStacks > 0 ? maxStacks : statusData.MaxStacks;
+            var resolvedPermanent = permanent || statusData.Permanent;
+            var kind = statusData.Kind;
+            var sourceAware = HasSourceAwareIdentity(statusData);
+            var mergedExisting = sourceAware && statusData.MergePolicy != StatusMergePolicy.AlwaysStack;
+            var status = mergedExisting
+                ? Find(kind, statusData.SourceSkillId)
+                : Find(kind);
+            if (status == null || (sourceAware && statusData.MergePolicy == StatusMergePolicy.AlwaysStack))
             {
                 status = new UnitStatusRuntime(kind);
                 statuses.Add(status);
+                mergedExisting = false;
             }
 
-            status.AddStacks(stacks, resolvedMaxStacks);
+            if (ShouldReplaceSourceData(status.SourceData, statusData))
+            {
+                status.SetSourceData(statusData);
+            }
+
+            status.SetSourceMetadata(statusData);
+            if (mergedExisting)
+            {
+                status.RefreshStacks(stacks, resolvedMaxStacks);
+            }
+            else
+            {
+                status.AddStacks(stacks, resolvedMaxStacks);
+            }
+
             status.SetPermanent(resolvedPermanent);
             if (resolvedPermanent || refreshDuration || status.DurationRemaining <= 0f)
             {
                 status.SetDuration(resolvedDuration);
+            }
+
+            if (kind == StatusEffectKind.Shield)
+            {
+                status.ApplyShield(shieldAmount, statusData.ShieldAmountRefreshPolicy, mergedExisting);
             }
 
             return status;
@@ -144,8 +184,16 @@ namespace Pakuri.InGame
 
         public bool Has(StatusEffectKind kind)
         {
-            var status = Find(kind);
-            return status != null && status.Stacks > 0;
+            for (var i = 0; i < statuses.Count; i++)
+            {
+                var status = statuses[i];
+                if (status != null && status.Kind == kind && status.Stacks > 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public int GetStacks(string tag)
@@ -155,8 +203,17 @@ namespace Pakuri.InGame
 
         public int GetStacks(StatusEffectKind kind)
         {
-            var status = Find(kind);
-            return status != null ? status.Stacks : 0;
+            var total = 0;
+            for (var i = 0; i < statuses.Count; i++)
+            {
+                var status = statuses[i];
+                if (status != null && status.Kind == kind)
+                {
+                    total += status.Stacks;
+                }
+            }
+
+            return total;
         }
 
         public bool Remove(string tag)
@@ -166,16 +223,18 @@ namespace Pakuri.InGame
 
         public bool Remove(StatusEffectKind kind)
         {
+            var removed = false;
             for (var i = 0; i < statuses.Count; i++)
             {
                 if (statuses[i] != null && statuses[i].Kind == kind)
                 {
                     statuses.RemoveAt(i);
-                    return true;
+                    removed = true;
+                    i--;
                 }
             }
 
-            return false;
+            return removed;
         }
 
         public void Clear()
@@ -183,18 +242,88 @@ namespace Pakuri.InGame
             statuses.Clear();
         }
 
-        private UnitStatusRuntime Find(StatusEffectKind kind)
+        public float GetTotalShieldAmount()
         {
+            var total = 0f;
             for (var i = 0; i < statuses.Count; i++)
             {
                 var status = statuses[i];
-                if (status != null && status.Kind == kind)
+                if (status != null && status.IsShieldStatus)
+                {
+                    total += status.RemainingShieldAmount;
+                }
+            }
+
+            return total;
+        }
+
+        public float ConsumeShield(float amount)
+        {
+            var remaining = Math.Max(0f, amount);
+            if (remaining <= 0f)
+            {
+                return 0f;
+            }
+
+            for (var i = 0; i < statuses.Count && remaining > 0f; i++)
+            {
+                var status = statuses[i];
+                if (status == null || !status.IsShieldStatus || status.RemainingShieldAmount <= 0f)
+                {
+                    continue;
+                }
+
+                remaining -= status.ConsumeShield(remaining);
+                if (status.RemainingShieldAmount <= 0f)
+                {
+                    statuses.RemoveAt(i);
+                    i--;
+                }
+            }
+
+            return Math.Max(0f, amount - remaining);
+        }
+
+        private UnitStatusRuntime Find(StatusEffectKind kind, string sourceSkillId = null)
+        {
+            var hasSourceSkillId = !string.IsNullOrWhiteSpace(sourceSkillId);
+            for (var i = 0; i < statuses.Count; i++)
+            {
+                var status = statuses[i];
+                if (status == null || status.Kind != kind)
+                {
+                    continue;
+                }
+
+                if (!hasSourceSkillId || string.Equals(status.SourceSkillId, sourceSkillId, StringComparison.OrdinalIgnoreCase))
                 {
                     return status;
                 }
             }
 
             return null;
+        }
+
+        private static bool HasSourceAwareIdentity(StatusEffectData statusData)
+        {
+            return statusData != null
+                && !string.IsNullOrWhiteSpace(statusData.SourceSkillId)
+                && statusData.MergePolicy != StatusMergePolicy.Unspecified;
+        }
+
+        private static bool ShouldReplaceSourceData(StatusEffectData current, StatusEffectData incoming)
+        {
+            if (incoming == null)
+            {
+                return false;
+            }
+
+            if (current == null)
+            {
+                return true;
+            }
+
+            return StatusEffectRuntime.ComputeModifierMagnitude(incoming) >= StatusEffectRuntime.ComputeModifierMagnitude(current);
         }
     }
 
@@ -206,16 +335,62 @@ namespace Pakuri.InGame
         }
 
         public StatusEffectKind Kind { get; }
-        public string Tag => StatusEffectUtility.ToId(Kind);
+        public string Tag => SourceData != null && !string.IsNullOrWhiteSpace(SourceData.StatusTag)
+            ? SourceData.StatusTag
+            : StatusEffectUtility.ToId(Kind);
+        public string DisplayName => SourceData != null && !string.IsNullOrWhiteSpace(SourceData.StatusName)
+            ? SourceData.StatusName
+            : StatusEffectUtility.ToDisplayName(Kind);
+        public StatusEffectData SourceData { get; private set; }
+        public string SourceSkillId { get; private set; }
+        public StatusTargetScope TargetScope { get; private set; } = StatusTargetScope.Unspecified;
+        public StatusMergePolicy MergePolicy { get; private set; } = StatusMergePolicy.Unspecified;
+        public ShieldRefreshRule ShieldAmountRefreshPolicy { get; private set; } = ShieldRefreshRule.TakeHighest;
         public int Stacks { get; private set; }
         public float DurationRemaining { get; private set; }
         public bool Permanent { get; private set; }
+        public float AppliedShieldAmount { get; private set; }
+        public float RemainingShieldAmount { get; private set; }
 
         public bool IsTimed => !Permanent && DurationRemaining > 0f;
+        public bool IsShieldStatus => Kind == StatusEffectKind.Shield;
+
+        public void SetSourceData(StatusEffectData sourceData)
+        {
+            if (sourceData != null)
+            {
+                SourceData = sourceData;
+            }
+        }
+
+        public void SetSourceMetadata(StatusEffectData sourceData)
+        {
+            if (sourceData == null)
+            {
+                return;
+            }
+
+            SourceSkillId = sourceData.SourceSkillId;
+            TargetScope = sourceData.TargetScope;
+            MergePolicy = sourceData.MergePolicy;
+            ShieldAmountRefreshPolicy = sourceData.ShieldAmountRefreshPolicy;
+        }
 
         public void AddStacks(int stacks, int maxStacks)
         {
             var nextStacks = Stacks + System.Math.Max(0, stacks);
+            Stacks = maxStacks > 0 ? System.Math.Min(maxStacks, nextStacks) : nextStacks;
+        }
+
+        public void RefreshStacks(int stacks, int maxStacks)
+        {
+            var incomingStacks = System.Math.Max(0, stacks);
+            if (incomingStacks <= 0)
+            {
+                return;
+            }
+
+            var nextStacks = System.Math.Max(Stacks, incomingStacks);
             Stacks = maxStacks > 0 ? System.Math.Min(maxStacks, nextStacks) : nextStacks;
         }
 
@@ -233,8 +408,55 @@ namespace Pakuri.InGame
             }
         }
 
+        public void ApplyShield(float amount, ShieldRefreshRule refreshRule, bool mergedExisting)
+        {
+            var resolvedAmount = System.Math.Max(0f, amount);
+            ShieldAmountRefreshPolicy = refreshRule;
+            if (!mergedExisting)
+            {
+                AppliedShieldAmount = resolvedAmount;
+                RemainingShieldAmount = resolvedAmount;
+                return;
+            }
+
+            switch (refreshRule)
+            {
+                case ShieldRefreshRule.Replace:
+                    AppliedShieldAmount = resolvedAmount;
+                    RemainingShieldAmount = resolvedAmount;
+                    break;
+                case ShieldRefreshRule.Stack:
+                    AppliedShieldAmount += resolvedAmount;
+                    RemainingShieldAmount += resolvedAmount;
+                    break;
+                case ShieldRefreshRule.TakeHighest:
+                default:
+                    var chosenAmount = System.Math.Max(RemainingShieldAmount, resolvedAmount);
+                    AppliedShieldAmount = chosenAmount;
+                    RemainingShieldAmount = chosenAmount;
+                    break;
+            }
+        }
+
+        public float ConsumeShield(float amount)
+        {
+            if (!IsShieldStatus || RemainingShieldAmount <= 0f || amount <= 0f)
+            {
+                return 0f;
+            }
+
+            var consumed = System.Math.Min(RemainingShieldAmount, amount);
+            RemainingShieldAmount = System.Math.Max(0f, RemainingShieldAmount - consumed);
+            return consumed;
+        }
+
         public bool Tick(float deltaTime)
         {
+            if (IsShieldStatus && RemainingShieldAmount <= 0f)
+            {
+                return true;
+            }
+
             if (Permanent)
             {
                 return false;
@@ -242,7 +464,7 @@ namespace Pakuri.InGame
 
             if (DurationRemaining <= 0f)
             {
-                return false;
+                return IsShieldStatus;
             }
 
             DurationRemaining = System.Math.Max(0f, DurationRemaining - deltaTime);

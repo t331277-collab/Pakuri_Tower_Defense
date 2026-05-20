@@ -9,6 +9,194 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - Older RunScene/Manifested UI history remains in that snapshot and earlier archive files.
 - This active file now keeps only the current `NewRunScene` UI behavior still relevant to active work.
 
+## Task: 2026-05-20 DebugModifiedUI Choice Application
+
+### Task title
+
+Wire `Canvas/DebugModifiedUI` so learned active skills can apply CSV-backed trait/master choices through debug buttons.
+
+### Goals
+
+- Let `DebugUI` open `DebugModifiedUI` from `AmodifierBtn` through `EmodifierBtn`.
+- Bind `Trait1`-`Trait5` and `Master1`-`Master2` button text from `monster_skill_choices.csv` runtime choice data.
+- Apply the clicked active-skill enhancement through the same `RunSession` choice path used by Offering enhancement picks.
+- Close `DebugModifiedUI` from its own `Close` button and when the parent `DebugUI` closes.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Implementation stays in `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs`; no new scene patch was needed because the authored objects already exist in `NewRunScene`.
+- Runtime rules should stay aligned with current Offering enhancement rules: max three active traits per skill, then one master choice.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution still requires explicit user permission and was not run in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified. `DebugUI` now owns `DebugModifiedUI` open/close flow, dynamic choice text binding, and debug application of active enhancement choices.
+
+### Next Actions
+
+- User verifies in Play Mode that `AmodifierBtn`-`EmodifierBtn` only open for learned skills, that `Trait`/`Master` text matches the current monster/skill choice rows, and that clicked choices immediately affect runtime behavior.
+- If a separate two-label title/description layout is desired later, add dedicated `Desc` child objects under the `DebugModifiedUI` buttons before changing code again.
+
+### Evidence
+
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` contains authored objects `Canvas/DebugModifiedUI`, `DebugModifiedUI/Trait1`-`Trait5`, `DebugModifiedUI/Master1`-`Master2`, `DebugModifiedUI/Close`, and `DebugUI/ABtn/AmodifierBtn` through `DebugUI/EBtn/EmodifierBtn`.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs` now serializes `debugModifiedPanel`, `modifierOpenButtons`, `modifierCloseButton`, `traitButtons`, and `masterButtons`.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs` now resolves `DebugModifiedUI` scene paths, closes the modifier panel in `Awake()`, and binds modifier-open and modifier-apply button listeners.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs` now populates `Trait` and `Master` button `Text (TMP)` labels from `SkillChoiceDefinition.Title` and `DescriptionText`.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs` now applies clicked active enhancement choices through `RunSession.RecordOfferingChoice(...)`, `RunSession.AccumulateReward(...)`, `RefreshRuntimeSkillModels(...)`, and `MonsterPanelUI.RefreshNow()`.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs` now enforces the same current active-choice availability policy as Offering: up to three `ActiveEnhancement` picks, then up to one `ActiveMaster`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings after one transient parallel-build file lock.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
+
+### History
+
+- 2026-05-20: User added `Canvas/DebugModifiedUI` to the scene and requested Code Builder wiring so active skill modifier buttons could apply `monster_skill_choices.csv` trait/master choices in debug flow.
+
+## Task: 2026-05-20 MonsterPanel Multi-Slot Runtime Binding
+
+### Task title
+
+Convert `MonsterPanelUI` from a selected-1P-only binding to a runtime slot-driven `1PMonster`-`5PMonster` panel binding.
+
+### Goals
+
+- Make `MonsterPanel` refresh `1PMonster` through `5PMonster` from actual player runtime slot ownership instead of only from `Players[0]`.
+- Keep each panel slot bound to its own `Monster Image` and `Active1`-`Active3` children without requiring a scene hierarchy rewrite.
+- Hide panel slots that do not currently have a player monster runtime model.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The implementation scope is limited to `Pakuri/Assets/Scripts2/InGame/UI/MonsterPanelUI.cs`.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution still requires explicit user permission and was not run in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified. `MonsterPanelUI` now resolves `1PMonster`-`5PMonster` and refreshes them by `UnitIdentity.SlotIndex`.
+
+### Next Actions
+
+- User verifies in Play Mode that manifested player monsters in slots `2P`-`5P` now show their `Monster Image` and learned active skill icons in the matching `MonsterPanel` slots.
+- If any slot still stays hidden in Play Mode, inspect whether that runtime model is missing from `combatManager.Roster.Players` rather than extending UI code first.
+
+### Evidence
+
+- Before this task, `Pakuri/Assets/Scripts2/InGame/UI/MonsterPanelUI.cs` bound only `MonsterPanel/1PMonster` and resolved the selected entry from `Players[0]`.
+- `Pakuri/Assets/Scripts2/InGame/UI/MonsterPanelUI.cs:11-15` now defines `MaxPartySlots = 5` and stores slot views in `monsterSlots`.
+- `Pakuri/Assets/Scripts2/InGame/UI/MonsterPanelUI.cs:44-58` now resolves a `MonsterUnitRuntimeModel[]` by runtime slot instead of a single selected-player entry.
+- `Pakuri/Assets/Scripts2/InGame/UI/MonsterPanelUI.cs:128-166` now resolves `1PMonster` through `5PMonster` under `MonsterPanel` by name and binds each slot view on demand.
+- `Pakuri/Assets/Scripts2/InGame/UI/MonsterPanelUI.cs:230-323` now applies per-slot monster image and active-skill UI refresh through `MonsterPanelSlotView.SetRuntime(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Core/SceneEntryManager.cs:372-384` already identifies player roster ownership by `identity.Side == UnitSide.Player && identity.SlotIndex == slotIndex`, which matches the slot authority now used by `MonsterPanelUI`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` contains `MonsterPanel`, `1PMonster`, `2PMonster`, `3PMonster`, `4PMonster`, and `5PMonster`, so the implemented code-side binding matches authored scene objects.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
+
+### History
+
+- 2026-05-20: User requested Code Builder work to convert `MonsterPanelUI.cs` from a 1P-only structure to a multi-slot structure after confirming the issue was code-side wiring rather than just inactive scene objects.
+
+## Task: 2026-05-20 Manifest Success Popup Label Cleanup
+
+### Task title
+
+Remove hardcoded mojibake labels from `MenifestedSuccessPopUp` while confirming authored spawn-point active state.
+
+### Goals
+
+- Replace the broken hardcoded labels in the Menifest success popup description with readable player-facing text.
+- Keep the popup bound to the existing CSV/runtime-backed monster fields instead of adding a new data path.
+- Verify whether `1PSpawnPoint` through `5PSpawnPoint` actually required a scene activation change before touching spawn logic.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The user explicitly limited implementation scope: do not change Manifest spawn logic code in this task.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution still requires explicit user permission and was not run.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented for popup text. Spawn-point activation did not require a repository scene edit because the inspected `NewRunScene.unity` file already stores `1PSpawnPoint` through `5PSpawnPoint` as active.
+
+### Next Actions
+
+- User verifies in Play Mode that `Canvas/MenifestedSuccessPopUp/MonsterDesc` no longer shows broken labels.
+- If Manifest spawn placement still fails after this, treat it as a separate spawn/runtime investigation task instead of extending this UI-only fix.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs:1349-1350` now formats the popup description labels as `속성` and `전투력` instead of the previous mojibake hardcoded fragments.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs:1348-1351` still uses the existing runtime-backed `monster.RoleSummary`, `monster.ElementLabel`, `monster.MaxHealth`, `monster.PowerStat`, `monster.ActiveSkillName`, and `monster.PassiveSkillName` fields.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` inspection showed the named objects `1PSpawnPoint`, `2PSpawnPoint`, `3PSpawnPoint`, `4PSpawnPoint`, and `5PSpawnPoint` with `m_IsActive: 1`, so no scene-file toggle patch was needed in this repository state.
+- Unity MCP `manage_scene load` opened `Assets/Scenes/NewScene/NewRunScene.unity`, and Unity MCP scene inspection returned `3PSpawnPoint active=true activeInHierarchy=true` after load.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings after a first parallel build attempt hit only a transient `Assembly-CSharp.dll` file lock.
+
+### History
+
+- 2026-05-20: User requested Code Builder implementation for the Menifest success popup mojibake and asked to make the spawn-point objects active without changing spawn logic.
+
+## Task: 2026-05-20 Reward Panel Grid Layout Inspector Exposure
+
+### Task title
+
+Expose RewardPanel clone placement as inspector-tunable grid settings on `InGameUIManager`.
+
+### Goals
+
+- Preserve the existing `RewardBtnContainer` template buttons as the visual source while moving clone placement authority into serialized script fields.
+- Keep the first visible reward row at `y = 295`, keep `122` vertical spacing, and let the next column begin by X spacing instead of relying on template inference.
+- Leave reward claim, prisoner choice, Offering, and Manifest UI interactions unchanged.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- UI conclusions must stay tied to inspected `InGameUIManager.cs` and `NewRunScene` hierarchy/RectTransform serialization.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution was deferred because explicit user permission was not given in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified. RewardPanel clone placement is now script-configured through inspector fields, and the same `NextBtn -> ContinueToNextDay()` flow now restores dead allies from session state before the next combat starts.
+
+### Next Actions
+
+- User verifies in Play Mode that cloned reward buttons follow the configured grid, that inspector changes on `InGameUIManager` immediately affect the next reward popup, and that dead allies return to their slots on the next day.
+- If the UI needs more than two columns regularly, tune `rewardButtonColumnSpacingX` and `rewardButtonRowsPerColumn` in the scene inspector rather than changing code first.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now serializes `rewardButtonFirstColumnPosition`, `rewardButtonColumnSpacingX`, `rewardButtonRowSpacingY`, and `rewardButtonRowsPerColumn`.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` `ArrangeRewardButton()` now preserves template anchor/pivot/size but writes clone `anchoredPosition` from serialized grid math.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` keeps `Canvas/RewardPanel/RewardBtnContainer/PrisonerBtn`, `DarkBtn`, and `GoldBtn`; inspected RectTransforms place those templates at `y = 295`, `122`, and `-53`.
+- `Pakuri/Assets/Scripts2/InGame/Core/StageManager.cs` now restores party members from session state and then restores HP before `StartCurrentDay()`, which is part of the same `NextBtn -> ContinueToNextDay()` UI flow owned by `InGameUIManager`.
+- `Pakuri/Assets/Scripts2/InGame/Core/SceneEntryManager.cs` now rebuilds missing selected/manifested player slots from `RunSession` during that next-day UI flow.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-20: User requested Code Builder work to change RewardPanel clone layout math and make the X/Y placement tunable from the governing UI script inspector.
+
 ## Task: 2026-05-19 Offering Choice1-3 Data Binding Refresh
 
 ### Task title

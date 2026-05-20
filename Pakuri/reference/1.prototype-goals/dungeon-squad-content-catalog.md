@@ -1,4 +1,4 @@
-# 던전 스쿼드 콘텐츠 카탈로그
+﻿# 던전 스쿼드 콘텐츠 카탈로그
 
 > 목적: 원작에 어떤 콘텐츠 있고, 우리 게임의 프로토타입은 어디까지 구현할 지 정리해둔 문서
 
@@ -49,7 +49,7 @@
 
 모든 전투 종료 후 포로와 재화를 지급한다.
 모든 전투에는 보스 개체가 존재하며, 해당 보스는 포로 보상에 확정 포함된다.
-5일차 중간보스전, 10일차 중간보스전, 보스전에서는 유물을 드랍한다.
+5라운드 중간보스전, 10라운드 중간보스전, 보스전에서는 유물을 드랍한다.
 유물은 파티 시너지형 런 내부 강화로 사용한다.
 전투 보상 구조는 [`combat-reward-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fcombat-reward-system) 참고
 
@@ -61,43 +61,43 @@
 목표 : 어둠신 시스템은 현재 프로토타입 범위에서 제외
 제외 : 후속 콘텐츠로 어둠신 시스템 문서 작성
 
-## 8. 진행일 선택 기능
+## 8. 진행 라운드 선택 기능
 일반 전투, 정예 전투, 상점, 전투 진입 이벤트
 
-목표 : 프로토타입에는 일반 진행일마다 오늘 진행할 콘텐츠를 선택하게 한다.
+목표 : 프로토타입에는 일반 진행 라운드마다 이번 라운드에 진행할 콘텐츠를 선택하게 한다.
 
 런 구조 기준:
-- 1일, 5일, 10일, 11일에는 고정 전투만 등장한다.
-- 2~4일, 6~9일에는 일반 전투가 기본 선택지로 등장한다.
-- 정예 전투는 매 일반 진행일마다 30% 확률로 선택지에 추가된다.
-- 정예 전투를 선택하면 해당 일차 전투 전체에 정예 접두 효과가 적용된다.
+- 1라운드, 5라운드, 10라운드, 11라운드에는 고정 전투만 등장한다.
+- 2~4라운드, 6~9라운드에는 일반 전투가 기본 선택지로 등장한다.
+- 정예 전투는 매 일반 진행 라운드마다 30% 확률로 선택지에 추가된다.
+- 정예 전투를 선택하면 해당 라운드 전투 전체에 정예 접두 효과가 적용된다.
 - 정예 전투 추가 보상은 포로 1명이다.
-- 상점은 6~9일 중 하루에 선택지로 등장한다.
-- 상점을 선택하면 해당 일차는 전투 없이 상점 이용만 하고 다음 일차로 넘어간다.
-- 6~9일에는 일반 전투, 정예 전투, 상점 선택지가 한 번에 모두 보일 수 있다.
+- 상점은 6~9라운드 중 한 라운드에 선택지로 등장한다.
+- 상점을 선택하면 해당 라운드는 전투 없이 상점 이용만 하고 다음 라운드로 넘어간다.
+- 6~9라운드에는 일반 전투, 정예 전투, 상점 선택지가 한 번에 모두 보일 수 있다.
 - 일반 전투와 정예 전투는 전투 진입 직후 20% 확률로 이벤트가 발생할 수 있다.
 - 이벤트 선택과 결과 처리가 끝나면 원래 전투로 복귀한다.
 
 관련 문서:
-- 런 일차 구조는 [`dungeon-squad-run-structure.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fdungeon-squad-run-structure) 참고
+- 런 라운드 구조는 [`dungeon-squad-run-structure.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fdungeon-squad-run-structure) 참고
 - 정예 전투 규칙은 [`elite-combat-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Felite-combat-system) 참고
 - 상점 상품과 가격은 [`shop-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fshop-system) 참고
 - 전투 진입 이벤트는 [`event-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fevent-system) 참고
 
 ## 9. 상점 기능
-상점 등장일, 상점 이용, 골드 소비
+상점 등장 라운드, 상점 이용, 골드 소비
 
-목표 : 각 스테이지 6~9일 중 하루에 상점 선택지를 제공한다.
+목표 : 각 스테이지 6~9라운드 중 한 라운드에 상점 선택지를 제공한다.
 
 런 구조 기준:
-- 상점은 6~9일 중 하루가 무작위로 지정된다.
+- 상점은 6~9라운드 중 한 라운드가 무작위로 지정된다.
 - 상점은 스테이지당 1회만 존재한다.
-- 상점을 선택하면 해당 일차는 전투 없이 상점 이용만 하고 다음 일차로 넘어간다.
-- 상점 이용일에는 전투 보상을 지급하지 않는다.
-- 상점이 등장한 날에도 일반 전투와 정예 전투 선택지가 함께 보일 수 있다.
+- 상점을 선택하면 해당 라운드는 전투 없이 상점 이용만 하고 다음 라운드로 넘어간다.
+- 상점 이용 라운드에는 전투 보상을 지급하지 않는다.
+- 상점이 등장한 라운드에도 일반 전투와 정예 전투 선택지가 함께 보일 수 있다.
 
 관련 문서:
-- 런 일차 구조는 [`dungeon-squad-run-structure.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fdungeon-squad-run-structure) 참고
+- 런 라운드 구조는 [`dungeon-squad-run-structure.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fdungeon-squad-run-structure) 참고
 - 상점 상품과 가격은 [`shop-system.md`](obsidian://open?vault=towerdefense_pakuri_docs&file=docs%2Freference%2F4.run%2Fshop-system) 참고
 
 

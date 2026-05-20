@@ -117,7 +117,42 @@ namespace Pakuri.Data
 
             catalog.Monsters = monsters.ToArray();
             catalog.StageOneEnemies = enemies.ToArray();
+            catalog.StatusEffects = BuildStatusEffects(model);
             return catalog;
+        }
+
+        private static StatusEffectDefinitionData[] BuildStatusEffects(SourceModel model)
+        {
+            var statuses = new List<StatusEffectDefinitionData>();
+            foreach (var row in model.StatusEffects.Values)
+            {
+                statuses.Add(new StatusEffectDefinitionData
+                {
+                    StatusEffectId = row.Id,
+                    StatusEffectLabel = row.Label,
+                    Classification = row.Classification,
+                    HasAttribute = row.HasAttribute,
+                    Attribute = row.Attribute,
+                    DefaultDurationSeconds = row.DefaultDurationSeconds,
+                    IsPermanent = row.IsPermanent,
+                    MaxStacks = row.MaxStacks,
+                    BaseStackAmount = row.BaseStackAmount > 0 ? row.BaseStackAmount : 1,
+                    CanMove = row.CanMove,
+                    CanAct = row.CanAct,
+                    CanUseSpecialSkill = row.CanUseSpecialSkill,
+                    ActionSpeedBonusPerStack = row.ActionSpeedBonusPerStack,
+                    MoveSpeedBonusPerStack = row.MoveSpeedBonusPerStack,
+                    AttackPowerBonusPerStack = row.AttackPowerBonusPerStack,
+                    DamageTakenBonusPerStack = row.DamageTakenBonusPerStack,
+                    CriticalDamageTakenBonusPerStack = row.CriticalDamageTakenBonusPerStack,
+                    CriticalResistanceBonusPerStack = row.CriticalResistanceBonusPerStack,
+                    ElementResistReductionPerStack = row.ElementResistReductionPerStack,
+                    ElementDamageTakenBonusPerStack = row.ElementDamageTakenBonusPerStack
+                });
+            }
+
+            statuses.Sort((left, right) => string.Compare(left.StatusEffectId, right.StatusEffectId, StringComparison.OrdinalIgnoreCase));
+            return statuses.ToArray();
         }
 
         private static MonsterDefinition.RewardChoiceDefinition[] BuildRewardChoices(SourceModel model, string monsterId)
@@ -193,6 +228,20 @@ namespace Pakuri.Data
                     StatusEffectId = skill.StatusEffectId,
                     StatusChance = skill.StatusChance,
                     StatusEffectLabel = skill.StatusEffectLabel,
+                    StatusDurationSeconds = skill.StatusDurationSeconds,
+                    StatusMaxStacks = skill.StatusMaxStacks,
+                    StatusStackAmount = skill.StatusStackAmount,
+                    StatusTargetScope = skill.StatusTargetScope,
+                    StatusMergePolicy = skill.StatusMergePolicy,
+                    ShieldAmountRefreshPolicy = skill.ShieldAmountRefreshPolicy,
+                    StatusActionSpeedBonus = skill.StatusActionSpeedBonus,
+                    StatusMoveSpeedBonus = skill.StatusMoveSpeedBonus,
+                    StatusAttackPowerBonus = skill.StatusAttackPowerBonus,
+                    StatusDamageTakenBonus = skill.StatusDamageTakenBonus,
+                    StatusCriticalDamageTakenBonus = skill.StatusCriticalDamageTakenBonus,
+                    StatusCriticalResistanceBonus = skill.StatusCriticalResistanceBonus,
+                    StatusElementResistReduction = skill.StatusElementResistReduction,
+                    StatusElementDamageTakenBonus = skill.StatusElementDamageTakenBonus,
                     Summary = skill.Summary,
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.ActiveEnhancement),
                     MasterSkillChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.ActiveMaster)
@@ -303,6 +352,8 @@ namespace Pakuri.Data
                     StatusStacksBonus = choice.StatusStacksBonus,
                     HasStatusStacksSet = choice.HasStatusStacksSet,
                     StatusStacksSet = choice.StatusStacksSet,
+                    HasStatusElementDamageTakenBonus = choice.HasStatusElementDamageTakenBonus,
+                    StatusElementDamageTakenBonus = choice.StatusElementDamageTakenBonus,
                     RuntimeSupportState = choice.RuntimeSupportState,
                     RuntimeSupportNotes = choice.RuntimeSupportNotes
                 };

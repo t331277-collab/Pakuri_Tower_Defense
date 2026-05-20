@@ -12,6 +12,7 @@ namespace Pakuri.InGame
         public StatSource ShieldStatSource;
         public float ShieldDuration;
         public ShieldRefreshRule RefreshRule;
+        public StatusEffectData ShieldStatus;
 
         [Header("Reflect")]
         public bool CanReflectDamage;

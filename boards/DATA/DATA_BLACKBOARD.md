@@ -4,6 +4,231 @@
 - Older CSV-transition history remains in `boards/ARCHIVE/CSV_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 
+## Task: 2026-05-21 Eve-A Branch Choice CSV Retune
+
+### Task title
+
+Retune Eve-A Arc Bolt branch choice rows so the new branch rule stays data-owned.
+
+### Goals
+
+- Remove the forced `branch_chance_set=1` behavior from Eve-A trait 5 and master 1.
+- Keep the new branch chance values as additive choice bonuses.
+- Set the recursive branch damage falloff to 70% on the choice rows that enable the mechanic.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- `monster_skill_choices.csv` remains the source of truth for these choice modifiers.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution still requires explicit user permission and was not run in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and rechecked from the edited CSV.
+
+### Next Actions
+
+- If future Arc Bolt tuning changes branch chance or damage falloff again, edit these same choice fields before considering code changes.
+- If a future base Eve-A row needs always-on branching, add that through the shared projectile data path rather than overloading these two choice rows.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now sets `eve-a-trait-5` to `branch_chance_bonus=0.35`, blank `branch_chance_set`, `branch_count=2`, and `branch_damage_multiplier=0.7`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now sets `eve-a-master-1` to `branch_chance_bonus=0.6`, blank `branch_chance_set`, `branch_count=2`, `branch_damage_multiplier=0.7`, and `branch_search_radius=4.5`.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv | Where-Object { $_.choice_id -in @('eve-a-trait-5','eve-a-master-1','eve-a-master-2') }` returned the updated branch fields exactly, while `eve-a-master-2` remained the non-branch status choice row.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:266-288` is still the shared consumer that interprets these branch fields into runtime branch behavior.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors after the edit; existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-21: User asked Code Builder to implement the new Arc Bolt branch rule with minimal code changes, so the choice CSV was retuned to additive chance plus 70% recursive branch falloff.
+
+## Task: 2026-05-20 Shield And Buff Status Schema Implementation
+
+### Task title
+
+Implement the blueprint CSV/runtime schema for source-aware buff and shield status behavior.
+
+### Goals
+
+- Add explicit skill-row ownership for target scope, merge policy, and shield refresh policy.
+- Normalize new shield CSV content onto canonical `status_effect_id=shield` while keeping legacy parse compatibility.
+- Keep runtime validation strict enough to catch incomplete shield/buff rows during catalog sync.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- CSV files remain the authoritative source for skill-status tuning.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution still requires explicit user permission and was not run in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, synced into the runtime catalog, and validation-backed in the editor.
+
+### Next Actions
+
+- Future timed ally buff/shield rows should populate `status_target_scope` and `status_merge_policy` instead of relying on code-only defaults.
+- Future shield rows should continue using canonical `status_effect_id=shield`; keep `holy-shield` as parse compatibility only until old content is fully gone.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:1` now includes `status_target_scope`, `status_merge_policy`, and `shield_amount_refresh_policy`; `:4` shows `ariel-b` populated as `shield / all_allies / same_source_refresh / take_highest`.
+- `Pakuri/Assets/CSVdata/source/status_effects.csv:10` now keeps the canonical shared shield row under `status_effect_id=shield`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs:137-139` adds the three new schema fields to runtime skill definitions.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs:80-82` and `:226-228` parse the three new CSV columns into `SkillRow`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs:234-236` copies the parsed values into `SkillDefinition`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Validation.cs:308-328` now rejects buff/shield rows missing supported `status_target_scope`, `status_merge_policy`, or `shield_amount_refresh_policy`, and `:321` / `:351` enforce canonical shield id `shield`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs:172-190` maps CSV-owned duration, target scope, refresh rule, and runtime status payload into buff/shield skill data.
+- Unity menu execution of `Pakuri/Sync CSV Runtime Catalog Assets` eventually logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.` after the source CSV asset refresh and the `status_effects.csv` quote fix.
+
+### History
+
+- 2026-05-20: Code Builder implemented the schema proposed in the shield/buff blueprint across source CSV, runtime parse/build, mapper, and validation code.
+- 2026-05-20: Editor sync first failed with `CSV table 'monster_skills.csv' is missing required column 'status_target_scope'`, which confirmed Unity had not yet reimported the edited CSV asset.
+- 2026-05-20: After a forced asset refresh, editor sync failed again with `CSV file 'status_effects.csv' row 10 has 2 columns but expected 19`; Code Builder fixed the broken shield-row quote and reran sync successfully.
+
+## Task: 2026-05-20 Shield And Buff CSV Schema Design Handoff
+
+### Task title
+
+Prepare the CSV/schema handoff for source-aware shield and buff runtime unification.
+
+### Goals
+
+- Record the requested new skill-row data ownership for target scope and merge policy.
+- Record that shield duration must come from CSV/runtime data instead of code fallback.
+- Give Code Builder one evidence-based schema contract before implementation begins.
+
+### Constraints
+
+- Role Owner is Designer.
+- This task changes documentation only; no CSV source file changed yet.
+- New field names remain proposal-level until Code Builder implements them.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Schema handoff documented for Code Builder.
+
+### Next Actions
+
+- Code Builder implements the selected skill-row fields through the CSV runtime build path.
+- If Builder renames any proposed field, update this file with the final adopted schema names in the implementation turn.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:4` shows `ariel-b` already owns `status_duration_seconds=5` but the current shield runtime does not honor that through timed gameplay state.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:14` and `:35` show buff rows already own duration/stack values.
+- `Pakuri/Assets/CSVdata/source/status_effects.csv:10` already has a shield-like shared row under `holy-shield`.
+- `boards/SkillBluePrint/shield-buff-status-unification-blueprint.md` proposes CSV-owned `status_target_scope`, merge-policy fields, and shield canonical-id normalization notes.
+
+### History
+
+- 2026-05-20: User requested a Builder-ready markdown handoff for the shield/buff redesign.
+- 2026-05-20: Designer documented the required CSV schema direction and linked it to the new Builder blueprint.
+
+## Task: 2026-05-20 Ariel-A Master 2 Status Choice CSV Activation
+
+### Task title
+
+Promote `ariel-a-master-2` from data-only to shared-status-supported choice data with a per-choice Holy damage taken bonus field.
+
+### Goals
+
+- Encode Ariel-A master 2 as a shared status choice in `monster_skill_choices.csv`.
+- Let a projectile choice row carry its own `status_element_damage_taken_bonus` instead of forcing all users of the same status row to share one value.
+- Keep the source of truth in the unified choice CSV rather than adding a second Ariel-specific data table.
+- Sync the runtime catalog after the source CSV edit.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The CSV file remains UTF-8.
+- The unified choice CSV schema changed in this task by adding `status_element_damage_taken_bonus`.
+- Code Reviewer execution still requires explicit user permission and was not run in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, schema-updated, and synced into the runtime catalog.
+
+### Next Actions
+
+- If later active choices need new debuff application, prefer `status_tag` plus optional stack/chance/override fields before introducing skill-specific runtime branches.
+- Keep unsupported Ariel rows explicit until a matching shared runtime contract exists.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now contains the new header/type column `status_element_damage_taken_bonus`, and `ariel-a-master-2` sets `status_tag=holy-exposure`, `status_stacks_set=1`, `status_element_damage_taken_bonus=0.15`, `runtime_support_state=ReferenceDirect`, and `runtime_support_notes=Reference status effect mapped into unified choice CSV.`
+- `git diff -- Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` shows the new shared choice column plus the `ariel-a-master-2` row changing from `DataOnlyUnsupported` to a `holy-exposure` shared-status row with `0.15`.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv | Where-Object { $_.choice_id -eq 'ariel-a-master-2' }` returned the new status fields exactly.
+- Unity-MCP menu execution of `Pakuri/Sync CSV Runtime Catalog Assets` returned `success:true` for this task; no new sync log line was captured afterward in the inspected console window.
+
+### History
+
+- 2026-05-20: User asked Code Builder to apply the `ariel-a-master-2` Holy Exposure data fix using the shared status choice path.
+- 2026-05-20: User then required per-skill values, so Code Builder added `status_element_damage_taken_bonus` to `monster_skill_choices.csv` and set Ariel-A master 2 to `0.15`.
+
+## Task: 2026-05-20 DebugModifiedUI Uses Unified Skill Choice CSV
+
+### Task title
+
+Reuse `monster_skill_choices.csv` runtime choice rows for debug active trait/master UI.
+
+### Goals
+
+- Keep `monster_skill_choices.csv` as the single source for active choice button text and debug-applied active choice IDs.
+- Reuse the already built `SkillChoiceDefinition` runtime objects instead of adding a debug-only CSV or hardcoded label path.
+- Keep current active choice grouping (`ActiveEnhancement`, `ActiveMaster`) authoritative for debug availability rules.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV file shape or content changed in this task.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution still requires explicit user permission and was not run in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented as a new consumer of existing runtime choice data. Debug modifier UI now reads existing `SkillChoiceDefinition` rows and does not add a parallel data source.
+
+### Next Actions
+
+- If future debug UI needs richer formatting than one `Text (TMP)` per button, keep sourcing `Title` and `DescriptionText` from `SkillChoiceDefinition` rather than duplicating the strings elsewhere.
+- If passive enhancement debug support is later added, continue using the same `SkillChoiceDefinition` runtime catalog path.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` already contains active choice rows with `choice_id`, `choice_group`, `title`, and `description_text`, for example `ariel-a-trait-1` through `ariel-a-master-2`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs:52-83` defines `SkillChoiceDefinition` with `ChoiceId`, `ChoiceGroup`, `Title`, and `DescriptionText`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs:287-315` already builds `SkillChoiceDefinition` rows from the unified choice CSV into active skill and passive skill choice arrays.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs` now reads `sourceSkill.EnhancementChoices` and `sourceSkill.MasterSkillChoices` directly and writes their `Title` plus `DescriptionText` into `DebugModifiedUI` button labels.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs` now records applied debug modifier picks with the exact `choice.ChoiceId`, which keeps debug-applied choices aligned with the same runtime IDs used by Offering and combat execution.
+
+### History
+
+- 2026-05-20: User requested `DebugModifiedUI` button text and application behavior sourced from `monster_skill_choices.csv`; Code Builder reused the existing runtime choice catalog instead of adding new data assets.
+
 ## Task: 2026-05-20 Projectile Burst Count CSV Field
 
 ### Task title

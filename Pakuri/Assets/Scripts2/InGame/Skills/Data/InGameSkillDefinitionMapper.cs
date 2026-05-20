@@ -129,7 +129,7 @@ namespace Pakuri.InGame
                 projectile.Projectile.PierceCount = source.PierceCount;
                 projectile.Projectile.ProjectileSpeed = source.ProjectileSpeed;
                 MapDamage(projectile.Damage, source);
-                projectile.OnHitStatus = CreateStatusApplication(source.StatusEffectId, source.StatusChance, source.StatusEffectLabel);
+                projectile.OnHitStatus = CreateStatusApplication(source);
                 return;
             }
 
@@ -138,7 +138,7 @@ namespace Pakuri.InGame
                 beam.BeamLength = 0f;
                 beam.BeamWidth = source.Radius;
                 MapDamage(beam.DamagePerTick, source);
-                beam.OnHitStatus = CreateStatusApplication(source.StatusEffectId, source.StatusChance, source.StatusEffectLabel);
+                beam.OnHitStatus = CreateStatusApplication(source);
                 return;
             }
 
@@ -151,7 +151,7 @@ namespace Pakuri.InGame
                 zone.Area.TickInterval = source.ShotIntervalSeconds;
                 zone.Area.CoverAll = source.RuntimeKind == SkillRuntimeKind.Field;
                 MapDamage(zone.DamagePerTick, source);
-                zone.OnTickStatus = CreateStatusApplication(source.StatusEffectId, source.StatusChance, source.StatusEffectLabel);
+                zone.OnTickStatus = CreateStatusApplication(source);
                 return;
             }
 
@@ -162,28 +162,32 @@ namespace Pakuri.InGame
                 single.Area.TickInterval = 0f;
                 single.Area.CoverAll = source.Radius <= 0f;
                 MapDamage(single.Damage, source);
-                single.OnHitStatus = CreateStatusApplication(source.StatusEffectId, source.StatusChance, source.StatusEffectLabel);
+                single.OnHitStatus = CreateStatusApplication(source);
                 return;
             }
 
             if (skill is BuffSkillData buff)
             {
-                buff.Target = BuffTarget.AllAllies;
-                buff.BuffDuration = source.CooldownSeconds;
+                buff.Target = MapBuffTarget(source, StatusEffectKind.None);
+                buff.BuffDuration = ResolveStatusDuration(source);
                 buff.HasAttachedDamage = source.BaseDamage > 0f;
                 MapDamage(buff.AttachedDamage, source);
                 buff.AttachedDamageRadius = source.Radius;
-                buff.AttachedStatus = CreateStatusApplication(source.StatusEffectId, source.StatusChance, source.StatusEffectLabel);
+                buff.AttachedStatus = CreateStatusApplication(source);
                 return;
             }
 
             if (skill is ShieldSkillData shield)
             {
-                shield.Target = BuffTarget.AllAllies;
+                shield.Target = MapBuffTarget(source, StatusEffectKind.Shield);
                 shield.ShieldBase = source.BaseDamage;
                 shield.ShieldCoefficient = GetDominantCoefficient(source, out var statSource);
                 shield.ShieldStatSource = statSource;
-                shield.RefreshRule = ShieldRefreshRule.TakeHighest;
+                shield.ShieldDuration = ResolveStatusDuration(source);
+                shield.RefreshRule = StatusEffectRuntime.TryParseShieldRefreshPolicy(source.ShieldAmountRefreshPolicy, out var refreshRule)
+                    ? refreshRule
+                    : ShieldRefreshRule.TakeHighest;
+                shield.ShieldStatus = CreateRuntimeStatusData(source);
                 shield.ReflectElement = MapElement(source.Attribute);
             }
         }
@@ -209,34 +213,75 @@ namespace Pakuri.InGame
             return source.AttackPowerCoefficient;
         }
 
-        private static StatusApplicationSpec CreateStatusApplication(string statusEffectId, float chance, string statusEffectLabel)
+        private static StatusApplicationSpec CreateStatusApplication(SkillDefinition source)
         {
             var application = new StatusApplicationSpec();
-            var statusKey = !string.IsNullOrWhiteSpace(statusEffectId)
-                ? statusEffectId.Trim()
-                : statusEffectLabel != null ? statusEffectLabel.Trim() : string.Empty;
-            if (string.IsNullOrWhiteSpace(statusKey))
-            {
-                application.Chance = 0f;
-                return application;
-            }
-
-            if (!StatusEffectUtility.TryParse(statusKey, out var kind))
-            {
-                application.Chance = 0f;
-                return application;
-            }
-
-            var definition = StatusEffectUtility.GetDefinition(kind);
-            var status = CreateTransient<StatusEffectData>(definition.Id);
-            status.Kind = kind;
-            status.StatusTag = definition.Id;
-            status.StatusName = string.IsNullOrWhiteSpace(statusEffectLabel) ? definition.DisplayName : statusEffectLabel;
+            var status = CreateRuntimeStatusData(source);
             application.Status = status;
-            application.Chance = Mathf.Clamp01(chance);
-            application.Stacks = 1;
+            application.Chance = Mathf.Clamp01(source != null ? source.StatusChance : 0f);
+            application.Stacks = status != null ? Math.Max(1, status.BaseStackAmount) : 1;
             application.RefreshDuration = true;
             return application;
+        }
+
+        private static StatusEffectData CreateRuntimeStatusData(SkillDefinition source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            var statusKey = !string.IsNullOrWhiteSpace(source.StatusEffectId)
+                ? source.StatusEffectId.Trim()
+                : source.StatusEffectLabel;
+            if (string.IsNullOrWhiteSpace(statusKey) || !StatusEffectUtility.TryParse(statusKey, out var kind))
+            {
+                return null;
+            }
+
+            return StatusEffectRuntime.CreateStatusData(kind, source.StatusEffectLabel, source);
+        }
+
+        private static BuffTarget MapBuffTarget(SkillDefinition source, StatusEffectKind fallbackKind)
+        {
+            if (source != null && StatusEffectRuntime.TryParseStatusTargetScope(source.StatusTargetScope, out var scope))
+            {
+                return scope == StatusTargetScope.Self ? BuffTarget.Self : BuffTarget.AllAllies;
+            }
+
+            if (source != null)
+            {
+                var statusKey = !string.IsNullOrWhiteSpace(source.StatusEffectId)
+                    ? source.StatusEffectId
+                    : source.StatusEffectLabel;
+                if (StatusEffectUtility.TryParse(statusKey, out var parsedKind)
+                    && parsedKind == StatusEffectKind.SlaughterPermit)
+                {
+                    return BuffTarget.Self;
+                }
+            }
+
+            return fallbackKind == StatusEffectKind.Shield ? BuffTarget.AllAllies : BuffTarget.AllAllies;
+        }
+
+        private static float ResolveStatusDuration(SkillDefinition source)
+        {
+            if (source == null)
+            {
+                return 0f;
+            }
+
+            if (source.StatusDurationSeconds > 0f)
+            {
+                return source.StatusDurationSeconds;
+            }
+
+            if (source.ActiveDurationSeconds > 0f)
+            {
+                return source.ActiveDurationSeconds;
+            }
+
+            return source.CooldownSeconds;
         }
 
         private static SkillChoiceEffectSpec[] MapChoices(SkillChoiceDefinition[] source)
@@ -292,7 +337,9 @@ namespace Pakuri.InGame
                     StatusTag = choice != null ? choice.StatusTag : string.Empty,
                     StatusStacksBonus = choice != null ? choice.StatusStacksBonus : 0,
                     HasStatusStacksSet = choice != null && choice.HasStatusStacksSet,
-                    StatusStacksSet = choice != null ? choice.StatusStacksSet : 0
+                    StatusStacksSet = choice != null ? choice.StatusStacksSet : 0,
+                    HasStatusElementDamageTakenBonus = choice != null && choice.HasStatusElementDamageTakenBonus,
+                    StatusElementDamageTakenBonus = choice != null ? choice.StatusElementDamageTakenBonus : 0f
                 };
             }
 
