@@ -130,6 +130,11 @@ namespace Pakuri.Data
                 ValidateRuntimeStatusColumns(skill, model.StatusEffects, errors);
             }
 
+            foreach (var effect in model.SkillEffects.Values)
+            {
+                ValidateSkillEffectRow(effect, model, errors);
+            }
+
             foreach (var status in model.StatusEffects.Values)
             {
                 ValidateStatusEffectRow(status, errors);
@@ -270,6 +275,18 @@ namespace Pakuri.Data
                 return;
             }
 
+            if (!string.IsNullOrWhiteSpace(skill.TargetSelection)
+                && !Enum.TryParse<SkillTargetSelection>(skill.TargetSelection, true, out _))
+            {
+                errors.Add($"Skill '{skill.Id}' has unsupported target_selection '{skill.TargetSelection}'.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(skill.HitTargetCount)
+                && !IsSupportedHitTargetCount(skill.HitTargetCount))
+            {
+                errors.Add($"Skill '{skill.Id}' has unsupported hit_target_count '{skill.HitTargetCount}'. Expected positive integer or global.");
+            }
+
             var statusKey = !string.IsNullOrWhiteSpace(skill.StatusEffectId)
                 ? skill.StatusEffectId.Trim()
                 : skill.StatusEffectLabel != null ? skill.StatusEffectLabel.Trim() : string.Empty;
@@ -331,6 +348,127 @@ namespace Pakuri.Data
                 if (skill.StatusDurationSeconds <= 0f)
                 {
                     errors.Add($"Shield skill '{skill.Id}' requires positive status_duration_seconds.");
+                }
+            }
+        }
+
+        private static void ValidateSkillEffectRow(
+            SkillEffectRow effect,
+            SourceModel model,
+            List<string> errors)
+        {
+            if (effect == null)
+            {
+                return;
+            }
+
+            if (model == null || !model.Skills.ContainsKey(effect.SkillId))
+            {
+                errors.Add($"Skill effect '{effect.Id}' references unknown skill '{effect.SkillId}'.");
+            }
+
+            ValidateChoiceReference(effect.RequiresActiveChoiceId, effect, model, "requires_active_choice_id", errors);
+            ValidateChoiceReference(effect.ExcludesActiveChoiceId, effect, model, "excludes_active_choice_id", errors);
+
+            if (effect.EffectKind == SkillMultiEffectKind.Damage && effect.BaseDamage <= 0f)
+            {
+                errors.Add($"Damage skill effect '{effect.Id}' requires positive base_damage.");
+            }
+
+            var hasStatus = !string.IsNullOrWhiteSpace(effect.StatusEffectId)
+                || !string.IsNullOrWhiteSpace(effect.StatusEffectLabel);
+            if (effect.EffectKind == SkillMultiEffectKind.Status && !hasStatus)
+            {
+                errors.Add($"Status skill effect '{effect.Id}' requires status_effect_id or status_effect_label.");
+            }
+
+            if (hasStatus)
+            {
+                var statusKey = !string.IsNullOrWhiteSpace(effect.StatusEffectId)
+                    ? effect.StatusEffectId
+                    : effect.StatusEffectLabel;
+                if (!StatusEffectUtility.TryParse(statusKey, out var kind))
+                {
+                    errors.Add($"Skill effect '{effect.Id}' uses unsupported runtime status '{statusKey}'.");
+                }
+                else
+                {
+                    var statusId = StatusEffectUtility.ToId(kind);
+                    if (!string.IsNullOrWhiteSpace(statusId)
+                        && (model == null || !model.StatusEffects.ContainsKey(statusId)))
+                    {
+                        errors.Add($"Skill effect '{effect.Id}' uses status '{statusId}' but status_effects.csv has no matching row.");
+                    }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(effect.ConditionStatusId)
+                && !StatusEffectUtility.TryParse(effect.ConditionStatusId, out _))
+            {
+                errors.Add($"Skill effect '{effect.Id}' uses unsupported condition_status_id '{effect.ConditionStatusId}'.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(effect.StatusTargetScope)
+                && !StatusEffectRuntime.TryParseStatusTargetScope(effect.StatusTargetScope, out _))
+            {
+                errors.Add($"Skill effect '{effect.Id}' has unsupported status_target_scope '{effect.StatusTargetScope}'.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(effect.StatusMergePolicy)
+                && !StatusEffectRuntime.TryParseStatusMergePolicy(effect.StatusMergePolicy, out _))
+            {
+                errors.Add($"Skill effect '{effect.Id}' has unsupported status_merge_policy '{effect.StatusMergePolicy}'.");
+            }
+        }
+
+        private static bool IsSupportedHitTargetCount(string rawValue)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                return true;
+            }
+
+            var normalized = rawValue.Trim();
+            if (string.Equals(normalized, "global", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(normalized, "all", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return int.TryParse(normalized, out var count) && count > 0;
+        }
+
+        private static void ValidateChoiceReference(
+            string choiceId,
+            SkillEffectRow effect,
+            SourceModel model,
+            string columnName,
+            List<string> errors)
+        {
+            if (string.IsNullOrWhiteSpace(choiceId))
+            {
+                return;
+            }
+
+            var choiceIds = choiceId.Split(';', ',');
+            for (var i = 0; i < choiceIds.Length; i++)
+            {
+                var currentChoiceId = choiceIds[i] != null ? choiceIds[i].Trim() : string.Empty;
+                if (string.IsNullOrWhiteSpace(currentChoiceId))
+                {
+                    continue;
+                }
+
+                if (model == null || !model.SkillChoices.TryGetValue(currentChoiceId, out var choice))
+                {
+                    errors.Add($"Skill effect '{effect.Id}' {columnName} references unknown choice '{currentChoiceId}'.");
+                    continue;
+                }
+
+                if (!string.Equals(choice.SkillId, effect.SkillId, StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(choice.TargetSkillId, effect.SkillId, StringComparison.OrdinalIgnoreCase))
+                {
+                    errors.Add($"Skill effect '{effect.Id}' {columnName} choice '{currentChoiceId}' does not apply to skill '{effect.SkillId}'.");
                 }
             }
         }
@@ -417,12 +555,23 @@ namespace Pakuri.Data
             foreach (var skill in model.Skills.Values)
             {
                 ValidateSpritePath(assetCatalog, skill.SkillIconPath, $"Skill '{skill.Id}' skill_icon_path", errors);
+                ValidatePrefabPath(assetCatalog, skill.StatusEffectPrefabPath, $"Skill '{skill.Id}' status_effect_prefab_path", errors);
             }
 
             foreach (var choice in model.SkillChoices.Values)
             {
                 ValidateSpritePath(assetCatalog, choice.SkillIconPath, $"Skill choice '{choice.Id}' skill_icon_path", errors);
                 ValidatePrefabPath(assetCatalog, choice.SkillEffectPrefabPath, $"Skill choice '{choice.Id}' skill_effect_prefab_path", errors);
+            }
+
+            foreach (var effect in model.SkillEffects.Values)
+            {
+                ValidatePrefabPath(assetCatalog, effect.SkillEffectPrefabPath, $"Skill effect '{effect.Id}' skill_effect_prefab_path", errors);
+            }
+
+            foreach (var status in model.StatusEffects.Values)
+            {
+                ValidatePrefabPath(assetCatalog, status.StatusEffectPrefabPath, $"Status effect '{status.Id}' status_effect_prefab_path", errors);
             }
 
             foreach (var enemy in model.StageOneEnemies.Values)

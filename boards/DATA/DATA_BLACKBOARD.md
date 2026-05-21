@@ -4,6 +4,60 @@
 - Older CSV-transition history remains in `boards/ARCHIVE/CSV_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 
+## Task: 2026-05-22 Monster Skill Multi-Effect CSV Runtime
+
+### Task title
+
+Add `monster_skill_effects.csv` as the reusable CSV source for secondary skill effects.
+
+### Goals
+
+- Add a new source CSV table for choice-gated secondary effects.
+- Parse/build/validate the table through `PakuriCsvRuntimeData`.
+- Use the table to encode Ariel-C ally buffs, master effects, trait 5 shielded-ally Holy damage, and master 2 second wave without hardcoded skill IDs.
+- Separate effect application target fields from visual center/anchor fields so ally buffs can apply to allies while visual effects can attach to affected units or stay at the primary attack center.
+
+### Constraints
+
+- Role Owner is Skill Builder.
+- CSV remains UTF-8 and follows the existing header plus type-row convention.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Skill Builder
+
+### Status
+
+Implemented, synced to Unity runtime catalog assets, and locally validated by build plus direct CSV reference checks.
+
+### Next Actions
+
+- Future similar skills should add rows to `monster_skill_effects.csv`.
+- If future effects need unsupported targeting or projectile behavior, extend the multi-effect blueprint/schema first.
+
+### Evidence
+
+- Added `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` and Unity generated `monster_skill_effects.csv.meta` with GUID `4ddf6bb31440b41438f4a7b82bbd5a92`.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_effects.csv` returned 9 Ariel-C rows with `effect_kind` values `Status` and `Damage`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.cs` now defines `MonsterSkillEffectsFileName = "monster_skill_effects.csv"`.
+- `PakuriCsvRuntimeData.Loader.cs`, `.SourceModel.cs`, `.MonsterDataset.cs`, `.Build.cs`, `.Validation.cs`, and `.Editor.cs` now load, parse, build, validate, and catalog effect rows and effect prefab paths.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs:83` defines `SkillMultiEffectCenterMode`; `:91` defines `SkillMultiEffectVisualAnchorMode`; `:107` and `:108` store the parsed values on `SkillEffectDefinition`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs:359` and `:360` parse `center_mode` and `visual_anchor_mode`; `PakuriCsvRuntimeData.Build.cs:281` and `:282` copy them into runtime definitions.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv:1` now includes `center_mode` and `visual_anchor_mode`; Ariel-C buff rows use `PrimarySkillCenter` plus `AppliedTargets`, while the master 2 damage row uses `PrimarySkillCenter` plus `Center`.
+- Representative Ariel-C buff visual rows use `Assets/Prefab/Skill/Ariel/Ariel_C-Buff.prefab`; trait 2 / trait 5 supplemental numeric rows keep prefab paths blank to avoid duplicate buff visuals.
+- A PowerShell CSV reference check over `monster_skills.csv`, `monster_skill_choices.csv`, and `monster_skill_effects.csv` returned `OK effects=9 ariel_c=9`, including skill ID, choice ID, prefab path, damage, and status-effect ID checks.
+- 2026-05-22 follow-up CSV check returned all 9 Ariel-C effect rows with parsed `center_mode` / `visual_anchor_mode` values and the expected `Ariel_C-Buff` / `Ariel_C` prefab split.
+- Unity-MCP `execute_menu_item` currently fails to find `Pakuri/Validate CSV Source Data` even though `PakuriCsvRuntimeData.Editor.cs` contains `[MenuItem("Pakuri/Validate CSV Source Data")]`; Unity-MCP `execute_code` remains blocked by the known Windows mono path-length error, so final validation did not rely on those tool paths.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+- 2026-05-22 follow-up runtime/editor `dotnet build` commands again passed with 0 errors and existing MSB3277 warnings after the center/visual schema extension.
+
+### History
+
+- 2026-05-22: User requested a Designer multi-effect CSV blueprint followed by Skill Builder schema/parser/build/shared-executor implementation.
+- 2026-05-22: User asked Code Builder to implement separated multi-effect centers and applied-target visuals so Ariel-C ally buffs can apply to allies but use the requested `Ariel_C-Buff.prefab` unit-attached effect.
+
 ## Task: 2026-05-21 Eve-A Branch Choice CSV Retune
 
 ### Task title
@@ -596,3 +650,42 @@ Implemented and editor-verified.
 ### History
 
 - 2026-05-18: Code Builder added CSV-backed enemy passive IDs/values and synced them into runtime enemy models.
+
+## Task: 2026-05-21 Explicit Target Selection SingleAttack Data Mapping
+
+### Task title
+
+Respect `target_selection` when mapping zero-radius SingleAttack CSV rows.
+
+### Goals
+
+- Keep legacy zero-radius SingleAttack rows with blank `target_selection` able to cover all targets.
+- Let explicit target-selection rows such as Ariel-D route as one-target SingleAttack skills.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV data values were changed in this follow-up.
+- The behavior is grounded in the active runtime CSV row and mapper code.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- For future zero-radius SingleAttack rows, leave `target_selection` blank only when full coverage is intended.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` Ariel-D row contains `radius=0` and `target_selection=HighestHealth`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` now sets `single.Area.CoverAll = source.Radius <= 0f && string.IsNullOrWhiteSpace(source.TargetSelection)`.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+
+### History
+
+- 2026-05-21: User reported Ariel-D looked like it hit all enemies; Builder fixed the data-to-runtime cover-all mapping so explicit `target_selection` wins over zero radius.

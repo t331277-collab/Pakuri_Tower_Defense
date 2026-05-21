@@ -4,6 +4,55 @@
 - Older broad combat/status history remains in `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 
+## Task: 2026-05-22 Multi-Effect Buff Stat Runtime
+
+### Task title
+
+Support multi-effect CSV buffs for action speed, spell power, and outgoing element damage.
+
+### Goals
+
+- Let `monster_skill_effects.csv` apply ally status effects through the shared status runtime.
+- Add spell-power bonus support to runtime status modifiers.
+- Add outgoing element damage bonus support for shielded-ally Ariel-C trait 5.
+- Let multi-effect status rows play attached visuals on the units that actually received the status, without changing the status application target.
+
+### Constraints
+
+- Role Owner is Skill Builder.
+- Status application remains routed through `InGameCombatManager.ApplyStatus(...)`.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Skill Builder
+
+### Status
+
+Implemented and locally validated by build plus direct CSV reference checks.
+
+### Next Actions
+
+- Future outgoing damage buffs should use the shared status modifier path rather than skill-specific damage branches.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/SkillData.cs` now adds `BuffModifierSpec.SpellPowerBonus`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectRuntime.cs` now adds `ResolveSpellPowerMultiplier(...)` and `ResolveOutgoingDamageMultiplier(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now applies spell-power status multipliers when resolving `StatSource.Intelligence` and applies outgoing element damage multipliers in `ResolveDamage(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:896` collects successfully applied status targets when `visual_anchor_mode=AppliedTargets`; `:938` routes those targets into attached visual spawning; `:1163` creates `InGameAttachedSkillEffectActor` instances on each target transform.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:1108` resolves visual centers through `SkillMultiEffectCenterMode`, including `PrimarySkillCenter`, `Caster`, and `NearestEnemy`, so status target selection is no longer forced to double as the visual center.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` has Ariel-C rows with `status_action_speed_bonus=0.12`, trait 2 rows with `0.06`, master 1 rows with `status_spell_power_bonus=0.18`, and trait 5 rows with `status_damage_bonus_rate=0.1` scoped to Holy and conditioned on `shield`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` has Ariel-C status rows with `target_side=AllAllies` and `visual_anchor_mode=AppliedTargets`, so the buff applies to allies and the requested `Ariel_C-Buff.prefab` attaches to affected ally units.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+- 2026-05-22 follow-up runtime/editor `dotnet build` commands passed with 0 errors after the applied-target visual extension; Unity console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-22: Skill Builder added shared status modifier support required by Ariel-C multi-effect rows.
+- 2026-05-22: Code Builder separated multi-effect status targets from visual anchors and made applied-target status visuals attach through `InGameAttachedSkillEffectActor`.
+
 ## Task: 2026-05-21 Eve-A Recursive Branch Shared Shock Path
 
 ### Task title
@@ -362,3 +411,44 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-18: Code Builder added area-status routing while adding AreaAttack and SingleAttack runtime execution.
+
+## Task: 2026-05-21 Ariel-D SingleAttack Status Target Fix
+
+### Task title
+
+Keep Ariel-D status application on one strongest enemy.
+
+### Goals
+
+- Ensure Ariel-D's status application follows the same single target as its damage.
+- Keep the status effect prefab path behavior unchanged.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This task does not implement party focus-target AI.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Ariel-D's mark/status VFX is attached to only the highest-HP enemy.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameZoneSkillActor.cs` applies damage and `TryApplyStatus(...)` to exactly one target in the `!areaCoversAll && areaRadius <= 0f` branch.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` now prevents explicit-selection SingleAttack rows from setting `single.Area.CoverAll=true`.
+- Ariel-D's CSV row has `target_selection=HighestHealth` and `status_effect_prefab_path=Assets/Prefab/Skill/Ariel/Ariel_D.prefab`.
+- Runtime and Editor `dotnet build` commands passed with 0 errors and existing MSB3277 warnings.
+- Unity-MCP console warning/error read after validation returned only MCP client handler logs.
+
+### History
+
+- 2026-05-21: After Mark/Execute conversion, Ariel-D still applied through the cover-all area branch because `Area.CoverAll` ignored `target_selection`; Builder aligned the SingleAttack area cover flag with explicit target selection.

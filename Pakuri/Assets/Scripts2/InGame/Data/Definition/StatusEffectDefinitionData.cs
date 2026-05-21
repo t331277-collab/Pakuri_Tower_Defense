@@ -1,5 +1,6 @@
 using System;
 using Pakuri.Combat;
+using UnityEngine;
 
 namespace Pakuri.Data
 {
@@ -32,5 +33,6 @@ namespace Pakuri.Data
         public float CriticalResistanceBonusPerStack;
         public float ElementResistReductionPerStack;
         public float ElementDamageTakenBonusPerStack;
+        public GameObject StatusEffectPrefab;
     }
 }

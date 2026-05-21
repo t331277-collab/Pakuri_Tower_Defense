@@ -235,6 +235,7 @@ namespace Pakuri.InGame
                     && manager.TryGetData(choiceId, out SkillChoiceDefinition choice)
                     && AppliesToSkill(choice, skillData))
                 {
+                    snapshot.AddActiveChoiceId(choice.ChoiceId);
                     snapshot.ApplyChoiceDefinition(choice);
                 }
             }

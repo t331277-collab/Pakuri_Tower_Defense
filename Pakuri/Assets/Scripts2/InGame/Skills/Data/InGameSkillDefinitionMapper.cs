@@ -107,15 +107,23 @@ namespace Pakuri.InGame
             skill.SkillEffectPrefab = source.SkillEffectPrefab;
             skill.EnhancementChoices = MapChoices(source.EnhancementChoices);
             skill.MasterChoices = MapChoices(source.MasterSkillChoices);
+            skill.MultiEffects = source.MultiEffects ?? Array.Empty<SkillEffectDefinition>();
 
             skill.Timing.Cooldown = source.CooldownSeconds;
             skill.Timing.ActiveDuration = source.ActiveDurationSeconds;
             skill.Timing.TickInterval = source.ShotIntervalSeconds;
             skill.Targeting.Range = 0f;
             skill.Targeting.Radius = source.Radius;
+            if (Enum.TryParse<SkillTargetSelection>(source.TargetSelection, true, out var targetSelection))
+            {
+                skill.Targeting.Selection = targetSelection;
+            }
+
             skill.Targeting.Shape = MapShape(source.RuntimeKind);
             skill.Targeting.CoverAll = source.RuntimeKind == SkillRuntimeKind.Field
-                || (source.RuntimeKind == SkillRuntimeKind.SingleAttack && source.Radius <= 0f);
+                || (source.RuntimeKind == SkillRuntimeKind.SingleAttack
+                    && source.Radius <= 0f
+                    && string.IsNullOrWhiteSpace(source.TargetSelection));
         }
 
         private static void MapActiveFields(SkillData skill, MonsterDefinition monster, SkillDefinition source)
@@ -157,10 +165,21 @@ namespace Pakuri.InGame
 
             if (skill is SingleAttackData single)
             {
+                var hasHitTargetCount = TryResolveHitTargetCount(
+                    source.HitTargetCount,
+                    out var hitAllTargets,
+                    out var hitTargetCount);
                 single.Area.Radius = source.Radius;
                 single.Area.Duration = 0f;
                 single.Area.TickInterval = 0f;
-                single.Area.CoverAll = source.Radius <= 0f;
+                single.UsesHitTargetCount = hasHitTargetCount || source.Radius <= 0f;
+                single.UsePrefabHitbox = hitAllTargets;
+                single.HitAllTargets = hitAllTargets;
+                single.HitTargetCount = hitAllTargets ? int.MaxValue : Math.Max(1, hitTargetCount);
+                single.Area.CoverAll = hitAllTargets
+                    || (!single.UsesHitTargetCount
+                        && source.Radius <= 0f
+                        && string.IsNullOrWhiteSpace(source.TargetSelection));
                 MapDamage(single.Damage, source);
                 single.OnHitStatus = CreateStatusApplication(source);
                 return;
@@ -239,7 +258,43 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            return StatusEffectRuntime.CreateStatusData(kind, source.StatusEffectLabel, source);
+            var status = StatusEffectRuntime.CreateStatusData(kind, source.StatusEffectLabel, source);
+            if (status != null && source.StatusEffectPrefab != null)
+            {
+                status.StatusEffectPrefab = source.StatusEffectPrefab;
+            }
+
+            return status;
+        }
+
+        private static bool TryResolveHitTargetCount(
+            string rawValue,
+            out bool hitAllTargets,
+            out int hitTargetCount)
+        {
+            hitAllTargets = false;
+            hitTargetCount = 1;
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                return false;
+            }
+
+            var normalized = rawValue.Trim();
+            if (string.Equals(normalized, "global", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(normalized, "all", StringComparison.OrdinalIgnoreCase))
+            {
+                hitAllTargets = true;
+                hitTargetCount = int.MaxValue;
+                return true;
+            }
+
+            if (int.TryParse(normalized, out var parsed) && parsed > 0)
+            {
+                hitTargetCount = parsed;
+                return true;
+            }
+
+            return true;
         }
 
         private static BuffTarget MapBuffTarget(SkillDefinition source, StatusEffectKind fallbackKind)

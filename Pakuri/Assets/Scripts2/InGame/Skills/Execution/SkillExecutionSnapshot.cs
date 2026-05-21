@@ -1,4 +1,5 @@
 using Pakuri.Data;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Pakuri.InGame
@@ -50,6 +51,7 @@ namespace Pakuri.InGame
         public bool HasStatusElementDamageTakenBonus { get; private set; }
         public float StatusElementDamageTakenBonus { get; private set; }
         public GameObject SkillEffectPrefab { get; private set; }
+        private readonly HashSet<string> activeChoiceIds = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
 
         public bool HasBranchBehavior =>
             BranchChanceBonus > 0f
@@ -217,6 +219,19 @@ namespace Pakuri.InGame
                 HasStatusElementDamageTakenBonus = choice.HasStatusElementDamageTakenBonus,
                 StatusElementDamageTakenBonus = choice.StatusElementDamageTakenBonus
             });
+        }
+
+        public void AddActiveChoiceId(string choiceId)
+        {
+            if (!string.IsNullOrWhiteSpace(choiceId))
+            {
+                activeChoiceIds.Add(choiceId);
+            }
+        }
+
+        public bool HasActiveChoice(string choiceId)
+        {
+            return !string.IsNullOrWhiteSpace(choiceId) && activeChoiceIds.Contains(choiceId);
         }
 
         private static float PositiveOrDefault(float value, float fallback)

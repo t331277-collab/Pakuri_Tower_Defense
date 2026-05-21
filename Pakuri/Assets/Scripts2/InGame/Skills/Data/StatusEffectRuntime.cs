@@ -64,6 +64,7 @@ namespace Pakuri.InGame
             var attackPowerBonus = ResolveOverride(source != null ? source.StatusAttackPowerBonus : 0f, catalogDefinition != null ? catalogDefinition.AttackPowerBonusPerStack : 0f);
             status.Modifiers.ActionSpeedBonus = actionSpeedBonus;
             status.Modifiers.AttackPowerBonus = attackPowerBonus;
+            status.Modifiers.SpellPowerBonus = 0f;
             status.Modifiers.DamageBonusRate = 0f;
 
             if (catalogDefinition != null && catalogDefinition.HasAttribute)
@@ -76,6 +77,9 @@ namespace Pakuri.InGame
             ApplySourceAwareMetadata(status, kind, source);
             status.Modifiers.ResistReduction = status.ElementResistReduction;
             status.IsControlEffect = !status.CanMove || !status.CanAct || !status.CanUseSpecialSkill;
+            status.StatusEffectPrefab = source != null && source.StatusEffectPrefab != null
+                ? source.StatusEffectPrefab
+                : catalogDefinition != null ? catalogDefinition.StatusEffectPrefab : null;
             return status;
         }
 
@@ -157,6 +161,8 @@ namespace Pakuri.InGame
 
             return Mathf.Abs(data.Modifiers.ActionSpeedBonus)
                 + Mathf.Abs(data.Modifiers.AttackPowerBonus)
+                + Mathf.Abs(data.Modifiers.SpellPowerBonus)
+                + Mathf.Abs(data.Modifiers.DamageBonusRate)
                 + Mathf.Abs(data.MoveSpeedBonus)
                 + Mathf.Abs(data.DamageTakenBonus)
                 + Mathf.Abs(data.CriticalDamageTakenBonus)
@@ -193,6 +199,17 @@ namespace Pakuri.InGame
         public static float ResolveAttackPowerMultiplier(BaseUnitRuntimeModel model)
         {
             return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.AttackPowerBonus));
+        }
+
+        public static float ResolveSpellPowerMultiplier(BaseUnitRuntimeModel model)
+        {
+            return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.SpellPowerBonus));
+        }
+
+        public static float ResolveOutgoingDamageMultiplier(BaseUnitRuntimeModel source, DamageAttribute attribute)
+        {
+            return Mathf.Max(0f, 1f + SumStacked(source, data =>
+                MatchesAttribute(data, attribute) ? data.Modifiers.DamageBonusRate : 0f));
         }
 
         public static float ResolveIncomingDamageMultiplier(BaseUnitRuntimeModel target, DamageAttribute attribute)

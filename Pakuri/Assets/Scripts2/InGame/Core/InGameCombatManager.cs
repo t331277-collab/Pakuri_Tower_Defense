@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Pakuri.Combat;
 using UnityEngine.EventSystems;
@@ -12,6 +13,7 @@ namespace Pakuri.InGame
         private readonly EnemyCombatSystem enemyCombatSystem = new EnemyCombatSystem();
         private readonly UnitResourceMutationService resourceMutations = new UnitResourceMutationService();
         private readonly SkillExecutionSystem skillExecution = new SkillExecutionSystem();
+        private readonly Dictionary<string, GameObject> statusEffectVisuals = new Dictionary<string, GameObject>();
 
         [SerializeField] private bool enemyCombatSimulationEnabled = true;
         [SerializeField] private bool skillExecutionEnabled = true;
@@ -147,6 +149,7 @@ namespace Pakuri.InGame
                 refreshDuration);
             resourceMutations.SynchronizeShieldView(target);
             RefreshUnitActor(target);
+            SpawnOrRefreshStatusEffectVisual(target, StatusEffectRuntime.CreateStatusData(kind, null), status);
             return status;
         }
 
@@ -173,6 +176,7 @@ namespace Pakuri.InGame
                 refreshDuration);
             resourceMutations.SynchronizeShieldView(target);
             RefreshUnitActor(target);
+            SpawnOrRefreshStatusEffectVisual(target, statusData, status);
             return status;
         }
 
@@ -201,6 +205,7 @@ namespace Pakuri.InGame
                 shieldAmount);
             resourceMutations.SynchronizeShieldView(target);
             RefreshUnitActor(target);
+            SpawnOrRefreshStatusEffectVisual(target, statusData, status);
             return status;
         }
 
@@ -325,6 +330,60 @@ namespace Pakuri.InGame
                 Time.deltaTime,
                 aimDirection,
                 logSkillExecutionContracts);
+        }
+
+        private void SpawnOrRefreshStatusEffectVisual(
+            BaseUnitRuntimeModel target,
+            StatusEffectData statusData,
+            UnitStatusRuntime status)
+        {
+            if (target == null
+                || statusData == null
+                || statusData.StatusEffectPrefab == null
+                || status == null
+                || Effects == null)
+            {
+                return;
+            }
+
+            var entry = roster.Find(target);
+            if (entry == null || entry.Transform == null)
+            {
+                return;
+            }
+
+            var unitId = target.Identity != null ? target.Identity.UnitId : string.Empty;
+            var sourceId = !string.IsNullOrWhiteSpace(status.SourceSkillId)
+                ? status.SourceSkillId
+                : statusData.SourceSkillId;
+            var key = $"{unitId}:{status.Kind}:{sourceId}:{statusData.StatusEffectPrefab.GetInstanceID()}";
+            if (statusEffectVisuals.TryGetValue(key, out var existing) && existing == null)
+            {
+                statusEffectVisuals.Remove(key);
+                existing = null;
+            }
+
+            var lifetime = status.Permanent
+                ? 3600f
+                : Mathf.Max(0.1f, status.DurationRemaining);
+            if (existing == null)
+            {
+                existing = Effects.InstantiateSkillPrefab(statusData.StatusEffectPrefab, entry.Transform.position, Quaternion.identity);
+                if (existing == null)
+                {
+                    return;
+                }
+
+                statusEffectVisuals[key] = existing;
+            }
+
+            var actor = existing.GetComponent<InGameAttachedSkillEffectActor>();
+            if (actor == null)
+            {
+                actor = existing.AddComponent<InGameAttachedSkillEffectActor>();
+            }
+
+            actor.Initialize(entry.Transform, lifetime, Vector3.zero);
         }
 
         private bool ShouldAutoRouteSkill(UnitRosterEntry entry, SkillRuntimeInstance runtime)

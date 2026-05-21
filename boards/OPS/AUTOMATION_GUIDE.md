@@ -7,6 +7,103 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 Older OPS automation and role-policy task blocks were archived to `boards/ARCHIVE/OPS_AUTOMATION_ARCHIVE_2026-05-19.md`.
 
+## Task: 2026-05-22 Multi-Effect Skill CSV Blueprint
+
+### Task title
+
+Add a reusable multi-effect skill CSV blueprint and Skill Builder route.
+
+### Goals
+
+- Document the reusable CSV-owned route for skills that need secondary damage, ally buffs, delayed waves, or choice-gated effects.
+- Keep Ariel-C style behavior out of monster-specific executor hardcoding.
+- Add Skill Builder routing for `monster_skill_effects.csv` / multi-effect skill work.
+- Extend the blueprint contract to cover separated effect centers and applied-target visual anchors.
+
+### Constraints
+
+- Role Owner is Designer for the blueprint and routing contract.
+- Runtime implementation is recorded in DATA/COMBAT/Ariel boards.
+- Claims are grounded in inspected `monster_skills.csv`, `SkillDefinition.cs`, `PakuriCsvRuntimeData.*`, and `SkillExecutors.cs`.
+
+### Role Owner
+
+Designer / Skill Builder
+
+### Status
+
+Implemented and locally verified.
+
+### Next Actions
+
+- Future bundled ally-effect or choice-gated secondary-effect skills should start from `boards/SkillBluePrint/multi-effect-skill-csv-blueprint.md`.
+- If a future effect cannot fit the CSV columns, extend the blueprint/schema before adding executor branches.
+
+### Evidence
+
+- Added `boards/SkillBluePrint/multi-effect-skill-csv-blueprint.md`.
+- `boards/SkillBluePrint/multi-effect-skill-csv-blueprint.md` now documents `center_mode` and `visual_anchor_mode`, including `PrimarySkillCenter` for delayed waves and `AppliedTargets` for unit-attached buff visuals.
+- Updated `AGENTS_ROLE/GAMEBULIDER_SKILL.md` so multi-effect skill and `monster_skill_effects.csv` requests route to the new blueprint.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now invokes a shared `SkillMultiEffectExecutor` from the `SingleAttack` path instead of adding an Ariel-C branch.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now keeps multi-effect application targets separate from visual centers/anchors through generic `SkillMultiEffectCenterMode` and `SkillMultiEffectVisualAnchorMode` fields.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-22: User approved the Designer blueprint first, then Skill Builder implementation for reusable multi-effect skill CSV support.
+- 2026-05-22: Code Builder updated the multi-effect blueprint and implementation so future skills can express applied-target attached visuals and primary-skill-center secondary waves without monster-specific executor branches.
+
+## Task: 2026-05-21 SingleAttack And AreaAttack Blueprint Contracts
+
+### Task title
+
+Add parsed-input Skill Builder blueprints for SingleAttack and AreaAttack.
+
+### Goals
+
+- Add a `SingleAttack` blueprint for one-shot area damage skills.
+- Add an `AreaAttack` blueprint for sustained ticking area skills.
+- Keep both new blueprints aligned with the existing projectile / BeamSkill parsed-input contract style.
+- Update Skill Builder blueprint selection so `SingleAttack` and `AreaAttack` requests route to the new files.
+
+### Constraints
+
+- Role Owner is Designer because this task changes workflow/design policy, not runtime gameplay code.
+- No C# script, scene, prefab, or CSV gameplay behavior was changed.
+- Claims must stay grounded in inspected runtime scripts and existing blueprint text.
+- `AreaAttack` must not silently absorb `Field`, `Mark`, or `Execute` behavior even though the current runtime maps those kinds to `ZoneSkillData`.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Implemented and locally verified by markdown and targeted code-path inspection.
+
+### Next Actions
+
+- Future `SingleAttack` implementation requests should read `boards/SkillBluePrint/single-attack-blueprint.md` as the first-read contract.
+- Future `AreaAttack` implementation requests should read `boards/SkillBluePrint/area-attack-blueprint.md` as the first-read contract.
+- If future area-like work is actually `Field`, `Mark`, `Execute`, drone, trap, marked-target fanout, or ally-effect bundled behavior, create or select a more specific blueprint instead of forcing it through these contracts.
+
+### Evidence
+
+- `boards/SkillBluePrint/projectile-blueprint.md` and `boards/SkillBluePrint/BeamSkill-blueprint.md` define the parsed-input contract structure copied for the new blueprint style: `Purpose`, `Core Rule`, `Builder Working Mode`, `What Builder May Read`, `Required Parsed Input`, common contract, stop-and-ask rule, and Builder output.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs:69-75` maps `SkillRuntimeKind.SingleAttack` to `SingleAttackData` and `SkillRuntimeKind.AreaAttack` to `ZoneSkillData`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs:145-163` maps radius, duration, tick interval, cover-all, damage, and status into `ZoneSkillData` / `SingleAttackData`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:479` shows `ZoneSkillExecutor`; `:611` shows `SingleAttackSkillExecutor`; `:628` routes SingleAttack through `InGameZoneSkillActor.ApplyAreaTick(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameZoneSkillActor.cs:24-66` initializes and applies an immediate area tick; `:140-160` repeats ticks until duration expires.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutionSystem.cs:194-195` registers `SingleAttackSkillExecutor` and `ZoneSkillExecutor` by default.
+- Added `boards/SkillBluePrint/single-attack-blueprint.md`.
+- Added `boards/SkillBluePrint/area-attack-blueprint.md`.
+- Updated `AGENTS_ROLE/GAMEBULIDER_SKILL.md` known mappings for `SingleAttack` and `AreaAttack`.
+
+### History
+
+- 2026-05-21: User asked whether `SingleAttack` and `AreaAttack` blueprints could be created before implementing new skills; Designer inspected existing shared runtime evidence and concluded the contracts can be created first.
+- 2026-05-21: User approved creating two blueprint files following the existing blueprint format and similar routing path.
+
 ## Task: 2026-05-21 Beam Blueprint Contract Rewrite
 
 ### Task title

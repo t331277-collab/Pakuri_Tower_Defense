@@ -23,4 +23,12 @@ MonoBehaviour:
     Asset: {fileID: 21300000, guid: 0caea6bc70c48504bb727429d31f5bc3, type: 3}
   - AssetPath: Assets/Image/Stage1/Enemy/Warrior.png
     Asset: {fileID: 21300000, guid: 128ccc7f23263be428abee49b68f0e07, type: 3}
-  Prefabs: []
+  Prefabs:
+  - AssetPath: Assets/Prefab/Skill/Ariel/Ariel_B.prefab
+    Asset: {fileID: 3529180550599226198, guid: a94d18f89e17df94fbed6a9e057e7fed, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Ariel/Ariel_C-Buff.prefab
+    Asset: {fileID: 8366197105921393042, guid: 33b5e950176a3454e9e779d062c8d540, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Ariel/Ariel_C.prefab
+    Asset: {fileID: 1713502052278588150, guid: f851084efb562e043a673ac67840693f, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Ariel/Ariel_D.prefab
+    Asset: {fileID: 9155496313211382274, guid: 9ab3f0a1fdf7cba419869b99af0013ef, type: 3}

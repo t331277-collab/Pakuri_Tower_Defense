@@ -12,6 +12,57 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-05-22 Ariel-C Multi-Effect CSV Runtime
+
+### Task title
+
+Implement Ariel-C blessing, traits, and master effects through reusable multi-effect CSV rows.
+
+### Goals
+
+- Keep Ariel-C base `SingleAttack` enemy damage on the shared one-shot area path.
+- Add all-ally action-speed blessing, trait 2, trait 3, trait 5, master 1, and master 2 behavior through `monster_skill_effects.csv`.
+- Avoid Ariel-C-specific executor branches.
+
+### Constraints
+
+- Role Owner is Skill Builder.
+- Ariel-C reference values are grounded in `Pakuri/reference/2.Monster/ariel/skill/c-blessing-wave.md`.
+- The reference names a second wave but does not specify a time interval, so the CSV row uses `Delayed` with `delay_seconds=0` and runtime schedules it on the next frame instead of inventing a numeric delay.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Skill Builder
+
+### Status
+
+Implemented and non-gameplay verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Ariel-C hits once normally, applies ally blessing, applies trait/master choices, and master 2 creates the second 60% wave.
+- If the second wave needs a designer-authored visible delay later, edit `delay_seconds` in `monster_skill_effects.csv`.
+
+### Evidence
+
+- `Pakuri/reference/2.Monster/ariel/skill/c-blessing-wave.md` lists Ariel-C base Holy damage `28`, spell coefficient `1.2`, radius `3.0`, all-ally action speed `+12%`, buff duration `4.0초`, cooldown `8.0초`, trait 2 `+6%`, trait 3 `+2초`, trait 5 shielded-allies Holy damage `+10%`, master 1 spell power `+18%`, and master 2 second wave `60%`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` keeps `ariel-c runtime_kind=SingleAttack`, `base_damage=28`, `spell_power_coefficient=1.2`, `radius=3`, and `cooldown_seconds=8`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now contains 9 `ariel-c` effect rows covering the action-speed blessing, trait combinations, shielded Holy damage, master 1 spell-power replacement, and master 2 second wave.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now separates Ariel-C effect application targets from visual placement with `center_mode` and `visual_anchor_mode`; Ariel-C ally buff rows keep `target_side=AllAllies`, use `visual_anchor_mode=AppliedTargets`, and use `Assets/Prefab/Skill/Ariel/Ariel_C-Buff.prefab` only on representative visual rows.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv:11` keeps the Ariel-C master 2 damage wave on `center_mode=PrimarySkillCenter` and `skill_effect_prefab_path=Assets/Prefab/Skill/Ariel/Ariel_C.prefab`, so the second wave stays on the first SingleAttack center instead of reselecting an ally or a different target.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:12636` now maps `ariel-c` to `Assets/Prefab/Skill/Ariel/Ariel_C.prefab` in `EffectManager` for the base attack-target SingleAttack visual.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` calls `SkillMultiEffectExecutor.Execute(...)` from `SingleAttackSkillExecutor` and uses choice IDs from `SkillExecutionSnapshot` for `requires_active_choice_id` / `excludes_active_choice_id`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now uses `SkillMultiEffectCenterMode` for visual/damage centers and attaches applied-target status visuals with `InGameAttachedSkillEffectActor` when `visual_anchor_mode=AppliedTargets`.
+- A PowerShell CSV reference check returned `OK effects=9 ariel_c=9` for the Ariel-C multi-effect rows, including choice references and prefab path checks. Unity-MCP `execute_menu_item` currently fails to find `Pakuri/Validate CSV Source Data`, so the final verification does not rely on that menu path.
+- 2026-05-22 follow-up verification: `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_effects.csv` showed Ariel-C rows with `PrimarySkillCenter`, ally buff rows with `AppliedTargets`, and representative buff prefab rows using `Assets/Prefab/Skill/Ariel/Ariel_C-Buff.prefab`; runtime/editor `dotnet build` commands passed with 0 errors and existing MSB3277 warnings.
+
+### History
+
+- 2026-05-22: User asked for Ariel-C to be implemented without hardcoding and with reusable CSV structure for similar future skills.
+- 2026-05-22: User asked Code Builder to split Ariel-C effect application target from visual center/anchor, use ally-target buff visuals, keep Ariel-B shield/buff visuals attached to units, and use `Assets/Prefab/Skill/Ariel/Ariel_C-Buff.prefab` for Ariel-C buff visuals.
+
 ## Task: 2026-05-20 Ariel-A Master 2 Holy Exposure Runtime Wiring
 
 ### Task title
@@ -433,3 +484,45 @@ Implemented and locally validated by C# builds, Unity-MCP refresh, console check
 
 - 2026-05-10: User requested the Ariel unit executor migration from the remaining-work report and asked whether MainMenu-selected Ariel shield skills protect teammates.
 - 2026-05-10: Code inspection confirmed selected Ariel shields did not protect manifested teammates before this pass; Builder added party shield state and Ariel unit executor dispatch.
+
+## Task: 2026-05-21 Ariel-D SingleAttack Target Fix
+
+### Task title
+
+Fix Ariel-D strongest-enemy targeting after Mark-to-SingleAttack conversion.
+
+### Goals
+
+- Keep Ariel-D authored as a SingleAttack skill.
+- Preserve `HighestHealth` as the first implementation of "strongest enemy".
+- Prevent Ariel-D's zero radius from turning into all-enemy coverage.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Party focus-target AI remains intentionally unimplemented per user instruction.
+- User performs Play Mode verification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Ariel-D only damages/applies the mark status to the current highest-HP enemy in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` Ariel-D row has `runtime_kind=SingleAttack`, `radius=0`, `target_selection=HighestHealth`, `status_effect_id=holy-exposure`, and `status_effect_prefab_path=Assets/Prefab/Skill/Ariel/Ariel_D.prefab`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` now sets `single.Area.CoverAll` to false when `source.TargetSelection` is present.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` passes `coverAll` into `InGameZoneSkillActor.ApplyAreaTick(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameZoneSkillActor.cs` uses the single-target branch only when `!areaCoversAll && areaRadius <= 0f`.
+- Runtime and Editor `dotnet build` commands passed with 0 errors and existing MSB3277 warnings.
+
+### History
+
+- 2026-05-21: User reported Ariel-D appeared to hit all targets. Builder traced the behavior to `SingleAttackData.Area.CoverAll = source.Radius <= 0f` and changed it to respect explicit `target_selection`.

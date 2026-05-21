@@ -12510,7 +12510,7 @@ Transform:
   m_GameObject: {fileID: 1427799825}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.89659, y: -4.86961, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12633,6 +12633,10 @@ MonoBehaviour:
       Prefab: {fileID: 3285557362087739772, guid: 66fcb365022930d4681ad320e5fff520, type: 3}
     - SkillId: ariel-b
       Prefab: {fileID: 3529180550599226198, guid: a94d18f89e17df94fbed6a9e057e7fed, type: 3}
+    - SkillId: ariel-c
+      Prefab: {fileID: 1713502052278588150, guid: f851084efb562e043a673ac67840693f, type: 3}
+    - SkillId: ariel-e
+      Prefab: {fileID: 3971032706705179479, guid: 34e251e3f631e7c4482a8db43f03e82c, type: 3}
   - MonsterId: eve
     SkillEffects:
     - SkillId: eve-a
@@ -14410,6 +14414,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1602480398}
   m_CullTransparentMesh: 1
+--- !u!1 &1603099209
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1603099210}
+  m_Layer: 0
+  m_Name: SkillPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1603099210
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1603099209}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1617652271
 GameObject:
   m_ObjectHideFlags: 0
@@ -18073,3 +18108,4 @@ SceneRoots:
   - {fileID: 876113832}
   - {fileID: 1115756856}
   - {fileID: 1773081075}
+  - {fileID: 1603099210}

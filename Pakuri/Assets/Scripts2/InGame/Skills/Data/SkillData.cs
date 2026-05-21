@@ -1,4 +1,5 @@
 ﻿using System;
+using Pakuri.Data;
 using UnityEngine;
 
 namespace Pakuri.InGame
@@ -54,6 +55,7 @@ namespace Pakuri.InGame
     {
         Nearest,
         LowestHealth,
+        HighestHealth,
         HighestStacks,
         ManualPosition,
         Owner
@@ -217,6 +219,7 @@ namespace Pakuri.InGame
     {
         public float ActionSpeedBonus;
         public float AttackPowerBonus;
+        public float SpellPowerBonus;
         public float DamageBonusRate;
         public float CritChanceBonusRate;
         public float ResistReduction;
@@ -245,6 +248,7 @@ namespace Pakuri.InGame
         [Header("Choices")]
         public SkillChoiceEffectSpec[] EnhancementChoices = Array.Empty<SkillChoiceEffectSpec>();
         public SkillChoiceEffectSpec[] MasterChoices = Array.Empty<SkillChoiceEffectSpec>();
+        public SkillEffectDefinition[] MultiEffects = Array.Empty<SkillEffectDefinition>();
     }
 
     [CreateAssetMenu(menuName = "Pakuri/InGame/Buff Skill Data", fileName = "BuffSkillData")]

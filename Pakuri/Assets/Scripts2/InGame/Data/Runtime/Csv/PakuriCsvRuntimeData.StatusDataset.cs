@@ -26,6 +26,7 @@ namespace Pakuri.Data
             public float CriticalResistanceBonusPerStack;
             public float ElementResistReductionPerStack;
             public float ElementDamageTakenBonusPerStack;
+            public string StatusEffectPrefabPath;
         }
 
         private static StatusEffectRow ParseStatusEffectRow(CsvRecord record)
@@ -51,7 +52,8 @@ namespace Pakuri.Data
                 CriticalDamageTakenBonusPerStack = record.ReadFloat("critical_damage_taken_bonus_per_stack"),
                 CriticalResistanceBonusPerStack = record.ReadFloat("critical_resistance_bonus_per_stack"),
                 ElementResistReductionPerStack = record.ReadFloat("element_resist_reduction_per_stack"),
-                ElementDamageTakenBonusPerStack = record.ReadFloat("element_damage_taken_bonus_per_stack")
+                ElementDamageTakenBonusPerStack = record.ReadFloat("element_damage_taken_bonus_per_stack"),
+                StatusEffectPrefabPath = record.ReadString("status_effect_prefab_path")
             };
         }
 

@@ -50,6 +50,7 @@ namespace Pakuri.Data
             sourceCatalog.Monsters = LoadImportedSourceTextAssetOrThrow(MonstersFileName);
             sourceCatalog.MonsterRewardChoices = LoadImportedSourceTextAssetOrThrow(MonsterRewardChoicesFileName);
             sourceCatalog.MonsterSkills = LoadImportedSourceTextAssetOrThrow(MonsterSkillsFileName);
+            sourceCatalog.MonsterSkillEffects = LoadImportedSourceTextAssetOrThrow(MonsterSkillEffectsFileName);
             sourceCatalog.MonsterSkillChoices = LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesFileName);
             sourceCatalog.StatusEffects = LoadImportedSourceTextAssetOrThrow(StatusEffectsFileName);
             sourceCatalog.StageOneEnemies = LoadImportedSourceTextAssetOrThrow(StageOneEnemiesFileName);
@@ -196,6 +197,21 @@ namespace Pakuri.Data
             foreach (var choice in sourceModel.SkillChoices.Values)
             {
                 AddAssetPath(paths, choice.SkillEffectPrefabPath);
+            }
+
+            foreach (var skill in sourceModel.Skills.Values)
+            {
+                AddAssetPath(paths, skill.StatusEffectPrefabPath);
+            }
+
+            foreach (var effect in sourceModel.SkillEffects.Values)
+            {
+                AddAssetPath(paths, effect.SkillEffectPrefabPath);
+            }
+
+            foreach (var status in sourceModel.StatusEffects.Values)
+            {
+                AddAssetPath(paths, status.StatusEffectPrefabPath);
             }
 
             var entries = new List<PakuriCsvRuntimeAssetCatalog.PrefabEntry>();

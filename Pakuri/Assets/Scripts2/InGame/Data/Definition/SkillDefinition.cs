@@ -48,6 +48,103 @@ namespace Pakuri.Data
         Passive
     }
 
+    public enum SkillMultiEffectKind
+    {
+        Damage,
+        Status
+    }
+
+    public enum SkillMultiEffectTargetSide
+    {
+        Enemy,
+        Self,
+        AllAllies
+    }
+
+    public enum SkillMultiEffectTargetSelection
+    {
+        Nearest,
+        Owner
+    }
+
+    public enum SkillMultiEffectTargetShape
+    {
+        Single,
+        Circle,
+        Battlefield
+    }
+
+    public enum SkillMultiEffectTiming
+    {
+        OnCast,
+        Delayed
+    }
+
+    public enum SkillMultiEffectCenterMode
+    {
+        EffectTarget,
+        PrimarySkillCenter,
+        Caster,
+        NearestEnemy
+    }
+
+    public enum SkillMultiEffectVisualAnchorMode
+    {
+        Center,
+        AppliedTargets
+    }
+
+    [Serializable]
+    public class SkillEffectDefinition
+    {
+        public string EffectId;
+        public string SkillId;
+        public int SortOrder;
+        public SkillMultiEffectKind EffectKind;
+        public SkillMultiEffectTargetSide TargetSide;
+        public SkillMultiEffectTargetSelection TargetSelection;
+        public SkillMultiEffectTargetShape TargetShape;
+        public SkillMultiEffectCenterMode CenterMode;
+        public SkillMultiEffectVisualAnchorMode VisualAnchorMode;
+        public SkillMultiEffectTiming EffectTiming;
+        public float DelaySeconds;
+        public bool EnabledByDefault;
+        public string RequiresActiveChoiceId;
+        public string ExcludesActiveChoiceId;
+        public string ConditionStatusId;
+        public SkillMultiEffectTargetSide ConditionTargetSide;
+        public DamageAttribute Attribute;
+        public float BaseDamage;
+        public float AttackPowerCoefficient;
+        public float SpellPowerCoefficient;
+        public float DamageMultiplier = 1f;
+        public float Radius;
+        public bool CoverAll;
+        public string StatusEffectId;
+        [Range(0f, 1f)] public float StatusChance;
+        public string StatusEffectLabel;
+        public GameObject StatusEffectPrefab;
+        public float StatusDurationSeconds;
+        public int StatusMaxStacks;
+        public int StatusStackAmount;
+        public string StatusTargetScope;
+        public string StatusMergePolicy;
+        public string ShieldAmountRefreshPolicy;
+        public float StatusActionSpeedBonus;
+        public float StatusMoveSpeedBonus;
+        public float StatusAttackPowerBonus;
+        public float StatusSpellPowerBonus;
+        public float StatusDamageBonusRate;
+        public float StatusDamageTakenBonus;
+        public float StatusCriticalDamageTakenBonus;
+        public float StatusCriticalResistanceBonus;
+        public float StatusElementResistReduction;
+        public float StatusElementDamageTakenBonus;
+        public GameObject SkillEffectPrefab;
+        public string RuntimeSupportState;
+        [TextArea(2, 5)] public string RuntimeSupportNotes;
+    }
+
     [Serializable]
     public class SkillChoiceDefinition
     {
@@ -119,6 +216,8 @@ namespace Pakuri.Data
         public float AttackPowerCoefficient;
         public float SpellPowerCoefficient;
         public float Radius;
+        public string HitTargetCount;
+        public string TargetSelection;
         public float CooldownSeconds;
         public float ActiveDurationSeconds;
         public int MagazineCapacity;
@@ -131,6 +230,7 @@ namespace Pakuri.Data
         public string StatusEffectId;
         [Range(0f, 1f)] public float StatusChance;
         public string StatusEffectLabel;
+        public GameObject StatusEffectPrefab;
         public float StatusDurationSeconds;
         public int StatusMaxStacks;
         public int StatusStackAmount;
@@ -148,6 +248,7 @@ namespace Pakuri.Data
         [TextArea(2, 4)] public string Summary;
         public SkillChoiceDefinition[] EnhancementChoices = Array.Empty<SkillChoiceDefinition>();
         public SkillChoiceDefinition[] MasterSkillChoices = Array.Empty<SkillChoiceDefinition>();
+        public SkillEffectDefinition[] MultiEffects = Array.Empty<SkillEffectDefinition>();
     }
 
     [Serializable]

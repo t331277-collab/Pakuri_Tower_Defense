@@ -147,7 +147,8 @@ namespace Pakuri.Data
                     CriticalDamageTakenBonusPerStack = row.CriticalDamageTakenBonusPerStack,
                     CriticalResistanceBonusPerStack = row.CriticalResistanceBonusPerStack,
                     ElementResistReductionPerStack = row.ElementResistReductionPerStack,
-                    ElementDamageTakenBonusPerStack = row.ElementDamageTakenBonusPerStack
+                    ElementDamageTakenBonusPerStack = row.ElementDamageTakenBonusPerStack,
+                    StatusEffectPrefab = LoadPrefab(row.StatusEffectPrefabPath)
                 });
             }
 
@@ -216,6 +217,8 @@ namespace Pakuri.Data
                     AttackPowerCoefficient = skill.AttackPowerCoefficient,
                     SpellPowerCoefficient = skill.SpellPowerCoefficient,
                     Radius = skill.Radius,
+                    HitTargetCount = skill.HitTargetCount,
+                    TargetSelection = skill.TargetSelection,
                     CooldownSeconds = skill.CooldownSeconds,
                     ActiveDurationSeconds = skill.ActiveDurationSeconds,
                     MagazineCapacity = skill.MagazineCapacity,
@@ -228,6 +231,7 @@ namespace Pakuri.Data
                     StatusEffectId = skill.StatusEffectId,
                     StatusChance = skill.StatusChance,
                     StatusEffectLabel = skill.StatusEffectLabel,
+                    StatusEffectPrefab = LoadPrefab(skill.StatusEffectPrefabPath),
                     StatusDurationSeconds = skill.StatusDurationSeconds,
                     StatusMaxStacks = skill.StatusMaxStacks,
                     StatusStackAmount = skill.StatusStackAmount,
@@ -244,7 +248,79 @@ namespace Pakuri.Data
                     StatusElementDamageTakenBonus = skill.StatusElementDamageTakenBonus,
                     Summary = skill.Summary,
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.ActiveEnhancement),
-                    MasterSkillChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.ActiveMaster)
+                    MasterSkillChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.ActiveMaster),
+                    MultiEffects = BuildSkillEffects(model, skill.Id)
+                };
+            }
+
+            return definitions;
+        }
+
+        private static SkillEffectDefinition[] BuildSkillEffects(SourceModel model, string skillId)
+        {
+            var effects = new List<SkillEffectRow>();
+            foreach (var effect in model.SkillEffects.Values)
+            {
+                if (string.Equals(effect.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
+                {
+                    effects.Add(effect);
+                }
+            }
+
+            effects.Sort((left, right) => left.SortOrder.CompareTo(right.SortOrder));
+
+            var definitions = new SkillEffectDefinition[effects.Count];
+            for (var i = 0; i < effects.Count; i++)
+            {
+                var effect = effects[i];
+                definitions[i] = new SkillEffectDefinition
+                {
+                    EffectId = effect.Id,
+                    SkillId = effect.SkillId,
+                    SortOrder = effect.SortOrder,
+                    EffectKind = effect.EffectKind,
+                    TargetSide = effect.TargetSide,
+                    TargetSelection = effect.TargetSelection,
+                    TargetShape = effect.TargetShape,
+                    CenterMode = effect.CenterMode,
+                    VisualAnchorMode = effect.VisualAnchorMode,
+                    EffectTiming = effect.EffectTiming,
+                    DelaySeconds = effect.DelaySeconds,
+                    EnabledByDefault = effect.EnabledByDefault,
+                    RequiresActiveChoiceId = effect.RequiresActiveChoiceId,
+                    ExcludesActiveChoiceId = effect.ExcludesActiveChoiceId,
+                    ConditionStatusId = effect.ConditionStatusId,
+                    ConditionTargetSide = effect.ConditionTargetSide,
+                    Attribute = effect.Attribute,
+                    BaseDamage = effect.BaseDamage,
+                    AttackPowerCoefficient = effect.AttackPowerCoefficient,
+                    SpellPowerCoefficient = effect.SpellPowerCoefficient,
+                    DamageMultiplier = effect.DamageMultiplier,
+                    Radius = effect.Radius,
+                    CoverAll = effect.CoverAll,
+                    StatusEffectId = effect.StatusEffectId,
+                    StatusChance = effect.StatusChance,
+                    StatusEffectLabel = effect.StatusEffectLabel,
+                    StatusEffectPrefab = LoadPrefab(effect.StatusEffectPrefabPath),
+                    StatusDurationSeconds = effect.StatusDurationSeconds,
+                    StatusMaxStacks = effect.StatusMaxStacks,
+                    StatusStackAmount = effect.StatusStackAmount,
+                    StatusTargetScope = effect.StatusTargetScope,
+                    StatusMergePolicy = effect.StatusMergePolicy,
+                    ShieldAmountRefreshPolicy = effect.ShieldAmountRefreshPolicy,
+                    StatusActionSpeedBonus = effect.StatusActionSpeedBonus,
+                    StatusMoveSpeedBonus = effect.StatusMoveSpeedBonus,
+                    StatusAttackPowerBonus = effect.StatusAttackPowerBonus,
+                    StatusSpellPowerBonus = effect.StatusSpellPowerBonus,
+                    StatusDamageBonusRate = effect.StatusDamageBonusRate,
+                    StatusDamageTakenBonus = effect.StatusDamageTakenBonus,
+                    StatusCriticalDamageTakenBonus = effect.StatusCriticalDamageTakenBonus,
+                    StatusCriticalResistanceBonus = effect.StatusCriticalResistanceBonus,
+                    StatusElementResistReduction = effect.StatusElementResistReduction,
+                    StatusElementDamageTakenBonus = effect.StatusElementDamageTakenBonus,
+                    SkillEffectPrefab = LoadPrefab(effect.SkillEffectPrefabPath),
+                    RuntimeSupportState = effect.RuntimeSupportState,
+                    RuntimeSupportNotes = effect.RuntimeSupportNotes
                 };
             }
 

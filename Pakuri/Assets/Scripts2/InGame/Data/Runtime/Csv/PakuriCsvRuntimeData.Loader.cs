@@ -41,6 +41,10 @@ namespace Pakuri.Data
             {
                 missingAssets.Add(MonsterSkillsFileName);
             }
+            if (sourceCatalog.MonsterSkillEffects == null)
+            {
+                missingAssets.Add(MonsterSkillEffectsFileName);
+            }
             if (sourceCatalog.MonsterSkillChoices == null)
             {
                 missingAssets.Add(MonsterSkillChoicesFileName);
@@ -97,6 +101,7 @@ namespace Pakuri.Data
             var monsterTable = CsvTable.Load(sourceCatalog.Monsters, MonstersFileName);
             var rewardChoiceTable = CsvTable.Load(sourceCatalog.MonsterRewardChoices, MonsterRewardChoicesFileName);
             var skillTable = CsvTable.Load(sourceCatalog.MonsterSkills, MonsterSkillsFileName);
+            var skillEffectTable = CsvTable.Load(sourceCatalog.MonsterSkillEffects, MonsterSkillEffectsFileName);
             var skillChoiceTable = CsvTable.Load(sourceCatalog.MonsterSkillChoices, MonsterSkillChoicesFileName);
             var statusEffectTable = CsvTable.Load(sourceCatalog.StatusEffects, StatusEffectsFileName);
             var enemyTable = CsvTable.Load(sourceCatalog.StageOneEnemies, StageOneEnemiesFileName);
@@ -130,6 +135,12 @@ namespace Pakuri.Data
             {
                 var row = ParseSkillRow(record);
                 AddUnique(model.Skills, row.Id, row, record);
+            }
+
+            foreach (var record in skillEffectTable.Records)
+            {
+                var row = ParseSkillEffectRow(record);
+                AddUnique(model.SkillEffects, row.Id, row, record);
             }
 
             foreach (var record in skillChoiceTable.Records)

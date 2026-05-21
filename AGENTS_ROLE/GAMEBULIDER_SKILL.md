@@ -25,6 +25,9 @@ Known mappings:
 
 - projectile, projectile skill, bullet, missile: `boards/SkillBluePrint/projectile-blueprint.md`
 - BeamSkill, beam, laser, ray, slash-line, `LineAttack`: `boards/SkillBluePrint/BeamSkill-blueprint.md`
+- single attack, one-shot area, instant area, `SingleAttack`: `boards/SkillBluePrint/single-attack-blueprint.md`
+- multi-effect skill, bundled ally effect, choice-gated secondary effect, `monster_skill_effects.csv`: `boards/SkillBluePrint/multi-effect-skill-csv-blueprint.md`
+- area attack, sustained area, ticking area, `AreaAttack`: `boards/SkillBluePrint/area-attack-blueprint.md`
 - zone, area, field, aura, ground effect: `boards/SkillBluePrint/zone-blueprint.md` when that file exists
 
 If no matching blueprint exists, stop and say the blueprint file does not exist.

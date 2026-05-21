@@ -24,6 +24,9 @@ The full pre-hierarchy task history is preserved at:
 - 2026-05-18 cross-domain UI/RUN/DATA status: `InGameUIManager.cs` now resolves prisoner reward display names from the CSV-backed runtime enemy catalog instead of showing mojibake plus raw enemy IDs, and `OfferingUI.cs` now uses CSV-backed monster/skill/passive/reward fields for choice titles/descriptions. Detailed records are in `boards/UI/RUNSCENE_UI.md`, `boards/RUN/RUN_BLACKBOARD.md`, and `boards/DATA/DATA_BLACKBOARD.md`.
 - 2026-05-18 automation status: `boards/SkillBluePrint/BeamSkill-blueprint.md` was added and `AGENTS_ROLE/GAMEBULIDER.md` now requires Code Builder to read it before BeamSkill / LineAttack implementation edits. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-21 routing/policy status: `boards/SkillBluePrint/BeamSkill-blueprint.md` was rewritten to match the projectile blueprint contract style, so BeamSkill work now defaults to parsed-input-to-shared-runtime flow and stops to ask on unsupported special beam behavior. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
+- 2026-05-21 routing/policy status: `boards/SkillBluePrint/single-attack-blueprint.md` and `boards/SkillBluePrint/area-attack-blueprint.md` were added, and Skill Builder routing now maps `SingleAttack` and `AreaAttack` requests to those parsed-input shared-runtime contracts. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
+- 2026-05-22 cross-domain DATA/COMBAT/MON/OPS status: `boards/SkillBluePrint/multi-effect-skill-csv-blueprint.md` and `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` were added; Skill Builder routing now maps multi-effect skill work to the new blueprint; Ariel-C trait/master effects are represented as CSV effect rows and executed through shared runtime support. Detailed records are in `boards/OPS/AUTOMATION_GUIDE.md`, `boards/DATA/DATA_BLACKBOARD.md`, `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, and `boards/MON/ARIEL_MONSTER.md`.
+- 2026-05-22 cross-domain DATA/COMBAT/MON/OPS status: multi-effect rows now separate application target from visual center/anchor with `center_mode` and `visual_anchor_mode`; Ariel-C ally buff visuals use `Assets/Prefab/Skill/Ariel/Ariel_C-Buff.prefab` on applied ally targets, while Ariel-C attack waves can stay on the primary SingleAttack center. Detailed records are in `boards/OPS/AUTOMATION_GUIDE.md`, `boards/DATA/DATA_BLACKBOARD.md`, `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, and `boards/MON/ARIEL_MONSTER.md`.
 - 2026-05-18 routing/policy status: the active report board was removed from routing, report work now reads the related active domain board only, `AGENTS_ROLE/GAMEDESIGNER.md` now includes a short HTML report structure rule, and inspected `Pakuri/Assets/**/*.csv` files were all already valid UTF-8 so no CSV data rewrite was needed. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-18 routing/policy status: `AGENTS.md` now defines a `SimpelWorker` role for very simple path-based work, `AGENTS_ROLE/SIMPELWORKER.md` was added, SimpelWorker reads no extra markdown after `AGENTS.md` and `MDTREE.md`, and it automatically falls back to Designer when no exact work path is provided. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-19 routing/policy status: `AGENTS.md`, `MDTREE.md`, `AGENTS_ROLE/GAMEBULIDER.md`, and `boards/SkillBluePrint/projectile-blueprint.md` now require a smallest-possible markdown read set, explicit exclusions for unrelated domains, and a short routing decision log. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
@@ -545,3 +548,45 @@ Implemented and locally validated.
 - 2026-05-21 01:31:09 +09:00: Builder -> Reviewer loop started. Run directory: C:\TowerDefence_Pakuri\Test\codex_loop_logs\20260521_013109
 - 2026-05-21 01:31:44 +09:00: Loop 1 Builder started. Output: C:\TowerDefence_Pakuri\Test\codex_loop_logs\20260521_013109\loop_01_builder.md
 - 2026-05-21 01:32:16 +09:00: Loop 1 Builder finished with exit code 1.
+
+## Recent Task: 2026-05-21 Ariel-D SingleAttack Target Fix
+
+### Task title
+
+Fix Ariel-D hitting all enemies after Mark-to-SingleAttack conversion.
+
+### Goals
+
+- Keep Ariel-D as `runtime_kind=SingleAttack`.
+- Make `target_selection=HighestHealth` route Ariel-D into the single-target branch instead of the cover-all branch.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User performs Play Mode verification.
+- Claims are grounded in inspected `monster_skills.csv`, `InGameSkillDefinitionMapper.cs`, `SkillExecutors.cs`, and `InGameZoneSkillActor.cs`.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- Run Code Reviewer stage if network execution is allowed.
+- User verifies Ariel-D in Play Mode against multiple enemies.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` Ariel-D row has `runtime_kind=SingleAttack`, `radius=0`, and `target_selection=HighestHealth`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` now sets `single.Area.CoverAll = source.Radius <= 0f && string.IsNullOrWhiteSpace(source.TargetSelection)`.
+- Before this fix, `SingleAttackSkillExecutor` ORed `skill.Area.CoverAll` with `skill.Targeting.CoverAll`, so Ariel-D's `radius=0` kept `areaCoversAll=true` and bypassed `InGameZoneSkillActor.ApplyAreaTick(...)`'s single-target branch.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+- Unity-MCP `Pakuri/Validate CSV Source Data` was executed; console warning/error read returned only MCP client handler logs.
+
+### History
+
+- 2026-05-21: User reported Ariel-D appeared to affect all targets instead of the strongest enemy. Code inspection found `SingleAttackData.Area.CoverAll` still used only `radius <= 0f`; Builder aligned it with `target_selection`.

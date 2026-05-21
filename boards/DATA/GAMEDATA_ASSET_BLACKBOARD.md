@@ -4,6 +4,56 @@
 - Older broad data/asset history remains in `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md` and other archive files under `boards/ARCHIVE/`.
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 
+## Task: 2026-05-22 Multi-Effect Runtime Catalog Asset Sync
+
+### Task title
+
+Sync the new `monster_skill_effects.csv` source and Ariel-C prefab path into runtime catalog assets.
+
+### Goals
+
+- Add the new source CSV TextAsset to `PakuriCsvRuntimeSourceCatalog`.
+- Add `Assets/Prefab/Skill/Ariel/Ariel_C.prefab` to the runtime prefab catalog through effect rows.
+- Add `Assets/Prefab/Skill/Ariel/Ariel_C-Buff.prefab` to the runtime prefab catalog through Ariel-C ally buff effect rows.
+- Add the `NewRunScene` `EffectManager` base visual mapping for `ariel-c` so the base SingleAttack attack-target visual can resolve separately from ally buff attached visuals.
+- Keep prefab authority CSV-owned only for effect-row visuals introduced by the multi-effect table.
+
+### Constraints
+
+- Role Owner is Skill Builder.
+- This task changes runtime catalog assets; it does not edit scene prefab wiring.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Skill Builder
+
+### Status
+
+Implemented and asset-verified.
+
+### Next Actions
+
+- Future effect-row prefab paths should be added to `monster_skill_effects.csv` and synced through the same catalog path.
+
+### Evidence
+
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog.asset` now serializes `MonsterSkillEffects` to GUID `4ddf6bb31440b41438f4a7b82bbd5a92`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv.meta` stores GUID `4ddf6bb31440b41438f4a7b82bbd5a92`.
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog.asset` now contains `AssetPath: Assets/Prefab/Skill/Ariel/Ariel_C.prefab` with prefab GUID `f851084efb562e043a673ac67840693f`.
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog.asset:27` now contains `AssetPath: Assets/Prefab/Skill/Ariel/Ariel_C-Buff.prefab` with prefab GUID `33b5e950176a3454e9e779d062c8d540`.
+- `Pakuri/Assets/Prefab/Skill/Ariel/Ariel_C-Buff.prefab.meta` stores GUID `33b5e950176a3454e9e779d062c8d540`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:12636` maps `SkillId: ariel-c` to `Assets/Prefab/Skill/Ariel/Ariel_C.prefab` GUID `f851084efb562e043a673ac67840693f` for the base attack-target SingleAttack visual.
+- `Test-Path Pakuri\Assets\Prefab\Skill\Ariel\Ariel_C.prefab` returned `True`.
+- `Test-Path Pakuri\Assets\Prefab\Skill\Ariel\Ariel_C-Buff.prefab` returned `True`.
+- Unity `Pakuri/Sync CSV Runtime Catalog Assets` returned success earlier in this task, and final asset evidence is the serialized YAML plus `Test-Path`; Unity-MCP `execute_menu_item` currently fails to find `Pakuri/Validate CSV Source Data`, so final validation used direct CSV reference checks instead of the validation menu.
+- 2026-05-22 follow-up Unity `Pakuri/Sync CSV Runtime Catalog Assets` returned success after `Ariel_C-Buff.prefab` was added to effect rows; Unity console warning/error read showed only MCP client handler logs, not CSV or C# compile errors.
+
+### History
+
+- 2026-05-22: Skill Builder added the multi-effect CSV and synced its source/prefab references into runtime catalog assets.
+- 2026-05-22: Code Builder added the Ariel-C buff prefab catalog path and the `ariel-c` scene visual mapping needed to keep ally buff visuals and attack-target visuals separate.
+
 ## Task: 2026-05-20 Shield And Buff Runtime Catalog Asset Sync
 
 ### Task title

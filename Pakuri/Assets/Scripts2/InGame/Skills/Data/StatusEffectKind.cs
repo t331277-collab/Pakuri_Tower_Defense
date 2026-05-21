@@ -281,6 +281,7 @@ namespace Pakuri.InGame
         public ElementType ElementModifierTarget;
         public bool HasElementModifierTarget;
         public bool IsControlEffect;
+        public GameObject StatusEffectPrefab;
         public BuffModifierSpec Modifiers = new BuffModifierSpec();
 
         [Header("Conditional Conversion")]
