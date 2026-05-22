@@ -369,6 +369,8 @@ namespace Pakuri.Data
 
             ValidateChoiceReference(effect.RequiresActiveChoiceId, effect, model, "requires_active_choice_id", errors);
             ValidateChoiceReference(effect.ExcludesActiveChoiceId, effect, model, "excludes_active_choice_id", errors);
+            ValidatePassiveReference(effect.RequiresPassiveSkillId, effect, model, "requires_passive_skill_id", errors);
+            ValidatePassiveReference(effect.ExcludesPassiveSkillId, effect, model, "excludes_passive_skill_id", errors);
 
             if (effect.EffectKind == SkillMultiEffectKind.Damage && effect.BaseDamage <= 0f)
             {
@@ -469,6 +471,40 @@ namespace Pakuri.Data
                     && !string.Equals(choice.TargetSkillId, effect.SkillId, StringComparison.OrdinalIgnoreCase))
                 {
                     errors.Add($"Skill effect '{effect.Id}' {columnName} choice '{currentChoiceId}' does not apply to skill '{effect.SkillId}'.");
+                }
+            }
+        }
+
+        private static void ValidatePassiveReference(
+            string passiveSkillId,
+            SkillEffectRow effect,
+            SourceModel model,
+            string columnName,
+            List<string> errors)
+        {
+            if (string.IsNullOrWhiteSpace(passiveSkillId))
+            {
+                return;
+            }
+
+            var passiveIds = passiveSkillId.Split(';', ',');
+            for (var i = 0; i < passiveIds.Length; i++)
+            {
+                var currentPassiveId = passiveIds[i] != null ? passiveIds[i].Trim() : string.Empty;
+                if (string.IsNullOrWhiteSpace(currentPassiveId))
+                {
+                    continue;
+                }
+
+                if (model == null || !model.Skills.TryGetValue(currentPassiveId, out var skill))
+                {
+                    errors.Add($"Skill effect '{effect.Id}' {columnName} references unknown passive skill '{currentPassiveId}'.");
+                    continue;
+                }
+
+                if (skill.SkillKind != PakuriCsvSkillKind.Passive)
+                {
+                    errors.Add($"Skill effect '{effect.Id}' {columnName} references non-passive skill '{currentPassiveId}'.");
                 }
             }
         }

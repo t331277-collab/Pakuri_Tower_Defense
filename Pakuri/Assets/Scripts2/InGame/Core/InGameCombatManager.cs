@@ -9,11 +9,15 @@ namespace Pakuri.InGame
     [DisallowMultipleComponent]
     public sealed class InGameCombatManager : MonoBehaviour
     {
+        private const float PassiveEffectRefreshInterval = 0.25f;
+
         private readonly UnitRosterService roster = new UnitRosterService();
         private readonly EnemyCombatSystem enemyCombatSystem = new EnemyCombatSystem();
         private readonly UnitResourceMutationService resourceMutations = new UnitResourceMutationService();
         private readonly SkillExecutionSystem skillExecution = new SkillExecutionSystem();
         private readonly Dictionary<string, GameObject> statusEffectVisuals = new Dictionary<string, GameObject>();
+        private readonly HashSet<string> appliedOneShotPassiveEffects = new HashSet<string>();
+        private float passiveEffectRefreshRemaining;
 
         [SerializeField] private bool enemyCombatSimulationEnabled = true;
         [SerializeField] private bool skillExecutionEnabled = true;
@@ -41,10 +45,13 @@ namespace Pakuri.InGame
         {
             roster.Clear();
             enemyCombatSystem.Clear();
+            ResetPassiveEffectState();
         }
 
         private void Update()
         {
+            TickLearnedPassiveEffects(Time.deltaTime);
+
             if (skillExecutionEnabled)
             {
                 skillExecution.Tick(
@@ -195,6 +202,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
+            var adjustedShieldAmount = Mathf.Max(0f, shieldAmount) * StatusEffectRuntime.ResolveShieldReceivedMultiplier(target);
             var status = target.Statuses.Apply(
                 statusData,
                 stacks,
@@ -202,11 +210,29 @@ namespace Pakuri.InGame
                 maxStacks,
                 permanent,
                 refreshDuration,
-                shieldAmount);
+                adjustedShieldAmount);
             resourceMutations.SynchronizeShieldView(target);
             RefreshUnitActor(target);
             SpawnOrRefreshStatusEffectVisual(target, statusData, status);
             return status;
+        }
+
+        public void ResetPassiveEffectState()
+        {
+            appliedOneShotPassiveEffects.Clear();
+            passiveEffectRefreshRemaining = 0f;
+        }
+
+        private void TickLearnedPassiveEffects(float deltaTime)
+        {
+            passiveEffectRefreshRemaining -= Mathf.Max(0f, deltaTime);
+            if (passiveEffectRefreshRemaining > 0f)
+            {
+                return;
+            }
+
+            passiveEffectRefreshRemaining = PassiveEffectRefreshInterval;
+            InGamePassiveEffectRuntime.ApplyLearnedPassiveEffects(this, roster, appliedOneShotPassiveEffects);
         }
 
         public bool HasStatus(BaseUnitRuntimeModel target, string statusTag)

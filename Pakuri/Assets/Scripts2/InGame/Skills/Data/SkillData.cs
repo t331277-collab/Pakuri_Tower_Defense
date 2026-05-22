@@ -221,6 +221,7 @@ namespace Pakuri.InGame
         public float AttackPowerBonus;
         public float SpellPowerBonus;
         public float DamageBonusRate;
+        public float ShieldReceivedBonus;
         public float CritChanceBonusRate;
         public float ResistReduction;
         public ElementType ResistReductionElement;

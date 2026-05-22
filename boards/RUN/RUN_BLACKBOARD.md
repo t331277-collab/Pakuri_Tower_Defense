@@ -4,6 +4,51 @@
 - Older run/combat flow history remains in that snapshot and earlier archives.
 - This active file now keeps only the current `NewRunScene` authority split and the surviving new-scene flow baseline.
 
+## Task: 2026-05-22 Offering Learned Passive Runtime Effects
+
+### Task title
+
+Refresh learned passive skill effects from runtime monster state during combat.
+
+### Goals
+
+- Use the existing Offering/run-session learned passive state as the authority for passive effect activation.
+- Apply passive effect rows to current roster entries without adding a parallel run-state store.
+- Keep one-shot passive effects from repeating every refresh tick.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This task does not change Offering selection UI; it consumes the already-recorded `LearnedPassiveSkillIds`.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that acquiring Ariel F-J through Offering changes the live combat state after runtime model refresh.
+- If Offering can add passives during the same active combat and needs G's one-shot shield only at the next combat start, add a battle-start event boundary before applying one-shot passive effects.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` already copies `RunSession.RunMonsterState.LearnedPassives` into `MonsterUnitRuntimeModel.State.LearnedPassiveSkillIds`.
+- `Pakuri/Assets/Scripts2/InGame/Run/RunSession.cs` already records Offering passive choices before this task; this task consumes the model state rather than changing that storage.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGamePassiveEffectRuntime.cs` iterates `roster.Players`, reads each monster model's `LearnedPassiveSkillIds`, resolves `PassiveDefinition`, and executes `PassiveEffects`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` calls passive refresh from `Update()` and stores `appliedOneShotPassiveEffects` to prevent `apply_once` effects from repeating.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` marks `ariel-g-start-shield` with `apply_once=true`; other passive aura rows use short `0.5` second durations and refresh every `0.25` seconds.
+- Runtime/editor `dotnet build` commands passed with 0 errors and existing MSB3277 warnings.
+
+### History
+
+- 2026-05-22: User asked whether Ariel F-J passives with existing values could be implemented; Code Builder connected the already-recorded learned passive state to the shared effect runtime.
+
 ## Task: 2026-05-20 DebugModifiedUI Active Choice Commit Path
 
 ### Task title

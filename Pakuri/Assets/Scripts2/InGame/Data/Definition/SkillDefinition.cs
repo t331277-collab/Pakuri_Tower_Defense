@@ -111,6 +111,9 @@ namespace Pakuri.Data
         public bool EnabledByDefault;
         public string RequiresActiveChoiceId;
         public string ExcludesActiveChoiceId;
+        public string RequiresPassiveSkillId;
+        public string ExcludesPassiveSkillId;
+        public bool ApplyOnce;
         public string ConditionStatusId;
         public SkillMultiEffectTargetSide ConditionTargetSide;
         public DamageAttribute Attribute;
@@ -135,6 +138,7 @@ namespace Pakuri.Data
         public float StatusAttackPowerBonus;
         public float StatusSpellPowerBonus;
         public float StatusDamageBonusRate;
+        public float StatusShieldReceivedBonus;
         public float StatusDamageTakenBonus;
         public float StatusCriticalDamageTakenBonus;
         public float StatusCriticalResistanceBonus;
@@ -265,5 +269,6 @@ namespace Pakuri.Data
         [TextArea(2, 5)] public string DescriptionText;
         [TextArea(2, 4)] public string Summary;
         public SkillChoiceDefinition[] EnhancementChoices = Array.Empty<SkillChoiceDefinition>();
+        public SkillEffectDefinition[] PassiveEffects = Array.Empty<SkillEffectDefinition>();
     }
 }

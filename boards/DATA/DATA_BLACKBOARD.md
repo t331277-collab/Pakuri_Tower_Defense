@@ -4,6 +4,54 @@
 - Older CSV-transition history remains in `boards/ARCHIVE/CSV_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 
+## Task: 2026-05-22 Passive Skill Multi-Effect CSV Runtime
+
+### Task title
+
+Extend `monster_skill_effects.csv` so passive skills and passive-gated active effects can use the shared effect runtime.
+
+### Goals
+
+- Attach effect rows to passive skill definitions as runtime data.
+- Add passive requirement/exclusion columns and one-shot effect support.
+- Add shield-received status modifier data for CSV-authored shield scaling.
+- Keep Ariel F-J implementation data-owned rather than hardcoded by skill ID.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- CSV remains UTF-8 without BOM and follows the header plus type-row convention.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, synced, and compile-verified.
+
+### Next Actions
+
+- Use `requires_passive_skill_id` / `excludes_passive_skill_id` for future passive-gated multi-effect rows.
+- Use `apply_once=true` only for effects that should fire once per passive owner/effect key.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv:1` now includes `requires_passive_skill_id`, `excludes_passive_skill_id`, `apply_once`, and `status_shield_received_bonus`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs` parses those new columns, and `PakuriCsvRuntimeData.Build.cs` copies them into `SkillEffectDefinition`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs` now sets `PassiveDefinition.PassiveEffects = BuildSkillEffects(model, skill.Id)`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Validation.cs` validates `requires_passive_skill_id` and `excludes_passive_skill_id` against passive skill rows.
+- `Pakuri/Assets/CSVdata/source/status_effects.csv` now contains the generic `passive-buff` status row.
+- A byte check on `monster_skill_effects.csv` returned leading bytes `34 101 102`, confirming the edited CSV starts with `"` / `e` / `f` and not a UTF-8 BOM.
+- Unity console logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+- Runtime/editor `dotnet build` commands passed with 0 errors and existing MSB3277 warnings.
+
+### History
+
+- 2026-05-22: Code Builder extended the multi-effect schema after the user asked for Ariel F-J passive implementation through CSV runtime-read effects if possible.
+
 ## Task: 2026-05-22 Monster Skill Multi-Effect CSV Runtime
 
 ### Task title

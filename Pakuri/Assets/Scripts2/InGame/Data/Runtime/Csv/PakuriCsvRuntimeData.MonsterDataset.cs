@@ -163,6 +163,9 @@ namespace Pakuri.Data
             public bool EnabledByDefault;
             public string RequiresActiveChoiceId;
             public string ExcludesActiveChoiceId;
+            public string RequiresPassiveSkillId;
+            public string ExcludesPassiveSkillId;
+            public bool ApplyOnce;
             public string ConditionStatusId;
             public SkillMultiEffectTargetSide ConditionTargetSide;
             public DamageAttribute Attribute;
@@ -187,6 +190,7 @@ namespace Pakuri.Data
             public float StatusAttackPowerBonus;
             public float StatusSpellPowerBonus;
             public float StatusDamageBonusRate;
+            public float StatusShieldReceivedBonus;
             public float StatusDamageTakenBonus;
             public float StatusCriticalDamageTakenBonus;
             public float StatusCriticalResistanceBonus;
@@ -370,6 +374,9 @@ namespace Pakuri.Data
                 EnabledByDefault = record.ReadBool("enabled_by_default"),
                 RequiresActiveChoiceId = record.ReadString("requires_active_choice_id"),
                 ExcludesActiveChoiceId = record.ReadString("excludes_active_choice_id"),
+                RequiresPassiveSkillId = record.ReadString("requires_passive_skill_id"),
+                ExcludesPassiveSkillId = record.ReadString("excludes_passive_skill_id"),
+                ApplyOnce = record.ReadBool("apply_once"),
                 ConditionStatusId = record.ReadString("condition_status_id"),
                 ConditionTargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("condition_target_side"),
                 Attribute = record.ReadEnum<DamageAttribute>("attribute"),
@@ -394,6 +401,7 @@ namespace Pakuri.Data
                 StatusAttackPowerBonus = record.ReadFloat("status_attack_power_bonus"),
                 StatusSpellPowerBonus = record.ReadFloat("status_spell_power_bonus"),
                 StatusDamageBonusRate = record.ReadFloat("status_damage_bonus_rate"),
+                StatusShieldReceivedBonus = record.ReadFloat("status_shield_received_bonus"),
                 StatusDamageTakenBonus = record.ReadFloat("status_damage_taken_bonus"),
                 StatusCriticalDamageTakenBonus = record.ReadFloat("status_critical_damage_taken_bonus"),
                 StatusCriticalResistanceBonus = record.ReadFloat("status_critical_resistance_bonus"),

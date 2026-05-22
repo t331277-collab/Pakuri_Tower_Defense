@@ -289,6 +289,9 @@ namespace Pakuri.Data
                     EnabledByDefault = effect.EnabledByDefault,
                     RequiresActiveChoiceId = effect.RequiresActiveChoiceId,
                     ExcludesActiveChoiceId = effect.ExcludesActiveChoiceId,
+                    RequiresPassiveSkillId = effect.RequiresPassiveSkillId,
+                    ExcludesPassiveSkillId = effect.ExcludesPassiveSkillId,
+                    ApplyOnce = effect.ApplyOnce,
                     ConditionStatusId = effect.ConditionStatusId,
                     ConditionTargetSide = effect.ConditionTargetSide,
                     Attribute = effect.Attribute,
@@ -313,6 +316,7 @@ namespace Pakuri.Data
                     StatusAttackPowerBonus = effect.StatusAttackPowerBonus,
                     StatusSpellPowerBonus = effect.StatusSpellPowerBonus,
                     StatusDamageBonusRate = effect.StatusDamageBonusRate,
+                    StatusShieldReceivedBonus = effect.StatusShieldReceivedBonus,
                     StatusDamageTakenBonus = effect.StatusDamageTakenBonus,
                     StatusCriticalDamageTakenBonus = effect.StatusCriticalDamageTakenBonus,
                     StatusCriticalResistanceBonus = effect.StatusCriticalResistanceBonus,
@@ -356,7 +360,8 @@ namespace Pakuri.Data
                     SkillIcon = LoadSprite(skill.SkillIconPath),
                     DescriptionText = skill.DescriptionText,
                     Summary = skill.Summary,
-                    EnhancementChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.PassiveEnhancement)
+                    EnhancementChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.PassiveEnhancement),
+                    PassiveEffects = BuildSkillEffects(model, skill.Id)
                 };
             }
 

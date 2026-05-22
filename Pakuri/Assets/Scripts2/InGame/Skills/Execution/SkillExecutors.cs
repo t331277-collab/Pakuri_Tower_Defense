@@ -1009,7 +1009,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < effects.Length; i++)
             {
                 var effect = effects[i];
-                if (!ShouldRun(effect, snapshot))
+                if (!ShouldRun(context, effect, snapshot))
                 {
                     continue;
                 }
@@ -1043,7 +1043,7 @@ namespace Pakuri.InGame
             ExecuteEffect(context, snapshot, effect, fallbackCenter);
         }
 
-        private static bool ShouldRun(SkillEffectDefinition effect, SkillExecutionSnapshot snapshot)
+        private static bool ShouldRun(SkillExecutionContext context, SkillEffectDefinition effect, SkillExecutionSnapshot snapshot)
         {
             if (effect == null)
             {
@@ -1060,7 +1060,17 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            return !HasAnyChoice(snapshot, effect.ExcludesActiveChoiceId);
+            if (HasAnyChoice(snapshot, effect.ExcludesActiveChoiceId))
+            {
+                return false;
+            }
+
+            if (!HasAllLearnedPassives(context, effect.RequiresPassiveSkillId))
+            {
+                return false;
+            }
+
+            return !HasAnyLearnedPassive(context, effect.ExcludesPassiveSkillId);
         }
 
         private static bool HasAllChoices(SkillExecutionSnapshot snapshot, string choiceList)
@@ -1106,6 +1116,55 @@ namespace Pakuri.InGame
             }
 
             return false;
+        }
+
+        private static bool HasAllLearnedPassives(SkillExecutionContext context, string passiveList)
+        {
+            if (string.IsNullOrWhiteSpace(passiveList))
+            {
+                return true;
+            }
+
+            var passives = passiveList.Split(';', ',');
+            for (var i = 0; i < passives.Length; i++)
+            {
+                var passiveId = passives[i];
+                if (!string.IsNullOrWhiteSpace(passiveId) && !HasLearnedPassive(context, passiveId.Trim()))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool HasAnyLearnedPassive(SkillExecutionContext context, string passiveList)
+        {
+            if (string.IsNullOrWhiteSpace(passiveList))
+            {
+                return false;
+            }
+
+            var passives = passiveList.Split(';', ',');
+            for (var i = 0; i < passives.Length; i++)
+            {
+                var passiveId = passives[i];
+                if (!string.IsNullOrWhiteSpace(passiveId) && HasLearnedPassive(context, passiveId.Trim()))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool HasLearnedPassive(SkillExecutionContext context, string passiveId)
+        {
+            var monster = context != null ? context.Caster as MonsterUnitRuntimeModel : null;
+            return monster != null
+                && monster.State != null
+                && !string.IsNullOrWhiteSpace(passiveId)
+                && monster.State.LearnedPassiveSkillIds.Contains(passiveId);
         }
 
         private static void ExecuteEffect(
@@ -1351,6 +1410,7 @@ namespace Pakuri.InGame
             status.Modifiers.AttackPowerBonus = effect.StatusAttackPowerBonus;
             status.Modifiers.SpellPowerBonus = effect.StatusSpellPowerBonus;
             status.Modifiers.DamageBonusRate = effect.StatusDamageBonusRate;
+            status.Modifiers.ShieldReceivedBonus = effect.StatusShieldReceivedBonus;
             status.MoveSpeedBonus = effect.StatusMoveSpeedBonus;
             status.MovementSlowRate = effect.StatusMoveSpeedBonus < 0f ? -effect.StatusMoveSpeedBonus : 0f;
             status.DamageTakenBonus = effect.StatusDamageTakenBonus;

@@ -4,6 +4,94 @@
 - Older broad combat/status history remains in `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 
+## Task: 2026-05-22 StatusEffectKind Mojibake Alias Cleanup
+
+### Task title
+
+Remove broken-encoding defensive status parse aliases from `StatusEffectKind`.
+
+### Goals
+
+- Keep supported status parsing on canonical ASCII IDs and normal Korean labels.
+- Stop accepting mojibake strings as hidden compatibility aliases.
+- Preserve current runtime status kinds and display names.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Scope is limited to `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs`.
+- This task does not remove normal Korean aliases such as `감전`, `방어막`, or `신성 노출`.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- If the project later chooses ID-only status parsing, first enforce populated `status_effect_id` in CSV validation, then remove normal Korean label aliases.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs` no longer contains mojibake alias cases such as `媛먯쟾`, `?뷀솕`, `?좎꽦 ?몄텧`, `移⑤У`, or `紐곗궡 ?덇?`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs` still keeps canonical IDs like `shock`, `shield`, `holy-exposure`, and normal Korean aliases like `감전`, `방어막`, `신성 노출`.
+- `Select-String` over `StatusEffectKind.cs` for the removed mojibake marker patterns only matched the normal C# conditional expression line in `BuildDisplaySuffix`, not a status parse alias.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-22: User asked Code Builder to remove all broken-encoding defensive strings from `StatusEffectKind.cs`.
+
+## Task: 2026-05-22 Passive Buff And Shield Received Runtime
+
+### Task title
+
+Support passive buff statuses and shield-received modifiers in the shared status runtime.
+
+### Goals
+
+- Add a generic status kind for passive aura-style buffs that should not collide with Ariel-C `blessing` conditions.
+- Let status modifiers increase shield amounts received by a target.
+- Keep Holy damage, action speed, and incoming damage passive bonuses on the existing status modifier path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- `blessing` remains reserved for authored blessing effects; passive aura rows use `passive-buff`.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- If passive buff status labels clutter combat UI, add a CSV/runtime display-hiding flag instead of reusing `blessing`.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs` now defines and parses `StatusEffectKind.PassiveBuff` with id `passive-buff`.
+- `Pakuri/Assets/CSVdata/source/status_effects.csv` now includes `passive-buff` as a generic `Buff` row.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/SkillData.cs` now includes `BuffModifierSpec.ShieldReceivedBonus`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectRuntime.cs` now includes `ResolveShieldReceivedMultiplier(...)` and includes `ShieldReceivedBonus` in modifier magnitude.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` copies `SkillEffectDefinition.StatusShieldReceivedBonus` into created status data.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` applies the shield-received multiplier inside `ApplyShieldStatus(...)`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-22: Ariel-G required all allies to receive `+18%` shield amount, so Code Builder added a generic shield-received status modifier instead of Ariel-specific shield code.
+
 ## Task: 2026-05-22 Multi-Effect Buff Stat Runtime
 
 ### Task title

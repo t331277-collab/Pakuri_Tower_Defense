@@ -66,6 +66,7 @@ namespace Pakuri.InGame
             status.Modifiers.AttackPowerBonus = attackPowerBonus;
             status.Modifiers.SpellPowerBonus = 0f;
             status.Modifiers.DamageBonusRate = 0f;
+            status.Modifiers.ShieldReceivedBonus = 0f;
 
             if (catalogDefinition != null && catalogDefinition.HasAttribute)
             {
@@ -163,6 +164,7 @@ namespace Pakuri.InGame
                 + Mathf.Abs(data.Modifiers.AttackPowerBonus)
                 + Mathf.Abs(data.Modifiers.SpellPowerBonus)
                 + Mathf.Abs(data.Modifiers.DamageBonusRate)
+                + Mathf.Abs(data.Modifiers.ShieldReceivedBonus)
                 + Mathf.Abs(data.MoveSpeedBonus)
                 + Mathf.Abs(data.DamageTakenBonus)
                 + Mathf.Abs(data.CriticalDamageTakenBonus)
@@ -204,6 +206,11 @@ namespace Pakuri.InGame
         public static float ResolveSpellPowerMultiplier(BaseUnitRuntimeModel model)
         {
             return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.SpellPowerBonus));
+        }
+
+        public static float ResolveShieldReceivedMultiplier(BaseUnitRuntimeModel model)
+        {
+            return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.ShieldReceivedBonus));
         }
 
         public static float ResolveOutgoingDamageMultiplier(BaseUnitRuntimeModel source, DamageAttribute attribute)

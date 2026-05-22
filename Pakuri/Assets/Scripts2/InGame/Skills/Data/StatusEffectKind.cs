@@ -20,7 +20,8 @@ namespace Pakuri.InGame
         NameMark,
         Silence,
         SlaughterPermit,
-        ActionSpeedUp
+        ActionSpeedUp,
+        PassiveBuff
     }
 
     public readonly struct StatusEffectDefinition
@@ -66,83 +67,71 @@ namespace Pakuri.InGame
             {
                 case "shock":
                 case "감전":
-                case "媛먯쟾":
                     kind = StatusEffectKind.Shock;
                     return true;
                 case "chill":
                 case "추위":
-                case "異붿쐞":
                     kind = StatusEffectKind.Chill;
                     return true;
                 case "freeze":
                 case "빙결":
-                case "鍮숆껐":
                     kind = StatusEffectKind.Freeze;
                     return true;
                 case "slow":
                 case "둔화":
-                case "?뷀솕":
                     kind = StatusEffectKind.Slow;
                     return true;
                 case "vulnerable":
                 case "취약":
-                case "痍⑥빟":
                     kind = StatusEffectKind.Vulnerable;
                     return true;
                 case "fire-resist-down":
                 case "화염 저항 감소":
-                case "?붿뿼 ???媛먯냼":
                     kind = StatusEffectKind.FireResistDown;
                     return true;
                 case "fire-exposure":
                 case "화염 노출":
-                case "?붿뿼 ?몄텧":
                     kind = StatusEffectKind.FireExposure;
                     return true;
                 case "shield":
                 case "holy-shield":
                 case "신성 방어막":
                 case "방어막":
-                case "?좎꽦 諛⑹뼱留?":
-                case "諛⑹뼱留?":
                     kind = StatusEffectKind.Shield;
                     return true;
                 case "blessing":
                 case "축복":
-                case "異뺣났":
                     kind = StatusEffectKind.Blessing;
                     return true;
                 case "holy-exposure":
                 case "신성 노출":
-                case "?좎꽦 ?몄텧":
                     kind = StatusEffectKind.HolyExposure;
                     return true;
                 case "holy-resist-down":
                 case "신성 저항 감소":
-                case "?좎꽦 ???媛먯냼":
                     kind = StatusEffectKind.HolyResistDown;
                     return true;
                 case "name-mark":
                 case "이름표식":
                 case "이름표식 연계":
-                case "?대쫫?쒖떇":
                     kind = StatusEffectKind.NameMark;
                     return true;
                 case "silence":
                 case "침묵":
-                case "移⑤У":
                     kind = StatusEffectKind.Silence;
                     return true;
                 case "slaughter-permit":
                 case "몰살 허가":
-                case "紐곗궡 ?덇?":
                     kind = StatusEffectKind.SlaughterPermit;
                     return true;
                 case "action-speed-up":
                 case "행동속도 증가":
                 case "행동속도":
-                case "?됰룞?띾룄 利앷?":
                     kind = StatusEffectKind.ActionSpeedUp;
+                    return true;
+                case "passive-buff":
+                case "passive":
+                    kind = StatusEffectKind.PassiveBuff;
                     return true;
                 default:
                     return false;
@@ -183,6 +172,8 @@ namespace Pakuri.InGame
                     return new StatusEffectDefinition(kind, "slaughter-permit", "몰살 허가", 6f, 1, false);
                 case StatusEffectKind.ActionSpeedUp:
                     return new StatusEffectDefinition(kind, "action-speed-up", "행동속도 증가", 6f, 1, false);
+                case StatusEffectKind.PassiveBuff:
+                    return new StatusEffectDefinition(kind, "passive-buff", "Passive Buff", 0f, 1, false);
                 default:
                     return NoneDefinition;
             }

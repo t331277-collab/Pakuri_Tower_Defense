@@ -12,6 +12,55 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-05-22 Ariel F-J Passive CSV Runtime
+
+### Task title
+
+Implement Ariel F-J passive skills through the reusable CSV effect runtime.
+
+### Goals
+
+- Make Offering-acquired Ariel F-J passives produce runtime effects from CSV-owned data.
+- Keep the implementation generic by attaching passive `monster_skill_effects.csv` rows to `PassiveDefinition`.
+- Add the missing shield-received multiplier needed by Ariel-G.
+- Gate Ariel-E's post-cast action-speed effect on learned passive `ariel-j` without Ariel-specific executor branches.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User required stopping if the behavior could not be implemented through CSV runtime-read effect structure; inspected code showed it could be done by extending `monster_skill_effects.csv` and shared runtime consumers.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compiled, and synced through Unity CSV runtime catalog.
+
+### Next Actions
+
+- User verifies in Play Mode that Offering acquisition of Ariel F-J affects combat: F Holy damage, G shield received/start shield, H blessed ally bonuses, I holy-exposure damage taken, and J shielded Holy damage plus Ariel-E action speed.
+- If G's one-shot shield must apply to allies spawned after combat start, extend the one-shot keying/target tracking; current runtime applies when learned passives are refreshed for existing roster entries.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` already has `ariel-f` through `ariel-j` as `Passive` rows with design values in their summaries.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` previously had an empty `PassiveSkillExecutor`, while `RunSession`/UI paths already copied learned passive IDs into `MonsterUnitRuntimeModel.State.LearnedPassiveSkillIds`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs` now stores `PassiveDefinition.PassiveEffects` and passive-gating fields on `SkillEffectDefinition`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now contains Ariel F-J rows: `ariel-f-party-holy-damage`, `ariel-g-shield-received`, `ariel-g-start-shield`, `ariel-h-blessed-holy-damage-speed`, `ariel-i-holy-exposure-damage-taken`, `ariel-j-shielded-holy-damage`, and `ariel-e-passive-j-action-speed`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGamePassiveEffectRuntime.cs` applies learned passive effect rows through the shared `SkillMultiEffectExecutor`; `InGameCombatManager.Update()` refreshes them every `0.25s`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now multiplies shield status amounts by `StatusEffectRuntime.ResolveShieldReceivedMultiplier(...)`, so Ariel-G's `status_shield_received_bonus=0.18` affects shield application.
+- Unity console logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-22: User asked Code Builder to implement Ariel F-J, but to stop and ask if the effects could not be implemented through CSV runtime-read structure.
+- 2026-05-22: Code Builder extended the existing multi-effect CSV/runtime path for passive effects instead of adding Ariel-only runtime branches.
+
 ## Task: 2026-05-22 Ariel-C Multi-Effect CSV Runtime
 
 ### Task title

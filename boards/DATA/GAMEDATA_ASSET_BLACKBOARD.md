@@ -4,6 +4,48 @@
 - Older broad data/asset history remains in `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md` and other archive files under `boards/ARCHIVE/`.
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 
+## Task: 2026-05-22 Passive Effect Runtime Catalog Sync
+
+### Task title
+
+Sync passive-effect CSV schema/content into the Unity runtime catalog assets.
+
+### Goals
+
+- Confirm the runtime catalog accepts the new passive effect columns.
+- Confirm new `passive-buff` status data and Ariel F-J effect rows are available to runtime catalog loading.
+- Keep catalog evidence separate from gameplay verification.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This task syncs CSV runtime catalog assets only; no prefab asset content was changed.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Synced and console-verified.
+
+### Next Actions
+
+- If a future passive effect adds prefab paths, rerun `Pakuri/Sync CSV Runtime Catalog Assets` so the asset catalog picks up the prefab reference.
+
+### Evidence
+
+- Unity `execute_menu_item` for `Pakuri/Sync CSV Runtime Catalog Assets` returned `success:true`.
+- Unity console logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime` contains `PakuriCsvRuntimeAssetCatalog.asset` and `PakuriCsvRuntimeSourceCatalog.asset`; this passive task did not add new prefab files to the asset catalog.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now stores the new passive effect schema and Ariel F-J rows consumed by catalog build.
+- `Pakuri/Assets/CSVdata/source/status_effects.csv` now stores `passive-buff`, which the synced source catalog can load through the existing status table.
+
+### History
+
+- 2026-05-22: Code Builder reran the runtime CSV catalog sync after extending passive effect CSV data and status definitions.
+
 ## Task: 2026-05-22 Multi-Effect Runtime Catalog Asset Sync
 
 ### Task title
