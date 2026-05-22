@@ -21,7 +21,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            manager.ApplyStatus(
+            var appliedStatus = manager.ApplyStatus(
                 target,
                 status.StatusData,
                 status.Stacks,
@@ -29,6 +29,12 @@ namespace Pakuri.InGame
                 status.MaxStacks,
                 status.Permanent,
                 status.RefreshDuration);
+            if (appliedStatus == null)
+            {
+                return false;
+            }
+
+            TryApplyThresholdStatus(manager, target, status);
             return true;
         }
 
@@ -67,6 +73,40 @@ namespace Pakuri.InGame
                 || statusData.Modifiers.AttackPowerBonus < 0f
                 || statusData.Modifiers.SpellPowerBonus < 0f
                 || statusData.Modifiers.DamageBonusRate < 0f;
+        }
+
+        private static void TryApplyThresholdStatus(
+            InGameCombatManager manager,
+            BaseUnitRuntimeModel target,
+            ProjectileStatusHitSpec status)
+        {
+            if (manager == null
+                || target == null
+                || target.Statuses == null
+                || status == null
+                || status.ThresholdStatusSpec == null
+                || !status.ThresholdStatusSpec.Enabled
+                || string.IsNullOrWhiteSpace(status.ThresholdSourceStatusId)
+                || status.ThresholdSourceMinStacks <= 0
+                || !StatusEffectUtility.TryParse(status.ThresholdSourceStatusId, out var triggerKind))
+            {
+                return;
+            }
+
+            if (target.Statuses.GetStacks(triggerKind) < status.ThresholdSourceMinStacks)
+            {
+                return;
+            }
+
+            var thresholdStatus = status.ThresholdStatusSpec;
+            manager.ApplyStatus(
+                target,
+                thresholdStatus.StatusData,
+                thresholdStatus.Stacks,
+                thresholdStatus.DurationSeconds,
+                thresholdStatus.MaxStacks,
+                thresholdStatus.Permanent,
+                thresholdStatus.RefreshDuration);
         }
     }
 }

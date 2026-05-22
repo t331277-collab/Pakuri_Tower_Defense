@@ -136,6 +136,7 @@ Use the existing shared `ProjectilesPerShot`/additional-projectile path only for
 The following behavior is considered normal shared projectile work.
 If the requested skill fits this list, Builder should implement it without asking extra design questions.
 
+- prefab-authored projectile contact when the projectile prefab and shared runtime actually provide a collider hitbox
 - straight projectile travel
 - one-shot projectile spawn
 - simultaneous multi-projectile fan spread
@@ -182,6 +183,7 @@ When a parsed projectile skill is implemented, Builder should wire the provided 
 - parsed status values -> shared on-hit status spec
 - parsed prefab info -> shared projectile visual binding path
 - parsed choice modifiers -> shared snapshot modifier path
+- parsed cooldown edits or reductions -> existing cooldown authority such as base `cooldown_seconds` or choice `cooldown_multiplier`, not a new custom cooldown-percent field
 
 The important rule is not the exact property names.
 The important rule is:
@@ -204,6 +206,7 @@ Stop-and-ask examples:
 - custom target priority beyond current nearest-target behavior
 - branch behavior that is not the current shared branch pattern
 - a special effect that depends on "final bullet", "every third shot", "only the last hit", or similar sequence state
+- a request that is actually an explicit target-designated mark/debuff structure rather than projectile contact
 
 When this happens, Builder should not try a best guess.
 Builder should stop with a short question describing exactly which unsupported behavior was requested.

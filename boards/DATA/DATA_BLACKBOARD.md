@@ -4,6 +4,141 @@
 - Older CSV-transition history remains in `boards/ARCHIVE/CSV_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 
+## Task: 2026-05-23 Eve-D Choice Payload On Existing CSV Fields
+
+### Task title
+
+Author Eve-D on current CSV/runtime authority by reusing existing choice fields instead of adding new SingleAttack follow-up columns.
+
+### Goals
+
+- Keep Eve-D base tuning on the existing `monster_skills.csv` row.
+- Keep cooldown reduction on the existing `cooldown_multiplier` field.
+- Reuse existing choice fields for the scoped delayed follow-up payload needed by Eve-D master 1.
+- Avoid introducing new CSV columns for a one-skill exception while the current parser requires strict row-width alignment.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- Current CSV and code were explicitly treated as the parsed source for this task.
+- No new columns were added to `monster_skill_choices.csv`, `monster_skill_effects.csv`, or `monster_skill_triger.csv`.
+- `branch_search_radius` is reused here as delay seconds only on the new shared SingleAttack follow-up interpretation path; this was not generalized into a new schema name in this task.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- If another SingleAttack later needs the same delayed status-gated follow-up, author it on the same existing fields and cite this task rather than adding duplicate schema.
+- If a future design needs both real branch-search radius and delayed follow-up timing on the same SingleAttack contract, revisit the schema with fresh parsed-source evidence before overloading more fields.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` keeps Eve-D on one base row with `runtime_kind=SingleAttack`, `cooldown_seconds=7`, and `status_effect_id=shock`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now authors `eve-d-trait-3` with `cooldown_multiplier=0.8`, which keeps cooldown reduction on the shared cooldown field instead of a new column.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now authors `eve-d-master-1` with `status_tag=shock`, `branch_count=1`, `branch_damage_multiplier=0.5`, `branch_search_radius=0.5`, and `skill_effect_prefab_path=Assets/Prefab/Skill/Eve/Eve_D.prefab`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` still has no Eve-D effect rows, and `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` still has no Eve-D trigger rows, so this implementation stayed on the existing base/choice tables.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now consumes that existing choice payload in `ResolveFollowUpSpec(...)` and `ExecuteConditionalFollowUpAfterDelay(...)` instead of requiring schema expansion.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the Eve-D CSV-authoring pass; only the existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-23: User told Skill Builder to implement Eve-D from the current CSV/code as parsed source and explicitly required cooldown reduction to keep using existing cooldown CSV fields rather than inventing a new cooldown-decrease schema.
+
+## Task: 2026-05-23 Zone Prefab Radius Multiplier Interpretation
+
+### Task title
+
+Keep Eve-C zone scaling on `radius_multiplier` while moving hit detection to prefab colliders.
+
+### Goals
+
+- Preserve current CSV authority without adding new Eve-C schema.
+- Keep `radius_multiplier` as the authored scaling input for collider-based zone prefabs.
+- Avoid repurposing `radius_bonus` for the requested `1.3 => 30% larger` behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV source row or header was changed in this task.
+- `radius` remains in the schema because other shared paths and effect rows still use it as data.
+- Unity Play Mode gameplay verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented in runtime interpretation only; no CSV content change was required.
+
+### Next Actions
+
+- Future Eve-C-style prefab growth should use `radius_multiplier`, not `radius_bonus`.
+- If the project later wants to remove `radius` from AreaAttack schema entirely, inspect effect rows and non-hitbox fallback paths first instead of deleting it from current CSV blindly.
+
+### Evidence
+
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv | Where-Object { $_.radius_bonus -and $_.radius_bonus.Trim() -ne '' }` returned no authored runtime rows, so the current active data does not require a `radius_bonus=1.3` reinterpretation.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now scales collider-backed AreaAttack prefabs through the existing snapshot scale-factor path, which is driven by current choice snapshot radius scaling.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` still contains rows such as `eve-c-master2-expire-burst` that use `radius`, so the shared schema field was not removed in this task.
+- No CSV file under `Pakuri/Assets/CSVdata/source/` was edited for this change.
+
+### History
+
+- 2026-05-23: User approved the Eve-C prefab-collider implementation and explicitly said not to use `radius_bonus=1.3` for the scaling behavior.
+
+## Task: 2026-05-23 Eve-C Choice And Effect CSV Schema Follow-Up
+
+### Task title
+
+Extend the shared skill CSV schema so Eve-C can author targeted status-duration bonuses, threshold-status promotions, and an OnExpire burst through data-owned rows.
+
+### Goals
+
+- Add choice columns for targeted status-duration bonuses and threshold-status promotions.
+- Re-author Eve-C trait/master rows on those generic columns instead of changing global status defaults.
+- Add the Eve-C master 2 OnExpire effect row to `monster_skill_effects.csv`.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- CSV remains the source of truth for Eve-C tuning; runtime code only adds generic consumers for the new columns.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and compile-verified. Unity-MCP sync/console calls timed out during this task, so runtime catalog evidence for the new prefab path was recorded from the serialized asset catalog file rather than a fresh sync log.
+
+### Next Actions
+
+- Keep future “bonus duration for one status only” skills on `status_duration_bonus_status_id` plus `status_duration_bonus`.
+- Keep future “X stacks of A immediately applies B” skills on `threshold_status_id`, `threshold_status_min_stacks`, and `threshold_apply_status_id`.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:1-2` now includes `status_duration_bonus_status_id`, `status_duration_bonus`, `threshold_status_id`, `threshold_status_min_stacks`, and `threshold_apply_status_id`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs`, `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs`, and `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Validation.cs` now parse, map, and validate those five columns.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now authors `eve-c-trait-5` with `freeze +1.0s`, `eve-c-master-1` with `freeze +1.5s` plus `chill >= 4 -> freeze`, and `eve-c-master-2` as `RuntimeImplemented`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now authors `eve-c-master2-expire-burst` with `OnExpire`, `Ice`, `24` base damage, `1.5` spell coefficient, `requires_active_choice_id=eve-c-master-2`, and `Assets/Prefab/Skill/Eve/Eve_c-master-2.prefab`.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv | Where-Object { $_.monster_id -eq 'eve' -and $_.skill_id -eq 'eve-c' -and $_.runtime_support_state -notin @('RuntimeImplemented','ReferenceDirect') }` returned no rows.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_effects.csv | Where-Object { $_.effect_id -eq 'eve-c-master2-expire-burst' }` returned the authored OnExpire damage row.
+
+### History
+
+- 2026-05-23: User rejected a global `freeze` duration edit and asked for a shared choice-snapshot extension plus a data-owned Eve-C master-2 expire burst row.
+
 ## Task: 2026-05-22 Ariel Dynamic Choice Count And Conditional Status CSV Schema
 
 ### Task title

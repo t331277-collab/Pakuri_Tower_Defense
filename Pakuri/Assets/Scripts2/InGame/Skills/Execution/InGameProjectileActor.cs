@@ -143,21 +143,45 @@ namespace Pakuri.InGame
             }
 
             var entries = combatManager.Roster.Entries;
+            var hasColliderHitbox = false;
+            var selfColliders = GetComponentsInChildren<Collider2D>();
+            if (selfColliders != null)
+            {
+                for (var i = 0; i < selfColliders.Length; i++)
+                {
+                    if (selfColliders[i] != null && selfColliders[i].enabled)
+                    {
+                        hasColliderHitbox = true;
+                        break;
+                    }
+                }
+            }
+
             var radiusSq = hitRadius * hitRadius;
             var current = transform.position;
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
-                if (entry == null || entry.Transform == null)
+                if (entry == null)
                 {
                     continue;
                 }
 
-                var offset = entry.Transform.position - current;
-                offset.z = 0f;
-                if (offset.sqrMagnitude <= radiusSq && TryHitTarget(entry))
+                if (hasColliderHitbox)
                 {
-                    return;
+                    if (UnitHitboxUtility.IsTargetInsideHitbox(selfColliders, entry) && TryHitTarget(entry))
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    var offset = entry.ResolveTargetPoint() - current;
+                    offset.z = 0f;
+                    if (offset.sqrMagnitude <= radiusSq && TryHitTarget(entry))
+                    {
+                        return;
+                    }
                 }
             }
         }
@@ -434,6 +458,9 @@ namespace Pakuri.InGame
         public int MaxStacks;
         public bool Permanent;
         public bool RefreshDuration = true;
+        public string ThresholdSourceStatusId;
+        public int ThresholdSourceMinStacks;
+        public ProjectileStatusHitSpec ThresholdStatusSpec;
     }
 
     public sealed class ProjectileBranchHitSpec

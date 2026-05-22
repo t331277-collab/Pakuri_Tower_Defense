@@ -57,6 +57,11 @@ Role entry points and track files:
 - Code Reviewer: `AGENTS_ROLE/GAMEREVIWER.md`
 - SimpelWorker: `AGENTS_ROLE/SIMPELWORKER.md`
 
+Skill Builder exception docs:
+
+- `boards/SkillBluePrint/skill-csv-exception-guide.md`: exception-only summary of current skill CSV table ownership and row-combination interpretation
+- `boards/SkillBluePrint/skill-builder-handoff-format.md`: normalized row-bundle handoff format for Skill Builder work
+
 ## Routing Rules
 
 ### Global Or Ambiguous Work
@@ -73,6 +78,9 @@ When the task edits root routing or role-policy markdown such as `AGENTS.md`, `M
 - `boards/OPS/AUTOMATION_GUIDE.md`
 
 Do not pull MON, RUN, UI, or DATA boards for that policy task unless the policy change is specifically about their routing.
+
+For Skill Builder policy or blueprint-usage work, treat the exception docs under `boards/SkillBluePrint/` as workflow documents, not as domain boards.
+Read them only when the request is explicitly about exception-path skill CSV interpretation or Skill Builder handoff format.
 
 ### Monster Work
 

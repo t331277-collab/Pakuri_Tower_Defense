@@ -95,7 +95,7 @@ namespace Pakuri.InGame
             spawnedUnit = Instantiate(prefab, spawnPosition, spawnRotation, ResolveRuntimeMonsterRoot());
             spawnedUnit.name = $"{prefab.name}_1P";
             actor = BindMonsterActor(spawnedUnit, model);
-            RegisterPlayer(model, actor);
+            RegisterPlayer(model, actor, spawnedUnit != null ? spawnedUnit.transform : null);
             return true;
         }
 
@@ -145,7 +145,7 @@ namespace Pakuri.InGame
             spawnedUnit.name = $"{prefab.name}_{clampedSlotIndex + 1}P";
 
             var actor = BindMonsterActor(spawnedUnit, model);
-            RegisterPlayer(model, actor);
+            RegisterPlayer(model, actor, spawnedUnit != null ? spawnedUnit.transform : null);
             return true;
         }
 
@@ -197,7 +197,7 @@ namespace Pakuri.InGame
             spawnedUnit = Instantiate(prefab, spawnPosition, spawnRotation, ResolveRuntimeMonsterRoot());
             spawnedUnit.name = $"{prefab.name}_1P";
             actor = BindMonsterActor(spawnedUnit, model);
-            RegisterPlayer(model, actor);
+            RegisterPlayer(model, actor, spawnedUnit != null ? spawnedUnit.transform : null);
             return true;
         }
 
@@ -335,7 +335,7 @@ namespace Pakuri.InGame
             spawnedUnit.name = $"{prefab.name}_Enemy_{spawnIndex}";
 
             var actor = BindEnemyActor(spawnedUnit, model);
-            RegisterEnemy(model, actor);
+            RegisterEnemy(model, actor, spawnedUnit != null ? spawnedUnit.transform : null);
             return true;
         }
 
@@ -452,21 +452,21 @@ namespace Pakuri.InGame
             return actor;
         }
 
-        private void RegisterPlayer(MonsterUnitRuntimeModel model, MonsterUnitActor actor)
+        private void RegisterPlayer(MonsterUnitRuntimeModel model, MonsterUnitActor actor, Transform hitboxRoot)
         {
             ResolveCombatManager();
             if (combatManager != null && model != null)
             {
-                combatManager.RegisterPlayerMonster(model, actor);
+                combatManager.RegisterPlayerMonster(model, actor, hitboxRoot);
             }
         }
 
-        private void RegisterEnemy(EnemyUnitRuntimeModel model, EnemyUnitActor actor)
+        private void RegisterEnemy(EnemyUnitRuntimeModel model, EnemyUnitActor actor, Transform hitboxRoot)
         {
             ResolveCombatManager();
             if (combatManager != null && model != null)
             {
-                combatManager.RegisterEnemy(model, actor);
+                combatManager.RegisterEnemy(model, actor, hitboxRoot);
             }
         }
 

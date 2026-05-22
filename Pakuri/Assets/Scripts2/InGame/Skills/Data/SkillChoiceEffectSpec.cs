@@ -58,6 +58,11 @@ namespace Pakuri.InGame
         public float StatusCriticalDamageTakenBonus;
         public bool HasStatusAilmentResistanceBonus;
         public float StatusAilmentResistanceBonus;
+        public string StatusDurationBonusStatusId;
+        public float StatusDurationBonus;
+        public string ThresholdStatusId;
+        public int ThresholdStatusMinStacks;
+        public string ThresholdApplyStatusId;
         public string CountStatusId;
         public SkillMultiEffectTargetSide CountTargetSide;
         public float DamageMultiplierPerCount;

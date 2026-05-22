@@ -15,6 +15,15 @@ For Skill Builder work, read only:
 - this file
 - exactly one matching `boards/SkillBluePrint/*-blueprint.md`
 
+Default path:
+
+- blueprint only
+
+Exception-only companion docs are allowed only when the selected blueprint cannot proceed on its own because the task is driven by a scoped row bundle or because row-combination interpretation is itself the blocking issue:
+
+- `boards/SkillBluePrint/skill-csv-exception-guide.md`
+- `boards/SkillBluePrint/skill-builder-handoff-format.md`
+
 Do not read `AGENTS_ROLE/GAMEBULIDER_IMPLEMENTATION.md` by default for Skill Builder work. The selected blueprint owns the implementation checklist, allowed runtime-code inspection scope, and verification expectations.
 
 ## Blueprint Selection Rule
@@ -29,6 +38,9 @@ Known mappings:
 - multi-effect skill, bundled ally effect, choice-gated secondary effect, `monster_skill_effects.csv`: `boards/SkillBluePrint/multi-effect-skill-csv-blueprint.md`
 - area attack, sustained area, ticking area, `AreaAttack`: `boards/SkillBluePrint/area-attack-blueprint.md`
 - zone, area, field, aura, ground effect: `boards/SkillBluePrint/zone-blueprint.md` when that file exists
+
+Exception-doc usage does not replace blueprint selection.
+Choose the primary blueprint from the base runtime behavior first, then use the exception docs only when the blueprint alone cannot safely continue.
 
 If no matching blueprint exists, stop and say the blueprint file does not exist.
 
@@ -49,11 +61,63 @@ Do not read another skill blueprint unless the selected blueprint explicitly nam
 
 Do not read MON, DATA, RUN, UI, OPS, archive, or other domain markdown unless the selected blueprint or an inspected failure path explicitly justifies that read.
 
+## Shared Skill Runtime Policy
+
+For skill blueprints that are fundamentally contact-based attack skills:
+
+- projectile
+- `SingleAttack`
+- `AreaAttack`
+
+Builder should prefer prefab-authored hitbox behavior when the runtime path and prefab actually provide collider-based contact.
+
+This means:
+
+- projectile contact should stay on the shared projectile path
+- `SingleAttack` contact should stay on the shared prefab-hitbox / shared area-hit path
+- `AreaAttack` / zone contact should stay on the shared prefab-hitbox zone path when the zone prefab provides colliders
+
+Do not redesign those skills back into monster-only fixed fake radii when the shared prefab hitbox path already exists.
+
+Do not force collider-contact structure onto skills that are not fundamentally contact attacks.
+Keep the existing non-contact structure for cases such as:
+
+- explicit target-designated debuffs or marks
+- battlefield-wide or global aura effects
+- other skills whose common path is status/selection/radius logic instead of prefab contact
+
+If a request mixes contact-hitbox behavior and explicit-target or global-effect behavior in one skill, stop and ask whether the user wants:
+
+- one shared reusable extension, or
+- a one-off exception
+
 ## Parsed Input Rule
 
 The user or task context must provide the parsed skill data required by the selected blueprint.
 
-If required parsed fields are missing, stop and report the missing fields instead of searching broadly through CSV, reference, archive, or old implementation files.
+Allowed alternative:
+
+- a normalized scoped row bundle that follows `boards/SkillBluePrint/skill-builder-handoff-format.md`
+
+Only in that exception path, Skill Builder may use:
+
+- `boards/SkillBluePrint/skill-csv-exception-guide.md`
+- `boards/SkillBluePrint/skill-builder-handoff-format.md`
+
+to interpret the provided row bundle.
+
+If required parsed fields or the required scoped row bundle are missing, stop and report the missing items instead of searching broadly through CSV, reference, archive, or old implementation files.
+
+## Cooldown Data Policy
+
+When a skill request includes cooldown reduction such as "cooldown -n%" or "cooldown reduction n%", Builder must reuse the existing cooldown CSV authority instead of inventing a new ad hoc field.
+
+Use the already existing cooldown-owned fields that match the requested layer:
+
+- base skill cooldown -> `cooldown_seconds`
+- choice or enhancement cooldown scaling -> `cooldown_multiplier`
+
+Do not add a separate new percentage-only cooldown field when the requested behavior is just scaling or editing existing cooldown authority.
 
 ## Unsupported Behavior Rule
 
@@ -67,6 +131,7 @@ Before reading the selected blueprint, state:
 
 - request class: Skill Builder
 - selected blueprint path
+- exception docs to read next, only when the blueprint alone cannot safely continue
 - markdown files intentionally excluded
 
 The exclusion list should name the skipped axes, such as MON, DATA, RUN, UI, OPS, archive, and other skill blueprints, when those axes were not requested and are not named by an inspected failure path.

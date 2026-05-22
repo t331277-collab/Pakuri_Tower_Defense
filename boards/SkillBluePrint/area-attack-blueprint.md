@@ -138,6 +138,7 @@ If a request truly depends on one of them, Builder should treat that as a specia
 The following behavior is considered normal shared AreaAttack work.
 If the requested skill fits this list, Builder should implement it without asking extra design questions.
 
+- prefab-authored zone contact when the zone prefab and shared runtime provide collider hitboxes
 - one cast creates one zone actor or one routed fallback zone tick path
 - immediate first tick on creation
 - repeated tick damage at a fixed interval while duration remains
@@ -189,6 +190,7 @@ When a parsed AreaAttack is implemented, Builder should wire the provided values
 - parsed status values -> shared on-tick status spec
 - parsed prefab info -> shared persistent zone visual binding path
 - parsed choice modifiers -> shared snapshot modifier path
+- parsed cooldown edits or reductions -> existing cooldown authority such as base `cooldown_seconds` or choice `cooldown_multiplier`, not a new custom cooldown-percent field
 
 The important rule is not the exact property names.
 The important rule is:
@@ -212,6 +214,7 @@ Stop-and-ask examples:
 - per-target persistent hit cooldown independent of the zone tick interval
 - ally shield, heal, or buff bundled into the same AreaAttack
 - special behavior for "last tick", "third tick", "first enemy entering", or similar sequence state
+- an explicit target-designated mark/debuff structure or a battlefield/global-aura effect whose common behavior is not collider-contact zone damage
 
 When this happens, Builder should not try a best guess.
 Builder should stop with a short question describing exactly which unsupported behavior was requested.
@@ -310,4 +313,3 @@ It is designed so that:
 - Builder stops and asks when a skill needs special behavior
 
 That is the desired behavior.
-

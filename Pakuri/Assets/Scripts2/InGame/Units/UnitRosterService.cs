@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,7 +18,7 @@ namespace Pakuri.InGame
         public int PlayerCount => players.Count;
         public int EnemyCount => enemies.Count;
 
-        public UnitRosterEntry Register(BaseUnitRuntimeModel model, Component actor)
+        public UnitRosterEntry Register(BaseUnitRuntimeModel model, Component actor, Transform hitboxRoot = null)
         {
             if (model == null)
             {
@@ -27,12 +28,12 @@ namespace Pakuri.InGame
             var existing = Find(model, actor);
             if (existing != null)
             {
-                existing.Actor = actor;
-                existing.Transform = actor != null ? actor.transform : existing.Transform;
+                existing.SetActor(actor);
+                existing.SetHitboxRoot(hitboxRoot);
                 return existing;
             }
 
-            var entry = new UnitRosterEntry(model, actor);
+            var entry = new UnitRosterEntry(model, actor, hitboxRoot);
             entries.Add(entry);
 
             if (model.Identity != null && model.Identity.Side == UnitSide.Enemy)
@@ -104,16 +105,19 @@ namespace Pakuri.InGame
 
     public sealed class UnitRosterEntry
     {
-        public UnitRosterEntry(BaseUnitRuntimeModel model, Component actor)
+        private Collider2D[] cachedHitboxColliders;
+
+        public UnitRosterEntry(BaseUnitRuntimeModel model, Component actor, Transform hitboxRoot = null)
         {
             Model = model;
-            Actor = actor;
-            Transform = actor != null ? actor.transform : null;
+            SetActor(actor);
+            SetHitboxRoot(hitboxRoot);
         }
 
         public BaseUnitRuntimeModel Model { get; }
         public Component Actor { get; internal set; }
         public Transform Transform { get; internal set; }
+        public Transform HitboxRoot { get; internal set; }
 
         public bool IsAlive
         {
@@ -122,6 +126,102 @@ namespace Pakuri.InGame
                 var resources = Model != null ? Model.Resources : null;
                 return resources != null && resources.CurrentHealth > 0f;
             }
+        }
+
+        internal void SetActor(Component actor)
+        {
+            Actor = actor;
+            Transform = actor != null ? actor.transform : null;
+            if (HitboxRoot == null)
+            {
+                HitboxRoot = Transform;
+            }
+
+            cachedHitboxColliders = null;
+        }
+
+        internal void SetHitboxRoot(Transform hitboxRoot)
+        {
+            HitboxRoot = hitboxRoot != null ? hitboxRoot : Transform;
+            cachedHitboxColliders = null;
+        }
+
+        public Vector3 ResolveTargetPoint()
+        {
+            var root = HitboxRoot != null ? HitboxRoot : Transform;
+            return root != null ? root.position : Vector3.zero;
+        }
+
+        public Collider2D[] GetHitboxColliders()
+        {
+            if (cachedHitboxColliders != null)
+            {
+                return cachedHitboxColliders;
+            }
+
+            var root = HitboxRoot != null ? HitboxRoot : Transform;
+            cachedHitboxColliders = root != null
+                ? root.GetComponentsInChildren<Collider2D>()
+                : Array.Empty<Collider2D>();
+            return cachedHitboxColliders;
+        }
+
+        public bool ContainsTransform(Transform candidate)
+        {
+            if (candidate == null)
+            {
+                return false;
+            }
+
+            if (Transform != null && (candidate == Transform || candidate.IsChildOf(Transform)))
+            {
+                return true;
+            }
+
+            return HitboxRoot != null && (candidate == HitboxRoot || candidate.IsChildOf(HitboxRoot));
+        }
+    }
+
+    internal static class UnitHitboxUtility
+    {
+        public static bool IsTargetInsideHitbox(Collider2D[] hitboxColliders, UnitRosterEntry target)
+        {
+            if (hitboxColliders == null || target == null || target.Model == null || !target.IsAlive)
+            {
+                return false;
+            }
+
+            var targetPoint = target.ResolveTargetPoint();
+            var targetColliders = target.GetHitboxColliders();
+            for (var i = 0; i < hitboxColliders.Length; i++)
+            {
+                var hitbox = hitboxColliders[i];
+                if (hitbox == null || !hitbox.enabled)
+                {
+                    continue;
+                }
+
+                if (hitbox.OverlapPoint(targetPoint))
+                {
+                    return true;
+                }
+
+                for (var j = 0; j < targetColliders.Length; j++)
+                {
+                    var targetCollider = targetColliders[j];
+                    if (targetCollider == null || !targetCollider.enabled)
+                    {
+                        continue;
+                    }
+
+                    if (hitbox.Distance(targetCollider).isOverlapped)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

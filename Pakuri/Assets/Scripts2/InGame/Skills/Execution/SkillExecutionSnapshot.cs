@@ -61,8 +61,12 @@ namespace Pakuri.InGame
         public bool HasStatusConditionalDamageTakenBonus { get; private set; }
         public float StatusConditionalDamageTakenBonus { get; private set; }
         public string StatusConditionalSourceStatusId { get; private set; }
+        public string ThresholdStatusId { get; private set; }
+        public int ThresholdStatusMinStacks { get; private set; }
+        public string ThresholdApplyStatusId { get; private set; }
         public GameObject SkillEffectPrefab { get; private set; }
         private readonly HashSet<string> activeChoiceIds = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, float> statusDurationBonuses = new Dictionary<string, float>(System.StringComparer.OrdinalIgnoreCase);
 
         public bool HasBranchBehavior =>
             BranchChanceBonus > 0f
@@ -188,11 +192,33 @@ namespace Pakuri.InGame
                 StatusAilmentResistanceBonus = spec.StatusAilmentResistanceBonus;
             }
 
+            if (!string.IsNullOrWhiteSpace(spec.StatusDurationBonusStatusId)
+                && !Mathf.Approximately(spec.StatusDurationBonus, 0f))
+            {
+                if (statusDurationBonuses.TryGetValue(spec.StatusDurationBonusStatusId, out var currentBonus))
+                {
+                    statusDurationBonuses[spec.StatusDurationBonusStatusId] = currentBonus + spec.StatusDurationBonus;
+                }
+                else
+                {
+                    statusDurationBonuses[spec.StatusDurationBonusStatusId] = spec.StatusDurationBonus;
+                }
+            }
+
             if (spec.HasStatusConditionalDamageTakenBonus)
             {
                 HasStatusConditionalDamageTakenBonus = true;
                 StatusConditionalDamageTakenBonus = spec.StatusConditionalDamageTakenBonus;
                 StatusConditionalSourceStatusId = spec.StatusConditionalSourceStatusId;
+            }
+
+            if (!string.IsNullOrWhiteSpace(spec.ThresholdStatusId)
+                && spec.ThresholdStatusMinStacks > 0
+                && !string.IsNullOrWhiteSpace(spec.ThresholdApplyStatusId))
+            {
+                ThresholdStatusId = spec.ThresholdStatusId;
+                ThresholdStatusMinStacks = spec.ThresholdStatusMinStacks;
+                ThresholdApplyStatusId = spec.ThresholdApplyStatusId;
             }
 
             if (spec.SkillEffectPrefab != null)
@@ -266,6 +292,11 @@ namespace Pakuri.InGame
                 StatusCriticalDamageTakenBonus = choice.StatusCriticalDamageTakenBonus,
                 HasStatusAilmentResistanceBonus = choice.HasStatusAilmentResistanceBonus,
                 StatusAilmentResistanceBonus = choice.StatusAilmentResistanceBonus,
+                StatusDurationBonusStatusId = choice.StatusDurationBonusStatusId,
+                StatusDurationBonus = choice.StatusDurationBonus,
+                ThresholdStatusId = choice.ThresholdStatusId,
+                ThresholdStatusMinStacks = choice.ThresholdStatusMinStacks,
+                ThresholdApplyStatusId = choice.ThresholdApplyStatusId,
                 CountStatusId = choice.CountStatusId,
                 CountTargetSide = choice.CountTargetSide,
                 DamageMultiplierPerCount = choice.DamageMultiplierPerCount,
@@ -287,6 +318,16 @@ namespace Pakuri.InGame
         public bool HasActiveChoice(string choiceId)
         {
             return !string.IsNullOrWhiteSpace(choiceId) && activeChoiceIds.Contains(choiceId);
+        }
+
+        public float ResolveStatusDurationBonus(string statusId)
+        {
+            if (string.IsNullOrWhiteSpace(statusId))
+            {
+                return 0f;
+            }
+
+            return statusDurationBonuses.TryGetValue(statusId, out var bonus) ? bonus : 0f;
         }
 
         private static float PositiveOrDefault(float value, float fallback)

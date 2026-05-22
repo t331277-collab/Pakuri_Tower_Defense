@@ -134,6 +134,11 @@ namespace Pakuri.Data
             public float StatusCriticalDamageTakenBonus;
             public bool HasStatusAilmentResistanceBonus;
             public float StatusAilmentResistanceBonus;
+            public string StatusDurationBonusStatusId;
+            public float StatusDurationBonus;
+            public string ThresholdStatusId;
+            public int ThresholdStatusMinStacks;
+            public string ThresholdApplyStatusId;
             public string CountStatusId;
             public SkillMultiEffectTargetSide CountTargetSide;
             public float DamageMultiplierPerCount;
@@ -356,6 +361,11 @@ namespace Pakuri.Data
             row.StatusCriticalDamageTakenBonus = statusCriticalDamageTakenBonus;
             row.HasStatusAilmentResistanceBonus = TryReadFloat(record, "status_ailment_resistance_bonus", out var statusAilmentResistanceBonus);
             row.StatusAilmentResistanceBonus = statusAilmentResistanceBonus;
+            row.StatusDurationBonusStatusId = record.ReadString("status_duration_bonus_status_id");
+            row.StatusDurationBonus = ReadOptionalFloat(record, "status_duration_bonus");
+            row.ThresholdStatusId = record.ReadString("threshold_status_id");
+            row.ThresholdStatusMinStacks = ReadOptionalInt(record, "threshold_status_min_stacks");
+            row.ThresholdApplyStatusId = record.ReadString("threshold_apply_status_id");
             row.CountStatusId = record.ReadString("count_status_id");
             row.CountTargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("count_target_side");
             row.DamageMultiplierPerCount = ReadOptionalFloat(record, "damage_multiplier_per_count");

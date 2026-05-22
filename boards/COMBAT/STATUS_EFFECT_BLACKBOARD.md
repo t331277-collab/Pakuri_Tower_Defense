@@ -4,6 +4,227 @@
 - Older broad combat/status history remains in `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 
+## Task: 2026-05-23 Eve-D Shock-Gated SingleAttack Follow-Up
+
+### Task title
+
+Let shared SingleAttack schedule a delayed follow-up only for targets that were already carrying the required status when the first hit landed.
+
+### Goals
+
+- Keep Eve-D base `shock` application on the existing shared status-spec path.
+- Let a scoped `SingleAttack` choice require a pre-hit status before a delayed follow-up is registered.
+- Keep the delayed follow-up from recursively scheduling another delayed follow-up.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- The new behavior must stay on shared SingleAttack runtime code, not on an Eve-only status branch.
+- Existing non-follow-up SingleAttack skills must keep their old behavior.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- If a future skill wants the same contract, reuse the same shared pre-hit status + delayed follow-up path before adding another special-case runtime branch.
+- User verifies that Eve-D trait 4 still adds extra `shock` through the normal status application path while master 1 still requires the target to be shocked before that hit.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` still resolves Eve-D's status application through `ProjectileSkillExecutor.ResolveStatusSpec(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now resolves a `SingleAttackFollowUpSpec` only when the snapshot carries `HasBranchCount`, `HasBranchDamageMultiplier`, `HasBranchSearchRadius`, and a required status id.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` `RegisterFollowUpTarget(...)` now checks `HasStatus(target.Model, followUpSpec.Value.RequiredStatusId)` before damage/status application, which keeps the requirement on the target's pre-hit state.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` `ExecuteConditionalFollowUpAfterDelay(...)` now clones the snapshot with the reduced damage multiplier and calls `ExecuteAtCenter(..., false)`, which reuses shared damage/status logic but blocks recursive follow-up scheduling.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now authors Eve-D trait 4 with `status_tag=shock` plus `status_stacks_bonus=1`, and Eve-D master 1 with `status_tag=shock`, `branch_count=1`, `branch_damage_multiplier=0.5`, and `branch_search_radius=0.5`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the shared follow-up path was added; only the existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-23: User clarified that Eve-D master 1 should trigger a second hit after `0.5` seconds only if the enemy hit by the first explosion was already in `shock`, and that the second hit must not explode again.
+
+## Task: 2026-05-23 Shared Unit Hurtbox Contract For Contact Skills
+
+### Task title
+
+Route collider-contact skills through a shared unit hurtbox-root contract instead of nested actor-child transforms.
+
+### Goals
+
+- Let collider-contact damage paths query the spawned unit hierarchy that actually owns body colliders.
+- Keep prefab-hitbox zone, SingleAttack hitbox, trigger hitbox, and projectile contact checks on one shared overlap rule.
+- Leave non-contact skills such as battlefield/radius-only effects and explicit target-designated status skills on their existing logic.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This task changes shared contact-resolution logic only; it does not redefine non-contact targeting.
+- Unity Play Mode gameplay verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies collider-contact skills no longer miss because roster entries point at actor-child transforms without colliders.
+- If a future unit prefab introduces non-body colliders under the spawned root, narrow the shared hurtbox filter with fresh prefab evidence instead of reverting to actor-child lookups.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Units/UnitRosterService.cs` now records `HitboxRoot`, exposes `GetHitboxColliders()`, and centralizes shared overlap checks in `UnitHitboxUtility.IsTargetInsideHitbox(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` and `SkillTriggerRuntime.cs` now delegate prefab-hitbox target checks to that shared utility instead of directly calling `target.Transform.GetComponentsInChildren<Collider2D>()`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameZoneSkillActor.cs` now uses the shared hurtbox contract on the prefab-hitbox zone path while keeping the older radius branch untouched for non-contact area skills.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs` and `InGameEnemySkillHitboxActor.cs` now prefer collider-authoritative roster hit tests when the attacking object has colliders, and fall back to the previous radius-only check only when no collider hitbox exists.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameLineAttackActor.cs` was intentionally not changed in this task, so line/radius contact rules remain position-based until a separate contract is requested.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the change; existing `MSB3277` warnings remained. One earlier parallel build attempt hit a temporary file-lock on `obj\\Debug\\Assembly-CSharp.dll` before the successful rerun.
+
+### History
+
+- 2026-05-23: Eve-C collider debug proved that the shared contact path was reading actor-child transforms with no colliders, so Code Builder added a spawned-unit-root hurtbox contract for collider-authoritative skills.
+
+## Task: 2026-05-23 AreaAttack Prefab Collider Tick Routing
+
+### Task title
+
+Let shared AreaAttack ticks use prefab collider overlap when the instantiated zone prefab provides a hitbox.
+
+### Goals
+
+- Preserve shared area-status application through `InGameCombatManager.ApplyStatus(...)`.
+- Let zone skills with authored collider prefabs route damage/status by collider overlap instead of only by radius distance checks.
+- Keep the existing radius-based area tick path as fallback for zone prefabs without colliders.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Keep the implementation generic in the shared `AreaAttack` runtime path.
+- Unity Play Mode gameplay verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies collider-authored zone skills such as Eve-C apply chill only to targets that overlap the live prefab collider.
+- If a future zone prefab should remain radius-authored even though it has colliders, add an explicit runtime contract before weakening the current shared autodetect path.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameZoneSkillActor.cs` now detects child `Collider2D` hitboxes, routes repeated ticks through collider overlap checks, and still falls back to the older radius-squared branch when no hitbox exists.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now scales instantiated AreaAttack hitbox prefabs through the existing snapshot radius-multiplier path before `InGameZoneSkillActor.Initialize(...)`.
+- Existing shared status application remains on `TryApplyStatus(...)` inside both the collider-overlap and fallback radius branches.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the change; existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-23: User requested Eve-C to follow prefab collider size like prefab-hitbox SingleAttack instead of staying on a fixed-radius zone path.
+
+## Task: 2026-05-23 Eve-C Prefab Hitbox Debug Logging
+
+### Task title
+
+Instrument the shared prefab-hitbox zone path so Eve-C overlap failures can be diagnosed from runtime logs.
+
+### Goals
+
+- Record which prefab colliders a zone tick is using.
+- Record which target colliders are being compared and whether `Distance(...).isOverlapped` is true.
+- Keep the debug output constrained to Eve-C while debugging the shared collider-overlap path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not change shared damage or status routing semantics while adding logs.
+- Keep the debug gate narrow enough that other zone skills do not spam the console.
+- Unity Play Mode gameplay verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User captures `[ZoneHitboxDebug:eve-c]` lines from Play Mode to identify whether the miss is caused by target selection, enemy child collider bounds, or overlap evaluation.
+- If the logs show the wrong child collider getting compared, adjust the shared target-collider selection rule with fresh evidence from those logs.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameZoneSkillActor.cs` now emits Eve-C-only logs for initialize, tick start/end, target collider collection, collider-pair comparisons, and hit/miss outcomes on the prefab-hitbox branch.
+- The shared debug path is gated by `IsDebugSkill(...)` checking `runtime.SkillId` against `eve-c`, so the added instrumentation does not broaden normal shared AreaAttack output.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the logging edit; existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-23: After collider-authored AreaAttack routing landed, the user reported visible Eve-C overlap without damage, so Code Builder added live overlap diagnostics to the shared zone hitbox path.
+
+## Task: 2026-05-23 Targeted Status Duration Bonus And Threshold Status Runtime
+
+### Task title
+
+Extend the shared status runtime so choice snapshots can add duration to a selected status id and trigger a second status when a stack threshold is reached.
+
+### Goals
+
+- Let a choice snapshot carry a status-id-specific duration bonus instead of only a skill/zone duration bonus.
+- Let status application resolve a shared threshold rule such as `chill >= 4 -> freeze`.
+- Keep the rule generic for future stack-threshold status promotions, not only Eve-C.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The implementation must remain on shared status application/runtime paths.
+- Unity Play Mode gameplay verification remains user-owned.
+- Native `codex review --uncommitted` could not complete because the local review command failed on blocked local/network execution, so the review result is a manual pass over the changed lines plus build evidence.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compile-verified, and manual-review-passed.
+
+### Next Actions
+
+- Future designs that say “only freeze duration increases” should use the same targeted status-duration path instead of editing the global `status_effects.csv` default duration.
+- Future designs that promote one status into another at a stack threshold should reuse the same threshold-status contract before adding new runtime branches.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs`, `Pakuri/Assets/Scripts2/InGame/Skills/Data/SkillChoiceEffectSpec.cs`, and `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillChoiceModifierRecord.cs` now define `StatusDurationBonusStatusId`, `StatusDurationBonus`, `ThresholdStatusId`, `ThresholdStatusMinStacks`, and `ThresholdApplyStatusId`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutionSnapshot.cs` now stores targeted status-duration bonuses and resolves them by status id through `ResolveStatusDurationBonus(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now applies those targeted bonuses both to base status specs and to multi-effect-authored status specs, and it builds the threshold follow-up status spec from the active snapshot.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillStatusApplyUtility.cs` now checks the target's live stack count after the first status application and applies the configured threshold status through the same shared `ApplyStatus(...)` path.
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs` already exposed `Statuses.GetStacks(...)`, which the new threshold rule now consumes instead of adding Eve-only state.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the runtime change; only the existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-23: User asked for a shared extension rather than a global freeze default-duration edit, and required a generic threshold-status rule for Eve-C master 1.
+
 ## Task: 2026-05-22 Dynamic Shield Count And Source-Conditional Damage Runtime
 
 ### Task title

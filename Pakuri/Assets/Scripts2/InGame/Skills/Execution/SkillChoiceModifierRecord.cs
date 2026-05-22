@@ -37,6 +37,11 @@ namespace Pakuri.InGame
         public int StatusStacksBonus { get; set; }
         public bool HasStatusStacksSet { get; set; }
         public int StatusStacksSet { get; set; }
+        public string StatusDurationBonusStatusId { get; set; }
+        public float StatusDurationBonus { get; set; }
+        public string ThresholdStatusId { get; set; }
+        public int ThresholdStatusMinStacks { get; set; }
+        public string ThresholdApplyStatusId { get; set; }
 
         public static SkillChoiceModifierRecord FromRow(IDictionary<string, string> row)
         {
@@ -80,6 +85,11 @@ namespace Pakuri.InGame
             record.StatusStacksBonus = GetInt(row, "status_stacks_bonus");
             record.HasStatusStacksSet = TryGetInt(row, "status_stacks_set", out var statusStacksSet);
             record.StatusStacksSet = statusStacksSet;
+            record.StatusDurationBonusStatusId = Get(row, "status_duration_bonus_status_id");
+            record.StatusDurationBonus = GetFloat(row, "status_duration_bonus");
+            record.ThresholdStatusId = Get(row, "threshold_status_id");
+            record.ThresholdStatusMinStacks = GetInt(row, "threshold_status_min_stacks");
+            record.ThresholdApplyStatusId = Get(row, "threshold_apply_status_id");
             return string.IsNullOrWhiteSpace(record.ChoiceId) ? null : record;
         }
 

@@ -7,6 +7,139 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 Older OPS automation and role-policy task blocks were archived to `boards/ARCHIVE/OPS_AUTOMATION_ARCHIVE_2026-05-19.md`.
 
+## Task: 2026-05-23 Skill Builder Contact-Hitbox And Cooldown Authority Policy
+
+### Task title
+
+Clarify Skill Builder policy for prefab-contact attack skills and existing cooldown CSV authority.
+
+### Goals
+
+- Make Skill Builder default projectile, `SingleAttack`, and `AreaAttack` work use prefab-authored contact behavior when the shared runtime path already supports collider hitboxes.
+- Keep explicit target-designated debuffs/marks and battlefield/global-aura effects on their existing non-contact structures instead of forcing them into collider-contact blueprints.
+- Make cooldown reduction requests reuse existing CSV cooldown authority such as `cooldown_seconds` and `cooldown_multiplier` instead of inventing a new percentage-only field.
+
+### Constraints
+
+- Role Owner is Designer because this task changes workflow/design policy, not runtime gameplay code.
+- Claims must stay grounded in inspected Skill Builder policy markdown and current skill CSV headers.
+- No C# script, scene, prefab, or gameplay CSV values are changed by this task.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Implemented and locally verified by targeted markdown and CSV-header inspection.
+
+### Next Actions
+
+- Future Skill Builder requests for projectile, `SingleAttack`, and `AreaAttack` should assume prefab-contact as the common path when the shared runtime/prefab supports it.
+- Future cooldown reduction requests should edit existing cooldown-owned fields instead of proposing a new cooldown-percent field.
+
+### Evidence
+
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md` now states that projectile, `SingleAttack`, and `AreaAttack` should prefer shared prefab-contact hitbox behavior when that runtime path exists, while explicit target-designated and global-effect skills stay on non-contact structures.
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md` now states that cooldown reduction work must reuse existing cooldown CSV authority and names base `cooldown_seconds` plus choice `cooldown_multiplier`.
+- `boards/SkillBluePrint/projectile-blueprint.md`, `single-attack-blueprint.md`, and `area-attack-blueprint.md` now describe prefab-contact behavior as part of the common path and name explicit target-designated / battlefield-global cases as stop-and-ask non-contact structures.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:1` contains the base cooldown column `cooldown_seconds`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:1` contains the enhancement cooldown column `cooldown_multiplier`.
+
+### History
+
+- 2026-05-23: User asked to document that projectile, `SingleAttack`, and `ZoneAttack` should be prefab-based by default while target-designated skills keep their other structure, and that cooldown reduction n% should manipulate existing cooldown CSV authority.
+
+## Task: 2026-05-22 Skill Builder Companion Docs Compression
+
+### Task title
+
+Compress Skill Builder CSV companion docs into an exception-only path and restore blueprint-only as the default workflow.
+
+### Goals
+
+- Keep normal Skill Builder work on one selected blueprint only.
+- Reduce the earlier three CSV companion docs to a smaller exception-only set.
+- Allow exception docs only when blueprint-only work cannot safely continue.
+- Update policy/routing files so Skill Builder does not over-read by default.
+
+### Constraints
+
+- Role Owner is Designer for the workflow contract and Code Builder for the markdown changes.
+- Claims must stay grounded in inspected `AGENTS_ROLE/GAMEBULIDER_SKILL.md`, `MDTREE.md`, `BLACKBOARD.md`, `monster_skills.csv`, `monster_skill_choices.csv`, `monster_skill_effects.csv`, and `monster_skill_triger.csv`.
+- No runtime C# behavior, scene object, prefab, or gameplay CSV values are changed by this task.
+
+### Role Owner
+
+Designer / Code Builder
+
+### Status
+
+Implemented and locally verified by markdown/file inspection.
+
+### Next Actions
+
+- Future Skill Builder requests should try blueprint-only first.
+- Use `skill-csv-exception-guide.md` plus `skill-builder-handoff-format.md` only when a scoped row bundle or row-combination ambiguity blocks blueprint-only work.
+
+### Evidence
+
+- Deleted `boards/SkillBluePrint/skill-csv-schema-dictionary.md`.
+- Deleted `boards/SkillBluePrint/skill-csv-pattern-guide.md`.
+- Added `boards/SkillBluePrint/skill-csv-exception-guide.md`.
+- Kept `boards/SkillBluePrint/skill-builder-handoff-format.md` and rewrote it as an exception-path handoff doc.
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md` now says the default Skill Builder path is blueprint-only and allows exception docs only when blueprint-only work cannot safely continue.
+- `MDTREE.md` now lists only the two exception docs and describes them as exception-path workflow docs.
+
+### History
+
+- 2026-05-22: User pointed out that reading CSV interpretation docs on every skill task defeats the purpose of blueprint-first work and asked for compression plus exception-only usage.
+
+## Task: 2026-05-22 Skill Builder CSV Companion Docs And Routing
+
+### Task title
+
+Add shared CSV interpretation and handoff companion docs for Skill Builder and route them through the active policy files.
+
+### Goals
+
+- Add one shared schema dictionary for the current skill CSV tables.
+- Add one shared pattern guide for combining base, choice, effect, and trigger rows.
+- Add one normalized handoff-format guide so Skill Builder can implement from a scoped row bundle plus one selected blueprint.
+- Update Skill Builder routing so these docs are explicitly allowed companion reads rather than ad hoc extra markdown.
+
+### Constraints
+
+- Role Owner is Designer for the workflow contract and Builder for the markdown file creation handoff.
+- Claims must stay grounded in inspected `monster_skills.csv`, `monster_skill_choices.csv`, `monster_skill_effects.csv`, `monster_skill_triger.csv`, `AGENTS_ROLE/GAMEBULIDER_SKILL.md`, `MDTREE.md`, and existing blueprint files.
+- No runtime C# behavior, scene object, prefab, or gameplay CSV values are changed by this task.
+
+### Role Owner
+
+Designer / Code Builder
+
+### Status
+
+Implemented and locally verified by targeted markdown/file inspection.
+
+### Next Actions
+
+- Future Skill Builder requests that start from scoped CSV rows should still choose exactly one primary blueprint, then use these companion docs only to interpret the row bundle.
+- If future skill authoring adds new skill CSV tables, update these companion docs together with `AGENTS_ROLE/GAMEBULIDER_SKILL.md` and `MDTREE.md`.
+
+### Evidence
+
+- Added `boards/SkillBluePrint/skill-csv-schema-dictionary.md`.
+- Added `boards/SkillBluePrint/skill-csv-pattern-guide.md`.
+- Added `boards/SkillBluePrint/skill-builder-handoff-format.md`.
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md` now explicitly allows those three files as shared companion docs for CSV-driven Skill Builder work while still requiring exactly one selected blueprint.
+- `MDTREE.md` now lists the three companion docs and clarifies that Skill Builder policy work may read only the specifically justified companion docs under `boards/SkillBluePrint/`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:1-2`, `monster_skill_choices.csv:1-2`, `monster_skill_effects.csv:1-2`, and `monster_skill_triger.csv:1-2` were inspected as the grounding schema sources for the new docs.
+
+### History
+
+- 2026-05-22: User rejected adding explanation CSVs and instead asked for three md companion docs plus routing changes so Skill Builder can work from `csv + blueprint`.
+
 ## Task: 2026-05-22 Multi-Effect Skill CSV Blueprint
 
 ### Task title

@@ -93,9 +93,9 @@ namespace Pakuri.InGame
             TickUnitStatuses(Time.deltaTime);
         }
 
-        public UnitRosterEntry RegisterPlayerMonster(MonsterUnitRuntimeModel model, MonsterUnitActor actor)
+        public UnitRosterEntry RegisterPlayerMonster(MonsterUnitRuntimeModel model, MonsterUnitActor actor, Transform hitboxRoot = null)
         {
-            var entry = roster.Register(model, actor);
+            var entry = roster.Register(model, actor, hitboxRoot);
             if (IsSelectedPlayerModel(model))
             {
                 SetSelectedPlayerAutoSkillMode(playerAutoSkillEnabled);
@@ -104,9 +104,9 @@ namespace Pakuri.InGame
             return entry;
         }
 
-        public UnitRosterEntry RegisterEnemy(EnemyUnitRuntimeModel model, EnemyUnitActor actor)
+        public UnitRosterEntry RegisterEnemy(EnemyUnitRuntimeModel model, EnemyUnitActor actor, Transform hitboxRoot = null)
         {
-            return roster.Register(model, actor);
+            return roster.Register(model, actor, hitboxRoot);
         }
 
         public bool UnregisterUnit(BaseUnitRuntimeModel model)
@@ -423,8 +423,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var candidate = collider.transform;
-                if (candidate == entry.Transform || candidate.IsChildOf(entry.Transform))
+                if (entry.ContainsTransform(collider.transform))
                 {
                     return entry;
                 }

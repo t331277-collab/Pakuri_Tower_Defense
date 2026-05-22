@@ -132,6 +132,7 @@ If a request truly depends on one of them, Builder should treat that as a specia
 The following behavior is considered normal shared SingleAttack work.
 If the requested skill fits this list, Builder should implement it without asking extra design questions.
 
+- prefab-authored contact hit when the skill prefab and shared runtime provide a collider hitbox
 - one cast resolves one area center
 - one immediate damage/status application
 - circular area by parsed `Radius`
@@ -177,6 +178,7 @@ When a parsed SingleAttack is implemented, Builder should wire the provided valu
 - parsed status values -> shared on-hit status spec
 - parsed prefab info -> shared one-shot visual binding path
 - parsed choice modifiers -> shared snapshot modifier path
+- parsed cooldown edits or reductions -> existing cooldown authority such as base `cooldown_seconds` or choice `cooldown_multiplier`, not a new custom cooldown-percent field
 
 The important rule is not the exact property names.
 The important rule is:
@@ -199,6 +201,7 @@ Stop-and-ask examples:
 - separate inner and outer radii
 - chained explosions or secondary impact areas
 - a special effect that depends on "only the first target", "third target", "on kill", or similar sequence state
+- an explicit target-designated mark/debuff structure whose common behavior is target selection rather than prefab contact
 
 When this happens, Builder should not try a best guess.
 Builder should stop with a short question describing exactly which unsupported behavior was requested.
@@ -297,4 +300,3 @@ It is designed so that:
 - Builder stops and asks when a skill needs special behavior
 
 That is the desired behavior.
-

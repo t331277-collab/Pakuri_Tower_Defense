@@ -185,6 +185,24 @@ namespace Pakuri.Data
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported status_conditional_source_status_id '{choice.StatusConditionalSourceStatusId}'.");
                 }
+
+                if (!string.IsNullOrWhiteSpace(choice.StatusDurationBonusStatusId)
+                    && !StatusEffectUtility.TryParse(choice.StatusDurationBonusStatusId, out _))
+                {
+                    errors.Add($"Skill choice '{choice.Id}' uses unsupported status_duration_bonus_status_id '{choice.StatusDurationBonusStatusId}'.");
+                }
+
+                if (!string.IsNullOrWhiteSpace(choice.ThresholdStatusId)
+                    && !StatusEffectUtility.TryParse(choice.ThresholdStatusId, out _))
+                {
+                    errors.Add($"Skill choice '{choice.Id}' uses unsupported threshold_status_id '{choice.ThresholdStatusId}'.");
+                }
+
+                if (!string.IsNullOrWhiteSpace(choice.ThresholdApplyStatusId)
+                    && !StatusEffectUtility.TryParse(choice.ThresholdApplyStatusId, out _))
+                {
+                    errors.Add($"Skill choice '{choice.Id}' uses unsupported threshold_apply_status_id '{choice.ThresholdApplyStatusId}'.");
+                }
             }
 
             foreach (var enemy in model.StageOneEnemies.Values)

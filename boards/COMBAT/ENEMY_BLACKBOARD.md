@@ -9,6 +9,50 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - Older broad combat/enemy history remains in `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current Stage 1 enemy runtime authority and verification baseline.
 
+## Task: 2026-05-23 Spawned Unit Root Registration For Enemy Hurtboxes
+
+### Task title
+
+Register spawned player/enemy units with their spawned root transform so shared collider-contact skills can see real body colliders.
+
+### Goals
+
+- Stop enemy roster entries from exposing only the nested `EnemyUnitActor` transform when body colliders live elsewhere on the spawned unit hierarchy.
+- Keep `FindUnitByCollider(...)` able to resolve colliders found on the spawned unit root tree.
+- Preserve existing spawn ownership and actor initialization flow.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This task changes runtime registration only; it does not edit enemy CSV or prefab serialization.
+- Unity Play Mode gameplay verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies Stage 1 enemies can now be hit by collider-contact skills whose overlap checks previously saw `targetColliders=[]`.
+- If a future spawned prefab has a different body-root split, pass the correct spawned root at registration time rather than reintroducing actor-child assumptions.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs` now passes `spawnedUnit.transform` into `RegisterPlayer(...)` and `RegisterEnemy(...)` so roster entries know the spawned unit root.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now accepts optional `hitboxRoot` parameters on `RegisterPlayerMonster(...)` and `RegisterEnemy(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Units/UnitRosterService.cs` now stores `HitboxRoot`, resolves target points from that root, caches hurtbox colliders from that hierarchy, and matches colliders through `ContainsTransform(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now uses `UnitRosterEntry.ContainsTransform(...)` inside `FindUnitByCollider(...)`, which lets trigger-based projectile contact resolve colliders on the spawned unit root tree.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the change; existing `MSB3277` warnings remained. One earlier parallel build attempt hit a temporary file-lock on `obj\\Debug\\Assembly-CSharp.dll` before the successful rerun.
+
+### History
+
+- 2026-05-23: Shared contact-hit debugging showed Stage 1 enemies were registered by nested actor transform rather than spawned unit root, so Code Builder corrected the roster registration contract.
+
 ## Task: 2026-05-22 Spawn-Time Enemy Action Policy
 
 ### Task title

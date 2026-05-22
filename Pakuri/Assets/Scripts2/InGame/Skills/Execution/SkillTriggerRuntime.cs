@@ -581,36 +581,7 @@ namespace Pakuri.InGame
 
         private static bool IsTargetInsideHitbox(Collider2D[] hitboxColliders, UnitRosterEntry target)
         {
-            if (hitboxColliders == null || target == null || target.Transform == null || target.Model == null || !target.IsAlive)
-            {
-                return false;
-            }
-
-            var targetColliders = target.Transform.GetComponentsInChildren<Collider2D>();
-            for (var i = 0; i < hitboxColliders.Length; i++)
-            {
-                var hitbox = hitboxColliders[i];
-                if (hitbox == null || !hitbox.enabled)
-                {
-                    continue;
-                }
-
-                if (hitbox.OverlapPoint(target.Transform.position))
-                {
-                    return true;
-                }
-
-                for (var j = 0; j < targetColliders.Length; j++)
-                {
-                    var targetCollider = targetColliders[j];
-                    if (targetCollider != null && targetCollider.enabled && hitbox.Distance(targetCollider).isOverlapped)
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
+            return UnitHitboxUtility.IsTargetInsideHitbox(hitboxColliders, target);
         }
 
         private static UnitRosterEntry ResolveSourceEntry(UnitRosterService roster, BaseUnitRuntimeModel source, BaseUnitRuntimeModel fallback)

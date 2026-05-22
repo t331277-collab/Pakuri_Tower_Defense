@@ -4,6 +4,93 @@
 - Older broad data/asset history remains in `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md` and other archive files under `boards/ARCHIVE/`.
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 
+## Task: 2026-05-23 Eve-D Base And Master-1 Visual Wiring
+
+### Task title
+
+Wire Eve-D base and master-1 follow-up visuals to the same `Eve_D.prefab` across the scene-owned EffectManager path and the runtime asset catalog.
+
+### Goals
+
+- Keep base Eve-D visual authority scene-owned through `NewRunScene` `EffectManager`.
+- Make the master-1 choice-level prefab path resolvable through the runtime asset catalog.
+- Use the same prefab path for base Eve-D and the delayed master-1 follow-up explosion.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- No prefab content edit was required in this task.
+- Base visual authority stays on `EffectManager`; choice-level prefab path authority stays on the runtime asset catalog.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented and file-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that both the base Eve-D cast and the master-1 delayed follow-up display `Assets/Prefab/Skill/Eve/Eve_D.prefab`.
+- If a later Eve-D follow-up visual diverges from the base visual, update both the scene mapping and the runtime catalog evidence together.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Skill/Eve/Eve_D.prefab` exists.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now maps `SkillId: eve-d` under monster `eve` to prefab GUID `ef1bb9690f7a9234dad21ff0d9c80e32`, which is `Assets/Prefab/Skill/Eve/Eve_D.prefab`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now authors `eve-d-master-1` with `skill_effect_prefab_path=Assets/Prefab/Skill/Eve/Eve_D.prefab`.
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog.asset` now contains `AssetPath: Assets/Prefab/Skill/Eve/Eve_D.prefab` with root GameObject fileID `1107537072718467244` and GUID `ef1bb9690f7a9234dad21ff0d9c80e32`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the Eve-D visual wiring; only the existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-23: User required both the base Eve-D skill effect and the master-1 explosion effect to use `Assets/Prefab/Skill/Eve/Eve_D.prefab`.
+
+## Task: 2026-05-23 Eve-C Runtime Visual Wiring And Catalog Entry
+
+### Task title
+
+Wire Eve-C base and master-2 visuals through the active scene/effect runtime paths.
+
+### Goals
+
+- Keep the base Eve-C skill visual scene-owned through `NewRunScene` `EffectManager`.
+- Keep the Eve-C master-2 expire-burst prefab available to runtime asset resolution through `PakuriCsvRuntimeAssetCatalog`.
+- Record the evidence even though Unity-MCP menu/console calls timed out during this task.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- No prefab content edits were required.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and file-verified. Fresh Unity sync confirmation could not be collected because Unity-MCP `execute_menu_item` and `read_console` timed out during this task.
+
+### Next Actions
+
+- When Unity-MCP becomes responsive again, rerun `Pakuri/Sync CSV Runtime Catalog Assets` to replace the file-level evidence with an editor sync log.
+- User verifies in Play Mode that base Eve-C uses `Eve_C.prefab` and the master-2 expire burst uses `Eve_c-master-2.prefab`.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Skill/Eve/Eve_C.prefab` exists and its root GameObject fileID is `2181036612366644816`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:12646-12647` now maps `SkillId: eve-c` to prefab GUID `383d4c700df69d44898dc953ea18b9d4`, which is `Assets/Prefab/Skill/Eve/Eve_C.prefab`.
+- `Pakuri/Assets/Prefab/Skill/Eve/Eve_c-master-2.prefab` exists and `Pakuri/Assets/Prefab/Skill/Eve/Eve_c-master-2.prefab.meta` stores GUID `30a4745c2cff29f41acf72125c981f67`.
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog.asset` now contains `AssetPath: Assets/Prefab/Skill/Eve/Eve_c-master-2.prefab` with root GameObject fileID `4334470998071384926` and GUID `30a4745c2cff29f41acf72125c981f67`.
+- `Test-Path Pakuri\Assets\Prefab\Skill\Eve\Eve_C.prefab` and `Test-Path Pakuri\Assets\Prefab\Skill\Eve\Eve_c-master-2.prefab` both returned `True`.
+
+### History
+
+- 2026-05-23: User supplied `Assets/Prefab/Skill/Eve/Eve_C.prefab` and `Assets/Prefab/Skill/Eve/Eve_c-master-2.prefab` as the required Eve-C visual paths for base and master-2 work.
+
 ## Task: 2026-05-22 Passive Effect Runtime Catalog Sync
 
 ### Task title

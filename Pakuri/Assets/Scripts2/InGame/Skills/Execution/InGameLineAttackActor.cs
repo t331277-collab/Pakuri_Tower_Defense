@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Pakuri.Combat;
+using Pakuri.Data;
 using UnityEngine;
 
 namespace Pakuri.InGame
@@ -21,10 +22,13 @@ namespace Pakuri.InGame
         private float damage;
         private DamageAttribute attribute;
         private ProjectileStatusHitSpec statusSpec;
+        private SkillEffectDefinition[] onHitStatusEffects;
         private BaseUnitRuntimeModel sourceModel;
         private bool criticalAllowed;
         private float critChanceBonus;
         private float critDamageBonus;
+        private readonly HashSet<string> appliedBaseStatusTargets = new HashSet<string>();
+        private readonly HashSet<string> appliedEffectStatusTargets = new HashSet<string>();
 
         public void Initialize(
             InGameCombatManager manager,
@@ -40,6 +44,7 @@ namespace Pakuri.InGame
             float damagePerTick,
             DamageAttribute damageAttribute,
             ProjectileStatusHitSpec onHitStatus,
+            SkillEffectDefinition[] onHitEffects,
             BaseUnitRuntimeModel source,
             bool allowCritical,
             float criticalChanceBonus,
@@ -59,10 +64,13 @@ namespace Pakuri.InGame
             damage = Mathf.Max(0f, damagePerTick);
             attribute = damageAttribute;
             statusSpec = onHitStatus;
+            onHitStatusEffects = onHitEffects;
             sourceModel = source;
             criticalAllowed = allowCritical;
             critChanceBonus = criticalChanceBonus;
             critDamageBonus = criticalDamageBonus;
+            appliedBaseStatusTargets.Clear();
+            appliedEffectStatusTargets.Clear();
 
             ConfigureVisual();
             ApplyLineTick(
@@ -77,10 +85,13 @@ namespace Pakuri.InGame
                 damage,
                 attribute,
                 statusSpec,
+                onHitStatusEffects,
                 sourceModel,
                 criticalAllowed,
                 critChanceBonus,
-                critDamageBonus);
+                critDamageBonus,
+                appliedBaseStatusTargets,
+                appliedEffectStatusTargets);
         }
 
         public static bool ApplyLineTick(
@@ -95,10 +106,13 @@ namespace Pakuri.InGame
             float damagePerTick,
             DamageAttribute damageAttribute,
             ProjectileStatusHitSpec onHitStatus,
+            SkillEffectDefinition[] onHitEffects,
             BaseUnitRuntimeModel source,
             bool criticalAllowed,
             float critChanceBonus,
-            float critDamageBonus)
+            float critDamageBonus,
+            HashSet<string> baseStatusAppliedTargets = null,
+            HashSet<string> effectStatusAppliedTargets = null)
         {
             if (manager == null || sourceEntry == null || unitRoster == null || lineDirection.sqrMagnitude <= 0.0001f)
             {
@@ -129,7 +143,9 @@ namespace Pakuri.InGame
                 }
 
                 manager.ApplyDamage(target.Model, damagePerTick, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus);
-                TryApplyStatus(manager, target.Model, onHitStatus);
+                var targetKey = ResolveTargetKey(target.Model);
+                TryApplyStatus(manager, target.Model, onHitStatus, targetKey, baseStatusAppliedTargets);
+                TryApplyOnHitEffects(manager, target.Model, onHitEffects, targetKey, effectStatusAppliedTargets);
                 routed = true;
             }
 
@@ -162,10 +178,13 @@ namespace Pakuri.InGame
                     damage,
                     attribute,
                     statusSpec,
+                    onHitStatusEffects,
                     sourceModel,
                     criticalAllowed,
                     critChanceBonus,
-                    critDamageBonus);
+                    critDamageBonus,
+                    appliedBaseStatusTargets,
+                    appliedEffectStatusTargets);
             }
 
             if (remainingDuration <= 0f)
@@ -221,9 +240,93 @@ namespace Pakuri.InGame
         private static void TryApplyStatus(
             InGameCombatManager manager,
             BaseUnitRuntimeModel target,
-            ProjectileStatusHitSpec status)
+            ProjectileStatusHitSpec status,
+            string targetKey,
+            HashSet<string> appliedTargets)
         {
-            SkillStatusApplyUtility.TryApplyStatus(manager, target, status);
+            if (status == null || !status.Enabled)
+            {
+                return;
+            }
+
+            if (appliedTargets != null && !string.IsNullOrWhiteSpace(targetKey) && appliedTargets.Contains(targetKey))
+            {
+                return;
+            }
+
+            if (SkillStatusApplyUtility.TryApplyStatus(manager, target, status)
+                && appliedTargets != null
+                && !string.IsNullOrWhiteSpace(targetKey))
+            {
+                appliedTargets.Add(targetKey);
+            }
+        }
+
+        private static void TryApplyOnHitEffects(
+            InGameCombatManager manager,
+            BaseUnitRuntimeModel target,
+            SkillEffectDefinition[] effects,
+            string targetKey,
+            HashSet<string> appliedEffects)
+        {
+            if (manager == null || target == null || effects == null || effects.Length == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < effects.Length; i++)
+            {
+                var effect = effects[i];
+                if (effect == null
+                    || effect.EffectTiming != SkillMultiEffectTiming.OnHit
+                    || effect.EffectKind != SkillMultiEffectKind.Status
+                    || !SkillMultiEffectExecutor.TargetMatchesCondition(target, effect))
+                {
+                    continue;
+                }
+
+                var effectKey = BuildEffectTargetKey(effect.EffectId, targetKey);
+                if (appliedEffects != null && !string.IsNullOrWhiteSpace(effectKey) && appliedEffects.Contains(effectKey))
+                {
+                    continue;
+                }
+
+                var status = SkillMultiEffectExecutor.ResolveStatusSpec(effect);
+                if (status == null || !status.Enabled)
+                {
+                    continue;
+                }
+
+                if (SkillStatusApplyUtility.TryApplyStatus(manager, target, status)
+                    && appliedEffects != null
+                    && !string.IsNullOrWhiteSpace(effectKey))
+                {
+                    appliedEffects.Add(effectKey);
+                }
+            }
+        }
+
+        private static string ResolveTargetKey(BaseUnitRuntimeModel target)
+        {
+            var unitId = target != null && target.Identity != null ? target.Identity.UnitId : null;
+            if (!string.IsNullOrWhiteSpace(unitId))
+            {
+                return unitId;
+            }
+
+            return target != null ? target.GetHashCode().ToString() : string.Empty;
+        }
+
+        private static string BuildEffectTargetKey(string effectId, string targetKey)
+        {
+            if (string.IsNullOrWhiteSpace(targetKey))
+            {
+                return string.Empty;
+            }
+
+            return string.IsNullOrWhiteSpace(effectId)
+                ? targetKey
+                : $"{effectId}::{targetKey}";
         }
     }
 }

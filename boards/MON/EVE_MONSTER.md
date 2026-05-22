@@ -21,6 +21,243 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - NewRunScene UI or Offering gating changes: update this file and `boards/UI/RUNSCENE_UI.md`.
 - Eve reports: update this file when a report changes active Eve facts. There is no active report board.
 
+## Task: 2026-05-23 Eve-D Shock-Gated Delayed Recast
+
+### Task title
+
+Implement Eve-D on the shared SingleAttack path with a shock-gated delayed follow-up that reuses the same prefab but does not recurse.
+
+### Goals
+
+- Keep base `eve-d` on the shared `SingleAttack` runtime using `Assets/Prefab/Skill/Eve/Eve_D.prefab`.
+- Keep trait 3 cooldown reduction on the existing shared cooldown multiplier field instead of adding a new cooldown schema.
+- Keep trait 4 on the shared status-stack path by adding one extra `shock` stack on hit.
+- Implement `master-1` so targets already in `shock` when struck by Eve-D receive one extra Eve-D follow-up after `0.5` seconds at `50%` damage.
+- Prevent the follow-up cast from scheduling another follow-up explosion.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- Current CSV and runtime files were explicitly treated as the parsed source for this task.
+- The follow-up must stay on the shared `SingleAttack` executor path; no Eve-only executor class was added.
+- No new CSV columns were added for this task because the current parser requires header-width alignment across every row.
+- Base Eve-D visual and master-1 follow-up visual both use `Assets/Prefab/Skill/Eve/Eve_D.prefab`.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in `NewRunScene` Play Mode that base Eve-D uses `Eve_D.prefab`, trait 3 reduces cooldown, and trait 4 adds one extra `shock` stack.
+- User verifies that `master-1` only recasts on enemies already carrying `shock` at the moment the first Eve-D hit lands, waits `0.5` seconds, deals `50%` damage, and does not trigger another follow-up.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now keeps `eve-d` as `runtime_kind=SingleAttack`, `attribute=Lightning`, `base_damage=10`, `spell_power_coefficient=0.7`, `radius=3.5`, `cooldown_seconds=7`, `status_effect_id=shock`, and `status_chance=1`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now sets `eve-d-trait-3` to `cooldown_multiplier=0.8` and `damage_multiplier=1.15`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now sets `eve-d-trait-4` to `status_tag=shock` and `status_stacks_bonus=1`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now sets `eve-d-master-1` to `skill_effect_prefab_path=Assets/Prefab/Skill/Eve/Eve_D.prefab`, `branch_count=1`, `branch_damage_multiplier=0.5`, `branch_search_radius=0.5`, and `status_tag=shock`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now extends `SingleAttackSkillExecutor` so `ResolveFollowUpSpec(...)` interprets that scoped Eve-D choice payload, `RegisterFollowUpTarget(...)` records only targets that already have the required status, `ScheduleConditionalFollowUps(...)` waits per repeat, and `ExecuteAtCenter(..., false)` prevents recursive re-explosions.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now maps `SkillId: eve-d` under monster `eve` to the `Eve_D.prefab` GUID.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the implementation; only the existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-23: User told Skill Builder to treat the current CSV/code as the parsed source and required Eve-D master 1 to recast once after `0.5` seconds only when the struck enemy was already shocked, without allowing the follow-up to explode again.
+
+## Task: 2026-05-23 Eve-C Shared Hurtbox Root Fix
+
+### Task title
+
+Fix Eve-C prefab-hitbox misses by making shared collider-contact skills resolve enemy hurtboxes from the spawned unit root instead of the actor child transform.
+
+### Goals
+
+- Stop Eve-C from reading `targetColliders=[]` when Stage 1 enemies already have body colliders on the spawned unit hierarchy.
+- Keep collider-authoritative contact skills using real unit hurtboxes.
+- Leave non-contact skills such as explicit target-designated skills and radius/battlefield-only paths on their existing logic.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Keep the solution shared; do not add an Eve-only collider lookup branch.
+- Preserve existing non-contact targeting behavior for skills such as Ariel-D mark-style selection.
+- Unity Play Mode gameplay verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User reruns Eve-C in Play Mode and confirms `[ZoneHitboxDebug:eve-c]` no longer reports `targetColliders=[]`.
+- User verifies Eve-C now damages only targets whose spawned-unit hurtboxes overlap the prefab collider.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Units/UnitRosterService.cs` now stores `HitboxRoot`, caches unit hitbox colliders, and exposes shared collider-overlap utility logic through `UnitHitboxUtility`.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs` now registers player/enemy roster entries with the spawned unit root transform instead of only the nested actor transform.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now resolves `FindUnitByCollider(...)` through `UnitRosterEntry.ContainsTransform(...)`, which includes the spawned unit root hierarchy.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameZoneSkillActor.cs` now reads target hurtboxes from the shared unit hitbox contract, which fixes the Eve-C prefab-hitbox path without changing the non-contact radius fallback branch.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs` and `InGameEnemySkillHitboxActor.cs` now prefer collider-authoritative roster-hit checks when the attacking object actually has colliders, and keep the old radius fallback only when no collider hitbox exists.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the change; existing `MSB3277` warnings remained. One earlier parallel build attempt hit a temporary file-lock on `obj\\Debug\\Assembly-CSharp.dll` before the successful rerun.
+
+### History
+
+- 2026-05-23: Eve-C debug logs showed `targetColliders=[]` on visibly overlapping Stage 1 enemies, so Code Builder moved shared contact hit detection to a spawned-unit-root hurtbox contract.
+
+## Task: 2026-05-23 Eve-C Prefab Hitbox Debug Logging
+
+### Task title
+
+Instrument Eve-C prefab-hitbox ticks so live overlap misses can be explained from runtime logs.
+
+### Goals
+
+- Log Eve-C zone initialization with cached prefab collider data.
+- Log Eve-C tick candidate counts, target collider sets, collider-pair overlap results, and routed hit/miss outcomes.
+- Keep the logs narrow to Eve-C so shared AreaAttack runtime spam stays contained.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not change Eve-C gameplay behavior while adding the logs.
+- Limit the debug path to inspected Eve-C runtime id evidence instead of enabling all zone skills.
+- Unity Play Mode gameplay verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User runs Eve-C in Play Mode and captures lines beginning with `[ZoneHitboxDebug:eve-c]`.
+- If the logs show collider overlap `false` while visuals appear to touch, inspect the reported enemy child collider bounds instead of the sprite only.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameZoneSkillActor.cs` now logs Eve-C-only prefab-hitbox initialization, tick start/end, per-target collider summaries, per collider-pair `Distance(...).isOverlapped` results, and hit/miss routing.
+- The debug gate is `runtime.SkillId == "eve-c"` inside `IsDebugSkill(...)`, so other AreaAttack skills do not emit the new logs.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the logging edit; existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-23: User reported that `Eve_C(Clone)` looked physically overlapping in scene view but enemies still took no damage, so Code Builder added runtime overlap diagnostics on the Eve-C prefab-hitbox path.
+
+## Task: 2026-05-23 Eve-C Prefab Collider Tick AreaAttack
+
+### Task title
+
+Make Eve-C follow its prefab collider and prefab scale on the shared AreaAttack path.
+
+### Goals
+
+- Stop Eve-C from using a fixed radius-only zone hit check when `Eve_C.prefab` already has a collider.
+- Keep Eve-C visual size owned by the instantiated prefab instead of force-fitting the sprite to `radius * 2`.
+- Let Eve-C trait radius scaling keep working through `radius_multiplier` by scaling the prefab hitbox and visual together.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Keep the change on the shared AreaAttack runtime path; do not add an Eve-only executor branch.
+- Do not reinterpret `radius_bonus=1.3`; this task keeps `radius_multiplier` as the scaling input and does not author a new `radius_bonus` usage.
+- Unity Play Mode gameplay verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in `NewRunScene` Play Mode that Eve-C only hits targets overlapping the instantiated `Eve_C.prefab` collider.
+- User verifies Eve-C trait radius upgrades enlarge the prefab hitbox and visible effect together instead of using the old fixed-radius sprite fit.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Skill/Eve/Eve_C.prefab` exists and includes `BoxCollider2D` with authored size data.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now scales instantiated AreaAttack prefabs only when they actually contain collider hitboxes, using the existing snapshot radius-multiplier path before zone ticking starts.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameZoneSkillActor.cs` now caches prefab colliders, skips the old sprite-to-radius rescale when a prefab hitbox exists, and applies tick damage/status through collider overlap checks with the old radius path kept as fallback.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the change; existing `MSB3277` warnings remained.
+- Unity-MCP console read after refresh showed no C# compile errors; remaining entries were existing `UnityEditor.Graphs` null-reference logs and MCP transport logs.
+
+### History
+
+- 2026-05-23: User asked Code Builder to stop treating Eve-C as a fixed-size radius zone and to make it follow the prefab collider/scale path like projectile and prefab-hitbox SingleAttack behavior.
+
+## Task: 2026-05-23 Eve-C Shared AreaAttack Completion
+
+### Task title
+
+Implement Eve-C base runtime plus trait/master support on the shared AreaAttack path.
+
+### Goals
+
+- Keep Eve-C on the shared `AreaAttack` runtime with `Assets/Prefab/Skill/Eve/Eve_C.prefab` as the base scene visual.
+- Support `trait-3` cooldown reduction through the existing choice cooldown multiplier.
+- Support `trait-5` and `master-1` freeze-duration bonuses through a targeted choice status-duration bonus path.
+- Support `master-1` as a shared threshold-status rule: `chill >= 4 -> freeze`.
+- Support `master-2` as a shared `OnExpire` effect that bursts once from the zone center with `Assets/Prefab/Skill/Eve/Eve_c-master-2.prefab`.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- Eve-C must stay on shared AreaAttack and multi-effect runtime paths; no Eve-only executor branch.
+- Unity Play Mode gameplay verification remains user-owned.
+- Native `codex review --uncommitted` could not complete because the local review command failed first on missing PATH and then on blocked websocket/network access, so final Reviewer evidence is a manual pass over the changed diff plus build results.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented, compile-verified, and manual-review-passed. Unity-MCP menu/console calls timed out during CSV runtime sync, so runtime catalog prefab evidence for `eve-c-master-2` was recorded from the serialized asset file after a direct catalog update.
+
+### Next Actions
+
+- User verifies in `NewRunScene` Play Mode that Eve-C ticks `chill`, immediately freezes at 4+ chill stacks when `master-1` is learned, and that freeze duration increases only for Eve-C trait/master paths.
+- User verifies that `master-2` fires exactly once when the field ends and uses `Assets/Prefab/Skill/Eve/Eve_c-master-2.prefab`.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now sets `eve-c-trait-3` to `cooldown_multiplier=0.85`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now sets `eve-c-trait-5` to `status_duration_bonus_status_id=freeze` and `status_duration_bonus=1`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now sets `eve-c-master-1` to `status_duration_bonus_status_id=freeze`, `status_duration_bonus=1.5`, `threshold_status_id=chill`, `threshold_status_min_stacks=4`, and `threshold_apply_status_id=freeze`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now marks `eve-c-master-2` as `RuntimeImplemented`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now contains `eve-c-master2-expire-burst` with `effect_timing=OnExpire`, `attribute=Ice`, `base_damage=24`, `spell_power_coefficient=1.5`, `requires_active_choice_id=eve-c-master-2`, and `skill_effect_prefab_path=Assets/Prefab/Skill/Eve/Eve_c-master-2.prefab`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now routes choice-targeted status duration bonuses, threshold-status application, and zone `OnExpire` effects through the shared runtime.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillStatusApplyUtility.cs` now applies a second shared status when the newly applied source status reaches a configured stack threshold.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameZoneSkillActor.cs` now executes filtered `OnExpire` effect rows once before the zone actor is destroyed.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now maps `SkillId: eve-c` to prefab GUID `383d4c700df69d44898dc953ea18b9d4`, which is `Assets/Prefab/Skill/Eve/Eve_C.prefab`.
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog.asset` now contains `Assets/Prefab/Skill/Eve/Eve_c-master-2.prefab` with GUID `30a4745c2cff29f41acf72125c981f67`.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv | Where-Object { $_.monster_id -eq 'eve' -and $_.skill_id -eq 'eve-c' -and $_.runtime_support_state -notin @('RuntimeImplemented','ReferenceDirect') }` returned no rows after the edit.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-23: User asked Code Builder / Skill Builder to implement Eve-C with a shared choice status-duration bonus, a shared threshold-status rule for `chill >= 4 -> freeze`, and an `OnExpire` master-2 burst using `Assets/Prefab/Skill/Eve/Eve_c-master-2.prefab`.
+
 ## Task: 2026-05-21 Eve-A Recursive Branch Projectile Rule
 
 ### Task title
