@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using Pakuri.Data;
 using UnityEngine;
 
 namespace Pakuri.InGame
@@ -22,6 +23,7 @@ namespace Pakuri.InGame
         public bool HasRadiusMultiplier;
         public float RadiusMultiplier = 1f;
         public float RadiusBonus;
+        public float BeamWidthBonus;
         public bool HasDurationMultiplier;
         public float DurationMultiplier = 1f;
         public float DurationBonus;
@@ -47,8 +49,22 @@ namespace Pakuri.InGame
         public int StatusStacksBonus;
         public bool HasStatusStacksSet;
         public int StatusStacksSet;
+        public int HitTargetCountBonus;
+        public float CritChanceBonus;
+        public float CritDamageBonus;
         public bool HasStatusElementDamageTakenBonus;
         public float StatusElementDamageTakenBonus;
+        public bool HasStatusCriticalDamageTakenBonus;
+        public float StatusCriticalDamageTakenBonus;
+        public bool HasStatusAilmentResistanceBonus;
+        public float StatusAilmentResistanceBonus;
+        public string CountStatusId;
+        public SkillMultiEffectTargetSide CountTargetSide;
+        public float DamageMultiplierPerCount;
+        public int CountMax;
+        public bool HasStatusConditionalDamageTakenBonus;
+        public float StatusConditionalDamageTakenBonus;
+        public string StatusConditionalSourceStatusId;
         public bool HasMaxHealthBonus;
         public float MaxHealthBonus;
 

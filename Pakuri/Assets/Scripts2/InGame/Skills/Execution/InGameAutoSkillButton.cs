@@ -17,15 +17,15 @@ namespace Pakuri.InGame
             }
 
             var button = GetComponent<Button>();
-            button.onClick.RemoveListener(EnablePlayerAutoSkillMode);
-            button.onClick.AddListener(EnablePlayerAutoSkillMode);
+            button.onClick.RemoveListener(ToggleSelectedPlayerAutoSkillMode);
+            button.onClick.AddListener(ToggleSelectedPlayerAutoSkillMode);
         }
 
-        private void EnablePlayerAutoSkillMode()
+        private void ToggleSelectedPlayerAutoSkillMode()
         {
             if (combatManager != null)
             {
-                combatManager.EnablePlayerAutoSkillMode();
+                combatManager.ToggleSelectedPlayerAutoSkillMode();
             }
         }
     }

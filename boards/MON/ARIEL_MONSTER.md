@@ -12,6 +12,302 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-05-22 Ariel Final Shared Choice Runtime Completion
+
+### Task title
+
+Implement `ariel-a-trait-5` and `ariel-d-trait-5` through shared choice/status contracts and re-audit Ariel coverage.
+
+### Goals
+
+- Add a shared choice snapshot rule that counts shielded allies and converts the count into a per-cast damage multiplier.
+- Add a shared status rule that increases incoming damage only when the attacker has a required status and the target carries the marked status.
+- Confirm that no Ariel skill, choice, effect, or trigger row remains unsupported after this pass.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The implementation must stay reusable in shared runtime/data paths rather than adding Ariel-only execution branches.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compile-verified, and CSV-sync-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that `ariel-a-trait-5` scales Ariel-A damage by `+6%` per currently shielded ally at cast time.
+- User verifies in Play Mode that `ariel-d-trait-5` increases damage only when the attacker has `shield` and the target carries Ariel-D's `holy-exposure` mark.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:7` now marks `ariel-a-trait-5` as `RuntimeImplemented` with `count_status_id=shield`, `count_target_side=AllAllies`, and `damage_multiplier_per_count=0.06`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:28` now marks `ariel-d-trait-5` as `RuntimeImplemented` with `status_conditional_source_status_id=shield` and `status_conditional_damage_taken_bonus=0.1`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutionSystem.cs:216-285` now resolves choices with roster context, counts matching status holders, and applies the dynamic damage multiplier to the cast snapshot.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:291-337`, `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectRuntime.cs:234-246`, `:366-374`, and `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:965-1011` now carry source-conditional incoming-damage status data through status resolution and the live damage path.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:1-2` now contains the current status payload schema columns, including `status_ailment_resistance_bonus` and `status_flat_element_resist_reduction`, so editor CSV sync matches the parser contract.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skills.csv | Where-Object { $_.monster_id -eq 'ariel' -and $_.implementation_state -notin @('RuntimeImplemented','ReferenceDirect') }`, the matching `monster_skill_choices.csv`, `monster_skill_effects.csv`, and `monster_skill_triger.csv` checks all returned no rows.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` assembly-version warnings remained.
+- Unity-MCP console after clear plus `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-22: User asked Code Builder to implement `ariel-a-trait-5` and `ariel-d-trait-5` and confirm whether every Ariel skill was now implemented.
+
+## Task: 2026-05-22 Ariel CSV-Only And Small Shared-Contract Follow-Up
+
+### Task title
+
+Implement the Ariel rows previously classified as CSV-only or requiring only small shared runtime/data contracts.
+
+### Goals
+
+- Finish `ariel-h-trait-3`, `ariel-i-trait-2`, and `ariel-j-trait-1` without adding skill-specific execution code.
+- Add the smallest shared contracts needed to finish `ariel-b-master-1`, `ariel-f-trait-3`, `ariel-g-trait-1`, `ariel-g-trait-2`, `ariel-g-trait-3`, `ariel-i-trait-1`, and `ariel-i-trait-3`.
+- Re-scan Ariel choice coverage and record the exact rows still unsupported after this pass.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The implementation must stay reusable in shared runtime/data paths rather than adding Ariel-only branches.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because the user explicitly told Builder not to run Reviewer.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that `ariel-b-master-1` grants shield amount `+50%` and status ailment resistance `+30%` only while the shield status remains active.
+- User verifies passive-choice-gated effects for `ariel-f-trait-3`, `ariel-g-trait-1/2/3`, `ariel-i-trait-1/3`, and `ariel-j-trait-1`.
+- Remaining Ariel choice rows still unsupported after this pass are only `ariel-a-trait-5` and `ariel-d-trait-5`.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:15` now marks `ariel-b-master-1` as `RuntimeImplemented` with `status_ailment_resistance_bonus=0.3`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:40-43` now mark `ariel-f-trait-3` and `ariel-g-trait-1/2/3` as `RuntimeImplemented`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:46-50` now mark `ariel-h-trait-3`, `ariel-i-trait-1/2/3`, and `ariel-j-trait-1` as `RuntimeImplemented`; `ariel-i-trait-2` now targets `ariel-d`, and `ariel-j-trait-1` now targets `ariel-e`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv:15`, `:25`, `:27`, `:29-30`, `:33-34`, and `:37` add the gated Ariel-C, Ariel-F, Ariel-G, Ariel-I, and Ariel-J effect rows used by this pass.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGamePassiveEffectRuntime.cs:56-106` now builds a passive-choice snapshot so passive effect rows can gate on chosen passive choices.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:298-326`, `:1439-1550` now apply shield choice ailment-resistance overrides, allow effect rows to filter by active-skill attribute, and map crit-chance / ailment-resistance / flat-element-resistance status payloads into runtime status data.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectRuntime.cs:222-262` now resolves crit chance bonus, flat element resistance reduction, and ailment resistance from active statuses; `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillStatusApplyUtility.cs:18-48` now applies ailment resistance to harmful status application chance.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv | Where-Object { $_.choice_id -like 'ariel-*' -and $_.runtime_support_state -notin @('RuntimeImplemented','ReferenceDirect') }` returned only `ariel-a-trait-5` and `ariel-d-trait-5`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` assembly-version warnings remained.
+
+### History
+
+- 2026-05-22: User asked Code Builder to implement the rows previously classified as CSV-only or requiring only a small shared contract.
+
+## Task: 2026-05-22 Ariel Shared Trigger/Crit/Duration Runtime Completion And Coverage Audit
+
+### Task title
+
+Implement Ariel's remaining shared-runtime-driven active/master effects and audit full Ariel coverage.
+
+### Goals
+
+- Implement `ariel-b-master-2` through a reusable shield-absorb trigger contract.
+- Implement `ariel-d-trait-4` through choice-driven target-count bonus support.
+- Implement `ariel-d-master-1` by wiring live InGame critical damage into the shared damage path and letting the Ariel-D mark carry a critical-damage-taken bonus.
+- Implement `ariel-d-master-2` through reusable status-expire trigger plus tracked incoming damage.
+- Implement `ariel-e-trait-5` through reusable runtime extension of active shield status durations.
+- Re-scan Ariel choice/effect/trigger coverage and record the remaining unsupported rows.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The implementation must stay generic in shared runtime/data paths; no Ariel-only execution branches were added for these effects.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because the user explicitly said not to run it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compile-verified, and coverage-audited.
+
+### Next Actions
+
+- User verifies in Play Mode that `ariel-b-master-2` reflects absorbed shield damage to the attacker, `ariel-d-master-1` increases critical damage taken on the marked target, `ariel-d-master-2` bursts on mark expiry from tracked Holy damage, and `ariel-e-trait-5` extends existing ally shield durations.
+- Remaining Ariel rows still needing future work are `ariel-a-trait-5`, `ariel-b-master-1`, `ariel-d-trait-5`, `ariel-f-trait-3`, `ariel-g-trait-1`, `ariel-g-trait-2`, `ariel-g-trait-3`, `ariel-h-trait-3`, `ariel-i-trait-1`, `ariel-i-trait-2`, `ariel-i-trait-3`, and `ariel-j-trait-1`.
+- `ariel-b-master-1` remains only partial because the shield amount portion is implemented, but the ailment-resistance portion still has no shared runtime contract.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:16` marks `ariel-b-master-2` `RuntimeImplemented`; `:27` marks `ariel-d-trait-4` with `hit_target_count_bonus=1`; `:29-30` mark `ariel-d-master-1` and `ariel-d-master-2` implemented; `:35` marks `ariel-e-trait-5` implemented.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv:5-6` add the reusable `OnShieldAbsorb` and `OnStatusExpire` Ariel trigger rows.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv:9` adds `ariel-e-trait5-extend-shield-duration` as a shared `ExtendStatusDuration` effect row.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs:55`, `:103-113`, and `:248-260` add `ExtendStatusDuration`, the new trigger events/damage source, and the new choice/runtime fields used by Ariel.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:11-13`, `:135-140`, `:271-277`, `:571`, `:577-618`, and `:834-962` now route crit-aware damage, shield-absorb triggers, status-expire triggers, tracked incoming damage recording, and shared status-duration extension.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillTriggerRuntime.cs:82-133`, `:390-396`, and `:515-518` execute shield-absorb and status-expire triggers, resolve `ShieldAbsorbedAmount` / `TrackedIncomingDamage`, and prioritize the event target when required.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv | Where-Object { $_.choice_id -like 'ariel-*' -and $_.runtime_support_state -notin @('RuntimeImplemented','ReferenceDirect') }` returned only `ariel-a-trait-5`, `ariel-b-master-1`, `ariel-d-trait-5`, `ariel-f-trait-3`, `ariel-g-trait-1`, `ariel-g-trait-2`, `ariel-g-trait-3`, `ariel-h-trait-3`, `ariel-i-trait-1`, `ariel-i-trait-2`, `ariel-i-trait-3`, and `ariel-j-trait-1`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` assembly-version warnings remained.
+
+### History
+
+- 2026-05-22: User asked Code Builder to start implementing the previously proposed shared-runtime Ariel fixes, skip Code Reviewer, and then verify whether all Ariel skills, traits, and master effects were now implemented.
+
+## Task: 2026-05-22 Ariel Triggered SingleAttack Runtime
+
+### Task title
+
+Implement Ariel last-shot and shield-expiry trigger skills through CSV-driven SingleAttack reuse.
+
+### Goals
+
+- Add `monster_skill_triger.csv` as the CSV authority for trigger-driven hidden skill executions.
+- Implement `ariel-a-master-1` as two last-magazine-projectile hit explosions at 0.5 second intervals using `Assets/Prefab/Skill/Ariel/Ariel_C.prefab`.
+- Implement `ariel-b-trait-4` as shield-expiry/depletion damage using `Assets/Prefab/Skill/Ariel/ariel-b-trait-4_Skill.prefab`.
+- Reuse SingleAttack-style target resolution and prefab hitbox collision instead of adding Ariel-only skill branches.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Trigger rows remain CSV-owned; runtime code stays generic for trigger event dispatch.
+- The requested file name is `monster_skill_triger.csv`.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, synced, and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that `ariel-a-master-1` fires two `Ariel_C` prefab-hitbox explosions from the final Ariel-A magazine projectile hit, spaced by 0.5 seconds.
+- User verifies in Play Mode that `ariel-b-trait-4` triggers when Ariel-B shield statuses expire by timer or depletion and that the prefab collider matches the intended visual area.
+- Run Code Reviewer only if the user explicitly requests it.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv:3` defines `ariel-a-master1-last-shot-explosion` with event `OnMagazineLastProjectileHit`, `repeat_count=2`, `repeat_interval_seconds=0.5`, and prefab `Assets/Prefab/Skill/Ariel/Ariel_C.prefab`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv:4` defines `ariel-b-trait4-shield-expire` with event `OnShieldExpire`, shield-applied-amount damage source, multiplier `0.6`, and prefab `Assets/Prefab/Skill/Ariel/ariel-b-trait-4_Skill.prefab`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:8` and `:13` mark `ariel-a-master-1` and `ariel-b-trait-4` as `ReferenceDirect` with trigger CSV notes.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs:97-131` defines trigger event, trigger damage source, and `SkillTriggerDefinition`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillTriggerRuntime.cs:12`, `:36`, `:202`, and `:334` implement projectile-hit trigger dispatch, shield-expire trigger dispatch, SingleAttack trigger execution, and prefab-hitbox overlap damage.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs:184-196` runs the last-magazine-projectile hit trigger once per projectile.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:100-104`, `:489-499`, and `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs:164-179`, `:275-291`, `:401` collect expired/depleted shield statuses and preserve shield source metadata for trigger dispatch.
+- `Pakuri/Assets/Prefab/Skill/Ariel/ariel-b-trait-4_Skill.prefab:119` now has a `BoxCollider2D`; `:162` records size `{x: 5.85, y: 5.46}`.
+- Runtime and editor `dotnet build` commands passed with 0 errors and existing MSB3277 warnings; Unity-MCP CSV catalog sync logged successful sync from `Assets/CSVdata/source` to `Assets/Resources/Pakuri/CSVRuntime`.
+
+### History
+
+- 2026-05-22: User asked Code Builder to create `monster_skill_triger.csv` and implement `ariel-a-master-1` plus `ariel-b-trait-4` as trigger-called SingleAttack-style prefab-hitbox skills.
+
+## Task: 2026-05-22 Ariel CSV-First Choice Cleanup And Shield Runtime Modifiers
+
+### Task title
+
+Implement Ariel CSV-only fixes first, then shared shield/status runtime modifiers.
+
+### Goals
+
+- Correct Ariel-C stale `runtime_support_state` choice rows that are already implemented through multi-effect rows.
+- Move Ariel-E conditional shield/damage/sanctuary behavior into `monster_skill_effects.csv`.
+- Let Ariel-B shield amount/duration choices apply through the shared shield executor.
+- Let Ariel-D status duration and Holy Exposure value choices apply through shared status snapshot handling.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Keep damage/status/shield effect data in CSV where the current multi-effect schema can express it.
+- Do not implement event-trigger behaviors such as last projectile, shield expiry, shield absorb reflection, or mark expiry in this pass.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, synced, and compile-verified.
+
+### Next Actions
+
+- User verifies Ariel-B shield amount/duration choices, Ariel-B trait 5 Holy damage buff, Ariel-D trait 2/3 mark effects, and Ariel-E trait/master effects in Play Mode.
+- Implement remaining event-trigger Ariel items separately: `ariel-a-master-1`, `ariel-b-trait-4`, `ariel-b-master-2`, and `ariel-d-master-2`.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:18`, `:19`, `:21`, `:22`, and `:23` now mark Ariel-C trait/master rows as `ReferenceDirect` because existing `monster_skill_effects.csv` rows implement them.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:10`, `:11`, `:14`, and `:15` now map Ariel-B shield amount/duration/Holy-damage-buff support, with master 1 marked partial because status ailment resistance remains unsupported.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:25` now gives `ariel-d-trait-2` `status_element_damage_taken_bonus=0.08`; `:26` keeps `duration_bonus=3` and marks it supported.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:32`, `:34`, `:36`, and `:37` now mark Ariel-E trait/master shield, conditional damage, sanctuary, and master 2 shield support as `ReferenceDirect`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv:3-8` now has Ariel-E default/replacement shield rows, Holy Exposure-only bonus damage, and the master 1 sanctuary damage-reduction status row.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv:9` now has the Ariel-B trait 5 shielded-ally Holy damage status row.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:229-247` applies choice duration modifiers to resolved status durations.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:1701-1718` applies shield snapshot damage/duration modifiers, and `:1757-1764` runs shield skill multi-effects after routed shield application.
+- Runtime/editor `dotnet build` commands passed with 0 errors and existing MSB3277 warnings.
+- Unity-MCP CSV sync logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`; console after clear/sync showed only that sync log and MCP client handler logs.
+
+### History
+
+- 2026-05-22: User asked Code Builder to implement the earlier classification in order: CSV-only items first, then CSV plus small shared runtime extensions.
+
+## Task: 2026-05-22 Ariel-C/E Debug Learned Skill Auto-Spam Fix
+
+### Task title
+
+Stop DebugUI-learned Ariel-C/E SingleAttack support effects from repeatedly firing outside valid combat input/auto conditions.
+
+### Goals
+
+- Keep Ariel-C and Ariel-E learned active skills usable after DebugUI acquisition.
+- Prevent Ariel-C buff and Ariel-E shield effects from repeating during spawn/reward or failed auto execution.
+- Preserve Ariel-C/E CSV-owned multi-effect behavior and avoid Ariel-specific executor branches.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The fix is generic in NewRunScene combat input/routing and shared SingleAttack/multi-effect execution.
+- No Ariel CSV rows or prefab mappings were changed in this task.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that DebugUI-learned Ariel-C/E persist, but only fire from selected 1P manual click while Auto is off or from Auto mode when a visible enemy exists in MainCamera during combat.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:5` keeps `ariel-c` as `SingleAttack`; `:7` keeps `ariel-e` as `SingleAttack`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv:3` keeps `ariel-e-shield-base` as an all-ally shield using `Assets/Prefab/Skill/Ariel/Ariel_B.prefab`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv:4-12` keep Ariel-C blessing/master rows in reusable multi-effect CSV data.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:55-72` now gates skill execution to `StageState.Combat`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:460-469` now requires selected 1P Auto plus visible MainCamera enemies for automatic player skill routing.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:689-699` now lets successfully applied support multi-effects count as routed, starting cooldown/recovery instead of retrying every frame.
+- Runtime/editor `dotnet build` commands passed with 0 errors and existing MSB3277 warnings.
+
+### History
+
+- 2026-05-22: User reported the cause was not DebugUI itself, but learned Ariel-C/E active skills being auto-routed later and failed SingleAttack executions repeatedly spawning effects. Code Builder fixed the generic route/input and SingleAttack multi-effect behavior.
+
 ## Task: 2026-05-22 Ariel F-J Passive CSV Runtime
 
 ### Task title

@@ -51,6 +51,7 @@ namespace Pakuri.Data
             sourceCatalog.MonsterRewardChoices = LoadImportedSourceTextAssetOrThrow(MonsterRewardChoicesFileName);
             sourceCatalog.MonsterSkills = LoadImportedSourceTextAssetOrThrow(MonsterSkillsFileName);
             sourceCatalog.MonsterSkillEffects = LoadImportedSourceTextAssetOrThrow(MonsterSkillEffectsFileName);
+            sourceCatalog.MonsterSkillTriggers = LoadImportedSourceTextAssetOrThrow(MonsterSkillTriggersFileName);
             sourceCatalog.MonsterSkillChoices = LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesFileName);
             sourceCatalog.StatusEffects = LoadImportedSourceTextAssetOrThrow(StatusEffectsFileName);
             sourceCatalog.StageOneEnemies = LoadImportedSourceTextAssetOrThrow(StageOneEnemiesFileName);
@@ -154,35 +155,18 @@ namespace Pakuri.Data
 
         private static PakuriCsvRuntimeAssetCatalog.SpriteEntry[] BuildSpriteEntries(SourceModel sourceModel)
         {
-            var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var skill in sourceModel.Skills.Values)
-            {
-                AddAssetPath(paths, skill.SkillIconPath);
-            }
-
-            foreach (var choice in sourceModel.SkillChoices.Values)
-            {
-                AddAssetPath(paths, choice.SkillIconPath);
-            }
-
-            foreach (var enemy in sourceModel.StageOneEnemies.Values)
-            {
-                AddAssetPath(paths, enemy.UnitSpritePath);
-                AddAssetPath(paths, enemy.ProjectileSpritePath);
-            }
-
             var entries = new List<PakuriCsvRuntimeAssetCatalog.SpriteEntry>();
-            foreach (var path in paths)
+            foreach (var asset in CollectReferencedAssets(sourceModel).SpritePaths)
             {
-                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(asset.AssetPath);
                 if (sprite == null)
                 {
-                    throw new CsvFatalException($"CSV runtime sprite asset is missing or not a Sprite: '{path}'.");
+                    throw new CsvFatalException($"CSV runtime sprite asset is missing or not a Sprite: '{asset.AssetPath}'.");
                 }
 
                 entries.Add(new PakuriCsvRuntimeAssetCatalog.SpriteEntry
                 {
-                    AssetPath = path,
+                    AssetPath = asset.AssetPath,
                     Asset = sprite
                 });
             }
@@ -193,55 +177,24 @@ namespace Pakuri.Data
 
         private static PakuriCsvRuntimeAssetCatalog.PrefabEntry[] BuildPrefabEntries(SourceModel sourceModel)
         {
-            var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var choice in sourceModel.SkillChoices.Values)
-            {
-                AddAssetPath(paths, choice.SkillEffectPrefabPath);
-            }
-
-            foreach (var skill in sourceModel.Skills.Values)
-            {
-                AddAssetPath(paths, skill.StatusEffectPrefabPath);
-            }
-
-            foreach (var effect in sourceModel.SkillEffects.Values)
-            {
-                AddAssetPath(paths, effect.SkillEffectPrefabPath);
-            }
-
-            foreach (var status in sourceModel.StatusEffects.Values)
-            {
-                AddAssetPath(paths, status.StatusEffectPrefabPath);
-            }
-
             var entries = new List<PakuriCsvRuntimeAssetCatalog.PrefabEntry>();
-            foreach (var path in paths)
+            foreach (var asset in CollectReferencedAssets(sourceModel).PrefabPaths)
             {
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(asset.AssetPath);
                 if (prefab == null)
                 {
-                    throw new CsvFatalException($"CSV runtime prefab asset is missing or not a GameObject: '{path}'.");
+                    throw new CsvFatalException($"CSV runtime prefab asset is missing or not a GameObject: '{asset.AssetPath}'.");
                 }
 
                 entries.Add(new PakuriCsvRuntimeAssetCatalog.PrefabEntry
                 {
-                    AssetPath = path,
+                    AssetPath = asset.AssetPath,
                     Asset = prefab
                 });
             }
 
             entries.Sort((left, right) => string.Compare(left.AssetPath, right.AssetPath, StringComparison.OrdinalIgnoreCase));
             return entries.ToArray();
-        }
-
-        private static void AddAssetPath(HashSet<string> paths, string assetPath)
-        {
-            if (string.IsNullOrWhiteSpace(assetPath))
-            {
-                return;
-            }
-
-            paths.Add(assetPath.Trim().Replace('\\', '/'));
         }
 
         private static void ResetRuntimeState()

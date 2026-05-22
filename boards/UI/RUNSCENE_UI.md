@@ -9,6 +9,50 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - Older RunScene/Manifested UI history remains in that snapshot and earlier archive files.
 - This active file now keeps only the current `NewRunScene` UI behavior still relevant to active work.
 
+## Task: 2026-05-22 AutoBtn Toggle And Manual Learned Skill Input
+
+### Task title
+
+Make `AutoBtn` toggle selected 1P auto-skill mode and require click input for selected 1P learned active skills while Auto is off.
+
+### Goals
+
+- Change `AutoBtn` from one-way enable to selected 1P Auto on/off toggle.
+- Keep selected 1P learned A-E active skills out of automatic routing while Auto is off.
+- Use one mouse click as the manual execution command for currently ready selected 1P learned active skills.
+- Preserve UI pointer blocking so clicking UI does not fire skills.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- UGUI `Canvas/AutoBtn` keeps using `InGameAutoSkillButton`; no scene serialization edit was made.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that first `AutoBtn` click enables selected 1P Auto, second click disables it, and Auto-off selected 1P skills fire only from a gameplay-area mouse click.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameAutoSkillButton.cs:20-28` now binds `AutoBtn` to `ToggleSelectedPlayerAutoSkillMode()` instead of one-way enable.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:309-321` now toggles and writes selected 1P `AutoSkillEnabled`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:363-405` now handles selected 1P manual skill execution on `leftButton.wasPressedThisFrame` and still exits when the pointer is over UI.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
+- Unity-MCP script refresh reached idle; warning/error console read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-22: User clarified `AutoBtn` must be a toggle: first click Auto on, second click Auto off. Code Builder implemented the toggle and selected 1P manual-click learned skill route.
+
 ## Task: 2026-05-20 DebugModifiedUI Choice Application
 
 ### Task title

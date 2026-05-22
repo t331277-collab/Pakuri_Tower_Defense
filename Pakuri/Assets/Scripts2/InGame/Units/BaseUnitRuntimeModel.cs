@@ -1,7 +1,20 @@
 using System;
+using Pakuri.Combat;
 
 namespace Pakuri.InGame
 {
+    public readonly struct ShieldAbsorbRecord
+    {
+        public ShieldAbsorbRecord(UnitStatusRuntime status, float absorbedAmount)
+        {
+            Status = status;
+            AbsorbedAmount = absorbedAmount;
+        }
+
+        public UnitStatusRuntime Status { get; }
+        public float AbsorbedAmount { get; }
+    }
+
     public enum UnitSide
     {
         Player,
@@ -158,6 +171,11 @@ namespace Pakuri.InGame
 
         public bool Tick(float deltaTime)
         {
+            return Tick(deltaTime, null);
+        }
+
+        public bool Tick(float deltaTime, System.Collections.Generic.ICollection<UnitStatusRuntime> removedStatuses)
+        {
             if (deltaTime <= 0f)
             {
                 return false;
@@ -169,6 +187,11 @@ namespace Pakuri.InGame
                 var status = statuses[i];
                 if (status == null || status.Tick(deltaTime))
                 {
+                    if (status != null && removedStatuses != null)
+                    {
+                        removedStatuses.Add(status);
+                    }
+
                     statuses.RemoveAt(i);
                     changed = true;
                 }
@@ -259,6 +282,19 @@ namespace Pakuri.InGame
 
         public float ConsumeShield(float amount)
         {
+            return ConsumeShield(amount, null);
+        }
+
+        public float ConsumeShield(float amount, System.Collections.Generic.ICollection<UnitStatusRuntime> depletedStatuses)
+        {
+            return ConsumeShield(amount, depletedStatuses, null);
+        }
+
+        public float ConsumeShield(
+            float amount,
+            System.Collections.Generic.ICollection<UnitStatusRuntime> depletedStatuses,
+            System.Collections.Generic.ICollection<ShieldAbsorbRecord> absorbRecords)
+        {
             var remaining = Math.Max(0f, amount);
             if (remaining <= 0f)
             {
@@ -273,15 +309,70 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                remaining -= status.ConsumeShield(remaining);
+                var absorbed = status.ConsumeShield(remaining);
+                remaining -= absorbed;
+                if (absorbRecords != null && absorbed > 0f)
+                {
+                    absorbRecords.Add(new ShieldAbsorbRecord(status, absorbed));
+                }
+
                 if (status.RemainingShieldAmount <= 0f)
                 {
+                    if (depletedStatuses != null)
+                    {
+                        depletedStatuses.Add(status);
+                    }
+
                     statuses.RemoveAt(i);
                     i--;
                 }
             }
 
             return Math.Max(0f, amount - remaining);
+        }
+
+        public bool ExtendDurations(StatusEffectKind kind, float durationDelta, Func<UnitStatusRuntime, bool> predicate = null)
+        {
+            if (durationDelta <= 0f)
+            {
+                return false;
+            }
+
+            var changed = false;
+            for (var i = 0; i < statuses.Count; i++)
+            {
+                var status = statuses[i];
+                if (status == null || status.Kind != kind)
+                {
+                    continue;
+                }
+
+                if (predicate != null && !predicate(status))
+                {
+                    continue;
+                }
+
+                changed |= status.ExtendDuration(durationDelta);
+            }
+
+            return changed;
+        }
+
+        public void RecordIncomingDamage(DamageAttribute attribute, float amount)
+        {
+            if (amount <= 0f)
+            {
+                return;
+            }
+
+            for (var i = 0; i < statuses.Count; i++)
+            {
+                var status = statuses[i];
+                if (status != null)
+                {
+                    status.RecordIncomingDamage(attribute, amount);
+                }
+            }
         }
 
         private UnitStatusRuntime Find(StatusEffectKind kind, string sourceSkillId = null)
@@ -343,6 +434,8 @@ namespace Pakuri.InGame
             : StatusEffectUtility.ToDisplayName(Kind);
         public StatusEffectData SourceData { get; private set; }
         public string SourceSkillId { get; private set; }
+        public string SourceUnitId { get; private set; }
+        public string SourceDefinitionId { get; private set; }
         public StatusTargetScope TargetScope { get; private set; } = StatusTargetScope.Unspecified;
         public StatusMergePolicy MergePolicy { get; private set; } = StatusMergePolicy.Unspecified;
         public ShieldRefreshRule ShieldAmountRefreshPolicy { get; private set; } = ShieldRefreshRule.TakeHighest;
@@ -351,6 +444,7 @@ namespace Pakuri.InGame
         public bool Permanent { get; private set; }
         public float AppliedShieldAmount { get; private set; }
         public float RemainingShieldAmount { get; private set; }
+        private readonly float[] trackedIncomingDamageTotals = new float[Enum.GetValues(typeof(DamageAttribute)).Length];
 
         public bool IsTimed => !Permanent && DurationRemaining > 0f;
         public bool IsShieldStatus => Kind == StatusEffectKind.Shield;
@@ -376,6 +470,13 @@ namespace Pakuri.InGame
             ShieldAmountRefreshPolicy = sourceData.ShieldAmountRefreshPolicy;
         }
 
+        public void SetSourceUnit(BaseUnitRuntimeModel source)
+        {
+            var identity = source != null ? source.Identity : null;
+            SourceUnitId = identity != null ? identity.UnitId : string.Empty;
+            SourceDefinitionId = identity != null ? identity.DefinitionId : string.Empty;
+        }
+
         public void AddStacks(int stacks, int maxStacks)
         {
             var nextStacks = Stacks + System.Math.Max(0, stacks);
@@ -397,6 +498,17 @@ namespace Pakuri.InGame
         public void SetDuration(float durationSeconds)
         {
             DurationRemaining = System.Math.Max(0f, durationSeconds);
+        }
+
+        public bool ExtendDuration(float durationDelta)
+        {
+            if (Permanent || durationDelta <= 0f)
+            {
+                return false;
+            }
+
+            DurationRemaining = System.Math.Max(0f, DurationRemaining + durationDelta);
+            return true;
         }
 
         public void SetPermanent(bool permanent)
@@ -448,6 +560,33 @@ namespace Pakuri.InGame
             var consumed = System.Math.Min(RemainingShieldAmount, amount);
             RemainingShieldAmount = System.Math.Max(0f, RemainingShieldAmount - consumed);
             return consumed;
+        }
+
+        public void RecordIncomingDamage(DamageAttribute attribute, float amount)
+        {
+            if (amount <= 0f)
+            {
+                return;
+            }
+
+            var index = (int)attribute;
+            if (index < 0 || index >= trackedIncomingDamageTotals.Length)
+            {
+                return;
+            }
+
+            trackedIncomingDamageTotals[index] += amount;
+        }
+
+        public float GetTrackedIncomingDamage(DamageAttribute attribute)
+        {
+            var index = (int)attribute;
+            if (index < 0 || index >= trackedIncomingDamageTotals.Length)
+            {
+                return 0f;
+            }
+
+            return trackedIncomingDamageTotals[index];
         }
 
         public bool Tick(float deltaTime)

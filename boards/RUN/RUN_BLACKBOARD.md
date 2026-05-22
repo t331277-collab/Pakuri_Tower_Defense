@@ -4,6 +4,56 @@
 - Older run/combat flow history remains in that snapshot and earlier archives.
 - This active file now keeps only the current `NewRunScene` authority split and the surviving new-scene flow baseline.
 
+## Task: 2026-05-22 Unit-Rule Combat Execution And Auto Routing
+
+### Task title
+
+Run NewRunScene combat behavior by unit rules instead of `StageState.Combat`.
+
+### Goals
+
+- Let spawned enemies move and attack as soon as their target/range/cooldown rules allow it.
+- Keep player learned active skill cooldowns advancing independent of the Stage flow state's `Combat` label.
+- Keep selected 1P Auto off at start and when toggled off.
+- Allow automatic player skill routing only when a living enemy exists inside `MainCamera` view.
+- Pass the clicked world point into manual skill execution so click-targeted area and SingleAttack skills use the clicked location.
+- Start monster skill cooldowns when a valid cast is committed even if the hit check finds no target.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This task changes runtime execution policy only; no CSV, scene, reward, or run-session persistence fields were changed.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that enemies begin moving immediately after spawning, selected 1P Auto toggles on/off, Auto skills only fire with a visible MainCamera enemy, and clicked manual skills consume cooldown on valid casts.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/StageManager.cs:172-179` remains the state authority for `Spawning`, `Combat`, and `RewardReady`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` no longer references `StageState.Combat`, `IsCombatStageActive()`, or a serialized `StageManager` gate for runtime behavior.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now ticks learned passives, player skill execution/manual input, and `enemyCombatSystem.Tick(...)` without checking the Stage flow state.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` still rejects automatic player skill routing without a visible living enemy in `MainCamera` or while the selected 1P Auto state is off.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutionContext.cs:13-35` and `SkillExecutionSystem.cs:49-62` now carry a manual target point for clicked-position skills.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now treats committed SingleAttack, direct Beam, manual fallback Projectile, and valid Buff target attempts as routed for cooldown purposes even when a hit/status application does not occur.
+- Runtime/editor `dotnet build` commands passed with 0 errors and existing MSB3277 warnings.
+- Unity-MCP script refresh reached idle; console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-22: User reported DebugUI-learned Ariel skills were persisted into later rounds and could repeatedly execute outside intended combat conditions. Code Builder added the combat-state and visible-enemy gates plus clicked-position manual execution.
+- 2026-05-22: User clarified that `Combat` should not gate enemy or monster behavior. Code Builder removed the Stage combat-state dependency from runtime combat behavior and kept Auto routing constrained by visible MainCamera enemies.
+
 ## Task: 2026-05-22 Offering Learned Passive Runtime Effects
 
 ### Task title
@@ -730,3 +780,46 @@ Implemented and editor-verified.
 ### History
 
 - 2026-05-18: Code Builder verified CSV passive ID/value data reaches created runtime enemy models through the current runtime catalog and unit factory path.
+
+## Task: 2026-05-22 Runtime Skill Execution Cleanup
+
+### Task title
+
+Align NewRun skill execution with Self targeting, prefab scale, and beam width bonuses.
+
+### Goals
+
+- Fix Self multi-effect runtime resolution.
+- Make prefab hitbox scale use resolved radius divided by base radius.
+- Make beam width bonuses affect line hit width and prefab visual Y scale through resolved beam width.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Unity Play Mode verification remains user-owned.
+- This task does not change enemy spawn/combat state flow.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies SingleAttack prefab radius upgrades and Eve-B beam width upgrades in RunScene Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillAreaUtility.cs` resolves base radius, modified radius, and prefab scale factor.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now calls `SkillAreaUtility.ResolvePrefabScaleFactor(...)` for SingleAttack prefab hitbox scaling.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` resolves beam width with `1f + snapshot.BeamWidthBonus`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameLineAttackActor.cs` already scales sprite Y from resolved `width / sprite.bounds.size.y`, so `beam_width_bonus=0.3` increases the visual width and hit width by 30%.
+- Runtime/editor builds passed with 0 errors; existing MSB3277 warnings remain.
+- Unity-MCP forced refresh produced no remaining missing-type compiler errors after importing the new utility scripts.
+
+### History
+
+- 2026-05-22: User approved the previously discussed order: Self target fix, prefab scale cleanup, utility extraction, and beam width bonus support.

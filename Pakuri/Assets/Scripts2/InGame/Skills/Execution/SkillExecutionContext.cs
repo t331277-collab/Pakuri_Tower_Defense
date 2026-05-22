@@ -9,7 +9,9 @@ namespace Pakuri.InGame
             SkillRuntimeInstance runtime,
             float deltaTime,
             bool hasManualAimDirection = false,
-            UnityEngine.Vector2 manualAimDirection = default)
+            UnityEngine.Vector2 manualAimDirection = default,
+            bool hasManualTargetPoint = false,
+            UnityEngine.Vector2 manualTargetPoint = default)
         {
             CombatManager = combatManager;
             Roster = roster;
@@ -18,6 +20,8 @@ namespace Pakuri.InGame
             DeltaTime = deltaTime;
             HasManualAimDirection = hasManualAimDirection;
             ManualAimDirection = manualAimDirection;
+            HasManualTargetPoint = hasManualTargetPoint;
+            ManualTargetPoint = manualTargetPoint;
         }
 
         public InGameCombatManager CombatManager { get; }
@@ -27,6 +31,8 @@ namespace Pakuri.InGame
         public float DeltaTime { get; }
         public bool HasManualAimDirection { get; }
         public UnityEngine.Vector2 ManualAimDirection { get; }
+        public bool HasManualTargetPoint { get; }
+        public UnityEngine.Vector2 ManualTargetPoint { get; }
 
         public BaseUnitRuntimeModel Caster => CasterEntry != null ? CasterEntry.Model : null;
         public SkillData SkillData => Runtime != null ? Runtime.Data : null;

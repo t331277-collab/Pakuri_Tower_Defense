@@ -21,6 +21,10 @@ namespace Pakuri.InGame
         private float damage;
         private DamageAttribute attribute;
         private ProjectileStatusHitSpec statusSpec;
+        private BaseUnitRuntimeModel sourceModel;
+        private bool criticalAllowed;
+        private float critChanceBonus;
+        private float critDamageBonus;
 
         public void Initialize(
             InGameCombatManager manager,
@@ -35,7 +39,11 @@ namespace Pakuri.InGame
             float tickIntervalSeconds,
             float damagePerTick,
             DamageAttribute damageAttribute,
-            ProjectileStatusHitSpec onHitStatus)
+            ProjectileStatusHitSpec onHitStatus,
+            BaseUnitRuntimeModel source,
+            bool allowCritical,
+            float criticalChanceBonus,
+            float criticalDamageBonus)
         {
             combatManager = manager;
             casterEntry = sourceEntry;
@@ -51,6 +59,10 @@ namespace Pakuri.InGame
             damage = Mathf.Max(0f, damagePerTick);
             attribute = damageAttribute;
             statusSpec = onHitStatus;
+            sourceModel = source;
+            criticalAllowed = allowCritical;
+            critChanceBonus = criticalChanceBonus;
+            critDamageBonus = criticalDamageBonus;
 
             ConfigureVisual();
             ApplyLineTick(
@@ -64,7 +76,11 @@ namespace Pakuri.InGame
                 width,
                 damage,
                 attribute,
-                statusSpec);
+                statusSpec,
+                sourceModel,
+                criticalAllowed,
+                critChanceBonus,
+                critDamageBonus);
         }
 
         public static bool ApplyLineTick(
@@ -78,7 +94,11 @@ namespace Pakuri.InGame
             float lineWidth,
             float damagePerTick,
             DamageAttribute damageAttribute,
-            ProjectileStatusHitSpec onHitStatus)
+            ProjectileStatusHitSpec onHitStatus,
+            BaseUnitRuntimeModel source,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus)
         {
             if (manager == null || sourceEntry == null || unitRoster == null || lineDirection.sqrMagnitude <= 0.0001f)
             {
@@ -108,7 +128,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                manager.ApplyDamage(target.Model, damagePerTick, damageAttribute);
+                manager.ApplyDamage(target.Model, damagePerTick, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus);
                 TryApplyStatus(manager, target.Model, onHitStatus);
                 routed = true;
             }
@@ -141,7 +161,11 @@ namespace Pakuri.InGame
                     width,
                     damage,
                     attribute,
-                    statusSpec);
+                    statusSpec,
+                    sourceModel,
+                    criticalAllowed,
+                    critChanceBonus,
+                    critDamageBonus);
             }
 
             if (remainingDuration <= 0f)
@@ -199,24 +223,7 @@ namespace Pakuri.InGame
             BaseUnitRuntimeModel target,
             ProjectileStatusHitSpec status)
         {
-            if (manager == null || target == null || status == null || !status.Enabled)
-            {
-                return;
-            }
-
-            if (Random.value > Mathf.Clamp01(status.Chance))
-            {
-                return;
-            }
-
-            manager.ApplyStatus(
-                target,
-                status.StatusData,
-                status.Stacks,
-                status.DurationSeconds,
-                status.MaxStacks,
-                status.Permanent,
-                status.RefreshDuration);
+            SkillStatusApplyUtility.TryApplyStatus(manager, target, status);
         }
     }
 }

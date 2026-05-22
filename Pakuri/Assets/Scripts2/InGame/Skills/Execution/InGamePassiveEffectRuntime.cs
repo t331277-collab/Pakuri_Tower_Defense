@@ -53,6 +53,7 @@ namespace Pakuri.InGame
 
             var context = new SkillExecutionContext(combatManager, roster, ownerEntry, null, 0f);
             var fallbackCenter = ownerEntry.Transform != null ? (Vector2)ownerEntry.Transform.position : Vector2.zero;
+            var snapshot = BuildPassiveChoiceSnapshot(owner, passiveId);
             for (var i = 0; i < passive.PassiveEffects.Length; i++)
             {
                 var effect = passive.PassiveEffects[i];
@@ -65,7 +66,7 @@ namespace Pakuri.InGame
 
                 if (!effect.ApplyOnce)
                 {
-                    SkillMultiEffectExecutor.Execute(context, null, new[] { effect }, fallbackCenter);
+                    SkillMultiEffectExecutor.Execute(context, snapshot, new[] { effect }, fallbackCenter);
                     continue;
                 }
 
@@ -75,9 +76,41 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                SkillMultiEffectExecutor.Execute(context, null, new[] { effect }, fallbackCenter);
+                SkillMultiEffectExecutor.Execute(context, snapshot, new[] { effect }, fallbackCenter);
                 appliedOneShotEffectKeys?.Add(key);
             }
+        }
+
+        private static SkillExecutionSnapshot BuildPassiveChoiceSnapshot(MonsterUnitRuntimeModel owner, string passiveId)
+        {
+            var snapshot = new SkillExecutionSnapshot(null);
+            var chosenChoiceIds = owner != null && owner.State != null ? owner.State.ChosenChoiceIds : null;
+            if (chosenChoiceIds == null || chosenChoiceIds.Count == 0 || string.IsNullOrWhiteSpace(passiveId))
+            {
+                return snapshot;
+            }
+
+            var manager = PakuriDataManager.Instance;
+            foreach (var choiceId in chosenChoiceIds)
+            {
+                if (manager == null || !manager.TryGetData(choiceId, out SkillChoiceDefinition choice) || choice == null)
+                {
+                    continue;
+                }
+
+                var targetSkillId = !string.IsNullOrWhiteSpace(choice.TargetSkillId)
+                    ? choice.TargetSkillId
+                    : choice.SkillId;
+                if (!string.Equals(targetSkillId, passiveId, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                snapshot.AddActiveChoiceId(choice.ChoiceId);
+                snapshot.ApplyChoiceDefinition(choice);
+            }
+
+            return snapshot;
         }
 
         private static bool HasAllLearnedPassives(MonsterUnitRuntimeModel owner, string passiveList)

@@ -1,11 +1,33 @@
+using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Pakuri.Combat;
+using AttributeDefenseSet = Pakuri.Combat.DamageCalculator.AttributeDefenseSet;
+using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace Pakuri.InGame
 {
+    public readonly struct DamageApplicationOptions
+    {
+        public DamageApplicationOptions(
+            BaseUnitRuntimeModel source,
+            bool criticalAllowed = false,
+            float critChanceBonus = 0f,
+            float critDamageBonus = 0f)
+        {
+            Source = source;
+            CriticalAllowed = criticalAllowed;
+            CritChanceBonus = critChanceBonus;
+            CritDamageBonus = critDamageBonus;
+        }
+
+        public BaseUnitRuntimeModel Source { get; }
+        public bool CriticalAllowed { get; }
+        public float CritChanceBonus { get; }
+        public float CritDamageBonus { get; }
+    }
+
     [DisallowMultipleComponent]
     public sealed class InGameCombatManager : MonoBehaviour
     {
@@ -60,7 +82,7 @@ namespace Pakuri.InGame
                     Time.deltaTime,
                     logSkillExecutionContracts,
                     ShouldAutoRouteSkill);
-                HandleSelectedPlayerPrimarySkillInput();
+                HandleSelectedPlayerManualSkillInput();
             }
 
             if (enemyCombatSimulationEnabled)
@@ -73,7 +95,13 @@ namespace Pakuri.InGame
 
         public UnitRosterEntry RegisterPlayerMonster(MonsterUnitRuntimeModel model, MonsterUnitActor actor)
         {
-            return roster.Register(model, actor);
+            var entry = roster.Register(model, actor);
+            if (IsSelectedPlayerModel(model))
+            {
+                SetSelectedPlayerAutoSkillMode(playerAutoSkillEnabled);
+            }
+
+            return entry;
         }
 
         public UnitRosterEntry RegisterEnemy(EnemyUnitRuntimeModel model, EnemyUnitActor actor)
@@ -91,9 +119,26 @@ namespace Pakuri.InGame
             float baseDamage,
             DamageAttribute attribute = DamageAttribute.Physical)
         {
-            var result = resourceMutations.ApplyDamage(target, baseDamage, attribute);
+            return ApplyDamage(target, baseDamage, attribute, null);
+        }
+
+        public InGameResourceChangeResult ApplyDamage(
+            BaseUnitRuntimeModel target,
+            float baseDamage,
+            DamageAttribute attribute,
+            BaseUnitRuntimeModel source,
+            bool criticalAllowed = false,
+            float critChanceBonus = 0f,
+            float critDamageBonus = 0f)
+        {
+            var depletedShields = new List<UnitStatusRuntime>();
+            var absorbedShields = new List<ShieldAbsorbRecord>();
+            var options = new DamageApplicationOptions(source, criticalAllowed, critChanceBonus, critDamageBonus);
+            var result = resourceMutations.ApplyDamage(target, baseDamage, attribute, options, depletedShields, absorbedShields);
             RefreshActorIfChanged(result);
             ShowDamageIfChanged(result);
+            DispatchShieldAbsorbTriggers(target, source, absorbedShields);
+            DispatchShieldExpireTriggers(target, depletedShields);
             RemoveUnitIfDead(result);
             return result;
         }
@@ -195,7 +240,8 @@ namespace Pakuri.InGame
             int stacks = 1,
             int maxStacks = 0,
             bool permanent = false,
-            bool refreshDuration = true)
+            bool refreshDuration = true,
+            BaseUnitRuntimeModel source = null)
         {
             if (target == null || target.Statuses == null || statusData == null || statusData.Kind != StatusEffectKind.Shield)
             {
@@ -211,10 +257,55 @@ namespace Pakuri.InGame
                 permanent,
                 refreshDuration,
                 adjustedShieldAmount);
+            if (status != null)
+            {
+                status.SetSourceUnit(source);
+            }
+
             resourceMutations.SynchronizeShieldView(target);
             RefreshUnitActor(target);
             SpawnOrRefreshStatusEffectVisual(target, statusData, status);
             return status;
+        }
+
+        public bool ExtendStatusDuration(BaseUnitRuntimeModel target, string statusTag, float durationDelta)
+        {
+            return StatusEffectUtility.TryParse(statusTag, out var kind)
+                && ExtendStatusDuration(target, kind, durationDelta);
+        }
+
+        public bool ExtendStatusDuration(BaseUnitRuntimeModel target, StatusEffectKind kind, float durationDelta)
+        {
+            if (target == null || target.Statuses == null || kind == StatusEffectKind.None || durationDelta <= 0f)
+            {
+                return false;
+            }
+
+            var changed = target.Statuses.ExtendDurations(
+                kind,
+                durationDelta,
+                status => status != null && !status.Permanent && (!status.IsShieldStatus || status.RemainingShieldAmount > 0f));
+            if (!changed)
+            {
+                return false;
+            }
+
+            resourceMutations.SynchronizeShieldView(target);
+            RefreshUnitActor(target);
+
+            var activeStatuses = target.Statuses.ActiveStatuses;
+            for (var i = 0; i < activeStatuses.Count; i++)
+            {
+                var status = activeStatuses[i];
+                if (status == null || status.Kind != kind || status.SourceData == null)
+                {
+                    continue;
+                }
+
+                SpawnOrRefreshStatusEffectVisual(target, status.SourceData, status);
+            }
+
+            return true;
         }
 
         public void ResetPassiveEffectState()
@@ -291,7 +382,22 @@ namespace Pakuri.InGame
 
         public void EnablePlayerAutoSkillMode()
         {
-            playerAutoSkillEnabled = true;
+            SetSelectedPlayerAutoSkillMode(true);
+        }
+
+        public void ToggleSelectedPlayerAutoSkillMode()
+        {
+            SetSelectedPlayerAutoSkillMode(!playerAutoSkillEnabled);
+        }
+
+        public void SetSelectedPlayerAutoSkillMode(bool enabled)
+        {
+            playerAutoSkillEnabled = enabled;
+            var player = GetSelectedPlayerEntry();
+            if (player != null && player.Model != null)
+            {
+                player.Model.AutoSkillEnabled = enabled;
+            }
         }
 
         public float ResolveProjectileDestroyBoundaryX()
@@ -333,29 +439,45 @@ namespace Pakuri.InGame
             return RefreshUnitActor(entry);
         }
 
-        private void HandleSelectedPlayerPrimarySkillInput()
+        private void HandleSelectedPlayerManualSkillInput()
         {
-            if (playerAutoSkillEnabled || !IsPrimaryMouseHeld() || IsPointerOverUi())
+            if (playerAutoSkillEnabled || !IsPrimaryMousePressedThisFrame() || IsPointerOverUi())
             {
                 return;
             }
 
             var player = GetSelectedPlayerEntry();
-            var runtime = FindActiveSkillRuntime(player, InGameSkillSlot.A);
-            var aimDirection = ResolveMouseAimDirection(player);
-            if (player == null || runtime == null || aimDirection.sqrMagnitude <= 0.0001f)
+            if (player == null || player.Model == null || player.Model.SkillRuntime == null)
             {
                 return;
             }
 
-            skillExecution.TryExecuteManual(
-                player,
-                runtime,
-                roster,
-                this,
-                Time.deltaTime,
-                aimDirection,
-                logSkillExecutionContracts);
+            var targetPoint = ResolveMouseWorldPoint();
+            var aimDirection = ResolveAimDirection(player, targetPoint);
+            if (aimDirection.sqrMagnitude <= 0.0001f)
+            {
+                return;
+            }
+
+            var activeSkills = player.Model.SkillRuntime.ActiveSkills;
+            for (var i = 0; i < activeSkills.Count; i++)
+            {
+                var runtime = activeSkills[i];
+                if (runtime == null)
+                {
+                    continue;
+                }
+
+                skillExecution.TryExecuteManual(
+                    player,
+                    runtime,
+                    roster,
+                    this,
+                    Time.deltaTime,
+                    aimDirection,
+                    targetPoint,
+                    logSkillExecutionContracts);
+            }
         }
 
         private void SpawnOrRefreshStatusEffectVisual(
@@ -414,15 +536,15 @@ namespace Pakuri.InGame
 
         private bool ShouldAutoRouteSkill(UnitRosterEntry entry, SkillRuntimeInstance runtime)
         {
-            return !IsSelectedPlayerPrimarySkill(entry, runtime) || playerAutoSkillEnabled;
-        }
+            if (!HasVisibleLivingEnemyInMainCamera()
+                || entry == null
+                || entry.Model == null
+                || !entry.Model.AutoSkillEnabled)
+            {
+                return false;
+            }
 
-        private bool IsSelectedPlayerPrimarySkill(UnitRosterEntry entry, SkillRuntimeInstance runtime)
-        {
-            return entry != null
-                && runtime != null
-                && runtime.Slot == InGameSkillSlot.A
-                && entry == GetSelectedPlayerEntry();
+            return !IsSelectedPlayerEntry(entry) || playerAutoSkillEnabled;
         }
 
         private void TickUnitStatuses(float deltaTime)
@@ -441,11 +563,74 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                if (model.Statuses.Tick(deltaTime))
+                var removedStatuses = new List<UnitStatusRuntime>();
+                if (model.Statuses.Tick(deltaTime, removedStatuses))
                 {
                     resourceMutations.SynchronizeShieldView(model);
                     RefreshUnitActor(model);
+                    DispatchStatusExpireTriggers(model, removedStatuses);
+                    DispatchShieldExpireTriggers(model, removedStatuses);
                 }
+            }
+        }
+
+        private void DispatchShieldAbsorbTriggers(
+            BaseUnitRuntimeModel shieldTarget,
+            BaseUnitRuntimeModel attacker,
+            IReadOnlyList<ShieldAbsorbRecord> absorbedShields)
+        {
+            if (shieldTarget == null || absorbedShields == null || absorbedShields.Count == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < absorbedShields.Count; i++)
+            {
+                var record = absorbedShields[i];
+                if (record.Status == null || record.AbsorbedAmount <= 0f)
+                {
+                    continue;
+                }
+
+                SkillTriggerRuntime.ExecuteShieldAbsorb(this, roster, shieldTarget, attacker, record.Status, record.AbsorbedAmount);
+            }
+        }
+
+        private void DispatchShieldExpireTriggers(BaseUnitRuntimeModel shieldTarget, IReadOnlyList<UnitStatusRuntime> removedStatuses)
+        {
+            if (shieldTarget == null || removedStatuses == null || removedStatuses.Count == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < removedStatuses.Count; i++)
+            {
+                var status = removedStatuses[i];
+                if (status == null || !status.IsShieldStatus)
+                {
+                    continue;
+                }
+
+                SkillTriggerRuntime.ExecuteShieldExpire(this, roster, shieldTarget, status);
+            }
+        }
+
+        private void DispatchStatusExpireTriggers(BaseUnitRuntimeModel statusOwner, IReadOnlyList<UnitStatusRuntime> removedStatuses)
+        {
+            if (statusOwner == null || removedStatuses == null || removedStatuses.Count == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < removedStatuses.Count; i++)
+            {
+                var status = removedStatuses[i];
+                if (status == null)
+                {
+                    continue;
+                }
+
+                SkillTriggerRuntime.ExecuteStatusExpire(this, roster, statusOwner, status);
             }
         }
 
@@ -454,51 +639,46 @@ namespace Pakuri.InGame
             return roster.Players.Count > 0 ? roster.Players[0] : null;
         }
 
-        private static SkillRuntimeInstance FindActiveSkillRuntime(UnitRosterEntry entry, InGameSkillSlot slot)
+        private bool IsSelectedPlayerEntry(UnitRosterEntry entry)
         {
-            var runtimeSet = entry != null && entry.Model != null ? entry.Model.SkillRuntime : null;
-            var activeSkills = runtimeSet != null ? runtimeSet.ActiveSkills : null;
-            if (activeSkills == null)
-            {
-                return null;
-            }
-
-            for (var i = 0; i < activeSkills.Count; i++)
-            {
-                var runtime = activeSkills[i];
-                if (runtime != null && runtime.Slot == slot)
-                {
-                    return runtime;
-                }
-            }
-
-            return null;
+            return entry != null && entry == GetSelectedPlayerEntry();
         }
 
-        private Vector2 ResolveMouseAimDirection(UnitRosterEntry player)
+        private static bool IsSelectedPlayerModel(BaseUnitRuntimeModel model)
+        {
+            return model != null
+                && model.Identity != null
+                && model.Identity.Side == UnitSide.Player
+                && model.Identity.SlotIndex == 0;
+        }
+
+        private Vector2 ResolveAimDirection(UnitRosterEntry player, Vector2 targetPoint)
         {
             if (player == null || player.Transform == null)
             {
                 return Vector2.zero;
             }
 
+            return targetPoint - (Vector2)player.Transform.position;
+        }
+
+        private Vector2 ResolveMouseWorldPoint()
+        {
             var cameraToUse = inputCamera != null ? inputCamera : Camera.main;
             if (cameraToUse == null)
             {
-                return Vector2.right;
+                return Vector2.zero;
             }
 
             var mouse = Mouse.current.position.ReadValue();
             var world = cameraToUse.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, -cameraToUse.transform.position.z));
-            var direction = world - player.Transform.position;
-            direction.z = 0f;
-            return direction;
+            return world;
         }
 
-        private static bool IsPrimaryMouseHeld()
+        private static bool IsPrimaryMousePressedThisFrame()
         {
             var mouse = Mouse.current;
-            return mouse != null && mouse.leftButton.isPressed;
+            return mouse != null && mouse.leftButton.wasPressedThisFrame;
         }
 
         private static bool IsPointerOverUi()
@@ -595,43 +775,101 @@ namespace Pakuri.InGame
 
             return effectManager;
         }
-    }
 
-    public sealed class UnitResourceMutationService
-    {
-        public InGameResourceChangeResult ApplyDamage(
-            BaseUnitRuntimeModel target,
-            float baseDamage,
-            DamageAttribute attribute = DamageAttribute.Physical)
+        private bool HasVisibleLivingEnemyInMainCamera()
         {
-            if (target == null || target.Resources == null || baseDamage <= 0f)
+            var cameraToUse = Camera.main != null ? Camera.main : inputCamera;
+            var enemies = roster.Enemies;
+            for (var i = 0; i < enemies.Count; i++)
             {
-                return InGameResourceChangeResult.Unchanged(target);
+                var enemy = enemies[i];
+                if (enemy == null || !enemy.IsAlive || enemy.Transform == null)
+                {
+                    continue;
+                }
+
+                if (cameraToUse == null)
+                {
+                    return true;
+                }
+
+                var viewport = cameraToUse.WorldToViewportPoint(enemy.Transform.position);
+                if (viewport.z >= 0f
+                    && viewport.x >= 0f
+                    && viewport.x <= 1f
+                    && viewport.y >= 0f
+                    && viewport.y <= 1f)
+                {
+                    return true;
+                }
             }
 
-            var resources = target.Resources;
-            var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
-            var beforeShield = ComputeTotalShield(target);
-            var finalDamage = Mathf.Round(ResolveDamageAfterDefense(target, baseDamage, attribute) * ResolveIncomingDamageMultiplier(target, attribute));
-            var statusShieldDamage = target.Statuses != null ? target.Statuses.ConsumeShield(finalDamage) : 0f;
-            var damageAfterStatusShield = Mathf.Max(0f, finalDamage - statusShieldDamage);
-            var directShieldBefore = Mathf.Max(0f, resources.DirectShield);
-            var directShieldDamage = Mathf.Min(directShieldBefore, damageAfterStatusShield);
-            var remainingDamage = Mathf.Max(0f, damageAfterStatusShield - directShieldDamage);
-
-            resources.DirectShield = RoundResource(Mathf.Max(0f, directShieldBefore - directShieldDamage));
-            resources.CurrentHealth = RoundResource(Mathf.Max(0f, beforeHealth - remainingDamage));
-            SynchronizeShieldView(target);
-
-            return new InGameResourceChangeResult(
-                target,
-                beforeHealth,
-                resources.CurrentHealth,
-                beforeShield,
-                resources.CurrentShield,
-                finalDamage,
-                resources.CurrentHealth <= 0f);
+            return false;
         }
+    }
+
+        public sealed class UnitResourceMutationService
+        {
+            public InGameResourceChangeResult ApplyDamage(
+                BaseUnitRuntimeModel target,
+                float baseDamage,
+                DamageAttribute attribute = DamageAttribute.Physical)
+            {
+                return ApplyDamage(target, baseDamage, attribute, default, null, null);
+            }
+
+            public InGameResourceChangeResult ApplyDamage(
+                BaseUnitRuntimeModel target,
+                float baseDamage,
+                DamageAttribute attribute,
+                ICollection<UnitStatusRuntime> depletedShieldStatuses)
+            {
+                return ApplyDamage(target, baseDamage, attribute, default, depletedShieldStatuses, null);
+            }
+
+            public InGameResourceChangeResult ApplyDamage(
+                BaseUnitRuntimeModel target,
+                float baseDamage,
+                DamageAttribute attribute,
+                DamageApplicationOptions options,
+                ICollection<UnitStatusRuntime> depletedShieldStatuses,
+                ICollection<ShieldAbsorbRecord> absorbedShieldStatuses)
+            {
+                if (target == null || target.Resources == null || baseDamage <= 0f)
+                {
+                    return InGameResourceChangeResult.Unchanged(target);
+                }
+
+                var resources = target.Resources;
+                var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
+                var beforeShield = ComputeTotalShield(target);
+                var finalDamage = ResolveFinalDamage(target, baseDamage, attribute, options);
+                if (target.Statuses != null)
+                {
+                    target.Statuses.RecordIncomingDamage(attribute, finalDamage);
+                }
+
+                var statusShieldDamage = target.Statuses != null
+                    ? target.Statuses.ConsumeShield(finalDamage, depletedShieldStatuses, absorbedShieldStatuses)
+                    : 0f;
+                var damageAfterStatusShield = Mathf.Max(0f, finalDamage - statusShieldDamage);
+                var directShieldBefore = Mathf.Max(0f, resources.DirectShield);
+                var directShieldDamage = Mathf.Min(directShieldBefore, damageAfterStatusShield);
+                var remainingDamage = Mathf.Max(0f, damageAfterStatusShield - directShieldDamage);
+
+                resources.DirectShield = RoundResource(Mathf.Max(0f, directShieldBefore - directShieldDamage));
+                resources.CurrentHealth = RoundResource(Mathf.Max(0f, beforeHealth - remainingDamage));
+                SynchronizeShieldView(target);
+
+                return new InGameResourceChangeResult(
+                    target,
+                    beforeHealth,
+                    resources.CurrentHealth,
+                    beforeShield,
+                    resources.CurrentShield,
+                    finalDamage,
+                    resources.CurrentHealth <= 0f);
+            }
 
         public InGameResourceChangeResult GrantShield(BaseUnitRuntimeModel target, float amount)
         {
@@ -711,15 +949,66 @@ namespace Pakuri.InGame
             DamageAttribute attribute)
         {
             var defense = target.Defenses != null ? target.Defenses.Get(attribute) : 0f;
+            defense -= StatusEffectRuntime.ResolveFlatElementResistReduction(target, attribute);
             var statusReduction = StatusEffectRuntime.ResolveElementResistReduction(target, attribute);
             defense *= Mathf.Clamp01(1f - statusReduction);
             var safeDefense = Mathf.Max(-95f, defense);
             return Mathf.Max(0f, baseDamage) * (100f / (100f + safeDefense));
         }
 
-        private static float ResolveIncomingDamageMultiplier(BaseUnitRuntimeModel target, DamageAttribute attribute)
+        private static float ResolveFinalDamage(
+            BaseUnitRuntimeModel target,
+            float baseDamage,
+            DamageAttribute attribute,
+            DamageApplicationOptions options)
         {
-            var statusMultiplier = StatusEffectRuntime.ResolveIncomingDamageMultiplier(target, attribute);
+            if (options.CriticalAllowed && options.Source != null)
+            {
+                var sourceStats = options.Source.Stats;
+                var sourceCriticalChance = (sourceStats != null ? sourceStats.CriticalChance : DamageCalculator.BaseCriticalChance)
+                    + StatusEffectRuntime.ResolveCriticalChanceBonus(options.Source);
+                var sourceCriticalDamage = sourceStats != null ? sourceStats.CriticalDamage : DamageCalculator.BaseCriticalMultiplier;
+                var targetCriticalResistance = (target != null && target.Stats != null ? target.Stats.CriticalResistance : 0f)
+                    + StatusEffectRuntime.ResolveCriticalResistanceBonus(target);
+                var criticalDamageTakenBonus = StatusEffectRuntime.ResolveCriticalDamageTakenBonus(target);
+                var damage = DamageCalculator.Resolve(
+                    Mathf.Max(0f, baseDamage),
+                    attribute,
+                    target != null ? ToAttributeDefenseSet(target.Defenses) : null,
+                    flatDefenseReduction: StatusEffectRuntime.ResolveFlatElementResistReduction(target, attribute),
+                    percentDefenseReductions: new[] { StatusEffectRuntime.ResolveElementResistReduction(target, attribute) },
+                    criticalChanceBonus: sourceCriticalChance + options.CritChanceBonus - DamageCalculator.BaseCriticalChance,
+                    criticalMultiplierBonus: sourceCriticalDamage + options.CritDamageBonus - DamageCalculator.BaseCriticalMultiplier,
+                    targetCriticalResistance: targetCriticalResistance,
+                    criticalDamageTakenBonus: criticalDamageTakenBonus,
+                    finalDamageMultiplier: ResolveIncomingDamageMultiplier(target, options.Source, attribute)).FinalDamage;
+                return Mathf.Round(Mathf.Max(0f, damage));
+            }
+
+            return Mathf.Round(ResolveDamageAfterDefense(target, baseDamage, attribute) * ResolveIncomingDamageMultiplier(target, options.Source, attribute));
+        }
+
+        private static AttributeDefenseSet ToAttributeDefenseSet(UnitDefenseRuntime defenses)
+        {
+            if (defenses == null)
+            {
+                return null;
+            }
+
+            return new AttributeDefenseSet
+            {
+                Physical = defenses.Physical,
+                Fire = defenses.Fire,
+                Lightning = defenses.Lightning,
+                Ice = defenses.Ice,
+                Darkness = defenses.Darkness,
+                Holy = defenses.Holy
+            };
+        }
+
+        private static float ResolveIncomingDamageMultiplier(BaseUnitRuntimeModel target, BaseUnitRuntimeModel source, DamageAttribute attribute)
+        {
+            var statusMultiplier = StatusEffectRuntime.ResolveIncomingDamageMultiplier(target, source, attribute);
             var enemy = target as EnemyUnitRuntimeModel;
             if (enemy == null)
             {

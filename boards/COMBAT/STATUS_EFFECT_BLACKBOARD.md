@@ -4,6 +4,280 @@
 - Older broad combat/status history remains in `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 
+## Task: 2026-05-22 Dynamic Shield Count And Source-Conditional Damage Runtime
+
+### Task title
+
+Extend the shared combat/status runtime so choice snapshots can count shielded allies and mark statuses can grant incoming-damage bonuses only from shielded attackers.
+
+### Goals
+
+- Let cast-time choice resolution count units on a selected side that currently carry a given status.
+- Let applied status data carry a required source status tag plus a conditional incoming-damage bonus.
+- Route the live damage path through the new source-target conditional status rule without adding Ariel-specific branches.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The implementation must remain generic for future count-based damage and source-target status-condition skills.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that shield gain/loss immediately changes `ariel-a-trait-5` damage on the next cast because the count is evaluated from live roster status state.
+- User verifies in Play Mode that Ariel-D's mark grants the extra damage only from attackers that currently have `shield`, not from unshielded attackers.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutionSystem.cs:116`, `:216-285` now resolve active choices with `UnitRosterService`, count matching status holders, and apply the resulting dynamic damage multiplier to the `SkillExecutionSnapshot`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:291-337` now clones status data with `ConditionalSourceStatusTag` and `ConditionalDamageTakenBonus` overrides from the active snapshot.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectRuntime.cs:234-246`, `:366-374` now evaluate target-side incoming-damage bonuses against the live attacker source and the required source status tag.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:965-1011` now passes `options.Source` into the final damage resolution and into `StatusEffectRuntime.ResolveIncomingDamageMultiplier(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillStatusApplyUtility.cs` now classifies positive conditional incoming-damage bonuses as debuff-like status payloads so harmful-source rules stay routed through the shared helper.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` assembly-version warnings remained.
+
+### History
+
+- 2026-05-22: User asked Code Builder to implement the last two Ariel rows that still required additional shared common logic.
+
+## Task: 2026-05-22 Passive Choice Gating, Ailment Resistance, And Flat Resist Runtime
+
+### Task title
+
+Extend the shared status runtime so passive-choice-gated Ariel effects can apply crit chance, ailment resistance, and flat Holy resistance reduction through CSV-owned rows.
+
+### Goals
+
+- Let passive effect rows see the owner's chosen passive choices.
+- Let shield or effect-authored statuses grant ailment resistance and reduce harmful status application chance.
+- Let status effects add crit chance and flat element-resistance reduction through the shared damage/status path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The implementation must remain generic for future passive-choice and resistance-based skills.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because the user explicitly told Builder not to run Reviewer.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies `ariel-b-master-1` ailment resistance on shielded allies, `ariel-f-trait-3` crit chance on Holy-skill allies, and `ariel-i-trait-3` flat Holy resistance reduction on Holy Exposure targets.
+- If future designs need ailment resistance to affect non-skill status sources, route those sources through the same shared application helper before adding new per-skill handling.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGamePassiveEffectRuntime.cs:56-106` now builds a `SkillExecutionSnapshot` from chosen passive choices before executing passive effect rows.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:1439-1550` now supports `condition_skill_attribute`, active-skill-attribute checks, and runtime status payload mapping for crit chance, ailment resistance, and flat element resistance reduction.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectRuntime.cs:222-262` now resolves shared crit chance bonus, flat element resistance reduction, and ailment resistance bonuses from active statuses.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillStatusApplyUtility.cs:18-48` now subtracts `ResolveAilmentResistanceBonus(...)` from harmful status application chance instead of ignoring runtime resistance modifiers.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:946-988` now routes final damage through flat element-resistance reduction before incoming-damage modifiers and crit resolution.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` assembly-version warnings remained.
+
+### History
+
+- 2026-05-22: User asked Code Builder to implement the Ariel rows that were previously classified as CSV-only or needing a small shared runtime contract.
+
+## Task: 2026-05-22 Shield Absorb, Status Expire, Crit Damage, And Duration Extension Runtime
+
+### Task title
+
+Extend the shared combat/status runtime for shield-absorb triggers, status-expire triggers, crit-aware skill damage, tracked incoming damage, and status-duration extension.
+
+### Goals
+
+- Dispatch reusable `OnShieldAbsorb` triggers with attacker, shield owner, and absorbed amount context.
+- Dispatch reusable `OnStatusExpire` triggers for non-shield statuses.
+- Record tracked incoming damage on active statuses so expiry bursts can resolve from stored totals.
+- Apply critical chance/damage in the live InGame damage path instead of leaving crit fields data-only.
+- Provide a shared runtime API to extend active status durations, including shield statuses.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The work must remain reusable for future non-Ariel skills.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because the user explicitly said not to run it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- Future absorb-reflect or mark-expiry skills should add CSV rows against these shared contracts instead of introducing skill-specific runtime branches.
+- If future designs need tracked damage by additional dimensions beyond `DamageAttribute`, extend the shared tracker structure before adding more trigger-specific logic.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:11-13` defines `DamageApplicationOptions`; `:135-140` collects absorbed shield records and dispatches shield-absorb triggers; `:271-277` adds shared `ExtendStatusDuration(...)`; `:571` dispatches status-expire triggers; `:834-849` records incoming damage before shield consumption; `:958-962` resolves crit-aware final damage.
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs` now stores per-status tracked incoming damage, exposes `ExtendDuration(...)`, and adds `ConsumeShield(...)` / `RecordIncomingDamage(...)` support used by the combat manager.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillTriggerRuntime.cs:82-133` adds `ExecuteShieldAbsorb(...)` and `ExecuteStatusExpire(...)`; `:390-396` resolves `ShieldAbsorbedAmount` and `TrackedIncomingDamage`; `:515-518` prefers the event target when trigger targeting requires it.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now forwards crit settings/source through projectile, zone, line, prefab-hitbox, and limited-target damage application paths, and `SkillMultiEffectExecutor` now supports `ExtendStatusDuration`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs`, `InGameLineAttackActor.cs`, and `InGameZoneSkillActor.cs` now carry critical configuration through their shared damage-application calls.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` assembly-version warnings remained.
+
+### History
+
+- 2026-05-22: User asked Code Builder to implement the previously proposed reusable runtime support for Ariel shield reflection, mark expiry burst, mark crit amplification, target-count bonus use, and ally shield-duration extension.
+
+## Task: 2026-05-22 Shield Expiry Trigger Dispatch
+
+### Task title
+
+Dispatch shield-expiry trigger skills from shared status runtime.
+
+### Goals
+
+- Preserve shield source unit and source definition on shield statuses so expiry effects can resolve the caster.
+- Dispatch `OnShieldExpire` when shield statuses end by duration or are fully consumed by damage.
+- Route Ariel-B trait 4 through the same generic trigger runtime as other CSV trigger rows.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Keep shield expiry dispatch generic in status/combat runtime; no Ariel-only branch.
+- Shield status UI/Play Mode behavior must be verified by the user in Unity.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies `ariel-b-trait-4` for both natural shield timeout and full shield depletion.
+- Inspect future shield-reflection or absorb-trigger requests separately because they need different event payload semantics than `OnShieldExpire`.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:100-104` collects fully depleted shield statuses during damage and dispatches shield-expiry triggers.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:198-225` records shield status source metadata through the `ApplyShieldStatus(..., source)` path.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:489-499` collects duration-expired statuses during status ticking and dispatches shield-expiry triggers.
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs:164-179` adds a status tick overload that returns removed statuses, and `:275-291` adds a shield consume overload that returns fully depleted shield statuses.
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs:401` stores shield source unit/definition metadata.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillTriggerRuntime.cs:36` handles `ExecuteShieldExpire(...)`, and `:334-384` applies prefab-hitbox damage to overlapped targets.
+- Runtime and editor `dotnet build` commands passed with 0 errors and existing MSB3277 warnings.
+
+### History
+
+- 2026-05-22: User asked to implement `ariel-b-trait-4` as an `OnShieldExpire` trigger skill using a SingleAttack-style prefab hitbox.
+
+## Task: 2026-05-22 Ariel Status Duration And Shield Snapshot Runtime
+
+### Task title
+
+Apply choice status duration modifiers and shield snapshot modifiers through shared runtime paths.
+
+### Goals
+
+- Let choice `duration_bonus` affect status duration for status-applying skills such as Ariel-D.
+- Let shield skills use choice damage/duration modifiers for shield amount and shield duration.
+- Let shield skills run generic multi-effect rows after successful shield application.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Keep implementation generic in `SkillExecutors.cs`; no Ariel-only executor branch.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies Ariel-B trait 1/2/5 and master 1 shield behavior plus Ariel-D trait 3 duration in Play Mode.
+- Keep event-trigger shield effects out of CSV until a shared trigger contract exists.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:229-247` now adjusts resolved status duration by `SkillExecutionSnapshot.DurationMultiplier` and `DurationBonus`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:1701-1718` now resolves shield amount/duration through snapshot modifiers.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:1757-1764` now runs `SkillMultiEffectExecutor.Execute(...)` for routed shield skills.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:1809-1820` now lets `ResolveShield(...)` apply snapshot base-damage and damage-multiplier modifiers.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:25-26` encode Ariel-D Holy Exposure bonus and duration support.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:10-15` encode Ariel-B shield modifier support state and values.
+- Runtime/editor `dotnet build` commands passed with 0 errors and existing MSB3277 warnings.
+
+### History
+
+- 2026-05-22: User asked Code Builder to implement CSV-only items first, followed by CSV plus small shared runtime extensions.
+
+## Task: 2026-05-22 SingleAttack Multi-Effect Routing And Visual Spam Guard
+
+### Task title
+
+Treat successfully applied SingleAttack support multi-effects as routed and avoid spawning base visuals when no target/effect routes.
+
+### Goals
+
+- Stop failed SingleAttack executions from repeatedly creating visuals without cooldown.
+- Let support effects such as all-ally shield/buff rows count as a routed skill execution when they actually apply.
+- Keep multi-effect visuals spawned only after their damage/status effect has a routed target.
+- Preserve shared status and shield application through `InGameCombatManager.ApplyStatus(...)` / `ApplyShieldStatus(...)`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The implementation stays generic in `SkillExecutors.cs`; no Ariel-only executor branch was added.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Ariel-C buff visuals and Ariel-E shield visuals no longer repeat every frame when the skill cannot legitimately execute.
+
+### Evidence
+
+- Before this task, `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:637` instantiated SingleAttack prefab hitbox visuals before confirming routed damage, and `SkillExecutionSystem.cs:132-134` only started cooldown when the executor returned Routed.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:689-699` now ORs SingleAttack damage/hitbox routing with `SkillMultiEffectExecutor.Execute(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:1013-1043` now returns whether any multi-effect routed or was scheduled.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:1231-1250` spawns damage multi-effect visuals only after `ApplyAreaTick(...)` routes.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:1254-1331` returns routed status effects only when at least one target received the status/shield and then spawns the matching visual.
+- Runtime/editor `dotnet build` commands passed with 0 errors and existing MSB3277 warnings.
+
+### History
+
+- 2026-05-22: User described `ariel-c` / `ariel-e` SingleAttack failures repeatedly creating buff/shield visuals without cooldown. Code Builder changed the shared SingleAttack/multi-effect routing contract so applied support effects start recovery and unrouted effects do not spawn visuals.
+
 ## Task: 2026-05-22 StatusEffectKind Mojibake Alias Cleanup
 
 ### Task title
@@ -540,3 +814,46 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-21: After Mark/Execute conversion, Ariel-D still applied through the cover-all area branch because `Area.CoverAll` ignored `target_selection`; Builder aligned the SingleAttack area cover flag with explicit target selection.
+
+## Task: 2026-05-22 Skill Targeting and Effect Utility Refactor
+
+### Task title
+
+Fix Self multi-effect targeting and route status/visual helpers through shared utilities.
+
+### Goals
+
+- Make `SkillTargetSide.Self` resolve to the caster only.
+- Keep ally/all-allies targeting behavior unchanged.
+- Centralize status application and common skill visual spawning paths.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution was not run because Reviewer stage requires explicit user permission in this repository workflow.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Self multi-effects no longer apply to all allies.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillTargetingUtility.cs` returns `new[] { caster }` for `SkillTargetSide.Self`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` delegates `FindNearestTarget`, `DirectionToTarget`, and `ResolveTargetList` to `SkillTargetingUtility`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillStatusApplyUtility.cs` now owns the shared `ApplyStatus(...)` chance path used by projectile, zone, line, and SingleAttack paths.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillVisualSpawnUtility.cs` now owns transient and attached skill visual spawning used by SingleAttack, multi-effect, buff, and shield paths.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+- Unity-MCP forced refresh removed the new utility type compile errors; remaining console entries were Unity graph/MCP client handler exceptions, not script compiler errors.
+
+### History
+
+- 2026-05-22: User requested Self target bug fix and utility extraction after Skills subtree review findings.

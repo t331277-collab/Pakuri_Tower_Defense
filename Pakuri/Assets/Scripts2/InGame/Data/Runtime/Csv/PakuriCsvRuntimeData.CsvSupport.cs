@@ -71,8 +71,8 @@ namespace Pakuri.Data
                     throw new CsvFatalException($"CSV file '{tableName}' must contain a header row and a type row.");
                 }
 
-                var headers = SplitCsvLine(lines[0]);
-                var types = SplitCsvLine(lines[1]);
+                var headers = PakuriCsvLineCodec.SplitLine(lines[0]);
+                var types = PakuriCsvLineCodec.SplitLine(lines[1]);
                 if (headers.Length == 0)
                 {
                     throw new CsvFatalException($"CSV file '{tableName}' has an empty header row.");
@@ -94,7 +94,7 @@ namespace Pakuri.Data
                         continue;
                     }
 
-                    var cells = SplitCsvLine(lines[lineIndex]);
+                    var cells = PakuriCsvLineCodec.SplitLine(lines[lineIndex]);
                     if (cells.Length != headers.Length)
                     {
                         throw new CsvFatalException(
@@ -248,7 +248,7 @@ namespace Pakuri.Data
                         $"CSV row {RowNumber} in '{TableName}' is missing value for column '{columnName}'.");
                 }
 
-                return Unescape(cells[index]);
+                return PakuriCsvLineCodec.UnescapeCell(cells[index]);
             }
 
             private static float ParseColorComponent(string value, string columnName)
@@ -262,49 +262,5 @@ namespace Pakuri.Data
             }
         }
 
-        private static string[] SplitCsvLine(string line)
-        {
-            var values = new List<string>();
-            var builder = new StringBuilder();
-            var inQuotes = false;
-
-            for (var i = 0; i < line.Length; i++)
-            {
-                var character = line[i];
-                if (character == '"')
-                {
-                    if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
-                    {
-                        builder.Append('"');
-                        i++;
-                    }
-                    else
-                    {
-                        inQuotes = !inQuotes;
-                    }
-
-                    continue;
-                }
-
-                if (character == ',' && !inQuotes)
-                {
-                    values.Add(builder.ToString());
-                    builder.Clear();
-                    continue;
-                }
-
-                builder.Append(character);
-            }
-
-            values.Add(builder.ToString());
-            return values.ToArray();
-        }
-
-        private static string Unescape(string value)
-        {
-            return string.IsNullOrEmpty(value)
-                ? string.Empty
-                : value.Replace("\\n", "\n");
-        }
     }
 }

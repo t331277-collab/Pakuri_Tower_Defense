@@ -27,6 +27,9 @@ The full pre-hierarchy task history is preserved at:
 - 2026-05-21 routing/policy status: `boards/SkillBluePrint/single-attack-blueprint.md` and `boards/SkillBluePrint/area-attack-blueprint.md` were added, and Skill Builder routing now maps `SingleAttack` and `AreaAttack` requests to those parsed-input shared-runtime contracts. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-22 cross-domain DATA/COMBAT/MON/OPS status: `boards/SkillBluePrint/multi-effect-skill-csv-blueprint.md` and `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` were added; Skill Builder routing now maps multi-effect skill work to the new blueprint; Ariel-C trait/master effects are represented as CSV effect rows and executed through shared runtime support. Detailed records are in `boards/OPS/AUTOMATION_GUIDE.md`, `boards/DATA/DATA_BLACKBOARD.md`, `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, and `boards/MON/ARIEL_MONSTER.md`.
 - 2026-05-22 cross-domain DATA/COMBAT/MON/OPS status: multi-effect rows now separate application target from visual center/anchor with `center_mode` and `visual_anchor_mode`; Ariel-C ally buff visuals use `Assets/Prefab/Skill/Ariel/Ariel_C-Buff.prefab` on applied ally targets, while Ariel-C attack waves can stay on the primary SingleAttack center. Detailed records are in `boards/OPS/AUTOMATION_GUIDE.md`, `boards/DATA/DATA_BLACKBOARD.md`, `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, and `boards/MON/ARIEL_MONSTER.md`.
+- 2026-05-22 cross-domain UI/RUN/COMBAT/MON status: `AutoBtn` now toggles selected 1P Auto mode, selected 1P learned active skills require click input while Auto is off, automatic player skill routing requires a visible MainCamera enemy instead of `StageState.Combat`, enemies act by target/range/cooldown rules as soon as they spawn, and committed no-hit monster casts now start cooldowns. Detailed records are in `boards/UI/RUNSCENE_UI.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/COMBAT/ENEMY_BLACKBOARD.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, and `boards/MON/ARIEL_MONSTER.md`.
+- 2026-05-22 cross-domain DATA/COMBAT/MON status: Ariel-C stale choice support states were corrected, Ariel-E conditional shield/damage/sanctuary effects and Ariel-B trait 5 were represented as CSV multi-effect rows, and shared runtime now applies choice duration modifiers to statuses plus choice amount/duration modifiers and multi-effects to shield skills. Detailed records are in `boards/MON/ARIEL_MONSTER.md`, `boards/DATA/DATA_BLACKBOARD.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
+- 2026-05-22 cross-domain DATA/COMBAT/MON status: `monster_skill_triger.csv` was added for CSV-owned trigger skills; Ariel `ariel-a-master-1` now runs a repeated last-projectile prefab-hitbox SingleAttack trigger, and `ariel-b-trait-4` now runs an `OnShieldExpire` prefab-hitbox trigger using shield-applied amount. Detailed records are in `boards/MON/ARIEL_MONSTER.md`, `boards/DATA/DATA_BLACKBOARD.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
 - 2026-05-18 routing/policy status: the active report board was removed from routing, report work now reads the related active domain board only, `AGENTS_ROLE/GAMEDESIGNER.md` now includes a short HTML report structure rule, and inspected `Pakuri/Assets/**/*.csv` files were all already valid UTF-8 so no CSV data rewrite was needed. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-18 routing/policy status: `AGENTS.md` now defines a `SimpelWorker` role for very simple path-based work, `AGENTS_ROLE/SIMPELWORKER.md` was added, SimpelWorker reads no extra markdown after `AGENTS.md` and `MDTREE.md`, and it automatically falls back to Designer when no exact work path is provided. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-19 routing/policy status: `AGENTS.md`, `MDTREE.md`, `AGENTS_ROLE/GAMEBULIDER.md`, and `boards/SkillBluePrint/projectile-blueprint.md` now require a smallest-possible markdown read set, explicit exclusions for unrelated domains, and a short routing decision log. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
@@ -590,3 +593,47 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-21: User reported Ariel-D appeared to affect all targets instead of the strongest enemy. Code inspection found `SingleAttackData.Area.CoverAll` still used only `radius <= 0f`; Builder aligned it with `target_selection`.
+
+## Recent Task: 2026-05-22 Skill Execution Utility and Beam Width Refactor
+
+### Task title
+
+Fix Self targeting, prefab radius scale, and beam width enhancement runtime flow.
+
+### Goals
+
+- Make Self multi-effect targeting resolve only to the caster.
+- Move common targeting, area radius, status application, and skill visual spawn behavior into utility surfaces.
+- Add CSV/runtime support for `beam_width_bonus`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Details are mirrored in `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, `boards/DATA/DATA_BLACKBOARD.md`, and `boards/RUN/RUN_BLACKBOARD.md`.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission is required by the repository role workflow.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Self multi-effects, SingleAttack prefab scaling, and Eve-B beam width behavior in Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Added `SkillTargetingUtility.cs`, `SkillAreaUtility.cs`, `SkillStatusApplyUtility.cs`, and `SkillVisualSpawnUtility.cs` under `Pakuri/Assets/Scripts2/InGame/Skills/Execution/`.
+- `monster_skill_choices.csv` now has `beam_width_bonus`; `eve-b-trait-2` uses `beam_width_bonus=0.3` and no longer uses `radius_multiplier=1.3`.
+- `SkillExecutionSnapshot.cs` exposes `BeamWidthBonus`; `SkillExecutors.cs` uses it for beam width.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
+- Unity-MCP forced refresh removed missing utility type compiler errors; remaining console entries were Unity graph/MCP client handler exceptions, not script compiler errors.
+
+### History
+
+- 2026-05-22: User asked Code Builder to implement the reviewed Skills cleanup order.

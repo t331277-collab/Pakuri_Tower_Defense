@@ -22,6 +22,12 @@ namespace Pakuri.InGame
         private bool destroyWhenGreaterThanBoundary = true;
         private ProjectileStatusHitSpec statusOnHit;
         private ProjectileBranchHitSpec branchOnHit;
+        private string sourceSkillId;
+        private bool isMagazineLastProjectile;
+        private bool magazineLastProjectileTriggerFired;
+        private bool criticalAllowed;
+        private float critChanceBonus;
+        private float critDamageBonus;
 
         public void Initialize(
             InGameCombatManager manager,
@@ -47,6 +53,12 @@ namespace Pakuri.InGame
             destroyWhenGreaterThanBoundary = direction.x >= 0f;
             statusOnHit = null;
             branchOnHit = null;
+            sourceSkillId = null;
+            isMagazineLastProjectile = false;
+            magazineLastProjectileTriggerFired = false;
+            criticalAllowed = false;
+            critChanceBonus = 0f;
+            critDamageBonus = 0f;
             EnsurePhysicsRelay();
         }
 
@@ -62,7 +74,12 @@ namespace Pakuri.InGame
             float lifetimeSeconds,
             ProjectileStatusHitSpec statusSpec,
             ProjectileBranchHitSpec branchSpec,
-            string ignoredUnitId = null)
+            string ignoredUnitId = null,
+            string skillId = null,
+            bool magazineLastProjectile = false,
+            bool allowCritical = false,
+            float criticalChanceBonus = 0f,
+            float criticalDamageBonus = 0f)
         {
             Initialize(
                 manager,
@@ -77,6 +94,12 @@ namespace Pakuri.InGame
 
             statusOnHit = statusSpec;
             branchOnHit = branchSpec;
+            sourceSkillId = skillId;
+            isMagazineLastProjectile = magazineLastProjectile;
+            magazineLastProjectileTriggerFired = false;
+            criticalAllowed = allowCritical;
+            critChanceBonus = criticalChanceBonus;
+            critDamageBonus = criticalDamageBonus;
             if (!string.IsNullOrWhiteSpace(ignoredUnitId))
             {
                 hitUnitIds.Add(ignoredUnitId);
@@ -152,8 +175,9 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            combatManager.ApplyDamage(target.Model, damage, damageAttribute);
+            combatManager.ApplyDamage(target.Model, damage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus);
             TryApplyStatus(target.Model);
+            TryRunProjectileHitTriggers();
             TrySpawnBranches(target);
             remainingHits--;
             if (remainingHits <= 0)
@@ -166,24 +190,24 @@ namespace Pakuri.InGame
 
         private void TryApplyStatus(BaseUnitRuntimeModel target)
         {
-            if (combatManager == null || target == null || statusOnHit == null || !statusOnHit.Enabled)
+            SkillStatusApplyUtility.TryApplyStatus(combatManager, target, statusOnHit);
+        }
+
+        private void TryRunProjectileHitTriggers()
+        {
+            if (!isMagazineLastProjectile || magazineLastProjectileTriggerFired)
             {
                 return;
             }
 
-            if (Random.value > Mathf.Clamp01(statusOnHit.Chance))
-            {
-                return;
-            }
-
-            combatManager.ApplyStatus(
-                target,
-                statusOnHit.StatusData,
-                statusOnHit.Stacks,
-                statusOnHit.DurationSeconds,
-                statusOnHit.MaxStacks,
-                statusOnHit.Permanent,
-                statusOnHit.RefreshDuration);
+            magazineLastProjectileTriggerFired = true;
+            SkillTriggerRuntime.ExecuteProjectileHit(
+                combatManager,
+                combatManager != null ? combatManager.Roster : null,
+                owner,
+                sourceSkillId,
+                true,
+                transform.position);
         }
 
         private void TrySpawnBranches(UnitRosterEntry hitTarget)
@@ -341,7 +365,12 @@ namespace Pakuri.InGame
                 Mathf.Max(0.1f, maxLifetime),
                 statusOnHit,
                 branchOnHit.CloneForChild(),
-                ignoredUnitId);
+                ignoredUnitId,
+                null,
+                false,
+                criticalAllowed,
+                critChanceBonus,
+                critDamageBonus);
         }
 
         private bool IsSameSide(BaseUnitRuntimeModel target)

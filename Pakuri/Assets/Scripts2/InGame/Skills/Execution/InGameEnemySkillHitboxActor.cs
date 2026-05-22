@@ -102,7 +102,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            combatManager.ApplyDamage(target.Model, damage, damageAttribute);
+            combatManager.ApplyDamage(target.Model, damage, damageAttribute, owner, true);
             remainingHits--;
             if (remainingHits <= 0)
             {

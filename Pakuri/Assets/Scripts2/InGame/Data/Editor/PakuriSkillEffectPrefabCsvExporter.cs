@@ -180,14 +180,14 @@ namespace Pakuri.Data
                 throw new InvalidOperationException($"CSV file '{assetPath}' must contain a header row and a type row.");
             }
 
-            var headers = SplitCsvLine(lines[0]);
+            var headers = PakuriCsvLineCodec.SplitLineToList(lines[0]);
             var idColumnIndex = FindColumnIndex(headers, idColumnName, assetPath);
             var prefabPathColumnIndex = FindColumnIndex(headers, SkillEffectPrefabPathColumnName, assetPath);
             var updatedRows = 0;
 
             for (var i = 2; i < lines.Count; i++)
             {
-                var cells = SplitCsvLine(lines[i]);
+                var cells = PakuriCsvLineCodec.SplitLineToList(lines[i]);
                 if (idColumnIndex >= cells.Count)
                 {
                     continue;
@@ -207,7 +207,7 @@ namespace Pakuri.Data
                 }
 
                 cells[prefabPathColumnIndex] = prefabPath;
-                lines[i] = JoinCsvLine(cells);
+                lines[i] = PakuriCsvLineCodec.JoinLine(cells);
                 updatedRows++;
             }
 
@@ -249,75 +249,6 @@ namespace Pakuri.Data
             {
                 cells.Add(string.Empty);
             }
-        }
-
-        private static List<string> SplitCsvLine(string line)
-        {
-            var values = new List<string>();
-            var builder = new StringBuilder();
-            var inQuotes = false;
-
-            for (var i = 0; i < line.Length; i++)
-            {
-                var character = line[i];
-                if (character == '"')
-                {
-                    if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
-                    {
-                        builder.Append('"');
-                        i++;
-                    }
-                    else
-                    {
-                        inQuotes = !inQuotes;
-                    }
-
-                    continue;
-                }
-
-                if (character == ',' && !inQuotes)
-                {
-                    values.Add(builder.ToString());
-                    builder.Clear();
-                    continue;
-                }
-
-                builder.Append(character);
-            }
-
-            values.Add(builder.ToString());
-            return values;
-        }
-
-        private static string JoinCsvLine(IReadOnlyList<string> cells)
-        {
-            var builder = new StringBuilder();
-            for (var i = 0; i < cells.Count; i++)
-            {
-                if (i > 0)
-                {
-                    builder.Append(',');
-                }
-
-                builder.Append(EscapeCsvCell(cells[i]));
-            }
-
-            return builder.ToString();
-        }
-
-        private static string EscapeCsvCell(string value)
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                return string.Empty;
-            }
-
-            if (value.IndexOfAny(new[] { ',', '"', '\r', '\n' }) < 0)
-            {
-                return value;
-            }
-
-            return "\"" + value.Replace("\"", "\"\"") + "\"";
         }
 
         public readonly struct ExportResult

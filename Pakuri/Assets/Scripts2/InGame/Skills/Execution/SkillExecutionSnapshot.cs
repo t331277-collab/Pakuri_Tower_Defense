@@ -33,6 +33,7 @@ namespace Pakuri.InGame
         public float ReloadTimeMultiplier { get; private set; }
         public float ShotIntervalMultiplier { get; private set; }
         public float RadiusBonus { get; private set; }
+        public float BeamWidthBonus { get; private set; }
         public float DurationBonus { get; private set; }
         public float BranchChanceBonus { get; private set; }
         public bool HasBranchChanceSet { get; private set; }
@@ -43,6 +44,9 @@ namespace Pakuri.InGame
         public float BranchDamageMultiplier { get; private set; }
         public bool HasBranchSearchRadius { get; private set; }
         public float BranchSearchRadius { get; private set; }
+        public int HitTargetCountBonus { get; private set; }
+        public float CritChanceBonus { get; private set; }
+        public float CritDamageBonus { get; private set; }
         public string StatusTag { get; private set; }
         public float StatusChanceBonus { get; private set; }
         public int StatusStacksBonus { get; private set; }
@@ -50,6 +54,13 @@ namespace Pakuri.InGame
         public int StatusStacksSet { get; private set; }
         public bool HasStatusElementDamageTakenBonus { get; private set; }
         public float StatusElementDamageTakenBonus { get; private set; }
+        public bool HasStatusCriticalDamageTakenBonus { get; private set; }
+        public float StatusCriticalDamageTakenBonus { get; private set; }
+        public bool HasStatusAilmentResistanceBonus { get; private set; }
+        public float StatusAilmentResistanceBonus { get; private set; }
+        public bool HasStatusConditionalDamageTakenBonus { get; private set; }
+        public float StatusConditionalDamageTakenBonus { get; private set; }
+        public string StatusConditionalSourceStatusId { get; private set; }
         public GameObject SkillEffectPrefab { get; private set; }
         private readonly HashSet<string> activeChoiceIds = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
 
@@ -85,6 +96,7 @@ namespace Pakuri.InGame
             }
 
             RadiusBonus += spec.RadiusBonus;
+            BeamWidthBonus += spec.BeamWidthBonus;
 
             if (spec.HasDurationMultiplier)
             {
@@ -142,6 +154,10 @@ namespace Pakuri.InGame
                 BranchSearchRadius = spec.BranchSearchRadius;
             }
 
+            HitTargetCountBonus += spec.HitTargetCountBonus;
+            CritChanceBonus += spec.CritChanceBonus;
+            CritDamageBonus += spec.CritDamageBonus;
+
             if (!string.IsNullOrWhiteSpace(spec.StatusTag))
             {
                 StatusTag = spec.StatusTag;
@@ -160,10 +176,34 @@ namespace Pakuri.InGame
                 StatusElementDamageTakenBonus = spec.StatusElementDamageTakenBonus;
             }
 
+            if (spec.HasStatusCriticalDamageTakenBonus)
+            {
+                HasStatusCriticalDamageTakenBonus = true;
+                StatusCriticalDamageTakenBonus = spec.StatusCriticalDamageTakenBonus;
+            }
+
+            if (spec.HasStatusAilmentResistanceBonus)
+            {
+                HasStatusAilmentResistanceBonus = true;
+                StatusAilmentResistanceBonus = spec.StatusAilmentResistanceBonus;
+            }
+
+            if (spec.HasStatusConditionalDamageTakenBonus)
+            {
+                HasStatusConditionalDamageTakenBonus = true;
+                StatusConditionalDamageTakenBonus = spec.StatusConditionalDamageTakenBonus;
+                StatusConditionalSourceStatusId = spec.StatusConditionalSourceStatusId;
+            }
+
             if (spec.SkillEffectPrefab != null)
             {
                 SkillEffectPrefab = spec.SkillEffectPrefab;
             }
+        }
+
+        public void ApplyDynamicDamageMultiplier(float multiplier)
+        {
+            DamageMultiplier *= PositiveOrDefault(multiplier, 1f);
         }
 
         public void ApplyChoiceDefinition(SkillChoiceDefinition choice)
@@ -188,6 +228,7 @@ namespace Pakuri.InGame
                 HasRadiusMultiplier = choice.HasRadiusMultiplier,
                 RadiusMultiplier = choice.RadiusMultiplier,
                 RadiusBonus = choice.RadiusBonus,
+                BeamWidthBonus = choice.BeamWidthBonus,
                 HasDurationMultiplier = choice.HasDurationMultiplier,
                 DurationMultiplier = choice.DurationMultiplier,
                 DurationBonus = choice.DurationBonus,
@@ -212,12 +253,26 @@ namespace Pakuri.InGame
                 BranchSearchRadius = choice.BranchSearchRadius,
                 HasMaxHealthBonus = choice.HasMaxHealthBonus,
                 MaxHealthBonus = choice.MaxHealthBonus,
+                HitTargetCountBonus = choice.HitTargetCountBonus,
+                CritChanceBonus = choice.CritChanceBonus,
+                CritDamageBonus = choice.CritDamageBonus,
                 StatusTag = choice.StatusTag,
                 StatusStacksBonus = choice.StatusStacksBonus,
                 HasStatusStacksSet = choice.HasStatusStacksSet,
                 StatusStacksSet = choice.StatusStacksSet,
                 HasStatusElementDamageTakenBonus = choice.HasStatusElementDamageTakenBonus,
-                StatusElementDamageTakenBonus = choice.StatusElementDamageTakenBonus
+                StatusElementDamageTakenBonus = choice.StatusElementDamageTakenBonus,
+                HasStatusCriticalDamageTakenBonus = choice.HasStatusCriticalDamageTakenBonus,
+                StatusCriticalDamageTakenBonus = choice.StatusCriticalDamageTakenBonus,
+                HasStatusAilmentResistanceBonus = choice.HasStatusAilmentResistanceBonus,
+                StatusAilmentResistanceBonus = choice.StatusAilmentResistanceBonus,
+                CountStatusId = choice.CountStatusId,
+                CountTargetSide = choice.CountTargetSide,
+                DamageMultiplierPerCount = choice.DamageMultiplierPerCount,
+                CountMax = choice.CountMax,
+                HasStatusConditionalDamageTakenBonus = choice.HasStatusConditionalDamageTakenBonus,
+                StatusConditionalDamageTakenBonus = choice.StatusConditionalDamageTakenBonus,
+                StatusConditionalSourceStatusId = choice.StatusConditionalSourceStatusId
             });
         }
 

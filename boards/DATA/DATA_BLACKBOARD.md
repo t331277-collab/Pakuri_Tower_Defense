@@ -4,6 +4,288 @@
 - Older CSV-transition history remains in `boards/ARCHIVE/CSV_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 
+## Task: 2026-05-22 Ariel Dynamic Choice Count And Conditional Status CSV Schema
+
+### Task title
+
+Extend the shared CSV schema so Ariel's last two choice rows stay data-owned through generic count-based and source-conditional status fields.
+
+### Goals
+
+- Add choice fields for dynamic per-cast status counting and per-count damage scaling.
+- Add choice/status fields for source-status-gated incoming-damage bonuses on applied statuses.
+- Keep the supporting schema in `monster_skill_choices.csv` and `monster_skills.csv` aligned with the current parser contract.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- CSV remains the source of truth for authored Ariel choice behavior; runtime code only adds generic consumers for the new columns.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compile-verified, and CSV-sync-verified.
+
+### Next Actions
+
+- Future “count allies with X status” or “target status grants bonus only from attackers with Y status” designs should use these same fields before adding new skill-specific schema.
+- Keep `monster_skills.csv` type/header rows aligned with parser-required status payload columns whenever shared status fields are added.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:1-2` now includes `count_status_id`, `count_target_side`, `damage_multiplier_per_count`, `count_max`, `status_conditional_source_status_id`, and `status_conditional_damage_taken_bonus`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:7` and `:28` now author `ariel-a-trait-5` and `ariel-d-trait-5` on those generic fields and mark both rows `RuntimeImplemented`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv:1-2` now matches the shared status payload parser by carrying `status_ailment_resistance_bonus` and `status_flat_element_resist_reduction` in both the header row and the type-description row.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs`, `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs`, and `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Validation.cs` now parse, map, and validate the new choice/status columns.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs`, `Pakuri/Assets/Scripts2/InGame/Skills/Data/SkillChoiceEffectSpec.cs`, and `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutionSnapshot.cs` now carry the new fields from CSV definitions into runtime snapshots.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv | Where-Object { $_.monster_id -eq 'ariel' -and $_.runtime_support_state -notin @('RuntimeImplemented','ReferenceDirect') }` returned no rows after this schema pass.
+- Unity-MCP console after clear plus `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-22: User asked Code Builder to finish the remaining Ariel choice rows by adding whatever shared common logic was still missing.
+
+## Task: 2026-05-22 Ariel Passive Choice/Resistance CSV Schema Follow-Up
+
+### Task title
+
+Extend the CSV/runtime schema so Ariel passive-choice follow-up rows and shield ailment-resistance rows stay data-owned.
+
+### Goals
+
+- Add CSV fields for `condition_skill_attribute`, `status_ailment_resistance_bonus`, `status_flat_element_resist_reduction`, and `status_critical_chance_bonus`.
+- Carry passive choice `status_ailment_resistance_bonus` through choice parsing, build, mapping, and runtime snapshots.
+- Re-author the Ariel rows that became supported through these shared fields and record the reduced unsupported set.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- CSV remains the source of truth for skill authoring; runtime code only adds generic consumers for the new columns.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because the user explicitly told Builder not to run Reviewer.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- Keep future “has Holy active skill” or “status grants ailment resistance” designs on these same fields instead of introducing skill-ID-specific columns.
+- Ariel choice rows still unsupported after this pass are only `ariel-a-trait-5` and `ariel-d-trait-5`.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:15`, `:40-43`, and `:46-50` now mark the newly supported Ariel rows as `RuntimeImplemented`, and `ariel-b-master-1` stores `status_ailment_resistance_bonus=0.3`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv:15`, `:25`, `:27`, `:29-30`, `:33-34`, and `:37` now author the Ariel follow-up rows that rely on the new condition/resistance/crit schema.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.StatusPayload.cs:25-64` now parses `status_ailment_resistance_bonus`, `status_flat_element_resist_reduction`, and `status_critical_chance_bonus`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs:135-162`, `:350-378` now parse choice-level ailment-resistance overrides and effect-level `condition_skill_attribute`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs:265`, `:431-432`, `:481-517` now map those parsed fields into runtime definitions.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs:198-203`, `:265-266`, `:314-317`, `Pakuri/Assets/Scripts2/InGame/Skills/Data/SkillChoiceEffectSpec.cs:58-59`, and `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutionSnapshot.cs:59-60`, `:182-185`, `:252-253` now carry the new fields through definition and snapshot layers.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv | Where-Object { $_.choice_id -like 'ariel-*' -and $_.runtime_support_state -notin @('RuntimeImplemented','ReferenceDirect') }` returned only `ariel-a-trait-5` and `ariel-d-trait-5`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` assembly-version warnings remained.
+
+### History
+
+- 2026-05-22: User asked Code Builder to implement the Ariel rows previously classified as CSV-only or requiring only a small shared contract.
+
+## Task: 2026-05-22 Ariel Choice/Trigger Schema Extension For Shared Runtime Effects
+
+### Task title
+
+Extend CSV/runtime schema so Ariel's remaining active/master effects stay data-owned on shared runtime contracts.
+
+### Goals
+
+- Add choice fields for target-count bonus, crit chance bonus, crit damage bonus, and status critical-damage-taken bonus.
+- Add trigger support for tracked attribute payload and the new absorb/expire trigger contracts.
+- Add multi-effect support for status-duration extension.
+- Keep Ariel's new reflection, crit-mark, mark-expiry, and shield-duration rows authored in CSV rather than hardcoded by skill ID.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- CSV remains the source of truth for these skill-authoring changes.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because the user explicitly said not to run it.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compile-verified, and coverage-audited.
+
+### Next Actions
+
+- Future skills that need absorb reflection, expiry bursts, or duration extension should add CSV rows against these shared fields first.
+- Ariel still has unsupported or partial choice rows outside this schema slice: `ariel-a-trait-5`, `ariel-b-master-1`, `ariel-d-trait-5`, `ariel-f-trait-3`, `ariel-g-trait-1`, `ariel-g-trait-2`, `ariel-g-trait-3`, `ariel-h-trait-3`, `ariel-i-trait-1`, `ariel-i-trait-2`, `ariel-i-trait-3`, and `ariel-j-trait-1`.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:16`, `:27`, `:29-30`, and `:35` now encode Ariel rows that use `hit_target_count_bonus`, `status_critical_damage_taken_bonus`, and the new runtime support states.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv:5-6` now encode `OnShieldAbsorb` and `OnStatusExpire` Ariel trigger rows with `damage_source` values `ShieldAbsorbedAmount` and `TrackedIncomingDamage`, plus `tracked_attribute=Holy`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv:9` now encodes `ExtendStatusDuration` for `ariel-e-trait-5`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs` now parses `hit_target_count_bonus`, `crit_chance_bonus`, `crit_damage_bonus`, `status_critical_damage_taken_bonus`, and `tracked_attribute`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs` now maps those parsed fields into runtime `SkillChoiceEffectSpec`, `SkillTriggerDefinition`, and `SkillEffectDefinition` data.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs:55`, `:103-113`, and `:248-260` define the runtime enums/fields backing the new CSV schema.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv | Where-Object { $_.choice_id -like 'ariel-*' -and $_.runtime_support_state -notin @('RuntimeImplemented','ReferenceDirect') }` returned only the remaining unsupported/partial Ariel rows listed above, confirming the new Ariel rows moved out of unsupported state.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` assembly-version warnings remained.
+
+### History
+
+- 2026-05-22: User asked Code Builder to implement the previously proposed shared data/runtime changes for Ariel and then verify Ariel-wide implementation coverage.
+
+## Task: 2026-05-22 Monster Skill Trigger CSV Source
+
+### Task title
+
+Add CSV authority for trigger-called hidden skill executions.
+
+### Goals
+
+- Add `monster_skill_triger.csv` to source CSV data and runtime catalog loading.
+- Parse, build, validate, asset-reference, and catalog-sync trigger rows into `MonsterDefinition.SkillTriggers`.
+- Keep Ariel trigger behavior data-owned where trigger event, choice gate, repeat timing, damage source, target shape, and prefab path are enough.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The requested CSV spelling is `monster_skill_triger.csv`.
+- CSV trigger runtime initially supports `SingleAttack` trigger rows only.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, synced, and compile-verified.
+
+### Next Actions
+
+- When adding more event-driven rows, add them to `monster_skill_triger.csv` only after a matching generic trigger event exists.
+- Keep unsupported trigger categories marked unsupported in choice CSV until their event payload and runtime contract are implemented.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv:3-4` contains the new Ariel trigger rows for last projectile hit and shield expiry.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/PakuriCsvRuntimeData.cs` defines `MonsterSkillTriggersFileName = "monster_skill_triger.csv"`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/PakuriCsvRuntimeSourceCatalog.cs:14` adds the `MonsterSkillTriggers` source TextAsset slot.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/PakuriCsvRuntimeData.SourceModel.cs` adds the source-model trigger dictionary, while loader/editor/build/asset-reference/validation files load, build, reference, and validate trigger rows.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/PakuriCsvRuntimeData.MonsterDataset.cs` adds the `SkillTriggerRow` parser.
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog.asset` was synced and now references the generated `monster_skill_triger.csv` TextAsset.
+- Runtime and editor `dotnet build` commands passed with 0 errors and existing MSB3277 warnings; Unity-MCP CSV catalog sync logged successful sync from `Assets/CSVdata/source` to `Assets/Resources/Pakuri/CSVRuntime`.
+
+### History
+
+- 2026-05-22: User requested `monster_skill_triger.csv` creation for Ariel `ariel-a-master-1` and `ariel-b-trait-4` trigger skills.
+
+## Task: 2026-05-22 Ariel Choice And Multi-Effect CSV Cleanup
+
+### Task title
+
+Record Ariel CSV-owned choice support corrections and new multi-effect rows.
+
+### Goals
+
+- Keep supported Ariel choice behavior represented in `monster_skill_choices.csv` and `monster_skill_effects.csv`.
+- Replace Ariel-E unconditional choice multipliers with conditional multi-effect rows where required.
+- Preserve unsupported event-trigger behavior as unsupported instead of encoding it incorrectly.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- CSV remains the source of truth for these data-shaped changes.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, synced, and compile-verified.
+
+### Next Actions
+
+- Future Ariel event-trigger work should extend runtime trigger support before adding CSV rows for last-shot, shield-expiry, shield-absorb, or mark-expiry effects.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:18-23` correct Ariel-C trait/master runtime support states to `ReferenceDirect`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:34` removes the unconditional `damage_multiplier=1.5` from `ariel-e-trait-4`; `monster_skill_effects.csv:7` adds a Holy Exposure-conditioned extra damage row.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv:36` removes the unconditional `damage_multiplier=0.82` from `ariel-e-master-1`; `monster_skill_effects.csv:8` adds all-ally incoming damage `-0.18` for 5 seconds.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv:3-6` encode Ariel-E base, trait 2, master 2, and combined trait 2 plus master 2 shield amount rows.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv:9` adds Ariel-B trait 5 as a shield-conditioned all-ally Holy damage status.
+- `Import-Csv -Encoding UTF8` checks over the edited choice/effect rows returned the expected fields.
+- Unity-MCP `Pakuri/Sync CSV Runtime Catalog Assets` logged successful sync from `Assets/CSVdata/source` to `Assets/Resources/Pakuri/CSVRuntime`.
+
+### History
+
+- 2026-05-22: User asked to start implementation from items that can be solved by CSV, then proceed to small shared runtime extensions.
+
+## Task: 2026-05-22 CSV Runtime Refactor Cleanup
+
+### Task title
+
+Reduce duplicate code in the CSV runtime load/build/validation path without changing CSV schema or runtime behavior.
+
+### Goals
+
+- Share CSV line split/join/escape logic between runtime CSV reading and the editor prefab exporter.
+- Consolidate repeated skill/status-effect payload parsing and runtime assignment.
+- Consolidate repeated build-time filter/sort patterns.
+- Use one referenced-asset collection path for editor asset catalog creation and validation coverage.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Keep current CSV column names and runtime definition fields compatible.
+- Do not turn `PakuriCsvRuntimeData` into a larger God Class; new responsibilities stay in small helper files.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- If Unity regenerates project files, confirm the new runtime CSV helper scripts remain included in generated project metadata.
+- Future CSV asset-path additions should go through `CollectReferencedAssets(...)` so editor catalog generation and validation stay aligned.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvLineCodec.cs` now owns shared CSV line split/join/escape/unescape helpers.
+- `Pakuri/Assets/Scripts2/InGame/Data/Editor/PakuriSkillEffectPrefabCsvExporter.cs` now uses `PakuriCsvLineCodec` instead of its duplicate local CSV helpers.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.StatusPayload.cs` now owns shared status payload parsing, and `PakuriCsvRuntimeData.Build.cs` applies it through `ApplyStatusPayload(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.AssetReferences.cs` now owns referenced sprite/prefab collection, including `Skill effect '{effect.Id}' status_effect_prefab_path`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Editor.cs` and `PakuriCsvRuntimeData.Validation.cs` now both use `CollectReferencedAssets(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs` now uses `FilterAndSort(...)` for reward, active skill, effect, passive skill, and skill choice row selection.
+- `dotnet build 'Pakuri\Assembly-CSharp.csproj' --no-restore` passed with 0 errors; existing MSB3277 warnings for `System.Net.Http` and `System.IO.Compression` remained.
+- `dotnet build 'Pakuri\Assembly-CSharp-Editor.csproj' --no-restore` passed with 0 errors; the same existing MSB3277 warnings remained.
+- `git diff --check -- Pakuri\Assets\Scripts2\InGame\Data\Runtime\Csv Pakuri\Assets\Scripts2\InGame\Data\Editor\PakuriSkillEffectPrefabCsvExporter.cs Pakuri\Assembly-CSharp.csproj` reported only existing line-ending normalization warnings and no whitespace errors.
+
+### History
+
+- 2026-05-22: User asked Code Builder to implement the four previously identified duplicate-reduction targets under `InGame/Data/Runtime/Csv`.
+
 ## Task: 2026-05-22 Passive Skill Multi-Effect CSV Runtime
 
 ### Task title
@@ -737,3 +1019,45 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-21: User reported Ariel-D looked like it hit all enemies; Builder fixed the data-to-runtime cover-all mapping so explicit `target_selection` wins over zero radius.
+
+## Task: 2026-05-22 Skill Choice Beam Width Bonus
+
+### Task title
+
+Add CSV-backed `beam_width_bonus` for beam/line skill width upgrades.
+
+### Goals
+
+- Separate beam width upgrades from radius upgrades.
+- Preserve Eve-B trait 2's damage +30% while moving 광선 폭 +30% to a dedicated field.
+- Carry the new CSV field into runtime `SkillExecutionSnapshot`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Existing non-beam width notes that are still marked unsupported were not remapped.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies Eve-B trait 2 in Play Mode: damage remains +30%, beam/line width increases by +30%.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now has `beam_width_bonus` after `max_health_bonus`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` row `eve-b-trait-2` now has `damage_multiplier=1.3`, blank `radius_multiplier`, and `beam_width_bonus=0.3`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs` reads `beam_width_bonus`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs`, `SkillDefinition.cs`, `SkillChoiceEffectSpec.cs`, `InGameSkillDefinitionMapper.cs`, and `SkillExecutionSnapshot.cs` carry `BeamWidthBonus` into skill execution.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+
+### History
+
+- 2026-05-22: User requested `Beam_Width_Bonus`-style enhancement support so 광선 폭 +30% scales beam effect width instead of using radius fields.

@@ -56,8 +56,10 @@ namespace Pakuri.InGame
             status.MovementSlowRate = moveSpeedBonus < 0f ? -moveSpeedBonus : 0f;
             status.DamageTakenBonus = ResolveOverride(source != null ? source.StatusDamageTakenBonus : 0f, catalogDefinition != null ? catalogDefinition.DamageTakenBonusPerStack : 0f);
             status.CriticalDamageTakenBonus = ResolveOverride(source != null ? source.StatusCriticalDamageTakenBonus : 0f, catalogDefinition != null ? catalogDefinition.CriticalDamageTakenBonusPerStack : 0f);
+            status.AilmentResistanceBonus = ResolveOverride(source != null ? source.StatusAilmentResistanceBonus : 0f, 0f);
             status.CriticalResistanceBonus = ResolveOverride(source != null ? source.StatusCriticalResistanceBonus : 0f, catalogDefinition != null ? catalogDefinition.CriticalResistanceBonusPerStack : 0f);
             status.ElementResistReduction = ResolveOverride(source != null ? source.StatusElementResistReduction : 0f, catalogDefinition != null ? catalogDefinition.ElementResistReductionPerStack : 0f);
+            status.FlatElementResistReduction = ResolveOverride(source != null ? source.StatusFlatElementResistReduction : 0f, 0f);
             status.ElementDamageTakenBonus = ResolveOverride(source != null ? source.StatusElementDamageTakenBonus : 0f, catalogDefinition != null ? catalogDefinition.ElementDamageTakenBonusPerStack : 0f);
 
             var actionSpeedBonus = ResolveOverride(source != null ? source.StatusActionSpeedBonus : 0f, catalogDefinition != null ? catalogDefinition.ActionSpeedBonusPerStack : 0f);
@@ -67,6 +69,7 @@ namespace Pakuri.InGame
             status.Modifiers.SpellPowerBonus = 0f;
             status.Modifiers.DamageBonusRate = 0f;
             status.Modifiers.ShieldReceivedBonus = 0f;
+            status.Modifiers.CritChanceBonusRate = 0f;
 
             if (catalogDefinition != null && catalogDefinition.HasAttribute)
             {
@@ -165,12 +168,16 @@ namespace Pakuri.InGame
                 + Mathf.Abs(data.Modifiers.SpellPowerBonus)
                 + Mathf.Abs(data.Modifiers.DamageBonusRate)
                 + Mathf.Abs(data.Modifiers.ShieldReceivedBonus)
+                + Mathf.Abs(data.Modifiers.CritChanceBonusRate)
                 + Mathf.Abs(data.MoveSpeedBonus)
                 + Mathf.Abs(data.DamageTakenBonus)
                 + Mathf.Abs(data.CriticalDamageTakenBonus)
+                + Mathf.Abs(data.AilmentResistanceBonus)
                 + Mathf.Abs(data.CriticalResistanceBonus)
                 + Mathf.Abs(data.ElementResistReduction)
-                + Mathf.Abs(data.ElementDamageTakenBonus);
+                + Mathf.Abs(data.FlatElementResistReduction)
+                + Mathf.Abs(data.ElementDamageTakenBonus)
+                + Mathf.Abs(data.ConditionalDamageTakenBonus);
         }
 
         public static bool CanMove(BaseUnitRuntimeModel model)
@@ -213,13 +220,18 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, 1f + SumStacked(model, data => data.Modifiers.ShieldReceivedBonus));
         }
 
+        public static float ResolveCriticalChanceBonus(BaseUnitRuntimeModel model)
+        {
+            return SumStacked(model, data => data.Modifiers.CritChanceBonusRate);
+        }
+
         public static float ResolveOutgoingDamageMultiplier(BaseUnitRuntimeModel source, DamageAttribute attribute)
         {
             return Mathf.Max(0f, 1f + SumStacked(source, data =>
                 MatchesAttribute(data, attribute) ? data.Modifiers.DamageBonusRate : 0f));
         }
 
-        public static float ResolveIncomingDamageMultiplier(BaseUnitRuntimeModel target, DamageAttribute attribute)
+        public static float ResolveIncomingDamageMultiplier(BaseUnitRuntimeModel target, BaseUnitRuntimeModel source, DamageAttribute attribute)
         {
             return Mathf.Max(0f, 1f + SumStacked(target, data =>
             {
@@ -227,6 +239,11 @@ namespace Pakuri.InGame
                 if (MatchesAttribute(data, attribute))
                 {
                     bonus += data.ElementDamageTakenBonus;
+                }
+
+                if (MatchesConditionalSourceStatus(source, data))
+                {
+                    bonus += data.ConditionalDamageTakenBonus;
                 }
 
                 return bonus;
@@ -238,9 +255,19 @@ namespace Pakuri.InGame
             return Mathf.Clamp01(SumStacked(target, data => MatchesAttribute(data, attribute) ? data.ElementResistReduction : 0f));
         }
 
+        public static float ResolveFlatElementResistReduction(BaseUnitRuntimeModel target, DamageAttribute attribute)
+        {
+            return Mathf.Max(0f, SumStacked(target, data => MatchesAttribute(data, attribute) ? data.FlatElementResistReduction : 0f));
+        }
+
         public static float ResolveCriticalDamageTakenBonus(BaseUnitRuntimeModel target)
         {
             return SumStacked(target, data => data.CriticalDamageTakenBonus);
+        }
+
+        public static float ResolveAilmentResistanceBonus(BaseUnitRuntimeModel target)
+        {
+            return Mathf.Clamp01(SumStacked(target, data => data.AilmentResistanceBonus));
         }
 
         public static float ResolveCriticalResistanceBonus(BaseUnitRuntimeModel target)
@@ -332,6 +359,26 @@ namespace Pakuri.InGame
         private static bool MatchesAttribute(StatusEffectData data, DamageAttribute attribute)
         {
             return data != null && data.HasElementModifierTarget && (DamageAttribute)(int)data.ElementModifierTarget == attribute;
+        }
+
+        private static bool MatchesConditionalSourceStatus(BaseUnitRuntimeModel source, StatusEffectData data)
+        {
+            if (data == null || string.IsNullOrWhiteSpace(data.ConditionalSourceStatusTag))
+            {
+                return false;
+            }
+
+            if (source == null || !StatusEffectUtility.TryParse(data.ConditionalSourceStatusTag, out var kind))
+            {
+                return false;
+            }
+
+            if (kind == StatusEffectKind.Shield)
+            {
+                return source.Resources != null && source.Resources.CurrentShield > 0f;
+            }
+
+            return source.Statuses != null && source.Statuses.Has(kind);
         }
 
         private static void ApplySourceAwareMetadata(StatusEffectData status, StatusEffectKind kind, SkillDefinition source)

@@ -51,5 +51,6 @@ namespace Pakuri.Data
         [Header("Full Skill Data")]
         public SkillDefinition[] ActiveSkills = Array.Empty<SkillDefinition>();
         public PassiveDefinition[] PassiveSkills = Array.Empty<PassiveDefinition>();
+        public SkillTriggerDefinition[] SkillTriggers = Array.Empty<SkillTriggerDefinition>();
     }
 }

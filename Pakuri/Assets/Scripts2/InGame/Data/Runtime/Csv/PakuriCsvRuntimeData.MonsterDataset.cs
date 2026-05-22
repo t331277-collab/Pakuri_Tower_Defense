@@ -73,24 +73,7 @@ namespace Pakuri.Data
             public float ProjectileSpeed;
             public int PierceCount;
             public bool CriticalAllowed;
-            public string StatusEffectId;
-            public float StatusChance;
-            public string StatusEffectLabel;
-            public string StatusEffectPrefabPath;
-            public float StatusDurationSeconds;
-            public int StatusMaxStacks;
-            public int StatusStackAmount;
-            public string StatusTargetScope;
-            public string StatusMergePolicy;
-            public string ShieldAmountRefreshPolicy;
-            public float StatusActionSpeedBonus;
-            public float StatusMoveSpeedBonus;
-            public float StatusAttackPowerBonus;
-            public float StatusDamageTakenBonus;
-            public float StatusCriticalDamageTakenBonus;
-            public float StatusCriticalResistanceBonus;
-            public float StatusElementResistReduction;
-            public float StatusElementDamageTakenBonus;
+            public StatusPayloadRow Status = new StatusPayloadRow();
         }
 
         private sealed class SkillChoiceRow
@@ -121,6 +104,7 @@ namespace Pakuri.Data
             public bool HasRadiusMultiplier;
             public float RadiusMultiplier = 1f;
             public float RadiusBonus;
+            public float BeamWidthBonus;
             public bool HasDurationMultiplier;
             public float DurationMultiplier = 1f;
             public float DurationBonus;
@@ -135,6 +119,9 @@ namespace Pakuri.Data
             public float BranchSearchRadius;
             public bool HasMaxHealthBonus;
             public float MaxHealthBonus;
+            public int HitTargetCountBonus;
+            public float CritChanceBonus;
+            public float CritDamageBonus;
             public string StatusTag;
             public bool HasStatusChanceBonus;
             public float StatusChanceBonus;
@@ -143,6 +130,17 @@ namespace Pakuri.Data
             public int StatusStacksSet;
             public bool HasStatusElementDamageTakenBonus;
             public float StatusElementDamageTakenBonus;
+            public bool HasStatusCriticalDamageTakenBonus;
+            public float StatusCriticalDamageTakenBonus;
+            public bool HasStatusAilmentResistanceBonus;
+            public float StatusAilmentResistanceBonus;
+            public string CountStatusId;
+            public SkillMultiEffectTargetSide CountTargetSide;
+            public float DamageMultiplierPerCount;
+            public int CountMax;
+            public bool HasStatusConditionalDamageTakenBonus;
+            public float StatusConditionalDamageTakenBonus;
+            public string StatusConditionalSourceStatusId;
             public string RuntimeSupportState;
             public string RuntimeSupportNotes;
         }
@@ -168,6 +166,7 @@ namespace Pakuri.Data
             public bool ApplyOnce;
             public string ConditionStatusId;
             public SkillMultiEffectTargetSide ConditionTargetSide;
+            public string ConditionSkillAttribute;
             public DamageAttribute Attribute;
             public float BaseDamage;
             public float AttackPowerCoefficient;
@@ -175,27 +174,40 @@ namespace Pakuri.Data
             public float DamageMultiplier = 1f;
             public float Radius;
             public bool CoverAll;
-            public string StatusEffectId;
-            public float StatusChance;
-            public string StatusEffectLabel;
-            public string StatusEffectPrefabPath;
-            public float StatusDurationSeconds;
-            public int StatusMaxStacks;
-            public int StatusStackAmount;
-            public string StatusTargetScope;
-            public string StatusMergePolicy;
-            public string ShieldAmountRefreshPolicy;
-            public float StatusActionSpeedBonus;
-            public float StatusMoveSpeedBonus;
-            public float StatusAttackPowerBonus;
-            public float StatusSpellPowerBonus;
-            public float StatusDamageBonusRate;
-            public float StatusShieldReceivedBonus;
-            public float StatusDamageTakenBonus;
-            public float StatusCriticalDamageTakenBonus;
-            public float StatusCriticalResistanceBonus;
-            public float StatusElementResistReduction;
-            public float StatusElementDamageTakenBonus;
+            public StatusPayloadRow Status = new StatusPayloadRow();
+            public string SkillEffectPrefabPath;
+            public string RuntimeSupportState;
+            public string RuntimeSupportNotes;
+        }
+
+        private sealed class SkillTriggerRow
+        {
+            public string Id;
+            public string MonsterId;
+            public string SourceSkillId;
+            public SkillTriggerEvent TriggerEvent;
+            public string RequiresActiveChoiceId;
+            public string ExcludesActiveChoiceId;
+            public string TriggeredSkillId;
+            public SkillRuntimeKind RuntimeKind;
+            public int SortOrder;
+            public SkillMultiEffectTargetSide TargetSide;
+            public SkillMultiEffectTargetSelection TargetSelection;
+            public SkillMultiEffectTargetShape TargetShape;
+            public SkillMultiEffectCenterMode CenterMode;
+            public DamageAttribute Attribute;
+            public float BaseDamage;
+            public float AttackPowerCoefficient;
+            public float SpellPowerCoefficient;
+            public float DamageMultiplier = 1f;
+            public SkillTriggerDamageSource DamageSource;
+            public float DamageSourceMultiplier;
+            public DamageAttribute TrackedAttribute;
+            public float Radius;
+            public bool CoverAll;
+            public string HitTargetCount;
+            public int RepeatCount = 1;
+            public float RepeatIntervalSeconds;
             public string SkillEffectPrefabPath;
             public string RuntimeSupportState;
             public string RuntimeSupportNotes;
@@ -276,24 +288,7 @@ namespace Pakuri.Data
                 ProjectileSpeed = record.ReadFloat("projectile_speed"),
                 PierceCount = record.ReadInt("pierce_count"),
                 CriticalAllowed = record.ReadBool("critical_allowed"),
-                StatusEffectId = record.ReadString("status_effect_id"),
-                StatusChance = record.ReadFloat("status_chance"),
-                StatusEffectLabel = record.ReadString("status_effect_label"),
-                StatusEffectPrefabPath = record.ReadString("status_effect_prefab_path"),
-                StatusDurationSeconds = record.ReadFloat("status_duration_seconds"),
-                StatusMaxStacks = record.ReadInt("status_max_stacks"),
-                StatusStackAmount = record.ReadInt("status_stack_amount"),
-                StatusTargetScope = record.ReadString("status_target_scope"),
-                StatusMergePolicy = record.ReadString("status_merge_policy"),
-                ShieldAmountRefreshPolicy = record.ReadString("shield_amount_refresh_policy"),
-                StatusActionSpeedBonus = record.ReadFloat("status_action_speed_bonus"),
-                StatusMoveSpeedBonus = record.ReadFloat("status_move_speed_bonus"),
-                StatusAttackPowerBonus = record.ReadFloat("status_attack_power_bonus"),
-                StatusDamageTakenBonus = record.ReadFloat("status_damage_taken_bonus"),
-                StatusCriticalDamageTakenBonus = record.ReadFloat("status_critical_damage_taken_bonus"),
-                StatusCriticalResistanceBonus = record.ReadFloat("status_critical_resistance_bonus"),
-                StatusElementResistReduction = record.ReadFloat("status_element_resist_reduction"),
-                StatusElementDamageTakenBonus = record.ReadFloat("status_element_damage_taken_bonus")
+                Status = ReadStatusPayload(record, false)
             };
         }
 
@@ -332,6 +327,7 @@ namespace Pakuri.Data
             row.HasRadiusMultiplier = TryReadFloat(record, "radius_multiplier", out var radiusMultiplier);
             row.RadiusMultiplier = radiusMultiplier;
             row.RadiusBonus = ReadOptionalFloat(record, "radius_bonus");
+            row.BeamWidthBonus = ReadOptionalFloat(record, "beam_width_bonus");
             row.HasDurationMultiplier = TryReadFloat(record, "duration_multiplier", out var durationMultiplier);
             row.DurationMultiplier = durationMultiplier;
             row.DurationBonus = ReadOptionalFloat(record, "duration_bonus");
@@ -346,6 +342,9 @@ namespace Pakuri.Data
             row.BranchSearchRadius = branchSearchRadius;
             row.HasMaxHealthBonus = TryReadFloat(record, "max_health_bonus", out var maxHealthBonus);
             row.MaxHealthBonus = maxHealthBonus;
+            row.HitTargetCountBonus = ReadOptionalInt(record, "hit_target_count_bonus");
+            row.CritChanceBonus = ReadOptionalFloat(record, "crit_chance_bonus");
+            row.CritDamageBonus = ReadOptionalFloat(record, "crit_damage_bonus");
             row.HasStatusChanceBonus = TryReadFloat(record, "status_chance_bonus", out var statusChanceBonus);
             row.StatusChanceBonus = statusChanceBonus;
             row.StatusStacksBonus = ReadOptionalInt(record, "status_stacks_bonus");
@@ -353,6 +352,17 @@ namespace Pakuri.Data
             row.StatusStacksSet = statusStacksSet;
             row.HasStatusElementDamageTakenBonus = TryReadFloat(record, "status_element_damage_taken_bonus", out var statusElementDamageTakenBonus);
             row.StatusElementDamageTakenBonus = statusElementDamageTakenBonus;
+            row.HasStatusCriticalDamageTakenBonus = TryReadFloat(record, "status_critical_damage_taken_bonus", out var statusCriticalDamageTakenBonus);
+            row.StatusCriticalDamageTakenBonus = statusCriticalDamageTakenBonus;
+            row.HasStatusAilmentResistanceBonus = TryReadFloat(record, "status_ailment_resistance_bonus", out var statusAilmentResistanceBonus);
+            row.StatusAilmentResistanceBonus = statusAilmentResistanceBonus;
+            row.CountStatusId = record.ReadString("count_status_id");
+            row.CountTargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("count_target_side");
+            row.DamageMultiplierPerCount = ReadOptionalFloat(record, "damage_multiplier_per_count");
+            row.CountMax = ReadOptionalInt(record, "count_max");
+            row.HasStatusConditionalDamageTakenBonus = TryReadFloat(record, "status_conditional_damage_taken_bonus", out var statusConditionalDamageTakenBonus);
+            row.StatusConditionalDamageTakenBonus = statusConditionalDamageTakenBonus;
+            row.StatusConditionalSourceStatusId = record.ReadString("status_conditional_source_status_id");
             return row;
         }
 
@@ -379,6 +389,7 @@ namespace Pakuri.Data
                 ApplyOnce = record.ReadBool("apply_once"),
                 ConditionStatusId = record.ReadString("condition_status_id"),
                 ConditionTargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("condition_target_side"),
+                ConditionSkillAttribute = record.ReadString("condition_skill_attribute"),
                 Attribute = record.ReadEnum<DamageAttribute>("attribute"),
                 BaseDamage = record.ReadFloat("base_damage"),
                 AttackPowerCoefficient = record.ReadFloat("attack_power_coefficient"),
@@ -386,27 +397,7 @@ namespace Pakuri.Data
                 DamageMultiplier = ReadOptionalFloat(record, "damage_multiplier"),
                 Radius = record.ReadFloat("radius"),
                 CoverAll = record.ReadBool("cover_all"),
-                StatusEffectId = record.ReadString("status_effect_id"),
-                StatusChance = record.ReadFloat("status_chance"),
-                StatusEffectLabel = record.ReadString("status_effect_label"),
-                StatusEffectPrefabPath = record.ReadString("status_effect_prefab_path"),
-                StatusDurationSeconds = record.ReadFloat("status_duration_seconds"),
-                StatusMaxStacks = record.ReadInt("status_max_stacks"),
-                StatusStackAmount = record.ReadInt("status_stack_amount"),
-                StatusTargetScope = record.ReadString("status_target_scope"),
-                StatusMergePolicy = record.ReadString("status_merge_policy"),
-                ShieldAmountRefreshPolicy = record.ReadString("shield_amount_refresh_policy"),
-                StatusActionSpeedBonus = record.ReadFloat("status_action_speed_bonus"),
-                StatusMoveSpeedBonus = record.ReadFloat("status_move_speed_bonus"),
-                StatusAttackPowerBonus = record.ReadFloat("status_attack_power_bonus"),
-                StatusSpellPowerBonus = record.ReadFloat("status_spell_power_bonus"),
-                StatusDamageBonusRate = record.ReadFloat("status_damage_bonus_rate"),
-                StatusShieldReceivedBonus = record.ReadFloat("status_shield_received_bonus"),
-                StatusDamageTakenBonus = record.ReadFloat("status_damage_taken_bonus"),
-                StatusCriticalDamageTakenBonus = record.ReadFloat("status_critical_damage_taken_bonus"),
-                StatusCriticalResistanceBonus = record.ReadFloat("status_critical_resistance_bonus"),
-                StatusElementResistReduction = record.ReadFloat("status_element_resist_reduction"),
-                StatusElementDamageTakenBonus = record.ReadFloat("status_element_damage_taken_bonus"),
+                Status = ReadStatusPayload(record, true),
                 SkillEffectPrefabPath = record.ReadString("skill_effect_prefab_path"),
                 RuntimeSupportState = record.ReadString("runtime_support_state"),
                 RuntimeSupportNotes = record.ReadString("runtime_support_notes")
@@ -415,6 +406,54 @@ namespace Pakuri.Data
             if (row.DamageMultiplier <= 0f)
             {
                 row.DamageMultiplier = 1f;
+            }
+
+            return row;
+        }
+
+        private static SkillTriggerRow ParseSkillTriggerRow(CsvRecord record)
+        {
+            var row = new SkillTriggerRow
+            {
+                Id = record.ReadRequiredString("trigger_id"),
+                MonsterId = record.ReadRequiredString("monster_id"),
+                SourceSkillId = record.ReadRequiredString("source_skill_id"),
+                TriggerEvent = record.ReadEnum<SkillTriggerEvent>("trigger_event"),
+                RequiresActiveChoiceId = record.ReadString("requires_active_choice_id"),
+                ExcludesActiveChoiceId = record.ReadString("excludes_active_choice_id"),
+                TriggeredSkillId = record.ReadRequiredString("triggered_skill_id"),
+                RuntimeKind = record.ReadEnum<SkillRuntimeKind>("runtime_kind"),
+                SortOrder = record.ReadInt("sort_order"),
+                TargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("target_side"),
+                TargetSelection = record.ReadEnum<SkillMultiEffectTargetSelection>("target_selection"),
+                TargetShape = record.ReadEnum<SkillMultiEffectTargetShape>("target_shape"),
+                CenterMode = record.ReadEnum<SkillMultiEffectCenterMode>("center_mode"),
+                Attribute = record.ReadEnum<DamageAttribute>("attribute"),
+                BaseDamage = record.ReadFloat("base_damage"),
+                AttackPowerCoefficient = record.ReadFloat("attack_power_coefficient"),
+                SpellPowerCoefficient = record.ReadFloat("spell_power_coefficient"),
+                DamageMultiplier = ReadOptionalFloat(record, "damage_multiplier"),
+                DamageSource = record.ReadEnum<SkillTriggerDamageSource>("damage_source"),
+                DamageSourceMultiplier = record.ReadFloat("damage_source_multiplier"),
+                TrackedAttribute = record.ReadEnum<DamageAttribute>("tracked_attribute"),
+                Radius = record.ReadFloat("radius"),
+                CoverAll = record.ReadBool("cover_all"),
+                HitTargetCount = record.ReadString("hit_target_count"),
+                RepeatCount = record.ReadInt("repeat_count"),
+                RepeatIntervalSeconds = record.ReadFloat("repeat_interval_seconds"),
+                SkillEffectPrefabPath = record.ReadString("skill_effect_prefab_path"),
+                RuntimeSupportState = record.ReadString("runtime_support_state"),
+                RuntimeSupportNotes = record.ReadString("runtime_support_notes")
+            };
+
+            if (row.DamageMultiplier <= 0f)
+            {
+                row.DamageMultiplier = 1f;
+            }
+
+            if (row.RepeatCount <= 0)
+            {
+                row.RepeatCount = 1;
             }
 
             return row;

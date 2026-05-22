@@ -51,6 +51,7 @@ namespace Pakuri.Data
                 monster.InitialRewardChoices = BuildRewardChoices(model, sourceMonster.Id);
                 monster.ActiveSkills = BuildActiveSkills(model, sourceMonster.Id);
                 monster.PassiveSkills = BuildPassiveSkills(model, sourceMonster.Id);
+                monster.SkillTriggers = BuildSkillTriggers(model, sourceMonster.Id);
                 monsters.Add(monster);
             }
 
@@ -158,16 +159,10 @@ namespace Pakuri.Data
 
         private static MonsterDefinition.RewardChoiceDefinition[] BuildRewardChoices(SourceModel model, string monsterId)
         {
-            var rewards = new List<RewardChoiceRow>();
-            foreach (var reward in model.RewardChoices.Values)
-            {
-                if (string.Equals(reward.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase))
-                {
-                    rewards.Add(reward);
-                }
-            }
-
-            rewards.Sort((left, right) => left.SortOrder.CompareTo(right.SortOrder));
+            var rewards = FilterAndSort(
+                model.RewardChoices.Values,
+                reward => string.Equals(reward.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase),
+                (left, right) => left.SortOrder.CompareTo(right.SortOrder));
 
             var definitions = new MonsterDefinition.RewardChoiceDefinition[rewards.Count];
             for (var i = 0; i < rewards.Count; i++)
@@ -186,23 +181,17 @@ namespace Pakuri.Data
 
         private static SkillDefinition[] BuildActiveSkills(SourceModel model, string monsterId)
         {
-            var skills = new List<SkillRow>();
-            foreach (var skill in model.Skills.Values)
-            {
-                if (skill.SkillKind == PakuriCsvSkillKind.Active
-                    && string.Equals(skill.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase))
-                {
-                    skills.Add(skill);
-                }
-            }
-
-            skills.Sort((left, right) => left.Slot.CompareTo(right.Slot));
+            var skills = FilterAndSort(
+                model.Skills.Values,
+                skill => skill.SkillKind == PakuriCsvSkillKind.Active
+                    && string.Equals(skill.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase),
+                (left, right) => left.Slot.CompareTo(right.Slot));
 
             var definitions = new SkillDefinition[skills.Count];
             for (var i = 0; i < skills.Count; i++)
             {
                 var skill = skills[i];
-                definitions[i] = new SkillDefinition
+                var definition = new SkillDefinition
                 {
                     SkillId = skill.Id,
                     DisplayName = skill.DisplayName,
@@ -228,29 +217,14 @@ namespace Pakuri.Data
                     ProjectileSpeed = skill.ProjectileSpeed,
                     PierceCount = skill.PierceCount,
                     CriticalAllowed = skill.CriticalAllowed,
-                    StatusEffectId = skill.StatusEffectId,
-                    StatusChance = skill.StatusChance,
-                    StatusEffectLabel = skill.StatusEffectLabel,
-                    StatusEffectPrefab = LoadPrefab(skill.StatusEffectPrefabPath),
-                    StatusDurationSeconds = skill.StatusDurationSeconds,
-                    StatusMaxStacks = skill.StatusMaxStacks,
-                    StatusStackAmount = skill.StatusStackAmount,
-                    StatusTargetScope = skill.StatusTargetScope,
-                    StatusMergePolicy = skill.StatusMergePolicy,
-                    ShieldAmountRefreshPolicy = skill.ShieldAmountRefreshPolicy,
-                    StatusActionSpeedBonus = skill.StatusActionSpeedBonus,
-                    StatusMoveSpeedBonus = skill.StatusMoveSpeedBonus,
-                    StatusAttackPowerBonus = skill.StatusAttackPowerBonus,
-                    StatusDamageTakenBonus = skill.StatusDamageTakenBonus,
-                    StatusCriticalDamageTakenBonus = skill.StatusCriticalDamageTakenBonus,
-                    StatusCriticalResistanceBonus = skill.StatusCriticalResistanceBonus,
-                    StatusElementResistReduction = skill.StatusElementResistReduction,
-                    StatusElementDamageTakenBonus = skill.StatusElementDamageTakenBonus,
                     Summary = skill.Summary,
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.ActiveEnhancement),
                     MasterSkillChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.ActiveMaster),
                     MultiEffects = BuildSkillEffects(model, skill.Id)
                 };
+
+                ApplyStatusPayload(definition, skill.Status);
+                definitions[i] = definition;
             }
 
             return definitions;
@@ -258,22 +232,16 @@ namespace Pakuri.Data
 
         private static SkillEffectDefinition[] BuildSkillEffects(SourceModel model, string skillId)
         {
-            var effects = new List<SkillEffectRow>();
-            foreach (var effect in model.SkillEffects.Values)
-            {
-                if (string.Equals(effect.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
-                {
-                    effects.Add(effect);
-                }
-            }
-
-            effects.Sort((left, right) => left.SortOrder.CompareTo(right.SortOrder));
+            var effects = FilterAndSort(
+                model.SkillEffects.Values,
+                effect => string.Equals(effect.SkillId, skillId, StringComparison.OrdinalIgnoreCase),
+                (left, right) => left.SortOrder.CompareTo(right.SortOrder));
 
             var definitions = new SkillEffectDefinition[effects.Count];
             for (var i = 0; i < effects.Count; i++)
             {
                 var effect = effects[i];
-                definitions[i] = new SkillEffectDefinition
+                var definition = new SkillEffectDefinition
                 {
                     EffectId = effect.Id,
                     SkillId = effect.SkillId,
@@ -294,6 +262,7 @@ namespace Pakuri.Data
                     ApplyOnce = effect.ApplyOnce,
                     ConditionStatusId = effect.ConditionStatusId,
                     ConditionTargetSide = effect.ConditionTargetSide,
+                    ConditionSkillAttribute = effect.ConditionSkillAttribute,
                     Attribute = effect.Attribute,
                     BaseDamage = effect.BaseDamage,
                     AttackPowerCoefficient = effect.AttackPowerCoefficient,
@@ -301,30 +270,60 @@ namespace Pakuri.Data
                     DamageMultiplier = effect.DamageMultiplier,
                     Radius = effect.Radius,
                     CoverAll = effect.CoverAll,
-                    StatusEffectId = effect.StatusEffectId,
-                    StatusChance = effect.StatusChance,
-                    StatusEffectLabel = effect.StatusEffectLabel,
-                    StatusEffectPrefab = LoadPrefab(effect.StatusEffectPrefabPath),
-                    StatusDurationSeconds = effect.StatusDurationSeconds,
-                    StatusMaxStacks = effect.StatusMaxStacks,
-                    StatusStackAmount = effect.StatusStackAmount,
-                    StatusTargetScope = effect.StatusTargetScope,
-                    StatusMergePolicy = effect.StatusMergePolicy,
-                    ShieldAmountRefreshPolicy = effect.ShieldAmountRefreshPolicy,
-                    StatusActionSpeedBonus = effect.StatusActionSpeedBonus,
-                    StatusMoveSpeedBonus = effect.StatusMoveSpeedBonus,
-                    StatusAttackPowerBonus = effect.StatusAttackPowerBonus,
-                    StatusSpellPowerBonus = effect.StatusSpellPowerBonus,
-                    StatusDamageBonusRate = effect.StatusDamageBonusRate,
-                    StatusShieldReceivedBonus = effect.StatusShieldReceivedBonus,
-                    StatusDamageTakenBonus = effect.StatusDamageTakenBonus,
-                    StatusCriticalDamageTakenBonus = effect.StatusCriticalDamageTakenBonus,
-                    StatusCriticalResistanceBonus = effect.StatusCriticalResistanceBonus,
-                    StatusElementResistReduction = effect.StatusElementResistReduction,
-                    StatusElementDamageTakenBonus = effect.StatusElementDamageTakenBonus,
                     SkillEffectPrefab = LoadPrefab(effect.SkillEffectPrefabPath),
                     RuntimeSupportState = effect.RuntimeSupportState,
                     RuntimeSupportNotes = effect.RuntimeSupportNotes
+                };
+
+                ApplyStatusPayload(definition, effect.Status);
+                definitions[i] = definition;
+            }
+
+            return definitions;
+        }
+
+        private static SkillTriggerDefinition[] BuildSkillTriggers(SourceModel model, string monsterId)
+        {
+            var triggers = FilterAndSort(
+                model.SkillTriggers.Values,
+                trigger => string.Equals(trigger.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase),
+                (left, right) => left.SortOrder.CompareTo(right.SortOrder));
+
+            var definitions = new SkillTriggerDefinition[triggers.Count];
+            for (var i = 0; i < triggers.Count; i++)
+            {
+                var trigger = triggers[i];
+                definitions[i] = new SkillTriggerDefinition
+                {
+                    TriggerId = trigger.Id,
+                    MonsterId = trigger.MonsterId,
+                    SourceSkillId = trigger.SourceSkillId,
+                    TriggerEvent = trigger.TriggerEvent,
+                    RequiresActiveChoiceId = trigger.RequiresActiveChoiceId,
+                    ExcludesActiveChoiceId = trigger.ExcludesActiveChoiceId,
+                    TriggeredSkillId = trigger.TriggeredSkillId,
+                    RuntimeKind = trigger.RuntimeKind,
+                    SortOrder = trigger.SortOrder,
+                    TargetSide = trigger.TargetSide,
+                    TargetSelection = trigger.TargetSelection,
+                    TargetShape = trigger.TargetShape,
+                    CenterMode = trigger.CenterMode,
+                    Attribute = trigger.Attribute,
+                    BaseDamage = trigger.BaseDamage,
+                    AttackPowerCoefficient = trigger.AttackPowerCoefficient,
+                    SpellPowerCoefficient = trigger.SpellPowerCoefficient,
+                    DamageMultiplier = trigger.DamageMultiplier,
+                    DamageSource = trigger.DamageSource,
+                    DamageSourceMultiplier = trigger.DamageSourceMultiplier,
+                    TrackedAttribute = trigger.TrackedAttribute,
+                    Radius = trigger.Radius,
+                    CoverAll = trigger.CoverAll,
+                    HitTargetCount = trigger.HitTargetCount,
+                    RepeatCount = trigger.RepeatCount,
+                    RepeatIntervalSeconds = trigger.RepeatIntervalSeconds,
+                    SkillEffectPrefab = LoadPrefab(trigger.SkillEffectPrefabPath),
+                    RuntimeSupportState = trigger.RuntimeSupportState,
+                    RuntimeSupportNotes = trigger.RuntimeSupportNotes
                 };
             }
 
@@ -333,17 +332,11 @@ namespace Pakuri.Data
 
         private static PassiveDefinition[] BuildPassiveSkills(SourceModel model, string monsterId)
         {
-            var skills = new List<SkillRow>();
-            foreach (var skill in model.Skills.Values)
-            {
-                if (skill.SkillKind == PakuriCsvSkillKind.Passive
-                    && string.Equals(skill.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase))
-                {
-                    skills.Add(skill);
-                }
-            }
-
-            skills.Sort((left, right) => left.Slot.CompareTo(right.Slot));
+            var skills = FilterAndSort(
+                model.Skills.Values,
+                skill => skill.SkillKind == PakuriCsvSkillKind.Passive
+                    && string.Equals(skill.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase),
+                (left, right) => left.Slot.CompareTo(right.Slot));
 
             var definitions = new PassiveDefinition[skills.Count];
             for (var i = 0; i < skills.Count; i++)
@@ -370,17 +363,11 @@ namespace Pakuri.Data
 
         private static SkillChoiceDefinition[] BuildSkillChoices(SourceModel model, string skillId, PakuriCsvChoiceGroup choiceGroup)
         {
-            var choices = new List<SkillChoiceRow>();
-            foreach (var choice in model.SkillChoices.Values)
-            {
-                if (choice.ChoiceGroup == choiceGroup
-                    && string.Equals(choice.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
-                {
-                    choices.Add(choice);
-                }
-            }
-
-            choices.Sort((left, right) => left.SortOrder.CompareTo(right.SortOrder));
+            var choices = FilterAndSort(
+                model.SkillChoices.Values,
+                choice => choice.ChoiceGroup == choiceGroup
+                    && string.Equals(choice.SkillId, skillId, StringComparison.OrdinalIgnoreCase),
+                (left, right) => left.SortOrder.CompareTo(right.SortOrder));
 
             var definitions = new SkillChoiceDefinition[choices.Count];
             for (var i = 0; i < choices.Count; i++)
@@ -413,6 +400,7 @@ namespace Pakuri.Data
                     HasRadiusMultiplier = choice.HasRadiusMultiplier,
                     RadiusMultiplier = choice.HasRadiusMultiplier ? choice.RadiusMultiplier : 1f,
                     RadiusBonus = choice.RadiusBonus,
+                    BeamWidthBonus = choice.BeamWidthBonus,
                     HasDurationMultiplier = choice.HasDurationMultiplier,
                     DurationMultiplier = choice.HasDurationMultiplier ? choice.DurationMultiplier : 1f,
                     DurationBonus = choice.DurationBonus,
@@ -427,6 +415,9 @@ namespace Pakuri.Data
                     BranchSearchRadius = choice.BranchSearchRadius,
                     HasMaxHealthBonus = choice.HasMaxHealthBonus,
                     MaxHealthBonus = choice.MaxHealthBonus,
+                    HitTargetCountBonus = choice.HitTargetCountBonus,
+                    CritChanceBonus = choice.CritChanceBonus,
+                    CritDamageBonus = choice.CritDamageBonus,
                     StatusTag = choice.StatusTag,
                     HasStatusChanceBonus = choice.HasStatusChanceBonus,
                     StatusChanceBonus = choice.StatusChanceBonus,
@@ -435,12 +426,103 @@ namespace Pakuri.Data
                     StatusStacksSet = choice.StatusStacksSet,
                     HasStatusElementDamageTakenBonus = choice.HasStatusElementDamageTakenBonus,
                     StatusElementDamageTakenBonus = choice.StatusElementDamageTakenBonus,
+                    HasStatusCriticalDamageTakenBonus = choice.HasStatusCriticalDamageTakenBonus,
+                    StatusCriticalDamageTakenBonus = choice.StatusCriticalDamageTakenBonus,
+                    HasStatusAilmentResistanceBonus = choice.HasStatusAilmentResistanceBonus,
+                    StatusAilmentResistanceBonus = choice.StatusAilmentResistanceBonus,
+                    CountStatusId = choice.CountStatusId,
+                    CountTargetSide = choice.CountTargetSide,
+                    DamageMultiplierPerCount = choice.DamageMultiplierPerCount,
+                    CountMax = choice.CountMax,
+                    HasStatusConditionalDamageTakenBonus = choice.HasStatusConditionalDamageTakenBonus,
+                    StatusConditionalDamageTakenBonus = choice.StatusConditionalDamageTakenBonus,
+                    StatusConditionalSourceStatusId = choice.StatusConditionalSourceStatusId,
                     RuntimeSupportState = choice.RuntimeSupportState,
                     RuntimeSupportNotes = choice.RuntimeSupportNotes
                 };
             }
 
             return definitions;
+        }
+
+        private static List<T> FilterAndSort<T>(
+            IEnumerable<T> source,
+            Predicate<T> predicate,
+            Comparison<T> comparison)
+        {
+            var filtered = new List<T>();
+            foreach (var item in source)
+            {
+                if (predicate(item))
+                {
+                    filtered.Add(item);
+                }
+            }
+
+            filtered.Sort(comparison);
+            return filtered;
+        }
+
+        private static void ApplyStatusPayload(SkillDefinition definition, StatusPayloadRow payload)
+        {
+            if (definition == null || payload == null)
+            {
+                return;
+            }
+
+            definition.StatusEffectId = payload.StatusEffectId;
+            definition.StatusChance = payload.StatusChance;
+            definition.StatusEffectLabel = payload.StatusEffectLabel;
+            definition.StatusEffectPrefab = LoadPrefab(payload.StatusEffectPrefabPath);
+            definition.StatusDurationSeconds = payload.StatusDurationSeconds;
+            definition.StatusMaxStacks = payload.StatusMaxStacks;
+            definition.StatusStackAmount = payload.StatusStackAmount;
+            definition.StatusTargetScope = payload.StatusTargetScope;
+            definition.StatusMergePolicy = payload.StatusMergePolicy;
+            definition.ShieldAmountRefreshPolicy = payload.ShieldAmountRefreshPolicy;
+            definition.StatusActionSpeedBonus = payload.StatusActionSpeedBonus;
+            definition.StatusMoveSpeedBonus = payload.StatusMoveSpeedBonus;
+            definition.StatusAttackPowerBonus = payload.StatusAttackPowerBonus;
+            definition.StatusDamageTakenBonus = payload.StatusDamageTakenBonus;
+            definition.StatusCriticalDamageTakenBonus = payload.StatusCriticalDamageTakenBonus;
+            definition.StatusAilmentResistanceBonus = payload.StatusAilmentResistanceBonus;
+            definition.StatusCriticalResistanceBonus = payload.StatusCriticalResistanceBonus;
+            definition.StatusElementResistReduction = payload.StatusElementResistReduction;
+            definition.StatusFlatElementResistReduction = payload.StatusFlatElementResistReduction;
+            definition.StatusElementDamageTakenBonus = payload.StatusElementDamageTakenBonus;
+        }
+
+        private static void ApplyStatusPayload(SkillEffectDefinition definition, StatusPayloadRow payload)
+        {
+            if (definition == null || payload == null)
+            {
+                return;
+            }
+
+            definition.StatusEffectId = payload.StatusEffectId;
+            definition.StatusChance = payload.StatusChance;
+            definition.StatusEffectLabel = payload.StatusEffectLabel;
+            definition.StatusEffectPrefab = LoadPrefab(payload.StatusEffectPrefabPath);
+            definition.StatusDurationSeconds = payload.StatusDurationSeconds;
+            definition.StatusMaxStacks = payload.StatusMaxStacks;
+            definition.StatusStackAmount = payload.StatusStackAmount;
+            definition.StatusTargetScope = payload.StatusTargetScope;
+            definition.StatusMergePolicy = payload.StatusMergePolicy;
+            definition.ShieldAmountRefreshPolicy = payload.ShieldAmountRefreshPolicy;
+            definition.StatusActionSpeedBonus = payload.StatusActionSpeedBonus;
+            definition.StatusMoveSpeedBonus = payload.StatusMoveSpeedBonus;
+            definition.StatusAttackPowerBonus = payload.StatusAttackPowerBonus;
+            definition.StatusSpellPowerBonus = payload.StatusSpellPowerBonus;
+            definition.StatusDamageBonusRate = payload.StatusDamageBonusRate;
+            definition.StatusShieldReceivedBonus = payload.StatusShieldReceivedBonus;
+            definition.StatusDamageTakenBonus = payload.StatusDamageTakenBonus;
+            definition.StatusCriticalDamageTakenBonus = payload.StatusCriticalDamageTakenBonus;
+            definition.StatusAilmentResistanceBonus = payload.StatusAilmentResistanceBonus;
+            definition.StatusCriticalChanceBonus = payload.StatusCriticalChanceBonus;
+            definition.StatusCriticalResistanceBonus = payload.StatusCriticalResistanceBonus;
+            definition.StatusElementResistReduction = payload.StatusElementResistReduction;
+            definition.StatusFlatElementResistReduction = payload.StatusFlatElementResistReduction;
+            definition.StatusElementDamageTakenBonus = payload.StatusElementDamageTakenBonus;
         }
 
         private static SkillChoiceGroup MapChoiceGroup(PakuriCsvChoiceGroup group)

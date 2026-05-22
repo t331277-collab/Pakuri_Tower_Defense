@@ -51,7 +51,8 @@ namespace Pakuri.Data
     public enum SkillMultiEffectKind
     {
         Damage,
-        Status
+        Status,
+        ExtendStatusDuration
     }
 
     public enum SkillMultiEffectTargetSide
@@ -64,7 +65,8 @@ namespace Pakuri.Data
     public enum SkillMultiEffectTargetSelection
     {
         Nearest,
-        Owner
+        Owner,
+        EventTarget
     }
 
     public enum SkillMultiEffectTargetShape
@@ -94,6 +96,57 @@ namespace Pakuri.Data
         AppliedTargets
     }
 
+    public enum SkillTriggerEvent
+    {
+        OnMagazineLastProjectileHit,
+        OnShieldExpire,
+        OnShieldAbsorb,
+        OnStatusExpire
+    }
+
+    public enum SkillTriggerDamageSource
+    {
+        Fixed,
+        ShieldAppliedAmount,
+        ShieldRemainingAmount,
+        ShieldAbsorbedAmount,
+        TrackedIncomingDamage
+    }
+
+    [Serializable]
+    public class SkillTriggerDefinition
+    {
+        public string TriggerId;
+        public string MonsterId;
+        public string SourceSkillId;
+        public SkillTriggerEvent TriggerEvent;
+        public string RequiresActiveChoiceId;
+        public string ExcludesActiveChoiceId;
+        public string TriggeredSkillId;
+        public SkillRuntimeKind RuntimeKind;
+        public int SortOrder;
+        public SkillMultiEffectTargetSide TargetSide;
+        public SkillMultiEffectTargetSelection TargetSelection;
+        public SkillMultiEffectTargetShape TargetShape;
+        public SkillMultiEffectCenterMode CenterMode;
+        public DamageAttribute Attribute;
+        public float BaseDamage;
+        public float AttackPowerCoefficient;
+        public float SpellPowerCoefficient;
+        public float DamageMultiplier = 1f;
+        public SkillTriggerDamageSource DamageSource;
+        public float DamageSourceMultiplier;
+        public DamageAttribute TrackedAttribute;
+        public float Radius;
+        public bool CoverAll;
+        public string HitTargetCount;
+        public int RepeatCount = 1;
+        public float RepeatIntervalSeconds;
+        public GameObject SkillEffectPrefab;
+        public string RuntimeSupportState;
+        [TextArea(2, 5)] public string RuntimeSupportNotes;
+    }
+
     [Serializable]
     public class SkillEffectDefinition
     {
@@ -116,6 +169,7 @@ namespace Pakuri.Data
         public bool ApplyOnce;
         public string ConditionStatusId;
         public SkillMultiEffectTargetSide ConditionTargetSide;
+        public string ConditionSkillAttribute;
         public DamageAttribute Attribute;
         public float BaseDamage;
         public float AttackPowerCoefficient;
@@ -141,9 +195,12 @@ namespace Pakuri.Data
         public float StatusShieldReceivedBonus;
         public float StatusDamageTakenBonus;
         public float StatusCriticalDamageTakenBonus;
+        public float StatusAilmentResistanceBonus;
         public float StatusCriticalResistanceBonus;
         public float StatusElementResistReduction;
+        public float StatusFlatElementResistReduction;
         public float StatusElementDamageTakenBonus;
+        public float StatusCriticalChanceBonus;
         public GameObject SkillEffectPrefab;
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
@@ -177,6 +234,7 @@ namespace Pakuri.Data
         public bool HasRadiusMultiplier;
         public float RadiusMultiplier = 1f;
         public float RadiusBonus;
+        public float BeamWidthBonus;
         public bool HasDurationMultiplier;
         public float DurationMultiplier = 1f;
         public float DurationBonus;
@@ -191,6 +249,9 @@ namespace Pakuri.Data
         public float BranchSearchRadius;
         public bool HasMaxHealthBonus;
         public float MaxHealthBonus;
+        public int HitTargetCountBonus;
+        public float CritChanceBonus;
+        public float CritDamageBonus;
         public string StatusTag;
         public bool HasStatusChanceBonus;
         public float StatusChanceBonus;
@@ -199,6 +260,17 @@ namespace Pakuri.Data
         public int StatusStacksSet;
         public bool HasStatusElementDamageTakenBonus;
         public float StatusElementDamageTakenBonus;
+        public bool HasStatusCriticalDamageTakenBonus;
+        public float StatusCriticalDamageTakenBonus;
+        public bool HasStatusAilmentResistanceBonus;
+        public float StatusAilmentResistanceBonus;
+        public string CountStatusId;
+        public SkillMultiEffectTargetSide CountTargetSide;
+        public float DamageMultiplierPerCount;
+        public int CountMax;
+        public bool HasStatusConditionalDamageTakenBonus;
+        public float StatusConditionalDamageTakenBonus;
+        public string StatusConditionalSourceStatusId;
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
     }
@@ -246,8 +318,10 @@ namespace Pakuri.Data
         public float StatusAttackPowerBonus;
         public float StatusDamageTakenBonus;
         public float StatusCriticalDamageTakenBonus;
+        public float StatusAilmentResistanceBonus;
         public float StatusCriticalResistanceBonus;
         public float StatusElementResistReduction;
+        public float StatusFlatElementResistReduction;
         public float StatusElementDamageTakenBonus;
         [TextArea(2, 4)] public string Summary;
         public SkillChoiceDefinition[] EnhancementChoices = Array.Empty<SkillChoiceDefinition>();

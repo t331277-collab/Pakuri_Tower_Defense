@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
@@ -365,6 +365,7 @@ namespace Pakuri.InGame
                     HasRadiusMultiplier = choice != null && choice.HasRadiusMultiplier,
                     RadiusMultiplier = choice != null && choice.HasRadiusMultiplier ? choice.RadiusMultiplier : 1f,
                     RadiusBonus = choice != null ? choice.RadiusBonus : 0f,
+                    BeamWidthBonus = choice != null ? choice.BeamWidthBonus : 0f,
                     HasDurationMultiplier = choice != null && choice.HasDurationMultiplier,
                     DurationMultiplier = choice != null && choice.HasDurationMultiplier ? choice.DurationMultiplier : 1f,
                     DurationBonus = choice != null ? choice.DurationBonus : 0f,
@@ -389,12 +390,26 @@ namespace Pakuri.InGame
                     BranchSearchRadius = choice != null ? choice.BranchSearchRadius : 0f,
                     HasMaxHealthBonus = choice != null && choice.HasMaxHealthBonus,
                     MaxHealthBonus = choice != null ? choice.MaxHealthBonus : 0f,
+                    HitTargetCountBonus = choice != null ? choice.HitTargetCountBonus : 0,
+                    CritChanceBonus = choice != null ? choice.CritChanceBonus : 0f,
+                    CritDamageBonus = choice != null ? choice.CritDamageBonus : 0f,
                     StatusTag = choice != null ? choice.StatusTag : string.Empty,
                     StatusStacksBonus = choice != null ? choice.StatusStacksBonus : 0,
                     HasStatusStacksSet = choice != null && choice.HasStatusStacksSet,
                     StatusStacksSet = choice != null ? choice.StatusStacksSet : 0,
                     HasStatusElementDamageTakenBonus = choice != null && choice.HasStatusElementDamageTakenBonus,
-                    StatusElementDamageTakenBonus = choice != null ? choice.StatusElementDamageTakenBonus : 0f
+                    StatusElementDamageTakenBonus = choice != null ? choice.StatusElementDamageTakenBonus : 0f,
+                    HasStatusCriticalDamageTakenBonus = choice != null && choice.HasStatusCriticalDamageTakenBonus,
+                    StatusCriticalDamageTakenBonus = choice != null ? choice.StatusCriticalDamageTakenBonus : 0f,
+                    HasStatusAilmentResistanceBonus = choice != null && choice.HasStatusAilmentResistanceBonus,
+                    StatusAilmentResistanceBonus = choice != null ? choice.StatusAilmentResistanceBonus : 0f,
+                    CountStatusId = choice != null ? choice.CountStatusId : string.Empty,
+                    CountTargetSide = choice != null ? choice.CountTargetSide : SkillMultiEffectTargetSide.Enemy,
+                    DamageMultiplierPerCount = choice != null ? choice.DamageMultiplierPerCount : 0f,
+                    CountMax = choice != null ? choice.CountMax : 0,
+                    HasStatusConditionalDamageTakenBonus = choice != null && choice.HasStatusConditionalDamageTakenBonus,
+                    StatusConditionalDamageTakenBonus = choice != null ? choice.StatusConditionalDamageTakenBonus : 0f,
+                    StatusConditionalSourceStatusId = choice != null ? choice.StatusConditionalSourceStatusId : string.Empty
                 };
             }
 

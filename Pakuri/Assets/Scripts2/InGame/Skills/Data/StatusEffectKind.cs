@@ -265,9 +265,11 @@ namespace Pakuri.InGame
         public float MovementSlowRate;
         public float MoveSpeedBonus;
         public float CriticalDamageTakenBonus;
+        public float AilmentResistanceBonus;
         public float CriticalResistanceBonus;
         public float DamageTakenBonus;
         public float ElementResistReduction;
+        public float FlatElementResistReduction;
         public float ElementDamageTakenBonus;
         public ElementType ElementModifierTarget;
         public bool HasElementModifierTarget;
@@ -278,5 +280,9 @@ namespace Pakuri.InGame
         [Header("Conditional Conversion")]
         public string TriggerConditionTag;
         public int TriggerConditionStacks;
+
+        [Header("Conditional Incoming Damage")]
+        public string ConditionalSourceStatusTag;
+        public float ConditionalDamageTakenBonus;
     }
 }

@@ -508,7 +508,7 @@ namespace Pakuri.InGame
             var prefab = effects != null ? effects.ResolveEnemySkillEffectPrefab(enemyModel, skillData.SkillKind) : null;
             if (prefab == null)
             {
-                combatManager.ApplyDamage(target.Model, damage, enemyModel.Attribute);
+                combatManager.ApplyDamage(target.Model, damage, enemyModel.Attribute, enemyModel, true);
                 return;
             }
 
@@ -516,7 +516,7 @@ namespace Pakuri.InGame
             var instance = effects.InstantiateSkillPrefab(prefab, origin, ResolveRotation(direction));
             if (instance == null)
             {
-                combatManager.ApplyDamage(target.Model, damage, enemyModel.Attribute);
+                combatManager.ApplyDamage(target.Model, damage, enemyModel.Attribute, enemyModel, true);
                 return;
             }
 
@@ -570,14 +570,14 @@ namespace Pakuri.InGame
             var prefab = effects != null ? effects.ResolveEnemySkillEffectPrefab(enemyModel, skillData.SkillKind) : null;
             if (prefab == null)
             {
-                combatManager.ApplyDamage(target.Model, damage, enemyModel.Attribute);
+                combatManager.ApplyDamage(target.Model, damage, enemyModel.Attribute, enemyModel, true);
                 return;
             }
 
             var instance = effects.InstantiateSkillPrefab(prefab, enemyEntry.Transform.position, ResolveRotation(direction));
             if (instance == null)
             {
-                combatManager.ApplyDamage(target.Model, damage, enemyModel.Attribute);
+                combatManager.ApplyDamage(target.Model, damage, enemyModel.Attribute, enemyModel, true);
                 return;
             }
 
@@ -596,7 +596,13 @@ namespace Pakuri.InGame
                 enemyModel.Attribute,
                 0,
                 ResolveEnemyProjectileBoundaryX(enemyEntry.Transform.position, direction),
-                ResolveEnemyProjectileLifetime(skillData, lifetimeSeconds));
+                ResolveEnemyProjectileLifetime(skillData, lifetimeSeconds),
+                null,
+                null,
+                null,
+                null,
+                false,
+                true);
         }
 
         private static void ExecuteHeal(

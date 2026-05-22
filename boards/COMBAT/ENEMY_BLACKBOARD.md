@@ -9,6 +9,50 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - Older broad combat/enemy history remains in `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current Stage 1 enemy runtime authority and verification baseline.
 
+## Task: 2026-05-22 Spawn-Time Enemy Action Policy
+
+### Task title
+
+Let spawned enemies move and attack by unit rules instead of waiting for `StageState.Combat`.
+
+### Goals
+
+- Remove the runtime behavior dependency where enemies waited until every encounter row finished spawning before moving.
+- Keep enemy movement and attack decisions owned by `EnemyCombatSystem` target, range, status, and cooldown checks.
+- Keep Stage flow states as run/reward flow information instead of the enemy action gate.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This task changes runtime execution policy only; no enemy CSV, prefab, or scene serialization was changed.
+- Unity Play Mode verification remains user-owned.
+- Code Reviewer execution requires explicit user permission and was not run in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies in Play Mode that enemies begin moving as soon as they spawn and attack once their current target is in range.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/StageManager.cs` still owns the flow states `Spawning`, `Combat`, and `RewardReady`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now calls `enemyCombatSystem.Tick(...)` whenever `enemyCombatSimulationEnabled` is true, without checking `StageState.Combat`.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSystem.cs` remains the owner of enemy target lookup, movement through `MoveToward(...)`, action permission through status checks, and basic/special skill cooldowns.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
+- Unity-MCP script refresh reached idle; console warning/error read showed only MCP client handler logs.
+
+### History
+
+- 2026-05-22: User clarified that enemies should not wait for all spawns before moving. Code Builder removed the `StageState.Combat` gate from the enemy combat tick path so spawned enemies act by their own target/range/cooldown rules.
+
 ## Task: 2026-05-18 NewRun Prefix Removal Follow-up
 
 ### Task title
