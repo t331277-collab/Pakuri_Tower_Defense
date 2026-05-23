@@ -301,6 +301,10 @@ namespace Pakuri.Data
                     TriggerEvent = trigger.TriggerEvent,
                     RequiresActiveChoiceId = trigger.RequiresActiveChoiceId,
                     ExcludesActiveChoiceId = trigger.ExcludesActiveChoiceId,
+                    ConditionStatusId = trigger.ConditionStatusId,
+                    TriggerAttribute = trigger.TriggerAttribute,
+                    ProcChance = trigger.ProcChance,
+                    InternalCooldownSeconds = trigger.InternalCooldownSeconds,
                     TriggeredSkillId = trigger.TriggeredSkillId,
                     RuntimeKind = trigger.RuntimeKind,
                     SortOrder = trigger.SortOrder,
@@ -430,11 +434,17 @@ namespace Pakuri.Data
                     StatusCriticalDamageTakenBonus = choice.StatusCriticalDamageTakenBonus,
                     HasStatusAilmentResistanceBonus = choice.HasStatusAilmentResistanceBonus,
                     StatusAilmentResistanceBonus = choice.StatusAilmentResistanceBonus,
+                    StatusMaxStacksBonusStatusId = choice.StatusMaxStacksBonusStatusId,
+                    StatusMaxStacksBonus = choice.StatusMaxStacksBonus,
                     StatusDurationBonusStatusId = choice.StatusDurationBonusStatusId,
                     StatusDurationBonus = choice.StatusDurationBonus,
                     ThresholdStatusId = choice.ThresholdStatusId,
                     ThresholdStatusMinStacks = choice.ThresholdStatusMinStacks,
                     ThresholdApplyStatusId = choice.ThresholdApplyStatusId,
+                    HasConditionalDamageMultiplier = choice.HasConditionalDamageMultiplier,
+                    ConditionalDamageMultiplier = choice.HasConditionalDamageMultiplier ? choice.ConditionalDamageMultiplier : 1f,
+                    ConditionalTargetStatusId = choice.ConditionalTargetStatusId,
+                    ConditionalTargetStatusMinStacks = choice.ConditionalTargetStatusMinStacks,
                     CountStatusId = choice.CountStatusId,
                     CountTargetSide = choice.CountTargetSide,
                     DamageMultiplierPerCount = choice.DamageMultiplierPerCount,
@@ -528,6 +538,10 @@ namespace Pakuri.Data
             definition.StatusElementResistReduction = payload.StatusElementResistReduction;
             definition.StatusFlatElementResistReduction = payload.StatusFlatElementResistReduction;
             definition.StatusElementDamageTakenBonus = payload.StatusElementDamageTakenBonus;
+            definition.StatusConditionalTargetStatusId = payload.StatusConditionalTargetStatusId;
+            definition.StatusConditionalStatusChanceBonus = payload.StatusConditionalStatusChanceBonus;
+            definition.StatusAppliedStatusDurationBonusStatusId = payload.StatusAppliedStatusDurationBonusStatusId;
+            definition.StatusAppliedStatusDurationBonus = payload.StatusAppliedStatusDurationBonus;
         }
 
         private static SkillChoiceGroup MapChoiceGroup(PakuriCsvChoiceGroup group)

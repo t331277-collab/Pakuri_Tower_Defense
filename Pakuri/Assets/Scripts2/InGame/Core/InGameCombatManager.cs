@@ -14,18 +14,21 @@ namespace Pakuri.InGame
             BaseUnitRuntimeModel source,
             bool criticalAllowed = false,
             float critChanceBonus = 0f,
-            float critDamageBonus = 0f)
+            float critDamageBonus = 0f,
+            string sourceSkillId = null)
         {
             Source = source;
             CriticalAllowed = criticalAllowed;
             CritChanceBonus = critChanceBonus;
             CritDamageBonus = critDamageBonus;
+            SourceSkillId = sourceSkillId;
         }
 
         public BaseUnitRuntimeModel Source { get; }
         public bool CriticalAllowed { get; }
         public float CritChanceBonus { get; }
         public float CritDamageBonus { get; }
+        public string SourceSkillId { get; }
     }
 
     [DisallowMultipleComponent]
@@ -39,6 +42,7 @@ namespace Pakuri.InGame
         private readonly SkillExecutionSystem skillExecution = new SkillExecutionSystem();
         private readonly Dictionary<string, GameObject> statusEffectVisuals = new Dictionary<string, GameObject>();
         private readonly HashSet<string> appliedOneShotPassiveEffects = new HashSet<string>();
+        private readonly Dictionary<string, float> passiveTriggerCooldowns = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
         private float passiveEffectRefreshRemaining;
 
         [SerializeField] private bool enemyCombatSimulationEnabled = true;
@@ -129,16 +133,18 @@ namespace Pakuri.InGame
             BaseUnitRuntimeModel source,
             bool criticalAllowed = false,
             float critChanceBonus = 0f,
-            float critDamageBonus = 0f)
+            float critDamageBonus = 0f,
+            string sourceSkillId = null)
         {
             var depletedShields = new List<UnitStatusRuntime>();
             var absorbedShields = new List<ShieldAbsorbRecord>();
-            var options = new DamageApplicationOptions(source, criticalAllowed, critChanceBonus, critDamageBonus);
+            var options = new DamageApplicationOptions(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
             var result = resourceMutations.ApplyDamage(target, baseDamage, attribute, options, depletedShields, absorbedShields);
             RefreshActorIfChanged(result);
             ShowDamageIfChanged(result);
             DispatchShieldAbsorbTriggers(target, source, absorbedShields);
             DispatchShieldExpireTriggers(target, depletedShields);
+            DispatchOutgoingDamageTriggers(target, attribute, options, result);
             RemoveUnitIfDead(result);
             return result;
         }
@@ -212,7 +218,8 @@ namespace Pakuri.InGame
             float durationSeconds,
             int maxStacks = 0,
             bool permanent = false,
-            bool refreshDuration = true)
+            bool refreshDuration = true,
+            BaseUnitRuntimeModel source = null)
         {
             if (target == null || target.Statuses == null || statusData == null || statusData.Kind == StatusEffectKind.None)
             {
@@ -226,6 +233,10 @@ namespace Pakuri.InGame
                 maxStacks,
                 permanent,
                 refreshDuration);
+            if (status != null)
+            {
+                status.SetSourceUnit(source);
+            }
             resourceMutations.SynchronizeShieldView(target);
             RefreshUnitActor(target);
             SpawnOrRefreshStatusEffectVisual(target, statusData, status);
@@ -311,7 +322,45 @@ namespace Pakuri.InGame
         public void ResetPassiveEffectState()
         {
             appliedOneShotPassiveEffects.Clear();
+            passiveTriggerCooldowns.Clear();
             passiveEffectRefreshRemaining = 0f;
+        }
+
+        public bool ConsumePassiveTriggerCooldown(string key, float cooldownSeconds)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return true;
+            }
+
+            var now = Time.time;
+            if (passiveTriggerCooldowns.TryGetValue(key, out var readyAt) && readyAt > now)
+            {
+                return false;
+            }
+
+            if (cooldownSeconds > 0f)
+            {
+                passiveTriggerCooldowns[key] = now + cooldownSeconds;
+            }
+            else
+            {
+                passiveTriggerCooldowns.Remove(key);
+            }
+
+            return true;
+        }
+
+        public bool TryExecuteTriggeredSkill(UnitRosterEntry casterEntry, SkillRuntimeInstance runtime, Vector2 targetPoint, bool hasTargetPoint)
+        {
+            return skillExecution.TryExecuteTriggered(
+                casterEntry,
+                runtime,
+                roster,
+                this,
+                logSkillExecutionContracts,
+                targetPoint,
+                hasTargetPoint);
         }
 
         private void TickLearnedPassiveEffects(float deltaTime)
@@ -324,6 +373,26 @@ namespace Pakuri.InGame
 
             passiveEffectRefreshRemaining = PassiveEffectRefreshInterval;
             InGamePassiveEffectRuntime.ApplyLearnedPassiveEffects(this, roster, appliedOneShotPassiveEffects);
+        }
+
+        private void DispatchOutgoingDamageTriggers(
+            BaseUnitRuntimeModel target,
+            DamageAttribute attribute,
+            DamageApplicationOptions options,
+            InGameResourceChangeResult result)
+        {
+            if (options.Source == null || result.AppliedDamage <= 0f)
+            {
+                return;
+            }
+
+            SkillTriggerRuntime.ExecuteOutgoingDamage(
+                this,
+                roster,
+                options.Source,
+                options.SourceSkillId,
+                target,
+                attribute);
         }
 
         public bool HasStatus(BaseUnitRuntimeModel target, string statusTag)

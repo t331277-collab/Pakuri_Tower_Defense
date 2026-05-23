@@ -19,6 +19,7 @@ namespace Pakuri.InGame
         private float remainingDuration;
         private float tickInterval;
         private float tickRemaining;
+        private int maxHitTargetCount;
         private float damage;
         private DamageAttribute attribute;
         private ProjectileStatusHitSpec statusSpec;
@@ -42,6 +43,7 @@ namespace Pakuri.InGame
             bool areaCoversAll,
             float durationSeconds,
             float tickIntervalSeconds,
+            int maxTargetsPerTick,
             float damagePerTick,
             DamageAttribute damageAttribute,
             ProjectileStatusHitSpec onTickStatus,
@@ -63,6 +65,7 @@ namespace Pakuri.InGame
             remainingDuration = Mathf.Max(0.05f, durationSeconds);
             tickInterval = Mathf.Max(0.05f, tickIntervalSeconds);
             tickRemaining = tickInterval;
+            maxHitTargetCount = maxTargetsPerTick <= 0 ? int.MaxValue : maxTargetsPerTick;
             damage = Mathf.Max(0f, damagePerTick);
             attribute = damageAttribute;
             statusSpec = onTickStatus;
@@ -95,9 +98,12 @@ namespace Pakuri.InGame
             DamageAttribute damageAttribute,
             ProjectileStatusHitSpec onHitStatus,
             BaseUnitRuntimeModel source,
+            string sourceSkillId,
             bool criticalAllowed,
             float critChanceBonus,
-            float critDamageBonus)
+            float critDamageBonus,
+            int maxTargetsPerTick = int.MaxValue,
+            SkillExecutionSnapshot executionSnapshot = null)
         {
             if (manager == null || sourceEntry == null || unitRoster == null)
             {
@@ -113,14 +119,15 @@ namespace Pakuri.InGame
                     return false;
                 }
 
-                manager.ApplyDamage(target.Model, damagePerTick, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus);
-                TryApplyStatus(manager, target.Model, onHitStatus);
+                var resolvedDamage = ResolveDamageAgainstTarget(damagePerTick, executionSnapshot, target.Model);
+                manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                TryApplyStatus(manager, target.Model, onHitStatus, source);
                 return true;
             }
 
             var radiusSq = Mathf.Max(0f, areaRadius) * Mathf.Max(0f, areaRadius);
             var hitUnitIds = new HashSet<string>();
-            var routed = false;
+            var eligibleTargets = new List<UnitRosterEntry>();
             for (var i = 0; i < candidates.Count; i++)
             {
                 var target = candidates[i];
@@ -144,12 +151,22 @@ namespace Pakuri.InGame
                     }
                 }
 
-                manager.ApplyDamage(target.Model, damagePerTick, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus);
-                TryApplyStatus(manager, target.Model, onHitStatus);
-                routed = true;
+                eligibleTargets.Add(target);
             }
 
-            return routed;
+            return ApplyResolvedHits(
+                manager,
+                eligibleTargets,
+                maxTargetsPerTick,
+                damagePerTick,
+                damageAttribute,
+                onHitStatus,
+                source,
+                sourceSkillId,
+                criticalAllowed,
+                critChanceBonus,
+                critDamageBonus,
+                executionSnapshot);
         }
 
         private void Update()
@@ -234,13 +251,16 @@ namespace Pakuri.InGame
                     roster,
                     targeting,
                     prefabHitboxColliders,
+                    maxHitTargetCount,
                     damage,
                     attribute,
                     statusSpec,
                     sourceModel,
+                    ResolveSourceSkillId(snapshot, runtime),
                     criticalAllowed,
                     critChanceBonus,
                     critDamageBonus,
+                    snapshot,
                     GetDebugSkillId());
             }
 
@@ -256,9 +276,12 @@ namespace Pakuri.InGame
                 attribute,
                 statusSpec,
                 sourceModel,
+                ResolveSourceSkillId(snapshot, runtime),
                 criticalAllowed,
                 critChanceBonus,
-                critDamageBonus);
+                critDamageBonus,
+                maxHitTargetCount,
+                snapshot);
         }
 
         private static bool ApplyPrefabAreaTick(
@@ -267,13 +290,16 @@ namespace Pakuri.InGame
             UnitRosterService unitRoster,
             SkillTargetingSpec targetingSpec,
             Collider2D[] hitboxColliders,
+            int maxTargetsPerTick,
             float damagePerTick,
             DamageAttribute damageAttribute,
             ProjectileStatusHitSpec onHitStatus,
             BaseUnitRuntimeModel source,
+            string sourceSkillId,
             bool criticalAllowed,
             float critChanceBonus,
             float critDamageBonus,
+            SkillExecutionSnapshot executionSnapshot,
             string debugSkillId)
         {
             if (manager == null || sourceEntry == null || unitRoster == null || hitboxColliders == null || hitboxColliders.Length == 0)
@@ -283,7 +309,7 @@ namespace Pakuri.InGame
 
             var candidates = SkillExecutionUtility.ResolveTargetList(sourceEntry, unitRoster, targetingSpec);
             var hitUnitIds = new HashSet<string>();
-            var routed = false;
+            var eligibleTargets = new List<UnitRosterEntry>();
             var debug = IsDebugSkill(debugSkillId);
             if (debug)
             {
@@ -309,21 +335,115 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                manager.ApplyDamage(target.Model, damagePerTick, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus);
-                TryApplyStatus(manager, target.Model, onHitStatus);
-                routed = true;
-                if (debug)
-                {
-                    Debug.Log($"[ZoneHitboxDebug:{debugSkillId}] Hit target={DescribeTarget(target)} damage={damagePerTick}");
-                }
+                eligibleTargets.Add(target);
             }
 
+            var selectedTargets = SelectTargetsForTick(eligibleTargets, maxTargetsPerTick);
+            var routed = ApplyResolvedHits(
+                manager,
+                selectedTargets,
+                int.MaxValue,
+                damagePerTick,
+                damageAttribute,
+                onHitStatus,
+                source,
+                sourceSkillId,
+                criticalAllowed,
+                critChanceBonus,
+                critDamageBonus,
+                executionSnapshot);
             if (debug)
             {
+                if (selectedTargets.Count > 0 && selectedTargets.Count < eligibleTargets.Count)
+                {
+                    Debug.Log($"[ZoneHitboxDebug:{debugSkillId}] RandomPick selected={selectedTargets.Count}/{eligibleTargets.Count}");
+                }
+
+                for (var i = 0; i < selectedTargets.Count; i++)
+                {
+                    var target = selectedTargets[i];
+                    if (target == null || target.Model == null)
+                    {
+                        continue;
+                    }
+
+                    var resolvedDamage = ResolveDamageAgainstTarget(damagePerTick, executionSnapshot, target.Model);
+                    Debug.Log($"[ZoneHitboxDebug:{debugSkillId}] Hit target={DescribeTarget(target)} damage={resolvedDamage}");
+                }
+
                 Debug.Log($"[ZoneHitboxDebug:{debugSkillId}] Tick end. routed={routed}");
             }
 
             return routed;
+        }
+
+        private static bool ApplyResolvedHits(
+            InGameCombatManager manager,
+            List<UnitRosterEntry> eligibleTargets,
+            int maxTargetsPerTick,
+            float damagePerTick,
+            DamageAttribute damageAttribute,
+            ProjectileStatusHitSpec onHitStatus,
+            BaseUnitRuntimeModel source,
+            string sourceSkillId,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            SkillExecutionSnapshot executionSnapshot)
+        {
+            if (manager == null || eligibleTargets == null || eligibleTargets.Count == 0)
+            {
+                return false;
+            }
+
+            var selectedTargets = SelectTargetsForTick(eligibleTargets, maxTargetsPerTick);
+            var routed = false;
+            for (var i = 0; i < selectedTargets.Count; i++)
+            {
+                var target = selectedTargets[i];
+                if (target == null || target.Model == null)
+                {
+                    continue;
+                }
+
+                var resolvedDamage = ResolveDamageAgainstTarget(damagePerTick, executionSnapshot, target.Model);
+                manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                TryApplyStatus(manager, target.Model, onHitStatus, source);
+                routed = true;
+            }
+
+            return routed;
+        }
+
+        private static List<UnitRosterEntry> SelectTargetsForTick(List<UnitRosterEntry> eligibleTargets, int maxTargetsPerTick)
+        {
+            if (eligibleTargets == null || eligibleTargets.Count == 0)
+            {
+                return new List<UnitRosterEntry>();
+            }
+
+            if (maxTargetsPerTick <= 0 || maxTargetsPerTick >= eligibleTargets.Count)
+            {
+                return new List<UnitRosterEntry>(eligibleTargets);
+            }
+
+            var selectedTargets = new List<UnitRosterEntry>(eligibleTargets);
+            for (var i = 0; i < maxTargetsPerTick; i++)
+            {
+                var randomIndex = UnityEngine.Random.Range(i, selectedTargets.Count);
+                (selectedTargets[i], selectedTargets[randomIndex]) = (selectedTargets[randomIndex], selectedTargets[i]);
+            }
+
+            selectedTargets.RemoveRange(maxTargetsPerTick, selectedTargets.Count - maxTargetsPerTick);
+            return selectedTargets;
+        }
+
+        private static float ResolveDamageAgainstTarget(
+            float baseDamage,
+            SkillExecutionSnapshot executionSnapshot,
+            BaseUnitRuntimeModel target)
+        {
+            return SkillExecutionUtility.ResolveDamageAgainstTarget(baseDamage, executionSnapshot, target);
         }
 
         private static bool IsTargetInsideHitbox(
@@ -464,9 +584,20 @@ namespace Pakuri.InGame
         private static void TryApplyStatus(
             InGameCombatManager manager,
             BaseUnitRuntimeModel target,
-            ProjectileStatusHitSpec status)
+            ProjectileStatusHitSpec status,
+            BaseUnitRuntimeModel source)
         {
-            SkillStatusApplyUtility.TryApplyStatus(manager, target, status);
+            SkillStatusApplyUtility.TryApplyStatus(manager, target, status, source);
+        }
+
+        private static string ResolveSourceSkillId(SkillExecutionSnapshot executionSnapshot, SkillRuntimeInstance sourceRuntime)
+        {
+            if (sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId))
+            {
+                return sourceRuntime.SkillId;
+            }
+
+            return executionSnapshot != null ? executionSnapshot.SkillId : string.Empty;
         }
     }
 }

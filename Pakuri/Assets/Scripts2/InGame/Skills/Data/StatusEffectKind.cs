@@ -284,5 +284,13 @@ namespace Pakuri.InGame
         [Header("Conditional Incoming Damage")]
         public string ConditionalSourceStatusTag;
         public float ConditionalDamageTakenBonus;
+
+        [Header("Conditional Status Application")]
+        public string ConditionalTargetStatusTag;
+        public float ConditionalStatusChanceBonus;
+
+        [Header("Applied Status Duration Bonus")]
+        public string AppliedStatusDurationBonusStatusId;
+        public float AppliedStatusDurationBonus;
     }
 }

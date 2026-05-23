@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
@@ -7,6 +9,18 @@ namespace Pakuri.InGame
     public static class StatusEffectRuntime
     {
         private const float MinimumActionMultiplier = 0.05f;
+
+        internal readonly struct StatusConditionRequirement
+        {
+            public StatusConditionRequirement(StatusEffectKind kind, int minStacks)
+            {
+                Kind = kind;
+                MinStacks = Mathf.Max(1, minStacks);
+            }
+
+            public StatusEffectKind Kind { get; }
+            public int MinStacks { get; }
+        }
 
         public static StatusEffectData CreateStatusData(StatusEffectKind kind, string label, SkillDefinition source = null)
         {
@@ -275,6 +289,127 @@ namespace Pakuri.InGame
             return SumStacked(target, data => data.CriticalResistanceBonus);
         }
 
+        public static float ResolveConditionalStatusChanceBonus(BaseUnitRuntimeModel source, BaseUnitRuntimeModel target)
+        {
+            return SumStacked(source, data => MatchesConditionalTargetStatus(target, data) ? data.ConditionalStatusChanceBonus : 0f);
+        }
+
+        public static float ResolveAppliedStatusDurationBonus(BaseUnitRuntimeModel source, string statusId)
+        {
+            if (string.IsNullOrWhiteSpace(statusId))
+            {
+                return 0f;
+            }
+
+            return SumStacked(source, data =>
+                string.Equals(data.AppliedStatusDurationBonusStatusId, statusId, StringComparison.OrdinalIgnoreCase)
+                    ? data.AppliedStatusDurationBonus
+                    : 0f);
+        }
+
+        internal static bool TryParseConditionStatusExpression(string rawValue, out StatusConditionRequirement[] requirements)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                requirements = Array.Empty<StatusConditionRequirement>();
+                return true;
+            }
+
+            var tokens = rawValue.Split(';', ',');
+            var parsed = new List<StatusConditionRequirement>(tokens.Length);
+            for (var i = 0; i < tokens.Length; i++)
+            {
+                var token = tokens[i] != null ? tokens[i].Trim() : string.Empty;
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    continue;
+                }
+
+                var statusId = token;
+                var minStacks = 1;
+                var separatorIndex = token.IndexOf(">=", StringComparison.OrdinalIgnoreCase);
+                var separatorLength = 2;
+                if (separatorIndex < 0)
+                {
+                    separatorIndex = token.IndexOf(':');
+                    separatorLength = 1;
+                }
+
+                if (separatorIndex >= 0)
+                {
+                    statusId = token.Substring(0, separatorIndex).Trim();
+                    var minStackText = token.Substring(separatorIndex + separatorLength).Trim();
+                    if (!int.TryParse(minStackText, out minStacks) || minStacks <= 0)
+                    {
+                        requirements = Array.Empty<StatusConditionRequirement>();
+                        return false;
+                    }
+                }
+
+                if (!StatusEffectUtility.TryParse(statusId, out var kind))
+                {
+                    requirements = Array.Empty<StatusConditionRequirement>();
+                    return false;
+                }
+
+                parsed.Add(new StatusConditionRequirement(kind, minStacks));
+            }
+
+            requirements = parsed.ToArray();
+            return requirements.Length > 0;
+        }
+
+        internal static bool MatchesConditionStatus(BaseUnitRuntimeModel target, string rawValue)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                return true;
+            }
+
+            if (target == null || !TryParseConditionStatusExpression(rawValue, out var requirements))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < requirements.Length; i++)
+            {
+                var requirement = requirements[i];
+                var stacks = requirement.Kind == StatusEffectKind.Shield && target.Resources != null && target.Resources.CurrentShield > 0f
+                    ? Math.Max(1, target.Statuses != null ? target.Statuses.GetStacks(requirement.Kind) : 0)
+                    : target.Statuses != null ? target.Statuses.GetStacks(requirement.Kind) : 0;
+                if (stacks >= requirement.MinStacks)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static bool MatchesConditionStatus(UnitStatusRuntime status, string rawValue)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                return true;
+            }
+
+            if (status == null || !TryParseConditionStatusExpression(rawValue, out var requirements))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < requirements.Length; i++)
+            {
+                var requirement = requirements[i];
+                if (status.Kind == requirement.Kind && status.Stacks >= requirement.MinStacks)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private static bool HasAnyStatus(BaseUnitRuntimeModel model, System.Func<StatusEffectData, bool> predicate)
         {
             var statuses = model != null && model.Statuses != null ? model.Statuses.ActiveStatuses : null;
@@ -379,6 +514,26 @@ namespace Pakuri.InGame
             }
 
             return source.Statuses != null && source.Statuses.Has(kind);
+        }
+
+        private static bool MatchesConditionalTargetStatus(BaseUnitRuntimeModel target, StatusEffectData data)
+        {
+            if (data == null || string.IsNullOrWhiteSpace(data.ConditionalTargetStatusTag))
+            {
+                return false;
+            }
+
+            if (target == null || !StatusEffectUtility.TryParse(data.ConditionalTargetStatusTag, out var kind))
+            {
+                return false;
+            }
+
+            if (kind == StatusEffectKind.Shield)
+            {
+                return target.Resources != null && target.Resources.CurrentShield > 0f;
+            }
+
+            return target.Statuses != null && target.Statuses.Has(kind);
         }
 
         private static void ApplySourceAwareMetadata(StatusEffectData status, StatusEffectKind kind, SkillDefinition source)

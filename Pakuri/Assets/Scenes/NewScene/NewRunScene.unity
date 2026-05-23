@@ -12647,6 +12647,8 @@ MonoBehaviour:
       Prefab: {fileID: 2181036612366644816, guid: 383d4c700df69d44898dc953ea18b9d4, type: 3}
     - SkillId: eve-d
       Prefab: {fileID: 1107537072718467244, guid: ef1bb9690f7a9234dad21ff0d9c80e32, type: 3}
+    - SkillId: eve-e
+      Prefab: {fileID: 1184936592282639523, guid: 1313fcd817f979e4981325d9c199fd30, type: 3}
   - MonsterId: rin
     SkillEffects:
     - SkillId: rin-a

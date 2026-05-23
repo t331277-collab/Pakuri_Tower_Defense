@@ -112,6 +112,8 @@ namespace Pakuri.InGame
             skill.Timing.Cooldown = source.CooldownSeconds;
             skill.Timing.ActiveDuration = source.ActiveDurationSeconds;
             skill.Timing.TickInterval = source.ShotIntervalSeconds;
+            skill.MagazineCapacity = source.MagazineCapacity;
+            skill.ReloadSeconds = source.ReloadSeconds;
             skill.Targeting.Range = 0f;
             skill.Targeting.Radius = source.Radius;
             if (Enum.TryParse<SkillTargetSelection>(source.TargetSelection, true, out var targetSelection))
@@ -152,12 +154,19 @@ namespace Pakuri.InGame
 
             if (skill is ZoneSkillData zone)
             {
+                var hasHitTargetCount = TryResolveHitTargetCount(
+                    source.HitTargetCount,
+                    out var hitAllTargets,
+                    out var hitTargetCount);
                 zone.Area.Radius = source.Radius;
                 zone.Area.Duration = source.ActiveDurationSeconds > 0f
                     ? source.ActiveDurationSeconds
                     : source.CooldownSeconds;
                 zone.Area.TickInterval = source.ShotIntervalSeconds;
-                zone.Area.CoverAll = source.RuntimeKind == SkillRuntimeKind.Field;
+                zone.UsesHitTargetCount = hasHitTargetCount;
+                zone.HitAllTargets = hitAllTargets;
+                zone.HitTargetCount = hitAllTargets ? int.MaxValue : Math.Max(1, hitTargetCount);
+                zone.Area.CoverAll = source.RuntimeKind == SkillRuntimeKind.Field || hitAllTargets;
                 MapDamage(zone.DamagePerTick, source);
                 zone.OnTickStatus = CreateStatusApplication(source);
                 return;

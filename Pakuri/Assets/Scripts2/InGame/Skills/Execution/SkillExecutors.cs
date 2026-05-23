@@ -68,15 +68,17 @@ namespace Pakuri.InGame
             {
                 if (target != null)
                 {
+                    var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
                     context.CombatManager.ApplyDamage(
                         target.Model,
-                        damage,
+                        resolvedDamage,
                         attribute,
                         context.Caster,
                         skill.Damage != null && skill.Damage.CriticalAllowed,
                         snapshot != null ? snapshot.CritChanceBonus : 0f,
-                        snapshot != null ? snapshot.CritDamageBonus : 0f);
-                    TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec);
+                        snapshot != null ? snapshot.CritDamageBonus : 0f,
+                        skill.SkillId);
+                    TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec, context.Caster);
                     return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
                 }
 
@@ -116,15 +118,17 @@ namespace Pakuri.InGame
                 {
                     if (target != null)
                     {
+                        var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
                         context.CombatManager.ApplyDamage(
                             target.Model,
-                            damage,
+                            resolvedDamage,
                             attribute,
                             context.Caster,
                             skill.Damage != null && skill.Damage.CriticalAllowed,
                             snapshot != null ? snapshot.CritChanceBonus : 0f,
-                            snapshot != null ? snapshot.CritDamageBonus : 0f);
-                        TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec);
+                            snapshot != null ? snapshot.CritDamageBonus : 0f,
+                            skill.SkillId);
+                        TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec, context.Caster);
                     }
 
                     continue;
@@ -138,15 +142,17 @@ namespace Pakuri.InGame
                 {
                     if (target != null)
                     {
+                        var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
                         context.CombatManager.ApplyDamage(
                             target.Model,
-                            damage,
+                            resolvedDamage,
                             attribute,
                             context.Caster,
                             skill.Damage != null && skill.Damage.CriticalAllowed,
                             snapshot != null ? snapshot.CritChanceBonus : 0f,
-                            snapshot != null ? snapshot.CritDamageBonus : 0f);
-                        TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec);
+                            snapshot != null ? snapshot.CritDamageBonus : 0f,
+                            skill.SkillId);
+                        TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec, context.Caster);
                     }
 
                     continue;
@@ -262,6 +268,11 @@ namespace Pakuri.InGame
             var maxStacks = resolvedStatusData != null && resolvedStatusData.MaxStacks > 0
                 ? resolvedStatusData.MaxStacks
                 : definition.DefaultMaxStacks;
+            var targetedMaxStacksBonus = ResolveStatusMaxStacksBonus(snapshot, resolvedStatusData, kind);
+            if (targetedMaxStacksBonus != 0)
+            {
+                maxStacks = Mathf.Max(0, maxStacks + targetedMaxStacksBonus);
+            }
             var permanent = definition.Permanent && (resolvedStatusData == null || resolvedStatusData.Duration <= 0f);
             if (snapshot != null
                 && (!Mathf.Approximately(snapshot.DurationMultiplier, 1f)
@@ -366,6 +377,22 @@ namespace Pakuri.InGame
             return snapshot.ResolveStatusDurationBonus(statusId);
         }
 
+        private static int ResolveStatusMaxStacksBonus(
+            SkillExecutionSnapshot snapshot,
+            StatusEffectData statusData,
+            StatusEffectKind kind)
+        {
+            if (snapshot == null)
+            {
+                return 0;
+            }
+
+            var statusId = statusData != null && !string.IsNullOrWhiteSpace(statusData.StatusTag)
+                ? statusData.StatusTag
+                : StatusEffectUtility.GetDefinition(kind).Id;
+            return snapshot.ResolveStatusMaxStacksBonus(statusId);
+        }
+
         private static ProjectileStatusHitSpec ResolveThresholdStatusSpec(SkillExecutionSnapshot snapshot)
         {
             if (snapshot == null
@@ -432,26 +459,10 @@ namespace Pakuri.InGame
         private static void TryApplyDirectStatus(
             InGameCombatManager combatManager,
             BaseUnitRuntimeModel target,
-            ProjectileStatusHitSpec statusSpec)
+            ProjectileStatusHitSpec statusSpec,
+            BaseUnitRuntimeModel source)
         {
-            if (combatManager == null || target == null || statusSpec == null || !statusSpec.Enabled)
-            {
-                return;
-            }
-
-            if (UnityEngine.Random.value > Mathf.Clamp01(statusSpec.Chance))
-            {
-                return;
-            }
-
-            combatManager.ApplyStatus(
-                target,
-                statusSpec.StatusData,
-                statusSpec.Stacks,
-                statusSpec.DurationSeconds,
-                statusSpec.MaxStacks,
-                statusSpec.Permanent,
-                statusSpec.RefreshDuration);
+            SkillStatusApplyUtility.TryApplyStatus(combatManager, target, statusSpec, source);
         }
     }
 
@@ -514,7 +525,9 @@ namespace Pakuri.InGame
                     attribute,
                     statusSpec,
                     onHitStatusEffects,
+                    snapshot,
                     context.Caster,
+                    skill.SkillId,
                     skill.DamagePerTick != null && skill.DamagePerTick.CriticalAllowed,
                     snapshot != null ? snapshot.CritChanceBonus : 0f,
                     snapshot != null ? snapshot.CritDamageBonus : 0f);
@@ -555,7 +568,9 @@ namespace Pakuri.InGame
                 attribute,
                 statusSpec,
                 onHitStatusEffects,
+                snapshot,
                 context.Caster,
+                skill.SkillId,
                 skill.DamagePerTick != null && skill.DamagePerTick.CriticalAllowed,
                 snapshot != null ? snapshot.CritChanceBonus : 0f,
                 snapshot != null ? snapshot.CritDamageBonus : 0f);
@@ -710,10 +725,12 @@ namespace Pakuri.InGame
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
             }
 
-            var center = ResolveAreaCenter(context, skill.Targeting, skill.Area);
+            var deploymentCount = ResolveDeploymentCount(snapshot);
+            var centers = ResolveAreaCenters(context, skill.Targeting, skill.Area, deploymentCount);
             var radius = ResolveRadius(skill, snapshot);
             var duration = ResolveDuration(skill, snapshot);
             var tickInterval = ResolveTickInterval(skill, snapshot);
+            var hitTargetCount = ResolveHitTargetCount(skill, snapshot);
             var damage = SkillExecutionUtility.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
             var attribute = SkillExecutionUtility.MapAttribute(skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element);
             var statusSpec = ProjectileSkillExecutor.ResolveStatusSpec(skill.OnTickStatus, snapshot);
@@ -726,50 +743,141 @@ namespace Pakuri.InGame
                     ? context.CombatManager.Effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId)
                     : null;
 
-            GameObject instance = null;
-            if (prefab != null && context.CombatManager.Effects != null)
+            var routed = false;
+            for (var i = 0; i < centers.Count; i++)
             {
-                instance = context.CombatManager.Effects.InstantiateSkillPrefab(prefab, center, Quaternion.identity);
-                if (instance != null && PrefabHasHitbox(instance))
+                var center = centers[i];
+                GameObject instance = null;
+                if (prefab != null && context.CombatManager.Effects != null)
                 {
-                    ApplyPrefabHitboxScale(instance.transform, SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area), snapshot);
-                    Physics2D.SyncTransforms();
+                    instance = context.CombatManager.Effects.InstantiateSkillPrefab(prefab, center, Quaternion.identity);
+                    if (instance != null && PrefabHasHitbox(instance))
+                    {
+                        ApplyPrefabHitboxScale(instance.transform, SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area), snapshot);
+                        Physics2D.SyncTransforms();
+                    }
                 }
+
+                if (instance == null)
+                {
+                    instance = new GameObject(string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameZoneSkill" : $"InGameZoneSkill_{skill.SkillId}");
+                    instance.transform.position = center;
+                }
+
+                var actor = instance.GetComponent<InGameZoneSkillActor>();
+                if (actor == null)
+                {
+                    actor = instance.AddComponent<InGameZoneSkillActor>();
+                }
+
+                actor.Initialize(
+                    context.CombatManager,
+                    context.CasterEntry,
+                    context.Roster,
+                    skill.Targeting,
+                    center,
+                    radius,
+                    coverAll,
+                    duration,
+                    tickInterval,
+                    hitTargetCount,
+                    damage,
+                    attribute,
+                    statusSpec,
+                    context.Runtime,
+                    snapshot,
+                    expireEffects,
+                    context.Caster,
+                    skill.DamagePerTick != null && skill.DamagePerTick.CriticalAllowed,
+                    snapshot != null ? snapshot.CritChanceBonus : 0f,
+                    snapshot != null ? snapshot.CritDamageBonus : 0f);
+                routed = true;
             }
 
-            if (instance == null)
+            return new SkillExecutionResult(
+                routed ? SkillExecutionStatus.Routed : SkillExecutionStatus.Rejected,
+                skill.SkillId,
+                GetType().Name);
+        }
+
+        private static int ResolveDeploymentCount(SkillExecutionSnapshot snapshot)
+        {
+            return 1 + (snapshot != null && snapshot.HasBranchCount ? Math.Max(0, snapshot.BranchCount) : 0);
+        }
+
+        private static int ResolveHitTargetCount(ZoneSkillData skill, SkillExecutionSnapshot snapshot)
+        {
+            if (skill == null || skill.HitAllTargets || !skill.UsesHitTargetCount)
             {
-                instance = new GameObject(string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameZoneSkill" : $"InGameZoneSkill_{skill.SkillId}");
-                instance.transform.position = center;
+                return int.MaxValue;
             }
 
-            var actor = instance.GetComponent<InGameZoneSkillActor>();
-            if (actor == null)
+            var baseCount = Math.Max(1, skill.HitTargetCount);
+            var bonus = snapshot != null ? snapshot.HitTargetCountBonus : 0;
+            return Math.Max(1, baseCount + bonus);
+        }
+
+        private static List<Vector2> ResolveAreaCenters(
+            SkillExecutionContext context,
+            SkillTargetingSpec targeting,
+            AreaBlueprintSpec area,
+            int deploymentCount)
+        {
+            var primaryCenter = ResolveAreaCenter(context, targeting, area);
+            var centers = new List<Vector2> { primaryCenter };
+            var coverAll = (area != null && area.CoverAll)
+                || (targeting != null && targeting.CoverAll);
+            if (deploymentCount <= 1
+                || context == null
+                || coverAll
+                || context.HasManualTargetPoint
+                || context.HasManualAimDirection)
             {
-                actor = instance.AddComponent<InGameZoneSkillActor>();
+                while (centers.Count < deploymentCount)
+                {
+                    centers.Add(primaryCenter);
+                }
+
+                return centers;
             }
 
-            actor.Initialize(
-                context.CombatManager,
-                context.CasterEntry,
-                context.Roster,
-                skill.Targeting,
-                center,
-                radius,
-                coverAll,
-                duration,
-                tickInterval,
-                damage,
-                attribute,
-                statusSpec,
-                context.Runtime,
-                snapshot,
-                expireEffects,
-                context.Caster,
-                skill.DamagePerTick != null && skill.DamagePerTick.CriticalAllowed,
-                snapshot != null ? snapshot.CritChanceBonus : 0f,
-                snapshot != null ? snapshot.CritDamageBonus : 0f);
-            return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
+            var orderedTargets = ResolveOrderedTargets(context.CasterEntry, context.Roster, targeting);
+            if (orderedTargets.Count <= 0)
+            {
+                while (centers.Count < deploymentCount)
+                {
+                    centers.Add(primaryCenter);
+                }
+
+                return centers;
+            }
+
+            centers.Clear();
+            for (var i = 0; i < orderedTargets.Count && centers.Count < deploymentCount; i++)
+            {
+                var target = orderedTargets[i];
+                if (target == null || target.Transform == null)
+                {
+                    continue;
+                }
+
+                centers.Add((Vector2)target.Transform.position);
+            }
+
+            while (centers.Count < deploymentCount)
+            {
+                var randomIndex = UnityEngine.Random.Range(0, orderedTargets.Count);
+                var fallbackTarget = orderedTargets[randomIndex];
+                if (fallbackTarget == null || fallbackTarget.Transform == null)
+                {
+                    centers.Add(primaryCenter);
+                    continue;
+                }
+
+                centers.Add((Vector2)fallbackTarget.Transform.position);
+            }
+
+            return centers;
         }
 
         private static Vector2 ResolveAreaCenter(
@@ -820,6 +928,73 @@ namespace Pakuri.InGame
             }
 
             return Mathf.Max(0.05f, interval);
+        }
+
+        private static List<UnitRosterEntry> ResolveOrderedTargets(
+            UnitRosterEntry sourceEntry,
+            UnitRosterService unitRoster,
+            SkillTargetingSpec targetingSpec)
+        {
+            var candidates = SkillExecutionUtility.ResolveTargetList(sourceEntry, unitRoster, targetingSpec);
+            var targets = new List<UnitRosterEntry>();
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                var target = candidates[i];
+                if (target != null && target.IsAlive && target.Model != null && target.Transform != null)
+                {
+                    targets.Add(target);
+                }
+            }
+
+            var selection = targetingSpec != null ? targetingSpec.Selection : SkillTargetSelection.Nearest;
+            targets.Sort((left, right) => CompareTargets(sourceEntry, selection, left, right));
+            return targets;
+        }
+
+        private static int CompareTargets(UnitRosterEntry sourceEntry, SkillTargetSelection selection, UnitRosterEntry left, UnitRosterEntry right)
+        {
+            if (left == right)
+            {
+                return 0;
+            }
+
+            if (left == null)
+            {
+                return 1;
+            }
+
+            if (right == null)
+            {
+                return -1;
+            }
+
+            var leftHealth = left.Model != null && left.Model.Resources != null ? left.Model.Resources.CurrentHealth : 0f;
+            var rightHealth = right.Model != null && right.Model.Resources != null ? right.Model.Resources.CurrentHealth : 0f;
+            if (selection == SkillTargetSelection.HighestHealth && !Mathf.Approximately(leftHealth, rightHealth))
+            {
+                return rightHealth.CompareTo(leftHealth);
+            }
+
+            if (selection == SkillTargetSelection.LowestHealth && !Mathf.Approximately(leftHealth, rightHealth))
+            {
+                return leftHealth.CompareTo(rightHealth);
+            }
+
+            var leftDistance = ResolveDistanceSquared(sourceEntry, left);
+            var rightDistance = ResolveDistanceSquared(sourceEntry, right);
+            return leftDistance.CompareTo(rightDistance);
+        }
+
+        private static float ResolveDistanceSquared(UnitRosterEntry sourceEntry, UnitRosterEntry target)
+        {
+            if (sourceEntry == null || sourceEntry.Transform == null || target == null || target.Transform == null)
+            {
+                return float.MaxValue;
+            }
+
+            var offset = target.Transform.position - sourceEntry.Transform.position;
+            offset.z = 0f;
+            return offset.sqrMagnitude;
         }
 
         private static SkillEffectDefinition[] ResolveOnExpireEffects(
@@ -1037,9 +1212,11 @@ namespace Pakuri.InGame
                         attribute,
                         statusSpec,
                         context.Caster,
+                        skill.SkillId,
                         skill.Damage != null && skill.Damage.CriticalAllowed,
                         critChanceBonus,
                         critDamageBonus,
+                        snapshot,
                         followUpSpec,
                         followUpTargets);
                     UnityEngine.Object.Destroy(instance, 1f);
@@ -1061,9 +1238,11 @@ namespace Pakuri.InGame
                         attribute,
                         statusSpec,
                         context.Caster,
+                        skill.SkillId,
                         skill.Damage != null && skill.Damage.CriticalAllowed,
                         critChanceBonus,
                         critDamageBonus,
+                        snapshot,
                         center,
                         followUpSpec,
                         followUpTargets);
@@ -1082,9 +1261,11 @@ namespace Pakuri.InGame
                         attribute,
                         statusSpec,
                         context.Caster,
+                        skill.SkillId,
                         skill.Damage != null && skill.Damage.CriticalAllowed,
                         critChanceBonus,
                         critDamageBonus,
+                        snapshot,
                         followUpSpec,
                         followUpTargets);
                 }
@@ -1130,9 +1311,11 @@ namespace Pakuri.InGame
             DamageAttribute attribute,
             ProjectileStatusHitSpec statusSpec,
             BaseUnitRuntimeModel source,
+            string sourceSkillId,
             bool criticalAllowed,
             float critChanceBonus,
             float critDamageBonus,
+            SkillExecutionSnapshot snapshot,
             SingleAttackFollowUpSpec? followUpSpec,
             List<SingleAttackFollowUpTarget> followUpTargets)
         {
@@ -1163,8 +1346,9 @@ namespace Pakuri.InGame
                     followUpSpec,
                     target,
                     target != null && target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero);
-                manager.ApplyDamage(target.Model, damage, attribute, source, criticalAllowed, critChanceBonus, critDamageBonus);
-                TryApplyStatus(manager, target.Model, statusSpec);
+                var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
+                manager.ApplyDamage(target.Model, resolvedDamage, attribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                TryApplyStatus(manager, target.Model, statusSpec, source);
                 routed = true;
                 hitCount++;
                 if (hitCount >= maxTargets)
@@ -1186,9 +1370,11 @@ namespace Pakuri.InGame
             DamageAttribute attribute,
             ProjectileStatusHitSpec statusSpec,
             BaseUnitRuntimeModel source,
+            string sourceSkillId,
             bool criticalAllowed,
             float critChanceBonus,
             float critDamageBonus,
+            SkillExecutionSnapshot snapshot,
             Vector2 center,
             SingleAttackFollowUpSpec? followUpSpec,
             List<SingleAttackFollowUpTarget> followUpTargets)
@@ -1205,8 +1391,9 @@ namespace Pakuri.InGame
             {
                 var target = targets[i];
                 RegisterFollowUpTarget(followUpTargets, followUpSpec, target, center);
-                manager.ApplyDamage(target.Model, damage, attribute, source, criticalAllowed, critChanceBonus, critDamageBonus);
-                TryApplyStatus(manager, target.Model, statusSpec);
+                var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
+                manager.ApplyDamage(target.Model, resolvedDamage, attribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                TryApplyStatus(manager, target.Model, statusSpec, source);
                 routed = true;
                 hitCount++;
                 if (hitCount >= maxTargets)
@@ -1230,9 +1417,11 @@ namespace Pakuri.InGame
             DamageAttribute attribute,
             ProjectileStatusHitSpec statusSpec,
             BaseUnitRuntimeModel source,
+            string sourceSkillId,
             bool criticalAllowed,
             float critChanceBonus,
             float critDamageBonus,
+            SkillExecutionSnapshot snapshot,
             SingleAttackFollowUpSpec? followUpSpec,
             List<SingleAttackFollowUpTarget> followUpTargets)
         {
@@ -1251,8 +1440,9 @@ namespace Pakuri.InGame
                 }
 
                 RegisterFollowUpTarget(followUpTargets, followUpSpec, target, center);
-                manager.ApplyDamage(target.Model, damage, attribute, source, criticalAllowed, critChanceBonus, critDamageBonus);
-                TryApplyStatus(manager, target.Model, statusSpec);
+                var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
+                manager.ApplyDamage(target.Model, resolvedDamage, attribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                TryApplyStatus(manager, target.Model, statusSpec, source);
                 return true;
             }
 
@@ -1276,8 +1466,9 @@ namespace Pakuri.InGame
                 }
 
                 RegisterFollowUpTarget(followUpTargets, followUpSpec, target, center);
-                manager.ApplyDamage(target.Model, damage, attribute, source, criticalAllowed, critChanceBonus, critDamageBonus);
-                TryApplyStatus(manager, target.Model, statusSpec);
+                var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
+                manager.ApplyDamage(target.Model, resolvedDamage, attribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                TryApplyStatus(manager, target.Model, statusSpec, source);
                 routed = true;
             }
 
@@ -1555,9 +1746,9 @@ namespace Pakuri.InGame
                 && target.Statuses.Has(statusId);
         }
 
-        private static void TryApplyStatus(InGameCombatManager manager, BaseUnitRuntimeModel target, ProjectileStatusHitSpec statusSpec)
+        private static void TryApplyStatus(InGameCombatManager manager, BaseUnitRuntimeModel target, ProjectileStatusHitSpec statusSpec, BaseUnitRuntimeModel source)
         {
-            SkillStatusApplyUtility.TryApplyStatus(manager, target, statusSpec);
+            SkillStatusApplyUtility.TryApplyStatus(manager, target, statusSpec, source);
         }
     }
 
@@ -1830,6 +2021,7 @@ namespace Pakuri.InGame
                 effect.Attribute,
                 statusSpec,
                 context.Caster,
+                !string.IsNullOrWhiteSpace(effect.EffectId) ? effect.EffectId : effect.SkillId,
                 damageSpec.CriticalAllowed,
                 snapshot != null ? snapshot.CritChanceBonus : 0f,
                 snapshot != null ? snapshot.CritDamageBonus : 0f);
@@ -1927,7 +2119,7 @@ namespace Pakuri.InGame
                 }
                 else
                 {
-                    if (!SkillStatusApplyUtility.TryApplyStatus(context.CombatManager, target.Model, statusSpec))
+                    if (!SkillStatusApplyUtility.TryApplyStatus(context.CombatManager, target.Model, statusSpec, context.Caster))
                     {
                         continue;
                     }
@@ -1965,26 +2157,7 @@ namespace Pakuri.InGame
             var statusMatches = true;
             if (!string.IsNullOrWhiteSpace(effect.ConditionStatusId))
             {
-                statusMatches = false;
-                if (!StatusEffectUtility.TryParse(effect.ConditionStatusId, out var kind))
-                {
-                    kind = StatusEffectKind.None;
-                }
-
-                if (kind != StatusEffectKind.None)
-                {
-                    if (target != null && target.Statuses != null && target.Statuses.Has(kind))
-                    {
-                        statusMatches = true;
-                    }
-                    else if (kind == StatusEffectKind.Shield
-                        && target != null
-                        && target.Resources != null
-                        && target.Resources.CurrentShield > 0f)
-                    {
-                        statusMatches = true;
-                    }
-                }
+                statusMatches = StatusEffectRuntime.MatchesConditionStatus(target, effect.ConditionStatusId);
             }
 
             var skillMatches = true;
@@ -2114,6 +2287,10 @@ namespace Pakuri.InGame
             status.ElementResistReduction = effect.StatusElementResistReduction;
             status.FlatElementResistReduction = effect.StatusFlatElementResistReduction;
             status.ElementDamageTakenBonus = effect.StatusElementDamageTakenBonus;
+            status.ConditionalTargetStatusTag = effect.StatusConditionalTargetStatusId;
+            status.ConditionalStatusChanceBonus = effect.StatusConditionalStatusChanceBonus;
+            status.AppliedStatusDurationBonusStatusId = effect.StatusAppliedStatusDurationBonusStatusId;
+            status.AppliedStatusDurationBonus = effect.StatusAppliedStatusDurationBonus;
             status.HasElementModifierTarget = !Mathf.Approximately(effect.StatusDamageBonusRate, 0f)
                 || !Mathf.Approximately(effect.StatusElementResistReduction, 0f)
                 || !Mathf.Approximately(effect.StatusFlatElementResistReduction, 0f)
@@ -2349,7 +2526,8 @@ namespace Pakuri.InGame
                     statusSpec.DurationSeconds,
                     statusSpec.MaxStacks,
                     statusSpec.Permanent,
-                    statusSpec.RefreshDuration);
+                    statusSpec.RefreshDuration,
+                    context.Caster);
 
                 if (prefab != null && target.Transform != null && context.CombatManager.Effects != null)
                 {
@@ -2577,6 +2755,19 @@ namespace Pakuri.InGame
             var speed = projectile != null ? Mathf.Max(0.1f, projectile.ProjectileSpeed) : 1f;
             const float battlefieldTravelDistance = 31f;
             return Mathf.Max(0.25f, battlefieldTravelDistance / speed + 0.5f);
+        }
+
+        public static float ResolveDamageAgainstTarget(
+            float baseDamage,
+            SkillExecutionSnapshot snapshot,
+            BaseUnitRuntimeModel target)
+        {
+            if (snapshot == null || target == null)
+            {
+                return Mathf.Max(0f, baseDamage);
+            }
+
+            return Mathf.Max(0f, baseDamage * snapshot.ResolveConditionalDamageMultiplier(target));
         }
 
         public static DamageAttribute MapAttribute(ElementType element)

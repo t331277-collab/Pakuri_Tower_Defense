@@ -4,6 +4,97 @@
 - Older CSV-transition history remains in `boards/ARCHIVE/CSV_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 
+## Task: 2026-05-24 Eve F-J Passive Effect/Trigger CSV Schema And Authoring
+
+### Task title
+
+Extend shared passive effect/trigger CSV data so Eve F-J can stay fully data-authored on the current runtime catalog path.
+
+### Goals
+
+- Add shared effect columns for target-status-conditional status chance and status-id-specific applied-duration bonuses.
+- Add shared trigger columns for condition status, attribute gating, proc chance, and internal cooldown.
+- Re-author Eve F-J passive rows so the remaining `DataOnlyUnsupported` / `ReferenceDirect` Eve passive rows move onto shared runtime support.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- Current CSV files were explicitly treated as the parsed source for this task.
+- No new Eve-only CSV file was added; the work stayed inside `monster_skill_effects.csv`, `monster_skill_triger.csv`, and `monster_skill_choices.csv`.
+- External Code Reviewer was not run because explicit user permission was not given.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented, compile-verified, and Unity CSV validation passed.
+
+### Next Actions
+
+- Reuse `status_conditional_target_status_id` plus `status_conditional_status_chance_bonus` for future passive rows that say "extra status chance only against targets already carrying X".
+- Reuse `status_applied_status_duration_bonus_status_id` plus `status_applied_status_duration_bonus` for future rows that extend only one applied status without editing global status defaults.
+- Reuse `condition_status_id`, `trigger_attribute`, `proc_chance`, and `internal_cooldown_seconds` before adding another trigger companion table.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` header/type rows now include `status_conditional_target_status_id`, `status_conditional_status_chance_bonus`, `status_applied_status_duration_bonus_status_id`, and `status_applied_status_duration_bonus`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` header/type rows now include `condition_status_id`, `trigger_attribute`, `proc_chance`, and `internal_cooldown_seconds`.
+- Eve F-J rows in `monster_skill_choices.csv` are now all `RuntimeImplemented`; `eve-g-trait-3`, `eve-i-trait-3`, and `eve-j-trait-3` target the active skills they modify instead of staying passive-note-only.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.StatusPayload.cs`, `PakuriCsvRuntimeData.MonsterDataset.cs`, `PakuriCsvRuntimeData.Build.cs`, and `PakuriCsvRuntimeData.Validation.cs` now parse, map, and validate the new effect/trigger columns.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the schema and row-authoring change; only the existing `MSB3277` warnings remained.
+- Unity `Pakuri/Validate CSV Source Data` succeeded after the follow-up validation fix, which confirmed the new headers, rows, and shared trigger semantics were accepted by the runtime catalog loader.
+
+### History
+
+- 2026-05-24: User asked Skill Builder to resume the interrupted Eve F-J passive implementation, which required shared passive effect and trigger schema expansion plus Eve row authoring.
+
+## Task: 2026-05-23 Eve-E Choice CSV Schema And Row Authoring
+
+### Task title
+
+Extend the shared choice CSV schema so Eve-E can author vulnerable max-stack bonuses and target-status-gated damage without Eve-only hardcoded rows.
+
+### Goals
+
+- Keep Eve-E choice behavior data-owned in `monster_skill_choices.csv`.
+- Add generic choice columns for targeted status max-stack bonuses and conditional target-status damage multipliers.
+- Re-author Eve-E rows so no Eve-E trait/master row remains partial or unsupported after the shared runtime extension.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- Current CSV files were explicitly treated as the parsed source for this task.
+- No new Eve-only companion CSV table was added; the work stays inside `monster_skill_choices.csv`.
+- External Code Reviewer was not run because explicit user permission was not given.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- Reuse `status_max_stacks_bonus_status_id` plus `status_max_stacks_bonus` for future choice-driven status-cap increases before adding another schema.
+- Reuse `conditional_damage_multiplier` plus `conditional_target_status_id` / `conditional_target_status_min_stacks` for future hit-time target-threshold damage bonuses before adding skill-id-specific columns.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now adds `status_max_stacks_bonus_status_id`, `status_max_stacks_bonus`, `conditional_damage_multiplier`, `conditional_target_status_id`, and `conditional_target_status_min_stacks` to the active choice schema.
+- Eve-E rows in `monster_skill_choices.csv` are now all `RuntimeImplemented`; trait 1 keeps `magazine_bonus=1`, trait 4 keeps `reload_time_multiplier=0.76923` plus `branch_count=1`, master 1 keeps `shot_interval_multiplier=0.76923` plus `branch_count=2`, trait 5 now authors `conditional_damage_multiplier=1.4` gated by `vulnerable >= 5`, and master 2 now authors `status_critical_damage_taken_bonus=0.01` plus `status_max_stacks_bonus_status_id=vulnerable` and `status_max_stacks_bonus=5`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs`, `PakuriCsvRuntimeData.Build.cs`, and `PakuriCsvRuntimeData.Validation.cs` now parse, map, and validate those new choice columns.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs`, `Skills/Data/SkillChoiceEffectSpec.cs`, `Skills/Execution/SkillChoiceModifierRecord.cs`, and `Skills/Execution/SkillExecutionSnapshot.cs` now carry the new fields into runtime choice snapshots.
+- `Import-Csv -Encoding UTF8 Pakuri\\Assets\\CSVdata\\source\\monster_skill_choices.csv | Where-Object { $_.skill_id -eq 'eve-e' }` returned all seven Eve-E choice rows with `runtime_support_state=RuntimeImplemented`.
+- `dotnet build Pakuri\\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the schema and row-authoring change; only the existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-23: User asked Skill Builder to implement Eve-E from the current CSV/code as parsed source, which required new shared choice columns for the last unsupported Eve-E behaviors.
+
 ## Task: 2026-05-23 Eve-D Choice Payload On Existing CSV Fields
 
 ### Task title

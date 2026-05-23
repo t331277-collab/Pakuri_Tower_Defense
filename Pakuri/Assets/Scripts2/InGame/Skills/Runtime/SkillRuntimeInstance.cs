@@ -218,9 +218,8 @@ namespace Pakuri.InGame
 
         private static int ResolveMaxMagazineSize(SkillData data)
         {
-            var projectile = data as ProjectileSkillData;
-            return projectile != null && projectile.Projectile != null
-                ? Math.Max(0, projectile.Projectile.MagazineSize)
+            return data != null
+                ? Math.Max(0, data.MagazineCapacity)
                 : 0;
         }
 
@@ -234,9 +233,8 @@ namespace Pakuri.InGame
 
         private static float ResolveReloadDuration(SkillData data)
         {
-            var projectile = data as ProjectileSkillData;
-            return projectile != null && projectile.Projectile != null
-                ? Mathf.Max(0f, projectile.Projectile.ReloadTime)
+            return data != null
+                ? Mathf.Max(0f, data.ReloadSeconds)
                 : 0f;
         }
 

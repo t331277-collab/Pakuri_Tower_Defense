@@ -21,6 +21,99 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - NewRunScene UI or Offering gating changes: update this file and `boards/UI/RUNSCENE_UI.md`.
 - Eve reports: update this file when a report changes active Eve facts. There is no active report board.
 
+## Task: 2026-05-24 Eve F-J Passive Runtime Completion
+
+### Task title
+
+Implement Eve passive skills F-J on shared passive/effect/trigger runtime paths and finish the interrupted `SkillTriggerRuntime.cs` follow-up.
+
+### Goals
+
+- Keep Eve-F/J passive behavior data-owned through `monster_skill_effects.csv`, `monster_skill_triger.csv`, and `monster_skill_choices.csv`.
+- Support Eve-F combat-start shield plus shocked-target modifiers, Eve-G Lightning/Ice ally buffs plus auto Prism Ray trigger, Eve-H chill/freeze target modifiers plus freeze-expire burst, Eve-I shocked/shock-5 Lightning amplifiers, and Eve-J vulnerable multi-resistance debuffs.
+- Keep all new behavior on shared runtime/status/trigger code paths instead of adding Eve-only executor branches.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- The selected authority stayed on `boards/SkillBluePrint/passive-stat-blueprint.md`, the inspected Eve CSV rows, and the explicitly edited runtime/data files.
+- Unity Play Mode gameplay verification remains user-owned.
+- External Code Reviewer was not run because explicit user permission was not given.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented, build-verified, and Unity CSV validation passed.
+
+### Next Actions
+
+- User verifies in `NewRunScene` Play Mode that Eve-F gives the combat-start shield only to allies with at least one Lightning active skill and that trait 3 grants action speed only while shielded.
+- User verifies Eve-G auto-casts Eve-B from allied Lightning/Ice outgoing damage with the shared internal cooldown and that trait 3 only boosts Eve-B against shielded targets.
+- User verifies Eve-H freeze-expire burst, Eve-I shock-5 Lightning resistance reduction, and Eve-J vulnerable damage/resistance amplification on live enemies.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now marks `eve-f-trait-1` through `eve-j-trait-3` as `RuntimeImplemented`; `eve-g-trait-3` now targets `eve-b`, `eve-i-trait-3` now targets `eve-d`, and `eve-j-trait-3` now targets `eve-e`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now authors Eve F-J passive rows such as `eve-f-start-shield`, `eve-h-status-chance`, `eve-i-shock5-lightning-resist`, and the `eve-j-vulnerable-*-resist` family.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now authors `eve-g-auto-prism-ray`, `eve-g-auto-prism-ray-trait1`, and `eve-h-freeze-expire-burst`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillTriggerRuntime.cs`, `Skills/Execution/SkillExecutors.cs`, and `Skills/Data/StatusEffectRuntime.cs` now share condition-status parsing, trigger-attribute matching, and runtime-kind checks needed by Eve G/H/I/J.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` warnings remained.
+- Unity `Pakuri/Validate CSV Source Data` completed successfully and logged `PakuriCsvRuntimeData loaded runtime catalog from resource source 'Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog' with 5 monsters and 8 stage-one enemies.`
+
+### History
+
+- 2026-05-24: User asked Skill Builder to resume the interrupted Eve F-J passive implementation that had stopped during the added `SkillTriggerRuntime.cs` work.
+
+## Task: 2026-05-23 Eve-E Shared AreaAttack Magazine And Vulnerable Runtime
+
+### Task title
+
+Implement Eve-E base runtime plus trait/master effects on the shared AreaAttack path with generic magazine, multi-deploy, vulnerable-threshold, and vulnerable-max-stack support.
+
+### Goals
+
+- Keep base `eve-e` on the shared `AreaAttack` runtime while honoring its authored `magazine_capacity=3`, `reload_seconds=6`, and `shot_interval_seconds=0.8`.
+- Keep Eve-E visuals scene-owned through `NewRunScene` `EffectManager` using `Assets/Prefab/Skill/Eve/Eve_E.prefab`.
+- Support trait 1 magazine/duration, trait 2 tick speed plus vulnerable stack amount, trait 3 damage, trait 4 reload plus simultaneous deploy count, trait 5 vulnerable-threshold lightning damage, master 1 simultaneous deploy count plus tick speed, and master 2 vulnerable max-stack plus crit-damage-taken-per-stack.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- Current CSV and runtime code were explicitly treated as the parsed source for this task.
+- The runtime change stays on shared `SkillData`, `SkillRuntimeInstance`, `ZoneSkillExecutor`, and shared status-resolution paths; no Eve-only executor class was added.
+- External Code Reviewer was not run because explicit user permission was not given.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented, compile-verified, and Unity-refresh/console-checked.
+
+### Next Actions
+
+- User verifies in `NewRunScene` Play Mode that Eve-E now spends 3 magazine charges before reload, can recast every `0.8` seconds, and shows `Eve_E.prefab`.
+- User verifies trait 4 and master 1 spawn additional simultaneous fields on the shared multi-deploy path.
+- User verifies trait 5 only grants the `+40%` lightning damage bonus against targets at `vulnerable >= 5`, and master 2 raises vulnerable max stacks by `+5` while adding `+1%` crit damage taken per vulnerable stack.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` Eve-E row is `runtime_kind=AreaAttack`, `base_damage=14`, `spell_power_coefficient=0.9`, `cooldown_seconds=5`, `active_duration_seconds=5`, `magazine_capacity=3`, `reload_seconds=6`, `shot_interval_seconds=0.8`, and `status_effect_id=vulnerable`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` Eve-E trait/master rows are now all `runtime_support_state=RuntimeImplemented`; trait 5 now uses `conditional_damage_multiplier=1.4` with `conditional_target_status_id=vulnerable` and `conditional_target_status_min_stacks=5`, and master 2 now uses `status_critical_damage_taken_bonus=0.01` plus `status_max_stacks_bonus_status_id=vulnerable` and `status_max_stacks_bonus=5`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/SkillData.cs`, `InGameSkillDefinitionMapper.cs`, and `Skills/Runtime/SkillRuntimeInstance.cs` now carry generic `MagazineCapacity` / `ReloadSeconds` into non-projectile active skills, so Eve-E uses the shared runtime magazine/reload state instead of a projectile-only path.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now resolves targeted status max-stack bonuses and shared AreaAttack deployment counts, and `InGameZoneSkillActor.cs` now applies shared conditional damage multipliers against tick targets through the active snapshot.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:12650-12651` now maps `SkillId: eve-e` to prefab GUID `1313fcd817f979e4981325d9c199fd30`, which is `Assets/Prefab/Skill/Eve/Eve_E.prefab`.
+- `dotnet build Pakuri\\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` warnings remained.
+- Unity `refresh_unity` completed successfully for a forced asset/script refresh request, and Unity console warning/error read returned only MCP client-handler logs, not C# compile or CSV parse errors.
+
+### History
+
+- 2026-05-23: User told Skill Builder to implement Eve-E and all enhancement/master effects while treating the current CSV/code as the parsed source.
+
 ## Task: 2026-05-23 Eve-D Shock-Gated Delayed Recast
 
 ### Task title

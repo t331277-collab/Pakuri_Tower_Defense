@@ -554,3 +554,91 @@ Completed.
 - 2026-05-19: User then clarified that the blueprint should be understandable to AI, should favor parsed-data-to-common-runtime flow, and should stop and ask when a projectile requires special behavior such as timed firing, homing, or last-shot explosion.
 - 2026-05-19: User requested shrinking the optional parsed-field list further and asked to remove unsupported field expectations while keeping prefab path support.
 
+## Task: 2026-05-24 Skill Builder Blueprint And Explicit-Path Only Default
+
+### Task title
+
+Make Skill Builder default to blueprint plus explicit parsed input/path authority, with CSV/code discovery allowed only by explicit user instruction.
+
+### Goals
+
+- Raise the default Skill Builder boundary to a top-level repository rule.
+- Make `Skill Builder` stop instead of inspecting unrelated CSV/code when parsed fields or work paths are missing.
+- Reserve current CSV/code inspection as an explicit exception path that the user must request.
+
+### Constraints
+
+- Role Owner is Designer because this task changes workflow policy, not runtime gameplay code.
+- No C# script, scene, prefab, or CSV gameplay behavior was changed.
+- Claims must stay grounded in the inspected text of `AGENTS.md`, `MDTREE.md`, `AGENTS_ROLE/COMMON.md`, `AGENTS_ROLE/GAMEDESIGNER.md`, `AGENTS_ROLE/GAMEBULIDER_SKILL.md`, and this board.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Future `Skill Builder` requests should provide either parsed fields or explicit work paths if code inspection inside a scoped area is expected.
+- If the user wants Builder to derive missing values from current CSV/code, the instruction should say so explicitly instead of leaving that as the default.
+- Future blueprint updates should preserve this default boundary unless the user explicitly requests a policy change.
+
+### Evidence
+
+- `AGENTS.md` now has `Skill Builder Absolute Boundary`, which limits default Skill Builder authority to the selected blueprint, explicit parsed input, and explicit code/prefab/scene/asset paths, and says CSV/code discovery requires explicit user instruction.
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md` now says default Skill Builder authority is limited to the selected blueprint, explicit parsed skill data, explicit work paths, and files inside those paths only when blueprint-required inspection is needed.
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md` now says reading current CSV/code as a parsed-source discovery step is forbidden by default and allowed only when the user explicitly instructs Builder to do so.
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md` now requires Builder to stop and report missing parsed fields, scoped row bundles, or explicit work paths instead of broad repository discovery.
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md` final output requirements now include whether explicit CSV/code discovery was used.
+
+### History
+
+- 2026-05-24: User asked whether Skill Builder could be made to implement from blueprint and user-given paths only, with related CSV/code inspection treated as an exception path that runs only on explicit user command.
+
+## Task: 2026-05-24 Passive Stat Blueprint And Skill Builder Route
+
+### Task title
+
+Add a blueprint-only passive-stat contract and route Skill Builder passive requests to it.
+
+### Goals
+
+- Create a dedicated Skill Builder blueprint for always-on passive number-adjustment skills.
+- Keep ordinary passive implementation on blueprint plus parsed input only, without CSV/code rediscovery.
+- Force triggered, damage-dealing, target-search, or proc-based passive behavior into stop-and-ask instead of implicit implementation.
+- Add a clear routing mapping so passive requests no longer fail on missing blueprint selection.
+
+### Constraints
+
+- Role Owner is Designer because this task changes workflow/design policy, not runtime gameplay code.
+- No C# script, scene, prefab, or gameplay CSV values were changed by this task.
+- Claims must stay grounded in inspected Skill Builder routing markdown and existing blueprint patterns.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Implemented and locally verified by targeted markdown checks.
+
+### Next Actions
+
+- Future `Skill Builder` passive requests should route first to `boards/SkillBluePrint/passive-stat-blueprint.md`.
+- If a passive creates gameplay actions instead of always-on numeric modifications, Builder should stop and ask instead of weakening the passive-stat contract.
+- If a reusable event-driven passive contract is needed later, create a separate passive-trigger blueprint rather than broadening the passive-stat blueprint.
+
+### Evidence
+
+- Added `boards/SkillBluePrint/passive-stat-blueprint.md`.
+- `passive-stat-blueprint.md` now defines a blueprint-only contract for `RuntimeKind == Passive` work, including required parsed input, allowed modifier families, common passive-stat contract, and stop-and-ask rules.
+- `passive-stat-blueprint.md` explicitly forbids CSV/reference rediscovery by default and blocks event-driven, damage-dealing, target-search, proc-based, and spawn-creating passives behind stop-and-ask.
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md` known mappings now route `passive`, `passive skill`, `always-on passive`, and `stat passive` requests to `boards/SkillBluePrint/passive-stat-blueprint.md`.
+
+### History
+
+- 2026-05-24: User asked to create a passive blueprint that lets Skill Builder implement ordinary passives from the blueprint alone and to wire the routing path for future passive requests.
+

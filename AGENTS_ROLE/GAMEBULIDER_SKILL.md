@@ -32,6 +32,7 @@ Select the blueprint named by the user or clearly matched from the requested ski
 
 Known mappings:
 
+- passive, passive skill, always-on passive, stat passive: `boards/SkillBluePrint/passive-stat-blueprint.md`
 - projectile, projectile skill, bullet, missile: `boards/SkillBluePrint/projectile-blueprint.md`
 - BeamSkill, beam, laser, ray, slash-line, `LineAttack`: `boards/SkillBluePrint/BeamSkill-blueprint.md`
 - single attack, one-shot area, instant area, `SingleAttack`: `boards/SkillBluePrint/single-attack-blueprint.md`
@@ -95,18 +96,30 @@ If a request mixes contact-hitbox behavior and explicit-target or global-effect 
 
 The user or task context must provide the parsed skill data required by the selected blueprint.
 
+Default Skill Builder authority is limited to:
+
+- the selected blueprint
+- parsed skill data explicitly provided by the user or task context
+- explicit work paths named by the user
+- files inside those explicit work paths only when the blueprint requires inspection to complete the implementation
+
+Do not inspect other CSV, code, references, boards, archives, or old monster implementations to infer missing values or behavior intent.
+
 Allowed alternative:
 
 - a normalized scoped row bundle that follows `boards/SkillBluePrint/skill-builder-handoff-format.md`
 
-Only in that exception path, Skill Builder may use:
+Only in that row-bundle exception path, Skill Builder may use:
 
 - `boards/SkillBluePrint/skill-csv-exception-guide.md`
 - `boards/SkillBluePrint/skill-builder-handoff-format.md`
 
 to interpret the provided row bundle.
 
-If required parsed fields or the required scoped row bundle are missing, stop and report the missing items instead of searching broadly through CSV, reference, archive, or old implementation files.
+Reading current CSV/code as a parsed-source discovery step is a separate exception and is forbidden by default.
+Use it only when the user explicitly instructs Builder to do so.
+
+If required parsed fields, the required scoped row bundle, or the explicit work path set are missing, stop and report the missing items instead of searching broadly through CSV, reference, archive, or old implementation files.
 
 ## Cooldown Data Policy
 
@@ -143,6 +156,7 @@ Skill Builder final output must include:
 - selected blueprint;
 - whether the request fit the blueprint's common path;
 - consumed parsed fields, or missing parsed fields if work stopped;
+- whether explicit CSV/code discovery was used, or whether the work stayed inside blueprint plus explicit parsed input/path authority;
 - changed runtime, prefab, scene, or data files when implementation occurs;
 - verification results required by the selected blueprint;
 - remaining user-owned Play Mode verification when applicable.

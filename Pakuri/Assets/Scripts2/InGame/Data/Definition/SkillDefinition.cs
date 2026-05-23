@@ -103,7 +103,8 @@ namespace Pakuri.Data
         OnMagazineLastProjectileHit,
         OnShieldExpire,
         OnShieldAbsorb,
-        OnStatusExpire
+        OnStatusExpire,
+        OnOutgoingDamage
     }
 
     public enum SkillTriggerDamageSource
@@ -124,6 +125,10 @@ namespace Pakuri.Data
         public SkillTriggerEvent TriggerEvent;
         public string RequiresActiveChoiceId;
         public string ExcludesActiveChoiceId;
+        public string ConditionStatusId;
+        public string TriggerAttribute;
+        public float ProcChance = 1f;
+        public float InternalCooldownSeconds;
         public string TriggeredSkillId;
         public SkillRuntimeKind RuntimeKind;
         public int SortOrder;
@@ -203,6 +208,10 @@ namespace Pakuri.Data
         public float StatusFlatElementResistReduction;
         public float StatusElementDamageTakenBonus;
         public float StatusCriticalChanceBonus;
+        public string StatusConditionalTargetStatusId;
+        public float StatusConditionalStatusChanceBonus;
+        public string StatusAppliedStatusDurationBonusStatusId;
+        public float StatusAppliedStatusDurationBonus;
         public GameObject SkillEffectPrefab;
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
@@ -266,11 +275,17 @@ namespace Pakuri.Data
         public float StatusCriticalDamageTakenBonus;
         public bool HasStatusAilmentResistanceBonus;
         public float StatusAilmentResistanceBonus;
+        public string StatusMaxStacksBonusStatusId;
+        public int StatusMaxStacksBonus;
         public string StatusDurationBonusStatusId;
         public float StatusDurationBonus;
         public string ThresholdStatusId;
         public int ThresholdStatusMinStacks;
         public string ThresholdApplyStatusId;
+        public bool HasConditionalDamageMultiplier;
+        public float ConditionalDamageMultiplier = 1f;
+        public string ConditionalTargetStatusId;
+        public int ConditionalTargetStatusMinStacks;
         public string CountStatusId;
         public SkillMultiEffectTargetSide CountTargetSide;
         public float DamageMultiplierPerCount;

@@ -199,7 +199,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            combatManager.ApplyDamage(target.Model, damage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus);
+            combatManager.ApplyDamage(target.Model, damage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
             TryApplyStatus(target.Model);
             TryRunProjectileHitTriggers();
             TrySpawnBranches(target);
@@ -214,7 +214,7 @@ namespace Pakuri.InGame
 
         private void TryApplyStatus(BaseUnitRuntimeModel target)
         {
-            SkillStatusApplyUtility.TryApplyStatus(combatManager, target, statusOnHit);
+            SkillStatusApplyUtility.TryApplyStatus(combatManager, target, statusOnHit, owner);
         }
 
         private void TryRunProjectileHitTriggers()

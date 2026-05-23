@@ -242,6 +242,8 @@ namespace Pakuri.InGame
         [Header("Runtime Blueprint")]
         public SkillTimingSpec Timing = new SkillTimingSpec();
         public SkillTargetingSpec Targeting = new SkillTargetingSpec();
+        public int MagazineCapacity;
+        public float ReloadSeconds;
 
         [Header("Presentation")]
         public GameObject SkillEffectPrefab;

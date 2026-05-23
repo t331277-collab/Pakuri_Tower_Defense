@@ -62,6 +62,36 @@ namespace Pakuri.InGame
                 targetPoint);
         }
 
+        public bool TryExecuteTriggered(
+            UnitRosterEntry entry,
+            SkillRuntimeInstance runtime,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            bool logRoutedContracts,
+            Vector2 targetPoint,
+            bool hasTargetPoint)
+        {
+            if (runtime == null || entry == null)
+            {
+                return false;
+            }
+
+            var aimDirection = entry.Transform != null && hasTargetPoint
+                ? targetPoint - (Vector2)entry.Transform.position
+                : default;
+            var hasAimDirection = hasTargetPoint && aimDirection.sqrMagnitude > 0.0001f;
+            return TryExecuteTriggeredSkill(
+                entry,
+                runtime,
+                roster,
+                combatManager,
+                logRoutedContracts,
+                hasAimDirection,
+                aimDirection,
+                hasTargetPoint,
+                targetPoint);
+        }
+
         private void TickEntry(
             UnitRosterEntry entry,
             UnitRosterService roster,
@@ -147,6 +177,52 @@ namespace Pakuri.InGame
                 if (logRoutedContracts)
                 {
                     Debug.Log($"Skill execution contract routed '{result.SkillId}' through {result.ExecutorName}.");
+                }
+            }
+
+            return result.Routed;
+        }
+
+        private bool TryExecuteTriggeredSkill(
+            UnitRosterEntry entry,
+            SkillRuntimeInstance runtime,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            bool logRoutedContracts,
+            bool hasManualAimDirection,
+            Vector2 manualAimDirection,
+            bool hasManualTargetPoint,
+            Vector2 manualTargetPoint)
+        {
+            if (runtime == null || entry == null)
+            {
+                return false;
+            }
+
+            var snapshot = choiceResolver.Resolve(entry.Model, runtime, roster);
+            if (!registry.TryResolve(runtime.Data, out var executor))
+            {
+                LastRejectedCount++;
+                return false;
+            }
+
+            var context = new SkillExecutionContext(
+                combatManager,
+                roster,
+                entry,
+                runtime,
+                0f,
+                hasManualAimDirection,
+                manualAimDirection,
+                hasManualTargetPoint,
+                manualTargetPoint);
+            var result = executor.Execute(context, snapshot);
+            if (result.Routed)
+            {
+                LastRoutedCount++;
+                if (logRoutedContracts)
+                {
+                    Debug.Log($"Triggered skill execution routed '{result.SkillId}' through {result.ExecutorName}.");
                 }
             }
 

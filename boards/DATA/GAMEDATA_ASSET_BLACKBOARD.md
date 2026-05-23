@@ -4,6 +4,48 @@
 - Older broad data/asset history remains in `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md` and other archive files under `boards/ARCHIVE/`.
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 
+## Task: 2026-05-23 Eve-E EffectManager Scene Wiring
+
+### Task title
+
+Wire Eve-E base AreaAttack visuals through the active `NewRunScene` `EffectManager` path.
+
+### Goals
+
+- Keep base Eve-E visual authority scene-owned through `NewRunScene` `EffectManager`.
+- Resolve base Eve-E casts to `Assets/Prefab/Skill/Eve/Eve_E.prefab`.
+- Avoid adding a parallel base-skill prefab-path route in monster skill CSV rows.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- No prefab content edit was required in this task.
+- External Code Reviewer was not run because explicit user permission was not given.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented and file-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that base Eve-E fields show `Eve_E.prefab`.
+- If a later Eve-E choice needs its own choice-level visual override, keep that on the runtime asset-catalog path while leaving the base visual scene-owned.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Skill/Eve/Eve_E.prefab` exists, and its root GameObject fileID is `1184936592282639523`.
+- `Pakuri/Assets/Prefab/Skill/Eve/Eve_E.prefab.meta` stores GUID `1313fcd817f979e4981325d9c199fd30`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity:12650-12651` now maps `SkillId: eve-e` to prefab GUID `1313fcd817f979e4981325d9c199fd30`, which is `Assets/Prefab/Skill/Eve/Eve_E.prefab`.
+- `Pakuri/Assets/Scripts2/InGame/Core/EffectManager.cs` remains the active base monster skill visual resolver through `ResolveMonsterSkillEffectPrefab(...)`.
+
+### History
+
+- 2026-05-23: Eve-E implementation required adding the missing `EffectManager` scene mapping for the existing `Eve_E.prefab`.
+
 ## Task: 2026-05-23 Eve-D Base And Master-1 Visual Wiring
 
 ### Task title

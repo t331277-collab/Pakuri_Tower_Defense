@@ -28,6 +28,10 @@ namespace Pakuri.Data
             public float StatusFlatElementResistReduction;
             public float StatusElementDamageTakenBonus;
             public float StatusCriticalChanceBonus;
+            public string StatusConditionalTargetStatusId;
+            public float StatusConditionalStatusChanceBonus;
+            public string StatusAppliedStatusDurationBonusStatusId;
+            public float StatusAppliedStatusDurationBonus;
         }
 
         private static StatusPayloadRow ReadStatusPayload(CsvRecord record, bool includeEffectOnlyModifiers)
@@ -62,6 +66,10 @@ namespace Pakuri.Data
                 payload.StatusDamageBonusRate = record.ReadFloat("status_damage_bonus_rate");
                 payload.StatusShieldReceivedBonus = record.ReadFloat("status_shield_received_bonus");
                 payload.StatusCriticalChanceBonus = record.ReadFloat("status_critical_chance_bonus");
+                payload.StatusConditionalTargetStatusId = record.ReadString("status_conditional_target_status_id");
+                payload.StatusConditionalStatusChanceBonus = record.ReadFloat("status_conditional_status_chance_bonus");
+                payload.StatusAppliedStatusDurationBonusStatusId = record.ReadString("status_applied_status_duration_bonus_status_id");
+                payload.StatusAppliedStatusDurationBonus = record.ReadFloat("status_applied_status_duration_bonus");
             }
 
             return payload;

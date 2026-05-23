@@ -67,6 +67,8 @@ namespace Pakuri.InGame
         public GameObject SkillEffectPrefab { get; private set; }
         private readonly HashSet<string> activeChoiceIds = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, float> statusDurationBonuses = new Dictionary<string, float>(System.StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, int> statusMaxStacksBonuses = new Dictionary<string, int>(System.StringComparer.OrdinalIgnoreCase);
+        private readonly List<ConditionalDamageRule> conditionalDamageRules = new List<ConditionalDamageRule>();
 
         public bool HasBranchBehavior =>
             BranchChanceBonus > 0f
@@ -192,6 +194,19 @@ namespace Pakuri.InGame
                 StatusAilmentResistanceBonus = spec.StatusAilmentResistanceBonus;
             }
 
+            if (!string.IsNullOrWhiteSpace(spec.StatusMaxStacksBonusStatusId)
+                && spec.StatusMaxStacksBonus != 0)
+            {
+                if (statusMaxStacksBonuses.TryGetValue(spec.StatusMaxStacksBonusStatusId, out var currentBonus))
+                {
+                    statusMaxStacksBonuses[spec.StatusMaxStacksBonusStatusId] = currentBonus + spec.StatusMaxStacksBonus;
+                }
+                else
+                {
+                    statusMaxStacksBonuses[spec.StatusMaxStacksBonusStatusId] = spec.StatusMaxStacksBonus;
+                }
+            }
+
             if (!string.IsNullOrWhiteSpace(spec.StatusDurationBonusStatusId)
                 && !Mathf.Approximately(spec.StatusDurationBonus, 0f))
             {
@@ -219,6 +234,17 @@ namespace Pakuri.InGame
                 ThresholdStatusId = spec.ThresholdStatusId;
                 ThresholdStatusMinStacks = spec.ThresholdStatusMinStacks;
                 ThresholdApplyStatusId = spec.ThresholdApplyStatusId;
+            }
+
+            if (spec.HasConditionalDamageMultiplier
+                && spec.ConditionalDamageMultiplier > 0f
+                && !string.IsNullOrWhiteSpace(spec.ConditionalTargetStatusId)
+                && spec.ConditionalTargetStatusMinStacks > 0)
+            {
+                conditionalDamageRules.Add(new ConditionalDamageRule(
+                    spec.ConditionalDamageMultiplier,
+                    spec.ConditionalTargetStatusId,
+                    spec.ConditionalTargetStatusMinStacks));
             }
 
             if (spec.SkillEffectPrefab != null)
@@ -292,11 +318,17 @@ namespace Pakuri.InGame
                 StatusCriticalDamageTakenBonus = choice.StatusCriticalDamageTakenBonus,
                 HasStatusAilmentResistanceBonus = choice.HasStatusAilmentResistanceBonus,
                 StatusAilmentResistanceBonus = choice.StatusAilmentResistanceBonus,
+                StatusMaxStacksBonusStatusId = choice.StatusMaxStacksBonusStatusId,
+                StatusMaxStacksBonus = choice.StatusMaxStacksBonus,
                 StatusDurationBonusStatusId = choice.StatusDurationBonusStatusId,
                 StatusDurationBonus = choice.StatusDurationBonus,
                 ThresholdStatusId = choice.ThresholdStatusId,
                 ThresholdStatusMinStacks = choice.ThresholdStatusMinStacks,
                 ThresholdApplyStatusId = choice.ThresholdApplyStatusId,
+                HasConditionalDamageMultiplier = choice.HasConditionalDamageMultiplier,
+                ConditionalDamageMultiplier = choice.ConditionalDamageMultiplier,
+                ConditionalTargetStatusId = choice.ConditionalTargetStatusId,
+                ConditionalTargetStatusMinStacks = choice.ConditionalTargetStatusMinStacks,
                 CountStatusId = choice.CountStatusId,
                 CountTargetSide = choice.CountTargetSide,
                 DamageMultiplierPerCount = choice.DamageMultiplierPerCount,
@@ -330,9 +362,75 @@ namespace Pakuri.InGame
             return statusDurationBonuses.TryGetValue(statusId, out var bonus) ? bonus : 0f;
         }
 
+        public int ResolveStatusMaxStacksBonus(string statusId)
+        {
+            if (string.IsNullOrWhiteSpace(statusId))
+            {
+                return 0;
+            }
+
+            return statusMaxStacksBonuses.TryGetValue(statusId, out var bonus) ? bonus : 0;
+        }
+
+        public float ResolveConditionalDamageMultiplier(BaseUnitRuntimeModel target)
+        {
+            if (target == null || conditionalDamageRules.Count == 0)
+            {
+                return 1f;
+            }
+
+            var multiplier = 1f;
+            for (var i = 0; i < conditionalDamageRules.Count; i++)
+            {
+                var rule = conditionalDamageRules[i];
+                if (!HasRequiredStacks(target, rule.StatusId, rule.MinStacks))
+                {
+                    continue;
+                }
+
+                multiplier *= PositiveOrDefault(rule.DamageMultiplier, 1f);
+            }
+
+            return multiplier;
+        }
+
+        private static bool HasRequiredStacks(BaseUnitRuntimeModel target, string statusId, int minimumStacks)
+        {
+            if (target == null || minimumStacks <= 0 || string.IsNullOrWhiteSpace(statusId))
+            {
+                return false;
+            }
+
+            if (!StatusEffectUtility.TryParse(statusId, out var kind))
+            {
+                return false;
+            }
+
+            if (kind == StatusEffectKind.Shield)
+            {
+                return target.Resources != null && target.Resources.CurrentShield > 0f;
+            }
+
+            return target.Statuses != null && target.Statuses.GetStacks(kind) >= minimumStacks;
+        }
+
         private static float PositiveOrDefault(float value, float fallback)
         {
             return value > 0f ? value : fallback;
+        }
+
+        private readonly struct ConditionalDamageRule
+        {
+            public ConditionalDamageRule(float damageMultiplier, string statusId, int minStacks)
+            {
+                DamageMultiplier = damageMultiplier;
+                StatusId = statusId;
+                MinStacks = minStacks;
+            }
+
+            public float DamageMultiplier { get; }
+            public string StatusId { get; }
+            public int MinStacks { get; }
         }
     }
 }

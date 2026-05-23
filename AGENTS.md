@@ -8,6 +8,19 @@ No repository rule is higher than this rule.
 
 If code or a file does not exist yet, say clearly that it does not exist and perform the required checks first. Do not claim that files, structures, functions, helpers, commands, or features exist in this repository based on guessing.
 
+## Skill Builder Absolute Boundary
+
+For `Skill Builder` implementation work, the default authority is limited to:
+- the selected `boards/SkillBluePrint/*-blueprint.md`;
+- parsed skill input explicitly provided by the user or task context;
+- code, prefab, scene, or asset paths explicitly provided by the user.
+
+Do not inspect unrelated CSV, reference markdown, archive markdown, old monster implementations, or broad repository code to discover missing skill values or behavior intent.
+
+That wider discovery path is exception-only and requires an explicit user instruction that authorizes it, such as telling Builder to treat the current CSV/code as the parsed source or to inspect related CSV/code for missing skill values.
+
+If the blueprint and the explicit parsed input/path set are insufficient, stop and report the missing items instead of widening the search scope.
+
 ## Startup Rules
 
 Before any substantive response or work, read `AGENTS.md` and `MDTREE.md` first.

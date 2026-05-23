@@ -134,11 +134,17 @@ namespace Pakuri.Data
             public float StatusCriticalDamageTakenBonus;
             public bool HasStatusAilmentResistanceBonus;
             public float StatusAilmentResistanceBonus;
+            public string StatusMaxStacksBonusStatusId;
+            public int StatusMaxStacksBonus;
             public string StatusDurationBonusStatusId;
             public float StatusDurationBonus;
             public string ThresholdStatusId;
             public int ThresholdStatusMinStacks;
             public string ThresholdApplyStatusId;
+            public bool HasConditionalDamageMultiplier;
+            public float ConditionalDamageMultiplier = 1f;
+            public string ConditionalTargetStatusId;
+            public int ConditionalTargetStatusMinStacks;
             public string CountStatusId;
             public SkillMultiEffectTargetSide CountTargetSide;
             public float DamageMultiplierPerCount;
@@ -193,6 +199,10 @@ namespace Pakuri.Data
             public SkillTriggerEvent TriggerEvent;
             public string RequiresActiveChoiceId;
             public string ExcludesActiveChoiceId;
+            public string ConditionStatusId;
+            public string TriggerAttribute;
+            public float ProcChance = 1f;
+            public float InternalCooldownSeconds;
             public string TriggeredSkillId;
             public SkillRuntimeKind RuntimeKind;
             public int SortOrder;
@@ -361,11 +371,17 @@ namespace Pakuri.Data
             row.StatusCriticalDamageTakenBonus = statusCriticalDamageTakenBonus;
             row.HasStatusAilmentResistanceBonus = TryReadFloat(record, "status_ailment_resistance_bonus", out var statusAilmentResistanceBonus);
             row.StatusAilmentResistanceBonus = statusAilmentResistanceBonus;
+            row.StatusMaxStacksBonusStatusId = record.ReadString("status_max_stacks_bonus_status_id");
+            row.StatusMaxStacksBonus = ReadOptionalInt(record, "status_max_stacks_bonus");
             row.StatusDurationBonusStatusId = record.ReadString("status_duration_bonus_status_id");
             row.StatusDurationBonus = ReadOptionalFloat(record, "status_duration_bonus");
             row.ThresholdStatusId = record.ReadString("threshold_status_id");
             row.ThresholdStatusMinStacks = ReadOptionalInt(record, "threshold_status_min_stacks");
             row.ThresholdApplyStatusId = record.ReadString("threshold_apply_status_id");
+            row.HasConditionalDamageMultiplier = TryReadFloat(record, "conditional_damage_multiplier", out var conditionalDamageMultiplier);
+            row.ConditionalDamageMultiplier = conditionalDamageMultiplier;
+            row.ConditionalTargetStatusId = record.ReadString("conditional_target_status_id");
+            row.ConditionalTargetStatusMinStacks = ReadOptionalInt(record, "conditional_target_status_min_stacks");
             row.CountStatusId = record.ReadString("count_status_id");
             row.CountTargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("count_target_side");
             row.DamageMultiplierPerCount = ReadOptionalFloat(record, "damage_multiplier_per_count");
@@ -431,6 +447,8 @@ namespace Pakuri.Data
                 TriggerEvent = record.ReadEnum<SkillTriggerEvent>("trigger_event"),
                 RequiresActiveChoiceId = record.ReadString("requires_active_choice_id"),
                 ExcludesActiveChoiceId = record.ReadString("excludes_active_choice_id"),
+                ConditionStatusId = record.ReadString("condition_status_id"),
+                TriggerAttribute = record.ReadString("trigger_attribute"),
                 TriggeredSkillId = record.ReadRequiredString("triggered_skill_id"),
                 RuntimeKind = record.ReadEnum<SkillRuntimeKind>("runtime_kind"),
                 SortOrder = record.ReadInt("sort_order"),
@@ -456,9 +474,24 @@ namespace Pakuri.Data
                 RuntimeSupportNotes = record.ReadString("runtime_support_notes")
             };
 
+            if (TryReadFloat(record, "proc_chance", out var procChance))
+            {
+                row.ProcChance = procChance;
+            }
+
+            if (TryReadFloat(record, "internal_cooldown_seconds", out var internalCooldownSeconds))
+            {
+                row.InternalCooldownSeconds = internalCooldownSeconds;
+            }
+
             if (row.DamageMultiplier <= 0f)
             {
                 row.DamageMultiplier = 1f;
+            }
+
+            if (row.ProcChance <= 0f)
+            {
+                row.ProcChance = 1f;
             }
 
             if (row.RepeatCount <= 0)

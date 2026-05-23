@@ -23,7 +23,9 @@ namespace Pakuri.InGame
         private DamageAttribute attribute;
         private ProjectileStatusHitSpec statusSpec;
         private SkillEffectDefinition[] onHitStatusEffects;
+        private SkillExecutionSnapshot executionSnapshot;
         private BaseUnitRuntimeModel sourceModel;
+        private string sourceSkillId;
         private bool criticalAllowed;
         private float critChanceBonus;
         private float critDamageBonus;
@@ -45,7 +47,9 @@ namespace Pakuri.InGame
             DamageAttribute damageAttribute,
             ProjectileStatusHitSpec onHitStatus,
             SkillEffectDefinition[] onHitEffects,
+            SkillExecutionSnapshot snapshot,
             BaseUnitRuntimeModel source,
+            string skillId,
             bool allowCritical,
             float criticalChanceBonus,
             float criticalDamageBonus)
@@ -65,7 +69,9 @@ namespace Pakuri.InGame
             attribute = damageAttribute;
             statusSpec = onHitStatus;
             onHitStatusEffects = onHitEffects;
+            executionSnapshot = snapshot;
             sourceModel = source;
+            sourceSkillId = skillId;
             criticalAllowed = allowCritical;
             critChanceBonus = criticalChanceBonus;
             critDamageBonus = criticalDamageBonus;
@@ -86,7 +92,9 @@ namespace Pakuri.InGame
                 attribute,
                 statusSpec,
                 onHitStatusEffects,
+                executionSnapshot,
                 sourceModel,
+                sourceSkillId,
                 criticalAllowed,
                 critChanceBonus,
                 critDamageBonus,
@@ -107,7 +115,9 @@ namespace Pakuri.InGame
             DamageAttribute damageAttribute,
             ProjectileStatusHitSpec onHitStatus,
             SkillEffectDefinition[] onHitEffects,
+            SkillExecutionSnapshot snapshot,
             BaseUnitRuntimeModel source,
+            string skillId,
             bool criticalAllowed,
             float critChanceBonus,
             float critDamageBonus,
@@ -142,10 +152,11 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                manager.ApplyDamage(target.Model, damagePerTick, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus);
+                var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damagePerTick, snapshot, target.Model);
+                manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, skillId);
                 var targetKey = ResolveTargetKey(target.Model);
-                TryApplyStatus(manager, target.Model, onHitStatus, targetKey, baseStatusAppliedTargets);
-                TryApplyOnHitEffects(manager, target.Model, onHitEffects, targetKey, effectStatusAppliedTargets);
+                TryApplyStatus(manager, target.Model, onHitStatus, source, targetKey, baseStatusAppliedTargets);
+                TryApplyOnHitEffects(manager, target.Model, onHitEffects, source, targetKey, effectStatusAppliedTargets);
                 routed = true;
             }
 
@@ -179,7 +190,9 @@ namespace Pakuri.InGame
                     attribute,
                     statusSpec,
                     onHitStatusEffects,
+                    executionSnapshot,
                     sourceModel,
+                    sourceSkillId,
                     criticalAllowed,
                     critChanceBonus,
                     critDamageBonus,
@@ -241,6 +254,7 @@ namespace Pakuri.InGame
             InGameCombatManager manager,
             BaseUnitRuntimeModel target,
             ProjectileStatusHitSpec status,
+            BaseUnitRuntimeModel source,
             string targetKey,
             HashSet<string> appliedTargets)
         {
@@ -254,7 +268,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (SkillStatusApplyUtility.TryApplyStatus(manager, target, status)
+            if (SkillStatusApplyUtility.TryApplyStatus(manager, target, status, source)
                 && appliedTargets != null
                 && !string.IsNullOrWhiteSpace(targetKey))
             {
@@ -266,6 +280,7 @@ namespace Pakuri.InGame
             InGameCombatManager manager,
             BaseUnitRuntimeModel target,
             SkillEffectDefinition[] effects,
+            BaseUnitRuntimeModel source,
             string targetKey,
             HashSet<string> appliedEffects)
         {
@@ -297,7 +312,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                if (SkillStatusApplyUtility.TryApplyStatus(manager, target, status)
+                if (SkillStatusApplyUtility.TryApplyStatus(manager, target, status, source)
                     && appliedEffects != null
                     && !string.IsNullOrWhiteSpace(effectKey))
                 {

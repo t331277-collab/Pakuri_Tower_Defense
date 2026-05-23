@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Pakuri.Combat;
 using Pakuri.InGame;
 
 namespace Pakuri.Data
@@ -192,6 +193,12 @@ namespace Pakuri.Data
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported status_duration_bonus_status_id '{choice.StatusDurationBonusStatusId}'.");
                 }
 
+                if (!string.IsNullOrWhiteSpace(choice.StatusMaxStacksBonusStatusId)
+                    && !StatusEffectUtility.TryParse(choice.StatusMaxStacksBonusStatusId, out _))
+                {
+                    errors.Add($"Skill choice '{choice.Id}' uses unsupported status_max_stacks_bonus_status_id '{choice.StatusMaxStacksBonusStatusId}'.");
+                }
+
                 if (!string.IsNullOrWhiteSpace(choice.ThresholdStatusId)
                     && !StatusEffectUtility.TryParse(choice.ThresholdStatusId, out _))
                 {
@@ -202,6 +209,12 @@ namespace Pakuri.Data
                     && !StatusEffectUtility.TryParse(choice.ThresholdApplyStatusId, out _))
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported threshold_apply_status_id '{choice.ThresholdApplyStatusId}'.");
+                }
+
+                if (!string.IsNullOrWhiteSpace(choice.ConditionalTargetStatusId)
+                    && !StatusEffectUtility.TryParse(choice.ConditionalTargetStatusId, out _))
+                {
+                    errors.Add($"Skill choice '{choice.Id}' uses unsupported conditional_target_status_id '{choice.ConditionalTargetStatusId}'.");
                 }
             }
 
@@ -442,7 +455,7 @@ namespace Pakuri.Data
             }
 
             if (!string.IsNullOrWhiteSpace(effect.ConditionStatusId)
-                && !StatusEffectUtility.TryParse(effect.ConditionStatusId, out _))
+                && !StatusEffectRuntime.TryParseConditionStatusExpression(effect.ConditionStatusId, out _))
             {
                 errors.Add($"Skill effect '{effect.Id}' uses unsupported condition_status_id '{effect.ConditionStatusId}'.");
             }
@@ -486,7 +499,27 @@ namespace Pakuri.Data
 
             if (trigger.RuntimeKind != SkillRuntimeKind.SingleAttack)
             {
-                errors.Add($"Skill trigger '{trigger.Id}' currently supports only SingleAttack runtime_kind.");
+                if (model == null || !model.Skills.TryGetValue(trigger.TriggeredSkillId, out var triggeredSkill))
+                {
+                    errors.Add($"Skill trigger '{trigger.Id}' references unknown triggered skill '{trigger.TriggeredSkillId}'.");
+                }
+                else
+                {
+                    if (!string.Equals(triggeredSkill.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        errors.Add($"Skill trigger '{trigger.Id}' triggered skill '{trigger.TriggeredSkillId}' belongs to '{triggeredSkill.MonsterId}', not '{trigger.MonsterId}'.");
+                    }
+
+                    if (triggeredSkill.RuntimeKind != trigger.RuntimeKind)
+                    {
+                        errors.Add($"Skill trigger '{trigger.Id}' runtime_kind '{trigger.RuntimeKind}' does not match triggered skill '{trigger.TriggeredSkillId}' runtime_kind '{triggeredSkill.RuntimeKind}'.");
+                    }
+                }
+            }
+
+            if (trigger.RuntimeKind == SkillRuntimeKind.Passive)
+            {
+                errors.Add($"Skill trigger '{trigger.Id}' cannot route runtime_kind Passive.");
             }
 
             if (!IsSupportedHitTargetCount(trigger.HitTargetCount))
@@ -504,18 +537,68 @@ namespace Pakuri.Data
                 errors.Add($"Skill trigger '{trigger.Id}' has negative repeat_interval_seconds.");
             }
 
-            if (trigger.DamageSource == SkillTriggerDamageSource.Fixed && trigger.BaseDamage <= 0f)
+            if (trigger.ProcChance < 0f || trigger.ProcChance > 1f)
             {
-                errors.Add($"Skill trigger '{trigger.Id}' uses Fixed damage_source and requires positive base_damage.");
+                errors.Add($"Skill trigger '{trigger.Id}' has proc_chance '{trigger.ProcChance}' outside 0..1.");
             }
 
-            if (trigger.DamageSource != SkillTriggerDamageSource.Fixed && trigger.DamageSourceMultiplier <= 0f)
+            if (trigger.InternalCooldownSeconds < 0f)
             {
-                errors.Add($"Skill trigger '{trigger.Id}' uses {trigger.DamageSource} and requires positive damage_source_multiplier.");
+                errors.Add($"Skill trigger '{trigger.Id}' has negative internal_cooldown_seconds.");
+            }
+
+            if (trigger.RuntimeKind == SkillRuntimeKind.SingleAttack)
+            {
+                if (trigger.DamageSource == SkillTriggerDamageSource.Fixed && trigger.BaseDamage <= 0f)
+                {
+                    errors.Add($"Skill trigger '{trigger.Id}' uses Fixed damage_source and requires positive base_damage.");
+                }
+
+                if (trigger.DamageSource != SkillTriggerDamageSource.Fixed && trigger.DamageSourceMultiplier <= 0f)
+                {
+                    errors.Add($"Skill trigger '{trigger.Id}' uses {trigger.DamageSource} and requires positive damage_source_multiplier.");
+                }
             }
 
             ValidateTriggerChoiceReference(trigger.RequiresActiveChoiceId, trigger, model, "requires_active_choice_id", errors);
             ValidateTriggerChoiceReference(trigger.ExcludesActiveChoiceId, trigger, model, "excludes_active_choice_id", errors);
+
+            if (!string.IsNullOrWhiteSpace(trigger.ConditionStatusId)
+                && !StatusEffectRuntime.TryParseConditionStatusExpression(trigger.ConditionStatusId, out _))
+            {
+                errors.Add($"Skill trigger '{trigger.Id}' uses unsupported condition_status_id '{trigger.ConditionStatusId}'.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(trigger.TriggerAttribute)
+                && !ValidateTriggerAttributes(trigger.TriggerAttribute))
+            {
+                errors.Add($"Skill trigger '{trigger.Id}' uses unsupported trigger_attribute '{trigger.TriggerAttribute}'.");
+            }
+        }
+
+        private static bool ValidateTriggerAttributes(string rawValue)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                return true;
+            }
+
+            var tokens = rawValue.Split(';', ',');
+            for (var i = 0; i < tokens.Length; i++)
+            {
+                var token = tokens[i] != null ? tokens[i].Trim() : string.Empty;
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    continue;
+                }
+
+                if (!Enum.TryParse<DamageAttribute>(token, true, out _))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static bool IsSupportedHitTargetCount(string rawValue)

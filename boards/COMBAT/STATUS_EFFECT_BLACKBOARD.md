@@ -4,6 +4,95 @@
 - Older broad combat/status history remains in `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 
+## Task: 2026-05-24 Shared Passive Condition-Status And Trigger Expression Support
+
+### Task title
+
+Extend shared status/trigger runtime so passive effect rows and trigger rows can target expression-style condition statuses and shared proc-gated routed skills.
+
+### Goals
+
+- Let shared runtime parse condition-status expressions such as `chill;freeze` and `shock:5`.
+- Let passive effect rows and trigger rows both consume the same condition-status matcher instead of duplicating string logic.
+- Keep routed trigger validation aligned with actual runtime semantics so non-`SingleAttack` routed skills do not need fake damage payloads.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- The implementation must stay on shared status parsing, trigger runtime, and CSV validation paths.
+- Unity Play Mode gameplay verification remains user-owned.
+- External Code Reviewer was not run because explicit user permission was not given.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented, compile-verified, and Unity CSV validation passed.
+
+### Next Actions
+
+- Reuse the shared condition-status expression format for future passive or trigger work that needs OR lists or minimum stack gates before inventing another status-condition schema.
+- Keep trigger damage-field validation scoped to `SingleAttack` unless a future routed trigger runtime begins consuming its own damage payload.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectRuntime.cs` now defines shared condition-status parsing and matching helpers used by both target status checks and status-expire trigger checks.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` and `SkillTriggerRuntime.cs` now delegate condition-status checks to `StatusEffectRuntime`, and `SkillTriggerRuntime.cs` now supports multi-attribute trigger filters such as `Lightning;Ice`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Validation.cs` now validates expression-style `condition_status_id` values and shared trigger-attribute lists, and now limits trigger damage payload validation to `runtime_kind=SingleAttack`.
+- The validation follow-up was grounded by the failing Eve-G trigger rows `eve-g-auto-prism-ray` and `eve-g-auto-prism-ray-trait1`, which route `LineAttack` `eve-b` and therefore should not require synthetic `base_damage` values on the trigger row.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the shared runtime/validation change; only the existing `MSB3277` warnings remained.
+- Unity `Pakuri/Validate CSV Source Data` then completed successfully and logged the runtime catalog load summary instead of `CsvFatalException`.
+
+### History
+
+- 2026-05-24: Eve F-J passive completion exposed that shared trigger validation was over-constraining routed non-`SingleAttack` triggers and that passive condition-status rows needed shared expression parsing.
+
+## Task: 2026-05-23 Shared Choice Status Max-Stack And Zone Conditional Damage Support
+
+### Task title
+
+Extend the shared status and AreaAttack tick runtime so choice snapshots can raise one status cap and apply damage only when a target already meets a status stack threshold.
+
+### Goals
+
+- Let a choice snapshot add max stacks to one specific applied status id instead of editing global status defaults.
+- Let AreaAttack tick damage apply an extra multiplier only against targets already carrying a required status at or above a required stack count.
+- Keep both behaviors on shared snapshot/runtime paths instead of adding Eve-only status branches.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- The implementation must stay on shared status-resolution and zone-tick code paths.
+- External Code Reviewer was not run because explicit user permission was not given.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented, compile-verified, and Unity-refresh/console-checked.
+
+### Next Actions
+
+- Reuse the new targeted max-stack bonus path for future “only this status cap increases” designs before editing `status_effects.csv`.
+- Reuse the new target-status-threshold damage path for future zone skills that say “bonus damage only when target already has X stacks.”
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutionSnapshot.cs` now stores targeted status max-stack bonuses keyed by status id and shared conditional damage rules keyed by target status id plus minimum stacks.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` now applies `ResolveStatusMaxStacksBonus(...)` while building `ProjectileStatusHitSpec`, so master-2-style vulnerable cap increases stay on the shared status-spec path.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameZoneSkillActor.cs` now resolves tick damage through `ResolveDamageAgainstTarget(...)`, which multiplies damage by the snapshot’s shared conditional damage rules before `ApplyDamage(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs` still defines vulnerable with default max stacks `10`, so Eve-E master 2’s `+5` cap comes from the new choice-owned override rather than a global catalog edit.
+- `dotnet build Pakuri\\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the shared runtime change; only the existing `MSB3277` warnings remained.
+- Unity console warning/error read after forced refresh returned only MCP client-handler logs, not C# compile or status-parse errors.
+
+### History
+
+- 2026-05-23: Eve-E implementation required a shared way to raise vulnerable max stacks by choice and to gate AreaAttack bonus damage on `vulnerable >= 5`.
+
 ## Task: 2026-05-23 Eve-D Shock-Gated SingleAttack Follow-Up
 
 ### Task title
