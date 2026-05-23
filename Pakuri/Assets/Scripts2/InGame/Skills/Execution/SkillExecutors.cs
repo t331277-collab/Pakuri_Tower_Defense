@@ -137,7 +137,7 @@ namespace Pakuri.InGame
                 var instance = effects.InstantiateSkillPrefab(
                     prefab,
                     origin,
-                    ResolveRotation(spreadDirection));
+                    SkillExecutionUtility.ResolveRotation(spreadDirection));
                 if (instance == null)
                 {
                     if (target != null)
@@ -212,17 +212,6 @@ namespace Pakuri.InGame
             return new Vector2(
                 direction.x * cos - direction.y * sin,
                 direction.x * sin + direction.y * cos).normalized;
-        }
-
-        private static Quaternion ResolveRotation(Vector2 direction)
-        {
-            if (direction.sqrMagnitude <= 0.0001f)
-            {
-                return Quaternion.identity;
-            }
-
-            var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            return Quaternion.Euler(0f, 0f, angle);
         }
 
         internal static ProjectileStatusHitSpec ResolveStatusSpec(
@@ -541,7 +530,7 @@ namespace Pakuri.InGame
             var instance = context.CombatManager.Effects.InstantiateSkillPrefab(
                 prefab,
                 center,
-                ResolveRotation(direction));
+                SkillExecutionUtility.ResolveRotation(direction));
             if (instance == null)
             {
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
@@ -652,12 +641,6 @@ namespace Pakuri.InGame
                 : 0.1f;
         }
 
-        private static Quaternion ResolveRotation(Vector2 direction)
-        {
-            var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            return Quaternion.Euler(0f, 0f, angle);
-        }
-
         private static SkillEffectDefinition[] ResolveOnHitStatusEffects(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -753,7 +736,7 @@ namespace Pakuri.InGame
                     instance = context.CombatManager.Effects.InstantiateSkillPrefab(prefab, center, Quaternion.identity);
                     if (instance != null && PrefabHasHitbox(instance))
                     {
-                        ApplyPrefabHitboxScale(instance.transform, SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area), snapshot);
+                        SkillExecutionUtility.ApplyPrefabScale(instance.transform, SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area), snapshot);
                         Physics2D.SyncTransforms();
                     }
                 }
@@ -841,7 +824,7 @@ namespace Pakuri.InGame
                 return centers;
             }
 
-            var orderedTargets = ResolveOrderedTargets(context.CasterEntry, context.Roster, targeting);
+            var orderedTargets = SkillExecutionUtility.ResolveOrderedTargets(context.CasterEntry, context.Roster, targeting);
             if (orderedTargets.Count <= 0)
             {
                 while (centers.Count < deploymentCount)
@@ -930,73 +913,6 @@ namespace Pakuri.InGame
             return Mathf.Max(0.05f, interval);
         }
 
-        private static List<UnitRosterEntry> ResolveOrderedTargets(
-            UnitRosterEntry sourceEntry,
-            UnitRosterService unitRoster,
-            SkillTargetingSpec targetingSpec)
-        {
-            var candidates = SkillExecutionUtility.ResolveTargetList(sourceEntry, unitRoster, targetingSpec);
-            var targets = new List<UnitRosterEntry>();
-            for (var i = 0; i < candidates.Count; i++)
-            {
-                var target = candidates[i];
-                if (target != null && target.IsAlive && target.Model != null && target.Transform != null)
-                {
-                    targets.Add(target);
-                }
-            }
-
-            var selection = targetingSpec != null ? targetingSpec.Selection : SkillTargetSelection.Nearest;
-            targets.Sort((left, right) => CompareTargets(sourceEntry, selection, left, right));
-            return targets;
-        }
-
-        private static int CompareTargets(UnitRosterEntry sourceEntry, SkillTargetSelection selection, UnitRosterEntry left, UnitRosterEntry right)
-        {
-            if (left == right)
-            {
-                return 0;
-            }
-
-            if (left == null)
-            {
-                return 1;
-            }
-
-            if (right == null)
-            {
-                return -1;
-            }
-
-            var leftHealth = left.Model != null && left.Model.Resources != null ? left.Model.Resources.CurrentHealth : 0f;
-            var rightHealth = right.Model != null && right.Model.Resources != null ? right.Model.Resources.CurrentHealth : 0f;
-            if (selection == SkillTargetSelection.HighestHealth && !Mathf.Approximately(leftHealth, rightHealth))
-            {
-                return rightHealth.CompareTo(leftHealth);
-            }
-
-            if (selection == SkillTargetSelection.LowestHealth && !Mathf.Approximately(leftHealth, rightHealth))
-            {
-                return leftHealth.CompareTo(rightHealth);
-            }
-
-            var leftDistance = ResolveDistanceSquared(sourceEntry, left);
-            var rightDistance = ResolveDistanceSquared(sourceEntry, right);
-            return leftDistance.CompareTo(rightDistance);
-        }
-
-        private static float ResolveDistanceSquared(UnitRosterEntry sourceEntry, UnitRosterEntry target)
-        {
-            if (sourceEntry == null || sourceEntry.Transform == null || target == null || target.Transform == null)
-            {
-                return float.MaxValue;
-            }
-
-            var offset = target.Transform.position - sourceEntry.Transform.position;
-            offset.z = 0f;
-            return offset.sqrMagnitude;
-        }
-
         private static SkillEffectDefinition[] ResolveOnExpireEffects(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -1035,21 +951,6 @@ namespace Pakuri.InGame
             return hitboxColliders != null && hitboxColliders.Length > 0;
         }
 
-        private static void ApplyPrefabHitboxScale(Transform target, float baseRadius, SkillExecutionSnapshot snapshot)
-        {
-            if (target == null || snapshot == null)
-            {
-                return;
-            }
-
-            var scaleFactor = SkillAreaUtility.ResolvePrefabScaleFactor(baseRadius, snapshot);
-            if (Mathf.Approximately(scaleFactor, 1f))
-            {
-                return;
-            }
-
-            target.localScale *= scaleFactor;
-        }
     }
 
     public sealed class SingleAttackSkillExecutor : TypedSkillExecutor<SingleAttackData>
@@ -1153,13 +1054,7 @@ namespace Pakuri.InGame
         {
             if (skill != null && skill.HitAllTargets)
             {
-                var skillPoint = GameObject.Find("SkillPoint");
-                if (skillPoint != null)
-                {
-                    return skillPoint.transform.position;
-                }
-
-                return Vector2.zero;
+                return SkillExecutionUtility.ResolveTargetGroupCenter(context, skill.Targeting, fallbackCenter);
             }
 
             return fallbackCenter;
@@ -1199,7 +1094,7 @@ namespace Pakuri.InGame
                 {
                     spawnedHitbox = true;
                     castCommitted = true;
-                    ApplyHitboxScale(instance.transform, SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area), snapshot);
+                    SkillExecutionUtility.ApplyPrefabScale(instance.transform, SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area), snapshot);
                     Physics2D.SyncTransforms();
                     routed = ApplyPrefabHitbox(
                         context.CombatManager,
@@ -1284,22 +1179,6 @@ namespace Pakuri.InGame
             return new SingleAttackExecutionOutcome(routed, castCommitted);
         }
 
-        private static void ApplyHitboxScale(Transform target, float baseRadius, SkillExecutionSnapshot snapshot)
-        {
-            if (target == null || snapshot == null)
-            {
-                return;
-            }
-
-            var scaleFactor = SkillAreaUtility.ResolvePrefabScaleFactor(baseRadius, snapshot);
-            if (Mathf.Approximately(scaleFactor, 1f))
-            {
-                return;
-            }
-
-            target.localScale *= scaleFactor;
-        }
-
         private static bool ApplyPrefabHitbox(
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
@@ -1330,7 +1209,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var targets = ResolveOrderedTargets(sourceEntry, unitRoster, targetingSpec);
+            var targets = SkillExecutionUtility.ResolveOrderedTargets(sourceEntry, unitRoster, targetingSpec);
             var routed = false;
             var hitCount = 0;
             for (var i = 0; i < targets.Count; i++)
@@ -1384,7 +1263,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var targets = ResolveOrderedTargets(sourceEntry, unitRoster, targetingSpec);
+            var targets = SkillExecutionUtility.ResolveOrderedTargets(sourceEntry, unitRoster, targetingSpec);
             var routed = false;
             var hitCount = 0;
             for (var i = 0; i < targets.Count; i++)
@@ -1430,7 +1309,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var targets = ResolveOrderedTargets(sourceEntry, unitRoster, targetingSpec);
+            var targets = SkillExecutionUtility.ResolveOrderedTargets(sourceEntry, unitRoster, targetingSpec);
             if (!coverAll && radius <= 0f)
             {
                 var target = targets.Count > 0 ? targets[0] : null;
@@ -1473,73 +1352,6 @@ namespace Pakuri.InGame
             }
 
             return routed;
-        }
-
-        private static List<UnitRosterEntry> ResolveOrderedTargets(
-            UnitRosterEntry sourceEntry,
-            UnitRosterService unitRoster,
-            SkillTargetingSpec targetingSpec)
-        {
-            var candidates = SkillExecutionUtility.ResolveTargetList(sourceEntry, unitRoster, targetingSpec);
-            var targets = new List<UnitRosterEntry>();
-            for (var i = 0; i < candidates.Count; i++)
-            {
-                var target = candidates[i];
-                if (target != null && target.IsAlive && target.Model != null && target.Transform != null)
-                {
-                    targets.Add(target);
-                }
-            }
-
-            var selection = targetingSpec != null ? targetingSpec.Selection : SkillTargetSelection.Nearest;
-            targets.Sort((left, right) => CompareTargets(sourceEntry, selection, left, right));
-            return targets;
-        }
-
-        private static int CompareTargets(UnitRosterEntry sourceEntry, SkillTargetSelection selection, UnitRosterEntry left, UnitRosterEntry right)
-        {
-            if (left == right)
-            {
-                return 0;
-            }
-
-            if (left == null)
-            {
-                return 1;
-            }
-
-            if (right == null)
-            {
-                return -1;
-            }
-
-            var leftHealth = left.Model != null && left.Model.Resources != null ? left.Model.Resources.CurrentHealth : 0f;
-            var rightHealth = right.Model != null && right.Model.Resources != null ? right.Model.Resources.CurrentHealth : 0f;
-            if (selection == SkillTargetSelection.HighestHealth && !Mathf.Approximately(leftHealth, rightHealth))
-            {
-                return rightHealth.CompareTo(leftHealth);
-            }
-
-            if (selection == SkillTargetSelection.LowestHealth && !Mathf.Approximately(leftHealth, rightHealth))
-            {
-                return leftHealth.CompareTo(rightHealth);
-            }
-
-            var leftDistance = ResolveDistanceSquared(sourceEntry, left);
-            var rightDistance = ResolveDistanceSquared(sourceEntry, right);
-            return leftDistance.CompareTo(rightDistance);
-        }
-
-        private static float ResolveDistanceSquared(UnitRosterEntry sourceEntry, UnitRosterEntry target)
-        {
-            if (sourceEntry == null || sourceEntry.Transform == null || target == null || target.Transform == null)
-            {
-                return float.MaxValue;
-            }
-
-            var offset = target.Transform.position - sourceEntry.Transform.position;
-            offset.z = 0f;
-            return offset.sqrMagnitude;
         }
 
         private static bool IsTargetInsideHitbox(Collider2D[] hitboxColliders, UnitRosterEntry target)
@@ -2711,6 +2523,87 @@ namespace Pakuri.InGame
             return SkillTargetingUtility.DirectionToTarget(origin, target);
         }
 
+        public static Quaternion ResolveRotation(Vector2 direction)
+        {
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                return Quaternion.identity;
+            }
+
+            var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            return Quaternion.Euler(0f, 0f, angle);
+        }
+
+        public static void ApplyPrefabScale(Transform target, float baseRadius, SkillExecutionSnapshot snapshot)
+        {
+            if (target == null || snapshot == null)
+            {
+                return;
+            }
+
+            var scaleFactor = SkillAreaUtility.ResolvePrefabScaleFactor(baseRadius, snapshot);
+            if (Mathf.Approximately(scaleFactor, 1f))
+            {
+                return;
+            }
+
+            target.localScale *= scaleFactor;
+        }
+
+        public static List<UnitRosterEntry> ResolveOrderedTargets(
+            UnitRosterEntry sourceEntry,
+            UnitRosterService unitRoster,
+            SkillTargetingSpec targetingSpec)
+        {
+            var candidates = ResolveTargetList(sourceEntry, unitRoster, targetingSpec);
+            var targets = new List<UnitRosterEntry>();
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                var target = candidates[i];
+                if (target != null && target.IsAlive && target.Model != null && target.Transform != null)
+                {
+                    targets.Add(target);
+                }
+            }
+
+            var selection = targetingSpec != null ? targetingSpec.Selection : SkillTargetSelection.Nearest;
+            targets.Sort((left, right) => CompareTargets(sourceEntry, selection, left, right));
+            return targets;
+        }
+
+        public static Vector2 ResolveTargetGroupCenter(
+            SkillExecutionContext context,
+            SkillTargetingSpec targeting,
+            Vector2 fallbackCenter)
+        {
+            if (context == null || context.CasterEntry == null || context.Roster == null)
+            {
+                return fallbackCenter;
+            }
+
+            var targets = ResolveOrderedTargets(context.CasterEntry, context.Roster, targeting);
+            if (targets.Count <= 0)
+            {
+                return fallbackCenter;
+            }
+
+            var sum = Vector2.zero;
+            var count = 0;
+            for (var i = 0; i < targets.Count; i++)
+            {
+                var target = targets[i];
+                if (target == null || target.Transform == null)
+                {
+                    continue;
+                }
+
+                sum += (Vector2)target.Transform.position;
+                count++;
+            }
+
+            return count > 0 ? sum / count : fallbackCenter;
+        }
+
         public static float ResolveDamage(
             BaseUnitRuntimeModel caster,
             SkillDamageSpec damage,
@@ -2797,6 +2690,52 @@ namespace Pakuri.InGame
             SkillTargetingSpec targeting)
         {
             return SkillTargetingUtility.ResolveTargetList(caster, roster, targeting);
+        }
+
+        private static int CompareTargets(UnitRosterEntry sourceEntry, SkillTargetSelection selection, UnitRosterEntry left, UnitRosterEntry right)
+        {
+            if (left == right)
+            {
+                return 0;
+            }
+
+            if (left == null)
+            {
+                return 1;
+            }
+
+            if (right == null)
+            {
+                return -1;
+            }
+
+            var leftHealth = left.Model != null && left.Model.Resources != null ? left.Model.Resources.CurrentHealth : 0f;
+            var rightHealth = right.Model != null && right.Model.Resources != null ? right.Model.Resources.CurrentHealth : 0f;
+            if (selection == SkillTargetSelection.HighestHealth && !Mathf.Approximately(leftHealth, rightHealth))
+            {
+                return rightHealth.CompareTo(leftHealth);
+            }
+
+            if (selection == SkillTargetSelection.LowestHealth && !Mathf.Approximately(leftHealth, rightHealth))
+            {
+                return leftHealth.CompareTo(rightHealth);
+            }
+
+            var leftDistance = ResolveDistanceSquared(sourceEntry, left);
+            var rightDistance = ResolveDistanceSquared(sourceEntry, right);
+            return leftDistance.CompareTo(rightDistance);
+        }
+
+        private static float ResolveDistanceSquared(UnitRosterEntry sourceEntry, UnitRosterEntry target)
+        {
+            if (sourceEntry == null || sourceEntry.Transform == null || target == null || target.Transform == null)
+            {
+                return float.MaxValue;
+            }
+
+            var offset = target.Transform.position - sourceEntry.Transform.position;
+            offset.z = 0f;
+            return offset.sqrMagnitude;
         }
     }
 }
