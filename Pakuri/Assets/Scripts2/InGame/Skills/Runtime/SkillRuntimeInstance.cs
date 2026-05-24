@@ -22,6 +22,8 @@ namespace Pakuri.InGame
         public float TickRemaining { get; private set; }
         public float ReloadRemaining { get; private set; }
         public int MagazineRemaining { get; private set; }
+        public int ProjectileLaunchCount { get; private set; }
+        public int SkillHitCount { get; private set; }
 
         private int effectiveMaxMagazineSize;
         private int effectiveBurstProjectileCount;
@@ -54,6 +56,30 @@ namespace Pakuri.InGame
             ReloadRemaining = 0f;
             MagazineRemaining = MaxMagazineSize;
             queuedBurstShotsRemaining = 0;
+            ProjectileLaunchCount = 0;
+            SkillHitCount = 0;
+        }
+
+        public int AdvanceProjectileLaunchCount()
+        {
+            if (ProjectileLaunchCount == int.MaxValue)
+            {
+                ProjectileLaunchCount = 0;
+            }
+
+            ProjectileLaunchCount++;
+            return ProjectileLaunchCount;
+        }
+
+        public int AdvanceSkillHitCount()
+        {
+            if (SkillHitCount == int.MaxValue)
+            {
+                SkillHitCount = 0;
+            }
+
+            SkillHitCount++;
+            return SkillHitCount;
         }
 
         public void Tick(float deltaTime)

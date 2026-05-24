@@ -4,6 +4,50 @@
 - Older broad data/asset history remains in `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md` and other archive files under `boards/ARCHIVE/`.
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 
+## Task: 2026-05-24 Rin-A Master-2 Choice Prefab Catalog Sync
+
+### Task title
+
+Sync Rin-A master-2 choice-level prefab path into the runtime asset catalog.
+
+### Goals
+
+- Keep base Rin-A visual authority scene-owned through `NewRunScene` `EffectManager`.
+- Make the master-2 choice-level `skill_effect_prefab_path` resolvable through `PakuriCsvRuntimeAssetCatalog`.
+- Reuse `Assets/Prefab/Skill/Rin/Rin_A.prefab` for the master-2 branch/effect path as requested.
+
+### Constraints
+
+- Role Owner is Skill Builder.
+- No prefab content was edited.
+- Base `rin-a` scene mapping remains unchanged.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Skill Builder
+
+### Status
+
+Synced and file-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Rin-A master-2 uses the intended Rin_A visual on branch/effect projectiles.
+- Future choice-level prefab paths should continue to sync through `Pakuri/Sync CSV Runtime Catalog Assets`.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now sets `rin-a-master-2` `skill_effect_prefab_path=Assets/Prefab/Skill/Rin/Rin_A.prefab`.
+- `Pakuri/Assets/Prefab/Skill/Rin/Rin_A.prefab.meta` stores GUID `19bfba788239eba498a44cb67c2622c6`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` already maps monster `rin` skill `rin-a` to the same GUID through `EffectManager`.
+- Unity `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog.asset` now contains `AssetPath: Assets/Prefab/Skill/Rin/Rin_A.prefab` with GUID `19bfba788239eba498a44cb67c2622c6`.
+
+### History
+
+- 2026-05-24: User required Rin-A master-2 effect to use `Assets/Prefab/Skill/Rin/Rin_A.prefab`.
+
 ## Task: 2026-05-23 Eve-E EffectManager Scene Wiring
 
 ### Task title

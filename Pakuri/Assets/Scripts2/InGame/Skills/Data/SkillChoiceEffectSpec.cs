@@ -1,4 +1,5 @@
 using System;
+using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
@@ -46,6 +47,9 @@ namespace Pakuri.InGame
         public float BranchDamageMultiplier = 1f;
         public bool HasBranchSearchRadius;
         public float BranchSearchRadius;
+        public int BranchLaunchPeriod;
+        public bool HasBranchLaunchChanceSet;
+        public float BranchLaunchChanceSet;
         public int StatusStacksBonus;
         public bool HasStatusStacksSet;
         public int StatusStacksSet;
@@ -78,6 +82,16 @@ namespace Pakuri.InGame
         public string StatusConditionalSourceStatusId;
         public bool HasMaxHealthBonus;
         public float MaxHealthBonus;
+        public bool HasOnHitAdditionalDamage;
+        public float OnHitAdditionalDamageChance;
+        public float OnHitAdditionalDamageMultiplier = 1f;
+        public DamageAttribute OnHitAdditionalDamageAttribute;
+        public string OnHitAdditionalDamageTarget;
+        public int OnHitChainHitPeriod;
+        public int OnHitChainTargetCount;
+        public float OnHitChainSearchRadius;
+        public float OnHitChainDamageMultiplier = 1f;
+        public DamageAttribute OnHitChainDamageAttribute;
 
         [Header("Added Effect")]
         public string StatusTag;

@@ -26,10 +26,11 @@ Code Builder should use this file as the primary contract for the requested work
 - `Pakuri/Assets/CSVdata/source/monster_skills.csv:35` defines `vega-c` as `runtime_kind=Buff` with `status_effect_id=slaughter-permit`, `status_duration_seconds=6`, `status_max_stacks=1`, `status_stack_amount=1`.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs:169-178` already maps buff duration from `StatusDurationSeconds`, but `BuffSkillExecutor` does not rely on `BuffDuration` as the authoritative runtime value.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs:182-189` maps shield base/coefficient/refresh rule but does not map `ShieldDuration`.
-- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:840-845` falls back shield duration to hardcoded `5f`.
-- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:862` applies shield through `GrantShield(target.Model, shield)`.
-- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:514-535` shows `GrantShield` only adds to `CurrentShield` and stores no duration, source skill, or refresh identity.
-- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameAttachedSkillEffectActor.cs:12-25` shows attached effect visuals only follow the passed lifetime; they do not own gameplay state.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SupportSkillExecutors.cs:140` contains the current `ShieldSkillExecutor`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SupportSkillExecutors.cs:151-161` resolves shield duration from `ShieldDuration` or `ShieldStatus.Duration` and resolves status data through `SkillStatusSpecUtility.ResolveStatusData(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SupportSkillExecutors.cs:183` applies shield through `InGameCombatManager.ApplyShieldStatus(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:246` exposes the timed shield-status application path; `GrantShield(...)` still exists as a raw resource mutation helper at `:152` and `:942`, but it is not the current timed shield skill path.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Actors/InGameAttachedSkillEffectActor.cs:12-25` shows attached effect visuals only follow the passed lifetime; they do not own gameplay state.
 - `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs:97-129` shows timed statuses are currently keyed only by `StatusEffectKind`.
 - `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs:114` uses `Find(kind)`, which prevents two different source skills from holding the same status kind independently.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs:235-271` shows `StatusEffectData` has duration/stack/modifier fields but no mutable shield-remaining payload.
@@ -79,10 +80,10 @@ Code Builder should use this file as the primary contract for the requested work
 - `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs`
 - `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs`
 - `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectRuntime.cs`
-- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs`
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SupportSkillExecutors.cs`
 - `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs`
 - `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs`
-- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameAttachedSkillEffectActor.cs`
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Actors/InGameAttachedSkillEffectActor.cs`
 
 ## Expected Implementation Surface
 
@@ -144,7 +145,7 @@ This means:
 
 - Buff mapper must read the new target / merge data from CSV.
 - Shield mapper must read duration from `status_duration_seconds` first.
-- Shield executor must stop using the hardcoded `5f` fallback.
+- Shield executor must remain off hardcoded `5f` duration fallback.
 - Attached VFX lifetime must use the resolved runtime duration that also governs gameplay expiration.
 
 ### 6. Canonical Shield Status Id

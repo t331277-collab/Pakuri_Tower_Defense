@@ -7,6 +7,91 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 Older OPS automation and role-policy task blocks were archived to `boards/ARCHIVE/OPS_AUTOMATION_ARCHIVE_2026-05-19.md`.
 
+## Task: 2026-05-24 Projectile Blueprint Nth Launch Branch Extension
+
+### Task title
+
+Promote nth-launch branch chance override into the projectile blueprint common path.
+
+### Goals
+
+- Keep Skill Builder from stopping on approved reusable projectile branch behavior that triggers every nth base projectile launch.
+- Document `BranchLaunchPeriod` and `BranchLaunchChanceSet` as optional parsed projectile fields.
+- Preserve the stop-and-ask rule for sequence-state behavior not covered by the shared nth-launch branch override.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder because this policy update follows an implemented runtime extension.
+- No skill CSV row values, prefab assets, or scene objects were changed by this task.
+- Skill Builder still requires parsed input or explicit current CSV/code discovery authorization before editing specific skill rows.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and locally verified by build, Unity refresh, and targeted source inspection.
+
+### Next Actions
+
+- Future projectile Skill Builder requests may use `BranchLaunchPeriod` plus `BranchLaunchChanceSet` for reusable nth-launch branch behavior.
+- If a future request needs another nth-launch effect family, add a deliberate shared extension instead of hardcoding a monster-specific branch.
+
+### Evidence
+
+- `boards/SkillBluePrint/projectile-blueprint.md` now lists `BranchLaunchPeriod` and `BranchLaunchChanceSet` as optional common parsed fields.
+- `boards/SkillBluePrint/projectile-blueprint.md` now includes nth-launch branch chance override in the common projectile contract.
+- `boards/SkillBluePrint/projectile-blueprint.md` now keeps other sequence-state effects outside that shared pattern in stop-and-ask.
+- Runtime support was added through `SkillRuntimeInstance.ProjectileLaunchCount`, `ProjectileSkillExecutor` per-launch branch resolution, and snapshot/choice fields for branch launch period/chance.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-24: User approved using a reusable launch-count function so `Rin-a` master-2 can make every 3rd launched projectile branch at 100%, and future skills can reuse nth-launch projectile behavior.
+
+## Task: 2026-05-24 Skill Blueprint Execution Path Refresh
+
+### Task title
+
+Refresh Skill Builder blueprint references after the skill execution folder refactor.
+
+### Goals
+
+- Remove stale `SkillExecutors.cs` references from the multi-effect and shield/buff unification blueprints.
+- Point future Skill Builder work at the current `Execution/Executors`, `Execution/Runtime`, and `Execution/Actors` files.
+- Keep blueprint claims grounded in the currently inspected refactored code structure.
+
+### Constraints
+
+- Role Owner is Designer because this changes workflow/blueprint documentation, not runtime gameplay code.
+- No C# script, scene, prefab, or gameplay CSV values were changed.
+- Claims must stay grounded in inspected blueprint text and current runtime source paths.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Implemented and locally verified by targeted markdown/code-path inspection.
+
+### Next Actions
+
+- Future Skill Builder work that uses these blueprints should follow the current role-folder paths instead of looking for `SkillExecutors.cs`.
+- If more blueprints still mention deleted execution files, update them only after inspecting the current matching runtime type path.
+
+### Evidence
+
+- `boards/SkillBluePrint/multi-effect-skill-csv-blueprint.md` now cites `Executors/SingleAttackSkillExecutor.cs`, `Runtime/SkillMultiEffectExecutor.cs`, and `Executors/SupportSkillExecutors.cs` instead of the deleted `SkillExecutors.cs`.
+- `boards/SkillBluePrint/shield-buff-status-unification-blueprint.md` now cites `Executors/SupportSkillExecutors.cs`, `Core/InGameCombatManager.cs`, and `Actors/InGameAttachedSkillEffectActor.cs` for the current shield/buff execution path.
+- Targeted search in the two edited blueprint files found no remaining deleted `Execution/SkillExecutors.cs` path references; current `SupportSkillExecutors.cs` references are intentional.
+- `Test-Path Pakuri\Assets\Scripts2\InGame\Skills\Execution\SkillExecutors.cs` returned `False`.
+
+### History
+
+- 2026-05-24: User asked to update the stale `SkillExecutors.cs` references in the multi-effect and shield/buff status unification blueprints after the execution folder role split.
+
 ## Task: 2026-05-23 Skill Builder Contact-Hitbox And Cooldown Authority Policy
 
 ### Task title

@@ -3,11 +3,204 @@
 This is the active enemy-domain persistent state file.
 When doing related work, follow `MDTREE.md` routing and update this file together with any required parent or child files.
 
+## Task: 2026-05-24 Shared Skill On-Hit Additional Damage Runtime
+
+### Task title
+
+Add a reusable skill hit rider for direct extra damage and every-nth-hit chain damage.
+
+### Goals
+
+- Let skill choices add immediate extra damage to the actual hit target without using `SingleAttack` as a fake triggered skill.
+- Let skill choices count primary hits and run deterministic chain damage every nth hit.
+- Apply the shared option from projectile, beam, zone, and single-attack hit paths.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is a shared runtime extension, not Rin-only hardcoding.
+- Added damage calls are guarded through the shared helper so additional damage does not recursively invoke itself.
+- On-hit extra and chain damage must not dispatch outgoing-damage triggers again; they are rider damage attached to the primary hit, not new trigger roots.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that direct on-hit extra damage and every-third-hit chain damage feel correct under real combat timing.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs` now stores `SkillHitCount` and exposes `AdvanceSkillHitCount()`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillOnHitAdditionalDamageUtility.cs` owns the shared on-hit extra damage and chain target selection.
+- `InGameProjectileActor`, `InGameLineAttackActor`, `InGameZoneSkillActor`, `ProjectileSkillExecutor`, and `SingleAttackSkillExecutor` now call the shared helper after primary hit damage/status resolution.
+- `SkillOnHitAdditionalDamageUtility` uses an in-helper execution flag so additional damage calls do not recursively invoke the same on-hit additional damage path.
+- `SkillOnHitAdditionalDamageUtility.cs:69` and `SkillOnHitAdditionalDamageUtility.cs:110` pass `suppressOutgoingDamageTriggers: true` through `InGameCombatManager.ApplyDamage`, so direct extra and chain rider damage do not fan out through `OnOutgoingDamage` triggers.
+- `InGameCombatManager.cs:388` returns before `SkillTriggerRuntime.ExecuteOutgoingDamage` when `DamageApplicationOptions.SuppressOutgoingDamageTriggers` is set.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remain.
+- Unity console after sync/validation showed only MCP client handler connection exceptions as errors, not C# compile errors.
+
+### History
+
+- 2026-05-24: User asked to generalize the Rin-A master-2 idea into a skill on-hit option usable by projectile, zone, single-attack, and beam skills.
+- 2026-05-24: User chose nth-hit as the chain criterion and reported direct 40% Lightning rider damage behaving like all-target damage. Code inspection showed hit-target damage was target-only, but it used the normal outgoing-damage trigger path; rider damage now suppresses outgoing-damage trigger dispatch.
+
 ## Archive Note
 
 - Full pre-cleanup snapshot moved to `boards/ARCHIVE/ENEMY_BLACKBOARD_ARCHIVE_2026-05-18.md`.
 - Older broad combat/enemy history remains in `boards/ARCHIVE/COMBAT_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current Stage 1 enemy runtime authority and verification baseline.
+
+## Task: 2026-05-24 Projectile Nth Launch Branch Runtime Extension
+
+### Task title
+
+Add a reusable projectile launch counter path for nth-launch branch chance overrides.
+
+### Goals
+
+- Let projectile choices express branch chance overrides on every nth base projectile launch.
+- Support `Rin-a` master-2 style "every 3rd launched projectile branches at 100%" without hardcoding monster or skill IDs.
+- Preserve existing branch-on-hit behavior for choices that only use branch chance/count/damage/search fields.
+
+### Constraints
+
+- Role Owner is Code Builder for the shared runtime extension and Skill Builder for future skill row application.
+- This task changed shared runtime/data definitions only; no skill CSV row values, prefab assets, or scene objects were edited.
+- Skill Builder did not inspect current Rin CSV rows because the user did not explicitly authorize current CSV/code discovery as parsed source.
+- Unity Play Mode gameplay verification remains user-owned.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Shared runtime extension implemented and compile-verified. Specific `Rin-a` enhancement/master rows still require parsed input or explicit CSV discovery authorization before Skill Builder can edit data.
+
+### Next Actions
+
+- To apply `Rin-a` master-2 through data, provide the parsed row bundle or explicitly authorize Skill Builder to use current CSV/code as the parsed source.
+- Required master-2 parsed values include target skill/choice identity plus `branch_launch_period=3`, `branch_launch_chance_set=1`, and any intended branch count/damage/search overrides.
+- Remaining `Rin-a` enhancements and master-1 need their parsed effect values before implementation.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs` now stores `ProjectileLaunchCount` and exposes `AdvanceProjectileLaunchCount()`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/ProjectileSkillExecutor.cs` now advances the launch count for each instantiated base projectile and resolves branch chance per projectile launch.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSnapshot.cs`, `SkillChoiceEffectSpec.cs`, `SkillChoiceModifierRecord.cs`, and `SkillChoiceDefinition` now carry `BranchLaunchPeriod` plus `BranchLaunchChanceSet`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs` can read optional `branch_launch_period` and `branch_launch_chance_set` columns when present.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.CsvSupport.cs` now exposes `HasColumn(...)` so optional new columns do not break older CSV tables that do not contain them.
+- `boards/SkillBluePrint/projectile-blueprint.md` now treats nth-launch branch chance override as part of the current common projectile path when parsed fields are provided.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; the same existing `MSB3277` warnings remained.
+- Unity-MCP script refresh recovered after domain reload and returned ready; console warning/error read showed MCP client handler connection logs, not C# compile errors.
+
+### History
+
+- 2026-05-24: User approved the reusable shared extension where projectile launch count, not hit count, drives every nth launch branch behavior.
+
+## Task: 2026-05-24 Skill Executor File Boundary Split
+
+### Task title
+
+Split the monolithic skill executor source into responsibility-specific execution files.
+
+### Goals
+
+- Remove the oversized `SkillExecutors.cs` owner and keep each executor in its own source file.
+- Preserve the existing `SkillExecutorRegistry` type-based routing and runtime behavior.
+- Move shared status-spec construction out of `ProjectileSkillExecutor` so beam, zone, single-attack, buff, and shield executors do not depend on the projectile executor for common status work.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is a behavior-preserving refactor only; no CSV rows, prefab assets, scene objects, runtime tuning, or skill contracts were intentionally changed.
+- Unity Play Mode gameplay verification remains user-owned.
+- Existing unrelated workspace changes under Rin assets and CSVRuntime assets were not touched by this task.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode only if they want gameplay confirmation after the source-file split.
+- Future skill executor changes should edit the narrow executor file or common utility file instead of reintroducing a combined `SkillExecutors.cs`.
+
+### Evidence
+
+- The previous `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` and `.meta` were removed.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/TypedSkillExecutor.cs`, `ProjectileSkillExecutor.cs`, `BeamSkillExecutor.cs`, `ZoneSkillExecutor.cs`, `SingleAttackSkillExecutor.cs`, `BuffSkillExecutor.cs`, `ShieldSkillExecutor.cs`, `PassiveSkillExecutor.cs`, `SkillMultiEffectExecutor.cs`, `SkillExecutionUtility.cs`, and `SkillStatusSpecUtility.cs` now hold the split responsibilities.
+- `Pakuri/Assembly-CSharp.csproj` now includes the new split skill execution files and no longer includes `SkillExecutors.cs`.
+- Search after the split found no remaining `ProjectileSkillExecutor.ResolveStatusSpec` or `ProjectileSkillExecutor.ResolveStatusData` callers.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `MSB3277` `System.Net.Http` / `System.IO.Compression` warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; the same existing `MSB3277` warnings remained.
+- Unity-MCP force refresh and script compilation returned the editor to idle; console error read showed only MCP client handler logs, not C# compile errors.
+
+### History
+
+- 2026-05-24: Code Builder split the monolithic skill executor file into executor-specific files plus common status, multi-effect, and execution utility files while preserving registry routing.
+
+## Task: 2026-05-24 Skill Execution Folder Role Organization
+
+### Task title
+
+Organize skill execution scripts into role-specific subfolders and consolidate tiny support files.
+
+### Goals
+
+- Move the current `Execution` root scripts into responsibility folders so the folder layout matches runtime ownership.
+- Consolidate tiny contract/model/support executor files without changing public type names or namespaces.
+- Preserve MonoBehaviour file names and moved `.meta` files for actor/UI scripts.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is a behavior-preserving structure refactor only; no CSV rows, prefabs, scenes, skill tuning, public type names, or namespaces were intentionally changed.
+- Unity Play Mode gameplay verification remains user-owned.
+- Existing unrelated workspace changes under Rin assets and CSVRuntime assets were not touched by this task.
+- Code Reviewer was not run because explicit Reviewer permission was not given.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode only if they want runtime gameplay confirmation after the folder move.
+- Future skill execution code should be added under the matching folder: `Executors`, `Actors`, `Runtime`, `Utilities`, `Contracts`, `Modifiers`, or `UI`.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution` now has no root `.cs` files; `.cs` files are under `Actors`, `Contracts`, `Executors`, `Modifiers`, `Runtime`, `UI`, and `Utilities`.
+- `SkillExecutionContext`, `SkillExecutionResult`, and `SkillExecutionStatus` are now in `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Contracts/SkillExecutionModels.cs`.
+- `IInGameSkillExecutor` and `TypedSkillExecutor<TSkillData>` are now in `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Contracts/SkillExecutorContracts.cs`.
+- `BuffSkillExecutor`, `ShieldSkillExecutor`, and `PassiveSkillExecutor` are now in `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SupportSkillExecutors.cs`.
+- `Pakuri/Assembly-CSharp.csproj` now includes the new role-folder paths and no longer includes the removed root-level contract/model/support executor files.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `MSB3277` `System.Net.Http` / `System.IO.Compression` warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; the same existing `MSB3277` warnings remained.
+- Unity-MCP script refresh returned to idle; console warning/error read showed only MCP client handler connection logs, not C# compile errors.
+
+### History
+
+- 2026-05-24: Code Builder moved skill execution source files into role folders and consolidated the tiny contract/model/support executor files while preserving type names and namespaces.
 
 ## Task: 2026-05-24 Shared Skill Executor Helper Consolidation
 

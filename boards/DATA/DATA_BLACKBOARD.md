@@ -4,6 +4,96 @@
 - Older CSV-transition history remains in `boards/ARCHIVE/CSV_BLACKBOARD_ARCHIVE_2026-05-14.md`.
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 
+## Task: 2026-05-24 Skill On-Hit Additional Damage CSV Schema
+
+### Task title
+
+Add shared choice CSV fields for direct on-hit extra damage and every-nth-hit chain damage.
+
+### Goals
+
+- Keep on-hit extra damage authored in `monster_skill_choices.csv`.
+- Keep Rin-A master-2 off the projectile `branch_*` launch override fields.
+- Carry the new CSV fields through runtime source rows, `SkillChoiceDefinition`, `SkillChoiceEffectSpec`, and `SkillExecutionSnapshot`.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- User provided the parsed Rin-A master-2 values in the request.
+- CSV source stayed UTF-8 and imported successfully through Unity.
+- No new companion CSV table was added.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and synced into runtime catalog assets.
+
+### Next Actions
+
+- Future skills needing direct hit-target extra damage should reuse `on_hit_additional_damage_*`.
+- Future skills needing deterministic nth-hit nearby chain damage should reuse `on_hit_chain_*`.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now includes `on_hit_additional_damage_chance`, `on_hit_additional_damage_multiplier`, `on_hit_additional_damage_attribute`, `on_hit_additional_damage_target`, `on_hit_chain_hit_period`, `on_hit_chain_target_count`, `on_hit_chain_search_radius`, `on_hit_chain_damage_multiplier`, `on_hit_chain_damage_attribute`, and `on_hit_additional_damage_visual`.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv` showed `rin-a-master-2` with `on_hit_additional_damage_chance=1`, `on_hit_additional_damage_multiplier=0.4`, `on_hit_chain_hit_period=3`, `on_hit_chain_target_count=2`, and blank branch chance/count/launch fields.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs` parses the new optional columns.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs`, `SkillDefinition.cs`, `SkillChoiceEffectSpec.cs`, `SkillChoiceModifierRecord.cs`, and `SkillExecutionSnapshot.cs` carry the new fields into runtime choice snapshots.
+- Unity-MCP editor execution returned `rin-a-master-2|extra=True:1:0.4:Lightning:HitTarget|chain=3:2:4.5:0.4:Lightning|branch=False:False:0:False`.
+- Unity `Pakuri/Sync CSV Runtime Catalog Assets` logged a successful sync from `Assets/CSVdata/source` to `Assets/Resources/Pakuri/CSVRuntime`.
+
+### History
+
+- 2026-05-24: User requested the additional damage behavior as a common skill on-hit option rather than a projectile-only branch extension.
+
+## Task: 2026-05-24 Rin-A Choice CSV Authoring
+
+### Task title
+
+Author Rin-A remaining choice behavior on the active `monster_skill_choices.csv` runtime authority.
+
+### Goals
+
+- Add reusable nth-projectile-launch branch override columns to the active choice CSV.
+- Move Rin-A trait 5 from unsupported critical prose to shared critical bonus fields.
+- Move Rin-A master 2 from unsupported prose to shared branch fields plus launch-period override fields.
+- Preserve Rin-A master 1 on the already-supported damage, magazine, and shot-interval fields.
+
+### Constraints
+
+- Role Owner is Skill Builder.
+- User explicitly approved current CSV/code as the parsed source.
+- No new monster-specific companion table was added.
+- CSV stayed UTF-8 and all rows now have the same 59-column shape.
+
+### Role Owner
+
+Skill Builder
+
+### Status
+
+Implemented and synced into runtime catalog assets.
+
+### Next Actions
+
+- Reuse `branch_launch_period` and `branch_launch_chance_set` for future projectile skills that need "every Nth projectile launch" branch chance overrides.
+- Keep future critical projectile choices on `crit_chance_bonus` and `crit_damage_bonus` before adding new critical schema.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` header/type rows now include `branch_launch_period` and `branch_launch_chance_set`.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv` showed `rin-a-trait-5` as `crit_chance_bonus=0.1`, `crit_damage_bonus=0.25`, and `RuntimeImplemented`.
+- The same import showed `rin-a-master-2` as `branch_chance_set=0.4`, `branch_count=2`, `branch_damage_multiplier=0.4`, `branch_search_radius=4.5`, `branch_launch_period=3`, `branch_launch_chance_set=1`, and `RuntimeImplemented`.
+- Unity `Pakuri/Sync CSV Runtime Catalog Assets` logged a successful sync from `Assets/CSVdata/source` to `Assets/Resources/Pakuri/CSVRuntime`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+
+### History
+
+- 2026-05-24: User requested Skill Builder implementation for Rin-A master-2, remaining enhancements, and master-1 using current CSV/code as parsed source.
+
 ## Task: 2026-05-24 Eve F-J Passive Effect/Trigger CSV Schema And Authoring
 
 ### Task title

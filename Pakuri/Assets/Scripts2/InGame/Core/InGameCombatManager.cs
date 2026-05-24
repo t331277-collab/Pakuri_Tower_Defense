@@ -15,13 +15,15 @@ namespace Pakuri.InGame
             bool criticalAllowed = false,
             float critChanceBonus = 0f,
             float critDamageBonus = 0f,
-            string sourceSkillId = null)
+            string sourceSkillId = null,
+            bool suppressOutgoingDamageTriggers = false)
         {
             Source = source;
             CriticalAllowed = criticalAllowed;
             CritChanceBonus = critChanceBonus;
             CritDamageBonus = critDamageBonus;
             SourceSkillId = sourceSkillId;
+            SuppressOutgoingDamageTriggers = suppressOutgoingDamageTriggers;
         }
 
         public BaseUnitRuntimeModel Source { get; }
@@ -29,6 +31,7 @@ namespace Pakuri.InGame
         public float CritChanceBonus { get; }
         public float CritDamageBonus { get; }
         public string SourceSkillId { get; }
+        public bool SuppressOutgoingDamageTriggers { get; }
     }
 
     [DisallowMultipleComponent]
@@ -134,11 +137,12 @@ namespace Pakuri.InGame
             bool criticalAllowed = false,
             float critChanceBonus = 0f,
             float critDamageBonus = 0f,
-            string sourceSkillId = null)
+            string sourceSkillId = null,
+            bool suppressOutgoingDamageTriggers = false)
         {
             var depletedShields = new List<UnitStatusRuntime>();
             var absorbedShields = new List<ShieldAbsorbRecord>();
-            var options = new DamageApplicationOptions(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+            var options = new DamageApplicationOptions(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers);
             var result = resourceMutations.ApplyDamage(target, baseDamage, attribute, options, depletedShields, absorbedShields);
             RefreshActorIfChanged(result);
             ShowDamageIfChanged(result);
@@ -381,7 +385,7 @@ namespace Pakuri.InGame
             DamageApplicationOptions options,
             InGameResourceChangeResult result)
         {
-            if (options.Source == null || result.AppliedDamage <= 0f)
+            if (options.Source == null || options.SuppressOutgoingDamageTriggers || result.AppliedDamage <= 0f)
             {
                 return;
             }

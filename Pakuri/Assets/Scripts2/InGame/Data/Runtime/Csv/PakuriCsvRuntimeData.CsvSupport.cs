@@ -144,6 +144,12 @@ namespace Pakuri.Data
                 return GetCell(columnName).Trim();
             }
 
+            public bool HasColumn(string columnName)
+            {
+                return !string.IsNullOrWhiteSpace(columnName)
+                    && headerLookup.ContainsKey(columnName);
+            }
+
             public int ReadInt(string columnName)
             {
                 var value = ReadString(columnName);

@@ -16,6 +16,97 @@ At the start of new work, use this active Rin file. Common monster history is ar
 
 Not populated yet.
 
+## Task: 2026-05-24 Rin-A Master-2 On-Hit Lightning Revision
+
+### Task title
+
+Revise `rin-a-master-2` from projectile branch launch behavior to shared on-hit Lightning additional damage and every-third-hit chain damage.
+
+### Goals
+
+- Make every Rin-A primary hit apply Lightning additional damage equal to 40% of the resolved hit damage.
+- Make every 3rd Rin-A primary hit chain Lightning damage equal to 40% of the resolved hit damage to up to 2 enemies near the hit target.
+- Keep the behavior on a shared on-hit damage extension usable by projectile, beam, zone, and single-attack hit paths.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- User provided the parsed behavior values in the request.
+- No Rin-only hardcoded runtime branch was added.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented, synced, and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Rin-A master-2 applies the direct Lightning extra hit on each hit and chains to 2 nearby enemies every 3rd primary hit.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now gives `rin-a-master-2` `on_hit_additional_damage_chance=1`, `on_hit_additional_damage_multiplier=0.4`, `on_hit_additional_damage_attribute=Lightning`, `on_hit_additional_damage_target=HitTarget`, `on_hit_chain_hit_period=3`, `on_hit_chain_target_count=2`, `on_hit_chain_search_radius=4.5`, `on_hit_chain_damage_multiplier=0.4`, and `on_hit_chain_damage_attribute=Lightning`.
+- The same row now has blank `branch_chance_set`, `branch_count`, `branch_damage_multiplier`, `branch_launch_period`, and `branch_launch_chance_set`, so it no longer uses the projectile branch launch override path.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillOnHitAdditionalDamageUtility.cs` applies shared direct on-hit extra damage and every-nth-hit chain damage.
+- Unity-MCP editor execution returned `rin-a-master-2|extra=True:1:0.4:Lightning:HitTarget|chain=3:2:4.5:0.4:Lightning|branch=False:False:0:False`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remain.
+- Unity `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-24: User clarified that master-2 should be on-hit Lightning additional damage plus every-third-hit chain damage, not projectile branch launch chance behavior.
+
+## Task: 2026-05-24 Rin-A Choice Runtime Completion
+
+### Task title
+
+Implement Rin-A remaining enhancement and master choice data on the shared projectile path.
+
+### Goals
+
+- Move `rin-a-trait-5` from partial support to shared projectile critical bonus fields.
+- Keep `rin-a-master-1` on existing shared damage, magazine, and shot-interval fields.
+- Implement `rin-a-master-2` with shared projectile branch behavior plus every-third-projectile-launch chance override.
+- Use `Assets/Prefab/Skill/Rin/Rin_A.prefab` for Rin-A master-2 effect prefab resolution.
+
+### Constraints
+
+- Role Owner is Skill Builder.
+- User explicitly approved treating current CSV/code as the parsed source.
+- Implementation stayed on the selected projectile blueprint common path and did not add Rin-only hardcoded runtime logic.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Skill Builder
+
+### Status
+
+Implemented, synced, and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Rin-A trait 5 applies critical chance/damage bonuses.
+- User verifies in Play Mode that Rin-A master 2 branches with 40% chance normally and 100% chance every 3rd projectile launch.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now includes `branch_launch_period` and `branch_launch_chance_set`.
+- `rin-a-trait-5` now has `crit_chance_bonus=0.1`, `crit_damage_bonus=0.25`, blank `damage_multiplier`, and `runtime_support_state=RuntimeImplemented`.
+- `rin-a-master-1` remains data-authored with `damage_multiplier=1.12`, `magazine_bonus=6`, and `shot_interval_multiplier=0.8200000000000001`.
+- `rin-a-master-2` now has `skill_effect_prefab_path=Assets/Prefab/Skill/Rin/Rin_A.prefab`, `branch_chance_set=0.4`, `branch_count=2`, `branch_damage_multiplier=0.4`, `branch_search_radius=4.5`, `branch_launch_period=3`, `branch_launch_chance_set=1`, and `runtime_support_state=RuntimeImplemented`.
+- Unity `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog.asset` now contains `Assets/Prefab/Skill/Rin/Rin_A.prefab` with GUID `19bfba788239eba498a44cb67c2622c6`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+
+### History
+
+- 2026-05-24: User authorized current CSV/code as parsed source for Rin-A master-2, remaining enhancements, and master-1 implementation.
+
 ## Task: 2026-05-19 Rin-A Shared Projectile Wiring
 
 ### Task title

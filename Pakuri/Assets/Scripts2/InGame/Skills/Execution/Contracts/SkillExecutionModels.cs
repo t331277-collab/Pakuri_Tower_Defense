@@ -1,0 +1,69 @@
+using UnityEngine;
+
+namespace Pakuri.InGame
+{
+    public sealed class SkillExecutionContext
+    {
+        public SkillExecutionContext(
+            InGameCombatManager combatManager,
+            UnitRosterService roster,
+            UnitRosterEntry casterEntry,
+            SkillRuntimeInstance runtime,
+            float deltaTime,
+            bool hasManualAimDirection = false,
+            Vector2 manualAimDirection = default,
+            bool hasManualTargetPoint = false,
+            Vector2 manualTargetPoint = default)
+        {
+            CombatManager = combatManager;
+            Roster = roster;
+            CasterEntry = casterEntry;
+            Runtime = runtime;
+            DeltaTime = deltaTime;
+            HasManualAimDirection = hasManualAimDirection;
+            ManualAimDirection = manualAimDirection;
+            HasManualTargetPoint = hasManualTargetPoint;
+            ManualTargetPoint = manualTargetPoint;
+        }
+
+        public InGameCombatManager CombatManager { get; }
+        public UnitRosterService Roster { get; }
+        public UnitRosterEntry CasterEntry { get; }
+        public SkillRuntimeInstance Runtime { get; }
+        public float DeltaTime { get; }
+        public bool HasManualAimDirection { get; }
+        public Vector2 ManualAimDirection { get; }
+        public bool HasManualTargetPoint { get; }
+        public Vector2 ManualTargetPoint { get; }
+
+        public BaseUnitRuntimeModel Caster => CasterEntry != null ? CasterEntry.Model : null;
+        public SkillData SkillData => Runtime != null ? Runtime.Data : null;
+    }
+
+    public enum SkillExecutionStatus
+    {
+        None,
+        Rejected,
+        Routed
+    }
+
+    public sealed class SkillExecutionResult
+    {
+        public static readonly SkillExecutionResult None = new SkillExecutionResult(
+            SkillExecutionStatus.None,
+            string.Empty,
+            string.Empty);
+
+        public SkillExecutionResult(SkillExecutionStatus status, string skillId, string executorName)
+        {
+            Status = status;
+            SkillId = skillId ?? string.Empty;
+            ExecutorName = executorName ?? string.Empty;
+        }
+
+        public SkillExecutionStatus Status { get; }
+        public string SkillId { get; }
+        public string ExecutorName { get; }
+        public bool Routed => Status == SkillExecutionStatus.Routed;
+    }
+}

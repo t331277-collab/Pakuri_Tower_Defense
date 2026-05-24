@@ -113,6 +113,8 @@ Optional but common fields:
 - `ChoiceModifierSpecs`
 - `ProjectilePrefabSource`
 - `SkillEffectPrefabOverride`
+- `BranchLaunchPeriod`
+- `BranchLaunchChanceSet`
 
 If any required field is missing, Builder must stop and report it.
 
@@ -154,6 +156,7 @@ If the requested skill fits this list, Builder should implement it without askin
 - on-hit damage
 - on-hit status application
 - current shared branch-on-hit behavior only when the provided branch data matches the existing branch pattern
+- nth-launch branch chance override when `BranchLaunchPeriod` and `BranchLaunchChanceSet` are provided
 
 In short:
 If the skill is "data goes in, common projectile comes out," Builder should proceed.
@@ -183,6 +186,7 @@ When a parsed projectile skill is implemented, Builder should wire the provided 
 - parsed status values -> shared on-hit status spec
 - parsed prefab info -> shared projectile visual binding path
 - parsed choice modifiers -> shared snapshot modifier path
+- parsed nth-launch branch values -> shared projectile launch counter and branch snapshot path
 - parsed cooldown edits or reductions -> existing cooldown authority such as base `cooldown_seconds` or choice `cooldown_multiplier`, not a new custom cooldown-percent field
 
 The important rule is not the exact property names.
@@ -204,8 +208,8 @@ Stop-and-ask examples:
 - projectile-carried mark payload
 - multi-hitbox projectile
 - custom target priority beyond current nearest-target behavior
-- branch behavior that is not the current shared branch pattern
-- a special effect that depends on "final bullet", "every third shot", "only the last hit", or similar sequence state
+- branch behavior that is not the current shared branch pattern or the current nth-launch branch override pattern
+- a special effect that depends on "final bullet", "only the last hit", or other sequence state not covered by `BranchLaunchPeriod`
 - a request that is actually an explicit target-designated mark/debuff structure rather than projectile contact
 
 When this happens, Builder should not try a best guess.

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using UnityEngine;
@@ -117,6 +118,9 @@ namespace Pakuri.Data
             public float BranchDamageMultiplier = 1f;
             public bool HasBranchSearchRadius;
             public float BranchSearchRadius;
+            public int BranchLaunchPeriod;
+            public bool HasBranchLaunchChanceSet;
+            public float BranchLaunchChanceSet;
             public bool HasMaxHealthBonus;
             public float MaxHealthBonus;
             public int HitTargetCountBonus;
@@ -152,6 +156,16 @@ namespace Pakuri.Data
             public bool HasStatusConditionalDamageTakenBonus;
             public float StatusConditionalDamageTakenBonus;
             public string StatusConditionalSourceStatusId;
+            public bool HasOnHitAdditionalDamage;
+            public float OnHitAdditionalDamageChance;
+            public float OnHitAdditionalDamageMultiplier = 1f;
+            public DamageAttribute OnHitAdditionalDamageAttribute;
+            public string OnHitAdditionalDamageTarget;
+            public int OnHitChainHitPeriod;
+            public int OnHitChainTargetCount;
+            public float OnHitChainSearchRadius;
+            public float OnHitChainDamageMultiplier = 1f;
+            public DamageAttribute OnHitChainDamageAttribute;
             public string RuntimeSupportState;
             public string RuntimeSupportNotes;
         }
@@ -355,6 +369,9 @@ namespace Pakuri.Data
             row.BranchDamageMultiplier = branchDamageMultiplier;
             row.HasBranchSearchRadius = TryReadFloat(record, "branch_search_radius", out var branchSearchRadius);
             row.BranchSearchRadius = branchSearchRadius;
+            row.BranchLaunchPeriod = ReadOptionalIntIfColumnExists(record, "branch_launch_period");
+            row.HasBranchLaunchChanceSet = TryReadFloatIfColumnExists(record, "branch_launch_chance_set", out var branchLaunchChanceSet);
+            row.BranchLaunchChanceSet = branchLaunchChanceSet;
             row.HasMaxHealthBonus = TryReadFloat(record, "max_health_bonus", out var maxHealthBonus);
             row.MaxHealthBonus = maxHealthBonus;
             row.HitTargetCountBonus = ReadOptionalInt(record, "hit_target_count_bonus");
@@ -389,6 +406,16 @@ namespace Pakuri.Data
             row.HasStatusConditionalDamageTakenBonus = TryReadFloat(record, "status_conditional_damage_taken_bonus", out var statusConditionalDamageTakenBonus);
             row.StatusConditionalDamageTakenBonus = statusConditionalDamageTakenBonus;
             row.StatusConditionalSourceStatusId = record.ReadString("status_conditional_source_status_id");
+            row.HasOnHitAdditionalDamage = TryReadFloatIfColumnExists(record, "on_hit_additional_damage_chance", out var onHitAdditionalDamageChance);
+            row.OnHitAdditionalDamageChance = onHitAdditionalDamageChance;
+            row.OnHitAdditionalDamageMultiplier = ReadOptionalFloatIfColumnExists(record, "on_hit_additional_damage_multiplier");
+            row.OnHitAdditionalDamageAttribute = ReadOptionalEnumIfColumnExists(record, "on_hit_additional_damage_attribute", DamageAttribute.Physical);
+            row.OnHitAdditionalDamageTarget = ReadOptionalStringIfColumnExists(record, "on_hit_additional_damage_target");
+            row.OnHitChainHitPeriod = ReadOptionalIntIfColumnExists(record, "on_hit_chain_hit_period");
+            row.OnHitChainTargetCount = ReadOptionalIntIfColumnExists(record, "on_hit_chain_target_count");
+            row.OnHitChainSearchRadius = ReadOptionalFloatIfColumnExists(record, "on_hit_chain_search_radius");
+            row.OnHitChainDamageMultiplier = ReadOptionalFloatIfColumnExists(record, "on_hit_chain_damage_multiplier");
+            row.OnHitChainDamageAttribute = ReadOptionalEnumIfColumnExists(record, "on_hit_chain_damage_attribute", DamageAttribute.Physical);
             return row;
         }
 
@@ -510,6 +537,40 @@ namespace Pakuri.Data
         private static int ReadOptionalInt(CsvRecord record, string columnName)
         {
             return TryReadInt(record, columnName, out var value) ? value : 0;
+        }
+
+        private static int ReadOptionalIntIfColumnExists(CsvRecord record, string columnName)
+        {
+            return record.HasColumn(columnName) ? ReadOptionalInt(record, columnName) : 0;
+        }
+
+        private static float ReadOptionalFloatIfColumnExists(CsvRecord record, string columnName)
+        {
+            return record.HasColumn(columnName) ? ReadOptionalFloat(record, columnName) : 0f;
+        }
+
+        private static string ReadOptionalStringIfColumnExists(CsvRecord record, string columnName)
+        {
+            return record.HasColumn(columnName) ? record.ReadString(columnName) : string.Empty;
+        }
+
+        private static T ReadOptionalEnumIfColumnExists<T>(CsvRecord record, string columnName, T fallback) where T : struct
+        {
+            if (!record.HasColumn(columnName))
+            {
+                return fallback;
+            }
+
+            var raw = record.ReadString(columnName);
+            return !string.IsNullOrWhiteSpace(raw) && Enum.TryParse(raw, true, out T value)
+                ? value
+                : fallback;
+        }
+
+        private static bool TryReadFloatIfColumnExists(CsvRecord record, string columnName, out float value)
+        {
+            value = 0f;
+            return record.HasColumn(columnName) && TryReadFloat(record, columnName, out value);
         }
 
         private static bool TryReadFloat(CsvRecord record, string columnName, out float value)

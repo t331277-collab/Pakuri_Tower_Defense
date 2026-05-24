@@ -38,3 +38,5 @@ MonoBehaviour:
     Asset: {fileID: 4334470998071384926, guid: 30a4745c2cff29f41acf72125c981f67, type: 3}
   - AssetPath: Assets/Prefab/Skill/Eve/Eve_D.prefab
     Asset: {fileID: 1107537072718467244, guid: ef1bb9690f7a9234dad21ff0d9c80e32, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Rin/Rin_A.prefab
+    Asset: {fileID: 7968378587265563361, guid: 19bfba788239eba498a44cb67c2622c6, type: 3}

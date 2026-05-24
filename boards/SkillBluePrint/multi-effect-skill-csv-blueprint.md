@@ -18,15 +18,17 @@ If a requested effect cannot be represented by the multi-effect CSV schema below
 
 ## Inspected Evidence
 
-- `Pakuri/Assets/CSVdata/source/monster_skills.csv` currently has one base status payload per skill row.
-- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs` currently stores base skill fields and choice fields, but no skill-owned multi-effect list.
-- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.cs` currently names `monster_skills.csv` and `monster_skill_choices.csv`, but no `monster_skill_effects.csv`.
-- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` currently routes `SingleAttack` through one immediate `InGameZoneSkillActor.ApplyAreaTick(...)` call and has separate `BuffSkillExecutor` / `ShieldSkillExecutor` paths for ally effects.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` owns the base skill row, while `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` exists as the reusable secondary-effect table.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs:351` stores skill-owned `SkillEffectDefinition[] MultiEffects`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.cs:23` names `monster_skill_effects.csv` as the runtime multi-effect source file.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs:65-66` executes the base `SingleAttack` hit, then calls `SkillMultiEffectExecutor.Execute(...)` with the resolved primary center.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillMultiEffectExecutor.cs:11-13` owns the shared multi-effect executor helper.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SupportSkillExecutors.cs:8` and `:140` contain the shared `BuffSkillExecutor` / `ShieldSkillExecutor` support paths for ally effects.
 - `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` currently marks several Ariel-C rows as `DataOnlyUnsupported`, which proves the existing base skill plus choice modifier columns are not enough for full Ariel-C behavior.
 
-## New CSV Ownership
+## CSV Ownership
 
-Add a new source CSV:
+Use the source CSV:
 
 - `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv`
 
@@ -119,15 +121,15 @@ This keeps future similar skills reusable: add rows to `monster_skill_effects.cs
 
 ## Builder Implementation Surface
 
-Expected Builder changes:
+Expected Builder changes for future extensions:
 
-- add runtime data classes/enums for skill effect definitions;
-- add `SkillDefinition.MultiEffects`;
-- parse and validate `monster_skill_effects.csv`;
-- include effect prefab paths in the CSV runtime asset catalog;
-- map multi-effects into transient `SkillData`;
-- add a shared multi-effect executor helper;
-- call the helper from `SingleAttackSkillExecutor` after the base hit;
+- extend runtime data classes/enums for new skill effect definition fields;
+- preserve `SkillDefinition.MultiEffects` as the skill-owned multi-effect container;
+- extend parsing and validation for `monster_skill_effects.csv` when new columns are needed;
+- include any new effect prefab paths in the CSV runtime asset catalog;
+- map parsed multi-effects into transient `SkillData`;
+- extend the shared `SkillMultiEffectExecutor` helper instead of adding monster-specific executor branches;
+- call the helper from the relevant base executor after the base hit or cast, following the existing `SingleAttackSkillExecutor` pattern;
 - keep the helper generic enough for other executors to call later.
 
 Do not add Ariel-specific executor code.
