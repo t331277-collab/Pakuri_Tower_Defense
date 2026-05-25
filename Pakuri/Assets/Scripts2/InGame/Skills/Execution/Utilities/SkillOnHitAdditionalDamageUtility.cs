@@ -24,7 +24,7 @@ namespace Pakuri.InGame
             if (manager == null
                 || roster == null
                 || snapshot == null
-                || !snapshot.HasOnHitAdditionalDamageBehavior
+                || (!snapshot.HasOnHitAdditionalDamageBehavior && !HasReloadReductionBehavior(snapshot))
                 || source == null
                 || hitTarget == null
                 || hitTarget.Model == null
@@ -38,6 +38,7 @@ namespace Pakuri.InGame
             applyingAdditionalDamage = true;
             try
             {
+                ApplyReloadReduction(runtime, snapshot);
                 ApplyHitTargetDamage(manager, snapshot, source, sourceSkillId, hitTarget, primaryBaseDamage);
                 ApplyChainDamage(manager, roster, snapshot, sourceEntry, source, sourceSkillId, hitTarget, hitPosition, primaryBaseDamage, hitIndex);
             }
@@ -190,6 +191,32 @@ namespace Pakuri.InGame
         {
             return string.IsNullOrWhiteSpace(target)
                 || string.Equals(target, HitTarget, System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool HasReloadReductionBehavior(SkillExecutionSnapshot snapshot)
+        {
+            return snapshot != null
+                && !string.IsNullOrWhiteSpace(snapshot.ReloadReduceTargetSkillId)
+                && snapshot.ReloadReduceSecondsPerHit > 0f;
+        }
+
+        private static void ApplyReloadReduction(SkillRuntimeInstance runtime, SkillExecutionSnapshot snapshot)
+        {
+            if (runtime == null
+                || runtime.Owner == null
+                || runtime.Owner.SkillRuntime == null
+                || !HasReloadReductionBehavior(snapshot))
+            {
+                return;
+            }
+
+            var targetRuntime = runtime.Owner.SkillRuntime.FindBySkillId(snapshot.ReloadReduceTargetSkillId);
+            if (targetRuntime == null || !targetRuntime.IsReloading)
+            {
+                return;
+            }
+
+            targetRuntime.ReduceReloadRemaining(snapshot.ReloadReduceSecondsPerHit);
         }
     }
 }

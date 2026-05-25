@@ -4,6 +4,49 @@
 - Older run/combat flow history remains in that snapshot and earlier archives.
 - This active file now keeps only the current `NewRunScene` authority split and the surviving new-scene flow baseline.
 
+## Task: 2026-05-26 Rin-B/Rin-C NewRunScene Runtime Verification
+
+### Task title
+
+Verify the current `NewRunScene` runtime accepts the Rin-B/Rin-C shared-skill implementation without compile or refresh errors.
+
+### Goals
+
+- Confirm the shared beam/buff/status runtime changes compile on both runtime and editor assemblies.
+- Confirm Unity refresh returns to idle after the Rin-B/Rin-C source changes.
+- Confirm warning/error console reads do not show new C# or CSV runtime failures.
+
+### Constraints
+
+- Role Owner is Skill Builder.
+- This task records runtime validation only; gameplay verification remains user-owned.
+- Existing external assembly conflict warnings are preserved as-is.
+
+### Role Owner
+
+Skill Builder
+
+### Status
+
+Compile-verified and refresh-checked.
+
+### Next Actions
+
+- User verifies Rin-B/Rin-C behavior in Play Mode.
+- If a later gameplay-only issue appears, start from the current compile/refresh-clean baseline instead of rechecking schema wiring first.
+
+### Evidence
+
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors after the Rin-B/Rin-C work; only the existing `System.Net.Http` / `System.IO.Compression` MSB3277 warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` first failed inside the sandbox with `Access to the path 'C:\Users\t3312\AppData\Local\Microsoft SDKs' is denied`, then passed with 0 errors when rerun unsandboxed; this was an environment permission issue, not a code error.
+- Unity `refresh_unity` returned `resulting_state":"idle"` after the Rin-B/Rin-C source changes.
+- Unity warning/error console reads after refresh returned only MCP-FOR-UNITY client connection/disposal logs and did not report C# compile errors or CSV runtime sync failures.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs`, `Skills/Execution/Executors/BeamSkillExecutor.cs`, `Skills/Execution/Executors/SupportSkillExecutors.cs`, and `Skills/Execution/SkillMultiEffectExecutor.cs` are the inspected runtime owners for the new Rin-B/Rin-C execution paths validated by the builds and refresh.
+
+### History
+
+- 2026-05-26: Skill Builder completed Rin-B/C implementation and then verified the active `NewRunScene` runtime path through build plus Unity refresh/console checks.
+
 ## Task: 2026-05-22 Unit-Rule Combat Execution And Auto Routing
 
 ### Task title

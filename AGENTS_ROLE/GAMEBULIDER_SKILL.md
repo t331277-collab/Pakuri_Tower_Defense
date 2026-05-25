@@ -94,16 +94,21 @@ If a request mixes contact-hitbox behavior and explicit-target or global-effect 
 
 ## Parsed Input Rule
 
-The user or task context must provide the parsed skill data required by the selected blueprint.
+The user or task context may provide the parsed skill data required by the selected blueprint directly.
+
+When parsed data is not provided directly, Skill Builder may derive it only from the minimum active skill-authoring CSV set under `Pakuri/Assets/CSVdata/source/` that is required by the selected blueprint and the requested skill.
 
 Default Skill Builder authority is limited to:
 
 - the selected blueprint
-- parsed skill data explicitly provided by the user or task context
+- parsed skill data explicitly provided by the user or task context when it exists
+- self-routed active skill-authoring CSV files under `Pakuri/Assets/CSVdata/source/` that directly participate in the selected skill's base/choice/effect/trigger contract
 - explicit work paths named by the user
 - files inside those explicit work paths only when the blueprint requires inspection to complete the implementation
 
-Do not inspect other CSV, code, references, boards, archives, or old monster implementations to infer missing values or behavior intent.
+Before reading any CSV, Builder must name that CSV in the routing decision and keep the CSV read set minimal.
+
+Do not inspect unrelated CSV, code, references, boards, archives, or old monster implementations to infer missing values or behavior intent.
 
 Allowed alternative:
 
@@ -116,10 +121,12 @@ Only in that row-bundle exception path, Skill Builder may use:
 
 to interpret the provided row bundle.
 
-Reading current CSV/code as a parsed-source discovery step is a separate exception and is forbidden by default.
+Reading broad current CSV/code outside the self-routed active skill-authoring CSV set is still a separate exception and is forbidden by default.
 Use it only when the user explicitly instructs Builder to do so.
 
-If required parsed fields, the required scoped row bundle, or the explicit work path set are missing, stop and report the missing items instead of searching broadly through CSV, reference, archive, or old implementation files.
+If the selected blueprint's common contract is insufficient, or the work requires a new CSV file, a new CSV column, reference-driven value discovery, old monster implementation inspection, or a new shared runtime/common-logic extension, stop and ask the user before widening scope.
+
+If required parsed fields, the required scoped row bundle, or the explicit work path set cannot be completed from the explicit input plus the routed active CSV set, stop and report the missing items instead of searching broadly through CSV, reference, archive, or old implementation files.
 
 ## Cooldown Data Policy
 

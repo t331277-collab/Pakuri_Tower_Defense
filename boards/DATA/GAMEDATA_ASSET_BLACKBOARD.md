@@ -4,6 +4,89 @@
 - Older broad data/asset history remains in `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md` and other archive files under `boards/ARCHIVE/`.
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 
+## Task: 2026-05-26 Rin Unit Animator Component Wiring
+
+### Task title
+
+Attach the new Rin animation controller component to the active `Rin_Unit` monster prefab.
+
+### Goals
+
+- Keep Rin unit animation wiring on `Assets/Prefab/Monster/Rin_Unit.prefab`.
+- Reuse the already assigned `Rin_Animation_Cont.controller` Animator controller.
+- Avoid scene-wide or CSV-owned animation wiring in this first implementation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The root prefab already carried `MonsterUnitActor` and `Animator`; this task only adds `Animation_Controller`.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and Unity-MCP inspected.
+
+### Next Actions
+
+- User verifies the animated Rin unit in Play Mode.
+
+### Evidence
+
+- Unity-MCP `manage_prefabs get_hierarchy` for `Assets/Prefab/Monster/Rin_Unit.prefab` showed the root `Rin_Unit` with `UnityEngine.Transform`, `UnityEngine.SpriteRenderer`, `Pakuri.InGame.MonsterUnitActor`, `UnityEngine.Animator`, and `Pakuri.InGame.Animation_Controller`.
+- `Pakuri/Assets/Prefab/Monster/Rin_Unit.prefab` serializes `Pakuri.InGame.Animation_Controller` with script GUID `3ab96406b52c3454daa4c602c0b81989`.
+- Unity editor code inspection returned `actor=True|animator=True|animationController=True|controllerName=Rin_Animation_Cont|clips=Anim_Rin_Idle,Anim_Rin_Attack_1,Anim_Rin_Attack_2,Anim_Rin_Attack_3,Anim_Rin_Dead_1,Anim_Rin_Hit`.
+
+### History
+
+- 2026-05-26: User requested the Rin animation implementation to be assigned only to `Assets/Prefab/Monster/Rin_Unit.prefab` for now.
+
+## Task: 2026-05-26 Rin-B/Rin-C EffectManager Scene Wiring
+
+### Task title
+
+Keep Rin-B and Rin-C base skill visuals wired through the active `NewRunScene` `EffectManager` path.
+
+### Goals
+
+- Add the missing base `rin-b` scene visual mapping to `Assets/Prefab/Skill/Rin/Rin_B.prefab`.
+- Keep `rin-c` grounded on the existing `Assets/Prefab/Skill/Rin/Rin_C.prefab` scene mapping.
+- Avoid moving base monster skill prefab authority back into skill CSV rows.
+
+### Constraints
+
+- Role Owner is Skill Builder.
+- No prefab content edit was required in this task.
+- Base skill visuals remain scene-owned through `EffectManager`.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Skill Builder
+
+### Status
+
+Implemented and file-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Rin-B shows `Rin_B.prefab` and Rin-C continues to show `Rin_C.prefab`.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Skill/Rin/Rin_B.prefab.meta` stores GUID `1265e3a5e02b7f14cb94a3a818221ffa`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now maps `SkillId: rin-b` to `Prefab: {fileID: 2447093715789092070, guid: 1265e3a5e02b7f14cb94a3a818221ffa, type: 3}`.
+- `Pakuri/Assets/Prefab/Skill/Rin/Rin_C.prefab.meta` stores GUID `c17e18be6f4f31b49a083bf1ce120f0d`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` keeps `rin-c` mapped to `Prefab: {fileID: 8767310348598417902, guid: c17e18be6f4f31b49a083bf1ce120f0d, type: 3}`.
+- `Pakuri/Assets/Scripts2/InGame/Core/EffectManager.cs` remains the active base monster skill visual resolver through `ResolveMonsterSkillEffectPrefab(...)`.
+
+### History
+
+- 2026-05-26: User supplied `Assets/Prefab/Skill/Rin/Rin_B.prefab` and `Assets/Prefab/Skill/Rin/Rin_C.prefab` as the required Rin-B/Rin-C effect paths.
+
 ## Task: 2026-05-24 Rin-A Master-2 Choice Prefab Catalog Sync
 
 ### Task title

@@ -185,7 +185,7 @@ namespace Pakuri.InGame
             float spawnYMax,
             out GameObject spawnedUnit)
         {
-            return SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, 1f, out spawnedUnit);
+            return SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, 1f, false, out spawnedUnit);
         }
 
         public bool SpawnEnemyById(
@@ -195,6 +195,19 @@ namespace Pakuri.InGame
             float spawnYMin,
             float spawnYMax,
             float healthMultiplier,
+            out GameObject spawnedUnit)
+        {
+            return SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, false, out spawnedUnit);
+        }
+
+        public bool SpawnEnemyById(
+            string enemyId,
+            int spawnIndex,
+            float spawnX,
+            float spawnYMin,
+            float spawnYMax,
+            float healthMultiplier,
+            bool isBoss,
             out GameObject spawnedUnit)
         {
             spawnedUnit = null;
@@ -212,6 +225,7 @@ namespace Pakuri.InGame
                 spawnYMin,
                 spawnYMax,
                 healthMultiplier,
+                isBoss,
                 out spawnedUnit);
             if (spawned)
             {

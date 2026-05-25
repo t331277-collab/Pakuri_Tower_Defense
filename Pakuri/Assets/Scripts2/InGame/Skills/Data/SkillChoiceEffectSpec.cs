@@ -25,6 +25,10 @@ namespace Pakuri.InGame
         public float RadiusMultiplier = 1f;
         public float RadiusBonus;
         public float BeamWidthBonus;
+        public bool HasKnockbackDistanceMultiplier;
+        public float KnockbackDistanceMultiplier = 1f;
+        public bool HasExecuteHealthRatioBonus;
+        public float ExecuteHealthRatioBonus;
         public bool HasDurationMultiplier;
         public float DurationMultiplier = 1f;
         public float DurationBonus;
@@ -56,6 +60,13 @@ namespace Pakuri.InGame
         public int HitTargetCountBonus;
         public float CritChanceBonus;
         public float CritDamageBonus;
+        public float ExecuteCritChanceBonus;
+        public bool HasBossDamageMultiplier;
+        public float BossDamageMultiplier = 1f;
+        public bool HasKillCooldownRefundRatioBonus;
+        public float KillCooldownRefundRatioBonus;
+        public bool KillResetsCooldown;
+        public bool KillResetsCooldownRequiresExecute;
         public bool HasStatusElementDamageTakenBonus;
         public float StatusElementDamageTakenBonus;
         public bool HasStatusCriticalDamageTakenBonus;
@@ -92,6 +103,8 @@ namespace Pakuri.InGame
         public float OnHitChainSearchRadius;
         public float OnHitChainDamageMultiplier = 1f;
         public DamageAttribute OnHitChainDamageAttribute;
+        public string ReloadReduceTargetSkillId;
+        public float ReloadReduceSecondsPerHit;
 
         [Header("Added Effect")]
         public string StatusTag;

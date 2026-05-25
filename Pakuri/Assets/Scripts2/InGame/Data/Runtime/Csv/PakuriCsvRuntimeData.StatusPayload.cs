@@ -1,3 +1,5 @@
+using Pakuri.Combat;
+
 namespace Pakuri.Data
 {
     public static partial class PakuriCsvRuntimeData
@@ -32,6 +34,9 @@ namespace Pakuri.Data
             public float StatusConditionalStatusChanceBonus;
             public string StatusAppliedStatusDurationBonusStatusId;
             public float StatusAppliedStatusDurationBonus;
+            public float StatusOutgoingAdditionalDamageMultiplier;
+            public DamageAttribute StatusOutgoingAdditionalDamageTriggerAttribute;
+            public DamageAttribute StatusOutgoingAdditionalDamageAttribute;
         }
 
         private static StatusPayloadRow ReadStatusPayload(CsvRecord record, bool includeEffectOnlyModifiers)
@@ -70,6 +75,9 @@ namespace Pakuri.Data
                 payload.StatusConditionalStatusChanceBonus = record.ReadFloat("status_conditional_status_chance_bonus");
                 payload.StatusAppliedStatusDurationBonusStatusId = record.ReadString("status_applied_status_duration_bonus_status_id");
                 payload.StatusAppliedStatusDurationBonus = record.ReadFloat("status_applied_status_duration_bonus");
+                payload.StatusOutgoingAdditionalDamageMultiplier = record.ReadFloat("status_outgoing_additional_damage_multiplier");
+                payload.StatusOutgoingAdditionalDamageTriggerAttribute = record.ReadEnum<DamageAttribute>("status_outgoing_additional_damage_trigger_attribute");
+                payload.StatusOutgoingAdditionalDamageAttribute = record.ReadEnum<DamageAttribute>("status_outgoing_additional_damage_attribute");
             }
 
             return payload;

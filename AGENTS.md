@@ -12,14 +12,19 @@ If code or a file does not exist yet, say clearly that it does not exist and per
 
 For `Skill Builder` implementation work, the default authority is limited to:
 - the selected `boards/SkillBluePrint/*-blueprint.md`;
-- parsed skill input explicitly provided by the user or task context;
+- parsed skill input explicitly provided by the user or task context when it exists;
+- the minimum active skill-authoring CSV files under `Pakuri/Assets/CSVdata/source/` that Builder explicitly routes for the selected blueprint and requested skill;
 - code, prefab, scene, or asset paths explicitly provided by the user.
+
+Before reading any CSV for `Skill Builder` work, Builder must add that CSV to the routing decision and keep the CSV read set minimal.
+
+Builder may read only the routed active skill-authoring CSV files needed to implement the requested skill on the selected blueprint path.
 
 Do not inspect unrelated CSV, reference markdown, archive markdown, old monster implementations, or broad repository code to discover missing skill values or behavior intent.
 
-That wider discovery path is exception-only and requires an explicit user instruction that authorizes it, such as telling Builder to treat the current CSV/code as the parsed source or to inspect related CSV/code for missing skill values.
+If the work requires a new CSV file, a new CSV column, reference-driven value discovery, old monster implementation inspection, or a new shared runtime/common-logic extension, stop and ask the user before widening scope.
 
-If the blueprint and the explicit parsed input/path set are insufficient, stop and report the missing items instead of widening the search scope.
+If the blueprint and the routed active CSV/input/path set are insufficient, stop and report the missing items instead of widening the search scope.
 
 ## Startup Rules
 

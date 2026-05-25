@@ -191,7 +191,8 @@ namespace Pakuri.InGame
                 {
                     if (entryManager != null)
                     {
-                        var healthMultiplier = row.SelectedAsBoss
+                        var isBoss = IsBossEncounter(row);
+                        var healthMultiplier = isBoss
                             ? UnityEngine.Random.Range(row.BossHealthMultiplierMin, row.BossHealthMultiplierMax)
                             : 1f;
                         entryManager.SpawnEnemyById(
@@ -201,6 +202,7 @@ namespace Pakuri.InGame
                             row.SpawnYMin,
                             row.SpawnYMax,
                             healthMultiplier,
+                            isBoss,
                             out _);
                     }
 
@@ -333,6 +335,28 @@ namespace Pakuri.InGame
             }
 
             normalBossCandidates[UnityEngine.Random.Range(0, normalBossCandidates.Count)].SelectedAsBoss = true;
+        }
+
+        private bool IsBossEncounter(StageEncounterRow row)
+        {
+            if (row == null)
+            {
+                return false;
+            }
+
+            if (row.SelectedAsBoss)
+            {
+                return true;
+            }
+
+            if (activeSession == null)
+            {
+                return false;
+            }
+
+            var isMidbossCombat = activeSession.CurrentCombatType == RunCombatType.Day5Midboss
+                || activeSession.CurrentCombatType == RunCombatType.Day10Midboss;
+            return isMidbossCombat && (row.IsGuaranteedBoss || row.IsBossCandidate);
         }
 
         private void ResolveReferences()

@@ -147,6 +147,7 @@ namespace Pakuri.InGame
             {
                 beam.BeamLength = 0f;
                 beam.BeamWidth = source.Radius;
+                beam.KnockbackDistance = source.KnockbackDistance;
                 MapDamage(beam.DamagePerTick, source);
                 beam.OnHitStatus = CreateStatusApplication(source);
                 return;
@@ -185,6 +186,11 @@ namespace Pakuri.InGame
                 single.UsePrefabHitbox = hitAllTargets;
                 single.HitAllTargets = hitAllTargets;
                 single.HitTargetCount = hitAllTargets ? int.MaxValue : Math.Max(1, hitTargetCount);
+                single.ExecuteHealthRatioThreshold = Mathf.Clamp01(source.ExecuteHealthRatioThreshold);
+                single.RequireExecuteThresholdToCast = source.RequireExecuteThresholdToCast;
+                single.ExecuteDamageMultiplier = source.ExecuteDamageMultiplier > 0f ? source.ExecuteDamageMultiplier : 1f;
+                single.KillCooldownRefundRatio = Mathf.Clamp01(source.KillCooldownRefundRatio);
+                single.BossDamageMultiplier = source.BossDamageMultiplier > 0f ? source.BossDamageMultiplier : 1f;
                 single.Area.CoverAll = hitAllTargets
                     || (!single.UsesHitTargetCount
                         && source.Radius <= 0f
@@ -375,6 +381,10 @@ namespace Pakuri.InGame
                     RadiusMultiplier = choice != null && choice.HasRadiusMultiplier ? choice.RadiusMultiplier : 1f,
                     RadiusBonus = choice != null ? choice.RadiusBonus : 0f,
                     BeamWidthBonus = choice != null ? choice.BeamWidthBonus : 0f,
+                    HasKnockbackDistanceMultiplier = choice != null && choice.HasKnockbackDistanceMultiplier,
+                    KnockbackDistanceMultiplier = choice != null && choice.HasKnockbackDistanceMultiplier ? choice.KnockbackDistanceMultiplier : 1f,
+                    HasExecuteHealthRatioBonus = choice != null && choice.HasExecuteHealthRatioBonus,
+                    ExecuteHealthRatioBonus = choice != null ? choice.ExecuteHealthRatioBonus : 0f,
                     HasDurationMultiplier = choice != null && choice.HasDurationMultiplier,
                     DurationMultiplier = choice != null && choice.HasDurationMultiplier ? choice.DurationMultiplier : 1f,
                     DurationBonus = choice != null ? choice.DurationBonus : 0f,
@@ -397,11 +407,21 @@ namespace Pakuri.InGame
                     BranchDamageMultiplier = choice != null && choice.HasBranchDamageMultiplier ? choice.BranchDamageMultiplier : 1f,
                     HasBranchSearchRadius = choice != null && choice.HasBranchSearchRadius,
                     BranchSearchRadius = choice != null ? choice.BranchSearchRadius : 0f,
+                    BranchLaunchPeriod = choice != null ? choice.BranchLaunchPeriod : 0,
+                    HasBranchLaunchChanceSet = choice != null && choice.HasBranchLaunchChanceSet,
+                    BranchLaunchChanceSet = choice != null ? choice.BranchLaunchChanceSet : 0f,
                     HasMaxHealthBonus = choice != null && choice.HasMaxHealthBonus,
                     MaxHealthBonus = choice != null ? choice.MaxHealthBonus : 0f,
                     HitTargetCountBonus = choice != null ? choice.HitTargetCountBonus : 0,
                     CritChanceBonus = choice != null ? choice.CritChanceBonus : 0f,
                     CritDamageBonus = choice != null ? choice.CritDamageBonus : 0f,
+                    ExecuteCritChanceBonus = choice != null ? choice.ExecuteCritChanceBonus : 0f,
+                    HasBossDamageMultiplier = choice != null && choice.HasBossDamageMultiplier,
+                    BossDamageMultiplier = choice != null && choice.HasBossDamageMultiplier ? choice.BossDamageMultiplier : 1f,
+                    HasKillCooldownRefundRatioBonus = choice != null && choice.HasKillCooldownRefundRatioBonus,
+                    KillCooldownRefundRatioBonus = choice != null ? choice.KillCooldownRefundRatioBonus : 0f,
+                    KillResetsCooldown = choice != null && choice.KillResetsCooldown,
+                    KillResetsCooldownRequiresExecute = choice != null && choice.KillResetsCooldownRequiresExecute,
                     StatusTag = choice != null ? choice.StatusTag : string.Empty,
                     StatusStacksBonus = choice != null ? choice.StatusStacksBonus : 0,
                     HasStatusStacksSet = choice != null && choice.HasStatusStacksSet,
@@ -412,6 +432,8 @@ namespace Pakuri.InGame
                     StatusCriticalDamageTakenBonus = choice != null ? choice.StatusCriticalDamageTakenBonus : 0f,
                     HasStatusAilmentResistanceBonus = choice != null && choice.HasStatusAilmentResistanceBonus,
                     StatusAilmentResistanceBonus = choice != null ? choice.StatusAilmentResistanceBonus : 0f,
+                    StatusMaxStacksBonusStatusId = choice != null ? choice.StatusMaxStacksBonusStatusId : string.Empty,
+                    StatusMaxStacksBonus = choice != null ? choice.StatusMaxStacksBonus : 0,
                     StatusDurationBonusStatusId = choice != null ? choice.StatusDurationBonusStatusId : string.Empty,
                     StatusDurationBonus = choice != null ? choice.StatusDurationBonus : 0f,
                     ThresholdStatusId = choice != null ? choice.ThresholdStatusId : string.Empty,
@@ -423,7 +445,23 @@ namespace Pakuri.InGame
                     CountMax = choice != null ? choice.CountMax : 0,
                     HasStatusConditionalDamageTakenBonus = choice != null && choice.HasStatusConditionalDamageTakenBonus,
                     StatusConditionalDamageTakenBonus = choice != null ? choice.StatusConditionalDamageTakenBonus : 0f,
-                    StatusConditionalSourceStatusId = choice != null ? choice.StatusConditionalSourceStatusId : string.Empty
+                    StatusConditionalSourceStatusId = choice != null ? choice.StatusConditionalSourceStatusId : string.Empty,
+                    HasConditionalDamageMultiplier = choice != null && choice.HasConditionalDamageMultiplier,
+                    ConditionalDamageMultiplier = choice != null && choice.HasConditionalDamageMultiplier ? choice.ConditionalDamageMultiplier : 1f,
+                    ConditionalTargetStatusId = choice != null ? choice.ConditionalTargetStatusId : string.Empty,
+                    ConditionalTargetStatusMinStacks = choice != null ? choice.ConditionalTargetStatusMinStacks : 0,
+                    HasOnHitAdditionalDamage = choice != null && choice.HasOnHitAdditionalDamage,
+                    OnHitAdditionalDamageChance = choice != null ? choice.OnHitAdditionalDamageChance : 0f,
+                    OnHitAdditionalDamageMultiplier = choice != null ? choice.OnHitAdditionalDamageMultiplier : 1f,
+                    OnHitAdditionalDamageAttribute = choice != null ? choice.OnHitAdditionalDamageAttribute : DamageAttribute.Physical,
+                    OnHitAdditionalDamageTarget = choice != null ? choice.OnHitAdditionalDamageTarget : string.Empty,
+                    OnHitChainHitPeriod = choice != null ? choice.OnHitChainHitPeriod : 0,
+                    OnHitChainTargetCount = choice != null ? choice.OnHitChainTargetCount : 0,
+                    OnHitChainSearchRadius = choice != null ? choice.OnHitChainSearchRadius : 0f,
+                    OnHitChainDamageMultiplier = choice != null ? choice.OnHitChainDamageMultiplier : 1f,
+                    OnHitChainDamageAttribute = choice != null ? choice.OnHitChainDamageAttribute : DamageAttribute.Physical,
+                    ReloadReduceTargetSkillId = choice != null ? choice.ReloadReduceTargetSkillId : string.Empty,
+                    ReloadReduceSecondsPerHit = choice != null ? choice.ReloadReduceSecondsPerHit : 0f
                 };
             }
 

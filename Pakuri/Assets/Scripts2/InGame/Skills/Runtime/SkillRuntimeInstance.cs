@@ -38,6 +38,7 @@ namespace Pakuri.InGame
         public bool IsBursting => queuedBurstShotsRemaining > 0;
         public int MaxMagazineSize => effectiveMaxMagazineSize;
         public float ReloadDuration => effectiveReloadDuration;
+        public float EffectiveCooldownDuration => effectiveCooldownDuration;
         public bool UsesMagazine => MaxMagazineSize > 0;
         public bool HasMagazine => !UsesMagazine || MagazineRemaining > 0;
         public bool CanCast => CanCastWithSnapshot(null);
@@ -180,6 +181,47 @@ namespace Pakuri.InGame
         public void ResetTickInterval()
         {
             TickRemaining = effectiveTickInterval;
+        }
+
+        public bool ReduceReloadRemaining(float seconds)
+        {
+            if (seconds <= 0f || ReloadRemaining <= 0f)
+            {
+                return false;
+            }
+
+            ReloadRemaining = Mathf.Max(0f, ReloadRemaining - seconds);
+            if (ReloadRemaining <= 0f && UsesMagazine && MagazineRemaining <= 0 && CooldownRemaining <= 0f && !IsBursting)
+            {
+                MagazineRemaining = MaxMagazineSize;
+            }
+
+            return true;
+        }
+
+        public bool ReduceCooldownRemaining(float seconds)
+        {
+            if (seconds <= 0f || CooldownRemaining <= 0f)
+            {
+                return false;
+            }
+
+            CooldownRemaining = Mathf.Max(0f, CooldownRemaining - seconds);
+            if (CooldownRemaining <= 0f && UsesMagazine && MagazineRemaining <= 0 && ReloadRemaining <= 0f && !IsBursting)
+            {
+                MagazineRemaining = MaxMagazineSize;
+            }
+
+            return true;
+        }
+
+        public void ResetCooldown()
+        {
+            CooldownRemaining = 0f;
+            if (UsesMagazine && MagazineRemaining <= 0 && ReloadRemaining <= 0f && !IsBursting)
+            {
+                MagazineRemaining = MaxMagazineSize;
+            }
         }
 
         private static float TickDown(float value, float deltaTime)

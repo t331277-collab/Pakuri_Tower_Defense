@@ -16,7 +16,16 @@ namespace Pakuri.InGame
             SkillEffectDefinition[] effects,
             Vector2 fallbackCenter)
         {
-            return ExecuteFiltered(context, snapshot, effects, fallbackCenter, null);
+            return ExecuteFiltered(context, snapshot, effects, fallbackCenter, null, false);
+        }
+
+        internal static bool ExecuteWithStatusDurationScaling(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SkillEffectDefinition[] effects,
+            Vector2 fallbackCenter)
+        {
+            return ExecuteFiltered(context, snapshot, effects, fallbackCenter, null, true);
         }
 
         internal static bool ExecuteOnExpire(
@@ -25,7 +34,7 @@ namespace Pakuri.InGame
             SkillEffectDefinition[] effects,
             Vector2 fallbackCenter)
         {
-            return ExecuteFiltered(context, snapshot, effects, fallbackCenter, SkillMultiEffectTiming.OnExpire);
+            return ExecuteFiltered(context, snapshot, effects, fallbackCenter, SkillMultiEffectTiming.OnExpire, false);
         }
 
         private static bool ExecuteFiltered(
@@ -33,7 +42,8 @@ namespace Pakuri.InGame
             SkillExecutionSnapshot snapshot,
             SkillEffectDefinition[] effects,
             Vector2 fallbackCenter,
-            SkillMultiEffectTiming? requiredTiming)
+            SkillMultiEffectTiming? requiredTiming,
+            bool scaleStatusDurationWithSnapshot)
         {
             if (context == null || context.CombatManager == null || effects == null || effects.Length == 0)
             {
@@ -64,12 +74,12 @@ namespace Pakuri.InGame
 
                 if (effect.EffectTiming == SkillMultiEffectTiming.Delayed || effect.DelaySeconds > 0f)
                 {
-                    context.CombatManager.StartCoroutine(ExecuteDelayed(context, snapshot, effect, fallbackCenter));
+                    context.CombatManager.StartCoroutine(ExecuteDelayed(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot));
                     routed = true;
                     continue;
                 }
 
-                routed = ExecuteEffect(context, snapshot, effect, fallbackCenter) || routed;
+                routed = ExecuteEffect(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot) || routed;
             }
 
             return routed;
@@ -79,7 +89,8 @@ namespace Pakuri.InGame
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
             SkillEffectDefinition effect,
-            Vector2 fallbackCenter)
+            Vector2 fallbackCenter,
+            bool scaleStatusDurationWithSnapshot)
         {
             var delay = effect != null ? Mathf.Max(0f, effect.DelaySeconds) : 0f;
             if (delay > 0f)
@@ -91,7 +102,7 @@ namespace Pakuri.InGame
                 yield return null;
             }
 
-            ExecuteEffect(context, snapshot, effect, fallbackCenter);
+            ExecuteEffect(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot);
         }
 
         internal static bool ShouldRun(SkillExecutionContext context, SkillEffectDefinition effect, SkillExecutionSnapshot snapshot)
@@ -222,7 +233,8 @@ namespace Pakuri.InGame
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
             SkillEffectDefinition effect,
-            Vector2 fallbackCenter)
+            Vector2 fallbackCenter,
+            bool scaleStatusDurationWithSnapshot)
         {
             if (effect == null || context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
             {
@@ -234,7 +246,7 @@ namespace Pakuri.InGame
                 case SkillMultiEffectKind.Damage:
                     return ExecuteDamageEffect(context, snapshot, effect, fallbackCenter);
                 case SkillMultiEffectKind.Status:
-                    return ExecuteStatusEffect(context, snapshot, effect, fallbackCenter);
+                    return ExecuteStatusEffect(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot);
                 case SkillMultiEffectKind.ExtendStatusDuration:
                     return ExecuteExtendStatusDurationEffect(context, effect);
             }
@@ -334,9 +346,10 @@ namespace Pakuri.InGame
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
             SkillEffectDefinition effect,
-            Vector2 fallbackCenter)
+            Vector2 fallbackCenter,
+            bool scaleStatusDurationWithSnapshot)
         {
-            var statusSpec = ResolveStatusSpec(effect, snapshot);
+            var statusSpec = ResolveStatusSpec(effect, snapshot, scaleStatusDurationWithSnapshot);
             if (statusSpec == null || !statusSpec.Enabled)
             {
                 return false;
@@ -444,7 +457,8 @@ namespace Pakuri.InGame
 
         internal static ProjectileStatusHitSpec ResolveStatusSpec(
             SkillEffectDefinition effect,
-            SkillExecutionSnapshot snapshot = null)
+            SkillExecutionSnapshot snapshot = null,
+            bool scaleDurationWithSnapshot = false)
         {
             var statusData = CreateStatusData(effect);
             if (statusData == null)
@@ -458,6 +472,11 @@ namespace Pakuri.InGame
             if (!Mathf.Approximately(targetedDurationBonus, 0f))
             {
                 duration = Mathf.Max(0f, duration + targetedDurationBonus);
+            }
+
+            if (scaleDurationWithSnapshot && snapshot != null)
+            {
+                duration = duration * Mathf.Max(0f, snapshot.DurationMultiplier) + snapshot.DurationBonus;
             }
 
             return new ProjectileStatusHitSpec
@@ -548,6 +567,9 @@ namespace Pakuri.InGame
             status.ConditionalStatusChanceBonus = effect.StatusConditionalStatusChanceBonus;
             status.AppliedStatusDurationBonusStatusId = effect.StatusAppliedStatusDurationBonusStatusId;
             status.AppliedStatusDurationBonus = effect.StatusAppliedStatusDurationBonus;
+            status.OutgoingAdditionalDamageMultiplier = effect.StatusOutgoingAdditionalDamageMultiplier;
+            status.OutgoingAdditionalDamageTriggerAttribute = effect.StatusOutgoingAdditionalDamageTriggerAttribute;
+            status.OutgoingAdditionalDamageAttribute = effect.StatusOutgoingAdditionalDamageAttribute;
             status.HasElementModifierTarget = !Mathf.Approximately(effect.StatusDamageBonusRate, 0f)
                 || !Mathf.Approximately(effect.StatusElementResistReduction, 0f)
                 || !Mathf.Approximately(effect.StatusFlatElementResistReduction, 0f)

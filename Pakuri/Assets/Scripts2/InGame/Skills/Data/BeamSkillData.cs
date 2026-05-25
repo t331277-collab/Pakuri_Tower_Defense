@@ -8,6 +8,7 @@ namespace Pakuri.InGame
         [Header("Beam")]
         public float BeamWidth;
         public float BeamLength;
+        public float KnockbackDistance;
         public bool StopAtFirstTarget;
 
         [Header("Tick Damage")]

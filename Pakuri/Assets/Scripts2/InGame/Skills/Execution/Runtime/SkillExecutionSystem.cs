@@ -173,6 +173,7 @@ namespace Pakuri.InGame
                     return false;
                 }
 
+                NotifyActiveSkillAnimation(entry);
                 LastRoutedCount++;
                 if (logRoutedContracts)
                 {
@@ -181,6 +182,12 @@ namespace Pakuri.InGame
             }
 
             return result.Routed;
+        }
+
+        private static void NotifyActiveSkillAnimation(UnitRosterEntry entry)
+        {
+            var monsterActor = entry != null ? entry.Actor as MonsterUnitActor : null;
+            monsterActor?.TryPlayActiveSkillAnimation();
         }
 
         private bool TryExecuteTriggeredSkill(

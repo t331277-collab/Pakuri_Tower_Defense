@@ -104,7 +104,8 @@ namespace Pakuri.Data
         OnShieldExpire,
         OnShieldAbsorb,
         OnStatusExpire,
-        OnOutgoingDamage
+        OnOutgoingDamage,
+        OnKill
     }
 
     public enum SkillTriggerDamageSource
@@ -149,6 +150,7 @@ namespace Pakuri.Data
         public string HitTargetCount;
         public int RepeatCount = 1;
         public float RepeatIntervalSeconds;
+        public bool RequireEventExecute;
         public GameObject SkillEffectPrefab;
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
@@ -212,6 +214,9 @@ namespace Pakuri.Data
         public float StatusConditionalStatusChanceBonus;
         public string StatusAppliedStatusDurationBonusStatusId;
         public float StatusAppliedStatusDurationBonus;
+        public float StatusOutgoingAdditionalDamageMultiplier;
+        public DamageAttribute StatusOutgoingAdditionalDamageTriggerAttribute;
+        public DamageAttribute StatusOutgoingAdditionalDamageAttribute;
         public GameObject SkillEffectPrefab;
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
@@ -246,6 +251,10 @@ namespace Pakuri.Data
         public float RadiusMultiplier = 1f;
         public float RadiusBonus;
         public float BeamWidthBonus;
+        public bool HasKnockbackDistanceMultiplier;
+        public float KnockbackDistanceMultiplier = 1f;
+        public bool HasExecuteHealthRatioBonus;
+        public float ExecuteHealthRatioBonus;
         public bool HasDurationMultiplier;
         public float DurationMultiplier = 1f;
         public float DurationBonus;
@@ -266,6 +275,13 @@ namespace Pakuri.Data
         public int HitTargetCountBonus;
         public float CritChanceBonus;
         public float CritDamageBonus;
+        public float ExecuteCritChanceBonus;
+        public bool HasBossDamageMultiplier;
+        public float BossDamageMultiplier = 1f;
+        public bool HasKillCooldownRefundRatioBonus;
+        public float KillCooldownRefundRatioBonus;
+        public bool KillResetsCooldown;
+        public bool KillResetsCooldownRequiresExecute;
         public string StatusTag;
         public bool HasStatusChanceBonus;
         public float StatusChanceBonus;
@@ -306,6 +322,8 @@ namespace Pakuri.Data
         public float OnHitChainSearchRadius;
         public float OnHitChainDamageMultiplier = 1f;
         public DamageAttribute OnHitChainDamageAttribute;
+        public string ReloadReduceTargetSkillId;
+        public float ReloadReduceSecondsPerHit;
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
     }
@@ -327,6 +345,12 @@ namespace Pakuri.Data
         public float AttackPowerCoefficient;
         public float SpellPowerCoefficient;
         public float Radius;
+        public float KnockbackDistance;
+        [Range(0f, 1f)] public float ExecuteHealthRatioThreshold;
+        public bool RequireExecuteThresholdToCast;
+        public float ExecuteDamageMultiplier = 1f;
+        [Range(0f, 1f)] public float KillCooldownRefundRatio;
+        public float BossDamageMultiplier = 1f;
         public string HitTargetCount;
         public string TargetSelection;
         public float CooldownSeconds;

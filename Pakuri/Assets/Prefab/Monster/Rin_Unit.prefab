@@ -118,7 +118,7 @@ Transform:
   m_GameObject: {fileID: 1072012525494599258}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.62, z: 0}
+  m_LocalPosition: {x: 0, y: 4.06, z: 0}
   m_LocalScale: {x: 0.20319727, y: 0.20319727, z: 1.354581}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -310,6 +310,8 @@ GameObject:
   - component: {fileID: 1934814329545622276}
   - component: {fileID: 4863817759397753600}
   - component: {fileID: -1863941469834791775}
+  - component: {fileID: -6977149475641408437}
+  - component: {fileID: 6169519153641302405}
   m_Layer: 0
   m_Name: Rin_Unit
   m_TagString: Untagged
@@ -326,8 +328,8 @@ Transform:
   m_GameObject: {fileID: 4596420534878418281}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.36, y: 0.05, z: 0}
-  m_LocalScale: {x: 0.49395344, y: 0.49395344, z: 0.49395344}
+  m_LocalPosition: {x: -3.8761, y: -0.4661, z: 0}
+  m_LocalScale: {x: 0.32479036, y: 0.32479036, z: 0.32479036}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1598787042462575495}
@@ -385,12 +387,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 0d2ed2f29d1d0894bba06e3472baffd7, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 839db8284722046448a48f517de27d26, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 5.03, y: 3.77}
+  m_Size: {x: 12, y: 12}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -414,6 +416,45 @@ MonoBehaviour:
   hpFill: {fileID: 0}
   shieldFill: {fileID: 0}
   damageTextPopup: {fileID: 0}
+  animationController: {fileID: 0}
+--- !u!95 &-6977149475641408437
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4596420534878418281}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: f20a341aa28e34440bbf4e77439c5c76, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &6169519153641302405
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4596420534878418281}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ab96406b52c3454daa4c602c0b81989, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.Animation_Controller
+  animator: {fileID: 0}
+  idleState: Anim_Rin_Idle
+  hitState: Anim_Rin_Hit
+  deadState: Anim_Rin_Dead_1
 --- !u!1 &6305637360214970602
 GameObject:
   m_ObjectHideFlags: 0
@@ -623,7 +664,7 @@ Transform:
   m_GameObject: {fileID: 8286632404928355829}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 3.3099997, z: 0}
+  m_LocalPosition: {x: 0, y: 4.7499995, z: 0}
   m_LocalScale: {x: 0.20319727, y: 0.20319727, z: 1.354581}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -725,7 +766,7 @@ Transform:
   m_GameObject: {fileID: 8491812413391772901}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.11, z: 0}
+  m_LocalPosition: {x: 0, y: 3.5499997, z: 0}
   m_LocalScale: {x: 3.3, y: 1.7, z: 1.35}
   m_ConstrainProportionsScale: 0
   m_Children:

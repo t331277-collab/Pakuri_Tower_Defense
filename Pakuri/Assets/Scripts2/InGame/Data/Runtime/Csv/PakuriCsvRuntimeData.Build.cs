@@ -206,6 +206,12 @@ namespace Pakuri.Data
                     AttackPowerCoefficient = skill.AttackPowerCoefficient,
                     SpellPowerCoefficient = skill.SpellPowerCoefficient,
                     Radius = skill.Radius,
+                    KnockbackDistance = skill.KnockbackDistance,
+                    ExecuteHealthRatioThreshold = skill.ExecuteHealthRatioThreshold,
+                    RequireExecuteThresholdToCast = skill.RequireExecuteThresholdToCast,
+                    ExecuteDamageMultiplier = skill.ExecuteDamageMultiplier,
+                    KillCooldownRefundRatio = skill.KillCooldownRefundRatio,
+                    BossDamageMultiplier = skill.BossDamageMultiplier,
                     HitTargetCount = skill.HitTargetCount,
                     TargetSelection = skill.TargetSelection,
                     CooldownSeconds = skill.CooldownSeconds,
@@ -325,6 +331,7 @@ namespace Pakuri.Data
                     HitTargetCount = trigger.HitTargetCount,
                     RepeatCount = trigger.RepeatCount,
                     RepeatIntervalSeconds = trigger.RepeatIntervalSeconds,
+                    RequireEventExecute = trigger.RequireEventExecute,
                     SkillEffectPrefab = LoadPrefab(trigger.SkillEffectPrefabPath),
                     RuntimeSupportState = trigger.RuntimeSupportState,
                     RuntimeSupportNotes = trigger.RuntimeSupportNotes
@@ -405,6 +412,10 @@ namespace Pakuri.Data
                     RadiusMultiplier = choice.HasRadiusMultiplier ? choice.RadiusMultiplier : 1f,
                     RadiusBonus = choice.RadiusBonus,
                     BeamWidthBonus = choice.BeamWidthBonus,
+                    HasKnockbackDistanceMultiplier = choice.HasKnockbackDistanceMultiplier,
+                    KnockbackDistanceMultiplier = choice.HasKnockbackDistanceMultiplier ? choice.KnockbackDistanceMultiplier : 1f,
+                    HasExecuteHealthRatioBonus = choice.HasExecuteHealthRatioBonus,
+                    ExecuteHealthRatioBonus = choice.ExecuteHealthRatioBonus,
                     HasDurationMultiplier = choice.HasDurationMultiplier,
                     DurationMultiplier = choice.HasDurationMultiplier ? choice.DurationMultiplier : 1f,
                     DurationBonus = choice.DurationBonus,
@@ -425,6 +436,13 @@ namespace Pakuri.Data
                     HitTargetCountBonus = choice.HitTargetCountBonus,
                     CritChanceBonus = choice.CritChanceBonus,
                     CritDamageBonus = choice.CritDamageBonus,
+                    ExecuteCritChanceBonus = choice.ExecuteCritChanceBonus,
+                    HasBossDamageMultiplier = choice.HasBossDamageMultiplier,
+                    BossDamageMultiplier = choice.HasBossDamageMultiplier ? choice.BossDamageMultiplier : 1f,
+                    HasKillCooldownRefundRatioBonus = choice.HasKillCooldownRefundRatioBonus,
+                    KillCooldownRefundRatioBonus = choice.KillCooldownRefundRatioBonus,
+                    KillResetsCooldown = choice.KillResetsCooldown,
+                    KillResetsCooldownRequiresExecute = choice.KillResetsCooldownRequiresExecute,
                     StatusTag = choice.StatusTag,
                     HasStatusChanceBonus = choice.HasStatusChanceBonus,
                     StatusChanceBonus = choice.StatusChanceBonus,
@@ -465,6 +483,8 @@ namespace Pakuri.Data
                     OnHitChainSearchRadius = choice.OnHitChainSearchRadius,
                     OnHitChainDamageMultiplier = choice.OnHitChainDamageMultiplier > 0f ? choice.OnHitChainDamageMultiplier : 1f,
                     OnHitChainDamageAttribute = choice.OnHitChainDamageAttribute,
+                    ReloadReduceTargetSkillId = choice.ReloadReduceTargetSkillId,
+                    ReloadReduceSecondsPerHit = choice.ReloadReduceSecondsPerHit,
                     RuntimeSupportState = choice.RuntimeSupportState,
                     RuntimeSupportNotes = choice.RuntimeSupportNotes
                 };
@@ -555,6 +575,9 @@ namespace Pakuri.Data
             definition.StatusConditionalStatusChanceBonus = payload.StatusConditionalStatusChanceBonus;
             definition.StatusAppliedStatusDurationBonusStatusId = payload.StatusAppliedStatusDurationBonusStatusId;
             definition.StatusAppliedStatusDurationBonus = payload.StatusAppliedStatusDurationBonus;
+            definition.StatusOutgoingAdditionalDamageMultiplier = payload.StatusOutgoingAdditionalDamageMultiplier;
+            definition.StatusOutgoingAdditionalDamageTriggerAttribute = payload.StatusOutgoingAdditionalDamageTriggerAttribute;
+            definition.StatusOutgoingAdditionalDamageAttribute = payload.StatusOutgoingAdditionalDamageAttribute;
         }
 
         private static SkillChoiceGroup MapChoiceGroup(PakuriCsvChoiceGroup group)

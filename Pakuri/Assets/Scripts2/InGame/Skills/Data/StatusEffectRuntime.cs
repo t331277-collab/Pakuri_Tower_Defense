@@ -22,6 +22,20 @@ namespace Pakuri.InGame
             public int MinStacks { get; }
         }
 
+        internal readonly struct OutgoingAdditionalDamageSpec
+        {
+            public OutgoingAdditionalDamageSpec(float multiplier, DamageAttribute triggerAttribute, DamageAttribute damageAttribute)
+            {
+                Multiplier = multiplier;
+                TriggerAttribute = triggerAttribute;
+                DamageAttribute = damageAttribute;
+            }
+
+            public float Multiplier { get; }
+            public DamageAttribute TriggerAttribute { get; }
+            public DamageAttribute DamageAttribute { get; }
+        }
+
         public static StatusEffectData CreateStatusData(StatusEffectKind kind, string label, SkillDefinition source = null)
         {
             if (kind == StatusEffectKind.None)
@@ -84,6 +98,9 @@ namespace Pakuri.InGame
             status.Modifiers.DamageBonusRate = 0f;
             status.Modifiers.ShieldReceivedBonus = 0f;
             status.Modifiers.CritChanceBonusRate = 0f;
+            status.OutgoingAdditionalDamageMultiplier = 0f;
+            status.OutgoingAdditionalDamageTriggerAttribute = DamageAttribute.Physical;
+            status.OutgoingAdditionalDamageAttribute = DamageAttribute.Physical;
 
             if (catalogDefinition != null && catalogDefinition.HasAttribute)
             {
@@ -191,7 +208,8 @@ namespace Pakuri.InGame
                 + Mathf.Abs(data.ElementResistReduction)
                 + Mathf.Abs(data.FlatElementResistReduction)
                 + Mathf.Abs(data.ElementDamageTakenBonus)
-                + Mathf.Abs(data.ConditionalDamageTakenBonus);
+                + Mathf.Abs(data.ConditionalDamageTakenBonus)
+                + Mathf.Abs(data.OutgoingAdditionalDamageMultiplier);
         }
 
         public static bool CanMove(BaseUnitRuntimeModel model)
@@ -243,6 +261,40 @@ namespace Pakuri.InGame
         {
             return Mathf.Max(0f, 1f + SumStacked(source, data =>
                 MatchesAttribute(data, attribute) ? data.Modifiers.DamageBonusRate : 0f));
+        }
+
+        internal static List<OutgoingAdditionalDamageSpec> ResolveOutgoingAdditionalDamageSpecs(BaseUnitRuntimeModel source, DamageAttribute triggerAttribute)
+        {
+            var results = new List<OutgoingAdditionalDamageSpec>();
+            var statuses = source != null && source.Statuses != null ? source.Statuses.ActiveStatuses : null;
+            if (statuses == null)
+            {
+                return results;
+            }
+
+            for (var i = 0; i < statuses.Count; i++)
+            {
+                var runtime = statuses[i];
+                if (runtime == null || runtime.Stacks <= 0)
+                {
+                    continue;
+                }
+
+                var data = ResolveRuntimeData(runtime);
+                if (data == null
+                    || data.OutgoingAdditionalDamageMultiplier <= 0f
+                    || data.OutgoingAdditionalDamageTriggerAttribute != triggerAttribute)
+                {
+                    continue;
+                }
+
+                results.Add(new OutgoingAdditionalDamageSpec(
+                    data.OutgoingAdditionalDamageMultiplier * runtime.Stacks,
+                    data.OutgoingAdditionalDamageTriggerAttribute,
+                    data.OutgoingAdditionalDamageAttribute));
+            }
+
+            return results;
         }
 
         public static float ResolveIncomingDamageMultiplier(BaseUnitRuntimeModel target, BaseUnitRuntimeModel source, DamageAttribute attribute)

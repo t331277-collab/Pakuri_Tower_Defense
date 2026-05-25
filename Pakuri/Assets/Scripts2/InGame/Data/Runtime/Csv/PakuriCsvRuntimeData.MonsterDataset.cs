@@ -63,6 +63,12 @@ namespace Pakuri.Data
             public float AttackPowerCoefficient;
             public float SpellPowerCoefficient;
             public float Radius;
+            public float KnockbackDistance;
+            public float ExecuteHealthRatioThreshold;
+            public bool RequireExecuteThresholdToCast;
+            public float ExecuteDamageMultiplier = 1f;
+            public float KillCooldownRefundRatio;
+            public float BossDamageMultiplier = 1f;
             public string HitTargetCount;
             public string TargetSelection;
             public float CooldownSeconds;
@@ -106,6 +112,10 @@ namespace Pakuri.Data
             public float RadiusMultiplier = 1f;
             public float RadiusBonus;
             public float BeamWidthBonus;
+            public bool HasKnockbackDistanceMultiplier;
+            public float KnockbackDistanceMultiplier = 1f;
+            public bool HasExecuteHealthRatioBonus;
+            public float ExecuteHealthRatioBonus;
             public bool HasDurationMultiplier;
             public float DurationMultiplier = 1f;
             public float DurationBonus;
@@ -126,6 +136,13 @@ namespace Pakuri.Data
             public int HitTargetCountBonus;
             public float CritChanceBonus;
             public float CritDamageBonus;
+            public float ExecuteCritChanceBonus;
+            public bool HasBossDamageMultiplier;
+            public float BossDamageMultiplier = 1f;
+            public bool HasKillCooldownRefundRatioBonus;
+            public float KillCooldownRefundRatioBonus;
+            public bool KillResetsCooldown;
+            public bool KillResetsCooldownRequiresExecute;
             public string StatusTag;
             public bool HasStatusChanceBonus;
             public float StatusChanceBonus;
@@ -166,6 +183,8 @@ namespace Pakuri.Data
             public float OnHitChainSearchRadius;
             public float OnHitChainDamageMultiplier = 1f;
             public DamageAttribute OnHitChainDamageAttribute;
+            public string ReloadReduceTargetSkillId;
+            public float ReloadReduceSecondsPerHit;
             public string RuntimeSupportState;
             public string RuntimeSupportNotes;
         }
@@ -237,6 +256,7 @@ namespace Pakuri.Data
             public string HitTargetCount;
             public int RepeatCount = 1;
             public float RepeatIntervalSeconds;
+            public bool RequireEventExecute;
             public string SkillEffectPrefabPath;
             public string RuntimeSupportState;
             public string RuntimeSupportNotes;
@@ -306,6 +326,12 @@ namespace Pakuri.Data
                 AttackPowerCoefficient = record.ReadFloat("attack_power_coefficient"),
                 SpellPowerCoefficient = record.ReadFloat("spell_power_coefficient"),
                 Radius = record.ReadFloat("radius"),
+                KnockbackDistance = ReadOptionalFloatIfColumnExists(record, "knockback_distance"),
+                ExecuteHealthRatioThreshold = ReadOptionalFloatIfColumnExists(record, "execute_health_ratio_threshold"),
+                RequireExecuteThresholdToCast = ReadOptionalBoolIfColumnExists(record, "require_execute_threshold_to_cast"),
+                ExecuteDamageMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "execute_damage_multiplier", 1f),
+                KillCooldownRefundRatio = ReadOptionalFloatIfColumnExists(record, "kill_cooldown_refund_ratio"),
+                BossDamageMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "boss_damage_multiplier", 1f),
                 HitTargetCount = record.ReadString("hit_target_count"),
                 TargetSelection = record.ReadString("target_selection"),
                 CooldownSeconds = record.ReadFloat("cooldown_seconds"),
@@ -357,6 +383,10 @@ namespace Pakuri.Data
             row.RadiusMultiplier = radiusMultiplier;
             row.RadiusBonus = ReadOptionalFloat(record, "radius_bonus");
             row.BeamWidthBonus = ReadOptionalFloat(record, "beam_width_bonus");
+            row.HasKnockbackDistanceMultiplier = TryReadFloatIfColumnExists(record, "knockback_distance_multiplier", out var knockbackDistanceMultiplier);
+            row.KnockbackDistanceMultiplier = knockbackDistanceMultiplier;
+            row.HasExecuteHealthRatioBonus = TryReadFloatIfColumnExists(record, "execute_health_ratio_bonus", out var executeHealthRatioBonus);
+            row.ExecuteHealthRatioBonus = executeHealthRatioBonus;
             row.HasDurationMultiplier = TryReadFloat(record, "duration_multiplier", out var durationMultiplier);
             row.DurationMultiplier = durationMultiplier;
             row.DurationBonus = ReadOptionalFloat(record, "duration_bonus");
@@ -377,6 +407,13 @@ namespace Pakuri.Data
             row.HitTargetCountBonus = ReadOptionalInt(record, "hit_target_count_bonus");
             row.CritChanceBonus = ReadOptionalFloat(record, "crit_chance_bonus");
             row.CritDamageBonus = ReadOptionalFloat(record, "crit_damage_bonus");
+            row.ExecuteCritChanceBonus = ReadOptionalFloatIfColumnExists(record, "execute_crit_chance_bonus");
+            row.HasBossDamageMultiplier = TryReadFloatIfColumnExists(record, "boss_damage_multiplier", out var bossDamageMultiplier);
+            row.BossDamageMultiplier = bossDamageMultiplier;
+            row.HasKillCooldownRefundRatioBonus = TryReadFloatIfColumnExists(record, "kill_cooldown_refund_ratio_bonus", out var killCooldownRefundRatioBonus);
+            row.KillCooldownRefundRatioBonus = killCooldownRefundRatioBonus;
+            row.KillResetsCooldown = ReadOptionalBoolIfColumnExists(record, "kill_resets_cooldown");
+            row.KillResetsCooldownRequiresExecute = ReadOptionalBoolIfColumnExists(record, "kill_resets_cooldown_requires_execute");
             row.HasStatusChanceBonus = TryReadFloat(record, "status_chance_bonus", out var statusChanceBonus);
             row.StatusChanceBonus = statusChanceBonus;
             row.StatusStacksBonus = ReadOptionalInt(record, "status_stacks_bonus");
@@ -416,6 +453,8 @@ namespace Pakuri.Data
             row.OnHitChainSearchRadius = ReadOptionalFloatIfColumnExists(record, "on_hit_chain_search_radius");
             row.OnHitChainDamageMultiplier = ReadOptionalFloatIfColumnExists(record, "on_hit_chain_damage_multiplier");
             row.OnHitChainDamageAttribute = ReadOptionalEnumIfColumnExists(record, "on_hit_chain_damage_attribute", DamageAttribute.Physical);
+            row.ReloadReduceTargetSkillId = ReadOptionalStringIfColumnExists(record, "reload_reduce_target_skill_id");
+            row.ReloadReduceSecondsPerHit = ReadOptionalFloatIfColumnExists(record, "reload_reduce_seconds_per_hit");
             return row;
         }
 
@@ -496,6 +535,7 @@ namespace Pakuri.Data
                 HitTargetCount = record.ReadString("hit_target_count"),
                 RepeatCount = record.ReadInt("repeat_count"),
                 RepeatIntervalSeconds = record.ReadFloat("repeat_interval_seconds"),
+                RequireEventExecute = ReadOptionalBoolIfColumnExists(record, "require_event_execute"),
                 SkillEffectPrefabPath = record.ReadString("skill_effect_prefab_path"),
                 RuntimeSupportState = record.ReadString("runtime_support_state"),
                 RuntimeSupportNotes = record.ReadString("runtime_support_notes")
@@ -549,9 +589,27 @@ namespace Pakuri.Data
             return record.HasColumn(columnName) ? ReadOptionalFloat(record, columnName) : 0f;
         }
 
+        private static float ReadOptionalFloatWithDefaultIfColumnExists(CsvRecord record, string columnName, float fallback)
+        {
+            return record.HasColumn(columnName) && TryReadFloat(record, columnName, out var value)
+                ? value
+                : fallback;
+        }
+
         private static string ReadOptionalStringIfColumnExists(CsvRecord record, string columnName)
         {
             return record.HasColumn(columnName) ? record.ReadString(columnName) : string.Empty;
+        }
+
+        private static bool ReadOptionalBoolIfColumnExists(CsvRecord record, string columnName)
+        {
+            if (!record.HasColumn(columnName))
+            {
+                return false;
+            }
+
+            var raw = record.ReadString(columnName);
+            return !string.IsNullOrWhiteSpace(raw) && record.ReadBool(columnName);
         }
 
         private static T ReadOptionalEnumIfColumnExists<T>(CsvRecord record, string columnName, T fallback) where T : struct

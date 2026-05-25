@@ -11,6 +11,11 @@ namespace Pakuri.InGame
         public bool UsePrefabHitbox;
         public bool HitAllTargets;
         [Min(1)] public int HitTargetCount = 1;
+        [Range(0f, 1f)] public float ExecuteHealthRatioThreshold;
+        public bool RequireExecuteThresholdToCast;
+        public float ExecuteDamageMultiplier = 1f;
+        [Range(0f, 1f)] public float KillCooldownRefundRatio;
+        public float BossDamageMultiplier = 1f;
 
         [Header("Enemy Effect")]
         public SkillDamageSpec Damage = new SkillDamageSpec();

@@ -66,7 +66,16 @@ namespace Pakuri.InGame
                 routed = true;
             }
 
-            return new SkillExecutionResult(routed || castCommitted ? SkillExecutionStatus.Routed : SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
+            var multiEffectRouted = false;
+            if (routed && skill.MultiEffects != null && skill.MultiEffects.Length > 0)
+            {
+                var center = context.CasterEntry.Transform != null
+                    ? (Vector2)context.CasterEntry.Transform.position
+                    : Vector2.zero;
+                multiEffectRouted = SkillMultiEffectExecutor.ExecuteWithStatusDurationScaling(context, snapshot, skill.MultiEffects, center);
+            }
+
+            return new SkillExecutionResult(routed || castCommitted || multiEffectRouted ? SkillExecutionStatus.Routed : SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
         }
 
         private static ProjectileStatusHitSpec ResolveBuffStatusSpec(BuffSkillData skill, SkillExecutionSnapshot snapshot)
@@ -209,7 +218,7 @@ namespace Pakuri.InGame
                 var center = context.CasterEntry.Transform != null
                     ? (Vector2)context.CasterEntry.Transform.position
                     : Vector2.zero;
-                multiEffectRouted = SkillMultiEffectExecutor.Execute(context, snapshot, skill.MultiEffects, center);
+                multiEffectRouted = SkillMultiEffectExecutor.ExecuteWithStatusDurationScaling(context, snapshot, skill.MultiEffects, center);
             }
 
             return new SkillExecutionResult(routed || multiEffectRouted ? SkillExecutionStatus.Routed : SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);

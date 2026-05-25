@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Pakuri.Combat;
 using UnityEngine;
 
 namespace Pakuri.InGame
@@ -292,5 +293,10 @@ namespace Pakuri.InGame
         [Header("Applied Status Duration Bonus")]
         public string AppliedStatusDurationBonusStatusId;
         public float AppliedStatusDurationBonus;
+
+        [Header("Outgoing Additional Damage")]
+        public float OutgoingAdditionalDamageMultiplier;
+        public DamageAttribute OutgoingAdditionalDamageTriggerAttribute;
+        public DamageAttribute OutgoingAdditionalDamageAttribute;
     }
 }

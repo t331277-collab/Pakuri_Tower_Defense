@@ -52,12 +52,31 @@ namespace Pakuri.InGame
             public Vector2 Center { get; }
         }
 
+        private readonly struct TargetDamageResolution
+        {
+            public TargetDamageResolution(float damage, float critChanceBonus, bool isExecute)
+            {
+                Damage = damage;
+                CritChanceBonus = critChanceBonus;
+                IsExecute = isExecute;
+            }
+
+            public float Damage { get; }
+            public float CritChanceBonus { get; }
+            public bool IsExecute { get; }
+        }
+
         public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
         {
             var skill = context != null ? context.SkillData as SingleAttackData : null;
             if (skill == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
             {
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
+            }
+
+            if (ShouldRejectCastForExecuteThreshold(context, snapshot, skill))
+            {
+                return new SkillExecutionResult(SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
             }
 
             var center = ResolveAreaCenter(context, skill.Targeting, skill.Area);
@@ -93,6 +112,28 @@ namespace Pakuri.InGame
                 : context.CombatManager.Effects != null
                     ? context.CombatManager.Effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId)
                     : null;
+        }
+
+        private static bool ShouldRejectCastForExecuteThreshold(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SingleAttackData skill)
+        {
+            if (context == null
+                || skill == null
+                || !skill.RequireExecuteThresholdToCast)
+            {
+                return false;
+            }
+
+            if (!TryResolveExecuteThreshold(skill, snapshot, out var threshold))
+            {
+                return false;
+            }
+
+            var targets = SkillExecutionUtility.ResolveOrderedTargets(context.CasterEntry, context.Roster, skill.Targeting);
+            var target = targets.Count > 0 ? targets[0] : null;
+            return target == null || target.Model == null || !IsWithinExecuteThreshold(target.Model, threshold);
         }
 
         private static void SpawnVisual(SkillExecutionContext context, GameObject prefab, Vector2 center)
@@ -156,6 +197,7 @@ namespace Pakuri.InGame
                         context.CombatManager,
                         context.CasterEntry,
                         context.Roster,
+                        skill,
                         skill.Targeting,
                         instance,
                         effectiveHitTargetCount,
@@ -184,6 +226,7 @@ namespace Pakuri.InGame
                         context.CombatManager,
                         context.CasterEntry,
                         context.Roster,
+                        skill,
                         skill.Targeting,
                         effectiveHitTargetCount,
                         damage,
@@ -206,6 +249,7 @@ namespace Pakuri.InGame
                         context.CombatManager,
                         context.CasterEntry,
                         context.Roster,
+                        skill,
                         skill.Targeting,
                         center,
                         radius,
@@ -242,6 +286,7 @@ namespace Pakuri.InGame
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
             UnitRosterService unitRoster,
+            SingleAttackData skill,
             SkillTargetingSpec targetingSpec,
             GameObject hitboxObject,
             int maxTargets,
@@ -286,8 +331,9 @@ namespace Pakuri.InGame
                     target,
                     target != null && target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero);
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-                var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
-                manager.ApplyDamage(target.Model, resolvedDamage, attribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus);
+                var result = manager.ApplyDamage(target.Model, targetDamage.Damage, attribute, source, criticalAllowed, targetDamage.CritChanceBonus, critDamageBonus, sourceSkillId, false, targetDamage.IsExecute);
+                HandleKillRecovery(sourceRuntime, skill, snapshot, result, targetDamage.IsExecute);
                 TryApplyStatus(manager, target.Model, statusSpec, source);
                 SkillOnHitAdditionalDamageUtility.TryApply(
                     manager,
@@ -299,7 +345,7 @@ namespace Pakuri.InGame
                     sourceSkillId,
                     target,
                     hitPosition,
-                    resolvedDamage);
+                    targetDamage.Damage);
                 routed = true;
                 hitCount++;
                 if (hitCount >= maxTargets)
@@ -315,6 +361,7 @@ namespace Pakuri.InGame
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
             UnitRosterService unitRoster,
+            SingleAttackData skill,
             SkillTargetingSpec targetingSpec,
             int maxTargets,
             float damage,
@@ -344,8 +391,9 @@ namespace Pakuri.InGame
                 var target = targets[i];
                 RegisterFollowUpTarget(followUpTargets, followUpSpec, target, center);
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : center;
-                var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
-                manager.ApplyDamage(target.Model, resolvedDamage, attribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus);
+                var result = manager.ApplyDamage(target.Model, targetDamage.Damage, attribute, source, criticalAllowed, targetDamage.CritChanceBonus, critDamageBonus, sourceSkillId, false, targetDamage.IsExecute);
+                HandleKillRecovery(sourceRuntime, skill, snapshot, result, targetDamage.IsExecute);
                 TryApplyStatus(manager, target.Model, statusSpec, source);
                 SkillOnHitAdditionalDamageUtility.TryApply(
                     manager,
@@ -357,7 +405,7 @@ namespace Pakuri.InGame
                     sourceSkillId,
                     target,
                     hitPosition,
-                    resolvedDamage);
+                    targetDamage.Damage);
                 routed = true;
                 hitCount++;
                 if (hitCount >= maxTargets)
@@ -373,6 +421,7 @@ namespace Pakuri.InGame
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
             UnitRosterService unitRoster,
+            SingleAttackData skill,
             SkillTargetingSpec targetingSpec,
             Vector2 center,
             float radius,
@@ -406,8 +455,9 @@ namespace Pakuri.InGame
 
                 RegisterFollowUpTarget(followUpTargets, followUpSpec, target, center);
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : center;
-                var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
-                manager.ApplyDamage(target.Model, resolvedDamage, attribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus);
+                var result = manager.ApplyDamage(target.Model, targetDamage.Damage, attribute, source, criticalAllowed, targetDamage.CritChanceBonus, critDamageBonus, sourceSkillId, false, targetDamage.IsExecute);
+                HandleKillRecovery(sourceRuntime, skill, snapshot, result, targetDamage.IsExecute);
                 TryApplyStatus(manager, target.Model, statusSpec, source);
                 SkillOnHitAdditionalDamageUtility.TryApply(
                     manager,
@@ -419,7 +469,7 @@ namespace Pakuri.InGame
                     sourceSkillId,
                     target,
                     hitPosition,
-                    resolvedDamage);
+                    targetDamage.Damage);
                 return true;
             }
 
@@ -444,8 +494,9 @@ namespace Pakuri.InGame
 
                 RegisterFollowUpTarget(followUpTargets, followUpSpec, target, center);
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : center;
-                var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
-                manager.ApplyDamage(target.Model, resolvedDamage, attribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus);
+                var result = manager.ApplyDamage(target.Model, targetDamage.Damage, attribute, source, criticalAllowed, targetDamage.CritChanceBonus, critDamageBonus, sourceSkillId, false, targetDamage.IsExecute);
+                HandleKillRecovery(sourceRuntime, skill, snapshot, result, targetDamage.IsExecute);
                 TryApplyStatus(manager, target.Model, statusSpec, source);
                 SkillOnHitAdditionalDamageUtility.TryApply(
                     manager,
@@ -457,7 +508,7 @@ namespace Pakuri.InGame
                     sourceSkillId,
                     target,
                     hitPosition,
-                    resolvedDamage);
+                    targetDamage.Damage);
                 routed = true;
             }
 
@@ -637,6 +688,13 @@ namespace Pakuri.InGame
                 HitTargetCountBonus = snapshot.HitTargetCountBonus,
                 CritChanceBonus = snapshot.CritChanceBonus,
                 CritDamageBonus = snapshot.CritDamageBonus,
+                ExecuteCritChanceBonus = snapshot.ExecuteCritChanceBonus,
+                HasBossDamageMultiplier = !Mathf.Approximately(snapshot.BossDamageMultiplier, 1f),
+                BossDamageMultiplier = snapshot.BossDamageMultiplier,
+                HasKillCooldownRefundRatioBonus = !Mathf.Approximately(snapshot.KillCooldownRefundRatioBonus, 0f),
+                KillCooldownRefundRatioBonus = snapshot.KillCooldownRefundRatioBonus,
+                KillResetsCooldown = snapshot.KillResetsCooldown,
+                KillResetsCooldownRequiresExecute = snapshot.KillResetsCooldownRequiresExecute,
                 StatusTag = snapshot.StatusTag,
                 HasStatusChanceBonus = !Mathf.Approximately(snapshot.StatusChanceBonus, 0f),
                 StatusChanceBonus = snapshot.StatusChanceBonus,
@@ -652,12 +710,98 @@ namespace Pakuri.InGame
                 ThresholdStatusId = snapshot.ThresholdStatusId,
                 ThresholdStatusMinStacks = snapshot.ThresholdStatusMinStacks,
                 ThresholdApplyStatusId = snapshot.ThresholdApplyStatusId,
+                HasExecuteHealthRatioBonus = !Mathf.Approximately(snapshot.ExecuteHealthRatioBonus, 0f),
+                ExecuteHealthRatioBonus = snapshot.ExecuteHealthRatioBonus,
                 SkillEffectPrefab = snapshot.SkillEffectPrefab,
                 HasStatusConditionalDamageTakenBonus = snapshot.HasStatusConditionalDamageTakenBonus,
                 StatusConditionalDamageTakenBonus = snapshot.StatusConditionalDamageTakenBonus,
                 StatusConditionalSourceStatusId = snapshot.StatusConditionalSourceStatusId
             });
             return clone;
+        }
+
+        private static TargetDamageResolution ResolveTargetDamage(
+            SingleAttackData skill,
+            SkillExecutionSnapshot snapshot,
+            float baseDamage,
+            BaseUnitRuntimeModel target,
+            float baseCritChanceBonus)
+        {
+            var damageMultiplier = snapshot != null ? snapshot.ResolveConditionalDamageMultiplier(target) : 1f;
+            var critChanceBonus = baseCritChanceBonus;
+            var isExecute = false;
+
+            if (skill != null && target != null)
+            {
+                if (TryResolveExecuteThreshold(skill, snapshot, out var threshold)
+                    && IsWithinExecuteThreshold(target, threshold))
+                {
+                    isExecute = true;
+                    damageMultiplier *= skill.ExecuteDamageMultiplier > 0f ? skill.ExecuteDamageMultiplier : 1f;
+                    critChanceBonus += snapshot != null ? snapshot.ExecuteCritChanceBonus : 0f;
+                }
+
+                if (target.IsBoss)
+                {
+                    damageMultiplier *= skill.BossDamageMultiplier > 0f ? skill.BossDamageMultiplier : 1f;
+                    if (snapshot != null)
+                    {
+                        damageMultiplier *= snapshot.BossDamageMultiplier;
+                    }
+                }
+            }
+
+            return new TargetDamageResolution(
+                Mathf.Max(0f, baseDamage * Mathf.Max(0f, damageMultiplier)),
+                critChanceBonus,
+                isExecute);
+        }
+
+        private static bool TryResolveExecuteThreshold(SingleAttackData skill, SkillExecutionSnapshot snapshot, out float threshold)
+        {
+            threshold = Mathf.Clamp01(Mathf.Max(0f, skill != null ? skill.ExecuteHealthRatioThreshold : 0f) + (snapshot != null ? snapshot.ExecuteHealthRatioBonus : 0f));
+            return threshold > 0f;
+        }
+
+        private static bool IsWithinExecuteThreshold(BaseUnitRuntimeModel target, float threshold)
+        {
+            var resources = target != null ? target.Resources : null;
+            var stats = target != null ? target.Stats : null;
+            if (resources == null || stats == null || stats.MaxHealth <= 0f || threshold <= 0f)
+            {
+                return false;
+            }
+
+            return resources.CurrentHealth / stats.MaxHealth <= threshold;
+        }
+
+        private static void HandleKillRecovery(
+            SkillRuntimeInstance sourceRuntime,
+            SingleAttackData skill,
+            SkillExecutionSnapshot snapshot,
+            InGameResourceChangeResult result,
+            bool wasExecute)
+        {
+            if (sourceRuntime == null || !result.IsDead)
+            {
+                return;
+            }
+
+            if (snapshot != null
+                && snapshot.KillResetsCooldown
+                && (!snapshot.KillResetsCooldownRequiresExecute || wasExecute))
+            {
+                sourceRuntime.ResetCooldown();
+                return;
+            }
+
+            var refundRatio = Mathf.Clamp01((skill != null ? skill.KillCooldownRefundRatio : 0f) + (snapshot != null ? snapshot.KillCooldownRefundRatioBonus : 0f));
+            if (refundRatio <= 0f)
+            {
+                return;
+            }
+
+            sourceRuntime.ReduceCooldownRemaining(sourceRuntime.EffectiveCooldownDuration * refundRatio);
         }
 
         private static bool HasStatus(BaseUnitRuntimeModel target, string statusId)

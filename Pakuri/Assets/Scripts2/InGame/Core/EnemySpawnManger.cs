@@ -209,7 +209,7 @@ namespace Pakuri.InGame
             float spawnYMax,
             out GameObject spawnedUnit)
         {
-            return SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, 1f, out spawnedUnit);
+            return SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, 1f, false, out spawnedUnit);
         }
 
         public bool SpawnEnemyById(
@@ -221,15 +221,28 @@ namespace Pakuri.InGame
             float healthMultiplier,
             out GameObject spawnedUnit)
         {
+            return SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, false, out spawnedUnit);
+        }
+
+        public bool SpawnEnemyById(
+            string enemyId,
+            int spawnIndex,
+            float spawnX,
+            float spawnYMin,
+            float spawnYMax,
+            float healthMultiplier,
+            bool isBoss,
+            out GameObject spawnedUnit)
+        {
             var prefab = ResolveEnemyPrefab(enemyId);
-            return TrySpawnEnemyUnit(prefab, enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, out spawnedUnit);
+            return TrySpawnEnemyUnit(prefab, enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, isBoss, out spawnedUnit);
         }
 
         public bool SpawnEnemyFromConfiguredPoint(GameObject prefab, string enemyId, int spawnIndex, out GameObject spawnedUnit)
         {
             ResolveEnemySpawnPoint();
             var basePosition = enemySpawnPoint != null ? enemySpawnPoint.position : Vector3.zero;
-            return TrySpawnEnemyUnit(prefab, enemyId, spawnIndex, basePosition.x, enemySpawnMinY, enemySpawnMaxY, 1f, out spawnedUnit);
+            return TrySpawnEnemyUnit(prefab, enemyId, spawnIndex, basePosition.x, enemySpawnMinY, enemySpawnMaxY, 1f, false, out spawnedUnit);
         }
 
         public bool SpawnInitialEnemyUnit(out GameObject spawnedUnit)
@@ -309,6 +322,7 @@ namespace Pakuri.InGame
             float spawnYMin,
             float spawnYMax,
             float healthMultiplier,
+            bool isBoss,
             out GameObject spawnedUnit)
         {
             spawnedUnit = null;
@@ -320,7 +334,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            if (!TryCreateEnemyModel(enemyId, spawnIndex, out var model))
+            if (!TryCreateEnemyModel(enemyId, spawnIndex, isBoss, out var model))
             {
                 return false;
             }
@@ -339,7 +353,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        private bool TryCreateEnemyModel(string enemyId, int slotIndex, out EnemyUnitRuntimeModel model)
+        private bool TryCreateEnemyModel(string enemyId, int slotIndex, bool isBoss, out EnemyUnitRuntimeModel model)
         {
             model = null;
 
@@ -357,7 +371,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            model = unitFactory.CreateEnemy(enemy, slotIndex);
+            model = unitFactory.CreateEnemy(enemy, slotIndex, isBoss);
             if (model == null)
             {
                 Debug.LogError($"EnemySpawnManger could not create an enemy runtime unit model for '{enemyId}'.");

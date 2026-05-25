@@ -4,6 +4,202 @@
 - This file keeps only task blocks dated 2026-05-08 based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/MON/RIN_MONSTER.md`.
 
+## Task: 2026-05-26 Rin Unit Animator Runtime Hook
+
+### Task title
+
+Connect Rin's prefab Animator to the current Scripts2 active-skill, hit, and death runtime events.
+
+### Goals
+
+- Add an `Animation_Controller` runtime component that drives the existing `Rin_Animation_Cont` states directly.
+- Play one random Rin attack state whenever a non-triggered active skill cast is successfully routed.
+- Play Rin hit animation on non-lethal monster damage and Rin death animation before the dead unit is destroyed.
+- Keep the first implementation scoped to `Assets/Prefab/Monster/Rin_Unit.prefab`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The existing animator controller has no parameters or transitions, so direct `Animator.Play(...)` calls are used.
+- Runtime animation requests are gated by the unit model `DefinitionId == "rin"` in `MonsterUnitActor`.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified through compile, prefab inspection, and Unity editor code inspection.
+
+### Next Actions
+
+- User verifies in Play Mode that Rin plays random attack animations on active skill casts, hit animation on non-lethal damage, and death animation at HP 0.
+- If other monsters need the same behavior later, promote the Rin-only model gate into shared data or prefab configuration.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Animation/Animation_Controller.cs` now resolves the local `Animator`, plays `Anim_Rin_Attack_1`, `Anim_Rin_Attack_2`, or `Anim_Rin_Attack_3` randomly, plays `Anim_Rin_Hit`, locks on `Anim_Rin_Dead_1`, and returns transient attack/hit states to idle after the clip length.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs` now exposes `TryPlayActiveSkillAnimation()`, `TryPlayHitAnimation()`, and `TryPlayDeathAnimation()` and only routes them when the model definition id is `rin`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs` now calls the active-skill animation hook only after `executor.Execute(...)` routes and `runtime.TryBeginCast(snapshot)` succeeds.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now calls the hit animation for non-lethal monster damage and the death animation before `Destroy(actor.gameObject, 0.95f)`.
+- `Pakuri/Assets/Prefab/Monster/Rin_Unit.prefab` now has `Pakuri.InGame.Animation_Controller` on the root beside `MonsterUnitActor` and `Animator`.
+- Unity editor code inspection returned `actor=True|animator=True|animationController=True|controllerName=Rin_Animation_Cont|clips=Anim_Rin_Idle,Anim_Rin_Attack_1,Anim_Rin_Attack_2,Anim_Rin_Attack_3,Anim_Rin_Dead_1,Anim_Rin_Hit`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remain.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors when rerun alone; the first parallel attempt hit only an `Assembly-CSharp.dll` file lock.
+
+### History
+
+- 2026-05-26: User asked Code Builder to implement the Designer-approved Rin animation plan using `Animation_Controller.cs`, `Rin_Unit.prefab`, and the existing `Rin_Animation_Cont.controller`.
+
+## Task: 2026-05-26 Rin-D Execute Gate And Execute-Only Kill Effects
+
+### Task title
+
+Implement Rin-D cast gating at the execute threshold and restrict execute-only kill rewards to the primary Rin-D hit on shared Scripts2 runtime paths.
+
+### Goals
+
+- Make `rin-d` reject casts unless its selected target is within the current execute threshold.
+- Keep Rin-D target ordering on the existing `LowestHealth` raw-current-health selection.
+- Make Rin-D master 1 cooldown reset and Holy burst require an execute kill from the primary `rin-d` hit.
+- Keep the fix on shared `SingleAttack`, damage, and trigger runtime paths without Rin-only hardcoded branches.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User explicitly requested that target selection remain unchanged.
+- New behavior is data-driven through shared CSV/runtime flags instead of monster-specific branches.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Rin-D does not cast above the current execute threshold.
+- User verifies that Rin-D master 1 Holy burst triggers only on execute kills from the primary Rin-D hit and does not chain its own kill reset behavior.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now adds shared `require_execute_threshold_to_cast` and sets it to `true` on `rin-d`.
+- The same `monster_skills.csv` file had to be normalized so all active skill rows carry the new trailing column; a post-fix CSV field-count scan returned `ALL_ROWS_OK` for 55-column rows.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now adds shared `kill_resets_cooldown_requires_execute` and sets it to `true` on `rin-d-master-1`.
+- The same `monster_skill_choices.csv` file had to be normalized so pre-existing choice rows also carry the new trailing column; post-fix field-count scans returned `UTF8_ALL_ROWS_OK` and `ALL_ROWS_OK_AFTER_BOM` for 78-column rows after the file was rewritten as UTF-8 BOM.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now adds shared `require_event_execute` and sets it to `true` on `rin-d-master1-kill-burst`.
+- The same `monster_skill_triger.csv` file had to be normalized so pre-existing trigger rows also carry the new trailing column; a post-fix CSV field-count scan returned `ALL_ROWS_OK` for 34-column rows.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` now rejects `SingleAttack` casts when `RequireExecuteThresholdToCast` is enabled and the selected target is above threshold, and it passes execute-hit state into shared kill recovery.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` and `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` now carry shared execute-kill context through damage and kill trigger dispatch.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` now attributes triggered damage to `triggered_skill_id` first, so triggered Holy burst kills no longer report as primary `rin-d` kills.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remain.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors after a rerun; the first parallel attempt failed only because `Assembly-CSharp.dll` was temporarily locked by the concurrent runtime build.
+- Unity `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.` after the `monster_skill_choices.csv` row-width normalization follow-up.
+
+### History
+
+- 2026-05-26: User requested Code Builder implementation so Rin-D casts only below threshold, keeps current target selection, and applies master-1 cooldown reset only to execute kills from the primary Rin-D hit.
+- 2026-05-26: Follow-up fix normalized `monster_skills.csv` row widths after Unity CSV runtime sync reported row 3 had 54 columns while the updated header expected 55.
+- 2026-05-26: Additional follow-up fix normalized `monster_skill_triger.csv` row widths after Unity CSV runtime sync reported row 3 had 33 columns while the updated header expected 34.
+- 2026-05-26: Additional follow-up fix normalized `monster_skill_choices.csv` row widths after Unity CSV runtime sync reported row 3 had 77 columns while the updated header expected 78, then rewrote the file as UTF-8 BOM and re-synced the runtime catalog successfully.
+
+## Task: 2026-05-26 Rin-D Execute Condition And Master Effect Audit
+
+### Task title
+
+Audit current `rin-d` SingleAttack runtime against the authored execute threshold, enhancement effects, and master effects.
+
+### Goals
+
+- Verify whether `rin-d` cast gating matches the authored 30% execute-health behavior.
+- Verify that Rin-D trait and master choice fields map into the current Scripts2 runtime as intended.
+- Record confirmed implementation mismatches before Builder follow-up.
+
+### Constraints
+
+- Role Owner is Designer.
+- Claims are limited to inspected CSV rows and current Scripts2 runtime code.
+- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs` does not exist in the current workspace, so no legacy-side comparison was possible from that path.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Inspection completed. Confirmed code/data mismatches exist in the current Scripts2 Rin-D behavior.
+
+### Next Actions
+
+- Builder should decide whether Rin-D must refuse execution unless a target is within the execute threshold, or whether only the execute bonus should be gated while cast remains allowed.
+- Builder should add an execute-only gate for Rin-D master-1 kill reset and kill burst if the authored text is meant to apply only to executed targets.
+- Builder should review whether Rin-D target selection should prefer lowest health ratio instead of lowest raw current health.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` defines `rin-d` as `runtime_kind=SingleAttack`, `target_selection=LowestHealth`, `execute_health_ratio_threshold=0.3`, `execute_damage_multiplier=1.8`, and `kill_cooldown_refund_ratio=0.35`.
+- `Pakuri/reference/2.Monster/rin/skill/d-finishing-blow.md` authors Rin-D around `처형 기준 체력 30% 이하`, trait 2 `처형 기준 체력 +10%`, master 1 `처형 대상에게 치명타 확률 +50%, 처치 시 쿨다운 완전 초기화`, and master 2 `처형 기준 체력 -10%`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs:708` through `:714` only use the execute threshold to add execute damage and execute crit chance; the cast path itself does not stop when the target is above the threshold.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs:359` through `:389` always damage the first ordered target from `ResolveOrderedTargets(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillTargetingUtility.cs:68` through `:97` and `SkillExecutionUtility.cs:219` through `:221` implement `LowestHealth` with raw `CurrentHealth`, not health ratio.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` gives `rin-d-master-1` `execute_crit_chance_bonus=0.5` and `kill_resets_cooldown=true`; `rin-d-master-2` gives `damage_multiplier=1.9`, `execute_health_ratio_bonus=-0.1`, `cooldown_multiplier=1.25`, and guaranteed Darkness on-hit additional damage.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs:755` through `:767` reset or refund cooldown on any Rin-D kill, without checking whether that hit was an execute hit.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv:10` plus `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs:181` through `:212` wire the Rin-D master-1 Holy burst to generic `OnKill`, and the trigger context does not carry an execute/non-execute flag.
+
+### History
+
+- 2026-05-26: User reported that Rin-D seemed to fire even when the opponent was not below 30% HP and asked for a full inspection of the skill, enhancement effects, and master effects.
+
+## Task: 2026-05-26 Rin-B And Rin-C Skill Builder Completion
+
+### Task title
+
+Implement Rin-B and Rin-C active enhancement/master effects on the current Scripts2 shared skill runtime.
+
+### Goals
+
+- Keep `rin-c` on the shared `LineAttack` / beam runtime and finish all trait/master effects.
+- Keep `rin-b` on the shared buff runtime and finish all trait/master effects, including the ally-wide master follow-up damage.
+- Reuse shared CSV/runtime paths instead of adding Rin-only hardcoded branches.
+
+### Constraints
+
+- Role Owner is Skill Builder.
+- User explicitly authorized current Rin CSV/reference files as the parsed source for this task.
+- Base skill visuals remain scene-owned through `NewRunScene` `EffectManager`; choice/effect behavior remains data-owned through the active CSV/runtime pipeline.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Skill Builder
+
+### Status
+
+Implemented, compile-verified, and Unity refresh-checked.
+
+### Next Actions
+
+- User verifies in Play Mode that Rin-B ally buffs and Rin-C knockback / reload reduction / lightning follow-up / slow behave as authored.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now keeps `rin-b` at `status_duration_seconds=5` and `status_action_speed_bonus=0.2`, and adds `knockback_distance=0.6` to `rin-c`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now marks all `rin-b-*` and `rin-c-*` choice rows as `RuntimeImplemented`; `rin-c-trait-2` uses `beam_width_bonus=0.25`, `rin-c-trait-3` uses `knockback_distance_multiplier=1.4`, `rin-c-trait-5` uses `reload_reduce_target_skill_id=rin-a` plus `reload_reduce_seconds_per_hit=0.25`, `rin-c-master-1` uses the shared on-hit lightning fields, and `rin-c-master-2` uses `beam_width_bonus=0.6`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now contains `rin-b-trait2-action-speed`, `rin-b-trait4-self-attack`, `rin-b-trait5-crit`, `rin-b-master1-roar`, `rin-b-master2-abyss`, and `rin-c-master2-slow`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/BeamSkillExecutor.cs`, `InGameLineAttackActor.cs`, `SkillOnHitAdditionalDamageUtility.cs`, and `SkillRuntimeInstance.cs` now cover Rin-C width/knockback/reload-reduction/on-hit additional damage on the shared beam path.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SupportSkillExecutors.cs`, `SkillMultiEffectExecutor.cs`, `StatusEffectRuntime.cs`, and `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now cover Rin-B scaled buff multi-effects and status-driven outgoing additional damage on the shared buff/status path.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` also passed with 0 errors after rerun outside the sandbox-denied path. Existing MSB3277 warnings remain.
+- Unity `refresh_unity` returned `resulting_state":"idle"`, and warning/error console reads after the refresh showed only MCP-FOR-UNITY client-handler logs, not C# or CSV runtime errors.
+
+### History
+
+- 2026-05-26: User instructed Skill Builder to start with Rin-C, explicitly approved current Rin CSV/reference files as parsed source, and then requested the same treatment for Rin-B.
+
 # RIN_MONSTER
 
 ## Scope

@@ -41,6 +41,7 @@ namespace Pakuri.InGame
             var statusSpec = SkillStatusSpecUtility.ResolveStatusSpec(skill.OnHitStatus, snapshot);
             var length = ResolveBeamLength(skill, origin, direction, context.CombatManager);
             var width = ResolveBeamWidth(skill, snapshot);
+            var knockbackDistance = ResolveKnockbackDistance(skill, snapshot);
             var duration = ResolveDuration(skill, snapshot);
             var tickInterval = ResolveTickInterval(skill, snapshot);
             var onHitStatusEffects = ResolveOnHitStatusEffects(context, snapshot, skill.MultiEffects);
@@ -63,6 +64,7 @@ namespace Pakuri.InGame
                     direction,
                     length,
                     width,
+                    knockbackDistance,
                     damage,
                     attribute,
                     statusSpec,
@@ -105,6 +107,7 @@ namespace Pakuri.InGame
                 direction,
                 length,
                 width,
+                knockbackDistance,
                 duration,
                 tickInterval,
                 damage,
@@ -168,6 +171,17 @@ namespace Pakuri.InGame
             }
 
             return Mathf.Max(0.1f, width);
+        }
+
+        private static float ResolveKnockbackDistance(BeamSkillData skill, SkillExecutionSnapshot snapshot)
+        {
+            var distance = skill != null ? Mathf.Max(0f, skill.KnockbackDistance) : 0f;
+            if (snapshot != null)
+            {
+                distance *= Mathf.Max(0f, snapshot.KnockbackDistanceMultiplier);
+            }
+
+            return Mathf.Max(0f, distance);
         }
 
         private static float ResolveBeamVisualWidthScale(SkillExecutionSnapshot snapshot)

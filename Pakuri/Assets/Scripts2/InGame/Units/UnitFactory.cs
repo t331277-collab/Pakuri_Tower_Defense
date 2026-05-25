@@ -27,7 +27,7 @@ namespace Pakuri.InGame
             return CreateMonster(definition, UnitSide.Player, UnitRole.Monster, slotIndex, "party", runState);
         }
 
-        public EnemyUnitRuntimeModel CreateEnemy(EnemyDefinition definition, int slotIndex = 0)
+        public EnemyUnitRuntimeModel CreateEnemy(EnemyDefinition definition, int slotIndex = 0, bool isBoss = false)
         {
             if (definition == null)
             {
@@ -82,6 +82,7 @@ namespace Pakuri.InGame
                     CurrentHealth = Math.Max(0f, maxHealth),
                     CurrentShield = 0f
                 },
+                IsBoss = isBoss,
                 AutoAttackEnabled = true,
                 AutoSkillEnabled = true
             };

@@ -16,6 +16,7 @@ namespace Pakuri.InGame
         private Vector2 direction = Vector2.right;
         private float length;
         private float width;
+        private float knockbackDistance;
         private float remainingDuration;
         private float tickInterval;
         private float tickRemaining;
@@ -42,6 +43,7 @@ namespace Pakuri.InGame
             Vector2 lineDirection,
             float lineLength,
             float lineWidth,
+            float lineKnockbackDistance,
             float durationSeconds,
             float tickIntervalSeconds,
             float damagePerTick,
@@ -64,6 +66,7 @@ namespace Pakuri.InGame
             direction = lineDirection.sqrMagnitude > 0.0001f ? lineDirection.normalized : Vector2.right;
             length = Mathf.Max(0.1f, lineLength);
             width = Mathf.Max(0.1f, lineWidth);
+            knockbackDistance = Mathf.Max(0f, lineKnockbackDistance);
             remainingDuration = Mathf.Max(0.05f, durationSeconds);
             tickInterval = Mathf.Max(0.01f, tickIntervalSeconds);
             tickRemaining = tickInterval;
@@ -91,6 +94,7 @@ namespace Pakuri.InGame
                 direction,
                 length,
                 width,
+                knockbackDistance,
                 damage,
                 attribute,
                 statusSpec,
@@ -115,6 +119,7 @@ namespace Pakuri.InGame
             Vector2 lineDirection,
             float lineLength,
             float lineWidth,
+            float lineKnockbackDistance,
             float damagePerTick,
             DamageAttribute damageAttribute,
             ProjectileStatusHitSpec onHitStatus,
@@ -160,6 +165,7 @@ namespace Pakuri.InGame
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
                 var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damagePerTick, snapshot, target.Model);
                 manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, skillId);
+                TryApplyKnockback(target, normalizedDirection, lineKnockbackDistance);
                 var targetKey = ResolveTargetKey(target.Model);
                 TryApplyStatus(manager, target.Model, onHitStatus, source, targetKey, baseStatusAppliedTargets);
                 TryApplyOnHitEffects(manager, target.Model, onHitEffects, source, targetKey, effectStatusAppliedTargets);
@@ -203,6 +209,7 @@ namespace Pakuri.InGame
                     direction,
                     length,
                     width,
+                    knockbackDistance,
                     damage,
                     attribute,
                     statusSpec,
@@ -266,6 +273,19 @@ namespace Pakuri.InGame
             var closest = lineOrigin + normalizedDirection * projected;
             var perpendicularDistance = Vector2.Distance((Vector2)targetPosition, closest);
             return perpendicularDistance <= Mathf.Max(0.05f, lineWidth * 0.5f);
+        }
+
+        private static void TryApplyKnockback(UnitRosterEntry target, Vector2 normalizedDirection, float distance)
+        {
+            if (target == null
+                || target.Transform == null
+                || distance <= 0f
+                || normalizedDirection.sqrMagnitude <= 0.0001f)
+            {
+                return;
+            }
+
+            target.Transform.position += (Vector3)(normalizedDirection.normalized * distance);
         }
 
         private static void TryApplyStatus(

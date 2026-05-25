@@ -21,6 +21,8 @@ namespace Pakuri.InGame
         public bool HasRadiusMultiplier { get; set; }
         public float RadiusMultiplier { get; set; }
         public float RadiusBonus { get; set; }
+        public bool HasKnockbackDistanceMultiplier { get; set; }
+        public float KnockbackDistanceMultiplier { get; set; }
         public bool HasDurationMultiplier { get; set; }
         public float DurationMultiplier { get; set; }
         public float DurationBonus { get; set; }
@@ -62,6 +64,8 @@ namespace Pakuri.InGame
         public float OnHitChainSearchRadius { get; set; }
         public float OnHitChainDamageMultiplier { get; set; }
         public DamageAttribute OnHitChainDamageAttribute { get; set; }
+        public string ReloadReduceTargetSkillId { get; set; }
+        public float ReloadReduceSecondsPerHit { get; set; }
 
         public static SkillChoiceModifierRecord FromRow(IDictionary<string, string> row)
         {
@@ -89,6 +93,8 @@ namespace Pakuri.InGame
             record.HasRadiusMultiplier = TryGetFloat(row, "radius_multiplier", out var radiusMultiplier);
             record.RadiusMultiplier = radiusMultiplier;
             record.RadiusBonus = GetFloat(row, "radius_bonus");
+            record.HasKnockbackDistanceMultiplier = TryGetFloat(row, "knockback_distance_multiplier", out var knockbackDistanceMultiplier);
+            record.KnockbackDistanceMultiplier = knockbackDistanceMultiplier;
             record.HasDurationMultiplier = TryGetFloat(row, "duration_multiplier", out var durationMultiplier);
             record.DurationMultiplier = durationMultiplier;
             record.DurationBonus = GetFloat(row, "duration_bonus");
@@ -129,6 +135,8 @@ namespace Pakuri.InGame
             record.OnHitChainSearchRadius = GetFloat(row, "on_hit_chain_search_radius");
             record.OnHitChainDamageMultiplier = GetFloat(row, "on_hit_chain_damage_multiplier");
             record.OnHitChainDamageAttribute = GetEnum(row, "on_hit_chain_damage_attribute", DamageAttribute.Physical);
+            record.ReloadReduceTargetSkillId = Get(row, "reload_reduce_target_skill_id");
+            record.ReloadReduceSecondsPerHit = GetFloat(row, "reload_reduce_seconds_per_hit");
             return string.IsNullOrWhiteSpace(record.ChoiceId) ? null : record;
         }
 

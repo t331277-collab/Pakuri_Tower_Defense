@@ -16,7 +16,8 @@ namespace Pakuri.InGame
             float critChanceBonus = 0f,
             float critDamageBonus = 0f,
             string sourceSkillId = null,
-            bool suppressOutgoingDamageTriggers = false)
+            bool suppressOutgoingDamageTriggers = false,
+            bool sourceHitWasExecute = false)
         {
             Source = source;
             CriticalAllowed = criticalAllowed;
@@ -24,6 +25,7 @@ namespace Pakuri.InGame
             CritDamageBonus = critDamageBonus;
             SourceSkillId = sourceSkillId;
             SuppressOutgoingDamageTriggers = suppressOutgoingDamageTriggers;
+            SourceHitWasExecute = sourceHitWasExecute;
         }
 
         public BaseUnitRuntimeModel Source { get; }
@@ -32,6 +34,7 @@ namespace Pakuri.InGame
         public float CritDamageBonus { get; }
         public string SourceSkillId { get; }
         public bool SuppressOutgoingDamageTriggers { get; }
+        public bool SourceHitWasExecute { get; }
     }
 
     [DisallowMultipleComponent]
@@ -138,17 +141,19 @@ namespace Pakuri.InGame
             float critChanceBonus = 0f,
             float critDamageBonus = 0f,
             string sourceSkillId = null,
-            bool suppressOutgoingDamageTriggers = false)
+            bool suppressOutgoingDamageTriggers = false,
+            bool sourceHitWasExecute = false)
         {
             var depletedShields = new List<UnitStatusRuntime>();
             var absorbedShields = new List<ShieldAbsorbRecord>();
-            var options = new DamageApplicationOptions(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers);
+            var options = new DamageApplicationOptions(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers, sourceHitWasExecute);
             var result = resourceMutations.ApplyDamage(target, baseDamage, attribute, options, depletedShields, absorbedShields);
             RefreshActorIfChanged(result);
             ShowDamageIfChanged(result);
             DispatchShieldAbsorbTriggers(target, source, absorbedShields);
             DispatchShieldExpireTriggers(target, depletedShields);
-            DispatchOutgoingDamageTriggers(target, attribute, options, result);
+            DispatchOutgoingDamageTriggers(target, attribute, options, result, baseDamage);
+            DispatchKillTriggers(target, attribute, options, result);
             RemoveUnitIfDead(result);
             return result;
         }
@@ -383,7 +388,8 @@ namespace Pakuri.InGame
             BaseUnitRuntimeModel target,
             DamageAttribute attribute,
             DamageApplicationOptions options,
-            InGameResourceChangeResult result)
+            InGameResourceChangeResult result,
+            float sourceBaseDamage)
         {
             if (options.Source == null || options.SuppressOutgoingDamageTriggers || result.AppliedDamage <= 0f)
             {
@@ -397,6 +403,70 @@ namespace Pakuri.InGame
                 options.SourceSkillId,
                 target,
                 attribute);
+
+            ApplyOutgoingAdditionalDamageStatuses(target, attribute, options, sourceBaseDamage);
+        }
+
+        private void DispatchKillTriggers(
+            BaseUnitRuntimeModel target,
+            DamageAttribute attribute,
+            DamageApplicationOptions options,
+            InGameResourceChangeResult result)
+        {
+            if (!result.IsDead || options.Source == null)
+            {
+                return;
+            }
+
+            SkillTriggerRuntime.ExecuteKill(
+                this,
+                roster,
+                options.Source,
+                options.SourceSkillId,
+                target,
+                attribute,
+                options.SourceHitWasExecute);
+        }
+
+        private void ApplyOutgoingAdditionalDamageStatuses(
+            BaseUnitRuntimeModel target,
+            DamageAttribute triggerAttribute,
+            DamageApplicationOptions options,
+            float sourceBaseDamage)
+        {
+            if (target == null
+                || options.Source == null
+                || sourceBaseDamage <= 0f
+                || (target.Resources != null && target.Resources.CurrentHealth <= 0f))
+            {
+                return;
+            }
+
+            var specs = StatusEffectRuntime.ResolveOutgoingAdditionalDamageSpecs(options.Source, triggerAttribute);
+            for (var i = 0; i < specs.Count; i++)
+            {
+                if (target.Resources != null && target.Resources.CurrentHealth <= 0f)
+                {
+                    break;
+                }
+
+                var spec = specs[i];
+                if (spec.Multiplier <= 0f)
+                {
+                    continue;
+                }
+
+                ApplyDamage(
+                    target,
+                    Mathf.Max(0f, sourceBaseDamage) * spec.Multiplier,
+                    spec.DamageAttribute,
+                    options.Source,
+                    true,
+                    0f,
+                    0f,
+                    options.SourceSkillId,
+                    true);
+            }
         }
 
         public bool HasStatus(BaseUnitRuntimeModel target, string statusTag)
@@ -783,6 +853,11 @@ namespace Pakuri.InGame
             if (monsterActor != null)
             {
                 monsterActor.ShowDamage(result.AppliedDamage);
+                if (!result.IsDead)
+                {
+                    monsterActor.TryPlayHitAnimation();
+                }
+
                 return;
             }
 
@@ -810,6 +885,12 @@ namespace Pakuri.InGame
             roster.Unregister(result.Target);
             if (actor != null)
             {
+                var monsterActor = actor as MonsterUnitActor;
+                if (monsterActor != null)
+                {
+                    monsterActor.TryPlayDeathAnimation();
+                }
+
                 Destroy(actor.gameObject, 0.95f);
             }
         }
