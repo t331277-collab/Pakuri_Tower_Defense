@@ -10,7 +10,8 @@ namespace Pakuri.Data
     {
         ActiveEnhancement,
         ActiveMaster,
-        PassiveEnhancement
+        PassiveEnhancement,
+        PassiveBase
     }
 
     public static partial class PakuriCsvRuntimeData

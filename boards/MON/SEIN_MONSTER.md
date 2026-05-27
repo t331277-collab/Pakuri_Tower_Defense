@@ -16,6 +16,379 @@ At the start of new work, use this active Sein file. Common monster history is a
 
 Active Sein task history is recorded below.
 
+## Task: 2026-05-28 Sein-I Base And Sein-G Trait-3 Shared Runtime Completion
+
+### Task title
+
+Extend the shared passive and trigger runtime so Sein-I base and Sein-G trait-3 can be fully implemented.
+
+### Goals
+
+- Add a shared passive-base modifier path that can modify an existing active skill while the passive is learned.
+- Add a shared triggered-skill cast marker path so a passive can react only to an auto-triggered child skill cast.
+- Finish the remaining Sein-I base and Sein-G trait-3 CSV implementation on top of those shared paths.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- The work stays inside the Sein board, the DATA board, the passive-stat blueprint authority, the current shared runtime scripts, and the routed Sein CSV files.
+- No Play Mode gameplay verification is performed by Codex.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented, compile-verified, and Unity editor-validated.
+
+### Next Actions
+
+- User verifies in Play Mode that learned `sein-i` speeds up `sein-d` tick cadence by 20%.
+- User verifies that only Sein-G auto-triggered `sein-b` casts reduce `sein-a` reload, while manual `sein-b` casts do not.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs` and `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs` now define and build shared `PassiveBase` modifier rows through `PassiveDefinition.BaseModifierChoices`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs` now applies learned passive base modifiers to active skill snapshots before chosen enhancement choices are added.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` and `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now forward a trigger-source skill marker through triggered skill cast execution, and triggered skills now dispatch shared `OnSkillCast` trigger events.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now contains `sein-i-base-shot-interval` and marks `sein-g-trait-3` as `RuntimeImplemented`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now contains `sein-g-auto-barrage-reload-trait3`, which uses the shared triggered-cast origin marker plus `condition_status_source_skill_id=sein-g` to gate the reload reduction to Sein-G-origin casts only.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed after one transient initial file-lock failure on `obj\Debug\Assembly-CSharp.dll`; only the existing `MSB3277` warnings remained.
+- Unity menu `Pakuri/Validate CSV Source Data` logged the runtime catalog load summary, and `Pakuri/Sync CSV Runtime Catalog Assets` logged successful sync to `Assets/Resources/Pakuri/CSVRuntime`.
+
+### History
+
+- 2026-05-28: Code Builder added a shared passive-base modifier group and a shared triggered-skill cast origin marker path, then authored the remaining Sein-I base and Sein-G trait-3 rows on top of that runtime support.
+
+## Task: 2026-05-27 Sein Passive CSV-Only F/H/I/J Authoring
+
+### Task title
+
+Implement the Sein passive portions that are already expressible through current CSV/runtime paths, without adding shared runtime logic.
+
+### Goals
+
+- Author `sein-f`, `sein-h`, the status portion of `sein-i`, and `sein-j` through existing status/effect/trigger CSV fields.
+- Keep `sein-i` base tick-speed modification and `sein-g-trait-3` trigger-origin behavior outside this pass because their required shared paths are not present in the inspected runtime.
+- Sync and validate the authored source CSV data through the Unity editor menus.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- Routed edit set is limited to `monster_skill_effects.csv`, `monster_skill_choices.csv`, and `monster_skill_triger.csv`; Unity sync updates the generated runtime catalog asset.
+- No shared runtime/common-logic extension is authored in this pass.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented and editor-validated for the CSV-only scope. `sein-i` base tick-speed `+20%` and exact `sein-g-trait-3` remain pending shared runtime work.
+
+### Next Actions
+
+- Implement the approved shared passive-base to active-skill numeric modifier path for `sein-i` base tick speed.
+- Implement a marker or composite trigger path so only `sein-g`-auto-triggered `sein-b` can reduce `sein-a` reload for `sein-g-trait-3`.
+- Run gameplay verification in Unity Play Mode after the shared-runtime remainder is implemented.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` rows `sein-f-fire-damage` through `sein-e-passive-j-fire-resist-down-trait3` add 12 current-runtime status effects: F ally fire/crit effects, H C-hit fire-resist/exposure effects, I D-hit exposure effects, and J E-hit exposure/resist effects.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` rows `sein-f-trait-1` through `sein-j-trait-3` now route active-skill traits to `sein-a`, `sein-c`, `sein-d`, or `sein-e` where required and record the CSV-authored effects as `RuntimeImplemented`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` rows `sein-j-kill-sein-a-reload` through `sein-j-kill-sein-e-cooldown-trait2` add 12 existing-action triggers for Sein-J: base 20% and trait-2 additional 10% cooldown/reload refunds after `sein-e` kills.
+- `TextFieldParser` validation after authoring returned `FIELD_COUNT_OK` for the three routed CSV files: effects `columns=66 lines=110`, trigger `columns=44 lines=42`, choices `columns=89 lines=252`.
+- Unity menu `Pakuri/Validate CSV Source Data` logged `PakuriCsvRuntimeData loaded runtime catalog ... with 5 monsters and 8 stage-one enemies.` and `Pakuri/Sync CSV Runtime Catalog Assets` logged successful sync from `Assets/CSVdata/source` to `Assets/Resources/Pakuri/CSVRuntime`.
+- The only exception entries emitted during the isolated Unity menu run were MCP transport connection-exit logs sourced from `Library/PackageCache/com.coplaydev.unity-mcp.../StdioBridgeHost.cs`, not CSV validation failures.
+
+### History
+
+- 2026-05-27: Skill Builder / Code Builder edited only CSV-solvable Sein passive behavior, field-validated the routed CSV set, then used Unity validation and catalog sync menus. Shared-runtime-only I base and G trait-3 behavior remained excluded.
+
+## Task: 2026-05-27 Designer Review Of Sein Passive F-J Blockers
+
+### Task title
+
+Re-check whether Sein passive F-J requires new shared runtime work, or whether the existing CSV and runtime paths already cover the requested behavior.
+
+### Goals
+
+- Verify the reported F-J blockers against inspected CSV and runtime code instead of assuming the prior Skill Builder conclusion is complete.
+- Separate behavior already expressible through current CSV paths from exact behavior that still lacks an execution path.
+- Keep the review within the active Sein board, the selected passive blueprint, the routed F-J CSV rows, and the runtime files named or directly reached by the blocker.
+
+### Constraints
+
+- Role Owner is Designer; this task records design verification only and does not implement CSV or runtime changes.
+- The inspected active CSV set was limited to `monster_skills.csv`, `monster_skill_choices.csv`, `monster_skill_effects.csv`, `monster_skill_triger.csv`, and `status_effects.csv`.
+- No reference markdown, archive markdown, unrelated monster board, UI board, RUN board, or DATA board was opened for this review.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Reviewed. The previous blocker list is over-broad: new passive-specific status kinds are not required for exact F/H/J status effects or the status portion of I. Two exact behaviors still require user-approved shared runtime work.
+
+### Next Actions
+
+- Return F/H/J and the status portion of I to Skill Builder as CSV-only work using existing `passive-buff`, `fire-resist-down`, and `fire-exposure` status ids plus existing `requires_passive_skill_id` / trigger paths.
+- Before authoring trait-gated active effects, set the relevant passive choice `target_skill_id` to the affected active skill so the active skill snapshot can see that chosen passive enhancement.
+- Ask the user whether to approve a shared runtime path for:
+  - `sein-i` base applying `Sein-D` tick-speed `+20%` while the passive is learned;
+  - `sein-g-trait-3` reducing `Sein-A` reload only after a `Sein-G`-triggered `Sein-B` execution.
+
+### Evidence
+
+- `boards/SkillBluePrint/passive-stat-blueprint.md` treats always-on skill-specific numeric modifiers and status-rule numeric modifiers as ordinary passive-stat behavior, while event-driven follow-ups remain stop-and-ask behavior.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` has no retained `sein-f`, `sein-h`, `sein-i`, or `sein-j` execution rows; their `monster_skills.csv` rows are marked `RuntimeImplemented` but currently only carry summary text for these effects.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillMultiEffectExecutor.cs` sets status `SourceSkillId` from each `effect_id`, defaults merge policy to `SameSourceRefresh`, supports `requires_passive_skill_id`, and copies flat fire-resist and element-damage-taken numeric payloads into runtime statuses.
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs` keeps source-aware statuses of the same `StatusEffectKind` separate by source id, and `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectRuntime.cs` sums their flat element resistance and element damage-taken values. Existing `fire-resist-down`, `fire-exposure`, and `passive-buff` ids therefore cover distinct additive F/H/I/J status effects without new enum ids.
+- Existing CSV rows `ariel-e-passive-j-action-speed`, `rin-j-physical-defense-down`, and their trait variants already demonstrate active-skill effects gated by `requires_passive_skill_id` and passive enhancements routed to the affected active skill through `target_skill_id`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` already supports passive-owner `OnKill`, `CooldownRefund`, and `ReloadReduce` actions, so Sein-J kill-based cooldown refund can be authored as existing trigger rows, including separate target rows when multiple Sein active skills must be refunded.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs` only adds choice modifiers to an active skill snapshot from chosen choices whose target resolves to that active skill. No inspected path applies a learned passive base row directly to `sein-d` tick interval, so `sein-i` base tick-speed `+20%` remains a real shared-runtime gap.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` executes one trigger action per trigger row and forwards a triggered skill as `sein-b`; no inspected CSV-visible marker identifies that B cast as specifically produced by `sein-g`. Therefore exact `sein-g-trait-3` remains blocked without a shared marker or composite-action path.
+
+### History
+
+- 2026-05-27: Designer inspected the passive-stat blueprint, routed Sein F-J CSV rows, status merge/runtime code, passive multi-effect gating, trigger actions, and active snapshot choice application. The inspection disproved the proposed new-status-kind blocker for F/H/I/J status payloads and retained only the I base tick-speed and G trait-3 trigger-origin gaps as shared-runtime decisions.
+
+## Task: 2026-05-27 Sein Passive F-J Skill Builder Blocker Review
+
+### Task title
+
+Attempt Sein passive F-J Skill Builder authoring from the passive-stat blueprint, keep only validator-safe progress, and record the shared-runtime blockers that prevent exact completion.
+
+### Goals
+
+- Implement Sein passive `f-heated-aim`, `g-flame-barrage`, `h-burning-trajectory`, `i-thermal-spread`, and `j-doomsday-omen` through the routed passive skill CSV set when the existing shared runtime permits it.
+- Keep repository data validator-clean while testing whether the current passive/stat/trigger paths are sufficient.
+- Stop before widening into a new shared runtime/common-logic extension that was not yet user-approved for this passive task.
+
+### Constraints
+
+- Role Owner is Skill Builder.
+- Routed CSV read/edit set was limited to `monster_skills.csv`, `monster_skill_choices.csv`, `monster_skill_effects.csv`, `monster_skill_triger.csv`, and `status_effects.csv`.
+- Reference inputs came only from `Pakuri/reference/2.Monster/sein/skill/f-heated-aim.md` through `j-doomsday-omen.md` plus `boards/SkillBluePrint/passive-stat-blueprint.md`.
+- New shared runtime/common-logic extensions discovered during authoring must stop and be reported instead of being silently invented.
+
+### Role Owner
+
+Skill Builder
+
+### Status
+
+Partially advanced, then stopped at shared-runtime blockers. Repository restored to validator-clean state.
+
+### Next Actions
+
+- Ask the user whether to widen scope into shared runtime work for:
+  - new supported runtime status kinds or a string-backed passive status path so F/H/I/J can apply distinct additive passive debuffs/buffs without enum rejection;
+  - a passive-base skill-modifier path so Sein-I base can grant `Sein-D` tick-speed `+20%` without relying on a selectable enhancement row;
+  - a trigger marker path so `Sein-G trait-3` can detect “auto-triggered Sein-B only” before reducing `Sein-A` reload.
+- If the user approves that wider shared work, resume from this blocker list instead of rediscovering it.
+
+### Evidence
+
+- `boards/SkillBluePrint/passive-stat-blueprint.md` explicitly limits the common path to always-on stat/skill/status modifiers and says event-driven passives should stop and ask rather than be guessed.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs` shows only chosen passive-enhancement rows can modify an active skill snapshot via `SkillChoiceResolver`; there is no current passive-base path that directly applies `Sein-I` base `Sein-D` tick-speed `+20%`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs` accepts only the enum-backed ids through `StatusEffectUtility.TryParse(...)`; attempted new ids for distinct Sein passive statuses were rejected by the CSV validator.
+- Unity editor validation, after reverting the unsupported new passive status/effect rows, logged `PakuriCsvRuntimeData loaded runtime catalog from resource source 'Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog' with 5 monsters and 8 stage-one enemies.`
+- Valid Sein-G progress was retained:
+  - `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now contains `sein-g-auto-barrage-base`, `sein-g-auto-barrage-trait1`, and `sein-g-auto-barrage-trait2`.
+  - `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now marks `sein-g-trait-1` and `sein-g-trait-2` as `RuntimeImplemented`, while `sein-g-trait-3` remains `DataOnlyUnsupported`.
+
+### History
+
+- 2026-05-27: Skill Builder first attempted full F-J authoring with new passive-specific status ids and trigger/effect rows, then proved through Unity validation and direct runtime reflection that those ids are rejected because they are not supported by `StatusEffectKind`.
+- 2026-05-27: Builder restored the invalid F/H/I/J passive status/effect rows, kept only validator-safe Sein-G trigger authoring, and recorded the remaining shared-runtime blockers for a later explicit user decision.
+
+## Task: 2026-05-27 Sein-G Triggered Skill Damage Override Support
+
+### Task title
+
+Add the minimum shared runtime path needed for Sein-G so a passive trigger can launch a triggered active skill with a trigger-scoped damage multiplier.
+
+### Goals
+
+- Let passive or trigger runtime launch a triggered active skill with a damage multiplier that applies only to that triggered execution.
+- Keep the change shared and minimal so existing triggered-skill callers remain behavior-compatible when they do not pass an override.
+- Avoid adding broader trigger snapshot or custom Sein-only branches before Sein-G authoring begins.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Only the shared triggered-skill execution path is extended in this step; no Sein-G CSV authoring is part of this change.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- Skill Builder can now author Sein-G trigger rows that call `sein-b` with a trigger-row `damage_multiplier`, knowing that the multiplier will be applied only to that triggered B execution.
+- User still needs Play Mode verification after Sein-G rows are authored.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now accepts an optional `triggeredDamageMultiplier` when forwarding triggered-skill execution to the skill system.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs` now accepts that override on the triggered execution path and applies it through `SkillExecutionSnapshot.ApplyDynamicDamageMultiplier(...)` before executor dispatch.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` now forwards trigger-row `damage_multiplier` into triggered-skill execution instead of dropping it for `TriggerActionKind.TriggeredSkill`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors after the change; only the existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-27: Designer review concluded that Sein-G could already express the ally-fire trigger, proc chance, cooldown gate, and reload reduction, but lacked a shared path for “triggered B only deals 60% damage.”
+
+## Task: 2026-05-27 Sein-E Manual Parallel Deployment Visual Fix
+
+### Task title
+
+Fix Sein-E manual casting so multi-deployment lines no longer collapse onto one center and so the prefab visual is scaled/oriented like the old line attack presentation.
+
+### Goals
+
+- Make manual Sein-E cast multiple deployments appear simultaneously instead of overlapping at one center.
+- Align manual Sein-E deployment centers in parallel to the clicked direction.
+- Restore large line-like visual scaling for `Sein_E.prefab` under the new `SingleAttack` multi-deployment runtime.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The fix stays in shared `SingleAttackSkillExecutor` runtime code; no CSV or prefab content rewrite is part of this step.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that manual Sein-E now shows 3 simultaneous parallel lines in the clicked direction.
+- User verifies the line visual length/width now matches the intended old `LineAttack` presentation more closely instead of spawning as a very small effect.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` now routes both auto and manual Sein-E multi-deployment casts through the same shared target-anchored center allocation path instead of keeping a manual-only parallel-center branch.
+- The same executor still rotates and rescales multi-deployment prefabs using the old line-style presentation rule (`length=31`, width from resolved skill radius), but its facing now follows the resolved deployment center direction just like auto casting.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillDeploymentCenterUtility.cs` no longer disables nearest-distinct target-center allocation just because the cast came from manual aim input.
+- `Pakuri/Assets/Prefab/Skill/Sein/Sein_E.prefab` still has local scale `0.22610311` and a `BoxCollider2D`, which explained why the unadjusted `SingleAttack` presentation looked much smaller than the previous line actor presentation.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 code errors after the fix; only the existing `MSB3277` warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 code errors when rerun sequentially; only the existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-27: User reported that Sein-E only showed one small line when cast manually, which inspection traced to manual center duplication in the new multi-deployment path and to the loss of the old line actor's visual scaling rule.
+- 2026-05-27: User then reported that manual Sein-E still behaved differently from auto; Builder removed the manual-only parallel deployment branch so manual casts now use the same nearest-distinct target-center allocation as auto casts.
+
+## Task: 2026-05-27 Sein-E Presence Zone CSV Validation Fix
+
+### Task title
+
+Allow Sein-E / Sein-D status-only persistent zones to pass shared CSV validation without inventing fake damage values.
+
+### Goals
+
+- Keep `sein-d-zone-presence` and `sein-e-master2-zone-presence` authored as zero-damage status-refresh zones.
+- Fix the shared CSV validator so these rows do not require fake positive `base_damage`.
+- Verify the original Unity error no longer appears when `Pakuri/Validate CSV Source Data` runs.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The fix must stay on shared validation logic instead of mutating Sein data into unintended damage rows.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and editor-validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Sein-D and Sein-E master-2 presence zones still refresh `sein-d-superheated-presence` without adding unintended damage.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Validation.cs` now allows `SkillMultiEffectKind.Damage` rows with `base_damage <= 0`, zero coefficients, persistent-zone timing, and status payloads to pass validation as status-only persistent zones.
+- The authored rows remain `sein-d-zone-presence` and `sein-e-master2-zone-presence` in `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv`; no fake damage numbers were added.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; only the existing `MSB3277` warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors when rerun sequentially after one file-lock failure caused by parallel compilation.
+- Unity menu `Pakuri/Validate CSV Source Data` logged `PakuriCsvRuntimeData loaded runtime catalog from resource source 'Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog' with 5 monsters and 8 stage-one enemies.` and did not log the earlier `requires positive base_damage` errors for `sein-d-zone-presence` or `sein-e-master2-zone-presence`.
+
+### History
+
+- 2026-05-27: User reported Unity startup validation errors because status-only presence zones were authored as `Damage` effects with `base_damage=0`, which the shared validator previously rejected unconditionally.
+
+## Task: 2026-05-27 Sein-E Multi-Deployment SingleAttack And Master Zone Follow-Up
+
+### Task title
+
+Extend shared `SingleAttack` runtime for Sein-E multi-deployment casting and implement Sein-E enhancement/master rows on that shared path.
+
+### Goals
+
+- Convert `sein-e` from `LineAttack` authoring to `SingleAttack` authoring without losing the intended multi-line cast feel.
+- Let one Sein-E cast execute multiple independent prefab-hitbox `SingleAttack` deployments using nearest-distinct target allocation with repeat fallback.
+- Implement Sein-E trait-3, trait-4, trait-5, and master-2 through shared multi-effect/status/runtime paths instead of a Sein-only branch.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- Selected blueprint is `boards/SkillBluePrint/single-attack-blueprint.md`.
+- Routed CSV authority was limited to `monster_skills.csv`, `monster_skill_choices.csv`, `monster_skill_effects.csv`, `monster_modifier_skill_choice.csv`, and `status_effects.csv`.
+- User explicitly approved widening scope to shared runtime/common-logic extension for the required multi-deployment behavior.
+- `Sein-E` must use `Assets/Prefab/Skill/Sein/Sein_E.prefab`.
+- `Sein-E master-2` must reuse Sein-D-style zone behavior/effects instead of a separate bespoke prefab family.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that base `sein-e` fires 3 independent hitbox deployments at once, preferring distinct nearby enemies and only overlapping targets when fewer than 3 enemies exist.
+- User verifies that `sein-e-trait-4` raises deployment count to 4 while reducing damage to 85%.
+- User verifies that `sein-e-master-2` spawns a Sein-D-style zone at each Sein-E deployment center and that `sein-e-trait-5` only gains bonus damage against enemies currently inside those superheated zones.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillDeploymentCenterUtility.cs` now provides shared target-anchored deployment-center allocation with nearest-distinct selection plus repeat fallback.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/SingleAttackData.cs`, `InGameSkillDefinitionMapper.cs`, and `Skills/Execution/Executors/SingleAttackSkillExecutor.cs` now support `SingleAttack` multi-deployment prefab-hitbox execution, using `hit_target_count` as base deployment count when the skill is authored as prefab-hitbox `SingleAttack`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs` and `Skills/Execution/Runtime/SkillMultiEffectExecutor.cs` now add shared `OnDeploymentCast` timing so each Sein-E deployment center can run follow-up effects.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/ZoneSkillExecutor.cs` now reuses the same deployment-center utility for existing multi-zone target anchoring and runs cast-timed multi-effects at each spawned zone center.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now authors `sein-e` as `runtime_kind=SingleAttack`, `hit_target_count=3`, base `fire-resist-down` status application for `5s` with flat reduction `10`, and `skill_effect_prefab_path=Assets/Prefab/Skill/Sein/Sein_E.prefab`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now marks `sein-e-trait-1` through `sein-e-master-2` as `RuntimeImplemented`, sets `sein-e-trait-4.hit_target_count_bonus=1` with `damage_multiplier=0.85`, and gates `sein-e-trait-5` on `conditional_target_status_id=sein-d-superheated-presence`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now adds `sein-e-trait3-fire-resist-bonus` as a shared `OnHit` status effect, plus `sein-e-master2-zone-damage` and `sein-e-master2-zone-presence` as shared `OnDeploymentCast` persistent-zone follow-ups that reuse Sein-D values and visuals.
+- `Pakuri/Assets/CSVdata/source/status_effects.csv` now contains `sein-d-superheated-presence`, and `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs` now recognizes that status id in shared runtime parsing/definition paths.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-27: User clarified that Sein-E should not be a capped-3-target attack, but a simultaneous multi-cast skill whose independent hitboxes can each hit unlimited enemies.
+- 2026-05-27: Builder reused the distinct-target-allocation concept from existing zone runtime behavior, promoted it into a shared deployment-center utility, and added a shared `OnDeploymentCast` follow-up timing so Sein-E master-2 could spawn Sein-D-style zones per deployment center.
+
 ## Task: 2026-05-27 Sein-B Manual Burst And Projectile Hold Input Fix
 
 ### Task title

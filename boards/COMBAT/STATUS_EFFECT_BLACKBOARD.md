@@ -5,6 +5,90 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-05-27 Zero-Damage Persistent Presence Zone Validation
+
+### Task title
+
+Keep shared presence-status zones valid when they intentionally deal no damage.
+
+### Goals
+
+- Preserve the `sein-d-superheated-presence` refresh path as a zero-damage persistent zone.
+- Avoid adding fake damage to presence-only effect rows.
+- Verify the shared CSV validator recognizes this status-only persistent-zone pattern.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The runtime/status behavior stays shared; no Sein-only validator bypass was added.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and editor-validated.
+
+### Next Actions
+
+- Reuse the same shared validation allowance for future persistent zones that exist only to refresh a status and intentionally deal zero damage.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Validation.cs` now treats zero-damage `Damage` effects as valid only when they are persistent zones with status payloads and zero stat coefficients.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` keeps `sein-d-zone-presence` and `sein-e-master2-zone-presence` at `base_damage=0` while continuing to apply `sein-d-superheated-presence`.
+- Unity menu `Pakuri/Validate CSV Source Data` completed and logged the runtime catalog load summary without the previous `requires positive base_damage` errors.
+
+### History
+
+- 2026-05-27: Shared validation originally forced positive base damage on all `Damage` effect rows, which incorrectly rejected presence-only persistent zones.
+
+## Task: 2026-05-27 Sein-D Superheated Presence Shared Status
+
+### Task title
+
+Add a shared zone-presence status so Sein-E conditional damage can query whether a target is currently inside a Sein-D-style superheated zone.
+
+### Goals
+
+- Keep `Sein-E trait-5` on the existing conditional-target-status damage path.
+- Avoid overloading `sein-d-heat-stack`, which represents repeated zone hits rather than current zone occupancy.
+- Reuse shared persistent-zone multi-effects so both base Sein-D and Sein-E master-2 can refresh the same presence status.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- The status store remains the shared `StatusEffectKind` / combat-manager status runtime; no parallel zone-presence registry was added.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that enemies inside base Sein-D and Sein-E master-2 zones keep the short-lived `sein-d-superheated-presence` status refreshed while they remain inside the area.
+- User verifies that leaving the zone drops the status quickly enough for `Sein-E trait-5` damage to stop applying.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectKind.cs` now defines `SeinDSuperheatedPresence`, parses id `sein-d-superheated-presence`, and returns a shared runtime definition with default duration `0.75s` and max stacks `1`.
+- `Pakuri/Assets/CSVdata/source/status_effects.csv` now contains `sein-d-superheated-presence`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now contains `sein-d-zone-presence` so base Sein-D can refresh that shared presence status through an `OnCast` persistent-zone companion effect.
+- The same effect CSV now contains `sein-e-master2-zone-presence` so each Sein-E master-2 deployment center spawns a matching persistent presence zone through shared `OnDeploymentCast` routing.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now gates `sein-e-trait-5` on `conditional_target_status_id=sein-d-superheated-presence` and `conditional_target_status_min_stacks=1`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; existing `MSB3277` warnings remain.
+
+### History
+
+- 2026-05-27: Sein-E trait-5 required “currently inside superheated zone” semantics, so Builder added a new shared presence status instead of reusing the existing repeated-hit stack status.
+
 ## Task: 2026-05-27 Sein Projectile/Zone Conditional Status Additions
 
 ### Task title

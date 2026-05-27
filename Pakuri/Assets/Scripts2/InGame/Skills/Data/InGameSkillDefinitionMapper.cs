@@ -188,13 +188,19 @@ namespace Pakuri.InGame
                     source.HitTargetCount,
                     out var hitAllTargets,
                     out var hitTargetCount);
+                var useMultiDeployment = !hitAllTargets
+                    && hasHitTargetCount
+                    && hitTargetCount > 1
+                    && source.SkillEffectPrefab != null;
                 single.Area.Radius = source.Radius;
                 single.Area.Duration = 0f;
                 single.Area.TickInterval = 0f;
-                single.UsesHitTargetCount = hasHitTargetCount || source.Radius <= 0f;
-                single.UsePrefabHitbox = hitAllTargets;
+                single.UsesHitTargetCount = !useMultiDeployment && (hasHitTargetCount || source.Radius <= 0f);
+                single.UsePrefabHitbox = hitAllTargets || useMultiDeployment;
+                single.UseMultiDeployment = useMultiDeployment;
                 single.HitAllTargets = hitAllTargets;
                 single.HitTargetCount = hitAllTargets ? int.MaxValue : Math.Max(1, hitTargetCount);
+                single.DeploymentCount = useMultiDeployment ? Math.Max(1, hitTargetCount) : 1;
                 single.DamageDelaySeconds = Mathf.Max(0f, source.DamageDelaySeconds);
                 single.ExecuteHealthRatioThreshold = Mathf.Clamp01(source.ExecuteHealthRatioThreshold);
                 single.RequireExecuteThresholdToCast = source.RequireExecuteThresholdToCast;

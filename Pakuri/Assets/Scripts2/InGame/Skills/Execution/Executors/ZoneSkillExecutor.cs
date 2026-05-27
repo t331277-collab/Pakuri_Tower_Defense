@@ -85,6 +85,7 @@ namespace Pakuri.InGame
                     snapshot != null ? snapshot.CritChanceBonus : 0f,
                     snapshot != null ? snapshot.CritDamageBonus : 0f);
                 routed = true;
+                routed = SkillMultiEffectExecutor.Execute(context, snapshot, skill.MultiEffects, center) || routed;
             }
 
             return new SkillExecutionResult(
@@ -117,60 +118,15 @@ namespace Pakuri.InGame
             int deploymentCount)
         {
             var primaryCenter = ResolveAreaCenter(context, targeting, area);
-            var centers = new List<Vector2> { primaryCenter };
             var coverAll = (area != null && area.CoverAll)
                 || (targeting != null && targeting.CoverAll);
-            if (deploymentCount <= 1
-                || context == null
-                || coverAll
-                || context.HasManualTargetPoint
-                || context.HasManualAimDirection)
-            {
-                while (centers.Count < deploymentCount)
-                {
-                    centers.Add(primaryCenter);
-                }
-
-                return centers;
-            }
-
-            var orderedTargets = SkillExecutionUtility.ResolveOrderedTargets(context.CasterEntry, context.Roster, targeting);
-            if (orderedTargets.Count <= 0)
-            {
-                while (centers.Count < deploymentCount)
-                {
-                    centers.Add(primaryCenter);
-                }
-
-                return centers;
-            }
-
-            centers.Clear();
-            for (var i = 0; i < orderedTargets.Count && centers.Count < deploymentCount; i++)
-            {
-                var target = orderedTargets[i];
-                if (target == null || target.Transform == null)
-                {
-                    continue;
-                }
-
-                centers.Add((Vector2)target.Transform.position);
-            }
-
-            while (centers.Count < deploymentCount)
-            {
-                var randomIndex = UnityEngine.Random.Range(0, orderedTargets.Count);
-                var fallbackTarget = orderedTargets[randomIndex];
-                if (fallbackTarget == null || fallbackTarget.Transform == null)
-                {
-                    centers.Add(primaryCenter);
-                    continue;
-                }
-
-                centers.Add((Vector2)fallbackTarget.Transform.position);
-            }
-
-            return centers;
+            return SkillDeploymentCenterUtility.ResolveTargetAnchoredCenters(
+                context,
+                targeting,
+                primaryCenter,
+                deploymentCount,
+                coverAll,
+                SkillDeploymentRepeatMode.RandomExisting);
         }
 
         private static Vector2 ResolveAreaCenter(

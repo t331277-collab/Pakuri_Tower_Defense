@@ -380,6 +380,7 @@ namespace Pakuri.Data
                     SkillIcon = LoadSprite(skill.SkillIconPath),
                     DescriptionText = skill.DescriptionText,
                     Summary = skill.Summary,
+                    BaseModifierChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.PassiveBase),
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.PassiveEnhancement),
                     PassiveEffects = BuildSkillEffects(model, skill.Id)
                 };
@@ -617,6 +618,8 @@ namespace Pakuri.Data
             {
                 case PakuriCsvChoiceGroup.ActiveMaster:
                     return SkillChoiceGroup.ActiveMaster;
+                case PakuriCsvChoiceGroup.PassiveBase:
+                    return SkillChoiceGroup.PassiveBase;
                 case PakuriCsvChoiceGroup.PassiveEnhancement:
                     return SkillChoiceGroup.PassiveEnhancement;
                 default:

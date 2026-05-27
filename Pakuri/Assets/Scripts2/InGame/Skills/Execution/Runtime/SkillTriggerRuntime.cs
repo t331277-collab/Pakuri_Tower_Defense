@@ -21,7 +21,8 @@ namespace Pakuri.InGame
                 DamageAttribute eventAttribute,
                 string eventSourceSkillId,
                 BaseUnitRuntimeModel eventSource = null,
-                bool eventWasExecute = false)
+                bool eventWasExecute = false,
+                string eventTriggerSourceSkillId = null)
             {
                 EventTarget = eventTarget;
                 Attacker = attacker;
@@ -33,6 +34,7 @@ namespace Pakuri.InGame
                 EventSourceSkillId = eventSourceSkillId;
                 EventSource = eventSource;
                 EventWasExecute = eventWasExecute;
+                EventTriggerSourceSkillId = eventTriggerSourceSkillId;
             }
 
             public BaseUnitRuntimeModel EventTarget { get; }
@@ -45,6 +47,7 @@ namespace Pakuri.InGame
             public string EventSourceSkillId { get; }
             public BaseUnitRuntimeModel EventSource { get; }
             public bool EventWasExecute { get; }
+            public string EventTriggerSourceSkillId { get; }
         }
 
         public static void ExecuteProjectileHit(
@@ -212,7 +215,8 @@ namespace Pakuri.InGame
             UnitRosterService roster,
             BaseUnitRuntimeModel source,
             string sourceSkillId,
-            Vector2 eventCenter)
+            Vector2 eventCenter,
+            string eventTriggerSourceSkillId = null)
         {
             if (combatManager == null || roster == null || source == null)
             {
@@ -228,7 +232,9 @@ namespace Pakuri.InGame
                 0f,
                 DamageAttribute.Physical,
                 sourceSkillId,
-                source);
+                source,
+                false,
+                eventTriggerSourceSkillId);
             ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillId, SkillTriggerEvent.OnSkillCast, triggerContext);
             ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnSkillCast, triggerContext);
         }
@@ -399,7 +405,10 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            if (!MatchesConditionStatusSourceSkill(trigger.ConditionStatusSourceSkillId, triggerContext.EventTarget))
+            if (!MatchesConditionStatusSourceSkill(
+                    trigger.ConditionStatusSourceSkillId,
+                    triggerContext.EventTarget,
+                    triggerContext.EventTriggerSourceSkillId))
             {
                 return false;
             }
@@ -563,7 +572,10 @@ namespace Pakuri.InGame
             return false;
         }
 
-        private static bool MatchesConditionStatusSourceSkill(string rawSourceSkillId, BaseUnitRuntimeModel target)
+        private static bool MatchesConditionStatusSourceSkill(
+            string rawSourceSkillId,
+            BaseUnitRuntimeModel target,
+            string eventTriggerSourceSkillId = null)
         {
             if (string.IsNullOrWhiteSpace(rawSourceSkillId))
             {
@@ -571,13 +583,8 @@ namespace Pakuri.InGame
             }
 
             var statuses = target != null && target.Statuses != null ? target.Statuses.ActiveStatuses : null;
-            if (statuses == null)
-            {
-                return false;
-            }
-
             var tokens = rawSourceSkillId.Split(';', ',');
-            for (var i = 0; i < statuses.Count; i++)
+            for (var i = 0; statuses != null && i < statuses.Count; i++)
             {
                 var status = statuses[i];
                 var sourceData = status != null ? status.SourceData : null;
@@ -595,6 +602,21 @@ namespace Pakuri.InGame
                     {
                         return true;
                     }
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(eventTriggerSourceSkillId))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < tokens.Length; i++)
+            {
+                var token = tokens[i] != null ? tokens[i].Trim() : string.Empty;
+                if (!string.IsNullOrWhiteSpace(token)
+                    && string.Equals(token, eventTriggerSourceSkillId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
                 }
             }
 
@@ -743,7 +765,16 @@ namespace Pakuri.InGame
             var targetPoint = triggerContext.EventTarget != null
                 ? triggerContext.EventCenter
                 : triggerContext.EventCenter;
-            return combatManager.TryExecuteTriggeredSkill(sourceEntry, runtime, targetPoint, true);
+            var triggeredDamageMultiplier = trigger.DamageMultiplier > 0f
+                ? trigger.DamageMultiplier
+                : 1f;
+            return combatManager.TryExecuteTriggeredSkill(
+                sourceEntry,
+                runtime,
+                targetPoint,
+                true,
+                triggeredDamageMultiplier,
+                trigger.SourceSkillId);
         }
 
         private static bool ExecuteEffect(

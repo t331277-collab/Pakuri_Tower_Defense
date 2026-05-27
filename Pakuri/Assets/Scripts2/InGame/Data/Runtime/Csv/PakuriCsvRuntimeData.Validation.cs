@@ -165,12 +165,16 @@ namespace Pakuri.Data
                         $"Skill choice '{choice.Id}' monster mismatch: choice monster '{choice.MonsterId}', skill monster '{skill.MonsterId}'.");
                 }
 
-                if (skill.SkillKind == PakuriCsvSkillKind.Active && choice.ChoiceGroup == PakuriCsvChoiceGroup.PassiveEnhancement)
+                if (skill.SkillKind == PakuriCsvSkillKind.Active
+                    && (choice.ChoiceGroup == PakuriCsvChoiceGroup.PassiveEnhancement
+                        || choice.ChoiceGroup == PakuriCsvChoiceGroup.PassiveBase))
                 {
-                    errors.Add($"Skill choice '{choice.Id}' uses PassiveEnhancement on active skill '{choice.SkillId}'.");
+                    errors.Add($"Skill choice '{choice.Id}' uses passive-only choice group on active skill '{choice.SkillId}'.");
                 }
 
-                if (skill.SkillKind == PakuriCsvSkillKind.Passive && choice.ChoiceGroup != PakuriCsvChoiceGroup.PassiveEnhancement)
+                if (skill.SkillKind == PakuriCsvSkillKind.Passive
+                    && choice.ChoiceGroup != PakuriCsvChoiceGroup.PassiveEnhancement
+                    && choice.ChoiceGroup != PakuriCsvChoiceGroup.PassiveBase)
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses active choice group on passive skill '{choice.SkillId}'.");
                 }
@@ -421,14 +425,23 @@ namespace Pakuri.Data
             ValidatePassiveReference(effect.RequiresPassiveSkillId, effect, model, "requires_passive_skill_id", errors);
             ValidatePassiveReference(effect.ExcludesPassiveSkillId, effect, model, "excludes_passive_skill_id", errors);
 
-            if (effect.EffectKind == SkillMultiEffectKind.Damage && effect.BaseDamage <= 0f)
+            var status = effect.Status;
+            var hasStatus = !string.IsNullOrWhiteSpace(status.StatusEffectId)
+                || !string.IsNullOrWhiteSpace(status.StatusEffectLabel);
+            var isStatusOnlyPersistentZone = effect.EffectKind == SkillMultiEffectKind.Damage
+                && effect.BaseDamage <= 0f
+                && effect.AttackPowerCoefficient <= 0f
+                && effect.SpellPowerCoefficient <= 0f
+                && effect.ActiveDurationSeconds > 0f
+                && effect.TickIntervalSeconds > 0f
+                && hasStatus;
+            if (effect.EffectKind == SkillMultiEffectKind.Damage
+                && effect.BaseDamage <= 0f
+                && !isStatusOnlyPersistentZone)
             {
                 errors.Add($"Damage skill effect '{effect.Id}' requires positive base_damage.");
             }
 
-            var status = effect.Status;
-            var hasStatus = !string.IsNullOrWhiteSpace(status.StatusEffectId)
-                || !string.IsNullOrWhiteSpace(status.StatusEffectLabel);
             if (effect.EffectKind == SkillMultiEffectKind.Status && !hasStatus)
             {
                 errors.Add($"Status skill effect '{effect.Id}' requires status_effect_id or status_effect_label.");
@@ -1136,6 +1149,7 @@ namespace Pakuri.Data
                     errors.Add($"Runtime passive '{skill.PassiveId}' is missing SkillIcon for '{sourceSkill.SkillIconPath}'.");
                 }
 
+                ValidateRuntimeSkillChoiceAssets(skill.BaseModifierChoices, sourceModel, skill.PassiveId, errors);
                 ValidateRuntimeSkillChoiceAssets(skill.EnhancementChoices, sourceModel, skill.PassiveId, errors);
             }
         }

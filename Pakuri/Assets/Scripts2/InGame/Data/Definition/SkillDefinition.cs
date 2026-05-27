@@ -29,7 +29,8 @@ namespace Pakuri.Data
     {
         ActiveEnhancement,
         ActiveMaster,
-        PassiveEnhancement
+        PassiveEnhancement,
+        PassiveBase
     }
 
     public enum SkillRuntimeKind
@@ -79,6 +80,7 @@ namespace Pakuri.Data
     public enum SkillMultiEffectTiming
     {
         OnCast,
+        OnDeploymentCast,
         Delayed,
         OnHit,
         OnExpire,
@@ -445,6 +447,7 @@ namespace Pakuri.Data
         public GameObject SkillEffectPrefab;
         [TextArea(2, 5)] public string DescriptionText;
         [TextArea(2, 4)] public string Summary;
+        public SkillChoiceDefinition[] BaseModifierChoices = Array.Empty<SkillChoiceDefinition>();
         public SkillChoiceDefinition[] EnhancementChoices = Array.Empty<SkillChoiceDefinition>();
         public SkillEffectDefinition[] PassiveEffects = Array.Empty<SkillEffectDefinition>();
     }

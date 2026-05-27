@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Skill CSV Runtime Architecture Explained</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --ink: #1f2933;
+      --muted: #5c6b7a;
+      --line: #d9e2ec;
+      --panel: #f7f9fc;
+      --accent: #176087;
+      --good: #1f6f43;
+      --warn: #8a5a24;
+      --bad: #9b2c2c;
+      --code-bg: #eef2f7;
+      --code-ink: #102a43;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 40px 0 72px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 34px;
+      margin-bottom: 0;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin: 40px 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--line);
+    }
+
+    h3 {
+      font-size: 18px;
+      margin: 24px 0 10px;
+    }
+
+    p { margin: 10px 0; }
+    ul, ol { margin: 10px 0; padding-left: 22px; }
+    li { margin: 6px 0; }
+
+    code {
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.94em;
+      color: var(--code-ink);
+      background: var(--code-bg);
+      border: 1px solid #d5dee9;
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 24px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      padding: 10px 12px;
+    }
+
+    th {
+      background: #edf4fa;
+      color: #243b53;
+    }
+
+    .hero {
+      background: linear-gradient(90deg, #edf6fb 0%, #ffffff 100%);
+      border-left: 6px solid var(--accent);
+      border-radius: 8px;
+      padding: 24px 26px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin: 14px 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .tag {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+    }
+
+    .good {
+      color: var(--good);
+      border-color: #b8e0c4;
+      background: #eefaf1;
+    }
+
+    .warn {
+      color: var(--warn);
+      border-color: #ead6b5;
+      background: #fff8eb;
+    }
+
+    .bad {
+      color: var(--bad);
+      border-color: #efc1c1;
+      background: #fff1f1;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      main {
+        width: min(1120px, calc(100% - 28px));
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div class="eyebrow">Code Evidence Summary</div>
+      <h1>현재 스킬 CSV / 런타임 구조 설명</h1>
+    </section>
+
+    <h2>1. 설명 요약</h2>
+    <div class="card">
+      <ul>
+        <li>스킬 본체는 <code>monster_skills.csv</code>에 만든다.</li>
+        <li>특성, 추가 효과, 자동 발동은 <code>choices / effects / triger / status</code> CSV로 붙인다.</li>
+        <li>런타임은 <code>PakuriCsvRuntimeData</code>가 CSV를 읽고 검증한 뒤 catalog로 만든다.</li>
+        <li>전투에서는 <code>InGameSkillDefinitionMapper.cs</code>, <code>SkillExecutionSystem.cs</code>, <code>SkillRuntimeInstance.cs</code>, 각 executor가 실제 실행을 맡는다.</li>
+        <li>기존 공용 축 안에 있으면 CSV만 수정하면 되고, 새 축이 필요하면 C# 공용 로직을 확장해야 한다.</li>
+      </ul>
+    </div>
+
+    <h2>2. 스킬을 만드는 파일 묶음</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>파일</th>
+          <th>역할</th>
+          <th>주로 넣는 내용</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>monster_skills.csv</code></td>
+          <td>스킬 본체</td>
+          <td>스킬 종류, 슬롯, runtime kind, 피해, 쿨다운, 탄창, 재장전, 발사 간격, 상태 부여</td>
+        </tr>
+        <tr>
+          <td><code>monster_skill_choices.csv</code></td>
+          <td>특성 / 마스터 / 패시브 보정</td>
+          <td>피해 배율, 탄창 증가, 재장전 시간 감소, 발사 간격 감소, 반경 증가, 치명 보정</td>
+        </tr>
+        <tr>
+          <td><code>monster_skill_effects.csv</code></td>
+          <td>추가 effect</td>
+          <td>버프, 디버프, 상태 부여, 추가 피해, 지속 effect</td>
+        </tr>
+        <tr>
+          <td><code>monster_skill_triger.csv</code></td>
+          <td>이벤트 트리거</td>
+          <td>자동 발동, triggered skill, cooldown refund, reload reduce</td>
+        </tr>
+        <tr>
+          <td><code>status_effects.csv</code></td>
+          <td>status 정의</td>
+          <td>status id, 기본 지속 시간, 스택 수, 상태별 수치 효과</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="card">
+      <p>실무적으로는 <strong>스킬 본체 1줄</strong>에 필요한 만큼 <strong>choice / effect / trigger / status row</strong>를 추가하는 구조다.</p>
+    </div>
+
+    <h2>3. 런타임 처리 흐름</h2>
+    <div class="card">
+      <ol>
+        <li><code>PakuriCsvRuntimeData.cs</code>가 CSV catalog 로드 시작</li>
+        <li><code>PakuriCsvRuntimeData.Loader.cs</code>가 CSV를 row 단위로 읽음</li>
+        <li><code>PakuriCsvRuntimeData.MonsterDataset.cs</code>가 row를 typed data로 파싱</li>
+        <li><code>PakuriCsvRuntimeData.Validation.cs</code>가 값과 참조를 검증</li>
+        <li><code>PakuriCsvRuntimeData.Build.cs</code>가 <code>GameDataCatalog</code> 생성</li>
+        <li><code>PakuriDataManager.cs</code>가 runtime lookup 등록</li>
+        <li><code>InGameSkillDefinitionMapper.cs</code>가 <code>SkillDefinition</code>을 <code>SkillData</code>로 변환</li>
+        <li><code>InGameCombatManager.cs</code>가 전투 중 <code>SkillExecutionSystem</code>을 tick</li>
+        <li><code>SkillExecutionSystem.cs</code>가 snapshot 계산, 실행기 선택, cast trigger 통지</li>
+        <li><code>SkillRuntimeInstance.cs</code>가 쿨다운, 탄창, 재장전, 발사 간격 관리</li>
+      </ol>
+    </div>
+
+    <h2>4. 현재 공용 로직이 이미 해주는 것</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>정의 계층</h3>
+        <p><code>SkillDefinition.cs</code>가 skill, passive, choice, effect, trigger 구조를 가진다.</p>
+      </div>
+      <div class="card">
+        <h3>modifier 누적</h3>
+        <p><code>SkillExecutionSnapshot.cs</code>가 피해 배율, 재장전 시간 배율, 발사 간격 배율, 탄창 보정 같은 공용 modifier를 모은다.</p>
+      </div>
+      <div class="card">
+        <h3>패시브 base 보정</h3>
+        <p><code>SkillExecutionSystem.cs</code>가 learned passive의 base modifier를 active snapshot에 적용한다.</p>
+      </div>
+      <div class="card">
+        <h3>지속 패시브 효과</h3>
+        <p><code>InGamePassiveEffectRuntime.cs</code>가 learned passive effect와 apply-once effect를 처리한다.</p>
+      </div>
+      <div class="card">
+        <h3>이벤트 트리거</h3>
+        <p><code>SkillTriggerRuntime.cs</code>가 damage, kill, cast 이벤트를 받아 triggered skill과 환급류를 처리한다.</p>
+      </div>
+      <div class="card">
+        <h3>실행기 계층</h3>
+        <p><code>SkillExecutionSystem.cs</code>에는 projectile, beam, single, zone, buff, shield, passive executor가 기본 등록되어 있다.</p>
+      </div>
+    </div>
+
+    <h2>5. 코드 수정 없이 CSV만으로 가능한 범위</h2>
+    <div class="card">
+      <ul>
+        <li>기존 <code>SkillRuntimeKind</code> 안에 들어가는 스킬</li>
+        <li>기본 피해, 계수, 쿨다운, 탄창, 재장전, 발사 간격, 관통 조정</li>
+        <li>기존 choice 컬럼으로 표현 가능한 특성 / 마스터 / 패시브 보정</li>
+        <li>기존 effect timing과 target 규칙으로 표현 가능한 버프 / 디버프 / 추가 피해</li>
+        <li>기존 trigger event와 action 조합으로 표현 가능한 자동 발동과 환급류</li>
+        <li>이미 지원되는 status id를 사용하는 상태이상</li>
+      </ul>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>요구 사항</th>
+          <th>CSV-only</th>
+          <th>메모</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>기존 투사체 스킬의 피해량 / 탄창 조정</td>
+          <td><span class="tag good">가능</span></td>
+          <td>기존 수치 필드만 수정하면 된다.</td>
+        </tr>
+        <tr>
+          <td>특성으로 재장전 시간 감소</td>
+          <td><span class="tag good">가능</span></td>
+          <td><code>reload_time_multiplier</code> 경로 사용</td>
+        </tr>
+        <tr>
+          <td>특성으로 발사 간격 감소</td>
+          <td><span class="tag good">가능</span></td>
+          <td><code>shot_interval_multiplier</code> 경로 사용</td>
+        </tr>
+        <tr>
+          <td>패시브 base가 특정 active 수치 보정</td>
+          <td><span class="tag good">가능</span></td>
+          <td><code>PassiveBase</code>와 snapshot 적용 경로 사용</td>
+        </tr>
+        <tr>
+          <td>기존 이벤트 기반 자동 발동 후 재장전 감소</td>
+          <td><span class="tag good">가능</span></td>
+          <td><code>ReloadReduce</code> trigger 사용</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>6. 코드 확장이 필요한 경우</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>경우</th>
+          <th>무엇이 부족한가</th>
+          <th>주 수정 파일</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>새로운 스킬 실행 방식</td>
+          <td>기존 runtime kind와 executor로 표현 불가</td>
+          <td><code>SkillDefinition.cs</code>, <code>InGameSkillDefinitionMapper.cs</code>, <code>SkillExecutionSystem.cs</code>, 새 <code>*SkillExecutor.cs</code>, 필요 시 <code>SkillRuntimeInstance.cs</code></td>
+        </tr>
+        <tr>
+          <td>choice CSV에 없는 새 modifier 축</td>
+          <td>기존 컬럼으로 수치 표현 불가</td>
+          <td><code>PakuriCsvRuntimeData.MonsterDataset.cs</code>, <code>SkillDefinition.cs</code>, <code>PakuriCsvRuntimeData.Build.cs</code>, <code>SkillExecutionSnapshot.cs</code>, <code>SkillExecutionSystem.cs</code>, <code>SkillRuntimeInstance.cs</code> 또는 executor</td>
+        </tr>
+        <tr>
+          <td>새 status id 또는 새 status 규칙</td>
+          <td>validator와 runtime이 새 status를 모름</td>
+          <td><code>StatusEffectKind.cs</code>, <code>StatusEffectRuntime.cs</code>, <code>status_effects.csv</code></td>
+        </tr>
+        <tr>
+          <td>새 trigger event 또는 새 trigger action</td>
+          <td>기존 이벤트 / 액션 종류로 표현 불가</td>
+          <td><code>SkillDefinition.cs</code>, <code>PakuriCsvRuntimeData.Validation.cs</code>, <code>SkillTriggerRuntime.cs</code>, <code>InGameCombatManager.cs</code></td>
+        </tr>
+        <tr>
+          <td>패시브가 다른 타이밍에서 active를 수정해야 함</td>
+          <td>현재 snapshot 적용 시점만으로 부족</td>
+          <td><code>SkillExecutionSystem.cs</code>, <code>SkillExecutionSnapshot.cs</code>, <code>SkillRuntimeInstance.cs</code> 또는 executor</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>7. 빠른 판단 기준</h2>
+    <div class="card">
+      <ul>
+        <li>기존 <code>SkillRuntimeKind</code> 안에 들어가면 먼저 CSV-only 후보로 본다.</li>
+        <li>기존 choice / effect / trigger 컬럼으로 표현되면 먼저 CSV-only 후보로 본다.</li>
+        <li>status id가 이미 <code>StatusEffectKind.cs</code>에 있으면 CSV-only 후보로 본다.</li>
+        <li>위 세 가지 중 하나라도 아니면 공용 코드 확장을 먼저 본다.</li>
+      </ul>
+    </div>
+  </main>
+</body>
+</html>

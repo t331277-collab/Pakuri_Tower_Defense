@@ -5,6 +5,132 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-05-28 Sein Passive Shared Runtime Data Completion
+
+### Task title
+
+Finish the remaining Sein passive data that depended on new shared passive-base and triggered-cast runtime support.
+
+### Goals
+
+- Author the shared-runtime-backed CSV rows for Sein-I base and Sein-G trait-3.
+- Keep the active CSV authority aligned with the new shared runtime behavior without adding a new CSV file.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- Edited data files are `monster_skill_choices.csv` and `monster_skill_triger.csv`; Unity sync updates the generated runtime catalog asset.
+- Shared runtime code was extended, but no new CSV file was introduced.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented and Unity editor-validated.
+
+### Next Actions
+
+- Reuse `PassiveBase` choice rows for future learned-passive base modifiers before adding a new passive-base schema.
+- Reuse the triggered-cast origin marker path when a passive must react only to a triggered child skill cast.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now contains `sein-i-base-shot-interval` with `choice_group=PassiveBase`, `target_skill_id=sein-d`, and `shot_interval_multiplier=0.8`.
+- The same choice CSV now marks `sein-g-trait-3` `RuntimeImplemented` and removes the prior blocker note.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now contains `sein-g-auto-barrage-reload-trait3`, which reduces `sein-a` reload by `0.10` on `OnSkillCast` of `sein-b` gated by Sein-G origin.
+- CSV field-width parsing succeeded after the new rows: choices `columns=89 lines=253`, trigger `columns=44 lines=43`.
+- Unity validation and runtime catalog sync both succeeded after the shared runtime and data changes.
+
+### History
+
+- 2026-05-28: Added the shared-runtime-backed Sein-I base and Sein-G trait-3 CSV rows and validated them through the Unity editor.
+
+## Task: 2026-05-27 Sein Passive CSV-Only Runtime Data Authoring
+
+### Task title
+
+Author and sync the existing-runtime CSV data required for the CSV-solvable portion of Sein passives F, H, I, and J.
+
+### Goals
+
+- Add the status-effect and trigger data already supported by current runtime paths.
+- Record active-skill choice routing needed for choice-gated Sein passive effects.
+- Keep shared-runtime-only behavior out of this data pass.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- Edited source authority is limited to `monster_skill_effects.csv`, `monster_skill_choices.csv`, and `monster_skill_triger.csv`.
+- Unity sync writes the generated runtime catalog asset; no new CSV schema or shared runtime logic is added here.
+- Excluded behavior is `sein-i` base tick-speed `+20%` and exact `sein-g-trait-3` auto-trigger source identification.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented and Unity editor-validated for the routed CSV-only data.
+
+### Next Actions
+
+- After the approved shared runtime work exists, add only the data required for `sein-i` base tick speed and `sein-g-trait-3`.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now contains 12 new Sein passive status effect rows for F/H/I/J using existing `passive-buff`, `fire-resist-down`, and `fire-exposure` runtime kinds.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now marks the authored F/H/I/J trait rows `RuntimeImplemented` and supplies target active skill routing where active snapshots require it.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now contains 12 Sein-J `OnKill` action rows using existing `CooldownRefund` and `ReloadReduce` behavior.
+- CSV field-width parsing succeeded after edits: effects `columns=66 lines=110`, trigger `columns=44 lines=42`, choices `columns=89 lines=252`.
+- Unity `Pakuri/Validate CSV Source Data` loaded the runtime catalog successfully, and `Pakuri/Sync CSV Runtime Catalog Assets` reported successful synchronization to `Assets/Resources/Pakuri/CSVRuntime`.
+
+### History
+
+- 2026-05-27: Added and validated the CSV-only Sein passive F/H/I/J data pass; left the two shared-runtime behaviors excluded by scope.
+
+## Task: 2026-05-27 Zero-Damage Persistent Zone CSV Validation Rule
+
+### Task title
+
+Adjust active CSV validation rules so status-only persistent `monster_skill_effects.csv` damage rows can remain zero-damage.
+
+### Goals
+
+- Keep active effect CSV authoring free of fake `base_damage` values for presence-only persistent zones.
+- Preserve positive-damage requirements for normal damage rows.
+- Validate the new rule through the actual Unity CSV validation menu.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The change is a shared validation-rule adjustment, not a new CSV schema.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and editor-validated.
+
+### Next Actions
+
+- Future effect rows that are authored as zero-damage persistent status zones should match the shared rule exactly: persistent timing, status payload, and zero coefficients.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Validation.cs` now exempts only status-only persistent zones from the unconditional positive-`base_damage` rule for `SkillMultiEffectKind.Damage`.
+- Active CSV evidence remains `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` rows `sein-d-zone-presence` and `sein-e-master2-zone-presence`, both authored with `base_damage=0`.
+- Unity menu `Pakuri/Validate CSV Source Data` succeeded after the fix and logged the runtime catalog load summary instead of the earlier validation failure.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 code errors; only the existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-27: Sein-E / Sein-D presence zones exposed that the active validation rule was too strict for zero-damage persistent status-refresh rows.
+
 ## Task: 2026-05-27 Sein-C/D Delayed Projectile And Residual Zone CSV Authoring
 
 ### Task title

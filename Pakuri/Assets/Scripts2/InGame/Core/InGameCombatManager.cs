@@ -384,7 +384,13 @@ namespace Pakuri.InGame
             return true;
         }
 
-        public bool TryExecuteTriggeredSkill(UnitRosterEntry casterEntry, SkillRuntimeInstance runtime, Vector2 targetPoint, bool hasTargetPoint)
+        public bool TryExecuteTriggeredSkill(
+            UnitRosterEntry casterEntry,
+            SkillRuntimeInstance runtime,
+            Vector2 targetPoint,
+            bool hasTargetPoint,
+            float triggeredDamageMultiplier = 1f,
+            string triggerSourceSkillId = null)
         {
             return skillExecution.TryExecuteTriggered(
                 casterEntry,
@@ -393,10 +399,16 @@ namespace Pakuri.InGame
                 this,
                 logSkillExecutionContracts,
                 targetPoint,
-                hasTargetPoint);
+                hasTargetPoint,
+                triggeredDamageMultiplier,
+                triggerSourceSkillId);
         }
 
-        public void DispatchSkillCastTriggers(UnitRosterEntry sourceEntry, string sourceSkillId, Vector2 eventCenter)
+        public void DispatchSkillCastTriggers(
+            UnitRosterEntry sourceEntry,
+            string sourceSkillId,
+            Vector2 eventCenter,
+            string triggerSourceSkillId = null)
         {
             var source = sourceEntry != null ? sourceEntry.Model : null;
             if (source == null || string.IsNullOrWhiteSpace(sourceSkillId))
@@ -404,7 +416,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            SkillTriggerRuntime.ExecuteSkillCast(this, roster, source, sourceSkillId, eventCenter);
+            SkillTriggerRuntime.ExecuteSkillCast(this, roster, source, sourceSkillId, eventCenter, triggerSourceSkillId);
         }
 
         private void TickLearnedPassiveEffects(float deltaTime)

@@ -1,4 +1,4 @@
-"status_effect_id","status_effect_label","effect_type","attribute","default_duration_seconds","is_permanent","max_stacks","base_stack_amount","can_move","can_act","can_use_special_skill","action_speed_bonus_per_stack","move_speed_bonus_per_stack","attack_power_bonus_per_stack","damage_taken_bonus_per_stack","critical_damage_taken_bonus_per_stack","critical_resistance_bonus_per_stack","element_resist_reduction_per_stack","element_damage_taken_bonus_per_stack","status_effect_prefab_path"
+﻿"status_effect_id","status_effect_label","effect_type","attribute","default_duration_seconds","is_permanent","max_stacks","base_stack_amount","can_move","can_act","can_use_special_skill","action_speed_bonus_per_stack","move_speed_bonus_per_stack","attack_power_bonus_per_stack","damage_taken_bonus_per_stack","critical_damage_taken_bonus_per_stack","critical_resistance_bonus_per_stack","element_resist_reduction_per_stack","element_damage_taken_bonus_per_stack","status_effect_prefab_path"
 "id","string","enum:StatusEffectClassification","enum:DamageAttribute|None","float","bool","int","int","bool","bool","bool","float","float","float","float","float","float","float","float","asset_path"
 "shock","감전","Debuff","Lightning","4","false","5","1","true","true","true","0","0","0","0","0","0","0","0",""
 "chill","추위","Debuff","Ice","3","false","5","1","true","true","true","0","-0.06","0","0","0","0","0","0",""
@@ -18,3 +18,4 @@
 "passive-buff","Passive Buff","Buff","None","0","false","1","1","true","true","true","0","0","0","0","0","0","0","0",""
 "sein-a-hit-mark","열풍 화살 표식","Debuff","Fire","5","false","1","1","true","true","true","0","0","0","0","0","0","0","0",""
 "sein-d-heat-stack","초열 타격","Debuff","Fire","1","false","99","1","true","true","true","0","0","0","0","0","0","0","0",""
+"sein-d-superheated-presence","초열 지대 노출","Debuff","Fire","0.75","false","1","1","true","true","true","0","0","0","0","0","0","0","0",""

@@ -9,8 +9,10 @@ namespace Pakuri.InGame
         public AreaBlueprintSpec Area = new AreaBlueprintSpec();
         public bool UsesHitTargetCount;
         public bool UsePrefabHitbox;
+        public bool UseMultiDeployment;
         public bool HitAllTargets;
         [Min(1)] public int HitTargetCount = 1;
+        [Min(1)] public int DeploymentCount = 1;
         [Min(0f)] public float DamageDelaySeconds;
         [Range(0f, 1f)] public float ExecuteHealthRatioThreshold;
         public bool RequireExecuteThresholdToCast;

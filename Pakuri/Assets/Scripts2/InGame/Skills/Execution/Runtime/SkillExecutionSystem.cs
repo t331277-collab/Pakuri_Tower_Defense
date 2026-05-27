@@ -69,7 +69,9 @@ namespace Pakuri.InGame
             InGameCombatManager combatManager,
             bool logRoutedContracts,
             Vector2 targetPoint,
-            bool hasTargetPoint)
+            bool hasTargetPoint,
+            float triggeredDamageMultiplier = 1f,
+            string triggerSourceSkillId = null)
         {
             if (runtime == null || entry == null)
             {
@@ -89,7 +91,9 @@ namespace Pakuri.InGame
                 hasAimDirection,
                 aimDirection,
                 hasTargetPoint,
-                targetPoint);
+                targetPoint,
+                triggeredDamageMultiplier,
+                triggerSourceSkillId);
         }
 
         private void TickEntry(
@@ -195,7 +199,8 @@ namespace Pakuri.InGame
             InGameCombatManager combatManager,
             UnitRosterEntry entry,
             SkillRuntimeInstance runtime,
-            SkillExecutionContext context)
+            SkillExecutionContext context,
+            string triggerSourceSkillId = null)
         {
             if (combatManager == null || entry == null || runtime == null || runtime.Data == null)
             {
@@ -205,7 +210,7 @@ namespace Pakuri.InGame
             var center = context != null && context.HasManualTargetPoint
                 ? context.ManualTargetPoint
                 : entry.Transform != null ? (Vector2)entry.Transform.position : Vector2.zero;
-            combatManager.DispatchSkillCastTriggers(entry, runtime.Data.SkillId, center);
+            combatManager.DispatchSkillCastTriggers(entry, runtime.Data.SkillId, center, triggerSourceSkillId);
         }
 
         private bool TryExecuteTriggeredSkill(
@@ -217,7 +222,9 @@ namespace Pakuri.InGame
             bool hasManualAimDirection,
             Vector2 manualAimDirection,
             bool hasManualTargetPoint,
-            Vector2 manualTargetPoint)
+            Vector2 manualTargetPoint,
+            float triggeredDamageMultiplier,
+            string triggerSourceSkillId)
         {
             if (runtime == null || entry == null)
             {
@@ -225,6 +232,11 @@ namespace Pakuri.InGame
             }
 
             var snapshot = choiceResolver.Resolve(entry.Model, runtime, roster);
+            if (!Mathf.Approximately(triggeredDamageMultiplier, 1f))
+            {
+                snapshot.ApplyDynamicDamageMultiplier(triggeredDamageMultiplier);
+            }
+
             if (!registry.TryResolve(runtime.Data, out var executor))
             {
                 LastRejectedCount++;
@@ -244,6 +256,7 @@ namespace Pakuri.InGame
             var result = executor.Execute(context, snapshot);
             if (result.Routed)
             {
+                NotifySkillCastTriggers(combatManager, entry, runtime, context, triggerSourceSkillId);
                 LastRoutedCount++;
                 if (logRoutedContracts)
                 {
@@ -318,6 +331,7 @@ namespace Pakuri.InGame
         {
             var skillData = runtime != null ? runtime.Data : null;
             var snapshot = new SkillExecutionSnapshot(skillData);
+            ApplyPassiveBaseModifiers(snapshot, owner as MonsterUnitRuntimeModel, skillData);
             var monsterOwner = owner as MonsterUnitRuntimeModel;
             var chosenChoiceIds = monsterOwner != null && monsterOwner.State != null
                 ? monsterOwner.State.ChosenChoiceIds
@@ -329,6 +343,44 @@ namespace Pakuri.InGame
 
             ApplyChoices(snapshot, chosenChoiceIds, skillData, owner, roster);
             return snapshot;
+        }
+
+        private static void ApplyPassiveBaseModifiers(
+            SkillExecutionSnapshot snapshot,
+            MonsterUnitRuntimeModel owner,
+            SkillData skillData)
+        {
+            if (snapshot == null
+                || owner == null
+                || owner.State == null
+                || skillData == null
+                || owner.State.LearnedPassiveSkillIds == null
+                || owner.State.LearnedPassiveSkillIds.Count == 0)
+            {
+                return;
+            }
+
+            var manager = PakuriDataManager.Instance;
+            foreach (var passiveId in owner.State.LearnedPassiveSkillIds)
+            {
+                if (manager == null
+                    || !manager.TryGetData(passiveId, out PassiveDefinition passive)
+                    || passive == null
+                    || passive.BaseModifierChoices == null
+                    || passive.BaseModifierChoices.Length == 0)
+                {
+                    continue;
+                }
+
+                for (var i = 0; i < passive.BaseModifierChoices.Length; i++)
+                {
+                    var modifier = passive.BaseModifierChoices[i];
+                    if (modifier != null && AppliesToSkill(modifier, skillData))
+                    {
+                        snapshot.ApplyChoiceDefinition(modifier);
+                    }
+                }
+            }
         }
 
         private static void ApplyChoices(

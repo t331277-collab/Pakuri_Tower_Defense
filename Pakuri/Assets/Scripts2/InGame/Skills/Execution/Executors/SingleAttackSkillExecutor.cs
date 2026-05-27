@@ -11,6 +11,7 @@ namespace Pakuri.InGame
     public sealed class SingleAttackSkillExecutor : TypedSkillExecutor<SingleAttackData>
     {
         private const float DefaultVisualLifetimeSeconds = 1f;
+        private const float DefaultMultiDeploymentLineLength = 31f;
         private const float PostDamageLifetimePaddingSeconds = 0.05f;
 
         private readonly struct SingleAttackExecutionOutcome
@@ -84,7 +85,9 @@ namespace Pakuri.InGame
 
             var center = ResolveAreaCenter(context, skill.Targeting, skill.Area);
             var prefab = ResolvePrefab(context, snapshot, skill);
-            var outcome = ExecuteAtCenter(context, snapshot, skill, center, prefab, true);
+            var outcome = skill.UseMultiDeployment
+                ? ExecuteResolvedDeployments(context, snapshot, skill, center, prefab)
+                : ExecuteAtCenter(context, snapshot, skill, center, prefab, true);
             var multiEffectRouted = SkillMultiEffectExecutor.Execute(context, snapshot, skill.MultiEffects, center);
             var routed = outcome.Routed || multiEffectRouted;
             return new SkillExecutionResult(
@@ -163,6 +166,104 @@ namespace Pakuri.InGame
             return fallbackCenter;
         }
 
+        private static int ResolveDeploymentCount(SingleAttackData skill, SkillExecutionSnapshot snapshot)
+        {
+            if (skill == null || !skill.UseMultiDeployment)
+            {
+                return 1;
+            }
+
+            var bonus = snapshot != null ? snapshot.HitTargetCountBonus : 0;
+            return Mathf.Max(1, skill.DeploymentCount + bonus);
+        }
+
+        private static List<Vector2> ResolveDeploymentCenters(
+            SkillExecutionContext context,
+            SingleAttackData skill,
+            Vector2 primaryCenter,
+            int deploymentCount)
+        {
+            var coverAll = (skill != null && skill.Area != null && skill.Area.CoverAll)
+                || (skill != null && skill.Targeting != null && skill.Targeting.CoverAll);
+            return SkillDeploymentCenterUtility.ResolveTargetAnchoredCenters(
+                context,
+                skill != null ? skill.Targeting : null,
+                primaryCenter,
+                deploymentCount,
+                coverAll,
+                SkillDeploymentRepeatMode.RepeatNearest);
+        }
+
+        private static SingleAttackExecutionOutcome ExecuteResolvedDeployments(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SingleAttackData skill,
+            Vector2 primaryCenter,
+            GameObject prefab)
+        {
+            var deploymentCount = ResolveDeploymentCount(skill, snapshot);
+            var centers = ResolveDeploymentCenters(context, skill, primaryCenter, deploymentCount);
+            var routed = false;
+            var castCommitted = false;
+            for (var i = 0; i < centers.Count; i++)
+            {
+                var center = centers[i];
+                var outcome = ExecuteAtCenter(context, snapshot, skill, center, prefab, true);
+                routed = routed || outcome.Routed;
+                castCommitted = castCommitted || outcome.CastCommitted;
+                routed = SkillMultiEffectExecutor.ExecuteOnDeploymentCast(context, snapshot, skill.MultiEffects, center) || routed;
+            }
+
+            return new SingleAttackExecutionOutcome(routed, castCommitted);
+        }
+
+        private static void ConfigureMultiDeploymentPrefabVisual(
+            Transform transform,
+            SkillExecutionContext context,
+            SingleAttackData skill,
+            SkillExecutionSnapshot snapshot,
+            Vector2 center)
+        {
+            if (transform == null || skill == null)
+            {
+                return;
+            }
+
+            var origin = context != null && context.CasterEntry != null && context.CasterEntry.Transform != null
+                ? (Vector2)context.CasterEntry.Transform.position
+                : center;
+            var direction = center - origin;
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                direction = Vector2.right;
+            }
+
+            transform.position = center;
+            transform.rotation = SkillExecutionUtility.ResolveRotation(direction.normalized);
+
+            var width = ResolveRadius(skill, snapshot);
+            var spriteRenderer = transform.GetComponent<SpriteRenderer>();
+            if (spriteRenderer != null && spriteRenderer.sprite != null)
+            {
+                var size = spriteRenderer.sprite.bounds.size;
+                var scale = transform.localScale;
+                if (size.x > 0.0001f)
+                {
+                    scale.x = Mathf.Sign(scale.x == 0f ? 1f : scale.x) * (DefaultMultiDeploymentLineLength / size.x);
+                }
+
+                if (size.y > 0.0001f)
+                {
+                    scale.y = Mathf.Sign(scale.y == 0f ? 1f : scale.y) * (width / size.y);
+                }
+
+                transform.localScale = scale;
+                return;
+            }
+
+            SkillExecutionUtility.ApplyPrefabScale(transform, SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area), snapshot);
+        }
+
         private static SingleAttackExecutionOutcome ExecuteAtCenter(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -181,7 +282,9 @@ namespace Pakuri.InGame
             var critChanceBonus = snapshot != null ? snapshot.CritChanceBonus : 0f;
             var critDamageBonus = snapshot != null ? snapshot.CritDamageBonus : 0f;
             var hitTargetCountBonus = snapshot != null ? snapshot.HitTargetCountBonus : 0;
-            var effectiveHitTargetCount = skill.HitAllTargets
+            var effectiveHitTargetCount = skill.UseMultiDeployment
+                ? int.MaxValue
+                : skill.HitAllTargets
                 ? int.MaxValue
                 : Mathf.Max(1, skill.HitTargetCount + hitTargetCountBonus);
             var damageDelaySeconds = Mathf.Max(0f, skill.DamageDelaySeconds);
@@ -200,7 +303,14 @@ namespace Pakuri.InGame
                 {
                     spawnedHitbox = true;
                     castCommitted = true;
-                    SkillExecutionUtility.ApplyPrefabScale(instance.transform, SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area), snapshot);
+                    if (skill.UseMultiDeployment)
+                    {
+                        ConfigureMultiDeploymentPrefabVisual(instance.transform, context, skill, snapshot, center);
+                    }
+                    else
+                    {
+                        SkillExecutionUtility.ApplyPrefabScale(instance.transform, SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area), snapshot);
+                    }
                     if (damageDelaySeconds > 0f)
                     {
                         context.CombatManager.StartCoroutine(ApplyPrefabHitboxAfterDelay(

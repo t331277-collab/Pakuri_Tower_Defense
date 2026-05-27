@@ -37,6 +37,15 @@ namespace Pakuri.InGame
             return ExecuteFiltered(context, snapshot, effects, fallbackCenter, SkillMultiEffectTiming.OnExpire, false);
         }
 
+        internal static bool ExecuteOnDeploymentCast(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SkillEffectDefinition[] effects,
+            Vector2 fallbackCenter)
+        {
+            return ExecuteFiltered(context, snapshot, effects, fallbackCenter, SkillMultiEffectTiming.OnDeploymentCast, false);
+        }
+
         internal static bool ExecuteOnHit(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -104,6 +113,7 @@ namespace Pakuri.InGame
                     }
                 }
                 else if (effect.EffectTiming == SkillMultiEffectTiming.OnHit
+                    || effect.EffectTiming == SkillMultiEffectTiming.OnDeploymentCast
                     || effect.EffectTiming == SkillMultiEffectTiming.OnExpire
                     || effect.EffectTiming == SkillMultiEffectTiming.OnHitCount)
                 {

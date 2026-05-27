@@ -24,7 +24,8 @@ namespace Pakuri.InGame
         ActionSpeedUp,
         PassiveBuff,
         SeinAHitMark,
-        SeinDHeatStack
+        SeinDHeatStack,
+        SeinDSuperheatedPresence
     }
 
     public readonly struct StatusEffectDefinition
@@ -142,6 +143,9 @@ namespace Pakuri.InGame
                 case "sein-d-heat-stack":
                     kind = StatusEffectKind.SeinDHeatStack;
                     return true;
+                case "sein-d-superheated-presence":
+                    kind = StatusEffectKind.SeinDSuperheatedPresence;
+                    return true;
                 default:
                     return false;
             }
@@ -187,6 +191,8 @@ namespace Pakuri.InGame
                     return new StatusEffectDefinition(kind, "sein-a-hit-mark", "Sein A Hit Mark", 5f, 1, false);
                 case StatusEffectKind.SeinDHeatStack:
                     return new StatusEffectDefinition(kind, "sein-d-heat-stack", "Sein D Heat Stack", 1f, 99, false);
+                case StatusEffectKind.SeinDSuperheatedPresence:
+                    return new StatusEffectDefinition(kind, "sein-d-superheated-presence", "Sein D Superheated Presence", 0.75f, 1, false);
                 default:
                     return NoneDefinition;
             }

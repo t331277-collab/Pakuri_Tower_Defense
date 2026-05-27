@@ -58,3 +58,5 @@ MonoBehaviour:
     Asset: {fileID: 2282866027505473427, guid: 395f96024484e1049881c2b3feab69ba, type: 3}
   - AssetPath: Assets/Prefab/Skill/Sein/Sein_D_Master_2.prefab
     Asset: {fileID: 2282866027505473427, guid: eeacd43e7677aa447a2a8d39670a1420, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Sein/Sein_E.prefab
+    Asset: {fileID: 6033072763576960657, guid: f3d5f6e31aa6d624aa4c95a67d7b874a, type: 3}
