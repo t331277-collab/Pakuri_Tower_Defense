@@ -10,6 +10,9 @@ namespace Pakuri.InGame
 
     public sealed class SingleAttackSkillExecutor : TypedSkillExecutor<SingleAttackData>
     {
+        private const float DefaultVisualLifetimeSeconds = 1f;
+        private const float PostDamageLifetimePaddingSeconds = 0.05f;
+
         private readonly struct SingleAttackExecutionOutcome
         {
             public SingleAttackExecutionOutcome(bool routed, bool castCommitted)
@@ -136,14 +139,18 @@ namespace Pakuri.InGame
             return target == null || target.Model == null || !IsWithinExecuteThreshold(target.Model, threshold);
         }
 
-        private static void SpawnVisual(SkillExecutionContext context, GameObject prefab, Vector2 center)
+        private static void SpawnVisual(SkillExecutionContext context, GameObject prefab, Vector2 center, float minimumLifetimeSeconds)
         {
             if (prefab == null || context.CombatManager.Effects == null)
             {
                 return;
             }
 
-            SkillVisualSpawnUtility.SpawnTransient(context.CombatManager.Effects, prefab, center, Quaternion.identity, 1f);
+            var instance = context.CombatManager.Effects.InstantiateSkillPrefab(prefab, center, Quaternion.identity);
+            if (instance != null)
+            {
+                UnityEngine.Object.Destroy(instance, ResolveVisualLifetime(instance, minimumLifetimeSeconds));
+            }
         }
 
         private static Vector2 ResolvePrefabHitboxCenter(SkillExecutionContext context, Vector2 fallbackCenter, SingleAttackData skill)
@@ -170,12 +177,14 @@ namespace Pakuri.InGame
             var damage = SkillExecutionUtility.ResolveDamage(context.Caster, skill.Damage, snapshot);
             var attribute = SkillExecutionUtility.MapAttribute(skill.Damage != null ? skill.Damage.Element : skill.Element);
             var statusSpec = SkillStatusSpecUtility.ResolveStatusSpec(skill.OnHitStatus, snapshot);
+            var onHitStatusEffects = ResolveOnHitStatusEffects(context, snapshot, skill.MultiEffects);
             var critChanceBonus = snapshot != null ? snapshot.CritChanceBonus : 0f;
             var critDamageBonus = snapshot != null ? snapshot.CritDamageBonus : 0f;
             var hitTargetCountBonus = snapshot != null ? snapshot.HitTargetCountBonus : 0;
             var effectiveHitTargetCount = skill.HitAllTargets
                 ? int.MaxValue
                 : Mathf.Max(1, skill.HitTargetCount + hitTargetCountBonus);
+            var damageDelaySeconds = Mathf.Max(0f, skill.DamageDelaySeconds);
             var followUpSpec = allowConditionalFollowUp ? ResolveFollowUpSpec(snapshot, statusSpec, prefab) : null;
             var followUpTargets = followUpSpec.HasValue ? new List<SingleAttackFollowUpTarget>() : null;
             var onHitRuntime = allowConditionalFollowUp ? context.Runtime : null;
@@ -192,94 +201,299 @@ namespace Pakuri.InGame
                     spawnedHitbox = true;
                     castCommitted = true;
                     SkillExecutionUtility.ApplyPrefabScale(instance.transform, SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area), snapshot);
-                    Physics2D.SyncTransforms();
-                    routed = ApplyPrefabHitbox(
-                        context.CombatManager,
-                        context.CasterEntry,
-                        context.Roster,
-                        skill,
-                        skill.Targeting,
-                        instance,
-                        effectiveHitTargetCount,
-                        damage,
-                        attribute,
-                        statusSpec,
-                        context.Caster,
-                        skill.SkillId,
-                        onHitRuntime,
-                        skill.Damage != null && skill.Damage.CriticalAllowed,
-                        critChanceBonus,
-                        critDamageBonus,
-                        snapshot,
-                        followUpSpec,
-                        followUpTargets);
-                    UnityEngine.Object.Destroy(instance, 1f);
+                    if (damageDelaySeconds > 0f)
+                    {
+                        context.CombatManager.StartCoroutine(ApplyPrefabHitboxAfterDelay(
+                            context,
+                            snapshot,
+                            skill,
+                            instance,
+                            effectiveHitTargetCount,
+                            damage,
+                            attribute,
+                            statusSpec,
+                            onHitStatusEffects,
+                            onHitRuntime,
+                            skill.Damage != null && skill.Damage.CriticalAllowed,
+                            critChanceBonus,
+                            critDamageBonus,
+                            followUpSpec,
+                            followUpTargets,
+                            damageDelaySeconds,
+                            allowConditionalFollowUp));
+                    }
+                    else
+                    {
+                        Physics2D.SyncTransforms();
+                        routed = ApplyPrefabHitbox(
+                            context.CombatManager,
+                            context.CasterEntry,
+                            context.Roster,
+                            skill,
+                            skill.Targeting,
+                            instance,
+                            effectiveHitTargetCount,
+                            damage,
+                            attribute,
+                            statusSpec,
+                            onHitStatusEffects,
+                            context.Caster,
+                            skill.SkillId,
+                            onHitRuntime,
+                            skill.Damage != null && skill.Damage.CriticalAllowed,
+                            critChanceBonus,
+                            critDamageBonus,
+                            snapshot,
+                            followUpSpec,
+                            followUpTargets);
+                    }
+
+                    UnityEngine.Object.Destroy(instance, ResolveVisualLifetime(instance, damageDelaySeconds + PostDamageLifetimePaddingSeconds));
                 }
             }
 
             if (!spawnedHitbox)
             {
                 castCommitted = true;
-                if (skill.UsesHitTargetCount && !skill.HitAllTargets)
+                if (damageDelaySeconds > 0f)
                 {
-                    routed = ApplyLimitedTargets(
-                        context.CombatManager,
-                        context.CasterEntry,
-                        context.Roster,
+                    SpawnVisual(context, prefab, center, damageDelaySeconds + PostDamageLifetimePaddingSeconds);
+                    context.CombatManager.StartCoroutine(ApplyNonPrefabTargetsAfterDelay(
+                        context,
+                        snapshot,
                         skill,
-                        skill.Targeting,
+                        center,
+                        radius,
+                        coverAll,
                         effectiveHitTargetCount,
                         damage,
                         attribute,
                         statusSpec,
-                        context.Caster,
-                        skill.SkillId,
+                        onHitStatusEffects,
                         onHitRuntime,
                         skill.Damage != null && skill.Damage.CriticalAllowed,
                         critChanceBonus,
                         critDamageBonus,
-                        snapshot,
-                        center,
                         followUpSpec,
-                        followUpTargets);
+                        followUpTargets,
+                        damageDelaySeconds,
+                        allowConditionalFollowUp));
                 }
                 else
                 {
-                    routed = ApplyAreaTargets(
-                        context.CombatManager,
-                        context.CasterEntry,
-                        context.Roster,
+                    routed = ApplyNonPrefabTargets(
+                        context,
+                        snapshot,
                         skill,
-                        skill.Targeting,
                         center,
                         radius,
                         coverAll,
+                        effectiveHitTargetCount,
                         damage,
                         attribute,
                         statusSpec,
-                        context.Caster,
-                        skill.SkillId,
+                        onHitStatusEffects,
                         onHitRuntime,
                         skill.Damage != null && skill.Damage.CriticalAllowed,
                         critChanceBonus,
                         critDamageBonus,
-                        snapshot,
                         followUpSpec,
                         followUpTargets);
-                }
 
-                if (routed)
-                {
-                    SpawnVisual(context, prefab, center);
+                    if (routed)
+                    {
+                        SpawnVisual(context, prefab, center, PostDamageLifetimePaddingSeconds);
+                    }
                 }
             }
 
-            if (allowConditionalFollowUp)
+            if (allowConditionalFollowUp && damageDelaySeconds <= 0f)
             {
                 ScheduleConditionalFollowUps(context, snapshot, skill, followUpSpec, followUpTargets);
             }
 
             return new SingleAttackExecutionOutcome(routed, castCommitted);
+        }
+
+        private static bool ApplyNonPrefabTargets(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SingleAttackData skill,
+            Vector2 center,
+            float radius,
+            bool coverAll,
+            int effectiveHitTargetCount,
+            float damage,
+            DamageAttribute attribute,
+            ProjectileStatusHitSpec statusSpec,
+            SkillEffectDefinition[] onHitStatusEffects,
+            SkillRuntimeInstance onHitRuntime,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            SingleAttackFollowUpSpec? followUpSpec,
+            List<SingleAttackFollowUpTarget> followUpTargets)
+        {
+            if (context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null || skill == null)
+            {
+                return false;
+            }
+
+            if (skill.UsesHitTargetCount && !skill.HitAllTargets)
+            {
+                return ApplyLimitedTargets(
+                    context.CombatManager,
+                    context.CasterEntry,
+                    context.Roster,
+                    skill,
+                    skill.Targeting,
+                    effectiveHitTargetCount,
+                    damage,
+                    attribute,
+                    statusSpec,
+                    onHitStatusEffects,
+                    context.Caster,
+                    skill.SkillId,
+                    onHitRuntime,
+                    criticalAllowed,
+                    critChanceBonus,
+                    critDamageBonus,
+                    snapshot,
+                    center,
+                    followUpSpec,
+                    followUpTargets);
+            }
+
+            return ApplyAreaTargets(
+                context.CombatManager,
+                context.CasterEntry,
+                context.Roster,
+                skill,
+                skill.Targeting,
+                center,
+                radius,
+                coverAll,
+                damage,
+                attribute,
+                statusSpec,
+                onHitStatusEffects,
+                context.Caster,
+                skill.SkillId,
+                onHitRuntime,
+                criticalAllowed,
+                critChanceBonus,
+                critDamageBonus,
+                snapshot,
+                followUpSpec,
+                followUpTargets);
+        }
+
+        private static IEnumerator ApplyNonPrefabTargetsAfterDelay(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SingleAttackData skill,
+            Vector2 center,
+            float radius,
+            bool coverAll,
+            int effectiveHitTargetCount,
+            float damage,
+            DamageAttribute attribute,
+            ProjectileStatusHitSpec statusSpec,
+            SkillEffectDefinition[] onHitStatusEffects,
+            SkillRuntimeInstance onHitRuntime,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            SingleAttackFollowUpSpec? followUpSpec,
+            List<SingleAttackFollowUpTarget> followUpTargets,
+            float delaySeconds,
+            bool allowConditionalFollowUp)
+        {
+            yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
+
+            ApplyNonPrefabTargets(
+                context,
+                snapshot,
+                skill,
+                center,
+                radius,
+                coverAll,
+                effectiveHitTargetCount,
+                damage,
+                attribute,
+                statusSpec,
+                onHitStatusEffects,
+                onHitRuntime,
+                criticalAllowed,
+                critChanceBonus,
+                critDamageBonus,
+                followUpSpec,
+                followUpTargets);
+
+            if (allowConditionalFollowUp)
+            {
+                ScheduleConditionalFollowUps(context, snapshot, skill, followUpSpec, followUpTargets);
+            }
+        }
+
+        private static IEnumerator ApplyPrefabHitboxAfterDelay(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SingleAttackData skill,
+            GameObject instance,
+            int effectiveHitTargetCount,
+            float damage,
+            DamageAttribute attribute,
+            ProjectileStatusHitSpec statusSpec,
+            SkillEffectDefinition[] onHitStatusEffects,
+            SkillRuntimeInstance onHitRuntime,
+            bool criticalAllowed,
+            float critChanceBonus,
+            float critDamageBonus,
+            SingleAttackFollowUpSpec? followUpSpec,
+            List<SingleAttackFollowUpTarget> followUpTargets,
+            float delaySeconds,
+            bool allowConditionalFollowUp)
+        {
+            yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
+
+            if (context == null
+                || context.CombatManager == null
+                || context.CasterEntry == null
+                || context.Roster == null
+                || skill == null
+                || instance == null)
+            {
+                yield break;
+            }
+
+            Physics2D.SyncTransforms();
+            ApplyPrefabHitbox(
+                context.CombatManager,
+                context.CasterEntry,
+                context.Roster,
+                skill,
+                skill.Targeting,
+                instance,
+                effectiveHitTargetCount,
+                damage,
+                attribute,
+                statusSpec,
+                onHitStatusEffects,
+                context.Caster,
+                skill.SkillId,
+                onHitRuntime,
+                criticalAllowed,
+                critChanceBonus,
+                critDamageBonus,
+                snapshot,
+                followUpSpec,
+                followUpTargets);
+
+            if (allowConditionalFollowUp)
+            {
+                ScheduleConditionalFollowUps(context, snapshot, skill, followUpSpec, followUpTargets);
+            }
         }
 
         private static bool ApplyPrefabHitbox(
@@ -293,6 +507,7 @@ namespace Pakuri.InGame
             float damage,
             DamageAttribute attribute,
             ProjectileStatusHitSpec statusSpec,
+            SkillEffectDefinition[] onHitStatusEffects,
             BaseUnitRuntimeModel source,
             string sourceSkillId,
             SkillRuntimeInstance sourceRuntime,
@@ -314,6 +529,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
+            var coreHitboxColliders = ResolveCoreHitboxColliders(hitboxObject, snapshot);
             var targets = SkillExecutionUtility.ResolveOrderedTargets(sourceEntry, unitRoster, targetingSpec);
             var routed = false;
             var hitCount = 0;
@@ -331,10 +547,13 @@ namespace Pakuri.InGame
                     target,
                     target != null && target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero);
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus);
+                var isCoreHit = coreHitboxColliders.Length > 0 && IsTargetInsideHitbox(coreHitboxColliders, target);
+                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus, isCoreHit);
                 var result = manager.ApplyDamage(target.Model, targetDamage.Damage, attribute, source, criticalAllowed, targetDamage.CritChanceBonus, critDamageBonus, sourceSkillId, false, targetDamage.IsExecute);
                 HandleKillRecovery(sourceRuntime, skill, snapshot, result, targetDamage.IsExecute);
                 TryApplyStatus(manager, target.Model, statusSpec, source);
+                TryApplyOnHitStatusEffects(manager, target.Model, onHitStatusEffects, source);
+                TryApplyCoreOnHitAdditionalDamage(manager, snapshot, source, sourceSkillId, target, targetDamage.Damage, isCoreHit);
                 SkillOnHitAdditionalDamageUtility.TryApply(
                     manager,
                     unitRoster,
@@ -354,6 +573,8 @@ namespace Pakuri.InGame
                 }
             }
 
+            TryApplyHitCountCooldownRefund(sourceRuntime, snapshot, hitCount);
+            TryExecuteOnHitCountEffects(manager, unitRoster, sourceEntry, sourceRuntime, skill, snapshot, hitCount, (Vector2)hitboxObject.transform.position);
             return routed;
         }
 
@@ -367,6 +588,7 @@ namespace Pakuri.InGame
             float damage,
             DamageAttribute attribute,
             ProjectileStatusHitSpec statusSpec,
+            SkillEffectDefinition[] onHitStatusEffects,
             BaseUnitRuntimeModel source,
             string sourceSkillId,
             SkillRuntimeInstance sourceRuntime,
@@ -391,10 +613,11 @@ namespace Pakuri.InGame
                 var target = targets[i];
                 RegisterFollowUpTarget(followUpTargets, followUpSpec, target, center);
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : center;
-                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus);
+                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus, false);
                 var result = manager.ApplyDamage(target.Model, targetDamage.Damage, attribute, source, criticalAllowed, targetDamage.CritChanceBonus, critDamageBonus, sourceSkillId, false, targetDamage.IsExecute);
                 HandleKillRecovery(sourceRuntime, skill, snapshot, result, targetDamage.IsExecute);
                 TryApplyStatus(manager, target.Model, statusSpec, source);
+                TryApplyOnHitStatusEffects(manager, target.Model, onHitStatusEffects, source);
                 SkillOnHitAdditionalDamageUtility.TryApply(
                     manager,
                     unitRoster,
@@ -414,6 +637,8 @@ namespace Pakuri.InGame
                 }
             }
 
+            TryApplyHitCountCooldownRefund(sourceRuntime, snapshot, hitCount);
+            TryExecuteOnHitCountEffects(manager, unitRoster, sourceEntry, sourceRuntime, skill, snapshot, hitCount, center);
             return routed;
         }
 
@@ -429,6 +654,7 @@ namespace Pakuri.InGame
             float damage,
             DamageAttribute attribute,
             ProjectileStatusHitSpec statusSpec,
+            SkillEffectDefinition[] onHitStatusEffects,
             BaseUnitRuntimeModel source,
             string sourceSkillId,
             SkillRuntimeInstance sourceRuntime,
@@ -455,10 +681,11 @@ namespace Pakuri.InGame
 
                 RegisterFollowUpTarget(followUpTargets, followUpSpec, target, center);
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : center;
-                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus);
+                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus, false);
                 var result = manager.ApplyDamage(target.Model, targetDamage.Damage, attribute, source, criticalAllowed, targetDamage.CritChanceBonus, critDamageBonus, sourceSkillId, false, targetDamage.IsExecute);
                 HandleKillRecovery(sourceRuntime, skill, snapshot, result, targetDamage.IsExecute);
                 TryApplyStatus(manager, target.Model, statusSpec, source);
+                TryApplyOnHitStatusEffects(manager, target.Model, onHitStatusEffects, source);
                 SkillOnHitAdditionalDamageUtility.TryApply(
                     manager,
                     unitRoster,
@@ -470,10 +697,13 @@ namespace Pakuri.InGame
                     target,
                     hitPosition,
                     targetDamage.Damage);
+                TryApplyHitCountCooldownRefund(sourceRuntime, snapshot, 1);
+                TryExecuteOnHitCountEffects(manager, unitRoster, sourceEntry, sourceRuntime, skill, snapshot, 1, center);
                 return true;
             }
 
             var routed = false;
+            var hitCount = 0;
             var radiusSq = Mathf.Max(0f, radius) * Mathf.Max(0f, radius);
             for (var i = 0; i < targets.Count; i++)
             {
@@ -494,10 +724,11 @@ namespace Pakuri.InGame
 
                 RegisterFollowUpTarget(followUpTargets, followUpSpec, target, center);
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : center;
-                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus);
+                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus, false);
                 var result = manager.ApplyDamage(target.Model, targetDamage.Damage, attribute, source, criticalAllowed, targetDamage.CritChanceBonus, critDamageBonus, sourceSkillId, false, targetDamage.IsExecute);
                 HandleKillRecovery(sourceRuntime, skill, snapshot, result, targetDamage.IsExecute);
                 TryApplyStatus(manager, target.Model, statusSpec, source);
+                TryApplyOnHitStatusEffects(manager, target.Model, onHitStatusEffects, source);
                 SkillOnHitAdditionalDamageUtility.TryApply(
                     manager,
                     unitRoster,
@@ -510,14 +741,243 @@ namespace Pakuri.InGame
                     hitPosition,
                     targetDamage.Damage);
                 routed = true;
+                hitCount++;
             }
 
+            TryApplyHitCountCooldownRefund(sourceRuntime, snapshot, hitCount);
+            TryExecuteOnHitCountEffects(manager, unitRoster, sourceEntry, sourceRuntime, skill, snapshot, hitCount, center);
             return routed;
         }
 
         private static bool IsTargetInsideHitbox(Collider2D[] hitboxColliders, UnitRosterEntry target)
         {
             return UnitHitboxUtility.IsTargetInsideHitbox(hitboxColliders, target);
+        }
+
+        private static Collider2D[] ResolveCoreHitboxColliders(GameObject hitboxObject, SkillExecutionSnapshot snapshot)
+        {
+            if (hitboxObject == null || snapshot == null || string.IsNullOrWhiteSpace(snapshot.CoreHitboxName))
+            {
+                return Array.Empty<Collider2D>();
+            }
+
+            var result = new List<Collider2D>();
+            var transforms = hitboxObject.GetComponentsInChildren<Transform>(true);
+            for (var i = 0; i < transforms.Length; i++)
+            {
+                var current = transforms[i];
+                if (current == null || !string.Equals(current.name, snapshot.CoreHitboxName, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var colliders = current.GetComponentsInChildren<Collider2D>(true);
+                if (colliders != null && colliders.Length > 0)
+                {
+                    result.AddRange(colliders);
+                }
+            }
+
+            return result.Count > 0 ? result.ToArray() : Array.Empty<Collider2D>();
+        }
+
+        private static SkillEffectDefinition[] ResolveOnHitStatusEffects(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SkillEffectDefinition[] effects)
+        {
+            if (effects == null || effects.Length == 0)
+            {
+                return Array.Empty<SkillEffectDefinition>();
+            }
+
+            var resolved = new List<SkillEffectDefinition>();
+            for (var i = 0; i < effects.Length; i++)
+            {
+                var effect = effects[i];
+                if (effect == null
+                    || effect.EffectTiming != SkillMultiEffectTiming.OnHit
+                    || effect.EffectKind != SkillMultiEffectKind.Status
+                    || effect.TargetSide != SkillMultiEffectTargetSide.Enemy
+                    || !SkillMultiEffectExecutor.ShouldRun(context, effect, snapshot))
+                {
+                    continue;
+                }
+
+                resolved.Add(effect);
+            }
+
+            return resolved.Count > 0 ? resolved.ToArray() : Array.Empty<SkillEffectDefinition>();
+        }
+
+        private static void TryApplyOnHitStatusEffects(
+            InGameCombatManager manager,
+            BaseUnitRuntimeModel target,
+            SkillEffectDefinition[] effects,
+            BaseUnitRuntimeModel source)
+        {
+            if (manager == null || target == null || effects == null || effects.Length == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < effects.Length; i++)
+            {
+                var effect = effects[i];
+                if (effect == null || !SkillMultiEffectExecutor.TargetMatchesCondition(target, effect))
+                {
+                    continue;
+                }
+
+                var status = SkillMultiEffectExecutor.ResolveStatusSpec(effect);
+                if (status == null || !status.Enabled)
+                {
+                    continue;
+                }
+
+                SkillStatusApplyUtility.TryApplyStatus(manager, target, status, source);
+            }
+        }
+
+        private static void TryApplyCoreOnHitAdditionalDamage(
+            InGameCombatManager manager,
+            SkillExecutionSnapshot snapshot,
+            BaseUnitRuntimeModel source,
+            string sourceSkillId,
+            UnitRosterEntry target,
+            float primaryDamage,
+            bool isCoreHit)
+        {
+            if (!isCoreHit
+                || manager == null
+                || snapshot == null
+                || !snapshot.HasCoreOnHitAdditionalDamage
+                || snapshot.CoreOnHitAdditionalDamageMultiplier <= 0f
+                || source == null
+                || target == null
+                || !target.IsAlive
+                || target.Model == null
+                || primaryDamage <= 0f
+                || UnityEngine.Random.value > Mathf.Clamp01(snapshot.CoreOnHitAdditionalDamageChance))
+            {
+                return;
+            }
+
+            manager.ApplyDamage(
+                target.Model,
+                primaryDamage * snapshot.CoreOnHitAdditionalDamageMultiplier,
+                snapshot.CoreOnHitAdditionalDamageAttribute,
+                source,
+                false,
+                0f,
+                0f,
+                sourceSkillId,
+                true);
+        }
+
+        private static void TryApplyHitCountCooldownRefund(
+            SkillRuntimeInstance sourceRuntime,
+            SkillExecutionSnapshot snapshot,
+            int hitCount)
+        {
+            if (sourceRuntime == null
+                || sourceRuntime.Owner == null
+                || sourceRuntime.Owner.SkillRuntime == null
+                || snapshot == null
+                || hitCount < snapshot.HitCountCooldownRefundMinTargets
+                || string.IsNullOrWhiteSpace(snapshot.HitCountCooldownRefundTargetSkillId)
+                || snapshot.HitCountCooldownRefundRatio <= 0f)
+            {
+                return;
+            }
+
+            var targetRuntime = sourceRuntime.Owner.SkillRuntime.FindBySkillId(snapshot.HitCountCooldownRefundTargetSkillId);
+            if (targetRuntime == null)
+            {
+                return;
+            }
+
+            targetRuntime.ReduceCooldownRemaining(targetRuntime.EffectiveCooldownDuration * Mathf.Clamp01(snapshot.HitCountCooldownRefundRatio));
+        }
+
+        private static void TryExecuteOnHitCountEffects(
+            InGameCombatManager manager,
+            UnitRosterService roster,
+            UnitRosterEntry sourceEntry,
+            SkillRuntimeInstance sourceRuntime,
+            SingleAttackData skill,
+            SkillExecutionSnapshot snapshot,
+            int hitCount,
+            Vector2 center)
+        {
+            if (manager == null
+                || roster == null
+                || sourceEntry == null
+                || skill == null
+                || skill.MultiEffects == null
+                || hitCount <= 0)
+            {
+                return;
+            }
+
+            var context = new SkillExecutionContext(manager, roster, sourceEntry, sourceRuntime, 0f);
+            SkillMultiEffectExecutor.ExecuteOnHitCount(context, snapshot, skill.MultiEffects, center, hitCount);
+        }
+
+        private static float ResolveVisualLifetime(GameObject instance, float minimumLifetimeSeconds)
+        {
+            var minimum = Mathf.Max(0.01f, minimumLifetimeSeconds);
+            var animationLength = ResolveAnimationLength(instance);
+            return Mathf.Max(minimum, animationLength > 0f ? animationLength : DefaultVisualLifetimeSeconds);
+        }
+
+        private static float ResolveAnimationLength(GameObject instance)
+        {
+            if (instance == null)
+            {
+                return 0f;
+            }
+
+            var maxLength = 0f;
+            var animators = instance.GetComponentsInChildren<Animator>(true);
+            for (var i = 0; i < animators.Length; i++)
+            {
+                var controller = animators[i] != null ? animators[i].runtimeAnimatorController : null;
+                var clips = controller != null ? controller.animationClips : null;
+                if (clips == null)
+                {
+                    continue;
+                }
+
+                for (var j = 0; j < clips.Length; j++)
+                {
+                    var clip = clips[j];
+                    if (clip != null)
+                    {
+                        maxLength = Mathf.Max(maxLength, clip.length);
+                    }
+                }
+            }
+
+            var legacyAnimations = instance.GetComponentsInChildren<UnityEngine.Animation>(true);
+            for (var i = 0; i < legacyAnimations.Length; i++)
+            {
+                var legacyAnimation = legacyAnimations[i];
+                if (legacyAnimation == null)
+                {
+                    continue;
+                }
+
+                foreach (AnimationState state in legacyAnimation)
+                {
+                    if (state != null)
+                    {
+                        maxLength = Mathf.Max(maxLength, state.length);
+                    }
+                }
+            }
+
+            return maxLength;
         }
 
         private static SingleAttackFollowUpSpec? ResolveFollowUpSpec(
@@ -725,11 +1185,17 @@ namespace Pakuri.InGame
             SkillExecutionSnapshot snapshot,
             float baseDamage,
             BaseUnitRuntimeModel target,
-            float baseCritChanceBonus)
+            float baseCritChanceBonus,
+            bool isCoreHit)
         {
             var damageMultiplier = snapshot != null ? snapshot.ResolveConditionalDamageMultiplier(target) : 1f;
             var critChanceBonus = baseCritChanceBonus;
             var isExecute = false;
+
+            if (isCoreHit && snapshot != null && snapshot.HasCoreDamageMultiplier)
+            {
+                damageMultiplier *= snapshot.CoreDamageMultiplier;
+            }
 
             if (skill != null && target != null)
             {

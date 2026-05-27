@@ -17,6 +17,10 @@ namespace Pakuri.InGame
         public float ConsecutiveHitMax;
 
         [Header("Impact Area")]
+        public bool ContactDamageEnabled = true;
+        public bool StopOnFirstHit;
+        [Min(0f)] public float ImpactDelaySeconds;
+        public GameObject ImpactEffectPrefab;
         public bool HasImpactArea;
         public AreaBlueprintSpec ImpactArea = new AreaBlueprintSpec();
         public SkillDamageSpec ImpactDamage = new SkillDamageSpec();

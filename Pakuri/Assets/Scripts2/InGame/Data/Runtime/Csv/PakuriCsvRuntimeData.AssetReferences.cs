@@ -65,6 +65,7 @@ namespace Pakuri.Data
             foreach (var skill in model.Skills.Values)
             {
                 assets.AddSprite(skill.SkillIconPath, $"Skill '{skill.Id}' skill_icon_path");
+                assets.AddPrefab(skill.SkillEffectPrefabPath, $"Skill '{skill.Id}' skill_effect_prefab_path");
                 assets.AddPrefab(skill.Status.StatusEffectPrefabPath, $"Skill '{skill.Id}' status_effect_prefab_path");
             }
 

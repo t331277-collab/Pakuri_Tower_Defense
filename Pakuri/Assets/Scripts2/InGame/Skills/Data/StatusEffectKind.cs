@@ -22,7 +22,9 @@ namespace Pakuri.InGame
         Silence,
         SlaughterPermit,
         ActionSpeedUp,
-        PassiveBuff
+        PassiveBuff,
+        SeinAHitMark,
+        SeinDHeatStack
     }
 
     public readonly struct StatusEffectDefinition
@@ -134,6 +136,12 @@ namespace Pakuri.InGame
                 case "passive":
                     kind = StatusEffectKind.PassiveBuff;
                     return true;
+                case "sein-a-hit-mark":
+                    kind = StatusEffectKind.SeinAHitMark;
+                    return true;
+                case "sein-d-heat-stack":
+                    kind = StatusEffectKind.SeinDHeatStack;
+                    return true;
                 default:
                     return false;
             }
@@ -175,6 +183,10 @@ namespace Pakuri.InGame
                     return new StatusEffectDefinition(kind, "action-speed-up", "행동속도 증가", 6f, 1, false);
                 case StatusEffectKind.PassiveBuff:
                     return new StatusEffectDefinition(kind, "passive-buff", "Passive Buff", 0f, 1, false);
+                case StatusEffectKind.SeinAHitMark:
+                    return new StatusEffectDefinition(kind, "sein-a-hit-mark", "Sein A Hit Mark", 5f, 1, false);
+                case StatusEffectKind.SeinDHeatStack:
+                    return new StatusEffectDefinition(kind, "sein-d-heat-stack", "Sein D Heat Stack", 1f, 99, false);
                 default:
                     return NoneDefinition;
             }
@@ -266,6 +278,7 @@ namespace Pakuri.InGame
         public float MovementSlowRate;
         public float MoveSpeedBonus;
         public float CriticalDamageTakenBonus;
+        public float CriticalDamageBonus;
         public float AilmentResistanceBonus;
         public float CriticalResistanceBonus;
         public float DamageTakenBonus;

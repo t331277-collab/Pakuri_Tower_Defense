@@ -81,7 +81,8 @@ namespace Pakuri.Data
         OnCast,
         Delayed,
         OnHit,
-        OnExpire
+        OnExpire,
+        OnHitCount
     }
 
     public enum SkillMultiEffectCenterMode
@@ -105,7 +106,8 @@ namespace Pakuri.Data
         OnShieldAbsorb,
         OnStatusExpire,
         OnOutgoingDamage,
-        OnKill
+        OnKill,
+        OnSkillCast
     }
 
     public enum SkillTriggerDamageSource
@@ -114,7 +116,18 @@ namespace Pakuri.Data
         ShieldAppliedAmount,
         ShieldRemainingAmount,
         ShieldAbsorbedAmount,
-        TrackedIncomingDamage
+        TrackedIncomingDamage,
+        EventAppliedDamage
+    }
+
+    public enum SkillTriggerActionKind
+    {
+        Auto,
+        SingleAttack,
+        TriggeredSkill,
+        Effect,
+        CooldownRefund,
+        ReloadReduce
     }
 
     [Serializable]
@@ -127,10 +140,18 @@ namespace Pakuri.Data
         public string RequiresActiveChoiceId;
         public string ExcludesActiveChoiceId;
         public string ConditionStatusId;
+        public string ConditionStatusSourceSkillId;
         public string TriggerAttribute;
+        public SkillTriggerActionKind TriggerAction;
+        public string EventSkillId;
         public float ProcChance = 1f;
         public float InternalCooldownSeconds;
+        public float TriggerDelaySeconds;
+        public int TriggerEveryCount;
+        public string EventSourceScope;
         public string TriggeredSkillId;
+        public string TargetSkillId;
+        public string TriggeredEffectId;
         public SkillRuntimeKind RuntimeKind;
         public int SortOrder;
         public SkillMultiEffectTargetSide TargetSide;
@@ -151,6 +172,8 @@ namespace Pakuri.Data
         public int RepeatCount = 1;
         public float RepeatIntervalSeconds;
         public bool RequireEventExecute;
+        public float CooldownRefundRatio;
+        public float ReloadReduceRatio;
         public GameObject SkillEffectPrefab;
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
@@ -179,6 +202,8 @@ namespace Pakuri.Data
         public string ConditionStatusId;
         public SkillMultiEffectTargetSide ConditionTargetSide;
         public string ConditionSkillAttribute;
+        public float ConditionHealthRatioMax;
+        public int ConditionHitCountMin;
         public DamageAttribute Attribute;
         public float BaseDamage;
         public float AttackPowerCoefficient;
@@ -186,6 +211,8 @@ namespace Pakuri.Data
         public float DamageMultiplier = 1f;
         public float Radius;
         public bool CoverAll;
+        public float ActiveDurationSeconds;
+        public float TickIntervalSeconds;
         public string StatusEffectId;
         [Range(0f, 1f)] public float StatusChance;
         public string StatusEffectLabel;
@@ -204,6 +231,7 @@ namespace Pakuri.Data
         public float StatusShieldReceivedBonus;
         public float StatusDamageTakenBonus;
         public float StatusCriticalDamageTakenBonus;
+        public float StatusCriticalDamageBonus;
         public float StatusAilmentResistanceBonus;
         public float StatusCriticalResistanceBonus;
         public float StatusElementResistReduction;
@@ -253,6 +281,8 @@ namespace Pakuri.Data
         public float BeamWidthBonus;
         public bool HasKnockbackDistanceMultiplier;
         public float KnockbackDistanceMultiplier = 1f;
+        public bool HasDamageDelayMultiplier;
+        public float DamageDelayMultiplier = 1f;
         public bool HasExecuteHealthRatioBonus;
         public float ExecuteHealthRatioBonus;
         public bool HasDurationMultiplier;
@@ -309,6 +339,8 @@ namespace Pakuri.Data
         public SkillMultiEffectTargetSide CountTargetSide;
         public float DamageMultiplierPerCount;
         public int CountMax;
+        public float ConsecutiveHitBonusRate;
+        public float ConsecutiveHitMax;
         public bool HasStatusConditionalDamageTakenBonus;
         public float StatusConditionalDamageTakenBonus;
         public string StatusConditionalSourceStatusId;
@@ -324,6 +356,16 @@ namespace Pakuri.Data
         public DamageAttribute OnHitChainDamageAttribute;
         public string ReloadReduceTargetSkillId;
         public float ReloadReduceSecondsPerHit;
+        public string CoreHitboxName;
+        public bool HasCoreDamageMultiplier;
+        public float CoreDamageMultiplier = 1f;
+        public bool HasCoreOnHitAdditionalDamage;
+        public float CoreOnHitAdditionalDamageChance;
+        public float CoreOnHitAdditionalDamageMultiplier = 1f;
+        public DamageAttribute CoreOnHitAdditionalDamageAttribute;
+        public string HitCountCooldownRefundTargetSkillId;
+        public int HitCountCooldownRefundMinTargets;
+        public float HitCountCooldownRefundRatio;
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
     }
@@ -346,6 +388,7 @@ namespace Pakuri.Data
         public float SpellPowerCoefficient;
         public float Radius;
         public float KnockbackDistance;
+        public float DamageDelaySeconds;
         [Range(0f, 1f)] public float ExecuteHealthRatioThreshold;
         public bool RequireExecuteThresholdToCast;
         public float ExecuteDamageMultiplier = 1f;
@@ -377,6 +420,7 @@ namespace Pakuri.Data
         public float StatusAttackPowerBonus;
         public float StatusDamageTakenBonus;
         public float StatusCriticalDamageTakenBonus;
+        public float StatusCriticalDamageBonus;
         public float StatusAilmentResistanceBonus;
         public float StatusCriticalResistanceBonus;
         public float StatusElementResistReduction;

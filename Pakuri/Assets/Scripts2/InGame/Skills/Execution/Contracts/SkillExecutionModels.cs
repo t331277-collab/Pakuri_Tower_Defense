@@ -10,6 +10,7 @@ namespace Pakuri.InGame
             UnitRosterEntry casterEntry,
             SkillRuntimeInstance runtime,
             float deltaTime,
+            BaseUnitRuntimeModel eventTarget = null,
             bool hasManualAimDirection = false,
             Vector2 manualAimDirection = default,
             bool hasManualTargetPoint = false,
@@ -20,6 +21,7 @@ namespace Pakuri.InGame
             CasterEntry = casterEntry;
             Runtime = runtime;
             DeltaTime = deltaTime;
+            EventTarget = eventTarget;
             HasManualAimDirection = hasManualAimDirection;
             ManualAimDirection = manualAimDirection;
             HasManualTargetPoint = hasManualTargetPoint;
@@ -31,6 +33,7 @@ namespace Pakuri.InGame
         public UnitRosterEntry CasterEntry { get; }
         public SkillRuntimeInstance Runtime { get; }
         public float DeltaTime { get; }
+        public BaseUnitRuntimeModel EventTarget { get; }
         public bool HasManualAimDirection { get; }
         public Vector2 ManualAimDirection { get; }
         public bool HasManualTargetPoint { get; }

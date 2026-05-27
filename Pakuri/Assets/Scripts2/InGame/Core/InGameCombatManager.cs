@@ -49,7 +49,11 @@ namespace Pakuri.InGame
         private readonly Dictionary<string, GameObject> statusEffectVisuals = new Dictionary<string, GameObject>();
         private readonly HashSet<string> appliedOneShotPassiveEffects = new HashSet<string>();
         private readonly Dictionary<string, float> passiveTriggerCooldowns = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, int> passiveTriggerCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         private float passiveEffectRefreshRemaining;
+        private bool hasLatchedManualProjectileInput;
+        private Vector2 latchedManualProjectileAimDirection;
+        private Vector2 latchedManualProjectileTargetPoint;
 
         [SerializeField] private bool enemyCombatSimulationEnabled = true;
         [SerializeField] private bool skillExecutionEnabled = true;
@@ -332,6 +336,7 @@ namespace Pakuri.InGame
         {
             appliedOneShotPassiveEffects.Clear();
             passiveTriggerCooldowns.Clear();
+            passiveTriggerCounts.Clear();
             passiveEffectRefreshRemaining = 0f;
         }
 
@@ -360,6 +365,25 @@ namespace Pakuri.InGame
             return true;
         }
 
+        public bool ConsumePassiveTriggerCount(string key, int triggerEveryCount)
+        {
+            if (string.IsNullOrWhiteSpace(key) || triggerEveryCount <= 1)
+            {
+                return true;
+            }
+
+            passiveTriggerCounts.TryGetValue(key, out var currentCount);
+            currentCount++;
+            if (currentCount < triggerEveryCount)
+            {
+                passiveTriggerCounts[key] = currentCount;
+                return false;
+            }
+
+            passiveTriggerCounts[key] = 0;
+            return true;
+        }
+
         public bool TryExecuteTriggeredSkill(UnitRosterEntry casterEntry, SkillRuntimeInstance runtime, Vector2 targetPoint, bool hasTargetPoint)
         {
             return skillExecution.TryExecuteTriggered(
@@ -370,6 +394,17 @@ namespace Pakuri.InGame
                 logSkillExecutionContracts,
                 targetPoint,
                 hasTargetPoint);
+        }
+
+        public void DispatchSkillCastTriggers(UnitRosterEntry sourceEntry, string sourceSkillId, Vector2 eventCenter)
+        {
+            var source = sourceEntry != null ? sourceEntry.Model : null;
+            if (source == null || string.IsNullOrWhiteSpace(sourceSkillId))
+            {
+                return;
+            }
+
+            SkillTriggerRuntime.ExecuteSkillCast(this, roster, source, sourceSkillId, eventCenter);
         }
 
         private void TickLearnedPassiveEffects(float deltaTime)
@@ -402,7 +437,9 @@ namespace Pakuri.InGame
                 options.Source,
                 options.SourceSkillId,
                 target,
-                attribute);
+                attribute,
+                result.AppliedDamage,
+                options.SourceHitWasExecute);
 
             ApplyOutgoingAdditionalDamageStatuses(target, attribute, options, sourceBaseDamage);
         }
@@ -425,6 +462,7 @@ namespace Pakuri.InGame
                 options.SourceSkillId,
                 target,
                 attribute,
+                result.AppliedDamage,
                 options.SourceHitWasExecute);
         }
 
@@ -583,7 +621,7 @@ namespace Pakuri.InGame
 
         private void HandleSelectedPlayerManualSkillInput()
         {
-            if (playerAutoSkillEnabled || !IsPrimaryMousePressedThisFrame() || IsPointerOverUi())
+            if (playerAutoSkillEnabled)
             {
                 return;
             }
@@ -591,13 +629,23 @@ namespace Pakuri.InGame
             var player = GetSelectedPlayerEntry();
             if (player == null || player.Model == null || player.Model.SkillRuntime == null)
             {
+                ClearLatchedManualProjectileInput();
                 return;
             }
 
-            var targetPoint = ResolveMouseWorldPoint();
-            var aimDirection = ResolveAimDirection(player, targetPoint);
-            if (aimDirection.sqrMagnitude <= 0.0001f)
+            var mousePressedThisFrame = IsPrimaryMousePressedThisFrame();
+            var mouseHeld = IsPrimaryMouseHeld();
+            var pointerOverUi = IsPointerOverUi();
+            var hasCurrentManualInput = TryResolveCurrentManualInput(
+                player,
+                mousePressedThisFrame || mouseHeld,
+                pointerOverUi,
+                out var currentAimDirection,
+                out var currentTargetPoint);
+            if (!hasCurrentManualInput
+                && !HasProjectileBursting(player.Model.SkillRuntime.ActiveSkills))
             {
+                ClearLatchedManualProjectileInput();
                 return;
             }
 
@@ -606,6 +654,21 @@ namespace Pakuri.InGame
             {
                 var runtime = activeSkills[i];
                 if (runtime == null)
+                {
+                    continue;
+                }
+
+                var isProjectile = runtime.Data is ProjectileSkillData;
+                if (!TryResolveManualSkillInputForRuntime(
+                        runtime,
+                        isProjectile,
+                        mousePressedThisFrame,
+                        mouseHeld,
+                        hasCurrentManualInput,
+                        currentAimDirection,
+                        currentTargetPoint,
+                        out var aimDirection,
+                        out var targetPoint))
                 {
                     continue;
                 }
@@ -619,6 +682,11 @@ namespace Pakuri.InGame
                     aimDirection,
                     targetPoint,
                     logSkillExecutionContracts);
+            }
+
+            if (!mouseHeld && !HasProjectileBursting(activeSkills))
+            {
+                ClearLatchedManualProjectileInput();
             }
         }
 
@@ -821,6 +889,109 @@ namespace Pakuri.InGame
         {
             var mouse = Mouse.current;
             return mouse != null && mouse.leftButton.wasPressedThisFrame;
+        }
+
+        private static bool IsPrimaryMouseHeld()
+        {
+            var mouse = Mouse.current;
+            return mouse != null && mouse.leftButton.isPressed;
+        }
+
+        private bool TryResolveCurrentManualInput(
+            UnitRosterEntry player,
+            bool wantsManualInput,
+            bool pointerOverUi,
+            out Vector2 aimDirection,
+            out Vector2 targetPoint)
+        {
+            aimDirection = Vector2.zero;
+            targetPoint = Vector2.zero;
+            if (!wantsManualInput || pointerOverUi)
+            {
+                return false;
+            }
+
+            targetPoint = ResolveMouseWorldPoint();
+            aimDirection = ResolveAimDirection(player, targetPoint);
+            if (aimDirection.sqrMagnitude <= 0.0001f)
+            {
+                return false;
+            }
+
+            latchedManualProjectileAimDirection = aimDirection;
+            latchedManualProjectileTargetPoint = targetPoint;
+            hasLatchedManualProjectileInput = true;
+            return true;
+        }
+
+        private bool TryResolveManualSkillInputForRuntime(
+            SkillRuntimeInstance runtime,
+            bool isProjectile,
+            bool mousePressedThisFrame,
+            bool mouseHeld,
+            bool hasCurrentManualInput,
+            Vector2 currentAimDirection,
+            Vector2 currentTargetPoint,
+            out Vector2 aimDirection,
+            out Vector2 targetPoint)
+        {
+            aimDirection = Vector2.zero;
+            targetPoint = Vector2.zero;
+            if (!isProjectile)
+            {
+                if (!mousePressedThisFrame || !hasCurrentManualInput)
+                {
+                    return false;
+                }
+
+                aimDirection = currentAimDirection;
+                targetPoint = currentTargetPoint;
+                return true;
+            }
+
+            if (hasCurrentManualInput && mouseHeld)
+            {
+                aimDirection = currentAimDirection;
+                targetPoint = currentTargetPoint;
+                return true;
+            }
+
+            if (runtime.IsBursting && hasLatchedManualProjectileInput)
+            {
+                aimDirection = latchedManualProjectileAimDirection;
+                targetPoint = latchedManualProjectileTargetPoint;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool HasProjectileBursting(IReadOnlyList<SkillRuntimeInstance> activeSkills)
+        {
+            if (activeSkills == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < activeSkills.Count; i++)
+            {
+                var runtime = activeSkills[i];
+                if (runtime != null
+                    && runtime.Data is ProjectileSkillData
+                    && runtime.IsBursting)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void ClearLatchedManualProjectileInput()
+        {
+            hasLatchedManualProjectileInput = false;
+            latchedManualProjectileAimDirection = Vector2.zero;
+            latchedManualProjectileTargetPoint = Vector2.zero;
         }
 
         private static bool IsPointerOverUi()
@@ -1121,6 +1292,7 @@ namespace Pakuri.InGame
                 var sourceCriticalChance = (sourceStats != null ? sourceStats.CriticalChance : DamageCalculator.BaseCriticalChance)
                     + StatusEffectRuntime.ResolveCriticalChanceBonus(options.Source);
                 var sourceCriticalDamage = sourceStats != null ? sourceStats.CriticalDamage : DamageCalculator.BaseCriticalMultiplier;
+                sourceCriticalDamage += StatusEffectRuntime.ResolveCriticalDamageBonus(options.Source);
                 var targetCriticalResistance = (target != null && target.Stats != null ? target.Stats.CriticalResistance : 0f)
                     + StatusEffectRuntime.ResolveCriticalResistanceBonus(target);
                 var criticalDamageTakenBonus = StatusEffectRuntime.ResolveCriticalDamageTakenBonus(target);

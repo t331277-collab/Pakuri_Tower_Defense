@@ -16,3 +16,5 @@
 "slaughter-permit","몰살 허가","Buff","None","6","false","1","1","true","true","true","0.25","0","0.2","0","0","0","0","0",""
 "action-speed-up","행동속도 증가","Buff","None","6","false","1","1","true","true","true","0.25","0","0","0","0","0","0","0",""
 "passive-buff","Passive Buff","Buff","None","0","false","1","1","true","true","true","0","0","0","0","0","0","0","0",""
+"sein-a-hit-mark","열풍 화살 표식","Debuff","Fire","5","false","1","1","true","true","true","0","0","0","0","0","0","0","0",""
+"sein-d-heat-stack","초열 타격","Debuff","Fire","1","false","99","1","true","true","true","0","0","0","0","0","0","0","0",""

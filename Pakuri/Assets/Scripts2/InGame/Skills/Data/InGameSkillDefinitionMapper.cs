@@ -138,8 +138,17 @@ namespace Pakuri.InGame
                 projectile.Projectile.ProjectilesPerShot = 1;
                 projectile.Projectile.PierceCount = source.PierceCount;
                 projectile.Projectile.ProjectileSpeed = source.ProjectileSpeed;
+                projectile.ContactDamageEnabled = source.DamageDelaySeconds <= 0f;
+                projectile.StopOnFirstHit = source.DamageDelaySeconds > 0f;
+                projectile.ImpactDelaySeconds = Mathf.Max(0f, source.DamageDelaySeconds);
+                projectile.ImpactEffectPrefab = source.SkillEffectPrefab;
+                projectile.HasImpactArea = source.DamageDelaySeconds > 0f;
+                projectile.ImpactArea.Radius = source.Radius;
+                projectile.ImpactArea.CoverAll = false;
                 MapDamage(projectile.Damage, source);
+                MapDamage(projectile.ImpactDamage, source);
                 projectile.OnHitStatus = CreateStatusApplication(source);
+                projectile.ImpactStatus = CreateStatusApplication(source);
                 return;
             }
 
@@ -186,6 +195,7 @@ namespace Pakuri.InGame
                 single.UsePrefabHitbox = hitAllTargets;
                 single.HitAllTargets = hitAllTargets;
                 single.HitTargetCount = hitAllTargets ? int.MaxValue : Math.Max(1, hitTargetCount);
+                single.DamageDelaySeconds = Mathf.Max(0f, source.DamageDelaySeconds);
                 single.ExecuteHealthRatioThreshold = Mathf.Clamp01(source.ExecuteHealthRatioThreshold);
                 single.RequireExecuteThresholdToCast = source.RequireExecuteThresholdToCast;
                 single.ExecuteDamageMultiplier = source.ExecuteDamageMultiplier > 0f ? source.ExecuteDamageMultiplier : 1f;
@@ -443,6 +453,8 @@ namespace Pakuri.InGame
                     CountTargetSide = choice != null ? choice.CountTargetSide : SkillMultiEffectTargetSide.Enemy,
                     DamageMultiplierPerCount = choice != null ? choice.DamageMultiplierPerCount : 0f,
                     CountMax = choice != null ? choice.CountMax : 0,
+                    ConsecutiveHitBonusRate = choice != null ? choice.ConsecutiveHitBonusRate : 0f,
+                    ConsecutiveHitMax = choice != null ? choice.ConsecutiveHitMax : 0f,
                     HasStatusConditionalDamageTakenBonus = choice != null && choice.HasStatusConditionalDamageTakenBonus,
                     StatusConditionalDamageTakenBonus = choice != null ? choice.StatusConditionalDamageTakenBonus : 0f,
                     StatusConditionalSourceStatusId = choice != null ? choice.StatusConditionalSourceStatusId : string.Empty,
@@ -461,7 +473,17 @@ namespace Pakuri.InGame
                     OnHitChainDamageMultiplier = choice != null ? choice.OnHitChainDamageMultiplier : 1f,
                     OnHitChainDamageAttribute = choice != null ? choice.OnHitChainDamageAttribute : DamageAttribute.Physical,
                     ReloadReduceTargetSkillId = choice != null ? choice.ReloadReduceTargetSkillId : string.Empty,
-                    ReloadReduceSecondsPerHit = choice != null ? choice.ReloadReduceSecondsPerHit : 0f
+                    ReloadReduceSecondsPerHit = choice != null ? choice.ReloadReduceSecondsPerHit : 0f,
+                    CoreHitboxName = choice != null ? choice.CoreHitboxName : string.Empty,
+                    HasCoreDamageMultiplier = choice != null && choice.HasCoreDamageMultiplier,
+                    CoreDamageMultiplier = choice != null && choice.HasCoreDamageMultiplier ? choice.CoreDamageMultiplier : 1f,
+                    HasCoreOnHitAdditionalDamage = choice != null && choice.HasCoreOnHitAdditionalDamage,
+                    CoreOnHitAdditionalDamageChance = choice != null ? choice.CoreOnHitAdditionalDamageChance : 0f,
+                    CoreOnHitAdditionalDamageMultiplier = choice != null ? choice.CoreOnHitAdditionalDamageMultiplier : 1f,
+                    CoreOnHitAdditionalDamageAttribute = choice != null ? choice.CoreOnHitAdditionalDamageAttribute : DamageAttribute.Physical,
+                    HitCountCooldownRefundTargetSkillId = choice != null ? choice.HitCountCooldownRefundTargetSkillId : string.Empty,
+                    HitCountCooldownRefundMinTargets = choice != null ? choice.HitCountCooldownRefundMinTargets : 0,
+                    HitCountCooldownRefundRatio = choice != null ? choice.HitCountCooldownRefundRatio : 0f
                 };
             }
 

@@ -27,6 +27,8 @@ namespace Pakuri.InGame
         public float BeamWidthBonus;
         public bool HasKnockbackDistanceMultiplier;
         public float KnockbackDistanceMultiplier = 1f;
+        public bool HasDamageDelayMultiplier;
+        public float DamageDelayMultiplier = 1f;
         public bool HasExecuteHealthRatioBonus;
         public float ExecuteHealthRatioBonus;
         public bool HasDurationMultiplier;
@@ -88,6 +90,8 @@ namespace Pakuri.InGame
         public SkillMultiEffectTargetSide CountTargetSide;
         public float DamageMultiplierPerCount;
         public int CountMax;
+        public float ConsecutiveHitBonusRate;
+        public float ConsecutiveHitMax;
         public bool HasStatusConditionalDamageTakenBonus;
         public float StatusConditionalDamageTakenBonus;
         public string StatusConditionalSourceStatusId;
@@ -105,6 +109,16 @@ namespace Pakuri.InGame
         public DamageAttribute OnHitChainDamageAttribute;
         public string ReloadReduceTargetSkillId;
         public float ReloadReduceSecondsPerHit;
+        public string CoreHitboxName;
+        public bool HasCoreDamageMultiplier;
+        public float CoreDamageMultiplier = 1f;
+        public bool HasCoreOnHitAdditionalDamage;
+        public float CoreOnHitAdditionalDamageChance;
+        public float CoreOnHitAdditionalDamageMultiplier = 1f;
+        public DamageAttribute CoreOnHitAdditionalDamageAttribute;
+        public string HitCountCooldownRefundTargetSkillId;
+        public int HitCountCooldownRefundMinTargets;
+        public float HitCountCooldownRefundRatio;
 
         [Header("Added Effect")]
         public string StatusTag;

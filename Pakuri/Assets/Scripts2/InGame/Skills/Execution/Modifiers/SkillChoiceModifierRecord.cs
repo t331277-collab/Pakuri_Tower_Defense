@@ -23,6 +23,8 @@ namespace Pakuri.InGame
         public float RadiusBonus { get; set; }
         public bool HasKnockbackDistanceMultiplier { get; set; }
         public float KnockbackDistanceMultiplier { get; set; }
+        public bool HasDamageDelayMultiplier { get; set; }
+        public float DamageDelayMultiplier { get; set; }
         public bool HasDurationMultiplier { get; set; }
         public float DurationMultiplier { get; set; }
         public float DurationBonus { get; set; }
@@ -66,6 +68,16 @@ namespace Pakuri.InGame
         public DamageAttribute OnHitChainDamageAttribute { get; set; }
         public string ReloadReduceTargetSkillId { get; set; }
         public float ReloadReduceSecondsPerHit { get; set; }
+        public string CoreHitboxName { get; set; }
+        public bool HasCoreDamageMultiplier { get; set; }
+        public float CoreDamageMultiplier { get; set; }
+        public bool HasCoreOnHitAdditionalDamage { get; set; }
+        public float CoreOnHitAdditionalDamageChance { get; set; }
+        public float CoreOnHitAdditionalDamageMultiplier { get; set; }
+        public DamageAttribute CoreOnHitAdditionalDamageAttribute { get; set; }
+        public string HitCountCooldownRefundTargetSkillId { get; set; }
+        public int HitCountCooldownRefundMinTargets { get; set; }
+        public float HitCountCooldownRefundRatio { get; set; }
 
         public static SkillChoiceModifierRecord FromRow(IDictionary<string, string> row)
         {
@@ -95,6 +107,8 @@ namespace Pakuri.InGame
             record.RadiusBonus = GetFloat(row, "radius_bonus");
             record.HasKnockbackDistanceMultiplier = TryGetFloat(row, "knockback_distance_multiplier", out var knockbackDistanceMultiplier);
             record.KnockbackDistanceMultiplier = knockbackDistanceMultiplier;
+            record.HasDamageDelayMultiplier = TryGetFloat(row, "damage_delay_multiplier", out var damageDelayMultiplier);
+            record.DamageDelayMultiplier = damageDelayMultiplier;
             record.HasDurationMultiplier = TryGetFloat(row, "duration_multiplier", out var durationMultiplier);
             record.DurationMultiplier = durationMultiplier;
             record.DurationBonus = GetFloat(row, "duration_bonus");
@@ -137,6 +151,16 @@ namespace Pakuri.InGame
             record.OnHitChainDamageAttribute = GetEnum(row, "on_hit_chain_damage_attribute", DamageAttribute.Physical);
             record.ReloadReduceTargetSkillId = Get(row, "reload_reduce_target_skill_id");
             record.ReloadReduceSecondsPerHit = GetFloat(row, "reload_reduce_seconds_per_hit");
+            record.CoreHitboxName = Get(row, "core_hitbox_name");
+            record.HasCoreDamageMultiplier = TryGetFloat(row, "core_damage_multiplier", out var coreDamageMultiplier);
+            record.CoreDamageMultiplier = coreDamageMultiplier;
+            record.HasCoreOnHitAdditionalDamage = TryGetFloat(row, "core_on_hit_additional_damage_chance", out var coreOnHitAdditionalDamageChance);
+            record.CoreOnHitAdditionalDamageChance = coreOnHitAdditionalDamageChance;
+            record.CoreOnHitAdditionalDamageMultiplier = GetFloat(row, "core_on_hit_additional_damage_multiplier");
+            record.CoreOnHitAdditionalDamageAttribute = GetEnum(row, "core_on_hit_additional_damage_attribute", DamageAttribute.Physical);
+            record.HitCountCooldownRefundTargetSkillId = Get(row, "hit_count_cooldown_refund_target_skill_id");
+            record.HitCountCooldownRefundMinTargets = GetInt(row, "hit_count_cooldown_refund_min_targets");
+            record.HitCountCooldownRefundRatio = GetFloat(row, "hit_count_cooldown_refund_ratio");
             return string.IsNullOrWhiteSpace(record.ChoiceId) ? null : record;
         }
 

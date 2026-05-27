@@ -98,6 +98,7 @@ namespace Pakuri.InGame
             status.Modifiers.DamageBonusRate = 0f;
             status.Modifiers.ShieldReceivedBonus = 0f;
             status.Modifiers.CritChanceBonusRate = 0f;
+            status.Modifiers.CritDamageBonusRate = 0f;
             status.OutgoingAdditionalDamageMultiplier = 0f;
             status.OutgoingAdditionalDamageTriggerAttribute = DamageAttribute.Physical;
             status.OutgoingAdditionalDamageAttribute = DamageAttribute.Physical;
@@ -200,6 +201,7 @@ namespace Pakuri.InGame
                 + Mathf.Abs(data.Modifiers.DamageBonusRate)
                 + Mathf.Abs(data.Modifiers.ShieldReceivedBonus)
                 + Mathf.Abs(data.Modifiers.CritChanceBonusRate)
+                + Mathf.Abs(data.Modifiers.CritDamageBonusRate)
                 + Mathf.Abs(data.MoveSpeedBonus)
                 + Mathf.Abs(data.DamageTakenBonus)
                 + Mathf.Abs(data.CriticalDamageTakenBonus)
@@ -255,6 +257,11 @@ namespace Pakuri.InGame
         public static float ResolveCriticalChanceBonus(BaseUnitRuntimeModel model)
         {
             return SumStacked(model, data => data.Modifiers.CritChanceBonusRate);
+        }
+
+        public static float ResolveCriticalDamageBonus(BaseUnitRuntimeModel model)
+        {
+            return SumStacked(model, data => data.Modifiers.CritDamageBonusRate);
         }
 
         public static float ResolveOutgoingDamageMultiplier(BaseUnitRuntimeModel source, DamageAttribute attribute)

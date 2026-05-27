@@ -44,39 +44,26 @@ namespace Pakuri.InGame
             if (prefab == null)
             {
                 var effects = context.CombatManager.Effects;
-                prefab = snapshot != null && snapshot.SkillEffectPrefab != null
-                    ? snapshot.SkillEffectPrefab
-                    : effects != null ? effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId) : null;
+                prefab = effects != null ? effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId) : null;
+                if (prefab == null && snapshot != null && snapshot.SkillEffectPrefab != null && !skill.HasImpactArea)
+                {
+                    prefab = snapshot.SkillEffectPrefab;
+                }
             }
 
             var statusSpec = SkillStatusSpecUtility.ResolveStatusSpec(skill.OnHitStatus, snapshot);
-            if (prefab == null)
+            var onHitEffects = ResolveTimedEffects(context, snapshot, skill.MultiEffects, SkillMultiEffectTiming.OnHit);
+            var onExpireEffects = ResolveTimedEffects(context, snapshot, skill.MultiEffects, SkillMultiEffectTiming.OnExpire);
+            var requiresProjectileActor = skill.StopOnFirstHit
+                || skill.HasImpactArea
+                || skill.ImpactDelaySeconds > 0f
+                || onHitEffects.Length > 0
+                || onExpireEffects.Length > 0;
+            if (prefab == null && !requiresProjectileActor)
             {
                 if (target != null)
                 {
-                    var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-                    var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
-                    context.CombatManager.ApplyDamage(
-                        target.Model,
-                        resolvedDamage,
-                        attribute,
-                        context.Caster,
-                        skill.Damage != null && skill.Damage.CriticalAllowed,
-                        snapshot != null ? snapshot.CritChanceBonus : 0f,
-                        snapshot != null ? snapshot.CritDamageBonus : 0f,
-                        skill.SkillId);
-                    TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec, context.Caster);
-                    SkillOnHitAdditionalDamageUtility.TryApply(
-                        context.CombatManager,
-                        context.Roster,
-                        context.Runtime,
-                        snapshot,
-                        context.CasterEntry,
-                        context.Caster,
-                        skill.SkillId,
-                        target,
-                        hitPosition,
-                        resolvedDamage);
+                    ApplyDirectProjectileHit(context, skill, snapshot, target, statusSpec, damage, attribute);
                     return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
                 }
 
@@ -115,29 +102,7 @@ namespace Pakuri.InGame
                 {
                     if (target != null)
                     {
-                        var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-                        var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
-                        context.CombatManager.ApplyDamage(
-                            target.Model,
-                            resolvedDamage,
-                            attribute,
-                            context.Caster,
-                            skill.Damage != null && skill.Damage.CriticalAllowed,
-                            snapshot != null ? snapshot.CritChanceBonus : 0f,
-                            snapshot != null ? snapshot.CritDamageBonus : 0f,
-                            skill.SkillId);
-                        TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec, context.Caster);
-                        SkillOnHitAdditionalDamageUtility.TryApply(
-                            context.CombatManager,
-                            context.Roster,
-                            context.Runtime,
-                            snapshot,
-                            context.CasterEntry,
-                            context.Caster,
-                            skill.SkillId,
-                            target,
-                            hitPosition,
-                            resolvedDamage);
+                        ApplyDirectProjectileHit(context, skill, snapshot, target, statusSpec, damage, attribute);
                     }
 
                     continue;
@@ -147,38 +112,14 @@ namespace Pakuri.InGame
                     ? context.Runtime.AdvanceProjectileLaunchCount()
                     : 0;
                 var branchSpec = ResolveBranchSpec(snapshot, prefab, projectileLaunchIndex);
-
-                var instance = effects.InstantiateSkillPrefab(
-                    prefab,
-                    origin,
-                    SkillExecutionUtility.ResolveRotation(spreadDirection));
+                var instance = prefab != null
+                    ? effects.InstantiateSkillPrefab(prefab, origin, SkillExecutionUtility.ResolveRotation(spreadDirection))
+                    : new GameObject(string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameProjectile" : $"InGameProjectile_{skill.SkillId}");
                 if (instance == null)
                 {
                     if (target != null)
                     {
-                        var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-                        var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
-                        context.CombatManager.ApplyDamage(
-                            target.Model,
-                            resolvedDamage,
-                            attribute,
-                            context.Caster,
-                            skill.Damage != null && skill.Damage.CriticalAllowed,
-                            snapshot != null ? snapshot.CritChanceBonus : 0f,
-                            snapshot != null ? snapshot.CritDamageBonus : 0f,
-                            skill.SkillId);
-                        TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec, context.Caster);
-                        SkillOnHitAdditionalDamageUtility.TryApply(
-                            context.CombatManager,
-                            context.Roster,
-                            context.Runtime,
-                            snapshot,
-                            context.CasterEntry,
-                            context.Caster,
-                            skill.SkillId,
-                            target,
-                            hitPosition,
-                            resolvedDamage);
+                        ApplyDirectProjectileHit(context, skill, snapshot, target, statusSpec, damage, attribute);
                     }
 
                     continue;
@@ -202,6 +143,16 @@ namespace Pakuri.InGame
                     lifetime,
                     statusSpec,
                     branchSpec,
+                    SkillStatusSpecUtility.ResolveStatusSpec(skill.ImpactStatus, snapshot),
+                    onHitEffects,
+                    onExpireEffects,
+                    skill.ContactDamageEnabled,
+                    skill.StopOnFirstHit,
+                    ResolveImpactDelay(skill, snapshot),
+                    skill.ImpactEffectPrefab,
+                    skill.HasImpactArea,
+                    SkillAreaUtility.ResolveRadius(skill.ImpactArea != null ? skill.ImpactArea.Radius : 0f, snapshot),
+                    damage,
                     context.Runtime,
                     snapshot,
                     null,
@@ -287,6 +238,90 @@ namespace Pakuri.InGame
             BaseUnitRuntimeModel source)
         {
             SkillStatusApplyUtility.TryApplyStatus(combatManager, target, statusSpec, source);
+        }
+
+        private static void ApplyDirectProjectileHit(
+            SkillExecutionContext context,
+            ProjectileSkillData skill,
+            SkillExecutionSnapshot snapshot,
+            UnitRosterEntry target,
+            ProjectileStatusHitSpec statusSpec,
+            float damage,
+            DamageAttribute attribute)
+        {
+            if (context == null || skill == null || target == null || target.Model == null)
+            {
+                return;
+            }
+
+            var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
+            var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
+            if (context.Runtime != null && snapshot != null)
+            {
+                resolvedDamage *= context.Runtime.ResolveConsecutiveHitDamageMultiplier(target.Model, snapshot);
+            }
+
+            resolvedDamage = Mathf.Max(0f, resolvedDamage);
+            context.CombatManager.ApplyDamage(
+                target.Model,
+                resolvedDamage,
+                attribute,
+                context.Caster,
+                skill.Damage != null && skill.Damage.CriticalAllowed,
+                snapshot != null ? snapshot.CritChanceBonus : 0f,
+                snapshot != null ? snapshot.CritDamageBonus : 0f,
+                skill.SkillId);
+            TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec, context.Caster);
+            SkillOnHitAdditionalDamageUtility.TryApply(
+                context.CombatManager,
+                context.Roster,
+                context.Runtime,
+                snapshot,
+                context.CasterEntry,
+                context.Caster,
+                skill.SkillId,
+                target,
+                hitPosition,
+                resolvedDamage);
+        }
+
+        private static float ResolveImpactDelay(ProjectileSkillData skill, SkillExecutionSnapshot snapshot)
+        {
+            var delay = skill != null ? skill.ImpactDelaySeconds : 0f;
+            if (snapshot != null)
+            {
+                delay *= Mathf.Max(0f, snapshot.DamageDelayMultiplier);
+            }
+
+            return Mathf.Max(0f, delay);
+        }
+
+        private static SkillEffectDefinition[] ResolveTimedEffects(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SkillEffectDefinition[] effects,
+            SkillMultiEffectTiming timing)
+        {
+            if (effects == null || effects.Length == 0)
+            {
+                return Array.Empty<SkillEffectDefinition>();
+            }
+
+            var resolved = new List<SkillEffectDefinition>();
+            for (var i = 0; i < effects.Length; i++)
+            {
+                var effect = effects[i];
+                if (effect == null
+                    || effect.EffectTiming != timing
+                    || !SkillMultiEffectExecutor.ShouldRun(context, effect, snapshot))
+                {
+                    continue;
+                }
+
+                resolved.Add(effect);
+            }
+
+            return resolved.Count > 0 ? resolved.ToArray() : Array.Empty<SkillEffectDefinition>();
         }
     }
 }

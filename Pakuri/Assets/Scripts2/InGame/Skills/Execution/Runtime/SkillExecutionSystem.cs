@@ -161,10 +161,10 @@ namespace Pakuri.InGame
                 entry,
                 runtime,
                 deltaTime,
-                hasManualAimDirection,
-                manualAimDirection,
-                hasManualTargetPoint,
-                manualTargetPoint);
+                hasManualAimDirection: hasManualAimDirection,
+                manualAimDirection: manualAimDirection,
+                hasManualTargetPoint: hasManualTargetPoint,
+                manualTargetPoint: manualTargetPoint);
             var result = executor.Execute(context, snapshot);
             if (result.Routed)
             {
@@ -174,6 +174,7 @@ namespace Pakuri.InGame
                 }
 
                 NotifyActiveSkillAnimation(entry);
+                NotifySkillCastTriggers(combatManager, entry, runtime, context);
                 LastRoutedCount++;
                 if (logRoutedContracts)
                 {
@@ -188,6 +189,23 @@ namespace Pakuri.InGame
         {
             var monsterActor = entry != null ? entry.Actor as MonsterUnitActor : null;
             monsterActor?.TryPlayActiveSkillAnimation();
+        }
+
+        private static void NotifySkillCastTriggers(
+            InGameCombatManager combatManager,
+            UnitRosterEntry entry,
+            SkillRuntimeInstance runtime,
+            SkillExecutionContext context)
+        {
+            if (combatManager == null || entry == null || runtime == null || runtime.Data == null)
+            {
+                return;
+            }
+
+            var center = context != null && context.HasManualTargetPoint
+                ? context.ManualTargetPoint
+                : entry.Transform != null ? (Vector2)entry.Transform.position : Vector2.zero;
+            combatManager.DispatchSkillCastTriggers(entry, runtime.Data.SkillId, center);
         }
 
         private bool TryExecuteTriggeredSkill(
@@ -219,10 +237,10 @@ namespace Pakuri.InGame
                 entry,
                 runtime,
                 0f,
-                hasManualAimDirection,
-                manualAimDirection,
-                hasManualTargetPoint,
-                manualTargetPoint);
+                hasManualAimDirection: hasManualAimDirection,
+                manualAimDirection: manualAimDirection,
+                hasManualTargetPoint: hasManualTargetPoint,
+                manualTargetPoint: manualTargetPoint);
             var result = executor.Execute(context, snapshot);
             if (result.Routed)
             {

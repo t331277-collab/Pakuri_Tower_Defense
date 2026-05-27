@@ -37,13 +37,50 @@ namespace Pakuri.InGame
             return ExecuteFiltered(context, snapshot, effects, fallbackCenter, SkillMultiEffectTiming.OnExpire, false);
         }
 
+        internal static bool ExecuteOnHit(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SkillEffectDefinition[] effects,
+            Vector2 fallbackCenter,
+            BaseUnitRuntimeModel eventTarget)
+        {
+            if (context == null)
+            {
+                return false;
+            }
+
+            var hitContext = new SkillExecutionContext(
+                context.CombatManager,
+                context.Roster,
+                context.CasterEntry,
+                context.Runtime,
+                context.DeltaTime,
+                eventTarget,
+                context.HasManualAimDirection,
+                context.ManualAimDirection,
+                context.HasManualTargetPoint,
+                context.ManualTargetPoint);
+            return ExecuteFiltered(hitContext, snapshot, effects, fallbackCenter, SkillMultiEffectTiming.OnHit, false);
+        }
+
+        internal static bool ExecuteOnHitCount(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SkillEffectDefinition[] effects,
+            Vector2 fallbackCenter,
+            int hitCount)
+        {
+            return ExecuteFiltered(context, snapshot, effects, fallbackCenter, SkillMultiEffectTiming.OnHitCount, false, hitCount);
+        }
+
         private static bool ExecuteFiltered(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
             SkillEffectDefinition[] effects,
             Vector2 fallbackCenter,
             SkillMultiEffectTiming? requiredTiming,
-            bool scaleStatusDurationWithSnapshot)
+            bool scaleStatusDurationWithSnapshot,
+            int eventHitCount = 0)
         {
             if (context == null || context.CombatManager == null || effects == null || effects.Length == 0)
             {
@@ -67,7 +104,13 @@ namespace Pakuri.InGame
                     }
                 }
                 else if (effect.EffectTiming == SkillMultiEffectTiming.OnHit
-                    || effect.EffectTiming == SkillMultiEffectTiming.OnExpire)
+                    || effect.EffectTiming == SkillMultiEffectTiming.OnExpire
+                    || effect.EffectTiming == SkillMultiEffectTiming.OnHitCount)
+                {
+                    continue;
+                }
+
+                if (!MatchesHitCountCondition(effect, eventHitCount))
                 {
                     continue;
                 }
@@ -277,6 +320,29 @@ namespace Pakuri.InGame
 
             var damage = SkillExecutionUtility.ResolveDamage(context.Caster, damageSpec, snapshot) * Mathf.Max(0f, effect.DamageMultiplier);
             var statusSpec = ResolveStatusSpec(effect, snapshot);
+            if (HasPersistentZone(effect))
+            {
+                return SpawnPersistentDamageZone(context, snapshot, effect, targeting, center, damage, statusSpec);
+            }
+
+            var explicitTarget = ResolveExplicitEventTarget(context, effect);
+            if (explicitTarget != null)
+            {
+                var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damage, snapshot, explicitTarget);
+                context.CombatManager.ApplyDamage(
+                    explicitTarget,
+                    resolvedDamage,
+                    effect.Attribute,
+                    context.Caster,
+                    damageSpec.CriticalAllowed,
+                    snapshot != null ? snapshot.CritChanceBonus : 0f,
+                    snapshot != null ? snapshot.CritDamageBonus : 0f,
+                    !string.IsNullOrWhiteSpace(effect.EffectId) ? effect.EffectId : effect.SkillId);
+                SkillStatusApplyUtility.TryApplyStatus(context.CombatManager, explicitTarget, statusSpec, context.Caster);
+                SpawnVisual(context, effect, center);
+                return true;
+            }
+
             var routed = InGameZoneSkillActor.ApplyAreaTick(
                 context.CombatManager,
                 context.CasterEntry,
@@ -356,7 +422,13 @@ namespace Pakuri.InGame
             }
 
             var targeting = BuildTargeting(effect);
-            var targets = SkillExecutionUtility.ResolveTargetList(context.CasterEntry, context.Roster, targeting);
+            var explicitTarget = ResolveExplicitEventTarget(context, effect);
+            var explicitEntry = explicitTarget != null && context != null && context.Roster != null
+                ? context.Roster.Find(explicitTarget)
+                : null;
+            var targets = explicitEntry != null
+                ? new List<UnitRosterEntry> { explicitEntry }
+                : SkillExecutionUtility.ResolveTargetList(context.CasterEntry, context.Roster, targeting);
             var visualTargets = effect.VisualAnchorMode == SkillMultiEffectVisualAnchorMode.AppliedTargets
                 ? new List<UnitRosterEntry>()
                 : null;
@@ -436,7 +508,28 @@ namespace Pakuri.InGame
                 skillMatches = HasActiveSkillAttribute(target, effect.ConditionSkillAttribute);
             }
 
-            return statusMatches && skillMatches;
+            var healthRatioMatches = true;
+            if (effect.ConditionHealthRatioMax > 0f)
+            {
+                healthRatioMatches = IsWithinHealthRatio(target, effect.ConditionHealthRatioMax);
+            }
+
+            return statusMatches && skillMatches && healthRatioMatches;
+        }
+
+        private static bool MatchesHitCountCondition(SkillEffectDefinition effect, int hitCount)
+        {
+            return effect == null || effect.ConditionHitCountMin <= 0 || hitCount >= effect.ConditionHitCountMin;
+        }
+
+        private static bool IsWithinHealthRatio(BaseUnitRuntimeModel target, float maxRatio)
+        {
+            var resources = target != null ? target.Resources : null;
+            var stats = target != null ? target.Stats : null;
+            return resources != null
+                && stats != null
+                && stats.MaxHealth > 0f
+                && resources.CurrentHealth / stats.MaxHealth <= Mathf.Clamp01(maxRatio);
         }
 
         private static float ResolveStatusDurationBonus(
@@ -554,6 +647,7 @@ namespace Pakuri.InGame
             status.Modifiers.DamageBonusRate = effect.StatusDamageBonusRate;
             status.Modifiers.ShieldReceivedBonus = effect.StatusShieldReceivedBonus;
             status.Modifiers.CritChanceBonusRate = effect.StatusCriticalChanceBonus;
+            status.Modifiers.CritDamageBonusRate = effect.StatusCriticalDamageBonus;
             status.MoveSpeedBonus = effect.StatusMoveSpeedBonus;
             status.MovementSlowRate = effect.StatusMoveSpeedBonus < 0f ? -effect.StatusMoveSpeedBonus : 0f;
             status.DamageTakenBonus = effect.StatusDamageTakenBonus;
@@ -651,9 +745,15 @@ namespace Pakuri.InGame
 
         private static SkillTargetSelection MapTargetSelection(SkillMultiEffectTargetSelection selection)
         {
-            return selection == SkillMultiEffectTargetSelection.Owner
-                ? SkillTargetSelection.Owner
-                : SkillTargetSelection.Nearest;
+            switch (selection)
+            {
+                case SkillMultiEffectTargetSelection.Owner:
+                    return SkillTargetSelection.Owner;
+                case SkillMultiEffectTargetSelection.EventTarget:
+                    return SkillTargetSelection.Nearest;
+                default:
+                    return SkillTargetSelection.Nearest;
+            }
         }
 
         private static SkillTargetShape MapTargetShape(SkillMultiEffectTargetShape shape)
@@ -679,6 +779,17 @@ namespace Pakuri.InGame
             {
                 switch (effect.CenterMode)
                 {
+                    case SkillMultiEffectCenterMode.EffectTarget:
+                        if (context != null && context.EventTarget != null)
+                        {
+                            var eventEntry = context.Roster != null ? context.Roster.Find(context.EventTarget) : null;
+                            if (eventEntry != null && eventEntry.Transform != null)
+                            {
+                                return eventEntry.Transform.position;
+                            }
+                        }
+
+                        return fallbackCenter;
                     case SkillMultiEffectCenterMode.PrimarySkillCenter:
                         return fallbackCenter;
                     case SkillMultiEffectCenterMode.Caster:
@@ -708,6 +819,97 @@ namespace Pakuri.InGame
             }
 
             return fallbackCenter;
+        }
+
+        private static bool HasPersistentZone(SkillEffectDefinition effect)
+        {
+            return effect != null && effect.ActiveDurationSeconds > 0f && effect.TickIntervalSeconds > 0f;
+        }
+
+        private static BaseUnitRuntimeModel ResolveExplicitEventTarget(SkillExecutionContext context, SkillEffectDefinition effect)
+        {
+            return effect != null
+                && effect.TargetSelection == SkillMultiEffectTargetSelection.EventTarget
+                ? context != null ? context.EventTarget : null
+                : null;
+        }
+
+        private static bool SpawnPersistentDamageZone(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SkillEffectDefinition effect,
+            SkillTargetingSpec targeting,
+            Vector2 center,
+            float damage,
+            ProjectileStatusHitSpec statusSpec)
+        {
+            if (context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
+            {
+                return false;
+            }
+
+            var duration = effect.ActiveDurationSeconds;
+            if (snapshot != null)
+            {
+                duration = duration * Mathf.Max(0f, snapshot.DurationMultiplier) + snapshot.DurationBonus;
+            }
+
+            var tickInterval = effect.TickIntervalSeconds;
+            if (snapshot != null)
+            {
+                tickInterval *= Mathf.Max(0.05f, snapshot.ShotIntervalMultiplier);
+            }
+
+            duration = Mathf.Max(0.05f, duration);
+            tickInterval = Mathf.Max(0.05f, tickInterval);
+            var coverAll = effect.CoverAll || effect.TargetShape == SkillMultiEffectTargetShape.Battlefield;
+            var radius = ResolveRadius(effect, snapshot);
+
+            GameObject instance = null;
+            if (effect.SkillEffectPrefab != null && context.CombatManager.Effects != null)
+            {
+                instance = context.CombatManager.Effects.InstantiateSkillPrefab(effect.SkillEffectPrefab, center, Quaternion.identity);
+                if (instance != null)
+                {
+                    SkillExecutionUtility.ApplyPrefabScale(instance.transform, effect.Radius, snapshot);
+                    Physics2D.SyncTransforms();
+                }
+            }
+
+            if (instance == null)
+            {
+                instance = new GameObject(string.IsNullOrWhiteSpace(effect.EffectId) ? "SkillEffectZone" : $"SkillEffectZone_{effect.EffectId}");
+                instance.transform.position = center;
+            }
+
+            var actor = instance.GetComponent<InGameZoneSkillActor>();
+            if (actor == null)
+            {
+                actor = instance.AddComponent<InGameZoneSkillActor>();
+            }
+
+            actor.Initialize(
+                context.CombatManager,
+                context.CasterEntry,
+                context.Roster,
+                targeting,
+                center,
+                radius,
+                coverAll,
+                duration,
+                tickInterval,
+                int.MaxValue,
+                damage,
+                effect.Attribute,
+                statusSpec,
+                context.Runtime,
+                snapshot,
+                System.Array.Empty<SkillEffectDefinition>(),
+                context.Caster,
+                true,
+                snapshot != null ? snapshot.CritChanceBonus : 0f,
+                snapshot != null ? snapshot.CritDamageBonus : 0f);
+            return true;
         }
 
         private static void SpawnVisual(SkillExecutionContext context, SkillEffectDefinition effect, Vector2 center)

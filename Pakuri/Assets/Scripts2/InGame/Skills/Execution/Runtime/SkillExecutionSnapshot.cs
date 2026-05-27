@@ -16,6 +16,7 @@ namespace Pakuri.InGame
             RadiusMultiplier = 1f;
             DurationMultiplier = 1f;
             KnockbackDistanceMultiplier = 1f;
+            DamageDelayMultiplier = 1f;
             ReloadTimeMultiplier = 1f;
             ShotIntervalMultiplier = 1f;
             BossDamageMultiplier = 1f;
@@ -40,6 +41,7 @@ namespace Pakuri.InGame
         public float RadiusBonus { get; private set; }
         public float BeamWidthBonus { get; private set; }
         public float KnockbackDistanceMultiplier { get; private set; }
+        public float DamageDelayMultiplier { get; private set; }
         public float ExecuteHealthRatioBonus { get; private set; }
         public float DurationBonus { get; private set; }
         public float BranchChanceBonus { get; private set; }
@@ -58,6 +60,8 @@ namespace Pakuri.InGame
         public float CritChanceBonus { get; private set; }
         public float CritDamageBonus { get; private set; }
         public float ExecuteCritChanceBonus { get; private set; }
+        public float ConsecutiveHitBonusRate { get; private set; }
+        public float ConsecutiveHitMax { get; private set; }
         public float BossDamageMultiplier { get; private set; }
         public float KillCooldownRefundRatioBonus { get; private set; }
         public bool KillResetsCooldown { get; private set; }
@@ -88,6 +92,16 @@ namespace Pakuri.InGame
         public DamageAttribute OnHitChainDamageAttribute { get; private set; }
         public string ReloadReduceTargetSkillId { get; private set; }
         public float ReloadReduceSecondsPerHit { get; private set; }
+        public string CoreHitboxName { get; private set; }
+        public bool HasCoreDamageMultiplier { get; private set; }
+        public float CoreDamageMultiplier { get; private set; } = 1f;
+        public bool HasCoreOnHitAdditionalDamage { get; private set; }
+        public float CoreOnHitAdditionalDamageChance { get; private set; }
+        public float CoreOnHitAdditionalDamageMultiplier { get; private set; } = 1f;
+        public DamageAttribute CoreOnHitAdditionalDamageAttribute { get; private set; }
+        public string HitCountCooldownRefundTargetSkillId { get; private set; }
+        public int HitCountCooldownRefundMinTargets { get; private set; }
+        public float HitCountCooldownRefundRatio { get; private set; }
         public string ThresholdStatusId { get; private set; }
         public int ThresholdStatusMinStacks { get; private set; }
         public string ThresholdApplyStatusId { get; private set; }
@@ -148,6 +162,11 @@ namespace Pakuri.InGame
             if (spec.HasKnockbackDistanceMultiplier)
             {
                 KnockbackDistanceMultiplier *= PositiveOrDefault(spec.KnockbackDistanceMultiplier, 1f);
+            }
+
+            if (spec.HasDamageDelayMultiplier)
+            {
+                DamageDelayMultiplier *= PositiveOrDefault(spec.DamageDelayMultiplier, 1f);
             }
 
             if (spec.HasExecuteHealthRatioBonus)
@@ -347,6 +366,34 @@ namespace Pakuri.InGame
                 ReloadReduceSecondsPerHit += spec.ReloadReduceSecondsPerHit;
             }
 
+            if (!string.IsNullOrWhiteSpace(spec.CoreHitboxName))
+            {
+                CoreHitboxName = spec.CoreHitboxName.Trim();
+            }
+
+            if (spec.HasCoreDamageMultiplier)
+            {
+                HasCoreDamageMultiplier = true;
+                CoreDamageMultiplier = PositiveOrDefault(spec.CoreDamageMultiplier, 1f);
+            }
+
+            if (spec.HasCoreOnHitAdditionalDamage)
+            {
+                HasCoreOnHitAdditionalDamage = true;
+                CoreOnHitAdditionalDamageChance = Mathf.Clamp01(spec.CoreOnHitAdditionalDamageChance);
+                CoreOnHitAdditionalDamageMultiplier = Mathf.Max(0f, spec.CoreOnHitAdditionalDamageMultiplier);
+                CoreOnHitAdditionalDamageAttribute = spec.CoreOnHitAdditionalDamageAttribute;
+            }
+
+            if (!string.IsNullOrWhiteSpace(spec.HitCountCooldownRefundTargetSkillId)
+                && spec.HitCountCooldownRefundMinTargets > 0
+                && spec.HitCountCooldownRefundRatio > 0f)
+            {
+                HitCountCooldownRefundTargetSkillId = spec.HitCountCooldownRefundTargetSkillId;
+                HitCountCooldownRefundMinTargets = spec.HitCountCooldownRefundMinTargets;
+                HitCountCooldownRefundRatio = Mathf.Clamp01(spec.HitCountCooldownRefundRatio);
+            }
+
             if (!string.IsNullOrWhiteSpace(spec.ThresholdStatusId)
                 && spec.ThresholdStatusMinStacks > 0
                 && !string.IsNullOrWhiteSpace(spec.ThresholdApplyStatusId))
@@ -365,6 +412,16 @@ namespace Pakuri.InGame
                     spec.ConditionalDamageMultiplier,
                     spec.ConditionalTargetStatusId,
                     spec.ConditionalTargetStatusMinStacks));
+            }
+
+            if (spec.ConsecutiveHitBonusRate > 0f)
+            {
+                ConsecutiveHitBonusRate = Mathf.Max(0f, spec.ConsecutiveHitBonusRate);
+            }
+
+            if (spec.ConsecutiveHitMax > 0f)
+            {
+                ConsecutiveHitMax = Mathf.Max(0f, spec.ConsecutiveHitMax);
             }
 
             if (spec.SkillEffectPrefab != null)
@@ -403,6 +460,8 @@ namespace Pakuri.InGame
                 BeamWidthBonus = choice.BeamWidthBonus,
                 HasKnockbackDistanceMultiplier = choice.HasKnockbackDistanceMultiplier,
                 KnockbackDistanceMultiplier = choice.KnockbackDistanceMultiplier,
+                HasDamageDelayMultiplier = choice.HasDamageDelayMultiplier,
+                DamageDelayMultiplier = choice.DamageDelayMultiplier,
                 HasExecuteHealthRatioBonus = choice.HasExecuteHealthRatioBonus,
                 ExecuteHealthRatioBonus = choice.ExecuteHealthRatioBonus,
                 HasDurationMultiplier = choice.HasDurationMultiplier,
@@ -467,6 +526,8 @@ namespace Pakuri.InGame
                 CountTargetSide = choice.CountTargetSide,
                 DamageMultiplierPerCount = choice.DamageMultiplierPerCount,
                 CountMax = choice.CountMax,
+                ConsecutiveHitBonusRate = choice.ConsecutiveHitBonusRate,
+                ConsecutiveHitMax = choice.ConsecutiveHitMax,
                 HasStatusConditionalDamageTakenBonus = choice.HasStatusConditionalDamageTakenBonus,
                 StatusConditionalDamageTakenBonus = choice.StatusConditionalDamageTakenBonus,
                 StatusConditionalSourceStatusId = choice.StatusConditionalSourceStatusId,
@@ -481,7 +542,17 @@ namespace Pakuri.InGame
                 OnHitChainDamageMultiplier = choice.OnHitChainDamageMultiplier,
                 OnHitChainDamageAttribute = choice.OnHitChainDamageAttribute,
                 ReloadReduceTargetSkillId = choice.ReloadReduceTargetSkillId,
-                ReloadReduceSecondsPerHit = choice.ReloadReduceSecondsPerHit
+                ReloadReduceSecondsPerHit = choice.ReloadReduceSecondsPerHit,
+                CoreHitboxName = choice.CoreHitboxName,
+                HasCoreDamageMultiplier = choice.HasCoreDamageMultiplier,
+                CoreDamageMultiplier = choice.CoreDamageMultiplier,
+                HasCoreOnHitAdditionalDamage = choice.HasCoreOnHitAdditionalDamage,
+                CoreOnHitAdditionalDamageChance = choice.CoreOnHitAdditionalDamageChance,
+                CoreOnHitAdditionalDamageMultiplier = choice.CoreOnHitAdditionalDamageMultiplier,
+                CoreOnHitAdditionalDamageAttribute = choice.CoreOnHitAdditionalDamageAttribute,
+                HitCountCooldownRefundTargetSkillId = choice.HitCountCooldownRefundTargetSkillId,
+                HitCountCooldownRefundMinTargets = choice.HitCountCooldownRefundMinTargets,
+                HitCountCooldownRefundRatio = choice.HitCountCooldownRefundRatio
             });
         }
 

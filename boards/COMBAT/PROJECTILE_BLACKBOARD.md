@@ -1,4 +1,4 @@
-# PROJECTILE_BLACKBOARD
+﻿# PROJECTILE_BLACKBOARD
 
 This is an active projectile-domain persistent state file created after new projectile runtime work resumed.
 Older projectile history remains archived at `boards/ARCHIVE/PROJECTILE_BLACKBOARD_ARCHIVE_2026-05-14.md`.
@@ -8,24 +8,24 @@ Older projectile history remains archived at `boards/ARCHIVE/PROJECTILE_BLACKBOA
 - InGame projectile spawning, movement, hit relay, pierce, branch, fan-out, and projectile-owned hit effects.
 - Monster-specific projectile facts should also be recorded in the relevant `boards/MON/{NAME}_MONSTER.md` file.
 
-## Task: 2026-05-17 InGame Projectile Modifier Execution
+## Task: 2026-05-27 Shared Projectile Delayed-Impact And Timed Follow-Up Runtime
 
 ### Task title
 
-Extend shared InGame projectiles with modifier-driven fan-out, pierce, status, and branch behavior.
+Extend the shared projectile runtime to support contact-stop delayed impacts plus on-hit and on-expire follow-up effects.
 
 ### Goals
 
-- Keep projectile behavior reusable instead of hardcoding Eve-A inside the projectile actor.
-- Allow `SkillExecutionSnapshot` modifier fields to affect active projectile behavior.
-- Preserve existing enemy projectile calls by keeping the previous `InGameProjectileActor.Initialize(...)` overload.
+- Let projectile skills stop on first contact, wait a configured delay, then resolve a delayed area impact.
+- Let projectile skills run shared `monster_skill_effects.csv` `OnHit` and `OnExpire` rows without monster-specific executor branches.
+- Preserve existing direct-hit fallback behavior for simple projectiles that do not need delayed impact or timed effects.
 
 ### Constraints
 
 - Role Owner is Code Builder.
-- Branch projectiles do not recursively branch or apply inherited status in this slice.
-- Unity Play Mode verification remains user-owned.
-- Code Reviewer execution requires explicit user permission and was not run.
+- This is a shared projectile/runtime extension, not a Sein-only branch.
+- The new behavior is only exercised when projectile/effect data asks for delayed impact or timed effects.
+- Unity Play Mode gameplay verification remains user-owned.
 
 ### Role Owner
 
@@ -33,22 +33,22 @@ Code Builder
 
 ### Status
 
-Builder implementation completed and locally verified.
+Implemented, synced, and compile-verified.
 
 ### Next Actions
 
-- User verifies projectile fan-out, pierce, and branch visuals in Play Mode.
-- If branch visuals need different assets later, add a data field instead of changing the branch actor to an Eve-specific path.
+- Reuse the delayed-impact path for future projectile skills before adding another projectile state machine.
+- Keep projectile visuals scene-owned through `EffectManager` when a flying visual is distinct from the delayed impact visual.
 
 ### Evidence
 
-- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs:82` applies `AdditionalProjectileBonus` and `:87` resolves branch behavior from the active snapshot.
-- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/InGameProjectileActor.cs:60` adds an extended initialize overload for optional status/branch specs while preserving the existing initialize overload used by enemy projectiles.
-- `InGameProjectileActor.cs:153` applies status on hit, and `:154` calls branch spawning after damage.
-- `InGameProjectileActor.cs:186` through `:307` finds nearby branch targets, spawns branch projectiles, prevents immediate re-hit of the source target, and disables recursive branch/status on branch projectiles.
-- Runtime/editor builds completed with 0 errors and existing assembly reference warnings.
-- Unity-MCP script refresh reached idle and console warning/error read returned only MCP client handler logs.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Actors/InGameProjectileActor.cs` now stores delayed-impact state (`stopAfterFirstHit`, `impactDelaySeconds`, `impactEffectPrefab`, `hasImpactArea`, `onHitEffects`, and `onExpireEffects`) and resolves contact-stop delayed impacts through the shared actor.
+- The same file now defers destroy-boundary cleanup while armed, executes `OnHit` follow-up effects on contact, resolves delayed explosion damage through `InGameZoneSkillActor.ApplyAreaTick(...)`, and waits for spawned impact visual lifetime before `OnExpire` follow-up effects.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/ProjectileSkillExecutor.cs` now resolves projectile timed effects from `SkillMultiEffectTiming.OnHit` and `OnExpire`, prefers explicit projectile prefab then scene `EffectManager` mapping for the flying visual, and creates a projectile actor instead of using direct-hit fallback when delayed-impact behavior exists.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillVisualSpawnUtility.cs` now exposes shared animation-length visual lifetime resolution used by projectile delayed-impact follow-up cleanup.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDataValidator.cs` now allows `CooldownProjectile` rows that rely on cooldown timing instead of magazine/reload fields while still validating projectile speed.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; existing `MSB3277` warnings remain.
 
 ### History
 
-- 2026-05-17: New active projectile work resumed for Eve-A step 2, so this board was created per `MDTREE.md`.
+- 2026-05-27: Sein-C required a shared projectile path for “flying arrow -> first-contact stop -> delayed explosion -> optional residual zone,” so the projectile actor and executor were extended instead of adding a Sein-only implementation.

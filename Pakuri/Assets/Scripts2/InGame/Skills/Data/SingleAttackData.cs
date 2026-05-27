@@ -11,6 +11,7 @@ namespace Pakuri.InGame
         public bool UsePrefabHitbox;
         public bool HitAllTargets;
         [Min(1)] public int HitTargetCount = 1;
+        [Min(0f)] public float DamageDelaySeconds;
         [Range(0f, 1f)] public float ExecuteHealthRatioThreshold;
         public bool RequireExecuteThresholdToCast;
         public float ExecuteDamageMultiplier = 1f;

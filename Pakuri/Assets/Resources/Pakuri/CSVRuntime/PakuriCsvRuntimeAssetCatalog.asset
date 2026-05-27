@@ -42,3 +42,19 @@ MonoBehaviour:
     Asset: {fileID: 7968378587265563361, guid: 19bfba788239eba498a44cb67c2622c6, type: 3}
   - AssetPath: Assets/Prefab/Skill/Rin/Rin_D_master_1.prefab
     Asset: {fileID: 8682295390662031567, guid: 21c89fcc7f13a3d489440cc7d72196e7, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Rin/Rin_E.prefab
+    Asset: {fileID: 6357067641262685288, guid: 896e086a136a4ef4a8054935eef3cfc1, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Rin/Rin_F.prefab
+    Asset: {fileID: 108287567450996986, guid: 0cad2911a166fec469c55abfb08383ae, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Sein/Sein_A_Master-2.prefab
+    Asset: {fileID: 5485008907326897054, guid: 70c4e5c831b879d46ad9420f17ba40ec, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Sein/Sein_C.prefab
+    Asset: {fileID: 3852850182120213786, guid: 307075734bf07414191a02f42bf58094, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Sein/Sein_C_Master-2.prefab
+    Asset: {fileID: 5485008907326897054, guid: 79800cce1c1fe1a46af3570c1675f8e2, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Sein/Sein_C_Master_1.prefab
+    Asset: {fileID: 2282866027505473427, guid: 079bea2142eb99f4a8bf1d91a533fa67, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Sein/Sein_D.prefab
+    Asset: {fileID: 2282866027505473427, guid: 395f96024484e1049881c2b3feab69ba, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Sein/Sein_D_Master_2.prefab
+    Asset: {fileID: 2282866027505473427, guid: eeacd43e7677aa447a2a8d39670a1420, type: 3}

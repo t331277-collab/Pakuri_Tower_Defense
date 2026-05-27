@@ -200,6 +200,7 @@ namespace Pakuri.Data
                     ImplementationState = skill.ImplementationState,
                     IsDefaultLearned = skill.IsDefaultLearned,
                     SkillIcon = LoadSprite(skill.SkillIconPath),
+                    SkillEffectPrefab = LoadPrefab(skill.SkillEffectPrefabPath),
                     DescriptionText = skill.DescriptionText,
                     Attribute = skill.Attribute,
                     BaseDamage = skill.BaseDamage,
@@ -207,6 +208,7 @@ namespace Pakuri.Data
                     SpellPowerCoefficient = skill.SpellPowerCoefficient,
                     Radius = skill.Radius,
                     KnockbackDistance = skill.KnockbackDistance,
+                    DamageDelaySeconds = skill.DamageDelaySeconds,
                     ExecuteHealthRatioThreshold = skill.ExecuteHealthRatioThreshold,
                     RequireExecuteThresholdToCast = skill.RequireExecuteThresholdToCast,
                     ExecuteDamageMultiplier = skill.ExecuteDamageMultiplier,
@@ -269,6 +271,8 @@ namespace Pakuri.Data
                     ConditionStatusId = effect.ConditionStatusId,
                     ConditionTargetSide = effect.ConditionTargetSide,
                     ConditionSkillAttribute = effect.ConditionSkillAttribute,
+                    ConditionHealthRatioMax = effect.ConditionHealthRatioMax,
+                    ConditionHitCountMin = effect.ConditionHitCountMin,
                     Attribute = effect.Attribute,
                     BaseDamage = effect.BaseDamage,
                     AttackPowerCoefficient = effect.AttackPowerCoefficient,
@@ -276,6 +280,8 @@ namespace Pakuri.Data
                     DamageMultiplier = effect.DamageMultiplier,
                     Radius = effect.Radius,
                     CoverAll = effect.CoverAll,
+                    ActiveDurationSeconds = effect.ActiveDurationSeconds,
+                    TickIntervalSeconds = effect.TickIntervalSeconds,
                     SkillEffectPrefab = LoadPrefab(effect.SkillEffectPrefabPath),
                     RuntimeSupportState = effect.RuntimeSupportState,
                     RuntimeSupportNotes = effect.RuntimeSupportNotes
@@ -308,10 +314,15 @@ namespace Pakuri.Data
                     RequiresActiveChoiceId = trigger.RequiresActiveChoiceId,
                     ExcludesActiveChoiceId = trigger.ExcludesActiveChoiceId,
                     ConditionStatusId = trigger.ConditionStatusId,
+                    ConditionStatusSourceSkillId = trigger.ConditionStatusSourceSkillId,
                     TriggerAttribute = trigger.TriggerAttribute,
+                    TriggerAction = trigger.TriggerAction,
+                    EventSkillId = trigger.EventSkillId,
                     ProcChance = trigger.ProcChance,
                     InternalCooldownSeconds = trigger.InternalCooldownSeconds,
                     TriggeredSkillId = trigger.TriggeredSkillId,
+                    TargetSkillId = trigger.TargetSkillId,
+                    TriggeredEffectId = trigger.TriggeredEffectId,
                     RuntimeKind = trigger.RuntimeKind,
                     SortOrder = trigger.SortOrder,
                     TargetSide = trigger.TargetSide,
@@ -331,7 +342,12 @@ namespace Pakuri.Data
                     HitTargetCount = trigger.HitTargetCount,
                     RepeatCount = trigger.RepeatCount,
                     RepeatIntervalSeconds = trigger.RepeatIntervalSeconds,
+                    TriggerDelaySeconds = trigger.TriggerDelaySeconds,
+                    TriggerEveryCount = trigger.TriggerEveryCount,
+                    EventSourceScope = trigger.EventSourceScope,
                     RequireEventExecute = trigger.RequireEventExecute,
+                    CooldownRefundRatio = trigger.CooldownRefundRatio,
+                    ReloadReduceRatio = trigger.ReloadReduceRatio,
                     SkillEffectPrefab = LoadPrefab(trigger.SkillEffectPrefabPath),
                     RuntimeSupportState = trigger.RuntimeSupportState,
                     RuntimeSupportNotes = trigger.RuntimeSupportNotes
@@ -414,6 +430,8 @@ namespace Pakuri.Data
                     BeamWidthBonus = choice.BeamWidthBonus,
                     HasKnockbackDistanceMultiplier = choice.HasKnockbackDistanceMultiplier,
                     KnockbackDistanceMultiplier = choice.HasKnockbackDistanceMultiplier ? choice.KnockbackDistanceMultiplier : 1f,
+                    HasDamageDelayMultiplier = choice.HasDamageDelayMultiplier,
+                    DamageDelayMultiplier = choice.HasDamageDelayMultiplier ? choice.DamageDelayMultiplier : 1f,
                     HasExecuteHealthRatioBonus = choice.HasExecuteHealthRatioBonus,
                     ExecuteHealthRatioBonus = choice.ExecuteHealthRatioBonus,
                     HasDurationMultiplier = choice.HasDurationMultiplier,
@@ -470,6 +488,8 @@ namespace Pakuri.Data
                     CountTargetSide = choice.CountTargetSide,
                     DamageMultiplierPerCount = choice.DamageMultiplierPerCount,
                     CountMax = choice.CountMax,
+                    ConsecutiveHitBonusRate = choice.ConsecutiveHitBonusRate,
+                    ConsecutiveHitMax = choice.ConsecutiveHitMax,
                     HasStatusConditionalDamageTakenBonus = choice.HasStatusConditionalDamageTakenBonus,
                     StatusConditionalDamageTakenBonus = choice.StatusConditionalDamageTakenBonus,
                     StatusConditionalSourceStatusId = choice.StatusConditionalSourceStatusId,
@@ -485,6 +505,16 @@ namespace Pakuri.Data
                     OnHitChainDamageAttribute = choice.OnHitChainDamageAttribute,
                     ReloadReduceTargetSkillId = choice.ReloadReduceTargetSkillId,
                     ReloadReduceSecondsPerHit = choice.ReloadReduceSecondsPerHit,
+                    CoreHitboxName = choice.CoreHitboxName,
+                    HasCoreDamageMultiplier = choice.HasCoreDamageMultiplier,
+                    CoreDamageMultiplier = choice.HasCoreDamageMultiplier && choice.CoreDamageMultiplier > 0f ? choice.CoreDamageMultiplier : 1f,
+                    HasCoreOnHitAdditionalDamage = choice.HasCoreOnHitAdditionalDamage,
+                    CoreOnHitAdditionalDamageChance = choice.CoreOnHitAdditionalDamageChance,
+                    CoreOnHitAdditionalDamageMultiplier = choice.HasCoreOnHitAdditionalDamage && choice.CoreOnHitAdditionalDamageMultiplier > 0f ? choice.CoreOnHitAdditionalDamageMultiplier : 1f,
+                    CoreOnHitAdditionalDamageAttribute = choice.CoreOnHitAdditionalDamageAttribute,
+                    HitCountCooldownRefundTargetSkillId = choice.HitCountCooldownRefundTargetSkillId,
+                    HitCountCooldownRefundMinTargets = choice.HitCountCooldownRefundMinTargets,
+                    HitCountCooldownRefundRatio = choice.HitCountCooldownRefundRatio,
                     RuntimeSupportState = choice.RuntimeSupportState,
                     RuntimeSupportNotes = choice.RuntimeSupportNotes
                 };
@@ -533,6 +563,7 @@ namespace Pakuri.Data
             definition.StatusAttackPowerBonus = payload.StatusAttackPowerBonus;
             definition.StatusDamageTakenBonus = payload.StatusDamageTakenBonus;
             definition.StatusCriticalDamageTakenBonus = payload.StatusCriticalDamageTakenBonus;
+            definition.StatusCriticalDamageBonus = payload.StatusCriticalDamageBonus;
             definition.StatusAilmentResistanceBonus = payload.StatusAilmentResistanceBonus;
             definition.StatusCriticalResistanceBonus = payload.StatusCriticalResistanceBonus;
             definition.StatusElementResistReduction = payload.StatusElementResistReduction;

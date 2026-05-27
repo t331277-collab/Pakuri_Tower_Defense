@@ -56,6 +56,7 @@ namespace Pakuri.Data
             public bool IsAvailableWithoutActiveRequirement;
             public SkillSlot RequiredActiveSlot;
             public string SkillIconPath;
+            public string SkillEffectPrefabPath;
             public string DescriptionText;
             public string Summary;
             public DamageAttribute Attribute;
@@ -64,6 +65,7 @@ namespace Pakuri.Data
             public float SpellPowerCoefficient;
             public float Radius;
             public float KnockbackDistance;
+            public float DamageDelaySeconds;
             public float ExecuteHealthRatioThreshold;
             public bool RequireExecuteThresholdToCast;
             public float ExecuteDamageMultiplier = 1f;
@@ -114,6 +116,8 @@ namespace Pakuri.Data
             public float BeamWidthBonus;
             public bool HasKnockbackDistanceMultiplier;
             public float KnockbackDistanceMultiplier = 1f;
+            public bool HasDamageDelayMultiplier;
+            public float DamageDelayMultiplier = 1f;
             public bool HasExecuteHealthRatioBonus;
             public float ExecuteHealthRatioBonus;
             public bool HasDurationMultiplier;
@@ -170,6 +174,8 @@ namespace Pakuri.Data
             public SkillMultiEffectTargetSide CountTargetSide;
             public float DamageMultiplierPerCount;
             public int CountMax;
+            public float ConsecutiveHitBonusRate;
+            public float ConsecutiveHitMax;
             public bool HasStatusConditionalDamageTakenBonus;
             public float StatusConditionalDamageTakenBonus;
             public string StatusConditionalSourceStatusId;
@@ -185,6 +191,16 @@ namespace Pakuri.Data
             public DamageAttribute OnHitChainDamageAttribute;
             public string ReloadReduceTargetSkillId;
             public float ReloadReduceSecondsPerHit;
+            public string CoreHitboxName;
+            public bool HasCoreDamageMultiplier;
+            public float CoreDamageMultiplier = 1f;
+            public bool HasCoreOnHitAdditionalDamage;
+            public float CoreOnHitAdditionalDamageChance;
+            public float CoreOnHitAdditionalDamageMultiplier = 1f;
+            public DamageAttribute CoreOnHitAdditionalDamageAttribute;
+            public string HitCountCooldownRefundTargetSkillId;
+            public int HitCountCooldownRefundMinTargets;
+            public float HitCountCooldownRefundRatio;
             public string RuntimeSupportState;
             public string RuntimeSupportNotes;
         }
@@ -211,6 +227,8 @@ namespace Pakuri.Data
             public string ConditionStatusId;
             public SkillMultiEffectTargetSide ConditionTargetSide;
             public string ConditionSkillAttribute;
+            public float ConditionHealthRatioMax;
+            public int ConditionHitCountMin;
             public DamageAttribute Attribute;
             public float BaseDamage;
             public float AttackPowerCoefficient;
@@ -218,6 +236,8 @@ namespace Pakuri.Data
             public float DamageMultiplier = 1f;
             public float Radius;
             public bool CoverAll;
+            public float ActiveDurationSeconds;
+            public float TickIntervalSeconds;
             public StatusPayloadRow Status = new StatusPayloadRow();
             public string SkillEffectPrefabPath;
             public string RuntimeSupportState;
@@ -233,10 +253,18 @@ namespace Pakuri.Data
             public string RequiresActiveChoiceId;
             public string ExcludesActiveChoiceId;
             public string ConditionStatusId;
+            public string ConditionStatusSourceSkillId;
             public string TriggerAttribute;
+            public SkillTriggerActionKind TriggerAction;
+            public string EventSkillId;
             public float ProcChance = 1f;
             public float InternalCooldownSeconds;
+            public float TriggerDelaySeconds;
+            public int TriggerEveryCount;
+            public string EventSourceScope;
             public string TriggeredSkillId;
+            public string TargetSkillId;
+            public string TriggeredEffectId;
             public SkillRuntimeKind RuntimeKind;
             public int SortOrder;
             public SkillMultiEffectTargetSide TargetSide;
@@ -257,6 +285,8 @@ namespace Pakuri.Data
             public int RepeatCount = 1;
             public float RepeatIntervalSeconds;
             public bool RequireEventExecute;
+            public float CooldownRefundRatio;
+            public float ReloadReduceRatio;
             public string SkillEffectPrefabPath;
             public string RuntimeSupportState;
             public string RuntimeSupportNotes;
@@ -319,6 +349,7 @@ namespace Pakuri.Data
                 IsAvailableWithoutActiveRequirement = record.ReadBool("is_available_without_active_requirement"),
                 RequiredActiveSlot = record.ReadEnum<SkillSlot>("required_active_slot"),
                 SkillIconPath = record.ReadString("skill_icon_path"),
+                SkillEffectPrefabPath = ReadOptionalStringIfColumnExists(record, "skill_effect_prefab_path"),
                 DescriptionText = record.ReadString("description_text"),
                 Summary = record.ReadString("summary"),
                 Attribute = record.ReadEnum<DamageAttribute>("attribute"),
@@ -327,6 +358,7 @@ namespace Pakuri.Data
                 SpellPowerCoefficient = record.ReadFloat("spell_power_coefficient"),
                 Radius = record.ReadFloat("radius"),
                 KnockbackDistance = ReadOptionalFloatIfColumnExists(record, "knockback_distance"),
+                DamageDelaySeconds = ReadOptionalFloatIfColumnExists(record, "damage_delay_seconds"),
                 ExecuteHealthRatioThreshold = ReadOptionalFloatIfColumnExists(record, "execute_health_ratio_threshold"),
                 RequireExecuteThresholdToCast = ReadOptionalBoolIfColumnExists(record, "require_execute_threshold_to_cast"),
                 ExecuteDamageMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "execute_damage_multiplier", 1f),
@@ -385,6 +417,8 @@ namespace Pakuri.Data
             row.BeamWidthBonus = ReadOptionalFloat(record, "beam_width_bonus");
             row.HasKnockbackDistanceMultiplier = TryReadFloatIfColumnExists(record, "knockback_distance_multiplier", out var knockbackDistanceMultiplier);
             row.KnockbackDistanceMultiplier = knockbackDistanceMultiplier;
+            row.HasDamageDelayMultiplier = TryReadFloatIfColumnExists(record, "damage_delay_multiplier", out var damageDelayMultiplier);
+            row.DamageDelayMultiplier = damageDelayMultiplier;
             row.HasExecuteHealthRatioBonus = TryReadFloatIfColumnExists(record, "execute_health_ratio_bonus", out var executeHealthRatioBonus);
             row.ExecuteHealthRatioBonus = executeHealthRatioBonus;
             row.HasDurationMultiplier = TryReadFloat(record, "duration_multiplier", out var durationMultiplier);
@@ -440,6 +474,8 @@ namespace Pakuri.Data
             row.CountTargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("count_target_side");
             row.DamageMultiplierPerCount = ReadOptionalFloat(record, "damage_multiplier_per_count");
             row.CountMax = ReadOptionalInt(record, "count_max");
+            row.ConsecutiveHitBonusRate = ReadOptionalFloatIfColumnExists(record, "consecutive_hit_bonus_rate");
+            row.ConsecutiveHitMax = ReadOptionalFloatIfColumnExists(record, "consecutive_hit_max");
             row.HasStatusConditionalDamageTakenBonus = TryReadFloat(record, "status_conditional_damage_taken_bonus", out var statusConditionalDamageTakenBonus);
             row.StatusConditionalDamageTakenBonus = statusConditionalDamageTakenBonus;
             row.StatusConditionalSourceStatusId = record.ReadString("status_conditional_source_status_id");
@@ -455,6 +491,16 @@ namespace Pakuri.Data
             row.OnHitChainDamageAttribute = ReadOptionalEnumIfColumnExists(record, "on_hit_chain_damage_attribute", DamageAttribute.Physical);
             row.ReloadReduceTargetSkillId = ReadOptionalStringIfColumnExists(record, "reload_reduce_target_skill_id");
             row.ReloadReduceSecondsPerHit = ReadOptionalFloatIfColumnExists(record, "reload_reduce_seconds_per_hit");
+            row.CoreHitboxName = ReadOptionalStringIfColumnExists(record, "core_hitbox_name");
+            row.HasCoreDamageMultiplier = TryReadFloatIfColumnExists(record, "core_damage_multiplier", out var coreDamageMultiplier);
+            row.CoreDamageMultiplier = coreDamageMultiplier;
+            row.HasCoreOnHitAdditionalDamage = TryReadFloatIfColumnExists(record, "core_on_hit_additional_damage_chance", out var coreOnHitAdditionalDamageChance);
+            row.CoreOnHitAdditionalDamageChance = coreOnHitAdditionalDamageChance;
+            row.CoreOnHitAdditionalDamageMultiplier = ReadOptionalFloatIfColumnExists(record, "core_on_hit_additional_damage_multiplier");
+            row.CoreOnHitAdditionalDamageAttribute = ReadOptionalEnumIfColumnExists(record, "core_on_hit_additional_damage_attribute", DamageAttribute.Physical);
+            row.HitCountCooldownRefundTargetSkillId = ReadOptionalStringIfColumnExists(record, "hit_count_cooldown_refund_target_skill_id");
+            row.HitCountCooldownRefundMinTargets = ReadOptionalIntIfColumnExists(record, "hit_count_cooldown_refund_min_targets");
+            row.HitCountCooldownRefundRatio = ReadOptionalFloatIfColumnExists(record, "hit_count_cooldown_refund_ratio");
             return row;
         }
 
@@ -482,6 +528,8 @@ namespace Pakuri.Data
                 ConditionStatusId = record.ReadString("condition_status_id"),
                 ConditionTargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("condition_target_side"),
                 ConditionSkillAttribute = record.ReadString("condition_skill_attribute"),
+                ConditionHealthRatioMax = ReadOptionalFloatIfColumnExists(record, "condition_health_ratio_max"),
+                ConditionHitCountMin = ReadOptionalIntIfColumnExists(record, "condition_hit_count_min"),
                 Attribute = record.ReadEnum<DamageAttribute>("attribute"),
                 BaseDamage = record.ReadFloat("base_damage"),
                 AttackPowerCoefficient = record.ReadFloat("attack_power_coefficient"),
@@ -489,6 +537,8 @@ namespace Pakuri.Data
                 DamageMultiplier = ReadOptionalFloat(record, "damage_multiplier"),
                 Radius = record.ReadFloat("radius"),
                 CoverAll = record.ReadBool("cover_all"),
+                ActiveDurationSeconds = ReadOptionalFloatIfColumnExists(record, "active_duration_seconds"),
+                TickIntervalSeconds = ReadOptionalFloatIfColumnExists(record, "tick_interval_seconds"),
                 Status = ReadStatusPayload(record, true),
                 SkillEffectPrefabPath = record.ReadString("skill_effect_prefab_path"),
                 RuntimeSupportState = record.ReadString("runtime_support_state"),
@@ -514,8 +564,13 @@ namespace Pakuri.Data
                 RequiresActiveChoiceId = record.ReadString("requires_active_choice_id"),
                 ExcludesActiveChoiceId = record.ReadString("excludes_active_choice_id"),
                 ConditionStatusId = record.ReadString("condition_status_id"),
+                ConditionStatusSourceSkillId = ReadOptionalStringIfColumnExists(record, "condition_status_source_skill_id"),
                 TriggerAttribute = record.ReadString("trigger_attribute"),
+                TriggerAction = ReadOptionalEnumIfColumnExists(record, "trigger_action", SkillTriggerActionKind.Auto),
+                EventSkillId = ReadOptionalStringIfColumnExists(record, "event_skill_id"),
                 TriggeredSkillId = record.ReadRequiredString("triggered_skill_id"),
+                TargetSkillId = ReadOptionalStringIfColumnExists(record, "target_skill_id"),
+                TriggeredEffectId = ReadOptionalStringIfColumnExists(record, "triggered_effect_id"),
                 RuntimeKind = record.ReadEnum<SkillRuntimeKind>("runtime_kind"),
                 SortOrder = record.ReadInt("sort_order"),
                 TargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("target_side"),
@@ -535,7 +590,12 @@ namespace Pakuri.Data
                 HitTargetCount = record.ReadString("hit_target_count"),
                 RepeatCount = record.ReadInt("repeat_count"),
                 RepeatIntervalSeconds = record.ReadFloat("repeat_interval_seconds"),
+                TriggerDelaySeconds = ReadOptionalFloatIfColumnExists(record, "trigger_delay_seconds"),
+                TriggerEveryCount = ReadOptionalIntIfColumnExists(record, "trigger_every_count"),
+                EventSourceScope = ReadOptionalStringIfColumnExists(record, "event_source_scope"),
                 RequireEventExecute = ReadOptionalBoolIfColumnExists(record, "require_event_execute"),
+                CooldownRefundRatio = ReadOptionalFloatIfColumnExists(record, "cooldown_refund_ratio"),
+                ReloadReduceRatio = ReadOptionalFloatIfColumnExists(record, "reload_reduce_ratio"),
                 SkillEffectPrefabPath = record.ReadString("skill_effect_prefab_path"),
                 RuntimeSupportState = record.ReadString("runtime_support_state"),
                 RuntimeSupportNotes = record.ReadString("runtime_support_notes")
@@ -564,6 +624,11 @@ namespace Pakuri.Data
             if (row.RepeatCount <= 0)
             {
                 row.RepeatCount = 1;
+            }
+
+            if (row.TriggerEveryCount < 0)
+            {
+                row.TriggerEveryCount = 0;
             }
 
             return row;

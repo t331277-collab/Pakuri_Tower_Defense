@@ -460,6 +460,16 @@ namespace Pakuri.Data
                 errors.Add($"Skill effect '{effect.Id}' uses unsupported condition_status_id '{effect.ConditionStatusId}'.");
             }
 
+            if (effect.ConditionHealthRatioMax < 0f || effect.ConditionHealthRatioMax > 1f)
+            {
+                errors.Add($"Skill effect '{effect.Id}' has condition_health_ratio_max '{effect.ConditionHealthRatioMax}' outside 0..1.");
+            }
+
+            if (effect.ConditionHitCountMin < 0)
+            {
+                errors.Add($"Skill effect '{effect.Id}' has negative condition_hit_count_min.");
+            }
+
             if (!string.IsNullOrWhiteSpace(status.StatusTargetScope)
                 && !StatusEffectRuntime.TryParseStatusTargetScope(status.StatusTargetScope, out _))
             {
@@ -497,7 +507,13 @@ namespace Pakuri.Data
                 errors.Add($"Skill trigger '{trigger.Id}' source skill '{trigger.SourceSkillId}' belongs to '{sourceSkill.MonsterId}', not '{trigger.MonsterId}'.");
             }
 
-            if (trigger.RuntimeKind != SkillRuntimeKind.SingleAttack)
+            var triggerAction = trigger.TriggerAction != SkillTriggerActionKind.Auto
+                ? trigger.TriggerAction
+                : trigger.RuntimeKind == SkillRuntimeKind.SingleAttack
+                    ? SkillTriggerActionKind.SingleAttack
+                    : SkillTriggerActionKind.TriggeredSkill;
+
+            if (triggerAction == SkillTriggerActionKind.TriggeredSkill)
             {
                 if (model == null || !model.Skills.TryGetValue(trigger.TriggeredSkillId, out var triggeredSkill))
                 {
@@ -517,7 +533,42 @@ namespace Pakuri.Data
                 }
             }
 
-            if (trigger.RuntimeKind == SkillRuntimeKind.Passive)
+            if (triggerAction == SkillTriggerActionKind.Effect)
+            {
+                if (model == null || string.IsNullOrWhiteSpace(trigger.TriggeredEffectId) || !model.SkillEffects.ContainsKey(trigger.TriggeredEffectId))
+                {
+                    errors.Add($"Skill trigger '{trigger.Id}' references unknown triggered_effect_id '{trigger.TriggeredEffectId}'.");
+                }
+            }
+
+            if (triggerAction == SkillTriggerActionKind.CooldownRefund || triggerAction == SkillTriggerActionKind.ReloadReduce)
+            {
+                var targetSkillId = !string.IsNullOrWhiteSpace(trigger.TargetSkillId)
+                    ? trigger.TargetSkillId
+                    : trigger.TriggeredSkillId;
+                if (model == null || string.IsNullOrWhiteSpace(targetSkillId) || !model.Skills.TryGetValue(targetSkillId, out var targetSkill))
+                {
+                    errors.Add($"Skill trigger '{trigger.Id}' references unknown target skill '{targetSkillId}'.");
+                }
+                else if (!string.Equals(targetSkill.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase))
+                {
+                    errors.Add($"Skill trigger '{trigger.Id}' target skill '{targetSkillId}' belongs to '{targetSkill.MonsterId}', not '{trigger.MonsterId}'.");
+                }
+            }
+
+            if (triggerAction == SkillTriggerActionKind.CooldownRefund
+                && (trigger.CooldownRefundRatio <= 0f || trigger.CooldownRefundRatio > 1f))
+            {
+                errors.Add($"Skill trigger '{trigger.Id}' requires cooldown_refund_ratio in 0..1 for CooldownRefund.");
+            }
+
+            if (triggerAction == SkillTriggerActionKind.ReloadReduce
+                && (trigger.ReloadReduceRatio <= 0f || trigger.ReloadReduceRatio > 1f))
+            {
+                errors.Add($"Skill trigger '{trigger.Id}' requires reload_reduce_ratio in 0..1 for ReloadReduce.");
+            }
+
+            if (trigger.RuntimeKind == SkillRuntimeKind.Passive && triggerAction == SkillTriggerActionKind.TriggeredSkill)
             {
                 errors.Add($"Skill trigger '{trigger.Id}' cannot route runtime_kind Passive.");
             }
@@ -537,6 +588,21 @@ namespace Pakuri.Data
                 errors.Add($"Skill trigger '{trigger.Id}' has negative repeat_interval_seconds.");
             }
 
+            if (trigger.TriggerDelaySeconds < 0f)
+            {
+                errors.Add($"Skill trigger '{trigger.Id}' has negative trigger_delay_seconds.");
+            }
+
+            if (trigger.TriggerEveryCount < 0)
+            {
+                errors.Add($"Skill trigger '{trigger.Id}' has negative trigger_every_count.");
+            }
+
+            if (!ValidateEventSourceScope(trigger.EventSourceScope))
+            {
+                errors.Add($"Skill trigger '{trigger.Id}' has unsupported event_source_scope '{trigger.EventSourceScope}'. Expected owner or all_allies.");
+            }
+
             if (trigger.ProcChance < 0f || trigger.ProcChance > 1f)
             {
                 errors.Add($"Skill trigger '{trigger.Id}' has proc_chance '{trigger.ProcChance}' outside 0..1.");
@@ -547,7 +613,7 @@ namespace Pakuri.Data
                 errors.Add($"Skill trigger '{trigger.Id}' has negative internal_cooldown_seconds.");
             }
 
-            if (trigger.RuntimeKind == SkillRuntimeKind.SingleAttack)
+            if (triggerAction == SkillTriggerActionKind.SingleAttack)
             {
                 if (trigger.DamageSource == SkillTriggerDamageSource.Fixed && trigger.BaseDamage <= 0f)
                 {
@@ -574,6 +640,48 @@ namespace Pakuri.Data
             {
                 errors.Add($"Skill trigger '{trigger.Id}' uses unsupported trigger_attribute '{trigger.TriggerAttribute}'.");
             }
+
+            ValidateSkillIdList(trigger.EventSkillId, trigger, model, "event_skill_id", errors);
+        }
+
+        private static void ValidateSkillIdList(
+            string rawSkillIds,
+            SkillTriggerRow trigger,
+            SourceModel model,
+            string columnName,
+            List<string> errors)
+        {
+            if (string.IsNullOrWhiteSpace(rawSkillIds))
+            {
+                return;
+            }
+
+            var skillIds = rawSkillIds.Split(';', ',');
+            for (var i = 0; i < skillIds.Length; i++)
+            {
+                var skillId = skillIds[i] != null ? skillIds[i].Trim() : string.Empty;
+                if (string.IsNullOrWhiteSpace(skillId))
+                {
+                    continue;
+                }
+
+                if (model == null || !model.Skills.TryGetValue(skillId, out _))
+                {
+                    errors.Add($"Skill trigger '{trigger.Id}' {columnName} references unknown skill '{skillId}'.");
+                }
+            }
+        }
+
+        private static bool ValidateEventSourceScope(string rawValue)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                return true;
+            }
+
+            var normalized = rawValue.Trim();
+            return string.Equals(normalized, "owner", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(normalized, "all_allies", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool ValidateTriggerAttributes(string rawValue)

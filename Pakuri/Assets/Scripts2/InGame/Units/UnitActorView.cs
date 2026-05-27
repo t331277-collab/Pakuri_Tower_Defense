@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Pakuri.InGame
@@ -197,16 +198,20 @@ namespace Pakuri.InGame
     [DisallowMultipleComponent]
     internal sealed class InGameDamageTextPopup : MonoBehaviour
     {
-        private const float DefaultDurationSeconds = 0.9f;
+        private const float DefaultDurationSeconds = 1f;
         private const float DefaultRiseDistance = 1f;
+        private const int DefaultMaxActivePopups = 12;
+        private const float DefaultStackVerticalSpacing = 0.18f;
 
         [SerializeField] private TextMesh damageText;
         [SerializeField] private float durationSeconds = DefaultDurationSeconds;
         [SerializeField] private float riseDistance = DefaultRiseDistance;
+        [SerializeField] private int maxActivePopups = DefaultMaxActivePopups;
+        [SerializeField] private float stackVerticalSpacing = DefaultStackVerticalSpacing;
 
         private Vector3 startLocalPosition;
         private Color startColor = Color.white;
-        private float remainingSeconds;
+        private readonly List<ActiveDamagePopup> activePopups = new List<ActiveDamagePopup>();
         private bool initialized;
 
         public void Initialize(TextMesh textMesh)
@@ -221,7 +226,11 @@ namespace Pakuri.InGame
             startLocalPosition = transform.localPosition;
             startColor = damageText.color;
             initialized = true;
-            Hide();
+            damageText.text = string.Empty;
+            var hiddenColor = startColor;
+            hiddenColor.a = 0f;
+            damageText.color = hiddenColor;
+            enabled = false;
         }
 
         public void Show(float damageAmount)
@@ -236,11 +245,8 @@ namespace Pakuri.InGame
                 return;
             }
 
-            remainingSeconds = Mathf.Max(0.01f, durationSeconds);
-            transform.localPosition = startLocalPosition;
-            damageText.text = $"{Mathf.RoundToInt(Mathf.Max(0f, damageAmount))}(Damage)";
-            SetAlpha(1f);
             gameObject.SetActive(true);
+            SpawnPopup(damageAmount);
             enabled = true;
         }
 
@@ -252,37 +258,126 @@ namespace Pakuri.InGame
                 return;
             }
 
-            remainingSeconds -= Time.deltaTime;
-            var duration = Mathf.Max(0.01f, durationSeconds);
-            var normalized = Mathf.Clamp01(1f - (remainingSeconds / duration));
-            var position = startLocalPosition;
-            position.y += riseDistance * normalized;
-            transform.localPosition = position;
-            SetAlpha(1f - normalized);
-
-            if (remainingSeconds <= 0f)
+            for (var i = activePopups.Count - 1; i >= 0; i--)
             {
-                Hide();
+                var popup = activePopups[i];
+                if (popup == null || popup.Text == null)
+                {
+                    activePopups.RemoveAt(i);
+                    continue;
+                }
+
+                popup.ElapsedSeconds += Time.deltaTime;
+                var normalized = Mathf.Clamp01(popup.ElapsedSeconds / popup.DurationSeconds);
+                var position = popup.StartLocalPosition;
+                position.y += riseDistance * normalized;
+                popup.Text.transform.localPosition = position;
+                var popupColor = popup.StartColor;
+                popupColor.a = Mathf.Clamp01(1f - normalized);
+                popup.Text.color = popupColor;
+
+                if (popup.ElapsedSeconds >= popup.DurationSeconds)
+                {
+                    if (popup.Instance != null)
+                    {
+                        Destroy(popup.Instance);
+                    }
+
+                    activePopups.RemoveAt(i);
+                }
+            }
+
+            if (activePopups.Count == 0)
+            {
+                enabled = false;
             }
         }
 
-        private void Hide()
+        private void SpawnPopup(float damageAmount)
         {
-            if (damageText != null)
-            {
-                damageText.text = string.Empty;
-                SetAlpha(0f);
-            }
-
-            gameObject.SetActive(false);
+            damageText.text = string.Empty;
+            var hiddenColor = startColor;
+            hiddenColor.a = 0f;
+            damageText.color = hiddenColor;
             enabled = false;
+
+            for (var i = activePopups.Count - 1; i >= 0; i--)
+            {
+                if (activePopups[i] == null || activePopups[i].Text == null)
+                {
+                    activePopups.RemoveAt(i);
+                }
+            }
+
+            var maxCount = Mathf.Max(1, maxActivePopups);
+            while (activePopups.Count >= maxCount)
+            {
+                var oldest = activePopups[0];
+                if (oldest != null && oldest.Instance != null)
+                {
+                    Destroy(oldest.Instance);
+                }
+
+                activePopups.RemoveAt(0);
+            }
+
+            var instance = Instantiate(damageText.gameObject, damageText.transform.parent);
+            instance.name = $"{damageText.gameObject.name}_Popup";
+            instance.SetActive(true);
+
+            var clonedController = instance.GetComponent<InGameDamageTextPopup>();
+            if (clonedController != null)
+            {
+                clonedController.enabled = false;
+                Destroy(clonedController);
+            }
+
+            var text = instance.GetComponent<TextMesh>();
+            if (text == null)
+            {
+                Destroy(instance);
+                return;
+            }
+
+            var stackOffset = activePopups.Count * Mathf.Max(0f, stackVerticalSpacing);
+            var popupStart = startLocalPosition;
+            popupStart.y += stackOffset;
+            text.transform.localPosition = popupStart;
+            text.text = $"{Mathf.RoundToInt(Mathf.Max(0f, damageAmount))}(Damage)";
+            var visibleColor = startColor;
+            visibleColor.a = 1f;
+            text.color = visibleColor;
+
+            activePopups.Add(new ActiveDamagePopup(
+                instance,
+                text,
+                popupStart,
+                startColor,
+                Mathf.Max(0.01f, durationSeconds)));
         }
 
-        private void SetAlpha(float alpha)
+        private sealed class ActiveDamagePopup
         {
-            var color = startColor;
-            color.a = Mathf.Clamp01(alpha);
-            damageText.color = color;
+            public ActiveDamagePopup(
+                GameObject instance,
+                TextMesh text,
+                Vector3 startLocalPosition,
+                Color startColor,
+                float durationSeconds)
+            {
+                Instance = instance;
+                Text = text;
+                StartLocalPosition = startLocalPosition;
+                StartColor = startColor;
+                DurationSeconds = durationSeconds;
+            }
+
+            public GameObject Instance { get; }
+            public TextMesh Text { get; }
+            public Vector3 StartLocalPosition { get; }
+            public Color StartColor { get; }
+            public float DurationSeconds { get; }
+            public float ElapsedSeconds { get; set; }
         }
     }
 }

@@ -31,6 +31,8 @@ namespace Pakuri.InGame
         private float effectiveTickInterval;
         private float effectiveCooldownDuration;
         private int queuedBurstShotsRemaining;
+        private string consecutiveHitTargetUnitId;
+        private int consecutiveHitRepeatCount;
 
         public bool IsCasting => CastRemaining > 0f;
         public bool IsActive => ActiveDurationRemaining > 0f;
@@ -59,6 +61,8 @@ namespace Pakuri.InGame
             queuedBurstShotsRemaining = 0;
             ProjectileLaunchCount = 0;
             SkillHitCount = 0;
+            consecutiveHitTargetUnitId = string.Empty;
+            consecutiveHitRepeatCount = 0;
         }
 
         public int AdvanceProjectileLaunchCount()
@@ -81,6 +85,49 @@ namespace Pakuri.InGame
 
             SkillHitCount++;
             return SkillHitCount;
+        }
+
+        public float ResolveConsecutiveHitDamageMultiplier(BaseUnitRuntimeModel target, SkillExecutionSnapshot snapshot)
+        {
+            if (target == null)
+            {
+                return 1f;
+            }
+
+            var projectileData = Data as ProjectileSkillData;
+            var bonusRate = snapshot != null && snapshot.ConsecutiveHitBonusRate > 0f
+                ? snapshot.ConsecutiveHitBonusRate
+                : projectileData != null ? projectileData.ConsecutiveHitBonusRate : 0f;
+            var bonusMax = snapshot != null && snapshot.ConsecutiveHitMax > 0f
+                ? snapshot.ConsecutiveHitMax
+                : projectileData != null ? projectileData.ConsecutiveHitMax : 0f;
+            if (bonusRate <= 0f || bonusMax <= 0f)
+            {
+                return 1f;
+            }
+
+            var unitId = target.Identity != null ? target.Identity.UnitId : string.Empty;
+            if (string.IsNullOrWhiteSpace(unitId))
+            {
+                consecutiveHitTargetUnitId = string.Empty;
+                consecutiveHitRepeatCount = 0;
+                return 1f;
+            }
+
+            if (string.Equals(consecutiveHitTargetUnitId, unitId, StringComparison.Ordinal))
+            {
+                consecutiveHitRepeatCount = Math.Min(consecutiveHitRepeatCount + 1, int.MaxValue - 1);
+            }
+            else
+            {
+                consecutiveHitTargetUnitId = unitId;
+                consecutiveHitRepeatCount = 0;
+            }
+
+            var bonus = Mathf.Min(
+                Mathf.Max(0f, bonusMax),
+                Mathf.Max(0f, bonusRate) * consecutiveHitRepeatCount);
+            return 1f + bonus;
         }
 
         public void Tick(float deltaTime)

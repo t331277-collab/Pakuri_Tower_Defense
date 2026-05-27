@@ -1,8 +1,66 @@
-## Archive Note
+﻿## Archive Note
 
 - Older task blocks were moved to `boards/ARCHIVE/MON_DETAIL_ARCHIVE_2026-05-12.md` on 2026-05-12.
 - This file keeps only task blocks dated 2026-05-08 based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/MON/RIN_MONSTER.md`.
+
+## Task: 2026-05-26 Rin-E SingleAttack Core Hitbox Skill Completion
+
+### Task title
+
+Implement Rin-E base skill, enhancement traits, and master effects on the shared SingleAttack prefab-hitbox path.
+
+### Goals
+
+- Use `Assets/Prefab/Skill/Rin/Rin_E.prefab` as Rin-E's skill effect prefab.
+- Let `CoreHitBox` child colliders drive center-only Rin-E effects.
+- Implement Rin-E trait 1-5 and master 1-2 without Rin-only hardcoded branches.
+- Keep center damage, center Fire bonus, hit-count cooldown refund, Dark extra damage, and master-2 slow on shared runtime/data extensions.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- Selected blueprint is `boards/SkillBluePrint/single-attack-blueprint.md`.
+- User explicitly approved the reusable shared extension for behavior outside the original SingleAttack common contract.
+- Unity Play Mode gameplay verification remains user-owned.
+- Unity CSV runtime catalog sync is pending because batchmode reported another Unity instance has this project open.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented, compile-verified, and synced through the open Unity Editor menu after the follow-up CSV validation fix.
+
+### Next Actions
+
+- User verifies in Play Mode that Rin-E uses `Rin_E.prefab`, base hit timing follows current `damage_delay_seconds`, and `CoreHitBox` center hits apply center-only effects.
+- User verifies in Play Mode that Rin-E master 2 applies the intended slow to hit enemies.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Skill/Rin/Rin_E.prefab` contains a child named `CoreHitBox` with an enabled `BoxCollider2D`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now has `skill_effect_prefab_path` and `rin-e` points to `Assets/Prefab/Skill/Rin/Rin_E.prefab`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now adds `core_hitbox_name`, `core_damage_multiplier`, `core_on_hit_additional_damage_*`, and `hit_count_cooldown_refund_*` columns.
+- Rin-E trait rows are now `RuntimeImplemented`: trait 1 damage `1.3`, trait 2 radius `1.25`, trait 3 cooldown `0.8`, trait 4 `CoreHitBox` damage `1.5`, and trait 5 `rin-b` cooldown refund ratio `0.2` when at least 3 targets are hit.
+- Rin-E master rows are now `RuntimeImplemented`: master 1 damage `2`, radius `0.8`, and core Fire additional damage `1`; master 2 damage `1.35`, radius `1.5`, and Dark on-hit additional damage `0.45`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now includes `rin-e-master2-slow`, an OnHit status effect that applies `slow` for `2` seconds with `status_move_speed_bonus=-0.25`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` now separates configured core hitbox colliders, applies core-only damage/extra damage, applies SingleAttack OnHit status effects, and applies hit-count cooldown refunds after a cast.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remain.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remain.
+- `cmd /c SyncCsvRuntimeCatalogs.bat` failed only because Unity batchmode reported another Unity instance has `C:/TowerDefence_Pakuri/Test/Pakuri` open.
+- Follow-up enum validation found the `DamageAttribute` enum defines `Darkness`, not `Dark`; `rin-e-master-2` and `rin-e-master2-slow` were corrected from `Dark` to `Darkness`, and a CSV enum scan returned `ENUM_VALIDATION_OK`.
+- Follow-up status-scope validation found `StatusEffectRuntime.TryParseStatusTargetScope(...)` only accepts `self` and `all_allies`; `rin-e-master2-slow` now leaves `status_target_scope` blank like `rin-c-master2-slow`, while `target_side=Enemy` still makes the OnHit status enemy-targeted.
+- CSV source scans returned `STATUS_TARGET_SCOPE_OK`, `STATUS_MERGE_POLICY_OK`, and `DAMAGE_ATTRIBUTE_ENUM_OK` for `monster_skill_effects.csv`.
+- `.NET TextFieldParser` scans returned `FIELD_COUNT_OK` for `monster_skill_effects.csv` 61 columns / 78 lines, `monster_skill_choices.csv` 86 columns / 252 lines, `monster_skills.csv` 57 columns / 52 lines, and `monster_skill_triger.csv` 34 columns / 10 lines.
+- Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.` after the fix.
+
+### History
+
+- 2026-05-26: User asked Code Builder and Skill Builder to apply the approved SingleAttack CoreHitBox extension and implement Rin-E with all enhancement and master effects using `Assets/Prefab/Skill/Rin/Rin_E.prefab`.
+- 2026-05-26: User reported Unity auto-sync failing on `monster_skill_effects.csv` row 78 because `attribute=Dark` was not a valid `DamageAttribute`; Builder corrected the enum value to `Darkness` and checked CSV enum columns for the same class of error.
+- 2026-05-26: User reported Unity CSV validation still failing on `rin-e-master2-slow status_target_scope=enemy`; Builder cleared that unsupported scope, verified the relevant CSV schemas and enum/status-scope scans, and synced the runtime catalog through the open Unity Editor menu.
 
 ## Task: 2026-05-26 Rin Unit Animator Runtime Hook
 
@@ -143,7 +201,7 @@ Inspection completed. Confirmed code/data mismatches exist in the current Script
 ### Evidence
 
 - `Pakuri/Assets/CSVdata/source/monster_skills.csv` defines `rin-d` as `runtime_kind=SingleAttack`, `target_selection=LowestHealth`, `execute_health_ratio_threshold=0.3`, `execute_damage_multiplier=1.8`, and `kill_cooldown_refund_ratio=0.35`.
-- `Pakuri/reference/2.Monster/rin/skill/d-finishing-blow.md` authors Rin-D around `처형 기준 체력 30% 이하`, trait 2 `처형 기준 체력 +10%`, master 1 `처형 대상에게 치명타 확률 +50%, 처치 시 쿨다운 완전 초기화`, and master 2 `처형 기준 체력 -10%`.
+- `Pakuri/reference/2.Monster/rin/skill/d-finishing-blow.md` authors Rin-D around `泥섑삎 湲곗? 泥대젰 30% ?댄븯`, trait 2 `泥섑삎 湲곗? 泥대젰 +10%`, master 1 `泥섑삎 ??곸뿉寃?移섎챸? ?뺣쪧 +50%, 泥섏튂 ??荑⑤떎???꾩쟾 珥덇린??, and master 2 `泥섑삎 湲곗? 泥대젰 -10%`.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs:708` through `:714` only use the execute threshold to add execute damage and execute crit chance; the cast path itself does not stop when the target is above the threshold.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs:359` through `:389` always damage the first ordered target from `ResolveOrderedTargets(...)`.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillTargetingUtility.cs:68` through `:97` and `SkillExecutionUtility.cs:219` through `:221` implement `LowestHealth` with raw `CurrentHealth`, not health ratio.
@@ -303,368 +361,51 @@ Implemented, synced, and compile-verified.
 
 - 2026-05-24: User authorized current CSV/code as parsed source for Rin-A master-2, remaining enhancements, and master-1 implementation.
 
-## Task: 2026-05-19 Rin-A Shared Projectile Wiring
+## Task: 2026-05-26 Rin F-J Passive Shared Trigger/Status Implementation
 
 ### Task title
 
-Wire `rin-a` into the current shared projectile runtime and common modifier table.
+Implement Rin passive F-J on shared status/effect/trigger runtime.
 
 ### Goals
 
-- Bind `rin-a` base projectile visuals through the active `EffectManager` scene mapping.
-- Keep `rin-a` on the shared `MagazineProjectile` runtime path.
-- Add the common projectile-compatible Rin-A choice modifiers to `SkillChoiceModifierData.csv`.
-- Leave unsupported crit-only or sequence-state behavior explicitly unsupported instead of guessing new monster-only runtime logic.
+- Implement Rin-F delayed follow-up attacks through `SingleAttack` trigger rows with `trigger_delay_seconds=0.3`.
+- Implement Rin-H as all-allied physical-damage count tracking before triggering auto shockwave rows.
+- Keep Rin-G, Rin-I, and Rin-J authored through common status/effect/trigger structures instead of Rin-only hardcoded runtime branches.
 
 ### Constraints
 
-- Role Owner is Code Builder.
-- Claims are based on inspected Scripts2 runtime code, active scene YAML, active modifier CSV, and the inspected `Rin_A.prefab` asset path provided by the user.
-- Unity Play Mode verification remains user-owned.
-- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
+- Role Owner is Code Builder / Skill Builder.
+- User explicitly approved the shared extensions needed for all-allied physical count, trigger action, cooldown/reload reduction, trigger delay, and status/effect conditions.
+- Skill Builder CSV reads stayed limited to `monster_skills.csv`, `monster_skill_choices.csv`, `monster_skill_effects.csv`, and `monster_skill_triger.csv`.
+- Unity Play Mode gameplay verification remains user-owned.
 
 ### Role Owner
 
-Code Builder
+Code Builder / Skill Builder
 
 ### Status
 
-Implemented and locally validated by file inspection and build.
+Implemented, synced, and CSV-validation/build verified.
 
 ### Next Actions
 
-- User verifies in Play Mode that `rin-a` now spawns `Rin_A.prefab` through the shared projectile path.
-- If full `rin-a-trait-5` crit modifiers or `rin-a-master-2` extra lightning / every-third-hit chain are required in Scripts2 runtime, request a shared extension or a one-off approved exception before implementing.
+- User verifies in Play Mode that Rin-F follow-up uses `Assets/Prefab/Skill/Rin/Rin_F.prefab` after 0.3 seconds.
+- User verifies in Play Mode that Rin-H counts all allied physical damage events and fires on the configured 10-hit / 8-hit trait cadence.
+- User verifies in Play Mode that Rin-G/I/J passive effects and cooldown/reload reductions match the design sheet intent.
 
 ### Evidence
 
-- `Pakuri/Assets/Prefab/Skill/Rin/Rin_A.prefab` exists and its prefab GUID is `19bfba788239eba498a44cb67c2622c6`.
-- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now maps monster `rin` skill `rin-a` to `Rin_A.prefab` through the `EffectManager` `monsterSkillEffects` list.
-- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` already maps projectile active rows into `ProjectileSkillData`, including magazine size, reload, shot interval, projectile speed, pierce count, and on-hit status.
-- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/SkillExecutors.cs` already routes `ProjectileSkillData` through `ProjectileSkillExecutor`, resolves base visuals through `EffectManager.ResolveMonsterSkillEffectPrefab(...)`, and applies modifier snapshot bonuses for additional projectiles and pierce.
-- `Pakuri/Assets/CSVdata/SkillChoiceModifierData.csv` now includes common-path `rin-a` rows for trait 1/2/3/4 and master 1, while trait 5 and master 2 are marked `DataOnlyUnsupported` because current shared projectile runtime has no crit modifier fields and no built-in every-third-hit chain behavior.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now contains `rin-f-followup`, `rin-f-followup-trait2`, and `rin-f-followup-lightning-trait3` with `trigger_action=SingleAttack`, `event_skill_id=rin-a;rin-c;rin-d;rin-e`, `event_source_scope=owner`, and `trigger_delay_seconds=0.3`; the physical rows use `Assets/Prefab/Skill/Rin/Rin_F.prefab`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now contains Rin-H all-ally physical trigger rows with `trigger_attribute=Physical`, `event_source_scope=all_allies`, and `trigger_every_count=10` or `8` depending on trait 1.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now contains Rin F-J passive status/effect rows including `rin-i-finishing-kill-crit-damage-trait2`, `rin-j-physical-defense-down`, and `rin-j-hitcount-action-speed`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` now supports `trigger_action`, `event_skill_id`, `event_source_scope`, `trigger_delay_seconds`, `trigger_every_count`, effect triggers, cooldown refund, and reload reduction.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now stores passive trigger counts and dispatches skill-cast triggers; `SkillExecutionSystem.cs` dispatches active skill-cast events after routed non-triggered casts.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillMultiEffectExecutor.cs` and `SingleAttackSkillExecutor.cs` now support `OnHitCount` multi-effects for hit-count-gated shared passive effects.
+- CSV field-count scan passed: `monster_skill_effects.csv` 64 columns / 91 lines, `monster_skill_triger.csv` 44 columns / 26 lines, `monster_skill_choices.csv` 86 columns / 252 lines, and `monster_skills.csv` 57 columns / 52 lines.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+- Unity `Pakuri/Validate CSV Source Data` logged `PakuriCsvRuntimeData loaded runtime catalog from resource source 'Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog' with 5 monsters and 8 stage-one enemies.` and did not log the prior `unsupported status_target_scope` CSV error.
 
 ### History
 
-- 2026-05-19: User requested Code Builder implementation of `rin-a`.
-- 2026-05-19: User clarified the base effect prefab path as `Assets/Prefab/Skill/Rin/Rin_A.prefab`.
-
-## Task: 2026-05-14 Rin NewRunScene Prefab Binding And HP Bar
-
-### Task title
-
-Confirm Rin prefab actor/model binding and HP bar sprite visibility.
-
-### Goals
-
-- Bind `Rin_Unit` through `NewRunSceneEntryManager`.
-- Verify Rin creates an exact `rin` runtime model and initializes `MonsterUnitActor`.
-- Make Rin's `MonsterHpBar` render through the shared HP bar pixel sprite.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- No Rin combat execution or Play Mode verification in this slice.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Builder implementation completed and locally verified. 2026-05-18 Rin active skill CSV rows were updated to the new skill-owned projectile/status schema. 2026-05-18 Rin design-only labels remain non-runtime statuses with `status_chance=0`.
-
-### Next Actions
-
-- User verifies Rin selection and HP bar visibility in Play Mode.
-
-### Evidence
-
-- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` references `Rin_Unit.prefab` in `rinUnitPrefab`.
-- Unity-MCP verification returned `rin:prefab=Rin_Unit|modelOk=True|model=rin|actor=True|actorModel=True|hpText=HP 260/260|bgSprite=True|fillSprite=True|shieldSprite=True`.
-- 2026-05-14 follow-up: `MonsterUnitActor` now scales HP fill against `Background.localScale.x`; Unity-MCP editor code returned `Rin_Unit:bgX=20|beforeFillX=20|fullFillX=20|halfFillX=10`.
-- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores `rin-a` `projectile_speed=13`, `pierce_count=0`, `magazine_capacity=10`, `reload_seconds=4`, and `shot_interval_seconds=0.34`, matching `Pakuri/reference/2.Monster/rin/skill/a-shattering-fist.md`.
-- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores `rin-c` `radius=1.6` and `status_effect_label=넉백`, matching `Pakuri/reference/2.Monster/rin/skill/c-shockwave.md`.
-- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now stores Rin design-only labels `행동속도 증가` and `넉백` with `status_chance=0`; runtime CSV validation rejects positive chance on unsupported status labels.
-- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` can still resolve supported labels such as `감전` from `status_effect_label` if a Rin row is intentionally edited to use a supported status later.
-- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
-
-### History
-
-- 2026-05-14: User asked to verify all five selectable prefab bindings and fix invisible `MonsterHpBar`.
-- 2026-05-14: User reported `HpFill` was forced to `1` on scene entry; Builder changed fill scaling to use the background width.
-- 2026-05-18: Code Builder moved Rin projectile/status tuning into the skill CSV row and filled Rin-C width from the reference document.
-- 2026-05-18: Code Builder normalized Rin design-only status labels to chance 0 and added supported status-label fallback/CSV sync batch support.
-
-## Task: 2026-05-18 Rin-E SingleAttack Runtime Kind
-
-### Task title
-
-Route Rin-E collapse strike through the new SingleAttack runtime kind.
-
-### Goals
-
-- Keep Rin-E as one-shot area damage rather than sustained `AreaAttack`.
-- Preserve CSV-authored damage, coefficient, radius, and cooldown.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- Unity Play Mode verification remains user-owned.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and locally validated.
-
-### Next Actions
-
-- User verifies in Play Mode that Rin-E applies one immediate area hit.
-
-### Evidence
-
-- `Pakuri/reference/2.Monster/rin/skill/e-collapse-strike.md` names Rin-E `붕괴 타격`.
-- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now has `rin-e runtime_kind=SingleAttack`.
-- `Pakuri/Assets/Scripts2/InGame/Skills/Data/SingleAttackData.cs` and `SkillExecutors.cs` provide the data and executor path.
-- Runtime/editor builds passed with 0 errors; Unity-MCP skill validator returned 0 errors and 0 warnings.
-
-### History
-
-- 2026-05-18: User listed CSV row 17 as a one-shot area attack skill for the new `SingleAttack` type.
-
-## Task: 2026-05-13 Rin Battlefield Facade Registration
-
-### Task title
-
-Route Rin battlefield projectile and effect registration through the Phase 1 facade.
-
-### Goals
-
-- Preserve Rin skill behavior while replacing direct battlefield list registration writes.
-- Keep Rin projectile/effect creation behind the new battlefield registration boundary.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- Do not run Unity Play Mode; user owns gameplay verification.
-- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and locally validated.
-
-### Next Actions
-
-- User verifies Rin skills in Play Mode if needed.
-
-### Evidence
-
-- `CombatRuntimeRinSkills.cs:575` now calls `AddBattlefieldProjectile(...)`.
-- Rin skill-effect registrations now call `AddBattlefieldSkillEffect(...)`.
-- Runtime and Editor builds completed with 0 errors and existing warnings.
-
-### History
-
-- 2026-05-13: Phase 1 battlefield facade boundary routed Rin battlefield object registration through facade methods.
-
-## Task: 2026-05-08 Rin CombatUnitRuntime Parity Resume
-
-### Task title
-
-Route selected Rin and manifested Rin through shared unit skill runtime paths.
-
-### Goals
-
-- Make selected 1P Rin and manifested 2P-5P Rin call `CombatUnitRuntime` plus `CombatSkillRuntime` based execution for Rin B/C/D/E.
-- Preserve Rin A magazine/projectile handling on the existing path.
-- Keep manifested Rin Howling buff duration and Howling dark follow-up on the unit runtime, not on selected-only fields.
-- Reuse existing RunScene slot status children for manifested monster name, HP text, and HP/shield bars.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- Claims are based on inspected files, Unity-MCP scene hierarchy output, and command output.
-- Unity Play Mode verification is user-owned.
-- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and locally validated by build, Unity refresh, and console checks.
-
-### Next Actions
-
-- User verifies selected Rin and manifested Rin B/C/D/E behavior in RunScene Play Mode.
-- User verifies 2P-5P monster status UI does not duplicate labels or bars when manifested monsters appear.
-- Run Code Reviewer only if explicitly requested.
-
-### Evidence
-
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:76` defines `TickSelectedRinUnitSkillRuntimes(...)` for selected Rin skill runtime ticking.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:128` routes Rin automatic skill execution through `TryTriggerRinUnitAutomaticSkills(CombatUnitRuntime runtime)`.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:240`, `:321`, and `:401` implement unit-runtime casts for Rin B, Rin D, and Rin E; Rin C is routed through the same unit skill tick and manifested shockwave path.
-- `Pakuri/Assets/Scripts/Combat/CombatUnitRuntime.cs:15` through `:18` stores separate name label, HP label, HP bar fill, and shield bar fill references.
-- `Pakuri/Assets/Scripts/Combat/CombatUnitRuntime.cs:25`, `:59`, `:104`, and `:128` store, tick, and reset manifested Rin Howling state on the unit runtime.
-- Unity-MCP scene hierarchy inspection found `CombatRoot/2PMonster`, `3PMonster`, `4PMonster`, `5PMonster`, and `EveUnit`; 2P/3P/Eve children included `MonsterHpLabel`, `MonsterHpBar/Fill`, `MonsterHpBar/Shield`, and `MonsterNameLabel`.
-- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
-- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and the same existing warnings.
-- Unity-MCP script refresh reached idle; console error query returned only MCP-FOR-UNITY client handler logs.
-
-### History
-
-- 2026-05-08: User resumed an interrupted request to start from Rin and make selected 1P and manifested 2P-5P monsters use the same `CombatUnitRuntime` plus `CombatSkillRuntime` execution basis.
-
-## Task: 2026-05-08 Manifested Rin C Shockwave Parity Fix
-
-### Task title
-
-Make manifested Rin C apply selected Rin C beam and knockback behavior.
-
-### Goals
-
-- Fix manifested Rin C so it does more than visual line damage.
-- Apply selected Rin C's map-wide beam hit shape, knockback, width choices, master slow, master lightning follow-up, and reload reduction behavior where applicable.
-- Keep damage multiplier sourced through existing manifested Rin C choice multiplier logic.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- User performs Play Mode verification.
-- Code Reviewer was not run because the user did not explicitly permit it.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and locally validated.
-
-### Next Actions
-
-- User verifies manifested Rin C knockback in RunScene Play Mode.
-- User verifies Rin C master/trait choices if those choices are learned on the manifested Rin.
-
-### Evidence
-
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:220` through `:310` shows selected Rin C uses map-wide range, `IsPointInsideBeam(...)`, `ApplyRinKnockback(...)`, master lightning follow-up, master slow, and trait reload reduction.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:499` routes manifested `rin-c` into `TryFireManifestedRinShockwave(...)`.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:545` implements the manifested Rin C beam path using selected-runtime helper methods and manifested Offering checks.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:627` reduces manifested Rin A reload when manifested Rin C trait 5 hits while Rin A is reloading.
-- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
-
-### History
-
-- 2026-05-08: User reported selected Rin C knockback works, but manifested Rin C only showed effect/beam without moving enemies.
-
-## Task: 2026-05-08 Manifested Rin Common Runtime Parity
-
-### Task title
-
-Apply Rin Offering choices through manifested projectile and common skill runtime.
-
-### Goals
-
-- Keep manifested Rin skills sourced from `SkillDefinition` data.
-- Apply Rin manifested Offering choices in shared damage, cooldown, magazine, reload, and shot interval paths.
-- Preserve manifested projectile/status handling through the common combat service.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- This is common manifested runtime work, not a full line-by-line copy of selected Rin private skill code.
-- User performs Play Mode verification.
-- Code Reviewer was not run because the user did not explicitly permit it.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and locally validated.
-
-### Next Actions
-
-- User verifies manifested Rin skills and Offering upgrades in RunScene Play Mode.
-- Run Code Reviewer only if explicitly requested.
-
-### Evidence
-
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:866` includes Rin skill-specific damage multipliers.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:991` includes Rin cooldown choice handling.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:1250`, `:1278`, and `:1310` include Rin A magazine/reload/shot-interval choice handling.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:693` applies manifested projectile status from skill data.
-- Runtime and Editor `dotnet build` commands completed with 0 errors and existing warnings.
-
-### History
-
-- 2026-05-08: Manifested Rin common runtime parity was implemented and retained as the latest active Rin task block during MON board compaction.
-
-## Required Sections For Future Work
-
-- Source references
-- Skill slots A-J
-- Runtime implementation status
-- Data asset status
-- DebugScene test status
-- Evidence
-- History
-
-## Task: 2026-05-08 Manifested Rin Passive And Targeting Continuation
-
-### Task title
-
-Make manifested Rin use Rin passive skill runtime effects and participate as an enemy target.
-
-### Goals
-
-- Apply Rin F-J passive effects to manifested Rin A/C/D/E runtime paths through `CombatUnitRuntime`.
-- Keep manifested Rin cooldown ticking affected by Rin action-speed passives.
-- Fix missing manifested HP slide bar fallback.
-- Allow enemies to target and damage manifested Rin and other manifested monsters.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- Unity Play Mode verification is user-owned.
-- Code Reviewer was not run because the user did not explicitly permit Reviewer execution.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and locally validated by build, diff check, Unity refresh, and console read.
-
-### Next Actions
-
-- User verifies in RunScene Play Mode that manifested Rin gets passive effects from Offering, has one HP bar, and can be attacked by enemies.
-- Run Code Reviewer only if explicitly requested.
-
-### Evidence
-
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:197` ticks manifested Rin unit skill cooldowns with `GetRinUnitActionSpeedMultiplier(...)`.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:1073` adds `TryApplyRinUnitProjectileHit(...)` for manifested Rin projectile damage with unit passive modifiers.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:1269` tracks manifested Rin physical hit count for Rin H.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeRinSkills.cs:1848` implements manifested Rin action-speed passive calculation.
-- `Pakuri/Assets/Scripts/Combat/CombatRuntimeParty.cs:793` routes manifested Rin C damage through `ApplyRinUnitSkillDamage(...)`.
-- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` completed with 0 errors and existing `System.Net.Http` / `System.IO.Compression` warnings.
-- `git diff --check` over touched combat files completed with exit code 0 and CRLF warnings only.
-- Unity-MCP script refresh requested compilation; console warning/error read returned only MCP-FOR-UNITY client handler logs.
-
-### History
-
-- 2026-05-08: User requested resuming work so manifested Rin gains passive skills like selected Rin, manifested monsters have HP slide bars, and enemies attack manifested monsters too.
+- 2026-05-26: User approved extending the shared trigger/status runtime, then clarified Rin-H should count all allied physical-damage skill usage before triggering.

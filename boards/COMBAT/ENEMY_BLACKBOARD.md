@@ -1,7 +1,59 @@
-# ENEMY_BLACKBOARD
+﻿# ENEMY_BLACKBOARD
 
 This is the active enemy-domain persistent state file.
 When doing related work, follow `MDTREE.md` routing and update this file together with any required parent or child files.
+
+## Archive Note
+
+- 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
+
+## Task: 2026-05-26 SingleAttack CSV Damage Delay Runtime
+
+### Task title
+
+Add CSV-authored delayed damage timing and animation-length visual lifetime for SingleAttack.
+
+### Goals
+
+- Let each `SingleAttack` row tune hit timing with `damage_delay_seconds`, defaulting existing rows to `0`.
+- Keep visual prefabs spawning immediately while delaying only damage/status/on-hit follow-up resolution.
+- Destroy SingleAttack visual/hitbox prefabs by animation clip length instead of the previous fixed `1f` lifetime.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is a shared SingleAttack runtime extension, not monster-specific hardcoding.
+- Existing rows keep `damage_delay_seconds=0` for immediate-hit compatibility.
+- Unity Play Mode gameplay verification remains user-owned.
+- Unity batchmode CSV runtime sync was attempted but blocked because the project is already open in another Unity instance.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified. CSV runtime catalog asset sync remains pending in the open Unity Editor or by rerunning `SyncCsvRuntimeCatalogs.bat` after closing the project.
+
+### Next Actions
+
+- User sets nonzero `damage_delay_seconds` values on desired `SingleAttack` rows and verifies hit feel in Play Mode.
+- Run `Pakuri/Sync CSV Runtime Catalog Assets` in the open Unity Editor, or close Unity and rerun `SyncCsvRuntimeCatalogs.bat`.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/SingleAttackData.cs` now exposes `DamageDelaySeconds` with default `0`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` now reads `skill.DamageDelaySeconds`, schedules delayed hit resolution through coroutines, and keeps immediate behavior when the value is `0`.
+- `SingleAttackSkillExecutor.cs` now delays `UsePrefabHitbox` damage until after `WaitForSeconds(...)`, then calls `Physics2D.SyncTransforms()` before `ApplyPrefabHitbox(...)`.
+- `SingleAttackSkillExecutor.cs` now resolves visual lifetime from child `Animator` / legacy `Animation` clip lengths and falls back to `1f` only when no animation length exists.
+- CSV parser verification returned `records=52`, `fields=56 records=52`, `damage_delay_index=50`, `type=float`, and `nonzero_defaults=0` for `monster_skills.csv`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remain.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors when rerun alone after a first parallel-build file lock.
+- `cmd /c SyncCsvRuntimeCatalogs.bat` failed with Unity's duplicate-project-open guard: another Unity instance has `C:/TowerDefence_Pakuri/Test/Pakuri` open.
+
+### History
+
+- 2026-05-26: User chose the N-second delayed damage approach and requested Code Builder implementation with default value `0` plus animation-length prefab deletion.
 
 ## Task: 2026-05-24 Shared Skill On-Hit Additional Damage Runtime
 
@@ -246,183 +298,6 @@ Implemented and compile-verified.
 
 - 2026-05-24: Code Builder consolidated duplicated helper logic from `ProjectileSkillExecutor`, `BeamSkillExecutor`, `ZoneSkillExecutor`, and `SingleAttackSkillExecutor` into `SkillExecutionUtility`, then replaced the hidden `SkillPoint` scene dependency with target-group-center resolution from runtime context.
 
-## Task: 2026-05-23 Spawned Unit Root Registration For Enemy Hurtboxes
-
-### Task title
-
-Register spawned player/enemy units with their spawned root transform so shared collider-contact skills can see real body colliders.
-
-### Goals
-
-- Stop enemy roster entries from exposing only the nested `EnemyUnitActor` transform when body colliders live elsewhere on the spawned unit hierarchy.
-- Keep `FindUnitByCollider(...)` able to resolve colliders found on the spawned unit root tree.
-- Preserve existing spawn ownership and actor initialization flow.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- This task changes runtime registration only; it does not edit enemy CSV or prefab serialization.
-- Unity Play Mode gameplay verification remains user-owned.
-- Code Reviewer was not run because explicit Reviewer permission was not given.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and compile-verified.
-
-### Next Actions
-
-- User verifies Stage 1 enemies can now be hit by collider-contact skills whose overlap checks previously saw `targetColliders=[]`.
-- If a future spawned prefab has a different body-root split, pass the correct spawned root at registration time rather than reintroducing actor-child assumptions.
-
-### Evidence
-
-- `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs` now passes `spawnedUnit.transform` into `RegisterPlayer(...)` and `RegisterEnemy(...)` so roster entries know the spawned unit root.
-- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now accepts optional `hitboxRoot` parameters on `RegisterPlayerMonster(...)` and `RegisterEnemy(...)`.
-- `Pakuri/Assets/Scripts2/InGame/Units/UnitRosterService.cs` now stores `HitboxRoot`, resolves target points from that root, caches hurtbox colliders from that hierarchy, and matches colliders through `ContainsTransform(...)`.
-- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now uses `UnitRosterEntry.ContainsTransform(...)` inside `FindUnitByCollider(...)`, which lets trigger-based projectile contact resolve colliders on the spawned unit root tree.
-- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors after the change; existing `MSB3277` warnings remained. One earlier parallel build attempt hit a temporary file-lock on `obj\\Debug\\Assembly-CSharp.dll` before the successful rerun.
-
-### History
-
-- 2026-05-23: Shared contact-hit debugging showed Stage 1 enemies were registered by nested actor transform rather than spawned unit root, so Code Builder corrected the roster registration contract.
-
-## Task: 2026-05-22 Spawn-Time Enemy Action Policy
-
-### Task title
-
-Let spawned enemies move and attack by unit rules instead of waiting for `StageState.Combat`.
-
-### Goals
-
-- Remove the runtime behavior dependency where enemies waited until every encounter row finished spawning before moving.
-- Keep enemy movement and attack decisions owned by `EnemyCombatSystem` target, range, status, and cooldown checks.
-- Keep Stage flow states as run/reward flow information instead of the enemy action gate.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- This task changes runtime execution policy only; no enemy CSV, prefab, or scene serialization was changed.
-- Unity Play Mode verification remains user-owned.
-- Code Reviewer execution requires explicit user permission and was not run in this task.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and locally validated.
-
-### Next Actions
-
-- User verifies in Play Mode that enemies begin moving as soon as they spawn and attack once their current target is in range.
-
-### Evidence
-
-- `Pakuri/Assets/Scripts2/InGame/Core/StageManager.cs` still owns the flow states `Spawning`, `Combat`, and `RewardReady`.
-- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now calls `enemyCombatSystem.Tick(...)` whenever `enemyCombatSimulationEnabled` is true, without checking `StageState.Combat`.
-- `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSystem.cs` remains the owner of enemy target lookup, movement through `MoveToward(...)`, action permission through status checks, and basic/special skill cooldowns.
-- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
-- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
-- Unity-MCP script refresh reached idle; console warning/error read showed only MCP client handler logs.
-
-### History
-
-- 2026-05-22: User clarified that enemies should not wait for all spawns before moving. Code Builder removed the `StageState.Combat` gate from the enemy combat tick path so spawned enemies act by their own target/range/cooldown rules.
-
-## Task: 2026-05-18 NewRun Prefix Removal Follow-up
-
-### Task title
-
-Keep enemy spawn references aligned after removing `NewRun` from runtime script names.
-
-### Goals
-
-- Keep enemy spawn manager records aligned with the renamed scene entry type.
-- Preserve the existing `EnemySpawnManger` script GUID and scene component reference.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- Behavior must remain unchanged.
-- Unity Play Mode verification remains user-owned.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and locally validated.
-
-### Next Actions
-
-- User verifies in Play Mode only if they want runtime spawn behavior confirmation.
-
-### Evidence
-
-- The previous `NewRunSceneEntryManager.cs` script is now `Pakuri/Assets/Scripts2/InGame/Core/SceneEntryManager.cs`.
-- `SceneEntryManager.cs` references `EnemySpawnManger` for configured enemy spawns.
-- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` records `Pakuri.InGame.SceneEntryManager`, `Pakuri.InGame.StageManager`, and `Pakuri.InGame.EnemySpawnManger`.
-- Search found no remaining `NewRunSceneEntryManager`, `NewRunStageManager`, `NewRunStartContext`, or `NewRunStageState` references in scripts, scene assets, prefab assets, asset files, or `Assembly-CSharp.csproj`.
-- Runtime/editor builds passed with 0 errors and existing MSB3277 warnings.
-
-### History
-
-- 2026-05-18: Code Builder removed the `NewRun` prefix from the remaining `NewRun*.cs` runtime scripts after the earlier `EnemySpawnManger` rename.
-
-## Task: 2026-05-18 Enemy Spawn Manager Rename
-
-### Task title
-
-Rename the current NewRunScene spawn manager script to `EnemySpawnManger`.
-
-### Goals
-
-- Rename the existing spawn manager script and class used by `NewRunScene`.
-- Preserve Unity scene/component compatibility by keeping the existing script `.meta` GUID.
-- Keep `SceneEntryManager` references compiling against the renamed type.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- Requested source file `NewRunStageSpawnManager.cs` was not present in `Pakuri/Assets`; the existing wired spawn manager was the former `Pakuri/Assets/Scripts2/InGame/Core/NewRunUnitSpawnManager.cs`, now `EnemySpawnManger.cs`.
-- This was a behavior-preserving rename only.
-- Unity Play Mode verification remains user-owned.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and locally validated.
-
-### Next Actions
-
-- User verifies in Play Mode only if they want to confirm scene component behavior after the Unity script rename.
-
-### Evidence
-
-- The former `Pakuri/Assets/Scripts2/InGame/Core/NewRunUnitSpawnManager.cs` and `.meta` were moved to `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs` and `.meta`.
-- `EnemySpawnManger.cs.meta` keeps GUID `fa013f8b8851bec4882efe505f98b801`.
-- `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs` now declares `public sealed class EnemySpawnManger : MonoBehaviour`.
-- `Pakuri/Assets/Scripts2/InGame/Core/SceneEntryManager.cs` now references `EnemySpawnManger`.
-- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` still references GUID `fa013f8b8851bec4882efe505f98b801` and now has `m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.EnemySpawnManger`.
-- `Pakuri/Assembly-CSharp.csproj` now compiles `Assets\Scripts2\InGame\Core\EnemySpawnManger.cs`.
-- Search after the rename found no remaining `NewRunUnitSpawnManager` or `NewRunStageSpawnManager` references in scripts, scene assets, or `Assembly-CSharp.csproj`.
-- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings.
-- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing MSB3277 warnings when rerun alone after a parallel-build file-lock attempt.
-- Unity-MCP force refresh cleared the stale missing-file compile error; console warning/error read showed MCP client handler logs and a UnityEditor.Graphs `NullReferenceException`, not a C# compile error.
-
-### History
-
-- 2026-05-18: User requested Code Builder rename `NewRunStageSpawnManager.cs` to `EnemySpawnManger.cs`; Code Builder inspected the project, found no `NewRunStageSpawnManager.cs`, and applied the rename to the actual wired spawn manager `NewRunUnitSpawnManager.cs`.
-
 ## Task: 2026-05-18 Stage1 Enemy Runtime Authority
 
 ### Task title
@@ -476,46 +351,3 @@ Current active enemy runtime state summarized and retained for future work. 2026
 - 2026-05-18: Code Builder split `EnemyCombatSimulationSystem` into orchestration, cooldown, targeting, execution, and shared runtime-data files.
 - 2026-05-18: Code Builder later merged `EnemySkillExecutor.cs` into `EnemyCombatSimulationSystem.cs` and merged `EnemySkillRuntime.cs` into `EnemySkillCooldown.cs` during the repository-wide high-integration consolidation pass.
 - 2026-05-18: Code Builder then absorbed `EnemySkillCooldown.cs` into the renamed `EnemyCombatSystem.cs` owner and also absorbed `CombatStatModels.cs` into `DamageCalculator.cs`.
-
-## Task: 2026-05-18 CSV-Backed Stage1 Enemy Passives
-
-### Task title
-
-Apply Stage 1 enemy passives from CSV passive ID/value fields.
-
-### Goals
-
-- Remove Stage 1 enemy passive stat changes from `StageOneSkill` hardcoded branches.
-- Apply `PhysicalDamageUp` only to Physical damage.
-- Keep existing defense, crit, healing, and incoming-damage passive behavior through reusable passive IDs.
-
-### Constraints
-
-- Role Owner is Code Builder.
-- User explicitly requested no Code Reviewer stage for this task.
-- Unity Play Mode verification remains user-owned.
-
-### Role Owner
-
-Code Builder
-
-### Status
-
-Implemented and editor-verified.
-
-### Next Actions
-
-- User verifies in Play Mode that Physical enemy passive buffs affect only Physical attacks and do not affect non-Physical enemy damage.
-
-### Evidence
-
-- `Pakuri/Assets/Scripts2/InGame/Units/UnitFactory.cs` now contains the integrated Stage 1 enemy passive application helper and switches on `EnemyUnitRuntimeModel.PassiveSkillId` instead of `StageOneSkill`.
-- `Pakuri/Assets/Scripts2/InGame/Units/UnitFactory.cs` maps `PhysicalDamageUp` to `PassivePhysicalDamageMultiplier`, `DefenseUp` to all defense stats, `CritChanceUp`, `CritDamageUp`, `HealingUp`, and `IncomingDamageDown`.
-- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitRuntimeModel.cs` now stores `PassiveSkillId`, `PassiveSkillValue`, and `PassivePhysicalDamageMultiplier`.
-- `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSystem.cs` multiplies `PassivePhysicalDamageMultiplier` only when the resolved damage attribute is `DamageAttribute.Physical`.
-- Unity-MCP editor execution after CSV sync returned `sword=PhysicalDamageUp:0.1:phys=1.1:out=1`, confirming the old generic outgoing multiplier stays at `1` for the swordsman passive.
-- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
-
-### History
-
-- 2026-05-18: Code Builder changed Stage 1 enemy passive application from skill-kind hardcoding to CSV passive ID/value application.

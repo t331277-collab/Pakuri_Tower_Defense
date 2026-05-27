@@ -223,6 +223,7 @@ namespace Pakuri.InGame
         public float DamageBonusRate;
         public float ShieldReceivedBonus;
         public float CritChanceBonusRate;
+        public float CritDamageBonusRate;
         public float ResistReduction;
         public ElementType ResistReductionElement;
     }

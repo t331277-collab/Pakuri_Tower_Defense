@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Pakuri.Combat;
+using Pakuri.Data;
 using UnityEngine;
 
 namespace Pakuri.InGame
@@ -30,6 +31,22 @@ namespace Pakuri.InGame
         private bool criticalAllowed;
         private float critChanceBonus;
         private float critDamageBonus;
+        private ProjectileStatusHitSpec impactStatusOnHit;
+        private SkillEffectDefinition[] onHitEffects;
+        private SkillEffectDefinition[] onExpireEffects;
+        private bool contactDamageEnabled = true;
+        private bool stopOnFirstHit;
+        private float impactDelaySeconds;
+        private GameObject impactEffectPrefab;
+        private bool hasImpactArea;
+        private float impactRadius;
+        private float impactDamage;
+        private bool impactArmed;
+        private float impactDelayRemaining;
+        private Vector2 impactCenter;
+        private BaseUnitRuntimeModel impactTarget;
+        private bool impactResolved;
+        private bool awaitingExpireEffects;
 
         public void Initialize(
             InGameCombatManager manager,
@@ -63,6 +80,22 @@ namespace Pakuri.InGame
             criticalAllowed = false;
             critChanceBonus = 0f;
             critDamageBonus = 0f;
+            impactStatusOnHit = null;
+            onHitEffects = System.Array.Empty<SkillEffectDefinition>();
+            onExpireEffects = System.Array.Empty<SkillEffectDefinition>();
+            contactDamageEnabled = true;
+            stopOnFirstHit = false;
+            impactDelaySeconds = 0f;
+            impactEffectPrefab = null;
+            hasImpactArea = false;
+            impactRadius = 0f;
+            impactDamage = 0f;
+            impactArmed = false;
+            impactDelayRemaining = 0f;
+            impactCenter = Vector2.zero;
+            impactTarget = null;
+            impactResolved = false;
+            awaitingExpireEffects = false;
             EnsurePhysicsRelay();
         }
 
@@ -78,6 +111,16 @@ namespace Pakuri.InGame
             float lifetimeSeconds,
             ProjectileStatusHitSpec statusSpec,
             ProjectileBranchHitSpec branchSpec,
+            ProjectileStatusHitSpec impactStatusSpec,
+            SkillEffectDefinition[] onHitEffectSpecs,
+            SkillEffectDefinition[] onExpireEffectSpecs,
+            bool enableContactDamage,
+            bool stopAfterFirstHit,
+            float impactDelay,
+            GameObject impactEffect,
+            bool enableImpactArea,
+            float impactAreaRadius,
+            float delayedImpactDamage,
             SkillRuntimeInstance sourceRuntime,
             SkillExecutionSnapshot snapshot,
             string ignoredUnitId = null,
@@ -100,6 +143,16 @@ namespace Pakuri.InGame
 
             statusOnHit = statusSpec;
             branchOnHit = branchSpec;
+            impactStatusOnHit = impactStatusSpec;
+            onHitEffects = onHitEffectSpecs ?? System.Array.Empty<SkillEffectDefinition>();
+            onExpireEffects = onExpireEffectSpecs ?? System.Array.Empty<SkillEffectDefinition>();
+            contactDamageEnabled = enableContactDamage;
+            stopOnFirstHit = stopAfterFirstHit;
+            impactDelaySeconds = Mathf.Max(0f, impactDelay);
+            impactEffectPrefab = impactEffect;
+            hasImpactArea = enableImpactArea;
+            impactRadius = Mathf.Max(0f, impactAreaRadius);
+            impactDamage = Mathf.Max(0f, delayedImpactDamage);
             runtime = sourceRuntime;
             executionSnapshot = snapshot;
             sourceSkillId = skillId;
@@ -122,12 +175,24 @@ namespace Pakuri.InGame
         private void Update()
         {
             var deltaTime = Time.deltaTime;
-            transform.position += (Vector3)(direction * speed * deltaTime);
-            maxLifetime -= deltaTime;
-            TryHitRosterTargets();
+            if (!impactArmed)
+            {
+                transform.position += (Vector3)(direction * speed * deltaTime);
+                TryHitRosterTargets();
+            }
+            else if (!impactResolved)
+            {
+                impactDelayRemaining -= deltaTime;
+                if (impactDelayRemaining <= 0f)
+                {
+                    ResolveImpact();
+                }
+            }
 
+            maxLifetime -= deltaTime;
             if (HasPassedDestroyBoundary() || maxLifetime <= 0f)
             {
+                TryExecuteOnExpireEffects();
                 Destroy(gameObject);
             }
         }
@@ -208,33 +273,75 @@ namespace Pakuri.InGame
             }
 
             var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-            combatManager.ApplyDamage(target.Model, damage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
-            TryApplyStatus(target.Model);
-            SkillOnHitAdditionalDamageUtility.TryApply(
-                combatManager,
-                combatManager != null ? combatManager.Roster : null,
-                runtime,
-                executionSnapshot,
-                combatManager != null && combatManager.Roster != null ? combatManager.Roster.Find(owner) : null,
-                owner,
-                sourceSkillId,
-                target,
-                hitPosition,
-                damage);
+            var resolvedDamage = 0f;
+            if (contactDamageEnabled)
+            {
+                resolvedDamage = ResolveHitDamage(target.Model);
+                combatManager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                TryApplyStatus(target.Model);
+                SkillOnHitAdditionalDamageUtility.TryApply(
+                    combatManager,
+                    combatManager != null ? combatManager.Roster : null,
+                    runtime,
+                    executionSnapshot,
+                    combatManager != null && combatManager.Roster != null ? combatManager.Roster.Find(owner) : null,
+                    owner,
+                    sourceSkillId,
+                    target,
+                    hitPosition,
+                    resolvedDamage);
+            }
+
             TryRunProjectileHitTriggers();
+            TryApplyOnHitEffects(target, hitPosition);
             TrySpawnBranches(target);
+            if (stopOnFirstHit)
+            {
+                ArmImpact(target, hitPosition);
+                return true;
+            }
+
             remainingHits--;
             if (remainingHits <= 0)
             {
+                TryExecuteOnExpireEffects();
                 Destroy(gameObject);
             }
 
             return true;
         }
 
+        private float ResolveHitDamage(BaseUnitRuntimeModel target)
+        {
+            var hitDamage = damage;
+            if (runtime != null && executionSnapshot != null)
+            {
+                hitDamage *= runtime.ResolveConsecutiveHitDamageMultiplier(target, executionSnapshot);
+            }
+
+            return Mathf.Max(0f, hitDamage);
+        }
+
         private void TryApplyStatus(BaseUnitRuntimeModel target)
         {
             SkillStatusApplyUtility.TryApplyStatus(combatManager, target, statusOnHit, owner);
+        }
+
+        private void TryApplyOnHitEffects(UnitRosterEntry target, Vector2 hitPosition)
+        {
+            if (target == null || onHitEffects == null || onHitEffects.Length == 0)
+            {
+                return;
+            }
+
+            var context = new SkillExecutionContext(
+                combatManager,
+                combatManager != null ? combatManager.Roster : null,
+                combatManager != null && combatManager.Roster != null ? combatManager.Roster.Find(owner) : null,
+                runtime,
+                0f,
+                target.Model);
+            SkillMultiEffectExecutor.ExecuteOnHit(context, executionSnapshot, onHitEffects, hitPosition, target.Model);
         }
 
         private void TryRunProjectileHitTriggers()
@@ -256,7 +363,7 @@ namespace Pakuri.InGame
 
         private void TrySpawnBranches(UnitRosterEntry hitTarget)
         {
-            if (combatManager == null || hitTarget == null || hitTarget.Transform == null || branchOnHit == null || !branchOnHit.Enabled)
+            if (impactArmed || combatManager == null || hitTarget == null || hitTarget.Transform == null || branchOnHit == null || !branchOnHit.Enabled)
             {
                 return;
             }
@@ -411,6 +518,16 @@ namespace Pakuri.InGame
                 branchOnHit.CloneForChild(),
                 null,
                 null,
+                null,
+                true,
+                false,
+                0f,
+                null,
+                false,
+                0f,
+                0f,
+                null,
+                null,
                 ignoredUnitId,
                 null,
                 false,
@@ -430,9 +547,134 @@ namespace Pakuri.InGame
 
         private bool HasPassedDestroyBoundary()
         {
+            if (impactArmed)
+            {
+                return false;
+            }
+
             return destroyWhenGreaterThanBoundary
                 ? transform.position.x > destroyBeyondX
                 : transform.position.x < destroyBeyondX;
+        }
+
+        private void ArmImpact(UnitRosterEntry target, Vector2 hitPosition)
+        {
+            impactArmed = true;
+            impactDelayRemaining = impactDelaySeconds;
+            impactCenter = hitPosition;
+            impactTarget = target != null ? target.Model : null;
+            speed = 0f;
+            remainingHits = 0;
+            var colliders = GetComponentsInChildren<Collider2D>(true);
+            for (var i = 0; i < colliders.Length; i++)
+            {
+                if (colliders[i] != null)
+                {
+                    colliders[i].enabled = false;
+                }
+            }
+        }
+
+        private void ResolveImpact()
+        {
+            if (impactResolved || combatManager == null)
+            {
+                return;
+            }
+
+            impactResolved = true;
+            var impactVisualLifetime = 0.05f;
+            if (impactEffectPrefab != null && combatManager.Effects != null)
+            {
+                var instance = combatManager.Effects.InstantiateSkillPrefab(impactEffectPrefab, impactCenter, Quaternion.identity);
+                if (instance != null)
+                {
+                    impactVisualLifetime = SkillVisualSpawnUtility.ResolveVisualLifetime(instance, 0.1f);
+                    Destroy(instance, impactVisualLifetime);
+                }
+            }
+
+            if (hasImpactArea)
+            {
+                InGameZoneSkillActor.ApplyAreaTick(
+                    combatManager,
+                    combatManager.Roster != null ? combatManager.Roster.Find(owner) : null,
+                    combatManager.Roster,
+                    BuildImpactTargeting(),
+                    impactCenter,
+                    impactRadius,
+                    false,
+                    impactDamage,
+                    damageAttribute,
+                    impactStatusOnHit,
+                    owner,
+                    sourceSkillId,
+                    runtime,
+                    criticalAllowed,
+                    critChanceBonus,
+                    critDamageBonus,
+                    int.MaxValue,
+                    executionSnapshot);
+            }
+
+            if (onExpireEffects != null && onExpireEffects.Length > 0 && combatManager != null)
+            {
+                awaitingExpireEffects = true;
+                combatManager.StartCoroutine(ExecuteOnExpireAfterDelay(impactVisualLifetime));
+                return;
+            }
+
+            Destroy(gameObject);
+        }
+
+        private System.Collections.IEnumerator ExecuteOnExpireAfterDelay(float delaySeconds)
+        {
+            var delay = Mathf.Max(0.01f, delaySeconds);
+            if (delay > 0f)
+            {
+                yield return new WaitForSeconds(delay);
+            }
+
+            TryExecuteOnExpireEffects();
+            Destroy(gameObject);
+        }
+
+        private void TryExecuteOnExpireEffects()
+        {
+            if (!awaitingExpireEffects && !impactResolved)
+            {
+                return;
+            }
+
+            if (onExpireEffects == null || onExpireEffects.Length == 0 || combatManager == null || combatManager.Roster == null)
+            {
+                onExpireEffects = System.Array.Empty<SkillEffectDefinition>();
+                return;
+            }
+
+            var sourceEntry = combatManager.Roster.Find(owner);
+            var context = new SkillExecutionContext(
+                combatManager,
+                combatManager.Roster,
+                sourceEntry,
+                runtime,
+                0f,
+                impactTarget);
+            SkillMultiEffectExecutor.ExecuteOnExpire(context, executionSnapshot, onExpireEffects, impactCenter);
+            onExpireEffects = System.Array.Empty<SkillEffectDefinition>();
+            awaitingExpireEffects = false;
+        }
+
+        private SkillTargetingSpec BuildImpactTargeting()
+        {
+            return new SkillTargetingSpec
+            {
+                TargetSide = SkillTargetSide.Enemy,
+                Selection = SkillTargetSelection.Nearest,
+                Shape = SkillTargetShape.Circle,
+                Radius = impactRadius,
+                CoverAll = false
+            };
         }
 
         private void EnsurePhysicsRelay()
