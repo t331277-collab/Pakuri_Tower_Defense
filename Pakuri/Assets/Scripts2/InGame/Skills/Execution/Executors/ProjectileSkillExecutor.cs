@@ -40,6 +40,9 @@ namespace Pakuri.InGame
 
             var damage = SkillExecutionUtility.ResolveDamage(context.Caster, skill.Damage, snapshot);
             var attribute = SkillExecutionUtility.MapAttribute(skill.Damage != null ? skill.Damage.Element : skill.Element);
+            var currentBurstProjectileIndex = context.Runtime != null
+                ? context.Runtime.ResolveCurrentBurstProjectileIndex()
+                : 1;
             var prefab = skill.Projectile != null ? skill.Projectile.ProjectilePrefab : null;
             if (prefab == null)
             {
@@ -89,6 +92,12 @@ namespace Pakuri.InGame
 
             projectileCount = Math.Max(1, projectileCount);
             pierce = Math.Max(0, pierce);
+            var burstDamageMultiplier = ResolveBurstDamageMultiplier(
+                skill,
+                snapshot,
+                currentBurstProjectileIndex,
+                burstProjectileCount);
+            var launchDamage = damage * burstDamageMultiplier;
             var isMagazineLastProjectile = context.Runtime != null
                 && context.Runtime.UsesMagazine
                 && context.Runtime.MagazineRemaining == 1;
@@ -102,7 +111,7 @@ namespace Pakuri.InGame
                 {
                     if (target != null)
                     {
-                        ApplyDirectProjectileHit(context, skill, snapshot, target, statusSpec, damage, attribute);
+                        ApplyDirectProjectileHit(context, skill, snapshot, target, statusSpec, launchDamage, attribute);
                     }
 
                     continue;
@@ -119,7 +128,7 @@ namespace Pakuri.InGame
                 {
                     if (target != null)
                     {
-                        ApplyDirectProjectileHit(context, skill, snapshot, target, statusSpec, damage, attribute);
+                        ApplyDirectProjectileHit(context, skill, snapshot, target, statusSpec, launchDamage, attribute);
                     }
 
                     continue;
@@ -136,7 +145,7 @@ namespace Pakuri.InGame
                     context.Caster,
                     spreadDirection,
                     speed,
-                    damage,
+                    launchDamage,
                     attribute,
                     pierce,
                     boundary,
@@ -152,7 +161,7 @@ namespace Pakuri.InGame
                     skill.ImpactEffectPrefab,
                     skill.HasImpactArea,
                     SkillAreaUtility.ResolveRadius(skill.ImpactArea != null ? skill.ImpactArea.Radius : 0f, snapshot),
-                    damage,
+                    launchDamage,
                     context.Runtime,
                     snapshot,
                     null,
@@ -162,6 +171,25 @@ namespace Pakuri.InGame
                     snapshot != null ? snapshot.CritChanceBonus : 0f,
                     snapshot != null ? snapshot.CritDamageBonus : 0f);
             }
+
+            TryScheduleFollowUpProjectile(
+                context,
+                snapshot,
+                skill,
+                prefab,
+                statusSpec,
+                onHitEffects,
+                onExpireEffects,
+                origin,
+                direction,
+                speed,
+                damage,
+                attribute,
+                pierce,
+                boundary,
+                lifetime,
+                burstProjectileCount,
+                currentBurstProjectileIndex);
 
             return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
         }
@@ -229,6 +257,218 @@ namespace Pakuri.InGame
             }
 
             return chance;
+        }
+
+        private static float ResolveBurstDamageMultiplier(
+            ProjectileSkillData skill,
+            SkillExecutionSnapshot snapshot,
+            int projectileIndex,
+            int burstProjectileCount)
+        {
+            var multiplier = 1f;
+            var projectile = skill != null ? skill.Projectile : null;
+            if (projectile != null
+                && projectile.BurstDamageMultiplier > 0f
+                && MatchesBurstProjectileIndex(projectile.BurstDamageProjectileIndex, projectileIndex, burstProjectileCount))
+            {
+                multiplier *= projectile.BurstDamageMultiplier;
+            }
+
+            if (snapshot != null)
+            {
+                multiplier *= snapshot.ResolveBurstDamageMultiplier(projectileIndex, burstProjectileCount);
+            }
+
+            return Mathf.Max(0f, multiplier);
+        }
+
+        private static bool MatchesBurstProjectileIndex(int configuredIndex, int projectileIndex, int burstProjectileCount)
+        {
+            if (configuredIndex == 0)
+            {
+                return burstProjectileCount > 0 && projectileIndex == burstProjectileCount;
+            }
+
+            return configuredIndex > 0 && configuredIndex == projectileIndex;
+        }
+
+        private static void TryScheduleFollowUpProjectile(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            ProjectileSkillData skill,
+            GameObject prefab,
+            ProjectileStatusHitSpec statusSpec,
+            SkillEffectDefinition[] onHitEffects,
+            SkillEffectDefinition[] onExpireEffects,
+            Vector2 origin,
+            Vector2 direction,
+            float speed,
+            float baseDamage,
+            DamageAttribute attribute,
+            int pierce,
+            float boundary,
+            float lifetime,
+            int burstProjectileCount,
+            int currentBurstProjectileIndex)
+        {
+            if (context == null
+                || context.CombatManager == null
+                || skill == null
+                || snapshot == null
+                || !snapshot.HasFollowUpProjectile
+                || prefab == null
+                || currentBurstProjectileIndex < burstProjectileCount)
+            {
+                return;
+            }
+
+            context.CombatManager.StartCoroutine(ExecuteFollowUpProjectilesAfterDelay(
+                context,
+                snapshot,
+                skill,
+                prefab,
+                statusSpec,
+                onHitEffects,
+                onExpireEffects,
+                origin,
+                direction,
+                speed,
+                baseDamage,
+                attribute,
+                pierce,
+                boundary,
+                lifetime));
+        }
+
+        private static IEnumerator ExecuteFollowUpProjectilesAfterDelay(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            ProjectileSkillData skill,
+            GameObject prefab,
+            ProjectileStatusHitSpec statusSpec,
+            SkillEffectDefinition[] onHitEffects,
+            SkillEffectDefinition[] onExpireEffects,
+            Vector2 origin,
+            Vector2 direction,
+            float speed,
+            float baseDamage,
+            DamageAttribute attribute,
+            int pierce,
+            float boundary,
+            float lifetime)
+        {
+            if (snapshot.FollowUpProjectileDelaySeconds > 0f)
+            {
+                yield return new WaitForSeconds(snapshot.FollowUpProjectileDelaySeconds);
+            }
+            else
+            {
+                yield return null;
+            }
+
+            if (context == null || context.CombatManager == null || skill == null || prefab == null)
+            {
+                yield break;
+            }
+
+            var count = Math.Max(1, snapshot.FollowUpProjectileCount);
+            for (var i = 0; i < count; i++)
+            {
+                SpawnProjectileActor(
+                    context,
+                    snapshot,
+                    skill,
+                    prefab,
+                    statusSpec,
+                    onHitEffects,
+                    onExpireEffects,
+                    origin,
+                    direction,
+                    speed,
+                    baseDamage * Mathf.Max(0f, snapshot.FollowUpProjectileDamageMultiplier),
+                    attribute,
+                    pierce,
+                    boundary,
+                    lifetime,
+                    false);
+            }
+        }
+
+        private static void SpawnProjectileActor(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            ProjectileSkillData skill,
+            GameObject prefab,
+            ProjectileStatusHitSpec statusSpec,
+            SkillEffectDefinition[] onHitEffects,
+            SkillEffectDefinition[] onExpireEffects,
+            Vector2 origin,
+            Vector2 direction,
+            float speed,
+            float damage,
+            DamageAttribute attribute,
+            int pierce,
+            float boundary,
+            float lifetime,
+            bool isMagazineLastProjectile)
+        {
+            if (context == null || context.CombatManager == null || skill == null || prefab == null)
+            {
+                return;
+            }
+
+            var effects = context.CombatManager.Effects;
+            if (effects == null)
+            {
+                return;
+            }
+
+            var projectileLaunchIndex = context.Runtime != null
+                ? context.Runtime.AdvanceProjectileLaunchCount()
+                : 0;
+            var branchSpec = ResolveBranchSpec(snapshot, prefab, projectileLaunchIndex);
+            var instance = effects.InstantiateSkillPrefab(prefab, origin, SkillExecutionUtility.ResolveRotation(direction));
+            if (instance == null)
+            {
+                return;
+            }
+
+            var actor = instance.GetComponent<InGameProjectileActor>();
+            if (actor == null)
+            {
+                actor = instance.AddComponent<InGameProjectileActor>();
+            }
+
+            actor.Initialize(
+                context.CombatManager,
+                context.Caster,
+                direction,
+                speed,
+                damage,
+                attribute,
+                pierce,
+                boundary,
+                lifetime,
+                statusSpec,
+                branchSpec,
+                SkillStatusSpecUtility.ResolveStatusSpec(skill.ImpactStatus, snapshot),
+                onHitEffects,
+                onExpireEffects,
+                skill.ContactDamageEnabled,
+                skill.StopOnFirstHit,
+                ResolveImpactDelay(skill, snapshot),
+                skill.ImpactEffectPrefab,
+                skill.HasImpactArea,
+                SkillAreaUtility.ResolveRadius(skill.ImpactArea != null ? skill.ImpactArea.Radius : 0f, snapshot),
+                damage,
+                context.Runtime,
+                snapshot,
+                null,
+                skill.SkillId,
+                isMagazineLastProjectile,
+                skill.Damage != null && skill.Damage.CriticalAllowed,
+                snapshot != null ? snapshot.CritChanceBonus : 0f,
+                snapshot != null ? snapshot.CritDamageBonus : 0f);
         }
 
         private static void TryApplyDirectStatus(

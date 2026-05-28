@@ -57,3 +57,63 @@ Current active `NewRunScene` UI rules summarized and retained for future work. 2
 - 2026-05-17: Status suffix display and Offering enhancement availability filtering were added to that active baseline.
 - 2026-05-18: Code Builder split `InGameUIManager` into Offering and Menifest helper flows, and commonized `MonsterUnitActor`/`EnemyUnitActor` presentation through `UnitActorView.cs`.
 - 2026-05-18: Code Builder later re-merged the Offering and Menifest helper files into `InGameUIManager.cs` during the repository-wide high-integration consolidation pass.
+
+## Task: 2026-05-29 Damage Meter UI Handoff
+
+### Task title
+
+Prepare the Code Builder handoff for the authored `NewRunScene` damage meter overlay.
+
+### Goals
+
+- Keep the damage meter UI work grounded in the existing authored `Canvas/DamageMeterUI` hierarchy.
+- Route implementation to a separate damage meter UI/controller path instead of expanding Offering/Menifest ownership in `InGameUIManager.cs`.
+- Preserve 1P to 5P panel order based on selected monster plus `RunSession.ManifestedMonsterIds`.
+- Keep damage meter skill bars bounded by `MeterBG` width, with 1st-place total damage as the full-width reference.
+- Apply repeated skill segment colors in red, blue, light green, sky blue, yellow, purple, and dark green order.
+- Preserve the authored `Skill-Meter` RectTransform Y/anchor/pivot while resizing cloned skill segments.
+- Resolve trigger-based damage meter labels back to the trigger source skill/passive display name when available.
+- Prefer `monster_skills.csv` active/passive `display_name` over choice or trigger-derived names when the damage source id is a real skill id.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Designer created the handoff only; no code or scene implementation was performed.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented by Code Builder.
+
+### Next Actions
+
+- User verifies live Play Mode numbers, button behavior, and visual fit for the authored meter layout.
+- Future icon work can fill `MonsterIconImage` values in `monsters.csv`; blank values are currently supported.
+
+### Evidence
+
+- Unity-MCP found `Canvas/DamageMeterUIBtn` and `Canvas/DamageMeterUI` in `NewRunScene`.
+- Unity-MCP found `Canvas/DamageMeterUI/1PDamagePanel` through `5PDamagePanel`; `1PDamagePanel` includes `Image`, `Monster_Name_Text`, `Total_Damage`, `Total_Damage_Persent`, `MeterBG`, and `Skill-Meter/SkillName`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` exposes `ApplyDamage(... source, ... sourceSkillId ...)` and returns `InGameResourceChangeResult`.
+- `Pakuri/Assets/Scripts2/InGame/Run/RunSession.cs` stores `ManifestedMonsterIds` in append order.
+- `Pakuri/Assets/Scripts2/InGame/UI/DamageMeterRuntimeTracker.cs` records player monster damage by actual health plus shield delta.
+- `Pakuri/Assets/Scripts2/InGame/UI/DamageMeterUIController.cs` auto-resolves `Canvas/DamageMeterUIBtn`, `Canvas/DamageMeterUI`, `Close`, and `1P~5PDamagePanel` children by name.
+- `Pakuri/Assets/Scripts2/InGame/UI/DamageMeterUIController.cs` calculates each skill meter width from `source.Damage / leaderDamage`, clamps accumulated width to `MeterBG`, and applies a fixed seven-color segment palette.
+- `Pakuri/Assets/Scripts2/InGame/UI/DamageMeterUIController.cs` now caches the authored `Skill-Meter` anchor, pivot, and Y position so clones only change X/width.
+- `Pakuri/Assets/Scripts2/InGame/UI/DamageMeterUIController.cs` now resolves trigger ids such as `rin-f-followup` through `SkillTriggerDefinition.SourceSkillId`, so `rin-f` damage can display the passive name from `monster_skills.csv`.
+- `Pakuri/Assets/Scripts2/InGame/UI/DamageMeterUIController.cs` now resolves active/passive skill ids before choice titles or trigger source fallback, and trigger fallback no longer matches `TriggeredSkillId`, preventing `rin-a`/`sein-a` from being overwritten by related passive or trigger labels.
+- Unity-MCP component inspection found `Pakuri.InGame.DamageMeterRuntimeTracker` and `Pakuri.InGame.DamageMeterUIController` attached to `Canvas`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+- Unity console after CSV validation/sync logged runtime catalog load and CSV runtime catalog sync without Pakuri CSV failure.
+
+### History
+
+- 2026-05-29: User requested a Code Builder implementation handoff for the damage meter UI design.
+- 2026-05-29: Code Builder implemented the runtime tracker, UI controller, combat hook, and Canvas scene binding for the authored damage meter overlay.
+- 2026-05-29: Code Builder changed skill meter widths to use the leader-damage scale and added the requested seven-color repeating segment palette.
+- 2026-05-29: Code Builder preserved authored skill-meter Y/anchor/pivot on clones and routed trigger damage labels back to their source skill/passive display names.
+- 2026-05-29: Code Builder changed damage meter label resolution so active/passive `monster_skills.csv` display names take priority over choice and trigger-derived labels.

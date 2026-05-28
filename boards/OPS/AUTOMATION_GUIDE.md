@@ -7,6 +7,47 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 Older OPS automation and role-policy task blocks were archived to `boards/ARCHIVE/OPS_AUTOMATION_ARCHIVE_2026-05-19.md`.
 
+## Task: 2026-05-28 Skill Builder Trigger Payload Documentation Guard
+
+### Task title
+
+Document the trigger-row payload guard so Skill Builder handoffs do not produce source-validity errors for trigger-routed `SingleAttack` follow-ups.
+
+### Goals
+
+- Make the Skill Builder documentation explicitly state that trigger `SingleAttack` rows own their own concrete damage payload.
+- Prevent future handoffs from treating `damage_multiplier` as an implicit source-skill payload reuse mechanism.
+- Keep the guard close to the active Skill Builder blueprint and exception docs.
+
+### Constraints
+
+- Role Owner is Code Builder / Designer.
+- This task changes workflow documentation, not runtime gameplay code by itself.
+- Claims must stay grounded in the inspected validator, trigger CSV row contract, and edited markdown files.
+
+### Role Owner
+
+Code Builder / Designer
+
+### Status
+
+Implemented and locally verified by targeted markdown inspection plus Unity CSV validation.
+
+### Next Actions
+
+- Future Skill Builder row-bundle handoffs should always restate trigger damage payload fields when `monster_skill_triger.csv` participates in the implementation.
+
+### Evidence
+
+- `AGENTS_ROLE/GAMEBULIDER_SKILL.md` now tells Builder that routed `monster_skill_triger.csv` `SingleAttack` follow-up rows must carry positive fixed payload through `base_damage` or `attack/spell` coefficient rather than `damage_multiplier` alone.
+- `boards/SkillBluePrint/single-attack-blueprint.md` now includes `TriggerSingleAttackRows` in optional parsed input and explicitly states that a `Fixed` trigger row must pass source CSV validation with its own positive damage payload.
+- `boards/SkillBluePrint/skill-csv-exception-guide.md` now says the trigger row owns its own damage payload and that linked `triggered_effect_id` rows do not satisfy trigger-row damage validation.
+- `boards/SkillBluePrint/skill-builder-handoff-format.md` now requires concrete trigger damage payload fields in the trigger-row bundle section.
+
+### History
+
+- 2026-05-28: Vega-B master-1 follow-up validation failure showed that the existing Skill Builder docs did not explicitly guard against zero-payload trigger rows that only carried a multiplier.
+
 ## Task: 2026-05-24 Projectile Blueprint Nth Launch Branch Extension
 
 ### Task title

@@ -160,7 +160,9 @@ namespace Pakuri.InGame
         {
             if (skill != null && skill.HitAllTargets)
             {
-                return SkillExecutionUtility.ResolveTargetGroupCenter(context, skill.Targeting, fallbackCenter);
+                return context != null && context.CasterEntry != null && context.CasterEntry.Transform != null
+                    ? (Vector2)context.CasterEntry.Transform.position
+                    : fallbackCenter;
             }
 
             return fallbackCenter;

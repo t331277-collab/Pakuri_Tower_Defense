@@ -428,6 +428,10 @@ namespace Pakuri.Data
             var status = effect.Status;
             var hasStatus = !string.IsNullOrWhiteSpace(status.StatusEffectId)
                 || !string.IsNullOrWhiteSpace(status.StatusEffectLabel);
+            var hasPositiveDamagePayload = HasPositiveDamagePayload(
+                effect.BaseDamage,
+                effect.AttackPowerCoefficient,
+                effect.SpellPowerCoefficient);
             var isStatusOnlyPersistentZone = effect.EffectKind == SkillMultiEffectKind.Damage
                 && effect.BaseDamage <= 0f
                 && effect.AttackPowerCoefficient <= 0f
@@ -436,10 +440,10 @@ namespace Pakuri.Data
                 && effect.TickIntervalSeconds > 0f
                 && hasStatus;
             if (effect.EffectKind == SkillMultiEffectKind.Damage
-                && effect.BaseDamage <= 0f
+                && !hasPositiveDamagePayload
                 && !isStatusOnlyPersistentZone)
             {
-                errors.Add($"Damage skill effect '{effect.Id}' requires positive base_damage.");
+                errors.Add($"Damage skill effect '{effect.Id}' requires positive base_damage or positive attack/spell coefficient.");
             }
 
             if (effect.EffectKind == SkillMultiEffectKind.Status && !hasStatus)
@@ -626,11 +630,13 @@ namespace Pakuri.Data
                 errors.Add($"Skill trigger '{trigger.Id}' has negative internal_cooldown_seconds.");
             }
 
-            if (triggerAction == SkillTriggerActionKind.SingleAttack)
+            if (triggerAction == SkillTriggerActionKind.SingleAttack
+                || triggerAction == SkillTriggerActionKind.LineAttack)
             {
-                if (trigger.DamageSource == SkillTriggerDamageSource.Fixed && trigger.BaseDamage <= 0f)
+                if (trigger.DamageSource == SkillTriggerDamageSource.Fixed
+                    && !HasPositiveDamagePayload(trigger.BaseDamage, trigger.AttackPowerCoefficient, trigger.SpellPowerCoefficient))
                 {
-                    errors.Add($"Skill trigger '{trigger.Id}' uses Fixed damage_source and requires positive base_damage.");
+                    errors.Add($"Skill trigger '{trigger.Id}' uses Fixed damage_source and requires positive base_damage or positive attack/spell coefficient.");
                 }
 
                 if (trigger.DamageSource != SkillTriggerDamageSource.Fixed && trigger.DamageSourceMultiplier <= 0f)
@@ -655,6 +661,13 @@ namespace Pakuri.Data
             }
 
             ValidateSkillIdList(trigger.EventSkillId, trigger, model, "event_skill_id", errors);
+        }
+
+        private static bool HasPositiveDamagePayload(float baseDamage, float attackPowerCoefficient, float spellPowerCoefficient)
+        {
+            return baseDamage > 0f
+                || attackPowerCoefficient > 0f
+                || spellPowerCoefficient > 0f;
         }
 
         private static void ValidateSkillIdList(

@@ -5,6 +5,47 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-05-28 Shared Silence Default Duration For Vega-B Threshold Refresh
+
+### Task title
+
+Align the shared `silence` base duration with Vega-B threshold silence refresh so the extra second can be authored without a duplicate status id.
+
+### Goals
+
+- Let Vega-B base silence remain `3s` while the master-2 threshold refresh lands at `4s`.
+- Let trait-2 `+1s` stack naturally on both the base silence and the threshold refresh.
+- Avoid creating a second silence status id only for Vega-B.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- The shared status id `silence` was changed only after inspecting the active Vega-B CSV usage in the current routed skill-authoring scope.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- If another inspected skill later requires a different shared silence base, revisit whether `silence` should stay shared or whether that skill needs a distinct status id.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/status_effects.csv` now sets `silence` default duration to `4`.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` still authors Vega-B base silence explicitly at `status_duration_seconds=3`, so the base hit stays at `3s`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now uses the shared threshold reapply path for `vega-b-master-2`, so the reapplied silence reads the shared default `4s`, and the same choice CSV applies `vega-b-trait-2` as `status_duration_bonus_status_id=silence` / `status_duration_bonus=1`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillMultiEffectExecutor.cs` resolves status duration from explicit duration first and otherwise falls back to the shared status default, then adds snapshot duration bonuses for the matching status id.
+
+### History
+
+- 2026-05-28: Vega-B master-2 needed “Name Mark 10 stacks or more -> silence duration +1 second” on the shared threshold reapply path, which reads status defaults instead of the original base-skill explicit duration.
+
 ## Task: 2026-05-27 Zero-Damage Persistent Presence Zone Validation
 
 ### Task title

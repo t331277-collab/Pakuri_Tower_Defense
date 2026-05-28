@@ -25,6 +25,7 @@ namespace Pakuri.Data
                 monster.PrimaryAttribute = sourceMonster.PrimaryAttribute;
                 monster.ActiveSkillName = sourceMonster.ActiveSkillName;
                 monster.PassiveSkillName = sourceMonster.PassiveSkillName;
+                monster.MonsterIconImage = LoadSprite(sourceMonster.MonsterIconImagePath);
                 monster.MaxHealth = sourceMonster.MaxHealth;
                 monster.PowerStat = sourceMonster.PowerStat;
                 monster.BaseDamage = sourceMonster.BaseDamage;
@@ -221,7 +222,10 @@ namespace Pakuri.Data
                     MagazineCapacity = skill.MagazineCapacity,
                     ReloadSeconds = skill.ReloadSeconds,
                     ShotIntervalSeconds = skill.ShotIntervalSeconds,
+                    BurstIntervalSeconds = skill.BurstIntervalSeconds,
                     ProjectileBurstCount = skill.ProjectileBurstCount,
+                    BurstDamageProjectileIndex = skill.BurstDamageProjectileIndex,
+                    BurstDamageMultiplier = skill.BurstDamageMultiplier,
                     ProjectileSpeed = skill.ProjectileSpeed,
                     PierceCount = skill.PierceCount,
                     CriticalAllowed = skill.CriticalAllowed,
@@ -423,6 +427,13 @@ namespace Pakuri.Data
                     PierceBonus = choice.PierceBonus,
                     HasShotIntervalMultiplier = choice.HasShotIntervalMultiplier,
                     ShotIntervalMultiplier = choice.HasShotIntervalMultiplier ? choice.ShotIntervalMultiplier : 1f,
+                    HasBurstDamageProjectileIndex = choice.HasBurstDamageProjectileIndex,
+                    BurstDamageProjectileIndex = choice.BurstDamageProjectileIndex,
+                    HasBurstDamageMultiplier = choice.HasBurstDamageMultiplier,
+                    BurstDamageMultiplier = choice.HasBurstDamageMultiplier ? choice.BurstDamageMultiplier : 1f,
+                    FollowUpProjectileCount = choice.FollowUpProjectileCount,
+                    FollowUpProjectileDelaySeconds = choice.FollowUpProjectileDelaySeconds,
+                    FollowUpProjectileDamageMultiplier = choice.FollowUpProjectileDamageMultiplier > 0f ? choice.FollowUpProjectileDamageMultiplier : 1f,
                     HasReloadTimeMultiplier = choice.HasReloadTimeMultiplier,
                     ReloadTimeMultiplier = choice.HasReloadTimeMultiplier ? choice.ReloadTimeMultiplier : 1f,
                     HasRadiusMultiplier = choice.HasRadiusMultiplier,

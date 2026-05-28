@@ -97,6 +97,7 @@ For each row, restate:
 - `trigger_id`
 - `trigger_event`
 - `triggered_skill_id`
+- concrete damage payload fields: `base_damage`, `attack_power_coefficient`, `spell_power_coefficient`, `damage_multiplier`, `damage_source`
 - payload source
 - timing/repeat fields
 - why the trigger is required
@@ -163,7 +164,7 @@ State the local non-gameplay verification expected from Builder, such as:
 - `<effect_id>`: relevant fields `...`; purpose `...`
 
 ### Trigger rows
-- `<trigger_id>`: relevant fields `...`; purpose `...`
+- `<trigger_id>`: relevant fields `base_damage=...`, `attack_power_coefficient=...`, `spell_power_coefficient=...`, `damage_multiplier=...`, `damage_source=...`; purpose `...`
 
 ### Prefab refs
 - `<asset path>`

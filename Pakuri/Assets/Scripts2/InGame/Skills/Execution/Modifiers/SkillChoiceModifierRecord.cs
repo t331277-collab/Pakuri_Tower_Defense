@@ -18,6 +18,13 @@ namespace Pakuri.InGame
         public float ReloadTimeMultiplier { get; set; }
         public bool HasShotIntervalMultiplier { get; set; }
         public float ShotIntervalMultiplier { get; set; }
+        public bool HasBurstDamageProjectileIndex { get; set; }
+        public int BurstDamageProjectileIndex { get; set; }
+        public bool HasBurstDamageMultiplier { get; set; }
+        public float BurstDamageMultiplier { get; set; }
+        public int FollowUpProjectileCount { get; set; }
+        public float FollowUpProjectileDelaySeconds { get; set; }
+        public float FollowUpProjectileDamageMultiplier { get; set; }
         public bool HasRadiusMultiplier { get; set; }
         public float RadiusMultiplier { get; set; }
         public float RadiusBonus { get; set; }
@@ -102,6 +109,13 @@ namespace Pakuri.InGame
             record.ReloadTimeMultiplier = reloadTimeMultiplier;
             record.HasShotIntervalMultiplier = TryGetFloat(row, "shot_interval_multiplier", out var shotIntervalMultiplier);
             record.ShotIntervalMultiplier = shotIntervalMultiplier;
+            record.HasBurstDamageProjectileIndex = TryGetInt(row, "burst_damage_projectile_index", out var burstDamageProjectileIndex);
+            record.BurstDamageProjectileIndex = burstDamageProjectileIndex;
+            record.HasBurstDamageMultiplier = TryGetFloat(row, "burst_damage_multiplier", out var burstDamageMultiplier);
+            record.BurstDamageMultiplier = burstDamageMultiplier;
+            record.FollowUpProjectileCount = GetInt(row, "follow_up_projectile_count");
+            record.FollowUpProjectileDelaySeconds = GetFloat(row, "follow_up_projectile_delay_seconds");
+            record.FollowUpProjectileDamageMultiplier = GetFloat(row, "follow_up_projectile_damage_multiplier");
             record.HasRadiusMultiplier = TryGetFloat(row, "radius_multiplier", out var radiusMultiplier);
             record.RadiusMultiplier = radiusMultiplier;
             record.RadiusBonus = GetFloat(row, "radius_bonus");

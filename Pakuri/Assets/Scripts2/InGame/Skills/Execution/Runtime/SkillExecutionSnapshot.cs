@@ -38,6 +38,9 @@ namespace Pakuri.InGame
         public int PierceBonus { get; private set; }
         public float ReloadTimeMultiplier { get; private set; }
         public float ShotIntervalMultiplier { get; private set; }
+        public int FollowUpProjectileCount { get; private set; }
+        public float FollowUpProjectileDelaySeconds { get; private set; }
+        public float FollowUpProjectileDamageMultiplier { get; private set; } = 1f;
         public float RadiusBonus { get; private set; }
         public float BeamWidthBonus { get; private set; }
         public float KnockbackDistanceMultiplier { get; private set; }
@@ -110,6 +113,7 @@ namespace Pakuri.InGame
         private readonly Dictionary<string, float> statusDurationBonuses = new Dictionary<string, float>(System.StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, int> statusMaxStacksBonuses = new Dictionary<string, int>(System.StringComparer.OrdinalIgnoreCase);
         private readonly List<ConditionalDamageRule> conditionalDamageRules = new List<ConditionalDamageRule>();
+        private readonly List<BurstDamageRule> burstDamageRules = new List<BurstDamageRule>();
 
         public bool HasBranchBehavior =>
             BranchChanceBonus > 0f
@@ -132,6 +136,10 @@ namespace Pakuri.InGame
             && OnHitChainTargetCount > 0
             && OnHitChainSearchRadius > 0f
             && OnHitChainDamageMultiplier > 0f;
+
+        public bool HasFollowUpProjectile =>
+            FollowUpProjectileCount > 0
+            && FollowUpProjectileDamageMultiplier > 0f;
 
         public void ApplyChoiceSpec(SkillChoiceEffectSpec spec)
         {
@@ -197,6 +205,22 @@ namespace Pakuri.InGame
             if (spec.HasShotIntervalMultiplier)
             {
                 ShotIntervalMultiplier *= PositiveOrDefault(spec.ShotIntervalMultiplier, 1f);
+            }
+
+            if (spec.HasBurstDamageMultiplier
+                && spec.BurstDamageMultiplier > 0f
+                && spec.HasBurstDamageProjectileIndex)
+            {
+                burstDamageRules.Add(new BurstDamageRule(
+                    spec.BurstDamageProjectileIndex,
+                    spec.BurstDamageMultiplier));
+            }
+
+            if (spec.FollowUpProjectileCount > 0)
+            {
+                FollowUpProjectileCount = spec.FollowUpProjectileCount;
+                FollowUpProjectileDelaySeconds = Mathf.Max(0f, spec.FollowUpProjectileDelaySeconds);
+                FollowUpProjectileDamageMultiplier = Mathf.Max(0f, spec.FollowUpProjectileDamageMultiplier);
             }
 
             if (spec.HasStatusChanceBonus)
@@ -475,6 +499,13 @@ namespace Pakuri.InGame
                 ReloadTimeMultiplier = choice.ReloadTimeMultiplier,
                 HasShotIntervalMultiplier = choice.HasShotIntervalMultiplier,
                 ShotIntervalMultiplier = choice.ShotIntervalMultiplier,
+                HasBurstDamageProjectileIndex = choice.HasBurstDamageProjectileIndex,
+                BurstDamageProjectileIndex = choice.BurstDamageProjectileIndex,
+                HasBurstDamageMultiplier = choice.HasBurstDamageMultiplier,
+                BurstDamageMultiplier = choice.BurstDamageMultiplier,
+                FollowUpProjectileCount = choice.FollowUpProjectileCount,
+                FollowUpProjectileDelaySeconds = choice.FollowUpProjectileDelaySeconds,
+                FollowUpProjectileDamageMultiplier = choice.FollowUpProjectileDamageMultiplier,
                 HasStatusChanceBonus = choice.HasStatusChanceBonus,
                 StatusChanceBonus = choice.StatusChanceBonus,
                 BranchChanceBonus = choice.BranchChanceBonus,
@@ -611,6 +642,28 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
+        public float ResolveBurstDamageMultiplier(int projectileIndex, int burstProjectileCount)
+        {
+            if (projectileIndex <= 0 || burstDamageRules.Count == 0)
+            {
+                return 1f;
+            }
+
+            var multiplier = 1f;
+            for (var i = 0; i < burstDamageRules.Count; i++)
+            {
+                var rule = burstDamageRules[i];
+                if (!MatchesBurstProjectileIndex(rule.ProjectileIndex, projectileIndex, burstProjectileCount))
+                {
+                    continue;
+                }
+
+                multiplier *= PositiveOrDefault(rule.DamageMultiplier, 1f);
+            }
+
+            return multiplier;
+        }
+
         private static bool HasRequiredStacks(BaseUnitRuntimeModel target, string statusId, int minimumStacks)
         {
             if (target == null || minimumStacks <= 0 || string.IsNullOrWhiteSpace(statusId))
@@ -631,6 +684,16 @@ namespace Pakuri.InGame
             return target.Statuses != null && target.Statuses.GetStacks(kind) >= minimumStacks;
         }
 
+        private static bool MatchesBurstProjectileIndex(int configuredIndex, int projectileIndex, int burstProjectileCount)
+        {
+            if (configuredIndex == 0)
+            {
+                return burstProjectileCount > 0 && projectileIndex == burstProjectileCount;
+            }
+
+            return configuredIndex == projectileIndex;
+        }
+
         private static float PositiveOrDefault(float value, float fallback)
         {
             return value > 0f ? value : fallback;
@@ -648,6 +711,18 @@ namespace Pakuri.InGame
             public float DamageMultiplier { get; }
             public string StatusId { get; }
             public int MinStacks { get; }
+        }
+
+        private readonly struct BurstDamageRule
+        {
+            public BurstDamageRule(int projectileIndex, float damageMultiplier)
+            {
+                ProjectileIndex = projectileIndex;
+                DamageMultiplier = damageMultiplier;
+            }
+
+            public int ProjectileIndex { get; }
+            public float DamageMultiplier { get; }
         }
     }
 }

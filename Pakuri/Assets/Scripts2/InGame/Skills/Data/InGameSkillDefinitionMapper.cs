@@ -135,6 +135,13 @@ namespace Pakuri.InGame
                 projectile.Projectile.MagazineSize = source.MagazineCapacity;
                 projectile.Projectile.ReloadTime = source.ReloadSeconds;
                 projectile.Projectile.BurstProjectileCount = Math.Max(1, source.ProjectileBurstCount);
+                projectile.Projectile.BurstIntervalSeconds = source.BurstIntervalSeconds > 0f
+                    ? source.BurstIntervalSeconds
+                    : source.ShotIntervalSeconds;
+                projectile.Projectile.BurstDamageProjectileIndex = source.BurstDamageProjectileIndex;
+                projectile.Projectile.BurstDamageMultiplier = source.BurstDamageMultiplier > 0f
+                    ? source.BurstDamageMultiplier
+                    : 1f;
                 projectile.Projectile.ProjectilesPerShot = 1;
                 projectile.Projectile.PierceCount = source.PierceCount;
                 projectile.Projectile.ProjectileSpeed = source.ProjectileSpeed;
@@ -412,6 +419,13 @@ namespace Pakuri.InGame
                     ReloadTimeMultiplier = choice != null && choice.HasReloadTimeMultiplier ? choice.ReloadTimeMultiplier : 1f,
                     HasShotIntervalMultiplier = choice != null && choice.HasShotIntervalMultiplier,
                     ShotIntervalMultiplier = choice != null && choice.HasShotIntervalMultiplier ? choice.ShotIntervalMultiplier : 1f,
+                    HasBurstDamageProjectileIndex = choice != null && choice.HasBurstDamageProjectileIndex,
+                    BurstDamageProjectileIndex = choice != null ? choice.BurstDamageProjectileIndex : 0,
+                    HasBurstDamageMultiplier = choice != null && choice.HasBurstDamageMultiplier,
+                    BurstDamageMultiplier = choice != null && choice.HasBurstDamageMultiplier ? choice.BurstDamageMultiplier : 1f,
+                    FollowUpProjectileCount = choice != null ? choice.FollowUpProjectileCount : 0,
+                    FollowUpProjectileDelaySeconds = choice != null ? choice.FollowUpProjectileDelaySeconds : 0f,
+                    FollowUpProjectileDamageMultiplier = choice != null && choice.FollowUpProjectileDamageMultiplier > 0f ? choice.FollowUpProjectileDamageMultiplier : 1f,
                     HasStatusChanceBonus = choice != null && choice.HasStatusChanceBonus,
                     StatusChanceBonus = choice != null ? choice.StatusChanceBonus : 0f,
                     BranchChanceBonus = choice != null ? choice.BranchChanceBonus : 0f,

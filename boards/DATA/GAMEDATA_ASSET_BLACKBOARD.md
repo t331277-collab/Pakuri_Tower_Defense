@@ -5,6 +5,53 @@
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-05-28 Vega-A Skill Prefab Catalog Wiring
+
+### Task title
+
+Keep Vega-A base projectile visuals and shared follow-up projectiles wired through the active CSV runtime asset-catalog path.
+
+### Goals
+
+- Author Vega-A base skill visual authority on `Assets/Prefab/Skill/Vega/Vega_A.prefab`.
+- Reuse the same prefab path for shared follow-up projectile spawning instead of creating a second Vega-only visual route.
+- Keep Vega-A master-2 slash visual authority on the user-provided `Assets/Prefab/Skill/Vega/Vega_A_Master_2.prefab` effect row.
+- Keep the active runtime asset catalog as the resolver for the CSV-authored prefab path.
+
+### Constraints
+
+- Role Owner is Skill Builder / Code Builder.
+- No prefab content edit was performed in this task.
+- Asset-path authority stayed on the active skill CSV and runtime asset catalog.
+
+### Role Owner
+
+Skill Builder / Code Builder
+
+### Status
+
+Implemented and Unity runtime-catalog path validated.
+
+### Next Actions
+
+- User verifies in Play Mode that both the base Vega-A burst projectiles and master-1 shadow follow-up projectile resolve the same requested prefab path.
+- User verifies in Play Mode that Vega-A master-2 kill slashes resolve `Assets/Prefab/Skill/Vega/Vega_A_Master_2.prefab` through the triggered effect row.
+- If later Vega-A branches require a different visual, add that as a CSV-authored choice/effect prefab path instead of a hardcoded asset lookup.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now sets `vega-a.skill_effect_prefab_path=Assets/Prefab/Skill/Vega/Vega_A.prefab`.
+- `Pakuri/Assets/Prefab/Skill/Vega/Vega_A.prefab` is the exact user-provided prefab path used for this implementation.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now sets `vega-a-master2-transfer-mark.skill_effect_prefab_path=Assets/Prefab/Skill/Vega/Vega_A_Master_2.prefab`.
+- `Pakuri/Assets/Prefab/Skill/Vega/Vega_A_Master_2.prefab` exists at the exact user-provided path.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/ProjectileSkillExecutor.cs` now reuses the resolved projectile prefab path when executing shared follow-up projectiles.
+- Unity refresh completed after the CSV update, and the filtered Unity console returned no asset-catalog or CSV runtime errors.
+
+### History
+
+- 2026-05-28: User explicitly supplied `Assets/Prefab/Skill/Vega/Vega_A.prefab` as the Vega-A effect reference path, so the active wiring stayed on the existing CSV/runtime catalog route.
+- 2026-05-28: User later supplied `Assets/Prefab/Skill/Vega/Vega_A_Master_2.prefab` as the Vega-A master-2 slash effect path, so that branch also stayed on the existing CSV/runtime catalog route.
+
 ## Task: 2026-05-27 Sein-C/D Skill Prefab And Catalog Wiring
 
 ### Task title

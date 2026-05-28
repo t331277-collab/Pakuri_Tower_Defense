@@ -91,6 +91,11 @@ namespace Pakuri.Data
                 assets.AddPrefab(status.StatusEffectPrefabPath, $"Status effect '{status.Id}' status_effect_prefab_path");
             }
 
+            foreach (var monster in model.Monsters.Values)
+            {
+                assets.AddSprite(monster.MonsterIconImagePath, $"Monster '{monster.Id}' MonsterIconImage");
+            }
+
             foreach (var enemy in model.StageOneEnemies.Values)
             {
                 assets.AddSprite(enemy.UnitSpritePath, $"Enemy '{enemy.Id}' unit_sprite_path");

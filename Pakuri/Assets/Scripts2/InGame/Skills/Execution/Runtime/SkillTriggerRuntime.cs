@@ -708,6 +708,9 @@ namespace Pakuri.InGame
                 case SkillTriggerActionKind.SingleAttack:
                     ExecuteSingleAttack(combatManager, roster, sourceEntry, source, trigger, triggerContext);
                     return;
+                case SkillTriggerActionKind.LineAttack:
+                    ExecuteLineAttack(combatManager, roster, sourceEntry, source, trigger, triggerContext);
+                    return;
                 case SkillTriggerActionKind.Effect:
                     ExecuteEffect(combatManager, roster, sourceEntry, trigger, triggerContext);
                     return;
@@ -917,6 +920,35 @@ namespace Pakuri.InGame
             return snapshot;
         }
 
+        private static SkillExecutionSnapshot BuildActiveChoiceSnapshot(MonsterUnitRuntimeModel owner, string skillId)
+        {
+            var snapshot = new SkillExecutionSnapshot(null);
+            var chosenChoiceIds = owner != null && owner.State != null ? owner.State.ChosenChoiceIds : null;
+            if (chosenChoiceIds == null || chosenChoiceIds.Count == 0 || string.IsNullOrWhiteSpace(skillId))
+            {
+                return snapshot;
+            }
+
+            var manager = PakuriDataManager.Instance;
+            foreach (var choiceId in chosenChoiceIds)
+            {
+                if (manager == null || !manager.TryGetData(choiceId, out SkillChoiceDefinition choice) || choice == null)
+                {
+                    continue;
+                }
+
+                if (!string.Equals(choice.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                snapshot.AddActiveChoiceId(choice.ChoiceId);
+                snapshot.ApplyChoiceDefinition(choice);
+            }
+
+            return snapshot;
+        }
+
         private static bool ReduceTargetCooldown(UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
         {
             var runtime = ResolveTargetRuntime(sourceEntry, trigger);
@@ -974,6 +1006,8 @@ namespace Pakuri.InGame
             }
 
             var damageSourceSkillId = ResolveTriggeredDamageSourceSkillId(trigger);
+            var onHitStatusEffect = ResolveTriggeredOnHitStatusEffect(source, trigger);
+            var onHitSnapshot = BuildActiveChoiceSnapshot(source as MonsterUnitRuntimeModel, trigger.SourceSkillId);
 
             if (IsPrefabHitboxTrigger(trigger) && trigger.SkillEffectPrefab != null && combatManager.Effects != null)
             {
@@ -994,7 +1028,10 @@ namespace Pakuri.InGame
                     damage,
                     trigger.Attribute,
                     damageSourceSkillId,
-                    triggerContext.EventTarget);
+                    trigger.TriggerId,
+                    triggerContext.EventTarget,
+                    onHitStatusEffect,
+                    onHitSnapshot);
                 UnityEngine.Object.Destroy(instance, 1f);
                 return routed;
             }
@@ -1011,14 +1048,116 @@ namespace Pakuri.InGame
                 damage,
                 trigger.Attribute,
                 damageSourceSkillId,
+                trigger.TriggerId,
                 triggerContext.EventTarget,
-                trigger.TargetSelection == SkillMultiEffectTargetSelection.EventTarget);
+                trigger.TargetSelection == SkillMultiEffectTargetSelection.EventTarget,
+                onHitStatusEffect,
+                onHitSnapshot);
             if (routedArea && trigger.SkillEffectPrefab != null && combatManager.Effects != null)
             {
                 SkillVisualSpawnUtility.SpawnTransient(combatManager.Effects, trigger.SkillEffectPrefab, center, Quaternion.identity, 1f);
             }
 
             return routedArea;
+        }
+
+        private static bool ExecuteLineAttack(
+            InGameCombatManager combatManager,
+            UnitRosterService roster,
+            UnitRosterEntry sourceEntry,
+            BaseUnitRuntimeModel source,
+            SkillTriggerDefinition trigger,
+            TriggerExecutionContext triggerContext)
+        {
+            if (combatManager == null || roster == null || sourceEntry == null || sourceEntry.Transform == null)
+            {
+                return false;
+            }
+
+            var targeting = BuildTargeting(trigger);
+            var origin = (Vector2)sourceEntry.Transform.position;
+            var preferredTarget = trigger.TargetSelection == SkillMultiEffectTargetSelection.EventTarget
+                ? FindPreferredEntry(roster, triggerContext.EventTarget)
+                : SkillExecutionUtility.FindNearestTarget(sourceEntry, roster, targeting);
+            if (preferredTarget == null || preferredTarget == sourceEntry)
+            {
+                preferredTarget = SkillExecutionUtility.FindNearestTarget(sourceEntry, roster, targeting);
+            }
+            var direction = SkillExecutionUtility.DirectionToTarget(origin, preferredTarget);
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                return false;
+            }
+
+            direction.Normalize();
+            var damage = ResolveDamage(source, trigger, triggerContext);
+            if (damage <= 0f)
+            {
+                return false;
+            }
+
+            var snapshot = BuildActiveChoiceSnapshot(source as MonsterUnitRuntimeModel, trigger.SourceSkillId);
+            var onHitStatusEffect = ResolveTriggeredOnHitStatusEffect(source, trigger);
+            var onHitEffects = onHitStatusEffect != null
+                ? new[] { onHitStatusEffect }
+                : Array.Empty<SkillEffectDefinition>();
+            var length = ResolveTriggeredLineLength(combatManager, origin, direction);
+            var width = Mathf.Max(0.1f, trigger.Radius);
+            var center = origin + direction * (length * 0.5f);
+
+            if (trigger.SkillEffectPrefab != null && combatManager.Effects != null)
+            {
+                var instance = combatManager.Effects.InstantiateSkillPrefab(
+                    trigger.SkillEffectPrefab,
+                    center,
+                    SkillExecutionUtility.ResolveRotation(direction));
+                if (instance != null)
+                {
+                    ConfigureTriggeredLineVisual(instance.transform, length, width);
+                    UnityEngine.Object.Destroy(instance, SkillVisualSpawnUtility.ResolveVisualLifetime(instance, 0.1f));
+                }
+            }
+
+            return InGameLineAttackActor.ApplyLineTick(
+                combatManager,
+                sourceEntry,
+                roster,
+                targeting,
+                origin,
+                direction,
+                length,
+                width,
+                0f,
+                damage,
+                trigger.Attribute,
+                null,
+                onHitEffects,
+                null,
+                snapshot,
+                source,
+                ResolveTriggeredDamageSourceSkillId(trigger),
+                true,
+                snapshot != null ? snapshot.CritChanceBonus : 0f,
+                snapshot != null ? snapshot.CritDamageBonus : 0f,
+                null,
+                null,
+                trigger.TriggerId);
+        }
+
+        private static SkillEffectDefinition ResolveTriggeredOnHitStatusEffect(BaseUnitRuntimeModel source, SkillTriggerDefinition trigger)
+        {
+            if (source == null || trigger == null || string.IsNullOrWhiteSpace(trigger.TriggeredEffectId))
+            {
+                return null;
+            }
+
+            var effect = ResolveTriggeredEffect(source, trigger.TriggeredEffectId);
+            return effect != null
+                && effect.EffectKind == SkillMultiEffectKind.Status
+                && effect.EffectTiming == SkillMultiEffectTiming.OnHit
+                && effect.TargetSide == SkillMultiEffectTargetSide.Enemy
+                    ? effect
+                    : null;
         }
 
         private static string ResolveTriggeredDamageSourceSkillId(SkillTriggerDefinition trigger)
@@ -1029,6 +1168,53 @@ namespace Pakuri.InGame
             }
 
             return trigger != null ? trigger.SourceSkillId : string.Empty;
+        }
+
+        private static float ResolveTriggeredLineLength(
+            InGameCombatManager combatManager,
+            Vector2 origin,
+            Vector2 direction)
+        {
+            const float defaultBeamLength = 31f;
+            if (combatManager != null && Mathf.Abs(direction.x) > 0.0001f)
+            {
+                var boundary = combatManager.ResolveProjectileDestroyBoundaryX();
+                var distance = Mathf.Abs((boundary - origin.x) / direction.x);
+                if (distance > 0.1f)
+                {
+                    return Mathf.Max(1f, distance);
+                }
+            }
+
+            return defaultBeamLength;
+        }
+
+        private static void ConfigureTriggeredLineVisual(Transform transform, float length, float width)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            var spriteRenderer = transform.GetComponent<SpriteRenderer>();
+            if (spriteRenderer == null || spriteRenderer.sprite == null)
+            {
+                return;
+            }
+
+            var size = spriteRenderer.sprite.bounds.size;
+            var scale = transform.localScale;
+            if (size.x > 0.0001f)
+            {
+                scale.x = Mathf.Sign(scale.x == 0f ? 1f : scale.x) * (length / size.x);
+            }
+
+            if (size.y > 0.0001f)
+            {
+                scale.y = Mathf.Sign(scale.y == 0f ? 1f : scale.y) * (width / size.y);
+            }
+
+            transform.localScale = scale;
         }
 
         private static SkillTargetingSpec BuildTargeting(SkillTriggerDefinition trigger)
@@ -1129,7 +1315,10 @@ namespace Pakuri.InGame
             float damage,
             DamageAttribute attribute,
             string sourceSkillId,
-            BaseUnitRuntimeModel preferredTarget)
+            string damageMeterSourceId,
+            BaseUnitRuntimeModel preferredTarget,
+            SkillEffectDefinition onHitStatusEffect,
+            SkillExecutionSnapshot onHitSnapshot)
         {
             if (manager == null || sourceEntry == null || roster == null || hitboxObject == null || maxTargets <= 0)
             {
@@ -1153,7 +1342,8 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                manager.ApplyDamage(target.Model, damage, attribute, sourceEntry.Model, true, 0f, 0f, sourceSkillId);
+                manager.ApplyDamage(target.Model, damage, attribute, sourceEntry.Model, true, 0f, 0f, sourceSkillId, false, false, damageMeterSourceId);
+                TryApplyTriggeredOnHitStatusEffect(manager, target.Model, onHitStatusEffect, onHitSnapshot, sourceEntry.Model);
                 routed = true;
                 hitCount++;
                 if (hitCount >= maxTargets)
@@ -1214,8 +1404,11 @@ namespace Pakuri.InGame
             float damage,
             DamageAttribute attribute,
             string sourceSkillId,
+            string damageMeterSourceId,
             BaseUnitRuntimeModel preferredTarget,
-            bool preferEventTarget)
+            bool preferEventTarget,
+            SkillEffectDefinition onHitStatusEffect,
+            SkillExecutionSnapshot onHitSnapshot)
         {
             if (manager == null || sourceEntry == null || roster == null || maxTargets <= 0)
             {
@@ -1231,7 +1424,8 @@ namespace Pakuri.InGame
                     return false;
                 }
 
-                manager.ApplyDamage(target.Model, damage, attribute, sourceEntry.Model, true, 0f, 0f, sourceSkillId);
+                manager.ApplyDamage(target.Model, damage, attribute, sourceEntry.Model, true, 0f, 0f, sourceSkillId, false, false, damageMeterSourceId);
+                TryApplyTriggeredOnHitStatusEffect(manager, target.Model, onHitStatusEffect, onHitSnapshot, sourceEntry.Model);
                 return true;
             }
 
@@ -1255,7 +1449,8 @@ namespace Pakuri.InGame
                     }
                 }
 
-                manager.ApplyDamage(target.Model, damage, attribute, sourceEntry.Model, true, 0f, 0f, sourceSkillId);
+                manager.ApplyDamage(target.Model, damage, attribute, sourceEntry.Model, true, 0f, 0f, sourceSkillId, false, false, damageMeterSourceId);
+                TryApplyTriggeredOnHitStatusEffect(manager, target.Model, onHitStatusEffect, onHitSnapshot, sourceEntry.Model);
                 routed = true;
                 hitCount++;
                 if (hitCount >= maxTargets)
@@ -1265,6 +1460,31 @@ namespace Pakuri.InGame
             }
 
             return routed;
+        }
+
+        private static void TryApplyTriggeredOnHitStatusEffect(
+            InGameCombatManager manager,
+            BaseUnitRuntimeModel target,
+            SkillEffectDefinition onHitStatusEffect,
+            SkillExecutionSnapshot onHitSnapshot,
+            BaseUnitRuntimeModel source)
+        {
+            if (manager == null
+                || target == null
+                || onHitStatusEffect == null
+                || !SkillMultiEffectExecutor.ShouldRun(new SkillExecutionContext(manager, null, null, null, 0f), onHitStatusEffect, onHitSnapshot)
+                || !SkillMultiEffectExecutor.TargetMatchesCondition(target, onHitStatusEffect))
+            {
+                return;
+            }
+
+            var status = SkillMultiEffectExecutor.ResolveStatusSpec(onHitStatusEffect, onHitSnapshot);
+            if (status == null || !status.Enabled)
+            {
+                return;
+            }
+
+            SkillStatusApplyUtility.TryApplyStatus(manager, target, status, source);
         }
 
         private static UnitRosterEntry FindPreferredEntry(UnitRosterService roster, BaseUnitRuntimeModel preferredTarget)

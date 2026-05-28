@@ -128,6 +128,12 @@ If the selected blueprint's common contract is insufficient, or the work require
 
 If required parsed fields, the required scoped row bundle, or the explicit work path set cannot be completed from the explicit input plus the routed active CSV set, stop and report the missing items instead of searching broadly through CSV, reference, archive, or old implementation files.
 
+For routed `monster_skill_triger.csv` `SingleAttack` follow-up rows:
+
+- treat the trigger row as owning a complete damage payload
+- do not assume `damage_multiplier` alone reuses the base skill damage payload
+- when `damage_source=Fixed`, ensure the row has positive `base_damage` or positive `attack_power_coefficient` / `spell_power_coefficient` before concluding the row is valid
+
 ## Cooldown Data Policy
 
 When a skill request includes cooldown reduction such as "cooldown -n%" or "cooldown reduction n%", Builder must reuse the existing cooldown CSV authority instead of inventing a new ad hoc field.

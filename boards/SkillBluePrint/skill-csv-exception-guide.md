@@ -85,6 +85,13 @@ Use it for:
 - shield-absorb
 - other already-supported shared trigger events
 
+Important for `runtime_kind=SingleAttack` trigger rows:
+
+- the trigger row owns its own damage payload
+- `damage_multiplier` is only a multiplier, not a replacement for `base_damage` or stat coefficients
+- when `damage_source=Fixed`, the row must provide positive `base_damage` or positive `attack_power_coefficient` / `spell_power_coefficient`
+- linked `triggered_effect_id` rows can add status or extra effects, but they do not satisfy the trigger row's damage payload validation
+
 ## Row Combination Patterns
 
 ### Pattern A: Base skill only

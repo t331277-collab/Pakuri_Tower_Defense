@@ -186,3 +186,52 @@ Retained as the active new-scene flow baseline.
 ### History
 
 - 2026-05-17: Legacy scene/controller cleanup, status label runtime, and Eve-A projectile modifier runtime were recorded against the surviving new-scene flow.
+
+## Task: 2026-05-29 Damage Meter Runtime Handoff
+
+### Task title
+
+Prepare the runtime damage-source tracking portion of the damage meter UI handoff.
+
+### Goals
+
+- Track player monster damage at the `InGameCombatManager.ApplyDamage` boundary.
+- Use actual applied health plus shield delta for current-round totals.
+- Preserve `RunSession.ManifestedMonsterIds` order for 2P to 5P display.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Designer created the handoff only; no runtime implementation was performed.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented by Code Builder.
+
+### Next Actions
+
+- User verifies live Play Mode damage totals and source segmentation during combat.
+- If future damage executors need more granular source names, pass `damageMeterSourceId` / `damageMeterDisplayName` through those specific executor paths.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` exposes `ApplyDamage(... BaseUnitRuntimeModel source, ... string sourceSkillId ...)`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` returns `InGameResourceChangeResult` with `PreviousHealth`, `CurrentHealth`, `PreviousShield`, `CurrentShield`, and `AppliedDamage`.
+- `Pakuri/Assets/Scripts2/InGame/Run/RunSession.cs` appends manifested monster ids in `ManifestedMonsterIds`.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` uses `session.ManifestedMonsterIds.Count` to compute manifested spawn slot index.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now calls `DamageMeterRuntimeTracker.RecordDamage(options, result)` immediately after `resourceMutations.ApplyDamage(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Core/StageManager.cs` now resets `DamageMeterRuntimeTracker.Active` in `StartCurrentDay()` before the current day combat flow starts.
+- `DamageApplicationOptions` now carries optional meter-only `DamageMeterSourceId` and `DamageMeterDisplayName`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` passes trigger ids as meter source ids for direct trigger damage where the runtime path exposes them.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Actors/InGameLineAttackActor.cs` accepts optional `damageMeterSourceId` and forwards it to `ApplyDamage`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+
+### History
+
+- 2026-05-29: User requested a Code Builder handoff for damage meter runtime tracking and source naming.
+- 2026-05-29: Code Builder implemented the damage meter runtime hook and meter-only source metadata path.

@@ -17,7 +17,9 @@ namespace Pakuri.InGame
             float critDamageBonus = 0f,
             string sourceSkillId = null,
             bool suppressOutgoingDamageTriggers = false,
-            bool sourceHitWasExecute = false)
+            bool sourceHitWasExecute = false,
+            string damageMeterSourceId = null,
+            string damageMeterDisplayName = null)
         {
             Source = source;
             CriticalAllowed = criticalAllowed;
@@ -26,6 +28,8 @@ namespace Pakuri.InGame
             SourceSkillId = sourceSkillId;
             SuppressOutgoingDamageTriggers = suppressOutgoingDamageTriggers;
             SourceHitWasExecute = sourceHitWasExecute;
+            DamageMeterSourceId = damageMeterSourceId;
+            DamageMeterDisplayName = damageMeterDisplayName;
         }
 
         public BaseUnitRuntimeModel Source { get; }
@@ -35,6 +39,8 @@ namespace Pakuri.InGame
         public string SourceSkillId { get; }
         public bool SuppressOutgoingDamageTriggers { get; }
         public bool SourceHitWasExecute { get; }
+        public string DamageMeterSourceId { get; }
+        public string DamageMeterDisplayName { get; }
     }
 
     [DisallowMultipleComponent]
@@ -146,12 +152,15 @@ namespace Pakuri.InGame
             float critDamageBonus = 0f,
             string sourceSkillId = null,
             bool suppressOutgoingDamageTriggers = false,
-            bool sourceHitWasExecute = false)
+            bool sourceHitWasExecute = false,
+            string damageMeterSourceId = null,
+            string damageMeterDisplayName = null)
         {
             var depletedShields = new List<UnitStatusRuntime>();
             var absorbedShields = new List<ShieldAbsorbRecord>();
-            var options = new DamageApplicationOptions(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers, sourceHitWasExecute);
+            var options = new DamageApplicationOptions(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceId, damageMeterDisplayName);
             var result = resourceMutations.ApplyDamage(target, baseDamage, attribute, options, depletedShields, absorbedShields);
+            DamageMeterRuntimeTracker.RecordDamage(options, result);
             RefreshActorIfChanged(result);
             ShowDamageIfChanged(result);
             DispatchShieldAbsorbTriggers(target, source, absorbedShields);

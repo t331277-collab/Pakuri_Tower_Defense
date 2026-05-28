@@ -29,6 +29,7 @@ namespace Pakuri.InGame
         private int effectiveBurstProjectileCount;
         private float effectiveReloadDuration;
         private float effectiveTickInterval;
+        private float effectiveBurstInterval;
         private float effectiveCooldownDuration;
         private int queuedBurstShotsRemaining;
         private string consecutiveHitTargetUnitId;
@@ -41,6 +42,7 @@ namespace Pakuri.InGame
         public int MaxMagazineSize => effectiveMaxMagazineSize;
         public float ReloadDuration => effectiveReloadDuration;
         public float EffectiveCooldownDuration => effectiveCooldownDuration;
+        public int EffectiveBurstProjectileCount => effectiveBurstProjectileCount;
         public bool UsesMagazine => MaxMagazineSize > 0;
         public bool HasMagazine => !UsesMagazine || MagazineRemaining > 0;
         public bool CanCast => CanCastWithSnapshot(null);
@@ -51,6 +53,7 @@ namespace Pakuri.InGame
             effectiveBurstProjectileCount = ResolveBurstProjectileCount(Data);
             effectiveReloadDuration = ResolveReloadDuration(Data);
             effectiveTickInterval = ResolveTickInterval(Data);
+            effectiveBurstInterval = ResolveBurstInterval(Data);
             effectiveCooldownDuration = ResolveCooldownDuration(Data);
             CooldownRemaining = 0f;
             CastRemaining = 0f;
@@ -186,9 +189,13 @@ namespace Pakuri.InGame
             if (IsBursting)
             {
                 queuedBurstShotsRemaining = Math.Max(0, queuedBurstShotsRemaining - 1);
-                TickRemaining = effectiveTickInterval;
-                if (!IsBursting)
+                if (IsBursting)
                 {
+                    TickRemaining = effectiveBurstInterval;
+                }
+                else
+                {
+                    TickRemaining = effectiveTickInterval;
                     BeginRecoveryIfNeeded();
                 }
 
@@ -208,8 +215,8 @@ namespace Pakuri.InGame
             var timing = Data.Timing;
             CastRemaining = timing != null ? Mathf.Max(0f, timing.CastTime) : 0f;
             ActiveDurationRemaining = timing != null ? Mathf.Max(0f, timing.ActiveDuration) : 0f;
-            TickRemaining = effectiveTickInterval;
             queuedBurstShotsRemaining = Math.Max(0, effectiveBurstProjectileCount - 1);
+            TickRemaining = IsBursting ? effectiveBurstInterval : effectiveTickInterval;
 
             if (!IsBursting)
             {
@@ -228,6 +235,19 @@ namespace Pakuri.InGame
         public void ResetTickInterval()
         {
             TickRemaining = effectiveTickInterval;
+        }
+
+        public int ResolveCurrentBurstProjectileIndex()
+        {
+            if (effectiveBurstProjectileCount <= 1 || !IsBursting)
+            {
+                return 1;
+            }
+
+            return Mathf.Clamp(
+                effectiveBurstProjectileCount - queuedBurstShotsRemaining + 1,
+                1,
+                effectiveBurstProjectileCount);
         }
 
         public bool ReduceReloadRemaining(float seconds)
@@ -288,6 +308,7 @@ namespace Pakuri.InGame
             var nextBurst = ResolveBurstProjectileCount(Data);
             effectiveReloadDuration = ResolveReloadDuration(Data);
             effectiveTickInterval = ResolveTickInterval(Data);
+            effectiveBurstInterval = ResolveBurstInterval(Data);
             effectiveCooldownDuration = ResolveCooldownDuration(Data);
 
             if (snapshot != null)
@@ -300,6 +321,7 @@ namespace Pakuri.InGame
 
                 effectiveReloadDuration *= Mathf.Max(0f, snapshot.ReloadTimeMultiplier);
                 effectiveTickInterval *= Mathf.Max(0f, snapshot.ShotIntervalMultiplier);
+                effectiveBurstInterval *= Mathf.Max(0f, snapshot.ShotIntervalMultiplier);
                 effectiveCooldownDuration *= Mathf.Max(0f, snapshot.CooldownMultiplier);
             }
 
@@ -357,6 +379,21 @@ namespace Pakuri.InGame
         {
             var timing = data != null ? data.Timing : null;
             return timing != null ? Mathf.Max(0f, timing.TickInterval) : 0f;
+        }
+
+        private static float ResolveBurstInterval(SkillData data)
+        {
+            var projectile = data as ProjectileSkillData;
+            if (projectile != null && projectile.Projectile != null)
+            {
+                var burstInterval = projectile.Projectile.BurstIntervalSeconds;
+                if (burstInterval > 0f)
+                {
+                    return burstInterval;
+                }
+            }
+
+            return ResolveTickInterval(data);
         }
 
         private static float ResolveCooldownDuration(SkillData data)

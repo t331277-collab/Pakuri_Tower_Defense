@@ -7,6 +7,133 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-05-28 Shared Trigger LineAttack Direct Execution
+
+### Task title
+
+Add an explicit shared trigger `LineAttack` execution path so delayed follow-up slashes can reuse beam/line aiming and linked OnHit status payloads without re-casting a helper skill.
+
+### Goals
+
+- Let trigger rows directly execute a shared `LineAttack` with runtime-authored damage, width, prefab, and status payload.
+- Keep base aimed-slash presentation consistent between direct skills and delayed trigger follow-ups.
+- Avoid recursive same-skill re-cast behavior on `OnSkillCast` trigger chains.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The shared runtime was extended only for explicit `trigger_action=LineAttack`; existing trigger rows do not auto-switch behavior just because `runtime_kind=LineAttack`.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and editor-validated.
+
+### Next Actions
+
+- Reuse explicit `trigger_action=LineAttack` only when a trigger must spawn a direct delayed line slash rather than re-cast a learned skill runtime.
+- If a future skill needs original-cast target locking instead of delayed nearest-target resolution, extend trigger context separately instead of overloading this direct line path.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs` now includes `SkillTriggerActionKind.LineAttack`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` now switches on `SkillTriggerActionKind.LineAttack` and executes a shared `ExecuteLineAttack(...)` path instead of routing only through `TriggeredSkill` or `SingleAttack`.
+- The same runtime file keeps `ResolveTriggerAction(...)` conservative, so only explicit `trigger_action=LineAttack` rows use the new direct path.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Actors/InGameLineAttackActor.cs` now applies linked OnHit effects through `TryApplyOnHitEffects(..., SkillExecutionSnapshot, ...)`, which preserves snapshot-resolved status specs on the shared line actor path.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Validation.cs` now validates explicit trigger `LineAttack` damage rows with the same positive payload rule used for trigger `SingleAttack`: positive `base_damage` or positive `attack/spell` coefficient for `Fixed` damage source.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; only the existing `MSB3277` warnings remained.
+- Unity menu `Pakuri/Validate CSV Source Data` completed and the console logged the runtime catalog load summary without a Pakuri CSV failure.
+
+### History
+
+- 2026-05-28: Vega-B master-1 follow-up originally lived on the shared triggered `SingleAttack` path; after the user asked for the same aimed slash behavior as base `vega-b`, Builder added a direct trigger `LineAttack` action instead of re-casting the base skill.
+
+## Task: 2026-05-28 Triggered SingleAttack Damage Payload Contract Fix
+
+### Task title
+
+Correct the shared trigger `SingleAttack` damage-payload contract after Vega-B follow-up validation exposed a mismatch between authored rows and runtime expectations.
+
+### Goals
+
+- Keep triggered `SingleAttack` follow-ups on the shared combat runtime path.
+- Ensure follow-up trigger rows carry concrete damage payload values instead of relying on `damage_multiplier` alone.
+- Keep source validation and runtime behavior consistent for future trigger-routed slashes.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This task updates shared validation behavior and one authored trigger row; no new trigger action kind was introduced.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and editor-validated.
+
+### Next Actions
+
+- Future triggered `SingleAttack` follow-ups should copy or derive a real payload into the trigger row before applying a scaling multiplier.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Validation.cs` now accepts `Fixed` trigger `SingleAttack` rows when they have positive `base_damage` or positive `attack/spell` coefficient, matching the runtime `ResolveDamage(...)` contract.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now gives `vega-b-master1-second-slash` concrete payload values `base_damage=30`, `attack_power_coefficient=1.4`, and `damage_multiplier=0.45`.
+- Unity menu `Pakuri/Validate CSV Source Data` completed successfully, and the console logged `PakuriCsvRuntimeData loaded runtime catalog ...` instead of the earlier `vega-b-master1-second-slash` validation error.
+
+### History
+
+- 2026-05-28: The first Vega-B follow-up trigger authoring incorrectly treated `damage_multiplier` as if it reused the source skill damage payload automatically.
+
+## Task: 2026-05-28 Triggered SingleAttack OnHit Status Payload
+
+### Task title
+
+Let shared triggered `SingleAttack` actions apply linked `OnHit` status effects with source-skill choice modifiers.
+
+### Goals
+
+- Reuse `monster_skill_triger.csv` `SingleAttack` rows for delayed follow-up slashes that must damage and inflict status together.
+- Keep the payload on the shared trigger/effect path instead of adding a hidden helper skill runtime.
+- Preserve source-skill choice gates and status-duration bonuses on the triggered status application.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is a shared combat-runtime extension, not Vega-only hardcoding.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- Reuse `triggered_effect_id` with `effect_kind=Status` and `effect_timing=OnHit` when future triggered `SingleAttack` follow-ups need status payloads.
+- Keep source-skill duration bonuses on this path by resolving the triggered OnHit status through the source-skill active-choice snapshot.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` now resolves a linked `OnHit` status effect for triggered `SingleAttack`, passes it through prefab-hitbox and area-hit routing, and applies it after each shared damage call.
+- The same runtime file now builds a source-skill active-choice snapshot for triggered OnHit status resolution, so shared checks such as `requires_active_choice_id` and `status_duration_bonus_status_id` are honored on the follow-up hit.
+- The same runtime file now applies the triggered OnHit status even on the radius-0 single-target fallback branch, closing the last direct-hit gap inside the shared trigger path.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; only the pre-existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-28: Vega-B master-1 required a delayed second slash that deals damage and also silences the hit targets; the previous shared trigger `SingleAttack` path could deal damage but could not carry a linked OnHit status payload.
+
 ## Task: 2026-05-26 SingleAttack CSV Damage Delay Runtime
 
 ### Task title

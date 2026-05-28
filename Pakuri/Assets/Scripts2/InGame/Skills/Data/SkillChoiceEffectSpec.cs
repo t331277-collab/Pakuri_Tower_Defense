@@ -42,6 +42,13 @@ namespace Pakuri.InGame
         public float ReloadTimeMultiplier = 1f;
         public bool HasShotIntervalMultiplier;
         public float ShotIntervalMultiplier = 1f;
+        public bool HasBurstDamageProjectileIndex;
+        public int BurstDamageProjectileIndex;
+        public bool HasBurstDamageMultiplier;
+        public float BurstDamageMultiplier = 1f;
+        public int FollowUpProjectileCount;
+        public float FollowUpProjectileDelaySeconds;
+        public float FollowUpProjectileDamageMultiplier = 1f;
         public bool HasStatusChanceBonus;
         public float StatusChanceBonus;
         public float BranchChanceBonus;

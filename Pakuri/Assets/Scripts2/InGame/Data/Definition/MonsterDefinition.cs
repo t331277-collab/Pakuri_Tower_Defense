@@ -24,6 +24,7 @@ namespace Pakuri.Data
         public DamageAttribute PrimaryAttribute = DamageAttribute.Physical;
         public string ActiveSkillName = "Skill A";
         public string PassiveSkillName = "Passive F";
+        public Sprite MonsterIconImage;
         public CombatStatBlock BaseStats = new CombatStatBlock();
         public AttributeDefenseSet Defenses = new AttributeDefenseSet();
 

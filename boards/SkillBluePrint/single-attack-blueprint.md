@@ -108,6 +108,7 @@ Optional but common fields:
 - `OnHitStatusChance`
 - `ChoiceModifierSpecs`
 - `SkillEffectPrefabOverride`
+- `TriggerSingleAttackRows` when the skill has event-driven follow-up slashes or delayed re-hits
 
 If any required field is missing, Builder must stop and report it.
 
@@ -179,6 +180,13 @@ When a parsed SingleAttack is implemented, Builder should wire the provided valu
 - parsed prefab info -> shared one-shot visual binding path
 - parsed choice modifiers -> shared snapshot modifier path
 - parsed cooldown edits or reductions -> existing cooldown authority such as base `cooldown_seconds` or choice `cooldown_multiplier`, not a new custom cooldown-percent field
+
+When the implementation uses trigger-routed `SingleAttack` follow-ups:
+
+- each trigger row must carry its own real damage payload through `base_damage` and/or `attack_power_coefficient` / `spell_power_coefficient`
+- do not assume `damage_multiplier` alone can "reuse" the source skill damage payload
+- if `damage_source=Fixed`, the trigger row itself must pass source CSV validation with a positive damage payload
+- linked `triggered_effect_id` status rows may add OnHit status, but they do not provide damage payload
 
 The important rule is not the exact property names.
 The important rule is:

@@ -5,6 +5,229 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-05-28 Vega-B Follow-up Trigger Row Re-authored To LineAttack
+
+### Task title
+
+Re-author the active Vega-B master-1 delayed follow-up row from trigger `SingleAttack` to explicit trigger `LineAttack` so the CSV authority matches the intended aimed-slash runtime path.
+
+### Goals
+
+- Keep the active source CSV explicit about the follow-up slash runtime kind and trigger action.
+- Preserve the existing authored payload, delay, prefab path, and linked silence effect.
+- Keep source validation aligned with the new explicit trigger action path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Edited source authority is limited to `monster_skill_triger.csv` plus the shared CSV validator/runtime definitions needed to accept explicit trigger `LineAttack`.
+- No new CSV file or new CSV column was added.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and editor-validated.
+
+### Next Actions
+
+- Future delayed aimed slashes should prefer explicit `trigger_action=LineAttack` when they are authored as direct trigger payloads, not as helper-skill re-casts.
+- Keep `triggered_skill_id` non-empty on trigger rows because the current CSV parser still requires that field even when the direct trigger action does not use it at runtime.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now authors `vega-b-master1-second-slash` with `runtime_kind=LineAttack`, `trigger_action=LineAttack`, `base_damage=30`, `attack_power_coefficient=1.4`, `damage_multiplier=0.45`, `radius=1.8`, `skill_effect_prefab_path=Assets/Prefab/Skill/Vega/Vega_B.prefab`, and `triggered_effect_id=vega-b-master1-second-silence`.
+- The same trigger row still keeps a non-empty `triggered_skill_id=vega-b`, which matches the current parser contract in `PakuriCsvRuntimeData.MonsterDataset.cs`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Validation.cs` now treats explicit trigger `LineAttack` rows like trigger `SingleAttack` rows for positive payload checks, which keeps source validation aligned with the shared direct trigger line path.
+- Unity menu `Pakuri/Validate CSV Source Data` logged the runtime catalog load summary after the row update.
+- Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-28: Base `vega-b` had already been returned to `LineAttack`, but the delayed master-1 follow-up row still remained on the old trigger `SingleAttack` authoring pattern until the user requested parity.
+
+## Task: 2026-05-28 Vega-B Base Runtime Kind Reverted To LineAttack
+
+### Task title
+
+Re-author the active Vega-B base row as `LineAttack` after user-facing validation showed the `SingleAttack` path produced a self-centered slash presentation.
+
+### Goals
+
+- Keep the active source CSV aligned with the intended aimed-slash presentation.
+- Reuse the current `LineAttack` data contract without adding a new column or helper row.
+- Sync the runtime catalog after the row change.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Edited source authority is limited to `monster_skills.csv`.
+- No new CSV column or new CSV file was introduced.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and editor-validated.
+
+### Next Actions
+
+- If future Vega-B work also needs the master-1 second slash to rotate as a beam, handle that as a separate trigger-path decision instead of assuming the base-row revert solves the follow-up trigger row too.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now authors `vega-b` with `runtime_kind=LineAttack`, `radius=1.8`, `cooldown_seconds=8`, `active_duration_seconds=0`, `shot_interval_seconds=0`, and `skill_effect_prefab_path=Assets/Prefab/Skill/Vega/Vega_B.prefab`.
+- PowerShell CSV readback confirmed the current active row values for `vega-b` exactly as `runtime_kind=LineAttack`, `active_duration_seconds=0`, `shot_interval_seconds=0`, and empty `hit_target_count`.
+- Unity menu `Pakuri/Validate CSV Source Data` completed after the row change, and the console logged the runtime catalog load summary instead of a CSV failure.
+- Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` completed and the console logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-28: The prior SingleAttack row had solved path-contact damage behavior but still presented as a self-cast slash because the shared SingleAttack prefab path does not rotate toward the target.
+
+## Task: 2026-05-28 Trigger SingleAttack Fixed Payload Validation Alignment
+
+### Task title
+
+Align trigger `SingleAttack` source validation with the real runtime damage contract and correct the Vega-B follow-up trigger row.
+
+### Goals
+
+- Prevent false assumptions that `damage_multiplier` alone is enough for trigger-routed `SingleAttack` damage rows.
+- Keep source validation aligned with runtime damage resolution, which accepts base damage or positive stat coefficients.
+- Correct `vega-b-master1-second-slash` so it both validates and deals the intended nonzero damage.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Edited source authority is limited to `monster_skill_triger.csv` and the shared CSV validator.
+- No new CSV column or new CSV file was added.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and editor-validated.
+
+### Next Actions
+
+- Future trigger-routed `SingleAttack` rows should include explicit payload evidence in the handoff: `base_damage`, coefficients, `damage_multiplier`, and `damage_source`.
+- Do not rely on `damage_multiplier` as an implicit source-skill damage reuse rule for trigger rows.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now authors `vega-b-master1-second-slash` with `base_damage=30`, `attack_power_coefficient=1.4`, and `damage_multiplier=0.45`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Validation.cs` now validates `Fixed` trigger `SingleAttack` rows with the same positive payload rule already used by shared damage effect rows: positive `base_damage` or positive `attack/spell` coefficient.
+- Unity menu `Pakuri/Validate CSV Source Data` completed after the fix, and the console returned the runtime catalog load summary instead of the previous Vega-B validation failure.
+
+### History
+
+- 2026-05-28: Vega-B master-1 follow-up was first authored with `damage_multiplier=0.45` but zero base/coefficient payload, which both failed source validation and would have resolved to zero runtime damage.
+
+## Task: 2026-05-28 Vega-B Shared Trigger Status Data Authoring
+
+### Task title
+
+Author the active CSV rows required for Vega-B silence slash follow-ups on the shared triggered `SingleAttack` path.
+
+### Goals
+
+- Keep Vega-B fully authored in the active CSV source without a hidden follow-up skill slot.
+- Reuse existing active CSV tables for the second slash trigger row and linked silence/name-mark effect rows.
+- Keep master-2 silence extension authored through existing threshold and status-duration fields.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- Active CSV authority stayed limited to `monster_skills.csv`, `monster_skill_choices.csv`, `monster_skill_effects.csv`, `monster_skill_triger.csv`, and `status_effects.csv`.
+- The shared runtime/common-logic extension was user-approved before implementation.
+- No new CSV file or new CSV column was introduced.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- Reuse the same row pattern when a follow-up slash needs delayed trigger damage plus a linked OnHit status effect: trigger row in `monster_skill_triger.csv` plus a linked `Status` `OnHit` effect row in `monster_skill_effects.csv`.
+- Keep `silence` default duration at `4s` unless another inspected skill now needs a different shared base.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now authors `vega-b` with `hit_target_count=global`, `status_effect_id=silence`, `status_duration_seconds=3`, and `skill_effect_prefab_path=Assets/Prefab/Skill/Vega/Vega_B.prefab`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now authors `vega-b-trait-2` through `status_duration_bonus_status_id=silence` / `status_duration_bonus=1`, and `vega-b-master-2` through `threshold_status_id=name-mark`, `threshold_status_min_stacks=10`, and `threshold_apply_status_id=silence`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now contains `vega-b-trait5-name-mark` and `vega-b-master1-second-silence`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now contains `vega-b-master1-second-slash` with `runtime_kind=SingleAttack`, `trigger_action=SingleAttack`, `damage_multiplier=0.45`, `trigger_delay_seconds=0.4`, `skill_effect_prefab_path=Assets/Prefab/Skill/Vega/Vega_B.prefab`, and `triggered_effect_id=vega-b-master1-second-silence`.
+- `Pakuri/Assets/CSVdata/source/status_effects.csv` now sets shared `silence` default duration to `4`, which lets the master-2 silence refresh land at `4s` and trait-2 plus master-2 combine to `5s` without a new status id.
+
+### History
+
+- 2026-05-28: The user first proposed reusing a separate helper skill row for Vega-B second slash, but current active-slot validation and learned-runtime loading made the shared trigger/effect row approach smaller and more aligned with existing active CSV authority.
+
+## Task: 2026-05-28 Vega-A Projectile Shared Runtime Extension
+
+### Task title
+
+Add the active CSV schema and shared runtime support required to author Vega-A burst cadence, burst-index damage, and follow-up shadow projectiles.
+
+### Goals
+
+- Keep Vega-A authorable in the active CSV source without adding a Vega-only table.
+- Extend the shared projectile path so burst-internal timing, per-burst-hit modifiers, and follow-up projectiles are data-driven.
+- Keep master-2 authored on the shared trigger/effect path using the later user-provided slash coefficient and prefab path.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- Active CSV authority stayed limited to `monster_skills.csv`, `monster_skill_choices.csv`, `monster_skill_effects.csv`, and `monster_skill_triger.csv`.
+- The shared runtime/common-logic extension was user-approved before implementation.
+- No new CSV file was introduced.
+- The missing Vega-A master-2 slash value was later provided by the user as `attack coefficient 0.5`, so the active effect row could be completed without widening scope.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and Unity editor-validated.
+
+### Next Actions
+
+- Reuse `burst_interval_seconds`, `burst_damage_projectile_index`, and `burst_damage_multiplier` for future projectile-burst skills before adding another per-projectile schema.
+- Reuse `follow_up_projectile_count`, `follow_up_projectile_delay_seconds`, and `follow_up_projectile_damage_multiplier` for future delayed shadow/follow-up projectile choices.
+- Reuse the existing shared `Damage` effect row path when a triggered effect must deal damage and apply status together; a separate Vega-only hybrid effect type was not needed.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` header now includes `burst_interval_seconds`, `burst_damage_projectile_index`, and `burst_damage_multiplier`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` header now includes `burst_damage_projectile_index`, `burst_damage_multiplier`, `follow_up_projectile_count`, `follow_up_projectile_delay_seconds`, and `follow_up_projectile_damage_multiplier`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now authors `vega-a-master2-transfer-mark` as `effect_kind=Damage`, `attack_power_coefficient=0.5`, `status_stack_amount=3`, and `skill_effect_prefab_path=Assets/Prefab/Skill/Vega/Vega_A_Master_2.prefab`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillMultiEffectExecutor.cs` already applies `ResolveStatusSpec(...)` from `SkillMultiEffectKind.Damage`, so the same shared row can deal damage and apply `name-mark` without a new effect kind.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Validation.cs` now treats positive `base_damage` or positive `attack/spell` coefficient as valid payload for shared `Damage` effect rows, fixing the false failure on coeff-only effect rows such as `vega-a-master2-transfer-mark`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs` now parses those new columns from active skill and choice rows.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs`, `.../Skills/Data/SkillData.cs`, `.../Skills/Data/SkillChoiceEffectSpec.cs`, `.../Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs`, and `.../Skills/Data/InGameSkillDefinitionMapper.cs` now carry the new data into runtime definitions and snapshots.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs` now resolves burst-internal cadence separately from outer cast cadence.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSnapshot.cs` and `.../Execution/Executors/ProjectileSkillExecutor.cs` now resolve shared burst-index damage rules and execute follow-up projectiles after the triggering burst hit.
+- Unity refresh completed after the new CSV schema and rows, and the filtered Unity console returned no Vega CSV/runtime errors after correcting the `triggered_skill_id` contract on `vega-a-master2-kill-transfer` and later filling the master-2 slash payload.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; only the pre-existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-28: Shared runtime work started after user approval to implement the three extension points first under Code Builder, then continue Vega-A under Skill Builder.
+- 2026-05-28: User later completed the missing Vega-A master-2 authority with `attack coefficient 0.5` and `Assets/Prefab/Skill/Vega/Vega_A_Master_2.prefab`, so the existing shared triggered-effect data path was finalized without more code changes.
+- 2026-05-28: Unity source validation exposed that coeff-only `Damage` effect rows were blocked by a stale `base_damage > 0` rule even though runtime damage already resolves from coefficients; Builder aligned the shared validator to the actual runtime contract and revalidated successfully.
+
 ## Task: 2026-05-28 Sein Passive Shared Runtime Data Completion
 
 ### Task title
@@ -569,3 +792,51 @@ Implemented, synced, and validation passed.
 ### History
 
 - 2026-05-26: Rin F-J passive implementation required reusable trigger/action/count/effect schema instead of one-off runtime branches, and the user approved that extension.
+
+## Task: 2026-05-29 Damage Meter Monster Icon CSV Handoff
+
+### Task title
+
+Prepare the CSV/data portion of the damage meter UI handoff.
+
+### Goals
+
+- Add `MonsterIconImage` to `Pakuri/Assets/CSVdata/source/monsters.csv` during Code Builder implementation.
+- Route the new sprite path through the existing runtime CSV asset catalog path.
+- Keep blank icon values non-fatal.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Designer created the handoff only; no CSV or code changes were performed.
+- Active CSV authority remains `Pakuri/Assets/CSVdata/source/*.csv` plus `PakuriCsvRuntimeData.*`.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented by Code Builder.
+
+### Next Actions
+
+- Fill `MonsterIconImage` asset paths later when final monster representative sprites are selected.
+- User verifies in Play Mode that blank icon values hide the panel image without blocking the meter.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monsters.csv` inspected header currently has no `MonsterIconImage` column.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/MonsterDefinition.cs` currently has `DisplayName`, `UnitSprite`, and `ProjectileSprite`, but no dedicated monster icon field.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs` already maps `monsters.csv display_name` into `MonsterDefinition.DisplayName` and uses `LoadSprite(...)` for existing sprite-backed CSV paths.
+- `Pakuri/Assets/CSVdata/source/monsters.csv` now has `MonsterIconImage` plus `asset_path` type entry; all current monster rows keep the value blank.
+- PowerShell CSV field-count check returned `header=24 rows=6 bad=`, confirming the edited `monsters.csv` row shape.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/MonsterDefinition.cs` now exposes `Sprite MonsterIconImage`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs`, `PakuriCsvRuntimeData.AssetReferences.cs`, and `PakuriCsvRuntimeData.Build.cs` parse, collect, and map `MonsterIconImage`.
+- Unity menu `Pakuri/Validate CSV Source Data` logged the runtime catalog load summary.
+- Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-29: User requested a Code Builder handoff that includes monster icon data ownership for the damage meter UI.
+- 2026-05-29: Code Builder added the blank-safe `MonsterIconImage` CSV/catalog path for damage meter panel icons.

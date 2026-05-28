@@ -63,6 +63,11 @@ namespace Pakuri.InGame
                 StopCoroutine(flowCoroutine);
             }
 
+            if (DamageMeterRuntimeTracker.Active != null)
+            {
+                DamageMeterRuntimeTracker.Active.ResetMeter();
+            }
+
             flowCoroutine = StartCoroutine(RunCurrentDayFlow());
         }
 

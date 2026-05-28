@@ -126,6 +126,7 @@ namespace Pakuri.Data
     {
         Auto,
         SingleAttack,
+        LineAttack,
         TriggeredSkill,
         Effect,
         CooldownRefund,
@@ -275,6 +276,13 @@ namespace Pakuri.Data
         public int PierceBonus;
         public bool HasShotIntervalMultiplier;
         public float ShotIntervalMultiplier = 1f;
+        public bool HasBurstDamageProjectileIndex;
+        public int BurstDamageProjectileIndex;
+        public bool HasBurstDamageMultiplier;
+        public float BurstDamageMultiplier = 1f;
+        public int FollowUpProjectileCount;
+        public float FollowUpProjectileDelaySeconds;
+        public float FollowUpProjectileDamageMultiplier = 1f;
         public bool HasReloadTimeMultiplier;
         public float ReloadTimeMultiplier = 1f;
         public bool HasRadiusMultiplier;
@@ -403,7 +411,10 @@ namespace Pakuri.Data
         public int MagazineCapacity;
         public float ReloadSeconds;
         public float ShotIntervalSeconds;
+        public float BurstIntervalSeconds;
         public int ProjectileBurstCount;
+        public int BurstDamageProjectileIndex;
+        public float BurstDamageMultiplier = 1f;
         public float ProjectileSpeed;
         public int PierceCount;
         public bool CriticalAllowed = true;

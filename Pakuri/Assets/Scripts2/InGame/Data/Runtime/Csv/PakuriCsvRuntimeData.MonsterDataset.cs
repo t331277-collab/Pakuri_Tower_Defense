@@ -16,6 +16,7 @@ namespace Pakuri.Data
             public DamageAttribute PrimaryAttribute;
             public string ActiveSkillName;
             public string PassiveSkillName;
+            public string MonsterIconImagePath;
             public float MaxHealth;
             public float PowerStat;
             public float BaseDamage;
@@ -78,7 +79,10 @@ namespace Pakuri.Data
             public int MagazineCapacity;
             public float ReloadSeconds;
             public float ShotIntervalSeconds;
+            public float BurstIntervalSeconds;
             public int ProjectileBurstCount;
+            public int BurstDamageProjectileIndex;
+            public float BurstDamageMultiplier = 1f;
             public float ProjectileSpeed;
             public int PierceCount;
             public bool CriticalAllowed;
@@ -108,6 +112,13 @@ namespace Pakuri.Data
             public int PierceBonus;
             public bool HasShotIntervalMultiplier;
             public float ShotIntervalMultiplier = 1f;
+            public bool HasBurstDamageProjectileIndex;
+            public int BurstDamageProjectileIndex;
+            public bool HasBurstDamageMultiplier;
+            public float BurstDamageMultiplier = 1f;
+            public int FollowUpProjectileCount;
+            public float FollowUpProjectileDelaySeconds;
+            public float FollowUpProjectileDamageMultiplier = 1f;
             public bool HasReloadTimeMultiplier;
             public float ReloadTimeMultiplier = 1f;
             public bool HasRadiusMultiplier;
@@ -303,6 +314,7 @@ namespace Pakuri.Data
                 PrimaryAttribute = record.ReadEnum<DamageAttribute>("primary_attribute"),
                 ActiveSkillName = record.ReadString("active_skill_name"),
                 PassiveSkillName = record.ReadString("passive_skill_name"),
+                MonsterIconImagePath = ReadOptionalStringIfColumnExists(record, "MonsterIconImage"),
                 MaxHealth = record.ReadFloat("max_health"),
                 PowerStat = record.ReadFloat("power_stat"),
                 BaseDamage = record.ReadFloat("base_damage"),
@@ -371,7 +383,10 @@ namespace Pakuri.Data
                 MagazineCapacity = record.ReadInt("magazine_capacity"),
                 ReloadSeconds = record.ReadFloat("reload_seconds"),
                 ShotIntervalSeconds = record.ReadFloat("shot_interval_seconds"),
+                BurstIntervalSeconds = ReadOptionalFloatIfColumnExists(record, "burst_interval_seconds"),
                 ProjectileBurstCount = record.ReadInt("projectile_burst_count"),
+                BurstDamageProjectileIndex = ReadOptionalIntIfColumnExists(record, "burst_damage_projectile_index"),
+                BurstDamageMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "burst_damage_multiplier", 1f),
                 ProjectileSpeed = record.ReadFloat("projectile_speed"),
                 PierceCount = record.ReadInt("pierce_count"),
                 CriticalAllowed = record.ReadBool("critical_allowed"),
@@ -409,6 +424,15 @@ namespace Pakuri.Data
             row.PierceBonus = ReadOptionalInt(record, "pierce_bonus");
             row.HasShotIntervalMultiplier = TryReadFloat(record, "shot_interval_multiplier", out var shotIntervalMultiplier);
             row.ShotIntervalMultiplier = shotIntervalMultiplier;
+            var burstDamageProjectileIndex = 0;
+            row.HasBurstDamageProjectileIndex = record.HasColumn("burst_damage_projectile_index")
+                && TryReadInt(record, "burst_damage_projectile_index", out burstDamageProjectileIndex);
+            row.BurstDamageProjectileIndex = burstDamageProjectileIndex;
+            row.HasBurstDamageMultiplier = TryReadFloatIfColumnExists(record, "burst_damage_multiplier", out var burstDamageMultiplier);
+            row.BurstDamageMultiplier = burstDamageMultiplier;
+            row.FollowUpProjectileCount = ReadOptionalIntIfColumnExists(record, "follow_up_projectile_count");
+            row.FollowUpProjectileDelaySeconds = ReadOptionalFloatIfColumnExists(record, "follow_up_projectile_delay_seconds");
+            row.FollowUpProjectileDamageMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "follow_up_projectile_damage_multiplier", 1f);
             row.HasReloadTimeMultiplier = TryReadFloat(record, "reload_time_multiplier", out var reloadTimeMultiplier);
             row.ReloadTimeMultiplier = reloadTimeMultiplier;
             row.HasRadiusMultiplier = TryReadFloat(record, "radius_multiplier", out var radiusMultiplier);

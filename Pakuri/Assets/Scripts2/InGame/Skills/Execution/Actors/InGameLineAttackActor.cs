@@ -132,7 +132,8 @@ namespace Pakuri.InGame
             float critChanceBonus,
             float critDamageBonus,
             HashSet<string> baseStatusAppliedTargets = null,
-            HashSet<string> effectStatusAppliedTargets = null)
+            HashSet<string> effectStatusAppliedTargets = null,
+            string damageMeterSourceId = null)
         {
             if (manager == null || sourceEntry == null || unitRoster == null || lineDirection.sqrMagnitude <= 0.0001f)
             {
@@ -164,11 +165,11 @@ namespace Pakuri.InGame
 
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
                 var resolvedDamage = SkillExecutionUtility.ResolveDamageAgainstTarget(damagePerTick, snapshot, target.Model);
-                manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, skillId);
+                manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, skillId, false, false, damageMeterSourceId);
                 TryApplyKnockback(target, normalizedDirection, lineKnockbackDistance);
                 var targetKey = ResolveTargetKey(target.Model);
                 TryApplyStatus(manager, target.Model, onHitStatus, source, targetKey, baseStatusAppliedTargets);
-                TryApplyOnHitEffects(manager, target.Model, onHitEffects, source, targetKey, effectStatusAppliedTargets);
+                TryApplyOnHitEffects(manager, target.Model, onHitEffects, snapshot, source, targetKey, effectStatusAppliedTargets);
                 SkillOnHitAdditionalDamageUtility.TryApply(
                     manager,
                     unitRoster,
@@ -318,6 +319,7 @@ namespace Pakuri.InGame
             InGameCombatManager manager,
             BaseUnitRuntimeModel target,
             SkillEffectDefinition[] effects,
+            SkillExecutionSnapshot snapshot,
             BaseUnitRuntimeModel source,
             string targetKey,
             HashSet<string> appliedEffects)
@@ -344,7 +346,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var status = SkillMultiEffectExecutor.ResolveStatusSpec(effect);
+                var status = SkillMultiEffectExecutor.ResolveStatusSpec(effect, snapshot);
                 if (status == null || !status.Enabled)
                 {
                     continue;
