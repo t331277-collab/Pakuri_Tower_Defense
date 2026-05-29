@@ -220,6 +220,21 @@ namespace Pakuri.Data
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported conditional_target_status_id '{choice.ConditionalTargetStatusId}'.");
                 }
+
+                if (!string.IsNullOrWhiteSpace(choice.RequiredSourceStatusId)
+                    && !StatusEffectUtility.TryParse(choice.RequiredSourceStatusId, out _))
+                {
+                    errors.Add($"Skill choice '{choice.Id}' uses unsupported required_source_status_id '{choice.RequiredSourceStatusId}'.");
+                }
+
+                if (!ChoiceTargetsKnownSkills(choice, model, out var unknownRuntimeTargetSkillId))
+                {
+                    errors.Add($"Skill choice '{choice.Id}' references unknown runtime target skill '{unknownRuntimeTargetSkillId}'.");
+                }
+                else if (!ChoiceTargetsOnlyMonsterSkills(choice, model, out var foreignRuntimeTargetSkillId))
+                {
+                    errors.Add($"Skill choice '{choice.Id}' runtime target skill '{foreignRuntimeTargetSkillId}' belongs to another monster.");
+                }
             }
 
             foreach (var enemy in model.StageOneEnemies.Values)
@@ -337,6 +352,12 @@ namespace Pakuri.Data
                 && !IsSupportedHitTargetCount(skill.HitTargetCount))
             {
                 errors.Add($"Skill '{skill.Id}' has unsupported hit_target_count '{skill.HitTargetCount}'. Expected positive integer or global.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(skill.DeploymentRequiredTargetStatusId)
+                && !StatusEffectUtility.TryParse(skill.DeploymentRequiredTargetStatusId, out _))
+            {
+                errors.Add($"Skill '{skill.Id}' uses unsupported deployment_required_target_status_id '{skill.DeploymentRequiredTargetStatusId}'.");
             }
 
             var status = skill.Status;
@@ -779,8 +800,7 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                if (!string.Equals(choice.SkillId, effect.SkillId, StringComparison.OrdinalIgnoreCase)
-                    && !string.Equals(choice.TargetSkillId, effect.SkillId, StringComparison.OrdinalIgnoreCase))
+                if (!ChoiceAppliesToSkillId(choice, effect.SkillId))
                 {
                     errors.Add($"Skill effect '{effect.Id}' {columnName} choice '{currentChoiceId}' does not apply to skill '{effect.SkillId}'.");
                 }
@@ -814,12 +834,107 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                if (!string.Equals(choice.SkillId, trigger.SourceSkillId, StringComparison.OrdinalIgnoreCase)
-                    && !string.Equals(choice.TargetSkillId, trigger.SourceSkillId, StringComparison.OrdinalIgnoreCase))
+                if (!ChoiceAppliesToSkillId(choice, trigger.SourceSkillId))
                 {
                     errors.Add($"Skill trigger '{trigger.Id}' {columnName} choice '{currentChoiceId}' does not apply to source skill '{trigger.SourceSkillId}'.");
                 }
             }
+        }
+
+        private static bool ChoiceAppliesToSkillId(SkillChoiceRow choice, string skillId)
+        {
+            if (choice == null || string.IsNullOrWhiteSpace(skillId))
+            {
+                return false;
+            }
+
+            if (MatchesDelimitedValue(choice.RuntimeTargetSkillIds, skillId))
+            {
+                return true;
+            }
+
+            if (string.Equals(choice.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return string.Equals(choice.TargetSkillId, skillId, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool ChoiceTargetsKnownSkills(SkillChoiceRow choice, SourceModel model, out string unknownSkillId)
+        {
+            unknownSkillId = string.Empty;
+            if (choice == null || model == null || string.IsNullOrWhiteSpace(choice.RuntimeTargetSkillIds))
+            {
+                return true;
+            }
+
+            var targets = choice.RuntimeTargetSkillIds.Split(';', ',');
+            for (var i = 0; i < targets.Length; i++)
+            {
+                var skillId = targets[i] != null ? targets[i].Trim() : string.Empty;
+                if (string.IsNullOrWhiteSpace(skillId))
+                {
+                    continue;
+                }
+
+                if (!model.Skills.ContainsKey(skillId))
+                {
+                    unknownSkillId = skillId;
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool ChoiceTargetsOnlyMonsterSkills(SkillChoiceRow choice, SourceModel model, out string foreignSkillId)
+        {
+            foreignSkillId = string.Empty;
+            if (choice == null || model == null || string.IsNullOrWhiteSpace(choice.RuntimeTargetSkillIds))
+            {
+                return true;
+            }
+
+            var targets = choice.RuntimeTargetSkillIds.Split(';', ',');
+            for (var i = 0; i < targets.Length; i++)
+            {
+                var skillId = targets[i] != null ? targets[i].Trim() : string.Empty;
+                if (string.IsNullOrWhiteSpace(skillId)
+                    || !model.Skills.TryGetValue(skillId, out var skill))
+                {
+                    continue;
+                }
+
+                if (!string.Equals(skill.MonsterId, choice.MonsterId, StringComparison.OrdinalIgnoreCase))
+                {
+                    foreignSkillId = skillId;
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool MatchesDelimitedValue(string rawValues, string expected)
+        {
+            if (string.IsNullOrWhiteSpace(rawValues) || string.IsNullOrWhiteSpace(expected))
+            {
+                return false;
+            }
+
+            var split = rawValues.Split(';', ',');
+            for (var i = 0; i < split.Length; i++)
+            {
+                var candidate = split[i] != null ? split[i].Trim() : string.Empty;
+                if (!string.IsNullOrWhiteSpace(candidate)
+                    && string.Equals(candidate, expected, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void ValidatePassiveReference(

@@ -71,6 +71,10 @@ namespace Pakuri.InGame
         public bool KillResetsCooldownRequiresExecute { get; private set; }
         public string StatusTag { get; private set; }
         public float StatusChanceBonus { get; private set; }
+        public bool HasStatusActionSpeedBonus { get; private set; }
+        public float StatusActionSpeedBonus { get; private set; }
+        public bool HasStatusAttackPowerBonus { get; private set; }
+        public float StatusAttackPowerBonus { get; private set; }
         public int StatusStacksBonus { get; private set; }
         public bool HasStatusStacksSet { get; private set; }
         public int StatusStacksSet { get; private set; }
@@ -105,6 +109,9 @@ namespace Pakuri.InGame
         public string HitCountCooldownRefundTargetSkillId { get; private set; }
         public int HitCountCooldownRefundMinTargets { get; private set; }
         public float HitCountCooldownRefundRatio { get; private set; }
+        public int RepeatCountPerTarget { get; private set; }
+        public float RepeatIntervalSeconds { get; private set; }
+        public float RepeatDamageMultiplier { get; private set; } = 1f;
         public string ThresholdStatusId { get; private set; }
         public int ThresholdStatusMinStacks { get; private set; }
         public string ThresholdApplyStatusId { get; private set; }
@@ -226,6 +233,18 @@ namespace Pakuri.InGame
             if (spec.HasStatusChanceBonus)
             {
                 StatusChanceBonus += spec.StatusChanceBonus;
+            }
+
+            if (spec.HasStatusActionSpeedBonus)
+            {
+                HasStatusActionSpeedBonus = true;
+                StatusActionSpeedBonus += spec.StatusActionSpeedBonus;
+            }
+
+            if (spec.HasStatusAttackPowerBonus)
+            {
+                HasStatusAttackPowerBonus = true;
+                StatusAttackPowerBonus += spec.StatusAttackPowerBonus;
             }
 
             BranchChanceBonus += spec.BranchChanceBonus;
@@ -418,6 +437,16 @@ namespace Pakuri.InGame
                 HitCountCooldownRefundRatio = Mathf.Clamp01(spec.HitCountCooldownRefundRatio);
             }
 
+            if (spec.RepeatCountPerTarget > 0)
+            {
+                RepeatCountPerTarget += spec.RepeatCountPerTarget;
+                RepeatIntervalSeconds = Mathf.Max(RepeatIntervalSeconds, spec.RepeatIntervalSeconds);
+                if (spec.RepeatDamageMultiplier > 0f)
+                {
+                    RepeatDamageMultiplier *= PositiveOrDefault(spec.RepeatDamageMultiplier, 1f);
+                }
+            }
+
             if (!string.IsNullOrWhiteSpace(spec.ThresholdStatusId)
                 && spec.ThresholdStatusMinStacks > 0
                 && !string.IsNullOrWhiteSpace(spec.ThresholdApplyStatusId))
@@ -533,6 +562,10 @@ namespace Pakuri.InGame
                 KillResetsCooldown = choice.KillResetsCooldown,
                 KillResetsCooldownRequiresExecute = choice.KillResetsCooldownRequiresExecute,
                 StatusTag = choice.StatusTag,
+                HasStatusActionSpeedBonus = choice.HasStatusActionSpeedBonus,
+                StatusActionSpeedBonus = choice.StatusActionSpeedBonus,
+                HasStatusAttackPowerBonus = choice.HasStatusAttackPowerBonus,
+                StatusAttackPowerBonus = choice.StatusAttackPowerBonus,
                 StatusStacksBonus = choice.StatusStacksBonus,
                 HasStatusStacksSet = choice.HasStatusStacksSet,
                 StatusStacksSet = choice.StatusStacksSet,
@@ -583,7 +616,10 @@ namespace Pakuri.InGame
                 CoreOnHitAdditionalDamageAttribute = choice.CoreOnHitAdditionalDamageAttribute,
                 HitCountCooldownRefundTargetSkillId = choice.HitCountCooldownRefundTargetSkillId,
                 HitCountCooldownRefundMinTargets = choice.HitCountCooldownRefundMinTargets,
-                HitCountCooldownRefundRatio = choice.HitCountCooldownRefundRatio
+                HitCountCooldownRefundRatio = choice.HitCountCooldownRefundRatio,
+                RepeatCountPerTarget = choice.RepeatCountPerTarget,
+                RepeatIntervalSeconds = choice.RepeatIntervalSeconds,
+                RepeatDamageMultiplier = choice.RepeatDamageMultiplier
             });
         }
 

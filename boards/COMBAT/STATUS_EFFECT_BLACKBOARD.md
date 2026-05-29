@@ -5,6 +5,50 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-05-30 Shared Source-Status Modifier And Marked-Target Fanout Support For Vega C/D
+
+### Task title
+
+Extend shared status-aware combat runtime so buff-active choice modifiers and marked-target fanout can stay on reusable common paths.
+
+### Goals
+
+- Let choice rows require an active source status before they modify later outgoing skill behavior.
+- Let attached buff status data receive shared choice-driven action-speed and attack-power scalar overrides.
+- Let shared contact-target resolution filter targets by required runtime status and minimum stacks for marked-target fanout skills such as Vega D.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- The runtime additions remain shared status/targeting behavior, not Vega-only executor branches.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and compile/CSV-validation verified.
+
+### Next Actions
+
+- Reuse `RequiredSourceStatusId` plus `RuntimeTargetSkillIds` when a future buff should change only specific later skills while the source buff is active.
+- Reuse `DeploymentRequiredTargetStatusId` when a future `SingleAttack` or other resolved-deployment skill must fan out only across marked targets.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs` now checks `RequiredSourceStatusId` / minimum stacks before a choice spec is applied and now matches delimited `RuntimeTargetSkillIds`, which is the shared gate Vega C uses for buff-active trait/master behavior.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillStatusSpecUtility.cs` now clones attached status data with snapshot-provided `status_action_speed_bonus` and `status_attack_power_bonus` overrides, so buff status scalars no longer have to stay fixed on the base skill row only.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillTargetingUtility.cs` and `.../SkillExecutionUtility.cs` now expose shared target resolution filtered by required target status id and minimum stacks.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` now resolves one deployment center per matched target carrying the required status and supports repeat-per-target fanout through shared snapshot fields.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSnapshot.cs` now carries shared repeat-per-target values and attached-buff scalar override flags through the execution snapshot used by both Vega C and Vega D.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-05-30: Vega C and Vega D implementation required the shared runtime to understand buff-active source-status gates, attached buff scalar overrides, and marked-target deployment fanout before the routed Vega rows could move out of `DataOnlyUnsupported` / mismatched runtime states.
+
 ## Task: 2026-05-28 Shared Silence Default Duration For Vega-B Threshold Refresh
 
 ### Task title

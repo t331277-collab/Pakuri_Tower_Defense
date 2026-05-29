@@ -86,6 +86,8 @@ namespace Pakuri.Data
             public float ProjectileSpeed;
             public int PierceCount;
             public bool CriticalAllowed;
+            public string DeploymentRequiredTargetStatusId;
+            public int DeploymentRequiredTargetStatusMinStacks;
             public StatusPayloadRow Status = new StatusPayloadRow();
         }
 
@@ -95,6 +97,7 @@ namespace Pakuri.Data
             public string MonsterId;
             public string SkillId;
             public string TargetSkillId;
+            public string RuntimeTargetSkillIds;
             public PakuriCsvChoiceGroup ChoiceGroup;
             public int SortOrder;
             public string Title;
@@ -161,6 +164,10 @@ namespace Pakuri.Data
             public string StatusTag;
             public bool HasStatusChanceBonus;
             public float StatusChanceBonus;
+            public bool HasStatusActionSpeedBonus;
+            public float StatusActionSpeedBonus;
+            public bool HasStatusAttackPowerBonus;
+            public float StatusAttackPowerBonus;
             public int StatusStacksBonus;
             public bool HasStatusStacksSet;
             public int StatusStacksSet;
@@ -190,6 +197,8 @@ namespace Pakuri.Data
             public bool HasStatusConditionalDamageTakenBonus;
             public float StatusConditionalDamageTakenBonus;
             public string StatusConditionalSourceStatusId;
+            public string RequiredSourceStatusId;
+            public int RequiredSourceStatusMinStacks;
             public bool HasOnHitAdditionalDamage;
             public float OnHitAdditionalDamageChance;
             public float OnHitAdditionalDamageMultiplier = 1f;
@@ -212,6 +221,9 @@ namespace Pakuri.Data
             public string HitCountCooldownRefundTargetSkillId;
             public int HitCountCooldownRefundMinTargets;
             public float HitCountCooldownRefundRatio;
+            public int RepeatCountPerTarget;
+            public float RepeatIntervalSeconds;
+            public float RepeatDamageMultiplier = 1f;
             public string RuntimeSupportState;
             public string RuntimeSupportNotes;
         }
@@ -390,6 +402,8 @@ namespace Pakuri.Data
                 ProjectileSpeed = record.ReadFloat("projectile_speed"),
                 PierceCount = record.ReadInt("pierce_count"),
                 CriticalAllowed = record.ReadBool("critical_allowed"),
+                DeploymentRequiredTargetStatusId = ReadOptionalStringIfColumnExists(record, "deployment_required_target_status_id"),
+                DeploymentRequiredTargetStatusMinStacks = ReadOptionalIntIfColumnExists(record, "deployment_required_target_status_min_stacks"),
                 Status = ReadStatusPayload(record, false)
             };
         }
@@ -402,6 +416,7 @@ namespace Pakuri.Data
                 MonsterId = record.ReadRequiredString("monster_id"),
                 SkillId = record.ReadRequiredString("skill_id"),
                 TargetSkillId = record.ReadString("target_skill_id"),
+                RuntimeTargetSkillIds = ReadOptionalStringIfColumnExists(record, "runtime_target_skill_ids"),
                 ChoiceGroup = record.ReadEnum<PakuriCsvChoiceGroup>("choice_group"),
                 SortOrder = record.ReadInt("sort_order"),
                 Title = record.ReadRequiredString("title"),
@@ -474,6 +489,10 @@ namespace Pakuri.Data
             row.KillResetsCooldownRequiresExecute = ReadOptionalBoolIfColumnExists(record, "kill_resets_cooldown_requires_execute");
             row.HasStatusChanceBonus = TryReadFloat(record, "status_chance_bonus", out var statusChanceBonus);
             row.StatusChanceBonus = statusChanceBonus;
+            row.HasStatusActionSpeedBonus = TryReadFloatIfColumnExists(record, "status_action_speed_bonus", out var statusActionSpeedBonus);
+            row.StatusActionSpeedBonus = statusActionSpeedBonus;
+            row.HasStatusAttackPowerBonus = TryReadFloatIfColumnExists(record, "status_attack_power_bonus", out var statusAttackPowerBonus);
+            row.StatusAttackPowerBonus = statusAttackPowerBonus;
             row.StatusStacksBonus = ReadOptionalInt(record, "status_stacks_bonus");
             row.HasStatusStacksSet = TryReadInt(record, "status_stacks_set", out var statusStacksSet);
             row.StatusStacksSet = statusStacksSet;
@@ -503,6 +522,8 @@ namespace Pakuri.Data
             row.HasStatusConditionalDamageTakenBonus = TryReadFloat(record, "status_conditional_damage_taken_bonus", out var statusConditionalDamageTakenBonus);
             row.StatusConditionalDamageTakenBonus = statusConditionalDamageTakenBonus;
             row.StatusConditionalSourceStatusId = record.ReadString("status_conditional_source_status_id");
+            row.RequiredSourceStatusId = ReadOptionalStringIfColumnExists(record, "required_source_status_id");
+            row.RequiredSourceStatusMinStacks = ReadOptionalIntIfColumnExists(record, "required_source_status_min_stacks");
             row.HasOnHitAdditionalDamage = TryReadFloatIfColumnExists(record, "on_hit_additional_damage_chance", out var onHitAdditionalDamageChance);
             row.OnHitAdditionalDamageChance = onHitAdditionalDamageChance;
             row.OnHitAdditionalDamageMultiplier = ReadOptionalFloatIfColumnExists(record, "on_hit_additional_damage_multiplier");
@@ -525,6 +546,9 @@ namespace Pakuri.Data
             row.HitCountCooldownRefundTargetSkillId = ReadOptionalStringIfColumnExists(record, "hit_count_cooldown_refund_target_skill_id");
             row.HitCountCooldownRefundMinTargets = ReadOptionalIntIfColumnExists(record, "hit_count_cooldown_refund_min_targets");
             row.HitCountCooldownRefundRatio = ReadOptionalFloatIfColumnExists(record, "hit_count_cooldown_refund_ratio");
+            row.RepeatCountPerTarget = ReadOptionalIntIfColumnExists(record, "repeat_count_per_target");
+            row.RepeatIntervalSeconds = ReadOptionalFloatIfColumnExists(record, "repeat_interval_seconds");
+            row.RepeatDamageMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "repeat_damage_multiplier", 1f);
             return row;
         }
 

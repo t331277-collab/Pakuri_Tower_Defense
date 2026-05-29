@@ -129,6 +129,16 @@ namespace Pakuri.InGame
             UnitRosterService roster,
             SkillTargetingSpec targeting)
         {
+            return ResolveTargetList(caster, roster, targeting, null, 0);
+        }
+
+        public static IReadOnlyList<UnitRosterEntry> ResolveTargetList(
+            UnitRosterEntry caster,
+            UnitRosterService roster,
+            SkillTargetingSpec targeting,
+            string requiredStatusId,
+            int requiredStatusMinStacks)
+        {
             if (caster == null || roster == null)
             {
                 return Array.Empty<UnitRosterEntry>();
@@ -140,20 +150,55 @@ namespace Pakuri.InGame
                 return new[] { caster };
             }
 
-            if (side == SkillTargetSide.Ally || side == SkillTargetSide.AllAllies)
-            {
-                return caster.Model != null
+            var targets = side == SkillTargetSide.Ally || side == SkillTargetSide.AllAllies
+                ? caster.Model != null
                     && caster.Model.Identity != null
                     && caster.Model.Identity.Side == UnitSide.Enemy
                         ? roster.Enemies
-                        : roster.Players;
+                        : roster.Players
+                : caster.Model != null
+                    && caster.Model.Identity != null
+                    && caster.Model.Identity.Side == UnitSide.Enemy
+                        ? roster.Players
+                        : roster.Enemies;
+
+            if (string.IsNullOrWhiteSpace(requiredStatusId))
+            {
+                return targets;
             }
 
-            return caster.Model != null
-                && caster.Model.Identity != null
-                && caster.Model.Identity.Side == UnitSide.Enemy
-                    ? roster.Players
-                    : roster.Enemies;
+            var filtered = new List<UnitRosterEntry>();
+            for (var i = 0; i < targets.Count; i++)
+            {
+                var target = targets[i];
+                if (HasRequiredStatus(target != null ? target.Model : null, requiredStatusId, requiredStatusMinStacks))
+                {
+                    filtered.Add(target);
+                }
+            }
+
+            return filtered;
+        }
+
+        private static bool HasRequiredStatus(BaseUnitRuntimeModel model, string statusId, int minimumStacks)
+        {
+            if (model == null || string.IsNullOrWhiteSpace(statusId))
+            {
+                return false;
+            }
+
+            var minStacks = Mathf.Max(1, minimumStacks);
+            if (!StatusEffectUtility.TryParse(statusId, out var kind))
+            {
+                return false;
+            }
+
+            if (kind == StatusEffectKind.Shield)
+            {
+                return model.Resources != null && model.Resources.CurrentShield > 0f;
+            }
+
+            return model.Statuses != null && model.Statuses.GetStacks(kind) >= minStacks;
         }
     }
 }

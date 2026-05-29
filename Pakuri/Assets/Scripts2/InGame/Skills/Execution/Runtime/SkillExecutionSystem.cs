@@ -400,7 +400,8 @@ namespace Pakuri.InGame
             {
                 if (manager != null
                     && manager.TryGetData(choiceId, out SkillChoiceDefinition choice)
-                    && AppliesToSkill(choice, skillData))
+                    && AppliesToSkill(choice, skillData)
+                    && MeetsSourceStatusRequirement(choice, owner))
                 {
                     snapshot.AddActiveChoiceId(choice.ChoiceId);
                     snapshot.ApplyChoiceDefinition(choice);
@@ -511,9 +512,9 @@ namespace Pakuri.InGame
             return null;
         }
 
-        private static bool HasStatus(BaseUnitRuntimeModel model, string statusId)
+        private static bool HasStatus(BaseUnitRuntimeModel model, string statusId, int minimumStacks = 1)
         {
-            if (model == null || string.IsNullOrWhiteSpace(statusId))
+            if (model == null || string.IsNullOrWhiteSpace(statusId) || minimumStacks <= 0)
             {
                 return false;
             }
@@ -528,7 +529,7 @@ namespace Pakuri.InGame
                 return model.Resources != null && model.Resources.CurrentShield > 0f;
             }
 
-            return model.Statuses != null && model.Statuses.Has(kind);
+            return model.Statuses != null && model.Statuses.GetStacks(kind) >= minimumStacks;
         }
 
         private static bool AppliesToSkill(SkillChoiceDefinition choice, SkillData skillData)
@@ -538,11 +539,47 @@ namespace Pakuri.InGame
                 return false;
             }
 
+            if (MatchesAnySkillId(choice.RuntimeTargetSkillIds, skillData.SkillId))
+            {
+                return true;
+            }
+
             var targetSkillId = !string.IsNullOrWhiteSpace(choice.TargetSkillId)
                 ? choice.TargetSkillId
                 : choice.SkillId;
             return !string.IsNullOrWhiteSpace(targetSkillId)
                 && string.Equals(targetSkillId, skillData.SkillId, System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool MeetsSourceStatusRequirement(SkillChoiceDefinition choice, BaseUnitRuntimeModel owner)
+        {
+            if (choice == null || string.IsNullOrWhiteSpace(choice.RequiredSourceStatusId))
+            {
+                return true;
+            }
+
+            return HasStatus(owner, choice.RequiredSourceStatusId, Mathf.Max(1, choice.RequiredSourceStatusMinStacks));
+        }
+
+        private static bool MatchesAnySkillId(string rawSkillIds, string skillId)
+        {
+            if (string.IsNullOrWhiteSpace(rawSkillIds) || string.IsNullOrWhiteSpace(skillId))
+            {
+                return false;
+            }
+
+            var split = rawSkillIds.Split(';', ',');
+            for (var i = 0; i < split.Length; i++)
+            {
+                var candidate = split[i] != null ? split[i].Trim() : string.Empty;
+                if (!string.IsNullOrWhiteSpace(candidate)
+                    && string.Equals(candidate, skillId, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

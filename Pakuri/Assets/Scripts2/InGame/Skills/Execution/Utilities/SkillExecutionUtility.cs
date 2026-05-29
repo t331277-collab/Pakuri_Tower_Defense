@@ -55,7 +55,22 @@ namespace Pakuri.InGame
             UnitRosterService unitRoster,
             SkillTargetingSpec targetingSpec)
         {
-            var candidates = ResolveTargetList(sourceEntry, unitRoster, targetingSpec);
+            return ResolveOrderedTargets(sourceEntry, unitRoster, targetingSpec, null, 0);
+        }
+
+        public static List<UnitRosterEntry> ResolveOrderedTargets(
+            UnitRosterEntry sourceEntry,
+            UnitRosterService unitRoster,
+            SkillTargetingSpec targetingSpec,
+            string requiredStatusId,
+            int requiredStatusMinStacks)
+        {
+            var candidates = SkillTargetingUtility.ResolveTargetList(
+                sourceEntry,
+                unitRoster,
+                targetingSpec,
+                requiredStatusId,
+                requiredStatusMinStacks);
             var targets = new List<UnitRosterEntry>();
             for (var i = 0; i < candidates.Count; i++)
             {

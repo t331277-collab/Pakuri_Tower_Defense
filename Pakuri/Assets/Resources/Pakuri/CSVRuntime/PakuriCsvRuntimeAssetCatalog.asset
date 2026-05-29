@@ -66,3 +66,7 @@ MonoBehaviour:
     Asset: {fileID: 3711649804326925464, guid: 3b13e808382b0f14bb42f1dcc921a394, type: 3}
   - AssetPath: Assets/Prefab/Skill/Vega/Vega_B.prefab
     Asset: {fileID: 6171574813146722975, guid: f0dd0e0f0196eff429e295f798f5423d, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Vega/Vega_C.prefab
+    Asset: {fileID: 5129220136040390084, guid: 383d16217e4c2dc49acd27923563e303, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Vega/Vega_D.prefab
+    Asset: {fileID: 2841107167972549463, guid: 47b7f2f4cd2e55341b1c0b180bdc635f, type: 3}

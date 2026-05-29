@@ -260,6 +260,7 @@ namespace Pakuri.Data
         public string MonsterId;
         public string SkillId;
         public string TargetSkillId;
+        public string RuntimeTargetSkillIds;
         public SkillChoiceGroup ChoiceGroup;
         public string Title;
         public Sprite SkillIcon;
@@ -325,6 +326,10 @@ namespace Pakuri.Data
         public string StatusTag;
         public bool HasStatusChanceBonus;
         public float StatusChanceBonus;
+        public bool HasStatusActionSpeedBonus;
+        public float StatusActionSpeedBonus;
+        public bool HasStatusAttackPowerBonus;
+        public float StatusAttackPowerBonus;
         public int StatusStacksBonus;
         public bool HasStatusStacksSet;
         public int StatusStacksSet;
@@ -354,6 +359,8 @@ namespace Pakuri.Data
         public bool HasStatusConditionalDamageTakenBonus;
         public float StatusConditionalDamageTakenBonus;
         public string StatusConditionalSourceStatusId;
+        public string RequiredSourceStatusId;
+        public int RequiredSourceStatusMinStacks;
         public bool HasOnHitAdditionalDamage;
         public float OnHitAdditionalDamageChance;
         public float OnHitAdditionalDamageMultiplier = 1f;
@@ -376,6 +383,9 @@ namespace Pakuri.Data
         public string HitCountCooldownRefundTargetSkillId;
         public int HitCountCooldownRefundMinTargets;
         public float HitCountCooldownRefundRatio;
+        public int RepeatCountPerTarget;
+        public float RepeatIntervalSeconds;
+        public float RepeatDamageMultiplier = 1f;
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
     }
@@ -418,6 +428,8 @@ namespace Pakuri.Data
         public float ProjectileSpeed;
         public int PierceCount;
         public bool CriticalAllowed = true;
+        public string DeploymentRequiredTargetStatusId;
+        public int DeploymentRequiredTargetStatusMinStacks;
         public string StatusEffectId;
         [Range(0f, 1f)] public float StatusChance;
         public string StatusEffectLabel;

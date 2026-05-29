@@ -195,6 +195,7 @@ namespace Pakuri.InGame
                     source.HitTargetCount,
                     out var hitAllTargets,
                     out var hitTargetCount);
+                var hasStatusFilteredDeployment = !string.IsNullOrWhiteSpace(source.DeploymentRequiredTargetStatusId);
                 var useMultiDeployment = !hitAllTargets
                     && hasHitTargetCount
                     && hitTargetCount > 1
@@ -203,11 +204,13 @@ namespace Pakuri.InGame
                 single.Area.Duration = 0f;
                 single.Area.TickInterval = 0f;
                 single.UsesHitTargetCount = !useMultiDeployment && (hasHitTargetCount || source.Radius <= 0f);
-                single.UsePrefabHitbox = hitAllTargets || useMultiDeployment;
-                single.UseMultiDeployment = useMultiDeployment;
+                single.UsePrefabHitbox = hitAllTargets || useMultiDeployment || hasStatusFilteredDeployment;
+                single.UseMultiDeployment = useMultiDeployment || hasStatusFilteredDeployment;
                 single.HitAllTargets = hitAllTargets;
                 single.HitTargetCount = hitAllTargets ? int.MaxValue : Math.Max(1, hitTargetCount);
                 single.DeploymentCount = useMultiDeployment ? Math.Max(1, hitTargetCount) : 1;
+                single.DeploymentRequiredTargetStatusId = source.DeploymentRequiredTargetStatusId;
+                single.DeploymentRequiredTargetStatusMinStacks = Mathf.Max(0, source.DeploymentRequiredTargetStatusMinStacks);
                 single.DamageDelaySeconds = Mathf.Max(0f, source.DamageDelaySeconds);
                 single.ExecuteHealthRatioThreshold = Mathf.Clamp01(source.ExecuteHealthRatioThreshold);
                 single.RequireExecuteThresholdToCast = source.RequireExecuteThresholdToCast;
@@ -453,6 +456,10 @@ namespace Pakuri.InGame
                     KillResetsCooldown = choice != null && choice.KillResetsCooldown,
                     KillResetsCooldownRequiresExecute = choice != null && choice.KillResetsCooldownRequiresExecute,
                     StatusTag = choice != null ? choice.StatusTag : string.Empty,
+                    HasStatusActionSpeedBonus = choice != null && choice.HasStatusActionSpeedBonus,
+                    StatusActionSpeedBonus = choice != null ? choice.StatusActionSpeedBonus : 0f,
+                    HasStatusAttackPowerBonus = choice != null && choice.HasStatusAttackPowerBonus,
+                    StatusAttackPowerBonus = choice != null ? choice.StatusAttackPowerBonus : 0f,
                     StatusStacksBonus = choice != null ? choice.StatusStacksBonus : 0,
                     HasStatusStacksSet = choice != null && choice.HasStatusStacksSet,
                     StatusStacksSet = choice != null ? choice.StatusStacksSet : 0,
@@ -503,7 +510,12 @@ namespace Pakuri.InGame
                     CoreOnHitAdditionalDamageAttribute = choice != null ? choice.CoreOnHitAdditionalDamageAttribute : DamageAttribute.Physical,
                     HitCountCooldownRefundTargetSkillId = choice != null ? choice.HitCountCooldownRefundTargetSkillId : string.Empty,
                     HitCountCooldownRefundMinTargets = choice != null ? choice.HitCountCooldownRefundMinTargets : 0,
-                    HitCountCooldownRefundRatio = choice != null ? choice.HitCountCooldownRefundRatio : 0f
+                    HitCountCooldownRefundRatio = choice != null ? choice.HitCountCooldownRefundRatio : 0f,
+                    RequiredSourceStatusId = choice != null ? choice.RequiredSourceStatusId : string.Empty,
+                    RequiredSourceStatusMinStacks = choice != null ? choice.RequiredSourceStatusMinStacks : 0,
+                    RepeatCountPerTarget = choice != null ? choice.RepeatCountPerTarget : 0,
+                    RepeatIntervalSeconds = choice != null ? choice.RepeatIntervalSeconds : 0f,
+                    RepeatDamageMultiplier = choice != null && choice.RepeatDamageMultiplier > 0f ? choice.RepeatDamageMultiplier : 1f
                 };
             }
 

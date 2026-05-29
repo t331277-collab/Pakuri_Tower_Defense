@@ -104,6 +104,8 @@ namespace Pakuri.InGame
             var needsChoiceCriticalDamageOverride = snapshot != null && snapshot.HasStatusCriticalDamageTakenBonus;
             var needsChoiceAilmentResistanceOverride = snapshot != null && snapshot.HasStatusAilmentResistanceBonus;
             var needsChoiceConditionalDamageTakenOverride = snapshot != null && snapshot.HasStatusConditionalDamageTakenBonus;
+            var needsChoiceActionSpeedOverride = snapshot != null && snapshot.HasStatusActionSpeedBonus;
+            var needsChoiceAttackPowerOverride = snapshot != null && snapshot.HasStatusAttackPowerBonus;
             if (statusData == null || statusData.Kind != kind)
             {
                 statusData = StatusEffectRuntime.CreateStatusData(kind, null);
@@ -113,7 +115,9 @@ namespace Pakuri.InGame
                 || (!needsChoiceElementDamageOverride
                     && !needsChoiceCriticalDamageOverride
                     && !needsChoiceAilmentResistanceOverride
-                    && !needsChoiceConditionalDamageTakenOverride))
+                    && !needsChoiceConditionalDamageTakenOverride
+                    && !needsChoiceActionSpeedOverride
+                    && !needsChoiceAttackPowerOverride))
             {
                 return statusData;
             }
@@ -139,6 +143,16 @@ namespace Pakuri.InGame
             {
                 overriddenStatus.ConditionalSourceStatusTag = snapshot.StatusConditionalSourceStatusId;
                 overriddenStatus.ConditionalDamageTakenBonus = snapshot.StatusConditionalDamageTakenBonus;
+            }
+
+            if (needsChoiceActionSpeedOverride)
+            {
+                overriddenStatus.Modifiers.ActionSpeedBonus += snapshot.StatusActionSpeedBonus;
+            }
+
+            if (needsChoiceAttackPowerOverride)
+            {
+                overriddenStatus.Modifiers.AttackPowerBonus += snapshot.StatusAttackPowerBonus;
             }
 
             return overriddenStatus;

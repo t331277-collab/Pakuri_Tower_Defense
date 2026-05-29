@@ -130,5 +130,14 @@ namespace Pakuri.InGame
         [Header("Added Effect")]
         public string StatusTag;
         public BuffModifierSpec AddedModifiers = new BuffModifierSpec();
+        public bool HasStatusActionSpeedBonus;
+        public float StatusActionSpeedBonus;
+        public bool HasStatusAttackPowerBonus;
+        public float StatusAttackPowerBonus;
+        public string RequiredSourceStatusId;
+        public int RequiredSourceStatusMinStacks;
+        public int RepeatCountPerTarget;
+        public float RepeatIntervalSeconds;
+        public float RepeatDamageMultiplier = 1f;
     }
 }

@@ -5,6 +5,51 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-05-30 Vega C/D Shared CSV Schema Extension And Active Row Authoring
+
+### Task title
+
+Extend the active monster skill CSV schema for reusable buff-active and marked-target fanout behavior, then author Vega C and Vega D on that shared data path.
+
+### Goals
+
+- Keep the new Vega C and Vega D behavior owned by the existing active CSV authority instead of adding a Vega-only file.
+- Add only the shared columns needed for attached buff scalar overrides, source-status-gated modifiers, repeat-per-target fanout, and marked-target deployment filtering.
+- Connect the user-provided Vega C/D prefab paths in the active skill rows.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- Active CSV authority stayed limited to `monster_skills.csv` and `monster_skill_choices.csv` for this task.
+- No new CSV file was added.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented, synced, and validation passed.
+
+### Next Actions
+
+- Reuse `deployment_required_target_status_id` plus `deployment_required_target_status_min_stacks` for future shared marked-target fanout rows before inventing another deployment table.
+- Reuse `runtime_target_skill_ids`, `required_source_status_id`, `status_action_speed_bonus`, `status_attack_power_bonus`, and repeat-per-target choice columns for future buff-active follow-up rules before adding another companion CSV.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` header now includes `deployment_required_target_status_id` and `deployment_required_target_status_min_stacks`.
+- The same skill CSV now authors `vega-c` with `skill_effect_prefab_path=Assets/Prefab/Skill/Vega/Vega_C.prefab`.
+- The same skill CSV now authors `vega-d` with `runtime_kind=SingleAttack`, `skill_effect_prefab_path=Assets/Prefab/Skill/Vega/Vega_D.prefab`, `deployment_required_target_status_id=name-mark`, and `deployment_required_target_status_min_stacks=1`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` header now includes `runtime_target_skill_ids`, `required_source_status_id`, `required_source_status_min_stacks`, `status_action_speed_bonus`, `status_attack_power_bonus`, `repeat_count_per_target`, `repeat_interval_seconds`, and `repeat_damage_multiplier`.
+- The same choice CSV now marks `vega-c-trait-2`, `vega-c-trait-3`, `vega-c-trait-4`, `vega-c-trait-5`, `vega-c-master-1`, `vega-c-master-2`, `vega-d-trait-5`, and `vega-d-master-1` as shared-runtime-backed rows instead of the prior unsupported/partial state, and it remaps `vega-d-trait-4` to conditional `name-mark >= 10` damage instead of plain unconditional `1.3x`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs`, `PakuriCsvRuntimeData.Build.cs`, and `PakuriCsvRuntimeData.Validation.cs` now parse, map, and validate the new shared columns.
+- Unity menu `Pakuri/Validate CSV Source Data` loaded the runtime catalog, and Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-30: Code Builder first implemented the shared runtime contract requested by the Vega handoff, then Skill Builder authored the active Vega C and Vega D rows on the new shared CSV fields and synced the runtime catalog.
+
 ## Task: 2026-05-28 Vega-B Follow-up Trigger Row Re-authored To LineAttack
 
 ### Task title

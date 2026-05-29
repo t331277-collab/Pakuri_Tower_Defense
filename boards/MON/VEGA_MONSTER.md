@@ -17,6 +17,58 @@ At the start of new work, use this active Vega file. Common monster history is a
 Vega active skills A-E and passive skills F-J are implemented and locally validated.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-05-30 Vega-C And Vega-D Shared Runtime Implementation And Skill Authoring
+
+### Task title
+
+Implement the shared runtime extensions and active CSV rows required to bring Vega C and Vega D onto reusable common paths.
+
+### Goals
+
+- Keep Vega C on shared `Buff` while adding reusable buff-active modifier support and attached-buff scalar choice overrides.
+- Move Vega D from the mismatched `AreaAttack` row shape to shared `SingleAttack` marked-target fanout.
+- Finish the routed active CSV authoring for Vega C and Vega D, including the user-provided prefab paths.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- Shared runtime extensions were allowed because the user explicitly asked for Code Builder implementation from the handoff.
+- User explicitly clarified that Vega D is `SingleAttack`-style repeated slashes at target positions, not a zone-style area attack.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented, build-verified, and Unity CSV-validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Vega C buff-active bonuses affect the intended follow-up skills only while `slaughter-permit` is active.
+- User verifies in Play Mode that Vega D casts one slash per marked enemy position, allows overlap, and repeats one extra slash per marked target when master-1 is learned.
+
+### Evidence
+
+- `boards/MON/VEGA_CD_COMMON_RUNTIME_HANDOFF.md` was used as the explicit implementation contract for the shared Vega C/D extension work.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs` now exposes shared choice/runtime fields for `RuntimeTargetSkillIds`, attached buff action-speed / attack-power overrides, `RequiredSourceStatusId`, repeat-per-target fields, and `DeploymentRequiredTargetStatusId`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs` now applies choice rows only when the source status requirement is met and accepts delimited `RuntimeTargetSkillIds`, so Vega C buff-active modifiers stay on shared runtime routing instead of Vega-only branches.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillStatusSpecUtility.cs` now clones attached status data with snapshot-provided action-speed and attack-power overrides, which lets Vega C trait-2, trait-3, and master-2 modify the attached `slaughter-permit` buff through shared logic.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` now treats `DeploymentRequiredTargetStatusId` as a shared resolved-deployment path and schedules shared repeat deployments per center, so Vega D stays on `SingleAttack` while fanning out across marked targets.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillExecutionUtility.cs` and `.../SkillTargetingUtility.cs` now expose shared ordered-target resolution filtered by required target status and minimum stacks.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now authors `vega-c` with `Assets/Prefab/Skill/Vega/Vega_C.prefab`, and authors `vega-d` as `runtime_kind=SingleAttack`, `skill_effect_prefab_path=Assets/Prefab/Skill/Vega/Vega_D.prefab`, `deployment_required_target_status_id=name-mark`, and `deployment_required_target_status_min_stacks=1`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now re-authors Vega C rows through shared `status_action_speed_bonus`, `status_attack_power_bonus`, `runtime_target_skill_ids`, and `required_source_status_id` fields, and re-authors Vega D trait-4 / trait-5 / master-1 through shared conditional-damage, status-set, and repeat-per-target fields.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the pre-existing `MSB3277` warnings remained.
+- Unity menu `Pakuri/Validate CSV Source Data` loaded the runtime catalog, and Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+- Unity console also logged one MCP bridge warning `Client handler error: Cannot access a disposed object.`, but no new Vega CSV parse failure or C# compile failure appeared in the inspected console output.
+
+### History
+
+- 2026-05-30: User asked Designer whether Vega C and Vega D could be implemented from the current repository state and then requested an English markdown handoff for Code Builder.
+- 2026-05-30: User clarified that Vega D should be treated as `SingleAttack` semantics rather than area-zone semantics; Designer reflected that correction in the handoff.
+- 2026-05-30: User then explicitly requested Code Builder implementation from `boards/MON/VEGA_CD_COMMON_RUNTIME_HANDOFF.md` followed by Skill Builder authoring for Vega C and Vega D with the provided prefab paths.
+
 ## Task: 2026-05-28 Vega-B Master-1 Follow-up Returned To LineAttack
 
 ### Task title
