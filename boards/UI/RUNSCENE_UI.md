@@ -10,6 +10,193 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - This active file now keeps only the current `NewRunScene` UI behavior still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-05-31 Offering Choice Card Summary And SkillName
+
+### Task title
+
+Bind `NewRunScene` Offering choice cards to monster summary and source skill names.
+
+### Goals
+
+- Fill `Choice1` through `Choice3` `Summary` labels with the monster display name.
+- Fill `Choice1` through `Choice3` `SkillName` labels with the source skill and choice title.
+- Preserve the existing `Desc` label as the effect description.
+- Preserve fallback behavior for older card layouts that only have `Text (TMP)`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is UGUI `Canvas/OfferingPanel` behavior in `NewRunScene`.
+- No scene asset edit was required because the inspected scene already contains `Summary` and `SkillName` label names.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Offering card text appears in the intended authored labels and does not overflow or bind to the wrong TMP child.
+
+### Evidence
+
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` contains `Choice1`, `Choice2`, and `Choice3` related `Summary` and `SkillName` child names.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now resolves `Summary`, `SkillName`, `Desc`, `Icon`, and fallback `Text (TMP)` for each Offering button.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now sets `Summary` to the monster display name and `SkillName` to values such as `심판의 빛·특성 1`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+- Unity-MCP `validate_script` for `Assets/Scripts2/InGame/UI/InGameUIManager.cs` reported 0 errors and the existing `Update()` string-concatenation GC warning.
+
+### History
+
+- 2026-05-31: User requested Offering `Choice1` through `Choice3` UI labels to place the monster name in `Summary` and source skill plus trait title in `SkillName`.
+- 2026-05-31: Code Builder implemented the UGUI label binding in `InGameUIManager.cs`.
+
+## Task: 2026-05-31 Offering Skill Choice Commit Refresh
+
+### Task title
+
+Keep Offering active/passive skill choices visible to runtime UI/model state immediately after commit, including dead scene actors.
+
+### Goals
+
+- Give active/passive Offering choices non-empty `ChoiceId` values.
+- Refresh registered roster monster models and dead/unregistered scene monster actor models after Offering commit.
+- Rebuild learned active skill runtime sets after the session state is copied into each model.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- `InGameUIManager.cs` remains the active NewRunScene Offering owner.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified. Unity-MCP validator could not run because no Unity Editor instance was found.
+
+### Next Actions
+
+- User verifies in Play Mode that Offering skill choices update the monster's available skills and that dead monsters keep those choices after next-day revive.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` commits Offering choices through `session.RecordOfferingChoice(choice.MonsterId, choice.RewardId, choice.ChoiceId, choice.ActiveSkillId, choice.PassiveSkillId)`.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now assigns `ChoiceId = skill.SkillId` for active skill Offering choices and `ChoiceId = passive.PassiveId` for passive skill Offering choices.
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` now refreshes scene-valid `MonsterUnitActor` models from `RunSession` and rebuilds learned active runtime sets after Offering commit.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-31: User reported Offering-acquired skills were not acquired.
+- 2026-05-31: Code Builder patched the Offering UI commit refresh so it no longer depends only on `combatManager.Roster.Players`.
+
+## Task: 2026-05-31 Nexus HP And End Panels
+
+### Task title
+
+Bind Nexus HP text and Win/Defeat panels for the `NewRunScene` end flow.
+
+### Goals
+
+- Display Nexus HP as `current / max` in `Canvas/Info/NexusHPinfo`.
+- Show `Canvas/DefeatPanel` on Nexus defeat.
+- Show `Canvas/WinPanel` on the configured Stage 2-11 prototype clear condition.
+- Use the same return-to-main-menu method for both Win and Defeat buttons.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The real main menu scene path is `Assets/Scenes/NewScene/NewMainMenu.unity`.
+- `NexusUnitActor` auto-resolves `Canvas/Info/NexusHPinfo` when the serialized field is blank.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, scene-bound, and compile/editor validated.
+
+### Next Actions
+
+- User verifies in Play Mode that Nexus HP text updates, DefeatPanel/WinPanel activate at the right time, and both buttons load `NewMainMenu`.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Units/NexusUnitActor.cs` writes Nexus HP as `current / max` and auto-resolves `Canvas/Info/NexusHPinfo`.
+- `Pakuri/Assets/Scripts2/InGame/Core/StageManager.cs` resolves `Canvas/WinPanel`, `Canvas/DefeatPanel`, and panel child `Button` components, then binds both to `ReturnToMainMenu()`.
+- `Pakuri/Assets/Scripts2/InGame/Core/StageManager.cs` hides Win/Defeat panels on startup and shows the matching panel on victory or defeat.
+- Unity-MCP scene inspection found `Canvas/Info/NexusHPinfo`, `Canvas/WinPanel`, `Canvas/DefeatPanel`, and `Nexus` with `NexusUnitActor`.
+- Unity-MCP `validate_script` on `Assets/Scripts2/InGame/Units/NexusUnitActor.cs` and `Assets/Scripts2/InGame/Core/StageManager.cs` reported 0 warnings and 0 errors.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-31: User asked for Nexus HP display plus Win/Defeat buttons that return to `NewMainMenu`.
+- 2026-05-31: Code Builder implemented `NexusUnitActor` HP text binding and StageManager end-panel/button flow.
+
+## Task: 2026-05-31 DebugUI Passive Buttons And Offering-State Recording
+
+### Task title
+
+Extend `NewRunScene` DebugUI to learn passive F-J skills and passive enhancements through the same run-state path used by Offering.
+
+### Goals
+
+- Add F-J DebugUI skill buttons to the same A-J slot resolution path.
+- Let F-J buttons learn passive skills for the currently selected player monster.
+- Let each F-J button child `EmodifierBtn` open `DebugPassiveModifiedUI`.
+- Let `DebugPassiveModifiedUI/Trait1` through `Trait3` acquire passive enhancement choices.
+- Record DebugUI skill and enhancement acquisition through `RunSession.RecordOfferingChoice` so learned skills and chosen choice ids can be filtered out of later Offering choices.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is UGUI `NewRunScene` debug tooling work, not a gameplay balance or CSV schema change.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated.
+
+### Next Actions
+
+- User verifies in Play Mode that F-J buttons learn passives for the selected monster.
+- User verifies that F-J `EmodifierBtn` opens `DebugPassiveModifiedUI` and Trait1-Trait3 can be acquired.
+- User verifies that DebugUI-acquired skills/enhancements do not appear again in Offering.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs:17` expands `DebugSlots` from A-E to A-J.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs:133` adds `TryLearnPassiveSlot`, resolving passives with `PakuriDataManager.Instance.ResolvePassiveSkill(...)`.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs:324` resolves `DebugPassiveModifiedUI`, and `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs:377` resolves `DebugPassiveModifiedUI/Trait1` through `Trait3`.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs:678` adds `ApplyPassiveModifierChoice` for passive enhancement acquisition.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs:900` adds `CommitDebugOfferingChoice`, which calls `RunSession.RecordOfferingChoice(...)` and then refreshes runtime skill models, button labels, modifier buttons, and the monster panel.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs:936` keeps enhancement reward lookup exact by returning a matching reward id only when `RewardId == choice.ChoiceId`; otherwise it records the exact choice id fallback.
+- Unity-MCP scene inspection found `Canvas/DebugUI/FBtn` through `JBtn`, each with child `EmodifierBtn`, and found `Canvas/DebugPassiveModifiedUI/Trait1` through `Trait3`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; only existing MSB3277 warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors when rerun alone after an initial parallel-build file lock.
+- Unity-MCP `validate_script` on `Assets/Scripts2/InGame/UI/DebugUI.cs` reported 0 errors and one pre-existing-style validator warning about string concatenation in `Update()`.
+- Unity-MCP warning/error console read after script refresh returned 0 entries.
+
+### History
+
+- 2026-05-31: User asked Designer how to extend `DebugUI` for F-J passive acquisition and passive enhancement acquisition.
+- 2026-05-31: User then asked Code Builder to implement the described DebugUI and Offering-state recording changes.
+- 2026-05-31: Code Builder implemented A-J slot binding, passive acquisition, passive modifier panel binding, and shared run-state commit logic in `DebugUI.cs`.
+
 ## Task: 2026-05-17 NewRunScene Active UI Rules
 
 ### Task title

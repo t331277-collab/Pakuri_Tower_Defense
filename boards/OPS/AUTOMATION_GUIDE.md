@@ -7,6 +7,86 @@ When doing related work, follow MDTREE.md routing and update this file together 
 
 Older OPS automation and role-policy task blocks were archived to `boards/ARCHIVE/OPS_AUTOMATION_ARCHIVE_2026-05-19.md`.
 
+## Task: 2026-05-30 UTF-8 Documentation Read Default
+
+### Task title
+
+Make UTF-8 raw text reads the default documentation inspection path for repository policy work.
+
+### Goals
+
+- Keep markdown and other text-document evidence readable without mojibake during Codex inspection.
+- Record the repository-level expectation in `AGENTS.md`.
+- Align future document reads on `Get-Content -Raw -Encoding UTF8` where PowerShell is used.
+
+### Constraints
+
+- Role Owner is Designer.
+- This task changes workflow policy, not runtime gameplay code.
+- Command approval behavior is controlled by the CLI/runtime, not by markdown policy alone.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Implemented.
+
+### Next Actions
+
+- Future markdown and text-document inspection should prefer `Get-Content -Raw -Encoding UTF8`.
+- If command approval prompts still appear, reuse the saved approved prefix instead of widening to unrelated command families.
+
+### Evidence
+
+- `AGENTS.md` startup rules now state that markdown and other text documentation files should be read with `Get-Content -Raw -Encoding UTF8` by default.
+- A broad approved command prefix for `Get-Content -Raw -Encoding UTF8` was saved in the current CLI session.
+
+### History
+
+- 2026-05-30: User asked to default future document reads to UTF-8 and to record that policy in `AGENTS.md`.
+
+## Task: 2026-05-30 File Read/Write Command Allowance For This Project
+
+### Task title
+
+Record that file read/write shell commands are expected workflow commands in this project.
+
+### Goals
+
+- Make file read/write inspection commands explicit as normal repository workflow.
+- Avoid repeated policy churn around enumerating individual command examples.
+- Keep UTF-8-safe text reads as the preferred documentation-read pattern.
+
+### Constraints
+
+- Role Owner is Designer.
+- This task records project-local workflow policy only.
+- CLI approval storage is still controlled by the runtime; markdown policy does not override runtime security.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Implemented.
+
+### Next Actions
+
+- Prefer UTF-8-safe text reads for documentation where practical.
+- Reuse saved CLI approvals where possible, while treating file read/write commands as the normal intended workflow in project policy.
+
+### Evidence
+
+- `AGENTS.md` now states that file read/write shell commands inside the intended workspace are normal and expected workflow commands for this project.
+- `AGENTS.md` no longer enumerates a short fixed list of command examples and instead records the broader project-level allowance.
+
+### History
+
+- 2026-05-30: User asked to replace the explicit command list with a broader statement that file read/write commands are allowed for this project before continuing implementation work.
+
 ## Task: 2026-05-28 Skill Builder Trigger Payload Documentation Guard
 
 ### Task title

@@ -29,3 +29,33 @@ stage1-day10-midboss,2,stage1-rogue,2,1,9.02,-5,5,false,false,1,1,false,Midboss 
 stage1-day11-boss,0,stage1-guardian-captain,1,1,9.02,0,0,false,true,1,1,false,Stage 1 boss fight includes day 5 midboss.
 stage1-day11-boss,1,stage1-attack-captain,1,1,9.02,0,0,false,true,1,1,false,Stage 1 boss fight includes day 10 midboss.
 stage1-day11-boss,2,stage1-hero-karin,1,1,9.02,0,0,false,true,1,1,true,Stage 1 boss fight includes stage boss.
+stage2-day1-normal,0,stage2-fire-dragon-slayer,1,1,9.02,-5,5,true,false,20,30,true,Stage 2 opening fire enemy boss candidate.
+stage2-day1-normal,1,stage2-lightning-scout,1,1,9.02,-5,5,true,false,20,30,false,Stage 2 opening lightning enemy boss candidate.
+stage2-day1-normal,2,stage2-dark-assassin,1,1,9.02,-5,5,true,false,20,30,false,Stage 2 opening dark enemy boss candidate.
+stage2-day1-normal,3,stage2-holy-priest,1,1,9.02,-5,5,true,false,20,30,false,Stage 2 opening holy enemy boss candidate.
+stage2-day2-normal,0,stage2-fire-dragon-slayer,2,1,9.02,-5,5,true,false,20,30,true,Stage 2 normal combat fire pressure.
+stage2-day2-normal,1,stage2-dark-assassin,1,1,9.02,-5,5,true,false,20,30,false,Stage 2 normal combat dark pressure.
+stage2-day3-normal,0,stage2-ice-guard,2,1,9.02,-5,5,true,false,20,30,true,Stage 2 normal combat ice defense pressure.
+stage2-day3-normal,1,stage2-holy-priest,1,1,9.02,-5,5,true,false,20,30,false,Stage 2 normal combat holy support pressure.
+stage2-day4-normal,0,stage2-fire-dragon-slayer,2,1,9.02,-5,5,true,false,20,30,true,Stage 2 mixed normal combat.
+stage2-day4-normal,1,stage2-ice-guard,1,1,9.02,-5,5,true,false,20,30,false,Stage 2 mixed normal combat.
+stage2-day4-normal,2,stage2-lightning-scout,1,1,9.02,-5,5,true,false,20,30,false,Stage 2 mixed normal combat.
+stage2-day5-midboss,0,stage2-ethan,1,1,9.02,0,0,false,true,1,1,true,Stage 2 day 5 guaranteed midboss.
+stage2-day5-midboss,1,stage2-fire-dragon-slayer,2,1,9.02,-5,5,false,false,1,1,false,Stage 2 midboss escort.
+stage2-day6-normal,0,stage2-fire-dragon-slayer,2,1,9.02,-5,5,true,false,20,30,true,Stage 2 normal combat fire pressure.
+stage2-day6-normal,1,stage2-holy-priest,1,1,9.02,-5,5,true,false,20,30,false,Stage 2 normal combat holy support pressure.
+stage2-day7-normal,0,stage2-ice-guard,2,1,9.02,-5,5,true,false,20,30,true,Stage 2 normal combat ice pressure.
+stage2-day7-normal,1,stage2-dark-assassin,2,1,9.02,-5,5,true,false,20,30,false,Stage 2 normal combat dark pressure.
+stage2-day8-normal,0,stage2-fire-dragon-slayer,2,1,9.02,-5,5,true,false,20,30,true,Stage 2 mixed normal combat.
+stage2-day8-normal,1,stage2-ice-guard,2,1,9.02,-5,5,true,false,20,30,false,Stage 2 mixed normal combat.
+stage2-day8-normal,2,stage2-holy-priest,1,1,9.02,-5,5,true,false,20,30,false,Stage 2 mixed normal combat.
+stage2-day9-normal,0,stage2-fire-dragon-slayer,2,1,9.02,-5,5,true,false,20,30,true,Stage 2 final normal mixed pressure.
+stage2-day9-normal,1,stage2-ice-guard,2,1,9.02,-5,5,true,false,20,30,false,Stage 2 final normal mixed pressure.
+stage2-day9-normal,2,stage2-dark-assassin,2,1,9.02,-5,5,true,false,20,30,false,Stage 2 final normal mixed pressure.
+stage2-day9-normal,3,stage2-holy-priest,1,1,9.02,-5,5,true,false,20,30,false,Stage 2 final normal support pressure.
+stage2-day10-midboss,0,stage2-drake,1,1,9.02,0,0,false,true,1,1,true,Stage 2 day 10 guaranteed midboss.
+stage2-day10-midboss,1,stage2-ice-guard,2,1,9.02,-5,5,false,false,1,1,false,Stage 2 midboss escort.
+stage2-day10-midboss,2,stage2-dark-assassin,2,1,9.02,-5,5,false,false,1,1,false,Stage 2 midboss escort.
+stage2-day11-boss,0,stage2-ethan,1,1,9.02,0,0,false,true,1,1,false,Stage 2 boss fight includes day 5 midboss.
+stage2-day11-boss,1,stage2-drake,1,1,9.02,0,0,false,true,1,1,false,Stage 2 boss fight includes day 10 midboss.
+stage2-day11-boss,2,stage2-arsen,1,1,9.02,0,0,false,true,1,1,true,Stage 2 boss fight includes stage boss.

@@ -63,6 +63,19 @@ namespace Pakuri.InGame
         public float ConditionalDamageMultiplier { get; set; }
         public string ConditionalTargetStatusId { get; set; }
         public int ConditionalTargetStatusMinStacks { get; set; }
+        public bool HasTargetStatusStackDamageMultiplier { get; set; }
+        public float TargetStatusStackDamageMultiplier { get; set; }
+        public bool HasConsumeTargetStatusRatioOverride { get; set; }
+        public float ConsumeTargetStatusRatioOverride { get; set; }
+        public bool HasConsumeTargetStatusStacksOverride { get; set; }
+        public int ConsumeTargetStatusStacksOverride { get; set; }
+        public float ConditionalCritChanceBonus { get; set; }
+        public string ConditionalCritTargetStatusId { get; set; }
+        public int ConditionalCritTargetStatusMinStacks { get; set; }
+        public float RedistributeConsumedStatusRatioOnKill { get; set; }
+        public string RedistributeConsumedStatusId { get; set; }
+        public float RedistributeConsumedStatusSearchRadius { get; set; }
+        public int RedistributeConsumedStatusTargetCount { get; set; }
         public bool HasOnHitAdditionalDamage { get; set; }
         public float OnHitAdditionalDamageChance { get; set; }
         public float OnHitAdditionalDamageMultiplier { get; set; }
@@ -153,6 +166,19 @@ namespace Pakuri.InGame
             record.ConditionalDamageMultiplier = conditionalDamageMultiplier;
             record.ConditionalTargetStatusId = Get(row, "conditional_target_status_id");
             record.ConditionalTargetStatusMinStacks = GetInt(row, "conditional_target_status_min_stacks");
+            record.HasTargetStatusStackDamageMultiplier = TryGetFloat(row, "target_status_stack_damage_multiplier", out var targetStatusStackDamageMultiplier);
+            record.TargetStatusStackDamageMultiplier = targetStatusStackDamageMultiplier;
+            record.HasConsumeTargetStatusRatioOverride = TryGetFloat(row, "consume_target_status_ratio_override", out var consumeTargetStatusRatioOverride);
+            record.ConsumeTargetStatusRatioOverride = consumeTargetStatusRatioOverride;
+            record.HasConsumeTargetStatusStacksOverride = TryGetInt(row, "consume_target_status_stacks_override", out var consumeTargetStatusStacksOverride);
+            record.ConsumeTargetStatusStacksOverride = consumeTargetStatusStacksOverride;
+            record.ConditionalCritChanceBonus = GetFloat(row, "conditional_crit_chance_bonus");
+            record.ConditionalCritTargetStatusId = Get(row, "conditional_crit_target_status_id");
+            record.ConditionalCritTargetStatusMinStacks = GetInt(row, "conditional_crit_target_status_min_stacks");
+            record.RedistributeConsumedStatusRatioOnKill = GetFloat(row, "redistribute_consumed_status_ratio_on_kill");
+            record.RedistributeConsumedStatusId = Get(row, "redistribute_consumed_status_id");
+            record.RedistributeConsumedStatusSearchRadius = GetFloat(row, "redistribute_consumed_status_search_radius");
+            record.RedistributeConsumedStatusTargetCount = GetInt(row, "redistribute_consumed_status_target_count");
             record.HasOnHitAdditionalDamage = TryGetFloat(row, "on_hit_additional_damage_chance", out var onHitAdditionalDamageChance);
             record.OnHitAdditionalDamageChance = onHitAdditionalDamageChance;
             record.OnHitAdditionalDamageMultiplier = GetFloat(row, "on_hit_additional_damage_multiplier");

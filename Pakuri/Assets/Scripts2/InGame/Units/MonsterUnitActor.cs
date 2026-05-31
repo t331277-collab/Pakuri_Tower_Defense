@@ -16,7 +16,10 @@ namespace Pakuri.InGame
         [SerializeField] private InGameDamageTextPopup damageTextPopup;
         [SerializeField] private Animation_Controller animationController;
 
+        private bool defeated;
+
         public MonsterUnitRuntimeModel Model { get; private set; }
+        public bool IsDefeated => defeated;
 
         public void Initialize(MonsterUnitRuntimeModel model)
         {
@@ -35,6 +38,11 @@ namespace Pakuri.InGame
 
         public void TryPlayActiveSkillAnimation()
         {
+            if (defeated)
+            {
+                return;
+            }
+
             if (ShouldUseRinAnimation())
             {
                 ResolveAnimationController()?.PlayRandomAttack();
@@ -43,6 +51,11 @@ namespace Pakuri.InGame
 
         public void TryPlayHitAnimation()
         {
+            if (defeated)
+            {
+                return;
+            }
+
             if (ShouldUseRinAnimation())
             {
                 ResolveAnimationController()?.PlayHit();
@@ -51,10 +64,29 @@ namespace Pakuri.InGame
 
         public void TryPlayDeathAnimation()
         {
-            if (ShouldUseRinAnimation())
+            ResolveAnimationController()?.PlayDeath();
+        }
+
+        public void MarkDefeated()
+        {
+            if (defeated)
             {
-                ResolveAnimationController()?.PlayDeath();
+                return;
             }
+
+            defeated = true;
+            DisableTargetColliders();
+            TryPlayDeathAnimation();
+        }
+
+        public void ReviveForNextDay()
+        {
+            defeated = false;
+            RestoreCombatStateForNextDay();
+            RestoreHealthToMaximum();
+            EnableTargetColliders();
+            ResolveAnimationController()?.ReviveToIdle();
+            RefreshDebugView();
         }
 
         public void RefreshDebugView()
@@ -110,6 +142,84 @@ namespace Pakuri.InGame
             }
 
             return animationController;
+        }
+
+        private void DisableTargetColliders()
+        {
+            var colliders = GetComponentsInChildren<Collider2D>();
+            for (var i = 0; i < colliders.Length; i++)
+            {
+                if (colliders[i] != null)
+                {
+                    colliders[i].enabled = false;
+                }
+            }
+        }
+
+        private void EnableTargetColliders()
+        {
+            var colliders = GetComponentsInChildren<Collider2D>();
+            for (var i = 0; i < colliders.Length; i++)
+            {
+                if (colliders[i] != null)
+                {
+                    colliders[i].enabled = true;
+                }
+            }
+        }
+
+        private void RestoreCombatStateForNextDay()
+        {
+            if (Model == null)
+            {
+                return;
+            }
+
+            Model.AutoAttackEnabled = true;
+            if (!IsSelectedPlayerModel(Model))
+            {
+                Model.AutoSkillEnabled = true;
+            }
+
+            Model.Statuses?.Clear();
+            var resources = Model.Resources;
+            if (resources != null)
+            {
+                resources.DirectShield = 0f;
+                resources.CurrentShield = 0f;
+            }
+
+            var activeSkills = Model.SkillRuntime != null ? Model.SkillRuntime.ActiveSkills : null;
+            if (activeSkills == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < activeSkills.Count; i++)
+            {
+                activeSkills[i]?.ResetRuntimeState();
+            }
+        }
+
+        private void RestoreHealthToMaximum()
+        {
+            var resources = Model != null ? Model.Resources : null;
+            var stats = Model != null ? Model.Stats : null;
+            if (resources == null || stats == null)
+            {
+                return;
+            }
+
+            resources.CurrentHealth = Mathf.Max(0f, stats.MaxHealth);
+        }
+
+        private static bool IsSelectedPlayerModel(MonsterUnitRuntimeModel model)
+        {
+            var identity = model != null ? model.Identity : null;
+            return identity != null
+                && identity.Side == UnitSide.Player
+                && identity.Role == UnitRole.Monster
+                && identity.SlotIndex == 0;
         }
 
         private bool ShouldUseRinAnimation()

@@ -5,6 +5,287 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-05-31 Enemy Nexus Damage CSV Column
+
+### Task title
+
+Add `nexus_damage` to active stage enemy source CSVs and route it into enemy runtime data.
+
+### Goals
+
+- Add an authored Nexus damage value for Stage 1 and Stage 2 enemies.
+- Keep current enemies at 1 Nexus damage by default.
+- Keep CSV validation and runtime catalog sync passing after the schema extension.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The authored header uses existing snake_case CSV style: `nexus_damage`.
+- Parser lookup is case-insensitive, but active source authority records the snake_case column name.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, shape-checked, validated, and synced.
+
+### Next Actions
+
+- Change `nexus_damage` values in `stage_one_enemies.csv` or `stage_two_enemies.csv` when enemy-specific Nexus damage is designed.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/stage_one_enemies.csv` and `Pakuri/Assets/CSVdata/source/stage_two_enemies.csv` now include `nexus_damage` with value `1` on current enemy rows.
+- PowerShell field-count verification returned 27 header fields and no bad rows for both enemy CSV files.
+- PowerShell `Import-Csv` verification found no blank/invalid `nexus_damage` values in either enemy CSV.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.EnemyDataset.cs` reads optional `nexus_damage` with default `1`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs` maps `NexusDamage` into `EnemyDefinition`.
+- Unity menu `Pakuri/Validate CSV Source Data` logged a runtime catalog load with 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.
+- Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` logged a sync from `Assets/CSVdata/source` to `Assets/Resources/Pakuri/CSVRuntime`.
+
+### History
+
+- 2026-05-31: User requested a Nexus damage column for Stage 1 and Stage 2 enemy CSVs.
+- 2026-05-31: Code Builder added `nexus_damage`, mapped it through source CSV parsing/build, and synced runtime catalog assets.
+
+## Task: 2026-05-31 Stage2 Enemy Runtime Catalog And Stage Flow Connection
+
+### Task title
+
+Connect Stage 2 enemy source data to the runtime CSV catalog and active stage-flow CSVs.
+
+### Goals
+
+- Add Stage 2 enemy catalog/source loading beside the existing Stage 1 enemy runtime path.
+- Author Stage 2 day, encounter, and reward rows so `RunSession` stage advance can find Stage 2 data.
+- Keep Stage 1 enemy sprite paths valid after the old `Assets/Image/Stage1/Enemy` path was no longer present.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Stage 2 reward numbers currently copy the Stage 1 reward pattern because no separate Stage 2 reward-balance source was provided.
+- Stage 2 unit sprite paths remain blank; prefab visuals are connected through `NewRunScene` enemy prefab bindings.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and Unity CSV validation passed.
+
+### Next Actions
+
+- User verifies Stage 2 progression and spawn feel in Play Mode.
+- Replace copied Stage 2 reward values when Stage 2-specific economy balance is authored.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/catalog_stage_two_enemies.csv` now contains 8 Stage 2 enemy catalog entries.
+- `Pakuri/Assets/CSVdata/source/stage_two_enemies.csv` now uses runtime-supported Stage 2 passive IDs such as `FireDefenseUp`, `LightningDamageUp`, `IceDefenseUp`, and `HolyDefenseUp`.
+- `Pakuri/Assets/CSVdata/StageDay.csv` now contains 11 `stage=2` rows.
+- `Pakuri/Assets/CSVdata/StageEncounter.csv` now contains 30 `stage2-*` encounter rows.
+- `Pakuri/Assets/CSVdata/StageReward.csv` now contains `reward-stage2-normal`, `reward-stage2-midboss`, `reward-stage2-day10-midboss`, and `reward-stage2-boss`.
+- CSV field-count check returned no bad rows for `stage_one_enemies.csv`, `stage_two_enemies.csv`, `catalog_stage_two_enemies.csv`, `StageDay.csv`, `StageEncounter.csv`, and `StageReward.csv`.
+- Reference check returned `missingDayEncounter=`, `missingDayReward=`, `missingEncounterEnemy=`, `stage2Days=11`, and `stage2Encounters=30`.
+- Unity `Pakuri/Validate CSV Source Data` logged `PakuriCsvRuntimeData loaded runtime catalog ... with 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.`
+
+### History
+
+- 2026-05-31: User requested implementation of the Stage 2 passive/runtime/prefab/stage-flow connection after confirming `stage2-holy-priest.prefab` had the required actor and collider components.
+- 2026-05-31: Code Builder connected Stage 2 source CSVs to the runtime catalog, added Stage 2 stage-flow rows, and corrected moved Stage 1 sprite paths to the existing `Assets/Enemy/Stage1/Enemy/Stage1/*.png` assets so CSV validation could complete.
+
+## Task: 2026-05-31 Stage2 Enemy Data-Only Source CSV
+
+### Task title
+
+Create a data-only `stage_two_enemies.csv` source file using the current `stage_one_enemies.csv` shape.
+
+### Goals
+
+- Add the Stage 2 enemy reference data without connecting it to the runtime catalog yet.
+- Keep the column layout identical to `stage_one_enemies.csv`.
+- Copy `stage_one_skill`, `basic_skill`, `passive_skill_name`, `passive_skill_id`, and `passive_skill_value` from `stage_one_enemies.csv` by row order.
+- Fill `passive_summary` from `Pakuri/reference/5.enemy/stage-2-enemies.md`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The new CSV is intentionally runtime-unconnected data only.
+- No runtime catalog, source catalog asset, enum, skill, prefab, scene, or encounter wiring was changed.
+- Stage 2 sprite paths remain blank because no Stage 2 sprite asset paths were provided or inspected for this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and local CSV shape verified.
+
+### Next Actions
+
+- If Stage 2 should become runtime-loaded later, add explicit runtime catalog/source-catalog support and a Stage 2 encounter/spawn path instead of assuming this data-only CSV is loaded.
+- Later Stage 2 runtime work should decide whether enemy skills stay on `StageOneEnemySkillKind` placeholders or move to a stage-neutral enemy skill id path.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/stage_two_enemies.csv` was absent before creation; `Test-Path` returned `False` for both `stage_two_enemies.csv` and the typo path `stage_two_enemiese.csv`.
+- `Pakuri/Assets/CSVdata/source/stage_two_enemies.csv:1` now matches the `stage_one_enemies.csv` header.
+- `Pakuri/Assets/CSVdata/source/stage_two_enemies.csv:3` through `:10` contain the eight Stage 2 enemy rows from `Pakuri/reference/5.enemy/stage-2-enemies.md`.
+- PowerShell field-count verification returned `header=26 rows=10 bad=`.
+- PowerShell comparison against `stage_one_enemies.csv` returned `copied=True` for all eight Stage 2 rows for `stage_one_skill`, `basic_skill`, `passive_skill_name`, `passive_skill_id`, and `passive_skill_value`.
+
+### History
+
+- 2026-05-31: User requested a data-only Stage 2 enemy CSV, same shape as `stage_one_enemies.csv`, with selected Stage 1 skill/passive columns copied and only `passive_summary` adapted from the Stage 2 reference.
+- 2026-05-31: Code Builder created `stage_two_enemies.csv` without runtime hookup.
+
+## Task: 2026-05-31 Vega F-J Passive Shared CSV Authoring And Effect-Header Normalization
+
+### Task title
+
+Author Vega F-J passive rows on the active CSV authority and normalize the passive-effect CSV schema so the new shared columns validate in Unity.
+
+### Goals
+
+- Keep Vega F-J passive implementation inside the active source CSV files instead of adding a Vega-only companion table.
+- Author the required passive base/effect/trigger rows for Vega F-J.
+- Keep the new generic effect schema aligned between authored rows, header/type rows, and Unity runtime import.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- Active CSV scope stayed limited to `monster_skill_choices.csv`, `monster_skill_effects.csv`, `monster_skill_triger.csv`, and the already-active `monster_skills.csv`.
+- No new CSV file was added.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented, synced, and validation passed.
+
+### Next Actions
+
+- Reuse `required_source_status_id` / `required_source_status_min_stacks` on passive effect rows before adding new aura-specific CSV tables.
+- Reuse `status_conditional_incoming_skill_runtime_kinds` and `status_conditional_outgoing_skill_runtime_kinds` for future runtime-kind-specific damage modifiers before adding skill-specific hardcoding.
+- When bulk-editing imported CSV outside Unity, force an editor asset refresh before trusting `TextAsset`-backed validation results.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` header/type rows now contain 70 columns and include the new generic fields `required_source_status_id`, `required_source_status_min_stacks`, `status_conditional_incoming_skill_runtime_kinds`, and `status_conditional_outgoing_skill_runtime_kinds`.
+- The same effect CSV now contains the Vega passive rows that were previously absent:
+  - Vega-F at lines 114-117.
+  - Vega-G at lines 118-120.
+  - Vega-H at lines 122-125.
+  - Vega-I at lines 126-131.
+  - Vega-J at lines 132-133.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now contains the Vega passive trigger rows at lines 46-58, including the `event_skill_runtime_kinds=Area` filter used by `vega-i-area-cooldown-base`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now contains the Vega F-J `RuntimeImplemented` enhancement rows at lines 189-203 and the missing Vega-H `PassiveBase` row `vega-h-base-duration` at line 254.
+- The first Unity validation pass failed with `CsvFatalException: CSV file 'monster_skill_effects.csv' row 114 has 70 columns but expected 66.`
+- After normalizing the effect CSV header/type rows and forcing a Unity asset refresh, Unity menu `Pakuri/Validate CSV Source Data` logged `PakuriCsvRuntimeData loaded runtime catalog from resource source 'Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog' with 5 monsters and 8 stage-one enemies.`
+- Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` then logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-31: Vega F-J passive implementation added new generic effect fields and the final Vega passive rows in the active CSV set.
+- 2026-05-31: The first Unity validation attempt exposed that `monster_skill_effects.csv` data rows had already widened to 70 columns while the header/type rows were still 66 columns.
+- 2026-05-31: Code Builder normalized the effect CSV schema, forced Unity asset refresh, and re-ran validation/sync successfully.
+
+## Task: 2026-05-31 Vega-D Active Row Re-authoring For Overlap And Delayed Repeats
+
+### Task title
+
+Re-author the active Vega-D skill and master-1 choice rows so overlapping local AoE hits and delayed per-target repeats are expressed entirely in the existing CSV authority.
+
+### Goals
+
+- Keep Vega-D on `monster_skills.csv` and `monster_skill_choices.csv` without adding a new CSV column or a new companion table.
+- Express overlap-enabled local fanout through `hit_target_count=global`.
+- Express base plus two delayed extra hits through `repeat_count_per_target=2` and `repeat_interval_seconds=0.5`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active CSV authority stayed limited to `monster_skills.csv` and `monster_skill_choices.csv` for this task.
+- No CSV schema change was needed.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, synced, and validation passed.
+
+### Next Actions
+
+- Reuse the same row pattern when another shared `SingleAttack` fanout skill needs overlap stacking at each resolved center.
+- Reuse repeat-per-target authoring before adding a parallel trigger row when the desired pattern is still “immediate base hit plus delayed extra repeats at the same center.”
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` line `vega-d` now sets `hit_target_count=global` while preserving the existing marked-target fanout fields and prefab path.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` line `vega-d-master-1` now sets `description_text=각 표식 대상 위치에 범위 참격 2회 추가 발생, 각 참격 위력 -35%`, `repeat_count_per_target=2`, and `repeat_interval_seconds=0.5`.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skills.csv` confirmed `vega-d.hit_target_count=global`.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv` confirmed `vega-d-master-1.repeat_count_per_target=2`, `repeat_interval_seconds=0.5`, and `repeat_damage_multiplier=1`.
+- Unity menu `Pakuri/Validate CSV Source Data` loaded the runtime catalog, and Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-31: Earlier same-day Vega-D row authoring had left `hit_target_count` blank and `repeat_count_per_target=1`, which matched the temporary single-target local-hit interpretation.
+- 2026-05-31: User then requested overlap-enabled area damage and two delayed extra slashes, so Code Builder updated the active rows without widening schema or runtime scope.
+
+## Task: 2026-05-31 Vega-E Shared Choice/Skill CSV Extension And Active Row Authoring
+
+### Task title
+
+Extend the active monster skill CSV schema for reusable marked-target execution data, then author Vega E on that shared path.
+
+### Goals
+
+- Keep Vega E on the active `monster_skills.csv` and `monster_skill_choices.csv` authority instead of introducing a Vega-only companion table.
+- Add only the shared columns needed for marked-target selection, target-status-stack damage, partial target-status consumption, conditional crit, and consumed-status redistribution.
+- Keep unsupported row state explicit when reference authority is still incomplete.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- Active CSV authority stayed limited to `monster_skills.csv` and `monster_skill_choices.csv` for this task.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented, synced, and validation passed. Vega-E trait-5 row is now fully authored with the user-provided nearby-search values.
+
+### Next Actions
+
+- Reuse the new target-selection, target-stack-damage, consume, conditional-crit, and redistribution columns for future shared marked-target finishers before adding another skill CSV.
+- Reuse the same `redistribute_consumed_status_search_radius` plus `redistribute_consumed_status_target_count` pair when future skills need bounded redistribution instead of inventing a new spread schema.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` header now includes `target_selection_status_id`, `target_selection_status_min_stacks`, `target_status_stack_status_id`, `target_status_stack_max_stacks`, `target_status_stack_base_damage`, `target_status_stack_attack_power_coefficient`, `target_status_stack_spell_power_coefficient`, `consume_target_status_id`, `consume_target_status_ratio`, and `consume_target_status_stacks`.
+- The same skill CSV now authors `vega-e` with `target_selection=HighestStacks`, `target_selection_status_id=name-mark`, `target_selection_status_min_stacks=1`, `target_status_stack_status_id=name-mark`, `target_status_stack_base_damage=6`, `target_status_stack_attack_power_coefficient=0.18`, `consume_target_status_id=name-mark`, `consume_target_status_ratio=0.5`, and `skill_effect_prefab_path=Assets/Prefab/Skill/Vega/Vega_E.prefab`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` header now includes `target_status_stack_damage_multiplier`, `consume_target_status_ratio_override`, `consume_target_status_stacks_override`, `conditional_crit_chance_bonus`, `conditional_crit_target_status_id`, `conditional_crit_target_status_min_stacks`, `redistribute_consumed_status_ratio_on_kill`, `redistribute_consumed_status_id`, `redistribute_consumed_status_search_radius`, and `redistribute_consumed_status_target_count`.
+- The same choice CSV now authors `vega-e-trait-1`, `trait-2`, `trait-3`, `trait-4`, `trait-5`, `master-1`, and `master-2` as `RuntimeImplemented`; `vega-e-trait-5` now includes `redistribute_consumed_status_ratio_on_kill=0.25`, `redistribute_consumed_status_id=name-mark`, `redistribute_consumed_status_search_radius=100`, and `redistribute_consumed_status_target_count=1`.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\source\monster_skill_choices.csv` confirmed the corrected Vega E row alignment after the first failed validation pass.
+- Unity menu `Pakuri/Validate CSV Source Data` loaded the runtime catalog, and Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-31: Code Builder first extended the shared active CSV schema for Vega E and authored the active rows.
+- 2026-05-31: Initial Unity validation exposed a malformed Vega E row alignment in `monster_skill_choices.csv`; Builder corrected the row shape and re-ran validation/sync successfully.
+- 2026-05-31: User then supplied the remaining trait-5 nearby-search authority and final Vega-E prefab path, so Skill Builder finished the active row authoring without another schema change.
+
 ## Task: 2026-05-30 Vega C/D Shared CSV Schema Extension And Active Row Authoring
 
 ### Task title

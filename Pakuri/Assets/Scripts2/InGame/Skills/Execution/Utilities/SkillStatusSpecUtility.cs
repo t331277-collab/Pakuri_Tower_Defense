@@ -95,6 +95,53 @@ namespace Pakuri.InGame
             };
         }
 
+        internal static ProjectileStatusHitSpec CreateDirectStatusSpec(
+            string statusId,
+            int stacks,
+            SkillExecutionSnapshot snapshot)
+        {
+            if (string.IsNullOrWhiteSpace(statusId)
+                || stacks <= 0
+                || !StatusEffectUtility.TryParse(statusId, out var kind))
+            {
+                return null;
+            }
+
+            var statusData = ResolveStatusData(StatusEffectRuntime.CreateStatusData(kind, null), kind, snapshot);
+            if (statusData == null)
+            {
+                return null;
+            }
+
+            var definition = StatusEffectUtility.GetDefinition(kind);
+            var duration = statusData.Duration > 0f ? statusData.Duration : definition.DefaultDurationSeconds;
+            var targetedDurationBonus = ResolveStatusDurationBonus(snapshot, statusData, kind);
+            if (!Mathf.Approximately(targetedDurationBonus, 0f))
+            {
+                duration = Mathf.Max(0f, duration + targetedDurationBonus);
+            }
+
+            var maxStacks = statusData.MaxStacks > 0 ? statusData.MaxStacks : definition.DefaultMaxStacks;
+            var targetedMaxStacksBonus = ResolveStatusMaxStacksBonus(snapshot, statusData, kind);
+            if (targetedMaxStacksBonus != 0)
+            {
+                maxStacks = Mathf.Max(0, maxStacks + targetedMaxStacksBonus);
+            }
+
+            return new ProjectileStatusHitSpec
+            {
+                Enabled = true,
+                Kind = kind,
+                StatusData = statusData,
+                Chance = 1f,
+                Stacks = Mathf.Max(1, stacks),
+                DurationSeconds = duration,
+                MaxStacks = maxStacks,
+                Permanent = statusData.Permanent && duration <= 0f,
+                RefreshDuration = true
+            };
+        }
+
         internal static StatusEffectData ResolveStatusData(
             StatusEffectData statusData,
             StatusEffectKind kind,

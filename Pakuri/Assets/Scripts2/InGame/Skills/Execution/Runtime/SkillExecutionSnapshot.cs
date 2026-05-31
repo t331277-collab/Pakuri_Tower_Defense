@@ -115,12 +115,23 @@ namespace Pakuri.InGame
         public string ThresholdStatusId { get; private set; }
         public int ThresholdStatusMinStacks { get; private set; }
         public string ThresholdApplyStatusId { get; private set; }
+        public float TargetStatusStackDamageMultiplier { get; private set; } = 1f;
+        public bool HasConsumeTargetStatusRatioOverride { get; private set; }
+        public float ConsumeTargetStatusRatioOverride { get; private set; }
+        public bool HasConsumeTargetStatusStacksOverride { get; private set; }
+        public int ConsumeTargetStatusStacksOverride { get; private set; }
+        public float RedistributeConsumedStatusRatioOnKill { get; private set; }
+        public string RedistributeConsumedStatusId { get; private set; }
+        public float RedistributeConsumedStatusSearchRadius { get; private set; }
+        public int RedistributeConsumedStatusTargetCount { get; private set; }
         public GameObject SkillEffectPrefab { get; private set; }
         private readonly HashSet<string> activeChoiceIds = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, float> statusDurationBonuses = new Dictionary<string, float>(System.StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, int> statusMaxStacksBonuses = new Dictionary<string, int>(System.StringComparer.OrdinalIgnoreCase);
         private readonly List<ConditionalDamageRule> conditionalDamageRules = new List<ConditionalDamageRule>();
+        private readonly List<ConditionalCritChanceRule> conditionalCritChanceRules = new List<ConditionalCritChanceRule>();
         private readonly List<BurstDamageRule> burstDamageRules = new List<BurstDamageRule>();
+        private readonly List<BurstStatusRule> burstStatusRules = new List<BurstStatusRule>();
 
         public bool HasBranchBehavior =>
             BranchChanceBonus > 0f
@@ -221,6 +232,13 @@ namespace Pakuri.InGame
                 burstDamageRules.Add(new BurstDamageRule(
                     spec.BurstDamageProjectileIndex,
                     spec.BurstDamageMultiplier));
+            }
+
+            if (spec.HasBurstStatusProjectileIndex && spec.BurstStatusStacksBonus != 0)
+            {
+                burstStatusRules.Add(new BurstStatusRule(
+                    spec.BurstStatusProjectileIndex,
+                    spec.BurstStatusStacksBonus));
             }
 
             if (spec.FollowUpProjectileCount > 0)
@@ -456,6 +474,23 @@ namespace Pakuri.InGame
                 ThresholdApplyStatusId = spec.ThresholdApplyStatusId;
             }
 
+            if (spec.HasTargetStatusStackDamageMultiplier && spec.TargetStatusStackDamageMultiplier > 0f)
+            {
+                TargetStatusStackDamageMultiplier *= PositiveOrDefault(spec.TargetStatusStackDamageMultiplier, 1f);
+            }
+
+            if (spec.HasConsumeTargetStatusRatioOverride)
+            {
+                HasConsumeTargetStatusRatioOverride = true;
+                ConsumeTargetStatusRatioOverride = Mathf.Clamp01(spec.ConsumeTargetStatusRatioOverride);
+            }
+
+            if (spec.HasConsumeTargetStatusStacksOverride)
+            {
+                HasConsumeTargetStatusStacksOverride = true;
+                ConsumeTargetStatusStacksOverride = Mathf.Max(0, spec.ConsumeTargetStatusStacksOverride);
+            }
+
             if (spec.HasConditionalDamageMultiplier
                 && spec.ConditionalDamageMultiplier > 0f
                 && !string.IsNullOrWhiteSpace(spec.ConditionalTargetStatusId)
@@ -465,6 +500,26 @@ namespace Pakuri.InGame
                     spec.ConditionalDamageMultiplier,
                     spec.ConditionalTargetStatusId,
                     spec.ConditionalTargetStatusMinStacks));
+            }
+
+            if (!Mathf.Approximately(spec.ConditionalCritChanceBonus, 0f)
+                && !string.IsNullOrWhiteSpace(spec.ConditionalCritTargetStatusId)
+                && spec.ConditionalCritTargetStatusMinStacks > 0)
+            {
+                conditionalCritChanceRules.Add(new ConditionalCritChanceRule(
+                    spec.ConditionalCritChanceBonus,
+                    spec.ConditionalCritTargetStatusId,
+                    spec.ConditionalCritTargetStatusMinStacks));
+            }
+
+            if (spec.RedistributeConsumedStatusRatioOnKill > 0f
+                && !string.IsNullOrWhiteSpace(spec.RedistributeConsumedStatusId)
+                && spec.RedistributeConsumedStatusSearchRadius > 0f)
+            {
+                RedistributeConsumedStatusRatioOnKill = Mathf.Clamp01(spec.RedistributeConsumedStatusRatioOnKill);
+                RedistributeConsumedStatusId = spec.RedistributeConsumedStatusId;
+                RedistributeConsumedStatusSearchRadius = Mathf.Max(0f, spec.RedistributeConsumedStatusSearchRadius);
+                RedistributeConsumedStatusTargetCount = Mathf.Max(0, spec.RedistributeConsumedStatusTargetCount);
             }
 
             if (spec.ConsecutiveHitBonusRate > 0f)
@@ -532,6 +587,9 @@ namespace Pakuri.InGame
                 BurstDamageProjectileIndex = choice.BurstDamageProjectileIndex,
                 HasBurstDamageMultiplier = choice.HasBurstDamageMultiplier,
                 BurstDamageMultiplier = choice.BurstDamageMultiplier,
+                HasBurstStatusProjectileIndex = choice.HasBurstStatusProjectileIndex,
+                BurstStatusProjectileIndex = choice.BurstStatusProjectileIndex,
+                BurstStatusStacksBonus = choice.BurstStatusStacksBonus,
                 FollowUpProjectileCount = choice.FollowUpProjectileCount,
                 FollowUpProjectileDelaySeconds = choice.FollowUpProjectileDelaySeconds,
                 FollowUpProjectileDamageMultiplier = choice.FollowUpProjectileDamageMultiplier,
@@ -582,10 +640,23 @@ namespace Pakuri.InGame
                 ThresholdStatusId = choice.ThresholdStatusId,
                 ThresholdStatusMinStacks = choice.ThresholdStatusMinStacks,
                 ThresholdApplyStatusId = choice.ThresholdApplyStatusId,
+                HasTargetStatusStackDamageMultiplier = choice.HasTargetStatusStackDamageMultiplier,
+                TargetStatusStackDamageMultiplier = choice.TargetStatusStackDamageMultiplier,
+                HasConsumeTargetStatusRatioOverride = choice.HasConsumeTargetStatusRatioOverride,
+                ConsumeTargetStatusRatioOverride = choice.ConsumeTargetStatusRatioOverride,
+                HasConsumeTargetStatusStacksOverride = choice.HasConsumeTargetStatusStacksOverride,
+                ConsumeTargetStatusStacksOverride = choice.ConsumeTargetStatusStacksOverride,
                 HasConditionalDamageMultiplier = choice.HasConditionalDamageMultiplier,
                 ConditionalDamageMultiplier = choice.ConditionalDamageMultiplier,
                 ConditionalTargetStatusId = choice.ConditionalTargetStatusId,
                 ConditionalTargetStatusMinStacks = choice.ConditionalTargetStatusMinStacks,
+                ConditionalCritChanceBonus = choice.ConditionalCritChanceBonus,
+                ConditionalCritTargetStatusId = choice.ConditionalCritTargetStatusId,
+                ConditionalCritTargetStatusMinStacks = choice.ConditionalCritTargetStatusMinStacks,
+                RedistributeConsumedStatusRatioOnKill = choice.RedistributeConsumedStatusRatioOnKill,
+                RedistributeConsumedStatusId = choice.RedistributeConsumedStatusId,
+                RedistributeConsumedStatusSearchRadius = choice.RedistributeConsumedStatusSearchRadius,
+                RedistributeConsumedStatusTargetCount = choice.RedistributeConsumedStatusTargetCount,
                 CountStatusId = choice.CountStatusId,
                 CountTargetSide = choice.CountTargetSide,
                 DamageMultiplierPerCount = choice.DamageMultiplierPerCount,
@@ -678,6 +749,28 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
+        public float ResolveConditionalCritChanceBonus(BaseUnitRuntimeModel target)
+        {
+            if (target == null || conditionalCritChanceRules.Count == 0)
+            {
+                return 0f;
+            }
+
+            var bonus = 0f;
+            for (var i = 0; i < conditionalCritChanceRules.Count; i++)
+            {
+                var rule = conditionalCritChanceRules[i];
+                if (!HasRequiredStacks(target, rule.StatusId, rule.MinStacks))
+                {
+                    continue;
+                }
+
+                bonus += rule.CritChanceBonus;
+            }
+
+            return bonus;
+        }
+
         public float ResolveBurstDamageMultiplier(int projectileIndex, int burstProjectileCount)
         {
             if (projectileIndex <= 0 || burstDamageRules.Count == 0)
@@ -698,6 +791,28 @@ namespace Pakuri.InGame
             }
 
             return multiplier;
+        }
+
+        public int ResolveBurstStatusStacksBonus(int projectileIndex, int burstProjectileCount)
+        {
+            if (projectileIndex <= 0 || burstStatusRules.Count == 0)
+            {
+                return 0;
+            }
+
+            var bonus = 0;
+            for (var i = 0; i < burstStatusRules.Count; i++)
+            {
+                var rule = burstStatusRules[i];
+                if (!MatchesBurstProjectileIndex(rule.ProjectileIndex, projectileIndex, burstProjectileCount))
+                {
+                    continue;
+                }
+
+                bonus += rule.StacksBonus;
+            }
+
+            return bonus;
         }
 
         private static bool HasRequiredStacks(BaseUnitRuntimeModel target, string statusId, int minimumStacks)
@@ -749,6 +864,20 @@ namespace Pakuri.InGame
             public int MinStacks { get; }
         }
 
+        private readonly struct ConditionalCritChanceRule
+        {
+            public ConditionalCritChanceRule(float critChanceBonus, string statusId, int minStacks)
+            {
+                CritChanceBonus = critChanceBonus;
+                StatusId = statusId;
+                MinStacks = minStacks;
+            }
+
+            public float CritChanceBonus { get; }
+            public string StatusId { get; }
+            public int MinStacks { get; }
+        }
+
         private readonly struct BurstDamageRule
         {
             public BurstDamageRule(int projectileIndex, float damageMultiplier)
@@ -759,6 +888,18 @@ namespace Pakuri.InGame
 
             public int ProjectileIndex { get; }
             public float DamageMultiplier { get; }
+        }
+
+        private readonly struct BurstStatusRule
+        {
+            public BurstStatusRule(int projectileIndex, int stacksBonus)
+            {
+                ProjectileIndex = projectileIndex;
+                StacksBonus = stacksBonus;
+            }
+
+            public int ProjectileIndex { get; }
+            public int StacksBonus { get; }
         }
     }
 }

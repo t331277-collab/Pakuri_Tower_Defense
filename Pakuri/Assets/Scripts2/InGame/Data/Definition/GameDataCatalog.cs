@@ -8,6 +8,7 @@ namespace Pakuri.Data
     {
         public MonsterDefinition[] Monsters = Array.Empty<MonsterDefinition>();
         public EnemyDefinition[] StageOneEnemies = Array.Empty<EnemyDefinition>();
+        public EnemyDefinition[] StageTwoEnemies = Array.Empty<EnemyDefinition>();
         public StatusEffectDefinitionData[] StatusEffects = Array.Empty<StatusEffectDefinitionData>();
 
         public MonsterDefinition GetMonsterById(string monsterId)
@@ -36,14 +37,30 @@ namespace Pakuri.Data
 
         public EnemyDefinition GetStageOneEnemyById(string enemyId)
         {
-            if (string.IsNullOrWhiteSpace(enemyId) || StageOneEnemies == null)
+            return GetEnemyById(enemyId, StageOneEnemies);
+        }
+
+        public EnemyDefinition GetStageTwoEnemyById(string enemyId)
+        {
+            return GetEnemyById(enemyId, StageTwoEnemies);
+        }
+
+        public EnemyDefinition GetEnemyById(string enemyId)
+        {
+            var enemy = GetEnemyById(enemyId, StageOneEnemies);
+            return enemy != null ? enemy : GetEnemyById(enemyId, StageTwoEnemies);
+        }
+
+        private static EnemyDefinition GetEnemyById(string enemyId, EnemyDefinition[] enemies)
+        {
+            if (string.IsNullOrWhiteSpace(enemyId) || enemies == null)
             {
                 return null;
             }
 
-            for (var i = 0; i < StageOneEnemies.Length; i++)
+            for (var i = 0; i < enemies.Length; i++)
             {
-                var enemy = StageOneEnemies[i];
+                var enemy = enemies[i];
                 if (enemy == null)
                 {
                     continue;

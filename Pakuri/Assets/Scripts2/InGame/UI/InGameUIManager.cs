@@ -530,7 +530,7 @@ namespace Pakuri.InGame
     internal sealed class OfferingUI
     {
         private const int MaxOfferingChoices = 3;
-        private const int MaxRunActiveSkillCount = 5;
+        private const int MaxAdditionalActiveSkillCount = 2;
         private const int MaxRunPassiveSkillCount = 5;
 
         private readonly System.Collections.Generic.List<OfferingChoiceView> offeringChoices =
@@ -682,7 +682,9 @@ namespace Pakuri.InGame
 
         private void AddActiveSkillChoices(RunSession session, MonsterDefinition monster, RunSession.RunMonsterState state)
         {
-            if (monster == null || state == null || state.LearnedActives.Count >= MaxRunActiveSkillCount)
+            if (monster == null
+                || state == null
+                || CountLearnedAdditionalActiveSkills(monster, state) >= MaxAdditionalActiveSkillCount)
             {
                 return;
             }
@@ -700,8 +702,11 @@ namespace Pakuri.InGame
                 {
                     Kind = OfferingChoiceKind.ActiveSkill,
                     MonsterId = state.MonsterId,
+                    ChoiceId = skill.SkillId,
                     ActiveSkillId = skill.SkillId,
-                    Title = $"{monster.DisplayName} · {skill.DisplayName}",
+                    Summary = monster.DisplayName,
+                    SkillName = ResolveChoiceDisplayName(skill.DisplayName, skill.SkillId),
+                    Title = $"{monster.DisplayName} · {ResolveChoiceDisplayName(skill.DisplayName, skill.SkillId)}",
                     Description = ResolveDescription(skill.Summary, skill.DescriptionText, skill.SkillId),
                     Icon = skill.SkillIcon
                 });
@@ -733,8 +738,11 @@ namespace Pakuri.InGame
                 {
                     Kind = OfferingChoiceKind.PassiveSkill,
                     MonsterId = state.MonsterId,
+                    ChoiceId = passive.PassiveId,
                     PassiveSkillId = passive.PassiveId,
-                    Title = $"{monster.DisplayName} · {passive.DisplayName}",
+                    Summary = monster.DisplayName,
+                    SkillName = ResolveChoiceDisplayName(passive.DisplayName, passive.PassiveId),
+                    Title = $"{monster.DisplayName} · {ResolveChoiceDisplayName(passive.DisplayName, passive.PassiveId)}",
                     Description = ResolveDescription(passive.Summary, passive.DescriptionText, passive.PassiveId),
                     Icon = passive.SkillIcon
                 });
@@ -764,6 +772,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
+                var skillName = BuildEnhancementSkillName(monster, reward, choiceData);
                 offeringChoices.Add(new OfferingChoiceView
                 {
                     Kind = OfferingChoiceKind.Enhancement,
@@ -772,7 +781,9 @@ namespace Pakuri.InGame
                     ChoiceId = reward.RewardId,
                     ActiveSkillId = reward.ActiveSkillId,
                     PassiveSkillId = reward.PassiveSkillId,
-                    Title = $"{monster.DisplayName} · {choiceData.Title}",
+                    Summary = monster.DisplayName,
+                    SkillName = skillName,
+                    Title = $"{monster.DisplayName} · {skillName}",
                     Description = ResolveDescription(null, choiceData.DescriptionText, choiceData.ChoiceId),
                     Icon = ResolveChoiceIcon(choiceData),
                     DamageMultiplier = choiceData.HasDamageMultiplier ? choiceData.DamageMultiplier : 1f,
@@ -830,6 +841,99 @@ namespace Pakuri.InGame
             }
 
             return null;
+        }
+
+        private static string BuildEnhancementSkillName(
+            MonsterDefinition monster,
+            MonsterDefinition.RewardChoiceDefinition reward,
+            SkillChoiceDefinition choice)
+        {
+            var sourceName = ResolveLinkedSkillDisplayName(monster, reward, choice);
+            var choiceTitle = choice != null && !string.IsNullOrWhiteSpace(choice.Title)
+                ? choice.Title.Trim()
+                : choice != null
+                    ? choice.ChoiceId
+                    : string.Empty;
+
+            if (string.IsNullOrWhiteSpace(sourceName))
+            {
+                return ResolveChoiceDisplayName(choiceTitle, choice != null ? choice.ChoiceId : string.Empty);
+            }
+
+            return string.IsNullOrWhiteSpace(choiceTitle) ? sourceName : $"{sourceName}·{choiceTitle}";
+        }
+
+        private static string ResolveLinkedSkillDisplayName(
+            MonsterDefinition monster,
+            MonsterDefinition.RewardChoiceDefinition reward,
+            SkillChoiceDefinition choice)
+        {
+            var targetSkillId = choice != null ? choice.TargetSkillId : string.Empty;
+            var choiceSkillId = choice != null ? choice.SkillId : string.Empty;
+            var rewardActiveSkillId = reward != null ? reward.ActiveSkillId : string.Empty;
+            var rewardPassiveSkillId = reward != null ? reward.PassiveSkillId : string.Empty;
+            var id = !string.IsNullOrWhiteSpace(targetSkillId)
+                ? targetSkillId
+                : !string.IsNullOrWhiteSpace(choiceSkillId)
+                    ? choiceSkillId
+                    : !string.IsNullOrWhiteSpace(rewardActiveSkillId)
+                        ? rewardActiveSkillId
+                        : rewardPassiveSkillId;
+
+            return ResolveSkillDisplayName(monster, id);
+        }
+
+        private static string ResolveSkillDisplayName(MonsterDefinition monster, string skillId)
+        {
+            if (string.IsNullOrWhiteSpace(skillId))
+            {
+                return string.Empty;
+            }
+
+            if (monster != null && monster.ActiveSkills != null)
+            {
+                for (var i = 0; i < monster.ActiveSkills.Length; i++)
+                {
+                    var skill = monster.ActiveSkills[i];
+                    if (skill != null && string.Equals(skill.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return ResolveChoiceDisplayName(skill.DisplayName, skill.SkillId);
+                    }
+                }
+            }
+
+            if (monster != null && monster.PassiveSkills != null)
+            {
+                for (var i = 0; i < monster.PassiveSkills.Length; i++)
+                {
+                    var passive = monster.PassiveSkills[i];
+                    if (passive != null && string.Equals(passive.PassiveId, skillId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return ResolveChoiceDisplayName(passive.DisplayName, passive.PassiveId);
+                    }
+                }
+            }
+
+            var manager = PakuriDataManager.Instance;
+            if (manager != null)
+            {
+                if (manager.TryGetData(skillId, out SkillDefinition activeSkill) && activeSkill != null)
+                {
+                    return ResolveChoiceDisplayName(activeSkill.DisplayName, activeSkill.SkillId);
+                }
+
+                if (manager.TryGetData(skillId, out PassiveDefinition passiveSkill) && passiveSkill != null)
+                {
+                    return ResolveChoiceDisplayName(passiveSkill.DisplayName, passiveSkill.PassiveId);
+                }
+            }
+
+            return skillId;
+        }
+
+        private static string ResolveChoiceDisplayName(string displayName, string fallback)
+        {
+            return string.IsNullOrWhiteSpace(displayName) ? fallback : displayName.Trim();
         }
 
         private static bool IsRewardChoiceAvailableForState(
@@ -926,6 +1030,31 @@ namespace Pakuri.InGame
                     SkillRuntimeFactory.RebuildLearnedActiveSet(model, skillCatalog);
                     combatManager.RefreshUnitActor(model);
                 }
+            }
+
+            RefreshSceneMonsterActorSkillModels(session, skillCatalog);
+        }
+
+        private static void RefreshSceneMonsterActorSkillModels(RunSession session, InGameSkillCatalog skillCatalog)
+        {
+            var actors = Resources.FindObjectsOfTypeAll<MonsterUnitActor>();
+            for (var i = 0; i < actors.Length; i++)
+            {
+                var actor = actors[i];
+                if (actor == null || actor.gameObject == null || !actor.gameObject.scene.IsValid())
+                {
+                    continue;
+                }
+
+                var model = actor.Model;
+                if (model == null)
+                {
+                    continue;
+                }
+
+                SyncModelStateFromSession(session, model);
+                SkillRuntimeFactory.RebuildLearnedActiveSet(model, skillCatalog);
+                actor.RefreshDebugView();
             }
         }
 
@@ -1036,6 +1165,49 @@ namespace Pakuri.InGame
             return count;
         }
 
+        private static int CountLearnedAdditionalActiveSkills(MonsterDefinition monster, RunSession.RunMonsterState state)
+        {
+            if (monster == null || state == null || state.LearnedActives == null || state.LearnedActives.Count == 0)
+            {
+                return 0;
+            }
+
+            var count = 0;
+            for (var i = 0; i < state.LearnedActives.Count; i++)
+            {
+                var skillId = state.LearnedActives[i];
+                if (string.IsNullOrWhiteSpace(skillId) || IsDefaultActiveSkill(monster, skillId))
+                {
+                    continue;
+                }
+
+                count++;
+            }
+
+            return count;
+        }
+
+        private static bool IsDefaultActiveSkill(MonsterDefinition monster, string skillId)
+        {
+            if (monster == null || monster.ActiveSkills == null || string.IsNullOrWhiteSpace(skillId))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < monster.ActiveSkills.Length; i++)
+            {
+                var skill = monster.ActiveSkills[i];
+                if (skill == null || !string.Equals(skill.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                return skill.IsDefaultLearned || skill.Slot == SkillSlot.A;
+            }
+
+            return false;
+        }
+
         private static OfferingButtonView[] ResolveButtonViews(Button[] buttons)
         {
             if (buttons == null || buttons.Length == 0)
@@ -1059,7 +1231,17 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (view.TitleLabel != null)
+            if (view.SummaryLabel != null)
+            {
+                view.SummaryLabel.text = choice.Summary;
+            }
+
+            if (view.SkillNameLabel != null)
+            {
+                view.SkillNameLabel.text = choice.SkillName;
+            }
+
+            if (view.TitleLabel != null && view.SkillNameLabel == null)
             {
                 view.TitleLabel.text = choice.Title;
             }
@@ -1069,7 +1251,7 @@ namespace Pakuri.InGame
                 view.DescriptionLabel.text = choice.Description;
             }
 
-            if (view.FallbackLabel != null && view.DescriptionLabel == null)
+            if (view.FallbackLabel != null && view.DescriptionLabel == null && view.SkillNameLabel == null)
             {
                 view.FallbackLabel.text = $"{choice.Title}\n{choice.Description}";
             }
@@ -1108,6 +1290,8 @@ namespace Pakuri.InGame
             public string ChoiceId;
             public string ActiveSkillId;
             public string PassiveSkillId;
+            public string Summary;
+            public string SkillName;
             public string Title;
             public string Description;
             public Sprite Icon;
@@ -1122,6 +1306,8 @@ namespace Pakuri.InGame
         private sealed class OfferingButtonView
         {
             public Button Button;
+            public TMP_Text SummaryLabel;
+            public TMP_Text SkillNameLabel;
             public TMP_Text TitleLabel;
             public TMP_Text DescriptionLabel;
             public TMP_Text FallbackLabel;
@@ -1137,6 +1323,8 @@ namespace Pakuri.InGame
                 var view = new OfferingButtonView
                 {
                     Button = button,
+                    SummaryLabel = FindChildComponent<TMP_Text>(button.transform, "Summary"),
+                    SkillNameLabel = FindChildComponent<TMP_Text>(button.transform, "SkillName"),
                     TitleLabel = FindChildComponent<TMP_Text>(button.transform, "Text (TMP)"),
                     DescriptionLabel = FindChildComponent<TMP_Text>(button.transform, "Desc"),
                     IconImage = FindChildComponent<Image>(button.transform, "Icon")

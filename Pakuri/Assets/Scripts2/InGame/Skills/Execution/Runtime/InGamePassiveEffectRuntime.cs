@@ -106,11 +106,40 @@ namespace Pakuri.InGame
                     continue;
                 }
 
+                if (!MeetsSourceStatusRequirement(choice, owner))
+                {
+                    continue;
+                }
+
                 snapshot.AddActiveChoiceId(choice.ChoiceId);
                 snapshot.ApplyChoiceDefinition(choice);
             }
 
             return snapshot;
+        }
+
+        private static bool MeetsSourceStatusRequirement(SkillChoiceDefinition choice, BaseUnitRuntimeModel owner)
+        {
+            if (choice == null || string.IsNullOrWhiteSpace(choice.RequiredSourceStatusId))
+            {
+                return true;
+            }
+
+            if (!StatusEffectUtility.TryParse(choice.RequiredSourceStatusId, out var kind))
+            {
+                return false;
+            }
+
+            if (kind == StatusEffectKind.Shield)
+            {
+                return owner != null
+                    && owner.Resources != null
+                    && owner.Resources.CurrentShield > 0f;
+            }
+
+            return owner != null
+                && owner.Statuses != null
+                && owner.Statuses.GetStacks(kind) >= Mathf.Max(1, choice.RequiredSourceStatusMinStacks);
         }
 
         private static bool HasAllLearnedPassives(MonsterUnitRuntimeModel owner, string passiveList)

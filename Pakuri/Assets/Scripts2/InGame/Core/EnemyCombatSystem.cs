@@ -74,6 +74,12 @@ namespace Pakuri.InGame
                     : null;
             }
 
+            if (EnemyTargeting.IsNexus(target))
+            {
+                TickNexusAssault(enemyEntry, enemyModel, target, combatManager, deltaTime);
+                return;
+            }
+
             var specialSkill = EnemyCombatRules.ResolveSpecialSkill(enemyModel);
             var canAct = StatusEffectRuntime.CanAct(enemyModel);
             var canUseSpecialSkill = canAct && StatusEffectRuntime.CanUseSpecialSkill(enemyModel);
@@ -180,6 +186,59 @@ namespace Pakuri.InGame
             var targetPosition = target.Transform.position;
             targetPosition.z = current.z;
             enemyEntry.Transform.position = Vector3.MoveTowards(current, targetPosition, moveSpeed * deltaTime);
+        }
+
+        private static void TickNexusAssault(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterEntry nexusTarget,
+            InGameCombatManager combatManager,
+            float deltaTime)
+        {
+            if (enemyEntry == null || enemyModel == null || nexusTarget == null || combatManager == null)
+            {
+                return;
+            }
+
+            if (!IsTouchingNexus(enemyEntry, nexusTarget))
+            {
+                if (StatusEffectRuntime.CanMove(enemyModel))
+                {
+                    MoveToward(enemyEntry, nexusTarget, enemyModel, deltaTime);
+                }
+
+                return;
+            }
+
+            var damage = Mathf.Max(1f, enemyModel.NexusDamage);
+            combatManager.ApplyDamage(nexusTarget.Model, damage, DamageAttribute.Physical, enemyModel, false);
+            combatManager.DespawnUnit(enemyModel);
+        }
+
+        private static bool IsTouchingNexus(UnitRosterEntry enemyEntry, UnitRosterEntry nexusTarget)
+        {
+            if (enemyEntry == null || nexusTarget == null || enemyEntry.Transform == null || nexusTarget.Transform == null)
+            {
+                return false;
+            }
+
+            var enemyPoint = enemyEntry.ResolveTargetPoint();
+            var targetColliders = nexusTarget.GetHitboxColliders();
+            for (var i = 0; i < targetColliders.Length; i++)
+            {
+                var collider = targetColliders[i];
+                if (collider != null && collider.enabled && collider.OverlapPoint(enemyPoint))
+                {
+                    return true;
+                }
+            }
+
+            if (UnitHitboxUtility.IsTargetInsideHitbox(enemyEntry.GetHitboxColliders(), nexusTarget))
+            {
+                return true;
+            }
+
+            return Vector2.Distance(enemyEntry.Transform.position, nexusTarget.Transform.position) <= 0.25f;
         }
 
         private EnemyCombatState GetState(EnemyUnitRuntimeModel enemyModel)
@@ -741,10 +800,7 @@ namespace Pakuri.InGame
             }
 
             var multiplier = Mathf.Max(0f, enemyModel.PassiveOutgoingDamageMultiplier);
-            if (attribute == DamageAttribute.Physical)
-            {
-                multiplier *= Mathf.Max(0f, enemyModel.PassivePhysicalDamageMultiplier);
-            }
+            multiplier *= ResolvePassiveAttributeDamageMultiplier(enemyModel, attribute);
 
             if (enemyModel.OutgoingDamageMultiplierRemainingSeconds > 0f)
             {
@@ -752,6 +808,30 @@ namespace Pakuri.InGame
             }
 
             return multiplier;
+        }
+
+        private static float ResolvePassiveAttributeDamageMultiplier(EnemyUnitRuntimeModel enemyModel, DamageAttribute attribute)
+        {
+            if (enemyModel == null)
+            {
+                return 1f;
+            }
+
+            switch (attribute)
+            {
+                case DamageAttribute.Fire:
+                    return Mathf.Max(0f, enemyModel.PassiveFireDamageMultiplier);
+                case DamageAttribute.Lightning:
+                    return Mathf.Max(0f, enemyModel.PassiveLightningDamageMultiplier);
+                case DamageAttribute.Ice:
+                    return Mathf.Max(0f, enemyModel.PassiveIceDamageMultiplier);
+                case DamageAttribute.Darkness:
+                    return Mathf.Max(0f, enemyModel.PassiveDarknessDamageMultiplier);
+                case DamageAttribute.Holy:
+                    return Mathf.Max(0f, enemyModel.PassiveHolyDamageMultiplier);
+                default:
+                    return Mathf.Max(0f, enemyModel.PassivePhysicalDamageMultiplier);
+            }
         }
 
         private static float ResolveEnemyProjectileSpeed(EnemyResolvedSkillData skillData, float fallbackSpeed)

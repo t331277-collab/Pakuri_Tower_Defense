@@ -375,9 +375,11 @@ namespace Pakuri.InGame
                 && trigger.TriggerEvent == triggerEvent
                 && string.Equals(trigger.SourceSkillId, sourceSkillId, StringComparison.OrdinalIgnoreCase)
                 && MatchesEventSkillId(trigger.EventSkillId, triggerContext.EventSourceSkillId)
+                && StatusEffectRuntime.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKinds, triggerContext.EventSourceSkillId)
                 && (!trigger.RequireEventExecute || triggerContext.EventWasExecute)
                 && HasAllChoices(source, trigger.RequiresActiveChoiceId)
-                && !HasAnyChoice(source, trigger.ExcludesActiveChoiceId);
+                && !HasAnyChoice(source, trigger.ExcludesActiveChoiceId)
+                && MeetsSourceStatusRequirement(source, trigger.RequiredSourceStatusId, trigger.RequiredSourceStatusMinStacks);
         }
 
         private static bool ShouldRunPassiveOwnerTrigger(
@@ -393,9 +395,11 @@ namespace Pakuri.InGame
                 || string.IsNullOrWhiteSpace(trigger.SourceSkillId)
                 || !owner.State.LearnedPassiveSkillIds.Contains(trigger.SourceSkillId)
                 || !MatchesEventSkillId(trigger.EventSkillId, triggerContext.EventSourceSkillId)
+                || !StatusEffectRuntime.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKinds, triggerContext.EventSourceSkillId)
                 || (trigger.RequireEventExecute && !triggerContext.EventWasExecute)
                 || !HasAllChoices(owner, trigger.RequiresActiveChoiceId)
-                || HasAnyChoice(owner, trigger.ExcludesActiveChoiceId))
+                || HasAnyChoice(owner, trigger.ExcludesActiveChoiceId)
+                || !MeetsSourceStatusRequirement(owner, trigger.RequiredSourceStatusId, trigger.RequiredSourceStatusMinStacks))
             {
                 return false;
             }
@@ -460,6 +464,30 @@ namespace Pakuri.InGame
             }
 
             return false;
+        }
+
+        private static bool MeetsSourceStatusRequirement(BaseUnitRuntimeModel owner, string statusId, int minStacks)
+        {
+            if (string.IsNullOrWhiteSpace(statusId))
+            {
+                return true;
+            }
+
+            if (!StatusEffectUtility.TryParse(statusId, out var kind))
+            {
+                return false;
+            }
+
+            if (kind == StatusEffectKind.Shield)
+            {
+                return owner != null
+                    && owner.Resources != null
+                    && owner.Resources.CurrentShield > 0f;
+            }
+
+            return owner != null
+                && owner.Statuses != null
+                && owner.Statuses.GetStacks(kind) >= Mathf.Max(1, minStacks);
         }
 
         private static bool MatchesConditionStatus(SkillTriggerDefinition trigger, UnitStatusRuntime status)
@@ -715,10 +743,10 @@ namespace Pakuri.InGame
                     ExecuteEffect(combatManager, roster, sourceEntry, trigger, triggerContext);
                     return;
                 case SkillTriggerActionKind.CooldownRefund:
-                    ReduceTargetCooldown(sourceEntry, trigger);
+                    ReduceTargetCooldown(roster, sourceEntry, trigger);
                     return;
                 case SkillTriggerActionKind.ReloadReduce:
-                    ReduceTargetReload(sourceEntry, trigger);
+                    ReduceTargetReload(roster, sourceEntry, trigger);
                     return;
                 default:
                     ExecuteTriggeredSkill(combatManager, sourceEntry, trigger, triggerContext);
@@ -804,7 +832,7 @@ namespace Pakuri.InGame
 
             var context = new SkillExecutionContext(combatManager, roster, sourceEntry, null, 0f);
             var snapshot = BuildPassiveChoiceSnapshot(sourceEntry.Model as MonsterUnitRuntimeModel, trigger.SourceSkillId);
-            return SkillMultiEffectExecutor.Execute(context, snapshot, new[] { effect }, triggerContext.EventCenter);
+            return SkillMultiEffectExecutor.ExecuteDirect(context, snapshot, effect, triggerContext.EventCenter);
         }
 
         private static SkillEffectDefinition ResolveTriggeredEffect(BaseUnitRuntimeModel source, string effectId)
@@ -913,6 +941,11 @@ namespace Pakuri.InGame
                     continue;
                 }
 
+                if (!MeetsSourceStatusRequirement(owner, choice.RequiredSourceStatusId, choice.RequiredSourceStatusMinStacks))
+                {
+                    continue;
+                }
+
                 snapshot.AddActiveChoiceId(choice.ChoiceId);
                 snapshot.ApplyChoiceDefinition(choice);
             }
@@ -942,6 +975,11 @@ namespace Pakuri.InGame
                     continue;
                 }
 
+                if (!MeetsSourceStatusRequirement(owner, choice.RequiredSourceStatusId, choice.RequiredSourceStatusMinStacks))
+                {
+                    continue;
+                }
+
                 snapshot.AddActiveChoiceId(choice.ChoiceId);
                 snapshot.ApplyChoiceDefinition(choice);
             }
@@ -949,39 +987,119 @@ namespace Pakuri.InGame
             return snapshot;
         }
 
-        private static bool ReduceTargetCooldown(UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
+        private static bool ReduceTargetCooldown(UnitRosterService roster, UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
         {
-            var runtime = ResolveTargetRuntime(sourceEntry, trigger);
-            if (runtime == null || trigger == null || trigger.CooldownRefundRatio <= 0f)
+            if (trigger == null || trigger.CooldownRefundRatio <= 0f)
             {
                 return false;
             }
 
-            return runtime.ReduceCooldownRemaining(runtime.EffectiveCooldownDuration * Mathf.Clamp01(trigger.CooldownRefundRatio));
+            var runtimes = ResolveTargetRuntimes(roster, sourceEntry, trigger);
+            var routed = false;
+            for (var i = 0; i < runtimes.Count; i++)
+            {
+                var runtime = runtimes[i];
+                if (runtime == null)
+                {
+                    continue;
+                }
+
+                routed = runtime.ReduceCooldownRemaining(runtime.EffectiveCooldownDuration * Mathf.Clamp01(trigger.CooldownRefundRatio)) || routed;
+            }
+
+            return routed;
         }
 
-        private static bool ReduceTargetReload(UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
+        private static bool ReduceTargetReload(UnitRosterService roster, UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
         {
-            var runtime = ResolveTargetRuntime(sourceEntry, trigger);
-            if (runtime == null || trigger == null || trigger.ReloadReduceRatio <= 0f)
+            if (trigger == null || trigger.ReloadReduceRatio <= 0f)
             {
                 return false;
             }
 
-            return runtime.ReduceReloadRemaining(runtime.ReloadDuration * Mathf.Clamp01(trigger.ReloadReduceRatio));
+            var runtimes = ResolveTargetRuntimes(roster, sourceEntry, trigger);
+            var routed = false;
+            for (var i = 0; i < runtimes.Count; i++)
+            {
+                var runtime = runtimes[i];
+                if (runtime == null)
+                {
+                    continue;
+                }
+
+                routed = runtime.ReduceReloadRemaining(runtime.ReloadDuration * Mathf.Clamp01(trigger.ReloadReduceRatio)) || routed;
+            }
+
+            return routed;
         }
 
-        private static SkillRuntimeInstance ResolveTargetRuntime(UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
+        private static List<SkillRuntimeInstance> ResolveTargetRuntimes(UnitRosterService roster, UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
         {
+            var runtimes = new List<SkillRuntimeInstance>();
+            var entries = ResolveCooldownTargetEntries(roster, sourceEntry, trigger);
             var skillId = trigger != null && !string.IsNullOrWhiteSpace(trigger.TargetSkillId)
                 ? trigger.TargetSkillId
                 : trigger != null ? trigger.TriggeredSkillId : string.Empty;
-            return sourceEntry != null
-                && sourceEntry.Model != null
-                && sourceEntry.Model.SkillRuntime != null
-                && !string.IsNullOrWhiteSpace(skillId)
-                    ? sourceEntry.Model.SkillRuntime.FindBySkillId(skillId)
-                    : null;
+
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                var skillRuntime = entry != null && entry.Model != null ? entry.Model.SkillRuntime : null;
+                if (skillRuntime == null)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(skillId))
+                {
+                    var runtime = skillRuntime.FindBySkillId(skillId);
+                    if (runtime != null)
+                    {
+                        runtimes.Add(runtime);
+                    }
+
+                    continue;
+                }
+
+                var activeSkills = skillRuntime.ActiveSkills;
+                for (var skillIndex = 0; activeSkills != null && skillIndex < activeSkills.Count; skillIndex++)
+                {
+                    var runtime = activeSkills[skillIndex];
+                    if (runtime != null)
+                    {
+                        runtimes.Add(runtime);
+                    }
+                }
+            }
+
+            return runtimes;
+        }
+
+        private static List<UnitRosterEntry> ResolveCooldownTargetEntries(UnitRosterService roster, UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
+        {
+            var entries = new List<UnitRosterEntry>();
+            if (trigger != null && trigger.TargetSide == SkillMultiEffectTargetSide.AllAllies)
+            {
+                var players = roster != null ? roster.Players : null;
+                for (var i = 0; players != null && i < players.Count; i++)
+                {
+                    var player = players[i];
+                    var identity = player != null && player.Model != null ? player.Model.Identity : null;
+                    if (player != null && player.Model != null && (identity == null || identity.Role != UnitRole.Nexus))
+                    {
+                        entries.Add(player);
+                    }
+                }
+
+                return entries;
+            }
+
+            if (sourceEntry != null && sourceEntry.Model != null)
+            {
+                entries.Add(sourceEntry);
+            }
+
+            return entries;
         }
 
         private static bool ExecuteSingleAttack(
@@ -1295,6 +1413,7 @@ namespace Pakuri.InGame
                     var useSpellPower = Mathf.Abs(trigger.SpellPowerCoefficient) >= Mathf.Abs(trigger.AttackPowerCoefficient);
                     var damageSpec = new SkillDamageSpec
                     {
+                        SkillId = trigger.SourceSkillId,
                         Element = (ElementType)(int)trigger.Attribute,
                         BaseDamage = trigger.BaseDamage,
                         StatCoefficient = useSpellPower ? trigger.SpellPowerCoefficient : trigger.AttackPowerCoefficient,

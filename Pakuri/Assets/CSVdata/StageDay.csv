@@ -10,3 +10,14 @@ stage,day,day_key,combat_type,encounter_id,reward_rule_id,elite_option_chance,sh
 1,9,stage1-day9,Normal,stage1-day9-normal,reward-stage1-normal,0,false,false,Normal progression day; shop and elite deferred.
 1,10,stage1-day10,Day10Midboss,stage1-day10-midboss,reward-stage1-day10-midboss,0,false,false,Fixed Stage 1 day 10 midboss combat.
 1,11,stage1-day11,Boss,stage1-day11-boss,reward-stage1-boss,0,false,false,Stage 1 boss combat; includes both midbosses and stage boss.
+2,1,stage2-day1,Normal,stage2-day1-normal,reward-stage2-normal,0,false,false,Stage 2 opening combat; data-driven Stage 2 enemy pool.
+2,2,stage2-day2,Normal,stage2-day2-normal,reward-stage2-normal,0,false,false,Stage 2 normal progression day.
+2,3,stage2-day3,Normal,stage2-day3-normal,reward-stage2-normal,0,false,false,Stage 2 normal progression day.
+2,4,stage2-day4,Normal,stage2-day4-normal,reward-stage2-normal,0,false,false,Stage 2 normal progression day.
+2,5,stage2-day5,Day5Midboss,stage2-day5-midboss,reward-stage2-midboss,0,false,false,Fixed Stage 2 day 5 midboss combat.
+2,6,stage2-day6,Normal,stage2-day6-normal,reward-stage2-normal,0,false,false,Stage 2 normal progression day.
+2,7,stage2-day7,Normal,stage2-day7-normal,reward-stage2-normal,0,false,false,Stage 2 normal progression day.
+2,8,stage2-day8,Normal,stage2-day8-normal,reward-stage2-normal,0,false,false,Stage 2 normal progression day.
+2,9,stage2-day9,Normal,stage2-day9-normal,reward-stage2-normal,0,false,false,Stage 2 final normal day.
+2,10,stage2-day10,Day10Midboss,stage2-day10-midboss,reward-stage2-day10-midboss,0,false,false,Fixed Stage 2 day 10 midboss combat.
+2,11,stage2-day11,Boss,stage2-day11-boss,reward-stage2-boss,0,false,false,Stage 2 boss combat; includes both midbosses and stage boss.

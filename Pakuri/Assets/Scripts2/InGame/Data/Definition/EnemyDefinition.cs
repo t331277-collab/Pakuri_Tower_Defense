@@ -76,6 +76,7 @@ namespace Pakuri.Data
         public string PassiveSkillName;
         public string PassiveSkillId;
         public float PassiveSkillValue;
+        public float NexusDamage = 1f;
         [TextArea(2, 4)] public string PassiveSummary;
 
         public EnemyDefinition CloneRuntimeCopy()
@@ -125,6 +126,7 @@ namespace Pakuri.Data
             clone.PassiveSkillName = PassiveSkillName;
             clone.PassiveSkillId = PassiveSkillId;
             clone.PassiveSkillValue = PassiveSkillValue;
+            clone.NexusDamage = NexusDamage;
             clone.PassiveSummary = PassiveSummary;
             return clone;
         }

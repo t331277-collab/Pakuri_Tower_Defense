@@ -82,7 +82,7 @@ namespace Pakuri.InGame
             }
 
             var selection = targetingSpec != null ? targetingSpec.Selection : SkillTargetSelection.Nearest;
-            targets.Sort((left, right) => CompareTargets(sourceEntry, selection, left, right));
+            targets.Sort((left, right) => CompareTargets(sourceEntry, targetingSpec, selection, left, right));
             return targets;
         }
 
@@ -136,7 +136,7 @@ namespace Pakuri.InGame
                 baseDamage = (baseDamage + snapshot.BaseDamageBonus) * Mathf.Max(0f, snapshot.DamageMultiplier);
             }
 
-            baseDamage *= StatusEffectRuntime.ResolveOutgoingDamageMultiplier(caster, MapAttribute(damage.Element));
+            baseDamage *= StatusEffectRuntime.ResolveOutgoingDamageMultiplier(caster, MapAttribute(damage.Element), damage.SkillId);
             return Mathf.Max(0f, baseDamage);
         }
 
@@ -207,7 +207,12 @@ namespace Pakuri.InGame
             return SkillTargetingUtility.ResolveTargetList(caster, roster, targeting);
         }
 
-        private static int CompareTargets(UnitRosterEntry sourceEntry, SkillTargetSelection selection, UnitRosterEntry left, UnitRosterEntry right)
+        private static int CompareTargets(
+            UnitRosterEntry sourceEntry,
+            SkillTargetingSpec targetingSpec,
+            SkillTargetSelection selection,
+            UnitRosterEntry left,
+            UnitRosterEntry right)
         {
             if (left == right)
             {
@@ -236,6 +241,17 @@ namespace Pakuri.InGame
                 return leftHealth.CompareTo(rightHealth);
             }
 
+            if (selection == SkillTargetSelection.HighestStacks)
+            {
+                var statusId = targetingSpec != null ? targetingSpec.SelectionStatusId : string.Empty;
+                var leftStacks = ResolveStatusStacks(left != null ? left.Model : null, statusId);
+                var rightStacks = ResolveStatusStacks(right != null ? right.Model : null, statusId);
+                if (leftStacks != rightStacks)
+                {
+                    return rightStacks.CompareTo(leftStacks);
+                }
+            }
+
             var leftDistance = ResolveDistanceSquared(sourceEntry, left);
             var rightDistance = ResolveDistanceSquared(sourceEntry, right);
             return leftDistance.CompareTo(rightDistance);
@@ -251,6 +267,26 @@ namespace Pakuri.InGame
             var offset = target.Transform.position - sourceEntry.Transform.position;
             offset.z = 0f;
             return offset.sqrMagnitude;
+        }
+
+        private static int ResolveStatusStacks(BaseUnitRuntimeModel model, string statusId)
+        {
+            if (model == null || string.IsNullOrWhiteSpace(statusId))
+            {
+                return 0;
+            }
+
+            if (!StatusEffectUtility.TryParse(statusId, out var kind))
+            {
+                return 0;
+            }
+
+            if (kind == StatusEffectKind.Shield)
+            {
+                return model.Resources != null && model.Resources.CurrentShield > 0f ? 1 : 0;
+            }
+
+            return model.Statuses != null ? model.Statuses.GetStacks(kind) : 0;
         }
     }
 }

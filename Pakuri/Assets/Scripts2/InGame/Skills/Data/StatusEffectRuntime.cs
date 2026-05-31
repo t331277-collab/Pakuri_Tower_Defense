@@ -264,10 +264,12 @@ namespace Pakuri.InGame
             return SumStacked(model, data => data.Modifiers.CritDamageBonusRate);
         }
 
-        public static float ResolveOutgoingDamageMultiplier(BaseUnitRuntimeModel source, DamageAttribute attribute)
+        public static float ResolveOutgoingDamageMultiplier(BaseUnitRuntimeModel source, DamageAttribute attribute, string sourceSkillId = null)
         {
             return Mathf.Max(0f, 1f + SumStacked(source, data =>
-                MatchesAttribute(data, attribute) ? data.Modifiers.DamageBonusRate : 0f));
+                MatchesAttribute(data, attribute) && MatchesSkillRuntimeKinds(data.ConditionalOutgoingSkillRuntimeKinds, sourceSkillId)
+                    ? data.Modifiers.DamageBonusRate
+                    : 0f));
         }
 
         internal static List<OutgoingAdditionalDamageSpec> ResolveOutgoingAdditionalDamageSpecs(BaseUnitRuntimeModel source, DamageAttribute triggerAttribute)
@@ -304,17 +306,18 @@ namespace Pakuri.InGame
             return results;
         }
 
-        public static float ResolveIncomingDamageMultiplier(BaseUnitRuntimeModel target, BaseUnitRuntimeModel source, DamageAttribute attribute)
+        public static float ResolveIncomingDamageMultiplier(BaseUnitRuntimeModel target, BaseUnitRuntimeModel source, DamageAttribute attribute, string sourceSkillId = null)
         {
             return Mathf.Max(0f, 1f + SumStacked(target, data =>
             {
-                var bonus = data.DamageTakenBonus;
-                if (MatchesAttribute(data, attribute))
+                var runtimeKindMatches = MatchesSkillRuntimeKinds(data.ConditionalIncomingSkillRuntimeKinds, sourceSkillId);
+                var bonus = runtimeKindMatches ? data.DamageTakenBonus : 0f;
+                if (runtimeKindMatches && MatchesAttribute(data, attribute))
                 {
                     bonus += data.ElementDamageTakenBonus;
                 }
 
-                if (MatchesConditionalSourceStatus(source, data))
+                if (runtimeKindMatches && MatchesConditionalSourceStatus(source, data))
                 {
                     bonus += data.ConditionalDamageTakenBonus;
                 }
@@ -368,54 +371,30 @@ namespace Pakuri.InGame
 
         internal static bool TryParseConditionStatusExpression(string rawValue, out StatusConditionRequirement[] requirements)
         {
-            if (string.IsNullOrWhiteSpace(rawValue))
+            if (!TryParseConditionStatusExpressionGroups(rawValue, out var groups))
+            {
+                requirements = Array.Empty<StatusConditionRequirement>();
+                return false;
+            }
+
+            if (groups.Length == 0)
             {
                 requirements = Array.Empty<StatusConditionRequirement>();
                 return true;
             }
 
-            var tokens = rawValue.Split(';', ',');
-            var parsed = new List<StatusConditionRequirement>(tokens.Length);
-            for (var i = 0; i < tokens.Length; i++)
+            var flattened = new List<StatusConditionRequirement>();
+            for (var i = 0; i < groups.Length; i++)
             {
-                var token = tokens[i] != null ? tokens[i].Trim() : string.Empty;
-                if (string.IsNullOrWhiteSpace(token))
+                var group = groups[i];
+                for (var j = 0; j < group.Length; j++)
                 {
-                    continue;
+                    flattened.Add(group[j]);
                 }
-
-                var statusId = token;
-                var minStacks = 1;
-                var separatorIndex = token.IndexOf(">=", StringComparison.OrdinalIgnoreCase);
-                var separatorLength = 2;
-                if (separatorIndex < 0)
-                {
-                    separatorIndex = token.IndexOf(':');
-                    separatorLength = 1;
-                }
-
-                if (separatorIndex >= 0)
-                {
-                    statusId = token.Substring(0, separatorIndex).Trim();
-                    var minStackText = token.Substring(separatorIndex + separatorLength).Trim();
-                    if (!int.TryParse(minStackText, out minStacks) || minStacks <= 0)
-                    {
-                        requirements = Array.Empty<StatusConditionRequirement>();
-                        return false;
-                    }
-                }
-
-                if (!StatusEffectUtility.TryParse(statusId, out var kind))
-                {
-                    requirements = Array.Empty<StatusConditionRequirement>();
-                    return false;
-                }
-
-                parsed.Add(new StatusConditionRequirement(kind, minStacks));
             }
 
-            requirements = parsed.ToArray();
-            return requirements.Length > 0;
+            requirements = flattened.ToArray();
+            return true;
         }
 
         internal static bool MatchesConditionStatus(BaseUnitRuntimeModel target, string rawValue)
@@ -425,18 +404,29 @@ namespace Pakuri.InGame
                 return true;
             }
 
-            if (target == null || !TryParseConditionStatusExpression(rawValue, out var requirements))
+            if (target == null || !TryParseConditionStatusExpressionGroups(rawValue, out var groups))
             {
                 return false;
             }
 
-            for (var i = 0; i < requirements.Length; i++)
+            for (var i = 0; i < groups.Length; i++)
             {
-                var requirement = requirements[i];
-                var stacks = requirement.Kind == StatusEffectKind.Shield && target.Resources != null && target.Resources.CurrentShield > 0f
-                    ? Math.Max(1, target.Statuses != null ? target.Statuses.GetStacks(requirement.Kind) : 0)
-                    : target.Statuses != null ? target.Statuses.GetStacks(requirement.Kind) : 0;
-                if (stacks >= requirement.MinStacks)
+                var group = groups[i];
+                var matchesGroup = true;
+                for (var j = 0; j < group.Length; j++)
+                {
+                    var requirement = group[j];
+                    var stacks = requirement.Kind == StatusEffectKind.Shield && target.Resources != null && target.Resources.CurrentShield > 0f
+                        ? Math.Max(1, target.Statuses != null ? target.Statuses.GetStacks(requirement.Kind) : 0)
+                        : target.Statuses != null ? target.Statuses.GetStacks(requirement.Kind) : 0;
+                    if (stacks < requirement.MinStacks)
+                    {
+                        matchesGroup = false;
+                        break;
+                    }
+                }
+
+                if (matchesGroup)
                 {
                     return true;
                 }
@@ -452,15 +442,143 @@ namespace Pakuri.InGame
                 return true;
             }
 
-            if (status == null || !TryParseConditionStatusExpression(rawValue, out var requirements))
+            if (status == null || !TryParseConditionStatusExpressionGroups(rawValue, out var groups))
             {
                 return false;
             }
 
-            for (var i = 0; i < requirements.Length; i++)
+            for (var i = 0; i < groups.Length; i++)
             {
-                var requirement = requirements[i];
-                if (status.Kind == requirement.Kind && status.Stacks >= requirement.MinStacks)
+                var group = groups[i];
+                var matchesGroup = true;
+                for (var j = 0; j < group.Length; j++)
+                {
+                    var requirement = group[j];
+                    if (status.Kind != requirement.Kind || status.Stacks < requirement.MinStacks)
+                    {
+                        matchesGroup = false;
+                        break;
+                    }
+                }
+
+                if (matchesGroup)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryParseConditionStatusExpressionGroups(string rawValue, out StatusConditionRequirement[][] groups)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                groups = Array.Empty<StatusConditionRequirement[]>();
+                return true;
+            }
+
+            var tokens = rawValue.Split(';', ',');
+            var parsedGroups = new List<StatusConditionRequirement[]>();
+            for (var i = 0; i < tokens.Length; i++)
+            {
+                var token = tokens[i] != null ? tokens[i].Trim() : string.Empty;
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    continue;
+                }
+
+                var andTokens = token.Split('&');
+                var group = new List<StatusConditionRequirement>(andTokens.Length);
+                for (var j = 0; j < andTokens.Length; j++)
+                {
+                    var part = andTokens[j] != null ? andTokens[j].Trim() : string.Empty;
+                    if (string.IsNullOrWhiteSpace(part))
+                    {
+                        groups = Array.Empty<StatusConditionRequirement[]>();
+                        return false;
+                    }
+
+                    var statusId = part;
+                    var minStacks = 1;
+                    var separatorIndex = part.IndexOf(">=", StringComparison.OrdinalIgnoreCase);
+                    var separatorLength = 2;
+                    if (separatorIndex < 0)
+                    {
+                        separatorIndex = part.IndexOf(':');
+                        separatorLength = 1;
+                    }
+
+                    if (separatorIndex >= 0)
+                    {
+                        statusId = part.Substring(0, separatorIndex).Trim();
+                        var minStackText = part.Substring(separatorIndex + separatorLength).Trim();
+                        if (!int.TryParse(minStackText, out minStacks) || minStacks <= 0)
+                        {
+                            groups = Array.Empty<StatusConditionRequirement[]>();
+                            return false;
+                        }
+                    }
+
+                    if (!StatusEffectUtility.TryParse(statusId, out var kind))
+                    {
+                        groups = Array.Empty<StatusConditionRequirement[]>();
+                        return false;
+                    }
+
+                    group.Add(new StatusConditionRequirement(kind, minStacks));
+                }
+
+                if (group.Count > 0)
+                {
+                    parsedGroups.Add(group.ToArray());
+                }
+            }
+
+            groups = parsedGroups.ToArray();
+            return groups.Length > 0;
+        }
+
+        internal static bool MatchesSkillRuntimeKinds(string rawValue, string sourceSkillId)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                return true;
+            }
+
+            if (string.IsNullOrWhiteSpace(sourceSkillId))
+            {
+                return false;
+            }
+
+            var manager = PakuriDataManager.Instance;
+            if (manager == null || !manager.TryGetData(sourceSkillId, out SkillDefinition skill) || skill == null)
+            {
+                return false;
+            }
+
+            var tokens = rawValue.Split(';', ',');
+            for (var i = 0; i < tokens.Length; i++)
+            {
+                var token = tokens[i] != null ? tokens[i].Trim() : string.Empty;
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    continue;
+                }
+
+                if (string.Equals(token, "Area", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(token, "AoE", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (IsAreaLikeSkill(skill))
+                    {
+                        return true;
+                    }
+
+                    continue;
+                }
+
+                if (Enum.TryParse(token, true, out SkillRuntimeKind runtimeKind)
+                    && skill.RuntimeKind == runtimeKind)
                 {
                     return true;
                 }
@@ -493,6 +611,27 @@ namespace Pakuri.InGame
             }
 
             return false;
+        }
+
+        private static bool IsAreaLikeSkill(SkillDefinition skill)
+        {
+            if (skill == null)
+            {
+                return false;
+            }
+
+            if (skill.RuntimeKind == SkillRuntimeKind.AreaAttack || skill.RuntimeKind == SkillRuntimeKind.Field)
+            {
+                return true;
+            }
+
+            if (skill.RuntimeKind != SkillRuntimeKind.SingleAttack)
+            {
+                return false;
+            }
+
+            return string.Equals(skill.HitTargetCount, "global", StringComparison.OrdinalIgnoreCase)
+                || skill.Radius > 0f;
         }
 
         private static float SumStacked(BaseUnitRuntimeModel model, System.Func<StatusEffectData, float> selector)

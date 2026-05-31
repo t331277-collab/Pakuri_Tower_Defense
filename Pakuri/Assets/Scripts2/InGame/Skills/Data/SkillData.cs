@@ -152,6 +152,8 @@ namespace Pakuri.InGame
     {
         public SkillTargetSide TargetSide = SkillTargetSide.Enemy;
         public SkillTargetSelection Selection = SkillTargetSelection.Nearest;
+        public string SelectionStatusId;
+        [Min(0)] public int SelectionStatusMinStacks;
         public SkillTargetShape Shape = SkillTargetShape.Single;
         [Tooltip("Deprecated. InGame skills target the whole battlefield; runtime ignores this value.")]
         [Min(0f)] public float Range;
@@ -162,6 +164,7 @@ namespace Pakuri.InGame
     [Serializable]
     public sealed class SkillDamageSpec
     {
+        public string SkillId;
         public ElementType Element;
         [Min(0f)] public float BaseDamage;
         public float StatCoefficient;

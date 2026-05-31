@@ -54,9 +54,11 @@ namespace Pakuri.InGame
                 }
             }
 
-            var statusSpec = SkillStatusSpecUtility.ResolveStatusSpec(skill.OnHitStatus, snapshot);
+            var baseStatusSpec = SkillStatusSpecUtility.ResolveStatusSpec(skill.OnHitStatus, snapshot);
             var onHitEffects = ResolveTimedEffects(context, snapshot, skill.MultiEffects, SkillMultiEffectTiming.OnHit);
             var onExpireEffects = ResolveTimedEffects(context, snapshot, skill.MultiEffects, SkillMultiEffectTiming.OnExpire);
+            var projectile = skill.Projectile;
+            var burstProjectileCount = projectile != null ? Math.Max(1, projectile.BurstProjectileCount) : 1;
             var requiresProjectileActor = skill.StopOnFirstHit
                 || skill.HasImpactArea
                 || skill.ImpactDelaySeconds > 0f
@@ -66,7 +68,8 @@ namespace Pakuri.InGame
             {
                 if (target != null)
                 {
-                    ApplyDirectProjectileHit(context, skill, snapshot, target, statusSpec, damage, attribute);
+                    var directStatusSpec = ResolveBurstStatusSpec(baseStatusSpec, snapshot, currentBurstProjectileIndex, burstProjectileCount);
+                    ApplyDirectProjectileHit(context, skill, snapshot, target, directStatusSpec, damage, attribute);
                     return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
                 }
 
@@ -76,10 +79,8 @@ namespace Pakuri.InGame
                     GetType().Name);
             }
 
-            var projectile = skill.Projectile;
             var speed = projectile != null ? projectile.ProjectileSpeed : 0f;
             var pierce = projectile != null ? projectile.PierceCount : 0;
-            var burstProjectileCount = projectile != null ? Math.Max(1, projectile.BurstProjectileCount) : 1;
             var projectileCount = projectile != null ? Math.Max(1, projectile.ProjectilesPerShot) : 1;
             if (snapshot != null)
             {
@@ -111,7 +112,8 @@ namespace Pakuri.InGame
                 {
                     if (target != null)
                     {
-                        ApplyDirectProjectileHit(context, skill, snapshot, target, statusSpec, launchDamage, attribute);
+                        var directStatusSpec = ResolveBurstStatusSpec(baseStatusSpec, snapshot, currentBurstProjectileIndex, burstProjectileCount);
+                        ApplyDirectProjectileHit(context, skill, snapshot, target, directStatusSpec, launchDamage, attribute);
                     }
 
                     continue;
@@ -128,7 +130,8 @@ namespace Pakuri.InGame
                 {
                     if (target != null)
                     {
-                        ApplyDirectProjectileHit(context, skill, snapshot, target, statusSpec, launchDamage, attribute);
+                        var directStatusSpec = ResolveBurstStatusSpec(baseStatusSpec, snapshot, currentBurstProjectileIndex, burstProjectileCount);
+                        ApplyDirectProjectileHit(context, skill, snapshot, target, directStatusSpec, launchDamage, attribute);
                     }
 
                     continue;
@@ -140,6 +143,7 @@ namespace Pakuri.InGame
                     actor = instance.AddComponent<InGameProjectileActor>();
                 }
 
+                var statusSpec = ResolveBurstStatusSpec(baseStatusSpec, snapshot, currentBurstProjectileIndex, burstProjectileCount);
                 actor.Initialize(
                     context.CombatManager,
                     context.Caster,
@@ -177,7 +181,7 @@ namespace Pakuri.InGame
                 snapshot,
                 skill,
                 prefab,
-                statusSpec,
+                baseStatusSpec,
                 onHitEffects,
                 onExpireEffects,
                 origin,
@@ -534,6 +538,50 @@ namespace Pakuri.InGame
             }
 
             return Mathf.Max(0f, delay);
+        }
+
+        private static ProjectileStatusHitSpec ResolveBurstStatusSpec(
+            ProjectileStatusHitSpec baseStatusSpec,
+            SkillExecutionSnapshot snapshot,
+            int projectileIndex,
+            int burstProjectileCount)
+        {
+            if (baseStatusSpec == null || snapshot == null)
+            {
+                return baseStatusSpec;
+            }
+
+            var stacksBonus = snapshot.ResolveBurstStatusStacksBonus(projectileIndex, burstProjectileCount);
+            if (stacksBonus == 0)
+            {
+                return baseStatusSpec;
+            }
+
+            return CloneStatusSpecWithStacks(baseStatusSpec, Mathf.Max(1, baseStatusSpec.Stacks + stacksBonus));
+        }
+
+        private static ProjectileStatusHitSpec CloneStatusSpecWithStacks(ProjectileStatusHitSpec source, int stacks)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            return new ProjectileStatusHitSpec
+            {
+                Enabled = source.Enabled,
+                Kind = source.Kind,
+                StatusData = source.StatusData,
+                Chance = source.Chance,
+                Stacks = stacks,
+                DurationSeconds = source.DurationSeconds,
+                MaxStacks = source.MaxStacks,
+                Permanent = source.Permanent,
+                RefreshDuration = source.RefreshDuration,
+                ThresholdSourceStatusId = source.ThresholdSourceStatusId,
+                ThresholdSourceMinStacks = source.ThresholdSourceMinStacks,
+                ThresholdStatusSpec = source.ThresholdStatusSpec
+            };
         }
 
         private static SkillEffectDefinition[] ResolveTimedEffects(

@@ -17,6 +17,7 @@ namespace Pakuri.Data
         private const string AssetCatalogResourcesPath = "Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog";
         private const string CatalogMonstersFileName = "catalog_monsters.csv";
         private const string CatalogStageOneEnemiesFileName = "catalog_stage_one_enemies.csv";
+        private const string CatalogStageTwoEnemiesFileName = "catalog_stage_two_enemies.csv";
         private const string MonstersFileName = "monsters.csv";
         private const string MonsterRewardChoicesFileName = "monster_modifier_skill_choice.csv";
         private const string MonsterSkillsFileName = "monster_skills.csv";
@@ -25,6 +26,7 @@ namespace Pakuri.Data
         private const string MonsterSkillChoicesFileName = "monster_skill_choices.csv";
         private const string StatusEffectsFileName = "status_effects.csv";
         private const string StageOneEnemiesFileName = "stage_one_enemies.csv";
+        private const string StageTwoEnemiesFileName = "stage_two_enemies.csv";
         private const string EnemySkillDataFileName = "EnemySkillData.csv";
         private const string EnemySkillDataAssetPath = "Assets/CSVdata/EnemySkillData.csv";
 
@@ -92,7 +94,8 @@ namespace Pakuri.Data
         {
             return
                 $"PakuriCsvRuntimeData loaded runtime catalog from resource source '{SourceCatalogResourcesPath}' " +
-                $"with {catalog.Monsters.Length} monsters and {catalog.StageOneEnemies.Length} stage-one enemies.";
+                $"with {catalog.Monsters.Length} monsters, {catalog.StageOneEnemies.Length} stage-one enemies, " +
+                $"and {catalog.StageTwoEnemies.Length} stage-two enemies.";
         }
 
         private static void FailAndQuit(string message, List<string> errors)

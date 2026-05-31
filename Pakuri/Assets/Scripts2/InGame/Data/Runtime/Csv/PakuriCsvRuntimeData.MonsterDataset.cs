@@ -74,6 +74,8 @@ namespace Pakuri.Data
             public float BossDamageMultiplier = 1f;
             public string HitTargetCount;
             public string TargetSelection;
+            public string TargetSelectionStatusId;
+            public int TargetSelectionStatusMinStacks;
             public float CooldownSeconds;
             public float ActiveDurationSeconds;
             public int MagazineCapacity;
@@ -88,6 +90,14 @@ namespace Pakuri.Data
             public bool CriticalAllowed;
             public string DeploymentRequiredTargetStatusId;
             public int DeploymentRequiredTargetStatusMinStacks;
+            public string TargetStatusStackStatusId;
+            public int TargetStatusStackMaxStacks;
+            public float TargetStatusStackBaseDamage;
+            public float TargetStatusStackAttackPowerCoefficient;
+            public float TargetStatusStackSpellPowerCoefficient;
+            public string ConsumeTargetStatusId;
+            public float ConsumeTargetStatusRatio;
+            public int ConsumeTargetStatusStacks;
             public StatusPayloadRow Status = new StatusPayloadRow();
         }
 
@@ -119,6 +129,9 @@ namespace Pakuri.Data
             public int BurstDamageProjectileIndex;
             public bool HasBurstDamageMultiplier;
             public float BurstDamageMultiplier = 1f;
+            public bool HasBurstStatusProjectileIndex;
+            public int BurstStatusProjectileIndex;
+            public int BurstStatusStacksBonus;
             public int FollowUpProjectileCount;
             public float FollowUpProjectileDelaySeconds;
             public float FollowUpProjectileDamageMultiplier = 1f;
@@ -188,6 +201,19 @@ namespace Pakuri.Data
             public float ConditionalDamageMultiplier = 1f;
             public string ConditionalTargetStatusId;
             public int ConditionalTargetStatusMinStacks;
+            public bool HasTargetStatusStackDamageMultiplier;
+            public float TargetStatusStackDamageMultiplier = 1f;
+            public bool HasConsumeTargetStatusRatioOverride;
+            public float ConsumeTargetStatusRatioOverride;
+            public bool HasConsumeTargetStatusStacksOverride;
+            public int ConsumeTargetStatusStacksOverride;
+            public float ConditionalCritChanceBonus;
+            public string ConditionalCritTargetStatusId;
+            public int ConditionalCritTargetStatusMinStacks;
+            public float RedistributeConsumedStatusRatioOnKill;
+            public string RedistributeConsumedStatusId;
+            public float RedistributeConsumedStatusSearchRadius;
+            public int RedistributeConsumedStatusTargetCount;
             public string CountStatusId;
             public SkillMultiEffectTargetSide CountTargetSide;
             public float DamageMultiplierPerCount;
@@ -246,6 +272,8 @@ namespace Pakuri.Data
             public string ExcludesActiveChoiceId;
             public string RequiresPassiveSkillId;
             public string ExcludesPassiveSkillId;
+            public string RequiredSourceStatusId;
+            public int RequiredSourceStatusMinStacks;
             public bool ApplyOnce;
             public string ConditionStatusId;
             public SkillMultiEffectTargetSide ConditionTargetSide;
@@ -275,11 +303,14 @@ namespace Pakuri.Data
             public SkillTriggerEvent TriggerEvent;
             public string RequiresActiveChoiceId;
             public string ExcludesActiveChoiceId;
+            public string RequiredSourceStatusId;
+            public int RequiredSourceStatusMinStacks;
             public string ConditionStatusId;
             public string ConditionStatusSourceSkillId;
             public string TriggerAttribute;
             public SkillTriggerActionKind TriggerAction;
             public string EventSkillId;
+            public string EventSkillRuntimeKinds;
             public float ProcChance = 1f;
             public float InternalCooldownSeconds;
             public float TriggerDelaySeconds;
@@ -390,6 +421,8 @@ namespace Pakuri.Data
                 BossDamageMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "boss_damage_multiplier", 1f),
                 HitTargetCount = record.ReadString("hit_target_count"),
                 TargetSelection = record.ReadString("target_selection"),
+                TargetSelectionStatusId = ReadOptionalStringIfColumnExists(record, "target_selection_status_id"),
+                TargetSelectionStatusMinStacks = ReadOptionalIntIfColumnExists(record, "target_selection_status_min_stacks"),
                 CooldownSeconds = record.ReadFloat("cooldown_seconds"),
                 ActiveDurationSeconds = record.ReadFloat("active_duration_seconds"),
                 MagazineCapacity = record.ReadInt("magazine_capacity"),
@@ -404,6 +437,14 @@ namespace Pakuri.Data
                 CriticalAllowed = record.ReadBool("critical_allowed"),
                 DeploymentRequiredTargetStatusId = ReadOptionalStringIfColumnExists(record, "deployment_required_target_status_id"),
                 DeploymentRequiredTargetStatusMinStacks = ReadOptionalIntIfColumnExists(record, "deployment_required_target_status_min_stacks"),
+                TargetStatusStackStatusId = ReadOptionalStringIfColumnExists(record, "target_status_stack_status_id"),
+                TargetStatusStackMaxStacks = ReadOptionalIntIfColumnExists(record, "target_status_stack_max_stacks"),
+                TargetStatusStackBaseDamage = ReadOptionalFloatIfColumnExists(record, "target_status_stack_base_damage"),
+                TargetStatusStackAttackPowerCoefficient = ReadOptionalFloatIfColumnExists(record, "target_status_stack_attack_power_coefficient"),
+                TargetStatusStackSpellPowerCoefficient = ReadOptionalFloatIfColumnExists(record, "target_status_stack_spell_power_coefficient"),
+                ConsumeTargetStatusId = ReadOptionalStringIfColumnExists(record, "consume_target_status_id"),
+                ConsumeTargetStatusRatio = ReadOptionalFloatIfColumnExists(record, "consume_target_status_ratio"),
+                ConsumeTargetStatusStacks = ReadOptionalIntIfColumnExists(record, "consume_target_status_stacks"),
                 Status = ReadStatusPayload(record, false)
             };
         }
@@ -445,6 +486,9 @@ namespace Pakuri.Data
             row.BurstDamageProjectileIndex = burstDamageProjectileIndex;
             row.HasBurstDamageMultiplier = TryReadFloatIfColumnExists(record, "burst_damage_multiplier", out var burstDamageMultiplier);
             row.BurstDamageMultiplier = burstDamageMultiplier;
+            row.HasBurstStatusProjectileIndex = TryReadIntIfColumnExists(record, "burst_status_projectile_index", out var burstStatusProjectileIndex);
+            row.BurstStatusProjectileIndex = burstStatusProjectileIndex;
+            row.BurstStatusStacksBonus = ReadOptionalIntIfColumnExists(record, "burst_status_stacks_bonus");
             row.FollowUpProjectileCount = ReadOptionalIntIfColumnExists(record, "follow_up_projectile_count");
             row.FollowUpProjectileDelaySeconds = ReadOptionalFloatIfColumnExists(record, "follow_up_projectile_delay_seconds");
             row.FollowUpProjectileDamageMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "follow_up_projectile_damage_multiplier", 1f);
@@ -513,6 +557,19 @@ namespace Pakuri.Data
             row.ConditionalDamageMultiplier = conditionalDamageMultiplier;
             row.ConditionalTargetStatusId = record.ReadString("conditional_target_status_id");
             row.ConditionalTargetStatusMinStacks = ReadOptionalInt(record, "conditional_target_status_min_stacks");
+            row.HasTargetStatusStackDamageMultiplier = TryReadFloatIfColumnExists(record, "target_status_stack_damage_multiplier", out var targetStatusStackDamageMultiplier);
+            row.TargetStatusStackDamageMultiplier = targetStatusStackDamageMultiplier;
+            row.HasConsumeTargetStatusRatioOverride = TryReadFloatIfColumnExists(record, "consume_target_status_ratio_override", out var consumeTargetStatusRatioOverride);
+            row.ConsumeTargetStatusRatioOverride = consumeTargetStatusRatioOverride;
+            row.HasConsumeTargetStatusStacksOverride = TryReadIntIfColumnExists(record, "consume_target_status_stacks_override", out var consumeTargetStatusStacksOverride);
+            row.ConsumeTargetStatusStacksOverride = consumeTargetStatusStacksOverride;
+            row.ConditionalCritChanceBonus = ReadOptionalFloatIfColumnExists(record, "conditional_crit_chance_bonus");
+            row.ConditionalCritTargetStatusId = ReadOptionalStringIfColumnExists(record, "conditional_crit_target_status_id");
+            row.ConditionalCritTargetStatusMinStacks = ReadOptionalIntIfColumnExists(record, "conditional_crit_target_status_min_stacks");
+            row.RedistributeConsumedStatusRatioOnKill = ReadOptionalFloatIfColumnExists(record, "redistribute_consumed_status_ratio_on_kill");
+            row.RedistributeConsumedStatusId = ReadOptionalStringIfColumnExists(record, "redistribute_consumed_status_id");
+            row.RedistributeConsumedStatusSearchRadius = ReadOptionalFloatIfColumnExists(record, "redistribute_consumed_status_search_radius");
+            row.RedistributeConsumedStatusTargetCount = ReadOptionalIntIfColumnExists(record, "redistribute_consumed_status_target_count");
             row.CountStatusId = record.ReadString("count_status_id");
             row.CountTargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("count_target_side");
             row.DamageMultiplierPerCount = ReadOptionalFloat(record, "damage_multiplier_per_count");
@@ -572,6 +629,8 @@ namespace Pakuri.Data
                 ExcludesActiveChoiceId = record.ReadString("excludes_active_choice_id"),
                 RequiresPassiveSkillId = record.ReadString("requires_passive_skill_id"),
                 ExcludesPassiveSkillId = record.ReadString("excludes_passive_skill_id"),
+                RequiredSourceStatusId = ReadOptionalStringIfColumnExists(record, "required_source_status_id"),
+                RequiredSourceStatusMinStacks = ReadOptionalIntIfColumnExists(record, "required_source_status_min_stacks"),
                 ApplyOnce = record.ReadBool("apply_once"),
                 ConditionStatusId = record.ReadString("condition_status_id"),
                 ConditionTargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("condition_target_side"),
@@ -611,12 +670,15 @@ namespace Pakuri.Data
                 TriggerEvent = record.ReadEnum<SkillTriggerEvent>("trigger_event"),
                 RequiresActiveChoiceId = record.ReadString("requires_active_choice_id"),
                 ExcludesActiveChoiceId = record.ReadString("excludes_active_choice_id"),
+                RequiredSourceStatusId = ReadOptionalStringIfColumnExists(record, "required_source_status_id"),
+                RequiredSourceStatusMinStacks = ReadOptionalIntIfColumnExists(record, "required_source_status_min_stacks"),
                 ConditionStatusId = record.ReadString("condition_status_id"),
                 ConditionStatusSourceSkillId = ReadOptionalStringIfColumnExists(record, "condition_status_source_skill_id"),
                 TriggerAttribute = record.ReadString("trigger_attribute"),
                 TriggerAction = ReadOptionalEnumIfColumnExists(record, "trigger_action", SkillTriggerActionKind.Auto),
                 EventSkillId = ReadOptionalStringIfColumnExists(record, "event_skill_id"),
-                TriggeredSkillId = record.ReadRequiredString("triggered_skill_id"),
+                EventSkillRuntimeKinds = ReadOptionalStringIfColumnExists(record, "event_skill_runtime_kinds"),
+                TriggeredSkillId = ReadOptionalStringIfColumnExists(record, "triggered_skill_id"),
                 TargetSkillId = ReadOptionalStringIfColumnExists(record, "target_skill_id"),
                 TriggeredEffectId = ReadOptionalStringIfColumnExists(record, "triggered_effect_id"),
                 RuntimeKind = record.ReadEnum<SkillRuntimeKind>("runtime_kind"),
@@ -695,6 +757,12 @@ namespace Pakuri.Data
         private static int ReadOptionalIntIfColumnExists(CsvRecord record, string columnName)
         {
             return record.HasColumn(columnName) ? ReadOptionalInt(record, columnName) : 0;
+        }
+
+        private static bool TryReadIntIfColumnExists(CsvRecord record, string columnName, out int value)
+        {
+            value = 0;
+            return record.HasColumn(columnName) && TryReadInt(record, columnName, out value);
         }
 
         private static float ReadOptionalFloatIfColumnExists(CsvRecord record, string columnName)

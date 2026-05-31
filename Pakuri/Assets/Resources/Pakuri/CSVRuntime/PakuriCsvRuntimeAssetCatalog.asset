@@ -13,15 +13,15 @@ MonoBehaviour:
   m_Name: PakuriCsvRuntimeAssetCatalog
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.Data.PakuriCsvRuntimeAssetCatalog
   Sprites:
-  - AssetPath: Assets/Image/Stage1/Enemy/Achor.png
+  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Achor.png
     Asset: {fileID: 21300000, guid: ef1e124d1928cc54ea59ccf3db8fdfe0, type: 3}
-  - AssetPath: Assets/Image/Stage1/Enemy/Priest.png
+  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Priest.png
     Asset: {fileID: 21300000, guid: 8734391ccbebaae48b6a4ab04c78cab3, type: 3}
-  - AssetPath: Assets/Image/Stage1/Enemy/Rogue.png
+  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Rogue.png
     Asset: {fileID: 21300000, guid: 91290f9ea0955e84cbf23401ff72fdac, type: 3}
-  - AssetPath: Assets/Image/Stage1/Enemy/Shield.png
+  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Shield.png
     Asset: {fileID: 21300000, guid: 0caea6bc70c48504bb727429d31f5bc3, type: 3}
-  - AssetPath: Assets/Image/Stage1/Enemy/Warrior.png
+  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Warrior.png
     Asset: {fileID: 21300000, guid: 128ccc7f23263be428abee49b68f0e07, type: 3}
   Prefabs:
   - AssetPath: Assets/Prefab/Skill/Ariel/ariel-b-trait-4_Skill.prefab
@@ -70,3 +70,5 @@ MonoBehaviour:
     Asset: {fileID: 5129220136040390084, guid: 383d16217e4c2dc49acd27923563e303, type: 3}
   - AssetPath: Assets/Prefab/Skill/Vega/Vega_D.prefab
     Asset: {fileID: 2841107167972549463, guid: 47b7f2f4cd2e55341b1c0b180bdc635f, type: 3}
+  - AssetPath: Assets/Prefab/Skill/Vega/Vega_E.prefab
+    Asset: {fileID: 6913114519679810237, guid: 4f10dd1703cb6a148be6a482ea00b73d, type: 3}

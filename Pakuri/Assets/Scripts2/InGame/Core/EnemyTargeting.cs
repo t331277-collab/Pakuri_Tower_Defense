@@ -7,15 +7,29 @@ namespace Pakuri.InGame
     {
         public static UnitRosterEntry FindNearestPlayerTarget(UnitRosterEntry enemyEntry, UnitRosterService roster)
         {
+            var best = FindNearestPlayerTarget(enemyEntry, roster, includeNexus: false);
+            return best ?? FindNearestPlayerTarget(enemyEntry, roster, includeNexus: true);
+        }
+
+        private static UnitRosterEntry FindNearestPlayerTarget(
+            UnitRosterEntry enemyEntry,
+            UnitRosterService roster,
+            bool includeNexus)
+        {
             var players = roster.Players;
             UnitRosterEntry best = null;
             var bestDistanceSq = float.MaxValue;
             var origin = enemyEntry.Transform.position;
-
             for (var i = 0; i < players.Count; i++)
             {
                 var candidate = players[i];
                 if (!IsActive(candidate))
+                {
+                    continue;
+                }
+
+                var isNexus = IsNexus(candidate);
+                if (isNexus != includeNexus)
                 {
                     continue;
                 }
@@ -33,6 +47,12 @@ namespace Pakuri.InGame
             }
 
             return best;
+        }
+
+        public static bool IsNexus(UnitRosterEntry entry)
+        {
+            var identity = entry != null && entry.Model != null ? entry.Model.Identity : null;
+            return identity != null && identity.Role == UnitRole.Nexus;
         }
 
         public static UnitRosterEntry FindLowestHealthEnemyAlly(UnitRosterService roster)

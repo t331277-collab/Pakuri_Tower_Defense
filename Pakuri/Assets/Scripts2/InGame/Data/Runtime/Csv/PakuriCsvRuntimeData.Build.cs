@@ -56,10 +56,21 @@ namespace Pakuri.Data
                 monsters.Add(monster);
             }
 
+            catalog.Monsters = monsters.ToArray();
+            catalog.StageOneEnemies = BuildEnemies(model.CatalogStageOneEnemies, model.StageOneEnemies);
+            catalog.StageTwoEnemies = BuildEnemies(model.CatalogStageTwoEnemies, model.StageTwoEnemies);
+            catalog.StatusEffects = BuildStatusEffects(model);
+            return catalog;
+        }
+
+        private static EnemyDefinition[] BuildEnemies(
+            Dictionary<string, CatalogEntryRow> catalogEntries,
+            Dictionary<string, EnemyRow> enemyRows)
+        {
             var enemies = new List<EnemyDefinition>();
-            foreach (var entry in SortCatalogEntries(model.CatalogStageOneEnemies))
+            foreach (var entry in SortCatalogEntries(catalogEntries))
             {
-                var sourceEnemy = model.StageOneEnemies[entry.RefId];
+                var sourceEnemy = enemyRows[entry.RefId];
                 var enemy = ScriptableObject.CreateInstance<EnemyDefinition>();
                 enemy.EnemyId = sourceEnemy.Id;
                 enemy.DisplayName = sourceEnemy.DisplayName;
@@ -113,14 +124,12 @@ namespace Pakuri.Data
                 enemy.PassiveSkillName = sourceEnemy.PassiveSkillName;
                 enemy.PassiveSkillId = sourceEnemy.PassiveSkillId;
                 enemy.PassiveSkillValue = sourceEnemy.PassiveSkillValue;
+                enemy.NexusDamage = sourceEnemy.NexusDamage > 0f ? sourceEnemy.NexusDamage : 1f;
                 enemy.PassiveSummary = sourceEnemy.PassiveSummary;
                 enemies.Add(enemy);
             }
 
-            catalog.Monsters = monsters.ToArray();
-            catalog.StageOneEnemies = enemies.ToArray();
-            catalog.StatusEffects = BuildStatusEffects(model);
-            return catalog;
+            return enemies.ToArray();
         }
 
         private static StatusEffectDefinitionData[] BuildStatusEffects(SourceModel model)
@@ -217,6 +226,8 @@ namespace Pakuri.Data
                     BossDamageMultiplier = skill.BossDamageMultiplier,
                     HitTargetCount = skill.HitTargetCount,
                     TargetSelection = skill.TargetSelection,
+                    TargetSelectionStatusId = skill.TargetSelectionStatusId,
+                    TargetSelectionStatusMinStacks = skill.TargetSelectionStatusMinStacks,
                     CooldownSeconds = skill.CooldownSeconds,
                     ActiveDurationSeconds = skill.ActiveDurationSeconds,
                     MagazineCapacity = skill.MagazineCapacity,
@@ -231,6 +242,14 @@ namespace Pakuri.Data
                     CriticalAllowed = skill.CriticalAllowed,
                     DeploymentRequiredTargetStatusId = skill.DeploymentRequiredTargetStatusId,
                     DeploymentRequiredTargetStatusMinStacks = skill.DeploymentRequiredTargetStatusMinStacks,
+                    TargetStatusStackStatusId = skill.TargetStatusStackStatusId,
+                    TargetStatusStackMaxStacks = skill.TargetStatusStackMaxStacks,
+                    TargetStatusStackBaseDamage = skill.TargetStatusStackBaseDamage,
+                    TargetStatusStackAttackPowerCoefficient = skill.TargetStatusStackAttackPowerCoefficient,
+                    TargetStatusStackSpellPowerCoefficient = skill.TargetStatusStackSpellPowerCoefficient,
+                    ConsumeTargetStatusId = skill.ConsumeTargetStatusId,
+                    ConsumeTargetStatusRatio = skill.ConsumeTargetStatusRatio,
+                    ConsumeTargetStatusStacks = skill.ConsumeTargetStatusStacks,
                     Summary = skill.Summary,
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.ActiveEnhancement),
                     MasterSkillChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.ActiveMaster),
@@ -273,6 +292,8 @@ namespace Pakuri.Data
                     ExcludesActiveChoiceId = effect.ExcludesActiveChoiceId,
                     RequiresPassiveSkillId = effect.RequiresPassiveSkillId,
                     ExcludesPassiveSkillId = effect.ExcludesPassiveSkillId,
+                    RequiredSourceStatusId = effect.RequiredSourceStatusId,
+                    RequiredSourceStatusMinStacks = effect.RequiredSourceStatusMinStacks,
                     ApplyOnce = effect.ApplyOnce,
                     ConditionStatusId = effect.ConditionStatusId,
                     ConditionTargetSide = effect.ConditionTargetSide,
@@ -319,11 +340,14 @@ namespace Pakuri.Data
                     TriggerEvent = trigger.TriggerEvent,
                     RequiresActiveChoiceId = trigger.RequiresActiveChoiceId,
                     ExcludesActiveChoiceId = trigger.ExcludesActiveChoiceId,
+                    RequiredSourceStatusId = trigger.RequiredSourceStatusId,
+                    RequiredSourceStatusMinStacks = trigger.RequiredSourceStatusMinStacks,
                     ConditionStatusId = trigger.ConditionStatusId,
                     ConditionStatusSourceSkillId = trigger.ConditionStatusSourceSkillId,
                     TriggerAttribute = trigger.TriggerAttribute,
                     TriggerAction = trigger.TriggerAction,
                     EventSkillId = trigger.EventSkillId,
+                    EventSkillRuntimeKinds = trigger.EventSkillRuntimeKinds,
                     ProcChance = trigger.ProcChance,
                     InternalCooldownSeconds = trigger.InternalCooldownSeconds,
                     TriggeredSkillId = trigger.TriggeredSkillId,
@@ -434,6 +458,9 @@ namespace Pakuri.Data
                     BurstDamageProjectileIndex = choice.BurstDamageProjectileIndex,
                     HasBurstDamageMultiplier = choice.HasBurstDamageMultiplier,
                     BurstDamageMultiplier = choice.HasBurstDamageMultiplier ? choice.BurstDamageMultiplier : 1f,
+                    HasBurstStatusProjectileIndex = choice.HasBurstStatusProjectileIndex,
+                    BurstStatusProjectileIndex = choice.BurstStatusProjectileIndex,
+                    BurstStatusStacksBonus = choice.BurstStatusStacksBonus,
                     FollowUpProjectileCount = choice.FollowUpProjectileCount,
                     FollowUpProjectileDelaySeconds = choice.FollowUpProjectileDelaySeconds,
                     FollowUpProjectileDamageMultiplier = choice.FollowUpProjectileDamageMultiplier > 0f ? choice.FollowUpProjectileDamageMultiplier : 1f,
@@ -503,6 +530,19 @@ namespace Pakuri.Data
                     ConditionalDamageMultiplier = choice.HasConditionalDamageMultiplier ? choice.ConditionalDamageMultiplier : 1f,
                     ConditionalTargetStatusId = choice.ConditionalTargetStatusId,
                     ConditionalTargetStatusMinStacks = choice.ConditionalTargetStatusMinStacks,
+                    HasTargetStatusStackDamageMultiplier = choice.HasTargetStatusStackDamageMultiplier,
+                    TargetStatusStackDamageMultiplier = choice.HasTargetStatusStackDamageMultiplier ? choice.TargetStatusStackDamageMultiplier : 1f,
+                    HasConsumeTargetStatusRatioOverride = choice.HasConsumeTargetStatusRatioOverride,
+                    ConsumeTargetStatusRatioOverride = choice.ConsumeTargetStatusRatioOverride,
+                    HasConsumeTargetStatusStacksOverride = choice.HasConsumeTargetStatusStacksOverride,
+                    ConsumeTargetStatusStacksOverride = choice.ConsumeTargetStatusStacksOverride,
+                    ConditionalCritChanceBonus = choice.ConditionalCritChanceBonus,
+                    ConditionalCritTargetStatusId = choice.ConditionalCritTargetStatusId,
+                    ConditionalCritTargetStatusMinStacks = choice.ConditionalCritTargetStatusMinStacks,
+                    RedistributeConsumedStatusRatioOnKill = choice.RedistributeConsumedStatusRatioOnKill,
+                    RedistributeConsumedStatusId = choice.RedistributeConsumedStatusId,
+                    RedistributeConsumedStatusSearchRadius = choice.RedistributeConsumedStatusSearchRadius,
+                    RedistributeConsumedStatusTargetCount = choice.RedistributeConsumedStatusTargetCount,
                     CountStatusId = choice.CountStatusId,
                     CountTargetSide = choice.CountTargetSide,
                     DamageMultiplierPerCount = choice.DamageMultiplierPerCount,
@@ -628,6 +668,8 @@ namespace Pakuri.Data
             definition.StatusElementDamageTakenBonus = payload.StatusElementDamageTakenBonus;
             definition.StatusConditionalTargetStatusId = payload.StatusConditionalTargetStatusId;
             definition.StatusConditionalStatusChanceBonus = payload.StatusConditionalStatusChanceBonus;
+            definition.StatusConditionalIncomingSkillRuntimeKinds = payload.StatusConditionalIncomingSkillRuntimeKinds;
+            definition.StatusConditionalOutgoingSkillRuntimeKinds = payload.StatusConditionalOutgoingSkillRuntimeKinds;
             definition.StatusAppliedStatusDurationBonusStatusId = payload.StatusAppliedStatusDurationBonusStatusId;
             definition.StatusAppliedStatusDurationBonus = payload.StatusAppliedStatusDurationBonus;
             definition.StatusOutgoingAdditionalDamageMultiplier = payload.StatusOutgoingAdditionalDamageMultiplier;

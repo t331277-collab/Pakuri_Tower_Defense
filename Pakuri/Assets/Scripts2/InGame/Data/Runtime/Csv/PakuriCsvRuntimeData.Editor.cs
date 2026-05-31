@@ -47,6 +47,7 @@ namespace Pakuri.Data
             var sourceCatalog = LoadOrCreateAsset<PakuriCsvRuntimeSourceCatalog>(SourceCatalogAssetPath);
             sourceCatalog.CatalogMonsters = LoadImportedSourceTextAssetOrThrow(CatalogMonstersFileName);
             sourceCatalog.CatalogStageOneEnemies = LoadImportedSourceTextAssetOrThrow(CatalogStageOneEnemiesFileName);
+            sourceCatalog.CatalogStageTwoEnemies = LoadImportedSourceTextAssetOrThrow(CatalogStageTwoEnemiesFileName);
             sourceCatalog.Monsters = LoadImportedSourceTextAssetOrThrow(MonstersFileName);
             sourceCatalog.MonsterRewardChoices = LoadImportedSourceTextAssetOrThrow(MonsterRewardChoicesFileName);
             sourceCatalog.MonsterSkills = LoadImportedSourceTextAssetOrThrow(MonsterSkillsFileName);
@@ -55,6 +56,7 @@ namespace Pakuri.Data
             sourceCatalog.MonsterSkillChoices = LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesFileName);
             sourceCatalog.StatusEffects = LoadImportedSourceTextAssetOrThrow(StatusEffectsFileName);
             sourceCatalog.StageOneEnemies = LoadImportedSourceTextAssetOrThrow(StageOneEnemiesFileName);
+            sourceCatalog.StageTwoEnemies = LoadImportedSourceTextAssetOrThrow(StageTwoEnemiesFileName);
             sourceCatalog.EnemySkills = LoadTextAssetOrThrow(
                 EnemySkillDataAssetPath,
                 "Create EnemySkillData.csv under Assets/CSVdata before validation.");

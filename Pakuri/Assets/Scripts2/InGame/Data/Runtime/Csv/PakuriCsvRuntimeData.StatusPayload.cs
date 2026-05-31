@@ -33,6 +33,8 @@ namespace Pakuri.Data
             public float StatusCriticalChanceBonus;
             public string StatusConditionalTargetStatusId;
             public float StatusConditionalStatusChanceBonus;
+            public string StatusConditionalIncomingSkillRuntimeKinds;
+            public string StatusConditionalOutgoingSkillRuntimeKinds;
             public string StatusAppliedStatusDurationBonusStatusId;
             public float StatusAppliedStatusDurationBonus;
             public float StatusOutgoingAdditionalDamageMultiplier;
@@ -75,6 +77,8 @@ namespace Pakuri.Data
                 payload.StatusCriticalDamageBonus = ReadOptionalFloatIfColumnExists(record, "status_critical_damage_bonus");
                 payload.StatusConditionalTargetStatusId = record.ReadString("status_conditional_target_status_id");
                 payload.StatusConditionalStatusChanceBonus = record.ReadFloat("status_conditional_status_chance_bonus");
+                payload.StatusConditionalIncomingSkillRuntimeKinds = ReadOptionalStringIfColumnExists(record, "status_conditional_incoming_skill_runtime_kinds");
+                payload.StatusConditionalOutgoingSkillRuntimeKinds = ReadOptionalStringIfColumnExists(record, "status_conditional_outgoing_skill_runtime_kinds");
                 payload.StatusAppliedStatusDurationBonusStatusId = record.ReadString("status_applied_status_duration_bonus_status_id");
                 payload.StatusAppliedStatusDurationBonus = record.ReadFloat("status_applied_status_duration_bonus");
                 payload.StatusOutgoingAdditionalDamageMultiplier = record.ReadFloat("status_outgoing_additional_damage_multiplier");

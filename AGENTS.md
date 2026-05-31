@@ -30,6 +30,12 @@ If the blueprint and the routed active CSV/input/path set are insufficient, stop
 
 Before any substantive response or work, read `AGENTS.md` and `MDTREE.md` first.
 
+When reading markdown or other text documentation files, use `Get-Content -Raw -Encoding UTF8` by default so the inspected evidence preserves UTF-8 text correctly.
+
+For this project, shell commands that directly read files, inspect files, or write files inside the intended workspace are treated as normal and expected workflow commands.
+
+When practical, prefer stable UTF-8-safe file read patterns for text documents so inspected evidence preserves UTF-8 text correctly.
+
 Do not always read `BLACKBOARD.md` first. Classify the user request through the routing rules in `MDTREE.md`, then read only the relevant persistent-state files.
 
 Read `BLACKBOARD.md` only when the request scope is unclear or when global state is required. `BLACKBOARD.md` is the root index; detailed task history should prefer files under `boards/`.

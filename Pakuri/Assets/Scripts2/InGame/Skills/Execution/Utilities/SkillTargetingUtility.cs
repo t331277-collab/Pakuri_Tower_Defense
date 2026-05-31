@@ -23,7 +23,10 @@ namespace Pakuri.InGame
             var bestDistanceSq = float.MaxValue;
             var bestHealth = float.MinValue;
             var bestLowestHealth = float.MaxValue;
+            var bestStacks = int.MinValue;
             var origin = caster.Transform.position;
+            var selectionStatusId = targeting != null ? targeting.SelectionStatusId : string.Empty;
+            var selectionStatusMinStacks = targeting != null ? targeting.SelectionStatusMinStacks : 0;
 
             for (var i = 0; i < candidates.Count; i++)
             {
@@ -97,6 +100,33 @@ namespace Pakuri.InGame
                     continue;
                 }
 
+                if (selection == SkillTargetSelection.HighestStacks)
+                {
+                    var stacks = ResolveStatusStacks(candidate.Model, selectionStatusId);
+                    if (stacks < Mathf.Max(0, selectionStatusMinStacks))
+                    {
+                        continue;
+                    }
+
+                    if (stacks < bestStacks)
+                    {
+                        continue;
+                    }
+
+                    var tieOffset = candidate.Transform.position - origin;
+                    tieOffset.z = 0f;
+                    var tieDistanceSq = tieOffset.sqrMagnitude;
+                    if (stacks == bestStacks && tieDistanceSq >= bestDistanceSq)
+                    {
+                        continue;
+                    }
+
+                    best = candidate;
+                    bestStacks = stacks;
+                    bestDistanceSq = tieDistanceSq;
+                    continue;
+                }
+
                 var offset = candidate.Transform.position - origin;
                 offset.z = 0f;
                 var distanceSq = offset.sqrMagnitude;
@@ -147,7 +177,7 @@ namespace Pakuri.InGame
             var side = targeting != null ? targeting.TargetSide : SkillTargetSide.Enemy;
             if (side == SkillTargetSide.Self)
             {
-                return new[] { caster };
+                return IsSkillTargetable(caster) ? new[] { caster } : Array.Empty<UnitRosterEntry>();
             }
 
             var targets = side == SkillTargetSide.Ally || side == SkillTargetSide.AllAllies
@@ -162,7 +192,11 @@ namespace Pakuri.InGame
                         ? roster.Players
                         : roster.Enemies;
 
-            if (string.IsNullOrWhiteSpace(requiredStatusId))
+            var selectionStatusId = targeting != null ? targeting.SelectionStatusId : string.Empty;
+            var selectionStatusMinStacks = targeting != null ? Mathf.Max(0, targeting.SelectionStatusMinStacks) : 0;
+            var useSelectionStatusFilter = !string.IsNullOrWhiteSpace(selectionStatusId) && selectionStatusMinStacks > 0;
+            var mustFilterNexus = ContainsNexusTarget(targets);
+            if (string.IsNullOrWhiteSpace(requiredStatusId) && !useSelectionStatusFilter && !mustFilterNexus)
             {
                 return targets;
             }
@@ -171,13 +205,47 @@ namespace Pakuri.InGame
             for (var i = 0; i < targets.Count; i++)
             {
                 var target = targets[i];
-                if (HasRequiredStatus(target != null ? target.Model : null, requiredStatusId, requiredStatusMinStacks))
+                var model = target != null ? target.Model : null;
+                if (!IsSkillTargetable(target))
                 {
-                    filtered.Add(target);
+                    continue;
                 }
+
+                if (!string.IsNullOrWhiteSpace(requiredStatusId)
+                    && !HasRequiredStatus(model, requiredStatusId, requiredStatusMinStacks))
+                {
+                    continue;
+                }
+
+                if (useSelectionStatusFilter
+                    && !HasRequiredStatus(model, selectionStatusId, selectionStatusMinStacks))
+                {
+                    continue;
+                }
+
+                filtered.Add(target);
             }
 
             return filtered;
+        }
+
+        private static bool ContainsNexusTarget(IReadOnlyList<UnitRosterEntry> targets)
+        {
+            for (var i = 0; targets != null && i < targets.Count; i++)
+            {
+                if (!IsSkillTargetable(targets[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsSkillTargetable(UnitRosterEntry entry)
+        {
+            var identity = entry != null && entry.Model != null ? entry.Model.Identity : null;
+            return identity == null || identity.Role != UnitRole.Nexus;
         }
 
         private static bool HasRequiredStatus(BaseUnitRuntimeModel model, string statusId, int minimumStacks)
@@ -199,6 +267,26 @@ namespace Pakuri.InGame
             }
 
             return model.Statuses != null && model.Statuses.GetStacks(kind) >= minStacks;
+        }
+
+        private static int ResolveStatusStacks(BaseUnitRuntimeModel model, string statusId)
+        {
+            if (model == null || string.IsNullOrWhiteSpace(statusId))
+            {
+                return 0;
+            }
+
+            if (!StatusEffectUtility.TryParse(statusId, out var kind))
+            {
+                return 0;
+            }
+
+            if (kind == StatusEffectKind.Shield)
+            {
+                return model.Resources != null && model.Resources.CurrentShield > 0f ? 1 : 0;
+            }
+
+            return model.Statuses != null ? model.Statuses.GetStacks(kind) : 0;
         }
     }
 }

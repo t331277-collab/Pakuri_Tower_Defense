@@ -15,6 +15,11 @@ namespace Pakuri.InGame
         [Min(1)] public int DeploymentCount = 1;
         public string DeploymentRequiredTargetStatusId;
         [Min(0)] public int DeploymentRequiredTargetStatusMinStacks;
+        public string TargetStatusStackStatusId;
+        [Min(0)] public int TargetStatusStackMaxStacks;
+        public string ConsumeTargetStatusId;
+        [Range(0f, 1f)] public float ConsumeTargetStatusRatio;
+        [Min(0)] public int ConsumeTargetStatusStacks;
         [Min(0f)] public float DamageDelaySeconds;
         [Range(0f, 1f)] public float ExecuteHealthRatioThreshold;
         public bool RequireExecuteThresholdToCast;
@@ -24,6 +29,7 @@ namespace Pakuri.InGame
 
         [Header("Enemy Effect")]
         public SkillDamageSpec Damage = new SkillDamageSpec();
+        public SkillDamageSpec TargetStatusStackDamage = new SkillDamageSpec();
         public StatusApplicationSpec OnHitStatus = new StatusApplicationSpec();
 
         [Header("Ally Effect")]

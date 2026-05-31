@@ -19,6 +19,21 @@ namespace Pakuri.InGame
             return ExecuteFiltered(context, snapshot, effects, fallbackCenter, null, false);
         }
 
+        internal static bool ExecuteDirect(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SkillEffectDefinition effect,
+            Vector2 fallbackCenter,
+            bool scaleStatusDurationWithSnapshot = false)
+        {
+            if (effect == null)
+            {
+                return false;
+            }
+
+            return ExecuteEffect(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot);
+        }
+
         internal static bool ExecuteWithStatusDurationScaling(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -185,7 +200,8 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            return !HasAnyLearnedPassive(context, effect.ExcludesPassiveSkillId);
+            return !HasAnyLearnedPassive(context, effect.ExcludesPassiveSkillId)
+                && HasRequiredSourceStatus(context, effect.RequiredSourceStatusId, effect.RequiredSourceStatusMinStacks);
         }
 
         private static bool HasAllChoices(SkillExecutionSnapshot snapshot, string choiceList)
@@ -282,6 +298,31 @@ namespace Pakuri.InGame
                 && monster.State.LearnedPassiveSkillIds.Contains(passiveId);
         }
 
+        private static bool HasRequiredSourceStatus(SkillExecutionContext context, string statusId, int minStacks)
+        {
+            if (string.IsNullOrWhiteSpace(statusId))
+            {
+                return true;
+            }
+
+            if (!StatusEffectUtility.TryParse(statusId, out var kind))
+            {
+                return false;
+            }
+
+            var caster = context != null ? context.Caster : null;
+            if (kind == StatusEffectKind.Shield)
+            {
+                return caster != null
+                    && caster.Resources != null
+                    && caster.Resources.CurrentShield > 0f;
+            }
+
+            return caster != null
+                && caster.Statuses != null
+                && caster.Statuses.GetStacks(kind) >= Mathf.Max(1, minStacks);
+        }
+
         private static bool ExecuteEffect(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -317,6 +358,7 @@ namespace Pakuri.InGame
             var center = ResolveEffectCenter(context, effect, targeting, fallbackCenter);
             var damageSpec = new SkillDamageSpec
             {
+                SkillId = effect.SkillId,
                 Element = (ElementType)(int)effect.Attribute,
                 BaseDamage = effect.BaseDamage,
                 StatCoefficient = Mathf.Abs(effect.SpellPowerCoefficient) >= Mathf.Abs(effect.AttackPowerCoefficient)
@@ -669,6 +711,8 @@ namespace Pakuri.InGame
             status.ElementDamageTakenBonus = effect.StatusElementDamageTakenBonus;
             status.ConditionalTargetStatusTag = effect.StatusConditionalTargetStatusId;
             status.ConditionalStatusChanceBonus = effect.StatusConditionalStatusChanceBonus;
+            status.ConditionalIncomingSkillRuntimeKinds = effect.StatusConditionalIncomingSkillRuntimeKinds;
+            status.ConditionalOutgoingSkillRuntimeKinds = effect.StatusConditionalOutgoingSkillRuntimeKinds;
             status.AppliedStatusDurationBonusStatusId = effect.StatusAppliedStatusDurationBonusStatusId;
             status.AppliedStatusDurationBonus = effect.StatusAppliedStatusDurationBonus;
             status.OutgoingAdditionalDamageMultiplier = effect.StatusOutgoingAdditionalDamageMultiplier;

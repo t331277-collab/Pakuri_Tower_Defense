@@ -484,12 +484,41 @@ namespace Pakuri.InGame
             {
                 case SkillMultiEffectTargetSide.Self:
                     var self = FindEntryForModel(owner, ownerIsEnemy ? roster.Enemies : roster.Players);
-                    return self != null ? new[] { self } : System.Array.Empty<UnitRosterEntry>();
+                    return IsSkillTarget(self) ? new[] { self } : System.Array.Empty<UnitRosterEntry>();
                 case SkillMultiEffectTargetSide.AllAllies:
-                    return ownerIsEnemy ? roster.Enemies : roster.Players;
+                    return FilterSkillTargets(ownerIsEnemy ? roster.Enemies : roster.Players);
                 default:
-                    return ownerIsEnemy ? roster.Players : roster.Enemies;
+                    return FilterSkillTargets(ownerIsEnemy ? roster.Players : roster.Enemies);
             }
+        }
+
+        private static System.Collections.Generic.IReadOnlyList<UnitRosterEntry> FilterSkillTargets(
+            System.Collections.Generic.IReadOnlyList<UnitRosterEntry> entries)
+        {
+            if (entries == null || entries.Count == 0)
+            {
+                return System.Array.Empty<UnitRosterEntry>();
+            }
+
+            var filtered = new System.Collections.Generic.List<UnitRosterEntry>();
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                if (!IsSkillTarget(entry))
+                {
+                    continue;
+                }
+
+                filtered.Add(entry);
+            }
+
+            return filtered;
+        }
+
+        private static bool IsSkillTarget(UnitRosterEntry entry)
+        {
+            var identity = entry != null && entry.Model != null ? entry.Model.Identity : null;
+            return entry != null && (identity == null || identity.Role != UnitRole.Nexus);
         }
 
         private static UnitRosterEntry FindEntryForModel(

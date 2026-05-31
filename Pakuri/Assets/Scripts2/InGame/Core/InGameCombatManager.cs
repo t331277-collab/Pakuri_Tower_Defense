@@ -129,6 +129,34 @@ namespace Pakuri.InGame
             return roster.Register(model, actor, hitboxRoot);
         }
 
+        public UnitRosterEntry RegisterNexus(NexusUnitRuntimeModel model, NexusUnitActor actor, Transform hitboxRoot = null)
+        {
+            return roster.Register(model, actor, hitboxRoot);
+        }
+
+        public bool DespawnUnit(BaseUnitRuntimeModel model, float destroyDelay = 0f)
+        {
+            if (model == null)
+            {
+                return false;
+            }
+
+            var entry = roster.Find(model);
+            if (entry == null)
+            {
+                return false;
+            }
+
+            var actor = entry.Actor;
+            roster.Unregister(model);
+            if (actor != null)
+            {
+                Destroy(actor.gameObject, Mathf.Max(0f, destroyDelay));
+            }
+
+            return true;
+        }
+
         public bool UnregisterUnit(BaseUnitRuntimeModel model)
         {
             return roster.Unregister(model);
@@ -173,6 +201,11 @@ namespace Pakuri.InGame
 
         public InGameResourceChangeResult GrantShield(BaseUnitRuntimeModel target, float amount)
         {
+            if (IsNexusModel(target))
+            {
+                return InGameResourceChangeResult.Unchanged(target);
+            }
+
             var result = resourceMutations.GrantShield(target, amount);
             RefreshActorIfChanged(result);
             return result;
@@ -180,6 +213,11 @@ namespace Pakuri.InGame
 
         public InGameResourceChangeResult SetShield(BaseUnitRuntimeModel target, float amount)
         {
+            if (IsNexusModel(target))
+            {
+                return InGameResourceChangeResult.Unchanged(target);
+            }
+
             var result = resourceMutations.SetShield(target, amount);
             RefreshActorIfChanged(result);
             return result;
@@ -187,6 +225,11 @@ namespace Pakuri.InGame
 
         public InGameResourceChangeResult Heal(BaseUnitRuntimeModel target, float amount)
         {
+            if (IsNexusModel(target))
+            {
+                return InGameResourceChangeResult.Unchanged(target);
+            }
+
             var result = resourceMutations.Heal(target, amount);
             RefreshActorIfChanged(result);
             return result;
@@ -215,7 +258,7 @@ namespace Pakuri.InGame
             bool permanent = false,
             bool refreshDuration = true)
         {
-            if (target == null || target.Statuses == null || kind == StatusEffectKind.None)
+            if (target == null || target.Statuses == null || kind == StatusEffectKind.None || IsNexusModel(target))
             {
                 return null;
             }
@@ -243,7 +286,7 @@ namespace Pakuri.InGame
             bool refreshDuration = true,
             BaseUnitRuntimeModel source = null)
         {
-            if (target == null || target.Statuses == null || statusData == null || statusData.Kind == StatusEffectKind.None)
+            if (target == null || target.Statuses == null || statusData == null || statusData.Kind == StatusEffectKind.None || IsNexusModel(target))
             {
                 return null;
             }
@@ -276,7 +319,7 @@ namespace Pakuri.InGame
             bool refreshDuration = true,
             BaseUnitRuntimeModel source = null)
         {
-            if (target == null || target.Statuses == null || statusData == null || statusData.Kind != StatusEffectKind.Shield)
+            if (target == null || target.Statuses == null || statusData == null || statusData.Kind != StatusEffectKind.Shield || IsNexusModel(target))
             {
                 return null;
             }
@@ -309,7 +352,7 @@ namespace Pakuri.InGame
 
         public bool ExtendStatusDuration(BaseUnitRuntimeModel target, StatusEffectKind kind, float durationDelta)
         {
-            if (target == null || target.Statuses == null || kind == StatusEffectKind.None || durationDelta <= 0f)
+            if (target == null || target.Statuses == null || kind == StatusEffectKind.None || durationDelta <= 0f || IsNexusModel(target))
             {
                 return false;
             }
@@ -563,6 +606,40 @@ namespace Pakuri.InGame
             }
 
             return removed;
+        }
+
+        public int ConsumeStatusStacks(BaseUnitRuntimeModel target, string statusTag, int stacks)
+        {
+            if (target == null || target.Statuses == null || stacks <= 0)
+            {
+                return 0;
+            }
+
+            var consumed = target.Statuses.ConsumeStacks(statusTag, stacks);
+            if (consumed > 0)
+            {
+                resourceMutations.SynchronizeShieldView(target);
+                RefreshUnitActor(target);
+            }
+
+            return consumed;
+        }
+
+        public int ConsumeStatusStacks(BaseUnitRuntimeModel target, StatusEffectKind kind, int stacks)
+        {
+            if (target == null || target.Statuses == null || stacks <= 0)
+            {
+                return 0;
+            }
+
+            var consumed = target.Statuses.ConsumeStacks(kind, stacks);
+            if (consumed > 0)
+            {
+                resourceMutations.SynchronizeShieldView(target);
+                RefreshUnitActor(target);
+            }
+
+            return consumed;
         }
 
         public bool RemoveStatus(BaseUnitRuntimeModel target, StatusEffectKind kind)
@@ -867,7 +944,17 @@ namespace Pakuri.InGame
 
         private UnitRosterEntry GetSelectedPlayerEntry()
         {
-            return roster.Players.Count > 0 ? roster.Players[0] : null;
+            var players = roster.Players;
+            for (var i = 0; i < players.Count; i++)
+            {
+                var entry = players[i];
+                if (entry != null && IsSelectedPlayerModel(entry.Model))
+                {
+                    return entry;
+                }
+            }
+
+            return null;
         }
 
         private bool IsSelectedPlayerEntry(UnitRosterEntry entry)
@@ -880,7 +967,15 @@ namespace Pakuri.InGame
             return model != null
                 && model.Identity != null
                 && model.Identity.Side == UnitSide.Player
+                && model.Identity.Role == UnitRole.Monster
                 && model.Identity.SlotIndex == 0;
+        }
+
+        private static bool IsNexusModel(BaseUnitRuntimeModel model)
+        {
+            return model != null
+                && model.Identity != null
+                && model.Identity.Role == UnitRole.Nexus;
         }
 
         private Vector2 ResolveAimDirection(UnitRosterEntry player, Vector2 targetPoint)
@@ -1077,10 +1172,18 @@ namespace Pakuri.InGame
             roster.Unregister(result.Target);
             if (actor != null)
             {
+                var nexusActor = actor as NexusUnitActor;
+                if (nexusActor != null)
+                {
+                    nexusActor.NotifyDefeated();
+                    return;
+                }
+
                 var monsterActor = actor as MonsterUnitActor;
                 if (monsterActor != null)
                 {
-                    monsterActor.TryPlayDeathAnimation();
+                    monsterActor.MarkDefeated();
+                    return;
                 }
 
                 Destroy(actor.gameObject, 0.95f);
@@ -1105,6 +1208,13 @@ namespace Pakuri.InGame
             if (enemyActor != null)
             {
                 enemyActor.RefreshDebugView();
+                return true;
+            }
+
+            var nexusActor = entry.Actor as NexusUnitActor;
+            if (nexusActor != null)
+            {
+                nexusActor.RefreshDebugView();
                 return true;
             }
 
@@ -1327,11 +1437,11 @@ namespace Pakuri.InGame
                     criticalMultiplierBonus: sourceCriticalDamage + options.CritDamageBonus - DamageCalculator.BaseCriticalMultiplier,
                     targetCriticalResistance: targetCriticalResistance,
                     criticalDamageTakenBonus: criticalDamageTakenBonus,
-                    finalDamageMultiplier: ResolveIncomingDamageMultiplier(target, options.Source, attribute)).FinalDamage;
+                    finalDamageMultiplier: ResolveIncomingDamageMultiplier(target, options.Source, attribute, options.SourceSkillId)).FinalDamage;
                 return Mathf.Round(Mathf.Max(0f, damage));
             }
 
-            return Mathf.Round(ResolveDamageAfterDefense(target, baseDamage, attribute) * ResolveIncomingDamageMultiplier(target, options.Source, attribute));
+            return Mathf.Round(ResolveDamageAfterDefense(target, baseDamage, attribute) * ResolveIncomingDamageMultiplier(target, options.Source, attribute, options.SourceSkillId));
         }
 
         private static AttributeDefenseSet ToAttributeDefenseSet(UnitDefenseRuntime defenses)
@@ -1352,9 +1462,9 @@ namespace Pakuri.InGame
             };
         }
 
-        private static float ResolveIncomingDamageMultiplier(BaseUnitRuntimeModel target, BaseUnitRuntimeModel source, DamageAttribute attribute)
+        private static float ResolveIncomingDamageMultiplier(BaseUnitRuntimeModel target, BaseUnitRuntimeModel source, DamageAttribute attribute, string sourceSkillId)
         {
-            var statusMultiplier = StatusEffectRuntime.ResolveIncomingDamageMultiplier(target, source, attribute);
+            var statusMultiplier = StatusEffectRuntime.ResolveIncomingDamageMultiplier(target, source, attribute, sourceSkillId);
             var enemy = target as EnemyUnitRuntimeModel;
             if (enemy == null)
             {

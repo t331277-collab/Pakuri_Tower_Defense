@@ -7,6 +7,7 @@ namespace Pakuri.Data
     {
         private readonly Dictionary<string, MonsterDefinition> monsters = new Dictionary<string, MonsterDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, EnemyDefinition> stageOneEnemies = new Dictionary<string, EnemyDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, EnemyDefinition> stageTwoEnemies = new Dictionary<string, EnemyDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, SkillDefinition> activeSkills = new Dictionary<string, SkillDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, PassiveDefinition> passiveSkills = new Dictionary<string, PassiveDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, StatusEffectDefinitionData> statusEffects = new Dictionary<string, StatusEffectDefinitionData>(StringComparer.OrdinalIgnoreCase);
@@ -31,6 +32,7 @@ namespace Pakuri.Data
             CurrentCatalog = catalog;
             monsters.Clear();
             stageOneEnemies.Clear();
+            stageTwoEnemies.Clear();
             activeSkills.Clear();
             passiveSkills.Clear();
             statusEffects.Clear();
@@ -46,7 +48,8 @@ namespace Pakuri.Data
             }
 
             RegisterMonsters(catalog.Monsters);
-            RegisterEnemies(catalog.StageOneEnemies);
+            RegisterEnemies(catalog.StageOneEnemies, stageOneEnemies);
+            RegisterEnemies(catalog.StageTwoEnemies, stageTwoEnemies);
             RegisterStatusEffects(catalog.StatusEffects);
         }
 
@@ -79,7 +82,11 @@ namespace Pakuri.Data
             }
             else if (targetType == typeof(EnemyDefinition))
             {
-                stageOneEnemies.TryGetValue(id, out var enemy);
+                if (!stageOneEnemies.TryGetValue(id, out var enemy))
+                {
+                    stageTwoEnemies.TryGetValue(id, out enemy);
+                }
+
                 resolved = enemy;
             }
             else if (targetType == typeof(SkillDefinition))
@@ -138,6 +145,18 @@ namespace Pakuri.Data
         {
             var catalog = GetCatalog(fallbackCatalog);
             var enemiesFromCatalog = catalog != null ? catalog.StageOneEnemies : null;
+            if (enemiesFromCatalog != null && enemiesFromCatalog.Length > 0)
+            {
+                return enemiesFromCatalog;
+            }
+
+            return Array.Empty<EnemyDefinition>();
+        }
+
+        public EnemyDefinition[] GetStageTwoEnemies(GameDataCatalog fallbackCatalog = null)
+        {
+            var catalog = GetCatalog(fallbackCatalog);
+            var enemiesFromCatalog = catalog != null ? catalog.StageTwoEnemies : null;
             if (enemiesFromCatalog != null && enemiesFromCatalog.Length > 0)
             {
                 return enemiesFromCatalog;
@@ -315,9 +334,11 @@ namespace Pakuri.Data
             }
         }
 
-        private void RegisterEnemies(EnemyDefinition[] catalogEnemies)
+        private static void RegisterEnemies(
+            EnemyDefinition[] catalogEnemies,
+            Dictionary<string, EnemyDefinition> target)
         {
-            if (catalogEnemies == null)
+            if (catalogEnemies == null || target == null)
             {
                 return;
             }
@@ -330,7 +351,7 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                stageOneEnemies[enemy.EnemyId] = enemy;
+                target[enemy.EnemyId] = enemy;
             }
         }
 

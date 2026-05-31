@@ -21,6 +21,11 @@ namespace Pakuri.Data
                 errors.Add("stage_one_enemies.csv has no enemy rows.");
             }
 
+            if (model.StageTwoEnemies.Count == 0)
+            {
+                errors.Add("stage_two_enemies.csv has no enemy rows.");
+            }
+
             if (model.EnemySkills.Count == 0)
             {
                 errors.Add("EnemySkillData.csv has no enemy skill rows.");
@@ -33,6 +38,7 @@ namespace Pakuri.Data
 
             ValidateCatalogEntries(model.CatalogMonsters, model.Monsters, "catalog_monsters.csv", errors);
             ValidateCatalogEntries(model.CatalogStageOneEnemies, model.StageOneEnemies, "catalog_stage_one_enemies.csv", errors);
+            ValidateCatalogEntries(model.CatalogStageTwoEnemies, model.StageTwoEnemies, "catalog_stage_two_enemies.csv", errors);
 
             foreach (var reward in model.RewardChoices.Values)
             {
@@ -221,10 +227,27 @@ namespace Pakuri.Data
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported conditional_target_status_id '{choice.ConditionalTargetStatusId}'.");
                 }
 
+                if (!string.IsNullOrWhiteSpace(choice.ConditionalCritTargetStatusId)
+                    && !StatusEffectUtility.TryParse(choice.ConditionalCritTargetStatusId, out _))
+                {
+                    errors.Add($"Skill choice '{choice.Id}' uses unsupported conditional_crit_target_status_id '{choice.ConditionalCritTargetStatusId}'.");
+                }
+
+                if (!string.IsNullOrWhiteSpace(choice.RedistributeConsumedStatusId)
+                    && !StatusEffectUtility.TryParse(choice.RedistributeConsumedStatusId, out _))
+                {
+                    errors.Add($"Skill choice '{choice.Id}' uses unsupported redistribute_consumed_status_id '{choice.RedistributeConsumedStatusId}'.");
+                }
+
                 if (!string.IsNullOrWhiteSpace(choice.RequiredSourceStatusId)
                     && !StatusEffectUtility.TryParse(choice.RequiredSourceStatusId, out _))
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported required_source_status_id '{choice.RequiredSourceStatusId}'.");
+                }
+
+                if (choice.HasBurstStatusProjectileIndex && choice.BurstStatusStacksBonus <= 0)
+                {
+                    errors.Add($"Skill choice '{choice.Id}' requires positive burst_status_stacks_bonus when burst_status_projectile_index is set.");
                 }
 
                 if (!ChoiceTargetsKnownSkills(choice, model, out var unknownRuntimeTargetSkillId))
@@ -237,20 +260,8 @@ namespace Pakuri.Data
                 }
             }
 
-            foreach (var enemy in model.StageOneEnemies.Values)
-            {
-                if (!model.EnemySkills.ContainsKey(enemy.StageOneSkill.ToString()))
-                {
-                    errors.Add($"Enemy '{enemy.Id}' references unknown enemy skill '{enemy.StageOneSkill}'.");
-                }
-
-                if (enemy.HasBasicSkill && !model.EnemySkills.ContainsKey(enemy.BasicSkill.ToString()))
-                {
-                    errors.Add($"Enemy '{enemy.Id}' references unknown basic enemy skill '{enemy.BasicSkill}'.");
-                }
-
-                ValidateEnemyPassiveColumns(enemy, errors);
-            }
+            ValidateEnemyRows(model.StageOneEnemies.Values, model.EnemySkills, errors);
+            ValidateEnemyRows(model.StageTwoEnemies.Values, model.EnemySkills, errors);
 
             foreach (var monster in model.Monsters.Values)
             {
@@ -360,6 +371,24 @@ namespace Pakuri.Data
                 errors.Add($"Skill '{skill.Id}' uses unsupported deployment_required_target_status_id '{skill.DeploymentRequiredTargetStatusId}'.");
             }
 
+            if (!string.IsNullOrWhiteSpace(skill.TargetSelectionStatusId)
+                && !StatusEffectUtility.TryParse(skill.TargetSelectionStatusId, out _))
+            {
+                errors.Add($"Skill '{skill.Id}' uses unsupported target_selection_status_id '{skill.TargetSelectionStatusId}'.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(skill.TargetStatusStackStatusId)
+                && !StatusEffectUtility.TryParse(skill.TargetStatusStackStatusId, out _))
+            {
+                errors.Add($"Skill '{skill.Id}' uses unsupported target_status_stack_status_id '{skill.TargetStatusStackStatusId}'.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(skill.ConsumeTargetStatusId)
+                && !StatusEffectUtility.TryParse(skill.ConsumeTargetStatusId, out _))
+            {
+                errors.Add($"Skill '{skill.Id}' uses unsupported consume_target_status_id '{skill.ConsumeTargetStatusId}'.");
+            }
+
             var status = skill.Status;
             var statusKey = !string.IsNullOrWhiteSpace(status.StatusEffectId)
                 ? status.StatusEffectId.Trim()
@@ -445,6 +474,11 @@ namespace Pakuri.Data
             ValidateChoiceReference(effect.ExcludesActiveChoiceId, effect, model, "excludes_active_choice_id", errors);
             ValidatePassiveReference(effect.RequiresPassiveSkillId, effect, model, "requires_passive_skill_id", errors);
             ValidatePassiveReference(effect.ExcludesPassiveSkillId, effect, model, "excludes_passive_skill_id", errors);
+            if (!string.IsNullOrWhiteSpace(effect.RequiredSourceStatusId)
+                && !StatusEffectUtility.TryParse(effect.RequiredSourceStatusId, out _))
+            {
+                errors.Add($"Skill effect '{effect.Id}' uses unsupported required_source_status_id '{effect.RequiredSourceStatusId}'.");
+            }
 
             var status = effect.Status;
             var hasStatus = !string.IsNullOrWhiteSpace(status.StatusEffectId)
@@ -519,6 +553,16 @@ namespace Pakuri.Data
             {
                 errors.Add($"Skill effect '{effect.Id}' has unsupported status_merge_policy '{status.StatusMergePolicy}'.");
             }
+
+            if (!ValidateSkillRuntimeKindList(status.StatusConditionalIncomingSkillRuntimeKinds))
+            {
+                errors.Add($"Skill effect '{effect.Id}' uses unsupported status_conditional_incoming_skill_runtime_kinds '{status.StatusConditionalIncomingSkillRuntimeKinds}'.");
+            }
+
+            if (!ValidateSkillRuntimeKindList(status.StatusConditionalOutgoingSkillRuntimeKinds))
+            {
+                errors.Add($"Skill effect '{effect.Id}' uses unsupported status_conditional_outgoing_skill_runtime_kinds '{status.StatusConditionalOutgoingSkillRuntimeKinds}'.");
+            }
         }
 
         private static void ValidateSkillTriggerRow(
@@ -543,6 +587,12 @@ namespace Pakuri.Data
             else if (!string.Equals(sourceSkill.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase))
             {
                 errors.Add($"Skill trigger '{trigger.Id}' source skill '{trigger.SourceSkillId}' belongs to '{sourceSkill.MonsterId}', not '{trigger.MonsterId}'.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(trigger.RequiredSourceStatusId)
+                && !StatusEffectUtility.TryParse(trigger.RequiredSourceStatusId, out _))
+            {
+                errors.Add($"Skill trigger '{trigger.Id}' uses unsupported required_source_status_id '{trigger.RequiredSourceStatusId}'.");
             }
 
             var triggerAction = trigger.TriggerAction != SkillTriggerActionKind.Auto
@@ -584,11 +634,16 @@ namespace Pakuri.Data
                 var targetSkillId = !string.IsNullOrWhiteSpace(trigger.TargetSkillId)
                     ? trigger.TargetSkillId
                     : trigger.TriggeredSkillId;
-                if (model == null || string.IsNullOrWhiteSpace(targetSkillId) || !model.Skills.TryGetValue(targetSkillId, out var targetSkill))
+                SkillRow targetSkill = null;
+                var requiresExplicitTargetSkill = !string.IsNullOrWhiteSpace(targetSkillId)
+                    || trigger.TargetSide != SkillMultiEffectTargetSide.AllAllies;
+                if (requiresExplicitTargetSkill
+                    && (model == null || string.IsNullOrWhiteSpace(targetSkillId) || !model.Skills.TryGetValue(targetSkillId, out targetSkill)))
                 {
                     errors.Add($"Skill trigger '{trigger.Id}' references unknown target skill '{targetSkillId}'.");
                 }
-                else if (!string.Equals(targetSkill.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase))
+                else if (requiresExplicitTargetSkill
+                    && !string.Equals(targetSkill.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase))
                 {
                     errors.Add($"Skill trigger '{trigger.Id}' target skill '{targetSkillId}' belongs to '{targetSkill.MonsterId}', not '{trigger.MonsterId}'.");
                 }
@@ -681,7 +736,43 @@ namespace Pakuri.Data
                 errors.Add($"Skill trigger '{trigger.Id}' uses unsupported trigger_attribute '{trigger.TriggerAttribute}'.");
             }
 
+            if (!ValidateSkillRuntimeKindList(trigger.EventSkillRuntimeKinds))
+            {
+                errors.Add($"Skill trigger '{trigger.Id}' uses unsupported event_skill_runtime_kinds '{trigger.EventSkillRuntimeKinds}'.");
+            }
+
             ValidateSkillIdList(trigger.EventSkillId, trigger, model, "event_skill_id", errors);
+        }
+
+        private static bool ValidateSkillRuntimeKindList(string rawValue)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                return true;
+            }
+
+            var tokens = rawValue.Split(';', ',');
+            for (var i = 0; i < tokens.Length; i++)
+            {
+                var token = tokens[i] != null ? tokens[i].Trim() : string.Empty;
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    continue;
+                }
+
+                if (string.Equals(token, "Area", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(token, "AoE", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (!Enum.TryParse(token, true, out SkillRuntimeKind _))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static bool HasPositiveDamagePayload(float baseDamage, float attackPowerCoefficient, float spellPowerCoefficient)
@@ -1036,7 +1127,49 @@ namespace Pakuri.Data
                 || string.Equals(passiveId, "CritChanceUp", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(passiveId, "CritDamageUp", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(passiveId, "HealingUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "IncomingDamageDown", StringComparison.OrdinalIgnoreCase);
+                || string.Equals(passiveId, "IncomingDamageDown", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "PhysicalDefenseUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "FireDamageUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "FireDefenseUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "LightningDamageUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "LightningDefenseUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "IceDamageUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "IceDefenseUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "DarknessDamageUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "DarknessDefenseUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "HolyDamageUp", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(passiveId, "HolyDefenseUp", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void ValidateEnemyRows(
+            IEnumerable<EnemyRow> enemies,
+            Dictionary<string, EnemySkillRow> enemySkills,
+            List<string> errors)
+        {
+            if (enemies == null)
+            {
+                return;
+            }
+
+            foreach (var enemy in enemies)
+            {
+                if (enemy == null)
+                {
+                    continue;
+                }
+
+                if (!enemySkills.ContainsKey(enemy.StageOneSkill.ToString()))
+                {
+                    errors.Add($"Enemy '{enemy.Id}' references unknown enemy skill '{enemy.StageOneSkill}'.");
+                }
+
+                if (enemy.HasBasicSkill && !enemySkills.ContainsKey(enemy.BasicSkill.ToString()))
+                {
+                    errors.Add($"Enemy '{enemy.Id}' references unknown basic enemy skill '{enemy.BasicSkill}'.");
+                }
+
+                ValidateEnemyPassiveColumns(enemy, errors);
+            }
         }
 
         private static void ValidateReferencedAssetCoverage(
@@ -1115,6 +1248,11 @@ namespace Pakuri.Data
                     errors.Add("Runtime GameDataCatalog has no stage-one enemies.");
                 }
 
+                if (catalog.StageTwoEnemies == null || catalog.StageTwoEnemies.Length == 0)
+                {
+                    errors.Add("Runtime GameDataCatalog has no stage-two enemies.");
+                }
+
                 if (catalog.StatusEffects == null || catalog.StatusEffects.Length == 0)
                 {
                     errors.Add("Runtime GameDataCatalog has no status effects.");
@@ -1124,7 +1262,8 @@ namespace Pakuri.Data
             if (catalog != null && sourceModel != null)
             {
                 ValidateRuntimeMonsterAssets(catalog.Monsters, sourceModel, errors);
-                ValidateRuntimeEnemyAssets(catalog.StageOneEnemies, sourceModel, errors);
+                ValidateRuntimeEnemyAssets(catalog.StageOneEnemies, sourceModel.StageOneEnemies, errors);
+                ValidateRuntimeEnemyAssets(catalog.StageTwoEnemies, sourceModel.StageTwoEnemies, errors);
             }
 
             if (errors.Count > 0)
@@ -1164,7 +1303,7 @@ namespace Pakuri.Data
 
         private static void ValidateRuntimeEnemyAssets(
             EnemyDefinition[] enemies,
-            SourceModel sourceModel,
+            Dictionary<string, EnemyRow> sourceEnemies,
             List<string> errors)
         {
             if (enemies == null)
@@ -1180,7 +1319,7 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                if (!sourceModel.StageOneEnemies.TryGetValue(enemy.EnemyId, out var sourceEnemy))
+                if (sourceEnemies == null || !sourceEnemies.TryGetValue(enemy.EnemyId, out var sourceEnemy))
                 {
                     errors.Add($"Runtime enemy '{enemy.EnemyId}' has no source row.");
                     continue;

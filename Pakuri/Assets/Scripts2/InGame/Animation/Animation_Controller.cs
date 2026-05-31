@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 namespace Pakuri.InGame
@@ -20,6 +21,7 @@ namespace Pakuri.InGame
         private float transientStateEndTime;
         private bool hasTransientState;
         private bool dead;
+        private Coroutine deathFreezeRoutine;
 
         private void Awake()
         {
@@ -68,7 +70,14 @@ namespace Pakuri.InGame
 
             dead = true;
             hasTransientState = false;
+            var deathLength = ResolveClipLength(deadState);
             PlayState(deadState);
+            if (deathFreezeRoutine != null)
+            {
+                StopCoroutine(deathFreezeRoutine);
+            }
+
+            deathFreezeRoutine = StartCoroutine(FreezeDeathOnLastFrame(deathLength));
         }
 
         public void PlayIdle()
@@ -79,6 +88,24 @@ namespace Pakuri.InGame
             }
 
             PlayState(idleState);
+        }
+
+        public void ReviveToIdle()
+        {
+            if (deathFreezeRoutine != null)
+            {
+                StopCoroutine(deathFreezeRoutine);
+                deathFreezeRoutine = null;
+            }
+
+            dead = false;
+            hasTransientState = false;
+            if (ResolveAnimator() != null)
+            {
+                animator.speed = 1f;
+            }
+
+            PlayIdle();
         }
 
         private void PlayTransient(string stateName)
@@ -95,7 +122,22 @@ namespace Pakuri.InGame
                 return;
             }
 
+            animator.speed = 1f;
             animator.Play(stateName, 0, 0f);
+        }
+
+        private IEnumerator FreezeDeathOnLastFrame(float deathLength)
+        {
+            yield return new WaitForSeconds(Mathf.Max(0.01f, deathLength));
+            if (ResolveAnimator() == null || string.IsNullOrWhiteSpace(deadState))
+            {
+                yield break;
+            }
+
+            animator.Play(deadState, 0, 0.999f);
+            animator.Update(0f);
+            animator.speed = 0f;
+            deathFreezeRoutine = null;
         }
 
         private float ResolveClipLength(string stateName)

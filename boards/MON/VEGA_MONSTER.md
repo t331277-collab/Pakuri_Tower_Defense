@@ -14,8 +14,359 @@ At the start of new work, use this active Vega file. Common monster history is a
 
 ## Status
 
-Vega active skills A-E and passive skills F-J are implemented and locally validated.
+Vega active skills A-E are implemented and locally validated.
+Vega passive skills F-J are now implemented on shared runtime/CSV paths and passed local build plus Unity CSV validation/sync on 2026-05-31.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
+
+## Task: 2026-05-31 Vega F-J Passive Shared Runtime And CSV Implementation
+
+### Task title
+
+Implement Vega passive skills F-J on shared runtime contracts, then author the passive base/effect/trigger rows in the active CSV set.
+
+### Goals
+
+- Keep Vega F-J on reusable shared runtime paths instead of adding Vega-only combat branches.
+- Implement the missing common-runtime surfaces identified by the earlier handoff: burst-index status bonus, source-status-gated passive aura, runtime-kind-filtered passive damage modifiers/triggers, and all-allies cooldown refund.
+- Author the final Vega F-J passive base/effect/trigger rows in the active CSV authority and clear stale unsupported metadata.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- Runtime authority stayed on the current shared Scripts2 combat/runtime path.
+- CSV authority stayed on `monster_skill_choices.csv`, `monster_skill_effects.csv`, and `monster_skill_triger.csv` plus the already-active `monster_skills.csv`.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented, build-verified, and Unity CSV-validated/synced.
+
+### Next Actions
+
+- User verifies in Play Mode that `vega-f` trait 3 adds the extra `name-mark` stack only on Vega-A's final burst projectile.
+- User verifies in Play Mode that `vega-h` ally buffs/debuffs follow live `slaughter-permit` uptime and stop immediately when the owner loses that status.
+- User verifies in Play Mode that `vega-i` applies and consumes only `Area`-kind damage interactions and that `vega-j` refunds cooldown to all allied active skills on Vega-E kills.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now contains the Vega F-J passive completion rows:
+  - `vega-h-base-duration` as `PassiveBase` at line 254.
+  - `vega-f-trait-1` through `vega-j-trait-3` as `RuntimeImplemented` rows at lines 189-203.
+  - `vega-f-trait-3` now authors the burst hook through `runtime_target_skill_ids=vega-a`, `burst_status_projectile_index=0`, and `burst_status_stacks_bonus=1`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now includes the passive effect rows that were absent during the earlier re-audit:
+  - Vega-F rows `vega-f-name-mark-damage-base` through `vega-f-name-mark-resist-trait2` at lines 114-117.
+  - Vega-G rows `vega-g-silence-damage-base`, `vega-g-silence-damage-trait1`, and `vega-g-silence-mark-crit-trait3` at lines 118-120.
+  - Vega-H source-status-gated aura rows `vega-h-slaughter-action-base` through `vega-h-slaughter-mark-damage-trait3` at lines 122-125.
+  - Vega-I triggered area-vulnerability rows `vega-d-i-area-vulnerability-base` through `vega-d-i-area-vulnerability-trait3-trait2` at lines 126-131.
+  - Vega-J survive-target rows `vega-e-j-survive-target-base` and `vega-e-j-survive-target-trait2` at lines 132-133.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now includes the passive trigger rows that were absent during the earlier re-audit:
+  - `vega-g-mark-on-hit-base` at line 46.
+  - `vega-i-area-vulnerability-base` through `vega-i-area-vulnerability-trait3-trait2` at lines 47-53.
+  - `vega-i-area-cooldown-base` at line 49 with `event_source_scope=all_allies`, `target_skill_id=vega-d`, and `event_skill_runtime_kinds=Area`.
+  - `vega-j-cooldown-base`, `vega-j-cooldown-trait1`, `vega-j-survive-target-base`, `vega-j-survive-target-trait2`, and `vega-j-vega-d-cooldown-trait3` at lines 54-58.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs` now exposes shared `EventSkillRuntimeKinds`, `StatusConditionalIncomingSkillRuntimeKinds`, `StatusConditionalOutgoingSkillRuntimeKinds`, `HasBurstStatusProjectileIndex`, `BurstStatusProjectileIndex`, and `BurstStatusStacksBonus`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs`, `PakuriCsvRuntimeData.Build.cs`, `PakuriCsvRuntimeData.StatusPayload.cs`, and `PakuriCsvRuntimeData.Validation.cs` now parse/map/validate the Vega F-J shared fields including `required_source_status_id`, `event_skill_runtime_kinds`, the runtime-kind conditional status fields, and the burst-status choice fields.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/ProjectileSkillExecutor.cs` now consumes `snapshot.ResolveBurstStatusStacksBonus(...)`, which is the shared runtime hook used by Vega-F trait 3.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectRuntime.cs` now resolves conditional incoming/outgoing damage modifiers through `MatchesSkillRuntimeKinds(...)`, which is the shared `Area` damage filter used by Vega-I.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` now checks `trigger.EventSkillRuntimeKinds`, can execute direct effect rows through `SkillMultiEffectExecutor.ExecuteDirect(...)`, and resolves cooldown/reload targets through `ResolveTargetRuntimes(...)`, including `TargetSide=AllAllies` for Vega-J.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` header/type rows were normalized to 70 columns so the newly added generic effect fields are accepted by the Unity CSV loader; after a forced Unity asset refresh, `Pakuri/Validate CSV Source Data` and `Pakuri/Sync CSV Runtime Catalog Assets` both completed successfully.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the pre-existing `MSB3277` warnings remained.
+- Unity console after the final validation pass logged `PakuriCsvRuntimeData loaded runtime catalog from resource source 'Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog' with 5 monsters and 8 stage-one enemies.`
+- Unity console after the final sync pass logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-31: Designer first re-audited Vega F-J and produced `boards/MON/VEGA_FJ_COMMON_RUNTIME_HANDOFF.md` because the then-inspected active CSV set had no passive base/effect/trigger authoring for F-J.
+- 2026-05-31: User then explicitly requested Code Builder runtime implementation and Skill Builder row authoring from that handoff, the Vega reference markdown, and `boards/SkillBluePrint/passive-stat-blueprint.md`.
+- 2026-05-31: Initial Unity validation failed with `CsvFatalException: CSV file 'monster_skill_effects.csv' row 114 has 70 columns but expected 66.` because the new generic effect fields had been added to authored rows without matching header/type-row normalization.
+- 2026-05-31: Code Builder normalized the effect CSV header/type rows to 70 columns, forced a Unity asset refresh, and re-ran validation/sync successfully.
+
+## Task: 2026-05-31 Vega F-J Passive Runtime Re-audit And Code Builder Handoff
+
+### Task title
+
+Re-audit whether Vega passive skills F-J and their enhancement rows are actually implementable on the current CSV/common-runtime surface, then prepare a Code Builder handoff for the missing work.
+
+### Goals
+
+- Separate metadata-only passive rows from real gameplay-supported passive runtime behavior.
+- Identify which Vega F-J pieces are CSV-authorable today and which still need shared runtime additions.
+- Produce a concrete Code Builder handoff markdown for the missing common-runtime work.
+
+### Constraints
+
+- Role Owner is Designer.
+- Conclusions must stay grounded in inspected active CSV/runtime files only.
+- Designer does not implement runtime code or CSV behavior rows.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Handoff markdown created. Re-audit completed.
+
+### Next Actions
+
+- Code Builder should start from `boards/MON/VEGA_FJ_COMMON_RUNTIME_HANDOFF.md`.
+- Code Builder should first decide whether to implement exact shared contracts or ask the user to approve approximations for the currently unsupported semantics.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` contains `vega-f` through `vega-j` as passive rows with `runtime_kind=Passive`, but that file alone does not create runtime behavior.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` contains Vega F-J `PassiveEnhancement` rows, but there are no Vega F-J `PassiveBase` rows in the active choice CSV.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` contains no `vega-f` through `vega-j` rows.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` contains no `vega-f` through `vega-j` rows.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs` shows that `PassiveDefinition` behavior is built only from `PassiveBase`, `PassiveEnhancement`, and passive effect rows.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/InGamePassiveEffectRuntime.cs` shows that learned passives only execute runtime behavior when `PassiveEffects` exist.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs` shows that passive base modifiers only apply when `BaseModifierChoices` exist.
+- Follow-up recheck then confirmed that some previously flagged blockers already have reusable support in current code, including `condition_status_id` stack-threshold expressions in `StatusEffectRuntime.TryParseConditionStatusExpression(...)`, `status_duration_bonus_status_id` passive-base duration overrides, and the two-stage effect-application gate formed by `condition_status_id` plus `status_conditional_target_status_id`.
+- `boards/MON/VEGA_FJ_COMMON_RUNTIME_HANDOFF.md` now records the detailed Designer handoff for Code Builder.
+
+### History
+
+- 2026-05-31: User asked for a Designer opinion on whether Vega F-J passives and their enhancements fit the current CSV/common-runtime surface and requested a Code Builder handoff file if shared runtime was still needed.
+- 2026-05-31: Designer re-audited the active CSV/runtime paths and found that the current board-level claim that Vega F-J were already implemented was broader than the inspected active data/runtime evidence.
+- 2026-05-31: User then requested a second-pass search for already-existing generic contracts before keeping anything on the “new common logic required” list, and the handoff was narrowed accordingly.
+
+## Task: 2026-05-31 Vega-D Deployment Center Spawn Fix
+
+### Task title
+
+Fix Vega-D so each marked-target AoE slash spawns at the resolved target center instead of snapping back to Monster Vega's own position.
+
+### Goals
+
+- Preserve the overlapping local AoE fanout behavior authored for Vega D.
+- Keep `hit_target_count=global` from forcing the prefab hitbox origin back to the caster when the skill is also using status-filtered deployments.
+- Avoid any new common runtime feature beyond the minimal executor bug fix.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The user explicitly requested immediate implementation and instructed Builder to stop only if new common logic became necessary; inspected current executor already had the needed deployment-center path.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Vega-D now appears at each marked target position instead of at Vega's own position.
+- User verifies in Play Mode that the overlapping local AoE and `즉시 / +0.5s / +1.0s` repeat timing still behave as previously authored after the center-origin fix.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` still authors `vega-d` with both `hit_target_count=global` and `deployment_required_target_status_id=name-mark`, so the bug had to be in the shared executor's hitbox-origin decision rather than in the active row bundle.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` still maps `hit_target_count=global` to `single.HitAllTargets=true` while also mapping `deployment_required_target_status_id` to `single.UsePrefabHitbox=true` and `single.UseMultiDeployment=true`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` previously routed any `HitAllTargets` prefab hitbox through `ResolvePrefabHitboxCenter(...)` back to the caster position; it now keeps the resolved deployment center when `UsesStatusFilteredDeployments(skill)` is true.
+- The same executor still resolves one center per marked target and still applies prefab scaling on that center, so this fix changes spawn origin only and does not alter the authored overlap/repeat semantics.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the pre-existing `MSB3277` warnings remained.
+- Unity console after `Pakuri/Validate CSV Source Data` and `Pakuri/Sync CSV Runtime Catalog Assets` showed runtime catalog load plus sync. The console also still showed one non-blocking MCP bridge warning `Client handler error: Cannot access a disposed object.`
+
+### History
+
+- 2026-05-31: After the overlap/repeat re-authoring, the user observed that Vega-D was spawning on Vega's own position instead of each target center.
+- 2026-05-31: Code Builder traced the bug to the shared `ResolvePrefabHitboxCenter(...)` branch that still treated all `HitAllTargets` skills like caster-anchored slashes and narrowed that branch to exclude status-filtered deployments.
+
+## Task: 2026-05-31 Vega-D Overlapping Area Fanout Re-authoring
+
+### Task title
+
+Re-author Vega D back to overlapping local area hits per marked target and update master-1 to add two delayed extra slashes on the existing shared repeat path.
+
+### Goals
+
+- Keep Vega D on the shared `SingleAttack` status-filtered fanout path without adding a new runtime branch.
+- Let each marked-target deployment center hit all enemies in its local radius so overlaps can stack.
+- Author Vega-D master-1 as base hit plus two extra delayed repeats at `0.5s` and `1.0s`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The user explicitly required work to stop if a new common runtime was needed; inspected current runtime already supported local multi-hit count, prefab radius scaling, and delayed per-target repeats.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified.
+
+### Next Actions
+
+- User verifies in Play Mode that each marked-target slash now damages every enemy inside the local radius and that overlapped circles stack damage.
+- User verifies in Play Mode that Vega-D master-1 now lands at `즉시 / +0.5s / +1.0s` per marked-target center and that each hit uses the authored `-35%` power adjustment.
+- User verifies in Play Mode that Vega-D master-2 still enlarges the live slash prefab together with the effective hit radius.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now authors `vega-d` with `hit_target_count=global` while keeping `runtime_kind=SingleAttack`, `radius=1.25`, `skill_effect_prefab_path=Assets/Prefab/Skill/Vega/Vega_D.prefab`, `deployment_required_target_status_id=name-mark`, and `deployment_required_target_status_min_stacks=1`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now authors `vega-d-master-1` with description `각 표식 대상 위치에 범위 참격 2회 추가 발생, 각 참격 위력 -35%`, `damage_multiplier=0.65`, `repeat_count_per_target=2`, `repeat_interval_seconds=0.5`, and `repeat_damage_multiplier=1`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` already keeps status-filtered fanout centers through `ResolveDeploymentCenters(...)`, resolves unlimited local hits when `HitAllTargets` is authored through `ResolveEffectiveHitTargetCount(...)`, and schedules per-target repeats with `delaySeconds = snapshot.RepeatIntervalSeconds * repeatIndex`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` still uses `SkillExecutionUtility.ApplyPrefabScale(...)` for the current Vega-D status-filtered fanout path instead of the stretched line visual branch.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillAreaUtility.cs` still maps radius modifiers into both effective radius and prefab scale through `ResolveRadius(...)` and `ResolvePrefabScaleFactor(...)`, so Vega-D master-2 radius growth remains data-driven.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the pre-existing `MSB3277` warnings remained.
+- Unity console after `Pakuri/Validate CSV Source Data` and `Pakuri/Sync CSV Runtime Catalog Assets` showed `PakuriCsvRuntimeData loaded runtime catalog from resource source 'Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog' with 5 monsters and 8 stage-one enemies.` and `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-31: An earlier same-day Vega-D pass temporarily re-authored the row toward single-target local hits to remove unintended overlap behavior.
+- 2026-05-31: User then explicitly requested overlapping local area damage plus base hit and two delayed extra slashes, so Code Builder re-authored the active Vega-D rows on the already-inspected shared runtime path without adding new common logic.
+
+## Task: 2026-05-31 Vega-D Marked-Target Fanout Single-Target Fix
+
+### Task title
+
+Keep Vega D on marked-target fanout while restoring per-target single-hit behavior and removing the unintended beam-like prefab stretch.
+
+### Goals
+
+- Preserve the shared `SingleAttack` resolved-deployment path that fires once per enemy carrying `name-mark`.
+- Stop status-filtered fanout casts from inheriting the line-style multi-deployment visual scaling.
+- Restore authored single-target hit count per deployment instead of unlimited local hits.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The user explicitly required that work stop only if firing separately at every marked enemy needed new shared common logic; inspected runtime already had that shared deployment path, so this task stayed inside the existing executor.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Vega D now spawns one slash per `name-mark` target without the stretched beam presentation.
+- User verifies in Play Mode that each slash damages only the intended marked target instead of also clipping nearby enemies around the deployment center.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` still authors `vega-d` as `runtime_kind=SingleAttack` with `deployment_required_target_status_id=name-mark`, `deployment_required_target_status_min_stacks=1`, `radius=1.25`, and empty `hit_target_count`, so the active row still requests one deployment per marked enemy rather than a separate runtime kind.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` still maps any `DeploymentRequiredTargetStatusId` row to `UsePrefabHitbox=true` and `UseMultiDeployment=true`, which is why the fix had to stay inside the shared `SingleAttackSkillExecutor` behavior split rather than in CSV alone.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` now distinguishes status-filtered deployments from line-style multi-deployment visuals through `UsesStatusFilteredDeployments(...)`, `UsesLineStyleMultiDeploymentVisual(...)`, and `ResolveEffectiveHitTargetCount(...)`.
+- In that executor, status-filtered fanout casts now keep the shared resolved-deployment center logic but no longer call `ConfigureMultiDeploymentPrefabVisual(...)`; they instead follow the normal prefab scaling path and use the authored hit-target count floor of `1`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the pre-existing `MSB3277` warnings remained.
+- Unity console after `Pakuri/Validate CSV Source Data` and `Pakuri/Sync CSV Runtime Catalog Assets` showed `PakuriCsvRuntimeData loaded runtime catalog from resource source 'Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog' with 5 monsters and 8 stage-one enemies.` and `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-31: User reported that Vega D should stay `SingleAttack` and fire at every marked enemy, but the current effect looked like a beam and the per-cast damage was not behaving as single-target.
+- 2026-05-31: Code Builder verified that the beam-like look came from `ConfigureMultiDeploymentPrefabVisual(...)` and that unlimited local hits came from `effectiveHitTargetCount = int.MaxValue` on the generic `UseMultiDeployment` path, then split the status-filtered fanout behavior from the line-style multi-deployment branch.
+
+## Task: 2026-05-31 Vega-E Shared Runtime Implementation And CSV Authoring
+
+### Task title
+
+Implement the shared runtime extensions and active CSV rows required to bring Vega E onto the current common `SingleAttack` path.
+
+### Goals
+
+- Keep Vega E on shared runtime rather than adding a Vega-only executor branch.
+- Support marked-target selection, mark-stack-based extra damage, and partial mark consumption through reusable runtime/data contracts.
+- Author the active Vega E CSV rows on those shared fields and keep unsupported data explicit where reference authority is still missing.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- Implementation authority started from `boards/MON/VEGA_E_COMMON_RUNTIME_HANDOFF.md`, then the final row-authoring pass used `boards/SkillBluePrint/single-attack-blueprint.md`, `Pakuri/reference/2.Monster/vega/skill/e-final-sentence.md`, and the routed active CSV files.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented, build-verified, and Unity CSV-validated. Vega-E trait-5 is now fully authored on the shared redistribution path with user-provided search radius `100` and target count `1`.
+
+### Next Actions
+
+- User verifies in Play Mode that Vega E now targets the enemy with the highest `name-mark` stack count and refuses to cast only when no marked target exists.
+- User verifies in Play Mode that base damage, per-stack bonus damage, and consumed-mark amount match the authored Vega E values across trait/master combinations.
+- User verifies in Play Mode that trait-5 kill redistribution sends `25%` of consumed `name-mark` to one nearby enemy using search radius `100`.
+
+### Evidence
+
+- `boards/MON/VEGA_E_COMMON_RUNTIME_HANDOFF.md` was used as the implementation contract for the shared Vega E runtime work.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillTargetingUtility.cs` and `.../SkillExecutionUtility.cs` now support `HighestStacks` targeting keyed by `target_selection_status_id` plus a minimum required stack count.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/SingleAttackData.cs`, `SkillDefinition.cs`, `InGameSkillDefinitionMapper.cs`, `SkillExecutionSnapshot.cs`, and the `PakuriCsvRuntimeData.*` CSV runtime files now carry shared target-status-stack damage, target-status consumption, conditional crit, and consumed-status redistribution fields.
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs` and `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now expose shared partial status-stack consumption helpers.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` now resolves shared target-status-stack bonus damage, consumes target stacks on hit, and can redistribute a portion of consumed stacks on kill.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now authors `vega-e` with `target_selection=HighestStacks`, `target_selection_status_id=name-mark`, `target_selection_status_min_stacks=1`, `target_status_stack_status_id=name-mark`, `target_status_stack_base_damage=6`, `target_status_stack_attack_power_coefficient=0.18`, `consume_target_status_id=name-mark`, `consume_target_status_ratio=0.5`, and `skill_effect_prefab_path=Assets/Prefab/Skill/Vega/Vega_E.prefab`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now marks `vega-e-trait-1`, `trait-2`, `trait-3`, `trait-4`, `trait-5`, `master-1`, and `master-2` as shared-runtime-backed rows; `vega-e-trait-5` now authors `redistribute_consumed_status_ratio_on_kill=0.25`, `redistribute_consumed_status_id=name-mark`, `redistribute_consumed_status_search_radius=100`, and `redistribute_consumed_status_target_count=1`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the pre-existing `MSB3277` warnings remained.
+- Unity menu `Pakuri/Validate CSV Source Data` loaded the runtime catalog, and Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+- The current redistribution split behavior inside `SingleAttackSkillExecutor.cs` only matters when the authored target count exceeds `1`; current Vega-E trait-5 authors target count `1`, so no multi-target split inference is exercised for this skill row.
+
+### History
+
+- 2026-05-30: Designer produced `boards/MON/VEGA_E_COMMON_RUNTIME_HANDOFF.md` after confirming Vega E still needed shared targeting/consumption/scaling extensions.
+- 2026-05-31: Code Builder implemented the shared runtime fields and re-authored the active Vega E rows on that path.
+- 2026-05-31: First Unity CSV validation exposed a temporary Vega E row-shape regression in `monster_skill_choices.csv`; Builder corrected the row alignment and revalidated successfully.
+- 2026-05-31: User later provided trait-5 nearby-search authority (`radius 100`, `target count 1`) plus the final prefab path `Assets/Prefab/Skill/Vega/Vega_E.prefab`, and Skill Builder completed the remaining row authoring.
+
+## Task: 2026-05-30 Vega-E Common Runtime Code Builder Handoff
+
+### Task title
+
+Prepare a Designer handoff for the remaining shared-runtime work needed to fully support Vega E on current CSV/runtime authority.
+
+### Goals
+
+- Separate Vega E behaviors that already fit current shared runtime from behaviors that still need shared extension.
+- Hand off the minimum shared runtime surface needed for Vega E without proposing Vega-only hardcoded branches.
+- Give Code Builder a concrete implementation order and acceptance target.
+
+### Constraints
+
+- Role Owner is Designer.
+- Designer does not implement code or scene changes.
+- Conclusions must stay grounded in inspected current code and active CSV rows only.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Handoff markdown created. Implementation not started.
+
+### Next Actions
+
+- If user requests implementation, Code Builder should use `boards/MON/VEGA_E_COMMON_RUNTIME_HANDOFF.md` as the starting contract.
+- Code Builder should first re-audit which Vega E rows can move to shared runtime by CSV re-authoring alone before extending code.
+
+### Evidence
+
+- `boards/MON/VEGA_E_COMMON_RUNTIME_HANDOFF.md` now records the Code Builder handoff for Vega E.
+- `monster_skills.csv` currently authors `vega-e` as shared `SingleAttack`, but still with `target_selection=Nearest`.
+- `monster_skill_choices.csv` currently marks all `vega-e-*` choice rows `DataOnlyUnsupported`.
+- Inspected shared runtime already supports generic damage multiplier, cooldown multiplier, and kill cooldown refund paths, so not every Vega E row necessarily needs new code.
+- Inspected shared runtime did not show a current generic contract for highest-mark target selection, mark-stack-based damage scaling, consumed-mark tracking, or consumed-mark redistribution.
+
+### History
+
+- 2026-05-30: User asked whether Vega E could be implemented on current common logic and CSV.
+- 2026-05-30: Designer concluded Vega E base cast already routes through shared `SingleAttack`, but full intended behavior still needs shared targeting/consumption/scaling extensions.
+- 2026-05-30: User then requested a Code Builder handoff markdown for Vega E.
 
 ## Task: 2026-05-30 Vega-C And Vega-D Shared Runtime Implementation And Skill Authoring
 

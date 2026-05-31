@@ -58,16 +58,18 @@ namespace Pakuri.InGame
 
         private readonly struct TargetDamageResolution
         {
-            public TargetDamageResolution(float damage, float critChanceBonus, bool isExecute)
+            public TargetDamageResolution(float damage, float critChanceBonus, bool isExecute, int plannedConsumedStacks)
             {
                 Damage = damage;
                 CritChanceBonus = critChanceBonus;
                 IsExecute = isExecute;
+                PlannedConsumedStacks = plannedConsumedStacks;
             }
 
             public float Damage { get; }
             public float CritChanceBonus { get; }
             public bool IsExecute { get; }
+            public int PlannedConsumedStacks { get; }
         }
 
         public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
@@ -158,7 +160,9 @@ namespace Pakuri.InGame
 
         private static Vector2 ResolvePrefabHitboxCenter(SkillExecutionContext context, Vector2 fallbackCenter, SingleAttackData skill)
         {
-            if (skill != null && skill.HitAllTargets)
+            if (skill != null
+                && skill.HitAllTargets
+                && !UsesStatusFilteredDeployments(skill))
             {
                 return context != null && context.CasterEntry != null && context.CasterEntry.Transform != null
                     ? (Vector2)context.CasterEntry.Transform.position
@@ -179,10 +183,38 @@ namespace Pakuri.InGame
             return Mathf.Max(1, skill.DeploymentCount + bonus);
         }
 
+        private static bool UsesStatusFilteredDeployments(SingleAttackData skill)
+        {
+            return skill != null && !string.IsNullOrWhiteSpace(skill.DeploymentRequiredTargetStatusId);
+        }
+
+        private static bool UsesLineStyleMultiDeploymentVisual(SingleAttackData skill)
+        {
+            return skill != null
+                && skill.UseMultiDeployment
+                && !UsesStatusFilteredDeployments(skill);
+        }
+
+        private static int ResolveEffectiveHitTargetCount(SingleAttackData skill, SkillExecutionSnapshot snapshot)
+        {
+            if (skill == null)
+            {
+                return 1;
+            }
+
+            if (UsesLineStyleMultiDeploymentVisual(skill) || skill.HitAllTargets)
+            {
+                return int.MaxValue;
+            }
+
+            var hitTargetCountBonus = snapshot != null ? snapshot.HitTargetCountBonus : 0;
+            return Mathf.Max(1, skill.HitTargetCount + hitTargetCountBonus);
+        }
+
         private static bool UsesResolvedDeployments(SingleAttackData skill)
         {
             return skill != null
-                && (skill.UseMultiDeployment || !string.IsNullOrWhiteSpace(skill.DeploymentRequiredTargetStatusId));
+                && (skill.UseMultiDeployment || UsesStatusFilteredDeployments(skill));
         }
 
         private static List<Vector2> ResolveDeploymentCenters(
@@ -191,7 +223,7 @@ namespace Pakuri.InGame
             Vector2 primaryCenter,
             int deploymentCount)
         {
-            if (skill != null && !string.IsNullOrWhiteSpace(skill.DeploymentRequiredTargetStatusId))
+            if (UsesStatusFilteredDeployments(skill))
             {
                 var requiredStacks = Mathf.Max(1, skill.DeploymentRequiredTargetStatusMinStacks);
                 var filteredTargets = SkillExecutionUtility.ResolveOrderedTargets(
@@ -375,12 +407,7 @@ namespace Pakuri.InGame
             var onHitStatusEffects = ResolveOnHitStatusEffects(context, snapshot, skill.MultiEffects);
             var critChanceBonus = snapshot != null ? snapshot.CritChanceBonus : 0f;
             var critDamageBonus = snapshot != null ? snapshot.CritDamageBonus : 0f;
-            var hitTargetCountBonus = snapshot != null ? snapshot.HitTargetCountBonus : 0;
-            var effectiveHitTargetCount = skill.UseMultiDeployment
-                ? int.MaxValue
-                : skill.HitAllTargets
-                ? int.MaxValue
-                : Mathf.Max(1, skill.HitTargetCount + hitTargetCountBonus);
+            var effectiveHitTargetCount = ResolveEffectiveHitTargetCount(skill, snapshot);
             var damageDelaySeconds = Mathf.Max(0f, skill.DamageDelaySeconds);
             var followUpSpec = allowConditionalFollowUp ? ResolveFollowUpSpec(snapshot, statusSpec, prefab) : null;
             var followUpTargets = followUpSpec.HasValue ? new List<SingleAttackFollowUpTarget>() : null;
@@ -397,7 +424,7 @@ namespace Pakuri.InGame
                 {
                     spawnedHitbox = true;
                     castCommitted = true;
-                    if (skill.UseMultiDeployment)
+                    if (UsesLineStyleMultiDeploymentVisual(skill))
                     {
                         ConfigureMultiDeploymentPrefabVisual(instance.transform, context, skill, snapshot, center);
                     }
@@ -752,9 +779,11 @@ namespace Pakuri.InGame
                     target != null && target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero);
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
                 var isCoreHit = coreHitboxColliders.Length > 0 && IsTargetInsideHitbox(coreHitboxColliders, target);
-                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus, isCoreHit);
+                var targetDamage = ResolveTargetDamage(source, skill, snapshot, damage, target.Model, critChanceBonus, isCoreHit);
                 var result = manager.ApplyDamage(target.Model, targetDamage.Damage, attribute, source, criticalAllowed, targetDamage.CritChanceBonus, critDamageBonus, sourceSkillId, false, targetDamage.IsExecute);
+                var consumedStacks = ConsumePlannedTargetStatusStacks(manager, target.Model, skill, targetDamage);
                 HandleKillRecovery(sourceRuntime, skill, snapshot, result, targetDamage.IsExecute);
+                TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, target, result, consumedStacks);
                 TryApplyStatus(manager, target.Model, statusSpec, source);
                 TryApplyOnHitStatusEffects(manager, target.Model, onHitStatusEffects, source);
                 TryApplyCoreOnHitAdditionalDamage(manager, snapshot, source, sourceSkillId, target, targetDamage.Damage, isCoreHit);
@@ -817,9 +846,11 @@ namespace Pakuri.InGame
                 var target = targets[i];
                 RegisterFollowUpTarget(followUpTargets, followUpSpec, target, center);
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : center;
-                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus, false);
+                var targetDamage = ResolveTargetDamage(source, skill, snapshot, damage, target.Model, critChanceBonus, false);
                 var result = manager.ApplyDamage(target.Model, targetDamage.Damage, attribute, source, criticalAllowed, targetDamage.CritChanceBonus, critDamageBonus, sourceSkillId, false, targetDamage.IsExecute);
+                var consumedStacks = ConsumePlannedTargetStatusStacks(manager, target.Model, skill, targetDamage);
                 HandleKillRecovery(sourceRuntime, skill, snapshot, result, targetDamage.IsExecute);
+                TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, target, result, consumedStacks);
                 TryApplyStatus(manager, target.Model, statusSpec, source);
                 TryApplyOnHitStatusEffects(manager, target.Model, onHitStatusEffects, source);
                 SkillOnHitAdditionalDamageUtility.TryApply(
@@ -885,9 +916,11 @@ namespace Pakuri.InGame
 
                 RegisterFollowUpTarget(followUpTargets, followUpSpec, target, center);
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : center;
-                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus, false);
+                var targetDamage = ResolveTargetDamage(source, skill, snapshot, damage, target.Model, critChanceBonus, false);
                 var result = manager.ApplyDamage(target.Model, targetDamage.Damage, attribute, source, criticalAllowed, targetDamage.CritChanceBonus, critDamageBonus, sourceSkillId, false, targetDamage.IsExecute);
+                var consumedStacks = ConsumePlannedTargetStatusStacks(manager, target.Model, skill, targetDamage);
                 HandleKillRecovery(sourceRuntime, skill, snapshot, result, targetDamage.IsExecute);
+                TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, target, result, consumedStacks);
                 TryApplyStatus(manager, target.Model, statusSpec, source);
                 TryApplyOnHitStatusEffects(manager, target.Model, onHitStatusEffects, source);
                 SkillOnHitAdditionalDamageUtility.TryApply(
@@ -928,9 +961,11 @@ namespace Pakuri.InGame
 
                 RegisterFollowUpTarget(followUpTargets, followUpSpec, target, center);
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : center;
-                var targetDamage = ResolveTargetDamage(skill, snapshot, damage, target.Model, critChanceBonus, false);
+                var targetDamage = ResolveTargetDamage(source, skill, snapshot, damage, target.Model, critChanceBonus, false);
                 var result = manager.ApplyDamage(target.Model, targetDamage.Damage, attribute, source, criticalAllowed, targetDamage.CritChanceBonus, critDamageBonus, sourceSkillId, false, targetDamage.IsExecute);
+                var consumedStacks = ConsumePlannedTargetStatusStacks(manager, target.Model, skill, targetDamage);
                 HandleKillRecovery(sourceRuntime, skill, snapshot, result, targetDamage.IsExecute);
+                TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, target, result, consumedStacks);
                 TryApplyStatus(manager, target.Model, statusSpec, source);
                 TryApplyOnHitStatusEffects(manager, target.Model, onHitStatusEffects, source);
                 SkillOnHitAdditionalDamageUtility.TryApply(
@@ -1378,12 +1413,22 @@ namespace Pakuri.InGame
                 ThresholdStatusId = snapshot.ThresholdStatusId,
                 ThresholdStatusMinStacks = snapshot.ThresholdStatusMinStacks,
                 ThresholdApplyStatusId = snapshot.ThresholdApplyStatusId,
+                HasTargetStatusStackDamageMultiplier = !Mathf.Approximately(snapshot.TargetStatusStackDamageMultiplier, 1f),
+                TargetStatusStackDamageMultiplier = snapshot.TargetStatusStackDamageMultiplier,
+                HasConsumeTargetStatusRatioOverride = snapshot.HasConsumeTargetStatusRatioOverride,
+                ConsumeTargetStatusRatioOverride = snapshot.ConsumeTargetStatusRatioOverride,
+                HasConsumeTargetStatusStacksOverride = snapshot.HasConsumeTargetStatusStacksOverride,
+                ConsumeTargetStatusStacksOverride = snapshot.ConsumeTargetStatusStacksOverride,
                 HasExecuteHealthRatioBonus = !Mathf.Approximately(snapshot.ExecuteHealthRatioBonus, 0f),
                 ExecuteHealthRatioBonus = snapshot.ExecuteHealthRatioBonus,
                 SkillEffectPrefab = snapshot.SkillEffectPrefab,
                 HasStatusConditionalDamageTakenBonus = snapshot.HasStatusConditionalDamageTakenBonus,
                 StatusConditionalDamageTakenBonus = snapshot.StatusConditionalDamageTakenBonus,
                 StatusConditionalSourceStatusId = snapshot.StatusConditionalSourceStatusId,
+                RedistributeConsumedStatusRatioOnKill = snapshot.RedistributeConsumedStatusRatioOnKill,
+                RedistributeConsumedStatusId = snapshot.RedistributeConsumedStatusId,
+                RedistributeConsumedStatusSearchRadius = snapshot.RedistributeConsumedStatusSearchRadius,
+                RedistributeConsumedStatusTargetCount = snapshot.RedistributeConsumedStatusTargetCount,
                 RepeatCountPerTarget = snapshot.RepeatCountPerTarget,
                 RepeatIntervalSeconds = snapshot.RepeatIntervalSeconds,
                 RepeatDamageMultiplier = snapshot.RepeatDamageMultiplier
@@ -1392,6 +1437,7 @@ namespace Pakuri.InGame
         }
 
         private static TargetDamageResolution ResolveTargetDamage(
+            BaseUnitRuntimeModel caster,
             SingleAttackData skill,
             SkillExecutionSnapshot snapshot,
             float baseDamage,
@@ -1399,9 +1445,11 @@ namespace Pakuri.InGame
             float baseCritChanceBonus,
             bool isCoreHit)
         {
+            var totalDamage = Mathf.Max(0f, baseDamage + ResolveTargetStatusStackAdditionalDamage(caster, skill, snapshot, target));
             var damageMultiplier = snapshot != null ? snapshot.ResolveConditionalDamageMultiplier(target) : 1f;
-            var critChanceBonus = baseCritChanceBonus;
+            var critChanceBonus = baseCritChanceBonus + (snapshot != null ? snapshot.ResolveConditionalCritChanceBonus(target) : 0f);
             var isExecute = false;
+            var plannedConsumedStacks = ResolvePlannedConsumedStacks(skill, snapshot, target);
 
             if (isCoreHit && snapshot != null && snapshot.HasCoreDamageMultiplier)
             {
@@ -1429,9 +1477,239 @@ namespace Pakuri.InGame
             }
 
             return new TargetDamageResolution(
-                Mathf.Max(0f, baseDamage * Mathf.Max(0f, damageMultiplier)),
+                Mathf.Max(0f, totalDamage * Mathf.Max(0f, damageMultiplier)),
                 critChanceBonus,
-                isExecute);
+                isExecute,
+                plannedConsumedStacks);
+        }
+
+        private static float ResolveTargetStatusStackAdditionalDamage(
+            BaseUnitRuntimeModel caster,
+            SingleAttackData skill,
+            SkillExecutionSnapshot snapshot,
+            BaseUnitRuntimeModel target)
+        {
+            if (caster == null
+                || skill == null
+                || target == null
+                || skill.TargetStatusStackDamage == null
+                || string.IsNullOrWhiteSpace(skill.TargetStatusStackStatusId))
+            {
+                return 0f;
+            }
+
+            var stacks = ResolveStatusStacks(target, skill.TargetStatusStackStatusId);
+            if (stacks <= 0)
+            {
+                return 0f;
+            }
+
+            if (skill.TargetStatusStackMaxStacks > 0)
+            {
+                stacks = Mathf.Min(stacks, skill.TargetStatusStackMaxStacks);
+            }
+
+            var perStackDamage = SkillExecutionUtility.ResolveDamage(caster, skill.TargetStatusStackDamage, snapshot);
+            var stackMultiplier = snapshot != null ? snapshot.TargetStatusStackDamageMultiplier : 1f;
+            return Mathf.Max(0f, stacks * perStackDamage * Mathf.Max(0f, stackMultiplier));
+        }
+
+        private static int ResolvePlannedConsumedStacks(
+            SingleAttackData skill,
+            SkillExecutionSnapshot snapshot,
+            BaseUnitRuntimeModel target)
+        {
+            if (skill == null
+                || target == null
+                || string.IsNullOrWhiteSpace(skill.ConsumeTargetStatusId))
+            {
+                return 0;
+            }
+
+            var currentStacks = ResolveStatusStacks(target, skill.ConsumeTargetStatusId);
+            if (currentStacks <= 0)
+            {
+                return 0;
+            }
+
+            if (snapshot != null && snapshot.HasConsumeTargetStatusStacksOverride)
+            {
+                return Mathf.Clamp(snapshot.ConsumeTargetStatusStacksOverride, 0, currentStacks);
+            }
+
+            if (skill.ConsumeTargetStatusStacks > 0)
+            {
+                return Mathf.Clamp(skill.ConsumeTargetStatusStacks, 0, currentStacks);
+            }
+
+            var ratio = snapshot != null && snapshot.HasConsumeTargetStatusRatioOverride
+                ? snapshot.ConsumeTargetStatusRatioOverride
+                : skill.ConsumeTargetStatusRatio;
+            if (ratio <= 0f)
+            {
+                return 0;
+            }
+
+            return Mathf.Clamp(Mathf.FloorToInt(currentStacks * Mathf.Clamp01(ratio)), 0, currentStacks);
+        }
+
+        private static int ConsumePlannedTargetStatusStacks(
+            InGameCombatManager manager,
+            BaseUnitRuntimeModel target,
+            SingleAttackData skill,
+            TargetDamageResolution damageResolution)
+        {
+            if (manager == null
+                || target == null
+                || skill == null
+                || damageResolution.PlannedConsumedStacks <= 0
+                || string.IsNullOrWhiteSpace(skill.ConsumeTargetStatusId))
+            {
+                return 0;
+            }
+
+            return manager.ConsumeStatusStacks(target, skill.ConsumeTargetStatusId, damageResolution.PlannedConsumedStacks);
+        }
+
+        private static void TryRedistributeConsumedStatusOnKill(
+            InGameCombatManager manager,
+            UnitRosterEntry sourceEntry,
+            UnitRosterService roster,
+            BaseUnitRuntimeModel source,
+            SkillExecutionSnapshot snapshot,
+            UnitRosterEntry defeatedTarget,
+            InGameResourceChangeResult result,
+            int consumedStacks)
+        {
+            if (manager == null
+                || sourceEntry == null
+                || roster == null
+                || source == null
+                || snapshot == null
+                || defeatedTarget == null
+                || defeatedTarget.Transform == null
+                || !result.IsDead
+                || consumedStacks <= 0
+                || snapshot.RedistributeConsumedStatusRatioOnKill <= 0f
+                || string.IsNullOrWhiteSpace(snapshot.RedistributeConsumedStatusId)
+                || snapshot.RedistributeConsumedStatusSearchRadius <= 0f)
+            {
+                return;
+            }
+
+            var totalRedistributedStacks = Mathf.FloorToInt(consumedStacks * Mathf.Clamp01(snapshot.RedistributeConsumedStatusRatioOnKill));
+            if (totalRedistributedStacks <= 0)
+            {
+                return;
+            }
+
+            var targets = ResolveRedistributionTargets(
+                sourceEntry,
+                roster,
+                defeatedTarget.Transform.position,
+                snapshot.RedistributeConsumedStatusSearchRadius,
+                defeatedTarget.Model,
+                snapshot.RedistributeConsumedStatusTargetCount);
+            if (targets.Count <= 0)
+            {
+                return;
+            }
+
+            var baseShare = totalRedistributedStacks / targets.Count;
+            var remainder = totalRedistributedStacks % targets.Count;
+            for (var i = 0; i < targets.Count; i++)
+            {
+                var target = targets[i];
+                var stacks = baseShare + (i < remainder ? 1 : 0);
+                if (target == null || target.Model == null || stacks <= 0)
+                {
+                    continue;
+                }
+
+                var statusSpec = SkillStatusSpecUtility.CreateDirectStatusSpec(snapshot.RedistributeConsumedStatusId, stacks, snapshot);
+                if (statusSpec != null)
+                {
+                    SkillStatusApplyUtility.TryApplyStatus(manager, target.Model, statusSpec, source);
+                }
+            }
+        }
+
+        private static List<UnitRosterEntry> ResolveRedistributionTargets(
+            UnitRosterEntry sourceEntry,
+            UnitRosterService roster,
+            Vector2 center,
+            float radius,
+            BaseUnitRuntimeModel excludedModel,
+            int maxTargetCount)
+        {
+            var result = new List<UnitRosterEntry>();
+            if (sourceEntry == null || roster == null || radius <= 0f)
+            {
+                return result;
+            }
+
+            var candidates = SkillExecutionUtility.ResolveTargetList(sourceEntry, roster, new SkillTargetingSpec
+            {
+                TargetSide = SkillTargetSide.Enemy,
+                Selection = SkillTargetSelection.Nearest,
+                Shape = SkillTargetShape.Circle,
+                Radius = radius
+            });
+            var radiusSq = radius * radius;
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                var candidate = candidates[i];
+                if (candidate == null
+                    || !candidate.IsAlive
+                    || candidate.Model == null
+                    || candidate.Transform == null
+                    || ReferenceEquals(candidate.Model, excludedModel))
+                {
+                    continue;
+                }
+
+                var offset = (Vector2)candidate.Transform.position - center;
+                if (offset.sqrMagnitude > radiusSq)
+                {
+                    continue;
+                }
+
+                result.Add(candidate);
+            }
+
+            result.Sort((left, right) =>
+            {
+                var leftDistance = left != null && left.Transform != null ? ((Vector2)left.Transform.position - center).sqrMagnitude : float.MaxValue;
+                var rightDistance = right != null && right.Transform != null ? ((Vector2)right.Transform.position - center).sqrMagnitude : float.MaxValue;
+                return leftDistance.CompareTo(rightDistance);
+            });
+
+            if (maxTargetCount > 0 && result.Count > maxTargetCount)
+            {
+                result.RemoveRange(maxTargetCount, result.Count - maxTargetCount);
+            }
+
+            return result;
+        }
+
+        private static int ResolveStatusStacks(BaseUnitRuntimeModel target, string statusId)
+        {
+            if (target == null || string.IsNullOrWhiteSpace(statusId))
+            {
+                return 0;
+            }
+
+            if (!StatusEffectUtility.TryParse(statusId, out var kind))
+            {
+                return 0;
+            }
+
+            if (kind == StatusEffectKind.Shield)
+            {
+                return target.Resources != null && target.Resources.CurrentShield > 0f ? 1 : 0;
+            }
+
+            return target.Statuses != null ? target.Statuses.GetStacks(kind) : 0;
         }
 
         private static bool TryResolveExecuteThreshold(SingleAttackData skill, SkillExecutionSnapshot snapshot, out float threshold)

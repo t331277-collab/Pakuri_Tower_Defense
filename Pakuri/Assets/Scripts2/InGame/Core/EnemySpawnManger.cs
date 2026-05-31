@@ -45,6 +45,7 @@ namespace Pakuri.InGame
         [SerializeField] private GameObject stageOneGuardianCaptainPrefab;
         [SerializeField] private GameObject stageOneAttackCaptainPrefab;
         [SerializeField] private GameObject stageOneHeroKarinPrefab;
+        [SerializeField] private EnemyPrefabBinding[] enemyPrefabBindings = Array.Empty<EnemyPrefabBinding>();
         [SerializeField] private string initialEnemyId = DefaultInitialEnemyId;
         [SerializeField] private string shieldEnemyId = DefaultShieldEnemyId;
         [SerializeField] private string rangedEnemyId = DefaultRangedEnemyId;
@@ -58,6 +59,16 @@ namespace Pakuri.InGame
         public InGameCombatManager CombatManager => combatManager;
         public float EnemySpawnMinY => enemySpawnMinY;
         public float EnemySpawnMaxY => enemySpawnMaxY;
+
+        [Serializable]
+        private sealed class EnemyPrefabBinding
+        {
+            [SerializeField] private string enemyId = string.Empty;
+            [SerializeField] private GameObject prefab = null;
+
+            public string EnemyId => enemyId;
+            public GameObject Prefab => prefab;
+        }
 
         public bool SpawnSelectedPlayerUnit(
             string selectedMonsterId,
@@ -427,7 +438,7 @@ namespace Pakuri.InGame
                 return registered;
             }
 
-            var fromCatalog = catalog != null ? catalog.GetStageOneEnemyById(enemyId) : null;
+            var fromCatalog = catalog != null ? catalog.GetEnemyById(enemyId) : null;
             if (fromCatalog != null)
             {
                 return fromCatalog;
@@ -516,6 +527,23 @@ namespace Pakuri.InGame
 
         private GameObject ResolveEnemyPrefab(string enemyId)
         {
+            if (enemyPrefabBindings != null)
+            {
+                for (var i = 0; i < enemyPrefabBindings.Length; i++)
+                {
+                    var binding = enemyPrefabBindings[i];
+                    if (binding == null || binding.Prefab == null)
+                    {
+                        continue;
+                    }
+
+                    if (string.Equals(enemyId, binding.EnemyId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return binding.Prefab;
+                    }
+                }
+            }
+
             if (string.Equals(enemyId, initialEnemyId, StringComparison.OrdinalIgnoreCase))
             {
                 return stageOneEnemyPrefab;

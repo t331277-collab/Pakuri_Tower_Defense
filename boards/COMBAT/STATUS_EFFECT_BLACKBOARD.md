@@ -5,6 +5,282 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-05-31 Nexus Exclusion From Skill And Status Targets
+
+### Task title
+
+Keep Nexus as a damageable enemy fallback target while excluding it from player skill, buff, shield, heal, and status target paths.
+
+### Goals
+
+- Preserve Nexus in the combat roster so enemies can attack it after monsters are gone.
+- Prevent allied skills, buffs, shields, heals, status application, status-count targeting, and chained additional damage from selecting Nexus.
+- Keep direct damage against Nexus allowed.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Nexus remains registered as player-side `UnitRole.Nexus`; filtering happens in skill/status paths, not by removing it from the roster.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified. Unity-MCP validator could not run because no Unity Editor instance was found.
+
+### Next Actions
+
+- User verifies in Play Mode that Nexus HP can still be damaged by enemies, but Monster buffs/skills no longer apply to Nexus.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillTargetingUtility.cs` now filters `UnitRole.Nexus` from resolved skill target lists, including `Self`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs` now filters `UnitRole.Nexus` from status-count target resolution.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` already guards Nexus from `GrantShield`, `SetShield`, `Heal`, `ApplyStatus`, `ApplyShieldStatus`, and `ExtendStatusDuration`, while `ApplyDamage` remains allowed.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` already filters Nexus from all-allies cooldown target entries.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillOnHitAdditionalDamageUtility.cs` already skips Nexus as a chain target.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+- Unity-MCP `validate_script` returned `No Unity Editor instances found`, so Unity-side validation was not available in this session.
+
+### History
+
+- 2026-05-31: User reported Monster buffs appearing to apply to Nexus and clarified Nexus should only take damage, not be a skill/buff target.
+- 2026-05-31: Code Builder verified Nexus is registered in the player roster for enemy fallback targeting, then tightened skill/status target filters instead of unregistering Nexus.
+
+## Task: 2026-05-31 Shared Passive Aura, Runtime-Kind Filter, Burst Status Hook, And All-Allies Cooldown Refund For Vega F-J
+
+### Task title
+
+Extend the shared passive/status runtime so Vega F-J can stay on reusable common logic for burst-index mark bonus, owner-status-gated aura behavior, area-only passive modifiers/triggers, and teamwide cooldown refund.
+
+### Goals
+
+- Keep Vega passive work on shared data-driven runtime contracts instead of Vega-only branches.
+- Let passive effects and passive triggers require a live owner status.
+- Let status-based damage modifiers and trigger events filter by skill runtime kind such as `Area`.
+- Let passive-triggered cooldown refund iterate allied skill runtimes, not only the owner's single target skill.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- The extension stays on shared status/runtime/trigger paths.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and compile/CSV-validation verified.
+
+### Next Actions
+
+- Reuse the burst-status choice path before adding another projectile-only trigger event for “Nth projectile adds stacks” behavior.
+- Reuse `required_source_status_id` and runtime-kind filters for future “while buff X is active” or “Area damage only” passives before adding monster-specific branches.
+- Reuse `TargetSide=AllAllies` on cooldown/reload trigger actions when future support skills need teamwide refund behavior.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs` now exposes the shared fields `EventSkillRuntimeKinds`, `StatusConditionalIncomingSkillRuntimeKinds`, `StatusConditionalOutgoingSkillRuntimeKinds`, `HasBurstStatusProjectileIndex`, `BurstStatusProjectileIndex`, and `BurstStatusStacksBonus`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs`, `PakuriCsvRuntimeData.Build.cs`, `PakuriCsvRuntimeData.StatusPayload.cs`, and `PakuriCsvRuntimeData.Validation.cs` now parse/map/validate the new burst-status, owner-status gate, and runtime-kind filter fields.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSnapshot.cs` now carries burst-status bonus data, and `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/ProjectileSkillExecutor.cs` now applies `ResolveBurstStatusStacksBonus(...)` on projectile hit.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/InGamePassiveEffectRuntime.cs` and `SkillMultiEffectExecutor.cs` now honor owner live-status gates on passive effects.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/StatusEffectRuntime.cs` now filters incoming/outgoing modifiers through `MatchesSkillRuntimeKinds(...)`, which is the shared status-side `Area` filter used by Vega-I debuffs.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` now filters passive-trigger events through `trigger.EventSkillRuntimeKinds`, routes direct effect rows through `SkillMultiEffectExecutor.ExecuteDirect(...)`, and resolves multi-target cooldown/reload operations through `ResolveTargetRuntimes(...)`, including `TargetSide=AllAllies`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now uses the burst-status path on `vega-f-trait-3`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_effects.csv` now uses owner-status-gated aura rows on `vega-h-*` and `Area`-only incoming-damage rows on `vega-d-i-area-vulnerability-*`.
+- `Pakuri/Assets/CSVdata/source/monster_skill_triger.csv` now uses `event_skill_runtime_kinds=Area` on `vega-i-area-cooldown-base` and `TargetSide=AllAllies` cooldown refund rows on `vega-j-cooldown-base` and `vega-j-cooldown-trait1`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` warnings remained.
+- Unity menu `Pakuri/Validate CSV Source Data` logged the runtime catalog load summary, and Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` logged a successful sync after the final effect-schema normalization and refresh.
+
+### History
+
+- 2026-05-31: Designer's Vega F-J handoff narrowed the remaining blockers to burst-index status bonus, source-status-gated aura, runtime-kind filter, and multi-unit cooldown refund.
+- 2026-05-31: Code Builder implemented those shared runtime contracts and Skill Builder authored Vega F-J on that path.
+- 2026-05-31: Final Unity validation passed after the effect CSV header/type rows were normalized to match the widened shared status schema.
+
+## Task: 2026-05-31 Shared SingleAttack HitAllTargets Origin Fix For Status-Filtered Fanout
+
+### Task title
+
+Fix the shared `SingleAttack` prefab-hitbox origin rule so status-filtered fanout skills can stay target-centered even when they also hit all local targets.
+
+### Goals
+
+- Keep caster-anchored `HitAllTargets` behavior for skills that are intentionally self-origin slashes.
+- Prevent `HitAllTargets` from overriding the resolved deployment center on status-filtered fanout skills such as Vega-D.
+- Preserve the current shared deployment-center, overlap, and repeat logic without adding a new executor mode.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This task modifies only the shared hitbox-origin guard in `SingleAttackSkillExecutor.cs`.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor-validated.
+
+### Next Actions
+
+- Reuse the same `!UsesStatusFilteredDeployments(skill)` guard when another shared `SingleAttack` row combines `hit_target_count=global` with status-filtered multi-center deployment.
+- If a future skill needs explicit caster-origin behavior even with status-filtered deployment, add a named shared flag instead of relying on the old implicit coupling.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` now narrows `ResolvePrefabHitboxCenter(...)` so only non-status-filtered `HitAllTargets` skills snap the prefab origin back to the caster.
+- The same executor still resolves status-filtered centers via `ResolveDeploymentCenters(...)`, still uses `UsePrefabHitbox`, and still applies overlap/repeat behavior on those centers.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` warnings remained.
+- Unity menu `Pakuri/Validate CSV Source Data` and `Pakuri/Sync CSV Runtime Catalog Assets` completed to the point that the console logged runtime catalog load plus sync without a new C# or CSV failure.
+
+### History
+
+- 2026-05-31: Vega-D exposed that the shared `HitAllTargets` origin rule was still assuming a caster-anchored slash even after Vega-D had been re-authored to use target-centered status-filtered fanout AoE.
+
+## Task: 2026-05-31 Shared SingleAttack Overlapping Fanout Reuse For Vega-D
+
+### Task title
+
+Reuse the current shared status-filtered `SingleAttack` fanout path for overlapping local AoE hits and delayed repeats through data-only Vega-D row changes.
+
+### Goals
+
+- Keep one deployment center per status-matched target.
+- Allow each deployment center to hit all enemies in its local area when the skill row authors `hit_target_count=global`.
+- Reuse the existing shared per-target repeat scheduler for delayed extra slashes instead of adding a Vega-only coroutine path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No new runtime code was added for this task; the change was limited to authoring values already supported by the inspected shared executor and snapshot.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented through active CSV re-authoring and compile/editor validation.
+
+### Next Actions
+
+- Reuse `hit_target_count=global` on status-filtered `SingleAttack` rows when local overlap stacking is intended.
+- Reuse `repeat_count_per_target` plus `repeat_interval_seconds` when a fanout slash should add delayed extra hits at each resolved deployment center.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` still resolves status-filtered deployment centers with `ResolveDeploymentCenters(...)`, computes local hit count with `ResolveEffectiveHitTargetCount(...)`, and schedules delayed repeats per center in `ScheduleRepeatedDeployments(...)`.
+- The same executor computes repeat timing as `delaySeconds = snapshot.RepeatIntervalSeconds * repeatIndex`, which is why authored `repeat_count_per_target=2` plus `repeat_interval_seconds=0.5` yields `+0.5s` and `+1.0s` follow-up hits after the immediate base hit.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillAreaUtility.cs` and `SkillExecutionUtility.cs` still route radius multipliers into both collision radius and live prefab scale, so overlap and visual growth stay aligned on the shared path.
+- `Pakuri/Assets/CSVdata/source/monster_skills.csv` now authors Vega-D with `hit_target_count=global`, and `Pakuri/Assets/CSVdata/source/monster_skill_choices.csv` now authors `vega-d-master-1` with `repeat_count_per_target=2` and `repeat_interval_seconds=0.5`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` warnings remained.
+- Unity menu `Pakuri/Validate CSV Source Data` and `Pakuri/Sync CSV Runtime Catalog Assets` completed to the point that the console logged runtime catalog load plus sync without a new C# or CSV failure.
+
+### History
+
+- 2026-05-31: Earlier same-day Vega-D row authoring had constrained local hits to single-target behavior.
+- 2026-05-31: User later requested overlap-stacking AoE plus two delayed extra hits, and Code Builder confirmed the existing shared executor already supported those semantics through current CSV fields alone.
+
+## Task: 2026-05-31 Shared SingleAttack Status-Filtered Fanout Single-Target Fix
+
+### Task title
+
+Split status-filtered `SingleAttack` fanout from line-style multi-deployment presentation so per-target repeated casts can remain single-target.
+
+### Goals
+
+- Preserve the shared deployment resolution that fans out across enemies carrying a required runtime status.
+- Stop status-filtered fanout from inheriting the long line visual transform used by non-status multi-deployment prefab slashes.
+- Restore authored hit-target-count handling for status-filtered fanout deployments.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The existing shared runtime already supported status-filtered deployment centers, so this task stayed within current common logic instead of introducing a new shared deployment system.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor-validated.
+
+### Next Actions
+
+- Reuse the same split whenever another shared `SingleAttack` skill needs one cast per status-matched target without the line-style stretched visual treatment.
+- If a future skill truly needs status-filtered fanout plus line-style stretching, author or add an explicit shared flag instead of relying on the old implicit `UseMultiDeployment` coupling.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` still couples `DeploymentRequiredTargetStatusId` to `UseMultiDeployment`, so shared executor handling remains the right place to separate visual semantics from deployment semantics.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` now adds `UsesStatusFilteredDeployments(...)`, `UsesLineStyleMultiDeploymentVisual(...)`, and `ResolveEffectiveHitTargetCount(...)` so status-filtered fanout no longer automatically means line-style stretched visuals or unlimited hit count.
+- The same executor still resolves one deployment center per status-matched target through `ResolveDeploymentCenters(...)`, so existing shared marked-target fanout behavior remains intact.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` warnings remained.
+- Unity menu `Pakuri/Validate CSV Source Data` and `Pakuri/Sync CSV Runtime Catalog Assets` completed to the point that the console logged runtime catalog load plus sync without a new C# or CSV failure.
+
+### History
+
+- 2026-05-31: Vega D exposed that the old shared `UseMultiDeployment` branch conflated three concerns: repeated deployment centers, line-style prefab presentation, and unlimited hit count.
+- 2026-05-31: Code Builder split the status-filtered fanout path from the line-style branch while keeping the same shared deployment-center resolution.
+
+## Task: 2026-05-31 Shared Target-Status Consumption And Redistribution Support For Vega E
+
+### Task title
+
+Extend the shared combat/status runtime so `SingleAttack` can scale from target status stacks, consume part of those stacks, and optionally redistribute consumed stacks on kill.
+
+### Goals
+
+- Keep Vega E mark interaction on shared runtime contracts rather than a Vega-only status branch.
+- Support partial stack consumption on runtime statuses through the existing shared unit status store.
+- Let shared `SingleAttack` resolve conditional crit and consumed-status redistribution from snapshot data.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- The implementation stays on shared status storage, combat-manager helpers, and `SingleAttack` runtime paths.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and compile/CSV-validation verified.
+
+### Next Actions
+
+- Reuse the shared consume-stack helper path if another skill later needs partial status consumption instead of whole-status removal.
+- Reuse the existing redistribution snapshot fields when another inspected skill needs explicit search radius/count authority instead of adding a parallel status spread system.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs` now exposes shared `ConsumeStacks(...)` helpers on `UnitStatusRuntimeSet` and `UnitStatusRuntime`, which lets status stacks be reduced without clearing the whole status entry.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now wraps shared status-stack consumption through `ConsumeStatusStacks(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSnapshot.cs` now carries shared target-status-stack damage multipliers, consume overrides, conditional crit rules, and consumed-status redistribution fields.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` now resolves target-status-stack additive damage, consumes planned stacks on hit, and redistributes a portion of consumed stacks on kill when snapshot data requests it.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/SkillStatusSpecUtility.cs` now creates a direct status spec for redistribution application without adding a Vega-specific status application path.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only the existing `MSB3277` warnings remained.
+- Unity menu `Pakuri/Validate CSV Source Data` loaded the runtime catalog, and Unity menu `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+
+### History
+
+- 2026-05-31: Vega E required shared target-status-stack damage plus partial mark consumption, so Code Builder extended the shared status/combat path instead of hardcoding `name-mark` logic inside a Vega-only branch.
+- 2026-05-31: Builder also added shared consumed-status redistribution support.
+- 2026-05-31: User later supplied Vega-E trait-5 search radius `100` and target count `1`, and Skill Builder finished the active redistribution row on that existing shared path.
+
 ## Task: 2026-05-30 Shared Source-Status Modifier And Marked-Target Fanout Support For Vega C/D
 
 ### Task title

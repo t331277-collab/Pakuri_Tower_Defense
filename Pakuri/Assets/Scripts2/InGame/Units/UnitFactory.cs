@@ -75,6 +75,7 @@ namespace Pakuri.InGame
                 AttackAttemptCooldownSeconds = ResolveEnemyAttackAttemptCooldown(definition),
                 PassiveSkillId = definition.PassiveSkillId,
                 PassiveSkillValue = definition.PassiveSkillValue,
+                NexusDamage = definition.NexusDamage > 0f ? definition.NexusDamage : 1f,
                 Stats = MapStats(stats, maxHealth, 0f),
                 Defenses = UnitDefenseRuntime.FromDefinition(definition.Defenses),
                 Resources = new UnitResourceRuntime
@@ -225,8 +226,41 @@ namespace Pakuri.InGame
                 case "physicaldamageup":
                     enemy.PassivePhysicalDamageMultiplier *= 1f + value;
                     break;
+                case "firedamageup":
+                    enemy.PassiveFireDamageMultiplier *= 1f + value;
+                    break;
+                case "lightningdamageup":
+                    enemy.PassiveLightningDamageMultiplier *= 1f + value;
+                    break;
+                case "icedamageup":
+                    enemy.PassiveIceDamageMultiplier *= 1f + value;
+                    break;
+                case "darknessdamageup":
+                    enemy.PassiveDarknessDamageMultiplier *= 1f + value;
+                    break;
+                case "holydamageup":
+                    enemy.PassiveHolyDamageMultiplier *= 1f + value;
+                    break;
                 case "defenseup":
                     MultiplyDefenses(enemy.Defenses, 1f + value);
+                    break;
+                case "physicaldefenseup":
+                    MultiplyDefense(enemy.Defenses, DamageAttribute.Physical, 1f + value);
+                    break;
+                case "firedefenseup":
+                    MultiplyDefense(enemy.Defenses, DamageAttribute.Fire, 1f + value);
+                    break;
+                case "lightningdefenseup":
+                    MultiplyDefense(enemy.Defenses, DamageAttribute.Lightning, 1f + value);
+                    break;
+                case "icedefenseup":
+                    MultiplyDefense(enemy.Defenses, DamageAttribute.Ice, 1f + value);
+                    break;
+                case "darknessdefenseup":
+                    MultiplyDefense(enemy.Defenses, DamageAttribute.Darkness, 1f + value);
+                    break;
+                case "holydefenseup":
+                    MultiplyDefense(enemy.Defenses, DamageAttribute.Holy, 1f + value);
                     break;
                 case "critchanceup":
                     if (enemy.Stats != null)
@@ -264,6 +298,36 @@ namespace Pakuri.InGame
             defenses.Ice *= multiplier;
             defenses.Darkness *= multiplier;
             defenses.Holy *= multiplier;
+        }
+
+        private static void MultiplyDefense(UnitDefenseRuntime defenses, DamageAttribute attribute, float multiplier)
+        {
+            if (defenses == null)
+            {
+                return;
+            }
+
+            switch (attribute)
+            {
+                case DamageAttribute.Fire:
+                    defenses.Fire *= multiplier;
+                    break;
+                case DamageAttribute.Lightning:
+                    defenses.Lightning *= multiplier;
+                    break;
+                case DamageAttribute.Ice:
+                    defenses.Ice *= multiplier;
+                    break;
+                case DamageAttribute.Darkness:
+                    defenses.Darkness *= multiplier;
+                    break;
+                case DamageAttribute.Holy:
+                    defenses.Holy *= multiplier;
+                    break;
+                default:
+                    defenses.Physical *= multiplier;
+                    break;
+            }
         }
 
         private static void ApplyRunState(UnitStateBucket target, RunSession.RunMonsterState runState)
@@ -304,7 +368,7 @@ namespace Pakuri.InGame
                     return registered;
                 }
 
-                var fromCatalog = catalog != null ? catalog.GetStageOneEnemyById(enemyId) : null;
+                var fromCatalog = catalog != null ? catalog.GetEnemyById(enemyId) : null;
                 if (fromCatalog != null)
                 {
                     return fromCatalog;
@@ -312,6 +376,11 @@ namespace Pakuri.InGame
             }
 
             var enemies = catalog != null ? catalog.StageOneEnemies : null;
+            if (enemies == null || enemies.Length == 0)
+            {
+                enemies = catalog != null ? catalog.StageTwoEnemies : null;
+            }
+
             if (enemies == null || enemies.Length == 0)
             {
                 return null;

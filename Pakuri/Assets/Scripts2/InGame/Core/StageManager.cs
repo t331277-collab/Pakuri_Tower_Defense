@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using Pakuri.Run;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace Pakuri.InGame
 {
@@ -26,12 +28,23 @@ namespace Pakuri.InGame
         [SerializeField] private bool startFlowOnStart = true;
         [SerializeField] private float clearCheckInterval = DefaultClearCheckInterval;
         [SerializeField] private bool restorePlayerHealthOnDayAdvance = true;
+        [SerializeField] private NexusUnitActor nexusActor;
+        [SerializeField] private GameObject winPanel;
+        [SerializeField] private GameObject defeatPanel;
+        [SerializeField] private Button winButton;
+        [SerializeField] private Button defeatButton;
+        [SerializeField] private string mainMenuScenePath = "Assets/Scenes/NewScene/NewMainMenu.unity";
+        [SerializeField] private int winStageIndex = 2;
+        [SerializeField] private int winDayIndex = 11;
 
         private StageFlowTable table = new StageFlowTable();
         private Coroutine flowCoroutine;
         private StageDayRow currentDay;
         private StageRewardRow currentReward;
         private RunSession activeSession;
+        private bool endButtonsBound;
+        private bool hasPreservedNexusHealth;
+        private float preservedNexusHealth;
 
         public StageState State { get; private set; } = StageState.NotStarted;
         public int CurrentStage => activeSession != null ? activeSession.StageIndex : 1;
@@ -45,14 +58,33 @@ namespace Pakuri.InGame
         public string CurrentEncounterId => currentDay != null ? currentDay.EncounterId : string.Empty;
         public string CurrentRewardRuleId => currentReward != null ? currentReward.RewardRuleId : string.Empty;
 
+        private void Awake()
+        {
+            ResolveReferences();
+            ResolveEndFlowReferences();
+            HideEndPanels();
+            BindEndButtons();
+        }
+
         private void Start()
         {
             ResolveReferences();
+            ResolveEndFlowReferences();
+            HideEndPanels();
+            BindEndButtons();
             LoadTables();
 
             if (startFlowOnStart)
             {
                 StartCurrentDay();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (nexusActor != null)
+            {
+                nexusActor.Defeated -= OnNexusDefeated;
             }
         }
 
@@ -89,6 +121,7 @@ namespace Pakuri.InGame
             PendingGoldReward = 0;
             PendingDarkTraceReward = 0;
             PendingPrisonerCount = 0;
+            PreserveCurrentNexusHealth();
             activeSession.AdvanceDay();
             RestorePlayerHealthForNextDay();
             StartCurrentDay();
@@ -121,6 +154,12 @@ namespace Pakuri.InGame
             {
                 var entry = players[i];
                 var model = entry != null ? entry.Model : null;
+                var identity = model != null ? model.Identity : null;
+                if (identity == null || identity.Role != UnitRole.Monster)
+                {
+                    continue;
+                }
+
                 var resources = model != null ? model.Resources : null;
                 var stats = model != null ? model.Stats : null;
                 if (resources == null || stats == null)
@@ -140,6 +179,8 @@ namespace Pakuri.InGame
             {
                 entryManager.SpawnSelectedPlayerUnit();
             }
+
+            EnsureNexusRegistered();
 
             activeSession = entryManager != null ? entryManager.ActiveSession : null;
             if (activeSession == null)
@@ -179,6 +220,14 @@ namespace Pakuri.InGame
 
             State = StageState.Combat;
             yield return WaitForEnemyClear();
+
+            if (IsConfiguredWinDay())
+            {
+                ShowWinPanel();
+                State = StageState.Victory;
+                flowCoroutine = null;
+                yield break;
+            }
 
             PrepareReward();
             State = StageState.RewardReady;
@@ -220,7 +269,7 @@ namespace Pakuri.InGame
         private IEnumerator WaitForEnemyClear()
         {
             var wait = new WaitForSeconds(Mathf.Max(0.05f, clearCheckInterval));
-            while (combatManager != null && combatManager.ActiveEnemyCount > 0)
+            while (combatManager != null && combatManager.ActiveEnemyCount > 0 && State != StageState.Defeat)
             {
                 yield return wait;
             }
@@ -377,6 +426,207 @@ namespace Pakuri.InGame
             }
         }
 
+        private void ResolveEndFlowReferences()
+        {
+            if (nexusActor == null)
+            {
+                var nexusObject = FindSceneGameObjectByPath("Nexus");
+                nexusActor = nexusObject != null ? nexusObject.GetComponent<NexusUnitActor>() : null;
+            }
+
+            if (winPanel == null)
+            {
+                winPanel = FindSceneGameObjectByPath("Canvas/WinPanel");
+            }
+
+            if (defeatPanel == null)
+            {
+                defeatPanel = FindSceneGameObjectByPath("Canvas/DefeatPanel");
+            }
+
+            if (winButton == null && winPanel != null)
+            {
+                winButton = winPanel.GetComponentInChildren<Button>(true);
+            }
+
+            if (defeatButton == null && defeatPanel != null)
+            {
+                defeatButton = defeatPanel.GetComponentInChildren<Button>(true);
+            }
+        }
+
+        private void EnsureNexusRegistered()
+        {
+            ResolveEndFlowReferences();
+            if (nexusActor == null)
+            {
+                var nexusObject = FindSceneGameObjectByPath("Nexus");
+                if (nexusObject == null)
+                {
+                    Debug.LogWarning("StageManager could not find Nexus in NewRunScene.");
+                    return;
+                }
+
+                nexusActor = nexusObject.AddComponent<NexusUnitActor>();
+            }
+
+            nexusActor.Defeated -= OnNexusDefeated;
+            nexusActor.Defeated += OnNexusDefeated;
+            nexusActor.Initialize();
+            RestorePreservedNexusHealth();
+
+            if (combatManager != null && nexusActor.Model != null)
+            {
+                combatManager.RegisterNexus(nexusActor.Model, nexusActor, nexusActor.transform);
+            }
+        }
+
+        private void PreserveCurrentNexusHealth()
+        {
+            ResolveEndFlowReferences();
+            if (nexusActor == null || !nexusActor.TryGetCurrentHealth(out var currentHealth))
+            {
+                return;
+            }
+
+            preservedNexusHealth = currentHealth;
+            hasPreservedNexusHealth = true;
+        }
+
+        private void RestorePreservedNexusHealth()
+        {
+            if (!hasPreservedNexusHealth || nexusActor == null)
+            {
+                return;
+            }
+
+            nexusActor.SetCurrentHealth(preservedNexusHealth);
+        }
+
+        private void OnNexusDefeated(NexusUnitActor defeatedNexus)
+        {
+            if (State == StageState.Victory)
+            {
+                return;
+            }
+
+            if (flowCoroutine != null)
+            {
+                StopCoroutine(flowCoroutine);
+                flowCoroutine = null;
+            }
+
+            State = StageState.Defeat;
+            ShowDefeatPanel();
+        }
+
+        private void HideEndPanels()
+        {
+            SetActive(winPanel, false);
+            SetActive(defeatPanel, false);
+        }
+
+        private void ShowWinPanel()
+        {
+            SetActive(defeatPanel, false);
+            SetActive(winPanel, true);
+        }
+
+        private void ShowDefeatPanel()
+        {
+            SetActive(winPanel, false);
+            SetActive(defeatPanel, true);
+        }
+
+        private void BindEndButtons()
+        {
+            if (endButtonsBound)
+            {
+                return;
+            }
+
+            if (winButton != null)
+            {
+                winButton.onClick.AddListener(ReturnToMainMenu);
+            }
+
+            if (defeatButton != null)
+            {
+                defeatButton.onClick.AddListener(ReturnToMainMenu);
+            }
+
+            endButtonsBound = true;
+        }
+
+        private void ReturnToMainMenu()
+        {
+            if (string.IsNullOrWhiteSpace(mainMenuScenePath))
+            {
+                Debug.LogError("StageManager cannot return to main menu because mainMenuScenePath is empty.");
+                return;
+            }
+
+            SceneManager.LoadScene(mainMenuScenePath);
+        }
+
+        private bool IsConfiguredWinDay()
+        {
+            return activeSession != null
+                && activeSession.StageIndex == winStageIndex
+                && activeSession.DayIndex == winDayIndex;
+        }
+
+        private static void SetActive(GameObject target, bool active)
+        {
+            if (target != null)
+            {
+                target.SetActive(active);
+            }
+        }
+
+        private static GameObject FindSceneGameObjectByPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return null;
+            }
+
+            var objects = Resources.FindObjectsOfTypeAll<GameObject>();
+            for (var i = 0; i < objects.Length; i++)
+            {
+                var candidate = objects[i];
+                if (candidate == null || !candidate.scene.IsValid())
+                {
+                    continue;
+                }
+
+                if (string.Equals(BuildPath(candidate.transform), path, StringComparison.Ordinal))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        private static string BuildPath(Transform transform)
+        {
+            if (transform == null)
+            {
+                return string.Empty;
+            }
+
+            var path = transform.name;
+            var parent = transform.parent;
+            while (parent != null)
+            {
+                path = parent.name + "/" + path;
+                parent = parent.parent;
+            }
+
+            return path;
+        }
+
         private void LoadTables()
         {
             table = StageFlowTable.Load(stageDayCsv, stageEncounterCsv, stageRewardCsv);
@@ -389,6 +639,8 @@ namespace Pakuri.InGame
         Spawning,
         Combat,
         RewardReady,
+        Victory,
+        Defeat,
         Error
     }
 

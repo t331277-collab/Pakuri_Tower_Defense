@@ -29,6 +29,10 @@ namespace Pakuri.Data
             {
                 missingAssets.Add(CatalogStageOneEnemiesFileName);
             }
+            if (sourceCatalog.CatalogStageTwoEnemies == null)
+            {
+                missingAssets.Add(CatalogStageTwoEnemiesFileName);
+            }
             if (sourceCatalog.Monsters == null)
             {
                 missingAssets.Add(MonstersFileName);
@@ -60,6 +64,10 @@ namespace Pakuri.Data
             if (sourceCatalog.StageOneEnemies == null)
             {
                 missingAssets.Add(StageOneEnemiesFileName);
+            }
+            if (sourceCatalog.StageTwoEnemies == null)
+            {
+                missingAssets.Add(StageTwoEnemiesFileName);
             }
             if (sourceCatalog.EnemySkills == null)
             {
@@ -102,6 +110,7 @@ namespace Pakuri.Data
 
             var catalogMonsterTable = CsvTable.Load(sourceCatalog.CatalogMonsters, CatalogMonstersFileName);
             var catalogEnemyTable = CsvTable.Load(sourceCatalog.CatalogStageOneEnemies, CatalogStageOneEnemiesFileName);
+            var catalogStageTwoEnemyTable = CsvTable.Load(sourceCatalog.CatalogStageTwoEnemies, CatalogStageTwoEnemiesFileName);
             var monsterTable = CsvTable.Load(sourceCatalog.Monsters, MonstersFileName);
             var rewardChoiceTable = CsvTable.Load(sourceCatalog.MonsterRewardChoices, MonsterRewardChoicesFileName);
             var skillTable = CsvTable.Load(sourceCatalog.MonsterSkills, MonsterSkillsFileName);
@@ -110,6 +119,7 @@ namespace Pakuri.Data
             var skillChoiceTable = CsvTable.Load(sourceCatalog.MonsterSkillChoices, MonsterSkillChoicesFileName);
             var statusEffectTable = CsvTable.Load(sourceCatalog.StatusEffects, StatusEffectsFileName);
             var enemyTable = CsvTable.Load(sourceCatalog.StageOneEnemies, StageOneEnemiesFileName);
+            var stageTwoEnemyTable = CsvTable.Load(sourceCatalog.StageTwoEnemies, StageTwoEnemiesFileName);
             var enemySkillTable = CsvTable.Load(sourceCatalog.EnemySkills, EnemySkillDataFileName);
 
             foreach (var record in catalogMonsterTable.Records)
@@ -122,6 +132,12 @@ namespace Pakuri.Data
             {
                 var row = ParseCatalogEntry(record, "enemy_id");
                 AddUnique(model.CatalogStageOneEnemies, row.Id, row, record);
+            }
+
+            foreach (var record in catalogStageTwoEnemyTable.Records)
+            {
+                var row = ParseCatalogEntry(record, "enemy_id");
+                AddUnique(model.CatalogStageTwoEnemies, row.Id, row, record);
             }
 
             foreach (var record in monsterTable.Records)
@@ -177,6 +193,13 @@ namespace Pakuri.Data
                 var row = ParseEnemyRow(record);
                 ApplyEnemySkillRow(row, model.EnemySkills, record);
                 AddUnique(model.StageOneEnemies, row.Id, row, record);
+            }
+
+            foreach (var record in stageTwoEnemyTable.Records)
+            {
+                var row = ParseEnemyRow(record);
+                ApplyEnemySkillRow(row, model.EnemySkills, record);
+                AddUnique(model.StageTwoEnemies, row.Id, row, record);
             }
 
             return model;

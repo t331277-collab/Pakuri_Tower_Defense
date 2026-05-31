@@ -25,7 +25,8 @@ namespace Pakuri.InGame
     {
         Monster,
         Enemy,
-        Summon
+        Summon,
+        Nexus
     }
 
     [Serializable]
@@ -243,6 +244,45 @@ namespace Pakuri.InGame
         public bool Remove(string tag)
         {
             return StatusEffectUtility.TryParse(tag, out var kind) && Remove(kind);
+        }
+
+        public int ConsumeStacks(string tag, int stacks)
+        {
+            return StatusEffectUtility.TryParse(tag, out var kind) ? ConsumeStacks(kind, stacks) : 0;
+        }
+
+        public int ConsumeStacks(StatusEffectKind kind, int stacks)
+        {
+            var remaining = System.Math.Max(0, stacks);
+            if (remaining <= 0)
+            {
+                return 0;
+            }
+
+            var consumed = 0;
+            for (var i = statuses.Count - 1; i >= 0 && remaining > 0; i--)
+            {
+                var status = statuses[i];
+                if (status == null || status.Kind != kind || status.Stacks <= 0)
+                {
+                    continue;
+                }
+
+                var consumedFromStatus = status.ConsumeStacks(remaining);
+                if (consumedFromStatus <= 0)
+                {
+                    continue;
+                }
+
+                consumed += consumedFromStatus;
+                remaining -= consumedFromStatus;
+                if (status.Stacks <= 0)
+                {
+                    statuses.RemoveAt(i);
+                }
+            }
+
+            return consumed;
         }
 
         public bool Remove(StatusEffectKind kind)
@@ -494,6 +534,13 @@ namespace Pakuri.InGame
 
             var nextStacks = System.Math.Max(Stacks, incomingStacks);
             Stacks = maxStacks > 0 ? System.Math.Min(maxStacks, nextStacks) : nextStacks;
+        }
+
+        public int ConsumeStacks(int stacks)
+        {
+            var consumed = System.Math.Min(System.Math.Max(0, stacks), System.Math.Max(0, Stacks));
+            Stacks = System.Math.Max(0, Stacks - consumed);
+            return consumed;
         }
 
         public void SetDuration(float durationSeconds)

@@ -146,6 +146,12 @@ namespace Pakuri.InGame
                     continue;
                 }
 
+                var identity = candidate.Model.Identity;
+                if (identity != null && identity.Role == UnitRole.Nexus)
+                {
+                    continue;
+                }
+
                 var candidateUnitId = ResolveUnitId(candidate.Model);
                 if ((!string.IsNullOrWhiteSpace(primaryUnitId) && candidateUnitId == primaryUnitId)
                     || candidate.Model == (hitTarget != null ? hitTarget.Model : null))

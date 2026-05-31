@@ -5,6 +5,51 @@
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-05-31 Stage2 Enemy Prefab Binding
+
+### Task title
+
+Wire Stage 2 enemy prefabs into the active `NewRunScene` enemy spawn manager.
+
+### Goals
+
+- Connect every Stage 2 enemy id to its prefab under `Assets/Prefab/Enemy/Stage2`.
+- Keep the existing Stage 1 hardcoded prefab fallback intact.
+- Verify each Stage 2 prefab has the required runtime actor and collision component.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The new binding uses the shared `EnemySpawnManger.enemyPrefabBindings` array instead of adding eight new Stage 2 serialized fields.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, Unity-MCP inspected, and debug-view child wiring checked.
+
+### Next Actions
+
+- User verifies Stage 2 prefab spawn positions and visual scale in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` serializes 8 `enemyPrefabBindings` entries for `stage2-fire-dragon-slayer`, `stage2-lightning-scout`, `stage2-ice-guard`, `stage2-dark-assassin`, `stage2-holy-priest`, `stage2-ethan`, `stage2-drake`, and `stage2-arsen`.
+- Unity-MCP scene inspection after reloading `Assets/Scenes/NewScene/NewRunScene.unity` showed all 8 Stage 2 bindings on `GameManager` / `Pakuri.InGame.EnemySpawnManger`.
+- Unity-MCP `manage_asset get_components` found both `Pakuri.InGame.EnemyUnitActor` and `UnityEngine.BoxCollider2D` on all 8 Stage 2 prefabs, including `Assets/Prefab/Enemy/Stage2/stage2-holy-priest.prefab`.
+- `Pakuri/Assets/Scripts2/InGame/Units/UnitActorView.cs` defines the auto-bound debug child names as `MonsterNameLabel`, `MonsterHpLabel`, `Damage`, `Background`, `Fill`, and `Shield`.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitActor.cs` calls `ResolveDebugViewReferences()` from `Initialize()` and resolves those children through `UnitActorView.FindTextMesh(...)` / `FindChildTransform(...)`.
+- Unity-MCP `manage_prefabs get_hierarchy` found all 8 Stage 2 prefabs have `Damage` with `TextMesh`, `MonsterHpBar` with `Background`/`Fill`/`Shield` sprite children, `MonsterHpLabel` with `TextMesh`, and `MonsterNameLabel` with `TextMesh`.
+
+### History
+
+- 2026-05-31: User stated `stage2-holy-priest.prefab` now had `EnemyUnitActor` and `BoxCollider2D`, then requested Stage 2 prefab connection work.
+- 2026-05-31: Code Builder added the shared prefab-binding array and connected all Stage 2 prefab assets in `NewRunScene`.
+- 2026-05-31: Code Builder checked the newly added Stage 2 prefab debug-view children against `EnemyUnitActor` / `UnitActorView` and found the actual prefab names match the runtime auto-binding names.
+
 ## Task: 2026-05-28 Vega-A Skill Prefab Catalog Wiring
 
 ### Task title

@@ -7,6 +7,243 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-05-31 Monster Revive Targetability Restore
+
+### Task title
+
+Restore defeated monster targetability through actor revive on the next day.
+
+### Goals
+
+- Keep defeated monster bodies persistent during the cleared day.
+- Restore HP, colliders, roster registration, and idle animation when the next day begins.
+- Restore common combat state for revived selected and manifested monsters so they can attack again.
+- Preserve the selected monster Auto mode from before death while manifested monsters return with AutoSkill enabled.
+- Avoid creating replacement monster prefabs when a dead actor already exists for the party slot.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The revive path is slot-based for selected slot 0 and manifested slots 1-4.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated. 2026-05-31 follow-up fixed revived monster attack/Auto state.
+
+### Next Actions
+
+- User verifies in Play Mode that revived selected and manifested monsters are targetable again, attack again, and enemies attack the revived actor instead of a duplicate prefab.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/SceneEntryManager.cs` now searches existing scene `MonsterUnitActor` instances by `UnitIdentity.SlotIndex` before spawning selected or manifested monsters on day advance.
+- `Pakuri/Assets/Scripts2/InGame/Core/SceneEntryManager.cs` re-registers revived actors through `combatManager.RegisterPlayerMonster(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs` now restores max HP, re-enables child colliders, and plays idle through `ReviveForNextDay()`.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs` now restores common revived combat state by setting `AutoAttackEnabled=true`, clearing statuses and shields, and resetting each learned active `SkillRuntimeInstance`.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs` restores `AutoSkillEnabled=true` only for non-selected monsters, so manifested monsters attack while selected monster Auto remains controlled by `InGameCombatManager.PlayerAutoSkillEnabled`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now finds the selected monster by `UnitRole.Monster` and `SlotIndex == 0` instead of `roster.Players[0]`, preventing Nexus from receiving selected-player Auto state.
+- `Pakuri/Assets/Scripts2/InGame/Animation/Animation_Controller.cs` now has `ReviveToIdle()` to undo death freeze and return to idle animation.
+- Unity-MCP `validate_script` reported 0 errors for `SceneEntryManager.cs`, `MonsterUnitActor.cs`, and `Animation_Controller.cs`; only the existing `Animation_Controller.Update()` GC warning remained.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+- 2026-05-31 follow-up validation: Unity-MCP `validate_script` reported 0 errors for `MonsterUnitActor.cs`; `InGameCombatManager.cs` validator reported a duplicate `ResolveEffectManager` signature, but PowerShell search found only one declaration at line 1202 and both dotnet builds passed with 0 errors.
+- 2026-05-31 follow-up validation: Unity refresh reached idle and Unity warning/error console read returned 0 entries.
+
+### History
+
+- 2026-05-31: User requested stage/day advance to revive dead monsters instead of spawning a fresh monster prefab.
+- 2026-05-31: Code Builder added revive and re-registration before existing prefab respawn paths.
+- 2026-05-31: User reported revived monsters could not attack/Auto; Code Builder added common revived combat-state restore and selected-player lookup by monster slot.
+
+## Task: 2026-05-31 Persistent Monster Death Body
+
+### Task title
+
+Keep defeated monsters visible while removing them from targetable combat runtime.
+
+### Goals
+
+- Stop destroying `MonsterUnitActor` GameObjects when monster HP reaches 0.
+- Keep the existing roster unregister path so defeated monsters are no longer target candidates.
+- Disable defeated monster colliders so collision-based lookup does not keep treating the body as an active unit.
+- If `Animation_Controller` exists, play death animation and freeze on the final death frame.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Enemy and other non-monster deaths still use the existing delayed `Destroy(...)` path.
+- Unity Play Mode gameplay verification remains user-owned.
+- Unity-MCP script validation could not run because no Unity Editor instance was connected.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that defeated monsters remain visible, are not targeted, and hold the final death sprite.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` now calls `MonsterUnitActor.MarkDefeated()` and returns instead of destroying monster actors inside `RemoveUnitIfDead(...)`.
+- The same method still unregisters the dead model from `UnitRosterService`, so `EnemyTargeting.IsActive(...)` and skill target searches no longer see that monster as alive/targetable.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs` now has `MarkDefeated()`, disables child `Collider2D` components, and plays death animation if `Animation_Controller` is present.
+- `Pakuri/Assets/Scripts2/InGame/Animation/Animation_Controller.cs` now freezes death by replaying the dead state at normalized time `0.999f`, updating once, and setting `animator.speed = 0f`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors when rerun alone after an initial parallel-build file lock.
+
+### History
+
+- 2026-05-31: User requested monsters not disappear after death, become untargetable, and hold the final death animation sprite when `Animation_Controller` exists.
+- 2026-05-31: Code Builder changed monster death handling to persistent visible bodies with disabled colliders and final-frame death animation freeze.
+
+## Task: 2026-05-31 Enemy Nexus Assault Runtime
+
+### Task title
+
+Let enemies target and damage the Nexus after all monster/player targets are gone.
+
+### Goals
+
+- Preserve the current monster-first enemy targeting behavior.
+- Let Nexus become the fallback target when no non-Nexus player unit is alive.
+- Apply CSV-authored Nexus damage on contact.
+- Despawn the enemy that successfully damages the Nexus.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Nexus assault uses a separate Nexus runtime actor, not `MonsterUnitActor`.
+- Default Nexus damage is 1 when data is missing or non-positive.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated.
+
+### Next Actions
+
+- User verifies in Play Mode that enemies only rush Nexus after monsters are cleared and that each damaging enemy disappears.
+- Tune `nexus_damage` values in stage enemy CSVs if later enemies should deal more than 1 Nexus damage.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemyTargeting.cs` now treats `UnitRole.Nexus` as fallback by excluding Nexus during the first nearest-player scan.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSystem.cs` routes Nexus targets to `TickNexusAssault(...)` instead of normal enemy skill rotation.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSystem.cs` applies `Mathf.Max(1f, enemyModel.NexusDamage)` to the Nexus and calls `combatManager.DespawnUnit(enemyModel)`.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitRuntimeModel.cs`, `EnemyDefinition.cs`, `UnitFactory.cs`, and `PakuriCsvRuntimeData.Build.cs` carry the new `NexusDamage` value into runtime enemies.
+- Unity-MCP `validate_script` on `Assets/Scripts2/InGame/Core/EnemyCombatSystem.cs` reported 0 warnings and 0 errors.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remained.
+
+### History
+
+- 2026-05-31: User asked for enemies to damage Nexus after monster targets are gone and disappear after dealing Nexus damage.
+- 2026-05-31: Code Builder added Nexus fallback targeting plus contact-damage despawn behavior.
+
+## Task: 2026-05-31 Stage2 Enemy Runtime And Passive Extension
+
+### Task title
+
+Extend enemy runtime lookup and passive application so Stage 2 enemies can spawn and apply their authored passives.
+
+### Goals
+
+- Let enemy lookup resolve both Stage 1 and Stage 2 enemy definitions.
+- Add reusable enemy passive IDs for attribute-specific damage and defense increases.
+- Keep existing Stage 1 passive IDs and behavior compatible.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This work does not implement new enemy active skill kinds; Stage 2 rows still use the existing `StageOneEnemySkillKind` contract.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compile-verified, CSV-validated, and Stage 2 spawn-coordinate checked.
+
+### Next Actions
+
+- User verifies Stage 2 enemy combat behavior in Play Mode.
+- If Stage 2 enemies need unique active skills later, extend enemy skill data separately instead of overloading this passive-runtime task.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/GameDataCatalog.cs` now exposes `StageTwoEnemies`, `GetStageTwoEnemyById(...)`, and `GetEnemyById(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/PakuriDataManager.cs` registers Stage 2 enemies and resolves `EnemyDefinition` from either stage dictionary.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs` resolves enemy definitions with `catalog.GetEnemyById(...)` and resolves prefab overrides through `enemyPrefabBindings`.
+- `Pakuri/Assets/CSVdata/StageEncounter.csv` Stage 2 rows now use the same spawn coordinate pattern as Stage 1: normal and escort rows use `spawn_x=9.02`, `spawn_y_min=-5`, `spawn_y_max=5`; guaranteed boss rows use `spawn_x=9.02`, `spawn_y_min=0`, `spawn_y_max=0`.
+- PowerShell verification returned `stage2Rows=30 badNormal=0 badBoss=0` for Stage 2 spawn coordinates and `missingEncounterDays=0 missingEnemyRefs=0 missingDayEncounterRefs=0 missingRewardRefs=0` for StageDay/StageEncounter/StageReward/enemy references.
+- `Pakuri/Assets/Scripts2/InGame/Units/EnemyUnitRuntimeModel.cs`, `UnitFactory.cs`, and `EnemyCombatSystem.cs` now support `FireDamageUp`, `LightningDamageUp`, `IceDamageUp`, `DarknessDamageUp`, `HolyDamageUp`, plus matching attribute-defense passive IDs.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing MSB3277 warnings remain.
+- Unity `Pakuri/Validate CSV Source Data` loaded 8 stage-one enemies and 8 stage-two enemies.
+
+### History
+
+- 2026-05-31: Earlier inspection showed only broad `DefenseUp` and `PhysicalDamageUp` worked for enemy passives.
+- 2026-05-31: Code Builder added the attribute-specific enemy passive runtime path and Stage 2 enemy lookup path.
+- 2026-05-31: Code Builder normalized Stage 2 `StageEncounter.csv` spawn coordinates to the Stage 1 coordinate pattern after the user reported abnormal Stage 2 enemy spawn positions.
+
+## Task: 2026-05-31 Stage2 Enemy Data-Only Source CSV
+
+### Task title
+
+Record the Stage 2 enemy source rows as data-only enemy-domain groundwork.
+
+### Goals
+
+- Preserve the current Stage 1 runtime enemy path while adding a separate Stage 2 source CSV for future work.
+- Keep Stage 2 rows aligned to the existing enemy row shape so later runtime connection can compare against the current Stage 1 contract.
+- Avoid changing enemy combat, spawn, skill enum, or prefab behavior in this data-only step.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The new file is not connected to `PakuriCsvRuntimeData`, `EnemySpawnManger`, `EffectManager`, `StageEncounter.csv`, or scene prefabs.
+- `stage_one_skill`, `basic_skill`, `passive_skill_name`, `passive_skill_id`, and `passive_skill_value` are placeholders copied from Stage 1 by row order as requested.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Data-only CSV created and shape-verified.
+
+### Next Actions
+
+- Future runtime Stage 2 work must add a real Stage 2 load/spawn/encounter path before these rows can affect gameplay.
+- Future skill work must replace or generalize the Stage 1 skill placeholders if Stage 2 enemy skills should execute their authored reference behavior.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/source/stage_two_enemies.csv:3` through `:10` contain the eight Stage 2 enemy rows: fire, lightning, ice, darkness, holy, Ethan, Drake, and Arsen.
+- `Pakuri/reference/5.enemy/stage-2-enemies.md` supplied the Stage 2 names, roles, attack types, attributes, stats, defenses, and passive summaries.
+- `Pakuri/Assets/CSVdata/source/stage_one_enemies.csv` supplied the header/type rows and the requested copied Stage 1 skill/passive columns.
+- PowerShell field-count verification returned `header=26 rows=10 bad=`.
+- PowerShell comparison against `stage_one_enemies.csv` returned `copied=True` for all eight Stage 2 rows for the five requested copied columns.
+
+### History
+
+- 2026-05-31: User requested `stage_two_enemies.csv` as a runtime-unconnected source file using the same shape as `stage_one_enemies.csv`.
+- 2026-05-31: Code Builder created the data-only CSV and left runtime enemy behavior unchanged.
+
 ## Task: 2026-05-28 Shared Trigger LineAttack Direct Execution
 
 ### Task title

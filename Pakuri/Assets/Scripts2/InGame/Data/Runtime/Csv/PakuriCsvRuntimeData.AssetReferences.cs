@@ -102,6 +102,12 @@ namespace Pakuri.Data
                 assets.AddSprite(enemy.ProjectileSpritePath, $"Enemy '{enemy.Id}' projectile_sprite_path");
             }
 
+            foreach (var enemy in model.StageTwoEnemies.Values)
+            {
+                assets.AddSprite(enemy.UnitSpritePath, $"Enemy '{enemy.Id}' unit_sprite_path");
+                assets.AddSprite(enemy.ProjectileSpritePath, $"Enemy '{enemy.Id}' projectile_sprite_path");
+            }
+
             return assets;
         }
     }

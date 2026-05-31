@@ -53,6 +53,7 @@ namespace Pakuri.Data
             public string PassiveSkillName;
             public string PassiveSkillId;
             public float PassiveSkillValue;
+            public float NexusDamage = 1f;
             public string PassiveSummary;
         }
 
@@ -101,6 +102,7 @@ namespace Pakuri.Data
                 PassiveSkillName = record.ReadString("passive_skill_name"),
                 PassiveSkillId = record.ReadString("passive_skill_id"),
                 PassiveSkillValue = record.ReadFloat("passive_skill_value"),
+                NexusDamage = ReadOptionalFloatWithDefault(record, "nexus_damage", 1f),
                 PassiveSummary = record.ReadString("passive_summary")
             };
 
@@ -180,6 +182,17 @@ namespace Pakuri.Data
 
         private static float ReadOptionalMultiplier(CsvRecord record, string columnName, float defaultValue)
         {
+            var value = record.ReadFloat(columnName);
+            return value > 0f ? value : defaultValue;
+        }
+
+        private static float ReadOptionalFloatWithDefault(CsvRecord record, string columnName, float defaultValue)
+        {
+            if (!record.HasColumn(columnName))
+            {
+                return defaultValue;
+            }
+
             var value = record.ReadFloat(columnName);
             return value > 0f ? value : defaultValue;
         }

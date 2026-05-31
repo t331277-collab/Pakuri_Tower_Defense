@@ -1,0 +1,10 @@
+enemy_id,display_name,encounter_role,attack_type,attribute,unit_sprite_path,projectile_sprite_path,max_health,attack_power,spell_power,move_speed,crit_chance,crit_damage,crit_resistance,def_physical,def_fire,def_lightning,def_ice,def_darkness,def_holy,stage_one_skill,basic_skill,passive_skill_name,passive_skill_id,passive_skill_value,nexus_damage,passive_summary
+id,string,enum:EnemyEncounterRole,enum:EnemyAttackType,enum:DamageAttribute,asset_path,asset_path,float,float,float,float,float,float,float,float,float,float,float,float,float,enum:StageOneEnemySkillKind,enum:StageOneEnemySkillKind,string,string,float,float,string
+stage2-fire-dragon-slayer,화룡 돌격단원,Normal,Melee,Fire,,,210,20,10,1.05,0.05,1.5,0,8,22,6,5,4,4,Slash,Slash,화룡 비늘,FireDefenseUp,0.15,1,화염 방어력 15% 증가
+stage2-lightning-scout,뇌룡 척후단원,Normal,MeleeAndRanged,Lightning,,,170,18,18,1.20,0.05,1.5,0,7,5,22,5,4,4,ShieldUp,Slash,뇌룡 기동,LightningDamageUp,0.12,1,번개 피해 12% 증가
+stage2-ice-guard,빙룡 수비단원,Normal,Melee,Ice,,,260,16,12,0.70,0.05,1.5,0,12,5,6,24,4,4,AimedShot,AimedShot,빙룡 갑주,IceDefenseUp,0.15,1,냉기 방어력 15% 증가
+stage2-dark-assassin,흑룡 암습단원,Normal,Ranged,Darkness,,,160,24,10,1.00,0.05,1.5,0,6,5,5,5,24,4,ShurikenThrow,AimedShot,흑룡 암습,CritDamageUp,0.25,1,치명타 피해 25% 증가
+stage2-holy-priest,성룡 사제단원,Normal,Ranged,Holy,,,190,6,26,0.80,0.05,1.5,0,6,5,5,5,4,24,Heal,AimedShot,성룡 축복,HolyDefenseUp,0.15,1,신성 방어력 15% 증가
+stage2-ethan,성창추적자 에단,Day5Midboss,Ranged,Physical,,,4200,32,12,0.95,0.05,1.5,0,16,8,14,6,5,6,GuardianFlag,Slash,성창 조준,CritChanceUp,0.10,1,치명타 확률 10% 증가
+stage2-drake,용살자 드레이크,Day10Midboss,Melee,Physical,,,5400,40,0,1.30,0.05,1.5,0,22,10,8,7,5,5,ChargeCommand,Slash,용살 검술,PhysicalDamageUp,0.15,1,물리 피해 15% 증가
+stage2-arsen,용살기사단장 아르센,StageBoss,Melee,Physical,,,8000,48,12,0.95,0.05,1.5,0,26,20,10,8,6,6,SacredSwordWave,Slash,단장의 내성,FireDefenseUp,0.15,1,화염 방어력 15% 증가

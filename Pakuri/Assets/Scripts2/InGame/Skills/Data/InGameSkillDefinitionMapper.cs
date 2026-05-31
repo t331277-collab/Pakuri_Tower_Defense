@@ -121,6 +121,8 @@ namespace Pakuri.InGame
                 skill.Targeting.Selection = targetSelection;
             }
 
+            skill.Targeting.SelectionStatusId = source.TargetSelectionStatusId;
+            skill.Targeting.SelectionStatusMinStacks = Mathf.Max(0, source.TargetSelectionStatusMinStacks);
             skill.Targeting.Shape = MapShape(source.RuntimeKind);
             skill.Targeting.CoverAll = source.RuntimeKind == SkillRuntimeKind.Field
                 || (source.RuntimeKind == SkillRuntimeKind.SingleAttack
@@ -211,6 +213,11 @@ namespace Pakuri.InGame
                 single.DeploymentCount = useMultiDeployment ? Math.Max(1, hitTargetCount) : 1;
                 single.DeploymentRequiredTargetStatusId = source.DeploymentRequiredTargetStatusId;
                 single.DeploymentRequiredTargetStatusMinStacks = Mathf.Max(0, source.DeploymentRequiredTargetStatusMinStacks);
+                single.TargetStatusStackStatusId = source.TargetStatusStackStatusId;
+                single.TargetStatusStackMaxStacks = Mathf.Max(0, source.TargetStatusStackMaxStacks);
+                single.ConsumeTargetStatusId = source.ConsumeTargetStatusId;
+                single.ConsumeTargetStatusRatio = Mathf.Clamp01(source.ConsumeTargetStatusRatio);
+                single.ConsumeTargetStatusStacks = Mathf.Max(0, source.ConsumeTargetStatusStacks);
                 single.DamageDelaySeconds = Mathf.Max(0f, source.DamageDelaySeconds);
                 single.ExecuteHealthRatioThreshold = Mathf.Clamp01(source.ExecuteHealthRatioThreshold);
                 single.RequireExecuteThresholdToCast = source.RequireExecuteThresholdToCast;
@@ -222,6 +229,14 @@ namespace Pakuri.InGame
                         && source.Radius <= 0f
                         && string.IsNullOrWhiteSpace(source.TargetSelection));
                 MapDamage(single.Damage, source);
+                single.TargetStatusStackDamage.Element = MapElement(source.Attribute);
+                single.TargetStatusStackDamage.BaseDamage = source.TargetStatusStackBaseDamage;
+                single.TargetStatusStackDamage.StatCoefficient = GetDominantCoefficient(
+                    source.TargetStatusStackAttackPowerCoefficient,
+                    source.TargetStatusStackSpellPowerCoefficient,
+                    out var targetStatusStatSource);
+                single.TargetStatusStackDamage.StatSource = targetStatusStatSource;
+                single.TargetStatusStackDamage.CriticalAllowed = false;
                 single.OnHitStatus = CreateStatusApplication(source);
                 return;
             }
@@ -254,6 +269,7 @@ namespace Pakuri.InGame
 
         private static void MapDamage(SkillDamageSpec damage, SkillDefinition source)
         {
+            damage.SkillId = source.SkillId;
             damage.Element = MapElement(source.Attribute);
             damage.BaseDamage = source.BaseDamage;
             damage.StatCoefficient = GetDominantCoefficient(source, out var statSource);
@@ -271,6 +287,18 @@ namespace Pakuri.InGame
 
             statSource = StatSource.Attack;
             return source.AttackPowerCoefficient;
+        }
+
+        private static float GetDominantCoefficient(float attackPowerCoefficient, float spellPowerCoefficient, out StatSource statSource)
+        {
+            if (Mathf.Abs(spellPowerCoefficient) >= Mathf.Abs(attackPowerCoefficient))
+            {
+                statSource = StatSource.Intelligence;
+                return spellPowerCoefficient;
+            }
+
+            statSource = StatSource.Attack;
+            return attackPowerCoefficient;
         }
 
         private static StatusApplicationSpec CreateStatusApplication(SkillDefinition source)
@@ -426,6 +454,9 @@ namespace Pakuri.InGame
                     BurstDamageProjectileIndex = choice != null ? choice.BurstDamageProjectileIndex : 0,
                     HasBurstDamageMultiplier = choice != null && choice.HasBurstDamageMultiplier,
                     BurstDamageMultiplier = choice != null && choice.HasBurstDamageMultiplier ? choice.BurstDamageMultiplier : 1f,
+                    HasBurstStatusProjectileIndex = choice != null && choice.HasBurstStatusProjectileIndex,
+                    BurstStatusProjectileIndex = choice != null ? choice.BurstStatusProjectileIndex : 0,
+                    BurstStatusStacksBonus = choice != null ? choice.BurstStatusStacksBonus : 0,
                     FollowUpProjectileCount = choice != null ? choice.FollowUpProjectileCount : 0,
                     FollowUpProjectileDelaySeconds = choice != null ? choice.FollowUpProjectileDelaySeconds : 0f,
                     FollowUpProjectileDamageMultiplier = choice != null && choice.FollowUpProjectileDamageMultiplier > 0f ? choice.FollowUpProjectileDamageMultiplier : 1f,
@@ -476,6 +507,19 @@ namespace Pakuri.InGame
                     ThresholdStatusId = choice != null ? choice.ThresholdStatusId : string.Empty,
                     ThresholdStatusMinStacks = choice != null ? choice.ThresholdStatusMinStacks : 0,
                     ThresholdApplyStatusId = choice != null ? choice.ThresholdApplyStatusId : string.Empty,
+                    HasTargetStatusStackDamageMultiplier = choice != null && choice.HasTargetStatusStackDamageMultiplier,
+                    TargetStatusStackDamageMultiplier = choice != null && choice.HasTargetStatusStackDamageMultiplier ? choice.TargetStatusStackDamageMultiplier : 1f,
+                    HasConsumeTargetStatusRatioOverride = choice != null && choice.HasConsumeTargetStatusRatioOverride,
+                    ConsumeTargetStatusRatioOverride = choice != null ? choice.ConsumeTargetStatusRatioOverride : 0f,
+                    HasConsumeTargetStatusStacksOverride = choice != null && choice.HasConsumeTargetStatusStacksOverride,
+                    ConsumeTargetStatusStacksOverride = choice != null ? choice.ConsumeTargetStatusStacksOverride : 0,
+                    ConditionalCritChanceBonus = choice != null ? choice.ConditionalCritChanceBonus : 0f,
+                    ConditionalCritTargetStatusId = choice != null ? choice.ConditionalCritTargetStatusId : string.Empty,
+                    ConditionalCritTargetStatusMinStacks = choice != null ? choice.ConditionalCritTargetStatusMinStacks : 0,
+                    RedistributeConsumedStatusRatioOnKill = choice != null ? choice.RedistributeConsumedStatusRatioOnKill : 0f,
+                    RedistributeConsumedStatusId = choice != null ? choice.RedistributeConsumedStatusId : string.Empty,
+                    RedistributeConsumedStatusSearchRadius = choice != null ? choice.RedistributeConsumedStatusSearchRadius : 0f,
+                    RedistributeConsumedStatusTargetCount = choice != null ? choice.RedistributeConsumedStatusTargetCount : 0,
                     CountStatusId = choice != null ? choice.CountStatusId : string.Empty,
                     CountTargetSide = choice != null ? choice.CountTargetSide : SkillMultiEffectTargetSide.Enemy,
                     DamageMultiplierPerCount = choice != null ? choice.DamageMultiplierPerCount : 0f,
