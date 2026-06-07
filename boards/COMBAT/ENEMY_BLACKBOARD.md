@@ -7,6 +7,54 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-06-07 Collider-Only Skill Hit Validation
+
+### Task title
+
+Remove target-point and radius fallback hit checks now that monster unit prefabs have colliders.
+
+### Goals
+
+- Require skill hitbox/projectile overlap against target colliders instead of target transform points.
+- Remove projectile and enemy hitbox actor radius fallback when the skill prefab lacks enabled colliders.
+- Keep enemy offensive skill prefabs on collider-driven hit detection.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User added `Collider2D` components to all `Assets/Prefab/Monster/*_Unit.prefab` files before this code change.
+- Enemy offensive skill prefabs under `Assets/Prefab/Enemy/Skill` already have colliders for `Warrior_Skill.prefab`, `Achor_Skill.prefab`, `Rogue_Skill.prefab`, and `Karin_Skill 1.prefab`.
+- Non-offensive enemy visual prefabs such as priest/shield/command visuals do not need hitbox colliders for damage routing.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that enemy projectile/slash attacks hit only through collider overlap against monster colliders.
+- User verifies monster skills still hit enemies correctly through enemy colliders after the shared hitbox utility change.
+
+### Evidence
+
+- `Assets/Prefab/Monster/Ariel_Unit.prefab`, `Eve_Unit.prefab`, `Rin_Unit.prefab`, `Sein_Unit.prefab`, and `Vega_Unit.prefab` each have one detected 2D collider.
+- `Pakuri/Assets/Scripts2/InGame/Units/UnitRosterService.cs` no longer uses `hitbox.OverlapPoint(target.ResolveTargetPoint())`; `UnitHitboxUtility.IsTargetInsideHitbox(...)` now requires target colliders and checks collider distance overlap.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Actors/InGameProjectileActor.cs` no longer uses the `hitRadius` roster fallback when the projectile has no enabled collider; it returns without a hit instead.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Actors/InGameEnemySkillHitboxActor.cs` no longer uses the `hitRadius` roster fallback when the hitbox prefab has no enabled collider; it returns without a hit instead.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Actors/InGameZoneSkillActor.cs` debug hitbox path no longer uses target-point overlap and now follows collider-only overlap checks.
+- Search for `OverlapPoint(targetPoint)`, `ResolveTargetPoint().*sqrMagnitude`, `var radiusSq = hitRadius * hitRadius`, and `PointCheck hitbox` under `Pakuri/Assets/Scripts2/InGame` returned no matches after the change.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remain.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remain.
+
+### History
+
+- 2026-06-07: User confirmed monster unit prefabs now have colliders and requested removal of fallback hit detection paths.
+
 ## Task: 2026-05-31 Monster Revive Targetability Restore
 
 ### Task title

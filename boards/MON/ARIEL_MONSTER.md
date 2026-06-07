@@ -59,3 +59,49 @@ Implemented, compile-verified, and CSV-sync-verified.
 ### History
 
 - 2026-05-22: User asked Code Builder to implement `ariel-a-trait-5` and `ariel-d-trait-5` and confirm whether every Ariel skill was now implemented.
+
+## Task: 2026-06-07 Ariel Animation Clip Controller And Prefab Wiring
+
+### Task title
+
+Create Ariel's shared Rin-contract animation assets and wire the monster prefab animator.
+
+### Goals
+
+- Create Ariel's six animation clips: attack 1, attack 2, attack 3, idle, hit, and death.
+- Create `Ariel_Animation_Cont.controller` with the same parameter contract as Rin: `Attack`, `AttackIndex`, `Hit`, and `Death`.
+- Add Animator and `Animation_Controller` components to `Ariel_Unit.prefab` and connect `MonsterUnitActor.animationController`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The controller contract follows inspected `Rin_Animation_Cont.controller`.
+- Unity Editor import and Play Mode animation verification were not available in this session.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally YAML/build-verified.
+
+### Next Actions
+
+- User lets Unity import the new `.anim` and `.controller` assets.
+- User verifies in Play Mode that Ariel plays idle, attack 1-3, hit, and death through the shared animation parameter contract.
+
+### Evidence
+
+- `Pakuri/Assets/Image/Monster/ariel/Animation/Animation_Ariel_Sprite` now contains 6 `Anim_Ariel_*.anim` files, 6 matching `.anim.meta` files, `Ariel_Animation_Cont.controller`, and `Ariel_Animation_Cont.controller.meta`.
+- `Select-String` confirmed `Ariel_Animation_Cont.controller` contains `Attack`, `AttackIndex`, `Hit`, `Death`, and the states `Anim_Ariel_Attack_1`, `Anim_Ariel_Attack_2`, `Anim_Ariel_Attack_3`, `Anim_Ariel_Hit`, `Anim_Ariel_Idle`, and `Anim_Ariel_Dead_1`.
+- `Pakuri/Assets/Prefab/Monster/Ariel_Unit.prefab` now has `animationController: {fileID: 900100000000002}`, an `Animator` with controller GUID `b2339c033d324ea8a1f138797de25ab8`, and an `Animation_Controller` with `idleState: Anim_Ariel_Idle`, `deadState: Anim_Ariel_Dead_1`, and `attackStateCount: 3`.
+- The controller meta GUID check returned `Ariel controllerGuid=b2339c033d324ea8a1f138797de25ab8 linked=True`.
+- The generated idle clip check returned `Ariel idleName=Anim_Ariel_Idle spriteRefs=16`.
+- 2026-06-07 follow-up correction verified `Ariel root=4596420534878418281 rootRefs=true animatorOwner=4596420534878418281 controllerOwner=4596420534878418281 ok=true` after fixing the generated Animator and `Animation_Controller` component owner fileIDs to the root `Ariel_Unit` GameObject.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-06-07: User asked Code Builder to create each monster's six animation clips, create controllers with Rin's parameter contract, and wire each monster prefab Animator controller.
+- 2026-06-07: User reported the non-Rin monster prefabs still did not show assigned Animator / `Animation_Controller`; Code Builder found the generated component blocks were owned by the wrong GameObject fileID and corrected them to the root Unit GameObject.

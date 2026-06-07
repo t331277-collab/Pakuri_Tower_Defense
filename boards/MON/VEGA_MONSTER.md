@@ -681,3 +681,49 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-18: User listed CSV row 34 as a one-shot area attack skill for the new `SingleAttack` type.
+
+## Task: 2026-06-07 Vega Animation Clip Controller And Prefab Wiring
+
+### Task title
+
+Create Vega's shared Rin-contract animation assets and wire the monster prefab animator.
+
+### Goals
+
+- Create Vega's six animation clips: attack 1, attack 2, attack 3, idle, hit, and death.
+- Create `Vega_Animation_Cont.controller` with the same parameter contract as Rin: `Attack`, `AttackIndex`, `Hit`, and `Death`.
+- Add Animator and `Animation_Controller` components to `Vega_Unit.prefab` and connect `MonsterUnitActor.animationController`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The controller contract follows inspected `Rin_Animation_Cont.controller`.
+- Unity Editor import and Play Mode animation verification were not available in this session.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally YAML/build-verified.
+
+### Next Actions
+
+- User lets Unity import the new `.anim` and `.controller` assets.
+- User verifies in Play Mode that Vega plays idle, attack 1-3, hit, and death through the shared animation parameter contract.
+
+### Evidence
+
+- `Pakuri/Assets/Image/Monster/Vega/Animation/Animation_Vega_Sprite` now contains 6 `Anim_Vega_*.anim` files, 6 matching `.anim.meta` files, `Vega_Animation_Cont.controller`, and `Vega_Animation_Cont.controller.meta`.
+- `Select-String` confirmed `Vega_Animation_Cont.controller` contains `Attack`, `AttackIndex`, `Hit`, `Death`, and the states `Anim_Vega_Attack_1`, `Anim_Vega_Attack_2`, `Anim_Vega_Attack_3`, `Anim_Vega_Hit`, `Anim_Vega_Idle`, and `Anim_Vega_Dead_1`.
+- `Pakuri/Assets/Prefab/Monster/Vega_Unit.prefab` now has `animationController: {fileID: 900400000000002}`, an `Animator` with controller GUID `c923064a4af54d6f9e26058c1197e17d`, and an `Animation_Controller` with `idleState: Anim_Vega_Idle`, `deadState: Anim_Vega_Dead_1`, and `attackStateCount: 3`.
+- The controller meta GUID check returned `Vega controllerGuid=c923064a4af54d6f9e26058c1197e17d linked=True`.
+- The generated idle clip check returned `Vega idleName=Anim_Vega_Idle spriteRefs=16`.
+- 2026-06-07 follow-up correction verified `Vega root=4596420534878418281 rootRefs=true animatorOwner=4596420534878418281 controllerOwner=4596420534878418281 ok=true` after fixing the generated Animator and `Animation_Controller` component owner fileIDs to the root `Vega_Unit` GameObject.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-06-07: User asked Code Builder to create each monster's six animation clips, create controllers with Rin's parameter contract, and wire each monster prefab Animator controller.
+- 2026-06-07: User reported the non-Rin monster prefabs still did not show assigned Animator / `Animation_Controller`; Code Builder found the generated component blocks were owned by the wrong GameObject fileID and corrected them to the root Unit GameObject.

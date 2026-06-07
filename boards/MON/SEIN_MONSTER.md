@@ -641,3 +641,49 @@ Implemented and non-gameplay verified.
 ### History
 
 - 2026-05-20: User approved an exact shared implementation for the Sein-B 5-shot burst cycle instead of the approximate existing magazine projectile behavior.
+
+## Task: 2026-06-07 Sein Animation Clip Controller And Prefab Wiring
+
+### Task title
+
+Create Sein's shared Rin-contract animation assets and wire the monster prefab animator.
+
+### Goals
+
+- Create Sein's six animation clips: attack 1, attack 2, attack 3, idle, hit, and death.
+- Create `Sein_Animation_Cont.controller` with the same parameter contract as Rin: `Attack`, `AttackIndex`, `Hit`, and `Death`.
+- Add Animator and `Animation_Controller` components to `Sein_Unit.prefab` and connect `MonsterUnitActor.animationController`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The controller contract follows inspected `Rin_Animation_Cont.controller`.
+- Unity Editor import and Play Mode animation verification were not available in this session.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally YAML/build-verified.
+
+### Next Actions
+
+- User lets Unity import the new `.anim` and `.controller` assets.
+- User verifies in Play Mode that Sein plays idle, attack 1-3, hit, and death through the shared animation parameter contract.
+
+### Evidence
+
+- `Pakuri/Assets/Image/Monster/Sein/Animation/Animation_Sein_Sprite` now contains 6 `Anim_Sein_*.anim` files, 6 matching `.anim.meta` files, `Sein_Animation_Cont.controller`, and `Sein_Animation_Cont.controller.meta`.
+- `Select-String` confirmed `Sein_Animation_Cont.controller` contains `Attack`, `AttackIndex`, `Hit`, `Death`, and the states `Anim_Sein_Attack_1`, `Anim_Sein_Attack_2`, `Anim_Sein_Attack_3`, `Anim_Sein_Hit`, `Anim_Sein_Idle`, and `Anim_Sein_Dead_1`.
+- `Pakuri/Assets/Prefab/Monster/Sein_Unit.prefab` now has `animationController: {fileID: 900300000000002}`, an `Animator` with controller GUID `ea44a003bbf345bbbccbfb750101f1ea`, and an `Animation_Controller` with `idleState: Anim_Sein_Idle`, `deadState: Anim_Sein_Dead_1`, and `attackStateCount: 3`.
+- The controller meta GUID check returned `Sein controllerGuid=ea44a003bbf345bbbccbfb750101f1ea linked=True`.
+- The generated idle clip check returned `Sein idleName=Anim_Sein_Idle spriteRefs=16`.
+- 2026-06-07 follow-up correction verified `Sein root=4596420534878418281 rootRefs=true animatorOwner=4596420534878418281 controllerOwner=4596420534878418281 ok=true` after fixing the generated Animator and `Animation_Controller` component owner fileIDs to the root `Sein_Unit` GameObject.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-06-07: User asked Code Builder to create each monster's six animation clips, create controllers with Rin's parameter contract, and wire each monster prefab Animator controller.
+- 2026-06-07: User reported the non-Rin monster prefabs still did not show assigned Animator / `Animation_Controller`; Code Builder found the generated component blocks were owned by the wrong GameObject fileID and corrected them to the root Unit GameObject.

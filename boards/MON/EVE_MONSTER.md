@@ -120,6 +120,52 @@ Current active Eve baseline summarized and retained for future work. 2026-05-18 
 - 2026-05-18: Code Builder moved Eve-A shock chance and projectile speed from hardcoded/monster-level data into the Eve skill row.
 - 2026-05-18: Code Builder added supported Korean status-label parsing/fallback and CSV runtime sync batch support.
 
+## Task: 2026-06-07 Eve Animation Clip Controller And Prefab Wiring
+
+### Task title
+
+Create Eve's shared Rin-contract animation assets and wire the monster prefab animator.
+
+### Goals
+
+- Create Eve's six animation clips: attack 1, attack 2, attack 3, idle, hit, and death.
+- Create `Eve_Animation_Cont.controller` with the same parameter contract as Rin: `Attack`, `AttackIndex`, `Hit`, and `Death`.
+- Add Animator and `Animation_Controller` components to `Eve_Unit.prefab` and connect `MonsterUnitActor.animationController`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The controller contract follows inspected `Rin_Animation_Cont.controller`.
+- Unity Editor import and Play Mode animation verification were not available in this session.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally YAML/build-verified.
+
+### Next Actions
+
+- User lets Unity import the new `.anim` and `.controller` assets.
+- User verifies in Play Mode that Eve plays idle, attack 1-3, hit, and death through the shared animation parameter contract.
+
+### Evidence
+
+- `Pakuri/Assets/Image/Monster/Eve/Animation/Animation_Eve_Sprite` now contains 6 `Anim_Eve_*.anim` files, 6 matching `.anim.meta` files, `Eve_Animation_Cont.controller`, and `Eve_Animation_Cont.controller.meta`.
+- `Select-String` confirmed `Eve_Animation_Cont.controller` contains `Attack`, `AttackIndex`, `Hit`, `Death`, and the states `Anim_Eve_Attack_1`, `Anim_Eve_Attack_2`, `Anim_Eve_Attack_3`, `Anim_Eve_Hit`, `Anim_Eve_Idle`, and `Anim_Eve_Dead_1`.
+- `Pakuri/Assets/Prefab/Monster/Eve_Unit.prefab` now has `animationController: {fileID: 900200000000002}`, an `Animator` with controller GUID `cc69556112bc45619ea4177c77ae95dc`, and an `Animation_Controller` with `idleState: Anim_Eve_Idle`, `deadState: Anim_Eve_Dead_1`, and `attackStateCount: 3`.
+- The controller meta GUID check returned `Eve controllerGuid=cc69556112bc45619ea4177c77ae95dc linked=True`.
+- The generated idle clip check returned `Eve idleName=Anim_Eve_Idle spriteRefs=16`.
+- 2026-06-07 follow-up correction verified `Eve root=4596420534878418281 rootRefs=true animatorOwner=4596420534878418281 controllerOwner=4596420534878418281 ok=true` after fixing the generated Animator and `Animation_Controller` component owner fileIDs to the root `Eve_Unit` GameObject.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` both passed with 0 errors; only existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-06-07: User asked Code Builder to create each monster's six animation clips, create controllers with Rin's parameter contract, and wire each monster prefab Animator controller.
+- 2026-06-07: User reported the non-Rin monster prefabs still did not show assigned Animator / `Animation_Controller`; Code Builder found the generated component blocks were owned by the wrong GameObject fileID and corrected them to the root Unit GameObject.
+
 ## Task: 2026-05-18 Eve C/D/E Runtime Kind And Names
 
 ### Task title
