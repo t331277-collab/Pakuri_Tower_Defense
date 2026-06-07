@@ -191,19 +191,18 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var targetPoint = target.ResolveTargetPoint();
             var targetColliders = target.GetHitboxColliders();
+            if (targetColliders == null || targetColliders.Length == 0)
+            {
+                return false;
+            }
+
             for (var i = 0; i < hitboxColliders.Length; i++)
             {
                 var hitbox = hitboxColliders[i];
                 if (hitbox == null || !hitbox.enabled)
                 {
                     continue;
-                }
-
-                if (hitbox.OverlapPoint(targetPoint))
-                {
-                    return true;
                 }
 
                 for (var j = 0; j < targetColliders.Length; j++)

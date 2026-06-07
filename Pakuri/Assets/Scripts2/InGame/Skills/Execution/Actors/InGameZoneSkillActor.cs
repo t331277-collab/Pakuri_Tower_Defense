@@ -497,10 +497,14 @@ namespace Pakuri.InGame
             }
 
             var targetColliders = target.GetHitboxColliders();
-            var targetPoint = target.ResolveTargetPoint();
             if (debug)
             {
                 Debug.Log($"[ZoneHitboxDebug:{debugSkillId}] Checking target={DescribeTarget(target)} targetColliders={DescribeColliderCollection(targetColliders)}");
+            }
+
+            if (targetColliders == null || targetColliders.Length == 0)
+            {
+                return false;
             }
 
             for (var i = 0; i < hitboxColliders.Length; i++)
@@ -509,17 +513,6 @@ namespace Pakuri.InGame
                 if (hitbox == null || !hitbox.enabled)
                 {
                     continue;
-                }
-
-                var containsTargetPoint = hitbox.OverlapPoint(targetPoint);
-                if (debug)
-                {
-                    Debug.Log($"[ZoneHitboxDebug:{debugSkillId}] PointCheck hitbox={DescribeCollider(hitbox)} targetPoint={targetPoint} overlapped={containsTargetPoint}");
-                }
-
-                if (containsTargetPoint)
-                {
-                    return true;
                 }
 
                 for (var j = 0; j < targetColliders.Length; j++)

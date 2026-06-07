@@ -5,8 +5,6 @@ namespace Pakuri.InGame
     [DisallowMultipleComponent]
     public sealed class MonsterUnitActor : MonoBehaviour
     {
-        private const string RinMonsterId = "rin";
-
         [SerializeField] private TextMesh monsterNameLabel;
         [SerializeField] private TextMesh monsterHpLabel;
         [SerializeField] private TextMesh damageTextLabel;
@@ -43,10 +41,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (ShouldUseRinAnimation())
-            {
-                ResolveAnimationController()?.PlayRandomAttack();
-            }
+            ResolveAnimationController()?.PlayRandomAttack();
         }
 
         public void TryPlayHitAnimation()
@@ -56,10 +51,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (ShouldUseRinAnimation())
-            {
-                ResolveAnimationController()?.PlayHit();
-            }
+            ResolveAnimationController()?.PlayHit();
         }
 
         public void TryPlayDeathAnimation()
@@ -220,14 +212,6 @@ namespace Pakuri.InGame
                 && identity.Side == UnitSide.Player
                 && identity.Role == UnitRole.Monster
                 && identity.SlotIndex == 0;
-        }
-
-        private bool ShouldUseRinAnimation()
-        {
-            var definitionId = Model != null && Model.Identity != null
-                ? Model.Identity.DefinitionId
-                : string.Empty;
-            return string.Equals(definitionId, RinMonsterId, System.StringComparison.OrdinalIgnoreCase);
         }
     }
 }

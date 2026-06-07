@@ -4,6 +4,55 @@
 - This file keeps only task blocks dated 2026-05-08 based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/MON/RIN_MONSTER.md`.
 
+## Task: 2026-06-07 Rin Animator Trigger Controller And Shared Actor Hook
+
+### Task title
+
+Move Rin unit animation routing from direct state-play attack/hit calls to Animator parameters, and make monster animation hooks reusable by other monster actors.
+
+### Goals
+
+- Add trigger/int parameter routing to `Rin_Animation_Cont.controller`.
+- Change `Animation_Controller` attack and hit playback to use Animator parameters instead of hardcoded direct state names.
+- Keep death final-frame freeze in script after the `Death` trigger.
+- Remove the Rin-only `MonsterUnitActor` definition-id gate so other monster prefabs can opt in by adding `Animation_Controller` and a compatible Animator Controller.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Existing Rin state names and animation clip references are preserved.
+- Other characters still need their own compatible Animator Controller parameters and prefab component wiring before they can play animations.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that Rin plays random `AttackIndex` 0-2 attacks, hit animation, death animation, and death final-frame freeze.
+- For Ariel/Eve/Sein/Vega, add `Animator` plus `Animation_Controller` to each prefab and use an Animator Controller with `Attack`, `AttackIndex`, `Hit`, and `Death` parameters.
+
+### Evidence
+
+- `Pakuri/Assets/Image/Monster/Rin/Animation/Animation_Rin 1/Rin_Animation_Cont.controller` now has `Attack`, `AttackIndex`, `Hit`, and `Death` Animator parameters.
+- The same controller now has Any State transitions for `Attack` plus `AttackIndex` 0, 1, and 2 into `Anim_Rin_Attack_1`, `Anim_Rin_Attack_2`, and `Anim_Rin_Attack_3`.
+- The same controller now has Any State transitions for `Hit` into `Anim_Rin_Hit` and `Death` into `Anim_Rin_Dead_1`.
+- Attack and hit states now transition back to `Anim_Rin_Idle` with exit time.
+- `Pakuri/Assets/Scripts2/InGame/Animation/Animation_Controller.cs` now calls `SetInteger("AttackIndex", ...)`, `SetTrigger("Attack")`, `SetTrigger("Hit")`, and `SetTrigger("Death")` when those Animator parameters exist, and keeps direct `Animator.Play(deadState, 0, 0.999f)` only for the death final-frame freeze.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitActor.cs` no longer contains `RinMonsterId` or `ShouldUseRinAnimation()` and now calls the resolved `Animation_Controller` for any monster actor that has the component.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remain.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remain.
+- `git diff --check -- Pakuri\Assets\Scripts2\InGame\Animation\Animation_Controller.cs Pakuri\Assets\Scripts2\InGame\Units\MonsterUnitActor.cs "Pakuri\Assets\Image\Monster\Rin\Animation\Animation_Rin 1\Rin_Animation_Cont.controller"` passed with only line-ending conversion warnings.
+
+### History
+
+- 2026-06-07: User asked Code Builder to update `Rin_Animation_Cont.controller`, `Animation_Controller.cs`, and `MonsterUnitActor.cs` so Rin uses Animator parameters/transitions for normal animation routing while `MonsterUnitActor` becomes reusable by other characters.
+
 ## Task: 2026-05-26 Rin-E SingleAttack Core Hitbox Skill Completion
 
 ### Task title

@@ -19,7 +19,6 @@ namespace Pakuri.InGame
         private float destroyBeyondX;
         private float maxLifetime;
         private int remainingHits = 1;
-        private float hitRadius = 0.5f;
         private bool destroyWhenGreaterThanBoundary = true;
         private ProjectileStatusHitSpec statusOnHit;
         private ProjectileBranchHitSpec branchOnHit;
@@ -230,8 +229,11 @@ namespace Pakuri.InGame
                 }
             }
 
-            var radiusSq = hitRadius * hitRadius;
-            var current = transform.position;
+            if (!hasColliderHitbox)
+            {
+                return;
+            }
+
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
@@ -240,21 +242,9 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                if (hasColliderHitbox)
+                if (UnitHitboxUtility.IsTargetInsideHitbox(selfColliders, entry) && TryHitTarget(entry))
                 {
-                    if (UnitHitboxUtility.IsTargetInsideHitbox(selfColliders, entry) && TryHitTarget(entry))
-                    {
-                        return;
-                    }
-                }
-                else
-                {
-                    var offset = entry.ResolveTargetPoint() - current;
-                    offset.z = 0f;
-                    if (offset.sqrMagnitude <= radiusSq && TryHitTarget(entry))
-                    {
-                        return;
-                    }
+                    return;
                 }
             }
         }

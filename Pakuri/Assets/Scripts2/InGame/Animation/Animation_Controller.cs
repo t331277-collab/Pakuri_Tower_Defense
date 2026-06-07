@@ -6,37 +6,22 @@ namespace Pakuri.InGame
     [DisallowMultipleComponent]
     public sealed class Animation_Controller : MonoBehaviour
     {
-        private static readonly string[] AttackStates =
-        {
-            "Anim_Rin_Attack_1",
-            "Anim_Rin_Attack_2",
-            "Anim_Rin_Attack_3"
-        };
+        private const string AttackTriggerName = "Attack";
+        private const string HitTriggerName = "Hit";
+        private const string DeathTriggerName = "Death";
+        private const string AttackIndexParameterName = "AttackIndex";
 
         [SerializeField] private Animator animator;
         [SerializeField] private string idleState = "Anim_Rin_Idle";
-        [SerializeField] private string hitState = "Anim_Rin_Hit";
         [SerializeField] private string deadState = "Anim_Rin_Dead_1";
+        [SerializeField] private int attackStateCount = 3;
 
-        private float transientStateEndTime;
-        private bool hasTransientState;
         private bool dead;
         private Coroutine deathFreezeRoutine;
 
         private void Awake()
         {
             ResolveAnimator();
-            PlayIdle();
-        }
-
-        private void Update()
-        {
-            if (dead || !hasTransientState || Time.time < transientStateEndTime)
-            {
-                return;
-            }
-
-            hasTransientState = false;
             PlayIdle();
         }
 
@@ -47,8 +32,16 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var index = Random.Range(0, AttackStates.Length);
-            PlayTransient(AttackStates[index]);
+            var resolvedAnimator = ResolveAnimator();
+            if (resolvedAnimator == null)
+            {
+                return;
+            }
+
+            resolvedAnimator.speed = 1f;
+            SetIntegerIfPresent(resolvedAnimator, AttackIndexParameterName, Random.Range(0, Mathf.Max(1, attackStateCount)));
+            ResetTriggerIfPresent(resolvedAnimator, HitTriggerName);
+            SetTriggerIfPresent(resolvedAnimator, AttackTriggerName);
         }
 
         public void PlayHit()
@@ -58,7 +51,15 @@ namespace Pakuri.InGame
                 return;
             }
 
-            PlayTransient(hitState);
+            var resolvedAnimator = ResolveAnimator();
+            if (resolvedAnimator == null)
+            {
+                return;
+            }
+
+            resolvedAnimator.speed = 1f;
+            ResetTriggerIfPresent(resolvedAnimator, AttackTriggerName);
+            SetTriggerIfPresent(resolvedAnimator, HitTriggerName);
         }
 
         public void PlayDeath()
@@ -69,9 +70,16 @@ namespace Pakuri.InGame
             }
 
             dead = true;
-            hasTransientState = false;
             var deathLength = ResolveClipLength(deadState);
-            PlayState(deadState);
+            var resolvedAnimator = ResolveAnimator();
+            if (resolvedAnimator != null)
+            {
+                resolvedAnimator.speed = 1f;
+                ResetTriggerIfPresent(resolvedAnimator, AttackTriggerName);
+                ResetTriggerIfPresent(resolvedAnimator, HitTriggerName);
+                SetTriggerIfPresent(resolvedAnimator, DeathTriggerName);
+            }
+
             if (deathFreezeRoutine != null)
             {
                 StopCoroutine(deathFreezeRoutine);
@@ -99,20 +107,12 @@ namespace Pakuri.InGame
             }
 
             dead = false;
-            hasTransientState = false;
             if (ResolveAnimator() != null)
             {
                 animator.speed = 1f;
             }
 
             PlayIdle();
-        }
-
-        private void PlayTransient(string stateName)
-        {
-            PlayState(stateName);
-            hasTransientState = true;
-            transientStateEndTime = Time.time + ResolveClipLength(stateName);
         }
 
         private void PlayState(string stateName)
@@ -169,6 +169,51 @@ namespace Pakuri.InGame
             }
 
             return animator;
+        }
+
+        private static void SetTriggerIfPresent(Animator targetAnimator, string parameterName)
+        {
+            if (HasParameter(targetAnimator, parameterName, AnimatorControllerParameterType.Trigger))
+            {
+                targetAnimator.SetTrigger(parameterName);
+            }
+        }
+
+        private static void ResetTriggerIfPresent(Animator targetAnimator, string parameterName)
+        {
+            if (HasParameter(targetAnimator, parameterName, AnimatorControllerParameterType.Trigger))
+            {
+                targetAnimator.ResetTrigger(parameterName);
+            }
+        }
+
+        private static void SetIntegerIfPresent(Animator targetAnimator, string parameterName, int value)
+        {
+            if (HasParameter(targetAnimator, parameterName, AnimatorControllerParameterType.Int))
+            {
+                targetAnimator.SetInteger(parameterName, value);
+            }
+        }
+
+        private static bool HasParameter(Animator targetAnimator, string parameterName, AnimatorControllerParameterType parameterType)
+        {
+            if (targetAnimator == null || string.IsNullOrWhiteSpace(parameterName))
+            {
+                return false;
+            }
+
+            var parameters = targetAnimator.parameters;
+            for (var i = 0; i < parameters.Length; i++)
+            {
+                var parameter = parameters[i];
+                if (parameter.type == parameterType
+                    && string.Equals(parameter.name, parameterName, System.StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
