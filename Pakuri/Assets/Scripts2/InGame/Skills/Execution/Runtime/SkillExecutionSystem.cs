@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Pakuri.Data;
 using UnityEngine;
 
@@ -9,6 +10,9 @@ namespace Pakuri.InGame
 
         private readonly SkillExecutorRegistry registry = new SkillExecutorRegistry();
         private readonly SkillChoiceResolver choiceResolver = new SkillChoiceResolver();
+        private readonly Dictionary<UnitRosterEntry, UnitSkillController> unitControllers =
+            new Dictionary<UnitRosterEntry, UnitSkillController>();
+        private readonly List<UnitRosterEntry> staleControllerEntries = new List<UnitRosterEntry>();
 
         public int LastRoutedCount { get; private set; }
         public int LastRejectedCount { get; private set; }
@@ -33,6 +37,8 @@ namespace Pakuri.InGame
             }
 
             var entries = roster.Entries;
+            PruneControllerCache(entries);
+
             for (var i = 0; i < entries.Count; i++)
             {
                 TickEntry(entries[i], roster, combatManager, deltaTime, logRoutedContracts, canAutoRoute);
@@ -49,17 +55,20 @@ namespace Pakuri.InGame
             Vector2 targetPoint,
             bool logRoutedContracts)
         {
-            return TryRouteSkill(
-                entry,
+            if (entry == null)
+            {
+                return false;
+            }
+
+            var controller = GetOrCreateController(entry);
+            return controller.TryExecuteManual(
                 runtime,
                 roster,
                 combatManager,
                 deltaTime,
-                logRoutedContracts,
-                true,
                 aimDirection,
-                true,
-                targetPoint);
+                targetPoint,
+                logRoutedContracts);
         }
 
         public bool TryExecuteTriggered(
@@ -104,30 +113,61 @@ namespace Pakuri.InGame
             bool logRoutedContracts,
             SkillAutoRoutePredicate canAutoRoute)
         {
-            var model = entry != null ? entry.Model : null;
-            var skillRuntime = model != null ? model.SkillRuntime : null;
-            if (skillRuntime == null)
+            if (entry == null)
             {
                 return;
             }
 
-            skillRuntime.Tick(deltaTime);
-            if (model == null || !model.AutoSkillEnabled || !entry.IsAlive || !StatusEffectRuntime.CanAct(model))
+            var controller = GetOrCreateController(entry);
+            controller.Tick(roster, combatManager, deltaTime, logRoutedContracts, canAutoRoute);
+        }
+
+        private UnitSkillController GetOrCreateController(UnitRosterEntry entry)
+        {
+            if (!unitControllers.TryGetValue(entry, out var controller))
+            {
+                controller = new UnitSkillController(entry, TryRouteSkill);
+                unitControllers.Add(entry, controller);
+            }
+
+            return controller;
+        }
+
+        private void PruneControllerCache(IReadOnlyList<UnitRosterEntry> activeEntries)
+        {
+            if (unitControllers.Count == 0)
             {
                 return;
             }
 
-            var activeSkills = skillRuntime.ActiveSkills;
-            for (var i = 0; i < activeSkills.Count; i++)
+            staleControllerEntries.Clear();
+            foreach (var pair in unitControllers)
             {
-                var runtime = activeSkills[i];
-                if (canAutoRoute != null && !canAutoRoute(entry, runtime))
+                if (!ContainsEntry(activeEntries, pair.Key))
                 {
-                    continue;
+                    staleControllerEntries.Add(pair.Key);
                 }
-
-                TryRouteSkill(entry, runtime, roster, combatManager, deltaTime, logRoutedContracts, false, default);
             }
+
+            for (var i = 0; i < staleControllerEntries.Count; i++)
+            {
+                unitControllers.Remove(staleControllerEntries[i]);
+            }
+
+            staleControllerEntries.Clear();
+        }
+
+        private static bool ContainsEntry(IReadOnlyList<UnitRosterEntry> entries, UnitRosterEntry candidate)
+        {
+            for (var i = 0; i < entries.Count; i++)
+            {
+                if (ReferenceEquals(entries[i], candidate))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private bool TryRouteSkill(
@@ -140,7 +180,8 @@ namespace Pakuri.InGame
             bool hasManualAimDirection,
             Vector2 manualAimDirection,
             bool hasManualTargetPoint = false,
-            Vector2 manualTargetPoint = default)
+            Vector2 manualTargetPoint = default,
+            System.Action<UnitRosterEntry> notifyActiveSkillAnimation = null)
         {
             if (runtime == null || entry == null || !StatusEffectRuntime.CanAct(entry.Model))
             {
@@ -177,7 +218,7 @@ namespace Pakuri.InGame
                     return false;
                 }
 
-                NotifyActiveSkillAnimation(entry);
+                notifyActiveSkillAnimation?.Invoke(entry);
                 NotifySkillCastTriggers(combatManager, entry, runtime, context);
                 LastRoutedCount++;
                 if (logRoutedContracts)
@@ -187,12 +228,6 @@ namespace Pakuri.InGame
             }
 
             return result.Routed;
-        }
-
-        private static void NotifyActiveSkillAnimation(UnitRosterEntry entry)
-        {
-            var monsterActor = entry != null ? entry.Actor as MonsterUnitActor : null;
-            monsterActor?.TryPlayActiveSkillAnimation();
         }
 
         private static void NotifySkillCastTriggers(

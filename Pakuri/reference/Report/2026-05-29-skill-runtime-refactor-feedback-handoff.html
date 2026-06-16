@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Skill Runtime Refactor Feedback Handoff</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --paper: #ffffff;
+      --ink: #17202a;
+      --muted: #5d6673;
+      --line: #d8dee8;
+      --accent: #176087;
+      --code: #eef2f7;
+      --warn: #8a5a24;
+      --good: #1f6f43;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "Malgun Gothic", "Noto Sans KR", Arial, sans-serif;
+      line-height: 1.65;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 32px 0 64px;
+    }
+
+    header,
+    section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px 26px;
+      margin-bottom: 16px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h1 { font-size: 30px; }
+    h2 { font-size: 22px; margin-bottom: 12px; }
+    h3 { font-size: 17px; margin: 18px 0 8px; }
+    p { margin: 10px 0 0; }
+    ul, ol { margin: 10px 0 0; padding-left: 22px; }
+    li { margin: 7px 0; }
+
+    code {
+      background: var(--code);
+      border: 1px solid #d5deea;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 0.94em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #eef4f8;
+      color: #26384a;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+      background: #fbfcfe;
+    }
+
+    .box strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .warn { border-color: #ead6b5; background: #fff8eb; }
+    .good { border-color: #b8d9c5; background: #eef8f1; }
+
+    .link-row {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .link-row a {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+      border: 1px solid #bfd3df;
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: #f2f8fb;
+    }
+
+    @media (max-width: 900px) {
+      .summary { grid-template-columns: 1fr; }
+      main { width: min(1120px, calc(100% - 24px)); }
+      header, section { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Designer Handoff / Updated 2026-05-30</div>
+    <h1>Skill Runtime Refactor Feedback Handoff</h1>
+    <p>이 문서는 원 작업자가 작성한 두 스킬 구조 보고서에 대해, 현재 저장소 코드 근거로 정리한 간결한 피드백이다. 주제는 캐릭터 일반 구조가 아니라 스킬 소유권, 실행 구조, CSV 확장 방식이다.</p>
+    <div class="link-row">
+      <a href="./2026-05-29-skill-runtime-refactor-feedback-handoff.md">Markdown handoff</a>
+    </div>
+    <div class="summary">
+      <div class="box warn">
+        <strong>핵심 판단</strong>
+        현재 구조는 CSV 기반이지만 새 행동이 flat CSV 필드, flat snapshot property, 중앙 executor 로직으로 계속 누적되고 있다.
+      </div>
+      <div class="box">
+        <strong>정확한 문제</strong>
+        캐릭터별 스킬 상태는 있지만, 캐릭터 단위 스킬 실행 주체는 아직 명확하지 않다.
+      </div>
+      <div class="box good">
+        <strong>권장 방향</strong>
+        현재 CSV 호환을 유지하면서 조건, 피해 보정, 히트 액션, 킬 액션, 투사체 행동, 상태/버프 handler로 분해한다.
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <h2>피드백 대상</h2>
+    <ul>
+      <li><code>D:\ChromeDownLoad\2026-05-28-skill-structure-problem-and-improvement-report.html</code></li>
+      <li><code>D:\ChromeDownLoad\2026-05-28-skill-csv-runtime-architecture-explained.html</code></li>
+    </ul>
+    <p>위 두 문서는 원 작업자의 설명과 문제 제기로 보고, 현재 저장소 코드와 대조했다.</p>
+  </section>
+
+  <section>
+    <h2>코드 근거</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>관찰</th>
+          <th>근거</th>
+          <th>판단</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>스킬 실행은 중앙 tick 구조다.</td>
+          <td><code>InGameCombatManager.cs:93</code>가 <code>SkillExecutionSystem.Tick(...)</code>을 호출하고, <code>SkillExecutionSystem.cs:35</code>와 <code>:120</code>이 roster와 active skill을 순회한다.</td>
+          <td>캐릭터가 스킬 상태를 갖고 있어도, 캐릭터 단위 실행 주체는 아직 분리되어 있지 않다.</td>
+        </tr>
+        <tr>
+          <td>스킬 상태 자체는 유닛 소유다.</td>
+          <td><code>BaseUnitRuntimeModel.cs:68</code>이 <code>SkillRuntime</code>을 저장하고, <code>SkillRuntimeFactory.cs:67</code>이 <code>new SkillRuntimeInstance(owner, skillData)</code>를 만든다.</td>
+          <td>현재 구조를 버릴 필요는 없고, 이 상태 저장 위에 unit-scoped controller를 얹는 것이 자연스럽다.</td>
+        </tr>
+        <tr>
+          <td><code>MonsterUnitActor</code>는 gameplay owner가 아니다.</td>
+          <td><code>MonsterUnitActor.cs:19</code>는 model 참조를 갖지만, <code>:36</code>, <code>:44</code>, <code>:52</code>, <code>:60</code>은 애니메이션과 표시 갱신 중심이다.</td>
+          <td>정확한 표현은 "model 참조를 가진 presentation actor"다.</td>
+        </tr>
+        <tr>
+          <td>execute, boss, kill 규칙은 executor 내부에 직접 들어가 있다.</td>
+          <td><code>SingleAttackData.cs:17</code>~<code>:21</code>, <code>SingleAttackSkillExecutor.cs:123</code>, <code>:1314</code>~<code>:1328</code>, <code>:1356</code>~<code>:1382</code></td>
+          <td>이 필드들은 조건, 피해 보정, 킬 후 액션 handler로 분리해야 한다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>문제가 되는 현재 필드 패턴</h2>
+    <p><code>monster_skills.csv</code>에는 다음 필드가 실제로 존재한다.</p>
+    <ul>
+      <li><code>execute_health_ratio_threshold</code></li>
+      <li><code>require_execute_threshold_to_cast</code></li>
+      <li><code>execute_damage_multiplier</code></li>
+      <li><code>kill_cooldown_refund_ratio</code></li>
+      <li><code>boss_damage_multiplier</code></li>
+    </ul>
+    <p><code>monster_skill_choices.csv</code>에도 <code>execute_health_ratio_bonus</code>, <code>execute_crit_chance_bonus</code>, <code>boss_damage_multiplier</code>, <code>kill_cooldown_refund_ratio_bonus</code>, <code>kill_resets_cooldown</code> 같은 대응 필드가 있다.</p>
+    <p>이 방향을 계속 유지하면 새 스킬 행동마다 CSV 컬럼, definition 필드, mapper, snapshot property, executor 조건문이 같이 늘어난다.</p>
+  </section>
+
+  <section>
+    <h2>권장 표현</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>현재 표현</th>
+          <th>권장 runtime 개념</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>require_execute_threshold_to_cast</code></td>
+          <td><code>CastCondition: target health ratio &lt;= threshold</code></td>
+        </tr>
+        <tr>
+          <td><code>execute_health_ratio_threshold</code></td>
+          <td><code>TargetHealthRatioCondition</code></td>
+        </tr>
+        <tr>
+          <td><code>execute_damage_multiplier</code></td>
+          <td><code>ConditionalDamageModifier</code></td>
+        </tr>
+        <tr>
+          <td><code>boss_damage_multiplier</code></td>
+          <td><code>TargetPredicateDamageModifier</code> with <code>target.IsBoss</code></td>
+        </tr>
+        <tr>
+          <td><code>kill_cooldown_refund_ratio</code></td>
+          <td><code>OnKillAction: ReduceCooldown</code></td>
+        </tr>
+        <tr>
+          <td><code>kill_resets_cooldown</code></td>
+          <td><code>OnKillAction: ResetCooldown</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>버프와 투사체의 경계</h2>
+    <p>지속적으로 유닛 상태를 바꾸는 것은 buff/status handler가 맡는 것이 맞다. 예시는 행동속도, 공격력, 주문력, 보호막 수치, 받는 피해, 저항, 이동속도, 치명 보정이다.</p>
+    <p>반대로 보스 추가 피해, 처형 배율, 처형 조건 cast reject, 킬 쿨타임 환급은 지속 버프가 아니라 히트 계산 또는 이벤트 반응이다. 이들은 damage modifier나 post-kill action으로 분리하는 편이 맞다.</p>
+    <p>투사체 상속이나 특수 projectile behavior는 이동, 충돌, 수명, 분기, delayed impact처럼 투사체 자체가 다르게 행동할 때만 사용해야 한다. 일반 피해 규칙을 projectile subclass에 넣으면 projectile이 전투 규칙을 너무 많이 알게 된다.</p>
+  </section>
+
+  <section>
+    <h2>목표 구조</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>구성</th>
+          <th>책임</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>MonsterUnitActor</code></td>
+          <td>표시, 애니메이션, 데미지 팝업, debug label</td>
+        </tr>
+        <tr>
+          <td><code>MonsterUnitRuntimeModel</code></td>
+          <td>identity, stats, resources, statuses, skill runtime state</td>
+        </tr>
+        <tr>
+          <td><code>UnitSkillController</code></td>
+          <td>해당 캐릭터의 skill tick, cast decision, manual/auto routing, execution request 생성</td>
+        </tr>
+        <tr>
+          <td><code>SkillExecutionPlan</code></td>
+          <td>CSV에서 컴파일된 condition/action/modifier node 목록</td>
+        </tr>
+        <tr>
+          <td>Action and modifier handlers</td>
+          <td>damage, status, projectile spawn, zone spawn, cooldown/reload change, visual spawn</td>
+        </tr>
+        <tr>
+          <td><code>InGameCombatManager</code> and services</td>
+          <td>scene roster, damage/status application, shared combat service coordination</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>현실적인 구현 순서</h2>
+    <ol>
+      <li>현재 CSV와 동작을 유지한다.</li>
+      <li><code>SingleAttackSkillExecutor</code>의 execute, boss, kill recovery 로직을 cast condition, damage modifier, post-hit/post-kill action handler로 추출한다.</li>
+      <li><code>UnitSkillController</code>를 추가해 캐릭터 단위 스킬 판단 주체를 만든다.</li>
+      <li><code>SkillExecutionSnapshot</code>의 flat property를 grouped modifier op로 줄인다.</li>
+      <li>기존 CSV를 <code>SkillExecutionPlan</code>으로 컴파일하는 계층을 추가한다.</li>
+      <li>runtime plan이 안정된 뒤에만 CSV 물리 분리나 row set 정규화를 검토한다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>원 작업자에게 줄 결론</h2>
+    <ol>
+      <li>두 보고서의 "중앙 인터프리터 비대화" 지적은 현재 코드와 맞다.</li>
+      <li>문제는 CSV 자체가 아니라, 새 행동이 wide CSV field와 flat snapshot property로 계속 들어가는 방식이다.</li>
+      <li>캐릭터별 스킬 상태는 이미 있으므로, 다음 개선은 unit-scoped skill owner를 추가하는 쪽이 좋다.</li>
+      <li>execute, boss, kill cooldown 예시는 각각 cast condition, damage modifier, on-kill action으로 분리해야 한다.</li>
+      <li>buff/status는 지속 상태 변화에 쓰고, projectile subclass는 투사체 행동 변화에만 쓰는 것이 좋다.</li>
+      <li>첫 구현은 반드시 behavior-preserving이어야 하며 현재 CSV 호환을 깨면 안 된다.</li>
+    </ol>
+  </section>
+</main>
+</body>
+</html>

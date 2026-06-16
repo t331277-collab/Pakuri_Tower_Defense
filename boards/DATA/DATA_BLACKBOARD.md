@@ -5,6 +5,62 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-06-17 Normalized Skill Authoring Row Table Handoff
+
+### Task title
+
+Design the next CSV-authoring refactor so new exception skills add behavior nodes instead of new wide CSV columns.
+
+### Goals
+
+- Convert the 2026-05-29 skill runtime refactor feedback into a DATA-scoped authoring schema handoff.
+- Keep current `monster_skills.csv` and `monster_skill_choices.csv` compatible during migration.
+- Define a normalized row-table path where future behavior is authored through `monster_skill_nodes.csv` and `monster_skill_node_params.csv` instead of new CSV headers.
+- Preserve existing `monster_skill_effects.csv` and `monster_skill_triger.csv` in the first pass because they already have row-like runtime support.
+- Give Code Builder phases for parser skeleton, node compiler integration, first sample migration, choice-family migration, and future wide-column freeze.
+
+### Constraints
+
+- Role Owner is Designer for this handoff.
+- No CSV, parser, runtime catalog, code, prefab, or scene file was changed by this design task.
+- The handoff is grounded in the inspected source feedback html/md, active CSV headers, current parser/build code, and Phase 6 `SkillExecutionPlan` surface.
+- Old wide columns must not be deleted in the first implementation.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Handoff created.
+
+### Next Actions
+
+- Code Builder implements the schema/parser skeleton only after explicit user request.
+- Code Builder updates this DATA board when actual CSV schema, parser, validation, or runtime catalog behavior changes.
+- Code Builder updates `boards/COMBAT/ENEMY_BLACKBOARD.md` if normalized nodes change `SkillExecutionPlan`, executor routing, or runtime skill behavior.
+- Code Reviewer should review before real skill authoring starts on the new node path.
+
+### Evidence
+
+- Created `Pakuri/reference/Report/2026-06-17-normalized-skill-authoring-row-table-handoff.md`.
+- Source feedback inspected: `Pakuri/reference/Report/2026-05-29-skill-runtime-refactor-feedback-handoff.md` and `.html`.
+- `monster_skills.csv` currently has 72 columns and 51 imported data rows.
+- `monster_skill_choices.csv` currently has 114 columns and 253 imported data rows.
+- `monster_skill_effects.csv` currently has 70 columns and 132 imported data rows.
+- `monster_skill_triger.csv` currently has 47 columns and 57 imported data rows.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs:417` to `:421` parses execute/boss/kill base skill columns directly.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs:505` to `:533` parses execute/boss/kill choice columns directly.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs:418` to `:490` shows `SkillDefinition` still owns many wide behavior fields.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs:264` to `:350` shows `SkillChoiceDefinition` still owns many wide behavior fields.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionPlan.cs:6` to `:24` defines authoring source and node kind enums.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionPlan.cs:213` to `:226` already accepts normalized node rows through the compiler overload.
+
+### History
+
+- 2026-06-17: User noted that Phase 6 had not actually split or structured the CSV authoring layer yet, then requested a design and handoff for splitting `monster_skills.csv` and `monster_skill_choices.csv` so new exception skills can add nodes instead of columns.
+
 ## Task: 2026-05-31 Enemy Nexus Damage CSV Column
 
 ### Task title

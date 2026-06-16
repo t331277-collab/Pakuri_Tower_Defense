@@ -5,6 +5,77 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    public enum CastConditionOpKind
+    {
+        TargetHealthRatioBonus
+    }
+
+    public enum DamageModifierOpKind
+    {
+        BossMultiplier
+    }
+
+    public enum CritModifierOpKind
+    {
+        ExecuteChanceBonus
+    }
+
+    public enum KillActionOpKind
+    {
+        CooldownReset,
+        CooldownRefundBonus
+    }
+
+    public readonly struct CastConditionOp
+    {
+        public CastConditionOp(CastConditionOpKind kind, float value)
+        {
+            Kind = kind;
+            Value = value;
+        }
+
+        public CastConditionOpKind Kind { get; }
+        public float Value { get; }
+    }
+
+    public readonly struct DamageModifierOp
+    {
+        public DamageModifierOp(DamageModifierOpKind kind, float multiplier)
+        {
+            Kind = kind;
+            Multiplier = multiplier;
+        }
+
+        public DamageModifierOpKind Kind { get; }
+        public float Multiplier { get; }
+    }
+
+    public readonly struct CritModifierOp
+    {
+        public CritModifierOp(CritModifierOpKind kind, float chanceBonus)
+        {
+            Kind = kind;
+            ChanceBonus = chanceBonus;
+        }
+
+        public CritModifierOpKind Kind { get; }
+        public float ChanceBonus { get; }
+    }
+
+    public readonly struct KillActionOp
+    {
+        public KillActionOp(KillActionOpKind kind, float ratioBonus, bool requiresExecute)
+        {
+            Kind = kind;
+            RatioBonus = ratioBonus;
+            RequiresExecute = requiresExecute;
+        }
+
+        public KillActionOpKind Kind { get; }
+        public float RatioBonus { get; }
+        public bool RequiresExecute { get; }
+    }
+
     public sealed class SkillExecutionSnapshot
     {
         public SkillExecutionSnapshot(SkillData source)
@@ -24,10 +95,12 @@ namespace Pakuri.InGame
             OnHitAdditionalDamageMultiplier = 1f;
             OnHitChainDamageMultiplier = 1f;
             SkillEffectPrefab = source != null ? source.SkillEffectPrefab : null;
+            RebuildExecutionPlan();
         }
 
         public SkillData Source { get; }
         public string SkillId { get; }
+        public SkillExecutionPlan Plan { get; private set; }
         public float DamageMultiplier { get; private set; }
         public float CooldownMultiplier { get; private set; }
         public float RadiusMultiplier { get; private set; }
@@ -132,6 +205,15 @@ namespace Pakuri.InGame
         private readonly List<ConditionalCritChanceRule> conditionalCritChanceRules = new List<ConditionalCritChanceRule>();
         private readonly List<BurstDamageRule> burstDamageRules = new List<BurstDamageRule>();
         private readonly List<BurstStatusRule> burstStatusRules = new List<BurstStatusRule>();
+        private readonly List<CastConditionOp> castConditionOps = new List<CastConditionOp>();
+        private readonly List<DamageModifierOp> damageModifierOps = new List<DamageModifierOp>();
+        private readonly List<CritModifierOp> critModifierOps = new List<CritModifierOp>();
+        private readonly List<KillActionOp> killActionOps = new List<KillActionOp>();
+
+        public IReadOnlyList<CastConditionOp> CastConditionOps => castConditionOps;
+        public IReadOnlyList<DamageModifierOp> DamageModifierOps => damageModifierOps;
+        public IReadOnlyList<CritModifierOp> CritModifierOps => critModifierOps;
+        public IReadOnlyList<KillActionOp> KillActionOps => killActionOps;
 
         public bool HasBranchBehavior =>
             BranchChanceBonus > 0f
@@ -536,6 +618,9 @@ namespace Pakuri.InGame
             {
                 SkillEffectPrefab = spec.SkillEffectPrefab;
             }
+
+            RefreshSingleAttackOperationBridges();
+            RebuildExecutionPlan();
         }
 
         public void ApplyDynamicDamageMultiplier(float multiplier)
@@ -848,6 +933,44 @@ namespace Pakuri.InGame
         private static float PositiveOrDefault(float value, float fallback)
         {
             return value > 0f ? value : fallback;
+        }
+
+        private void RefreshSingleAttackOperationBridges()
+        {
+            castConditionOps.Clear();
+            damageModifierOps.Clear();
+            critModifierOps.Clear();
+            killActionOps.Clear();
+
+            if (!Mathf.Approximately(ExecuteHealthRatioBonus, 0f))
+            {
+                castConditionOps.Add(new CastConditionOp(CastConditionOpKind.TargetHealthRatioBonus, ExecuteHealthRatioBonus));
+            }
+
+            if (!Mathf.Approximately(BossDamageMultiplier, 1f))
+            {
+                damageModifierOps.Add(new DamageModifierOp(DamageModifierOpKind.BossMultiplier, BossDamageMultiplier));
+            }
+
+            if (!Mathf.Approximately(ExecuteCritChanceBonus, 0f))
+            {
+                critModifierOps.Add(new CritModifierOp(CritModifierOpKind.ExecuteChanceBonus, ExecuteCritChanceBonus));
+            }
+
+            if (KillResetsCooldown)
+            {
+                killActionOps.Add(new KillActionOp(KillActionOpKind.CooldownReset, 0f, KillResetsCooldownRequiresExecute));
+            }
+
+            if (!Mathf.Approximately(KillCooldownRefundRatioBonus, 0f))
+            {
+                killActionOps.Add(new KillActionOp(KillActionOpKind.CooldownRefundBonus, KillCooldownRefundRatioBonus, false));
+            }
+        }
+
+        private void RebuildExecutionPlan()
+        {
+            Plan = SkillExecutionPlanCompiler.Compile(Source, this);
         }
 
         private readonly struct ConditionalDamageRule

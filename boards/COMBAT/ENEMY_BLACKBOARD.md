@@ -7,6 +7,131 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-06-16 UnitSkillController Runtime Refactor Phase 1-6
+
+### Task title
+
+Add a behavior-preserving `UnitSkillController` shell, move manual decision routing into it, extract current `SingleAttack` execute/boss/kill rules into handlers, add operation-record bridges, compile those current operation records into an initial `SkillExecutionPlan`, add a normalized authoring node surface without changing current CSV schema, and close the refactor slice with cleanup and verification evidence.
+
+### Goals
+
+- Convert the 2026-05-29 skill runtime refactor feedback into an implementation-stage handoff.
+- Keep the first implementation phases behavior-preserving and compatible with current CSV/data/runtime paths.
+- Make `UnitSkillController` the planned unit-scoped skill decision owner while keeping shared combat mutation in `InGameCombatManager`.
+- Implement Phase 1 by moving the existing per-entry skill tick/auto-route loop behind `UnitSkillController` without changing manual skill routing or executor behavior.
+- Implement Phase 2 by routing manual selected-skill execution through the cached `UnitSkillController` while preserving `InGameCombatManager.HandleSelectedPlayerManualSkillInput()` as input owner.
+- Keep active-skill animation request owned by `UnitSkillController` and supplied into the shared route method as a success callback.
+- Implement Phase 3 by moving current `SingleAttack` execute-threshold, execute damage/crit, boss damage, and kill cooldown reset/refund rules into local handler classes while preserving current CSV/data/snapshot fields.
+- Implement Phase 4 by representing current `SingleAttack` execute/boss/kill snapshot behavior through grouped operation records while retaining the old flat snapshot properties as compatibility bridges.
+- Implement Phase 5 by compiling current `SkillData` identity and current snapshot operation records into `SkillExecutionPlan`, then feeding that plan to the existing `SingleAttack` rule handlers without changing CSV schema or executor routing.
+- Implement Phase 6 by allowing normalized plan nodes to coexist with legacy wide-column operation bridges in the runtime plan surface, without creating new CSV files, deleting old columns, or changing parser/catalog behavior.
+- Implement Phase 7 by removing only obsolete adapter wrappers, updating the combat board, and recording non-gameplay verification evidence.
+
+### Constraints
+
+- Role Owner is Code Builder after the initial Designer handoff.
+- No CSV, prefab, scene, status, damage, or executor behavior changes were performed in Phase 1.
+- `SkillExecutionSystem.Tick(...)` remains the public global entry point.
+- Existing manual skill execution still exposes the old `SkillExecutionSystem.TryExecuteManual(...)` API, but internally delegates to the unit controller.
+- Phase 3 does not change CSV headers, parser logic, `SingleAttackData`, `SkillChoiceEffectSpec`, or `SkillExecutionSnapshot` field compatibility.
+- Phase 4 does not remove existing flat `SkillExecutionSnapshot` properties; it adds operation lists beside them and routes the Phase 3 handlers through those lists.
+- Phase 5 does not change CSV headers, parser logic, source CSV rows, executor registry routing, or base skill data classes; the first plan only wraps current source identity plus the Phase 4 operation records.
+- Phase 6 does not split current CSV files into condition/action/modifier tables and does not delete old columns; it only adds runtime plan node types and a compiler overload for future normalized row inputs.
+- Phase 7 does not remove compatibility fields or old CSV/data paths; only unneeded local wrapper adapters are eligible for cleanup.
+- User requested avoiding excessive fallback functions; Phase 1 adds one controller shell and delegates to the existing route method.
+- Code Reviewer execution still requires explicit user permission.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 1, Phase 2, Phase 3, Phase 4, initial Phase 5, Phase 6 normalized-node runtime surface, and Phase 7 cleanup/verification implemented. Reviewer allocation fix applied. Locally build/editor/Unity-MCP script-validated.
+
+### Next Actions
+
+- User performs Play Mode verification for unchanged auto skill routing, selected manual skill behavior, and `SingleAttack` execute/boss/kill behavior.
+- User performs Play Mode verification for unchanged Phase 5 plan-fed `SingleAttack` execute/boss/kill behavior.
+- Future normalized CSV/schema work must still be a separate DATA-scoped step, after user approval, because Phase 6 did not add or alter authoring tables.
+- Run Code Reviewer only when the user explicitly requests the Phase 7/final refactor review.
+- Update this board if shared skill execution, executor routing, or `UnitSkillController` ownership changes are implemented.
+- Update `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md` only if status/buff handler behavior changes.
+- Update `boards/DATA/DATA_BLACKBOARD.md` only if CSV schema, parser, validation, or runtime catalog behavior changes.
+
+### Evidence
+
+- Created `Pakuri/reference/Report/2026-06-16-unit-skill-controller-runtime-refactor-handoff.md`.
+- Source handoff inspected: `Pakuri/reference/Report/2026-05-29-skill-runtime-refactor-feedback-handoff.md`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs:54` owns `SkillExecutionSystem`; `:95` to `:105` calls `skillExecution.Tick(...)` from `Update()`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs:13` to `:15` stores reusable `UnitSkillController` instances by `UnitRosterEntry` and a reusable stale-entry list.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs:25` defines the central tick entry, `:39` to `:44` prunes the controller cache and iterates roster entries, and `:121` to `:122` reuses the cached controller for each unit tick.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs:48` to `:72` preserves the public manual execution API and delegates it to `UnitSkillController.TryExecuteManual(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Units/BaseUnitRuntimeModel.cs:69` already stores `UnitSkillRuntimeSet SkillRuntime`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeFactory.cs:67` creates `new SkillRuntimeInstance(owner, skillData)`.
+- Before Phase 3, `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs:132`, `:1461` to `:1475`, and `:1745` to `:1759` directly handled execute threshold, boss multiplier, and kill cooldown reset/refund rules.
+- Search under `Pakuri/Assets/Scripts2/InGame` found no `UnitSkillController`.
+- Added `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/UnitSkillController.cs`; `:5` defines `public sealed class UnitSkillController`, `:7` defines `SkillRouteRequest`, and `:31` defines its `Tick(...)` method.
+- `UnitSkillController.cs:45` ticks `skillRuntime`, `:46` preserves the existing auto-skill/alive/can-act guard, `:55` preserves the injected auto-route predicate, and `:60` to `:71` delegates auto execution to the existing route request.
+- `UnitSkillController.cs:75` to `:96` adds `TryExecuteManual(...)`, so selected manual skill execution now enters the unit-scoped controller before shared route dispatch.
+- `UnitSkillController.cs:98` to `:102` owns active-skill animation notification request and passes it to the shared route delegate for successful routed casts.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs:125` to `:133` creates `UnitSkillController(entry, TryRouteSkill)` only on cache miss; the per-frame `TickEntry(...)` path no longer allocates a controller every frame.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs:136` to `:170` prunes cached controllers whose `UnitRosterEntry` is no longer present in `roster.Entries`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs:173` to `:184` keeps shared execution dispatch centralized while accepting a controller-supplied `notifyActiveSkillAnimation` callback.
+- `Pakuri/Assembly-CSharp.csproj:68` includes `Assets\Scripts2\InGame\Skills\Execution\Runtime\UnitSkillController.cs`.
+- Added `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillRuleHandlers.cs`; `:7` defines `ISkillCastCondition`, `:12` defines `ISkillDamageModifier`, `:17` defines `ISkillPostHitAction`, `:97` defines `TargetHealthRatioCastCondition`, `:137` defines `ExecuteDamageModifier`, `:155` defines `BossDamageModifier`, `:172` defines `KillCooldownResetAction`, and `:190` defines `KillCooldownRefundAction`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs:125` to `:131` now delegates execute-threshold cast rejection to `SingleAttackSkillRuleHandlers`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs:1442` to `:1448` now delegates execute and boss damage modifier application to `SingleAttackSkillRuleHandlers`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs:1684` to `:1693` now delegates kill cooldown recovery to `SingleAttackSkillRuleHandlers`.
+- `Pakuri/Assembly-CSharp.csproj:150` includes `Assets\Scripts2\InGame\Skills\Execution\Executors\SingleAttackSkillRuleHandlers.cs`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSnapshot.cs:8` to `:78` now defines `CastConditionOp`, `DamageModifierOp`, `CritModifierOp`, and `KillActionOp` record structs with matching op-kind enums.
+- `SkillExecutionSnapshot.cs:206` to `:214` stores and exposes `CastConditionOps`, `DamageModifierOps`, `CritModifierOps`, and `KillActionOps` as operation-list bridges while keeping the old flat properties at `:119`, `:136`, and `:139` to `:142`.
+- `SkillExecutionSnapshot.cs:278` to `:406` still accumulates `ExecuteHealthRatioBonus`, `ExecuteCritChanceBonus`, `BossDamageMultiplier`, `KillCooldownRefundRatioBonus`, `KillResetsCooldown`, and `KillResetsCooldownRequiresExecute` from existing choice specs.
+- `SkillExecutionSnapshot.cs:935` to `:964` rebuilds the `SingleAttack` operation bridges from the current flat compatibility properties.
+- `SingleAttackSkillRuleHandlers.cs:121`, `:165`, `:192`, `:221`, and `:253` now read snapshot operation lists for execute threshold bonus, execute crit bonus, boss multiplier, kill reset, and kill refund bonus.
+- Added `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionPlan.cs`; `:6` defines `SkillExecutionPlan`, `:24` to `:29` expose the source skill identity and compiled operation lists, and `:48` to `:59` define `SkillExecutionPlanCompiler.Compile(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSnapshot.cs:98` builds an initial plan, `:103` exposes `Plan`, `:622` to `:623` rebuilds operation bridges and the plan after each choice spec is applied, and `:971` to `:974` owns the plan rebuild bridge.
+- `SingleAttackSkillRuleHandlers.cs:121`, `:165`, `:192`, `:222`, and `:254` now read cast, crit, damage, and kill operation lists through `snapshot.Plan` instead of directly through the snapshot operation lists.
+- `Pakuri/Assembly-CSharp.csproj:130` includes `Assets\Scripts2\InGame\Skills\Execution\Runtime\SkillExecutionPlan.cs`.
+- `SkillExecutionPlan.cs:6` to `:24` now defines normalized authoring-source and plan-node kind enums for legacy wide-column and future normalized-row coexistence.
+- `SkillExecutionPlan.cs:26` to `:101` defines `SkillExecutionPlanNode` with optional cast-condition, damage-modifier, crit-modifier, and kill-action payloads plus row/source metadata.
+- `SkillExecutionPlan.cs:103` to `:129` keeps `SkillExecutionPlan` source identity and executable op lists while also exposing copied normalized `Nodes`.
+- `SkillExecutionPlan.cs:147` to `:203` merges node payload ops into the same typed operation lists read by current handlers, so future normalized rows can feed existing compatibility handlers.
+- `SkillExecutionPlan.cs:213` to `:226` adds a compiler overload that accepts normalized plan nodes while the existing `Compile(source, snapshot)` path remains unchanged.
+- Phase 7 cleanup removed the now-unneeded private `SingleAttackSkillExecutor` wrappers for execute-threshold rejection and kill recovery; `SingleAttackSkillExecutor.cs:83`, `:763`, `:830`, `:900`, and `:945` now call `SingleAttackSkillRuleHandlers` directly.
+- Phase 7 reference search under `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs` found only direct `SingleAttackSkillRuleHandlers.ShouldRejectCastForExecuteThreshold(...)` and `SingleAttackSkillRuleHandlers.HandleKillRecovery(...)` calls after wrapper removal.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing `MSB3277` warnings; one earlier parallel build failed only with `CS2012` file lock on `obj\Debug\Assembly-CSharp.dll`.
+- Phase 3 `git diff --check` reported no whitespace errors and only CRLF working-copy warnings.
+- Phase 4 `git diff --check` reported no whitespace errors and only CRLF working-copy warnings.
+- Phase 5 `git diff --check` reported no whitespace errors and only CRLF working-copy warnings.
+- Phase 6 `git diff --check` reported no whitespace errors and only CRLF working-copy warnings.
+- Unity-MCP `validate_script` reported 0 warnings and 0 errors for `Assets/Scripts2/InGame/Skills/Execution/Runtime/UnitSkillController.cs` and `Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs`.
+- Unity-MCP `read_console` returned 0 error log entries after validation.
+- Phase 3 Unity-MCP `validate_script` and `read_console` could not run because the tool returned `No Unity Editor instances found. Please ensure Unity is running with MCP for Unity bridge.`
+- Phase 4 Unity-MCP `validate_script` reported 0 warnings and 0 errors for `Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSnapshot.cs` and `Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillRuleHandlers.cs` after retry; Unity-MCP console read returned UnityConnect token exchange and MCP transport errors, not C# compile diagnostics.
+- Phase 5 Unity-MCP `validate_script` reported 0 warnings and 0 errors for `Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionPlan.cs`, `Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSnapshot.cs`, and `Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillRuleHandlers.cs`; Unity-MCP `read_console` returned 0 warning/error entries.
+- Phase 6 Unity-MCP `validate_script` reported 0 warnings and 0 errors for `Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionPlan.cs`; Unity-MCP `read_console` returned 0 warning/error entries.
+- Phase 7 `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` passed with 0 errors after a single-project rerun; a previous parallel build attempt failed only with `CS2012` file lock on `obj\Debug\Assembly-CSharp.dll`.
+- Phase 7 `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors and existing `MSB3277` warnings.
+- Phase 7 `git diff --check` reported no whitespace errors and only CRLF working-copy warnings.
+- Phase 7 Unity-MCP editor state reported idle, not compiling, no domain reload pending, and ready for tools.
+- Phase 7 Unity-MCP `read_console` returned 0 warning/error entries before script validation.
+- Phase 7 Unity-MCP `validate_script` reported 0 warnings and 0 errors for `Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionPlan.cs`, `Assets/Scripts2/InGame/Skills/Execution/Runtime/UnitSkillController.cs`, `Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSnapshot.cs`, `Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSystem.cs`, `Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillRuleHandlers.cs`, and `Assets/Scripts2/InGame/Skills/Execution/Executors/SingleAttackSkillExecutor.cs`; two first parallel validation calls transiently returned `No Unity Editor instances found` and passed on retry.
+
+### History
+
+- 2026-06-16: User requested a handoff that divides work stages for restructuring current skill runtime according to the 2026-05-29 feedback and creating `UnitSkillController`.
+- 2026-06-16: User switched to Code Builder and requested Phase 1 implementation while avoiding excessive fallback functions. Code Builder added the behavior-preserving controller shell and kept existing routing/executor behavior delegated through `SkillExecutionSystem`.
+- 2026-06-16: User requested the Code Reviewer fix request to remove per-frame `UnitSkillController` allocation. Code Builder changed `SkillExecutionSystem` to cache controllers by `UnitRosterEntry` and prune stale entries against `roster.Entries`.
+- 2026-06-16: User requested Code Builder Phase 2 implementation. Code Builder added `UnitSkillController.TryExecuteManual(...)`, preserved `SkillExecutionSystem.TryExecuteManual(...)` as a compatibility wrapper, and moved active-skill animation notification request into the unit controller callback path.
+- 2026-06-16: User requested Code Builder Phase 3 implementation. Code Builder added local single-attack rule handlers and changed `SingleAttackSkillExecutor` to delegate current execute, boss, and kill cooldown rules without changing CSV/data/snapshot compatibility fields.
+- 2026-06-16: User requested Code Builder Phase 4 implementation. Code Builder added snapshot operation-record bridges and changed the Phase 3 handlers to consume those operation lists while preserving existing flat snapshot properties.
+- 2026-06-16: User requested Code Builder Phase 5 implementation. Code Builder added an initial `SkillExecutionPlan` compiler, made `SkillExecutionSnapshot` rebuild the plan from current operation records, and routed current `SingleAttack` rule handlers through the plan while preserving CSV/data/executor compatibility.
+- 2026-06-16: User requested Code Builder Phase 6 implementation. Code Builder added runtime normalized plan-node types and a compiler overload so future normalized row-set authoring can coexist with legacy wide-column operation bridges without changing current CSV/parser/catalog behavior.
+- 2026-06-17: User requested Code Builder Phase 7 implementation. Code Builder removed obsolete local `SingleAttackSkillExecutor` wrapper adapters, kept compatibility fields and CSV/data paths intact, updated this board, and verified the refactor slice with dotnet builds, diff check, Unity editor state, console read, and Unity-MCP script validation.
+
 ## Task: 2026-06-07 Collider-Only Skill Hit Validation
 
 ### Task title
