@@ -1,0 +1,2 @@
+skill_id,monster_id,skill_kind,slot,display_name,runtime_kind,implementation_state,is_default_learned,is_available_without_active_requirement,required_active_slot,skill_icon_path,description_text,summary
+string,string,enum,enum,string,enum,enum,bool,bool,enum,string,string,string

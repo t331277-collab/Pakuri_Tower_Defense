@@ -162,15 +162,28 @@ namespace Pakuri.InGame
 
             state.IsExecute = true;
             state.DamageMultiplier *= skill.ExecuteDamageMultiplier > 0f ? skill.ExecuteDamageMultiplier : 1f;
-            var ops = snapshot != null && snapshot.Plan != null ? snapshot.Plan.CritModifiers : null;
-            if (ops == null)
+            var damageOps = snapshot != null && snapshot.Plan != null ? snapshot.Plan.DamageModifiers : null;
+            if (damageOps != null)
+            {
+                for (var i = 0; i < damageOps.Count; i++)
+                {
+                    var op = damageOps[i];
+                    if (op.Kind == DamageModifierOpKind.ExecuteMultiplier)
+                    {
+                        state.DamageMultiplier *= op.Multiplier;
+                    }
+                }
+            }
+
+            var critOps = snapshot != null && snapshot.Plan != null ? snapshot.Plan.CritModifiers : null;
+            if (critOps == null)
             {
                 return;
             }
 
-            for (var i = 0; i < ops.Count; i++)
+            for (var i = 0; i < critOps.Count; i++)
             {
-                var op = ops[i];
+                var op = critOps[i];
                 if (op.Kind == CritModifierOpKind.ExecuteChanceBonus)
                 {
                     state.CritChanceBonus += op.ChanceBonus;

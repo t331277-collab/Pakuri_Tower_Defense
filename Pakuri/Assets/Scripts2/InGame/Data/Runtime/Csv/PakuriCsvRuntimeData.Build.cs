@@ -253,7 +253,8 @@ namespace Pakuri.Data
                     Summary = skill.Summary,
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.ActiveEnhancement),
                     MasterSkillChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.ActiveMaster),
-                    MultiEffects = BuildSkillEffects(model, skill.Id)
+                    MultiEffects = BuildSkillEffects(model, skill.Id),
+                    NormalizedPlanNodes = BuildSkillNodeDefinitions(model, SkillNodeOwnerKind.Skill, skill.Id, skill.Id)
                 };
 
                 ApplyStatusPayload(definition, skill.Status);
@@ -431,18 +432,32 @@ namespace Pakuri.Data
             for (var i = 0; i < choices.Count; i++)
             {
                 var choice = choices[i];
+                var hasChoiceBase = model.SkillChoiceBaseRows.TryGetValue(choice.Id, out var choiceBase);
+                var choiceMonsterId = hasChoiceBase ? choiceBase.MonsterId : choice.MonsterId;
+                var choiceSkillId = hasChoiceBase ? choiceBase.SkillId : choice.SkillId;
+                var choiceTargetSkillId = hasChoiceBase ? choiceBase.TargetSkillId : choice.TargetSkillId;
+                var choiceRuntimeTargetSkillIds = hasChoiceBase ? choiceBase.RuntimeTargetSkillIds : choice.RuntimeTargetSkillIds;
+                var choiceGroupValue = hasChoiceBase ? choiceBase.ChoiceGroup : choice.ChoiceGroup;
+                var choiceTitle = hasChoiceBase ? choiceBase.Title : choice.Title;
+                var choiceSkillIconPath = hasChoiceBase ? choiceBase.SkillIconPath : choice.SkillIconPath;
+                var choiceSkillEffectPrefabPath = hasChoiceBase ? choiceBase.SkillEffectPrefabPath : choice.SkillEffectPrefabPath;
+                var choiceDescriptionText = hasChoiceBase ? choiceBase.DescriptionText : choice.DescriptionText;
+                var choiceRuntimeSupportState = hasChoiceBase ? choiceBase.RuntimeSupportState : choice.RuntimeSupportState;
+                var choiceRuntimeSupportNotes = hasChoiceBase ? choiceBase.RuntimeSupportNotes : choice.RuntimeSupportNotes;
+                var targetSkillId = string.IsNullOrWhiteSpace(choiceTargetSkillId) ? choiceSkillId : choiceTargetSkillId;
+
                 definitions[i] = new SkillChoiceDefinition
                 {
                     ChoiceId = choice.Id,
-                    MonsterId = choice.MonsterId,
-                    SkillId = choice.SkillId,
-                    TargetSkillId = string.IsNullOrWhiteSpace(choice.TargetSkillId) ? choice.SkillId : choice.TargetSkillId,
-                    RuntimeTargetSkillIds = choice.RuntimeTargetSkillIds,
-                    ChoiceGroup = MapChoiceGroup(choice.ChoiceGroup),
-                    Title = choice.Title,
-                    SkillIcon = LoadSprite(choice.SkillIconPath),
-                    SkillEffectPrefab = LoadPrefab(choice.SkillEffectPrefabPath),
-                    DescriptionText = choice.DescriptionText,
+                    MonsterId = choiceMonsterId,
+                    SkillId = choiceSkillId,
+                    TargetSkillId = targetSkillId,
+                    RuntimeTargetSkillIds = choiceRuntimeTargetSkillIds,
+                    ChoiceGroup = MapChoiceGroup(choiceGroupValue),
+                    Title = choiceTitle,
+                    SkillIcon = LoadSprite(choiceSkillIconPath),
+                    SkillEffectPrefab = LoadPrefab(choiceSkillEffectPrefabPath),
+                    DescriptionText = choiceDescriptionText,
                     HasDamageMultiplier = choice.HasDamageMultiplier,
                     DamageMultiplier = choice.HasDamageMultiplier ? choice.DamageMultiplier : 1f,
                     BaseDamageBonus = choice.BaseDamageBonus,
@@ -579,8 +594,146 @@ namespace Pakuri.Data
                     RepeatCountPerTarget = choice.RepeatCountPerTarget,
                     RepeatIntervalSeconds = choice.RepeatIntervalSeconds,
                     RepeatDamageMultiplier = choice.RepeatDamageMultiplier > 0f ? choice.RepeatDamageMultiplier : 1f,
-                    RuntimeSupportState = choice.RuntimeSupportState,
-                    RuntimeSupportNotes = choice.RuntimeSupportNotes
+                    NormalizedPlanNodes = BuildSkillNodeDefinitions(
+                        model,
+                        SkillNodeOwnerKind.Choice,
+                        choice.Id,
+                        targetSkillId),
+                    RuntimeSupportState = choiceRuntimeSupportState,
+                    RuntimeSupportNotes = choiceRuntimeSupportNotes
+                };
+            }
+
+            var baseOnlyChoices = FilterAndSort(
+                model.SkillChoiceBaseRows.Values,
+                choice => choice.ChoiceGroup == choiceGroup
+                    && string.Equals(choice.SkillId, skillId, StringComparison.OrdinalIgnoreCase)
+                    && !model.SkillChoices.ContainsKey(choice.Id),
+                (left, right) => left.SortOrder.CompareTo(right.SortOrder));
+
+            if (baseOnlyChoices.Count == 0)
+            {
+                return definitions;
+            }
+
+            var mergedDefinitions = new SkillChoiceDefinition[definitions.Length + baseOnlyChoices.Count];
+            var legacyIndex = 0;
+            var baseOnlyIndex = 0;
+            var mergedIndex = 0;
+            while (legacyIndex < choices.Count || baseOnlyIndex < baseOnlyChoices.Count)
+            {
+                var takeLegacy = baseOnlyIndex >= baseOnlyChoices.Count
+                    || (legacyIndex < choices.Count
+                        && choices[legacyIndex].SortOrder <= baseOnlyChoices[baseOnlyIndex].SortOrder);
+
+                if (takeLegacy)
+                {
+                    mergedDefinitions[mergedIndex] = definitions[legacyIndex];
+                    legacyIndex++;
+                }
+                else
+                {
+                    mergedDefinitions[mergedIndex] = BuildBaseOnlySkillChoiceDefinition(model, baseOnlyChoices[baseOnlyIndex]);
+                    baseOnlyIndex++;
+                }
+
+                mergedIndex++;
+            }
+
+            return mergedDefinitions;
+        }
+
+        private static SkillChoiceDefinition BuildBaseOnlySkillChoiceDefinition(SourceModel model, SkillChoiceBaseRow choice)
+        {
+            var targetSkillId = string.IsNullOrWhiteSpace(choice.TargetSkillId) ? choice.SkillId : choice.TargetSkillId;
+            return new SkillChoiceDefinition
+            {
+                ChoiceId = choice.Id,
+                MonsterId = choice.MonsterId,
+                SkillId = choice.SkillId,
+                TargetSkillId = targetSkillId,
+                RuntimeTargetSkillIds = choice.RuntimeTargetSkillIds,
+                ChoiceGroup = MapChoiceGroup(choice.ChoiceGroup),
+                Title = choice.Title,
+                SkillIcon = LoadSprite(choice.SkillIconPath),
+                SkillEffectPrefab = LoadPrefab(choice.SkillEffectPrefabPath),
+                DescriptionText = choice.DescriptionText,
+                NormalizedPlanNodes = BuildSkillNodeDefinitions(
+                    model,
+                    SkillNodeOwnerKind.Choice,
+                    choice.Id,
+                    targetSkillId),
+                RuntimeSupportState = choice.RuntimeSupportState,
+                RuntimeSupportNotes = choice.RuntimeSupportNotes
+            };
+        }
+
+        private static SkillNodeDefinition[] BuildSkillNodeDefinitions(
+            SourceModel model,
+            SkillNodeOwnerKind ownerKind,
+            string ownerId,
+            string defaultTargetSkillId)
+        {
+            var nodes = FilterAndSort(
+                model.SkillNodes.Values,
+                node => node.OwnerKind == ownerKind
+                    && string.Equals(node.OwnerId, ownerId, StringComparison.OrdinalIgnoreCase),
+                (left, right) => left.SortOrder.CompareTo(right.SortOrder));
+
+            if (nodes.Count == 0)
+            {
+                return Array.Empty<SkillNodeDefinition>();
+            }
+
+            var definitions = new SkillNodeDefinition[nodes.Count];
+            for (var i = 0; i < nodes.Count; i++)
+            {
+                var node = nodes[i];
+                definitions[i] = new SkillNodeDefinition
+                {
+                    NodeId = node.Id,
+                    OwnerKind = node.OwnerKind.ToString(),
+                    OwnerId = node.OwnerId,
+                    TargetSkillId = string.IsNullOrWhiteSpace(node.TargetSkillId) ? defaultTargetSkillId : node.TargetSkillId,
+                    NodeKind = node.NodeKind.ToString(),
+                    HandlerId = node.HandlerId,
+                    SortOrder = node.SortOrder,
+                    EnabledByDefault = node.EnabledByDefault,
+                    RequiresActiveChoiceId = node.RequiresActiveChoiceId,
+                    ExcludesActiveChoiceId = node.ExcludesActiveChoiceId,
+                    RequiresPassiveSkillId = node.RequiresPassiveSkillId,
+                    ExcludesPassiveSkillId = node.ExcludesPassiveSkillId,
+                    RuntimeSupportState = node.RuntimeSupportState,
+                    RuntimeSupportNotes = node.RuntimeSupportNotes,
+                    Params = BuildSkillNodeParamDefinitions(model, node.Id)
+                };
+            }
+
+            return definitions;
+        }
+
+        private static SkillNodeParamDefinition[] BuildSkillNodeParamDefinitions(SourceModel model, string nodeId)
+        {
+            var nodeParams = FilterAndSort(
+                model.SkillNodeParams,
+                param => string.Equals(param.NodeId, nodeId, StringComparison.OrdinalIgnoreCase),
+                (left, right) => string.Compare(left.ParamKey, right.ParamKey, StringComparison.OrdinalIgnoreCase));
+
+            if (nodeParams.Count == 0)
+            {
+                return Array.Empty<SkillNodeParamDefinition>();
+            }
+
+            var definitions = new SkillNodeParamDefinition[nodeParams.Count];
+            for (var i = 0; i < nodeParams.Count; i++)
+            {
+                var param = nodeParams[i];
+                definitions[i] = new SkillNodeParamDefinition
+                {
+                    NodeId = param.NodeId,
+                    ParamKey = param.ParamKey,
+                    ValueType = param.ValueType.ToString(),
+                    Value = param.Value
                 };
             }
 

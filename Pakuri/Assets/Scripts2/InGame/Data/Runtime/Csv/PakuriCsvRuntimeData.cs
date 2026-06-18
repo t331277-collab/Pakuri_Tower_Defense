@@ -21,6 +21,10 @@ namespace Pakuri.Data
         private const string MonstersFileName = "monsters.csv";
         private const string MonsterRewardChoicesFileName = "monster_modifier_skill_choice.csv";
         private const string MonsterSkillsFileName = "monster_skills.csv";
+        private const string MonsterSkillBaseFileName = "monster_skill_base.csv";
+        private const string MonsterSkillChoiceBaseFileName = "monster_skill_choice_base.csv";
+        private const string MonsterSkillNodesFileName = "monster_skill_nodes.csv";
+        private const string MonsterSkillNodeParamsFileName = "monster_skill_node_params.csv";
         private const string MonsterSkillEffectsFileName = "monster_skill_effects.csv";
         private const string MonsterSkillTriggersFileName = "monster_skill_triger.csv";
         private const string MonsterSkillChoicesFileName = "monster_skill_choices.csv";

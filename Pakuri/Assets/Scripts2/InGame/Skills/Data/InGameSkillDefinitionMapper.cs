@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
@@ -108,6 +110,7 @@ namespace Pakuri.InGame
             skill.EnhancementChoices = MapChoices(source.EnhancementChoices);
             skill.MasterChoices = MapChoices(source.MasterSkillChoices);
             skill.MultiEffects = source.MultiEffects ?? Array.Empty<SkillEffectDefinition>();
+            skill.NormalizedPlanNodes = MapSkillNodeDefinitions(source.NormalizedPlanNodes);
 
             skill.Timing.Cooldown = source.CooldownSeconds;
             skill.Timing.ActiveDuration = source.ActiveDurationSeconds;
@@ -419,7 +422,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < source.Length; i++)
             {
                 var choice = source[i];
-                mapped[i] = new SkillChoiceEffectSpec
+                var spec = new SkillChoiceEffectSpec
                 {
                     ChoiceId = choice != null ? choice.ChoiceId : string.Empty,
                     Title = choice != null ? choice.Title : string.Empty,
@@ -559,11 +562,319 @@ namespace Pakuri.InGame
                     RequiredSourceStatusMinStacks = choice != null ? choice.RequiredSourceStatusMinStacks : 0,
                     RepeatCountPerTarget = choice != null ? choice.RepeatCountPerTarget : 0,
                     RepeatIntervalSeconds = choice != null ? choice.RepeatIntervalSeconds : 0f,
-                    RepeatDamageMultiplier = choice != null && choice.RepeatDamageMultiplier > 0f ? choice.RepeatDamageMultiplier : 1f
+                    RepeatDamageMultiplier = choice != null && choice.RepeatDamageMultiplier > 0f ? choice.RepeatDamageMultiplier : 1f,
+                    NormalizedPlanNodes = choice != null ? MapSkillNodeDefinitions(choice.NormalizedPlanNodes) : Array.Empty<SkillExecutionPlanNode>()
                 };
+
+                if (choice != null)
+                {
+                    ApplyNormalizedChoiceNodes(spec, choice.NormalizedPlanNodes);
+                }
+
+                mapped[i] = spec;
             }
 
             return mapped;
+        }
+
+        private static void ApplyNormalizedChoiceNodes(SkillChoiceEffectSpec spec, SkillNodeDefinition[] nodes)
+        {
+            if (spec == null || nodes == null || nodes.Length == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < nodes.Length; i++)
+            {
+                var node = nodes[i];
+                if (node == null || !node.EnabledByDefault)
+                {
+                    continue;
+                }
+
+                ApplyNormalizedChoiceNode(spec, node);
+            }
+        }
+
+        private static void ApplyNormalizedChoiceNode(SkillChoiceEffectSpec spec, SkillNodeDefinition node)
+        {
+            var handlerId = node.HandlerId ?? string.Empty;
+            if (string.Equals(handlerId, "DamageMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasDamageMultiplier = true;
+                spec.DamageMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "CooldownMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasCooldownMultiplier = true;
+                spec.CooldownMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "RadiusMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasRadiusMultiplier = true;
+                spec.RadiusMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "RadiusBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.RadiusBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "AdditionalDamage", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasOnHitAdditionalDamage = true;
+                spec.OnHitAdditionalDamageChance = GetFloatParam(node, "chance", 1f);
+                spec.OnHitAdditionalDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
+                spec.OnHitAdditionalDamageAttribute = GetEnumParam(node, "attribute", DamageAttribute.Physical);
+                var target = GetParam(node, "target");
+                spec.OnHitAdditionalDamageTarget = string.IsNullOrWhiteSpace(target)
+                    ? GetParam(node, "target_side")
+                    : target;
+                return;
+            }
+
+            if (string.Equals(handlerId, "EveryNthHitChainDamage", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.OnHitChainHitPeriod = GetIntParam(node, "hit_count", 0);
+                spec.OnHitChainTargetCount = GetIntParam(node, "max_targets", spec.OnHitChainTargetCount);
+                spec.OnHitChainSearchRadius = GetFloatParam(node, "radius", spec.OnHitChainSearchRadius);
+                spec.OnHitChainDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
+                spec.OnHitChainDamageAttribute = GetEnumParam(node, "attribute", DamageAttribute.Physical);
+                return;
+            }
+
+            if (string.Equals(handlerId, "RepeatPerTarget", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.RepeatCountPerTarget = GetIntParam(node, "repeat_count", 0);
+                spec.RepeatIntervalSeconds = GetFloatParam(node, "repeat_interval_seconds", 0f);
+                spec.RepeatDamageMultiplier = GetFloatParam(node, "repeat_damage_multiplier", 1f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "TargetStatusCritBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.ConditionalCritChanceBonus += GetFloatParam(node, "crit_chance_bonus", 0f);
+                spec.ConditionalCritTargetStatusId = GetParam(node, "status_id");
+                spec.ConditionalCritTargetStatusMinStacks = GetIntParam(node, "min_stacks", 0);
+                return;
+            }
+
+            if (string.Equals(handlerId, "RedistributeConsumedStatus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.RedistributeConsumedStatusRatioOnKill = GetFloatParam(node, "ratio", 0f);
+                spec.RedistributeConsumedStatusId = GetParam(node, "status_id");
+                spec.RedistributeConsumedStatusSearchRadius = GetFloatParam(node, "radius", 0f);
+                spec.RedistributeConsumedStatusTargetCount = GetIntParam(node, "target_count", 0);
+            }
+        }
+
+        public static SkillExecutionPlanNode[] MapSkillNodeDefinitions(SkillNodeDefinition[] source)
+        {
+            if (source == null || source.Length == 0)
+            {
+                return Array.Empty<SkillExecutionPlanNode>();
+            }
+
+            var mapped = new List<SkillExecutionPlanNode>(source.Length);
+            for (var i = 0; i < source.Length; i++)
+            {
+                var node = MapSkillNodeDefinition(source[i]);
+                if (node != null)
+                {
+                    mapped.Add(node);
+                }
+            }
+
+            return mapped.Count == 0 ? Array.Empty<SkillExecutionPlanNode>() : mapped.ToArray();
+        }
+
+        private static SkillExecutionPlanNode MapSkillNodeDefinition(SkillNodeDefinition node)
+        {
+            if (node == null || !node.EnabledByDefault)
+            {
+                return null;
+            }
+
+            var handlerId = node.HandlerId ?? string.Empty;
+            var rowId = node.NodeId;
+            if (string.Equals(handlerId, "TargetHealthRatioCondition", StringComparison.OrdinalIgnoreCase))
+            {
+                return SkillExecutionPlanNode.FromCastCondition(
+                    SkillExecutionPlanAuthoringSource.NormalizedRow,
+                    rowId,
+                    new CastConditionOp(
+                        CastConditionOpKind.TargetHealthRatioBonus,
+                        GetFloatParam(node, "threshold", 0f)));
+            }
+
+            if (string.Equals(handlerId, "TargetHealthRatioThresholdBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return SkillExecutionPlanNode.FromCastCondition(
+                    SkillExecutionPlanAuthoringSource.NormalizedRow,
+                    rowId,
+                    new CastConditionOp(
+                        CastConditionOpKind.TargetHealthRatioBonus,
+                        GetFloatParam(node, "threshold_bonus", 0f)));
+            }
+
+            if (string.Equals(handlerId, "ExecuteDamageMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                return SkillExecutionPlanNode.FromDamageModifier(
+                    SkillExecutionPlanAuthoringSource.NormalizedRow,
+                    rowId,
+                    new DamageModifierOp(
+                        DamageModifierOpKind.ExecuteMultiplier,
+                        GetFloatParam(node, "multiplier", 1f)));
+            }
+
+            if (string.Equals(handlerId, "TargetPredicateDamageMultiplier", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(GetParam(node, "predicate"), "is_boss", StringComparison.OrdinalIgnoreCase))
+            {
+                return SkillExecutionPlanNode.FromDamageModifier(
+                    SkillExecutionPlanAuthoringSource.NormalizedRow,
+                    rowId,
+                    new DamageModifierOp(
+                        DamageModifierOpKind.BossMultiplier,
+                        GetFloatParam(node, "multiplier", 1f)));
+            }
+
+            if (string.Equals(handlerId, "BossDamageMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                return SkillExecutionPlanNode.FromDamageModifier(
+                    SkillExecutionPlanAuthoringSource.NormalizedRow,
+                    rowId,
+                    new DamageModifierOp(
+                        DamageModifierOpKind.BossMultiplier,
+                        GetFloatParam(node, "multiplier", 1f)));
+            }
+
+            if (string.Equals(handlerId, "ExecuteCritChanceBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return SkillExecutionPlanNode.FromCritModifier(
+                    SkillExecutionPlanAuthoringSource.NormalizedRow,
+                    rowId,
+                    new CritModifierOp(
+                        CritModifierOpKind.ExecuteChanceBonus,
+                        GetFloatParam(node, "crit_chance_bonus", 0f)));
+            }
+
+            if (string.Equals(handlerId, "CooldownReset", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "CooldownResetOnKill", StringComparison.OrdinalIgnoreCase))
+            {
+                return SkillExecutionPlanNode.FromKillAction(
+                    SkillExecutionPlanAuthoringSource.NormalizedRow,
+                    rowId,
+                    new KillActionOp(
+                        KillActionOpKind.CooldownReset,
+                        0f,
+                        GetBoolParam(node, "requires_execute", false)));
+            }
+
+            if (string.Equals(handlerId, "CooldownRefund", StringComparison.OrdinalIgnoreCase))
+            {
+                return SkillExecutionPlanNode.FromKillAction(
+                    SkillExecutionPlanAuthoringSource.NormalizedRow,
+                    rowId,
+                    new KillActionOp(
+                        KillActionOpKind.CooldownRefundBonus,
+                        GetFloatParam(node, "ratio", 0f),
+                        false));
+            }
+
+            if (string.Equals(handlerId, "CooldownRefundBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return SkillExecutionPlanNode.FromKillAction(
+                    SkillExecutionPlanAuthoringSource.NormalizedRow,
+                    rowId,
+                    new KillActionOp(
+                        KillActionOpKind.CooldownRefundBonus,
+                        GetFloatParam(node, "ratio_bonus", 0f),
+                        false));
+            }
+
+            return new SkillExecutionPlanNode(
+                MapNodeKind(node.NodeKind),
+                SkillExecutionPlanAuthoringSource.NormalizedRow,
+                rowId);
+        }
+
+        private static SkillExecutionPlanNodeKind MapNodeKind(string value)
+        {
+            return !string.IsNullOrWhiteSpace(value)
+                && Enum.TryParse(value, true, out SkillExecutionPlanNodeKind kind)
+                    ? kind
+                    : SkillExecutionPlanNodeKind.Action;
+        }
+
+        private static string GetParam(SkillNodeDefinition node, string key)
+        {
+            if (node == null || node.Params == null || string.IsNullOrWhiteSpace(key))
+            {
+                return string.Empty;
+            }
+
+            for (var i = 0; i < node.Params.Length; i++)
+            {
+                var param = node.Params[i];
+                if (param != null && string.Equals(param.ParamKey, key, StringComparison.OrdinalIgnoreCase))
+                {
+                    return param.Value ?? string.Empty;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static float GetFloatParam(SkillNodeDefinition node, string key, float fallback)
+        {
+            var raw = GetParam(node, key);
+            return !string.IsNullOrWhiteSpace(raw)
+                && float.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
+                    ? value
+                    : fallback;
+        }
+
+        private static int GetIntParam(SkillNodeDefinition node, string key, int fallback)
+        {
+            var raw = GetParam(node, key);
+            return !string.IsNullOrWhiteSpace(raw)
+                && int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
+                    ? value
+                    : fallback;
+        }
+
+        private static bool GetBoolParam(SkillNodeDefinition node, string key, bool fallback)
+        {
+            var raw = GetParam(node, key);
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return fallback;
+            }
+
+            if (bool.TryParse(raw, out var value))
+            {
+                return value;
+            }
+
+            return string.Equals(raw, "1", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(raw, "yes", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(raw, "y", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static T GetEnumParam<T>(SkillNodeDefinition node, string key, T fallback)
+            where T : struct
+        {
+            var raw = GetParam(node, key);
+            return !string.IsNullOrWhiteSpace(raw)
+                && Enum.TryParse(raw, true, out T value)
+                    ? value
+                    : fallback;
         }
 
         private static CharacterType MapCharacter(string monsterId)

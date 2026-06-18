@@ -13,9 +13,13 @@ namespace Pakuri.Data
             public readonly Dictionary<string, MonsterRow> Monsters = new Dictionary<string, MonsterRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, RewardChoiceRow> RewardChoices = new Dictionary<string, RewardChoiceRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, SkillRow> Skills = new Dictionary<string, SkillRow>(StringComparer.OrdinalIgnoreCase);
+            public readonly Dictionary<string, SkillBaseRow> SkillBaseRows = new Dictionary<string, SkillBaseRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, SkillEffectRow> SkillEffects = new Dictionary<string, SkillEffectRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, SkillTriggerRow> SkillTriggers = new Dictionary<string, SkillTriggerRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, SkillChoiceRow> SkillChoices = new Dictionary<string, SkillChoiceRow>(StringComparer.OrdinalIgnoreCase);
+            public readonly Dictionary<string, SkillChoiceBaseRow> SkillChoiceBaseRows = new Dictionary<string, SkillChoiceBaseRow>(StringComparer.OrdinalIgnoreCase);
+            public readonly Dictionary<string, SkillNodeRow> SkillNodes = new Dictionary<string, SkillNodeRow>(StringComparer.OrdinalIgnoreCase);
+            public readonly List<SkillNodeParamRow> SkillNodeParams = new List<SkillNodeParamRow>();
             public readonly Dictionary<string, StatusEffectRow> StatusEffects = new Dictionary<string, StatusEffectRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, EnemyRow> StageOneEnemies = new Dictionary<string, EnemyRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, EnemyRow> StageTwoEnemies = new Dictionary<string, EnemyRow>(StringComparer.OrdinalIgnoreCase);

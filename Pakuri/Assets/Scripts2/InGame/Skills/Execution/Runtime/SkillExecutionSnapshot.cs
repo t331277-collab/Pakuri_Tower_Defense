@@ -12,7 +12,8 @@ namespace Pakuri.InGame
 
     public enum DamageModifierOpKind
     {
-        BossMultiplier
+        BossMultiplier,
+        ExecuteMultiplier
     }
 
     public enum CritModifierOpKind
@@ -95,6 +96,7 @@ namespace Pakuri.InGame
             OnHitAdditionalDamageMultiplier = 1f;
             OnHitChainDamageMultiplier = 1f;
             SkillEffectPrefab = source != null ? source.SkillEffectPrefab : null;
+            AddNormalizedPlanNodes(source != null ? source.NormalizedPlanNodes : null);
             RebuildExecutionPlan();
         }
 
@@ -209,11 +211,13 @@ namespace Pakuri.InGame
         private readonly List<DamageModifierOp> damageModifierOps = new List<DamageModifierOp>();
         private readonly List<CritModifierOp> critModifierOps = new List<CritModifierOp>();
         private readonly List<KillActionOp> killActionOps = new List<KillActionOp>();
+        private readonly List<SkillExecutionPlanNode> normalizedPlanNodes = new List<SkillExecutionPlanNode>();
 
         public IReadOnlyList<CastConditionOp> CastConditionOps => castConditionOps;
         public IReadOnlyList<DamageModifierOp> DamageModifierOps => damageModifierOps;
         public IReadOnlyList<CritModifierOp> CritModifierOps => critModifierOps;
         public IReadOnlyList<KillActionOp> KillActionOps => killActionOps;
+        public IReadOnlyList<SkillExecutionPlanNode> NormalizedPlanNodes => normalizedPlanNodes;
 
         public bool HasBranchBehavior =>
             BranchChanceBonus > 0f
@@ -619,6 +623,7 @@ namespace Pakuri.InGame
                 SkillEffectPrefab = spec.SkillEffectPrefab;
             }
 
+            AddNormalizedPlanNodes(spec.NormalizedPlanNodes);
             RefreshSingleAttackOperationBridges();
             RebuildExecutionPlan();
         }
@@ -775,7 +780,8 @@ namespace Pakuri.InGame
                 HitCountCooldownRefundRatio = choice.HitCountCooldownRefundRatio,
                 RepeatCountPerTarget = choice.RepeatCountPerTarget,
                 RepeatIntervalSeconds = choice.RepeatIntervalSeconds,
-                RepeatDamageMultiplier = choice.RepeatDamageMultiplier
+                RepeatDamageMultiplier = choice.RepeatDamageMultiplier,
+                NormalizedPlanNodes = InGameSkillDefinitionMapper.MapSkillNodeDefinitions(choice.NormalizedPlanNodes)
             });
         }
 
@@ -970,7 +976,23 @@ namespace Pakuri.InGame
 
         private void RebuildExecutionPlan()
         {
-            Plan = SkillExecutionPlanCompiler.Compile(Source, this);
+            Plan = SkillExecutionPlanCompiler.Compile(Source, this, normalizedPlanNodes);
+        }
+
+        private void AddNormalizedPlanNodes(IReadOnlyList<SkillExecutionPlanNode> nodes)
+        {
+            if (nodes == null || nodes.Count == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < nodes.Count; i++)
+            {
+                if (nodes[i] != null)
+                {
+                    normalizedPlanNodes.Add(nodes[i]);
+                }
+            }
         }
 
         private readonly struct ConditionalDamageRule

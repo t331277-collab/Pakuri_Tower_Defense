@@ -19,6 +19,20 @@ This file does not replace blueprint selection.
 Use the base `monster_skills.csv` row to select the primary blueprint from `runtime_kind` first.
 Then use this file only if the scoped rows still need interpretation.
 
+## Normalized Node Default Rule
+
+New exception skill behavior must be authored as normalized node rows by default:
+
+- add behavior rows to `monster_skill_nodes.csv`;
+- add payload rows to `monster_skill_node_params.csv`;
+- add or reuse a runtime handler schema only when behavior is genuinely new.
+
+Do not add new behavior columns to `monster_skills.csv` or `monster_skill_choices.csv` unless Designer or Code Builder explicitly approves a shared wide field in the active handoff or DATA board task.
+
+Existing wide behavior columns in `monster_skills.csv` and `monster_skill_choices.csv` are compatibility/deprecated authoring surfaces. Keep them readable for existing rows and migrations, but do not route new exception behavior to those columns by default.
+
+Existing `monster_skill_effects.csv` and `monster_skill_triger.csv` remain valid specialized row tables until a separate migration explicitly replaces or adapts them.
+
 ## When Skill Builder May Read This File
 
 Read this file only when at least one of these is true:

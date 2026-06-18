@@ -51,6 +51,10 @@ namespace Pakuri.Data
             sourceCatalog.Monsters = LoadImportedSourceTextAssetOrThrow(MonstersFileName);
             sourceCatalog.MonsterRewardChoices = LoadImportedSourceTextAssetOrThrow(MonsterRewardChoicesFileName);
             sourceCatalog.MonsterSkills = LoadImportedSourceTextAssetOrThrow(MonsterSkillsFileName);
+            sourceCatalog.MonsterSkillBase = LoadImportedSourceTextAssetIfPresent(MonsterSkillBaseFileName);
+            sourceCatalog.MonsterSkillChoiceBase = LoadImportedSourceTextAssetIfPresent(MonsterSkillChoiceBaseFileName);
+            sourceCatalog.MonsterSkillNodes = LoadImportedSourceTextAssetIfPresent(MonsterSkillNodesFileName);
+            sourceCatalog.MonsterSkillNodeParams = LoadImportedSourceTextAssetIfPresent(MonsterSkillNodeParamsFileName);
             sourceCatalog.MonsterSkillEffects = LoadImportedSourceTextAssetOrThrow(MonsterSkillEffectsFileName);
             sourceCatalog.MonsterSkillTriggers = LoadImportedSourceTextAssetOrThrow(MonsterSkillTriggersFileName);
             sourceCatalog.MonsterSkillChoices = LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesFileName);
@@ -103,6 +107,19 @@ namespace Pakuri.Data
             return LoadTextAssetOrThrow(
                 assetPath,
                 "Import the source CSV into Assets/CSVdata/source before validation.");
+        }
+
+        private static TextAsset LoadImportedSourceTextAssetIfPresent(string fileName)
+        {
+            var assetPath = $"{ImportedSourceAssetRoot}/{fileName}";
+            var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
+            if (asset != null)
+            {
+                return asset;
+            }
+
+            TryImportTextAsset(assetPath);
+            return AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
         }
 
         private static TextAsset LoadTextAssetOrThrow(string assetPath, string instruction)

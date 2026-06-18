@@ -22,25 +22,30 @@ Design the next CSV-authoring refactor so new exception skills add behavior node
 ### Constraints
 
 - Role Owner is Designer for this handoff.
-- No CSV, parser, runtime catalog, code, prefab, or scene file was changed by this design task.
+- Phase A changed CSV schema skeleton files, runtime CSV parser/model/validation code, and runtime source catalog references only.
 - The handoff is grounded in the inspected source feedback html/md, active CSV headers, current parser/build code, and Phase 6 `SkillExecutionPlan` surface.
 - Old wide columns must not be deleted in the first implementation.
 - Unity Play Mode gameplay verification remains user-owned.
 
 ### Role Owner
 
-Designer
+Code Builder
 
 ### Status
 
-Handoff created.
+Phase E wide-column freeze policy applied; Phase D choice-family migration remains locally validated.
 
 ### Next Actions
 
-- Code Builder implements the schema/parser skeleton only after explicit user request.
-- Code Builder updates this DATA board when actual CSV schema, parser, validation, or runtime catalog behavior changes.
+- Code Builder keeps legacy wide CSV behavior active until a later migration phase explicitly moves behavior into normalized nodes; `rin-d` is the first Phase C exception sample now migrated to normalized nodes.
 - Code Builder updates `boards/COMBAT/ENEMY_BLACKBOARD.md` if normalized nodes change `SkillExecutionPlan`, executor routing, or runtime skill behavior.
 - Code Reviewer should review before real skill authoring starts on the new node path.
+- Phase C sample migration now has a duplicate guard for the currently supported execute/boss/kill normalized handlers.
+- Phase D now has representative choice-owned normalized rows for damage/cooldown/radius modifiers, execute/boss/kill choice actions, on-hit additional damage, repeat per target, conditional crit, and redistribute-on-kill behavior; keep new exception choice behavior on node rows/params instead of adding new `monster_skill_choices.csv` behavior columns.
+- Phase D reviewer follow-up now keeps representative choice metadata in `monster_skill_choice_base.csv`; duplicate legacy rows keep their behavior compatibility values, but `BuildSkillChoices(...)` prefers base-row metadata and can build future base-only choice rows with normalized nodes.
+- Phase E board rule: new exception skill behavior must use `monster_skill_nodes.csv` plus `monster_skill_node_params.csv` by default.
+- Phase E exception rule: adding new behavior columns to `monster_skills.csv` or `monster_skill_choices.csv` requires explicit Designer or Code Builder approval recorded in the active handoff or DATA board task.
+- Existing wide behavior columns in `monster_skills.csv` and `monster_skill_choices.csv` are compatibility/deprecated inputs; keep them readable until enough migrated rows are proven through Play Mode.
 
 ### Evidence
 
@@ -56,10 +61,69 @@ Handoff created.
 - `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs:264` to `:350` shows `SkillChoiceDefinition` still owns many wide behavior fields.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionPlan.cs:6` to `:24` defines authoring source and node kind enums.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionPlan.cs:213` to `:226` already accepts normalized node rows through the compiler overload.
+- Phase A added optional source catalog TextAsset fields for `monster_skill_base.csv`, `monster_skill_choice_base.csv`, `monster_skill_nodes.csv`, and `monster_skill_node_params.csv`.
+- Phase A added empty header/type skeleton CSV files under `Pakuri/Assets/CSVdata/source/`.
+- Phase A added `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` with row models, optional parsers, handler schema registry, and node/param validation.
+- Phase A follow-up added handler-schema enum param value validation for normalized node params such as `predicate`, `attribute`, and `target_side`.
+- Phase B added `SkillNodeDefinition` and `SkillNodeParamDefinition` to `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs`.
+- Phase B routes skill-owned normalized rows from `BuildActiveSkills(...)` into `SkillDefinition.NormalizedPlanNodes` and choice-owned normalized rows from `BuildSkillChoices(...)` into `SkillChoiceDefinition.NormalizedPlanNodes`.
+- Phase B maps `SkillNodeDefinition[]` through `InGameSkillDefinitionMapper.MapSkillNodeDefinitions(...)` into `SkillExecutionPlanNode[]`.
+- Phase B currently converts supported normalized handlers `TargetHealthRatioThresholdBonus`, `TargetPredicateDamageMultiplier` with `predicate=is_boss`, `BossDamageMultiplier`, `ExecuteCritChanceBonus`, `CooldownReset`, `CooldownResetOnKill`, `CooldownRefund`, and `CooldownRefundBonus` into typed plan ops; unsupported handlers still enter `SkillExecutionPlan.Nodes` as normalized row metadata without executable op payload.
+- Phase B stores mapped normalized nodes on `SkillData.NormalizedPlanNodes` and `SkillChoiceEffectSpec.NormalizedPlanNodes`, and `SkillExecutionSnapshot` feeds them into `SkillExecutionPlanCompiler.Compile(source, snapshot, normalizedRows)`.
+- Phase B reviewer follow-up preserves node `runtime_support_state` / `runtime_support_notes` and nested param `node_id` on `SkillNodeDefinition` / `SkillNodeParamDefinition` so runtime definitions no longer drop the normalized authoring support metadata.
+- Phase B reviewer follow-up now validation-fails `owner_kind=Passive`, `owner_kind=Effect`, and `owner_kind=Trigger` until those owner paths are actually wired into runtime plans, preventing valid-looking normalized rows from being silently ignored.
+- Phase A reviewer follow-up now enforces schema-declared enum params such as `predicate`, `attribute`, and `target_side` to use `value_type=Enum` and validates the authored value against the handler schema even when the row tries a different value type.
+- Phase C migrated the `rin-d` base execute/kill sample by setting the legacy numeric wide fields `execute_health_ratio_threshold=0`, `execute_damage_multiplier=1`, and `kill_cooldown_refund_ratio=0` while keeping the old columns present and readable.
+- Phase C added `rin-d-execute-condition`, `rin-d-execute-multiplier`, `rin-d-boss-multiplier`, and `rin-d-kill-cooldown-refund` rows to `monster_skill_nodes.csv`, with seven matching rows in `monster_skill_node_params.csv`.
+- Phase C added duplicate validation guards so enabled normalized nodes for `TargetHealthRatioCondition`, `ExecuteDamageMultiplier`, boss multiplier handlers, `CooldownRefund`, `TargetHealthRatioThresholdBonus`, `ExecuteCritChanceBonus`, `CooldownRefundBonus`, and cooldown reset handlers fail when the matching legacy wide field is still active on the same owner.
+- `dotnet build Pakuri.sln --no-restore` succeeded with 0 errors and existing `System.Net.Http` / `System.IO.Compression` conflict warnings.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors after the enum validation follow-up; existing `MSB3277` warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors after the enum validation follow-up; existing `MSB3277` warnings remained.
+- Unity-MCP `Pakuri/Validate CSV Source Data` logged runtime catalog load with 5 monsters, 8 stage-one enemies, and 8 stage-two enemies after the empty normalized CSV files were imported.
+- Phase B `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors after implementation; existing `MSB3277` warnings remained.
+- Phase B `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors after implementation; existing `MSB3277` warnings remained.
+- Unity-MCP Phase B smoke returned `nodes=1, damageModifiers=1, firstRow=phase_b_test_node, multiplier=1.25` for an in-memory normalized `BossDamageMultiplier` node.
+- Phase B reviewer follow-up `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- Unity-MCP direct `PakuriCsvRuntimeData.SyncAndValidateCsvRuntimeCatalogsForEditor()` after the reviewer follow-up logged `Pakuri CSV runtime catalogs synced and validated from 'Assets/CSVdata/source' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+- Unity-MCP Phase B reviewer follow-up smoke returned `nodes=1, damageModifiers=1, row=phase_b_review_node, multiplier=1.25, support=RuntimeImplemented:phase_b_review_node`.
+- Unity-MCP Phase B current-catalog check returned `catalog=True, activeSkills=25, skillNodes=0, choiceNodes=0`, confirming current empty normalized CSV rows do not add plan nodes to existing skills.
+- Unity-MCP console after Phase B catalog load logged `PakuriCsvRuntimeData loaded runtime catalog from resource source 'Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog' with 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.`
+- Phase C CSV field-count check returned `monster_skills.csv header=72 rows=52 bad=`, `monster_skill_nodes.csv header=14 rows=6 bad=`, and `monster_skill_node_params.csv header=4 rows=9 bad=`.
+- Phase C `Import-Csv` check returned `rin-d` legacy values `threshold=0`, `require=true`, `execute=1`, `refund=0`, `boss=1`, with `nodeCount=4`, `paramCount=7`, and handlers `TargetHealthRatioCondition,ExecuteDamageMultiplier,TargetPredicateDamageMultiplier,CooldownRefund`.
+- Phase C `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- Phase C Unity-MCP `PakuriCsvRuntimeData.SyncAndValidateCsvRuntimeCatalogsForEditor()` returned `SyncAndValidateCsvRuntimeCatalogsForEditor completed`.
+- Phase C Unity-MCP runtime catalog inspection returned `legacy=threshold:0,require:True,execute:1,refund:0,boss:1|defNodes=4|planNodes=4|casts=1:0.3|damage=2:ExecuteMultiplier:1.8,BossMultiplier:1|kills=1:CooldownRefundBonus:0.35`.
+- Phase D added 14 `Choice` owner rows to `monster_skill_nodes.csv` and 29 matching param rows to `monster_skill_node_params.csv`; handlers are `DamageMultiplier`, `CooldownMultiplier`, `RadiusMultiplier`, `TargetHealthRatioThresholdBonus`, `ExecuteCritChanceBonus`, `CooldownReset`, `TargetPredicateDamageMultiplier`, `CooldownRefundBonus`, `AdditionalDamage`, `EveryNthHitChainDamage`, `RepeatPerTarget`, `TargetStatusCritBonus`, and `RedistributeConsumedStatus`.
+- Phase D migrated representative legacy values out of `monster_skill_choices.csv` for `ariel-a-trait-1`, `ariel-b-trait-3`, `ariel-c-trait-4`, `rin-d-trait-2`, `rin-d-master-1`, `rin-d-trait-5`, `rin-d-trait-3`, `rin-a-master-2`, `vega-d-master-1`, `vega-e-trait-4`, and `vega-e-trait-5` while keeping the old columns present.
+- Phase D CSV field-count check using `Microsoft.VisualBasic.FileIO.TextFieldParser` returned `monster_skill_choices.csv: header=114 rows=253 bad=`, `monster_skill_nodes.csv: header=14 rows=19 bad=`, and `monster_skill_node_params.csv: header=4 rows=37 bad=`.
+- Phase D `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- Phase D Unity-MCP `PakuriCsvRuntimeData.SyncAndValidateCsvRuntimeCatalogsForEditor()` returned `sync-ok`, and Unity-MCP `read_console` returned 0 warning/error entries afterward.
+- Phase D Unity-MCP choice-family smoke returned `ariel-a-trait-1=True:1.25:nodes1`, `ariel-b-trait-3=True:0.8:nodes1`, `ariel-c-trait-4=True:1.25:nodes1`, `rin-a-master-2=extraTrue:1:0.4:Lightning:HitTarget|chain3:2:4.5:0.4:Lightning:nodes2`, `vega-d-master-1=damageTrue:0.65|repeat2:0.15:0.6:nodes2`, `vega-e-trait-4=crit0.35:name-mark:1:nodes1`, and `vega-e-trait-5=redistribute0.25:name-mark:5:3:nodes1`.
+- Phase D fixed the duplicate-overlap guard so blank legacy chain/repeat multiplier cells are treated like the existing Build fallback (`>0 ? value : 1`) instead of being falsely considered active legacy wide behavior.
+- Phase D reviewer follow-up filled `Pakuri/Assets/CSVdata/source/monster_skill_choice_base.csv` with 11 representative metadata rows for `ariel-a-trait-1`, `ariel-b-trait-3`, `ariel-c-trait-4`, `rin-a-master-2`, `rin-d-trait-2`, `rin-d-trait-3`, `rin-d-trait-5`, `rin-d-master-1`, `vega-d-master-1`, `vega-e-trait-4`, and `vega-e-trait-5`.
+- Phase D reviewer follow-up updated `BuildSkillChoices(...)` so legacy duplicate choice rows preserve existing behavior fields while metadata fields come from `SkillChoiceBaseRows`, and base-only rows are merged by `sort_order` through `BuildBaseOnlySkillChoiceDefinition(...)`.
+- Phase D reviewer follow-up updated normalized validation so choice-owned nodes and choice gates accept `monster_skill_choice_base.csv` rows, duplicate base/legacy rows must match `monster_id`, `skill_id`, and `choice_group`, and runtime asset validation accepts either legacy or base choice source rows.
+- Phase D reviewer follow-up CSV field-count check returned `monster_skill_choice_base.csv header=13 lines=13 bad=`, `monster_skill_choices.csv header=114 lines=254 bad=`, `monster_skill_nodes.csv header=14 lines=20 bad=`, and `monster_skill_node_params.csv header=4 lines=38 bad=`.
+- Phase D reviewer follow-up `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remained.
+- Phase D reviewer follow-up Unity-MCP `PakuriCsvRuntimeData.SyncAndValidateCsvRuntimeCatalogsForEditor()` returned `sync-ok`; representative choice smoke returned each of the 11 migrated choice ids with `count=1` and expected node counts (`nodes=1` or `nodes=2`) plus base metadata descriptions.
+- Phase D reviewer follow-up Unity-MCP console warning/error read showed only MCP transport `Client handler error: Cannot access a disposed object`, not a Pakuri CSV validation or C# compile error.
+- Phase E updated `Pakuri/reference/Report/2026-06-17-normalized-skill-authoring-row-table-handoff.md` and `boards/SkillBluePrint/skill-csv-exception-guide.md` so future exception behavior routes to normalized nodes by default.
+- Phase E marks existing wide behavior columns in `monster_skills.csv` and `monster_skill_choices.csv` as compatibility/deprecated authoring surfaces while preserving old CSV rows and old columns.
+- Phase E TextFieldParser CSV field-count check returned `monster_skills.csv header=72 rows=51 bad=`, `monster_skill_choices.csv header=114 rows=253 bad=`, `monster_skill_base.csv header=13 rows=1 bad=`, `monster_skill_choice_base.csv header=13 rows=12 bad=`, `monster_skill_nodes.csv header=14 rows=19 bad=`, `monster_skill_node_params.csv header=4 rows=37 bad=`, `monster_skill_effects.csv header=70 rows=132 bad=`, and `monster_skill_triger.csv header=47 rows=57 bad=`.
+- Phase E `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remained.
+- Phase E Unity-MCP `Pakuri.Data.PakuriCsvRuntimeData.SyncAndValidateCsvRuntimeCatalogsForEditor()` returned `sync-ok`, and Unity-MCP warning/error console read returned 0 entries.
 
 ### History
 
 - 2026-06-17: User noted that Phase 6 had not actually split or structured the CSV authoring layer yet, then requested a design and handoff for splitting `monster_skills.csv` and `monster_skill_choices.csv` so new exception skills can add nodes instead of columns.
+- 2026-06-17: Code Builder implemented Phase A parser skeleton: optional normalized CSV files, row models, handler schema validation, empty schema CSVs, Unity import, and validation.
+- 2026-06-17: Code Builder fixed the Code Reviewer finding that enum node params were only partly validated by adding handler-schema allowed enum values and re-running build plus Unity CSV validation.
+- 2026-06-17: Code Builder implemented Phase B by preserving normalized CSV rows as `SkillNodeDefinition`, mapping supported handlers into `SkillExecutionPlanNode` operation payloads, and feeding base skill plus choice nodes into `SkillExecutionSnapshot` without removing or disabling legacy wide-column bridges.
+- 2026-06-17: Code Builder fixed the Phase B Code Reviewer findings by preserving node support metadata, preserving nested param node ids, blocking unsupported passive/effect/trigger node owner kinds until runtime adapters exist, and tightening schema enum param validation.
+- 2026-06-17: Code Builder implemented Phase C first sample migration for `rin-d`, added execute multiplier plan-op support, added duplicate guard validation for supported legacy+normalized behavior overlap, and verified the migrated sample through CSV checks, dotnet builds, Unity CSV validation, and runtime catalog plan inspection.
+- 2026-06-17: Code Builder implemented Phase D representative choice-family migration, moved selected `monster_skill_choices.csv` behavior values into normalized choice-owned nodes/params, mapped generic choice nodes back into `SkillChoiceEffectSpec`, extended duplicate guards, and verified CSV shape, builds, Unity CSV sync, and runtime choice/node smoke checks.
+- 2026-06-18: Code Builder fixed the Phase D Reviewer finding by populating choice base metadata rows, making `BuildSkillChoices(...)` use base metadata for duplicate rows and support base-only normalized choice rows, extending validation, and re-running CSV shape checks, dotnet builds, Unity CSV sync, and representative choice smoke checks.
+- 2026-06-18: Code Builder started Phase E by applying the DATA board rule and Skill Builder exception-guide rule that new exception skill behavior defaults to normalized nodes, with old wide behavior columns treated as compatibility/deprecated inputs until Play Mode-proven migration coverage is sufficient; then verified CSV field counts, dotnet builds, Unity CSV sync, and console warning/error state.
 
 ## Task: 2026-05-31 Enemy Nexus Damage CSV Column
 

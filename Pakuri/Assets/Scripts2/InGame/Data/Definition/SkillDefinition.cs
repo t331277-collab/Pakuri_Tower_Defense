@@ -261,6 +261,35 @@ namespace Pakuri.Data
     }
 
     [Serializable]
+    public class SkillNodeParamDefinition
+    {
+        public string NodeId;
+        public string ParamKey;
+        public string ValueType;
+        public string Value;
+    }
+
+    [Serializable]
+    public class SkillNodeDefinition
+    {
+        public string NodeId;
+        public string OwnerKind;
+        public string OwnerId;
+        public string TargetSkillId;
+        public string NodeKind;
+        public string HandlerId;
+        public int SortOrder;
+        public bool EnabledByDefault;
+        public string RequiresActiveChoiceId;
+        public string ExcludesActiveChoiceId;
+        public string RequiresPassiveSkillId;
+        public string ExcludesPassiveSkillId;
+        public string RuntimeSupportState;
+        [TextArea(2, 5)] public string RuntimeSupportNotes;
+        public SkillNodeParamDefinition[] Params = Array.Empty<SkillNodeParamDefinition>();
+    }
+
+    [Serializable]
     public class SkillChoiceDefinition
     {
         public string ChoiceId;
@@ -409,6 +438,7 @@ namespace Pakuri.Data
         public int RepeatCountPerTarget;
         public float RepeatIntervalSeconds;
         public float RepeatDamageMultiplier = 1f;
+        public SkillNodeDefinition[] NormalizedPlanNodes = Array.Empty<SkillNodeDefinition>();
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
     }
@@ -488,6 +518,7 @@ namespace Pakuri.Data
         public SkillChoiceDefinition[] EnhancementChoices = Array.Empty<SkillChoiceDefinition>();
         public SkillChoiceDefinition[] MasterSkillChoices = Array.Empty<SkillChoiceDefinition>();
         public SkillEffectDefinition[] MultiEffects = Array.Empty<SkillEffectDefinition>();
+        public SkillNodeDefinition[] NormalizedPlanNodes = Array.Empty<SkillNodeDefinition>();
     }
 
     [Serializable]

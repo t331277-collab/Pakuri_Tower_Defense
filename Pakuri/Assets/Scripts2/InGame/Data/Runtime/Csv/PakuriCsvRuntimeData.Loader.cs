@@ -114,6 +114,10 @@ namespace Pakuri.Data
             var monsterTable = CsvTable.Load(sourceCatalog.Monsters, MonstersFileName);
             var rewardChoiceTable = CsvTable.Load(sourceCatalog.MonsterRewardChoices, MonsterRewardChoicesFileName);
             var skillTable = CsvTable.Load(sourceCatalog.MonsterSkills, MonsterSkillsFileName);
+            var skillBaseTable = LoadOptionalCsvTable(sourceCatalog.MonsterSkillBase, MonsterSkillBaseFileName);
+            var skillChoiceBaseTable = LoadOptionalCsvTable(sourceCatalog.MonsterSkillChoiceBase, MonsterSkillChoiceBaseFileName);
+            var skillNodeTable = LoadOptionalCsvTable(sourceCatalog.MonsterSkillNodes, MonsterSkillNodesFileName);
+            var skillNodeParamTable = LoadOptionalCsvTable(sourceCatalog.MonsterSkillNodeParams, MonsterSkillNodeParamsFileName);
             var skillEffectTable = CsvTable.Load(sourceCatalog.MonsterSkillEffects, MonsterSkillEffectsFileName);
             var skillTriggerTable = CsvTable.Load(sourceCatalog.MonsterSkillTriggers, MonsterSkillTriggersFileName);
             var skillChoiceTable = CsvTable.Load(sourceCatalog.MonsterSkillChoices, MonsterSkillChoicesFileName);
@@ -156,6 +160,41 @@ namespace Pakuri.Data
             {
                 var row = ParseSkillRow(record);
                 AddUnique(model.Skills, row.Id, row, record);
+            }
+
+            if (skillBaseTable != null)
+            {
+                foreach (var record in skillBaseTable.Records)
+                {
+                    var row = ParseSkillBaseRow(record);
+                    AddUnique(model.SkillBaseRows, row.Id, row, record);
+                }
+            }
+
+            if (skillChoiceBaseTable != null)
+            {
+                foreach (var record in skillChoiceBaseTable.Records)
+                {
+                    var row = ParseSkillChoiceBaseRow(record);
+                    AddUnique(model.SkillChoiceBaseRows, row.Id, row, record);
+                }
+            }
+
+            if (skillNodeTable != null)
+            {
+                foreach (var record in skillNodeTable.Records)
+                {
+                    var row = ParseSkillNodeRow(record);
+                    AddUnique(model.SkillNodes, row.Id, row, record);
+                }
+            }
+
+            if (skillNodeParamTable != null)
+            {
+                foreach (var record in skillNodeParamTable.Records)
+                {
+                    model.SkillNodeParams.Add(ParseSkillNodeParamRow(record));
+                }
             }
 
             foreach (var record in skillEffectTable.Records)
@@ -203,6 +242,11 @@ namespace Pakuri.Data
             }
 
             return model;
+        }
+
+        private static CsvTable LoadOptionalCsvTable(TextAsset asset, string tableName)
+        {
+            return asset != null ? CsvTable.Load(asset, tableName) : null;
         }
 
         private static void AddUnique<T>(Dictionary<string, T> dictionary, string id, T value, CsvRecord record)

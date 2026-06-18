@@ -155,5 +155,6 @@ namespace Pakuri.InGame
         public int RepeatCountPerTarget;
         public float RepeatIntervalSeconds;
         public float RepeatDamageMultiplier = 1f;
+        public SkillExecutionPlanNode[] NormalizedPlanNodes = Array.Empty<SkillExecutionPlanNode>();
     }
 }

@@ -395,6 +395,14 @@ Acceptance:
 - Old CSV rows still load.
 - New row-set authoring coexists with old wide-column authoring.
 
+Phase E active rule:
+
+- The DATA board and Skill Builder exception guide now define normalized nodes as the default path for new exception skill behavior.
+- New behavior should be added through `monster_skill_nodes.csv` plus `monster_skill_node_params.csv`; a new handler schema/runtime handler is added only when behavior is genuinely new.
+- New behavior columns in `monster_skills.csv` or `monster_skill_choices.csv` require explicit Designer or Code Builder approval recorded in the active handoff or DATA board task.
+- Existing behavior columns in `monster_skills.csv` and `monster_skill_choices.csv` are compatibility/deprecated inputs. They stay readable for current rows and migrations, but they are not the default authoring surface for new exception behavior.
+- `monster_skill_effects.csv` and `monster_skill_triger.csv` remain valid specialized row tables until a later migration explicitly adapts or replaces them.
+
 ## Compatibility Rules
 
 - Do not delete `monster_skills.csv` or `monster_skill_choices.csv` in the first implementation.
@@ -444,4 +452,3 @@ Code Builder should add validation that proves:
 - `boards/COMBAT/ENEMY_BLACKBOARD.md`: update when normalized nodes affect `SkillExecutionPlan`, executor routing, or skill behavior runtime.
 - `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`: update only if node params add new asset-path catalog ownership.
 - `boards/RUN/RUN_BLACKBOARD.md`: update only if NewRunScene run flow or reward offering behavior changes.
-

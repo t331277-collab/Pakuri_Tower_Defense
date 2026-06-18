@@ -260,6 +260,8 @@ namespace Pakuri.Data
                 }
             }
 
+            ValidateNormalizedSkillAuthoringRows(model, assetCatalog, errors);
+
             ValidateEnemyRows(model.StageOneEnemies.Values, model.EnemySkills, errors);
             ValidateEnemyRows(model.StageTwoEnemies.Values, model.EnemySkills, errors);
 
@@ -1440,20 +1442,24 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                if (!sourceModel.SkillChoices.TryGetValue(choice.ChoiceId, out var sourceChoice))
+                var hasSourceChoice = sourceModel.SkillChoices.TryGetValue(choice.ChoiceId, out var sourceChoice);
+                var hasSourceChoiceBase = sourceModel.SkillChoiceBaseRows.TryGetValue(choice.ChoiceId, out var sourceChoiceBase);
+                if (!hasSourceChoice && !hasSourceChoiceBase)
                 {
                     errors.Add($"Runtime skill choice '{choice.ChoiceId}' for skill '{skillId}' has no source row.");
                     continue;
                 }
 
-                if (!string.IsNullOrWhiteSpace(sourceChoice.SkillIconPath) && choice.SkillIcon == null)
+                var skillIconPath = hasSourceChoice ? sourceChoice.SkillIconPath : sourceChoiceBase.SkillIconPath;
+                if (!string.IsNullOrWhiteSpace(skillIconPath) && choice.SkillIcon == null)
                 {
-                    errors.Add($"Runtime skill choice '{choice.ChoiceId}' is missing SkillIcon for '{sourceChoice.SkillIconPath}'.");
+                    errors.Add($"Runtime skill choice '{choice.ChoiceId}' is missing SkillIcon for '{skillIconPath}'.");
                 }
 
-                if (!string.IsNullOrWhiteSpace(sourceChoice.SkillEffectPrefabPath) && choice.SkillEffectPrefab == null)
+                var skillEffectPrefabPath = hasSourceChoice ? sourceChoice.SkillEffectPrefabPath : sourceChoiceBase.SkillEffectPrefabPath;
+                if (!string.IsNullOrWhiteSpace(skillEffectPrefabPath) && choice.SkillEffectPrefab == null)
                 {
-                    errors.Add($"Runtime skill choice '{choice.ChoiceId}' is missing SkillEffectPrefab for '{sourceChoice.SkillEffectPrefabPath}'.");
+                    errors.Add($"Runtime skill choice '{choice.ChoiceId}' is missing SkillEffectPrefab for '{skillEffectPrefabPath}'.");
                 }
             }
         }

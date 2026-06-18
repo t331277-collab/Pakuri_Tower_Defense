@@ -259,6 +259,7 @@ namespace Pakuri.InGame
         public SkillChoiceEffectSpec[] EnhancementChoices = Array.Empty<SkillChoiceEffectSpec>();
         public SkillChoiceEffectSpec[] MasterChoices = Array.Empty<SkillChoiceEffectSpec>();
         public SkillEffectDefinition[] MultiEffects = Array.Empty<SkillEffectDefinition>();
+        public SkillExecutionPlanNode[] NormalizedPlanNodes = Array.Empty<SkillExecutionPlanNode>();
     }
 
     [CreateAssetMenu(menuName = "Pakuri/InGame/Buff Skill Data", fileName = "BuffSkillData")]

@@ -11,6 +11,10 @@ namespace Pakuri.Data
         public TextAsset Monsters;
         public TextAsset MonsterRewardChoices;
         public TextAsset MonsterSkills;
+        public TextAsset MonsterSkillBase;
+        public TextAsset MonsterSkillChoiceBase;
+        public TextAsset MonsterSkillNodes;
+        public TextAsset MonsterSkillNodeParams;
         public TextAsset MonsterSkillEffects;
         public TextAsset MonsterSkillTriggers;
         public TextAsset MonsterSkillChoices;

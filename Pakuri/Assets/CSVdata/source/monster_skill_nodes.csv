@@ -1,0 +1,20 @@
+node_id,owner_kind,owner_id,target_skill_id,node_kind,handler_id,sort_order,enabled_by_default,requires_active_choice_id,excludes_active_choice_id,requires_passive_skill_id,excludes_passive_skill_id,runtime_support_state,runtime_support_notes
+string,enum,string,string,enum,string,int,bool,string,string,string,string,string,string
+rin-d-execute-condition,Skill,rin-d,rin-d,CastCondition,TargetHealthRatioCondition,100,true,,,,,RuntimeImplemented,Phase C migration from monster_skills execute threshold wide columns
+rin-d-execute-multiplier,Skill,rin-d,rin-d,DamageModifier,ExecuteDamageMultiplier,110,true,,,,,RuntimeImplemented,Phase C migration from monster_skills execute_damage_multiplier
+rin-d-boss-multiplier,Skill,rin-d,rin-d,DamageModifier,TargetPredicateDamageMultiplier,120,true,,,,,RuntimeImplemented,Phase C guard coverage for boss multiplier handler with legacy default value
+rin-d-kill-cooldown-refund,Skill,rin-d,rin-d,OnKillAction,CooldownRefund,130,true,,,,,RuntimeImplemented,Phase C migration from monster_skills kill_cooldown_refund_ratio
+ariel-a-trait-1-damage-multiplier,Choice,ariel-a-trait-1,ariel-a,DamageModifier,DamageMultiplier,200,true,,,,,RuntimeImplemented,Phase D migration from monster_skill_choices damage_multiplier
+ariel-b-trait-3-cooldown-multiplier,Choice,ariel-b-trait-3,ariel-b,Action,CooldownMultiplier,200,true,,,,,RuntimeImplemented,Phase D migration from monster_skill_choices cooldown_multiplier
+ariel-c-trait-4-radius-multiplier,Choice,ariel-c-trait-4,ariel-c,Action,RadiusMultiplier,200,true,,,,,RuntimeImplemented,Phase D migration from monster_skill_choices radius_multiplier
+rin-d-trait-2-execute-threshold-bonus,Choice,rin-d-trait-2,rin-d,CastCondition,TargetHealthRatioThresholdBonus,200,true,,,,,RuntimeImplemented,Phase D migration from monster_skill_choices execute_health_ratio_bonus
+rin-d-master-1-execute-crit-bonus,Choice,rin-d-master-1,rin-d,CritModifier,ExecuteCritChanceBonus,200,true,,,,,RuntimeImplemented,Phase D migration from monster_skill_choices execute_crit_chance_bonus
+rin-d-master-1-kill-reset,Choice,rin-d-master-1,rin-d,OnKillAction,CooldownReset,210,true,,,,,RuntimeImplemented,Phase D migration from monster_skill_choices kill_resets_cooldown
+rin-d-trait-5-boss-multiplier,Choice,rin-d-trait-5,rin-d,DamageModifier,TargetPredicateDamageMultiplier,200,true,,,,,RuntimeImplemented,Phase D migration from monster_skill_choices boss_damage_multiplier
+rin-d-trait-3-kill-refund-bonus,Choice,rin-d-trait-3,rin-d,OnKillAction,CooldownRefundBonus,200,true,,,,,RuntimeImplemented,Phase D migration from monster_skill_choices kill_cooldown_refund_ratio_bonus
+rin-a-master-2-additional-damage,Choice,rin-a-master-2,rin-a,OnHitAction,AdditionalDamage,200,true,,,,,RuntimeImplemented,Phase D migration from monster_skill_choices on_hit_additional_damage_*
+rin-a-master-2-chain-damage,Choice,rin-a-master-2,rin-a,OnHitAction,EveryNthHitChainDamage,210,true,,,,,RuntimeImplemented,Phase D migration from monster_skill_choices on_hit_chain_*
+vega-d-master-1-damage-multiplier,Choice,vega-d-master-1,vega-d,DamageModifier,DamageMultiplier,200,true,,,,,RuntimeImplemented,Phase D migration from monster_skill_choices damage_multiplier
+vega-d-master-1-repeat-per-target,Choice,vega-d-master-1,vega-d,Action,RepeatPerTarget,210,true,,,,,RuntimeImplemented,Phase D migration from monster_skill_choices repeat_*
+vega-e-trait-4-conditional-crit,Choice,vega-e-trait-4,vega-e,CritModifier,TargetStatusCritBonus,200,true,,,,,RuntimeImplemented,Phase D migration from monster_skill_choices conditional_crit_*
+vega-e-trait-5-redistribute-consumed-status,Choice,vega-e-trait-5,vega-e,OnKillAction,RedistributeConsumedStatus,200,true,,,,,RuntimeImplemented,Phase D migration from monster_skill_choices redistribute_consumed_status_*

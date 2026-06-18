@@ -1,0 +1,13 @@
+choice_id,monster_id,skill_id,target_skill_id,runtime_target_skill_ids,choice_group,sort_order,title,description_text,skill_icon_path,skill_effect_prefab_path,runtime_support_state,runtime_support_notes
+string,string,string,string,string,enum,int,string,string,string,string,string,string
+ariel-a-trait-1,ariel,ariel-a,ariel-a,,ActiveEnhancement,0,특성 1,위력 +25%,,,ReferenceDirect,Reference numeric effect mapped into unified choice CSV.
+ariel-b-trait-3,ariel,ariel-b,ariel-b,,ActiveEnhancement,2,특성 3,쿨타임 -20%,,,ReferenceDirect,Reference numeric effect mapped into unified choice CSV.
+ariel-c-trait-4,ariel,ariel-c,ariel-c,,ActiveEnhancement,3,특성 4,파동 반경 +25%,,,ReferenceDirect,Reference numeric effect mapped into unified choice CSV.
+rin-a-master-2,rin,rin-a,rin-a,,ActiveMaster,1,뇌격 건틀릿,"적중 시 대상에게 40% 번개 추가 피해, 3번째 적중마다 대상 주변 2명에게 40% 번개 연쇄",,Assets/Prefab/Skill/Rin/Rin_A.prefab,RuntimeImplemented,Uses shared on-hit additional damage for Lightning 40% damage to the hit target and every third primary hit chains Lightning 40% damage to two nearby enemies.
+rin-d-trait-2,rin,rin-d,rin-d,,ActiveEnhancement,1,특성 2,처형 기준 체력 +10%,,,RuntimeImplemented,Shared execute-threshold bonus support raises Rin-D execute range by 10 percentage points.
+rin-d-trait-3,rin,rin-d,rin-d,,ActiveEnhancement,2,특성 3,처치 시 쿨다운 반환 +20%,,,RuntimeImplemented,Shared kill cooldown refund bonus support adds +20% refund on Rin-D kills.
+rin-d-trait-5,rin,rin-d,rin-d,,ActiveEnhancement,4,특성 5,보스 대상 위력 +25%,,,RuntimeImplemented,Shared boss-target damage support now applies Rin-D trait 5 to boss and midboss enemies only.
+rin-d-master-1,rin,rin-d,rin-d,,ActiveMaster,0,확정 종결,"처형 대상에게 치명타 확률 +50%, 처치 시 쿨다운 완전 초기화, 처치 순간 대상 주변에 90% 신성 피해 폭발",,,RuntimeImplemented,"Shared execute crit bonus, kill cooldown reset, and OnKill trigger wiring now implement Rin-D master 1."
+vega-d-master-1,vega,vega-d,vega-d,,ActiveMaster,0,명부 난도질,"각 표식 대상 위치에 범위 참격 2회 추가 발생, 각 참격 위력 -35%",,,ReferenceDirect,Reference numeric effect mapped into unified choice CSV.
+vega-e-trait-4,vega,vega-e,vega-e,,ActiveEnhancement,3,특성 4,이름표식 20스택 이상인 대상에게 치명타 확률 +35%,,,RuntimeImplemented,Shared conditional crit chance bonus versus target status stacks.
+vega-e-trait-5,vega,vega-e,vega-e,,ActiveEnhancement,4,특성 5,최종선고로 적을 처치하면 소모한 이름표식의 25%를 주변 적에게 분배,,,RuntimeImplemented,Shared consumed-status redistribution runtime with user-provided search radius 100 and target count 1.
