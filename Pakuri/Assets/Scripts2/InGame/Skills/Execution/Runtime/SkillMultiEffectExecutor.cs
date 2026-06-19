@@ -503,7 +503,7 @@ namespace Pakuri.InGame
                     context.CombatManager.ApplyShieldStatus(
                         target.Model,
                         statusSpec.StatusData,
-                        ResolveStatusEffectShieldAmount(context.Caster, effect),
+                        ResolveStatusEffectShieldAmount(context.Caster, effect, snapshot),
                         statusSpec.DurationSeconds,
                         statusSpec.Stacks,
                         statusSpec.MaxStacks,
@@ -551,7 +551,10 @@ namespace Pakuri.InGame
             var statusMatches = true;
             if (!string.IsNullOrWhiteSpace(effect.ConditionStatusId))
             {
-                statusMatches = StatusEffectRuntime.MatchesConditionStatus(target, effect.ConditionStatusId);
+                statusMatches = StatusEffectRuntime.MatchesConditionStatus(
+                    target,
+                    effect.ConditionStatusId,
+                    effect.ConditionStatusSourceSkillId);
             }
 
             var skillMatches = true;
@@ -611,6 +614,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
+            statusData = SkillStatusSpecUtility.ResolveStatusData(statusData, statusData.Kind, snapshot);
             var definition = StatusEffectUtility.GetDefinition(statusData.Kind);
             var duration = statusData.Duration > 0f ? statusData.Duration : definition.DefaultDurationSeconds;
             var targetedDurationBonus = ResolveStatusDurationBonus(snapshot, statusData, statusData.Kind);
@@ -751,7 +755,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        private static float ResolveStatusEffectShieldAmount(BaseUnitRuntimeModel caster, SkillEffectDefinition effect)
+        private static float ResolveStatusEffectShieldAmount(BaseUnitRuntimeModel caster, SkillEffectDefinition effect, SkillExecutionSnapshot snapshot)
         {
             if (effect == null)
             {
@@ -769,7 +773,13 @@ namespace Pakuri.InGame
             }
 
             var coefficient = useSpellPower ? effect.SpellPowerCoefficient : effect.AttackPowerCoefficient;
-            return Mathf.Max(0f, (effect.BaseDamage + stat * coefficient) * Mathf.Max(0f, effect.DamageMultiplier));
+            var shield = (effect.BaseDamage + stat * coefficient) * Mathf.Max(0f, effect.DamageMultiplier);
+            if (snapshot != null)
+            {
+                shield = (shield + snapshot.BaseDamageBonus) * Mathf.Max(0f, snapshot.ShieldAmountMultiplier);
+            }
+
+            return Mathf.Max(0f, shield);
         }
 
         private static SkillTargetingSpec BuildTargeting(SkillEffectDefinition effect)

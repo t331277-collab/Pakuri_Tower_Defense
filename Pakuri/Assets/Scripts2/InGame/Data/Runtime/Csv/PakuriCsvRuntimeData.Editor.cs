@@ -62,8 +62,8 @@ namespace Pakuri.Data
             sourceCatalog.StageOneEnemies = LoadImportedSourceTextAssetOrThrow(StageOneEnemiesFileName);
             sourceCatalog.StageTwoEnemies = LoadImportedSourceTextAssetOrThrow(StageTwoEnemiesFileName);
             sourceCatalog.EnemySkills = LoadTextAssetOrThrow(
-                EnemySkillDataAssetPath,
-                "Create EnemySkillData.csv under Assets/CSVdata before validation.");
+                GetImportedSourceAssetPath(EnemySkillDataFileName),
+                "Create EnemySkillData.csv under Assets/CSVdata/runtime/enemy before validation.");
             EditorUtility.SetDirty(sourceCatalog);
 
             var sourceModel = LoadSourceModel(sourceCatalog);
@@ -103,15 +103,15 @@ namespace Pakuri.Data
 
         private static TextAsset LoadImportedSourceTextAssetOrThrow(string fileName)
         {
-            var assetPath = $"{ImportedSourceAssetRoot}/{fileName}";
+            var assetPath = GetImportedSourceAssetPath(fileName);
             return LoadTextAssetOrThrow(
                 assetPath,
-                "Import the source CSV into Assets/CSVdata/source before validation.");
+                "Import the source CSV into Assets/CSVdata/runtime before validation.");
         }
 
         private static TextAsset LoadImportedSourceTextAssetIfPresent(string fileName)
         {
-            var assetPath = $"{ImportedSourceAssetRoot}/{fileName}";
+            var assetPath = GetImportedSourceAssetPath(fileName);
             var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
             if (asset != null)
             {

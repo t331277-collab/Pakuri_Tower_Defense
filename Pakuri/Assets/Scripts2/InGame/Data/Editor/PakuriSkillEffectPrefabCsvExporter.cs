@@ -11,7 +11,7 @@ namespace Pakuri.Data
     internal static class PakuriSkillEffectPrefabCsvExporter
     {
         private const string MonsterAssetFolder = "Assets/Data/GameData/Monsters";
-        private const string MonsterSkillChoicesCsvPath = "Assets/CSVdata/source/monster_skill_choices.csv";
+        private const string MonsterSkillChoicesCsvPath = "Assets/CSVdata/runtime/monster/skills/monster_skill_choices.csv";
         private const string ChoiceIdColumnName = "choice_id";
         private const string SkillEffectPrefabPathColumnName = "skill_effect_prefab_path";
 

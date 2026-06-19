@@ -250,11 +250,38 @@ namespace Pakuri.Data
                 new[] { "ratio" });
             AddSkillNodeHandlerSchema(schemas, "DamageMultiplier", SkillExecutionPlanNodeKind.DamageModifier,
                 new[] { "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "ShieldAmountMultiplier", SkillExecutionPlanNodeKind.Action,
+                new[] { "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "CountStatusDamageMultiplier", SkillExecutionPlanNodeKind.DamageModifier,
+                new[] { "status_id", "target_side", "amount_per_count" }, new[] { "max_count" }, EnumParamValues(
+                    "target_side", Enum.GetNames(typeof(SkillMultiEffectTargetSide))));
             AddSkillNodeHandlerSchema(schemas, "CooldownMultiplier", SkillExecutionPlanNodeKind.Action,
                 new[] { "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "MagazineBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "ReloadTimeMultiplier", SkillExecutionPlanNodeKind.Action,
+                new[] { "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "PierceBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "RadiusMultiplier", SkillExecutionPlanNodeKind.Action,
                 new[] { "multiplier" });
             AddSkillNodeHandlerSchema(schemas, "RadiusBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "DurationBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus_seconds" });
+            AddSkillNodeHandlerSchema(schemas, "StatusActionSpeedBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" }, new[] { "status_id" });
+            AddSkillNodeHandlerSchema(schemas, "StatusAttackPowerBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "StatusAilmentResistanceBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "StatusDurationBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "status_id", "bonus_seconds" });
+            AddSkillNodeHandlerSchema(schemas, "StatusConditionalDamageTakenBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "source_status_id", "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "StatusElementDamageTakenBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "StatusCriticalDamageTakenBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "DelayedDamage", SkillExecutionPlanNodeKind.Action,
                 new[] { "delay_seconds" });
@@ -470,7 +497,6 @@ namespace Pakuri.Data
                     }
                     break;
                 case SkillNodeOwnerKind.Passive:
-                    errors.Add($"Skill node '{node.Id}' uses owner_kind 'Passive', but passive-owned normalized nodes are not wired into runtime plans yet.");
                     if (!model.Skills.TryGetValue(node.OwnerId, out var passive) || passive.SkillKind != PakuriCsvSkillKind.Passive)
                     {
                         errors.Add($"Skill node '{node.Id}' references unknown passive owner '{node.OwnerId}'.");
@@ -660,11 +686,46 @@ namespace Pakuri.Data
                 AddLegacyOverlapError(node, "damage_multiplier", errors);
             }
 
+            if (string.Equals(node.HandlerId, "ShieldAmountMultiplier", StringComparison.OrdinalIgnoreCase)
+                && choice.HasDamageMultiplier
+                && !NearlyEqual(choice.DamageMultiplier, 1f))
+            {
+                AddLegacyOverlapError(node, "damage_multiplier", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "CountStatusDamageMultiplier", StringComparison.OrdinalIgnoreCase)
+                && (!string.IsNullOrWhiteSpace(choice.CountStatusId)
+                    || !NearlyZero(choice.DamageMultiplierPerCount)
+                    || choice.CountMax > 0))
+            {
+                AddLegacyOverlapError(node, "count_status_id/damage_multiplier_per_count/count_max", errors);
+            }
+
             if (string.Equals(node.HandlerId, "CooldownMultiplier", StringComparison.OrdinalIgnoreCase)
                 && choice.HasCooldownMultiplier
                 && !NearlyEqual(choice.CooldownMultiplier, 1f))
             {
                 AddLegacyOverlapError(node, "cooldown_multiplier", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "MagazineBonus", StringComparison.OrdinalIgnoreCase)
+                && choice.HasMagazineBonus
+                && choice.MagazineBonus != 0)
+            {
+                AddLegacyOverlapError(node, "magazine_bonus", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "ReloadTimeMultiplier", StringComparison.OrdinalIgnoreCase)
+                && choice.HasReloadTimeMultiplier
+                && !NearlyEqual(choice.ReloadTimeMultiplier, 1f))
+            {
+                AddLegacyOverlapError(node, "reload_time_multiplier", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "PierceBonus", StringComparison.OrdinalIgnoreCase)
+                && choice.PierceBonus != 0)
+            {
+                AddLegacyOverlapError(node, "pierce_bonus", errors);
             }
 
             if (string.Equals(node.HandlerId, "RadiusMultiplier", StringComparison.OrdinalIgnoreCase)
@@ -678,6 +739,60 @@ namespace Pakuri.Data
                 && !NearlyZero(choice.RadiusBonus))
             {
                 AddLegacyOverlapError(node, "radius_bonus", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "DurationBonus", StringComparison.OrdinalIgnoreCase)
+                && !NearlyZero(choice.DurationBonus))
+            {
+                AddLegacyOverlapError(node, "duration_bonus", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase)
+                && choice.HasStatusActionSpeedBonus
+                && !NearlyZero(choice.StatusActionSpeedBonus))
+            {
+                AddLegacyOverlapError(node, "status_action_speed_bonus", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase)
+                && choice.HasStatusAttackPowerBonus
+                && !NearlyZero(choice.StatusAttackPowerBonus))
+            {
+                AddLegacyOverlapError(node, "status_attack_power_bonus", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "StatusAilmentResistanceBonus", StringComparison.OrdinalIgnoreCase)
+                && choice.HasStatusAilmentResistanceBonus
+                && !NearlyZero(choice.StatusAilmentResistanceBonus))
+            {
+                AddLegacyOverlapError(node, "status_ailment_resistance_bonus", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "StatusDurationBonus", StringComparison.OrdinalIgnoreCase)
+                && (!string.IsNullOrWhiteSpace(choice.StatusDurationBonusStatusId)
+                    || !NearlyZero(choice.StatusDurationBonus)))
+            {
+                AddLegacyOverlapError(node, "status_duration_bonus_*", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "StatusConditionalDamageTakenBonus", StringComparison.OrdinalIgnoreCase)
+                && choice.HasStatusConditionalDamageTakenBonus)
+            {
+                AddLegacyOverlapError(node, "status_conditional_*", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase)
+                && choice.HasStatusElementDamageTakenBonus
+                && !NearlyZero(choice.StatusElementDamageTakenBonus))
+            {
+                AddLegacyOverlapError(node, "status_element_damage_taken_bonus", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "StatusCriticalDamageTakenBonus", StringComparison.OrdinalIgnoreCase)
+                && choice.HasStatusCriticalDamageTakenBonus
+                && !NearlyZero(choice.StatusCriticalDamageTakenBonus))
+            {
+                AddLegacyOverlapError(node, "status_critical_damage_taken_bonus", errors);
             }
 
             if (string.Equals(node.HandlerId, "TargetHealthRatioThresholdBonus", StringComparison.OrdinalIgnoreCase)

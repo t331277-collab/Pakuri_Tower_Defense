@@ -151,7 +151,11 @@ namespace Pakuri.InGame
             var needsChoiceCriticalDamageOverride = snapshot != null && snapshot.HasStatusCriticalDamageTakenBonus;
             var needsChoiceAilmentResistanceOverride = snapshot != null && snapshot.HasStatusAilmentResistanceBonus;
             var needsChoiceConditionalDamageTakenOverride = snapshot != null && snapshot.HasStatusConditionalDamageTakenBonus;
-            var needsChoiceActionSpeedOverride = snapshot != null && snapshot.HasStatusActionSpeedBonus;
+            var statusId = statusData != null && !string.IsNullOrWhiteSpace(statusData.StatusTag)
+                ? statusData.StatusTag
+                : StatusEffectUtility.GetDefinition(kind).Id;
+            var actionSpeedBonus = snapshot != null ? snapshot.ResolveStatusActionSpeedBonus(statusId) : 0f;
+            var needsChoiceActionSpeedOverride = !Mathf.Approximately(actionSpeedBonus, 0f);
             var needsChoiceAttackPowerOverride = snapshot != null && snapshot.HasStatusAttackPowerBonus;
             if (statusData == null || statusData.Kind != kind)
             {
@@ -194,7 +198,7 @@ namespace Pakuri.InGame
 
             if (needsChoiceActionSpeedOverride)
             {
-                overriddenStatus.Modifiers.ActionSpeedBonus += snapshot.StatusActionSpeedBonus;
+                overriddenStatus.Modifiers.ActionSpeedBonus += actionSpeedBonus;
             }
 
             if (needsChoiceAttackPowerOverride)

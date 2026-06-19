@@ -5,6 +5,49 @@
 - This active file now keeps only the current `NewRunScene` authority split and the surviving new-scene flow baseline.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-06-19 Stage Flow CSV Folder Move
+
+### Task title
+
+Move active `NewRunScene` stage-flow CSV files into `Assets/CSVdata/stage_flow`.
+
+### Goals
+
+- Separate stage-flow CSV files from runtime catalog CSV files.
+- Preserve `NewRunScene` serialized `StageManager` TextAsset references by moving `.meta` files with the CSV files.
+- Keep Stage 1 and Stage 2 day/encounter/reward data available to the existing `StageManager` flow.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No StageManager gameplay behavior or CSV row content was changed.
+- Unity Play Mode progression verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Moved and CSV-shape checked.
+
+### Next Actions
+
+- Future stage-flow rows should be edited under `Pakuri/Assets/CSVdata/stage_flow/`.
+- User verifies Play Mode day/stage progression as usual.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/stage_flow/StageDay.csv` exists after the move with 10 columns, 22 data/type rows after the header, and no field-count mismatch.
+- `Pakuri/Assets/CSVdata/stage_flow/StageEncounter.csv` exists after the move with 14 columns, 60 data/type rows after the header, and no field-count mismatch.
+- `Pakuri/Assets/CSVdata/stage_flow/StageReward.csv` exists after the move with 13 columns, 9 data/type rows after the header, and no field-count mismatch.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` had serialized `stageDayCsv`, `stageEncounterCsv`, and `stageRewardCsv` TextAsset GUID references before the move; the CSV `.meta` files were moved with the CSV files to preserve those GUIDs.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors after the move.
+
+### History
+
+- 2026-06-19: Code Builder moved `StageDay.csv`, `StageEncounter.csv`, and `StageReward.csv` from `Assets/CSVdata/` to `Assets/CSVdata/stage_flow/` while preserving `.meta` files.
+
 ## Task: 2026-05-31 Offering Choice Labels And Active Skill Cap
 
 ### Task title

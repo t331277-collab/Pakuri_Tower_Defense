@@ -208,6 +208,7 @@ namespace Pakuri.Data
         public int RequiredSourceStatusMinStacks;
         public bool ApplyOnce;
         public string ConditionStatusId;
+        public string ConditionStatusSourceSkillId;
         public SkillMultiEffectTargetSide ConditionTargetSide;
         public string ConditionSkillAttribute;
         public float ConditionHealthRatioMax;
@@ -537,5 +538,6 @@ namespace Pakuri.Data
         public SkillChoiceDefinition[] BaseModifierChoices = Array.Empty<SkillChoiceDefinition>();
         public SkillChoiceDefinition[] EnhancementChoices = Array.Empty<SkillChoiceDefinition>();
         public SkillEffectDefinition[] PassiveEffects = Array.Empty<SkillEffectDefinition>();
+        public SkillNodeDefinition[] NormalizedPlanNodes = Array.Empty<SkillNodeDefinition>();
     }
 }

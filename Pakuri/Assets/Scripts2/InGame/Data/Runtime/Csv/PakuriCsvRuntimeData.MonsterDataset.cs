@@ -276,6 +276,7 @@ namespace Pakuri.Data
             public int RequiredSourceStatusMinStacks;
             public bool ApplyOnce;
             public string ConditionStatusId;
+            public string ConditionStatusSourceSkillId;
             public SkillMultiEffectTargetSide ConditionTargetSide;
             public string ConditionSkillAttribute;
             public float ConditionHealthRatioMax;
@@ -633,6 +634,7 @@ namespace Pakuri.Data
                 RequiredSourceStatusMinStacks = ReadOptionalIntIfColumnExists(record, "required_source_status_min_stacks"),
                 ApplyOnce = record.ReadBool("apply_once"),
                 ConditionStatusId = record.ReadString("condition_status_id"),
+                ConditionStatusSourceSkillId = ReadOptionalStringIfColumnExists(record, "condition_status_source_skill_id"),
                 ConditionTargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("condition_target_side"),
                 ConditionSkillAttribute = record.ReadString("condition_skill_attribute"),
                 ConditionHealthRatioMax = ReadOptionalFloatIfColumnExists(record, "condition_health_ratio_max"),

@@ -5,6 +5,49 @@
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-06-19 CSV Runtime Source Asset Path Reorganization
+
+### Task title
+
+Keep runtime CSV source asset references valid after moving CSV files into purpose-specific folders.
+
+### Goals
+
+- Preserve runtime source catalog and asset catalog sync after CSV file moves.
+- Preserve Unity object references by moving CSV `.meta` files with their CSV files.
+- Keep editor auto-sync watching the new runtime CSV folder tree.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The runtime source catalog asset remains under `Assets/Resources/Pakuri/CSVRuntime`.
+- Stage-flow scene references are preserved by GUID and remain user Play Mode verified.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and Unity-MCP sync/validate checked.
+
+### Next Actions
+
+- Keep prefab-path authority in CSV rows unchanged; only the CSV table asset locations changed.
+- When adding a new runtime CSV file, add its purpose folder mapping in `PakuriCsvRuntimeData.GetImportedSourceAssetPath(...)`.
+
+### Evidence
+
+- `PakuriCsvRuntimeData.Editor.cs` now syncs source TextAssets from `Assets/CSVdata/runtime/...` instead of `Assets/CSVdata/source`.
+- `PakuriCsvRuntimeCatalogPostprocessor.cs` now detects changed `.csv` files under `Assets/CSVdata/runtime`.
+- `PakuriSkillEffectPrefabCsvExporter.cs` now targets `Assets/CSVdata/runtime/monster/skills/monster_skill_choices.csv`.
+- Unity-MCP sync logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/runtime' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+- Unity-MCP warning/error console read after sync/validate returned 0 entries.
+
+### History
+
+- 2026-06-19: Code Builder reorganized active CSV source assets and updated runtime/editor catalog paths without changing prefab-path strings inside the CSV rows.
+
 ## Task: 2026-05-31 Stage2 Enemy Prefab Binding
 
 ### Task title

@@ -5,6 +5,67 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-06-19 Ariel Effect Object Trigger Binding Handoff
+
+### Task title
+
+Document how Ariel A-J can move from pre-combined CSV rows to skill body plus small effect objects, trigger bindings, and conditional modifiers.
+
+### Goals
+
+- Preserve the current runtime evidence that Ariel already has base skill rows, effect rows, trigger rows, and a small normalized node start.
+- Define a migration handoff that reduces Ariel C-style row explosion.
+- Explain how the old structure remains compatibility input until parity is verified.
+
+### Constraints
+
+- Role Owner started as Designer and continued as Code Builder after user explicitly requested implementation.
+- The implementation uses generic `monster_skill_nodes.csv` and `monster_skill_node_params.csv`; no specialized effect object CSV files were added in this pass.
+- User resolved the six ambiguous design questions before implementation.
+- Unity Play Mode parity remains user-owned.
+
+### Role Owner
+
+Designer / Code Builder
+
+### Status
+
+Code Builder pass implemented normalized node handler expansion, Ariel numeric choice node migration, and Ariel C blessing row-explosion reduction.
+
+### Next Actions
+
+- User Play Mode verifies Ariel C combinations, Ariel B shield events, Ariel E shield composition, and Ariel J post-E / Ariel-E-shield-only behavior.
+- Code Reviewer pass is pending after the Phase 2-5 implementation.
+
+### Evidence
+
+- `Pakuri/reference/Report/2026-06-19-ariel-effect-object-trigger-binding-handoff.md` was created.
+- `Pakuri/reference/2.Monster/ariel/skill/` contains the inspected Ariel A-J reference markdown files.
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skills.csv` contains Ariel base rows `ariel-a` through `ariel-j`.
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_effects.csv` contains Ariel effect rows including pre-combined Ariel C blessing rows.
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_triger.csv` contains Ariel trigger rows for last projectile, shield expire, shield absorb, and status expire behavior.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillMultiEffectExecutor.cs` owns current multi-effect execution for damage, status, and status-duration extension.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` owns current combat trigger dispatch.
+- User answers recorded in the handoff: D trait 5 requires the attacker itself to have shield; J shield condition requires Ariel-E-generated shield; I holy exposure damage taken applies to all incoming damage while exposure exists; passives are always active; durations stay seconds; generic node CSVs are the storage path.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` now registers reusable handlers including `CountStatusDamageMultiplier`, `MagazineBonus`, `ReloadTimeMultiplier`, `PierceBonus`, `DurationBonus`, `StatusActionSpeedBonus`, `StatusAilmentResistanceBonus`, `StatusConditionalDamageTakenBonus`, and `StatusElementDamageTakenBonus`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSnapshot.cs` now applies normalized choice nodes on the combat snapshot path and supports status-targeted action speed bonuses.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillMultiEffectExecutor.cs` now resolves status snapshot overrides through `SkillStatusSpecUtility.ResolveStatusData(...)`.
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_nodes.csv` now contains Ariel choice-owned normalized node rows for migrated numeric modifiers and `ariel-c-trait-2-blessing-action-speed`.
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_effects.csv` has 9 Ariel C pre-combined blessing rows disabled as `MigratedToEffectBinding`; the base rows now compose with normalized choice nodes.
+- Phase 2-5 added `ShieldAmountMultiplier` so shield amount choices can avoid reusing generic damage multipliers when damage and shield behavior diverge.
+- `SkillMultiEffectExecutor.ResolveStatusEffectShieldAmount(...)` now receives the combat snapshot and applies the shield-specific multiplier to status-effect shield amounts.
+- `StatusEffectRuntime.MatchesConditionStatus(...)` now supports an optional required source skill id for effect condition checks.
+- `ariel-j-shielded-holy-damage` now uses `condition_status_source_skill_id=ariel-e-shield-base`, matching the source id stored by the Ariel E shield effect status.
+- `monster_skill_triger.csv` now keeps A last-shot, B shield-expire, B shield-absorb, and D mark-expire trigger rows as explicit runtime trigger-binding compatibility rows.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings for `System.Net.Http` and `System.IO.Compression` remained.
+- Unity-MCP `Pakuri/Sync CSV Runtime Catalog Assets`, `Pakuri/Validate CSV Source Data`, and `Pakuri/InGame/Validate Skill Data` completed; console logged runtime catalog load and `InGame skill data validation passed with 0 warning(s).`
+
+### History
+
+- 2026-06-19: User asked how Ariel A-J would be decomposed into skill body, small effect objects, trigger bindings, and conditional modifiers, including runtime application and old-structure handling.
+- 2026-06-19: User then requested Code Builder implementation and answered the ambiguity questions; Code Builder implemented the generic node handler expansion, migrated 28 Ariel numeric choice modifiers into normalized nodes, added the Ariel C trait2 targeted blessing node, and disabled 9 Ariel C pre-combined rows.
+- 2026-06-19: User requested the remaining Phase 2-5 implementation; Code Builder added shield-specific multiplier support, E shield row reduction, J-owned post-E triggers, and source-specific effect conditions.
+
 ## Task: 2026-05-31 Nexus Exclusion From Skill And Status Targets
 
 ### Task title

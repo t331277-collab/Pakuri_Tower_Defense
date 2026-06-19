@@ -54,6 +54,8 @@ namespace Pakuri.InGame
             skill.SkillEffectPrefab = source.SkillEffectPrefab;
             skill.EnhancementChoices = MapChoices(source.EnhancementChoices);
             skill.MasterChoices = Array.Empty<SkillChoiceEffectSpec>();
+            skill.MultiEffects = source.PassiveEffects ?? Array.Empty<SkillEffectDefinition>();
+            skill.NormalizedPlanNodes = MapSkillNodeDefinitions(source.NormalizedPlanNodes);
             skill.TriggerType = PassiveTrigger.Always;
             skill.ApplyTarget = PassiveTarget.Self;
             return skill;
@@ -431,6 +433,8 @@ namespace Pakuri.InGame
                     SkillEffectPrefab = choice != null ? choice.SkillEffectPrefab : null,
                     HasDamageMultiplier = choice != null && choice.HasDamageMultiplier,
                     DamageMultiplier = choice != null && choice.HasDamageMultiplier ? choice.DamageMultiplier : 1f,
+                    HasShieldAmountMultiplier = false,
+                    ShieldAmountMultiplier = 1f,
                     BaseDamageBonus = choice != null ? choice.BaseDamageBonus : 0f,
                     HasCooldownMultiplier = choice != null && choice.HasCooldownMultiplier,
                     CooldownMultiplier = choice != null && choice.HasCooldownMultiplier ? choice.CooldownMultiplier : 1f,
@@ -577,7 +581,7 @@ namespace Pakuri.InGame
             return mapped;
         }
 
-        private static void ApplyNormalizedChoiceNodes(SkillChoiceEffectSpec spec, SkillNodeDefinition[] nodes)
+        internal static void ApplyNormalizedChoiceNodes(SkillChoiceEffectSpec spec, SkillNodeDefinition[] nodes)
         {
             if (spec == null || nodes == null || nodes.Length == 0)
             {
@@ -606,10 +610,46 @@ namespace Pakuri.InGame
                 return;
             }
 
+            if (string.Equals(handlerId, "ShieldAmountMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasShieldAmountMultiplier = true;
+                spec.ShieldAmountMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "CountStatusDamageMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.CountStatusId = GetParam(node, "status_id");
+                spec.CountTargetSide = GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.AllAllies);
+                spec.DamageMultiplierPerCount += GetFloatParam(node, "amount_per_count", 0f);
+                spec.CountMax = GetIntParam(node, "max_count", spec.CountMax);
+                return;
+            }
+
             if (string.Equals(handlerId, "CooldownMultiplier", StringComparison.OrdinalIgnoreCase))
             {
                 spec.HasCooldownMultiplier = true;
                 spec.CooldownMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "MagazineBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasMagazineBonus = true;
+                spec.MagazineBonus += GetIntParam(node, "bonus", 0);
+                return;
+            }
+
+            if (string.Equals(handlerId, "ReloadTimeMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasReloadTimeMultiplier = true;
+                spec.ReloadTimeMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "PierceBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.PierceBonus += GetIntParam(node, "bonus", 0);
                 return;
             }
 
@@ -623,6 +663,63 @@ namespace Pakuri.InGame
             if (string.Equals(handlerId, "RadiusBonus", StringComparison.OrdinalIgnoreCase))
             {
                 spec.RadiusBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "DurationBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.DurationBonus += GetFloatParam(node, "bonus_seconds", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasStatusActionSpeedBonus = true;
+                spec.StatusActionSpeedBonusStatusId = GetParam(node, "status_id");
+                spec.StatusActionSpeedBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasStatusAttackPowerBonus = true;
+                spec.StatusAttackPowerBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "StatusAilmentResistanceBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasStatusAilmentResistanceBonus = true;
+                spec.StatusAilmentResistanceBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "StatusDurationBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.StatusDurationBonusStatusId = GetParam(node, "status_id");
+                spec.StatusDurationBonus += GetFloatParam(node, "bonus_seconds", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "StatusConditionalDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasStatusConditionalDamageTakenBonus = true;
+                spec.StatusConditionalSourceStatusId = GetParam(node, "source_status_id");
+                spec.StatusConditionalDamageTakenBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasStatusElementDamageTakenBonus = true;
+                spec.StatusElementDamageTakenBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "StatusCriticalDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasStatusCriticalDamageTakenBonus = true;
+                spec.StatusCriticalDamageTakenBonus += GetFloatParam(node, "bonus", 0f);
                 return;
             }
 

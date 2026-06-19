@@ -9,7 +9,14 @@ namespace Pakuri.Data
 {
     public static partial class PakuriCsvRuntimeData
     {
-        private const string ImportedSourceAssetRoot = "Assets/CSVdata/source";
+        private const string CsvDataAssetRoot = "Assets/CSVdata";
+        private const string RuntimeCsvAssetRoot = CsvDataAssetRoot + "/runtime";
+        private const string RuntimeCatalogCsvAssetRoot = RuntimeCsvAssetRoot + "/catalog";
+        private const string RuntimeMonsterCsvAssetRoot = RuntimeCsvAssetRoot + "/monster";
+        private const string RuntimeMonsterSkillCsvAssetRoot = RuntimeMonsterCsvAssetRoot + "/skills";
+        private const string RuntimeEnemyCsvAssetRoot = RuntimeCsvAssetRoot + "/enemy";
+        private const string RuntimeStatusCsvAssetRoot = RuntimeCsvAssetRoot + "/status";
+        private const string ImportedSourceAssetRoot = RuntimeCsvAssetRoot;
         private const string RuntimeResourcesFolderAssetPath = "Assets/Resources/Pakuri/CSVRuntime";
         private const string SourceCatalogAssetPath = RuntimeResourcesFolderAssetPath + "/PakuriCsvRuntimeSourceCatalog.asset";
         private const string AssetCatalogAssetPath = RuntimeResourcesFolderAssetPath + "/PakuriCsvRuntimeAssetCatalog.asset";
@@ -32,13 +39,56 @@ namespace Pakuri.Data
         private const string StageOneEnemiesFileName = "stage_one_enemies.csv";
         private const string StageTwoEnemiesFileName = "stage_two_enemies.csv";
         private const string EnemySkillDataFileName = "EnemySkillData.csv";
-        private const string EnemySkillDataAssetPath = "Assets/CSVdata/EnemySkillData.csv";
+        private const string EnemySkillDataAssetPath = RuntimeEnemyCsvAssetRoot + "/" + EnemySkillDataFileName;
 
         private static bool initialized;
         private static bool failed;
         private static GameDataCatalog runtimeCatalog;
         private static PakuriCsvRuntimeSourceCatalog runtimeSourceCatalog;
         private static PakuriCsvRuntimeAssetCatalog runtimeAssetCatalog;
+
+        public static string GetImportedSourceAssetPath(string fileName)
+        {
+            switch (fileName)
+            {
+                case CatalogMonstersFileName:
+                case CatalogStageOneEnemiesFileName:
+                case CatalogStageTwoEnemiesFileName:
+                    return $"{RuntimeCatalogCsvAssetRoot}/{fileName}";
+                case MonstersFileName:
+                case MonsterRewardChoicesFileName:
+                    return $"{RuntimeMonsterCsvAssetRoot}/{fileName}";
+                case MonsterSkillsFileName:
+                case MonsterSkillBaseFileName:
+                case MonsterSkillChoiceBaseFileName:
+                case MonsterSkillNodesFileName:
+                case MonsterSkillNodeParamsFileName:
+                case MonsterSkillEffectsFileName:
+                case MonsterSkillTriggersFileName:
+                case MonsterSkillChoicesFileName:
+                    return $"{RuntimeMonsterSkillCsvAssetRoot}/{fileName}";
+                case StatusEffectsFileName:
+                    return $"{RuntimeStatusCsvAssetRoot}/{fileName}";
+                case StageOneEnemiesFileName:
+                case StageTwoEnemiesFileName:
+                case EnemySkillDataFileName:
+                    return $"{RuntimeEnemyCsvAssetRoot}/{fileName}";
+                default:
+                    return $"{RuntimeCsvAssetRoot}/{fileName}";
+            }
+        }
+
+        public static bool IsRuntimeCsvSourceAssetPath(string assetPath)
+        {
+            if (string.IsNullOrWhiteSpace(assetPath))
+            {
+                return false;
+            }
+
+            var normalized = assetPath.Replace('\\', '/');
+            return normalized.StartsWith(RuntimeCsvAssetRoot + "/", StringComparison.OrdinalIgnoreCase)
+                && normalized.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void InitializeBeforeSceneLoad()

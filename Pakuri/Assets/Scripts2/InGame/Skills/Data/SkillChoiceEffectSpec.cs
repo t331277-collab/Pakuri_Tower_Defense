@@ -18,6 +18,8 @@ namespace Pakuri.InGame
         [Header("Multipliers")]
         public bool HasDamageMultiplier;
         public float DamageMultiplier = 1f;
+        public bool HasShieldAmountMultiplier;
+        public float ShieldAmountMultiplier = 1f;
         public float BaseDamageBonus;
         public bool HasCooldownMultiplier;
         public float CooldownMultiplier = 1f;
@@ -147,6 +149,7 @@ namespace Pakuri.InGame
         public string StatusTag;
         public BuffModifierSpec AddedModifiers = new BuffModifierSpec();
         public bool HasStatusActionSpeedBonus;
+        public string StatusActionSpeedBonusStatusId;
         public float StatusActionSpeedBonus;
         public bool HasStatusAttackPowerBonus;
         public float StatusAttackPowerBonus;

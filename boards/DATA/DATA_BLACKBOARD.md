@@ -5,6 +5,124 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-06-19 CSVdata Folder Reorganization
+
+### Task title
+
+Move active CSV authoring files into purpose-specific `Assets/CSVdata` folders and remove unused Codex backup CSV files.
+
+### Goals
+
+- Replace the old flat `Assets/CSVdata/source` runtime CSV folder with purpose-based runtime folders.
+- Keep runtime catalog sync, validation, and editor auto-sync functional after the move.
+- Preserve Unity GUID references by moving CSV `.meta` files with the CSV files.
+- Delete unused `.bak_codex` CSV backup files from the active CSV folder.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active runtime CSV files remain UTF-8 and retain their row shape.
+- `StageDay.csv`, `StageEncounter.csv`, and `StageReward.csv` remain active `NewRunScene` stage-flow inputs and were moved, not deleted.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, CSV-shape checked, compiled, and Unity-MCP sync/validate checked.
+
+### Next Actions
+
+- Future runtime CSV files should be added under `Assets/CSVdata/runtime/{catalog,enemy,monster,status}` by ownership.
+- Future NewRunScene stage-flow CSV files should stay under `Assets/CSVdata/stage_flow`.
+- Do not restore `Assets/CSVdata/source`; update `PakuriCsvRuntimeData.GetImportedSourceAssetPath(...)` when adding a new runtime CSV table.
+
+### Evidence
+
+- Active catalog CSV files now live under `Pakuri/Assets/CSVdata/runtime/catalog/`.
+- Active enemy CSV files now live under `Pakuri/Assets/CSVdata/runtime/enemy/`, including `EnemySkillData.csv`.
+- Active monster base/choice catalog CSV files now live under `Pakuri/Assets/CSVdata/runtime/monster/`.
+- Active monster skill CSV files now live under `Pakuri/Assets/CSVdata/runtime/monster/skills/`.
+- Active status CSV files now live under `Pakuri/Assets/CSVdata/runtime/status/`.
+- Active stage-flow CSV files now live under `Pakuri/Assets/CSVdata/stage_flow/`.
+- Deleted unused backups: `monster_skill_choices.csv.bak_codex`, `monster_skill_effects.csv.bak_codex`, `monster_skill_triger.csv.bak_codex`, and their `.meta` files.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.cs` now maps each runtime CSV filename to its purpose-specific folder through `GetImportedSourceAssetPath(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Editor.cs` now loads imported runtime CSVs through `GetImportedSourceAssetPath(...)`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Editor/PakuriCsvRuntimeCatalogPostprocessor.cs` now watches `Assets/CSVdata/runtime/**/*.csv`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Editor/PakuriSkillEffectPrefabCsvExporter.cs` now writes `monster_skill_choices.csv` at `Assets/CSVdata/runtime/monster/skills/monster_skill_choices.csv`.
+- PowerShell TextFieldParser check returned `bad=` empty for all active CSV files after the move, including runtime and stage-flow CSVs.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- Unity-MCP `Pakuri/Sync CSV Runtime Catalog Assets` logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/runtime' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+- Unity-MCP `Pakuri/Validate CSV Source Data` logged `PakuriCsvRuntimeData loaded runtime catalog from resource source 'Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog' with 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.`
+- Unity-MCP warning/error console read after sync/validate returned 0 entries.
+
+### History
+
+- 2026-06-19: User requested Code Builder to reorganize `Pakuri/Assets/CSVdata` files by purpose, update hard paths, delete `.bak_codex` backups, run dotnet builds, and verify Unity-MCP CSV sync/validate.
+- 2026-06-19: Code Builder moved active CSV files into `runtime/` and `stage_flow/`, removed the old empty `source` folder, updated runtime/editor hard paths, deleted unused `.bak_codex` backup files, and verified CSV shape, builds, and Unity-MCP sync/validate.
+
+## Task: 2026-06-19 Ariel Normalized Choice Node Implementation
+
+### Task title
+
+Move Ariel numeric choice behavior toward generic normalized node authoring and reduce Ariel C pre-combined effect rows.
+
+### Goals
+
+- Use `monster_skill_nodes.csv` and `monster_skill_node_params.csv` as the user-selected generic effect-object storage path.
+- Add reusable node handlers for common choice modifiers instead of adding new wide CSV columns.
+- Migrate Ariel numeric choice modifiers out of `monster_skill_choices.csv` behavior fields into normalized choice nodes.
+- Keep old effect rows only where still needed for compatibility, and disable Ariel C rows made redundant by composition.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No specialized `skill_effect_bindings.csv`, `skill_effect_defs.csv`, or `skill_effect_modifiers.csv` files were added.
+- Existing wide columns remain parser-compatible for old rows.
+- Unity Play Mode parity remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compiled, synced, and Unity-MCP validated.
+
+### Next Actions
+
+- User verifies Ariel C, Ariel B shield amount/duration, Ariel E shield trait/master composition, and Ariel J post-E / E-shield-only behavior in Play Mode.
+- Future new exception behavior should prefer normalized node rows over new wide `monster_skill_choices.csv` columns.
+- Code Reviewer pass is pending after the Phase 2-5 implementation.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` now registers reusable node handlers including `CountStatusDamageMultiplier`, `MagazineBonus`, `ReloadTimeMultiplier`, `PierceBonus`, `DurationBonus`, `StatusActionSpeedBonus`, `StatusAilmentResistanceBonus`, `StatusConditionalDamageTakenBonus`, and `StatusElementDamageTakenBonus`.
+- `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs` now keeps `PassiveDefinition.NormalizedPlanNodes`, and `PakuriCsvRuntimeData.Build.cs` builds passive-owned normalized nodes.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Data/InGameSkillDefinitionMapper.cs` maps the new node handlers into `SkillChoiceEffectSpec`.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSnapshot.cs` now applies normalized choice nodes during combat snapshot creation.
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_nodes.csv` now has 47 imported rows after the Ariel migration, including `ariel-c-trait-2-blessing-action-speed`.
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_node_params.csv` now has 69 imported rows after the Ariel migration and Ariel C trait2 targeted action-speed node addition.
+- Initial PowerShell migration output returned `migrated=28 nodes=47 params=68`; the final Ariel C trait2 node addition brought the parsed param row count to 69.
+- TextFieldParser CSV shape check returned `monster_skill_choices.csv header=114 rows=252 bad=`, `monster_skill_nodes.csv header=14 rows=47 bad=`, `monster_skill_node_params.csv header=4 rows=69 bad=`, and `monster_skill_effects.csv header=70 rows=131 bad=`.
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_effects.csv` has 9 Ariel C pre-combined blessing rows disabled as `MigratedToEffectBinding`.
+- Follow-up Phase 2-5 cleanup added the `ShieldAmountMultiplier` node handler and four Ariel shield amount nodes for B trait1, B master1, E trait2, and E master2.
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_effects.csv` now has one active `ariel-e-shield*` row and three disabled E shield variants marked `MigratedToEffectBinding`.
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_effects.csv` no longer keeps J post-E action-speed behavior under `ariel-e`; those effects are now `ariel-j-after-e-action-speed*`.
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_triger.csv` now has two J-owned `OnSkillCast` trigger rows for `event_skill_id=ariel-e`.
+- `condition_status_source_skill_id` was added to `monster_skill_effects.csv` and runtime parsing/build code so `ariel-j-shielded-holy-damage` can require the shield source `ariel-e-shield-base`.
+- Phase 2-5 CSV shape check returned no bad rows for active Ariel-related skill CSV files, with `monster_skill_effects.csv header=71 rows=133 bad=`.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remained.
+- Unity-MCP sync/validate logs showed CSV runtime catalog sync from `Assets/CSVdata/runtime`, runtime catalog load with 5 monsters, 8 stage-one enemies, and 8 stage-two enemies, and `InGame skill data validation passed with 0 warning(s).`
+
+### History
+
+- 2026-06-19: User requested Code Builder to execute the Ariel effect-object trigger-binding handoff and answered all six ambiguous design questions, including use of generic node CSVs.
+- 2026-06-19: User then requested remaining Phase 2-5 implementation; Code Builder added shield amount nodes, reduced E shield variants, moved J post-E behavior to J-owned trigger/effect rows, and added effect source-skill conditions.
+
 ## Task: 2026-06-17 Normalized Skill Authoring Row Table Handoff
 
 ### Task title

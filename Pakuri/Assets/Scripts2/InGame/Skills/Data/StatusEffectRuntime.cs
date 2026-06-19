@@ -399,6 +399,11 @@ namespace Pakuri.InGame
 
         internal static bool MatchesConditionStatus(BaseUnitRuntimeModel target, string rawValue)
         {
+            return MatchesConditionStatus(target, rawValue, null);
+        }
+
+        internal static bool MatchesConditionStatus(BaseUnitRuntimeModel target, string rawValue, string requiredSourceSkillId)
+        {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
                 return true;
@@ -424,11 +429,56 @@ namespace Pakuri.InGame
                         matchesGroup = false;
                         break;
                     }
+
+                    if (!MatchesRequiredSourceSkill(target, requirement.Kind, requiredSourceSkillId))
+                    {
+                        matchesGroup = false;
+                        break;
+                    }
                 }
 
                 if (matchesGroup)
                 {
                     return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool MatchesRequiredSourceSkill(BaseUnitRuntimeModel target, StatusEffectKind kind, string requiredSourceSkillId)
+        {
+            if (string.IsNullOrWhiteSpace(requiredSourceSkillId))
+            {
+                return true;
+            }
+
+            var statuses = target != null && target.Statuses != null ? target.Statuses.ActiveStatuses : null;
+            var tokens = requiredSourceSkillId.Split(';', ',');
+            for (var i = 0; statuses != null && i < statuses.Count; i++)
+            {
+                var status = statuses[i];
+                if (status == null || status.Kind != kind || status.Stacks <= 0)
+                {
+                    continue;
+                }
+
+                var sourceSkillId = !string.IsNullOrWhiteSpace(status.SourceSkillId)
+                    ? status.SourceSkillId
+                    : status.SourceData != null ? status.SourceData.SourceSkillId : string.Empty;
+                if (string.IsNullOrWhiteSpace(sourceSkillId))
+                {
+                    continue;
+                }
+
+                for (var j = 0; j < tokens.Length; j++)
+                {
+                    var token = tokens[j] != null ? tokens[j].Trim() : string.Empty;
+                    if (!string.IsNullOrWhiteSpace(token)
+                        && string.Equals(token, sourceSkillId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
                 }
             }
 

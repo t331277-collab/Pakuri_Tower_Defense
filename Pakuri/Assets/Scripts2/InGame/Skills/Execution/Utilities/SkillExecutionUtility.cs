@@ -151,7 +151,9 @@ namespace Pakuri.InGame
             var shield = Mathf.Max(0f, skill.ShieldBase + stat * skill.ShieldCoefficient);
             if (snapshot != null)
             {
-                shield = (shield + snapshot.BaseDamageBonus) * Mathf.Max(0f, snapshot.DamageMultiplier);
+                shield = (shield + snapshot.BaseDamageBonus)
+                    * Mathf.Max(0f, snapshot.DamageMultiplier)
+                    * Mathf.Max(0f, snapshot.ShieldAmountMultiplier);
             }
 
             return Mathf.Max(0f, shield);

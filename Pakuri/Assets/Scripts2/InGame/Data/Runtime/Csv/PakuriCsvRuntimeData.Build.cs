@@ -297,6 +297,7 @@ namespace Pakuri.Data
                     RequiredSourceStatusMinStacks = effect.RequiredSourceStatusMinStacks,
                     ApplyOnce = effect.ApplyOnce,
                     ConditionStatusId = effect.ConditionStatusId,
+                    ConditionStatusSourceSkillId = effect.ConditionStatusSourceSkillId,
                     ConditionTargetSide = effect.ConditionTargetSide,
                     ConditionSkillAttribute = effect.ConditionSkillAttribute,
                     ConditionHealthRatioMax = effect.ConditionHealthRatioMax,
@@ -413,7 +414,8 @@ namespace Pakuri.Data
                     Summary = skill.Summary,
                     BaseModifierChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.PassiveBase),
                     EnhancementChoices = BuildSkillChoices(model, skill.Id, PakuriCsvChoiceGroup.PassiveEnhancement),
-                    PassiveEffects = BuildSkillEffects(model, skill.Id)
+                    PassiveEffects = BuildSkillEffects(model, skill.Id),
+                    NormalizedPlanNodes = BuildSkillNodeDefinitions(model, SkillNodeOwnerKind.Passive, skill.Id, skill.Id)
                 };
             }
 

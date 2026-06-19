@@ -84,6 +84,7 @@ namespace Pakuri.InGame
             Source = source;
             SkillId = source != null ? source.SkillId : string.Empty;
             DamageMultiplier = 1f;
+            ShieldAmountMultiplier = 1f;
             CooldownMultiplier = 1f;
             RadiusMultiplier = 1f;
             DurationMultiplier = 1f;
@@ -104,6 +105,7 @@ namespace Pakuri.InGame
         public string SkillId { get; }
         public SkillExecutionPlan Plan { get; private set; }
         public float DamageMultiplier { get; private set; }
+        public float ShieldAmountMultiplier { get; private set; }
         public float CooldownMultiplier { get; private set; }
         public float RadiusMultiplier { get; private set; }
         public float DurationMultiplier { get; private set; }
@@ -147,6 +149,7 @@ namespace Pakuri.InGame
         public string StatusTag { get; private set; }
         public float StatusChanceBonus { get; private set; }
         public bool HasStatusActionSpeedBonus { get; private set; }
+        public string StatusActionSpeedBonusStatusId { get; private set; }
         public float StatusActionSpeedBonus { get; private set; }
         public bool HasStatusAttackPowerBonus { get; private set; }
         public float StatusAttackPowerBonus { get; private set; }
@@ -201,6 +204,7 @@ namespace Pakuri.InGame
         public int RedistributeConsumedStatusTargetCount { get; private set; }
         public GameObject SkillEffectPrefab { get; private set; }
         private readonly HashSet<string> activeChoiceIds = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, float> statusActionSpeedBonuses = new Dictionary<string, float>(System.StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, float> statusDurationBonuses = new Dictionary<string, float>(System.StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, int> statusMaxStacksBonuses = new Dictionary<string, int>(System.StringComparer.OrdinalIgnoreCase);
         private readonly List<ConditionalDamageRule> conditionalDamageRules = new List<ConditionalDamageRule>();
@@ -255,6 +259,11 @@ namespace Pakuri.InGame
             if (spec.HasDamageMultiplier)
             {
                 DamageMultiplier *= PositiveOrDefault(spec.DamageMultiplier, 1f);
+            }
+
+            if (spec.HasShieldAmountMultiplier)
+            {
+                ShieldAmountMultiplier *= PositiveOrDefault(spec.ShieldAmountMultiplier, 1f);
             }
 
             BaseDamageBonus += spec.BaseDamageBonus;
@@ -342,7 +351,22 @@ namespace Pakuri.InGame
             if (spec.HasStatusActionSpeedBonus)
             {
                 HasStatusActionSpeedBonus = true;
-                StatusActionSpeedBonus += spec.StatusActionSpeedBonus;
+                if (string.IsNullOrWhiteSpace(spec.StatusActionSpeedBonusStatusId))
+                {
+                    StatusActionSpeedBonus += spec.StatusActionSpeedBonus;
+                }
+                else
+                {
+                    StatusActionSpeedBonusStatusId = spec.StatusActionSpeedBonusStatusId;
+                    if (statusActionSpeedBonuses.TryGetValue(spec.StatusActionSpeedBonusStatusId, out var currentBonus))
+                    {
+                        statusActionSpeedBonuses[spec.StatusActionSpeedBonusStatusId] = currentBonus + spec.StatusActionSpeedBonus;
+                    }
+                    else
+                    {
+                        statusActionSpeedBonuses[spec.StatusActionSpeedBonusStatusId] = spec.StatusActionSpeedBonus;
+                    }
+                }
             }
 
             if (spec.HasStatusAttackPowerBonus)
@@ -640,7 +664,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            ApplyChoiceSpec(new SkillChoiceEffectSpec
+            var spec = new SkillChoiceEffectSpec
             {
                 ChoiceId = choice.ChoiceId,
                 Title = choice.Title,
@@ -649,6 +673,8 @@ namespace Pakuri.InGame
                 SkillEffectPrefab = choice.SkillEffectPrefab,
                 HasDamageMultiplier = choice.HasDamageMultiplier,
                 DamageMultiplier = choice.DamageMultiplier,
+                HasShieldAmountMultiplier = false,
+                ShieldAmountMultiplier = 1f,
                 BaseDamageBonus = choice.BaseDamageBonus,
                 HasCooldownMultiplier = choice.HasCooldownMultiplier,
                 CooldownMultiplier = choice.CooldownMultiplier,
@@ -711,6 +737,7 @@ namespace Pakuri.InGame
                 KillResetsCooldownRequiresExecute = choice.KillResetsCooldownRequiresExecute,
                 StatusTag = choice.StatusTag,
                 HasStatusActionSpeedBonus = choice.HasStatusActionSpeedBonus,
+                StatusActionSpeedBonusStatusId = string.Empty,
                 StatusActionSpeedBonus = choice.StatusActionSpeedBonus,
                 HasStatusAttackPowerBonus = choice.HasStatusAttackPowerBonus,
                 StatusAttackPowerBonus = choice.StatusAttackPowerBonus,
@@ -782,7 +809,10 @@ namespace Pakuri.InGame
                 RepeatIntervalSeconds = choice.RepeatIntervalSeconds,
                 RepeatDamageMultiplier = choice.RepeatDamageMultiplier,
                 NormalizedPlanNodes = InGameSkillDefinitionMapper.MapSkillNodeDefinitions(choice.NormalizedPlanNodes)
-            });
+            };
+
+            InGameSkillDefinitionMapper.ApplyNormalizedChoiceNodes(spec, choice.NormalizedPlanNodes);
+            ApplyChoiceSpec(spec);
         }
 
         public void AddActiveChoiceId(string choiceId)
@@ -806,6 +836,18 @@ namespace Pakuri.InGame
             }
 
             return statusDurationBonuses.TryGetValue(statusId, out var bonus) ? bonus : 0f;
+        }
+
+        public float ResolveStatusActionSpeedBonus(string statusId)
+        {
+            var bonus = StatusActionSpeedBonus;
+            if (!string.IsNullOrWhiteSpace(statusId)
+                && statusActionSpeedBonuses.TryGetValue(statusId, out var targetedBonus))
+            {
+                bonus += targetedBonus;
+            }
+
+            return bonus;
         }
 
         public int ResolveStatusMaxStacksBonus(string statusId)
