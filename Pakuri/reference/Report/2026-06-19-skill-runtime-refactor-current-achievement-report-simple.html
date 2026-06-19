@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Ariel / Enemy 스킬 런타임 구조 정리 보고서</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --text: #202124;
+      --muted: #5f6368;
+      --line: #d9dce1;
+      --soft: #f6f7f9;
+      --accent: #1f6feb;
+      --good: #1f7a4d;
+      --mid: #8a5a00;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", Arial, sans-serif;
+      color: var(--text);
+      background: #fff;
+      line-height: 1.65;
+    }
+
+    main {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 40px 28px 64px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 36px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 24px 0 8px;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 8px 0;
+    }
+
+    ul {
+      margin: 8px 0 0;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 4px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 20px;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: var(--soft);
+      font-weight: 700;
+    }
+
+    code {
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--soft);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.95em;
+    }
+
+    .lead {
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .summary {
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--accent);
+      padding: 18px 20px;
+      background: #fbfcfe;
+      margin: 22px 0 24px;
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 16px 0 12px;
+    }
+
+    .score {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .score strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 20px;
+    }
+
+    .good {
+      color: var(--good);
+    }
+
+    .mid {
+      color: var(--mid);
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        padding: 28px 16px 48px;
+      }
+
+      .score-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Ariel / Enemy 스킬 런타임 구조 정리 보고서</h1>
+  <p class="lead">기준 문서: <code>2026-05-29-skill-runtime-refactor-feedback-handoff.md</code>. 이 문서는 처음 보는 사람도 현재 리팩토링 상태를 빠르게 이해할 수 있도록 핵심만 정리한다.</p>
+
+  <section class="summary">
+    <h2>요약</h2>
+    <p>현재 스킬 런타임은 예전보다 역할이 훨씬 분리됐다. 유닛의 표시와 애니메이션은 <code>MonsterUnitActor.cs</code>가 맡고, 체력·스탯·상태·스킬 쿨다운 같은 실제 전투 상태는 런타임 모델과 전투 서비스가 맡는다.</p>
+    <p>Ariel 스킬은 공용 몬스터 스킬 구조로 옮겨가는 중이다. <code>UnitSkillController.cs</code>가 유닛별 스킬 실행 요청을 만들고, <code>SkillExecutionPlan.cs</code>가 CSV에서 온 조건·행동·수정 노드를 담는다.</p>
+    <p>Enemy 스킬은 완료로 본다. 이유는 플레이어/몬스터 스킬 구조와 Enemy 스킬 구조를 하나로 합치지 않고, 서로 분리해서 사용하는 것이 현재 설계 방향이기 때문이다. Enemy는 <code>EnemyDefinition.cs</code>와 <code>EnemyCombatSystem.cs</code>의 전용 plan/runtime 구조로 Stage 2 스킬을 처리한다.</p>
+
+    <div class="score-grid">
+      <div class="score">
+        <strong class="good">Ariel: 진행 중</strong>
+        <span>기본 구조는 들어갔고, 나머지는 Eve, Vega, Sein, Rin 리팩토링을 진행하며 더 정리한다.</span>
+      </div>
+      <div class="score">
+        <strong class="good">Enemy: 완료</strong>
+        <span>Enemy는 별도 스킬 구조를 사용하기로 했으므로, 공용 몬스터 plan과 통합하지 않아도 된다.</span>
+      </div>
+      <div class="score">
+        <strong class="mid">전체: 단계적 완성</strong>
+        <span>Ariel에서 검증한 구조를 다른 몬스터에 적용하면서 남은 공용 handler를 정리한다.</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>현재 구조를 한 문장으로 설명</h2>
+    <p>화면에 보이는 유닛은 Actor가 담당하고, 실제 전투 데이터는 RuntimeModel이 담당하며, 스킬 사용 판단은 UnitSkillController와 SkillExecutionSystem이 처리하고, 피해·상태·트리거 적용은 InGameCombatManager와 관련 서비스가 처리한다.</p>
+  </section>
+
+  <section>
+    <h2>목표 구조 대비 현재 상태</h2>
+    <table>
+      <thead>
+      <tr>
+        <th>구성</th>
+        <th>쉬운 설명</th>
+        <th>현재 상태</th>
+        <th>근거 스크립트</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td><code>MonsterUnitActor</code></td>
+        <td>유닛을 화면에 보여주는 쪽이다. 이름, 체력바, 데미지 팝업, 애니메이션을 담당한다.</td>
+        <td class="good">달성</td>
+        <td><code>MonsterUnitActor.cs</code></td>
+      </tr>
+      <tr>
+        <td><code>MonsterUnitRuntimeModel</code></td>
+        <td>유닛의 실제 전투 데이터다. identity, stats, resources, statuses, skill runtime state가 여기에 있다.</td>
+        <td class="good">달성</td>
+        <td><code>BaseUnitRuntimeModel.cs</code>, <code>MonsterUnitRuntimeModel.cs</code></td>
+      </tr>
+      <tr>
+        <td><code>UnitSkillController</code></td>
+        <td>각 유닛이 스킬을 쓸 수 있는지 확인하고, 자동/수동 스킬 실행 요청을 만든다.</td>
+        <td class="good">대부분 달성</td>
+        <td><code>UnitSkillController.cs</code>, <code>SkillExecutionSystem.cs</code></td>
+      </tr>
+      <tr>
+        <td><code>SkillExecutionPlan</code></td>
+        <td>CSV에서 읽은 스킬 조건, 행동, 수치 변경을 노드 목록으로 들고 있는 구조다.</td>
+        <td class="mid">Ariel 기준 진행 중</td>
+        <td><code>SkillExecutionPlan.cs</code>, <code>SkillExecutionSnapshot.cs</code>, <code>InGameSkillDefinitionMapper.cs</code></td>
+      </tr>
+      <tr>
+        <td>Action / Modifier Handler</td>
+        <td>피해, 상태이상, 투사체 생성, 장판 생성, 쿨다운 변경 같은 실제 스킬 행동을 처리하는 부분이다.</td>
+        <td class="mid">진입점은 있음, 세부 분리는 진행 중</td>
+        <td><code>SkillPlanActionDispatcher.cs</code>, <code>SkillMultiEffectExecutor.cs</code>, <code>SkillTriggerRuntime.cs</code></td>
+      </tr>
+      <tr>
+        <td><code>InGameCombatManager</code> and services</td>
+        <td>전투 전체를 조정한다. 데미지 적용, 상태 적용, 트리거 호출, 상태 시간 감소를 관리한다.</td>
+        <td class="good">달성</td>
+        <td><code>InGameCombatManager.cs</code>, <code>MonsterUnitRuntimeStateService.cs</code></td>
+      </tr>
+      <tr>
+        <td>Enemy Skill Runtime</td>
+        <td>Enemy 전용 스킬 실행 구조다. 플레이어/몬스터 스킬 구조와 분리해서 사용한다.</td>
+        <td class="good">완료</td>
+        <td><code>EnemyDefinition.cs</code>, <code>EnemyCombatSystem.cs</code></td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Ariel은 어디까지 됐나</h2>
+    <p>Ariel은 목표 구조를 적용하기 위한 선행 사례다. Ariel choice의 많은 수치 변경은 더 이상 넓은 CSV 필드만으로 처리하지 않고, normalized node와 plan action 쪽으로 옮겨졌다.</p>
+    <p><code>SkillExecutionPlan.cs</code>에는 조건, 행동, 피해 수정, 치명타 수정, 처치 후 행동, effect action, trigger action을 담을 수 있는 구조가 있다. <code>InGameSkillDefinitionMapper.cs</code>는 CSV 정의를 런타임 skill data와 normalized plan node로 옮긴다.</p>
+    <p>다만 Ariel도 완전히 끝난 것은 아니다. <code>SkillExecutionSnapshot.cs</code>에는 아직 여러 flat multiplier 필드가 남아 있고, effect/trigger 실행은 <code>SkillMultiEffectExecutor.cs</code>, <code>SkillTriggerRuntime.cs</code>로 이어지는 호환 구조가 남아 있다.</p>
+  </section>
+
+  <section>
+    <h2>Enemy는 왜 완료로 보는가</h2>
+    <p>Enemy는 플레이어/몬스터 스킬과 같은 구조로 합치지 않는다. Enemy 스킬은 Enemy 전용 구조를 사용한다는 설계 기준이 있으므로, 공용 <code>SkillExecutionPlan.cs</code>과 통합되지 않았다는 점은 미완성 사유가 아니다.</p>
+    <p>현재 Enemy는 <code>EnemyDefinition.cs</code>의 <code>EnemySkillPlanDefinition</code>과 <code>EnemyCombatSystem.cs</code>의 <code>EnemySkillPlanRuntime</code>을 통해 Stage 2 스킬을 처리한다. 보드 근거상 이 경로는 damage area, projectile, heal, chain, charge, outgoing damage debuff, collider hitbox, stage-persistent status 같은 요구 기능을 처리하도록 구현되어 있다.</p>
+    <p>따라서 Enemy는 “공용 몬스터 스킬 구조와 분리된 전용 구조”라는 기준에서는 완료 상태다. 이후 필요한 작업은 통합이 아니라 Enemy 전용 구조 안에서 개별 스킬 동작을 조정하거나 검증하는 일이다.</p>
+  </section>
+
+  <section>
+    <h2>아직 남은 일</h2>
+    <p>남은 작업은 Enemy가 아니라 Ariel 이후의 플레이어/몬스터 스킬 구조 쪽이다. Eve, Vega, Sein, Rin을 리팩토링하면서 Ariel에서 만든 방식을 반복 적용하면 된다.</p>
+    <ul>
+      <li>Eve, Vega, Sein, Rin의 특수 효과를 새 flat field로 늘리지 않고 plan node로 표현한다.</li>
+      <li>반복되는 피해, 상태, 투사체, 장판, 시각 효과 처리를 명확한 handler로 나눈다.</li>
+      <li><code>SkillExecutionSnapshot.cs</code>에 남아 있는 flat 필드는 몬스터별 리팩토링을 하면서 점진적으로 줄인다.</li>
+      <li>Ariel은 선행 사례로 유지하고, 다른 몬스터를 옮기면서 공용 구조를 완성한다.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>결론</h2>
+    <p>Ariel은 목표 구조로 가는 중간 단계까지 도달했다. 표시, 런타임 상태, 스킬 요청, 실행 계획, 전투 서비스 책임이 이전보다 명확하게 분리됐다.</p>
+    <p>Enemy는 완료로 본다. 플레이어/몬스터 스킬 구조와 Enemy 스킬 구조는 분리해서 사용하는 것이 현재 설계 기준이며, Enemy 전용 plan/runtime은 이미 구현되어 있다.</p>
+    <p>앞으로의 핵심은 Eve, Vega, Sein, Rin을 Ariel과 같은 방향으로 정리하면서 공용 몬스터 스킬 구조를 완성하는 것이다.</p>
+  </section>
+
+  <p class="note">검토 근거: <code>MonsterUnitActor.cs</code>, <code>BaseUnitRuntimeModel.cs</code>, <code>MonsterUnitRuntimeModel.cs</code>, <code>UnitSkillController.cs</code>, <code>SkillExecutionSystem.cs</code>, <code>SkillExecutionPlan.cs</code>, <code>SkillExecutionSnapshot.cs</code>, <code>InGameSkillDefinitionMapper.cs</code>, <code>SkillPlanActionDispatcher.cs</code>, <code>SkillMultiEffectExecutor.cs</code>, <code>SkillTriggerRuntime.cs</code>, <code>EnemyDefinition.cs</code>, <code>EnemyCombatSystem.cs</code>, <code>InGameCombatManager.cs</code>, <code>MonsterUnitRuntimeStateService.cs</code>, <code>ARIEL_MONSTER.md</code>, <code>ENEMY_BLACKBOARD.md</code>.</p>
+</main>
+</body>
+</html>

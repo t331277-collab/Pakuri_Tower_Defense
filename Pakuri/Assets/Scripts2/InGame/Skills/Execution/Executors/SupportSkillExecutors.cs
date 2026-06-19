@@ -67,12 +67,13 @@ namespace Pakuri.InGame
             }
 
             var multiEffectRouted = false;
-            if (routed && skill.MultiEffects != null && skill.MultiEffects.Length > 0)
+            var planEffects = SkillPlanActionDispatcher.ResolveEffects(snapshot, skill.MultiEffects);
+            if (routed && planEffects.Length > 0)
             {
                 var center = context.CasterEntry.Transform != null
                     ? (Vector2)context.CasterEntry.Transform.position
                     : Vector2.zero;
-                multiEffectRouted = SkillMultiEffectExecutor.ExecuteWithStatusDurationScaling(context, snapshot, skill.MultiEffects, center);
+                multiEffectRouted = SkillMultiEffectExecutor.ExecuteWithStatusDurationScaling(context, snapshot, planEffects, center);
             }
 
             return new SkillExecutionResult(routed || castCommitted || multiEffectRouted ? SkillExecutionStatus.Routed : SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
@@ -213,12 +214,13 @@ namespace Pakuri.InGame
             }
 
             var multiEffectRouted = false;
-            if (routed && skill.MultiEffects != null && skill.MultiEffects.Length > 0)
+            var planEffects = SkillPlanActionDispatcher.ResolveEffects(snapshot, skill.MultiEffects);
+            if (routed && planEffects.Length > 0)
             {
                 var center = context.CasterEntry.Transform != null
                     ? (Vector2)context.CasterEntry.Transform.position
                     : Vector2.zero;
-                multiEffectRouted = SkillMultiEffectExecutor.ExecuteWithStatusDurationScaling(context, snapshot, skill.MultiEffects, center);
+                multiEffectRouted = SkillMultiEffectExecutor.ExecuteWithStatusDurationScaling(context, snapshot, planEffects, center);
             }
 
             return new SkillExecutionResult(routed || multiEffectRouted ? SkillExecutionStatus.Routed : SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);

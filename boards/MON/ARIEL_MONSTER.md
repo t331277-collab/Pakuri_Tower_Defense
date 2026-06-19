@@ -12,6 +12,158 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-06-19 Ariel Plan-Action Runtime Migration
+
+### Task title
+
+Move Ariel choice modifiers from old wide choice folding to Ariel-only `SkillExecutionPlan` action handling.
+
+### Goals
+
+- Remove remaining Ariel old wide behavior payloads from `monster_skill_choices.csv`.
+- Compile Ariel choice-owned normalized nodes into `SkillExecutionPlanNode.Action` payloads.
+- Make Ariel snapshot mutation use plan action handlers instead of `ApplyNormalizedChoiceNodes(...)` folding into `SkillChoiceEffectSpec`.
+- Keep Ariel A master2 status application on the explicit trigger/effect handler path while the +15% Holy damage-taken modifier stays a normalized node.
+
+### Constraints
+
+- Role Owner is Code Builder, then Code Reviewer.
+- Compatibility gate is Ariel-only by `monster_id=ariel` or `choice_id` prefix `ariel-`.
+- Full trigger/effect rows are not yet unified into `SkillExecutionPlan.Actions`; they remain explicit `monster_skill_triger.csv` / `monster_skill_effects.csv` runtime objects.
+- Unity Play Mode behavior verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Code Reviewer
+
+### Status
+
+Implemented and reviewed. Passed for the Ariel-first target scope; full future goal of putting every trigger/effect action inside one `SkillExecutionPlan` is still not complete.
+
+### Next Actions
+
+- User verifies Ariel A master2, Ariel D trait4/master1, and dynamic shield-count damage behavior in Play Mode.
+- Future migration can move trigger/effect CSV rows into plan action nodes if the target architecture requires a single plan-owned execution list.
+
+### Evidence
+
+- `SkillExecutionPlan.cs` now exposes `SkillExecutionPlanNode.Action`, `SkillExecutionPlanNode.FromAction(...)`, and `SkillExecutionPlan.Actions`.
+- `SkillExecutionSnapshot.cs` now detects Ariel choices, maps `choice.NormalizedPlanNodes` through `InGameSkillDefinitionMapper.MapSkillNodeDefinitions(...)`, applies `ApplyPlanActionNodes(...)`, and skips the old `SkillChoiceEffectSpec` path for Ariel.
+- `InGameSkillDefinitionMapper.cs` now skips `ApplyNormalizedChoiceNodes(...)` for Ariel choices and maps normalized node handlers such as `HitTargetCountBonus` and `StatusCriticalDamageTakenBonus` into `SkillActionOp`.
+- `SkillExecutionSystem.cs` now resolves Ariel dynamic `CountStatusDamageMultiplier` through mapped plan action nodes while keeping the old wide dynamic path for non-Ariel compatibility.
+- `monster_skill_choices.csv` Ariel old behavior-field scan returned `arielWideNonDefault=0`.
+- `monster_skill_nodes.csv` has `ariel-d-trait-4-hit-target-count-bonus` with handler `HitTargetCountBonus`, and `monster_skill_node_params.csv` stores `bonus=1`.
+- `monster_skill_nodes.csv` has `ariel-d-master-1-status-critical-damage-taken` with handler `StatusCriticalDamageTakenBonus`, and `monster_skill_node_params.csv` stores `bonus=0.25`.
+- `monster_skill_triger.csv` has `ariel-a-master2-holy-exposure-on-hit` with `trigger_event=OnOutgoingDamage`, `requires_active_choice_id=ariel-a-master-2`, `target_selection=EventTarget`, `trigger_action=Effect`, and `triggered_effect_id=ariel-a-master-2-holy-exposure-on-hit`.
+- `monster_skill_effects.csv` has `ariel-a-master-2-holy-exposure-on-hit` with `status_effect_id=holy-exposure`, `status_chance=1`, and `status_stack_amount=1`.
+- Runtime and editor `dotnet build` commands passed with 0 errors; existing `MSB3277` warnings remained.
+- Unity-MCP sync/validate menus logged runtime catalog sync/load and `InGame skill data validation passed with 0 warning(s)`; warning/error console read returned 0 entries.
+
+### History
+
+- 2026-06-19: User requested Code Builder to perform steps 1-6 for Ariel-first target-structure migration, then Code Reviewer review.
+- 2026-06-19: Builder added plan action payloads and Ariel-only runtime routing; Reviewer found no blocking defects in the scoped Ariel-first migration, with the explicit caveat that trigger/effect rows are still not single-plan action nodes.
+
+## Task: 2026-06-19 Ariel A Master2 Trigger Binding Fix
+
+### Task title
+
+Convert Ariel A master2 holy exposure from old choice wide columns to trigger/effect/node composition.
+
+### Goals
+
+- Replace `ariel-a-master-2` choice-wide status payload with a trigger-bound status effect object.
+- Apply holy exposure to the hit event target through the current trigger runtime.
+- Keep the +15% Holy damage taken value in a normalized status modifier node.
+- Prevent migrated Ariel E shield variants from executing through leftover choice gates.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Current trigger enum has no `OnHit`; the implemented runtime event is `OnOutgoingDamage`, which is the existing hit-success trigger path.
+- Active CSV authority is under `Pakuri/Assets/CSVdata/runtime`.
+- Unity Play Mode behavior verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compiled, CSV-checked, and Unity-MCP validated. Code Reviewer was not rerun.
+
+### Next Actions
+
+- User verifies in Play Mode that Ariel A master2 applies `holy-exposure` to enemies hit by Ariel A.
+- User verifies Ariel E shield amount variants no longer double-apply old precombined shield rows with the new shield amount nodes.
+
+### Evidence
+
+- `monster_skill_choices.csv` now keeps `ariel-a-master-2` as `RuntimeImplemented` with blank `status_tag`, `status_chance_bonus`, `status_stacks_set`, and `status_element_damage_taken_bonus`.
+- `monster_skill_triger.csv` now has `ariel-a-master2-holy-exposure-on-hit` with `source_skill_id=ariel-a`, `trigger_event=OnOutgoingDamage`, `requires_active_choice_id=ariel-a-master-2`, `target_selection=EventTarget`, `trigger_action=Effect`, and `triggered_effect_id=ariel-a-master-2-holy-exposure-on-hit`.
+- `monster_skill_effects.csv` now has `ariel-a-master-2-holy-exposure-on-hit` as a `Status` effect for `status_effect_id=holy-exposure`, `status_chance=1`, and `status_stack_amount=1`.
+- `monster_skill_nodes.csv` and `monster_skill_node_params.csv` now add `ariel-a-master-2-holy-exposure-element-damage-taken` with handler `StatusElementDamageTakenBonus` and `bonus=0.15`.
+- `monster_skill_effects.csv` no longer has executable `requires_active_choice_id` or `requires_passive_skill_id` gates on `MigratedToEffectBinding` rows, including the three Ariel E shield variants.
+- `SkillTriggerRuntime.ExecuteEffect(...)` now forwards `triggerContext.EventTarget` into `SkillExecutionContext`, so `target_selection=EventTarget` works for trigger-bound effect rows.
+- `PakuriCsvRuntimeData.Validation.cs` now rejects `MigratedToEffectBinding` skill effects that still carry executable choice/passive gates.
+- `Import-Csv` property-count check returned `monster_skill_choices.csv props=114 dataRows=253 bad=`, `monster_skill_effects.csv props=71 dataRows=133 bad=`, `monster_skill_triger.csv props=47 dataRows=59 bad=`, `monster_skill_nodes.csv props=14 dataRows=54 bad=`, and `monster_skill_node_params.csv props=4 dataRows=76 bad=`.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- Unity-MCP `Pakuri/Sync CSV Runtime Catalog Assets`, `Pakuri/Validate CSV Source Data`, and `Pakuri/InGame/Validate Skill Data` executed; console logged runtime catalog sync/load and `InGame skill data validation passed with 0 warning(s)`, with 0 warning/error entries.
+
+### History
+
+- 2026-06-19: Code Reviewer found `ariel-a-master-2` still used old choice-wide status columns and Ariel E migrated shield variants still had executable choice gates.
+- 2026-06-19: User confirmed Ariel A master2 should be represented as trigger on hit, event target, apply status, and `status_id=holy-exposure`; Builder implemented the current-runtime equivalent using `OnOutgoingDamage` plus trigger-bound status effect and normalized node modifier.
+
+## Task: 2026-06-19 Ariel Passive Node Decomposition Follow-up
+
+### Task title
+
+Convert remaining Ariel passive numeric modifiers to atomic normalized nodes.
+
+### Goals
+
+- Make Ariel F/G/H/I/J passive numeric upgrades compose like Ariel C: base effect objects plus modifier nodes and trigger bindings.
+- Remove duplicate execution paths where old choice-gated effect or trigger rows would stack with the new nodes.
+- Keep conceptually separate effects such as F trait3 crit, G trait3 shielded holy damage, and I trait3 holy resist reduction as effect objects.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The implementation stays on `monster_skill_nodes.csv`, `monster_skill_node_params.csv`, `monster_skill_effects.csv`, and `monster_skill_triger.csv`.
+- No MSW-MCP is used; Unity checks use Unity-MCP only.
+- Unity Play Mode parity remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compiled, CSV-checked, and Unity-MCP validated.
+
+### Next Actions
+
+- User verifies Ariel F/G/H/I/J passive combinations in Play Mode.
+- Keep future passive numeric add-ons on normalized nodes before adding choice-gated duplicate effect rows.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` now registers `StatusDamageBonusRate`, `StatusShieldReceivedBonus`, `StatusCriticalChanceBonus`, `StatusDamageTakenBonus`, and `StatusFlatElementResistReduction` normalized handlers.
+- `SkillChoiceEffectSpec`, `SkillExecutionSnapshot`, `InGameSkillDefinitionMapper`, `SkillStatusSpecUtility`, and `SingleAttackSkillExecutor` now carry those status modifier nodes into status data; existing element/crit/ailment status bonuses now accumulate instead of replacing base values.
+- `monster_skill_nodes.csv` now uses status modifier nodes for `ariel-f-trait-1-holy-damage-bonus`, `ariel-g-trait-1-shield-received-bonus`, `ariel-g-trait-2-start-shield-amount-multiplier`, `ariel-h-trait-1-blessed-holy-damage-bonus`, `ariel-h-trait-2-blessed-action-speed-bonus`, `ariel-i-trait-1-exposure-damage-taken-bonus`, `ariel-j-trait-1-after-e-action-speed-bonus`, and `ariel-j-trait-2-shielded-holy-damage-bonus`.
+- `monster_skill_effects.csv` marks `ariel-g-shield-received-trait1`, `ariel-g-start-shield-trait2`, `ariel-i-holy-exposure-damage-taken-trait1`, and `ariel-j-after-e-action-speed-trait1` as `MigratedToEffectBinding`.
+- `monster_skill_triger.csv` no longer contains `ariel-j-after-e-action-speed-trait1-trigger`; J trait1 now modifies the base J post-E trigger effect through a normalized node.
+- CSV shape check returned `monster_skill_choices.csv header=114 rows=252 bad=`, `monster_skill_nodes.csv header=14 rows=52 bad=`, `monster_skill_node_params.csv header=4 rows=74 bad=`, `monster_skill_effects.csv header=71 rows=131 bad=`, and `monster_skill_triger.csv header=47 rows=57 bad=`.
+- Ariel spot check returned `{"fNode":1,"gNodes":2,"hNodes":2,"iTrait1Migrated":1,"jTrait1TriggerRows":0,"oldGenericPassiveDamageNodes":0}`.
+- Active old-support check returned `activeReferenceDirectEffects=0 referenceDirectTriggers=0` for Ariel rows.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- Unity-MCP console after `Pakuri/Sync CSV Runtime Catalog Assets`, `Pakuri/Validate CSV Source Data`, and `Pakuri/InGame/Validate Skill Data` logged runtime catalog sync/load and `InGame skill data validation passed with 0 warning(s)`, with 0 warning/error console entries.
+
+### History
+
+- 2026-06-19: User requested Code Builder to decompose every Ariel skill like Ariel C using atomic effect object + modifier node + binding node, using lines 373-962 of the Ariel handoff report as the detailed node standard.
+
 ## Task: 2026-06-19 Ariel Effect Object Node Pilot
 
 ### Task title

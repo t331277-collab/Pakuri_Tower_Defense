@@ -4,18 +4,7 @@ namespace Pakuri.InGame
 {
     public sealed class UnitSkillController
     {
-        public delegate bool SkillRouteRequest(
-            UnitRosterEntry entry,
-            SkillRuntimeInstance runtime,
-            UnitRosterService roster,
-            InGameCombatManager combatManager,
-            float deltaTime,
-            bool logRoutedContracts,
-            bool hasManualAimDirection,
-            Vector2 manualAimDirection,
-            bool hasManualTargetPoint,
-            Vector2 manualTargetPoint,
-            System.Action<UnitRosterEntry> notifyActiveSkillAnimation);
+        public delegate bool SkillRouteRequest(SkillExecutionRequest request);
 
         private readonly UnitRosterEntry entry;
         private readonly SkillRouteRequest routeSkill;
@@ -57,18 +46,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                routeSkill(
-                    entry,
-                    runtime,
-                    roster,
-                    combatManager,
-                    deltaTime,
-                    logRoutedContracts,
-                    false,
-                    default,
-                    false,
-                    default,
-                    NotifyActiveSkillAnimation);
+                routeSkill(CreateAutoRequest(runtime, roster, combatManager, deltaTime, logRoutedContracts));
             }
         }
 
@@ -81,7 +59,47 @@ namespace Pakuri.InGame
             Vector2 targetPoint,
             bool logRoutedContracts)
         {
-            return routeSkill(
+            return routeSkill(CreateManualRequest(
+                runtime,
+                roster,
+                combatManager,
+                deltaTime,
+                aimDirection,
+                targetPoint,
+                logRoutedContracts));
+        }
+
+        private SkillExecutionRequest CreateAutoRequest(
+            SkillRuntimeInstance runtime,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            float deltaTime,
+            bool logRoutedContracts)
+        {
+            return new SkillExecutionRequest(
+                entry,
+                runtime,
+                roster,
+                combatManager,
+                deltaTime,
+                logRoutedContracts,
+                false,
+                default,
+                false,
+                default,
+                NotifyActiveSkillAnimation);
+        }
+
+        private SkillExecutionRequest CreateManualRequest(
+            SkillRuntimeInstance runtime,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            float deltaTime,
+            Vector2 aimDirection,
+            Vector2 targetPoint,
+            bool logRoutedContracts)
+        {
+            return new SkillExecutionRequest(
                 entry,
                 runtime,
                 roster,

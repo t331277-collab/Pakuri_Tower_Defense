@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &6711210013456624539
+--- !u!1 &4560032002312233589
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,40 +8,40 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5909745351427284247}
-  - component: {fileID: 5025850502502526968}
-  - component: {fileID: 2935680655653469285}
-  - component: {fileID: 4019895350569578375}
+  - component: {fileID: 2289085830413144733}
+  - component: {fileID: 4212160082989673526}
+  - component: {fileID: 8642008712781042297}
+  - component: {fileID: 1262428993864179233}
   m_Layer: 0
-  m_Name: Warrior_Skill
+  m_Name: dark-assassin_Skill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &5909745351427284247
+--- !u!4 &2289085830413144733
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6711210013456624539}
+  m_GameObject: {fileID: 4560032002312233589}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.683025, y: 1.5982132, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.4066, y: 0.4066, z: 0.4066}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &5025850502502526968
+--- !u!212 &4212160082989673526
 SpriteRenderer:
   serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6711210013456624539}
+  m_GameObject: {fileID: 4560032002312233589}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -81,29 +81,29 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 50
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 50ac20857de2edc41841a7054881284f, type: 3}
+  m_Sprite: {fileID: 21300000, guid: da4169affddaf884ba6194c7cf9178b9, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 1
+  m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2.28, y: 2.78}
+  m_Size: {x: 5.65, y: 7.24}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!95 &2935680655653469285
+--- !u!95 &8642008712781042297
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6711210013456624539}
+  m_GameObject: {fileID: 4560032002312233589}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 3002088aba3600a4489ef77352d8935a, type: 2}
+  m_Controller: {fileID: 9100000, guid: 93c6692d3f4f1174eb8081b321e5e76e, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -115,13 +115,13 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!61 &4019895350569578375
+--- !u!61 &1262428993864179233
 BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6711210013456624539}
+  m_GameObject: {fileID: 4560032002312233589}
   m_Enabled: 1
   serializedVersion: 3
   m_Density: 1
@@ -149,15 +149,15 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.08671975, y: -0.16931048}
+  m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 2.28, y: 2.78}
-    newSize: {x: 2.28, y: 2.78}
+    oldSize: {x: 5.65, y: 7.24}
+    newSize: {x: 5.65, y: 7.24}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.297173, y: 1.2520766}
+  m_Size: {x: 5.65, y: 7.24}
   m_EdgeRadius: 0

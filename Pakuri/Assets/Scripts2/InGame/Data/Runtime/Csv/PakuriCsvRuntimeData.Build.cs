@@ -57,13 +57,14 @@ namespace Pakuri.Data
             }
 
             catalog.Monsters = monsters.ToArray();
-            catalog.StageOneEnemies = BuildEnemies(model.CatalogStageOneEnemies, model.StageOneEnemies);
-            catalog.StageTwoEnemies = BuildEnemies(model.CatalogStageTwoEnemies, model.StageTwoEnemies);
+            catalog.StageOneEnemies = BuildEnemies(model, model.CatalogStageOneEnemies, model.StageOneEnemies);
+            catalog.StageTwoEnemies = BuildEnemies(model, model.CatalogStageTwoEnemies, model.StageTwoEnemies);
             catalog.StatusEffects = BuildStatusEffects(model);
             return catalog;
         }
 
         private static EnemyDefinition[] BuildEnemies(
+            SourceModel model,
             Dictionary<string, CatalogEntryRow> catalogEntries,
             Dictionary<string, EnemyRow> enemyRows)
         {
@@ -102,6 +103,8 @@ namespace Pakuri.Data
                 enemy.BasicSkill = sourceEnemy.BasicSkill;
                 enemy.BasicSkillName = sourceEnemy.BasicSkillName;
                 enemy.BasicSkillCoefficient = sourceEnemy.BasicSkillCoefficient;
+                enemy.BasicSkillAttackPowerCoefficient = sourceEnemy.BasicSkillAttackPowerCoefficient;
+                enemy.BasicSkillSpellPowerCoefficient = sourceEnemy.BasicSkillSpellPowerCoefficient;
                 enemy.BasicSkillCooldown = sourceEnemy.BasicSkillCooldown;
                 enemy.BasicSkillDuration = sourceEnemy.BasicSkillDuration;
                 enemy.BasicSkillRadius = sourceEnemy.BasicSkillRadius;
@@ -110,9 +113,12 @@ namespace Pakuri.Data
                 enemy.BasicSkillProjectileLifetime = sourceEnemy.BasicSkillProjectileLifetime;
                 enemy.BasicSkillMoveSpeedMultiplier = sourceEnemy.BasicSkillMoveSpeedMultiplier;
                 enemy.BasicSkillOutgoingDamageMultiplier = sourceEnemy.BasicSkillOutgoingDamageMultiplier;
+                enemy.BasicSkillPlan = BuildEnemySkillPlan(model, sourceEnemy.BasicSkill.ToString());
                 enemy.StageOneSkill = sourceEnemy.StageOneSkill;
                 enemy.ActiveSkillName = sourceEnemy.ActiveSkillName;
                 enemy.ActiveSkillCoefficient = sourceEnemy.ActiveSkillCoefficient;
+                enemy.ActiveSkillAttackPowerCoefficient = sourceEnemy.ActiveSkillAttackPowerCoefficient;
+                enemy.ActiveSkillSpellPowerCoefficient = sourceEnemy.ActiveSkillSpellPowerCoefficient;
                 enemy.ActiveSkillCooldown = sourceEnemy.ActiveSkillCooldown;
                 enemy.ActiveSkillDuration = sourceEnemy.ActiveSkillDuration;
                 enemy.ActiveSkillRadius = sourceEnemy.ActiveSkillRadius;
@@ -121,6 +127,7 @@ namespace Pakuri.Data
                 enemy.ActiveSkillProjectileLifetime = sourceEnemy.ActiveSkillProjectileLifetime;
                 enemy.ActiveSkillMoveSpeedMultiplier = sourceEnemy.ActiveSkillMoveSpeedMultiplier;
                 enemy.ActiveSkillOutgoingDamageMultiplier = sourceEnemy.ActiveSkillOutgoingDamageMultiplier;
+                enemy.ActiveSkillPlan = BuildEnemySkillPlan(model, sourceEnemy.StageOneSkill.ToString());
                 enemy.PassiveSkillName = sourceEnemy.PassiveSkillName;
                 enemy.PassiveSkillId = sourceEnemy.PassiveSkillId;
                 enemy.PassiveSkillValue = sourceEnemy.PassiveSkillValue;
@@ -130,6 +137,74 @@ namespace Pakuri.Data
             }
 
             return enemies.ToArray();
+        }
+
+        private static EnemySkillPlanDefinition BuildEnemySkillPlan(SourceModel model, string skillId)
+        {
+            if (model == null || string.IsNullOrWhiteSpace(skillId))
+            {
+                return null;
+            }
+
+            var nodes = FilterAndSort(
+                model.EnemySkillNodes,
+                node => string.Equals(node.SkillId, skillId, StringComparison.OrdinalIgnoreCase),
+                (left, right) => left.SortOrder.CompareTo(right.SortOrder));
+
+            if (nodes.Count == 0)
+            {
+                return null;
+            }
+
+            var plan = new EnemySkillPlanDefinition
+            {
+                SkillId = skillId,
+                Nodes = new EnemySkillPlanNodeDefinition[nodes.Count]
+            };
+
+            for (var i = 0; i < nodes.Count; i++)
+            {
+                var node = nodes[i];
+                plan.Nodes[i] = new EnemySkillPlanNodeDefinition
+                {
+                    NodeId = node.NodeId,
+                    SortOrder = node.SortOrder,
+                    Trigger = node.Trigger,
+                    TargetSelector = node.TargetSelector,
+                    ActionOp = node.ActionOp,
+                    Enabled = node.Enabled,
+                    Params = BuildEnemySkillNodeParams(model, skillId, node.NodeId)
+                };
+            }
+
+            return plan;
+        }
+
+        private static EnemySkillPlanParamDefinition[] BuildEnemySkillNodeParams(SourceModel model, string skillId, string nodeId)
+        {
+            var nodeParams = FilterAndSort(
+                model.EnemySkillNodeParams,
+                param => string.Equals(param.SkillId, skillId, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(param.NodeId, nodeId, StringComparison.OrdinalIgnoreCase),
+                (left, right) => string.Compare(left.ParamKey, right.ParamKey, StringComparison.OrdinalIgnoreCase));
+
+            if (nodeParams.Count == 0)
+            {
+                return Array.Empty<EnemySkillPlanParamDefinition>();
+            }
+
+            var definitions = new EnemySkillPlanParamDefinition[nodeParams.Count];
+            for (var i = 0; i < nodeParams.Count; i++)
+            {
+                var param = nodeParams[i];
+                definitions[i] = new EnemySkillPlanParamDefinition
+                {
+                    ParamKey = param.ParamKey,
+                    ParamValue = param.ParamValue
+                };
+            }
+
+            return definitions;
         }
 
         private static StatusEffectDefinitionData[] BuildStatusEffects(SourceModel model)

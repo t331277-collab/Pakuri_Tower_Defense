@@ -15,6 +15,13 @@ namespace Pakuri.InGame
         private float damage;
         private float lifetimeSeconds;
         private int remainingHits = 1;
+        private bool hitDetectionEnabled = true;
+        private StatusEffectData statusOnHit;
+        private int statusStacks = 1;
+        private float statusDurationSeconds;
+        private int statusMaxStacks = 1;
+        private bool statusPermanent;
+        private bool statusRefreshDuration = true;
 
         public void Initialize(
             InGameCombatManager manager,
@@ -31,7 +38,24 @@ namespace Pakuri.InGame
             damageAttribute = attribute;
             lifetimeSeconds = Mathf.Max(0.05f, lifetime);
             remainingHits = Mathf.Max(1, maxHits);
+            hitDetectionEnabled = true;
             EnsurePhysicsRelay();
+        }
+
+        public void ConfigureStatusOnHit(
+            StatusEffectData statusData,
+            int stacks,
+            float durationSeconds,
+            int maxStacks,
+            bool permanent = false,
+            bool refreshDuration = true)
+        {
+            statusOnHit = statusData;
+            statusStacks = Mathf.Max(1, stacks);
+            statusDurationSeconds = Mathf.Max(0f, durationSeconds);
+            statusMaxStacks = Mathf.Max(1, maxStacks);
+            statusPermanent = permanent;
+            statusRefreshDuration = refreshDuration;
         }
 
         private void Awake()
@@ -42,7 +66,10 @@ namespace Pakuri.InGame
         private void Update()
         {
             lifetimeSeconds -= Time.deltaTime;
-            TryHitRosterTargets();
+            if (hitDetectionEnabled)
+            {
+                TryHitRosterTargets();
+            }
 
             if (lifetimeSeconds <= 0f)
             {
@@ -52,7 +79,7 @@ namespace Pakuri.InGame
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            if (combatManager == null || other == null || owner == null)
+            if (!hitDetectionEnabled || combatManager == null || other == null || owner == null)
             {
                 return;
             }
@@ -62,7 +89,7 @@ namespace Pakuri.InGame
 
         private void TryHitRosterTargets()
         {
-            if (combatManager == null || owner == null)
+            if (!hitDetectionEnabled || combatManager == null || owner == null)
             {
                 return;
             }
@@ -95,16 +122,21 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                if (UnitHitboxUtility.IsTargetInsideHitbox(selfColliders, entry) && TryHitTarget(entry))
+                if (UnitHitboxUtility.IsTargetInsideHitbox(selfColliders, entry))
                 {
-                    return;
+                    TryHitTarget(entry);
                 }
             }
         }
 
         private bool TryHitTarget(UnitRosterEntry target)
         {
-            if (target == null || target.Model == null || !target.IsAlive || IsSameSide(target.Model))
+            if (!hitDetectionEnabled
+                || target == null
+                || target.Model == null
+                || !target.IsAlive
+                || IsSameSide(target.Model)
+                || IsNexus(target.Model))
             {
                 return false;
             }
@@ -116,10 +148,27 @@ namespace Pakuri.InGame
             }
 
             combatManager.ApplyDamage(target.Model, damage, damageAttribute, owner, true);
-            remainingHits--;
+            if (statusOnHit != null)
+            {
+                combatManager.ApplyStatus(
+                    target.Model,
+                    statusOnHit,
+                    statusStacks,
+                    statusDurationSeconds,
+                    statusMaxStacks,
+                    statusPermanent,
+                    statusRefreshDuration,
+                    owner);
+            }
+
+            if (remainingHits < int.MaxValue)
+            {
+                remainingHits--;
+            }
+
             if (remainingHits <= 0)
             {
-                Destroy(gameObject);
+                DisableHitDetection();
             }
 
             return true;
@@ -132,6 +181,31 @@ namespace Pakuri.InGame
             return ownerIdentity != null
                 && targetIdentity != null
                 && ownerIdentity.Side == targetIdentity.Side;
+        }
+
+        private static bool IsNexus(BaseUnitRuntimeModel target)
+        {
+            var targetIdentity = target != null ? target.Identity : null;
+            return targetIdentity != null && targetIdentity.Role == UnitRole.Nexus;
+        }
+
+        private void DisableHitDetection()
+        {
+            hitDetectionEnabled = false;
+
+            var colliders = GetComponentsInChildren<Collider2D>();
+            if (colliders == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < colliders.Length; i++)
+            {
+                if (colliders[i] != null)
+                {
+                    colliders[i].enabled = false;
+                }
+            }
         }
 
         private void EnsurePhysicsRelay()

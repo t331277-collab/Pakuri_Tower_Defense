@@ -150,6 +150,11 @@ namespace Pakuri.InGame
             var needsChoiceElementDamageOverride = snapshot != null && snapshot.HasStatusElementDamageTakenBonus;
             var needsChoiceCriticalDamageOverride = snapshot != null && snapshot.HasStatusCriticalDamageTakenBonus;
             var needsChoiceAilmentResistanceOverride = snapshot != null && snapshot.HasStatusAilmentResistanceBonus;
+            var needsChoiceDamageBonusRateOverride = snapshot != null && snapshot.HasStatusDamageBonusRate;
+            var needsChoiceShieldReceivedOverride = snapshot != null && snapshot.HasStatusShieldReceivedBonus;
+            var needsChoiceCriticalChanceOverride = snapshot != null && snapshot.HasStatusCriticalChanceBonus;
+            var needsChoiceDamageTakenOverride = snapshot != null && snapshot.HasStatusDamageTakenBonus;
+            var needsChoiceFlatElementResistOverride = snapshot != null && snapshot.HasStatusFlatElementResistReduction;
             var needsChoiceConditionalDamageTakenOverride = snapshot != null && snapshot.HasStatusConditionalDamageTakenBonus;
             var statusId = statusData != null && !string.IsNullOrWhiteSpace(statusData.StatusTag)
                 ? statusData.StatusTag
@@ -166,6 +171,11 @@ namespace Pakuri.InGame
                 || (!needsChoiceElementDamageOverride
                     && !needsChoiceCriticalDamageOverride
                     && !needsChoiceAilmentResistanceOverride
+                    && !needsChoiceDamageBonusRateOverride
+                    && !needsChoiceShieldReceivedOverride
+                    && !needsChoiceCriticalChanceOverride
+                    && !needsChoiceDamageTakenOverride
+                    && !needsChoiceFlatElementResistOverride
                     && !needsChoiceConditionalDamageTakenOverride
                     && !needsChoiceActionSpeedOverride
                     && !needsChoiceAttackPowerOverride))
@@ -177,17 +187,42 @@ namespace Pakuri.InGame
             overriddenStatus.hideFlags = HideFlags.DontSave;
             if (needsChoiceElementDamageOverride)
             {
-                overriddenStatus.ElementDamageTakenBonus = snapshot.StatusElementDamageTakenBonus;
+                overriddenStatus.ElementDamageTakenBonus += snapshot.StatusElementDamageTakenBonus;
             }
 
             if (needsChoiceCriticalDamageOverride)
             {
-                overriddenStatus.CriticalDamageTakenBonus = snapshot.StatusCriticalDamageTakenBonus;
+                overriddenStatus.CriticalDamageTakenBonus += snapshot.StatusCriticalDamageTakenBonus;
             }
 
             if (needsChoiceAilmentResistanceOverride)
             {
-                overriddenStatus.AilmentResistanceBonus = snapshot.StatusAilmentResistanceBonus;
+                overriddenStatus.AilmentResistanceBonus += snapshot.StatusAilmentResistanceBonus;
+            }
+
+            if (needsChoiceDamageBonusRateOverride)
+            {
+                overriddenStatus.Modifiers.DamageBonusRate += snapshot.StatusDamageBonusRate;
+            }
+
+            if (needsChoiceShieldReceivedOverride)
+            {
+                overriddenStatus.Modifiers.ShieldReceivedBonus += snapshot.StatusShieldReceivedBonus;
+            }
+
+            if (needsChoiceCriticalChanceOverride)
+            {
+                overriddenStatus.Modifiers.CritChanceBonusRate += snapshot.StatusCriticalChanceBonus;
+            }
+
+            if (needsChoiceDamageTakenOverride)
+            {
+                overriddenStatus.DamageTakenBonus += snapshot.StatusDamageTakenBonus;
+            }
+
+            if (needsChoiceFlatElementResistOverride)
+            {
+                overriddenStatus.FlatElementResistReduction += snapshot.StatusFlatElementResistReduction;
             }
 
             if (needsChoiceConditionalDamageTakenOverride)

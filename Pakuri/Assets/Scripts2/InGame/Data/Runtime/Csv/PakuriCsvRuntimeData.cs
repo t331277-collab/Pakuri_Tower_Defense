@@ -39,6 +39,8 @@ namespace Pakuri.Data
         private const string StageOneEnemiesFileName = "stage_one_enemies.csv";
         private const string StageTwoEnemiesFileName = "stage_two_enemies.csv";
         private const string EnemySkillDataFileName = "EnemySkillData.csv";
+        private const string EnemySkillNodesFileName = "EnemySkillNodes.csv";
+        private const string EnemySkillNodeParamsFileName = "EnemySkillNodeParams.csv";
         private const string EnemySkillDataAssetPath = RuntimeEnemyCsvAssetRoot + "/" + EnemySkillDataFileName;
 
         private static bool initialized;
@@ -72,6 +74,8 @@ namespace Pakuri.Data
                 case StageOneEnemiesFileName:
                 case StageTwoEnemiesFileName:
                 case EnemySkillDataFileName:
+                case EnemySkillNodesFileName:
+                case EnemySkillNodeParamsFileName:
                     return $"{RuntimeEnemyCsvAssetRoot}/{fileName}";
                 default:
                     return $"{RuntimeCsvAssetRoot}/{fileName}";

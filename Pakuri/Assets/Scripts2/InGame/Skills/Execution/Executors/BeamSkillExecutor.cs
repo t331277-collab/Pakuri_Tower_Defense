@@ -44,8 +44,9 @@ namespace Pakuri.InGame
             var knockbackDistance = ResolveKnockbackDistance(skill, snapshot);
             var duration = ResolveDuration(skill, snapshot);
             var tickInterval = ResolveTickInterval(skill, snapshot);
-            var onHitStatusEffects = ResolveOnHitStatusEffects(context, snapshot, skill.MultiEffects);
-            var castEffects = ResolveCastEffects(context, snapshot, skill.MultiEffects);
+            var planEffects = SkillPlanActionDispatcher.ResolveEffects(snapshot, skill.MultiEffects);
+            var onHitStatusEffects = ResolveOnHitStatusEffects(context, snapshot, planEffects);
+            var castEffects = ResolveCastEffects(context, snapshot, planEffects);
             var center = (Vector2)origin + direction * (length * 0.5f);
             var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab

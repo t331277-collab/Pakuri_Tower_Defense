@@ -17,7 +17,7 @@ namespace Pakuri.InGame
             }
 
             var skill = CreateConcreteActiveSkill(source);
-            MapCommonFields(skill, monster != null ? monster.MonsterId : string.Empty, source);
+            MapCommonFields(skill, monster != null ? monster.MonsterId : string.Empty, source, monster != null ? monster.SkillTriggers : null);
             MapActiveFields(skill, monster, source);
             return skill;
         }
@@ -55,6 +55,7 @@ namespace Pakuri.InGame
             skill.EnhancementChoices = MapChoices(source.EnhancementChoices);
             skill.MasterChoices = Array.Empty<SkillChoiceEffectSpec>();
             skill.MultiEffects = source.PassiveEffects ?? Array.Empty<SkillEffectDefinition>();
+            skill.SkillTriggers = FilterSkillTriggersForSkill(monster != null ? monster.SkillTriggers : null, source.PassiveId);
             skill.NormalizedPlanNodes = MapSkillNodeDefinitions(source.NormalizedPlanNodes);
             skill.TriggerType = PassiveTrigger.Always;
             skill.ApplyTarget = PassiveTarget.Self;
@@ -98,7 +99,11 @@ namespace Pakuri.InGame
             return instance;
         }
 
-        private static void MapCommonFields(SkillData skill, string monsterId, SkillDefinition source)
+        private static void MapCommonFields(
+            SkillData skill,
+            string monsterId,
+            SkillDefinition source,
+            SkillTriggerDefinition[] monsterTriggers = null)
         {
             skill.SkillId = source.SkillId;
             skill.SkillName = source.DisplayName;
@@ -112,6 +117,7 @@ namespace Pakuri.InGame
             skill.EnhancementChoices = MapChoices(source.EnhancementChoices);
             skill.MasterChoices = MapChoices(source.MasterSkillChoices);
             skill.MultiEffects = source.MultiEffects ?? Array.Empty<SkillEffectDefinition>();
+            skill.SkillTriggers = FilterSkillTriggersForSkill(monsterTriggers, source.SkillId);
             skill.NormalizedPlanNodes = MapSkillNodeDefinitions(source.NormalizedPlanNodes);
 
             skill.Timing.Cooldown = source.CooldownSeconds;
@@ -133,6 +139,50 @@ namespace Pakuri.InGame
                 || (source.RuntimeKind == SkillRuntimeKind.SingleAttack
                     && source.Radius <= 0f
                     && string.IsNullOrWhiteSpace(source.TargetSelection));
+        }
+
+        private static SkillTriggerDefinition[] FilterSkillTriggersForSkill(
+            SkillTriggerDefinition[] triggers,
+            string skillId)
+        {
+            if (triggers == null || triggers.Length == 0 || string.IsNullOrWhiteSpace(skillId))
+            {
+                return Array.Empty<SkillTriggerDefinition>();
+            }
+
+            var count = 0;
+            for (var i = 0; i < triggers.Length; i++)
+            {
+                if (IsTriggerOwnedBySkill(triggers[i], skillId))
+                {
+                    count++;
+                }
+            }
+
+            if (count == 0)
+            {
+                return Array.Empty<SkillTriggerDefinition>();
+            }
+
+            var filtered = new SkillTriggerDefinition[count];
+            var index = 0;
+            for (var i = 0; i < triggers.Length; i++)
+            {
+                if (IsTriggerOwnedBySkill(triggers[i], skillId))
+                {
+                    filtered[index] = triggers[i];
+                    index++;
+                }
+            }
+
+            return filtered;
+        }
+
+        private static bool IsTriggerOwnedBySkill(SkillTriggerDefinition trigger, string skillId)
+        {
+            return trigger != null
+                && !string.IsNullOrWhiteSpace(trigger.SourceSkillId)
+                && string.Equals(trigger.SourceSkillId, skillId, StringComparison.OrdinalIgnoreCase);
         }
 
         private static void MapActiveFields(SkillData skill, MonsterDefinition monster, SkillDefinition source)
@@ -570,7 +620,7 @@ namespace Pakuri.InGame
                     NormalizedPlanNodes = choice != null ? MapSkillNodeDefinitions(choice.NormalizedPlanNodes) : Array.Empty<SkillExecutionPlanNode>()
                 };
 
-                if (choice != null)
+                if (choice != null && !HasNormalizedPlanNodes(choice))
                 {
                     ApplyNormalizedChoiceNodes(spec, choice.NormalizedPlanNodes);
                 }
@@ -579,6 +629,13 @@ namespace Pakuri.InGame
             }
 
             return mapped;
+        }
+
+        private static bool HasNormalizedPlanNodes(SkillChoiceDefinition choice)
+        {
+            return choice != null
+                && choice.NormalizedPlanNodes != null
+                && choice.NormalizedPlanNodes.Length > 0;
         }
 
         internal static void ApplyNormalizedChoiceNodes(SkillChoiceEffectSpec spec, SkillNodeDefinition[] nodes)
@@ -653,6 +710,12 @@ namespace Pakuri.InGame
                 return;
             }
 
+            if (string.Equals(handlerId, "HitTargetCountBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HitTargetCountBonus += GetIntParam(node, "bonus", 0);
+                return;
+            }
+
             if (string.Equals(handlerId, "RadiusMultiplier", StringComparison.OrdinalIgnoreCase))
             {
                 spec.HasRadiusMultiplier = true;
@@ -691,6 +754,41 @@ namespace Pakuri.InGame
             {
                 spec.HasStatusAilmentResistanceBonus = true;
                 spec.StatusAilmentResistanceBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "StatusDamageBonusRate", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasStatusDamageBonusRate = true;
+                spec.StatusDamageBonusRate += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "StatusShieldReceivedBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasStatusShieldReceivedBonus = true;
+                spec.StatusShieldReceivedBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "StatusCriticalChanceBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasStatusCriticalChanceBonus = true;
+                spec.StatusCriticalChanceBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "StatusDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasStatusDamageTakenBonus = true;
+                spec.StatusDamageTakenBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "StatusFlatElementResistReduction", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasStatusFlatElementResistReduction = true;
+                spec.StatusFlatElementResistReduction += GetFloatParam(node, "bonus", 0f);
                 return;
             }
 
@@ -895,10 +993,154 @@ namespace Pakuri.InGame
                         false));
             }
 
+            var action = MapSkillActionOp(node, handlerId);
+            if (action.HasValue)
+            {
+                return SkillExecutionPlanNode.FromAction(
+                    SkillExecutionPlanAuthoringSource.NormalizedRow,
+                    rowId,
+                    action.Value);
+            }
+
             return new SkillExecutionPlanNode(
                 MapNodeKind(node.NodeKind),
                 SkillExecutionPlanAuthoringSource.NormalizedRow,
                 rowId);
+        }
+
+        private static SkillActionOp? MapSkillActionOp(SkillNodeDefinition node, string handlerId)
+        {
+            if (string.Equals(handlerId, "DamageMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.DamageMultiplier, GetFloatParam(node, "multiplier", 1f));
+            }
+
+            if (string.Equals(handlerId, "ShieldAmountMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.ShieldAmountMultiplier, GetFloatParam(node, "multiplier", 1f));
+            }
+
+            if (string.Equals(handlerId, "CountStatusDamageMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(
+                    SkillActionOpKind.CountStatusDamageMultiplier,
+                    GetFloatParam(node, "amount_per_count", 0f),
+                    GetIntParam(node, "max_count", 0),
+                    GetParam(node, "status_id"),
+                    null,
+                    GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.AllAllies));
+            }
+
+            if (string.Equals(handlerId, "CooldownMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.CooldownMultiplier, GetFloatParam(node, "multiplier", 1f));
+            }
+
+            if (string.Equals(handlerId, "MagazineBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.MagazineBonus, intValue: GetIntParam(node, "bonus", 0));
+            }
+
+            if (string.Equals(handlerId, "ReloadTimeMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.ReloadTimeMultiplier, GetFloatParam(node, "multiplier", 1f));
+            }
+
+            if (string.Equals(handlerId, "PierceBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.PierceBonus, intValue: GetIntParam(node, "bonus", 0));
+            }
+
+            if (string.Equals(handlerId, "RadiusMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.RadiusMultiplier, GetFloatParam(node, "multiplier", 1f));
+            }
+
+            if (string.Equals(handlerId, "RadiusBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.RadiusBonus, GetFloatParam(node, "bonus", 0f));
+            }
+
+            if (string.Equals(handlerId, "DurationBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.DurationBonus, GetFloatParam(node, "bonus_seconds", 0f));
+            }
+
+            if (string.Equals(handlerId, "HitTargetCountBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.HitTargetCountBonus, intValue: GetIntParam(node, "bonus", 0));
+            }
+
+            if (string.Equals(handlerId, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(
+                    SkillActionOpKind.StatusActionSpeedBonus,
+                    GetFloatParam(node, "bonus", 0f),
+                    stringValue: GetParam(node, "status_id"));
+            }
+
+            if (string.Equals(handlerId, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.StatusAttackPowerBonus, GetFloatParam(node, "bonus", 0f));
+            }
+
+            if (string.Equals(handlerId, "StatusAilmentResistanceBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.StatusAilmentResistanceBonus, GetFloatParam(node, "bonus", 0f));
+            }
+
+            if (string.Equals(handlerId, "StatusDamageBonusRate", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.StatusDamageBonusRate, GetFloatParam(node, "bonus", 0f));
+            }
+
+            if (string.Equals(handlerId, "StatusShieldReceivedBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.StatusShieldReceivedBonus, GetFloatParam(node, "bonus", 0f));
+            }
+
+            if (string.Equals(handlerId, "StatusCriticalChanceBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.StatusCriticalChanceBonus, GetFloatParam(node, "bonus", 0f));
+            }
+
+            if (string.Equals(handlerId, "StatusDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.StatusDamageTakenBonus, GetFloatParam(node, "bonus", 0f));
+            }
+
+            if (string.Equals(handlerId, "StatusFlatElementResistReduction", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.StatusFlatElementResistReduction, GetFloatParam(node, "bonus", 0f));
+            }
+
+            if (string.Equals(handlerId, "StatusDurationBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(
+                    SkillActionOpKind.StatusDurationBonus,
+                    GetFloatParam(node, "bonus_seconds", 0f),
+                    stringValue: GetParam(node, "status_id"));
+            }
+
+            if (string.Equals(handlerId, "StatusConditionalDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(
+                    SkillActionOpKind.StatusConditionalDamageTakenBonus,
+                    GetFloatParam(node, "bonus", 0f),
+                    stringValue: GetParam(node, "source_status_id"));
+            }
+
+            if (string.Equals(handlerId, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.StatusElementDamageTakenBonus, GetFloatParam(node, "bonus", 0f));
+            }
+
+            if (string.Equals(handlerId, "StatusCriticalDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.StatusCriticalDamageTakenBonus, GetFloatParam(node, "bonus", 0f));
+            }
+
+            return null;
         }
 
         private static SkillExecutionPlanNodeKind MapNodeKind(string value)

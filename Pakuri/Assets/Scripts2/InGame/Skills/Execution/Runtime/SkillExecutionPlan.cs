@@ -30,26 +30,35 @@ namespace Pakuri.InGame
             SkillExecutionPlanAuthoringSource authoringSource,
             string rowId,
             CastConditionOp? castCondition = null,
+            SkillActionOp? action = null,
             DamageModifierOp? damageModifier = null,
             CritModifierOp? critModifier = null,
-            KillActionOp? killAction = null)
+            KillActionOp? killAction = null,
+            SkillEffectAction effectAction = null,
+            SkillTriggerAction triggerAction = null)
         {
             Kind = kind;
             AuthoringSource = authoringSource;
             RowId = rowId ?? string.Empty;
             CastCondition = castCondition;
+            Action = action;
             DamageModifier = damageModifier;
             CritModifier = critModifier;
             KillAction = killAction;
+            EffectAction = effectAction;
+            TriggerAction = triggerAction;
         }
 
         public SkillExecutionPlanNodeKind Kind { get; }
         public SkillExecutionPlanAuthoringSource AuthoringSource { get; }
         public string RowId { get; }
         public CastConditionOp? CastCondition { get; }
+        public SkillActionOp? Action { get; }
         public DamageModifierOp? DamageModifier { get; }
         public CritModifierOp? CritModifier { get; }
         public KillActionOp? KillAction { get; }
+        public SkillEffectAction EffectAction { get; }
+        public SkillTriggerAction TriggerAction { get; }
 
         public static SkillExecutionPlanNode FromCastCondition(
             SkillExecutionPlanAuthoringSource authoringSource,
@@ -75,6 +84,18 @@ namespace Pakuri.InGame
                 damageModifier: op);
         }
 
+        public static SkillExecutionPlanNode FromAction(
+            SkillExecutionPlanAuthoringSource authoringSource,
+            string rowId,
+            SkillActionOp op)
+        {
+            return new SkillExecutionPlanNode(
+                SkillExecutionPlanNodeKind.Action,
+                authoringSource,
+                rowId,
+                action: op);
+        }
+
         public static SkillExecutionPlanNode FromCritModifier(
             SkillExecutionPlanAuthoringSource authoringSource,
             string rowId,
@@ -98,6 +119,62 @@ namespace Pakuri.InGame
                 rowId,
                 killAction: op);
         }
+
+        public static SkillExecutionPlanNode FromEffect(
+            SkillExecutionPlanAuthoringSource authoringSource,
+            string rowId,
+            SkillEffectDefinition effect)
+        {
+            return new SkillExecutionPlanNode(
+                SkillExecutionPlanNodeKind.Action,
+                authoringSource,
+                rowId,
+                effectAction: new SkillEffectAction(effect));
+        }
+
+        public static SkillExecutionPlanNode FromTrigger(
+            SkillExecutionPlanAuthoringSource authoringSource,
+            string rowId,
+            SkillTriggerDefinition trigger)
+        {
+            return new SkillExecutionPlanNode(
+                SkillExecutionPlanNodeKind.Trigger,
+                authoringSource,
+                rowId,
+                triggerAction: new SkillTriggerAction(trigger));
+        }
+    }
+
+    public sealed class SkillEffectAction
+    {
+        public SkillEffectAction(SkillEffectDefinition definition)
+        {
+            Definition = definition;
+            EffectId = definition != null ? definition.EffectId : string.Empty;
+            Kind = definition != null ? definition.EffectKind : default;
+            Timing = definition != null ? definition.EffectTiming : default;
+        }
+
+        internal SkillEffectDefinition Definition { get; }
+        public string EffectId { get; }
+        public SkillMultiEffectKind Kind { get; }
+        public SkillMultiEffectTiming Timing { get; }
+    }
+
+    public sealed class SkillTriggerAction
+    {
+        public SkillTriggerAction(SkillTriggerDefinition definition)
+        {
+            Definition = definition;
+            TriggerId = definition != null ? definition.TriggerId : string.Empty;
+            Event = definition != null ? definition.TriggerEvent : default;
+            ActionKind = definition != null ? definition.TriggerAction : default;
+        }
+
+        internal SkillTriggerDefinition Definition { get; }
+        public string TriggerId { get; }
+        public SkillTriggerEvent Event { get; }
+        public SkillTriggerActionKind ActionKind { get; }
     }
 
     public sealed class SkillExecutionPlan
@@ -115,18 +192,24 @@ namespace Pakuri.InGame
             SkillId = skillId ?? string.Empty;
             Nodes = Copy(nodes);
             CastConditions = CopyOps(castConditions, Nodes, node => node.CastCondition);
+            Actions = CopyOps<SkillActionOp>(null, Nodes, node => node.Action);
             DamageModifiers = CopyOps(damageModifiers, Nodes, node => node.DamageModifier);
             CritModifiers = CopyOps(critModifiers, Nodes, node => node.CritModifier);
             KillActions = CopyOps(killActions, Nodes, node => node.KillAction);
+            EffectActions = CopyNodeReferences(Nodes, node => node.EffectAction);
+            TriggerActions = CopyNodeReferences(Nodes, node => node.TriggerAction);
         }
 
         public SkillData Source { get; }
         public string SkillId { get; }
         public IReadOnlyList<SkillExecutionPlanNode> Nodes { get; }
         public IReadOnlyList<CastConditionOp> CastConditions { get; }
+        public IReadOnlyList<SkillActionOp> Actions { get; }
         public IReadOnlyList<DamageModifierOp> DamageModifiers { get; }
         public IReadOnlyList<CritModifierOp> CritModifiers { get; }
         public IReadOnlyList<KillActionOp> KillActions { get; }
+        public IReadOnlyList<SkillEffectAction> EffectActions { get; }
+        public IReadOnlyList<SkillTriggerAction> TriggerActions { get; }
 
         private static T[] Copy<T>(IReadOnlyList<T> source)
         {
@@ -201,6 +284,45 @@ namespace Pakuri.InGame
 
             return count;
         }
+
+        private static T[] CopyNodeReferences<T>(
+            IReadOnlyList<SkillExecutionPlanNode> nodes,
+            System.Func<SkillExecutionPlanNode, T> selector)
+            where T : class
+        {
+            if (nodes == null || nodes.Count == 0)
+            {
+                return new T[0];
+            }
+
+            var count = 0;
+            for (var i = 0; i < nodes.Count; i++)
+            {
+                if (selector(nodes[i]) != null)
+                {
+                    count++;
+                }
+            }
+
+            if (count == 0)
+            {
+                return new T[0];
+            }
+
+            var copy = new T[count];
+            var index = 0;
+            for (var i = 0; i < nodes.Count; i++)
+            {
+                var value = selector(nodes[i]);
+                if (value != null)
+                {
+                    copy[index] = value;
+                    index++;
+                }
+            }
+
+            return copy;
+        }
     }
 
     public static class SkillExecutionPlanCompiler
@@ -215,6 +337,7 @@ namespace Pakuri.InGame
             SkillExecutionSnapshot snapshot,
             IReadOnlyList<SkillExecutionPlanNode> normalizedRows)
         {
+            var nodes = BuildPlanNodes(source, normalizedRows);
             return new SkillExecutionPlan(
                 source,
                 snapshot != null ? snapshot.SkillId : (source != null ? source.SkillId : string.Empty),
@@ -222,7 +345,58 @@ namespace Pakuri.InGame
                 snapshot != null ? snapshot.DamageModifierOps : null,
                 snapshot != null ? snapshot.CritModifierOps : null,
                 snapshot != null ? snapshot.KillActionOps : null,
-                normalizedRows);
+                nodes);
+        }
+
+        private static IReadOnlyList<SkillExecutionPlanNode> BuildPlanNodes(
+            SkillData source,
+            IReadOnlyList<SkillExecutionPlanNode> normalizedRows)
+        {
+            var effectCount = source != null && source.MultiEffects != null ? source.MultiEffects.Length : 0;
+            var triggerCount = source != null && source.SkillTriggers != null ? source.SkillTriggers.Length : 0;
+            var normalizedCount = normalizedRows != null ? normalizedRows.Count : 0;
+            if (effectCount + triggerCount + normalizedCount == 0)
+            {
+                return normalizedRows;
+            }
+
+            var nodes = new List<SkillExecutionPlanNode>(effectCount + triggerCount + normalizedCount);
+            for (var i = 0; i < effectCount; i++)
+            {
+                var effect = source.MultiEffects[i];
+                if (effect != null)
+                {
+                    nodes.Add(SkillExecutionPlanNode.FromEffect(
+                        SkillExecutionPlanAuthoringSource.LegacyWideColumn,
+                        effect.EffectId,
+                        effect));
+                }
+            }
+
+            for (var i = 0; i < triggerCount; i++)
+            {
+                var trigger = source.SkillTriggers[i];
+                if (trigger != null)
+                {
+                    nodes.Add(SkillExecutionPlanNode.FromTrigger(
+                        SkillExecutionPlanAuthoringSource.LegacyWideColumn,
+                        trigger.TriggerId,
+                        trigger));
+                }
+            }
+
+            if (normalizedRows != null)
+            {
+                for (var i = 0; i < normalizedRows.Count; i++)
+                {
+                    if (normalizedRows[i] != null)
+                    {
+                        nodes.Add(normalizedRows[i]);
+                    }
+                }
+            }
+
+            return nodes;
         }
     }
 }

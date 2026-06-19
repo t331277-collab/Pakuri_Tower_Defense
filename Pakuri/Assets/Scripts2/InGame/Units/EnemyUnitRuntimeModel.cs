@@ -11,6 +11,8 @@ namespace Pakuri.InGame
         public bool HasBasicSkill;
         public StageOneEnemySkillKind BasicSkill;
         public float BasicSkillCoefficient;
+        public float BasicSkillAttackPowerCoefficient;
+        public float BasicSkillSpellPowerCoefficient;
         public float BasicSkillDuration;
         public float BasicSkillRadius;
         public float BasicSkillFlatValue;
@@ -18,9 +20,12 @@ namespace Pakuri.InGame
         public float BasicSkillProjectileLifetime;
         public float BasicSkillMoveSpeedMultiplier = 1f;
         public float BasicSkillOutgoingDamageMultiplier = 1f;
+        public EnemySkillPlanDefinition BasicSkillPlan;
         public float BasicSkillCooldownSeconds;
         public StageOneEnemySkillKind StageOneSkill;
         public float ActiveSkillCoefficient;
+        public float ActiveSkillAttackPowerCoefficient;
+        public float ActiveSkillSpellPowerCoefficient;
         public float ActiveSkillDuration;
         public float ActiveSkillRadius;
         public float ActiveSkillFlatValue;
@@ -28,6 +33,7 @@ namespace Pakuri.InGame
         public float ActiveSkillProjectileLifetime;
         public float ActiveSkillMoveSpeedMultiplier = 1f;
         public float ActiveSkillOutgoingDamageMultiplier = 1f;
+        public EnemySkillPlanDefinition ActiveSkillPlan;
         public float ActiveSkillCooldownSeconds;
         public float AttackAttemptRange;
         public float AttackAttemptCooldownSeconds;

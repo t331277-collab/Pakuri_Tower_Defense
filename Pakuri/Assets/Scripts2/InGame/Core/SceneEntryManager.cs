@@ -435,6 +435,7 @@ namespace Pakuri.InGame
             }
 
             SyncExistingMonsterModelFromSession(model);
+            MonsterUnitRuntimeStateService.RestoreForNextDay(model);
             actor.ReviveForNextDay();
             revivedEntry = combatManager.RegisterPlayerMonster(model, actor, actor.transform);
             return revivedEntry != null;

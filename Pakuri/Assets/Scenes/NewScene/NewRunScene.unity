@@ -18880,6 +18880,34 @@ MonoBehaviour:
       Prefab: {fileID: 3517001639107925163, guid: d3fbe1e58b0383e4cbcbc791d4961f91, type: 3}
     - StageOneSkill: 0
       Prefab: {fileID: 6711210013456624539, guid: 86d2cf796a0668f48bf01d312cceb7dc, type: 3}
+  - EnemyId: stage2-fire-dragon-slayer
+    SkillEffects:
+    - StageOneSkill: 8
+      Prefab: {fileID: 2334640017509608026, guid: ead3e9b7ab06e2f4287fbdf62d8aa4f1, type: 3}
+  - EnemyId: stage2-lightning-scout
+    SkillEffects:
+    - StageOneSkill: 9
+      Prefab: {fileID: 9000857448749210545, guid: 41875471f52f97449b206e91e5fdf318, type: 3}
+  - EnemyId: stage2-ice-guard
+    SkillEffects:
+    - StageOneSkill: 10
+      Prefab: {fileID: 6711210013456624539, guid: 5716a4b1ec13cfe44ab2e98f73ececb5, type: 3}
+  - EnemyId: stage2-dark-assassin
+    SkillEffects:
+    - StageOneSkill: 11
+      Prefab: {fileID: 4560032002312233589, guid: 36d272f072fbdbb4483b7e1b8cb8a5ed, type: 3}
+  - EnemyId: stage2-holy-priest
+    SkillEffects:
+    - StageOneSkill: 12
+      Prefab: {fileID: 6438375768576846172, guid: a08e81e6e3db7734fa635ccf4b7ce4e5, type: 3}
+  - EnemyId: stage2-ethan
+    SkillEffects:
+    - StageOneSkill: 13
+      Prefab: {fileID: 2911305427010586471, guid: a41c14d516a697f4a803b6e60ec659e9, type: 3}
+  - EnemyId: stage2-arsen
+    SkillEffects:
+    - StageOneSkill: 15
+      Prefab: {fileID: 9172702428440743968, guid: d914f0f26231438448c58ca4110e49c4, type: 3}
 --- !u!1 &1444841197
 GameObject:
   m_ObjectHideFlags: 0

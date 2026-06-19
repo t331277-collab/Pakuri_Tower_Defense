@@ -264,6 +264,7 @@ namespace Pakuri.Data
 
             ValidateEnemyRows(model.StageOneEnemies.Values, model.EnemySkills, errors);
             ValidateEnemyRows(model.StageTwoEnemies.Values, model.EnemySkills, errors);
+            ValidateEnemySkillNodes(model, errors);
 
             foreach (var monster in model.Monsters.Values)
             {
@@ -470,6 +471,13 @@ namespace Pakuri.Data
             if (model == null || !model.Skills.ContainsKey(effect.SkillId))
             {
                 errors.Add($"Skill effect '{effect.Id}' references unknown skill '{effect.SkillId}'.");
+            }
+
+            if (string.Equals(effect.RuntimeSupportState, "MigratedToEffectBinding", StringComparison.OrdinalIgnoreCase)
+                && (!string.IsNullOrWhiteSpace(effect.RequiresActiveChoiceId)
+                    || !string.IsNullOrWhiteSpace(effect.RequiresPassiveSkillId)))
+            {
+                errors.Add($"Skill effect '{effect.Id}' is MigratedToEffectBinding but still has executable choice/passive gates.");
             }
 
             ValidateChoiceReference(effect.RequiresActiveChoiceId, effect, model, "requires_active_choice_id", errors);
@@ -1171,6 +1179,84 @@ namespace Pakuri.Data
                 }
 
                 ValidateEnemyPassiveColumns(enemy, errors);
+            }
+        }
+
+        private static void ValidateEnemySkillNodes(SourceModel model, List<string> errors)
+        {
+            if (model == null)
+            {
+                return;
+            }
+
+            var supportedActionOps = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "DamageArea",
+                "SpawnProjectile",
+                "Heal",
+                "ApplySelfIncomingDamageMultiplier",
+                "GrantShieldToEnemyAllies",
+                "ApplyAllyMoveAndDamageMultiplier",
+                "Damage",
+                "DamageAndActionSpeedDebuff",
+                "DamageThenDelayedChain",
+                "ChargeDamageStatus",
+                "ApplyOutgoingDamageMultiplierStatus"
+            };
+            var supportedTargetSelectors = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "CurrentTarget",
+                "NearestTower",
+                "FarthestTower",
+                "RandomTower",
+                "LowestHealthEnemyAlly",
+                "Self",
+                "EnemyAlliesInRadius",
+                "AllTowers"
+            };
+            var knownNodeIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < model.EnemySkillNodes.Count; i++)
+            {
+                var node = model.EnemySkillNodes[i];
+                if (node == null)
+                {
+                    continue;
+                }
+
+                if (!model.EnemySkills.ContainsKey(node.SkillId))
+                {
+                    errors.Add($"Enemy skill node '{node.NodeId}' references unknown enemy skill '{node.SkillId}'.");
+                }
+
+                if (string.IsNullOrWhiteSpace(node.ActionOp))
+                {
+                    errors.Add($"Enemy skill node '{node.NodeId}' has empty action_op.");
+                }
+                else if (!supportedActionOps.Contains(node.ActionOp))
+                {
+                    errors.Add($"Enemy skill node '{node.NodeId}' has unsupported action_op '{node.ActionOp}'.");
+                }
+
+                if (!string.IsNullOrWhiteSpace(node.TargetSelector) && !supportedTargetSelectors.Contains(node.TargetSelector))
+                {
+                    errors.Add($"Enemy skill node '{node.NodeId}' has unsupported target_selector '{node.TargetSelector}'.");
+                }
+
+                knownNodeIds.Add($"{node.SkillId}:{node.NodeId}");
+            }
+
+            for (var i = 0; i < model.EnemySkillNodeParams.Count; i++)
+            {
+                var param = model.EnemySkillNodeParams[i];
+                if (param == null)
+                {
+                    continue;
+                }
+
+                if (!knownNodeIds.Contains($"{param.SkillId}:{param.NodeId}"))
+                {
+                    errors.Add($"Enemy skill node param '{param.SkillId}/{param.NodeId}/{param.ParamKey}' references unknown enemy skill node.");
+                }
             }
         }
 

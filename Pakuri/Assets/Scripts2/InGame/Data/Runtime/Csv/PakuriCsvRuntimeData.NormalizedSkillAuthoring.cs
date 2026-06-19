@@ -263,6 +263,8 @@ namespace Pakuri.Data
                 new[] { "multiplier" });
             AddSkillNodeHandlerSchema(schemas, "PierceBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "HitTargetCountBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "RadiusMultiplier", SkillExecutionPlanNodeKind.Action,
                 new[] { "multiplier" });
             AddSkillNodeHandlerSchema(schemas, "RadiusBonus", SkillExecutionPlanNodeKind.Action,
@@ -274,6 +276,16 @@ namespace Pakuri.Data
             AddSkillNodeHandlerSchema(schemas, "StatusAttackPowerBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "StatusAilmentResistanceBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "StatusDamageBonusRate", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "StatusShieldReceivedBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "StatusCriticalChanceBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "StatusDamageTakenBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "StatusFlatElementResistReduction", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "StatusDurationBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "status_id", "bonus_seconds" });
@@ -726,6 +738,12 @@ namespace Pakuri.Data
                 && choice.PierceBonus != 0)
             {
                 AddLegacyOverlapError(node, "pierce_bonus", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "HitTargetCountBonus", StringComparison.OrdinalIgnoreCase)
+                && choice.HitTargetCountBonus != 0)
+            {
+                AddLegacyOverlapError(node, "hit_target_count_bonus", errors);
             }
 
             if (string.Equals(node.HandlerId, "RadiusMultiplier", StringComparison.OrdinalIgnoreCase)

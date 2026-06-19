@@ -31,7 +31,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            return ExecuteEffect(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot);
+            return SkillPlanActionDispatcher.ExecuteEffect(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot);
         }
 
         internal static bool ExecuteWithStatusDurationScaling(
@@ -147,7 +147,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                routed = ExecuteEffect(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot) || routed;
+                routed = SkillPlanActionDispatcher.ExecuteEffect(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot) || routed;
             }
 
             return routed;
@@ -170,7 +170,7 @@ namespace Pakuri.InGame
                 yield return null;
             }
 
-            ExecuteEffect(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot);
+            SkillPlanActionDispatcher.ExecuteEffect(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot);
         }
 
         internal static bool ShouldRun(SkillExecutionContext context, SkillEffectDefinition effect, SkillExecutionSnapshot snapshot)
@@ -323,32 +323,7 @@ namespace Pakuri.InGame
                 && caster.Statuses.GetStacks(kind) >= Mathf.Max(1, minStacks);
         }
 
-        private static bool ExecuteEffect(
-            SkillExecutionContext context,
-            SkillExecutionSnapshot snapshot,
-            SkillEffectDefinition effect,
-            Vector2 fallbackCenter,
-            bool scaleStatusDurationWithSnapshot)
-        {
-            if (effect == null || context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
-            {
-                return false;
-            }
-
-            switch (effect.EffectKind)
-            {
-                case SkillMultiEffectKind.Damage:
-                    return ExecuteDamageEffect(context, snapshot, effect, fallbackCenter);
-                case SkillMultiEffectKind.Status:
-                    return ExecuteStatusEffect(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot);
-                case SkillMultiEffectKind.ExtendStatusDuration:
-                    return ExecuteExtendStatusDurationEffect(context, effect);
-            }
-
-            return false;
-        }
-
-        private static bool ExecuteDamageEffect(
+        internal static bool ExecuteDamageEffectAction(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
             SkillEffectDefinition effect,
@@ -420,7 +395,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        private static bool ExecuteExtendStatusDurationEffect(
+        internal static bool ExecuteExtendStatusDurationEffectAction(
             SkillExecutionContext context,
             SkillEffectDefinition effect)
         {
@@ -460,7 +435,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        private static bool ExecuteStatusEffect(
+        internal static bool ExecuteStatusEffectAction(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
             SkillEffectDefinition effect,

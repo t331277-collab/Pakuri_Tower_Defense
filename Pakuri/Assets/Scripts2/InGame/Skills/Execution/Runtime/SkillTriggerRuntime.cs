@@ -9,7 +9,7 @@ namespace Pakuri.InGame
 {
     internal static class SkillTriggerRuntime
     {
-        private readonly struct TriggerExecutionContext
+        internal readonly struct TriggerExecutionContext
         {
             public TriggerExecutionContext(
                 BaseUnitRuntimeModel eventTarget,
@@ -293,7 +293,7 @@ namespace Pakuri.InGame
 
             var monsterId = source.Identity != null ? source.Identity.DefinitionId : string.Empty;
             var monster = PakuriDataManager.Instance.ResolveMonster(monsterId);
-            var triggers = monster != null ? monster.SkillTriggers : null;
+            var triggers = ResolveSourceOwnedPlanTriggers(source, sourceSkillId, monster != null ? monster.SkillTriggers : null);
             if (triggers == null || triggers.Length == 0)
             {
                 return;
@@ -310,6 +310,17 @@ namespace Pakuri.InGame
 
                 ExecuteTrigger(combatManager, roster, roster.Find(source), source, trigger, triggerContext);
             }
+        }
+
+        private static SkillTriggerDefinition[] ResolveSourceOwnedPlanTriggers(
+            BaseUnitRuntimeModel source,
+            string sourceSkillId,
+            SkillTriggerDefinition[] fallbackTriggers)
+        {
+            var runtime = source != null && source.SkillRuntime != null
+                ? source.SkillRuntime.FindBySkillId(sourceSkillId)
+                : null;
+            return SkillPlanActionDispatcher.ResolveTriggers(runtime, fallbackTriggers);
         }
 
         private static void ExecutePassiveOwnerTriggers(
@@ -731,47 +742,10 @@ namespace Pakuri.InGame
             SkillTriggerDefinition trigger,
             TriggerExecutionContext triggerContext)
         {
-            switch (ResolveTriggerAction(trigger))
-            {
-                case SkillTriggerActionKind.SingleAttack:
-                    ExecuteSingleAttack(combatManager, roster, sourceEntry, source, trigger, triggerContext);
-                    return;
-                case SkillTriggerActionKind.LineAttack:
-                    ExecuteLineAttack(combatManager, roster, sourceEntry, source, trigger, triggerContext);
-                    return;
-                case SkillTriggerActionKind.Effect:
-                    ExecuteEffect(combatManager, roster, sourceEntry, trigger, triggerContext);
-                    return;
-                case SkillTriggerActionKind.CooldownRefund:
-                    ReduceTargetCooldown(roster, sourceEntry, trigger);
-                    return;
-                case SkillTriggerActionKind.ReloadReduce:
-                    ReduceTargetReload(roster, sourceEntry, trigger);
-                    return;
-                default:
-                    ExecuteTriggeredSkill(combatManager, sourceEntry, trigger, triggerContext);
-                    return;
-            }
+            SkillPlanActionDispatcher.ExecuteTriggerAction(combatManager, roster, sourceEntry, source, trigger, triggerContext);
         }
 
-        private static SkillTriggerActionKind ResolveTriggerAction(SkillTriggerDefinition trigger)
-        {
-            if (trigger == null)
-            {
-                return SkillTriggerActionKind.Auto;
-            }
-
-            if (trigger.TriggerAction != SkillTriggerActionKind.Auto)
-            {
-                return trigger.TriggerAction;
-            }
-
-            return trigger.RuntimeKind == SkillRuntimeKind.SingleAttack
-                ? SkillTriggerActionKind.SingleAttack
-                : SkillTriggerActionKind.TriggeredSkill;
-        }
-
-        private static bool ExecuteTriggeredSkill(
+        internal static bool ExecuteTriggeredSkillAction(
             InGameCombatManager combatManager,
             UnitRosterEntry sourceEntry,
             SkillTriggerDefinition trigger,
@@ -808,7 +782,7 @@ namespace Pakuri.InGame
                 trigger.SourceSkillId);
         }
 
-        private static bool ExecuteEffect(
+        internal static bool ExecuteEffectAction(
             InGameCombatManager combatManager,
             UnitRosterService roster,
             UnitRosterEntry sourceEntry,
@@ -830,7 +804,13 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var context = new SkillExecutionContext(combatManager, roster, sourceEntry, null, 0f);
+            var context = new SkillExecutionContext(
+                combatManager,
+                roster,
+                sourceEntry,
+                null,
+                0f,
+                triggerContext.EventTarget);
             var snapshot = BuildPassiveChoiceSnapshot(sourceEntry.Model as MonsterUnitRuntimeModel, trigger.SourceSkillId);
             return SkillMultiEffectExecutor.ExecuteDirect(context, snapshot, effect, triggerContext.EventCenter);
         }
@@ -987,7 +967,7 @@ namespace Pakuri.InGame
             return snapshot;
         }
 
-        private static bool ReduceTargetCooldown(UnitRosterService roster, UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
+        internal static bool ReduceTargetCooldownAction(UnitRosterService roster, UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
         {
             if (trigger == null || trigger.CooldownRefundRatio <= 0f)
             {
@@ -1010,7 +990,7 @@ namespace Pakuri.InGame
             return routed;
         }
 
-        private static bool ReduceTargetReload(UnitRosterService roster, UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
+        internal static bool ReduceTargetReloadAction(UnitRosterService roster, UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
         {
             if (trigger == null || trigger.ReloadReduceRatio <= 0f)
             {
@@ -1102,7 +1082,7 @@ namespace Pakuri.InGame
             return entries;
         }
 
-        private static bool ExecuteSingleAttack(
+        internal static bool ExecuteSingleAttackAction(
             InGameCombatManager combatManager,
             UnitRosterService roster,
             UnitRosterEntry sourceEntry,
@@ -1179,7 +1159,7 @@ namespace Pakuri.InGame
             return routedArea;
         }
 
-        private static bool ExecuteLineAttack(
+        internal static bool ExecuteLineAttackAction(
             InGameCombatManager combatManager,
             UnitRosterService roster,
             UnitRosterEntry sourceEntry,

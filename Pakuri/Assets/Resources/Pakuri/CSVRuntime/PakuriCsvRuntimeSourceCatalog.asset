@@ -29,3 +29,5 @@ MonoBehaviour:
   StageOneEnemies: {fileID: 4900000, guid: 61c9eb99d31ad914fb1fa849d1a30a96, type: 3}
   StageTwoEnemies: {fileID: 4900000, guid: 11c490074f7917944a1ad554040d411c, type: 3}
   EnemySkills: {fileID: 4900000, guid: d1e6867e2c874365ab3bfedbd0117a42, type: 3}
+  EnemySkillNodes: {fileID: 4900000, guid: 843767bc634ae0d4f8b2d024eca31c0e, type: 3}
+  EnemySkillNodeParams: {fileID: 4900000, guid: d118bcad03953104d952617372a7db8f, type: 3}

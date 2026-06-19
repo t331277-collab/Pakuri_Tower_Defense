@@ -5,6 +5,137 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-06-19 Ariel Plan Action Status Modifier Routing
+
+### Task title
+
+Apply Ariel status-related choice modifiers through plan action handlers instead of old choice spec folding.
+
+### Goals
+
+- Route Ariel status modifier nodes such as Holy damage taken and critical damage taken through `SkillActionOp`.
+- Keep Ariel A master2 holy exposure application as a trigger-bound status effect on the hit event target.
+- Preserve non-Ariel old wide status behavior compatibility.
+
+### Constraints
+
+- Role Owner is Code Builder / Code Reviewer.
+- No Ariel-only status storage was added.
+- Trigger/effect status application remains explicit CSV runtime behavior in this pass.
+
+### Role Owner
+
+Code Builder / Code Reviewer
+
+### Status
+
+Implemented and reviewed for Ariel-first scope.
+
+### Next Actions
+
+- User verifies the live status effects in Play Mode.
+- Future status modifier migrations should prefer normalized nodes before adding new wide status columns.
+
+### Evidence
+
+- `SkillExecutionSnapshot.cs` has `SkillActionOpKind.StatusElementDamageTakenBonus` and `SkillActionOpKind.StatusCriticalDamageTakenBonus` handling inside `ApplyPlanAction(...)`.
+- `InGameSkillDefinitionMapper.cs` maps `StatusElementDamageTakenBonus` and `StatusCriticalDamageTakenBonus` handlers into `SkillActionOp`.
+- `monster_skill_nodes.csv` keeps `ariel-a-master-2-holy-exposure-element-damage-taken` with handler `StatusElementDamageTakenBonus` and `bonus=0.15`.
+- `monster_skill_nodes.csv` keeps `ariel-d-master-1-status-critical-damage-taken` with handler `StatusCriticalDamageTakenBonus` and `bonus=0.25`.
+- `monster_skill_triger.csv` / `monster_skill_effects.csv` keep Ariel A master2 status application as `OnOutgoingDamage` + `EventTarget` + `Status` effect with `status_effect_id=holy-exposure`.
+- Runtime/editor builds passed with 0 errors, and Unity-MCP InGame skill validation passed with 0 warning(s).
+
+### History
+
+- 2026-06-19: User requested target-structure migration and Reviewer verification after asking whether Ariel A master2 should be trigger/event-target/apply-status/holy-exposure.
+
+## Task: 2026-06-19 Trigger-Bound EventTarget Status Application Fix
+
+### Task title
+
+Allow trigger-bound effect rows to apply statuses to the hit event target.
+
+### Goals
+
+- Support Ariel A master2 holy exposure as a trigger-bound status effect.
+- Preserve shared trigger/effect runtime behavior without adding Ariel-only branches.
+- Keep status modifier values data-authored through normalized nodes.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Current trigger event used for hit-success routing is `OnOutgoingDamage`.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compiled, and Unity-MCP validated.
+
+### Next Actions
+
+- User verifies Ariel A master2 applies `holy-exposure` to the actual hit enemy in Play Mode.
+- Reuse trigger-bound `Effect` + `EventTarget` for future on-hit status applications.
+
+### Evidence
+
+- `SkillTriggerRuntime.ExecuteEffect(...)` now constructs `SkillExecutionContext` with `triggerContext.EventTarget`, enabling `SkillMultiEffectExecutor` to resolve `target_selection=EventTarget`.
+- `monster_skill_triger.csv` now binds `ariel-a-master2-holy-exposure-on-hit` to `trigger_event=OnOutgoingDamage`, `target_selection=EventTarget`, and `trigger_action=Effect`.
+- `monster_skill_effects.csv` now applies `status_effect_id=holy-exposure` through `ariel-a-master-2-holy-exposure-on-hit`.
+- `monster_skill_nodes.csv` / `monster_skill_node_params.csv` add `StatusElementDamageTakenBonus` `bonus=0.15` for the applied holy exposure status.
+- Runtime and editor dotnet builds passed with 0 errors; existing `MSB3277` warnings remained.
+- Unity-MCP validation logged `InGame skill data validation passed with 0 warning(s)` and warning/error console read returned 0 entries.
+
+### History
+
+- 2026-06-19: User confirmed the intended design as hit trigger, event target, apply status, and `status_id=holy-exposure`; Builder implemented the current runtime equivalent using `OnOutgoingDamage`.
+
+## Task: 2026-06-19 Ariel Passive Status Modifier Node Decomposition
+
+### Task title
+
+Route Ariel passive status modifier add-ons through normalized choice nodes.
+
+### Goals
+
+- Let passive status effects receive additive modifier-node values for damage bonus, shield received, critical chance, damage taken, and flat element resist reduction.
+- Ensure Ariel F/G/H/I/J passive numeric upgrades compose onto base status effect objects instead of relying on duplicate status effect rows.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Shared status runtime behavior remains data-driven; no Ariel-only status branch was added.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compiled, and Unity-MCP validated.
+
+### Next Actions
+
+- User verifies Ariel passive status modifier stacking in Play Mode.
+- Future status modifier nodes should remain additive unless a handoff explicitly asks for replacement semantics.
+
+### Evidence
+
+- `SkillStatusSpecUtility.ResolveStatusData(...)` now applies normalized choice status modifiers additively to `StatusEffectData` fields and `BuffModifierSpec` fields.
+- `SkillExecutionSnapshot` now carries `StatusDamageBonusRate`, `StatusShieldReceivedBonus`, `StatusCriticalChanceBonus`, `StatusDamageTakenBonus`, and `StatusFlatElementResistReduction`.
+- Existing status element/critical/ailment modifier choice values now accumulate onto base status data instead of replacing base values.
+- Ariel F trait1, G trait1/G trait2, H trait1/H trait2, I trait1, J trait1, and J trait2 are now represented by normalized status modifier nodes.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- Unity-MCP validation logged `InGame skill data validation passed with 0 warning(s)` and the warning/error console read returned 0 entries.
+
+### History
+
+- 2026-06-19: User requested Code Builder to decompose all Ariel skills like Ariel C using atomic effect object + modifier node + binding node.
+
 ## Task: 2026-06-19 Ariel Effect Object Trigger Binding Handoff
 
 ### Task title

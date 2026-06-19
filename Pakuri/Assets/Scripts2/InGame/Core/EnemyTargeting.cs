@@ -55,6 +55,82 @@ namespace Pakuri.InGame
             return identity != null && identity.Role == UnitRole.Nexus;
         }
 
+        public static UnitRosterEntry FindFarthestPlayerTarget(UnitRosterEntry enemyEntry, UnitRosterService roster)
+        {
+            var players = roster != null ? roster.Players : null;
+            UnitRosterEntry best = null;
+            var bestDistanceSq = float.MinValue;
+            var origin = enemyEntry != null && enemyEntry.Transform != null ? enemyEntry.Transform.position : Vector3.zero;
+            if (players == null)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < players.Count; i++)
+            {
+                var candidate = players[i];
+                if (!IsActive(candidate) || IsNexus(candidate))
+                {
+                    continue;
+                }
+
+                var offset = candidate.Transform.position - origin;
+                offset.z = 0f;
+                var distanceSq = offset.sqrMagnitude;
+                if (distanceSq <= bestDistanceSq)
+                {
+                    continue;
+                }
+
+                best = candidate;
+                bestDistanceSq = distanceSq;
+            }
+
+            return best;
+        }
+
+        public static UnitRosterEntry FindRandomPlayerTarget(UnitRosterService roster)
+        {
+            var players = roster != null ? roster.Players : null;
+            if (players == null)
+            {
+                return null;
+            }
+
+            var candidates = new List<UnitRosterEntry>();
+            for (var i = 0; i < players.Count; i++)
+            {
+                var candidate = players[i];
+                if (IsActive(candidate) && !IsNexus(candidate))
+                {
+                    candidates.Add(candidate);
+                }
+            }
+
+            return candidates.Count > 0 ? candidates[Random.Range(0, candidates.Count)] : null;
+        }
+
+        public static List<UnitRosterEntry> FindAllPlayerTargets(UnitRosterService roster)
+        {
+            var result = new List<UnitRosterEntry>();
+            var players = roster != null ? roster.Players : null;
+            if (players == null)
+            {
+                return result;
+            }
+
+            for (var i = 0; i < players.Count; i++)
+            {
+                var candidate = players[i];
+                if (IsActive(candidate) && !IsNexus(candidate))
+                {
+                    result.Add(candidate);
+                }
+            }
+
+            return result;
+        }
+
         public static UnitRosterEntry FindLowestHealthEnemyAlly(UnitRosterService roster)
         {
             var enemies = roster.Enemies;

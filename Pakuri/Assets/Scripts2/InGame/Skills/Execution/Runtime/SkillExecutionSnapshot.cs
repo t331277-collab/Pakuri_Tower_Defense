@@ -27,6 +27,33 @@ namespace Pakuri.InGame
         CooldownRefundBonus
     }
 
+    public enum SkillActionOpKind
+    {
+        DamageMultiplier,
+        ShieldAmountMultiplier,
+        CountStatusDamageMultiplier,
+        CooldownMultiplier,
+        MagazineBonus,
+        ReloadTimeMultiplier,
+        PierceBonus,
+        RadiusMultiplier,
+        RadiusBonus,
+        DurationBonus,
+        HitTargetCountBonus,
+        StatusActionSpeedBonus,
+        StatusAttackPowerBonus,
+        StatusAilmentResistanceBonus,
+        StatusDamageBonusRate,
+        StatusShieldReceivedBonus,
+        StatusCriticalChanceBonus,
+        StatusDamageTakenBonus,
+        StatusFlatElementResistReduction,
+        StatusDurationBonus,
+        StatusConditionalDamageTakenBonus,
+        StatusElementDamageTakenBonus,
+        StatusCriticalDamageTakenBonus
+    }
+
     public readonly struct CastConditionOp
     {
         public CastConditionOp(CastConditionOpKind kind, float value)
@@ -75,6 +102,32 @@ namespace Pakuri.InGame
         public KillActionOpKind Kind { get; }
         public float RatioBonus { get; }
         public bool RequiresExecute { get; }
+    }
+
+    public readonly struct SkillActionOp
+    {
+        public SkillActionOp(
+            SkillActionOpKind kind,
+            float floatValue = 0f,
+            int intValue = 0,
+            string stringValue = null,
+            string secondaryStringValue = null,
+            SkillMultiEffectTargetSide targetSide = SkillMultiEffectTargetSide.Enemy)
+        {
+            Kind = kind;
+            FloatValue = floatValue;
+            IntValue = intValue;
+            StringValue = stringValue ?? string.Empty;
+            SecondaryStringValue = secondaryStringValue ?? string.Empty;
+            TargetSide = targetSide;
+        }
+
+        public SkillActionOpKind Kind { get; }
+        public float FloatValue { get; }
+        public int IntValue { get; }
+        public string StringValue { get; }
+        public string SecondaryStringValue { get; }
+        public SkillMultiEffectTargetSide TargetSide { get; }
     }
 
     public sealed class SkillExecutionSnapshot
@@ -162,6 +215,16 @@ namespace Pakuri.InGame
         public float StatusCriticalDamageTakenBonus { get; private set; }
         public bool HasStatusAilmentResistanceBonus { get; private set; }
         public float StatusAilmentResistanceBonus { get; private set; }
+        public bool HasStatusDamageBonusRate { get; private set; }
+        public float StatusDamageBonusRate { get; private set; }
+        public bool HasStatusShieldReceivedBonus { get; private set; }
+        public float StatusShieldReceivedBonus { get; private set; }
+        public bool HasStatusCriticalChanceBonus { get; private set; }
+        public float StatusCriticalChanceBonus { get; private set; }
+        public bool HasStatusDamageTakenBonus { get; private set; }
+        public float StatusDamageTakenBonus { get; private set; }
+        public bool HasStatusFlatElementResistReduction { get; private set; }
+        public float StatusFlatElementResistReduction { get; private set; }
         public bool HasStatusConditionalDamageTakenBonus { get; private set; }
         public float StatusConditionalDamageTakenBonus { get; private set; }
         public string StatusConditionalSourceStatusId { get; private set; }
@@ -451,19 +514,49 @@ namespace Pakuri.InGame
             if (spec.HasStatusElementDamageTakenBonus)
             {
                 HasStatusElementDamageTakenBonus = true;
-                StatusElementDamageTakenBonus = spec.StatusElementDamageTakenBonus;
+                StatusElementDamageTakenBonus += spec.StatusElementDamageTakenBonus;
             }
 
             if (spec.HasStatusCriticalDamageTakenBonus)
             {
                 HasStatusCriticalDamageTakenBonus = true;
-                StatusCriticalDamageTakenBonus = spec.StatusCriticalDamageTakenBonus;
+                StatusCriticalDamageTakenBonus += spec.StatusCriticalDamageTakenBonus;
             }
 
             if (spec.HasStatusAilmentResistanceBonus)
             {
                 HasStatusAilmentResistanceBonus = true;
-                StatusAilmentResistanceBonus = spec.StatusAilmentResistanceBonus;
+                StatusAilmentResistanceBonus += spec.StatusAilmentResistanceBonus;
+            }
+
+            if (spec.HasStatusDamageBonusRate)
+            {
+                HasStatusDamageBonusRate = true;
+                StatusDamageBonusRate += spec.StatusDamageBonusRate;
+            }
+
+            if (spec.HasStatusShieldReceivedBonus)
+            {
+                HasStatusShieldReceivedBonus = true;
+                StatusShieldReceivedBonus += spec.StatusShieldReceivedBonus;
+            }
+
+            if (spec.HasStatusCriticalChanceBonus)
+            {
+                HasStatusCriticalChanceBonus = true;
+                StatusCriticalChanceBonus += spec.StatusCriticalChanceBonus;
+            }
+
+            if (spec.HasStatusDamageTakenBonus)
+            {
+                HasStatusDamageTakenBonus = true;
+                StatusDamageTakenBonus += spec.StatusDamageTakenBonus;
+            }
+
+            if (spec.HasStatusFlatElementResistReduction)
+            {
+                HasStatusFlatElementResistReduction = true;
+                StatusFlatElementResistReduction += spec.StatusFlatElementResistReduction;
             }
 
             if (!string.IsNullOrWhiteSpace(spec.StatusMaxStacksBonusStatusId)
@@ -664,6 +757,12 @@ namespace Pakuri.InGame
                 return;
             }
 
+            if (HasNormalizedPlanNodes(choice))
+            {
+                ApplyNodeBackedChoiceDefinition(choice);
+                return;
+            }
+
             var spec = new SkillChoiceEffectSpec
             {
                 ChoiceId = choice.ChoiceId,
@@ -813,6 +912,155 @@ namespace Pakuri.InGame
 
             InGameSkillDefinitionMapper.ApplyNormalizedChoiceNodes(spec, choice.NormalizedPlanNodes);
             ApplyChoiceSpec(spec);
+        }
+
+        private void ApplyNodeBackedChoiceDefinition(SkillChoiceDefinition choice)
+        {
+            if (choice.SkillEffectPrefab != null)
+            {
+                SkillEffectPrefab = choice.SkillEffectPrefab;
+            }
+
+            var nodes = InGameSkillDefinitionMapper.MapSkillNodeDefinitions(choice.NormalizedPlanNodes);
+            AddNormalizedPlanNodes(nodes);
+            ApplyPlanActionNodes(nodes);
+            RefreshSingleAttackOperationBridges();
+            RebuildExecutionPlan();
+        }
+
+        private static bool HasNormalizedPlanNodes(SkillChoiceDefinition choice)
+        {
+            return choice != null
+                && choice.NormalizedPlanNodes != null
+                && choice.NormalizedPlanNodes.Length > 0;
+        }
+
+        private void ApplyPlanActionNodes(IReadOnlyList<SkillExecutionPlanNode> nodes)
+        {
+            if (nodes == null || nodes.Count == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < nodes.Count; i++)
+            {
+                var action = nodes[i] != null ? nodes[i].Action : null;
+                if (action.HasValue)
+                {
+                    ApplyPlanAction(action.Value);
+                }
+            }
+        }
+
+        private void ApplyPlanAction(SkillActionOp action)
+        {
+            switch (action.Kind)
+            {
+                case SkillActionOpKind.DamageMultiplier:
+                    DamageMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+                    break;
+                case SkillActionOpKind.ShieldAmountMultiplier:
+                    ShieldAmountMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+                    break;
+                case SkillActionOpKind.CooldownMultiplier:
+                    CooldownMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+                    break;
+                case SkillActionOpKind.MagazineBonus:
+                    MagazineBonus += action.IntValue;
+                    break;
+                case SkillActionOpKind.ReloadTimeMultiplier:
+                    ReloadTimeMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+                    break;
+                case SkillActionOpKind.PierceBonus:
+                    PierceBonus += action.IntValue;
+                    break;
+                case SkillActionOpKind.RadiusMultiplier:
+                    RadiusMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+                    break;
+                case SkillActionOpKind.RadiusBonus:
+                    RadiusBonus += action.FloatValue;
+                    break;
+                case SkillActionOpKind.DurationBonus:
+                    DurationBonus += action.FloatValue;
+                    break;
+                case SkillActionOpKind.HitTargetCountBonus:
+                    HitTargetCountBonus += action.IntValue;
+                    break;
+                case SkillActionOpKind.StatusActionSpeedBonus:
+                    ApplyStatusActionSpeedBonus(action.StringValue, action.FloatValue);
+                    break;
+                case SkillActionOpKind.StatusAttackPowerBonus:
+                    HasStatusAttackPowerBonus = true;
+                    StatusAttackPowerBonus += action.FloatValue;
+                    break;
+                case SkillActionOpKind.StatusAilmentResistanceBonus:
+                    HasStatusAilmentResistanceBonus = true;
+                    StatusAilmentResistanceBonus += action.FloatValue;
+                    break;
+                case SkillActionOpKind.StatusDamageBonusRate:
+                    HasStatusDamageBonusRate = true;
+                    StatusDamageBonusRate += action.FloatValue;
+                    break;
+                case SkillActionOpKind.StatusShieldReceivedBonus:
+                    HasStatusShieldReceivedBonus = true;
+                    StatusShieldReceivedBonus += action.FloatValue;
+                    break;
+                case SkillActionOpKind.StatusCriticalChanceBonus:
+                    HasStatusCriticalChanceBonus = true;
+                    StatusCriticalChanceBonus += action.FloatValue;
+                    break;
+                case SkillActionOpKind.StatusDamageTakenBonus:
+                    HasStatusDamageTakenBonus = true;
+                    StatusDamageTakenBonus += action.FloatValue;
+                    break;
+                case SkillActionOpKind.StatusFlatElementResistReduction:
+                    HasStatusFlatElementResistReduction = true;
+                    StatusFlatElementResistReduction += action.FloatValue;
+                    break;
+                case SkillActionOpKind.StatusDurationBonus:
+                    ApplyStatusDurationBonus(action.StringValue, action.FloatValue);
+                    break;
+                case SkillActionOpKind.StatusConditionalDamageTakenBonus:
+                    HasStatusConditionalDamageTakenBonus = true;
+                    StatusConditionalDamageTakenBonus += action.FloatValue;
+                    StatusConditionalSourceStatusId = action.StringValue;
+                    break;
+                case SkillActionOpKind.StatusElementDamageTakenBonus:
+                    HasStatusElementDamageTakenBonus = true;
+                    StatusElementDamageTakenBonus += action.FloatValue;
+                    break;
+                case SkillActionOpKind.StatusCriticalDamageTakenBonus:
+                    HasStatusCriticalDamageTakenBonus = true;
+                    StatusCriticalDamageTakenBonus += action.FloatValue;
+                    break;
+            }
+        }
+
+        private void ApplyStatusActionSpeedBonus(string statusId, float bonus)
+        {
+            HasStatusActionSpeedBonus = true;
+            if (string.IsNullOrWhiteSpace(statusId))
+            {
+                StatusActionSpeedBonus += bonus;
+                return;
+            }
+
+            StatusActionSpeedBonusStatusId = statusId;
+            statusActionSpeedBonuses[statusId] = statusActionSpeedBonuses.TryGetValue(statusId, out var currentBonus)
+                ? currentBonus + bonus
+                : bonus;
+        }
+
+        private void ApplyStatusDurationBonus(string statusId, float bonus)
+        {
+            if (string.IsNullOrWhiteSpace(statusId) || Mathf.Approximately(bonus, 0f))
+            {
+                return;
+            }
+
+            statusDurationBonuses[statusId] = statusDurationBonuses.TryGetValue(statusId, out var currentBonus)
+                ? currentBonus + bonus
+                : bonus;
         }
 
         public void AddActiveChoiceId(string choiceId)

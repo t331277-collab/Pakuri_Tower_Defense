@@ -125,6 +125,8 @@ namespace Pakuri.Data
             var enemyTable = CsvTable.Load(sourceCatalog.StageOneEnemies, StageOneEnemiesFileName);
             var stageTwoEnemyTable = CsvTable.Load(sourceCatalog.StageTwoEnemies, StageTwoEnemiesFileName);
             var enemySkillTable = CsvTable.Load(sourceCatalog.EnemySkills, EnemySkillDataFileName);
+            var enemySkillNodeTable = LoadOptionalCsvTable(sourceCatalog.EnemySkillNodes, EnemySkillNodesFileName);
+            var enemySkillNodeParamTable = LoadOptionalCsvTable(sourceCatalog.EnemySkillNodeParams, EnemySkillNodeParamsFileName);
 
             foreach (var record in catalogMonsterTable.Records)
             {
@@ -225,6 +227,22 @@ namespace Pakuri.Data
             {
                 var row = ParseEnemySkillRow(record);
                 AddUnique(model.EnemySkills, row.Id, row, record);
+            }
+
+            if (enemySkillNodeTable != null)
+            {
+                foreach (var record in enemySkillNodeTable.Records)
+                {
+                    model.EnemySkillNodes.Add(ParseEnemySkillNodeRow(record));
+                }
+            }
+
+            if (enemySkillNodeParamTable != null)
+            {
+                foreach (var record in enemySkillNodeParamTable.Records)
+                {
+                    model.EnemySkillNodeParams.Add(ParseEnemySkillNodeParamRow(record));
+                }
             }
 
             foreach (var record in enemyTable.Records)

@@ -21,7 +21,6 @@ namespace Pakuri.InGame
         public void SetChoiceModifierLibrary(SkillChoiceModifierLibrary library)
         {
         }
-
         public void Tick(
             UnitRosterService roster,
             InGameCombatManager combatManager,
@@ -170,25 +169,16 @@ namespace Pakuri.InGame
             return false;
         }
 
-        private bool TryRouteSkill(
-            UnitRosterEntry entry,
-            SkillRuntimeInstance runtime,
-            UnitRosterService roster,
-            InGameCombatManager combatManager,
-            float deltaTime,
-            bool logRoutedContracts,
-            bool hasManualAimDirection,
-            Vector2 manualAimDirection,
-            bool hasManualTargetPoint = false,
-            Vector2 manualTargetPoint = default,
-            System.Action<UnitRosterEntry> notifyActiveSkillAnimation = null)
+        private bool TryRouteSkill(SkillExecutionRequest request)
         {
+            var entry = request.Entry;
+            var runtime = request.Runtime;
             if (runtime == null || entry == null || !StatusEffectRuntime.CanAct(entry.Model))
             {
                 return false;
             }
 
-            var snapshot = choiceResolver.Resolve(entry != null ? entry.Model : null, runtime, roster);
+            var snapshot = choiceResolver.Resolve(entry != null ? entry.Model : null, runtime, request.Roster);
             if (!runtime.CanCastWithSnapshot(snapshot))
             {
                 return false;
@@ -201,15 +191,15 @@ namespace Pakuri.InGame
             }
 
             var context = new SkillExecutionContext(
-                combatManager,
-                roster,
+                request.CombatManager,
+                request.Roster,
                 entry,
                 runtime,
-                deltaTime,
-                hasManualAimDirection: hasManualAimDirection,
-                manualAimDirection: manualAimDirection,
-                hasManualTargetPoint: hasManualTargetPoint,
-                manualTargetPoint: manualTargetPoint);
+                request.DeltaTime,
+                hasManualAimDirection: request.HasManualAimDirection,
+                manualAimDirection: request.ManualAimDirection,
+                hasManualTargetPoint: request.HasManualTargetPoint,
+                manualTargetPoint: request.ManualTargetPoint);
             var result = executor.Execute(context, snapshot);
             if (result.Routed)
             {
@@ -218,10 +208,10 @@ namespace Pakuri.InGame
                     return false;
                 }
 
-                notifyActiveSkillAnimation?.Invoke(entry);
-                NotifySkillCastTriggers(combatManager, entry, runtime, context);
+                request.NotifyActiveSkillAnimation?.Invoke(entry);
+                NotifySkillCastTriggers(request.CombatManager, entry, runtime, context);
                 LastRoutedCount++;
-                if (logRoutedContracts)
+                if (request.LogRoutedContracts)
                 {
                     Debug.Log($"Skill execution contract routed '{result.SkillId}' through {result.ExecutorName}.");
                 }
@@ -451,19 +441,65 @@ namespace Pakuri.InGame
             BaseUnitRuntimeModel owner,
             UnitRosterService roster)
         {
+            if (snapshot == null || choice == null || roster == null)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(choice.CountStatusId)
+                && choice.DamageMultiplierPerCount > 0f)
+            {
+                ApplyCountStatusDamageMultiplier(
+                    snapshot,
+                    owner,
+                    roster,
+                    choice.CountTargetSide,
+                    choice.CountStatusId,
+                    choice.DamageMultiplierPerCount,
+                    choice.CountMax);
+            }
+
+            var nodes = InGameSkillDefinitionMapper.MapSkillNodeDefinitions(choice.NormalizedPlanNodes);
+            for (var i = 0; i < nodes.Length; i++)
+            {
+                var action = nodes[i] != null ? nodes[i].Action : null;
+                if (!action.HasValue || action.Value.Kind != SkillActionOpKind.CountStatusDamageMultiplier)
+                {
+                    continue;
+                }
+
+                ApplyCountStatusDamageMultiplier(
+                    snapshot,
+                    owner,
+                    roster,
+                    action.Value.TargetSide,
+                    action.Value.StringValue,
+                    action.Value.FloatValue,
+                    action.Value.IntValue);
+            }
+        }
+
+        private static void ApplyCountStatusDamageMultiplier(
+            SkillExecutionSnapshot snapshot,
+            BaseUnitRuntimeModel owner,
+            UnitRosterService roster,
+            SkillMultiEffectTargetSide targetSide,
+            string statusId,
+            float amountPerCount,
+            int countMax)
+        {
             if (snapshot == null
-                || choice == null
-                || string.IsNullOrWhiteSpace(choice.CountStatusId)
-                || choice.DamageMultiplierPerCount <= 0f
+                || string.IsNullOrWhiteSpace(statusId)
+                || amountPerCount <= 0f
                 || roster == null)
             {
                 return;
             }
 
-            var count = CountMatchingTargets(owner, roster, choice.CountTargetSide, choice.CountStatusId);
-            if (choice.CountMax > 0)
+            var count = CountMatchingTargets(owner, roster, targetSide, statusId);
+            if (countMax > 0)
             {
-                count = Mathf.Min(count, choice.CountMax);
+                count = Mathf.Min(count, countMax);
             }
 
             if (count <= 0)
@@ -471,7 +507,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            snapshot.ApplyDynamicDamageMultiplier(1f + count * choice.DamageMultiplierPerCount);
+            snapshot.ApplyDynamicDamageMultiplier(1f + count * amountPerCount);
         }
 
         private static int CountMatchingTargets(

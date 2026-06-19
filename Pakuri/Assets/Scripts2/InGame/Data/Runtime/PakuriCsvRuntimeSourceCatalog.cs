@@ -22,5 +22,7 @@ namespace Pakuri.Data
         public TextAsset StageOneEnemies;
         public TextAsset StageTwoEnemies;
         public TextAsset EnemySkills;
+        public TextAsset EnemySkillNodes;
+        public TextAsset EnemySkillNodeParams;
     }
 }

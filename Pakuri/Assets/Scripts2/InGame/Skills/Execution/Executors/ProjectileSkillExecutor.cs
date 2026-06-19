@@ -55,8 +55,9 @@ namespace Pakuri.InGame
             }
 
             var baseStatusSpec = SkillStatusSpecUtility.ResolveStatusSpec(skill.OnHitStatus, snapshot);
-            var onHitEffects = ResolveTimedEffects(context, snapshot, skill.MultiEffects, SkillMultiEffectTiming.OnHit);
-            var onExpireEffects = ResolveTimedEffects(context, snapshot, skill.MultiEffects, SkillMultiEffectTiming.OnExpire);
+            var planEffects = SkillPlanActionDispatcher.ResolveEffects(snapshot, skill.MultiEffects);
+            var onHitEffects = ResolveTimedEffects(context, snapshot, planEffects, SkillMultiEffectTiming.OnHit);
+            var onExpireEffects = ResolveTimedEffects(context, snapshot, planEffects, SkillMultiEffectTiming.OnExpire);
             var projectile = skill.Projectile;
             var burstProjectileCount = projectile != null ? Math.Max(1, projectile.BurstProjectileCount) : 1;
             var requiresProjectileActor = skill.StopOnFirstHit

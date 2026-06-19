@@ -74,8 +74,6 @@ namespace Pakuri.InGame
         public void ReviveForNextDay()
         {
             defeated = false;
-            RestoreCombatStateForNextDay();
-            RestoreHealthToMaximum();
             EnableTargetColliders();
             ResolveAnimationController()?.ReviveToIdle();
             RefreshDebugView();
@@ -158,60 +156,6 @@ namespace Pakuri.InGame
                     colliders[i].enabled = true;
                 }
             }
-        }
-
-        private void RestoreCombatStateForNextDay()
-        {
-            if (Model == null)
-            {
-                return;
-            }
-
-            Model.AutoAttackEnabled = true;
-            if (!IsSelectedPlayerModel(Model))
-            {
-                Model.AutoSkillEnabled = true;
-            }
-
-            Model.Statuses?.Clear();
-            var resources = Model.Resources;
-            if (resources != null)
-            {
-                resources.DirectShield = 0f;
-                resources.CurrentShield = 0f;
-            }
-
-            var activeSkills = Model.SkillRuntime != null ? Model.SkillRuntime.ActiveSkills : null;
-            if (activeSkills == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < activeSkills.Count; i++)
-            {
-                activeSkills[i]?.ResetRuntimeState();
-            }
-        }
-
-        private void RestoreHealthToMaximum()
-        {
-            var resources = Model != null ? Model.Resources : null;
-            var stats = Model != null ? Model.Stats : null;
-            if (resources == null || stats == null)
-            {
-                return;
-            }
-
-            resources.CurrentHealth = Mathf.Max(0f, stats.MaxHealth);
-        }
-
-        private static bool IsSelectedPlayerModel(MonsterUnitRuntimeModel model)
-        {
-            var identity = model != null ? model.Identity : null;
-            return identity != null
-                && identity.Side == UnitSide.Player
-                && identity.Role == UnitRole.Monster
-                && identity.SlotIndex == 0;
         }
     }
 }

@@ -5,6 +5,377 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-06-19 Enemy Skill Node Runtime Implementation 1-7
+
+### Task title
+
+Implement the data side of enemy skill node runtime handoff steps 1-7.
+
+### Goals
+
+- Add enemy skill node and node-param runtime CSV files.
+- Remove `enemy_scope` from `EnemySkillData.csv` and keep `radius` as the enemy skill range authority.
+- Add Stage2 active skill rows and bind Stage2 units to those skills.
+- Keep Stage1 skills on the same node data path with old executor fallback still present.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User deferred handoff step 8; old direct execution fallback remains.
+- MSW-MCP is not used; Unity-MCP is the only MCP validation path.
+- Unity Play Mode behavior verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compiled, CSV-shape checked, and Unity-MCP CSV sync/validate checked. 2026-06-19 follow-up Code Builder pass added runtime validation coverage for enemy node `action_op` and `target_selector` values.
+
+### Next Actions
+
+- User verifies Stage2 skill behavior in Play Mode before step 8 removes old direct paths.
+- Keep future enemy skill tuning in `EnemySkillData.csv` and behavior composition in `EnemySkillNodes.csv` / `EnemySkillNodeParams.csv`.
+
+### Evidence
+
+- Added `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillNodes.csv` and `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillNodeParams.csv`.
+- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillData.csv` no longer contains `enemy_scope` or `range`.
+- Stage2 skill rows in `EnemySkillData.csv` use requested radii: FireDragonSlash 2, ChainLightning 7, FrostPressure 2, DarkStab 1.4, HolyDragonHeal 5, HolySpearThrow 14, OpeningCharge 40, Intimidation 40.
+- `Pakuri/Assets/CSVdata/runtime/enemy/stage_two_enemies.csv` binds Stage2 enemies to those Stage2 active skill ids.
+- CSV row-width check returned `bad=` empty for `EnemySkillData.csv`, `stage_two_enemies.csv`, `EnemySkillNodes.csv`, and `EnemySkillNodeParams.csv`.
+- `PakuriCsvRuntimeData.Validation.cs` now rejects unsupported `EnemySkillNodes.csv` `action_op` values and unsupported `target_selector` values.
+- PowerShell validation of `EnemySkillNodes.csv`, excluding the second schema row, returned `badOps=` and `badSelectors=` empty.
+- `EnemySkillNodeParams.csv` contains the requested Stage2 values including `ChainLightning delay=0.5`, `ChainLightning chain_radius=7`, `FrostPressure action_speed_bonus=-0.2`, and `Intimidation multiplier=0.7`.
+- Runtime/editor builds passed with 0 errors; only existing `MSB3277` assembly-version warnings remained.
+- Unity-MCP sync logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/runtime' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+- Unity-MCP validate logged runtime catalog load with 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.
+- 2026-06-19 follow-up Unity-MCP validation could not run because no Unity Editor instance was found by the MCP bridge.
+
+### History
+
+- 2026-06-19: User asked Code Builder to implement handoff steps 1-7, create the two enemy node CSV files, make Lightning Scout chain again after 0.5 seconds on another target, and make Arsen reduce target outgoing damage to x0.7.
+
+## Task: 2026-06-19 EnemySkillData Range Column Removal
+
+### Task title
+
+Remove the unused `range` column from enemy skill runtime CSV data.
+
+### Goals
+
+- Keep enemy skill distance data on the currently used `radius` column.
+- Remove the unused `range` column from `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillData.csv`.
+- Preserve runtime CSV sync and validation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No enemy combat code was changed; inspected runtime code already ignored `range`.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and Unity-MCP validated.
+
+### Next Actions
+
+- Keep future Stage1 enemy skill distance authoring on `radius` unless runtime code adds a separate range contract.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillData.csv` no longer contains the `range` header/type column.
+- `Import-Csv -Encoding UTF8 Pakuri\Assets\CSVdata\runtime\enemy\EnemySkillData.csv` showed `hasRange=False`, `headerCount=33`, and data rows loaded.
+- TextFieldParser row-width check returned `expected=33` and `bad=` empty.
+- Search under `Pakuri/Assets/Scripts2/InGame` found no `ReadFloat("range")`, `ReadOptionalFloat(record, "range")`, `ActiveSkillRange`, or `BasicSkillRange` references.
+- Unity-MCP `Pakuri/Sync CSV Runtime Catalog Assets` logged sync from `Assets/CSVdata/runtime`.
+- Unity-MCP `Pakuri/Validate CSV Source Data` logged runtime catalog load with 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.
+- Unity-MCP warning/error console read returned 0 entries.
+
+### History
+
+- 2026-06-19: User asked Code Builder to delete the unused `range` column after code inspection showed Stage1 enemy attack distance uses `radius` or attack-type fallback.
+
+## Task: 2026-06-19 Enemy Skill Node Data Handoff
+
+### Task title
+
+Record the data-facing handoff for future enemy active skill node authoring.
+
+### Goals
+
+- Keep current `EnemySkillData.csv` as the enemy skill body source.
+- Plan future enemy behavior rows as node and node-param data instead of extending hardcoded Stage1 skill switches.
+- Include Stage1 enemy skills in the migration so Stage1 and Stage2 do not diverge into separate execution/data models.
+
+### Constraints
+
+- Role Owner is Designer.
+- This task produced a handoff only; no CSV file, column, row, parser, prefab, or runtime catalog asset was changed.
+- Proposed enemy node CSV files do not exist yet and must be created by Code Builder only after the implementation route is chosen.
+- Do not infer unsupported dual-attribute damage or tower status support without inspecting/adding runtime support.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Handoff created; implementation not started.
+
+### Next Actions
+
+- Code Builder decides exact enemy node CSV schema and adds parser/runtime support.
+- Candidate files from the handoff are `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillNodes.csv` and `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillNodeParams.csv`.
+- Code Builder keeps old enemy execution fallback until Stage1 node parity is verified.
+- Code Builder removes `enemy_scope` from `EnemySkillData.csv`, adds Stage2 active skill body rows there, and treats each row's `radius` as the source of truth for enemy skill range.
+
+### Evidence
+
+- Created `Pakuri/reference/Report/2026-06-19-enemy-skill-node-runtime-handoff.md`.
+- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillData.csv` exists and currently holds enemy skill body/tuning fields.
+- Updated `Pakuri/reference/Report/2026-06-19-enemy-skill-node-runtime-handoff.md` to require `EnemySkillData.csv` Stage2 rows, no `enemy_scope` gate, and requested Stage2 radius values: Fire Dragon Soldier 2, Lightning Scout 7, Ice Guard 2, Dark Assassin 1.4, Holy Priest 5, Ethan 14, Drake 40, Arsen 40.
+- The proposed `EnemySkillNodes.csv` and `EnemySkillNodeParams.csv` files are handoff candidates only; they were not created in this task.
+- `Pakuri/Assets/Scripts2/InGame/Data/PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` contains normalized monster skill authoring support, but enemy skills are not currently compiled through that node path.
+- `Pakuri/Assets/Scripts2/InGame/Enemy/EnemyCombatSystem.cs` currently executes enemy skills through resolved skill data and a direct skill-kind switch, not through enemy node CSV rows.
+
+### History
+
+- 2026-06-19: User requested a Code Builder handoff that judges Stage1 prefab skill applicability together with Stage2 enemy skill implementation planning.
+- 2026-06-19: User revised the handoff so Stage2 enemy skills are managed through `EnemySkillData.csv`, enemy skill range comes from `radius`, `enemy_scope` is removed, and combat-start skills use high `radius` values for immediate execution.
+
+## Task: 2026-06-19 Generic Node-Backed Choice Routing
+
+### Task title
+
+Record the data-facing behavior of replacing Ariel-only choice routing with generic node-backed choice routing.
+
+### Goals
+
+- Make normalized choice nodes apply generically for any monster instead of only Ariel.
+- Keep legacy wide choice mapping as fallback for choices without normalized plan nodes.
+- Preserve current runtime CSV schema and validation behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV file, column, or row value was changed in this pass.
+- Active CSV authority remains `Pakuri/Assets/CSVdata/runtime`.
+- Play Mode gameplay parity remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compiled, and Unity-MCP validated.
+
+### Next Actions
+
+- Future migrated choices for Eve, Vega, Sein, Rin, and Ariel can use normalized choice nodes without needing monster-specific runtime gates.
+- Keep wide choice columns as compatibility fallback until old rows are fully migrated.
+
+### Evidence
+
+- `monster_skill_nodes.csv` currently contains normalized choice nodes for Ariel, Rin, and Vega, so routing had to become monster-agnostic rather than Ariel-only.
+- `SkillExecutionSnapshot.cs` now routes any `SkillChoiceDefinition` with non-empty `NormalizedPlanNodes` through the node-backed choice path.
+- `InGameSkillDefinitionMapper.cs` now skips old `ApplyNormalizedChoiceNodes(...)` folding when a choice already has normalized plan nodes, preventing node-backed choices from double-applying through legacy wide specs.
+- `SkillExecutionSystem.cs` now reads `CountStatusDamageMultiplier` nodes without an Ariel-only gate.
+- Search under `Pakuri/Assets/Scripts2/InGame/Skills` found no remaining `IsArielChoice` or `ApplyArielChoiceDefinition`.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- Unity-MCP `Pakuri/InGame/Validate Skill Data` logged `InGame skill data validation passed with 0 warning(s)` after a clean console run, with 0 warning/error entries.
+
+### History
+
+- 2026-06-19: User requested Code Builder to fix Code Reviewer findings and make the structure better for future skill objectification and additions.
+
+## Task: 2026-06-19 Shared Plan Projection For Existing Effect And Trigger CSV Rows
+
+### Task title
+
+Record the data-runtime projection path that lets existing effect/trigger CSV rows enter `SkillExecutionPlan`.
+
+### Goals
+
+- Keep current CSV schemas unchanged while making `monster_skill_effects.csv` and `monster_skill_triger.csv` rows visible as plan node payloads.
+- Avoid adding Ariel-only data behavior; the projection applies to source-owned skill triggers for all monsters.
+- Preserve existing runtime catalog sync and InGame skill validation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active CSV authority remains `Pakuri/Assets/CSVdata/runtime`.
+- No new CSV file, CSV column, or runtime catalog schema was added in this pass.
+- Existing trigger/effect row execution remains compatible through fallback paths.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and Unity-MCP validated.
+
+### Next Actions
+
+- Future CSV migration can author trigger/effect action semantics as normalized plan nodes once handler coverage is complete.
+- Keep existing CSV effect/trigger rows valid until Play Mode parity proves the handler replacement path.
+
+### Evidence
+
+- `SkillData.cs` now includes `SkillTriggerDefinition[] SkillTriggers`.
+- `InGameSkillDefinitionMapper.cs` filters monster-level `SkillTriggerDefinition` rows by `SourceSkillId` and attaches them to each active/passive skill data object.
+- `SkillExecutionPlan.cs` converts `SkillData.MultiEffects` and `SkillData.SkillTriggers` into `SkillExecutionPlanNode.FromEffect(...)` and `SkillExecutionPlanNode.FromTrigger(...)`.
+- `SkillPlanActionDispatcher.cs` resolves plan-projected effects/triggers with legacy fallback.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- Unity-MCP CSV sync logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/runtime' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+- Unity-MCP validation logged runtime catalog load with 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.
+- Unity-MCP InGame skill validation logged `InGame skill data validation passed with 0 warning(s)`, and warning/error console read returned 0 entries.
+
+### History
+
+- 2026-06-19: User requested the target structure be made reusable for Eve, Vega, Sein, Rin, and Ariel.
+- 2026-06-19: Code Builder added plan projection for existing effect/trigger CSV runtime objects without changing CSV shape.
+
+## Task: 2026-06-19 Ariel Plan-Action CSV Migration
+
+### Task title
+
+Record Ariel runtime CSV movement from old choice-wide behavior fields to normalized plan action nodes.
+
+### Goals
+
+- Keep Ariel choice metadata in `monster_skill_choices.csv`, but remove active Ariel modifier payload reliance on old behavior columns.
+- Store Ariel D trait4/master1 remaining modifiers in `monster_skill_nodes.csv` and `monster_skill_node_params.csv`.
+- Preserve Ariel A master2 status application as explicit trigger/effect CSV rows.
+
+### Constraints
+
+- Role Owner is Code Builder / Code Reviewer.
+- Active CSV authority remains `Pakuri/Assets/CSVdata/runtime`.
+- `monster_skill_triger.csv` and `monster_skill_effects.csv` remain explicit runtime object tables in this pass.
+
+### Role Owner
+
+Code Builder / Code Reviewer
+
+### Status
+
+Implemented and reviewed for Ariel-first migration scope.
+
+### Next Actions
+
+- Keep future Ariel modifier additions on `monster_skill_nodes.csv` plus `monster_skill_node_params.csv`.
+- Do not add new Ariel behavior columns to `monster_skill_choices.csv` without a recorded exception.
+
+### Evidence
+
+- `monster_skill_choices.csv` Ariel old behavior-field scan returned `arielWideNonDefault=0`.
+- `monster_skill_nodes.csv` has `ariel-d-trait-4-hit-target-count-bonus` / `HitTargetCountBonus` and `ariel-d-master-1-status-critical-damage-taken` / `StatusCriticalDamageTakenBonus`.
+- `monster_skill_node_params.csv` stores `bonus=1` for D trait4 hit target count and `bonus=0.25` for D master1 critical damage taken.
+- `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` registers `HitTargetCountBonus` and validates overlap for `hit_target_count_bonus` and `status_critical_damage_taken_bonus`.
+- Unity-MCP CSV sync and InGame skill validation passed with `InGame skill data validation passed with 0 warning(s)` and 0 warning/error console entries.
+
+### History
+
+- 2026-06-19: User requested Ariel-first target migration after prior Reviewer found old wide choice residues.
+
+## Task: 2026-06-19 Ariel A Master2 Runtime CSV Binding Fix
+
+### Task title
+
+Record Ariel A master2 CSV migration from choice-wide status fields to trigger/effect/node rows.
+
+### Goals
+
+- Keep active Ariel A master2 behavior out of old `monster_skill_choices.csv` status-wide fields.
+- Author the status application through `monster_skill_triger.csv` and `monster_skill_effects.csv`.
+- Author the +15% Holy damage taken modifier through `monster_skill_nodes.csv` and `monster_skill_node_params.csv`.
+- Add CSV validation coverage for migrated effect rows that still have executable gates.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active CSV authority remains `Pakuri/Assets/CSVdata/runtime`.
+- Current runtime trigger enum uses `OnOutgoingDamage` for hit-success trigger binding; no unsupported `OnHit` enum value was authored.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compiled, and Unity-MCP validated.
+
+### Next Actions
+
+- Keep future migrated effect rows free of executable `requires_active_choice_id` / `requires_passive_skill_id` gates when `runtime_support_state=MigratedToEffectBinding`.
+- Keep future on-hit status applications on trigger/effect rows before adding new wide choice columns.
+
+### Evidence
+
+- `monster_skill_choices.csv` now has `ariel-a-master-2` with old status-wide payload fields blank and `runtime_support_state=RuntimeImplemented`.
+- `monster_skill_triger.csv` now has `ariel-a-master2-holy-exposure-on-hit` with `trigger_event=OnOutgoingDamage`, `target_selection=EventTarget`, and `trigger_action=Effect`.
+- `monster_skill_effects.csv` now has `ariel-a-master-2-holy-exposure-on-hit` with `status_effect_id=holy-exposure`, `status_chance=1`, and `status_stack_amount=1`.
+- `monster_skill_nodes.csv` and `monster_skill_node_params.csv` now carry the `StatusElementDamageTakenBonus` node and `bonus=0.15` param for `ariel-a-master-2`.
+- `PakuriCsvRuntimeData.Validation.cs` now errors when `MigratedToEffectBinding` effect rows still carry executable choice/passive gates.
+- CSV property-count check returned no bad rows for `monster_skill_choices.csv`, `monster_skill_effects.csv`, `monster_skill_triger.csv`, `monster_skill_nodes.csv`, and `monster_skill_node_params.csv`.
+- Unity-MCP sync/validate logs showed sync from `Assets/CSVdata/runtime`, runtime catalog load, and `InGame skill data validation passed with 0 warning(s)`.
+
+### History
+
+- 2026-06-19: Code Reviewer found `ariel-a-master-2` still depended on old choice-wide status columns and Ariel E migrated shield variants could still run through choice gates.
+- 2026-06-19: Code Builder moved the behavior to trigger/effect/node rows, cleared migrated shield gates, and added validation coverage.
+
+## Task: 2026-06-19 Ariel Passive Node Decomposition Follow-up
+
+### Task title
+
+Record Ariel passive modifier CSV decomposition on the normalized node path.
+
+### Goals
+
+- Keep Ariel passive numeric add-ons in `monster_skill_nodes.csv` and `monster_skill_node_params.csv` instead of duplicate choice-gated effect rows.
+- Preserve runtime CSV validation and catalog sync after adding new status modifier handler ids.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active CSV authority remains under `Pakuri/Assets/CSVdata/runtime`.
+- No new specialized effect binding CSV tables were added.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and Unity-MCP validated.
+
+### Next Actions
+
+- Reuse the status modifier normalized handlers for future passive aura numeric add-ons.
+- Keep conceptually new conditional passive effects in `monster_skill_effects.csv` when they add a new condition/effect object rather than modifying an existing base effect.
+
+### Evidence
+
+- Added normalized handler schemas for `StatusDamageBonusRate`, `StatusShieldReceivedBonus`, `StatusCriticalChanceBonus`, `StatusDamageTakenBonus`, and `StatusFlatElementResistReduction` in `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs`.
+- `monster_skill_nodes.csv` now carries the Ariel F/G/H/I/J passive status modifier nodes; the old generic passive damage node ids for F/H/I/J are absent (`oldGenericPassiveDamageNodes=0`).
+- `monster_skill_effects.csv` marks G trait1, G trait2, I trait1, and J trait1 duplicate rows as `MigratedToEffectBinding`.
+- `monster_skill_triger.csv` no longer contains `ariel-j-after-e-action-speed-trait1-trigger`.
+- CSV shape check returned no bad rows for `monster_skill_choices.csv`, `monster_skill_nodes.csv`, `monster_skill_node_params.csv`, `monster_skill_effects.csv`, and `monster_skill_triger.csv`.
+- Unity-MCP sync/validate logs showed sync from `Assets/CSVdata/runtime`, runtime catalog load with 5 monsters, 8 stage-one enemies, and 8 stage-two enemies, and `InGame skill data validation passed with 0 warning(s)`.
+
+### History
+
+- 2026-06-19: User requested Code Builder to finish Ariel A-J decomposition using the report's lines 373-962 as the node/effect/binding standard.
+
 ## Task: 2026-06-19 CSVdata Folder Reorganization
 
 ### Task title

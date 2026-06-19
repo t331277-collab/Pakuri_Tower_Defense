@@ -65,6 +65,11 @@ namespace Pakuri.InGame
             var state = GetState(enemyModel);
             var actionDeltaTime = deltaTime * StatusEffectRuntime.ResolveActionSpeedMultiplier(enemyModel);
             EnemyCombatRules.TickEnemyCooldowns(state, actionDeltaTime);
+            EnemySkillPlanRuntime.TickPendingActions(enemyEntry, enemyModel, roster, combatManager, state, actionDeltaTime);
+            if (EnemySkillPlanRuntime.TickActiveCharge(enemyEntry, enemyModel, roster, combatManager, state, deltaTime))
+            {
+                return;
+            }
 
             var target = EnemyTargeting.FindNearestPlayerTarget(enemyEntry, roster);
             if (target != null)
@@ -83,7 +88,15 @@ namespace Pakuri.InGame
             var specialSkill = EnemyCombatRules.ResolveSpecialSkill(enemyModel);
             var canAct = StatusEffectRuntime.CanAct(enemyModel);
             var canUseSpecialSkill = canAct && StatusEffectRuntime.CanUseSpecialSkill(enemyModel);
-            var executedSupportSkill = canUseSpecialSkill && TryExecuteCooldownDrivenSpecialSkill(
+            var executedStartSkill = canUseSpecialSkill && TryExecuteCombatStartSpecialSkill(
+                enemyEntry,
+                enemyModel,
+                roster,
+                combatManager,
+                specialSkill,
+                state,
+                logAttackAttempts);
+            var executedSupportSkill = !executedStartSkill && canUseSpecialSkill && TryExecuteCooldownDrivenSpecialSkill(
                 enemyEntry,
                 enemyModel,
                 roster,
@@ -121,7 +134,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (!canAct || executedSupportSkill || !EnemyCombatRules.IsSkillReady(state, offensiveSkill.SlotType))
+            if (!canAct || executedStartSkill || executedSupportSkill || !EnemyCombatRules.IsSkillReady(state, offensiveSkill.SlotType))
             {
                 return;
             }
@@ -129,7 +142,7 @@ namespace Pakuri.InGame
             EnemyCombatRules.SetSkillCooldown(state, offensiveSkill);
             state.AttackAttemptCount++;
             LastAttackAttemptCount++;
-            EnemySkillExecutor.Execute(enemyEntry, enemyModel, target, roster, combatManager, offensiveSkill);
+            ExecuteSkillWithPlanFallback(enemyEntry, enemyModel, target, roster, combatManager, offensiveSkill, state);
 
             if (logAttackAttempts)
             {
@@ -158,7 +171,7 @@ namespace Pakuri.InGame
             EnemyCombatRules.SetSkillCooldown(state, specialSkill);
             state.AttackAttemptCount++;
             LastAttackAttemptCount++;
-            EnemySkillExecutor.Execute(enemyEntry, enemyModel, target, roster, combatManager, specialSkill);
+            ExecuteSkillWithPlanFallback(enemyEntry, enemyModel, target, roster, combatManager, specialSkill, state);
 
             if (logAttackAttempts)
             {
@@ -168,7 +181,54 @@ namespace Pakuri.InGame
             return true;
         }
 
-        private static void MoveToward(
+        private bool TryExecuteCombatStartSpecialSkill(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            EnemyResolvedSkillData specialSkill,
+            EnemyCombatState state,
+            bool logAttackAttempts)
+        {
+            if (state.CombatStartSpecialExecuted
+                || !specialSkill.IsAssigned
+                || specialSkill.Plan == null
+                || !EnemySkillPlanRuntime.HasCombatStartTrigger(specialSkill.Plan)
+                || !EnemyCombatRules.IsSkillReady(state, EnemySkillSlotType.Special))
+            {
+                return false;
+            }
+
+            state.CombatStartSpecialExecuted = true;
+            EnemyCombatRules.SetSkillCooldown(state, specialSkill);
+            state.AttackAttemptCount++;
+            LastAttackAttemptCount++;
+            EnemySkillPlanRuntime.Execute(enemyEntry, enemyModel, null, roster, combatManager, specialSkill, state, "CombatStart");
+
+            if (logAttackAttempts)
+            {
+                Debug.Log(BuildAttackAttemptLog(enemyModel, null, specialSkill.SkillKind));
+            }
+
+            return true;
+        }
+
+        private static void ExecuteSkillWithPlanFallback(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterEntry target,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            EnemyResolvedSkillData skillData,
+            EnemyCombatState state)
+        {
+            if (!EnemySkillPlanRuntime.Execute(enemyEntry, enemyModel, target, roster, combatManager, skillData, state, string.Empty))
+            {
+                EnemySkillExecutor.Execute(enemyEntry, enemyModel, target, roster, combatManager, skillData);
+            }
+        }
+
+        internal static void MoveToward(
             UnitRosterEntry enemyEntry,
             UnitRosterEntry target,
             EnemyUnitRuntimeModel enemyModel,
@@ -283,6 +343,31 @@ namespace Pakuri.InGame
         public float BasicSkillCooldownRemaining;
         public float SpecialSkillCooldownRemaining;
         public int AttackAttemptCount;
+        public bool CombatStartSpecialExecuted;
+        internal PendingEnemySkillAction PendingAction;
+        internal ActiveEnemyChargeAction ActiveCharge;
+    }
+
+    internal sealed class PendingEnemySkillAction
+    {
+        public float RemainingSeconds;
+        public string ActionOp;
+        public string ExcludedTargetUnitId;
+        public float DamageMultiplier = 1f;
+        public DamageAttribute Attribute = DamageAttribute.Physical;
+        public float SearchRadius;
+        public EnemyResolvedSkillData SkillData;
+    }
+
+    internal sealed class ActiveEnemyChargeAction
+    {
+        public string TargetUnitId;
+        public float ElapsedSeconds;
+        public float RampSeconds = 3f;
+        public float MaxMoveSpeedMultiplier = 2.5f;
+        public float DamageTargetMaxHealthRatio = 1f;
+        public float FreezeDurationSeconds = 5f;
+        public DamageAttribute Attribute = DamageAttribute.Physical;
     }
 
     internal enum EnemySkillSlotType
@@ -297,6 +382,8 @@ namespace Pakuri.InGame
         public EnemySkillSlotType SlotType;
         public StageOneEnemySkillKind SkillKind;
         public float Coefficient;
+        public float AttackPowerCoefficient;
+        public float SpellPowerCoefficient;
         public float CooldownSeconds;
         public float Duration;
         public float Radius;
@@ -305,6 +392,7 @@ namespace Pakuri.InGame
         public float ProjectileLifetime;
         public float MoveSpeedMultiplier;
         public float OutgoingDamageMultiplier;
+        public EnemySkillPlanDefinition Plan;
         public bool IsAssigned;
     }
 
@@ -322,6 +410,8 @@ namespace Pakuri.InGame
                 SlotType = EnemySkillSlotType.Special,
                 SkillKind = enemyModel.StageOneSkill,
                 Coefficient = enemyModel.ActiveSkillCoefficient,
+                AttackPowerCoefficient = enemyModel.ActiveSkillAttackPowerCoefficient,
+                SpellPowerCoefficient = enemyModel.ActiveSkillSpellPowerCoefficient,
                 CooldownSeconds = enemyModel.ActiveSkillCooldownSeconds,
                 Duration = enemyModel.ActiveSkillDuration,
                 Radius = enemyModel.ActiveSkillRadius,
@@ -330,6 +420,7 @@ namespace Pakuri.InGame
                 ProjectileLifetime = enemyModel.ActiveSkillProjectileLifetime,
                 MoveSpeedMultiplier = enemyModel.ActiveSkillMoveSpeedMultiplier,
                 OutgoingDamageMultiplier = enemyModel.ActiveSkillOutgoingDamageMultiplier,
+                Plan = enemyModel.ActiveSkillPlan,
                 IsAssigned = true
             };
         }
@@ -346,6 +437,8 @@ namespace Pakuri.InGame
                 SlotType = EnemySkillSlotType.Basic,
                 SkillKind = enemyModel.BasicSkill,
                 Coefficient = enemyModel.BasicSkillCoefficient,
+                AttackPowerCoefficient = enemyModel.BasicSkillAttackPowerCoefficient,
+                SpellPowerCoefficient = enemyModel.BasicSkillSpellPowerCoefficient,
                 CooldownSeconds = enemyModel.BasicSkillCooldownSeconds,
                 Duration = enemyModel.BasicSkillDuration,
                 Radius = enemyModel.BasicSkillRadius,
@@ -354,6 +447,7 @@ namespace Pakuri.InGame
                 ProjectileLifetime = enemyModel.BasicSkillProjectileLifetime,
                 MoveSpeedMultiplier = enemyModel.BasicSkillMoveSpeedMultiplier,
                 OutgoingDamageMultiplier = enemyModel.BasicSkillOutgoingDamageMultiplier,
+                Plan = enemyModel.BasicSkillPlan,
                 IsAssigned = true
             };
         }
@@ -447,6 +541,7 @@ namespace Pakuri.InGame
             switch (skillKind)
             {
                 case StageOneEnemySkillKind.Heal:
+                case StageOneEnemySkillKind.HolyDragonHeal:
                 case StageOneEnemySkillKind.ShieldUp:
                 case StageOneEnemySkillKind.GuardianFlag:
                 case StageOneEnemySkillKind.ChargeCommand:
@@ -460,7 +555,8 @@ namespace Pakuri.InGame
             StageOneEnemySkillKind skillKind,
             UnitRosterService roster)
         {
-            return skillKind != StageOneEnemySkillKind.Heal || EnemyTargeting.FindLowestHealthEnemyAlly(roster) != null;
+            return (skillKind != StageOneEnemySkillKind.Heal && skillKind != StageOneEnemySkillKind.HolyDragonHeal)
+                || EnemyTargeting.FindLowestHealthEnemyAlly(roster) != null;
         }
 
         public static void TickTemporaryEnemyModifiers(EnemyUnitRuntimeModel enemyModel, float deltaTime)
@@ -495,6 +591,658 @@ namespace Pakuri.InGame
             {
                 multiplier = 1f;
             }
+        }
+    }
+
+    internal static class EnemySkillPlanRuntime
+    {
+        private const string CombatStartTrigger = "CombatStart";
+        private const int HitAllColliderTargets = int.MaxValue;
+        private const bool StagePersistentStatus = true;
+
+        public static bool HasCombatStartTrigger(EnemySkillPlanDefinition plan)
+        {
+            var nodes = plan != null ? plan.Nodes : null;
+            if (nodes == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < nodes.Length; i++)
+            {
+                var node = nodes[i];
+                if (node != null
+                    && node.Enabled
+                    && string.Equals(node.Trigger, CombatStartTrigger, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static void TickPendingActions(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            EnemyCombatState state,
+            float deltaTime)
+        {
+            var pending = state != null ? state.PendingAction : null;
+            if (pending == null)
+            {
+                return;
+            }
+
+            pending.RemainingSeconds = Mathf.Max(0f, pending.RemainingSeconds - deltaTime);
+            if (pending.RemainingSeconds > 0f)
+            {
+                return;
+            }
+
+            state.PendingAction = null;
+            if (string.Equals(pending.ActionOp, "ChainDamage", System.StringComparison.OrdinalIgnoreCase))
+            {
+                ExecutePendingChainDamage(enemyEntry, enemyModel, roster, combatManager, pending);
+            }
+        }
+
+        public static bool TickActiveCharge(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            EnemyCombatState state,
+            float deltaTime)
+        {
+            var charge = state != null ? state.ActiveCharge : null;
+            if (charge == null)
+            {
+                return false;
+            }
+
+            if (enemyEntry == null || enemyEntry.Transform == null || enemyModel == null || roster == null || combatManager == null)
+            {
+                ClearActiveCharge(enemyModel, state);
+                return true;
+            }
+
+            var hitTarget = FindChargeHitTarget(enemyEntry, roster);
+            if (hitTarget != null)
+            {
+                ResolveChargeHit(enemyModel, hitTarget, combatManager, state, charge);
+                return true;
+            }
+
+            charge.ElapsedSeconds += Mathf.Max(0f, deltaTime);
+            var rampProgress = charge.RampSeconds > 0f
+                ? Mathf.Clamp01(charge.ElapsedSeconds / charge.RampSeconds)
+                : 1f;
+            enemyModel.MoveSpeedMultiplier = Mathf.Lerp(1f, Mathf.Max(1f, charge.MaxMoveSpeedMultiplier), rampProgress);
+            enemyModel.MoveSpeedMultiplierRemainingSeconds = Mathf.Max(0.1f, deltaTime + 0.05f);
+
+            var chargeTarget = FindPlayerTargetByUnitId(roster, charge.TargetUnitId) ?? EnemyTargeting.FindRandomPlayerTarget(roster);
+            if (chargeTarget == null || chargeTarget.Transform == null)
+            {
+                ClearActiveCharge(enemyModel, state);
+                return true;
+            }
+
+            if (StatusEffectRuntime.CanMove(enemyModel))
+            {
+                EnemyCombatSystem.MoveToward(enemyEntry, chargeTarget, enemyModel, deltaTime);
+            }
+
+            hitTarget = FindChargeHitTarget(enemyEntry, roster);
+            if (hitTarget != null)
+            {
+                ResolveChargeHit(enemyModel, hitTarget, combatManager, state, charge);
+            }
+
+            return true;
+        }
+
+        public static bool Execute(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterEntry currentTarget,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            EnemyResolvedSkillData skillData,
+            EnemyCombatState state,
+            string triggerFilter)
+        {
+            var plan = skillData.Plan;
+            var nodes = plan != null ? plan.Nodes : null;
+            if (nodes == null || nodes.Length == 0 || enemyModel == null || combatManager == null || roster == null)
+            {
+                return false;
+            }
+
+            var executed = false;
+            for (var i = 0; i < nodes.Length; i++)
+            {
+                var node = nodes[i];
+                if (node == null || !node.Enabled || !ShouldExecuteForTrigger(node, triggerFilter))
+                {
+                    continue;
+                }
+
+                executed |= ExecuteNode(enemyEntry, enemyModel, currentTarget, roster, combatManager, skillData, state, node);
+            }
+
+            return executed;
+        }
+
+        private static bool ShouldExecuteForTrigger(EnemySkillPlanNodeDefinition node, string triggerFilter)
+        {
+            var wantsCombatStart = string.Equals(node.Trigger, CombatStartTrigger, System.StringComparison.OrdinalIgnoreCase);
+            if (string.IsNullOrWhiteSpace(triggerFilter))
+            {
+                return !wantsCombatStart;
+            }
+
+            return string.Equals(node.Trigger, triggerFilter, System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool ExecuteNode(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterEntry currentTarget,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            EnemyResolvedSkillData skillData,
+            EnemyCombatState state,
+            EnemySkillPlanNodeDefinition node)
+        {
+            switch ((node.ActionOp ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "damagearea":
+                    ExecuteColliderDamageAreaOrFallback(enemyEntry, enemyModel, ResolveSingleTarget(node, enemyEntry, currentTarget, roster), combatManager, skillData, node);
+                    return true;
+                case "spawnprojectile":
+                    EnemySkillExecutor.ExecuteEnemyProjectile(enemyEntry, enemyModel, ResolveSingleTarget(node, enemyEntry, currentTarget, roster), combatManager, skillData, GetFloat(node, "fallback_speed", 10f), GetFloat(node, "fallback_lifetime", 2.5f));
+                    return true;
+                case "heal":
+                    EnemySkillExecutor.ExecuteHeal(enemyModel, roster, combatManager, skillData);
+                    return true;
+                case "applyselfincomingdamagemultiplier":
+                    EnemySkillExecutor.ExecuteShieldUp(enemyEntry, enemyModel, combatManager, skillData);
+                    return true;
+                case "grantshieldtoenemyallies":
+                    EnemySkillExecutor.ExecuteGuardianFlag(enemyEntry, enemyModel, roster, combatManager, skillData);
+                    return true;
+                case "applyallymoveanddamagemultiplier":
+                    EnemySkillExecutor.ExecuteChargeCommand(enemyEntry, enemyModel, roster, combatManager, skillData);
+                    return true;
+                case "damage":
+                    ExecuteColliderDamageOrFallback(enemyEntry, enemyModel, ResolveSingleTarget(node, enemyEntry, currentTarget, roster), combatManager, skillData, node);
+                    return true;
+                case "damageandactionspeeddebuff":
+                    ExecuteDamageAndActionSpeedDebuff(enemyEntry, enemyModel, ResolveSingleTarget(node, enemyEntry, currentTarget, roster), combatManager, skillData, node);
+                    return true;
+                case "damagethendelayedchain":
+                    ExecuteDamageThenDelayedChain(enemyEntry, enemyModel, currentTarget, roster, combatManager, skillData, state, node);
+                    return true;
+                case "chargedamagestatus":
+                    ExecuteChargeDamageStatus(enemyEntry, enemyModel, roster, combatManager, skillData, state, node);
+                    return true;
+                case "applyoutgoingdamagemultiplierstatus":
+                    ExecuteOutgoingDamageMultiplierStatus(enemyModel, roster, combatManager, skillData, node);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static void ExecuteColliderDamageOrFallback(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterEntry target,
+            InGameCombatManager combatManager,
+            EnemyResolvedSkillData skillData,
+            EnemySkillPlanNodeDefinition node)
+        {
+            if (!TrySpawnColliderDamageSkill(enemyEntry, enemyModel, target, combatManager, skillData, node, null))
+            {
+                ApplyDamageToSingleTarget(enemyModel, target, combatManager, skillData, ResolveAttribute(node, enemyModel.Attribute), 1f);
+            }
+        }
+
+        private static void ExecuteColliderDamageAreaOrFallback(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterEntry target,
+            InGameCombatManager combatManager,
+            EnemyResolvedSkillData skillData,
+            EnemySkillPlanNodeDefinition node)
+        {
+            var maxHits = skillData.SkillKind == StageOneEnemySkillKind.FireDragonSlash ? HitAllColliderTargets : 1;
+            if (!TrySpawnColliderDamageSkill(enemyEntry, enemyModel, target, combatManager, skillData, node, null, maxHits))
+            {
+                EnemySkillExecutor.ExecuteSlash(enemyEntry, enemyModel, target, combatManager, skillData);
+            }
+        }
+
+        private static void ExecuteDamageAndActionSpeedDebuff(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterEntry target,
+            InGameCombatManager combatManager,
+            EnemyResolvedSkillData skillData,
+            EnemySkillPlanNodeDefinition node)
+        {
+            if (target == null || target.Model == null)
+            {
+                return;
+            }
+
+            var status = StatusEffectRuntime.CreateStatusData(StatusEffectKind.PassiveBuff, "Action Speed Down");
+            if (status == null)
+            {
+                ApplyDamageToSingleTarget(enemyModel, target, combatManager, skillData, ResolveAttribute(node, DamageAttribute.Ice), 1f);
+                return;
+            }
+
+            status.StatusTag = "enemy-action-speed-down";
+            status.StatusName = "Action Speed Down";
+            status.Modifiers.ActionSpeedBonus = GetFloat(node, "action_speed_bonus", -0.2f);
+            if (!TrySpawnColliderDamageSkill(enemyEntry, enemyModel, target, combatManager, skillData, node, status))
+            {
+                ApplyDamageToSingleTarget(enemyModel, target, combatManager, skillData, ResolveAttribute(node, DamageAttribute.Ice), 1f);
+                combatManager.ApplyStatus(target.Model, status, 1, GetFloat(node, "duration", 3f), 1, false, true, enemyModel);
+            }
+        }
+
+        private static void ExecuteDamageThenDelayedChain(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterEntry currentTarget,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            EnemyResolvedSkillData skillData,
+            EnemyCombatState state,
+            EnemySkillPlanNodeDefinition node)
+        {
+            var target = ResolveSingleTarget(node, enemyEntry, currentTarget, roster);
+            if (target == null || target.Model == null)
+            {
+                return;
+            }
+
+            ApplyDamageToSingleTarget(enemyModel, target, combatManager, skillData, ResolveAttribute(node, DamageAttribute.Lightning), 1f);
+            EnemySkillExecutor.SpawnAttachedEnemySkillEffect(target, enemyModel, combatManager, skillData, GetFloat(node, "visual_duration", 0.8f));
+            if (state == null)
+            {
+                return;
+            }
+
+            state.PendingAction = new PendingEnemySkillAction
+            {
+                RemainingSeconds = GetFloat(node, "delay", 0.5f),
+                ActionOp = "ChainDamage",
+                ExcludedTargetUnitId = target.Model.Identity != null ? target.Model.Identity.UnitId : null,
+                DamageMultiplier = GetFloat(node, "chain_multiplier", 0.5f),
+                Attribute = ResolveAttribute(node, DamageAttribute.Lightning),
+                SearchRadius = GetFloat(node, "chain_radius", skillData.Radius),
+                SkillData = skillData
+            };
+        }
+
+        private static void ExecutePendingChainDamage(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            PendingEnemySkillAction pending)
+        {
+            var target = FindNearestDifferentPlayerTarget(enemyEntry, roster, pending.ExcludedTargetUnitId, pending.SearchRadius);
+            if (target == null)
+            {
+                return;
+            }
+
+            ApplyDamageToSingleTarget(enemyModel, target, combatManager, pending.SkillData, pending.Attribute, pending.DamageMultiplier);
+            EnemySkillExecutor.SpawnAttachedEnemySkillEffect(target, enemyModel, combatManager, pending.SkillData, 0.8f);
+        }
+
+        private static void ExecuteChargeDamageStatus(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            EnemyResolvedSkillData skillData,
+            EnemyCombatState state,
+            EnemySkillPlanNodeDefinition node)
+        {
+            var target = EnemyTargeting.FindRandomPlayerTarget(roster);
+            if (target == null || target.Model == null)
+            {
+                return;
+            }
+
+            if (state == null)
+            {
+                return;
+            }
+
+            state.ActiveCharge = new ActiveEnemyChargeAction
+            {
+                TargetUnitId = target.Model.Identity != null ? target.Model.Identity.UnitId : null,
+                RampSeconds = GetFloat(node, "ramp_seconds", 3f),
+                MaxMoveSpeedMultiplier = GetFloat(node, "move_speed_multiplier", 2.5f),
+                DamageTargetMaxHealthRatio = GetFloat(node, "target_max_health_ratio", 1f),
+                FreezeDurationSeconds = GetFloat(node, "status_duration", 5f),
+                Attribute = ResolveAttribute(node, DamageAttribute.Physical)
+            };
+        }
+
+        private static UnitRosterEntry FindChargeHitTarget(UnitRosterEntry enemyEntry, UnitRosterService roster)
+        {
+            var players = roster != null ? roster.Players : null;
+            if (enemyEntry == null || players == null)
+            {
+                return null;
+            }
+
+            var enemyColliders = enemyEntry.GetHitboxColliders();
+            for (var i = 0; i < players.Count; i++)
+            {
+                var candidate = players[i];
+                if (!EnemyTargeting.IsActive(candidate) || EnemyTargeting.IsNexus(candidate))
+                {
+                    continue;
+                }
+
+                if (UnitHitboxUtility.IsTargetInsideHitbox(enemyColliders, candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        private static UnitRosterEntry FindPlayerTargetByUnitId(UnitRosterService roster, string unitId)
+        {
+            var players = roster != null ? roster.Players : null;
+            if (players == null || string.IsNullOrWhiteSpace(unitId))
+            {
+                return null;
+            }
+
+            for (var i = 0; i < players.Count; i++)
+            {
+                var candidate = players[i];
+                var identity = candidate != null && candidate.Model != null ? candidate.Model.Identity : null;
+                if (EnemyTargeting.IsActive(candidate)
+                    && !EnemyTargeting.IsNexus(candidate)
+                    && identity != null
+                    && string.Equals(identity.UnitId, unitId, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        private static void ResolveChargeHit(
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterEntry target,
+            InGameCombatManager combatManager,
+            EnemyCombatState state,
+            ActiveEnemyChargeAction charge)
+        {
+            if (target == null || target.Model == null || combatManager == null)
+            {
+                ClearActiveCharge(enemyModel, state);
+                return;
+            }
+
+            var maxHealth = target.Model.Stats != null ? Mathf.Max(0f, target.Model.Stats.MaxHealth) : 0f;
+            var damage = maxHealth * Mathf.Max(0f, charge.DamageTargetMaxHealthRatio);
+            combatManager.ApplyDamage(target.Model, damage, charge.Attribute, enemyModel, true);
+            combatManager.ApplyStatus(target.Model, StatusEffectKind.Freeze, 1, Mathf.Max(0f, charge.FreezeDurationSeconds), 1, false, true);
+            ClearActiveCharge(enemyModel, state);
+        }
+
+        private static void ClearActiveCharge(EnemyUnitRuntimeModel enemyModel, EnemyCombatState state)
+        {
+            if (state != null)
+            {
+                state.ActiveCharge = null;
+            }
+
+            if (enemyModel == null)
+            {
+                return;
+            }
+
+            enemyModel.MoveSpeedMultiplier = 1f;
+            enemyModel.MoveSpeedMultiplierRemainingSeconds = 0f;
+        }
+
+        private static void ExecuteOutgoingDamageMultiplierStatus(
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            EnemyResolvedSkillData skillData,
+            EnemySkillPlanNodeDefinition node)
+        {
+            var targets = EnemyTargeting.FindAllPlayerTargets(roster);
+            var multiplier = GetFloat(node, "multiplier", 0.7f);
+            for (var i = 0; i < targets.Count; i++)
+            {
+                var target = targets[i];
+                if (target == null || target.Model == null)
+                {
+                    continue;
+                }
+
+                var status = StatusEffectRuntime.CreateStatusData(StatusEffectKind.PassiveBuff, "Intimidated");
+                if (status == null)
+                {
+                    continue;
+                }
+
+                status.StatusTag = "enemy-intimidation";
+                status.StatusName = "Intimidated";
+                status.Modifiers.DamageBonusRate = multiplier - 1f;
+                combatManager.ApplyStatus(target.Model, status, 1, 0f, 1, StagePersistentStatus, true);
+                EnemySkillExecutor.SpawnAttachedEnemySkillEffect(target, enemyModel, combatManager, skillData, GetFloat(node, "visual_duration", 0.8f));
+            }
+        }
+
+        private static bool TrySpawnColliderDamageSkill(
+            UnitRosterEntry enemyEntry,
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterEntry target,
+            InGameCombatManager combatManager,
+            EnemyResolvedSkillData skillData,
+            EnemySkillPlanNodeDefinition node,
+            StatusEffectData statusOnHit,
+            int maxHits = 1)
+        {
+            if (enemyEntry == null || enemyEntry.Transform == null || target == null || target.Transform == null || combatManager == null)
+            {
+                return false;
+            }
+
+            var effects = combatManager.Effects;
+            var prefab = effects != null ? effects.ResolveEnemySkillEffectPrefab(enemyModel, skillData.SkillKind) : null;
+            if (prefab == null)
+            {
+                return false;
+            }
+
+            var direction = target.Transform.position - enemyEntry.Transform.position;
+            direction.z = 0f;
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                direction = Vector3.left;
+            }
+
+            var instance = effects.InstantiateSkillPrefab(prefab, target.Transform.position, EnemySkillExecutor.ResolveRotation(direction));
+            if (instance == null)
+            {
+                return false;
+            }
+
+            var colliders = instance.GetComponentsInChildren<Collider2D>();
+            var hasCollider = false;
+            for (var i = 0; i < colliders.Length; i++)
+            {
+                if (colliders[i] != null && colliders[i].enabled)
+                {
+                    hasCollider = true;
+                    break;
+                }
+            }
+
+            if (!hasCollider)
+            {
+                UnityEngine.Object.Destroy(instance);
+                return false;
+            }
+
+            var actor = instance.GetComponent<InGameEnemySkillHitboxActor>();
+            if (actor == null)
+            {
+                actor = instance.AddComponent<InGameEnemySkillHitboxActor>();
+            }
+
+            actor.Initialize(
+                combatManager,
+                enemyModel,
+                EnemySkillExecutor.ResolveAttackDamage(enemyModel, skillData),
+                ResolveAttribute(node, enemyModel.Attribute),
+                skillData.Radius,
+                SkillVisualSpawnUtility.ResolveVisualLifetime(instance, GetFloat(node, "hitbox_lifetime", 0.35f)),
+                maxHits);
+            if (statusOnHit != null)
+            {
+                actor.ConfigureStatusOnHit(statusOnHit, 1, GetFloat(node, "duration", 3f), 1, false, true);
+            }
+
+            return true;
+        }
+
+        private static UnitRosterEntry ResolveSingleTarget(
+            EnemySkillPlanNodeDefinition node,
+            UnitRosterEntry enemyEntry,
+            UnitRosterEntry currentTarget,
+            UnitRosterService roster)
+        {
+            switch ((node.TargetSelector ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "farthesttower":
+                    return EnemyTargeting.FindFarthestPlayerTarget(enemyEntry, roster);
+                case "randomtower":
+                    return EnemyTargeting.FindRandomPlayerTarget(roster);
+                case "lowesthealthenemyally":
+                    return EnemyTargeting.FindLowestHealthEnemyAlly(roster);
+                case "nearesttower":
+                case "currenttarget":
+                default:
+                    return currentTarget ?? EnemyTargeting.FindNearestPlayerTarget(enemyEntry, roster);
+            }
+        }
+
+        private static UnitRosterEntry FindNearestDifferentPlayerTarget(
+            UnitRosterEntry enemyEntry,
+            UnitRosterService roster,
+            string excludedTargetUnitId,
+            float searchRadius)
+        {
+            var players = roster != null ? roster.Players : null;
+            UnitRosterEntry best = null;
+            var bestDistanceSq = float.MaxValue;
+            var origin = enemyEntry != null && enemyEntry.Transform != null ? enemyEntry.Transform.position : Vector3.zero;
+            var radiusSq = searchRadius > 0f ? searchRadius * searchRadius : float.MaxValue;
+            if (players == null)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < players.Count; i++)
+            {
+                var candidate = players[i];
+                var identity = candidate != null && candidate.Model != null ? candidate.Model.Identity : null;
+                if (!EnemyTargeting.IsActive(candidate)
+                    || EnemyTargeting.IsNexus(candidate)
+                    || identity == null
+                    || string.Equals(identity.UnitId, excludedTargetUnitId, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var offset = candidate.Transform.position - origin;
+                offset.z = 0f;
+                var distanceSq = offset.sqrMagnitude;
+                if (distanceSq > radiusSq || distanceSq >= bestDistanceSq)
+                {
+                    continue;
+                }
+
+                best = candidate;
+                bestDistanceSq = distanceSq;
+            }
+
+            return best;
+        }
+
+        private static void ApplyDamageToSingleTarget(
+            EnemyUnitRuntimeModel enemyModel,
+            UnitRosterEntry target,
+            InGameCombatManager combatManager,
+            EnemyResolvedSkillData skillData,
+            DamageAttribute attribute,
+            float multiplier)
+        {
+            if (target == null || target.Model == null)
+            {
+                return;
+            }
+
+            var damage = EnemySkillExecutor.ResolveAttackDamage(enemyModel, skillData) * Mathf.Max(0f, multiplier);
+            combatManager.ApplyDamage(target.Model, damage, attribute, enemyModel, true);
+        }
+
+        private static DamageAttribute ResolveAttribute(EnemySkillPlanNodeDefinition node, DamageAttribute fallback)
+        {
+            var value = GetString(node, "attribute", string.Empty);
+            return System.Enum.TryParse(value, true, out DamageAttribute parsed) ? parsed : fallback;
+        }
+
+        private static string GetString(EnemySkillPlanNodeDefinition node, string key, string defaultValue)
+        {
+            var parameters = node != null ? node.Params : null;
+            if (parameters == null)
+            {
+                return defaultValue;
+            }
+
+            for (var i = 0; i < parameters.Length; i++)
+            {
+                var parameter = parameters[i];
+                if (parameter != null && string.Equals(parameter.ParamKey, key, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return parameter.ParamValue;
+                }
+            }
+
+            return defaultValue;
+        }
+
+        private static float GetFloat(EnemySkillPlanNodeDefinition node, string key, float defaultValue)
+        {
+            var value = GetString(node, key, string.Empty);
+            return float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsed)
+                ? parsed
+                : defaultValue;
         }
     }
 
@@ -542,7 +1290,7 @@ namespace Pakuri.InGame
             }
         }
 
-        private static void ExecuteSlash(
+        internal static void ExecuteSlash(
             UnitRosterEntry enemyEntry,
             EnemyUnitRuntimeModel enemyModel,
             UnitRosterEntry target,
@@ -585,7 +1333,7 @@ namespace Pakuri.InGame
                 actor = instance.AddComponent<InGameEnemySkillHitboxActor>();
             }
 
-            actor.Initialize(combatManager, enemyModel, damage, enemyModel.Attribute, radius, 0.35f);
+            actor.Initialize(combatManager, enemyModel, damage, enemyModel.Attribute, radius, SkillVisualSpawnUtility.ResolveVisualLifetime(instance, 0.35f));
         }
 
         private static void ExecuteShuriken(
@@ -608,7 +1356,7 @@ namespace Pakuri.InGame
             ExecuteEnemyProjectile(enemyEntry, enemyModel, target, combatManager, skillData, 10f, 2.5f);
         }
 
-        private static void ExecuteEnemyProjectile(
+        internal static void ExecuteEnemyProjectile(
             UnitRosterEntry enemyEntry,
             EnemyUnitRuntimeModel enemyModel,
             UnitRosterEntry target,
@@ -646,16 +1394,19 @@ namespace Pakuri.InGame
                 actor = instance.AddComponent<InGameProjectileActor>();
             }
 
+            var resolvedSpeed = ResolveEnemyProjectileSpeed(enemyModel, skillData, projectileSpeed);
+            var resolvedLifetime = ResolveEnemyProjectileLifetime(skillData, lifetimeSeconds);
+
             actor.Initialize(
                 combatManager,
                 enemyModel,
                 direction,
-                ResolveEnemyProjectileSpeed(skillData, projectileSpeed),
+                resolvedSpeed,
                 damage,
                 enemyModel.Attribute,
                 0,
-                ResolveEnemyProjectileBoundaryX(enemyEntry.Transform.position, direction),
-                ResolveEnemyProjectileLifetime(skillData, lifetimeSeconds),
+                ResolveEnemyProjectileBoundaryX(enemyEntry.Transform.position, direction, resolvedSpeed, resolvedLifetime),
+                resolvedLifetime,
                 null,
                 null,
                 null,
@@ -676,7 +1427,7 @@ namespace Pakuri.InGame
                 true);
         }
 
-        private static void ExecuteHeal(
+        internal static void ExecuteHeal(
             EnemyUnitRuntimeModel enemyModel,
             UnitRosterService roster,
             InGameCombatManager combatManager,
@@ -712,7 +1463,7 @@ namespace Pakuri.InGame
             }
         }
 
-        private static void ExecuteShieldUp(
+        internal static void ExecuteShieldUp(
             UnitRosterEntry enemyEntry,
             EnemyUnitRuntimeModel enemyModel,
             InGameCombatManager combatManager,
@@ -723,7 +1474,7 @@ namespace Pakuri.InGame
             SpawnAttachedEnemySkillEffect(enemyEntry, enemyModel, combatManager, skillData, skillData.Duration);
         }
 
-        private static void ExecuteGuardianFlag(
+        internal static void ExecuteGuardianFlag(
             UnitRosterEntry enemyEntry,
             EnemyUnitRuntimeModel enemyModel,
             UnitRosterService roster,
@@ -740,7 +1491,7 @@ namespace Pakuri.InGame
             SpawnAttachedEnemySkillEffect(enemyEntry, enemyModel, combatManager, skillData, skillData.Duration);
         }
 
-        private static void ExecuteChargeCommand(
+        internal static void ExecuteChargeCommand(
             UnitRosterEntry enemyEntry,
             EnemyUnitRuntimeModel enemyModel,
             UnitRosterService roster,
@@ -776,23 +1527,32 @@ namespace Pakuri.InGame
             ExecuteEnemyProjectile(enemyEntry, enemyModel, target, combatManager, skillData, 12f, 4f);
         }
 
-        private static float ResolveAttackDamage(EnemyUnitRuntimeModel enemyModel, EnemyResolvedSkillData skillData)
+        internal static float ResolveAttackDamage(EnemyUnitRuntimeModel enemyModel, EnemyResolvedSkillData skillData)
         {
             var attribute = enemyModel != null ? enemyModel.Attribute : DamageAttribute.Physical;
-            return Mathf.Max(0f, ResolveAttackPower(enemyModel) * Mathf.Max(0f, skillData.Coefficient) * ResolveOutgoingDamageMultiplier(enemyModel, attribute));
+            var attackCoefficient = Mathf.Max(0f, skillData.AttackPowerCoefficient);
+            var spellCoefficient = Mathf.Max(0f, skillData.SpellPowerCoefficient);
+            if (attackCoefficient <= 0f && spellCoefficient <= 0f && skillData.Coefficient > 0f)
+            {
+                attackCoefficient = skillData.Coefficient;
+            }
+
+            var damage = ResolveAttackPower(enemyModel) * Mathf.Max(0f, attackCoefficient);
+            damage += ResolveSpellPower(enemyModel) * spellCoefficient;
+            return Mathf.Max(0f, damage * ResolveOutgoingDamageMultiplier(enemyModel, attribute));
         }
 
-        private static float ResolveAttackPower(EnemyUnitRuntimeModel enemyModel)
+        internal static float ResolveAttackPower(EnemyUnitRuntimeModel enemyModel)
         {
             return enemyModel != null && enemyModel.Stats != null ? enemyModel.Stats.AttackPower : 0f;
         }
 
-        private static float ResolveSpellPower(EnemyUnitRuntimeModel enemyModel)
+        internal static float ResolveSpellPower(EnemyUnitRuntimeModel enemyModel)
         {
             return enemyModel != null && enemyModel.Stats != null ? enemyModel.Stats.SpellPower : 0f;
         }
 
-        private static float ResolveOutgoingDamageMultiplier(EnemyUnitRuntimeModel enemyModel, DamageAttribute attribute)
+        internal static float ResolveOutgoingDamageMultiplier(EnemyUnitRuntimeModel enemyModel, DamageAttribute attribute)
         {
             if (enemyModel == null)
             {
@@ -834,21 +1594,63 @@ namespace Pakuri.InGame
             }
         }
 
-        private static float ResolveEnemyProjectileSpeed(EnemyResolvedSkillData skillData, float fallbackSpeed)
+        internal static float ResolveEnemyProjectileSpeed(EnemyResolvedSkillData skillData, float fallbackSpeed)
         {
             return skillData.ProjectileSpeed > 0f
                 ? skillData.ProjectileSpeed
                 : fallbackSpeed;
         }
 
-        private static float ResolveEnemyProjectileLifetime(EnemyResolvedSkillData skillData, float fallbackLifetime)
+        internal static float ResolveEnemyProjectileSpeed(EnemyUnitRuntimeModel enemyModel, EnemyResolvedSkillData skillData, float fallbackSpeed)
         {
+            if (skillData.SkillKind == StageOneEnemySkillKind.HolySpearThrow)
+            {
+                return 12f;
+            }
+
+            return ResolveEnemyProjectileSpeed(skillData, fallbackSpeed);
+        }
+
+        internal static float ResolveCurrentMoveSpeed(EnemyUnitRuntimeModel enemyModel)
+        {
+            if (enemyModel == null)
+            {
+                return 0f;
+            }
+
+            var moveSpeed = enemyModel.Stats != null ? Mathf.Max(0f, enemyModel.Stats.MoveSpeed) : 0f;
+            moveSpeed *= EnemyCombatRules.ResolveMoveSpeedMultiplier(enemyModel);
+            moveSpeed *= StatusEffectRuntime.ResolveMoveSpeedMultiplier(enemyModel);
+            return moveSpeed;
+        }
+
+        internal static float ResolveEnemyProjectileLifetime(EnemyResolvedSkillData skillData, float fallbackLifetime)
+        {
+            if (IsEnemyProjectileSkillWithContactLifetime(skillData.SkillKind))
+            {
+                return 10f;
+            }
+
             return skillData.ProjectileLifetime > 0f
                 ? skillData.ProjectileLifetime
                 : fallbackLifetime;
         }
 
-        private static void SpawnAttachedEnemySkillEffect(
+        private static bool IsEnemyProjectileSkillWithContactLifetime(StageOneEnemySkillKind skillKind)
+        {
+            switch (skillKind)
+            {
+                case StageOneEnemySkillKind.AimedShot:
+                case StageOneEnemySkillKind.ShurikenThrow:
+                case StageOneEnemySkillKind.SacredSwordWave:
+                case StageOneEnemySkillKind.HolySpearThrow:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        internal static void SpawnAttachedEnemySkillEffect(
             UnitRosterEntry target,
             EnemyUnitRuntimeModel enemyModel,
             InGameCombatManager combatManager,
@@ -882,7 +1684,7 @@ namespace Pakuri.InGame
             actor.Initialize(target.Transform, Mathf.Max(0.1f, duration), Vector3.zero);
         }
 
-        private static Quaternion ResolveRotation(Vector3 direction)
+        internal static Quaternion ResolveRotation(Vector3 direction)
         {
             if (direction.sqrMagnitude <= 0.0001f)
             {
@@ -893,10 +1695,11 @@ namespace Pakuri.InGame
             return Quaternion.Euler(0f, 0f, angle);
         }
 
-        private static float ResolveEnemyProjectileBoundaryX(Vector3 origin, Vector3 direction)
+        private static float ResolveEnemyProjectileBoundaryX(Vector3 origin, Vector3 direction, float speed, float lifetimeSeconds)
         {
             var normalized = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.left;
-            return origin.x + normalized.x * 40f;
+            var maxTravelDistance = Mathf.Max(40f, Mathf.Max(0f, speed) * Mathf.Max(0.1f, lifetimeSeconds) + 1f);
+            return origin.x + normalized.x * maxTravelDistance;
         }
     }
 }

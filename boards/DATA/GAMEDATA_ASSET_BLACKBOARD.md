@@ -48,6 +48,55 @@ Implemented and Unity-MCP sync/validate checked.
 
 - 2026-06-19: Code Builder reorganized active CSV source assets and updated runtime/editor catalog paths without changing prefab-path strings inside the CSV rows.
 
+## Task: 2026-06-19 Stage2 Enemy Skill Prefab Binding
+
+### Task title
+
+Wire Stage2 enemy skill prefabs through the active `EffectManager` enemy skill effect mapping.
+
+### Goals
+
+- Connect Stage2 enemy skill visuals under `Assets/Prefab/Enemy/Skill/Stage2` to the Stage2 skill ids.
+- Use prefab colliders for offensive collider-backed skills when the prefab contains a 2D collider.
+- Keep Lightning Scout and Arsen as direct-target/effect-only visuals because their inspected prefabs do not contain 2D colliders.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- `EffectManager.enemySkillEffects` in `NewRunScene` remains the scene authority for enemy skill visual prefab mapping.
+- No Drake skill prefab exists under `Assets/Prefab/Enemy/Skill/Stage2` in the inspected file listing, so Drake OpeningCharge was not mapped to a skill prefab in this pass.
+- Unity Play Mode behavior verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and file/build verified. 2026-06-19 later Code Builder pass fixed collider-backed runtime use for FireDragonSlash and kept Ethan prefab mapping while changing HolySpearThrow speed in runtime.
+
+### Next Actions
+
+- User verifies Stage2 skill visuals and collider contact behavior in Play Mode.
+- Add a Drake skill prefab under `Assets/Prefab/Enemy/Skill/Stage2` before wiring OpeningCharge visual authority through the same mapping.
+
+### Evidence
+
+- `Pakuri/Assets/Prefab/Enemy/Skill/Stage2` contains `arsen_Skill.prefab`, `dark-assassin_Skill.prefab`, `ethan_Skill.prefab`, `fire-dragon-slayer.prefab`, `holy-priest_Skill.prefab`, `ice-guard_Skill.prefab`, and `lightning-scout_1.prefab`.
+- PowerShell collider scan returned `collider=True` for `dark-assassin_Skill.prefab`, `ethan_Skill.prefab`, `fire-dragon-slayer.prefab`, and `ice-guard_Skill.prefab`.
+- The same collider scan returned `collider=False` for `arsen_Skill.prefab`, `holy-priest_Skill.prefab`, and `lightning-scout_1.prefab`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now maps `stage2-fire-dragon-slayer` / FireDragonSlash, `stage2-lightning-scout` / ChainLightning, `stage2-ice-guard` / FrostPressure, `stage2-dark-assassin` / DarkStab, `stage2-holy-priest` / HolyDragonHeal, `stage2-ethan` / HolySpearThrow, and `stage2-arsen` / Intimidation in `EffectManager.enemySkillEffects`.
+- 2026-06-19 later inspection confirmed `NewRunScene.unity` still maps `stage2-fire-dragon-slayer` to `fire-dragon-slayer.prefab` GUID `ead3e9b7ab06e2f4287fbdf62d8aa4f1`, `stage2-dark-assassin` to `dark-assassin_Skill.prefab` GUID `36d272f072fbdbb4483b7e1b8cb8a5ed`, and `stage2-ethan` to `ethan_Skill.prefab` GUID `a41c14d516a697f4a803b6e60ec659e9`.
+- `EnemyCombatSystem.cs` now routes `DamageArea` through the same collider-prefab path used by other collider-backed Stage2 enemy skills before falling back to old slash behavior, and hitbox lifetime now resolves from prefab animation length through `SkillVisualSpawnUtility.ResolveVisualLifetime(...)`.
+- `EnemyCombatSystem.cs` now resolves HolySpearThrow projectile speed as current Ethan move speed x2 instead of the fixed CSV/projectile speed path.
+- `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors and existing `MSB3277` warnings.
+- 2026-06-19 later `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained, and the Editor build also retried once after a transient `Assembly-CSharp.dll` file lock.
+- 2026-06-19 later Unity-MCP `validate_script` for `Assets/Scripts2/InGame/Core/EnemyCombatSystem.cs` returned 0 warnings and 0 errors.
+
+### History
+
+- 2026-06-19: User requested Stage2 skill prefab linkage and collider behavior by skill type after the enemy skill node runtime implementation.
+
 ## Task: 2026-05-31 Stage2 Enemy Prefab Binding
 
 ### Task title

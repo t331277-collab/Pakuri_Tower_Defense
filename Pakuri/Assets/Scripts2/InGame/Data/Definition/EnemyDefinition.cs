@@ -31,7 +31,41 @@ namespace Pakuri.Data
         Heal,
         GuardianFlag,
         ChargeCommand,
-        SacredSwordWave
+        SacredSwordWave,
+        FireDragonSlash,
+        ChainLightning,
+        FrostPressure,
+        DarkStab,
+        HolyDragonHeal,
+        HolySpearThrow,
+        OpeningCharge,
+        Intimidation
+    }
+
+    [Serializable]
+    public sealed class EnemySkillPlanDefinition
+    {
+        public string SkillId;
+        public EnemySkillPlanNodeDefinition[] Nodes = Array.Empty<EnemySkillPlanNodeDefinition>();
+    }
+
+    [Serializable]
+    public sealed class EnemySkillPlanNodeDefinition
+    {
+        public string NodeId;
+        public int SortOrder;
+        public string Trigger;
+        public string TargetSelector;
+        public string ActionOp;
+        public bool Enabled = true;
+        public EnemySkillPlanParamDefinition[] Params = Array.Empty<EnemySkillPlanParamDefinition>();
+    }
+
+    [Serializable]
+    public sealed class EnemySkillPlanParamDefinition
+    {
+        public string ParamKey;
+        public string ParamValue;
     }
 
     [CreateAssetMenu(menuName = "Pakuri/Enemy Definition", fileName = "EnemyDefinition")]
@@ -54,6 +88,8 @@ namespace Pakuri.Data
         public StageOneEnemySkillKind BasicSkill;
         public string BasicSkillName;
         public float BasicSkillCoefficient = 1f;
+        public float BasicSkillAttackPowerCoefficient = 1f;
+        public float BasicSkillSpellPowerCoefficient;
         public float BasicSkillCooldown = 2f;
         public float BasicSkillDuration;
         public float BasicSkillRadius;
@@ -62,9 +98,12 @@ namespace Pakuri.Data
         public float BasicSkillProjectileLifetime;
         public float BasicSkillMoveSpeedMultiplier = 1f;
         public float BasicSkillOutgoingDamageMultiplier = 1f;
+        public EnemySkillPlanDefinition BasicSkillPlan;
         public StageOneEnemySkillKind StageOneSkill;
         public string ActiveSkillName;
         public float ActiveSkillCoefficient = 1f;
+        public float ActiveSkillAttackPowerCoefficient = 1f;
+        public float ActiveSkillSpellPowerCoefficient;
         public float ActiveSkillCooldown = 2f;
         public float ActiveSkillDuration;
         public float ActiveSkillRadius;
@@ -73,6 +112,7 @@ namespace Pakuri.Data
         public float ActiveSkillProjectileLifetime;
         public float ActiveSkillMoveSpeedMultiplier = 1f;
         public float ActiveSkillOutgoingDamageMultiplier = 1f;
+        public EnemySkillPlanDefinition ActiveSkillPlan;
         public string PassiveSkillName;
         public string PassiveSkillId;
         public float PassiveSkillValue;
@@ -104,6 +144,8 @@ namespace Pakuri.Data
             clone.BasicSkill = BasicSkill;
             clone.BasicSkillName = BasicSkillName;
             clone.BasicSkillCoefficient = BasicSkillCoefficient;
+            clone.BasicSkillAttackPowerCoefficient = BasicSkillAttackPowerCoefficient;
+            clone.BasicSkillSpellPowerCoefficient = BasicSkillSpellPowerCoefficient;
             clone.BasicSkillCooldown = BasicSkillCooldown;
             clone.BasicSkillDuration = BasicSkillDuration;
             clone.BasicSkillRadius = BasicSkillRadius;
@@ -112,9 +154,12 @@ namespace Pakuri.Data
             clone.BasicSkillProjectileLifetime = BasicSkillProjectileLifetime;
             clone.BasicSkillMoveSpeedMultiplier = BasicSkillMoveSpeedMultiplier;
             clone.BasicSkillOutgoingDamageMultiplier = BasicSkillOutgoingDamageMultiplier;
+            clone.BasicSkillPlan = BasicSkillPlan;
             clone.StageOneSkill = StageOneSkill;
             clone.ActiveSkillName = ActiveSkillName;
             clone.ActiveSkillCoefficient = ActiveSkillCoefficient;
+            clone.ActiveSkillAttackPowerCoefficient = ActiveSkillAttackPowerCoefficient;
+            clone.ActiveSkillSpellPowerCoefficient = ActiveSkillSpellPowerCoefficient;
             clone.ActiveSkillCooldown = ActiveSkillCooldown;
             clone.ActiveSkillDuration = ActiveSkillDuration;
             clone.ActiveSkillRadius = ActiveSkillRadius;
@@ -123,6 +168,7 @@ namespace Pakuri.Data
             clone.ActiveSkillProjectileLifetime = ActiveSkillProjectileLifetime;
             clone.ActiveSkillMoveSpeedMultiplier = ActiveSkillMoveSpeedMultiplier;
             clone.ActiveSkillOutgoingDamageMultiplier = ActiveSkillOutgoingDamageMultiplier;
+            clone.ActiveSkillPlan = ActiveSkillPlan;
             clone.PassiveSkillName = PassiveSkillName;
             clone.PassiveSkillId = PassiveSkillId;
             clone.PassiveSkillValue = PassiveSkillValue;

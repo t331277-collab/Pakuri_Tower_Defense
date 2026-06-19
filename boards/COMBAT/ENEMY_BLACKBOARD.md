@@ -7,6 +7,292 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-06-19 Enemy Skill Node Runtime Implementation 1-7
+
+### Task title
+
+Implement enemy Stage1/Stage2 skills through runtime skill node plans.
+
+### Goals
+
+- Compile enemy skill body rows plus node rows into runtime skill plans.
+- Preserve old direct executor fallback until step 8 is approved.
+- Implement Stage2 behavior handlers requested for combat-start, chain, heal, charge, and outgoing-damage reduction skills.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- User explicitly postponed step 8 until after observing implemented skills.
+- Arsen outgoing damage reduction uses existing status modifier runtime because inspected player runtime models do not expose a direct outgoing-damage multiplier field.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and non-Play-Mode validated. 2026-06-19 follow-up Code Builder pass fixed Reviewer findings and wired Stage2 skill prefabs where matching prefabs exist. 2026-06-19 later Code Builder pass fixed Stage2 Fire/Dark collider-prefab runtime use and changed Ethan HolySpearThrow projectile speed to current move speed x2. 2026-06-19 final Code Builder pass separated enemy skill hit detection from visual lifetime and excluded Nexus from enemy skill hitbox damage. 2026-06-19 later projectile follow-up set Ethan spear speed to Karin sword-wave speed and enemy projectile lifetime to 10 seconds. 2026-06-19 final Drake follow-up replaced instant charge damage/teleport behavior with an active collider-contact charge that ramps from normal move speed to x2.5 over 3 seconds, clears on hit, and applies 5 second Freeze to the hit non-Nexus player unit. 2026-06-19 Arsen/FireDragon follow-up made Arsen intimidation explicitly stage-persistent and made FireDragonSlash collider damage hit every contacted non-Nexus enemy target instead of stopping after the first hit.
+
+### Next Actions
+
+- User verifies Play Mode behavior for Stage2 enemies, especially Lightning Scout delayed second hit, Drake spawn-time charge, and Arsen outgoing damage x0.7.
+- After behavior confirmation, step 8 can remove old direct execution paths if still desired.
+
+### Evidence
+
+- `EnemyDefinition.cs`, `EnemyUnitRuntimeModel.cs`, and `UnitFactory.cs` now carry attack/spell coefficients plus basic/active `EnemySkillPlanDefinition` objects.
+- `PakuriCsvRuntimeData.*` now loads, builds, and validates `EnemySkillNodes.csv` and `EnemySkillNodeParams.csv`.
+- `EnemyCombatSystem.cs` executes plan nodes before falling back to `EnemySkillExecutor.Execute(...)`.
+- `EnemySkillPlanRuntime` handles `DamageArea`, `SpawnProjectile`, `Heal`, `Damage`, `DamageAndActionSpeedDebuff`, `DamageThenDelayedChain`, `ChargeDamageStatus`, and `ApplyOutgoingDamageMultiplierStatus`.
+- Lightning Scout chain uses a pending action with `delay_seconds=0.5` and excludes the first target unit id.
+- Arsen intimidation applies a `PassiveBuff` status modifier with `DamageBonusRate=-0.3`, which existing `StatusEffectRuntime.ResolveOutgoingDamageMultiplier(...)` multiplies into outgoing damage.
+- Arsen intimidation now applies that `PassiveBuff` with the named `StagePersistentStatus=true` path; inspected `UnitStatusRuntime.Tick(...)` keeps permanent statuses from ticking down, so the effect persists until stage/runtime state reset removes statuses.
+- `EnemySkillExecutor.ResolveAttackDamage(...)` now uses explicit attack/spell coefficients and only falls back to compatibility `Coefficient` when both explicit coefficients are zero, preventing spell-only skills such as Chain Lightning from double-counting attack damage.
+- `EnemyCombatSystem.cs` now routes Dark Stab and Frost Pressure through `TrySpawnColliderDamageSkill(...)` when a Stage2 skill prefab has an enabled `Collider2D`; Frost Pressure configures status-on-hit through `InGameEnemySkillHitboxActor.ConfigureStatusOnHit(...)`.
+- `EnemyCombatSystem.cs` now also routes `DamageArea` plan nodes through `TrySpawnColliderDamageSkill(...)` before falling back to `ExecuteSlash(...)`, so FireDragonSlash can use the collider-backed `fire-dragon-slayer.prefab` path.
+- `EnemyCombatSystem.cs` now passes `HitAllColliderTargets=int.MaxValue` only for `StageOneEnemySkillKind.FireDragonSlash`; other `DamageArea` collider skills keep the default single-hit limit.
+- `InGameEnemySkillHitboxActor.cs` now continues scanning all roster entries in a frame and does not decrement `remainingHits` when the max-hit sentinel is `int.MaxValue`, allowing FireDragonSlash to damage every contacted non-Nexus opposing unit once per visual lifetime.
+- Enemy collider skill hitbox lifetime now uses `SkillVisualSpawnUtility.ResolveVisualLifetime(instance, minimum)` instead of the previous fixed `0.35f`, so animated Stage2 skill prefabs can remain for their authored animation length.
+- `InGameEnemySkillHitboxActor.cs` now disables hit detection when `remainingHits` is exhausted instead of destroying the visual GameObject, so collider-backed enemy skill prefabs remain until the animation-length lifetime expires.
+- `InGameEnemySkillHitboxActor.cs` now excludes `UnitRole.Nexus` targets from enemy skill hitbox damage, leaving Nexus damage to the enemy Nexus assault path.
+- `EnemySkillExecutor.ResolveEnemyProjectileSpeed(enemyModel, skillData, fallbackSpeed)` previously used current move speed x2 for `HolySpearThrow`; the 2026-06-19 projectile follow-up changed it to fixed `12f` so Ethan spear matches Karin `SacredSwordWave` runtime projectile speed.
+- `EnemyCombatSystem.cs` now stores Drake `ChargeDamageStatus` as `EnemyCombatState.ActiveCharge` instead of teleporting to the selected target or applying immediate damage.
+- `EnemyCombatSystem.cs` now ticks active Drake charge before normal enemy targeting, ramps `enemyModel.MoveSpeedMultiplier` from x1 to x2.5 over 3 seconds, and uses the existing `MoveToward(...)` path for movement.
+- `EnemyCombatSystem.cs` now resolves Drake charge hits through `UnitHitboxUtility.IsTargetInsideHitbox(enemyEntry.GetHitboxColliders(), candidate)` against active non-Nexus player units, so any colliding Monster unit can be hit even if it was not the original random charge target.
+- `EnemyCombatSystem.cs` now clears Drake active charge on hit and applies damage plus `StatusEffectKind.Freeze` for the node `status_duration` value, defaulting to 5 seconds.
+- `EnemyCombatSystem.cs` now resolves Ethan `HolySpearThrow` projectile speed as `12f`, matching the inspected Karin `SacredSwordWave` runtime speed.
+- `EnemyCombatSystem.cs` now gives enemy projectile skills `AimedShot`, `ShurikenThrow`, `SacredSwordWave`, and `HolySpearThrow` a 10 second max lifetime and calculates their x-boundary from resolved speed x lifetime so they are not removed by the old short boundary before the 10 second timeout.
+- Lightning Scout chain damage remains wired: `EnemySkillNodes.csv` maps `ChainLightning` to `DamageThenDelayedChain`, `EnemySkillNodeParams.csv` sets `chain_multiplier=0.5`, `delay=0.5`, and `chain_radius=7`, and `EnemyCombatSystem.cs` applies the pending chain damage with `pending.DamageMultiplier`.
+- `InGameEnemySkillHitboxActor.cs` now supports optional status-on-hit and applies the configured status through `combatManager.ApplyStatus(...)` after a collider hit applies damage.
+- Lightning Scout still uses direct target damage and now spawns `lightning-scout_1.prefab` as an attached visual on the directly selected targets; the inspected prefab has no 2D collider, matching the requested direct-target-only behavior.
+- Arsen Intimidation still applies the x0.7 outgoing-damage status and now spawns `arsen_Skill.prefab` as an attached visual effect; the inspected prefab has no 2D collider, matching the requested debuff/effect-only behavior.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` now maps Stage2 enemy skill effects for FireDragonSlash, ChainLightning, FrostPressure, DarkStab, HolyDragonHeal, HolySpearThrow, and Intimidation through the existing `EffectManager.enemySkillEffects` scene authority.
+- No Drake skill prefab exists under `Pakuri/Assets/Prefab/Enemy/Skill/Stage2` in the inspected file listing, so OpeningCharge remains logic-only in this pass.
+- `EnemyTargeting.cs` now exposes farthest/random/all player target helpers used by the enemy node runtime.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors and existing `MSB3277` warnings.
+- 2026-06-19 follow-up `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors and existing `MSB3277` warnings.
+- 2026-06-19 later follow-up `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained, and the Editor build also retried once after a transient `Assembly-CSharp.dll` file lock.
+- 2026-06-19 later Unity-MCP `validate_script` for `Assets/Scripts2/InGame/Core/EnemyCombatSystem.cs` returned 0 warnings and 0 errors.
+- 2026-06-19 final `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- 2026-06-19 final Unity-MCP `validate_script` for `Assets/Scripts2/InGame/Skills/Execution/Actors/InGameEnemySkillHitboxActor.cs` returned 0 errors and 1 warning: `Consider using FixedUpdate() for Rigidbody operations`.
+- 2026-06-19 later projectile follow-up `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- 2026-06-19 later projectile follow-up Unity-MCP `validate_script` for `Assets/Scripts2/InGame/Core/EnemyCombatSystem.cs` returned 0 warnings and 0 errors.
+- 2026-06-19 final Drake follow-up `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- 2026-06-19 final Drake follow-up Unity-MCP `validate_script` for `Assets/Scripts2/InGame/Core/EnemyCombatSystem.cs` returned 0 warnings and 0 errors.
+- 2026-06-19 Arsen/FireDragon follow-up sandboxed `dotnet build` initially failed because access to `C:\Users\t3312\AppData\Local\Microsoft SDKs` was denied; the approved external rerun passed `Pakuri/Assembly-CSharp.csproj` and `Pakuri/Assembly-CSharp-Editor.csproj` with 0 errors and existing `MSB3277` warnings.
+- 2026-06-19 Arsen/FireDragon follow-up Unity-MCP `validate_script` for `Assets/Scripts2/InGame/Core/EnemyCombatSystem.cs` returned 0 warnings and 0 errors; `Assets/Scripts2/InGame/Skills/Execution/Actors/InGameEnemySkillHitboxActor.cs` returned 0 errors and 1 existing-style warning: `Consider using FixedUpdate() for Rigidbody operations`.
+- 2026-06-19 follow-up Unity-MCP validation was not available because `validate_script` returned `No Unity Editor instances found. Please ensure Unity is running with MCP for Unity bridge.`
+- PowerShell CSV checks returned `bad=` empty for `EnemySkillData.csv`, `stage_two_enemies.csv`, `EnemySkillNodes.csv`, and `EnemySkillNodeParams.csv`; `Select-String` found no `enemy_scope` or `range` in `EnemySkillData.csv`.
+- PowerShell node validation returned `badOps=` and `badSelectors=` empty after excluding the CSV schema row.
+
+### History
+
+- 2026-06-19: User asked Code Builder to start steps 1-7 from the enemy skill node runtime handoff and defer step 8.
+
+## Task: 2026-06-19 EnemySkillData Range Column Removal
+
+### Task title
+
+Remove the unused `range` column from enemy skill runtime CSV data.
+
+### Goals
+
+- Keep current enemy attack-distance behavior unchanged.
+- Remove the dead enemy skill `range` CSV column after confirming combat code uses `radius`.
+- Preserve CSV catalog sync and validation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No enemy combat runtime code was changed.
+- `EnemyCombatRules.ResolveAttackAttemptRange(...)` still uses positive `skillData.Radius` first, then attack-type fallback.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and Unity-MCP validated.
+
+### Next Actions
+
+- Use `radius` for Stage1 enemy skill attack-attempt distance and ally-effect radius until a separate range runtime contract is added.
+
+### Evidence
+
+- `EnemyCombatSystem.cs` resolves attack attempt range from `skillData.Radius` and falls back to attack type values: Ranged 5, MeleeAndRanged 4, Buffer 5, default 1.4.
+- `PakuriCsvRuntimeData.EnemyDataset.cs` reads `EnemySkillData.csv` `radius` and assigns it to active/basic skill radius fields.
+- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillData.csv` no longer contains `range`.
+- CSV row-width check returned `expected=33` and `bad=` empty.
+- Unity-MCP sync/validate completed with 0 warning/error console entries.
+
+### History
+
+- 2026-06-19: User asked whether `range` was unnecessary, then requested Code Builder remove it.
+
+## Task: 2026-06-19 Enemy Skill Node Runtime Handoff
+
+### Task title
+
+Prepare a Code Builder handoff for migrating enemy Stage1 and Stage2 active skills to a node-based execution structure.
+
+### Goals
+
+- Decide whether existing `Assets/Prefab/Enemy/Skill/Stage1` skills should be included in the enemy node migration.
+- Give Code Builder a concrete Stage1 parity-first and Stage2 extension plan.
+- Keep enemy behavior grounded in inspected current runtime code, active enemy CSVs, existing prefabs, and the Stage2 enemy reference.
+
+### Constraints
+
+- Role Owner is Designer.
+- This task produced a handoff only; no runtime code, CSV, prefab, or scene behavior was changed.
+- Prefabs are treated as optional visual/projectile/hitbox payloads, not as the authoritative behavior definition.
+- MSW-MCP remains excluded; Unity-MCP is the only project MCP path.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Handoff created.
+
+### Next Actions
+
+- Code Builder implements the enemy node data model, compiler, plan/action dispatcher, and Stage1 fallback path.
+- Code Builder migrates Stage1 first for behavior parity, then adds Stage2-specific handlers such as chain damage, combat-start triggers, charge movement/contact, and tower debuffs.
+- Code Builder adds Stage2 active skill body rows to `EnemySkillData.csv`, removes `enemy_scope`, and uses `radius` as the skill range authority.
+- User or Builder verifies Play Mode behavior after implementation.
+
+### Evidence
+
+- Created `Pakuri/reference/Report/2026-06-19-enemy-skill-node-runtime-handoff.md`.
+- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillData.csv` currently stores enemy skill body fields such as `runtime_kind`, coefficients, cooldown, radius, projectile speed/lifetime, duration, flat value, movement multiplier, and outgoing damage multiplier.
+- Updated `Pakuri/reference/Report/2026-06-19-enemy-skill-node-runtime-handoff.md` to set Stage2 `EnemySkillData.csv` radius values: Fire Dragon Soldier 2, Lightning Scout 7, Ice Guard 2, Dark Assassin 1.4, Holy Priest 5, Ethan 14, Drake 40, Arsen 40.
+- The same report now states `enemy_scope` should be removed and skill usability should come from unit skill assignment, not scope filtering.
+- `Pakuri/Assets/CSVdata/source/stage_one_enemies.csv` binds Stage1 enemies to `stage_one_skill`, `basic_skill`, passive names, passive ids, and passive values.
+- `Pakuri/Assets/Scripts2/InGame/Enemy/EnemyDefinition.cs` currently defines Stage1-only `StageOneEnemySkillKind` values.
+- `Pakuri/Assets/Scripts2/InGame/Enemy/EnemyCombatSystem.cs` currently resolves enemy skills into `EnemyResolvedSkillData` and executes them through a direct `EnemySkillExecutor.Execute(...)` switch.
+- Stage1 prefab folder contains `Achor_Skill.prefab`, `Karin_Skill 1.prefab`, `Preist_Skill.prefab`, `Rogue_Skill.prefab`, `Shield_King_Skill.prefab`, `Shield_Skill.prefab`, `Warrior_King_Skill 1.prefab`, and `Warrior_Skill.prefab`.
+- Stage2 prefab folder contains `arsen_Skill.prefab`, `dark-assassin_Skill.prefab`, `ethan_Skill.prefab`, `fire-dragon-slayer.prefab`, `holy-priest_Skill.prefab`, `ice-guard_Skill.prefab`, and `lightning-scout_1.prefab`.
+- `Pakuri/reference/5.enemy/stage-2-enemies.md` section `## 2. 모든 적 액티브 스킬` defines Fire Dragon Soldier, Lightning Scout, Ice Guard, Dark Assassin, Holy Priest, Ethan, Drake, and Arsen active skill behavior.
+
+### History
+
+- 2026-06-19: User asked whether existing Stage1 enemy skill prefabs can be included while preparing Stage2 enemy skills, and requested a handoff markdown file for Code Builder.
+- 2026-06-19: User revised the handoff so `EnemySkillData.csv` owns Stage2 skill body rows and radius values, with Drake/Arsen combat-start skills using `radius=40` for immediate spawn-time execution.
+
+## Task: 2026-06-19 Target Skill Runtime Structure Fix
+
+### Task title
+
+Apply Code Reviewer findings for the target MonsterUnitActor / RuntimeModel / SkillExecutionPlan / handler structure.
+
+### Goals
+
+- Remove combat/runtime reset state mutation from `MonsterUnitActor`.
+- Move existing effect and trigger execution through a shared plan action dispatcher path.
+- Stop using Ariel-only choice routing and use node-backed choice routing for any monster with normalized choice nodes.
+- Keep current gameplay data behavior compatible while improving the structure for Ariel, Rin, Vega, Eve, and Sein migration.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This pass keeps existing CSV schemas and effect/trigger definition objects compatible.
+- Core effect execution internals remain in the existing executor methods, but dispatch selection now enters through `SkillPlanActionDispatcher`.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compiled, Unity-MCP script-validated, and InGame skill data validated.
+
+### Next Actions
+
+- User verifies Play Mode behavior for Ariel and any Rin/Vega choices that already have normalized choice nodes.
+- Later work can split individual effect action internals into separate handler classes once behavior parity is confirmed.
+
+### Evidence
+
+- `MonsterUnitActor.cs` no longer contains `AutoAttackEnabled`, `AutoSkillEnabled`, `Statuses`, `Resources`, `SkillRuntime`, or `CurrentHealth` state reset code.
+- `MonsterUnitRuntimeStateService.cs` now owns next-day runtime reset for monster model auto flags, statuses, shields, health, and active skill runtime state.
+- `SceneEntryManager.cs` calls `MonsterUnitRuntimeStateService.RestoreForNextDay(model)` before `actor.ReviveForNextDay()`.
+- `SkillExecutionPlan.cs` now exposes `SkillEffectAction` / `SkillTriggerAction` wrappers and `EffectActions` / `TriggerActions`, replacing public raw `Plan.Effects` / `Plan.Triggers` exposure.
+- `SkillPlanActionDispatcher.cs` now owns effect-kind dispatch and trigger-action dispatch.
+- `SkillMultiEffectExecutor.cs` now routes direct, filtered, and delayed effect execution through `SkillPlanActionDispatcher.ExecuteEffect(...)`.
+- `SkillTriggerRuntime.cs` now routes trigger action selection through `SkillPlanActionDispatcher.ExecuteTriggerAction(...)`.
+- `SkillExecutionSnapshot.cs`, `InGameSkillDefinitionMapper.cs`, and `SkillExecutionSystem.cs` no longer contain `IsArielChoice` or `ApplyArielChoiceDefinition`; choice routing is based on whether `NormalizedPlanNodes` exist.
+- Search for `IsArielChoice`, `ApplyArielChoiceDefinition`, `Plan.Effects`, and `Plan.Triggers` under `Pakuri/Assets/Scripts2/InGame/Skills` returned no matches.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- Unity-MCP `validate_script` returned 0 warnings and 0 errors for `MonsterUnitRuntimeStateService.cs`, `SceneEntryManager.cs`, `SkillExecutionPlan.cs`, `SkillPlanActionDispatcher.cs`, `SkillMultiEffectExecutor.cs`, `SkillTriggerRuntime.cs`, `SkillExecutionSnapshot.cs`, and `InGameSkillDefinitionMapper.cs`.
+- After clearing the console, Unity-MCP `Pakuri/InGame/Validate Skill Data` logged `InGame skill data validation passed with 0 warning(s)`, and warning/error console read returned 0 entries.
+- `git diff --check` exited successfully; only line-ending warnings were printed.
+
+### History
+
+- 2026-06-19: User asked Code Builder to fix the Code Reviewer findings on Ariel's target runtime structure.
+
+## Task: 2026-06-19 Shared SkillExecutionPlan Effect/Trigger Foundation
+
+### Task title
+
+Move shared skill runtime toward a monster-agnostic plan node execution structure.
+
+### Goals
+
+- Let Eve, Ariel, Rin, Sein, and Vega use the same future `SkillExecutionPlan` path instead of Ariel-only plan-action routing.
+- Project existing skill multi-effect rows and source-owned trigger rows into `SkillExecutionPlanNode` payloads without changing CSV row behavior.
+- Route active skill executors through plan-resolved effect lists while preserving the existing `SkillMultiEffectExecutor` behavior.
+- Make `UnitSkillController` create a typed `SkillExecutionRequest` for auto/manual casts before global dispatch.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This pass is behavior-preserving: existing CSV schemas and old trigger/effect runtime execution remain compatible.
+- Trigger/effect rows are now visible in plan nodes, but full handler replacement of `SkillTriggerRuntime` and `SkillMultiEffectExecutor` is still future work.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compiled, Unity-MCP script-validated, CSV-synced, and InGame skill data validated.
+
+### Next Actions
+
+- Later migration can replace remaining direct `SkillTriggerRuntime` and `SkillMultiEffectExecutor` internals with explicit plan action handlers.
+- Later migration can remove Ariel-only choice routing once all normalized choice nodes use the common plan action path.
+- User verifies unchanged auto/manual skill behavior and trigger/effect behavior in Play Mode.
+
+### Evidence
+
+- `SkillExecutionPlan.cs` now allows `SkillExecutionPlanNode` to carry `SkillEffectDefinition` and `SkillTriggerDefinition` payloads and exposes compiled `Effects` and `Triggers`.
+- `SkillData.cs` now stores `SkillTriggers`, and `InGameSkillDefinitionMapper.cs` maps monster trigger rows onto their source skill data for all monsters.
+- `SkillRuntimeInstance.cs` now compiles a `BasePlan` so active source-owned trigger lookup can use plan-projected trigger rows.
+- `SkillPlanActionDispatcher.cs` now resolves effect/trigger payloads from the compiled plan with legacy fallback.
+- `BeamSkillExecutor.cs`, `ProjectileSkillExecutor.cs`, `SingleAttackSkillExecutor.cs`, `SupportSkillExecutors.cs`, and `ZoneSkillExecutor.cs` now read plan-resolved effects before calling existing multi-effect execution.
+- `SkillTriggerRuntime.cs` now resolves source-owned active-skill triggers through the runtime base plan, falling back to monster-level trigger rows when needed.
+- `SkillExecutionRequest.cs` was added, and `UnitSkillController.cs` now creates auto/manual request objects before `SkillExecutionSystem` routes execution.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- Unity-MCP `validate_script` returned 0 warnings and 0 errors for `SkillExecutionPlan.cs`, `SkillExecutionRequest.cs`, and `SkillPlanActionDispatcher.cs`.
+- Unity-MCP `Pakuri/Sync CSV Runtime Catalog Assets`, `Pakuri/Validate CSV Source Data`, and `Pakuri/InGame/Validate Skill Data` executed; console logged runtime catalog load and `InGame skill data validation passed with 0 warning(s)`.
+- Unity-MCP warning/error console read returned 0 entries.
+
+### History
+
+- 2026-06-19: User requested Code Builder implementation of the target structure for all monsters, not just Ariel.
+- 2026-06-19: Code Builder implemented a shared behavior-preserving foundation: plan node effect/trigger payloads, plan-resolved executor effects, active trigger plan projection, and typed skill execution requests.
+
 ## Task: 2026-06-16 UnitSkillController Runtime Refactor Phase 1-6
 
 ### Task title

@@ -87,6 +87,16 @@ namespace Pakuri.InGame
         public float StatusCriticalDamageTakenBonus;
         public bool HasStatusAilmentResistanceBonus;
         public float StatusAilmentResistanceBonus;
+        public bool HasStatusDamageBonusRate;
+        public float StatusDamageBonusRate;
+        public bool HasStatusShieldReceivedBonus;
+        public float StatusShieldReceivedBonus;
+        public bool HasStatusCriticalChanceBonus;
+        public float StatusCriticalChanceBonus;
+        public bool HasStatusDamageTakenBonus;
+        public float StatusDamageTakenBonus;
+        public bool HasStatusFlatElementResistReduction;
+        public float StatusFlatElementResistReduction;
         public string StatusMaxStacksBonusStatusId;
         public int StatusMaxStacksBonus;
         public string StatusDurationBonusStatusId;

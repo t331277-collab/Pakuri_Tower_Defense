@@ -9,11 +9,13 @@ namespace Pakuri.InGame
         {
             Owner = owner;
             Data = data;
+            BasePlan = SkillExecutionPlanCompiler.Compile(data, null, data != null ? data.NormalizedPlanNodes : null);
             ResetRuntimeState();
         }
 
         public BaseUnitRuntimeModel Owner { get; }
         public SkillData Data { get; }
+        public SkillExecutionPlan BasePlan { get; }
         public string SkillId => Data != null ? Data.SkillId : string.Empty;
         public InGameSkillSlot Slot => Data != null ? Data.Slot : default;
         public float CooldownRemaining { get; private set; }

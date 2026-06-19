@@ -24,6 +24,8 @@ namespace Pakuri.Data
             public readonly Dictionary<string, EnemyRow> StageOneEnemies = new Dictionary<string, EnemyRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, EnemyRow> StageTwoEnemies = new Dictionary<string, EnemyRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, EnemySkillRow> EnemySkills = new Dictionary<string, EnemySkillRow>(StringComparer.OrdinalIgnoreCase);
+            public readonly List<EnemySkillNodeRow> EnemySkillNodes = new List<EnemySkillNodeRow>();
+            public readonly List<EnemySkillNodeParamRow> EnemySkillNodeParams = new List<EnemySkillNodeParamRow>();
         }
     }
 }

@@ -90,7 +90,11 @@ namespace Pakuri.InGame
             var outcome = UsesResolvedDeployments(skill)
                 ? ExecuteResolvedDeployments(context, snapshot, skill, center, prefab)
                 : ExecuteAtCenter(context, snapshot, skill, center, prefab, true);
-            var multiEffectRouted = SkillMultiEffectExecutor.Execute(context, snapshot, skill.MultiEffects, center);
+            var multiEffectRouted = SkillMultiEffectExecutor.Execute(
+                context,
+                snapshot,
+                SkillPlanActionDispatcher.ResolveEffects(snapshot, skill.MultiEffects),
+                center);
             var routed = outcome.Routed || multiEffectRouted;
             return new SkillExecutionResult(
                 routed || outcome.CastCommitted ? SkillExecutionStatus.Routed : SkillExecutionStatus.Rejected,
@@ -251,7 +255,11 @@ namespace Pakuri.InGame
                 var outcome = ExecuteAtCenter(context, snapshot, skill, center, prefab, true);
                 routed = routed || outcome.Routed;
                 castCommitted = castCommitted || outcome.CastCommitted;
-                routed = SkillMultiEffectExecutor.ExecuteOnDeploymentCast(context, snapshot, skill.MultiEffects, center) || routed;
+                routed = SkillMultiEffectExecutor.ExecuteOnDeploymentCast(
+                    context,
+                    snapshot,
+                    SkillPlanActionDispatcher.ResolveEffects(snapshot, skill.MultiEffects),
+                    center) || routed;
                 ScheduleRepeatedDeployments(context, snapshot, skill, center, prefab);
             }
 
@@ -283,7 +291,11 @@ namespace Pakuri.InGame
                 if (delaySeconds <= 0f)
                 {
                     ExecuteAtCenter(context, repeatSnapshot, skill, center, prefab, false);
-                    SkillMultiEffectExecutor.ExecuteOnDeploymentCast(context, repeatSnapshot, skill.MultiEffects, center);
+                    SkillMultiEffectExecutor.ExecuteOnDeploymentCast(
+                        context,
+                        repeatSnapshot,
+                        SkillPlanActionDispatcher.ResolveEffects(repeatSnapshot, skill.MultiEffects),
+                        center);
                     continue;
                 }
 
@@ -318,7 +330,11 @@ namespace Pakuri.InGame
             }
 
             ExecuteAtCenter(context, snapshot, skill, center, prefab, false);
-            SkillMultiEffectExecutor.ExecuteOnDeploymentCast(context, snapshot, skill.MultiEffects, center);
+            SkillMultiEffectExecutor.ExecuteOnDeploymentCast(
+                context,
+                snapshot,
+                SkillPlanActionDispatcher.ResolveEffects(snapshot, skill.MultiEffects),
+                center);
         }
 
         private static void ConfigureMultiDeploymentPrefabVisual(
@@ -382,7 +398,10 @@ namespace Pakuri.InGame
             var damage = SkillExecutionUtility.ResolveDamage(context.Caster, skill.Damage, snapshot);
             var attribute = SkillExecutionUtility.MapAttribute(skill.Damage != null ? skill.Damage.Element : skill.Element);
             var statusSpec = SkillStatusSpecUtility.ResolveStatusSpec(skill.OnHitStatus, snapshot);
-            var onHitStatusEffects = ResolveOnHitStatusEffects(context, snapshot, skill.MultiEffects);
+            var onHitStatusEffects = ResolveOnHitStatusEffects(
+                context,
+                snapshot,
+                SkillPlanActionDispatcher.ResolveEffects(snapshot, skill.MultiEffects));
             var critChanceBonus = snapshot != null ? snapshot.CritChanceBonus : 0f;
             var critDamageBonus = snapshot != null ? snapshot.CritDamageBonus : 0f;
             var effectiveHitTargetCount = ResolveEffectiveHitTargetCount(skill, snapshot);
@@ -1131,14 +1150,18 @@ namespace Pakuri.InGame
                 || roster == null
                 || sourceEntry == null
                 || skill == null
-                || skill.MultiEffects == null
                 || hitCount <= 0)
             {
                 return;
             }
 
             var context = new SkillExecutionContext(manager, roster, sourceEntry, sourceRuntime, 0f);
-            SkillMultiEffectExecutor.ExecuteOnHitCount(context, snapshot, skill.MultiEffects, center, hitCount);
+            SkillMultiEffectExecutor.ExecuteOnHitCount(
+                context,
+                snapshot,
+                SkillPlanActionDispatcher.ResolveEffects(snapshot, skill.MultiEffects),
+                center,
+                hitCount);
         }
 
         private static float ResolveVisualLifetime(GameObject instance, float minimumLifetimeSeconds)
@@ -1388,6 +1411,16 @@ namespace Pakuri.InGame
                 StatusCriticalDamageTakenBonus = snapshot.StatusCriticalDamageTakenBonus,
                 HasStatusAilmentResistanceBonus = snapshot.HasStatusAilmentResistanceBonus,
                 StatusAilmentResistanceBonus = snapshot.StatusAilmentResistanceBonus,
+                HasStatusDamageBonusRate = snapshot.HasStatusDamageBonusRate,
+                StatusDamageBonusRate = snapshot.StatusDamageBonusRate,
+                HasStatusShieldReceivedBonus = snapshot.HasStatusShieldReceivedBonus,
+                StatusShieldReceivedBonus = snapshot.StatusShieldReceivedBonus,
+                HasStatusCriticalChanceBonus = snapshot.HasStatusCriticalChanceBonus,
+                StatusCriticalChanceBonus = snapshot.StatusCriticalChanceBonus,
+                HasStatusDamageTakenBonus = snapshot.HasStatusDamageTakenBonus,
+                StatusDamageTakenBonus = snapshot.StatusDamageTakenBonus,
+                HasStatusFlatElementResistReduction = snapshot.HasStatusFlatElementResistReduction,
+                StatusFlatElementResistReduction = snapshot.StatusFlatElementResistReduction,
                 ThresholdStatusId = snapshot.ThresholdStatusId,
                 ThresholdStatusMinStacks = snapshot.ThresholdStatusMinStacks,
                 ThresholdApplyStatusId = snapshot.ThresholdApplyStatusId,

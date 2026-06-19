@@ -64,6 +64,8 @@ namespace Pakuri.Data
             sourceCatalog.EnemySkills = LoadTextAssetOrThrow(
                 GetImportedSourceAssetPath(EnemySkillDataFileName),
                 "Create EnemySkillData.csv under Assets/CSVdata/runtime/enemy before validation.");
+            sourceCatalog.EnemySkillNodes = LoadImportedSourceTextAssetIfPresent(EnemySkillNodesFileName);
+            sourceCatalog.EnemySkillNodeParams = LoadImportedSourceTextAssetIfPresent(EnemySkillNodeParamsFileName);
             EditorUtility.SetDirty(sourceCatalog);
 
             var sourceModel = LoadSourceModel(sourceCatalog);

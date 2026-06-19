@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 
@@ -31,6 +32,8 @@ namespace Pakuri.Data
             public StageOneEnemySkillKind BasicSkill;
             public string BasicSkillName;
             public float BasicSkillCoefficient;
+            public float BasicSkillAttackPowerCoefficient;
+            public float BasicSkillSpellPowerCoefficient;
             public float BasicSkillCooldown;
             public float BasicSkillDuration;
             public float BasicSkillRadius;
@@ -42,6 +45,8 @@ namespace Pakuri.Data
             public StageOneEnemySkillKind StageOneSkill;
             public string ActiveSkillName;
             public float ActiveSkillCoefficient;
+            public float ActiveSkillAttackPowerCoefficient;
+            public float ActiveSkillSpellPowerCoefficient;
             public float ActiveSkillCooldown;
             public float ActiveSkillDuration;
             public float ActiveSkillRadius;
@@ -72,6 +77,25 @@ namespace Pakuri.Data
             public float ProjectileLifetime;
             public float MoveSpeedMultiplier = 1f;
             public float OutgoingDamageMultiplier = 1f;
+        }
+
+        private sealed class EnemySkillNodeRow
+        {
+            public string SkillId;
+            public string NodeId;
+            public int SortOrder;
+            public string Trigger;
+            public string TargetSelector;
+            public string ActionOp;
+            public bool Enabled = true;
+        }
+
+        private sealed class EnemySkillNodeParamRow
+        {
+            public string SkillId;
+            public string NodeId;
+            public string ParamKey;
+            public string ParamValue;
         }
 
         private static EnemyRow ParseEnemyRow(CsvRecord record)
@@ -135,6 +159,31 @@ namespace Pakuri.Data
             };
         }
 
+        private static EnemySkillNodeRow ParseEnemySkillNodeRow(CsvRecord record)
+        {
+            return new EnemySkillNodeRow
+            {
+                SkillId = record.ReadRequiredString("skill_id"),
+                NodeId = record.ReadRequiredString("node_id"),
+                SortOrder = record.ReadInt("sort_order"),
+                Trigger = record.ReadString("trigger"),
+                TargetSelector = record.ReadString("target_selector"),
+                ActionOp = record.ReadRequiredString("action_op"),
+                Enabled = ReadOptionalBoolWithDefault(record, "enabled", true)
+            };
+        }
+
+        private static EnemySkillNodeParamRow ParseEnemySkillNodeParamRow(CsvRecord record)
+        {
+            return new EnemySkillNodeParamRow
+            {
+                SkillId = record.ReadRequiredString("skill_id"),
+                NodeId = record.ReadRequiredString("node_id"),
+                ParamKey = record.ReadRequiredString("param_key"),
+                ParamValue = record.ReadString("param_value")
+            };
+        }
+
         private static void ApplyEnemySkillRow(
             EnemyRow enemy,
             Dictionary<string, EnemySkillRow> enemySkills,
@@ -148,6 +197,8 @@ namespace Pakuri.Data
                 "stage_one_skill",
                 out enemy.ActiveSkillName,
                 out enemy.ActiveSkillCoefficient,
+                out enemy.ActiveSkillAttackPowerCoefficient,
+                out enemy.ActiveSkillSpellPowerCoefficient,
                 out enemy.ActiveSkillCooldown,
                 out enemy.ActiveSkillDuration,
                 out enemy.ActiveSkillRadius,
@@ -170,6 +221,8 @@ namespace Pakuri.Data
                 "basic_skill",
                 out enemy.BasicSkillName,
                 out enemy.BasicSkillCoefficient,
+                out enemy.BasicSkillAttackPowerCoefficient,
+                out enemy.BasicSkillSpellPowerCoefficient,
                 out enemy.BasicSkillCooldown,
                 out enemy.BasicSkillDuration,
                 out enemy.BasicSkillRadius,
@@ -195,6 +248,11 @@ namespace Pakuri.Data
 
             var value = record.ReadFloat(columnName);
             return value > 0f ? value : defaultValue;
+        }
+
+        private static bool ReadOptionalBoolWithDefault(CsvRecord record, string columnName, bool defaultValue)
+        {
+            return record.HasColumn(columnName) ? record.ReadBool(columnName) : defaultValue;
         }
 
         private static bool TryReadOptionalStageOneSkill(
@@ -226,6 +284,8 @@ namespace Pakuri.Data
             string ownerColumnName,
             out string skillName,
             out float coefficient,
+            out float attackPowerCoefficient,
+            out float spellPowerCoefficient,
             out float cooldown,
             out float duration,
             out float radius,
@@ -249,6 +309,8 @@ namespace Pakuri.Data
             }
 
             skillName = skill.DisplayName;
+            attackPowerCoefficient = skill.AttackPowerCoefficient;
+            spellPowerCoefficient = skill.SpellPowerCoefficient;
             coefficient = skill.AttackPowerCoefficient > 0f
                 ? skill.AttackPowerCoefficient
                 : skill.SpellPowerCoefficient;

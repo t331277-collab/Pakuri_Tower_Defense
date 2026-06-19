@@ -27,7 +27,8 @@ namespace Pakuri.InGame
             var damage = SkillExecutionUtility.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
             var attribute = SkillExecutionUtility.MapAttribute(skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element);
             var statusSpec = SkillStatusSpecUtility.ResolveStatusSpec(skill.OnTickStatus, snapshot);
-            var expireEffects = ResolveOnExpireEffects(context, snapshot, skill.MultiEffects);
+            var planEffects = SkillPlanActionDispatcher.ResolveEffects(snapshot, skill.MultiEffects);
+            var expireEffects = ResolveOnExpireEffects(context, snapshot, planEffects);
             var coverAll = (skill.Area != null && skill.Area.CoverAll)
                 || (skill.Targeting != null && skill.Targeting.CoverAll);
             var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
@@ -85,7 +86,7 @@ namespace Pakuri.InGame
                     snapshot != null ? snapshot.CritChanceBonus : 0f,
                     snapshot != null ? snapshot.CritDamageBonus : 0f);
                 routed = true;
-                routed = SkillMultiEffectExecutor.Execute(context, snapshot, skill.MultiEffects, center) || routed;
+            routed = SkillMultiEffectExecutor.Execute(context, snapshot, planEffects, center) || routed;
             }
 
             return new SkillExecutionResult(
