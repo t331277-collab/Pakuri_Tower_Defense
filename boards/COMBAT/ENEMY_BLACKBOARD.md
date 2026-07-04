@@ -7,6 +7,49 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-05 Monster Choice Base Runtime Removal
+
+### Task title
+
+Record that monster skill choice runtime no longer accepts the removed base CSV tables.
+
+### Goals
+
+- Supersede older Phase D notes that mentioned `monster_skill_choice_base.csv` as an active choice metadata source.
+- Keep current monster choice runtime authority on `monster_skill_choices.csv`.
+- Keep historical notes intact while making the current state explicit.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This board update records the data/runtime cleanup only; enemy skill behavior was not changed.
+- MSW-MCP is not used; Unity-MCP remains the only MCP path if Unity Editor validation is needed.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- Treat older board/reference mentions of `monster_skill_choice_base.csv` and `SkillChoiceBaseRows` as historical unless a future task explicitly reintroduces a base table.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_choice_base.csv` and its `.meta` file were deleted.
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_base.csv` and its `.meta` file were deleted.
+- `PakuriCsvRuntimeData.Build.cs`, `PakuriCsvRuntimeData.Loader.cs`, `PakuriCsvRuntimeData.SourceModel.cs`, `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs`, and `PakuriCsvRuntimeData.Validation.cs` no longer use `SkillChoiceBaseRows` or `SkillBaseRows`.
+- `Select-String` under `Pakuri/Assets/Scripts2/InGame/Data/Runtime` for removed base-table symbols and filenames returned no matches.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+
+### History
+
+- 2026-07-05: User asked Code Builder to delete `monster_skill_base.csv` and `monster_skill_choice_base.csv`, and to unify choice references onto `monster_skill_choices.csv`.
+
 ## Task: 2026-06-19 Enemy Skill Node Runtime Implementation 1-7
 
 ### Task title

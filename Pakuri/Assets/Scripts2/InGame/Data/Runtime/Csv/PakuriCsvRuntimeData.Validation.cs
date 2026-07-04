@@ -1528,21 +1528,19 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                var hasSourceChoice = sourceModel.SkillChoices.TryGetValue(choice.ChoiceId, out var sourceChoice);
-                var hasSourceChoiceBase = sourceModel.SkillChoiceBaseRows.TryGetValue(choice.ChoiceId, out var sourceChoiceBase);
-                if (!hasSourceChoice && !hasSourceChoiceBase)
+                if (!sourceModel.SkillChoices.TryGetValue(choice.ChoiceId, out var sourceChoice))
                 {
                     errors.Add($"Runtime skill choice '{choice.ChoiceId}' for skill '{skillId}' has no source row.");
                     continue;
                 }
 
-                var skillIconPath = hasSourceChoice ? sourceChoice.SkillIconPath : sourceChoiceBase.SkillIconPath;
+                var skillIconPath = sourceChoice.SkillIconPath;
                 if (!string.IsNullOrWhiteSpace(skillIconPath) && choice.SkillIcon == null)
                 {
                     errors.Add($"Runtime skill choice '{choice.ChoiceId}' is missing SkillIcon for '{skillIconPath}'.");
                 }
 
-                var skillEffectPrefabPath = hasSourceChoice ? sourceChoice.SkillEffectPrefabPath : sourceChoiceBase.SkillEffectPrefabPath;
+                var skillEffectPrefabPath = sourceChoice.SkillEffectPrefabPath;
                 if (!string.IsNullOrWhiteSpace(skillEffectPrefabPath) && choice.SkillEffectPrefab == null)
                 {
                     errors.Add($"Runtime skill choice '{choice.ChoiceId}' is missing SkillEffectPrefab for '{skillEffectPrefabPath}'.");

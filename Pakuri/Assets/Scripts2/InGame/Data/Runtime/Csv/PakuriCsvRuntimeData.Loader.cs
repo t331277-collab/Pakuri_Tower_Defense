@@ -41,9 +41,29 @@ namespace Pakuri.Data
             {
                 missingAssets.Add(MonsterRewardChoicesFileName);
             }
-            if (sourceCatalog.MonsterSkills == null)
+            if (sourceCatalog.MonsterSkillsProjectile == null)
             {
-                missingAssets.Add(MonsterSkillsFileName);
+                missingAssets.Add(MonsterSkillsProjectileFileName);
+            }
+            if (sourceCatalog.MonsterSkillsLineAttack == null)
+            {
+                missingAssets.Add(MonsterSkillsLineAttackFileName);
+            }
+            if (sourceCatalog.MonsterSkillsAreaAttack == null)
+            {
+                missingAssets.Add(MonsterSkillsAreaAttackFileName);
+            }
+            if (sourceCatalog.MonsterSkillsSingleAttack == null)
+            {
+                missingAssets.Add(MonsterSkillsSingleAttackFileName);
+            }
+            if (sourceCatalog.MonsterSkillsBuff == null)
+            {
+                missingAssets.Add(MonsterSkillsBuffFileName);
+            }
+            if (sourceCatalog.MonsterSkillsPassive == null)
+            {
+                missingAssets.Add(MonsterSkillsPassiveFileName);
             }
             if (sourceCatalog.MonsterSkillEffects == null)
             {
@@ -113,9 +133,6 @@ namespace Pakuri.Data
             var catalogStageTwoEnemyTable = CsvTable.Load(sourceCatalog.CatalogStageTwoEnemies, CatalogStageTwoEnemiesFileName);
             var monsterTable = CsvTable.Load(sourceCatalog.Monsters, MonstersFileName);
             var rewardChoiceTable = CsvTable.Load(sourceCatalog.MonsterRewardChoices, MonsterRewardChoicesFileName);
-            var skillTable = CsvTable.Load(sourceCatalog.MonsterSkills, MonsterSkillsFileName);
-            var skillBaseTable = LoadOptionalCsvTable(sourceCatalog.MonsterSkillBase, MonsterSkillBaseFileName);
-            var skillChoiceBaseTable = LoadOptionalCsvTable(sourceCatalog.MonsterSkillChoiceBase, MonsterSkillChoiceBaseFileName);
             var skillNodeTable = LoadOptionalCsvTable(sourceCatalog.MonsterSkillNodes, MonsterSkillNodesFileName);
             var skillNodeParamTable = LoadOptionalCsvTable(sourceCatalog.MonsterSkillNodeParams, MonsterSkillNodeParamsFileName);
             var skillEffectTable = CsvTable.Load(sourceCatalog.MonsterSkillEffects, MonsterSkillEffectsFileName);
@@ -158,29 +175,39 @@ namespace Pakuri.Data
                 AddUnique(model.RewardChoices, row.Id, row, record);
             }
 
-            foreach (var record in skillTable.Records)
-            {
-                var row = ParseSkillRow(record);
-                AddUnique(model.Skills, row.Id, row, record);
-            }
-
-            if (skillBaseTable != null)
-            {
-                foreach (var record in skillBaseTable.Records)
-                {
-                    var row = ParseSkillBaseRow(record);
-                    AddUnique(model.SkillBaseRows, row.Id, row, record);
-                }
-            }
-
-            if (skillChoiceBaseTable != null)
-            {
-                foreach (var record in skillChoiceBaseTable.Records)
-                {
-                    var row = ParseSkillChoiceBaseRow(record);
-                    AddUnique(model.SkillChoiceBaseRows, row.Id, row, record);
-                }
-            }
+            LoadSkillRows(
+                model,
+                sourceCatalog.MonsterSkillsProjectile,
+                MonsterSkillsProjectileFileName,
+                SkillRuntimeKind.MagazineProjectile,
+                SkillRuntimeKind.CooldownProjectile);
+            LoadSkillRows(
+                model,
+                sourceCatalog.MonsterSkillsLineAttack,
+                MonsterSkillsLineAttackFileName,
+                SkillRuntimeKind.LineAttack);
+            LoadSkillRows(
+                model,
+                sourceCatalog.MonsterSkillsAreaAttack,
+                MonsterSkillsAreaAttackFileName,
+                SkillRuntimeKind.AreaAttack,
+                SkillRuntimeKind.Field);
+            LoadSkillRows(
+                model,
+                sourceCatalog.MonsterSkillsSingleAttack,
+                MonsterSkillsSingleAttackFileName,
+                SkillRuntimeKind.SingleAttack);
+            LoadSkillRows(
+                model,
+                sourceCatalog.MonsterSkillsBuff,
+                MonsterSkillsBuffFileName,
+                SkillRuntimeKind.Buff,
+                SkillRuntimeKind.Shield);
+            LoadSkillRows(
+                model,
+                sourceCatalog.MonsterSkillsPassive,
+                MonsterSkillsPassiveFileName,
+                SkillRuntimeKind.Passive);
 
             if (skillNodeTable != null)
             {
@@ -260,6 +287,45 @@ namespace Pakuri.Data
             }
 
             return model;
+        }
+
+        private static void LoadSkillRows(
+            SourceModel model,
+            TextAsset skillAsset,
+            string tableName,
+            params SkillRuntimeKind[] allowedRuntimeKinds)
+        {
+            var skillTable = CsvTable.Load(skillAsset, tableName);
+            foreach (var record in skillTable.Records)
+            {
+                var row = ParseSkillRow(record);
+                if (!IsAllowedSkillRuntimeKind(row.RuntimeKind, allowedRuntimeKinds))
+                {
+                    throw new CsvFatalException(
+                        $"CSV table '{tableName}' contains skill '{row.Id}' with unsupported runtime_kind '{row.RuntimeKind}'.",
+                        new List<string>
+                        {
+                            $"Move skill '{row.Id}' to the split monster skill CSV that owns runtime_kind '{row.RuntimeKind}'."
+                        });
+                }
+
+                AddUnique(model.Skills, row.Id, row, record);
+            }
+        }
+
+        private static bool IsAllowedSkillRuntimeKind(
+            SkillRuntimeKind runtimeKind,
+            SkillRuntimeKind[] allowedRuntimeKinds)
+        {
+            for (var i = 0; i < allowedRuntimeKinds.Length; i++)
+            {
+                if (allowedRuntimeKinds[i] == runtimeKind)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static CsvTable LoadOptionalCsvTable(TextAsset asset, string tableName)

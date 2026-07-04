@@ -30,40 +30,6 @@ namespace Pakuri.Data
             ChoiceId
         }
 
-        private sealed class SkillBaseRow
-        {
-            public string Id;
-            public string MonsterId;
-            public PakuriCsvSkillKind SkillKind;
-            public SkillSlot Slot;
-            public string DisplayName;
-            public SkillRuntimeKind RuntimeKind;
-            public SkillImplementationState ImplementationState;
-            public bool IsDefaultLearned;
-            public bool IsAvailableWithoutActiveRequirement;
-            public SkillSlot RequiredActiveSlot;
-            public string SkillIconPath;
-            public string DescriptionText;
-            public string Summary;
-        }
-
-        private sealed class SkillChoiceBaseRow
-        {
-            public string Id;
-            public string MonsterId;
-            public string SkillId;
-            public string TargetSkillId;
-            public string RuntimeTargetSkillIds;
-            public PakuriCsvChoiceGroup ChoiceGroup;
-            public int SortOrder;
-            public string Title;
-            public string DescriptionText;
-            public string SkillIconPath;
-            public string SkillEffectPrefabPath;
-            public string RuntimeSupportState;
-            public string RuntimeSupportNotes;
-        }
-
         private sealed class SkillNodeRow
         {
             public string Id;
@@ -134,46 +100,6 @@ namespace Pakuri.Data
 
         private static readonly Dictionary<string, SkillNodeHandlerSchema> SkillNodeHandlerSchemas =
             BuildSkillNodeHandlerSchemas();
-
-        private static SkillBaseRow ParseSkillBaseRow(CsvRecord record)
-        {
-            return new SkillBaseRow
-            {
-                Id = record.ReadRequiredString("skill_id"),
-                MonsterId = record.ReadRequiredString("monster_id"),
-                SkillKind = record.ReadEnum<PakuriCsvSkillKind>("skill_kind"),
-                Slot = record.ReadEnum<SkillSlot>("slot"),
-                DisplayName = record.ReadRequiredString("display_name"),
-                RuntimeKind = record.ReadEnum<SkillRuntimeKind>("runtime_kind"),
-                ImplementationState = record.ReadEnum<SkillImplementationState>("implementation_state"),
-                IsDefaultLearned = record.ReadBool("is_default_learned"),
-                IsAvailableWithoutActiveRequirement = record.ReadBool("is_available_without_active_requirement"),
-                RequiredActiveSlot = record.ReadEnum<SkillSlot>("required_active_slot"),
-                SkillIconPath = record.ReadString("skill_icon_path"),
-                DescriptionText = record.ReadString("description_text"),
-                Summary = record.ReadString("summary")
-            };
-        }
-
-        private static SkillChoiceBaseRow ParseSkillChoiceBaseRow(CsvRecord record)
-        {
-            return new SkillChoiceBaseRow
-            {
-                Id = record.ReadRequiredString("choice_id"),
-                MonsterId = record.ReadRequiredString("monster_id"),
-                SkillId = record.ReadRequiredString("skill_id"),
-                TargetSkillId = record.ReadString("target_skill_id"),
-                RuntimeTargetSkillIds = record.ReadString("runtime_target_skill_ids"),
-                ChoiceGroup = record.ReadEnum<PakuriCsvChoiceGroup>("choice_group"),
-                SortOrder = record.ReadInt("sort_order"),
-                Title = record.ReadRequiredString("title"),
-                DescriptionText = record.ReadString("description_text"),
-                SkillIconPath = record.ReadString("skill_icon_path"),
-                SkillEffectPrefabPath = record.ReadString("skill_effect_prefab_path"),
-                RuntimeSupportState = record.ReadString("runtime_support_state"),
-                RuntimeSupportNotes = record.ReadString("runtime_support_notes")
-            };
-        }
 
         private static SkillNodeRow ParseSkillNodeRow(CsvRecord record)
         {
@@ -386,9 +312,6 @@ namespace Pakuri.Data
                 return;
             }
 
-            ValidateSkillBaseRows(model, errors);
-            ValidateSkillChoiceBaseRows(model, errors);
-
             var paramsByNode = new Dictionary<string, List<SkillNodeParamRow>>(StringComparer.OrdinalIgnoreCase);
             var paramKeyLookupByNode = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
             foreach (var param in model.SkillNodeParams)
@@ -448,56 +371,6 @@ namespace Pakuri.Data
             }
         }
 
-        private static void ValidateSkillBaseRows(SourceModel model, List<string> errors)
-        {
-            foreach (var row in model.SkillBaseRows.Values)
-            {
-                if (!model.Monsters.ContainsKey(row.MonsterId))
-                {
-                    errors.Add($"Skill base '{row.Id}' references unknown monster '{row.MonsterId}'.");
-                }
-            }
-        }
-
-        private static void ValidateSkillChoiceBaseRows(SourceModel model, List<string> errors)
-        {
-            foreach (var row in model.SkillChoiceBaseRows.Values)
-            {
-                if (!model.Monsters.ContainsKey(row.MonsterId))
-                {
-                    errors.Add($"Skill choice base '{row.Id}' references unknown monster '{row.MonsterId}'.");
-                }
-
-                if (!model.Skills.ContainsKey(row.SkillId))
-                {
-                    errors.Add($"Skill choice base '{row.Id}' references unknown skill '{row.SkillId}'.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(row.TargetSkillId) && !model.Skills.ContainsKey(row.TargetSkillId))
-                {
-                    errors.Add($"Skill choice base '{row.Id}' references unknown target skill '{row.TargetSkillId}'.");
-                }
-
-                if (model.SkillChoices.TryGetValue(row.Id, out var legacyChoice))
-                {
-                    if (!string.Equals(row.MonsterId, legacyChoice.MonsterId, StringComparison.OrdinalIgnoreCase))
-                    {
-                        errors.Add($"Skill choice base '{row.Id}' monster_id '{row.MonsterId}' does not match legacy choice monster_id '{legacyChoice.MonsterId}'.");
-                    }
-
-                    if (!string.Equals(row.SkillId, legacyChoice.SkillId, StringComparison.OrdinalIgnoreCase))
-                    {
-                        errors.Add($"Skill choice base '{row.Id}' skill_id '{row.SkillId}' does not match legacy choice skill_id '{legacyChoice.SkillId}'.");
-                    }
-
-                    if (row.ChoiceGroup != legacyChoice.ChoiceGroup)
-                    {
-                        errors.Add($"Skill choice base '{row.Id}' choice_group '{row.ChoiceGroup}' does not match legacy choice choice_group '{legacyChoice.ChoiceGroup}'.");
-                    }
-                }
-            }
-        }
-
         private static void ValidateSkillNodeOwner(SkillNodeRow node, SourceModel model, List<string> errors)
         {
             switch (node.OwnerKind)
@@ -515,8 +388,7 @@ namespace Pakuri.Data
                     }
                     break;
                 case SkillNodeOwnerKind.Choice:
-                    if (!model.SkillChoices.ContainsKey(node.OwnerId)
-                        && !model.SkillChoiceBaseRows.ContainsKey(node.OwnerId))
+                    if (!model.SkillChoices.ContainsKey(node.OwnerId))
                     {
                         errors.Add($"Skill node '{node.Id}' references unknown choice owner '{node.OwnerId}'.");
                     }
@@ -563,10 +435,7 @@ namespace Pakuri.Data
         {
             if (!string.IsNullOrWhiteSpace(choiceId) && !model.SkillChoices.ContainsKey(choiceId))
             {
-                if (!model.SkillChoiceBaseRows.ContainsKey(choiceId))
-                {
-                    errors.Add($"Skill node '{nodeId}' {columnName} references unknown choice '{choiceId}'.");
-                }
+                errors.Add($"Skill node '{nodeId}' {columnName} references unknown choice '{choiceId}'.");
             }
         }
 

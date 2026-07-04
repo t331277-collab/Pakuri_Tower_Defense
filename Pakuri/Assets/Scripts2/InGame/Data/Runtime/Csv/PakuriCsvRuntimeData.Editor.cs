@@ -50,9 +50,12 @@ namespace Pakuri.Data
             sourceCatalog.CatalogStageTwoEnemies = LoadImportedSourceTextAssetOrThrow(CatalogStageTwoEnemiesFileName);
             sourceCatalog.Monsters = LoadImportedSourceTextAssetOrThrow(MonstersFileName);
             sourceCatalog.MonsterRewardChoices = LoadImportedSourceTextAssetOrThrow(MonsterRewardChoicesFileName);
-            sourceCatalog.MonsterSkills = LoadImportedSourceTextAssetOrThrow(MonsterSkillsFileName);
-            sourceCatalog.MonsterSkillBase = LoadImportedSourceTextAssetIfPresent(MonsterSkillBaseFileName);
-            sourceCatalog.MonsterSkillChoiceBase = LoadImportedSourceTextAssetIfPresent(MonsterSkillChoiceBaseFileName);
+            sourceCatalog.MonsterSkillsProjectile = LoadImportedSourceTextAssetOrThrow(MonsterSkillsProjectileFileName);
+            sourceCatalog.MonsterSkillsLineAttack = LoadImportedSourceTextAssetOrThrow(MonsterSkillsLineAttackFileName);
+            sourceCatalog.MonsterSkillsAreaAttack = LoadImportedSourceTextAssetOrThrow(MonsterSkillsAreaAttackFileName);
+            sourceCatalog.MonsterSkillsSingleAttack = LoadImportedSourceTextAssetOrThrow(MonsterSkillsSingleAttackFileName);
+            sourceCatalog.MonsterSkillsBuff = LoadImportedSourceTextAssetOrThrow(MonsterSkillsBuffFileName);
+            sourceCatalog.MonsterSkillsPassive = LoadImportedSourceTextAssetOrThrow(MonsterSkillsPassiveFileName);
             sourceCatalog.MonsterSkillNodes = LoadImportedSourceTextAssetIfPresent(MonsterSkillNodesFileName);
             sourceCatalog.MonsterSkillNodeParams = LoadImportedSourceTextAssetIfPresent(MonsterSkillNodeParamsFileName);
             sourceCatalog.MonsterSkillEffects = LoadImportedSourceTextAssetOrThrow(MonsterSkillEffectsFileName);

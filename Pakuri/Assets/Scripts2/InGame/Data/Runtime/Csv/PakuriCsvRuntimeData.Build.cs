@@ -509,32 +509,20 @@ namespace Pakuri.Data
             for (var i = 0; i < choices.Count; i++)
             {
                 var choice = choices[i];
-                var hasChoiceBase = model.SkillChoiceBaseRows.TryGetValue(choice.Id, out var choiceBase);
-                var choiceMonsterId = hasChoiceBase ? choiceBase.MonsterId : choice.MonsterId;
-                var choiceSkillId = hasChoiceBase ? choiceBase.SkillId : choice.SkillId;
-                var choiceTargetSkillId = hasChoiceBase ? choiceBase.TargetSkillId : choice.TargetSkillId;
-                var choiceRuntimeTargetSkillIds = hasChoiceBase ? choiceBase.RuntimeTargetSkillIds : choice.RuntimeTargetSkillIds;
-                var choiceGroupValue = hasChoiceBase ? choiceBase.ChoiceGroup : choice.ChoiceGroup;
-                var choiceTitle = hasChoiceBase ? choiceBase.Title : choice.Title;
-                var choiceSkillIconPath = hasChoiceBase ? choiceBase.SkillIconPath : choice.SkillIconPath;
-                var choiceSkillEffectPrefabPath = hasChoiceBase ? choiceBase.SkillEffectPrefabPath : choice.SkillEffectPrefabPath;
-                var choiceDescriptionText = hasChoiceBase ? choiceBase.DescriptionText : choice.DescriptionText;
-                var choiceRuntimeSupportState = hasChoiceBase ? choiceBase.RuntimeSupportState : choice.RuntimeSupportState;
-                var choiceRuntimeSupportNotes = hasChoiceBase ? choiceBase.RuntimeSupportNotes : choice.RuntimeSupportNotes;
-                var targetSkillId = string.IsNullOrWhiteSpace(choiceTargetSkillId) ? choiceSkillId : choiceTargetSkillId;
+                var targetSkillId = string.IsNullOrWhiteSpace(choice.TargetSkillId) ? choice.SkillId : choice.TargetSkillId;
 
                 definitions[i] = new SkillChoiceDefinition
                 {
                     ChoiceId = choice.Id,
-                    MonsterId = choiceMonsterId,
-                    SkillId = choiceSkillId,
+                    MonsterId = choice.MonsterId,
+                    SkillId = choice.SkillId,
                     TargetSkillId = targetSkillId,
-                    RuntimeTargetSkillIds = choiceRuntimeTargetSkillIds,
-                    ChoiceGroup = MapChoiceGroup(choiceGroupValue),
-                    Title = choiceTitle,
-                    SkillIcon = LoadSprite(choiceSkillIconPath),
-                    SkillEffectPrefab = LoadPrefab(choiceSkillEffectPrefabPath),
-                    DescriptionText = choiceDescriptionText,
+                    RuntimeTargetSkillIds = choice.RuntimeTargetSkillIds,
+                    ChoiceGroup = MapChoiceGroup(choice.ChoiceGroup),
+                    Title = choice.Title,
+                    SkillIcon = LoadSprite(choice.SkillIconPath),
+                    SkillEffectPrefab = LoadPrefab(choice.SkillEffectPrefabPath),
+                    DescriptionText = choice.DescriptionText,
                     HasDamageMultiplier = choice.HasDamageMultiplier,
                     DamageMultiplier = choice.HasDamageMultiplier ? choice.DamageMultiplier : 1f,
                     BaseDamageBonus = choice.BaseDamageBonus,
@@ -676,73 +664,12 @@ namespace Pakuri.Data
                         SkillNodeOwnerKind.Choice,
                         choice.Id,
                         targetSkillId),
-                    RuntimeSupportState = choiceRuntimeSupportState,
-                    RuntimeSupportNotes = choiceRuntimeSupportNotes
+                    RuntimeSupportState = choice.RuntimeSupportState,
+                    RuntimeSupportNotes = choice.RuntimeSupportNotes
                 };
             }
 
-            var baseOnlyChoices = FilterAndSort(
-                model.SkillChoiceBaseRows.Values,
-                choice => choice.ChoiceGroup == choiceGroup
-                    && string.Equals(choice.SkillId, skillId, StringComparison.OrdinalIgnoreCase)
-                    && !model.SkillChoices.ContainsKey(choice.Id),
-                (left, right) => left.SortOrder.CompareTo(right.SortOrder));
-
-            if (baseOnlyChoices.Count == 0)
-            {
-                return definitions;
-            }
-
-            var mergedDefinitions = new SkillChoiceDefinition[definitions.Length + baseOnlyChoices.Count];
-            var legacyIndex = 0;
-            var baseOnlyIndex = 0;
-            var mergedIndex = 0;
-            while (legacyIndex < choices.Count || baseOnlyIndex < baseOnlyChoices.Count)
-            {
-                var takeLegacy = baseOnlyIndex >= baseOnlyChoices.Count
-                    || (legacyIndex < choices.Count
-                        && choices[legacyIndex].SortOrder <= baseOnlyChoices[baseOnlyIndex].SortOrder);
-
-                if (takeLegacy)
-                {
-                    mergedDefinitions[mergedIndex] = definitions[legacyIndex];
-                    legacyIndex++;
-                }
-                else
-                {
-                    mergedDefinitions[mergedIndex] = BuildBaseOnlySkillChoiceDefinition(model, baseOnlyChoices[baseOnlyIndex]);
-                    baseOnlyIndex++;
-                }
-
-                mergedIndex++;
-            }
-
-            return mergedDefinitions;
-        }
-
-        private static SkillChoiceDefinition BuildBaseOnlySkillChoiceDefinition(SourceModel model, SkillChoiceBaseRow choice)
-        {
-            var targetSkillId = string.IsNullOrWhiteSpace(choice.TargetSkillId) ? choice.SkillId : choice.TargetSkillId;
-            return new SkillChoiceDefinition
-            {
-                ChoiceId = choice.Id,
-                MonsterId = choice.MonsterId,
-                SkillId = choice.SkillId,
-                TargetSkillId = targetSkillId,
-                RuntimeTargetSkillIds = choice.RuntimeTargetSkillIds,
-                ChoiceGroup = MapChoiceGroup(choice.ChoiceGroup),
-                Title = choice.Title,
-                SkillIcon = LoadSprite(choice.SkillIconPath),
-                SkillEffectPrefab = LoadPrefab(choice.SkillEffectPrefabPath),
-                DescriptionText = choice.DescriptionText,
-                NormalizedPlanNodes = BuildSkillNodeDefinitions(
-                    model,
-                    SkillNodeOwnerKind.Choice,
-                    choice.Id,
-                    targetSkillId),
-                RuntimeSupportState = choice.RuntimeSupportState,
-                RuntimeSupportNotes = choice.RuntimeSupportNotes
-            };
+            return definitions;
         }
 
         private static SkillNodeDefinition[] BuildSkillNodeDefinitions(

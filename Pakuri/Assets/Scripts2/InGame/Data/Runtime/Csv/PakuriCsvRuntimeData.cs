@@ -27,9 +27,12 @@ namespace Pakuri.Data
         private const string CatalogStageTwoEnemiesFileName = "catalog_stage_two_enemies.csv";
         private const string MonstersFileName = "monsters.csv";
         private const string MonsterRewardChoicesFileName = "monster_modifier_skill_choice.csv";
-        private const string MonsterSkillsFileName = "monster_skills.csv";
-        private const string MonsterSkillBaseFileName = "monster_skill_base.csv";
-        private const string MonsterSkillChoiceBaseFileName = "monster_skill_choice_base.csv";
+        private const string MonsterSkillsProjectileFileName = "monster_skills_projectile.csv";
+        private const string MonsterSkillsLineAttackFileName = "monster_skills_line_attack.csv";
+        private const string MonsterSkillsAreaAttackFileName = "monster_skills_area_attack.csv";
+        private const string MonsterSkillsSingleAttackFileName = "monster_skills_single_attack.csv";
+        private const string MonsterSkillsBuffFileName = "monster_skills_buff.csv";
+        private const string MonsterSkillsPassiveFileName = "monster_skills_passive.csv";
         private const string MonsterSkillNodesFileName = "monster_skill_nodes.csv";
         private const string MonsterSkillNodeParamsFileName = "monster_skill_node_params.csv";
         private const string MonsterSkillEffectsFileName = "monster_skill_effects.csv";
@@ -60,9 +63,12 @@ namespace Pakuri.Data
                 case MonstersFileName:
                 case MonsterRewardChoicesFileName:
                     return $"{RuntimeMonsterCsvAssetRoot}/{fileName}";
-                case MonsterSkillsFileName:
-                case MonsterSkillBaseFileName:
-                case MonsterSkillChoiceBaseFileName:
+                case MonsterSkillsProjectileFileName:
+                case MonsterSkillsLineAttackFileName:
+                case MonsterSkillsAreaAttackFileName:
+                case MonsterSkillsSingleAttackFileName:
+                case MonsterSkillsBuffFileName:
+                case MonsterSkillsPassiveFileName:
                 case MonsterSkillNodesFileName:
                 case MonsterSkillNodeParamsFileName:
                 case MonsterSkillEffectsFileName:

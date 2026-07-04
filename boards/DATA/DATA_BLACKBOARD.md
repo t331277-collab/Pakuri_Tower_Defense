@@ -5,6 +5,110 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-05 Monster Skills Runtime Kind CSV Split
+
+### Task title
+
+Split the runtime monster skill body table by `runtime_kind` ownership and remove the monolithic `monster_skills.csv` runtime source.
+
+### Goals
+
+- Replace `monster_skills.csv` with runtime-kind split CSV files under `Pakuri/Assets/CSVdata/runtime/monster/skills/`.
+- Merge `CooldownProjectile` into the projectile split file, `Field` into the area-attack split file, and `Shield` into the buff split file.
+- Keep split CSV columns narrow so each file contains only columns used by its owned runtime kinds.
+- Make runtime loading, editor sync, and validation use the split files instead of `monster_skills.csv`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active runtime CSV authority remains under `Pakuri/Assets/CSVdata/runtime`.
+- MSW-MCP is not used; Unity-MCP remains the only MCP path if Unity Editor validation is needed.
+- Historical board references to old `monster_skills.csv` rows remain historical unless a current task block says otherwise.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- Author future monster skill body rows in the split file that owns the row's `runtime_kind`.
+- Keep `CooldownProjectile` in `monster_skills_projectile.csv`, `Field` in `monster_skills_area_attack.csv`, and `Shield` in `monster_skills_buff.csv`.
+- If Unity Editor validation is needed, run the existing Pakuri CSV runtime sync/validate menu through Unity-MCP.
+
+### Evidence
+
+- Added `monster_skills_projectile.csv` with 7 rows / 35 columns and allowed kinds `MagazineProjectile|CooldownProjectile`.
+- Added `monster_skills_line_attack.csv` with 3 rows / 25 columns and allowed kind `LineAttack`.
+- Added `monster_skills_area_attack.csv` with 3 rows / 28 columns and allowed kinds `AreaAttack|Field`.
+- Added `monster_skills_single_attack.csv` with 9 rows / 39 columns and allowed kind `SingleAttack`.
+- Added `monster_skills_buff.csv` with 3 rows / 26 columns and allowed kinds `Buff|Shield`.
+- Added `monster_skills_passive.csv` with 25 rows / 11 columns and allowed kind `Passive`.
+- PowerShell CSV verification returned `TOTAL_ROWS=50`, `DUPLICATE_IDS=0`, and empty `BadKinds` for every split file.
+- Comparison against the deleted monolithic `monster_skills.csv` returned `DROPPED_NON_DEFAULT_VALUES=0` after allowing blank/default values and the explicit `없음` status label.
+- Deleted `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skills.csv` and `monster_skills.csv.meta`; `Test-Path` returned `False` for both paths.
+- `PakuriCsvRuntimeData.Loader.cs` now loads the six split TextAssets and rejects rows whose `runtime_kind` does not belong to that split file.
+- `PakuriCsvRuntimeData.MonsterDataset.cs` and `PakuriCsvRuntimeData.StatusPayload.cs` now allow missing non-owned skill/status columns when parsing split skill rows.
+- `PakuriCsvRuntimeData.cs`, `PakuriCsvRuntimeData.Editor.cs`, `PakuriCsvRuntimeSourceCatalog.cs`, and `PakuriCsvRuntimeSourceCatalog.asset` now use the six split source names instead of `MonsterSkills`.
+- `Select-String` under `Pakuri/Assets/Scripts2`, `Pakuri/Assets/Resources`, and `Pakuri/Assets/CSVdata` for `MonsterSkillsFileName`, `MonsterSkills:`, `monster_skills.csv`, and the old monolithic GUID returned no matches.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `git diff --check` returned no whitespace errors; only Git line-ending normalization warnings were printed.
+
+### History
+
+- 2026-07-05: User asked Code Builder to merge `cooldown_projectile` into `MagazineProjectile`, include `Field` in `AreaAttack`, include `Shield` in `Buff`, and implement the split.
+
+## Task: 2026-07-05 Monster Skill Base CSV Removal
+
+### Task title
+
+Remove unused monster skill base CSV tables from the active runtime skill data path.
+
+### Goals
+
+- Delete `monster_skill_base.csv` and `monster_skill_choice_base.csv` plus their Unity `.meta` files.
+- Remove runtime/editor references to `monster_skill_base.csv`.
+- Make choice source validation and build logic use `monster_skill_choices.csv` only.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active runtime CSV authority remains under `Pakuri/Assets/CSVdata/runtime`.
+- MSW-MCP is not used; Unity-MCP remains the only MCP path if Unity Editor validation is needed.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- Keep future monster choice rows in `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_choices.csv`.
+- If Unity Editor validation is needed, run the existing Pakuri CSV runtime sync/validate menu through Unity-MCP.
+
+### Evidence
+
+- Deleted `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_base.csv` and `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_base.csv.meta`.
+- Deleted `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_choice_base.csv` and `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_choice_base.csv.meta`.
+- `PakuriCsvRuntimeSourceCatalog.cs` and `PakuriCsvRuntimeSourceCatalog.asset` no longer contain `MonsterSkillBase` or `MonsterSkillChoiceBase`.
+- `PakuriCsvRuntimeData.Build.cs`, `PakuriCsvRuntimeData.Loader.cs`, `PakuriCsvRuntimeData.SourceModel.cs`, `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs`, and `PakuriCsvRuntimeData.Validation.cs` no longer use `SkillBaseRows` or `SkillChoiceBaseRows`.
+- `Test-Path` for the four deleted CSV/meta paths returned `False`, `False`, `False`, and `False`.
+- `Select-String` under `Pakuri/Assets/Scripts2/InGame/Data/Runtime` for removed base-table symbols and filenames returned no matches.
+- `Select-String` on `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog.asset` for removed base-table symbols and filenames returned no matches.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+
+### History
+
+- 2026-07-05: User asked Code Builder to delete `monster_skill_base.csv` and `monster_skill_choice_base.csv`, and to stop referencing `monster_skill_choice_base.csv` by unifying choice references onto `monster_skill_choices.csv`.
+
 ## Task: 2026-06-19 Enemy Skill Node Runtime Implementation 1-7
 
 ### Task title

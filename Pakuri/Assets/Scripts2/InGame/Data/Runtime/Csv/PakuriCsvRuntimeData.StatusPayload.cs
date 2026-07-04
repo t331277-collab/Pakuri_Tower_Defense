@@ -42,30 +42,33 @@ namespace Pakuri.Data
             public DamageAttribute StatusOutgoingAdditionalDamageAttribute;
         }
 
-        private static StatusPayloadRow ReadStatusPayload(CsvRecord record, bool includeEffectOnlyModifiers)
+        private static StatusPayloadRow ReadStatusPayload(
+            CsvRecord record,
+            bool includeEffectOnlyModifiers,
+            bool allowMissingColumns = false)
         {
             var payload = new StatusPayloadRow
             {
-                StatusEffectId = record.ReadString("status_effect_id"),
-                StatusChance = record.ReadFloat("status_chance"),
-                StatusEffectLabel = record.ReadString("status_effect_label"),
-                StatusEffectPrefabPath = record.ReadString("status_effect_prefab_path"),
-                StatusDurationSeconds = record.ReadFloat("status_duration_seconds"),
-                StatusMaxStacks = record.ReadInt("status_max_stacks"),
-                StatusStackAmount = record.ReadInt("status_stack_amount"),
-                StatusTargetScope = record.ReadString("status_target_scope"),
-                StatusMergePolicy = record.ReadString("status_merge_policy"),
-                ShieldAmountRefreshPolicy = record.ReadString("shield_amount_refresh_policy"),
-                StatusActionSpeedBonus = record.ReadFloat("status_action_speed_bonus"),
-                StatusMoveSpeedBonus = record.ReadFloat("status_move_speed_bonus"),
-                StatusAttackPowerBonus = record.ReadFloat("status_attack_power_bonus"),
-                StatusDamageTakenBonus = record.ReadFloat("status_damage_taken_bonus"),
-                StatusCriticalDamageTakenBonus = record.ReadFloat("status_critical_damage_taken_bonus"),
-                StatusAilmentResistanceBonus = record.ReadFloat("status_ailment_resistance_bonus"),
-                StatusCriticalResistanceBonus = record.ReadFloat("status_critical_resistance_bonus"),
-                StatusElementResistReduction = record.ReadFloat("status_element_resist_reduction"),
-                StatusFlatElementResistReduction = record.ReadFloat("status_flat_element_resist_reduction"),
-                StatusElementDamageTakenBonus = record.ReadFloat("status_element_damage_taken_bonus")
+                StatusEffectId = ReadStatusString(record, "status_effect_id", allowMissingColumns),
+                StatusChance = ReadStatusFloat(record, "status_chance", allowMissingColumns),
+                StatusEffectLabel = ReadStatusString(record, "status_effect_label", allowMissingColumns),
+                StatusEffectPrefabPath = ReadStatusString(record, "status_effect_prefab_path", allowMissingColumns),
+                StatusDurationSeconds = ReadStatusFloat(record, "status_duration_seconds", allowMissingColumns),
+                StatusMaxStacks = ReadStatusInt(record, "status_max_stacks", allowMissingColumns),
+                StatusStackAmount = ReadStatusInt(record, "status_stack_amount", allowMissingColumns),
+                StatusTargetScope = ReadStatusString(record, "status_target_scope", allowMissingColumns),
+                StatusMergePolicy = ReadStatusString(record, "status_merge_policy", allowMissingColumns),
+                ShieldAmountRefreshPolicy = ReadStatusString(record, "shield_amount_refresh_policy", allowMissingColumns),
+                StatusActionSpeedBonus = ReadStatusFloat(record, "status_action_speed_bonus", allowMissingColumns),
+                StatusMoveSpeedBonus = ReadStatusFloat(record, "status_move_speed_bonus", allowMissingColumns),
+                StatusAttackPowerBonus = ReadStatusFloat(record, "status_attack_power_bonus", allowMissingColumns),
+                StatusDamageTakenBonus = ReadStatusFloat(record, "status_damage_taken_bonus", allowMissingColumns),
+                StatusCriticalDamageTakenBonus = ReadStatusFloat(record, "status_critical_damage_taken_bonus", allowMissingColumns),
+                StatusAilmentResistanceBonus = ReadStatusFloat(record, "status_ailment_resistance_bonus", allowMissingColumns),
+                StatusCriticalResistanceBonus = ReadStatusFloat(record, "status_critical_resistance_bonus", allowMissingColumns),
+                StatusElementResistReduction = ReadStatusFloat(record, "status_element_resist_reduction", allowMissingColumns),
+                StatusFlatElementResistReduction = ReadStatusFloat(record, "status_flat_element_resist_reduction", allowMissingColumns),
+                StatusElementDamageTakenBonus = ReadStatusFloat(record, "status_element_damage_taken_bonus", allowMissingColumns)
             };
 
             if (includeEffectOnlyModifiers)
@@ -87,6 +90,27 @@ namespace Pakuri.Data
             }
 
             return payload;
+        }
+
+        private static string ReadStatusString(CsvRecord record, string columnName, bool allowMissingColumns)
+        {
+            return allowMissingColumns
+                ? ReadOptionalStringIfColumnExists(record, columnName)
+                : record.ReadString(columnName);
+        }
+
+        private static float ReadStatusFloat(CsvRecord record, string columnName, bool allowMissingColumns)
+        {
+            return allowMissingColumns
+                ? ReadOptionalFloatIfColumnExists(record, columnName)
+                : record.ReadFloat(columnName);
+        }
+
+        private static int ReadStatusInt(CsvRecord record, string columnName, bool allowMissingColumns)
+        {
+            return allowMissingColumns
+                ? ReadOptionalIntIfColumnExists(record, columnName)
+                : record.ReadInt(columnName);
         }
     }
 }

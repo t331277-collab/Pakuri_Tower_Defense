@@ -5,6 +5,95 @@
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-05 Monster Skills Split SourceCatalog Wiring
+
+### Task title
+
+Wire split monster skill runtime CSV files into the runtime source catalog.
+
+### Goals
+
+- Replace the serialized single `MonsterSkills` TextAsset reference with six split monster skill TextAsset references.
+- Preserve the existing source catalog asset path under `Assets/Resources/Pakuri/CSVRuntime`.
+- Keep editor sync loading the split CSV files from `Assets/CSVdata/runtime/monster/skills`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No prefab-path or runtime asset catalog ownership changed in this task.
+- MSW-MCP is not used; Unity-MCP remains the only MCP path if Unity Editor validation is needed.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- When adding another monster skill body split file, add the TextAsset field, file-name constant, path mapping, editor assignment, and serialized source catalog reference together.
+
+### Evidence
+
+- `PakuriCsvRuntimeSourceCatalog.cs` now declares `MonsterSkillsProjectile`, `MonsterSkillsLineAttack`, `MonsterSkillsAreaAttack`, `MonsterSkillsSingleAttack`, `MonsterSkillsBuff`, and `MonsterSkillsPassive`.
+- `PakuriCsvRuntimeSourceCatalog.asset` now serializes those six fields using GUIDs `4d2829c1fdc345b7bf1aba23dd7fd4b1`, `1b8eb880f8494399b8151ef2cc0c6ade`, `5fc269887d9b4f6da4981087cd15e34a`, `a6b19806a3ca4578a9204e35ab3c0182`, `b0c7408603e54abd9bbb7fabdb492c7e`, and `22160b9cc31c4eefaca07d56f6e9abd3`.
+- `PakuriCsvRuntimeData.Editor.cs` loads all six split files through `LoadImportedSourceTextAssetOrThrow(...)`.
+- `PakuriCsvRuntimeData.cs` maps all six split filenames to `RuntimeMonsterSkillCsvAssetRoot`.
+- `Select-String` under active Scripts2/resources/CSVdata paths found no remaining `MonsterSkills:` serialized field, `MonsterSkillsFileName`, `monster_skills.csv`, or old monolithic GUID reference.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+
+### History
+
+- 2026-07-05: User asked Code Builder to implement the runtime-kind split and remove the monolithic `monster_skills.csv` source path.
+
+## Task: 2026-07-05 Monster Skill Base CSV SourceCatalog Cleanup
+
+### Task title
+
+Remove unused monster skill base TextAsset references from the runtime source catalog.
+
+### Goals
+
+- Keep `PakuriCsvRuntimeSourceCatalog` aligned with the remaining active runtime monster skill CSV files.
+- Remove serialized source catalog references to deleted base CSV tables.
+- Preserve the existing runtime CSV source catalog asset path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Runtime source catalog asset remains under `Assets/Resources/Pakuri/CSVRuntime`.
+- No prefab-path or asset-catalog authority changed in this task.
+- MSW-MCP is not used; Unity-MCP remains the only MCP path if Unity Editor validation is needed.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- When adding a new runtime monster skill CSV file, add its TextAsset field and path mapping explicitly instead of reintroducing the removed base tables.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Data/Runtime/PakuriCsvRuntimeSourceCatalog.cs` no longer declares `MonsterSkillBase` or `MonsterSkillChoiceBase`.
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog.asset` no longer serializes `MonsterSkillBase` or `MonsterSkillChoiceBase`.
+- `PakuriCsvRuntimeData.Editor.cs` no longer loads `MonsterSkillBaseFileName` or `MonsterSkillChoiceBaseFileName` into the source catalog.
+- `PakuriCsvRuntimeData.cs` no longer maps `monster_skill_base.csv` or `monster_skill_choice_base.csv` through `GetImportedSourceAssetPath(...)`.
+- `Select-String` on `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog.asset` for removed base-table symbols and filenames returned no matches.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+
+### History
+
+- 2026-07-05: User asked Code Builder to delete `monster_skill_base.csv` and `monster_skill_choice_base.csv`, and to unify runtime monster skill choice references onto `monster_skill_choices.csv`.
+
 ## Task: 2026-06-19 CSV Runtime Source Asset Path Reorganization
 
 ### Task title

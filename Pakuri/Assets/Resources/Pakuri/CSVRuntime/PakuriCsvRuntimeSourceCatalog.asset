@@ -17,9 +17,12 @@ MonoBehaviour:
   CatalogStageTwoEnemies: {fileID: 4900000, guid: 1be2b3aabf5583c4995d1dcfc5e6d46e, type: 3}
   Monsters: {fileID: 4900000, guid: 3dce2014d8aeb774db75ef4d8d8575da, type: 3}
   MonsterRewardChoices: {fileID: 4900000, guid: 2f9229f6de8506a4fae1fad9c093e347, type: 3}
-  MonsterSkills: {fileID: 4900000, guid: bbc492c5e4ae3cf44a6aeab4ded27b5b, type: 3}
-  MonsterSkillBase: {fileID: 4900000, guid: 69443056c097e37418c4c0be238a73dd, type: 3}
-  MonsterSkillChoiceBase: {fileID: 4900000, guid: bc282ef7b5ae11c439eeb9e3ee5f5ac9, type: 3}
+  MonsterSkillsProjectile: {fileID: 4900000, guid: 4d2829c1fdc345b7bf1aba23dd7fd4b1, type: 3}
+  MonsterSkillsLineAttack: {fileID: 4900000, guid: 1b8eb880f8494399b8151ef2cc0c6ade, type: 3}
+  MonsterSkillsAreaAttack: {fileID: 4900000, guid: 5fc269887d9b4f6da4981087cd15e34a, type: 3}
+  MonsterSkillsSingleAttack: {fileID: 4900000, guid: a6b19806a3ca4578a9204e35ab3c0182, type: 3}
+  MonsterSkillsBuff: {fileID: 4900000, guid: b0c7408603e54abd9bbb7fabdb492c7e, type: 3}
+  MonsterSkillsPassive: {fileID: 4900000, guid: 22160b9cc31c4eefaca07d56f6e9abd3, type: 3}
   MonsterSkillNodes: {fileID: 4900000, guid: 6bb7bc5afcecc3242ad184d3d32ef4f6, type: 3}
   MonsterSkillNodeParams: {fileID: 4900000, guid: 57ad4bcfb726eea4bba3bf8f2eda2098, type: 3}
   MonsterSkillEffects: {fileID: 4900000, guid: 4ddf6bb31440b41438f4a7b82bbd5a92, type: 3}
