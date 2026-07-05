@@ -5,6 +5,186 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-06 Monster Skill Choice Effect Trigger CSV Character Folder Split
+
+### Task title
+
+Split runtime monster skill choice, effect, and trigger CSV files into per-character folders and remove default-only columns.
+
+### Goals
+
+- Create `ariel`, `eve`, `rin`, `sein`, and `vega` folders under `skills/choices`, `skills/effects`, and `skills/triggers`.
+- Replace root choice split files with `{monster}_skill_choices_{kind}.csv` files under each monster folder.
+- Replace root `monster_skill_effects.csv` with `{monster}_skill_effects.csv` files under each monster folder.
+- Replace root `monster_skill_triger.csv` with `{monster}_skill_triger.csv` files under each monster folder.
+- Keep runtime/editor catalog loading compatible with split files.
+- Remove columns that are only parser defaults in each split file.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active runtime CSV authority remains under `Pakuri/Assets/CSVdata/runtime`.
+- Legacy single-file catalog fields remain only as fallback when split arrays are empty.
+- No MSW-MCP was used; Unity-MCP remains the only MCP validation path if Unity Editor validation is needed.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, CSV-checked, and compile-verified.
+
+### Next Actions
+
+- Author future choice rows in `skills/choices/{monster}/{monster}_skill_choices_{kind}.csv`.
+- Author future effect rows in `skills/effects/{monster}/{monster}_skill_effects.csv`.
+- Author future trigger rows in `skills/triggers/{monster}/{monster}_skill_triger.csv`.
+- If Unity Editor validation is needed, run `Pakuri/Sync CSV Runtime Catalog Assets` and `Pakuri/Validate CSV Source Data` through Unity-MCP.
+
+### Evidence
+
+- Created monster folders under `Pakuri/Assets/CSVdata/runtime/monster/skills/choices`, `effects`, and `triggers`.
+- Deleted the six root `monster_skill_choices_*.csv` files and replaced them with 23 monster-owned choice files.
+- Deleted root `monster_skill_effects.csv` and replaced it with 5 monster-owned effect files.
+- Deleted root `monster_skill_triger.csv` and replaced it with 5 monster-owned trigger files.
+- Split generation created 33 CSV files with 442 total data rows and dropped 586 default-only columns.
+- Choice verification returned `choice_files=23`, `choice_rows=252`, `choice_dupes=0`, `choice_missing_skills=0`, and `choice_by_monster=ariel:50,eve:50,rin:50,sein:51,vega:51`.
+- Effect verification returned `effect_files=5`, `effect_rows=132`, `effect_dupes=0`, `effect_missing_skills=0`, and `effect_by_monster=ariel:36,eve:34,rin:20,sein:19,vega:23`.
+- Trigger verification returned `trigger_files=5`, `trigger_rows=58`, `trigger_dupes=0`, `trigger_missing_source_skills=0`, and `trigger_by_monster=ariel:6,eve:3,rin:17,sein:17,vega:15`.
+- Root legacy checks returned `root_legacy_choice_files=0`, `root_legacy_effect_files=0`, and `root_legacy_trigger_files=0`.
+- `PakuriCsvRuntimeSourceCatalog.cs` now exposes split arrays for monster skill choices, effects, and triggers.
+- `PakuriCsvRuntimeData.Editor.cs` now recursively collects split choice/effect/trigger CSV TextAssets by suffix.
+- `PakuriCsvRuntimeData.Loader.cs` now loads choice/effect/trigger split arrays first, falling back to legacy single TextAsset fields only when arrays are empty.
+- `PakuriCsvRuntimeData.MonsterDataset.cs` and `PakuriCsvRuntimeData.StatusPayload.cs` now allow default-backed effect/trigger/status columns to be missing from split CSV files.
+- `PakuriCsvRuntimeSourceCatalog.asset` now clears legacy choice/effect/trigger aggregate references and stores split CSV TextAsset arrays.
+- Search in `PakuriCsvRuntimeSourceCatalog.asset` for the old aggregate choice/effect/trigger GUIDs returned no matches.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `git diff --check` returned no whitespace errors; only Git line-ending normalization warnings were printed.
+
+### History
+
+- 2026-07-06: User requested Code Builder to split `skills/choices`, `skills/effects`, and `skills/triggers/monster_skill_triger.csv` by monster type and clean garbage/default columns like the previous base/node split.
+
+## Task: 2026-07-06 Monster Skill Base And Node CSV Character Folder Split
+
+### Task title
+
+Split runtime monster skill base and node CSV files into per-character folders and make runtime loading use those split assets.
+
+### Goals
+
+- Create `ariel`, `eve`, `rin`, `sein`, and `vega` folders under `Pakuri/Assets/CSVdata/runtime/monster/skills/base`.
+- Rename base CSV files from `monster_skills_*` to `{monster}_skills_*` inside the owning monster folder.
+- Remove columns that are empty for every data row in each split base CSV.
+- Create the same five monster folders under `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes` and move current node CSV files into their owner folders.
+- Keep in-game runtime loading compatible with the split folder structure.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active runtime CSV authority remains under `Pakuri/Assets/CSVdata/runtime`.
+- Legacy single-file catalog fields remain only as fallback when split arrays are empty.
+- No MSW-MCP was used; Unity-MCP remains the only MCP validation path if Unity Editor validation is needed.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, CSV-checked, and compile-verified.
+
+### Next Actions
+
+- Author future base skill rows in `skills/base/{monster}/{monster}_skills_{kind}.csv`.
+- Author future node rows in `skills/nodes/{monster}/{monster}_skill_nodes.csv` and params in `{monster}_skill_node_params.csv`.
+- If Unity Editor validation is needed, run `Pakuri/Sync CSV Runtime Catalog Assets` and `Pakuri/Validate CSV Source Data` through Unity-MCP.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/base` now has `ariel`, `eve`, `rin`, `sein`, and `vega` folders.
+- The six root `monster_skills_*.csv` base files were replaced by 23 monster-owned files named `{monster}_skills_projectile.csv`, `{monster}_skills_line_attack.csv`, `{monster}_skills_area_attack.csv`, `{monster}_skills_single_attack.csv`, `{monster}_skills_buff.csv`, and `{monster}_skills_passive.csv` as applicable.
+- Base CSV verification returned `base_file_count=23`, `base_row_count=50`, `base_by_monster=ariel:10,eve:10,rin:10,sein:10,vega:10`, `duplicate_skill_ids=0`, `blank_columns_after_split=0`, and `root_legacy_base_files=0`.
+- 2026-07-06 follow-up cleanup removed 88 optional base CSV columns whose values were only parser defaults, including numeric `0`, bool `false`, blank strings, `status_effect_label=없음`, default `DamageAttribute.Physical`, default `required_active_slot=A`, and default multiplier `1` columns.
+- Follow-up sample checks showed `Pakuri/Assets/CSVdata/runtime/monster/skills/base/ariel/ariel_skills_buff.csv` no longer contains `status_max_stacks`, `status_stack_amount`, `status_action_speed_bonus`, or `status_attack_power_bonus`.
+- Follow-up sample checks showed `Pakuri/Assets/CSVdata/runtime/monster/skills/base/vega/vega_skills_line_attack.csv` no longer contains `active_duration_seconds`, `shot_interval_seconds`, or `spell_power_coefficient`.
+- Follow-up base CSV verification returned `row_count=50`, `duplicate_skill_ids=0`, `by_monster=ariel:10,eve:10,rin:10,sein:10,vega:10`, and `default_only_optional_columns_remaining=0`.
+- 2026-07-06 bool cleanup inspected `InGameSkillDefinitionMapper.MapDamage`, `BuffSkillData` mapping, `ShieldSkillData` mapping, and `SupportSkillExecutors`; `critical_allowed` is used through `MapDamage` for damage specs, but Shield mapping does not call `MapDamage`, and current Buff executor does not apply attached damage.
+- Removed non-applicable `critical_allowed` from `ariel/ariel_skills_buff.csv`, `rin/rin_skills_buff.csv`, and `vega/vega_skills_buff.csv`.
+- Bool follow-up verification returned `support_critical_allowed_remaining=0`, `row_count=50`, `duplicate_skill_ids=0`, and `by_monster=ariel:10,eve:10,rin:10,sein:10,vega:10`.
+- Remaining bool `true` columns are code-referenced: `is_default_learned` is used by `RunSession` and validation, `is_available_without_active_requirement` is used by `RunSession`/UI/validation, `require_execute_threshold_to_cast` is used by single-attack execution, and remaining `critical_allowed` appears only on damage runtime kinds.
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes` now has `ariel`, `eve`, `rin`, `sein`, and `vega` folders.
+- Current node data was moved to `nodes/ariel/ariel_skill_nodes.csv`, `nodes/ariel/ariel_skill_node_params.csv`, `nodes/rin/rin_skill_nodes.csv`, `nodes/rin/rin_skill_node_params.csv`, `nodes/vega/vega_skill_nodes.csv`, and `nodes/vega/vega_skill_node_params.csv`.
+- Node CSV verification returned `node_file_count=3`, `node_row_count=55`, `param_file_count=3`, `param_row_count=77`, `missing_param_node_refs=0`, and `root_legacy_node_files=0`.
+- `PakuriCsvRuntimeSourceCatalog.cs` now exposes split TextAsset arrays for each base skill kind.
+- `PakuriCsvRuntimeData.Editor.cs` now recursively collects split base and node CSV TextAssets by suffix under the base/nodes folders.
+- `PakuriCsvRuntimeData.Loader.cs` now loads base skill split arrays first and falls back to legacy single TextAsset fields only when arrays are empty.
+- `PakuriCsvRuntimeSourceCatalog.asset` now clears legacy base/node aggregate references and stores split CSV TextAsset arrays.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `git diff --check` returned no whitespace errors; only Git line-ending normalization warnings were printed.
+
+### History
+
+- 2026-07-06: User requested Code Builder to split `skills/base` and `skills/nodes` runtime CSVs into five monster folders, rename base files away from `monster_skills_*`, remove all-null columns, and keep in-game operation intact.
+- 2026-07-06: User pointed out that all-null cleanup still left default-value garbage columns such as `0` status stack fields and unused line-attack timing/coefficient fields; Code Builder removed default-only optional columns from the split base CSV files.
+- 2026-07-06: User pointed out `critical_allowed=true` on Ariel's Shield row; Code Builder verified bool references and removed non-applicable support-skill `critical_allowed` columns.
+
+## Task: 2026-07-06 Monster Skill Node CSV Character Split
+
+### Task title
+
+Split monster skill node and node-param runtime CSVs by character while keeping runtime loading compatible.
+
+### Goals
+
+- Replace monolithic monster skill node CSV sources with character-prefixed split files.
+- Make runtime/editor catalog loading use split node CSV arrays when present.
+- Keep legacy single-file node fields as fallback only when no split files exist.
+- Preserve existing node and node-param row content and in-game runtime behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active runtime CSV authority remains under `Pakuri/Assets/CSVdata/runtime`.
+- No MSW-MCP is used; Unity-MCP remains the only MCP validation path if editor validation is needed.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, CSV-checked, and compile-verified.
+
+### Next Actions
+
+- Author future character-specific monster skill node rows in `skills/nodes/monster_skill_nodes_{character}.csv`.
+- Author future character-specific node params in `skills/nodes/monster_skill_node_params_{character}.csv`.
+- If Unity Editor validation is needed, run `Pakuri/Sync CSV Runtime Catalog Assets` and `Pakuri/Validate CSV Source Data` through Unity-MCP.
+
+### Evidence
+
+- Deleted aggregate `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/monster_skill_nodes.csv` and `monster_skill_node_params.csv` plus their `.meta` files.
+- Added `monster_skill_nodes_ariel.csv` with 40 data rows, `monster_skill_nodes_rin.csv` with 11 data rows, and `monster_skill_nodes_vega.csv` with 4 data rows.
+- Added `monster_skill_node_params_ariel.csv` with 44 data rows, `monster_skill_node_params_rin.csv` with 22 data rows, and `monster_skill_node_params_vega.csv` with 11 data rows.
+- Split verification returned `node_total=55`, `node_dupes=0`, `param_total=77`, and `missing_param_nodes=0`.
+- Row-width checks returned empty `bad=` for all six split node/node-param CSV files.
+- `PakuriCsvRuntimeSourceCatalog.cs` now exposes `MonsterSkillNodeFiles` and `MonsterSkillNodeParamFiles`.
+- `PakuriCsvRuntimeData.Editor.cs` now auto-collects `monster_skill_nodes_*.csv` and `monster_skill_node_params_*.csv` from `skills/nodes`, and uses legacy single files only when no split files exist.
+- `PakuriCsvRuntimeData.Loader.cs` now loads split node/node-param TextAsset arrays first, falling back to the legacy single TextAsset fields only when the arrays are empty.
+- `PakuriCsvRuntimeSourceCatalog.asset` now clears legacy `MonsterSkillNodes` / `MonsterSkillNodeParams` references and stores split CSV TextAsset arrays.
+- `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- Initial parallel runtime build hit only an `obj/Debug/Assembly-CSharp.dll` file lock; rerunning `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` alone passed with 0 errors.
+- `git diff --check` returned no whitespace errors; only Git line-ending normalization warnings were printed.
+
+### History
+
+- 2026-07-06: User requested Code Builder to split `monster_skill_nodes.csv` and `monster_skill_node_params.csv` by character and keep in-game runtime operation intact.
+
 ## Task: 2026-07-05 Monster Skill Choice CSV Split And Skill Folder Reorg
 
 ### Task title

@@ -41,59 +41,59 @@ namespace Pakuri.Data
             {
                 missingAssets.Add(MonsterRewardChoicesFileName);
             }
-            if (sourceCatalog.MonsterSkillsProjectile == null)
+            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillsProjectileFiles, sourceCatalog.MonsterSkillsProjectile))
             {
                 missingAssets.Add(MonsterSkillsProjectileFileName);
             }
-            if (sourceCatalog.MonsterSkillsLineAttack == null)
+            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillsLineAttackFiles, sourceCatalog.MonsterSkillsLineAttack))
             {
                 missingAssets.Add(MonsterSkillsLineAttackFileName);
             }
-            if (sourceCatalog.MonsterSkillsAreaAttack == null)
+            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillsAreaAttackFiles, sourceCatalog.MonsterSkillsAreaAttack))
             {
                 missingAssets.Add(MonsterSkillsAreaAttackFileName);
             }
-            if (sourceCatalog.MonsterSkillsSingleAttack == null)
+            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillsSingleAttackFiles, sourceCatalog.MonsterSkillsSingleAttack))
             {
                 missingAssets.Add(MonsterSkillsSingleAttackFileName);
             }
-            if (sourceCatalog.MonsterSkillsBuff == null)
+            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillsBuffFiles, sourceCatalog.MonsterSkillsBuff))
             {
                 missingAssets.Add(MonsterSkillsBuffFileName);
             }
-            if (sourceCatalog.MonsterSkillsPassive == null)
+            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillsPassiveFiles, sourceCatalog.MonsterSkillsPassive))
             {
                 missingAssets.Add(MonsterSkillsPassiveFileName);
             }
-            if (sourceCatalog.MonsterSkillEffects == null)
+            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillEffectFiles, sourceCatalog.MonsterSkillEffects))
             {
                 missingAssets.Add(MonsterSkillEffectsFileName);
             }
-            if (sourceCatalog.MonsterSkillTriggers == null)
+            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillTriggerFiles, sourceCatalog.MonsterSkillTriggers))
             {
                 missingAssets.Add(MonsterSkillTriggersFileName);
             }
-            if (sourceCatalog.MonsterSkillChoicesProjectile == null)
+            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillChoicesProjectileFiles, sourceCatalog.MonsterSkillChoicesProjectile))
             {
                 missingAssets.Add(MonsterSkillChoicesProjectileFileName);
             }
-            if (sourceCatalog.MonsterSkillChoicesLineAttack == null)
+            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillChoicesLineAttackFiles, sourceCatalog.MonsterSkillChoicesLineAttack))
             {
                 missingAssets.Add(MonsterSkillChoicesLineAttackFileName);
             }
-            if (sourceCatalog.MonsterSkillChoicesAreaAttack == null)
+            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillChoicesAreaAttackFiles, sourceCatalog.MonsterSkillChoicesAreaAttack))
             {
                 missingAssets.Add(MonsterSkillChoicesAreaAttackFileName);
             }
-            if (sourceCatalog.MonsterSkillChoicesSingleAttack == null)
+            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillChoicesSingleAttackFiles, sourceCatalog.MonsterSkillChoicesSingleAttack))
             {
                 missingAssets.Add(MonsterSkillChoicesSingleAttackFileName);
             }
-            if (sourceCatalog.MonsterSkillChoicesBuff == null)
+            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillChoicesBuffFiles, sourceCatalog.MonsterSkillChoicesBuff))
             {
                 missingAssets.Add(MonsterSkillChoicesBuffFileName);
             }
-            if (sourceCatalog.MonsterSkillChoicesPassive == null)
+            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillChoicesPassiveFiles, sourceCatalog.MonsterSkillChoicesPassive))
             {
                 missingAssets.Add(MonsterSkillChoicesPassiveFileName);
             }
@@ -153,10 +153,54 @@ namespace Pakuri.Data
             var catalogStageTwoEnemyTable = CsvTable.Load(sourceCatalog.CatalogStageTwoEnemies, CatalogStageTwoEnemiesFileName);
             var monsterTable = CsvTable.Load(sourceCatalog.Monsters, MonstersFileName);
             var rewardChoiceTable = CsvTable.Load(sourceCatalog.MonsterRewardChoices, MonsterRewardChoicesFileName);
-            var skillNodeTable = LoadOptionalCsvTable(sourceCatalog.MonsterSkillNodes, MonsterSkillNodesFileName);
-            var skillNodeParamTable = LoadOptionalCsvTable(sourceCatalog.MonsterSkillNodeParams, MonsterSkillNodeParamsFileName);
-            var skillEffectTable = CsvTable.Load(sourceCatalog.MonsterSkillEffects, MonsterSkillEffectsFileName);
-            var skillTriggerTable = CsvTable.Load(sourceCatalog.MonsterSkillTriggers, MonsterSkillTriggersFileName);
+            var projectileSkillAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillsProjectileFiles,
+                sourceCatalog.MonsterSkillsProjectile);
+            var lineAttackSkillAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillsLineAttackFiles,
+                sourceCatalog.MonsterSkillsLineAttack);
+            var areaAttackSkillAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillsAreaAttackFiles,
+                sourceCatalog.MonsterSkillsAreaAttack);
+            var singleAttackSkillAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillsSingleAttackFiles,
+                sourceCatalog.MonsterSkillsSingleAttack);
+            var buffSkillAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillsBuffFiles,
+                sourceCatalog.MonsterSkillsBuff);
+            var passiveSkillAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillsPassiveFiles,
+                sourceCatalog.MonsterSkillsPassive);
+            var skillNodeAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillNodeFiles,
+                sourceCatalog.MonsterSkillNodes);
+            var skillNodeParamAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillNodeParamFiles,
+                sourceCatalog.MonsterSkillNodeParams);
+            var skillEffectAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillEffectFiles,
+                sourceCatalog.MonsterSkillEffects);
+            var skillTriggerAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillTriggerFiles,
+                sourceCatalog.MonsterSkillTriggers);
+            var projectileChoiceAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillChoicesProjectileFiles,
+                sourceCatalog.MonsterSkillChoicesProjectile);
+            var lineAttackChoiceAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillChoicesLineAttackFiles,
+                sourceCatalog.MonsterSkillChoicesLineAttack);
+            var areaAttackChoiceAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillChoicesAreaAttackFiles,
+                sourceCatalog.MonsterSkillChoicesAreaAttack);
+            var singleAttackChoiceAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillChoicesSingleAttackFiles,
+                sourceCatalog.MonsterSkillChoicesSingleAttack);
+            var buffChoiceAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillChoicesBuffFiles,
+                sourceCatalog.MonsterSkillChoicesBuff);
+            var passiveChoiceAssets = ResolveSplitOrLegacyCsvAssets(
+                sourceCatalog.MonsterSkillChoicesPassiveFiles,
+                sourceCatalog.MonsterSkillChoicesPassive);
             var statusEffectTable = CsvTable.Load(sourceCatalog.StatusEffects, StatusEffectsFileName);
             var enemyTable = CsvTable.Load(sourceCatalog.StageOneEnemies, StageOneEnemiesFileName);
             var stageTwoEnemyTable = CsvTable.Load(sourceCatalog.StageTwoEnemies, StageTwoEnemiesFileName);
@@ -196,40 +240,43 @@ namespace Pakuri.Data
 
             LoadSkillRows(
                 model,
-                sourceCatalog.MonsterSkillsProjectile,
+                projectileSkillAssets,
                 MonsterSkillsProjectileFileName,
                 SkillRuntimeKind.MagazineProjectile,
                 SkillRuntimeKind.CooldownProjectile);
             LoadSkillRows(
                 model,
-                sourceCatalog.MonsterSkillsLineAttack,
+                lineAttackSkillAssets,
                 MonsterSkillsLineAttackFileName,
                 SkillRuntimeKind.LineAttack);
             LoadSkillRows(
                 model,
-                sourceCatalog.MonsterSkillsAreaAttack,
+                areaAttackSkillAssets,
                 MonsterSkillsAreaAttackFileName,
                 SkillRuntimeKind.AreaAttack,
                 SkillRuntimeKind.Field);
             LoadSkillRows(
                 model,
-                sourceCatalog.MonsterSkillsSingleAttack,
+                singleAttackSkillAssets,
                 MonsterSkillsSingleAttackFileName,
                 SkillRuntimeKind.SingleAttack);
             LoadSkillRows(
                 model,
-                sourceCatalog.MonsterSkillsBuff,
+                buffSkillAssets,
                 MonsterSkillsBuffFileName,
                 SkillRuntimeKind.Buff,
                 SkillRuntimeKind.Shield);
             LoadSkillRows(
                 model,
-                sourceCatalog.MonsterSkillsPassive,
+                passiveSkillAssets,
                 MonsterSkillsPassiveFileName,
                 SkillRuntimeKind.Passive);
 
-            if (skillNodeTable != null)
+            for (var assetIndex = 0; assetIndex < skillNodeAssets.Length; assetIndex++)
             {
+                var skillNodeTable = CsvTable.Load(
+                    skillNodeAssets[assetIndex],
+                    GetTextAssetCsvTableName(skillNodeAssets[assetIndex], MonsterSkillNodesFileName));
                 foreach (var record in skillNodeTable.Records)
                 {
                     var row = ParseSkillNodeRow(record);
@@ -237,57 +284,72 @@ namespace Pakuri.Data
                 }
             }
 
-            if (skillNodeParamTable != null)
+            for (var assetIndex = 0; assetIndex < skillNodeParamAssets.Length; assetIndex++)
             {
+                var skillNodeParamTable = CsvTable.Load(
+                    skillNodeParamAssets[assetIndex],
+                    GetTextAssetCsvTableName(skillNodeParamAssets[assetIndex], MonsterSkillNodeParamsFileName));
                 foreach (var record in skillNodeParamTable.Records)
                 {
                     model.SkillNodeParams.Add(ParseSkillNodeParamRow(record));
                 }
             }
 
-            foreach (var record in skillEffectTable.Records)
+            for (var assetIndex = 0; assetIndex < skillEffectAssets.Length; assetIndex++)
             {
-                var row = ParseSkillEffectRow(record);
-                AddUnique(model.SkillEffects, row.Id, row, record);
+                var skillEffectTable = CsvTable.Load(
+                    skillEffectAssets[assetIndex],
+                    GetTextAssetCsvTableName(skillEffectAssets[assetIndex], MonsterSkillEffectsFileName));
+                foreach (var record in skillEffectTable.Records)
+                {
+                    var row = ParseSkillEffectRow(record);
+                    AddUnique(model.SkillEffects, row.Id, row, record);
+                }
             }
 
-            foreach (var record in skillTriggerTable.Records)
+            for (var assetIndex = 0; assetIndex < skillTriggerAssets.Length; assetIndex++)
             {
-                var row = ParseSkillTriggerRow(record);
-                AddUnique(model.SkillTriggers, row.Id, row, record);
+                var skillTriggerTable = CsvTable.Load(
+                    skillTriggerAssets[assetIndex],
+                    GetTextAssetCsvTableName(skillTriggerAssets[assetIndex], MonsterSkillTriggersFileName));
+                foreach (var record in skillTriggerTable.Records)
+                {
+                    var row = ParseSkillTriggerRow(record);
+                    AddUnique(model.SkillTriggers, row.Id, row, record);
+                }
             }
 
             LoadSkillChoiceRows(
                 model,
-                sourceCatalog.MonsterSkillChoicesProjectile,
+                projectileChoiceAssets,
                 MonsterSkillChoicesProjectileFileName,
                 SkillRuntimeKind.MagazineProjectile,
                 SkillRuntimeKind.CooldownProjectile);
             LoadSkillChoiceRows(
                 model,
-                sourceCatalog.MonsterSkillChoicesLineAttack,
+                lineAttackChoiceAssets,
                 MonsterSkillChoicesLineAttackFileName,
                 SkillRuntimeKind.LineAttack);
             LoadSkillChoiceRows(
                 model,
-                sourceCatalog.MonsterSkillChoicesAreaAttack,
+                areaAttackChoiceAssets,
                 MonsterSkillChoicesAreaAttackFileName,
                 SkillRuntimeKind.AreaAttack,
                 SkillRuntimeKind.Field);
             LoadSkillChoiceRows(
                 model,
-                sourceCatalog.MonsterSkillChoicesSingleAttack,
+                singleAttackChoiceAssets,
                 MonsterSkillChoicesSingleAttackFileName,
                 SkillRuntimeKind.SingleAttack);
             LoadSkillChoiceRows(
                 model,
-                sourceCatalog.MonsterSkillChoicesBuff,
+                buffChoiceAssets,
                 MonsterSkillChoicesBuffFileName,
                 SkillRuntimeKind.Buff,
                 SkillRuntimeKind.Shield);
             LoadSkillChoiceRows(
                 model,
-                sourceCatalog.MonsterSkillChoicesPassive,
+                passiveChoiceAssets,
                 MonsterSkillChoicesPassiveFileName,
                 SkillRuntimeKind.Passive);
 
@@ -338,6 +400,23 @@ namespace Pakuri.Data
 
         private static void LoadSkillRows(
             SourceModel model,
+            TextAsset[] skillAssets,
+            string fallbackTableName,
+            params SkillRuntimeKind[] allowedRuntimeKinds)
+        {
+            for (var assetIndex = 0; assetIndex < skillAssets.Length; assetIndex++)
+            {
+                var skillAsset = skillAssets[assetIndex];
+                LoadSkillRows(
+                    model,
+                    skillAsset,
+                    GetTextAssetCsvTableName(skillAsset, fallbackTableName),
+                    allowedRuntimeKinds);
+            }
+        }
+
+        private static void LoadSkillRows(
+            SourceModel model,
             TextAsset skillAsset,
             string tableName,
             params SkillRuntimeKind[] allowedRuntimeKinds)
@@ -357,6 +436,23 @@ namespace Pakuri.Data
                 }
 
                 AddUnique(model.Skills, row.Id, row, record);
+            }
+        }
+
+        private static void LoadSkillChoiceRows(
+            SourceModel model,
+            TextAsset[] choiceAssets,
+            string fallbackTableName,
+            params SkillRuntimeKind[] allowedOwnerRuntimeKinds)
+        {
+            for (var assetIndex = 0; assetIndex < choiceAssets.Length; assetIndex++)
+            {
+                var choiceAsset = choiceAssets[assetIndex];
+                LoadSkillChoiceRows(
+                    model,
+                    choiceAsset,
+                    GetTextAssetCsvTableName(choiceAsset, fallbackTableName),
+                    allowedOwnerRuntimeKinds);
             }
         }
 
@@ -412,6 +508,65 @@ namespace Pakuri.Data
         private static CsvTable LoadOptionalCsvTable(TextAsset asset, string tableName)
         {
             return asset != null ? CsvTable.Load(asset, tableName) : null;
+        }
+
+        private static bool HasAnyCsvAsset(TextAsset[] splitAssets, TextAsset legacyAsset)
+        {
+            if (legacyAsset != null)
+            {
+                return true;
+            }
+
+            if (splitAssets == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < splitAssets.Length; i++)
+            {
+                if (splitAssets[i] != null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static TextAsset[] ResolveSplitOrLegacyCsvAssets(TextAsset[] splitAssets, TextAsset legacyAsset)
+        {
+            if (splitAssets != null)
+            {
+                var assets = new List<TextAsset>(splitAssets.Length);
+                for (var i = 0; i < splitAssets.Length; i++)
+                {
+                    if (splitAssets[i] != null)
+                    {
+                        assets.Add(splitAssets[i]);
+                    }
+                }
+
+                if (assets.Count > 0)
+                {
+                    return assets.ToArray();
+                }
+            }
+
+            return legacyAsset != null
+                ? new[] { legacyAsset }
+                : Array.Empty<TextAsset>();
+        }
+
+        private static string GetTextAssetCsvTableName(TextAsset asset, string fallbackTableName)
+        {
+            if (asset == null || string.IsNullOrWhiteSpace(asset.name))
+            {
+                return fallbackTableName;
+            }
+
+            return asset.name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                ? asset.name
+                : asset.name + ".csv";
         }
 
         private static void AddUnique<T>(Dictionary<string, T> dictionary, string id, T value, CsvRecord record)

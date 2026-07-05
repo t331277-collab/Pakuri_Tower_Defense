@@ -1,0 +1,7 @@
+﻿"skill_id","monster_id","skill_kind","slot","display_name","runtime_kind","implementation_state","is_available_without_active_requirement","required_active_slot","description_text","summary"
+"id","string","enum:PakuriCsvSkillKind","enum:SkillSlot","string","enum:SkillRuntimeKind","enum:SkillImplementationState","bool","enum:SkillSlot","string","string"
+"eve-f","eve","Passive","F","전압 보정","Passive","RuntimeImplemented","true","A","아크 볼트 패시브. 전투 시작 시 번개 스킬을 가진 아군에게 이브 주문력의 120%만큼 12초 동안 보호막을 부여한다. 모든 아군은 감전된 대상에게 주는 피해가 10% 증가한다.","전투 시작 시 번개 스킬 보유 아군에게 보호막을 부여한다. 감전 대상 피해 +10%."
+"eve-g","eve","Passive","G","약점 분석","Passive","RuntimeImplemented","false","B","프리즘 레이 패시브. 아군의 번개 또는 얼음 피해가 4% 확률로 프리즘 레이를 자동 시전한다. 재발동 대기시간 1.5초. 모든 아군의 번개 및 얼음 피해 +8%.","번개 또는 얼음 피해가 프리즘 레이를 자동 시전할 수 있다. 번개 및 얼음 피해 +8%."
+"eve-h","eve","Passive","H","입자 분리","Passive","RuntimeImplemented","false","C","프로스트 필드 패시브. 모든 아군은 추위 또는 빙결 대상에게 주는 피해가 14% 증가한다. 추위 또는 빙결 대상에 대한 상태이상 확률 +10%.","추위 또는 빙결 대상 피해 +14%. 상태이상 확률 +10%."
+"eve-i","eve","Passive","I","냉각 알고리즘","Passive","RuntimeImplemented","false","D","스태틱 오버라이드 패시브. 모든 아군은 감전된 대상에게 주는 번개 피해가 18% 증가한다. 감전 5스택 대상의 번개 저항을 12 감소시킨다.","감전 대상 번개 피해 +18%. 감전 5스택 대상 번개 저항 -12."
+"eve-j","eve","Passive","J","과전류 회로","Passive","RuntimeImplemented","false","E","플라즈마 필드 패시브. 모든 아군은 취약 대상에게 주는 피해가 12% 증가한다. 취약 대상의 모든 저항을 8 감소시킨다.","취약 대상 피해 +12%. 취약 대상 모든 저항 -8."

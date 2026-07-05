@@ -73,20 +73,20 @@ namespace Pakuri.Data
 
             if (includeEffectOnlyModifiers)
             {
-                payload.StatusSpellPowerBonus = record.ReadFloat("status_spell_power_bonus");
-                payload.StatusDamageBonusRate = record.ReadFloat("status_damage_bonus_rate");
-                payload.StatusShieldReceivedBonus = record.ReadFloat("status_shield_received_bonus");
-                payload.StatusCriticalChanceBonus = record.ReadFloat("status_critical_chance_bonus");
+                payload.StatusSpellPowerBonus = ReadStatusFloat(record, "status_spell_power_bonus", allowMissingColumns);
+                payload.StatusDamageBonusRate = ReadStatusFloat(record, "status_damage_bonus_rate", allowMissingColumns);
+                payload.StatusShieldReceivedBonus = ReadStatusFloat(record, "status_shield_received_bonus", allowMissingColumns);
+                payload.StatusCriticalChanceBonus = ReadStatusFloat(record, "status_critical_chance_bonus", allowMissingColumns);
                 payload.StatusCriticalDamageBonus = ReadOptionalFloatIfColumnExists(record, "status_critical_damage_bonus");
-                payload.StatusConditionalTargetStatusId = record.ReadString("status_conditional_target_status_id");
-                payload.StatusConditionalStatusChanceBonus = record.ReadFloat("status_conditional_status_chance_bonus");
+                payload.StatusConditionalTargetStatusId = ReadStatusString(record, "status_conditional_target_status_id", allowMissingColumns);
+                payload.StatusConditionalStatusChanceBonus = ReadStatusFloat(record, "status_conditional_status_chance_bonus", allowMissingColumns);
                 payload.StatusConditionalIncomingSkillRuntimeKinds = ReadOptionalStringIfColumnExists(record, "status_conditional_incoming_skill_runtime_kinds");
                 payload.StatusConditionalOutgoingSkillRuntimeKinds = ReadOptionalStringIfColumnExists(record, "status_conditional_outgoing_skill_runtime_kinds");
-                payload.StatusAppliedStatusDurationBonusStatusId = record.ReadString("status_applied_status_duration_bonus_status_id");
-                payload.StatusAppliedStatusDurationBonus = record.ReadFloat("status_applied_status_duration_bonus");
-                payload.StatusOutgoingAdditionalDamageMultiplier = record.ReadFloat("status_outgoing_additional_damage_multiplier");
-                payload.StatusOutgoingAdditionalDamageTriggerAttribute = record.ReadEnum<DamageAttribute>("status_outgoing_additional_damage_trigger_attribute");
-                payload.StatusOutgoingAdditionalDamageAttribute = record.ReadEnum<DamageAttribute>("status_outgoing_additional_damage_attribute");
+                payload.StatusAppliedStatusDurationBonusStatusId = ReadStatusString(record, "status_applied_status_duration_bonus_status_id", allowMissingColumns);
+                payload.StatusAppliedStatusDurationBonus = ReadStatusFloat(record, "status_applied_status_duration_bonus", allowMissingColumns);
+                payload.StatusOutgoingAdditionalDamageMultiplier = ReadStatusFloat(record, "status_outgoing_additional_damage_multiplier", allowMissingColumns);
+                payload.StatusOutgoingAdditionalDamageTriggerAttribute = ReadOptionalEnumIfColumnExists(record, "status_outgoing_additional_damage_trigger_attribute", DamageAttribute.Physical);
+                payload.StatusOutgoingAdditionalDamageAttribute = ReadOptionalEnumIfColumnExists(record, "status_outgoing_additional_damage_attribute", DamageAttribute.Physical);
             }
 
             return payload;

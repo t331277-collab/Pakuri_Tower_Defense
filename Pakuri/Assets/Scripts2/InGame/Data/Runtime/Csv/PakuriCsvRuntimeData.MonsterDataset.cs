@@ -627,34 +627,34 @@ namespace Pakuri.Data
                 CenterMode = record.ReadEnum<SkillMultiEffectCenterMode>("center_mode"),
                 VisualAnchorMode = record.ReadEnum<SkillMultiEffectVisualAnchorMode>("visual_anchor_mode"),
                 EffectTiming = record.ReadEnum<SkillMultiEffectTiming>("effect_timing"),
-                DelaySeconds = record.ReadFloat("delay_seconds"),
-                EnabledByDefault = record.ReadBool("enabled_by_default"),
-                RequiresActiveChoiceId = record.ReadString("requires_active_choice_id"),
-                ExcludesActiveChoiceId = record.ReadString("excludes_active_choice_id"),
-                RequiresPassiveSkillId = record.ReadString("requires_passive_skill_id"),
-                ExcludesPassiveSkillId = record.ReadString("excludes_passive_skill_id"),
+                DelaySeconds = ReadOptionalFloatIfColumnExists(record, "delay_seconds"),
+                EnabledByDefault = ReadOptionalBoolWithDefaultIfColumnExists(record, "enabled_by_default", true),
+                RequiresActiveChoiceId = ReadOptionalStringIfColumnExists(record, "requires_active_choice_id"),
+                ExcludesActiveChoiceId = ReadOptionalStringIfColumnExists(record, "excludes_active_choice_id"),
+                RequiresPassiveSkillId = ReadOptionalStringIfColumnExists(record, "requires_passive_skill_id"),
+                ExcludesPassiveSkillId = ReadOptionalStringIfColumnExists(record, "excludes_passive_skill_id"),
                 RequiredSourceStatusId = ReadOptionalStringIfColumnExists(record, "required_source_status_id"),
                 RequiredSourceStatusMinStacks = ReadOptionalIntIfColumnExists(record, "required_source_status_min_stacks"),
-                ApplyOnce = record.ReadBool("apply_once"),
-                ConditionStatusId = record.ReadString("condition_status_id"),
+                ApplyOnce = ReadOptionalBoolIfColumnExists(record, "apply_once"),
+                ConditionStatusId = ReadOptionalStringIfColumnExists(record, "condition_status_id"),
                 ConditionStatusSourceSkillId = ReadOptionalStringIfColumnExists(record, "condition_status_source_skill_id"),
                 ConditionTargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("condition_target_side"),
-                ConditionSkillAttribute = record.ReadString("condition_skill_attribute"),
+                ConditionSkillAttribute = ReadOptionalStringIfColumnExists(record, "condition_skill_attribute"),
                 ConditionHealthRatioMax = ReadOptionalFloatIfColumnExists(record, "condition_health_ratio_max"),
                 ConditionHitCountMin = ReadOptionalIntIfColumnExists(record, "condition_hit_count_min"),
-                Attribute = record.ReadEnum<DamageAttribute>("attribute"),
-                BaseDamage = record.ReadFloat("base_damage"),
-                AttackPowerCoefficient = record.ReadFloat("attack_power_coefficient"),
-                SpellPowerCoefficient = record.ReadFloat("spell_power_coefficient"),
-                DamageMultiplier = ReadOptionalFloat(record, "damage_multiplier"),
-                Radius = record.ReadFloat("radius"),
-                CoverAll = record.ReadBool("cover_all"),
+                Attribute = ReadOptionalEnumIfColumnExists(record, "attribute", DamageAttribute.Physical),
+                BaseDamage = ReadOptionalFloatIfColumnExists(record, "base_damage"),
+                AttackPowerCoefficient = ReadOptionalFloatIfColumnExists(record, "attack_power_coefficient"),
+                SpellPowerCoefficient = ReadOptionalFloatIfColumnExists(record, "spell_power_coefficient"),
+                DamageMultiplier = ReadOptionalFloatIfColumnExists(record, "damage_multiplier"),
+                Radius = ReadOptionalFloatIfColumnExists(record, "radius"),
+                CoverAll = ReadOptionalBoolIfColumnExists(record, "cover_all"),
                 ActiveDurationSeconds = ReadOptionalFloatIfColumnExists(record, "active_duration_seconds"),
                 TickIntervalSeconds = ReadOptionalFloatIfColumnExists(record, "tick_interval_seconds"),
-                Status = ReadStatusPayload(record, true),
-                SkillEffectPrefabPath = record.ReadString("skill_effect_prefab_path"),
-                RuntimeSupportState = record.ReadString("runtime_support_state"),
-                RuntimeSupportNotes = record.ReadString("runtime_support_notes")
+                Status = ReadStatusPayload(record, true, true),
+                SkillEffectPrefabPath = ReadOptionalStringIfColumnExists(record, "skill_effect_prefab_path"),
+                RuntimeSupportState = ReadOptionalStringIfColumnExists(record, "runtime_support_state"),
+                RuntimeSupportNotes = ReadOptionalStringIfColumnExists(record, "runtime_support_notes")
             };
 
             if (row.DamageMultiplier <= 0f)
@@ -673,13 +673,13 @@ namespace Pakuri.Data
                 MonsterId = record.ReadRequiredString("monster_id"),
                 SourceSkillId = record.ReadRequiredString("source_skill_id"),
                 TriggerEvent = record.ReadEnum<SkillTriggerEvent>("trigger_event"),
-                RequiresActiveChoiceId = record.ReadString("requires_active_choice_id"),
-                ExcludesActiveChoiceId = record.ReadString("excludes_active_choice_id"),
+                RequiresActiveChoiceId = ReadOptionalStringIfColumnExists(record, "requires_active_choice_id"),
+                ExcludesActiveChoiceId = ReadOptionalStringIfColumnExists(record, "excludes_active_choice_id"),
                 RequiredSourceStatusId = ReadOptionalStringIfColumnExists(record, "required_source_status_id"),
                 RequiredSourceStatusMinStacks = ReadOptionalIntIfColumnExists(record, "required_source_status_min_stacks"),
-                ConditionStatusId = record.ReadString("condition_status_id"),
+                ConditionStatusId = ReadOptionalStringIfColumnExists(record, "condition_status_id"),
                 ConditionStatusSourceSkillId = ReadOptionalStringIfColumnExists(record, "condition_status_source_skill_id"),
-                TriggerAttribute = record.ReadString("trigger_attribute"),
+                TriggerAttribute = ReadOptionalStringIfColumnExists(record, "trigger_attribute"),
                 TriggerAction = ReadOptionalEnumIfColumnExists(record, "trigger_action", SkillTriggerActionKind.Auto),
                 EventSkillId = ReadOptionalStringIfColumnExists(record, "event_skill_id"),
                 EventSkillRuntimeKinds = ReadOptionalStringIfColumnExists(record, "event_skill_runtime_kinds"),
@@ -692,36 +692,36 @@ namespace Pakuri.Data
                 TargetSelection = record.ReadEnum<SkillMultiEffectTargetSelection>("target_selection"),
                 TargetShape = record.ReadEnum<SkillMultiEffectTargetShape>("target_shape"),
                 CenterMode = record.ReadEnum<SkillMultiEffectCenterMode>("center_mode"),
-                Attribute = record.ReadEnum<DamageAttribute>("attribute"),
-                BaseDamage = record.ReadFloat("base_damage"),
-                AttackPowerCoefficient = record.ReadFloat("attack_power_coefficient"),
-                SpellPowerCoefficient = record.ReadFloat("spell_power_coefficient"),
-                DamageMultiplier = ReadOptionalFloat(record, "damage_multiplier"),
+                Attribute = ReadOptionalEnumIfColumnExists(record, "attribute", DamageAttribute.Physical),
+                BaseDamage = ReadOptionalFloatIfColumnExists(record, "base_damage"),
+                AttackPowerCoefficient = ReadOptionalFloatIfColumnExists(record, "attack_power_coefficient"),
+                SpellPowerCoefficient = ReadOptionalFloatIfColumnExists(record, "spell_power_coefficient"),
+                DamageMultiplier = ReadOptionalFloatIfColumnExists(record, "damage_multiplier"),
                 DamageSource = record.ReadEnum<SkillTriggerDamageSource>("damage_source"),
-                DamageSourceMultiplier = record.ReadFloat("damage_source_multiplier"),
+                DamageSourceMultiplier = ReadOptionalFloatIfColumnExists(record, "damage_source_multiplier"),
                 TrackedAttribute = record.ReadEnum<DamageAttribute>("tracked_attribute"),
-                Radius = record.ReadFloat("radius"),
-                CoverAll = record.ReadBool("cover_all"),
-                HitTargetCount = record.ReadString("hit_target_count"),
-                RepeatCount = record.ReadInt("repeat_count"),
-                RepeatIntervalSeconds = record.ReadFloat("repeat_interval_seconds"),
+                Radius = ReadOptionalFloatIfColumnExists(record, "radius"),
+                CoverAll = ReadOptionalBoolIfColumnExists(record, "cover_all"),
+                HitTargetCount = ReadOptionalStringIfColumnExists(record, "hit_target_count"),
+                RepeatCount = ReadOptionalIntIfColumnExists(record, "repeat_count"),
+                RepeatIntervalSeconds = ReadOptionalFloatIfColumnExists(record, "repeat_interval_seconds"),
                 TriggerDelaySeconds = ReadOptionalFloatIfColumnExists(record, "trigger_delay_seconds"),
                 TriggerEveryCount = ReadOptionalIntIfColumnExists(record, "trigger_every_count"),
                 EventSourceScope = ReadOptionalStringIfColumnExists(record, "event_source_scope"),
                 RequireEventExecute = ReadOptionalBoolIfColumnExists(record, "require_event_execute"),
                 CooldownRefundRatio = ReadOptionalFloatIfColumnExists(record, "cooldown_refund_ratio"),
                 ReloadReduceRatio = ReadOptionalFloatIfColumnExists(record, "reload_reduce_ratio"),
-                SkillEffectPrefabPath = record.ReadString("skill_effect_prefab_path"),
-                RuntimeSupportState = record.ReadString("runtime_support_state"),
-                RuntimeSupportNotes = record.ReadString("runtime_support_notes")
+                SkillEffectPrefabPath = ReadOptionalStringIfColumnExists(record, "skill_effect_prefab_path"),
+                RuntimeSupportState = ReadOptionalStringIfColumnExists(record, "runtime_support_state"),
+                RuntimeSupportNotes = ReadOptionalStringIfColumnExists(record, "runtime_support_notes")
             };
 
-            if (TryReadFloat(record, "proc_chance", out var procChance))
+            if (TryReadFloatIfColumnExists(record, "proc_chance", out var procChance))
             {
                 row.ProcChance = procChance;
             }
 
-            if (TryReadFloat(record, "internal_cooldown_seconds", out var internalCooldownSeconds))
+            if (TryReadFloatIfColumnExists(record, "internal_cooldown_seconds", out var internalCooldownSeconds))
             {
                 row.InternalCooldownSeconds = internalCooldownSeconds;
             }
@@ -796,6 +796,17 @@ namespace Pakuri.Data
 
             var raw = record.ReadString(columnName);
             return !string.IsNullOrWhiteSpace(raw) && record.ReadBool(columnName);
+        }
+
+        private static bool ReadOptionalBoolWithDefaultIfColumnExists(CsvRecord record, string columnName, bool fallback)
+        {
+            if (!record.HasColumn(columnName))
+            {
+                return fallback;
+            }
+
+            var raw = record.ReadString(columnName);
+            return string.IsNullOrWhiteSpace(raw) ? fallback : record.ReadBool(columnName);
         }
 
         private static T ReadOptionalEnumIfColumnExists<T>(CsvRecord record, string columnName, T fallback) where T : struct

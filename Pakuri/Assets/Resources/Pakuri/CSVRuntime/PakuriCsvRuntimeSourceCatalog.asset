@@ -17,22 +17,100 @@ MonoBehaviour:
   CatalogStageTwoEnemies: {fileID: 4900000, guid: 1be2b3aabf5583c4995d1dcfc5e6d46e, type: 3}
   Monsters: {fileID: 4900000, guid: 3dce2014d8aeb774db75ef4d8d8575da, type: 3}
   MonsterRewardChoices: {fileID: 4900000, guid: 2f9229f6de8506a4fae1fad9c093e347, type: 3}
-  MonsterSkillsProjectile: {fileID: 4900000, guid: 4d2829c1fdc345b7bf1aba23dd7fd4b1, type: 3}
-  MonsterSkillsLineAttack: {fileID: 4900000, guid: 1b8eb880f8494399b8151ef2cc0c6ade, type: 3}
-  MonsterSkillsAreaAttack: {fileID: 4900000, guid: 5fc269887d9b4f6da4981087cd15e34a, type: 3}
-  MonsterSkillsSingleAttack: {fileID: 4900000, guid: a6b19806a3ca4578a9204e35ab3c0182, type: 3}
-  MonsterSkillsBuff: {fileID: 4900000, guid: b0c7408603e54abd9bbb7fabdb492c7e, type: 3}
-  MonsterSkillsPassive: {fileID: 4900000, guid: 22160b9cc31c4eefaca07d56f6e9abd3, type: 3}
-  MonsterSkillNodes: {fileID: 4900000, guid: 6bb7bc5afcecc3242ad184d3d32ef4f6, type: 3}
-  MonsterSkillNodeParams: {fileID: 4900000, guid: 57ad4bcfb726eea4bba3bf8f2eda2098, type: 3}
-  MonsterSkillEffects: {fileID: 4900000, guid: 4ddf6bb31440b41438f4a7b82bbd5a92, type: 3}
-  MonsterSkillTriggers: {fileID: 4900000, guid: 9f4d1785fab0dfa48a5c4c2b92443357, type: 3}
-  MonsterSkillChoicesProjectile: {fileID: 4900000, guid: 964c31a67f8c4fa6a922d8d7c2270fe8, type: 3}
-  MonsterSkillChoicesLineAttack: {fileID: 4900000, guid: 51ee29cf373a41eea8cc76054785af64, type: 3}
-  MonsterSkillChoicesAreaAttack: {fileID: 4900000, guid: d45513b00f504a0e8ead76ca995e0c4b, type: 3}
-  MonsterSkillChoicesSingleAttack: {fileID: 4900000, guid: bcb4dbe3464a43979e4476b3f5bcdc05, type: 3}
-  MonsterSkillChoicesBuff: {fileID: 4900000, guid: 30f713f3e3f3440abd8934dd1ca66bb6, type: 3}
-  MonsterSkillChoicesPassive: {fileID: 4900000, guid: e5779c680c304497a2525150a34fa156, type: 3}
+  MonsterSkillsProjectile: {fileID: 0}
+  MonsterSkillsProjectileFiles:
+  - {fileID: 4900000, guid: 00819d7b8b304ec5a7ca07f0cbd2885a, type: 3}
+  - {fileID: 4900000, guid: 4d50e670fabc431aa0da4f95e0aae992, type: 3}
+  - {fileID: 4900000, guid: 32b96ca596e54876b819299a5b92a09c, type: 3}
+  - {fileID: 4900000, guid: 6f2a911621f845e2b1068564065577d7, type: 3}
+  - {fileID: 4900000, guid: e07f46fe60824d719ca6a131e021a251, type: 3}
+  MonsterSkillsLineAttack: {fileID: 0}
+  MonsterSkillsLineAttackFiles:
+  - {fileID: 4900000, guid: ea74683fe7964febae80e0d8b1c42a12, type: 3}
+  - {fileID: 4900000, guid: 313416d3c9bb4170a6cb462069d23db2, type: 3}
+  - {fileID: 4900000, guid: 563f9354201d47c9861b9ef9385b8a8c, type: 3}
+  MonsterSkillsAreaAttack: {fileID: 0}
+  MonsterSkillsAreaAttackFiles:
+  - {fileID: 4900000, guid: 56a4b25037b64c5dbade692403b378bb, type: 3}
+  - {fileID: 4900000, guid: bd336bf01e0a412b947ac8390153de9e, type: 3}
+  MonsterSkillsSingleAttack: {fileID: 0}
+  MonsterSkillsSingleAttackFiles:
+  - {fileID: 4900000, guid: 0e32bca8e9924ec28f20e90597f9faea, type: 3}
+  - {fileID: 4900000, guid: 35aca6686aee40b695eb0abeba9ce1f9, type: 3}
+  - {fileID: 4900000, guid: 3ad8a8af45cf4e4b886f6c24b9d1b2e7, type: 3}
+  - {fileID: 4900000, guid: db186aaf8d6845a897ba5de356ac150d, type: 3}
+  - {fileID: 4900000, guid: 5700354aa46842ce8ec002279e1c8abc, type: 3}
+  MonsterSkillsBuff: {fileID: 0}
+  MonsterSkillsBuffFiles:
+  - {fileID: 4900000, guid: cf46f36739404bf8ad6176097a16c2c0, type: 3}
+  - {fileID: 4900000, guid: 7ffdb86339504e359a8ae89a08ec92d9, type: 3}
+  - {fileID: 4900000, guid: 26604be6e78e47cfa71dc8adf906d529, type: 3}
+  MonsterSkillsPassive: {fileID: 0}
+  MonsterSkillsPassiveFiles:
+  - {fileID: 4900000, guid: 80ad38e352ec42b6ab408a688a6afec9, type: 3}
+  - {fileID: 4900000, guid: 72580cfe847144d1ae75189bc767b598, type: 3}
+  - {fileID: 4900000, guid: 73631972c095490c8aea92eac3de0182, type: 3}
+  - {fileID: 4900000, guid: 63cf878ed97846f593126b2c19c0c89b, type: 3}
+  - {fileID: 4900000, guid: 0bc368f85b534f3fb974f2f99de8e6dd, type: 3}
+  MonsterSkillNodes: {fileID: 0}
+  MonsterSkillNodeParams: {fileID: 0}
+  MonsterSkillNodeFiles:
+  - {fileID: 4900000, guid: 490b714ca887432a88e50852efb95d86, type: 3}
+  - {fileID: 4900000, guid: d3790436d24146639d1e03846a7603cd, type: 3}
+  - {fileID: 4900000, guid: af3eda4b11154dc799f3112312baec3c, type: 3}
+  MonsterSkillNodeParamFiles:
+  - {fileID: 4900000, guid: 2226b360df36427c83062e3be7af19c3, type: 3}
+  - {fileID: 4900000, guid: cdd9ab479b9b4ec08da915b315464787, type: 3}
+  - {fileID: 4900000, guid: 401f0e6280fb4c5fb7de11b60fa4dac4, type: 3}
+  MonsterSkillEffects: {fileID: 0}
+  MonsterSkillEffectFiles:
+  - {fileID: 4900000, guid: de95dfd09fa14fd5bffaf64855a35d25, type: 3}
+  - {fileID: 4900000, guid: dff31f6d39f2422384721a936323d093, type: 3}
+  - {fileID: 4900000, guid: b8bcc4b0a8514de9a420896bfd16c9c2, type: 3}
+  - {fileID: 4900000, guid: b60d9e9343d242f6ba835eb87ebcebcb, type: 3}
+  - {fileID: 4900000, guid: bddda35528cc475eb4af13ab3dc8b9d9, type: 3}
+  MonsterSkillTriggers: {fileID: 0}
+  MonsterSkillTriggerFiles:
+  - {fileID: 4900000, guid: 59fa81b35f004018915c560308d3514f, type: 3}
+  - {fileID: 4900000, guid: 106350b3d94c42a6ad9b02badca381c2, type: 3}
+  - {fileID: 4900000, guid: 5858c2af68b04f3e863376aa63f8cce4, type: 3}
+  - {fileID: 4900000, guid: 93a6012513e1405d9adb23a3d7bc8c62, type: 3}
+  - {fileID: 4900000, guid: 2f73e2ce0483448f963514aaf377a4c8, type: 3}
+  MonsterSkillChoicesProjectile: {fileID: 0}
+  MonsterSkillChoicesProjectileFiles:
+  - {fileID: 4900000, guid: cb46d093b9b94195bddf25686a300897, type: 3}
+  - {fileID: 4900000, guid: 39c46434dfb64c67a84eea90ce3ccc73, type: 3}
+  - {fileID: 4900000, guid: 1e7daf376bb64726a9879f686e5e7e3d, type: 3}
+  - {fileID: 4900000, guid: dfa46ce837e04ca6a221df6ae9497337, type: 3}
+  - {fileID: 4900000, guid: 920387056c244de7bf926482785c9dc9, type: 3}
+  MonsterSkillChoicesLineAttack: {fileID: 0}
+  MonsterSkillChoicesLineAttackFiles:
+  - {fileID: 4900000, guid: cb26aeaacddb4292ae4a76c110bac756, type: 3}
+  - {fileID: 4900000, guid: 7af92107179b49668c456cfcce21585d, type: 3}
+  - {fileID: 4900000, guid: edebe40ff8bc49dca3f4928a18f67f3e, type: 3}
+  MonsterSkillChoicesAreaAttack: {fileID: 0}
+  MonsterSkillChoicesAreaAttackFiles:
+  - {fileID: 4900000, guid: 2bcb16a6ebd74190b597aec49c887c8d, type: 3}
+  - {fileID: 4900000, guid: e3ed006c4b214aefa318bce13b6c383f, type: 3}
+  MonsterSkillChoicesSingleAttack: {fileID: 0}
+  MonsterSkillChoicesSingleAttackFiles:
+  - {fileID: 4900000, guid: 982bb2395e9d4b2ab592402bea0b39d7, type: 3}
+  - {fileID: 4900000, guid: c8749fc6070f45a3ab809fc33b01c739, type: 3}
+  - {fileID: 4900000, guid: 27b164b27a9e4b93810d54fcb7f7780f, type: 3}
+  - {fileID: 4900000, guid: 0c8c60adc9ff421fa34b630e27ec0944, type: 3}
+  - {fileID: 4900000, guid: 7ae0aa605d624c468ea6a44d78235348, type: 3}
+  MonsterSkillChoicesBuff: {fileID: 0}
+  MonsterSkillChoicesBuffFiles:
+  - {fileID: 4900000, guid: 4844d525f21e43fb9f34f4298230ccb9, type: 3}
+  - {fileID: 4900000, guid: 2aa7e1132ce2421bba2c93682d6f4729, type: 3}
+  - {fileID: 4900000, guid: 0df1316f58eb418dafc385ac8c17f4e8, type: 3}
+  MonsterSkillChoicesPassive: {fileID: 0}
+  MonsterSkillChoicesPassiveFiles:
+  - {fileID: 4900000, guid: ec1af95d111349ab8a254b0da116612c, type: 3}
+  - {fileID: 4900000, guid: 526f8ab07b004db4930750afcd4856d9, type: 3}
+  - {fileID: 4900000, guid: ed30bb8ca97a4d75a13adcf3d03bbb31, type: 3}
+  - {fileID: 4900000, guid: 4132a13a3e8349c7886cbbbd5bc3b8b6, type: 3}
+  - {fileID: 4900000, guid: 325a94efa5ae4b8eb1cb340ce82b4b5b, type: 3}
   StatusEffects: {fileID: 4900000, guid: 416f4448310d2b04380faadda26e468a, type: 3}
   StageOneEnemies: {fileID: 4900000, guid: 61c9eb99d31ad914fb1fa849d1a30a96, type: 3}
   StageTwoEnemies: {fileID: 4900000, guid: 11c490074f7917944a1ad554040d411c, type: 3}

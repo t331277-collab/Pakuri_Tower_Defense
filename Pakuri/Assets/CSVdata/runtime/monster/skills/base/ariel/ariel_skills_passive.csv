@@ -1,0 +1,7 @@
+﻿"skill_id","monster_id","skill_kind","slot","display_name","runtime_kind","implementation_state","is_available_without_active_requirement","required_active_slot","description_text","summary"
+"id","string","enum:PakuriCsvSkillKind","enum:SkillSlot","string","enum:SkillRuntimeKind","enum:SkillImplementationState","bool","enum:SkillSlot","string","string"
+"ariel-f","ariel","Passive","F","빛의 인도","Passive","RuntimeImplemented","true","A","심판의 빛 대응 패시브. 아리엘의 신성 공격이 파티 전체의 신성 화력 기준점이 된다.\n모든 아군의 신성 피해: +12%","모든 아군의 신성 피해: +12%"
+"ariel-g","ariel","Passive","G","수호 교리","Passive","RuntimeImplemented","false","B","성광 방패 대응 패시브. 모든 아군의 방어막 운용을 강화한다.\n모든 아군이 받는 방어막량: +18%\n전투 시작 시 모든 아군 신성 방어막: 25 + 주문력 * 0.8","모든 아군이 받는 방어막량: +18%\n전투 시작 시 모든 아군 신성 방어막: 25 + 주문력 * 0.8"
+"ariel-h","ariel","Passive","H","축복 전파","Passive","RuntimeImplemented","false","C","축복의 파동 대응 패시브. 축복 효과를 파티의 지속 화력으로 연결한다.\n축복을 받은 아군의 신성 피해: +15%\n축복을 받은 아군의 쿨타임 충전 속도: +10%","축복을 받은 아군의 신성 피해: +15%\n축복을 받은 아군의 쿨타임 충전 속도: +10%"
+"ariel-i","ariel","Passive","I","낙인 계시","Passive","RuntimeImplemented","false","D","천상의 낙인 대응 패시브. 신성 노출 대상에게 파티의 공격을 집중시킨다.\n신성 노출 대상이 모든 아군에게 받는 피해: +10%","신성 노출 대상이 모든 아군에게 받는 피해: +10%"
+"ariel-j","ariel","Passive","J","성역 선포","Passive","RuntimeImplemented","false","E","대천사의 강림 대응 패시브. 강림 이후 파티가 다시 공세를 이어갈 수 있게 만든다.\n대천사의 강림 이후 모든 아군 행동속도: +15%, 5초\n대천사의 강림 방어막이 남아있는 아군의 신성 피해: +20%","대천사의 강림 이후 모든 아군 행동속도: +15%, 5초\n대천사의 강림 방어막이 남아있는 아군의 신성 피해: +20%"
