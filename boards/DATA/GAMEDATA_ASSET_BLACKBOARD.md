@@ -5,6 +5,56 @@
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-05 Monster Skill Choice Split SourceCatalog Wiring
+
+### Task title
+
+Wire split monster skill choice runtime CSV files and purpose folders into the runtime source catalog.
+
+### Goals
+
+- Replace the serialized single `MonsterSkillChoices` TextAsset reference with six split choice TextAsset references.
+- Preserve moved CSV asset references by keeping existing body/effect/trigger/node `.meta` GUIDs with their moved CSV files.
+- Make editor sync and runtime loading use the new purpose folders under `Assets/CSVdata/runtime/monster/skills`.
+- Keep the skill effect prefab exporter compatible with split choice CSV files.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Runtime source catalog asset remains under `Assets/Resources/Pakuri/CSVRuntime`.
+- No prefab-path ownership changed; only CSV file locations and split TextAsset wiring changed.
+- MSW-MCP is not used; Unity-MCP remains the only MCP path if Unity Editor validation is needed.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- When adding another monster skill choice split, add the TextAsset field, filename constant, path mapping, editor assignment, serialized source catalog reference, and exporter path together.
+
+### Evidence
+
+- `PakuriCsvRuntimeSourceCatalog.cs` now declares `MonsterSkillChoicesProjectile`, `MonsterSkillChoicesLineAttack`, `MonsterSkillChoicesAreaAttack`, `MonsterSkillChoicesSingleAttack`, `MonsterSkillChoicesBuff`, and `MonsterSkillChoicesPassive`.
+- `PakuriCsvRuntimeSourceCatalog.asset` now serializes split choice GUIDs `964c31a67f8c4fa6a922d8d7c2270fe8`, `51ee29cf373a41eea8cc76054785af64`, `d45513b00f504a0e8ead76ca995e0c4b`, `bcb4dbe3464a43979e4476b3f5bcdc05`, `30f713f3e3f3440abd8934dd1ca66bb6`, and `e5779c680c304497a2525150a34fa156`.
+- `PakuriCsvRuntimeData.cs` maps skill body CSVs to `skills/base`, split choice CSVs to `skills/choices`, effects to `skills/effects`, triggers to `skills/triggers`, and nodes/node params to `skills/nodes`.
+- `PakuriCsvRuntimeData.Editor.cs` loads all six split choice TextAssets through `LoadImportedSourceTextAssetOrThrow(...)`.
+- `PakuriCsvRuntimeData.Loader.cs` loads all six split choice files and rejects a choice row when the owner skill's `runtime_kind` does not belong to that split file.
+- `PakuriCsvRuntimeData.MonsterDataset.cs` now parses omitted split-choice payload columns through optional-if-column-exists helpers.
+- `PakuriSkillEffectPrefabCsvExporter.cs` now updates all six split choice CSV paths and adds `skill_effect_prefab_path` only when a matching row needs that column in a split file.
+- PowerShell verification returned `ROOT_CSV_COUNT=0`, `OLD_CHOICE_EXISTS=False`, and SourceCatalog GUID lines matching the six split choice `.meta` GUIDs.
+- PowerShell search under `Pakuri/Assets` returned no remaining `monster_skill_choices.csv`, `MonsterSkillChoicesFileName`, `MonsterSkillChoices:`, old choice GUID `5b5f094e9fbfaef4593518ad6d855917`, `monster_skills.csv`, `MonsterSkillsFileName`, or `MonsterSkills:` matches.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+
+### History
+
+- 2026-07-05: User approved splitting `monster_skill_choices.csv` by owner skill `runtime_kind` and organizing active monster skill runtime CSVs into folders.
+
 ## Task: 2026-07-05 Monster Skills Split SourceCatalog Wiring
 
 ### Task title

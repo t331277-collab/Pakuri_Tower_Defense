@@ -60,7 +60,12 @@ namespace Pakuri.Data
             sourceCatalog.MonsterSkillNodeParams = LoadImportedSourceTextAssetIfPresent(MonsterSkillNodeParamsFileName);
             sourceCatalog.MonsterSkillEffects = LoadImportedSourceTextAssetOrThrow(MonsterSkillEffectsFileName);
             sourceCatalog.MonsterSkillTriggers = LoadImportedSourceTextAssetOrThrow(MonsterSkillTriggersFileName);
-            sourceCatalog.MonsterSkillChoices = LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesFileName);
+            sourceCatalog.MonsterSkillChoicesProjectile = LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesProjectileFileName);
+            sourceCatalog.MonsterSkillChoicesLineAttack = LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesLineAttackFileName);
+            sourceCatalog.MonsterSkillChoicesAreaAttack = LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesAreaAttackFileName);
+            sourceCatalog.MonsterSkillChoicesSingleAttack = LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesSingleAttackFileName);
+            sourceCatalog.MonsterSkillChoicesBuff = LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesBuffFileName);
+            sourceCatalog.MonsterSkillChoicesPassive = LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesPassiveFileName);
             sourceCatalog.StatusEffects = LoadImportedSourceTextAssetOrThrow(StatusEffectsFileName);
             sourceCatalog.StageOneEnemies = LoadImportedSourceTextAssetOrThrow(StageOneEnemiesFileName);
             sourceCatalog.StageTwoEnemies = LoadImportedSourceTextAssetOrThrow(StageTwoEnemiesFileName);

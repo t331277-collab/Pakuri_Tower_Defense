@@ -20,7 +20,12 @@ namespace Pakuri.Data
         public TextAsset MonsterSkillNodeParams;
         public TextAsset MonsterSkillEffects;
         public TextAsset MonsterSkillTriggers;
-        public TextAsset MonsterSkillChoices;
+        public TextAsset MonsterSkillChoicesProjectile;
+        public TextAsset MonsterSkillChoicesLineAttack;
+        public TextAsset MonsterSkillChoicesAreaAttack;
+        public TextAsset MonsterSkillChoicesSingleAttack;
+        public TextAsset MonsterSkillChoicesBuff;
+        public TextAsset MonsterSkillChoicesPassive;
         public TextAsset StatusEffects;
         public TextAsset StageOneEnemies;
         public TextAsset StageTwoEnemies;

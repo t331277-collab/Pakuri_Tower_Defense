@@ -73,9 +73,29 @@ namespace Pakuri.Data
             {
                 missingAssets.Add(MonsterSkillTriggersFileName);
             }
-            if (sourceCatalog.MonsterSkillChoices == null)
+            if (sourceCatalog.MonsterSkillChoicesProjectile == null)
             {
-                missingAssets.Add(MonsterSkillChoicesFileName);
+                missingAssets.Add(MonsterSkillChoicesProjectileFileName);
+            }
+            if (sourceCatalog.MonsterSkillChoicesLineAttack == null)
+            {
+                missingAssets.Add(MonsterSkillChoicesLineAttackFileName);
+            }
+            if (sourceCatalog.MonsterSkillChoicesAreaAttack == null)
+            {
+                missingAssets.Add(MonsterSkillChoicesAreaAttackFileName);
+            }
+            if (sourceCatalog.MonsterSkillChoicesSingleAttack == null)
+            {
+                missingAssets.Add(MonsterSkillChoicesSingleAttackFileName);
+            }
+            if (sourceCatalog.MonsterSkillChoicesBuff == null)
+            {
+                missingAssets.Add(MonsterSkillChoicesBuffFileName);
+            }
+            if (sourceCatalog.MonsterSkillChoicesPassive == null)
+            {
+                missingAssets.Add(MonsterSkillChoicesPassiveFileName);
             }
             if (sourceCatalog.StatusEffects == null)
             {
@@ -137,7 +157,6 @@ namespace Pakuri.Data
             var skillNodeParamTable = LoadOptionalCsvTable(sourceCatalog.MonsterSkillNodeParams, MonsterSkillNodeParamsFileName);
             var skillEffectTable = CsvTable.Load(sourceCatalog.MonsterSkillEffects, MonsterSkillEffectsFileName);
             var skillTriggerTable = CsvTable.Load(sourceCatalog.MonsterSkillTriggers, MonsterSkillTriggersFileName);
-            var skillChoiceTable = CsvTable.Load(sourceCatalog.MonsterSkillChoices, MonsterSkillChoicesFileName);
             var statusEffectTable = CsvTable.Load(sourceCatalog.StatusEffects, StatusEffectsFileName);
             var enemyTable = CsvTable.Load(sourceCatalog.StageOneEnemies, StageOneEnemiesFileName);
             var stageTwoEnemyTable = CsvTable.Load(sourceCatalog.StageTwoEnemies, StageTwoEnemiesFileName);
@@ -238,11 +257,39 @@ namespace Pakuri.Data
                 AddUnique(model.SkillTriggers, row.Id, row, record);
             }
 
-            foreach (var record in skillChoiceTable.Records)
-            {
-                var row = ParseSkillChoiceRow(record);
-                AddUnique(model.SkillChoices, row.Id, row, record);
-            }
+            LoadSkillChoiceRows(
+                model,
+                sourceCatalog.MonsterSkillChoicesProjectile,
+                MonsterSkillChoicesProjectileFileName,
+                SkillRuntimeKind.MagazineProjectile,
+                SkillRuntimeKind.CooldownProjectile);
+            LoadSkillChoiceRows(
+                model,
+                sourceCatalog.MonsterSkillChoicesLineAttack,
+                MonsterSkillChoicesLineAttackFileName,
+                SkillRuntimeKind.LineAttack);
+            LoadSkillChoiceRows(
+                model,
+                sourceCatalog.MonsterSkillChoicesAreaAttack,
+                MonsterSkillChoicesAreaAttackFileName,
+                SkillRuntimeKind.AreaAttack,
+                SkillRuntimeKind.Field);
+            LoadSkillChoiceRows(
+                model,
+                sourceCatalog.MonsterSkillChoicesSingleAttack,
+                MonsterSkillChoicesSingleAttackFileName,
+                SkillRuntimeKind.SingleAttack);
+            LoadSkillChoiceRows(
+                model,
+                sourceCatalog.MonsterSkillChoicesBuff,
+                MonsterSkillChoicesBuffFileName,
+                SkillRuntimeKind.Buff,
+                SkillRuntimeKind.Shield);
+            LoadSkillChoiceRows(
+                model,
+                sourceCatalog.MonsterSkillChoicesPassive,
+                MonsterSkillChoicesPassiveFileName,
+                SkillRuntimeKind.Passive);
 
             foreach (var record in statusEffectTable.Records)
             {
@@ -310,6 +357,40 @@ namespace Pakuri.Data
                 }
 
                 AddUnique(model.Skills, row.Id, row, record);
+            }
+        }
+
+        private static void LoadSkillChoiceRows(
+            SourceModel model,
+            TextAsset choiceAsset,
+            string tableName,
+            params SkillRuntimeKind[] allowedOwnerRuntimeKinds)
+        {
+            var choiceTable = CsvTable.Load(choiceAsset, tableName);
+            foreach (var record in choiceTable.Records)
+            {
+                var row = ParseSkillChoiceRow(record);
+                if (!model.Skills.TryGetValue(row.SkillId, out var ownerSkill))
+                {
+                    throw new CsvFatalException(
+                        $"CSV table '{tableName}' contains choice '{row.Id}' for unknown owner skill '{row.SkillId}'.",
+                        new List<string>
+                        {
+                            $"Define skill '{row.SkillId}' in the split monster skill CSV before adding its choices."
+                        });
+                }
+
+                if (!IsAllowedSkillRuntimeKind(ownerSkill.RuntimeKind, allowedOwnerRuntimeKinds))
+                {
+                    throw new CsvFatalException(
+                        $"CSV table '{tableName}' contains choice '{row.Id}' for skill '{row.SkillId}' with unsupported owner runtime_kind '{ownerSkill.RuntimeKind}'.",
+                        new List<string>
+                        {
+                            $"Move choice '{row.Id}' to the split monster skill choice CSV that owns runtime_kind '{ownerSkill.RuntimeKind}'."
+                        });
+                }
+
+                AddUnique(model.SkillChoices, row.Id, row, record);
             }
         }
 

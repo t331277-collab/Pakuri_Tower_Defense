@@ -27,7 +27,12 @@ MonoBehaviour:
   MonsterSkillNodeParams: {fileID: 4900000, guid: 57ad4bcfb726eea4bba3bf8f2eda2098, type: 3}
   MonsterSkillEffects: {fileID: 4900000, guid: 4ddf6bb31440b41438f4a7b82bbd5a92, type: 3}
   MonsterSkillTriggers: {fileID: 4900000, guid: 9f4d1785fab0dfa48a5c4c2b92443357, type: 3}
-  MonsterSkillChoices: {fileID: 4900000, guid: 5b5f094e9fbfaef4593518ad6d855917, type: 3}
+  MonsterSkillChoicesProjectile: {fileID: 4900000, guid: 964c31a67f8c4fa6a922d8d7c2270fe8, type: 3}
+  MonsterSkillChoicesLineAttack: {fileID: 4900000, guid: 51ee29cf373a41eea8cc76054785af64, type: 3}
+  MonsterSkillChoicesAreaAttack: {fileID: 4900000, guid: d45513b00f504a0e8ead76ca995e0c4b, type: 3}
+  MonsterSkillChoicesSingleAttack: {fileID: 4900000, guid: bcb4dbe3464a43979e4476b3f5bcdc05, type: 3}
+  MonsterSkillChoicesBuff: {fileID: 4900000, guid: 30f713f3e3f3440abd8934dd1ca66bb6, type: 3}
+  MonsterSkillChoicesPassive: {fileID: 4900000, guid: e5779c680c304497a2525150a34fa156, type: 3}
   StatusEffects: {fileID: 4900000, guid: 416f4448310d2b04380faadda26e468a, type: 3}
   StageOneEnemies: {fileID: 4900000, guid: 61c9eb99d31ad914fb1fa849d1a30a96, type: 3}
   StageTwoEnemies: {fileID: 4900000, guid: 11c490074f7917944a1ad554040d411c, type: 3}

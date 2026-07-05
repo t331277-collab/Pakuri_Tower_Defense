@@ -5,6 +5,63 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-05 Monster Skill Choice CSV Split And Skill Folder Reorg
+
+### Task title
+
+Split runtime monster skill choice rows by owner skill `runtime_kind` and organize monster skill runtime CSVs into purpose folders.
+
+### Goals
+
+- Replace the monolithic `monster_skill_choices.csv` runtime source with owner-runtime-kind split choice CSV files.
+- Keep choice split ownership based on the row's owner `skill_id`, matching runtime choice lookup, not `target_skill_id`.
+- Move active monster skill body/effect/trigger/node CSV files under purpose folders below `Pakuri/Assets/CSVdata/runtime/monster/skills`.
+- Keep split choice columns narrow by omitting columns with no non-empty values in that split.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active runtime CSV authority remains under `Pakuri/Assets/CSVdata/runtime`.
+- Preserve moved CSV Unity GUIDs by moving existing `.meta` files with their CSV files.
+- MSW-MCP is not used; Unity-MCP remains the only MCP path if Unity Editor validation is needed.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- Author future monster skill body rows under `skills/base`.
+- Author future monster skill choice rows under `skills/choices` in the file matching the owner skill's `runtime_kind`.
+- If Unity Editor validation is needed, run the existing Pakuri CSV runtime sync/validate menu through Unity-MCP.
+
+### Evidence
+
+- Created `skills/base`, `skills/choices`, `skills/effects`, `skills/triggers`, and `skills/nodes` folders under `Pakuri/Assets/CSVdata/runtime/monster/skills`.
+- Moved `monster_skills_projectile.csv`, `monster_skills_line_attack.csv`, `monster_skills_area_attack.csv`, `monster_skills_single_attack.csv`, `monster_skills_buff.csv`, and `monster_skills_passive.csv` into `skills/base` with their `.meta` files.
+- Moved `monster_skill_effects.csv` into `skills/effects`, `monster_skill_triger.csv` into `skills/triggers`, and `monster_skill_nodes.csv` / `monster_skill_node_params.csv` into `skills/nodes` with their `.meta` files.
+- Deleted `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_choices.csv` and its `.meta`; verification returned `OLD_CHOICE_EXISTS=False` and `ROOT_CSV_COUNT=0`.
+- Added `monster_skill_choices_projectile.csv` with 49 rows / 39 columns.
+- Added `monster_skill_choices_line_attack.csv` with 21 rows / 28 columns.
+- Added `monster_skill_choices_area_attack.csv` with 21 rows / 31 columns.
+- Added `monster_skill_choices_single_attack.csv` with 63 rows / 43 columns.
+- Added `monster_skill_choices_buff.csv` with 21 rows / 23 columns.
+- Added `monster_skill_choices_passive.csv` with 77 rows / 26 columns.
+- PowerShell verification returned `TOTAL_CHOICE_ROWS=252`, `DUPLICATE_CHOICE_IDS=0`, empty `BAD_SKILL_SPLITS`, and empty `BAD_CHOICE_SPLITS`.
+- TextFieldParser width checks returned `bad=` empty for all moved skill body, split choice, effect, trigger, node, and node-param CSV files.
+- PowerShell search under `Pakuri/Assets` returned no remaining `monster_skill_choices.csv`, `MonsterSkillChoicesFileName`, `MonsterSkillChoices:`, old choice GUID `5b5f094e9fbfaef4593518ad6d855917`, `monster_skills.csv`, `MonsterSkillsFileName`, or `MonsterSkills:` matches.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `git diff --check` returned no whitespace errors; only Git line-ending normalization warnings were printed.
+
+### History
+
+- 2026-07-05: User approved splitting `monster_skill_choices.csv` using the original skill's `runtime_kind` and organizing the files into folders.
+
 ## Task: 2026-07-05 Monster Skills Runtime Kind CSV Split
 
 ### Task title

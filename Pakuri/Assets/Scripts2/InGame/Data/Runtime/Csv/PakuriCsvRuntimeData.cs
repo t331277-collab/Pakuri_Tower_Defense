@@ -14,6 +14,11 @@ namespace Pakuri.Data
         private const string RuntimeCatalogCsvAssetRoot = RuntimeCsvAssetRoot + "/catalog";
         private const string RuntimeMonsterCsvAssetRoot = RuntimeCsvAssetRoot + "/monster";
         private const string RuntimeMonsterSkillCsvAssetRoot = RuntimeMonsterCsvAssetRoot + "/skills";
+        private const string RuntimeMonsterSkillBaseCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/base";
+        private const string RuntimeMonsterSkillChoiceCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/choices";
+        private const string RuntimeMonsterSkillEffectCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/effects";
+        private const string RuntimeMonsterSkillTriggerCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/triggers";
+        private const string RuntimeMonsterSkillNodeCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/nodes";
         private const string RuntimeEnemyCsvAssetRoot = RuntimeCsvAssetRoot + "/enemy";
         private const string RuntimeStatusCsvAssetRoot = RuntimeCsvAssetRoot + "/status";
         private const string ImportedSourceAssetRoot = RuntimeCsvAssetRoot;
@@ -37,7 +42,12 @@ namespace Pakuri.Data
         private const string MonsterSkillNodeParamsFileName = "monster_skill_node_params.csv";
         private const string MonsterSkillEffectsFileName = "monster_skill_effects.csv";
         private const string MonsterSkillTriggersFileName = "monster_skill_triger.csv";
-        private const string MonsterSkillChoicesFileName = "monster_skill_choices.csv";
+        private const string MonsterSkillChoicesProjectileFileName = "monster_skill_choices_projectile.csv";
+        private const string MonsterSkillChoicesLineAttackFileName = "monster_skill_choices_line_attack.csv";
+        private const string MonsterSkillChoicesAreaAttackFileName = "monster_skill_choices_area_attack.csv";
+        private const string MonsterSkillChoicesSingleAttackFileName = "monster_skill_choices_single_attack.csv";
+        private const string MonsterSkillChoicesBuffFileName = "monster_skill_choices_buff.csv";
+        private const string MonsterSkillChoicesPassiveFileName = "monster_skill_choices_passive.csv";
         private const string StatusEffectsFileName = "status_effects.csv";
         private const string StageOneEnemiesFileName = "stage_one_enemies.csv";
         private const string StageTwoEnemiesFileName = "stage_two_enemies.csv";
@@ -69,12 +79,21 @@ namespace Pakuri.Data
                 case MonsterSkillsSingleAttackFileName:
                 case MonsterSkillsBuffFileName:
                 case MonsterSkillsPassiveFileName:
+                    return $"{RuntimeMonsterSkillBaseCsvAssetRoot}/{fileName}";
                 case MonsterSkillNodesFileName:
                 case MonsterSkillNodeParamsFileName:
+                    return $"{RuntimeMonsterSkillNodeCsvAssetRoot}/{fileName}";
                 case MonsterSkillEffectsFileName:
+                    return $"{RuntimeMonsterSkillEffectCsvAssetRoot}/{fileName}";
                 case MonsterSkillTriggersFileName:
-                case MonsterSkillChoicesFileName:
-                    return $"{RuntimeMonsterSkillCsvAssetRoot}/{fileName}";
+                    return $"{RuntimeMonsterSkillTriggerCsvAssetRoot}/{fileName}";
+                case MonsterSkillChoicesProjectileFileName:
+                case MonsterSkillChoicesLineAttackFileName:
+                case MonsterSkillChoicesAreaAttackFileName:
+                case MonsterSkillChoicesSingleAttackFileName:
+                case MonsterSkillChoicesBuffFileName:
+                case MonsterSkillChoicesPassiveFileName:
+                    return $"{RuntimeMonsterSkillChoiceCsvAssetRoot}/{fileName}";
                 case StatusEffectsFileName:
                     return $"{RuntimeStatusCsvAssetRoot}/{fileName}";
                 case StageOneEnemiesFileName:

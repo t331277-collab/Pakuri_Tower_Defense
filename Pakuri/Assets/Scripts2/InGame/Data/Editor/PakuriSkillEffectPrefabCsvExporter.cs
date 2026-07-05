@@ -11,9 +11,17 @@ namespace Pakuri.Data
     internal static class PakuriSkillEffectPrefabCsvExporter
     {
         private const string MonsterAssetFolder = "Assets/Data/GameData/Monsters";
-        private const string MonsterSkillChoicesCsvPath = "Assets/CSVdata/runtime/monster/skills/monster_skill_choices.csv";
         private const string ChoiceIdColumnName = "choice_id";
         private const string SkillEffectPrefabPathColumnName = "skill_effect_prefab_path";
+        private static readonly string[] MonsterSkillChoicesCsvPaths =
+        {
+            "Assets/CSVdata/runtime/monster/skills/choices/monster_skill_choices_projectile.csv",
+            "Assets/CSVdata/runtime/monster/skills/choices/monster_skill_choices_line_attack.csv",
+            "Assets/CSVdata/runtime/monster/skills/choices/monster_skill_choices_area_attack.csv",
+            "Assets/CSVdata/runtime/monster/skills/choices/monster_skill_choices_single_attack.csv",
+            "Assets/CSVdata/runtime/monster/skills/choices/monster_skill_choices_buff.csv",
+            "Assets/CSVdata/runtime/monster/skills/choices/monster_skill_choices_passive.csv"
+        };
 
         [MenuItem("Pakuri/Export Skill Effect Prefabs To CSV")]
         public static void ExportAllMenu()
@@ -29,12 +37,19 @@ namespace Pakuri.Data
             var assignedChoicePrefabPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             CollectAssignedPrefabPaths(assignedChoicePrefabPaths);
-            var choiceRowsUpdated = UpdateCsvPrefabPathColumn(
-                MonsterSkillChoicesCsvPath,
-                ChoiceIdColumnName,
-                assignedChoicePrefabPaths);
+            var choiceRowsUpdated = 0;
+            for (var i = 0; i < MonsterSkillChoicesCsvPaths.Length; i++)
+            {
+                choiceRowsUpdated += UpdateCsvPrefabPathColumn(
+                    MonsterSkillChoicesCsvPaths[i],
+                    ChoiceIdColumnName,
+                    assignedChoicePrefabPaths);
+            }
 
-            AssetDatabase.ImportAsset(MonsterSkillChoicesCsvPath);
+            for (var i = 0; i < MonsterSkillChoicesCsvPaths.Length; i++)
+            {
+                AssetDatabase.ImportAsset(MonsterSkillChoicesCsvPaths[i]);
+            }
             PakuriCsvRuntimeData.SyncImportedSourceCatalogsForEditor();
 
             return new ExportResult(
@@ -182,7 +197,24 @@ namespace Pakuri.Data
 
             var headers = PakuriCsvLineCodec.SplitLineToList(lines[0]);
             var idColumnIndex = FindColumnIndex(headers, idColumnName, assetPath);
-            var prefabPathColumnIndex = FindColumnIndex(headers, SkillEffectPrefabPathColumnName, assetPath);
+            var prefabPathColumnIndex = FindOptionalColumnIndex(headers, SkillEffectPrefabPathColumnName);
+            if (prefabPathColumnIndex < 0)
+            {
+                if (!HasMatchingPrefabRow(lines, idColumnIndex, prefabPathsById))
+                {
+                    return 0;
+                }
+
+                prefabPathColumnIndex = headers.Count;
+                headers.Add(SkillEffectPrefabPathColumnName);
+                lines[0] = PakuriCsvLineCodec.JoinLine(headers);
+
+                var typeCells = PakuriCsvLineCodec.SplitLineToList(lines[1]);
+                EnsureCellCount(typeCells, headers.Count);
+                typeCells[prefabPathColumnIndex] = "asset_path";
+                lines[1] = PakuriCsvLineCodec.JoinLine(typeCells);
+            }
+
             var updatedRows = 0;
 
             for (var i = 2; i < lines.Count; i++)
@@ -241,6 +273,42 @@ namespace Pakuri.Data
             }
 
             throw new InvalidOperationException($"CSV file '{assetPath}' is missing column '{columnName}'.");
+        }
+
+        private static int FindOptionalColumnIndex(IReadOnlyList<string> headers, string columnName)
+        {
+            for (var i = 0; i < headers.Count; i++)
+            {
+                if (string.Equals(headers[i], columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private static bool HasMatchingPrefabRow(
+            IReadOnlyList<string> lines,
+            int idColumnIndex,
+            Dictionary<string, string> prefabPathsById)
+        {
+            for (var i = 2; i < lines.Count; i++)
+            {
+                var cells = PakuriCsvLineCodec.SplitLineToList(lines[i]);
+                if (idColumnIndex >= cells.Count)
+                {
+                    continue;
+                }
+
+                var rowId = cells[idColumnIndex];
+                if (!string.IsNullOrWhiteSpace(rowId) && prefabPathsById.ContainsKey(rowId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void EnsureCellCount(List<string> cells, int requiredCount)
