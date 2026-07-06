@@ -112,13 +112,13 @@ namespace Pakuri.Data
                 NodeKind = record.ReadEnum<SkillExecutionPlanNodeKind>("node_kind"),
                 HandlerId = record.ReadRequiredString("handler_id"),
                 SortOrder = record.ReadInt("sort_order"),
-                EnabledByDefault = record.ReadBool("enabled_by_default"),
-                RequiresActiveChoiceId = record.ReadString("requires_active_choice_id"),
-                ExcludesActiveChoiceId = record.ReadString("excludes_active_choice_id"),
-                RequiresPassiveSkillId = record.ReadString("requires_passive_skill_id"),
-                ExcludesPassiveSkillId = record.ReadString("excludes_passive_skill_id"),
-                RuntimeSupportState = record.ReadString("runtime_support_state"),
-                RuntimeSupportNotes = record.ReadString("runtime_support_notes")
+                EnabledByDefault = ReadOptionalBoolWithDefaultIfColumnExists(record, "enabled_by_default", true),
+                RequiresActiveChoiceId = ReadOptionalStringIfColumnExists(record, "requires_active_choice_id"),
+                ExcludesActiveChoiceId = ReadOptionalStringIfColumnExists(record, "excludes_active_choice_id"),
+                RequiresPassiveSkillId = ReadOptionalStringIfColumnExists(record, "requires_passive_skill_id"),
+                ExcludesPassiveSkillId = ReadOptionalStringIfColumnExists(record, "excludes_passive_skill_id"),
+                RuntimeSupportState = ReadOptionalStringIfColumnExists(record, "runtime_support_state"),
+                RuntimeSupportNotes = ReadOptionalStringIfColumnExists(record, "runtime_support_notes")
             };
         }
 

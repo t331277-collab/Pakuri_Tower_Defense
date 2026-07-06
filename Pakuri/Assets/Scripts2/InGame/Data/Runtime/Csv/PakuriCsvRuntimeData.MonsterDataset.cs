@@ -356,8 +356,8 @@ namespace Pakuri.Data
                 RoleSummary = record.ReadString("role_summary"),
                 ElementLabel = record.ReadString("element_label"),
                 PrimaryAttribute = record.ReadEnum<DamageAttribute>("primary_attribute"),
-                ActiveSkillName = record.ReadString("active_skill_name"),
-                PassiveSkillName = record.ReadString("passive_skill_name"),
+                ActiveSkillName = ReadOptionalStringIfColumnExists(record, "active_skill_name"),
+                PassiveSkillName = ReadOptionalStringIfColumnExists(record, "passive_skill_name"),
                 MonsterIconImagePath = ReadOptionalStringIfColumnExists(record, "MonsterIconImage"),
                 MaxHealth = record.ReadFloat("max_health"),
                 PowerStat = record.ReadFloat("power_stat"),
@@ -390,20 +390,21 @@ namespace Pakuri.Data
             };
         }
 
-        private static SkillRow ParseSkillRow(CsvRecord record)
+        private static SkillRow ParseSkillRow(CsvRecord record, string tableName)
         {
+            var slot = record.ReadEnum<SkillSlot>("slot");
             return new SkillRow
             {
                 Id = record.ReadRequiredString("skill_id"),
-                MonsterId = record.ReadRequiredString("monster_id"),
-                SkillKind = record.ReadEnum<PakuriCsvSkillKind>("skill_kind"),
-                Slot = record.ReadEnum<SkillSlot>("slot"),
+                MonsterId = ReadMonsterIdOrInfer(record, tableName),
+                SkillKind = ReadSkillKindOrInfer(record, slot),
+                Slot = slot,
                 DisplayName = record.ReadRequiredString("display_name"),
-                RuntimeKind = record.ReadEnum<SkillRuntimeKind>("runtime_kind"),
-                ImplementationState = record.ReadEnum<SkillImplementationState>("implementation_state"),
-                IsDefaultLearned = ReadOptionalBoolIfColumnExists(record, "is_default_learned"),
-                IsAvailableWithoutActiveRequirement = ReadOptionalBoolIfColumnExists(record, "is_available_without_active_requirement"),
-                RequiredActiveSlot = ReadOptionalEnumIfColumnExists(record, "required_active_slot", SkillSlot.A),
+                RuntimeKind = ReadRuntimeKindOrInfer(record, slot),
+                ImplementationState = ReadOptionalEnumIfColumnExists(record, "implementation_state", SkillImplementationState.RuntimeImplemented),
+                IsDefaultLearned = ReadOptionalBoolWithDefaultIfColumnExists(record, "is_default_learned", slot == SkillSlot.A),
+                IsAvailableWithoutActiveRequirement = ReadOptionalBoolWithDefaultIfColumnExists(record, "is_available_without_active_requirement", slot == SkillSlot.F),
+                RequiredActiveSlot = ReadOptionalEnumIfColumnExists(record, "required_active_slot", InferRequiredActiveSlot(slot)),
                 SkillIconPath = ReadOptionalStringIfColumnExists(record, "skill_icon_path"),
                 SkillEffectPrefabPath = ReadOptionalStringIfColumnExists(record, "skill_effect_prefab_path"),
                 DescriptionText = ReadOptionalStringIfColumnExists(record, "description_text"),
@@ -450,12 +451,12 @@ namespace Pakuri.Data
             };
         }
 
-        private static SkillChoiceRow ParseSkillChoiceRow(CsvRecord record)
+        private static SkillChoiceRow ParseSkillChoiceRow(CsvRecord record, string tableName)
         {
             var row = new SkillChoiceRow
             {
                 Id = record.ReadRequiredString("choice_id"),
-                MonsterId = record.ReadRequiredString("monster_id"),
+                MonsterId = ReadMonsterIdOrInfer(record, tableName),
                 SkillId = record.ReadRequiredString("skill_id"),
                 TargetSkillId = ReadOptionalStringIfColumnExists(record, "target_skill_id"),
                 RuntimeTargetSkillIds = ReadOptionalStringIfColumnExists(record, "runtime_target_skill_ids"),
@@ -665,12 +666,12 @@ namespace Pakuri.Data
             return row;
         }
 
-        private static SkillTriggerRow ParseSkillTriggerRow(CsvRecord record)
+        private static SkillTriggerRow ParseSkillTriggerRow(CsvRecord record, string tableName)
         {
             var row = new SkillTriggerRow
             {
                 Id = record.ReadRequiredString("trigger_id"),
-                MonsterId = record.ReadRequiredString("monster_id"),
+                MonsterId = ReadMonsterIdOrInfer(record, tableName),
                 SourceSkillId = record.ReadRequiredString("source_skill_id"),
                 TriggerEvent = record.ReadEnum<SkillTriggerEvent>("trigger_event"),
                 RequiresActiveChoiceId = ReadOptionalStringIfColumnExists(record, "requires_active_choice_id"),
@@ -747,6 +748,92 @@ namespace Pakuri.Data
             }
 
             return row;
+        }
+
+        private static string ReadMonsterIdOrInfer(CsvRecord record, string tableName)
+        {
+            var monsterId = ReadOptionalStringIfColumnExists(record, "monster_id");
+            if (!string.IsNullOrWhiteSpace(monsterId))
+            {
+                return monsterId;
+            }
+
+            monsterId = InferMonsterIdFromSplitTableName(tableName);
+            if (!string.IsNullOrWhiteSpace(monsterId))
+            {
+                return monsterId;
+            }
+
+            throw new CsvFatalException(
+                $"CSV row {record.RowNumber} in '{record.TableName}' is missing monster ownership.",
+                new List<string>
+                {
+                    "Add a monster_id column or use a split monster CSV name such as 'ariel_skills_projectile.csv'."
+                });
+        }
+
+        private static string InferMonsterIdFromSplitTableName(string tableName)
+        {
+            if (string.IsNullOrWhiteSpace(tableName))
+            {
+                return string.Empty;
+            }
+
+            var splitIndex = tableName.IndexOf("_skills_", StringComparison.OrdinalIgnoreCase);
+            if (splitIndex <= 0)
+            {
+                splitIndex = tableName.IndexOf("_skill_", StringComparison.OrdinalIgnoreCase);
+            }
+
+            return splitIndex > 0
+                ? tableName.Substring(0, splitIndex).Trim().ToLowerInvariant()
+                : string.Empty;
+        }
+
+        private static PakuriCsvSkillKind ReadSkillKindOrInfer(CsvRecord record, SkillSlot slot)
+        {
+            return record.HasColumn("skill_kind")
+                ? record.ReadEnum<PakuriCsvSkillKind>("skill_kind")
+                : slot >= SkillSlot.F
+                    ? PakuriCsvSkillKind.Passive
+                    : PakuriCsvSkillKind.Active;
+        }
+
+        private static SkillRuntimeKind ReadRuntimeKindOrInfer(CsvRecord record, SkillSlot slot)
+        {
+            if (record.HasColumn("runtime_kind"))
+            {
+                return record.ReadEnum<SkillRuntimeKind>("runtime_kind");
+            }
+
+            if (slot >= SkillSlot.F)
+            {
+                return SkillRuntimeKind.Passive;
+            }
+
+            throw new CsvFatalException(
+                $"CSV row {record.RowNumber} in '{record.TableName}' is missing runtime_kind.",
+                new List<string>
+                {
+                    "Active skill rows still require runtime_kind because active split files can contain multiple execution types."
+                });
+        }
+
+        private static SkillSlot InferRequiredActiveSlot(SkillSlot passiveSlot)
+        {
+            switch (passiveSlot)
+            {
+                case SkillSlot.G:
+                    return SkillSlot.B;
+                case SkillSlot.H:
+                    return SkillSlot.C;
+                case SkillSlot.I:
+                    return SkillSlot.D;
+                case SkillSlot.J:
+                    return SkillSlot.E;
+                default:
+                    return SkillSlot.A;
+            }
         }
 
         private static float ReadOptionalFloat(CsvRecord record, string columnName)

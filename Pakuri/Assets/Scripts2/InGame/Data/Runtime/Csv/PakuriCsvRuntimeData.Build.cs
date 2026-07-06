@@ -23,8 +23,18 @@ namespace Pakuri.Data
                 monster.RoleSummary = sourceMonster.RoleSummary;
                 monster.ElementLabel = sourceMonster.ElementLabel;
                 monster.PrimaryAttribute = sourceMonster.PrimaryAttribute;
-                monster.ActiveSkillName = sourceMonster.ActiveSkillName;
-                monster.PassiveSkillName = sourceMonster.PassiveSkillName;
+                monster.ActiveSkillName = ResolveMonsterSkillDisplayName(
+                    model,
+                    sourceMonster.Id,
+                    PakuriCsvSkillKind.Active,
+                    SkillSlot.A,
+                    sourceMonster.ActiveSkillName);
+                monster.PassiveSkillName = ResolveMonsterSkillDisplayName(
+                    model,
+                    sourceMonster.Id,
+                    PakuriCsvSkillKind.Passive,
+                    SkillSlot.F,
+                    sourceMonster.PassiveSkillName);
                 monster.MonsterIconImage = LoadSprite(sourceMonster.MonsterIconImagePath);
                 monster.MaxHealth = sourceMonster.MaxHealth;
                 monster.PowerStat = sourceMonster.PowerStat;
@@ -61,6 +71,29 @@ namespace Pakuri.Data
             catalog.StageTwoEnemies = BuildEnemies(model, model.CatalogStageTwoEnemies, model.StageTwoEnemies);
             catalog.StatusEffects = BuildStatusEffects(model);
             return catalog;
+        }
+
+        private static string ResolveMonsterSkillDisplayName(
+            SourceModel model,
+            string monsterId,
+            PakuriCsvSkillKind skillKind,
+            SkillSlot slot,
+            string fallback)
+        {
+            if (model != null && model.Skills != null)
+            {
+                foreach (var skill in model.Skills.Values)
+                {
+                    if (skill.SkillKind == skillKind
+                        && skill.Slot == slot
+                        && string.Equals(skill.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return skill.DisplayName;
+                    }
+                }
+            }
+
+            return fallback ?? string.Empty;
         }
 
         private static EnemyDefinition[] BuildEnemies(

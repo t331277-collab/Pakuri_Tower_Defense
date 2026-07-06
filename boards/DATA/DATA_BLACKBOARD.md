@@ -5,6 +5,66 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-07 Monster Runtime CSV Inferred Metadata Cleanup
+
+### Task title
+
+Remove split monster runtime CSV columns that are now inferred by file ownership or slot rules.
+
+### Goals
+
+- Remove monster ownership, implementation-state, skill-kind, default-learned, passive-unlock, and support-note columns where the current split CSV layout makes them redundant.
+- Keep runtime loading compatible by inferring removed values from split file names, slot rules, or existing fallback behavior.
+- Keep `runtime_kind` in base/trigger CSVs because runtime execution still depends on it.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active runtime CSV authority remains under `Pakuri/Assets/CSVdata/runtime/monster`.
+- `monster_modifier_skill_choice.csv` keeps `monster_id` because it is still a mixed root CSV, not a per-monster split file.
+- `skills/effects/*/*_skill_effects.csv` keeps `runtime_support_state` because `MigratedToEffectBinding` is still used by validation.
+- No MSW-MCP was used; Unity-MCP remains the only MCP validation path if Unity Editor validation is needed.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, CSV-checked, and compile-verified.
+
+### Next Actions
+
+- If Unity Editor validation is needed, run `Pakuri/Sync CSV Runtime Catalog Assets` and `Pakuri/Validate CSV Source Data` through Unity-MCP.
+- Keep future split skill CSVs free of columns inferred by monster folder/file ownership and slot conventions.
+
+### Evidence
+
+- Removed `monster_id`, `skill_kind`, and `implementation_state` from all `skills/base/{monster}/*.csv` files.
+- Removed `is_default_learned` from current projectile base files; loader now treats slot A active skills as default learned.
+- Removed `is_available_without_active_requirement` and `required_active_slot` from passive base files; loader now treats slot F as available without active requirement and maps G/H/I/J to B/C/D/E.
+- Removed `runtime_kind` from all `*_skills_passive.csv` files; loader now infers `SkillRuntimeKind.Passive` when a base skill row has an F-J passive slot and no `runtime_kind` column.
+- Removed `monster_id`, `runtime_support_state`, and `runtime_support_notes` from all split choice CSV files.
+- Removed `target_skill_id` from choice CSV files where every data row targeted the owning `skill_id`; passive choice files that target other skills kept the column.
+- Removed `enabled_by_default`, node gate columns, `runtime_support_state`, and `runtime_support_notes` from normalized node CSV files.
+- Removed `monster_id`, `runtime_support_state`, and `runtime_support_notes` from split trigger CSV files.
+- Removed `runtime_support_notes` from split effect CSV files while retaining `runtime_support_state` for `MigratedToEffectBinding` validation.
+- Removed `active_skill_name` and `passive_skill_name` from `monsters.csv`; runtime catalog build now derives them from slot A active and slot F passive display names.
+- `PakuriCsvRuntimeData.MonsterDataset.cs` now infers split CSV monster ownership from `{monster}_skills_*` / `{monster}_skill_*` file names and defaults removed base-skill metadata from slot rules.
+- `PakuriCsvRuntimeData.MonsterDataset.cs` still requires `runtime_kind` for active rows when the column is missing, because active split files can contain multiple execution types such as `MagazineProjectile`/`CooldownProjectile`, `AreaAttack`/`Field`, or `Buff`/`Shield`.
+- `PakuriCsvRuntimeData.Build.cs` now resolves monster active/passive display names from skill rows when building `MonsterDefinition`.
+- `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` now defaults missing node metadata/gate columns to enabled/no gates.
+- CSV shape check across `Pakuri/Assets/CSVdata/runtime/monster/**/*.csv` returned `CSV_SHAPE_OK`.
+- Removed-column scans returned `BASE_REMOVED_COLUMNS_OK`, `CHOICE_REMOVED_COLUMNS_OK`, `NODE_REMOVED_COLUMNS_OK`, and `TRIGGER_EFFECT_MONSTER_REMOVED_COLUMNS_OK`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
+- `git diff --check` returned no whitespace errors; only Git line-ending normalization warnings were printed.
+
+### History
+
+- 2026-07-07: User requested Code Builder to remove strong and conditional CSV metadata cleanup candidates and replace them with code-flow defaults/inference, with a short explanation of why each removed column was deleted and how it is replaced.
+- 2026-07-07: User pointed out passive skill CSV files do not need `runtime_kind=Passive`; Builder removed that column from all passive base CSVs and made F-J slots infer passive runtime kind.
+
 ## Task: 2026-07-06 Monster Skill Choice Effect Trigger CSV Character Folder Split
 
 ### Task title

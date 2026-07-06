@@ -314,7 +314,7 @@ namespace Pakuri.Data
                     GetTextAssetCsvTableName(skillTriggerAssets[assetIndex], MonsterSkillTriggersFileName));
                 foreach (var record in skillTriggerTable.Records)
                 {
-                    var row = ParseSkillTriggerRow(record);
+                    var row = ParseSkillTriggerRow(record, skillTriggerTable.TableName);
                     AddUnique(model.SkillTriggers, row.Id, row, record);
                 }
             }
@@ -424,7 +424,7 @@ namespace Pakuri.Data
             var skillTable = CsvTable.Load(skillAsset, tableName);
             foreach (var record in skillTable.Records)
             {
-                var row = ParseSkillRow(record);
+                var row = ParseSkillRow(record, tableName);
                 if (!IsAllowedSkillRuntimeKind(row.RuntimeKind, allowedRuntimeKinds))
                 {
                     throw new CsvFatalException(
@@ -465,7 +465,7 @@ namespace Pakuri.Data
             var choiceTable = CsvTable.Load(choiceAsset, tableName);
             foreach (var record in choiceTable.Records)
             {
-                var row = ParseSkillChoiceRow(record);
+                var row = ParseSkillChoiceRow(record, tableName);
                 if (!model.Skills.TryGetValue(row.SkillId, out var ownerSkill))
                 {
                     throw new CsvFatalException(

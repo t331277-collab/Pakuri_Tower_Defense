@@ -1,4 +1,4 @@
-﻿"skill_id","monster_id","skill_kind","slot","display_name","runtime_kind","implementation_state","description_text","summary","base_damage","attack_power_coefficient","radius","target_selection","cooldown_seconds","critical_allowed","require_execute_threshold_to_cast","skill_effect_prefab_path"
-"id","string","enum:PakuriCsvSkillKind","enum:SkillSlot","string","enum:SkillRuntimeKind","enum:SkillImplementationState","string","string","float","float","float","enum:SkillTargetSelection","float","bool","bool","asset_path"
-"rin-d","rin","Active","D","종결 일격","SingleAttack","RuntimeImplemented","체력이 낮아진 적을 거대한 충격권으로 마무리하는 처형형 물리 스킬.","체력이 낮아진 적을 거대한 충격권으로 마무리하는 처형형 물리 스킬.","45","2.4","0","LowestHealth","9","true","true",""
-"rin-e","rin","Active","E","붕괴 타격","SingleAttack","RuntimeImplemented","지정 범위에 거대한 주먹 충격을 떨어뜨려 강한 물리 피해를 1회 입히는 비탄창 스킬.","지정 범위에 거대한 주먹 충격을 떨어뜨려 강한 물리 피해를 1회 입히는 비탄창 스킬.","40","2","2.4","","8","true","","Assets/Prefab/Skill/Rin/Rin_E.prefab"
+"skill_id","slot","display_name","runtime_kind","description_text","summary","base_damage","attack_power_coefficient","radius","target_selection","cooldown_seconds","critical_allowed","require_execute_threshold_to_cast","skill_effect_prefab_path"
+"id","enum:SkillSlot","string","enum:SkillRuntimeKind","string","string","float","float","float","enum:SkillTargetSelection","float","bool","bool","asset_path"
+"rin-d","D","종결 일격","SingleAttack","체력이 낮아진 적을 거대한 충격권으로 마무리하는 처형형 물리 스킬.","체력이 낮아진 적을 거대한 충격권으로 마무리하는 처형형 물리 스킬.","45","2.4","0","LowestHealth","9","true","true",""
+"rin-e","E","붕괴 타격","SingleAttack","지정 범위에 거대한 주먹 충격을 떨어뜨려 강한 물리 피해를 1회 입히는 비탄창 스킬.","지정 범위에 거대한 주먹 충격을 떨어뜨려 강한 물리 피해를 1회 입히는 비탄창 스킬.","40","2","2.4","","8","true","","Assets/Prefab/Skill/Rin/Rin_E.prefab"

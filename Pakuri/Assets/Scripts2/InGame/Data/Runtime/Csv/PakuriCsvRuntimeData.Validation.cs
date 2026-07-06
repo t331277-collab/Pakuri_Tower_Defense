@@ -312,7 +312,8 @@ namespace Pakuri.Data
                         errors.Add($"Monster '{monster.Id}' slot A active skill must be default learned.");
                     }
 
-                    if (!string.Equals(monster.ActiveSkillName, slotA.DisplayName, StringComparison.Ordinal))
+                    if (!string.IsNullOrWhiteSpace(monster.ActiveSkillName)
+                        && !string.Equals(monster.ActiveSkillName, slotA.DisplayName, StringComparison.Ordinal))
                     {
                         errors.Add(
                             $"Monster '{monster.Id}' active_skill_name '{monster.ActiveSkillName}' does not match slot A display name '{slotA.DisplayName}'.");
@@ -330,7 +331,8 @@ namespace Pakuri.Data
                         errors.Add($"Monster '{monster.Id}' slot F passive must be available without active requirement.");
                     }
 
-                    if (!string.Equals(monster.PassiveSkillName, slotF.DisplayName, StringComparison.Ordinal))
+                    if (!string.IsNullOrWhiteSpace(monster.PassiveSkillName)
+                        && !string.Equals(monster.PassiveSkillName, slotF.DisplayName, StringComparison.Ordinal))
                     {
                         errors.Add(
                             $"Monster '{monster.Id}' passive_skill_name '{monster.PassiveSkillName}' does not match slot F display name '{slotF.DisplayName}'.");
