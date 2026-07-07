@@ -12,6 +12,60 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-07-08 Ariel Node CSV Kind Folder Split
+
+### Task title
+
+Split Ariel normalized node CSVs into `node` and `nodes_param` folders by target skill kind.
+
+### Goals
+
+- Replace `nodes/ariel/ariel_skill_nodes.csv` with kind-owned node CSV files under `nodes/ariel/node`.
+- Replace `nodes/ariel/ariel_skill_node_params.csv` with matching kind-owned param CSV files under `nodes/ariel/nodes_param`.
+- Keep row semantics unchanged and preserve runtime loader compatibility through existing `_skill_nodes.csv` / `_skill_node_params.csv` suffix collection.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Split classification is based on Ariel base skill kinds and inspected node `target_skill_id`; blank `target_skill_id` rows are classified by the `ariel-a` through `ariel-j` prefix in `owner_id` or `node_id`.
+- No MSW-MCP was used.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- If Unity Editor asset import validation is needed, run `Pakuri/Sync CSV Runtime Catalog Assets` and `Pakuri/Validate CSV Source Data` through Unity-MCP.
+- Keep future Ariel node files in `nodes/ariel/node/{kind}_skill_nodes.csv` and matching params in `nodes/ariel/nodes_param/{kind}_skill_node_params.csv`.
+
+### Evidence
+
+- `PakuriCsvRuntimeData.Editor.cs` uses `Directory.GetFiles(..., SearchOption.AllDirectories)` and collects node files by `_skill_nodes.csv` and params by `_skill_node_params.csv`, so the new nested folders remain collectible.
+- Created `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/ariel/node/` with `ariel_buff_skill_nodes.csv`, `ariel_passive_skill_nodes.csv`, `ariel_projectile_skill_nodes.csv`, and `ariel_single_attack_skill_nodes.csv`.
+- Created `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/ariel/nodes_param/` with matching `ariel_*_skill_node_params.csv` files.
+- Deleted old aggregate files `nodes/ariel/ariel_skill_nodes.csv` and `nodes/ariel/ariel_skill_node_params.csv` plus their `.meta` files.
+- Split verification returned node row counts `buff=10`, `passive=74`, `projectile=7`, `single_attack=102`, total `193`.
+- Split verification returned param row counts `buff=16`, `passive=122`, `projectile=11`, `single_attack=181`, total `330`.
+- Integrity verification returned `duplicate_node_ids=0`, `missing_param_node_refs=0`, and `classification_bad=0`.
+- `PakuriCsvRuntimeSourceCatalog.asset` now references all 8 new Ariel split node/param GUIDs and no longer references old GUIDs `490b714ca887432a88e50852efb95d86` or `2226b360df36427c83062e3be7af19c3`.
+- Unity auto-sync reported `ArgumentException: An item with the same key has already been added. Key: ApplyStatus`; inspected code showed duplicate `AddSkillNodeHandlerSchema(schemas, "ApplyStatus", ...)` registrations at `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs`.
+- `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` now keeps only the effect-owned `ApplyStatus` schema registration used by current Ariel node CSVs.
+- Follow-up Unity validation reported unknown `triggered_effect_id` for `ariel-a-master-2-holy-exposure-on-hit` and `ariel-j-after-e-action-speed`, plus unknown skill `ariel-e-shield-base` for `source_skill_id`.
+- `PakuriCsvRuntimeData.Validation.cs` now treats every `IsEffectOperationHandler(...)` node-owned effect operation, including `ApplyStatus`, `ApplyShield`, and `StatusModifier`, as a valid skill effect source.
+- `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` now allows a `source_skill_id` node param to reference a node-owned effect source when that id is not a base skill id.
+- Unity-MCP ran `Pakuri/Sync CSV Runtime Catalog Assets`, `Pakuri/Validate CSV Source Data`, and `Pakuri/InGame/Validate Skill Data`; console filters returned 0 entries for `Pakuri CSV source validation failed`, `unknown triggered_effect_id`, and `references unknown skill 'ariel-e-shield-base'`, and logged `InGame skill data validation passed with 0 warning(s).`
+- `git diff --check` passed with only the existing line-ending normalization warning for `PakuriCsvRuntimeSourceCatalog.asset`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors and 2 existing warnings each; the editor build was rerun after an initial transient `Assembly-CSharp.dll` file-lock failure.
+
+### History
+
+- 2026-07-08: User clarified that the requested two-folder split meant `node` versus `nodes_param`, not `choices` versus `effects`; Code Builder split Ariel node CSV rows by strengthened target skill kind in those two folders.
+
 ## Task: 2026-07-08 Ariel Effect CSV Full Node Migration
 
 ### Task title

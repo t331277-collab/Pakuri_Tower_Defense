@@ -839,9 +839,7 @@ namespace Pakuri.Data
                 if (node != null
                     && node.OwnerKind == SkillNodeOwnerKind.Effect
                     && string.Equals(node.OwnerId, effectId, StringComparison.OrdinalIgnoreCase)
-                    && (string.Equals(node.HandlerId, "EffectStatus", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(node.HandlerId, "EffectDamage", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(node.HandlerId, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase)))
+                    && IsEffectOperationHandler(node.HandlerId))
                 {
                     return true;
                 }

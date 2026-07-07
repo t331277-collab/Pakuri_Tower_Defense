@@ -5,6 +5,57 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-08 Ariel Node CSV Kind Folder Split
+
+### Task title
+
+Split Ariel runtime node CSV authority into node and node-param folders by skill kind.
+
+### Goals
+
+- Keep active runtime CSV authority under `Pakuri/Assets/CSVdata/runtime`.
+- Make Ariel normalized node files mirror the choice/base kind split while separating node rows from node-param rows.
+- Keep existing recursive suffix-based catalog collection compatible.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Only Ariel node CSV files were split; Rin and Vega node CSV files remain in their existing per-monster aggregate files.
+- No MSW-MCP was used.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- Future Ariel node rows should be authored in `skills/nodes/ariel/node/`.
+- Future Ariel node params should be authored in `skills/nodes/ariel/nodes_param/`.
+- If Unity Editor validation is needed, sync and validate runtime CSV catalogs through Unity-MCP.
+
+### Evidence
+
+- `PakuriCsvRuntimeData.Editor.cs` recursively collects node CSV TextAssets by `_skill_nodes.csv` and param CSV TextAssets by `_skill_node_params.csv`.
+- Ariel node files are now `ariel_buff_skill_nodes.csv`, `ariel_passive_skill_nodes.csv`, `ariel_projectile_skill_nodes.csv`, and `ariel_single_attack_skill_nodes.csv` under `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/ariel/node/`.
+- Ariel param files are now the matching `ariel_*_skill_node_params.csv` files under `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/ariel/nodes_param/`.
+- Old aggregate Ariel node CSV files and their `.meta` files were deleted.
+- Row preservation check returned `nodes_total=193`, `params_total=330`, `duplicate_node_ids=0`, and `missing_param_node_refs=0`.
+- Classification check against Ariel base skill kind returned `classification_bad=0`.
+- `PakuriCsvRuntimeSourceCatalog.asset` references the 8 new Ariel split CSV GUIDs and no longer references the old aggregate node GUIDs.
+- Unity auto-sync initially failed before CSV load because `ApplyStatus` was registered twice in `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs`; the duplicate schema registration was removed so only the current effect-owned `ApplyStatus` handler remains.
+- Follow-up source validation errors for node-owned Ariel effect ids were fixed by making `PakuriCsvRuntimeData.Validation.cs` recognize all current effect-owned operation handlers through `IsEffectOperationHandler(...)`.
+- The `source_skill_id=ariel-e-shield-base` node param is now accepted as a node-owned effect source in `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` instead of being validated only as a base skill id.
+- Unity-MCP menu validation returned no entries for the reported failed source-validation strings and logged `InGame skill data validation passed with 0 warning(s).`
+- Runtime and editor `dotnet build` commands passed with 0 errors; existing warnings remained.
+
+### History
+
+- 2026-07-08: User requested that `skills/nodes/ariel` be split into `node` and `nodes_param` folders, and then split by the kind of skill being strengthened like `skills/choices/ariel`.
+
 ## Task: 2026-07-08 Ariel Effect CSV Node Authority Removal
 
 ### Task title

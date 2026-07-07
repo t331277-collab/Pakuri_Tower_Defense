@@ -55,11 +55,17 @@ MonoBehaviour:
   MonsterSkillNodes: {fileID: 0}
   MonsterSkillNodeParams: {fileID: 0}
   MonsterSkillNodeFiles:
-  - {fileID: 4900000, guid: 490b714ca887432a88e50852efb95d86, type: 3}
+  - {fileID: 4900000, guid: c58f053d76954583a486653388f31a8c, type: 3}
+  - {fileID: 4900000, guid: f1103678edfa427d875c35a81aaf04dd, type: 3}
+  - {fileID: 4900000, guid: e44e154fa77d44249f1ab39f47966e66, type: 3}
+  - {fileID: 4900000, guid: c0d4776f55be440eb2e20d67d12c54bc, type: 3}
   - {fileID: 4900000, guid: d3790436d24146639d1e03846a7603cd, type: 3}
   - {fileID: 4900000, guid: af3eda4b11154dc799f3112312baec3c, type: 3}
   MonsterSkillNodeParamFiles:
-  - {fileID: 4900000, guid: 2226b360df36427c83062e3be7af19c3, type: 3}
+  - {fileID: 4900000, guid: 306f2b11bf874c48b04104ff5e33ec75, type: 3}
+  - {fileID: 4900000, guid: 72f6c635c2724e389fc43e5e3f5b13fc, type: 3}
+  - {fileID: 4900000, guid: ca54c8a609f7454e91b33d18120c4a9f, type: 3}
+  - {fileID: 4900000, guid: 49002fe6911748bc83c46a5c5589367a, type: 3}
   - {fileID: 4900000, guid: cdd9ab479b9b4ec08da915b315464787, type: 3}
   - {fileID: 4900000, guid: 401f0e6280fb4c5fb7de11b60fa4dac4, type: 3}
   MonsterSkillEffects: {fileID: 0}

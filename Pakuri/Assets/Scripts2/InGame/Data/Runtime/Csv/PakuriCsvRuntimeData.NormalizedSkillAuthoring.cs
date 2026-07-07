@@ -356,9 +356,6 @@ namespace Pakuri.Data
                 new string[0], new[] { "projectile_index", "count", "angle", "damage_multiplier" });
             AddSkillNodeHandlerSchema(schemas, "SpawnProjectile", SkillExecutionPlanNodeKind.Action,
                 new string[0], new[] { "projectile_prefab_path", "projectile_sprite_path", "count", "speed" });
-            AddSkillNodeHandlerSchema(schemas, "ApplyStatus", SkillExecutionPlanNodeKind.OnHitAction,
-                new[] { "status_id" }, new[] { "stacks", "duration_seconds", "chance", "target_side" }, EnumParamValues(
-                    "target_side", Enum.GetNames(typeof(SkillMultiEffectTargetSide))));
             AddSkillNodeHandlerSchema(schemas, "BossDamageMultiplier", SkillExecutionPlanNodeKind.DamageModifier,
                 new[] { "multiplier" });
             AddSkillNodeHandlerSchema(schemas, "CooldownResetOnKill", SkillExecutionPlanNodeKind.OnKillAction,
@@ -966,7 +963,9 @@ namespace Pakuri.Data
                     }
                     return;
                 case SkillNodeValueType.SkillId:
-                    if (string.IsNullOrWhiteSpace(value) || !model.Skills.ContainsKey(value))
+                    if (string.IsNullOrWhiteSpace(value)
+                        || (!model.Skills.ContainsKey(value)
+                            && !(IsEffectSourceSkillNodeParam(param) && HasSkillEffectSource(model, value))))
                     {
                         errors.Add($"Skill node param '{param.NodeId}.{param.ParamKey}' references unknown skill '{param.Value}'.");
                     }
@@ -987,6 +986,12 @@ namespace Pakuri.Data
                     errors.Add($"Skill node param '{param.NodeId}.{param.ParamKey}' has unsupported value_type '{param.ValueType}'.");
                     return;
             }
+        }
+
+        private static bool IsEffectSourceSkillNodeParam(SkillNodeParamRow param)
+        {
+            return param != null
+                && string.Equals(param.ParamKey, "source_skill_id", StringComparison.OrdinalIgnoreCase);
         }
 
         private static void ValidateSkillNodeEnumParam(SkillNodeParamRow param, string value, List<string> errors)
