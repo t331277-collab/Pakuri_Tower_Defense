@@ -64,7 +64,6 @@ MonoBehaviour:
   - {fileID: 4900000, guid: 401f0e6280fb4c5fb7de11b60fa4dac4, type: 3}
   MonsterSkillEffects: {fileID: 0}
   MonsterSkillEffectFiles:
-  - {fileID: 4900000, guid: de95dfd09fa14fd5bffaf64855a35d25, type: 3}
   - {fileID: 4900000, guid: dff31f6d39f2422384721a936323d093, type: 3}
   - {fileID: 4900000, guid: b8bcc4b0a8514de9a420896bfd16c9c2, type: 3}
   - {fileID: 4900000, guid: b60d9e9343d242f6ba835eb87ebcebcb, type: 3}

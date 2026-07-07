@@ -635,7 +635,7 @@ namespace Pakuri.Data
 
             if (triggerAction == SkillTriggerActionKind.Effect)
             {
-                if (model == null || string.IsNullOrWhiteSpace(trigger.TriggeredEffectId) || !model.SkillEffects.ContainsKey(trigger.TriggeredEffectId))
+                if (model == null || string.IsNullOrWhiteSpace(trigger.TriggeredEffectId) || !HasSkillEffectSource(model, trigger.TriggeredEffectId))
                 {
                     errors.Add($"Skill trigger '{trigger.Id}' references unknown triggered_effect_id '{trigger.TriggeredEffectId}'.");
                 }
@@ -820,6 +820,34 @@ namespace Pakuri.Data
                     errors.Add($"Skill trigger '{trigger.Id}' {columnName} references unknown skill '{skillId}'.");
                 }
             }
+        }
+
+        private static bool HasSkillEffectSource(SourceModel model, string effectId)
+        {
+            if (model == null || string.IsNullOrWhiteSpace(effectId))
+            {
+                return false;
+            }
+
+            if (model.SkillEffects.ContainsKey(effectId))
+            {
+                return true;
+            }
+
+            foreach (var node in model.SkillNodes.Values)
+            {
+                if (node != null
+                    && node.OwnerKind == SkillNodeOwnerKind.Effect
+                    && string.Equals(node.OwnerId, effectId, StringComparison.OrdinalIgnoreCase)
+                    && (string.Equals(node.HandlerId, "EffectStatus", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(node.HandlerId, "EffectDamage", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(node.HandlerId, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool ValidateEventSourceScope(string rawValue)

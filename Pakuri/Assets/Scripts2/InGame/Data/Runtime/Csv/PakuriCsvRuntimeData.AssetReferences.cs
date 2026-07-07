@@ -81,6 +81,24 @@ namespace Pakuri.Data
                 assets.AddPrefab(effect.Status.StatusEffectPrefabPath, $"Skill effect '{effect.Id}' status_effect_prefab_path");
             }
 
+            foreach (var param in model.SkillNodeParams)
+            {
+                if (param == null || param.ValueType != SkillNodeValueType.AssetPath)
+                {
+                    continue;
+                }
+
+                if (param.ParamKey != null
+                    && param.ParamKey.IndexOf("sprite", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    assets.AddSprite(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");
+                }
+                else
+                {
+                    assets.AddPrefab(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");
+                }
+            }
+
             foreach (var trigger in model.SkillTriggers.Values)
             {
                 assets.AddPrefab(trigger.SkillEffectPrefabPath, $"Skill trigger '{trigger.Id}' skill_effect_prefab_path");

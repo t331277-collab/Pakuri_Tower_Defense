@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Pakuri.Combat;
 using UnityEngine;
 using AttributeDefenseSet = Pakuri.Combat.DamageCalculator.AttributeDefenseSet;
@@ -379,7 +380,7 @@ namespace Pakuri.Data
                 effect => string.Equals(effect.SkillId, skillId, StringComparison.OrdinalIgnoreCase),
                 (left, right) => left.SortOrder.CompareTo(right.SortOrder));
 
-            var definitions = new SkillEffectDefinition[effects.Count];
+            var definitions = new List<SkillEffectDefinition>(effects.Count);
             for (var i = 0; i < effects.Count; i++)
             {
                 var effect = effects[i];
@@ -425,10 +426,366 @@ namespace Pakuri.Data
                 };
 
                 ApplyStatusPayload(definition, effect.Status);
-                definitions[i] = definition;
+                definitions.Add(definition);
             }
 
-            return definitions;
+            definitions.AddRange(BuildEffectOwnedSkillEffects(model, skillId));
+            definitions.Sort((left, right) =>
+            {
+                var sortCompare = left.SortOrder.CompareTo(right.SortOrder);
+                return sortCompare != 0
+                    ? sortCompare
+                    : string.Compare(left.EffectId, right.EffectId, StringComparison.OrdinalIgnoreCase);
+            });
+            return definitions.ToArray();
+        }
+
+        private static SkillEffectDefinition[] BuildEffectOwnedSkillEffects(SourceModel model, string skillId)
+        {
+            var effectNodes = FilterAndSort(
+                model.SkillNodes.Values,
+                node => node.OwnerKind == SkillNodeOwnerKind.Effect
+                    && string.Equals(node.TargetSkillId, skillId, StringComparison.OrdinalIgnoreCase),
+                (left, right) =>
+                {
+                    var ownerCompare = string.Compare(left.OwnerId, right.OwnerId, StringComparison.OrdinalIgnoreCase);
+                    return ownerCompare != 0 ? ownerCompare : left.SortOrder.CompareTo(right.SortOrder);
+                });
+
+            if (effectNodes.Count == 0)
+            {
+                return Array.Empty<SkillEffectDefinition>();
+            }
+
+            var grouped = new Dictionary<string, List<SkillNodeRow>>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < effectNodes.Count; i++)
+            {
+                var node = effectNodes[i];
+                if (node == null || string.IsNullOrWhiteSpace(node.OwnerId))
+                {
+                    continue;
+                }
+
+                if (!grouped.TryGetValue(node.OwnerId, out var nodes))
+                {
+                    nodes = new List<SkillNodeRow>();
+                    grouped.Add(node.OwnerId, nodes);
+                }
+
+                nodes.Add(node);
+            }
+
+            var definitions = new List<SkillEffectDefinition>(grouped.Count);
+            foreach (var entry in grouped)
+            {
+                var nodes = entry.Value;
+                SkillNodeRow operationNode = null;
+                for (var i = 0; i < nodes.Count; i++)
+                {
+                    if (IsEffectOperationHandler(nodes[i].HandlerId))
+                    {
+                        operationNode = nodes[i];
+                        break;
+                    }
+                }
+
+                if (operationNode == null)
+                {
+                    continue;
+                }
+
+                var definition = BuildEffectOwnedSkillEffectDefinition(operationNode);
+                ApplyEffectOwnedSkillEffectOperationNode(model, definition, operationNode);
+                for (var i = 0; i < nodes.Count; i++)
+                {
+                    var node = nodes[i];
+                    if (node == operationNode)
+                    {
+                        continue;
+                    }
+
+                    ApplyEffectOwnedSkillEffectNode(model, definition, node);
+                }
+
+                definitions.Add(definition);
+            }
+
+            definitions.Sort((left, right) =>
+            {
+                var sortCompare = left.SortOrder.CompareTo(right.SortOrder);
+                return sortCompare != 0
+                    ? sortCompare
+                    : string.Compare(left.EffectId, right.EffectId, StringComparison.OrdinalIgnoreCase);
+            });
+            return definitions.ToArray();
+        }
+
+        private static bool IsEffectOperationHandler(string handlerId)
+        {
+            return string.Equals(handlerId, "ApplyStatus", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "ApplyShield", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "StatusModifier", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "EffectStatus", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "EffectDamage", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static SkillEffectDefinition BuildEffectOwnedSkillEffectDefinition(SkillNodeRow node)
+        {
+            return new SkillEffectDefinition
+            {
+                EffectId = node.OwnerId,
+                SkillId = node.TargetSkillId,
+                SortOrder = node.SortOrder,
+                TargetSide = SkillMultiEffectTargetSide.Enemy,
+                TargetSelection = SkillMultiEffectTargetSelection.Nearest,
+                TargetShape = SkillMultiEffectTargetShape.Single,
+                CenterMode = SkillMultiEffectCenterMode.PrimarySkillCenter,
+                VisualAnchorMode = SkillMultiEffectVisualAnchorMode.Center,
+                EffectTiming = SkillMultiEffectTiming.OnCast,
+                EnabledByDefault = node.EnabledByDefault,
+                RequiresActiveChoiceId = node.RequiresActiveChoiceId,
+                ExcludesActiveChoiceId = node.ExcludesActiveChoiceId,
+                RequiresPassiveSkillId = node.RequiresPassiveSkillId,
+                ExcludesPassiveSkillId = node.ExcludesPassiveSkillId,
+                RuntimeSupportState = node.RuntimeSupportState,
+                RuntimeSupportNotes = node.RuntimeSupportNotes,
+                DamageMultiplier = 1f,
+                StatusChance = 1f,
+                StatusMaxStacks = 1,
+                StatusStackAmount = 1
+            };
+        }
+
+        private static void ApplyEffectOwnedSkillEffectOperationNode(
+            SourceModel model,
+            SkillEffectDefinition definition,
+            SkillNodeRow node)
+        {
+            var parameters = BuildSkillNodeParamValueLookup(model, node.Id);
+            if (string.Equals(node.HandlerId, "EffectDamage", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.EffectKind = SkillMultiEffectKind.Damage;
+                definition.Attribute = GetSkillNodeEnumParam(parameters, "attribute", DamageAttribute.Physical);
+                definition.BaseDamage = GetSkillNodeFloatParam(parameters, "base_damage", 0f);
+                definition.AttackPowerCoefficient = GetSkillNodeFloatParam(parameters, "attack_power_coefficient", 0f);
+                definition.SpellPowerCoefficient = GetSkillNodeFloatParam(parameters, "spell_power_coefficient", 0f);
+                definition.DamageMultiplier = GetSkillNodeFloatParam(parameters, "damage_multiplier", 1f);
+                definition.Radius = GetSkillNodeFloatParam(parameters, "radius", 0f);
+                definition.TickIntervalSeconds = GetSkillNodeFloatParam(parameters, "tick_interval_seconds", 0f);
+            }
+            else if (string.Equals(node.HandlerId, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.EffectKind = SkillMultiEffectKind.ExtendStatusDuration;
+                ApplyEffectOwnedStatusParams(definition, parameters);
+            }
+            else if (string.Equals(node.HandlerId, "ApplyShield", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.EffectKind = SkillMultiEffectKind.Status;
+                definition.StatusEffectId = "shield";
+                definition.BaseDamage = GetSkillNodeFloatParam(parameters, "base_damage", 0f);
+                definition.AttackPowerCoefficient = GetSkillNodeFloatParam(parameters, "attack_power_coefficient", 0f);
+                definition.SpellPowerCoefficient = GetSkillNodeFloatParam(parameters, "spell_power_coefficient", 0f);
+                definition.DamageMultiplier = GetSkillNodeFloatParam(parameters, "damage_multiplier", 1f);
+                ApplyEffectOwnedStatusParams(definition, parameters, keepExistingStatusId: true);
+            }
+            else if (string.Equals(node.HandlerId, "StatusModifier", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.EffectKind = SkillMultiEffectKind.Status;
+                definition.StatusEffectId = "passive-buff";
+                ApplyEffectOwnedStatusParams(definition, parameters, keepExistingStatusId: true);
+            }
+            else
+            {
+                definition.EffectKind = SkillMultiEffectKind.Status;
+                ApplyEffectOwnedStatusParams(definition, parameters);
+            }
+        }
+
+        private static void ApplyEffectOwnedStatusParams(
+            SkillEffectDefinition definition,
+            Dictionary<string, string> parameters,
+            bool keepExistingStatusId = false)
+        {
+            if (!keepExistingStatusId)
+            {
+                definition.StatusEffectId = GetSkillNodeStringParam(parameters, "status_id");
+            }
+
+            definition.StatusChance = GetSkillNodeFloatParam(parameters, "status_chance", 1f);
+            definition.StatusEffectLabel = GetSkillNodeStringParam(parameters, "status_label");
+            definition.StatusEffectPrefab = LoadPrefab(GetSkillNodeStringParam(parameters, "status_effect_prefab_path"));
+            definition.StatusDurationSeconds = GetSkillNodeFloatParam(parameters, "status_duration_seconds", 0f);
+            definition.StatusMaxStacks = GetSkillNodeIntParam(parameters, "status_max_stacks", 1);
+            definition.StatusStackAmount = GetSkillNodeIntParam(parameters, "status_stack_amount", 1);
+            definition.StatusTargetScope = GetSkillNodeStringParam(parameters, "status_target_scope");
+            definition.StatusMergePolicy = GetSkillNodeStringParam(parameters, "status_merge_policy");
+            definition.ShieldAmountRefreshPolicy = GetSkillNodeStringParam(parameters, "shield_amount_refresh_policy");
+        }
+
+        private static void ApplyEffectOwnedSkillEffectNode(SourceModel model, SkillEffectDefinition definition, SkillNodeRow node)
+        {
+            var parameters = BuildSkillNodeParamValueLookup(model, node.Id);
+            var handlerId = node.HandlerId;
+            if (IsEffectOperationHandler(handlerId))
+            {
+                ApplyEffectOwnedSkillEffectOperationNode(model, definition, node);
+                return;
+            }
+
+            if (string.Equals(handlerId, "EffectTarget", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.TargetSide = GetSkillNodeEnumParam(parameters, "target_side", definition.TargetSide);
+                definition.TargetSelection = GetSkillNodeEnumParam(parameters, "target_selection", definition.TargetSelection);
+                definition.TargetShape = GetSkillNodeEnumParam(parameters, "target_shape", definition.TargetShape);
+                definition.CenterMode = GetSkillNodeEnumParam(parameters, "center_mode", definition.CenterMode);
+                definition.VisualAnchorMode = GetSkillNodeEnumParam(parameters, "visual_anchor_mode", definition.VisualAnchorMode);
+                definition.EffectTiming = GetSkillNodeEnumParam(parameters, "effect_timing", definition.EffectTiming);
+                definition.DelaySeconds = GetSkillNodeFloatParam(parameters, "delay_seconds", definition.DelaySeconds);
+                definition.ApplyOnce = GetSkillNodeBoolParam(parameters, "apply_once", definition.ApplyOnce);
+                definition.CoverAll = GetSkillNodeBoolParam(parameters, "cover_all", definition.CoverAll);
+                return;
+            }
+
+            if (string.Equals(handlerId, "EffectVisual", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.SkillEffectPrefab = LoadPrefab(GetSkillNodeStringParam(parameters, "skill_effect_prefab_path"));
+                return;
+            }
+
+            if (string.Equals(handlerId, "ConditionStatus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.ConditionStatusId = BuildConditionStatusExpression(parameters);
+                definition.ConditionTargetSide = GetSkillNodeEnumParam(parameters, "target_side", definition.TargetSide);
+                definition.ConditionStatusSourceSkillId = GetSkillNodeStringParam(parameters, "source_skill_id");
+                return;
+            }
+
+            if (string.Equals(handlerId, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.ConditionSkillAttribute = GetSkillNodeStringParam(parameters, "attribute");
+                return;
+            }
+
+            if (string.Equals(handlerId, "EffectLifetime", StringComparison.OrdinalIgnoreCase))
+            {
+                var duration = GetSkillNodeFloatParam(parameters, "duration_seconds", 0f);
+                if (definition.EffectKind == SkillMultiEffectKind.Damage)
+                {
+                    definition.ActiveDurationSeconds = duration;
+                }
+                else
+                {
+                definition.StatusDurationSeconds = duration;
+            }
+
+            return;
+        }
+
+            var bonus = GetSkillNodeFloatParam(parameters, "bonus", 0f);
+            if (string.Equals(handlerId, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusActionSpeedBonus += bonus;
+            }
+            else if (string.Equals(handlerId, "StatusSpellPowerBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusSpellPowerBonus += bonus;
+            }
+            else if (string.Equals(handlerId, "StatusDamageBonusRate", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.Attribute = GetSkillNodeEnumParam(parameters, "attribute", definition.Attribute);
+                definition.StatusDamageBonusRate += bonus;
+            }
+            else if (string.Equals(handlerId, "StatusShieldReceivedBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusShieldReceivedBonus += bonus;
+            }
+            else if (string.Equals(handlerId, "StatusDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusDamageTakenBonus += bonus;
+            }
+            else if (string.Equals(handlerId, "StatusFlatElementResistReduction", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.Attribute = GetSkillNodeEnumParam(parameters, "attribute", definition.Attribute);
+                definition.StatusFlatElementResistReduction += bonus;
+            }
+            else if (string.Equals(handlerId, "StatusCriticalChanceBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusCriticalChanceBonus += bonus;
+            }
+            else if (string.Equals(handlerId, "DamageMultiplier", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "ShieldAmountMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.DamageMultiplier *= GetSkillNodeFloatParam(parameters, "multiplier", 1f);
+            }
+        }
+
+        private static string BuildConditionStatusExpression(Dictionary<string, string> parameters)
+        {
+            var statusId = GetSkillNodeStringParam(parameters, "status_id");
+            var minStacks = GetSkillNodeIntParam(parameters, "min_stacks", 1);
+            if (string.IsNullOrWhiteSpace(statusId) || minStacks <= 1)
+            {
+                return statusId;
+            }
+
+            return string.Concat(statusId, ":", minStacks.ToString(CultureInfo.InvariantCulture));
+        }
+
+        private static Dictionary<string, string> BuildSkillNodeParamValueLookup(SourceModel model, string nodeId)
+        {
+            var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < model.SkillNodeParams.Count; i++)
+            {
+                var param = model.SkillNodeParams[i];
+                if (param != null && string.Equals(param.NodeId, nodeId, StringComparison.OrdinalIgnoreCase))
+                {
+                    parameters[param.ParamKey] = param.Value;
+                }
+            }
+
+            return parameters;
+        }
+
+        private static string GetSkillNodeStringParam(Dictionary<string, string> parameters, string key)
+        {
+            return parameters.TryGetValue(key, out var value) ? value : string.Empty;
+        }
+
+        private static float GetSkillNodeFloatParam(Dictionary<string, string> parameters, string key, float defaultValue)
+        {
+            return parameters.TryGetValue(key, out var value)
+                && float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+                    ? parsed
+                    : defaultValue;
+        }
+
+        private static int GetSkillNodeIntParam(Dictionary<string, string> parameters, string key, int defaultValue)
+        {
+            return parameters.TryGetValue(key, out var value)
+                && int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
+                    ? parsed
+                    : defaultValue;
+        }
+
+        private static bool GetSkillNodeBoolParam(Dictionary<string, string> parameters, string key, bool defaultValue)
+        {
+            return parameters.TryGetValue(key, out var value)
+                && bool.TryParse(value, out var parsed)
+                    ? parsed
+                    : defaultValue;
+        }
+
+        private static TEnum GetSkillNodeEnumParam<TEnum>(
+            Dictionary<string, string> parameters,
+            string key,
+            TEnum defaultValue)
+            where TEnum : struct
+        {
+            return parameters.TryGetValue(key, out var value)
+                && Enum.TryParse(value, true, out TEnum parsed)
+                    ? parsed
+                    : defaultValue;
         }
 
         private static SkillTriggerDefinition[] BuildSkillTriggers(SourceModel model, string monsterId)

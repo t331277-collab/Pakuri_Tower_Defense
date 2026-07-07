@@ -9,7 +9,7 @@
 "fire-exposure","화염 노출","Debuff","Fire","0","false","0","1","true","true","true","0","0","0","0","0","0","0","0",""
 "shield","방어막","Buff","Holy","0","false","0","1","true","true","true","0","0","0","0","0","0","0","0",""
 "blessing","축복","Buff","Holy","0","false","1","1","true","true","true","0","0","0","0","0","0","0","0",""
-"holy-exposure","신성 노출","Debuff","Holy","0","false","1","1","true","true","true","0","0","0","0","0","0","0","0",""
+"holy-exposure","신성 노출","Debuff","Holy","0","false","1","1","true","true","true","0","0","0","0","0","0","0","0.15",""
 "holy-resist-down","신성 저항 감소","Debuff","Holy","0","false","0","1","true","true","true","0","0","0","0","0","0","0","0",""
 "name-mark","이름표식","Debuff","None","0","true","0","1","true","true","true","0","0","0","0","0","0","0","0",""
 "silence","침묵","Debuff","None","4","false","1","1","true","true","false","0","0","0","0","0","0","0","0",""

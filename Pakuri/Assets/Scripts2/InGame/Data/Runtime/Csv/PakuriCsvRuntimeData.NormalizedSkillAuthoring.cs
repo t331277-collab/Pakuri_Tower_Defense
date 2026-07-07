@@ -204,7 +204,8 @@ namespace Pakuri.Data
             AddSkillNodeHandlerSchema(schemas, "StatusAilmentResistanceBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "StatusDamageBonusRate", SkillExecutionPlanNodeKind.Action,
-                new[] { "bonus" });
+                new[] { "bonus" }, new[] { "attribute" }, EnumParamValues(
+                    "attribute", Enum.GetNames(typeof(DamageAttribute))));
             AddSkillNodeHandlerSchema(schemas, "StatusShieldReceivedBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "StatusCriticalChanceBonus", SkillExecutionPlanNodeKind.Action,
@@ -212,7 +213,8 @@ namespace Pakuri.Data
             AddSkillNodeHandlerSchema(schemas, "StatusDamageTakenBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "StatusFlatElementResistReduction", SkillExecutionPlanNodeKind.Action,
-                new[] { "bonus" });
+                new[] { "bonus" }, new[] { "attribute" }, EnumParamValues(
+                    "attribute", Enum.GetNames(typeof(DamageAttribute))));
             AddSkillNodeHandlerSchema(schemas, "StatusDurationBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "status_id", "bonus_seconds" });
             AddSkillNodeHandlerSchema(schemas, "StatusConditionalDamageTakenBonus", SkillExecutionPlanNodeKind.Action,
@@ -221,6 +223,103 @@ namespace Pakuri.Data
                 new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "StatusCriticalDamageTakenBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "StatusSpellPowerBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "ApplyStatus", SkillExecutionPlanNodeKind.Action,
+                new[] { "status_id" },
+                new[]
+                {
+                    "status_chance",
+                    "status_label",
+                    "status_effect_prefab_path",
+                    "status_max_stacks",
+                    "status_stack_amount",
+                    "status_target_scope",
+                    "status_merge_policy",
+                    "shield_amount_refresh_policy"
+                });
+            AddSkillNodeHandlerSchema(schemas, "ApplyShield", SkillExecutionPlanNodeKind.Action,
+                Array.Empty<string>(),
+                new[]
+                {
+                    "base_damage",
+                    "attack_power_coefficient",
+                    "spell_power_coefficient",
+                    "damage_multiplier",
+                    "status_chance",
+                    "status_label",
+                    "status_effect_prefab_path",
+                    "status_max_stacks",
+                    "status_stack_amount",
+                    "status_target_scope",
+                    "status_merge_policy",
+                    "shield_amount_refresh_policy"
+                });
+            AddSkillNodeHandlerSchema(schemas, "StatusModifier", SkillExecutionPlanNodeKind.Action,
+                Array.Empty<string>(),
+                new[]
+                {
+                    "status_chance",
+                    "status_label",
+                    "status_effect_prefab_path",
+                    "status_max_stacks",
+                    "status_stack_amount",
+                    "status_target_scope",
+                    "status_merge_policy"
+                });
+            AddSkillNodeHandlerSchema(schemas, "EffectStatus", SkillExecutionPlanNodeKind.Action,
+                new[] { "status_id" },
+                new[]
+                {
+                    "status_chance",
+                    "status_label",
+                    "status_effect_prefab_path",
+                    "status_max_stacks",
+                    "status_stack_amount",
+                    "status_target_scope",
+                    "status_merge_policy",
+                    "shield_amount_refresh_policy"
+                });
+            AddSkillNodeHandlerSchema(schemas, "EffectDamage", SkillExecutionPlanNodeKind.Action,
+                new[] { "attribute" },
+                new[]
+                {
+                    "base_damage",
+                    "attack_power_coefficient",
+                    "spell_power_coefficient",
+                    "damage_multiplier",
+                    "radius",
+                    "tick_interval_seconds"
+                },
+                enumParamAllowedValues: EnumParamValues(
+                    "attribute", Enum.GetNames(typeof(DamageAttribute))));
+            AddSkillNodeHandlerSchema(schemas, "EffectExtendStatusDuration", SkillExecutionPlanNodeKind.Action,
+                new[] { "status_id" });
+            AddSkillNodeHandlerSchema(schemas, "EffectTarget", SkillExecutionPlanNodeKind.Action,
+                Array.Empty<string>(),
+                new[]
+                {
+                    "target_side",
+                    "target_selection",
+                    "target_shape",
+                    "center_mode",
+                    "visual_anchor_mode",
+                    "effect_timing",
+                    "delay_seconds",
+                    "apply_once",
+                    "cover_all"
+                },
+                EffectBaseEnumParamValues());
+            AddSkillNodeHandlerSchema(schemas, "EffectVisual", SkillExecutionPlanNodeKind.Action,
+                new[] { "skill_effect_prefab_path" });
+            AddSkillNodeHandlerSchema(schemas, "ConditionStatus", SkillExecutionPlanNodeKind.Action,
+                new[] { "status_id" }, new[] { "target_side", "source_skill_id", "min_stacks" }, EnumParamValues(
+                    "target_side", Enum.GetNames(typeof(SkillMultiEffectTargetSide))));
+            AddSkillNodeHandlerSchema(schemas, "ConditionSkillAttribute", SkillExecutionPlanNodeKind.Action,
+                new[] { "attribute" }, enumParamAllowedValues: EnumParamValues(
+                    "attribute", Enum.GetNames(typeof(DamageAttribute))));
+            AddSkillNodeHandlerSchema(schemas, "EffectLifetime", SkillExecutionPlanNodeKind.Action,
+                new[] { "duration_seconds" });
             AddSkillNodeHandlerSchema(schemas, "DelayedDamage", SkillExecutionPlanNodeKind.Action,
                 new[] { "delay_seconds" });
             AddSkillNodeHandlerSchema(schemas, "RequiredTargetStatus", SkillExecutionPlanNodeKind.CastCondition,
@@ -265,6 +364,55 @@ namespace Pakuri.Data
             AddSkillNodeHandlerSchema(schemas, "CooldownResetOnKill", SkillExecutionPlanNodeKind.OnKillAction,
                 new string[0], new[] { "requires_execute" });
             return schemas;
+        }
+
+        private static string[] EffectBaseRequiredParams(params string[] extraParams)
+        {
+            var required = new List<string>();
+            if (extraParams != null)
+            {
+                required.AddRange(extraParams);
+            }
+
+            return required.ToArray();
+        }
+
+        private static string[] EffectBaseOptionalParams(params string[] extraParams)
+        {
+            var optional = new List<string>
+            {
+                "target_side",
+                "target_selection",
+                "target_shape",
+                "center_mode",
+                "visual_anchor_mode",
+                "effect_timing",
+                "delay_seconds",
+                "apply_once",
+                "cover_all",
+                "attribute",
+                "skill_effect_prefab_path",
+                "required_source_status_id",
+                "required_source_status_min_stacks"
+            };
+            if (extraParams != null)
+            {
+                optional.AddRange(extraParams);
+            }
+
+            return optional.ToArray();
+        }
+
+        private static Dictionary<string, string[]> EffectBaseEnumParamValues()
+        {
+            return EnumParamValues(
+                "target_side", Enum.GetNames(typeof(SkillMultiEffectTargetSide)),
+                "target_selection", Enum.GetNames(typeof(SkillMultiEffectTargetSelection)),
+                "target_shape", Enum.GetNames(typeof(SkillMultiEffectTargetShape)),
+                "center_mode", Enum.GetNames(typeof(SkillMultiEffectCenterMode)),
+                "visual_anchor_mode", Enum.GetNames(typeof(SkillMultiEffectVisualAnchorMode)),
+                "effect_timing", Enum.GetNames(typeof(SkillMultiEffectTiming)),
+                "attribute", Enum.GetNames(typeof(DamageAttribute)));
         }
 
         private static void AddSkillNodeHandlerSchema(
@@ -394,10 +542,13 @@ namespace Pakuri.Data
                     }
                     break;
                 case SkillNodeOwnerKind.Effect:
-                    errors.Add($"Skill node '{node.Id}' uses owner_kind 'Effect', but effect-owned normalized nodes are not wired into runtime plans yet.");
-                    if (!model.SkillEffects.ContainsKey(node.OwnerId))
+                    if (string.IsNullOrWhiteSpace(node.OwnerId))
                     {
-                        errors.Add($"Skill node '{node.Id}' references unknown effect owner '{node.OwnerId}'.");
+                        errors.Add($"Skill node '{node.Id}' requires owner_id for effect-owned nodes.");
+                    }
+                    if (string.IsNullOrWhiteSpace(node.TargetSkillId) || !model.Skills.ContainsKey(node.TargetSkillId))
+                    {
+                        errors.Add($"Skill node '{node.Id}' effect owner '{node.OwnerId}' requires a known target_skill_id.");
                     }
                     break;
                 case SkillNodeOwnerKind.Trigger:

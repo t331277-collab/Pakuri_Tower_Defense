@@ -5,6 +5,58 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-08 Ariel Effect CSV Node Authority Removal
+
+### Task title
+
+Remove Ariel's per-monster effect CSV after moving its effect definitions into normalized node CSVs.
+
+### Goals
+
+- Keep current runtime monster CSV split authority intact.
+- Allow a monster to omit `{monster}_skill_effects.csv` when its effects are represented by `owner_kind=Effect` nodes.
+- Preserve trigger `triggered_effect_id` validation against node-owned effect ids.
+- Keep moved effect prefab paths available to the runtime asset catalog through node params.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active runtime authority remains under `Pakuri/Assets/CSVdata/runtime`.
+- No MSW-MCP was used.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented as semantic effect-owned nodes and compile-verified.
+
+### Next Actions
+
+- For future per-monster effect CSV removals, first verify effect id parity against effect-owned operation nodes and trigger references.
+- Keep effect-owned node params semantic-only; do not recreate deleted effect CSV rows as carrier nodes such as `EffectStatus(status_id=passive-buff)`.
+- Run Unity-MCP CSV/source validation if editor-side asset import validation is needed.
+
+### Evidence
+
+- Deleted `Pakuri/Assets/CSVdata/runtime/monster/skills/effects/ariel/ariel_skill_effects.csv` and `.meta`.
+- Removed deleted GUID `de95dfd09fa14fd5bffaf64855a35d25` from `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog.asset`.
+- Post-delete `Test-Path` returned `False` for both deleted Ariel effect files.
+- Post-delete search under `Pakuri/Assets/Resources` and `Pakuri/Assets/CSVdata` for `de95dfd09fa14fd5bffaf64855a35d25|ariel_skill_effects` returned no matches.
+- `PakuriCsvRuntimeData.Build.cs`, `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs`, `PakuriCsvRuntimeData.Validation.cs`, and `PakuriCsvRuntimeData.AssetReferences.cs` now support effect-owned node definitions as data authority.
+- `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` now registers semantic operation handlers `ApplyStatus`, `ApplyShield`, and `StatusModifier`, plus target, visual, condition, lifetime, and status modifier handlers.
+- Ariel node verification returned handler counts: `ApplyShield=6`, `ApplyStatus=13`, `StatusModifier=14`, `EffectDamage=2`, `EffectExtendStatusDuration=1`, `ConditionStatus=10`, `EffectLifetime=33`, `EffectTarget=36`, and `EffectVisual=11`.
+- Ariel node verification returned `effects=36`, `nodes=193`, `params=330`, `passive_buff_param_count=0`, `effect_status_nodes=0`, and required-param `missing_count=0`.
+- Effect parity returned `effect_csv_count=36 node_owner_count=36 missing=0 extra=0`; Ariel trigger references `ariel-a-master-2-holy-exposure-on-hit` and `ariel-j-after-e-action-speed` both resolved to node-owned effects.
+- `git diff --check` returned `DIFF_CHECK_OK`; Git also printed line-ending normalization warnings.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-07-08: Ariel became the first monster whose split effect CSV was removed after full node migration; other monster effect CSV files remain present.
+- 2026-07-08: After migration, Code Builder first compacted Ariel effect-owned params, then corrected the data model after the user clarified that carrier status rows were still not semantic nodes. The final Ariel node data uses `ApplyStatus`, `ApplyShield`, and `StatusModifier` operations instead of `EffectStatus(status_id=passive-buff|shield|blessing)` carrier rows.
+
 ## Task: 2026-07-07 Monster Runtime CSV Inferred Metadata Cleanup
 
 ### Task title

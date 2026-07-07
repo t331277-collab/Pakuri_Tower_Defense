@@ -12,6 +12,71 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-07-08 Ariel Effect CSV Full Node Migration
+
+### Task title
+
+Move Ariel's remaining skill effects from `ariel_skill_effects.csv` into effect-owned normalized nodes.
+
+### Goals
+
+- Keep `ariel_skill_triger.csv` unchanged while preserving its `triggered_effect_id` bindings.
+- Move all 36 Ariel effect rows into `nodes/ariel/ariel_skill_nodes.csv` and `nodes/ariel/ariel_skill_node_params.csv`.
+- Make `holy-exposure` itself carry the common Holy damage-taken +15% behavior in `status_effects.csv`.
+- Delete `skills/effects/ariel/ariel_skill_effects.csv` after verifying all effect ids exist as node-owned effect definitions.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Work is based on inspected runtime CSV/code only.
+- MSW-MCP is not used; Unity-MCP remains the only MCP path if editor validation is needed.
+- Unity Play Mode behavior verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, corrected to semantic nodes, compiled, file-verified, and deleted the Ariel effect CSV.
+
+### Next Actions
+
+- User verifies Ariel effect parity in Play Mode, especially Ariel A master2 holy exposure, Ariel C blessing variants, Ariel E shield/sanctuary, and Ariel J post-E trigger.
+- If Unity Editor validation is needed, run `Pakuri/Sync CSV Runtime Catalog Assets`, `Pakuri/Validate CSV Source Data`, and `Pakuri/InGame/Validate Skill Data` through Unity-MCP.
+- Keep future Ariel effect-owned node params semantic-only; do not recreate deleted effect CSV rows as `*-base` nodes.
+
+### Evidence
+
+- `PakuriCsvRuntimeData.Build.cs` now builds `SkillEffectDefinition` entries from `owner_kind=Effect` semantic node groups and still supports legacy `SkillEffectRow` data for other monsters.
+- `PakuriCsvRuntimeData.Build.cs` no longer requires a `*-base` effect node or a carrier `EffectStatus` node. It creates the effect definition from one operation node (`ApplyStatus`, `ApplyShield`, `StatusModifier`, `EffectDamage`, or `EffectExtendStatusDuration`) and composes `EffectTarget`, `EffectVisual`, `ConditionStatus`, `ConditionSkillAttribute`, `EffectLifetime`, and status modifier nodes into that definition.
+- `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` now registers effect-owned operation handlers `ApplyStatus`, `ApplyShield`, and `StatusModifier` in addition to `EffectDamage` and `EffectExtendStatusDuration`.
+- `ConditionStatus` now supports `status_id`, `target_side`, `min_stacks`, and optional `source_skill_id`; `Build.cs` converts `min_stacks` into the existing condition expression format such as `shield:2`.
+- `StatusDamageBonusRate` and `StatusFlatElementResistReduction` now own their `attribute` param directly instead of relying on an old effect-row/base attribute field.
+- `PakuriCsvRuntimeData.Validation.cs` now accepts `triggered_effect_id` when it is supplied by an effect-owned node group.
+- `PakuriCsvRuntimeData.AssetReferences.cs` now collects `AssetPath` node params, so effect prefabs moved out of effect CSV remain in the asset catalog.
+- `ariel_skill_nodes.csv` / `ariel_skill_node_params.csv` now contain 36 effect-owned semantic node groups with no effect `node_id` ending in `-base`, no `EffectStatus` nodes, and no `passive-buff` value in node params.
+- Ariel node verification returned handler counts: `ApplyShield=6`, `ApplyStatus=13`, `StatusModifier=14`, `EffectDamage=2`, `EffectExtendStatusDuration=1`, `ConditionStatus=10`, `EffectLifetime=33`, `EffectTarget=36`, and `EffectVisual=11`.
+- Ariel node verification returned `effects=36`, `nodes=193`, `params=330`, `passive_buff_param_count=0`, and `effect_status_nodes=0`.
+- Effect group verification returned `effect_groups=36` and `missing_count=0`; each group has exactly one operation node and required params for operation, condition, lifetime, and visual nodes.
+- `ariel-b-shielded-holy-trait5` is now split into `StatusModifier`, `EffectTarget`, `ConditionStatus`, `EffectLifetime`, and `StatusDamageBonusRate`; the condition carries `status_id=shield`, `target_side=AllAllies`, and `min_stacks=1`, while the Holy attribute lives on `StatusDamageBonusRate`.
+- Shield effects such as `ariel-e-shield-base` now use `ApplyShield` with shield amount params (`base_damage`, `spell_power_coefficient`, optional `damage_multiplier`) instead of `EffectStatus(status_id=shield)`.
+- Real status applications such as `ariel-a-master-2-holy-exposure-on-hit` use `ApplyStatus(status_id=holy-exposure)`.
+- `ariel-a-master-2-holy-exposure-element-damage-taken` was removed from Ariel choice nodes; `status_effects.csv` now has `holy-exposure` with `element_damage_taken_bonus_per_stack=0.15`.
+- Verification before deletion returned `effect_csv_count=36 node_base_count=36 missing=0 extra=0`; after semantic-node correction, parity returned `effect_csv_count=36 node_owner_count=36 missing=0 extra=0`.
+- Trigger verification returned `ariel-a-master2-holy-exposure-on-hit` and `ariel-j-after-e-action-speed-trigger` with `node_effect_exists=True`.
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/effects/ariel/ariel_skill_effects.csv` and its `.meta` were deleted.
+- `PakuriCsvRuntimeSourceCatalog.asset` no longer references deleted GUID `de95dfd09fa14fd5bffaf64855a35d25`; post-delete search returned no matches.
+- `git diff --check` returned `DIFF_CHECK_OK`; Git also printed existing line-ending normalization warnings.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-07-08: User confirmed all `holy-exposure` instances should share Holy damage +15%, then requested Code Builder to migrate the remaining Ariel effect CSV content to nodes and delete `ariel_skill_effects.csv` only after confirming full migration.
+- 2026-07-08: User pointed out migrated effect node params still contained meaningless defaults like the original `ariel-b-shielded-holy-trait5-base` expansion; Code Builder first compacted defaults, then replaced that insufficient approach after the user clarified the intended node-composition structure.
+- 2026-07-08: User clarified the previous conversion was still wrong because it copied deleted effect CSV rows into `*-base` nodes instead of implementing semantic nodes. Code Builder rebuilt Ariel effect-owned nodes without `*-base` operation nodes and split targeting, visuals, conditions, lifetime, and modifiers into separate handlers.
+- 2026-07-08: User clarified that merely removing the `-base` suffix was still insufficient because `EffectStatus(status_id=passive-buff|shield|blessing)` rows were carrier rows. Code Builder replaced those carriers with semantic `ApplyStatus`, `ApplyShield`, and `StatusModifier` operations and removed `passive-buff` from Ariel node params.
+
 ## Task: 2026-06-19 Ariel Plan-Action Runtime Migration
 
 ### Task title
