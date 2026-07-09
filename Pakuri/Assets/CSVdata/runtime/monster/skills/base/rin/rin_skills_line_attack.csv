@@ -1,3 +1,0 @@
-"skill_id","slot","display_name","runtime_kind","description_text","summary","base_damage","attack_power_coefficient","radius","cooldown_seconds","critical_allowed","status_effect_label","knockback_distance"
-"id","enum:SkillSlot","string","enum:SkillRuntimeKind","string","string","float","float","float","float","bool","string","float"
-"rin-c","C","충격파","LineAttack","파쇄권보다 묵직한 직선 충격파를 발사해 적을 살짝 뒤로 밀어낸다.","파쇄권보다 묵직한 직선 충격파를 발사해 적을 살짝 뒤로 밀어낸다.","28","1.35","1.6","5.5","true","넉백","0.6"

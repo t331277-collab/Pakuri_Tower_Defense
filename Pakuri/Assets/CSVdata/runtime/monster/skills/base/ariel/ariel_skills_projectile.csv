@@ -1,3 +1,0 @@
-"skill_id","slot","display_name","runtime_kind","description_text","summary","attribute","base_damage","spell_power_coefficient","magazine_capacity","reload_seconds","shot_interval_seconds","projectile_burst_count","projectile_speed","pierce_count","critical_allowed"
-"id","enum:SkillSlot","string","enum:SkillRuntimeKind","string","string","enum:DamageAttribute","float","float","int","float","float","int","float","int","bool"
-"ariel-a","A","심판의 빛","MagazineProjectile","아리엘의 기본 신성 투사체. 적에게 빛의 탄환을 날려 신성 피해를 준다.","아리엘의 기본 신성 투사체. 적에게 빛의 탄환을 날려 신성 피해를 준다.","Holy","18","1","7","4.6","0.36","1","17","1","true"

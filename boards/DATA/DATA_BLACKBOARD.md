@@ -5,6 +5,164 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-09 Ariel F-J Passive EffectTarget Param Cleanup
+
+### Task title
+
+Remove copied Ariel F-J passive EffectTarget defaults from node params.
+
+### Goals
+
+- Implement `boards/TRAIT_MASTER/ARIEL_FJ_PASSIVE_NODE_CONVERSION_PLAN.md`.
+- Keep Ariel F-J passive behavior on functional node params instead of copied old effect defaults.
+- Remove status/shield passive target defaults that do not carry current behavior: `target_selection=Owner`, `target_shape=Battlefield`, `center_mode=Caster`, and no-visual `visual_anchor_mode=AppliedTargets`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active runtime CSV authority remains under `Pakuri/Assets/CSVdata/runtime/monster/skills`.
+- The change is CSV-only; no runtime code expansion was required.
+- No MSW-MCP was used.
+- Unity Play Mode behavior verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, CSV-checked, and compile-verified.
+
+### Next Actions
+
+- User verifies Ariel F-J passive combinations in Play Mode if gameplay parity confirmation is needed.
+- Keep future passive effect-owned node params minimal: target side, real conditions, lifetime, one-shot flags, source-skill filters, and actual modifier values.
+
+### Evidence
+
+- Edited `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/passive/passive_skill_node_params.csv`.
+- Removed copied target defaults from Ariel F-J passive EffectTarget rows, including `target_selection=Owner`, `target_shape=Battlefield`, `center_mode=Caster`, and no-visual `visual_anchor_mode=AppliedTargets`.
+- Kept functional params such as `target_side=AllAllies`, `target_side=Enemy`, `apply_once=true`, `duration_seconds`, `bonus`, `multiplier`, `attribute`, `status_id`, `min_stacks`, and `source_skill_id`.
+- Made Ariel I EffectTarget rows explicit with `target_side=Enemy` after removing `target_shape=Battlefield` and `center_mode=Caster`.
+- Removed-param scan returned `REMOVED_PASSIVE_TARGET_DEFAULTS_OK`.
+- Passive node-param reference check returned `PASSIVE_NODE_PARAM_REFS_OK nodes=58 params=68`.
+- Full runtime skill CSV shape check returned `CSV_SHAPE_OK files=31`.
+- Full node-param reference check returned `NODE_PARAM_REFS_OK nodes=139 params=212 paramFiles=4`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors and 2 warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors and 2 warnings.
+- `git diff --check` returned no whitespace errors; Git printed line-ending normalization warnings only.
+
+### History
+
+- 2026-07-09: User requested Code Builder to implement the Ariel F-J passive node conversion plan from `boards/TRAIT_MASTER/ARIEL_FJ_PASSIVE_NODE_CONVERSION_PLAN.md`.
+
+## Task: 2026-07-09 Ariel Node-Based Choice/Effect Cleanup
+
+### Task title
+
+Remove wrongly migrated Ariel choice/master effect clones and keep behavior on functional nodes.
+
+### Goals
+
+- Remove copied `MigratedToEffectBinding` effect-owned node groups that duplicated Ariel enhancement/master combinations.
+- Keep numeric choice behavior on functional Choice nodes such as `StatusActionSpeedBonus`, `StatusShieldReceivedBonus`, `ShieldAmountMultiplier`, `StatusDamageTakenBonus`, and `StatusDurationBonus`.
+- Preserve base effect-owned node groups for actual effects such as Ariel C blessing, Ariel E shield, and Ariel J post-E action speed.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active runtime CSV authority remains under `Pakuri/Assets/CSVdata/runtime/monster/skills`.
+- Work is based on inspected CSV/runtime code evidence only.
+- No MSW-MCP was used.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, CSV-checked, and compile-verified.
+
+### Next Actions
+
+- If editor-side import validation is required, run Unity-MCP/editor menu validation after Unity reloads the changed CSV assets.
+- Keep future numeric skill enhancements and master modifiers as functional Choice nodes instead of precombined copied Effect groups.
+
+### Evidence
+
+- Removed the passive copied Effect groups `ariel-j-after-e-action-speed-trait1`, `ariel-g-shield-received-trait1`, `ariel-g-start-shield-trait2`, and `ariel-i-holy-exposure-damage-taken-trait1` from `nodes/passive/passive_skill_nodes.csv` and matching params from `nodes/passive/passive_skill_node_params.csv`.
+- Removed the single-attack copied Effect groups with `MigratedToEffectBinding`, including Ariel C blessing trait/master combinations and Ariel E shield trait/master combinations, from `nodes/single_attack/single_attack_skill_nodes.csv` and matching params from `nodes/single_attack/single_attack_skill_node_params.csv`.
+- Converted `ariel-c-trait-3-duration-bonus` and `ariel-h-trait-3-duration-bonus` from `DurationBonus` to `StatusDurationBonus` with `status_id=blessing` and `bonus_seconds=2`.
+- Verified removed ids and `MigratedToEffectBinding` no longer appear under `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes`.
+- Verified retained Choice nodes include `ariel-c-trait-2-blessing-action-speed`, `ariel-e-trait-2-shield-amount-multiplier`, `ariel-e-master-2-shield-amount-multiplier`, `ariel-g-trait-2-start-shield-amount-multiplier`, and `ariel-j-trait-1-after-e-action-speed-bonus`.
+- Runtime code evidence: `SkillExecutionSnapshot.ApplyNodeBackedChoiceDefinition` applies mapped plan action nodes, and `SkillExecutionSystem.AppliesToSkill` accepts `TargetSkillId` / `RuntimeTargetSkillIds`.
+- Runtime code evidence: `SkillMultiEffectExecutor.ResolveStatusSpec` applies targeted `StatusDurationBonus`, and `ResolveStatusEffectShieldAmount` applies snapshot `ShieldAmountMultiplier`.
+- CSV parser shape check returned `CSV_SHAPE_OK files=31`.
+- Node-param reference check returned `NODE_PARAM_REFS_OK nodes=139 paramFiles=4`.
+- Node count summary returned `NODE_COUNT=139`, `PARAM_COUNT=239`, and `MIGRATED_TO_EFFECT_BINDING_COUNT=0`.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors and 2 warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors and 2 warnings.
+- `git diff --check` returned no whitespace errors; Git printed line-ending normalization warnings only.
+
+### History
+
+- 2026-07-09: User requested Code Builder to fix wrongly converted skill enhancement/master skill rows back to node-based behavior and verify.
+
+## Task: 2026-07-09 Monster Runtime Skill CSV Kind Folder Consolidation
+
+### Task title
+
+Consolidate monster-owned runtime skill CSV files into skill-kind folders.
+
+### Goals
+
+- Replace monster-folder split CSV files under `Pakuri/Assets/CSVdata/runtime/monster/skills` with skill-kind-owned folders.
+- Add explicit `monster_id` to consolidated runtime skill CSV rows so loader ownership no longer depends on monster-prefixed filenames.
+- Preserve current loaded row ids and row counts across base, choice, effect, trigger, node, and node-param data.
+- Keep runtime/editor catalog loading compatible with the new file names and folders.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active runtime CSV authority remains under `Pakuri/Assets/CSVdata/runtime/monster/skills`.
+- No MSW-MCP was used.
+- Unity-MCP Play Mode validation remains user-owned; Codex attempted editor menu sync only.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, CSV-checked, source-catalog-guid checked, and compile-verified. Unity-MCP menu sync could not complete because the open editor still executed the pre-change compiled menu code and searched for `monster_skills_projectile.csv`; `execute_code` refresh also failed with a local Mono path-length error.
+
+### Next Actions
+
+- After the Unity Editor reloads/recompiles, run `Pakuri/Sync CSV Runtime Catalog Assets` and `Pakuri/Validate CSV Source Data` through Unity-MCP or the editor menu.
+- Author future runtime monster skill CSV rows under skill-kind folders instead of monster folders.
+- Keep `monster_id` present in consolidated CSV rows whenever filenames no longer carry monster ownership.
+
+### Evidence
+
+- Created kind-folder base files: `base/projectile/skills_projectile.csv`, `base/line_attack/skills_line_attack.csv`, `base/area_attack/skills_area_attack.csv`, `base/single_attack/skills_single_attack.csv`, `base/buff/skills_buff.csv`, and `base/passive/skills_passive.csv`.
+- Created kind-folder choice files under `choices/{kind}/skill_choices_{kind}.csv`.
+- Created kind-folder effect files under `effects/{kind}/{kind}_skill_effects.csv`, trigger files under `triggers/{kind}/{kind}_skill_triger.csv`, and node files under `nodes/{kind}/{kind}_skill_nodes.csv` / `{kind}_skill_node_params.csv`.
+- Removed old monster folders and files under `skills/base`, `skills/choices`, `skills/effects`, `skills/nodes`, and `skills/triggers`.
+- Row-count verification returned 31 active CSV files with base 50 rows, choices 252 rows, effects 96 rows, triggers 58 rows, nodes 208 rows, and node params 363 rows.
+- CSV parser shape check returned `CSV_SHAPE_AND_MONSTER_ID_OK files=31`.
+- ID/reference check returned `CSV_ID_CHECK_OK skills=50 choices=252 effects=96 triggers=58 nodes=208 node_params=363`.
+- `PakuriCsvRuntimeSourceCatalog.asset` now references the 31 new skill-kind CSV GUIDs, and deleted skill CSV GUID scan returned `SOURCE_CATALOG_OLD_SKILL_GUIDS_REMOVED_OK`.
+- `PakuriCsvRuntimeData.cs` fallback file names now use `skills_*` and `skill_choices_*` names.
+- `PakuriCsvRuntimeData.Editor.cs` suffix collection now matches `skills_*` and `skill_choices_*` without requiring monster prefixes.
+- `PakuriSkillEffectPrefabCsvExporter.cs` now writes to the new `choices/{kind}/skill_choices_{kind}.csv` paths.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors and 2 warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors and 2 warnings.
+- `git diff --check` returned no whitespace errors; Git printed line-ending normalization warnings only.
+
+### History
+
+- 2026-07-09: User requested Code Builder to stop organizing runtime monster skill CSV files by monster name and consolidate them into skill-kind folders/files with explicit `monster_id`.
+
 ## Task: 2026-07-08 Ariel Node CSV Kind Folder Split
 
 ### Task title

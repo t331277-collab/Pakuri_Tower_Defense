@@ -15,12 +15,12 @@ namespace Pakuri.Data
         private const string SkillEffectPrefabPathColumnName = "skill_effect_prefab_path";
         private static readonly string[] MonsterSkillChoicesCsvPaths =
         {
-            "Assets/CSVdata/runtime/monster/skills/choices/monster_skill_choices_projectile.csv",
-            "Assets/CSVdata/runtime/monster/skills/choices/monster_skill_choices_line_attack.csv",
-            "Assets/CSVdata/runtime/monster/skills/choices/monster_skill_choices_area_attack.csv",
-            "Assets/CSVdata/runtime/monster/skills/choices/monster_skill_choices_single_attack.csv",
-            "Assets/CSVdata/runtime/monster/skills/choices/monster_skill_choices_buff.csv",
-            "Assets/CSVdata/runtime/monster/skills/choices/monster_skill_choices_passive.csv"
+            "Assets/CSVdata/runtime/monster/skills/choices/projectile/skill_choices_projectile.csv",
+            "Assets/CSVdata/runtime/monster/skills/choices/line_attack/skill_choices_line_attack.csv",
+            "Assets/CSVdata/runtime/monster/skills/choices/area_attack/skill_choices_area_attack.csv",
+            "Assets/CSVdata/runtime/monster/skills/choices/single_attack/skill_choices_single_attack.csv",
+            "Assets/CSVdata/runtime/monster/skills/choices/buff/skill_choices_buff.csv",
+            "Assets/CSVdata/runtime/monster/skills/choices/passive/skill_choices_passive.csv"
         };
 
         [MenuItem("Pakuri/Export Skill Effect Prefabs To CSV")]

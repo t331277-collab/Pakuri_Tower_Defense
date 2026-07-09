@@ -12,6 +12,104 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-07-09 Ariel F-J Passive EffectTarget Param Cleanup
+
+### Task title
+
+Clean copied EffectTarget defaults from Ariel F-J passive node params.
+
+### Goals
+
+- Apply `boards/TRAIT_MASTER/ARIEL_FJ_PASSIVE_NODE_CONVERSION_PLAN.md` to Ariel F-J passive runtime node params.
+- Keep Ariel passive effects decomposed into functional nodes rather than copied old effect-row target defaults.
+- Preserve all gameplay-carrying params for F-J passives and traits.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Current files are skill-kind paths under `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes`.
+- The implementation is CSV-only.
+- No MSW-MCP was used.
+- Unity Play Mode behavior verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and verified by CSV checks plus runtime/editor compile.
+
+### Next Actions
+
+- User verifies Ariel F/J holy damage, action speed, shield, blessing, holy-exposure, and shielded-holy passive interactions in Play Mode if gameplay parity is required.
+- Future Ariel passive node edits should avoid reintroducing `target_selection=Owner`, `target_shape=Battlefield`, `center_mode=Caster`, or no-visual `visual_anchor_mode=AppliedTargets` on status/shield EffectTarget nodes.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/passive/passive_skill_node_params.csv` no longer has Ariel F-J passive rows with `target_selection`, `target_shape`, `center_mode`, or `visual_anchor_mode`.
+- Ariel F-J passive EffectTarget rows still retain functional target sides: F/G/H/J ally effects use `target_side=AllAllies`, and Ariel I holy-exposure effects now explicitly use `target_side=Enemy`.
+- `ariel-g-start-shield-effect-target` still keeps `apply_once=true`; `ariel-j-shielded-holy-damage-condition-status` still keeps `source_skill_id=ariel-e-shield-base`.
+- Condition/status/modifier values remain in node params, including `status_id=shield`, `status_id=blessing`, `status_id=holy-exposure`, `min_stacks=1`, Holy attributes, bonuses, multipliers, and lifetimes.
+- Removed-param scan returned `REMOVED_PASSIVE_TARGET_DEFAULTS_OK`.
+- Passive node-param reference check returned `PASSIVE_NODE_PARAM_REFS_OK nodes=58 params=68`.
+- Full runtime skill CSV shape check returned `CSV_SHAPE_OK files=31`.
+- Full node-param reference check returned `NODE_PARAM_REFS_OK nodes=139 params=212 paramFiles=4`.
+- Runtime and editor `dotnet build` commands passed with 0 errors and 2 warnings each.
+
+### History
+
+- 2026-07-09: User requested Code Builder to implement the Ariel F-J passive node conversion plan after identifying copied EffectTarget-style params in passive node params.
+
+## Task: 2026-07-09 Ariel Enhancement/Master Node Cleanup
+
+### Task title
+
+Restore Ariel enhancement and master behavior to functional normalized nodes.
+
+### Goals
+
+- Remove Ariel copied Effect groups that represented enhancement/master value combinations instead of atomic node behavior.
+- Keep base effects as effect-owned nodes and keep enhancement/master deltas as Choice-owned functional nodes.
+- Fix blessing duration modifiers to use status-targeted duration nodes.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Current files are skill-kind paths under `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes`.
+- No MSW-MCP was used.
+- Unity Play Mode behavior verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and verified by CSV checks plus runtime/editor compile.
+
+### Next Actions
+
+- User verifies Ariel C blessing combinations, Ariel E shield trait/master combinations, Ariel G/J passive modifiers, and Ariel I passive modifier in Play Mode.
+- Future Ariel modifiers should avoid copied `EffectTarget`/`EffectLifetime` groups when a functional Choice node can modify the base effect.
+
+### Evidence
+
+- `nodes/passive/passive_skill_nodes.csv` no longer has copied Effect owners `ariel-j-after-e-action-speed-trait1`, `ariel-g-shield-received-trait1`, `ariel-g-start-shield-trait2`, or `ariel-i-holy-exposure-damage-taken-trait1`.
+- `nodes/passive/passive_skill_node_params.csv` no longer has params for those copied Effect nodes.
+- `nodes/single_attack/single_attack_skill_nodes.csv` no longer has `MigratedToEffectBinding` copies for Ariel C blessing trait/master combinations or Ariel E shield trait/master combinations.
+- `nodes/single_attack/single_attack_skill_node_params.csv` no longer has params for the removed copied Effect nodes.
+- `ariel-c-trait-3-duration-bonus` and `ariel-h-trait-3-duration-bonus` are now `StatusDurationBonus` nodes with `status_id=blessing` and `bonus_seconds=2`.
+- Retained functional nodes include `StatusActionSpeedBonus` for `ariel-c-trait-2-blessing-action-speed` and `ariel-j-trait-1-after-e-action-speed-bonus`, `ShieldAmountMultiplier` for Ariel E/G shield modifiers, `StatusShieldReceivedBonus` for `ariel-g-trait-1`, and `StatusDamageTakenBonus` for `ariel-i-trait-1`.
+- Inspected runtime code confirms choice nodes are applied through `SkillExecutionSnapshot.ApplyNodeBackedChoiceDefinition`, `SkillExecutionSystem.AppliesToSkill`, `SkillMultiEffectExecutor.ResolveStatusSpec`, and `SkillMultiEffectExecutor.ResolveStatusEffectShieldAmount`.
+- Removed-id scan and `MigratedToEffectBinding` scan under runtime skill nodes returned no rows.
+- CSV checks returned `CSV_SHAPE_OK files=31`, `NODE_PARAM_REFS_OK nodes=139 paramFiles=4`, and `MIGRATED_TO_EFFECT_BINDING_COUNT=0`.
+- Runtime and editor `dotnet build` commands passed with 0 errors and 2 warnings each.
+
+### History
+
+- 2026-07-09: User identified passive rows such as `ariel-j-after-e-action-speed-trait1-effect-target` as copied old CSV values instead of fully node-based behavior, then requested Code Builder implementation and verification.
+
 ## Task: 2026-07-08 Ariel Node CSV Kind Folder Split
 
 ### Task title

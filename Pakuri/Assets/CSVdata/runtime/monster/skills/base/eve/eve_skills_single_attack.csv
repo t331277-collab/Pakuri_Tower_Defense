@@ -1,3 +1,0 @@
-"skill_id","slot","display_name","runtime_kind","description_text","summary","attribute","base_damage","spell_power_coefficient","radius","cooldown_seconds","critical_allowed","status_effect_id","status_chance","status_effect_label","status_stack_amount"
-"id","enum:SkillSlot","string","enum:SkillRuntimeKind","string","string","enum:DamageAttribute","float","float","float","float","bool","string","float","string","int"
-"eve-d","D","스태틱 오버라이드","SingleAttack","감전된 대상과 연계되는 번개 범위 공격. 기본 피해 10, 주문력 계수 0.7. 반경 3.5, 폭발 반경 1.8, 쿨다운 7.0초. 감전 스택당 피해 +35%.","스태틱 오버라이드. 피해 10 + 주문력 x0.7. 반경 3.5, 쿨다운 7.0초.","Lightning","10","0.7","3.5","7","true","shock","1","감전","1"

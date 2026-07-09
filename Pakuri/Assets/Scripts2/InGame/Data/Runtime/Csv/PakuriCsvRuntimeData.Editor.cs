@@ -52,22 +52,22 @@ namespace Pakuri.Data
             sourceCatalog.MonsterRewardChoices = LoadImportedSourceTextAssetOrThrow(MonsterRewardChoicesFileName);
             sourceCatalog.MonsterSkillsProjectileFiles = LoadImportedSourceTextAssetsBySuffix(
                 RuntimeMonsterSkillBaseCsvAssetRoot,
-                "_skills_projectile.csv");
+                "skills_projectile.csv");
             sourceCatalog.MonsterSkillsLineAttackFiles = LoadImportedSourceTextAssetsBySuffix(
                 RuntimeMonsterSkillBaseCsvAssetRoot,
-                "_skills_line_attack.csv");
+                "skills_line_attack.csv");
             sourceCatalog.MonsterSkillsAreaAttackFiles = LoadImportedSourceTextAssetsBySuffix(
                 RuntimeMonsterSkillBaseCsvAssetRoot,
-                "_skills_area_attack.csv");
+                "skills_area_attack.csv");
             sourceCatalog.MonsterSkillsSingleAttackFiles = LoadImportedSourceTextAssetsBySuffix(
                 RuntimeMonsterSkillBaseCsvAssetRoot,
-                "_skills_single_attack.csv");
+                "skills_single_attack.csv");
             sourceCatalog.MonsterSkillsBuffFiles = LoadImportedSourceTextAssetsBySuffix(
                 RuntimeMonsterSkillBaseCsvAssetRoot,
-                "_skills_buff.csv");
+                "skills_buff.csv");
             sourceCatalog.MonsterSkillsPassiveFiles = LoadImportedSourceTextAssetsBySuffix(
                 RuntimeMonsterSkillBaseCsvAssetRoot,
-                "_skills_passive.csv");
+                "skills_passive.csv");
             sourceCatalog.MonsterSkillsProjectile = sourceCatalog.MonsterSkillsProjectileFiles.Length == 0
                 ? LoadImportedSourceTextAssetOrThrow(MonsterSkillsProjectileFileName)
                 : null;
@@ -112,22 +112,22 @@ namespace Pakuri.Data
                 : null;
             sourceCatalog.MonsterSkillChoicesProjectileFiles = LoadImportedSourceTextAssetsBySuffix(
                 RuntimeMonsterSkillChoiceCsvAssetRoot,
-                "_skill_choices_projectile.csv");
+                "skill_choices_projectile.csv");
             sourceCatalog.MonsterSkillChoicesLineAttackFiles = LoadImportedSourceTextAssetsBySuffix(
                 RuntimeMonsterSkillChoiceCsvAssetRoot,
-                "_skill_choices_line_attack.csv");
+                "skill_choices_line_attack.csv");
             sourceCatalog.MonsterSkillChoicesAreaAttackFiles = LoadImportedSourceTextAssetsBySuffix(
                 RuntimeMonsterSkillChoiceCsvAssetRoot,
-                "_skill_choices_area_attack.csv");
+                "skill_choices_area_attack.csv");
             sourceCatalog.MonsterSkillChoicesSingleAttackFiles = LoadImportedSourceTextAssetsBySuffix(
                 RuntimeMonsterSkillChoiceCsvAssetRoot,
-                "_skill_choices_single_attack.csv");
+                "skill_choices_single_attack.csv");
             sourceCatalog.MonsterSkillChoicesBuffFiles = LoadImportedSourceTextAssetsBySuffix(
                 RuntimeMonsterSkillChoiceCsvAssetRoot,
-                "_skill_choices_buff.csv");
+                "skill_choices_buff.csv");
             sourceCatalog.MonsterSkillChoicesPassiveFiles = LoadImportedSourceTextAssetsBySuffix(
                 RuntimeMonsterSkillChoiceCsvAssetRoot,
-                "_skill_choices_passive.csv");
+                "skill_choices_passive.csv");
             sourceCatalog.MonsterSkillChoicesProjectile = sourceCatalog.MonsterSkillChoicesProjectileFiles.Length == 0
                 ? LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesProjectileFileName)
                 : null;

@@ -1,3 +1,0 @@
-"skill_id","slot","display_name","runtime_kind","description_text","summary","base_damage","attack_power_coefficient","magazine_capacity","reload_seconds","shot_interval_seconds","projectile_burst_count","projectile_speed","critical_allowed"
-"id","enum:SkillSlot","string","enum:SkillRuntimeKind","string","string","float","float","int","float","float","int","float","bool"
-"rin-a","A","파쇄권","MagazineProjectile","린 타워의 기본 액티브 스킬. 거대 기계 건틀릿에서 주먹 모양의 충격파를 탄환처럼 발사한다.","린 타워의 기본 액티브 스킬. 거대 기계 건틀릿에서 주먹 모양의 충격파를 탄환처럼 발사한다.","17","1","10","4","0.34","1","13","true"

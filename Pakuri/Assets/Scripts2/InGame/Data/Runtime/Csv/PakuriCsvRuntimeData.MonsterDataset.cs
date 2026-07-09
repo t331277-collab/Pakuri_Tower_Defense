@@ -768,7 +768,7 @@ namespace Pakuri.Data
                 $"CSV row {record.RowNumber} in '{record.TableName}' is missing monster ownership.",
                 new List<string>
                 {
-                    "Add a monster_id column or use a split monster CSV name such as 'ariel_skills_projectile.csv'."
+                    "Add a monster_id column to kind-grouped monster skill CSV files such as 'skills_projectile.csv'."
                 });
         }
 
