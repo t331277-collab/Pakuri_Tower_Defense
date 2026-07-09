@@ -113,6 +113,15 @@ namespace Pakuri.InGame
                 : null;
         }
 
+        public GameObject CreateRuntimeSkillObject(string objectName, Vector3 position, Quaternion rotation)
+        {
+            var instance = new GameObject(string.IsNullOrWhiteSpace(objectName) ? "RuntimeSkillVisual" : objectName);
+            var transform = instance.transform;
+            transform.SetParent(ResolveRuntimeSkillRoot(), false);
+            transform.SetPositionAndRotation(position, rotation);
+            return instance;
+        }
+
         private void Awake()
         {
             lookupDirty = true;

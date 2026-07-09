@@ -116,6 +116,9 @@ namespace Pakuri.InGame
             status.StatusEffectPrefab = source != null && source.StatusEffectPrefab != null
                 ? source.StatusEffectPrefab
                 : catalogDefinition != null ? catalogDefinition.StatusEffectPrefab : null;
+            status.RuntimeVisual = source != null && RuntimeSkillVisualFactory.HasVisual(source.RuntimeVisual)
+                ? source.RuntimeVisual
+                : new Pakuri.Data.RuntimeSkillVisualSpec();
             return status;
         }
 

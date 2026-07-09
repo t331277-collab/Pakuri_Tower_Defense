@@ -1106,10 +1106,20 @@ namespace Pakuri.InGame
             var damageSourceSkillId = ResolveTriggeredDamageSourceSkillId(trigger);
             var onHitStatusEffect = ResolveTriggeredOnHitStatusEffect(source, trigger);
             var onHitSnapshot = BuildActiveChoiceSnapshot(source as MonsterUnitRuntimeModel, trigger.SourceSkillId);
+            var runtimeVisual = trigger.RuntimeVisual;
+            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var hasRuntimeHitbox = runtimeVisual != null && runtimeVisual.Hitbox != null && runtimeVisual.Hitbox.HasHitbox();
 
-            if (IsPrefabHitboxTrigger(trigger) && trigger.SkillEffectPrefab != null && combatManager.Effects != null)
+            if ((hasRuntimeHitbox || IsPrefabHitboxTrigger(trigger)) && combatManager.Effects != null)
             {
-                var instance = combatManager.Effects.InstantiateSkillPrefab(trigger.SkillEffectPrefab, center, Quaternion.identity);
+                var instance = hasRuntimeHitbox
+                    ? RuntimeSkillVisualFactory.Create(
+                        combatManager.Effects,
+                        runtimeVisual,
+                        string.IsNullOrWhiteSpace(trigger.TriggerId) ? "RuntimeTriggerHitbox" : $"RuntimeTriggerHitbox_{trigger.TriggerId}",
+                        center,
+                        Quaternion.identity)
+                    : combatManager.Effects.InstantiateSkillPrefab(trigger.SkillEffectPrefab, center, Quaternion.identity);
                 if (instance == null)
                 {
                     return false;
@@ -1151,7 +1161,17 @@ namespace Pakuri.InGame
                 trigger.TargetSelection == SkillMultiEffectTargetSelection.EventTarget,
                 onHitStatusEffect,
                 onHitSnapshot);
-            if (routedArea && trigger.SkillEffectPrefab != null && combatManager.Effects != null)
+            if (routedArea && hasRuntimeVisual && combatManager.Effects != null)
+            {
+                SkillVisualSpawnUtility.SpawnTransient(
+                    combatManager.Effects,
+                    runtimeVisual,
+                    string.IsNullOrWhiteSpace(trigger.TriggerId) ? "RuntimeTriggerVisual" : $"RuntimeTriggerVisual_{trigger.TriggerId}",
+                    center,
+                    Quaternion.identity,
+                    1f);
+            }
+            else if (routedArea && trigger.SkillEffectPrefab != null && combatManager.Effects != null)
             {
                 SkillVisualSpawnUtility.SpawnTransient(combatManager.Effects, trigger.SkillEffectPrefab, center, Quaternion.identity, 1f);
             }
@@ -1203,7 +1223,23 @@ namespace Pakuri.InGame
             var width = Mathf.Max(0.1f, trigger.Radius);
             var center = origin + direction * (length * 0.5f);
 
-            if (trigger.SkillEffectPrefab != null && combatManager.Effects != null)
+            var runtimeVisual = trigger.RuntimeVisual;
+            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            if (hasRuntimeVisual && combatManager.Effects != null)
+            {
+                var instance = RuntimeSkillVisualFactory.Create(
+                    combatManager.Effects,
+                    runtimeVisual,
+                    string.IsNullOrWhiteSpace(trigger.TriggerId) ? "RuntimeTriggerLineVisual" : $"RuntimeTriggerLineVisual_{trigger.TriggerId}",
+                    center,
+                    SkillExecutionUtility.ResolveRotation(direction));
+                if (instance != null)
+                {
+                    ConfigureTriggeredLineVisual(instance.transform, length, width);
+                    UnityEngine.Object.Destroy(instance, SkillVisualSpawnUtility.ResolveVisualLifetime(instance, 0.1f));
+                }
+            }
+            else if (trigger.SkillEffectPrefab != null && combatManager.Effects != null)
             {
                 var instance = combatManager.Effects.InstantiateSkillPrefab(
                     trigger.SkillEffectPrefab,

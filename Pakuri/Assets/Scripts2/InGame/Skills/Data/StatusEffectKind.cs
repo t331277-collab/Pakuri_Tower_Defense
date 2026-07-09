@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Pakuri.Combat;
+using Pakuri.Data;
 using UnityEngine;
 
 namespace Pakuri.InGame
@@ -295,6 +296,7 @@ namespace Pakuri.InGame
         public bool HasElementModifierTarget;
         public bool IsControlEffect;
         public GameObject StatusEffectPrefab;
+        public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
         public BuffModifierSpec Modifiers = new BuffModifierSpec();
 
         [Header("Conditional Conversion")]

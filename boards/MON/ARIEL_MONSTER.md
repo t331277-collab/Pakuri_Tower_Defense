@@ -12,6 +12,109 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-07-10 Ariel Runtime Visual Migration Implementation
+
+### Task title
+
+Implement Ariel base/trigger/status runtime visual and hitbox assembly without prefab fallback.
+
+### Goals
+
+- Convert Ariel A/B/C/D/E base visual data and Ariel A/B trigger visual-hitbox data to `runtime_visual_*` CSV fields.
+- Keep Ariel skill prefabs in the repository, but avoid using them as runtime fallback for converted Ariel base/trigger/status paths.
+- Preserve user corrections: do not add node CSV columns, do not migrate local position/rotation, do not preserve Ariel E's incorrect collider offset, and treat animation as visual playback rather than universal lifetime.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Work is based on `boards/MON/ARIEL_SKILL_RUNTIME_VISUAL_MIGRATION_PLAN.md` and inspected runtime code/CSV/prefab evidence.
+- No MSW-MCP was used.
+- Node-owned explicit effect prefab references are not converted in this task because the user previously rejected adding runtime visual/hitbox columns to node CSVs.
+- Unity Play Mode visual parity remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- Run Unity Editor CSV catalog sync/validation if editor asset refresh validation is required.
+- User verifies Ariel A projectile, Ariel B shield visual, Ariel B trait4 trigger hitbox, Ariel C/E single-attack hitboxes, and Ariel D status visual in Play Mode.
+- If full node-owned visual removal is desired later, create a separate node-effect visual migration that does not add broad node CSV columns without user approval.
+
+### Evidence
+
+- Added `RuntimeSkillVisualSpec`, `RuntimeSkillHitboxSpec`, and runtime visual CSV fields in `Pakuri/Assets/Scripts2/InGame/Data/Definition/SkillDefinition.cs` and `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.MonsterDataset.cs`.
+- Added runtime AnimatorController catalog support in `Pakuri/Assets/Scripts2/InGame/Data/Runtime/PakuriCsvRuntimeAssetCatalog.cs`, `PakuriCsvRuntimeData.AssetReferences.cs`, `PakuriCsvRuntimeData.Editor.cs`, `PakuriCsvRuntimeData.Validation.cs`, and `PakuriCsvRuntimeData.Build.cs`.
+- Added `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Utilities/RuntimeSkillVisualFactory.cs`.
+- Runtime creation is used by `ProjectileSkillExecutor`, `SingleAttackSkillExecutor`, `SupportSkillExecutors`, `SkillTriggerRuntime`, `SkillVisualSpawnUtility`, and status visuals in `InGameCombatManager`.
+- Ariel runtime CSV rows were updated in `base/projectile/skills_projectile.csv`, `base/buff/skills_buff.csv`, `base/single_attack/skills_single_attack.csv`, `triggers/buff/buff_skill_triger.csv`, and `triggers/projectile/projectile_skill_triger.csv`.
+- CSV field-count verification passed for all five edited CSV files.
+- Removed the implemented shape/trigger-state CSV columns from the runtime visual schema. Positive hitbox size now creates a runtime `BoxCollider2D`; projectile runtime visuals pass trigger mode in code, while non-projectile runtime visual paths default to non-trigger mode.
+- Search confirmed base/trigger/status runtime skill CSVs contain no Ariel `Assets/Prefab/Skill/Ariel` prefab paths after this pass. Remaining Ariel prefab paths are node-owned entries in `nodes/single_attack/single_attack_skill_node_params.csv` only.
+- Follow-up Unity auto-sync row-width failure was traced to stale imported TextAsset risk rather than the current disk CSV: `PakuriCsvLineCodec` counted `skills_projectile.csv` row 4 as 38 columns, matching the 38-column header.
+- `PakuriCsvRuntimeData.Editor.cs` now forces synchronous AssetDatabase import before runtime catalog sync reads source CSV TextAssets.
+- Unity-MCP sync and validation menus completed without CSV fatal errors after the refresh/import change.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-07-10: User requested Code Builder to implement from `ARIEL_SKILL_RUNTIME_VISUAL_MIGRATION_PLAN.md`, keep Ariel skill prefabs undeleted, and ensure skill implementation does not use prefabs as fallback.
+- 2026-07-10: Implemented runtime visual/hitbox specs and converted Ariel base/trigger/status CSV rows. Ariel prefabs were not deleted.
+- 2026-07-10: User requested removing common hitbox shape/trigger CSV columns and clearing Ariel prefab paths from base/trigger/status; Code Builder removed those columns, moved trigger-state policy into code, and verified converted base/trigger/status paths no longer reference Ariel prefabs.
+- 2026-07-10: User reported Unity auto-sync row 4 width error; Code Builder verified current CSV shape, forced Unity sync/validation successfully, and added sync-time source TextAsset refresh to reduce stale import recurrence.
+
+## Task: 2026-07-10 Ariel Runtime Visual Migration Plan
+
+### Task title
+
+Create Ariel-only runtime visual and hitbox migration design.
+
+### Goals
+
+- Document how Ariel skill prefabs can move to runtime-created visual/hitbox objects.
+- Keep difficult authored-prefab structures out of the Ariel-only migration scope.
+- Preserve the user's corrections: base/trigger-owned values should live in base/trigger CSVs, node CSVs should not receive new runtime visual/hitbox columns in this Ariel migration, root local position/rotation should not be migrated, Ariel E hitbox offset should be treated as `0,0`, and animation controllers are visual playback data rather than universal lifetime data.
+
+### Constraints
+
+- Role Owner is Designer.
+- This is a design/documentation task only; no CSV, code, scene, or prefab implementation was performed.
+- The plan is based on inspected Ariel prefab YAML, runtime executor code, current runtime CSV headers/rows, and Ariel board history.
+- No MSW-MCP was used.
+- Unity Play Mode behavior verification remains user-owned.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Design handoff created.
+
+### Next Actions
+
+- Code Builder can implement from `boards/MON/ARIEL_SKILL_RUNTIME_VISUAL_MIGRATION_PLAN.md` after user approval.
+- Before converting `Ariel_C.prefab`, Code Builder must resolve or intentionally retire the missing MonoBehaviour GUID `e8261e6f2e5fac44da64da2b23939e9a`.
+- When implementation changes CSV/runtime asset authority, update this board together with the relevant DATA board.
+
+### Evidence
+
+- Created `boards/MON/ARIEL_SKILL_RUNTIME_VISUAL_MIGRATION_PLAN.md`.
+- `Airel_A.prefab`, `ariel-b-trait-4_Skill.prefab`, `Ariel_B.prefab`, `Ariel_C-Buff.prefab`, `Ariel_C.prefab`, `Ariel_D.prefab`, and `Ariel_E.prefab` were inspected for SpriteRenderer, Animator, BoxCollider2D, scale, sprite GUID, animator controller GUID, and script GUID evidence.
+- Runtime code evidence used in the plan includes `EffectManager.InstantiateSkillPrefab(...)`, `ProjectileSkillExecutor`, `InGameProjectileActor`, `ZoneSkillExecutor`, `InGameZoneSkillActor`, `BeamSkillExecutor`, `InGameLineAttackActor`, `SingleAttackSkillExecutor`, and `SkillVisualSpawnUtility`.
+- Current CSV evidence used in the plan includes `skills_projectile.csv`, `skills_buff.csv`, `skills_single_attack.csv`, `buff_skill_triger.csv`, `projectile_skill_triger.csv`, and `single_attack_skill_node_params.csv`.
+
+### History
+
+- 2026-07-10: User asked for an MD based on the discussion of converting Ariel skill prefabs to runtime structure, explicitly requiring the corrections about CSV ownership, unnecessary local position/rotation, optional hitbox offset, Ariel E offset correction, and animation/lifetime separation to be included.
+- 2026-07-10: User clarified that this Ariel migration should not add new runtime visual/hitbox values to node CSVs; the plan was corrected to target base and trigger CSV columns, while leaving existing node-owned prefab references as fallback or separate future work.
+
 ## Task: 2026-07-09 Ariel F-J Passive EffectTarget Param Cleanup
 
 ### Task title

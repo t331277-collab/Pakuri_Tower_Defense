@@ -21,9 +21,11 @@ namespace Pakuri.Data
         {
             private readonly HashSet<string> spritePathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             private readonly HashSet<string> prefabPathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            private readonly HashSet<string> animatorControllerPathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             public List<ReferencedAssetPath> SpritePaths { get; } = new List<ReferencedAssetPath>();
             public List<ReferencedAssetPath> PrefabPaths { get; } = new List<ReferencedAssetPath>();
+            public List<ReferencedAssetPath> AnimatorControllerPaths { get; } = new List<ReferencedAssetPath>();
 
             public void AddSprite(string assetPath, string ownerLabel)
             {
@@ -33,6 +35,11 @@ namespace Pakuri.Data
             public void AddPrefab(string assetPath, string ownerLabel)
             {
                 Add(assetPath, ownerLabel, prefabPathLookup, PrefabPaths);
+            }
+
+            public void AddAnimatorController(string assetPath, string ownerLabel)
+            {
+                Add(assetPath, ownerLabel, animatorControllerPathLookup, AnimatorControllerPaths);
             }
 
             private static void Add(
@@ -67,6 +74,10 @@ namespace Pakuri.Data
                 assets.AddSprite(skill.SkillIconPath, $"Skill '{skill.Id}' skill_icon_path");
                 assets.AddPrefab(skill.SkillEffectPrefabPath, $"Skill '{skill.Id}' skill_effect_prefab_path");
                 assets.AddPrefab(skill.Status.StatusEffectPrefabPath, $"Skill '{skill.Id}' status_effect_prefab_path");
+                assets.AddSprite(skill.RuntimeVisualSpritePath, $"Skill '{skill.Id}' runtime_visual_sprite_path");
+                assets.AddAnimatorController(
+                    skill.RuntimeVisualAnimatorControllerPath,
+                    $"Skill '{skill.Id}' runtime_visual_animator_controller_path");
             }
 
             foreach (var choice in model.SkillChoices.Values)
@@ -102,6 +113,10 @@ namespace Pakuri.Data
             foreach (var trigger in model.SkillTriggers.Values)
             {
                 assets.AddPrefab(trigger.SkillEffectPrefabPath, $"Skill trigger '{trigger.Id}' skill_effect_prefab_path");
+                assets.AddSprite(trigger.RuntimeVisualSpritePath, $"Skill trigger '{trigger.Id}' runtime_visual_sprite_path");
+                assets.AddAnimatorController(
+                    trigger.RuntimeVisualAnimatorControllerPath,
+                    $"Skill trigger '{trigger.Id}' runtime_visual_animator_controller_path");
             }
 
             foreach (var status in model.StatusEffects.Values)

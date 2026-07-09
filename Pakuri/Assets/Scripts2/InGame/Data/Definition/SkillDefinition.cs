@@ -134,6 +134,34 @@ namespace Pakuri.Data
     }
 
     [Serializable]
+    public sealed class RuntimeSkillHitboxSpec
+    {
+        public Vector2 Size;
+
+        public bool HasHitbox()
+        {
+            return Size.x > 0f && Size.y > 0f;
+        }
+    }
+
+    [Serializable]
+    public sealed class RuntimeSkillVisualSpec
+    {
+        public Sprite Sprite;
+        public RuntimeAnimatorController AnimatorController;
+        public float Scale = 1f;
+        public int SortingOrder;
+        public RuntimeSkillHitboxSpec Hitbox = new RuntimeSkillHitboxSpec();
+
+        public bool HasVisual()
+        {
+            return Sprite != null
+                || AnimatorController != null
+                || (Hitbox != null && Hitbox.HasHitbox());
+        }
+    }
+
+    [Serializable]
     public class SkillTriggerDefinition
     {
         public string TriggerId;
@@ -181,6 +209,7 @@ namespace Pakuri.Data
         public float CooldownRefundRatio;
         public float ReloadReduceRatio;
         public GameObject SkillEffectPrefab;
+        public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
     }
@@ -455,6 +484,7 @@ namespace Pakuri.Data
         public bool IsDefaultLearned;
         public Sprite SkillIcon;
         public GameObject SkillEffectPrefab;
+        public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
         [TextArea(2, 5)] public string DescriptionText;
         public DamageAttribute Attribute;
         public float BaseDamage;

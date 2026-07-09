@@ -1309,6 +1309,11 @@ namespace Pakuri.Data
             {
                 ValidatePrefabPath(assetCatalog, asset.AssetPath, asset.OwnerLabel, errors);
             }
+
+            foreach (var asset in referencedAssets.AnimatorControllerPaths)
+            {
+                ValidateAnimatorControllerPath(assetCatalog, asset.AssetPath, asset.OwnerLabel, errors);
+            }
         }
 
         private static void ValidateSpritePath(
@@ -1342,6 +1347,23 @@ namespace Pakuri.Data
             if (!assetCatalog.HasPrefab(assetPath))
             {
                 errors.Add($"{ownerLabel} references prefab asset '{assetPath}' that is not present in the runtime asset catalog.");
+            }
+        }
+
+        private static void ValidateAnimatorControllerPath(
+            PakuriCsvRuntimeAssetCatalog assetCatalog,
+            string assetPath,
+            string ownerLabel,
+            List<string> errors)
+        {
+            if (string.IsNullOrWhiteSpace(assetPath))
+            {
+                return;
+            }
+
+            if (!assetCatalog.HasAnimatorController(assetPath))
+            {
+                errors.Add($"{ownerLabel} references animator controller asset '{assetPath}' that is not present in the runtime asset catalog.");
             }
         }
 

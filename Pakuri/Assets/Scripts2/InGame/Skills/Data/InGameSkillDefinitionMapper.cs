@@ -114,6 +114,7 @@ namespace Pakuri.InGame
             skill.Description = source.DescriptionText;
             skill.Icon = source.SkillIcon;
             skill.SkillEffectPrefab = source.SkillEffectPrefab;
+            skill.RuntimeVisual = source.RuntimeVisual ?? new RuntimeSkillVisualSpec();
             skill.EnhancementChoices = MapChoices(source.EnhancementChoices);
             skill.MasterChoices = MapChoices(source.MasterSkillChoices);
             skill.MultiEffects = source.MultiEffects ?? Array.Empty<SkillEffectDefinition>();

@@ -1,9 +1,27 @@
 using UnityEngine;
+using Pakuri.Data;
 
 namespace Pakuri.InGame
 {
     internal static class SkillVisualSpawnUtility
     {
+        public static GameObject SpawnTransient(
+            EffectManager effects,
+            RuntimeSkillVisualSpec visual,
+            string objectName,
+            Vector3 position,
+            Quaternion rotation,
+            float durationSeconds)
+        {
+            var instance = RuntimeSkillVisualFactory.Create(effects, visual, objectName, position, rotation);
+            if (instance != null)
+            {
+                Object.Destroy(instance, Mathf.Max(0.01f, durationSeconds));
+            }
+
+            return instance;
+        }
+
         public static GameObject SpawnTransient(
             EffectManager effects,
             GameObject prefab,
@@ -22,6 +40,35 @@ namespace Pakuri.InGame
                 Object.Destroy(instance, Mathf.Max(0.01f, durationSeconds));
             }
 
+            return instance;
+        }
+
+        public static GameObject SpawnAttached(
+            EffectManager effects,
+            RuntimeSkillVisualSpec visual,
+            string objectName,
+            Transform target,
+            float durationSeconds,
+            Vector3 offset)
+        {
+            if (effects == null || !RuntimeSkillVisualFactory.HasVisual(visual) || target == null)
+            {
+                return null;
+            }
+
+            var instance = RuntimeSkillVisualFactory.Create(effects, visual, objectName, target.position, Quaternion.identity);
+            if (instance == null)
+            {
+                return null;
+            }
+
+            var actor = instance.GetComponent<InGameAttachedSkillEffectActor>();
+            if (actor == null)
+            {
+                actor = instance.AddComponent<InGameAttachedSkillEffectActor>();
+            }
+
+            actor.Initialize(target, Mathf.Max(0.1f, durationSeconds), offset);
             return instance;
         }
 

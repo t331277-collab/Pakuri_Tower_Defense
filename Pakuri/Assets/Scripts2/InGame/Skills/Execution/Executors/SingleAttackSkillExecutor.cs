@@ -86,10 +86,12 @@ namespace Pakuri.InGame
             }
 
             var center = ResolveAreaCenter(context, skill.Targeting, skill.Area);
-            var prefab = ResolvePrefab(context, snapshot, skill);
+            var runtimeVisual = skill.RuntimeVisual;
+            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var prefab = hasRuntimeVisual ? null : ResolvePrefab(context, snapshot, skill);
             var outcome = UsesResolvedDeployments(skill)
-                ? ExecuteResolvedDeployments(context, snapshot, skill, center, prefab)
-                : ExecuteAtCenter(context, snapshot, skill, center, prefab, true);
+                ? ExecuteResolvedDeployments(context, snapshot, skill, center, runtimeVisual, prefab)
+                : ExecuteAtCenter(context, snapshot, skill, center, runtimeVisual, prefab, true);
             var multiEffectRouted = SkillMultiEffectExecutor.Execute(
                 context,
                 snapshot,
@@ -126,14 +128,28 @@ namespace Pakuri.InGame
                     : null;
         }
 
-        private static void SpawnVisual(SkillExecutionContext context, GameObject prefab, Vector2 center, float minimumLifetimeSeconds)
+        private static void SpawnVisual(
+            SkillExecutionContext context,
+            RuntimeSkillVisualSpec runtimeVisual,
+            GameObject prefab,
+            Vector2 center,
+            float minimumLifetimeSeconds)
         {
-            if (prefab == null || context.CombatManager.Effects == null)
+            if (context.CombatManager.Effects == null)
             {
                 return;
             }
 
-            var instance = context.CombatManager.Effects.InstantiateSkillPrefab(prefab, center, Quaternion.identity);
+            var instance = RuntimeSkillVisualFactory.HasVisual(runtimeVisual)
+                ? RuntimeSkillVisualFactory.Create(
+                    context.CombatManager.Effects,
+                    runtimeVisual,
+                    "RuntimeSingleAttackVisual",
+                    center,
+                    Quaternion.identity)
+                : prefab != null
+                    ? context.CombatManager.Effects.InstantiateSkillPrefab(prefab, center, Quaternion.identity)
+                    : null;
             if (instance != null)
             {
                 UnityEngine.Object.Destroy(instance, ResolveVisualLifetime(instance, minimumLifetimeSeconds));
@@ -243,6 +259,7 @@ namespace Pakuri.InGame
             SkillExecutionSnapshot snapshot,
             SingleAttackData skill,
             Vector2 primaryCenter,
+            RuntimeSkillVisualSpec runtimeVisual,
             GameObject prefab)
         {
             var deploymentCount = ResolveDeploymentCount(skill, snapshot);
@@ -252,7 +269,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < centers.Count; i++)
             {
                 var center = centers[i];
-                var outcome = ExecuteAtCenter(context, snapshot, skill, center, prefab, true);
+                var outcome = ExecuteAtCenter(context, snapshot, skill, center, runtimeVisual, prefab, true);
                 routed = routed || outcome.Routed;
                 castCommitted = castCommitted || outcome.CastCommitted;
                 routed = SkillMultiEffectExecutor.ExecuteOnDeploymentCast(
@@ -260,7 +277,7 @@ namespace Pakuri.InGame
                     snapshot,
                     SkillPlanActionDispatcher.ResolveEffects(snapshot, skill.MultiEffects),
                     center) || routed;
-                ScheduleRepeatedDeployments(context, snapshot, skill, center, prefab);
+                ScheduleRepeatedDeployments(context, snapshot, skill, center, runtimeVisual, prefab);
             }
 
             return new SingleAttackExecutionOutcome(routed, castCommitted);
@@ -271,6 +288,7 @@ namespace Pakuri.InGame
             SkillExecutionSnapshot snapshot,
             SingleAttackData skill,
             Vector2 center,
+            RuntimeSkillVisualSpec runtimeVisual,
             GameObject prefab)
         {
             if (context == null
@@ -290,7 +308,7 @@ namespace Pakuri.InGame
                 var delaySeconds = Mathf.Max(0f, snapshot.RepeatIntervalSeconds * repeatIndex);
                 if (delaySeconds <= 0f)
                 {
-                    ExecuteAtCenter(context, repeatSnapshot, skill, center, prefab, false);
+                    ExecuteAtCenter(context, repeatSnapshot, skill, center, runtimeVisual, prefab, false);
                     SkillMultiEffectExecutor.ExecuteOnDeploymentCast(
                         context,
                         repeatSnapshot,
@@ -304,6 +322,7 @@ namespace Pakuri.InGame
                     repeatSnapshot,
                     skill,
                     center,
+                    runtimeVisual,
                     prefab,
                     delaySeconds));
             }
@@ -314,6 +333,7 @@ namespace Pakuri.InGame
             SkillExecutionSnapshot snapshot,
             SingleAttackData skill,
             Vector2 center,
+            RuntimeSkillVisualSpec runtimeVisual,
             GameObject prefab,
             float delaySeconds)
         {
@@ -329,7 +349,7 @@ namespace Pakuri.InGame
                 yield break;
             }
 
-            ExecuteAtCenter(context, snapshot, skill, center, prefab, false);
+            ExecuteAtCenter(context, snapshot, skill, center, runtimeVisual, prefab, false);
             SkillMultiEffectExecutor.ExecuteOnDeploymentCast(
                 context,
                 snapshot,
@@ -389,6 +409,7 @@ namespace Pakuri.InGame
             SkillExecutionSnapshot snapshot,
             SingleAttackData skill,
             Vector2 center,
+            RuntimeSkillVisualSpec runtimeVisual,
             GameObject prefab,
             bool allowConditionalFollowUp)
         {
@@ -413,19 +434,27 @@ namespace Pakuri.InGame
             var routed = false;
             var castCommitted = false;
 
-            if (skill.UsePrefabHitbox && prefab != null && context.CombatManager.Effects != null)
+            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            if (skill.UsePrefabHitbox && (hasRuntimeVisual || prefab != null) && context.CombatManager.Effects != null)
             {
                 center = ResolvePrefabHitboxCenter(context, center, skill);
-                var instance = context.CombatManager.Effects.InstantiateSkillPrefab(prefab, center, Quaternion.identity);
+                var instance = hasRuntimeVisual
+                    ? RuntimeSkillVisualFactory.Create(
+                        context.CombatManager.Effects,
+                        runtimeVisual,
+                        "RuntimeSingleAttackHitbox",
+                        center,
+                        Quaternion.identity)
+                    : context.CombatManager.Effects.InstantiateSkillPrefab(prefab, center, Quaternion.identity);
                 if (instance != null)
                 {
                     spawnedHitbox = true;
                     castCommitted = true;
-                    if (UsesLineStyleMultiDeploymentVisual(skill))
+                    if (!hasRuntimeVisual && UsesLineStyleMultiDeploymentVisual(skill))
                     {
                         ConfigureMultiDeploymentPrefabVisual(instance.transform, context, skill, snapshot, center);
                     }
-                    else
+                    else if (!hasRuntimeVisual)
                     {
                         SkillExecutionUtility.ApplyPrefabScale(instance.transform, SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area), snapshot);
                     }
@@ -485,7 +514,7 @@ namespace Pakuri.InGame
                 castCommitted = true;
                 if (damageDelaySeconds > 0f)
                 {
-                    SpawnVisual(context, prefab, center, damageDelaySeconds + PostDamageLifetimePaddingSeconds);
+                    SpawnVisual(context, runtimeVisual, prefab, center, damageDelaySeconds + PostDamageLifetimePaddingSeconds);
                     context.CombatManager.StartCoroutine(ApplyNonPrefabTargetsAfterDelay(
                         context,
                         snapshot,
@@ -530,7 +559,7 @@ namespace Pakuri.InGame
 
                     if (routed)
                     {
-                        SpawnVisual(context, prefab, center, PostDamageLifetimePaddingSeconds);
+                        SpawnVisual(context, runtimeVisual, prefab, center, PostDamageLifetimePaddingSeconds);
                     }
                 }
             }
@@ -1346,7 +1375,7 @@ namespace Pakuri.InGame
                 ? (Vector2)liveTarget.Transform.position
                 : followUpTarget.Center;
             var followUpSnapshot = snapshot != null ? CloneSnapshotWithDamageMultiplier(snapshot, followUpSpec.DamageMultiplier) : null;
-            ExecuteAtCenter(context, followUpSnapshot, skill, center, followUpSpec.Prefab, false);
+            ExecuteAtCenter(context, followUpSnapshot, skill, center, null, followUpSpec.Prefab, false);
         }
 
         private static SkillExecutionSnapshot CloneSnapshotWithDamageMultiplier(

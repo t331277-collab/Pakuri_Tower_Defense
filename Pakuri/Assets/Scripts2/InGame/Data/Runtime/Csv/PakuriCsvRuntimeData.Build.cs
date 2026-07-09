@@ -320,6 +320,7 @@ namespace Pakuri.Data
                     IsDefaultLearned = skill.IsDefaultLearned,
                     SkillIcon = LoadSprite(skill.SkillIconPath),
                     SkillEffectPrefab = LoadPrefab(skill.SkillEffectPrefabPath),
+                    RuntimeVisual = BuildRuntimeVisual(skill),
                     DescriptionText = skill.DescriptionText,
                     Attribute = skill.Attribute,
                     BaseDamage = skill.BaseDamage,
@@ -846,6 +847,7 @@ namespace Pakuri.Data
                     CooldownRefundRatio = trigger.CooldownRefundRatio,
                     ReloadReduceRatio = trigger.ReloadReduceRatio,
                     SkillEffectPrefab = LoadPrefab(trigger.SkillEffectPrefabPath),
+                    RuntimeVisual = BuildRuntimeVisual(trigger),
                     RuntimeSupportState = trigger.RuntimeSupportState,
                     RuntimeSupportNotes = trigger.RuntimeSupportNotes
                 };
@@ -1256,6 +1258,68 @@ namespace Pakuri.Data
             if (runtimeAssetCatalog != null && runtimeAssetCatalog.TryGetSprite(assetPath, out var sprite))
             {
                 return sprite;
+            }
+
+            return null;
+        }
+
+        private static RuntimeSkillVisualSpec BuildRuntimeVisual(SkillRow row)
+        {
+            return row == null
+                ? new RuntimeSkillVisualSpec()
+                : BuildRuntimeVisual(
+                    row.RuntimeVisualSpritePath,
+                    row.RuntimeVisualAnimatorControllerPath,
+                    row.RuntimeVisualScale,
+                    row.RuntimeVisualSortingOrder,
+                    row.RuntimeHitboxSizeX,
+                    row.RuntimeHitboxSizeY);
+        }
+
+        private static RuntimeSkillVisualSpec BuildRuntimeVisual(SkillTriggerRow row)
+        {
+            return row == null
+                ? new RuntimeSkillVisualSpec()
+                : BuildRuntimeVisual(
+                    row.RuntimeVisualSpritePath,
+                    row.RuntimeVisualAnimatorControllerPath,
+                    row.RuntimeVisualScale,
+                    row.RuntimeVisualSortingOrder,
+                    row.RuntimeHitboxSizeX,
+                    row.RuntimeHitboxSizeY);
+        }
+
+        private static RuntimeSkillVisualSpec BuildRuntimeVisual(
+            string spritePath,
+            string animatorControllerPath,
+            float scale,
+            int sortingOrder,
+            float hitboxSizeX,
+            float hitboxSizeY)
+        {
+            return new RuntimeSkillVisualSpec
+            {
+                Sprite = LoadSprite(spritePath),
+                AnimatorController = LoadAnimatorController(animatorControllerPath),
+                Scale = scale > 0f ? scale : 1f,
+                SortingOrder = sortingOrder,
+                Hitbox = new RuntimeSkillHitboxSpec
+                {
+                    Size = new Vector2(Mathf.Max(0f, hitboxSizeX), Mathf.Max(0f, hitboxSizeY))
+                }
+            };
+        }
+
+        private static RuntimeAnimatorController LoadAnimatorController(string assetPath)
+        {
+            if (string.IsNullOrWhiteSpace(assetPath))
+            {
+                return null;
+            }
+
+            if (runtimeAssetCatalog != null && runtimeAssetCatalog.TryGetAnimatorController(assetPath, out var animatorController))
+            {
+                return animatorController;
             }
 
             return null;

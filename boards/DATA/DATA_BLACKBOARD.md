@@ -5,6 +5,58 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-10 Ariel Runtime Visual CSV Columns
+
+### Task title
+
+Add base/trigger runtime visual and hitbox CSV columns for Ariel.
+
+### Goals
+
+- Store Ariel runtime visual sprite/controller/scale/sorting data on base skill and trigger CSV rows.
+- Store Ariel runtime hitbox size data on collider-backed base skill and trigger CSV rows.
+- Keep hitbox shape and trigger-state policy in code because the current runtime path uses one common BoxCollider2D convention.
+- Keep node CSV schema unchanged for this pass.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active runtime CSV authority remains under `Pakuri/Assets/CSVdata/runtime/monster/skills`.
+- Existing node-owned `skill_effect_prefab_path` params are outside this base/trigger/status CSV migration.
+- No MSW-MCP was used.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- If Unity Editor validation is needed, sync and validate runtime CSV catalogs through Unity-MCP/editor menu after Unity reloads code.
+- Treat future deliberate non-zero hitbox offsets as a separate schema extension; Ariel E uses offset `0,0`.
+
+### Evidence
+
+- Added runtime visual columns to `base/projectile/skills_projectile.csv`, `base/buff/skills_buff.csv`, `base/single_attack/skills_single_attack.csv`, `triggers/buff/buff_skill_triger.csv`, and `triggers/projectile/projectile_skill_triger.csv`.
+- Ariel rows now carry `runtime_visual_sprite_path`, `runtime_visual_animator_controller_path`, `runtime_visual_scale`, `runtime_visual_sorting_order`, `runtime_hitbox_size_x`, and `runtime_hitbox_size_y` where applicable.
+- Runtime code decides hitbox shape and trigger state: positive hitbox size creates a `BoxCollider2D`; projectile runtime visuals pass trigger mode, while non-projectile runtime visual paths default to non-trigger mode.
+- Cleared converted Ariel trigger `skill_effect_prefab_path` values and Ariel D `status_effect_prefab_path`.
+- CSV field-count verification passed for all five edited CSV files.
+- Follow-up after Unity auto-sync reported `skills_projectile.csv` row 4 as 37 columns: the current disk file was verified with `PakuriCsvLineCodec` as 38 columns for row 4, and full runtime skill CSV shape verification returned no bad rows.
+- `PakuriCsvRuntimeData.Editor.cs` now refreshes the AssetDatabase with `ForceSynchronousImport` at the start of runtime catalog sync so existing TextAsset references are not read from stale import cache after external CSV edits.
+- Unity-MCP `Pakuri/Sync CSV Runtime Catalog Assets` logged successful sync from `Assets/CSVdata/runtime`, and `Pakuri/Validate CSV Source Data` logged the runtime catalog load summary without CSV fatal errors.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-07-10: User requested Code Builder implementation from the Ariel runtime visual migration plan, with Ariel prefabs retained but not used as runtime fallback for converted skill paths.
+- 2026-07-10: User requested removing the common hitbox shape/trigger CSV columns and letting code own those policies; Code Builder removed those columns and verified all five edited CSV files keep matching row widths.
+- 2026-07-10: User reported Unity auto-sync `skills_projectile.csv` row-width failure; Code Builder verified the final CSV shape, forced Unity reimport/sync successfully, and added a sync-time AssetDatabase refresh to prevent stale TextAsset reads.
+
 ## Task: 2026-07-09 Ariel F-J Passive EffectTarget Param Cleanup
 
 ### Task title

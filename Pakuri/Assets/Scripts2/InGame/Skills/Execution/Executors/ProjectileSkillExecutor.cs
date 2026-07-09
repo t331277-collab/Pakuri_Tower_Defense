@@ -43,8 +43,10 @@ namespace Pakuri.InGame
             var currentBurstProjectileIndex = context.Runtime != null
                 ? context.Runtime.ResolveCurrentBurstProjectileIndex()
                 : 1;
-            var prefab = skill.Projectile != null ? skill.Projectile.ProjectilePrefab : null;
-            if (prefab == null)
+            var runtimeVisual = skill.RuntimeVisual;
+            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var prefab = hasRuntimeVisual ? null : skill.Projectile != null ? skill.Projectile.ProjectilePrefab : null;
+            if (prefab == null && !hasRuntimeVisual)
             {
                 var effects = context.CombatManager.Effects;
                 prefab = effects != null ? effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId) : null;
@@ -63,6 +65,7 @@ namespace Pakuri.InGame
             var requiresProjectileActor = skill.StopOnFirstHit
                 || skill.HasImpactArea
                 || skill.ImpactDelaySeconds > 0f
+                || hasRuntimeVisual
                 || onHitEffects.Length > 0
                 || onExpireEffects.Length > 0;
             if (prefab == null && !requiresProjectileActor)
@@ -124,9 +127,18 @@ namespace Pakuri.InGame
                     ? context.Runtime.AdvanceProjectileLaunchCount()
                     : 0;
                 var branchSpec = ResolveBranchSpec(snapshot, prefab, projectileLaunchIndex);
-                var instance = prefab != null
-                    ? effects.InstantiateSkillPrefab(prefab, origin, SkillExecutionUtility.ResolveRotation(spreadDirection))
-                    : new GameObject(string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameProjectile" : $"InGameProjectile_{skill.SkillId}");
+                var rotation = SkillExecutionUtility.ResolveRotation(spreadDirection);
+                var instance = hasRuntimeVisual
+                    ? RuntimeSkillVisualFactory.Create(
+                        effects,
+                        runtimeVisual,
+                        string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameProjectile" : $"InGameProjectile_{skill.SkillId}",
+                        origin,
+                        rotation,
+                        hitboxIsTrigger: true)
+                    : prefab != null
+                        ? effects.InstantiateSkillPrefab(prefab, origin, rotation)
+                        : new GameObject(string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameProjectile" : $"InGameProjectile_{skill.SkillId}");
                 if (instance == null)
                 {
                     if (target != null)

@@ -5,6 +5,54 @@
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-10 Runtime Skill Visual Asset Catalog
+
+### Task title
+
+Add runtime skill visual Sprite/AnimatorController catalog support for Ariel migration.
+
+### Goals
+
+- Let runtime skill CSV rows reference Sprite and AnimatorController assets directly instead of instantiating Ariel skill prefabs.
+- Keep old Ariel prefabs as assets, but do not use them as fallback for converted Ariel base/trigger/status paths.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active runtime CSV authority remains under `Pakuri/Assets/CSVdata/runtime/monster/skills`.
+- No MSW-MCP was used.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- Run Unity Editor CSV runtime catalog sync/validation after editor reload if asset import validation is needed.
+- Keep future runtime visual asset paths in base/trigger CSVs unless a separate node-effect visual migration is explicitly approved.
+
+### Evidence
+
+- `PakuriCsvRuntimeAssetCatalog.cs` now stores Sprite, Prefab, and RuntimeAnimatorController entries.
+- `PakuriCsvRuntimeData.AssetReferences.cs`, `PakuriCsvRuntimeData.Editor.cs`, `PakuriCsvRuntimeData.Validation.cs`, and `PakuriCsvRuntimeData.Build.cs` collect, build, validate, and load runtime visual sprite/controller paths.
+- Ariel runtime visual CSV fields were added to `skills_projectile.csv`, `skills_buff.csv`, `skills_single_attack.csv`, `buff_skill_triger.csv`, and `projectile_skill_triger.csv`.
+- Runtime hitbox CSV fields now keep only size data. BoxCollider2D creation and trigger-state policy are code-owned instead of asset-catalog-owned.
+- CSV field-count verification passed for those five files.
+- Runtime catalog sync now forces AssetDatabase synchronous import before reading source TextAssets, preventing stale imported CSV content from feeding the asset catalog after external file edits.
+- Unity-MCP `Pakuri/Sync CSV Runtime Catalog Assets` and `Pakuri/Validate CSV Source Data` completed without CSV fatal errors after the refresh/import change.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-07-10: Code Builder implemented Ariel runtime visual/hitbox migration and extended the runtime asset catalog to carry AnimatorController references.
+- 2026-07-10: Code Builder removed the common hitbox shape/trigger CSV columns from the runtime visual path; the asset catalog remains responsible for Sprite/AnimatorController resolution only.
+- 2026-07-10: Code Builder fixed a stale TextAsset sync risk reported as `skills_projectile.csv` row 4 width mismatch by forcing synchronous import before runtime catalog source TextAssets are read.
+
 ## Task: 2026-07-05 Monster Skill Choice Split SourceCatalog Wiring
 
 ### Task title

@@ -22,9 +22,11 @@ namespace Pakuri.InGame
             }
 
             var targets = ResolveBuffTargets(context.CasterEntry, context.Roster, skill.Target);
-            var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
+            var runtimeVisual = skill.RuntimeVisual;
+            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var prefab = !hasRuntimeVisual && snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
-                : context.CombatManager.Effects != null
+                : !hasRuntimeVisual && context.CombatManager.Effects != null
                     ? context.CombatManager.Effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId)
                     : null;
             var routed = false;
@@ -53,7 +55,17 @@ namespace Pakuri.InGame
                     statusSpec.RefreshDuration,
                     context.Caster);
 
-                if (prefab != null && target.Transform != null && context.CombatManager.Effects != null)
+                if (hasRuntimeVisual && target.Transform != null && context.CombatManager.Effects != null)
+                {
+                    SkillVisualSpawnUtility.SpawnAttached(
+                        context.CombatManager.Effects,
+                        runtimeVisual,
+                        string.IsNullOrWhiteSpace(skill.SkillId) ? "RuntimeBuffVisual" : $"RuntimeBuffVisual_{skill.SkillId}",
+                        target.Transform,
+                        statusSpec.DurationSeconds,
+                        Vector3.zero);
+                }
+                else if (prefab != null && target.Transform != null && context.CombatManager.Effects != null)
                 {
                     SkillVisualSpawnUtility.SpawnAttached(
                         context.CombatManager.Effects,
@@ -174,9 +186,11 @@ namespace Pakuri.InGame
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
             }
 
-            var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
+            var runtimeVisual = skill.RuntimeVisual;
+            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var prefab = !hasRuntimeVisual && snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
-                : context.CombatManager.Effects != null
+                : !hasRuntimeVisual && context.CombatManager.Effects != null
                     ? context.CombatManager.Effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId)
                     : null;
 
@@ -200,7 +214,17 @@ namespace Pakuri.InGame
                     false,
                     true,
                     context.Caster);
-                if (prefab != null && target.Transform != null && context.CombatManager.Effects != null)
+                if (hasRuntimeVisual && target.Transform != null && context.CombatManager.Effects != null)
+                {
+                    SkillVisualSpawnUtility.SpawnAttached(
+                        context.CombatManager.Effects,
+                        runtimeVisual,
+                        string.IsNullOrWhiteSpace(skill.SkillId) ? "RuntimeShieldVisual" : $"RuntimeShieldVisual_{skill.SkillId}",
+                        target.Transform,
+                        duration,
+                        Vector3.zero);
+                }
+                else if (prefab != null && target.Transform != null && context.CombatManager.Effects != null)
                 {
                     SkillVisualSpawnUtility.SpawnAttached(
                         context.CombatManager.Effects,

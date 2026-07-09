@@ -23,17 +23,30 @@ MonoBehaviour:
     Asset: {fileID: 21300000, guid: 0caea6bc70c48504bb727429d31f5bc3, type: 3}
   - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Warrior.png
     Asset: {fileID: 21300000, guid: 128ccc7f23263be428abee49b68f0e07, type: 3}
+  - AssetPath: Assets/Image/Monster/ariel/SkillEffect/1.png
+    Asset: {fileID: 21300000, guid: 3476df253a7be994c9586a7baed1b9be, type: 3}
+  - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
+      15\uC77C \uC624\uD6C4 05_27_46-Photoroom 1.png"
+    Asset: {fileID: 21300000, guid: b4635bf7bb7f06d498f12cde25a2c586, type: 3}
+  - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
+      15\uC77C \uC624\uD6C4 05_37_22-Photoroom 1.png"
+    Asset: {fileID: 21300000, guid: 1b8a9fbe74e502a45b4caddef70bf134, type: 3}
+  - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
+      22\uC77C \uC624\uC804 12_15_03-Photoroom 1.png"
+    Asset: {fileID: 21300000, guid: 2eda7ef196190804baa452114008d4b2, type: 3}
+  - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
+      22\uC77C \uC624\uC804 12_25_00-Photoroom 2.png"
+    Asset: {fileID: 21300000, guid: 60c0a1f02add52d47b5f2154560f8f04, type: 3}
+  - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
+      22\uC77C \uC624\uC804 12_31_35-Photoroom 1.png"
+    Asset: {fileID: 21300000, guid: 73386185b646dc14d9c0e9fd5b9830a5, type: 3}
   Prefabs:
-  - AssetPath: Assets/Prefab/Skill/Ariel/ariel-b-trait-4_Skill.prefab
-    Asset: {fileID: 2056063138332479, guid: bd9fb889f15735e45a481788fb9faf78, type: 3}
   - AssetPath: Assets/Prefab/Skill/Ariel/Ariel_B.prefab
     Asset: {fileID: 3529180550599226198, guid: a94d18f89e17df94fbed6a9e057e7fed, type: 3}
   - AssetPath: Assets/Prefab/Skill/Ariel/Ariel_C-Buff.prefab
     Asset: {fileID: 8366197105921393042, guid: 33b5e950176a3454e9e779d062c8d540, type: 3}
   - AssetPath: Assets/Prefab/Skill/Ariel/Ariel_C.prefab
     Asset: {fileID: 1713502052278588150, guid: f851084efb562e043a673ac67840693f, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Ariel/Ariel_D.prefab
-    Asset: {fileID: 9155496313211382274, guid: 9ab3f0a1fdf7cba419869b99af0013ef, type: 3}
   - AssetPath: Assets/Prefab/Skill/Eve/Eve_c-master-2.prefab
     Asset: {fileID: 4334470998071384926, guid: 30a4745c2cff29f41acf72125c981f67, type: 3}
   - AssetPath: Assets/Prefab/Skill/Eve/Eve_D.prefab
@@ -72,3 +85,21 @@ MonoBehaviour:
     Asset: {fileID: 2841107167972549463, guid: 47b7f2f4cd2e55341b1c0b180bdc635f, type: 3}
   - AssetPath: Assets/Prefab/Skill/Vega/Vega_E.prefab
     Asset: {fileID: 6913114519679810237, guid: 4f10dd1703cb6a148be6a482ea00b73d, type: 3}
+  AnimatorControllers:
+  - AssetPath: Assets/Image/Monster/ariel/SkillEffect/1.controller
+    Asset: {fileID: 9100000, guid: 3547e90223db8fb4893a84732a1e3bb7, type: 2}
+  - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
+      15\uC77C \uC624\uD6C4 05_27_46-Photoroom 1.controller"
+    Asset: {fileID: 9100000, guid: f9568907de19d4a4b92cbc99dadbc855, type: 2}
+  - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
+      15\uC77C \uC624\uD6C4 05_37_22-Photoroom 1.controller"
+    Asset: {fileID: 9100000, guid: 5807496f41cc3194ea713684c395202b, type: 2}
+  - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
+      22\uC77C \uC624\uC804 12_15_03-Photoroom 1.controller"
+    Asset: {fileID: 9100000, guid: c6c50bf91cc59d44f9e89207c63d2e9a, type: 2}
+  - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
+      22\uC77C \uC624\uC804 12_25_00-Photoroom 2.controller"
+    Asset: {fileID: 9100000, guid: 89134930bd86bcc4390a46b491a933d6, type: 2}
+  - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
+      22\uC77C \uC624\uC804 12_31_35-Photoroom 1.controller"
+    Asset: {fileID: 9100000, guid: 77d7cb47f47128549bcb48757316087e, type: 2}

@@ -58,6 +58,12 @@ namespace Pakuri.Data
             public SkillSlot RequiredActiveSlot;
             public string SkillIconPath;
             public string SkillEffectPrefabPath;
+            public string RuntimeVisualSpritePath;
+            public string RuntimeVisualAnimatorControllerPath;
+            public float RuntimeVisualScale = 1f;
+            public int RuntimeVisualSortingOrder;
+            public float RuntimeHitboxSizeX;
+            public float RuntimeHitboxSizeY;
             public string DescriptionText;
             public string Summary;
             public DamageAttribute Attribute;
@@ -343,6 +349,12 @@ namespace Pakuri.Data
             public float CooldownRefundRatio;
             public float ReloadReduceRatio;
             public string SkillEffectPrefabPath;
+            public string RuntimeVisualSpritePath;
+            public string RuntimeVisualAnimatorControllerPath;
+            public float RuntimeVisualScale = 1f;
+            public int RuntimeVisualSortingOrder;
+            public float RuntimeHitboxSizeX;
+            public float RuntimeHitboxSizeY;
             public string RuntimeSupportState;
             public string RuntimeSupportNotes;
         }
@@ -407,6 +419,12 @@ namespace Pakuri.Data
                 RequiredActiveSlot = ReadOptionalEnumIfColumnExists(record, "required_active_slot", InferRequiredActiveSlot(slot)),
                 SkillIconPath = ReadOptionalStringIfColumnExists(record, "skill_icon_path"),
                 SkillEffectPrefabPath = ReadOptionalStringIfColumnExists(record, "skill_effect_prefab_path"),
+                RuntimeVisualSpritePath = ReadOptionalStringIfColumnExists(record, "runtime_visual_sprite_path"),
+                RuntimeVisualAnimatorControllerPath = ReadOptionalStringIfColumnExists(record, "runtime_visual_animator_controller_path"),
+                RuntimeVisualScale = ReadOptionalFloatWithDefaultIfColumnExists(record, "runtime_visual_scale", 1f),
+                RuntimeVisualSortingOrder = ReadOptionalIntIfColumnExists(record, "runtime_visual_sorting_order"),
+                RuntimeHitboxSizeX = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_x"),
+                RuntimeHitboxSizeY = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_y"),
                 DescriptionText = ReadOptionalStringIfColumnExists(record, "description_text"),
                 Summary = ReadOptionalStringIfColumnExists(record, "summary"),
                 Attribute = ReadOptionalEnumIfColumnExists(record, "attribute", DamageAttribute.Physical),
@@ -713,6 +731,12 @@ namespace Pakuri.Data
                 CooldownRefundRatio = ReadOptionalFloatIfColumnExists(record, "cooldown_refund_ratio"),
                 ReloadReduceRatio = ReadOptionalFloatIfColumnExists(record, "reload_reduce_ratio"),
                 SkillEffectPrefabPath = ReadOptionalStringIfColumnExists(record, "skill_effect_prefab_path"),
+                RuntimeVisualSpritePath = ReadOptionalStringIfColumnExists(record, "runtime_visual_sprite_path"),
+                RuntimeVisualAnimatorControllerPath = ReadOptionalStringIfColumnExists(record, "runtime_visual_animator_controller_path"),
+                RuntimeVisualScale = ReadOptionalFloatWithDefaultIfColumnExists(record, "runtime_visual_scale", 1f),
+                RuntimeVisualSortingOrder = ReadOptionalIntIfColumnExists(record, "runtime_visual_sorting_order"),
+                RuntimeHitboxSizeX = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_x"),
+                RuntimeHitboxSizeY = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_y"),
                 RuntimeSupportState = ReadOptionalStringIfColumnExists(record, "runtime_support_state"),
                 RuntimeSupportNotes = ReadOptionalStringIfColumnExists(record, "runtime_support_notes")
             };

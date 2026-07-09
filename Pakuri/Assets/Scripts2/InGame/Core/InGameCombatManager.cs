@@ -795,7 +795,7 @@ namespace Pakuri.InGame
         {
             if (target == null
                 || statusData == null
-                || statusData.StatusEffectPrefab == null
+                || (!RuntimeSkillVisualFactory.HasVisual(statusData.RuntimeVisual) && statusData.StatusEffectPrefab == null)
                 || status == null
                 || Effects == null)
             {
@@ -812,7 +812,11 @@ namespace Pakuri.InGame
             var sourceId = !string.IsNullOrWhiteSpace(status.SourceSkillId)
                 ? status.SourceSkillId
                 : statusData.SourceSkillId;
-            var key = $"{unitId}:{status.Kind}:{sourceId}:{statusData.StatusEffectPrefab.GetInstanceID()}";
+            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(statusData.RuntimeVisual);
+            var visualId = hasRuntimeVisual
+                ? statusData.RuntimeVisual.GetHashCode()
+                : statusData.StatusEffectPrefab.GetInstanceID();
+            var key = $"{unitId}:{status.Kind}:{sourceId}:{visualId}";
             if (statusEffectVisuals.TryGetValue(key, out var existing) && existing == null)
             {
                 statusEffectVisuals.Remove(key);
@@ -824,7 +828,14 @@ namespace Pakuri.InGame
                 : Mathf.Max(0.1f, status.DurationRemaining);
             if (existing == null)
             {
-                existing = Effects.InstantiateSkillPrefab(statusData.StatusEffectPrefab, entry.Transform.position, Quaternion.identity);
+                existing = hasRuntimeVisual
+                    ? RuntimeSkillVisualFactory.Create(
+                        Effects,
+                        statusData.RuntimeVisual,
+                        string.IsNullOrWhiteSpace(sourceId) ? "RuntimeStatusVisual" : $"RuntimeStatusVisual_{sourceId}",
+                        entry.Transform.position,
+                        Quaternion.identity)
+                    : Effects.InstantiateSkillPrefab(statusData.StatusEffectPrefab, entry.Transform.position, Quaternion.identity);
                 if (existing == null)
                 {
                     return;

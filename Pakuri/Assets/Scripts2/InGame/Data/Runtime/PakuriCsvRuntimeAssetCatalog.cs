@@ -21,11 +21,20 @@ namespace Pakuri.Data
             public GameObject Asset;
         }
 
+        [Serializable]
+        public struct AnimatorControllerEntry
+        {
+            public string AssetPath;
+            public RuntimeAnimatorController Asset;
+        }
+
         public SpriteEntry[] Sprites = Array.Empty<SpriteEntry>();
         public PrefabEntry[] Prefabs = Array.Empty<PrefabEntry>();
+        public AnimatorControllerEntry[] AnimatorControllers = Array.Empty<AnimatorControllerEntry>();
 
         private Dictionary<string, Sprite> spriteLookup;
         private Dictionary<string, GameObject> prefabLookup;
+        private Dictionary<string, RuntimeAnimatorController> animatorControllerLookup;
 
         public bool TryGetSprite(string assetPath, out Sprite sprite)
         {
@@ -37,6 +46,12 @@ namespace Pakuri.Data
         {
             EnsureLookups();
             return prefabLookup.TryGetValue(Normalize(assetPath), out prefab);
+        }
+
+        public bool TryGetAnimatorController(string assetPath, out RuntimeAnimatorController animatorController)
+        {
+            EnsureLookups();
+            return animatorControllerLookup.TryGetValue(Normalize(assetPath), out animatorController);
         }
 
         public bool HasSprite(string assetPath)
@@ -51,10 +66,17 @@ namespace Pakuri.Data
             return prefabLookup.ContainsKey(Normalize(assetPath));
         }
 
+        public bool HasAnimatorController(string assetPath)
+        {
+            EnsureLookups();
+            return animatorControllerLookup.ContainsKey(Normalize(assetPath));
+        }
+
         public void ResetLookups()
         {
             spriteLookup = null;
             prefabLookup = null;
+            animatorControllerLookup = null;
         }
 
         private void OnEnable()
@@ -64,13 +86,14 @@ namespace Pakuri.Data
 
         private void EnsureLookups()
         {
-            if (spriteLookup != null && prefabLookup != null)
+            if (spriteLookup != null && prefabLookup != null && animatorControllerLookup != null)
             {
                 return;
             }
 
             spriteLookup = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
             prefabLookup = new Dictionary<string, GameObject>(StringComparer.OrdinalIgnoreCase);
+            animatorControllerLookup = new Dictionary<string, RuntimeAnimatorController>(StringComparer.OrdinalIgnoreCase);
 
             if (Sprites != null)
             {
@@ -99,6 +122,23 @@ namespace Pakuri.Data
                     }
 
                     prefabLookup.Add(normalized, entry.Asset);
+                }
+            }
+
+            if (AnimatorControllers != null)
+            {
+                for (var i = 0; i < AnimatorControllers.Length; i++)
+                {
+                    var entry = AnimatorControllers[i];
+                    var normalized = Normalize(entry.AssetPath);
+                    if (string.IsNullOrWhiteSpace(normalized)
+                        || entry.Asset == null
+                        || animatorControllerLookup.ContainsKey(normalized))
+                    {
+                        continue;
+                    }
+
+                    animatorControllerLookup.Add(normalized, entry.Asset);
                 }
             }
         }

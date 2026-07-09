@@ -254,6 +254,7 @@ namespace Pakuri.InGame
 
         [Header("Presentation")]
         public GameObject SkillEffectPrefab;
+        public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
 
         [Header("Choices")]
         public SkillChoiceEffectSpec[] EnhancementChoices = Array.Empty<SkillChoiceEffectSpec>();

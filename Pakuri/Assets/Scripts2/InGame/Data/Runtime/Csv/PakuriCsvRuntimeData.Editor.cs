@@ -43,6 +43,7 @@ namespace Pakuri.Data
         private static void SyncRuntimeCatalogAssetsFromImportedSource()
         {
             EnsureRuntimeResourcesFolderExists();
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
             var sourceCatalog = LoadOrCreateAsset<PakuriCsvRuntimeSourceCatalog>(SourceCatalogAssetPath);
             sourceCatalog.CatalogMonsters = LoadImportedSourceTextAssetOrThrow(CatalogMonstersFileName);
@@ -160,6 +161,7 @@ namespace Pakuri.Data
             var assetCatalog = LoadOrCreateAsset<PakuriCsvRuntimeAssetCatalog>(AssetCatalogAssetPath);
             assetCatalog.Sprites = BuildSpriteEntries(sourceModel);
             assetCatalog.Prefabs = BuildPrefabEntries(sourceModel);
+            assetCatalog.AnimatorControllers = BuildAnimatorControllerEntries(sourceModel);
             assetCatalog.ResetLookups();
             EditorUtility.SetDirty(assetCatalog);
 
@@ -350,6 +352,28 @@ namespace Pakuri.Data
                 {
                     AssetPath = asset.AssetPath,
                     Asset = prefab
+                });
+            }
+
+            entries.Sort((left, right) => string.Compare(left.AssetPath, right.AssetPath, StringComparison.OrdinalIgnoreCase));
+            return entries.ToArray();
+        }
+
+        private static PakuriCsvRuntimeAssetCatalog.AnimatorControllerEntry[] BuildAnimatorControllerEntries(SourceModel sourceModel)
+        {
+            var entries = new List<PakuriCsvRuntimeAssetCatalog.AnimatorControllerEntry>();
+            foreach (var asset in CollectReferencedAssets(sourceModel).AnimatorControllerPaths)
+            {
+                var animatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(asset.AssetPath);
+                if (animatorController == null)
+                {
+                    throw new CsvFatalException($"CSV runtime animator controller asset is missing or not a RuntimeAnimatorController: '{asset.AssetPath}'.");
+                }
+
+                entries.Add(new PakuriCsvRuntimeAssetCatalog.AnimatorControllerEntry
+                {
+                    AssetPath = asset.AssetPath,
+                    Asset = animatorController
                 });
             }
 
