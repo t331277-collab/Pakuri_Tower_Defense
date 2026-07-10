@@ -1409,50 +1409,46 @@ namespace Pakuri.InGame
                 resources.CurrentHealth <= 0f);
         }
 
-        private static float ResolveDamageAfterDefense(
-            BaseUnitRuntimeModel target,
-            float baseDamage,
-            DamageAttribute attribute)
-        {
-            var defense = target.Defenses != null ? target.Defenses.Get(attribute) : 0f;
-            defense -= StatusEffectRuntime.ResolveFlatElementResistReduction(target, attribute);
-            var statusReduction = StatusEffectRuntime.ResolveElementResistReduction(target, attribute);
-            defense *= Mathf.Clamp01(1f - statusReduction);
-            var safeDefense = Mathf.Max(-95f, defense);
-            return Mathf.Max(0f, baseDamage) * (100f / (100f + safeDefense));
-        }
-
         private static float ResolveFinalDamage(
             BaseUnitRuntimeModel target,
             float baseDamage,
             DamageAttribute attribute,
             DamageApplicationOptions options)
         {
-            if (options.CriticalAllowed && options.Source != null)
+            var criticalAllowed = options.CriticalAllowed && options.Source != null;
+            var sourceStats = criticalAllowed ? options.Source.Stats : null;
+            var sourceCriticalChance = criticalAllowed
+                ? (sourceStats != null ? sourceStats.CriticalChance : DamageCalculator.BaseCriticalChance)
+                    + StatusEffectRuntime.ResolveCriticalChanceBonus(options.Source)
+                : DamageCalculator.BaseCriticalChance;
+            var sourceCriticalDamage = criticalAllowed
+                ? (sourceStats != null ? sourceStats.CriticalDamage : DamageCalculator.BaseCriticalMultiplier)
+                : DamageCalculator.BaseCriticalMultiplier;
+            if (criticalAllowed)
             {
-                var sourceStats = options.Source.Stats;
-                var sourceCriticalChance = (sourceStats != null ? sourceStats.CriticalChance : DamageCalculator.BaseCriticalChance)
-                    + StatusEffectRuntime.ResolveCriticalChanceBonus(options.Source);
-                var sourceCriticalDamage = sourceStats != null ? sourceStats.CriticalDamage : DamageCalculator.BaseCriticalMultiplier;
                 sourceCriticalDamage += StatusEffectRuntime.ResolveCriticalDamageBonus(options.Source);
-                var targetCriticalResistance = (target != null && target.Stats != null ? target.Stats.CriticalResistance : 0f)
-                    + StatusEffectRuntime.ResolveCriticalResistanceBonus(target);
-                var criticalDamageTakenBonus = StatusEffectRuntime.ResolveCriticalDamageTakenBonus(target);
-                var damage = DamageCalculator.Resolve(
-                    Mathf.Max(0f, baseDamage),
-                    attribute,
-                    target != null ? ToAttributeDefenseSet(target.Defenses) : null,
-                    flatDefenseReduction: StatusEffectRuntime.ResolveFlatElementResistReduction(target, attribute),
-                    percentDefenseReductions: new[] { StatusEffectRuntime.ResolveElementResistReduction(target, attribute) },
-                    criticalChanceBonus: sourceCriticalChance + options.CritChanceBonus - DamageCalculator.BaseCriticalChance,
-                    criticalMultiplierBonus: sourceCriticalDamage + options.CritDamageBonus - DamageCalculator.BaseCriticalMultiplier,
-                    targetCriticalResistance: targetCriticalResistance,
-                    criticalDamageTakenBonus: criticalDamageTakenBonus,
-                    finalDamageMultiplier: ResolveIncomingDamageMultiplier(target, options.Source, attribute, options.SourceSkillId)).FinalDamage;
-                return Mathf.Round(Mathf.Max(0f, damage));
             }
 
-            return Mathf.Round(ResolveDamageAfterDefense(target, baseDamage, attribute) * ResolveIncomingDamageMultiplier(target, options.Source, attribute, options.SourceSkillId));
+            var targetCriticalResistance = criticalAllowed
+                ? (target != null && target.Stats != null ? target.Stats.CriticalResistance : 0f)
+                    + StatusEffectRuntime.ResolveCriticalResistanceBonus(target)
+                : 0f;
+            var criticalDamageTakenBonus = criticalAllowed
+                ? StatusEffectRuntime.ResolveCriticalDamageTakenBonus(target)
+                : 0f;
+            var damage = DamageCalculator.Resolve(
+                Mathf.Max(0f, baseDamage),
+                attribute,
+                target != null ? ToAttributeDefenseSet(target.Defenses) : null,
+                criticalAllowed,
+                flatDefenseReduction: StatusEffectRuntime.ResolveFlatElementResistReduction(target, attribute),
+                percentDefenseReductions: new[] { StatusEffectRuntime.ResolveElementResistReduction(target, attribute) },
+                criticalChanceBonus: sourceCriticalChance + options.CritChanceBonus - DamageCalculator.BaseCriticalChance,
+                criticalMultiplierBonus: sourceCriticalDamage + options.CritDamageBonus - DamageCalculator.BaseCriticalMultiplier,
+                targetCriticalResistance: targetCriticalResistance,
+                criticalDamageTakenBonus: criticalDamageTakenBonus,
+                finalDamageMultiplier: ResolveIncomingDamageMultiplier(target, options.Source, attribute, options.SourceSkillId)).FinalDamage;
+            return Mathf.Round(Mathf.Max(0f, damage));
         }
 
         private static AttributeDefenseSet ToAttributeDefenseSet(UnitDefenseRuntime defenses)

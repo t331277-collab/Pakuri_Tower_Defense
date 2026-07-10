@@ -5,6 +5,57 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-11 Legacy Effect To Semantic Node Migration Guide
+
+### Task title
+
+Define the current CSV and handler rules for migrating legacy monster effect rows to semantic nodes.
+
+### Goals
+
+- Record current runtime authority boundaries between base, choices, effects, triggers, nodes, and node params.
+- Inventory current handler support by owner kind instead of treating schema registration as runtime implementation.
+- Map legacy effect columns to semantic operation, target, condition, lifetime, visual, and modifier nodes.
+- Audit the remaining Eve/Rin/Sein/Vega effect rows for current-handler coverage and required shared extensions.
+
+### Constraints
+
+- Role Owner is Designer.
+- This is a documentation handoff; no runtime CSV rows, schemas, catalogs, or code were changed.
+- Current skill-kind consolidated CSV files remain the active inspected authority.
+- Existing handler reuse is mandatory before proposing a new handler.
+- Trigger-owned normalized nodes remain outside current runtime support.
+- No MSW-MCP was used.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Guide created from current CSV and code evidence.
+
+### Next Actions
+
+- Migrate only selected legacy effect rows and remove each matching legacy row in the same change to avoid duplicate execution.
+- Extend `StatusAttackPowerBonus`, `StatusElementDamageTakenBonus`, and `StatusDamageTakenBonus` Effect composition before creating equivalent duplicate handler ids.
+- Implement new semantic handlers only for the proven unsupported field families listed in the guide and only after user approval for shared runtime scope.
+- Preserve kind-consolidated effect CSV files until all remaining monster rows in a file are migrated; do not delete a shared kind file after one monster conversion.
+
+### Evidence
+
+- Created `boards/MON/ARIEL_NODE_DECOMPOSITION_GUIDE.md` with current handler inventory, column mapping, templates, stop conditions, and verification gates.
+- Current CSV aggregation returned 139 nodes total after excluding type rows: Ariel 124, Rin 11, Vega 4.
+- Current legacy effect aggregation returned 96 data rows: Eve 34, Rin 20, Sein 19, Vega 23; Ariel has no legacy effect rows.
+- `PakuriCsvRuntimeData.Build.cs` currently appends legacy effect definitions and node-owned effect definitions, so duplicate ids can execute twice unless the migrated legacy row is removed.
+- `PakuriCsvRuntimeData.Build.cs` builds node-owned effects from one semantic operation plus target/condition/lifetime/visual/modifier nodes.
+- `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` registers some schema-only handlers that are not mapped by `InGameSkillDefinitionMapper` or the Effect composer; the guide lists them as non-authorable until runtime wiring exists.
+- Field-level audit classified the 96 legacy effects as 58 current-handler-ready rows, 16 existing-handler-extension rows, and 22 new-semantic-handler rows, including four Damage effects that also carry a status payload.
+
+### History
+
+- 2026-07-11: User requested a current-code-based transition MD for converting the remaining effect CSV behavior into Ariel-style semantic node composition.
+
 ## Task: 2026-07-10 Ariel Runtime Visual CSV Columns
 
 ### Task title

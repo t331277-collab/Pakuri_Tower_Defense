@@ -186,6 +186,37 @@ namespace Pakuri.Combat
             float criticalDamageTakenBonus = 0f,
             float finalDamageMultiplier = 1f)
         {
+            return Resolve(
+                baseDamage,
+                attribute,
+                defenses,
+                true,
+                flatDefenseBonus,
+                flatDefenseReduction,
+                percentDefenseBonus,
+                percentDefenseReductions,
+                criticalChanceBonus,
+                criticalMultiplierBonus,
+                targetCriticalResistance,
+                criticalDamageTakenBonus,
+                finalDamageMultiplier);
+        }
+
+        public static DamageResult Resolve(
+            float baseDamage,
+            DamageAttribute attribute,
+            AttributeDefenseSet defenses,
+            bool criticalAllowed,
+            float flatDefenseBonus = 0f,
+            float flatDefenseReduction = 0f,
+            float percentDefenseBonus = 0f,
+            float[] percentDefenseReductions = null,
+            float criticalChanceBonus = 0f,
+            float criticalMultiplierBonus = 0f,
+            float targetCriticalResistance = 0f,
+            float criticalDamageTakenBonus = 0f,
+            float finalDamageMultiplier = 1f)
+        {
             var baseDefense = defenses != null ? defenses.Get(attribute) : 0f;
             var breakdown = ResolveDefense(
                 attribute,
@@ -198,7 +229,7 @@ namespace Pakuri.Combat
             var safeDefense = Mathf.Max(-95f, breakdown.FinalDefense);
             var damageAfterDefense = baseDamage * (100f / (100f + safeDefense));
             var criticalChance = Mathf.Clamp01(BaseCriticalChance + criticalChanceBonus - targetCriticalResistance);
-            var isCritical = UnityEngine.Random.value < criticalChance;
+            var isCritical = criticalAllowed && UnityEngine.Random.value < criticalChance;
             var criticalMultiplier = BaseCriticalMultiplier + criticalMultiplierBonus + criticalDamageTakenBonus;
             var afterCritical = isCritical ? damageAfterDefense * criticalMultiplier : damageAfterDefense;
             var safeFinalMultiplier = Mathf.Max(0f, finalDamageMultiplier);

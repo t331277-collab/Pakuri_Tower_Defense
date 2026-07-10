@@ -12,6 +12,55 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-07-11 Ariel Node Decomposition Guide
+
+### Task title
+
+Create an Ariel-grounded guide for decomposing other monsters' legacy effect rows into semantic nodes.
+
+### Goals
+
+- Compare Ariel A-J reference intent with the current Ariel Choice/Effect node implementation.
+- Document the current implemented node handlers and distinguish runtime-wired handlers from schema-only names.
+- Give an AI agent a repeatable method for separating base skill bodies, Choice modifiers, Effect groups, and Trigger bindings.
+- Prefer existing handlers and require evidence plus user approval before shared runtime handler expansion.
+
+### Constraints
+
+- Role Owner is Designer.
+- This task creates design/documentation only; no skill CSV or runtime code implementation was performed.
+- Evidence is limited to the user-provided Ariel reference directory, current runtime node/effect CSVs, relevant runtime code, and routed Ariel/DATA boards.
+- No other monster reference markdown or archived monster implementation was inspected for value discovery.
+- No MSW-MCP was used.
+- Unity Play Mode verification remains user-owned for later implementation work.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Design and implementation handoff created.
+
+### Next Actions
+
+- Code Builder or Skill Builder can migrate a selected monster in small skill-kind batches using `boards/MON/ARIEL_NODE_DECOMPOSITION_GUIDE.md`.
+- Start with legacy effect rows that the guide classifies as supported by current handlers.
+- If a selected row needs shared handler work, provide the required-handler evidence bundle and obtain user approval before expanding runtime scope.
+
+### Evidence
+
+- Created `boards/MON/ARIEL_NODE_DECOMPOSITION_GUIDE.md`.
+- Inspected all 10 files under `Pakuri/reference/2.Monster/ariel/skill` and compared their A-J behavior families with current Ariel node groups.
+- Current disk aggregation returned 124 Ariel nodes: 39 Choice-owned nodes and 85 Effect-owned nodes grouped under 20 Effect owner ids.
+- The guide records the current Ariel pattern: base skill body remains in base CSV, numeric changes use Choice nodes, independent behavior uses one-operation Effect groups, and event timing remains in trigger CSV.
+- The guide explicitly keeps current Trigger rows out of normalized migration because validation reports `owner_kind=Trigger` is not wired into runtime plans.
+- Current non-Ariel effect audit returned 96 rows: 58 immediately representable, 16 requiring existing-handler Effect composer extension, and 22 requiring genuinely new semantic handler support.
+
+### History
+
+- 2026-07-11: User requested an evidence-based MD that lets an AI agent use Ariel's current node implementation to decompose other monsters' effect CSV behavior, reuse existing nodes first, and add handlers only when necessary.
+
 ## Task: 2026-07-10 Ariel Runtime Visual Migration Implementation
 
 ### Task title

@@ -5,6 +5,56 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-11 Shared DamageCalculator Final-Damage Routing
+
+### Task title
+
+Route all `InGameCombatManager` final-damage calculations through `DamageCalculator`.
+
+### Goals
+
+- Remove the duplicated non-critical defense formula from `InGameCombatManager`.
+- Use `DamageCalculator` for both critical-enabled and critical-disabled damage.
+- Preserve existing defense, status multiplier, rounding, shield-consumption, health, and combat-trigger behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The existing public attribute-based `DamageCalculator.Resolve(...)` signature remains available and keeps its critical-enabled behavior.
+- Critical-disabled damage must not consume `UnityEngine.Random.value`.
+- `InGameCombatManager` remains responsible for gathering runtime status inputs and applying the result to status shields, direct shields, health, views, and triggers.
+- No MSW-MCP was used; Unity checks use Unity-MCP only.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified. Unity-MCP script validation was unavailable because no Unity Editor instance was connected.
+
+### Next Actions
+
+- User verifies in Play Mode that critical-disabled damage, failed critical rolls, successful critical rolls, defense reduction, incoming-damage modifiers, and shield absorption retain their previous results.
+- If Unity Editor-side evidence is required, connect the project through Unity-MCP and validate the two changed scripts plus console state.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Combat/DamageCalculator.cs` now has a `criticalAllowed` overload; the existing overload delegates to it with criticals enabled.
+- `DamageCalculator` gates its random roll with `criticalAllowed && UnityEngine.Random.value < criticalChance`, so disabled criticals do not consume combat RNG.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` removed `ResolveDamageAfterDefense(...)`; `ResolveFinalDamage(...)` now always calls `DamageCalculator.Resolve(...)` and passes defense reductions plus incoming-damage multipliers.
+- Search for `ResolveDamageAfterDefense|DamageCalculator.Resolve(` across the two changed files returned only the unified `InGameCombatManager` call.
+- `git diff --check` passed for both code files with only existing LF-to-CRLF normalization warnings.
+- `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors and 2 existing `MSB3277` warnings.
+- `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors and 2 existing `MSB3277` warnings.
+- Unity-MCP `validate_script` for both changed scripts returned `No Unity Editor instances found`; no Unity-side validation result was available.
+
+### History
+
+- 2026-07-11: User requested Code Builder to make `InGameCombatManager` call `DamageCalculator` for actual damage regardless of whether criticals are allowed.
+- 2026-07-11: Code Builder implemented the single calculation route, preserved the existing public overload and non-critical RNG behavior, and completed local build verification.
+
 ## Task: 2026-06-19 Ariel Plan Action Status Modifier Routing
 
 ### Task title
