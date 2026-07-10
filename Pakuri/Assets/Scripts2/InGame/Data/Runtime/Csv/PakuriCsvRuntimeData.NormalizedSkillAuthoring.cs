@@ -30,9 +30,16 @@ namespace Pakuri.Data
             ChoiceId
         }
 
+        private enum SkillGraphKind
+        {
+            Plan,
+            Effect
+        }
+
         private sealed class SkillNodeRow
         {
             public string Id;
+            public string MonsterId;
             public SkillNodeOwnerKind OwnerKind;
             public string OwnerId;
             public string TargetSkillId;
@@ -51,9 +58,43 @@ namespace Pakuri.Data
         private sealed class SkillNodeParamRow
         {
             public string NodeId;
+            public string MonsterId;
             public string ParamKey;
             public SkillNodeValueType ValueType;
             public string Value;
+        }
+
+        private sealed class SkillNodeTypeRow
+        {
+            public string Id;
+            public string HandlerId;
+            public SkillExecutionPlanNodeKind NodeKind;
+            public string RuntimeSupportState;
+            public string RuntimeSupportNotes;
+        }
+
+        private sealed class SkillNodeTypeParamRow
+        {
+            public string NodeTypeId;
+            public int ParamOrder;
+            public string ParamKey;
+            public SkillNodeValueType ValueType;
+            public bool Required;
+            public string AllowedValues;
+        }
+
+        private sealed class SkillGraphNodeRow
+        {
+            public string MonsterId;
+            public SkillNodeOwnerKind OwnerKind;
+            public string OwnerId;
+            public SkillGraphKind GraphKind;
+            public int GraphIndex;
+            public string TargetSkillId;
+            public int NodeOrder;
+            public string NodeTypeId;
+            public readonly string[] Args = new string[12];
+            public string ExcludesActiveChoiceId;
         }
 
         private sealed class SkillNodeHandlerSchema
@@ -106,6 +147,7 @@ namespace Pakuri.Data
             return new SkillNodeRow
             {
                 Id = record.ReadRequiredString("node_id"),
+                MonsterId = ReadOptionalStringIfColumnExists(record, "monster_id"),
                 OwnerKind = record.ReadEnum<SkillNodeOwnerKind>("owner_kind"),
                 OwnerId = record.ReadRequiredString("owner_id"),
                 TargetSkillId = record.ReadString("target_skill_id"),
@@ -127,10 +169,59 @@ namespace Pakuri.Data
             return new SkillNodeParamRow
             {
                 NodeId = record.ReadRequiredString("node_id"),
+                MonsterId = ReadOptionalStringIfColumnExists(record, "monster_id"),
                 ParamKey = record.ReadRequiredString("param_key"),
                 ValueType = ParseSkillNodeValueType(record.ReadRequiredString("value_type"), record),
                 Value = record.ReadString("value")
             };
+        }
+
+        private static SkillNodeTypeRow ParseSkillNodeTypeRow(CsvRecord record)
+        {
+            return new SkillNodeTypeRow
+            {
+                Id = record.ReadRequiredString("node_type_id"),
+                HandlerId = record.ReadRequiredString("handler_id"),
+                NodeKind = record.ReadEnum<SkillExecutionPlanNodeKind>("node_kind"),
+                RuntimeSupportState = ReadOptionalStringIfColumnExists(record, "runtime_support_state"),
+                RuntimeSupportNotes = ReadOptionalStringIfColumnExists(record, "runtime_support_notes")
+            };
+        }
+
+        private static SkillNodeTypeParamRow ParseSkillNodeTypeParamRow(CsvRecord record)
+        {
+            return new SkillNodeTypeParamRow
+            {
+                NodeTypeId = record.ReadRequiredString("node_type_id"),
+                ParamOrder = record.ReadInt("param_order"),
+                ParamKey = record.ReadRequiredString("param_key"),
+                ValueType = ParseSkillNodeValueType(record.ReadRequiredString("value_type"), record),
+                Required = record.ReadBool("required"),
+                AllowedValues = ReadOptionalStringIfColumnExists(record, "allowed_values")
+            };
+        }
+
+        private static SkillGraphNodeRow ParseSkillGraphNodeRow(CsvRecord record)
+        {
+            var row = new SkillGraphNodeRow
+            {
+                MonsterId = record.ReadRequiredString("monster_id"),
+                OwnerKind = record.ReadEnum<SkillNodeOwnerKind>("owner_kind"),
+                OwnerId = record.ReadRequiredString("owner_id"),
+                GraphKind = record.ReadEnum<SkillGraphKind>("graph_kind"),
+                GraphIndex = record.ReadInt("graph_index"),
+                TargetSkillId = ReadOptionalStringIfColumnExists(record, "target_skill_id"),
+                NodeOrder = record.ReadInt("node_order"),
+                NodeTypeId = record.ReadRequiredString("node_type_id"),
+                ExcludesActiveChoiceId = ReadOptionalStringIfColumnExists(record, "excludes_active_choice_id")
+            };
+
+            for (var i = 0; i < row.Args.Length; i++)
+            {
+                row.Args[i] = ReadOptionalStringIfColumnExists(record, $"arg_{i + 1}");
+            }
+
+            return row;
         }
 
         private static SkillNodeValueType ParseSkillNodeValueType(string rawValue, CsvRecord record)
@@ -1026,6 +1117,450 @@ namespace Pakuri.Data
                 errors.Add(
                     $"Skill node '{node.Id}' handler '{node.HandlerId}' param '{param.ParamKey}' has invalid enum value '{param.Value}'. Allowed values: {string.Join(", ", allowedValues)}.");
             }
+        }
+
+        private static void MaterializeSkillGraphRows(SourceModel model)
+        {
+            if (model == null || model.SkillGraphNodes.Count == 0)
+            {
+                return;
+            }
+
+            var errors = new List<string>();
+            var migratedMonsterIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < model.SkillGraphNodes.Count; i++)
+            {
+                migratedMonsterIds.Add(model.SkillGraphNodes[i].MonsterId);
+            }
+
+            foreach (var legacyNode in model.SkillNodes.Values)
+            {
+                if (legacyNode != null
+                    && !string.IsNullOrWhiteSpace(legacyNode.MonsterId)
+                    && migratedMonsterIds.Contains(legacyNode.MonsterId))
+                {
+                    errors.Add(
+                        $"Monster '{legacyNode.MonsterId}' has both skill_graph_nodes rows and legacy node '{legacyNode.Id}'. Remove one authoring path.");
+                }
+            }
+
+            var paramsByType = BuildSkillNodeTypeParamLookup(model, errors);
+            ValidateSkillNodeTypeDefinitions(model, paramsByType, errors);
+
+            var generatedNodes = new List<SkillNodeRow>(model.SkillGraphNodes.Count);
+            var generatedParams = new List<SkillNodeParamRow>();
+            var generatedNodeIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var graphNodeKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var effectOperationCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            for (var i = 0; i < model.SkillGraphNodes.Count; i++)
+            {
+                var graph = model.SkillGraphNodes[i];
+                var graphKey = BuildSkillGraphKey(graph);
+                var graphNodeKey = $"{graphKey}:{graph.NodeOrder}";
+                if (!graphNodeKeys.Add(graphNodeKey))
+                {
+                    errors.Add($"Skill graph '{graphKey}' has duplicate node_order '{graph.NodeOrder}'.");
+                    continue;
+                }
+
+                if (graph.GraphIndex < 0)
+                {
+                    errors.Add($"Skill graph '{graphKey}' requires graph_index >= 0.");
+                }
+
+                if (!model.Monsters.ContainsKey(graph.MonsterId))
+                {
+                    errors.Add($"Skill graph '{graphKey}' references unknown monster '{graph.MonsterId}'.");
+                }
+
+                if (!model.SkillNodeTypes.TryGetValue(graph.NodeTypeId, out var nodeType))
+                {
+                    errors.Add($"Skill graph node '{graphNodeKey}' references unknown node_type_id '{graph.NodeTypeId}'.");
+                    continue;
+                }
+
+                if (!SkillNodeHandlerSchemas.TryGetValue(nodeType.HandlerId, out var handlerSchema))
+                {
+                    errors.Add($"Skill graph node '{graphNodeKey}' uses unregistered handler_id '{nodeType.HandlerId}'.");
+                    continue;
+                }
+
+                var targetSkillId = ResolveSkillGraphTargetSkillId(model, graph, errors);
+                if (!string.IsNullOrWhiteSpace(targetSkillId)
+                    && model.Skills.TryGetValue(targetSkillId, out var targetSkill)
+                    && !string.Equals(targetSkill.MonsterId, graph.MonsterId, StringComparison.OrdinalIgnoreCase))
+                {
+                    errors.Add(
+                        $"Skill graph '{graphKey}' target skill '{targetSkillId}' belongs to '{targetSkill.MonsterId}', not '{graph.MonsterId}'.");
+                }
+
+                if (graph.GraphKind == SkillGraphKind.Plan && IsEffectGraphOnlyHandler(nodeType.HandlerId))
+                {
+                    errors.Add(
+                        $"Skill graph '{graphKey}' is Plan but node '{graph.NodeOrder}' uses Effect-only handler '{nodeType.HandlerId}'.");
+                }
+
+                if (graph.GraphKind == SkillGraphKind.Effect && IsEffectOperationHandler(nodeType.HandlerId))
+                {
+                    effectOperationCounts.TryGetValue(graphKey, out var operationCount);
+                    effectOperationCounts[graphKey] = operationCount + 1;
+                }
+
+                var nodeId = BuildGeneratedSkillGraphNodeId(graph);
+                if (!generatedNodeIds.Add(nodeId) || model.SkillNodes.ContainsKey(nodeId))
+                {
+                    errors.Add($"Skill graph generated duplicate node id '{nodeId}'.");
+                    continue;
+                }
+
+                var ownerKind = graph.GraphKind == SkillGraphKind.Effect
+                    ? SkillNodeOwnerKind.Effect
+                    : graph.OwnerKind;
+                var ownerId = graph.GraphKind == SkillGraphKind.Effect
+                    ? BuildGeneratedSkillGraphEffectId(graph.OwnerKind, graph.OwnerId, graph.GraphIndex)
+                    : graph.OwnerId;
+                if (graph.GraphKind == SkillGraphKind.Effect)
+                {
+                    if (model.SkillEffects.ContainsKey(ownerId))
+                    {
+                        errors.Add($"Skill graph '{graphKey}' generated EffectId '{ownerId}' that overlaps a legacy effect row.");
+                    }
+
+                }
+
+                var requiresChoiceId = graph.GraphKind == SkillGraphKind.Effect
+                    && graph.OwnerKind == SkillNodeOwnerKind.Choice
+                        ? graph.OwnerId
+                        : string.Empty;
+
+                generatedNodes.Add(new SkillNodeRow
+                {
+                    Id = nodeId,
+                    MonsterId = graph.MonsterId,
+                    OwnerKind = ownerKind,
+                    OwnerId = ownerId,
+                    TargetSkillId = targetSkillId,
+                    NodeKind = nodeType.NodeKind,
+                    HandlerId = nodeType.HandlerId,
+                    SortOrder = graph.NodeOrder,
+                    EnabledByDefault = true,
+                    RequiresActiveChoiceId = requiresChoiceId,
+                    ExcludesActiveChoiceId = graph.ExcludesActiveChoiceId,
+                    RequiresPassiveSkillId = string.Empty,
+                    ExcludesPassiveSkillId = string.Empty,
+                    RuntimeSupportState = nodeType.RuntimeSupportState,
+                    RuntimeSupportNotes = nodeType.RuntimeSupportNotes
+                });
+
+                paramsByType.TryGetValue(graph.NodeTypeId, out var typeParams);
+                typeParams = typeParams ?? new List<SkillNodeTypeParamRow>();
+                var definedOrders = new HashSet<int>();
+                for (var paramIndex = 0; paramIndex < typeParams.Count; paramIndex++)
+                {
+                    var typeParam = typeParams[paramIndex];
+                    definedOrders.Add(typeParam.ParamOrder);
+                    var value = graph.Args[typeParam.ParamOrder - 1];
+                    if (string.IsNullOrWhiteSpace(value))
+                    {
+                        if (typeParam.Required)
+                        {
+                            errors.Add(
+                                $"Skill graph node '{graphNodeKey}' requires arg_{typeParam.ParamOrder} for param '{typeParam.ParamKey}'.");
+                        }
+                        continue;
+                    }
+
+                    ValidateSkillGraphAllowedValue(graphNodeKey, typeParam, value, errors);
+                    generatedParams.Add(new SkillNodeParamRow
+                    {
+                        NodeId = nodeId,
+                        MonsterId = graph.MonsterId,
+                        ParamKey = typeParam.ParamKey,
+                        ValueType = typeParam.ValueType,
+                        Value = value
+                    });
+                }
+
+                for (var argIndex = 0; argIndex < graph.Args.Length; argIndex++)
+                {
+                    if (!string.IsNullOrWhiteSpace(graph.Args[argIndex]) && !definedOrders.Contains(argIndex + 1))
+                    {
+                        errors.Add(
+                            $"Skill graph node '{graphNodeKey}' sets arg_{argIndex + 1}, but node type '{graph.NodeTypeId}' has no matching param definition.");
+                    }
+                }
+            }
+
+            var effectGraphKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < model.SkillGraphNodes.Count; i++)
+            {
+                var graph = model.SkillGraphNodes[i];
+                if (graph.GraphKind == SkillGraphKind.Effect)
+                {
+                    effectGraphKeys.Add(BuildSkillGraphKey(graph));
+                }
+            }
+
+            foreach (var graphKey in effectGraphKeys)
+            {
+                effectOperationCounts.TryGetValue(graphKey, out var operationCount);
+                if (operationCount != 1)
+                {
+                    errors.Add($"Effect graph '{graphKey}' requires exactly one operation handler but has {operationCount}.");
+                }
+            }
+
+            if (errors.Count > 0)
+            {
+                throw new CsvFatalException("Skill graph authoring materialization failed.", errors);
+            }
+
+            for (var i = 0; i < generatedNodes.Count; i++)
+            {
+                model.SkillNodes.Add(generatedNodes[i].Id, generatedNodes[i]);
+            }
+            model.SkillNodeParams.AddRange(generatedParams);
+        }
+
+        private static Dictionary<string, List<SkillNodeTypeParamRow>> BuildSkillNodeTypeParamLookup(
+            SourceModel model,
+            List<string> errors)
+        {
+            var result = new Dictionary<string, List<SkillNodeTypeParamRow>>(StringComparer.OrdinalIgnoreCase);
+            var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < model.SkillNodeTypeParams.Count; i++)
+            {
+                var param = model.SkillNodeTypeParams[i];
+                if (!model.SkillNodeTypes.ContainsKey(param.NodeTypeId))
+                {
+                    errors.Add(
+                        $"Skill node type param '{param.NodeTypeId}.{param.ParamKey}' references unknown node_type_id.");
+                    continue;
+                }
+
+                if (param.ParamOrder < 1 || param.ParamOrder > 12)
+                {
+                    errors.Add(
+                        $"Skill node type param '{param.NodeTypeId}.{param.ParamKey}' requires param_order between 1 and 12.");
+                    continue;
+                }
+
+                var orderKey = $"{param.NodeTypeId}:{param.ParamOrder}";
+                var nameKey = $"{param.NodeTypeId}:{param.ParamKey}";
+                if (!keys.Add(orderKey) || !keys.Add(nameKey))
+                {
+                    errors.Add(
+                        $"Skill node type '{param.NodeTypeId}' has duplicate param order or key for '{param.ParamKey}'.");
+                    continue;
+                }
+
+                if (!result.TryGetValue(param.NodeTypeId, out var list))
+                {
+                    list = new List<SkillNodeTypeParamRow>();
+                    result.Add(param.NodeTypeId, list);
+                }
+                list.Add(param);
+            }
+
+            foreach (var entry in result)
+            {
+                entry.Value.Sort((left, right) => left.ParamOrder.CompareTo(right.ParamOrder));
+            }
+            return result;
+        }
+
+        private static void ValidateSkillNodeTypeDefinitions(
+            SourceModel model,
+            Dictionary<string, List<SkillNodeTypeParamRow>> paramsByType,
+            List<string> errors)
+        {
+            foreach (var nodeType in model.SkillNodeTypes.Values)
+            {
+                if (!SkillNodeHandlerSchemas.TryGetValue(nodeType.HandlerId, out var schema))
+                {
+                    errors.Add($"Skill node type '{nodeType.Id}' uses unregistered handler_id '{nodeType.HandlerId}'.");
+                    continue;
+                }
+
+                if (nodeType.NodeKind != schema.NodeKind)
+                {
+                    errors.Add(
+                        $"Skill node type '{nodeType.Id}' handler '{nodeType.HandlerId}' requires node_kind '{schema.NodeKind}', not '{nodeType.NodeKind}'.");
+                }
+
+                paramsByType.TryGetValue(nodeType.Id, out var typeParams);
+                typeParams = typeParams ?? new List<SkillNodeTypeParamRow>();
+                var definedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                for (var i = 0; i < typeParams.Count; i++)
+                {
+                    var param = typeParams[i];
+                    definedKeys.Add(param.ParamKey);
+                    if (!schema.AllowedParams.Contains(param.ParamKey))
+                    {
+                        errors.Add(
+                            $"Skill node type '{nodeType.Id}' defines unsupported param '{param.ParamKey}' for handler '{nodeType.HandlerId}'.");
+                    }
+
+                    var expectedRequired = schema.RequiredParams.Contains(param.ParamKey);
+                    if (param.Required != expectedRequired)
+                    {
+                        errors.Add(
+                            $"Skill node type '{nodeType.Id}' param '{param.ParamKey}' required={param.Required} but handler schema requires {expectedRequired}.");
+                    }
+                }
+
+                foreach (var requiredParam in schema.RequiredParams)
+                {
+                    if (!definedKeys.Contains(requiredParam))
+                    {
+                        errors.Add(
+                            $"Skill node type '{nodeType.Id}' is missing required handler param definition '{requiredParam}'.");
+                    }
+                }
+            }
+        }
+
+        private static string ResolveSkillGraphTargetSkillId(
+            SourceModel model,
+            SkillGraphNodeRow graph,
+            List<string> errors)
+        {
+            string targetSkillId;
+            switch (graph.OwnerKind)
+            {
+                case SkillNodeOwnerKind.Choice:
+                    if (!model.SkillChoices.TryGetValue(graph.OwnerId, out var choice))
+                    {
+                        errors.Add($"Skill graph '{BuildSkillGraphKey(graph)}' references unknown choice owner '{graph.OwnerId}'.");
+                        return graph.TargetSkillId;
+                    }
+                    if (!string.Equals(choice.MonsterId, graph.MonsterId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        errors.Add(
+                            $"Skill graph choice owner '{graph.OwnerId}' belongs to '{choice.MonsterId}', not '{graph.MonsterId}'.");
+                    }
+                    targetSkillId = string.IsNullOrWhiteSpace(choice.TargetSkillId) ? choice.SkillId : choice.TargetSkillId;
+                    break;
+                case SkillNodeOwnerKind.Skill:
+                    if (!model.Skills.TryGetValue(graph.OwnerId, out var ownerSkill))
+                    {
+                        errors.Add($"Skill graph '{BuildSkillGraphKey(graph)}' references unknown skill owner '{graph.OwnerId}'.");
+                        return graph.TargetSkillId;
+                    }
+                    if (!string.Equals(ownerSkill.MonsterId, graph.MonsterId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        errors.Add(
+                            $"Skill graph skill owner '{graph.OwnerId}' belongs to '{ownerSkill.MonsterId}', not '{graph.MonsterId}'.");
+                    }
+                    targetSkillId = graph.OwnerId;
+                    break;
+                case SkillNodeOwnerKind.Trigger:
+                    if (!model.SkillTriggers.TryGetValue(graph.OwnerId, out var trigger))
+                    {
+                        errors.Add($"Skill graph '{BuildSkillGraphKey(graph)}' references unknown trigger owner '{graph.OwnerId}'.");
+                        return graph.TargetSkillId;
+                    }
+                    if (!string.Equals(trigger.MonsterId, graph.MonsterId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        errors.Add(
+                            $"Skill graph trigger owner '{graph.OwnerId}' belongs to '{trigger.MonsterId}', not '{graph.MonsterId}'.");
+                    }
+                    targetSkillId = trigger.SourceSkillId;
+                    break;
+                default:
+                    errors.Add(
+                        $"Skill graph '{BuildSkillGraphKey(graph)}' uses unsupported owner_kind '{graph.OwnerKind}'.");
+                    return graph.TargetSkillId;
+            }
+
+            if (!string.IsNullOrWhiteSpace(graph.TargetSkillId))
+            {
+                targetSkillId = graph.TargetSkillId;
+            }
+
+            if (string.IsNullOrWhiteSpace(targetSkillId) || !model.Skills.ContainsKey(targetSkillId))
+            {
+                errors.Add(
+                    $"Skill graph '{BuildSkillGraphKey(graph)}' resolves unknown target_skill_id '{targetSkillId}'.");
+            }
+            return targetSkillId;
+        }
+
+        private static void ValidateSkillGraphAllowedValue(
+            string graphNodeKey,
+            SkillNodeTypeParamRow param,
+            string value,
+            List<string> errors)
+        {
+            if (string.IsNullOrWhiteSpace(param.AllowedValues))
+            {
+                return;
+            }
+
+            var allowed = param.AllowedValues.Split('|');
+            for (var i = 0; i < allowed.Length; i++)
+            {
+                if (string.Equals(allowed[i].Trim(), value.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+            }
+
+            errors.Add(
+                $"Skill graph node '{graphNodeKey}' param '{param.ParamKey}' has invalid value '{value}'. Allowed: {param.AllowedValues}.");
+        }
+
+        private static bool IsEffectGraphOnlyHandler(string handlerId)
+        {
+            return IsEffectOperationHandler(handlerId)
+                || string.Equals(handlerId, "EffectTarget", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "EffectVisual", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "ConditionStatus", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "EffectLifetime", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string BuildSkillGraphKey(SkillGraphNodeRow graph)
+        {
+            return $"{graph.MonsterId}:{graph.OwnerKind}:{graph.OwnerId}:{graph.GraphKind}:{graph.GraphIndex}";
+        }
+
+        private static string BuildGeneratedSkillGraphNodeId(SkillGraphNodeRow graph)
+        {
+            return $"{graph.OwnerKind}:{graph.OwnerId}:{graph.GraphKind}:{graph.GraphIndex}:{graph.NodeOrder}";
+        }
+
+        private static string BuildGeneratedSkillGraphEffectId(
+            SkillNodeOwnerKind ownerKind,
+            string ownerId,
+            int graphIndex)
+        {
+            if (ownerKind == SkillNodeOwnerKind.Choice || ownerKind == SkillNodeOwnerKind.Trigger)
+            {
+                return graphIndex == 0 ? ownerId : $"{ownerId}@effect{graphIndex + 1}";
+            }
+
+            return $"{ownerId}@effect{graphIndex + 1}";
+        }
+
+        private static bool HasSkillGraphReference(SkillTriggerRow trigger)
+        {
+            return trigger != null
+                && !string.IsNullOrWhiteSpace(trigger.TriggeredGraphOwnerId);
+        }
+
+        private static string ResolveTriggeredEffectId(SkillTriggerRow trigger)
+        {
+            if (!HasSkillGraphReference(trigger))
+            {
+                return trigger != null ? trigger.TriggeredEffectId : string.Empty;
+            }
+
+            return BuildGeneratedSkillGraphEffectId(
+                trigger.TriggeredGraphOwnerKind,
+                trigger.TriggeredGraphOwnerId,
+                trigger.TriggeredGraphIndex);
         }
     }
 }

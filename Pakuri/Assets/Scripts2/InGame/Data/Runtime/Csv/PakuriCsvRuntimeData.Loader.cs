@@ -73,6 +73,18 @@ namespace Pakuri.Data
             {
                 missingAssets.Add(MonsterSkillTriggersFileName);
             }
+            if (sourceCatalog.MonsterSkillNodeDefinitions == null)
+            {
+                missingAssets.Add(MonsterSkillNodeDefinitionsFileName);
+            }
+            if (sourceCatalog.MonsterSkillNodeDefinitionParams == null)
+            {
+                missingAssets.Add(MonsterSkillNodeDefinitionParamsFileName);
+            }
+            if (sourceCatalog.MonsterSkillGraphNodeFiles == null || sourceCatalog.MonsterSkillGraphNodeFiles.Length == 0)
+            {
+                missingAssets.Add("skill_graph_nodes_*.csv");
+            }
             if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillChoicesProjectileFiles, sourceCatalog.MonsterSkillChoicesProjectile))
             {
                 missingAssets.Add(MonsterSkillChoicesProjectileFileName);
@@ -183,6 +195,13 @@ namespace Pakuri.Data
             var skillTriggerAssets = ResolveSplitOrLegacyCsvAssets(
                 sourceCatalog.MonsterSkillTriggerFiles,
                 sourceCatalog.MonsterSkillTriggers);
+            var skillGraphNodeAssets = sourceCatalog.MonsterSkillGraphNodeFiles ?? Array.Empty<TextAsset>();
+            var skillNodeDefinitionTable = CsvTable.Load(
+                sourceCatalog.MonsterSkillNodeDefinitions,
+                MonsterSkillNodeDefinitionsFileName);
+            var skillNodeDefinitionParamTable = CsvTable.Load(
+                sourceCatalog.MonsterSkillNodeDefinitionParams,
+                MonsterSkillNodeDefinitionParamsFileName);
             var projectileChoiceAssets = ResolveSplitOrLegacyCsvAssets(
                 sourceCatalog.MonsterSkillChoicesProjectileFiles,
                 sourceCatalog.MonsterSkillChoicesProjectile);
@@ -272,6 +291,17 @@ namespace Pakuri.Data
                 MonsterSkillsPassiveFileName,
                 SkillRuntimeKind.Passive);
 
+            foreach (var record in skillNodeDefinitionTable.Records)
+            {
+                var row = ParseSkillNodeTypeRow(record);
+                AddUnique(model.SkillNodeTypes, row.Id, row, record);
+            }
+
+            foreach (var record in skillNodeDefinitionParamTable.Records)
+            {
+                model.SkillNodeTypeParams.Add(ParseSkillNodeTypeParamRow(record));
+            }
+
             for (var assetIndex = 0; assetIndex < skillNodeAssets.Length; assetIndex++)
             {
                 var skillNodeTable = CsvTable.Load(
@@ -352,6 +382,19 @@ namespace Pakuri.Data
                 passiveChoiceAssets,
                 MonsterSkillChoicesPassiveFileName,
                 SkillRuntimeKind.Passive);
+
+            for (var assetIndex = 0; assetIndex < skillGraphNodeAssets.Length; assetIndex++)
+            {
+                var graphNodeTable = CsvTable.Load(
+                    skillGraphNodeAssets[assetIndex],
+                    GetTextAssetCsvTableName(skillGraphNodeAssets[assetIndex], "skill_graph_nodes.csv"));
+                foreach (var record in graphNodeTable.Records)
+                {
+                    model.SkillGraphNodes.Add(ParseSkillGraphNodeRow(record));
+                }
+            }
+
+            MaterializeSkillGraphRows(model);
 
             foreach (var record in statusEffectTable.Records)
             {

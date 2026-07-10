@@ -27,25 +27,24 @@ Design Ariel's first migration from authored node ids and node params to owner-k
 
 ### Constraints
 
-- Role Owner is Designer.
-- Documentation/design only; implementation has not started.
+- Role Owner is Designer / Code Builder.
+- Ariel graph storage/runtime compatibility 구현은 완료했으며 사용자 Play Mode A-J 회귀 검증은 아직 남아 있다.
 - Ariel legacy effects are already zero, but the shared effects directory remains because it contains 96 Eve/Rin/Sein/Vega rows.
 - Existing Ariel trigger wide payload conversion is outside the first storage-compatibility migration except for two Effect graph references.
 - No MSW-MCP was used.
 
 ### Role Owner
 
-Designer
+Designer / Code Builder
 
 ### Status
 
-Code Builder handoff created.
+Code Builder implementation and Unity CSV validation completed; user Play Mode regression pending.
 
 ### Next Actions
 
-- Implement `boards/MON/ARIEL_SKILL_GRAPH_NODES_MIGRATION_PLAN.md` in phases.
-- Preserve current player-facing Ariel behavior while compiling graph rows into the existing `SkillNodeDefinition` and `SkillEffectDefinition` runtime contracts.
-- Require user Play Mode verification after compile/catalog validation.
+- 사용자 Play Mode에서 Ariel A-J 기본/특성/마스터 조합을 회귀 검증한다.
+- 다른 몬스터 전환 전에는 Rin/Vega legacy node와 shared legacy effects 경로를 유지한다.
 
 ### Evidence
 
@@ -55,10 +54,20 @@ Code Builder handoff created.
 - Target ownership is 39 Choice/Plan rows, 45 Choice/Effect rows, 36 Skill/Effect rows, and 4 Trigger/Effect rows.
 - `ariel-a-master-2-holy-exposure-on-hit` becomes `Choice / ariel-a-master-2 / Effect / 0` and uses the real choice id as owner identity.
 - Three Ariel references to old Effect owner strings must move with graph identity: two trigger effect references and one condition `source_skill_id` reference.
+- 구현 결과는 definition 32종/param contract 53행, Ariel graph row 124행, Effect graph 20개이며 분포는 Choice/Plan 39, Choice/Effect 45, Skill/Effect 36, Trigger/Effect 4다.
+- Ariel legacy node/param은 0행이 되었고 Rin/Vega legacy node 15행/param 33행 및 legacy effects 96행은 유지되었다.
+- `PakuriCsvRuntimeData` loader가 graph CSV를 기존 `SkillNodeRow`/`SkillNodeParamRow`로 materialize하여 기존 mapper/executor 계약을 재사용하며, trigger graph reference는 build 시 생성 EffectId로 해석한다.
+- `dotnet build Assembly-CSharp.csproj`와 `Assembly-CSharp-Editor.csproj`는 각각 오류 0건이었다.
+- Unity-MCP에서 `Pakuri/Sync CSV Runtime Catalog Assets` 후 `Pakuri/Validate CSV Source Data`를 실행했고, 리소스 카탈로그에서 몬스터 5종·스테이지 적 8+8종을 로드했으며 콘솔 오류는 0건이었다.
+- 후속 graph schema 정리로 네 `skill_graph_nodes_*.csv`에서 `requires_active_choice_id`, 두 passive gate, `runtime_support_state`, `runtime_support_notes`를 제거해 각 파일을 21열로 축소했다.
+- `excludes_active_choice_id`는 `Skill/ariel-c/Effect/0`의 `ariel-c-master-1` 제외 조건 1건만 보존했으며, Choice 소유 Effect의 required-choice 조건은 loader가 owner id에서 계속 생성한다.
+- 후속 정리 뒤 Runtime/Editor 빌드는 오류 0건이었고 Unity-MCP catalog sync/source validation도 몬스터 5종·스테이지 적 8+8종 로드로 재통과했다.
 
 ### History
 
 - 2026-07-11: User requested an implementation-design MD for first migrating Ariel to definition-only nodes plus value-owning `skill_graph_nodes`, while retaining legacy effects until all monsters finish migration.
+- 2026-07-11: Code Builder implemented the Ariel-only graph migration, preserved legacy compatibility paths, and completed compile plus Unity catalog validation. User Play Mode A-J regression remains pending.
+- 2026-07-11: User requested a slimmer graph schema. Code Builder removed five redundant graph columns while preserving the single Ariel C master exclusion gate, then revalidated builds and the Unity runtime catalog.
 
 ## Task: 2026-07-11 Ariel Node Decomposition Guide
 

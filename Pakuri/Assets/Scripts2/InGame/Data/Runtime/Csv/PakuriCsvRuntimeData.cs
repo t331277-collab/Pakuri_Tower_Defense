@@ -40,6 +40,8 @@ namespace Pakuri.Data
         private const string MonsterSkillsPassiveFileName = "skills_passive.csv";
         private const string MonsterSkillNodesFileName = "monster_skill_nodes.csv";
         private const string MonsterSkillNodeParamsFileName = "monster_skill_node_params.csv";
+        private const string MonsterSkillNodeDefinitionsFileName = "skill_node_definitions.csv";
+        private const string MonsterSkillNodeDefinitionParamsFileName = "skill_node_definition_params.csv";
         private const string MonsterSkillEffectsFileName = "monster_skill_effects.csv";
         private const string MonsterSkillTriggersFileName = "monster_skill_triger.csv";
         private const string MonsterSkillChoicesProjectileFileName = "skill_choices_projectile.csv";
@@ -83,6 +85,9 @@ namespace Pakuri.Data
                 case MonsterSkillNodesFileName:
                 case MonsterSkillNodeParamsFileName:
                     return $"{RuntimeMonsterSkillNodeCsvAssetRoot}/{fileName}";
+                case MonsterSkillNodeDefinitionsFileName:
+                case MonsterSkillNodeDefinitionParamsFileName:
+                    return $"{RuntimeMonsterSkillNodeCsvAssetRoot}/definitions/{fileName}";
                 case MonsterSkillEffectsFileName:
                     return $"{RuntimeMonsterSkillEffectCsvAssetRoot}/{fileName}";
                 case MonsterSkillTriggersFileName:

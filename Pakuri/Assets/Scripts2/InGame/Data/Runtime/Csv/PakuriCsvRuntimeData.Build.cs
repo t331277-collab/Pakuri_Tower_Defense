@@ -820,7 +820,7 @@ namespace Pakuri.Data
                     InternalCooldownSeconds = trigger.InternalCooldownSeconds,
                     TriggeredSkillId = trigger.TriggeredSkillId,
                     TargetSkillId = trigger.TargetSkillId,
-                    TriggeredEffectId = trigger.TriggeredEffectId,
+                    TriggeredEffectId = ResolveTriggeredEffectId(trigger),
                     RuntimeKind = trigger.RuntimeKind,
                     SortOrder = trigger.SortOrder,
                     TargetSide = trigger.TargetSide,

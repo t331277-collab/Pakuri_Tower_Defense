@@ -18,6 +18,9 @@ namespace Pakuri.Data
             public readonly Dictionary<string, SkillChoiceRow> SkillChoices = new Dictionary<string, SkillChoiceRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, SkillNodeRow> SkillNodes = new Dictionary<string, SkillNodeRow>(StringComparer.OrdinalIgnoreCase);
             public readonly List<SkillNodeParamRow> SkillNodeParams = new List<SkillNodeParamRow>();
+            public readonly Dictionary<string, SkillNodeTypeRow> SkillNodeTypes = new Dictionary<string, SkillNodeTypeRow>(StringComparer.OrdinalIgnoreCase);
+            public readonly List<SkillNodeTypeParamRow> SkillNodeTypeParams = new List<SkillNodeTypeParamRow>();
+            public readonly List<SkillGraphNodeRow> SkillGraphNodes = new List<SkillGraphNodeRow>();
             public readonly Dictionary<string, StatusEffectRow> StatusEffects = new Dictionary<string, StatusEffectRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, EnemyRow> StageOneEnemies = new Dictionary<string, EnemyRow>(StringComparer.OrdinalIgnoreCase);
             public readonly Dictionary<string, EnemyRow> StageTwoEnemies = new Dictionary<string, EnemyRow>(StringComparer.OrdinalIgnoreCase);

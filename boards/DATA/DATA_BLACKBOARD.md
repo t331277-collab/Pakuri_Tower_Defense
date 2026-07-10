@@ -20,8 +20,8 @@ Define the first compatibility migration from Ariel node instances and params to
 
 ### Constraints
 
-- Role Owner is Designer.
-- This task creates design/documentation only; no runtime CSV or C# implementation was performed.
+- Role Owner is Designer / Code Builder.
+- Ariel-only runtime CSV and compatibility loader implementation is complete; user Play Mode verification remains pending.
 - First implementation scope is the 124 current Ariel nodes and 179 Ariel params.
 - Legacy effects remain at 96 rows because Eve/Rin/Sein/Vega are not fully node-migrated.
 - Rin/Vega legacy normalized nodes remain supported during transition.
@@ -29,16 +29,16 @@ Define the first compatibility migration from Ariel node instances and params to
 
 ### Role Owner
 
-Designer
+Designer / Code Builder
 
 ### Status
 
-Implementation design created; Code Builder work has not started.
+Code Builder implementation and Unity source-data validation completed; user Play Mode regression pending.
 
 ### Next Actions
 
-- Code Builder implements node definition catalogs and `skill_graph_nodes_{kind}.csv` compatibility loading.
-- Migrate Ariel only, remove Ariel legacy node/param rows in the same change, and keep Rin/Vega plus legacy effects intact.
+- 사용자 Play Mode에서 Ariel A-J 기본/특성/마스터 조합을 검증한다.
+- 다음 몬스터를 명시적으로 전환하기 전까지 Rin/Vega legacy node와 legacy effects를 유지한다.
 - Do not delete `skills/effects` until every legacy effect and trigger reference has graph coverage.
 
 ### Evidence
@@ -49,10 +49,19 @@ Implementation design created; Code Builder work has not started.
 - Current non-Ariel compatibility data is 15 legacy normalized nodes and 33 params.
 - Current effects remain 96 rows and contain no Ariel rows.
 - The plan defines `owner_kind + owner_id + graph_kind + graph_index` identity, generated runtime NodeId/EffectId, trigger graph references, validation, migration order, and deletion gates.
+- Runtime authoring now has 32 node definitions, 53 definition-param rows, and 124 Ariel graph rows; legacy Ariel node/param rows are 0 while Rin/Vega 15/33 and shared effects 96 remain.
+- Graph distribution is Choice/Plan 39, Choice/Effect 45, Skill/Effect 36, Trigger/Effect 4; all 20 Effect graphs contain exactly one operation node.
+- Loader materialization preserves the existing `SkillNodeDefinition`/`SkillEffectDefinition` build path; two Ariel effect triggers use graph reference columns and the internal E-effect source resolves to `ariel-e@effect1`.
+- Runtime and Editor dotnet builds completed with 0 errors. Unity-MCP catalog sync and source validation loaded 5 monsters and 8+8 stage enemies with 0 console errors.
+- Graph schema follow-up removed `requires_active_choice_id`, `requires_passive_skill_id`, `excludes_passive_skill_id`, `runtime_support_state`, and `runtime_support_notes` from all four Ariel graph CSVs; each graph file now has 21 columns.
+- `excludes_active_choice_id` remains as the only graph gate because `Skill/ariel-c/Effect/0` requires the single `ariel-c-master-1` exclusion; Choice Effect required-choice identity is inferred from its owner.
+- The follow-up retained all 124 graph rows and one exclusion value, then passed Runtime/Editor builds and Unity-MCP catalog sync/source validation with 0 errors.
 
 ### History
 
 - 2026-07-11: User approved a `skill_graph_nodes` single-value-owner direction, requested `choice_id`-based graph identity, required keeping legacy effects until all monsters migrate, and limited first implementation to Ariel.
+- 2026-07-11: Code Builder completed the Ariel graph CSV/runtime compatibility migration and Unity source-data validation; only user-owned Play Mode regression remains.
+- 2026-07-11: Code Builder reduced the graph instance schema to owner/node/args plus `excludes_active_choice_id`, preserving the only active exclusion while removing five redundant graph columns.
 
 ## Task: 2026-07-11 Legacy Effect To Semantic Node Migration Guide
 

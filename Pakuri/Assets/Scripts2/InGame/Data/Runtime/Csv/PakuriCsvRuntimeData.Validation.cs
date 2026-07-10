@@ -635,9 +635,28 @@ namespace Pakuri.Data
 
             if (triggerAction == SkillTriggerActionKind.Effect)
             {
-                if (model == null || string.IsNullOrWhiteSpace(trigger.TriggeredEffectId) || !HasSkillEffectSource(model, trigger.TriggeredEffectId))
+                var resolvedEffectId = ResolveTriggeredEffectId(trigger);
+                if (HasSkillGraphReference(trigger))
                 {
-                    errors.Add($"Skill trigger '{trigger.Id}' references unknown triggered_effect_id '{trigger.TriggeredEffectId}'.");
+                    if (!string.IsNullOrWhiteSpace(trigger.TriggeredEffectId))
+                    {
+                        errors.Add(
+                            $"Skill trigger '{trigger.Id}' cannot set both triggered_effect_id and triggered graph reference columns.");
+                    }
+                    if (trigger.TriggeredGraphKind != SkillGraphKind.Effect)
+                    {
+                        errors.Add($"Skill trigger '{trigger.Id}' graph reference must use graph_kind 'Effect'.");
+                    }
+                    if (!HasSkillGraphSource(model, trigger))
+                    {
+                        errors.Add(
+                            $"Skill trigger '{trigger.Id}' references unknown skill graph '{trigger.TriggeredGraphOwnerKind}/{trigger.TriggeredGraphOwnerId}/Effect/{trigger.TriggeredGraphIndex}'.");
+                    }
+                }
+
+                if (model == null || string.IsNullOrWhiteSpace(resolvedEffectId) || !HasSkillEffectSource(model, resolvedEffectId))
+                {
+                    errors.Add($"Skill trigger '{trigger.Id}' references unknown triggered effect '{resolvedEffectId}'.");
                 }
             }
 
@@ -840,6 +859,29 @@ namespace Pakuri.Data
                     && node.OwnerKind == SkillNodeOwnerKind.Effect
                     && string.Equals(node.OwnerId, effectId, StringComparison.OrdinalIgnoreCase)
                     && IsEffectOperationHandler(node.HandlerId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool HasSkillGraphSource(SourceModel model, SkillTriggerRow trigger)
+        {
+            if (model == null || !HasSkillGraphReference(trigger))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < model.SkillGraphNodes.Count; i++)
+            {
+                var graph = model.SkillGraphNodes[i];
+                if (graph.GraphKind == SkillGraphKind.Effect
+                    && graph.OwnerKind == trigger.TriggeredGraphOwnerKind
+                    && graph.GraphIndex == trigger.TriggeredGraphIndex
+                    && string.Equals(graph.MonsterId, trigger.MonsterId, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(graph.OwnerId, trigger.TriggeredGraphOwnerId, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }

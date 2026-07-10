@@ -2,10 +2,10 @@
 
 ## 문서 상태
 
-- 역할: Designer
-- 상태: 구현 전 설계 및 Code Builder handoff
+- 역할: Designer 설계 → Code Builder 구현
+- 상태: 1차 구현 및 Unity CSV 검증 완료, 사용자 Play Mode 회귀 검증 대기
 - 대상: 현재 Ariel normalized node 데이터만 1차 전환
-- 비대상: 이번 문서 작성 단계에서는 CSV, C#, prefab, scene을 변경하지 않는다.
+- 비대상: prefab/scene 변경, 다른 몬스터 graph 전환, legacy effects 삭제
 - 절대 조건: 모든 판단은 현재 CSV와 런타임 코드에서 확인한 근거를 사용한다.
 
 ## 1. 목표
@@ -279,7 +279,7 @@ Pakuri/Assets/CSVdata/runtime/monster/skills/choices/passive/skill_graph_nodes_p
 헤더:
 
 ```csv
-monster_id,owner_kind,owner_id,graph_kind,graph_index,target_skill_id,node_order,node_type_id,arg_1,arg_2,arg_3,arg_4,arg_5,arg_6,arg_7,arg_8,arg_9,arg_10,arg_11,arg_12,runtime_support_state,runtime_support_notes
+monster_id,owner_kind,owner_id,graph_kind,graph_index,target_skill_id,node_order,node_type_id,arg_1,arg_2,arg_3,arg_4,arg_5,arg_6,arg_7,arg_8,arg_9,arg_10,arg_11,arg_12,excludes_active_choice_id
 ```
 
 규칙:
@@ -293,6 +293,10 @@ monster_id,owner_kind,owner_id,graph_kind,graph_index,target_skill_id,node_order
 - `arg_n` CSV type row는 전부 `string`으로 읽고 definition의 `value_type`으로 재검증한다.
 - required arg가 비면 validation error다.
 - definition에 없는 추가 arg가 채워져 있으면 validation error다.
+- Choice 소유 Effect의 required-choice 조건은 `owner_kind=Choice + owner_id`에서 loader가 자동 생성하므로 별도 컬럼을 두지 않는다.
+- 현재 Ariel에서 실제 필요한 graph gate는 기본 `ariel-c` Effect를 `ariel-c-master-1` 선택 시 막는 `excludes_active_choice_id` 1건뿐이므로 이 컬럼만 유지한다.
+- passive gate 두 컬럼은 현재 값과 사용 행이 없어서 제거하고, 향후 필요하면 별도 condition node 설계를 우선한다.
+- runtime support 상태와 메모는 graph instance 값이 아니라 node definition/handler 구현 책임이므로 graph CSV에서 제거한다.
 - 12개를 넘는 param이 필요한 새 handler는 graph CSV 컬럼을 즉시 늘리지 않고 handler 분해 가능성을 먼저 검토한다.
 
 ### 4.3 `ariel-a-master-2` 변환 예
@@ -314,8 +318,8 @@ EffectTarget
 새 graph rows:
 
 ```csv
-ariel,Choice,ariel-a-master-2,Effect,0,ariel-a,1,ApplyStatus,holy-exposure,,,,,,,,,,,,RuntimeImplemented,
-ariel,Choice,ariel-a-master-2,Effect,0,ariel-a,2,EffectTarget,,EventTarget,,EffectTarget,AppliedTargets,,,,,,,,RuntimeImplemented,
+ariel,Choice,ariel-a-master-2,Effect,0,ariel-a,1,ApplyStatus,holy-exposure,,,,,,,,,,,,
+ariel,Choice,ariel-a-master-2,Effect,0,ariel-a,2,EffectTarget,,EventTarget,,EffectTarget,AppliedTargets,,,,,,,
 ```
 
 `EffectTarget`의 arg 위치는 definition param order가 결정한다. 빈 값은 handler default를 유지한다.
@@ -549,7 +553,7 @@ Trigger build:
 2. handler param order에 맞춰 `arg_1..arg_12`를 채운다.
 3. 39 Choice Plan nodes를 옮긴다.
 4. 20 Effect 그룹을 Choice 11, Skill 8, Trigger 1 owner로 다시 분류한다.
-5. runtime support 상태와 실제 asset/status/skill reference를 보존한다.
+5. runtime support 메타데이터는 node definition/handler 책임으로 유지하고 실제 asset/status/skill reference를 보존한다.
 
 ### Phase 3: runtime build 전환
 
@@ -613,23 +617,25 @@ monster/owner 기준으로 단일 경로만 활성화되도록 validation해야 
 
 Code Builder 구현은 다음 조건을 모두 만족해야 한다.
 
-- [ ] node definition CSV 2개가 존재하고 Ariel 사용 handler 32종을 정의한다.
-- [ ] Ariel `skill_graph_nodes_{kind}.csv` graph row 합계가 124다.
-- [ ] Ariel graph arg 값이 기존 node param 179개의 의미와 일치한다.
-- [ ] Ariel legacy node row가 0개다.
-- [ ] Ariel legacy node param row가 0개다.
-- [ ] Rin/Vega legacy node 15개와 param 33개가 유지된다.
-- [ ] legacy effects 96행이 변경 없이 유지된다.
-- [ ] Choice/Skill/Trigger graph owner reference가 모두 유효하다.
-- [ ] Effect graph 20개가 정확히 하나의 operation node를 가진다.
-- [ ] `ariel-a-master-2` authored Effect graph owner id가 실제 choice id다.
-- [ ] Ariel 두 effect trigger가 legacy effect string 대신 graph ref를 사용한다.
-- [ ] Ariel 내부 effect-source 참조가 새 graph identity로 resolve된다.
-- [ ] 동일 Ariel 기능이 graph와 legacy node 양쪽에서 생성되지 않는다.
-- [ ] 기존 `SkillNodeDefinition`, `SkillEffectDefinition`, execution plan에 동등한 runtime 결과가 생성된다.
-- [ ] runtime/editor build가 0 error다.
-- [ ] Unity-MCP CSV sync/validation에 fatal error가 없다.
+- [x] node definition CSV 2개가 존재하고 Ariel 사용 handler 32종을 정의한다.
+- [x] Ariel `skill_graph_nodes_{kind}.csv` graph row 합계가 124다.
+- [x] Ariel graph arg 값이 기존 node param 179개의 의미와 일치한다.
+- [x] Ariel legacy node row가 0개다.
+- [x] Ariel legacy node param row가 0개다.
+- [x] Rin/Vega legacy node 15개와 param 33개가 유지된다.
+- [x] legacy effects 96행이 변경 없이 유지된다.
+- [x] Choice/Skill/Trigger graph owner reference가 모두 유효하다.
+- [x] Effect graph 20개가 정확히 하나의 operation node를 가진다.
+- [x] `ariel-a-master-2` authored Effect graph owner id가 실제 choice id다.
+- [x] Ariel 두 effect trigger가 legacy effect string 대신 graph ref를 사용한다.
+- [x] Ariel 내부 effect-source 참조가 새 graph identity로 resolve된다.
+- [x] 동일 Ariel 기능이 graph와 legacy node 양쪽에서 생성되지 않는다.
+- [x] 기존 `SkillNodeDefinition`, `SkillEffectDefinition`, execution plan에 동등한 runtime 구조가 생성된다.
+- [x] runtime/editor build가 0 error다.
+- [x] Unity-MCP CSV sync/validation에 fatal error가 없다.
 - [ ] 사용자 Play Mode에서 Ariel A-J 기본/특성/마스터 조합을 검증한다.
+
+구조 및 에디터 검증은 2026-07-11 Code Builder 구현에서 완료했다. 마지막 항목은 실제 플레이 조작이 필요한 사용자 검증이므로 완료 처리하지 않는다.
 
 ## 12. Code Builder 검증 명령/증거 요구
 

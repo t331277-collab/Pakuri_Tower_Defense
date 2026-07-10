@@ -99,6 +99,15 @@ namespace Pakuri.Data
             sourceCatalog.MonsterSkillNodeParams = sourceCatalog.MonsterSkillNodeParamFiles.Length == 0
                 ? LoadImportedSourceTextAssetIfPresent(MonsterSkillNodeParamsFileName)
                 : null;
+            sourceCatalog.MonsterSkillNodeDefinitions = LoadTextAssetOrThrow(
+                $"{RuntimeMonsterSkillNodeCsvAssetRoot}/definitions/{MonsterSkillNodeDefinitionsFileName}",
+                "Create the skill node definition CSV before validation.");
+            sourceCatalog.MonsterSkillNodeDefinitionParams = LoadTextAssetOrThrow(
+                $"{RuntimeMonsterSkillNodeCsvAssetRoot}/definitions/{MonsterSkillNodeDefinitionParamsFileName}",
+                "Create the skill node definition param CSV before validation.");
+            sourceCatalog.MonsterSkillGraphNodeFiles = LoadImportedSourceTextAssetsByPrefix(
+                RuntimeMonsterSkillChoiceCsvAssetRoot,
+                "skill_graph_nodes_");
             sourceCatalog.MonsterSkillEffectFiles = LoadImportedSourceTextAssetsBySuffix(
                 RuntimeMonsterSkillEffectCsvAssetRoot,
                 "_skill_effects.csv");
@@ -225,6 +234,45 @@ namespace Pakuri.Data
             var files = Directory.GetFiles(
                 absoluteFolderPath,
                 "*" + fileNameSuffix,
+                SearchOption.AllDirectories);
+            Array.Sort(files, StringComparer.OrdinalIgnoreCase);
+
+            var assets = new List<TextAsset>(files.Length);
+            for (var i = 0; i < files.Length; i++)
+            {
+                var assetPath = GetAssetPathFromAbsolutePath(files[i]);
+                if (string.IsNullOrWhiteSpace(assetPath))
+                {
+                    continue;
+                }
+
+                var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
+                if (asset == null)
+                {
+                    TryImportTextAsset(assetPath);
+                    asset = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
+                }
+
+                if (asset != null)
+                {
+                    assets.Add(asset);
+                }
+            }
+
+            return assets.ToArray();
+        }
+
+        private static TextAsset[] LoadImportedSourceTextAssetsByPrefix(string folderAssetPath, string fileNamePrefix)
+        {
+            var absoluteFolderPath = GetAbsoluteAssetPath(folderAssetPath);
+            if (!Directory.Exists(absoluteFolderPath))
+            {
+                return Array.Empty<TextAsset>();
+            }
+
+            var files = Directory.GetFiles(
+                absoluteFolderPath,
+                fileNamePrefix + "*.csv",
                 SearchOption.AllDirectories);
             Array.Sort(files, StringComparer.OrdinalIgnoreCase);
 

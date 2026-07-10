@@ -326,6 +326,10 @@ namespace Pakuri.Data
             public string TriggeredSkillId;
             public string TargetSkillId;
             public string TriggeredEffectId;
+            public SkillNodeOwnerKind TriggeredGraphOwnerKind;
+            public string TriggeredGraphOwnerId;
+            public SkillGraphKind TriggeredGraphKind;
+            public int TriggeredGraphIndex;
             public SkillRuntimeKind RuntimeKind;
             public int SortOrder;
             public SkillMultiEffectTargetSide TargetSide;
@@ -705,6 +709,16 @@ namespace Pakuri.Data
                 TriggeredSkillId = ReadOptionalStringIfColumnExists(record, "triggered_skill_id"),
                 TargetSkillId = ReadOptionalStringIfColumnExists(record, "target_skill_id"),
                 TriggeredEffectId = ReadOptionalStringIfColumnExists(record, "triggered_effect_id"),
+                TriggeredGraphOwnerKind = ReadOptionalEnumIfColumnExists(
+                    record,
+                    "triggered_graph_owner_kind",
+                    SkillNodeOwnerKind.Skill),
+                TriggeredGraphOwnerId = ReadOptionalStringIfColumnExists(record, "triggered_graph_owner_id"),
+                TriggeredGraphKind = ReadOptionalEnumIfColumnExists(
+                    record,
+                    "triggered_graph_kind",
+                    SkillGraphKind.Effect),
+                TriggeredGraphIndex = ReadOptionalIntIfColumnExists(record, "triggered_graph_index"),
                 RuntimeKind = record.ReadEnum<SkillRuntimeKind>("runtime_kind"),
                 SortOrder = record.ReadInt("sort_order"),
                 TargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("target_side"),
