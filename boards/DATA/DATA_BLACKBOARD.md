@@ -5,6 +5,55 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-11 Ariel Skill Graph Nodes Migration Design
+
+### Task title
+
+Define the first compatibility migration from Ariel node instances and params to choice-owned skill graph nodes.
+
+### Goals
+
+- Make node CSVs definition-only in the final structure.
+- Move actual node composition and values into `choices/{kind}/skill_graph_nodes_{kind}.csv`.
+- Use `choice_id` as the owner id for Choice graphs instead of authored behavior names such as `ariel-a-master-2-holy-exposure-on-hit`.
+- Preserve legacy effects and non-Ariel node paths until their own migrations complete.
+
+### Constraints
+
+- Role Owner is Designer.
+- This task creates design/documentation only; no runtime CSV or C# implementation was performed.
+- First implementation scope is the 124 current Ariel nodes and 179 Ariel params.
+- Legacy effects remain at 96 rows because Eve/Rin/Sein/Vega are not fully node-migrated.
+- Rin/Vega legacy normalized nodes remain supported during transition.
+- No MSW-MCP was used.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Implementation design created; Code Builder work has not started.
+
+### Next Actions
+
+- Code Builder implements node definition catalogs and `skill_graph_nodes_{kind}.csv` compatibility loading.
+- Migrate Ariel only, remove Ariel legacy node/param rows in the same change, and keep Rin/Vega plus legacy effects intact.
+- Do not delete `skills/effects` until every legacy effect and trigger reference has graph coverage.
+
+### Evidence
+
+- Created `boards/MON/ARIEL_SKILL_GRAPH_NODES_MIGRATION_PLAN.md`.
+- Current aggregation returned Ariel 124 nodes, 179 params, 32 used handlers, and 20 Effect groups.
+- The target migration produces 39 Choice/Plan rows, 45 Choice/Effect rows, 36 Skill/Effect rows, and 4 Trigger/Effect rows.
+- Current non-Ariel compatibility data is 15 legacy normalized nodes and 33 params.
+- Current effects remain 96 rows and contain no Ariel rows.
+- The plan defines `owner_kind + owner_id + graph_kind + graph_index` identity, generated runtime NodeId/EffectId, trigger graph references, validation, migration order, and deletion gates.
+
+### History
+
+- 2026-07-11: User approved a `skill_graph_nodes` single-value-owner direction, requested `choice_id`-based graph identity, required keeping legacy effects until all monsters migrate, and limited first implementation to Ariel.
+
 ## Task: 2026-07-11 Legacy Effect To Semantic Node Migration Guide
 
 ### Task title

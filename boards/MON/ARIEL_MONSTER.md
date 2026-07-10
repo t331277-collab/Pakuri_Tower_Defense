@@ -12,6 +12,54 @@ Ariel dedicated monster, skill, and runtime persistent-state file.
 
 At the start of new work, use this active Ariel file. Common monster history is archived at `boards/ARCHIVE/MON_BLACKBOARD_ARCHIVE_2026-05-14.md`; consult `boards/MON/EVE_MONSTER.md` only when a concrete implementation example is needed.
 
+## Task: 2026-07-11 Ariel Skill Graph Nodes Migration Design
+
+### Task title
+
+Design Ariel's first migration from authored node ids and node params to owner-keyed skill graph nodes.
+
+### Goals
+
+- Replace Ariel's 124 current node instance rows and 179 param rows with 124 graph node rows that own the real values.
+- Use real `choice_id` values for Choice graph ownership instead of semantic Effect names.
+- Reclassify Ariel Effect composition under Choice, Skill, or Trigger graph owners without changing runtime behavior.
+- Keep all non-Ariel legacy node/effect paths operational during the first migration.
+
+### Constraints
+
+- Role Owner is Designer.
+- Documentation/design only; implementation has not started.
+- Ariel legacy effects are already zero, but the shared effects directory remains because it contains 96 Eve/Rin/Sein/Vega rows.
+- Existing Ariel trigger wide payload conversion is outside the first storage-compatibility migration except for two Effect graph references.
+- No MSW-MCP was used.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Code Builder handoff created.
+
+### Next Actions
+
+- Implement `boards/MON/ARIEL_SKILL_GRAPH_NODES_MIGRATION_PLAN.md` in phases.
+- Preserve current player-facing Ariel behavior while compiling graph rows into the existing `SkillNodeDefinition` and `SkillEffectDefinition` runtime contracts.
+- Require user Play Mode verification after compile/catalog validation.
+
+### Evidence
+
+- Created `boards/MON/ARIEL_SKILL_GRAPH_NODES_MIGRATION_PLAN.md`.
+- Ariel currently has 50 Choice rows, 39 Choice-owned nodes, and 85 Effect-owned nodes grouped into 20 Effects.
+- Choice-gated Ariel Effect groups account for 45 nodes across 11 graphs; no-Choice Effect groups account for 40 nodes across 9 graphs.
+- Target ownership is 39 Choice/Plan rows, 45 Choice/Effect rows, 36 Skill/Effect rows, and 4 Trigger/Effect rows.
+- `ariel-a-master-2-holy-exposure-on-hit` becomes `Choice / ariel-a-master-2 / Effect / 0` and uses the real choice id as owner identity.
+- Three Ariel references to old Effect owner strings must move with graph identity: two trigger effect references and one condition `source_skill_id` reference.
+
+### History
+
+- 2026-07-11: User requested an implementation-design MD for first migrating Ariel to definition-only nodes plus value-owning `skill_graph_nodes`, while retaining legacy effects until all monsters finish migration.
+
 ## Task: 2026-07-11 Ariel Node Decomposition Guide
 
 ### Task title
