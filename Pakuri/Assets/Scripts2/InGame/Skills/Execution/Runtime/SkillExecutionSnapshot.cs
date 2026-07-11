@@ -39,6 +39,16 @@ namespace Pakuri.InGame
         RadiusMultiplier,
         RadiusBonus,
         DurationBonus,
+        DurationMultiplier,
+        AdditionalProjectileBonus,
+        ShotIntervalMultiplier,
+        BranchProjectile,
+        StatusStackAmountBonus,
+        StatusStackAmountSet,
+        StatusMaxStacksBonus,
+        ConditionalDamageMultiplier,
+        TargetStatusStackDamageRateBonus,
+        TriggerProcChanceBonus,
         HitTargetCountBonus,
         StatusActionSpeedBonus,
         StatusAttackPowerBonus,
@@ -112,7 +122,9 @@ namespace Pakuri.InGame
             int intValue = 0,
             string stringValue = null,
             string secondaryStringValue = null,
-            SkillMultiEffectTargetSide targetSide = SkillMultiEffectTargetSide.Enemy)
+            SkillMultiEffectTargetSide targetSide = SkillMultiEffectTargetSide.Enemy,
+            float secondaryFloatValue = 0f,
+            float thirdFloatValue = 0f)
         {
             Kind = kind;
             FloatValue = floatValue;
@@ -120,6 +132,8 @@ namespace Pakuri.InGame
             StringValue = stringValue ?? string.Empty;
             SecondaryStringValue = secondaryStringValue ?? string.Empty;
             TargetSide = targetSide;
+            SecondaryFloatValue = secondaryFloatValue;
+            ThirdFloatValue = thirdFloatValue;
         }
 
         public SkillActionOpKind Kind { get; }
@@ -128,6 +142,8 @@ namespace Pakuri.InGame
         public string StringValue { get; }
         public string SecondaryStringValue { get; }
         public SkillMultiEffectTargetSide TargetSide { get; }
+        public float SecondaryFloatValue { get; }
+        public float ThirdFloatValue { get; }
     }
 
     public sealed class SkillExecutionSnapshot
@@ -270,6 +286,8 @@ namespace Pakuri.InGame
         private readonly Dictionary<string, float> statusActionSpeedBonuses = new Dictionary<string, float>(System.StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, float> statusDurationBonuses = new Dictionary<string, float>(System.StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, int> statusMaxStacksBonuses = new Dictionary<string, int>(System.StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, float> targetStatusStackDamageRateBonuses = new Dictionary<string, float>(System.StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, float> triggerProcChanceBonuses = new Dictionary<string, float>(System.StringComparer.OrdinalIgnoreCase);
         private readonly List<ConditionalDamageRule> conditionalDamageRules = new List<ConditionalDamageRule>();
         private readonly List<ConditionalCritChanceRule> conditionalCritChanceRules = new List<ConditionalCritChanceRule>();
         private readonly List<BurstDamageRule> burstDamageRules = new List<BurstDamageRule>();
@@ -983,6 +1001,64 @@ namespace Pakuri.InGame
                 case SkillActionOpKind.DurationBonus:
                     DurationBonus += action.FloatValue;
                     break;
+                case SkillActionOpKind.DurationMultiplier:
+                    DurationMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+                    break;
+                case SkillActionOpKind.AdditionalProjectileBonus:
+                    AdditionalProjectileBonus += action.IntValue;
+                    break;
+                case SkillActionOpKind.ShotIntervalMultiplier:
+                    ShotIntervalMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+                    break;
+                case SkillActionOpKind.BranchProjectile:
+                    BranchChanceBonus += action.FloatValue;
+                    if (action.IntValue > 0)
+                    {
+                        HasBranchCount = true;
+                        BranchCount = action.IntValue;
+                    }
+                    if (action.SecondaryFloatValue > 0f)
+                    {
+                        HasBranchDamageMultiplier = true;
+                        BranchDamageMultiplier = action.SecondaryFloatValue;
+                    }
+                    if (action.ThirdFloatValue > 0f)
+                    {
+                        HasBranchSearchRadius = true;
+                        BranchSearchRadius = action.ThirdFloatValue;
+                    }
+                    break;
+                case SkillActionOpKind.StatusStackAmountBonus:
+                    StatusStacksBonus += action.IntValue;
+                    break;
+                case SkillActionOpKind.StatusStackAmountSet:
+                    HasStatusStacksSet = true;
+                    StatusStacksSet = Mathf.Max(0, action.IntValue);
+                    break;
+                case SkillActionOpKind.StatusMaxStacksBonus:
+                    if (!string.IsNullOrWhiteSpace(action.StringValue) && action.IntValue != 0)
+                    {
+                        statusMaxStacksBonuses.TryGetValue(action.StringValue, out var currentMaxStacksBonus);
+                        statusMaxStacksBonuses[action.StringValue] = currentMaxStacksBonus + action.IntValue;
+                    }
+                    break;
+                case SkillActionOpKind.ConditionalDamageMultiplier:
+                    AddConditionalDamageRule(action.FloatValue, action.StringValue, action.IntValue);
+                    break;
+                case SkillActionOpKind.TargetStatusStackDamageRateBonus:
+                    if (!string.IsNullOrWhiteSpace(action.StringValue) && !Mathf.Approximately(action.FloatValue, 0f))
+                    {
+                        targetStatusStackDamageRateBonuses.TryGetValue(action.StringValue, out var currentRateBonus);
+                        targetStatusStackDamageRateBonuses[action.StringValue] = currentRateBonus + action.FloatValue;
+                    }
+                    break;
+                case SkillActionOpKind.TriggerProcChanceBonus:
+                    if (!string.IsNullOrWhiteSpace(action.StringValue) && !Mathf.Approximately(action.FloatValue, 0f))
+                    {
+                        triggerProcChanceBonuses.TryGetValue(action.StringValue, out var currentProcBonus);
+                        triggerProcChanceBonuses[action.StringValue] = currentProcBonus + action.FloatValue;
+                    }
+                    break;
                 case SkillActionOpKind.HitTargetCountBonus:
                     HitTargetCountBonus += action.IntValue;
                     break;
@@ -1063,6 +1139,16 @@ namespace Pakuri.InGame
                 : bonus;
         }
 
+        private void AddConditionalDamageRule(float multiplier, string statusId, int minStacks)
+        {
+            if (string.IsNullOrWhiteSpace(statusId) || multiplier <= 0f)
+            {
+                return;
+            }
+
+            conditionalDamageRules.Add(new ConditionalDamageRule(multiplier, statusId, Mathf.Max(1, minStacks)));
+        }
+
         public void AddActiveChoiceId(string choiceId)
         {
             if (!string.IsNullOrWhiteSpace(choiceId))
@@ -1106,6 +1192,26 @@ namespace Pakuri.InGame
             }
 
             return statusMaxStacksBonuses.TryGetValue(statusId, out var bonus) ? bonus : 0;
+        }
+
+        public float ResolveTargetStatusStackDamageRateBonus(string statusId)
+        {
+            if (string.IsNullOrWhiteSpace(statusId))
+            {
+                return 0f;
+            }
+
+            return targetStatusStackDamageRateBonuses.TryGetValue(statusId, out var bonus) ? bonus : 0f;
+        }
+
+        public float ResolveTriggerProcChanceBonus(string triggerId)
+        {
+            if (string.IsNullOrWhiteSpace(triggerId))
+            {
+                return 0f;
+            }
+
+            return triggerProcChanceBonuses.TryGetValue(triggerId, out var bonus) ? bonus : 0f;
         }
 
         public float ResolveConditionalDamageMultiplier(BaseUnitRuntimeModel target)

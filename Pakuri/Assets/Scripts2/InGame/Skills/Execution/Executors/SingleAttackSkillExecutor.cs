@@ -1485,7 +1485,7 @@ namespace Pakuri.InGame
             float baseCritChanceBonus,
             bool isCoreHit)
         {
-            var totalDamage = Mathf.Max(0f, baseDamage + ResolveTargetStatusStackAdditionalDamage(caster, skill, snapshot, target));
+            var totalDamage = Mathf.Max(0f, baseDamage + ResolveTargetStatusStackAdditionalDamage(caster, skill, snapshot, target, baseDamage));
             var damageMultiplier = snapshot != null ? snapshot.ResolveConditionalDamageMultiplier(target) : 1f;
             var critChanceBonus = baseCritChanceBonus + (snapshot != null ? snapshot.ResolveConditionalCritChanceBonus(target) : 0f);
             var isExecute = false;
@@ -1512,7 +1512,8 @@ namespace Pakuri.InGame
             BaseUnitRuntimeModel caster,
             SingleAttackData skill,
             SkillExecutionSnapshot snapshot,
-            BaseUnitRuntimeModel target)
+            BaseUnitRuntimeModel target,
+            float baseDamage)
         {
             if (caster == null
                 || skill == null
@@ -1536,7 +1537,12 @@ namespace Pakuri.InGame
 
             var perStackDamage = SkillExecutionUtility.ResolveDamage(caster, skill.TargetStatusStackDamage, snapshot);
             var stackMultiplier = snapshot != null ? snapshot.TargetStatusStackDamageMultiplier : 1f;
-            return Mathf.Max(0f, stacks * perStackDamage * Mathf.Max(0f, stackMultiplier));
+            var rateBonus = snapshot != null
+                ? snapshot.ResolveTargetStatusStackDamageRateBonus(skill.TargetStatusStackStatusId)
+                : 0f;
+            var perStackTotal = perStackDamage * Mathf.Max(0f, stackMultiplier)
+                + Mathf.Max(0f, baseDamage) * rateBonus;
+            return Mathf.Max(0f, stacks * perStackTotal);
         }
 
         private static int ResolvePlannedConsumedStacks(

@@ -5,6 +5,44 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-12 Eve Status Graph Migration
+
+### Task title
+
+Move Eve status-dependent skill behavior from wide/legacy rows into shared graph nodes.
+
+### Goals
+
+- Preserve shock, chill/freeze, vulnerable, status-duration, stack, resistance, and damage-taken behavior through common nodes.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- No monster-only status runtime branch is introduced.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and source-validated; Play Mode verification remains.
+
+### Next Actions
+
+- User verifies Eve-D stack damage, Eve-E vulnerable stacks, and Eve F-J passive status modifiers in Play Mode.
+
+### Evidence
+
+- Eve-D uses `StatusFilteredDeployment`, `TargetStatusStackDamage`, and additive stack-rate nodes without consuming shock.
+- Eve-E uses graph-authored vulnerable stack amount/max-stack/critical-damage-taken modifiers.
+- Eve F-J legacy status effects were replaced by shared Effect graphs; `StatusElementDamageTakenBonus` now accepts an optional element attribute so Eve-I remains Lightning-specific.
+- Unity CSV validation passed and both C# projects build with 0 errors.
+
+### History
+
+- 2026-07-12: Completed Eve status graph migration and verification handoff.
+
 ## Task: 2026-07-11 Shared DamageCalculator Final-Damage Routing
 
 ### Task title

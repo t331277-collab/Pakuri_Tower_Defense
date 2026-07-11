@@ -288,6 +288,24 @@ namespace Pakuri.Data
                 new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "DurationBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus_seconds" });
+            AddSkillNodeHandlerSchema(schemas, "DurationMultiplier", SkillExecutionPlanNodeKind.Action,
+                new[] { "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "AdditionalProjectileBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "ShotIntervalMultiplier", SkillExecutionPlanNodeKind.Action,
+                new[] { "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "StatusStackAmountBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "status_id", "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "StatusStackAmountSet", SkillExecutionPlanNodeKind.Action,
+                new[] { "status_id", "value" });
+            AddSkillNodeHandlerSchema(schemas, "StatusMaxStacksBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "status_id", "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "ConditionalDamageMultiplier", SkillExecutionPlanNodeKind.DamageModifier,
+                new[] { "status_id", "min_stacks", "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "TargetStatusStackDamageRateBonus", SkillExecutionPlanNodeKind.DamageModifier,
+                new[] { "status_id", "bonus_rate_per_stack" });
+            AddSkillNodeHandlerSchema(schemas, "TriggerProcChanceBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "trigger_id", "bonus" });
             AddSkillNodeHandlerSchema(schemas, "StatusActionSpeedBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" }, new[] { "status_id" });
             AddSkillNodeHandlerSchema(schemas, "StatusAttackPowerBonus", SkillExecutionPlanNodeKind.Action,
@@ -311,7 +329,10 @@ namespace Pakuri.Data
             AddSkillNodeHandlerSchema(schemas, "StatusConditionalDamageTakenBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "source_status_id", "bonus" });
             AddSkillNodeHandlerSchema(schemas, "StatusElementDamageTakenBonus", SkillExecutionPlanNodeKind.Action,
-                new[] { "bonus" });
+                new[] { "bonus" }, new[] { "attribute" }, EnumParamValues(
+                    "attribute", Enum.GetNames(typeof(DamageAttribute))));
+            AddSkillNodeHandlerSchema(schemas, "StatusConditionalStatusChanceBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "status_ids", "bonus" });
             AddSkillNodeHandlerSchema(schemas, "StatusCriticalDamageTakenBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "StatusSpellPowerBonus", SkillExecutionPlanNodeKind.Action,
@@ -386,6 +407,8 @@ namespace Pakuri.Data
                     "attribute", Enum.GetNames(typeof(DamageAttribute))));
             AddSkillNodeHandlerSchema(schemas, "EffectExtendStatusDuration", SkillExecutionPlanNodeKind.Action,
                 new[] { "status_id" });
+            AddSkillNodeHandlerSchema(schemas, "RecastZone", SkillExecutionPlanNodeKind.OnExpireAction,
+                new[] { "source_skill_id", "delay_seconds", "duration_seconds", "radius_multiplier", "inherit_snapshot", "max_generation" });
             AddSkillNodeHandlerSchema(schemas, "EffectTarget", SkillExecutionPlanNodeKind.Action,
                 Array.Empty<string>(),
                 new[]
@@ -406,6 +429,9 @@ namespace Pakuri.Data
             AddSkillNodeHandlerSchema(schemas, "ConditionStatus", SkillExecutionPlanNodeKind.Action,
                 new[] { "status_id" }, new[] { "target_side", "source_skill_id", "min_stacks" }, EnumParamValues(
                     "target_side", Enum.GetNames(typeof(SkillMultiEffectTargetSide))));
+            AddSkillNodeHandlerSchema(schemas, "ConditionAnyStatus", SkillExecutionPlanNodeKind.Action,
+                new[] { "status_ids" }, new[] { "target_side", "source_skill_id", "min_stacks" }, EnumParamValues(
+                    "target_side", Enum.GetNames(typeof(SkillMultiEffectTargetSide))));
             AddSkillNodeHandlerSchema(schemas, "ConditionSkillAttribute", SkillExecutionPlanNodeKind.Action,
                 new[] { "attribute" }, enumParamAllowedValues: EnumParamValues(
                     "attribute", Enum.GetNames(typeof(DamageAttribute))));
@@ -417,6 +443,8 @@ namespace Pakuri.Data
                 new[] { "status_id" }, new[] { "min_stacks" });
             AddSkillNodeHandlerSchema(schemas, "TargetStatusStackDamage", SkillExecutionPlanNodeKind.DamageModifier,
                 new[] { "status_id" }, new[] { "max_stacks", "base_damage", "attack_power_coefficient", "spell_power_coefficient", "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "StatusFilteredDeployment", SkillExecutionPlanNodeKind.Action,
+                new[] { "status_id", "min_stacks" });
             AddSkillNodeHandlerSchema(schemas, "ConsumeTargetStatus", SkillExecutionPlanNodeKind.OnHitAction,
                 new[] { "status_id" }, new[] { "ratio", "stacks" });
             AddSkillNodeHandlerSchema(schemas, "CooldownReset", SkillExecutionPlanNodeKind.OnKillAction,
@@ -444,7 +472,7 @@ namespace Pakuri.Data
             AddSkillNodeHandlerSchema(schemas, "CooldownRefundBonus", SkillExecutionPlanNodeKind.OnKillAction,
                 new[] { "ratio_bonus" });
             AddSkillNodeHandlerSchema(schemas, "BranchProjectile", SkillExecutionPlanNodeKind.Action,
-                new string[0], new[] { "projectile_index", "count", "angle", "damage_multiplier" });
+                new string[0], new[] { "projectile_index", "count", "angle", "damage_multiplier", "chance_bonus", "search_radius" });
             AddSkillNodeHandlerSchema(schemas, "SpawnProjectile", SkillExecutionPlanNodeKind.Action,
                 new string[0], new[] { "projectile_prefab_path", "projectile_sprite_path", "count", "speed" });
             AddSkillNodeHandlerSchema(schemas, "BossDamageMultiplier", SkillExecutionPlanNodeKind.DamageModifier,
@@ -1517,6 +1545,7 @@ namespace Pakuri.Data
                 || string.Equals(handlerId, "EffectTarget", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "EffectVisual", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "ConditionStatus", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "EffectLifetime", StringComparison.OrdinalIgnoreCase);
         }

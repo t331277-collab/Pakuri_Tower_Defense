@@ -17,12 +17,19 @@ namespace Pakuri.Data
             }
 
             public CsvFatalException(string message, List<string> errors)
-                : base(message)
+                : base(errors == null || errors.Count == 0
+                    ? message
+                    : string.Concat(message, Environment.NewLine, string.Join(Environment.NewLine, errors)))
             {
                 Errors = errors ?? new List<string>();
             }
 
             public List<string> Errors { get; }
+
+            public override string ToString()
+            {
+                return base.ToString();
+            }
         }
 
         private sealed class CsvTable

@@ -5,6 +5,44 @@
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-12 Eve Skill Graph Catalog Wiring
+
+### Task title
+
+Register the new Eve line-attack and area-attack graph sources in the runtime catalog.
+
+### Goals
+
+- Import the two new graph CSV assets and keep generated runtime catalog references synchronized.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Unity-MCP is the only MCP used; no MSW-MCP.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Complete; Play Mode behavior verification remains user-owned.
+
+### Next Actions
+
+- Preserve both graph source references during future catalog regeneration.
+
+### Evidence
+
+- Unity generated `.meta` files for `skill_graph_nodes_line_attack.csv` and `skill_graph_nodes_area_attack.csv`.
+- `PakuriCsvRuntimeSourceCatalog.asset` gained the two graph sources and Unity CSV validation loaded the 5-monster catalog successfully.
+- The user added an enabled `BoxCollider2D` to `Assets/Prefab/Skill/Eve/Eve_D.prefab`. Eve-D now uses that authored footprint as its base hitbox, while existing root-scale radius modifiers resize Sprite and Collider together.
+
+### History
+
+- 2026-07-12: Added and validated Eve line/area graph catalog wiring.
+- 2026-07-12: Recorded Eve-D prefab Collider as base footprint authority; the paired CSV row uses `radius=0` and `hit_target_count=global`.
+
 ## Task: 2026-07-10 Runtime Skill Visual Asset Catalog
 
 ### Task title

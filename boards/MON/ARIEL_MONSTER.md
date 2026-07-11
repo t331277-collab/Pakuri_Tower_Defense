@@ -73,21 +73,21 @@ Code Builder implementation and Unity CSV validation completed; user Play Mode r
 
 ### Task title
 
-Create an Ariel-grounded guide for decomposing other monsters' legacy effect rows into semantic nodes.
+Maintain the current Ariel skill-graph conversion guide for decomposing legacy effect rows into graph nodes.
 
 ### Goals
 
-- Compare Ariel A-J reference intent with the current Ariel Choice/Effect node implementation.
-- Document the current implemented node handlers and distinguish runtime-wired handlers from schema-only names.
-- Give an AI agent a repeatable method for separating base skill bodies, Choice modifiers, Effect groups, and Trigger bindings.
-- Prefer existing handlers and require evidence plus user approval before shared runtime handler expansion.
+- Use the current 21-column `skill_graph_nodes` schema as the authoring authority.
+- Document `node_type_id + param_order -> arg_N` mapping, graph ownership, generated IDs, and trigger references.
+- Give an AI agent a repeatable method for separating base skill bodies, Choice Plan graphs, Effect graphs, and Trigger bindings.
+- Record current graph/direct-node incompatibility and stop when existing graph definitions cannot preserve a legacy effect field.
 
 ### Constraints
 
 - Role Owner is Designer.
 - This task creates design/documentation only; no skill CSV or runtime code implementation was performed.
-- Evidence is limited to the user-provided Ariel reference directory, current runtime node/effect CSVs, relevant runtime code, and routed Ariel/DATA boards.
-- No other monster reference markdown or archived monster implementation was inspected for value discovery.
+- Evidence is limited to current runtime skill CSVs, relevant runtime code, and routed Ariel/DATA boards.
+- No monster reference markdown, archive, UI, RUN, or unrelated monster board was inspected for value discovery.
 - No MSW-MCP was used.
 - Unity Play Mode verification remains user-owned for later implementation work.
 
@@ -97,26 +97,29 @@ Designer
 
 ### Status
 
-Design and implementation handoff created.
+Guide rewritten for the current `skill_graph_nodes` schema and loader behavior.
 
 ### Next Actions
 
-- Code Builder or Skill Builder can migrate a selected monster in small skill-kind batches using `boards/MON/ARIEL_NODE_DECOMPOSITION_GUIDE.md`.
-- Start with legacy effect rows that the guide classifies as supported by current handlers.
-- If a selected row needs shared handler work, provide the required-handler evidence bundle and obtain user approval before expanding runtime scope.
+- Code Builder or Skill Builder selects one monster, routes the minimum active CSV set, and audits every non-empty legacy field before migration.
+- Eve/Sein have no direct-node overlap and can begin only in a kind whose graph file already exists; Rin/Vega must first resolve their 15 remaining legacy direct nodes.
+- Stop for user approval when a graph file, node type, param, CSV column, or shared runtime composer/mapper extension is required.
 
 ### Evidence
 
-- Created `boards/MON/ARIEL_NODE_DECOMPOSITION_GUIDE.md`.
-- Inspected all 10 files under `Pakuri/reference/2.Monster/ariel/skill` and compared their A-J behavior families with current Ariel node groups.
-- Current disk aggregation returned 124 Ariel nodes: 39 Choice-owned nodes and 85 Effect-owned nodes grouped under 20 Effect owner ids.
-- The guide records the current Ariel pattern: base skill body remains in base CSV, numeric changes use Choice nodes, independent behavior uses one-operation Effect groups, and event timing remains in trigger CSV.
-- The guide explicitly keeps current Trigger rows out of normalized migration because validation reports `owner_kind=Trigger` is not wired into runtime plans.
-- Current non-Ariel effect audit returned 96 rows: 58 immediately representable, 16 requiring existing-handler Effect composer extension, and 22 requiring genuinely new semantic handler support.
+- Rewrote `boards/MON/ARIEL_NODE_DECOMPOSITION_GUIDE.md` around the current graph instance files under `choices/{kind}/skill_graph_nodes_{kind}.csv` instead of direct node/param authoring.
+- Current disk aggregation returned 124 Ariel graph rows: Choice/Plan 39 rows in 36 graphs, Choice/Effect 45 rows in 11 graphs, Skill/Effect 36 rows in 8 graphs, and Trigger/Effect 4 rows in 1 graph.
+- All 20 current Ariel Effect graphs contain exactly one operation node.
+- Current graph files exist for buff, passive, projectile, and single-attack only; area-attack and line-attack graph files do not exist.
+- `skill_node_definitions.csv` has 32 node types and `skill_node_definition_params.csv` has 53 param rows; the maximum defined arg is `EffectTarget.arg_8`, while current Ariel data uses at most `arg_5`.
+- `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` rejects graph/direct-node mixing for one monster, rejects undefined/required arg violations, generates node/effect IDs, and resolves Choice/Skill/Trigger owners.
+- Current legacy compatibility data remains 15 direct nodes with 33 params for Rin/Vega and 96 effect rows for Eve/Rin/Sein/Vega.
+- The obsolete 58/16/22 effect classification and the statement that Trigger-owned nodes are unsupported were removed; current Ariel has one Trigger/Effect graph and two trigger graph-reference rows.
 
 ### History
 
 - 2026-07-11: User requested an evidence-based MD that lets an AI agent use Ariel's current node implementation to decompose other monsters' effect CSV behavior, reuse existing nodes first, and add handlers only when necessary.
+- 2026-07-11: User requested updating the guide after the CSV structure changed; Designer rewrote it for current graph rows, positional args, generated IDs, trigger references, compatibility gates, and stop conditions.
 
 ## Task: 2026-07-10 Ariel Runtime Visual Migration Implementation
 

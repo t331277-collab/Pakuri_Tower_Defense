@@ -10,6 +10,102 @@ namespace Pakuri.InGame
 
     public sealed class ZoneSkillExecutor : TypedSkillExecutor<ZoneSkillData>
     {
+        internal static bool ExecuteRecast(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot inheritedSnapshot,
+            SkillEffectDefinition effect,
+            Vector2 center)
+        {
+            var skill = context != null ? context.SkillData as ZoneSkillData : null;
+            if (skill == null
+                || effect == null
+                || context.CombatManager == null
+                || context.CasterEntry == null
+                || context.Roster == null
+                || (!string.IsNullOrWhiteSpace(effect.RecastSourceSkillId)
+                    && !string.Equals(effect.RecastSourceSkillId, skill.SkillId, StringComparison.OrdinalIgnoreCase)))
+            {
+                return false;
+            }
+
+            var maxGeneration = Math.Max(1, effect.RecastMaxGeneration);
+            if (context.RecastGeneration >= maxGeneration)
+            {
+                return false;
+            }
+
+            var snapshot = effect.RecastInheritSnapshot
+                ? inheritedSnapshot
+                : new SkillExecutionSnapshot(skill);
+            var radius = ResolveRadius(skill, snapshot) * Mathf.Max(0f, effect.RecastRadiusMultiplier);
+            var duration = Mathf.Max(0.05f, effect.RecastDurationSeconds);
+            var tickInterval = ResolveTickInterval(skill, snapshot);
+            var hitTargetCount = ResolveHitTargetCount(skill, snapshot);
+            var damage = SkillExecutionUtility.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
+            var attribute = SkillExecutionUtility.MapAttribute(skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element);
+            var statusSpec = SkillStatusSpecUtility.ResolveStatusSpec(skill.OnTickStatus, snapshot);
+            var planEffects = SkillPlanActionDispatcher.ResolveEffects(snapshot, skill.MultiEffects);
+            var expireEffects = ResolveOnExpireEffects(context, snapshot, planEffects);
+            var coverAll = (skill.Area != null && skill.Area.CoverAll)
+                || (skill.Targeting != null && skill.Targeting.CoverAll);
+            var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
+                ? snapshot.SkillEffectPrefab
+                : context.CombatManager.Effects != null
+                    ? context.CombatManager.Effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId)
+                    : null;
+
+            GameObject instance = null;
+            if (prefab != null && context.CombatManager.Effects != null)
+            {
+                instance = context.CombatManager.Effects.InstantiateSkillPrefab(prefab, center, Quaternion.identity);
+                if (instance != null && PrefabHasHitbox(instance))
+                {
+                    SkillExecutionUtility.ApplyPrefabScale(
+                        instance.transform,
+                        SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area),
+                        snapshot);
+                    instance.transform.localScale *= Mathf.Max(0f, effect.RecastRadiusMultiplier);
+                    Physics2D.SyncTransforms();
+                }
+            }
+
+            if (instance == null)
+            {
+                instance = new GameObject(string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameRecastZone" : $"InGameRecastZone_{skill.SkillId}");
+                instance.transform.position = center;
+            }
+
+            var actor = instance.GetComponent<InGameZoneSkillActor>();
+            if (actor == null)
+            {
+                actor = instance.AddComponent<InGameZoneSkillActor>();
+            }
+
+            actor.Initialize(
+                context.CombatManager,
+                context.CasterEntry,
+                context.Roster,
+                skill.Targeting,
+                center,
+                radius,
+                coverAll,
+                duration,
+                tickInterval,
+                hitTargetCount,
+                damage,
+                attribute,
+                statusSpec,
+                context.Runtime,
+                snapshot,
+                expireEffects,
+                context.Caster,
+                skill.DamagePerTick != null && skill.DamagePerTick.CriticalAllowed,
+                snapshot != null ? snapshot.CritChanceBonus : 0f,
+                snapshot != null ? snapshot.CritDamageBonus : 0f,
+                context.RecastGeneration + 1);
+            return true;
+        }
+
         public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
         {
             var skill = context != null ? context.SkillData as ZoneSkillData : null;

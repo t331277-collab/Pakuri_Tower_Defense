@@ -50,7 +50,9 @@ MonoBehaviour:
   MonsterSkillNodeDefinitions: {fileID: 4900000, guid: 1280beeb031fbe549abb95b4c85ffd3a, type: 3}
   MonsterSkillNodeDefinitionParams: {fileID: 4900000, guid: 5ca5bc924d237e749b25e8faaec9852b, type: 3}
   MonsterSkillGraphNodeFiles:
+  - {fileID: 4900000, guid: 7832fdad2dbfdd94ab8e1ce9c9ef05ee, type: 3}
   - {fileID: 4900000, guid: 7dae69c58981f4d4ab1a25fdf77ae3a8, type: 3}
+  - {fileID: 4900000, guid: e05f372561a857b47b1bdaf2bbfe2cae, type: 3}
   - {fileID: 4900000, guid: ea256f2cc3b8c884783de3f1adddeef8, type: 3}
   - {fileID: 4900000, guid: 858fc6e682fb67a4eb6ff40e358a0a31, type: 3}
   - {fileID: 4900000, guid: 50be6ecc0f3b7c9489a75ebb22576821, type: 3}

@@ -528,6 +528,7 @@ namespace Pakuri.Data
                 || string.Equals(handlerId, "StatusModifier", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "EffectStatus", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "EffectDamage", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "RecastZone", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase);
         }
 
@@ -574,6 +575,16 @@ namespace Pakuri.Data
                 definition.DamageMultiplier = GetSkillNodeFloatParam(parameters, "damage_multiplier", 1f);
                 definition.Radius = GetSkillNodeFloatParam(parameters, "radius", 0f);
                 definition.TickIntervalSeconds = GetSkillNodeFloatParam(parameters, "tick_interval_seconds", 0f);
+            }
+            else if (string.Equals(node.HandlerId, "RecastZone", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.EffectKind = SkillMultiEffectKind.RecastZone;
+                definition.RecastSourceSkillId = GetSkillNodeStringParam(parameters, "source_skill_id");
+                definition.DelaySeconds = GetSkillNodeFloatParam(parameters, "delay_seconds", 0f);
+                definition.RecastDurationSeconds = GetSkillNodeFloatParam(parameters, "duration_seconds", 0f);
+                definition.RecastRadiusMultiplier = GetSkillNodeFloatParam(parameters, "radius_multiplier", 1f);
+                definition.RecastInheritSnapshot = GetSkillNodeBoolParam(parameters, "inherit_snapshot", true);
+                definition.RecastMaxGeneration = GetSkillNodeIntParam(parameters, "max_generation", 1);
             }
             else if (string.Equals(node.HandlerId, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase))
             {
@@ -662,6 +673,14 @@ namespace Pakuri.Data
                 return;
             }
 
+            if (string.Equals(handlerId, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.ConditionStatusId = GetSkillNodeStringParam(parameters, "status_ids");
+                definition.ConditionTargetSide = GetSkillNodeEnumParam(parameters, "target_side", definition.TargetSide);
+                definition.ConditionStatusSourceSkillId = GetSkillNodeStringParam(parameters, "source_skill_id");
+                return;
+            }
+
             if (string.Equals(handlerId, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase))
             {
                 definition.ConditionSkillAttribute = GetSkillNodeStringParam(parameters, "attribute");
@@ -713,6 +732,16 @@ namespace Pakuri.Data
             else if (string.Equals(handlerId, "StatusCriticalChanceBonus", StringComparison.OrdinalIgnoreCase))
             {
                 definition.StatusCriticalChanceBonus += bonus;
+            }
+            else if (string.Equals(handlerId, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.Attribute = GetSkillNodeEnumParam(parameters, "attribute", definition.Attribute);
+                definition.StatusElementDamageTakenBonus += bonus;
+            }
+            else if (string.Equals(handlerId, "StatusConditionalStatusChanceBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusConditionalTargetStatusId = GetSkillNodeStringParam(parameters, "status_ids");
+                definition.StatusConditionalStatusChanceBonus += bonus;
             }
             else if (string.Equals(handlerId, "DamageMultiplier", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "ShieldAmountMultiplier", StringComparison.OrdinalIgnoreCase))

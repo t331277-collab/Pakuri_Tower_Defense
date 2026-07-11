@@ -293,6 +293,12 @@ namespace Pakuri.InGame
                     out var targetStatusStatSource);
                 single.TargetStatusStackDamage.StatSource = targetStatusStatSource;
                 single.TargetStatusStackDamage.CriticalAllowed = false;
+                ApplySingleAttackBasePlanNodes(single, source.NormalizedPlanNodes, source.Attribute);
+                if (!string.IsNullOrWhiteSpace(single.DeploymentRequiredTargetStatusId))
+                {
+                    single.UsePrefabHitbox = true;
+                    single.UseMultiDeployment = true;
+                }
                 single.OnHitStatus = CreateStatusApplication(source);
                 return;
             }
@@ -870,6 +876,52 @@ namespace Pakuri.InGame
             }
         }
 
+        private static void ApplySingleAttackBasePlanNodes(
+            SingleAttackData single,
+            SkillNodeDefinition[] nodes,
+            DamageAttribute attribute)
+        {
+            if (single == null || nodes == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < nodes.Length; i++)
+            {
+                var node = nodes[i];
+                if (node == null || !node.EnabledByDefault)
+                {
+                    continue;
+                }
+
+                var handlerId = node.HandlerId ?? string.Empty;
+                if (string.Equals(handlerId, "StatusFilteredDeployment", StringComparison.OrdinalIgnoreCase))
+                {
+                    single.DeploymentRequiredTargetStatusId = GetParam(node, "status_id");
+                    single.DeploymentRequiredTargetStatusMinStacks = Mathf.Max(1, GetIntParam(node, "min_stacks", 1));
+                    continue;
+                }
+
+                if (!string.Equals(handlerId, "TargetStatusStackDamage", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                single.TargetStatusStackStatusId = GetParam(node, "status_id");
+                single.TargetStatusStackMaxStacks = Mathf.Max(0, GetIntParam(node, "max_stacks", 0));
+                single.TargetStatusStackDamage.Element = MapElement(attribute);
+                single.TargetStatusStackDamage.BaseDamage = GetFloatParam(node, "base_damage", 0f);
+                var attackCoefficient = GetFloatParam(node, "attack_power_coefficient", 0f);
+                var spellCoefficient = GetFloatParam(node, "spell_power_coefficient", 0f);
+                single.TargetStatusStackDamage.StatCoefficient = GetDominantCoefficient(
+                    attackCoefficient,
+                    spellCoefficient,
+                    out var statSource);
+                single.TargetStatusStackDamage.StatSource = statSource;
+                single.TargetStatusStackDamage.CriticalAllowed = false;
+            }
+        }
+
         public static SkillExecutionPlanNode[] MapSkillNodeDefinitions(SkillNodeDefinition[] source)
         {
             if (source == null || source.Length == 0)
@@ -1065,6 +1117,80 @@ namespace Pakuri.InGame
             if (string.Equals(handlerId, "DurationBonus", StringComparison.OrdinalIgnoreCase))
             {
                 return new SkillActionOp(SkillActionOpKind.DurationBonus, GetFloatParam(node, "bonus_seconds", 0f));
+            }
+
+            if (string.Equals(handlerId, "DurationMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.DurationMultiplier, GetFloatParam(node, "multiplier", 1f));
+            }
+
+            if (string.Equals(handlerId, "AdditionalProjectileBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.AdditionalProjectileBonus, intValue: GetIntParam(node, "bonus", 0));
+            }
+
+            if (string.Equals(handlerId, "ShotIntervalMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.ShotIntervalMultiplier, GetFloatParam(node, "multiplier", 1f));
+            }
+
+            if (string.Equals(handlerId, "BranchProjectile", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(
+                    SkillActionOpKind.BranchProjectile,
+                    GetFloatParam(node, "chance_bonus", 0f),
+                    GetIntParam(node, "count", 0),
+                    secondaryFloatValue: GetFloatParam(node, "damage_multiplier", 0f),
+                    thirdFloatValue: GetFloatParam(node, "search_radius", 0f));
+            }
+
+            if (string.Equals(handlerId, "StatusStackAmountBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(
+                    SkillActionOpKind.StatusStackAmountBonus,
+                    intValue: GetIntParam(node, "bonus", 0),
+                    stringValue: GetParam(node, "status_id"));
+            }
+
+            if (string.Equals(handlerId, "StatusStackAmountSet", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(
+                    SkillActionOpKind.StatusStackAmountSet,
+                    intValue: GetIntParam(node, "value", 0),
+                    stringValue: GetParam(node, "status_id"));
+            }
+
+            if (string.Equals(handlerId, "StatusMaxStacksBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(
+                    SkillActionOpKind.StatusMaxStacksBonus,
+                    intValue: GetIntParam(node, "bonus", 0),
+                    stringValue: GetParam(node, "status_id"));
+            }
+
+            if (string.Equals(handlerId, "ConditionalDamageMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(
+                    SkillActionOpKind.ConditionalDamageMultiplier,
+                    GetFloatParam(node, "multiplier", 1f),
+                    GetIntParam(node, "min_stacks", 1),
+                    GetParam(node, "status_id"));
+            }
+
+            if (string.Equals(handlerId, "TargetStatusStackDamageRateBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(
+                    SkillActionOpKind.TargetStatusStackDamageRateBonus,
+                    GetFloatParam(node, "bonus_rate_per_stack", 0f),
+                    stringValue: GetParam(node, "status_id"));
+            }
+
+            if (string.Equals(handlerId, "TriggerProcChanceBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(
+                    SkillActionOpKind.TriggerProcChanceBonus,
+                    GetFloatParam(node, "bonus", 0f),
+                    stringValue: GetParam(node, "trigger_id"));
             }
 
             if (string.Equals(handlerId, "HitTargetCountBonus", StringComparison.OrdinalIgnoreCase))

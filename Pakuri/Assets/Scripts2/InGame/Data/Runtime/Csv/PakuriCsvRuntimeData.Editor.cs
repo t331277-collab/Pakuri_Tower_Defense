@@ -35,9 +35,21 @@ namespace Pakuri.Data
         [MenuItem("Pakuri/Validate CSV Source Data")]
         private static void ValidateSourceDataMenu()
         {
-            SyncImportedSourceCatalogsForEditor();
-            var catalog = LoadAndValidateRuntimeCatalog();
-            Debug.Log(FormatRuntimeCatalogSummary(catalog));
+            try
+            {
+                SyncImportedSourceCatalogsForEditor();
+                var catalog = LoadAndValidateRuntimeCatalog();
+                Debug.Log(FormatRuntimeCatalogSummary(catalog));
+            }
+            catch (CsvFatalException exception)
+            {
+                if (exception.Errors.Count > 0)
+                {
+                    Debug.LogError(string.Join(Environment.NewLine, exception.Errors));
+                }
+
+                throw;
+            }
         }
 
         private static void SyncRuntimeCatalogAssetsFromImportedSource()

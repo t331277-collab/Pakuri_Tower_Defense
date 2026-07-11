@@ -83,7 +83,8 @@ namespace Pakuri.InGame
                 context.HasManualAimDirection,
                 context.ManualAimDirection,
                 context.HasManualTargetPoint,
-                context.ManualTargetPoint);
+                context.ManualTargetPoint,
+                context.RecastGeneration);
             return ExecuteFiltered(hitContext, snapshot, effects, fallbackCenter, SkillMultiEffectTiming.OnHit, false);
         }
 

@@ -538,7 +538,11 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var chance = trigger.ProcChance > 0f ? Mathf.Clamp01(trigger.ProcChance) : 1f;
+            var passiveSnapshot = BuildPassiveChoiceSnapshot(owner, trigger.SourceSkillId);
+            var procChanceBonus = passiveSnapshot.ResolveTriggerProcChanceBonus(trigger.TriggerId);
+            var chance = trigger.ProcChance > 0f
+                ? Mathf.Clamp01(trigger.ProcChance + procChanceBonus)
+                : Mathf.Clamp01(1f + procChanceBonus);
             if (chance <= 0f || UnityEngine.Random.value > chance)
             {
                 return false;

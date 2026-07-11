@@ -5,6 +5,63 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-11 Eve A-J Skill Graph Migration Proposal
+
+### Task title
+
+Define the data/schema handoff for migrating all Eve skills to current skill graph authoring.
+
+### Goals
+
+- Inventory current Eve base, Choice, legacy effect, trigger, and graph ownership.
+- Separate existing graph reuse, wide-runtime graph exposure, owner-kind extensions, and new shared semantics.
+- Define the new area/line graph-file requirement and legacy-row deletion gates.
+- Keep the redesigned Eve-E reference authoritative instead of migrating its obsolete magazine columns.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- Implementation follows the approved Eve proposal and matching per-kind Skill Blueprints.
+- Current 21-column graph schema and positional node definition model remain the target contract.
+- New files, node definitions, params, or shared runtime connections require user approval before Builder implementation.
+- No MSW-MCP was used.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Approved Eve data/schema migration implemented and validated; user Play Mode verification remains.
+
+### Next Actions
+
+- User verifies the migrated Eve graph combinations in Play Mode.
+- Keep future Eve behavior changes graph-authored; do not restore removed wide/legacy ownership.
+
+### Evidence
+
+- Current Eve data count is base 10, Choice 50, graph 0, legacy effect 34, trigger 3, and legacy direct node 0.
+- Legacy effects are Eve-B 2, Eve-C 1, Eve-F 5, Eve-G 4, Eve-H 4, Eve-I 4, and Eve-J 14.
+- Existing graph files do not cover line-attack or area-attack, both required by Eve A-J.
+- `SkillChoiceModifierRecord`, `SkillExecutionSnapshot`, and runtime executors already consume additional projectiles, shot interval, duration multiplier, status stack changes, conditional damage, status max stacks, branch data, and trigger proc chance through wide data; the proposal routes these as graph exposure rather than new gameplay behavior.
+- `StatusElementDamageTakenBonus` exists as a node type but lacks Effect composer consumption, so Eve-I requires owner-kind extension rather than a duplicate node.
+- Eve-D uses the existing full-roster status filter and target-position deployment runtime, so `StatusFilteredDeployment` is graph exposure rather than a new runtime meaning; the spawned prefab Collider now owns the spatial footprint.
+- Eve-D still needs additive stack-rate bonuses, and Eve-E still needs a guarded snapshot-preserving zone recast.
+- Eve-E's stack-scaled critical-damage-taken master can reuse the existing `StatusCriticalDamageTakenBonus` node because `StatusEffectRuntime.SumStacked` multiplies it by runtime status stacks; only the wide `StatusMaxStacksBonus` feature needs graph exposure.
+- Added `skill_graph_nodes_line_attack.csv` and `skill_graph_nodes_area_attack.csv`; Unity generated their `.meta` files and the source catalog now references them.
+- Authored 229 Eve graph rows in total: A 18, B 21, C/E 30, D 13, F-J 147.
+- Deleted all 34 planned Eve legacy effect rows, consolidated Eve-G triggers, and converted Eve-H to triggered graph reference.
+- Runtime catalog source validation passed in Unity-MCP; both runtime and Editor C# projects build with 0 errors.
+- Eve-D base row now stores `radius=0` and `hit_target_count=global`: the CSV no longer owns an absolute radius, while each collider-backed deployment may hit every overlapping enemy. Radius multiplier graph nodes remain unchanged.
+
+### History
+
+- 2026-07-11: User requested a complete Eve A-J graph migration proposal with existing-feature reuse and evidence-based new-node rationale.
+- 2026-07-12: Eve-D changed to a full-map shocked-target scan; removed the search-radius node proposal and reduced genuinely new common meanings from four to two.
+- 2026-07-12: Code Builder completed the approved CSV/node/runtime migration and Unity catalog synchronization; Play Mode validation remains user-owned.
+- 2026-07-12: Updated Eve-D base targeting authority to prefab Collider size plus `global` per-deployment hits; Unity source validation passed.
+
 ## Task: 2026-07-11 Ariel Skill Graph Nodes Migration Design
 
 ### Task title
@@ -71,18 +128,18 @@ Define the current CSV and handler rules for migrating legacy monster effect row
 
 ### Goals
 
-- Record current runtime authority boundaries between base, choices, effects, triggers, nodes, and node params.
-- Inventory current handler support by owner kind instead of treating schema registration as runtime implementation.
-- Map legacy effect columns to semantic operation, target, condition, lifetime, visual, and modifier nodes.
-- Audit the remaining Eve/Rin/Sein/Vega effect rows for current-handler coverage and required shared extensions.
+- Record current runtime authority boundaries between base, choices, graph instances, node definitions, legacy nodes/effects, and triggers.
+- Document positional `arg_N` interpretation and current owner/graph/generated-ID rules.
+- Map only currently representable legacy effect fields to semantic operation, target, condition, lifetime, visual, and modifier nodes.
+- Require a per-row non-empty-field audit instead of preserving a stale coverage classification from the previous CSV schema.
 
 ### Constraints
 
 - Role Owner is Designer.
 - This is a documentation handoff; no runtime CSV rows, schemas, catalogs, or code were changed.
-- Current skill-kind consolidated CSV files remain the active inspected authority.
+- Current skill-kind consolidated CSV files and the graph/definition CSV files remain the active inspected authority.
 - Existing handler reuse is mandatory before proposing a new handler.
-- Trigger-owned normalized nodes remain outside current runtime support.
+- Current runtime supports Trigger-owned Effect graphs; current Ariel contains one such graph.
 - No MSW-MCP was used.
 
 ### Role Owner
@@ -91,28 +148,31 @@ Designer
 
 ### Status
 
-Guide created from current CSV and code evidence.
+Guide rewritten from the current graph CSV and loader/composer evidence.
 
 ### Next Actions
 
-- Migrate only selected legacy effect rows and remove each matching legacy row in the same change to avoid duplicate execution.
-- Extend `StatusAttackPowerBonus`, `StatusElementDamageTakenBonus`, and `StatusDamageTakenBonus` Effect composition before creating equivalent duplicate handler ids.
-- Implement new semantic handlers only for the proven unsupported field families listed in the guide and only after user approval for shared runtime scope.
-- Preserve kind-consolidated effect CSV files until all remaining monster rows in a file are migrated; do not delete a shared kind file after one monster conversion.
+- Route one selected monster and the minimum kind-specific CSV set before implementation.
+- Audit all non-empty legacy effect fields; remove a legacy row only when every behavior field is represented or proven to equal a runtime default.
+- Resolve legacy direct-node overlap before adding graph rows for Rin or Vega.
+- Obtain user approval before adding missing area/line graph files, node definitions, params, CSV columns, or shared runtime connections.
+- Preserve kind-consolidated effect CSV files while any other legacy row remains.
 
 ### Evidence
 
-- Created `boards/MON/ARIEL_NODE_DECOMPOSITION_GUIDE.md` with current handler inventory, column mapping, templates, stop conditions, and verification gates.
-- Current CSV aggregation returned 139 nodes total after excluding type rows: Ariel 124, Rin 11, Vega 4.
-- Current legacy effect aggregation returned 96 data rows: Eve 34, Rin 20, Sein 19, Vega 23; Ariel has no legacy effect rows.
-- `PakuriCsvRuntimeData.Build.cs` currently appends legacy effect definitions and node-owned effect definitions, so duplicate ids can execute twice unless the migrated legacy row is removed.
-- `PakuriCsvRuntimeData.Build.cs` builds node-owned effects from one semantic operation plus target/condition/lifetime/visual/modifier nodes.
-- `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` registers some schema-only handlers that are not mapped by `InGameSkillDefinitionMapper` or the Effect composer; the guide lists them as non-authorable until runtime wiring exists.
-- Field-level audit classified the 96 legacy effects as 58 current-handler-ready rows, 16 existing-handler-extension rows, and 22 new-semantic-handler rows, including four Damage effects that also carry a status payload.
+- Rewrote `boards/MON/ARIEL_NODE_DECOMPOSITION_GUIDE.md` for the current 21-column graph instance schema and removed the obsolete direct node/param authoring examples.
+- Current CSV aggregation returned 124 Ariel graph rows in 56 graphs: 36 Plan graphs and 20 Effect graphs.
+- Current legacy compatibility data is separate: Rin/Vega retain 15 direct node rows plus 33 params, and Eve/Rin/Sein/Vega retain 96 legacy effect rows.
+- Current graph files exist for buff, passive, projectile, and single-attack; area-attack and line-attack graph files do not exist.
+- Node definitions currently contain 32 types and 53 param definitions; `arg_N` is materialized by `param_order`, undefined args fail validation, and `arg_9~arg_12` have no current definition.
+- `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` rejects graph/direct-node mixing per monster, requires exactly one operation per Effect graph, derives Choice/Skill/Trigger target skills, and generates effect IDs from owner kind/id/index.
+- `PakuriCsvRuntimeData.Build.cs` supports only a subset of legacy effect fields through the current graph param definitions and Effect composer, so the old 58/16/22 classification was removed.
+- Current trigger evidence includes `Choice/ariel-a-master-2/Effect/0` and `Trigger/ariel-j-after-e-action-speed-trigger/Effect/0` graph references.
 
 ### History
 
 - 2026-07-11: User requested a current-code-based transition MD for converting the remaining effect CSV behavior into Ariel-style semantic node composition.
+- 2026-07-11: User requested revising the guide because the CSV structure changed; Designer replaced the old node/param path and stale coverage audit with the current graph schema, positional args, compatibility rules, and per-row conversion gates.
 
 ## Task: 2026-07-10 Ariel Runtime Visual CSV Columns
 

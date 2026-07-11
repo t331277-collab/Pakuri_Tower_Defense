@@ -25,6 +25,8 @@ namespace Pakuri.InGame
                     return SkillMultiEffectExecutor.ExecuteStatusEffectAction(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot);
                 case SkillMultiEffectKind.ExtendStatusDuration:
                     return SkillMultiEffectExecutor.ExecuteExtendStatusDurationEffectAction(context, effect);
+                case SkillMultiEffectKind.RecastZone:
+                    return ZoneSkillExecutor.ExecuteRecast(context, snapshot, effect, fallbackCenter);
             }
 
             return false;

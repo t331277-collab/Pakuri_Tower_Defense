@@ -32,6 +32,7 @@ namespace Pakuri.InGame
         private float critDamageBonus;
         private Collider2D[] prefabHitboxColliders;
         private bool usePrefabHitbox;
+        private int recastGeneration;
 
         public void Initialize(
             InGameCombatManager manager,
@@ -53,7 +54,8 @@ namespace Pakuri.InGame
             BaseUnitRuntimeModel source,
             bool allowCritical,
             float criticalChanceBonus,
-            float criticalDamageBonus)
+            float criticalDamageBonus,
+            int generation = 0)
         {
             combatManager = manager;
             casterEntry = sourceEntry;
@@ -76,6 +78,7 @@ namespace Pakuri.InGame
             criticalAllowed = allowCritical;
             critChanceBonus = criticalChanceBonus;
             critDamageBonus = criticalDamageBonus;
+            recastGeneration = Mathf.Max(0, generation);
             prefabHitboxColliders = GetComponentsInChildren<Collider2D>();
             usePrefabHitbox = !coverAll
                 && prefabHitboxColliders != null
@@ -216,7 +219,13 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var context = new SkillExecutionContext(combatManager, roster, casterEntry, runtime, 0f);
+            var context = new SkillExecutionContext(
+                combatManager,
+                roster,
+                casterEntry,
+                runtime,
+                0f,
+                recastGeneration: recastGeneration);
             SkillMultiEffectExecutor.ExecuteOnExpire(context, snapshot, onExpireEffects, center);
             onExpireEffects = null;
         }

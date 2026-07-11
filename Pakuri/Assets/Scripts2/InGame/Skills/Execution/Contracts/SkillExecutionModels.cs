@@ -14,7 +14,8 @@ namespace Pakuri.InGame
             bool hasManualAimDirection = false,
             Vector2 manualAimDirection = default,
             bool hasManualTargetPoint = false,
-            Vector2 manualTargetPoint = default)
+            Vector2 manualTargetPoint = default,
+            int recastGeneration = 0)
         {
             CombatManager = combatManager;
             Roster = roster;
@@ -26,6 +27,7 @@ namespace Pakuri.InGame
             ManualAimDirection = manualAimDirection;
             HasManualTargetPoint = hasManualTargetPoint;
             ManualTargetPoint = manualTargetPoint;
+            RecastGeneration = Mathf.Max(0, recastGeneration);
         }
 
         public InGameCombatManager CombatManager { get; }
@@ -38,6 +40,7 @@ namespace Pakuri.InGame
         public Vector2 ManualAimDirection { get; }
         public bool HasManualTargetPoint { get; }
         public Vector2 ManualTargetPoint { get; }
+        public int RecastGeneration { get; }
 
         public BaseUnitRuntimeModel Caster => CasterEntry != null ? CasterEntry.Model : null;
         public SkillData SkillData => Runtime != null ? Runtime.Data : null;

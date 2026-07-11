@@ -53,7 +53,8 @@ namespace Pakuri.Data
     {
         Damage,
         Status,
-        ExtendStatusDuration
+        ExtendStatusDuration,
+        RecastZone
     }
 
     public enum SkillMultiEffectTargetSide
@@ -251,6 +252,11 @@ namespace Pakuri.Data
         public bool CoverAll;
         public float ActiveDurationSeconds;
         public float TickIntervalSeconds;
+        public string RecastSourceSkillId;
+        public float RecastDurationSeconds;
+        public float RecastRadiusMultiplier = 1f;
+        public bool RecastInheritSnapshot = true;
+        public int RecastMaxGeneration = 1;
         public string StatusEffectId;
         [Range(0f, 1f)] public float StatusChance;
         public string StatusEffectLabel;
