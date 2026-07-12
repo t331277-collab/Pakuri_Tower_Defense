@@ -906,7 +906,22 @@ namespace Pakuri.InGame
             var radius = ResolveRadius(effect, snapshot);
 
             GameObject instance = null;
-            if (effect.SkillEffectPrefab != null && context.CombatManager.Effects != null)
+            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(effect.RuntimeVisual);
+            if (hasRuntimeVisual && context.CombatManager.Effects != null)
+            {
+                instance = RuntimeSkillVisualFactory.Create(
+                    context.CombatManager.Effects,
+                    effect.RuntimeVisual,
+                    string.IsNullOrWhiteSpace(effect.EffectId) ? "SkillEffectZone" : $"SkillEffectZone_{effect.EffectId}",
+                    center,
+                    Quaternion.identity);
+                if (instance != null)
+                {
+                    SkillExecutionUtility.ApplyPrefabScale(instance.transform, effect.Radius, snapshot);
+                    Physics2D.SyncTransforms();
+                }
+            }
+            else if (effect.SkillEffectPrefab != null && context.CombatManager.Effects != null)
             {
                 instance = context.CombatManager.Effects.InstantiateSkillPrefab(effect.SkillEffectPrefab, center, Quaternion.identity);
                 if (instance != null)
@@ -954,12 +969,25 @@ namespace Pakuri.InGame
 
         private static void SpawnVisual(SkillExecutionContext context, SkillEffectDefinition effect, Vector2 center)
         {
-            if (effect == null || effect.SkillEffectPrefab == null || context == null || context.CombatManager == null || context.CombatManager.Effects == null)
+            if (effect == null || context == null || context.CombatManager == null || context.CombatManager.Effects == null)
             {
                 return;
             }
 
-            SkillVisualSpawnUtility.SpawnTransient(context.CombatManager.Effects, effect.SkillEffectPrefab, center, Quaternion.identity, 1f);
+            if (RuntimeSkillVisualFactory.HasVisual(effect.RuntimeVisual))
+            {
+                SkillVisualSpawnUtility.SpawnTransient(
+                    context.CombatManager.Effects,
+                    effect.RuntimeVisual,
+                    string.IsNullOrWhiteSpace(effect.EffectId) ? "SkillEffectVisual" : $"SkillEffectVisual_{effect.EffectId}",
+                    center,
+                    Quaternion.identity,
+                    1f);
+            }
+            else if (effect.SkillEffectPrefab != null)
+            {
+                SkillVisualSpawnUtility.SpawnTransient(context.CombatManager.Effects, effect.SkillEffectPrefab, center, Quaternion.identity, 1f);
+            }
         }
 
         private static void SpawnVisualOnTargets(
@@ -969,7 +997,6 @@ namespace Pakuri.InGame
             float duration)
         {
             if (effect == null
-                || effect.SkillEffectPrefab == null
                 || context == null
                 || context.CombatManager == null
                 || context.CombatManager.Effects == null
@@ -987,12 +1014,25 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                SkillVisualSpawnUtility.SpawnAttached(
-                    context.CombatManager.Effects,
-                    effect.SkillEffectPrefab,
-                    target.Transform,
-                    lifetime,
-                    Vector3.zero);
+                if (RuntimeSkillVisualFactory.HasVisual(effect.RuntimeVisual))
+                {
+                    SkillVisualSpawnUtility.SpawnAttached(
+                        context.CombatManager.Effects,
+                        effect.RuntimeVisual,
+                        string.IsNullOrWhiteSpace(effect.EffectId) ? "SkillEffectVisual" : $"SkillEffectVisual_{effect.EffectId}",
+                        target.Transform,
+                        lifetime,
+                        Vector3.zero);
+                }
+                else if (effect.SkillEffectPrefab != null)
+                {
+                    SkillVisualSpawnUtility.SpawnAttached(
+                        context.CombatManager.Effects,
+                        effect.SkillEffectPrefab,
+                        target.Transform,
+                        lifetime,
+                        Vector3.zero);
+                }
             }
         }
 

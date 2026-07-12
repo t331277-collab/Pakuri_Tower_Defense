@@ -104,6 +104,12 @@ namespace Pakuri.Data
                 {
                     assets.AddSprite(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");
                 }
+                else if (param.ParamKey != null
+                    && param.ParamKey.IndexOf("animator", StringComparison.OrdinalIgnoreCase) >= 0
+                    && param.ParamKey.IndexOf("controller", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    assets.AddAnimatorController(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");
+                }
                 else
                 {
                     assets.AddPrefab(param.Value, $"Skill node param '{param.NodeId}.{param.ParamKey}'");

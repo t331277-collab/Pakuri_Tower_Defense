@@ -48,13 +48,15 @@ namespace Pakuri.InGame
             var onHitStatusEffects = ResolveOnHitStatusEffects(context, snapshot, planEffects);
             var castEffects = ResolveCastEffects(context, snapshot, planEffects);
             var center = (Vector2)origin + direction * (length * 0.5f);
-            var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
+            var runtimeVisual = skill.RuntimeVisual;
+            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var prefab = !hasRuntimeVisual && snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
-                : context.CombatManager.Effects != null
+                : !hasRuntimeVisual && context.CombatManager.Effects != null
                     ? context.CombatManager.Effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId)
                     : null;
 
-            if (prefab == null || context.CombatManager.Effects == null)
+            if ((!hasRuntimeVisual && prefab == null) || context.CombatManager.Effects == null)
             {
                 InGameLineAttackActor.ApplyLineTick(
                     context.CombatManager,
@@ -84,10 +86,15 @@ namespace Pakuri.InGame
                 return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
             }
 
-            var instance = context.CombatManager.Effects.InstantiateSkillPrefab(
-                prefab,
-                center,
-                SkillExecutionUtility.ResolveRotation(direction));
+            var rotation = SkillExecutionUtility.ResolveRotation(direction);
+            var instance = hasRuntimeVisual
+                ? RuntimeSkillVisualFactory.Create(
+                    context.CombatManager.Effects,
+                    runtimeVisual,
+                    string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameLineAttack" : $"InGameLineAttack_{skill.SkillId}",
+                    center,
+                    rotation)
+                : context.CombatManager.Effects.InstantiateSkillPrefab(prefab, center, rotation);
             if (instance == null)
             {
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);

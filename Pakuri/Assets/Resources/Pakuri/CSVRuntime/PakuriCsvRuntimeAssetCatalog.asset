@@ -40,6 +40,23 @@ MonoBehaviour:
   - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
       22\uC77C \uC624\uC804 12_31_35-Photoroom 1.png"
     Asset: {fileID: 21300000, guid: 73386185b646dc14d9c0e9fd5b9830a5, type: 3}
+  - AssetPath: "Assets/Image/Monster/Eve/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
+      23\uC77C \uC624\uD6C4 11_27_11-Photoroom 1.png"
+    Asset: {fileID: 21300000, guid: f4a8099030e8c26408ff2b94f8803724, type: 3}
+  - AssetPath: Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/1.png
+    Asset: {fileID: -7780656566647862641, guid: 8ed6dde2bbaf1214b832cbddcf9b5257, type: 3}
+  - AssetPath: "Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image
+      2026\uB144 5\uC6D4 15\uC77C \uC624\uD6C4 05_38_31-Photoroom 1.png"
+    Asset: {fileID: 21300000, guid: 150e1751ae042d64994a4cb068504983, type: 3}
+  - AssetPath: "Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image
+      2026\uB144 5\uC6D4 18\uC77C \uC624\uD6C4 03_03_31-Photoroom 1.png"
+    Asset: {fileID: 21300000, guid: 84916919d7fb4aa4693c751464d9e922, type: 3}
+  - AssetPath: "Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image
+      2026\uB144 5\uC6D4 18\uC77C \uC624\uD6C4 04_30_10-Photoroom 1.png"
+    Asset: {fileID: 8971745245780726277, guid: 46c7ce89c95aac74a8c77f02de6a9322, type: 3}
+  - AssetPath: "Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image
+      2026\uB144 5\uC6D4 7\uC77C \uC624\uD6C4 09_55_44-Photoroom 1 (1).png"
+    Asset: {fileID: 21300000, guid: 32b483e360d00d84595519ce97016e07, type: 3}
   Prefabs:
   - AssetPath: Assets/Prefab/Skill/Ariel/Ariel_B.prefab
     Asset: {fileID: 3529180550599226198, guid: a94d18f89e17df94fbed6a9e057e7fed, type: 3}
@@ -47,8 +64,6 @@ MonoBehaviour:
     Asset: {fileID: 8366197105921393042, guid: 33b5e950176a3454e9e779d062c8d540, type: 3}
   - AssetPath: Assets/Prefab/Skill/Ariel/Ariel_C.prefab
     Asset: {fileID: 1713502052278588150, guid: f851084efb562e043a673ac67840693f, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Eve/Eve_c-master-2.prefab
-    Asset: {fileID: 4334470998071384926, guid: 30a4745c2cff29f41acf72125c981f67, type: 3}
   - AssetPath: Assets/Prefab/Skill/Rin/Rin_A.prefab
     Asset: {fileID: 7968378587265563361, guid: 19bfba788239eba498a44cb67c2622c6, type: 3}
   - AssetPath: Assets/Prefab/Skill/Rin/Rin_D_master_1.prefab
@@ -101,3 +116,21 @@ MonoBehaviour:
   - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
       22\uC77C \uC624\uC804 12_31_35-Photoroom 1.controller"
     Asset: {fileID: 9100000, guid: 77d7cb47f47128549bcb48757316087e, type: 2}
+  - AssetPath: "Assets/Image/Monster/Eve/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
+      23\uC77C \uC624\uD6C4 11_27_11-Photoroom 1.controller"
+    Asset: {fileID: 9100000, guid: 36db9da2f77b0eb439263c2989084867, type: 2}
+  - AssetPath: "Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image
+      2026\uB144 5\uC6D4 15\uC77C \uC624\uD6C4 05_38_31-Photoroom 1.controller"
+    Asset: {fileID: 9100000, guid: 22aebecf2b853c942a994af31cf07c30, type: 2}
+  - AssetPath: "Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image
+      2026\uB144 5\uC6D4 18\uC77C \uC624\uD6C4 03_03_31-Photoroom 1.controller"
+    Asset: {fileID: 9100000, guid: 7a65e10f8d7d38d43ae4725ecb80d304, type: 2}
+  - AssetPath: "Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image
+      2026\uB144 5\uC6D4 18\uC77C \uC624\uD6C4 04_30_10-Photoroom 1_0.controller"
+    Asset: {fileID: 9100000, guid: 03bfd1b50f25a944d8ec0c16780e19f7, type: 2}
+  - AssetPath: "Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image
+      2026\uB144 5\uC6D4 23\uC77C \uC624\uC804 12_11_01-Photoroom 1_0.controller"
+    Asset: {fileID: 9100000, guid: 2bc6ec8679aa3944ea94a9225f8f0578, type: 2}
+  - AssetPath: "Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image
+      2026\uB144 5\uC6D4 7\uC77C \uC624\uD6C4 09_55_44-Photoroom 1 (1).controller"
+    Asset: {fileID: 9100000, guid: 4a6ab63398936764284eed7143f2e9ab, type: 2}

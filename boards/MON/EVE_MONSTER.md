@@ -22,6 +22,58 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - Eve reports: update this file when a report changes active Eve facts. There is no active report board.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-12 Eve Runtime Visual And Hitbox Migration
+
+### Task title
+
+Move Eve A-E and Eve-C master-2 visual/hitbox construction from prefab instantiation to shared runtime composition.
+
+### Goals
+
+- Build Eve A-E visuals from CSV-owned Sprite, AnimatorController, scale, sorting order, and optional BoxCollider2D data.
+- Preserve Eve-D per-shocked-target overlapping collider deployments and Eve-C/E collider-backed zone behavior.
+- Keep Eve-C master-2 damage/target/timing on its existing OnExpire Effect graph while replacing only its prefab visual with runtime composition.
+- Retain all Eve skill prefab assets and current scene mappings until the later all-monster cleanup pass.
+
+### Constraints
+
+- Role Owner is Code Builder refactoring track; skill blueprints were intentionally not used.
+- No offset CSV fields were added; `RuntimeSkillVisualFactory` continues to use `Vector2.zero`.
+- Player-facing timing, damage, targeting, node composition, and prefab assets must remain unchanged.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, CSV/catalog validated, and both C# projects build with 0 errors. The Eve-B/E unwanted `RuntimeStatusVisual` inheritance bug is fixed; Play Mode parity verification remains.
+
+### Next Actions
+
+- User verifies Eve A projectile collision, Eve-B beam width/duration, Eve-C/E collider zones and radius traits, Eve-D global overlapping deployments, and Eve-C master-2 expiry visual in Play Mode.
+- User verifies Eve-B slow and Eve-E vulnerable no longer create a separate `RuntimeStatusVisual`, while their legitimate skill visuals still appear.
+- Keep `Assets/Prefab/Skill/Eve/*.prefab` until all monster skill visual migrations are complete.
+
+### Evidence
+
+- Eve A/B/C/D/E base rows now carry `runtime_visual_*` data; A/C/D/E also carry their prefab-authored BoxCollider2D sizes.
+- `BeamSkillExecutor.cs` and `ZoneSkillExecutor.cs` now prefer shared `RuntimeSkillVisualFactory` composition while preserving their old prefab fallback for unconverted skills.
+- `RuntimeEffectVisual` was added to the normalized node definitions; Eve-C master-2 uses it instead of `Eve_c-master-2.prefab` while retaining `EffectDamage` and `EffectTarget(OnExpire)` nodes.
+- `SkillMultiEffectExecutor.cs` now supports runtime visual creation for transient, attached, and zone effect visuals.
+- No Eve prefab was deleted and `NewRunScene.unity` was not edited.
+- Unity-MCP `Pakuri/Validate CSV Source Data` loaded 5 monsters, 8 stage-one enemies, and 8 stage-two enemies without validation errors.
+- Runtime and Editor `dotnet build --no-restore /p:UseSharedCompilation=false` completed with 0 errors and the existing two MSB3277 warnings.
+- `StatusEffectRuntime.CreateStatusData(...)` now copies a skill runtime visual only when its anchor is explicitly `StatusTarget`; Eve-B/E remain at the default `Skill` anchor.
+- `InGameCombatManager` creates status-attached runtime visuals with `includeHitbox: false`, preventing a status decoration from inheriting Eve-E's gameplay collider even if visual data is misrouted later.
+
+### History
+
+- 2026-07-12: User approved the work as a Code Builder refactor, required all offsets to stay implicit zero, and deferred prefab deletion until every skill migration is complete.
+- 2026-07-12: Code Builder implemented shared Beam/Zone/Effect runtime visuals and migrated Eve A-E plus Eve-C master-2 data.
+- 2026-07-12: Fixed Eve-B/E base visuals being reused as `RuntimeStatusVisual`; Eve-D and all Eve prefab assets were left unchanged.
+
 ## Task: 2026-07-11 Eve A-J Skill Graph Migration Proposal
 
 ### Task title

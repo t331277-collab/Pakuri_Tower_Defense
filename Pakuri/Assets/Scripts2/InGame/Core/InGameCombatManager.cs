@@ -834,7 +834,8 @@ namespace Pakuri.InGame
                         statusData.RuntimeVisual,
                         string.IsNullOrWhiteSpace(sourceId) ? "RuntimeStatusVisual" : $"RuntimeStatusVisual_{sourceId}",
                         entry.Transform.position,
-                        Quaternion.identity)
+                        Quaternion.identity,
+                        includeHitbox: false)
                     : Effects.InstantiateSkillPrefab(statusData.StatusEffectPrefab, entry.Transform.position, Quaternion.identity);
                 if (existing == null)
                 {

@@ -4,6 +4,54 @@
 - This file keeps only task blocks dated 2026-05-08 based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/MON/RIN_MONSTER.md`.
 
+## Task: 2026-07-12 Rin A-J Node Migration Proposal
+
+### Task title
+
+Design Rin A-J migration from wide/legacy skill authoring to positional skill graphs.
+
+### Goals
+
+- Move Rin base/Choice/Effect behavior to existing graph kinds while preserving Trigger event envelopes.
+- Reuse current wide/direct/runtime meanings and introduce no new gameplay semantics.
+- Preserve Rin-E `CoreHitBox` and existing skill prefab contracts during the node migration.
+
+### Constraints
+
+- Role Owner is Code Builder for the approved implementation phase.
+- Existing prefab, scene, and Rin-E `CoreHitBox` contracts remain unchanged.
+- Rin graph rows and Rin legacy direct nodes cannot coexist in one materialized dataset.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Rin A-J positional graph migration implemented and source/build validation completed. Play Mode behavior verification remains.
+
+### Next Actions
+
+- Verify Rin A-E damage, targeting, reload, slow, execute, `CoreHitBox`, and hit-count refund behavior in Play Mode.
+- Verify Rin F-J Trigger cadence and passive Effect gates in Play Mode.
+
+### Evidence
+
+- Inspected Rin reference A-J files, normalized base/Choice/Effect/Trigger/direct-node CSV rows, node definitions, materializer, mapper, executors, status runtime, and Rin prefabs.
+- Current Rin data contains base 10, Choice 50, graph 0, legacy Effect 20, Trigger 17, direct node 11, and direct param 22 rows.
+- All needed graph kind files already exist; no new graph CSV file is proposed.
+- Every requested Rin behavior already has a current wide/direct/Effect/Trigger runtime meaning, so the proposal requires zero new gameplay semantics.
+- Rin now materializes from 138 positional graph rows; Rin legacy Effect rows, legacy direct nodes/params, and non-routing Choice behavior values are all zero.
+- All 17 Rin Trigger rows remain; the two Rin-I kill triggers now reference Trigger-owned Effect graphs.
+- Runtime and Editor C# builds completed with 0 errors; Unity `Pakuri/Validate CSV Source Data` completed without validation errors.
+- `git diff --name-only -- Pakuri/Assets/Prefab Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` returned no changed prefab or scene path.
+
+### History
+
+- 2026-07-12: User requested an Eve-format Rin node migration proposal that maximizes reuse of existing features.
+- 2026-07-12: Designer created `RIN_NODE_MIGRATION_PROPOSAL.md` and retained prefab/Trigger compatibility boundaries.
+- 2026-07-12: Code Builder exposed the approved shared node meanings, migrated Rin A-J to positional graphs, removed overlapping Rin legacy authoring, and completed source/build validation.
+
 ## Task: 2026-06-07 Rin Animator Trigger Controller And Shared Actor Hook
 
 ### Task title

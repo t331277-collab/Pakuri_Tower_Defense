@@ -5,6 +5,90 @@
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-12 Rin Node Migration Asset Compatibility
+
+### Task title
+
+Record the prefab and scene contracts that Rin node migration must preserve.
+
+### Goals
+
+- Keep current Rin base visual mappings and prefab catalog paths intact.
+- Preserve Rin-E named `CoreHitBox` Collider behavior and Trigger-owned skill prefabs.
+
+### Constraints
+
+- Role Owner is Designer.
+- No prefab, scene, catalog, or visual migration is included.
+- Asset cleanup or runtime visual conversion requires a separate approved task.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Compatibility constraints documented; assets unchanged.
+
+### Next Actions
+
+- Code Builder must not rename/remove `CoreHitBox` or replace D/F Trigger prefab paths during node migration.
+- Update this board again only if implementation actually changes asset authority.
+
+### Evidence
+
+- `Rin_E.prefab` contains a `CoreHitBox` child and `BoxCollider2D`; `SingleAttackSkillExecutor` resolves that exact name.
+- Rin-A/B/C/D have `NewRunScene` `EffectManager` mappings, while Rin-E keeps its base prefab path in normalized single-attack data.
+- `Rin_D_master_1.prefab` and `Rin_F.prefab` exist and are referenced by retained Trigger paths.
+
+### History
+
+- 2026-07-12: Designer preserved current Rin prefab/hitbox contracts in the node migration proposal.
+
+## Task: 2026-07-12 Eve Runtime Visual Asset Catalog
+
+### Task title
+
+Catalog Eve runtime Sprite and AnimatorController assets while retaining old prefabs for later cleanup.
+
+### Goals
+
+- Add every Eve A-E and Eve-C master-2 runtime visual asset to `PakuriCsvRuntimeAssetCatalog`.
+- Keep old prefab assets and current scene references intact while converted runtime paths stop resolving them.
+
+### Constraints
+
+- Role Owner is Code Builder refactoring track.
+- No prefab deletion or `NewRunScene` serialization edit is included.
+- Runtime asset lookup remains path-owned through the existing CSV catalog.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Catalog regenerated and Unity validation passed. Skill visual and status-target visual ownership are now separated without changing asset paths.
+
+### Next Actions
+
+- Retain Eve prefabs until all monster skill migrations are complete, then perform one explicit cleanup pass.
+- User verifies Sprite/Animator parity in Play Mode.
+- User verifies Eve-B/E do not create status-attached duplicates and Ariel-D keeps its intentional target-attached status visual.
+
+### Evidence
+
+- `PakuriCsvRuntimeAssetCatalog.asset` now includes Eve A-E and Eve-C master-2 Sprite and AnimatorController paths resolved from the retained prefabs' GUID-backed assets.
+- AnimatorController-valued graph asset params are now cataloged and validated as animator controllers instead of prefabs.
+- `Pakuri/Sync CSV Runtime Catalog Assets` regenerated the runtime catalog, and `Pakuri/Validate CSV Source Data` subsequently loaded 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.
+- `Assets/Prefab/Skill/Eve/Eve_A.prefab` through `Eve_E.prefab` and `Eve_c-master-2.prefab` still exist; `NewRunScene.unity` was not changed.
+- Runtime visual anchor data changes only composition ownership; no Sprite, AnimatorController, prefab, catalog GUID, or scene mapping was deleted or replaced by the Eve-B/E bug fix.
+
+### History
+
+- 2026-07-12: Added Eve runtime visual assets to the catalog and intentionally deferred prefab deletion.
+- 2026-07-12: Separated status-target visual ownership and disabled hitbox creation on status decorations; retained the existing Eve asset catalog and prefabs.
+
 ## Task: 2026-07-12 Eve Skill Graph Catalog Wiring
 
 ### Task title

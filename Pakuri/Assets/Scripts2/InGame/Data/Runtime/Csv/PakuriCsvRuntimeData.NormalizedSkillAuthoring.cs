@@ -274,6 +274,10 @@ namespace Pakuri.Data
                     "target_side", Enum.GetNames(typeof(SkillMultiEffectTargetSide))));
             AddSkillNodeHandlerSchema(schemas, "CooldownMultiplier", SkillExecutionPlanNodeKind.Action,
                 new[] { "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "CritChanceBonus", SkillExecutionPlanNodeKind.CritModifier,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "CritDamageBonus", SkillExecutionPlanNodeKind.CritModifier,
+                new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "MagazineBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "ReloadTimeMultiplier", SkillExecutionPlanNodeKind.Action,
@@ -286,6 +290,19 @@ namespace Pakuri.Data
                 new[] { "multiplier" });
             AddSkillNodeHandlerSchema(schemas, "RadiusBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "BeamWidthBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "KnockbackDistanceMultiplier", SkillExecutionPlanNodeKind.Action,
+                new[] { "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "ReloadReducePerHit", SkillExecutionPlanNodeKind.OnHitAction,
+                new[] { "target_skill_id", "seconds_per_hit" });
+            AddSkillNodeHandlerSchema(schemas, "CoreDamageMultiplier", SkillExecutionPlanNodeKind.DamageModifier,
+                new[] { "hitbox_name", "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "CoreAdditionalDamage", SkillExecutionPlanNodeKind.OnHitAction,
+                new[] { "hitbox_name", "chance", "multiplier", "attribute" }, enumParamAllowedValues: EnumParamValues(
+                    "attribute", Enum.GetNames(typeof(DamageAttribute))));
+            AddSkillNodeHandlerSchema(schemas, "HitCountCooldownRefund", SkillExecutionPlanNodeKind.OnHitAction,
+                new[] { "target_skill_id", "min_targets", "ratio" });
             AddSkillNodeHandlerSchema(schemas, "DurationBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus_seconds" });
             AddSkillNodeHandlerSchema(schemas, "DurationMultiplier", SkillExecutionPlanNodeKind.Action,
@@ -309,6 +326,8 @@ namespace Pakuri.Data
             AddSkillNodeHandlerSchema(schemas, "StatusActionSpeedBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" }, new[] { "status_id" });
             AddSkillNodeHandlerSchema(schemas, "StatusAttackPowerBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "StatusMoveSpeedBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "StatusAilmentResistanceBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
@@ -335,6 +354,15 @@ namespace Pakuri.Data
                 new[] { "status_ids", "bonus" });
             AddSkillNodeHandlerSchema(schemas, "StatusCriticalDamageTakenBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "StatusCriticalDamageBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
+            AddSkillNodeHandlerSchema(schemas, "StatusElementResistReduction", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" }, new[] { "attribute" }, EnumParamValues(
+                    "attribute", Enum.GetNames(typeof(DamageAttribute))));
+            AddSkillNodeHandlerSchema(schemas, "StatusOutgoingAdditionalDamage", SkillExecutionPlanNodeKind.Action,
+                new[] { "multiplier", "trigger_attribute", "damage_attribute" }, enumParamAllowedValues: EnumParamValues(
+                    "trigger_attribute", Enum.GetNames(typeof(DamageAttribute)),
+                    "damage_attribute", Enum.GetNames(typeof(DamageAttribute))));
             AddSkillNodeHandlerSchema(schemas, "StatusSpellPowerBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "ApplyStatus", SkillExecutionPlanNodeKind.Action,
@@ -426,6 +454,19 @@ namespace Pakuri.Data
                 EffectBaseEnumParamValues());
             AddSkillNodeHandlerSchema(schemas, "EffectVisual", SkillExecutionPlanNodeKind.Action,
                 new[] { "skill_effect_prefab_path" });
+            AddSkillNodeHandlerSchema(schemas, "RuntimeEffectVisual", SkillExecutionPlanNodeKind.Action,
+                new[]
+                {
+                    "runtime_visual_sprite_path",
+                    "runtime_visual_animator_controller_path"
+                },
+                new[]
+                {
+                    "runtime_visual_scale",
+                    "runtime_visual_sorting_order",
+                    "runtime_hitbox_size_x",
+                    "runtime_hitbox_size_y"
+                });
             AddSkillNodeHandlerSchema(schemas, "ConditionStatus", SkillExecutionPlanNodeKind.Action,
                 new[] { "status_id" }, new[] { "target_side", "source_skill_id", "min_stacks" }, EnumParamValues(
                     "target_side", Enum.GetNames(typeof(SkillMultiEffectTargetSide))));
@@ -435,6 +476,10 @@ namespace Pakuri.Data
             AddSkillNodeHandlerSchema(schemas, "ConditionSkillAttribute", SkillExecutionPlanNodeKind.Action,
                 new[] { "attribute" }, enumParamAllowedValues: EnumParamValues(
                     "attribute", Enum.GetNames(typeof(DamageAttribute))));
+            AddSkillNodeHandlerSchema(schemas, "ConditionHealthRatioMax", SkillExecutionPlanNodeKind.Action,
+                new[] { "ratio" });
+            AddSkillNodeHandlerSchema(schemas, "ConditionHitCountMin", SkillExecutionPlanNodeKind.Action,
+                new[] { "min_targets" });
             AddSkillNodeHandlerSchema(schemas, "EffectLifetime", SkillExecutionPlanNodeKind.Action,
                 new[] { "duration_seconds" });
             AddSkillNodeHandlerSchema(schemas, "DelayedDamage", SkillExecutionPlanNodeKind.Action,
@@ -457,8 +502,6 @@ namespace Pakuri.Data
                 new[] { "hit_count", "multiplier" }, new[] { "radius", "max_targets", "attribute", "target_side" }, EnumParamValues(
                     "attribute", Enum.GetNames(typeof(DamageAttribute)),
                     "target_side", Enum.GetNames(typeof(SkillMultiEffectTargetSide))));
-            AddSkillNodeHandlerSchema(schemas, "HitCountCooldownRefund", SkillExecutionPlanNodeKind.OnHitAction,
-                new[] { "hit_count", "ratio" });
             AddSkillNodeHandlerSchema(schemas, "RepeatPerTarget", SkillExecutionPlanNodeKind.Action,
                 new[] { "repeat_count", "repeat_interval_seconds", "repeat_damage_multiplier" });
             AddSkillNodeHandlerSchema(schemas, "TargetStatusCritBonus", SkillExecutionPlanNodeKind.CritModifier,
@@ -856,6 +899,18 @@ namespace Pakuri.Data
                 AddLegacyOverlapError(node, "cooldown_multiplier", errors);
             }
 
+            if (string.Equals(node.HandlerId, "CritChanceBonus", StringComparison.OrdinalIgnoreCase)
+                && !NearlyZero(choice.CritChanceBonus))
+            {
+                AddLegacyOverlapError(node, "crit_chance_bonus", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "CritDamageBonus", StringComparison.OrdinalIgnoreCase)
+                && !NearlyZero(choice.CritDamageBonus))
+            {
+                AddLegacyOverlapError(node, "crit_damage_bonus", errors);
+            }
+
             if (string.Equals(node.HandlerId, "MagazineBonus", StringComparison.OrdinalIgnoreCase)
                 && choice.HasMagazineBonus
                 && choice.MagazineBonus != 0)
@@ -893,6 +948,48 @@ namespace Pakuri.Data
                 && !NearlyZero(choice.RadiusBonus))
             {
                 AddLegacyOverlapError(node, "radius_bonus", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "BeamWidthBonus", StringComparison.OrdinalIgnoreCase)
+                && !NearlyZero(choice.BeamWidthBonus))
+            {
+                AddLegacyOverlapError(node, "beam_width_bonus", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "KnockbackDistanceMultiplier", StringComparison.OrdinalIgnoreCase)
+                && choice.HasKnockbackDistanceMultiplier
+                && !NearlyEqual(choice.KnockbackDistanceMultiplier, 1f))
+            {
+                AddLegacyOverlapError(node, "knockback_distance_multiplier", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "ReloadReducePerHit", StringComparison.OrdinalIgnoreCase)
+                && (!string.IsNullOrWhiteSpace(choice.ReloadReduceTargetSkillId)
+                    || !NearlyZero(choice.ReloadReduceSecondsPerHit)))
+            {
+                AddLegacyOverlapError(node, "reload_reduce_*", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "CoreDamageMultiplier", StringComparison.OrdinalIgnoreCase)
+                && (!string.IsNullOrWhiteSpace(choice.CoreHitboxName)
+                    || choice.HasCoreDamageMultiplier))
+            {
+                AddLegacyOverlapError(node, "core_hitbox_name/core_damage_multiplier", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "CoreAdditionalDamage", StringComparison.OrdinalIgnoreCase)
+                && (!string.IsNullOrWhiteSpace(choice.CoreHitboxName)
+                    || choice.HasCoreOnHitAdditionalDamage))
+            {
+                AddLegacyOverlapError(node, "core_on_hit_additional_damage_*", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "HitCountCooldownRefund", StringComparison.OrdinalIgnoreCase)
+                && (!string.IsNullOrWhiteSpace(choice.HitCountCooldownRefundTargetSkillId)
+                    || choice.HitCountCooldownRefundMinTargets > 0
+                    || !NearlyZero(choice.HitCountCooldownRefundRatio)))
+            {
+                AddLegacyOverlapError(node, "hit_count_cooldown_refund_*", errors);
             }
 
             if (string.Equals(node.HandlerId, "DurationBonus", StringComparison.OrdinalIgnoreCase)
@@ -1076,7 +1173,9 @@ namespace Pakuri.Data
                 case SkillNodeValueType.AssetPath:
                     if (string.IsNullOrWhiteSpace(value)
                         || assetCatalog == null
-                        || (!assetCatalog.HasSprite(value) && !assetCatalog.HasPrefab(value)))
+                        || (!assetCatalog.HasSprite(value)
+                            && !assetCatalog.HasPrefab(value)
+                            && !assetCatalog.HasAnimatorController(value)))
                     {
                         errors.Add($"Skill node param '{param.NodeId}.{param.ParamKey}' references unknown asset path '{param.Value}'.");
                     }
@@ -1261,6 +1360,9 @@ namespace Pakuri.Data
                     && graph.OwnerKind == SkillNodeOwnerKind.Choice
                         ? graph.OwnerId
                         : string.Empty;
+                var requiresPassiveSkillId = graph.GraphKind == SkillGraphKind.Effect
+                    ? ResolveGeneratedEffectPassiveSkillId(model, graph)
+                    : string.Empty;
 
                 generatedNodes.Add(new SkillNodeRow
                 {
@@ -1275,7 +1377,7 @@ namespace Pakuri.Data
                     EnabledByDefault = true,
                     RequiresActiveChoiceId = requiresChoiceId,
                     ExcludesActiveChoiceId = graph.ExcludesActiveChoiceId,
-                    RequiresPassiveSkillId = string.Empty,
+                    RequiresPassiveSkillId = requiresPassiveSkillId,
                     ExcludesPassiveSkillId = string.Empty,
                     RuntimeSupportState = nodeType.RuntimeSupportState,
                     RuntimeSupportNotes = nodeType.RuntimeSupportNotes
@@ -1513,6 +1615,31 @@ namespace Pakuri.Data
                     $"Skill graph '{BuildSkillGraphKey(graph)}' resolves unknown target_skill_id '{targetSkillId}'.");
             }
             return targetSkillId;
+        }
+
+        private static string ResolveGeneratedEffectPassiveSkillId(SourceModel model, SkillGraphNodeRow graph)
+        {
+            if (model == null || graph == null || graph.GraphKind != SkillGraphKind.Effect)
+            {
+                return string.Empty;
+            }
+
+            if (graph.OwnerKind == SkillNodeOwnerKind.Skill
+                && model.Skills.TryGetValue(graph.OwnerId, out var skill)
+                && skill.SkillKind == PakuriCsvSkillKind.Passive)
+            {
+                return skill.Id;
+            }
+
+            if (graph.OwnerKind == SkillNodeOwnerKind.Choice
+                && model.SkillChoices.TryGetValue(graph.OwnerId, out var choice)
+                && model.Skills.TryGetValue(choice.SkillId, out var choiceSkill)
+                && choiceSkill.SkillKind == PakuriCsvSkillKind.Passive)
+            {
+                return choiceSkill.Id;
+            }
+
+            return string.Empty;
         }
 
         private static void ValidateSkillGraphAllowedValue(

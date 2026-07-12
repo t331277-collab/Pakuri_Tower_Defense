@@ -5,6 +5,48 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-12 Rin Status Effect Graph Exposure Design
+
+### Task title
+
+Preserve Rin status Effect behavior while migrating legacy Effect rows to graphs.
+
+### Goals
+
+- Expose existing move-speed, critical-damage, resistance-reduction, outgoing-additional-damage, health-ratio, and hit-count Effect meanings to positional graphs.
+- Preserve passive-to-active Effect gates for Rin-J effects attached to Rin-E.
+
+### Constraints
+
+- Role Owner is Code Builder for the approved implementation phase.
+- No new status gameplay meaning was introduced.
+- Existing Trigger event envelopes remain intact; Play Mode verification is still required.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Approved status Effect graph exposure and passive gate inference implemented; source/build validation completed.
+
+### Next Actions
+
+- Verify Rin-B/C/E/G/I/J status application, expiry, resistance reduction, outgoing additional damage, and passive gates in Play Mode.
+
+### Evidence
+
+- Current Rin legacy Effects use status move speed, attack power, critical chance/damage, physical damage bonus, physical resistance reduction, health-ratio, and OnHitCount fields already consumed by shared runtime.
+- The current graph materializer leaves generated `RequiresPassiveSkillId` blank; the proposal requires passive Skill/Choice ownership to preserve this gate when targeting `rin-e`.
+- Effect composition now maps the approved health-ratio, hit-count, move-speed, attack-power, critical-damage, resistance-reduction, and outgoing-additional-damage graph operations to existing runtime fields.
+- Generated passive Skill/Choice Effects infer `RequiresPassiveSkillId`; Rin-I kill Effects use explicit Trigger-owned Effect graph references.
+- Rin legacy Effect rows are zero after migration, and Unity source validation completed without validation errors.
+
+### History
+
+- 2026-07-12: Designer recorded the status-specific graph exposure and gate requirements in the Rin node proposal.
+- 2026-07-12: Code Builder implemented the approved Effect composer operations and passive gate preservation, then validated the generated source catalog.
+
 ## Task: 2026-07-12 Eve Status Graph Migration
 
 ### Task title
@@ -26,11 +68,12 @@ Code Builder / Skill Builder
 
 ### Status
 
-Implemented and source-validated; Play Mode verification remains.
+Implemented and source-validated. Eve-B/E base runtime visuals no longer leak into status visuals; Play Mode verification remains.
 
 ### Next Actions
 
 - User verifies Eve-D stack damage, Eve-E vulnerable stacks, and Eve F-J passive status modifiers in Play Mode.
+- User verifies Eve-B slow and Eve-E vulnerable apply without spawning an extra `RuntimeStatusVisual` or status-owned collider.
 
 ### Evidence
 
@@ -38,10 +81,14 @@ Implemented and source-validated; Play Mode verification remains.
 - Eve-E uses graph-authored vulnerable stack amount/max-stack/critical-damage-taken modifiers.
 - Eve F-J legacy status effects were replaced by shared Effect graphs; `StatusElementDamageTakenBonus` now accepts an optional element attribute so Eve-I remains Lightning-specific.
 - Unity CSV validation passed and both C# projects build with 0 errors.
+- `StatusEffectRuntime.CreateStatusData(...)` now accepts a source runtime visual only when `RuntimeSkillVisualAnchor.StatusTarget` is explicit, instead of copying every base skill visual.
+- Status-attached runtime visual creation passes `includeHitbox: false`, so status decorations cannot create gameplay colliders.
+- `skills_single_attack.csv` opts only Ariel-D into `StatusTarget`; Eve-B/E keep the default `Skill` ownership.
 
 ### History
 
 - 2026-07-12: Completed Eve status graph migration and verification handoff.
+- 2026-07-12: Fixed Eve-B/E `RuntimeStatusVisual` leakage through shared status visual ownership and collider guards.
 
 ## Task: 2026-07-11 Shared DamageCalculator Final-Damage Routing
 

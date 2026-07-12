@@ -5,6 +5,98 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-12 Rin Positional Graph Migration Design
+
+### Task title
+
+Define the normalized CSV and node-definition handoff for Rin A-J.
+
+### Goals
+
+- Reuse the existing projectile, buff, line, single-attack, and passive graph files.
+- Expose current wide/direct Effect meanings through positional node definitions and mapper/composer connections.
+- Remove Rin legacy direct nodes and legacy Effects only after equivalent graph rows exist.
+
+### Constraints
+
+- Role Owner is Code Builder for the approved implementation phase.
+- No new graph CSV file or gameplay meaning was introduced.
+- Trigger rows remain event envelopes where graph Plan cannot currently modify trigger cadence or damage.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Rin normalized graph migration implemented and validated; Play Mode behavior verification remains.
+
+### Next Actions
+
+- Verify the materialized Rin definitions and Trigger behavior in Play Mode.
+- Keep legacy Rin authoring removed after the Play Mode pass confirms behavioral parity.
+
+### Evidence
+
+- `skill_graph_nodes_projectile/buff/line_attack/single_attack/passive.csv` all exist with the current 21-column schema.
+- Rin currently has no graph rows but has 11 direct nodes and 22 direct params; `MaterializeSkillGraphRows(...)` rejects monster-level graph/direct-node mixing.
+- The proposal identifies graph exposure for crit, beam width, knockback, reload reduction, core hitbox, hit-count refund, status payload, and Effect conditions using existing runtime fields.
+- Added approved definitions/params and mapper/composer connections for the reused wide/direct/Effect meanings.
+- Rin data totals after migration: graph 138, legacy Effect 0, Trigger 17, direct node 0, direct param 0, non-routing Choice behavior value 0.
+- Every inspected runtime monster skill CSV row matches its header's 21-column graph schema or its own source header shape; `git diff --check` reports no whitespace error.
+- Unity `Pakuri/Validate CSV Source Data` loaded the runtime catalog with 5 monsters and reported no validation error.
+
+### History
+
+- 2026-07-12: Designer documented the Rin normalized graph migration in `boards/MON/RIN_NODE_MIGRATION_PROPOSAL.md`.
+- 2026-07-12: Code Builder implemented the positional graph rows, shared node exposure, passive gate inference, Trigger graph references, and legacy-authoring cleanup.
+
+## Task: 2026-07-12 Eve Runtime Visual CSV Migration
+
+### Task title
+
+Represent Eve A-E and Eve-C master-2 visuals/hitboxes through normalized runtime CSV data.
+
+### Goals
+
+- Add runtime visual columns to the existing line-attack and area-attack base tables.
+- Populate Eve A-E runtime Sprite/Animator/scale/sorting/hitbox values without adding offset columns.
+- Add a reusable `RuntimeEffectVisual` node type using the existing graph `arg_1` through `arg_12` columns.
+
+### Constraints
+
+- Role Owner is Code Builder refactoring track.
+- No new CSV file and no offset CSV column are introduced.
+- Existing prefab-path node behavior must remain compatible for all unconverted skills.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and Unity CSV validation passed. Runtime visual status-target ownership is now explicit.
+
+### Next Actions
+
+- Preserve the runtime visual columns and `RuntimeEffectVisual` node definition during future normalized CSV maintenance.
+- Use `runtime_visual_anchor=StatusTarget` only for visuals intentionally attached to a status target; blank/default values remain skill-owned.
+- User verifies gameplay/visual parity in Play Mode.
+
+### Evidence
+
+- Updated `skills_projectile.csv`, `skills_line_attack.csv`, `skills_single_attack.csv`, and `skills_area_attack.csv` with Eve runtime visual values.
+- CSV parser checks returned uniform field counts per edited table: projectile 38, line attack 29, single attack 42, area attack 32, and area graph 21.
+- Added `RuntimeEffectVisual` to `skill_node_definitions.csv` and its Sprite, AnimatorController, scale, sorting, and optional hitbox params to `skill_node_definition_params.csv`.
+- Eve-C master-2 graph now keeps `EffectDamage` and `EffectTarget(OnExpire)` and replaces only its visual row with `RuntimeEffectVisual`.
+- Unity-MCP source validation loaded the 5-monster, 8+8-enemy runtime catalog successfully.
+- `skills_single_attack.csv` now has optional `runtime_visual_anchor`; Ariel-D is explicitly `StatusTarget`, while Eve-D and all other rows remain blank/default `Skill`.
+
+### History
+
+- 2026-07-12: Migrated Eve visual/hitbox authority to existing normalized CSV tables without creating offset columns or deleting prefabs.
+- 2026-07-12: Added explicit runtime visual status-target ownership to stop Eve-B/E base visuals from being copied into their applied statuses.
+
 ## Task: 2026-07-11 Eve A-J Skill Graph Migration Proposal
 
 ### Task title

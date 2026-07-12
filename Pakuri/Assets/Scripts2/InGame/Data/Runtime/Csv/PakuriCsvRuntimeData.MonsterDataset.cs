@@ -62,6 +62,7 @@ namespace Pakuri.Data
             public string RuntimeVisualAnimatorControllerPath;
             public float RuntimeVisualScale = 1f;
             public int RuntimeVisualSortingOrder;
+            public string RuntimeVisualAnchor;
             public float RuntimeHitboxSizeX;
             public float RuntimeHitboxSizeY;
             public string DescriptionText;
@@ -357,6 +358,7 @@ namespace Pakuri.Data
             public string RuntimeVisualAnimatorControllerPath;
             public float RuntimeVisualScale = 1f;
             public int RuntimeVisualSortingOrder;
+            public string RuntimeVisualAnchor;
             public float RuntimeHitboxSizeX;
             public float RuntimeHitboxSizeY;
             public string RuntimeSupportState;
@@ -427,6 +429,7 @@ namespace Pakuri.Data
                 RuntimeVisualAnimatorControllerPath = ReadOptionalStringIfColumnExists(record, "runtime_visual_animator_controller_path"),
                 RuntimeVisualScale = ReadOptionalFloatWithDefaultIfColumnExists(record, "runtime_visual_scale", 1f),
                 RuntimeVisualSortingOrder = ReadOptionalIntIfColumnExists(record, "runtime_visual_sorting_order"),
+                RuntimeVisualAnchor = ReadOptionalStringIfColumnExists(record, "runtime_visual_anchor"),
                 RuntimeHitboxSizeX = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_x"),
                 RuntimeHitboxSizeY = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_y"),
                 DescriptionText = ReadOptionalStringIfColumnExists(record, "description_text"),
@@ -749,6 +752,7 @@ namespace Pakuri.Data
                 RuntimeVisualAnimatorControllerPath = ReadOptionalStringIfColumnExists(record, "runtime_visual_animator_controller_path"),
                 RuntimeVisualScale = ReadOptionalFloatWithDefaultIfColumnExists(record, "runtime_visual_scale", 1f),
                 RuntimeVisualSortingOrder = ReadOptionalIntIfColumnExists(record, "runtime_visual_sorting_order"),
+                RuntimeVisualAnchor = ReadOptionalStringIfColumnExists(record, "runtime_visual_anchor"),
                 RuntimeHitboxSizeX = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_x"),
                 RuntimeHitboxSizeY = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_y"),
                 RuntimeSupportState = ReadOptionalStringIfColumnExists(record, "runtime_support_state"),

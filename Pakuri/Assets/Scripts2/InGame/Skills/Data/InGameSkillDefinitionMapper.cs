@@ -697,6 +697,18 @@ namespace Pakuri.InGame
                 return;
             }
 
+            if (string.Equals(handlerId, "CritChanceBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.CritChanceBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "CritDamageBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.CritDamageBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
             if (string.Equals(handlerId, "MagazineBonus", StringComparison.OrdinalIgnoreCase))
             {
                 spec.HasMagazineBonus = true;
@@ -733,6 +745,52 @@ namespace Pakuri.InGame
             if (string.Equals(handlerId, "RadiusBonus", StringComparison.OrdinalIgnoreCase))
             {
                 spec.RadiusBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "BeamWidthBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.BeamWidthBonus += GetFloatParam(node, "bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "KnockbackDistanceMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasKnockbackDistanceMultiplier = true;
+                spec.KnockbackDistanceMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "ReloadReducePerHit", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.ReloadReduceTargetSkillId = GetParam(node, "target_skill_id");
+                spec.ReloadReduceSecondsPerHit += GetFloatParam(node, "seconds_per_hit", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "CoreDamageMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.CoreHitboxName = GetParam(node, "hitbox_name");
+                spec.HasCoreDamageMultiplier = true;
+                spec.CoreDamageMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "CoreAdditionalDamage", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.CoreHitboxName = GetParam(node, "hitbox_name");
+                spec.HasCoreOnHitAdditionalDamage = true;
+                spec.CoreOnHitAdditionalDamageChance = GetFloatParam(node, "chance", 1f);
+                spec.CoreOnHitAdditionalDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
+                spec.CoreOnHitAdditionalDamageAttribute = GetEnumParam(node, "attribute", DamageAttribute.Physical);
+                return;
+            }
+
+            if (string.Equals(handlerId, "HitCountCooldownRefund", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HitCountCooldownRefundTargetSkillId = GetParam(node, "target_skill_id");
+                spec.HitCountCooldownRefundMinTargets = GetIntParam(node, "min_targets", 0);
+                spec.HitCountCooldownRefundRatio = GetFloatParam(node, "ratio", 0f);
                 return;
             }
 

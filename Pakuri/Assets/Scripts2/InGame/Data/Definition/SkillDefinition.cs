@@ -102,6 +102,12 @@ namespace Pakuri.Data
         AppliedTargets
     }
 
+    public enum RuntimeSkillVisualAnchor
+    {
+        Skill,
+        StatusTarget
+    }
+
     public enum SkillTriggerEvent
     {
         OnMagazineLastProjectileHit,
@@ -152,6 +158,7 @@ namespace Pakuri.Data
         public RuntimeAnimatorController AnimatorController;
         public float Scale = 1f;
         public int SortingOrder;
+        public RuntimeSkillVisualAnchor Anchor = RuntimeSkillVisualAnchor.Skill;
         public RuntimeSkillHitboxSpec Hitbox = new RuntimeSkillHitboxSpec();
 
         public bool HasVisual()
@@ -292,6 +299,7 @@ namespace Pakuri.Data
         public DamageAttribute StatusOutgoingAdditionalDamageTriggerAttribute;
         public DamageAttribute StatusOutgoingAdditionalDamageAttribute;
         public GameObject SkillEffectPrefab;
+        public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
     }

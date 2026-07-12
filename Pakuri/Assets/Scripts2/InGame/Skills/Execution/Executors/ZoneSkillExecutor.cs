@@ -48,14 +48,34 @@ namespace Pakuri.InGame
             var expireEffects = ResolveOnExpireEffects(context, snapshot, planEffects);
             var coverAll = (skill.Area != null && skill.Area.CoverAll)
                 || (skill.Targeting != null && skill.Targeting.CoverAll);
-            var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
+            var runtimeVisual = skill.RuntimeVisual;
+            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var prefab = !hasRuntimeVisual && snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
-                : context.CombatManager.Effects != null
+                : !hasRuntimeVisual && context.CombatManager.Effects != null
                     ? context.CombatManager.Effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId)
                     : null;
 
             GameObject instance = null;
-            if (prefab != null && context.CombatManager.Effects != null)
+            if (hasRuntimeVisual && context.CombatManager.Effects != null)
+            {
+                instance = RuntimeSkillVisualFactory.Create(
+                    context.CombatManager.Effects,
+                    runtimeVisual,
+                    string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameRecastZone" : $"InGameRecastZone_{skill.SkillId}",
+                    center,
+                    Quaternion.identity);
+                if (instance != null && PrefabHasHitbox(instance))
+                {
+                    SkillExecutionUtility.ApplyPrefabScale(
+                        instance.transform,
+                        SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area),
+                        snapshot);
+                    instance.transform.localScale *= Mathf.Max(0f, effect.RecastRadiusMultiplier);
+                    Physics2D.SyncTransforms();
+                }
+            }
+            else if (prefab != null && context.CombatManager.Effects != null)
             {
                 instance = context.CombatManager.Effects.InstantiateSkillPrefab(prefab, center, Quaternion.identity);
                 if (instance != null && PrefabHasHitbox(instance))
@@ -127,9 +147,11 @@ namespace Pakuri.InGame
             var expireEffects = ResolveOnExpireEffects(context, snapshot, planEffects);
             var coverAll = (skill.Area != null && skill.Area.CoverAll)
                 || (skill.Targeting != null && skill.Targeting.CoverAll);
-            var prefab = snapshot != null && snapshot.SkillEffectPrefab != null
+            var runtimeVisual = skill.RuntimeVisual;
+            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var prefab = !hasRuntimeVisual && snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
-                : context.CombatManager.Effects != null
+                : !hasRuntimeVisual && context.CombatManager.Effects != null
                     ? context.CombatManager.Effects.ResolveMonsterSkillEffectPrefab(context.Caster, skill.SkillId)
                     : null;
 
@@ -138,7 +160,21 @@ namespace Pakuri.InGame
             {
                 var center = centers[i];
                 GameObject instance = null;
-                if (prefab != null && context.CombatManager.Effects != null)
+                if (hasRuntimeVisual && context.CombatManager.Effects != null)
+                {
+                    instance = RuntimeSkillVisualFactory.Create(
+                        context.CombatManager.Effects,
+                        runtimeVisual,
+                        string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameZoneSkill" : $"InGameZoneSkill_{skill.SkillId}",
+                        center,
+                        Quaternion.identity);
+                    if (instance != null && PrefabHasHitbox(instance))
+                    {
+                        SkillExecutionUtility.ApplyPrefabScale(instance.transform, SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area), snapshot);
+                        Physics2D.SyncTransforms();
+                    }
+                }
+                else if (prefab != null && context.CombatManager.Effects != null)
                 {
                     instance = context.CombatManager.Effects.InstantiateSkillPrefab(prefab, center, Quaternion.identity);
                     if (instance != null && PrefabHasHitbox(instance))

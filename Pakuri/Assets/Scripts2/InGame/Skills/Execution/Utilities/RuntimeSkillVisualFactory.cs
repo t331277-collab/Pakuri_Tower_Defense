@@ -16,7 +16,8 @@ namespace Pakuri.InGame
             string objectName,
             Vector3 position,
             Quaternion rotation,
-            bool hitboxIsTrigger = false)
+            bool hitboxIsTrigger = false,
+            bool includeHitbox = true)
         {
             if (effects == null || !HasVisual(spec))
             {
@@ -24,11 +25,15 @@ namespace Pakuri.InGame
             }
 
             var instance = effects.CreateRuntimeSkillObject(objectName, position, rotation);
-            Configure(instance, spec, hitboxIsTrigger);
+            Configure(instance, spec, hitboxIsTrigger, includeHitbox);
             return instance;
         }
 
-        public static void Configure(GameObject instance, RuntimeSkillVisualSpec spec, bool hitboxIsTrigger = false)
+        public static void Configure(
+            GameObject instance,
+            RuntimeSkillVisualSpec spec,
+            bool hitboxIsTrigger = false,
+            bool includeHitbox = true)
         {
             if (instance == null || !HasVisual(spec))
             {
@@ -61,7 +66,7 @@ namespace Pakuri.InGame
                 animator.runtimeAnimatorController = spec.AnimatorController;
             }
 
-            if (spec.Hitbox != null && spec.Hitbox.HasHitbox())
+            if (includeHitbox && spec.Hitbox != null && spec.Hitbox.HasHitbox())
             {
                 ConfigureHitbox(instance, spec.Hitbox, hitboxIsTrigger);
             }

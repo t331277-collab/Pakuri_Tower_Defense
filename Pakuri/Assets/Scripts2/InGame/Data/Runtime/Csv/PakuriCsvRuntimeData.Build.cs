@@ -665,6 +665,18 @@ namespace Pakuri.Data
                 return;
             }
 
+            if (string.Equals(handlerId, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.RuntimeVisual = BuildRuntimeVisual(
+                    GetSkillNodeStringParam(parameters, "runtime_visual_sprite_path"),
+                    GetSkillNodeStringParam(parameters, "runtime_visual_animator_controller_path"),
+                    GetSkillNodeFloatParam(parameters, "runtime_visual_scale", 1f),
+                    GetSkillNodeIntParam(parameters, "runtime_visual_sorting_order", 0),
+                    GetSkillNodeFloatParam(parameters, "runtime_hitbox_size_x", 0f),
+                    GetSkillNodeFloatParam(parameters, "runtime_hitbox_size_y", 0f));
+                return;
+            }
+
             if (string.Equals(handlerId, "ConditionStatus", StringComparison.OrdinalIgnoreCase))
             {
                 definition.ConditionStatusId = BuildConditionStatusExpression(parameters);
@@ -687,6 +699,18 @@ namespace Pakuri.Data
                 return;
             }
 
+            if (string.Equals(handlerId, "ConditionHealthRatioMax", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.ConditionHealthRatioMax = GetSkillNodeFloatParam(parameters, "ratio", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "ConditionHitCountMin", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.ConditionHitCountMin = GetSkillNodeIntParam(parameters, "min_targets", 0);
+                return;
+            }
+
             if (string.Equals(handlerId, "EffectLifetime", StringComparison.OrdinalIgnoreCase))
             {
                 var duration = GetSkillNodeFloatParam(parameters, "duration_seconds", 0f);
@@ -706,6 +730,14 @@ namespace Pakuri.Data
             if (string.Equals(handlerId, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase))
             {
                 definition.StatusActionSpeedBonus += bonus;
+            }
+            else if (string.Equals(handlerId, "StatusMoveSpeedBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusMoveSpeedBonus += bonus;
+            }
+            else if (string.Equals(handlerId, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusAttackPowerBonus += bonus;
             }
             else if (string.Equals(handlerId, "StatusSpellPowerBonus", StringComparison.OrdinalIgnoreCase))
             {
@@ -732,6 +764,27 @@ namespace Pakuri.Data
             else if (string.Equals(handlerId, "StatusCriticalChanceBonus", StringComparison.OrdinalIgnoreCase))
             {
                 definition.StatusCriticalChanceBonus += bonus;
+            }
+            else if (string.Equals(handlerId, "StatusCriticalDamageBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusCriticalDamageBonus += bonus;
+            }
+            else if (string.Equals(handlerId, "StatusElementResistReduction", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.Attribute = GetSkillNodeEnumParam(parameters, "attribute", definition.Attribute);
+                definition.StatusElementResistReduction += bonus;
+            }
+            else if (string.Equals(handlerId, "StatusOutgoingAdditionalDamage", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusOutgoingAdditionalDamageMultiplier += GetSkillNodeFloatParam(parameters, "multiplier", 0f);
+                definition.StatusOutgoingAdditionalDamageTriggerAttribute = GetSkillNodeEnumParam(
+                    parameters,
+                    "trigger_attribute",
+                    DamageAttribute.Physical);
+                definition.StatusOutgoingAdditionalDamageAttribute = GetSkillNodeEnumParam(
+                    parameters,
+                    "damage_attribute",
+                    DamageAttribute.Physical);
             }
             else if (string.Equals(handlerId, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
             {
@@ -1302,7 +1355,8 @@ namespace Pakuri.Data
                     row.RuntimeVisualScale,
                     row.RuntimeVisualSortingOrder,
                     row.RuntimeHitboxSizeX,
-                    row.RuntimeHitboxSizeY);
+                    row.RuntimeHitboxSizeY,
+                    row.RuntimeVisualAnchor);
         }
 
         private static RuntimeSkillVisualSpec BuildRuntimeVisual(SkillTriggerRow row)
@@ -1315,7 +1369,8 @@ namespace Pakuri.Data
                     row.RuntimeVisualScale,
                     row.RuntimeVisualSortingOrder,
                     row.RuntimeHitboxSizeX,
-                    row.RuntimeHitboxSizeY);
+                    row.RuntimeHitboxSizeY,
+                    row.RuntimeVisualAnchor);
         }
 
         private static RuntimeSkillVisualSpec BuildRuntimeVisual(
@@ -1324,14 +1379,23 @@ namespace Pakuri.Data
             float scale,
             int sortingOrder,
             float hitboxSizeX,
-            float hitboxSizeY)
+            float hitboxSizeY,
+            string visualAnchor = null)
         {
+            var anchor = RuntimeSkillVisualAnchor.Skill;
+            if (!string.IsNullOrWhiteSpace(visualAnchor)
+                && !Enum.TryParse(visualAnchor, true, out anchor))
+            {
+                anchor = RuntimeSkillVisualAnchor.Skill;
+            }
+
             return new RuntimeSkillVisualSpec
             {
                 Sprite = LoadSprite(spritePath),
                 AnimatorController = LoadAnimatorController(animatorControllerPath),
                 Scale = scale > 0f ? scale : 1f,
                 SortingOrder = sortingOrder,
+                Anchor = anchor,
                 Hitbox = new RuntimeSkillHitboxSpec
                 {
                     Size = new Vector2(Mathf.Max(0f, hitboxSizeX), Mathf.Max(0f, hitboxSizeY))
