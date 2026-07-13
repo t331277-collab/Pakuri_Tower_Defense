@@ -222,6 +222,19 @@ Both F rows can then share the same values and clear `skill_effect_prefab_path` 
 - Unity-MCP CSV sync/validation reports no source/catalog errors.
 - User Play Mode verification confirms visual and collision parity.
 
+## 2026-07-13 Implementation Notes
+
+- Code Builder added shared `RuntimeSkillHitboxSpec.Offset` and changed `RuntimeSkillVisualFactory` to apply the authored offset instead of forcing zero.
+- Skill and Trigger CSV parsing/build paths now read optional `runtime_hitbox_offset_x/y` values.
+- Rin A/B/C base rows now author runtime sprite/controller/scale/hitbox values. Existing scene mappings remain as fallback but runtime visual presence takes precedence.
+- Rin F base/trait-2 follow-up Trigger rows now author the same runtime sprite/controller/scale/zero-offset hitbox values.
+- Rin D master 1 kill-burst Trigger now authors runtime sprite, exact box size `(3.9373517, 3.788869)`, and exact offset `(0.53632426, -0.41973162)`.
+- Rin D base remains unchanged and scene-prefab-backed.
+- Rin E remains prefab-backed and now explicitly authors `use_prefab_hitbox=true`. An explicit prefab hitbox with no target-count limit resolves all overlapping targets without changing its target-centered placement.
+- Converted Trigger prefab paths and A-D scene mappings remain as fallback/parity evidence until user Play Mode verification. No Rin prefab was deleted or edited.
+- Runtime and Editor builds passed with 0 errors; existing assembly conflict warnings remained.
+- Unity-MCP `Pakuri/Validate CSV Source Data` loaded the runtime catalog with 5 monsters and reported no validation error.
+
 ## Related Boards
 
 - `boards/MON/RIN_MONSTER.md`

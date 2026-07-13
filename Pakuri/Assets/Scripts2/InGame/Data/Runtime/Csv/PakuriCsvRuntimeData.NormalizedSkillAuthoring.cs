@@ -307,10 +307,26 @@ namespace Pakuri.Data
                 new[] { "bonus_seconds" });
             AddSkillNodeHandlerSchema(schemas, "DurationMultiplier", SkillExecutionPlanNodeKind.Action,
                 new[] { "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "DamageDelayMultiplier", SkillExecutionPlanNodeKind.Action,
+                new[] { "multiplier" });
             AddSkillNodeHandlerSchema(schemas, "AdditionalProjectileBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "ShotIntervalMultiplier", SkillExecutionPlanNodeKind.Action,
                 new[] { "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "ConsecutiveHitDamageBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus_rate", "max_bonus" });
+            AddSkillNodeHandlerSchema(schemas, "BurstDamageRule", SkillExecutionPlanNodeKind.DamageModifier,
+                new[] { "projectile_index", "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "FollowUpProjectile", SkillExecutionPlanNodeKind.Action,
+                new[] { "count", "delay_seconds", "damage_multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "ThresholdApplyStatus", SkillExecutionPlanNodeKind.Action,
+                new[] { "source_status_id", "min_stacks", "apply_status_id" });
+            AddSkillNodeHandlerSchema(schemas, "TargetStatusStackDamageMultiplier", SkillExecutionPlanNodeKind.DamageModifier,
+                new[] { "multiplier" });
+            AddSkillNodeHandlerSchema(schemas, "ConsumeTargetStatusRatioOverride", SkillExecutionPlanNodeKind.Action,
+                new[] { "ratio" });
+            AddSkillNodeHandlerSchema(schemas, "BurstStatusStacksBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "projectile_index", "bonus" });
             AddSkillNodeHandlerSchema(schemas, "StatusStackAmountBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "status_id", "bonus" });
             AddSkillNodeHandlerSchema(schemas, "StatusStackAmountSet", SkillExecutionPlanNodeKind.Action,
@@ -454,6 +470,23 @@ namespace Pakuri.Data
                 EffectBaseEnumParamValues());
             AddSkillNodeHandlerSchema(schemas, "EffectVisual", SkillExecutionPlanNodeKind.Action,
                 new[] { "skill_effect_prefab_path" });
+            AddSkillNodeHandlerSchema(schemas, "AttachStatusPayload", SkillExecutionPlanNodeKind.Action,
+                new[] { "status_id" },
+                new[]
+                {
+                    "status_chance",
+                    "status_label",
+                    "status_duration_seconds",
+                    "status_max_stacks",
+                    "status_stack_amount",
+                    "status_merge_policy"
+                });
+            AddSkillNodeHandlerSchema(schemas, "RequiredSourceStatus", SkillExecutionPlanNodeKind.Action,
+                new[] { "status_id" }, new[] { "min_stacks" });
+            AddSkillNodeHandlerSchema(schemas, "StatusRuntimeKindFilter", SkillExecutionPlanNodeKind.Action,
+                Array.Empty<string>(), new[] { "incoming_skill_runtime_kinds", "outgoing_skill_runtime_kinds" });
+            AddSkillNodeHandlerSchema(schemas, "StatusCriticalResistanceBonus", SkillExecutionPlanNodeKind.Action,
+                new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "RuntimeEffectVisual", SkillExecutionPlanNodeKind.Action,
                 new[]
                 {
@@ -996,6 +1029,59 @@ namespace Pakuri.Data
                 && !NearlyZero(choice.DurationBonus))
             {
                 AddLegacyOverlapError(node, "duration_bonus", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "DamageDelayMultiplier", StringComparison.OrdinalIgnoreCase)
+                && choice.HasDamageDelayMultiplier
+                && !NearlyEqual(choice.DamageDelayMultiplier, 1f))
+            {
+                AddLegacyOverlapError(node, "damage_delay_multiplier", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "ConsecutiveHitDamageBonus", StringComparison.OrdinalIgnoreCase)
+                && (!NearlyZero(choice.ConsecutiveHitBonusRate) || !NearlyZero(choice.ConsecutiveHitMax)))
+            {
+                AddLegacyOverlapError(node, "consecutive_hit_bonus_rate/consecutive_hit_max", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "BurstDamageRule", StringComparison.OrdinalIgnoreCase)
+                && (choice.HasBurstDamageProjectileIndex || choice.HasBurstDamageMultiplier))
+            {
+                AddLegacyOverlapError(node, "burst_damage_projectile_index/burst_damage_multiplier", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "FollowUpProjectile", StringComparison.OrdinalIgnoreCase)
+                && (choice.FollowUpProjectileCount > 0
+                    || !NearlyZero(choice.FollowUpProjectileDelaySeconds)
+                    || !NearlyEqual(choice.FollowUpProjectileDamageMultiplier, 1f)))
+            {
+                AddLegacyOverlapError(node, "follow_up_projectile_*", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "ThresholdApplyStatus", StringComparison.OrdinalIgnoreCase)
+                && (!string.IsNullOrWhiteSpace(choice.ThresholdStatusId)
+                    || choice.ThresholdStatusMinStacks > 0
+                    || !string.IsNullOrWhiteSpace(choice.ThresholdApplyStatusId)))
+            {
+                AddLegacyOverlapError(node, "threshold_status_*/threshold_apply_status_id", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "TargetStatusStackDamageMultiplier", StringComparison.OrdinalIgnoreCase)
+                && choice.HasTargetStatusStackDamageMultiplier)
+            {
+                AddLegacyOverlapError(node, "target_status_stack_damage_multiplier", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "ConsumeTargetStatusRatioOverride", StringComparison.OrdinalIgnoreCase)
+                && choice.HasConsumeTargetStatusRatioOverride)
+            {
+                AddLegacyOverlapError(node, "consume_target_status_ratio_override", errors);
+            }
+
+            if (string.Equals(node.HandlerId, "BurstStatusStacksBonus", StringComparison.OrdinalIgnoreCase)
+                && (choice.HasBurstStatusProjectileIndex || choice.BurstStatusStacksBonus != 0))
+            {
+                AddLegacyOverlapError(node, "burst_status_projectile_index/burst_status_stacks_bonus", errors);
             }
 
             if (string.Equals(node.HandlerId, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase)
@@ -1671,6 +1757,10 @@ namespace Pakuri.Data
             return IsEffectOperationHandler(handlerId)
                 || string.Equals(handlerId, "EffectTarget", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "EffectVisual", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "AttachStatusPayload", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "RequiredSourceStatus", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "StatusRuntimeKindFilter", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "StatusCriticalResistanceBonus", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "ConditionStatus", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "ConditionSkillAttribute", StringComparison.OrdinalIgnoreCase)

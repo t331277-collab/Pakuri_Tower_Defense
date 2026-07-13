@@ -78,6 +78,12 @@ namespace Pakuri.Data
                 assets.AddAnimatorController(
                     skill.RuntimeVisualAnimatorControllerPath,
                     $"Skill '{skill.Id}' runtime_visual_animator_controller_path");
+                assets.AddSprite(
+                    skill.RuntimeImpactVisualSpritePath,
+                    $"Skill '{skill.Id}' runtime_impact_visual_sprite_path");
+                assets.AddAnimatorController(
+                    skill.RuntimeImpactVisualAnimatorControllerPath,
+                    $"Skill '{skill.Id}' runtime_impact_visual_animator_controller_path");
             }
 
             foreach (var choice in model.SkillChoices.Values)

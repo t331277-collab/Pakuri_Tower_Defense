@@ -136,10 +136,9 @@ namespace Pakuri.InGame
             skill.Targeting.SelectionStatusId = source.TargetSelectionStatusId;
             skill.Targeting.SelectionStatusMinStacks = Mathf.Max(0, source.TargetSelectionStatusMinStacks);
             skill.Targeting.Shape = MapShape(source.RuntimeKind);
-            skill.Targeting.CoverAll = source.RuntimeKind == SkillRuntimeKind.Field
-                || (source.RuntimeKind == SkillRuntimeKind.SingleAttack
-                    && source.Radius <= 0f
-                    && string.IsNullOrWhiteSpace(source.TargetSelection));
+            skill.Targeting.CoverAll = source.RuntimeKind == SkillRuntimeKind.SingleAttack
+                && source.Radius <= 0f
+                && string.IsNullOrWhiteSpace(source.TargetSelection);
         }
 
         private static SkillTriggerDefinition[] FilterSkillTriggersForSkill(
@@ -207,6 +206,7 @@ namespace Pakuri.InGame
                 projectile.StopOnFirstHit = source.DamageDelaySeconds > 0f;
                 projectile.ImpactDelaySeconds = Mathf.Max(0f, source.DamageDelaySeconds);
                 projectile.ImpactEffectPrefab = source.SkillEffectPrefab;
+                projectile.ImpactRuntimeVisual = source.ImpactRuntimeVisual ?? new RuntimeSkillVisualSpec();
                 projectile.HasImpactArea = source.DamageDelaySeconds > 0f;
                 projectile.ImpactArea.Radius = source.Radius;
                 projectile.ImpactArea.CoverAll = false;
@@ -241,7 +241,7 @@ namespace Pakuri.InGame
                 zone.UsesHitTargetCount = hasHitTargetCount;
                 zone.HitAllTargets = hitAllTargets;
                 zone.HitTargetCount = hitAllTargets ? int.MaxValue : Math.Max(1, hitTargetCount);
-                zone.Area.CoverAll = source.RuntimeKind == SkillRuntimeKind.Field || hitAllTargets;
+                zone.Area.CoverAll = hitAllTargets;
                 MapDamage(zone.DamagePerTick, source);
                 zone.OnTickStatus = CreateStatusApplication(source);
                 return;
@@ -254,18 +254,23 @@ namespace Pakuri.InGame
                     out var hitAllTargets,
                     out var hitTargetCount);
                 var hasStatusFilteredDeployment = !string.IsNullOrWhiteSpace(source.DeploymentRequiredTargetStatusId);
+                var hasRuntimeHitbox = source.RuntimeVisual != null
+                    && source.RuntimeVisual.Hitbox != null
+                    && source.RuntimeVisual.Hitbox.HasHitbox();
                 var useMultiDeployment = !hitAllTargets
                     && hasHitTargetCount
                     && hitTargetCount > 1
-                    && source.SkillEffectPrefab != null;
+                    && (source.SkillEffectPrefab != null || hasRuntimeHitbox);
                 single.Area.Radius = source.Radius;
                 single.Area.Duration = 0f;
                 single.Area.TickInterval = 0f;
                 single.UsesHitTargetCount = !useMultiDeployment && (hasHitTargetCount || source.Radius <= 0f);
-                single.UsePrefabHitbox = hitAllTargets || useMultiDeployment || hasStatusFilteredDeployment;
+                single.UsePrefabHitbox = source.UsePrefabHitbox || hitAllTargets || useMultiDeployment || hasStatusFilteredDeployment;
                 single.UseMultiDeployment = useMultiDeployment || hasStatusFilteredDeployment;
                 single.HitAllTargets = hitAllTargets;
-                single.HitTargetCount = hitAllTargets ? int.MaxValue : Math.Max(1, hitTargetCount);
+                single.HitTargetCount = hitAllTargets || (source.UsePrefabHitbox && !hasHitTargetCount)
+                    ? int.MaxValue
+                    : Math.Max(1, hitTargetCount);
                 single.DeploymentCount = useMultiDeployment ? Math.Max(1, hitTargetCount) : 1;
                 single.DeploymentRequiredTargetStatusId = source.DeploymentRequiredTargetStatusId;
                 single.DeploymentRequiredTargetStatusMinStacks = Mathf.Max(0, source.DeploymentRequiredTargetStatusMinStacks);
@@ -664,6 +669,40 @@ namespace Pakuri.InGame
             }
         }
 
+        internal static void ApplyNormalizedChoiceCompatibilityNodes(
+            SkillChoiceEffectSpec spec,
+            SkillNodeDefinition[] nodes)
+        {
+            if (spec == null || nodes == null || nodes.Length == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < nodes.Length; i++)
+            {
+                var node = nodes[i];
+                if (node == null || !node.EnabledByDefault || !RequiresChoiceSpecCompatibility(node.HandlerId))
+                {
+                    continue;
+                }
+
+                ApplyNormalizedChoiceNode(spec, node);
+            }
+        }
+
+        private static bool RequiresChoiceSpecCompatibility(string handlerId)
+        {
+            return string.Equals(handlerId, "BurstDamageRule", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "FollowUpProjectile", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "ThresholdApplyStatus", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "TargetStatusStackDamageMultiplier", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "ConsumeTargetStatusRatioOverride", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "BurstStatusStacksBonus", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "RepeatPerTarget", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "TargetStatusCritBonus", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handlerId, "RedistributeConsumedStatus", StringComparison.OrdinalIgnoreCase);
+        }
+
         private static void ApplyNormalizedChoiceNode(SkillChoiceEffectSpec spec, SkillNodeDefinition node)
         {
             var handlerId = node.HandlerId ?? string.Empty;
@@ -797,6 +836,67 @@ namespace Pakuri.InGame
             if (string.Equals(handlerId, "DurationBonus", StringComparison.OrdinalIgnoreCase))
             {
                 spec.DurationBonus += GetFloatParam(node, "bonus_seconds", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "DamageDelayMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasDamageDelayMultiplier = true;
+                spec.DamageDelayMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "ConsecutiveHitDamageBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.ConsecutiveHitBonusRate += GetFloatParam(node, "bonus_rate", 0f);
+                spec.ConsecutiveHitMax += GetFloatParam(node, "max_bonus", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "BurstDamageRule", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasBurstDamageProjectileIndex = true;
+                spec.BurstDamageProjectileIndex = GetIntParam(node, "projectile_index", 0);
+                spec.HasBurstDamageMultiplier = true;
+                spec.BurstDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "FollowUpProjectile", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.FollowUpProjectileCount = GetIntParam(node, "count", 0);
+                spec.FollowUpProjectileDelaySeconds = GetFloatParam(node, "delay_seconds", 0f);
+                spec.FollowUpProjectileDamageMultiplier = GetFloatParam(node, "damage_multiplier", 1f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "ThresholdApplyStatus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.ThresholdStatusId = GetParam(node, "source_status_id");
+                spec.ThresholdStatusMinStacks = GetIntParam(node, "min_stacks", 0);
+                spec.ThresholdApplyStatusId = GetParam(node, "apply_status_id");
+                return;
+            }
+
+            if (string.Equals(handlerId, "TargetStatusStackDamageMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasTargetStatusStackDamageMultiplier = true;
+                spec.TargetStatusStackDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "ConsumeTargetStatusRatioOverride", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasConsumeTargetStatusRatioOverride = true;
+                spec.ConsumeTargetStatusRatioOverride = GetFloatParam(node, "ratio", 0f);
+                return;
+            }
+
+            if (string.Equals(handlerId, "BurstStatusStacksBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                spec.HasBurstStatusProjectileIndex = true;
+                spec.BurstStatusProjectileIndex = GetIntParam(node, "projectile_index", 0);
+                spec.BurstStatusStacksBonus = GetIntParam(node, "bonus", 0);
                 return;
             }
 
@@ -1182,6 +1282,11 @@ namespace Pakuri.InGame
                 return new SkillActionOp(SkillActionOpKind.DurationMultiplier, GetFloatParam(node, "multiplier", 1f));
             }
 
+            if (string.Equals(handlerId, "DamageDelayMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(SkillActionOpKind.DamageDelayMultiplier, GetFloatParam(node, "multiplier", 1f));
+            }
+
             if (string.Equals(handlerId, "AdditionalProjectileBonus", StringComparison.OrdinalIgnoreCase))
             {
                 return new SkillActionOp(SkillActionOpKind.AdditionalProjectileBonus, intValue: GetIntParam(node, "bonus", 0));
@@ -1190,6 +1295,14 @@ namespace Pakuri.InGame
             if (string.Equals(handlerId, "ShotIntervalMultiplier", StringComparison.OrdinalIgnoreCase))
             {
                 return new SkillActionOp(SkillActionOpKind.ShotIntervalMultiplier, GetFloatParam(node, "multiplier", 1f));
+            }
+
+            if (string.Equals(handlerId, "ConsecutiveHitDamageBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SkillActionOp(
+                    SkillActionOpKind.ConsecutiveHitDamageBonus,
+                    GetFloatParam(node, "bonus_rate", 0f),
+                    secondaryFloatValue: GetFloatParam(node, "max_bonus", 0f));
             }
 
             if (string.Equals(handlerId, "BranchProjectile", StringComparison.OrdinalIgnoreCase))

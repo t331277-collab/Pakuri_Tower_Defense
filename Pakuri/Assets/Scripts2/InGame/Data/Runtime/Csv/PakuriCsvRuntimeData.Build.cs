@@ -321,6 +321,7 @@ namespace Pakuri.Data
                     SkillIcon = LoadSprite(skill.SkillIconPath),
                     SkillEffectPrefab = LoadPrefab(skill.SkillEffectPrefabPath),
                     RuntimeVisual = BuildRuntimeVisual(skill),
+                    ImpactRuntimeVisual = BuildImpactRuntimeVisual(skill),
                     DescriptionText = skill.DescriptionText,
                     Attribute = skill.Attribute,
                     BaseDamage = skill.BaseDamage,
@@ -335,6 +336,7 @@ namespace Pakuri.Data
                     KillCooldownRefundRatio = skill.KillCooldownRefundRatio,
                     BossDamageMultiplier = skill.BossDamageMultiplier,
                     HitTargetCount = skill.HitTargetCount,
+                    UsePrefabHitbox = skill.UsePrefabHitbox,
                     TargetSelection = skill.TargetSelection,
                     TargetSelectionStatusId = skill.TargetSelectionStatusId,
                     TargetSelectionStatusMinStacks = skill.TargetSelectionStatusMinStacks,
@@ -665,6 +667,30 @@ namespace Pakuri.Data
                 return;
             }
 
+            if (string.Equals(handlerId, "AttachStatusPayload", StringComparison.OrdinalIgnoreCase))
+            {
+                ApplyEffectOwnedStatusParams(definition, parameters);
+                return;
+            }
+
+            if (string.Equals(handlerId, "RequiredSourceStatus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.RequiredSourceStatusId = GetSkillNodeStringParam(parameters, "status_id");
+                definition.RequiredSourceStatusMinStacks = GetSkillNodeIntParam(parameters, "min_stacks", 1);
+                return;
+            }
+
+            if (string.Equals(handlerId, "StatusRuntimeKindFilter", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusConditionalIncomingSkillRuntimeKinds = GetSkillNodeStringParam(
+                    parameters,
+                    "incoming_skill_runtime_kinds");
+                definition.StatusConditionalOutgoingSkillRuntimeKinds = GetSkillNodeStringParam(
+                    parameters,
+                    "outgoing_skill_runtime_kinds");
+                return;
+            }
+
             if (string.Equals(handlerId, "RuntimeEffectVisual", StringComparison.OrdinalIgnoreCase))
             {
                 definition.RuntimeVisual = BuildRuntimeVisual(
@@ -764,6 +790,10 @@ namespace Pakuri.Data
             else if (string.Equals(handlerId, "StatusCriticalChanceBonus", StringComparison.OrdinalIgnoreCase))
             {
                 definition.StatusCriticalChanceBonus += bonus;
+            }
+            else if (string.Equals(handlerId, "StatusCriticalResistanceBonus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusCriticalResistanceBonus += bonus;
             }
             else if (string.Equals(handlerId, "StatusCriticalDamageBonus", StringComparison.OrdinalIgnoreCase))
             {
@@ -1356,7 +1386,9 @@ namespace Pakuri.Data
                     row.RuntimeVisualSortingOrder,
                     row.RuntimeHitboxSizeX,
                     row.RuntimeHitboxSizeY,
-                    row.RuntimeVisualAnchor);
+                    row.RuntimeVisualAnchor,
+                    row.RuntimeHitboxOffsetX,
+                    row.RuntimeHitboxOffsetY);
         }
 
         private static RuntimeSkillVisualSpec BuildRuntimeVisual(SkillTriggerRow row)
@@ -1370,7 +1402,22 @@ namespace Pakuri.Data
                     row.RuntimeVisualSortingOrder,
                     row.RuntimeHitboxSizeX,
                     row.RuntimeHitboxSizeY,
-                    row.RuntimeVisualAnchor);
+                    row.RuntimeVisualAnchor,
+                    row.RuntimeHitboxOffsetX,
+                    row.RuntimeHitboxOffsetY);
+        }
+
+        private static RuntimeSkillVisualSpec BuildImpactRuntimeVisual(SkillRow row)
+        {
+            return row == null
+                ? new RuntimeSkillVisualSpec()
+                : BuildRuntimeVisual(
+                    row.RuntimeImpactVisualSpritePath,
+                    row.RuntimeImpactVisualAnimatorControllerPath,
+                    row.RuntimeImpactVisualScale,
+                    row.RuntimeImpactVisualSortingOrder,
+                    0f,
+                    0f);
         }
 
         private static RuntimeSkillVisualSpec BuildRuntimeVisual(
@@ -1380,7 +1427,9 @@ namespace Pakuri.Data
             int sortingOrder,
             float hitboxSizeX,
             float hitboxSizeY,
-            string visualAnchor = null)
+            string visualAnchor = null,
+            float hitboxOffsetX = 0f,
+            float hitboxOffsetY = 0f)
         {
             var anchor = RuntimeSkillVisualAnchor.Skill;
             if (!string.IsNullOrWhiteSpace(visualAnchor)
@@ -1398,7 +1447,8 @@ namespace Pakuri.Data
                 Anchor = anchor,
                 Hitbox = new RuntimeSkillHitboxSpec
                 {
-                    Size = new Vector2(Mathf.Max(0f, hitboxSizeX), Mathf.Max(0f, hitboxSizeY))
+                    Size = new Vector2(Mathf.Max(0f, hitboxSizeX), Mathf.Max(0f, hitboxSizeY)),
+                    Offset = new Vector2(hitboxOffsetX, hitboxOffsetY)
                 }
             };
         }

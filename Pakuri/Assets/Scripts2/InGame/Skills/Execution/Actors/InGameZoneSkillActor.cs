@@ -269,7 +269,7 @@ namespace Pakuri.InGame
         {
             if (usePrefabHitbox)
             {
-                return ApplyPrefabAreaTick(
+                return ApplyColliderAreaTick(
                     combatManager,
                     casterEntry,
                     roster,
@@ -310,7 +310,7 @@ namespace Pakuri.InGame
                 snapshot);
         }
 
-        private static bool ApplyPrefabAreaTick(
+        internal static bool ApplyColliderAreaTick(
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
             UnitRosterService unitRoster,

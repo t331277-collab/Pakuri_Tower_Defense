@@ -5,6 +5,99 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-13 Vega Positional Graph Migration
+
+### Task title
+
+Vega Active Runtime CSV Positional Graph Migration
+
+### Goals
+
+- Vega A-J active runtime Choice/Effect/direct node를 기존 positional graph CSV로 이전한다.
+- Trigger envelope를 유지하고 Trigger-owned Effect를 graph reference로 연결한다.
+- 전환 후 중복 wide/legacy authoring이 0인지 검증한다.
+
+### Constraints
+
+- Role Owner는 Code Builder다.
+- Blueprint/reference/archive는 범위 밖이다.
+- 새 graph 파일과 offset은 추가하지 않는다.
+- cross-skill `runtime_target_skill_ids`와 source-status gate metadata는 유지한다.
+
+### Role Owner
+
+- Code Builder
+
+### Status
+
+- **CSV migration implemented and Unity source validation passed / Play Mode remains**
+
+### Next Actions
+
+1. 사용자 Play Mode에서 Vega A-J graph 조합과 Trigger parity를 확인한다.
+2. 전환된 graph가 권위이며 legacy Effect/direct node authoring을 복원하지 않는다.
+3. 향후 Vega 변경은 기존 graph/definition schema에서 작성한다.
+
+### Evidence
+
+- 전환 후 Vega 집계: graph 154행/58 graph, legacy Effect 0, Trigger 15, direct node 0, direct param 0, 중복 wide 행동 값 0.
+- graph 분포: Plan 45행/35 graph, Effect 109행/23 graph. 기존 projectile/line_attack/buff/single_attack/passive 21열 파일만 사용했다.
+- Trigger 11행이 graph reference를 사용하며 모든 참조 대상 graph가 존재한다.
+- A trait 4는 `BurstDamageRule(0, 1.5)`, E trait 4는 `TargetStatusCritBonus(..., min_stacks=20)`으로 작성됐다.
+- CSV graph schema/required arg/Effect operation/Trigger reference 검사 오류 0, 변경 runtime CSV 30개 shape 오류 0.
+- Unity-MCP source catalog validation과 InGame skill validation(`0 warning(s)`)이 통과했다.
+- 상세 구현/검증: `boards/MON/VEGA_NODE_MIGRATION_PROPOSAL.md`.
+
+### History
+
+- 2026-07-13: active runtime CSV와 loader/mapper/validation code를 근거로 Vega 데이터 전환안을 기록했다.
+- 2026-07-13: Code Builder가 승인된 A/E 수치를 적용하고 positional graph 이전, legacy 제거, Unity 자동 검증을 완료했다.
+
+## Task: 2026-07-13 Sein Positional Graph Migration
+
+### Task title
+
+Move Sein A-J Choice and legacy Effect authoring into normalized positional graphs.
+
+### Goals
+
+- Reuse the existing projectile, area, single-attack, and passive graph files.
+- Expose only the missing runtime meanings needed by the approved Sein proposal.
+- Remove duplicate wide Choice and legacy Effect authoring after graph parity.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No new graph CSV file or CSV column is introduced.
+- The existing 17 Trigger rows remain event envelopes.
+- Sein prefabs and scenes remain unchanged.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and source/build validated; Play Mode parity verification remains.
+
+### Next Actions
+
+- Verify A-J graph composition and the retained Trigger behavior in Play Mode.
+- Keep legacy Sein Effect rows removed after parity is confirmed.
+
+### Evidence
+
+- Sein totals after migration: positional graph 121, legacy Effect 0, Trigger 17, direct node 0, direct param 0.
+- Sein Choice rows remain 51; non-routing wide behavior values remaining after migration count 0.
+- Added `DamageDelayMultiplier`, `ConsecutiveHitDamageBonus`, and `AttachStatusPayload` definitions/params and extended positional `EffectDamage` params for values already consumed by runtime code.
+- CSV shape and normalized graph validation returned 0 errors; both runtime and editor C# projects build with 0 errors.
+- Unity-MCP source validation and runtime catalog sync completed without validation errors.
+
+### History
+
+- 2026-07-13: Designer documented the Sein migration in `boards/MON/SEIN_NODE_MIGRATION_PROPOSAL.md`.
+- 2026-07-13: Code Builder implemented 121 graph rows, shared node exposure, legacy-authoring cleanup, and validation without prefab or scene changes.
+
 ## Task: 2026-07-12 Rin Positional Graph Migration Design
 
 ### Task title
@@ -75,7 +168,7 @@ Code Builder
 
 ### Status
 
-Implemented and Unity CSV validation passed. Runtime visual status-target ownership is now explicit.
+Implemented and Unity CSV validation passed. Runtime visual status-target ownership is explicit, and Eve-C master-2's existing `RuntimeEffectVisual` args now own its Collider footprint.
 
 ### Next Actions
 
@@ -89,6 +182,7 @@ Implemented and Unity CSV validation passed. Runtime visual status-target owners
 - CSV parser checks returned uniform field counts per edited table: projectile 38, line attack 29, single attack 42, area attack 32, and area graph 21.
 - Added `RuntimeEffectVisual` to `skill_node_definitions.csv` and its Sprite, AnimatorController, scale, sorting, and optional hitbox params to `skill_node_definition_params.csv`.
 - Eve-C master-2 graph now keeps `EffectDamage` and `EffectTarget(OnExpire)` and replaces only its visual row with `RuntimeEffectVisual`.
+- Eve-C master-2's `RuntimeEffectVisual` row uses existing args 5/6 for hitbox size `6.52 x 6.11`; no new CSV file, column, or prefab-path flag was added.
 - Unity-MCP source validation loaded the 5-monster, 8+8-enemy runtime catalog successfully.
 - `skills_single_attack.csv` now has optional `runtime_visual_anchor`; Ariel-D is explicitly `StatusTarget`, while Eve-D and all other rows remain blank/default `Skill`.
 
@@ -96,6 +190,7 @@ Implemented and Unity CSV validation passed. Runtime visual status-target owners
 
 - 2026-07-12: Migrated Eve visual/hitbox authority to existing normalized CSV tables without creating offset columns or deleting prefabs.
 - 2026-07-12: Added explicit runtime visual status-target ownership to stop Eve-B/E base visuals from being copied into their applied statuses.
+- 2026-07-13: Added Eve-C master-2 runtime hitbox values to the existing 21-column graph row and validated the regenerated runtime catalog through Unity-MCP.
 
 ## Task: 2026-07-11 Eve A-J Skill Graph Migration Proposal
 
@@ -2765,24 +2860,23 @@ Define the active CSV boundary for Rin prefab-to-runtime visual migration.
 
 ### Constraints
 
-- Role Owner is Designer.
-- This task does not implement CSV or runtime changes.
+- Role Owner is Code Builder for the approved implementation phase.
+- Prefab deletion and scene fallback cleanup are not included.
 - Non-zero collider offsets and named child colliders cannot be discarded during parity migration.
 
 ### Role Owner
 
-Designer
+Code Builder
 
 ### Status
 
-CSV/runtime feasibility inspection completed; implementation not started.
+CSV/runtime implementation and source/build validation completed; user Play Mode parity remains.
 
 ### Next Actions
 
-- Code Builder fills the existing runtime visual columns for Rin A/B/C and leaves Rin D base unchanged.
-- Code Builder adds the already parsed runtime visual/hitbox columns to `passive_skill_triger.csv` before converting Rin F.
-- Code Builder adds optional `runtime_hitbox_offset_x/y` parsing/model/factory support and exposes runtime visual/hitbox fields on `single_attack_skill_triger.csv` for Rin D master 1.
-- Independently resolve the active Rin-E `UsePrefabHitbox` routing mismatch before considering any E visual migration.
+- User verifies runtime visual/hitbox parity for Rin A/B/C/F and D master 1.
+- User verifies Rin E hits every overlapping prefab collider target and preserves named `CoreHitBox` effects.
+- Remove converted fallback prefab references only after parity confirmation.
 
 ### Evidence
 
@@ -2793,8 +2887,58 @@ CSV/runtime feasibility inspection completed; implementation not started.
 - Rin D master 1 requires runtime box size `(3.9373517, 3.788869)` and offset `(0.53632426, -0.41973162)` to preserve current Trigger hitbox behavior.
 - Active `rin-e` has radius `2.4` and blank `hit_target_count`; `InGameSkillDefinitionMapper` consequently leaves `UsePrefabHitbox=false`.
 - `SingleAttackSkillExecutor.ResolveCoreHitboxColliders(...)` is called only inside the `UsePrefabHitbox` branch, so active data does not currently reach named `CoreHitBox` resolution.
+- `RuntimeSkillHitboxSpec` now stores `Offset`; both skill and Trigger readers/builders accept optional `runtime_hitbox_offset_x/y`.
+- `single_attack_skill_triger.csv` and `passive_skill_triger.csv` expose runtime visual/hitbox columns; D master 1 and two F follow-up rows carry the approved values.
+- `skills_single_attack.csv` exposes `use_prefab_hitbox`; only Rin E sets it to `true` in this task.
+- Explicit prefab-hitbox skills without an authored target limit now resolve `int.MaxValue` overlapping targets, avoiding Rin E's previous one-target cap while keeping `HitAllTargets=false` target-centered placement.
+- TextFieldParser checks found no row/header count mismatch in all six edited CSVs. Unity-MCP source validation completed without errors.
 
 ### History
 
 - 2026-07-12: Designer recorded the CSV exposure boundary and Rin-E pre-migration blocker while validating Rin runtime visual feasibility.
 - 2026-07-13: User kept Rin D base prefab-backed and approved D master 1 runtime conversion; Designer added optional hitbox-offset and single-attack Trigger schema work to the handoff.
+- 2026-07-13: Code Builder implemented runtime visual data, optional offset parsing/building, D master 1/F Trigger fields, and Rin-E explicit prefab-hitbox routing.
+
+## Task: 2026-07-13 Sein Runtime Visual CSV Contract
+
+### Task title
+
+Author Sein runtime visual data and add a separate optional projectile impact visual contract.
+
+### Goals
+
+- Author existing runtime sprite/controller/scale/sorting/hitbox fields for Sein A-E and relevant Trigger/choice effects.
+- Add optional impact sprite/controller/scale/sorting fields for delayed projectile impacts without reusing the flying projectile visual.
+- Keep Sein runtime object and collider offsets at zero without adding Sein offset columns or graph params.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active data authority is `Pakuri/Assets/CSVdata/runtime`.
+- Existing prefab paths stay as fallback pending Play Mode parity.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, synchronized, and validated.
+
+### Next Actions
+
+- User performs Play Mode parity checks before fallback-path cleanup.
+- Reuse the optional impact visual fields only for projectile skills that require a distinct impact presentation.
+
+### Evidence
+
+- `skills_projectile.csv` adds only `runtime_impact_visual_sprite_path`, `runtime_impact_visual_animator_controller_path`, `runtime_impact_visual_scale`, and `runtime_impact_visual_sorting_order`; no Sein offset fields were added.
+- `PakuriCsvRuntimeData.MonsterDataset.cs`, `.Build.cs`, and `.AssetReferences.cs` parse, build, and catalog those optional impact assets.
+- Sein A/B/C/D/E base rows and four choice graph visual targets plus A master-2 Trigger carry the inspected sprite/controller/scale/hitbox sizes.
+- TextFieldParser reported no row/header mismatch across all 7 edited CSV files.
+- Unity-MCP `Pakuri/Sync CSV Runtime Catalog Assets` logged successful sync from `Assets/CSVdata/runtime`; post-sync `Pakuri/Validate CSV Source Data` loaded the runtime catalog with no error entries.
+
+### History
+
+- 2026-07-13: User rejected offset authoring for Sein because both object and collider offsets are fixed at `(0,0)`.
+- 2026-07-13: Code Builder added the distinct impact visual contract and authored Sein runtime visual rows/nodes.

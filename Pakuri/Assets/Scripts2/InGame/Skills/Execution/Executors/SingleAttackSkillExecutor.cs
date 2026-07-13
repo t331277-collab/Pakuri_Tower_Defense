@@ -200,7 +200,9 @@ namespace Pakuri.InGame
                 return 1;
             }
 
-            if (UsesLineStyleMultiDeploymentVisual(skill) || skill.HitAllTargets)
+            if (UsesLineStyleMultiDeploymentVisual(skill)
+                || skill.HitAllTargets
+                || skill.HitTargetCount == int.MaxValue)
             {
                 return int.MaxValue;
             }
@@ -450,7 +452,7 @@ namespace Pakuri.InGame
                 {
                     spawnedHitbox = true;
                     castCommitted = true;
-                    if (!hasRuntimeVisual && UsesLineStyleMultiDeploymentVisual(skill))
+                    if (UsesLineStyleMultiDeploymentVisual(skill))
                     {
                         ConfigureMultiDeploymentPrefabVisual(instance.transform, context, skill, snapshot, center);
                     }

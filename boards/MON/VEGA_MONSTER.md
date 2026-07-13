@@ -18,6 +18,59 @@ Vega active skills A-E are implemented and locally validated.
 Vega passive skills F-J are now implemented on shared runtime/CSV paths and passed local build plus Unity CSV validation/sync on 2026-05-31.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-13 Vega Positional Graph Migration
+
+### Task title
+
+Vega A-J Positional Skill Graph Migration
+
+### Goals
+
+- Vega A-J Choice/Effect/direct node 행동을 positional graph로 이전한다.
+- Trigger 15개의 event envelope를 유지하면서 Trigger-owned Effect를 graph reference로 전환한다.
+- 사용자 승인값인 A trait 4 마지막 탄환 `1.5`와 E trait 4 `20`스택 조건을 적용한다.
+
+### Constraints
+
+- Role Owner는 Code Builder다.
+- Blueprint/reference markdown은 읽지 않는다.
+- 근거는 `Pakuri/Assets/CSVdata/runtime/monster/skills/`와 실제 runtime code다.
+- 새 graph 파일/graph 열/offset은 추가하지 않는다. B master 1에 필요한 line Trigger graph 참조 4열만 기존 Trigger schema와 같은 형식으로 추가한다.
+- prefab, scene, object/collider offset은 변경하지 않는다.
+
+### Role Owner
+
+- Code Builder
+
+### Status
+
+- **Implemented and automated validation passed / user Play Mode verification remains**
+
+### Next Actions
+
+1. 사용자가 Play Mode에서 A trait 4 마지막 탄환 배율과 E trait 4 20스택 임계값을 확인한다.
+2. A-J Choice 조합, Trigger event/internal cooldown, H source gate, I Area filter의 동작 parity를 확인한다.
+3. 확인 전 제거된 legacy Effect/direct node를 다시 추가하지 않는다.
+
+### Evidence
+
+- 제안서: `boards/MON/VEGA_NODE_MIGRATION_PROPOSAL.md`.
+- 전환 후 집계: positional graph 154행/58 graph, legacy Effect 0, Trigger 15, direct node 0, direct param 0, 중복 Choice wide 행동 값 0.
+- graph 구성: `Plan` 45행/35 graph, `Effect` 109행/23 graph. Trigger graph reference는 11행이다.
+- A trait 4 CSV는 `BurstDamageRule`, `projectile_index=0`, `multiplier=1.5`다.
+- E trait 4 CSV는 `TargetStatusCritBonus`, `status_id=name-mark`, `crit_chance_bonus=0.35`, `min_stacks=20`이다.
+- node-backed Choice 특수 handler 9개는 mapper compatibility 경로와 Snapshot 필드 적용 경로로 연결했다.
+- Unity-MCP `Pakuri/Validate CSV Source Data`는 5 monsters/8+8 enemies catalog를 로드했고 `Pakuri/InGame/Validate Skill Data`는 경고 0으로 통과했다.
+- runtime/Editor C# build는 오류 0이다. 변경 runtime CSV 30개 shape 검사와 `git diff --check`도 오류 0이다.
+- EditMode test case는 저장소에서 0개 발견됐다. 생성된 `TestResults.xml`은 `total=0`, `failed=0`, `result=Passed`다.
+
+### History
+
+- 2026-07-13: Designer가 Blueprint를 제외하고 active runtime CSV와 runtime code만 검사했다.
+- 2026-07-13: Vega positional graph 전환안을 작성하고 MON/DATA persistent state에 연결했다.
+- 2026-07-13: 사용자가 A trait 4의 마지막 탄환 `1.5`와 E trait 4의 설명값 `20`스택을 승인했다.
+- 2026-07-13: Code Builder가 graph 154행, 공용 node/composer 연결, Trigger graph 참조, legacy 제거를 구현하고 Unity 자동 검증을 통과했다.
+
 ## Task: 2026-05-31 Vega F-J Passive Shared Runtime And CSV Implementation
 
 ### Task title

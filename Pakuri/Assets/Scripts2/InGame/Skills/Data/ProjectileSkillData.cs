@@ -21,6 +21,7 @@ namespace Pakuri.InGame
         public bool StopOnFirstHit;
         [Min(0f)] public float ImpactDelaySeconds;
         public GameObject ImpactEffectPrefab;
+        public Pakuri.Data.RuntimeSkillVisualSpec ImpactRuntimeVisual = new Pakuri.Data.RuntimeSkillVisualSpec();
         public bool HasImpactArea;
         public AreaBlueprintSpec ImpactArea = new AreaBlueprintSpec();
         public SkillDamageSpec ImpactDamage = new SkillDamageSpec();

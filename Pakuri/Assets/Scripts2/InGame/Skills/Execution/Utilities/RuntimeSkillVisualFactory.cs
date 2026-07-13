@@ -81,7 +81,7 @@ namespace Pakuri.InGame
             }
 
             collider.size = hitbox.Size;
-            collider.offset = Vector2.zero;
+            collider.offset = hitbox.Offset;
             collider.isTrigger = hitboxIsTrigger;
         }
     }

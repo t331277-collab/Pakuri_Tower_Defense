@@ -65,6 +65,12 @@ namespace Pakuri.Data
             public string RuntimeVisualAnchor;
             public float RuntimeHitboxSizeX;
             public float RuntimeHitboxSizeY;
+            public float RuntimeHitboxOffsetX;
+            public float RuntimeHitboxOffsetY;
+            public string RuntimeImpactVisualSpritePath;
+            public string RuntimeImpactVisualAnimatorControllerPath;
+            public float RuntimeImpactVisualScale = 1f;
+            public int RuntimeImpactVisualSortingOrder;
             public string DescriptionText;
             public string Summary;
             public DamageAttribute Attribute;
@@ -80,6 +86,7 @@ namespace Pakuri.Data
             public float KillCooldownRefundRatio;
             public float BossDamageMultiplier = 1f;
             public string HitTargetCount;
+            public bool UsePrefabHitbox;
             public string TargetSelection;
             public string TargetSelectionStatusId;
             public int TargetSelectionStatusMinStacks;
@@ -361,6 +368,8 @@ namespace Pakuri.Data
             public string RuntimeVisualAnchor;
             public float RuntimeHitboxSizeX;
             public float RuntimeHitboxSizeY;
+            public float RuntimeHitboxOffsetX;
+            public float RuntimeHitboxOffsetY;
             public string RuntimeSupportState;
             public string RuntimeSupportNotes;
         }
@@ -432,6 +441,12 @@ namespace Pakuri.Data
                 RuntimeVisualAnchor = ReadOptionalStringIfColumnExists(record, "runtime_visual_anchor"),
                 RuntimeHitboxSizeX = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_x"),
                 RuntimeHitboxSizeY = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_y"),
+                RuntimeHitboxOffsetX = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_offset_x"),
+                RuntimeHitboxOffsetY = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_offset_y"),
+                RuntimeImpactVisualSpritePath = ReadOptionalStringIfColumnExists(record, "runtime_impact_visual_sprite_path"),
+                RuntimeImpactVisualAnimatorControllerPath = ReadOptionalStringIfColumnExists(record, "runtime_impact_visual_animator_controller_path"),
+                RuntimeImpactVisualScale = ReadOptionalFloatWithDefaultIfColumnExists(record, "runtime_impact_visual_scale", 1f),
+                RuntimeImpactVisualSortingOrder = ReadOptionalIntIfColumnExists(record, "runtime_impact_visual_sorting_order"),
                 DescriptionText = ReadOptionalStringIfColumnExists(record, "description_text"),
                 Summary = ReadOptionalStringIfColumnExists(record, "summary"),
                 Attribute = ReadOptionalEnumIfColumnExists(record, "attribute", DamageAttribute.Physical),
@@ -447,6 +462,7 @@ namespace Pakuri.Data
                 KillCooldownRefundRatio = ReadOptionalFloatIfColumnExists(record, "kill_cooldown_refund_ratio"),
                 BossDamageMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "boss_damage_multiplier", 1f),
                 HitTargetCount = ReadOptionalStringIfColumnExists(record, "hit_target_count"),
+                UsePrefabHitbox = ReadOptionalBoolIfColumnExists(record, "use_prefab_hitbox"),
                 TargetSelection = ReadOptionalStringIfColumnExists(record, "target_selection"),
                 TargetSelectionStatusId = ReadOptionalStringIfColumnExists(record, "target_selection_status_id"),
                 TargetSelectionStatusMinStacks = ReadOptionalIntIfColumnExists(record, "target_selection_status_min_stacks"),
@@ -755,6 +771,8 @@ namespace Pakuri.Data
                 RuntimeVisualAnchor = ReadOptionalStringIfColumnExists(record, "runtime_visual_anchor"),
                 RuntimeHitboxSizeX = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_x"),
                 RuntimeHitboxSizeY = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_y"),
+                RuntimeHitboxOffsetX = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_offset_x"),
+                RuntimeHitboxOffsetY = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_offset_y"),
                 RuntimeSupportState = ReadOptionalStringIfColumnExists(record, "runtime_support_state"),
                 RuntimeSupportNotes = ReadOptionalStringIfColumnExists(record, "runtime_support_notes")
             };

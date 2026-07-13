@@ -57,6 +57,27 @@ MonoBehaviour:
   - AssetPath: "Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image
       2026\uB144 5\uC6D4 7\uC77C \uC624\uD6C4 09_55_44-Photoroom 1 (1).png"
     Asset: {fileID: 21300000, guid: 32b483e360d00d84595519ce97016e07, type: 3}
+  - AssetPath: Assets/Image/Monster/Rin/Legacy/Effect_Sprite/1.png
+    Asset: {fileID: 21300000, guid: 2f4302a88af1e5541a36857991410656, type: 3}
+  - AssetPath: Assets/Image/Monster/Rin/Legacy/Effect_Sprite/2-5-1.png
+    Asset: {fileID: -1994424207337404346, guid: 6c3dbde4109d7dd4bbbceecc307314f9, type: 3}
+  - AssetPath: Assets/Image/Monster/Rin/Legacy/Effect_Sprite/5-1.png
+    Asset: {fileID: 6089031415840852981, guid: 6e018c5c32c2bed429bca4d1ad1eb3fd, type: 3}
+  - AssetPath: "Assets/Image/Monster/Rin/Legacy/Effect_Sprite/ChatGPT Image 2026\uB144
+      5\uC6D4 8\uC77C \uC624\uD6C4 06_12_43-Photoroom 1.png"
+    Asset: {fileID: 21300000, guid: 40a75a4674638ba4c89d1c09f721302b, type: 3}
+  - AssetPath: Assets/Image/Monster/Rin/Legacy/Rin_Shoot.png
+    Asset: {fileID: 21300000, guid: 910fd4f0185802b44bd67baedc519844, type: 3}
+  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sein_Shoot.png
+    Asset: {fileID: 21300000, guid: 9f975ebffed428b4ab2b35f00b5c45d4, type: 3}
+  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/1.png
+    Asset: {fileID: 21300000, guid: 9260ee84c3be4fb4cb561fa1d8001b4b, type: 3}
+  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/B-1.png
+    Asset: {fileID: 21300000, guid: afa54ca00617afa439470ed8c1f66a9e, type: 3}
+  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/C-1.png
+    Asset: {fileID: 21300000, guid: 9ee6c41e93c20ca4696a0c35a4fe786d, type: 3}
+  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/E-1.png
+    Asset: {fileID: 21300000, guid: 5afdaa6480ea77a41a37ef3b7773549b, type: 3}
   Prefabs:
   - AssetPath: Assets/Prefab/Skill/Ariel/Ariel_B.prefab
     Asset: {fileID: 3529180550599226198, guid: a94d18f89e17df94fbed6a9e057e7fed, type: 3}
@@ -134,3 +155,19 @@ MonoBehaviour:
   - AssetPath: "Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image
       2026\uB144 5\uC6D4 7\uC77C \uC624\uD6C4 09_55_44-Photoroom 1 (1).controller"
     Asset: {fileID: 9100000, guid: 4a6ab63398936764284eed7143f2e9ab, type: 2}
+  - AssetPath: Assets/Image/Monster/Rin/Legacy/Effect_Sprite/1.controller
+    Asset: {fileID: 9100000, guid: 2f0912fbf58619540ad4f690bd8bf1c2, type: 2}
+  - AssetPath: "Assets/Image/Monster/Rin/Legacy/Effect_Sprite/ChatGPT Image 2026\uB144
+      5\uC6D4 24\uC77C \uC624\uD6C4 12_53_20-Photoroom 2_0.controller"
+    Asset: {fileID: 9100000, guid: 8ff4b5ad6838f664c95a91277b6de2e8, type: 2}
+  - AssetPath: "Assets/Image/Monster/Rin/Legacy/Effect_Sprite/ChatGPT Image 2026\uB144
+      5\uC6D4 8\uC77C \uC624\uD6C4 06_12_43-Photoroom 1.controller"
+    Asset: {fileID: 9100000, guid: 5c33b427ce5bcc54eb95c45fb92f71c2, type: 2}
+  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/1.controller
+    Asset: {fileID: 9100000, guid: deb6e0769172f624299e895b875ae2a5, type: 2}
+  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/B-1.controller
+    Asset: {fileID: 9100000, guid: b25d7952d1bd8374582bfb5b121fa112, type: 2}
+  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/C-1.controller
+    Asset: {fileID: 9100000, guid: 5cd3e62057a25f64386a9719c9c7b8fc, type: 2}
+  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/E-1.controller
+    Asset: {fileID: 9100000, guid: 3043ba2ee29640f4fb83076cce1b33db, type: 2}

@@ -37,6 +37,7 @@ namespace Pakuri.InGame
         private bool stopOnFirstHit;
         private float impactDelaySeconds;
         private GameObject impactEffectPrefab;
+        private RuntimeSkillVisualSpec impactRuntimeVisual;
         private bool hasImpactArea;
         private float impactRadius;
         private float impactDamage;
@@ -86,6 +87,7 @@ namespace Pakuri.InGame
             stopOnFirstHit = false;
             impactDelaySeconds = 0f;
             impactEffectPrefab = null;
+            impactRuntimeVisual = null;
             hasImpactArea = false;
             impactRadius = 0f;
             impactDamage = 0f;
@@ -117,6 +119,7 @@ namespace Pakuri.InGame
             bool stopAfterFirstHit,
             float impactDelay,
             GameObject impactEffect,
+            RuntimeSkillVisualSpec runtimeImpactVisual,
             bool enableImpactArea,
             float impactAreaRadius,
             float delayedImpactDamage,
@@ -149,6 +152,7 @@ namespace Pakuri.InGame
             stopOnFirstHit = stopAfterFirstHit;
             impactDelaySeconds = Mathf.Max(0f, impactDelay);
             impactEffectPrefab = impactEffect;
+            impactRuntimeVisual = runtimeImpactVisual;
             hasImpactArea = enableImpactArea;
             impactRadius = Mathf.Max(0f, impactAreaRadius);
             impactDamage = Mathf.Max(0f, delayedImpactDamage);
@@ -513,6 +517,7 @@ namespace Pakuri.InGame
                 false,
                 0f,
                 null,
+                null,
                 false,
                 0f,
                 0f,
@@ -574,7 +579,22 @@ namespace Pakuri.InGame
 
             impactResolved = true;
             var impactVisualLifetime = 0.05f;
-            if (impactEffectPrefab != null && combatManager.Effects != null)
+            if (RuntimeSkillVisualFactory.HasVisual(impactRuntimeVisual) && combatManager.Effects != null)
+            {
+                var instance = RuntimeSkillVisualFactory.Create(
+                    combatManager.Effects,
+                    impactRuntimeVisual,
+                    string.IsNullOrWhiteSpace(sourceSkillId) ? "InGameProjectileImpact" : $"InGameProjectileImpact_{sourceSkillId}",
+                    impactCenter,
+                    Quaternion.identity,
+                    includeHitbox: false);
+                if (instance != null)
+                {
+                    impactVisualLifetime = SkillVisualSpawnUtility.ResolveVisualLifetime(instance, 0.1f);
+                    Destroy(instance, impactVisualLifetime);
+                }
+            }
+            else if (impactEffectPrefab != null && combatManager.Effects != null)
             {
                 var instance = combatManager.Effects.InstantiateSkillPrefab(impactEffectPrefab, impactCenter, Quaternion.identity);
                 if (instance != null)

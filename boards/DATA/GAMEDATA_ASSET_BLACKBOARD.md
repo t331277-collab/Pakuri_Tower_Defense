@@ -5,6 +5,46 @@
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-13 Sein Zone Prefab Collider Authority
+
+### Task title
+
+Use the authored Sein zone prefab colliders as runtime hit boundaries.
+
+### Goals
+
+- Keep collider shape/offset authority on the three user-edited Sein prefabs.
+- Ensure runtime mapping does not suppress the collider path for `sein-d` solely because its runtime kind is `Field`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The prefab edits are user-authored and must not be overwritten.
+- No scene or runtime asset-catalog path changes are required.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Runtime mapping fixed and Unity-MCP prefab hierarchy validated; Play Mode boundary verification remains.
+
+### Next Actions
+
+- User verifies the exact collider shapes and offsets against visible effects in Play Mode.
+
+### Evidence
+
+- Git diff shows user-added enabled root `BoxCollider2D` components on `Sein_C_Master_1.prefab`, `Sein_D.prefab`, and `Sein_D_Master_2.prefab`.
+- Unity-MCP `get_hierarchy` reports each prefab root as active with `Transform`, `SpriteRenderer`, `Animator`, and `BoxCollider2D`.
+- `InGameSkillDefinitionMapper.cs` now leaves `Field` zones spatial unless explicit all-target data requests `CoverAll`, allowing `InGameZoneSkillActor` to consume those prefab colliders.
+- No prefab, scene, CSV, or asset-catalog file was edited by Code Builder for this fix.
+
+### History
+
+- 2026-07-13: User authored the Sein zone colliders; Code Builder connected Sein-D to the existing collider-first zone runtime by removing the implicit `Field` cover-all override.
+
 ## Task: 2026-07-12 Rin Runtime Visual Asset Boundary
 
 ### Task title
@@ -19,23 +59,23 @@ Record which Rin skill prefab contracts can move to shared runtime visuals.
 
 ### Constraints
 
-- Role Owner is Designer.
-- No asset, scene, catalog, or CSV change is implemented in this task.
+- Role Owner is Code Builder for the approved implementation phase.
+- Prefab assets and scene mappings remain untouched; runtime asset catalog changes are generated from CSV paths.
 - Existing prefab assets remain available for parity inspection.
 
 ### Role Owner
 
-Designer
+Code Builder
 
 ### Status
 
-Asset-boundary design completed; implementation not started.
+Runtime visual asset paths implemented and catalog-validated; user Play Mode parity remains.
 
 ### Next Actions
 
-- Code Builder authors runtime fields for Rin A/B/C, exposes runtime visual fields on passive Trigger CSV for Rin F, and converts Rin D master 1 after shared offset support exists.
+- User verifies runtime visuals for Rin A/B/C/F and D master 1 in Play Mode.
 - Retain `Rin_D.prefab` and `Rin_E.prefab` as active prefab dependencies.
-- Keep `Rin_D_master_1.prefab` on disk for parity evidence even after its Trigger path stops instantiating it.
+- Keep converted prefabs and A-C scene mappings on disk/as fallback evidence until parity confirmation.
 
 ### Evidence
 
@@ -45,11 +85,16 @@ Asset-boundary design completed; implementation not started.
 - `Rin_D_master_1.prefab` has a non-zero collider offset; revised design preserves it through optional runtime offset fields rather than retaining prefab execution.
 - User explicitly selected Rin D base for prefab retention and D master 1 for runtime conversion.
 - No Rin G-J prefab/status visual reference exists in the active runtime skill CSV tree.
+- Runtime asset catalog now contains Rin A/B/C/F/D-master1 sprite paths and B/C/F animator-controller paths from active CSV data.
+- Runtime specs take precedence, while existing A-C scene mappings and F/D-master1 Trigger prefab paths remain fallback references.
+- `git diff --name-only` found no change under `Assets/Prefab/Skill/Rin` or `NewRunScene.unity`.
+- Unity-MCP source validation loaded the updated catalog without asset errors.
 
 ### History
 
 - 2026-07-12: Designer recorded the Rin runtime visual conversion boundary in `boards/MON/RIN_SKILL_RUNTIME_VISUAL_MIGRATION_PLAN.md`.
 - 2026-07-13: Designer revised asset authority: Rin D base remains scene/prefab-backed, while Rin D master 1 becomes runtime-backed after offset support is implemented.
+- 2026-07-13: Code Builder authored the approved runtime asset paths; Unity auto-sync updated the runtime asset catalog while all Rin prefabs and scene mappings remained unchanged.
 
 ## Task: 2026-07-12 Rin Node Migration Asset Compatibility
 
@@ -114,7 +159,7 @@ Code Builder
 
 ### Status
 
-Catalog regenerated and Unity validation passed. Skill visual and status-target visual ownership are now separated without changing asset paths.
+Catalog regenerated and Unity validation passed. Eve-C master-2 resolves only its runtime Sprite/Animator assets; its retained prefab is no longer a runtime catalog dependency.
 
 ### Next Actions
 
@@ -125,6 +170,7 @@ Catalog regenerated and Unity validation passed. Skill visual and status-target 
 ### Evidence
 
 - `PakuriCsvRuntimeAssetCatalog.asset` now includes Eve A-E and Eve-C master-2 Sprite and AnimatorController paths resolved from the retained prefabs' GUID-backed assets.
+- The regenerated catalog contains Eve-C master-2's Sprite and AnimatorController paths and contains no `Assets/Prefab/Skill/Eve/Eve_c-master-2.prefab` entry.
 - AnimatorController-valued graph asset params are now cataloged and validated as animator controllers instead of prefabs.
 - `Pakuri/Sync CSV Runtime Catalog Assets` regenerated the runtime catalog, and `Pakuri/Validate CSV Source Data` subsequently loaded 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.
 - `Assets/Prefab/Skill/Eve/Eve_A.prefab` through `Eve_E.prefab` and `Eve_c-master-2.prefab` still exist; `NewRunScene.unity` was not changed.
@@ -134,6 +180,7 @@ Catalog regenerated and Unity validation passed. Skill visual and status-target 
 
 - 2026-07-12: Added Eve runtime visual assets to the catalog and intentionally deferred prefab deletion.
 - 2026-07-12: Separated status-target visual ownership and disabled hitbox creation on status decorations; retained the existing Eve asset catalog and prefabs.
+- 2026-07-13: Regenerated the catalog after authoring Eve-C master-2's runtime Collider size; retained the prefab asset on disk without restoring a prefab-path dependency.
 
 ## Task: 2026-07-12 Eve Skill Graph Catalog Wiring
 
@@ -769,3 +816,44 @@ Current active asset-wiring baseline summarized and retained for future work. 20
 - 2026-05-18: Monster visual sprite/color source columns were removed from `monsters.csv`; current skill visual authority remains `EffectManager` plus scene/prefab wiring.
 - 2026-05-18: CSV runtime catalog sync/validation was exposed as a public editor method and wrapped by `SyncCsvRuntimeCatalogs.bat`.
 - 2026-05-19: Rin-A prefab wiring was added to the active `EffectManager` scene mapping using `Assets/Prefab/Skill/Rin/Rin_A.prefab`.
+
+## Task: 2026-07-13 Sein Runtime Visual Asset Catalog Wiring
+
+### Task title
+
+Register Sein runtime-composed skill sprites and animator controllers in the runtime asset catalog.
+
+### Goals
+
+- Resolve every authored Sein runtime sprite/controller path through `PakuriCsvRuntimeAssetCatalog`.
+- Preserve existing prefab and scene references as staged fallbacks.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Sein prefab or scene mapping is deleted in this phase.
+- User Play Mode parity is required before fallback cleanup.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Catalog synchronized and Unity-MCP validated.
+
+### Next Actions
+
+- User verifies runtime presentation in Play Mode.
+- Remove fallback prefab/scene wiring later only after parity confirmation.
+
+### Evidence
+
+- `PakuriCsvRuntimeAssetCatalog.asset` now contains Sein sprites `Sein_Shoot.png`, `1.png`, `B-1.png`, `C-1.png`, and `E-1.png` with resolved GUIDs.
+- The catalog also contains `1.controller`, `B-1.controller`, `C-1.controller`, and `E-1.controller` with resolved GUIDs.
+- Unity-MCP sync logged `Pakuri CSV runtime catalogs synced from 'Assets/CSVdata/runtime' to 'Assets/Resources/Pakuri/CSVRuntime'.`
+- Post-sync validation logged the runtime catalog summary and the error-only console query returned 0 entries.
+
+### History
+
+- 2026-07-13: Code Builder synchronized Sein runtime visual references into the asset catalog while retaining prefab fallbacks.

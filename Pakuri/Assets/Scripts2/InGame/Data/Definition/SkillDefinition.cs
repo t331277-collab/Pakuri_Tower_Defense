@@ -144,6 +144,7 @@ namespace Pakuri.Data
     public sealed class RuntimeSkillHitboxSpec
     {
         public Vector2 Size;
+        public Vector2 Offset;
 
         public bool HasHitbox()
         {
@@ -499,6 +500,7 @@ namespace Pakuri.Data
         public Sprite SkillIcon;
         public GameObject SkillEffectPrefab;
         public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
+        public RuntimeSkillVisualSpec ImpactRuntimeVisual = new RuntimeSkillVisualSpec();
         [TextArea(2, 5)] public string DescriptionText;
         public DamageAttribute Attribute;
         public float BaseDamage;
@@ -513,6 +515,7 @@ namespace Pakuri.Data
         [Range(0f, 1f)] public float KillCooldownRefundRatio;
         public float BossDamageMultiplier = 1f;
         public string HitTargetCount;
+        public bool UsePrefabHitbox;
         public string TargetSelection;
         public string TargetSelectionStatusId;
         public int TargetSelectionStatusMinStacks;

@@ -40,8 +40,10 @@ namespace Pakuri.InGame
         RadiusBonus,
         DurationBonus,
         DurationMultiplier,
+        DamageDelayMultiplier,
         AdditionalProjectileBonus,
         ShotIntervalMultiplier,
+        ConsecutiveHitDamageBonus,
         BranchProjectile,
         StatusStackAmountBonus,
         StatusStackAmountSet,
@@ -939,11 +941,93 @@ namespace Pakuri.InGame
                 SkillEffectPrefab = choice.SkillEffectPrefab;
             }
 
+            var compatibilitySpec = new SkillChoiceEffectSpec();
+            InGameSkillDefinitionMapper.ApplyNormalizedChoiceCompatibilityNodes(
+                compatibilitySpec,
+                choice.NormalizedPlanNodes);
+            ApplyNodeBackedChoiceFields(compatibilitySpec);
+
             var nodes = InGameSkillDefinitionMapper.MapSkillNodeDefinitions(choice.NormalizedPlanNodes);
             AddNormalizedPlanNodes(nodes);
             ApplyPlanActionNodes(nodes);
             RefreshSingleAttackOperationBridges();
             RebuildExecutionPlan();
+        }
+
+        private void ApplyNodeBackedChoiceFields(SkillChoiceEffectSpec spec)
+        {
+            if (spec.HasBurstDamageMultiplier
+                && spec.BurstDamageMultiplier > 0f
+                && spec.HasBurstDamageProjectileIndex)
+            {
+                burstDamageRules.Add(new BurstDamageRule(
+                    spec.BurstDamageProjectileIndex,
+                    spec.BurstDamageMultiplier));
+            }
+
+            if (spec.HasBurstStatusProjectileIndex && spec.BurstStatusStacksBonus != 0)
+            {
+                burstStatusRules.Add(new BurstStatusRule(
+                    spec.BurstStatusProjectileIndex,
+                    spec.BurstStatusStacksBonus));
+            }
+
+            if (spec.FollowUpProjectileCount > 0)
+            {
+                FollowUpProjectileCount = spec.FollowUpProjectileCount;
+                FollowUpProjectileDelaySeconds = Mathf.Max(0f, spec.FollowUpProjectileDelaySeconds);
+                FollowUpProjectileDamageMultiplier = Mathf.Max(0f, spec.FollowUpProjectileDamageMultiplier);
+            }
+
+            if (!string.IsNullOrWhiteSpace(spec.ThresholdStatusId)
+                && spec.ThresholdStatusMinStacks > 0
+                && !string.IsNullOrWhiteSpace(spec.ThresholdApplyStatusId))
+            {
+                ThresholdStatusId = spec.ThresholdStatusId;
+                ThresholdStatusMinStacks = spec.ThresholdStatusMinStacks;
+                ThresholdApplyStatusId = spec.ThresholdApplyStatusId;
+            }
+
+            if (spec.HasTargetStatusStackDamageMultiplier && spec.TargetStatusStackDamageMultiplier > 0f)
+            {
+                TargetStatusStackDamageMultiplier *= PositiveOrDefault(spec.TargetStatusStackDamageMultiplier, 1f);
+            }
+
+            if (spec.HasConsumeTargetStatusRatioOverride)
+            {
+                HasConsumeTargetStatusRatioOverride = true;
+                ConsumeTargetStatusRatioOverride = Mathf.Clamp01(spec.ConsumeTargetStatusRatioOverride);
+            }
+
+            if (spec.RepeatCountPerTarget > 0)
+            {
+                RepeatCountPerTarget += spec.RepeatCountPerTarget;
+                RepeatIntervalSeconds = Mathf.Max(RepeatIntervalSeconds, spec.RepeatIntervalSeconds);
+                if (spec.RepeatDamageMultiplier > 0f)
+                {
+                    RepeatDamageMultiplier *= PositiveOrDefault(spec.RepeatDamageMultiplier, 1f);
+                }
+            }
+
+            if (!Mathf.Approximately(spec.ConditionalCritChanceBonus, 0f)
+                && !string.IsNullOrWhiteSpace(spec.ConditionalCritTargetStatusId)
+                && spec.ConditionalCritTargetStatusMinStacks > 0)
+            {
+                conditionalCritChanceRules.Add(new ConditionalCritChanceRule(
+                    spec.ConditionalCritChanceBonus,
+                    spec.ConditionalCritTargetStatusId,
+                    spec.ConditionalCritTargetStatusMinStacks));
+            }
+
+            if (spec.RedistributeConsumedStatusRatioOnKill > 0f
+                && !string.IsNullOrWhiteSpace(spec.RedistributeConsumedStatusId)
+                && spec.RedistributeConsumedStatusSearchRadius > 0f)
+            {
+                RedistributeConsumedStatusRatioOnKill = Mathf.Clamp01(spec.RedistributeConsumedStatusRatioOnKill);
+                RedistributeConsumedStatusId = spec.RedistributeConsumedStatusId;
+                RedistributeConsumedStatusSearchRadius = Mathf.Max(0f, spec.RedistributeConsumedStatusSearchRadius);
+                RedistributeConsumedStatusTargetCount = Mathf.Max(0, spec.RedistributeConsumedStatusTargetCount);
+            }
         }
 
         private static bool HasNormalizedPlanNodes(SkillChoiceDefinition choice)
@@ -1004,11 +1088,18 @@ namespace Pakuri.InGame
                 case SkillActionOpKind.DurationMultiplier:
                     DurationMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
                     break;
+                case SkillActionOpKind.DamageDelayMultiplier:
+                    DamageDelayMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+                    break;
                 case SkillActionOpKind.AdditionalProjectileBonus:
                     AdditionalProjectileBonus += action.IntValue;
                     break;
                 case SkillActionOpKind.ShotIntervalMultiplier:
                     ShotIntervalMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+                    break;
+                case SkillActionOpKind.ConsecutiveHitDamageBonus:
+                    ConsecutiveHitBonusRate += Mathf.Max(0f, action.FloatValue);
+                    ConsecutiveHitMax += Mathf.Max(0f, action.SecondaryFloatValue);
                     break;
                 case SkillActionOpKind.BranchProjectile:
                     BranchChanceBonus += action.FloatValue;

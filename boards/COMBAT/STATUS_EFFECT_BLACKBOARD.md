@@ -5,6 +5,93 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-13 Vega Effect Graph Composer Migration
+
+### Task title
+
+Preserve Vega status gates, runtime-kind filters, and conditional modifiers in positional Effect graphs.
+
+### Goals
+
+- Move Vega legacy status Effects to Skill/Choice/Trigger-owned positional graphs.
+- Preserve H owner source-status gates, I incoming `Area` filters, and G conditional critical-resistance behavior.
+- Reuse current status runtime meanings without adding Vega-only combat branches.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Blueprint, prefab, scene, object/collider offset, and new gameplay behavior are outside scope.
+- Existing status runtime fields remain authoritative; new node types only expose those fields through positional authoring.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and Unity CSV/InGame validation passed; Play Mode status parity verification remains.
+
+### Next Actions
+
+- Verify Vega-H effects start and stop with live `slaughter-permit` ownership in Play Mode.
+- Verify Vega-I debuffs apply only to incoming `Area` runtime kinds.
+- Verify Vega-G trait 3 requires both `silence` and `name-mark` and applies critical resistance `-0.10`.
+
+### Evidence
+
+- `PakuriCsvRuntimeData.Build.cs` composes `RequiredSourceStatus`, `StatusRuntimeKindFilter`, and `StatusCriticalResistanceBonus` into existing `SkillEffectDefinition` fields.
+- `ConditionStatusExpression` maps to the existing `ConditionStatus` handler and preserves `silence&name-mark` without a new condition evaluator.
+- Vega Effect authoring is now 109 positional rows across 23 Effect graphs; legacy Vega Effect rows are 0.
+- Vega Trigger graph references total 11 and resolve to existing Trigger-owned Effect graphs.
+- Unity-MCP `Pakuri/Validate CSV Source Data` loaded the runtime catalog successfully; `Pakuri/InGame/Validate Skill Data` passed with 0 warnings.
+- Runtime and Editor C# projects build with 0 errors.
+
+### History
+
+- 2026-07-13: Designer proposal identified missing positional exposure for source gates, runtime-kind filters, and critical resistance.
+- 2026-07-13: Code Builder added shared schema/composer mapping, migrated Vega Effects, and removed the 23 legacy rows after automated validation.
+
+## Task: 2026-07-13 Sein Hybrid Effect Graph Migration
+
+### Task title
+
+Preserve Sein damage-plus-status and persistent-zone payloads while removing legacy Effect rows.
+
+### Goals
+
+- Let one generated damage Effect retain its status payload without inventing a second gameplay Effect.
+- Preserve existing persistent tick, status duration/stack, merge-policy, and passive ownership gates.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- `AttachStatusPayload` composes status fields onto the Effect's existing operation kind; it does not create a separate trigger skill.
+- No new status gameplay meaning or prefab/scene behavior is introduced.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and source/build validated; Play Mode persistent-status verification remains.
+
+### Next Actions
+
+- Verify Sein-C follow-up Effects and Sein-D/E persistent damage/status refresh behavior in Play Mode.
+
+### Evidence
+
+- `AttachStatusPayload` is registered as an Effect-only positional node with required `status_id` and optional chance/label/duration/stack/merge arguments.
+- `PakuriCsvRuntimeData.Build.ApplyEffectOwnedSkillEffectNode(...)` applies the status payload while preserving the current Effect operation kind.
+- `EffectDamage` positional params now expose the already-consumed attack-power coefficient and tick interval.
+- Sein legacy Effect rows count 0 after 19 equivalent Effect graphs were authored; normalized graph validation reports 0 errors.
+- Unity-MCP source validation loaded the runtime catalog without validation errors.
+
+### History
+
+- 2026-07-13: Code Builder added the hybrid status-payload composer path and migrated Sein-C/D/E/F legacy Effects to positional graphs.
+
 ## Task: 2026-07-12 Rin Status Effect Graph Exposure Design
 
 ### Task title

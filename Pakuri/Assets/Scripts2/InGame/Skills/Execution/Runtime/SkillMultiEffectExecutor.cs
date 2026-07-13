@@ -353,6 +353,20 @@ namespace Pakuri.InGame
                 return SpawnPersistentDamageZone(context, snapshot, effect, targeting, center, damage, statusSpec);
             }
 
+            if (TryExecuteRuntimeHitboxDamageEffect(
+                    context,
+                    snapshot,
+                    effect,
+                    targeting,
+                    center,
+                    damage,
+                    statusSpec,
+                    damageSpec.CriticalAllowed,
+                    out var runtimeHitboxRouted))
+            {
+                return runtimeHitboxRouted;
+            }
+
             var explicitTarget = ResolveExplicitEventTarget(context, effect);
             if (explicitTarget != null)
             {
@@ -394,6 +408,79 @@ namespace Pakuri.InGame
             }
 
             return routed;
+        }
+
+        private static bool TryExecuteRuntimeHitboxDamageEffect(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SkillEffectDefinition effect,
+            SkillTargetingSpec targeting,
+            Vector2 center,
+            float damage,
+            ProjectileStatusHitSpec statusSpec,
+            bool criticalAllowed,
+            out bool routed)
+        {
+            routed = false;
+            var runtimeVisual = effect != null ? effect.RuntimeVisual : null;
+            var runtimeHitbox = runtimeVisual != null ? runtimeVisual.Hitbox : null;
+            if (runtimeHitbox == null || !runtimeHitbox.HasHitbox())
+            {
+                return false;
+            }
+
+            var effectId = !string.IsNullOrWhiteSpace(effect.EffectId)
+                ? effect.EffectId
+                : effect.SkillId;
+            if (context == null
+                || context.CombatManager == null
+                || context.CombatManager.Effects == null)
+            {
+                Debug.LogError($"Runtime hitbox effect '{effectId}' could not create its RuntimeEffectVisual.");
+                return true;
+            }
+
+            var instance = SkillVisualSpawnUtility.SpawnTransient(
+                context.CombatManager.Effects,
+                runtimeVisual,
+                string.IsNullOrWhiteSpace(effect.EffectId) ? "SkillEffectVisual" : $"SkillEffectVisual_{effect.EffectId}",
+                center,
+                Quaternion.identity,
+                1f);
+            if (instance == null)
+            {
+                Debug.LogError($"Runtime hitbox effect '{effectId}' failed to create its RuntimeEffectVisual.");
+                return true;
+            }
+
+            SkillExecutionUtility.ApplyPrefabScale(instance.transform, effect.Radius, snapshot);
+            Physics2D.SyncTransforms();
+            var hitboxColliders = instance.GetComponentsInChildren<Collider2D>();
+            if (hitboxColliders == null || hitboxColliders.Length == 0)
+            {
+                Debug.LogError($"Runtime hitbox effect '{effectId}' created no Collider2D components.");
+                return true;
+            }
+
+            routed = InGameZoneSkillActor.ApplyColliderAreaTick(
+                context.CombatManager,
+                context.CasterEntry,
+                context.Roster,
+                targeting,
+                hitboxColliders,
+                int.MaxValue,
+                damage,
+                effect.Attribute,
+                statusSpec,
+                context.Caster,
+                effectId,
+                null,
+                criticalAllowed,
+                snapshot != null ? snapshot.CritChanceBonus : 0f,
+                snapshot != null ? snapshot.CritDamageBonus : 0f,
+                null,
+                effectId);
+            return true;
         }
 
         internal static bool ExecuteExtendStatusDurationEffectAction(
