@@ -5,6 +5,49 @@
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-14 Choice Prefab Graph Authority Cleanup
+
+### Task title
+
+Move remaining Choice prefab metadata to graph authority and remove obsolete export/catalog inputs.
+
+### Goals
+
+- Keep Rin A master-2 prefab resolution through the runtime asset catalog while moving its source path to a graph node.
+- Prevent editor tooling from recreating deleted Choice wide columns.
+- Remove empty legacy Effect TextAsset references from the runtime source catalog.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No prefab or scene content was changed.
+- Runtime asset resolution still uses `PakuriCsvRuntimeAssetCatalog` and normalized asset-path params.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and Unity catalog/source validation passed.
+
+### Next Actions
+
+- User verifies Rin A master-2 visual parity in Play Mode.
+- Future choice-specific prefab paths are authored as Choice/Plan `EffectVisual` graph nodes.
+
+### Evidence
+
+- `rin-a-master-2` now stores `Assets/Prefab/Skill/Rin/Rin_A.prefab` in `skill_graph_nodes_projectile.csv` as `EffectVisual arg_1`; the Choice CSV has no prefab column.
+- Generic normalized-node asset collection already catalogs `asset_path` params, and Unity source validation loaded the catalog successfully.
+- `PakuriCsvRuntimeSourceCatalog.asset` no longer serializes the six removed legacy Effect TextAssets.
+- The deleted `PakuriSkillEffectPrefabCsvExporter.cs` searched missing `Assets/Data/GameData/Monsters` and emitted a Unity error; removing it prevents regeneration of `skill_effect_prefab_path` on Choice CSVs.
+- Unity-MCP sync completed and InGame skill data validation passed with 0 warnings.
+
+### History
+
+- 2026-07-14: Code Builder moved Rin choice prefab authority to graph metadata, removed obsolete legacy asset inputs/tooling, and synchronized the runtime catalogs.
+
 ## Task: 2026-07-13 Sein Zone Prefab Collider Authority
 
 ### Task title

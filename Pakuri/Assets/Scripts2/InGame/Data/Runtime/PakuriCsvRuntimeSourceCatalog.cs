@@ -29,8 +29,6 @@ namespace Pakuri.Data
         public TextAsset MonsterSkillNodeDefinitions;
         public TextAsset MonsterSkillNodeDefinitionParams;
         public TextAsset[] MonsterSkillGraphNodeFiles;
-        public TextAsset MonsterSkillEffects;
-        public TextAsset[] MonsterSkillEffectFiles;
         public TextAsset MonsterSkillTriggers;
         public TextAsset[] MonsterSkillTriggerFiles;
         public TextAsset MonsterSkillChoicesProjectile;

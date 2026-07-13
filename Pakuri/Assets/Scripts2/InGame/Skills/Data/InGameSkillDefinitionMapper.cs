@@ -1100,6 +1100,56 @@ namespace Pakuri.InGame
             return mapped.Count == 0 ? Array.Empty<SkillExecutionPlanNode>() : mapped.ToArray();
         }
 
+        public static SkillNodeDefinition[] FilterSkillNodeDefinitionsForTarget(
+            SkillNodeDefinition[] source,
+            string targetSkillId)
+        {
+            if (source == null || source.Length == 0)
+            {
+                return Array.Empty<SkillNodeDefinition>();
+            }
+
+            if (string.IsNullOrWhiteSpace(targetSkillId))
+            {
+                return source;
+            }
+
+            var filtered = new List<SkillNodeDefinition>(source.Length);
+            for (var i = 0; i < source.Length; i++)
+            {
+                var node = source[i];
+                if (node != null
+                    && node.EnabledByDefault
+                    && string.Equals(node.TargetSkillId, targetSkillId, StringComparison.OrdinalIgnoreCase))
+                {
+                    filtered.Add(node);
+                }
+            }
+
+            return filtered.Count == 0 ? Array.Empty<SkillNodeDefinition>() : filtered.ToArray();
+        }
+
+        public static bool HasSkillNodeForTarget(SkillNodeDefinition[] source, string targetSkillId)
+        {
+            if (source == null || source.Length == 0 || string.IsNullOrWhiteSpace(targetSkillId))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < source.Length; i++)
+            {
+                var node = source[i];
+                if (node != null
+                    && node.EnabledByDefault
+                    && string.Equals(node.TargetSkillId, targetSkillId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private static SkillExecutionPlanNode MapSkillNodeDefinition(SkillNodeDefinition node)
         {
             if (node == null || !node.EnabledByDefault)

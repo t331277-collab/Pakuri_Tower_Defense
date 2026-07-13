@@ -941,13 +941,16 @@ namespace Pakuri.InGame
                 SkillEffectPrefab = choice.SkillEffectPrefab;
             }
 
+            var targetNodes = InGameSkillDefinitionMapper.FilterSkillNodeDefinitionsForTarget(
+                choice.NormalizedPlanNodes,
+                SkillId);
             var compatibilitySpec = new SkillChoiceEffectSpec();
             InGameSkillDefinitionMapper.ApplyNormalizedChoiceCompatibilityNodes(
                 compatibilitySpec,
-                choice.NormalizedPlanNodes);
+                targetNodes);
             ApplyNodeBackedChoiceFields(compatibilitySpec);
 
-            var nodes = InGameSkillDefinitionMapper.MapSkillNodeDefinitions(choice.NormalizedPlanNodes);
+            var nodes = InGameSkillDefinitionMapper.MapSkillNodeDefinitions(targetNodes);
             AddNormalizedPlanNodes(nodes);
             ApplyPlanActionNodes(nodes);
             RefreshSingleAttackOperationBridges();

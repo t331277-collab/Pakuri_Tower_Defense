@@ -5,6 +5,53 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-14 Choice Definition And Graph Value Authority Cleanup
+
+### Task title
+
+Make `skill_choices_*.csv` definition-only and remove the empty legacy Effect CSV input.
+
+### Goals
+
+- Keep Choice CSV ownership on identity, display text, ordering, and the passive `target_skill_id` relation.
+- Keep gameplay values, target routing, source-status gates, and choice prefab metadata in `skill_graph_nodes_*.csv`.
+- Remove the zero-row `runtime/monster/skills/effects` input and its catalog/loader dependency.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No Blueprint, monster proposal, UI, scene, or prefab content was read or edited.
+- Runtime `SkillEffectDefinition` execution remains; only the empty legacy Effect CSV source path is removed.
+- Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented; runtime/editor builds and Unity source/InGame validation passed.
+
+### Next Actions
+
+- User verifies cross-skill Choice application and Rin A master-2 visual behavior in Play Mode.
+- Future Choice behavior values and target routing are authored in graph rows, not by restoring Choice wide columns.
+
+### Evidence
+
+- Six Choice files retain all 252 data rows; five files are 7 columns and passive is 8 columns because `target_skill_id` remains before `description_text`. In every file `description_text` is the final column.
+- Vega C trait 4/5/master 1 source gate moved to `RequiredSourceStatus` Plan nodes; trait 5 now has explicit A/B/D/E target nodes.
+- Rin A master-2 prefab path moved to a Choice/Plan `EffectVisual` node.
+- Runtime Choice application filters normalized nodes by `SkillNodeDefinition.TargetSkillId`; Choice source gate/prefab fields are derived from normalized Plan nodes during catalog build.
+- Deleted the six zero-data legacy Effect CSVs, their metadata/directories, source-catalog fields, loader/editor discovery, and the obsolete prefab exporter that depended on missing `Assets/Data/GameData/Monsters`.
+- `dotnet build Assembly-CSharp.csproj --no-restore` and `dotnet build Assembly-CSharp-Editor.csproj --no-restore`: 0 errors; existing assembly-version warnings only.
+- Unity-MCP catalog sync and source validation loaded 5 monsters and 8+8 enemies; InGame skill validation passed with 0 warnings.
+
+### History
+
+- 2026-07-14: Code inspection found all six legacy Effect files had zero data rows while loader/catalog still required them, and found 14 remaining post-description Choice metadata cells.
+- 2026-07-14: Code Builder migrated the remaining metadata, reduced Choice schemas, removed the legacy Effect input path, and completed static plus Unity validation.
+
 ## Task: 2026-07-13 Vega Positional Graph Migration
 
 ### Task title
@@ -22,7 +69,7 @@ Vega Active Runtime CSV Positional Graph Migration
 - Role Owner는 Code Builder다.
 - Blueprint/reference/archive는 범위 밖이다.
 - 새 graph 파일과 offset은 추가하지 않는다.
-- cross-skill `runtime_target_skill_ids`와 source-status gate metadata는 유지한다.
+- 이 전환 시점에는 cross-skill `runtime_target_skill_ids`와 source-status gate metadata를 유지했으며, 2026-07-14 definition-only 정리에서 graph node로 이전했다.
 
 ### Role Owner
 

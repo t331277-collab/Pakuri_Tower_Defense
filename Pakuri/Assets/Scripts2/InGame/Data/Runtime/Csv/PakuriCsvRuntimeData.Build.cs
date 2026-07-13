@@ -1014,6 +1014,11 @@ namespace Pakuri.Data
             {
                 var choice = choices[i];
                 var targetSkillId = string.IsNullOrWhiteSpace(choice.TargetSkillId) ? choice.SkillId : choice.TargetSkillId;
+                var normalizedPlanNodes = BuildSkillNodeDefinitions(
+                    model,
+                    SkillNodeOwnerKind.Choice,
+                    choice.Id,
+                    targetSkillId);
 
                 definitions[i] = new SkillChoiceDefinition
                 {
@@ -1025,7 +1030,10 @@ namespace Pakuri.Data
                     ChoiceGroup = MapChoiceGroup(choice.ChoiceGroup),
                     Title = choice.Title,
                     SkillIcon = LoadSprite(choice.SkillIconPath),
-                    SkillEffectPrefab = LoadPrefab(choice.SkillEffectPrefabPath),
+                    SkillEffectPrefab = LoadPrefab(GetChoicePlanNodeParam(
+                        normalizedPlanNodes,
+                        "EffectVisual",
+                        "skill_effect_prefab_path")),
                     DescriptionText = choice.DescriptionText,
                     HasDamageMultiplier = choice.HasDamageMultiplier,
                     DamageMultiplier = choice.HasDamageMultiplier ? choice.DamageMultiplier : 1f,
@@ -1136,8 +1144,15 @@ namespace Pakuri.Data
                     HasStatusConditionalDamageTakenBonus = choice.HasStatusConditionalDamageTakenBonus,
                     StatusConditionalDamageTakenBonus = choice.StatusConditionalDamageTakenBonus,
                     StatusConditionalSourceStatusId = choice.StatusConditionalSourceStatusId,
-                    RequiredSourceStatusId = choice.RequiredSourceStatusId,
-                    RequiredSourceStatusMinStacks = choice.RequiredSourceStatusMinStacks,
+                    RequiredSourceStatusId = GetChoicePlanNodeParam(
+                        normalizedPlanNodes,
+                        "RequiredSourceStatus",
+                        "status_id"),
+                    RequiredSourceStatusMinStacks = GetChoicePlanNodeIntParam(
+                        normalizedPlanNodes,
+                        "RequiredSourceStatus",
+                        "min_stacks",
+                        1),
                     HasOnHitAdditionalDamage = choice.HasOnHitAdditionalDamage,
                     OnHitAdditionalDamageChance = choice.OnHitAdditionalDamageChance,
                     OnHitAdditionalDamageMultiplier = choice.HasOnHitAdditionalDamage && choice.OnHitAdditionalDamageMultiplier > 0f ? choice.OnHitAdditionalDamageMultiplier : 1f,
@@ -1163,17 +1178,60 @@ namespace Pakuri.Data
                     RepeatCountPerTarget = choice.RepeatCountPerTarget,
                     RepeatIntervalSeconds = choice.RepeatIntervalSeconds,
                     RepeatDamageMultiplier = choice.RepeatDamageMultiplier > 0f ? choice.RepeatDamageMultiplier : 1f,
-                    NormalizedPlanNodes = BuildSkillNodeDefinitions(
-                        model,
-                        SkillNodeOwnerKind.Choice,
-                        choice.Id,
-                        targetSkillId),
+                    NormalizedPlanNodes = normalizedPlanNodes,
                     RuntimeSupportState = choice.RuntimeSupportState,
                     RuntimeSupportNotes = choice.RuntimeSupportNotes
                 };
             }
 
             return definitions;
+        }
+
+        private static string GetChoicePlanNodeParam(
+            SkillNodeDefinition[] nodes,
+            string handlerId,
+            string paramKey)
+        {
+            if (nodes == null || string.IsNullOrWhiteSpace(handlerId) || string.IsNullOrWhiteSpace(paramKey))
+            {
+                return string.Empty;
+            }
+
+            for (var nodeIndex = 0; nodeIndex < nodes.Length; nodeIndex++)
+            {
+                var node = nodes[nodeIndex];
+                if (node == null
+                    || !node.EnabledByDefault
+                    || !string.Equals(node.HandlerId, handlerId, StringComparison.OrdinalIgnoreCase)
+                    || node.Params == null)
+                {
+                    continue;
+                }
+
+                for (var paramIndex = 0; paramIndex < node.Params.Length; paramIndex++)
+                {
+                    var param = node.Params[paramIndex];
+                    if (param != null
+                        && string.Equals(param.ParamKey, paramKey, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return param.Value ?? string.Empty;
+                    }
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static int GetChoicePlanNodeIntParam(
+            SkillNodeDefinition[] nodes,
+            string handlerId,
+            string paramKey,
+            int fallback)
+        {
+            var raw = GetChoicePlanNodeParam(nodes, handlerId, paramKey);
+            return int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
+                ? value
+                : fallback;
         }
 
         private static SkillNodeDefinition[] BuildSkillNodeDefinitions(

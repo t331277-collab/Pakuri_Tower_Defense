@@ -16,7 +16,6 @@ namespace Pakuri.Data
         private const string RuntimeMonsterSkillCsvAssetRoot = RuntimeMonsterCsvAssetRoot + "/skills";
         private const string RuntimeMonsterSkillBaseCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/base";
         private const string RuntimeMonsterSkillChoiceCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/choices";
-        private const string RuntimeMonsterSkillEffectCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/effects";
         private const string RuntimeMonsterSkillTriggerCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/triggers";
         private const string RuntimeMonsterSkillNodeCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/nodes";
         private const string RuntimeEnemyCsvAssetRoot = RuntimeCsvAssetRoot + "/enemy";
@@ -42,7 +41,6 @@ namespace Pakuri.Data
         private const string MonsterSkillNodeParamsFileName = "monster_skill_node_params.csv";
         private const string MonsterSkillNodeDefinitionsFileName = "skill_node_definitions.csv";
         private const string MonsterSkillNodeDefinitionParamsFileName = "skill_node_definition_params.csv";
-        private const string MonsterSkillEffectsFileName = "monster_skill_effects.csv";
         private const string MonsterSkillTriggersFileName = "monster_skill_triger.csv";
         private const string MonsterSkillChoicesProjectileFileName = "skill_choices_projectile.csv";
         private const string MonsterSkillChoicesLineAttackFileName = "skill_choices_line_attack.csv";
@@ -88,8 +86,6 @@ namespace Pakuri.Data
                 case MonsterSkillNodeDefinitionsFileName:
                 case MonsterSkillNodeDefinitionParamsFileName:
                     return $"{RuntimeMonsterSkillNodeCsvAssetRoot}/definitions/{fileName}";
-                case MonsterSkillEffectsFileName:
-                    return $"{RuntimeMonsterSkillEffectCsvAssetRoot}/{fileName}";
                 case MonsterSkillTriggersFileName:
                     return $"{RuntimeMonsterSkillTriggerCsvAssetRoot}/{fileName}";
                 case MonsterSkillChoicesProjectileFileName:

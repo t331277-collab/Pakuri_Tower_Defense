@@ -37,6 +37,7 @@
 "rin","Choice","rin-a-master-1","Plan","0","rin-a","3","DamageMultiplier","1.12","","","","","","","","","","","",""
 "rin","Choice","rin-a-master-2","Plan","0","rin-a","1","AdditionalDamage","0.4","","1","Lightning","HitTarget","","","","","","","",""
 "rin","Choice","rin-a-master-2","Plan","0","rin-a","2","EveryNthHitChainDamage","3","0.4","4.5","2","Lightning","","","","","","","",""
+"rin","Choice","rin-a-master-2","Plan","0","rin-a","3","EffectVisual","Assets/Prefab/Skill/Rin/Rin_A.prefab","","","","","","","","","","","",""
 "sein","Choice","sein-a-trait-1","Plan","0","sein-a","1","DamageMultiplier","1.25","","","","","","","","","","","",""
 "sein","Choice","sein-a-trait-2","Plan","0","sein-a","1","MagazineBonus","4","","","","","","","","","","","",""
 "sein","Choice","sein-a-trait-3","Plan","0","sein-a","1","ReloadTimeMultiplier","0.7692307692307692","","","","","","","","","","","",""

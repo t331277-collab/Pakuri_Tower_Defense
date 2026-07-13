@@ -1756,9 +1756,7 @@ namespace Pakuri.Data
         {
             return IsEffectOperationHandler(handlerId)
                 || string.Equals(handlerId, "EffectTarget", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(handlerId, "EffectVisual", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "AttachStatusPayload", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(handlerId, "RequiredSourceStatus", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "StatusRuntimeKindFilter", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "StatusCriticalResistanceBonus", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(handlerId, "ConditionStatus", StringComparison.OrdinalIgnoreCase)

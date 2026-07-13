@@ -459,7 +459,10 @@ namespace Pakuri.InGame
                     choice.CountMax);
             }
 
-            var nodes = InGameSkillDefinitionMapper.MapSkillNodeDefinitions(choice.NormalizedPlanNodes);
+            var targetNodes = InGameSkillDefinitionMapper.FilterSkillNodeDefinitionsForTarget(
+                choice.NormalizedPlanNodes,
+                snapshot.SkillId);
+            var nodes = InGameSkillDefinitionMapper.MapSkillNodeDefinitions(targetNodes);
             for (var i = 0; i < nodes.Length; i++)
             {
                 var action = nodes[i] != null ? nodes[i].Action : null;
@@ -639,9 +642,11 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            if (MatchesAnySkillId(choice.RuntimeTargetSkillIds, skillData.SkillId))
+            if (choice.NormalizedPlanNodes != null && choice.NormalizedPlanNodes.Length > 0)
             {
-                return true;
+                return InGameSkillDefinitionMapper.HasSkillNodeForTarget(
+                    choice.NormalizedPlanNodes,
+                    skillData.SkillId);
             }
 
             var targetSkillId = !string.IsNullOrWhiteSpace(choice.TargetSkillId)
@@ -661,25 +666,5 @@ namespace Pakuri.InGame
             return HasStatus(owner, choice.RequiredSourceStatusId, Mathf.Max(1, choice.RequiredSourceStatusMinStacks));
         }
 
-        private static bool MatchesAnySkillId(string rawSkillIds, string skillId)
-        {
-            if (string.IsNullOrWhiteSpace(rawSkillIds) || string.IsNullOrWhiteSpace(skillId))
-            {
-                return false;
-            }
-
-            var split = rawSkillIds.Split(';', ',');
-            for (var i = 0; i < split.Length; i++)
-            {
-                var candidate = split[i] != null ? split[i].Trim() : string.Empty;
-                if (!string.IsNullOrWhiteSpace(candidate)
-                    && string.Equals(candidate, skillId, System.StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
     }
 }

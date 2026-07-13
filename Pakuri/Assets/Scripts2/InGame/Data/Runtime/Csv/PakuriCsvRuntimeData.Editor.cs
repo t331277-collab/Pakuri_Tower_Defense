@@ -120,15 +120,9 @@ namespace Pakuri.Data
             sourceCatalog.MonsterSkillGraphNodeFiles = LoadImportedSourceTextAssetsByPrefix(
                 RuntimeMonsterSkillChoiceCsvAssetRoot,
                 "skill_graph_nodes_");
-            sourceCatalog.MonsterSkillEffectFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillEffectCsvAssetRoot,
-                "_skill_effects.csv");
             sourceCatalog.MonsterSkillTriggerFiles = LoadImportedSourceTextAssetsBySuffix(
                 RuntimeMonsterSkillTriggerCsvAssetRoot,
                 "_skill_triger.csv");
-            sourceCatalog.MonsterSkillEffects = sourceCatalog.MonsterSkillEffectFiles.Length == 0
-                ? LoadImportedSourceTextAssetOrThrow(MonsterSkillEffectsFileName)
-                : null;
             sourceCatalog.MonsterSkillTriggers = sourceCatalog.MonsterSkillTriggerFiles.Length == 0
                 ? LoadImportedSourceTextAssetOrThrow(MonsterSkillTriggersFileName)
                 : null;

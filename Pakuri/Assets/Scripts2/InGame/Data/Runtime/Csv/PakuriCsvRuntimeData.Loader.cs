@@ -65,10 +65,6 @@ namespace Pakuri.Data
             {
                 missingAssets.Add(MonsterSkillsPassiveFileName);
             }
-            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillEffectFiles, sourceCatalog.MonsterSkillEffects))
-            {
-                missingAssets.Add(MonsterSkillEffectsFileName);
-            }
             if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillTriggerFiles, sourceCatalog.MonsterSkillTriggers))
             {
                 missingAssets.Add(MonsterSkillTriggersFileName);
@@ -189,9 +185,6 @@ namespace Pakuri.Data
             var skillNodeParamAssets = ResolveSplitOrLegacyCsvAssets(
                 sourceCatalog.MonsterSkillNodeParamFiles,
                 sourceCatalog.MonsterSkillNodeParams);
-            var skillEffectAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillEffectFiles,
-                sourceCatalog.MonsterSkillEffects);
             var skillTriggerAssets = ResolveSplitOrLegacyCsvAssets(
                 sourceCatalog.MonsterSkillTriggerFiles,
                 sourceCatalog.MonsterSkillTriggers);
@@ -322,18 +315,6 @@ namespace Pakuri.Data
                 foreach (var record in skillNodeParamTable.Records)
                 {
                     model.SkillNodeParams.Add(ParseSkillNodeParamRow(record));
-                }
-            }
-
-            for (var assetIndex = 0; assetIndex < skillEffectAssets.Length; assetIndex++)
-            {
-                var skillEffectTable = CsvTable.Load(
-                    skillEffectAssets[assetIndex],
-                    GetTextAssetCsvTableName(skillEffectAssets[assetIndex], MonsterSkillEffectsFileName));
-                foreach (var record in skillEffectTable.Records)
-                {
-                    var row = ParseSkillEffectRow(record);
-                    AddUnique(model.SkillEffects, row.Id, row, record);
                 }
             }
 
