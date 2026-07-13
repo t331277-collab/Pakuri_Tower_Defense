@@ -2750,3 +2750,51 @@ Implemented by Code Builder.
 
 - 2026-05-29: User requested a Code Builder handoff that includes monster icon data ownership for the damage meter UI.
 - 2026-05-29: Code Builder added the blank-safe `MonsterIconImage` CSV/catalog path for damage meter panel icons.
+## Task: 2026-07-12 Rin Runtime Visual Data Feasibility
+
+### Task title
+
+Define the active CSV boundary for Rin prefab-to-runtime visual migration.
+
+### Goals
+
+- Reuse existing base runtime visual columns for Rin A-C while keeping Rin D base prefab-backed.
+- Expose existing parsed Trigger runtime visual fields on the passive Trigger CSV for Rin F.
+- Extend the shared runtime hitbox spec and single-attack Trigger schema with optional offset fields for Rin D master 1.
+- Preserve prefab-owned data that the current runtime visual schema cannot represent.
+
+### Constraints
+
+- Role Owner is Designer.
+- This task does not implement CSV or runtime changes.
+- Non-zero collider offsets and named child colliders cannot be discarded during parity migration.
+
+### Role Owner
+
+Designer
+
+### Status
+
+CSV/runtime feasibility inspection completed; implementation not started.
+
+### Next Actions
+
+- Code Builder fills the existing runtime visual columns for Rin A/B/C and leaves Rin D base unchanged.
+- Code Builder adds the already parsed runtime visual/hitbox columns to `passive_skill_triger.csv` before converting Rin F.
+- Code Builder adds optional `runtime_hitbox_offset_x/y` parsing/model/factory support and exposes runtime visual/hitbox fields on `single_attack_skill_triger.csv` for Rin D master 1.
+- Independently resolve the active Rin-E `UsePrefabHitbox` routing mismatch before considering any E visual migration.
+
+### Evidence
+
+- Projectile, buff, line-attack, and single-attack base CSV headers already expose runtime sprite/controller/scale/sorting/hitbox columns.
+- `PakuriCsvRuntimeData.MonsterDataset.cs` already reads optional Trigger runtime visual fields, and `SkillTriggerRuntime` already consumes them.
+- `passive_skill_triger.csv` does not currently include those runtime visual columns.
+- `single_attack_skill_triger.csv` also lacks runtime visual fields, and `RuntimeSkillHitboxSpec` currently stores only `Size`; `RuntimeSkillVisualFactory` currently forces collider offset to zero.
+- Rin D master 1 requires runtime box size `(3.9373517, 3.788869)` and offset `(0.53632426, -0.41973162)` to preserve current Trigger hitbox behavior.
+- Active `rin-e` has radius `2.4` and blank `hit_target_count`; `InGameSkillDefinitionMapper` consequently leaves `UsePrefabHitbox=false`.
+- `SingleAttackSkillExecutor.ResolveCoreHitboxColliders(...)` is called only inside the `UsePrefabHitbox` branch, so active data does not currently reach named `CoreHitBox` resolution.
+
+### History
+
+- 2026-07-12: Designer recorded the CSV exposure boundary and Rin-E pre-migration blocker while validating Rin runtime visual feasibility.
+- 2026-07-13: User kept Rin D base prefab-backed and approved D master 1 runtime conversion; Designer added optional hitbox-offset and single-attack Trigger schema work to the handoff.

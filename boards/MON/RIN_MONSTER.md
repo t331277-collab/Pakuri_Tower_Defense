@@ -4,6 +4,55 @@
 - This file keeps only task blocks dated 2026-05-08 based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/MON/RIN_MONSTER.md`.
 
+## Task: 2026-07-12 Rin Skill Runtime Visual Migration Feasibility
+
+### Task title
+
+Classify Rin skill prefab visuals for Ariel-style runtime composition.
+
+### Goals
+
+- Identify Rin visuals that fit the existing shared runtime sprite/animator/box model.
+- Retain prefabs where collider offsets or named child hitboxes carry gameplay meaning.
+- Define a behavior-preserving Code Builder migration order without deleting prefabs.
+
+### Constraints
+
+- Role Owner is Designer.
+- This task is design and inspection only; CSV, C#, prefab, and scene implementation is not included.
+- Prefab assets remain on disk until all converted paths pass user Play Mode verification.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Feasibility inspection completed in `boards/MON/RIN_SKILL_RUNTIME_VISUAL_MIGRATION_PLAN.md`.
+
+### Next Actions
+
+- Code Builder converts Rin A/B/C and F through the existing shared runtime visual path.
+- Code Builder adds optional shared hitbox offset support and converts Rin D master 1 with its authored collider size/offset.
+- Keep Rin D base and Rin E prefab-backed.
+- Before any Rin-E visual work, verify and correct the active `UsePrefabHitbox` routing so the named `CoreHitBox` path is actually reachable.
+
+### Evidence
+
+- Unity-MCP inspected all seven Rin skill prefab hierarchies: A/B/C/D/D-master1/F are single-root; E alone contains `Rin_E/CoreHitBox`.
+- Current factory supports one sprite, one animator, uniform scale, and one zero-offset root box collider.
+- A/B/C fit the existing runtime path; F fits after passive Trigger CSV columns are exposed.
+- D master 1 has collider offset `(0.53632426, -0.41973162)`; user approved preserving it through a shared runtime hitbox-offset extension.
+- D base remains prefab-backed by user decision. E remains prefab-backed because it has two differently transformed colliders including named child `CoreHitBox`.
+- Active G-J rows contain no prefab or runtime visual path and therefore have no parity-migration target.
+- Active Rin-E data maps to `UsePrefabHitbox=false`, while named core lookup only runs inside the prefab-hitbox branch; this is a verified pre-migration blocker.
+
+### History
+
+- 2026-07-12: User requested Rin A-J prefab-to-runtime feasibility verification using the Ariel migration approach.
+- 2026-07-12: Designer classified A/B/C/D as easy, F as a small schema-exposure conversion, D master 1 as conditional, E as prefab-retained, and G-J as having no current visual prefab target.
+- 2026-07-13: User selected Rin D base for prefab retention and Rin D master 1 for runtime conversion; Designer revised the handoff to preserve D master 1's non-zero collider offset through a shared optional offset extension.
+
 ## Task: 2026-07-12 Rin A-J Node Migration Proposal
 
 ### Task title

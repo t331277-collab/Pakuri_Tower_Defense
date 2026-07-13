@@ -5,6 +5,52 @@
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-12 Rin Runtime Visual Asset Boundary
+
+### Task title
+
+Record which Rin skill prefab contracts can move to shared runtime visuals.
+
+### Goals
+
+- Move approved single-root compositions out of prefab authority, including Rin D master 1 through an exact offset-preserving runtime spec.
+- Preserve Rin D base prefab authority and Rin E named child-hitbox authority.
+- Keep prefab deletion separate from the runtime migration.
+
+### Constraints
+
+- Role Owner is Designer.
+- No asset, scene, catalog, or CSV change is implemented in this task.
+- Existing prefab assets remain available for parity inspection.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Asset-boundary design completed; implementation not started.
+
+### Next Actions
+
+- Code Builder authors runtime fields for Rin A/B/C, exposes runtime visual fields on passive Trigger CSV for Rin F, and converts Rin D master 1 after shared offset support exists.
+- Retain `Rin_D.prefab` and `Rin_E.prefab` as active prefab dependencies.
+- Keep `Rin_D_master_1.prefab` on disk for parity evidence even after its Trigger path stops instantiating it.
+
+### Evidence
+
+- Scene `EffectManager` currently maps Rin A-D base visuals.
+- Active CSV paths additionally reference Rin A master 2, Rin D master 1, Rin E, and Rin F.
+- Unity-MCP found only `Rin_E.prefab` has a child object; its `CoreHitBox` name is consumed by SingleAttack core-effect code.
+- `Rin_D_master_1.prefab` has a non-zero collider offset; revised design preserves it through optional runtime offset fields rather than retaining prefab execution.
+- User explicitly selected Rin D base for prefab retention and D master 1 for runtime conversion.
+- No Rin G-J prefab/status visual reference exists in the active runtime skill CSV tree.
+
+### History
+
+- 2026-07-12: Designer recorded the Rin runtime visual conversion boundary in `boards/MON/RIN_SKILL_RUNTIME_VISUAL_MIGRATION_PLAN.md`.
+- 2026-07-13: Designer revised asset authority: Rin D base remains scene/prefab-backed, while Rin D master 1 becomes runtime-backed after offset support is implemented.
+
 ## Task: 2026-07-12 Rin Node Migration Asset Compatibility
 
 ### Task title
