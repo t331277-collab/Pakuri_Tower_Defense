@@ -787,3 +787,35 @@ Implemented and locally YAML/build-verified.
 
 - 2026-06-07: User asked Code Builder to create each monster's six animation clips, create controllers with Rin's parameter contract, and wire each monster prefab Animator controller.
 - 2026-06-07: User reported the non-Rin monster prefabs still did not show assigned Animator / `Animation_Controller`; Code Builder found the generated component blocks were owned by the wrong GameObject fileID and corrected them to the root Unit GameObject.
+
+## Task: Ariel runtime skill prefab decommission
+
+### Goals
+
+- Remove all seven Ariel skill prefabs after retaining their runtime visual data.
+
+### Constraints
+
+- No blueprint or new CSV columns; collider offset remains `(0, 0)`.
+
+### Role Owner
+
+- Code Builder
+
+### Status
+
+- Code complete; user Play Mode verification pending.
+
+### Next Actions
+
+- User verifies Ariel A-E, enhancement, and master visuals in Play Mode.
+
+### Evidence
+
+- Ariel graph prefab EffectVisual rows were replaced by `RuntimeEffectVisual` where required.
+- `NewRunScene.unity` contains no Ariel monster skill prefab mappings.
+- `Pakuri/Assets/Prefab/Skill/Ariel` assets and `Ariel.meta` were deleted.
+
+### History
+
+- 2026-07-14: Code Builder completed Ariel prefab dependency removal.

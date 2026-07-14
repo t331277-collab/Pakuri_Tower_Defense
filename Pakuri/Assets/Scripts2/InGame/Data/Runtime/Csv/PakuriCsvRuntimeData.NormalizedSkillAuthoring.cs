@@ -488,13 +488,10 @@ namespace Pakuri.Data
             AddSkillNodeHandlerSchema(schemas, "StatusCriticalResistanceBonus", SkillExecutionPlanNodeKind.Action,
                 new[] { "bonus" });
             AddSkillNodeHandlerSchema(schemas, "RuntimeEffectVisual", SkillExecutionPlanNodeKind.Action,
+                new[] { "runtime_visual_sprite_path" },
                 new[]
                 {
-                    "runtime_visual_sprite_path",
-                    "runtime_visual_animator_controller_path"
-                },
-                new[]
-                {
+                    "runtime_visual_animator_controller_path",
                     "runtime_visual_scale",
                     "runtime_visual_sorting_order",
                     "runtime_hitbox_size_x",

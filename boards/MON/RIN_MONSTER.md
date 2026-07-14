@@ -560,3 +560,35 @@ Implemented, synced, and CSV-validation/build verified.
 ### History
 
 - 2026-05-26: User approved extending the shared trigger/status runtime, then clarified Rin-H should count all allied physical-damage skill usage before triggering.
+
+## Task: Rin partial runtime skill prefab decommission
+
+### Goals
+
+- Delete migrated Rin A/B/C/D Master 1/F prefabs and retain Rin-D/Rin-E exceptions.
+
+### Constraints
+
+- Rin-D scene mapping and Rin-E runtime CSV prefab path remain active; collider offset remains `(0, 0)`.
+
+### Role Owner
+
+- Code Builder
+
+### Status
+
+- Code complete; user Play Mode verification pending.
+
+### Next Actions
+
+- User verifies Rin A-C/F runtime visuals and Rin D/E retained prefab behavior in Play Mode.
+
+### Evidence
+
+- Rin A Master 2 and Rin D Master 1/F trigger prefab references were removed.
+- Rin D Master 1 collider offsets were normalized to `0,0`.
+- `Assets/Prefab/Skill/Rin` now retains only Rin-D and Rin-E prefabs.
+
+### History
+
+- 2026-07-14: Code Builder completed the approved partial Rin prefab decommission.

@@ -18793,48 +18793,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.EffectManager
   runtimeSkillRoot: {fileID: 502722560}
   monsterSkillEffects:
-  - MonsterId: ariel
-    SkillEffects:
-    - SkillId: ariel-a
-      Prefab: {fileID: 3285557362087739772, guid: 66fcb365022930d4681ad320e5fff520, type: 3}
-    - SkillId: ariel-b
-      Prefab: {fileID: 3529180550599226198, guid: a94d18f89e17df94fbed6a9e057e7fed, type: 3}
-    - SkillId: ariel-c
-      Prefab: {fileID: 1713502052278588150, guid: f851084efb562e043a673ac67840693f, type: 3}
-    - SkillId: ariel-e
-      Prefab: {fileID: 3971032706705179479, guid: 34e251e3f631e7c4482a8db43f03e82c, type: 3}
-  - MonsterId: eve
-    SkillEffects:
-    - SkillId: eve-a
-      Prefab: {fileID: 3046447516185771510, guid: 22e2919723124c1458a796744a9268b5, type: 3}
-    - SkillId: eve-b
-      Prefab: {fileID: 3843049686398240108, guid: 224f5e7622cd0264b961ee388a015d65, type: 3}
-    - SkillId: eve-c
-      Prefab: {fileID: 2181036612366644816, guid: 383d4c700df69d44898dc953ea18b9d4, type: 3}
-    - SkillId: eve-d
-      Prefab: {fileID: 1107537072718467244, guid: ef1bb9690f7a9234dad21ff0d9c80e32, type: 3}
-    - SkillId: eve-e
-      Prefab: {fileID: 1184936592282639523, guid: 1313fcd817f979e4981325d9c199fd30, type: 3}
   - MonsterId: rin
     SkillEffects:
-    - SkillId: rin-a
-      Prefab: {fileID: 7968378587265563361, guid: 19bfba788239eba498a44cb67c2622c6, type: 3}
-    - SkillId: rin-b
-      Prefab: {fileID: 2447093715789092070, guid: 1265e3a5e02b7f14cb94a3a818221ffa, type: 3}
-    - SkillId: rin-c
-      Prefab: {fileID: 8767310348598417902, guid: c17e18be6f4f31b49a083bf1ce120f0d, type: 3}
     - SkillId: rin-d
       Prefab: {fileID: 4571567099965563202, guid: 4fb536ec34e06544ab6226bf8f02cb08, type: 3}
-  - MonsterId: sein
-    SkillEffects:
-    - SkillId: sein-a
-      Prefab: {fileID: 4615280462318169642, guid: 256552cb82ec9c2499fc2e0e01d20dd2, type: 3}
-    - SkillId: sein-b
-      Prefab: {fileID: 4615280462318169642, guid: 4a98d27a330426f4c8b35ea35171bd9a, type: 3}
-    - SkillId: sein-c
-      Prefab: {fileID: 4615280462318169642, guid: 4a98d27a330426f4c8b35ea35171bd9a, type: 3}
-  - MonsterId: vega
-    SkillEffects: []
   enemySkillEffects:
   - EnemyId: stage1-swordsman
     SkillEffects:

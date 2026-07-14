@@ -33,6 +33,7 @@ namespace Pakuri.InGame
         private float critDamageBonus;
         private readonly HashSet<string> appliedBaseStatusTargets = new HashSet<string>();
         private readonly HashSet<string> appliedEffectStatusTargets = new HashSet<string>();
+        private readonly List<Collider2D> lineOverlapResults = new List<Collider2D>(32);
 
         public void Initialize(
             InGameCombatManager manager,
@@ -107,7 +108,9 @@ namespace Pakuri.InGame
                 critChanceBonus,
                 critDamageBonus,
                 appliedBaseStatusTargets,
-                appliedEffectStatusTargets);
+                appliedEffectStatusTargets,
+                null,
+                lineOverlapResults);
         }
 
         public static bool ApplyLineTick(
@@ -133,7 +136,8 @@ namespace Pakuri.InGame
             float critDamageBonus,
             HashSet<string> baseStatusAppliedTargets = null,
             HashSet<string> effectStatusAppliedTargets = null,
-            string damageMeterSourceId = null)
+            string damageMeterSourceId = null,
+            List<Collider2D> overlapResults = null)
         {
             if (manager == null || sourceEntry == null || unitRoster == null || lineDirection.sqrMagnitude <= 0.0001f)
             {
@@ -141,6 +145,20 @@ namespace Pakuri.InGame
             }
 
             var normalizedDirection = lineDirection.normalized;
+            var resolvedLength = Mathf.Max(0.1f, lineLength);
+            var resolvedWidth = Mathf.Max(0.1f, lineWidth);
+            var hitboxCenter = lineOrigin + normalizedDirection * (resolvedLength * 0.5f);
+            var hitboxAngle = Mathf.Atan2(normalizedDirection.y, normalizedDirection.x) * Mathf.Rad2Deg;
+            var overlappedColliders = overlapResults ?? new List<Collider2D>(32);
+            overlappedColliders.Clear();
+            Physics2D.SyncTransforms();
+            Physics2D.OverlapBox(
+                hitboxCenter,
+                new Vector2(resolvedLength, resolvedWidth),
+                hitboxAngle,
+                ContactFilter2D.noFilter,
+                overlappedColliders);
+
             var candidates = SkillExecutionUtility.ResolveTargetList(sourceEntry, unitRoster, targetingSpec);
             var hitUnitIds = new HashSet<string>();
             var routed = false;
@@ -158,7 +176,13 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                if (!IsInsideLine(lineOrigin, normalizedDirection, lineLength, lineWidth, target.Transform.position))
+                if (!IsInsideLineHitbox(
+                        overlappedColliders,
+                        target,
+                        lineOrigin,
+                        normalizedDirection,
+                        resolvedLength,
+                        resolvedWidth))
                 {
                     continue;
                 }
@@ -223,7 +247,9 @@ namespace Pakuri.InGame
                     critChanceBonus,
                     critDamageBonus,
                     appliedBaseStatusTargets,
-                    appliedEffectStatusTargets);
+                    appliedEffectStatusTargets,
+                    null,
+                    lineOverlapResults);
             }
 
             if (remainingDuration <= 0f)
@@ -257,7 +283,45 @@ namespace Pakuri.InGame
             }
         }
 
-        private static bool IsInsideLine(
+        private static bool IsInsideLineHitbox(
+            IReadOnlyList<Collider2D> overlappedColliders,
+            UnitRosterEntry target,
+            Vector2 lineOrigin,
+            Vector2 normalizedDirection,
+            float lineLength,
+            float lineWidth)
+        {
+            if (target == null || target.Model == null || !target.IsAlive)
+            {
+                return false;
+            }
+
+            var targetColliders = target.GetHitboxColliders();
+            var hasEnabledTargetCollider = false;
+            for (var i = 0; targetColliders != null && i < targetColliders.Length; i++)
+            {
+                var targetCollider = targetColliders[i];
+                if (targetCollider == null || !targetCollider.enabled)
+                {
+                    continue;
+                }
+
+                hasEnabledTargetCollider = true;
+                for (var j = 0; overlappedColliders != null && j < overlappedColliders.Count; j++)
+                {
+                    if (overlappedColliders[j] == targetCollider)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return !hasEnabledTargetCollider
+                && target.Transform != null
+                && IsPointInsideLine(lineOrigin, normalizedDirection, lineLength, lineWidth, target.Transform.position);
+        }
+
+        private static bool IsPointInsideLine(
             Vector2 lineOrigin,
             Vector2 normalizedDirection,
             float lineLength,

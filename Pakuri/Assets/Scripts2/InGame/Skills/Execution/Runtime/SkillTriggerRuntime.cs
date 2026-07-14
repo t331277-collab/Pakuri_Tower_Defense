@@ -1227,7 +1227,7 @@ namespace Pakuri.InGame
             var width = Mathf.Max(0.1f, trigger.Radius);
             var center = origin + direction * (length * 0.5f);
 
-            var runtimeVisual = trigger.RuntimeVisual;
+            var runtimeVisual = ResolveTriggeredLineRuntimeVisual(source, trigger);
             var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
             if (hasRuntimeVisual && combatManager.Effects != null)
             {
@@ -1280,6 +1280,26 @@ namespace Pakuri.InGame
                 null,
                 null,
                 trigger.TriggerId);
+        }
+
+        private static RuntimeSkillVisualSpec ResolveTriggeredLineRuntimeVisual(
+            BaseUnitRuntimeModel source,
+            SkillTriggerDefinition trigger)
+        {
+            if (trigger == null || RuntimeSkillVisualFactory.HasVisual(trigger.RuntimeVisual))
+            {
+                return trigger != null ? trigger.RuntimeVisual : null;
+            }
+
+            var skillId = !string.IsNullOrWhiteSpace(trigger.TriggeredSkillId)
+                ? trigger.TriggeredSkillId
+                : trigger.SourceSkillId;
+            var runtime = source != null && source.SkillRuntime != null
+                ? source.SkillRuntime.FindBySkillId(skillId)
+                : null;
+            return runtime != null && runtime.Data != null
+                ? runtime.Data.RuntimeVisual
+                : null;
         }
 
         private static SkillEffectDefinition ResolveTriggeredOnHitStatusEffect(BaseUnitRuntimeModel source, SkillTriggerDefinition trigger)

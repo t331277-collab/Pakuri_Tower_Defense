@@ -380,3 +380,75 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-18: User reported that the issue was not CSV corruption but wrong translated/hardcoded skill naming and requested Code Builder correction.
+
+## Task: 2026-07-14 Eve B Runtime Line Collider Detection
+
+### Task title
+
+Move Eve B line-hit detection onto the shared runtime collider query.
+
+### Goals
+
+- Detect Eve B targets by their runtime hitbox colliders.
+- Keep line query offset `(0,0)` and avoid new CSV columns.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Eve B CSV visual data and prefab assets were not changed; only the shared LineAttack execution path changed.
+- Original `Eve_B.prefab` collider offset `(0,0)` was used as evidence.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and build-validated; user Play Mode boundary check remains.
+
+### Next Actions
+
+- User verifies Eve B hits targets whose colliders overlap the line edge and misses non-overlapping targets.
+
+### Evidence
+
+- `BeamSkillExecutor` routes Eve B `LineAttack` through `InGameLineAttackActor.ApplyLineTick`.
+- `ApplyLineTick` now executes a centered, rotated `Physics2D.OverlapBox(length, width)` and matches results against `UnitRosterEntry.GetHitboxColliders()`.
+- `Assembly-CSharp.csproj` builds with 0 errors; Unity-MCP InGame skill validation passed with 0 warnings.
+
+### History
+
+- 2026-07-14: User requested collider-based runtime detection for Eve B together with Vega B.
+- 2026-07-14: Code Builder implemented it through the shared LineAttack actor.
+
+## Task: Eve runtime skill prefab decommission
+
+### Goals
+
+- Remove all six Eve skill prefabs while preserving runtime visuals and projectile branches.
+
+### Constraints
+
+- LineAttack remains collider-driven; no new CSV columns; collider offset remains `(0, 0)`.
+
+### Role Owner
+
+- Code Builder
+
+### Status
+
+- Code complete; user Play Mode verification pending.
+
+### Next Actions
+
+- User verifies Eve A-E, especially A branch projectiles and B line hit detection, in Play Mode.
+
+### Evidence
+
+- Projectile branch runtime visual support was added to `ProjectileSkillExecutor` and `InGameProjectileActor`.
+- `NewRunScene.unity` contains no Eve monster skill prefab mappings.
+- `Pakuri/Assets/Prefab/Skill/Eve` assets and `Eve.meta` were deleted.
+
+### History
+
+- 2026-07-14: Code Builder completed Eve prefab dependency removal.

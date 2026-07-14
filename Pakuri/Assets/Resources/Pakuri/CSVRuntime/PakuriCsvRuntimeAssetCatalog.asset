@@ -32,6 +32,9 @@ MonoBehaviour:
       15\uC77C \uC624\uD6C4 05_37_22-Photoroom 1.png"
     Asset: {fileID: 21300000, guid: 1b8a9fbe74e502a45b4caddef70bf134, type: 3}
   - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
+      22\uC77C \uC624\uC804 01_06_44-Photoroom 1.png"
+    Asset: {fileID: 21300000, guid: 3c2a4a372ae34bf42a3f35348ba45478, type: 3}
+  - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
       22\uC77C \uC624\uC804 12_15_03-Photoroom 1.png"
     Asset: {fileID: 21300000, guid: 2eda7ef196190804baa452114008d4b2, type: 3}
   - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
@@ -78,47 +81,20 @@ MonoBehaviour:
     Asset: {fileID: 21300000, guid: 9ee6c41e93c20ca4696a0c35a4fe786d, type: 3}
   - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/E-1.png
     Asset: {fileID: 21300000, guid: 5afdaa6480ea77a41a37ef3b7773549b, type: 3}
+  - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Sprite/B_1.png
+    Asset: {fileID: 21300000, guid: 7ce5da5652fb00d4c8d97d8a5ddce12e, type: 3}
+  - AssetPath: "Assets/Image/Monster/Vega/SkillEffect/Sprite/ChatGPT Image 2026\uB144
+      5\uC6D4 28\uC77C \uC624\uD6C4 10_11_00-Photoroom 1.png"
+    Asset: {fileID: 21300000, guid: 809d294b352cce842a176df6a98374c9, type: 3}
+  - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Sprite/D_1.png
+    Asset: {fileID: 21300000, guid: d68ccca1cdf0b6b45b1fa3849f669724, type: 3}
+  - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Sprite/E_1.png
+    Asset: {fileID: 21300000, guid: f7fba0dc8867c484bb37cb09224e7c51, type: 3}
+  - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Vega_Shoot2.png
+    Asset: {fileID: -6777606773706237578, guid: 725f2fe8f2a299540b099f2e8469f36e, type: 3}
   Prefabs:
-  - AssetPath: Assets/Prefab/Skill/Ariel/Ariel_B.prefab
-    Asset: {fileID: 3529180550599226198, guid: a94d18f89e17df94fbed6a9e057e7fed, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Ariel/Ariel_C-Buff.prefab
-    Asset: {fileID: 8366197105921393042, guid: 33b5e950176a3454e9e779d062c8d540, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Ariel/Ariel_C.prefab
-    Asset: {fileID: 1713502052278588150, guid: f851084efb562e043a673ac67840693f, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Rin/Rin_A.prefab
-    Asset: {fileID: 7968378587265563361, guid: 19bfba788239eba498a44cb67c2622c6, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Rin/Rin_D_master_1.prefab
-    Asset: {fileID: 8682295390662031567, guid: 21c89fcc7f13a3d489440cc7d72196e7, type: 3}
   - AssetPath: Assets/Prefab/Skill/Rin/Rin_E.prefab
     Asset: {fileID: 6357067641262685288, guid: 896e086a136a4ef4a8054935eef3cfc1, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Rin/Rin_F.prefab
-    Asset: {fileID: 108287567450996986, guid: 0cad2911a166fec469c55abfb08383ae, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Sein/Sein_A_Master-2.prefab
-    Asset: {fileID: 5485008907326897054, guid: 70c4e5c831b879d46ad9420f17ba40ec, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Sein/Sein_C.prefab
-    Asset: {fileID: 3852850182120213786, guid: 307075734bf07414191a02f42bf58094, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Sein/Sein_C_Master-2.prefab
-    Asset: {fileID: 5485008907326897054, guid: 79800cce1c1fe1a46af3570c1675f8e2, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Sein/Sein_C_Master_1.prefab
-    Asset: {fileID: 2282866027505473427, guid: 079bea2142eb99f4a8bf1d91a533fa67, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Sein/Sein_D.prefab
-    Asset: {fileID: 2282866027505473427, guid: 395f96024484e1049881c2b3feab69ba, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Sein/Sein_D_Master_2.prefab
-    Asset: {fileID: 2282866027505473427, guid: eeacd43e7677aa447a2a8d39670a1420, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Sein/Sein_E.prefab
-    Asset: {fileID: 6033072763576960657, guid: f3d5f6e31aa6d624aa4c95a67d7b874a, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Vega/Vega_A.prefab
-    Asset: {fileID: 3711649804326925464, guid: 9b694563cba96284f8551bc1f5f95c15, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Vega/Vega_A_Master_2.prefab
-    Asset: {fileID: 3711649804326925464, guid: 3b13e808382b0f14bb42f1dcc921a394, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Vega/Vega_B.prefab
-    Asset: {fileID: 6171574813146722975, guid: f0dd0e0f0196eff429e295f798f5423d, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Vega/Vega_C.prefab
-    Asset: {fileID: 5129220136040390084, guid: 383d16217e4c2dc49acd27923563e303, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Vega/Vega_D.prefab
-    Asset: {fileID: 2841107167972549463, guid: 47b7f2f4cd2e55341b1c0b180bdc635f, type: 3}
-  - AssetPath: Assets/Prefab/Skill/Vega/Vega_E.prefab
-    Asset: {fileID: 6913114519679810237, guid: 4f10dd1703cb6a148be6a482ea00b73d, type: 3}
   AnimatorControllers:
   - AssetPath: Assets/Image/Monster/ariel/SkillEffect/1.controller
     Asset: {fileID: 9100000, guid: 3547e90223db8fb4893a84732a1e3bb7, type: 2}
@@ -128,6 +104,9 @@ MonoBehaviour:
   - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
       15\uC77C \uC624\uD6C4 05_37_22-Photoroom 1.controller"
     Asset: {fileID: 9100000, guid: 5807496f41cc3194ea713684c395202b, type: 2}
+  - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
+      22\uC77C \uC624\uC804 01_06_44-Photoroom 1.controller"
+    Asset: {fileID: 9100000, guid: d8ff7d9468bd57f45b70d20cd756601d, type: 2}
   - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
       22\uC77C \uC624\uC804 12_15_03-Photoroom 1.controller"
     Asset: {fileID: 9100000, guid: c6c50bf91cc59d44f9e89207c63d2e9a, type: 2}
@@ -171,3 +150,12 @@ MonoBehaviour:
     Asset: {fileID: 9100000, guid: 5cd3e62057a25f64386a9719c9c7b8fc, type: 2}
   - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/E-1.controller
     Asset: {fileID: 9100000, guid: 3043ba2ee29640f4fb83076cce1b33db, type: 2}
+  - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Sprite/B_1.controller
+    Asset: {fileID: 9100000, guid: 62b71b3b63061af4bb07d121fc5e6448, type: 2}
+  - AssetPath: "Assets/Image/Monster/Vega/SkillEffect/Sprite/ChatGPT Image 2026\uB144
+      5\uC6D4 28\uC77C \uC624\uD6C4 10_11_00-Photoroom 1.controller"
+    Asset: {fileID: 9100000, guid: 0967077254bcfa94882c33ea9da4c71d, type: 2}
+  - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Sprite/D_1.controller
+    Asset: {fileID: 9100000, guid: a531fdbb2a677224889af5cab37a8d76, type: 2}
+  - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Sprite/E_1.controller
+    Asset: {fileID: 9100000, guid: 8da98440a7061014aac80c79f58be8a8, type: 2}

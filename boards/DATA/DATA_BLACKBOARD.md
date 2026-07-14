@@ -2892,6 +2892,7 @@ Implemented by Code Builder.
 
 - 2026-05-29: User requested a Code Builder handoff that includes monster icon data ownership for the damage meter UI.
 - 2026-05-29: Code Builder added the blank-safe `MonsterIconImage` CSV/catalog path for damage meter panel icons.
+
 ## Task: 2026-07-12 Rin Runtime Visual Data Feasibility
 
 ### Task title
@@ -2989,3 +2990,118 @@ Implemented, synchronized, and validated.
 
 - 2026-07-13: User rejected offset authoring for Sein because both object and collider offsets are fixed at `(0,0)`.
 - 2026-07-13: Code Builder added the distinct impact visual contract and authored Sein runtime visual rows/nodes.
+
+## Task: 2026-07-14 Vega Runtime Visual CSV Design
+
+### Task title
+
+Define the active CSV and graph changes for Vega prefab-to-runtime skill visuals.
+
+### Goals
+
+- Populate existing base runtime visual fields for Vega A-E.
+- Reuse Vega B base runtime visual for B master 1 without changing the line-attack Trigger CSV schema.
+- Replace Vega A master 2 `EffectVisual` with a static, hitbox-free `RuntimeEffectVisual`.
+
+### Constraints
+
+- Role Owner is Designer.
+- CSV and C# implementation was later completed by Code Builder.
+- No offset fields are required: A/D gameplay colliders are centered, and B's non-zero prefab collider offset is not part of its mathematical line-hit authority.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Implemented and validated by the related Code Builder task below.
+
+### Next Actions
+
+- User verifies runtime visual and collider parity in Play Mode.
+
+### Evidence
+
+- The five active Vega base rows already expose base runtime visual fields but leave them blank.
+- `line_attack_skill_triger.csv` remains unchanged at 37 columns; `SkillTriggerRuntime` now resolves B master 1 visual from base `vega-b`.
+- `RuntimeEffectVisual` currently requires both sprite and controller in `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs:490-502` and `skill_node_definition_params.csv:57-62`; `Vega_A_Master_2.prefab` has no Animator.
+- Exact values and behavior constraints are recorded in `boards/MON/VEGA_SKILL_RUNTIME_VISUAL_MIGRATION_PLAN.md`.
+
+### History
+
+- 2026-07-14: Designer isolated the two authoring gaps and avoided adding unused offset or Vega-specific fields.
+
+## Task: 2026-07-14 Vega Runtime Visual CSV Implementation
+
+### Task title
+
+Author Vega runtime visuals without new offset or Trigger columns.
+
+### Goals
+
+- Move Vega A-E and A master 2 visual authority into active runtime CSV/graph data.
+- Remove B master 1 prefab authority while reusing base B runtime visual.
+- Preserve centered runtime colliders and existing gameplay values.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV columns were added; `line_attack_skill_triger.csv` remains 37 columns.
+- Object and collider offsets are fixed to `(0,0)` by existing default materialization.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, synchronized, and validated.
+
+### Next Actions
+
+- User verifies visual and hitbox parity in Play Mode.
+
+### Evidence
+
+- Vega A-E base prefab paths, B master 1 prefab path, and A master 2 `EffectVisual` prefab reference were removed from active runtime CSV/graph files.
+- Vega A/D contain runtime hitbox sizes; B uses shared runtime line query; A master 2 and E remain hitbox-free.
+- `RuntimeEffectVisual` animator controller is optional in code schema and `skill_node_definition_params.csv`.
+- Seven edited CSV files have zero header/row field-count mismatches.
+- Active runtime skill CSV search has zero `Assets/Prefab/Skill/Vega` references.
+
+### History
+
+- 2026-07-14: Code Builder implemented the user's no-new-column, zero-offset data boundary.
+
+## Task: Runtime skill prefab dependency decommission
+
+### Goals
+
+- Keep runtime skill numeric/visual authority in runtime CSV and graph nodes while deleting migrated skill prefabs.
+
+### Constraints
+
+- No new CSV columns; runtime object and collider offsets remain `(0, 0)`; retain Rin-D and Rin-E prefab exceptions.
+
+### Role Owner
+
+- Code Builder
+
+### Status
+
+- Code complete; user Play Mode verification pending.
+
+### Next Actions
+
+- User verifies base, enhancement, and master skill visuals and hit detection in Play Mode.
+
+### Evidence
+
+- `boards/MON/MONSTER_SKILL_RUNTIME_PREFAB_DECOMMISSION_PLAN.md`
+- Runtime CSV shape check passed for 33 files; active runtime prefab path is Rin-E only.
+- Deleted prefab GUID reference check passed for 33 prefab GUIDs.
+
+### History
+
+- 2026-07-14: Code Builder removed migrated prefab paths, normalized runtime collider offsets, and deleted migrated prefab assets.

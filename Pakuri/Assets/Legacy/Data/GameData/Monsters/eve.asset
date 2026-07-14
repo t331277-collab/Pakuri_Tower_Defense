@@ -156,7 +156,7 @@ MonoBehaviour:
     ImplementationState: 2
     IsDefaultLearned: 0
     SkillIcon: {fileID: 0}
-    SkillEffectPrefab: {fileID: 3843049686398240108, guid: 224f5e7622cd0264b961ee388a015d65, type: 3}
+    SkillEffectPrefab: {fileID: 0}
     DescriptionText: "Beholder\uC758 Decomposition Ray \uCC38\uACE0."
     Attribute: 2
     BaseDamage: 12

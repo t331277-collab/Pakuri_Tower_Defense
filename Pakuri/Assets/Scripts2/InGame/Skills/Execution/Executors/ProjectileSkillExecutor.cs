@@ -126,7 +126,7 @@ namespace Pakuri.InGame
                 var projectileLaunchIndex = context.Runtime != null
                     ? context.Runtime.AdvanceProjectileLaunchCount()
                     : 0;
-                var branchSpec = ResolveBranchSpec(snapshot, prefab, projectileLaunchIndex);
+                var branchSpec = ResolveBranchSpec(snapshot, runtimeVisual, prefab, projectileLaunchIndex);
                 var rotation = SkillExecutionUtility.ResolveRotation(spreadDirection);
                 var instance = hasRuntimeVisual
                     ? RuntimeSkillVisualFactory.Create(
@@ -194,6 +194,7 @@ namespace Pakuri.InGame
                 context,
                 snapshot,
                 skill,
+                runtimeVisual,
                 prefab,
                 baseStatusSpec,
                 onHitEffects,
@@ -238,9 +239,15 @@ namespace Pakuri.InGame
                 direction.x * cos - direction.y * sin,
                 direction.x * sin + direction.y * cos).normalized;
         }
-        private static ProjectileBranchHitSpec ResolveBranchSpec(SkillExecutionSnapshot snapshot, GameObject prefab, int projectileLaunchIndex)
+        private static ProjectileBranchHitSpec ResolveBranchSpec(
+            SkillExecutionSnapshot snapshot,
+            RuntimeSkillVisualSpec runtimeVisual,
+            GameObject prefab,
+            int projectileLaunchIndex)
         {
-            if (snapshot == null || !snapshot.HasBranchBehavior || prefab == null)
+            if (snapshot == null
+                || !snapshot.HasBranchBehavior
+                || (!RuntimeSkillVisualFactory.HasVisual(runtimeVisual) && prefab == null))
             {
                 return null;
             }
@@ -256,6 +263,7 @@ namespace Pakuri.InGame
             return new ProjectileBranchHitSpec
             {
                 Enabled = true,
+                RuntimeVisual = runtimeVisual,
                 ProjectilePrefab = prefab,
                 Chance = Mathf.Clamp01(chance),
                 Count = Math.Max(1, count),
@@ -314,6 +322,7 @@ namespace Pakuri.InGame
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
             ProjectileSkillData skill,
+            RuntimeSkillVisualSpec runtimeVisual,
             GameObject prefab,
             ProjectileStatusHitSpec statusSpec,
             SkillEffectDefinition[] onHitEffects,
@@ -334,7 +343,7 @@ namespace Pakuri.InGame
                 || skill == null
                 || snapshot == null
                 || !snapshot.HasFollowUpProjectile
-                || prefab == null
+                || (!RuntimeSkillVisualFactory.HasVisual(runtimeVisual) && prefab == null)
                 || currentBurstProjectileIndex < burstProjectileCount)
             {
                 return;
@@ -344,6 +353,7 @@ namespace Pakuri.InGame
                 context,
                 snapshot,
                 skill,
+                runtimeVisual,
                 prefab,
                 statusSpec,
                 onHitEffects,
@@ -362,6 +372,7 @@ namespace Pakuri.InGame
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
             ProjectileSkillData skill,
+            RuntimeSkillVisualSpec runtimeVisual,
             GameObject prefab,
             ProjectileStatusHitSpec statusSpec,
             SkillEffectDefinition[] onHitEffects,
@@ -384,7 +395,10 @@ namespace Pakuri.InGame
                 yield return null;
             }
 
-            if (context == null || context.CombatManager == null || skill == null || prefab == null)
+            if (context == null
+                || context.CombatManager == null
+                || skill == null
+                || (!RuntimeSkillVisualFactory.HasVisual(runtimeVisual) && prefab == null))
             {
                 yield break;
             }
@@ -396,6 +410,7 @@ namespace Pakuri.InGame
                     context,
                     snapshot,
                     skill,
+                    runtimeVisual,
                     prefab,
                     statusSpec,
                     onHitEffects,
@@ -416,6 +431,7 @@ namespace Pakuri.InGame
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
             ProjectileSkillData skill,
+            RuntimeSkillVisualSpec runtimeVisual,
             GameObject prefab,
             ProjectileStatusHitSpec statusSpec,
             SkillEffectDefinition[] onHitEffects,
@@ -430,7 +446,10 @@ namespace Pakuri.InGame
             float lifetime,
             bool isMagazineLastProjectile)
         {
-            if (context == null || context.CombatManager == null || skill == null || prefab == null)
+            if (context == null
+                || context.CombatManager == null
+                || skill == null
+                || (!RuntimeSkillVisualFactory.HasVisual(runtimeVisual) && prefab == null))
             {
                 return;
             }
@@ -444,8 +463,17 @@ namespace Pakuri.InGame
             var projectileLaunchIndex = context.Runtime != null
                 ? context.Runtime.AdvanceProjectileLaunchCount()
                 : 0;
-            var branchSpec = ResolveBranchSpec(snapshot, prefab, projectileLaunchIndex);
-            var instance = effects.InstantiateSkillPrefab(prefab, origin, SkillExecutionUtility.ResolveRotation(direction));
+            var branchSpec = ResolveBranchSpec(snapshot, runtimeVisual, prefab, projectileLaunchIndex);
+            var rotation = SkillExecutionUtility.ResolveRotation(direction);
+            var instance = RuntimeSkillVisualFactory.HasVisual(runtimeVisual)
+                ? RuntimeSkillVisualFactory.Create(
+                    effects,
+                    runtimeVisual,
+                    string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameProjectile" : $"InGameProjectile_{skill.SkillId}",
+                    origin,
+                    rotation,
+                    hitboxIsTrigger: true)
+                : effects.InstantiateSkillPrefab(prefab, origin, rotation);
             if (instance == null)
             {
                 return;

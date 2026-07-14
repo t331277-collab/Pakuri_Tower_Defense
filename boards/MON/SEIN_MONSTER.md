@@ -882,3 +882,35 @@ Implemented and non-Play-Mode verified.
 
 - 2026-07-13: User authorized Code Builder to start the refactor and fixed the zero-offset contract.
 - 2026-07-13: Runtime composition code/data/catalog wiring was implemented; manual gameplay parity was intentionally left to the user.
+
+## Task: Sein runtime skill prefab decommission
+
+### Goals
+
+- Remove all nine Sein skill prefabs after clearing base, trigger, and graph prefab references.
+
+### Constraints
+
+- Use existing runtime visual fields and `RuntimeEffectVisual`; no new columns; collider offset remains `(0, 0)`.
+
+### Role Owner
+
+- Code Builder
+
+### Status
+
+- Code complete; user Play Mode verification pending.
+
+### Next Actions
+
+- User verifies Sein A-E, enhancement, and master visuals in Play Mode.
+
+### Evidence
+
+- Sein C/D/E base prefab paths and A/C/D/E effect prefab nodes were removed while runtime visual values remain.
+- `NewRunScene.unity` contains no Sein monster skill prefab mappings.
+- `Pakuri/Assets/Prefab/Skill/Sein` assets and `Sein.meta` were deleted.
+
+### History
+
+- 2026-07-14: Code Builder completed Sein prefab dependency removal.

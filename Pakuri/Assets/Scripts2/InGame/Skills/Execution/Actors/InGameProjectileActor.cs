@@ -362,7 +362,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (branchOnHit.ProjectilePrefab == null || Random.value > Mathf.Clamp01(branchOnHit.Chance))
+            if (!branchOnHit.HasProjectileVisual || Random.value > Mathf.Clamp01(branchOnHit.Chance))
             {
                 return;
             }
@@ -480,10 +480,16 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var instance = effects.InstantiateSkillPrefab(
-                branchOnHit.ProjectilePrefab,
-                origin,
-                ResolveRotation(branchDirection));
+            var rotation = ResolveRotation(branchDirection);
+            var instance = RuntimeSkillVisualFactory.HasVisual(branchOnHit.RuntimeVisual)
+                ? RuntimeSkillVisualFactory.Create(
+                    effects,
+                    branchOnHit.RuntimeVisual,
+                    "InGameProjectileBranch",
+                    origin,
+                    rotation,
+                    hitboxIsTrigger: true)
+                : effects.InstantiateSkillPrefab(branchOnHit.ProjectilePrefab, origin, rotation);
             if (instance == null)
             {
                 return;
@@ -742,11 +748,14 @@ namespace Pakuri.InGame
         private readonly HashSet<string> branchedTargets = new HashSet<string>();
 
         public bool Enabled;
+        public RuntimeSkillVisualSpec RuntimeVisual;
         public GameObject ProjectilePrefab;
         public float Chance;
         public int Count;
         public float DamageMultiplier = 1f;
         public float SearchRadius;
+
+        public bool HasProjectileVisual => RuntimeSkillVisualFactory.HasVisual(RuntimeVisual) || ProjectilePrefab != null;
 
         public bool HasBranchedTarget(string unitId)
         {
@@ -771,6 +780,7 @@ namespace Pakuri.InGame
             return new ProjectileBranchHitSpec
             {
                 Enabled = Enabled,
+                RuntimeVisual = RuntimeVisual,
                 ProjectilePrefab = ProjectilePrefab,
                 Chance = Chance,
                 Count = Count,

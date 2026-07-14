@@ -44,5 +44,4 @@
 "sein","Choice","sein-d-master-2","Effect","0","sein-d","1","EffectDamage","Fire","12","0","0.4","3.2","0.55","0.5","","","","","",""
 "sein","Choice","sein-d-master-2","Effect","0","sein-d","2","EffectTarget","Enemy","Nearest","Circle","PrimarySkillCenter","Center","OnExpire","","","","","","",""
 "sein","Choice","sein-d-master-2","Effect","0","sein-d","3","EffectLifetime","3","","","","","","","","","","","",""
-"sein","Choice","sein-d-master-2","Effect","0","sein-d","4","EffectVisual","Assets/Prefab/Skill/Sein/Sein_D_Master_2.prefab","","","","","","","","","","","",""
-"sein","Choice","sein-d-master-2","Effect","0","sein-d","5","RuntimeEffectVisual","Assets/Image/Monster/Sein/SkillEffect/Sprite/C-1.png","Assets/Image/Monster/Sein/SkillEffect/Sprite/C-1.controller","1","0","3.593319","1.8302448","","","","","","",""
+"sein","Choice","sein-d-master-2","Effect","0","sein-d","4","RuntimeEffectVisual","Assets/Image/Monster/Sein/SkillEffect/Sprite/C-1.png","Assets/Image/Monster/Sein/SkillEffect/Sprite/C-1.controller","1","0","3.593319","1.8302448","","","","","","",""

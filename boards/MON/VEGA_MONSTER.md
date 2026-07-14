@@ -780,3 +780,121 @@ Implemented and locally YAML/build-verified.
 
 - 2026-06-07: User asked Code Builder to create each monster's six animation clips, create controllers with Rin's parameter contract, and wire each monster prefab Animator controller.
 - 2026-06-07: User reported the non-Rin monster prefabs still did not show assigned Animator / `Animation_Controller`; Code Builder found the generated component blocks were owned by the wrong GameObject fileID and corrected them to the root Unit GameObject.
+
+## Task: 2026-07-14 Vega Skill Runtime Visual Migration Design
+
+### Task title
+
+Design Vega's prefab-to-runtime skill visual migration.
+
+### Goals
+
+- Move Vega A-E, A master 2, and B master 1 away from active skill-prefab instantiation.
+- Preserve gameplay-authoritative colliders: Vega A projectile, Vega D marked-target deployments, and shared LineAttack runtime box queries.
+- Keep A master 2 and E on their existing mathematical target-resolution paths.
+
+### Constraints
+
+- Role Owner is Designer.
+- Implementation is complete; prefab files remain on disk.
+- Skill Blueprints were excluded because this is a presentation/runtime assembly refactor.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Implemented and statically validated; user Play Mode parity remains.
+
+### Next Actions
+
+- Verify each converted path and B collider boundaries in Play Mode.
+
+### Evidence
+
+- Unity-MCP found six single-root Vega skill prefabs: A, A master 2, B, C, D, and E.
+- Active runtime CSV/graph references occur in the five A-E base rows, B master 1 line Trigger, and A master 2 Effect graph.
+- `InGameLineAttackActor.ApplyLineTick` now uses a centered `length × width` runtime `Physics2D.OverlapBox` against target colliders.
+- `InGameSkillDefinitionMapper` forces D's status-filtered deployments onto `UsePrefabHitbox`, making D's `(2.64,2.63)` collider gameplay authority.
+- Detailed values and the ordered migration are recorded in `boards/MON/VEGA_SKILL_RUNTIME_VISUAL_MIGRATION_PLAN.md`.
+
+### History
+
+- 2026-07-14: User requested a Vega runtime visual migration plan following the Sein plan format.
+- 2026-07-14: Code Builder removed active Vega prefab references, implemented runtime visuals and shared LineAttack collider queries, and passed Unity-MCP validation.
+
+## Task: 2026-07-14 Vega Runtime Visual And Collider Migration
+
+### Task title
+
+Move Vega skill presentation to runtime assembly and Vega B detection to runtime collider queries.
+
+### Goals
+
+- Runtime-assemble Vega A-E, A master 2, and B master 1 without active Vega skill-prefab references.
+- Use target colliders for Vega B and B master 1 line detection.
+- Keep every runtime collider/object offset `(0,0)` and add no CSV columns.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Original prefabs remain evidence assets and were not deleted or edited.
+- Skill Blueprint was excluded; Unity-MCP was the only MCP used.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented; build and Unity-MCP static validation passed.
+
+### Next Actions
+
+- User verifies Vega A-E, A master 2, and B master 1 in Play Mode.
+- Pay special attention to B/B master 1 edge overlap and D marked-target deployment coverage.
+
+### Evidence
+
+- Active runtime skill CSV/graph search has zero `Assets/Prefab/Skill/Vega` matches.
+- Vega B base runtime visual lives in `skills_line_attack.csv`; B master 1 resolves it via `SkillTriggerRuntime` without Trigger CSV columns.
+- `InGameLineAttackActor` queries a rotated `length × width` box and compares overlap results with target hitbox colliders.
+- Vega A and D runtime hitboxes are centered; missing offset columns materialize as `(0,0)` through `BuildRuntimeVisual` defaults.
+- Runtime catalog sync and both Unity validation menus completed with no skill warning/error.
+
+### History
+
+- 2026-07-14: Code Builder completed migration and recorded user-owned Play Mode verification.
+
+## Task: Vega runtime skill prefab decommission
+
+### Goals
+
+- Remove all six Vega skill prefabs while preserving runtime visuals, collider LineAttack, and follow-up projectiles.
+
+### Constraints
+
+- No new CSV columns; object and collider offsets remain `(0, 0)`.
+
+### Role Owner
+
+- Code Builder
+
+### Status
+
+- Code complete; user Play Mode verification pending.
+
+### Next Actions
+
+- User verifies Vega A-E, especially A Master 1 follow-up and B/Master line hit detection, in Play Mode.
+
+### Evidence
+
+- Runtime follow-up projectile creation was added to `ProjectileSkillExecutor`.
+- Active runtime CSV search has zero `Assets/Prefab/Skill/Vega` references.
+- `Pakuri/Assets/Prefab/Skill/Vega` assets and `Vega.meta` were deleted.
+
+### History
+
+- 2026-07-14: Code Builder completed Vega prefab dependency removal.
