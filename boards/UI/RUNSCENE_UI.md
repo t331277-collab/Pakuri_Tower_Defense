@@ -10,6 +10,50 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - This active file now keeps only the current `NewRunScene` UI behavior still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-15 DebugPanel Number-8 Toggle
+
+### Task title
+
+Hide and reveal the authored `Canvas/DebugPanel` with number 8.
+
+### Goals
+
+- Make the developer panel unavailable visually at scene start.
+- Toggle the panel with either keyboard digit 8 control.
+- Preserve existing DebugUI button, skill-learning, and modifier-panel bindings after their move beneath `DebugPanel`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- `DebugUI.cs` remains the single owner; no additional scene component is added.
+- The inspected hierarchy `Canvas/DebugPanel/{DebugUI, DebugModifiedUI, DebugPassiveModifiedUI, DebugUIBtn}` is authoritative.
+- Unity Play Mode gameplay/input verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated.
+
+### Next Actions
+
+- User verifies the first 8 press activates the entire `DebugPanel`, the second deactivates it, and existing DebugUI controls still open and bind correctly.
+
+### Evidence
+
+- Unity-MCP reported `Canvas/DebugPanel` active in the authored scene and `DebugUI`, `DebugModifiedUI`, `DebugPassiveModifiedUI`, and `DebugUIBtn` as its inspected children.
+- Unity-MCP reported the `Pakuri.InGame.DebugUI` component on `Canvas`, so disabling `DebugPanel` does not disable the `Update()` input listener.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs` adds `debugRootPanel`, runtime initial hiding, top-row/numpad 8 toggling, and updates existing UI lookup paths to their current `DebugPanel/...` hierarchy.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors and the existing 2 MSB3277 warning groups.
+- Unity script validation reported 0 errors; scene validation reported 0 missing scripts and 0 broken prefabs.
+
+### History
+
+- 2026-07-15: User added `Canvas/DebugPanel` and requested number-8 visibility toggling through the Debug UI script.
+- 2026-07-15: Code Builder implemented the toggle and aligned DebugUI child lookup paths with the inspected new hierarchy.
+
 ## Task: 2026-07-15 UtilPanel Auto And Time Controls
 
 ### Task title

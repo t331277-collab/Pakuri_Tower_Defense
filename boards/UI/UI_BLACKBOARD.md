@@ -4,6 +4,50 @@
 - Older UI cleanup history remains in that snapshot and earlier archive bundles.
 - This active file now keeps only the surviving new-scene UI flow baseline.
 
+## Task: 2026-07-15 DebugPanel Keyboard Toggle
+
+### Task title
+
+Toggle the `NewRunScene` developer UI root with keyboard number 8.
+
+### Goals
+
+- Start `Canvas/DebugPanel` hidden at runtime.
+- Toggle the whole panel on and off with the top-row 8 key or numeric-keypad 8 key.
+- Keep the input owner active while the developer panel itself is hidden.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Input uses the project's installed Unity Input System `Keyboard` controls.
+- No scene serialization change is required because `DebugUI` remains attached to the active root `Canvas` and resolves `DebugPanel` by the inspected hierarchy path.
+- Unity Play Mode input verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated.
+
+### Next Actions
+
+- User verifies in Play Mode that 8 opens `Canvas/DebugPanel`, another 8 closes it, and both top-row and numpad 8 work.
+
+### Evidence
+
+- Unity-MCP found active `Canvas/DebugPanel` and found `Pakuri.InGame.DebugUI` attached to `Canvas`, outside that panel.
+- `Pakuri/Assets/Scripts2/InGame/UI/DebugUI.cs` now resolves `DebugPanel`, hides it in `Awake()`, and checks `Keyboard.current.digit8Key` plus `Keyboard.current.numpad8Key` in `Update()`.
+- Installed Input System source `Library/PackageCache/com.unity.inputsystem@21a28c3a6c83/InputSystem/Devices/Keyboard.cs` defines both inspected controls.
+- Runtime C# build passed with 0 errors; existing MCP assembly-reference MSB3277 warnings remained.
+- Unity script validation reported 0 errors, Unity console read returned 0 errors after clear, and `NewRunScene` validation reported 0 issues.
+
+### History
+
+- 2026-07-15: User requested a Code Builder implementation that toggles `Canvas/DebugPanel` with keyboard number 8.
+- 2026-07-15: Code Builder implemented runtime hide/toggle behavior in the existing `DebugUI` owner.
+
 ## Task: 2026-05-17 Surviving NewScene UI Flow
 
 ### Task title

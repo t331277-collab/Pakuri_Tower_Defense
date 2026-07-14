@@ -3,6 +3,7 @@ using Pakuri.Data;
 using Pakuri.Run;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace Pakuri.InGame
@@ -28,6 +29,7 @@ namespace Pakuri.InGame
             InGameSkillSlot.J
         };
 
+        [SerializeField] private GameObject debugRootPanel;
         [SerializeField] private GameObject debugPanel;
         [SerializeField] private GameObject debugModifiedPanel;
         [SerializeField] private GameObject debugPassiveModifiedPanel;
@@ -53,6 +55,7 @@ namespace Pakuri.InGame
             ResolveReferences();
             ResolveSceneUi();
             BindButtons();
+            SetDebugRootPanelVisible(false);
             SetPanelVisible(false);
             SetModifiedPanelVisible(false);
             SetPassiveModifiedPanelVisible(false);
@@ -69,6 +72,13 @@ namespace Pakuri.InGame
         private void Update()
         {
             ResolveReferences();
+
+            var keyboard = Keyboard.current;
+            if (keyboard != null
+                && (keyboard.digit8Key.wasPressedThisFrame || keyboard.numpad8Key.wasPressedThisFrame))
+            {
+                SetDebugRootPanelVisible(debugRootPanel == null || !debugRootPanel.activeSelf);
+            }
         }
 
         public void Open()
@@ -309,46 +319,51 @@ namespace Pakuri.InGame
 
         private void ResolveSceneUi()
         {
+            if (debugRootPanel == null)
+            {
+                debugRootPanel = FindChildObject("DebugPanel");
+            }
+
             if (debugPanel == null)
             {
-                debugPanel = FindChildObject("DebugUI");
+                debugPanel = FindChildObject("DebugPanel/DebugUI");
             }
 
             if (debugModifiedPanel == null)
             {
-                debugModifiedPanel = FindChildObject("DebugModifiedUI");
+                debugModifiedPanel = FindChildObject("DebugPanel/DebugModifiedUI");
             }
 
             if (debugPassiveModifiedPanel == null)
             {
-                debugPassiveModifiedPanel = FindChildObject("DebugPassiveModifiedUI");
+                debugPassiveModifiedPanel = FindChildObject("DebugPanel/DebugPassiveModifiedUI");
             }
 
             if (openButton == null)
             {
-                openButton = FindButton("DebugUIBtn") ?? FindButton("DebugBtn");
+                openButton = FindButton("DebugPanel/DebugUIBtn") ?? FindButton("DebugPanel/DebugBtn");
             }
 
             if (closeButton == null)
             {
-                closeButton = FindButton("DebugUI/Close");
+                closeButton = FindButton("DebugPanel/DebugUI/Close");
             }
 
             if (modifierCloseButton == null)
             {
-                modifierCloseButton = FindButton("DebugModifiedUI/Close");
+                modifierCloseButton = FindButton("DebugPanel/DebugModifiedUI/Close");
             }
 
             if (passiveModifierCloseButton == null)
             {
-                passiveModifierCloseButton = FindButton("DebugPassiveModifiedUI/Close");
+                passiveModifierCloseButton = FindButton("DebugPanel/DebugPassiveModifiedUI/Close");
             }
 
             EnsureSkillButtonArray();
             for (var i = 0; i < DebugSlots.Length; i++)
             {
                 var slotName = DebugSlots[i].ToString();
-                ResolveSkillButton(i, $"DebugUI/{slotName} Btn", $"DebugUI/{slotName}Btn");
+                ResolveSkillButton(i, $"DebugPanel/DebugUI/{slotName} Btn", $"DebugPanel/DebugUI/{slotName}Btn");
             }
 
             EnsureModifierOpenButtonArray();
@@ -358,25 +373,25 @@ namespace Pakuri.InGame
                 var modifierButtonName = ResolveModifierButtonName(DebugSlots[i]);
                 ResolveModifierOpenButton(
                     i,
-                    $"DebugUI/{slotName} Btn/{modifierButtonName}",
-                    $"DebugUI/{slotName}Btn/{modifierButtonName}");
+                    $"DebugPanel/DebugUI/{slotName} Btn/{modifierButtonName}",
+                    $"DebugPanel/DebugUI/{slotName}Btn/{modifierButtonName}");
             }
 
             EnsureTraitButtonArray();
-            ResolveTraitButton(0, "DebugModifiedUI/Trait1", "DebugModifiedUI/trait1");
-            ResolveTraitButton(1, "DebugModifiedUI/Trait2", "DebugModifiedUI/trait2");
-            ResolveTraitButton(2, "DebugModifiedUI/Trait3", "DebugModifiedUI/trait3");
-            ResolveTraitButton(3, "DebugModifiedUI/Trait4", "DebugModifiedUI/trait4");
-            ResolveTraitButton(4, "DebugModifiedUI/Trait5", "DebugModifiedUI/trait5");
+            ResolveTraitButton(0, "DebugPanel/DebugModifiedUI/Trait1", "DebugPanel/DebugModifiedUI/trait1");
+            ResolveTraitButton(1, "DebugPanel/DebugModifiedUI/Trait2", "DebugPanel/DebugModifiedUI/trait2");
+            ResolveTraitButton(2, "DebugPanel/DebugModifiedUI/Trait3", "DebugPanel/DebugModifiedUI/trait3");
+            ResolveTraitButton(3, "DebugPanel/DebugModifiedUI/Trait4", "DebugPanel/DebugModifiedUI/trait4");
+            ResolveTraitButton(4, "DebugPanel/DebugModifiedUI/Trait5", "DebugPanel/DebugModifiedUI/trait5");
 
             EnsureMasterButtonArray();
-            ResolveMasterButton(0, "DebugModifiedUI/Master1", "DebugModifiedUI/master1");
-            ResolveMasterButton(1, "DebugModifiedUI/Master2", "DebugModifiedUI/master2");
+            ResolveMasterButton(0, "DebugPanel/DebugModifiedUI/Master1", "DebugPanel/DebugModifiedUI/master1");
+            ResolveMasterButton(1, "DebugPanel/DebugModifiedUI/Master2", "DebugPanel/DebugModifiedUI/master2");
 
             EnsurePassiveTraitButtonArray();
-            ResolvePassiveTraitButton(0, "DebugPassiveModifiedUI/Trait1", "DebugPassiveModifiedUI/trait1");
-            ResolvePassiveTraitButton(1, "DebugPassiveModifiedUI/Trait2", "DebugPassiveModifiedUI/trait2");
-            ResolvePassiveTraitButton(2, "DebugPassiveModifiedUI/Trait3", "DebugPassiveModifiedUI/trait3");
+            ResolvePassiveTraitButton(0, "DebugPanel/DebugPassiveModifiedUI/Trait1", "DebugPanel/DebugPassiveModifiedUI/trait1");
+            ResolvePassiveTraitButton(1, "DebugPanel/DebugPassiveModifiedUI/Trait2", "DebugPanel/DebugPassiveModifiedUI/trait2");
+            ResolvePassiveTraitButton(2, "DebugPanel/DebugPassiveModifiedUI/Trait3", "DebugPanel/DebugPassiveModifiedUI/trait3");
         }
 
         private void ResolveSkillButton(int index, string primaryPath, string fallbackPath)
@@ -548,6 +563,14 @@ namespace Pakuri.InGame
             }
 
             return session != null ? session.SelectedMonsterId : string.Empty;
+        }
+
+        private void SetDebugRootPanelVisible(bool visible)
+        {
+            if (debugRootPanel != null)
+            {
+                debugRootPanel.SetActive(visible);
+            }
         }
 
         private void SetPanelVisible(bool visible)
