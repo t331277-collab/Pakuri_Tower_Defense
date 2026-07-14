@@ -5,6 +5,52 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-15 Next-Day Skill Effect Cleanup
+
+### Task title
+
+Clear completed-day runtime skill actors and applied combat effects without deleting skill metadata.
+
+### Goals
+
+- Treat `EffectManager.runtimeSkillRoot` as the ownership boundary for field-resident skill objects.
+- Disable and destroy all root children before the next day begins.
+- Clear unit statuses and transient shields, then refresh actor resource views.
+- Reset full monster active-skill runtime state, not cooldown alone.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Runtime cleanup does not alter skill definitions, learned active/passive IDs, choice records, or `RunSession` state.
+- Existing effect prefab lookup tables remain intact.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated.
+
+### Next Actions
+
+- User verifies no old projectile, zone, beam, impact, status visual, or delayed skill hit survives a day transition.
+- User verifies magazine, reload, queued burst, hit count, cast, active duration, tick timer, and cooldown begin from fresh runtime state.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/EffectManager.cs` now exposes `ClearRuntimeSkillObjects()` and clears all children of the same root used by `InstantiateSkillPrefab()` and `CreateRuntimeSkillObject()`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` calls `StopAllCoroutines()`; inspected `StartCoroutine` call sites on this manager are skill projectile, repeated deployment, delayed hit, multi-effect, and trigger paths.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs` `ResetRuntimeState()` clears cooldown, cast, active duration, tick, reload, magazine, queued burst shots, projectile count, hit count, and consecutive-hit state.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitRuntimeStateService.cs` invokes that full runtime reset while leaving model metadata untouched.
+- Runtime C# build passed with 0 errors, Unity console reported 0 errors, and `NewRunScene` validation reported no missing scripts or broken prefabs.
+
+### History
+
+- 2026-07-15: Code Builder traced all runtime skill object creation to `EffectManager.runtimeSkillRoot` and added centralized cleanup.
+- 2026-07-15: Code Builder added status, shield, passive-trigger, delayed-action, and full monster skill runtime reset at the next-day boundary.
+
 ## Task: 2026-07-13 Vega Effect Graph Composer Migration
 
 ### Task title

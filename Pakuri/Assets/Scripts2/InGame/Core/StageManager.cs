@@ -122,6 +122,11 @@ namespace Pakuri.InGame
             PendingDarkTraceReward = 0;
             PendingPrisonerCount = 0;
             PreserveCurrentNexusHealth();
+            if (combatManager != null)
+            {
+                combatManager.ResetTransientCombatStateForNextDay();
+            }
+
             activeSession.AdvanceDay();
             RestorePlayerHealthForNextDay();
             StartCurrentDay();

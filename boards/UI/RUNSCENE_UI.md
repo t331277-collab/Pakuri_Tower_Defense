@@ -10,6 +10,53 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - This active file now keeps only the current `NewRunScene` UI behavior still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-15 UtilPanel Auto And Time Controls
+
+### Task title
+
+Move Auto control ownership to `UtilPanel` and add 1x/1.5x/2x game-speed cycling.
+
+### Goals
+
+- Keep `AutoBtn` as selected-player auto-skill toggle.
+- Cycle `TimeBtn` through 1x, 1.5x, 2x, then 1x.
+- Show only `TimeBtn/1.5` at 1.5x, only `TimeBtn/2` at 2x, and neither at 1x.
+- Apply speed to current scaled-time gameplay, including cooldowns, projectiles, skill actors, effects, and spawn/skill delays.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Existing user-authored `NewRunScene` layout, image, and font changes are preserved.
+- `Time.timeScale` is the shared speed authority; individual combat systems do not apply duplicate speed multipliers.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated.
+
+### Next Actions
+
+- User verifies in Play Mode that `TimeBtn` cycles 1x → 1.5x → 2x → 1x and indicator visibility matches each state.
+- User verifies cooldowns, projectile travel, skill effects, animations, and stage delays accelerate together.
+- User verifies `AutoBtn` still toggles only selected-player auto skill mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUtilityPanelController.cs` replaced `InGameAutoSkillButton.cs` while preserving script GUID `b1158f7e84cec17449b6b904dd152208`.
+- `InGameUtilityPanelController` binds `AutoBtn` and `TimeBtn`, applies `{1f, 1.5f, 2f}` through `Time.timeScale`, adjusts `Time.fixedDeltaTime`, and updates the two indicator GameObjects.
+- Unity-MCP live scene inspection confirmed one controller on `Canvas/UtilPanel`, no controller on either button, and serialized references to `AutoBtn`, `TimeBtn`, `1.5`, `2`, and `GameManager`.
+- Unity-MCP scene validation reported 0 issues, 0 missing scripts, and 0 broken prefabs.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing MCP assembly-reference MSB3277 warnings remained.
+
+### History
+
+- 2026-07-15: User requested Code Builder implementation of shared Auto and game-speed controls under `UtilPanel`.
+- 2026-07-15: Code Builder renamed the script, centralized both button bindings on `UtilPanel`, wired the live scene, and saved `NewRunScene`.
+
 ## Task: 2026-05-31 Offering Choice Card Summary And SkillName
 
 ### Task title

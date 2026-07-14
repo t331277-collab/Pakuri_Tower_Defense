@@ -122,6 +122,22 @@ namespace Pakuri.InGame
             return instance;
         }
 
+        public void ClearRuntimeSkillObjects()
+        {
+            var root = ResolveRuntimeSkillRoot();
+            for (var i = root.childCount - 1; i >= 0; i--)
+            {
+                var child = root.GetChild(i);
+                if (child == null)
+                {
+                    continue;
+                }
+
+                child.gameObject.SetActive(false);
+                Destroy(child.gameObject);
+            }
+        }
+
         private void Awake()
         {
             lookupDirty = true;

@@ -392,6 +392,50 @@ namespace Pakuri.InGame
             passiveEffectRefreshRemaining = 0f;
         }
 
+        public void ResetTransientCombatStateForNextDay()
+        {
+            StopAllCoroutines();
+            ClearLatchedManualProjectileInput();
+            enemyCombatSystem.Clear();
+
+            var effects = ResolveEffectManager();
+            if (effects != null)
+            {
+                effects.ClearRuntimeSkillObjects();
+            }
+
+            statusEffectVisuals.Clear();
+            ResetPassiveEffectState();
+
+            var entries = roster.Entries;
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                var model = entry != null ? entry.Model : null;
+                if (model == null)
+                {
+                    continue;
+                }
+
+                if (model is MonsterUnitRuntimeModel monsterModel)
+                {
+                    MonsterUnitRuntimeStateService.ResetTransientCombatState(monsterModel);
+                }
+                else
+                {
+                    model.Statuses?.Clear();
+                    if (model.Resources != null)
+                    {
+                        model.Resources.DirectShield = 0f;
+                        model.Resources.CurrentShield = 0f;
+                    }
+                }
+
+                resourceMutations.SynchronizeShieldView(model);
+                RefreshUnitActor(entry);
+            }
+        }
+
         public bool ConsumePassiveTriggerCooldown(string key, float cooldownSeconds)
         {
             if (string.IsNullOrWhiteSpace(key))

@@ -17,8 +17,19 @@ namespace Pakuri.InGame
                 model.AutoSkillEnabled = true;
             }
 
-            model.Statuses?.Clear();
+            ResetTransientCombatState(model);
             ResetResources(model);
+        }
+
+        public static void ResetTransientCombatState(MonsterUnitRuntimeModel model)
+        {
+            if (model == null)
+            {
+                return;
+            }
+
+            model.Statuses?.Clear();
+            ResetShields(model);
             ResetActiveSkillRuntime(model);
         }
 
@@ -34,6 +45,18 @@ namespace Pakuri.InGame
             resources.DirectShield = 0f;
             resources.CurrentShield = 0f;
             resources.CurrentHealth = Mathf.Max(0f, stats.MaxHealth);
+        }
+
+        private static void ResetShields(MonsterUnitRuntimeModel model)
+        {
+            var resources = model != null ? model.Resources : null;
+            if (resources == null)
+            {
+                return;
+            }
+
+            resources.DirectShield = 0f;
+            resources.CurrentShield = 0f;
         }
 
         private static void ResetActiveSkillRuntime(MonsterUnitRuntimeModel model)

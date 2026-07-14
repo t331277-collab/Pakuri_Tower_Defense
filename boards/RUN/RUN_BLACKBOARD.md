@@ -5,6 +5,53 @@
 - This active file now keeps only the current `NewRunScene` authority split and the surviving new-scene flow baseline.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-15 Next-Day Transient Combat Reset
+
+### Task title
+
+Reset monster skill runtime and field-applied skill effects before advancing to the next day.
+
+### Goals
+
+- Reset every registered monster unit's active-skill cooldown/cast/reload/burst runtime at 1-1 → 1-2 style transitions.
+- Remove field-resident runtime skill objects and cancel delayed skill actions from the completed day.
+- Clear transient statuses, shields, status visuals, passive trigger counters, and passive trigger cooldowns.
+- Preserve run metadata, learned skills, selected choices, and the existing optional next-day health-restore rule.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Reset occurs only after `StageState.RewardReady` and active-session validation succeed.
+- `RunSession`, monster state metadata, learned skill lists, and choice records are not cleared.
+- Unity Play Mode progression verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated.
+
+### Next Actions
+
+- User verifies in Play Mode that a monster skill on cooldown at day end is ready at the next day start.
+- User verifies projectiles, zones, beams, delayed hits, statuses, and shields from the prior day do not remain.
+- User verifies learned skills and Offering choices persist across the same transition.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/Core/StageManager.cs` calls `ResetTransientCombatStateForNextDay()` after preserving Nexus health and before `RunSession.AdvanceDay()`.
+- `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` cancels skill coroutines, clears enemy combat cache, field skill objects, status visual tracking, passive runtime tracking, and registered unit transient effects.
+- `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitRuntimeStateService.cs` now separates transient combat reset from `RestoreForNextDay()`, so cooldown/effect reset does not force health restoration.
+- Existing `RestorePlayerHealthForNextDay()` remains controlled by `restorePlayerHealthOnDayAdvance`.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; Unity console reported 0 errors after refresh.
+
+### History
+
+- 2026-07-15: User added next-round monster cooldown and skill-effect reset to the Code Builder request.
+- 2026-07-15: Code Builder added a pre-advance transient reset boundary while preserving session metadata and health-restore configuration.
+
 ## Task: 2026-06-19 Stage Flow CSV Folder Move
 
 ### Task title
