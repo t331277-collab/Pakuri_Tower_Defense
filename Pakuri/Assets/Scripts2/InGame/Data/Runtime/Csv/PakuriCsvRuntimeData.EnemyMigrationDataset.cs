@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using Pakuri.Combat;
-using UnityEngine;
 
 namespace Pakuri.Data
 {
@@ -12,12 +10,11 @@ namespace Pakuri.Data
         {
             public string Id;
             public string StageId;
+            public int SortOrder;
             public string DisplayName;
             public EnemyEncounterRole EncounterRole;
             public EnemyAttackType AttackType;
             public DamageAttribute Attribute;
-            public string UnitSpritePath;
-            public string ProjectileSpritePath;
             public float MaxHealth;
             public float AttackPower;
             public float SpellPower;
@@ -31,22 +28,10 @@ namespace Pakuri.Data
             public float IceDefense;
             public float DarknessDefense;
             public float HolyDefense;
-            public string SkillLoadoutId;
-            public string PassiveSkillName;
-            public string PassiveSkillId;
-            public float PassiveSkillValue;
+            public string SkillSlotAId;
+            public string SkillSlotBId;
+            public string PassiveId;
             public float NexusDamage;
-            public string PassiveSummary;
-        }
-
-        private sealed class EnemySkillLoadoutRow
-        {
-            public string LoadoutId;
-            public SkillSlot RuntimeSlot;
-            public string SkillId;
-            public string AiRole;
-            public int Priority;
-            public bool Enabled;
         }
 
         private sealed class EnemyBaseSkillRow
@@ -72,6 +57,9 @@ namespace Pakuri.Data
             public string HitTargetCount;
             public float ChargeRampSeconds = 3f;
             public float ChargeMoveSpeedMultiplier = 2.5f;
+            public EnemyPassiveTarget PassiveApplyTarget = EnemyPassiveTarget.Self;
+            public EnemyPassiveModifierKind PassiveModifierKind;
+            public float PassiveModifierValue;
         }
 
         private sealed class EnemyMigrationTriggerRow
@@ -91,12 +79,11 @@ namespace Pakuri.Data
             {
                 Id = record.ReadRequiredString("enemy_id"),
                 StageId = record.ReadRequiredString("stage_id"),
+                SortOrder = record.ReadInt("sort_order"),
                 DisplayName = record.ReadRequiredString("display_name"),
                 EncounterRole = record.ReadEnum<EnemyEncounterRole>("encounter_role"),
                 AttackType = record.ReadEnum<EnemyAttackType>("attack_type"),
                 Attribute = record.ReadEnum<DamageAttribute>("attribute"),
-                UnitSpritePath = record.ReadString("unit_sprite_path"),
-                ProjectileSpritePath = record.ReadString("projectile_sprite_path"),
                 MaxHealth = record.ReadFloat("max_health"),
                 AttackPower = record.ReadFloat("attack_power"),
                 SpellPower = record.ReadFloat("spell_power"),
@@ -110,37 +97,27 @@ namespace Pakuri.Data
                 IceDefense = record.ReadFloat("def_ice"),
                 DarknessDefense = record.ReadFloat("def_darkness"),
                 HolyDefense = record.ReadFloat("def_holy"),
-                SkillLoadoutId = record.ReadRequiredString("skill_loadout_id"),
-                PassiveSkillName = record.ReadString("passive_skill_name"),
-                PassiveSkillId = record.ReadString("passive_skill_id"),
-                PassiveSkillValue = record.ReadFloat("passive_skill_value"),
-                NexusDamage = record.ReadFloat("nexus_damage"),
-                PassiveSummary = record.ReadString("passive_summary")
-            };
-        }
-
-        private static EnemySkillLoadoutRow ParseEnemySkillLoadoutRow(CsvRecord record)
-        {
-            return new EnemySkillLoadoutRow
-            {
-                LoadoutId = record.ReadRequiredString("loadout_id"),
-                RuntimeSlot = record.ReadEnum<SkillSlot>("runtime_slot"),
-                SkillId = record.ReadRequiredString("skill_id"),
-                AiRole = record.ReadRequiredString("ai_role"),
-                Priority = record.ReadInt("priority"),
-                Enabled = record.ReadBool("enabled")
+                SkillSlotAId = record.ReadRequiredString("skill_slot_a_id"),
+                SkillSlotBId = record.ReadRequiredString("skill_slot_b_id"),
+                PassiveId = record.ReadRequiredString("passive_id"),
+                NexusDamage = record.ReadFloat("nexus_damage")
             };
         }
 
         private static EnemyBaseSkillRow ParseEnemyBaseSkillRow(CsvRecord record, string tableName)
         {
+            if (string.Equals(tableName, "skills_passive.csv", StringComparison.OrdinalIgnoreCase))
+            {
+                return ParseEnemyPassiveSkillRow(record);
+            }
+
             if (record.HasColumn("runtime_hitbox_offset_x") || record.HasColumn("runtime_hitbox_offset_y"))
             {
                 throw new CsvFatalException(
                     $"CSV table '{tableName}' must not define runtime hitbox offset columns. Enemy runtime hitboxes are centered at (0,0).");
             }
 
-            return new EnemyBaseSkillRow
+            var row = new EnemyBaseSkillRow
             {
                 Skill = ParseSkillRow(record, tableName, "enemy-shared"),
                 ExecutionProfile = ReadOptionalStringIfColumnExists(record, "execution_profile"),
@@ -164,6 +141,36 @@ namespace Pakuri.Data
                 ChargeRampSeconds = ReadOptionalFloatWithDefaultIfColumnExists(record, "charge_ramp_seconds", 3f),
                 ChargeMoveSpeedMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "charge_move_speed_multiplier", 2.5f)
             };
+
+            if (row.Skill.SkillKind == PakuriCsvSkillKind.Passive
+                || row.Skill.RuntimeKind == SkillRuntimeKind.Passive)
+            {
+                throw new CsvFatalException(
+                    $"CSV table '{tableName}' contains passive skill '{row.Skill.Id}'. Enemy passive rows must be authored in 'skills_passive.csv'.");
+            }
+
+            return row;
+        }
+
+        private static EnemyBaseSkillRow ParseEnemyPassiveSkillRow(CsvRecord record)
+        {
+            return new EnemyBaseSkillRow
+            {
+                Skill = new SkillRow
+                {
+                    Id = record.ReadRequiredString("skill_id"),
+                    MonsterId = "enemy-shared",
+                    SkillKind = PakuriCsvSkillKind.Passive,
+                    Slot = SkillSlot.F,
+                    DisplayName = record.ReadRequiredString("display_name"),
+                    RuntimeKind = SkillRuntimeKind.Passive,
+                    ImplementationState = SkillImplementationState.RuntimeImplemented,
+                    IsAvailableWithoutActiveRequirement = true
+                },
+                PassiveApplyTarget = record.ReadEnum<EnemyPassiveTarget>("apply_target"),
+                PassiveModifierKind = record.ReadEnum<EnemyPassiveModifierKind>("modifier_kind"),
+                PassiveModifierValue = record.ReadFloat("modifier_value")
+            };
         }
 
         private static EnemyMigrationTriggerRow ParseEnemyMigrationTriggerRow(CsvRecord record)
@@ -182,37 +189,10 @@ namespace Pakuri.Data
 
         private static void ValidateEnemyMigrationRows(SourceModel model, List<string> errors)
         {
-            if (model.MigratedEnemies.Count != model.StageOneEnemies.Count + model.StageTwoEnemies.Count)
-            {
-                errors.Add(
-                    $"enemies.csv row count '{model.MigratedEnemies.Count}' does not match legacy stage row count '{model.StageOneEnemies.Count + model.StageTwoEnemies.Count}'.");
-            }
-
-            if (model.EnemyBaseSkills.Count != model.EnemySkills.Count)
-            {
-                errors.Add(
-                    $"Enemy base skill row count '{model.EnemyBaseSkills.Count}' does not match legacy skill count '{model.EnemySkills.Count}'.");
-            }
-
-            var loadoutIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var loadoutSlotKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var referencedLoadoutIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            for (var i = 0; i < model.EnemySkillLoadouts.Count; i++)
-            {
-                var loadout = model.EnemySkillLoadouts[i];
-                loadoutIds.Add(loadout.LoadoutId);
-                if (!loadoutSlotKeys.Add(loadout.LoadoutId + ":" + loadout.RuntimeSlot))
-                {
-                    errors.Add($"Enemy loadout '{loadout.LoadoutId}' has duplicate runtime slot '{loadout.RuntimeSlot}'.");
-                }
-
-                if (!model.EnemyBaseSkills.ContainsKey(loadout.SkillId))
-                {
-                    errors.Add($"Enemy loadout '{loadout.LoadoutId}' references unknown base skill '{loadout.SkillId}'.");
-                }
-            }
-
-            foreach (var enemy in model.MigratedEnemies.Values)
+            var referencedActiveSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var referencedPassiveIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var stageSortKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var enemy in model.Enemies.Values)
             {
                 if (!string.Equals(enemy.StageId, "stage_one", StringComparison.OrdinalIgnoreCase)
                     && !string.Equals(enemy.StageId, "stage_two", StringComparison.OrdinalIgnoreCase))
@@ -220,150 +200,128 @@ namespace Pakuri.Data
                     errors.Add($"Enemy '{enemy.Id}' has unsupported stage_id '{enemy.StageId}'.");
                 }
 
-                if (!loadoutIds.Contains(enemy.SkillLoadoutId))
+                if (enemy.SortOrder < 0)
                 {
-                    errors.Add($"Enemy '{enemy.Id}' references missing skill_loadout_id '{enemy.SkillLoadoutId}'.");
+                    errors.Add($"Enemy '{enemy.Id}' has negative sort_order '{enemy.SortOrder}'.");
+                }
+                else if (!stageSortKeys.Add(enemy.StageId + ":" + enemy.SortOrder))
+                {
+                    errors.Add($"Enemy stage '{enemy.StageId}' has duplicate sort_order '{enemy.SortOrder}'.");
                 }
 
-                if (!referencedLoadoutIds.Add(enemy.SkillLoadoutId))
-                {
-                    errors.Add($"Enemy skill_loadout_id '{enemy.SkillLoadoutId}' is assigned to more than one Enemy.");
-                }
+                ValidateEnemySkillSlot(model, enemy, enemy.SkillSlotAId, SkillSlot.A, referencedActiveSkillIds, errors);
+                ValidateEnemySkillSlot(model, enemy, enemy.SkillSlotBId, SkillSlot.B, referencedActiveSkillIds, errors);
+                ValidateEnemyPassive(model, enemy, referencedPassiveIds, errors);
+            }
 
-                var legacyRows = string.Equals(enemy.StageId, "stage_two", StringComparison.OrdinalIgnoreCase)
-                    ? model.StageTwoEnemies
-                    : model.StageOneEnemies;
-                if (!legacyRows.TryGetValue(enemy.Id, out var legacy))
+            foreach (var baseSkill in model.EnemyBaseSkills.Values)
+            {
+                if (baseSkill == null || baseSkill.Skill == null)
                 {
-                    errors.Add($"Enemy '{enemy.Id}' has no matching legacy row for parity validation.");
                     continue;
                 }
 
-                ValidateEnemyMigrationParity(enemy, legacy, errors);
-                ValidateEnemyLoadoutParity(enemy, legacy, model.EnemySkillLoadouts, errors);
-            }
-
-            foreach (var loadoutId in loadoutIds)
-            {
-                if (!referencedLoadoutIds.Contains(loadoutId))
+                if (baseSkill.Skill.SkillKind == PakuriCsvSkillKind.Passive)
                 {
-                    errors.Add($"Enemy loadout '{loadoutId}' is not referenced by enemies.csv.");
+                    if (!referencedPassiveIds.Contains(baseSkill.Skill.Id))
+                    {
+                        errors.Add($"Enemy passive skill '{baseSkill.Skill.Id}' is not referenced by enemies.csv passive_id.");
+                    }
+                }
+                else if (!referencedActiveSkillIds.Contains(baseSkill.Skill.Id))
+                {
+                    errors.Add($"Enemy base skill '{baseSkill.Skill.Id}' is not referenced by an Enemy A/B skill slot.");
                 }
             }
 
-            foreach (var legacySkill in model.EnemySkills.Values)
+            foreach (var trigger in model.EnemyMigrationTriggers.Values)
             {
-                if (!model.EnemyBaseSkills.TryGetValue(legacySkill.Id, out var migrated) || migrated.Skill == null)
+                if (!model.EnemyBaseSkills.TryGetValue(trigger.SourceSkillId, out var sourceSkill)
+                    || sourceSkill == null
+                    || sourceSkill.Skill == null)
                 {
-                    errors.Add($"Legacy enemy skill '{legacySkill.Id}' has no migrated base row.");
-                    continue;
+                    errors.Add($"Enemy trigger '{trigger.Id}' references unknown source skill '{trigger.SourceSkillId}'.");
+                }
+                else if (trigger.RuntimeKind != sourceSkill.Skill.RuntimeKind)
+                {
+                    errors.Add(
+                        $"Enemy trigger '{trigger.Id}' runtime_kind '{trigger.RuntimeKind}' does not match source skill kind '{sourceSkill.Skill.RuntimeKind}'.");
                 }
 
-                ValidateEnemySkillMigrationParity(legacySkill, migrated, errors);
+                if (!model.EnemyBaseSkills.ContainsKey(trigger.TriggeredSkillId))
+                {
+                    errors.Add($"Enemy trigger '{trigger.Id}' references unknown triggered skill '{trigger.TriggeredSkillId}'.");
+                }
             }
 
-            ValidateEnemyNodeMigrationParity(model, errors);
-            ValidateEnemyCombatStartTrigger(model, "OpeningCharge", SkillRuntimeKind.SingleAttack, errors);
+            ValidateEnemyCombatStartTrigger(model, "OpeningCharge", SkillRuntimeKind.Buff, errors);
             ValidateEnemyCombatStartTrigger(model, "Intimidation", SkillRuntimeKind.Buff, errors);
         }
 
-        private static void ValidateEnemyMigrationParity(
-            EnemyMigrationRow migrated,
-            EnemyRow legacy,
+        private static void ValidateEnemySkillSlot(
+            SourceModel model,
+            EnemyMigrationRow enemy,
+            string skillId,
+            SkillSlot slot,
+            HashSet<string> referencedSkillIds,
             List<string> errors)
         {
-            if (!string.Equals(migrated.DisplayName, legacy.DisplayName, StringComparison.Ordinal)
-                || migrated.EncounterRole != legacy.EncounterRole
-                || migrated.AttackType != legacy.AttackType
-                || migrated.Attribute != legacy.Attribute
-                || !string.Equals(migrated.UnitSpritePath, legacy.UnitSpritePath, StringComparison.Ordinal)
-                || !string.Equals(migrated.ProjectileSpritePath, legacy.ProjectileSpritePath, StringComparison.Ordinal)
-                || !Approximately(migrated.MaxHealth, legacy.MaxHealth)
-                || !Approximately(migrated.AttackPower, legacy.AttackPower)
-                || !Approximately(migrated.SpellPower, legacy.SpellPower)
-                || !Approximately(migrated.MoveSpeed, legacy.MoveSpeed)
-                || !Approximately(migrated.CriticalChance, legacy.CriticalChance)
-                || !Approximately(migrated.CriticalDamage, legacy.CriticalDamage)
-                || !Approximately(migrated.CriticalResistance, legacy.CriticalResistance)
-                || !Approximately(migrated.PhysicalDefense, legacy.PhysicalDefense)
-                || !Approximately(migrated.FireDefense, legacy.FireDefense)
-                || !Approximately(migrated.LightningDefense, legacy.LightningDefense)
-                || !Approximately(migrated.IceDefense, legacy.IceDefense)
-                || !Approximately(migrated.DarknessDefense, legacy.DarknessDefense)
-                || !Approximately(migrated.HolyDefense, legacy.HolyDefense)
-                || !string.Equals(migrated.PassiveSkillName, legacy.PassiveSkillName, StringComparison.Ordinal)
-                || !string.Equals(migrated.PassiveSkillId, legacy.PassiveSkillId, StringComparison.OrdinalIgnoreCase)
-                || !Approximately(migrated.PassiveSkillValue, legacy.PassiveSkillValue)
-                || !Approximately(migrated.NexusDamage, legacy.NexusDamage)
-                || !string.Equals(migrated.PassiveSummary, legacy.PassiveSummary, StringComparison.Ordinal))
+            if (!model.EnemyBaseSkills.TryGetValue(skillId, out var skill)
+                || skill == null
+                || skill.Skill == null)
             {
-                errors.Add($"Enemy '{migrated.Id}' does not match its legacy stage row.");
+                errors.Add($"Enemy '{enemy.Id}' slot '{slot}' references unknown base skill '{skillId}'.");
+                return;
             }
+
+            if (skill.Skill.SkillKind != PakuriCsvSkillKind.Active
+                || skill.Skill.RuntimeKind == SkillRuntimeKind.Passive)
+            {
+                errors.Add($"Enemy '{enemy.Id}' slot '{slot}' must reference an active skill, but '{skillId}' is passive.");
+                return;
+            }
+
+            referencedSkillIds.Add(skillId);
         }
 
-        private static void ValidateEnemyLoadoutParity(
-            EnemyMigrationRow migrated,
-            EnemyRow legacy,
-            List<EnemySkillLoadoutRow> loadouts,
+        private static void ValidateEnemyPassive(
+            SourceModel model,
+            EnemyMigrationRow enemy,
+            HashSet<string> referencedPassiveIds,
             List<string> errors)
         {
-            var enabledCount = 0;
-            var basicCount = 0;
-            var activeCount = 0;
-            var expectedBasicSkillId = legacy.BasicSkill.ToString();
-            var expectedActiveSkillId = legacy.StageOneSkill.ToString();
-
-            for (var i = 0; i < loadouts.Count; i++)
+            var passiveId = enemy.PassiveId != null ? enemy.PassiveId.Trim() : string.Empty;
+            if (!model.EnemyBaseSkills.TryGetValue(passiveId, out var passive)
+                || passive == null
+                || passive.Skill == null)
             {
-                var loadout = loadouts[i];
-                if (!loadout.Enabled
-                    || !string.Equals(loadout.LoadoutId, migrated.SkillLoadoutId, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                enabledCount++;
-                if (loadout.RuntimeSlot == SkillSlot.A
-                    && string.Equals(loadout.SkillId, expectedBasicSkillId, StringComparison.OrdinalIgnoreCase))
-                {
-                    basicCount++;
-                }
-
-                if (loadout.RuntimeSlot == SkillSlot.B
-                    && string.Equals(loadout.SkillId, expectedActiveSkillId, StringComparison.OrdinalIgnoreCase))
-                {
-                    activeCount++;
-                }
+                errors.Add($"Enemy '{enemy.Id}' references unknown passive_id '{passiveId}'.");
+                return;
             }
 
-            if (enabledCount != 2 || basicCount != 1 || activeCount != 1)
+            if (passive.Skill.SkillKind != PakuriCsvSkillKind.Passive
+                || passive.Skill.RuntimeKind != SkillRuntimeKind.Passive
+                || passive.Skill.Slot != SkillSlot.F)
             {
-                errors.Add(
-                    $"Enemy '{migrated.Id}' loadout '{migrated.SkillLoadoutId}' must preserve " +
-                    $"legacy A='{expectedBasicSkillId}' and B='{expectedActiveSkillId}'.");
+                errors.Add($"Enemy '{enemy.Id}' passive_id '{passiveId}' must reference an Enemy passive definition.");
             }
-        }
 
-        private static void ValidateEnemySkillMigrationParity(
-            EnemySkillRow legacy,
-            EnemyBaseSkillRow migrated,
-            List<string> errors)
-        {
-            var skill = migrated.Skill;
-            if (!string.Equals(skill.DisplayName, legacy.DisplayName, StringComparison.Ordinal)
-                || !Approximately(skill.AttackPowerCoefficient, legacy.AttackPowerCoefficient)
-                || !Approximately(skill.SpellPowerCoefficient, legacy.SpellPowerCoefficient)
-                || !Approximately(skill.CooldownSeconds, legacy.CooldownSeconds)
-                || !Approximately(migrated.CastRange > 0f ? migrated.CastRange : skill.Radius, legacy.Radius)
-                || !Approximately(skill.ActiveDurationSeconds, legacy.ActiveDuration)
-                || !Approximately(migrated.FlatValue, legacy.FlatValue)
-                || !Approximately(skill.ProjectileSpeed, legacy.ProjectileSpeed)
-                || !Approximately(migrated.ProjectileLifetime, legacy.ProjectileLifetime)
-                || !Approximately(migrated.MoveSpeedMultiplier, legacy.MoveSpeedMultiplier)
-                || !Approximately(migrated.OutgoingDamageMultiplier, legacy.OutgoingDamageMultiplier))
+            if (passive.PassiveApplyTarget != EnemyPassiveTarget.Self)
             {
-                errors.Add($"Enemy base skill '{legacy.Id}' does not match EnemySkillData.csv.");
+                errors.Add($"Enemy passive '{passiveId}' has unsupported apply_target '{passive.PassiveApplyTarget}'.");
             }
+
+            if (passive.PassiveModifierKind == EnemyPassiveModifierKind.None)
+            {
+                errors.Add($"Enemy passive '{passiveId}' requires a supported modifier_kind.");
+            }
+
+            if (passive.PassiveModifierValue <= 0f)
+            {
+                errors.Add($"Enemy passive '{passiveId}' requires a positive modifier_value.");
+            }
+
+            referencedPassiveIds.Add(passiveId);
         }
 
         private static void ValidateEnemyCombatStartTrigger(
@@ -391,96 +349,5 @@ namespace Pakuri.Data
             }
         }
 
-        private static void ValidateEnemyNodeMigrationParity(SourceModel model, List<string> errors)
-        {
-            for (var i = 0; i < model.EnemySkillNodes.Count; i++)
-            {
-                var node = model.EnemySkillNodes[i];
-                if (node == null
-                    || !model.EnemyBaseSkills.TryGetValue(node.SkillId, out var migrated)
-                    || migrated == null)
-                {
-                    continue;
-                }
-
-                if (!string.Equals(migrated.ExecutionProfile, node.ActionOp, StringComparison.OrdinalIgnoreCase))
-                {
-                    errors.Add(
-                        $"Enemy base skill '{node.SkillId}' execution_profile '{migrated.ExecutionProfile}' does not match legacy action_op '{node.ActionOp}'.");
-                }
-            }
-
-            for (var i = 0; i < model.EnemySkillNodeParams.Count; i++)
-            {
-                var param = model.EnemySkillNodeParams[i];
-                if (param == null
-                    || !model.EnemyBaseSkills.TryGetValue(param.SkillId, out var migrated)
-                    || migrated == null
-                    || migrated.Skill == null)
-                {
-                    continue;
-                }
-
-                if (!EnemyNodeParamMatchesBase(param, migrated))
-                {
-                    errors.Add(
-                        $"Enemy node param '{param.SkillId}.{param.ParamKey}={param.ParamValue}' was not preserved by the migrated base row.");
-                }
-            }
-        }
-
-        private static bool EnemyNodeParamMatchesBase(
-            EnemySkillNodeParamRow param,
-            EnemyBaseSkillRow migrated)
-        {
-            if (string.Equals(param.ParamKey, "attribute", StringComparison.OrdinalIgnoreCase))
-            {
-                return Enum.TryParse(param.ParamValue, true, out DamageAttribute attribute)
-                    && migrated.Skill.Attribute == attribute;
-            }
-
-            if (!float.TryParse(
-                    param.ParamValue,
-                    NumberStyles.Float,
-                    CultureInfo.InvariantCulture,
-                    out var expected))
-            {
-                return false;
-            }
-
-            switch (param.ParamKey != null ? param.ParamKey.ToLowerInvariant() : string.Empty)
-            {
-                case "fallback_speed":
-                    return Approximately(migrated.Skill.ProjectileSpeed, expected);
-                case "fallback_lifetime":
-                    return Approximately(migrated.ProjectileLifetime, expected);
-                case "delay":
-                    return Approximately(migrated.ChainDelaySeconds, expected);
-                case "chain_multiplier":
-                    return Approximately(migrated.ChainDamageMultiplier, expected);
-                case "chain_radius":
-                    return Approximately(migrated.ChainRadius, expected);
-                case "action_speed_bonus":
-                    return Approximately(migrated.StatusActionSpeedBonus, expected);
-                case "duration":
-                case "status_duration":
-                    return Approximately(migrated.StatusDurationSeconds, expected);
-                case "target_max_health_ratio":
-                    return Approximately(migrated.TargetMaxHealthRatio, expected);
-                case "ramp_seconds":
-                    return Approximately(migrated.ChargeRampSeconds, expected);
-                case "move_speed_multiplier":
-                    return Approximately(migrated.ChargeMoveSpeedMultiplier, expected);
-                case "multiplier":
-                    return Approximately(migrated.OutgoingDamageMultiplier, expected);
-                default:
-                    return false;
-            }
-        }
-
-        private static bool Approximately(float left, float right)
-        {
-            return Mathf.Abs(left - right) <= 0.0001f;
-        }
     }
 }

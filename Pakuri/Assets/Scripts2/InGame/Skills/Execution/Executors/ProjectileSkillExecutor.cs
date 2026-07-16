@@ -107,10 +107,14 @@ namespace Pakuri.InGame
                 && context.Runtime.UsesMagazine
                 && context.Runtime.MagazineRemaining == 1;
             var lifetime = SkillExecutionUtility.ResolveProjectileLifetime(skill);
-            var boundary = context.CombatManager.ResolveProjectileDestroyBoundaryX();
             for (var i = 0; i < projectileCount; i++)
             {
                 var spreadDirection = ResolveProjectileSpreadDirection(direction, i, projectileCount);
+                var boundary = InGameProjectileActor.ResolveDestroyBoundaryX(
+                    origin,
+                    spreadDirection,
+                    speed,
+                    lifetime);
                 var effects = context.CombatManager.Effects;
                 if (effects == null)
                 {
@@ -126,7 +130,7 @@ namespace Pakuri.InGame
                 var projectileLaunchIndex = context.Runtime != null
                     ? context.Runtime.AdvanceProjectileLaunchCount()
                     : 0;
-                var branchSpec = ResolveBranchSpec(snapshot, runtimeVisual, prefab, projectileLaunchIndex);
+                var branchSpec = ResolveBranchDamageSpec(snapshot, projectileLaunchIndex);
                 var rotation = SkillExecutionUtility.ResolveRotation(spreadDirection);
                 var instance = hasRuntimeVisual
                     ? RuntimeSkillVisualFactory.Create(
@@ -205,7 +209,11 @@ namespace Pakuri.InGame
                 damage,
                 attribute,
                 pierce,
-                boundary,
+                InGameProjectileActor.ResolveDestroyBoundaryX(
+                    origin,
+                    direction,
+                    speed,
+                    lifetime),
                 lifetime,
                 burstProjectileCount,
                 currentBurstProjectileIndex);
@@ -239,15 +247,11 @@ namespace Pakuri.InGame
                 direction.x * cos - direction.y * sin,
                 direction.x * sin + direction.y * cos).normalized;
         }
-        private static ProjectileBranchHitSpec ResolveBranchSpec(
+        private static ProjectileBranchDamageSpec ResolveBranchDamageSpec(
             SkillExecutionSnapshot snapshot,
-            RuntimeSkillVisualSpec runtimeVisual,
-            GameObject prefab,
             int projectileLaunchIndex)
         {
-            if (snapshot == null
-                || !snapshot.HasBranchBehavior
-                || (!RuntimeSkillVisualFactory.HasVisual(runtimeVisual) && prefab == null))
+            if (snapshot == null || !snapshot.HasBranchBehavior)
             {
                 return null;
             }
@@ -260,11 +264,9 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            return new ProjectileBranchHitSpec
+            return new ProjectileBranchDamageSpec
             {
                 Enabled = true,
-                RuntimeVisual = runtimeVisual,
-                ProjectilePrefab = prefab,
                 Chance = Mathf.Clamp01(chance),
                 Count = Math.Max(1, count),
                 DamageMultiplier = snapshot.HasBranchDamageMultiplier ? Mathf.Max(0f, snapshot.BranchDamageMultiplier) : 1f,
@@ -463,7 +465,7 @@ namespace Pakuri.InGame
             var projectileLaunchIndex = context.Runtime != null
                 ? context.Runtime.AdvanceProjectileLaunchCount()
                 : 0;
-            var branchSpec = ResolveBranchSpec(snapshot, runtimeVisual, prefab, projectileLaunchIndex);
+            var branchSpec = ResolveBranchDamageSpec(snapshot, projectileLaunchIndex);
             var rotation = SkillExecutionUtility.ResolveRotation(direction);
             var instance = RuntimeSkillVisualFactory.HasVisual(runtimeVisual)
                 ? RuntimeSkillVisualFactory.Create(

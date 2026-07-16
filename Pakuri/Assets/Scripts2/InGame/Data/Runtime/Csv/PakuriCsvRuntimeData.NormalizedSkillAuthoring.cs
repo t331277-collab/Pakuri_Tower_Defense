@@ -544,8 +544,8 @@ namespace Pakuri.Data
                 new[] { "crit_chance_bonus" });
             AddSkillNodeHandlerSchema(schemas, "CooldownRefundBonus", SkillExecutionPlanNodeKind.OnKillAction,
                 new[] { "ratio_bonus" });
-            AddSkillNodeHandlerSchema(schemas, "BranchProjectile", SkillExecutionPlanNodeKind.Action,
-                new string[0], new[] { "projectile_index", "count", "angle", "damage_multiplier", "chance_bonus", "search_radius" });
+            AddSkillNodeHandlerSchema(schemas, "BranchDamage", SkillExecutionPlanNodeKind.Action,
+                new string[0], new[] { "chance_bonus", "count", "damage_multiplier", "search_radius" });
             AddSkillNodeHandlerSchema(schemas, "SpawnProjectile", SkillExecutionPlanNodeKind.Action,
                 new string[0], new[] { "projectile_prefab_path", "projectile_sprite_path", "count", "speed" });
             AddSkillNodeHandlerSchema(schemas, "BossDamageMultiplier", SkillExecutionPlanNodeKind.DamageModifier,

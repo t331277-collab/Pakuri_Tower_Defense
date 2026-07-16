@@ -5,6 +5,50 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-17 OpeningCharge Buff Classification And Contact Freeze
+
+### Task title
+
+Route OpeningCharge as a Buff-owned active charge while preserving its contact freeze.
+
+### Goals
+
+- Treat the caster's charge movement increase as Buff authoring rather than SingleAttack authoring.
+- Preserve the existing `freeze` status application for 5 seconds on the contacted target.
+- Prevent the Trigger kind check from rejecting the specialized charge runtime data.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not add a new status type or status CSV schema.
+- Keep movement execution in `ChargeSkillExecutor`; the shared status runtime remains responsible only for the authored contact freeze.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified. User Play Mode verification remains.
+
+### Next Actions
+
+- Verify the caster movement increase begins from the CombatStart Buff Trigger.
+- Verify only the contacted hostile receives the existing 5-second freeze application.
+
+### Evidence
+
+- `skills_buff.csv` owns OpeningCharge with `move_speed_multiplier=2.5`, `status_effect_id=freeze`, and `status_duration=5`.
+- `SkillTriggerRuntime.MatchesRuntimeKind` now accepts `ChargeSkillData` under `SkillRuntimeKind.Buff`, allowing the specialized charge executor to start.
+- `ChargeSkillExecutor` still calls the shared status applier after the target-max-health contact damage and then clears the active charge.
+- No status schema, status definition, or new status runtime branch was added.
+- Runtime and Editor C# builds passed with 0 errors; only the pre-existing 2 `MSB3277` warnings remained.
+
+### History
+
+- 2026-07-17: Code Builder applied the Buff/Status unification blueprint boundary: Buff owns the charge classification and movement authoring, while the existing shared status path owns freeze.
+
 ## Task: 2026-07-15 Next-Day Skill Effect Cleanup
 
 ### Task title

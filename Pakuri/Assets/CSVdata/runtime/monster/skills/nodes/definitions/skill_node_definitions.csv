@@ -3,7 +3,7 @@
 "ApplyShield","ApplyShield","Action","",""
 "ApplyStatus","ApplyStatus","Action","",""
 "AdditionalProjectileBonus","AdditionalProjectileBonus","Action","",""
-"BranchProjectile","BranchProjectile","Action","",""
+"BranchDamage","BranchDamage","Action","",""
 "BurstDamageRule","BurstDamageRule","DamageModifier","",""
 "BurstStatusStacksBonus","BurstStatusStacksBonus","Action","",""
 "ConditionalDamageMultiplier","ConditionalDamageMultiplier","DamageModifier","",""

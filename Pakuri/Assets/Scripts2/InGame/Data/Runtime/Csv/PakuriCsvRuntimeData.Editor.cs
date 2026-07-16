@@ -59,8 +59,6 @@ namespace Pakuri.Data
 
             var sourceCatalog = LoadOrCreateAsset<PakuriCsvRuntimeSourceCatalog>(SourceCatalogAssetPath);
             sourceCatalog.CatalogMonsters = LoadImportedSourceTextAssetOrThrow(CatalogMonstersFileName);
-            sourceCatalog.CatalogStageOneEnemies = LoadImportedSourceTextAssetOrThrow(CatalogStageOneEnemiesFileName);
-            sourceCatalog.CatalogStageTwoEnemies = LoadImportedSourceTextAssetOrThrow(CatalogStageTwoEnemiesFileName);
             sourceCatalog.Monsters = LoadImportedSourceTextAssetOrThrow(MonstersFileName);
             sourceCatalog.MonsterRewardChoices = LoadImportedSourceTextAssetOrThrow(MonsterRewardChoicesFileName);
             sourceCatalog.MonsterSkillsProjectileFiles = LoadImportedSourceTextAssetsBySuffix(
@@ -163,19 +161,9 @@ namespace Pakuri.Data
                 ? LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesPassiveFileName)
                 : null;
             sourceCatalog.StatusEffects = LoadImportedSourceTextAssetOrThrow(StatusEffectsFileName);
-            sourceCatalog.StageOneEnemies = LoadImportedSourceTextAssetOrThrow(StageOneEnemiesFileName);
-            sourceCatalog.StageTwoEnemies = LoadImportedSourceTextAssetOrThrow(StageTwoEnemiesFileName);
-            sourceCatalog.EnemySkills = LoadTextAssetOrThrow(
-                GetImportedSourceAssetPath(EnemySkillDataFileName),
-                "Create EnemySkillData.csv under Assets/CSVdata/runtime/enemy before validation.");
-            sourceCatalog.EnemySkillNodes = LoadImportedSourceTextAssetIfPresent(EnemySkillNodesFileName);
-            sourceCatalog.EnemySkillNodeParams = LoadImportedSourceTextAssetIfPresent(EnemySkillNodeParamsFileName);
             sourceCatalog.Enemies = LoadTextAssetOrThrow(
                 $"{RuntimeEnemyCsvAssetRoot}/{EnemiesFileName}",
                 "Create enemies.csv under Assets/CSVdata/runtime/enemy before validation.");
-            sourceCatalog.EnemySkillLoadouts = LoadTextAssetOrThrow(
-                $"{RuntimeEnemyCsvAssetRoot}/{EnemySkillLoadoutsFileName}",
-                "Create enemy_skill_loadouts.csv under Assets/CSVdata/runtime/enemy before validation.");
             sourceCatalog.EnemySkillBaseFiles = LoadImportedSourceTextAssetsByPrefix(
                 RuntimeEnemySkillBaseCsvAssetRoot,
                 "skills_");

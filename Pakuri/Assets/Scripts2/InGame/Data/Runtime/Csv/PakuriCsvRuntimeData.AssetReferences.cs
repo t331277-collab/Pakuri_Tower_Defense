@@ -155,24 +155,6 @@ namespace Pakuri.Data
                 assets.AddSprite(monster.MonsterIconImagePath, $"Monster '{monster.Id}' MonsterIconImage");
             }
 
-            foreach (var enemy in model.StageOneEnemies.Values)
-            {
-                assets.AddSprite(enemy.UnitSpritePath, $"Enemy '{enemy.Id}' unit_sprite_path");
-                assets.AddSprite(enemy.ProjectileSpritePath, $"Enemy '{enemy.Id}' projectile_sprite_path");
-            }
-
-            foreach (var enemy in model.StageTwoEnemies.Values)
-            {
-                assets.AddSprite(enemy.UnitSpritePath, $"Enemy '{enemy.Id}' unit_sprite_path");
-                assets.AddSprite(enemy.ProjectileSpritePath, $"Enemy '{enemy.Id}' projectile_sprite_path");
-            }
-
-            foreach (var enemy in model.MigratedEnemies.Values)
-            {
-                assets.AddSprite(enemy.UnitSpritePath, $"Migrated enemy '{enemy.Id}' unit_sprite_path");
-                assets.AddSprite(enemy.ProjectileSpritePath, $"Migrated enemy '{enemy.Id}' projectile_sprite_path");
-            }
-
             return assets;
         }
     }

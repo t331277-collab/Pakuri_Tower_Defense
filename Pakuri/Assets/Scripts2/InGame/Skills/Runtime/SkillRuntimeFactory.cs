@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Pakuri.Data;
 
 namespace Pakuri.InGame
 {
@@ -34,6 +35,33 @@ namespace Pakuri.InGame
 
             owner.SkillRuntime.Clear();
             PopulateLearnedActiveSet(owner, catalog, owner.SkillRuntime);
+        }
+
+        public static void RebuildAssignedActiveSet(
+            BaseUnitRuntimeModel owner,
+            SkillDefinition[] definitions,
+            SkillTriggerDefinition[] triggers)
+        {
+            if (owner == null)
+            {
+                return;
+            }
+
+            owner.SkillRuntime.Clear();
+            if (definitions == null)
+            {
+                return;
+            }
+
+            var ownerId = owner.Identity != null ? owner.Identity.DefinitionId : string.Empty;
+            for (var i = 0; i < definitions.Length; i++)
+            {
+                var data = InGameSkillDefinitionMapper.CreateActiveSkillData(ownerId, definitions[i], triggers);
+                if (data != null)
+                {
+                    owner.SkillRuntime.AddOrReplace(new SkillRuntimeInstance(owner, data));
+                }
+            }
         }
 
         private static void PopulateLearnedActiveSet(

@@ -221,7 +221,7 @@ Do not combine that decision with the first normalized authoring implementation.
 | Current column family | Proposed node |
 |---|---|
 | `damage_multiplier`, `base_damage_bonus`, `cooldown_multiplier` | `DamageModifier` / `CooldownModifier` nodes on `owner_kind=Choice` |
-| projectile branch columns | `ProjectileModifier`, `handler_id=BranchProjectile` |
+| projectile branch columns | `ProjectileModifier`, `handler_id=BranchDamage` |
 | `execute_health_ratio_bonus` | `CastCondition` modifier node, `handler_id=TargetHealthRatioThresholdBonus` |
 | `execute_crit_chance_bonus` | `CritModifier`, `handler_id=ExecuteCritChanceBonus` |
 | `boss_damage_multiplier` | `DamageModifier`, `handler_id=TargetPredicateDamageMultiplier`, `predicate=is_boss` |

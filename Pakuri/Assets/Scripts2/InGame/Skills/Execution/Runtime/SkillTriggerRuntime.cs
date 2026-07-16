@@ -1814,6 +1814,7 @@ namespace Pakuri.InGame
                 case SkillRuntimeKind.Execute:
                     return data is ZoneSkillData;
                 case SkillRuntimeKind.Buff:
+                    return data is BuffSkillData || data is ChargeSkillData;
                 case SkillRuntimeKind.Heal:
                     return data is BuffSkillData;
                 case SkillRuntimeKind.Shield:

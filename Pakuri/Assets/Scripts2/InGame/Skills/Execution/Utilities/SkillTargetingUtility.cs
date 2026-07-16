@@ -28,6 +28,21 @@ namespace Pakuri.InGame
             var selectionStatusId = targeting != null ? targeting.SelectionStatusId : string.Empty;
             var selectionStatusMinStacks = targeting != null ? targeting.SelectionStatusMinStacks : 0;
 
+            if (selection == SkillTargetSelection.Random)
+            {
+                var valid = new List<UnitRosterEntry>();
+                for (var i = 0; i < candidates.Count; i++)
+                {
+                    var candidate = candidates[i];
+                    if (candidate != null && candidate.IsAlive && candidate.Transform != null && candidate.Model != null)
+                    {
+                        valid.Add(candidate);
+                    }
+                }
+
+                return valid.Count > 0 ? valid[UnityEngine.Random.Range(0, valid.Count)] : null;
+            }
+
             for (var i = 0; i < candidates.Count; i++)
             {
                 var candidate = candidates[i];
@@ -130,6 +145,18 @@ namespace Pakuri.InGame
                 var offset = candidate.Transform.position - origin;
                 offset.z = 0f;
                 var distanceSq = offset.sqrMagnitude;
+                if (selection == SkillTargetSelection.Farthest)
+                {
+                    if (best != null && distanceSq <= bestDistanceSq)
+                    {
+                        continue;
+                    }
+
+                    best = candidate;
+                    bestDistanceSq = distanceSq;
+                    continue;
+                }
+
                 if (distanceSq >= bestDistanceSq)
                 {
                     continue;

@@ -74,7 +74,8 @@ namespace Pakuri.InGame
                 : catalogDefinition != null && catalogDefinition.BaseStackAmount > 0 ? catalogDefinition.BaseStackAmount : 1;
 
             var catalogPermanent = catalogDefinition != null ? catalogDefinition.IsPermanent : fallback.Permanent;
-            status.Permanent = catalogPermanent && status.Duration <= 0f;
+            status.Permanent = (catalogPermanent || (source != null && source.StatusPermanent))
+                && status.Duration <= 0f;
             status.CanMove = catalogDefinition == null || catalogDefinition.CanMove;
             status.CanAct = catalogDefinition == null || catalogDefinition.CanAct;
             status.CanUseSpecialSkill = catalogDefinition == null || catalogDefinition.CanUseSpecialSkill;
@@ -94,8 +95,8 @@ namespace Pakuri.InGame
             var attackPowerBonus = ResolveOverride(source != null ? source.StatusAttackPowerBonus : 0f, catalogDefinition != null ? catalogDefinition.AttackPowerBonusPerStack : 0f);
             status.Modifiers.ActionSpeedBonus = actionSpeedBonus;
             status.Modifiers.AttackPowerBonus = attackPowerBonus;
-            status.Modifiers.SpellPowerBonus = 0f;
-            status.Modifiers.DamageBonusRate = 0f;
+            status.Modifiers.SpellPowerBonus = source != null ? source.StatusSpellPowerBonus : 0f;
+            status.Modifiers.DamageBonusRate = source != null ? source.StatusDamageBonusRate : 0f;
             status.Modifiers.ShieldReceivedBonus = 0f;
             status.Modifiers.CritChanceBonusRate = 0f;
             status.Modifiers.CritDamageBonusRate = 0f;

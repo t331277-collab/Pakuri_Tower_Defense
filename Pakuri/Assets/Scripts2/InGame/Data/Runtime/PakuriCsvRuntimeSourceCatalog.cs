@@ -6,8 +6,6 @@ namespace Pakuri.Data
     public sealed class PakuriCsvRuntimeSourceCatalog : ScriptableObject
     {
         public TextAsset CatalogMonsters;
-        public TextAsset CatalogStageOneEnemies;
-        public TextAsset CatalogStageTwoEnemies;
         public TextAsset Monsters;
         public TextAsset MonsterRewardChoices;
         public TextAsset MonsterSkillsProjectile;
@@ -44,13 +42,7 @@ namespace Pakuri.Data
         public TextAsset MonsterSkillChoicesPassive;
         public TextAsset[] MonsterSkillChoicesPassiveFiles;
         public TextAsset StatusEffects;
-        public TextAsset StageOneEnemies;
-        public TextAsset StageTwoEnemies;
-        public TextAsset EnemySkills;
-        public TextAsset EnemySkillNodes;
-        public TextAsset EnemySkillNodeParams;
         public TextAsset Enemies;
-        public TextAsset EnemySkillLoadouts;
         public TextAsset[] EnemySkillBaseFiles;
         public TextAsset[] EnemySkillTriggerFiles;
     }

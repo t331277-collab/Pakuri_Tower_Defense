@@ -44,7 +44,7 @@ namespace Pakuri.InGame
         AdditionalProjectileBonus,
         ShotIntervalMultiplier,
         ConsecutiveHitDamageBonus,
-        BranchProjectile,
+        BranchDamage,
         StatusStackAmountBonus,
         StatusStackAmountSet,
         StatusMaxStacksBonus,
@@ -1104,7 +1104,7 @@ namespace Pakuri.InGame
                     ConsecutiveHitBonusRate += Mathf.Max(0f, action.FloatValue);
                     ConsecutiveHitMax += Mathf.Max(0f, action.SecondaryFloatValue);
                     break;
-                case SkillActionOpKind.BranchProjectile:
+                case SkillActionOpKind.BranchDamage:
                     BranchChanceBonus += action.FloatValue;
                     if (action.IntValue > 0)
                     {

@@ -22,6 +22,54 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - Eve reports: update this file when a report changes active Eve facts. There is no active report board.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-17 Eve-A Branch Damage Conversion
+
+### Task title
+
+Convert Eve-A branch enhancement from recursive child projectiles to non-recursive instant chain damage.
+
+### Goals
+
+- Damage nearby enemies immediately when the original Eve-A projectile hits.
+- Show a temporary blue line from the hit target to each branch-damage target.
+- Prevent branch damage from creating another branch.
+- Rename the authored node from `BranchProjectile` to `BranchDamage`.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- Preserve the existing Eve-A branch chance, target count, damage multiplier, and search-radius values.
+- Do not add a prefab, new CSV column, or new graph file for the temporary line.
+- Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented. Runtime and Editor builds pass; user Play Mode verification remains.
+
+### Next Actions
+
+- User verifies Eve-A trait 5 and master 1 against clustered enemies in `NewRunScene`.
+- Confirm one original hit creates at most the configured two branch-damage applications and no child projectile.
+- Confirm the temporary blue lines are visible and branch damage does not recursively fan out.
+
+### Evidence
+
+- `InGameProjectileActor.TryApplyBranchDamage(...)` selects distinct nearby hostile targets, applies immediate damage, and passes `suppressOutgoingDamageTriggers=true`.
+- The old branch projectile spawn, fallback projectile, `CloneForChild()`, runtime visual, and prefab fields were removed from the branch spec.
+- `InGameProjectileActor` creates a 0.12-second blue `LineRenderer` between the primary hit position and each branch target.
+- Eve-A graph rows now use `BranchDamage`: trait 5 remains `0.35 / 2 / 0.7`, and master 1 remains `0.6 / 2 / 0.7 / 4.5`.
+- CSV parsing found 2 Eve `BranchDamage` graph rows, 1 node definition, 4 parameter definitions, and 0 remaining `BranchProjectile` CSV rows.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` and `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors; only the existing two assembly-version warnings remained.
+
+### History
+
+- 2026-07-17: User changed Eve-A branch from bouncing projectiles to electrical-style nearby damage with temporary blue lines and prohibited branch recursion.
+- 2026-07-17: Code Builder implemented the shared projectile runtime change, renamed the node and Eve graph rows, and completed build/CSV checks.
+
 ## Task: 2026-07-12 Eve Runtime Visual And Hitbox Migration
 
 ### Task title

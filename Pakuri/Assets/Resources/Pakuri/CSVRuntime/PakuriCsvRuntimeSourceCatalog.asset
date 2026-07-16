@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: PakuriCsvRuntimeSourceCatalog
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.Data.PakuriCsvRuntimeSourceCatalog
   CatalogMonsters: {fileID: 4900000, guid: cdbdbe4e32ac3784aa7948bdf22f8bac, type: 3}
-  CatalogStageOneEnemies: {fileID: 4900000, guid: b12a03e0e05eadf429a9c68fa0f4a796, type: 3}
-  CatalogStageTwoEnemies: {fileID: 4900000, guid: 1be2b3aabf5583c4995d1dcfc5e6d46e, type: 3}
   Monsters: {fileID: 4900000, guid: 3dce2014d8aeb774db75ef4d8d8575da, type: 3}
   MonsterRewardChoices: {fileID: 4900000, guid: 2f9229f6de8506a4fae1fad9c093e347, type: 3}
   MonsterSkillsProjectile: {fileID: 0}
@@ -82,13 +80,7 @@ MonoBehaviour:
   MonsterSkillChoicesPassiveFiles:
   - {fileID: 4900000, guid: 03c5868f092b449fbf9c9ecde8b42198, type: 3}
   StatusEffects: {fileID: 4900000, guid: 416f4448310d2b04380faadda26e468a, type: 3}
-  StageOneEnemies: {fileID: 4900000, guid: 61c9eb99d31ad914fb1fa849d1a30a96, type: 3}
-  StageTwoEnemies: {fileID: 4900000, guid: 11c490074f7917944a1ad554040d411c, type: 3}
-  EnemySkills: {fileID: 4900000, guid: d1e6867e2c874365ab3bfedbd0117a42, type: 3}
-  EnemySkillNodes: {fileID: 4900000, guid: 843767bc634ae0d4f8b2d024eca31c0e, type: 3}
-  EnemySkillNodeParams: {fileID: 4900000, guid: d118bcad03953104d952617372a7db8f, type: 3}
   Enemies: {fileID: 4900000, guid: 911dc2cae6894e76ac5a31c8ca579f51, type: 3}
-  EnemySkillLoadouts: {fileID: 4900000, guid: 0e120d9345c9462abf4885211b94a868, type: 3}
   EnemySkillBaseFiles:
   - {fileID: 4900000, guid: 49d8a91883b9449ca3eb3760f746b9b1, type: 3}
   - {fileID: 4900000, guid: f703fb9b5af2427fadc196316620018e, type: 3}

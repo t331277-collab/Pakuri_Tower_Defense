@@ -5,6 +5,274 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-17 Enemy CSV Contract Simplification
+
+### Task title
+
+Collapse Enemy skill assignments into `enemies.csv` and remove unused Enemy CSV columns.
+
+### Goals
+
+- Delete `enemy_skill_loadouts.csv` and its source-catalog contract.
+- Add direct `skill_slot_a_id` and `skill_slot_b_id` columns to `enemies.csv`.
+- Remove `unit_sprite_path`, `projectile_sprite_path`, and Enemy base `description_text`/`summary`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Preserve all existing Enemy stats, passives, skill IDs, skill values, runtime visuals, and Trigger rows.
+- Do not remove the shared optional description/summary parser used by other runtime datasets.
+- Do not remove `EnemyDefinition` sprite API fields in this CSV-contract task; they are no longer populated by Enemy CSV.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and validated.
+
+### Next Actions
+
+- User runs Unity Play Mode parity for Enemy spawn, A/B skill selection, and CombatStart behavior.
+- Future Enemy assignment edits are made in the two slot columns of `runtime/enemy/enemies.csv`.
+
+### Evidence
+
+- `enemy_skill_loadouts.csv` and `.meta` are deleted; the runtime source catalog asset and C# catalog/loader/editor/source model contain no loadout field.
+- `enemies.csv` has 16 data rows, Stage 1/2 counts of 8/8, 16 unique base IDs, and 0 missing A/B references.
+- Ten active Enemy runtime CSV files passed `TextFieldParser` width validation with 0 malformed rows.
+- Enemy CSV search found 0 `unit_sprite_path`, `projectile_sprite_path`, `description_text`, or `summary` headers; `passive_summary` intentionally remains.
+- Active code/resource search found 0 removed loadout and Enemy sprite-path contract symbols.
+- Solution build passed with 0 errors and the existing 2 `MSB3277` warnings.
+
+### History
+
+- 2026-07-17: Code Builder simplified the active Enemy CSV contract and updated the migration report to the direct A/B authority.
+
+## Task: 2026-07-17 OpeningCharge Buff CSV Authority
+
+### Task title
+
+Make the Enemy Buff base/Trigger tables the sole CSV authority for OpeningCharge.
+
+### Goals
+
+- Remove OpeningCharge from the SingleAttack base and Trigger tables.
+- Author its movement increase, target-max-health damage ratio, and freeze values in the existing Buff schema.
+- Keep exactly one active base row and one active Trigger row for the skill.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Keep the current 42-column Buff base schema and 7-column Trigger schema.
+- Add no CSV file or column.
+- Keep `ChargeDamageStatus` as the specialized execution profile.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and structurally validated.
+
+### Next Actions
+
+- User verifies the authored `2.5` movement multiplier and `1.0` target maximum-health damage ratio in Play Mode.
+- Keep future OpeningCharge tuning in the Buff base row rather than reintroducing a SingleAttack row.
+
+### Evidence
+
+- CSV parsing found `skills_buff.csv` at 42 columns with 0 malformed rows and `buff_skill_triger.csv` at 7 columns with 0 malformed rows.
+- CSV parsing found `skills_single_attack.csv` at 44 columns with 0 malformed rows and `single_attack_skill_triger.csv` at 7 columns with 0 malformed rows after removal.
+- An aggregate exact-ID check found 1 OpeningCharge base row (`Buff`, `ChargeDamageStatus`, movement `2.5`, ratio `1`) and 1 Trigger row (`Buff`, `CombatStart`).
+- `EnemyMigrationDataset` now validates OpeningCharge as `SkillRuntimeKind.Buff`.
+- Runtime and Editor C# builds passed with 0 errors; only the pre-existing 2 `MSB3277` warnings remained.
+
+### History
+
+- 2026-07-17: Code Builder transferred the existing OpeningCharge values from SingleAttack authoring to Buff authoring without changing CSV schemas.
+
+## Task: 2026-07-17 BranchDamage Node And Eve-A Graph
+
+### Task title
+
+Replace the projectile-spawning branch node with a non-recursive instant-damage branch node.
+
+### Goals
+
+- Make `BranchDamage` the active node identifier and handler.
+- Keep the existing positional parameters: chance bonus, count, damage multiplier, and search radius.
+- Update Eve-A trait 5 and master 1 graph rows without changing their tuning values.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- Keep the current 21-column graph schema.
+- Do not add a CSV file or column.
+- Runtime behavior must not require a projectile visual or prefab.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented and statically validated; Unity Play Mode verification remains user-owned.
+
+### Next Actions
+
+- User verifies both Eve-A `BranchDamage` choice paths in Play Mode.
+- If the temporary line presentation needs tuning, change runtime line presentation only; keep the node data contract unchanged.
+
+### Evidence
+
+- `skill_node_definitions.csv` contains one `BranchDamage` Action definition.
+- `skill_node_definition_params.csv` contains four `BranchDamage` params in order: `chance_bonus`, `count`, `damage_multiplier`, `search_radius`.
+- `skill_graph_nodes_projectile.csv` contains two Eve `BranchDamage` rows and no `BranchProjectile` row.
+- `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs`, `InGameSkillDefinitionMapper.cs`, and `SkillExecutionSnapshot.cs` now route `BranchDamage`.
+- PowerShell `Import-Csv` checks returned 2 Eve graph rows, 1 node definition, 4 parameter definitions, and 0 old node rows.
+- Runtime and Editor C# builds passed with 0 errors; only the pre-existing `MSB3277` warnings remained.
+
+### History
+
+- 2026-07-17: User approved the branch semantic change and requested both runtime and node application.
+- 2026-07-17: Code Builder renamed the node contract and updated Eve-A graph authoring while preserving existing values.
+
+## Task: 2026-07-16 Enemy Phase 9 CSV Authority Cutover
+
+### Task title
+
+Make merged Enemy CSV, typed base rows, and Trigger rows the only active Enemy data authority.
+
+### Goals
+
+- Remove legacy stage, skill, node, node-param, and catalog inputs.
+- Preserve Stage 1/2 output ordering from one `enemies.csv`.
+- Validate current data intrinsically without comparing to deleted tables.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Current Enemy Choice/graph CSV remains absent.
+- Enemy runtime visual fields remain on base rows with no offset columns.
+- Legacy copies under `Assets/Legacy` are archives, not active runtime inputs.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 9 data cutover implemented and validated.
+
+### Next Actions
+
+- User verifies gameplay parity in Play Mode.
+- Future Enemy tuning edits use only `runtime/enemy/enemies.csv`, typed base, and Trigger files.
+
+### Evidence
+
+- `enemies.csv` has 16 rows, `stage_id` and `sort_order`; Stage 1 and Stage 2 each contain 8 unique sort orders.
+- The former 32 loadout rows were folded into `enemies.csv` direct A/B columns on 2026-07-17; typed base files have 16 skill rows and Trigger files have exactly OpeningCharge and Intimidation.
+- `PakuriCsvRuntimeData` loader/source/build/validation no longer requires `stage_one_enemies.csv`, `stage_two_enemies.csv`, `EnemySkillData.csv`, `EnemySkillNodes.csv`, `EnemySkillNodeParams.csv`, or the two Enemy catalog CSVs.
+- Active runtime search found none of the seven removed legacy CSV filenames.
+- Enemy runtime CSV width validation passed across 10 active files after loadout removal.
+- Unity Editor source sync/validation logged `[EnemyPhase9Validation] PASS`.
+
+### History
+
+- 2026-07-16: Code Builder completed Phase 9A and 9D data cleanup and made the merged dataset the active authority.
+
+## Task: 2026-07-16 Enemy Phase 9 Data Deletion Gate
+
+### Task title
+
+Verify whether legacy Enemy CSV inputs can be deleted after Phase 7-8.
+
+### Goals
+
+- Confirm current Enemy AI no longer needs legacy execution data during active casts.
+- Identify remaining loader and validation dependencies that block CSV deletion.
+- Preserve current base-only Enemy skill authoring and future optional Choice boundary.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No legacy CSV is deleted in this task.
+- `enemies.csv` cannot become sole authority until loader/build/validation stops requiring the stage and legacy skill tables.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 9 data deletion is blocked.
+
+### Next Actions
+
+- Pass Unity Editor CSV validation and 16-skill Play Mode parity.
+- Refactor `PakuriCsvRuntimeData` so `enemies.csv`, loadouts, typed base, and Trigger files are sufficient.
+- Remove legacy parity validation only in the approved Phase 9 cleanup.
+
+### Evidence
+
+- `PakuriCsvRuntimeData.cs` still defines direct filenames for `stage_one_enemies.csv`, `stage_two_enemies.csv`, `EnemySkillData.csv`, `EnemySkillNodes.csv`, and `EnemySkillNodeParams.csv`.
+- `PakuriCsvRuntimeData.Validation.cs` still reports missing legacy stage/skill rows as errors.
+- `PakuriCsvRuntimeData.EnemyMigrationDataset.cs` still compares migrated rows against legacy Enemy rows and `EnemySkillData.csv`.
+- Current Enemy Choice/graph input remains absent; `SkillChoiceResolver` generalization required no new CSV.
+
+### History
+
+- 2026-07-16: Code Builder verified that Phase 7-8 does not make legacy Enemy CSV deletable yet.
+
+## Task: 2026-07-16 Enemy CSV Runtime Consumption Phase 4-6
+
+### Task title
+
+Consume typed Enemy base/loadout/Trigger CSV as shared runtime skill definitions for all current Enemy skills.
+
+### Goals
+
+- Materialize assigned `SkillDefinition[]` and `SkillTriggerDefinition[]` per Enemy.
+- Carry combined coefficients, support multipliers, chain values, charge values, target scope, target selection, projectile lifetime, and runtime hitbox size into typed runtime data.
+- Keep legacy CSV parity validation and fallback intact.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- `enemies.csv` is not yet sole Enemy definition authority.
+- No Enemy Choice/master graph rows.
+- No runtime hitbox offset columns.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 4-6 runtime consumption implemented and compile/static validated. Unity Editor CSV validation remains.
+
+### Next Actions
+
+- Run Unity CSV sync/validation in the open Editor.
+- After Play Mode parity, decide Phase 7/9 authority switch and legacy CSV removal separately.
+
+### Evidence
+
+- `PakuriCsvRuntimeData.Build.cs` builds assigned Enemy base definitions and CombatStart triggers from `enemy_skill_loadouts.csv` and kind-specific base/Trigger files.
+- Builder normalizes `FarthestHostile`, `RandomHostile`, `LowestHealthFriendly`, and current/all target labels into shared runtime selection values.
+- Builder emits `passive-buff` for FrostPressure, ShieldUp, ChargeCommand, and Intimidation status materialization.
+- `SkillDamageSpec` combined AP/SP fields and explicit projectile lifetime are consumed by shared execution utilities.
+- Static CSV width output: area 43 columns, single_attack 44 columns, other active base files 42 columns, with no mismatched rows.
+- Runtime/Editor solution build passed with 0 errors.
+
+### History
+
+- 2026-07-16: Code Builder connected Phase 0-3 Enemy migration data to Phase 4-6 shared typed runtime execution.
+
 ## Task: 2026-07-16 Enemy CSV Migration Phase 0-3
 
 ### Task title
@@ -3217,3 +3485,52 @@ Implemented, synchronized, and validated.
 ### History
 
 - 2026-07-14: Code Builder removed migrated prefab paths, normalized runtime collider offsets, and deleted migrated prefab assets.
+
+## Task: 2026-07-17 Enemy Passive CSV Normalization
+
+### Task title
+
+Normalize Enemy passive ownership into assignment and definition tables.
+
+### Goals
+
+- Replace `passive_skill_name`, `passive_skill_id`, `passive_skill_value`, and `passive_summary` in `enemies.csv` with `passive_id`.
+- Make `skills_passive.csv` the value/function authority for Enemy passives.
+- Validate active A/B references separately from passive references.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No new Enemy Choice or graph CSV is introduced.
+- Enemy passive authoring contract remains limited to ID, display name, target, modifier kind, and value.
+- Shared runtime classification values are fixed by the dedicated Enemy passive parser.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented. Solution compile, static CSV validation, and Unity Editor validation passed.
+
+### Next Actions
+
+- Keep future Enemy passive tuning in `skills_passive.csv`; change `enemies.csv` only when assignment changes.
+
+### Evidence
+
+- `enemies.csv` contract now ends with `skill_slot_a_id,skill_slot_b_id,passive_id,nexus_damage`.
+- `skills_passive.csv` contract is `skill_id,display_name,apply_target,modifier_kind,modifier_value`.
+- `PakuriCsvRuntimeData.EnemyMigrationDataset.cs` routes `skills_passive.csv` to a dedicated parser, reads the five authored columns, and internally materializes `skill_kind=Passive`, `slot=F`, `runtime_kind=Passive`.
+- The same parser rejects passive rows authored outside `skills_passive.csv`; catalog validation rejects unknown references, unsupported targets, `None`, and non-positive values.
+- `PakuriCsvRuntimeData.Build.cs` resolves `passive_id` into `EnemyPassiveDefinition`.
+- CSV reference check found 16 assignments, 16 definitions, 0 missing, and 0 unused.
+- CSV shape check found 5 columns, 16 rows, 0 width errors, and `enemy-sword-mastery.modifier_value=0.10`.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` passed with 0 errors and the existing 2 assembly-version warnings.
+- `git diff --check` passed for the implementation files.
+- `SyncAndValidateCsvRuntimeCatalogsForEditor()` logged `[EnemyPassiveParserValidation] PASS` for the five-column contract; the temporary hook and generated `.meta` leave no residue.
+
+### History
+
+- 2026-07-17: Code Builder established `enemies.csv` as passive assignment authority and `skills_passive.csv` as passive definition authority.
+- 2026-07-17: Code Builder removed redundant `skill_kind`, `slot`, and `runtime_kind` columns and moved those constants into the dedicated Enemy passive parser.

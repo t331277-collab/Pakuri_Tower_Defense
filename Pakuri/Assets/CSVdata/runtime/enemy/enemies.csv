@@ -1,18 +1,18 @@
-enemy_id,stage_id,display_name,encounter_role,attack_type,attribute,unit_sprite_path,projectile_sprite_path,max_health,attack_power,spell_power,move_speed,crit_chance,crit_damage,crit_resistance,def_physical,def_fire,def_lightning,def_ice,def_darkness,def_holy,skill_loadout_id,passive_skill_name,passive_skill_id,passive_skill_value,nexus_damage,passive_summary
-id,string,string,enum:EnemyEncounterRole,enum:EnemyAttackType,enum:DamageAttribute,asset_path,asset_path,float,float,float,float,float,float,float,float,float,float,float,float,float,id,string,string,float,float,string
-stage1-swordsman,stage_one,검사,Normal,Melee,Physical,Assets/Enemy/Stage1/Enemy/Stage1/Warrior.png,,100,12,0,1,0.05,1.5,0,5,2,2,2,2,2,stage1-swordsman-loadout,검술 숙련,PhysicalDamageUp,0.10,1,물리 피해 10% 증가
-stage1-shieldbearer,stage_one,방패병,Normal,Melee,Physical,Assets/Enemy/Stage1/Enemy/Stage1/Shield.png,,180,8,0,0.75,0.05,1.5,0,12,3,3,3,2,2,stage1-shieldbearer-loadout,두꺼운 갑옷,DefenseUp,0.10,1,방어력 10% 증가
-stage1-archer,stage_one,궁수,Normal,Ranged,Physical,Assets/Enemy/Stage1/Enemy/Stage1/Achor.png,,80,10,0,0.9,0.05,1.5,0,3,2,2,2,2,2,stage1-archer-loadout,정조준,CritChanceUp,0.08,1,치명타 확률 8% 증가
-stage1-rogue,stage_one,도적,Normal,Ranged,Physical,Assets/Enemy/Stage1/Enemy/Stage1/Rogue.png,,70,15,0,1,0.05,1.5,0,2,2,2,2,2,2,stage1-rogue-loadout,날카로운 수리검,CritDamageUp,0.20,1,치명타 피해 20% 증가
-stage1-priest,stage_one,사제,Normal,Buffer,Holy,Assets/Enemy/Stage1/Enemy/Stage1/Priest.png,,90,4,12,0.8,0.05,1.5,0,3,2,2,2,2,8,stage1-priest-loadout,신성 집중,HealingUp,0.15,1,치유량 15% 증가
-stage1-guardian-captain,stage_one,수호대장,Day5Midboss,Melee,Physical,Assets/Enemy/Stage1/Enemy/Stage1/Shield.png,,2200,18,4,0.85,0.05,1.5,0,15,5,5,5,4,6,stage1-guardian-captain-loadout,수호 숙련,IncomingDamageDown,0.12,1,받는 피해 12% 감소
-stage1-attack-captain,stage_one,공격대장,Day10Midboss,Melee,Physical,Assets/Enemy/Stage1/Enemy/Stage1/Warrior.png,,3200,26,0,1.1,0.05,1.5,0,12,4,4,4,3,3,stage1-attack-captain-loadout,공격 숙련,PhysicalDamageUp,0.12,1,물리 피해 12% 증가
-stage1-hero-karin,stage_one,용사 카린,StageBoss,MeleeAndRanged,Physical,Assets/Enemy/Stage1/Enemy/Stage1/Warrior.png,,5000,32,10,1,0.05,1.5,0,16,6,6,6,5,12,stage1-hero-karin-loadout,용사의 힘,PhysicalDamageUp,0.15,1,물리 피해 15% 증가
-stage2-fire-dragon-slayer,stage_two,화룡 돌격단원,Normal,Melee,Fire,,,210,20,10,1.05,0.05,1.5,0,8,22,6,5,4,4,stage2-fire-dragon-slayer-loadout,화룡 비늘,FireDefenseUp,0.15,1,화염 방어력 15% 증가
-stage2-lightning-scout,stage_two,뇌룡 척후단원,Normal,MeleeAndRanged,Lightning,,,170,18,18,1.20,0.05,1.5,0,7,5,22,5,4,4,stage2-lightning-scout-loadout,뇌룡 기동,LightningDamageUp,0.12,1,번개 피해 12% 증가
-stage2-ice-guard,stage_two,빙룡 수비단원,Normal,Melee,Ice,,,260,16,12,0.70,0.05,1.5,0,12,5,6,24,4,4,stage2-ice-guard-loadout,빙룡 갑주,IceDefenseUp,0.15,1,냉기 방어력 15% 증가
-stage2-dark-assassin,stage_two,흑룡 암습단원,Normal,Ranged,Darkness,,,160,24,10,1.00,0.05,1.5,0,6,5,5,5,24,4,stage2-dark-assassin-loadout,흑룡 암습,CritDamageUp,0.25,1,치명타 피해 25% 증가
-stage2-holy-priest,stage_two,성룡 사제단원,Normal,Ranged,Holy,,,190,6,26,0.80,0.05,1.5,0,6,5,5,5,4,24,stage2-holy-priest-loadout,성룡 축복,HolyDefenseUp,0.15,1,신성 방어력 15% 증가
-stage2-ethan,stage_two,성창추적자 에단,Day5Midboss,Ranged,Physical,,,4200,32,12,0.95,0.05,1.5,0,16,8,14,6,5,6,stage2-ethan-loadout,성창 조준,CritChanceUp,0.10,1,치명타 확률 10% 증가
-stage2-drake,stage_two,용살자 드레이크,Day10Midboss,Melee,Physical,,,5400,40,0,1.30,0.05,1.5,0,22,10,8,7,5,5,stage2-drake-loadout,용살 검술,PhysicalDamageUp,0.15,1,물리 피해 15% 증가
-stage2-arsen,stage_two,용살기사단장 아르센,StageBoss,Melee,Physical,,,8000,48,12,0.95,0.05,1.5,0,26,20,10,8,6,6,stage2-arsen-loadout,단장의 내성,FireDefenseUp,0.15,1,화염 방어력 15% 증가
+enemy_id,stage_id,sort_order,display_name,encounter_role,attack_type,attribute,max_health,attack_power,spell_power,move_speed,crit_chance,crit_damage,crit_resistance,def_physical,def_fire,def_lightning,def_ice,def_darkness,def_holy,skill_slot_a_id,skill_slot_b_id,passive_id,nexus_damage
+id,string,int,string,enum:EnemyEncounterRole,enum:EnemyAttackType,enum:DamageAttribute,float,float,float,float,float,float,float,float,float,float,float,float,float,id,id,id,float
+stage1-swordsman,stage_one,0,검사,Normal,Melee,Physical,100,12,0,1,0.05,1.5,0,5,2,2,2,2,2,Slash,Slash,enemy-sword-mastery,1
+stage1-shieldbearer,stage_one,1,방패병,Normal,Melee,Physical,180,8,0,0.75,0.05,1.5,0,12,3,3,3,2,2,Slash,ShieldUp,enemy-thick-armor,1
+stage1-archer,stage_one,2,궁수,Normal,Ranged,Physical,80,10,0,0.9,0.05,1.5,0,3,2,2,2,2,2,AimedShot,AimedShot,enemy-precision-aim,1
+stage1-rogue,stage_one,3,도적,Normal,Ranged,Physical,70,15,0,1,0.05,1.5,0,2,2,2,2,2,2,AimedShot,ShurikenThrow,enemy-sharp-shuriken,1
+stage1-priest,stage_one,4,사제,Normal,Buffer,Holy,90,4,12,0.8,0.05,1.5,0,3,2,2,2,2,8,AimedShot,Heal,enemy-holy-focus,1
+stage1-guardian-captain,stage_one,5,수호대장,Day5Midboss,Melee,Physical,2200,18,4,0.85,0.05,1.5,0,15,5,5,5,4,6,Slash,GuardianFlag,enemy-guardian-mastery,1
+stage1-attack-captain,stage_one,6,공격대장,Day10Midboss,Melee,Physical,3200,26,0,1.1,0.05,1.5,0,12,4,4,4,3,3,Slash,ChargeCommand,enemy-attack-mastery,1
+stage1-hero-karin,stage_one,7,용사 카린,StageBoss,MeleeAndRanged,Physical,5000,32,10,1,0.05,1.5,0,16,6,6,6,5,12,Slash,SacredSwordWave,enemy-hero-power,1
+stage2-fire-dragon-slayer,stage_two,0,화룡 돌격단원,Normal,Melee,Fire,210,20,10,1.05,0.05,1.5,0,8,22,6,5,4,4,Slash,FireDragonSlash,enemy-fire-dragon-scales,1
+stage2-lightning-scout,stage_two,1,뇌룡 척후단원,Normal,MeleeAndRanged,Lightning,170,18,18,1.20,0.05,1.5,0,7,5,22,5,4,4,Slash,ChainLightning,enemy-lightning-mobility,1
+stage2-ice-guard,stage_two,2,빙룡 수비단원,Normal,Melee,Ice,260,16,12,0.70,0.05,1.5,0,12,5,6,24,4,4,AimedShot,FrostPressure,enemy-ice-armor,1
+stage2-dark-assassin,stage_two,3,흑룡 암습단원,Normal,Ranged,Darkness,160,24,10,1.00,0.05,1.5,0,6,5,5,5,24,4,AimedShot,DarkStab,enemy-dark-ambush,1
+stage2-holy-priest,stage_two,4,성룡 사제단원,Normal,Ranged,Holy,190,6,26,0.80,0.05,1.5,0,6,5,5,5,4,24,AimedShot,HolyDragonHeal,enemy-holy-blessing,1
+stage2-ethan,stage_two,5,성창추적자 에단,Day5Midboss,Ranged,Physical,4200,32,12,0.95,0.05,1.5,0,16,8,14,6,5,6,Slash,HolySpearThrow,enemy-holy-spear-aim,1
+stage2-drake,stage_two,6,용살자 드레이크,Day10Midboss,Melee,Physical,5400,40,0,1.30,0.05,1.5,0,22,10,8,7,5,5,Slash,OpeningCharge,enemy-dragon-slaying-swordsmanship,1
+stage2-arsen,stage_two,7,용살기사단장 아르센,StageBoss,Melee,Physical,8000,48,12,0.95,0.05,1.5,0,26,20,10,8,6,6,Slash,Intimidation,enemy-commander-resistance,1

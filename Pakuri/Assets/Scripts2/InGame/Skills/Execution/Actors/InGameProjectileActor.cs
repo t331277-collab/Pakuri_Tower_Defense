@@ -21,7 +21,7 @@ namespace Pakuri.InGame
         private int remainingHits = 1;
         private bool destroyWhenGreaterThanBoundary = true;
         private ProjectileStatusHitSpec statusOnHit;
-        private ProjectileBranchHitSpec branchOnHit;
+        private ProjectileBranchDamageSpec branchDamageOnHit;
         private SkillRuntimeInstance runtime;
         private SkillExecutionSnapshot executionSnapshot;
         private string sourceSkillId;
@@ -71,7 +71,7 @@ namespace Pakuri.InGame
             maxLifetime = Mathf.Max(0.1f, lifetimeSeconds);
             destroyWhenGreaterThanBoundary = direction.x >= 0f;
             statusOnHit = null;
-            branchOnHit = null;
+            branchDamageOnHit = null;
             runtime = null;
             executionSnapshot = null;
             sourceSkillId = null;
@@ -100,6 +100,21 @@ namespace Pakuri.InGame
             EnsurePhysicsRelay();
         }
 
+        internal static float ResolveDestroyBoundaryX(
+            Vector2 origin,
+            Vector2 fireDirection,
+            float projectileSpeed,
+            float lifetimeSeconds)
+        {
+            var normalizedDirection = fireDirection.sqrMagnitude > 0.0001f
+                ? fireDirection.normalized
+                : Vector2.right;
+            var maxTravelDistance = Mathf.Max(
+                40f,
+                Mathf.Max(0f, projectileSpeed) * Mathf.Max(0.1f, lifetimeSeconds) + 1f);
+            return origin.x + normalizedDirection.x * maxTravelDistance;
+        }
+
         public void Initialize(
             InGameCombatManager manager,
             BaseUnitRuntimeModel source,
@@ -111,7 +126,7 @@ namespace Pakuri.InGame
             float boundaryX,
             float lifetimeSeconds,
             ProjectileStatusHitSpec statusSpec,
-            ProjectileBranchHitSpec branchSpec,
+            ProjectileBranchDamageSpec branchSpec,
             ProjectileStatusHitSpec impactStatusSpec,
             SkillEffectDefinition[] onHitEffectSpecs,
             SkillEffectDefinition[] onExpireEffectSpecs,
@@ -144,7 +159,7 @@ namespace Pakuri.InGame
                 lifetimeSeconds);
 
             statusOnHit = statusSpec;
-            branchOnHit = branchSpec;
+            branchDamageOnHit = branchSpec;
             impactStatusOnHit = impactStatusSpec;
             onHitEffects = onHitEffectSpecs ?? System.Array.Empty<SkillEffectDefinition>();
             onExpireEffects = onExpireEffectSpecs ?? System.Array.Empty<SkillEffectDefinition>();
@@ -288,7 +303,7 @@ namespace Pakuri.InGame
 
             TryRunProjectileHitTriggers();
             TryApplyOnHitEffects(target, hitPosition);
-            TrySpawnBranches(target);
+            TryApplyBranchDamage(target, hitPosition, resolvedDamage);
             if (stopOnFirstHit)
             {
                 ArmImpact(target, hitPosition);
@@ -355,55 +370,69 @@ namespace Pakuri.InGame
                 transform.position);
         }
 
-        private void TrySpawnBranches(UnitRosterEntry hitTarget)
+        private void TryApplyBranchDamage(
+            UnitRosterEntry hitTarget,
+            Vector2 hitPosition,
+            float primaryDamage)
         {
-            if (impactArmed || combatManager == null || hitTarget == null || hitTarget.Transform == null || branchOnHit == null || !branchOnHit.Enabled)
+            if (impactArmed
+                || combatManager == null
+                || combatManager.Roster == null
+                || hitTarget == null
+                || branchDamageOnHit == null
+                || !branchDamageOnHit.Enabled
+                || primaryDamage <= 0f)
             {
                 return;
             }
 
-            if (!branchOnHit.HasProjectileVisual || Random.value > Mathf.Clamp01(branchOnHit.Chance))
+            if (Random.value > Mathf.Clamp01(branchDamageOnHit.Chance))
             {
                 return;
             }
 
             var candidates = combatManager.Roster.Entries;
-            var radiusSq = branchOnHit.SearchRadius * branchOnHit.SearchRadius;
-            var spawned = 0;
-            for (var i = 0; i < branchOnHit.Count; i++)
+            var radiusSq = branchDamageOnHit.SearchRadius * branchDamageOnHit.SearchRadius;
+            var selectedTargets = new HashSet<BaseUnitRuntimeModel>();
+            var branchDamage = primaryDamage * Mathf.Max(0f, branchDamageOnHit.DamageMultiplier);
+            if (branchDamage <= 0f)
             {
-                var target = FindNearestBranchTarget(candidates, hitTarget, radiusSq);
-                if (target != null && target.Transform != null)
-                {
-                    SpawnBranchProjectile(hitTarget, target);
-                    spawned++;
-                    var targetId = target.Model != null && target.Model.Identity != null ? target.Model.Identity.UnitId : null;
-                    if (!string.IsNullOrWhiteSpace(targetId))
-                    {
-                        branchOnHit.MarkBranchedTarget(targetId);
-                    }
-
-                    continue;
-                }
-
-                SpawnFallbackBranchProjectile(hitTarget, i);
-                spawned++;
+                return;
             }
 
-            if (spawned > 0)
+            for (var i = 0; i < branchDamageOnHit.Count; i++)
             {
-                branchOnHit.ClearBranchedTargets();
+                var target = FindNearestBranchTarget(candidates, hitTarget, hitPosition, radiusSq, selectedTargets);
+                if (target == null || target.Model == null || target.Transform == null)
+                {
+                    break;
+                }
+
+                selectedTargets.Add(target.Model);
+                var targetPosition = (Vector2)target.Transform.position;
+                combatManager.ApplyDamage(
+                    target.Model,
+                    branchDamage,
+                    damageAttribute,
+                    owner,
+                    criticalAllowed,
+                    critChanceBonus,
+                    critDamageBonus,
+                    sourceSkillId,
+                    true);
+                SpawnBranchDamageLine(hitPosition, targetPosition);
             }
         }
 
         private UnitRosterEntry FindNearestBranchTarget(
             IReadOnlyList<UnitRosterEntry> candidates,
             UnitRosterEntry hitTarget,
-            float radiusSq)
+            Vector2 origin,
+            float radiusSq,
+            HashSet<BaseUnitRuntimeModel> selectedTargets)
         {
             UnitRosterEntry best = null;
             var bestDistanceSq = float.MaxValue;
-            var origin = hitTarget.Transform.position;
             for (var i = 0; i < candidates.Count; i++)
             {
                 var candidate = candidates[i];
@@ -417,14 +446,12 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var unitId = candidate.Model.Identity != null ? candidate.Model.Identity.UnitId : null;
-                if (!string.IsNullOrWhiteSpace(unitId) && branchOnHit.HasBranchedTarget(unitId))
+                if (selectedTargets.Contains(candidate.Model))
                 {
                     continue;
                 }
 
-                var offset = candidate.Transform.position - origin;
-                offset.z = 0f;
+                var offset = (Vector2)candidate.Transform.position - origin;
                 var distanceSq = offset.sqrMagnitude;
                 if (distanceSq > radiusSq || distanceSq >= bestDistanceSq)
                 {
@@ -438,103 +465,34 @@ namespace Pakuri.InGame
             return best;
         }
 
-        private void SpawnBranchProjectile(UnitRosterEntry hitTarget, UnitRosterEntry branchTarget)
+        private void SpawnBranchDamageLine(Vector2 origin, Vector2 target)
         {
-            var origin = hitTarget.Transform.position;
-            var directionToTarget = branchTarget.Transform.position - origin;
-            directionToTarget.z = 0f;
-            if (directionToTarget.sqrMagnitude <= 0.0001f)
+            var shader = Shader.Find("Sprites/Default");
+            if (shader == null)
             {
                 return;
             }
 
-            SpawnBranchProjectile(hitTarget, directionToTarget);
-        }
-
-        private void SpawnFallbackBranchProjectile(UnitRosterEntry hitTarget, int branchIndex)
-        {
-            if (hitTarget == null || hitTarget.Transform == null)
+            const float durationSeconds = 0.12f;
+            var lineObject = new GameObject("InGameBranchDamageLine");
+            var material = new Material(shader)
             {
-                return;
-            }
-
-            var baseAngle = branchOnHit.Count > 1
-                ? Mathf.Lerp(-18f, 18f, branchIndex / (float)(branchOnHit.Count - 1))
-                : 0f;
-            var jitter = Random.Range(-12f, 12f);
-            var directionToTarget = Quaternion.Euler(0f, 0f, baseAngle + jitter) * Vector2.right;
-            SpawnBranchProjectile(hitTarget, directionToTarget);
-        }
-
-        private void SpawnBranchProjectile(UnitRosterEntry hitTarget, Vector2 branchDirection)
-        {
-            if (hitTarget == null || hitTarget.Transform == null || branchDirection.sqrMagnitude <= 0.0001f)
-            {
-                return;
-            }
-
-            var origin = hitTarget.Transform.position;
-            var effects = combatManager.Effects;
-            if (effects == null)
-            {
-                return;
-            }
-
-            var rotation = ResolveRotation(branchDirection);
-            var instance = RuntimeSkillVisualFactory.HasVisual(branchOnHit.RuntimeVisual)
-                ? RuntimeSkillVisualFactory.Create(
-                    effects,
-                    branchOnHit.RuntimeVisual,
-                    "InGameProjectileBranch",
-                    origin,
-                    rotation,
-                    hitboxIsTrigger: true)
-                : effects.InstantiateSkillPrefab(branchOnHit.ProjectilePrefab, origin, rotation);
-            if (instance == null)
-            {
-                return;
-            }
-
-            var actor = instance.GetComponent<InGameProjectileActor>();
-            if (actor == null)
-            {
-                actor = instance.AddComponent<InGameProjectileActor>();
-            }
-
-            var ignoredUnitId = hitTarget.Model != null && hitTarget.Model.Identity != null
-                ? hitTarget.Model.Identity.UnitId
-                : null;
-            actor.Initialize(
-                combatManager,
-                owner,
-                branchDirection,
-                speed,
-                damage * Mathf.Max(0f, branchOnHit.DamageMultiplier),
-                damageAttribute,
-                0,
-                destroyBeyondX,
-                Mathf.Max(0.1f, maxLifetime),
-                statusOnHit,
-                branchOnHit.CloneForChild(),
-                null,
-                null,
-                null,
-                true,
-                false,
-                0f,
-                null,
-                null,
-                false,
-                0f,
-                0f,
-                null,
-                null,
-                ignoredUnitId,
-                null,
-                false,
-                criticalAllowed,
-                critChanceBonus,
-                critDamageBonus);
+                name = "RuntimeBranchDamageLineMaterial"
+            };
+            var line = lineObject.AddComponent<LineRenderer>();
+            line.sharedMaterial = material;
+            line.useWorldSpace = true;
+            line.positionCount = 2;
+            line.startWidth = 0.08f;
+            line.endWidth = 0.04f;
+            line.startColor = new Color(0.1f, 0.65f, 1f, 1f);
+            line.endColor = new Color(0.1f, 0.35f, 1f, 0.75f);
+            line.numCapVertices = 2;
+            line.sortingOrder = 100;
+            line.SetPosition(0, new Vector3(origin.x, origin.y, 0f));
+            line.SetPosition(1, new Vector3(target.x, target.y, 0f));
+            Destroy(material, durationSeconds);
+            Destroy(lineObject, durationSeconds);
         }
 
         private bool IsSameSide(BaseUnitRuntimeModel target)
@@ -743,50 +701,12 @@ namespace Pakuri.InGame
         public ProjectileStatusHitSpec ThresholdStatusSpec;
     }
 
-    public sealed class ProjectileBranchHitSpec
+    public sealed class ProjectileBranchDamageSpec
     {
-        private readonly HashSet<string> branchedTargets = new HashSet<string>();
-
         public bool Enabled;
-        public RuntimeSkillVisualSpec RuntimeVisual;
-        public GameObject ProjectilePrefab;
         public float Chance;
         public int Count;
         public float DamageMultiplier = 1f;
         public float SearchRadius;
-
-        public bool HasProjectileVisual => RuntimeSkillVisualFactory.HasVisual(RuntimeVisual) || ProjectilePrefab != null;
-
-        public bool HasBranchedTarget(string unitId)
-        {
-            return !string.IsNullOrWhiteSpace(unitId) && branchedTargets.Contains(unitId);
-        }
-
-        public void MarkBranchedTarget(string unitId)
-        {
-            if (!string.IsNullOrWhiteSpace(unitId))
-            {
-                branchedTargets.Add(unitId);
-            }
-        }
-
-        public void ClearBranchedTargets()
-        {
-            branchedTargets.Clear();
-        }
-
-        public ProjectileBranchHitSpec CloneForChild()
-        {
-            return new ProjectileBranchHitSpec
-            {
-                Enabled = Enabled,
-                RuntimeVisual = RuntimeVisual,
-                ProjectilePrefab = ProjectilePrefab,
-                Chance = Chance,
-                Count = Count,
-                DamageMultiplier = DamageMultiplier,
-                SearchRadius = SearchRadius
-            };
-        }
     }
 }

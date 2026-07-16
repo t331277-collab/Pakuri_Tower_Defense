@@ -16,19 +16,9 @@ namespace Pakuri.Data
                 errors.Add("monsters.csv has no monster rows.");
             }
 
-            if (model.StageOneEnemies.Count == 0)
+            if (model.Enemies.Count == 0)
             {
-                errors.Add("stage_one_enemies.csv has no enemy rows.");
-            }
-
-            if (model.StageTwoEnemies.Count == 0)
-            {
-                errors.Add("stage_two_enemies.csv has no enemy rows.");
-            }
-
-            if (model.EnemySkills.Count == 0)
-            {
-                errors.Add("EnemySkillData.csv has no enemy skill rows.");
+                errors.Add("enemies.csv has no enemy rows.");
             }
 
             if (model.StatusEffects.Count == 0)
@@ -37,8 +27,6 @@ namespace Pakuri.Data
             }
 
             ValidateCatalogEntries(model.CatalogMonsters, model.Monsters, "catalog_monsters.csv", errors);
-            ValidateCatalogEntries(model.CatalogStageOneEnemies, model.StageOneEnemies, "catalog_stage_one_enemies.csv", errors);
-            ValidateCatalogEntries(model.CatalogStageTwoEnemies, model.StageTwoEnemies, "catalog_stage_two_enemies.csv", errors);
 
             foreach (var reward in model.RewardChoices.Values)
             {
@@ -262,9 +250,6 @@ namespace Pakuri.Data
 
             ValidateNormalizedSkillAuthoringRows(model, assetCatalog, errors);
 
-            ValidateEnemyRows(model.StageOneEnemies.Values, model.EnemySkills, errors);
-            ValidateEnemyRows(model.StageTwoEnemies.Values, model.EnemySkills, errors);
-            ValidateEnemySkillNodes(model, errors);
             ValidateEnemyMigrationRows(model, errors);
 
             foreach (var monster in model.Monsters.Values)
@@ -1172,165 +1157,6 @@ namespace Pakuri.Data
             }
         }
 
-        private static void ValidateEnemyPassiveColumns(EnemyRow enemy, List<string> errors)
-        {
-            if (enemy == null)
-            {
-                return;
-            }
-
-            var passiveId = enemy.PassiveSkillId != null ? enemy.PassiveSkillId.Trim() : string.Empty;
-            if (string.IsNullOrWhiteSpace(passiveId))
-            {
-                if (enemy.PassiveSkillValue > 0f)
-                {
-                    errors.Add($"Enemy '{enemy.Id}' has passive_skill_value '{enemy.PassiveSkillValue}' but no passive_skill_id.");
-                }
-
-                return;
-            }
-
-            if (!IsSupportedEnemyPassiveId(passiveId))
-            {
-                errors.Add($"Enemy '{enemy.Id}' uses unsupported passive_skill_id '{passiveId}'.");
-            }
-
-            if (enemy.PassiveSkillValue <= 0f)
-            {
-                errors.Add($"Enemy '{enemy.Id}' passive_skill_id '{passiveId}' requires a positive passive_skill_value.");
-            }
-        }
-
-        private static bool IsSupportedEnemyPassiveId(string passiveId)
-        {
-            return string.Equals(passiveId, "PhysicalDamageUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "DefenseUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "CritChanceUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "CritDamageUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "HealingUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "IncomingDamageDown", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "PhysicalDefenseUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "FireDamageUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "FireDefenseUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "LightningDamageUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "LightningDefenseUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "IceDamageUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "IceDefenseUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "DarknessDamageUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "DarknessDefenseUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "HolyDamageUp", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(passiveId, "HolyDefenseUp", StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static void ValidateEnemyRows(
-            IEnumerable<EnemyRow> enemies,
-            Dictionary<string, EnemySkillRow> enemySkills,
-            List<string> errors)
-        {
-            if (enemies == null)
-            {
-                return;
-            }
-
-            foreach (var enemy in enemies)
-            {
-                if (enemy == null)
-                {
-                    continue;
-                }
-
-                if (!enemySkills.ContainsKey(enemy.StageOneSkill.ToString()))
-                {
-                    errors.Add($"Enemy '{enemy.Id}' references unknown enemy skill '{enemy.StageOneSkill}'.");
-                }
-
-                if (enemy.HasBasicSkill && !enemySkills.ContainsKey(enemy.BasicSkill.ToString()))
-                {
-                    errors.Add($"Enemy '{enemy.Id}' references unknown basic enemy skill '{enemy.BasicSkill}'.");
-                }
-
-                ValidateEnemyPassiveColumns(enemy, errors);
-            }
-        }
-
-        private static void ValidateEnemySkillNodes(SourceModel model, List<string> errors)
-        {
-            if (model == null)
-            {
-                return;
-            }
-
-            var supportedActionOps = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "DamageArea",
-                "SpawnProjectile",
-                "Heal",
-                "ApplySelfIncomingDamageMultiplier",
-                "GrantShieldToEnemyAllies",
-                "ApplyAllyMoveAndDamageMultiplier",
-                "Damage",
-                "DamageAndActionSpeedDebuff",
-                "DamageThenDelayedChain",
-                "ChargeDamageStatus",
-                "ApplyOutgoingDamageMultiplierStatus"
-            };
-            var supportedTargetSelectors = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "CurrentTarget",
-                "NearestTower",
-                "FarthestTower",
-                "RandomTower",
-                "LowestHealthEnemyAlly",
-                "Self",
-                "EnemyAlliesInRadius",
-                "AllTowers"
-            };
-            var knownNodeIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            for (var i = 0; i < model.EnemySkillNodes.Count; i++)
-            {
-                var node = model.EnemySkillNodes[i];
-                if (node == null)
-                {
-                    continue;
-                }
-
-                if (!model.EnemySkills.ContainsKey(node.SkillId))
-                {
-                    errors.Add($"Enemy skill node '{node.NodeId}' references unknown enemy skill '{node.SkillId}'.");
-                }
-
-                if (string.IsNullOrWhiteSpace(node.ActionOp))
-                {
-                    errors.Add($"Enemy skill node '{node.NodeId}' has empty action_op.");
-                }
-                else if (!supportedActionOps.Contains(node.ActionOp))
-                {
-                    errors.Add($"Enemy skill node '{node.NodeId}' has unsupported action_op '{node.ActionOp}'.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(node.TargetSelector) && !supportedTargetSelectors.Contains(node.TargetSelector))
-                {
-                    errors.Add($"Enemy skill node '{node.NodeId}' has unsupported target_selector '{node.TargetSelector}'.");
-                }
-
-                knownNodeIds.Add($"{node.SkillId}:{node.NodeId}");
-            }
-
-            for (var i = 0; i < model.EnemySkillNodeParams.Count; i++)
-            {
-                var param = model.EnemySkillNodeParams[i];
-                if (param == null)
-                {
-                    continue;
-                }
-
-                if (!knownNodeIds.Contains($"{param.SkillId}:{param.NodeId}"))
-                {
-                    errors.Add($"Enemy skill node param '{param.SkillId}/{param.NodeId}/{param.ParamKey}' references unknown enemy skill node.");
-                }
-            }
-        }
-
         private static void ValidateReferencedAssetCoverage(
             SourceModel model,
             PakuriCsvRuntimeAssetCatalog assetCatalog,
@@ -1443,8 +1269,8 @@ namespace Pakuri.Data
             if (catalog != null && sourceModel != null)
             {
                 ValidateRuntimeMonsterAssets(catalog.Monsters, sourceModel, errors);
-                ValidateRuntimeEnemyAssets(catalog.StageOneEnemies, sourceModel.StageOneEnemies, errors);
-                ValidateRuntimeEnemyAssets(catalog.StageTwoEnemies, sourceModel.StageTwoEnemies, errors);
+                ValidateRuntimeEnemyAssets(catalog.StageOneEnemies, sourceModel.Enemies, errors);
+                ValidateRuntimeEnemyAssets(catalog.StageTwoEnemies, sourceModel.Enemies, errors);
             }
 
             if (errors.Count > 0)
@@ -1484,7 +1310,7 @@ namespace Pakuri.Data
 
         private static void ValidateRuntimeEnemyAssets(
             EnemyDefinition[] enemies,
-            Dictionary<string, EnemyRow> sourceEnemies,
+            Dictionary<string, EnemyMigrationRow> sourceEnemies,
             List<string> errors)
         {
             if (enemies == null)
@@ -1506,15 +1332,6 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                if (!string.IsNullOrWhiteSpace(sourceEnemy.UnitSpritePath) && enemy.UnitSprite == null)
-                {
-                    errors.Add($"Runtime enemy '{enemy.EnemyId}' is missing UnitSprite for '{sourceEnemy.UnitSpritePath}'.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(sourceEnemy.ProjectileSpritePath) && enemy.ProjectileSprite == null)
-                {
-                    errors.Add($"Runtime enemy '{enemy.EnemyId}' is missing ProjectileSprite for '{sourceEnemy.ProjectileSpritePath}'.");
-                }
             }
         }
 

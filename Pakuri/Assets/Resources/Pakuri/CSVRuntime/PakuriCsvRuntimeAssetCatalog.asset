@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: PakuriCsvRuntimeAssetCatalog
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.Data.PakuriCsvRuntimeAssetCatalog
   Sprites:
-  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Achor.png
-    Asset: {fileID: 21300000, guid: ef1e124d1928cc54ea59ccf3db8fdfe0, type: 3}
   - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Achor/ChatGPT Image 2026\uB144 5\uC6D4
       15\uC77C \uC624\uD6C4 07_37_41 1.png"
     Asset: {fileID: 21300000, guid: 36a465a8e68bc1048aeaee89f14bba4b, type: 3}
@@ -24,20 +22,12 @@ MonoBehaviour:
   - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Preist/ChatGPT Image 2026\uB144
       5\uC6D4 15\uC77C \uC624\uD6C4 07_43_34-Photoroom 1.png"
     Asset: {fileID: 21300000, guid: 22d7d618afc0ac04b8a5180e83ade844, type: 3}
-  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Priest.png
-    Asset: {fileID: 21300000, guid: 8734391ccbebaae48b6a4ab04c78cab3, type: 3}
-  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Rogue.png
-    Asset: {fileID: 21300000, guid: 91290f9ea0955e84cbf23401ff72fdac, type: 3}
-  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Shield.png
-    Asset: {fileID: 21300000, guid: 0caea6bc70c48504bb727429d31f5bc3, type: 3}
   - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Shield/ChatGPT Image 2026\uB144
       5\uC6D4 16\uC77C \uC624\uC804 01_33_45-Photoroom 1.png"
     Asset: {fileID: -4406097972065725354, guid: 920e1af41d651d643914a42765a4e2ff, type: 3}
   - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/shield_King/ChatGPT Image 2026\uB144
       5\uC6D4 16\uC77C \uC624\uC804 01_39_04-Photoroom 1.png"
     Asset: {fileID: -4871535039512559577, guid: 9de87d17ab47da445a9ede28d1e047bb, type: 3}
-  - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Warrior.png
-    Asset: {fileID: 21300000, guid: 128ccc7f23263be428abee49b68f0e07, type: 3}
   - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Warrior/ChatGPT Image 2026\uB144
       5\uC6D4 15\uC77C \uC624\uD6C4 07_34_03-Photoroom (1) 1.png"
     Asset: {fileID: 21300000, guid: 50ac20857de2edc41841a7054881284f, type: 3}

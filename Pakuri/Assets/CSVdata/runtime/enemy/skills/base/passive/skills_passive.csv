@@ -1,2 +1,18 @@
-skill_id,skill_kind,slot,display_name,runtime_kind,description_text,summary
-id,enum:PakuriCsvSkillKind,enum:SkillSlot,string,enum:SkillRuntimeKind,string,string
+skill_id,display_name,apply_target,modifier_kind,modifier_value
+id,string,enum:EnemyPassiveTarget,enum:EnemyPassiveModifierKind,float
+enemy-sword-mastery,검술 숙련,Self,PhysicalDamageUp,0.10
+enemy-thick-armor,두꺼운 갑옷,Self,DefenseUp,0.10
+enemy-precision-aim,정조준,Self,CritChanceUp,0.08
+enemy-sharp-shuriken,날카로운 수리검,Self,CritDamageUp,0.20
+enemy-holy-focus,신성 집중,Self,HealingUp,0.15
+enemy-guardian-mastery,수호 숙련,Self,IncomingDamageDown,0.12
+enemy-attack-mastery,공격 숙련,Self,PhysicalDamageUp,0.12
+enemy-hero-power,용사의 힘,Self,PhysicalDamageUp,0.15
+enemy-fire-dragon-scales,화룡 비늘,Self,FireDefenseUp,0.15
+enemy-lightning-mobility,뇌룡 기동,Self,LightningDamageUp,0.12
+enemy-ice-armor,빙룡 갑주,Self,IceDefenseUp,0.15
+enemy-dark-ambush,흑룡 암습,Self,CritDamageUp,0.25
+enemy-holy-blessing,성룡 축복,Self,HolyDefenseUp,0.15
+enemy-holy-spear-aim,성창 조준,Self,CritChanceUp,0.10
+enemy-dragon-slaying-swordsmanship,용살 검술,Self,PhysicalDamageUp,0.15
+enemy-commander-resistance,단장의 내성,Self,FireDefenseUp,0.15

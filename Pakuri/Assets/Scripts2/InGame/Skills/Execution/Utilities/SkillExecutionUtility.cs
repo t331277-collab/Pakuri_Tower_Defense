@@ -129,15 +129,43 @@ namespace Pakuri.InGame
                 return 0f;
             }
 
-            var stat = ResolveStat(caster, damage.StatSource);
-            var baseDamage = Mathf.Max(0f, damage.BaseDamage + stat * damage.StatCoefficient);
+            var baseDamage = ResolvePowerValue(caster, damage);
             if (snapshot != null)
             {
                 baseDamage = (baseDamage + snapshot.BaseDamageBonus) * Mathf.Max(0f, snapshot.DamageMultiplier);
             }
 
             baseDamage *= StatusEffectRuntime.ResolveOutgoingDamageMultiplier(caster, MapAttribute(damage.Element), damage.SkillId);
+            if (caster is EnemyUnitRuntimeModel enemy)
+            {
+                baseDamage *= EnemyPassiveRuntime.ResolveOutgoingDamageMultiplier(
+                    enemy,
+                    MapAttribute(damage.Element));
+            }
+
             return Mathf.Max(0f, baseDamage);
+        }
+
+        public static float ResolvePowerValue(BaseUnitRuntimeModel caster, SkillDamageSpec spec)
+        {
+            if (spec == null)
+            {
+                return 0f;
+            }
+
+            if (spec.UseCombinedStatCoefficients)
+            {
+                var attack = ResolveStat(caster, StatSource.Attack);
+                var spell = ResolveStat(caster, StatSource.Intelligence);
+                return Mathf.Max(
+                    0f,
+                    spec.BaseDamage
+                    + attack * spec.AttackPowerCoefficient
+                    + spell * spec.SpellPowerCoefficient);
+            }
+
+            var stat = ResolveStat(caster, spec.StatSource);
+            return Mathf.Max(0f, spec.BaseDamage + stat * spec.StatCoefficient);
         }
 
         public static float ResolveShield(BaseUnitRuntimeModel caster, ShieldSkillData skill, SkillExecutionSnapshot snapshot = null)
@@ -162,6 +190,11 @@ namespace Pakuri.InGame
         public static float ResolveProjectileLifetime(ProjectileSkillData skill)
         {
             var projectile = skill != null ? skill.Projectile : null;
+            if (projectile != null && projectile.LifetimeSeconds > 0f)
+            {
+                return projectile.LifetimeSeconds;
+            }
+
             var speed = projectile != null ? Mathf.Max(0.1f, projectile.ProjectileSpeed) : 1f;
             const float battlefieldTravelDistance = 31f;
             return Mathf.Max(0.25f, battlefieldTravelDistance / speed + 0.5f);
@@ -256,6 +289,11 @@ namespace Pakuri.InGame
 
             var leftDistance = ResolveDistanceSquared(sourceEntry, left);
             var rightDistance = ResolveDistanceSquared(sourceEntry, right);
+            if (selection == SkillTargetSelection.Farthest)
+            {
+                return rightDistance.CompareTo(leftDistance);
+            }
+
             return leftDistance.CompareTo(rightDistance);
         }
 

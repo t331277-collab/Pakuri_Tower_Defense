@@ -67,11 +67,24 @@ namespace Pakuri.InGame
         public UnitDefenseRuntime Defenses = new UnitDefenseRuntime();
         public UnitResourceRuntime Resources = new UnitResourceRuntime();
         public UnitSkillRuntimeSet SkillRuntime = new UnitSkillRuntimeSet();
+        public UnitChargeRuntime ActiveCharge;
         public UnitStatusRuntimeSet Statuses = new UnitStatusRuntimeSet();
         public UnitStateBucket State = new UnitStateBucket();
         public bool IsBoss;
         public bool AutoAttackEnabled = true;
         public bool AutoSkillEnabled = true;
+    }
+
+    public sealed class UnitChargeRuntime
+    {
+        public string SkillId;
+        public string TargetUnitId;
+        public float ElapsedSeconds;
+        public float RampSeconds = 3f;
+        public float MaxMoveSpeedMultiplier = 2.5f;
+        public float DamageTargetMaxHealthRatio = 1f;
+        public StatusApplicationSpec OnHitStatus;
+        public DamageAttribute Attribute = DamageAttribute.Physical;
     }
 
     public class UnitRuntimeModel : BaseUnitRuntimeModel

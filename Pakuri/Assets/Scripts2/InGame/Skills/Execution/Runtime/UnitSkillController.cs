@@ -69,6 +69,21 @@ namespace Pakuri.InGame
                 logRoutedContracts));
         }
 
+        public bool TryExecuteSelected(
+            SkillRuntimeInstance runtime,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            float deltaTime,
+            bool logRoutedContracts)
+        {
+            return routeSkill(CreateAutoRequest(
+                runtime,
+                roster,
+                combatManager,
+                deltaTime,
+                logRoutedContracts));
+        }
+
         private SkillExecutionRequest CreateAutoRequest(
             SkillRuntimeInstance runtime,
             UnitRosterService roster,

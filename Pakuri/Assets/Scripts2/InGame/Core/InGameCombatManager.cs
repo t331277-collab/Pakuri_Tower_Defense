@@ -506,6 +506,25 @@ namespace Pakuri.InGame
                 triggerSourceSkillId);
         }
 
+        public bool CanExecuteSelectedSkill(UnitRosterEntry casterEntry, SkillRuntimeInstance runtime)
+        {
+            return skillExecution.CanExecuteSelected(casterEntry, runtime, roster);
+        }
+
+        public bool TryExecuteSelectedSkill(
+            UnitRosterEntry casterEntry,
+            SkillRuntimeInstance runtime,
+            float deltaTime)
+        {
+            return skillExecution.TryExecuteSelected(
+                casterEntry,
+                runtime,
+                roster,
+                this,
+                deltaTime,
+                logSkillExecutionContracts);
+        }
+
         public void DispatchSkillCastTriggers(
             UnitRosterEntry sourceEntry,
             string sourceSkillId,
@@ -916,6 +935,11 @@ namespace Pakuri.InGame
 
         private bool ShouldAutoRouteSkill(UnitRosterEntry entry, SkillRuntimeInstance runtime)
         {
+            if (entry != null && entry.Model is EnemyUnitRuntimeModel)
+            {
+                return false;
+            }
+
             if (!HasVisibleLivingEnemyInMainCamera()
                 || entry == null
                 || entry.Model == null
@@ -1539,13 +1563,7 @@ namespace Pakuri.InGame
                 return statusMultiplier;
             }
 
-            var multiplier = Mathf.Max(0f, enemy.PassiveIncomingDamageMultiplier);
-            if (enemy.IncomingDamageMultiplierRemainingSeconds > 0f)
-            {
-                multiplier *= Mathf.Max(0f, enemy.IncomingDamageMultiplier);
-            }
-
-            return multiplier * statusMultiplier;
+            return Mathf.Max(0f, enemy.PassiveIncomingDamageMultiplier) * statusMultiplier;
         }
 
         public void SynchronizeShieldView(BaseUnitRuntimeModel target)

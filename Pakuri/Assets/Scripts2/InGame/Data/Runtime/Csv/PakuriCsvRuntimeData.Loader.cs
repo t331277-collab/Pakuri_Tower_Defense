@@ -25,14 +25,6 @@ namespace Pakuri.Data
             {
                 missingAssets.Add(CatalogMonstersFileName);
             }
-            if (sourceCatalog.CatalogStageOneEnemies == null)
-            {
-                missingAssets.Add(CatalogStageOneEnemiesFileName);
-            }
-            if (sourceCatalog.CatalogStageTwoEnemies == null)
-            {
-                missingAssets.Add(CatalogStageTwoEnemiesFileName);
-            }
             if (sourceCatalog.Monsters == null)
             {
                 missingAssets.Add(MonstersFileName);
@@ -109,25 +101,9 @@ namespace Pakuri.Data
             {
                 missingAssets.Add(StatusEffectsFileName);
             }
-            if (sourceCatalog.StageOneEnemies == null)
-            {
-                missingAssets.Add(StageOneEnemiesFileName);
-            }
-            if (sourceCatalog.StageTwoEnemies == null)
-            {
-                missingAssets.Add(StageTwoEnemiesFileName);
-            }
-            if (sourceCatalog.EnemySkills == null)
-            {
-                missingAssets.Add(EnemySkillDataFileName);
-            }
             if (sourceCatalog.Enemies == null)
             {
                 missingAssets.Add(EnemiesFileName);
-            }
-            if (sourceCatalog.EnemySkillLoadouts == null)
-            {
-                missingAssets.Add(EnemySkillLoadoutsFileName);
             }
             if (sourceCatalog.EnemySkillBaseFiles == null || sourceCatalog.EnemySkillBaseFiles.Length == 0)
             {
@@ -173,8 +149,6 @@ namespace Pakuri.Data
             var model = new SourceModel();
 
             var catalogMonsterTable = CsvTable.Load(sourceCatalog.CatalogMonsters, CatalogMonstersFileName);
-            var catalogEnemyTable = CsvTable.Load(sourceCatalog.CatalogStageOneEnemies, CatalogStageOneEnemiesFileName);
-            var catalogStageTwoEnemyTable = CsvTable.Load(sourceCatalog.CatalogStageTwoEnemies, CatalogStageTwoEnemiesFileName);
             var monsterTable = CsvTable.Load(sourceCatalog.Monsters, MonstersFileName);
             var rewardChoiceTable = CsvTable.Load(sourceCatalog.MonsterRewardChoices, MonsterRewardChoicesFileName);
             var projectileSkillAssets = ResolveSplitOrLegacyCsvAssets(
@@ -230,30 +204,12 @@ namespace Pakuri.Data
                 sourceCatalog.MonsterSkillChoicesPassiveFiles,
                 sourceCatalog.MonsterSkillChoicesPassive);
             var statusEffectTable = CsvTable.Load(sourceCatalog.StatusEffects, StatusEffectsFileName);
-            var enemyTable = CsvTable.Load(sourceCatalog.StageOneEnemies, StageOneEnemiesFileName);
-            var stageTwoEnemyTable = CsvTable.Load(sourceCatalog.StageTwoEnemies, StageTwoEnemiesFileName);
-            var enemySkillTable = CsvTable.Load(sourceCatalog.EnemySkills, EnemySkillDataFileName);
-            var enemySkillNodeTable = LoadOptionalCsvTable(sourceCatalog.EnemySkillNodes, EnemySkillNodesFileName);
-            var enemySkillNodeParamTable = LoadOptionalCsvTable(sourceCatalog.EnemySkillNodeParams, EnemySkillNodeParamsFileName);
-            var migratedEnemyTable = CsvTable.Load(sourceCatalog.Enemies, EnemiesFileName);
-            var enemySkillLoadoutTable = CsvTable.Load(sourceCatalog.EnemySkillLoadouts, EnemySkillLoadoutsFileName);
+            var enemyTable = CsvTable.Load(sourceCatalog.Enemies, EnemiesFileName);
 
             foreach (var record in catalogMonsterTable.Records)
             {
                 var row = ParseCatalogEntry(record, "monster_id");
                 AddUnique(model.CatalogMonsters, row.Id, row, record);
-            }
-
-            foreach (var record in catalogEnemyTable.Records)
-            {
-                var row = ParseCatalogEntry(record, "enemy_id");
-                AddUnique(model.CatalogStageOneEnemies, row.Id, row, record);
-            }
-
-            foreach (var record in catalogStageTwoEnemyTable.Records)
-            {
-                var row = ParseCatalogEntry(record, "enemy_id");
-                AddUnique(model.CatalogStageTwoEnemies, row.Id, row, record);
             }
 
             foreach (var record in monsterTable.Records)
@@ -401,51 +357,10 @@ namespace Pakuri.Data
                 AddUnique(model.StatusEffects, row.Id, row, record);
             }
 
-            foreach (var record in enemySkillTable.Records)
-            {
-                var row = ParseEnemySkillRow(record);
-                AddUnique(model.EnemySkills, row.Id, row, record);
-            }
-
-            if (enemySkillNodeTable != null)
-            {
-                foreach (var record in enemySkillNodeTable.Records)
-                {
-                    model.EnemySkillNodes.Add(ParseEnemySkillNodeRow(record));
-                }
-            }
-
-            if (enemySkillNodeParamTable != null)
-            {
-                foreach (var record in enemySkillNodeParamTable.Records)
-                {
-                    model.EnemySkillNodeParams.Add(ParseEnemySkillNodeParamRow(record));
-                }
-            }
-
             foreach (var record in enemyTable.Records)
             {
-                var row = ParseEnemyRow(record);
-                ApplyEnemySkillRow(row, model.EnemySkills, record);
-                AddUnique(model.StageOneEnemies, row.Id, row, record);
-            }
-
-            foreach (var record in stageTwoEnemyTable.Records)
-            {
-                var row = ParseEnemyRow(record);
-                ApplyEnemySkillRow(row, model.EnemySkills, record);
-                AddUnique(model.StageTwoEnemies, row.Id, row, record);
-            }
-
-            foreach (var record in migratedEnemyTable.Records)
-            {
                 var row = ParseEnemyMigrationRow(record);
-                AddUnique(model.MigratedEnemies, row.Id, row, record);
-            }
-
-            foreach (var record in enemySkillLoadoutTable.Records)
-            {
-                model.EnemySkillLoadouts.Add(ParseEnemySkillLoadoutRow(record));
+                AddUnique(model.Enemies, row.Id, row, record);
             }
 
             var enemyBaseAssets = sourceCatalog.EnemySkillBaseFiles ?? Array.Empty<TextAsset>();

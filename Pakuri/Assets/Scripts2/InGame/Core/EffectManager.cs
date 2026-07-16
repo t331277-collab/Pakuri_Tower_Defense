@@ -22,29 +22,11 @@ namespace Pakuri.InGame
             public List<MonsterSkillEffectEntry> SkillEffects = new List<MonsterSkillEffectEntry>();
         }
 
-        [Serializable]
-        public sealed class EnemySkillEffectEntry
-        {
-            public StageOneEnemySkillKind StageOneSkill;
-            public GameObject Prefab;
-        }
-
-        [Serializable]
-        public sealed class EnemySkillEffectGroup
-        {
-            public string EnemyId;
-            public List<EnemySkillEffectEntry> SkillEffects = new List<EnemySkillEffectEntry>();
-        }
-
         [SerializeField] private Transform runtimeSkillRoot;
         [SerializeField] private List<MonsterSkillEffectGroup> monsterSkillEffects = new List<MonsterSkillEffectGroup>();
-        [SerializeField] private List<EnemySkillEffectGroup> enemySkillEffects = new List<EnemySkillEffectGroup>();
 
         private readonly Dictionary<string, Dictionary<string, GameObject>> monsterLookup =
             new Dictionary<string, Dictionary<string, GameObject>>(StringComparer.OrdinalIgnoreCase);
-
-        private readonly Dictionary<string, Dictionary<StageOneEnemySkillKind, GameObject>> enemyLookup =
-            new Dictionary<string, Dictionary<StageOneEnemySkillKind, GameObject>>(StringComparer.OrdinalIgnoreCase);
 
         private bool lookupDirty = true;
 
@@ -66,42 +48,6 @@ namespace Pakuri.InGame
             EnsureLookup();
             return monsterLookup.TryGetValue(NormalizeKey(monsterId), out var skillMap)
                    && skillMap.TryGetValue(NormalizeKey(skillId), out var prefab)
-                ? prefab
-                : null;
-        }
-
-        public GameObject ResolveEnemySkillEffectPrefab(EnemyUnitRuntimeModel enemy)
-        {
-            if (enemy == null)
-            {
-                return null;
-            }
-
-            var enemyId = enemy.Identity != null ? enemy.Identity.DefinitionId : null;
-            return ResolveEnemySkillEffectPrefab(enemyId, enemy.StageOneSkill);
-        }
-
-        public GameObject ResolveEnemySkillEffectPrefab(EnemyUnitRuntimeModel enemy, StageOneEnemySkillKind skillKind)
-        {
-            if (enemy == null)
-            {
-                return null;
-            }
-
-            var enemyId = enemy.Identity != null ? enemy.Identity.DefinitionId : null;
-            return ResolveEnemySkillEffectPrefab(enemyId, skillKind);
-        }
-
-        public GameObject ResolveEnemySkillEffectPrefab(string enemyId, StageOneEnemySkillKind skillKind)
-        {
-            if (string.IsNullOrWhiteSpace(enemyId))
-            {
-                return null;
-            }
-
-            EnsureLookup();
-            return enemyLookup.TryGetValue(NormalizeKey(enemyId), out var skillMap)
-                   && skillMap.TryGetValue(skillKind, out var prefab)
                 ? prefab
                 : null;
         }
@@ -157,7 +103,6 @@ namespace Pakuri.InGame
 
             lookupDirty = false;
             monsterLookup.Clear();
-            enemyLookup.Clear();
 
             for (var i = 0; i < monsterSkillEffects.Count; i++)
             {
@@ -191,37 +136,6 @@ namespace Pakuri.InGame
                 }
             }
 
-            for (var i = 0; i < enemySkillEffects.Count; i++)
-            {
-                var group = enemySkillEffects[i];
-                if (group == null || string.IsNullOrWhiteSpace(group.EnemyId))
-                {
-                    continue;
-                }
-
-                var enemyId = NormalizeKey(group.EnemyId);
-                if (!enemyLookup.TryGetValue(enemyId, out var skillMap))
-                {
-                    skillMap = new Dictionary<StageOneEnemySkillKind, GameObject>();
-                    enemyLookup.Add(enemyId, skillMap);
-                }
-
-                if (group.SkillEffects == null)
-                {
-                    continue;
-                }
-
-                for (var j = 0; j < group.SkillEffects.Count; j++)
-                {
-                    var entry = group.SkillEffects[j];
-                    if (entry == null || entry.Prefab == null)
-                    {
-                        continue;
-                    }
-
-                    skillMap[entry.StageOneSkill] = entry.Prefab;
-                }
-            }
         }
 
         private Transform ResolveRuntimeSkillRoot()

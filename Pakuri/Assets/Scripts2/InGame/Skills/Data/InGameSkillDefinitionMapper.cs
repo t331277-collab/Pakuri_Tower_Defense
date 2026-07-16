@@ -24,13 +24,21 @@ namespace Pakuri.InGame
 
         public static SkillData CreateActiveSkillData(string monsterId, SkillDefinition source)
         {
+            return CreateActiveSkillData(monsterId, source, null);
+        }
+
+        public static SkillData CreateActiveSkillData(
+            string ownerId,
+            SkillDefinition source,
+            SkillTriggerDefinition[] triggers)
+        {
             if (source == null)
             {
                 return null;
             }
 
             var skill = CreateConcreteActiveSkill(source);
-            MapCommonFields(skill, monsterId, source);
+            MapCommonFields(skill, ownerId, source, triggers);
             MapActiveFields(skill, null, source);
             return skill;
         }
@@ -64,6 +72,31 @@ namespace Pakuri.InGame
 
         private static SkillData CreateConcreteActiveSkill(SkillDefinition source)
         {
+            if (MatchesProfile(source, "DamageArea"))
+            {
+                return CreateTransient<SingleAttackData>(source.SkillId);
+            }
+
+            if (MatchesProfile(source, "DamageThenDelayedChain"))
+            {
+                return CreateTransient<ChainAttackSkillData>(source.SkillId);
+            }
+
+            if (MatchesProfile(source, "ChargeDamageStatus"))
+            {
+                return CreateTransient<ChargeSkillData>(source.SkillId);
+            }
+
+            if (source.RuntimeKind == SkillRuntimeKind.Heal)
+            {
+                return CreateTransient<HealSkillData>(source.SkillId);
+            }
+
+            if (MatchesProfile(source, "ApplySelfIncomingDamageMultiplier"))
+            {
+                return CreateTransient<BuffSkillData>(source.SkillId);
+            }
+
             switch (source.RuntimeKind)
             {
                 case SkillRuntimeKind.MagazineProjectile:
@@ -79,7 +112,6 @@ namespace Pakuri.InGame
                 case SkillRuntimeKind.Execute:
                     return CreateTransient<ZoneSkillData>(source.SkillId);
                 case SkillRuntimeKind.Buff:
-                case SkillRuntimeKind.Heal:
                     return CreateTransient<BuffSkillData>(source.SkillId);
                 case SkillRuntimeKind.Shield:
                     return CreateTransient<ShieldSkillData>(source.SkillId);
@@ -126,8 +158,9 @@ namespace Pakuri.InGame
             skill.Timing.TickInterval = source.ShotIntervalSeconds;
             skill.MagazineCapacity = source.MagazineCapacity;
             skill.ReloadSeconds = source.ReloadSeconds;
-            skill.Targeting.Range = 0f;
-            skill.Targeting.Radius = source.Radius;
+            skill.Targeting.Range = source.CastRange;
+            skill.Targeting.Radius = source.EffectRadius > 0f ? source.EffectRadius : source.Radius;
+            skill.Targeting.TargetSide = MapEnemyTargetSide(source.TargetScope);
             if (Enum.TryParse<SkillTargetSelection>(source.TargetSelection, true, out var targetSelection))
             {
                 skill.Targeting.Selection = targetSelection;
@@ -202,6 +235,7 @@ namespace Pakuri.InGame
                 projectile.Projectile.ProjectilesPerShot = 1;
                 projectile.Projectile.PierceCount = source.PierceCount;
                 projectile.Projectile.ProjectileSpeed = source.ProjectileSpeed;
+                projectile.Projectile.LifetimeSeconds = source.ProjectileLifetimeSeconds;
                 projectile.ContactDamageEnabled = source.DamageDelaySeconds <= 0f;
                 projectile.StopOnFirstHit = source.DamageDelaySeconds > 0f;
                 projectile.ImpactDelaySeconds = Mathf.Max(0f, source.DamageDelaySeconds);
@@ -308,9 +342,39 @@ namespace Pakuri.InGame
                 return;
             }
 
+            if (skill is ChainAttackSkillData chain)
+            {
+                MapDamage(chain.Damage, source);
+                chain.ChainDamageMultiplier = source.ChainDamageMultiplier;
+                chain.ChainDelaySeconds = source.ChainDelaySeconds;
+                chain.ChainRadius = source.ChainRadius > 0f ? source.ChainRadius : source.Radius;
+                chain.ExcludePrimaryTarget = source.ExcludePrimaryTarget;
+                return;
+            }
+
+            if (skill is ChargeSkillData charge)
+            {
+                charge.TargetMaxHealthRatio = source.TargetMaxHealthRatio;
+                charge.RampSeconds = source.ChargeRampSeconds;
+                charge.MaxMoveSpeedMultiplier = source.MoveSpeedMultiplier > 1f
+                    ? source.MoveSpeedMultiplier
+                    : source.ChargeMoveSpeedMultiplier;
+                charge.OnHitStatus = CreateStatusApplication(source);
+                return;
+            }
+
+            if (skill is HealSkillData heal)
+            {
+                MapDamage(heal.Healing, source);
+                heal.Healing.BaseDamage = source.FlatValue;
+                return;
+            }
+
             if (skill is BuffSkillData buff)
             {
                 buff.Target = MapBuffTarget(source, StatusEffectKind.None);
+                buff.UseConfiguredTargeting = !string.IsNullOrWhiteSpace(source.TargetScope);
+                buff.AttachVisualToCaster = MatchesProfile(source, "ApplyAllyMoveAndDamageMultiplier");
                 buff.BuffDuration = ResolveStatusDuration(source);
                 buff.HasAttachedDamage = source.BaseDamage > 0f;
                 MapDamage(buff.AttachedDamage, source);
@@ -322,6 +386,8 @@ namespace Pakuri.InGame
             if (skill is ShieldSkillData shield)
             {
                 shield.Target = MapBuffTarget(source, StatusEffectKind.Shield);
+                shield.UseConfiguredTargeting = !string.IsNullOrWhiteSpace(source.TargetScope);
+                shield.AttachVisualToCaster = MatchesProfile(source, "GrantShieldToEnemyAllies");
                 shield.ShieldBase = source.BaseDamage;
                 shield.ShieldCoefficient = GetDominantCoefficient(source, out var statSource);
                 shield.ShieldStatSource = statSource;
@@ -341,7 +407,36 @@ namespace Pakuri.InGame
             damage.BaseDamage = source.BaseDamage;
             damage.StatCoefficient = GetDominantCoefficient(source, out var statSource);
             damage.StatSource = statSource;
+            damage.UseCombinedStatCoefficients = source.UseCombinedStatCoefficients;
+            damage.AttackPowerCoefficient = source.AttackPowerCoefficient;
+            damage.SpellPowerCoefficient = source.SpellPowerCoefficient;
             damage.CriticalAllowed = source.CriticalAllowed;
+        }
+
+        private static SkillTargetSide MapEnemyTargetSide(string targetScope)
+        {
+            if (string.IsNullOrWhiteSpace(targetScope))
+            {
+                return SkillTargetSide.Enemy;
+            }
+
+            if (string.Equals(targetScope, "Self", StringComparison.OrdinalIgnoreCase))
+            {
+                return SkillTargetSide.Self;
+            }
+
+            if (targetScope.StartsWith("Friendly", StringComparison.OrdinalIgnoreCase))
+            {
+                return SkillTargetSide.AllAllies;
+            }
+
+            return SkillTargetSide.Enemy;
+        }
+
+        private static bool MatchesProfile(SkillDefinition source, string profile)
+        {
+            return source != null
+                && string.Equals(source.ExecutionProfile, profile, StringComparison.OrdinalIgnoreCase);
         }
 
         private static float GetDominantCoefficient(SkillDefinition source, out StatSource statSource)
@@ -1355,10 +1450,10 @@ namespace Pakuri.InGame
                     secondaryFloatValue: GetFloatParam(node, "max_bonus", 0f));
             }
 
-            if (string.Equals(handlerId, "BranchProjectile", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(handlerId, "BranchDamage", StringComparison.OrdinalIgnoreCase))
             {
                 return new SkillActionOp(
-                    SkillActionOpKind.BranchProjectile,
+                    SkillActionOpKind.BranchDamage,
                     GetFloatParam(node, "chance_bonus", 0f),
                     GetIntParam(node, "count", 0),
                     secondaryFloatValue: GetFloatParam(node, "damage_multiplier", 0f),

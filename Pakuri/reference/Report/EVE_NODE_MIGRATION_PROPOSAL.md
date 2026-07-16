@@ -172,13 +172,13 @@ Effect graph는 항상 operation node를 정확히 1개 사용한다.
 
 | handler | 변경 제안 | 사용처 |
 |---|---|---|
-| `BranchProjectile` | definition과 Plan mapper에 `chance_bonus`, `count`, `damage_multiplier`, `search_radius` 추가 | Eve-A 특성 5, 마스터 1 |
+| `BranchDamage` | definition과 Plan mapper에 `chance_bonus`, `count`, `damage_multiplier`, `search_radius` 추가 | Eve-A 특성 5, 마스터 1 |
 | `StatusFilteredDeployment` | wide base의 `deployment_required_target_status_*`와 현재 SingleAttack 전체-roster 필터/대상별 배치 경로를 node definition과 Plan materialize에 연결 | Eve-D 기본 전체 필드 스캔 |
 | `RepeatPerTarget` | 현재 schema/mapper를 node definition에 승격 | Eve-D 마스터 1 |
 | `TargetStatusStackDamage` | 현재 schema와 SingleAttack stack damage 경로를 definition/Plan materialize에 연결 | Eve-D 기본 스택 피해 |
 
-현재 `BranchProjectile`의 schema-only param만으로는 Eve-A의 확률과 탐색 반경을 모두
-표현하지 못하므로 param 확장이 필요하다.
+`BranchDamage`는 원 투사체 적중 위치에서 가까운 적에게 즉시 피해를 적용한다.
+자식 투사체를 생성하지 않고, 갈래 피해는 다시 갈래를 발동하지 않는다.
 
 `StatusFilteredDeployment`의 제안 param은 다음 두 개뿐이다.
 
@@ -271,8 +271,8 @@ base/projectile에 유지:
 | 특성 2 | `ReloadTimeMultiplier(0.76923)` + `PierceBonus(1)` | 재사용 |
 | 특성 3 | `AdditionalProjectileBonus(1)` + `ReloadTimeMultiplier(1.2)` | graph 노출 + 재사용 |
 | 특성 4 | `AdditionalProjectileBonus(2)` + `ShotIntervalMultiplier(1.25)` | graph 노출 |
-| 특성 5 | `DamageMultiplier(1.25)` + `BranchProjectile(chance_bonus=0.35,count=2,damage=0.7)` | 재사용 + schema 승격 |
-| 갈래 회로 | `DamageMultiplier(1.35)` + `MagazineBonus(2)` + `BranchProjectile(chance_bonus=0.6,count=2,damage=0.7,search_radius=4.5)` | 재사용 + schema 승격 |
+| 특성 5 | `DamageMultiplier(1.25)` + `BranchDamage(chance_bonus=0.35,count=2,damage_multiplier=0.7)` | 공용 즉시 갈래 피해 |
+| 갈래 회로 | `DamageMultiplier(1.35)` + `MagazineBonus(2)` + `BranchDamage(chance_bonus=0.6,count=2,damage_multiplier=0.7,search_radius=4.5)` | 공용 즉시 갈래 피해 |
 | 과충전 일제사격 | `DamageMultiplier(1.45)` + `PierceBonus(2)` + `AdditionalProjectileBonus(2)` + `ShotIntervalMultiplier(1.2)` + `StatusStackAmountSet(shock,2)` | 혼합 |
 
 현재 CSV의 마스터 1 제목 `분기 회로`는 레퍼런스의 `갈래 회로`로 교정한다.

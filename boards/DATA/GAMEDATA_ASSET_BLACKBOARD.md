@@ -5,6 +5,227 @@
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-17 Enemy Source Catalog Simplification
+
+### Task title
+
+Remove the Enemy loadout and unit/projectile sprite CSV inputs from runtime source/catalog authority.
+
+### Goals
+
+- Stop serializing and loading `enemy_skill_loadouts.csv`.
+- Keep Enemy unit visuals owned by spawned prefab bindings.
+- Keep skill visuals owned by each typed base skill row.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Existing Enemy prefab bindings and runtime skill visual asset paths remain unchanged.
+- No Enemy skill prefab is deleted or moved by this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and statically verified.
+
+### Next Actions
+
+- User verifies prefab-spawned Enemy visuals and base-row skill visuals in Play Mode.
+- Run the normal Unity source-catalog sync only if Unity later regenerates the catalog asset.
+
+### Evidence
+
+- `PakuriCsvRuntimeSourceCatalog.cs` and `PakuriCsvRuntimeSourceCatalog.asset` contain no `EnemySkillLoadouts` entry.
+- `PakuriCsvRuntimeData.Loader.cs`, `.Editor.cs`, `.AssetReferences.cs`, and `.Build.cs` no longer load loadouts or Enemy unit/projectile sprite paths.
+- `EnemySpawnManger` continues to instantiate configured prefab bindings; `UnitFactory` does not require Enemy CSV sprite paths.
+- Search found 0 deleted loadout GUID references under `Pakuri/Assets`.
+- Solution build passed with 0 errors.
+
+### History
+
+- 2026-07-17: Code Builder removed redundant Enemy source-catalog inputs while preserving prefab and typed-base visual authority.
+
+## Task: 2026-07-17 Eve-A Branch Runtime Visual Removal
+
+### Task title
+
+Remove branch-projectile visual dependency and use a temporary runtime blue line for Eve-A branch damage.
+
+### Goals
+
+- Stop resolving the base projectile runtime visual or prefab for branch effects.
+- Create the temporary electrical connection directly at runtime.
+- Keep existing Eve projectile assets and catalogs unchanged.
+
+### Constraints
+
+- Role Owner is Code Builder / Skill Builder.
+- No prefab, Sprite, AnimatorController, scene mapping, catalog entry, or CSV asset-path column is added.
+- The temporary line is presentation-only and must not own hit detection.
+
+### Role Owner
+
+Code Builder / Skill Builder
+
+### Status
+
+Implemented without asset or catalog changes; user Play Mode visual verification remains.
+
+### Next Actions
+
+- User checks blue-line visibility, width, sorting, and 0.12-second duration in Play Mode.
+- Keep existing Eve projectile assets until their separate decommission task is complete.
+
+### Evidence
+
+- `ProjectileBranchDamageSpec` now contains only chance, count, damage multiplier, and search radius.
+- The previous runtime visual and projectile prefab fields were removed from the branch spec.
+- `InGameProjectileActor.SpawnBranchDamageLine(...)` creates and destroys a runtime `LineRenderer` and material without asset lookup.
+- No prefab, scene, runtime catalog, or asset catalog file was changed for this task.
+- Runtime and Editor builds passed with 0 errors.
+
+### History
+
+- 2026-07-17: User requested an interim blue electrical line instead of spawned branch projectiles.
+- 2026-07-17: Code Builder implemented the presentation entirely in runtime code and left all asset/catalog authority unchanged.
+
+## Task: 2026-07-16 Enemy Skill Prefab Legacy Move And Visual Fallback Removal
+
+### Task title
+
+Remove active scene-owned Enemy skill visual fallback while preserving the old prefabs as GUID-stable Legacy evidence.
+
+### Goals
+
+- Use base-row runtime visual data as the active Enemy skill visual authority.
+- Remove Enemy prefab mapping from `EffectManager` and `NewRunScene`.
+- Move all old Enemy skill prefabs to Legacy without deleting or regenerating them.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Prefab `.meta` files and GUIDs must remain unchanged.
+- Enemy runtime hitbox offset remains `(0,0)`; only size is authored.
+- `OpeningCharge` has no runtime visual because the inspected legacy scene/prefab mapping had none.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Scene fallback removed and prefab Legacy move completed; static and Unity validation pass.
+
+### Next Actions
+
+- User verifies the 15 represented visuals and centered gameplay hitboxes in Play Mode.
+- Keep `Pakuri/Assets/Legacy/Enemy/Skill` as migration evidence unless a later explicit archive policy changes it.
+
+### Evidence
+
+- `EffectManager.cs` has no Enemy skill prefab registry/resolver; `NewRunScene.unity` has no `enemySkillEffects` block.
+- `Pakuri/Assets/Prefab/Enemy/Skill` is absent.
+- `Pakuri/Assets/Legacy/Enemy/Skill` contains 15 prefabs and 15 matching prefab metadata files.
+- All 15 prefab GUIDs match their pre-move `HEAD` values.
+- Search outside the Legacy skill folder found 0 references to those 15 GUIDs.
+- Runtime visual asset verification found 15 visual-bearing skills with 0 missing Sprite/Animator assets; `OpeningCharge` is the sole intentional visual-less skill.
+- Enemy CSV has no `runtime_hitbox_offset_x/y`; the Enemy parser only contains a guard rejecting those columns.
+
+### History
+
+- 2026-07-16: Code Builder removed the scene fallback, preserved all Enemy skill prefab GUIDs, and moved the folder to Legacy.
+
+## Task: 2026-07-16 Enemy Skill Prefab Legacy Preservation Gate
+
+### Task title
+
+Preserve Enemy skill prefabs during Phase 9 cleanup and define their later Legacy destination.
+
+### Goals
+
+- Prevent deletion of the 15 current Enemy skill prefabs.
+- Preserve Unity GUIDs through `.meta`-retaining folder movement.
+- Delay movement until runtime visual parity and serialized-reference cleanup are proven.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No prefab or `.meta` file is moved in this task.
+- Collider offset is not migrated; only gameplay-required size remains runtime data.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Preservation policy documented. Actual movement blocked by remaining scene fallback and Unity reference verification.
+
+### Next Actions
+
+- Complete visual/hitbox Play Mode parity for all 16 skills.
+- Remove `EffectManager` Enemy enum fallback and confirm scene/prefab/asset serialized references are 0.
+- Move the complete `Pakuri/Assets/Prefab/Enemy/Skill` folder to `Pakuri/Assets/Legacy/Enemy/Skill` with folder and prefab `.meta` files preserved.
+
+### Evidence
+
+- Source folder contains 15 `.prefab` files and 15 matching `.prefab.meta` files.
+- `Pakuri/Assets/Prefab/Enemy/Skill.meta`, `Stage1.meta`, and `Stage2.meta` exist.
+- `Pakuri/Assets/Legacy` exists, but `Pakuri/Assets/Legacy/Enemy/Skill` does not.
+- `EffectManager.cs` still contains `StageOneEnemySkillKind` Enemy prefab mappings.
+- Migration report now states that Enemy skill prefabs are not Phase 9 deletion candidates.
+
+### History
+
+- 2026-07-16: User required Legacy preservation instead of deletion; Code Builder recorded the exact source, destination, and `.meta` boundary.
+
+## Task: 2026-07-16 Enemy Runtime Visual Consumption Phase 4-6
+
+### Task title
+
+Use Enemy base-row runtime visuals and centered hitbox sizes from shared typed executors.
+
+### Goals
+
+- Spawn Phase 4-6 Enemy visuals through `RuntimeSkillVisualFactory` from base CSV data.
+- Use explicit projectile lifetime and gameplay-required centered hitbox size.
+- Preserve scene prefab mapping only as fallback.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No runtime hitbox offset columns or prefab offset transfer.
+- Existing Enemy skill prefabs and `EffectManager` enum mappings are not removed.
+- OpeningCharge still has no authored runtime visual.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Runtime visual consumption code implemented and compile-verified. Unity visual parity remains.
+
+### Next Actions
+
+- Verify 15 represented visuals, non-uniform HolySpearThrow scale, sorting, projectile contact, and centered area/single hitboxes in Play Mode.
+- Remove scene fallback only after report gate conditions pass.
+
+### Evidence
+
+- Projectile, SingleAttack, Buff, Shield, Heal, and Chain executors prefer `RuntimeSkillVisualSpec` before prefab fallback.
+- DamageArea maps to `SingleAttackSkillExecutor`, using runtime hitbox size and no authored offset.
+- Heal/Chain support visuals attach to resolved targets; ChargeCommand/GuardianFlag configured visuals attach once to caster.
+- Enemy base CSV width check passed with 0 mismatched rows.
+- C# solution build passed with 0 errors.
+
+### History
+
+- 2026-07-16: Code Builder activated Enemy base-row runtime visuals for Phase 4-6 shared execution while retaining scene fallback.
+
 ## Task: 2026-07-16 Enemy Runtime Visual Catalog Phase 0-3
 
 ### Task title
@@ -61,7 +282,7 @@ Design the migration of Enemy skill prefab metadata from scene enum mappings to 
 ### Goals
 
 - Preserve the current Enemy skill visuals, animator assets, local scale, sorting order, and gameplay-required collider sizes.
-- Resolve Enemy skill visuals by skill/loadout data rather than Enemy ID plus StageOneEnemySkillKind scene mappings.
+- Resolve Enemy skill visuals by the direct A/B base skill IDs rather than Enemy ID plus StageOneEnemySkillKind scene mappings.
 - Store runtime visual fields directly on each typed base skill row without a separate visual override layer.
 
 ### Constraints
@@ -1115,3 +1336,43 @@ Catalog synchronized and Unity-MCP validated.
 ### History
 
 - 2026-07-14: Code Builder completed asset decommission and Unity catalog synchronization.
+
+## Task: 2026-07-17 Enemy Passive Source Catalog Coverage
+
+### Task title
+
+Confirm the Enemy passive base CSV remains reachable through the runtime source catalog.
+
+### Goals
+
+- Keep `skills_passive.csv` included in `EnemySkillBaseFiles`.
+- Avoid unnecessary runtime asset-catalog entries because Enemy passive rows contain no visual asset paths.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No prefab, sprite, animator, scene, or runtime asset-catalog mutation is required for this passive-only data change.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Source-catalog coverage and Unity catalog sync/validation passed.
+
+### Next Actions
+
+- No GameData asset action remains for this passive-only change.
+
+### Evidence
+
+- `skills_passive.csv.meta` GUID is `7ffdb20f69d1449d83ea68a3801eec8b`.
+- `Pakuri/Assets/Resources/Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog.asset` already contains that GUID in `EnemySkillBaseFiles`.
+- `PakuriCsvRuntimeData.Editor.cs` discovers all Enemy `skills_*.csv` files recursively under the base root.
+- Passive rows contain no runtime visual or prefab paths, so `PakuriCsvRuntimeAssetCatalog.asset` needs no new asset reference.
+- Open-Editor sync/validation logged `[EnemyPassiveCsvValidation] PASS`; the temporary hook and `.meta` were removed afterward.
+
+### History
+
+- 2026-07-17: Code Builder verified existing source-catalog registration for the populated Enemy passive CSV.

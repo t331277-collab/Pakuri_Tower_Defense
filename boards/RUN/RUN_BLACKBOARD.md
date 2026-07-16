@@ -5,6 +5,183 @@
 - This active file now keeps only the current `NewRunScene` authority split and the surviving new-scene flow baseline.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-17 Enemy Direct Slot Runtime Handoff
+
+### Task title
+
+Keep the run-time Enemy spawn/AI flow unchanged while sourcing A/B skills directly from `enemies.csv`.
+
+### Goals
+
+- Build each spawned Enemy's two assigned runtime skills without a loadout table.
+- Preserve prefab-based Enemy spawning and Enemy AI A/B selection.
+- Preserve CombatStart Trigger dispatch.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Scene serialization, prefab bindings, encounter composition, skill values, and AI policy are unchanged.
+- Unity Play Mode behavior verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Code complete and compile-verified.
+
+### Next Actions
+
+- User verifies Enemy prefab spawn and all A/B/CombatStart casts in `NewRunScene`.
+- Runtime defects must be fixed in the direct slot/shared execution path; do not restore the loadout table.
+
+### Evidence
+
+- `PakuriCsvRuntimeData.Build.cs` assigns A/B definitions directly from the migrated Enemy row before runtime skill rebuilding.
+- `EnemyCombatSystem` still selects the resulting A/B `SkillRuntimeInstance` entries; its selection policy was not changed.
+- `EnemySpawnManger` prefab binding flow was not edited by this task.
+- Solution build passed with 0 errors and the existing 2 warnings.
+
+### History
+
+- 2026-07-17: Code Builder replaced only the Enemy assignment data source, leaving run spawn and AI ownership intact.
+
+## Task: 2026-07-16 Enemy Phase 9 Runtime Cutover
+
+### Task title
+
+Run Enemy AI and CombatStart skills solely through shared runtime execution after legacy retirement.
+
+### Goals
+
+- Keep Enemy AI as A/B runtime selection only.
+- Keep cast/cooldown authority in `SkillRuntimeInstance`.
+- Remove runtime fallback to Enemy-only skill execution and scene visual lookup.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Enemy entries remain excluded from Monster automatic skill routing.
+- CombatStart Trigger skills remain excluded from normal Enemy AI selection.
+- Unity Play Mode cadence and behavior parity remain user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Runtime cutover and compile/Editor validation complete; Play Mode parity remains.
+
+### Next Actions
+
+- User verifies A/B priority, cooldown cadence, no duplicate casts, OpeningCharge, and Intimidation in Play Mode.
+- Any defect is fixed in shared runtime execution; legacy fallback is not restored.
+
+### Evidence
+
+- `EnemyCombatSystem` no longer contains legacy cooldown, pending-plan, charge, Plan, or Executor runtime branches.
+- `SkillRuntimeInstance.TryBeginCast(...)` remains the cast/cooldown authority.
+- `ShouldAutoRouteSkill(...)` still excludes Enemy entries, preventing shared auto-route plus Enemy AI duplicate execution.
+- OpeningCharge and Intimidation remain one-shot `CombatStart` Trigger rows.
+- Unity Editor CSV validation passed and script reload completed without compiler errors.
+- Solution build passed with 0 errors and the existing 2 warnings.
+
+### History
+
+- 2026-07-16: Code Builder completed Phase 9 runtime cutover and final non-Play-Mode deletion verification.
+
+## Task: 2026-07-16 Enemy Runtime Cast Authority Phase 7-8
+
+### Task title
+
+Make Enemy AI a shared-runtime selector while preserving separate Monster auto-routing ownership.
+
+### Goals
+
+- Tick Enemy cooldown through the shared runtime set.
+- Route selected Enemy casts through the same execution request used by automatic shared skills.
+- Keep CombatStart Trigger casts separate from normal Enemy AI selection.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Enemy entries remain excluded from Monster automatic skill routing.
+- Legacy code remains physically present until Phase 9 gates pass.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified; Play Mode cadence and parity pending.
+
+### Next Actions
+
+- Verify support priority, A/B fallback, cooldown cadence, OpeningCharge, and Intimidation in Play Mode.
+- Confirm no duplicate cast occurs between `SkillExecutionSystem.Tick(...)` and `EnemyCombatSystem.Tick(...)`.
+- Do not start Phase 9 deletion until the run-time parity gate passes.
+
+### Evidence
+
+- `InGameCombatManager.Update()` ticks shared skill runtime before Enemy AI; Enemy auto-route predicate returns false.
+- `EnemyCombatSystem` selects runtime slots and calls `CanExecuteSelectedSkill(...)` / `TryExecuteSelectedSkill(...)`.
+- `UnitSkillController.TryExecuteSelected(...)` creates the same non-manual request shape as auto routing.
+- `SkillExecutionSystem.TryRouteSkill(...)` resolves Choice snapshot, executes typed executor, and commits cast/cooldown once.
+- CombatStart-triggered runtimes are filtered out of normal Enemy AI slot selection.
+
+### History
+
+- 2026-07-16: Code Builder completed the Phase 7 ownership switch and Phase 8 Choice-state generalization without enabling current Enemy Choice acquisition.
+
+## Task: 2026-07-16 Enemy Shared Runtime Spawn And Cast Bridge
+
+### Task title
+
+Build Enemy shared skill runtime before roster registration and bridge legacy Enemy AI choices to shared executors.
+
+### Goals
+
+- Ensure CombatStart triggers can execute from assigned Enemy runtime skills at registration.
+- Keep one cast source by disabling Enemy entries in Monster automatic skill routing.
+- Preserve current Enemy AI movement, skill priority, and cooldown cadence during Phase 4-6.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Phase 7 runtime slot/cooldown ownership is not complete.
+- Legacy executor remains failure fallback.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Spawn/cast bridge implemented and compile-verified. Runtime parity remains.
+
+### Next Actions
+
+- Verify OpeningCharge and Intimidation fire once on combat start.
+- Verify normal Enemy skills do not double-cast from `SkillExecutionSystem.Tick` plus `EnemyCombatSystem.Tick`.
+- After parity, perform Phase 7 runtime slot/cooldown authority transfer.
+
+### Evidence
+
+- `EnemySpawnManger` calls `SkillRuntimeFactory.RebuildAssignedActiveSet(...)` before `RegisterEnemy(...)`.
+- Registration dispatch can therefore resolve OpeningCharge/Intimidation runtime instances.
+- `ShouldAutoRouteSkill(...)` returns false for `EnemyUnitRuntimeModel`.
+- `EnemyCombatSystem` routes its selected skill ID through shared triggered execution and uses legacy code only on rejection.
+- `SharedChargeSkillRuntime.Tick(...)` owns active shared charge movement/hit resolution before normal Enemy AI actions.
+
+### History
+
+- 2026-07-16: Code Builder added the Phase 4-6 compatibility bridge without claiming Phase 7 completion.
+
 ## Task: 2026-07-15 Next-Day Transient Combat Reset
 
 ### Task title
@@ -610,3 +787,47 @@ Implemented by Code Builder.
 
 - 2026-05-29: User requested a Code Builder handoff for damage meter runtime tracking and source naming.
 - 2026-05-29: Code Builder implemented the damage meter runtime hook and meter-only source metadata path.
+
+## Task: 2026-07-17 Enemy Passive Spawn Assembly
+
+### Task title
+
+Apply CSV-defined Enemy self-passives during Enemy runtime model creation.
+
+### Goals
+
+- Resolve each Enemy's `passive_id` during runtime catalog build.
+- Apply the resolved passive exactly once when `UnitFactory.CreateEnemy` creates the runtime model.
+- Preserve current outgoing damage, defense, critical, healing, and incoming-damage calculations.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Enemy passives are fixed spawn-time unit modifiers, not learned Monster passives.
+- No Enemy run-state acquisition or Choice state is created.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compile-verified, and Unity CSV-validated. Play Mode verification remains.
+
+### Next Actions
+
+- Verify one Enemy for each modifier family in Play Mode after Unity CSV validation.
+
+### Evidence
+
+- `PakuriCsvRuntimeData.Build.cs` resolves `EnemyMigrationRow.PassiveId` into `EnemyPassiveDefinition`.
+- `PakuriCsvRuntimeData.EnemyMigrationDataset.cs` turns each five-column `skills_passive.csv` definition into the shared internal `Passive/F/Passive` runtime row.
+- `UnitFactory.cs` invokes `EnemyPassiveRuntime.Apply(model, definition.PassiveSkill)` after base stats and defenses are materialized.
+- `EnemyPassiveRuntime` supports only `Self` and retains existing multiplier/additive calculations.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors.
+- Unity Editor source sync logged `[EnemyPassiveParserValidation] PASS` for the dedicated parser and five-column CSV.
+
+### History
+
+- 2026-07-17: Code Builder moved Enemy passive spawn assembly to the new passive-definition contract.
+- 2026-07-17: Dedicated Enemy passive parsing removed three redundant authoring columns without changing spawn assembly.

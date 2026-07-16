@@ -70,6 +70,45 @@ namespace Pakuri.InGame
                 logRoutedContracts);
         }
 
+        public bool CanExecuteSelected(
+            UnitRosterEntry entry,
+            SkillRuntimeInstance runtime,
+            UnitRosterService roster)
+        {
+            if (entry == null
+                || runtime == null
+                || !StatusEffectRuntime.CanAct(entry.Model)
+                || !registry.TryResolve(runtime.Data, out _))
+            {
+                return false;
+            }
+
+            var snapshot = choiceResolver.Resolve(entry.Model, runtime, roster);
+            return runtime.CanCastWithSnapshot(snapshot);
+        }
+
+        public bool TryExecuteSelected(
+            UnitRosterEntry entry,
+            SkillRuntimeInstance runtime,
+            UnitRosterService roster,
+            InGameCombatManager combatManager,
+            float deltaTime,
+            bool logRoutedContracts)
+        {
+            if (entry == null)
+            {
+                return false;
+            }
+
+            var controller = GetOrCreateController(entry);
+            return controller.TryExecuteSelected(
+                runtime,
+                roster,
+                combatManager,
+                deltaTime,
+                logRoutedContracts);
+        }
+
         public bool TryExecuteTriggered(
             UnitRosterEntry entry,
             SkillRuntimeInstance runtime,
@@ -341,6 +380,9 @@ namespace Pakuri.InGame
             Register(new ZoneSkillExecutor());
             Register(new BuffSkillExecutor());
             Register(new ShieldSkillExecutor());
+            Register(new HealSkillExecutor());
+            Register(new ChainAttackSkillExecutor());
+            Register(new ChargeSkillExecutor());
             Register(new PassiveSkillExecutor());
         }
     }
@@ -357,9 +399,8 @@ namespace Pakuri.InGame
             var skillData = runtime != null ? runtime.Data : null;
             var snapshot = new SkillExecutionSnapshot(skillData);
             ApplyPassiveBaseModifiers(snapshot, owner as MonsterUnitRuntimeModel, skillData);
-            var monsterOwner = owner as MonsterUnitRuntimeModel;
-            var chosenChoiceIds = monsterOwner != null && monsterOwner.State != null
-                ? monsterOwner.State.ChosenChoiceIds
+            var chosenChoiceIds = owner != null && owner.State != null
+                ? owner.State.ChosenChoiceIds
                 : null;
             if (skillData == null || chosenChoiceIds == null || chosenChoiceIds.Count == 0)
             {

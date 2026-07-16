@@ -68,8 +68,8 @@ namespace Pakuri.Data
             }
 
             catalog.Monsters = monsters.ToArray();
-            catalog.StageOneEnemies = BuildEnemies(model, model.CatalogStageOneEnemies, model.StageOneEnemies);
-            catalog.StageTwoEnemies = BuildEnemies(model, model.CatalogStageTwoEnemies, model.StageTwoEnemies);
+            catalog.StageOneEnemies = BuildEnemies(model, "stage_one");
+            catalog.StageTwoEnemies = BuildEnemies(model, "stage_two");
             catalog.StatusEffects = BuildStatusEffects(model);
             return catalog;
         }
@@ -99,21 +99,28 @@ namespace Pakuri.Data
 
         private static EnemyDefinition[] BuildEnemies(
             SourceModel model,
-            Dictionary<string, CatalogEntryRow> catalogEntries,
-            Dictionary<string, EnemyRow> enemyRows)
+            string stageId)
         {
             var enemies = new List<EnemyDefinition>();
-            foreach (var entry in SortCatalogEntries(catalogEntries))
+            var sourceEnemies = FilterAndSort(
+                model.Enemies.Values,
+                row => string.Equals(row.StageId, stageId, StringComparison.OrdinalIgnoreCase),
+                (left, right) =>
+                {
+                    var orderCompare = left.SortOrder.CompareTo(right.SortOrder);
+                    return orderCompare != 0
+                        ? orderCompare
+                        : string.Compare(left.Id, right.Id, StringComparison.OrdinalIgnoreCase);
+                });
+            for (var i = 0; i < sourceEnemies.Count; i++)
             {
-                var sourceEnemy = enemyRows[entry.RefId];
+                var sourceEnemy = sourceEnemies[i];
                 var enemy = ScriptableObject.CreateInstance<EnemyDefinition>();
                 enemy.EnemyId = sourceEnemy.Id;
                 enemy.DisplayName = sourceEnemy.DisplayName;
                 enemy.EncounterRole = sourceEnemy.EncounterRole;
                 enemy.AttackType = sourceEnemy.AttackType;
                 enemy.Attribute = sourceEnemy.Attribute;
-                enemy.UnitSprite = LoadSprite(sourceEnemy.UnitSpritePath);
-                enemy.ProjectileSprite = LoadSprite(sourceEnemy.ProjectileSpritePath);
                 enemy.Stats = new CombatStatBlock
                 {
                     MaxHealth = sourceEnemy.MaxHealth,
@@ -133,81 +140,70 @@ namespace Pakuri.Data
                     Darkness = sourceEnemy.DarknessDefense,
                     Holy = sourceEnemy.HolyDefense
                 };
-                enemy.HasBasicSkill = sourceEnemy.HasBasicSkill;
-                enemy.BasicSkill = sourceEnemy.BasicSkill;
-                enemy.BasicSkillName = sourceEnemy.BasicSkillName;
-                enemy.BasicSkillCoefficient = sourceEnemy.BasicSkillCoefficient;
-                enemy.BasicSkillAttackPowerCoefficient = sourceEnemy.BasicSkillAttackPowerCoefficient;
-                enemy.BasicSkillSpellPowerCoefficient = sourceEnemy.BasicSkillSpellPowerCoefficient;
-                enemy.BasicSkillCooldown = sourceEnemy.BasicSkillCooldown;
-                enemy.BasicSkillDuration = sourceEnemy.BasicSkillDuration;
-                enemy.BasicSkillRadius = sourceEnemy.BasicSkillRadius;
-                enemy.BasicSkillFlatValue = sourceEnemy.BasicSkillFlatValue;
-                enemy.BasicSkillProjectileSpeed = sourceEnemy.BasicSkillProjectileSpeed;
-                enemy.BasicSkillProjectileLifetime = sourceEnemy.BasicSkillProjectileLifetime;
-                enemy.BasicSkillMoveSpeedMultiplier = sourceEnemy.BasicSkillMoveSpeedMultiplier;
-                enemy.BasicSkillOutgoingDamageMultiplier = sourceEnemy.BasicSkillOutgoingDamageMultiplier;
-                enemy.BasicSkillPlan = BuildEnemySkillPlan(model, sourceEnemy.BasicSkill.ToString());
-                enemy.StageOneSkill = sourceEnemy.StageOneSkill;
-                enemy.ActiveSkillName = sourceEnemy.ActiveSkillName;
-                enemy.ActiveSkillCoefficient = sourceEnemy.ActiveSkillCoefficient;
-                enemy.ActiveSkillAttackPowerCoefficient = sourceEnemy.ActiveSkillAttackPowerCoefficient;
-                enemy.ActiveSkillSpellPowerCoefficient = sourceEnemy.ActiveSkillSpellPowerCoefficient;
-                enemy.ActiveSkillCooldown = sourceEnemy.ActiveSkillCooldown;
-                enemy.ActiveSkillDuration = sourceEnemy.ActiveSkillDuration;
-                enemy.ActiveSkillRadius = sourceEnemy.ActiveSkillRadius;
-                enemy.ActiveSkillFlatValue = sourceEnemy.ActiveSkillFlatValue;
-                enemy.ActiveSkillProjectileSpeed = sourceEnemy.ActiveSkillProjectileSpeed;
-                enemy.ActiveSkillProjectileLifetime = sourceEnemy.ActiveSkillProjectileLifetime;
-                enemy.ActiveSkillMoveSpeedMultiplier = sourceEnemy.ActiveSkillMoveSpeedMultiplier;
-                enemy.ActiveSkillOutgoingDamageMultiplier = sourceEnemy.ActiveSkillOutgoingDamageMultiplier;
-                enemy.ActiveSkillPlan = BuildEnemySkillPlan(model, sourceEnemy.StageOneSkill.ToString());
                 enemy.ActiveSkills = BuildEnemyAssignedActiveSkills(model, sourceEnemy.Id);
                 enemy.SkillTriggers = BuildEnemyAssignedSkillTriggers(model, sourceEnemy.Id);
-                enemy.PassiveSkillName = sourceEnemy.PassiveSkillName;
-                enemy.PassiveSkillId = sourceEnemy.PassiveSkillId;
-                enemy.PassiveSkillValue = sourceEnemy.PassiveSkillValue;
+                enemy.PassiveSkill = BuildEnemyPassiveDefinition(model, sourceEnemy.PassiveId);
                 enemy.NexusDamage = sourceEnemy.NexusDamage > 0f ? sourceEnemy.NexusDamage : 1f;
-                enemy.PassiveSummary = sourceEnemy.PassiveSummary;
                 enemies.Add(enemy);
             }
 
             return enemies.ToArray();
         }
 
+        private static EnemyPassiveDefinition BuildEnemyPassiveDefinition(SourceModel model, string passiveId)
+        {
+            if (model == null
+                || string.IsNullOrWhiteSpace(passiveId)
+                || !model.EnemyBaseSkills.TryGetValue(passiveId, out var source)
+                || source == null
+                || source.Skill == null)
+            {
+                return null;
+            }
+
+            return new EnemyPassiveDefinition
+            {
+                PassiveId = source.Skill.Id,
+                DisplayName = source.Skill.DisplayName,
+                ApplyTarget = source.PassiveApplyTarget,
+                ModifierKind = source.PassiveModifierKind,
+                ModifierValue = source.PassiveModifierValue
+            };
+        }
+
         private static SkillDefinition[] BuildEnemyAssignedActiveSkills(SourceModel model, string enemyId)
         {
             if (model == null
                 || string.IsNullOrWhiteSpace(enemyId)
-                || !model.MigratedEnemies.TryGetValue(enemyId, out var migratedEnemy))
+                || !model.Enemies.TryGetValue(enemyId, out var migratedEnemy))
             {
                 return Array.Empty<SkillDefinition>();
             }
 
-            var loadouts = FilterAndSort(
-                model.EnemySkillLoadouts,
-                loadout => loadout.Enabled
-                    && string.Equals(loadout.LoadoutId, migratedEnemy.SkillLoadoutId, StringComparison.OrdinalIgnoreCase),
-                (left, right) =>
-                {
-                    var slotCompare = left.RuntimeSlot.CompareTo(right.RuntimeSlot);
-                    return slotCompare != 0 ? slotCompare : left.Priority.CompareTo(right.Priority);
-                });
-            var definitions = new List<SkillDefinition>(loadouts.Count);
-            for (var i = 0; i < loadouts.Count; i++)
-            {
-                var loadout = loadouts[i];
-                if (!model.EnemyBaseSkills.TryGetValue(loadout.SkillId, out var source)
-                    || source == null
-                    || source.Skill == null)
-                {
-                    continue;
-                }
-
-                definitions.Add(BuildEnemyAssignedSkillDefinition(source, loadout.RuntimeSlot));
-            }
+            var definitions = new List<SkillDefinition>(2);
+            TryAddEnemyAssignedSkillDefinition(model, migratedEnemy.SkillSlotAId, SkillSlot.A, definitions);
+            TryAddEnemyAssignedSkillDefinition(model, migratedEnemy.SkillSlotBId, SkillSlot.B, definitions);
 
             return definitions.ToArray();
+        }
+
+        private static void TryAddEnemyAssignedSkillDefinition(
+            SourceModel model,
+            string skillId,
+            SkillSlot runtimeSlot,
+            List<SkillDefinition> definitions)
+        {
+            if (model == null
+                || definitions == null
+                || string.IsNullOrWhiteSpace(skillId)
+                || !model.EnemyBaseSkills.TryGetValue(skillId, out var source)
+                || source == null
+                || source.Skill == null)
+            {
+                return;
+            }
+
+            definitions.Add(BuildEnemyAssignedSkillDefinition(source, runtimeSlot));
         }
 
         private static SkillDefinition BuildEnemyAssignedSkillDefinition(EnemyBaseSkillRow source, SkillSlot runtimeSlot)
@@ -274,7 +270,7 @@ namespace Pakuri.Data
             var profile = definition.ExecutionProfile ?? string.Empty;
             if (string.Equals(profile, "DamageAndActionSpeedDebuff", StringComparison.OrdinalIgnoreCase))
             {
-                definition.StatusEffectId = "PassiveBuff";
+                definition.StatusEffectId = "passive-buff";
                 definition.StatusEffectLabel = "Action Speed Down";
                 definition.StatusChance = 1f;
                 definition.StatusMaxStacks = 1;
@@ -282,7 +278,7 @@ namespace Pakuri.Data
             }
             else if (string.Equals(profile, "ApplySelfIncomingDamageMultiplier", StringComparison.OrdinalIgnoreCase))
             {
-                definition.StatusEffectId = "PassiveBuff";
+                definition.StatusEffectId = "passive-buff";
                 definition.StatusEffectLabel = "Incoming Damage Down";
                 definition.StatusChance = 1f;
                 definition.StatusMaxStacks = 1;
@@ -292,7 +288,7 @@ namespace Pakuri.Data
             }
             else if (string.Equals(profile, "ApplyAllyMoveAndDamageMultiplier", StringComparison.OrdinalIgnoreCase))
             {
-                definition.StatusEffectId = "PassiveBuff";
+                definition.StatusEffectId = "passive-buff";
                 definition.StatusEffectLabel = "Charge Command";
                 definition.StatusChance = 1f;
                 definition.StatusMaxStacks = 1;
@@ -303,7 +299,7 @@ namespace Pakuri.Data
             }
             else if (string.Equals(profile, "ApplyOutgoingDamageMultiplierStatus", StringComparison.OrdinalIgnoreCase))
             {
-                definition.StatusEffectId = "PassiveBuff";
+                definition.StatusEffectId = "passive-buff";
                 definition.StatusEffectLabel = "Intimidated";
                 definition.StatusChance = 1f;
                 definition.StatusMaxStacks = 1;
@@ -318,6 +314,12 @@ namespace Pakuri.Data
                 definition.StatusMaxStacks = 1;
                 definition.StatusStackAmount = 1;
                 definition.StatusTargetScope = "AllAllies";
+            }
+            else if (string.Equals(profile, "ChargeDamageStatus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusChance = 1f;
+                definition.StatusMaxStacks = 1;
+                definition.StatusStackAmount = 1;
             }
         }
 
@@ -356,21 +358,16 @@ namespace Pakuri.Data
         {
             if (model == null
                 || string.IsNullOrWhiteSpace(enemyId)
-                || !model.MigratedEnemies.TryGetValue(enemyId, out var migratedEnemy))
+                || !model.Enemies.TryGetValue(enemyId, out var migratedEnemy))
             {
                 return Array.Empty<SkillTriggerDefinition>();
             }
 
-            var assignedSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            for (var i = 0; i < model.EnemySkillLoadouts.Count; i++)
+            var assignedSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
-                var loadout = model.EnemySkillLoadouts[i];
-                if (loadout.Enabled
-                    && string.Equals(loadout.LoadoutId, migratedEnemy.SkillLoadoutId, StringComparison.OrdinalIgnoreCase))
-                {
-                    assignedSkillIds.Add(loadout.SkillId);
-                }
-            }
+                migratedEnemy.SkillSlotAId,
+                migratedEnemy.SkillSlotBId
+            };
 
             var rows = FilterAndSort(
                 model.EnemyMigrationTriggers.Values,
@@ -391,74 +388,6 @@ namespace Pakuri.Data
                     RuntimeKind = row.RuntimeKind,
                     SortOrder = row.SortOrder,
                     ProcChance = 1f
-                };
-            }
-
-            return definitions;
-        }
-
-        private static EnemySkillPlanDefinition BuildEnemySkillPlan(SourceModel model, string skillId)
-        {
-            if (model == null || string.IsNullOrWhiteSpace(skillId))
-            {
-                return null;
-            }
-
-            var nodes = FilterAndSort(
-                model.EnemySkillNodes,
-                node => string.Equals(node.SkillId, skillId, StringComparison.OrdinalIgnoreCase),
-                (left, right) => left.SortOrder.CompareTo(right.SortOrder));
-
-            if (nodes.Count == 0)
-            {
-                return null;
-            }
-
-            var plan = new EnemySkillPlanDefinition
-            {
-                SkillId = skillId,
-                Nodes = new EnemySkillPlanNodeDefinition[nodes.Count]
-            };
-
-            for (var i = 0; i < nodes.Count; i++)
-            {
-                var node = nodes[i];
-                plan.Nodes[i] = new EnemySkillPlanNodeDefinition
-                {
-                    NodeId = node.NodeId,
-                    SortOrder = node.SortOrder,
-                    Trigger = node.Trigger,
-                    TargetSelector = node.TargetSelector,
-                    ActionOp = node.ActionOp,
-                    Enabled = node.Enabled,
-                    Params = BuildEnemySkillNodeParams(model, skillId, node.NodeId)
-                };
-            }
-
-            return plan;
-        }
-
-        private static EnemySkillPlanParamDefinition[] BuildEnemySkillNodeParams(SourceModel model, string skillId, string nodeId)
-        {
-            var nodeParams = FilterAndSort(
-                model.EnemySkillNodeParams,
-                param => string.Equals(param.SkillId, skillId, StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(param.NodeId, nodeId, StringComparison.OrdinalIgnoreCase),
-                (left, right) => string.Compare(left.ParamKey, right.ParamKey, StringComparison.OrdinalIgnoreCase));
-
-            if (nodeParams.Count == 0)
-            {
-                return Array.Empty<EnemySkillPlanParamDefinition>();
-            }
-
-            var definitions = new EnemySkillPlanParamDefinition[nodeParams.Count];
-            for (var i = 0; i < nodeParams.Count; i++)
-            {
-                var param = nodeParams[i];
-                definitions[i] = new EnemySkillPlanParamDefinition
-                {
-                    ParamKey = param.ParamKey,
-                    ParamValue = param.ParamValue
                 };
             }
 

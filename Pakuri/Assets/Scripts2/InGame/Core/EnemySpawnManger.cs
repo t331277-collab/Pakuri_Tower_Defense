@@ -389,6 +389,8 @@ namespace Pakuri.InGame
                 return false;
             }
 
+            SkillRuntimeFactory.RebuildAssignedActiveSet(model, enemy.ActiveSkills, enemy.SkillTriggers);
+
             return true;
         }
 

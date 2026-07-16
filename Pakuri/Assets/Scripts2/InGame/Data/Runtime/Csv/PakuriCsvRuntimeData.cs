@@ -30,8 +30,6 @@ namespace Pakuri.Data
         private const string SourceCatalogResourcesPath = "Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog";
         private const string AssetCatalogResourcesPath = "Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog";
         private const string CatalogMonstersFileName = "catalog_monsters.csv";
-        private const string CatalogStageOneEnemiesFileName = "catalog_stage_one_enemies.csv";
-        private const string CatalogStageTwoEnemiesFileName = "catalog_stage_two_enemies.csv";
         private const string MonstersFileName = "monsters.csv";
         private const string MonsterRewardChoicesFileName = "monster_modifier_skill_choice.csv";
         private const string MonsterSkillsProjectileFileName = "skills_projectile.csv";
@@ -52,14 +50,7 @@ namespace Pakuri.Data
         private const string MonsterSkillChoicesBuffFileName = "skill_choices_buff.csv";
         private const string MonsterSkillChoicesPassiveFileName = "skill_choices_passive.csv";
         private const string StatusEffectsFileName = "status_effects.csv";
-        private const string StageOneEnemiesFileName = "stage_one_enemies.csv";
-        private const string StageTwoEnemiesFileName = "stage_two_enemies.csv";
-        private const string EnemySkillDataFileName = "EnemySkillData.csv";
-        private const string EnemySkillNodesFileName = "EnemySkillNodes.csv";
-        private const string EnemySkillNodeParamsFileName = "EnemySkillNodeParams.csv";
         private const string EnemiesFileName = "enemies.csv";
-        private const string EnemySkillLoadoutsFileName = "enemy_skill_loadouts.csv";
-        private const string EnemySkillDataAssetPath = RuntimeEnemyCsvAssetRoot + "/" + EnemySkillDataFileName;
 
         private static bool initialized;
         private static bool failed;
@@ -72,8 +63,6 @@ namespace Pakuri.Data
             switch (fileName)
             {
                 case CatalogMonstersFileName:
-                case CatalogStageOneEnemiesFileName:
-                case CatalogStageTwoEnemiesFileName:
                     return $"{RuntimeCatalogCsvAssetRoot}/{fileName}";
                 case MonstersFileName:
                 case MonsterRewardChoicesFileName:
@@ -102,13 +91,7 @@ namespace Pakuri.Data
                     return $"{RuntimeMonsterSkillChoiceCsvAssetRoot}/{fileName}";
                 case StatusEffectsFileName:
                     return $"{RuntimeStatusCsvAssetRoot}/{fileName}";
-                case StageOneEnemiesFileName:
-                case StageTwoEnemiesFileName:
-                case EnemySkillDataFileName:
-                case EnemySkillNodesFileName:
-                case EnemySkillNodeParamsFileName:
                 case EnemiesFileName:
-                case EnemySkillLoadoutsFileName:
                     return $"{RuntimeEnemyCsvAssetRoot}/{fileName}";
                 default:
                     return $"{RuntimeCsvAssetRoot}/{fileName}";

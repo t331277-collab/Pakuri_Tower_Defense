@@ -7,6 +7,8 @@ namespace Pakuri.InGame
     {
         [Header("Shield")]
         public BuffTarget Target;
+        public bool UseConfiguredTargeting;
+        public bool AttachVisualToCaster;
         public float ShieldBase;
         public float ShieldCoefficient;
         public StatSource ShieldStatSource;
