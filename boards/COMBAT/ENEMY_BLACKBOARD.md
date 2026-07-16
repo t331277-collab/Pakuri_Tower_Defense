@@ -7,6 +7,113 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-16 Enemy Shared Skill Migration Phase 0-3
+
+### Task title
+
+Implement the Phase 0 baseline, shared runtime generalization, merged Enemy/loadout CSV input, and 16 typed Enemy base rows without switching Enemy execution authority.
+
+### Goals
+
+- Preserve current Enemy AI and legacy executor behavior during the parity period.
+- Allow shared skill runtime state, factory, Trigger, and Passive paths to accept `BaseUnitRuntimeModel`.
+- Add one-time shared `CombatStart` dispatch without removing current Enemy CombatStart behavior.
+- Load and validate new Enemy migration CSV in parallel with legacy data.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Phase 4 executor transfer, Enemy AI slot routing, and legacy removal are excluded.
+- New Enemy base CSV has no graph/Choice rows and no runtime hitbox offset columns.
+- Current scene Enemy prefab mapping remains fallback authority.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 0-3 implementation complete and C# compile-verified. Unity Play Mode parity remains.
+
+### Next Actions
+
+- Run Unity CSV source validation and representative Stage 1/2 Play Mode scenarios.
+- Begin Phase 4 only after the new parallel CSV validation is clean.
+- Keep legacy Enemy execution enabled until each migrated skill passes behavior parity.
+
+### Evidence
+
+- `Pakuri/reference/Report/2026-07-16-enemy-shared-skill-phase-0-baseline.md` records 16 skills, 21 params, 15 prefab snapshots, and collider authority.
+- `BaseUnitRuntimeModel.State`, generalized `SkillRuntimeFactory`, side-aware Trigger/Passive iteration, `SkillTriggerEvent.CombatStart`, and one-time registration dispatch are implemented.
+- `enemies.csv` has 16 rows; `enemy_skill_loadouts.csv` has 32 rows; typed base files have 16 active rows; Trigger files have 2 CombatStart rows.
+- `PakuriCsvRuntimeData.EnemyMigrationDataset.cs` validates full legacy Enemy fields, A/B loadout parity, 16 node action profiles, 21 node params, stage IDs, and exactly one CombatStart Trigger for OpeningCharge and Intimidation.
+- Runtime and Editor `dotnet build` passed with 0 errors; existing MSB3277 warnings remained.
+- Independent PowerShell parity checks returned `enemy_and_loadout_parity=PASS` and `legacy_to_base_parity=PASS`.
+
+### History
+
+- 2026-07-16: Code Builder completed migration plan Phase 0-3 while retaining the legacy Enemy cast owner and executor.
+
+## Task: 2026-07-16 Enemy Shared Skill Runtime And CSV Migration Design
+
+### Task title
+
+Design the migration from the Enemy-only skill plan/executor path to shared Monster-style typed base skill executors, with optional future Choice/graph enhancement.
+
+### Goals
+
+- Separate Enemy unit description and skill loadout from skill execution values.
+- Route the current 16 Enemy base skills through shared SkillDefinition, SkillRuntimeInstance, SkillExecutionPlan, and typed executors without requiring Choice/graph rows.
+- Keep Enemy AI as a separate brain that selects a skill without owning its effect implementation.
+
+### Constraints
+
+- Role Owner is Designer.
+- This task creates a design/handoff document only; no code, CSV, prefab, or scene behavior is changed.
+- Proposed file names and APIs in the report do not exist until a Code Builder implements them.
+- Current Monster behavior must remain stable while Enemy skills migrate incrementally behind legacy fallback.
+- Current Enemy skills have no inspected enhancement or master rows, so the initial migration must not create mandatory Choice/graph inputs.
+- Ally conversion is a future feature and is excluded from this migration's APIs, steps, verification, and acceptance criteria.
+- Runtime visual ownership stays directly on each typed base skill row; no visual override layer is used.
+- CombatStart timing is stored in kind-specific Trigger CSV while the triggered skill's effect remains in its typed base row.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Design handoff created; implementation has not started.
+
+### Next Actions
+
+- Code Builder generalizes the current Monster-specific SkillRuntimeFactory to BaseUnitRuntimeModel-compatible input.
+- Add shared Hostile/Friendly target scopes, shared Heal execution, and Enemy AI-to-shared-runtime cast handoff.
+- Add `SkillTriggerEvent.CombatStart` and one-shot combat-start dispatch because the current shared trigger enum has no CombatStart value.
+- Migrate simple Damage/Area/Projectile Enemy base rows into shared typed executors first, then support and complex execution profiles.
+- Move Intimidation and OpeningCharge CombatStart conditions into buff and single-attack Trigger CSV paths.
+- Generalize Choice state only when Enemy enhancement/master acquisition is actually introduced.
+- Retire Enemy-only Plan/Executor and StageOneEnemySkillKind only after all 16 skills pass parity checks.
+
+### Evidence
+
+- Design report: `Pakuri/reference/Report/2026-07-16-enemy-shared-skill-runtime-csv-migration-plan.md`.
+- Current Enemy data has 16 skills, 16 nodes, and 21 node params across `EnemySkillData.csv`, `EnemySkillNodes.csv`, and `EnemySkillNodeParams.csv`.
+- `EnemyDefinition.cs`, `PakuriCsvRuntimeData.EnemyDataset.cs`, `PakuriCsvRuntimeData.Build.cs`, `EnemyUnitRuntimeModel.cs`, and `UnitFactory.cs` copy Basic/Active skill fields across multiple layers.
+- `EnemyCombatSystem.cs` owns both Enemy AI selection and Enemy-only skill execution; `SkillExecutionSystem` also ticks roster entries, so a direct dual connection would risk duplicate casts.
+- `Slash` is assigned 11 times. Under the revised contract one skill ID has one base-row visual; different visuals require distinct skill IDs/base rows while still sharing AreaAttack executor code.
+- Inspected Monster base CSV headers directly carry base damage, coefficients, cooldown, radius, target selection, status, and runtime visual/hitbox data; graph rows are not required merely to represent those base values.
+- `Intimidation` and `OpeningCharge` both have current `CombatStart` rows in `EnemySkillNodes.csv`; Intimidation stores outgoing multiplier `0.7` in both current skill/param data.
+- `EnemyCombatSystem.ExecuteOutgoingDamageMultiplierStatus(...)` converts Intimidation multiplier `0.7` to `DamageBonusRate=-0.3` through `multiplier - 1f`.
+- Current `SkillTriggerActionKind` contains `TriggeredSkill`, while current `SkillTriggerEvent` contains no `CombatStart`, proving the required shared trigger extension boundary.
+
+### History
+
+- 2026-07-16: Inspected the current Enemy CSV, Enemy runtime copies, shared Monster skill path, targeting, and prefab/runtime visual paths; created the migration report.
+- 2026-07-16: Revised the handoff so current Enemy skills migrate as typed base skills; Choice/graph is optional and deferred until an actual enhancement or master feature exists.
+- 2026-07-16: Removed ally-conversion implementation content because it is future scope, and aligned Enemy runtime hitboxes with the Vega zero-offset/size-only migration boundary.
+- 2026-07-16: Removed visual override design, assigned runtime visuals directly to base rows, and separated CombatStart Trigger timing from base effect data.
+
 ## Task: 2026-07-05 Monster Choice Base Runtime Removal
 
 ### Task title

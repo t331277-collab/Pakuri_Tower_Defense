@@ -162,6 +162,8 @@ namespace Pakuri.Data
                 enemy.ActiveSkillMoveSpeedMultiplier = sourceEnemy.ActiveSkillMoveSpeedMultiplier;
                 enemy.ActiveSkillOutgoingDamageMultiplier = sourceEnemy.ActiveSkillOutgoingDamageMultiplier;
                 enemy.ActiveSkillPlan = BuildEnemySkillPlan(model, sourceEnemy.StageOneSkill.ToString());
+                enemy.ActiveSkills = BuildEnemyAssignedActiveSkills(model, sourceEnemy.Id);
+                enemy.SkillTriggers = BuildEnemyAssignedSkillTriggers(model, sourceEnemy.Id);
                 enemy.PassiveSkillName = sourceEnemy.PassiveSkillName;
                 enemy.PassiveSkillId = sourceEnemy.PassiveSkillId;
                 enemy.PassiveSkillValue = sourceEnemy.PassiveSkillValue;
@@ -171,6 +173,228 @@ namespace Pakuri.Data
             }
 
             return enemies.ToArray();
+        }
+
+        private static SkillDefinition[] BuildEnemyAssignedActiveSkills(SourceModel model, string enemyId)
+        {
+            if (model == null
+                || string.IsNullOrWhiteSpace(enemyId)
+                || !model.MigratedEnemies.TryGetValue(enemyId, out var migratedEnemy))
+            {
+                return Array.Empty<SkillDefinition>();
+            }
+
+            var loadouts = FilterAndSort(
+                model.EnemySkillLoadouts,
+                loadout => loadout.Enabled
+                    && string.Equals(loadout.LoadoutId, migratedEnemy.SkillLoadoutId, StringComparison.OrdinalIgnoreCase),
+                (left, right) =>
+                {
+                    var slotCompare = left.RuntimeSlot.CompareTo(right.RuntimeSlot);
+                    return slotCompare != 0 ? slotCompare : left.Priority.CompareTo(right.Priority);
+                });
+            var definitions = new List<SkillDefinition>(loadouts.Count);
+            for (var i = 0; i < loadouts.Count; i++)
+            {
+                var loadout = loadouts[i];
+                if (!model.EnemyBaseSkills.TryGetValue(loadout.SkillId, out var source)
+                    || source == null
+                    || source.Skill == null)
+                {
+                    continue;
+                }
+
+                definitions.Add(BuildEnemyAssignedSkillDefinition(source, loadout.RuntimeSlot));
+            }
+
+            return definitions.ToArray();
+        }
+
+        private static SkillDefinition BuildEnemyAssignedSkillDefinition(EnemyBaseSkillRow source, SkillSlot runtimeSlot)
+        {
+            var row = source.Skill;
+            var definition = new SkillDefinition
+            {
+                SkillId = row.Id,
+                DisplayName = row.DisplayName,
+                Slot = runtimeSlot,
+                RuntimeKind = row.RuntimeKind,
+                ImplementationState = SkillImplementationState.RuntimeImplemented,
+                IsDefaultLearned = true,
+                RuntimeVisual = BuildRuntimeVisual(row),
+                DescriptionText = row.DescriptionText,
+                Summary = row.Summary,
+                Attribute = row.Attribute,
+                BaseDamage = row.BaseDamage,
+                AttackPowerCoefficient = row.AttackPowerCoefficient,
+                SpellPowerCoefficient = row.SpellPowerCoefficient,
+                UseCombinedStatCoefficients = true,
+                Radius = source.EffectRadius > 0f ? source.EffectRadius : row.Radius,
+                CastRange = source.CastRange > 0f ? source.CastRange : row.Radius,
+                EffectRadius = source.EffectRadius,
+                TargetScope = source.TargetScope,
+                TargetSelection = MapEnemyTargetSelection(source.TargetSelection),
+                ExecutionProfile = source.ExecutionProfile,
+                FlatValue = source.FlatValue,
+                ProjectileSpeed = row.ProjectileSpeed,
+                ProjectileLifetimeSeconds = source.ProjectileLifetime,
+                CooldownSeconds = row.CooldownSeconds,
+                ActiveDurationSeconds = row.ActiveDurationSeconds,
+                IncomingDamageMultiplier = source.IncomingDamageMultiplier,
+                MoveSpeedMultiplier = source.MoveSpeedMultiplier,
+                OutgoingDamageMultiplier = source.OutgoingDamageMultiplier,
+                ChainDamageMultiplier = source.ChainDamageMultiplier,
+                ChainDelaySeconds = source.ChainDelaySeconds,
+                ChainRadius = source.ChainRadius,
+                ExcludePrimaryTarget = source.ExcludePrimaryTarget,
+                TargetMaxHealthRatio = source.TargetMaxHealthRatio,
+                ChargeRampSeconds = source.ChargeRampSeconds,
+                ChargeMoveSpeedMultiplier = source.ChargeMoveSpeedMultiplier,
+                HitTargetCount = source.HitTargetCount,
+                CriticalAllowed = true,
+                StatusEffectId = row.Status != null ? row.Status.StatusEffectId : string.Empty,
+                StatusDurationSeconds = source.StatusDurationSeconds > 0f
+                    ? source.StatusDurationSeconds
+                    : row.ActiveDurationSeconds,
+                StatusActionSpeedBonus = source.StatusActionSpeedBonus,
+                UsePrefabHitbox = row.RuntimeHitboxSizeX > 0f || row.RuntimeHitboxSizeY > 0f
+            };
+
+            ApplyEnemyExecutionProfile(definition);
+            return definition;
+        }
+
+        private static void ApplyEnemyExecutionProfile(SkillDefinition definition)
+        {
+            if (definition == null)
+            {
+                return;
+            }
+
+            var profile = definition.ExecutionProfile ?? string.Empty;
+            if (string.Equals(profile, "DamageAndActionSpeedDebuff", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusEffectId = "PassiveBuff";
+                definition.StatusEffectLabel = "Action Speed Down";
+                definition.StatusChance = 1f;
+                definition.StatusMaxStacks = 1;
+                definition.StatusStackAmount = 1;
+            }
+            else if (string.Equals(profile, "ApplySelfIncomingDamageMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusEffectId = "PassiveBuff";
+                definition.StatusEffectLabel = "Incoming Damage Down";
+                definition.StatusChance = 1f;
+                definition.StatusMaxStacks = 1;
+                definition.StatusStackAmount = 1;
+                definition.StatusTargetScope = "Self";
+                definition.StatusDamageTakenBonus = definition.IncomingDamageMultiplier - 1f;
+            }
+            else if (string.Equals(profile, "ApplyAllyMoveAndDamageMultiplier", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusEffectId = "PassiveBuff";
+                definition.StatusEffectLabel = "Charge Command";
+                definition.StatusChance = 1f;
+                definition.StatusMaxStacks = 1;
+                definition.StatusStackAmount = 1;
+                definition.StatusTargetScope = "AllAllies";
+                definition.StatusMoveSpeedBonus = definition.MoveSpeedMultiplier - 1f;
+                definition.StatusDamageBonusRate = definition.OutgoingDamageMultiplier - 1f;
+            }
+            else if (string.Equals(profile, "ApplyOutgoingDamageMultiplierStatus", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.StatusEffectId = "PassiveBuff";
+                definition.StatusEffectLabel = "Intimidated";
+                definition.StatusChance = 1f;
+                definition.StatusMaxStacks = 1;
+                definition.StatusStackAmount = 1;
+                definition.StatusDamageBonusRate = definition.OutgoingDamageMultiplier - 1f;
+                definition.StatusPermanent = definition.StatusDurationSeconds <= 0f;
+            }
+            else if (string.Equals(profile, "GrantShieldToEnemyAllies", StringComparison.OrdinalIgnoreCase))
+            {
+                definition.BaseDamage = definition.FlatValue;
+                definition.StatusChance = 1f;
+                definition.StatusMaxStacks = 1;
+                definition.StatusStackAmount = 1;
+                definition.StatusTargetScope = "AllAllies";
+            }
+        }
+
+        private static string MapEnemyTargetSelection(string selection)
+        {
+            if (string.Equals(selection, "FarthestHostile", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Farthest";
+            }
+
+            if (string.Equals(selection, "RandomHostile", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Random";
+            }
+
+            if (string.Equals(selection, "LowestHealthFriendly", StringComparison.OrdinalIgnoreCase))
+            {
+                return "LowestHealth";
+            }
+
+            if (string.Equals(selection, "AllHostiles", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(selection, "AllFriendlies", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Nearest";
+            }
+
+            if (string.Equals(selection, "CurrentTarget", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Nearest";
+            }
+
+            return selection;
+        }
+
+        private static SkillTriggerDefinition[] BuildEnemyAssignedSkillTriggers(SourceModel model, string enemyId)
+        {
+            if (model == null
+                || string.IsNullOrWhiteSpace(enemyId)
+                || !model.MigratedEnemies.TryGetValue(enemyId, out var migratedEnemy))
+            {
+                return Array.Empty<SkillTriggerDefinition>();
+            }
+
+            var assignedSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < model.EnemySkillLoadouts.Count; i++)
+            {
+                var loadout = model.EnemySkillLoadouts[i];
+                if (loadout.Enabled
+                    && string.Equals(loadout.LoadoutId, migratedEnemy.SkillLoadoutId, StringComparison.OrdinalIgnoreCase))
+                {
+                    assignedSkillIds.Add(loadout.SkillId);
+                }
+            }
+
+            var rows = FilterAndSort(
+                model.EnemyMigrationTriggers.Values,
+                trigger => trigger.Enabled && assignedSkillIds.Contains(trigger.SourceSkillId),
+                (left, right) => left.SortOrder.CompareTo(right.SortOrder));
+            var definitions = new SkillTriggerDefinition[rows.Count];
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                definitions[i] = new SkillTriggerDefinition
+                {
+                    TriggerId = row.Id,
+                    MonsterId = enemyId,
+                    SourceSkillId = row.SourceSkillId,
+                    TriggerEvent = row.TriggerEvent,
+                    TriggerAction = SkillTriggerActionKind.TriggeredSkill,
+                    TriggeredSkillId = row.TriggeredSkillId,
+                    RuntimeKind = row.RuntimeKind,
+                    SortOrder = row.SortOrder,
+                    ProcChance = 1f
+                };
+            }
+
+            return definitions;
         }
 
         private static EnemySkillPlanDefinition BuildEnemySkillPlan(SourceModel model, string skillId)
@@ -697,6 +921,9 @@ namespace Pakuri.Data
                     GetSkillNodeStringParam(parameters, "runtime_visual_sprite_path"),
                     GetSkillNodeStringParam(parameters, "runtime_visual_animator_controller_path"),
                     GetSkillNodeFloatParam(parameters, "runtime_visual_scale", 1f),
+                    0f,
+                    0f,
+                    0f,
                     GetSkillNodeIntParam(parameters, "runtime_visual_sorting_order", 0),
                     GetSkillNodeFloatParam(parameters, "runtime_hitbox_size_x", 0f),
                     GetSkillNodeFloatParam(parameters, "runtime_hitbox_size_y", 0f));
@@ -1441,6 +1668,9 @@ namespace Pakuri.Data
                     row.RuntimeVisualSpritePath,
                     row.RuntimeVisualAnimatorControllerPath,
                     row.RuntimeVisualScale,
+                    row.RuntimeVisualScaleX,
+                    row.RuntimeVisualScaleY,
+                    row.RuntimeVisualScaleZ,
                     row.RuntimeVisualSortingOrder,
                     row.RuntimeHitboxSizeX,
                     row.RuntimeHitboxSizeY,
@@ -1457,6 +1687,9 @@ namespace Pakuri.Data
                     row.RuntimeVisualSpritePath,
                     row.RuntimeVisualAnimatorControllerPath,
                     row.RuntimeVisualScale,
+                    0f,
+                    0f,
+                    0f,
                     row.RuntimeVisualSortingOrder,
                     row.RuntimeHitboxSizeX,
                     row.RuntimeHitboxSizeY,
@@ -1473,6 +1706,9 @@ namespace Pakuri.Data
                     row.RuntimeImpactVisualSpritePath,
                     row.RuntimeImpactVisualAnimatorControllerPath,
                     row.RuntimeImpactVisualScale,
+                    0f,
+                    0f,
+                    0f,
                     row.RuntimeImpactVisualSortingOrder,
                     0f,
                     0f);
@@ -1482,6 +1718,9 @@ namespace Pakuri.Data
             string spritePath,
             string animatorControllerPath,
             float scale,
+            float scaleX,
+            float scaleY,
+            float scaleZ,
             int sortingOrder,
             float hitboxSizeX,
             float hitboxSizeY,
@@ -1496,11 +1735,19 @@ namespace Pakuri.Data
                 anchor = RuntimeSkillVisualAnchor.Skill;
             }
 
+            var useLocalScale = scaleX != 0f || scaleY != 0f || scaleZ != 0f;
             return new RuntimeSkillVisualSpec
             {
                 Sprite = LoadSprite(spritePath),
                 AnimatorController = LoadAnimatorController(animatorControllerPath),
                 Scale = scale > 0f ? scale : 1f,
+                UseLocalScale = useLocalScale,
+                LocalScale = useLocalScale
+                    ? new Vector3(
+                        scaleX != 0f ? scaleX : 1f,
+                        scaleY != 0f ? scaleY : 1f,
+                        scaleZ != 0f ? scaleZ : 1f)
+                    : Vector3.one,
                 SortingOrder = sortingOrder,
                 Anchor = anchor,
                 Hitbox = new RuntimeSkillHitboxSpec

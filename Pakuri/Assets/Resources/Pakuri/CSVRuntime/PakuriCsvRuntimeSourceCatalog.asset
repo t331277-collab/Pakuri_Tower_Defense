@@ -87,3 +87,16 @@ MonoBehaviour:
   EnemySkills: {fileID: 4900000, guid: d1e6867e2c874365ab3bfedbd0117a42, type: 3}
   EnemySkillNodes: {fileID: 4900000, guid: 843767bc634ae0d4f8b2d024eca31c0e, type: 3}
   EnemySkillNodeParams: {fileID: 4900000, guid: d118bcad03953104d952617372a7db8f, type: 3}
+  Enemies: {fileID: 4900000, guid: 911dc2cae6894e76ac5a31c8ca579f51, type: 3}
+  EnemySkillLoadouts: {fileID: 4900000, guid: 0e120d9345c9462abf4885211b94a868, type: 3}
+  EnemySkillBaseFiles:
+  - {fileID: 4900000, guid: 49d8a91883b9449ca3eb3760f746b9b1, type: 3}
+  - {fileID: 4900000, guid: f703fb9b5af2427fadc196316620018e, type: 3}
+  - {fileID: 4900000, guid: f00db90083dd4701b32c2c5302c296e3, type: 3}
+  - {fileID: 4900000, guid: 7ffdb20f69d1449d83ea68a3801eec8b, type: 3}
+  - {fileID: 4900000, guid: 8c4c800298724953b6839ce4aaec7969, type: 3}
+  - {fileID: 4900000, guid: 5b75068070084994b9c1e8356c43fba0, type: 3}
+  - {fileID: 4900000, guid: 2ebf66bd020147b3a77c489538c43aff, type: 3}
+  EnemySkillTriggerFiles:
+  - {fileID: 4900000, guid: 53048d2ee69041b380baa5dbfd184912, type: 3}
+  - {fileID: 4900000, guid: 95e0cc44f6e342298c2e3f5dd6c16470, type: 3}

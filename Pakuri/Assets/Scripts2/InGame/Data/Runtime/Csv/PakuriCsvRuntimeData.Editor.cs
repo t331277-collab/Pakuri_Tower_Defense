@@ -170,6 +170,18 @@ namespace Pakuri.Data
                 "Create EnemySkillData.csv under Assets/CSVdata/runtime/enemy before validation.");
             sourceCatalog.EnemySkillNodes = LoadImportedSourceTextAssetIfPresent(EnemySkillNodesFileName);
             sourceCatalog.EnemySkillNodeParams = LoadImportedSourceTextAssetIfPresent(EnemySkillNodeParamsFileName);
+            sourceCatalog.Enemies = LoadTextAssetOrThrow(
+                $"{RuntimeEnemyCsvAssetRoot}/{EnemiesFileName}",
+                "Create enemies.csv under Assets/CSVdata/runtime/enemy before validation.");
+            sourceCatalog.EnemySkillLoadouts = LoadTextAssetOrThrow(
+                $"{RuntimeEnemyCsvAssetRoot}/{EnemySkillLoadoutsFileName}",
+                "Create enemy_skill_loadouts.csv under Assets/CSVdata/runtime/enemy before validation.");
+            sourceCatalog.EnemySkillBaseFiles = LoadImportedSourceTextAssetsByPrefix(
+                RuntimeEnemySkillBaseCsvAssetRoot,
+                "skills_");
+            sourceCatalog.EnemySkillTriggerFiles = LoadImportedSourceTextAssetsBySuffix(
+                RuntimeEnemySkillTriggerCsvAssetRoot,
+                "_skill_triger.csv");
             EditorUtility.SetDirty(sourceCatalog);
 
             var sourceModel = LoadSourceModel(sourceCatalog);

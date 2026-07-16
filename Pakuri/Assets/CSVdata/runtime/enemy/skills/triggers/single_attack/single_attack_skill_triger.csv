@@ -1,0 +1,3 @@
+trigger_id,source_skill_id,trigger_event,triggered_skill_id,runtime_kind,sort_order,enabled
+id,id,enum:SkillTriggerEvent,id,enum:SkillRuntimeKind,int,bool
+opening-charge-combat-start,OpeningCharge,CombatStart,OpeningCharge,SingleAttack,10,true

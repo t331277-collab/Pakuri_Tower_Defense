@@ -86,6 +86,20 @@ namespace Pakuri.Data
                     $"Skill '{skill.Id}' runtime_impact_visual_animator_controller_path");
             }
 
+            foreach (var enemySkill in model.EnemyBaseSkills.Values)
+            {
+                var skill = enemySkill != null ? enemySkill.Skill : null;
+                if (skill == null)
+                {
+                    continue;
+                }
+
+                assets.AddSprite(skill.RuntimeVisualSpritePath, $"Enemy base skill '{skill.Id}' runtime_visual_sprite_path");
+                assets.AddAnimatorController(
+                    skill.RuntimeVisualAnimatorControllerPath,
+                    $"Enemy base skill '{skill.Id}' runtime_visual_animator_controller_path");
+            }
+
             foreach (var choice in model.SkillChoices.Values)
             {
                 assets.AddSprite(choice.SkillIconPath, $"Skill choice '{choice.Id}' skill_icon_path");
@@ -151,6 +165,12 @@ namespace Pakuri.Data
             {
                 assets.AddSprite(enemy.UnitSpritePath, $"Enemy '{enemy.Id}' unit_sprite_path");
                 assets.AddSprite(enemy.ProjectileSpritePath, $"Enemy '{enemy.Id}' projectile_sprite_path");
+            }
+
+            foreach (var enemy in model.MigratedEnemies.Values)
+            {
+                assets.AddSprite(enemy.UnitSpritePath, $"Migrated enemy '{enemy.Id}' unit_sprite_path");
+                assets.AddSprite(enemy.ProjectileSpritePath, $"Migrated enemy '{enemy.Id}' projectile_sprite_path");
             }
 
             return assets;

@@ -83,6 +83,10 @@ namespace Pakuri.Data
         public Sprite UnitSprite;
         public Sprite ProjectileSprite;
 
+        [Header("Shared Runtime Skills")]
+        public SkillDefinition[] ActiveSkills = Array.Empty<SkillDefinition>();
+        public SkillTriggerDefinition[] SkillTriggers = Array.Empty<SkillTriggerDefinition>();
+
         [Header("Stage 1 Skill")]
         public bool HasBasicSkill;
         public StageOneEnemySkillKind BasicSkill;
@@ -140,6 +144,8 @@ namespace Pakuri.Data
             clone.Defenses = Defenses != null ? Defenses.Clone() : new AttributeDefenseSet();
             clone.UnitSprite = UnitSprite;
             clone.ProjectileSprite = ProjectileSprite;
+            clone.ActiveSkills = ActiveSkills ?? Array.Empty<SkillDefinition>();
+            clone.SkillTriggers = SkillTriggers ?? Array.Empty<SkillTriggerDefinition>();
             clone.HasBasicSkill = HasBasicSkill;
             clone.BasicSkill = BasicSkill;
             clone.BasicSkillName = BasicSkillName;

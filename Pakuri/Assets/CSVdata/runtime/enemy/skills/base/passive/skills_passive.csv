@@ -1,0 +1,2 @@
+skill_id,skill_kind,slot,display_name,runtime_kind,description_text,summary
+id,enum:PakuriCsvSkillKind,enum:SkillSlot,string,enum:SkillRuntimeKind,string,string

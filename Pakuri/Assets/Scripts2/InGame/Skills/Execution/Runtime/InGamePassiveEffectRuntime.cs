@@ -16,11 +16,11 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var players = roster.Players;
-            for (var i = 0; i < players.Count; i++)
+            var entries = roster.Entries;
+            for (var i = 0; i < entries.Count; i++)
             {
-                var ownerEntry = players[i];
-                var owner = ownerEntry != null ? ownerEntry.Model as MonsterUnitRuntimeModel : null;
+                var ownerEntry = entries[i];
+                var owner = ownerEntry != null ? ownerEntry.Model : null;
                 var learnedPassives = owner != null && owner.State != null ? owner.State.LearnedPassiveSkillIds : null;
                 if (ownerEntry == null || owner == null || learnedPassives == null || learnedPassives.Count == 0)
                 {
@@ -38,7 +38,7 @@ namespace Pakuri.InGame
             InGameCombatManager combatManager,
             UnitRosterService roster,
             UnitRosterEntry ownerEntry,
-            MonsterUnitRuntimeModel owner,
+            BaseUnitRuntimeModel owner,
             string passiveId,
             ISet<string> appliedOneShotEffectKeys)
         {
@@ -81,7 +81,7 @@ namespace Pakuri.InGame
             }
         }
 
-        private static SkillExecutionSnapshot BuildPassiveChoiceSnapshot(MonsterUnitRuntimeModel owner, string passiveId)
+        private static SkillExecutionSnapshot BuildPassiveChoiceSnapshot(BaseUnitRuntimeModel owner, string passiveId)
         {
             var snapshot = new SkillExecutionSnapshot(null);
             var chosenChoiceIds = owner != null && owner.State != null ? owner.State.ChosenChoiceIds : null;
@@ -142,7 +142,7 @@ namespace Pakuri.InGame
                 && owner.Statuses.GetStacks(kind) >= Mathf.Max(1, choice.RequiredSourceStatusMinStacks);
         }
 
-        private static bool HasAllLearnedPassives(MonsterUnitRuntimeModel owner, string passiveList)
+        private static bool HasAllLearnedPassives(BaseUnitRuntimeModel owner, string passiveList)
         {
             if (string.IsNullOrWhiteSpace(passiveList))
             {
@@ -162,7 +162,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        private static bool HasAnyLearnedPassive(MonsterUnitRuntimeModel owner, string passiveList)
+        private static bool HasAnyLearnedPassive(BaseUnitRuntimeModel owner, string passiveList)
         {
             if (string.IsNullOrWhiteSpace(passiveList))
             {
@@ -182,7 +182,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        private static bool HasLearnedPassive(MonsterUnitRuntimeModel owner, string passiveId)
+        private static bool HasLearnedPassive(BaseUnitRuntimeModel owner, string passiveId)
         {
             return owner != null
                 && owner.State != null
@@ -190,7 +190,7 @@ namespace Pakuri.InGame
                 && owner.State.LearnedPassiveSkillIds.Contains(passiveId);
         }
 
-        private static string BuildOneShotKey(MonsterUnitRuntimeModel owner, string passiveId, SkillEffectDefinition effect)
+        private static string BuildOneShotKey(BaseUnitRuntimeModel owner, string passiveId, SkillEffectDefinition effect)
         {
             var unitId = owner != null && owner.Identity != null && !string.IsNullOrWhiteSpace(owner.Identity.UnitId)
                 ? owner.Identity.UnitId

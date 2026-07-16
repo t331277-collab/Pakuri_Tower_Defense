@@ -72,6 +72,50 @@ namespace Pakuri.InGame
                 new TriggerExecutionContext(source, null, eventCenter, null, 0f, 0f, DamageAttribute.Physical, sourceSkillId, source));
         }
 
+        public static void ExecuteCombatStart(
+            InGameCombatManager combatManager,
+            UnitRosterService roster,
+            BaseUnitRuntimeModel source)
+        {
+            var activeSkills = source != null && source.SkillRuntime != null
+                ? source.SkillRuntime.ActiveSkills
+                : null;
+            if (combatManager == null || roster == null || source == null || activeSkills == null)
+            {
+                return;
+            }
+
+            var center = ResolveUnitPosition(roster, source);
+            for (var i = 0; i < activeSkills.Count; i++)
+            {
+                var runtime = activeSkills[i];
+                var sourceSkillId = runtime != null && runtime.Data != null
+                    ? runtime.Data.SkillId
+                    : string.Empty;
+                if (string.IsNullOrWhiteSpace(sourceSkillId))
+                {
+                    continue;
+                }
+
+                ExecuteSourceOwnedTriggers(
+                    combatManager,
+                    roster,
+                    source,
+                    sourceSkillId,
+                    SkillTriggerEvent.CombatStart,
+                    new TriggerExecutionContext(
+                        source,
+                        source,
+                        center,
+                        null,
+                        0f,
+                        0f,
+                        DamageAttribute.Physical,
+                        sourceSkillId,
+                        source));
+            }
+        }
+
         public static void ExecuteShieldExpire(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -299,11 +343,10 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var sourceMonster = source as MonsterUnitRuntimeModel;
             for (var i = 0; i < triggers.Length; i++)
             {
                 var trigger = triggers[i];
-                if (!ShouldRunSourceOwnedTrigger(trigger, sourceMonster, sourceSkillId, triggerEvent, triggerContext))
+                if (!ShouldRunSourceOwnedTrigger(trigger, source, sourceSkillId, triggerEvent, triggerContext))
                 {
                     continue;
                 }
@@ -334,11 +377,11 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var players = roster.Players;
-            for (var i = 0; i < players.Count; i++)
+            var entries = roster.Entries;
+            for (var i = 0; i < entries.Count; i++)
             {
-                var ownerEntry = players[i];
-                var owner = ownerEntry != null ? ownerEntry.Model as MonsterUnitRuntimeModel : null;
+                var ownerEntry = entries[i];
+                var owner = ownerEntry != null ? ownerEntry.Model : null;
                 if (ownerEntry == null || owner == null || owner.State == null || owner.State.LearnedPassiveSkillIds.Count == 0)
                 {
                     continue;
@@ -377,7 +420,7 @@ namespace Pakuri.InGame
 
         private static bool ShouldRunSourceOwnedTrigger(
             SkillTriggerDefinition trigger,
-            MonsterUnitRuntimeModel source,
+            BaseUnitRuntimeModel source,
             string sourceSkillId,
             SkillTriggerEvent triggerEvent,
             TriggerExecutionContext triggerContext)
@@ -395,7 +438,7 @@ namespace Pakuri.InGame
 
         private static bool ShouldRunPassiveOwnerTrigger(
             SkillTriggerDefinition trigger,
-            MonsterUnitRuntimeModel owner,
+            BaseUnitRuntimeModel owner,
             SkillTriggerEvent triggerEvent,
             TriggerExecutionContext triggerContext)
         {
@@ -432,7 +475,7 @@ namespace Pakuri.InGame
                 && MatchesEventSourceScope(trigger.EventSourceScope, owner, triggerContext.EventSource);
         }
 
-        private static bool HasAllChoices(MonsterUnitRuntimeModel source, string choiceList)
+        private static bool HasAllChoices(BaseUnitRuntimeModel source, string choiceList)
         {
             if (string.IsNullOrWhiteSpace(choiceList))
             {
@@ -457,7 +500,7 @@ namespace Pakuri.InGame
             return true;
         }
 
-        private static bool HasAnyChoice(MonsterUnitRuntimeModel source, string choiceList)
+        private static bool HasAnyChoice(BaseUnitRuntimeModel source, string choiceList)
         {
             if (string.IsNullOrWhiteSpace(choiceList) || source == null || source.State == null)
             {
@@ -531,7 +574,7 @@ namespace Pakuri.InGame
             return false;
         }
 
-        private static bool PassesProcGate(InGameCombatManager combatManager, MonsterUnitRuntimeModel owner, SkillTriggerDefinition trigger)
+        private static bool PassesProcGate(InGameCombatManager combatManager, BaseUnitRuntimeModel owner, SkillTriggerDefinition trigger)
         {
             if (combatManager == null || owner == null || trigger == null)
             {
@@ -551,7 +594,7 @@ namespace Pakuri.InGame
             return combatManager.ConsumePassiveTriggerCooldown(BuildPassiveTriggerCooldownKey(owner, trigger), trigger.InternalCooldownSeconds);
         }
 
-        private static bool PassesCountGate(InGameCombatManager combatManager, MonsterUnitRuntimeModel owner, SkillTriggerDefinition trigger)
+        private static bool PassesCountGate(InGameCombatManager combatManager, BaseUnitRuntimeModel owner, SkillTriggerDefinition trigger)
         {
             if (combatManager == null || owner == null || trigger == null)
             {
@@ -561,7 +604,7 @@ namespace Pakuri.InGame
             return combatManager.ConsumePassiveTriggerCount(BuildPassiveTriggerCooldownKey(owner, trigger), trigger.TriggerEveryCount);
         }
 
-        private static bool MatchesEventSourceScope(string scope, MonsterUnitRuntimeModel owner, BaseUnitRuntimeModel eventSource)
+        private static bool MatchesEventSourceScope(string scope, BaseUnitRuntimeModel owner, BaseUnitRuntimeModel eventSource)
         {
             if (string.IsNullOrWhiteSpace(scope))
             {
@@ -679,7 +722,7 @@ namespace Pakuri.InGame
                 && string.Equals(leftId, rightId, StringComparison.OrdinalIgnoreCase);
         }
 
-        private static string BuildPassiveTriggerCooldownKey(MonsterUnitRuntimeModel owner, SkillTriggerDefinition trigger)
+        private static string BuildPassiveTriggerCooldownKey(BaseUnitRuntimeModel owner, SkillTriggerDefinition trigger)
         {
             var unitId = owner != null && owner.Identity != null && !string.IsNullOrWhiteSpace(owner.Identity.UnitId)
                 ? owner.Identity.UnitId
@@ -815,7 +858,7 @@ namespace Pakuri.InGame
                 null,
                 0f,
                 triggerContext.EventTarget);
-            var snapshot = BuildPassiveChoiceSnapshot(sourceEntry.Model as MonsterUnitRuntimeModel, trigger.SourceSkillId);
+            var snapshot = BuildPassiveChoiceSnapshot(sourceEntry.Model, trigger.SourceSkillId);
             return SkillMultiEffectExecutor.ExecuteDirect(context, snapshot, effect, triggerContext.EventCenter);
         }
 
@@ -900,7 +943,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        private static SkillExecutionSnapshot BuildPassiveChoiceSnapshot(MonsterUnitRuntimeModel owner, string passiveId)
+        private static SkillExecutionSnapshot BuildPassiveChoiceSnapshot(BaseUnitRuntimeModel owner, string passiveId)
         {
             var snapshot = new SkillExecutionSnapshot(null);
             var chosenChoiceIds = owner != null && owner.State != null ? owner.State.ChosenChoiceIds : null;
@@ -937,7 +980,7 @@ namespace Pakuri.InGame
             return snapshot;
         }
 
-        private static SkillExecutionSnapshot BuildActiveChoiceSnapshot(MonsterUnitRuntimeModel owner, string skillId)
+        private static SkillExecutionSnapshot BuildActiveChoiceSnapshot(BaseUnitRuntimeModel owner, string skillId)
         {
             var snapshot = new SkillExecutionSnapshot(null);
             var chosenChoiceIds = owner != null && owner.State != null ? owner.State.ChosenChoiceIds : null;
@@ -1064,14 +1107,23 @@ namespace Pakuri.InGame
             var entries = new List<UnitRosterEntry>();
             if (trigger != null && trigger.TargetSide == SkillMultiEffectTargetSide.AllAllies)
             {
-                var players = roster != null ? roster.Players : null;
-                for (var i = 0; players != null && i < players.Count; i++)
+                var allEntries = roster != null ? roster.Entries : null;
+                var sourceSide = sourceEntry != null
+                    && sourceEntry.Model != null
+                    && sourceEntry.Model.Identity != null
+                        ? sourceEntry.Model.Identity.Side
+                        : UnitSide.Player;
+                for (var i = 0; allEntries != null && i < allEntries.Count; i++)
                 {
-                    var player = players[i];
-                    var identity = player != null && player.Model != null ? player.Model.Identity : null;
-                    if (player != null && player.Model != null && (identity == null || identity.Role != UnitRole.Nexus))
+                    var ally = allEntries[i];
+                    var identity = ally != null && ally.Model != null ? ally.Model.Identity : null;
+                    if (ally != null
+                        && ally.Model != null
+                        && identity != null
+                        && identity.Side == sourceSide
+                        && identity.Role != UnitRole.Nexus)
                     {
-                        entries.Add(player);
+                        entries.Add(ally);
                     }
                 }
 
@@ -1109,7 +1161,7 @@ namespace Pakuri.InGame
 
             var damageSourceSkillId = ResolveTriggeredDamageSourceSkillId(trigger);
             var onHitStatusEffect = ResolveTriggeredOnHitStatusEffect(source, trigger);
-            var onHitSnapshot = BuildActiveChoiceSnapshot(source as MonsterUnitRuntimeModel, trigger.SourceSkillId);
+            var onHitSnapshot = BuildActiveChoiceSnapshot(source, trigger.SourceSkillId);
             var runtimeVisual = trigger.RuntimeVisual;
             var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
             var hasRuntimeHitbox = runtimeVisual != null && runtimeVisual.Hitbox != null && runtimeVisual.Hitbox.HasHitbox();
@@ -1218,7 +1270,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var snapshot = BuildActiveChoiceSnapshot(source as MonsterUnitRuntimeModel, trigger.SourceSkillId);
+            var snapshot = BuildActiveChoiceSnapshot(source, trigger.SourceSkillId);
             var onHitStatusEffect = ResolveTriggeredOnHitStatusEffect(source, trigger);
             var onHitEffects = onHitStatusEffect != null
                 ? new[] { onHitStatusEffect }

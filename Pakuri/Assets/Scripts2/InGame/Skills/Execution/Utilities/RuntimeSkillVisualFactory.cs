@@ -40,8 +40,15 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var scale = spec.Scale > 0f ? spec.Scale : 1f;
-            instance.transform.localScale = new Vector3(scale, scale, scale);
+            if (spec.UseLocalScale)
+            {
+                instance.transform.localScale = spec.LocalScale;
+            }
+            else
+            {
+                var scale = spec.Scale > 0f ? spec.Scale : 1f;
+                instance.transform.localScale = new Vector3(scale, scale, scale);
+            }
 
             if (spec.Sprite != null)
             {

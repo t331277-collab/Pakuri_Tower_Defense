@@ -116,7 +116,8 @@ namespace Pakuri.Data
         OnStatusExpire,
         OnOutgoingDamage,
         OnKill,
-        OnSkillCast
+        OnSkillCast,
+        CombatStart
     }
 
     public enum SkillTriggerDamageSource
@@ -158,6 +159,8 @@ namespace Pakuri.Data
         public Sprite Sprite;
         public RuntimeAnimatorController AnimatorController;
         public float Scale = 1f;
+        public bool UseLocalScale;
+        public Vector3 LocalScale = Vector3.one;
         public int SortingOrder;
         public RuntimeSkillVisualAnchor Anchor = RuntimeSkillVisualAnchor.Skill;
         public RuntimeSkillHitboxSpec Hitbox = new RuntimeSkillHitboxSpec();
@@ -506,7 +509,24 @@ namespace Pakuri.Data
         public float BaseDamage;
         public float AttackPowerCoefficient;
         public float SpellPowerCoefficient;
+        public bool UseCombinedStatCoefficients;
         public float Radius;
+        public float CastRange;
+        public float EffectRadius;
+        public string TargetScope;
+        public string ExecutionProfile;
+        public float FlatValue;
+        public float ProjectileLifetimeSeconds;
+        public float IncomingDamageMultiplier = 1f;
+        public float MoveSpeedMultiplier = 1f;
+        public float OutgoingDamageMultiplier = 1f;
+        public float ChainDamageMultiplier;
+        public float ChainDelaySeconds;
+        public float ChainRadius;
+        public bool ExcludePrimaryTarget;
+        public float TargetMaxHealthRatio;
+        public float ChargeRampSeconds = 3f;
+        public float ChargeMoveSpeedMultiplier = 2.5f;
         public float KnockbackDistance;
         public float DamageDelaySeconds;
         [Range(0f, 1f)] public float ExecuteHealthRatioThreshold;
@@ -554,6 +574,9 @@ namespace Pakuri.Data
         public float StatusActionSpeedBonus;
         public float StatusMoveSpeedBonus;
         public float StatusAttackPowerBonus;
+        public float StatusSpellPowerBonus;
+        public float StatusDamageBonusRate;
+        public bool StatusPermanent;
         public float StatusDamageTakenBonus;
         public float StatusCriticalDamageTakenBonus;
         public float StatusCriticalDamageBonus;

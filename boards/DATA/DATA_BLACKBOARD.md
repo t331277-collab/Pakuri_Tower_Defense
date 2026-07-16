@@ -5,6 +5,118 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-16 Enemy CSV Migration Phase 0-3
+
+### Task title
+
+Add merged Enemy definitions, separated loadouts, typed base skills, and CombatStart Trigger inputs as a parallel validated migration dataset.
+
+### Goals
+
+- Merge 8 Stage 1 and 8 Stage 2 definitions into `enemies.csv` with `stage_id`.
+- Separate Basic/Special assignment into 32 loadout rows.
+- Mechanically move 16 skill values and 21 node params into typed base fields.
+- Keep Choice/graph inputs absent until a real Enemy enhancement feature exists.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Legacy stage and Enemy skill CSV remain runtime fallback during parity.
+- Base rows directly own visual paths; no `visual_override_id`.
+- No `runtime_hitbox_offset_x/y` columns.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 0-3 data authored, cataloged, and compile-verified. Unity CSV menu validation remains.
+
+### Next Actions
+
+- Run `Pakuri/Validate CSV Source Data` in Unity after script refresh.
+- Compare the representative behavior scenarios recorded in the Phase 0 baseline.
+- Do not make `enemies.csv` the sole build authority before Phase 4+ parity.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/runtime/enemy/enemies.csv`: 16 data rows.
+- `Pakuri/Assets/CSVdata/runtime/enemy/enemy_skill_loadouts.csv`: 32 data rows.
+- `Pakuri/Assets/CSVdata/runtime/enemy/skills/base/`: 16 active skill rows across projectile, area_attack, single_attack, buff, heal, and shield; passive is header-only.
+- `Pakuri/Assets/CSVdata/runtime/enemy/skills/triggers/`: OpeningCharge and Intimidation CombatStart rows.
+- CSV width check returned one consistent field count per file.
+- All authored runtime visual Sprite/Controller paths exist on disk.
+- Independent checks returned `enemy_and_loadout_parity=PASS` for 16 Enemy rows and 32 loadout rows, and `legacy_to_base_parity=PASS` for 16 base rows, 16 legacy action nodes, and 21 legacy params.
+- Runtime and Editor C# builds passed with 0 errors; Unity menu CSV validation remains pending.
+
+### History
+
+- 2026-07-16: Code Builder implemented Phase 2 and Phase 3 as a parallel migration dataset with legacy parity validation.
+
+## Task: 2026-07-16 Enemy Shared Skill CSV Migration Design
+
+### Task title
+
+Design a Monster-style typed base CSV structure for current Enemy skills, with optional future Choice and graph inputs.
+
+### Goals
+
+- Keep Enemy definition CSV responsible for unit stats, initial side, brain, passive, and skill loadout identity.
+- Move the current cooldown, range, cast, visual, hitbox, damage, status, trigger, and complex action parameters into kind-specific base inputs.
+- Preserve current values by mechanical migration rather than inventing new tuning.
+- Do not require Choice or graph CSV until Enemy enhancement/master behavior actually exists.
+
+### Constraints
+
+- Role Owner is Designer.
+- Proposed files such as `enemies.csv`, `enemy_skill_loadouts.csv`, and the `enemy/skills/` directory do not currently exist.
+- Choice examples containing `<designer_value>` are schema illustrations, not approved balance data.
+- Future node definitions should use shared authority, but node-definition work is outside the initial base migration.
+- Ally conversion is future scope and is not part of the current CSV contract.
+- Enemy runtime hitbox authoring uses size only when gameplay requires a collider; no offset columns are proposed.
+- Final Enemy definition authority is one `enemies.csv` with `stage_id`; the existing Stage 1/2 files are migration inputs only.
+- Runtime visual columns belong directly to typed base skill rows; no visual override table or ID is proposed.
+
+### Role Owner
+
+Designer
+
+### Status
+
+CSV contract and phased migration design documented; no data files changed.
+
+### Next Actions
+
+- Code Builder creates the loader/model path only after confirming the proposed contract against the current runtime parser.
+- Move the current 16 skills and 21 parameters into kind-specific base fields without changing values.
+- Merge current Stage 1/2 Enemy rows into `enemies.csv` and replace embedded skill columns with `skill_loadout_id`.
+- Author Intimidation and OpeningCharge CombatStart relations in kind-specific Trigger CSV files.
+- Extend the shared Trigger event contract with `CombatStart`; use the existing `TriggeredSkill` action value rather than introducing a new action name.
+- Use shared Hostile/Friendly target scopes instead of duplicating Monster and Enemy executor logic.
+- Add initial validation for missing skill IDs, bad loadout references, and missing asset paths.
+- Add node/Choice/graph-position validation only when the optional enhancement inputs are introduced.
+
+### Evidence
+
+- Design report: `Pakuri/reference/Report/2026-07-16-enemy-shared-skill-runtime-csv-migration-plan.md`.
+- Current active Enemy inputs are `stage_one_enemies.csv`, `stage_two_enemies.csv`, `EnemySkillData.csv`, `EnemySkillNodes.csv`, and `EnemySkillNodeParams.csv`.
+- The current skill set contains 2 AreaAttack, 2 Buff, 4 CooldownProjectile, 2 Heal, 2 Shield, and 4 SingleAttack definitions.
+- Current target selectors include CurrentTarget, EnemyAlliesInRadius, LowestHealthEnemyAlly, Self, FarthestTower, RandomTower, and AllTowers; Farthest and Random need shared targeting support.
+- Current `ChainLightning` stores delayed-chain behavior in one action with inspected values `0.5` damage multiplier, `0.5` delay, radius `7`, and primary-target exclusion; the revised design keeps those current behavior values in a typed base execution profile rather than mandatory graph rows.
+- Current `Intimidation` stores `trigger=CombatStart`, target `AllTowers`, action `ApplyOutgoingDamageMultiplierStatus`, and multiplier `0.7`; current `OpeningCharge` also stores `trigger=CombatStart`.
+- Current shared `SkillTriggerEvent` lacks CombatStart, while `SkillTriggerActionKind.TriggeredSkill` already exists.
+- Inspected Monster projectile, area-attack, single-attack, and buff base headers directly contain damage, coefficients, cooldown, targeting, status, and runtime visual/hitbox values.
+- The revised report proposes unit-only Enemy data, a separate loadout table, and kind-specific base tables as the initial required structure; Choice and positional graph tables are future optional inputs.
+- The Vega migration plan keeps runtime collider offsets at `(0,0)`, creates no offset columns, and carries only gameplay-required hitbox sizes; the Enemy CSV proposal now follows the same boundary.
+
+### History
+
+- 2026-07-16: Inspected active Enemy CSV contracts and shared Monster CSV/runtime composition; documented the proposed target schema and migration examples.
+- 2026-07-16: Revised the CSV contract to keep all current Enemy base behavior in kind-specific base tables and defer Choice/graph files until enhancement or master effects exist.
+- 2026-07-16: Removed ally-conversion data/API assumptions and removed Enemy hitbox offset columns from the proposed schema.
+- 2026-07-16: Fixed final authority to merged `enemies.csv`, removed visual overrides, and added buff/single-attack Trigger CSV paths for current CombatStart skills.
+
 ## Task: 2026-07-14 Choice Definition And Graph Value Authority Cleanup
 
 ### Task title

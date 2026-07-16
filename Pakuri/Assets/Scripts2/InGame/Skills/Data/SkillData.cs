@@ -6,6 +6,7 @@ namespace Pakuri.InGame
 {
     public enum CharacterType
     {
+        Unknown = -1,
         Eve,
         Ariel,
         Rin,
@@ -58,7 +59,9 @@ namespace Pakuri.InGame
         HighestHealth,
         HighestStacks,
         ManualPosition,
-        Owner
+        Owner,
+        Farthest,
+        Random
     }
 
     public enum SkillTargetShape
@@ -169,6 +172,9 @@ namespace Pakuri.InGame
         [Min(0f)] public float BaseDamage;
         public float StatCoefficient;
         public StatSource StatSource;
+        public bool UseCombinedStatCoefficients;
+        public float AttackPowerCoefficient;
+        public float SpellPowerCoefficient;
         public bool CriticalAllowed = true;
     }
 
@@ -193,6 +199,7 @@ namespace Pakuri.InGame
         [Min(1)] public int ProjectilesPerShot = 1;
         [Min(0)] public int PierceCount;
         [Min(0f)] public float ProjectileSpeed;
+        [Min(0f)] public float LifetimeSeconds;
         public ProjectileTravelMode TravelMode = ProjectileTravelMode.Straight;
         public GameObject ProjectilePrefab;
     }
@@ -270,6 +277,8 @@ namespace Pakuri.InGame
         [Header("Buff")]
         public float BuffDuration;
         public BuffTarget Target;
+        public bool UseConfiguredTargeting;
+        public bool AttachVisualToCaster;
         public string ApplyStatusTag;
 
         [Header("Modifiers")]
@@ -280,5 +289,31 @@ namespace Pakuri.InGame
         public SkillDamageSpec AttachedDamage = new SkillDamageSpec();
         public float AttachedDamageRadius;
         public StatusApplicationSpec AttachedStatus = new StatusApplicationSpec();
+    }
+
+    [CreateAssetMenu(menuName = "Pakuri/InGame/Heal Skill Data", fileName = "HealSkillData")]
+    public sealed class HealSkillData : SkillData
+    {
+        public SkillDamageSpec Healing = new SkillDamageSpec();
+        public bool AttachVisualToTarget = true;
+    }
+
+    [CreateAssetMenu(menuName = "Pakuri/InGame/Chain Attack Skill Data", fileName = "ChainAttackSkillData")]
+    public sealed class ChainAttackSkillData : SkillData
+    {
+        public SkillDamageSpec Damage = new SkillDamageSpec();
+        public float ChainDamageMultiplier = 0.5f;
+        public float ChainDelaySeconds = 0.5f;
+        public float ChainRadius;
+        public bool ExcludePrimaryTarget = true;
+    }
+
+    [CreateAssetMenu(menuName = "Pakuri/InGame/Charge Skill Data", fileName = "ChargeSkillData")]
+    public sealed class ChargeSkillData : SkillData
+    {
+        public float TargetMaxHealthRatio = 1f;
+        public float RampSeconds = 3f;
+        public float MaxMoveSpeedMultiplier = 2.5f;
+        public StatusApplicationSpec OnHitStatus = new StatusApplicationSpec();
     }
 }

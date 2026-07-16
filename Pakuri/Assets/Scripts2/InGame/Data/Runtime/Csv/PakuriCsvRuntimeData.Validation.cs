@@ -265,6 +265,7 @@ namespace Pakuri.Data
             ValidateEnemyRows(model.StageOneEnemies.Values, model.EnemySkills, errors);
             ValidateEnemyRows(model.StageTwoEnemies.Values, model.EnemySkills, errors);
             ValidateEnemySkillNodes(model, errors);
+            ValidateEnemyMigrationRows(model, errors);
 
             foreach (var monster in model.Monsters.Values)
             {

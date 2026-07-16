@@ -54,6 +54,7 @@ namespace Pakuri.InGame
         private readonly SkillExecutionSystem skillExecution = new SkillExecutionSystem();
         private readonly Dictionary<string, GameObject> statusEffectVisuals = new Dictionary<string, GameObject>();
         private readonly HashSet<string> appliedOneShotPassiveEffects = new HashSet<string>();
+        private readonly HashSet<BaseUnitRuntimeModel> combatStartDispatchedUnits = new HashSet<BaseUnitRuntimeModel>();
         private readonly Dictionary<string, float> passiveTriggerCooldowns = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, int> passiveTriggerCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         private float passiveEffectRefreshRemaining;
@@ -87,6 +88,7 @@ namespace Pakuri.InGame
         {
             roster.Clear();
             enemyCombatSystem.Clear();
+            combatStartDispatchedUnits.Clear();
             ResetPassiveEffectState();
         }
 
@@ -121,12 +123,15 @@ namespace Pakuri.InGame
                 SetSelectedPlayerAutoSkillMode(playerAutoSkillEnabled);
             }
 
+            DispatchCombatStartOnce(model);
             return entry;
         }
 
         public UnitRosterEntry RegisterEnemy(EnemyUnitRuntimeModel model, EnemyUnitActor actor, Transform hitboxRoot = null)
         {
-            return roster.Register(model, actor, hitboxRoot);
+            var entry = roster.Register(model, actor, hitboxRoot);
+            DispatchCombatStartOnce(model);
+            return entry;
         }
 
         public UnitRosterEntry RegisterNexus(NexusUnitRuntimeModel model, NexusUnitActor actor, Transform hitboxRoot = null)
@@ -405,6 +410,7 @@ namespace Pakuri.InGame
             }
 
             statusEffectVisuals.Clear();
+            combatStartDispatchedUnits.Clear();
             ResetPassiveEffectState();
 
             var entries = roster.Entries;
@@ -513,6 +519,16 @@ namespace Pakuri.InGame
             }
 
             SkillTriggerRuntime.ExecuteSkillCast(this, roster, source, sourceSkillId, eventCenter, triggerSourceSkillId);
+        }
+
+        private void DispatchCombatStartOnce(BaseUnitRuntimeModel source)
+        {
+            if (source == null || !combatStartDispatchedUnits.Add(source))
+            {
+                return;
+            }
+
+            SkillTriggerRuntime.ExecuteCombatStart(this, roster, source);
         }
 
         private void TickLearnedPassiveEffects(float deltaTime)

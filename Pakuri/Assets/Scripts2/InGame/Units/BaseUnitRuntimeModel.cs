@@ -68,6 +68,7 @@ namespace Pakuri.InGame
         public UnitResourceRuntime Resources = new UnitResourceRuntime();
         public UnitSkillRuntimeSet SkillRuntime = new UnitSkillRuntimeSet();
         public UnitStatusRuntimeSet Statuses = new UnitStatusRuntimeSet();
+        public UnitStateBucket State = new UnitStateBucket();
         public bool IsBoss;
         public bool AutoAttackEnabled = true;
         public bool AutoSkillEnabled = true;

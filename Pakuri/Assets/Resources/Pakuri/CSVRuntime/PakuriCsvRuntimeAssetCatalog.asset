@@ -15,14 +15,42 @@ MonoBehaviour:
   Sprites:
   - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Achor.png
     Asset: {fileID: 21300000, guid: ef1e124d1928cc54ea59ccf3db8fdfe0, type: 3}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Achor/ChatGPT Image 2026\uB144 5\uC6D4
+      15\uC77C \uC624\uD6C4 07_37_41 1.png"
+    Asset: {fileID: 21300000, guid: 36a465a8e68bc1048aeaee89f14bba4b, type: 3}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Karin/ChatGPT Image 2026\uB144 5\uC6D4
+      16\uC77C \uC624\uC804 01_32_22-Photoroom 1.png"
+    Asset: {fileID: 21300000, guid: 6d8e56c2f1195b24090e6838d46f3927, type: 3}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Preist/ChatGPT Image 2026\uB144
+      5\uC6D4 15\uC77C \uC624\uD6C4 07_43_34-Photoroom 1.png"
+    Asset: {fileID: 21300000, guid: 22d7d618afc0ac04b8a5180e83ade844, type: 3}
   - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Priest.png
     Asset: {fileID: 21300000, guid: 8734391ccbebaae48b6a4ab04c78cab3, type: 3}
   - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Rogue.png
     Asset: {fileID: 21300000, guid: 91290f9ea0955e84cbf23401ff72fdac, type: 3}
   - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Shield.png
     Asset: {fileID: 21300000, guid: 0caea6bc70c48504bb727429d31f5bc3, type: 3}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Shield/ChatGPT Image 2026\uB144
+      5\uC6D4 16\uC77C \uC624\uC804 01_33_45-Photoroom 1.png"
+    Asset: {fileID: -4406097972065725354, guid: 920e1af41d651d643914a42765a4e2ff, type: 3}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/shield_King/ChatGPT Image 2026\uB144
+      5\uC6D4 16\uC77C \uC624\uC804 01_39_04-Photoroom 1.png"
+    Asset: {fileID: -4871535039512559577, guid: 9de87d17ab47da445a9ede28d1e047bb, type: 3}
   - AssetPath: Assets/Enemy/Stage1/Enemy/Stage1/Warrior.png
     Asset: {fileID: 21300000, guid: 128ccc7f23263be428abee49b68f0e07, type: 3}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Warrior/ChatGPT Image 2026\uB144
+      5\uC6D4 15\uC77C \uC624\uD6C4 07_34_03-Photoroom (1) 1.png"
+    Asset: {fileID: 21300000, guid: 50ac20857de2edc41841a7054881284f, type: 3}
+  - AssetPath: Assets/Enemy/Stage2/Skill/arsen_1.png
+    Asset: {fileID: 21300000, guid: 1fb2a83c6b841ab47bc7e46797284539, type: 3}
+  - AssetPath: Assets/Enemy/Stage2/Skill/dark-assassin_1.png
+    Asset: {fileID: 21300000, guid: da4169affddaf884ba6194c7cf9178b9, type: 3}
+  - AssetPath: Assets/Enemy/Stage2/Skill/ethan_1.png
+    Asset: {fileID: 21300000, guid: f4108c7d32982ac4f8783f24c0a981b2, type: 3}
+  - AssetPath: Assets/Enemy/Stage2/Skill/fire-dragon-slayer_!.png
+    Asset: {fileID: 21300000, guid: 2845dd6426a0c6e43b392b9ab0261e00, type: 3}
+  - AssetPath: Assets/Enemy/Stage2/Skill/lightning-scout_1.png
+    Asset: {fileID: 21300000, guid: e1173e38ff670294d8d9d329e64f1c4b, type: 3}
   - AssetPath: Assets/Image/Monster/ariel/SkillEffect/1.png
     Asset: {fileID: 21300000, guid: 3476df253a7be994c9586a7baed1b9be, type: 3}
   - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4
@@ -96,6 +124,34 @@ MonoBehaviour:
   - AssetPath: Assets/Prefab/Skill/Rin/Rin_E.prefab
     Asset: {fileID: 6357067641262685288, guid: 896e086a136a4ef4a8054935eef3cfc1, type: 3}
   AnimatorControllers:
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Achor/ChatGPT Image 2026\uB144 5\uC6D4
+      15\uC77C \uC624\uD6C4 07_37_41 1.controller"
+    Asset: {fileID: 9100000, guid: fbee638e4996b2b499b14f08c80d2ad5, type: 2}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Karin/ChatGPT Image 2026\uB144 5\uC6D4
+      16\uC77C \uC624\uC804 01_32_22-Photoroom 1.controller"
+    Asset: {fileID: 9100000, guid: 89b9a05ed810aaa448bff1ebe7c0d87c, type: 2}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Preist/ChatGPT Image 2026\uB144
+      5\uC6D4 15\uC77C \uC624\uD6C4 07_43_34-Photoroom 1.controller"
+    Asset: {fileID: 9100000, guid: 3363f29e1551e864da65ac68cd1b8b58, type: 2}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Shield/ChatGPT Image 2026\uB144
+      5\uC6D4 16\uC77C \uC624\uC804 01_33_45-Photoroom 1_0.controller"
+    Asset: {fileID: 9100000, guid: 41ee22c3c0470de45892cc4161bf0dcb, type: 2}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/shield_King/ChatGPT Image 2026\uB144
+      5\uC6D4 16\uC77C \uC624\uC804 01_39_04-Photoroom 1_0.controller"
+    Asset: {fileID: 9100000, guid: fef6d7db96aec1c4087e18443196de01, type: 2}
+  - AssetPath: "Assets/Enemy/Stage1/Enemy/Stage1/Warrior/ChatGPT Image 2026\uB144
+      5\uC6D4 15\uC77C \uC624\uD6C4 07_34_03-Photoroom (1) 1.controller"
+    Asset: {fileID: 9100000, guid: 3002088aba3600a4489ef77352d8935a, type: 2}
+  - AssetPath: Assets/Enemy/Stage2/Skill/arsen_1.controller
+    Asset: {fileID: 9100000, guid: ee2f1d22cc70f3440a879cb355f33de5, type: 2}
+  - AssetPath: Assets/Enemy/Stage2/Skill/dark-assassin_1.controller
+    Asset: {fileID: 9100000, guid: 93c6692d3f4f1174eb8081b321e5e76e, type: 2}
+  - AssetPath: Assets/Enemy/Stage2/Skill/ethan_1.controller
+    Asset: {fileID: 9100000, guid: 2049186cdaf07be48a2ca73ab6092b6b, type: 2}
+  - AssetPath: Assets/Enemy/Stage2/Skill/fire-dragon-slayer_!.controller
+    Asset: {fileID: 9100000, guid: 6dd19bd4fe4ddc3458b50b207acf6b38, type: 2}
+  - AssetPath: Assets/Enemy/Stage2/Skill/lightning-scout_1.controller
+    Asset: {fileID: 9100000, guid: 702a62a867a2f904dbd5a8201d8647c7, type: 2}
   - AssetPath: Assets/Image/Monster/ariel/SkillEffect/1.controller
     Asset: {fileID: 9100000, guid: 3547e90223db8fb4893a84732a1e3bb7, type: 2}
   - AssetPath: "Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\uB144 5\uC6D4

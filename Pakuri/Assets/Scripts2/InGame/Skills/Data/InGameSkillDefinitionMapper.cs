@@ -1578,8 +1578,9 @@ namespace Pakuri.InGame
                 case "vega":
                     return CharacterType.Vega;
                 case "eve":
-                default:
                     return CharacterType.Eve;
+                default:
+                    return CharacterType.Unknown;
             }
         }
 

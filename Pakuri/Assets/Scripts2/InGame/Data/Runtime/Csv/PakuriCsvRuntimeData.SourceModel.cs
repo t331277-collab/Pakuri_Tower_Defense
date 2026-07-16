@@ -27,6 +27,10 @@ namespace Pakuri.Data
             public readonly Dictionary<string, EnemySkillRow> EnemySkills = new Dictionary<string, EnemySkillRow>(StringComparer.OrdinalIgnoreCase);
             public readonly List<EnemySkillNodeRow> EnemySkillNodes = new List<EnemySkillNodeRow>();
             public readonly List<EnemySkillNodeParamRow> EnemySkillNodeParams = new List<EnemySkillNodeParamRow>();
+            public readonly Dictionary<string, EnemyMigrationRow> MigratedEnemies = new Dictionary<string, EnemyMigrationRow>(StringComparer.OrdinalIgnoreCase);
+            public readonly List<EnemySkillLoadoutRow> EnemySkillLoadouts = new List<EnemySkillLoadoutRow>();
+            public readonly Dictionary<string, EnemyBaseSkillRow> EnemyBaseSkills = new Dictionary<string, EnemyBaseSkillRow>(StringComparer.OrdinalIgnoreCase);
+            public readonly Dictionary<string, EnemyMigrationTriggerRow> EnemyMigrationTriggers = new Dictionary<string, EnemyMigrationTriggerRow>(StringComparer.OrdinalIgnoreCase);
         }
     }
 }

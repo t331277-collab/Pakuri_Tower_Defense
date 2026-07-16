@@ -121,6 +121,22 @@ namespace Pakuri.Data
             {
                 missingAssets.Add(EnemySkillDataFileName);
             }
+            if (sourceCatalog.Enemies == null)
+            {
+                missingAssets.Add(EnemiesFileName);
+            }
+            if (sourceCatalog.EnemySkillLoadouts == null)
+            {
+                missingAssets.Add(EnemySkillLoadoutsFileName);
+            }
+            if (sourceCatalog.EnemySkillBaseFiles == null || sourceCatalog.EnemySkillBaseFiles.Length == 0)
+            {
+                missingAssets.Add("enemy/skills/base/**/skills_*.csv");
+            }
+            if (sourceCatalog.EnemySkillTriggerFiles == null || sourceCatalog.EnemySkillTriggerFiles.Length == 0)
+            {
+                missingAssets.Add("enemy/skills/triggers/**/*_skill_triger.csv");
+            }
 
             if (missingAssets.Count > 0)
             {
@@ -219,6 +235,8 @@ namespace Pakuri.Data
             var enemySkillTable = CsvTable.Load(sourceCatalog.EnemySkills, EnemySkillDataFileName);
             var enemySkillNodeTable = LoadOptionalCsvTable(sourceCatalog.EnemySkillNodes, EnemySkillNodesFileName);
             var enemySkillNodeParamTable = LoadOptionalCsvTable(sourceCatalog.EnemySkillNodeParams, EnemySkillNodeParamsFileName);
+            var migratedEnemyTable = CsvTable.Load(sourceCatalog.Enemies, EnemiesFileName);
+            var enemySkillLoadoutTable = CsvTable.Load(sourceCatalog.EnemySkillLoadouts, EnemySkillLoadoutsFileName);
 
             foreach (var record in catalogMonsterTable.Records)
             {
@@ -417,6 +435,42 @@ namespace Pakuri.Data
                 var row = ParseEnemyRow(record);
                 ApplyEnemySkillRow(row, model.EnemySkills, record);
                 AddUnique(model.StageTwoEnemies, row.Id, row, record);
+            }
+
+            foreach (var record in migratedEnemyTable.Records)
+            {
+                var row = ParseEnemyMigrationRow(record);
+                AddUnique(model.MigratedEnemies, row.Id, row, record);
+            }
+
+            foreach (var record in enemySkillLoadoutTable.Records)
+            {
+                model.EnemySkillLoadouts.Add(ParseEnemySkillLoadoutRow(record));
+            }
+
+            var enemyBaseAssets = sourceCatalog.EnemySkillBaseFiles ?? Array.Empty<TextAsset>();
+            for (var assetIndex = 0; assetIndex < enemyBaseAssets.Length; assetIndex++)
+            {
+                var asset = enemyBaseAssets[assetIndex];
+                var tableName = GetTextAssetCsvTableName(asset, "enemy_base_skills.csv");
+                var table = CsvTable.Load(asset, tableName);
+                foreach (var record in table.Records)
+                {
+                    var row = ParseEnemyBaseSkillRow(record, tableName);
+                    AddUnique(model.EnemyBaseSkills, row.Skill.Id, row, record);
+                }
+            }
+
+            var enemyTriggerAssets = sourceCatalog.EnemySkillTriggerFiles ?? Array.Empty<TextAsset>();
+            for (var assetIndex = 0; assetIndex < enemyTriggerAssets.Length; assetIndex++)
+            {
+                var asset = enemyTriggerAssets[assetIndex];
+                var table = CsvTable.Load(asset, GetTextAssetCsvTableName(asset, "enemy_skill_triger.csv"));
+                foreach (var record in table.Records)
+                {
+                    var row = ParseEnemyMigrationTriggerRow(record);
+                    AddUnique(model.EnemyMigrationTriggers, row.Id, row, record);
+                }
             }
 
             return model;

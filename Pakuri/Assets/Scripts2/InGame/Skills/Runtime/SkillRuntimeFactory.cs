@@ -15,7 +15,7 @@ namespace Pakuri.InGame
         };
 
         public static UnitSkillRuntimeSet CreateLearnedActiveSet(
-            MonsterUnitRuntimeModel owner,
+            BaseUnitRuntimeModel owner,
             InGameSkillCatalog catalog)
         {
             var set = new UnitSkillRuntimeSet();
@@ -24,7 +24,7 @@ namespace Pakuri.InGame
         }
 
         public static void RebuildLearnedActiveSet(
-            MonsterUnitRuntimeModel owner,
+            BaseUnitRuntimeModel owner,
             InGameSkillCatalog catalog)
         {
             if (owner == null)
@@ -37,7 +37,7 @@ namespace Pakuri.InGame
         }
 
         private static void PopulateLearnedActiveSet(
-            MonsterUnitRuntimeModel owner,
+            BaseUnitRuntimeModel owner,
             InGameSkillCatalog catalog,
             UnitSkillRuntimeSet target)
         {

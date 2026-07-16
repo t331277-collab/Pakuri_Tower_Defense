@@ -49,5 +49,9 @@ namespace Pakuri.Data
         public TextAsset EnemySkills;
         public TextAsset EnemySkillNodes;
         public TextAsset EnemySkillNodeParams;
+        public TextAsset Enemies;
+        public TextAsset EnemySkillLoadouts;
+        public TextAsset[] EnemySkillBaseFiles;
+        public TextAsset[] EnemySkillTriggerFiles;
     }
 }

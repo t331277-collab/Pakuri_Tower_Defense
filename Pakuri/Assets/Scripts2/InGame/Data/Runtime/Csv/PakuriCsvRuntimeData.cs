@@ -19,6 +19,9 @@ namespace Pakuri.Data
         private const string RuntimeMonsterSkillTriggerCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/triggers";
         private const string RuntimeMonsterSkillNodeCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/nodes";
         private const string RuntimeEnemyCsvAssetRoot = RuntimeCsvAssetRoot + "/enemy";
+        private const string RuntimeEnemySkillCsvAssetRoot = RuntimeEnemyCsvAssetRoot + "/skills";
+        private const string RuntimeEnemySkillBaseCsvAssetRoot = RuntimeEnemySkillCsvAssetRoot + "/base";
+        private const string RuntimeEnemySkillTriggerCsvAssetRoot = RuntimeEnemySkillCsvAssetRoot + "/triggers";
         private const string RuntimeStatusCsvAssetRoot = RuntimeCsvAssetRoot + "/status";
         private const string ImportedSourceAssetRoot = RuntimeCsvAssetRoot;
         private const string RuntimeResourcesFolderAssetPath = "Assets/Resources/Pakuri/CSVRuntime";
@@ -54,6 +57,8 @@ namespace Pakuri.Data
         private const string EnemySkillDataFileName = "EnemySkillData.csv";
         private const string EnemySkillNodesFileName = "EnemySkillNodes.csv";
         private const string EnemySkillNodeParamsFileName = "EnemySkillNodeParams.csv";
+        private const string EnemiesFileName = "enemies.csv";
+        private const string EnemySkillLoadoutsFileName = "enemy_skill_loadouts.csv";
         private const string EnemySkillDataAssetPath = RuntimeEnemyCsvAssetRoot + "/" + EnemySkillDataFileName;
 
         private static bool initialized;
@@ -102,6 +107,8 @@ namespace Pakuri.Data
                 case EnemySkillDataFileName:
                 case EnemySkillNodesFileName:
                 case EnemySkillNodeParamsFileName:
+                case EnemiesFileName:
+                case EnemySkillLoadoutsFileName:
                     return $"{RuntimeEnemyCsvAssetRoot}/{fileName}";
                 default:
                     return $"{RuntimeCsvAssetRoot}/{fileName}";

@@ -5,6 +5,109 @@
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-16 Enemy Runtime Visual Catalog Phase 0-3
+
+### Task title
+
+Register Enemy base-row Sprite and Animator Controller paths for runtime visual assembly while retaining scene prefab fallback.
+
+### Goals
+
+- Give each of the 16 base skill rows direct runtime visual authority.
+- Catalog all referenced Enemy skill sprites/controllers.
+- Preserve non-uniform Ethan scale through shared runtime visual data.
+- Transfer only gameplay-required hitbox size and keep runtime offset `(0,0)`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Existing 15 Enemy skill prefabs and scene mappings are not removed.
+- OpeningCharge has no confirmed current skill visual mapping, so its base visual remains empty.
+- Phase 4+ behavior transfer is excluded.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 0-3 asset references authored and resource catalogs updated. Unity visual parity remains.
+
+### Next Actions
+
+- Run Unity catalog sync/validation after leaving Play Mode or completing script refresh.
+- Verify all 15 represented visuals, Ethan non-uniform scale, sorting orders, and centered gameplay hitboxes.
+- Remove scene fallback only after later migration phases satisfy the report gates.
+
+### Evidence
+
+- `PakuriCsvRuntimeData.AssetReferences.cs` collects migrated Enemy base visual paths.
+- `PakuriCsvRuntimeAssetCatalog.asset` contains 11 unique Enemy skill sprites and 11 Animator Controllers used by the 16 base rows.
+- `RuntimeSkillVisualSpec` and `RuntimeSkillVisualFactory` now support optional non-uniform local scale; existing scalar scale behavior remains default.
+- New Enemy base CSV contains no offset columns.
+- Phase 0 baseline records prefab offsets only as evidence and lists the eight gameplay-required size transfers.
+- Static asset-path validation found 0 missing Sprite/Animator Controller paths, and both runtime and Editor C# builds passed with 0 errors.
+
+### History
+
+- 2026-07-16: Code Builder cataloged Enemy base visuals and added non-uniform runtime scale support needed by HolySpearThrow.
+
+## Task: 2026-07-16 Enemy Skill Prefab To Runtime Visual Design
+
+### Task title
+
+Design the migration of Enemy skill prefab metadata from scene enum mappings to shared runtime skill CSV and asset-catalog resolution.
+
+### Goals
+
+- Preserve the current Enemy skill visuals, animator assets, local scale, sorting order, and gameplay-required collider sizes.
+- Resolve Enemy skill visuals by skill/loadout data rather than Enemy ID plus StageOneEnemySkillKind scene mappings.
+- Store runtime visual fields directly on each typed base skill row without a separate visual override layer.
+
+### Constraints
+
+- Role Owner is Designer.
+- No prefab, scene, or asset catalog was edited.
+- Existing scene mappings remain a fallback until all 16 skill visuals and 15 prefab parity checks pass.
+- Follow `boards/MON/VEGA_SKILL_RUNTIME_VISUAL_MIGRATION_PLAN.md`: do not migrate prefab collider offsets or add offset CSV columns.
+- Runtime hitbox offset is `(0,0)`; carry only a size proven necessary for gameplay collision.
+- One skill ID owns one runtime visual; different visuals use distinct skill IDs/base rows while sharing the same typed executor.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Prefab and scene evidence recorded in the migration report; implementation has not started.
+
+### Next Actions
+
+- Extract prefab Sprite and Animator Controller asset paths, scale, sorting, and gameplay-required hitbox size directly into typed base skill runtime visual fields.
+- Classify collider authority per skill before authoring size; omit hitbox data when targeting/radius/query code already owns gameplay detection.
+- Generalize `EffectManager` to one shared visual resolver backed by `PakuriCsvRuntimeAssetCatalog`.
+- Define an explicit visual policy for `OpeningCharge`/Stage 2 Drake before removing scene fallback.
+- Verify runtime actor attachment because the inspected prefabs contain no MonoBehaviour behavior.
+
+### Evidence
+
+- Design report: `Pakuri/reference/Report/2026-07-16-enemy-shared-skill-runtime-csv-migration-plan.md`.
+- `Pakuri/Assets/Prefab/Enemy/Skill/` contains 15 inspected prefabs.
+- Each inspected prefab has one GameObject, one SpriteRenderer, one Animator, and zero MonoBehaviours.
+- Eight prefabs contain BoxCollider2D and seven are visual-only.
+- Karin, Warrior, and Ice Guard contain inspected non-zero prefab collider offsets, but the Vega migration boundary intentionally does not transfer prefab offsets and keeps runtime collider centers at `(0,0)`.
+- `RuntimeSkillVisualFactory.ConfigureHitbox(...)` currently assigns both size and offset from `RuntimeSkillHitboxSpec`; the Enemy migration contract must therefore leave offset input absent/defaulted to zero rather than authoring prefab offsets.
+- `RuntimeSkillVisualFactory` creates SpriteRenderer, optional Animator, and optional BoxCollider2D at runtime, matching the Vega migration method.
+- Monster typed base CSV headers already contain direct runtime visual sprite/controller/scale/sorting/hitbox-size columns, supporting the same direct-authority structure for Enemy.
+- `NewRunScene.unity` contains 21 Enemy ID plus StageOneEnemySkillKind mappings in `EffectManager`; no Stage 2 Drake/OpeningCharge mapping was found.
+- `EffectManager` currently has separate Monster and Enemy skill effect prefab resolution paths.
+
+### History
+
+- 2026-07-16: Inspected all Enemy skill prefab YAML and the scene mapping structure; documented shared visual resolution and fallback retirement gates.
+- 2026-07-16: Revised the plan to match Vega runtime visuals: no prefab offset migration, no offset CSV columns, and size only for gameplay-required colliders.
+- 2026-07-16: Removed visual override ownership; each Enemy typed base row now directly owns its runtime visual fields.
+
 ## Task: 2026-07-14 Choice Prefab Graph Authority Cleanup
 
 ### Task title
