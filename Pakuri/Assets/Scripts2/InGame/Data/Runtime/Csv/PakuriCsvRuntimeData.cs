@@ -10,20 +10,20 @@ namespace Pakuri.Data
     public static partial class PakuriCsvRuntimeData
     {
         private const string CsvDataAssetRoot = "Assets/CSVdata";
-        private const string RuntimeCsvAssetRoot = CsvDataAssetRoot + "/runtime";
-        private const string RuntimeCatalogCsvAssetRoot = RuntimeCsvAssetRoot + "/catalog";
-        private const string RuntimeMonsterCsvAssetRoot = RuntimeCsvAssetRoot + "/monster";
-        private const string RuntimeMonsterSkillCsvAssetRoot = RuntimeMonsterCsvAssetRoot + "/skills";
-        private const string RuntimeMonsterSkillBaseCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/base";
-        private const string RuntimeMonsterSkillChoiceCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/choices";
-        private const string RuntimeMonsterSkillTriggerCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/triggers";
-        private const string RuntimeMonsterSkillNodeCsvAssetRoot = RuntimeMonsterSkillCsvAssetRoot + "/nodes";
-        private const string RuntimeEnemyCsvAssetRoot = RuntimeCsvAssetRoot + "/enemy";
-        private const string RuntimeEnemySkillCsvAssetRoot = RuntimeEnemyCsvAssetRoot + "/skills";
-        private const string RuntimeEnemySkillBaseCsvAssetRoot = RuntimeEnemySkillCsvAssetRoot + "/base";
-        private const string RuntimeEnemySkillTriggerCsvAssetRoot = RuntimeEnemySkillCsvAssetRoot + "/triggers";
-        private const string RuntimeStatusCsvAssetRoot = RuntimeCsvAssetRoot + "/status";
-        private const string ImportedSourceAssetRoot = RuntimeCsvAssetRoot;
+        private const string AuthoringCsvAssetRoot = CsvDataAssetRoot + "/authoring";
+        private const string AuthoringCatalogCsvAssetRoot = AuthoringCsvAssetRoot + "/catalog";
+        private const string AuthoringMonsterCsvAssetRoot = AuthoringCsvAssetRoot + "/monster";
+        private const string AuthoringMonsterSkillCsvAssetRoot = AuthoringMonsterCsvAssetRoot + "/skills";
+        private const string AuthoringMonsterSkillBaseCsvAssetRoot = AuthoringMonsterSkillCsvAssetRoot + "/base";
+        private const string AuthoringMonsterSkillChoiceCsvAssetRoot = AuthoringMonsterSkillCsvAssetRoot + "/choices";
+        private const string AuthoringMonsterSkillTriggerCsvAssetRoot = AuthoringMonsterSkillCsvAssetRoot + "/triggers";
+        private const string AuthoringMonsterSkillNodeCsvAssetRoot = AuthoringMonsterSkillCsvAssetRoot + "/nodes";
+        private const string AuthoringEnemyCsvAssetRoot = AuthoringCsvAssetRoot + "/enemy";
+        private const string AuthoringEnemySkillCsvAssetRoot = AuthoringEnemyCsvAssetRoot + "/skills";
+        private const string AuthoringEnemySkillBaseCsvAssetRoot = AuthoringEnemySkillCsvAssetRoot + "/base";
+        private const string AuthoringEnemySkillTriggerCsvAssetRoot = AuthoringEnemySkillCsvAssetRoot + "/triggers";
+        private const string AuthoringStatusCsvAssetRoot = AuthoringCsvAssetRoot + "/status";
+        private const string AuthoringSourceAssetRoot = AuthoringCsvAssetRoot;
         private const string RuntimeResourcesFolderAssetPath = "Assets/Resources/Pakuri/CSVRuntime";
         private const string SourceCatalogAssetPath = RuntimeResourcesFolderAssetPath + "/PakuriCsvRuntimeSourceCatalog.asset";
         private const string AssetCatalogAssetPath = RuntimeResourcesFolderAssetPath + "/PakuriCsvRuntimeAssetCatalog.asset";
@@ -60,45 +60,55 @@ namespace Pakuri.Data
 
         public static string GetImportedSourceAssetPath(string fileName)
         {
+            return GetAuthoringSourceAssetPath(fileName);
+        }
+
+        public static string GetAuthoringSourceAssetPath(string fileName)
+        {
             switch (fileName)
             {
                 case CatalogMonstersFileName:
-                    return $"{RuntimeCatalogCsvAssetRoot}/{fileName}";
+                    return $"{AuthoringCatalogCsvAssetRoot}/{fileName}";
                 case MonstersFileName:
                 case MonsterRewardChoicesFileName:
-                    return $"{RuntimeMonsterCsvAssetRoot}/{fileName}";
+                    return $"{AuthoringMonsterCsvAssetRoot}/{fileName}";
                 case MonsterSkillsProjectileFileName:
                 case MonsterSkillsLineAttackFileName:
                 case MonsterSkillsAreaAttackFileName:
                 case MonsterSkillsSingleAttackFileName:
                 case MonsterSkillsBuffFileName:
                 case MonsterSkillsPassiveFileName:
-                    return $"{RuntimeMonsterSkillBaseCsvAssetRoot}/{fileName}";
+                    return $"{AuthoringMonsterSkillBaseCsvAssetRoot}/{fileName}";
                 case MonsterSkillNodesFileName:
                 case MonsterSkillNodeParamsFileName:
-                    return $"{RuntimeMonsterSkillNodeCsvAssetRoot}/{fileName}";
+                    return $"{AuthoringMonsterSkillNodeCsvAssetRoot}/{fileName}";
                 case MonsterSkillNodeDefinitionsFileName:
                 case MonsterSkillNodeDefinitionParamsFileName:
-                    return $"{RuntimeMonsterSkillNodeCsvAssetRoot}/definitions/{fileName}";
+                    return $"{AuthoringMonsterSkillNodeCsvAssetRoot}/definitions/{fileName}";
                 case MonsterSkillTriggersFileName:
-                    return $"{RuntimeMonsterSkillTriggerCsvAssetRoot}/{fileName}";
+                    return $"{AuthoringMonsterSkillTriggerCsvAssetRoot}/{fileName}";
                 case MonsterSkillChoicesProjectileFileName:
                 case MonsterSkillChoicesLineAttackFileName:
                 case MonsterSkillChoicesAreaAttackFileName:
                 case MonsterSkillChoicesSingleAttackFileName:
                 case MonsterSkillChoicesBuffFileName:
                 case MonsterSkillChoicesPassiveFileName:
-                    return $"{RuntimeMonsterSkillChoiceCsvAssetRoot}/{fileName}";
+                    return $"{AuthoringMonsterSkillChoiceCsvAssetRoot}/{fileName}";
                 case StatusEffectsFileName:
-                    return $"{RuntimeStatusCsvAssetRoot}/{fileName}";
+                    return $"{AuthoringStatusCsvAssetRoot}/{fileName}";
                 case EnemiesFileName:
-                    return $"{RuntimeEnemyCsvAssetRoot}/{fileName}";
+                    return $"{AuthoringEnemyCsvAssetRoot}/{fileName}";
                 default:
-                    return $"{RuntimeCsvAssetRoot}/{fileName}";
+                    return $"{AuthoringCsvAssetRoot}/{fileName}";
             }
         }
 
         public static bool IsRuntimeCsvSourceAssetPath(string assetPath)
+        {
+            return IsAuthoringCsvSourceAssetPath(assetPath);
+        }
+
+        public static bool IsAuthoringCsvSourceAssetPath(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))
             {
@@ -106,7 +116,7 @@ namespace Pakuri.Data
             }
 
             var normalized = assetPath.Replace('\\', '/');
-            return normalized.StartsWith(RuntimeCsvAssetRoot + "/", StringComparison.OrdinalIgnoreCase)
+            return normalized.StartsWith(AuthoringCsvAssetRoot + "/", StringComparison.OrdinalIgnoreCase)
                 && normalized.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
         }
 

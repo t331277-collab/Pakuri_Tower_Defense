@@ -106,9 +106,9 @@ Offset은 현재 프리팹 증거로만 기록한다. 새 CSV에는 offset 열�
 
 ## 근거
 
-- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillData.csv`
-- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillNodes.csv`
-- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillNodeParams.csv`
+- `Pakuri/Assets/CSVdata/authoring/enemy/EnemySkillData.csv`
+- `Pakuri/Assets/CSVdata/authoring/enemy/EnemySkillNodes.csv`
+- `Pakuri/Assets/CSVdata/authoring/enemy/EnemySkillNodeParams.csv`
 - `Pakuri/Assets/Prefab/Enemy/Skill/`
 - `Pakuri/Assets/Scripts2/InGame/Core/EnemyCombatSystem.cs`
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Actors/InGameProjectileActor.cs`

@@ -21,7 +21,7 @@ namespace Pakuri.Data
             var catalog = LoadAndValidateRuntimeCatalog();
             Debug.Log(FormatRuntimeCatalogSummary(catalog));
             Debug.Log(
-                $"Pakuri CSV runtime catalogs synced and validated from '{ImportedSourceAssetRoot}' to '{RuntimeResourcesFolderAssetPath}'.");
+                $"Pakuri CSV runtime catalogs synced and validated from '{AuthoringSourceAssetRoot}' to '{RuntimeResourcesFolderAssetPath}'.");
         }
 
         [MenuItem("Pakuri/Sync CSV Runtime Catalog Assets")]
@@ -29,7 +29,7 @@ namespace Pakuri.Data
         {
             SyncImportedSourceCatalogsForEditor();
             Debug.Log(
-                $"Pakuri CSV runtime catalogs synced from '{ImportedSourceAssetRoot}' to '{RuntimeResourcesFolderAssetPath}'.");
+                $"Pakuri CSV runtime catalogs synced from '{AuthoringSourceAssetRoot}' to '{RuntimeResourcesFolderAssetPath}'.");
         }
 
         [MenuItem("Pakuri/Validate CSV Source Data")]
@@ -62,22 +62,22 @@ namespace Pakuri.Data
             sourceCatalog.Monsters = LoadImportedSourceTextAssetOrThrow(MonstersFileName);
             sourceCatalog.MonsterRewardChoices = LoadImportedSourceTextAssetOrThrow(MonsterRewardChoicesFileName);
             sourceCatalog.MonsterSkillsProjectileFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillBaseCsvAssetRoot,
+                AuthoringMonsterSkillBaseCsvAssetRoot,
                 "skills_projectile.csv");
             sourceCatalog.MonsterSkillsLineAttackFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillBaseCsvAssetRoot,
+                AuthoringMonsterSkillBaseCsvAssetRoot,
                 "skills_line_attack.csv");
             sourceCatalog.MonsterSkillsAreaAttackFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillBaseCsvAssetRoot,
+                AuthoringMonsterSkillBaseCsvAssetRoot,
                 "skills_area_attack.csv");
             sourceCatalog.MonsterSkillsSingleAttackFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillBaseCsvAssetRoot,
+                AuthoringMonsterSkillBaseCsvAssetRoot,
                 "skills_single_attack.csv");
             sourceCatalog.MonsterSkillsBuffFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillBaseCsvAssetRoot,
+                AuthoringMonsterSkillBaseCsvAssetRoot,
                 "skills_buff.csv");
             sourceCatalog.MonsterSkillsPassiveFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillBaseCsvAssetRoot,
+                AuthoringMonsterSkillBaseCsvAssetRoot,
                 "skills_passive.csv");
             sourceCatalog.MonsterSkillsProjectile = sourceCatalog.MonsterSkillsProjectileFiles.Length == 0
                 ? LoadImportedSourceTextAssetOrThrow(MonsterSkillsProjectileFileName)
@@ -98,10 +98,10 @@ namespace Pakuri.Data
                 ? LoadImportedSourceTextAssetOrThrow(MonsterSkillsPassiveFileName)
                 : null;
             sourceCatalog.MonsterSkillNodeFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillNodeCsvAssetRoot,
+                AuthoringMonsterSkillNodeCsvAssetRoot,
                 "_skill_nodes.csv");
             sourceCatalog.MonsterSkillNodeParamFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillNodeCsvAssetRoot,
+                AuthoringMonsterSkillNodeCsvAssetRoot,
                 "_skill_node_params.csv");
             sourceCatalog.MonsterSkillNodes = sourceCatalog.MonsterSkillNodeFiles.Length == 0
                 ? LoadImportedSourceTextAssetIfPresent(MonsterSkillNodesFileName)
@@ -110,37 +110,37 @@ namespace Pakuri.Data
                 ? LoadImportedSourceTextAssetIfPresent(MonsterSkillNodeParamsFileName)
                 : null;
             sourceCatalog.MonsterSkillNodeDefinitions = LoadTextAssetOrThrow(
-                $"{RuntimeMonsterSkillNodeCsvAssetRoot}/definitions/{MonsterSkillNodeDefinitionsFileName}",
+                $"{AuthoringMonsterSkillNodeCsvAssetRoot}/definitions/{MonsterSkillNodeDefinitionsFileName}",
                 "Create the skill node definition CSV before validation.");
             sourceCatalog.MonsterSkillNodeDefinitionParams = LoadTextAssetOrThrow(
-                $"{RuntimeMonsterSkillNodeCsvAssetRoot}/definitions/{MonsterSkillNodeDefinitionParamsFileName}",
+                $"{AuthoringMonsterSkillNodeCsvAssetRoot}/definitions/{MonsterSkillNodeDefinitionParamsFileName}",
                 "Create the skill node definition param CSV before validation.");
             sourceCatalog.MonsterSkillGraphNodeFiles = LoadImportedSourceTextAssetsByPrefix(
-                RuntimeMonsterSkillChoiceCsvAssetRoot,
+                AuthoringMonsterSkillChoiceCsvAssetRoot,
                 "skill_graph_nodes_");
             sourceCatalog.MonsterSkillTriggerFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillTriggerCsvAssetRoot,
+                AuthoringMonsterSkillTriggerCsvAssetRoot,
                 "_skill_triger.csv");
             sourceCatalog.MonsterSkillTriggers = sourceCatalog.MonsterSkillTriggerFiles.Length == 0
                 ? LoadImportedSourceTextAssetOrThrow(MonsterSkillTriggersFileName)
                 : null;
             sourceCatalog.MonsterSkillChoicesProjectileFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillChoiceCsvAssetRoot,
+                AuthoringMonsterSkillChoiceCsvAssetRoot,
                 "skill_choices_projectile.csv");
             sourceCatalog.MonsterSkillChoicesLineAttackFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillChoiceCsvAssetRoot,
+                AuthoringMonsterSkillChoiceCsvAssetRoot,
                 "skill_choices_line_attack.csv");
             sourceCatalog.MonsterSkillChoicesAreaAttackFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillChoiceCsvAssetRoot,
+                AuthoringMonsterSkillChoiceCsvAssetRoot,
                 "skill_choices_area_attack.csv");
             sourceCatalog.MonsterSkillChoicesSingleAttackFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillChoiceCsvAssetRoot,
+                AuthoringMonsterSkillChoiceCsvAssetRoot,
                 "skill_choices_single_attack.csv");
             sourceCatalog.MonsterSkillChoicesBuffFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillChoiceCsvAssetRoot,
+                AuthoringMonsterSkillChoiceCsvAssetRoot,
                 "skill_choices_buff.csv");
             sourceCatalog.MonsterSkillChoicesPassiveFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeMonsterSkillChoiceCsvAssetRoot,
+                AuthoringMonsterSkillChoiceCsvAssetRoot,
                 "skill_choices_passive.csv");
             sourceCatalog.MonsterSkillChoicesProjectile = sourceCatalog.MonsterSkillChoicesProjectileFiles.Length == 0
                 ? LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesProjectileFileName)
@@ -162,13 +162,13 @@ namespace Pakuri.Data
                 : null;
             sourceCatalog.StatusEffects = LoadImportedSourceTextAssetOrThrow(StatusEffectsFileName);
             sourceCatalog.Enemies = LoadTextAssetOrThrow(
-                $"{RuntimeEnemyCsvAssetRoot}/{EnemiesFileName}",
-                "Create enemies.csv under Assets/CSVdata/runtime/enemy before validation.");
+                $"{AuthoringEnemyCsvAssetRoot}/{EnemiesFileName}",
+                "Create enemies.csv under Assets/CSVdata/authoring/enemy before validation.");
             sourceCatalog.EnemySkillBaseFiles = LoadImportedSourceTextAssetsByPrefix(
-                RuntimeEnemySkillBaseCsvAssetRoot,
+                AuthoringEnemySkillBaseCsvAssetRoot,
                 "skills_");
             sourceCatalog.EnemySkillTriggerFiles = LoadImportedSourceTextAssetsBySuffix(
-                RuntimeEnemySkillTriggerCsvAssetRoot,
+                AuthoringEnemySkillTriggerCsvAssetRoot,
                 "_skill_triger.csv");
             EditorUtility.SetDirty(sourceCatalog);
 
@@ -213,7 +213,7 @@ namespace Pakuri.Data
             var assetPath = GetImportedSourceAssetPath(fileName);
             return LoadTextAssetOrThrow(
                 assetPath,
-                "Import the source CSV into Assets/CSVdata/runtime before validation.");
+                "Import the source CSV into Assets/CSVdata/authoring before validation.");
         }
 
         private static TextAsset LoadImportedSourceTextAssetIfPresent(string fileName)

@@ -35,16 +35,8 @@ MonoBehaviour:
   - {fileID: 4900000, guid: 045d6352ab144f428cf1a19a86291d5b, type: 3}
   MonsterSkillNodes: {fileID: 0}
   MonsterSkillNodeParams: {fileID: 0}
-  MonsterSkillNodeFiles:
-  - {fileID: 4900000, guid: 9112f06651b1424eb1c592f0481a926d, type: 3}
-  - {fileID: 4900000, guid: ce2944498a974d548941e594d062c3ba, type: 3}
-  - {fileID: 4900000, guid: 384783c315c1480db9343d6e38c776af, type: 3}
-  - {fileID: 4900000, guid: cb39d5e5fd124fe9a276ea91ceb9c836, type: 3}
-  MonsterSkillNodeParamFiles:
-  - {fileID: 4900000, guid: 5d7b21348baa4d479c206f9d5d233d17, type: 3}
-  - {fileID: 4900000, guid: 493590b52341497588ff6d2446e5c4b8, type: 3}
-  - {fileID: 4900000, guid: b5324c4c6b2f4d918e80b3bafad2c520, type: 3}
-  - {fileID: 4900000, guid: 3371186b412f444cab6805bc51f8c578, type: 3}
+  MonsterSkillNodeFiles: []
+  MonsterSkillNodeParamFiles: []
   MonsterSkillNodeDefinitions: {fileID: 4900000, guid: 1280beeb031fbe549abb95b4c85ffd3a, type: 3}
   MonsterSkillNodeDefinitionParams: {fileID: 4900000, guid: 5ca5bc924d237e749b25e8faaec9852b, type: 3}
   MonsterSkillGraphNodeFiles:

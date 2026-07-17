@@ -91,6 +91,6 @@
 
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Executors/ProjectileSkillExecutor.cs`
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Actors/InGameProjectileActor.cs`
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/`
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/`
 - `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity`
 - `Pakuri/Assets/Prefab/Skill/`

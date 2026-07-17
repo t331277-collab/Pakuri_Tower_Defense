@@ -10,21 +10,24 @@ If code or a file does not exist yet, say clearly that it does not exist and per
 
 ## Skill Builder Absolute Boundary
 
-For `Skill Builder` implementation work, the default authority is limited to:
-- the selected `boards/SkillBluePrint/*-blueprint.md`;
-- parsed skill input explicitly provided by the user or task context when it exists;
-- the minimum active skill-authoring CSV files under `Pakuri/Assets/CSVdata/source/` that Builder explicitly routes for the selected blueprint and requested skill;
-- code, prefab, scene, or asset paths explicitly provided by the user.
+`Skill Builder` owns new Base skill authoring only when an existing Projectile, Buff, SingleAttack, LineAttack, AreaAttack, or Passive runtime/schema can express the Reference. It also owns Enhancement and Master node authoring for an existing or newly authored Base skill.
 
-Before reading any CSV for `Skill Builder` work, Builder must add that CSV to the routing decision and keep the CSV read set minimal.
+The exact user-provided skill Reference MD is the only semantic input. Builder derives ids and values only through `AGENTS_ROLE/GAMEBULIDER_SKILL.md` and the selected blueprint; it does not require separate parsed input.
 
-Builder may read only the routed active skill-authoring CSV files needed to implement the requested skill on the selected blueprint path.
+Default authority is limited to:
 
-Do not inspect unrelated CSV, reference markdown, archive markdown, old monster implementations, or broad repository code to discover missing skill values or behavior intent.
+- exactly one family Base blueprint for Base work;
+- `boards/SkillBluePrint/enhancement-master-node-blueprint.md` for Enhancement/Master work;
+- the exact user-provided skill Reference MD;
+- the selected family's minimum Base, Choice, graph, and trigger CSV rows allowed by the selected blueprint;
+- matching node-definition rows only when the selected graph requires them;
+- the uniquely matching row in `Pakuri/Assets/CSVdata/authoring/status/status_effects.csv` only when a Reference status label needs an id.
 
-If the work requires a new CSV file, a new CSV column, reference-driven value discovery, old monster implementation inspection, or a new shared runtime/common-logic extension, stop and ask the user before widening scope.
+Before reading any CSV, Builder must name its exact path and why it is required. Read and edit only the new Base skill, requested Choices, and their explicitly required Skill/Choice/Trigger-owned graph rows.
 
-If the blueprint and the routed active CSV/input/path set are insufficient, stop and report the missing items instead of widening the search scope.
+Do not read another Base blueprint, another Reference, linked Obsidian documentation, MON/DATA/RUN/UI/OPS/archive markdown, old implementations, broad runtime code, unrelated CSV, prefabs, scenes, or asset folders by default.
+
+Skill Builder must stop when work requires a new runtime behavior, node type, handler, parameter, CSV file or column, shared code, prefab/scene change, asset creation, or a value missing or ambiguous in the provided Reference. Stop instead of widening scope or inventing an id, numeric value, policy, or asset path.
 
 ## Startup Rules
 
@@ -69,7 +72,7 @@ When performing a role, read and follow that role file:
 - Code Reviewer: read `AGENTS_ROLE/GAMEREVIWER.md`.
 - SimpelWorker: read `AGENTS_ROLE/SIMPELWORKER.md`.
 
-`Skill Builder` is a Code Builder track for skill implementation work.
+`Skill Builder` is the Code Builder track for Reference-driven Base authoring on an existing runtime/schema and Enhancement/Master node authoring.
 
 `SimpelWorker` is for very simple work such as file renames or information extraction. After the required startup reads of `AGENTS.md` and `MDTREE.md`, `SimpelWorker` does not read additional markdown files, including `AGENTS_ROLE/COMMON.md`.
 

@@ -232,14 +232,14 @@ Clean copied EffectTarget defaults from Ariel F-J passive node params.
 
 ### Goals
 
-- Apply `boards/TRAIT_MASTER/ARIEL_FJ_PASSIVE_NODE_CONVERSION_PLAN.md` to Ariel F-J passive runtime node params.
+- Apply the Ariel F-J passive node conversion and EffectTarget cleanup to the passive runtime node params.
 - Keep Ariel passive effects decomposed into functional nodes rather than copied old effect-row target defaults.
 - Preserve all gameplay-carrying params for F-J passives and traits.
 
 ### Constraints
 
 - Role Owner is Code Builder.
-- Current files are skill-kind paths under `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes`.
+- Current files are skill-kind paths under `Pakuri/Assets/CSVdata/authoring/monster/skills/nodes`.
 - The implementation is CSV-only.
 - No MSW-MCP was used.
 - Unity Play Mode behavior verification remains user-owned.
@@ -259,7 +259,7 @@ Implemented and verified by CSV checks plus runtime/editor compile.
 
 ### Evidence
 
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/passive/passive_skill_node_params.csv` no longer has Ariel F-J passive rows with `target_selection`, `target_shape`, `center_mode`, or `visual_anchor_mode`.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/nodes/passive/passive_skill_node_params.csv` no longer has Ariel F-J passive rows with `target_selection`, `target_shape`, `center_mode`, or `visual_anchor_mode`.
 - Ariel F-J passive EffectTarget rows still retain functional target sides: F/G/H/J ally effects use `target_side=AllAllies`, and Ariel I holy-exposure effects now explicitly use `target_side=Enemy`.
 - `ariel-g-start-shield-effect-target` still keeps `apply_once=true`; `ariel-j-shielded-holy-damage-condition-status` still keeps `source_skill_id=ariel-e-shield-base`.
 - Condition/status/modifier values remain in node params, including `status_id=shield`, `status_id=blessing`, `status_id=holy-exposure`, `min_stacks=1`, Holy attributes, bonuses, multipliers, and lifetimes.
@@ -288,7 +288,7 @@ Restore Ariel enhancement and master behavior to functional normalized nodes.
 ### Constraints
 
 - Role Owner is Code Builder.
-- Current files are skill-kind paths under `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes`.
+- Current files are skill-kind paths under `Pakuri/Assets/CSVdata/authoring/monster/skills/nodes`.
 - No MSW-MCP was used.
 - Unity Play Mode behavior verification remains user-owned.
 
@@ -356,8 +356,8 @@ Implemented and compile-verified.
 ### Evidence
 
 - `PakuriCsvRuntimeData.Editor.cs` uses `Directory.GetFiles(..., SearchOption.AllDirectories)` and collects node files by `_skill_nodes.csv` and params by `_skill_node_params.csv`, so the new nested folders remain collectible.
-- Created `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/ariel/node/` with `ariel_buff_skill_nodes.csv`, `ariel_passive_skill_nodes.csv`, `ariel_projectile_skill_nodes.csv`, and `ariel_single_attack_skill_nodes.csv`.
-- Created `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/ariel/nodes_param/` with matching `ariel_*_skill_node_params.csv` files.
+- Created `Pakuri/Assets/CSVdata/authoring/monster/skills/nodes/ariel/node/` with `ariel_buff_skill_nodes.csv`, `ariel_passive_skill_nodes.csv`, `ariel_projectile_skill_nodes.csv`, and `ariel_single_attack_skill_nodes.csv`.
+- Created `Pakuri/Assets/CSVdata/authoring/monster/skills/nodes/ariel/nodes_param/` with matching `ariel_*_skill_node_params.csv` files.
 - Deleted old aggregate files `nodes/ariel/ariel_skill_nodes.csv` and `nodes/ariel/ariel_skill_node_params.csv` plus their `.meta` files.
 - Split verification returned node row counts `buff=10`, `passive=74`, `projectile=7`, `single_attack=102`, total `193`.
 - Split verification returned param row counts `buff=16`, `passive=122`, `projectile=11`, `single_attack=181`, total `330`.
@@ -429,7 +429,7 @@ Implemented, corrected to semantic nodes, compiled, file-verified, and deleted t
 - `ariel-a-master-2-holy-exposure-element-damage-taken` was removed from Ariel choice nodes; `status_effects.csv` now has `holy-exposure` with `element_damage_taken_bonus_per_stack=0.15`.
 - Verification before deletion returned `effect_csv_count=36 node_base_count=36 missing=0 extra=0`; after semantic-node correction, parity returned `effect_csv_count=36 node_owner_count=36 missing=0 extra=0`.
 - Trigger verification returned `ariel-a-master2-holy-exposure-on-hit` and `ariel-j-after-e-action-speed-trigger` with `node_effect_exists=True`.
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/effects/ariel/ariel_skill_effects.csv` and its `.meta` were deleted.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/effects/ariel/ariel_skill_effects.csv` and its `.meta` were deleted.
 - `PakuriCsvRuntimeSourceCatalog.asset` no longer references deleted GUID `de95dfd09fa14fd5bffaf64855a35d25`; post-delete search returned no matches.
 - `git diff --check` returned `DIFF_CHECK_OK`; Git also printed existing line-ending normalization warnings.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and `dotnet build Pakuri\Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors; existing `MSB3277` warnings remained.
@@ -510,7 +510,7 @@ Convert Ariel A master2 holy exposure from old choice wide columns to trigger/ef
 
 - Role Owner is Code Builder.
 - Current trigger enum has no `OnHit`; the implemented runtime event is `OnOutgoingDamage`, which is the existing hit-success trigger path.
-- Active CSV authority is under `Pakuri/Assets/CSVdata/runtime`.
+- Active CSV authority is under `Pakuri/Assets/CSVdata/authoring`.
 - Unity Play Mode behavior verification remains user-owned.
 
 ### Role Owner
@@ -628,11 +628,11 @@ Implemented and Unity-MCP validated.
 
 ### Evidence
 
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_nodes.csv` now contains Ariel normalized choice nodes for damage, cooldown, magazine, reload, pierce, duration, shield-count damage, status-conditional damage-taken, and status modifier bonuses.
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_node_params.csv` now carries the matching values; initial migration output reported `migrated=28 nodes=47 params=68`, and the final Ariel C trait2 targeted action-speed node addition brought the parsed param row count to 69.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/monster_skill_nodes.csv` now contains Ariel normalized choice nodes for damage, cooldown, magazine, reload, pierce, duration, shield-count damage, status-conditional damage-taken, and status modifier bonuses.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/monster_skill_node_params.csv` now carries the matching values; initial migration output reported `migrated=28 nodes=47 params=68`, and the final Ariel C trait2 targeted action-speed node addition brought the parsed param row count to 69.
 - TextFieldParser CSV shape check returned `monster_skill_choices.csv header=114 rows=252 bad=`, `monster_skill_nodes.csv header=14 rows=47 bad=`, `monster_skill_node_params.csv header=4 rows=69 bad=`, and `monster_skill_effects.csv header=70 rows=131 bad=`.
 - `ariel-c-trait-2-blessing-action-speed` is a `StatusActionSpeedBonus` node with `status_id=blessing` and `bonus=0.06`.
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_effects.csv` keeps Ariel C base rows but disables 9 pre-combined rows as `MigratedToEffectBinding`.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/monster_skill_effects.csv` keeps Ariel C base rows but disables 9 pre-combined rows as `MigratedToEffectBinding`.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSnapshot.cs` now applies normalized choice nodes during combat snapshot creation and resolves status-targeted action speed bonuses.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillMultiEffectExecutor.cs` now applies snapshot status overrides through `SkillStatusSpecUtility.ResolveStatusData(...)`.
 - `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` passed with 0 errors; existing `MSB3277` warnings remained.

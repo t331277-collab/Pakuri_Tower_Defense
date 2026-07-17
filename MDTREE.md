@@ -57,10 +57,17 @@ Role entry points and track files:
 - Code Reviewer: `AGENTS_ROLE/GAMEREVIWER.md`
 - SimpelWorker: `AGENTS_ROLE/SIMPELWORKER.md`
 
-Skill Builder exception docs:
+Skill Builder active blueprints:
 
-- `boards/SkillBluePrint/skill-csv-exception-guide.md`: exception-only summary of current skill CSV table ownership and row-combination interpretation
-- `boards/SkillBluePrint/skill-builder-handoff-format.md`: normalized row-bundle handoff format for Skill Builder work
+- `boards/SkillBluePrint/projectile-base-blueprint.md`: existing Projectile runtime/schema Base authoring;
+- `boards/SkillBluePrint/buff-base-blueprint.md`: existing Buff/Shield runtime/schema Base authoring;
+- `boards/SkillBluePrint/single-attack-base-blueprint.md`: existing SingleAttack Base and conditional Skill-owned secondary effect authoring;
+- `boards/SkillBluePrint/line-attack-base-blueprint.md`: existing LineAttack runtime/schema Base authoring;
+- `boards/SkillBluePrint/area-attack-base-blueprint.md`: existing AreaAttack/Field Base and conditional Skill-owned secondary effect authoring;
+- `boards/SkillBluePrint/passive-base-node-blueprint.md`: Passive Base metadata plus Skill/Trigger-owned node authoring;
+- `boards/SkillBluePrint/enhancement-master-node-blueprint.md`: family-independent Enhancement and Master node authoring.
+
+Read the exact user-provided Reference MD first, then only the selected Base blueprint. A combined Base plus Enhancement/Master request may additionally read the Enhancement/Master blueprint.
 
 ## Routing Rules
 
@@ -79,8 +86,7 @@ When the task edits root routing or role-policy markdown such as `AGENTS.md`, `M
 
 Do not pull MON, RUN, UI, or DATA boards for that policy task unless the policy change is specifically about their routing.
 
-For Skill Builder policy or blueprint-usage work, treat the exception docs under `boards/SkillBluePrint/` as workflow documents, not as domain boards.
-Read them only when the request is explicitly about exception-path skill CSV interpretation or Skill Builder handoff format.
+For Skill Builder policy or blueprint-usage work, read only the blueprint files whose contracts are directly being changed.
 
 ### Monster Work
 

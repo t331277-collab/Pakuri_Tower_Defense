@@ -221,8 +221,8 @@ EffectId 변경은 status source 비교에 영향을 줄 수 있다. Ariel 현�
 신규 경로:
 
 ```text
-Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/definitions/skill_node_definitions.csv
-Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/definitions/skill_node_definition_params.csv
+Pakuri/Assets/CSVdata/authoring/monster/skills/nodes/definitions/skill_node_definitions.csv
+Pakuri/Assets/CSVdata/authoring/monster/skills/nodes/definitions/skill_node_definition_params.csv
 ```
 
 `skill_node_definitions.csv`:
@@ -268,10 +268,10 @@ EffectTarget,2,target_selection,enum,false,Nearest|EventTarget|Owner
 신규 경로:
 
 ```text
-Pakuri/Assets/CSVdata/runtime/monster/skills/choices/projectile/skill_graph_nodes_projectile.csv
-Pakuri/Assets/CSVdata/runtime/monster/skills/choices/buff/skill_graph_nodes_buff.csv
-Pakuri/Assets/CSVdata/runtime/monster/skills/choices/single_attack/skill_graph_nodes_single_attack.csv
-Pakuri/Assets/CSVdata/runtime/monster/skills/choices/passive/skill_graph_nodes_passive.csv
+Pakuri/Assets/CSVdata/authoring/monster/skills/choices/projectile/skill_graph_nodes_projectile.csv
+Pakuri/Assets/CSVdata/authoring/monster/skills/choices/buff/skill_graph_nodes_buff.csv
+Pakuri/Assets/CSVdata/authoring/monster/skills/choices/single_attack/skill_graph_nodes_single_attack.csv
+Pakuri/Assets/CSVdata/authoring/monster/skills/choices/passive/skill_graph_nodes_passive.csv
 ```
 
 1차 Ariel에는 area/line graph row가 없으므로 해당 신규 파일을 만들지 않는다. 향후 실제 row가 생길 때 같은 규칙으로 추가한다.
@@ -660,11 +660,11 @@ Unity Play Mode gameplay verification은 사용자 소유다.
 
 현재 CSV:
 
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/choices/{kind}/skill_choices_{kind}.csv`
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/{kind}/{kind}_skill_nodes.csv`
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/{kind}/{kind}_skill_node_params.csv`
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/effects/{kind}/{kind}_skill_effects.csv`
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/triggers/{kind}/{kind}_skill_triger.csv`
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/choices/{kind}/skill_choices_{kind}.csv`
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/nodes/{kind}/{kind}_skill_nodes.csv`
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/nodes/{kind}/{kind}_skill_node_params.csv`
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/effects/{kind}/{kind}_skill_effects.csv`
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/triggers/{kind}/{kind}_skill_triger.csv`
 
 현재 코드:
 

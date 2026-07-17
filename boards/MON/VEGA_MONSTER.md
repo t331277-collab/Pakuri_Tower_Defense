@@ -34,7 +34,7 @@ Vega A-J Positional Skill Graph Migration
 
 - Role Owner는 Code Builder다.
 - Blueprint/reference markdown은 읽지 않는다.
-- 근거는 `Pakuri/Assets/CSVdata/runtime/monster/skills/`와 실제 runtime code다.
+- 근거는 `Pakuri/Assets/CSVdata/authoring/monster/skills/`와 실제 runtime code다.
 - 새 graph 파일/graph 열/offset은 추가하지 않는다. B master 1에 필요한 line Trigger graph 참조 4열만 기존 Trigger schema와 같은 형식으로 추가한다.
 - prefab, scene, object/collider offset은 변경하지 않는다.
 

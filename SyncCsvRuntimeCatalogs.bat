@@ -5,9 +5,17 @@ set "REPO_DIR=%~dp0"
 set "PROJECT_DIR=%REPO_DIR%Pakuri"
 set "LOG_FILE=%REPO_DIR%PakuriCsvRuntimeSync.log"
 
-if not exist "%PROJECT_DIR%\Assets\CSVdata\source\monster_skills.csv" (
-    echo Missing Unity project or CSV source under "%PROJECT_DIR%".
+if not exist "%PROJECT_DIR%\Assets\CSVdata\authoring\monster\monsters.csv" (
+    echo Missing Unity project or CSV authoring source under "%PROJECT_DIR%".
     exit /b 1
+)
+
+if not defined UNITY_EXE (
+    for /f "tokens=2" %%V in ('findstr /b /c:"m_EditorVersion:" "%PROJECT_DIR%\ProjectSettings\ProjectVersion.txt"') do (
+        if exist "C:\Program Files\Unity\Hub\Editor\%%V\Editor\Unity.exe" (
+            set "UNITY_EXE=C:\Program Files\Unity\Hub\Editor\%%V\Editor\Unity.exe"
+        )
+    )
 )
 
 if not defined UNITY_EXE (

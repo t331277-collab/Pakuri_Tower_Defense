@@ -91,7 +91,7 @@
 
 ### 3.1 시작 시 Enemy CSV
 
-현재 `Pakuri/Assets/CSVdata/runtime/enemy/`에는 다음 파일이 있다.
+현재 `Pakuri/Assets/CSVdata/authoring/enemy/`에는 다음 파일이 있다.
 
 - `stage_one_enemies.csv`
 - `stage_two_enemies.csv`
@@ -287,7 +287,7 @@ Brain
 아래는 현재 16개 Enemy 기본 스킬을 옮길 때 필요한 목표 구조다. 현재 존재하지 않는 제안 파일이 포함되어 있다.
 
 ```text
-Pakuri/Assets/CSVdata/runtime/enemy/
+Pakuri/Assets/CSVdata/authoring/enemy/
 ├─ enemies.csv
 └─ skills/
    ├─ base/
@@ -326,7 +326,7 @@ Pakuri/Assets/CSVdata/runtime/enemy/
 현재 Enemy에 강화효과 또는 Master 효과가 추가될 때만 다음 입력을 추가한다.
 
 ```text
-Pakuri/Assets/CSVdata/runtime/enemy/
+Pakuri/Assets/CSVdata/authoring/enemy/
 ├─ enemy_skill_choice_sets.csv
 └─ skills/
    ├─ choices/

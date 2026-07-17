@@ -4,7 +4,7 @@
 
 Vega A-J 스킬의 현재 동작을 `skill_graph_nodes_*.csv` 기반 positional graph로 이전한다.
 
-- 활성 authoring 기준은 `Pakuri/Assets/CSVdata/runtime/monster/skills/`이다.
+- 활성 authoring 기준은 `Pakuri/Assets/CSVdata/authoring/monster/skills/`이다.
 - Sein 전환처럼 `Plan` graph는 Choice modifier를, `Effect` graph는 효과 조립을 담당한다.
 - base skill 10행과 Trigger의 이벤트/확률/쿨다운 envelope는 유지한다.
 - legacy Effect 23행과 legacy direct node 4행/param 11행은 이전 완료와 동시에 제거한다.
@@ -39,7 +39,7 @@ Vega A-J 스킬의 현재 동작을 `skill_graph_nodes_*.csv` 기반 positional 
 
 ### 3.1 전환 전 활성 Vega 데이터 집계
 
-`Pakuri/Assets/CSVdata/runtime/monster/skills/`에서 `monster_id=vega`를 집계했다.
+`Pakuri/Assets/CSVdata/authoring/monster/skills/`에서 `monster_id=vega`를 집계했다.
 
 | 구분 | 현재 행 수 | 근거 |
 |---|---:|---|
@@ -54,7 +54,7 @@ Vega A-J 스킬의 현재 동작을 `skill_graph_nodes_*.csv` 기반 positional 
 검사 시작 명령:
 
 ```powershell
-rg -l 'vega' 'Pakuri\Assets\CSVdata\runtime\monster\skills' -g '*.csv'
+rg -l 'vega' 'Pakuri\Assets\CSVdata\authoring\monster\skills' -g '*.csv'
 ```
 
 각 CSV는 `Import-Csv` 후 `monster_id -eq 'vega'`로 집계했다. 이 제안서는 검사 시점에 존재하지 않았고 본 파일이 최초 생성본이다.
@@ -488,7 +488,7 @@ Trigger 15행은 삭제하지 않는다.
 
 ## 22. Evidence
 
-- Vega base/Choice/Effect/Trigger/node CSV: `Pakuri/Assets/CSVdata/runtime/monster/skills/`
+- Vega base/Choice/Effect/Trigger/node CSV: `Pakuri/Assets/CSVdata/authoring/monster/skills/`
 - graph materializer/schema/overlap: `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs`
 - Effect graph 조립: `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.Build.cs`
 - Trigger graph 열 파싱/검증: `PakuriCsvRuntimeData.MonsterDataset.cs`, `PakuriCsvRuntimeData.Validation.cs`

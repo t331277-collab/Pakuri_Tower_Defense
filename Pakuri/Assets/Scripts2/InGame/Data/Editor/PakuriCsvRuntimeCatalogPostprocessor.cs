@@ -47,7 +47,7 @@ namespace Pakuri.Data
                     continue;
                 }
 
-                if (PakuriCsvRuntimeData.IsRuntimeCsvSourceAssetPath(assetPath))
+                if (PakuriCsvRuntimeData.IsAuthoringCsvSourceAssetPath(assetPath))
                 {
                     return true;
                 }

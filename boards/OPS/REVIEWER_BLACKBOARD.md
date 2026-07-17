@@ -192,7 +192,7 @@ Passed with no blocking findings.
 - CSV acceptance check returned `eActiveShieldRows=1`, `eDisabledShieldVariants=3`, `shieldAmountNodes=4`, `oldEJRows=0`, `jTriggerRows=2`, and `jShieldSource=ariel-e-shield-base`.
 - CSV field-count check returned no bad rows for `monster_skill_choices.csv`, `monster_skill_nodes.csv`, `monster_skill_node_params.csv`, `monster_skill_effects.csv`, and `monster_skill_triger.csv`.
 - Runtime and editor `dotnet build` commands passed with 0 errors; existing `MSB3277` warnings remained.
-- Unity-MCP console logs showed CSV runtime sync from `Assets/CSVdata/runtime`, runtime catalog load, and `InGame skill data validation passed with 0 warning(s)`; Unity-MCP warning/error console read returned 0 entries.
+- Unity-MCP console logs showed CSV runtime sync from `Assets/CSVdata/authoring`, runtime catalog load, and `InGame skill data validation passed with 0 warning(s)`; Unity-MCP warning/error console read returned 0 entries.
 
 ### History
 

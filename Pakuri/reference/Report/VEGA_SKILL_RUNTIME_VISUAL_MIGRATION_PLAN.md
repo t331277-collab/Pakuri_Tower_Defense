@@ -6,7 +6,7 @@ Vega A-E와 두 강화 실행 경로가 `Assets/Prefab/Skill/Vega/*.prefab`을 �
 
 프리팹 파일 자체의 삭제는 이 계획에 포함하지 않는다. 각 런타임 경로의 동작과 표현이 Play Mode에서 확인된 뒤 활성 CSV/그래프의 `skill_effect_prefab_path` 또는 `EffectVisual` 참조만 제거한다.
 
-현재 활성 저작 경로는 `Pakuri/Assets/CSVdata/runtime/`이다. 2026-07-14 Code Builder 구현이 완료되었으며, 이번 작업은 스킬 표현/판정 리팩터링이므로 Skill Blueprint는 읽거나 변경하지 않았다.
+현재 활성 저작 경로는 `Pakuri/Assets/CSVdata/authoring/`이다. 2026-07-14 Code Builder 구현이 완료되었으며, 이번 작업은 스킬 표현/판정 리팩터링이므로 Skill Blueprint는 읽거나 변경하지 않았다.
 
 ## Inspected Evidence
 

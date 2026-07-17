@@ -21,7 +21,7 @@ This is a Designer handoff. Implementation has not started. Runtime object posit
 - `SkillTriggerRuntime.ExecuteSingleAttackAction` uses a runtime hitbox when the Trigger runtime visual has a hitbox. This supports Sein-A master 2 with its authored size and fixed zero offset.
 - Sein-E currently becomes multi-deployment only when `InGameSkillDefinitionMapper` sees a prefab-backed `SingleAttack` with `hit_target_count > 1`. `SingleAttackSkillExecutor` also applies its line-style rotation/scaling only to the prefab path, not the runtime-visual path.
 - `InGameProjectileActor` stores `impactEffectPrefab` as a `GameObject` and instantiates that prefab in `ResolveImpact()`. No separate runtime impact visual field exists.
-- Current active authoring is under `Pakuri/Assets/CSVdata/runtime/`, not the older `Pakuri/Assets/CSVdata/source/` paths recorded in older board history.
+- Current active authoring is under `Pakuri/Assets/CSVdata/authoring/`, not the older `Pakuri/Assets/CSVdata/source/` paths recorded in older board history.
 
 ## Current Prefab Reference Map
 
@@ -361,7 +361,7 @@ Implemented and source/build/Unity-MCP verified; user Play Mode parity remains.
 - `InGameSkillDefinitionMapper` accepts runtime hitboxes as Sein-E multi-deployment authority, and `SingleAttackSkillExecutor` applies the existing line-style transform to runtime-created deployments as well as prefab deployments.
 - TextFieldParser validation reported matching row counts for all 7 edited CSVs: 42, 32, 43, 50, and three 21-column graph tables.
 - `dotnet build Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` and the Editor project both passed with 0 errors; only existing MSB3277 reference warnings remained.
-- Unity-MCP refreshed/compiled the project, synced `Assets/CSVdata/runtime` to `Assets/Resources/Pakuri/CSVRuntime`, revalidated the catalog, and reported 0 error entries. Play Mode was not started.
+- Unity-MCP refreshed/compiled the project, synced `Assets/CSVdata/authoring` to `Assets/Resources/Pakuri/CSVRuntime`, revalidated the catalog, and reported 0 error entries. Play Mode was not started.
 
 ### History
 

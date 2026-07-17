@@ -32,7 +32,7 @@ Design the safe migration of Sein prefab-backed skill visuals to runtime-created
 
 - Role Owner is Designer; no code, CSV, scene, or prefab implementation is part of this task.
 - Every conclusion uses inspected current code, active runtime CSV rows, prefab serialization, and Unity-MCP asset/hierarchy output.
-- Active skill authoring is currently under `Pakuri/Assets/CSVdata/runtime/`; older `source/` board paths are not treated as current authority.
+- Active skill authoring is currently under `Pakuri/Assets/CSVdata/authoring/`; older `source/` board paths are not treated as current authority.
 - Do not add runtime object/collider offset columns or graph params; user fixed both offsets at `(0,0)`.
 - Remaining shared runtime/common-logic extensions require explicit user approval before Skill Builder / Code Builder implementation.
 - Unity Play Mode gameplay verification remains user-owned.

@@ -8,7 +8,7 @@ Sein A-J 기본 스킬, 액티브 특성 25개, 액티브 마스터 10개,
 이 제안은 다음 근거를 사용한다.
 
 - 기능 의도: `Pakuri/reference/2.Monster/sein/skill/*.md`
-- 현재 수치와 구현 상태: `Pakuri/Assets/CSVdata/runtime/monster/skills/**`의 Sein base/Choice/Effect/Trigger 행
+- 현재 수치와 구현 상태: `Pakuri/Assets/CSVdata/authoring/monster/skills/**`의 Sein base/Choice/Effect/Trigger 행
 - graph 작성 형식: `boards/MON/RIN_NODE_MIGRATION_PROPOSAL.md`와 현재 21컬럼 `skill_graph_nodes_*` 파일
 - 실제 지원 판단: node definition, graph materializer, `InGameSkillDefinitionMapper`, Effect composer, Trigger runtime, 각 Executor 코드
 

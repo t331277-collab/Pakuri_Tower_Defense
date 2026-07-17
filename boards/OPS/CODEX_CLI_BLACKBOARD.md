@@ -4,6 +4,50 @@
 - This file keeps only task blocks dated `2026-04-25` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/OPS/CODEX_CLI_BLACKBOARD.md`.
 
+## Task: 2026-07-17 Codex CLI 0.144.5 Update
+
+### Task title
+
+Update local Codex CLI from 0.144.4 to 0.144.5.
+
+### Goals
+
+- Install Codex CLI 0.144.5 through the official installer supplied by the user.
+- Verify the active codex command and official installed executable report the target version.
+- Confirm run_codex.bat still resolves and launches the official executable.
+
+### Constraints
+
+- Role Owner is Designer / OPS.
+- This task changes the user-local Codex CLI installation, not gameplay code.
+- Evidence comes from inspected launcher files and command output.
+
+### Role Owner
+
+Designer / OPS
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Start the next CLI session through run_codex.bat so the new process loads the 0.144.5 helper files.
+
+### Evidence
+
+- Official installer reported update from 0.144.4 to 0.144.5 and successful installation.
+- codex --version and the official installed executable both returned codex-cli 0.144.5.
+- Get-Command codex resolved C:\Users\t3312\AppData\Local\Programs\OpenAI\Codex\bin\codex.exe before the legacy npm wrapper.
+- run_codex.bat resolves Get-Command codex first, validates its version, and passes that path to run_codex_prompt_launcher.ps1.
+- codex_prompt.txt and run_codex_prompt_launcher.ps1 both existed during verification.
+- run_codex_prompt_launcher.ps1 accepts the resolved executable path, validates it, and starts it with the repository root and UTF-8 prompt.
+- The already-running pre-update session could not refresh codex-windows-sandbox-setup.exe after installation; a new session is required for updated helper loading.
+
+### History
+
+- 2026-07-17: User requested Codex CLI update to 0.144.5 and confirmed run_codex.bat must keep launching the CLI.
+
 ## Task: 2026-07-10 Codex CLI 0.144.1 Update And PATH Repair
 
 ### Task title

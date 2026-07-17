@@ -25,7 +25,7 @@ Verification:
 - `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore` passed with 0 errors. Existing `MSB3277` warnings for `System.Net.Http` and `System.IO.Compression` remained.
 - `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore` passed with 0 errors. The same existing `MSB3277` warnings remained.
 - TextFieldParser CSV shape check returned `monster_skill_choices.csv header=114 rows=252 bad=`, `monster_skill_nodes.csv header=14 rows=47 bad=`, `monster_skill_node_params.csv header=4 rows=69 bad=`, and `monster_skill_effects.csv header=70 rows=131 bad=`.
-- Unity-MCP `Pakuri/Sync CSV Runtime Catalog Assets` logged sync from `Assets/CSVdata/runtime` to `Assets/Resources/Pakuri/CSVRuntime`.
+- Unity-MCP `Pakuri/Sync CSV Runtime Catalog Assets` logged sync from `Assets/CSVdata/authoring` to `Assets/Resources/Pakuri/CSVRuntime`.
 - Unity-MCP `Pakuri/Validate CSV Source Data` loaded the runtime catalog with 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.
 - Unity-MCP `Pakuri/InGame/Validate Skill Data` logged `InGame skill data validation passed with 0 warning(s).`
 
@@ -54,12 +54,12 @@ Ariel A~J 스킬을 기존 "조합 결과 행 추가" 방식에서 "스킬 본�
 - `Pakuri/reference/2.Monster/ariel/skill/d-celestial-brand.md` describes Ariel D as strongest-target mark with holy exposure, target count, crit damage taken, and mark-expire burst from tracked holy incoming damage.
 - `Pakuri/reference/2.Monster/ariel/skill/e-archangel-descent.md` describes Ariel E as battlefield holy damage plus all-ally shield, shield-duration extension, sanctuary damage reduction, and high-damage/low-shield master behavior.
 - `Pakuri/reference/2.Monster/ariel/skill/f-guiding-light.md` to `j-sanctuary-proclamation.md` define passive effects tied to Ariel A~E.
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skills.csv` contains 10 Ariel base rows: `ariel-a` through `ariel-j`.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/monster_skills.csv` contains 10 Ariel base rows: `ariel-a` through `ariel-j`.
 - `monster_skills.csv` currently stores Ariel base identity and broad runtime families such as `MagazineProjectile`, `Shield`, `SingleAttack`, and `Passive`.
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_effects.csv` already contains Ariel row-like effect data such as `ariel-c-blessing-action-default`, `ariel-c-blessing-action-trait2-trait3-h-trait3`, `ariel-e-shield-base`, and `ariel-i-holy-exposure-damage-taken`.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/monster_skill_effects.csv` already contains Ariel row-like effect data such as `ariel-c-blessing-action-default`, `ariel-c-blessing-action-trait2-trait3-h-trait3`, `ariel-e-shield-base`, and `ariel-i-holy-exposure-damage-taken`.
 - `monster_skill_effects.csv` currently mixes trigger timing, target rule, gate conditions, effect kind, status payload, damage payload, and runtime notes in one row.
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_triger.csv` already contains Ariel trigger rows such as `ariel-a-master1-last-shot-explosion`, `ariel-b-trait4-shield-expire`, `ariel-b-master2-shield-absorb-reflect`, and `ariel-d-master2-mark-expire-burst`.
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_nodes.csv` currently has Ariel normalized node examples for `ariel-a-trait-1-damage-multiplier`, `ariel-b-trait-3-cooldown-multiplier`, and `ariel-c-trait-4-radius-multiplier`.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/monster_skill_triger.csv` already contains Ariel trigger rows such as `ariel-a-master1-last-shot-explosion`, `ariel-b-trait4-shield-expire`, `ariel-b-master2-shield-absorb-reflect`, and `ariel-d-master2-mark-expire-burst`.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/monster_skill_nodes.csv` currently has Ariel normalized node examples for `ariel-a-trait-1-damage-multiplier`, `ariel-b-trait-3-cooldown-multiplier`, and `ariel-c-trait-4-radius-multiplier`.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillMultiEffectExecutor.cs` already executes `Damage`, `Status`, and `ExtendStatusDuration` effects and has entry points for `OnHit`, `OnExpire`, and `OnHitCount`.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` already dispatches source-owned and passive-owned trigger events including projectile hit, shield expire, shield absorb, status expire, outgoing damage, skill cast, and kill.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionPlan.cs` already has `SkillExecutionPlanNode`, `SkillExecutionPlanNodeKind`, and normalized-row authoring source support, but current typed node payloads are still limited to cast condition, damage modifier, crit modifier, and kill action operations.

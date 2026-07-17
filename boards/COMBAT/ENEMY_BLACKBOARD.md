@@ -433,8 +433,8 @@ Implemented and compile-verified.
 
 ### Evidence
 
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_choice_base.csv` and its `.meta` file were deleted.
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_base.csv` and its `.meta` file were deleted.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/monster_skill_choice_base.csv` and its `.meta` file were deleted.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/monster_skill_base.csv` and its `.meta` file were deleted.
 - `PakuriCsvRuntimeData.Build.cs`, `PakuriCsvRuntimeData.Loader.cs`, `PakuriCsvRuntimeData.SourceModel.cs`, `PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs`, and `PakuriCsvRuntimeData.Validation.cs` no longer use `SkillChoiceBaseRows` or `SkillBaseRows`.
 - `Select-String` under `Pakuri/Assets/Scripts2/InGame/Data/Runtime` for removed base-table symbols and filenames returned no matches.
 - `dotnet build Pakuri\Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false /clp:ErrorsOnly /v:minimal` passed with 0 errors.
@@ -562,7 +562,7 @@ Implemented and Unity-MCP validated.
 
 - `EnemyCombatSystem.cs` resolves attack attempt range from `skillData.Radius` and falls back to attack type values: Ranged 5, MeleeAndRanged 4, Buffer 5, default 1.4.
 - `PakuriCsvRuntimeData.EnemyDataset.cs` reads `EnemySkillData.csv` `radius` and assigns it to active/basic skill radius fields.
-- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillData.csv` no longer contains `range`.
+- `Pakuri/Assets/CSVdata/authoring/enemy/EnemySkillData.csv` no longer contains `range`.
 - CSV row-width check returned `expected=33` and `bad=` empty.
 - Unity-MCP sync/validate completed with 0 warning/error console entries.
 
@@ -607,7 +607,7 @@ Handoff created.
 ### Evidence
 
 - Created `Pakuri/reference/Report/2026-06-19-enemy-skill-node-runtime-handoff.md`.
-- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillData.csv` currently stores enemy skill body fields such as `runtime_kind`, coefficients, cooldown, radius, projectile speed/lifetime, duration, flat value, movement multiplier, and outgoing damage multiplier.
+- `Pakuri/Assets/CSVdata/authoring/enemy/EnemySkillData.csv` currently stores enemy skill body fields such as `runtime_kind`, coefficients, cooldown, radius, projectile speed/lifetime, duration, flat value, movement multiplier, and outgoing damage multiplier.
 - Updated `Pakuri/reference/Report/2026-06-19-enemy-skill-node-runtime-handoff.md` to set Stage2 `EnemySkillData.csv` radius values: Fire Dragon Soldier 2, Lightning Scout 7, Ice Guard 2, Dark Assassin 1.4, Holy Priest 5, Ethan 14, Drake 40, Arsen 40.
 - The same report now states `enemy_scope` should be removed and skill usability should come from unit skill assignment, not scope filtering.
 - `Pakuri/Assets/CSVdata/source/stage_one_enemies.csv` binds Stage1 enemies to `stage_one_skill`, `basic_skill`, passive names, passive ids, and passive values.
@@ -1670,8 +1670,8 @@ Code complete. Solution compile, static CSV checks, and Unity Editor CSV validat
 
 ### Evidence
 
-- `Pakuri/Assets/CSVdata/runtime/enemy/enemies.csv` has 16 Enemy rows and now stores only `passive_id` for passive assignment.
-- `Pakuri/Assets/CSVdata/runtime/enemy/skills/base/passive/skills_passive.csv` has 16 five-column definitions with `apply_target`, `modifier_kind`, and `modifier_value`.
+- `Pakuri/Assets/CSVdata/authoring/enemy/enemies.csv` has 16 Enemy rows and now stores only `passive_id` for passive assignment.
+- `Pakuri/Assets/CSVdata/authoring/enemy/skills/base/passive/skills_passive.csv` has 16 five-column definitions with `apply_target`, `modifier_kind`, and `modifier_value`.
 - `PakuriCsvRuntimeData.EnemyMigrationDataset.cs` detects `skills_passive.csv` and internally constructs the shared `Passive/F/Passive` classification without authoring those three columns.
 - Static CSV reference verification returned Enemy 16, passive 16, missing references 0, unused passives 0.
 - CSV shape verification returned 5 columns, 16 rows, 0 width errors, and `enemy-sword-mastery.modifier_value=0.10`.

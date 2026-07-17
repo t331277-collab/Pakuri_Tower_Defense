@@ -484,17 +484,17 @@ Code Builder pass implemented normalized node handler expansion, Ariel numeric c
 
 - `Pakuri/reference/Report/2026-06-19-ariel-effect-object-trigger-binding-handoff.md` was created.
 - `Pakuri/reference/2.Monster/ariel/skill/` contains the inspected Ariel A-J reference markdown files.
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skills.csv` contains Ariel base rows `ariel-a` through `ariel-j`.
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_effects.csv` contains Ariel effect rows including pre-combined Ariel C blessing rows.
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_triger.csv` contains Ariel trigger rows for last projectile, shield expire, shield absorb, and status expire behavior.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/monster_skills.csv` contains Ariel base rows `ariel-a` through `ariel-j`.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/monster_skill_effects.csv` contains Ariel effect rows including pre-combined Ariel C blessing rows.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/monster_skill_triger.csv` contains Ariel trigger rows for last projectile, shield expire, shield absorb, and status expire behavior.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillMultiEffectExecutor.cs` owns current multi-effect execution for damage, status, and status-duration extension.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillTriggerRuntime.cs` owns current combat trigger dispatch.
 - User answers recorded in the handoff: D trait 5 requires the attacker itself to have shield; J shield condition requires Ariel-E-generated shield; I holy exposure damage taken applies to all incoming damage while exposure exists; passives are always active; durations stay seconds; generic node CSVs are the storage path.
 - `Pakuri/Assets/Scripts2/InGame/Data/Runtime/Csv/PakuriCsvRuntimeData.NormalizedSkillAuthoring.cs` now registers reusable handlers including `CountStatusDamageMultiplier`, `MagazineBonus`, `ReloadTimeMultiplier`, `PierceBonus`, `DurationBonus`, `StatusActionSpeedBonus`, `StatusAilmentResistanceBonus`, `StatusConditionalDamageTakenBonus`, and `StatusElementDamageTakenBonus`.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillExecutionSnapshot.cs` now applies normalized choice nodes on the combat snapshot path and supports status-targeted action speed bonuses.
 - `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Runtime/SkillMultiEffectExecutor.cs` now resolves status snapshot overrides through `SkillStatusSpecUtility.ResolveStatusData(...)`.
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_nodes.csv` now contains Ariel choice-owned normalized node rows for migrated numeric modifiers and `ariel-c-trait-2-blessing-action-speed`.
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/monster_skill_effects.csv` has 9 Ariel C pre-combined blessing rows disabled as `MigratedToEffectBinding`; the base rows now compose with normalized choice nodes.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/monster_skill_nodes.csv` now contains Ariel choice-owned normalized node rows for migrated numeric modifiers and `ariel-c-trait-2-blessing-action-speed`.
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/monster_skill_effects.csv` has 9 Ariel C pre-combined blessing rows disabled as `MigratedToEffectBinding`; the base rows now compose with normalized choice nodes.
 - Phase 2-5 added `ShieldAmountMultiplier` so shield amount choices can avoid reusing generic damage multipliers when damage and shield behavior diverge.
 - `SkillMultiEffectExecutor.ResolveStatusEffectShieldAmount(...)` now receives the combat snapshot and applies the shield-specific multiplier to status-effect shield amounts.
 - `StatusEffectRuntime.MatchesConditionStatus(...)` now supports an optional required source skill id for effect condition checks.

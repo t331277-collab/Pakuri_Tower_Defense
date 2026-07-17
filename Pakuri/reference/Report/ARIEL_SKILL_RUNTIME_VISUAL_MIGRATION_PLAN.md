@@ -112,7 +112,7 @@ Current role:
 
 CSV owner:
 
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/base/projectile/skills_projectile.csv`
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/base/projectile/skills_projectile.csv`
 
 Runtime fields:
 
@@ -167,7 +167,7 @@ Current role:
 
 CSV owner:
 
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/triggers/buff/buff_skill_triger.csv`
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/triggers/buff/buff_skill_triger.csv`
 
 Runtime fields:
 
@@ -194,7 +194,7 @@ Current role:
 
 CSV owner:
 
-- Existing owner is `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/single_attack/single_attack_skill_node_params.csv`.
+- Existing owner is `Pakuri/Assets/CSVdata/authoring/monster/skills/nodes/single_attack/single_attack_skill_node_params.csv`.
 - This plan does not add runtime visual columns to node CSVs.
 
 Current node param to replace:
@@ -246,7 +246,7 @@ Current role:
 
 CSV owner:
 
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/base/single_attack/skills_single_attack.csv`
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/base/single_attack/skills_single_attack.csv`
 
 Current field:
 
@@ -276,7 +276,7 @@ Current role:
 
 CSV owner:
 
-- `Pakuri/Assets/CSVdata/runtime/monster/skills/base/single_attack/skills_single_attack.csv`
+- `Pakuri/Assets/CSVdata/authoring/monster/skills/base/single_attack/skills_single_attack.csv`
 
 Runtime fields:
 

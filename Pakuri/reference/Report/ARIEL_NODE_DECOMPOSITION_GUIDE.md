@@ -3,7 +3,7 @@
 ## 1. 문서 목적
 
 이 문서는 현재 디스크의 Ariel `skill_graph_nodes` 구현을 기준으로, 아직
-`Pakuri/Assets/CSVdata/runtime/monster/skills/effects/{kind}/{kind}_skill_effects.csv`
+`Pakuri/Assets/CSVdata/authoring/monster/skills/effects/{kind}/{kind}_skill_effects.csv`
 행을 사용하는 몬스터를 현재 그래프 작성 방식으로 전환하는 절차를 정의한다.
 
 이 문서의 핵심은 다음 세 가지다.
@@ -20,22 +20,22 @@
 ### 2.1 CSV 권한
 
 - 기본 스킬:
-  `Pakuri/Assets/CSVdata/runtime/monster/skills/base/{kind}/skills_{kind}.csv`
+  `Pakuri/Assets/CSVdata/authoring/monster/skills/base/{kind}/skills_{kind}.csv`
 - Choice 메타데이터와 kind별 전용 값:
-  `Pakuri/Assets/CSVdata/runtime/monster/skills/choices/{kind}/skill_choices_{kind}.csv`
+  `Pakuri/Assets/CSVdata/authoring/monster/skills/choices/{kind}/skill_choices_{kind}.csv`
 - 현재 그래프 인스턴스:
-  `Pakuri/Assets/CSVdata/runtime/monster/skills/choices/{kind}/skill_graph_nodes_{kind}.csv`
+  `Pakuri/Assets/CSVdata/authoring/monster/skills/choices/{kind}/skill_graph_nodes_{kind}.csv`
 - 노드 타입 정의:
-  `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/definitions/skill_node_definitions.csv`
+  `Pakuri/Assets/CSVdata/authoring/monster/skills/nodes/definitions/skill_node_definitions.csv`
 - 노드 인자 정의:
-  `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/definitions/skill_node_definition_params.csv`
+  `Pakuri/Assets/CSVdata/authoring/monster/skills/nodes/definitions/skill_node_definition_params.csv`
 - legacy direct node 호환 데이터:
-  `Pakuri/Assets/CSVdata/runtime/monster/skills/nodes/{kind}/{kind}_skill_nodes.csv`
+  `Pakuri/Assets/CSVdata/authoring/monster/skills/nodes/{kind}/{kind}_skill_nodes.csv`
   및 `{kind}_skill_node_params.csv`
 - legacy effect 호환 데이터:
-  `Pakuri/Assets/CSVdata/runtime/monster/skills/effects/{kind}/{kind}_skill_effects.csv`
+  `Pakuri/Assets/CSVdata/authoring/monster/skills/effects/{kind}/{kind}_skill_effects.csv`
 - Trigger:
-  `Pakuri/Assets/CSVdata/runtime/monster/skills/triggers/{kind}/{kind}_skill_triger.csv`
+  `Pakuri/Assets/CSVdata/authoring/monster/skills/triggers/{kind}/{kind}_skill_triger.csv`
 
 ### 2.2 런타임 코드
 

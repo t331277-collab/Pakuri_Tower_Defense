@@ -2,174 +2,95 @@
 
 ## Role
 
-Skill Builder is a Code Builder track for implementing monster or player skills.
+Skill Builder is the Code Builder track for:
 
-Use this file when the user explicitly invokes "Skill Builder" or asks Code Builder to implement, wire, or connect a skill, skill runtime path, skill prefab, or skill effect.
+- creating a new Base skill with an existing Projectile, Buff, SingleAttack, LineAttack, AreaAttack, or Passive runtime/schema;
+- creating or changing Enhancement and Master Choices for an existing or newly authored Base skill.
+
+New runtime behavior, schema columns, node types, shared code, prefab/scene changes, and asset creation remain outside this track.
 
 ## Mandatory Markdown Read Set
 
-For Skill Builder work, read only:
+After `AGENTS.md` and `MDTREE.md`, read only:
 
-- `AGENTS_ROLE/COMMON.md`
-- `AGENTS_ROLE/GAMEBULIDER.md`
-- this file
-- exactly one matching `boards/SkillBluePrint/*-blueprint.md`
+- `AGENTS_ROLE/COMMON.md`;
+- `AGENTS_ROLE/GAMEBULIDER.md`;
+- this file;
+- the exact skill Reference MD path provided by the user;
+- exactly one routed Base blueprint for Base work;
+- `boards/SkillBluePrint/enhancement-master-node-blueprint.md` for Enhancement/Master work.
 
-Default path:
+A combined Base plus Enhancement/Master request may read the selected Base blueprint and the Enhancement/Master blueprint. Do not read the other Base blueprints.
 
-- blueprint only
+## Reference-Only Input Rule
 
-Exception-only companion docs are allowed only when the selected blueprint cannot proceed on its own because the task is driven by a scoped row bundle or because row-combination interpretation is itself the blocking issue:
+The exact user-provided skill Reference MD is the only semantic input. Do not require separate ids, parsed values, node bundles, or asset paths.
 
-- `boards/SkillBluePrint/skill-csv-exception-guide.md`
-- `boards/SkillBluePrint/skill-builder-handoff-format.md`
+Derive identity only when all checks agree:
 
-Do not read `AGENTS_ROLE/GAMEBULIDER_IMPLEMENTATION.md` by default for Skill Builder work. The selected blueprint owns the implementation checklist, allowed runtime-code inspection scope, and verification expectations.
+- `monster_id`: directory immediately before `skill` in the Reference path;
+- slot: leading filename token before the first hyphen, normalized to the CSV slot token;
+- `skill_id`: `<monster_id>-<lowercase slot>`;
+- display name and behavior: Reference title, summary, Basic Information, Base Values, and calculation sections.
 
-## Blueprint Selection Rule
+Trait rows, Master rows, and Awakening rows are not Base input. Enhancement/Master authoring uses only the Trait and Master Skill tables; Awakening is excluded.
 
-Select the blueprint named by the user or clearly matched from the requested skill type.
+If the path, title, classification, slot, formulas, or behavior conflict, stop. Do not open a linked Obsidian document or another Reference to repair the input.
 
-Known mappings:
+## Runtime Lifecycle Boundary
 
-- passive, passive skill, always-on passive, stat passive: `boards/SkillBluePrint/passive-stat-blueprint.md`
-- projectile, projectile skill, bullet, missile: `boards/SkillBluePrint/projectile-blueprint.md`
-- BeamSkill, beam, laser, ray, slash-line, `LineAttack`: `boards/SkillBluePrint/BeamSkill-blueprint.md`
-- single attack, one-shot area, instant area, `SingleAttack`: `boards/SkillBluePrint/single-attack-blueprint.md`
-- multi-effect skill, bundled ally effect, choice-gated secondary effect, `monster_skill_effects.csv`: `boards/SkillBluePrint/multi-effect-skill-csv-blueprint.md`
-- area attack, sustained area, ticking area, `AreaAttack`: `boards/SkillBluePrint/area-attack-blueprint.md`
-- zone, area, field, aura, ground effect: `boards/SkillBluePrint/zone-blueprint.md` when that file exists
+Do not restate or author runtime lifecycle algorithms in a blueprint. Existing runtime code owns cast eligibility, cooldown/reload countdown, active/tick progression, projectile and visual cleanup, status expiry, and passive refresh/event dispatch.
 
-Exception-doc usage does not replace blueprint selection.
-Choose the primary blueprint from the base runtime behavior first, then use the exception docs only when the blueprint alone cannot safely continue.
+Blueprints still require the exact data values consumed by that lifecycle when the selected CSV exposes them: cooldown, reload, firing/tick interval, active or status duration, delayed effect timing, and trigger internal cooldown. A code-owned transition is not permission to invent or omit its Reference-owned tuning value.
 
-If no matching blueprint exists, stop and say the blueprint file does not exist.
+## Blueprint Routing
 
-If multiple blueprints could match, stop and ask the user which blueprint owns the skill before reading additional markdown.
+Read the Reference first, then select exactly one Base blueprint:
 
-## Blueprint Authority
+- projectile launch behavior: `boards/SkillBluePrint/projectile-base-blueprint.md`;
+- shield or non-damaging status/stat application: `boards/SkillBluePrint/buff-base-blueprint.md`;
+- one immediate damage execution, including a documented secondary effect: `boards/SkillBluePrint/single-attack-base-blueprint.md`;
+- sustained line/beam damage with duration and tick interval: `boards/SkillBluePrint/line-attack-base-blueprint.md`;
+- sustained area/field damage with duration and tick interval: `boards/SkillBluePrint/area-attack-base-blueprint.md`;
+- passive behavior expressed by Skill-owned nodes: `boards/SkillBluePrint/passive-base-node-blueprint.md`.
 
-The selected blueprint owns:
+All Enhancement and Master requests route to:
 
-- required parsed input;
-- allowed extra markdown reads;
-- allowed runtime code inspection scope;
-- common, partial, and unsupported behavior classification;
-- stop-and-ask rules;
-- verification expectations.
+- `boards/SkillBluePrint/enhancement-master-node-blueprint.md`.
 
-Do not read another skill blueprint unless the selected blueprint explicitly names it.
+If more than one Base family matches or the Reference lacks the facts needed to distinguish them, stop and report the ambiguity.
 
-Do not read MON, DATA, RUN, UI, OPS, archive, or other domain markdown unless the selected blueprint or an inspected failure path explicitly justifies that read.
+## Minimal Authority
 
-## Shared Skill Runtime Policy
+The selected blueprint owns the exact CSV read/edit set. Before reading a CSV, name its path and why it is required.
 
-For skill blueprints that are fundamentally contact-based attack skills:
+Status ids may be resolved only from the uniquely matching `status_effect_label` row in:
 
-- projectile
-- `SingleAttack`
-- `AreaAttack`
+- `Pakuri/Assets/CSVdata/authoring/status/status_effects.csv`.
 
-Builder should prefer prefab-authored hitbox behavior when the runtime path and prefab actually provide collider-based contact.
+Do not invent an id or asset path. Do not inspect unrelated rows, another family, another Reference, linked documentation, boards, archives, old implementations, broad runtime code, prefabs, scenes, or asset folders.
 
-This means:
-
-- projectile contact should stay on the shared projectile path
-- `SingleAttack` contact should stay on the shared prefab-hitbox / shared area-hit path
-- `AreaAttack` / zone contact should stay on the shared prefab-hitbox zone path when the zone prefab provides colliders
-
-Do not redesign those skills back into monster-only fixed fake radii when the shared prefab hitbox path already exists.
-
-Do not force collider-contact structure onto skills that are not fundamentally contact attacks.
-Keep the existing non-contact structure for cases such as:
-
-- explicit target-designated debuffs or marks
-- battlefield-wide or global aura effects
-- other skills whose common path is status/selection/radius logic instead of prefab contact
-
-If a request mixes contact-hitbox behavior and explicit-target or global-effect behavior in one skill, stop and ask whether the user wants:
-
-- one shared reusable extension, or
-- a one-off exception
-
-## Parsed Input Rule
-
-The user or task context may provide the parsed skill data required by the selected blueprint directly.
-
-When parsed data is not provided directly, Skill Builder may derive it only from the minimum active skill-authoring CSV set under `Pakuri/Assets/CSVdata/source/` that is required by the selected blueprint and the requested skill.
-
-Default Skill Builder authority is limited to:
-
-- the selected blueprint
-- parsed skill data explicitly provided by the user or task context when it exists
-- self-routed active skill-authoring CSV files under `Pakuri/Assets/CSVdata/source/` that directly participate in the selected skill's base/choice/effect/trigger contract
-- explicit work paths named by the user
-- files inside those explicit work paths only when the blueprint requires inspection to complete the implementation
-
-Before reading any CSV, Builder must name that CSV in the routing decision and keep the CSV read set minimal.
-
-Do not inspect unrelated CSV, code, references, boards, archives, or old monster implementations to infer missing values or behavior intent.
-
-Allowed alternative:
-
-- a normalized scoped row bundle that follows `boards/SkillBluePrint/skill-builder-handoff-format.md`
-
-Only in that row-bundle exception path, Skill Builder may use:
-
-- `boards/SkillBluePrint/skill-csv-exception-guide.md`
-- `boards/SkillBluePrint/skill-builder-handoff-format.md`
-
-to interpret the provided row bundle.
-
-Reading broad current CSV/code outside the self-routed active skill-authoring CSV set is still a separate exception and is forbidden by default.
-Use it only when the user explicitly instructs Builder to do so.
-
-If the selected blueprint's common contract is insufficient, or the work requires a new CSV file, a new CSV column, reference-driven value discovery, old monster implementation inspection, or a new shared runtime/common-logic extension, stop and ask the user before widening scope.
-
-If required parsed fields, the required scoped row bundle, or the explicit work path set cannot be completed from the explicit input plus the routed active CSV set, stop and report the missing items instead of searching broadly through CSV, reference, archive, or old implementation files.
-
-For routed `monster_skill_triger.csv` `SingleAttack` follow-up rows:
-
-- treat the trigger row as owning a complete damage payload
-- do not assume `damage_multiplier` alone reuses the base skill damage payload
-- when `damage_source=Fixed`, ensure the row has positive `base_damage` or positive `attack_power_coefficient` / `spell_power_coefficient` before concluding the row is valid
-
-## Cooldown Data Policy
-
-When a skill request includes cooldown reduction such as "cooldown -n%" or "cooldown reduction n%", Builder must reuse the existing cooldown CSV authority instead of inventing a new ad hoc field.
-
-Use the already existing cooldown-owned fields that match the requested layer:
-
-- base skill cooldown -> `cooldown_seconds`
-- choice or enhancement cooldown scaling -> `cooldown_multiplier`
-
-Do not add a separate new percentage-only cooldown field when the requested behavior is just scaling or editing existing cooldown authority.
-
-## Unsupported Behavior Rule
-
-If the requested behavior is outside the selected blueprint's common contract, stop and ask whether to implement a one-off exception or design a reusable shared extension.
-
-Do not infer unsupported behavior from old monster-specific code, CSV text, or reference documents unless the user explicitly asks for that discovery work.
+If the Reference lacks an exact required value, or the selected existing contract cannot express the behavior, stop before editing. Scope expansion requires explicit user authority.
 
 ## Routing Decision Log
 
-Before reading the selected blueprint, state:
+Before CSV access, state:
 
-- request class: Skill Builder
-- selected blueprint path
-- exception docs to read next, only when the blueprint alone cannot safely continue
-- markdown files intentionally excluded
-
-The exclusion list should name the skipped axes, such as MON, DATA, RUN, UI, OPS, archive, and other skill blueprints, when those axes were not requested and are not named by an inspected failure path.
+- request class: Base, Enhancement/Master, or combined;
+- exact Reference MD path;
+- derived monster, slot, skill id, and runtime family;
+- selected blueprint or two blueprints for a combined request;
+- exact CSV files and row ownership to read/edit;
+- excluded markdown, family, code, prefab, scene, asset, and unrelated CSV axes.
 
 ## Output Requirements
 
-Skill Builder final output must include:
+Report:
 
-- selected blueprint;
-- whether the request fit the blueprint's common path;
-- consumed parsed fields, or missing parsed fields if work stopped;
-- whether explicit CSV/code discovery was used, or whether the work stayed inside blueprint plus explicit parsed input/path authority;
-- changed runtime, prefab, scene, or data files when implementation occurs;
-- verification results required by the selected blueprint;
-- remaining user-owned Play Mode verification when applicable.
+- consumed Reference and selected blueprint;
+- derived identity and runtime family;
+- routed and changed rows/files;
+- node/trigger ownership when used;
+- targeted CSV validation results;
+- confirmation that no unrelated family, runtime code, prefab, scene, or asset was changed;
+- exact missing value or boundary when stopped.

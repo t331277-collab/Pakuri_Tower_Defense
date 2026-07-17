@@ -19,7 +19,7 @@ This handoff includes existing `Assets/Prefab/Enemy/Skill/Stage1` skills. Stage1
 
 Files and paths inspected:
 
-- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillData.csv`
+- `Pakuri/Assets/CSVdata/authoring/enemy/EnemySkillData.csv`
 - `Pakuri/Assets/CSVdata/source/stage_one_enemies.csv`
 - `Pakuri/Assets/Scripts2/InGame/Enemy/EnemyDefinition.cs`
 - `Pakuri/Assets/Scripts2/InGame/Enemy/EnemyCombatSystem.cs`
@@ -104,7 +104,7 @@ Do not force enemy skills through monster `UnitSkillController` immediately. Cur
 
 Keep:
 
-- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillData.csv`
+- `Pakuri/Assets/CSVdata/authoring/enemy/EnemySkillData.csv`
 
 Required `EnemySkillData.csv` cleanup/addition:
 
@@ -115,12 +115,12 @@ Required `EnemySkillData.csv` cleanup/addition:
 
 Add or route after approval by Builder scope:
 
-- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillNodes.csv`
-- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillNodeParams.csv`
+- `Pakuri/Assets/CSVdata/authoring/enemy/EnemySkillNodes.csv`
+- `Pakuri/Assets/CSVdata/authoring/enemy/EnemySkillNodeParams.csv`
 
 Optional only if needed:
 
-- `Pakuri/Assets/CSVdata/runtime/enemy/EnemySkillTriggers.csv`
+- `Pakuri/Assets/CSVdata/authoring/enemy/EnemySkillTriggers.csv`
 
 Suggested node columns:
 
