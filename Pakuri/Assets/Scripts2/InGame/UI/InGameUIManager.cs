@@ -11,11 +11,21 @@ namespace Pakuri.InGame
     [DisallowMultipleComponent]
     public sealed class InGameUIManager : MonoBehaviour
     {
+        private const int PrisonPartySlotCount = 5;
+
         private readonly List<RewardButtonView> rewardButtons = new List<RewardButtonView>();
+        private readonly PrisonPartySlotView[] prisonPartySlots = new PrisonPartySlotView[PrisonPartySlotCount];
+        private readonly string[] prisonSlotMonsterIds = new string[PrisonPartySlotCount];
 
         [SerializeField] private StageManager stageManager;
         [SerializeField] private SceneEntryManager entryManager;
         [SerializeField] private InGameCombatManager combatManager;
+        [Header("Prison Panel Monster Portraits")]
+        [SerializeField] private Sprite arielPrisonPortrait;
+        [SerializeField] private Sprite evePrisonPortrait;
+        [SerializeField] private Sprite rinPrisonPortrait;
+        [SerializeField] private Sprite seinPrisonPortrait;
+        [SerializeField] private Sprite vegaPrisonPortrait;
         [SerializeField] private Vector2 rewardButtonFirstColumnPosition = new Vector2(-321.97855f, 295f);
         [SerializeField] private float rewardButtonColumnSpacingX = 533.97855f;
         [SerializeField] private float rewardButtonRowSpacingY = 122f;
@@ -29,11 +39,15 @@ namespace Pakuri.InGame
         private Button nextButton;
         private TMP_Text rewardSummaryText;
         private GameObject prisonerChoicePopUp;
-        private Button offeringButton;
-        private Button menifestedButton;
         private TMP_Text stageInfoText;
         private TMP_Text goldInfoText;
         private TMP_Text darkInfoText;
+        private GameObject prisonPanel;
+        private TMP_Text prisonStageInfoText;
+        private TMP_Text prisonGoldInfoText;
+        private TMP_Text prisonDarkInfoText;
+        private Image prisonPrisonerImage;
+        private TMP_Text prisonPrisonerNameText;
         private int shownStage = -1;
         private int shownDay = -1;
         private RewardButtonView activePrisonerButton;
@@ -84,12 +98,11 @@ namespace Pakuri.InGame
             var prisoners = stageManager.PendingPrisonerEnemyIds;
             for (var i = 0; i < prisoners.Count; i++)
             {
-                var capturedIndex = i;
                 var prisonerId = prisoners[i];
                 var button = CreateRewardButton(prisonerTemplateButton, "PrisonerReward", order++);
                 SetButtonLabel(button, $"Prisoner\n{ResolvePrisonerDisplayName(prisonerId)}");
                 var view = RegisterRewardButton(button, RewardKind.Prisoner, 0, prisonerId);
-                button.onClick.AddListener(() => OpenPrisonerChoice(view, capturedIndex));
+                button.onClick.AddListener(() => OpenPrisonPanel(view));
             }
 
             if (stageManager.PendingGoldReward > 0)
@@ -116,7 +129,7 @@ namespace Pakuri.InGame
             RefreshInfo();
         }
 
-        private void OpenPrisonerChoice(RewardButtonView view, int rewardIndex)
+        private void OpenPrisonPanel(RewardButtonView view)
         {
             if (view == null || view.Consumed)
             {
@@ -124,7 +137,10 @@ namespace Pakuri.InGame
             }
 
             activePrisonerButton = view;
-            SetActive(prisonerChoicePopUp, true);
+            SetActive(rewardPanel, false);
+            SetActive(prisonerChoicePopUp, false);
+            SetActive(prisonPanel, true);
+            RefreshPrisonPanel();
         }
 
         private void ClaimMaterialReward(RewardButtonView view, int gold, int darkTrace)
@@ -180,6 +196,24 @@ namespace Pakuri.InGame
                 darkInfoText.gameObject.SetActive(true);
                 darkInfoText.text = $"Dark {Math.Max(0, session != null ? session.DarkTrace : 0)}";
             }
+
+            var refreshPrisonInfo = prisonPanel != null && prisonPanel.activeSelf;
+            if (refreshPrisonInfo && prisonStageInfoText != null)
+            {
+                var stage = stageManager != null ? stageManager.CurrentStage : (session != null ? session.StageIndex : 1);
+                var day = stageManager != null ? stageManager.CurrentDay : (session != null ? session.DayIndex : 1);
+                prisonStageInfoText.text = $"Stage {stage}-{day}";
+            }
+
+            if (refreshPrisonInfo && prisonGoldInfoText != null)
+            {
+                prisonGoldInfoText.text = $"Gold {Math.Max(0, session != null ? session.Gold : 0)}";
+            }
+
+            if (refreshPrisonInfo && prisonDarkInfoText != null)
+            {
+                prisonDarkInfoText.text = $"Dark {Math.Max(0, session != null ? session.DarkTrace : 0)}";
+            }
         }
 
         private void ResolveReferences()
@@ -211,8 +245,7 @@ namespace Pakuri.InGame
             rewardSummaryText = FindText("RewardPanel/Summary");
 
             prisonerChoicePopUp = FindChildObject("PrisonerChoicePopUp");
-            offeringButton = FindButton("PrisonerChoicePopUp/OfferingBtn");
-            menifestedButton = FindButton("PrisonerChoicePopUp/Menifested");
+            ResolvePrisonPanelUi();
 
             var offeringPanel = FindChildObject("OfferingPanel");
             var offeringChoiceButtons = new[]
@@ -225,13 +258,12 @@ namespace Pakuri.InGame
             offeringUI = new OfferingUI(
                 offeringPanel,
                 offeringChoiceButtons,
-                prisonerChoicePopUp,
-                rewardPanel,
                 ResolveSession,
                 ResolveCatalog,
                 ResolveCombatManager,
                 () => activePrisonerButton,
                 ConsumePrisonerButton,
+                CompletePrisonAction,
                 RefreshInfo);
 
             menifestUI = new MenifestUI(
@@ -243,13 +275,13 @@ namespace Pakuri.InGame
                 FindText("MenifestedSuccessPopUp/MonsterName"),
                 FindText("MenifestedSuccessPopUp/MonsterDesc"),
                 FindImage("MenifestedSuccessPopUp/MonsterImage"),
-                prisonerChoicePopUp,
                 ResolveSession,
                 ResolveCatalog,
                 ResolveStageManager,
                 ResolveEntryManager,
                 () => activePrisonerButton,
                 ConsumePrisonerButton,
+                CompletePrisonAction,
                 RefreshInfo);
 
             stageInfoText = FindText("Info/StageInfo");
@@ -257,29 +289,220 @@ namespace Pakuri.InGame
             darkInfoText = FindText("Info/Darkinfo");
         }
 
+        private void ResolvePrisonPanelUi()
+        {
+            prisonPanel = FindChildObject("PrisonPanel");
+            prisonStageInfoText = FindText("PrisonPanel/StageSum");
+            prisonGoldInfoText = FindText("PrisonPanel/Goldinfo");
+            prisonDarkInfoText = FindText("PrisonPanel/Darkinfo");
+            prisonPrisonerImage = FindImage("PrisonPanel/Prisonal/Image");
+            prisonPrisonerNameText = FindText("PrisonPanel/Prisonal/Image/Name");
+
+            for (var i = 0; i < prisonPartySlots.Length; i++)
+            {
+                var slotPath = $"PrisonPanel/{i + 1}P";
+                prisonPartySlots[i] = new PrisonPartySlotView(
+                    FindImage($"{slotPath}/Image"),
+                    FindText($"{slotPath}/Image/Name"),
+                    FindButton($"{slotPath}/Button"),
+                    FindChildObject($"{slotPath}/Button/Reinforcement"),
+                    FindChildObject($"{slotPath}/Button/Menifested"));
+            }
+        }
+
+        private void RefreshPrisonPanel()
+        {
+            RefreshInfo();
+
+            var session = ResolveSession();
+            var partyMonsterIds = ResolvePrisonPartyMonsterIds(session);
+            for (var i = 0; i < prisonPartySlots.Length; i++)
+            {
+                var isOccupied = i < partyMonsterIds.Count;
+                var isNextManifestSlot = partyMonsterIds.Count > 0
+                    && partyMonsterIds.Count < PrisonPartySlotCount
+                    && i == partyMonsterIds.Count;
+                var monsterId = isOccupied ? partyMonsterIds[i] : string.Empty;
+                prisonSlotMonsterIds[i] = monsterId;
+                RefreshPrisonPartySlot(prisonPartySlots[i], monsterId, isOccupied, isNextManifestSlot);
+            }
+
+            RefreshSelectedPrisoner();
+        }
+
+        private List<string> ResolvePrisonPartyMonsterIds(RunSession session)
+        {
+            var monsterIds = new List<string>(PrisonPartySlotCount);
+            if (session == null || string.IsNullOrWhiteSpace(session.SelectedMonsterId))
+            {
+                return monsterIds;
+            }
+
+            monsterIds.Add(session.SelectedMonsterId);
+            for (var i = 0; i < session.ManifestedMonsterIds.Count && monsterIds.Count < PrisonPartySlotCount; i++)
+            {
+                var monsterId = session.ManifestedMonsterIds[i];
+                if (!string.IsNullOrWhiteSpace(monsterId))
+                {
+                    monsterIds.Add(monsterId);
+                }
+            }
+
+            return monsterIds;
+        }
+
+        private void RefreshPrisonPartySlot(
+            PrisonPartySlotView slot,
+            string monsterId,
+            bool isOccupied,
+            bool isNextManifestSlot)
+        {
+            if (slot == null)
+            {
+                return;
+            }
+
+            SetActive(slot.Image != null ? slot.Image.gameObject : null, isOccupied);
+            SetActive(slot.Button != null ? slot.Button.gameObject : null, isOccupied || isNextManifestSlot);
+            SetActive(slot.ReinforcementLabel, isOccupied);
+            SetActive(slot.MenifestedLabel, isNextManifestSlot);
+
+            if (slot.Button != null)
+            {
+                slot.Button.interactable = isOccupied || isNextManifestSlot;
+            }
+
+            if (!isOccupied)
+            {
+                return;
+            }
+
+            var monster = PakuriDataManager.Instance.ResolveMonster(monsterId, ResolveCatalog());
+            if (slot.NameText != null)
+            {
+                slot.NameText.text = monster != null && !string.IsNullOrWhiteSpace(monster.DisplayName)
+                    ? monster.DisplayName
+                    : monsterId;
+            }
+
+            if (slot.Image != null)
+            {
+                var portrait = ResolveMonsterPortrait(monsterId, monster);
+                slot.Image.sprite = portrait;
+                slot.Image.color = portrait != null ? Color.white : new Color(0f, 0f, 0f, 0.3f);
+            }
+        }
+
+        private void RefreshSelectedPrisoner()
+        {
+            var prisonerId = activePrisonerButton != null ? activePrisonerButton.PrisonerId : string.Empty;
+            var hasPrisoner = !string.IsNullOrWhiteSpace(prisonerId);
+            SetActive(prisonPrisonerImage != null ? prisonPrisonerImage.gameObject : null, hasPrisoner);
+            if (!hasPrisoner)
+            {
+                return;
+            }
+
+            if (prisonPrisonerNameText != null)
+            {
+                prisonPrisonerNameText.text = ResolvePrisonerDisplayName(prisonerId);
+            }
+
+            if (prisonPrisonerImage != null)
+            {
+                var unitSpawnManager = entryManager != null ? entryManager.UnitSpawnManager : null;
+                var portrait = unitSpawnManager != null
+                    ? unitSpawnManager.ResolveEnemyPortraitSprite(prisonerId)
+                    : null;
+                prisonPrisonerImage.sprite = portrait;
+                prisonPrisonerImage.color = portrait != null ? Color.white : new Color(0f, 0f, 0f, 0.3f);
+            }
+        }
+
+        private Sprite ResolveMonsterPortrait(string monsterId, MonsterDefinition monster)
+        {
+            if (string.Equals(monsterId, "ariel", StringComparison.OrdinalIgnoreCase))
+            {
+                return arielPrisonPortrait;
+            }
+
+            if (string.Equals(monsterId, "eve", StringComparison.OrdinalIgnoreCase))
+            {
+                return evePrisonPortrait;
+            }
+
+            if (string.Equals(monsterId, "rin", StringComparison.OrdinalIgnoreCase))
+            {
+                return rinPrisonPortrait;
+            }
+
+            if (string.Equals(monsterId, "sein", StringComparison.OrdinalIgnoreCase))
+            {
+                return seinPrisonPortrait;
+            }
+
+            if (string.Equals(monsterId, "vega", StringComparison.OrdinalIgnoreCase))
+            {
+                return vegaPrisonPortrait;
+            }
+
+            return monster != null ? monster.UnitSprite : null;
+        }
+
         private void BindStaticButtons()
         {
             BindButton(nextButton, ContinueToNextDay);
-            BindButton(offeringButton, OpenOfferingFromPrisonerChoice);
-            BindButton(menifestedButton, TryManifestFromPrisonerChoice);
+
+            for (var i = 0; i < prisonPartySlots.Length; i++)
+            {
+                var capturedIndex = i;
+                BindButton(prisonPartySlots[i]?.Button, () => ActivatePrisonPartySlot(capturedIndex));
+            }
         }
 
-        private void OpenOfferingFromPrisonerChoice()
+        private void ActivatePrisonPartySlot(int slotIndex)
         {
-            offeringUI?.OpenOfferingPanel();
-            SetActive(prisonerChoicePopUp, false);
+            if (slotIndex < 0 || slotIndex >= prisonPartySlots.Length)
+            {
+                return;
+            }
+
+            var monsterId = prisonSlotMonsterIds[slotIndex];
+            if (!string.IsNullOrWhiteSpace(monsterId))
+            {
+                if (offeringUI != null && offeringUI.OpenOfferingPanel(monsterId))
+                {
+                    SetActive(prisonPanel, false);
+                }
+
+                return;
+            }
+
+            var session = ResolveSession();
+            var occupiedCount = ResolvePrisonPartyMonsterIds(session).Count;
+            if (slotIndex != occupiedCount || menifestUI == null || !menifestUI.TryManifestPrisoner())
+            {
+                return;
+            }
+
+            SetActive(prisonPanel, false);
         }
 
-        private void TryManifestFromPrisonerChoice()
+        private void CompletePrisonAction()
         {
-            menifestUI?.TryManifestPrisoner();
+            SetActive(prisonPanel, false);
             SetActive(prisonerChoicePopUp, false);
+            offeringUI?.Hide();
+            menifestUI?.Hide();
+            SetActive(rewardPanel, true);
+            RefreshInfo();
         }
 
         private void HideTransientPanels()
         {
             SetActive(rewardPanel, false);
             SetActive(prisonerChoicePopUp, false);
+            SetActive(prisonPanel, false);
             offeringUI?.Hide();
             menifestUI?.Hide();
         }
@@ -372,7 +595,7 @@ namespace Pakuri.InGame
         private string ResolvePrisonerDisplayName(string prisonerId)
         {
             var catalog = ResolveCatalog();
-            var enemy = catalog != null ? catalog.GetStageOneEnemyById(prisonerId) : null;
+            var enemy = catalog != null ? catalog.GetEnemyById(prisonerId) : null;
             if (enemy != null && !string.IsNullOrWhiteSpace(enemy.DisplayName))
             {
                 return enemy.DisplayName;
@@ -484,6 +707,29 @@ namespace Pakuri.InGame
             return null;
         }
 
+        private sealed class PrisonPartySlotView
+        {
+            public PrisonPartySlotView(
+                Image image,
+                TMP_Text nameText,
+                Button button,
+                GameObject reinforcementLabel,
+                GameObject menifestedLabel)
+            {
+                Image = image;
+                NameText = nameText;
+                Button = button;
+                ReinforcementLabel = reinforcementLabel;
+                MenifestedLabel = menifestedLabel;
+            }
+
+            public Image Image { get; }
+            public TMP_Text NameText { get; }
+            public Button Button { get; }
+            public GameObject ReinforcementLabel { get; }
+            public GameObject MenifestedLabel { get; }
+        }
+
         internal sealed class RewardButtonView
         {
             private readonly Color originalColor;
@@ -538,49 +784,54 @@ namespace Pakuri.InGame
         private readonly Button[] offeringChoiceButtons;
         private readonly OfferingButtonView[] offeringButtonViews;
         private readonly GameObject offeringPanel;
-        private readonly GameObject prisonerChoicePopUp;
-        private readonly GameObject rewardPanel;
         private readonly Func<RunSession> resolveSession;
         private readonly Func<GameDataCatalog> resolveCatalog;
         private readonly Func<InGameCombatManager> resolveCombatManager;
         private readonly Func<InGameUIManager.RewardButtonView> resolveActivePrisonerButton;
         private readonly Action consumePrisonerButton;
+        private readonly Action completePrisonAction;
         private readonly Action refreshInfo;
 
         public OfferingUI(
             GameObject offeringPanel,
             Button[] offeringChoiceButtons,
-            GameObject prisonerChoicePopUp,
-            GameObject rewardPanel,
             Func<RunSession> resolveSession,
             Func<GameDataCatalog> resolveCatalog,
             Func<InGameCombatManager> resolveCombatManager,
             Func<InGameUIManager.RewardButtonView> resolveActivePrisonerButton,
             Action consumePrisonerButton,
+            Action completePrisonAction,
             Action refreshInfo)
         {
             this.offeringPanel = offeringPanel;
             this.offeringChoiceButtons = offeringChoiceButtons ?? Array.Empty<Button>();
             offeringButtonViews = ResolveButtonViews(this.offeringChoiceButtons);
-            this.prisonerChoicePopUp = prisonerChoicePopUp;
-            this.rewardPanel = rewardPanel;
             this.resolveSession = resolveSession;
             this.resolveCatalog = resolveCatalog;
             this.resolveCombatManager = resolveCombatManager;
             this.resolveActivePrisonerButton = resolveActivePrisonerButton;
             this.consumePrisonerButton = consumePrisonerButton;
+            this.completePrisonAction = completePrisonAction;
             this.refreshInfo = refreshInfo;
         }
 
-        public void OpenOfferingPanel()
+        public bool OpenOfferingPanel(string monsterId)
         {
             var activePrisonerButton = resolveActivePrisonerButton?.Invoke();
-            if (activePrisonerButton == null || activePrisonerButton.Consumed)
+            if (activePrisonerButton == null
+                || activePrisonerButton.Consumed
+                || string.IsNullOrWhiteSpace(monsterId))
             {
-                return;
+                return false;
             }
 
-            BuildOfferingChoices();
+            BuildOfferingChoices(monsterId);
+            if (offeringChoices.Count == 0)
+            {
+                Debug.LogWarning($"Offering has no available choices for monster '{monsterId}'.");
+                return false;
+            }
+
             SetActive(offeringPanel, true);
 
             for (var i = 0; i < offeringChoiceButtons.Length; i++)
@@ -606,6 +857,8 @@ namespace Pakuri.InGame
                 BindChoiceButton(buttonView, choice);
                 button.onClick.AddListener(() => CommitOfferingChoice(capturedIndex));
             }
+
+            return true;
         }
 
         public void Hide()
@@ -649,12 +902,11 @@ namespace Pakuri.InGame
             RefreshRuntimeSkillModels();
             consumePrisonerButton?.Invoke();
             SetActive(offeringPanel, false);
-            SetActive(prisonerChoicePopUp, false);
-            SetActive(rewardPanel, true);
             refreshInfo?.Invoke();
+            completePrisonAction?.Invoke();
         }
 
-        private void BuildOfferingChoices()
+        private void BuildOfferingChoices(string monsterId)
         {
             offeringChoices.Clear();
             var session = resolveSession?.Invoke();
@@ -663,15 +915,16 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var targets = ResolveOfferingTargets(session);
-            for (var i = 0; i < targets.Count; i++)
+            var monster = PakuriDataManager.Instance.ResolveMonster(monsterId, resolveCatalog?.Invoke());
+            if (monster == null)
             {
-                var monster = targets[i];
-                var state = session.EnsurePartyMemberState(monster);
-                AddActiveSkillChoices(session, monster, state);
-                AddPassiveSkillChoices(session, monster, state);
-                AddEnhancementChoices(session, monster, state);
+                return;
             }
+
+            var state = session.EnsurePartyMemberState(monster);
+            AddActiveSkillChoices(session, monster, state);
+            AddPassiveSkillChoices(session, monster, state);
+            AddEnhancementChoices(session, monster, state);
 
             ShuffleOfferingChoices();
             while (offeringChoices.Count > MaxOfferingChoices)
@@ -977,37 +1230,6 @@ namespace Pakuri.InGame
                 default:
                     return true;
             }
-        }
-
-        private System.Collections.Generic.List<MonsterDefinition> ResolveOfferingTargets(RunSession session)
-        {
-            var targets = new System.Collections.Generic.List<MonsterDefinition>();
-            var catalog = resolveCatalog?.Invoke();
-            AddOfferingTarget(targets, PakuriDataManager.Instance.ResolveMonster(session.SelectedMonsterId, catalog));
-            for (var i = 0; i < session.ManifestedMonsterIds.Count; i++)
-            {
-                AddOfferingTarget(targets, PakuriDataManager.Instance.ResolveMonster(session.ManifestedMonsterIds[i], catalog));
-            }
-
-            return targets;
-        }
-
-        private static void AddOfferingTarget(System.Collections.Generic.List<MonsterDefinition> targets, MonsterDefinition monster)
-        {
-            if (targets == null || monster == null || string.IsNullOrWhiteSpace(monster.MonsterId))
-            {
-                return;
-            }
-
-            for (var i = 0; i < targets.Count; i++)
-            {
-                if (targets[i] != null && string.Equals(targets[i].MonsterId, monster.MonsterId, StringComparison.OrdinalIgnoreCase))
-                {
-                    return;
-                }
-            }
-
-            targets.Add(monster);
         }
 
         private void RefreshRuntimeSkillModels()
@@ -1371,13 +1593,13 @@ namespace Pakuri.InGame
         private readonly TMP_Text monsterNameText;
         private readonly TMP_Text monsterDescText;
         private readonly Image monsterImage;
-        private readonly GameObject prisonerChoicePopUp;
         private readonly Func<RunSession> resolveSession;
         private readonly Func<GameDataCatalog> resolveCatalog;
         private readonly Func<StageManager> resolveStageManager;
         private readonly Func<SceneEntryManager> resolveEntryManager;
         private readonly Func<InGameUIManager.RewardButtonView> resolveActivePrisonerButton;
         private readonly Action consumePrisonerButton;
+        private readonly Action completePrisonAction;
         private readonly Action refreshInfo;
 
         private MonsterDefinition pendingManifestMonster;
@@ -1391,13 +1613,13 @@ namespace Pakuri.InGame
             TMP_Text monsterNameText,
             TMP_Text monsterDescText,
             Image monsterImage,
-            GameObject prisonerChoicePopUp,
             Func<RunSession> resolveSession,
             Func<GameDataCatalog> resolveCatalog,
             Func<StageManager> resolveStageManager,
             Func<SceneEntryManager> resolveEntryManager,
             Func<InGameUIManager.RewardButtonView> resolveActivePrisonerButton,
             Action consumePrisonerButton,
+            Action completePrisonAction,
             Action refreshInfo)
         {
             this.manifestedFailPopUp = manifestedFailPopUp;
@@ -1408,32 +1630,31 @@ namespace Pakuri.InGame
             this.monsterNameText = monsterNameText;
             this.monsterDescText = monsterDescText;
             this.monsterImage = monsterImage;
-            this.prisonerChoicePopUp = prisonerChoicePopUp;
             this.resolveSession = resolveSession;
             this.resolveCatalog = resolveCatalog;
             this.resolveStageManager = resolveStageManager;
             this.resolveEntryManager = resolveEntryManager;
             this.resolveActivePrisonerButton = resolveActivePrisonerButton;
             this.consumePrisonerButton = consumePrisonerButton;
+            this.completePrisonAction = completePrisonAction;
             this.refreshInfo = refreshInfo;
 
-            BindButton(this.manifestedFailBackButton, () => SetActive(this.manifestedFailPopUp, false));
+            BindButton(this.manifestedFailBackButton, CompleteAfterFailure);
             BindButton(this.dontChoiceButton, SkipManifestChoice);
             BindButton(this.choiceButton, CommitManifestChoice);
         }
 
-        public void TryManifestPrisoner()
+        public bool TryManifestPrisoner()
         {
             var session = resolveSession?.Invoke();
             var activePrisonerButton = resolveActivePrisonerButton?.Invoke();
             if (session == null || activePrisonerButton == null || activePrisonerButton.Consumed)
             {
-                return;
+                return false;
             }
 
             session.ClaimPrisonerReward(activePrisonerButton.PrisonerId);
             consumePrisonerButton?.Invoke();
-            SetActive(prisonerChoicePopUp, false);
 
             pendingManifestMonster = ResolveNextManifestCandidate(session);
             var stageManager = resolveStageManager?.Invoke();
@@ -1442,10 +1663,11 @@ namespace Pakuri.InGame
             if (!succeeded)
             {
                 SetActive(manifestedFailPopUp, true);
-                return;
+                return true;
             }
 
             ShowManifestSuccessPopup(pendingManifestMonster);
+            return true;
         }
 
         public void Hide()
@@ -1479,7 +1701,14 @@ namespace Pakuri.InGame
         {
             pendingManifestMonster = null;
             SetActive(manifestedSuccessPopUp, false);
-            SetActive(prisonerChoicePopUp, false);
+            completePrisonAction?.Invoke();
+        }
+
+        private void CompleteAfterFailure()
+        {
+            pendingManifestMonster = null;
+            SetActive(manifestedFailPopUp, false);
+            completePrisonAction?.Invoke();
         }
 
         private void CommitManifestChoice()
@@ -1500,8 +1729,8 @@ namespace Pakuri.InGame
 
             pendingManifestMonster = null;
             SetActive(manifestedSuccessPopUp, false);
-            SetActive(prisonerChoicePopUp, false);
             refreshInfo?.Invoke();
+            completePrisonAction?.Invoke();
         }
 
         private MonsterDefinition ResolveNextManifestCandidate(RunSession session)

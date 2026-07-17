@@ -85,4 +85,4 @@ Other Effect nodes may define target, condition, lifetime, payload, or visual. I
 - run the existing targeted CSV validation when available;
 - confirm the diff contains only the routed Choice and graph rows.
 
-Do not run runtime/editor builds for this data-only path. Report changed rows and validation results, or the exact missing values that caused a stop.
+Do not run runtime/editor builds for this data-only path.

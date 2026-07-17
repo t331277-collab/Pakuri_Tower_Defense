@@ -56,6 +56,7 @@ Implemented and locally verified.
 - `area-attack-base-blueprint.md` no longer asks for magazine/reload values because the selected AreaAttack authoring contract does not use them.
 - All six Base blueprints now spell out the Reference-derived identity as `monster_id`, slot, and `skill_id` instead of the opaque phrase "skill identity defined by GAMEBULIDER_SKILL.md".
 - `GAMEBULIDER_SKILL.md` now centralizes the lifecycle boundary: runtime code owns state transitions and cleanup, while blueprints still require CSV-backed tuning values such as cooldown, duration, interval, reload, delay, and trigger internal cooldown.
+- `GAMEBULIDER_SKILL.md` is now the sole final-output contract for Skill Builder work. Blueprints retain implementation and family-specific verification rules only; the remaining output instruction was removed from `enhancement-master-node-blueprint.md`.
 - Inspected code evidence: `InGameSkillDefinitionMapper.cs` maps CSV cooldown/active duration/tick interval/magazine/reload into `SkillData`; `SkillRuntimeInstance.cs` owns countdown and recovery transitions; Beam/Zone/Support executors consume mapped duration/interval/status duration; projectile and SingleAttack visual lifetimes use runtime resolvers; Passive effects refresh through `InGameCombatManager` and `InGamePassiveEffectRuntime`.
 - Final checks reported seven active blueprints, `utf8Errors=0`, `trailingWhitespace=0`, 55 concrete documented paths with `missing=0`, no removed oversized blueprint sections, and no stale single-blueprint routing phrase.
 - `git diff --check` passed for the routed policy/blueprint files; Git emitted only LF-to-CRLF working-copy warnings.
@@ -66,6 +67,7 @@ Implemented and locally verified.
 - 2026-07-17: User chose separate Base blueprints because family CSV columns differ and Passive uses Skill-owned nodes.
 - 2026-07-17: User declared the exact skill Reference MD to be the entire user input and supplied seven active-skill examples for routing and identity simulation.
 - 2026-07-17: User removed the irrelevant AreaAttack magazine/reload instruction and requested clarification of identity and lifecycle ownership; the documentation was made explicit and lifecycle rules were centralized instead of duplicated per blueprint.
+- 2026-07-17: User requested one owner for Skill Builder final-output requirements; output ownership was centralized in `GAMEBULIDER_SKILL.md` and removed from the selected blueprints.
 
 ## Task: 2026-07-17 Single Enhancement/Master Node Blueprint Routing
 

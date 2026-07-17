@@ -5,6 +5,48 @@
 - This active file now keeps only the current runtime prefab/catalog wiring still useful for day-to-day work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-17 PrisonPanel Portrait Asset Wiring
+
+### Task title
+
+Wire player and prisoner portrait assets into the authored PrisonPanel without adding CSV asset columns.
+
+### Goals
+
+- Serialize the five user-selected player portrait sprites on the active `InGameUIManager` scene component.
+- Reuse current enemy prefab root sprites for Stage 1/2 prisoner portraits.
+- Keep prisoner Korean names owned by the existing enemy CSV `display_name` values.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV schema or runtime asset-catalog entry was added.
+- Enemy combat prefab bindings remain the portrait mapping authority for prisoner images.
+- Unity Play Mode visual verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and Unity-MCP validated; user Play Mode visual verification pending.
+
+### Next Actions
+
+- User verifies aspect/cropping and portrait clarity for all five player units and Stage 1/2 prisoners.
+
+### Evidence
+
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` serializes the requested Ariel, Eve, Rin, Sein, and Vega Sprite GUIDs on `Pakuri.InGame.InGameUIManager`.
+- Unity-MCP component inspection resolved those five references back to the exact requested asset paths.
+- `Pakuri/Assets/Scripts2/InGame/Core/EnemySpawnManger.cs` exposes `ResolveEnemyPortraitSprite(...)`, which reads the root SpriteRenderer from the already routed enemy prefab.
+- Unity scene validation reported 0 missing scripts, 0 broken prefabs, and 0 total issues.
+
+### History
+
+- 2026-07-17: Code Builder connected the requested player images and existing enemy prefab images to PrisonPanel presentation.
+
 ## Task: 2026-07-17 Enemy Source Catalog Simplification
 
 ### Task title

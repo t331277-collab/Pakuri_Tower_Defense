@@ -85,6 +85,8 @@ Before CSV access, state:
 
 ## Output Requirements
 
+This section is the only final-output contract for Skill Builder work. Selected blueprints define implementation and verification rules only and must not add separate final-output requirements.
+
 Report:
 
 - consumed Reference and selected blueprint;

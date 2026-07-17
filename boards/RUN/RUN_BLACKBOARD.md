@@ -5,6 +5,49 @@
 - This active file now keeps only the current `NewRunScene` authority split and the surviving new-scene flow baseline.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-17 PrisonPanel Run-State Binding
+
+### Task title
+
+Bind PrisonPanel party progression to the existing RunSession manifestation order.
+
+### Goals
+
+- Keep 1P owned by `SelectedMonsterId` and 2P-5P owned by `ManifestedMonsterIds` append order.
+- Permit manifestation only in the first empty party slot.
+- Preserve the existing prisoner-consumption, success roll, and random unowned player-monster candidate logic.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No RunSession schema or manifestation probability rule changed.
+- Offering and manifestation still consume the active prisoner reward through the existing reward view.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated; user Play Mode verification pending.
+
+### Next Actions
+
+- User verifies party order and spawn slot order after multiple successful manifestations.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` derives PrisonPanel slots from `SelectedMonsterId` plus `ManifestedMonsterIds` and enables only index `partyCount` for Menifested.
+- `MenifestUI.ResolveNextManifestCandidate(...)`, `PendingManifestSuccessChance`, `RecordManifestedMonster(...)`, and spawn slot computation remain the existing manifestation authorities.
+- Failure-back, success-skip, and success-confirm now all return to RewardPanel through `CompletePrisonAction()`.
+- Runtime/editor builds passed with 0 errors; Unity scene validation reported 0 issues.
+
+### History
+
+- 2026-07-17: User confirmed the prisoner remains a material and successful manifestation still yields a random unowned player unit.
+- 2026-07-17: Code Builder connected that unchanged run logic to the sequential PrisonPanel slot UI.
+
 ## Task: 2026-07-17 Enemy Direct Slot Runtime Handoff
 
 ### Task title

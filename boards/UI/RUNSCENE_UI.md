@@ -10,6 +10,49 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - This active file now keeps only the current `NewRunScene` UI behavior still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-17 PrisonPanel Party And Prisoner UI
+
+### Task title
+
+Drive the authored PrisonPanel from current run and prisoner reward state.
+
+### Goals
+
+- Show `Stage N-N`, current Gold/Dark, the selected monster plus manifested monsters, and the selected prisoner.
+- Show Reinforcement for occupied slots, Menifested only on the first empty slot, and disable later empty slot buttons.
+- Restrict Offering candidates to the monster represented by the clicked occupied slot.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Party order remains `SelectedMonsterId` followed by `ManifestedMonsterIds`.
+- Player portraits use the five user-provided Sprite assets; prisoner portraits reuse the root SpriteRenderer of the existing enemy prefab binding.
+- Unity Play Mode gameplay and visual verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated; user Play Mode verification pending.
+
+### Next Actions
+
+- User verifies every selected starting monster portrait/name, sequential slot activation, Stage 1/2 prisoner portrait/name, and per-unit Offering filtering.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` builds five slot views from the inspected UGUI hierarchy and renders them from `RunSession`.
+- `OfferingUI.OpenOfferingPanel(string monsterId)` now builds candidates only for the passed monster.
+- `MenifestUI` returns through one completion callback after failure-back, success-skip, or success-confirm.
+- Unity-MCP verified the five serialized Sprite paths and saved `Canvas/PrisonPanel` with `activeSelf=false`.
+- Both C# builds passed with 0 errors; Unity script/scene/console checks found no errors.
+
+### History
+
+- 2026-07-17: Code Builder implemented the user-approved PrisonPanel party, reinforcement, manifestation, and prisoner presentation flow.
+
 ## Task: 2026-07-15 DebugPanel Number-8 Toggle
 
 ### Task title

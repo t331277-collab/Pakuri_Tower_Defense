@@ -5,6 +5,46 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-17 Stage 1 Boss Health Multiplier Retuning
+
+### Task title
+
+Retune Stage 1 normal boss candidates and fixed midboss health multipliers by day range.
+
+### Goals
+
+- Set Stage 1 Day 1-5 applicable boss rows to a `3-5` health multiplier range.
+- Set Stage 1 Day 6-10 applicable boss rows to a `6-10` health multiplier range.
+- Preserve Stage 1 non-boss escorts, Day 11, and all Stage 2 rows.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Change only `boss_health_multiplier_min` and `boss_health_multiplier_max` on Stage 1 rows selected as a boss candidate or guaranteed boss for Day 1-10.
+- Do not change CSV schema, encounter composition, prisoner flags, or notes.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and structurally validated.
+
+### Next Actions
+
+- User verifies the revised Stage 1 boss durability curve in Unity Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/CSVdata/stage_flow/StageEncounter.csv` contains 24 applicable Stage 1 Day 1-10 boss rows: Day 1-5 validate as `3-5`, and Day 6-10 validate as `6-10`.
+- CSV validation reports 14 header fields, 60 data rows, and zero malformed-width rows.
+- Day 5 and Day 10 non-boss escort rows remain `1-1`; Stage 1 Day 11 and all Stage 2 rows are outside the diff.
+
+### History
+
+- 2026-07-17: Code Builder applied the user-approved Stage 1 boss health multiplier ranges without changing unrelated encounters.
+
 ## Task: 2026-07-17 Enemy CSV Contract Simplification
 
 ### Task title

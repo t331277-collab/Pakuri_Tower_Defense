@@ -4,6 +4,48 @@
 - Older UI cleanup history remains in that snapshot and earlier archive bundles.
 - This active file now keeps only the surviving new-scene UI flow baseline.
 
+## Task: 2026-07-17 PrisonPanel Reward Flow
+
+### Task title
+
+Replace the prisoner reward popup entry with the authored `Canvas/PrisonPanel` flow.
+
+### Goals
+
+- Open `PrisonPanel` from a prisoner reward and return to `RewardPanel` after Offering or Menifest completion.
+- Render the current stage, resources, ordered party slots, and selected prisoner.
+- Keep only the next empty party slot available for manifestation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- The existing `PrisonerChoicePopUp` remains in the scene but is no longer the prisoner reward entry path.
+- Unity Play Mode gameplay and visual verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated; user Play Mode verification pending.
+
+### Next Actions
+
+- User verifies RewardPanel → PrisonPanel → Offering/Menifest → RewardPanel navigation in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts2/InGame/UI/InGameUIManager.cs` resolves and binds `PrisonPanel/1P` through `5P`, `Prisonal`, `StageSum`, `Goldinfo`, and `Darkinfo`.
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` stores `PrisonPanel` inactive and serializes all five requested player portrait sprites on `InGameUIManager`.
+- Runtime and editor C# builds passed with 0 errors; existing MSB3277 warnings remained.
+- Unity script validation returned 0 errors, scene validation returned 0 issues, and the error-only console query returned 0 entries.
+
+### History
+
+- 2026-07-17: User approved retaining the existing random player-unit manifestation logic and requested Code Builder implementation.
+- 2026-07-17: Code Builder connected the authored PrisonPanel hierarchy to the active reward flow.
+
 ## Task: 2026-07-15 DebugPanel Keyboard Toggle
 
 ### Task title

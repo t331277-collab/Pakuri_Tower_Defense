@@ -60,6 +60,14 @@ namespace Pakuri.InGame
         public float EnemySpawnMinY => enemySpawnMinY;
         public float EnemySpawnMaxY => enemySpawnMaxY;
 
+        /// <summary>Returns the root unit sprite from the existing enemy-id prefab binding.</summary>
+        public Sprite ResolveEnemyPortraitSprite(string enemyId)
+        {
+            var prefab = ResolveEnemyPrefab(enemyId);
+            var spriteRenderer = prefab != null ? prefab.GetComponent<SpriteRenderer>() : null;
+            return spriteRenderer != null ? spriteRenderer.sprite : null;
+        }
+
         [Serializable]
         private sealed class EnemyPrefabBinding
         {
