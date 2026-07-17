@@ -81,7 +81,6 @@ namespace Pakuri.InGame
         public int LastEnemyAttackAttemptCount => enemyCombatSystem.LastAttackAttemptCount;
         public int LastSkillExecutionRoutedCount => skillExecution.LastRoutedCount;
         public int LastSkillExecutionRejectedCount => skillExecution.LastRejectedCount;
-        public int SkillChoiceModifierRecordCount => 0;
         public bool PlayerAutoSkillEnabled => playerAutoSkillEnabled;
 
         private void Awake()

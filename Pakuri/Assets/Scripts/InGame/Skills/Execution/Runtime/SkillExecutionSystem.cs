@@ -16,11 +16,6 @@ namespace Pakuri.InGame
 
         public int LastRoutedCount { get; private set; }
         public int LastRejectedCount { get; private set; }
-        public int ModifierRecordCount => 0;
-
-        public void SetChoiceModifierLibrary(SkillChoiceModifierLibrary library)
-        {
-        }
         public void Tick(
             UnitRosterService roster,
             InGameCombatManager combatManager,

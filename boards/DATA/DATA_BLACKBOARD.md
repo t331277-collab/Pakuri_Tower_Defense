@@ -3624,3 +3624,50 @@ Implemented and validated.
 
 - 2026-07-17: Code Builder performed the GUID-preserving root move, deleted verified zero-row node inputs, migrated active path references, and validated the generated runtime catalogs.
 - 2026-07-17: Code Builder restored unrelated project/package/URP changes caused by an initial older-Editor validation launch; those files have zero content diff.
+
+## Task: 2026-07-17 Remove Legacy Skill Choice Modifier Runtime
+
+### Task title
+
+Remove the disconnected `SkillChoiceModifierLibrary` runtime path and its empty compatibility API.
+
+### Goals
+
+- Delete the unused `Skills/Execution/Modifiers` scripts and Unity metadata.
+- Remove the empty modifier-library setter and hardcoded zero-count properties.
+- Preserve the active `SkillChoiceDefinition -> SkillExecutionSnapshot` choice application path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not change authoring CSV, runtime catalog, prefab, scene, or live choice behavior.
+- Remove only symbols proven disconnected by repository-wide source search.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified.
+
+### Next Actions
+
+- User verifies in Play Mode that learned Enhancement/Master choices still affect their target skills.
+- Future choice modifiers continue through `SkillChoiceDefinition` and `SkillExecutionSnapshot`; do not restore the deleted standalone modifier CSV parser/library path.
+
+### Evidence
+
+- Deleted `Pakuri/Assets/Scripts2/InGame/Skills/Execution/Modifiers/SkillChoiceModifierLibrary.cs`, `SkillChoiceModifierRecord.cs`, their `.meta` files, and the folder `.meta`; the `Modifiers` directory no longer exists.
+- Removed `SkillExecutionSystem.ModifierRecordCount`, the empty `SetChoiceModifierLibrary(...)`, and `InGameCombatManager.SkillChoiceModifierRecordCount`.
+- Search for `SkillChoiceModifierLibrary|SkillChoiceModifierRecord|SetChoiceModifierLibrary|ModifierRecordCount|SkillChoiceModifierRecordCount` under `Pakuri/Assets/Scripts2` returned zero references.
+- The live resolver still loads chosen IDs through `PakuriDataManager.TryGetData(..., out SkillChoiceDefinition)` and applies them with `SkillExecutionSnapshot.ApplyChoiceDefinition(...)`.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors and the existing 2 `MSB3277` warnings.
+- `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false` passed with 0 errors and the existing 2 `MSB3277` warnings.
+- Unity-MCP Console query returned 0 error entries, and `SkillExecutionSystem.cs` validation returned 0 errors and 0 warnings.
+- Unity-MCP validation reported a duplicate `ResolveEffectManager()` in `InGameCombatManager.cs`, but source search found one declaration at line 1319 and both C# builds passed; this is a validator false positive unrelated to the removed property.
+
+### History
+
+- 2026-07-17: User approved deletion of the legacy modifier scripts, folder, metadata, and remaining empty APIs; Code Builder completed removal and compile verification.
