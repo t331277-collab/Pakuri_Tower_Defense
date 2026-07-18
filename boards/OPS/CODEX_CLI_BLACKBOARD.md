@@ -4,6 +4,48 @@
 - This file keeps only task blocks dated `2026-04-25` based on the date in each `## Task:` / `## Recent Task:` heading.
 - Source file: `boards/OPS/CODEX_CLI_BLACKBOARD.md`.
 
+## Task: 2026-07-19 Codex CLI 0.144.6 Update
+
+### Task title
+
+Update local Codex CLI from 0.144.5 to 0.144.6.
+
+### Goals
+
+- Install Codex CLI 0.144.6 through the official installer supplied by the user.
+- Verify the active `codex` command and official installed executable report the target version.
+- Preserve the existing repository launcher files.
+
+### Constraints
+
+- Role Owner is Designer / OPS.
+- This task changes the user-local Codex CLI installation, not gameplay code.
+- Evidence comes from installer and command output.
+
+### Role Owner
+
+Designer / OPS
+
+### Status
+
+Completed.
+
+### Next Actions
+
+- Start the next CLI session normally so the new 0.144.6 process and helper files are loaded together.
+
+### Evidence
+
+- Official installer reported `Updating Codex CLI from 0.144.5 to 0.144.6` and `Codex CLI 0.144.6 installed successfully`.
+- `Get-Command codex` resolved `C:\Users\t3312\AppData\Local\Programs\OpenAI\Codex\bin\codex.exe`.
+- `codex --version` and the official installed executable both returned `codex-cli 0.144.6`.
+- `run_codex.bat`, `run_codex_prompt_launcher.ps1`, and `codex_prompt.txt` all still exist.
+- The OpenAI Codex manual helper refreshed the local official manual cache before installation.
+
+### History
+
+- 2026-07-19: User requested the advertised Codex CLI 0.144.6 update; the official installer and version checks completed successfully.
+
 ## Task: 2026-07-17 Codex CLI 0.144.5 Update
 
 ### Task title
