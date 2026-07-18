@@ -327,7 +327,7 @@ namespace Pakuri.InGame
         }
     }
 
-    public sealed class SkillExecutorRegistry
+    internal sealed class SkillExecutorRegistry
     {
         private readonly System.Collections.Generic.List<IInGameSkillExecutor> executors =
             new System.Collections.Generic.List<IInGameSkillExecutor>();
@@ -378,11 +378,10 @@ namespace Pakuri.InGame
             Register(new HealSkillExecutor());
             Register(new ChainAttackSkillExecutor());
             Register(new ChargeSkillExecutor());
-            Register(new PassiveSkillExecutor());
         }
     }
 
-    public sealed class SkillChoiceResolver
+    internal sealed class SkillChoiceResolver
     {
         public SkillExecutionSnapshot Resolve(BaseUnitRuntimeModel owner, SkillRuntimeInstance runtime)
         {

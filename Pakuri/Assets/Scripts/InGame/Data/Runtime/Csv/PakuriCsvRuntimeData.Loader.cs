@@ -498,11 +498,6 @@ namespace Pakuri.Data
             return false;
         }
 
-        private static CsvTable LoadOptionalCsvTable(TextAsset asset, string tableName)
-        {
-            return asset != null ? CsvTable.Load(asset, tableName) : null;
-        }
-
         private static bool HasAnyCsvAsset(TextAsset[] splitAssets, TextAsset legacyAsset)
         {
             if (legacyAsset != null)

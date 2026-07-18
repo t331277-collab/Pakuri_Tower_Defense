@@ -125,11 +125,6 @@ namespace Pakuri.Data
                 ValidateRuntimeStatusColumns(skill, model.StatusEffects, errors);
             }
 
-            foreach (var effect in model.SkillEffects.Values)
-            {
-                ValidateSkillEffectRow(effect, model, errors);
-            }
-
             foreach (var trigger in model.SkillTriggers.Values)
             {
                 ValidateSkillTriggerRow(trigger, model, errors);
@@ -446,123 +441,6 @@ namespace Pakuri.Data
             }
         }
 
-        private static void ValidateSkillEffectRow(
-            SkillEffectRow effect,
-            SourceModel model,
-            List<string> errors)
-        {
-            if (effect == null)
-            {
-                return;
-            }
-
-            if (model == null || !model.Skills.ContainsKey(effect.SkillId))
-            {
-                errors.Add($"Skill effect '{effect.Id}' references unknown skill '{effect.SkillId}'.");
-            }
-
-            if (string.Equals(effect.RuntimeSupportState, "MigratedToEffectBinding", StringComparison.OrdinalIgnoreCase)
-                && (!string.IsNullOrWhiteSpace(effect.RequiresActiveChoiceId)
-                    || !string.IsNullOrWhiteSpace(effect.RequiresPassiveSkillId)))
-            {
-                errors.Add($"Skill effect '{effect.Id}' is MigratedToEffectBinding but still has executable choice/passive gates.");
-            }
-
-            ValidateChoiceReference(effect.RequiresActiveChoiceId, effect, model, "requires_active_choice_id", errors);
-            ValidateChoiceReference(effect.ExcludesActiveChoiceId, effect, model, "excludes_active_choice_id", errors);
-            ValidatePassiveReference(effect.RequiresPassiveSkillId, effect, model, "requires_passive_skill_id", errors);
-            ValidatePassiveReference(effect.ExcludesPassiveSkillId, effect, model, "excludes_passive_skill_id", errors);
-            if (!string.IsNullOrWhiteSpace(effect.RequiredSourceStatusId)
-                && !StatusEffectUtility.TryParse(effect.RequiredSourceStatusId, out _))
-            {
-                errors.Add($"Skill effect '{effect.Id}' uses unsupported required_source_status_id '{effect.RequiredSourceStatusId}'.");
-            }
-
-            var status = effect.Status;
-            var hasStatus = !string.IsNullOrWhiteSpace(status.StatusEffectId)
-                || !string.IsNullOrWhiteSpace(status.StatusEffectLabel);
-            var hasPositiveDamagePayload = HasPositiveDamagePayload(
-                effect.BaseDamage,
-                effect.AttackPowerCoefficient,
-                effect.SpellPowerCoefficient);
-            var isStatusOnlyPersistentZone = effect.EffectKind == SkillMultiEffectKind.Damage
-                && effect.BaseDamage <= 0f
-                && effect.AttackPowerCoefficient <= 0f
-                && effect.SpellPowerCoefficient <= 0f
-                && effect.ActiveDurationSeconds > 0f
-                && effect.TickIntervalSeconds > 0f
-                && hasStatus;
-            if (effect.EffectKind == SkillMultiEffectKind.Damage
-                && !hasPositiveDamagePayload
-                && !isStatusOnlyPersistentZone)
-            {
-                errors.Add($"Damage skill effect '{effect.Id}' requires positive base_damage or positive attack/spell coefficient.");
-            }
-
-            if (effect.EffectKind == SkillMultiEffectKind.Status && !hasStatus)
-            {
-                errors.Add($"Status skill effect '{effect.Id}' requires status_effect_id or status_effect_label.");
-            }
-
-            if (hasStatus)
-            {
-                var statusKey = !string.IsNullOrWhiteSpace(status.StatusEffectId)
-                    ? status.StatusEffectId
-                    : status.StatusEffectLabel;
-                if (!StatusEffectUtility.TryParse(statusKey, out var kind))
-                {
-                    errors.Add($"Skill effect '{effect.Id}' uses unsupported runtime status '{statusKey}'.");
-                }
-                else
-                {
-                    var statusId = StatusEffectUtility.ToId(kind);
-                    if (!string.IsNullOrWhiteSpace(statusId)
-                        && (model == null || !model.StatusEffects.ContainsKey(statusId)))
-                    {
-                        errors.Add($"Skill effect '{effect.Id}' uses status '{statusId}' but status_effects.csv has no matching row.");
-                    }
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(effect.ConditionStatusId)
-                && !StatusEffectRuntime.TryParseConditionStatusExpression(effect.ConditionStatusId, out _))
-            {
-                errors.Add($"Skill effect '{effect.Id}' uses unsupported condition_status_id '{effect.ConditionStatusId}'.");
-            }
-
-            if (effect.ConditionHealthRatioMax < 0f || effect.ConditionHealthRatioMax > 1f)
-            {
-                errors.Add($"Skill effect '{effect.Id}' has condition_health_ratio_max '{effect.ConditionHealthRatioMax}' outside 0..1.");
-            }
-
-            if (effect.ConditionHitCountMin < 0)
-            {
-                errors.Add($"Skill effect '{effect.Id}' has negative condition_hit_count_min.");
-            }
-
-            if (!string.IsNullOrWhiteSpace(status.StatusTargetScope)
-                && !StatusEffectRuntime.TryParseStatusTargetScope(status.StatusTargetScope, out _))
-            {
-                errors.Add($"Skill effect '{effect.Id}' has unsupported status_target_scope '{status.StatusTargetScope}'.");
-            }
-
-            if (!string.IsNullOrWhiteSpace(status.StatusMergePolicy)
-                && !StatusEffectRuntime.TryParseStatusMergePolicy(status.StatusMergePolicy, out _))
-            {
-                errors.Add($"Skill effect '{effect.Id}' has unsupported status_merge_policy '{status.StatusMergePolicy}'.");
-            }
-
-            if (!ValidateSkillRuntimeKindList(status.StatusConditionalIncomingSkillRuntimeKinds))
-            {
-                errors.Add($"Skill effect '{effect.Id}' uses unsupported status_conditional_incoming_skill_runtime_kinds '{status.StatusConditionalIncomingSkillRuntimeKinds}'.");
-            }
-
-            if (!ValidateSkillRuntimeKindList(status.StatusConditionalOutgoingSkillRuntimeKinds))
-            {
-                errors.Add($"Skill effect '{effect.Id}' uses unsupported status_conditional_outgoing_skill_runtime_kinds '{status.StatusConditionalOutgoingSkillRuntimeKinds}'.");
-            }
-        }
-
         private static void ValidateSkillTriggerRow(
             SkillTriggerRow trigger,
             SourceModel model,
@@ -834,11 +712,6 @@ namespace Pakuri.Data
                 return false;
             }
 
-            if (model.SkillEffects.ContainsKey(effectId))
-            {
-                return true;
-            }
-
             foreach (var node in model.SkillNodes.Values)
             {
                 if (node != null
@@ -928,40 +801,6 @@ namespace Pakuri.Data
             }
 
             return int.TryParse(normalized, out var count) && count > 0;
-        }
-
-        private static void ValidateChoiceReference(
-            string choiceId,
-            SkillEffectRow effect,
-            SourceModel model,
-            string columnName,
-            List<string> errors)
-        {
-            if (string.IsNullOrWhiteSpace(choiceId))
-            {
-                return;
-            }
-
-            var choiceIds = choiceId.Split(';', ',');
-            for (var i = 0; i < choiceIds.Length; i++)
-            {
-                var currentChoiceId = choiceIds[i] != null ? choiceIds[i].Trim() : string.Empty;
-                if (string.IsNullOrWhiteSpace(currentChoiceId))
-                {
-                    continue;
-                }
-
-                if (model == null || !model.SkillChoices.TryGetValue(currentChoiceId, out var choice))
-                {
-                    errors.Add($"Skill effect '{effect.Id}' {columnName} references unknown choice '{currentChoiceId}'.");
-                    continue;
-                }
-
-                if (!ChoiceAppliesToSkillId(choice, effect.SkillId))
-                {
-                    errors.Add($"Skill effect '{effect.Id}' {columnName} choice '{currentChoiceId}' does not apply to skill '{effect.SkillId}'.");
-                }
-            }
         }
 
         private static void ValidateTriggerChoiceReference(
@@ -1092,40 +931,6 @@ namespace Pakuri.Data
             }
 
             return false;
-        }
-
-        private static void ValidatePassiveReference(
-            string passiveSkillId,
-            SkillEffectRow effect,
-            SourceModel model,
-            string columnName,
-            List<string> errors)
-        {
-            if (string.IsNullOrWhiteSpace(passiveSkillId))
-            {
-                return;
-            }
-
-            var passiveIds = passiveSkillId.Split(';', ',');
-            for (var i = 0; i < passiveIds.Length; i++)
-            {
-                var currentPassiveId = passiveIds[i] != null ? passiveIds[i].Trim() : string.Empty;
-                if (string.IsNullOrWhiteSpace(currentPassiveId))
-                {
-                    continue;
-                }
-
-                if (model == null || !model.Skills.TryGetValue(currentPassiveId, out var skill))
-                {
-                    errors.Add($"Skill effect '{effect.Id}' {columnName} references unknown passive skill '{currentPassiveId}'.");
-                    continue;
-                }
-
-                if (skill.SkillKind != PakuriCsvSkillKind.Passive)
-                {
-                    errors.Add($"Skill effect '{effect.Id}' {columnName} references non-passive skill '{currentPassiveId}'.");
-                }
-            }
         }
 
         private static void ValidateStatusEffectRow(StatusEffectRow status, List<string> errors)

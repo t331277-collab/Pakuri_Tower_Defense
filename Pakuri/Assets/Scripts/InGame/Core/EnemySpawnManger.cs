@@ -14,13 +14,6 @@ namespace Pakuri.InGame
         private const string RinMonsterId = "rin";
         private const string SeinMonsterId = "sein";
         private const string VegaMonsterId = "vega";
-        private const string DefaultInitialEnemyId = "stage1-swordsman";
-        private const string DefaultShieldEnemyId = "stage1-shieldbearer";
-        private const string DefaultRangedEnemyId = "stage1-rogue";
-        private const string DefaultBufferEnemyId = "stage1-priest";
-        private const string DefaultGuardianCaptainEnemyId = "stage1-guardian-captain";
-        private const string DefaultAttackCaptainEnemyId = "stage1-attack-captain";
-        private const string DefaultHeroKarinEnemyId = "stage1-hero-karin";
         private const string RuntimeObjectRootName = "RunTimeObject";
         private const string RuntimeEnemyRootName = "RunTimeEnemy";
         private const string RuntimeMonsterRootName = "RunTimeMonster";
@@ -38,21 +31,7 @@ namespace Pakuri.InGame
         [SerializeField] private GameObject rinUnitPrefab;
         [SerializeField] private GameObject seinUnitPrefab;
         [SerializeField] private GameObject vegaUnitPrefab;
-        [SerializeField] private GameObject stageOneEnemyPrefab;
-        [SerializeField] private GameObject stageOneShieldEnemyPrefab;
-        [SerializeField] private GameObject stageOneRangedEnemyPrefab;
-        [SerializeField] private GameObject stageOneBufferEnemyPrefab;
-        [SerializeField] private GameObject stageOneGuardianCaptainPrefab;
-        [SerializeField] private GameObject stageOneAttackCaptainPrefab;
-        [SerializeField] private GameObject stageOneHeroKarinPrefab;
         [SerializeField] private EnemyPrefabBinding[] enemyPrefabBindings = Array.Empty<EnemyPrefabBinding>();
-        [SerializeField] private string initialEnemyId = DefaultInitialEnemyId;
-        [SerializeField] private string shieldEnemyId = DefaultShieldEnemyId;
-        [SerializeField] private string rangedEnemyId = DefaultRangedEnemyId;
-        [SerializeField] private string bufferEnemyId = DefaultBufferEnemyId;
-        [SerializeField] private string guardianCaptainEnemyId = DefaultGuardianCaptainEnemyId;
-        [SerializeField] private string attackCaptainEnemyId = DefaultAttackCaptainEnemyId;
-        [SerializeField] private string heroKarinEnemyId = DefaultHeroKarinEnemyId;
         [SerializeField] private float enemySpawnMinY = -5f;
         [SerializeField] private float enemySpawnMaxY = 5f;
 
@@ -255,48 +234,6 @@ namespace Pakuri.InGame
         {
             var prefab = ResolveEnemyPrefab(enemyId);
             return TrySpawnEnemyUnit(prefab, enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, isBoss, out spawnedUnit);
-        }
-
-        public bool SpawnEnemyFromConfiguredPoint(GameObject prefab, string enemyId, int spawnIndex, out GameObject spawnedUnit)
-        {
-            ResolveEnemySpawnPoint();
-            var basePosition = enemySpawnPoint != null ? enemySpawnPoint.position : Vector3.zero;
-            return TrySpawnEnemyUnit(prefab, enemyId, spawnIndex, basePosition.x, enemySpawnMinY, enemySpawnMaxY, 1f, false, out spawnedUnit);
-        }
-
-        public bool SpawnInitialEnemyUnit(out GameObject spawnedUnit)
-        {
-            return SpawnEnemyFromConfiguredPoint(stageOneEnemyPrefab, initialEnemyId, 0, out spawnedUnit);
-        }
-
-        public bool SpawnShieldEnemyUnit(out GameObject spawnedUnit)
-        {
-            return SpawnEnemyFromConfiguredPoint(stageOneShieldEnemyPrefab, shieldEnemyId, 1, out spawnedUnit);
-        }
-
-        public bool SpawnRangedEnemyUnit(out GameObject spawnedUnit)
-        {
-            return SpawnEnemyFromConfiguredPoint(stageOneRangedEnemyPrefab, rangedEnemyId, 2, out spawnedUnit);
-        }
-
-        public bool SpawnBufferEnemyUnit(out GameObject spawnedUnit)
-        {
-            return SpawnEnemyFromConfiguredPoint(stageOneBufferEnemyPrefab, bufferEnemyId, 3, out spawnedUnit);
-        }
-
-        public bool SpawnGuardianCaptainEnemyUnit(out GameObject spawnedUnit)
-        {
-            return SpawnEnemyFromConfiguredPoint(stageOneGuardianCaptainPrefab, guardianCaptainEnemyId, 4, out spawnedUnit);
-        }
-
-        public bool SpawnAttackCaptainEnemyUnit(out GameObject spawnedUnit)
-        {
-            return SpawnEnemyFromConfiguredPoint(stageOneAttackCaptainPrefab, attackCaptainEnemyId, 5, out spawnedUnit);
-        }
-
-        public bool SpawnHeroKarinEnemyUnit(out GameObject spawnedUnit)
-        {
-            return SpawnEnemyFromConfiguredPoint(stageOneHeroKarinPrefab, heroKarinEnemyId, 6, out spawnedUnit);
         }
 
         private bool TryCreateSelectedModel(
@@ -552,41 +489,6 @@ namespace Pakuri.InGame
                         return binding.Prefab;
                     }
                 }
-            }
-
-            if (string.Equals(enemyId, initialEnemyId, StringComparison.OrdinalIgnoreCase))
-            {
-                return stageOneEnemyPrefab;
-            }
-
-            if (string.Equals(enemyId, shieldEnemyId, StringComparison.OrdinalIgnoreCase))
-            {
-                return stageOneShieldEnemyPrefab;
-            }
-
-            if (string.Equals(enemyId, rangedEnemyId, StringComparison.OrdinalIgnoreCase))
-            {
-                return stageOneRangedEnemyPrefab;
-            }
-
-            if (string.Equals(enemyId, bufferEnemyId, StringComparison.OrdinalIgnoreCase))
-            {
-                return stageOneBufferEnemyPrefab;
-            }
-
-            if (string.Equals(enemyId, guardianCaptainEnemyId, StringComparison.OrdinalIgnoreCase))
-            {
-                return stageOneGuardianCaptainPrefab;
-            }
-
-            if (string.Equals(enemyId, attackCaptainEnemyId, StringComparison.OrdinalIgnoreCase))
-            {
-                return stageOneAttackCaptainPrefab;
-            }
-
-            if (string.Equals(enemyId, heroKarinEnemyId, StringComparison.OrdinalIgnoreCase))
-            {
-                return stageOneHeroKarinPrefab;
             }
 
             return null;

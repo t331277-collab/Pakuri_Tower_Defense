@@ -162,45 +162,6 @@ namespace Pakuri.InGame
             }
         }
 
-        private static EnemyDefinition ResolveEnemy(GameDataCatalog catalog, string enemyId)
-        {
-            if (!string.IsNullOrWhiteSpace(enemyId))
-            {
-                var registered = PakuriDataManager.Instance.GetData<EnemyDefinition>(enemyId);
-                if (registered != null)
-                {
-                    return registered;
-                }
-
-                var fromCatalog = catalog != null ? catalog.GetEnemyById(enemyId) : null;
-                if (fromCatalog != null)
-                {
-                    return fromCatalog;
-                }
-            }
-
-            var enemies = catalog != null ? catalog.StageOneEnemies : null;
-            if (enemies == null || enemies.Length == 0)
-            {
-                enemies = catalog != null ? catalog.StageTwoEnemies : null;
-            }
-
-            if (enemies == null || enemies.Length == 0)
-            {
-                return null;
-            }
-
-            for (var i = 0; i < enemies.Length; i++)
-            {
-                if (enemies[i] != null)
-                {
-                    return enemies[i];
-                }
-            }
-
-            return null;
-        }
-
         private static string BuildUnitId(string prefix, string definitionId, int slotIndex)
         {
             var id = string.IsNullOrWhiteSpace(definitionId) ? "unknown" : definitionId;

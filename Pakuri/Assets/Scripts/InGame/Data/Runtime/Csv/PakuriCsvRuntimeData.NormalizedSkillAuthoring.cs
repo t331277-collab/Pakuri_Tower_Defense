@@ -555,43 +555,6 @@ namespace Pakuri.Data
             return schemas;
         }
 
-        private static string[] EffectBaseRequiredParams(params string[] extraParams)
-        {
-            var required = new List<string>();
-            if (extraParams != null)
-            {
-                required.AddRange(extraParams);
-            }
-
-            return required.ToArray();
-        }
-
-        private static string[] EffectBaseOptionalParams(params string[] extraParams)
-        {
-            var optional = new List<string>
-            {
-                "target_side",
-                "target_selection",
-                "target_shape",
-                "center_mode",
-                "visual_anchor_mode",
-                "effect_timing",
-                "delay_seconds",
-                "apply_once",
-                "cover_all",
-                "attribute",
-                "skill_effect_prefab_path",
-                "required_source_status_id",
-                "required_source_status_min_stacks"
-            };
-            if (extraParams != null)
-            {
-                optional.AddRange(extraParams);
-            }
-
-            return optional.ToArray();
-        }
-
         private static Dictionary<string, string[]> EffectBaseEnumParamValues()
         {
             return EnumParamValues(
@@ -1430,15 +1393,6 @@ namespace Pakuri.Data
                 var ownerId = graph.GraphKind == SkillGraphKind.Effect
                     ? BuildGeneratedSkillGraphEffectId(graph.OwnerKind, graph.OwnerId, graph.GraphIndex)
                     : graph.OwnerId;
-                if (graph.GraphKind == SkillGraphKind.Effect)
-                {
-                    if (model.SkillEffects.ContainsKey(ownerId))
-                    {
-                        errors.Add($"Skill graph '{graphKey}' generated EffectId '{ownerId}' that overlaps a legacy effect row.");
-                    }
-
-                }
-
                 var requiresChoiceId = graph.GraphKind == SkillGraphKind.Effect
                     && graph.OwnerKind == SkillNodeOwnerKind.Choice
                         ? graph.OwnerId

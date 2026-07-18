@@ -9,16 +9,16 @@ namespace Pakuri.InGame
     public sealed class EffectManager : MonoBehaviour
     {
         [Serializable]
-        public sealed class MonsterSkillEffectEntry
+        private sealed class MonsterSkillEffectEntry
         {
-            public string SkillId;
-            public GameObject Prefab;
+            public string SkillId = string.Empty;
+            public GameObject Prefab = null;
         }
 
         [Serializable]
-        public sealed class MonsterSkillEffectGroup
+        private sealed class MonsterSkillEffectGroup
         {
-            public string MonsterId;
+            public string MonsterId = string.Empty;
             public List<MonsterSkillEffectEntry> SkillEffects = new List<MonsterSkillEffectEntry>();
         }
 

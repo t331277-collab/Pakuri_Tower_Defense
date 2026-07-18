@@ -23563,8 +23563,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.SceneEntryManager
   combatManager: {fileID: 1427799828}
   unitSpawnManager: {fileID: 1427799830}
-  enemySpawnIntervalSeconds: 1
-  spawnInitialEnemySequenceOnStart: 0
   allowEveFallback: 1
 --- !u!114 &1427799828
 MonoBehaviour:
@@ -23638,14 +23636,23 @@ MonoBehaviour:
   rinUnitPrefab: {fileID: 4596420534878418281, guid: 45d446ad22f4f2f4d94f4ab1039c5b0a, type: 3}
   seinUnitPrefab: {fileID: 4596420534878418281, guid: d827bb1e48cabef4abeed838d6bb8e05, type: 3}
   vegaUnitPrefab: {fileID: 4596420534878418281, guid: a1e586738d1b9b64a97d0caba4cd449c, type: 3}
-  stageOneEnemyPrefab: {fileID: 6219452113495756200, guid: f2892daa44e860e49b1ea2b17f8682dc, type: 3}
-  stageOneShieldEnemyPrefab: {fileID: 6219452113495756200, guid: 134892515805b3848858777fbb9c2892, type: 3}
-  stageOneRangedEnemyPrefab: {fileID: 6219452113495756200, guid: 41679be8164df3d4fa09bc87aa4c1fb7, type: 3}
-  stageOneBufferEnemyPrefab: {fileID: 6219452113495756200, guid: 1fd46dd360e001847b2d0e89ded130d9, type: 3}
-  stageOneGuardianCaptainPrefab: {fileID: 6219452113495756200, guid: 4dbb60015bf26c445abc28930bee2cec, type: 3}
-  stageOneAttackCaptainPrefab: {fileID: 6219452113495756200, guid: f7f5b002997b494478c4744a6d3f3fef, type: 3}
-  stageOneHeroKarinPrefab: {fileID: 6219452113495756200, guid: 078cea88ffc67744e8f02da371344665, type: 3}
   enemyPrefabBindings:
+  - enemyId: stage1-swordsman
+    prefab: {fileID: 6219452113495756200, guid: f2892daa44e860e49b1ea2b17f8682dc, type: 3}
+  - enemyId: stage1-shieldbearer
+    prefab: {fileID: 6219452113495756200, guid: 134892515805b3848858777fbb9c2892, type: 3}
+  - enemyId: stage1-archer
+    prefab: {fileID: 6219452113495756200, guid: bffcd0db2ede5a34a9297596966f6697, type: 3}
+  - enemyId: stage1-rogue
+    prefab: {fileID: 6219452113495756200, guid: 41679be8164df3d4fa09bc87aa4c1fb7, type: 3}
+  - enemyId: stage1-priest
+    prefab: {fileID: 6219452113495756200, guid: 1fd46dd360e001847b2d0e89ded130d9, type: 3}
+  - enemyId: stage1-guardian-captain
+    prefab: {fileID: 6219452113495756200, guid: 4dbb60015bf26c445abc28930bee2cec, type: 3}
+  - enemyId: stage1-attack-captain
+    prefab: {fileID: 6219452113495756200, guid: f7f5b002997b494478c4744a6d3f3fef, type: 3}
+  - enemyId: stage1-hero-karin
+    prefab: {fileID: 6219452113495756200, guid: 078cea88ffc67744e8f02da371344665, type: 3}
   - enemyId: stage2-fire-dragon-slayer
     prefab: {fileID: 5195311948756499146, guid: d38697eb45dd1e545a70f50c2f1271c5, type: 3}
   - enemyId: stage2-lightning-scout
@@ -23662,13 +23669,6 @@ MonoBehaviour:
     prefab: {fileID: 2901641940831284134, guid: 4ca246702baa4fd45b4921ba449d94a9, type: 3}
   - enemyId: stage2-arsen
     prefab: {fileID: 7149419201978181015, guid: 352837e4f845dc54ab09d08e639b5f66, type: 3}
-  initialEnemyId: stage1-swordsman
-  shieldEnemyId: stage1-shieldbearer
-  rangedEnemyId: stage1-rogue
-  bufferEnemyId: stage1-priest
-  guardianCaptainEnemyId: stage1-guardian-captain
-  attackCaptainEnemyId: stage1-attack-captain
-  heroKarinEnemyId: stage1-hero-karin
   enemySpawnMinY: -5
   enemySpawnMaxY: 5
 --- !u!114 &1427799831

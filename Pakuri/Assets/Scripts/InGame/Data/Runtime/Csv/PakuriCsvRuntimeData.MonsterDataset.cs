@@ -271,48 +271,6 @@ namespace Pakuri.Data
             public string RuntimeSupportNotes;
         }
 
-        private sealed class SkillEffectRow
-        {
-            public string Id;
-            public string SkillId;
-            public int SortOrder;
-            public SkillMultiEffectKind EffectKind;
-            public SkillMultiEffectTargetSide TargetSide;
-            public SkillMultiEffectTargetSelection TargetSelection;
-            public SkillMultiEffectTargetShape TargetShape;
-            public SkillMultiEffectCenterMode CenterMode;
-            public SkillMultiEffectVisualAnchorMode VisualAnchorMode;
-            public SkillMultiEffectTiming EffectTiming;
-            public float DelaySeconds;
-            public bool EnabledByDefault;
-            public string RequiresActiveChoiceId;
-            public string ExcludesActiveChoiceId;
-            public string RequiresPassiveSkillId;
-            public string ExcludesPassiveSkillId;
-            public string RequiredSourceStatusId;
-            public int RequiredSourceStatusMinStacks;
-            public bool ApplyOnce;
-            public string ConditionStatusId;
-            public string ConditionStatusSourceSkillId;
-            public SkillMultiEffectTargetSide ConditionTargetSide;
-            public string ConditionSkillAttribute;
-            public float ConditionHealthRatioMax;
-            public int ConditionHitCountMin;
-            public DamageAttribute Attribute;
-            public float BaseDamage;
-            public float AttackPowerCoefficient;
-            public float SpellPowerCoefficient;
-            public float DamageMultiplier = 1f;
-            public float Radius;
-            public bool CoverAll;
-            public float ActiveDurationSeconds;
-            public float TickIntervalSeconds;
-            public StatusPayloadRow Status = new StatusPayloadRow();
-            public string SkillEffectPrefabPath;
-            public string RuntimeSupportState;
-            public string RuntimeSupportNotes;
-        }
-
         private sealed class SkillTriggerRow
         {
             public string Id;
@@ -660,58 +618,6 @@ namespace Pakuri.Data
             row.RepeatCountPerTarget = ReadOptionalIntIfColumnExists(record, "repeat_count_per_target");
             row.RepeatIntervalSeconds = ReadOptionalFloatIfColumnExists(record, "repeat_interval_seconds");
             row.RepeatDamageMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "repeat_damage_multiplier", 1f);
-            return row;
-        }
-
-        private static SkillEffectRow ParseSkillEffectRow(CsvRecord record)
-        {
-            var row = new SkillEffectRow
-            {
-                Id = record.ReadRequiredString("effect_id"),
-                SkillId = record.ReadRequiredString("skill_id"),
-                SortOrder = record.ReadInt("sort_order"),
-                EffectKind = record.ReadEnum<SkillMultiEffectKind>("effect_kind"),
-                TargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("target_side"),
-                TargetSelection = record.ReadEnum<SkillMultiEffectTargetSelection>("target_selection"),
-                TargetShape = record.ReadEnum<SkillMultiEffectTargetShape>("target_shape"),
-                CenterMode = record.ReadEnum<SkillMultiEffectCenterMode>("center_mode"),
-                VisualAnchorMode = record.ReadEnum<SkillMultiEffectVisualAnchorMode>("visual_anchor_mode"),
-                EffectTiming = record.ReadEnum<SkillMultiEffectTiming>("effect_timing"),
-                DelaySeconds = ReadOptionalFloatIfColumnExists(record, "delay_seconds"),
-                EnabledByDefault = ReadOptionalBoolWithDefaultIfColumnExists(record, "enabled_by_default", true),
-                RequiresActiveChoiceId = ReadOptionalStringIfColumnExists(record, "requires_active_choice_id"),
-                ExcludesActiveChoiceId = ReadOptionalStringIfColumnExists(record, "excludes_active_choice_id"),
-                RequiresPassiveSkillId = ReadOptionalStringIfColumnExists(record, "requires_passive_skill_id"),
-                ExcludesPassiveSkillId = ReadOptionalStringIfColumnExists(record, "excludes_passive_skill_id"),
-                RequiredSourceStatusId = ReadOptionalStringIfColumnExists(record, "required_source_status_id"),
-                RequiredSourceStatusMinStacks = ReadOptionalIntIfColumnExists(record, "required_source_status_min_stacks"),
-                ApplyOnce = ReadOptionalBoolIfColumnExists(record, "apply_once"),
-                ConditionStatusId = ReadOptionalStringIfColumnExists(record, "condition_status_id"),
-                ConditionStatusSourceSkillId = ReadOptionalStringIfColumnExists(record, "condition_status_source_skill_id"),
-                ConditionTargetSide = record.ReadEnum<SkillMultiEffectTargetSide>("condition_target_side"),
-                ConditionSkillAttribute = ReadOptionalStringIfColumnExists(record, "condition_skill_attribute"),
-                ConditionHealthRatioMax = ReadOptionalFloatIfColumnExists(record, "condition_health_ratio_max"),
-                ConditionHitCountMin = ReadOptionalIntIfColumnExists(record, "condition_hit_count_min"),
-                Attribute = ReadOptionalEnumIfColumnExists(record, "attribute", DamageAttribute.Physical),
-                BaseDamage = ReadOptionalFloatIfColumnExists(record, "base_damage"),
-                AttackPowerCoefficient = ReadOptionalFloatIfColumnExists(record, "attack_power_coefficient"),
-                SpellPowerCoefficient = ReadOptionalFloatIfColumnExists(record, "spell_power_coefficient"),
-                DamageMultiplier = ReadOptionalFloatIfColumnExists(record, "damage_multiplier"),
-                Radius = ReadOptionalFloatIfColumnExists(record, "radius"),
-                CoverAll = ReadOptionalBoolIfColumnExists(record, "cover_all"),
-                ActiveDurationSeconds = ReadOptionalFloatIfColumnExists(record, "active_duration_seconds"),
-                TickIntervalSeconds = ReadOptionalFloatIfColumnExists(record, "tick_interval_seconds"),
-                Status = ReadStatusPayload(record, true, true),
-                SkillEffectPrefabPath = ReadOptionalStringIfColumnExists(record, "skill_effect_prefab_path"),
-                RuntimeSupportState = ReadOptionalStringIfColumnExists(record, "runtime_support_state"),
-                RuntimeSupportNotes = ReadOptionalStringIfColumnExists(record, "runtime_support_notes")
-            };
-
-            if (row.DamageMultiplier <= 0f)
-            {
-                row.DamageMultiplier = 1f;
-            }
-
             return row;
         }
 

@@ -631,8 +631,4 @@ namespace Pakuri.InGame
             caster.ActiveCharge = null;
         }
     }
-
-    public sealed class PassiveSkillExecutor : TypedSkillExecutor<PassiveSkillData>
-    {
-    }
 }

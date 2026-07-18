@@ -360,7 +360,7 @@ namespace Pakuri.InGame
         }
     }
 
-    public sealed class EnemyCombatState
+    internal sealed class EnemyCombatState
     {
         public string TargetUnitId;
         public int AttackAttemptCount;

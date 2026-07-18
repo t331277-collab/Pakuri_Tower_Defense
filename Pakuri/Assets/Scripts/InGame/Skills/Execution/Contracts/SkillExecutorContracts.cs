@@ -16,10 +16,6 @@ namespace Pakuri.InGame
             return skillData is TSkillData;
         }
 
-        public virtual SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
-        {
-            var skillId = snapshot != null ? snapshot.SkillId : string.Empty;
-            return new SkillExecutionResult(SkillExecutionStatus.Routed, skillId, GetType().Name);
-        }
+        public abstract SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot);
     }
 }

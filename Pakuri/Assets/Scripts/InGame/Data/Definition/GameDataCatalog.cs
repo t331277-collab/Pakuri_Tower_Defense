@@ -35,16 +35,6 @@ namespace Pakuri.Data
             return null;
         }
 
-        public EnemyDefinition GetStageOneEnemyById(string enemyId)
-        {
-            return GetEnemyById(enemyId, StageOneEnemies);
-        }
-
-        public EnemyDefinition GetStageTwoEnemyById(string enemyId)
-        {
-            return GetEnemyById(enemyId, StageTwoEnemies);
-        }
-
         public EnemyDefinition GetEnemyById(string enemyId)
         {
             var enemy = GetEnemyById(enemyId, StageOneEnemies);

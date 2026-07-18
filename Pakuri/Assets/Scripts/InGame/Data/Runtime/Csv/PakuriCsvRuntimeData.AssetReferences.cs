@@ -106,12 +106,6 @@ namespace Pakuri.Data
                 assets.AddPrefab(choice.SkillEffectPrefabPath, $"Skill choice '{choice.Id}' skill_effect_prefab_path");
             }
 
-            foreach (var effect in model.SkillEffects.Values)
-            {
-                assets.AddPrefab(effect.SkillEffectPrefabPath, $"Skill effect '{effect.Id}' skill_effect_prefab_path");
-                assets.AddPrefab(effect.Status.StatusEffectPrefabPath, $"Skill effect '{effect.Id}' status_effect_prefab_path");
-            }
-
             foreach (var param in model.SkillNodeParams)
             {
                 if (param == null || param.ValueType != SkillNodeValueType.AssetPath)

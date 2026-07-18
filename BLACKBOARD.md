@@ -23,6 +23,7 @@ The full pre-hierarchy task history is preserved at:
 - 2026-05-18 cross-domain UI/RUN status: `NewRunScene` now has `DebugUI.cs` on `Canvas`, `MonsterPanelUI.cs` on `Canvas/MonsterPanel`, and Offering/debug active-skill acquisition now syncs `RunSession` learned state into active `MonsterUnitRuntimeModel.State` before rebuilding runtime skills. Detailed records are in `boards/UI/RUNSCENE_UI.md` and `boards/RUN/RUN_BLACKBOARD.md`.
 - 2026-05-18 cross-domain UI/RUN/DATA status: `InGameUIManager.cs` now resolves prisoner reward display names from the CSV-backed runtime enemy catalog instead of showing mojibake plus raw enemy IDs, and `OfferingUI.cs` now uses CSV-backed monster/skill/passive/reward fields for choice titles/descriptions. Detailed records are in `boards/UI/RUNSCENE_UI.md`, `boards/RUN/RUN_BLACKBOARD.md`, and `boards/DATA/DATA_BLACKBOARD.md`.
 - 2026-07-17 routing/policy status: Skill Builder now accepts one exact skill Reference MD as its only semantic input, routes new Base authoring to one of six existing-family blueprints, and routes Enhancement/Master authoring to the shared node blueprint. New runtime/schema/node/code/asset work remains outside the track. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
+- 2026-07-18 board maintenance status: active COMBAT, DATA, MON, OPS, RUN, and UI boards now retain only July-dated task blocks; 180 earlier or undated records were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-07-18.md`. Detailed record is in `boards/OPS/AUTOMATION_GUIDE.md`.
 - 2026-05-22 cross-domain DATA/COMBAT/MON/OPS status: multi-effect rows now separate application target from visual center/anchor with `center_mode` and `visual_anchor_mode`; Ariel-C ally buff visuals use `Assets/Prefab/Skill/Ariel/Ariel_C-Buff.prefab` on applied ally targets, while Ariel-C attack waves can stay on the primary SingleAttack center. Detailed records are in `boards/OPS/AUTOMATION_GUIDE.md`, `boards/DATA/DATA_BLACKBOARD.md`, `boards/DATA/GAMEDATA_ASSET_BLACKBOARD.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, and `boards/MON/ARIEL_MONSTER.md`.
 - 2026-05-22 cross-domain UI/RUN/COMBAT/MON status: `AutoBtn` now toggles selected 1P Auto mode, selected 1P learned active skills require click input while Auto is off, automatic player skill routing requires a visible MainCamera enemy instead of `StageState.Combat`, enemies act by target/range/cooldown rules as soon as they spawn, and committed no-hit monster casts now start cooldowns. Detailed records are in `boards/UI/RUNSCENE_UI.md`, `boards/RUN/RUN_BLACKBOARD.md`, `boards/COMBAT/ENEMY_BLACKBOARD.md`, `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`, and `boards/MON/ARIEL_MONSTER.md`.
 - 2026-05-22 cross-domain DATA/COMBAT/MON status: Ariel-C stale choice support states were corrected, Ariel-E conditional shield/damage/sanctuary effects and Ariel-B trait 5 were represented as CSV multi-effect rows, and shared runtime now applies choice duration modifiers to statuses plus choice amount/duration modifiers and multi-effects to shield skills. Detailed records are in `boards/MON/ARIEL_MONSTER.md`, `boards/DATA/DATA_BLACKBOARD.md`, and `boards/COMBAT/STATUS_EFFECT_BLACKBOARD.md`.
@@ -634,3 +635,93 @@ Implemented and locally validated.
 ### History
 
 - 2026-05-22: User asked Code Builder to implement the reviewed Skills cleanup order.
+
+## Recent Task: 2026-07-18 Scripts Unused Code Cleanup
+
+### Task title
+
+Remove repository-dead scripts, APIs, legacy skill-effect row paths, and overbroad type exposure under `Pakuri/Assets/Scripts`.
+
+### Goals
+
+- Remove types and methods whose declarations had no current code or Unity asset references.
+- Remove the no-op passive executor and make typed executors require an explicit implementation.
+- Remove the unpopulated legacy `SkillEffectRow` source path while preserving normalized effect-node construction.
+- Reduce public exposure for implementation-only helper types.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Existing skill, CSV, prefab, scene, and player-facing behavior must remain unchanged.
+- Unity Play Mode gameplay verification remains user-owned.
+- Code Reviewer was not run because explicit permission is required.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and locally validated.
+
+### Next Actions
+
+- User verifies representative active and passive skills plus enemy attacks in Unity Play Mode.
+- Run Code Reviewer only if explicitly requested.
+
+### Evidence
+
+- Deleted `Pakuri/Assets/Scripts/InGame/Skills/Execution/Actors/InGameEnemySkillHitboxActor.cs` and its `.meta`; repository search found no code, scene, prefab, or GUID references before deletion and no remaining asset references afterward.
+- Removed empty `InGameContextManager`, `InGameResultManager`, `UnitRuntimeModel`, and the empty partial `PakuriCsvRuntimeData` declaration in `PakuriCsvRuntimeData.Types.cs`.
+- Removed unused APIs and helpers including `ResolveEnemy`, `CreateLearnedActiveSet`, `CloneRuntimeCopy`, `RecordRewardChoice`, stage-specific enemy getters, `ResolveTargetGroupCenter`, `LoadOptionalCsvTable`, and the unused effect parameter helpers.
+- Removed `PassiveSkillExecutor`; `TypedSkillExecutor<TSkillData>.Execute(...)` is now abstract, and every remaining registered typed executor has an override.
+- Removed the unpopulated legacy `SkillEffectRow` dictionary/parser/validation/build/asset-reference branches; `BuildSkillEffects(...)` now returns normalized effect-owned node definitions.
+- Reduced `SkillExecutorRegistry`, `SkillChoiceResolver`, `EnemyCombatState`, and `UnitResourceMutationService` to `internal`; EffectManager's serialized entry/group types are private nested types.
+- `git diff --stat -- Pakuri/Assets/Scripts` reports 25 changed files, 11 insertions, and 828 deletions; `git diff --check -- Pakuri/Assets/Scripts` passed with only line-ending notices.
+- Runtime and Editor `dotnet build --no-restore` each passed with 0 errors and the existing 2 MSB3277 assembly-version warnings.
+- Unity-MCP forced script compilation, then reported `ready_for_tools=true`; an `Assets/Scripts`-filtered error read returned 0 entries. The unfiltered console contained one MCP package client-handler `Cannot access a disposed object` error, not a project script compiler error.
+
+### History
+
+- 2026-07-18: User explicitly switched to Code Builder and requested removal of the unnecessary code identified in the preceding code-based review.
+
+## Recent Task: 2026-07-18 July-Only Active Board Compaction
+
+### Task title
+
+Archive every non-July task record from active COMBAT, DATA, MON, OPS, RUN, and UI boards.
+
+### Goals
+
+- Keep active domain context limited to July 2026 work.
+- Preserve all removed history in a source-grouped archive.
+- Keep archive history discoverable from active boards and `MDTREE.md`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No gameplay code, CSV, prefab, scene, or unrelated worktree content is changed by this documentation migration.
+- Undated records are archived without inventing dates.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and structurally validated.
+
+### Next Actions
+
+- Use the active domain boards for July work.
+- Read `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-07-18.md` only when older or undated history is required.
+
+### Evidence
+
+- The migration retained 116 pre-existing July task blocks and archived 180 earlier or undated task records from 18 sources.
+- Seventeen active board files now link to the new archive; `boards/UI/DAMAGE_METER_UI_HANDOFF.md` was removed after its content was normalized into the archive.
+- Detailed commands, counts, and maintenance history are recorded in `boards/OPS/AUTOMATION_GUIDE.md`.
+
+### History
+
+- 2026-07-18: User directed Code Builder to leave only July work in the active domain boards and archive everything else.

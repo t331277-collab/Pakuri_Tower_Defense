@@ -202,16 +202,6 @@ namespace Pakuri.Run
             return false;
         }
 
-        public void RecordRewardChoice(string rewardId, string passiveIdIfUnlocked)
-        {
-            if (!string.IsNullOrWhiteSpace(rewardId) && !HasChosenReward(rewardId))
-            {
-                ChosenRewardIds.Add(rewardId);
-            }
-
-            AddLearnedPassive(passiveIdIfUnlocked);
-        }
-
         public void RecordOfferingChoice(string rewardId, string linkedChoiceId, string activeSkillId, string passiveSkillId)
         {
             RecordOfferingChoice(SelectedMonsterId, rewardId, linkedChoiceId, activeSkillId, passiveSkillId);

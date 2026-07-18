@@ -141,30 +141,6 @@ namespace Pakuri.Data
             return Array.Empty<MonsterDefinition>();
         }
 
-        public EnemyDefinition[] GetStageOneEnemies(GameDataCatalog fallbackCatalog = null)
-        {
-            var catalog = GetCatalog(fallbackCatalog);
-            var enemiesFromCatalog = catalog != null ? catalog.StageOneEnemies : null;
-            if (enemiesFromCatalog != null && enemiesFromCatalog.Length > 0)
-            {
-                return enemiesFromCatalog;
-            }
-
-            return Array.Empty<EnemyDefinition>();
-        }
-
-        public EnemyDefinition[] GetStageTwoEnemies(GameDataCatalog fallbackCatalog = null)
-        {
-            var catalog = GetCatalog(fallbackCatalog);
-            var enemiesFromCatalog = catalog != null ? catalog.StageTwoEnemies : null;
-            if (enemiesFromCatalog != null && enemiesFromCatalog.Length > 0)
-            {
-                return enemiesFromCatalog;
-            }
-
-            return Array.Empty<EnemyDefinition>();
-        }
-
         public MonsterDefinition ResolveMonster(string id, GameDataCatalog fallbackCatalog = null)
         {
             var resolvedMonster = GetData<MonsterDefinition>(id);

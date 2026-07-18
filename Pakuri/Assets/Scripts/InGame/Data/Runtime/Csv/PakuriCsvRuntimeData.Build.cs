@@ -531,69 +531,7 @@ namespace Pakuri.Data
 
         private static SkillEffectDefinition[] BuildSkillEffects(SourceModel model, string skillId)
         {
-            var effects = FilterAndSort(
-                model.SkillEffects.Values,
-                effect => string.Equals(effect.SkillId, skillId, StringComparison.OrdinalIgnoreCase),
-                (left, right) => left.SortOrder.CompareTo(right.SortOrder));
-
-            var definitions = new List<SkillEffectDefinition>(effects.Count);
-            for (var i = 0; i < effects.Count; i++)
-            {
-                var effect = effects[i];
-                var definition = new SkillEffectDefinition
-                {
-                    EffectId = effect.Id,
-                    SkillId = effect.SkillId,
-                    SortOrder = effect.SortOrder,
-                    EffectKind = effect.EffectKind,
-                    TargetSide = effect.TargetSide,
-                    TargetSelection = effect.TargetSelection,
-                    TargetShape = effect.TargetShape,
-                    CenterMode = effect.CenterMode,
-                    VisualAnchorMode = effect.VisualAnchorMode,
-                    EffectTiming = effect.EffectTiming,
-                    DelaySeconds = effect.DelaySeconds,
-                    EnabledByDefault = effect.EnabledByDefault,
-                    RequiresActiveChoiceId = effect.RequiresActiveChoiceId,
-                    ExcludesActiveChoiceId = effect.ExcludesActiveChoiceId,
-                    RequiresPassiveSkillId = effect.RequiresPassiveSkillId,
-                    ExcludesPassiveSkillId = effect.ExcludesPassiveSkillId,
-                    RequiredSourceStatusId = effect.RequiredSourceStatusId,
-                    RequiredSourceStatusMinStacks = effect.RequiredSourceStatusMinStacks,
-                    ApplyOnce = effect.ApplyOnce,
-                    ConditionStatusId = effect.ConditionStatusId,
-                    ConditionStatusSourceSkillId = effect.ConditionStatusSourceSkillId,
-                    ConditionTargetSide = effect.ConditionTargetSide,
-                    ConditionSkillAttribute = effect.ConditionSkillAttribute,
-                    ConditionHealthRatioMax = effect.ConditionHealthRatioMax,
-                    ConditionHitCountMin = effect.ConditionHitCountMin,
-                    Attribute = effect.Attribute,
-                    BaseDamage = effect.BaseDamage,
-                    AttackPowerCoefficient = effect.AttackPowerCoefficient,
-                    SpellPowerCoefficient = effect.SpellPowerCoefficient,
-                    DamageMultiplier = effect.DamageMultiplier,
-                    Radius = effect.Radius,
-                    CoverAll = effect.CoverAll,
-                    ActiveDurationSeconds = effect.ActiveDurationSeconds,
-                    TickIntervalSeconds = effect.TickIntervalSeconds,
-                    SkillEffectPrefab = LoadPrefab(effect.SkillEffectPrefabPath),
-                    RuntimeSupportState = effect.RuntimeSupportState,
-                    RuntimeSupportNotes = effect.RuntimeSupportNotes
-                };
-
-                ApplyStatusPayload(definition, effect.Status);
-                definitions.Add(definition);
-            }
-
-            definitions.AddRange(BuildEffectOwnedSkillEffects(model, skillId));
-            definitions.Sort((left, right) =>
-            {
-                var sortCompare = left.SortOrder.CompareTo(right.SortOrder);
-                return sortCompare != 0
-                    ? sortCompare
-                    : string.Compare(left.EffectId, right.EffectId, StringComparison.OrdinalIgnoreCase);
-            });
-            return definitions.ToArray();
+            return BuildEffectOwnedSkillEffects(model, skillId);
         }
 
         private static SkillEffectDefinition[] BuildEffectOwnedSkillEffects(SourceModel model, string skillId)

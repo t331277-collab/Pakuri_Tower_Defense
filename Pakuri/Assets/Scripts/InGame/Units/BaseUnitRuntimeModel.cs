@@ -87,10 +87,6 @@ namespace Pakuri.InGame
         public DamageAttribute Attribute = DamageAttribute.Physical;
     }
 
-    public class UnitRuntimeModel : BaseUnitRuntimeModel
-    {
-    }
-
     public sealed class UnitStatusRuntimeSet
     {
         private readonly System.Collections.Generic.List<UnitStatusRuntime> statuses =

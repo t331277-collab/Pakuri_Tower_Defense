@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Data;
 using Pakuri.Run;
@@ -15,19 +14,9 @@ namespace Pakuri.InGame
 
         [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private EnemySpawnManger unitSpawnManager;
-        [SerializeField] private float enemySpawnIntervalSeconds = 1f;
-        [SerializeField] private bool spawnInitialEnemySequenceOnStart;
         [SerializeField] private bool allowEveFallback = true;
 
         private GameObject spawnedPlayerUnit;
-        private GameObject spawnedEnemyUnit;
-        private GameObject spawnedShieldEnemyUnit;
-        private GameObject spawnedRangedEnemyUnit;
-        private GameObject spawnedBufferEnemyUnit;
-        private GameObject spawnedGuardianCaptainEnemyUnit;
-        private GameObject spawnedAttackCaptainEnemyUnit;
-        private GameObject spawnedHeroKarinEnemyUnit;
-        private Coroutine enemySpawnSequence;
 
         public MonsterUnitActor SpawnedPlayerActor { get; private set; }
         public MonsterUnitRuntimeModel SpawnedPlayerModel { get; private set; }
@@ -41,10 +30,6 @@ namespace Pakuri.InGame
         {
             ResolveReferences();
             SpawnSelectedPlayerUnit();
-            if (spawnInitialEnemySequenceOnStart)
-            {
-                enemySpawnSequence = StartCoroutine(SpawnInitialEnemySequence());
-            }
         }
 
         public void SpawnSelectedPlayerUnit()
@@ -85,97 +70,6 @@ namespace Pakuri.InGame
             SpawnedPlayerActor = actor;
             ActiveSession = session;
             StartContext.Clear();
-        }
-
-        public void SpawnInitialEnemyUnit()
-        {
-            if (spawnedEnemyUnit != null)
-            {
-                return;
-            }
-
-            if (TrySpawnConfiguredEnemy(spawner => spawner.SpawnInitialEnemyUnit(out spawnedEnemyUnit)))
-            {
-                CaptureLastEnemySpawn();
-            }
-        }
-
-        public void SpawnRangedEnemyUnit()
-        {
-            if (spawnedRangedEnemyUnit != null)
-            {
-                return;
-            }
-
-            if (TrySpawnConfiguredEnemy(spawner => spawner.SpawnRangedEnemyUnit(out spawnedRangedEnemyUnit)))
-            {
-                CaptureLastEnemySpawn();
-            }
-        }
-
-        public void SpawnShieldEnemyUnit()
-        {
-            if (spawnedShieldEnemyUnit != null)
-            {
-                return;
-            }
-
-            if (TrySpawnConfiguredEnemy(spawner => spawner.SpawnShieldEnemyUnit(out spawnedShieldEnemyUnit)))
-            {
-                CaptureLastEnemySpawn();
-            }
-        }
-
-        public void SpawnBufferEnemyUnit()
-        {
-            if (spawnedBufferEnemyUnit != null)
-            {
-                return;
-            }
-
-            if (TrySpawnConfiguredEnemy(spawner => spawner.SpawnBufferEnemyUnit(out spawnedBufferEnemyUnit)))
-            {
-                CaptureLastEnemySpawn();
-            }
-        }
-
-        public void SpawnGuardianCaptainEnemyUnit()
-        {
-            if (spawnedGuardianCaptainEnemyUnit != null)
-            {
-                return;
-            }
-
-            if (TrySpawnConfiguredEnemy(spawner => spawner.SpawnGuardianCaptainEnemyUnit(out spawnedGuardianCaptainEnemyUnit)))
-            {
-                CaptureLastEnemySpawn();
-            }
-        }
-
-        public void SpawnAttackCaptainEnemyUnit()
-        {
-            if (spawnedAttackCaptainEnemyUnit != null)
-            {
-                return;
-            }
-
-            if (TrySpawnConfiguredEnemy(spawner => spawner.SpawnAttackCaptainEnemyUnit(out spawnedAttackCaptainEnemyUnit)))
-            {
-                CaptureLastEnemySpawn();
-            }
-        }
-
-        public void SpawnHeroKarinEnemyUnit()
-        {
-            if (spawnedHeroKarinEnemyUnit != null)
-            {
-                return;
-            }
-
-            if (TrySpawnConfiguredEnemy(spawner => spawner.SpawnHeroKarinEnemyUnit(out spawnedHeroKarinEnemyUnit)))
-            {
-                CaptureLastEnemySpawn();
-            }
         }
 
         public bool SpawnEnemyById(
@@ -262,45 +156,6 @@ namespace Pakuri.InGame
 
             RestoreSelectedPlayerFromSession();
             RestoreManifestedPlayersFromSession();
-        }
-
-        private IEnumerator SpawnInitialEnemySequence()
-        {
-            SpawnInitialEnemyUnit();
-
-            yield return new WaitForSeconds(Mathf.Max(0f, enemySpawnIntervalSeconds));
-            SpawnShieldEnemyUnit();
-
-            yield return new WaitForSeconds(Mathf.Max(0f, enemySpawnIntervalSeconds));
-            SpawnRangedEnemyUnit();
-
-            yield return new WaitForSeconds(Mathf.Max(0f, enemySpawnIntervalSeconds));
-            SpawnBufferEnemyUnit();
-
-            yield return new WaitForSeconds(Mathf.Max(0f, enemySpawnIntervalSeconds));
-            SpawnGuardianCaptainEnemyUnit();
-
-            yield return new WaitForSeconds(Mathf.Max(0f, enemySpawnIntervalSeconds));
-            SpawnAttackCaptainEnemyUnit();
-
-            yield return new WaitForSeconds(Mathf.Max(0f, enemySpawnIntervalSeconds));
-            SpawnHeroKarinEnemyUnit();
-
-            enemySpawnSequence = null;
-        }
-
-        private delegate bool ConfiguredEnemySpawn(EnemySpawnManger spawner);
-
-        private bool TrySpawnConfiguredEnemy(ConfiguredEnemySpawn spawn)
-        {
-            ResolveReferences();
-            if (unitSpawnManager == null)
-            {
-                Debug.LogError("SceneEntryManager cannot spawn configured enemies because EnemySpawnManger is missing.");
-                return false;
-            }
-
-            return spawn(unitSpawnManager);
         }
 
         private void CaptureLastEnemySpawn()
@@ -554,11 +409,4 @@ namespace Pakuri.InGame
         }
     }
 
-    public sealed class InGameContextManager
-    {
-    }
-
-    public sealed class InGameResultManager
-    {
-    }
 }

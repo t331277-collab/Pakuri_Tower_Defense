@@ -1358,7 +1358,7 @@ namespace Pakuri.InGame
         }
     }
 
-        public sealed class UnitResourceMutationService
+        internal sealed class UnitResourceMutationService
         {
             public InGameResourceChangeResult ApplyDamage(
                 BaseUnitRuntimeModel target,

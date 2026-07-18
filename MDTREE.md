@@ -35,6 +35,7 @@ Examples of exclusions:
 - `BLACKBOARD.md`: root index and current global status only.
 - `AGENTS_ROLE/COMMON.md`: shared role rules inherited by Designer, Code Builder, Skill Builder, and Code Reviewer.
 - `boards/ARCHIVE/BLACKBOARD_2026-04-30_PRE_HIERARCHY.md`: full pre-hierarchy archive.
+- `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-07-18.md`: non-July task history moved from active COMBAT, DATA, MON, OPS, RUN, and UI boards.
 
 Role entry points and track files:
 

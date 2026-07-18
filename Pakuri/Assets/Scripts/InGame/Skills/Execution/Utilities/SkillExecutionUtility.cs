@@ -86,39 +86,6 @@ namespace Pakuri.InGame
             return targets;
         }
 
-        public static Vector2 ResolveTargetGroupCenter(
-            SkillExecutionContext context,
-            SkillTargetingSpec targeting,
-            Vector2 fallbackCenter)
-        {
-            if (context == null || context.CasterEntry == null || context.Roster == null)
-            {
-                return fallbackCenter;
-            }
-
-            var targets = ResolveOrderedTargets(context.CasterEntry, context.Roster, targeting);
-            if (targets.Count <= 0)
-            {
-                return fallbackCenter;
-            }
-
-            var sum = Vector2.zero;
-            var count = 0;
-            for (var i = 0; i < targets.Count; i++)
-            {
-                var target = targets[i];
-                if (target == null || target.Transform == null)
-                {
-                    continue;
-                }
-
-                sum += (Vector2)target.Transform.position;
-                count++;
-            }
-
-            return count > 0 ? sum / count : fallbackCenter;
-        }
-
         public static float ResolveDamage(
             BaseUnitRuntimeModel caster,
             SkillDamageSpec damage,

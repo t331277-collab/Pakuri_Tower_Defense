@@ -15,15 +15,6 @@ namespace Pakuri.InGame
             InGameSkillSlot.E
         };
 
-        public static UnitSkillRuntimeSet CreateLearnedActiveSet(
-            BaseUnitRuntimeModel owner,
-            InGameSkillCatalog catalog)
-        {
-            var set = new UnitSkillRuntimeSet();
-            PopulateLearnedActiveSet(owner, catalog, set);
-            return set;
-        }
-
         public static void RebuildLearnedActiveSet(
             BaseUnitRuntimeModel owner,
             InGameSkillCatalog catalog)
