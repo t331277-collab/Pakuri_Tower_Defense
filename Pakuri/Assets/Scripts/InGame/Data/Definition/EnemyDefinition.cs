@@ -1,8 +1,8 @@
 using System;
 using Pakuri.Combat;
+using Pakuri.InGame;
 using UnityEngine;
 using AttributeDefenseSet = Pakuri.Combat.DamageCalculator.AttributeDefenseSet;
-using CombatStatBlock = Pakuri.Combat.DamageCalculator.CombatStatBlock;
 
 namespace Pakuri.Data
 {
@@ -79,7 +79,16 @@ namespace Pakuri.Data
         public EnemyEncounterRole EncounterRole;
         public EnemyAttackType AttackType;
         public DamageAttribute Attribute;
-        public CombatStatBlock Stats = new CombatStatBlock();
+        public UnitStatsRuntime Stats = new UnitStatsRuntime
+        {
+            MaxHealth = 100f,
+            AttackPower = 30f,
+            SpellPower = 30f,
+            MoveSpeed = 1f,
+            CriticalChance = DamageCalculator.BaseCriticalChance,
+            CriticalDamage = DamageCalculator.BaseCriticalMultiplier,
+            CriticalResistance = 0f
+        };
         public AttributeDefenseSet Defenses = new AttributeDefenseSet();
 
         [Header("Combat Visuals")]

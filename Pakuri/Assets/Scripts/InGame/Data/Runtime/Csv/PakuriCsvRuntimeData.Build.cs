@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Pakuri.Combat;
+using Pakuri.InGame;
 using UnityEngine;
 using AttributeDefenseSet = Pakuri.Combat.DamageCalculator.AttributeDefenseSet;
-using CombatStatBlock = Pakuri.Combat.DamageCalculator.CombatStatBlock;
 
 namespace Pakuri.Data
 {
@@ -41,7 +41,7 @@ namespace Pakuri.Data
                 monster.PowerStat = sourceMonster.PowerStat;
                 monster.BaseDamage = sourceMonster.BaseDamage;
                 monster.PowerCoefficient = sourceMonster.PowerCoefficient;
-                monster.BaseStats = new CombatStatBlock
+                monster.BaseStats = new UnitStatsRuntime
                 {
                     MaxHealth = sourceMonster.MaxHealth,
                     AttackPower = sourceMonster.BaseAttackPower,
@@ -121,7 +121,7 @@ namespace Pakuri.Data
                 enemy.EncounterRole = sourceEnemy.EncounterRole;
                 enemy.AttackType = sourceEnemy.AttackType;
                 enemy.Attribute = sourceEnemy.Attribute;
-                enemy.Stats = new CombatStatBlock
+                enemy.Stats = new UnitStatsRuntime
                 {
                     MaxHealth = sourceEnemy.MaxHealth,
                     AttackPower = sourceEnemy.AttackPower,
