@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
-    public sealed class EnemyCombatSystem
+    public class EnemyCombatSystem
     {
         private readonly Dictionary<string, EnemyCombatState> enemyStates = new Dictionary<string, EnemyCombatState>();
 
@@ -360,7 +360,7 @@ namespace Pakuri.InGame
         }
     }
 
-    internal sealed class EnemyCombatState
+    internal class EnemyCombatState
     {
         public string TargetUnitId;
         public int AttackAttemptCount;

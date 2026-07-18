@@ -12,7 +12,7 @@ namespace Pakuri.InGame
     [DisallowMultipleComponent]
     [RequireComponent(typeof(SceneEntryManager))]
     [RequireComponent(typeof(InGameCombatManager))]
-    public sealed class StageManager : MonoBehaviour
+    public class StageManager : MonoBehaviour
     {
         private const float DefaultClearCheckInterval = 0.25f;
 
@@ -649,7 +649,7 @@ namespace Pakuri.InGame
         Error
     }
 
-    internal sealed class StageDayRow
+    internal class StageDayRow
     {
         public int Stage;
         public int Day;
@@ -658,7 +658,7 @@ namespace Pakuri.InGame
         public string RewardRuleId;
     }
 
-    internal sealed class StageEncounterRow
+    internal class StageEncounterRow
     {
         public string EncounterId;
         public int SpawnOrder;
@@ -676,7 +676,7 @@ namespace Pakuri.InGame
         public bool SelectedAsBoss;
     }
 
-    internal sealed class StageRewardRow
+    internal class StageRewardRow
     {
         public string RewardRuleId;
         public int Gold;
@@ -704,7 +704,7 @@ namespace Pakuri.InGame
         }
     }
 
-    internal sealed class StageFlowTable
+    internal class StageFlowTable
     {
         private readonly List<StageDayRow> days = new List<StageDayRow>();
         private readonly List<StageEncounterRow> encounters = new List<StageEncounterRow>();

@@ -8,7 +8,7 @@ namespace Pakuri.InGame
     [DisallowMultipleComponent]
     [RequireComponent(typeof(InGameCombatManager))]
     [RequireComponent(typeof(EnemySpawnManger))]
-    public sealed class SceneEntryManager : MonoBehaviour
+    public class SceneEntryManager : MonoBehaviour
     {
         private const string EveMonsterId = "eve";
 

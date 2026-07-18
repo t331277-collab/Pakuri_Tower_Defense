@@ -7,7 +7,7 @@ namespace Pakuri.InGame
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(InGameCombatManager))]
-    public sealed class EnemySpawnManger : MonoBehaviour
+    public class EnemySpawnManger : MonoBehaviour
     {
         private const string ArielMonsterId = "ariel";
         private const string EveMonsterId = "eve";
@@ -48,7 +48,7 @@ namespace Pakuri.InGame
         }
 
         [Serializable]
-        private sealed class EnemyPrefabBinding
+        private class EnemyPrefabBinding
         {
             [SerializeField] private string enemyId = string.Empty;
             [SerializeField] private GameObject prefab = null;

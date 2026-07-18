@@ -6,17 +6,17 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
     [DisallowMultipleComponent]
-    public sealed class EffectManager : MonoBehaviour
+    public class EffectManager : MonoBehaviour
     {
         [Serializable]
-        private sealed class MonsterSkillEffectEntry
+        private class MonsterSkillEffectEntry
         {
             public string SkillId = string.Empty;
             public GameObject Prefab = null;
         }
 
         [Serializable]
-        private sealed class MonsterSkillEffectGroup
+        private class MonsterSkillEffectGroup
         {
             public string MonsterId = string.Empty;
             public List<MonsterSkillEffectEntry> SkillEffects = new List<MonsterSkillEffectEntry>();
