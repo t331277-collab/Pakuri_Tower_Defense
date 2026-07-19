@@ -238,7 +238,7 @@ namespace Pakuri.InGame
                 }
 
                 request.NotifyActiveSkillAnimation?.Invoke(entry);
-                NotifySkillCastTriggers(request.CombatManager, entry, runtime, context);
+                NotifySkillCastTriggers(request.CombatManager, request.Roster, entry, runtime, context);
                 if (request.LogRoutedContracts)
                 {
                     Debug.Log($"Skill execution contract routed '{result.SkillId}' through {result.ExecutorName}.");
@@ -250,6 +250,7 @@ namespace Pakuri.InGame
 
         private static void NotifySkillCastTriggers(
             InGameCombatManager combatManager,
+            UnitRosterService roster,
             UnitRosterEntry entry,
             SkillRuntimeInstance runtime,
             SkillExecutionContext context,
@@ -263,7 +264,13 @@ namespace Pakuri.InGame
             var center = context != null && context.HasManualTargetPoint
                 ? context.ManualTargetPoint
                 : entry.Transform != null ? (Vector2)entry.Transform.position : Vector2.zero;
-            combatManager.DispatchSkillCastTriggers(entry, runtime.Data.SkillId, center, triggerSourceSkillId);
+            SkillTriggerRuntime.ExecuteSkillCast(
+                combatManager,
+                roster,
+                entry.Model,
+                runtime.Data.SkillId,
+                center,
+                triggerSourceSkillId);
         }
 
         private bool TryExecuteTriggeredSkill(
@@ -308,7 +315,7 @@ namespace Pakuri.InGame
             var result = executor.Execute(context, snapshot);
             if (result.Routed)
             {
-                NotifySkillCastTriggers(combatManager, entry, runtime, context, triggerSourceSkillId);
+                NotifySkillCastTriggers(combatManager, roster, entry, runtime, context, triggerSourceSkillId);
                 if (logRoutedContracts)
                 {
                     Debug.Log($"Triggered skill execution routed '{result.SkillId}' through {result.ExecutorName}.");

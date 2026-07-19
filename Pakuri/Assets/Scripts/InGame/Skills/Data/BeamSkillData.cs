@@ -2,7 +2,6 @@
 
 namespace Pakuri.InGame
 {
-    [CreateAssetMenu(menuName = "Pakuri/InGame/Beam Skill Data", fileName = "BeamSkillData")]
     public sealed class BeamSkillData : SkillData
     {
         [Header("Beam")]

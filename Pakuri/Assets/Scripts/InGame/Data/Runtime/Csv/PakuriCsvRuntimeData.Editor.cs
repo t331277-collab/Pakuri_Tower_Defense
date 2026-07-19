@@ -7,14 +7,23 @@ using UnityEngine;
 
 namespace Pakuri.Data
 {
+    /*
+     * Unity Editor에서 CSV와 런타임 Source·Asset 카탈로그를 동기화한다.
+     */
     public static partial class PakuriCsvRuntimeData
     {
+        /*
+         * 가져온 CSV 원본으로 런타임 카탈로그 자산을 갱신한다.
+         */
         public static void SyncImportedSourceCatalogsForEditor()
         {
             SyncRuntimeCatalogAssetsFromImportedSource();
             ResetRuntimeState();
         }
 
+        /*
+         * 에디터에서 CSV 원본과 런타임 카탈로그를 동기화하고 검증한다.
+         */
         public static void SyncAndValidateCsvRuntimeCatalogsForEditor()
         {
             SyncImportedSourceCatalogsForEditor();
@@ -25,6 +34,9 @@ namespace Pakuri.Data
         }
 
         [MenuItem("Pakuri/Sync CSV Runtime Catalog Assets")]
+        /*
+         * Unity 메뉴에서 런타임 카탈로그 자산 동기화를 실행한다.
+         */
         private static void SyncRuntimeCatalogAssetsMenu()
         {
             SyncImportedSourceCatalogsForEditor();
@@ -33,6 +45,9 @@ namespace Pakuri.Data
         }
 
         [MenuItem("Pakuri/Validate CSV Source Data")]
+        /*
+         * Unity 메뉴에서 CSV 원본 검증을 실행한다.
+         */
         private static void ValidateSourceDataMenu()
         {
             try
@@ -52,6 +67,9 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * 원본 CSV와 런타임 자산을 동기화한다.
+         */
         private static void SyncRuntimeCatalogAssetsFromImportedSource()
         {
             EnsureRuntimeResourcesFolderExists();
@@ -79,36 +97,6 @@ namespace Pakuri.Data
             sourceCatalog.MonsterSkillsPassiveFiles = LoadImportedSourceTextAssetsBySuffix(
                 AuthoringMonsterSkillBaseCsvAssetRoot,
                 "skills_passive.csv");
-            sourceCatalog.MonsterSkillsProjectile = sourceCatalog.MonsterSkillsProjectileFiles.Length == 0
-                ? LoadImportedSourceTextAssetOrThrow(MonsterSkillsProjectileFileName)
-                : null;
-            sourceCatalog.MonsterSkillsLineAttack = sourceCatalog.MonsterSkillsLineAttackFiles.Length == 0
-                ? LoadImportedSourceTextAssetOrThrow(MonsterSkillsLineAttackFileName)
-                : null;
-            sourceCatalog.MonsterSkillsAreaAttack = sourceCatalog.MonsterSkillsAreaAttackFiles.Length == 0
-                ? LoadImportedSourceTextAssetOrThrow(MonsterSkillsAreaAttackFileName)
-                : null;
-            sourceCatalog.MonsterSkillsSingleAttack = sourceCatalog.MonsterSkillsSingleAttackFiles.Length == 0
-                ? LoadImportedSourceTextAssetOrThrow(MonsterSkillsSingleAttackFileName)
-                : null;
-            sourceCatalog.MonsterSkillsBuff = sourceCatalog.MonsterSkillsBuffFiles.Length == 0
-                ? LoadImportedSourceTextAssetOrThrow(MonsterSkillsBuffFileName)
-                : null;
-            sourceCatalog.MonsterSkillsPassive = sourceCatalog.MonsterSkillsPassiveFiles.Length == 0
-                ? LoadImportedSourceTextAssetOrThrow(MonsterSkillsPassiveFileName)
-                : null;
-            sourceCatalog.MonsterSkillNodeFiles = LoadImportedSourceTextAssetsBySuffix(
-                AuthoringMonsterSkillNodeCsvAssetRoot,
-                "_skill_nodes.csv");
-            sourceCatalog.MonsterSkillNodeParamFiles = LoadImportedSourceTextAssetsBySuffix(
-                AuthoringMonsterSkillNodeCsvAssetRoot,
-                "_skill_node_params.csv");
-            sourceCatalog.MonsterSkillNodes = sourceCatalog.MonsterSkillNodeFiles.Length == 0
-                ? LoadImportedSourceTextAssetIfPresent(MonsterSkillNodesFileName)
-                : null;
-            sourceCatalog.MonsterSkillNodeParams = sourceCatalog.MonsterSkillNodeParamFiles.Length == 0
-                ? LoadImportedSourceTextAssetIfPresent(MonsterSkillNodeParamsFileName)
-                : null;
             sourceCatalog.MonsterSkillNodeDefinitions = LoadTextAssetOrThrow(
                 $"{AuthoringMonsterSkillNodeCsvAssetRoot}/definitions/{MonsterSkillNodeDefinitionsFileName}",
                 "Create the skill node definition CSV before validation.");
@@ -121,9 +109,6 @@ namespace Pakuri.Data
             sourceCatalog.MonsterSkillTriggerFiles = LoadImportedSourceTextAssetsBySuffix(
                 AuthoringMonsterSkillTriggerCsvAssetRoot,
                 "_skill_triger.csv");
-            sourceCatalog.MonsterSkillTriggers = sourceCatalog.MonsterSkillTriggerFiles.Length == 0
-                ? LoadImportedSourceTextAssetOrThrow(MonsterSkillTriggersFileName)
-                : null;
             sourceCatalog.MonsterSkillChoicesProjectileFiles = LoadImportedSourceTextAssetsBySuffix(
                 AuthoringMonsterSkillChoiceCsvAssetRoot,
                 "skill_choices_projectile.csv");
@@ -142,24 +127,6 @@ namespace Pakuri.Data
             sourceCatalog.MonsterSkillChoicesPassiveFiles = LoadImportedSourceTextAssetsBySuffix(
                 AuthoringMonsterSkillChoiceCsvAssetRoot,
                 "skill_choices_passive.csv");
-            sourceCatalog.MonsterSkillChoicesProjectile = sourceCatalog.MonsterSkillChoicesProjectileFiles.Length == 0
-                ? LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesProjectileFileName)
-                : null;
-            sourceCatalog.MonsterSkillChoicesLineAttack = sourceCatalog.MonsterSkillChoicesLineAttackFiles.Length == 0
-                ? LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesLineAttackFileName)
-                : null;
-            sourceCatalog.MonsterSkillChoicesAreaAttack = sourceCatalog.MonsterSkillChoicesAreaAttackFiles.Length == 0
-                ? LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesAreaAttackFileName)
-                : null;
-            sourceCatalog.MonsterSkillChoicesSingleAttack = sourceCatalog.MonsterSkillChoicesSingleAttackFiles.Length == 0
-                ? LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesSingleAttackFileName)
-                : null;
-            sourceCatalog.MonsterSkillChoicesBuff = sourceCatalog.MonsterSkillChoicesBuffFiles.Length == 0
-                ? LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesBuffFileName)
-                : null;
-            sourceCatalog.MonsterSkillChoicesPassive = sourceCatalog.MonsterSkillChoicesPassiveFiles.Length == 0
-                ? LoadImportedSourceTextAssetOrThrow(MonsterSkillChoicesPassiveFileName)
-                : null;
             sourceCatalog.StatusEffects = LoadImportedSourceTextAssetOrThrow(StatusEffectsFileName);
             sourceCatalog.Enemies = LoadTextAssetOrThrow(
                 $"{AuthoringEnemyCsvAssetRoot}/{EnemiesFileName}",
@@ -184,6 +151,9 @@ namespace Pakuri.Data
             AssetDatabase.Refresh();
         }
 
+        /*
+         * 작업에 필요한 상태를 준비한다.
+         */
         private static void EnsureRuntimeResourcesFolderExists()
         {
             var resourceFolder = Path.Combine(Application.dataPath, "Resources");
@@ -194,6 +164,9 @@ namespace Pakuri.Data
             Directory.CreateDirectory(csvFolder);
         }
 
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
         private static T LoadOrCreateAsset<T>(string assetPath)
             where T : ScriptableObject
         {
@@ -208,6 +181,9 @@ namespace Pakuri.Data
             return asset;
         }
 
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
         private static TextAsset LoadImportedSourceTextAssetOrThrow(string fileName)
         {
             var assetPath = GetImportedSourceAssetPath(fileName);
@@ -216,19 +192,9 @@ namespace Pakuri.Data
                 "Import the source CSV into Assets/CSVdata/authoring before validation.");
         }
 
-        private static TextAsset LoadImportedSourceTextAssetIfPresent(string fileName)
-        {
-            var assetPath = GetImportedSourceAssetPath(fileName);
-            var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
-            if (asset != null)
-            {
-                return asset;
-            }
-
-            TryImportTextAsset(assetPath);
-            return AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
-        }
-
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
         private static TextAsset[] LoadImportedSourceTextAssetsBySuffix(string folderAssetPath, string fileNameSuffix)
         {
             var absoluteFolderPath = GetAbsoluteAssetPath(folderAssetPath);
@@ -268,6 +234,9 @@ namespace Pakuri.Data
             return assets.ToArray();
         }
 
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
         private static TextAsset[] LoadImportedSourceTextAssetsByPrefix(string folderAssetPath, string fileNamePrefix)
         {
             var absoluteFolderPath = GetAbsoluteAssetPath(folderAssetPath);
@@ -307,6 +276,9 @@ namespace Pakuri.Data
             return assets.ToArray();
         }
 
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
         private static TextAsset LoadTextAssetOrThrow(string assetPath, string instruction)
         {
             var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
@@ -326,6 +298,9 @@ namespace Pakuri.Data
             return asset;
         }
 
+        /*
+         * 해당 자료 변환에 필요한 값을 구성한다.
+         */
         private static void TryImportTextAsset(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))
@@ -345,6 +320,9 @@ namespace Pakuri.Data
                 ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
         }
 
+        /*
+         * 계산에 필요한 값을 반환한다.
+         */
         private static string GetAbsoluteAssetPath(string assetPath)
         {
             const string assetsPrefix = "Assets/";
@@ -357,6 +335,9 @@ namespace Pakuri.Data
             return Path.Combine(Application.dataPath, relativePath);
         }
 
+        /*
+         * 계산에 필요한 값을 반환한다.
+         */
         private static string GetAssetPathFromAbsolutePath(string absolutePath)
         {
             var fullPath = Path.GetFullPath(absolutePath).Replace('\\', '/');
@@ -369,6 +350,9 @@ namespace Pakuri.Data
             return "Assets/" + fullPath.Substring(assetsRoot.Length + 1);
         }
 
+        /*
+         * 원본 값으로 런타임 자료를 만든다.
+         */
         private static PakuriCsvRuntimeAssetCatalog.SpriteEntry[] BuildSpriteEntries(SourceModel sourceModel)
         {
             var entries = new List<PakuriCsvRuntimeAssetCatalog.SpriteEntry>();
@@ -391,6 +375,9 @@ namespace Pakuri.Data
             return entries.ToArray();
         }
 
+        /*
+         * 원본 값으로 런타임 자료를 만든다.
+         */
         private static PakuriCsvRuntimeAssetCatalog.PrefabEntry[] BuildPrefabEntries(SourceModel sourceModel)
         {
             var entries = new List<PakuriCsvRuntimeAssetCatalog.PrefabEntry>();
@@ -413,6 +400,9 @@ namespace Pakuri.Data
             return entries.ToArray();
         }
 
+        /*
+         * 원본 값으로 런타임 자료를 만든다.
+         */
         private static PakuriCsvRuntimeAssetCatalog.AnimatorControllerEntry[] BuildAnimatorControllerEntries(SourceModel sourceModel)
         {
             var entries = new List<PakuriCsvRuntimeAssetCatalog.AnimatorControllerEntry>();
@@ -435,6 +425,9 @@ namespace Pakuri.Data
             return entries.ToArray();
         }
 
+        /*
+         * 에디터 동기화 뒤 런타임 캐시를 초기화한다.
+         */
         private static void ResetRuntimeState()
         {
             initialized = false;

@@ -536,13 +536,7 @@ namespace Pakuri.InGame
             }
 
             var targeting = BuildTargeting(effect);
-            var explicitTarget = ResolveExplicitEventTarget(context, effect);
-            var explicitEntry = explicitTarget != null && context != null && context.Roster != null
-                ? context.Roster.Find(explicitTarget)
-                : null;
-            var targets = explicitEntry != null
-                ? new List<UnitRosterEntry> { explicitEntry }
-                : SkillExecutionUtility.ResolveTargetList(context.CasterEntry, context.Roster, targeting);
+            var targets = ResolveStatusTargets(context, effect, targeting);
             var visualTargets = effect.VisualAnchorMode == SkillMultiEffectVisualAnchorMode.AppliedTargets
                 ? new List<UnitRosterEntry>()
                 : null;
@@ -601,6 +595,112 @@ namespace Pakuri.InGame
             }
 
             return routed;
+        }
+
+        // Code Builder: 패시브 런타임이 상태 변화 통지를 받았을 때 조건을 만족하는 대상만 계산한다.
+        internal static List<UnitRosterEntry> ResolvePassiveStatusTargets(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SkillEffectDefinition effect)
+        {
+            var matches = new List<UnitRosterEntry>();
+            if (context == null
+                || effect == null
+                || effect.EffectKind != SkillMultiEffectKind.Status
+                || !ShouldRun(context, effect, snapshot))
+            {
+                return matches;
+            }
+
+            var targeting = BuildTargeting(effect);
+            var targets = ResolveStatusTargets(context, effect, targeting);
+            for (var i = 0; i < targets.Count; i++)
+            {
+                var target = targets[i];
+                if (target != null
+                    && target.IsAlive
+                    && target.Model != null
+                    && TargetMatchesCondition(target.Model, effect))
+                {
+                    matches.Add(target);
+                }
+            }
+
+            return matches;
+        }
+
+        // Code Builder: 조건형 패시브 상태는 짧은 임대 갱신 대신 조건이 끝날 때까지 한 번만 유지한다.
+        internal static bool ApplyPersistentPassiveStatus(
+            SkillExecutionContext context,
+            SkillExecutionSnapshot snapshot,
+            SkillEffectDefinition effect,
+            UnitRosterEntry target,
+            Vector2 fallbackCenter)
+        {
+            if (context == null
+                || context.CombatManager == null
+                || effect == null
+                || target == null
+                || !target.IsAlive
+                || target.Model == null
+                || !TargetMatchesCondition(target.Model, effect))
+            {
+                return false;
+            }
+
+            var statusSpec = ResolveStatusSpec(effect, snapshot);
+            if (statusSpec == null || !statusSpec.Enabled || statusSpec.StatusData == null)
+            {
+                return false;
+            }
+
+            var visualDuration = statusSpec.DurationSeconds;
+            statusSpec.Permanent = true;
+            statusSpec.DurationSeconds = 0f;
+            statusSpec.RefreshDuration = false;
+
+            var applied = statusSpec.StatusData.Kind == StatusEffectKind.Shield
+                ? context.CombatManager.ApplyShieldStatus(
+                    target.Model,
+                    statusSpec.StatusData,
+                    ResolveStatusEffectShieldAmount(context.Caster, effect, snapshot),
+                    statusSpec.DurationSeconds,
+                    statusSpec.Stacks,
+                    statusSpec.MaxStacks,
+                    statusSpec.Permanent,
+                    statusSpec.RefreshDuration,
+                    context.Caster) != null
+                : SkillStatusApplyUtility.TryApplyStatus(context.CombatManager, target.Model, statusSpec, context.Caster);
+            if (!applied)
+            {
+                return false;
+            }
+
+            if (effect.VisualAnchorMode == SkillMultiEffectVisualAnchorMode.AppliedTargets)
+            {
+                SpawnVisualOnTargets(context, effect, new[] { target }, visualDuration);
+            }
+            else
+            {
+                var targeting = BuildTargeting(effect);
+                SpawnVisual(context, effect, ResolveEffectCenter(context, effect, targeting, fallbackCenter));
+            }
+
+            return true;
+        }
+
+        private static IReadOnlyList<UnitRosterEntry> ResolveStatusTargets(
+            SkillExecutionContext context,
+            SkillEffectDefinition effect,
+            SkillTargetingSpec targeting)
+        {
+            var explicitTarget = ResolveExplicitEventTarget(context, effect);
+            var explicitEntry = explicitTarget != null && context != null && context.Roster != null
+                ? context.Roster.Find(explicitTarget)
+                : null;
+            return explicitEntry != null
+                ? new List<UnitRosterEntry> { explicitEntry }
+                : SkillExecutionUtility.ResolveTargetList(context.CasterEntry, context.Roster, targeting);
         }
 
         internal static bool TargetMatchesCondition(BaseUnitRuntimeModel target, SkillEffectDefinition effect)

@@ -1,5 +1,6 @@
 using System;
 using Pakuri.Combat;
+using UnityEngine;
 
 namespace Pakuri.InGame
 {
@@ -76,6 +77,25 @@ namespace Pakuri.InGame
 
         // Code Builder: Nexus 역할 판정을 모델에 모아 중복 규칙 파일을 제거했다.
         public bool IsNexus => Identity != null && Identity.Role == UnitRole.Nexus;
+
+        /*
+         * 직접 보호막과 활성 상태 보호막의 총량을 반환한다.
+         */
+        public float GetTotalShield()
+        {
+            var directShield = Mathf.Max(0f, Resources.DirectShield);
+            var statusShield = Mathf.Max(0f, Statuses.GetTotalShieldAmount());
+            return Mathf.Round(Mathf.Max(0f, directShield + statusShield));
+        }
+
+        /*
+         * 직접 보호막과 상태 보호막의 합계를 현재 자원 값에 반영한다.
+         */
+        public void SyncShield()
+        {
+            Resources.DirectShield = Mathf.Round(Mathf.Max(0f, Resources.DirectShield));
+            Resources.CurrentShield = GetTotalShield();
+        }
     }
 
     public sealed class UnitChargeRuntime
@@ -234,6 +254,13 @@ namespace Pakuri.InGame
             return false;
         }
 
+        // Code Builder: 패시브 효과가 같은 상태 종류의 다른 출처를 건드리지 않고 활성 여부를 확인한다.
+        public bool Has(StatusEffectKind kind, string sourceSkillId)
+        {
+            var status = Find(kind, sourceSkillId);
+            return status != null && status.Stacks > 0;
+        }
+
         public int GetStacks(string tag)
         {
             return StatusEffectUtility.TryParse(tag, out var kind) ? GetStacks(kind) : 0;
@@ -300,15 +327,30 @@ namespace Pakuri.InGame
 
         public bool Remove(StatusEffectKind kind)
         {
+            return Remove(kind, null, null);
+        }
+
+        // Code Builder: 조건이 끝난 패시브가 자신이 만든 상태만 제거하도록 출처를 함께 비교한다.
+        public bool Remove(
+            StatusEffectKind kind,
+            string sourceSkillId,
+            System.Collections.Generic.ICollection<UnitStatusRuntime> removedStatuses)
+        {
             var removed = false;
-            for (var i = 0; i < statuses.Count; i++)
+            var hasSourceSkillId = !string.IsNullOrWhiteSpace(sourceSkillId);
+            for (var i = statuses.Count - 1; i >= 0; i--)
             {
-                if (statuses[i] != null && statuses[i].Kind == kind)
+                var status = statuses[i];
+                if (status == null
+                    || status.Kind != kind
+                    || (hasSourceSkillId && !string.Equals(status.SourceSkillId, sourceSkillId, StringComparison.OrdinalIgnoreCase)))
                 {
-                    statuses.RemoveAt(i);
-                    removed = true;
-                    i--;
+                    continue;
                 }
+
+                removedStatuses?.Add(status);
+                statuses.RemoveAt(i);
+                removed = true;
             }
 
             return removed;

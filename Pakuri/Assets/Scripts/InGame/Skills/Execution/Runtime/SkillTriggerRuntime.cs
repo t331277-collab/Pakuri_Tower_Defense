@@ -180,6 +180,34 @@ namespace Pakuri.InGame
             ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnShieldAbsorb, triggerContext);
         }
 
+        /*
+         * 한 피해에서 보호막이 흡수한 기록을 순서대로 Trigger에 전달한다.
+         */
+        public static void ExecuteShieldAbsorbs(
+            InGameCombatManager combatManager,
+            UnitRosterService roster,
+            BaseUnitRuntimeModel shieldTarget,
+            BaseUnitRuntimeModel attacker,
+            IReadOnlyList<ShieldAbsorbRecord> absorbedShields)
+        {
+            for (var i = 0; i < absorbedShields.Count; i++)
+            {
+                var record = absorbedShields[i];
+                if (record.AbsorbedAmount <= 0f)
+                {
+                    continue;
+                }
+
+                ExecuteShieldAbsorb(
+                    combatManager,
+                    roster,
+                    shieldTarget,
+                    attacker,
+                    record.Status,
+                    record.AbsorbedAmount);
+            }
+        }
+
         public static void ExecuteStatusExpire(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -208,6 +236,43 @@ namespace Pakuri.InGame
                 source);
             ExecuteSourceOwnedTriggers(combatManager, roster, source, sourceSkillId, SkillTriggerEvent.OnStatusExpire, triggerContext);
             ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnStatusExpire, triggerContext);
+        }
+
+        /*
+         * 제거된 상태의 일반 만료와 보호막 만료 Trigger를 함께 실행한다.
+         */
+        public static void ExecuteExpiredStatuses(
+            InGameCombatManager combatManager,
+            UnitRosterService roster,
+            BaseUnitRuntimeModel statusOwner,
+            IReadOnlyList<UnitStatusRuntime> removedStatuses)
+        {
+            for (var i = 0; i < removedStatuses.Count; i++)
+            {
+                var status = removedStatuses[i];
+                ExecuteStatusExpire(combatManager, roster, statusOwner, status);
+            }
+
+            ExecuteShieldExpires(combatManager, roster, statusOwner, removedStatuses);
+        }
+
+        /*
+         * 제거된 보호막 상태만 보호막 만료 Trigger에 전달한다.
+         */
+        public static void ExecuteShieldExpires(
+            InGameCombatManager combatManager,
+            UnitRosterService roster,
+            BaseUnitRuntimeModel shieldTarget,
+            IReadOnlyList<UnitStatusRuntime> removedStatuses)
+        {
+            for (var i = 0; i < removedStatuses.Count; i++)
+            {
+                var status = removedStatuses[i];
+                if (status.IsShieldStatus)
+                {
+                    ExecuteShieldExpire(combatManager, roster, shieldTarget, status);
+                }
+            }
         }
 
         public static void ExecuteOutgoingDamage(
@@ -591,7 +656,9 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            return combatManager.ConsumePassiveTriggerCooldown(BuildPassiveTriggerCooldownKey(owner, trigger), trigger.InternalCooldownSeconds);
+            return combatManager.PassiveEffects.ConsumeTriggerCooldown(
+                BuildPassiveTriggerCooldownKey(owner, trigger),
+                trigger.InternalCooldownSeconds);
         }
 
         private static bool PassesCountGate(InGameCombatManager combatManager, BaseUnitRuntimeModel owner, SkillTriggerDefinition trigger)
@@ -601,7 +668,9 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            return combatManager.ConsumePassiveTriggerCount(BuildPassiveTriggerCooldownKey(owner, trigger), trigger.TriggerEveryCount);
+            return combatManager.PassiveEffects.ConsumeTriggerCount(
+                BuildPassiveTriggerCooldownKey(owner, trigger),
+                trigger.TriggerEveryCount);
         }
 
         private static bool MatchesEventSourceScope(string scope, BaseUnitRuntimeModel owner, BaseUnitRuntimeModel eventSource)
@@ -820,9 +889,12 @@ namespace Pakuri.InGame
             var triggeredDamageMultiplier = trigger.DamageMultiplier > 0f
                 ? trigger.DamageMultiplier
                 : 1f;
-            return combatManager.TryExecuteTriggeredSkill(
+            return combatManager.SkillExecution.TryExecuteTriggered(
                 sourceEntry,
                 runtime,
+                combatManager.Roster,
+                combatManager,
+                combatManager.LogSkillExecutionContracts,
                 targetPoint,
                 true,
                 triggeredDamageMultiplier,

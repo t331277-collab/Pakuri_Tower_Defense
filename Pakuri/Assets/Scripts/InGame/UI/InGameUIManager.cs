@@ -18,7 +18,7 @@ namespace Pakuri.InGame
         private readonly string[] prisonSlotMonsterIds = new string[PrisonPartySlotCount];
 
         [SerializeField] private StageManager stageManager;
-        [SerializeField] private SceneEntryManager entryManager;
+        [SerializeField] private UnitSpawnManager unitSpawnManager;
         [SerializeField] private InGameCombatManager combatManager;
         [Header("Prison Panel Monster Portraits")]
         [SerializeField] private Sprite arielPrisonPortrait;
@@ -223,9 +223,9 @@ namespace Pakuri.InGame
                 stageManager = FindSceneObject<StageManager>();
             }
 
-            if (entryManager == null)
+            if (unitSpawnManager == null)
             {
-                entryManager = FindSceneObject<SceneEntryManager>();
+                unitSpawnManager = FindSceneObject<UnitSpawnManager>();
             }
 
             if (combatManager == null)
@@ -278,7 +278,7 @@ namespace Pakuri.InGame
                 ResolveSession,
                 ResolveCatalog,
                 ResolveStageManager,
-                ResolveEntryManager,
+                ResolveUnitSpawnManager,
                 () => activePrisonerButton,
                 ConsumePrisonerButton,
                 CompletePrisonAction,
@@ -408,15 +408,6 @@ namespace Pakuri.InGame
                 prisonPrisonerNameText.text = ResolvePrisonerDisplayName(prisonerId);
             }
 
-            if (prisonPrisonerImage != null)
-            {
-                var unitSpawnManager = entryManager != null ? entryManager.UnitSpawnManager : null;
-                var portrait = unitSpawnManager != null
-                    ? unitSpawnManager.ResolveEnemyPortraitSprite(prisonerId)
-                    : null;
-                prisonPrisonerImage.sprite = portrait;
-                prisonPrisonerImage.color = portrait != null ? Color.white : new Color(0f, 0f, 0f, 0.3f);
-            }
         }
 
         private Sprite ResolveMonsterPortrait(string monsterId, MonsterDefinition monster)
@@ -583,7 +574,7 @@ namespace Pakuri.InGame
                 return stageManager.ActiveSession;
             }
 
-            return entryManager != null ? entryManager.ActiveSession : null;
+            return unitSpawnManager != null ? unitSpawnManager.ActiveSession : null;
         }
 
         private GameDataCatalog ResolveCatalog()
@@ -616,10 +607,10 @@ namespace Pakuri.InGame
             return stageManager;
         }
 
-        private SceneEntryManager ResolveEntryManager()
+        private UnitSpawnManager ResolveUnitSpawnManager()
         {
             ResolveReferences();
-            return entryManager;
+            return unitSpawnManager;
         }
 
         private GameObject FindChildObject(string path)
@@ -1596,7 +1587,7 @@ namespace Pakuri.InGame
         private readonly Func<RunSession> resolveSession;
         private readonly Func<GameDataCatalog> resolveCatalog;
         private readonly Func<StageManager> resolveStageManager;
-        private readonly Func<SceneEntryManager> resolveEntryManager;
+        private readonly Func<UnitSpawnManager> resolveUnitSpawnManager;
         private readonly Func<InGameUIManager.RewardButtonView> resolveActivePrisonerButton;
         private readonly Action consumePrisonerButton;
         private readonly Action completePrisonAction;
@@ -1616,7 +1607,7 @@ namespace Pakuri.InGame
             Func<RunSession> resolveSession,
             Func<GameDataCatalog> resolveCatalog,
             Func<StageManager> resolveStageManager,
-            Func<SceneEntryManager> resolveEntryManager,
+            Func<UnitSpawnManager> resolveUnitSpawnManager,
             Func<InGameUIManager.RewardButtonView> resolveActivePrisonerButton,
             Action consumePrisonerButton,
             Action completePrisonAction,
@@ -1633,7 +1624,7 @@ namespace Pakuri.InGame
             this.resolveSession = resolveSession;
             this.resolveCatalog = resolveCatalog;
             this.resolveStageManager = resolveStageManager;
-            this.resolveEntryManager = resolveEntryManager;
+            this.resolveUnitSpawnManager = resolveUnitSpawnManager;
             this.resolveActivePrisonerButton = resolveActivePrisonerButton;
             this.consumePrisonerButton = consumePrisonerButton;
             this.completePrisonAction = completePrisonAction;
@@ -1721,10 +1712,10 @@ namespace Pakuri.InGame
 
             session.RecordManifestedMonster(pendingManifestMonster);
             var slotIndex = Mathf.Clamp(session.ManifestedMonsterIds.Count, 1, 4);
-            var entryManager = resolveEntryManager?.Invoke();
-            if (entryManager != null)
+            var unitSpawnManager = resolveUnitSpawnManager?.Invoke();
+            if (unitSpawnManager != null)
             {
-                entryManager.SpawnManifestedMonster(pendingManifestMonster, slotIndex, out _);
+                unitSpawnManager.SpawnManifestedMonster(pendingManifestMonster, slotIndex);
             }
 
             pendingManifestMonster = null;

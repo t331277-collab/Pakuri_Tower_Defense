@@ -14,7 +14,7 @@ namespace Pakuri.InGame
         [SerializeField] private Transform monsterPanelRoot;
         [SerializeField] private MonsterPanelSlotView[] monsterSlots = new MonsterPanelSlotView[MaxPartySlots];
         [SerializeField] private StageManager stageManager;
-        [SerializeField] private SceneEntryManager entryManager;
+        [SerializeField] private UnitSpawnManager unitSpawnManager;
         [SerializeField] private InGameCombatManager combatManager;
 
         private void Awake()
@@ -83,9 +83,9 @@ namespace Pakuri.InGame
                 }
             }
 
-            if (models[0] == null && entryManager != null)
+            if (models[0] == null && unitSpawnManager != null)
             {
-                models[0] = entryManager.SpawnedPlayerModel;
+                models[0] = unitSpawnManager.SpawnedPlayerModel;
             }
 
             return models;
@@ -98,9 +98,9 @@ namespace Pakuri.InGame
                 stageManager = FindSceneObject<StageManager>();
             }
 
-            if (entryManager == null)
+            if (unitSpawnManager == null)
             {
-                entryManager = FindSceneObject<SceneEntryManager>();
+                unitSpawnManager = FindSceneObject<UnitSpawnManager>();
             }
 
             if (combatManager == null)

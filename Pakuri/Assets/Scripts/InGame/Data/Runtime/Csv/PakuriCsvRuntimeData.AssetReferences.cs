@@ -3,10 +3,16 @@ using System.Collections.Generic;
 
 namespace Pakuri.Data
 {
+    /*
+     * CSV가 참조하는 Sprite, Prefab, Animator 경로를 수집하고 중복을 정리한다.
+     */
     public static partial class PakuriCsvRuntimeData
     {
         private readonly struct ReferencedAssetPath
         {
+            /*
+             * 참조 자산 경로를 구성한다.
+             */
             public ReferencedAssetPath(string assetPath, string ownerLabel)
             {
                 AssetPath = assetPath;
@@ -17,6 +23,9 @@ namespace Pakuri.Data
             public string OwnerLabel { get; }
         }
 
+        /*
+         * 종류별 자산 경로와 중복 확인용 경로 집합을 보관한다.
+         */
         private sealed class ReferencedAssetSet
         {
             private readonly HashSet<string> spritePathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -27,21 +36,33 @@ namespace Pakuri.Data
             public List<ReferencedAssetPath> PrefabPaths { get; } = new List<ReferencedAssetPath>();
             public List<ReferencedAssetPath> AnimatorControllerPaths { get; } = new List<ReferencedAssetPath>();
 
+            /*
+             * 항목을 대상 목록에 추가한다.
+             */
             public void AddSprite(string assetPath, string ownerLabel)
             {
                 Add(assetPath, ownerLabel, spritePathLookup, SpritePaths);
             }
 
+            /*
+             * 항목을 대상 목록에 추가한다.
+             */
             public void AddPrefab(string assetPath, string ownerLabel)
             {
                 Add(assetPath, ownerLabel, prefabPathLookup, PrefabPaths);
             }
 
+            /*
+             * 항목을 대상 목록에 추가한다.
+             */
             public void AddAnimatorController(string assetPath, string ownerLabel)
             {
                 Add(assetPath, ownerLabel, animatorControllerPathLookup, AnimatorControllerPaths);
             }
 
+            /*
+             * 항목을 대상 목록에 추가한다.
+             */
             private static void Add(
                 string assetPath,
                 string ownerLabel,
@@ -61,6 +82,9 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * 원본 모델이 사용하는 Sprite, Prefab, Animator 참조를 모은다.
+         */
         private static ReferencedAssetSet CollectReferencedAssets(SourceModel model)
         {
             var assets = new ReferencedAssetSet();

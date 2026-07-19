@@ -271,7 +271,6 @@ namespace Pakuri.InGame
         public SkillExecutionPlanNode[] NormalizedPlanNodes = Array.Empty<SkillExecutionPlanNode>();
     }
 
-    [CreateAssetMenu(menuName = "Pakuri/InGame/Buff Skill Data", fileName = "BuffSkillData")]
     public sealed class BuffSkillData : SkillData
     {
         [Header("Buff")]
@@ -291,14 +290,12 @@ namespace Pakuri.InGame
         public StatusApplicationSpec AttachedStatus = new StatusApplicationSpec();
     }
 
-    [CreateAssetMenu(menuName = "Pakuri/InGame/Heal Skill Data", fileName = "HealSkillData")]
     public sealed class HealSkillData : SkillData
     {
         public SkillDamageSpec Healing = new SkillDamageSpec();
         public bool AttachVisualToTarget = true;
     }
 
-    [CreateAssetMenu(menuName = "Pakuri/InGame/Chain Attack Skill Data", fileName = "ChainAttackSkillData")]
     public sealed class ChainAttackSkillData : SkillData
     {
         public SkillDamageSpec Damage = new SkillDamageSpec();
@@ -308,7 +305,6 @@ namespace Pakuri.InGame
         public bool ExcludePrimaryTarget = true;
     }
 
-    [CreateAssetMenu(menuName = "Pakuri/InGame/Charge Skill Data", fileName = "ChargeSkillData")]
     public sealed class ChargeSkillData : SkillData
     {
         public float TargetMaxHealthRatio = 1f;

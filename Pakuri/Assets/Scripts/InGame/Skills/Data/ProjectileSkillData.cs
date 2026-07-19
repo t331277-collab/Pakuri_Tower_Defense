@@ -2,7 +2,6 @@
 
 namespace Pakuri.InGame
 {
-    [CreateAssetMenu(menuName = "Pakuri/InGame/Projectile Skill Data", fileName = "ProjectileSkillData")]
     public sealed class ProjectileSkillData : SkillData
     {
         [Header("Projectile")]

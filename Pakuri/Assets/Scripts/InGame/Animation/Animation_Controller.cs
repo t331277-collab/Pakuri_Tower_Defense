@@ -8,7 +8,7 @@ namespace Pakuri.InGame
      * 대기, 공격, 피격, 사망, 부활 애니메이션을 재생하고
      * 사망 애니메이션이 끝나면 마지막 프레임을 유지한다.
      */
-    public sealed class Animation_Controller : MonoBehaviour
+    public class Animation_Controller : MonoBehaviour
     {
         private const string AttackTriggerName = "Attack";
         private const string HitTriggerName = "Hit";
@@ -45,6 +45,7 @@ namespace Pakuri.InGame
             }
 
             animator.speed = 1f;
+            // AttackIndex는 0부터 공격 상태 개수 직전까지의 Animator 분기를 선택한다.
             animator.SetInteger(AttackIndexParameterName, Random.Range(0, Mathf.Max(1, attackStateCount)));
             animator.ResetTrigger(HitTriggerName);
             animator.SetTrigger(AttackTriggerName);
@@ -78,6 +79,7 @@ namespace Pakuri.InGame
             }
 
             dead = true;
+            // Trigger 실행 전에 클립 길이를 확보해 사망 연출이 끝나는 시점을 계산한다.
             var deathLength = ResolveClipLength(deadState);
             animator.speed = 1f;
             animator.ResetTrigger(AttackTriggerName);
@@ -151,6 +153,7 @@ namespace Pakuri.InGame
                 yield break;
             }
 
+            // 마지막 정규화 프레임으로 이동한 뒤 Animator 속도를 멈춰 사망 포즈를 유지한다.
             animator.Play(deadState, 0, 0.999f);
             animator.Update(0f);
             animator.speed = 0f;

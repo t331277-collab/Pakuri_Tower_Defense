@@ -2,7 +2,6 @@
 
 namespace Pakuri.InGame
 {
-    [CreateAssetMenu(menuName = "Pakuri/InGame/Zone Skill Data", fileName = "ZoneSkillData")]
     public sealed class ZoneSkillData : SkillData
     {
         [Header("Area")]

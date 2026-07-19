@@ -7,15 +7,27 @@ using UnityEngine;
 
 namespace Pakuri.Data
 {
+    /*
+     * CSV 텍스트를 표와 행으로 나누고 각 값을 필요한 자료형으로 읽는다.
+     */
     public static partial class PakuriCsvRuntimeData
     {
+        /*
+         * CSV 로딩을 중단해야 하는 오류와 세부 오류 목록을 전달한다.
+         */
         private sealed class CsvFatalException : Exception
         {
+            /*
+             * CSV 치명 오류와 세부 오류 목록을 보관한다.
+             */
             public CsvFatalException(string message)
                 : this(message, null)
             {
             }
 
+            /*
+             * CSV 치명 오류와 세부 오류 목록을 보관한다.
+             */
             public CsvFatalException(string message, List<string> errors)
                 : base(errors == null || errors.Count == 0
                     ? message
@@ -26,14 +38,23 @@ namespace Pakuri.Data
 
             public List<string> Errors { get; }
 
+            /*
+             * 오류 메시지와 세부 내용을 문자열로 만든다.
+             */
             public override string ToString()
             {
                 return base.ToString();
             }
         }
 
+        /*
+         * CSV의 헤더, 자료형, 데이터 행을 한 묶음으로 보관한다.
+         */
         private sealed class CsvTable
         {
+            /*
+             * CSV 헤더와 행 목록을 구성한다.
+             */
             private CsvTable(string tableName, string[] headers, string[] types, List<CsvRecord> records)
             {
                 TableName = tableName;
@@ -47,6 +68,9 @@ namespace Pakuri.Data
             public string[] Types { get; }
             public List<CsvRecord> Records { get; }
 
+            /*
+             * 필요한 CSV 또는 자산을 불러온다.
+             */
             public static CsvTable Load(TextAsset asset, string tableName)
             {
                 if (asset == null)
@@ -57,6 +81,9 @@ namespace Pakuri.Data
                 return Load(tableName, asset.text);
             }
 
+            /*
+             * 필요한 CSV 또는 자산을 불러온다.
+             */
             public static CsvTable Load(string path)
             {
                 if (!File.Exists(path))
@@ -67,6 +94,9 @@ namespace Pakuri.Data
                 return Load(Path.GetFileName(path), File.ReadAllText(path, Encoding.UTF8));
             }
 
+            /*
+             * 필요한 CSV 또는 자산을 불러온다.
+             */
             private static CsvTable Load(string tableName, string contents)
             {
                 var normalizedContents = string.IsNullOrEmpty(contents)
@@ -78,8 +108,8 @@ namespace Pakuri.Data
                     throw new CsvFatalException($"CSV file '{tableName}' must contain a header row and a type row.");
                 }
 
-                var headers = PakuriCsvLineCodec.SplitLine(lines[0]);
-                var types = PakuriCsvLineCodec.SplitLine(lines[1]);
+                var headers = SplitCsvLine(lines[0]);
+                var types = SplitCsvLine(lines[1]);
                 if (headers.Length == 0)
                 {
                     throw new CsvFatalException($"CSV file '{tableName}' has an empty header row.");
@@ -101,7 +131,7 @@ namespace Pakuri.Data
                         continue;
                     }
 
-                    var cells = PakuriCsvLineCodec.SplitLine(lines[lineIndex]);
+                    var cells = SplitCsvLine(lines[lineIndex]);
                     if (cells.Length != headers.Length)
                     {
                         throw new CsvFatalException(
@@ -115,11 +145,17 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * CSV 한 행의 값과 헤더별 열 위치를 보관한다.
+         */
         private sealed class CsvRecord
         {
             private readonly string[] cells;
             private readonly Dictionary<string, int> headerLookup;
 
+            /*
+             * CSV 한 행과 열 위치 정보를 구성한다.
+             */
             public CsvRecord(string tableName, int rowNumber, string[] headers, string[] cells)
             {
                 TableName = tableName;
@@ -135,6 +171,9 @@ namespace Pakuri.Data
             public string TableName { get; }
             public int RowNumber { get; }
 
+            /*
+             * CSV 행에서 필요한 값을 읽는다.
+             */
             public string ReadRequiredString(string columnName)
             {
                 var value = ReadString(columnName);
@@ -146,17 +185,26 @@ namespace Pakuri.Data
                 return value;
             }
 
+            /*
+             * CSV 행에서 필요한 값을 읽는다.
+             */
             public string ReadString(string columnName)
             {
                 return GetCell(columnName).Trim();
             }
 
+            /*
+             * 필요한 조건을 만족하는지 확인한다.
+             */
             public bool HasColumn(string columnName)
             {
                 return !string.IsNullOrWhiteSpace(columnName)
                     && headerLookup.ContainsKey(columnName);
             }
 
+            /*
+             * CSV 행에서 필요한 값을 읽는다.
+             */
             public int ReadInt(string columnName)
             {
                 var value = ReadString(columnName);
@@ -174,6 +222,9 @@ namespace Pakuri.Data
                 return parsed;
             }
 
+            /*
+             * CSV 행에서 필요한 값을 읽는다.
+             */
             public float ReadFloat(string columnName)
             {
                 var value = ReadString(columnName);
@@ -191,6 +242,9 @@ namespace Pakuri.Data
                 return parsed;
             }
 
+            /*
+             * CSV 행에서 필요한 값을 읽는다.
+             */
             public bool ReadBool(string columnName)
             {
                 var value = ReadString(columnName);
@@ -208,28 +262,9 @@ namespace Pakuri.Data
                 return parsed;
             }
 
-            public Color ReadColor(string columnName)
-            {
-                var value = ReadString(columnName);
-                if (string.IsNullOrWhiteSpace(value))
-                {
-                    return Color.white;
-                }
-
-                var parts = value.Split('|');
-                if (parts.Length != 4)
-                {
-                    throw new CsvFatalException(
-                        $"CSV row {RowNumber} in '{TableName}' has invalid color value '{value}' for '{columnName}'.");
-                }
-
-                return new Color(
-                    ParseColorComponent(parts[0], columnName),
-                    ParseColorComponent(parts[1], columnName),
-                    ParseColorComponent(parts[2], columnName),
-                    ParseColorComponent(parts[3], columnName));
-            }
-
+            /*
+             * CSV 행에서 필요한 값을 읽는다.
+             */
             public TEnum ReadEnum<TEnum>(string columnName)
                 where TEnum : struct
             {
@@ -248,6 +283,9 @@ namespace Pakuri.Data
                 return parsed;
             }
 
+            /*
+             * 계산에 필요한 값을 반환한다.
+             */
             private string GetCell(string columnName)
             {
                 if (!headerLookup.TryGetValue(columnName, out var index))
@@ -261,19 +299,68 @@ namespace Pakuri.Data
                         $"CSV row {RowNumber} in '{TableName}' is missing value for column '{columnName}'.");
                 }
 
-                return PakuriCsvLineCodec.UnescapeCell(cells[index]);
-            }
-
-            private static float ParseColorComponent(string value, string columnName)
-            {
-                if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
-                {
-                    throw new CsvFatalException($"Invalid color component '{value}' in column '{columnName}'.");
-                }
-
-                return parsed;
+                return UnescapeCsvCell(cells[index]);
             }
         }
 
+        /*
+         * 따옴표로 묶인 쉼표와 연속 따옴표를 구분해 CSV 한 줄을 열 단위로 나눈다.
+         */
+        private static string[] SplitCsvLine(string line)
+        {
+            var values = new List<string>();
+            var builder = new StringBuilder();
+            var inQuotes = false;
+
+            if (line == null)
+            {
+                values.Add(string.Empty);
+                return values.ToArray();
+            }
+
+            for (var i = 0; i < line.Length; i++)
+            {
+                var character = line[i];
+                if (character == '"')
+                {
+                    if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        builder.Append('"');
+                        i++;
+                    }
+                    else
+                    {
+                        inQuotes = !inQuotes;
+                    }
+
+                    continue;
+                }
+
+                if (character == ',' && !inQuotes)
+                {
+                    values.Add(builder.ToString());
+                    builder.Clear();
+                    continue;
+                }
+
+                builder.Append(character);
+            }
+
+            values.Add(builder.ToString());
+            return values.ToArray();
+        }
+
+        /*
+         * CSV 셀 안의 줄바꿈 표기를 실제 줄바꿈으로 바꾼다.
+         */
+        private static string UnescapeCsvCell(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            return value.Replace("\\n", "\n");
+        }
     }
 }

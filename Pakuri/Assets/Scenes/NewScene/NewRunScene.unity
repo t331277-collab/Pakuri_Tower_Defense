@@ -13900,7 +13900,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.InGameUIManager
   stageManager: {fileID: 0}
-  entryManager: {fileID: 0}
+  unitSpawnManager: {fileID: 1427799830}
   combatManager: {fileID: 0}
   arielPrisonPortrait: {fileID: 21300000, guid: a2e16c5de6059e64bb11895b285e8b11, type: 3}
   evePrisonPortrait: {fileID: 21300000, guid: de0e751ccbfda1a458f5f515a15608d8, type: 3}
@@ -13957,7 +13957,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   stageManager: {fileID: 0}
-  entryManager: {fileID: 0}
+  unitSpawnManager: {fileID: 1427799830}
   combatManager: {fileID: 0}
   monsterPanelUI: {fileID: 0}
 --- !u!114 &876113835
@@ -13990,7 +13990,7 @@ MonoBehaviour:
     monsterImage: {fileID: 0}
     activeSlots: []
   stageManager: {fileID: 1427799829}
-  entryManager: {fileID: 1427799827}
+  unitSpawnManager: {fileID: 1427799830}
   combatManager: {fileID: 1427799828}
 --- !u!114 &876113836
 MonoBehaviour:
@@ -14043,7 +14043,7 @@ MonoBehaviour:
     totalDamagePercentText: {fileID: 0}
     meterBackground: {fileID: 0}
     meterTemplate: {fileID: 0}
-  entryManager: {fileID: 0}
+  unitSpawnManager: {fileID: 1427799830}
   tracker: {fileID: 0}
 --- !u!114 &876113837
 MonoBehaviour:
@@ -23523,7 +23523,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1427799826}
-  - component: {fileID: 1427799827}
   - component: {fileID: 1427799828}
   - component: {fileID: 1427799829}
   - component: {fileID: 1427799830}
@@ -23551,21 +23550,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1427799827
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1427799825}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b6ff00e786df7fb46ae905aa63bee059, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.SceneEntryManager
-  combatManager: {fileID: 1427799828}
-  unitSpawnManager: {fileID: 1427799830}
-  allowEveFallback: 1
 --- !u!114 &1427799828
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23596,8 +23580,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c2fbcf1f36342aca23eac2221b2c1e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.StageManager
-  entryManager: {fileID: 1427799827}
   combatManager: {fileID: 1427799828}
+  unitSpawnManager: {fileID: 1427799830}
   stageDayCsv: {fileID: 4900000, guid: 1f0de32c2b7b4d2da2e4b9340af2db31, type: 3}
   stageEncounterCsv: {fileID: 4900000, guid: e14b38c9a5164e69a8e0325cc6ad5180, type: 3}
   stageRewardCsv: {fileID: 4900000, guid: c9708f3d0fbd4ed88b6c9f681d472ea1, type: 3}
@@ -23623,7 +23607,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fa013f8b8851bec4882efe505f98b801, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.EnemySpawnManger
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.UnitSpawnManager
   combatManager: {fileID: 1427799828}
   playerSpawnPoint: {fileID: 1137822058}
   enemySpawnPoint: {fileID: 1902957069}

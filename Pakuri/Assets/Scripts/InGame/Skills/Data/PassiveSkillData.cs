@@ -2,7 +2,6 @@
 
 namespace Pakuri.InGame
 {
-    [CreateAssetMenu(menuName = "Pakuri/InGame/Passive Skill Data", fileName = "PassiveSkillData")]
     public sealed class PassiveSkillData : SkillData
     {
         [Header("Trigger")]

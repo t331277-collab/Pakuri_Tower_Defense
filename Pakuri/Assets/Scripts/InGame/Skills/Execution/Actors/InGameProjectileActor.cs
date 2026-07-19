@@ -222,7 +222,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var target = combatManager.FindUnitByCollider(other);
+            var target = combatManager.Roster.FindByCollider(other);
             TryHitTarget(target);
         }
 

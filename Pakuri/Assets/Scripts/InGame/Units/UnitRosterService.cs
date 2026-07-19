@@ -74,6 +74,23 @@ namespace Pakuri.InGame
             return Find(model, null);
         }
 
+        /*
+         * Collider가 속한 등록 유닛을 찾는다.
+         */
+        public UnitRosterEntry FindByCollider(Collider2D collider)
+        {
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                if (entry.ContainsTransform(collider.transform))
+                {
+                    return entry;
+                }
+            }
+
+            return null;
+        }
+
         // Code Builder: 등록된 Actor 표시 갱신은 로스터가 담당한다.
         public bool RefreshActor(BaseUnitRuntimeModel model)
         {

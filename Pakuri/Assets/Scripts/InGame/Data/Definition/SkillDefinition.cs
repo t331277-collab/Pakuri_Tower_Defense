@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Pakuri.Data
 {
+    /*
+     * 몬스터가 보유할 수 있는 스킬 슬롯을 구분한다.
+     */
     public enum SkillSlot
     {
         A,
@@ -18,6 +21,9 @@ namespace Pakuri.Data
         J
     }
 
+    /*
+     * 스킬 데이터가 런타임에서 지원되는 단계를 구분한다.
+     */
     public enum SkillImplementationState
     {
         NotImplemented,
@@ -25,6 +31,9 @@ namespace Pakuri.Data
         RuntimeImplemented
     }
 
+    /*
+     * 선택지가 액티브·패시브의 어느 성장 단계인지 구분한다.
+     */
     public enum SkillChoiceGroup
     {
         ActiveEnhancement,
@@ -33,6 +42,9 @@ namespace Pakuri.Data
         PassiveBase
     }
 
+    /*
+     * 스킬을 실행할 공용 런타임 종류를 구분한다.
+     */
     public enum SkillRuntimeKind
     {
         MagazineProjectile,
@@ -49,6 +61,9 @@ namespace Pakuri.Data
         Passive
     }
 
+    /*
+     * 한 스킬에 연결되는 추가 효과의 동작을 구분한다.
+     */
     public enum SkillMultiEffectKind
     {
         Damage,
@@ -57,6 +72,9 @@ namespace Pakuri.Data
         RecastZone
     }
 
+    /*
+     * 추가 효과가 적용될 진영을 구분한다.
+     */
     public enum SkillMultiEffectTargetSide
     {
         Enemy,
@@ -64,6 +82,9 @@ namespace Pakuri.Data
         AllAllies
     }
 
+    /*
+     * 추가 효과가 대상을 고르는 방식을 구분한다.
+     */
     public enum SkillMultiEffectTargetSelection
     {
         Nearest,
@@ -71,6 +92,9 @@ namespace Pakuri.Data
         EventTarget
     }
 
+    /*
+     * 추가 효과의 대상 범위를 구분한다.
+     */
     public enum SkillMultiEffectTargetShape
     {
         Single,
@@ -78,6 +102,9 @@ namespace Pakuri.Data
         Battlefield
     }
 
+    /*
+     * 추가 효과가 실행되는 시점을 구분한다.
+     */
     public enum SkillMultiEffectTiming
     {
         OnCast,
@@ -88,6 +115,9 @@ namespace Pakuri.Data
         OnHitCount
     }
 
+    /*
+     * 범위 효과의 중심 위치를 구분한다.
+     */
     public enum SkillMultiEffectCenterMode
     {
         EffectTarget,
@@ -96,18 +126,27 @@ namespace Pakuri.Data
         NearestEnemy
     }
 
+    /*
+     * 추가 효과의 시각 오브젝트가 붙을 위치를 구분한다.
+     */
     public enum SkillMultiEffectVisualAnchorMode
     {
         Center,
         AppliedTargets
     }
 
+    /*
+     * 스킬 시각 오브젝트가 스킬과 상태 중 어디에 속하는지 구분한다.
+     */
     public enum RuntimeSkillVisualAnchor
     {
         Skill,
         StatusTarget
     }
 
+    /*
+     * 스킬 Trigger를 발생시키는 전투 사건을 구분한다.
+     */
     public enum SkillTriggerEvent
     {
         OnMagazineLastProjectileHit,
@@ -120,6 +159,9 @@ namespace Pakuri.Data
         CombatStart
     }
 
+    /*
+     * Trigger 피해가 기준으로 삼을 값을 구분한다.
+     */
     public enum SkillTriggerDamageSource
     {
         Fixed,
@@ -130,6 +172,9 @@ namespace Pakuri.Data
         EventAppliedDamage
     }
 
+    /*
+     * Trigger가 실행할 결과 동작을 구분한다.
+     */
     public enum SkillTriggerActionKind
     {
         Auto,
@@ -141,18 +186,27 @@ namespace Pakuri.Data
         ReloadReduce
     }
 
+    /*
+     * 런타임 스킬 충돌 영역의 크기와 중심 보정값을 보관한다.
+     */
     [Serializable]
     public sealed class RuntimeSkillHitboxSpec
     {
         public Vector2 Size;
         public Vector2 Offset;
 
+        /*
+         * 너비와 높이가 모두 설정됐는지 확인한다.
+         */
         public bool HasHitbox()
         {
             return Size.x > 0f && Size.y > 0f;
         }
     }
 
+    /*
+     * 런타임에서 조합할 스프라이트, 애니메이터, 크기, 충돌 영역을 보관한다.
+     */
     [Serializable]
     public sealed class RuntimeSkillVisualSpec
     {
@@ -165,6 +219,9 @@ namespace Pakuri.Data
         public RuntimeSkillVisualAnchor Anchor = RuntimeSkillVisualAnchor.Skill;
         public RuntimeSkillHitboxSpec Hitbox = new RuntimeSkillHitboxSpec();
 
+        /*
+         * 화면 표시나 충돌 영역으로 사용할 데이터가 있는지 확인한다.
+         */
         public bool HasVisual()
         {
             return Sprite != null
@@ -173,9 +230,13 @@ namespace Pakuri.Data
         }
     }
 
+    /*
+     * 전투 사건의 조건과 그때 실행할 스킬·효과 정보를 보관한다.
+     */
     [Serializable]
     public class SkillTriggerDefinition
     {
+        // Trigger 식별과 발생 조건
         public string TriggerId;
         public string MonsterId;
         public string SourceSkillId;
@@ -187,6 +248,7 @@ namespace Pakuri.Data
         public string ConditionStatusId;
         public string ConditionStatusSourceSkillId;
         public string TriggerAttribute;
+        // Trigger 실행 동작과 대상 선택
         public SkillTriggerActionKind TriggerAction;
         public string EventSkillId;
         public string EventSkillRuntimeKinds;
@@ -211,24 +273,31 @@ namespace Pakuri.Data
         public float DamageMultiplier = 1f;
         public SkillTriggerDamageSource DamageSource;
         public float DamageSourceMultiplier;
+        // Trigger 피해 계산
         public DamageAttribute TrackedAttribute;
         public float Radius;
         public bool CoverAll;
+        // 반복 실행과 재사용 대기시간 변경
         public string HitTargetCount;
         public int RepeatCount = 1;
         public float RepeatIntervalSeconds;
         public bool RequireEventExecute;
         public float CooldownRefundRatio;
         public float ReloadReduceRatio;
+        // Trigger 표시와 런타임 지원 상태
         public GameObject SkillEffectPrefab;
         public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
     }
 
+    /*
+     * 기본 스킬에 덧붙일 피해, 상태, 재시전 효과와 실행 조건을 보관한다.
+     */
     [Serializable]
     public class SkillEffectDefinition
     {
+        // 효과 식별과 실행 시점
         public string EffectId;
         public string SkillId;
         public int SortOrder;
@@ -247,6 +316,7 @@ namespace Pakuri.Data
         public string ExcludesPassiveSkillId;
         public string RequiredSourceStatusId;
         public int RequiredSourceStatusMinStacks;
+        // 선택지·패시브·상태 기반 실행 조건
         public bool ApplyOnce;
         public string ConditionStatusId;
         public string ConditionStatusSourceSkillId;
@@ -262,7 +332,9 @@ namespace Pakuri.Data
         public float Radius;
         public bool CoverAll;
         public float ActiveDurationSeconds;
+        // 피해와 범위 설정
         public float TickIntervalSeconds;
+        // 기존 장판을 다시 생성할 때 사용할 설정
         public string RecastSourceSkillId;
         public float RecastDurationSeconds;
         public float RecastRadiusMultiplier = 1f;
@@ -283,6 +355,7 @@ namespace Pakuri.Data
         public float StatusAttackPowerBonus;
         public float StatusSpellPowerBonus;
         public float StatusDamageBonusRate;
+        // 상태 적용과 상태 능력치 변경
         public float StatusShieldReceivedBonus;
         public float StatusDamageTakenBonus;
         public float StatusCriticalDamageTakenBonus;
@@ -304,10 +377,14 @@ namespace Pakuri.Data
         public DamageAttribute StatusOutgoingAdditionalDamageAttribute;
         public GameObject SkillEffectPrefab;
         public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
+        // 런타임 지원 여부와 진단 설명
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
     }
 
+    /*
+     * 그래프 노드에 전달할 매개변수 하나를 보관한다.
+     */
     [Serializable]
     public class SkillNodeParamDefinition
     {
@@ -317,6 +394,9 @@ namespace Pakuri.Data
         public string Value;
     }
 
+    /*
+     * 스킬·선택지·Trigger가 소유하는 실행 그래프 노드를 보관한다.
+     */
     [Serializable]
     public class SkillNodeDefinition
     {
@@ -337,9 +417,13 @@ namespace Pakuri.Data
         public SkillNodeParamDefinition[] Params = Array.Empty<SkillNodeParamDefinition>();
     }
 
+    /*
+     * 스킬 성장 선택지가 변경할 전투 수치와 조건을 보관한다.
+     */
     [Serializable]
     public class SkillChoiceDefinition
     {
+        // 선택지 식별과 표시 정보
         public string ChoiceId;
         public string MonsterId;
         public string SkillId;
@@ -350,6 +434,7 @@ namespace Pakuri.Data
         public Sprite SkillIcon;
         public GameObject SkillEffectPrefab;
         [TextArea(2, 5)] public string DescriptionText;
+        // 기본 피해, 재사용 대기시간, 탄창 변경
         public bool HasDamageMultiplier;
         public float DamageMultiplier = 1f;
         public float BaseDamageBonus;
@@ -357,6 +442,7 @@ namespace Pakuri.Data
         public float CooldownMultiplier = 1f;
         public bool HasMagazineBonus;
         public int MagazineBonus;
+        // 투사체와 연속 발사 변경
         public int AdditionalProjectileBonus;
         public int PierceBonus;
         public bool HasShotIntervalMultiplier;
@@ -373,6 +459,7 @@ namespace Pakuri.Data
         public float FollowUpProjectileDamageMultiplier = 1f;
         public bool HasReloadTimeMultiplier;
         public float ReloadTimeMultiplier = 1f;
+        // 범위, 지속시간, 분기 공격 변경
         public bool HasRadiusMultiplier;
         public float RadiusMultiplier = 1f;
         public float RadiusBonus;
@@ -410,6 +497,7 @@ namespace Pakuri.Data
         public float KillCooldownRefundRatioBonus;
         public bool KillResetsCooldown;
         public bool KillResetsCooldownRequiresExecute;
+        // 상태 적용과 조건부 피해 변경
         public string StatusTag;
         public bool HasStatusChanceBonus;
         public float StatusChanceBonus;
@@ -461,6 +549,7 @@ namespace Pakuri.Data
         public string StatusConditionalSourceStatusId;
         public string RequiredSourceStatusId;
         public int RequiredSourceStatusMinStacks;
+        // 추가 타격, 연쇄 공격, 핵심 충돌 영역 변경
         public bool HasOnHitAdditionalDamage;
         public float OnHitAdditionalDamageChance;
         public float OnHitAdditionalDamageMultiplier = 1f;
@@ -486,14 +575,19 @@ namespace Pakuri.Data
         public int RepeatCountPerTarget;
         public float RepeatIntervalSeconds;
         public float RepeatDamageMultiplier = 1f;
+        // 정규화 그래프와 런타임 지원 상태
         public SkillNodeDefinition[] NormalizedPlanNodes = Array.Empty<SkillNodeDefinition>();
         public string RuntimeSupportState;
         [TextArea(2, 5)] public string RuntimeSupportNotes;
     }
 
+    /*
+     * 액티브 스킬의 실행 종류, 피해, 투사체, 상태, 성장 선택지를 보관한다.
+     */
     [Serializable]
     public class SkillDefinition
     {
+        // 스킬 식별과 표시 정보
         public string SkillId;
         public string DisplayName;
         public SkillSlot Slot;
@@ -505,6 +599,7 @@ namespace Pakuri.Data
         public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
         public RuntimeSkillVisualSpec ImpactRuntimeVisual = new RuntimeSkillVisualSpec();
         [TextArea(2, 5)] public string DescriptionText;
+        // 기본 피해와 대상 범위
         public DamageAttribute Attribute;
         public float BaseDamage;
         public float AttackPowerCoefficient;
@@ -514,6 +609,7 @@ namespace Pakuri.Data
         public float CastRange;
         public float EffectRadius;
         public string TargetScope;
+        // 특수 실행 프로필과 전용 수치
         public string ExecutionProfile;
         public float FlatValue;
         public float ProjectileLifetimeSeconds;
@@ -534,11 +630,13 @@ namespace Pakuri.Data
         public float ExecuteDamageMultiplier = 1f;
         [Range(0f, 1f)] public float KillCooldownRefundRatio;
         public float BossDamageMultiplier = 1f;
+        // 명중 대상 수와 대상 선택
         public string HitTargetCount;
         public bool UsePrefabHitbox;
         public string TargetSelection;
         public string TargetSelectionStatusId;
         public int TargetSelectionStatusMinStacks;
+        // 재사용 대기시간과 투사체 동작
         public float CooldownSeconds;
         public float ActiveDurationSeconds;
         public int MagazineCapacity;
@@ -551,6 +649,7 @@ namespace Pakuri.Data
         public float ProjectileSpeed;
         public int PierceCount;
         public bool CriticalAllowed = true;
+        // 대상 상태 중첩을 이용하는 공격 설정
         public string DeploymentRequiredTargetStatusId;
         public int DeploymentRequiredTargetStatusMinStacks;
         public string TargetStatusStackStatusId;
@@ -561,6 +660,7 @@ namespace Pakuri.Data
         public string ConsumeTargetStatusId;
         [Range(0f, 1f)] public float ConsumeTargetStatusRatio;
         public int ConsumeTargetStatusStacks;
+        // 스킬이 적용할 상태와 능력치 변경값
         public string StatusEffectId;
         [Range(0f, 1f)] public float StatusChance;
         public string StatusEffectLabel;
@@ -585,6 +685,7 @@ namespace Pakuri.Data
         public float StatusElementResistReduction;
         public float StatusFlatElementResistReduction;
         public float StatusElementDamageTakenBonus;
+        // 성장 선택지와 추가 효과 그래프
         [TextArea(2, 4)] public string Summary;
         public SkillChoiceDefinition[] EnhancementChoices = Array.Empty<SkillChoiceDefinition>();
         public SkillChoiceDefinition[] MasterSkillChoices = Array.Empty<SkillChoiceDefinition>();
@@ -592,6 +693,9 @@ namespace Pakuri.Data
         public SkillNodeDefinition[] NormalizedPlanNodes = Array.Empty<SkillNodeDefinition>();
     }
 
+    /*
+     * 패시브 스킬의 요구 슬롯, 성장 선택지, 효과 그래프를 보관한다.
+     */
     [Serializable]
     public class PassiveDefinition
     {

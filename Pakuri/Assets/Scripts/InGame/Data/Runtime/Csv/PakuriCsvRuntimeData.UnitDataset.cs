@@ -5,8 +5,14 @@ using UnityEngine;
 
 namespace Pakuri.Data
 {
+    /*
+     * 몬스터와 적 CSV 행을 읽고 현재 데이터 규칙을 검사한다.
+     */
     public static partial class PakuriCsvRuntimeData
     {
+        /*
+         * 플레이어 몬스터 CSV 한 행의 능력치와 표시 정보를 보관한다.
+         */
         private sealed class MonsterRow
         {
             public string Id;
@@ -35,6 +41,9 @@ namespace Pakuri.Data
             public float HolyDefense;
         }
 
+        /*
+         * 몬스터 초기 보상 선택지와 연결 스킬 ID를 보관한다.
+         */
         private sealed class RewardChoiceRow
         {
             public string Id;
@@ -44,6 +53,9 @@ namespace Pakuri.Data
             public int SortOrder;
         }
 
+        /*
+         * 액티브·패시브 스킬 CSV 한 행의 실행 값을 보관한다.
+         */
         private sealed class SkillRow
         {
             public string Id;
@@ -118,6 +130,9 @@ namespace Pakuri.Data
             public StatusPayloadRow Status = new StatusPayloadRow();
         }
 
+        /*
+         * 스킬 성장 선택지 CSV 한 행의 변경값과 조건을 보관한다.
+         */
         private sealed class SkillChoiceRow
         {
             public string Id;
@@ -271,6 +286,9 @@ namespace Pakuri.Data
             public string RuntimeSupportNotes;
         }
 
+        /*
+         * 전투 사건에 연결된 스킬 Trigger 한 행을 보관한다.
+         */
         private sealed class SkillTriggerRow
         {
             public string Id;
@@ -335,6 +353,9 @@ namespace Pakuri.Data
             public string RuntimeSupportNotes;
         }
 
+        /*
+         * CSV 행을 실행에 사용할 자료로 변환한다.
+         */
         private static MonsterRow ParseMonsterRow(CsvRecord record)
         {
             return new MonsterRow
@@ -366,6 +387,9 @@ namespace Pakuri.Data
             };
         }
 
+        /*
+         * CSV 행을 실행에 사용할 자료로 변환한다.
+         */
         private static RewardChoiceRow ParseRewardChoiceRow(CsvRecord record)
         {
             return new RewardChoiceRow
@@ -378,6 +402,9 @@ namespace Pakuri.Data
             };
         }
 
+        /*
+         * CSV 행을 실행에 사용할 자료로 변환한다.
+         */
         private static SkillRow ParseSkillRow(CsvRecord record, string tableName, string ownerIdOverride = null)
         {
             var slot = record.ReadEnum<SkillSlot>("slot");
@@ -458,6 +485,9 @@ namespace Pakuri.Data
             };
         }
 
+        /*
+         * CSV 행을 실행에 사용할 자료로 변환한다.
+         */
         private static SkillChoiceRow ParseSkillChoiceRow(CsvRecord record, string tableName)
         {
             var row = new SkillChoiceRow
@@ -477,7 +507,6 @@ namespace Pakuri.Data
                 RuntimeSupportState = ReadOptionalStringIfColumnExists(record, "runtime_support_state"),
                 RuntimeSupportNotes = ReadOptionalStringIfColumnExists(record, "runtime_support_notes")
             };
-
             row.HasDamageMultiplier = TryReadFloatIfColumnExists(record, "damage_multiplier", out var damageMultiplier);
             row.DamageMultiplier = damageMultiplier;
             row.BaseDamageBonus = ReadOptionalFloatIfColumnExists(record, "base_damage_bonus");
@@ -621,6 +650,9 @@ namespace Pakuri.Data
             return row;
         }
 
+        /*
+         * CSV 행을 실행에 사용할 자료로 변환한다.
+         */
         private static SkillTriggerRow ParseSkillTriggerRow(CsvRecord record, string tableName)
         {
             var row = new SkillTriggerRow
@@ -724,6 +756,9 @@ namespace Pakuri.Data
             return row;
         }
 
+        /*
+         * CSV 행에서 필요한 값을 읽는다.
+         */
         private static string ReadMonsterIdOrInfer(CsvRecord record, string tableName)
         {
             var monsterId = ReadOptionalStringIfColumnExists(record, "monster_id");
@@ -746,6 +781,9 @@ namespace Pakuri.Data
                 });
         }
 
+        /*
+         * 파일명과 행 정보로 누락된 값을 판단한다.
+         */
         private static string InferMonsterIdFromSplitTableName(string tableName)
         {
             if (string.IsNullOrWhiteSpace(tableName))
@@ -764,6 +802,9 @@ namespace Pakuri.Data
                 : string.Empty;
         }
 
+        /*
+         * CSV 행에서 필요한 값을 읽는다.
+         */
         private static PakuriCsvSkillKind ReadSkillKindOrInfer(CsvRecord record, SkillSlot slot)
         {
             return record.HasColumn("skill_kind")
@@ -773,6 +814,9 @@ namespace Pakuri.Data
                     : PakuriCsvSkillKind.Active;
         }
 
+        /*
+         * CSV 행에서 필요한 값을 읽는다.
+         */
         private static SkillRuntimeKind ReadRuntimeKindOrInfer(CsvRecord record, SkillSlot slot)
         {
             if (record.HasColumn("runtime_kind"))
@@ -793,6 +837,9 @@ namespace Pakuri.Data
                 });
         }
 
+        /*
+         * 파일명과 행 정보로 누락된 값을 판단한다.
+         */
         private static SkillSlot InferRequiredActiveSlot(SkillSlot passiveSlot)
         {
             switch (passiveSlot)
@@ -810,32 +857,50 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * CSV 행에서 필요한 값을 읽는다.
+         */
         private static float ReadOptionalFloat(CsvRecord record, string columnName)
         {
             return TryReadFloat(record, columnName, out var value) ? value : 0f;
         }
 
+        /*
+         * CSV 행에서 필요한 값을 읽는다.
+         */
         private static int ReadOptionalInt(CsvRecord record, string columnName)
         {
             return TryReadInt(record, columnName, out var value) ? value : 0;
         }
 
+        /*
+         * CSV 행에서 필요한 값을 읽는다.
+         */
         private static int ReadOptionalIntIfColumnExists(CsvRecord record, string columnName)
         {
             return record.HasColumn(columnName) ? ReadOptionalInt(record, columnName) : 0;
         }
 
+        /*
+         * 열이 존재하고 값이 있으면 CSV 값을 읽는다.
+         */
         private static bool TryReadIntIfColumnExists(CsvRecord record, string columnName, out int value)
         {
             value = 0;
             return record.HasColumn(columnName) && TryReadInt(record, columnName, out value);
         }
 
+        /*
+         * CSV 행에서 필요한 값을 읽는다.
+         */
         private static float ReadOptionalFloatIfColumnExists(CsvRecord record, string columnName)
         {
             return record.HasColumn(columnName) ? ReadOptionalFloat(record, columnName) : 0f;
         }
 
+        /*
+         * CSV 행에서 필요한 값을 읽는다.
+         */
         private static float ReadOptionalFloatWithDefaultIfColumnExists(CsvRecord record, string columnName, float fallback)
         {
             return record.HasColumn(columnName) && TryReadFloat(record, columnName, out var value)
@@ -843,11 +908,17 @@ namespace Pakuri.Data
                 : fallback;
         }
 
+        /*
+         * CSV 행에서 필요한 값을 읽는다.
+         */
         private static string ReadOptionalStringIfColumnExists(CsvRecord record, string columnName)
         {
             return record.HasColumn(columnName) ? record.ReadString(columnName) : string.Empty;
         }
 
+        /*
+         * CSV 행에서 필요한 값을 읽는다.
+         */
         private static bool ReadOptionalBoolIfColumnExists(CsvRecord record, string columnName)
         {
             if (!record.HasColumn(columnName))
@@ -859,6 +930,9 @@ namespace Pakuri.Data
             return !string.IsNullOrWhiteSpace(raw) && record.ReadBool(columnName);
         }
 
+        /*
+         * CSV 행에서 필요한 값을 읽는다.
+         */
         private static bool ReadOptionalBoolWithDefaultIfColumnExists(CsvRecord record, string columnName, bool fallback)
         {
             if (!record.HasColumn(columnName))
@@ -870,6 +944,9 @@ namespace Pakuri.Data
             return string.IsNullOrWhiteSpace(raw) ? fallback : record.ReadBool(columnName);
         }
 
+        /*
+         * CSV 행에서 필요한 값을 읽는다.
+         */
         private static T ReadOptionalEnumIfColumnExists<T>(CsvRecord record, string columnName, T fallback) where T : struct
         {
             if (!record.HasColumn(columnName))
@@ -883,12 +960,18 @@ namespace Pakuri.Data
                 : fallback;
         }
 
+        /*
+         * 열이 존재하고 값이 있으면 CSV 값을 읽는다.
+         */
         private static bool TryReadFloatIfColumnExists(CsvRecord record, string columnName, out float value)
         {
             value = 0f;
             return record.HasColumn(columnName) && TryReadFloat(record, columnName, out value);
         }
 
+        /*
+         * 열이 존재하고 값이 있으면 CSV 값을 읽는다.
+         */
         private static bool TryReadFloat(CsvRecord record, string columnName, out float value)
         {
             var raw = record.ReadString(columnName);
@@ -902,6 +985,9 @@ namespace Pakuri.Data
             return true;
         }
 
+        /*
+         * 열이 존재하고 값이 있으면 CSV 값을 읽는다.
+         */
         private static bool TryReadInt(CsvRecord record, string columnName, out int value)
         {
             var raw = record.ReadString(columnName);
@@ -915,6 +1001,9 @@ namespace Pakuri.Data
             return true;
         }
 
+        /*
+         * 입력값과 참조 관계가 올바른지 검사한다.
+         */
         private static void ValidateExpectedSlots(
             string monsterId,
             HashSet<SkillSlot> slots,
@@ -929,6 +1018,382 @@ namespace Pakuri.Data
                 {
                     errors.Add($"Monster '{monsterId}' is missing {kindLabel} slot '{slot}'.");
                 }
+            }
+        }
+
+        /*
+         * 적 CSV 한 행의 기본 능력치와 장착 스킬 ID를 보관한다.
+         */
+        private sealed class EnemyMigrationRow
+        {
+            public string Id;
+            public string StageId;
+            public int SortOrder;
+            public string DisplayName;
+            public EnemyEncounterRole EncounterRole;
+            public EnemyAttackType AttackType;
+            public DamageAttribute Attribute;
+            public float MaxHealth;
+            public float AttackPower;
+            public float SpellPower;
+            public float MoveSpeed;
+            public float CriticalChance;
+            public float CriticalDamage;
+            public float CriticalResistance;
+            public float PhysicalDefense;
+            public float FireDefense;
+            public float LightningDefense;
+            public float IceDefense;
+            public float DarknessDefense;
+            public float HolyDefense;
+            public string SkillSlotAId;
+            public string SkillSlotBId;
+            public string PassiveId;
+            public float NexusDamage;
+        }
+
+        /*
+         * 적 스킬 CSV 한 행의 실행 방식과 전투 값을 보관한다.
+         */
+        private sealed class EnemyBaseSkillRow
+        {
+            public SkillRow Skill;
+            public string ExecutionProfile;
+            public string TargetScope;
+            public string TargetSelection;
+            public float CastRange;
+            public float EffectRadius;
+            public float ProjectileLifetime;
+            public float FlatValue;
+            public float IncomingDamageMultiplier = 1f;
+            public float MoveSpeedMultiplier = 1f;
+            public float OutgoingDamageMultiplier = 1f;
+            public float ChainDamageMultiplier;
+            public float ChainDelaySeconds;
+            public float ChainRadius;
+            public bool ExcludePrimaryTarget;
+            public float StatusActionSpeedBonus;
+            public float StatusDurationSeconds;
+            public float TargetMaxHealthRatio;
+            public string HitTargetCount;
+            public float ChargeRampSeconds = 3f;
+            public float ChargeMoveSpeedMultiplier = 2.5f;
+            public EnemyPassiveTarget PassiveApplyTarget = EnemyPassiveTarget.Self;
+            public EnemyPassiveModifierKind PassiveModifierKind;
+            public float PassiveModifierValue;
+        }
+
+        /*
+         * 적 스킬 Trigger 한 행의 실행 대상과 순서를 보관한다.
+         */
+        private sealed class EnemyMigrationTriggerRow
+        {
+            public string Id;
+            public string SourceSkillId;
+            public SkillTriggerEvent TriggerEvent;
+            public string TriggeredSkillId;
+            public SkillRuntimeKind RuntimeKind;
+            public int SortOrder;
+            public bool Enabled;
+        }
+
+        /*
+         * CSV 행을 실행에 사용할 자료로 변환한다.
+         */
+        private static EnemyMigrationRow ParseEnemyMigrationRow(CsvRecord record)
+        {
+            return new EnemyMigrationRow
+            {
+                Id = record.ReadRequiredString("enemy_id"),
+                StageId = record.ReadRequiredString("stage_id"),
+                SortOrder = record.ReadInt("sort_order"),
+                DisplayName = record.ReadRequiredString("display_name"),
+                EncounterRole = record.ReadEnum<EnemyEncounterRole>("encounter_role"),
+                AttackType = record.ReadEnum<EnemyAttackType>("attack_type"),
+                Attribute = record.ReadEnum<DamageAttribute>("attribute"),
+                MaxHealth = record.ReadFloat("max_health"),
+                AttackPower = record.ReadFloat("attack_power"),
+                SpellPower = record.ReadFloat("spell_power"),
+                MoveSpeed = record.ReadFloat("move_speed"),
+                CriticalChance = record.ReadFloat("crit_chance"),
+                CriticalDamage = record.ReadFloat("crit_damage"),
+                CriticalResistance = record.ReadFloat("crit_resistance"),
+                PhysicalDefense = record.ReadFloat("def_physical"),
+                FireDefense = record.ReadFloat("def_fire"),
+                LightningDefense = record.ReadFloat("def_lightning"),
+                IceDefense = record.ReadFloat("def_ice"),
+                DarknessDefense = record.ReadFloat("def_darkness"),
+                HolyDefense = record.ReadFloat("def_holy"),
+                SkillSlotAId = record.ReadRequiredString("skill_slot_a_id"),
+                SkillSlotBId = record.ReadRequiredString("skill_slot_b_id"),
+                PassiveId = record.ReadRequiredString("passive_id"),
+                NexusDamage = record.ReadFloat("nexus_damage")
+            };
+        }
+
+        /*
+         * CSV 행을 실행에 사용할 자료로 변환한다.
+         */
+        private static EnemyBaseSkillRow ParseEnemyBaseSkillRow(CsvRecord record, string tableName)
+        {
+            if (string.Equals(tableName, "skills_passive.csv", StringComparison.OrdinalIgnoreCase))
+            {
+                return ParseEnemyPassiveSkillRow(record);
+            }
+
+            if (record.HasColumn("runtime_hitbox_offset_x") || record.HasColumn("runtime_hitbox_offset_y"))
+            {
+                throw new CsvFatalException(
+                    $"CSV table '{tableName}' must not define runtime hitbox offset columns. Enemy runtime hitboxes are centered at (0,0).");
+            }
+
+            var row = new EnemyBaseSkillRow
+            {
+                Skill = ParseSkillRow(record, tableName, "enemy-shared"),
+                ExecutionProfile = ReadOptionalStringIfColumnExists(record, "execution_profile"),
+                TargetScope = ReadOptionalStringIfColumnExists(record, "target_scope"),
+                TargetSelection = ReadOptionalStringIfColumnExists(record, "target_selection"),
+                CastRange = ReadOptionalFloatIfColumnExists(record, "cast_range"),
+                EffectRadius = ReadOptionalFloatIfColumnExists(record, "effect_radius"),
+                ProjectileLifetime = ReadOptionalFloatIfColumnExists(record, "projectile_lifetime"),
+                FlatValue = ReadOptionalFloatIfColumnExists(record, "flat_value"),
+                IncomingDamageMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "incoming_damage_multiplier", 1f),
+                MoveSpeedMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "move_speed_multiplier", 1f),
+                OutgoingDamageMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "outgoing_damage_multiplier", 1f),
+                ChainDamageMultiplier = ReadOptionalFloatIfColumnExists(record, "chain_damage_multiplier"),
+                ChainDelaySeconds = ReadOptionalFloatIfColumnExists(record, "chain_delay_seconds"),
+                ChainRadius = ReadOptionalFloatIfColumnExists(record, "chain_radius"),
+                ExcludePrimaryTarget = ReadOptionalBoolIfColumnExists(record, "exclude_primary_target"),
+                StatusActionSpeedBonus = ReadOptionalFloatIfColumnExists(record, "status_action_speed_bonus"),
+                StatusDurationSeconds = ReadOptionalFloatIfColumnExists(record, "status_duration_seconds"),
+                TargetMaxHealthRatio = ReadOptionalFloatIfColumnExists(record, "target_max_health_ratio"),
+                HitTargetCount = ReadOptionalStringIfColumnExists(record, "hit_target_count"),
+                ChargeRampSeconds = ReadOptionalFloatWithDefaultIfColumnExists(record, "charge_ramp_seconds", 3f),
+                ChargeMoveSpeedMultiplier = ReadOptionalFloatWithDefaultIfColumnExists(record, "charge_move_speed_multiplier", 2.5f)
+            };
+
+            if (row.Skill.SkillKind == PakuriCsvSkillKind.Passive
+                || row.Skill.RuntimeKind == SkillRuntimeKind.Passive)
+            {
+                throw new CsvFatalException(
+                    $"CSV table '{tableName}' contains passive skill '{row.Skill.Id}'. Enemy passive rows must be authored in 'skills_passive.csv'.");
+            }
+
+            return row;
+        }
+
+        /*
+         * CSV 행을 실행에 사용할 자료로 변환한다.
+         */
+        private static EnemyBaseSkillRow ParseEnemyPassiveSkillRow(CsvRecord record)
+        {
+            return new EnemyBaseSkillRow
+            {
+                Skill = new SkillRow
+                {
+                    Id = record.ReadRequiredString("skill_id"),
+                    MonsterId = "enemy-shared",
+                    SkillKind = PakuriCsvSkillKind.Passive,
+                    Slot = SkillSlot.F,
+                    DisplayName = record.ReadRequiredString("display_name"),
+                    RuntimeKind = SkillRuntimeKind.Passive,
+                    ImplementationState = SkillImplementationState.RuntimeImplemented,
+                    IsAvailableWithoutActiveRequirement = true
+                },
+                PassiveApplyTarget = record.ReadEnum<EnemyPassiveTarget>("apply_target"),
+                PassiveModifierKind = record.ReadEnum<EnemyPassiveModifierKind>("modifier_kind"),
+                PassiveModifierValue = record.ReadFloat("modifier_value")
+            };
+        }
+
+        /*
+         * CSV 행을 실행에 사용할 자료로 변환한다.
+         */
+        private static EnemyMigrationTriggerRow ParseEnemyMigrationTriggerRow(CsvRecord record)
+        {
+            return new EnemyMigrationTriggerRow
+            {
+                Id = record.ReadRequiredString("trigger_id"),
+                SourceSkillId = record.ReadRequiredString("source_skill_id"),
+                TriggerEvent = record.ReadEnum<SkillTriggerEvent>("trigger_event"),
+                TriggeredSkillId = record.ReadRequiredString("triggered_skill_id"),
+                RuntimeKind = record.ReadEnum<SkillRuntimeKind>("runtime_kind"),
+                SortOrder = record.ReadInt("sort_order"),
+                Enabled = record.ReadBool("enabled")
+            };
+        }
+
+        /*
+         * 입력값과 참조 관계가 올바른지 검사한다.
+         */
+        private static void ValidateEnemyMigrationRows(SourceModel model, List<string> errors)
+        {
+            var referencedActiveSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var referencedPassiveIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var stageSortKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var enemy in model.Enemies.Values)
+            {
+                if (!string.Equals(enemy.StageId, "stage_one", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(enemy.StageId, "stage_two", StringComparison.OrdinalIgnoreCase))
+                {
+                    errors.Add($"Enemy '{enemy.Id}' has unsupported stage_id '{enemy.StageId}'.");
+                }
+
+                if (enemy.SortOrder < 0)
+                {
+                    errors.Add($"Enemy '{enemy.Id}' has negative sort_order '{enemy.SortOrder}'.");
+                }
+                else if (!stageSortKeys.Add(enemy.StageId + ":" + enemy.SortOrder))
+                {
+                    errors.Add($"Enemy stage '{enemy.StageId}' has duplicate sort_order '{enemy.SortOrder}'.");
+                }
+
+                ValidateEnemySkillSlot(model, enemy, enemy.SkillSlotAId, SkillSlot.A, referencedActiveSkillIds, errors);
+                ValidateEnemySkillSlot(model, enemy, enemy.SkillSlotBId, SkillSlot.B, referencedActiveSkillIds, errors);
+                ValidateEnemyPassive(model, enemy, referencedPassiveIds, errors);
+            }
+
+            foreach (var baseSkill in model.EnemyBaseSkills.Values)
+            {
+                if (baseSkill == null || baseSkill.Skill == null)
+                {
+                    continue;
+                }
+
+                if (baseSkill.Skill.SkillKind == PakuriCsvSkillKind.Passive)
+                {
+                    if (!referencedPassiveIds.Contains(baseSkill.Skill.Id))
+                    {
+                        errors.Add($"Enemy passive skill '{baseSkill.Skill.Id}' is not referenced by enemies.csv passive_id.");
+                    }
+                }
+                else if (!referencedActiveSkillIds.Contains(baseSkill.Skill.Id))
+                {
+                    errors.Add($"Enemy base skill '{baseSkill.Skill.Id}' is not referenced by an Enemy A/B skill slot.");
+                }
+            }
+
+            foreach (var trigger in model.EnemyMigrationTriggers.Values)
+            {
+                if (!model.EnemyBaseSkills.TryGetValue(trigger.SourceSkillId, out var sourceSkill)
+                    || sourceSkill == null
+                    || sourceSkill.Skill == null)
+                {
+                    errors.Add($"Enemy trigger '{trigger.Id}' references unknown source skill '{trigger.SourceSkillId}'.");
+                }
+                else if (trigger.RuntimeKind != sourceSkill.Skill.RuntimeKind)
+                {
+                    errors.Add(
+                        $"Enemy trigger '{trigger.Id}' runtime_kind '{trigger.RuntimeKind}' does not match source skill kind '{sourceSkill.Skill.RuntimeKind}'.");
+                }
+
+                if (!model.EnemyBaseSkills.ContainsKey(trigger.TriggeredSkillId))
+                {
+                    errors.Add($"Enemy trigger '{trigger.Id}' references unknown triggered skill '{trigger.TriggeredSkillId}'.");
+                }
+            }
+
+            ValidateEnemyCombatStartTrigger(model, "OpeningCharge", SkillRuntimeKind.Buff, errors);
+            ValidateEnemyCombatStartTrigger(model, "Intimidation", SkillRuntimeKind.Buff, errors);
+        }
+
+        /*
+         * 입력값과 참조 관계가 올바른지 검사한다.
+         */
+        private static void ValidateEnemySkillSlot(
+            SourceModel model,
+            EnemyMigrationRow enemy,
+            string skillId,
+            SkillSlot slot,
+            HashSet<string> referencedSkillIds,
+            List<string> errors)
+        {
+            if (!model.EnemyBaseSkills.TryGetValue(skillId, out var skill)
+                || skill == null
+                || skill.Skill == null)
+            {
+                errors.Add($"Enemy '{enemy.Id}' slot '{slot}' references unknown base skill '{skillId}'.");
+                return;
+            }
+
+            if (skill.Skill.SkillKind != PakuriCsvSkillKind.Active
+                || skill.Skill.RuntimeKind == SkillRuntimeKind.Passive)
+            {
+                errors.Add($"Enemy '{enemy.Id}' slot '{slot}' must reference an active skill, but '{skillId}' is passive.");
+                return;
+            }
+
+            referencedSkillIds.Add(skillId);
+        }
+
+        /*
+         * 입력값과 참조 관계가 올바른지 검사한다.
+         */
+        private static void ValidateEnemyPassive(
+            SourceModel model,
+            EnemyMigrationRow enemy,
+            HashSet<string> referencedPassiveIds,
+            List<string> errors)
+        {
+            var passiveId = enemy.PassiveId != null ? enemy.PassiveId.Trim() : string.Empty;
+            if (!model.EnemyBaseSkills.TryGetValue(passiveId, out var passive)
+                || passive == null
+                || passive.Skill == null)
+            {
+                errors.Add($"Enemy '{enemy.Id}' references unknown passive_id '{passiveId}'.");
+                return;
+            }
+
+            if (passive.Skill.SkillKind != PakuriCsvSkillKind.Passive
+                || passive.Skill.RuntimeKind != SkillRuntimeKind.Passive
+                || passive.Skill.Slot != SkillSlot.F)
+            {
+                errors.Add($"Enemy '{enemy.Id}' passive_id '{passiveId}' must reference an Enemy passive definition.");
+            }
+
+            if (passive.PassiveApplyTarget != EnemyPassiveTarget.Self)
+            {
+                errors.Add($"Enemy passive '{passiveId}' has unsupported apply_target '{passive.PassiveApplyTarget}'.");
+            }
+
+            if (passive.PassiveModifierKind == EnemyPassiveModifierKind.None)
+            {
+                errors.Add($"Enemy passive '{passiveId}' requires a supported modifier_kind.");
+            }
+
+            if (passive.PassiveModifierValue <= 0f)
+            {
+                errors.Add($"Enemy passive '{passiveId}' requires a positive modifier_value.");
+            }
+
+            referencedPassiveIds.Add(passiveId);
+        }
+
+        /*
+         * 입력값과 참조 관계가 올바른지 검사한다.
+         */
+        private static void ValidateEnemyCombatStartTrigger(
+            SourceModel model,
+            string skillId,
+            SkillRuntimeKind runtimeKind,
+            List<string> errors)
+        {
+            var count = 0;
+            foreach (var trigger in model.EnemyMigrationTriggers.Values)
+            {
+                if (trigger.Enabled
+                    && trigger.TriggerEvent == SkillTriggerEvent.CombatStart
+                    && string.Equals(trigger.SourceSkillId, skillId, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(trigger.TriggeredSkillId, skillId, StringComparison.OrdinalIgnoreCase)
+                    && trigger.RuntimeKind == runtimeKind)
+                {
+                    count++;
+                }
+            }
+
+            if (count != 1)
+            {
+                errors.Add($"Enemy skill '{skillId}' requires exactly one enabled CombatStart trigger; found '{count}'.");
             }
         }
     }

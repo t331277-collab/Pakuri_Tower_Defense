@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace Pakuri.Data
 {
+    /*
+     * 생성된 게임 데이터 카탈로그를 등록하고 ID와 몬스터별 데이터 조회를 제공한다.
+     */
     public sealed class PakuriDataManager
     {
         private readonly Dictionary<string, MonsterDefinition> monsters = new Dictionary<string, MonsterDefinition>(StringComparer.OrdinalIgnoreCase);
@@ -19,6 +22,9 @@ namespace Pakuri.Data
 
         private static readonly PakuriDataManager instance = new PakuriDataManager();
 
+        /*
+         * 전역에서 하나의 데이터 조회 표만 사용하도록 외부 생성을 막는다.
+         */
         private PakuriDataManager()
         {
         }
@@ -27,6 +33,9 @@ namespace Pakuri.Data
 
         public GameDataCatalog CurrentCatalog { get; private set; }
 
+        /*
+         * 새 카탈로그를 기준으로 모든 런타임 조회 표를 다시 구성한다.
+         */
         public void RegisterCatalog(GameDataCatalog catalog)
         {
             CurrentCatalog = catalog;
@@ -53,6 +62,9 @@ namespace Pakuri.Data
             RegisterStatusEffects(catalog.StatusEffects);
         }
 
+        /*
+         * ID와 요청 자료형에 맞는 데이터를 조회하고 없으면 null을 반환한다.
+         */
         public T GetData<T>(string id)
             where T : class
         {
@@ -64,6 +76,9 @@ namespace Pakuri.Data
             return null;
         }
 
+        /*
+         * ID와 요청 자료형에 맞는 데이터를 찾아 반환한다.
+         */
         public bool TryGetData<T>(string id, out T value)
             where T : class
         {
@@ -124,11 +139,17 @@ namespace Pakuri.Data
             return value != null;
         }
 
+        /*
+         * 현재 등록된 카탈로그를 우선하고 없으면 전달받은 카탈로그를 사용한다.
+         */
         public GameDataCatalog GetCatalog(GameDataCatalog fallbackCatalog = null)
         {
             return CurrentCatalog ?? fallbackCatalog;
         }
 
+        /*
+         * 현재 카탈로그 또는 대체 카탈로그의 몬스터 목록을 반환한다.
+         */
         public MonsterDefinition[] GetMonsters(GameDataCatalog fallbackCatalog = null)
         {
             var catalog = GetCatalog(fallbackCatalog);
@@ -141,6 +162,9 @@ namespace Pakuri.Data
             return Array.Empty<MonsterDefinition>();
         }
 
+        /*
+         * ID에 맞는 몬스터를 찾고 없으면 대체 목록의 첫 몬스터를 반환한다.
+         */
         public MonsterDefinition ResolveMonster(string id, GameDataCatalog fallbackCatalog = null)
         {
             var resolvedMonster = GetData<MonsterDefinition>(id);
@@ -165,6 +189,9 @@ namespace Pakuri.Data
             return monsters.Length > 0 ? monsters[0] : null;
         }
 
+        /*
+         * 몬스터에 등록된 액티브 스킬 목록을 반환한다.
+         */
         public SkillDefinition[] GetActiveSkills(string monsterId, MonsterDefinition fallbackMonster = null)
         {
             if (!string.IsNullOrWhiteSpace(monsterId)
@@ -186,6 +213,9 @@ namespace Pakuri.Data
             return Array.Empty<SkillDefinition>();
         }
 
+        /*
+         * 몬스터에 등록된 패시브 스킬 목록을 반환한다.
+         */
         public PassiveDefinition[] GetPassiveSkills(string monsterId, MonsterDefinition fallbackMonster = null)
         {
             if (!string.IsNullOrWhiteSpace(monsterId)
@@ -207,6 +237,9 @@ namespace Pakuri.Data
             return Array.Empty<PassiveDefinition>();
         }
 
+        /*
+         * 몬스터에 등록된 초기 보상 선택지 목록을 반환한다.
+         */
         public MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(string monsterId, MonsterDefinition fallbackMonster = null)
         {
             if (!string.IsNullOrWhiteSpace(monsterId)
@@ -228,6 +261,9 @@ namespace Pakuri.Data
             return Array.Empty<MonsterDefinition.RewardChoiceDefinition>();
         }
 
+        /*
+         * 몬스터의 액티브 스킬 중 요청 슬롯에 배치된 스킬을 찾는다.
+         */
         public SkillDefinition ResolveActiveSkill(string monsterId, SkillSlot slot, MonsterDefinition fallbackMonster = null)
         {
             var skills = GetActiveSkills(monsterId, fallbackMonster);
@@ -243,6 +279,9 @@ namespace Pakuri.Data
             return null;
         }
 
+        /*
+         * 몬스터의 패시브 스킬 중 요청 슬롯에 배치된 스킬을 찾는다.
+         */
         public PassiveDefinition ResolvePassiveSkill(string monsterId, SkillSlot slot, MonsterDefinition fallbackMonster = null)
         {
             var passives = GetPassiveSkills(monsterId, fallbackMonster);
@@ -258,6 +297,9 @@ namespace Pakuri.Data
             return null;
         }
 
+        /*
+         * 몬스터와 몬스터가 소유한 스킬 및 보상 선택지를 조회 표에 등록한다.
+         */
         private void RegisterMonsters(MonsterDefinition[] catalogMonsters)
         {
             if (catalogMonsters == null)
@@ -310,6 +352,9 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * 스테이지별 적 정의를 지정한 조회 표에 등록한다.
+         */
         private static void RegisterEnemies(
             EnemyDefinition[] catalogEnemies,
             Dictionary<string, EnemyDefinition> target)
@@ -331,6 +376,9 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * 상태 효과 정의를 ID 조회 표에 등록한다.
+         */
         private void RegisterStatusEffects(StatusEffectDefinitionData[] catalogStatusEffects)
         {
             if (catalogStatusEffects == null)
@@ -350,6 +398,9 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * 액티브 스킬과 그 성장 선택지를 조회 표에 등록한다.
+         */
         private void RegisterActiveSkill(SkillDefinition skill)
         {
             if (skill == null || string.IsNullOrWhiteSpace(skill.SkillId))
@@ -362,6 +413,9 @@ namespace Pakuri.Data
             RegisterSkillChoices(skill.MasterSkillChoices);
         }
 
+        /*
+         * 패시브 스킬과 그 성장 선택지를 조회 표에 등록한다.
+         */
         private void RegisterPassiveSkill(PassiveDefinition passive)
         {
             if (passive == null || string.IsNullOrWhiteSpace(passive.PassiveId))
@@ -373,6 +427,9 @@ namespace Pakuri.Data
             RegisterSkillChoices(passive.EnhancementChoices);
         }
 
+        /*
+         * 스킬 성장 선택지를 ID 조회 표에 등록한다.
+         */
         private void RegisterSkillChoices(SkillChoiceDefinition[] choices)
         {
             if (choices == null)

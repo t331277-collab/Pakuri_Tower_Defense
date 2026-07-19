@@ -256,7 +256,6 @@ namespace Pakuri.InGame
         }
     }
 
-    [CreateAssetMenu(menuName = "Pakuri/InGame/Status Effect Data", fileName = "StatusEffectData")]
     public sealed class StatusEffectData : ScriptableObject
     {
         [Header("Identity")]

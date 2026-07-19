@@ -43,7 +43,7 @@ namespace Pakuri.InGame
         [SerializeField] private Button[] masterButtons = new Button[MasterButtonCount];
         [SerializeField] private Button[] passiveTraitButtons = new Button[PassiveTraitButtonCount];
         [SerializeField] private StageManager stageManager;
-        [SerializeField] private SceneEntryManager entryManager;
+        [SerializeField] private UnitSpawnManager unitSpawnManager;
         [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private MonsterPanelUI monsterPanelUI;
 
@@ -301,9 +301,9 @@ namespace Pakuri.InGame
                 stageManager = FindSceneObject<StageManager>();
             }
 
-            if (entryManager == null)
+            if (unitSpawnManager == null)
             {
-                entryManager = FindSceneObject<SceneEntryManager>();
+                unitSpawnManager = FindSceneObject<UnitSpawnManager>();
             }
 
             if (combatManager == null)
@@ -534,7 +534,7 @@ namespace Pakuri.InGame
                 return stageManager.ActiveSession;
             }
 
-            return entryManager != null ? entryManager.ActiveSession : null;
+            return unitSpawnManager != null ? unitSpawnManager.ActiveSession : null;
         }
 
         private GameDataCatalog ResolveCatalog()

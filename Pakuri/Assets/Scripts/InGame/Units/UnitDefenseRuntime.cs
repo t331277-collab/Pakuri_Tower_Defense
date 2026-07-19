@@ -1,6 +1,5 @@
 using System;
 using Pakuri.Combat;
-using AttributeDefenseSet = Pakuri.Combat.DamageCalculator.AttributeDefenseSet;
 
 namespace Pakuri.InGame
 {
@@ -33,7 +32,7 @@ namespace Pakuri.InGame
             }
         }
 
-        public static UnitDefenseRuntime FromDefinition(AttributeDefenseSet source)
+        public static UnitDefenseRuntime FromDefinition(DamageCalculator.AttributeDefenseSet source)
         {
             if (source == null)
             {

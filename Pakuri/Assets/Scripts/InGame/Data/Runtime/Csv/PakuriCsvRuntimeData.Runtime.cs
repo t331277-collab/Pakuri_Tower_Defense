@@ -2,11 +2,232 @@ using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Pakuri.Data
 {
+    /*
+     * CSV 자산을 불러와 검증과 런타임 카탈로그 생성을 조율한다.
+     */
     public static partial class PakuriCsvRuntimeData
     {
+        private const string CsvDataAssetRoot = "Assets/CSVdata";
+        private const string AuthoringCsvAssetRoot = CsvDataAssetRoot + "/authoring";
+        private const string AuthoringCatalogCsvAssetRoot = AuthoringCsvAssetRoot + "/catalog";
+        private const string AuthoringMonsterCsvAssetRoot = AuthoringCsvAssetRoot + "/monster";
+        private const string AuthoringMonsterSkillCsvAssetRoot = AuthoringMonsterCsvAssetRoot + "/skills";
+        private const string AuthoringMonsterSkillBaseCsvAssetRoot = AuthoringMonsterSkillCsvAssetRoot + "/base";
+        private const string AuthoringMonsterSkillChoiceCsvAssetRoot = AuthoringMonsterSkillCsvAssetRoot + "/choices";
+        private const string AuthoringMonsterSkillTriggerCsvAssetRoot = AuthoringMonsterSkillCsvAssetRoot + "/triggers";
+        private const string AuthoringMonsterSkillNodeCsvAssetRoot = AuthoringMonsterSkillCsvAssetRoot + "/nodes";
+        private const string AuthoringEnemyCsvAssetRoot = AuthoringCsvAssetRoot + "/enemy";
+        private const string AuthoringEnemySkillCsvAssetRoot = AuthoringEnemyCsvAssetRoot + "/skills";
+        private const string AuthoringEnemySkillBaseCsvAssetRoot = AuthoringEnemySkillCsvAssetRoot + "/base";
+        private const string AuthoringEnemySkillTriggerCsvAssetRoot = AuthoringEnemySkillCsvAssetRoot + "/triggers";
+        private const string AuthoringStatusCsvAssetRoot = AuthoringCsvAssetRoot + "/status";
+        private const string AuthoringSourceAssetRoot = AuthoringCsvAssetRoot;
+        private const string RuntimeResourcesFolderAssetPath = "Assets/Resources/Pakuri/CSVRuntime";
+        private const string SourceCatalogAssetPath = RuntimeResourcesFolderAssetPath + "/PakuriCsvRuntimeSourceCatalog.asset";
+        private const string AssetCatalogAssetPath = RuntimeResourcesFolderAssetPath + "/PakuriCsvRuntimeAssetCatalog.asset";
+        private const string SourceCatalogResourcesPath = "Pakuri/CSVRuntime/PakuriCsvRuntimeSourceCatalog";
+        private const string AssetCatalogResourcesPath = "Pakuri/CSVRuntime/PakuriCsvRuntimeAssetCatalog";
+        private const string CatalogMonstersFileName = "catalog_monsters.csv";
+        private const string MonstersFileName = "monsters.csv";
+        private const string MonsterRewardChoicesFileName = "monster_modifier_skill_choice.csv";
+        private const string MonsterSkillsProjectileFileName = "skills_projectile.csv";
+        private const string MonsterSkillsLineAttackFileName = "skills_line_attack.csv";
+        private const string MonsterSkillsAreaAttackFileName = "skills_area_attack.csv";
+        private const string MonsterSkillsSingleAttackFileName = "skills_single_attack.csv";
+        private const string MonsterSkillsBuffFileName = "skills_buff.csv";
+        private const string MonsterSkillsPassiveFileName = "skills_passive.csv";
+        private const string MonsterSkillNodeDefinitionsFileName = "skill_node_definitions.csv";
+        private const string MonsterSkillNodeDefinitionParamsFileName = "skill_node_definition_params.csv";
+        private const string MonsterSkillTriggersFileName = "monster_skill_triger.csv";
+        private const string MonsterSkillChoicesProjectileFileName = "skill_choices_projectile.csv";
+        private const string MonsterSkillChoicesLineAttackFileName = "skill_choices_line_attack.csv";
+        private const string MonsterSkillChoicesAreaAttackFileName = "skill_choices_area_attack.csv";
+        private const string MonsterSkillChoicesSingleAttackFileName = "skill_choices_single_attack.csv";
+        private const string MonsterSkillChoicesBuffFileName = "skill_choices_buff.csv";
+        private const string MonsterSkillChoicesPassiveFileName = "skill_choices_passive.csv";
+        private const string StatusEffectsFileName = "status_effects.csv";
+        private const string EnemiesFileName = "enemies.csv";
+
+        private static bool initialized;
+        private static bool failed;
+        private static GameDataCatalog runtimeCatalog;
+        private static PakuriCsvRuntimeSourceCatalog runtimeSourceCatalog;
+        private static PakuriCsvRuntimeAssetCatalog runtimeAssetCatalog;
+
+        /*
+         * 계산에 필요한 값을 반환한다.
+         */
+        public static string GetImportedSourceAssetPath(string fileName)
+        {
+            return GetAuthoringSourceAssetPath(fileName);
+        }
+
+        /*
+         * 계산에 필요한 값을 반환한다.
+         */
+        public static string GetAuthoringSourceAssetPath(string fileName)
+        {
+            switch (fileName)
+            {
+                case CatalogMonstersFileName:
+                    return $"{AuthoringCatalogCsvAssetRoot}/{fileName}";
+                case MonstersFileName:
+                case MonsterRewardChoicesFileName:
+                    return $"{AuthoringMonsterCsvAssetRoot}/{fileName}";
+                case MonsterSkillsProjectileFileName:
+                case MonsterSkillsLineAttackFileName:
+                case MonsterSkillsAreaAttackFileName:
+                case MonsterSkillsSingleAttackFileName:
+                case MonsterSkillsBuffFileName:
+                case MonsterSkillsPassiveFileName:
+                    return $"{AuthoringMonsterSkillBaseCsvAssetRoot}/{fileName}";
+                case MonsterSkillNodeDefinitionsFileName:
+                case MonsterSkillNodeDefinitionParamsFileName:
+                    return $"{AuthoringMonsterSkillNodeCsvAssetRoot}/definitions/{fileName}";
+                case MonsterSkillTriggersFileName:
+                    return $"{AuthoringMonsterSkillTriggerCsvAssetRoot}/{fileName}";
+                case MonsterSkillChoicesProjectileFileName:
+                case MonsterSkillChoicesLineAttackFileName:
+                case MonsterSkillChoicesAreaAttackFileName:
+                case MonsterSkillChoicesSingleAttackFileName:
+                case MonsterSkillChoicesBuffFileName:
+                case MonsterSkillChoicesPassiveFileName:
+                    return $"{AuthoringMonsterSkillChoiceCsvAssetRoot}/{fileName}";
+                case StatusEffectsFileName:
+                    return $"{AuthoringStatusCsvAssetRoot}/{fileName}";
+                case EnemiesFileName:
+                    return $"{AuthoringEnemyCsvAssetRoot}/{fileName}";
+                default:
+                    return $"{AuthoringCsvAssetRoot}/{fileName}";
+            }
+        }
+
+        /*
+         * 필요한 조건을 만족하는지 확인한다.
+         */
+        public static bool IsAuthoringCsvSourceAssetPath(string assetPath)
+        {
+            if (string.IsNullOrWhiteSpace(assetPath))
+            {
+                return false;
+            }
+
+            var normalized = assetPath.Replace('\\', '/');
+            return normalized.StartsWith(AuthoringCsvAssetRoot + "/", StringComparison.OrdinalIgnoreCase)
+                && normalized.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /*
+         * Scene 로드 전에 CSV 런타임 데이터를 초기화한다.
+         */
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void InitializeBeforeSceneLoad()
+        {
+            EnsureInitialized();
+        }
+
+        /*
+         * CSV 카탈로그를 반환하고 초기화 실패 시 null을 반환한다.
+         */
+        public static GameDataCatalog ResolveCatalogOrFallback(GameDataCatalog fallback)
+        {
+            EnsureInitialized();
+            if (failed)
+            {
+                return null;
+            }
+
+            return runtimeCatalog != null ? runtimeCatalog : fallback;
+        }
+
+        /*
+         * CSV 런타임 데이터가 한 번만 초기화되도록 한다.
+         */
+        public static void EnsureInitialized()
+        {
+            if (initialized || failed)
+            {
+                return;
+            }
+
+            try
+            {
+                runtimeCatalog = LoadAndValidateRuntimeCatalog();
+                initialized = true;
+                Debug.Log(FormatRuntimeCatalogSummary(runtimeCatalog));
+            }
+            catch (CsvFatalException ex)
+            {
+                FailAndQuit(ex.Message, ex.Errors);
+            }
+            catch (Exception ex)
+            {
+                FailAndQuit(
+                    "PakuriCsvRuntimeData failed with an unexpected exception.",
+                    new List<string> { ex.ToString() });
+            }
+        }
+
+        /*
+         * 원본 CSV를 읽고 검증한 뒤 런타임 카탈로그를 등록한다.
+         */
+        private static GameDataCatalog LoadAndValidateRuntimeCatalog()
+        {
+            runtimeSourceCatalog = LoadSourceCatalogOrThrow();
+            runtimeAssetCatalog = LoadAssetCatalogOrThrow();
+            var source = LoadSourceModel(runtimeSourceCatalog);
+            ValidateSourceModelOrThrow(source, runtimeAssetCatalog);
+            var catalog = BuildRuntimeCatalog(source);
+            ValidateRuntimeCatalogOrThrow(catalog, source);
+            PakuriDataManager.Instance.RegisterCatalog(catalog);
+            return catalog;
+        }
+
+        /*
+         * 로그에 사용할 설명 문자열을 만든다.
+         */
+        private static string FormatRuntimeCatalogSummary(GameDataCatalog catalog)
+        {
+            return
+                $"PakuriCsvRuntimeData loaded runtime catalog from resource source '{SourceCatalogResourcesPath}' " +
+                $"with {catalog.Monsters.Length} monsters, {catalog.StageOneEnemies.Length} stage-one enemies, " +
+                $"and {catalog.StageTwoEnemies.Length} stage-two enemies.";
+        }
+
+        /*
+         * 치명적인 CSV 오류를 기록하고 실행을 종료한다.
+         */
+        private static void FailAndQuit(string message, List<string> errors)
+        {
+            failed = true;
+            Debug.LogError(message);
+
+            if (errors != null)
+            {
+                for (var i = 0; i < errors.Count; i++)
+                {
+                    Debug.LogError(errors[i]);
+                }
+            }
+
+#if UNITY_EDITOR
+            if (Application.isPlaying)
+            {
+                EditorApplication.isPlaying = false;
+            }
+#endif
+            Application.Quit();
+        }
+
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
         private static PakuriCsvRuntimeSourceCatalog LoadSourceCatalogOrThrow()
         {
             var sourceCatalog = Resources.Load<PakuriCsvRuntimeSourceCatalog>(SourceCatalogResourcesPath);
@@ -33,31 +254,31 @@ namespace Pakuri.Data
             {
                 missingAssets.Add(MonsterRewardChoicesFileName);
             }
-            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillsProjectileFiles, sourceCatalog.MonsterSkillsProjectile))
+            if (sourceCatalog.MonsterSkillsProjectileFiles == null || sourceCatalog.MonsterSkillsProjectileFiles.Length == 0)
             {
                 missingAssets.Add(MonsterSkillsProjectileFileName);
             }
-            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillsLineAttackFiles, sourceCatalog.MonsterSkillsLineAttack))
+            if (sourceCatalog.MonsterSkillsLineAttackFiles == null || sourceCatalog.MonsterSkillsLineAttackFiles.Length == 0)
             {
                 missingAssets.Add(MonsterSkillsLineAttackFileName);
             }
-            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillsAreaAttackFiles, sourceCatalog.MonsterSkillsAreaAttack))
+            if (sourceCatalog.MonsterSkillsAreaAttackFiles == null || sourceCatalog.MonsterSkillsAreaAttackFiles.Length == 0)
             {
                 missingAssets.Add(MonsterSkillsAreaAttackFileName);
             }
-            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillsSingleAttackFiles, sourceCatalog.MonsterSkillsSingleAttack))
+            if (sourceCatalog.MonsterSkillsSingleAttackFiles == null || sourceCatalog.MonsterSkillsSingleAttackFiles.Length == 0)
             {
                 missingAssets.Add(MonsterSkillsSingleAttackFileName);
             }
-            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillsBuffFiles, sourceCatalog.MonsterSkillsBuff))
+            if (sourceCatalog.MonsterSkillsBuffFiles == null || sourceCatalog.MonsterSkillsBuffFiles.Length == 0)
             {
                 missingAssets.Add(MonsterSkillsBuffFileName);
             }
-            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillsPassiveFiles, sourceCatalog.MonsterSkillsPassive))
+            if (sourceCatalog.MonsterSkillsPassiveFiles == null || sourceCatalog.MonsterSkillsPassiveFiles.Length == 0)
             {
                 missingAssets.Add(MonsterSkillsPassiveFileName);
             }
-            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillTriggerFiles, sourceCatalog.MonsterSkillTriggers))
+            if (sourceCatalog.MonsterSkillTriggerFiles == null || sourceCatalog.MonsterSkillTriggerFiles.Length == 0)
             {
                 missingAssets.Add(MonsterSkillTriggersFileName);
             }
@@ -73,27 +294,27 @@ namespace Pakuri.Data
             {
                 missingAssets.Add("skill_graph_nodes_*.csv");
             }
-            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillChoicesProjectileFiles, sourceCatalog.MonsterSkillChoicesProjectile))
+            if (sourceCatalog.MonsterSkillChoicesProjectileFiles == null || sourceCatalog.MonsterSkillChoicesProjectileFiles.Length == 0)
             {
                 missingAssets.Add(MonsterSkillChoicesProjectileFileName);
             }
-            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillChoicesLineAttackFiles, sourceCatalog.MonsterSkillChoicesLineAttack))
+            if (sourceCatalog.MonsterSkillChoicesLineAttackFiles == null || sourceCatalog.MonsterSkillChoicesLineAttackFiles.Length == 0)
             {
                 missingAssets.Add(MonsterSkillChoicesLineAttackFileName);
             }
-            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillChoicesAreaAttackFiles, sourceCatalog.MonsterSkillChoicesAreaAttack))
+            if (sourceCatalog.MonsterSkillChoicesAreaAttackFiles == null || sourceCatalog.MonsterSkillChoicesAreaAttackFiles.Length == 0)
             {
                 missingAssets.Add(MonsterSkillChoicesAreaAttackFileName);
             }
-            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillChoicesSingleAttackFiles, sourceCatalog.MonsterSkillChoicesSingleAttack))
+            if (sourceCatalog.MonsterSkillChoicesSingleAttackFiles == null || sourceCatalog.MonsterSkillChoicesSingleAttackFiles.Length == 0)
             {
                 missingAssets.Add(MonsterSkillChoicesSingleAttackFileName);
             }
-            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillChoicesBuffFiles, sourceCatalog.MonsterSkillChoicesBuff))
+            if (sourceCatalog.MonsterSkillChoicesBuffFiles == null || sourceCatalog.MonsterSkillChoicesBuffFiles.Length == 0)
             {
                 missingAssets.Add(MonsterSkillChoicesBuffFileName);
             }
-            if (!HasAnyCsvAsset(sourceCatalog.MonsterSkillChoicesPassiveFiles, sourceCatalog.MonsterSkillChoicesPassive))
+            if (sourceCatalog.MonsterSkillChoicesPassiveFiles == null || sourceCatalog.MonsterSkillChoicesPassiveFiles.Length == 0)
             {
                 missingAssets.Add(MonsterSkillChoicesPassiveFileName);
             }
@@ -127,6 +348,9 @@ namespace Pakuri.Data
             return sourceCatalog;
         }
 
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
         private static PakuriCsvRuntimeAssetCatalog LoadAssetCatalogOrThrow()
         {
             var assetCatalog = Resources.Load<PakuriCsvRuntimeAssetCatalog>(AssetCatalogResourcesPath);
@@ -144,6 +368,9 @@ namespace Pakuri.Data
             return assetCatalog;
         }
 
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
         private static SourceModel LoadSourceModel(PakuriCsvRuntimeSourceCatalog sourceCatalog)
         {
             var model = new SourceModel();
@@ -151,58 +378,26 @@ namespace Pakuri.Data
             var catalogMonsterTable = CsvTable.Load(sourceCatalog.CatalogMonsters, CatalogMonstersFileName);
             var monsterTable = CsvTable.Load(sourceCatalog.Monsters, MonstersFileName);
             var rewardChoiceTable = CsvTable.Load(sourceCatalog.MonsterRewardChoices, MonsterRewardChoicesFileName);
-            var projectileSkillAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillsProjectileFiles,
-                sourceCatalog.MonsterSkillsProjectile);
-            var lineAttackSkillAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillsLineAttackFiles,
-                sourceCatalog.MonsterSkillsLineAttack);
-            var areaAttackSkillAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillsAreaAttackFiles,
-                sourceCatalog.MonsterSkillsAreaAttack);
-            var singleAttackSkillAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillsSingleAttackFiles,
-                sourceCatalog.MonsterSkillsSingleAttack);
-            var buffSkillAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillsBuffFiles,
-                sourceCatalog.MonsterSkillsBuff);
-            var passiveSkillAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillsPassiveFiles,
-                sourceCatalog.MonsterSkillsPassive);
-            var skillNodeAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillNodeFiles,
-                sourceCatalog.MonsterSkillNodes);
-            var skillNodeParamAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillNodeParamFiles,
-                sourceCatalog.MonsterSkillNodeParams);
-            var skillTriggerAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillTriggerFiles,
-                sourceCatalog.MonsterSkillTriggers);
-            var skillGraphNodeAssets = sourceCatalog.MonsterSkillGraphNodeFiles ?? Array.Empty<TextAsset>();
+            var projectileSkillAssets = sourceCatalog.MonsterSkillsProjectileFiles;
+            var lineAttackSkillAssets = sourceCatalog.MonsterSkillsLineAttackFiles;
+            var areaAttackSkillAssets = sourceCatalog.MonsterSkillsAreaAttackFiles;
+            var singleAttackSkillAssets = sourceCatalog.MonsterSkillsSingleAttackFiles;
+            var buffSkillAssets = sourceCatalog.MonsterSkillsBuffFiles;
+            var passiveSkillAssets = sourceCatalog.MonsterSkillsPassiveFiles;
+            var skillTriggerAssets = sourceCatalog.MonsterSkillTriggerFiles;
+            var skillGraphNodeAssets = sourceCatalog.MonsterSkillGraphNodeFiles;
             var skillNodeDefinitionTable = CsvTable.Load(
                 sourceCatalog.MonsterSkillNodeDefinitions,
                 MonsterSkillNodeDefinitionsFileName);
             var skillNodeDefinitionParamTable = CsvTable.Load(
                 sourceCatalog.MonsterSkillNodeDefinitionParams,
                 MonsterSkillNodeDefinitionParamsFileName);
-            var projectileChoiceAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillChoicesProjectileFiles,
-                sourceCatalog.MonsterSkillChoicesProjectile);
-            var lineAttackChoiceAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillChoicesLineAttackFiles,
-                sourceCatalog.MonsterSkillChoicesLineAttack);
-            var areaAttackChoiceAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillChoicesAreaAttackFiles,
-                sourceCatalog.MonsterSkillChoicesAreaAttack);
-            var singleAttackChoiceAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillChoicesSingleAttackFiles,
-                sourceCatalog.MonsterSkillChoicesSingleAttack);
-            var buffChoiceAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillChoicesBuffFiles,
-                sourceCatalog.MonsterSkillChoicesBuff);
-            var passiveChoiceAssets = ResolveSplitOrLegacyCsvAssets(
-                sourceCatalog.MonsterSkillChoicesPassiveFiles,
-                sourceCatalog.MonsterSkillChoicesPassive);
+            var projectileChoiceAssets = sourceCatalog.MonsterSkillChoicesProjectileFiles;
+            var lineAttackChoiceAssets = sourceCatalog.MonsterSkillChoicesLineAttackFiles;
+            var areaAttackChoiceAssets = sourceCatalog.MonsterSkillChoicesAreaAttackFiles;
+            var singleAttackChoiceAssets = sourceCatalog.MonsterSkillChoicesSingleAttackFiles;
+            var buffChoiceAssets = sourceCatalog.MonsterSkillChoicesBuffFiles;
+            var passiveChoiceAssets = sourceCatalog.MonsterSkillChoicesPassiveFiles;
             var statusEffectTable = CsvTable.Load(sourceCatalog.StatusEffects, StatusEffectsFileName);
             var enemyTable = CsvTable.Load(sourceCatalog.Enemies, EnemiesFileName);
 
@@ -267,29 +462,6 @@ namespace Pakuri.Data
             foreach (var record in skillNodeDefinitionParamTable.Records)
             {
                 model.SkillNodeTypeParams.Add(ParseSkillNodeTypeParamRow(record));
-            }
-
-            for (var assetIndex = 0; assetIndex < skillNodeAssets.Length; assetIndex++)
-            {
-                var skillNodeTable = CsvTable.Load(
-                    skillNodeAssets[assetIndex],
-                    GetTextAssetCsvTableName(skillNodeAssets[assetIndex], MonsterSkillNodesFileName));
-                foreach (var record in skillNodeTable.Records)
-                {
-                    var row = ParseSkillNodeRow(record);
-                    AddUnique(model.SkillNodes, row.Id, row, record);
-                }
-            }
-
-            for (var assetIndex = 0; assetIndex < skillNodeParamAssets.Length; assetIndex++)
-            {
-                var skillNodeParamTable = CsvTable.Load(
-                    skillNodeParamAssets[assetIndex],
-                    GetTextAssetCsvTableName(skillNodeParamAssets[assetIndex], MonsterSkillNodeParamsFileName));
-                foreach (var record in skillNodeParamTable.Records)
-                {
-                    model.SkillNodeParams.Add(ParseSkillNodeParamRow(record));
-                }
             }
 
             for (var assetIndex = 0; assetIndex < skillTriggerAssets.Length; assetIndex++)
@@ -391,6 +563,9 @@ namespace Pakuri.Data
             return model;
         }
 
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
         private static void LoadSkillRows(
             SourceModel model,
             TextAsset[] skillAssets,
@@ -408,6 +583,9 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
         private static void LoadSkillRows(
             SourceModel model,
             TextAsset skillAsset,
@@ -432,6 +610,9 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
         private static void LoadSkillChoiceRows(
             SourceModel model,
             TextAsset[] choiceAssets,
@@ -449,6 +630,9 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
         private static void LoadSkillChoiceRows(
             SourceModel model,
             TextAsset choiceAsset,
@@ -483,6 +667,9 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * 필요한 조건을 만족하는지 확인한다.
+         */
         private static bool IsAllowedSkillRuntimeKind(
             SkillRuntimeKind runtimeKind,
             SkillRuntimeKind[] allowedRuntimeKinds)
@@ -498,53 +685,9 @@ namespace Pakuri.Data
             return false;
         }
 
-        private static bool HasAnyCsvAsset(TextAsset[] splitAssets, TextAsset legacyAsset)
-        {
-            if (legacyAsset != null)
-            {
-                return true;
-            }
-
-            if (splitAssets == null)
-            {
-                return false;
-            }
-
-            for (var i = 0; i < splitAssets.Length; i++)
-            {
-                if (splitAssets[i] != null)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static TextAsset[] ResolveSplitOrLegacyCsvAssets(TextAsset[] splitAssets, TextAsset legacyAsset)
-        {
-            if (splitAssets != null)
-            {
-                var assets = new List<TextAsset>(splitAssets.Length);
-                for (var i = 0; i < splitAssets.Length; i++)
-                {
-                    if (splitAssets[i] != null)
-                    {
-                        assets.Add(splitAssets[i]);
-                    }
-                }
-
-                if (assets.Count > 0)
-                {
-                    return assets.ToArray();
-                }
-            }
-
-            return legacyAsset != null
-                ? new[] { legacyAsset }
-                : Array.Empty<TextAsset>();
-        }
-
+        /*
+         * TextAsset 이름으로 CSV 테이블 이름을 만든다.
+         */
         private static string GetTextAssetCsvTableName(TextAsset asset, string fallbackTableName)
         {
             if (asset == null || string.IsNullOrWhiteSpace(asset.name))
@@ -557,6 +700,9 @@ namespace Pakuri.Data
                 : asset.name + ".csv";
         }
 
+        /*
+         * 중복 ID를 거부하고 원본 행을 사전에 추가한다.
+         */
         private static void AddUnique<T>(Dictionary<string, T> dictionary, string id, T value, CsvRecord record)
         {
             if (string.IsNullOrWhiteSpace(id))

@@ -2,7 +2,6 @@
 
 namespace Pakuri.InGame
 {
-    [CreateAssetMenu(menuName = "Pakuri/InGame/Shield Skill Data", fileName = "ShieldSkillData")]
     public sealed class ShieldSkillData : SkillData
     {
         [Header("Shield")]

@@ -2,7 +2,6 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
-    [CreateAssetMenu(menuName = "Pakuri/InGame/Single Attack Data", fileName = "SingleAttackData")]
     public sealed class SingleAttackData : SkillData
     {
         [Header("Area")]

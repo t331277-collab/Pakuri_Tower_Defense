@@ -1,4 +1,5 @@
 using System;
+using Pakuri.InGame;
 using UnityEngine;
 
 namespace Pakuri.Combat
@@ -87,6 +88,7 @@ namespace Pakuri.Combat
                 flatDefenseReduction,
                 percentDefenseReductions);
 
+            // 방어력이 -100에 닿아 피해 공식의 분모가 0이 되지 않도록 제한한다.
             var safeDefense = Mathf.Max(-95f, finalDefense);
             var damageAfterDefense = baseDamage * (100f / (100f + safeDefense));
             var criticalChance = Mathf.Clamp01(BaseCriticalChance + criticalChanceBonus - targetCriticalResistance);
@@ -95,6 +97,89 @@ namespace Pakuri.Combat
             var afterCritical = isCritical ? damageAfterDefense * criticalMultiplier : damageAfterDefense;
             var safeFinalMultiplier = Mathf.Max(0f, finalDamageMultiplier);
             return afterCritical * safeFinalMultiplier;
+        }
+
+        /*
+         * 유닛 능력치와 상태 효과를 반영해 실제 적용할 최종 피해를 계산한다.
+         */
+        public static float CalculateDamage(
+            BaseUnitRuntimeModel target,
+            float baseDamage,
+            DamageAttribute attribute,
+            DamageApplicationOptions options)
+        {
+            var criticalAllowed = options.CriticalAllowed;
+            var sourceStats = options.Source.Stats;
+            var criticalChance = criticalAllowed
+                ? sourceStats.CriticalChance + StatusEffectRuntime.ResolveCriticalChanceBonus(options.Source)
+                : BaseCriticalChance;
+            var criticalDamage = criticalAllowed
+                ? sourceStats.CriticalDamage
+                : BaseCriticalMultiplier;
+
+            if (criticalAllowed)
+            {
+                criticalDamage += StatusEffectRuntime.ResolveCriticalDamageBonus(options.Source);
+            }
+
+            var criticalResistance = criticalAllowed
+                ? target.Stats.CriticalResistance + StatusEffectRuntime.ResolveCriticalResistanceBonus(target)
+                : 0f;
+            var criticalDamageTaken = criticalAllowed
+                ? StatusEffectRuntime.ResolveCriticalDamageTakenBonus(target)
+                : 0f;
+
+            // 공격자 치명타 보정과 대상의 방어·받는 피해 보정을 최종 계산기로 전달한다.
+            var damage = Resolve(
+                Mathf.Max(0f, baseDamage),
+                attribute,
+                CopyDefenses(target.Defenses),
+                criticalAllowed,
+                flatDefenseReduction: StatusEffectRuntime.ResolveFlatElementResistReduction(target, attribute),
+                percentDefenseReductions: new[] { StatusEffectRuntime.ResolveElementResistReduction(target, attribute) },
+                criticalChanceBonus: criticalChance + options.CritChanceBonus - BaseCriticalChance,
+                criticalMultiplierBonus: criticalDamage + options.CritDamageBonus - BaseCriticalMultiplier,
+                targetCriticalResistance: criticalResistance,
+                criticalDamageTakenBonus: criticalDamageTaken,
+                finalDamageMultiplier: GetIncomingDamageMultiplier(target, options.Source, attribute, options.SourceSkillId));
+
+            return Mathf.Round(Mathf.Max(0f, damage));
+        }
+
+        /*
+         * 유닛 방어력 값을 피해 계산 형식으로 복사한다.
+         */
+        private static AttributeDefenseSet CopyDefenses(UnitDefenseRuntime defenses)
+        {
+            return new AttributeDefenseSet
+            {
+                Physical = defenses.Physical,
+                Fire = defenses.Fire,
+                Lightning = defenses.Lightning,
+                Ice = defenses.Ice,
+                Darkness = defenses.Darkness,
+                Holy = defenses.Holy
+            };
+        }
+
+        /*
+         * 상태 효과와 적 패시브의 받는 피해 배율을 합친다.
+         */
+        private static float GetIncomingDamageMultiplier(
+            BaseUnitRuntimeModel target,
+            BaseUnitRuntimeModel source,
+            DamageAttribute attribute,
+            string sourceSkillId)
+        {
+            var statusMultiplier = StatusEffectRuntime.ResolveIncomingDamageMultiplier(
+                target,
+                source,
+                attribute,
+                sourceSkillId);
+            var enemy = target as EnemyUnitRuntimeModel;
+            return enemy == null
+                ? statusMultiplier
+                : Mathf.Max(0f, enemy.PassiveIncomingDamageMultiplier) * statusMultiplier;
         }
 
         /*
@@ -108,6 +193,7 @@ namespace Pakuri.Combat
         {
             var finalDefense = baseDefense - flatDefenseReduction;
             var safeReductions = percentDefenseReductions ?? Array.Empty<float>();
+            // 여러 비율 감소는 합산하지 않고 남은 방어력에 차례대로 곱한다.
             for (var i = 0; i < safeReductions.Length; i++)
             {
                 finalDefense *= 1f - Mathf.Clamp01(safeReductions[i]);

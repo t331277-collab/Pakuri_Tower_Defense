@@ -7,10 +7,9 @@ namespace Pakuri.InGame
 {
     /*
      * 선택 플레이어의 수동 조준과 자동 스킬 허용 조건을 처리한다.
-     * Code Builder: 입력과 화면 판정을 InGameCombatManager에서 분리했다.
      */
-    [DisallowMultipleComponent]
-    public sealed class PlayerCombatControl : MonoBehaviour
+
+    public class PlayerCombatControl : MonoBehaviour
     {
         [SerializeField] private Camera inputCamera;
         [SerializeField] private bool autoSkillEnabled;
@@ -21,6 +20,9 @@ namespace Pakuri.InGame
 
         public bool AutoSkillEnabled => autoSkillEnabled;
 
+        /*
+         * 선택 플레이어의 입력을 읽고 실행 가능한 액티브 스킬에 전달한다.
+         */
         internal void HandleManualInput(
             UnitRosterService roster,
             SkillExecutionSystem skillExecution,
@@ -34,23 +36,27 @@ namespace Pakuri.InGame
             }
 
             var player = FindSelectedPlayer(roster);
-            if (player == null || player.Model == null || player.Model.SkillRuntime == null)
+            if (player == null)
             {
                 ClearManualInput();
                 return;
             }
 
-            var pressed = IsMousePressed();
-            var held = IsMouseHeld();
+            // 한 프레임의 마우스 상태를 한 번 읽어 모든 스킬에 같은 입력을 전달한다.
+            var mouse = Mouse.current;
+            var pressed = mouse != null && mouse.leftButton.wasPressedThisFrame;
+            var held = mouse != null && mouse.leftButton.isPressed;
+            var pointerOverUi = EventSystem.current != null
+                && EventSystem.current.IsPointerOverGameObject();
             var hasInput = TryGetCurrentInput(
                 player,
-                inputCamera,
                 pressed || held,
-                IsPointerOverUi(),
+                pointerOverUi,
                 out var currentAim,
                 out var currentTarget);
             var activeSkills = player.Model.SkillRuntime.ActiveSkills;
 
+            // 연속 발사 중이면 새 마우스 입력이 없어도 저장된 조준으로 남은 탄을 처리한다.
             if (!hasInput && !HasBurstingProjectile(activeSkills))
             {
                 ClearManualInput();
@@ -60,12 +66,8 @@ namespace Pakuri.InGame
             for (var i = 0; i < activeSkills.Count; i++)
             {
                 var runtime = activeSkills[i];
-                if (runtime == null)
-                {
-                    continue;
-                }
-
                 var isProjectile = runtime.Data is ProjectileSkillData;
+                // 각 스킬은 클릭·홀드·연속 발사 규칙에 맞는 입력만 선택한다.
                 if (!TryGetSkillInput(
                         runtime,
                         isProjectile,
@@ -97,58 +99,60 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 유닛이 자동 스킬을 사용할 수 있는 상태인지 반환한다.
+         */
         public bool CanUseAutoSkill(
             UnitRosterEntry entry,
             UnitRosterService roster)
         {
-            if (entry != null && entry.Model is EnemyUnitRuntimeModel)
+            if (entry.Model is EnemyUnitRuntimeModel)
             {
                 return false;
             }
 
-            if (!HasVisibleEnemy(roster, inputCamera)
-                || entry == null
-                || entry.Model == null
+            if (!HasVisibleEnemy(roster)
                 || !entry.Model.AutoSkillEnabled)
             {
                 return false;
             }
 
-            return !IsSelectedPlayer(entry, roster) || autoSkillEnabled;
+            // 선택 플레이어만 UI에서 정한 자동 스킬 모드를 따른다.
+            return entry != FindSelectedPlayer(roster) || autoSkillEnabled;
         }
 
+        /*
+         * 선택 플레이어의 자동 스킬 사용 여부를 전환한다.
+         */
         public void ToggleAutoSkillMode(UnitRosterService roster)
         {
-            SetAutoSkillMode(!autoSkillEnabled, roster);
-        }
-
-        public void SetAutoSkillMode(bool enabled, UnitRosterService roster)
-        {
-            autoSkillEnabled = enabled;
+            autoSkillEnabled = !autoSkillEnabled;
+            // 표시 상태와 실제 플레이어 모델의 자동 스킬 설정을 함께 갱신한다.
             ApplyAutoSkillModeToSelectedPlayer(roster);
         }
 
+        /*
+         * 현재 자동 스킬 설정을 선택 플레이어 모델에 적용한다.
+         */
         public void ApplyAutoSkillModeToSelectedPlayer(UnitRosterService roster)
         {
             var player = FindSelectedPlayer(roster);
-            if (player != null && player.Model != null)
+            if (player != null)
             {
                 player.Model.AutoSkillEnabled = autoSkillEnabled;
             }
         }
 
+        /*
+         * 플레이어 진영의 첫 번째 몬스터를 선택 플레이어로 찾는다.
+         */
         public UnitRosterEntry FindSelectedPlayer(UnitRosterService roster)
         {
-            if (roster == null)
-            {
-                return null;
-            }
-
             var players = roster.Players;
             for (var i = 0; i < players.Count; i++)
             {
                 var entry = players[i];
-                if (entry != null && IsSelectedPlayerModel(entry.Model))
+                if (IsSelectedPlayerModel(entry.Model))
                 {
                     return entry;
                 }
@@ -157,15 +161,19 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * 모델이 수동 입력을 받는 첫 번째 플레이어 몬스터인지 반환한다.
+         */
         public static bool IsSelectedPlayerModel(BaseUnitRuntimeModel model)
         {
-            return model != null
-                && model.Identity != null
-                && model.Identity.Side == UnitSide.Player
+            return model.Identity.Side == UnitSide.Player
                 && model.Identity.Role == UnitRole.Monster
                 && model.Identity.SlotIndex == 0;
         }
 
+        /*
+         * 저장된 투사체 조준 입력을 초기화한다.
+         */
         public void ClearManualInput()
         {
             hasSavedProjectileInput = false;
@@ -173,14 +181,11 @@ namespace Pakuri.InGame
             savedTargetPoint = Vector2.zero;
         }
 
-        private bool IsSelectedPlayer(UnitRosterEntry entry, UnitRosterService roster)
-        {
-            return entry != null && entry == FindSelectedPlayer(roster);
-        }
-
+        /*
+         * 현재 마우스 입력에서 조준 방향과 목표 지점을 만든다.
+         */
         private bool TryGetCurrentInput(
             UnitRosterEntry player,
-            Camera inputCamera,
             bool wantsInput,
             bool pointerOverUi,
             out Vector2 aimDirection,
@@ -188,15 +193,20 @@ namespace Pakuri.InGame
         {
             aimDirection = Vector2.zero;
             targetPoint = Vector2.zero;
-            if (!wantsInput || pointerOverUi || inputCamera == null)
+            if (!wantsInput || pointerOverUi)
             {
                 return false;
             }
 
-            targetPoint = GetMouseWorldPoint(inputCamera);
-            aimDirection = player == null || player.Transform == null
-                ? Vector2.zero
-                : targetPoint - (Vector2)player.Transform.position;
+            // 화면의 마우스 위치를 전투 월드 좌표로 바꿔 조준점을 만든다.
+            if (Mouse.current != null)
+            {
+                var mouse = Mouse.current.position.ReadValue();
+                targetPoint = inputCamera.ScreenToWorldPoint(
+                    new Vector3(mouse.x, mouse.y, -inputCamera.transform.position.z));
+            }
+
+            aimDirection = targetPoint - (Vector2)player.Transform.position;
             if (aimDirection.sqrMagnitude <= 0.0001f)
             {
                 return false;
@@ -208,6 +218,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 스킬 종류와 연속 발사 상태에 맞는 조준 입력을 선택한다.
+         */
         private bool TryGetSkillInput(
             SkillRuntimeInstance runtime,
             bool isProjectile,
@@ -224,6 +237,7 @@ namespace Pakuri.InGame
 
             if (!isProjectile)
             {
+                // 비투사체 스킬은 클릭한 프레임의 현재 조준만 사용한다.
                 if (!pressed || !hasCurrentInput)
                 {
                     return false;
@@ -234,6 +248,7 @@ namespace Pakuri.InGame
                 return true;
             }
 
+            // 투사체는 버튼을 누르는 동안 최신 마우스 조준을 사용한다.
             if (hasCurrentInput && held)
             {
                 aimDirection = currentAim;
@@ -241,6 +256,7 @@ namespace Pakuri.InGame
                 return true;
             }
 
+            // 버튼을 놓아도 진행 중인 연속 발사는 마지막으로 저장한 조준을 유지한다.
             if (runtime.IsBursting && hasSavedProjectileInput)
             {
                 aimDirection = savedAimDirection;
@@ -251,17 +267,15 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 연속 발사 중인 투사체 스킬이 있는지 반환한다.
+         */
         private static bool HasBurstingProjectile(IReadOnlyList<SkillRuntimeInstance> skills)
         {
-            if (skills == null)
-            {
-                return false;
-            }
-
             for (var i = 0; i < skills.Count; i++)
             {
                 var runtime = skills[i];
-                if (runtime != null && runtime.Data is ProjectileSkillData && runtime.IsBursting)
+                if (runtime.Data is ProjectileSkillData && runtime.IsBursting)
                 {
                     return true;
                 }
@@ -270,23 +284,22 @@ namespace Pakuri.InGame
             return false;
         }
 
-        private static bool HasVisibleEnemy(UnitRosterService roster, Camera inputCamera)
+        /*
+         * 화면 안에 살아 있는 적이 있는지 반환한다.
+         */
+        private bool HasVisibleEnemy(UnitRosterService roster)
         {
-            if (roster == null || inputCamera == null)
-            {
-                return false;
-            }
-
             var enemies = roster.Enemies;
             for (var i = 0; i < enemies.Count; i++)
             {
                 var enemy = enemies[i];
-                if (enemy == null || !enemy.IsAlive || enemy.Transform == null)
+                if (!enemy.IsAlive)
                 {
                     continue;
                 }
 
                 var viewport = inputCamera.WorldToViewportPoint(enemy.Transform.position);
+                // 카메라 뒤쪽이거나 화면 경계 밖인 적은 자동 스킬 대상으로 세지 않는다.
                 if (viewport.z >= 0f
                     && viewport.x >= 0f
                     && viewport.x <= 1f
@@ -300,34 +313,5 @@ namespace Pakuri.InGame
             return false;
         }
 
-        private static Vector2 GetMouseWorldPoint(Camera inputCamera)
-        {
-            if (inputCamera == null || Mouse.current == null)
-            {
-                return Vector2.zero;
-            }
-
-            var mouse = Mouse.current.position.ReadValue();
-            var world = inputCamera.ScreenToWorldPoint(
-                new Vector3(mouse.x, mouse.y, -inputCamera.transform.position.z));
-            return world;
-        }
-
-        private static bool IsMousePressed()
-        {
-            var mouse = Mouse.current;
-            return mouse != null && mouse.leftButton.wasPressedThisFrame;
-        }
-
-        private static bool IsMouseHeld()
-        {
-            var mouse = Mouse.current;
-            return mouse != null && mouse.leftButton.isPressed;
-        }
-
-        private static bool IsPointerOverUi()
-        {
-            return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
-        }
     }
 }

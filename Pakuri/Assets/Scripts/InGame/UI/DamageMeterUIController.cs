@@ -19,7 +19,7 @@ namespace Pakuri.InGame
         [SerializeField] private GameObject meterRoot;
         [SerializeField] private Button closeButton;
         [SerializeField] private DamagePanelView[] panels = new DamagePanelView[MaxPartySlots];
-        [SerializeField] private SceneEntryManager entryManager;
+        [SerializeField] private UnitSpawnManager unitSpawnManager;
         [SerializeField] private DamageMeterRuntimeTracker tracker;
 
         private readonly string[] partyMonsterIds = new string[MaxPartySlots];
@@ -104,16 +104,16 @@ namespace Pakuri.InGame
         {
             Array.Clear(partyMonsterIds, 0, partyMonsterIds.Length);
 
-            var session = entryManager != null ? entryManager.ActiveSession : null;
+            var session = unitSpawnManager != null ? unitSpawnManager.ActiveSession : null;
             if (session != null && !string.IsNullOrWhiteSpace(session.SelectedMonsterId))
             {
                 partyMonsterIds[0] = session.SelectedMonsterId;
             }
-            else if (entryManager != null
-                && entryManager.SpawnedPlayerModel != null
-                && entryManager.SpawnedPlayerModel.Identity != null)
+            else if (unitSpawnManager != null
+                && unitSpawnManager.SpawnedPlayerModel != null
+                && unitSpawnManager.SpawnedPlayerModel.Identity != null)
             {
-                partyMonsterIds[0] = entryManager.SpawnedPlayerModel.Identity.DefinitionId;
+                partyMonsterIds[0] = unitSpawnManager.SpawnedPlayerModel.Identity.DefinitionId;
             }
 
             var manifested = session != null ? session.ManifestedMonsterIds : null;
@@ -374,9 +374,9 @@ namespace Pakuri.InGame
 
         private void ResolveReferences()
         {
-            if (entryManager == null)
+            if (unitSpawnManager == null)
             {
-                entryManager = FindSceneObject<SceneEntryManager>();
+                unitSpawnManager = FindSceneObject<UnitSpawnManager>();
             }
 
             if (tracker == null)
