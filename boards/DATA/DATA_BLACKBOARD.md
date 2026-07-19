@@ -9,6 +9,48 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-19 Stage Parser Dead Value Removal
+
+### Task title
+
+Remove unused Stage row values while preserving active CSV parsing behavior.
+
+### Goals
+
+- Stop storing `StageDayRow.CombatType`, which had no reader.
+- Stop storing `StageRewardRow.PrisonerCount3Chance`, whose runtime result already uses the implicit remainder branch.
+- Preserve numeric validation of `prisoner_count_3_chance` and leave CSV files unchanged.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Stage encounter composition, reward values, probability branch behavior, CSV schema, and UTF-8 data remain unchanged.
+- No CSV or runtime catalog asset is edited by this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, solution-build verified, and Unity Editor compile-verified.
+
+### Next Actions
+
+- User verifies representative Stage reward rolls and day progression in Play Mode.
+
+### Evidence
+
+- `StageManager.cs` removes zero-reference `CurrentEncounterId`, `CurrentRewardRuleId`, `StageDayRow.CombatType`, and stored `PrisonerCount3Chance`.
+- `LoadRewards(...)` still calls `ParseFloat(row, "prisoner_count_3_chance")` through a discard, preserving malformed-number failure behavior.
+- The 1/2/3-prisoner branch remains `chance1`, `chance1 + chance2`, then remainder; no CSV content changed.
+- Solution build passed with 0 errors and the existing 2 `MSB3277` warnings.
+- Unity refresh/compile returned to idle with no C# compiler or `Assets/Scripts` error entries.
+
+### History
+
+- 2026-07-19: Code Builder removed dead Stage values while retaining the third-chance parse validation side effect.
+
 ## Task: 2026-07-17 Stage 1 Boss Health Multiplier Retuning
 
 ### Task title

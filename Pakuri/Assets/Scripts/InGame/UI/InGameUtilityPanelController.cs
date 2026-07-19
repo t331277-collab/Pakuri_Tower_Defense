@@ -8,7 +8,8 @@ namespace Pakuri.InGame
     {
         private static readonly float[] TimeScales = { 1f, 1.5f, 2f };
 
-        [SerializeField] private InGameCombatManager combatManager;
+        // Code Builder: 자동 스킬 입력 상태는 PlayerCombatControl에 직접 요청한다.
+        [SerializeField] private PlayerCombatControl playerCombatControl;
         [SerializeField] private Button autoButton;
         [SerializeField] private Button timeButton;
         [SerializeField] private GameObject onePointFiveIndicator;
@@ -65,9 +66,9 @@ namespace Pakuri.InGame
 
         private void ResolveReferences()
         {
-            if (combatManager == null)
+            if (playerCombatControl == null)
             {
-                combatManager = FindFirstObjectByType<InGameCombatManager>();
+                playerCombatControl = FindFirstObjectByType<PlayerCombatControl>();
             }
 
             var autoTransform = transform.Find("AutoBtn");
@@ -121,9 +122,11 @@ namespace Pakuri.InGame
 
         private void ToggleSelectedPlayerAutoSkillMode()
         {
-            if (combatManager != null)
+            if (playerCombatControl != null)
             {
-                combatManager.ToggleSelectedPlayerAutoSkillMode();
+                var combatManager = FindFirstObjectByType<InGameCombatManager>();
+                playerCombatControl.ToggleAutoSkillMode(
+                    combatManager != null ? combatManager.Roster : null);
             }
         }
     }

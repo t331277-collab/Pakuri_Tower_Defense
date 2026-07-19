@@ -14057,6 +14057,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8474f78509600a145be3ca0cf353f6b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.DamageMeterRuntimeTracker
+  combatManager: {fileID: 1427799828}
 --- !u!1 &876894091
 GameObject:
   m_ObjectHideFlags: 0
@@ -14244,7 +14245,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1158f7e84cec17449b6b904dd152208, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.InGameUtilityPanelController
-  combatManager: {fileID: 1427799828}
+  playerCombatControl: {fileID: 1427799832}
   autoButton: {fileID: 2022552815}
   timeButton: {fileID: 1183382878}
   onePointFiveIndicator: {fileID: 968101817}
@@ -23527,6 +23528,7 @@ GameObject:
   - component: {fileID: 1427799829}
   - component: {fileID: 1427799830}
   - component: {fileID: 1427799831}
+  - component: {fileID: 1427799832}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -23580,10 +23582,7 @@ MonoBehaviour:
   skillExecutionEnabled: 1
   logEnemyAttackAttempts: 0
   logSkillExecutionContracts: 0
-  playerAutoSkillEnabled: 0
-  inputCamera: {fileID: 1824280075}
-  projectileDestroyBoundary: {fileID: 1902957069}
-  projectileDestroyBoundaryFallbackX: 31
+  playerCombatControl: {fileID: 1427799832}
   effectManager: {fileID: 1427799831}
 --- !u!114 &1427799829
 MonoBehaviour:
@@ -23669,8 +23668,6 @@ MonoBehaviour:
     prefab: {fileID: 2901641940831284134, guid: 4ca246702baa4fd45b4921ba449d94a9, type: 3}
   - enemyId: stage2-arsen
     prefab: {fileID: 7149419201978181015, guid: 352837e4f845dc54ab09d08e639b5f66, type: 3}
-  enemySpawnMinY: -5
-  enemySpawnMaxY: 5
 --- !u!114 &1427799831
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23689,6 +23686,20 @@ MonoBehaviour:
     SkillEffects:
     - SkillId: rin-d
       Prefab: {fileID: 4571567099965563202, guid: 4fb536ec34e06544ab6226bf8f02cb08, type: 3}
+--- !u!114 &1427799832
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1427799825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41ecde25977bf7845bc0a35ca15d7982, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.PlayerCombatControl
+  inputCamera: {fileID: 1824280075}
+  autoSkillEnabled: 0
 --- !u!1 &1437384833
 GameObject:
   m_ObjectHideFlags: 0

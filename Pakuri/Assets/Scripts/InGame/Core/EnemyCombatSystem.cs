@@ -1,5 +1,3 @@
-// 'System.Collections.Generic' 네임스페이스의 타입과 API를 이 파일에서 사용한다.
-using System.Collections.Generic;
 // 'Pakuri.Combat' 네임스페이스의 타입과 API를 이 파일에서 사용한다.
 using Pakuri.Combat;
 // 'Pakuri.Data' 네임스페이스의 타입과 API를 이 파일에서 사용한다.
@@ -14,30 +12,6 @@ namespace Pakuri.InGame
     // 'EnemyCombatSystem' 클래스 정의를 시작한다.
     public class EnemyCombatSystem
     {
-        // [낯선 문법] readonly 필드 'enemyStates'를 초기화하며, 생성 뒤에는 이 참조를 다시 대입할 수 없다.
-        private readonly Dictionary<string, EnemyCombatState> enemyStates = new Dictionary<string, EnemyCombatState>();
-
-        // 'LastAttackAttemptCount' 읽기 전용 property로 계산 결과 또는 상태를 외부에 공개한다.
-        public int LastAttackAttemptCount { get; private set; }
-
-        // 적별 전투 상태와 마지막 공격 시도 횟수를 초기화한다.
-        // 'Clear' 메소드의 입력과 반환 계약을 선언한다.
-        public void Clear()
-        {
-            // 컬렉션에 남은 항목을 모두 제거해 상태를 초기화한다.
-            enemyStates.Clear();
-            // 'LastAttackAttemptCount'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            LastAttackAttemptCount = 0;
-        }
-
-        // 전투 관리자 없이 적 전투 갱신을 실행하는 간편 호출이다.
-        // 'Tick' 메소드의 입력과 반환 계약을 선언한다.
-        public void Tick(UnitRosterService roster, float deltaTime, bool logAttackAttempts)
-        {
-            // 'Tick' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            Tick(roster, null, deltaTime, logAttackAttempts);
-        }
-
         // 모든 적을 순회하며 전투 관리자와 시간 변화량을 사용해 행동을 갱신한다.
         // 'Tick' 메소드의 입력과 반환 계약을 선언한다.
         public void Tick(
@@ -50,9 +24,6 @@ namespace Pakuri.InGame
             // 'logAttackAttempts' 매개변수 또는 지역값의 타입을 'bool'로 지정한다.
             bool logAttackAttempts)
         {
-            // 'LastAttackAttemptCount'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            LastAttackAttemptCount = 0;
-
             // [방어 로직] 'roster == null || deltaTime <= 0f' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
             if (roster == null || deltaTime <= 0f)
             {
@@ -100,8 +71,6 @@ namespace Pakuri.InGame
                 return;
             }
 
-            // 지역 변수 'state'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var state = GetState(enemyModel);
             // 'SharedChargeSkillRuntime.Tick(enemyEntry, roster, combatManager, deltaTime)' 조건이 참인지 검사해 실행 분기를 결정한다.
             if (SharedChargeSkillRuntime.Tick(enemyEntry, roster, combatManager, deltaTime))
             {
@@ -111,17 +80,6 @@ namespace Pakuri.InGame
 
             // 지역 변수 'target'에 오른쪽 계산 또는 조회 결과를 저장한다.
             var target = EnemyTargeting.FindNearestPlayerTarget(enemyEntry, roster);
-            // [방어 로직] 'target != null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (target != null)
-            {
-                // 'state.TargetUnitId'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-                state.TargetUnitId = target.Model != null && target.Model.Identity != null
-                    // [낯선 문법] 삼항 연산자의 조건 참 결과로 'target.Model.Identity.UnitId' 값을 선택한다.
-                    ? target.Model.Identity.UnitId
-                    // [Fallback][낯선 문법] 삼항 연산자의 조건 거짓 대체값으로 'null;' 값을 선택한다.
-                    : null;
-            }
-
             // 'EnemyTargeting.IsNexus(target)' 조건이 참인지 검사해 실행 분기를 결정한다.
             if (EnemyTargeting.IsNexus(target))
             {
@@ -155,8 +113,6 @@ namespace Pakuri.InGame
                     combatManager,
                     // 'specialRuntime' 열거값을 선택 가능한 상수 항목으로 정의한다.
                     specialRuntime,
-                    // 'state' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                    state,
                     // 'deltaTime' 열거값을 선택 가능한 상수 항목으로 정의한다.
                     deltaTime,
                     // 'logAttackAttempts' 값을 현재 메소드 호출의 인수로 전달한다.
@@ -223,8 +179,6 @@ namespace Pakuri.InGame
                 combatManager,
                 // 'offensiveRuntime' 열거값을 선택 가능한 상수 항목으로 정의한다.
                 offensiveRuntime,
-                // 'state' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                state,
                 // 'deltaTime' 열거값을 선택 가능한 상수 항목으로 정의한다.
                 deltaTime,
                 // 'logAttackAttempts' 값을 현재 메소드 호출의 인수로 전달한다.
@@ -288,8 +242,6 @@ namespace Pakuri.InGame
             InGameCombatManager combatManager,
             // 'runtime' 매개변수 또는 지역값의 타입을 'SkillRuntimeInstance'로 지정한다.
             SkillRuntimeInstance runtime,
-            // 'state' 매개변수 또는 지역값의 타입을 'EnemyCombatState'로 지정한다.
-            EnemyCombatState state,
             // 'deltaTime' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
             float deltaTime,
             // 'logAttackAttempts' 매개변수 또는 지역값의 타입을 'bool'로 지정한다.
@@ -307,11 +259,6 @@ namespace Pakuri.InGame
                 // [방어 로직] Try 패턴 메소드 'TryExecuteSharedSkill'가 결과를 만들지 못했음을 false로 알린다.
                 return false;
             }
-
-            // 'state.AttackAttemptCount++;' 식을 평가해 현재 계산 또는 상태 변경의 한 단계를 수행한다.
-            state.AttackAttemptCount++;
-            // 'LastAttackAttemptCount++;' 식을 평가해 현재 계산 또는 상태 변경의 한 단계를 수행한다.
-            LastAttackAttemptCount++;
 
             // 'logAttackAttempts' 조건이 참인지 검사해 실행 분기를 결정한다.
             if (logAttackAttempts)
@@ -535,32 +482,6 @@ namespace Pakuri.InGame
             return Vector2.Distance(enemyEntry.Transform.position, nexusTarget.Transform.position) <= 0.25f;
         }
 
-        // 적 유닛 ID에 대응하는 지속 전투 상태를 찾거나 새로 만든다.
-        // 'GetState' 메소드의 입력과 반환 계약을 선언한다.
-        private EnemyCombatState GetState(EnemyUnitRuntimeModel enemyModel)
-        {
-            // [Fallback][낯선 문법] 삼항 연산자(?:)로 조건에 따라 정상값 또는 대체값을 선택한다.
-            var unitId = enemyModel.Identity != null ? enemyModel.Identity.UnitId : null;
-            // [방어 로직] 'string.IsNullOrWhiteSpace(unitId)' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (string.IsNullOrWhiteSpace(unitId))
-            {
-                // 'unitId'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-                unitId = "enemy-unknown";
-            }
-
-            // [방어 로직] '!enemyStates.TryGetValue(unitId, out var state)' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (!enemyStates.TryGetValue(unitId, out var state))
-            {
-                // 'state'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-                state = new EnemyCombatState();
-                // Add 호출 결과 또는 지정 항목을 컬렉션에 추가한다.
-                enemyStates.Add(unitId, state);
-            }
-
-            // 계산 또는 조회 결과 'state'을 호출자에게 반환한다.
-            return state;
-        }
-
         // 적 이름, 대상 이름, 스킬 ID를 포함한 공격 시도 로그 문자열을 만든다.
         // 'BuildAttackAttemptLog' 메소드의 입력과 반환 계약을 선언한다.
         private static string BuildAttackAttemptLog(
@@ -595,13 +516,4 @@ namespace Pakuri.InGame
         }
     }
 
-    // 한 적이 현재 추적하는 대상과 누적 공격 시도 횟수를 저장한다.
-    // 'EnemyCombatState' 클래스 정의를 시작한다.
-    internal class EnemyCombatState
-    {
-        // 'TargetUnitId' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
-        public string TargetUnitId;
-        // 'AttackAttemptCount' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
-        public int AttackAttemptCount;
-    }
 }

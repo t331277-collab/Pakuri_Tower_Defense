@@ -87,7 +87,7 @@ namespace Pakuri.InGame
 
             var center = ResolveAreaCenter(context, skill.Targeting, skill.Area);
             var runtimeVisual = skill.RuntimeVisual;
-            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var hasRuntimeVisual = EffectVisualUtility.HasVisual(runtimeVisual);
             var prefab = hasRuntimeVisual ? null : ResolvePrefab(context, snapshot, skill);
             var outcome = UsesResolvedDeployments(skill)
                 ? ExecuteResolvedDeployments(context, snapshot, skill, center, runtimeVisual, prefab)
@@ -140,9 +140,8 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var instance = RuntimeSkillVisualFactory.HasVisual(runtimeVisual)
-                ? RuntimeSkillVisualFactory.Create(
-                    context.CombatManager.Effects,
+            var instance = EffectVisualUtility.HasVisual(runtimeVisual)
+                ? context.CombatManager.Effects.CreateRuntimeVisual(
                     runtimeVisual,
                     "RuntimeSingleAttackVisual",
                     center,
@@ -436,13 +435,12 @@ namespace Pakuri.InGame
             var routed = false;
             var castCommitted = false;
 
-            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var hasRuntimeVisual = EffectVisualUtility.HasVisual(runtimeVisual);
             if (skill.UsePrefabHitbox && (hasRuntimeVisual || prefab != null) && context.CombatManager.Effects != null)
             {
                 center = ResolvePrefabHitboxCenter(context, center, skill);
                 var instance = hasRuntimeVisual
-                    ? RuntimeSkillVisualFactory.Create(
-                        context.CombatManager.Effects,
+                    ? context.CombatManager.Effects.CreateRuntimeVisual(
                         runtimeVisual,
                         "RuntimeSingleAttackHitbox",
                         center,

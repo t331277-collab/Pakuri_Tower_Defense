@@ -74,6 +74,13 @@ namespace Pakuri.InGame
             return Find(model, null);
         }
 
+        // Code Builder: 등록된 Actor 표시 갱신은 로스터가 담당한다.
+        public bool RefreshActor(BaseUnitRuntimeModel model)
+        {
+            var entry = Find(model);
+            return entry != null && entry.RefreshActor();
+        }
+
         private UnitRosterEntry Find(BaseUnitRuntimeModel model, Component actor)
         {
             var unitId = model != null && model.Identity != null ? model.Identity.UnitId : null;
@@ -106,6 +113,8 @@ namespace Pakuri.InGame
     public sealed class UnitRosterEntry
     {
         private Collider2D[] cachedHitboxColliders;
+
+        // Code Builder: 등록된 Actor의 표시와 패배 처리를 로스터 항목에서 직접 연결한다.
 
         public UnitRosterEntry(BaseUnitRuntimeModel model, Component actor, Transform hitboxRoot = null)
         {
@@ -179,6 +188,75 @@ namespace Pakuri.InGame
             }
 
             return HitboxRoot != null && (candidate == HitboxRoot || candidate.IsChildOf(HitboxRoot));
+        }
+
+        internal void ShowDamage(float damageAmount, bool isDead)
+        {
+            if (Actor == null || damageAmount <= 0f)
+            {
+                return;
+            }
+
+            if (Actor is MonsterUnitActor monster)
+            {
+                monster.ShowDamage(damageAmount);
+                if (!isDead)
+                {
+                    monster.TryPlayHitAnimation();
+                }
+
+                return;
+            }
+
+            if (Actor is EnemyUnitActor enemy)
+            {
+                enemy.ShowDamage(damageAmount);
+            }
+        }
+
+        internal bool RefreshActor()
+        {
+            if (Actor is MonsterUnitActor monster)
+            {
+                monster.RefreshDebugView();
+                return true;
+            }
+
+            if (Actor is EnemyUnitActor enemy)
+            {
+                enemy.RefreshDebugView();
+                return true;
+            }
+
+            if (Actor is NexusUnitActor nexus)
+            {
+                nexus.RefreshDebugView();
+                return true;
+            }
+
+            return false;
+        }
+
+        internal void ShowDefeated()
+        {
+            if (Actor == null)
+            {
+                return;
+            }
+
+            if (Actor is NexusUnitActor nexus)
+            {
+                nexus.NotifyDefeated();
+                return;
+            }
+
+            if (Actor is MonsterUnitActor monster)
+            {
+                monster.MarkDefeated();
+                return;
+            }
+
+            UnityEngine.Object.Destroy(Actor.gameObject, 0.95f);
         }
     }
 

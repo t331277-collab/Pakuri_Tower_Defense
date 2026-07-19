@@ -4,19 +4,14 @@ using System;
 using System.Collections.Generic;
 // 'Pakuri.Combat' 네임스페이스의 타입과 API를 이 파일에서 사용한다.
 using Pakuri.Combat;
-// 'AttributeDefenseSet = Pakuri.Combat.DamageCalculator.AttributeDefenseSet' 네임스페이스의 타입과 API를 이 파일에서 사용한다.
 using AttributeDefenseSet = Pakuri.Combat.DamageCalculator.AttributeDefenseSet;
 // 'UnityEngine' 네임스페이스의 타입과 API를 이 파일에서 사용한다.
 using UnityEngine;
-// 'UnityEngine.EventSystems' 네임스페이스의 타입과 API를 이 파일에서 사용한다.
-using UnityEngine.EventSystems;
-// 'UnityEngine.InputSystem' 네임스페이스의 타입과 API를 이 파일에서 사용한다.
-using UnityEngine.InputSystem;
 
 // 'Pakuri.InGame' 네임스페이스 범위를 선언해 관련 타입 이름의 충돌을 막는다.
 namespace Pakuri.InGame
 {
-    // 피해 적용 시 공격자, 치명타, 스킬 출처, Trigger 억제, 피해량 표시 정보를 전달한다.
+    // 피해 적용 시 공격자, 치명타, 스킬 출처, Trigger 억제, 피해 통계 출처를 전달한다.
     // 'DamageApplicationOptions' 값 형식 구조체 정의를 시작한다.
     public readonly struct DamageApplicationOptions
     {
@@ -25,22 +20,20 @@ namespace Pakuri.InGame
         public DamageApplicationOptions(
             // 'source' 매개변수 또는 지역값의 타입을 'BaseUnitRuntimeModel'로 지정한다.
             BaseUnitRuntimeModel source,
-            // [Fallback][낯선 문법] 선택 인수 'criticalAllowed'가 생략되면 기본값 'false'을 사용한다.
-            bool criticalAllowed = false,
-            // [Fallback][낯선 문법] 선택 인수 'critChanceBonus'가 생략되면 기본값 '0f'을 사용한다.
-            float critChanceBonus = 0f,
-            // [Fallback][낯선 문법] 선택 인수 'critDamageBonus'가 생략되면 기본값 '0f'을 사용한다.
-            float critDamageBonus = 0f,
-            // [Fallback][낯선 문법] 선택 인수 'sourceSkillId'가 생략되면 기본값 'null'을 사용한다.
-            string sourceSkillId = null,
-            // [Fallback][낯선 문법] 선택 인수 'suppressOutgoingDamageTriggers'가 생략되면 기본값 'false'을 사용한다.
-            bool suppressOutgoingDamageTriggers = false,
-            // [Fallback][낯선 문법] 선택 인수 'sourceHitWasExecute'가 생략되면 기본값 'false'을 사용한다.
-            bool sourceHitWasExecute = false,
-            // [Fallback][낯선 문법] 선택 인수 'damageMeterSourceId'가 생략되면 기본값 'null'을 사용한다.
-            string damageMeterSourceId = null,
-            // [Fallback][낯선 문법] 선택 인수 'damageMeterDisplayName'가 생략되면 기본값 'null'을 사용한다.
-            string damageMeterDisplayName = null)
+            // 이 공격이 치명타 계산을 허용하는지 지정한다.
+            bool criticalAllowed,
+            // 기본 치명타 확률에 더할 값을 지정한다.
+            float critChanceBonus,
+            // 기본 치명타 피해 배율에 더할 값을 지정한다.
+            float critDamageBonus,
+            // 피해를 발생시킨 스킬 ID를 지정한다.
+            string sourceSkillId,
+            // 추가 피해 Trigger 재호출을 막을지 지정한다.
+            bool suppressOutgoingDamageTriggers,
+            // 현재 타격이 처형 판정이었는지 지정한다.
+            bool sourceHitWasExecute,
+            // 피해 통계에서 사용할 출처 ID를 지정한다.
+            string damageMeterSourceId)
         {
             // 'Source'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
             Source = source;
@@ -58,8 +51,6 @@ namespace Pakuri.InGame
             SourceHitWasExecute = sourceHitWasExecute;
             // 'DamageMeterSourceId'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
             DamageMeterSourceId = damageMeterSourceId;
-            // 'DamageMeterDisplayName'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            DamageMeterDisplayName = damageMeterDisplayName;
         }
 
         // 'Source' 읽기 전용 property로 계산 결과 또는 상태를 외부에 공개한다.
@@ -78,13 +69,11 @@ namespace Pakuri.InGame
         public bool SourceHitWasExecute { get; }
         // 'DamageMeterSourceId' 읽기 전용 property로 계산 결과 또는 상태를 외부에 공개한다.
         public string DamageMeterSourceId { get; }
-        // 'DamageMeterDisplayName' 읽기 전용 property로 계산 결과 또는 상태를 외부에 공개한다.
-        public string DamageMeterDisplayName { get; }
     }
 
-    // 전투 로스터, 스킬 실행, 적 AI, 피해·회복·상태, Trigger, 수동 입력을 통합 관리한다.
-    // [낯선 문법] DisallowMultipleComponent attribute: 같은 GameObject에 이 컴포넌트가 중복 부착되는 것을 막는다.
-    [DisallowMultipleComponent]
+    // 전투 로스터, 피해·상태 처리, 스킬 실행, 적 AI를 순서대로 조율한다.
+    // Code Builder: 입력·표시·통계·날짜·경계 소유권은 각 담당 스크립트로 분리했다.
+
     // 'InGameCombatManager' 클래스 정의를 시작한다.
     public sealed class InGameCombatManager : MonoBehaviour
     {
@@ -95,12 +84,10 @@ namespace Pakuri.InGame
         private readonly UnitRosterService roster = new UnitRosterService();
         // [낯선 문법] readonly 필드 'enemyCombatSystem'를 초기화하며, 생성 뒤에는 이 참조를 다시 대입할 수 없다.
         private readonly EnemyCombatSystem enemyCombatSystem = new EnemyCombatSystem();
-        // [낯선 문법] readonly 필드 'resourceMutations'를 초기화하며, 생성 뒤에는 이 참조를 다시 대입할 수 없다.
-        private readonly UnitResourceMutationService resourceMutations = new UnitResourceMutationService();
         // [낯선 문법] readonly 필드 'skillExecution'를 초기화하며, 생성 뒤에는 이 참조를 다시 대입할 수 없다.
         private readonly SkillExecutionSystem skillExecution = new SkillExecutionSystem();
-        // [낯선 문법] readonly 필드 'statusEffectVisuals'를 초기화하며, 생성 뒤에는 이 참조를 다시 대입할 수 없다.
-        private readonly Dictionary<string, GameObject> statusEffectVisuals = new Dictionary<string, GameObject>();
+        // Code Builder: 입력 상태는 PlayerCombatControl이 소유하고 이 관리자는 실행 순서만 조율한다.
+        [SerializeField] private PlayerCombatControl playerCombatControl;
         // [낯선 문법] readonly 필드 'appliedOneShotPassiveEffects'를 초기화하며, 생성 뒤에는 이 참조를 다시 대입할 수 없다.
         private readonly HashSet<string> appliedOneShotPassiveEffects = new HashSet<string>();
         // [낯선 문법] readonly 필드 'combatStartDispatchedUnits'를 초기화하며, 생성 뒤에는 이 참조를 다시 대입할 수 없다.
@@ -111,12 +98,6 @@ namespace Pakuri.InGame
         private readonly Dictionary<string, int> passiveTriggerCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         // 'passiveEffectRefreshRemaining' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
         private float passiveEffectRefreshRemaining;
-        // 'hasLatchedManualProjectileInput' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
-        private bool hasLatchedManualProjectileInput;
-        // 'latchedManualProjectileAimDirection' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
-        private Vector2 latchedManualProjectileAimDirection;
-        // 'latchedManualProjectileTargetPoint' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
-        private Vector2 latchedManualProjectileTargetPoint;
 
         // [낯선 문법] SerializeField attribute: private 상태 'enemyCombatSimulationEnabled'을 Unity 직렬화와 Inspector 편집 대상으로 만든다.
         [SerializeField] private bool enemyCombatSimulationEnabled = true;
@@ -126,12 +107,6 @@ namespace Pakuri.InGame
         [SerializeField] private bool logEnemyAttackAttempts;
         // [낯선 문법] SerializeField attribute: private 상태 'logSkillExecutionContracts'을 Unity 직렬화와 Inspector 편집 대상으로 만든다.
         [SerializeField] private bool logSkillExecutionContracts;
-        // [낯선 문법] SerializeField attribute: private 상태 'playerAutoSkillEnabled'을 Unity 직렬화와 Inspector 편집 대상으로 만든다.
-        [SerializeField] private bool playerAutoSkillEnabled;
-        // [낯선 문법] SerializeField attribute: private 상태 'inputCamera'을 Unity 직렬화와 Inspector 편집 대상으로 만든다.
-        [SerializeField] private Camera inputCamera;
-        // [낯선 문법] SerializeField attribute: private 상태 'projectileDestroyBoundary'을 Unity 직렬화와 Inspector 편집 대상으로 만든다.
-        [SerializeField] private Transform projectileDestroyBoundary;
         // [낯선 문법] SerializeField attribute: private 상태 'effectManager'을 Unity 직렬화와 Inspector 편집 대상으로 만든다.
         [SerializeField] private EffectManager effectManager;
 
@@ -140,29 +115,23 @@ namespace Pakuri.InGame
         // [낯선 문법] 식 본문 property: 'Effects' 값을 오른쪽 식 하나로 계산해 반환한다.
         public EffectManager Effects => effectManager;
 
-        // [낯선 문법] 식 본문 property: 'ActiveUnitCount' 값을 오른쪽 식 하나로 계산해 반환한다.
-        public int ActiveUnitCount => roster.Count;
-        // [낯선 문법] 식 본문 property: 'ActivePlayerCount' 값을 오른쪽 식 하나로 계산해 반환한다.
-        public int ActivePlayerCount => roster.PlayerCount;
         // [낯선 문법] 식 본문 property: 'ActiveEnemyCount' 값을 오른쪽 식 하나로 계산해 반환한다.
         public int ActiveEnemyCount => roster.EnemyCount;
-        // [낯선 문법] 식 본문 property: 'LastEnemyAttackAttemptCount' 값을 오른쪽 식 하나로 계산해 반환한다.
-        public int LastEnemyAttackAttemptCount => enemyCombatSystem.LastAttackAttemptCount;
-        // [낯선 문법] 식 본문 property: 'LastSkillExecutionRoutedCount' 값을 오른쪽 식 하나로 계산해 반환한다.
-        public int LastSkillExecutionRoutedCount => skillExecution.LastRoutedCount;
-        // [낯선 문법] 식 본문 property: 'LastSkillExecutionRejectedCount' 값을 오른쪽 식 하나로 계산해 반환한다.
-        public int LastSkillExecutionRejectedCount => skillExecution.LastRejectedCount;
-        // [낯선 문법] 식 본문 property: 'PlayerAutoSkillEnabled' 값을 오른쪽 식 하나로 계산해 반환한다.
-        public bool PlayerAutoSkillEnabled => playerAutoSkillEnabled;
+        // Code Builder: 피해 통계는 전투 결과 이벤트를 구독하는 쪽에서 기록한다.
+        public event Action<DamageApplicationOptions, InGameResourceChangeResult> DamageApplied;
 
         // 전투 시작 전 로스터, 적 상태, 전투 시작 Trigger 기록, 패시브 상태를 초기화한다.
         // 'Awake' 메소드의 입력과 반환 계약을 선언한다.
         private void Awake()
         {
+            // 같은 GameObject에 연결된 플레이어 입력 처리기를 찾는다.
+            if (playerCombatControl == null)
+            {
+                playerCombatControl = GetComponent<PlayerCombatControl>();
+            }
+
             // 컬렉션에 남은 항목을 모두 제거해 상태를 초기화한다.
             roster.Clear();
-            // 컬렉션에 남은 항목을 모두 제거해 상태를 초기화한다.
-            enemyCombatSystem.Clear();
             // 컬렉션에 남은 항목을 모두 제거해 상태를 초기화한다.
             combatStartDispatchedUnits.Clear();
             // 'ResetPassiveEffectState' 메소드를 호출해 현재 단계의 처리를 실행한다.
@@ -191,8 +160,16 @@ namespace Pakuri.InGame
                     logSkillExecutionContracts,
                     // 'ShouldAutoRouteSkill' 값을 현재 메소드 호출의 인수로 전달한다.
                     ShouldAutoRouteSkill);
-                // 'HandleSelectedPlayerManualSkillInput' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                HandleSelectedPlayerManualSkillInput();
+                // 선택 플레이어의 수동 입력을 별도 입력 처리기에 전달한다.
+                if (playerCombatControl != null)
+                {
+                    playerCombatControl.HandleManualInput(
+                        roster,
+                        skillExecution,
+                        this,
+                        Time.deltaTime,
+                        logSkillExecutionContracts);
+                }
             }
 
             // 'enemyCombatSimulationEnabled' 조건이 참인지 검사해 실행 분기를 결정한다.
@@ -208,15 +185,15 @@ namespace Pakuri.InGame
 
         // 플레이어 몬스터를 로스터에 등록하고 자동 스킬 설정과 전투 시작 Trigger를 적용한다.
         // 'RegisterPlayerMonster' 메소드의 입력과 반환 계약을 선언한다.
-        public UnitRosterEntry RegisterPlayerMonster(MonsterUnitRuntimeModel model, MonsterUnitActor actor, Transform hitboxRoot = null)
+        public UnitRosterEntry RegisterPlayerMonster(MonsterUnitRuntimeModel model, MonsterUnitActor actor, Transform hitboxRoot)
         {
             // 지역 변수 'entry'에 오른쪽 계산 또는 조회 결과를 저장한다.
             var entry = roster.Register(model, actor, hitboxRoot);
             // 'IsSelectedPlayerModel(model)' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (IsSelectedPlayerModel(model))
+            if (playerCombatControl != null && PlayerCombatControl.IsSelectedPlayerModel(model))
             {
-                // 'SetSelectedPlayerAutoSkillMode' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                SetSelectedPlayerAutoSkillMode(playerAutoSkillEnabled);
+                // 현재 자동 스킬 설정을 새로 등록된 선택 플레이어에게 적용한다.
+                playerCombatControl.ApplyAutoSkillModeToSelectedPlayer(roster);
             }
 
             // 'DispatchCombatStartOnce' 메소드를 호출해 현재 단계의 처리를 실행한다.
@@ -227,7 +204,7 @@ namespace Pakuri.InGame
 
         // 적을 로스터에 등록하고 해당 유닛의 전투 시작 Trigger를 한 번 실행한다.
         // 'RegisterEnemy' 메소드의 입력과 반환 계약을 선언한다.
-        public UnitRosterEntry RegisterEnemy(EnemyUnitRuntimeModel model, EnemyUnitActor actor, Transform hitboxRoot = null)
+        public UnitRosterEntry RegisterEnemy(EnemyUnitRuntimeModel model, EnemyUnitActor actor, Transform hitboxRoot)
         {
             // 지역 변수 'entry'에 오른쪽 계산 또는 조회 결과를 저장한다.
             var entry = roster.Register(model, actor, hitboxRoot);
@@ -239,15 +216,15 @@ namespace Pakuri.InGame
 
         // 넥서스 모델과 Actor를 전투 로스터에 등록한다.
         // 'RegisterNexus' 메소드의 입력과 반환 계약을 선언한다.
-        public UnitRosterEntry RegisterNexus(NexusUnitRuntimeModel model, NexusUnitActor actor, Transform hitboxRoot = null)
+        public UnitRosterEntry RegisterNexus(NexusUnitRuntimeModel model, NexusUnitActor actor, Transform hitboxRoot)
         {
             // 계산 또는 조회 결과 'roster.Register(model, actor, hitboxRoot)'을 호출자에게 반환한다.
             return roster.Register(model, actor, hitboxRoot);
         }
 
-        // 모델을 로스터에서 해제하고 연결된 Actor GameObject를 지정 지연 후 제거한다.
+        // 모델을 로스터에서 해제하고 연결된 Actor GameObject를 제거한다.
         // 'DespawnUnit' 메소드의 입력과 반환 계약을 선언한다.
-        public bool DespawnUnit(BaseUnitRuntimeModel model, float destroyDelay = 0f)
+        public bool DespawnUnit(BaseUnitRuntimeModel model)
         {
             // [방어 로직] 'model == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
             if (model == null)
@@ -272,34 +249,12 @@ namespace Pakuri.InGame
             // [방어 로직] 'actor != null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
             if (actor != null)
             {
-                // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-                Destroy(actor.gameObject, Mathf.Max(0f, destroyDelay));
+                // 지연 없이 로스터에서 해제된 Actor를 제거한다.
+                Destroy(actor.gameObject);
             }
 
             // 요청한 검사 또는 처리가 성공했음을 true로 반환한다.
             return true;
-        }
-
-        // GameObject 제거 없이 지정 모델만 전투 로스터에서 해제한다.
-        // 'UnregisterUnit' 메소드의 입력과 반환 계약을 선언한다.
-        public bool UnregisterUnit(BaseUnitRuntimeModel model)
-        {
-            // 계산 또는 조회 결과 'roster.Unregister(model)'을 호출자에게 반환한다.
-            return roster.Unregister(model);
-        }
-
-        // 공격자 정보 없이 기본 옵션으로 대상에게 피해를 적용한다.
-        // 'ApplyDamage' 메소드의 입력과 반환 계약을 선언한다.
-        public InGameResourceChangeResult ApplyDamage(
-            // 'target' 매개변수 또는 지역값의 타입을 'BaseUnitRuntimeModel'로 지정한다.
-            BaseUnitRuntimeModel target,
-            // 'baseDamage' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float baseDamage,
-            // [Fallback][낯선 문법] 선택 인수 'attribute'가 생략되면 기본값 'DamageAttribute.Physical'을 사용한다.
-            DamageAttribute attribute = DamageAttribute.Physical)
-        {
-            // 계산 또는 조회 결과 'ApplyDamage(target, baseDamage, attribute, null)'을 호출자에게 반환한다.
-            return ApplyDamage(target, baseDamage, attribute, null);
         }
 
         // 피해 옵션을 구성해 자원 변경, 피해 표시, 보호막·공격·처치 Trigger, 사망 처리를 실행한다.
@@ -325,25 +280,27 @@ namespace Pakuri.InGame
             bool suppressOutgoingDamageTriggers = false,
             // [Fallback][낯선 문법] 선택 인수 'sourceHitWasExecute'가 생략되면 기본값 'false'을 사용한다.
             bool sourceHitWasExecute = false,
-            // [Fallback][낯선 문법] 선택 인수 'damageMeterSourceId'가 생략되면 기본값 'null'을 사용한다.
-            string damageMeterSourceId = null,
-            // [Fallback][낯선 문법] 선택 인수 'damageMeterDisplayName'가 생략되면 기본값 'null'을 사용한다.
-            string damageMeterDisplayName = null)
+            string damageMeterSourceId = null)
         {
             // 지역 변수 'depletedShields'에 오른쪽 계산 또는 조회 결과를 저장한다.
             var depletedShields = new List<UnitStatusRuntime>();
             // 지역 변수 'absorbedShields'에 오른쪽 계산 또는 조회 결과를 저장한다.
             var absorbedShields = new List<ShieldAbsorbRecord>();
             // 지역 변수 'options'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var options = new DamageApplicationOptions(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceId, damageMeterDisplayName);
+            var options = new DamageApplicationOptions(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceId);
             // 지역 변수 'result'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var result = resourceMutations.ApplyDamage(target, baseDamage, attribute, options, depletedShields, absorbedShields);
-            // 'DamageMeterRuntimeTracker.RecordDamage' 메소드를 호출해 해당 객체의 처리를 실행한다.
-            DamageMeterRuntimeTracker.RecordDamage(options, result);
+            var result = ApplyDamageToResources(target, baseDamage, attribute, options, depletedShields, absorbedShields);
+            // 통계와 UI가 피해 결과를 직접 구독할 수 있도록 알린다.
+            DamageApplied?.Invoke(options, result);
             // 'RefreshActorIfChanged' 메소드를 호출해 현재 단계의 처리를 실행한다.
             RefreshActorIfChanged(result);
-            // 'ShowDamageIfChanged' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            ShowDamageIfChanged(result);
+            // 피해 숫자와 피격 연출을 등록된 Actor에 전달한다.
+            var damagedEntry = roster.Find(result.Target);
+            // 실제 자원 변화가 있는 등록 유닛만 피해 표시를 갱신한다.
+            if (result.Changed && damagedEntry != null)
+            {
+                damagedEntry.ShowDamage(result.AppliedDamage, result.IsDead);
+            }
             // 'DispatchShieldAbsorbTriggers' 메소드를 호출해 현재 단계의 처리를 실행한다.
             DispatchShieldAbsorbTriggers(target, source, absorbedShields);
             // 'DispatchShieldExpireTriggers' 메소드를 호출해 현재 단계의 처리를 실행한다.
@@ -358,136 +315,231 @@ namespace Pakuri.InGame
             return result;
         }
 
-        // 넥서스를 제외한 대상에게 기존 값에 더해 직접 보호막을 부여하고 Actor를 갱신한다.
-        // 'GrantShield' 메소드의 입력과 반환 계약을 선언한다.
-        public InGameResourceChangeResult GrantShield(BaseUnitRuntimeModel target, float amount)
-        {
-            // 'IsNexusModel(target)' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (IsNexusModel(target))
-            {
-                // 계산 또는 조회 결과 'InGameResourceChangeResult.Unchanged(target)'을 호출자에게 반환한다.
-                return InGameResourceChangeResult.Unchanged(target);
-            }
-
-            // 지역 변수 'result'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var result = resourceMutations.GrantShield(target, amount);
-            // 'RefreshActorIfChanged' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            RefreshActorIfChanged(result);
-            // 계산 또는 조회 결과 'result'을 호출자에게 반환한다.
-            return result;
-        }
-
-        // 넥서스를 제외한 대상의 직접 보호막을 지정 값으로 설정하고 Actor를 갱신한다.
-        // 'SetShield' 메소드의 입력과 반환 계약을 선언한다.
-        public InGameResourceChangeResult SetShield(BaseUnitRuntimeModel target, float amount)
-        {
-            // 'IsNexusModel(target)' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (IsNexusModel(target))
-            {
-                // 계산 또는 조회 결과 'InGameResourceChangeResult.Unchanged(target)'을 호출자에게 반환한다.
-                return InGameResourceChangeResult.Unchanged(target);
-            }
-
-            // 지역 변수 'result'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var result = resourceMutations.SetShield(target, amount);
-            // 'RefreshActorIfChanged' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            RefreshActorIfChanged(result);
-            // 계산 또는 조회 결과 'result'을 호출자에게 반환한다.
-            return result;
-        }
-
         // 넥서스를 제외한 대상의 체력을 최대 체력 범위에서 회복하고 Actor를 갱신한다.
         // 'Heal' 메소드의 입력과 반환 계약을 선언한다.
         public InGameResourceChangeResult Heal(BaseUnitRuntimeModel target, float amount)
         {
-            // 'IsNexusModel(target)' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (IsNexusModel(target))
+            // Nexus는 회복 대상에서 제외한다.
+            if (target != null && target.IsNexus)
             {
                 // 계산 또는 조회 결과 'InGameResourceChangeResult.Unchanged(target)'을 호출자에게 반환한다.
                 return InGameResourceChangeResult.Unchanged(target);
             }
 
             // 지역 변수 'result'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var result = resourceMutations.Heal(target, amount);
+            var result = HealResources(target, amount);
             // 'RefreshActorIfChanged' 메소드를 호출해 현재 단계의 처리를 실행한다.
             RefreshActorIfChanged(result);
             // 계산 또는 조회 결과 'result'을 호출자에게 반환한다.
             return result;
         }
 
-        // 문자열 상태 태그를 상태 종류로 변환해 대상에게 적용한다.
-        // 'ApplyStatus' 메소드의 입력과 반환 계약을 선언한다.
-        public UnitStatusRuntime ApplyStatus(
-            // 'target' 매개변수 또는 지역값의 타입을 'BaseUnitRuntimeModel'로 지정한다.
+        // 피해를 상태 보호막, 직접 보호막, 체력 순서로 적용한다.
+        private static InGameResourceChangeResult ApplyDamageToResources(
             BaseUnitRuntimeModel target,
-            // 'statusTag' 매개변수 또는 지역값의 타입을 'string'로 지정한다.
-            string statusTag,
-            // 'stacks' 매개변수 또는 지역값의 타입을 'int'로 지정한다.
-            int stacks,
-            // 'durationSeconds' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float durationSeconds,
-            // [Fallback][낯선 문법] 선택 인수 'maxStacks'가 생략되면 기본값 '0'을 사용한다.
-            int maxStacks = 0,
-            // [Fallback][낯선 문법] 선택 인수 'permanent'가 생략되면 기본값 'false'을 사용한다.
-            bool permanent = false,
-            // [Fallback][낯선 문법] 선택 인수 'refreshDuration'가 생략되면 기본값 'true'을 사용한다.
-            bool refreshDuration = true)
+            float baseDamage,
+            DamageAttribute attribute,
+            DamageApplicationOptions options,
+            ICollection<UnitStatusRuntime> depletedShields,
+            ICollection<ShieldAbsorbRecord> absorbedShields)
         {
-            // 여러 줄로 이어지는 계산 또는 조건 결과를 반환하기 시작한다.
-            return StatusEffectUtility.TryParse(statusTag, out var kind)
-                // [낯선 문법] 삼항 연산자의 조건 참 결과로 'ApplyStatus(target, kind, stacks, durationSeconds, maxStacks, permanent, refreshDuration)' 값을 선택한다.
-                ? ApplyStatus(target, kind, stacks, durationSeconds, maxStacks, permanent, refreshDuration)
-                // [Fallback][낯선 문법] 삼항 연산자의 조건 거짓 대체값으로 'null;' 값을 선택한다.
-                : null;
+            // 피해를 적용할 수 없는 요청은 변경 없음으로 끝낸다.
+            if (target == null || target.Resources == null || baseDamage <= 0f)
+            {
+                return InGameResourceChangeResult.Unchanged(target);
+            }
+
+            // 적용 전 자원과 방어 계산이 끝난 최종 피해를 기록한다.
+            var resources = target.Resources;
+            var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
+            var beforeShield = GetTotalShield(target);
+            var finalDamage = CalculateDamage(target, baseDamage, attribute, options);
+
+            // 상태 Trigger가 참조할 수 있도록 이번 속성 피해를 상태 런타임에 기록한다.
+            if (target.Statuses != null)
+            {
+                target.Statuses.RecordIncomingDamage(attribute, finalDamage);
+            }
+
+            // 상태 보호막, 직접 보호막, 체력 순서로 남은 피해를 전달한다.
+            var statusShieldDamage = target.Statuses != null
+                ? target.Statuses.ConsumeShield(finalDamage, depletedShields, absorbedShields)
+                : 0f;
+            var damageAfterStatusShield = Mathf.Max(0f, finalDamage - statusShieldDamage);
+            var directShieldBefore = Mathf.Max(0f, resources.DirectShield);
+            var directShieldDamage = Mathf.Min(directShieldBefore, damageAfterStatusShield);
+            var remainingDamage = Mathf.Max(0f, damageAfterStatusShield - directShieldDamage);
+
+            // 계산 결과를 반올림해 자원 모델과 총 보호막 표시를 동기화한다.
+            resources.DirectShield = Round(Mathf.Max(0f, directShieldBefore - directShieldDamage));
+            resources.CurrentHealth = Round(Mathf.Max(0f, beforeHealth - remainingDamage));
+            SyncShield(target);
+
+            // 적용 전후 값과 사망 여부를 하나의 피해 결과로 반환한다.
+            return new InGameResourceChangeResult(
+                target,
+                beforeHealth,
+                resources.CurrentHealth,
+                beforeShield,
+                resources.CurrentShield,
+                finalDamage,
+                resources.CurrentHealth <= 0f);
         }
 
-        // 상태 종류와 중첩·지속시간 규칙을 적용하고 보호막·Actor·시각 효과를 갱신한다.
-        // 'ApplyStatus' 메소드의 입력과 반환 계약을 선언한다.
-        public UnitStatusRuntime ApplyStatus(
-            // 'target' 매개변수 또는 지역값의 타입을 'BaseUnitRuntimeModel'로 지정한다.
-            BaseUnitRuntimeModel target,
-            // 'kind' 매개변수 또는 지역값의 타입을 'StatusEffectKind'로 지정한다.
-            StatusEffectKind kind,
-            // 'stacks' 매개변수 또는 지역값의 타입을 'int'로 지정한다.
-            int stacks,
-            // 'durationSeconds' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float durationSeconds,
-            // [Fallback][낯선 문법] 선택 인수 'maxStacks'가 생략되면 기본값 '0'을 사용한다.
-            int maxStacks = 0,
-            // [Fallback][낯선 문법] 선택 인수 'permanent'가 생략되면 기본값 'false'을 사용한다.
-            bool permanent = false,
-            // [Fallback][낯선 문법] 선택 인수 'refreshDuration'가 생략되면 기본값 'true'을 사용한다.
-            bool refreshDuration = true)
+        // 대상 체력을 최대 체력 범위에서 회복한다.
+        private static InGameResourceChangeResult HealResources(BaseUnitRuntimeModel target, float amount)
         {
-            // [방어 로직] 'target == null || target.Statuses == null || kind == StatusEffectKind.None || IsNexusModel(target)' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (target == null || target.Statuses == null || kind == StatusEffectKind.None || IsNexusModel(target))
+            // 체력과 최대 체력을 확인할 수 없는 요청은 변경하지 않는다.
+            if (target == null || target.Resources == null || target.Stats == null || amount <= 0f)
             {
-                // [Fallback] 정상 결과를 만들 수 없을 때 기본 결과 'null'을 호출자에게 반환한다.
+                return InGameResourceChangeResult.Unchanged(target);
+            }
+
+            // 회복 전 값을 보존하고 최대 체력을 넘지 않도록 회복량을 적용한다.
+            var resources = target.Resources;
+            var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
+            var beforeShield = GetTotalShield(target);
+            var maxHealth = Mathf.Max(0f, target.Stats.MaxHealth);
+            resources.CurrentHealth = Round(Mathf.Min(maxHealth, beforeHealth + amount));
+            SyncShield(target);
+
+            // 회복 전후 자원 상태를 변경 결과로 반환한다.
+            return new InGameResourceChangeResult(
+                target,
+                beforeHealth,
+                resources.CurrentHealth,
+                beforeShield,
+                resources.CurrentShield,
+                0f,
+                resources.CurrentHealth <= 0f);
+        }
+
+        // 직접 보호막과 상태 보호막의 합계를 표시 자원에 맞춘다.
+        private static void SyncShield(BaseUnitRuntimeModel target)
+        {
+            // 자원 모델이 없는 대상은 동기화할 수 없다.
+            if (target == null || target.Resources == null)
+            {
+                return;
+            }
+
+            // 직접 보호막을 정리한 뒤 상태 보호막을 포함한 총량을 갱신한다.
+            target.Resources.DirectShield = Round(Mathf.Max(0f, target.Resources.DirectShield));
+            target.Resources.CurrentShield = GetTotalShield(target);
+        }
+
+        // 공격자 치명타, 대상 저항, 상태 보정, 적 패시브를 반영한 최종 피해를 계산한다.
+        private static float CalculateDamage(
+            BaseUnitRuntimeModel target,
+            float baseDamage,
+            DamageAttribute attribute,
+            DamageApplicationOptions options)
+        {
+            // 공격자가 있고 치명타가 허용된 공격만 공격자 치명타 능력치를 사용한다.
+            var criticalAllowed = options.CriticalAllowed && options.Source != null;
+            var sourceStats = criticalAllowed ? options.Source.Stats : null;
+            var criticalChance = criticalAllowed
+                ? (sourceStats != null ? sourceStats.CriticalChance : DamageCalculator.BaseCriticalChance)
+                    + StatusEffectRuntime.ResolveCriticalChanceBonus(options.Source)
+                : DamageCalculator.BaseCriticalChance;
+            var criticalDamage = criticalAllowed
+                ? (sourceStats != null ? sourceStats.CriticalDamage : DamageCalculator.BaseCriticalMultiplier)
+                : DamageCalculator.BaseCriticalMultiplier;
+
+            // 공격자 상태가 제공하는 치명타 피해 보너스를 합산한다.
+            if (criticalAllowed)
+            {
+                criticalDamage += StatusEffectRuntime.ResolveCriticalDamageBonus(options.Source);
+            }
+
+            // 대상의 치명타 저항과 치명타 피격 보정을 계산한다.
+            var criticalResistance = criticalAllowed
+                ? (target != null && target.Stats != null ? target.Stats.CriticalResistance : 0f)
+                    + StatusEffectRuntime.ResolveCriticalResistanceBonus(target)
+                : 0f;
+            var criticalDamageTaken = criticalAllowed
+                ? StatusEffectRuntime.ResolveCriticalDamageTakenBonus(target)
+                : 0f;
+            // 공통 DamageCalculator에 방어력과 상태 기반 보정값을 전달한다.
+            var damage = DamageCalculator.Resolve(
+                Mathf.Max(0f, baseDamage),
+                attribute,
+                target != null ? CopyDefenses(target.Defenses) : null,
+                criticalAllowed,
+                flatDefenseReduction: StatusEffectRuntime.ResolveFlatElementResistReduction(target, attribute),
+                percentDefenseReductions: new[] { StatusEffectRuntime.ResolveElementResistReduction(target, attribute) },
+                criticalChanceBonus: criticalChance + options.CritChanceBonus - DamageCalculator.BaseCriticalChance,
+                criticalMultiplierBonus: criticalDamage + options.CritDamageBonus - DamageCalculator.BaseCriticalMultiplier,
+                targetCriticalResistance: criticalResistance,
+                criticalDamageTakenBonus: criticalDamageTaken,
+                finalDamageMultiplier: GetIncomingDamageMultiplier(target, options.Source, attribute, options.SourceSkillId));
+
+            // 자원 계산에 사용할 수 있도록 음수를 막고 정수 단위로 반올림한다.
+            return Mathf.Round(Mathf.Max(0f, damage));
+        }
+
+        // 유닛 방어력 값을 DamageCalculator 입력 형식으로 복사한다.
+        private static AttributeDefenseSet CopyDefenses(UnitDefenseRuntime defenses)
+        {
+            // 방어력 모델이 없으면 계산기에 빈 방어값을 전달한다.
+            if (defenses == null)
+            {
                 return null;
             }
 
-            // 지역 변수 'status'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-            var status = target.Statuses.Apply(
-                // 'kind' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                kind,
-                // 'stacks' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                stacks,
-                // 'durationSeconds' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                durationSeconds,
-                // 'maxStacks' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                maxStacks,
-                // 'permanent' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                permanent,
-                // 'refreshDuration' 값을 현재 메소드 호출의 인수로 전달한다.
-                refreshDuration);
-            // 'resourceMutations.SynchronizeShieldView' 메소드를 호출해 해당 객체의 처리를 실행한다.
-            resourceMutations.SynchronizeShieldView(target);
-            // 'RefreshUnitActor' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            RefreshUnitActor(target);
-            // 'SpawnOrRefreshStatusEffectVisual' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            SpawnOrRefreshStatusEffectVisual(target, StatusEffectRuntime.CreateStatusData(kind, null), status);
-            // 계산 또는 조회 결과 'status'을 호출자에게 반환한다.
-            return status;
+            // 여섯 속성 방어력을 같은 속성 항목에 대응시킨다.
+            return new AttributeDefenseSet
+            {
+                Physical = defenses.Physical,
+                Fire = defenses.Fire,
+                Lightning = defenses.Lightning,
+                Ice = defenses.Ice,
+                Darkness = defenses.Darkness,
+                Holy = defenses.Holy
+            };
+        }
+
+        // 상태 기반 받는 피해 배율과 적 전용 패시브 배율을 결합한다.
+        private static float GetIncomingDamageMultiplier(
+            BaseUnitRuntimeModel target,
+            BaseUnitRuntimeModel source,
+            DamageAttribute attribute,
+            string sourceSkillId)
+        {
+            // 모든 유닛에 공통으로 적용되는 상태 피해 배율을 먼저 계산한다.
+            var statusMultiplier = StatusEffectRuntime.ResolveIncomingDamageMultiplier(
+                target,
+                source,
+                attribute,
+                sourceSkillId);
+            // 적 유닛이면 고유 패시브 배율을 추가하고, 다른 유닛은 상태 배율만 사용한다.
+            var enemy = target as EnemyUnitRuntimeModel;
+            return enemy == null
+                ? statusMultiplier
+                : Mathf.Max(0f, enemy.PassiveIncomingDamageMultiplier) * statusMultiplier;
+        }
+
+        // 직접 보호막과 활성 상태 보호막의 총량을 반환한다.
+        private static float GetTotalShield(BaseUnitRuntimeModel target)
+        {
+            // 보호막 자원을 확인할 수 없으면 0을 반환한다.
+            if (target == null || target.Resources == null)
+            {
+                return 0f;
+            }
+
+            // 직접 보호막과 상태 보호막을 각각 0 이상으로 제한해 합산한다.
+            var directShield = Mathf.Max(0f, target.Resources.DirectShield);
+            var statusShield = target.Statuses != null
+                ? Mathf.Max(0f, target.Statuses.GetTotalShieldAmount())
+                : 0f;
+            return Round(directShield + statusShield);
+        }
+
+        // 자원 값을 0 이상 정수 단위로 정리한다.
+        private static float Round(float value)
+        {
+            return Mathf.Round(Mathf.Max(0f, value));
         }
 
         // StatusEffectData와 출처 유닛을 포함한 상태를 적용하고 런타임 표시를 갱신한다.
@@ -501,17 +553,17 @@ namespace Pakuri.InGame
             int stacks,
             // 'durationSeconds' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
             float durationSeconds,
-            // [Fallback][낯선 문법] 선택 인수 'maxStacks'가 생략되면 기본값 '0'을 사용한다.
-            int maxStacks = 0,
-            // [Fallback][낯선 문법] 선택 인수 'permanent'가 생략되면 기본값 'false'을 사용한다.
-            bool permanent = false,
-            // [Fallback][낯선 문법] 선택 인수 'refreshDuration'가 생략되면 기본값 'true'을 사용한다.
-            bool refreshDuration = true,
-            // [Fallback][낯선 문법] 선택 인수 'source'가 생략되면 기본값 'null'을 사용한다.
-            BaseUnitRuntimeModel source = null)
+            // 허용할 최대 중첩 수를 지정한다.
+            int maxStacks,
+            // 지속시간 없이 유지할지 지정한다.
+            bool permanent,
+            // 재적용 시 지속시간을 갱신할지 지정한다.
+            bool refreshDuration,
+            // 상태를 발생시킨 유닛을 지정한다.
+            BaseUnitRuntimeModel source)
         {
-            // [방어 로직] 'target == null || target.Statuses == null || statusData == null || statusData.Kind == StatusEffectKind.None || IsNexusModel(target)' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (target == null || target.Statuses == null || statusData == null || statusData.Kind == StatusEffectKind.None || IsNexusModel(target))
+            // 상태 적용에 필요한 대상과 상태 정의를 확인하고 Nexus를 제외한다.
+            if (target == null || target.Statuses == null || statusData == null || statusData.Kind == StatusEffectKind.None || target.IsNexus)
             {
                 // [Fallback] 정상 결과를 만들 수 없을 때 기본 결과 'null'을 호출자에게 반환한다.
                 return null;
@@ -537,12 +589,12 @@ namespace Pakuri.InGame
                 // 'status.SetSourceUnit' 메소드를 호출해 해당 객체의 처리를 실행한다.
                 status.SetSourceUnit(source);
             }
-            // 'resourceMutations.SynchronizeShieldView' 메소드를 호출해 해당 객체의 처리를 실행한다.
-            resourceMutations.SynchronizeShieldView(target);
-            // 'RefreshUnitActor' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            RefreshUnitActor(target);
-            // 'SpawnOrRefreshStatusEffectVisual' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            SpawnOrRefreshStatusEffectVisual(target, statusData, status);
+            // 직접 보호막과 상태 보호막 표시값을 맞춘다.
+            SyncShield(target);
+            // 로스터에 등록된 Actor 표시를 갱신한다.
+            roster.RefreshActor(target);
+            // 상태 비주얼 갱신은 EffectManager에 맡긴다.
+            effectManager?.SpawnOrRefreshStatusVisual(target, roster, statusData, status);
             // 계산 또는 조회 결과 'status'을 호출자에게 반환한다.
             return status;
         }
@@ -558,19 +610,19 @@ namespace Pakuri.InGame
             float shieldAmount,
             // 'durationSeconds' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
             float durationSeconds,
-            // [Fallback][낯선 문법] 선택 인수 'stacks'가 생략되면 기본값 '1'을 사용한다.
-            int stacks = 1,
-            // [Fallback][낯선 문법] 선택 인수 'maxStacks'가 생략되면 기본값 '0'을 사용한다.
-            int maxStacks = 0,
-            // [Fallback][낯선 문법] 선택 인수 'permanent'가 생략되면 기본값 'false'을 사용한다.
-            bool permanent = false,
-            // [Fallback][낯선 문법] 선택 인수 'refreshDuration'가 생략되면 기본값 'true'을 사용한다.
-            bool refreshDuration = true,
-            // [Fallback][낯선 문법] 선택 인수 'source'가 생략되면 기본값 'null'을 사용한다.
-            BaseUnitRuntimeModel source = null)
+            // 적용할 보호막 상태 중첩 수를 지정한다.
+            int stacks,
+            // 허용할 최대 중첩 수를 지정한다.
+            int maxStacks,
+            // 지속시간 없이 유지할지 지정한다.
+            bool permanent,
+            // 재적용 시 지속시간을 갱신할지 지정한다.
+            bool refreshDuration,
+            // 보호막 상태를 발생시킨 유닛을 지정한다.
+            BaseUnitRuntimeModel source)
         {
-            // [방어 로직] 'target == null || target.Statuses == null || statusData == null || statusData.Kind != StatusEffectKind.Shield || IsNexusModel(target)' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (target == null || target.Statuses == null || statusData == null || statusData.Kind != StatusEffectKind.Shield || IsNexusModel(target))
+            // 보호막 적용에 필요한 대상과 상태 정의를 확인하고 Nexus를 제외한다.
+            if (target == null || target.Statuses == null || statusData == null || statusData.Kind != StatusEffectKind.Shield || target.IsNexus)
             {
                 // [Fallback] 정상 결과를 만들 수 없을 때 기본 결과 'null'을 호출자에게 반환한다.
                 return null;
@@ -601,32 +653,22 @@ namespace Pakuri.InGame
                 status.SetSourceUnit(source);
             }
 
-            // 'resourceMutations.SynchronizeShieldView' 메소드를 호출해 해당 객체의 처리를 실행한다.
-            resourceMutations.SynchronizeShieldView(target);
-            // 'RefreshUnitActor' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            RefreshUnitActor(target);
-            // 'SpawnOrRefreshStatusEffectVisual' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            SpawnOrRefreshStatusEffectVisual(target, statusData, status);
+            // 직접 보호막과 상태 보호막 표시값을 맞춘다.
+            SyncShield(target);
+            // 로스터에 등록된 Actor 표시를 갱신한다.
+            roster.RefreshActor(target);
+            // 상태 비주얼 갱신은 EffectManager에 맡긴다.
+            effectManager?.SpawnOrRefreshStatusVisual(target, roster, statusData, status);
             // 계산 또는 조회 결과 'status'을 호출자에게 반환한다.
             return status;
-        }
-
-        // 문자열 상태 태그를 변환해 해당 상태들의 지속시간 연장을 요청한다.
-        // 'ExtendStatusDuration' 메소드의 입력과 반환 계약을 선언한다.
-        public bool ExtendStatusDuration(BaseUnitRuntimeModel target, string statusTag, float durationDelta)
-        {
-            // 여러 줄로 이어지는 계산 또는 조건 결과를 반환하기 시작한다.
-            return StatusEffectUtility.TryParse(statusTag, out var kind)
-                // 앞 조건과 AND로 'ExtendStatusDuration(target, kind, durationDelta);' 조건을 추가한다.
-                && ExtendStatusDuration(target, kind, durationDelta);
         }
 
         // 영구 상태와 소진 보호막을 제외한 지정 종류 상태의 지속시간과 시각 효과를 연장한다.
         // 'ExtendStatusDuration' 메소드의 입력과 반환 계약을 선언한다.
         public bool ExtendStatusDuration(BaseUnitRuntimeModel target, StatusEffectKind kind, float durationDelta)
         {
-            // [방어 로직] 'target == null || target.Statuses == null || kind == StatusEffectKind.None || durationDelta <= 0f || IsNexusModel(target)' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (target == null || target.Statuses == null || kind == StatusEffectKind.None || durationDelta <= 0f || IsNexusModel(target))
+            // 연장할 상태와 시간을 확인하고 Nexus를 제외한다.
+            if (target == null || target.Statuses == null || kind == StatusEffectKind.None || durationDelta <= 0f || target.IsNexus)
             {
                 // [방어 로직] 필수 대상 또는 유효 조건이 없으므로 실패 결과 false를 반환한다.
                 return false;
@@ -647,10 +689,10 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            // 'resourceMutations.SynchronizeShieldView' 메소드를 호출해 해당 객체의 처리를 실행한다.
-            resourceMutations.SynchronizeShieldView(target);
-            // 'RefreshUnitActor' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            RefreshUnitActor(target);
+            // 직접 보호막과 상태 보호막 표시값을 맞춘다.
+            SyncShield(target);
+            // 로스터에 등록된 Actor 표시를 갱신한다.
+            roster.RefreshActor(target);
 
             // 지역 변수 'activeStatuses'에 오른쪽 계산 또는 조회 결과를 저장한다.
             var activeStatuses = target.Statuses.ActiveStatuses;
@@ -666,8 +708,8 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                // 'SpawnOrRefreshStatusEffectVisual' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                SpawnOrRefreshStatusEffectVisual(target, status.SourceData, status);
+                // 상태 비주얼 갱신은 EffectManager에 맡긴다.
+                effectManager?.SpawnOrRefreshStatusVisual(target, roster, status.SourceData, status);
             }
 
             // 요청한 검사 또는 처리가 성공했음을 true로 반환한다.
@@ -689,21 +731,16 @@ namespace Pakuri.InGame
         }
 
         // 날짜 전환 시 코루틴, 입력, 적 AI, 효과 오브젝트, 상태, 보호막 등 일시 전투 상태를 정리한다.
-        // 'ResetTransientCombatStateForNextDay' 메소드의 입력과 반환 계약을 선언한다.
-        public void ResetTransientCombatStateForNextDay()
+        // Code Builder: 날짜 의미는 StageManager에 두고 전투 상태만 초기화한다.
+        public void ResetCombatState()
         {
             // 'StopAllCoroutines' 메소드를 호출해 현재 단계의 처리를 실행한다.
             StopAllCoroutines();
-            // 'ClearLatchedManualProjectileInput' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            ClearLatchedManualProjectileInput();
-            // 컬렉션에 남은 항목을 모두 제거해 상태를 초기화한다.
-            enemyCombatSystem.Clear();
-
+            // 저장된 수동 투사체 입력을 비운다.
+            playerCombatControl?.ClearManualInput();
             // 직렬화된 효과 관리자의 런타임 스킬 오브젝트를 모두 정리한다.
             effectManager.ClearRuntimeSkillObjects();
 
-            // 컬렉션에 남은 항목을 모두 제거해 상태를 초기화한다.
-            statusEffectVisuals.Clear();
             // 컬렉션에 남은 항목을 모두 제거해 상태를 초기화한다.
             combatStartDispatchedUnits.Clear();
             // 'ResetPassiveEffectState' 메소드를 호출해 현재 단계의 처리를 실행한다.
@@ -746,10 +783,10 @@ namespace Pakuri.InGame
                     }
                 }
 
-                // 'resourceMutations.SynchronizeShieldView' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                resourceMutations.SynchronizeShieldView(model);
-                // 'RefreshUnitActor' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                RefreshUnitActor(entry);
+                // 직접 보호막과 상태 보호막 표시값을 맞춘다.
+                SyncShield(model);
+                // Actor 표시를 현재 자원 상태로 갱신한다.
+                entry.RefreshActor();
             }
         }
 
@@ -831,10 +868,10 @@ namespace Pakuri.InGame
             Vector2 targetPoint,
             // 'hasTargetPoint' 매개변수 또는 지역값의 타입을 'bool'로 지정한다.
             bool hasTargetPoint,
-            // [Fallback][낯선 문법] 선택 인수 'triggeredDamageMultiplier'가 생략되면 기본값 '1f'을 사용한다.
-            float triggeredDamageMultiplier = 1f,
-            // [Fallback][낯선 문법] 선택 인수 'triggerSourceSkillId'가 생략되면 기본값 'null'을 사용한다.
-            string triggerSourceSkillId = null)
+            // Trigger가 스킬 피해에 적용할 배율을 지정한다.
+            float triggeredDamageMultiplier,
+            // 재귀 Trigger 판정에 사용할 원본 스킬 ID를 지정한다.
+            string triggerSourceSkillId)
         {
             // 여러 줄로 이어지는 계산 또는 조건 결과를 반환하기 시작한다.
             return skillExecution.TryExecuteTriggered(
@@ -901,8 +938,8 @@ namespace Pakuri.InGame
             string sourceSkillId,
             // 'eventCenter' 매개변수 또는 지역값의 타입을 'Vector2'로 지정한다.
             Vector2 eventCenter,
-            // [Fallback][낯선 문법] 선택 인수 'triggerSourceSkillId'가 생략되면 기본값 'null'을 사용한다.
-            string triggerSourceSkillId = null)
+            // 재귀 Trigger 판정에 사용할 원본 스킬 ID를 지정한다.
+            string triggerSourceSkillId)
         {
             // [Fallback][낯선 문법] 삼항 연산자(?:)로 조건에 따라 정상값 또는 대체값을 선택한다.
             var source = sourceEntry != null ? sourceEntry.Model : null;
@@ -1103,64 +1140,6 @@ namespace Pakuri.InGame
             }
         }
 
-        // 대상이 문자열 태그에 해당하는 상태를 보유했는지 확인한다.
-        // 'HasStatus' 메소드의 입력과 반환 계약을 선언한다.
-        public bool HasStatus(BaseUnitRuntimeModel target, string statusTag)
-        {
-            // 계산 또는 조회 결과 'target != null && target.Statuses != null && target.Statuses.Has(statusTag)'을 호출자에게 반환한다.
-            return target != null && target.Statuses != null && target.Statuses.Has(statusTag);
-        }
-
-        // 대상이 지정 종류의 상태를 보유했는지 확인한다.
-        // 'HasStatus' 메소드의 입력과 반환 계약을 선언한다.
-        public bool HasStatus(BaseUnitRuntimeModel target, StatusEffectKind kind)
-        {
-            // 계산 또는 조회 결과 'target != null && target.Statuses != null && target.Statuses.Has(kind)'을 호출자에게 반환한다.
-            return target != null && target.Statuses != null && target.Statuses.Has(kind);
-        }
-
-        // 문자열 태그 상태의 현재 중첩 수를 반환한다.
-        // 'GetStatusStacks' 메소드의 입력과 반환 계약을 선언한다.
-        public int GetStatusStacks(BaseUnitRuntimeModel target, string statusTag)
-        {
-            // [Fallback][낯선 문법] 삼항 연산자(?:)로 조건 결과에 맞는 값 하나를 반환한다.
-            return target != null && target.Statuses != null ? target.Statuses.GetStacks(statusTag) : 0;
-        }
-
-        // 지정 종류 상태의 현재 중첩 수를 반환한다.
-        // 'GetStatusStacks' 메소드의 입력과 반환 계약을 선언한다.
-        public int GetStatusStacks(BaseUnitRuntimeModel target, StatusEffectKind kind)
-        {
-            // [Fallback][낯선 문법] 삼항 연산자(?:)로 조건 결과에 맞는 값 하나를 반환한다.
-            return target != null && target.Statuses != null ? target.Statuses.GetStacks(kind) : 0;
-        }
-
-        // 문자열 태그 상태를 제거하고 보호막 표시와 Actor를 갱신한다.
-        // 'RemoveStatus' 메소드의 입력과 반환 계약을 선언한다.
-        public bool RemoveStatus(BaseUnitRuntimeModel target, string statusTag)
-        {
-            // [방어 로직] 'target == null || target.Statuses == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (target == null || target.Statuses == null)
-            {
-                // [방어 로직] 필수 대상 또는 유효 조건이 없으므로 실패 결과 false를 반환한다.
-                return false;
-            }
-
-            // 지역 변수 'removed'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var removed = target.Statuses.Remove(statusTag);
-            // 'removed' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (removed)
-            {
-                // 'resourceMutations.SynchronizeShieldView' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                resourceMutations.SynchronizeShieldView(target);
-                // 'RefreshUnitActor' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                RefreshUnitActor(target);
-            }
-
-            // 계산 또는 조회 결과 'removed'을 호출자에게 반환한다.
-            return removed;
-        }
-
         // 문자열 태그 상태의 중첩을 지정 수만큼 소비하고 표시를 갱신한다.
         // 'ConsumeStatusStacks' 메소드의 입력과 반환 계약을 선언한다.
         public int ConsumeStatusStacks(BaseUnitRuntimeModel target, string statusTag, int stacks)
@@ -1177,106 +1156,14 @@ namespace Pakuri.InGame
             // 'consumed > 0' 조건이 참인지 검사해 실행 분기를 결정한다.
             if (consumed > 0)
             {
-                // 'resourceMutations.SynchronizeShieldView' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                resourceMutations.SynchronizeShieldView(target);
-                // 'RefreshUnitActor' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                RefreshUnitActor(target);
+                // 직접 보호막과 상태 보호막 표시값을 맞춘다.
+                SyncShield(target);
+                // 로스터에 등록된 Actor 표시를 갱신한다.
+                roster.RefreshActor(target);
             }
 
             // 계산 또는 조회 결과 'consumed'을 호출자에게 반환한다.
             return consumed;
-        }
-
-        // 지정 종류 상태의 중첩을 지정 수만큼 소비하고 표시를 갱신한다.
-        // 'ConsumeStatusStacks' 메소드의 입력과 반환 계약을 선언한다.
-        public int ConsumeStatusStacks(BaseUnitRuntimeModel target, StatusEffectKind kind, int stacks)
-        {
-            // [방어 로직] 'target == null || target.Statuses == null || stacks <= 0' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (target == null || target.Statuses == null || stacks <= 0)
-            {
-                // [Fallback] 정상 결과를 만들 수 없을 때 기본 결과 '0'을 호출자에게 반환한다.
-                return 0;
-            }
-
-            // 지역 변수 'consumed'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var consumed = target.Statuses.ConsumeStacks(kind, stacks);
-            // 'consumed > 0' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (consumed > 0)
-            {
-                // 'resourceMutations.SynchronizeShieldView' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                resourceMutations.SynchronizeShieldView(target);
-                // 'RefreshUnitActor' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                RefreshUnitActor(target);
-            }
-
-            // 계산 또는 조회 결과 'consumed'을 호출자에게 반환한다.
-            return consumed;
-        }
-
-        // 지정 종류 상태를 제거하고 보호막 표시와 Actor를 갱신한다.
-        // 'RemoveStatus' 메소드의 입력과 반환 계약을 선언한다.
-        public bool RemoveStatus(BaseUnitRuntimeModel target, StatusEffectKind kind)
-        {
-            // [방어 로직] 'target == null || target.Statuses == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (target == null || target.Statuses == null)
-            {
-                // [방어 로직] 필수 대상 또는 유효 조건이 없으므로 실패 결과 false를 반환한다.
-                return false;
-            }
-
-            // 지역 변수 'removed'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var removed = target.Statuses.Remove(kind);
-            // 'removed' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (removed)
-            {
-                // 'resourceMutations.SynchronizeShieldView' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                resourceMutations.SynchronizeShieldView(target);
-                // 'RefreshUnitActor' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                RefreshUnitActor(target);
-            }
-
-            // 계산 또는 조회 결과 'removed'을 호출자에게 반환한다.
-            return removed;
-        }
-
-        // 선택 플레이어 몬스터의 자동 스킬 모드를 활성화한다.
-        // 'EnablePlayerAutoSkillMode' 메소드의 입력과 반환 계약을 선언한다.
-        public void EnablePlayerAutoSkillMode()
-        {
-            // 'SetSelectedPlayerAutoSkillMode' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            SetSelectedPlayerAutoSkillMode(true);
-        }
-
-        // 선택 플레이어 몬스터의 자동 스킬 모드를 현재 값의 반대로 전환한다.
-        // 'ToggleSelectedPlayerAutoSkillMode' 메소드의 입력과 반환 계약을 선언한다.
-        public void ToggleSelectedPlayerAutoSkillMode()
-        {
-            // 'SetSelectedPlayerAutoSkillMode' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            SetSelectedPlayerAutoSkillMode(!playerAutoSkillEnabled);
-        }
-
-        // 관리자 설정과 선택 플레이어 모델의 자동 스킬 허용 값을 함께 변경한다.
-        // 'SetSelectedPlayerAutoSkillMode' 메소드의 입력과 반환 계약을 선언한다.
-        public void SetSelectedPlayerAutoSkillMode(bool enabled)
-        {
-            // 'playerAutoSkillEnabled'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            playerAutoSkillEnabled = enabled;
-            // 지역 변수 'player'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var player = GetSelectedPlayerEntry();
-            // [방어 로직] 'player != null && player.Model != null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (player != null && player.Model != null)
-            {
-                // 'player.Model.AutoSkillEnabled'에 오른쪽 계산 또는 조회 결과를 저장한다.
-                player.Model.AutoSkillEnabled = enabled;
-            }
-        }
-
-        // 직렬화된 투사체 제거 경계 Transform의 X 좌표를 반환한다.
-        // 'ResolveProjectileDestroyBoundaryX' 메소드의 입력과 반환 계약을 선언한다.
-        public float ResolveProjectileDestroyBoundaryX()
-        {
-            // 직렬화된 제거 경계의 X 좌표를 호출자에게 반환한다.
-            return projectileDestroyBoundary.position.x;
         }
 
         // Collider Transform을 포함하는 전투 로스터 항목을 찾는다.
@@ -1316,274 +1203,12 @@ namespace Pakuri.InGame
             return null;
         }
 
-        // 모델에 대응하는 로스터 항목을 찾아 Actor 표시를 갱신한다.
-        // 'RefreshUnitActor' 메소드의 입력과 반환 계약을 선언한다.
-        public bool RefreshUnitActor(BaseUnitRuntimeModel model)
-        {
-            // 지역 변수 'entry'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var entry = roster.Find(model);
-            // 계산 또는 조회 결과 'RefreshUnitActor(entry)'을 호출자에게 반환한다.
-            return RefreshUnitActor(entry);
-        }
-
-        // 자동 모드가 꺼진 1P의 마우스 입력을 스킬별 수동 조준·연속 발사 실행으로 전달한다.
-        // 'HandleSelectedPlayerManualSkillInput' 메소드의 입력과 반환 계약을 선언한다.
-        private void HandleSelectedPlayerManualSkillInput()
-        {
-            // 'playerAutoSkillEnabled' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (playerAutoSkillEnabled)
-            {
-                // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
-                return;
-            }
-
-            // 지역 변수 'player'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var player = GetSelectedPlayerEntry();
-            // [방어 로직] 'player == null || player.Model == null || player.Model.SkillRuntime == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (player == null || player.Model == null || player.Model.SkillRuntime == null)
-            {
-                // 'ClearLatchedManualProjectileInput' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                ClearLatchedManualProjectileInput();
-                // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
-                return;
-            }
-
-            // 지역 변수 'mousePressedThisFrame'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var mousePressedThisFrame = IsPrimaryMousePressedThisFrame();
-            // 지역 변수 'mouseHeld'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var mouseHeld = IsPrimaryMouseHeld();
-            // 지역 변수 'pointerOverUi'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var pointerOverUi = IsPointerOverUi();
-            // 지역 변수 'hasCurrentManualInput'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-            var hasCurrentManualInput = TryResolveCurrentManualInput(
-                // 'player' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                player,
-                // 'mousePressedThisFrame || mouseHeld' 식의 값을 현재 생성자 또는 메소드 호출에 전달한다.
-                mousePressedThisFrame || mouseHeld,
-                // 'pointerOverUi' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                pointerOverUi,
-                // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
-                out var currentAimDirection,
-                // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
-                out var currentTargetPoint);
-            //  줄로 이어지는 조건식을 시작하고 최종 결과로 실행 분기를 결정한다.
-            if (!hasCurrentManualInput
-                // 앞 조건과 AND로 '!HasProjectileBursting(player.Model.SkillRuntime.ActiveSkills))' 조건을 추가한다.
-                && !HasProjectileBursting(player.Model.SkillRuntime.ActiveSkills))
-            {
-                // 'ClearLatchedManualProjectileInput' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                ClearLatchedManualProjectileInput();
-                // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
-                return;
-            }
-
-            // 지역 변수 'activeSkills'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var activeSkills = player.Model.SkillRuntime.ActiveSkills;
-            // 'var i = 0; i < activeSkills.Count; i++' 규칙으로 인덱스를 갱신하며 코드를 반복한다.
-            for (var i = 0; i < activeSkills.Count; i++)
-            {
-                // 지역 변수 'runtime'에 오른쪽 계산 또는 조회 결과를 저장한다.
-                var runtime = activeSkills[i];
-                // [방어 로직] 'runtime == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-                if (runtime == null)
-                {
-                    // 'continue' 값을 현재 메소드 호출의 인수로 전달한다.
-                    continue;
-                }
-
-                // [낯선 문법] is 패턴으로 런타임 타입을 검사하고 필요하면 해당 타입 변수로 받는다.
-                var isProjectile = runtime.Data is ProjectileSkillData;
-                //  줄로 이어지는 조건식을 시작하고 최종 결과로 실행 분기를 결정한다.
-                if (!TryResolveManualSkillInputForRuntime(
-                        // 'runtime' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                        runtime,
-                        // 'isProjectile' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                        isProjectile,
-                        // 'mousePressedThisFrame' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                        mousePressedThisFrame,
-                        // 'mouseHeld' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                        mouseHeld,
-                        // 'hasCurrentManualInput' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                        hasCurrentManualInput,
-                        // 'currentAimDirection' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                        currentAimDirection,
-                        // 'currentTargetPoint' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                        currentTargetPoint,
-                        // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
-                        out var aimDirection,
-                        // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
-                        out var targetPoint))
-                {
-                    // 'continue' 값을 현재 메소드 호출의 인수로 전달한다.
-                    continue;
-                }
-
-                // 'skillExecution.TryExecuteManual' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                skillExecution.TryExecuteManual(
-                    // 'player' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                    player,
-                    // 'runtime' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                    runtime,
-                    // 'roster' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                    roster,
-                    // 'this' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                    this,
-                    // 'Time.deltaTime' 값을 현재 메소드 호출의 인수로 전달한다.
-                    Time.deltaTime,
-                    // 'aimDirection' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                    aimDirection,
-                    // 'targetPoint' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                    targetPoint,
-                    // 'logSkillExecutionContracts' 값을 현재 메소드 호출의 인수로 전달한다.
-                    logSkillExecutionContracts);
-            }
-
-            // '!mouseHeld && !HasProjectileBursting(activeSkills)' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (!mouseHeld && !HasProjectileBursting(activeSkills))
-            {
-                // 'ClearLatchedManualProjectileInput' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                ClearLatchedManualProjectileInput();
-            }
-        }
-
-        // 활성 상태의 프리팹 또는 런타임 시각 정의를 생성하고 대상 Transform에 부착해 수명을 갱신한다.
-        // 'SpawnOrRefreshStatusEffectVisual' 메소드의 입력과 반환 계약을 선언한다.
-        private void SpawnOrRefreshStatusEffectVisual(
-            // 'target' 매개변수 또는 지역값의 타입을 'BaseUnitRuntimeModel'로 지정한다.
-            BaseUnitRuntimeModel target,
-            // 'statusData' 매개변수 또는 지역값의 타입을 'StatusEffectData'로 지정한다.
-            StatusEffectData statusData,
-            // 'status' 매개변수 또는 지역값의 타입을 'UnitStatusRuntime'로 지정한다.
-            UnitStatusRuntime status)
-        {
-            //  줄로 이어지는 조건식을 시작하고 최종 결과로 실행 분기를 결정한다.
-            if (target == null
-                // [방어 로직] 앞 조건과 OR로 'statusData == null' 조건을 추가한다.
-                || statusData == null
-                // [방어 로직] 앞 조건과 OR로 '(!RuntimeSkillVisualFactory.HasVisual(statusData.RuntimeVisual) && statusData.StatusEffectPrefab == null)' 조건을 추가한다.
-                || (!RuntimeSkillVisualFactory.HasVisual(statusData.RuntimeVisual) && statusData.StatusEffectPrefab == null)
-                // [방어 로직] 앞 조건과 OR로 'status == null' 조건을 추가한다.
-                || status == null
-                // [방어 로직] 앞 조건과 OR로 'Effects == null)' 조건을 추가한다.
-                || Effects == null)
-            {
-                // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
-                return;
-            }
-
-            // 지역 변수 'entry'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var entry = roster.Find(target);
-            // [방어 로직] 'entry == null || entry.Transform == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (entry == null || entry.Transform == null)
-            {
-                // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
-                return;
-            }
-
-            // [Fallback][낯선 문법] 삼항 연산자(?:)로 조건에 따라 정상값 또는 대체값을 선택한다.
-            var unitId = target.Identity != null ? target.Identity.UnitId : string.Empty;
-            // 지역 변수 'sourceId'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-            var sourceId = !string.IsNullOrWhiteSpace(status.SourceSkillId)
-                // [낯선 문법] 삼항 연산자의 조건 참 결과로 'status.SourceSkillId' 값을 선택한다.
-                ? status.SourceSkillId
-                // [Fallback][낯선 문법] 삼항 연산자의 조건 거짓 대체값으로 'statusData.SourceSkillId;' 값을 선택한다.
-                : statusData.SourceSkillId;
-            // 지역 변수 'hasRuntimeVisual'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(statusData.RuntimeVisual);
-            // 지역 변수 'visualId'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-            var visualId = hasRuntimeVisual
-                // [낯선 문법] 삼항 연산자의 조건 참 결과로 'statusData.RuntimeVisual.GetHashCode()' 값을 선택한다.
-                ? statusData.RuntimeVisual.GetHashCode()
-                // [Fallback][낯선 문법] 삼항 연산자의 조건 거짓 대체값으로 'statusData.StatusEffectPrefab.GetInstanceID();' 값을 선택한다.
-                : statusData.StatusEffectPrefab.GetInstanceID();
-            // 지역 변수 'key'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var key = $"{unitId}:{status.Kind}:{sourceId}:{visualId}";
-            // [방어 로직] 'statusEffectVisuals.TryGetValue(key, out var existing) && existing == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (statusEffectVisuals.TryGetValue(key, out var existing) && existing == null)
-            {
-                // 지정 항목을 컬렉션에서 제거하고 이후 처리 대상에서 제외한다.
-                statusEffectVisuals.Remove(key);
-                // 'existing'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-                existing = null;
-            }
-
-            // 지역 변수 'lifetime'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-            var lifetime = status.Permanent
-                // [낯선 문법] 삼항 연산자의 조건 참 결과로 '3600f' 값을 선택한다.
-                ? 3600f
-                // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-                : Mathf.Max(0.1f, status.DurationRemaining);
-            // [방어 로직] 'existing == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (existing == null)
-            {
-                // 'existing'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-                existing = hasRuntimeVisual
-                    // [낯선 문법] 삼항 연산자의 조건 참 결과로 'RuntimeSkillVisualFactory.Create(' 값을 선택한다.
-                    ? RuntimeSkillVisualFactory.Create(
-                        // 'Effects' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                        Effects,
-                        // 'statusData.RuntimeVisual' 값을 현재 메소드 호출의 인수로 전달한다.
-                        statusData.RuntimeVisual,
-                        // [Fallback][낯선 문법] 삼항 연산자(?:)로 조건에 따라 정상값 또는 대체값을 선택한다.
-                        string.IsNullOrWhiteSpace(sourceId) ? "RuntimeStatusVisual" : $"RuntimeStatusVisual_{sourceId}",
-                        // 'entry.Transform.position' 값을 현재 메소드 호출의 인수로 전달한다.
-                        entry.Transform.position,
-                        // 'Quaternion.identity' 값을 현재 메소드 호출의 인수로 전달한다.
-                        Quaternion.identity,
-                        // [낯선 문법] named argument 'includeHitbox'에 'false)' 값을 전달한다.
-                        includeHitbox: false)
-                    // [Fallback][낯선 문법] 삼항 연산자의 조건 거짓 대체값으로 'Effects.InstantiateSkillPrefab(statusData.StatusEffectPrefab, entry.Transform.position, Quaternion.identity);' 값을 선택한다.
-                    : Effects.InstantiateSkillPrefab(statusData.StatusEffectPrefab, entry.Transform.position, Quaternion.identity);
-                // [방어 로직] 'existing == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-                if (existing == null)
-                {
-                    // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
-                    return;
-                }
-
-                // 'statusEffectVisuals[key]'에 오른쪽 계산 또는 조회 결과를 저장한다.
-                statusEffectVisuals[key] = existing;
-            }
-
-            // 지역 변수 'actor'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var actor = existing.GetComponent<InGameAttachedSkillEffectActor>();
-            // [방어 로직] 'actor == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (actor == null)
-            {
-                // 'actor'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-                actor = existing.AddComponent<InGameAttachedSkillEffectActor>();
-            }
-
-            // 'actor.Initialize' 메소드를 호출해 해당 객체의 처리를 실행한다.
-            actor.Initialize(entry.Transform, lifetime, Vector3.zero);
-        }
-
         // 화면에 살아 있는 적이 있고 유닛 자동 설정이 허용될 때 플레이어 스킬 자동 실행을 허용한다.
         // 'ShouldAutoRouteSkill' 메소드의 입력과 반환 계약을 선언한다.
         private bool ShouldAutoRouteSkill(UnitRosterEntry entry, SkillRuntimeInstance runtime)
         {
-            // [방어 로직] 'entry != null && entry.Model is EnemyUnitRuntimeModel' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (entry != null && entry.Model is EnemyUnitRuntimeModel)
-            {
-                // [방어 로직] 필수 대상 또는 유효 조건이 없으므로 실패 결과 false를 반환한다.
-                return false;
-            }
-
-            // '!HasVisibleLivingEnemyInMainCamera(' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (!HasVisibleLivingEnemyInMainCamera()
-                // [방어 로직] 앞 조건과 OR로 'entry == null' 조건을 추가한다.
-                || entry == null
-                // [방어 로직] 앞 조건과 OR로 'entry.Model == null' 조건을 추가한다.
-                || entry.Model == null
-                // [방어 로직] 앞 조건과 OR로 '!entry.Model.AutoSkillEnabled)' 조건을 추가한다.
-                || !entry.Model.AutoSkillEnabled)
-            {
-                // 조건 판단의 부정 결과를 false로 반환한다.
-                return false;
-            }
-
-            // 계산 또는 조회 결과 '!IsSelectedPlayerEntry(entry) || playerAutoSkillEnabled'을 호출자에게 반환한다.
-            return !IsSelectedPlayerEntry(entry) || playerAutoSkillEnabled;
+            return playerCombatControl != null
+                && playerCombatControl.CanUseAutoSkill(entry, roster);
         }
 
         // 모든 로스터 유닛의 상태 지속시간을 갱신하고 만료 상태·보호막 Trigger를 실행한다.
@@ -1616,10 +1241,10 @@ namespace Pakuri.InGame
                 // 'model.Statuses.Tick(deltaTime, removedStatuses)' 조건이 참인지 검사해 실행 분기를 결정한다.
                 if (model.Statuses.Tick(deltaTime, removedStatuses))
                 {
-                    // 'resourceMutations.SynchronizeShieldView' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                    resourceMutations.SynchronizeShieldView(model);
-                    // 'RefreshUnitActor' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                    RefreshUnitActor(model);
+                    // 직접 보호막과 상태 보호막 표시값을 맞춘다.
+                    SyncShield(model);
+                    // 로스터에 등록된 Actor 표시를 갱신한다.
+                    roster.RefreshActor(model);
                     // 'DispatchStatusExpireTriggers' 메소드를 호출해 현재 단계의 처리를 실행한다.
                     DispatchStatusExpireTriggers(model, removedStatuses);
                     // 'DispatchShieldExpireTriggers' 메소드를 호출해 현재 단계의 처리를 실행한다.
@@ -1718,280 +1343,6 @@ namespace Pakuri.InGame
             }
         }
 
-        // 플레이어 로스터에서 슬롯 0의 선택 몬스터 항목을 찾는다.
-        // 'GetSelectedPlayerEntry' 메소드의 입력과 반환 계약을 선언한다.
-        private UnitRosterEntry GetSelectedPlayerEntry()
-        {
-            // 지역 변수 'players'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var players = roster.Players;
-            // 'var i = 0; i < players.Count; i++' 규칙으로 인덱스를 갱신하며 코드를 반복한다.
-            for (var i = 0; i < players.Count; i++)
-            {
-                // 지역 변수 'entry'에 오른쪽 계산 또는 조회 결과를 저장한다.
-                var entry = players[i];
-                // [방어 로직] 'entry != null && IsSelectedPlayerModel(entry.Model)' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-                if (entry != null && IsSelectedPlayerModel(entry.Model))
-                {
-                    // 계산 또는 조회 결과 'entry'을 호출자에게 반환한다.
-                    return entry;
-                }
-            }
-
-            // [Fallback] 정상 결과를 만들 수 없을 때 기본 결과 'null'을 호출자에게 반환한다.
-            return null;
-        }
-
-        // 지정 항목이 현재 선택된 1P 몬스터 항목인지 확인한다.
-        // 'IsSelectedPlayerEntry' 메소드의 입력과 반환 계약을 선언한다.
-        private bool IsSelectedPlayerEntry(UnitRosterEntry entry)
-        {
-            // 계산 또는 조회 결과 'entry != null && entry == GetSelectedPlayerEntry()'을 호출자에게 반환한다.
-            return entry != null && entry == GetSelectedPlayerEntry();
-        }
-
-        // 모델 식별자가 플레이어 진영 몬스터 슬롯 0인지 판별한다.
-        // 'IsSelectedPlayerModel' 메소드의 입력과 반환 계약을 선언한다.
-        private static bool IsSelectedPlayerModel(BaseUnitRuntimeModel model)
-        {
-            // 여러 줄로 이어지는 계산 또는 조건 결과를 반환하기 시작한다.
-            return model != null
-                // 앞 조건과 AND로 'model.Identity != null' 조건을 추가한다.
-                && model.Identity != null
-                // 앞 조건과 AND로 'model.Identity.Side == UnitSide.Player' 조건을 추가한다.
-                && model.Identity.Side == UnitSide.Player
-                // 앞 조건과 AND로 'model.Identity.Role == UnitRole.Monster' 조건을 추가한다.
-                && model.Identity.Role == UnitRole.Monster
-                // 앞 조건과 AND로 'model.Identity.SlotIndex == 0;' 조건을 추가한다.
-                && model.Identity.SlotIndex == 0;
-        }
-
-        // 모델 식별자의 역할이 넥서스인지 판별한다.
-        // 'IsNexusModel' 메소드의 입력과 반환 계약을 선언한다.
-        private static bool IsNexusModel(BaseUnitRuntimeModel model)
-        {
-            // 여러 줄로 이어지는 계산 또는 조건 결과를 반환하기 시작한다.
-            return model != null
-                // 앞 조건과 AND로 'model.Identity != null' 조건을 추가한다.
-                && model.Identity != null
-                // 앞 조건과 AND로 'model.Identity.Role == UnitRole.Nexus;' 조건을 추가한다.
-                && model.Identity.Role == UnitRole.Nexus;
-        }
-
-        // 플레이어 위치에서 목표 월드 좌표로 향하는 조준 벡터를 계산한다.
-        // 'ResolveAimDirection' 메소드의 입력과 반환 계약을 선언한다.
-        private Vector2 ResolveAimDirection(UnitRosterEntry player, Vector2 targetPoint)
-        {
-            // [방어 로직] 'player == null || player.Transform == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (player == null || player.Transform == null)
-            {
-                // 계산 또는 조회 결과 'Vector2.zero'을 호출자에게 반환한다.
-                return Vector2.zero;
-            }
-
-            // 계산 또는 조회 결과 'targetPoint - (Vector2)player.Transform.position'을 호출자에게 반환한다.
-            return targetPoint - (Vector2)player.Transform.position;
-        }
-
-        // 입력 카메라를 사용해 현재 마우스 화면 좌표를 월드 좌표로 변환한다.
-        // 'ResolveMouseWorldPoint' 메소드의 입력과 반환 계약을 선언한다.
-        private Vector2 ResolveMouseWorldPoint()
-        {
-            // 지역 변수 'mouse'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var mouse = Mouse.current.position.ReadValue();
-            // 직렬화된 입력 카메라로 화면 좌표를 월드 좌표로 변환한다.
-            var world = inputCamera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, -inputCamera.transform.position.z));
-            // 계산 또는 조회 결과 'world'을 호출자에게 반환한다.
-            return world;
-        }
-
-        // 현재 프레임에 마우스 왼쪽 버튼이 눌리기 시작했는지 확인한다.
-        // 'IsPrimaryMousePressedThisFrame' 메소드의 입력과 반환 계약을 선언한다.
-        private static bool IsPrimaryMousePressedThisFrame()
-        {
-            // 지역 변수 'mouse'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var mouse = Mouse.current;
-            // 계산 또는 조회 결과 'mouse != null && mouse.leftButton.wasPressedThisFrame'을 호출자에게 반환한다.
-            return mouse != null && mouse.leftButton.wasPressedThisFrame;
-        }
-
-        // 마우스 왼쪽 버튼이 현재 눌린 상태인지 확인한다.
-        // 'IsPrimaryMouseHeld' 메소드의 입력과 반환 계약을 선언한다.
-        private static bool IsPrimaryMouseHeld()
-        {
-            // 지역 변수 'mouse'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var mouse = Mouse.current;
-            // 계산 또는 조회 결과 'mouse != null && mouse.leftButton.isPressed'을 호출자에게 반환한다.
-            return mouse != null && mouse.leftButton.isPressed;
-        }
-
-        // UI 위가 아닌 유효 마우스 입력을 월드 목표점과 조준 방향으로 변환하고 투사체 입력을 저장한다.
-        // [방어 로직] 성공 여부를 bool로 돌려주는 Try 패턴. 'TryResolveCurrentManualInput' 메소드의 입력과 반환 계약을 선언한다.
-        private bool TryResolveCurrentManualInput(
-            // 'player' 매개변수 또는 지역값의 타입을 'UnitRosterEntry'로 지정한다.
-            UnitRosterEntry player,
-            // 'wantsManualInput' 매개변수 또는 지역값의 타입을 'bool'로 지정한다.
-            bool wantsManualInput,
-            // 'pointerOverUi' 매개변수 또는 지역값의 타입을 'bool'로 지정한다.
-            bool pointerOverUi,
-            // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
-            out Vector2 aimDirection,
-            // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
-            out Vector2 targetPoint)
-        {
-            // 'aimDirection'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            aimDirection = Vector2.zero;
-            // 'targetPoint'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            targetPoint = Vector2.zero;
-            // '!wantsManualInput || pointerOverUi' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (!wantsManualInput || pointerOverUi)
-            {
-                // [방어 로직] Try 패턴 메소드 'TryResolveCurrentManualInput'가 결과를 만들지 못했음을 false로 알린다.
-                return false;
-            }
-
-            // 'targetPoint'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            targetPoint = ResolveMouseWorldPoint();
-            // 'aimDirection'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            aimDirection = ResolveAimDirection(player, targetPoint);
-            // [방어 로직] 'aimDirection.sqrMagnitude <= 0.0001f' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (aimDirection.sqrMagnitude <= 0.0001f)
-            {
-                // [방어 로직] Try 패턴 메소드 'TryResolveCurrentManualInput'가 결과를 만들지 못했음을 false로 알린다.
-                return false;
-            }
-
-            // 'latchedManualProjectileAimDirection'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            latchedManualProjectileAimDirection = aimDirection;
-            // 'latchedManualProjectileTargetPoint'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            latchedManualProjectileTargetPoint = targetPoint;
-            // 'hasLatchedManualProjectileInput'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            hasLatchedManualProjectileInput = true;
-            // 요청한 검사 또는 처리가 성공했음을 true로 반환한다.
-            return true;
-        }
-
-        // 일반 스킬의 클릭 입력과 투사체 연속 발사의 현재·저장 입력을 구분해 실행 조준값을 만든다.
-        // [방어 로직] 성공 여부를 bool로 돌려주는 Try 패턴. 'TryResolveManualSkillInputForRuntime' 메소드의 입력과 반환 계약을 선언한다.
-        private bool TryResolveManualSkillInputForRuntime(
-            // 'runtime' 매개변수 또는 지역값의 타입을 'SkillRuntimeInstance'로 지정한다.
-            SkillRuntimeInstance runtime,
-            // 'isProjectile' 매개변수 또는 지역값의 타입을 'bool'로 지정한다.
-            bool isProjectile,
-            // 'mousePressedThisFrame' 매개변수 또는 지역값의 타입을 'bool'로 지정한다.
-            bool mousePressedThisFrame,
-            // 'mouseHeld' 매개변수 또는 지역값의 타입을 'bool'로 지정한다.
-            bool mouseHeld,
-            // 'hasCurrentManualInput' 매개변수 또는 지역값의 타입을 'bool'로 지정한다.
-            bool hasCurrentManualInput,
-            // 'currentAimDirection' 매개변수 또는 지역값의 타입을 'Vector2'로 지정한다.
-            Vector2 currentAimDirection,
-            // 'currentTargetPoint' 매개변수 또는 지역값의 타입을 'Vector2'로 지정한다.
-            Vector2 currentTargetPoint,
-            // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
-            out Vector2 aimDirection,
-            // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
-            out Vector2 targetPoint)
-        {
-            // 'aimDirection'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            aimDirection = Vector2.zero;
-            // 'targetPoint'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            targetPoint = Vector2.zero;
-            // '!isProjectile' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (!isProjectile)
-            {
-                // '!mousePressedThisFrame || !hasCurrentManualInput' 조건이 참인지 검사해 실행 분기를 결정한다.
-                if (!mousePressedThisFrame || !hasCurrentManualInput)
-                {
-                    // [방어 로직] Try 패턴 메소드 'TryResolveManualSkillInputForRuntime'가 결과를 만들지 못했음을 false로 알린다.
-                    return false;
-                }
-
-                // 'aimDirection'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-                aimDirection = currentAimDirection;
-                // 'targetPoint'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-                targetPoint = currentTargetPoint;
-                // 요청한 검사 또는 처리가 성공했음을 true로 반환한다.
-                return true;
-            }
-
-            // 'hasCurrentManualInput && mouseHeld' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (hasCurrentManualInput && mouseHeld)
-            {
-                // 'aimDirection'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-                aimDirection = currentAimDirection;
-                // 'targetPoint'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-                targetPoint = currentTargetPoint;
-                // 요청한 검사 또는 처리가 성공했음을 true로 반환한다.
-                return true;
-            }
-
-            // 'runtime.IsBursting && hasLatchedManualProjectileInput' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (runtime.IsBursting && hasLatchedManualProjectileInput)
-            {
-                // 'aimDirection'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-                aimDirection = latchedManualProjectileAimDirection;
-                // 'targetPoint'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-                targetPoint = latchedManualProjectileTargetPoint;
-                // 요청한 검사 또는 처리가 성공했음을 true로 반환한다.
-                return true;
-            }
-
-            // [방어 로직] Try 패턴 메소드 'TryResolveManualSkillInputForRuntime'가 결과를 만들지 못했음을 false로 알린다.
-            return false;
-        }
-
-        // 활성 스킬 중 연속 발사 중인 투사체 스킬이 있는지 확인한다.
-        // 'HasProjectileBursting' 메소드의 입력과 반환 계약을 선언한다.
-        private static bool HasProjectileBursting(IReadOnlyList<SkillRuntimeInstance> activeSkills)
-        {
-            // [방어 로직] 'activeSkills == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (activeSkills == null)
-            {
-                // [방어 로직] 필수 대상 또는 유효 조건이 없으므로 실패 결과 false를 반환한다.
-                return false;
-            }
-
-            // 'var i = 0; i < activeSkills.Count; i++' 규칙으로 인덱스를 갱신하며 코드를 반복한다.
-            for (var i = 0; i < activeSkills.Count; i++)
-            {
-                // 지역 변수 'runtime'에 오른쪽 계산 또는 조회 결과를 저장한다.
-                var runtime = activeSkills[i];
-                //  줄로 이어지는 조건식을 시작하고 최종 결과로 실행 분기를 결정한다.
-                if (runtime != null
-                    // [낯선 문법] is 패턴으로 런타임 타입을 검사하고 필요하면 해당 타입 변수로 받는다.
-                    && runtime.Data is ProjectileSkillData
-                    // 앞 조건과 AND로 'runtime.IsBursting)' 조건을 추가한다.
-                    && runtime.IsBursting)
-                {
-                    // 요청한 검사 또는 처리가 성공했음을 true로 반환한다.
-                    return true;
-                }
-            }
-
-            // [방어 로직] 필수 대상 또는 유효 조건이 없으므로 실패 결과 false를 반환한다.
-            return false;
-        }
-
-        // 연속 투사체 발사에 보존한 수동 조준 방향과 목표점을 초기화한다.
-        // 'ClearLatchedManualProjectileInput' 메소드의 입력과 반환 계약을 선언한다.
-        private void ClearLatchedManualProjectileInput()
-        {
-            // 'hasLatchedManualProjectileInput'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            hasLatchedManualProjectileInput = false;
-            // 'latchedManualProjectileAimDirection'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            latchedManualProjectileAimDirection = Vector2.zero;
-            // 'latchedManualProjectileTargetPoint'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            latchedManualProjectileTargetPoint = Vector2.zero;
-        }
-
-        // 현재 포인터가 EventSystem UI 위에 있는지 확인한다.
-        // 'IsPointerOverUi' 메소드의 입력과 반환 계약을 선언한다.
-        private static bool IsPointerOverUi()
-        {
-            // 계산 또는 조회 결과 'EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()'을 호출자에게 반환한다.
-            return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
-        }
-
         // 자원 변경 결과가 실제로 달라졌을 때 대상 Actor 표시를 갱신한다.
         // 'RefreshActorIfChanged' 메소드의 입력과 반환 계약을 선언한다.
         private void RefreshActorIfChanged(InGameResourceChangeResult result)
@@ -1999,56 +1350,8 @@ namespace Pakuri.InGame
             // 'result.Changed' 조건이 참인지 검사해 실행 분기를 결정한다.
             if (result.Changed)
             {
-                // 'RefreshUnitActor' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                RefreshUnitActor(result.Target);
-            }
-        }
-
-        // 적용 피해가 있으면 대상 Actor의 피해 숫자와 몬스터 피격 애니메이션을 실행한다.
-        // 'ShowDamageIfChanged' 메소드의 입력과 반환 계약을 선언한다.
-        private void ShowDamageIfChanged(InGameResourceChangeResult result)
-        {
-            // [방어 로직] '!result.Changed || result.AppliedDamage <= 0f' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (!result.Changed || result.AppliedDamage <= 0f)
-            {
-                // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
-                return;
-            }
-
-            // 지역 변수 'entry'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var entry = roster.Find(result.Target);
-            // [방어 로직] 'entry == null || entry.Actor == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (entry == null || entry.Actor == null)
-            {
-                // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
-                return;
-            }
-
-            // 지역 변수 'monsterActor'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var monsterActor = entry.Actor as MonsterUnitActor;
-            // [방어 로직] 'monsterActor != null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (monsterActor != null)
-            {
-                // 'monsterActor.ShowDamage' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                monsterActor.ShowDamage(result.AppliedDamage);
-                // '!result.IsDead' 조건이 참인지 검사해 실행 분기를 결정한다.
-                if (!result.IsDead)
-                {
-                    // 'monsterActor.TryPlayHitAnimation' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                    monsterActor.TryPlayHitAnimation();
-                }
-
-                // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
-                return;
-            }
-
-            // 지역 변수 'enemyActor'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var enemyActor = entry.Actor as EnemyUnitActor;
-            // [방어 로직] 'enemyActor != null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (enemyActor != null)
-            {
-                // 'enemyActor.ShowDamage' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                enemyActor.ShowDamage(result.AppliedDamage);
+                // 로스터에 등록된 Actor 표시를 갱신한다.
+                roster.RefreshActor(result.Target);
             }
         }
 
@@ -2072,537 +1375,12 @@ namespace Pakuri.InGame
                 return;
             }
 
-            // 지역 변수 'actor'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var actor = entry.Actor;
             // 'roster.Unregister' 메소드를 호출해 해당 객체의 처리를 실행한다.
             roster.Unregister(result.Target);
-            // [방어 로직] 'actor != null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (actor != null)
-            {
-                // 지역 변수 'nexusActor'에 오른쪽 계산 또는 조회 결과를 저장한다.
-                var nexusActor = actor as NexusUnitActor;
-                // [방어 로직] 'nexusActor != null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-                if (nexusActor != null)
-                {
-                    // 'nexusActor.NotifyDefeated' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                    nexusActor.NotifyDefeated();
-                    // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
-                    return;
-                }
-
-                // 지역 변수 'monsterActor'에 오른쪽 계산 또는 조회 결과를 저장한다.
-                var monsterActor = actor as MonsterUnitActor;
-                // [방어 로직] 'monsterActor != null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-                if (monsterActor != null)
-                {
-                    // 'monsterActor.MarkDefeated' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                    monsterActor.MarkDefeated();
-                    // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
-                    return;
-                }
-
-                // 지정 Unity Object를 수명 종료 시점에 제거한다.
-                Destroy(actor.gameObject, 0.95f);
-            }
+            // 등록된 Actor가 자신의 패배 연출 또는 Nexus 패배 통지를 처리한다.
+            entry.ShowDefeated();
         }
 
-        // 로스터 Actor 유형에 맞는 디버그·체력 표시 갱신 함수를 호출한다.
-        // 'RefreshUnitActor' 메소드의 입력과 반환 계약을 선언한다.
-        private static bool RefreshUnitActor(UnitRosterEntry entry)
-        {
-            // [방어 로직] 'entry == null || entry.Actor == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (entry == null || entry.Actor == null)
-            {
-                // [방어 로직] 필수 대상 또는 유효 조건이 없으므로 실패 결과 false를 반환한다.
-                return false;
-            }
-
-            // 지역 변수 'monsterActor'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var monsterActor = entry.Actor as MonsterUnitActor;
-            // [방어 로직] 'monsterActor != null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (monsterActor != null)
-            {
-                // 'monsterActor.RefreshDebugView' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                monsterActor.RefreshDebugView();
-                // 요청한 검사 또는 처리가 성공했음을 true로 반환한다.
-                return true;
-            }
-
-            // 지역 변수 'enemyActor'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var enemyActor = entry.Actor as EnemyUnitActor;
-            // [방어 로직] 'enemyActor != null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (enemyActor != null)
-            {
-                // 'enemyActor.RefreshDebugView' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                enemyActor.RefreshDebugView();
-                // 요청한 검사 또는 처리가 성공했음을 true로 반환한다.
-                return true;
-            }
-
-            // 지역 변수 'nexusActor'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var nexusActor = entry.Actor as NexusUnitActor;
-            // [방어 로직] 'nexusActor != null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (nexusActor != null)
-            {
-                // 'nexusActor.RefreshDebugView' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                nexusActor.RefreshDebugView();
-                // 요청한 검사 또는 처리가 성공했음을 true로 반환한다.
-                return true;
-            }
-
-            // [방어 로직] 필수 대상 또는 유효 조건이 없으므로 실패 결과 false를 반환한다.
-            return false;
-        }
-
-        // 살아 있는 적 중 하나라도 직렬화된 입력 카메라 화면 안에 있는지 확인한다.
-        // 'HasVisibleLivingEnemyInMainCamera' 메소드의 입력과 반환 계약을 선언한다.
-        private bool HasVisibleLivingEnemyInMainCamera()
-        {
-            // 지역 변수 'enemies'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var enemies = roster.Enemies;
-            // 'var i = 0; i < enemies.Count; i++' 규칙으로 인덱스를 갱신하며 코드를 반복한다.
-            for (var i = 0; i < enemies.Count; i++)
-            {
-                // 지역 변수 'enemy'에 오른쪽 계산 또는 조회 결과를 저장한다.
-                var enemy = enemies[i];
-                // [방어 로직] 'enemy == null || !enemy.IsAlive || enemy.Transform == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-                if (enemy == null || !enemy.IsAlive || enemy.Transform == null)
-                {
-                    // 'continue' 값을 현재 메소드 호출의 인수로 전달한다.
-                    continue;
-                }
-
-                // 직렬화된 입력 카메라에서 적의 viewport 좌표를 계산한다.
-                var viewport = inputCamera.WorldToViewportPoint(enemy.Transform.position);
-                //  줄로 이어지는 조건식을 시작하고 최종 결과로 실행 분기를 결정한다.
-                if (viewport.z >= 0f
-                    // 앞 조건과 AND로 'viewport.x >= 0f' 조건을 추가한다.
-                    && viewport.x >= 0f
-                    // 앞 조건과 AND로 'viewport.x <= 1f' 조건을 추가한다.
-                    && viewport.x <= 1f
-                    // 앞 조건과 AND로 'viewport.y >= 0f' 조건을 추가한다.
-                    && viewport.y >= 0f
-                    // 앞 조건과 AND로 'viewport.y <= 1f)' 조건을 추가한다.
-                    && viewport.y <= 1f)
-                {
-                    // 요청한 검사 또는 처리가 성공했음을 true로 반환한다.
-                    return true;
-                }
-            }
-
-            // 조건 판단의 부정 결과를 false로 반환한다.
-            return false;
-        }
-    }
-
-        // 체력과 직접·상태 보호막을 실제로 변경하고 최종 피해 계산과 자원 반올림을 담당한다.
-        // 'UnitResourceMutationService' 클래스 정의를 시작한다.
-        internal sealed class UnitResourceMutationService
-        {
-            // 기본 옵션으로 대상에게 속성 피해를 적용한다.
-            // 'ApplyDamage' 메소드의 입력과 반환 계약을 선언한다.
-            public InGameResourceChangeResult ApplyDamage(
-                // 'target' 매개변수 또는 지역값의 타입을 'BaseUnitRuntimeModel'로 지정한다.
-                BaseUnitRuntimeModel target,
-                // 'baseDamage' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-                float baseDamage,
-                // [Fallback][낯선 문법] 선택 인수 'attribute'가 생략되면 기본값 'DamageAttribute.Physical'을 사용한다.
-                DamageAttribute attribute = DamageAttribute.Physical)
-            {
-                // 계산 또는 조회 결과 'ApplyDamage(target, baseDamage, attribute, default, null, null)'을 호출자에게 반환한다.
-                return ApplyDamage(target, baseDamage, attribute, default, null, null);
-            }
-
-            // 소진된 상태 보호막 목록을 수집하며 대상에게 피해를 적용한다.
-            // 'ApplyDamage' 메소드의 입력과 반환 계약을 선언한다.
-            public InGameResourceChangeResult ApplyDamage(
-                // 'target' 매개변수 또는 지역값의 타입을 'BaseUnitRuntimeModel'로 지정한다.
-                BaseUnitRuntimeModel target,
-                // 'baseDamage' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-                float baseDamage,
-                // 'attribute' 매개변수 또는 지역값의 타입을 'DamageAttribute'로 지정한다.
-                DamageAttribute attribute,
-                // 'depletedShieldStatuses' 매개변수 또는 지역값의 타입을 'ICollection<UnitStatusRuntime>'로 지정한다.
-                ICollection<UnitStatusRuntime> depletedShieldStatuses)
-            {
-                // 계산 또는 조회 결과 'ApplyDamage(target, baseDamage, attribute, default, depletedShieldStatuses, null)'을 호출자에게 반환한다.
-                return ApplyDamage(target, baseDamage, attribute, default, depletedShieldStatuses, null);
-            }
-
-            // 방어·치명타·상태 보호막·직접 보호막·체력 순서로 피해를 처리해 변경 결과를 만든다.
-            // 'ApplyDamage' 메소드의 입력과 반환 계약을 선언한다.
-            public InGameResourceChangeResult ApplyDamage(
-                // 'target' 매개변수 또는 지역값의 타입을 'BaseUnitRuntimeModel'로 지정한다.
-                BaseUnitRuntimeModel target,
-                // 'baseDamage' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-                float baseDamage,
-                // 'attribute' 매개변수 또는 지역값의 타입을 'DamageAttribute'로 지정한다.
-                DamageAttribute attribute,
-                // 'options' 매개변수 또는 지역값의 타입을 'DamageApplicationOptions'로 지정한다.
-                DamageApplicationOptions options,
-                // 'depletedShieldStatuses' 매개변수 또는 지역값의 타입을 'ICollection<UnitStatusRuntime>'로 지정한다.
-                ICollection<UnitStatusRuntime> depletedShieldStatuses,
-                // 'absorbedShieldStatuses' 매개변수 또는 지역값의 타입을 'ICollection<ShieldAbsorbRecord>'로 지정한다.
-                ICollection<ShieldAbsorbRecord> absorbedShieldStatuses)
-            {
-                // [방어 로직] 'target == null || target.Resources == null || baseDamage <= 0f' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-                if (target == null || target.Resources == null || baseDamage <= 0f)
-                {
-                    // 계산 또는 조회 결과 'InGameResourceChangeResult.Unchanged(target)'을 호출자에게 반환한다.
-                    return InGameResourceChangeResult.Unchanged(target);
-                }
-
-                // 지역 변수 'resources'에 오른쪽 계산 또는 조회 결과를 저장한다.
-                var resources = target.Resources;
-                // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-                var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
-                // 지역 변수 'beforeShield'에 오른쪽 계산 또는 조회 결과를 저장한다.
-                var beforeShield = ComputeTotalShield(target);
-                // 지역 변수 'finalDamage'에 오른쪽 계산 또는 조회 결과를 저장한다.
-                var finalDamage = ResolveFinalDamage(target, baseDamage, attribute, options);
-                // [방어 로직] 'target.Statuses != null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-                if (target.Statuses != null)
-                {
-                    // 'target.Statuses.RecordIncomingDamage' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                    target.Statuses.RecordIncomingDamage(attribute, finalDamage);
-                }
-
-                // 지역 변수 'statusShieldDamage'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-                var statusShieldDamage = target.Statuses != null
-                    // [낯선 문법] 삼항 연산자의 조건 참 결과로 'target.Statuses.ConsumeShield(finalDamage, depletedShieldStatuses, absorbedShieldStatuses)' 값을 선택한다.
-                    ? target.Statuses.ConsumeShield(finalDamage, depletedShieldStatuses, absorbedShieldStatuses)
-                    // [Fallback][낯선 문법] 삼항 연산자의 조건 거짓 대체값으로 '0f;' 값을 선택한다.
-                    : 0f;
-                // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-                var damageAfterStatusShield = Mathf.Max(0f, finalDamage - statusShieldDamage);
-                // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-                var directShieldBefore = Mathf.Max(0f, resources.DirectShield);
-                // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-                var directShieldDamage = Mathf.Min(directShieldBefore, damageAfterStatusShield);
-                // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-                var remainingDamage = Mathf.Max(0f, damageAfterStatusShield - directShieldDamage);
-
-                // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-                resources.DirectShield = RoundResource(Mathf.Max(0f, directShieldBefore - directShieldDamage));
-                // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-                resources.CurrentHealth = RoundResource(Mathf.Max(0f, beforeHealth - remainingDamage));
-                // 'SynchronizeShieldView' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                SynchronizeShieldView(target);
-
-                // 여러 줄로 이어지는 계산 또는 조건 결과를 반환하기 시작한다.
-                return new InGameResourceChangeResult(
-                    // 'target' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                    target,
-                    // 'beforeHealth' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                    beforeHealth,
-                    // 'resources.CurrentHealth' 값을 현재 메소드 호출의 인수로 전달한다.
-                    resources.CurrentHealth,
-                    // 'beforeShield' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                    beforeShield,
-                    // 'resources.CurrentShield' 값을 현재 메소드 호출의 인수로 전달한다.
-                    resources.CurrentShield,
-                    // 'finalDamage' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                    finalDamage,
-                    // 'resources.CurrentHealth <= 0f);' 식을 평가해 현재 계산 또는 상태 변경의 한 단계를 수행한다.
-                    resources.CurrentHealth <= 0f);
-            }
-
-        // 대상의 기존 직접 보호막에 지정 값을 더하고 총 보호막 표시를 동기화한다.
-        // 'GrantShield' 메소드의 입력과 반환 계약을 선언한다.
-        public InGameResourceChangeResult GrantShield(BaseUnitRuntimeModel target, float amount)
-        {
-            // [방어 로직] 'target == null || target.Resources == null || amount <= 0f' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (target == null || target.Resources == null || amount <= 0f)
-            {
-                // 계산 또는 조회 결과 'InGameResourceChangeResult.Unchanged(target)'을 호출자에게 반환한다.
-                return InGameResourceChangeResult.Unchanged(target);
-            }
-
-            // 지역 변수 'resources'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var resources = target.Resources;
-            // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-            var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
-            // 지역 변수 'beforeShield'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var beforeShield = ComputeTotalShield(target);
-            // 'resources.CurrentHealth'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            resources.CurrentHealth = RoundResource(beforeHealth);
-            // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-            resources.DirectShield = RoundResource(Mathf.Max(0f, resources.DirectShield) + amount);
-            // 'SynchronizeShieldView' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            SynchronizeShieldView(target);
-
-            // 여러 줄로 이어지는 계산 또는 조건 결과를 반환하기 시작한다.
-            return new InGameResourceChangeResult(
-                // 'target' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                target,
-                // 'beforeHealth' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                beforeHealth,
-                // 'resources.CurrentHealth' 값을 현재 메소드 호출의 인수로 전달한다.
-                resources.CurrentHealth,
-                // 'beforeShield' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                beforeShield,
-                // 'resources.CurrentShield' 값을 현재 메소드 호출의 인수로 전달한다.
-                resources.CurrentShield,
-                // '0f' 식의 값을 현재 생성자 또는 메소드 호출에 전달한다.
-                0f,
-                // 'resources.CurrentHealth <= 0f);' 식을 평가해 현재 계산 또는 상태 변경의 한 단계를 수행한다.
-                resources.CurrentHealth <= 0f);
-        }
-
-        // 대상의 직접 보호막을 지정 값으로 교체하고 총 보호막 표시를 동기화한다.
-        // 'SetShield' 메소드의 입력과 반환 계약을 선언한다.
-        public InGameResourceChangeResult SetShield(BaseUnitRuntimeModel target, float amount)
-        {
-            // [방어 로직] 'target == null || target.Resources == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (target == null || target.Resources == null)
-            {
-                // 계산 또는 조회 결과 'InGameResourceChangeResult.Unchanged(target)'을 호출자에게 반환한다.
-                return InGameResourceChangeResult.Unchanged(target);
-            }
-
-            // 지역 변수 'resources'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var resources = target.Resources;
-            // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-            var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
-            // 지역 변수 'beforeShield'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var beforeShield = ComputeTotalShield(target);
-            // 'resources.CurrentHealth'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            resources.CurrentHealth = RoundResource(beforeHealth);
-            // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-            resources.DirectShield = RoundResource(Mathf.Max(0f, amount));
-            // 'SynchronizeShieldView' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            SynchronizeShieldView(target);
-
-            // 여러 줄로 이어지는 계산 또는 조건 결과를 반환하기 시작한다.
-            return new InGameResourceChangeResult(
-                // 'target' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                target,
-                // 'beforeHealth' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                beforeHealth,
-                // 'resources.CurrentHealth' 값을 현재 메소드 호출의 인수로 전달한다.
-                resources.CurrentHealth,
-                // 'beforeShield' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                beforeShield,
-                // 'resources.CurrentShield' 값을 현재 메소드 호출의 인수로 전달한다.
-                resources.CurrentShield,
-                // '0f' 식의 값을 현재 생성자 또는 메소드 호출에 전달한다.
-                0f,
-                // 'resources.CurrentHealth <= 0f);' 식을 평가해 현재 계산 또는 상태 변경의 한 단계를 수행한다.
-                resources.CurrentHealth <= 0f);
-        }
-
-        // 대상 체력을 최대 체력 이하로 회복하고 자원 변경 결과를 만든다.
-        // 'Heal' 메소드의 입력과 반환 계약을 선언한다.
-        public InGameResourceChangeResult Heal(BaseUnitRuntimeModel target, float amount)
-        {
-            // [방어 로직] 'target == null || target.Resources == null || target.Stats == null || amount <= 0f' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (target == null || target.Resources == null || target.Stats == null || amount <= 0f)
-            {
-                // 계산 또는 조회 결과 'InGameResourceChangeResult.Unchanged(target)'을 호출자에게 반환한다.
-                return InGameResourceChangeResult.Unchanged(target);
-            }
-
-            // 지역 변수 'resources'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var resources = target.Resources;
-            // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-            var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
-            // 지역 변수 'beforeShield'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var beforeShield = ComputeTotalShield(target);
-            // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-            var maxHealth = Mathf.Max(0f, target.Stats.MaxHealth);
-            // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-            resources.CurrentHealth = RoundResource(Mathf.Min(maxHealth, beforeHealth + amount));
-            // 'SynchronizeShieldView' 메소드를 호출해 현재 단계의 처리를 실행한다.
-            SynchronizeShieldView(target);
-
-            // 여러 줄로 이어지는 계산 또는 조건 결과를 반환하기 시작한다.
-            return new InGameResourceChangeResult(
-                // 'target' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                target,
-                // 'beforeHealth' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                beforeHealth,
-                // 'resources.CurrentHealth' 값을 현재 메소드 호출의 인수로 전달한다.
-                resources.CurrentHealth,
-                // 'beforeShield' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                beforeShield,
-                // 'resources.CurrentShield' 값을 현재 메소드 호출의 인수로 전달한다.
-                resources.CurrentShield,
-                // '0f' 식의 값을 현재 생성자 또는 메소드 호출에 전달한다.
-                0f,
-                // 'resources.CurrentHealth <= 0f);' 식을 평가해 현재 계산 또는 상태 변경의 한 단계를 수행한다.
-                resources.CurrentHealth <= 0f);
-        }
-
-        // 공격자·대상 능력치와 상태 보정을 DamageCalculator에 전달해 반올림된 최종 피해를 계산한다.
-        // 'ResolveFinalDamage' 메소드의 입력과 반환 계약을 선언한다.
-        private static float ResolveFinalDamage(
-            // 'target' 매개변수 또는 지역값의 타입을 'BaseUnitRuntimeModel'로 지정한다.
-            BaseUnitRuntimeModel target,
-            // 'baseDamage' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float baseDamage,
-            // 'attribute' 매개변수 또는 지역값의 타입을 'DamageAttribute'로 지정한다.
-            DamageAttribute attribute,
-            // 'options' 매개변수 또는 지역값의 타입을 'DamageApplicationOptions'로 지정한다.
-            DamageApplicationOptions options)
-        {
-            // 지역 변수 'criticalAllowed'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var criticalAllowed = options.CriticalAllowed && options.Source != null;
-            // [Fallback][낯선 문법] 삼항 연산자(?:)로 조건에 따라 정상값 또는 대체값을 선택한다.
-            var sourceStats = criticalAllowed ? options.Source.Stats : null;
-            // 지역 변수 'sourceCriticalChance'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-            var sourceCriticalChance = criticalAllowed
-                // [Fallback][낯선 문법] 삼항 연산자(?:)로 조건에 따라 정상값 또는 대체값을 선택한다.
-                ? (sourceStats != null ? sourceStats.CriticalChance : DamageCalculator.BaseCriticalChance)
-                    // '+ StatusEffectRuntime.ResolveCriticalChanceBonus(options.Source)' 식을 평가해 현재 계산 또는 상태 변경의 한 단계를 수행한다.
-                    + StatusEffectRuntime.ResolveCriticalChanceBonus(options.Source)
-                // [Fallback][낯선 문법] 삼항 연산자의 조건 거짓 대체값으로 'DamageCalculator.BaseCriticalChance;' 값을 선택한다.
-                : DamageCalculator.BaseCriticalChance;
-            // 지역 변수 'sourceCriticalDamage'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-            var sourceCriticalDamage = criticalAllowed
-                // [Fallback][낯선 문법] 삼항 연산자(?:)로 조건에 따라 정상값 또는 대체값을 선택한다.
-                ? (sourceStats != null ? sourceStats.CriticalDamage : DamageCalculator.BaseCriticalMultiplier)
-                // [Fallback][낯선 문법] 삼항 연산자의 조건 거짓 대체값으로 'DamageCalculator.BaseCriticalMultiplier;' 값을 선택한다.
-                : DamageCalculator.BaseCriticalMultiplier;
-            // 'criticalAllowed' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (criticalAllowed)
-            {
-                // 'sourceCriticalDamage' 값에 'StatusEffectRuntime.ResolveCriticalDamageBonus(options.Source)' 결과를 누적한다.
-                sourceCriticalDamage += StatusEffectRuntime.ResolveCriticalDamageBonus(options.Source);
-            }
-
-            // 지역 변수 'targetCriticalResistance'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-            var targetCriticalResistance = criticalAllowed
-                // [Fallback][낯선 문법] 삼항 연산자(?:)로 조건에 따라 정상값 또는 대체값을 선택한다.
-                ? (target != null && target.Stats != null ? target.Stats.CriticalResistance : 0f)
-                    // '+ StatusEffectRuntime.ResolveCriticalResistanceBonus(target)' 식을 평가해 현재 계산 또는 상태 변경의 한 단계를 수행한다.
-                    + StatusEffectRuntime.ResolveCriticalResistanceBonus(target)
-                // [Fallback][낯선 문법] 삼항 연산자의 조건 거짓 대체값으로 '0f;' 값을 선택한다.
-                : 0f;
-            // 지역 변수 'criticalDamageTakenBonus'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-            var criticalDamageTakenBonus = criticalAllowed
-                // [낯선 문법] 삼항 연산자의 조건 참 결과로 'StatusEffectRuntime.ResolveCriticalDamageTakenBonus(target)' 값을 선택한다.
-                ? StatusEffectRuntime.ResolveCriticalDamageTakenBonus(target)
-                // [Fallback][낯선 문법] 삼항 연산자의 조건 거짓 대체값으로 '0f;' 값을 선택한다.
-                : 0f;
-            // 지역 변수 'damage'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-            var damage = DamageCalculator.Resolve(
-                // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-                Mathf.Max(0f, baseDamage),
-                // 'attribute' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                attribute,
-                // [Fallback][낯선 문법] 삼항 연산자(?:)로 조건에 따라 정상값 또는 대체값을 선택한다.
-                target != null ? ToAttributeDefenseSet(target.Defenses) : null,
-                // 'criticalAllowed' 열거값을 선택 가능한 상수 항목으로 정의한다.
-                criticalAllowed,
-                // [낯선 문법] named argument 'flatDefenseReduction'에 'StatusEffectRuntime.ResolveFlatElementResistReduction(target, attribute),' 값을 전달한다.
-                flatDefenseReduction: StatusEffectRuntime.ResolveFlatElementResistReduction(target, attribute),
-                // [낯선 문법] named argument 'percentDefenseReductions'에 'new[] { StatusEffectRuntime.ResolveElementResistReduction(target, attribute) },' 값을 전달한다.
-                percentDefenseReductions: new[] { StatusEffectRuntime.ResolveElementResistReduction(target, attribute) },
-                // [낯선 문법] named argument 'criticalChanceBonus'에 'sourceCriticalChance + options.CritChanceBonus - DamageCalculator.BaseCriticalChance,' 값을 전달한다.
-                criticalChanceBonus: sourceCriticalChance + options.CritChanceBonus - DamageCalculator.BaseCriticalChance,
-                // [낯선 문법] named argument 'criticalMultiplierBonus'에 'sourceCriticalDamage + options.CritDamageBonus - DamageCalculator.BaseCriticalMultiplier,' 값을 전달한다.
-                criticalMultiplierBonus: sourceCriticalDamage + options.CritDamageBonus - DamageCalculator.BaseCriticalMultiplier,
-                // [낯선 문법] named argument 'targetCriticalResistance'에 'targetCriticalResistance,' 값을 전달한다.
-                targetCriticalResistance: targetCriticalResistance,
-                // [낯선 문법] named argument 'criticalDamageTakenBonus'에 'criticalDamageTakenBonus,' 값을 전달한다.
-                criticalDamageTakenBonus: criticalDamageTakenBonus,
-                // 상태 효과와 적 패시브를 반영한 최종 피해 배율을 전달한다.
-                finalDamageMultiplier: ResolveIncomingDamageMultiplier(target, options.Source, attribute, options.SourceSkillId));
-            // 계산 또는 조회 결과 'Mathf.Round(Mathf.Max(0f, damage))'을 호출자에게 반환한다.
-            return Mathf.Round(Mathf.Max(0f, damage));
-        }
-
-        // 유닛 방어력 모델을 DamageCalculator가 사용하는 속성 방어력 집합으로 복사한다.
-        // 'ToAttributeDefenseSet' 메소드의 입력과 반환 계약을 선언한다.
-        private static AttributeDefenseSet ToAttributeDefenseSet(UnitDefenseRuntime defenses)
-        {
-            // [방어 로직] 'defenses == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (defenses == null)
-            {
-                // [Fallback] 정상 결과를 만들 수 없을 때 기본 결과 'null'을 호출자에게 반환한다.
-                return null;
-            }
-
-            // 여러 줄로 이어지는 계산 또는 조건 결과를 반환하기 시작한다.
-            return new AttributeDefenseSet
-            {
-                // 'Physical'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-                Physical = defenses.Physical,
-                // 'Fire'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-                Fire = defenses.Fire,
-                // 'Lightning'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-                Lightning = defenses.Lightning,
-                // 'Ice'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-                Ice = defenses.Ice,
-                // 'Darkness'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-                Darkness = defenses.Darkness,
-                // 'Holy'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-                Holy = defenses.Holy
-            };
-        }
-
-        // 상태 기반 받는 피해 배율과 적 고유 패시브 피해 배율을 결합한다.
-        // 'ResolveIncomingDamageMultiplier' 메소드의 입력과 반환 계약을 선언한다.
-        private static float ResolveIncomingDamageMultiplier(BaseUnitRuntimeModel target, BaseUnitRuntimeModel source, DamageAttribute attribute, string sourceSkillId)
-        {
-            // 지역 변수 'statusMultiplier'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var statusMultiplier = StatusEffectRuntime.ResolveIncomingDamageMultiplier(target, source, attribute, sourceSkillId);
-            // 지역 변수 'enemy'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var enemy = target as EnemyUnitRuntimeModel;
-            // [방어 로직] 'enemy == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (enemy == null)
-            {
-                // 계산 또는 조회 결과 'statusMultiplier'을 호출자에게 반환한다.
-                return statusMultiplier;
-            }
-
-            // 계산 또는 조회 결과 'Mathf.Max(0f, enemy.PassiveIncomingDamageMultiplier) * statusMultiplier'을 호출자에게 반환한다.
-            return Mathf.Max(0f, enemy.PassiveIncomingDamageMultiplier) * statusMultiplier;
-        }
-
-        // 직접 보호막과 시간제 상태 보호막의 합을 CurrentShield에 동기화한다.
-        // 'SynchronizeShieldView' 메소드의 입력과 반환 계약을 선언한다.
-        public void SynchronizeShieldView(BaseUnitRuntimeModel target)
-        {
-            // [방어 로직] 'target == null || target.Resources == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (target == null || target.Resources == null)
-            {
-                // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
-                return;
-            }
-
-            // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-            target.Resources.DirectShield = RoundResource(Mathf.Max(0f, target.Resources.DirectShield));
-            // 'target.Resources.CurrentShield'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            target.Resources.CurrentShield = ComputeTotalShield(target);
-        }
-
-        // 대상의 직접 보호막과 활성 상태 보호막 총량을 합산한다.
-        // 'ComputeTotalShield' 메소드의 입력과 반환 계약을 선언한다.
-        private static float ComputeTotalShield(BaseUnitRuntimeModel target)
-        {
-            // [방어 로직] 'target == null || target.Resources == null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (target == null || target.Resources == null)
-            {
-                // [Fallback] 정상 결과를 만들 수 없을 때 기본 결과 '0f'을 호출자에게 반환한다.
-                return 0f;
-            }
-
-            // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-            var directShield = Mathf.Max(0f, target.Resources.DirectShield);
-            // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
-            var timedShield = target.Statuses != null ? Mathf.Max(0f, target.Statuses.GetTotalShieldAmount()) : 0f;
-            // 계산 또는 조회 결과 'RoundResource(directShield + timedShield)'을 호출자에게 반환한다.
-            return RoundResource(directShield + timedShield);
-        }
-
-        // 자원 값을 0 이상으로 제한하고 가장 가까운 정수로 반올림한다.
-        // 'RoundResource' 메소드의 입력과 반환 계약을 선언한다.
-        private static float RoundResource(float value)
-        {
-            // 계산 또는 조회 결과 'Mathf.Round(Mathf.Max(0f, value))'을 호출자에게 반환한다.
-            return Mathf.Round(Mathf.Max(0f, value));
-        }
     }
 
     // 피해·보호막·회복 전후 자원 값과 사망 여부를 전달하는 불변 결과다.

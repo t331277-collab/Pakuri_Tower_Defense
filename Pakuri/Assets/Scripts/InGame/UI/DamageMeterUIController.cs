@@ -143,7 +143,7 @@ namespace Pakuri.InGame
             return max;
         }
 
-        private string ResolveDisplayName(string monsterId, string sourceId, string storedDisplayName)
+        private string ResolveDisplayName(string monsterId, string sourceId)
         {
             var manager = PakuriDataManager.Instance;
             var monster = manager.ResolveMonster(monsterId, ResolveCatalog());
@@ -180,11 +180,7 @@ namespace Pakuri.InGame
                 return choice.Title;
             }
 
-            if (!string.IsNullOrWhiteSpace(storedDisplayName))
-            {
-                return storedDisplayName;
-            }
-
+            // Code Builder: 저장된 별칭 없이 sourceId를 최종 표시명으로 사용한다.
             return string.IsNullOrWhiteSpace(sourceId) ? "Unknown" : sourceId;
         }
 
@@ -499,7 +495,7 @@ namespace Pakuri.InGame
                 MonsterDefinition monster,
                 MonsterDamageRecord record,
                 float leaderDamage,
-                Func<string, string, string, string> displayNameResolver,
+                Func<string, string, string> displayNameResolver,
                 Func<string, string, int, int> sortKeyResolver)
             {
                 ResolveChildren();
@@ -558,7 +554,7 @@ namespace Pakuri.InGame
                 string monsterId,
                 MonsterDamageRecord record,
                 float leaderDamage,
-                Func<string, string, string, string> displayNameResolver,
+                Func<string, string, string> displayNameResolver,
                 Func<string, string, int, int> sortKeyResolver)
             {
                 if (meterTemplate == null)
@@ -600,7 +596,7 @@ namespace Pakuri.InGame
                     var label = segment.GetComponentInChildren<TMP_Text>(true);
                     if (label != null)
                     {
-                        var displayName = displayNameResolver(monsterId, source.SourceId, source.DisplayName);
+                        var displayName = displayNameResolver(monsterId, source.SourceId);
                         label.text = string.Format("{0} {1}", displayName, FormatCompact(source.Damage));
                     }
                 }

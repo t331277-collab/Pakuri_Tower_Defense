@@ -1163,14 +1163,13 @@ namespace Pakuri.InGame
             var onHitStatusEffect = ResolveTriggeredOnHitStatusEffect(source, trigger);
             var onHitSnapshot = BuildActiveChoiceSnapshot(source, trigger.SourceSkillId);
             var runtimeVisual = trigger.RuntimeVisual;
-            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var hasRuntimeVisual = EffectVisualUtility.HasVisual(runtimeVisual);
             var hasRuntimeHitbox = runtimeVisual != null && runtimeVisual.Hitbox != null && runtimeVisual.Hitbox.HasHitbox();
 
             if ((hasRuntimeHitbox || IsPrefabHitboxTrigger(trigger)) && combatManager.Effects != null)
             {
                 var instance = hasRuntimeHitbox
-                    ? RuntimeSkillVisualFactory.Create(
-                        combatManager.Effects,
+                    ? combatManager.Effects.CreateRuntimeVisual(
                         runtimeVisual,
                         string.IsNullOrWhiteSpace(trigger.TriggerId) ? "RuntimeTriggerHitbox" : $"RuntimeTriggerHitbox_{trigger.TriggerId}",
                         center,
@@ -1219,8 +1218,7 @@ namespace Pakuri.InGame
                 onHitSnapshot);
             if (routedArea && hasRuntimeVisual && combatManager.Effects != null)
             {
-                SkillVisualSpawnUtility.SpawnTransient(
-                    combatManager.Effects,
+                combatManager.Effects.SpawnTransient(
                     runtimeVisual,
                     string.IsNullOrWhiteSpace(trigger.TriggerId) ? "RuntimeTriggerVisual" : $"RuntimeTriggerVisual_{trigger.TriggerId}",
                     center,
@@ -1229,7 +1227,11 @@ namespace Pakuri.InGame
             }
             else if (routedArea && trigger.SkillEffectPrefab != null && combatManager.Effects != null)
             {
-                SkillVisualSpawnUtility.SpawnTransient(combatManager.Effects, trigger.SkillEffectPrefab, center, Quaternion.identity, 1f);
+                combatManager.Effects.SpawnTransient(
+                    trigger.SkillEffectPrefab,
+                    center,
+                    Quaternion.identity,
+                    1f);
             }
 
             return routedArea;
@@ -1275,37 +1277,34 @@ namespace Pakuri.InGame
             var onHitEffects = onHitStatusEffect != null
                 ? new[] { onHitStatusEffect }
                 : Array.Empty<SkillEffectDefinition>();
-            var length = ResolveTriggeredLineLength(combatManager, origin, direction);
+            var length = ResolveTriggeredLineLength();
             var width = Mathf.Max(0.1f, trigger.Radius);
             var center = origin + direction * (length * 0.5f);
 
             var runtimeVisual = ResolveTriggeredLineRuntimeVisual(source, trigger);
-            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
-            if (hasRuntimeVisual && combatManager.Effects != null)
+            var hasRuntimeVisual = EffectVisualUtility.HasVisual(runtimeVisual);
+            var effects = combatManager.Effects;
+            GameObject instance = null;
+            if (hasRuntimeVisual && effects != null)
             {
-                var instance = RuntimeSkillVisualFactory.Create(
-                    combatManager.Effects,
+                instance = effects.CreateRuntimeVisual(
                     runtimeVisual,
                     string.IsNullOrWhiteSpace(trigger.TriggerId) ? "RuntimeTriggerLineVisual" : $"RuntimeTriggerLineVisual_{trigger.TriggerId}",
                     center,
                     SkillExecutionUtility.ResolveRotation(direction));
-                if (instance != null)
-                {
-                    ConfigureTriggeredLineVisual(instance.transform, length, width);
-                    UnityEngine.Object.Destroy(instance, SkillVisualSpawnUtility.ResolveVisualLifetime(instance, 0.1f));
-                }
             }
-            else if (trigger.SkillEffectPrefab != null && combatManager.Effects != null)
+            else if (trigger.SkillEffectPrefab != null && effects != null)
             {
-                var instance = combatManager.Effects.InstantiateSkillPrefab(
+                instance = effects.InstantiateSkillPrefab(
                     trigger.SkillEffectPrefab,
                     center,
                     SkillExecutionUtility.ResolveRotation(direction));
-                if (instance != null)
-                {
-                    ConfigureTriggeredLineVisual(instance.transform, length, width);
-                    UnityEngine.Object.Destroy(instance, SkillVisualSpawnUtility.ResolveVisualLifetime(instance, 0.1f));
-                }
+            }
+
+            if (instance != null)
+            {
+                ConfigureTriggeredLineVisual(instance.transform, length, width);
+                effects.DestroyAfterAnimation(instance, 0.1f);
             }
 
             return InGameLineAttackActor.ApplyLineTick(
@@ -1338,7 +1337,7 @@ namespace Pakuri.InGame
             BaseUnitRuntimeModel source,
             SkillTriggerDefinition trigger)
         {
-            if (trigger == null || RuntimeSkillVisualFactory.HasVisual(trigger.RuntimeVisual))
+            if (trigger == null || EffectVisualUtility.HasVisual(trigger.RuntimeVisual))
             {
                 return trigger != null ? trigger.RuntimeVisual : null;
             }
@@ -1380,22 +1379,10 @@ namespace Pakuri.InGame
             return trigger != null ? trigger.SourceSkillId : string.Empty;
         }
 
-        private static float ResolveTriggeredLineLength(
-            InGameCombatManager combatManager,
-            Vector2 origin,
-            Vector2 direction)
+        private static float ResolveTriggeredLineLength()
         {
+            // Code Builder: Trigger 선형 공격의 기본 길이는 Trigger 실행기가 직접 소유한다.
             const float defaultBeamLength = 31f;
-            if (combatManager != null && Mathf.Abs(direction.x) > 0.0001f)
-            {
-                var boundary = combatManager.ResolveProjectileDestroyBoundaryX();
-                var distance = Mathf.Abs((boundary - origin.x) / direction.x);
-                if (distance > 0.1f)
-                {
-                    return Mathf.Max(1f, distance);
-                }
-            }
-
             return defaultBeamLength;
         }
 

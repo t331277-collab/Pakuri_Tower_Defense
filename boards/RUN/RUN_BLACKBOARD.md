@@ -9,6 +9,50 @@
 - This active file now keeps only the current `NewRunScene` authority split and the surviving new-scene flow baseline.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-19 NewRunScene Core Dead Code Removal
+
+### Task title
+
+Remove unused NewRunScene entry, combat façade, Stage projection, and serialized spawn-range state.
+
+### Goals
+
+- Keep the active selected-player, manifested-party, encounter Enemy, combat, and reward flow unchanged.
+- Remove zero-reference public projections, overloads, status façades, and write-only spawn results.
+- Remove Scene YAML values whose backing fields had no runtime consumer.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- `SpawnedPlayerModel`, `UnitSpawnManager`, full Enemy spawn handoff, `ActiveEnemyCount`, active status APIs, and run progression remain intact.
+- Existing unrelated `EffectVisualUtility` worktree changes are preserved.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, solution-build verified, and Unity Editor compile-verified.
+
+### Next Actions
+
+- User verifies selected/manifested party restore, Stage 1/2 Enemy spawning, day advance, rewards, and Auto toggle in Play Mode.
+
+### Evidence
+
+- `SceneEntryManager.cs` removes unused Actor/Enemy projections, last-Enemy capture, two short spawn wrappers, and `StartContext.HasPendingRun`; live UI-consumed model/spawn-manager properties remain.
+- `InGameCombatManager.cs` removes zero-reference count projections, status/resource façades, registration wrapper, simple damage wrapper, and one-way Auto-enable wrapper while retaining active callers' overloads.
+- `SkillExecutionSystem.cs` removes routed/rejected counters whose only consumers were deleted façade properties.
+- `NewRunScene.unity` removes only `enemySpawnMinY` and `enemySpawnMaxY`; active encounter rows continue to pass Y ranges into the full spawn path.
+- Solution build passed with 0 errors and the existing 2 `MSB3277` warnings; `git diff --check` reported no whitespace errors.
+- Unity refresh/compile returned to idle with no C# compiler or `Assets/Scripts` error entries; Play Mode was not started.
+
+### History
+
+- 2026-07-19: Code Builder removed repository-dead NewRunScene core APIs and state without touching active flow ownership.
+
 ## Task: 2026-07-17 PrisonPanel Run-State Binding
 
 ### Task title
@@ -361,3 +405,46 @@ Implemented and compile/editor validated. Play Mode progression verification rem
 ### History
 
 - 2026-07-18: Code Builder removed the unused Stage 1 bootstrap route and retained encounter-driven Stage 1/2 spawning as the sole active run path.
+
+## Task: 2026-07-19 Combat Coordinator Boundary Phase 1
+
+### Task title
+
+Reduce `InGameCombatManager` responsibility without changing run or Nexus lifecycle ownership.
+
+### Goals
+
+- Move combat damage, selected-player input, Actor display, and Nexus identity checks behind small direct helpers.
+- Keep Nexus defeat state, defeat UI, day transition, and run progression in the existing `StageManager` path.
+- Preserve the combat manager's public handoff used by run flow.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- `StageManager`, scenes, prefabs, CSV sources, and serialized manager fields are not changed by this phase.
+- Unity Play Mode progression verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 1 implemented and compile/editor validated. Play Mode run verification remains.
+
+### Next Actions
+
+- User verifies Nexus damage and defeat UI, reward/day transitions, and next-day combat reset in Play Mode.
+- Keep `StageManager` as Nexus/run lifecycle owner unless later code evidence shows a narrower run-specific boundary is needed.
+
+### Evidence
+
+- `InGameCombatManager.ApplyDamage(...)`, healing, shield sync, player input, Actor refresh, and Nexus filtering now delegate to `CombatDamageService`, `PlayerCombatControl`, `CombatUnitView`, and `CombatTargetRules`.
+- `StageManager.cs` was not modified by this phase; existing Nexus defeat state/UI and run progression remain in place.
+- Public `InGameCombatManager` methods and serialized fields remain available, and `Update()` keeps its existing execution order.
+- Solution build passed with 0 errors and the existing 2 assembly-version warnings.
+- Unity Editor forced refresh reached idle; script-related error filters returned 0 entries.
+
+### History
+
+- 2026-07-19: Code Builder completed the first combat-manager split while retaining run/Nexus lifecycle ownership in `StageManager`.

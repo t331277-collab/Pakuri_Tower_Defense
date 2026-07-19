@@ -44,7 +44,7 @@ namespace Pakuri.InGame
                 ? context.Runtime.ResolveCurrentBurstProjectileIndex()
                 : 1;
             var runtimeVisual = skill.RuntimeVisual;
-            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var hasRuntimeVisual = EffectVisualUtility.HasVisual(runtimeVisual);
             var prefab = hasRuntimeVisual ? null : skill.Projectile != null ? skill.Projectile.ProjectilePrefab : null;
             if (prefab == null && !hasRuntimeVisual)
             {
@@ -133,8 +133,7 @@ namespace Pakuri.InGame
                 var branchSpec = ResolveBranchDamageSpec(snapshot, projectileLaunchIndex);
                 var rotation = SkillExecutionUtility.ResolveRotation(spreadDirection);
                 var instance = hasRuntimeVisual
-                    ? RuntimeSkillVisualFactory.Create(
-                        effects,
+                    ? effects.CreateRuntimeVisual(
                         runtimeVisual,
                         string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameProjectile" : $"InGameProjectile_{skill.SkillId}",
                         origin,
@@ -142,7 +141,10 @@ namespace Pakuri.InGame
                         hitboxIsTrigger: true)
                     : prefab != null
                         ? effects.InstantiateSkillPrefab(prefab, origin, rotation)
-                        : new GameObject(string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameProjectile" : $"InGameProjectile_{skill.SkillId}");
+                        : effects.CreateRuntimeSkillObject(
+                            string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameProjectile" : $"InGameProjectile_{skill.SkillId}",
+                            origin,
+                            rotation);
                 if (instance == null)
                 {
                     if (target != null)
@@ -345,7 +347,7 @@ namespace Pakuri.InGame
                 || skill == null
                 || snapshot == null
                 || !snapshot.HasFollowUpProjectile
-                || (!RuntimeSkillVisualFactory.HasVisual(runtimeVisual) && prefab == null)
+                || (!EffectVisualUtility.HasVisual(runtimeVisual) && prefab == null)
                 || currentBurstProjectileIndex < burstProjectileCount)
             {
                 return;
@@ -400,7 +402,7 @@ namespace Pakuri.InGame
             if (context == null
                 || context.CombatManager == null
                 || skill == null
-                || (!RuntimeSkillVisualFactory.HasVisual(runtimeVisual) && prefab == null))
+                || (!EffectVisualUtility.HasVisual(runtimeVisual) && prefab == null))
             {
                 yield break;
             }
@@ -451,7 +453,7 @@ namespace Pakuri.InGame
             if (context == null
                 || context.CombatManager == null
                 || skill == null
-                || (!RuntimeSkillVisualFactory.HasVisual(runtimeVisual) && prefab == null))
+                || (!EffectVisualUtility.HasVisual(runtimeVisual) && prefab == null))
             {
                 return;
             }
@@ -467,9 +469,8 @@ namespace Pakuri.InGame
                 : 0;
             var branchSpec = ResolveBranchDamageSpec(snapshot, projectileLaunchIndex);
             var rotation = SkillExecutionUtility.ResolveRotation(direction);
-            var instance = RuntimeSkillVisualFactory.HasVisual(runtimeVisual)
-                ? RuntimeSkillVisualFactory.Create(
-                    effects,
+            var instance = EffectVisualUtility.HasVisual(runtimeVisual)
+                ? effects.CreateRuntimeVisual(
                     runtimeVisual,
                     string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameProjectile" : $"InGameProjectile_{skill.SkillId}",
                     origin,

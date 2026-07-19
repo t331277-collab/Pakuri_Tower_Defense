@@ -53,18 +53,6 @@ namespace Pakuri.InGame
         [SerializeField] private GameObject vegaUnitPrefab;
         // [낯선 문법] SerializeField attribute: private 상태 'enemyPrefabBindings'을 Unity 직렬화와 Inspector 편집 대상으로 만든다.
         [SerializeField] private EnemyPrefabBinding[] enemyPrefabBindings = Array.Empty<EnemyPrefabBinding>();
-        // [낯선 문법] SerializeField attribute: private 상태 'enemySpawnMinY'을 Unity 직렬화와 Inspector 편집 대상으로 만든다.
-        [SerializeField] private float enemySpawnMinY = -5f;
-        // [낯선 문법] SerializeField attribute: private 상태 'enemySpawnMaxY'을 Unity 직렬화와 Inspector 편집 대상으로 만든다.
-        [SerializeField] private float enemySpawnMaxY = 5f;
-
-        // [낯선 문법] 식 본문 property: 'CombatManager' 값을 오른쪽 식 하나로 계산해 반환한다.
-        public InGameCombatManager CombatManager => combatManager;
-        // [낯선 문법] 식 본문 property: 'EnemySpawnMinY' 값을 오른쪽 식 하나로 계산해 반환한다.
-        public float EnemySpawnMinY => enemySpawnMinY;
-        // [낯선 문법] 식 본문 property: 'EnemySpawnMaxY' 값을 오른쪽 식 하나로 계산해 반환한다.
-        public float EnemySpawnMaxY => enemySpawnMaxY;
-
         // 적 ID에 연결된 프리팹의 루트 SpriteRenderer에서 초상화용 Sprite를 반환한다.
         // 'ResolveEnemyPortraitSprite' 메소드의 입력과 반환 계약을 선언한다.
         public Sprite ResolveEnemyPortraitSprite(string enemyId)
@@ -321,48 +309,6 @@ namespace Pakuri.InGame
             RegisterPlayer(model, actor, spawnedUnit.transform);
             // 요청한 검사 또는 처리가 성공했음을 true로 반환한다.
             return true;
-        }
-
-        // 기본 체력 배율과 일반 적 설정으로 적 생성 오버로드를 호출한다.
-        // 'SpawnEnemyById' 메소드의 입력과 반환 계약을 선언한다.
-        public bool SpawnEnemyById(
-            // 'enemyId' 매개변수 또는 지역값의 타입을 'string'로 지정한다.
-            string enemyId,
-            // 'spawnIndex' 매개변수 또는 지역값의 타입을 'int'로 지정한다.
-            int spawnIndex,
-            // 'spawnX' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float spawnX,
-            // 'spawnYMin' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float spawnYMin,
-            // 'spawnYMax' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float spawnYMax,
-            // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
-            out GameObject spawnedUnit)
-        {
-            // 계산 또는 조회 결과 'SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, 1f, false, out spawnedUnit)'을 호출자에게 반환한다.
-            return SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, 1f, false, out spawnedUnit);
-        }
-
-        // 지정 체력 배율과 일반 적 설정으로 적 생성 오버로드를 호출한다.
-        // 'SpawnEnemyById' 메소드의 입력과 반환 계약을 선언한다.
-        public bool SpawnEnemyById(
-            // 'enemyId' 매개변수 또는 지역값의 타입을 'string'로 지정한다.
-            string enemyId,
-            // 'spawnIndex' 매개변수 또는 지역값의 타입을 'int'로 지정한다.
-            int spawnIndex,
-            // 'spawnX' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float spawnX,
-            // 'spawnYMin' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float spawnYMin,
-            // 'spawnYMax' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float spawnYMax,
-            // 'healthMultiplier' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float healthMultiplier,
-            // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
-            out GameObject spawnedUnit)
-        {
-            // 계산 또는 조회 결과 'SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, false, out spawnedUnit)'을 호출자에게 반환한다.
-            return SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, false, out spawnedUnit);
         }
 
         // 적 ID에 대응하는 프리팹을 찾아 전체 적 생성 절차를 실행한다.

@@ -120,7 +120,7 @@ namespace Pakuri.InGame
             status.RuntimeVisual = source != null
                 && source.RuntimeVisual != null
                 && source.RuntimeVisual.Anchor == RuntimeSkillVisualAnchor.StatusTarget
-                && RuntimeSkillVisualFactory.HasVisual(source.RuntimeVisual)
+                && EffectVisualUtility.HasVisual(source.RuntimeVisual)
                 ? source.RuntimeVisual
                 : new Pakuri.Data.RuntimeSkillVisualSpec();
             return status;

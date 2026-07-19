@@ -20,6 +20,7 @@ namespace Pakuri.InGame
             if (skill == null
                 || effect == null
                 || context.CombatManager == null
+                || context.CombatManager.Effects == null
                 || context.CasterEntry == null
                 || context.Roster == null
                 || (!string.IsNullOrWhiteSpace(effect.RecastSourceSkillId)
@@ -49,7 +50,7 @@ namespace Pakuri.InGame
             var coverAll = (skill.Area != null && skill.Area.CoverAll)
                 || (skill.Targeting != null && skill.Targeting.CoverAll);
             var runtimeVisual = skill.RuntimeVisual;
-            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var hasRuntimeVisual = EffectVisualUtility.HasVisual(runtimeVisual);
             var prefab = !hasRuntimeVisual && snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
                 : !hasRuntimeVisual && context.CombatManager.Effects != null
@@ -59,8 +60,7 @@ namespace Pakuri.InGame
             GameObject instance = null;
             if (hasRuntimeVisual && context.CombatManager.Effects != null)
             {
-                instance = RuntimeSkillVisualFactory.Create(
-                    context.CombatManager.Effects,
+                instance = context.CombatManager.Effects.CreateRuntimeVisual(
                     runtimeVisual,
                     string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameRecastZone" : $"InGameRecastZone_{skill.SkillId}",
                     center,
@@ -91,8 +91,10 @@ namespace Pakuri.InGame
 
             if (instance == null)
             {
-                instance = new GameObject(string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameRecastZone" : $"InGameRecastZone_{skill.SkillId}");
-                instance.transform.position = center;
+                instance = context.CombatManager.Effects.CreateRuntimeSkillObject(
+                    string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameRecastZone" : $"InGameRecastZone_{skill.SkillId}",
+                    center,
+                    Quaternion.identity);
             }
 
             var actor = instance.GetComponent<InGameZoneSkillActor>();
@@ -129,7 +131,11 @@ namespace Pakuri.InGame
         public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
         {
             var skill = context != null ? context.SkillData as ZoneSkillData : null;
-            if (skill == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
+            if (skill == null
+                || context.CombatManager == null
+                || context.CombatManager.Effects == null
+                || context.CasterEntry == null
+                || context.Roster == null)
             {
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
             }
@@ -148,7 +154,7 @@ namespace Pakuri.InGame
             var coverAll = (skill.Area != null && skill.Area.CoverAll)
                 || (skill.Targeting != null && skill.Targeting.CoverAll);
             var runtimeVisual = skill.RuntimeVisual;
-            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var hasRuntimeVisual = EffectVisualUtility.HasVisual(runtimeVisual);
             var prefab = !hasRuntimeVisual && snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
                 : !hasRuntimeVisual && context.CombatManager.Effects != null
@@ -162,8 +168,7 @@ namespace Pakuri.InGame
                 GameObject instance = null;
                 if (hasRuntimeVisual && context.CombatManager.Effects != null)
                 {
-                    instance = RuntimeSkillVisualFactory.Create(
-                        context.CombatManager.Effects,
+                    instance = context.CombatManager.Effects.CreateRuntimeVisual(
                         runtimeVisual,
                         string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameZoneSkill" : $"InGameZoneSkill_{skill.SkillId}",
                         center,
@@ -186,8 +191,10 @@ namespace Pakuri.InGame
 
                 if (instance == null)
                 {
-                    instance = new GameObject(string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameZoneSkill" : $"InGameZoneSkill_{skill.SkillId}");
-                    instance.transform.position = center;
+                    instance = context.CombatManager.Effects.CreateRuntimeSkillObject(
+                        string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameZoneSkill" : $"InGameZoneSkill_{skill.SkillId}",
+                        center,
+                        Quaternion.identity);
                 }
 
                 var actor = instance.GetComponent<InGameZoneSkillActor>();

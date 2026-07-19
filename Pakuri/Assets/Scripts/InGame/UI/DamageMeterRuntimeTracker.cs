@@ -9,6 +9,8 @@ namespace Pakuri.InGame
     {
         private readonly Dictionary<string, MonsterDamageRecord> records = new Dictionary<string, MonsterDamageRecord>(StringComparer.OrdinalIgnoreCase);
 
+        [SerializeField] private InGameCombatManager combatManager;
+
         public static DamageMeterRuntimeTracker Active { get; private set; }
         public int Version { get; private set; }
 
@@ -21,24 +23,33 @@ namespace Pakuri.InGame
         private void OnEnable()
         {
             Active = this;
+            ResolveCombatManager();
+            if (combatManager != null)
+            {
+                combatManager.DamageApplied -= Record;
+                combatManager.DamageApplied += Record;
+            }
         }
 
-        private void OnDestroy()
+        private void OnDisable()
         {
+            if (combatManager != null)
+            {
+                combatManager.DamageApplied -= Record;
+            }
+
             if (Active == this)
             {
                 Active = null;
             }
         }
 
-        public static void RecordDamage(DamageApplicationOptions options, InGameResourceChangeResult result)
+        private void ResolveCombatManager()
         {
-            if (Active == null)
+            if (combatManager == null)
             {
-                return;
+                combatManager = FindFirstObjectByType<InGameCombatManager>();
             }
-
-            Active.Record(options, result);
         }
 
         public void ResetMeter()
@@ -60,6 +71,7 @@ namespace Pakuri.InGame
 
         private void Record(DamageApplicationOptions options, InGameResourceChangeResult result)
         {
+            // Code Builder: 피해 통계는 전투 결과 이벤트를 받아 이 Tracker가 기록한다.
             var source = options.Source;
             var identity = source != null ? source.Identity : null;
             if (identity == null
@@ -86,17 +98,14 @@ namespace Pakuri.InGame
                 sourceId = "Unknown";
             }
 
-            var displayName = !string.IsNullOrWhiteSpace(options.DamageMeterDisplayName)
-                ? options.DamageMeterDisplayName
-                : string.Empty;
-
             if (!records.TryGetValue(identity.DefinitionId, out var record))
             {
                 record = new MonsterDamageRecord(identity.DefinitionId);
                 records.Add(identity.DefinitionId, record);
             }
 
-            record.AddDamage(sourceId, displayName, actualDamage);
+            // Code Builder: 표시명은 UI가 sourceId로 해석하므로 런타임에는 피해량만 저장한다.
+            record.AddDamage(sourceId, actualDamage);
             Version++;
         }
     }
@@ -115,7 +124,7 @@ namespace Pakuri.InGame
         public float TotalDamage { get; private set; }
         public IReadOnlyList<SkillDamageRecord> OrderedSources => orderedSources;
 
-        public void AddDamage(string sourceId, string displayName, float amount)
+        public void AddDamage(string sourceId, float amount)
         {
             if (!sources.TryGetValue(sourceId, out var source))
             {
@@ -124,7 +133,7 @@ namespace Pakuri.InGame
                 orderedSources.Add(source);
             }
 
-            source.AddDamage(displayName, amount);
+            source.AddDamage(amount);
             TotalDamage += amount;
         }
     }
@@ -137,16 +146,10 @@ namespace Pakuri.InGame
         }
 
         public string SourceId { get; }
-        public string DisplayName { get; private set; }
         public float Damage { get; private set; }
 
-        public void AddDamage(string displayName, float amount)
+        public void AddDamage(float amount)
         {
-            if (string.IsNullOrWhiteSpace(DisplayName) && !string.IsNullOrWhiteSpace(displayName))
-            {
-                DisplayName = displayName;
-            }
-
             Damage += amount;
         }
     }

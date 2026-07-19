@@ -468,13 +468,16 @@ namespace Pakuri.InGame
         private void SpawnBranchDamageLine(Vector2 origin, Vector2 target)
         {
             var shader = Shader.Find("Sprites/Default");
-            if (shader == null)
+            if (shader == null || combatManager.Effects == null)
             {
                 return;
             }
 
             const float durationSeconds = 0.12f;
-            var lineObject = new GameObject("InGameBranchDamageLine");
+            var lineObject = combatManager.Effects.CreateRuntimeSkillObject(
+                "InGameBranchDamageLine",
+                Vector3.zero,
+                Quaternion.identity);
             var material = new Material(shader)
             {
                 name = "RuntimeBranchDamageLineMaterial"
@@ -492,7 +495,7 @@ namespace Pakuri.InGame
             line.SetPosition(0, new Vector3(origin.x, origin.y, 0f));
             line.SetPosition(1, new Vector3(target.x, target.y, 0f));
             Destroy(material, durationSeconds);
-            Destroy(lineObject, durationSeconds);
+            combatManager.Effects.DestroyAfter(lineObject, durationSeconds);
         }
 
         private bool IsSameSide(BaseUnitRuntimeModel target)
@@ -543,29 +546,25 @@ namespace Pakuri.InGame
 
             impactResolved = true;
             var impactVisualLifetime = 0.05f;
-            if (RuntimeSkillVisualFactory.HasVisual(impactRuntimeVisual) && combatManager.Effects != null)
+            var effects = combatManager.Effects;
+            GameObject instance = null;
+            if (effects != null && EffectVisualUtility.HasVisual(impactRuntimeVisual))
             {
-                var instance = RuntimeSkillVisualFactory.Create(
-                    combatManager.Effects,
+                instance = effects.CreateRuntimeVisual(
                     impactRuntimeVisual,
                     string.IsNullOrWhiteSpace(sourceSkillId) ? "InGameProjectileImpact" : $"InGameProjectileImpact_{sourceSkillId}",
                     impactCenter,
                     Quaternion.identity,
                     includeHitbox: false);
-                if (instance != null)
-                {
-                    impactVisualLifetime = SkillVisualSpawnUtility.ResolveVisualLifetime(instance, 0.1f);
-                    Destroy(instance, impactVisualLifetime);
-                }
             }
-            else if (impactEffectPrefab != null && combatManager.Effects != null)
+            else if (effects != null && impactEffectPrefab != null)
             {
-                var instance = combatManager.Effects.InstantiateSkillPrefab(impactEffectPrefab, impactCenter, Quaternion.identity);
-                if (instance != null)
-                {
-                    impactVisualLifetime = SkillVisualSpawnUtility.ResolveVisualLifetime(instance, 0.1f);
-                    Destroy(instance, impactVisualLifetime);
-                }
+                instance = effects.InstantiateSkillPrefab(impactEffectPrefab, impactCenter, Quaternion.identity);
+            }
+
+            if (instance != null)
+            {
+                impactVisualLifetime = effects.DestroyAfterAnimation(instance, 0.1f);
             }
 
             if (hasImpactArea)

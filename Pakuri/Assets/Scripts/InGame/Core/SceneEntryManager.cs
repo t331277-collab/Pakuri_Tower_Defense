@@ -28,18 +28,10 @@ namespace Pakuri.InGame
         // 'spawnedPlayerUnit' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
         private GameObject spawnedPlayerUnit;
 
-        // 'SpawnedPlayerActor' 읽기 전용 property로 계산 결과 또는 상태를 외부에 공개한다.
-        public MonsterUnitActor SpawnedPlayerActor { get; private set; }
         // 'SpawnedPlayerModel' 읽기 전용 property로 계산 결과 또는 상태를 외부에 공개한다.
         public MonsterUnitRuntimeModel SpawnedPlayerModel { get; private set; }
-        // 'SpawnedEnemyActor' 읽기 전용 property로 계산 결과 또는 상태를 외부에 공개한다.
-        public EnemyUnitActor SpawnedEnemyActor { get; private set; }
-        // 'SpawnedEnemyModel' 읽기 전용 property로 계산 결과 또는 상태를 외부에 공개한다.
-        public EnemyUnitRuntimeModel SpawnedEnemyModel { get; private set; }
         // 'ActiveSession' 읽기 전용 property로 계산 결과 또는 상태를 외부에 공개한다.
         public RunSession ActiveSession { get; private set; }
-        // [낯선 문법] 식 본문 property: 'CombatManager' 값을 오른쪽 식 하나로 계산해 반환한다.
-        public InGameCombatManager CombatManager => combatManager;
         // [낯선 문법] 식 본문 property: 'UnitSpawnManager' 값을 오른쪽 식 하나로 계산해 반환한다.
         public EnemySpawnManger UnitSpawnManager => unitSpawnManager;
 
@@ -91,8 +83,8 @@ namespace Pakuri.InGame
                     out spawnedPlayerUnit,
                     // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
                     out var model,
-                    // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
-                    out var actor,
+                    // 생성 관리자가 내부에서 Actor를 등록하므로 반환 Actor는 보관하지 않는다.
+                    out _,
                     // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
                     out var session))
             {
@@ -102,57 +94,13 @@ namespace Pakuri.InGame
 
             // 'SpawnedPlayerModel'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
             SpawnedPlayerModel = model;
-            // 'SpawnedPlayerActor'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            SpawnedPlayerActor = actor;
             // 'ActiveSession'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
             ActiveSession = session;
             // 컬렉션에 남은 항목을 모두 제거해 상태를 초기화한다.
             StartContext.Clear();
         }
 
-        // 기본 체력 배율과 일반 적 설정으로 적 생성을 요청한다.
-        // 'SpawnEnemyById' 메소드의 입력과 반환 계약을 선언한다.
-        public bool SpawnEnemyById(
-            // 'enemyId' 매개변수 또는 지역값의 타입을 'string'로 지정한다.
-            string enemyId,
-            // 'spawnIndex' 매개변수 또는 지역값의 타입을 'int'로 지정한다.
-            int spawnIndex,
-            // 'spawnX' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float spawnX,
-            // 'spawnYMin' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float spawnYMin,
-            // 'spawnYMax' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float spawnYMax,
-            // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
-            out GameObject spawnedUnit)
-        {
-            // 계산 또는 조회 결과 'SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, 1f, false, out spawnedUnit)'을 호출자에게 반환한다.
-            return SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, 1f, false, out spawnedUnit);
-        }
-
-        // 지정 체력 배율과 일반 적 설정으로 적 생성을 요청한다.
-        // 'SpawnEnemyById' 메소드의 입력과 반환 계약을 선언한다.
-        public bool SpawnEnemyById(
-            // 'enemyId' 매개변수 또는 지역값의 타입을 'string'로 지정한다.
-            string enemyId,
-            // 'spawnIndex' 매개변수 또는 지역값의 타입을 'int'로 지정한다.
-            int spawnIndex,
-            // 'spawnX' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float spawnX,
-            // 'spawnYMin' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float spawnYMin,
-            // 'spawnYMax' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float spawnYMax,
-            // 'healthMultiplier' 매개변수 또는 지역값의 타입을 'float'로 지정한다.
-            float healthMultiplier,
-            // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
-            out GameObject spawnedUnit)
-        {
-            // 계산 또는 조회 결과 'SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, false, out spawnedUnit)'을 호출자에게 반환한다.
-            return SpawnEnemyById(enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, false, out spawnedUnit);
-        }
-
-        // 적 ID, 위치 범위, 체력 배율, 보스 여부를 생성 관리자에 전달하고 최근 적 참조를 저장한다.
+        // 적 ID, 위치 범위, 체력 배율, 보스 여부를 생성 관리자에 전달한다.
         // 'SpawnEnemyById' 메소드의 입력과 반환 계약을 선언한다.
         public bool SpawnEnemyById(
             // 'enemyId' 매개변수 또는 지역값의 타입을 'string'로 지정한다.
@@ -201,13 +149,6 @@ namespace Pakuri.InGame
                 isBoss,
                 // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
                 out spawnedUnit);
-            // 'spawned' 조건이 참인지 검사해 실행 분기를 결정한다.
-            if (spawned)
-            {
-                // 'CaptureLastEnemySpawn' 메소드를 호출해 현재 단계의 처리를 실행한다.
-                CaptureLastEnemySpawn();
-            }
-
             // 계산 또는 조회 결과 'spawned'을 호출자에게 반환한다.
             return spawned;
         }
@@ -254,25 +195,6 @@ namespace Pakuri.InGame
             RestoreManifestedPlayersFromSession();
         }
 
-        // 로스터에 마지막으로 등록된 적의 모델과 Actor를 최근 생성 결과로 저장한다.
-        // 'CaptureLastEnemySpawn' 메소드의 입력과 반환 계약을 선언한다.
-        private void CaptureLastEnemySpawn()
-        {
-            // [방어 로직] 'combatManager == null || combatManager.Roster.Enemies.Count == 0' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
-            if (combatManager == null || combatManager.Roster.Enemies.Count == 0)
-            {
-                // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
-                return;
-            }
-
-            // 지역 변수 'lastEntry'에 오른쪽 계산 또는 조회 결과를 저장한다.
-            var lastEntry = combatManager.Roster.Enemies[combatManager.Roster.Enemies.Count - 1];
-            // 'SpawnedEnemyModel'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            SpawnedEnemyModel = lastEntry.Model as EnemyUnitRuntimeModel;
-            // 'SpawnedEnemyActor'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            SpawnedEnemyActor = lastEntry.Actor as EnemyUnitActor;
-        }
-
         // 1P 몬스터를 로스터 검색, 기존 Actor 부활, 새 인스턴스 생성 순서로 복원한다.
         // 'RestoreSelectedPlayerFromSession' 메소드의 입력과 반환 계약을 선언한다.
         private void RestoreSelectedPlayerFromSession()
@@ -305,23 +227,19 @@ namespace Pakuri.InGame
                     out spawnedPlayerUnit,
                     // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
                     out var model,
-                    // [낯선 문법] out 인수로 메소드 성공 여부와 함께 추가 결과값을 받아온다.
-                    out var actor))
+                    // 생성 관리자가 내부에서 Actor를 등록하므로 반환 Actor는 보관하지 않는다.
+                    out _))
             {
                 // 'spawnedPlayerUnit'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
                 spawnedPlayerUnit = null;
                 // 'SpawnedPlayerModel'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
                 SpawnedPlayerModel = null;
-                // 'SpawnedPlayerActor'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-                SpawnedPlayerActor = null;
                 // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
                 return;
             }
 
             // 'SpawnedPlayerModel'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
             SpawnedPlayerModel = model;
-            // 'SpawnedPlayerActor'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            SpawnedPlayerActor = actor;
         }
 
         // 세션의 현현 몬스터 목록을 슬롯별로 확인해 누락된 파티원을 부활하거나 다시 생성한다.
@@ -379,8 +297,6 @@ namespace Pakuri.InGame
                 spawnedPlayerUnit = null;
                 // 'SpawnedPlayerModel'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
                 SpawnedPlayerModel = null;
-                // 'SpawnedPlayerActor'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-                SpawnedPlayerActor = null;
                 // [방어 로직] 현재 메소드의 남은 처리를 건너뛰고 즉시 호출 지점으로 돌아간다.
                 return;
             }
@@ -391,8 +307,6 @@ namespace Pakuri.InGame
             spawnedPlayerUnit = actor != null ? actor.gameObject : null;
             // 'SpawnedPlayerModel'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
             SpawnedPlayerModel = entry.Model as MonsterUnitRuntimeModel;
-            // 'SpawnedPlayerActor'에 오른쪽 계산, 조회, 또는 상수 결과를 저장한다.
-            SpawnedPlayerActor = actor;
         }
 
         // 플레이어 몬스터 로스터에서 지정 파티 슬롯의 항목을 찾는다.
@@ -588,9 +502,6 @@ namespace Pakuri.InGame
     {
         // 'SelectedMonsterId' 읽기 전용 property로 계산 결과 또는 상태를 외부에 공개한다.
         public static string SelectedMonsterId { get; private set; }
-        // [낯선 문법] 식 본문 property: 'HasPendingRun' 값을 오른쪽 식 하나로 계산해 반환한다.
-        public static bool HasPendingRun => !string.IsNullOrWhiteSpace(SelectedMonsterId);
-
         // 다음 인게임 씬에서 사용할 선택 몬스터 ID를 저장한다.
         // 'Prepare' 메소드의 입력과 반환 계약을 선언한다.
         public static void Prepare(string selectedMonsterId)

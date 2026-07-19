@@ -39,7 +39,7 @@ namespace Pakuri.InGame
             var damage = SkillExecutionUtility.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
             var attribute = SkillExecutionUtility.MapAttribute(skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element);
             var statusSpec = SkillStatusSpecUtility.ResolveStatusSpec(skill.OnHitStatus, snapshot);
-            var length = ResolveBeamLength(skill, origin, direction, context.CombatManager);
+            var length = ResolveBeamLength(skill);
             var width = ResolveBeamWidth(skill, snapshot);
             var knockbackDistance = ResolveKnockbackDistance(skill, snapshot);
             var duration = ResolveDuration(skill, snapshot);
@@ -49,7 +49,7 @@ namespace Pakuri.InGame
             var castEffects = ResolveCastEffects(context, snapshot, planEffects);
             var center = (Vector2)origin + direction * (length * 0.5f);
             var runtimeVisual = skill.RuntimeVisual;
-            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var hasRuntimeVisual = EffectVisualUtility.HasVisual(runtimeVisual);
             var prefab = !hasRuntimeVisual && snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
                 : !hasRuntimeVisual && context.CombatManager.Effects != null
@@ -88,8 +88,7 @@ namespace Pakuri.InGame
 
             var rotation = SkillExecutionUtility.ResolveRotation(direction);
             var instance = hasRuntimeVisual
-                ? RuntimeSkillVisualFactory.Create(
-                    context.CombatManager.Effects,
+                ? context.CombatManager.Effects.CreateRuntimeVisual(
                     runtimeVisual,
                     string.IsNullOrWhiteSpace(skill.SkillId) ? "InGameLineAttack" : $"InGameLineAttack_{skill.SkillId}",
                     center,
@@ -136,23 +135,14 @@ namespace Pakuri.InGame
             return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
         }
 
-        private static float ResolveBeamLength(BeamSkillData skill, Vector3 origin, Vector2 direction, InGameCombatManager manager)
+        private static float ResolveBeamLength(BeamSkillData skill)
         {
             if (skill != null && skill.BeamLength > 0f)
             {
                 return skill.BeamLength;
             }
 
-            if (manager != null && Mathf.Abs(direction.x) > 0.0001f)
-            {
-                var boundary = manager.ResolveProjectileDestroyBoundaryX();
-                var distance = Mathf.Abs((boundary - origin.x) / direction.x);
-                if (distance > 0.1f)
-                {
-                    return Mathf.Max(1f, distance);
-                }
-            }
-
+            // Code Builder: 빔 길이 기본값은 빔 실행기가 직접 소유한다.
             return DefaultBeamLength;
         }
 

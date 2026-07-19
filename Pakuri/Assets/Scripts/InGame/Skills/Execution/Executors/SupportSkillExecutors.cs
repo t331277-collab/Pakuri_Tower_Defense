@@ -27,7 +27,7 @@ namespace Pakuri.InGame
                 ? ResolveConfiguredTargets(context.CasterEntry, context.Roster, skill.Targeting)
                 : ResolveBuffTargets(context.CasterEntry, context.Roster, skill.Target);
             var runtimeVisual = skill.RuntimeVisual;
-            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var hasRuntimeVisual = EffectVisualUtility.HasVisual(runtimeVisual);
             var prefab = !hasRuntimeVisual && snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
                 : !hasRuntimeVisual && context.CombatManager.Effects != null
@@ -62,25 +62,27 @@ namespace Pakuri.InGame
 
                 var visualTarget = skill.AttachVisualToCaster ? context.CasterEntry.Transform : target.Transform;
                 var canSpawnVisual = !skill.AttachVisualToCaster || !casterVisualSpawned;
-                if (canSpawnVisual && hasRuntimeVisual && visualTarget != null && context.CombatManager.Effects != null)
+                var effects = context.CombatManager.Effects;
+                GameObject visualInstance = null;
+                if (canSpawnVisual && visualTarget != null && effects != null)
                 {
-                    SkillVisualSpawnUtility.SpawnAttached(
-                        context.CombatManager.Effects,
-                        runtimeVisual,
-                        string.IsNullOrWhiteSpace(skill.SkillId) ? "RuntimeBuffVisual" : $"RuntimeBuffVisual_{skill.SkillId}",
-                        visualTarget,
-                        statusSpec.DurationSeconds,
-                        Vector3.zero);
-                    casterVisualSpawned = skill.AttachVisualToCaster;
+                    if (hasRuntimeVisual)
+                    {
+                        visualInstance = effects.CreateRuntimeVisual(
+                            runtimeVisual,
+                            string.IsNullOrWhiteSpace(skill.SkillId) ? "RuntimeBuffVisual" : $"RuntimeBuffVisual_{skill.SkillId}",
+                            visualTarget.position,
+                            Quaternion.identity);
+                    }
+                    else if (prefab != null)
+                    {
+                        visualInstance = effects.InstantiateSkillPrefab(prefab, visualTarget.position, Quaternion.identity);
+                    }
                 }
-                else if (canSpawnVisual && prefab != null && visualTarget != null && context.CombatManager.Effects != null)
+
+                if (visualInstance != null)
                 {
-                    SkillVisualSpawnUtility.SpawnAttached(
-                        context.CombatManager.Effects,
-                        prefab,
-                        visualTarget,
-                        statusSpec.DurationSeconds,
-                        Vector3.zero);
+                    effects.AttachToTarget(visualInstance, visualTarget, statusSpec.DurationSeconds, Vector3.zero);
                     casterVisualSpawned = skill.AttachVisualToCaster;
                 }
 
@@ -215,7 +217,7 @@ namespace Pakuri.InGame
             }
 
             var runtimeVisual = skill.RuntimeVisual;
-            var hasRuntimeVisual = RuntimeSkillVisualFactory.HasVisual(runtimeVisual);
+            var hasRuntimeVisual = EffectVisualUtility.HasVisual(runtimeVisual);
             var prefab = !hasRuntimeVisual && snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
                 : !hasRuntimeVisual && context.CombatManager.Effects != null
@@ -247,25 +249,27 @@ namespace Pakuri.InGame
                     context.Caster);
                 var visualTarget = skill.AttachVisualToCaster ? context.CasterEntry.Transform : target.Transform;
                 var canSpawnVisual = !skill.AttachVisualToCaster || !casterVisualSpawned;
-                if (canSpawnVisual && hasRuntimeVisual && visualTarget != null && context.CombatManager.Effects != null)
+                var effects = context.CombatManager.Effects;
+                GameObject visualInstance = null;
+                if (canSpawnVisual && visualTarget != null && effects != null)
                 {
-                    SkillVisualSpawnUtility.SpawnAttached(
-                        context.CombatManager.Effects,
-                        runtimeVisual,
-                        string.IsNullOrWhiteSpace(skill.SkillId) ? "RuntimeShieldVisual" : $"RuntimeShieldVisual_{skill.SkillId}",
-                        visualTarget,
-                        duration,
-                        Vector3.zero);
-                    casterVisualSpawned = skill.AttachVisualToCaster;
+                    if (hasRuntimeVisual)
+                    {
+                        visualInstance = effects.CreateRuntimeVisual(
+                            runtimeVisual,
+                            string.IsNullOrWhiteSpace(skill.SkillId) ? "RuntimeShieldVisual" : $"RuntimeShieldVisual_{skill.SkillId}",
+                            visualTarget.position,
+                            Quaternion.identity);
+                    }
+                    else if (prefab != null)
+                    {
+                        visualInstance = effects.InstantiateSkillPrefab(prefab, visualTarget.position, Quaternion.identity);
+                    }
                 }
-                else if (canSpawnVisual && prefab != null && visualTarget != null && context.CombatManager.Effects != null)
+
+                if (visualInstance != null)
                 {
-                    SkillVisualSpawnUtility.SpawnAttached(
-                        context.CombatManager.Effects,
-                        prefab,
-                        visualTarget,
-                        duration,
-                        Vector3.zero);
+                    effects.AttachToTarget(visualInstance, visualTarget, duration, Vector3.zero);
                     casterVisualSpawned = skill.AttachVisualToCaster;
                 }
 
@@ -330,15 +334,21 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (RuntimeSkillVisualFactory.HasVisual(skill.RuntimeVisual))
+            if (EffectVisualUtility.HasVisual(skill.RuntimeVisual))
             {
-                SkillVisualSpawnUtility.SpawnAttached(
-                    context.CombatManager.Effects,
+                var instance = context.CombatManager.Effects.CreateRuntimeVisual(
                     skill.RuntimeVisual,
                     $"RuntimeSupportVisual_{skill.SkillId}",
-                    target.Transform,
-                    lifetime,
-                    Vector3.zero);
+                    target.Transform.position,
+                    Quaternion.identity);
+                if (instance != null)
+                {
+                    context.CombatManager.Effects.AttachToTarget(
+                        instance,
+                        target.Transform,
+                        lifetime,
+                        Vector3.zero);
+                }
             }
         }
     }

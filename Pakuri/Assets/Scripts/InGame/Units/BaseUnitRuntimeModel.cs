@@ -73,6 +73,9 @@ namespace Pakuri.InGame
         public bool IsBoss;
         public bool AutoAttackEnabled = true;
         public bool AutoSkillEnabled = true;
+
+        // Code Builder: Nexus 역할 판정을 모델에 모아 중복 규칙 파일을 제거했다.
+        public bool IsNexus => Identity != null && Identity.Role == UnitRole.Nexus;
     }
 
     public sealed class UnitChargeRuntime

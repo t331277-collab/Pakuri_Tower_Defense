@@ -14,8 +14,6 @@ namespace Pakuri.InGame
             new Dictionary<UnitRosterEntry, UnitSkillController>();
         private readonly List<UnitRosterEntry> staleControllerEntries = new List<UnitRosterEntry>();
 
-        public int LastRoutedCount { get; private set; }
-        public int LastRejectedCount { get; private set; }
         public void Tick(
             UnitRosterService roster,
             InGameCombatManager combatManager,
@@ -23,8 +21,6 @@ namespace Pakuri.InGame
             bool logRoutedContracts,
             SkillAutoRoutePredicate canAutoRoute = null)
         {
-            LastRoutedCount = 0;
-            LastRejectedCount = 0;
             if (roster == null || deltaTime <= 0f)
             {
                 return;
@@ -220,7 +216,6 @@ namespace Pakuri.InGame
 
             if (!registry.TryResolve(runtime.Data, out var executor))
             {
-                LastRejectedCount++;
                 return false;
             }
 
@@ -244,7 +239,6 @@ namespace Pakuri.InGame
 
                 request.NotifyActiveSkillAnimation?.Invoke(entry);
                 NotifySkillCastTriggers(request.CombatManager, entry, runtime, context);
-                LastRoutedCount++;
                 if (request.LogRoutedContracts)
                 {
                     Debug.Log($"Skill execution contract routed '{result.SkillId}' through {result.ExecutorName}.");
@@ -298,7 +292,6 @@ namespace Pakuri.InGame
 
             if (!registry.TryResolve(runtime.Data, out var executor))
             {
-                LastRejectedCount++;
                 return false;
             }
 
@@ -316,7 +309,6 @@ namespace Pakuri.InGame
             if (result.Routed)
             {
                 NotifySkillCastTriggers(combatManager, entry, runtime, context, triggerSourceSkillId);
-                LastRoutedCount++;
                 if (logRoutedContracts)
                 {
                     Debug.Log($"Triggered skill execution routed '{result.SkillId}' through {result.ExecutorName}.");

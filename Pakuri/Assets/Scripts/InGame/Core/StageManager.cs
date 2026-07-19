@@ -106,11 +106,6 @@ namespace Pakuri.InGame
         public float PendingManifestSuccessChance => currentReward != null ? currentReward.ManifestSuccessChance : 0.7f;
         // [낯선 문법] 식 본문 property: 'ActiveSession' 값을 오른쪽 식 하나로 계산해 반환한다.
         public RunSession ActiveSession => activeSession;
-        // [낯선 문법] 식 본문 property: 'CurrentEncounterId' 값을 오른쪽 식 하나로 계산해 반환한다.
-        public string CurrentEncounterId => currentDay != null ? currentDay.EncounterId : string.Empty;
-        // [낯선 문법] 식 본문 property: 'CurrentRewardRuleId' 값을 오른쪽 식 하나로 계산해 반환한다.
-        public string CurrentRewardRuleId => currentReward != null ? currentReward.RewardRuleId : string.Empty;
-
         // 스테이지 진행에 필요한 컴포넌트와 승패 UI를 확보하고 버튼 이벤트를 연결한다.
         // 'Awake' 메소드의 입력과 반환 계약을 선언한다.
         private void Awake()
@@ -213,8 +208,8 @@ namespace Pakuri.InGame
             // [방어 로직] 'combatManager != null' 상태가 안전한 실행 조건을 만족하지 않는지 검사한다.
             if (combatManager != null)
             {
-                // 'combatManager.ResetTransientCombatStateForNextDay' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                combatManager.ResetTransientCombatStateForNextDay();
+                // 날짜 전환 의미는 StageManager가 소유하고 전투 상태 초기화만 요청한다.
+                combatManager.ResetCombatState();
             }
 
             // 'activeSession.AdvanceDay' 메소드를 호출해 해당 객체의 처리를 실행한다.
@@ -288,8 +283,8 @@ namespace Pakuri.InGame
 
                 // [방어 로직] Mathf 범위 함수로 계산값이 허용 범위를 벗어나지 않게 보정한다.
                 resources.CurrentHealth = Mathf.Max(0f, stats.MaxHealth);
-                // 'combatManager.RefreshUnitActor' 메소드를 호출해 해당 객체의 처리를 실행한다.
-                combatManager.RefreshUnitActor(model);
+                // 로스터에 등록된 Actor 표시를 갱신한다.
+                combatManager.Roster.RefreshActor(model);
             }
         }
 
@@ -912,8 +907,6 @@ namespace Pakuri.InGame
         public int Stage;
         // 'Day' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
         public int Day;
-        // 'CombatType' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
-        public string CombatType;
         // 'EncounterId' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
         public string EncounterId;
         // 'RewardRuleId' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
@@ -968,8 +961,6 @@ namespace Pakuri.InGame
         public float PrisonerCount1Chance;
         // 'PrisonerCount2Chance' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
         public float PrisonerCount2Chance;
-        // 'PrisonerCount3Chance' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
-        public float PrisonerCount3Chance;
         // 'ManifestSuccessChance' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
         public float ManifestSuccessChance;
         // 'EliteBonusPrisoners' 필드 또는 property를 선언해 객체 상태를 보관하거나 공개한다.
@@ -1106,8 +1097,6 @@ namespace Pakuri.InGame
                     Stage = ParseInt(row, "stage"),
                     // 'Day'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
                     Day = ParseInt(row, "day"),
-                    // 'CombatType'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-                    CombatType = Read(row, "combat_type"),
                     // 'EncounterId'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
                     EncounterId = Read(row, "encounter_id"),
                     // 'RewardRuleId'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
@@ -1163,6 +1152,8 @@ namespace Pakuri.InGame
             // 'var row in ReadRows(csv)' 컬렉션의 각 항목을 순서대로 처리한다.
             foreach (var row in ReadRows(csv))
             {
+                // 세 번째 포로 확률은 나머지 구간이지만 CSV 숫자 형식 검증은 유지한다.
+                _ = ParseFloat(row, "prisoner_count_3_chance");
                 // Add 호출 결과 또는 지정 항목을 컬렉션에 추가한다.
                 rewards.Add(new StageRewardRow
                 {
@@ -1176,8 +1167,6 @@ namespace Pakuri.InGame
                     PrisonerCount1Chance = ParseFloat(row, "prisoner_count_1_chance"),
                     // 'PrisonerCount2Chance'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
                     PrisonerCount2Chance = ParseFloat(row, "prisoner_count_2_chance"),
-                    // 'PrisonerCount3Chance'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
-                    PrisonerCount3Chance = ParseFloat(row, "prisoner_count_3_chance"),
                     // 'ManifestSuccessChance'에 저장할 여러 줄 계산 또는 선택식을 시작한다.
                     ManifestSuccessChance = ParseFloat(row, "manifest_success_chance"),
                     // 'EliteBonusPrisoners'에 저장할 여러 줄 계산 또는 선택식을 시작한다.

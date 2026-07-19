@@ -1250,7 +1250,7 @@ namespace Pakuri.InGame
                 {
                     SyncModelStateFromSession(session, model);
                     SkillRuntimeFactory.RebuildLearnedActiveSet(model, skillCatalog);
-                    combatManager.RefreshUnitActor(model);
+                    combatManager.Roster.RefreshActor(model);
                 }
             }
 

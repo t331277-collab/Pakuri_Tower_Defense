@@ -11,6 +11,48 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-19 Enemy Core Dead Code Removal
+
+### Task title
+
+Remove repository-dead Enemy AI state, targeting helpers, counters, and spawn wrappers.
+
+### Goals
+
+- Remove write-only Enemy combat state and unconsumed execution counters.
+- Keep the active nearest-target, support selection, movement, A/B cast, and Nexus assault paths unchanged.
+- Keep only the full encounter-driven Enemy spawn overload.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Existing Enemy skill values, cooldowns, target policy, prefabs, and Stage encounter behavior remain unchanged.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, solution-build verified, and Unity Editor compile-verified.
+
+### Next Actions
+
+- User verifies representative Enemy movement, A/B casts, support casts, and Nexus contact in Play Mode.
+
+### Evidence
+
+- `EnemyCombatSystem.cs` no longer contains `EnemyCombatState`, its dictionary, write-only target/attempt fields, the unused short `Tick(...)`, or unconsumed attack counters.
+- `EnemyTargeting.cs` no longer contains the four zero-reference farthest/random/all/radius helpers; active nearest/Nexus/lowest-health helpers remain.
+- `EnemySpawnManger.cs` retains one full `SpawnEnemyById(...)` path and removes two unused wrappers plus unused default Y-range accessors.
+- Repository search returned no removed-symbol matches; `dotnet build Pakuri/Pakuri.sln --no-restore /p:UseSharedCompilation=false -v:minimal` passed with 0 errors and the existing 2 `MSB3277` warnings.
+- Unity refresh/compile returned to idle with no C# compiler or `Assets/Scripts` error entries; the sole Error entry was the MCP package transport `Cannot access a disposed object`.
+
+### History
+
+- 2026-07-19: User switched to Code Builder and requested removal of the code-proven dead paths.
+
 ## Task: 2026-07-17 Enemy Direct A/B Skill Assignment
 
 ### Task title
@@ -548,3 +590,97 @@ Implemented, structurally validated, compile-verified, and Unity Editor refresh-
 
 - 2026-07-18: User identified the Stage 1-only prefab/spawn declarations as inconsistent with Stage 2 binding ownership and explicitly requested Code Builder unification.
 - 2026-07-18: Code Builder migrated all 16 Enemy prefab bindings to one array and removed the disabled Stage 1-only spawn path.
+
+## Task: 2026-07-19 InGameCombatManager Responsibility Split Phase 1
+
+### Task title
+
+Split damage, player input, Actor display, and Nexus checks from `InGameCombatManager`.
+
+### Goals
+
+- Keep `InGameCombatManager` as the combat coordinator while moving independent rules into direct, narrowly named classes.
+- Preserve damage order, shield handling, manual/auto skill input, Actor refresh, and Nexus exclusion behavior.
+- Mark every touched script with a `Code Builder` comment.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Public manager APIs, serialized fields, and `Update()` execution order remain unchanged.
+- Existing status, skill trigger, stage flow, UI, CSV, prefab, and scene behavior remain unchanged.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Phase 1 implemented, solution compile-verified, and Unity Editor refresh-verified. Play Mode verification remains.
+
+### Next Actions
+
+- User verifies shield-to-health damage order, healing, status shield refresh, manual burst aiming, auto skill routing, Actor defeat display, and Nexus defeat flow in Play Mode.
+- Treat further status/trigger extraction as a separate phase only after this behavior check.
+
+### Evidence
+
+- `InGameCombatManager.cs` is 1,331 lines after extraction; it delegates damage to `CombatDamageService`, player input to `PlayerCombatControl`, Actor display to `CombatUnitView`, and Nexus identity to `CombatTargetRules`.
+- `CombatDamageService.cs`, `PlayerCombatControl.cs`, `CombatUnitView.cs`, and `CombatTargetRules.cs` exist with Unity `.meta` files.
+- Removed-symbol search in `InGameCombatManager.cs` returned no `UnitResourceMutationService`, direct Input System/EventSystem usage, direct mouse access, or moved damage-resolution implementation.
+- `dotnet build Pakuri/Pakuri.sln --no-restore /p:UseSharedCompilation=false -v:minimal` passed with 0 errors and the existing 2 `MSB3277` warnings.
+- Unity forced refresh completed at idle with Play Mode off; console filters for `error CS` and `Assets/Scripts` returned 0 entries.
+- `git diff --check` passed.
+
+### History
+
+- 2026-07-19: User requested Code Builder responsibility separation with direct naming modeled after `Animation_Controller.cs` and explicit comments on touched scripts.
+- 2026-07-19: Code Builder completed Phase 1 without moving Nexus defeat state/UI from `StageManager`.
+
+## Task: 2026-07-19 Combat Responsibility Merge
+
+### Task title
+
+Merge over-separated damage, Nexus, and Actor display helpers into their existing owners.
+
+### Goals
+
+- Return damage, healing, and shield mutation to `InGameCombatManager`.
+- Make `BaseUnitRuntimeModel` own the shared Nexus-role check.
+- Make `UnitRosterEntry` connect its registered Actor to damage, refresh, and defeat behavior.
+- Delete the three temporary helper scripts and their Unity metadata.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Public combat APIs, damage order, Trigger order, Actor behavior, and serialized fields remain unchanged.
+- `PlayerCombatControl` remains separated.
+- Root `BLACKBOARD.md` is not read or updated per user instruction.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, solution-build verified, and Unity Editor compile-verified. Play Mode verification remains.
+
+### Next Actions
+
+- User verifies shield-to-health damage, healing, Actor hit/death display, Nexus defeat notification, and next-day Actor refresh in Play Mode.
+
+### Evidence
+
+- `CombatDamageService.cs`, `CombatTargetRules.cs`, `CombatUnitView.cs`, and their `.meta` files no longer exist.
+- `InGameCombatManager` now owns resource damage, healing, shield synchronization, status/passive damage modifier preparation, Trigger dispatch, and death coordination.
+- `BaseUnitRuntimeModel.IsNexus` is the common role check; `EnemyTargeting.IsNexus(...)` now delegates to it.
+- `UnitRosterEntry` owns `ShowDamage(...)`, `RefreshActor()`, and `ShowDefeated()` for its registered Actor.
+- Repository search returned no references to the three deleted helper types.
+- Unity forced refresh removed the deleted source paths from the generated C# project and returned to idle with 0 `error CS` and 0 `Assets/Scripts` error entries.
+- `dotnet build Pakuri/Pakuri.sln --no-restore /p:UseSharedCompilation=false -v:minimal` passed with 0 errors and the existing 2 `MSB3277` warnings.
+
+### History
+
+- 2026-07-19: User rejected the three helper boundaries as unnecessary and explicitly requested Code Builder reintegration.
+- 2026-07-19: Code Builder merged each responsibility into the existing manager, model, and roster owners without changing public combat behavior.
