@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 전투 유닛을 진영별로 등록하고 액터와 피격 대상을 찾는 서비스.
+     */
     public sealed class UnitRosterService
     {
         private readonly List<UnitRosterEntry> entries = new List<UnitRosterEntry>();

@@ -8,6 +8,9 @@ using UnityEngine.UI;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 스테이지 정보, 보상 선택, 감옥 파티 화면을 갱신하고 입력을 연결하는 컴포넌트.
+     */
     [DisallowMultipleComponent]
     public sealed class InGameUIManager : MonoBehaviour
     {
@@ -931,7 +934,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var skills = CsvDataLoader.CurrentCatalog.GetActiveSkills(monster.MonsterId, monster);
+            var skills = CsvDataLoader.CurrentCatalog.GetActiveSkills(monster.MonsterId);
             for (var i = 0; i < skills.Length; i++)
             {
                 var skill = skills[i];
@@ -962,7 +965,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var passives = CsvDataLoader.CurrentCatalog.GetPassiveSkills(monster.MonsterId, monster);
+            var passives = CsvDataLoader.CurrentCatalog.GetPassiveSkills(monster.MonsterId);
             for (var i = 0; i < passives.Length; i++)
             {
                 var passive = passives[i];
@@ -998,7 +1001,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var rewards = CsvDataLoader.CurrentCatalog.GetRewardChoices(monster.MonsterId, monster);
+            var rewards = CsvDataLoader.CurrentCatalog.GetRewardChoices(monster.MonsterId);
             for (var i = 0; i < rewards.Length; i++)
             {
                 var reward = rewards[i];
@@ -1237,7 +1240,7 @@ namespace Pakuri.InGame
                 if (model != null)
                 {
                     SyncModelStateFromSession(session, model);
-                    SkillRuntimeFactory.RebuildLearnedActiveSet(model);
+                    SkillRuntimeFactory.RebuildLearnedSkillSet(model);
                     combatManager.Roster.RefreshActor(model);
                 }
             }
@@ -1263,7 +1266,7 @@ namespace Pakuri.InGame
                 }
 
                 SyncModelStateFromSession(session, model);
-                SkillRuntimeFactory.RebuildLearnedActiveSet(model);
+                SkillRuntimeFactory.RebuildLearnedSkillSet(model);
                 actor.RefreshDebugView();
             }
         }
@@ -1316,7 +1319,7 @@ namespace Pakuri.InGame
 
         private bool HasLearnedRequiredActive(RunSession session, MonsterDefinition monster, RunSession.RunMonsterState state, SkillSlot slot)
         {
-            var skills = CsvDataLoader.CurrentCatalog.GetActiveSkills(monster.MonsterId, monster);
+            var skills = CsvDataLoader.CurrentCatalog.GetActiveSkills(monster.MonsterId);
             for (var i = 0; i < skills.Length; i++)
             {
                 var skill = skills[i];

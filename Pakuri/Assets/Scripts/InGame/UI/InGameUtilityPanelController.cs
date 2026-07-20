@@ -3,6 +3,9 @@ using UnityEngine.UI;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 자동 스킬 사용과 전투 배속 버튼을 제어하는 인게임 UI 컴포넌트.
+     */
     [DisallowMultipleComponent]
     public sealed class InGameUtilityPanelController : MonoBehaviour
     {

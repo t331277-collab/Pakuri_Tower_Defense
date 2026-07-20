@@ -2,18 +2,23 @@ using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using UnityEngine;
+using static Pakuri.Data.CsvDataLoader;
+using static Pakuri.Data.CsvParser;
+using static Pakuri.Data.CsvSourceModel;
+using static Pakuri.Data.SkillGraphBuilder;
+
 
 namespace Pakuri.Data
 {
     /*
      * 몬스터와 적 CSV 행을 읽고 현재 데이터 규칙을 검사한다.
      */
-    public static partial class CsvDataLoader
+    internal static class CsvRowParser
     {
         /*
          * 플레이어 몬스터 CSV 한 행의 능력치와 표시 정보를 보관한다.
          */
-        private sealed class MonsterRow
+        internal sealed class MonsterRow
         {
             public string Id;
             public string DisplayName;
@@ -44,7 +49,7 @@ namespace Pakuri.Data
         /*
          * 몬스터 초기 보상 선택지와 연결 스킬 ID를 보관한다.
          */
-        private sealed class RewardChoiceRow
+        internal sealed class RewardChoiceRow
         {
             public string Id;
             public string MonsterId;
@@ -56,7 +61,7 @@ namespace Pakuri.Data
         /*
          * 액티브·패시브 스킬 CSV 한 행의 실행 값을 보관한다.
          */
-        private sealed class SkillRow
+        internal sealed class SkillRow
         {
             public string Id;
             public string MonsterId;
@@ -133,7 +138,7 @@ namespace Pakuri.Data
         /*
          * 스킬 성장 선택지 CSV 한 행의 변경값과 조건을 보관한다.
          */
-        private sealed class SkillChoiceRow
+        internal sealed class SkillChoiceRow
         {
             public string Id;
             public string MonsterId;
@@ -289,7 +294,7 @@ namespace Pakuri.Data
         /*
          * 전투 사건에 연결된 스킬 Trigger 한 행을 보관한다.
          */
-        private sealed class SkillTriggerRow
+        internal sealed class SkillTriggerRow
         {
             public string Id;
             public string MonsterId;
@@ -356,7 +361,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        private static MonsterRow ParseMonsterRow(CsvRecord record)
+        internal static MonsterRow ParseMonsterRow(CsvRecord record)
         {
             return new MonsterRow
             {
@@ -390,7 +395,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        private static RewardChoiceRow ParseRewardChoiceRow(CsvRecord record)
+        internal static RewardChoiceRow ParseRewardChoiceRow(CsvRecord record)
         {
             return new RewardChoiceRow
             {
@@ -405,7 +410,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        private static SkillRow ParseSkillRow(CsvRecord record, string tableName, string ownerIdOverride = null)
+        internal static SkillRow ParseSkillRow(CsvRecord record, string tableName, string ownerIdOverride = null)
         {
             var slot = record.ReadEnum<SkillSlot>("slot");
             return new SkillRow
@@ -488,7 +493,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        private static SkillChoiceRow ParseSkillChoiceRow(CsvRecord record, string tableName)
+        internal static SkillChoiceRow ParseSkillChoiceRow(CsvRecord record, string tableName)
         {
             var row = new SkillChoiceRow
             {
@@ -653,7 +658,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        private static SkillTriggerRow ParseSkillTriggerRow(CsvRecord record, string tableName)
+        internal static SkillTriggerRow ParseSkillTriggerRow(CsvRecord record, string tableName)
         {
             var row = new SkillTriggerRow
             {
@@ -759,7 +764,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        private static string ReadMonsterIdOrInfer(CsvRecord record, string tableName)
+        internal static string ReadMonsterIdOrInfer(CsvRecord record, string tableName)
         {
             var monsterId = ReadOptionalStringIfColumnExists(record, "monster_id");
             if (!string.IsNullOrWhiteSpace(monsterId))
@@ -784,7 +789,7 @@ namespace Pakuri.Data
         /*
          * 파일명과 행 정보로 누락된 값을 판단한다.
          */
-        private static string InferMonsterIdFromSplitTableName(string tableName)
+        internal static string InferMonsterIdFromSplitTableName(string tableName)
         {
             if (string.IsNullOrWhiteSpace(tableName))
             {
@@ -805,7 +810,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        private static PakuriCsvSkillKind ReadSkillKindOrInfer(CsvRecord record, SkillSlot slot)
+        internal static PakuriCsvSkillKind ReadSkillKindOrInfer(CsvRecord record, SkillSlot slot)
         {
             return record.HasColumn("skill_kind")
                 ? record.ReadEnum<PakuriCsvSkillKind>("skill_kind")
@@ -817,7 +822,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        private static SkillRuntimeKind ReadRuntimeKindOrInfer(CsvRecord record, SkillSlot slot)
+        internal static SkillRuntimeKind ReadRuntimeKindOrInfer(CsvRecord record, SkillSlot slot)
         {
             if (record.HasColumn("runtime_kind"))
             {
@@ -840,7 +845,7 @@ namespace Pakuri.Data
         /*
          * 파일명과 행 정보로 누락된 값을 판단한다.
          */
-        private static SkillSlot InferRequiredActiveSlot(SkillSlot passiveSlot)
+        internal static SkillSlot InferRequiredActiveSlot(SkillSlot passiveSlot)
         {
             switch (passiveSlot)
             {
@@ -860,7 +865,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        private static float ReadOptionalFloat(CsvRecord record, string columnName)
+        internal static float ReadOptionalFloat(CsvRecord record, string columnName)
         {
             return TryReadFloat(record, columnName, out var value) ? value : 0f;
         }
@@ -868,7 +873,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        private static int ReadOptionalInt(CsvRecord record, string columnName)
+        internal static int ReadOptionalInt(CsvRecord record, string columnName)
         {
             return TryReadInt(record, columnName, out var value) ? value : 0;
         }
@@ -876,7 +881,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        private static int ReadOptionalIntIfColumnExists(CsvRecord record, string columnName)
+        internal static int ReadOptionalIntIfColumnExists(CsvRecord record, string columnName)
         {
             return record.HasColumn(columnName) ? ReadOptionalInt(record, columnName) : 0;
         }
@@ -884,7 +889,7 @@ namespace Pakuri.Data
         /*
          * 열이 존재하고 값이 있으면 CSV 값을 읽는다.
          */
-        private static bool TryReadIntIfColumnExists(CsvRecord record, string columnName, out int value)
+        internal static bool TryReadIntIfColumnExists(CsvRecord record, string columnName, out int value)
         {
             value = 0;
             return record.HasColumn(columnName) && TryReadInt(record, columnName, out value);
@@ -893,7 +898,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        private static float ReadOptionalFloatIfColumnExists(CsvRecord record, string columnName)
+        internal static float ReadOptionalFloatIfColumnExists(CsvRecord record, string columnName)
         {
             return record.HasColumn(columnName) ? ReadOptionalFloat(record, columnName) : 0f;
         }
@@ -901,7 +906,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        private static float ReadOptionalFloatWithDefaultIfColumnExists(CsvRecord record, string columnName, float fallback)
+        internal static float ReadOptionalFloatWithDefaultIfColumnExists(CsvRecord record, string columnName, float fallback)
         {
             return record.HasColumn(columnName) && TryReadFloat(record, columnName, out var value)
                 ? value
@@ -911,7 +916,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        private static string ReadOptionalStringIfColumnExists(CsvRecord record, string columnName)
+        internal static string ReadOptionalStringIfColumnExists(CsvRecord record, string columnName)
         {
             return record.HasColumn(columnName) ? record.ReadString(columnName) : string.Empty;
         }
@@ -919,7 +924,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        private static bool ReadOptionalBoolIfColumnExists(CsvRecord record, string columnName)
+        internal static bool ReadOptionalBoolIfColumnExists(CsvRecord record, string columnName)
         {
             if (!record.HasColumn(columnName))
             {
@@ -933,7 +938,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        private static bool ReadOptionalBoolWithDefaultIfColumnExists(CsvRecord record, string columnName, bool fallback)
+        internal static bool ReadOptionalBoolWithDefaultIfColumnExists(CsvRecord record, string columnName, bool fallback)
         {
             if (!record.HasColumn(columnName))
             {
@@ -947,7 +952,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        private static T ReadOptionalEnumIfColumnExists<T>(CsvRecord record, string columnName, T fallback) where T : struct
+        internal static T ReadOptionalEnumIfColumnExists<T>(CsvRecord record, string columnName, T fallback) where T : struct
         {
             if (!record.HasColumn(columnName))
             {
@@ -963,7 +968,7 @@ namespace Pakuri.Data
         /*
          * 열이 존재하고 값이 있으면 CSV 값을 읽는다.
          */
-        private static bool TryReadFloatIfColumnExists(CsvRecord record, string columnName, out float value)
+        internal static bool TryReadFloatIfColumnExists(CsvRecord record, string columnName, out float value)
         {
             value = 0f;
             return record.HasColumn(columnName) && TryReadFloat(record, columnName, out value);
@@ -972,7 +977,7 @@ namespace Pakuri.Data
         /*
          * 열이 존재하고 값이 있으면 CSV 값을 읽는다.
          */
-        private static bool TryReadFloat(CsvRecord record, string columnName, out float value)
+        internal static bool TryReadFloat(CsvRecord record, string columnName, out float value)
         {
             var raw = record.ReadString(columnName);
             if (string.IsNullOrWhiteSpace(raw))
@@ -988,7 +993,7 @@ namespace Pakuri.Data
         /*
          * 열이 존재하고 값이 있으면 CSV 값을 읽는다.
          */
-        private static bool TryReadInt(CsvRecord record, string columnName, out int value)
+        internal static bool TryReadInt(CsvRecord record, string columnName, out int value)
         {
             var raw = record.ReadString(columnName);
             if (string.IsNullOrWhiteSpace(raw))
@@ -1004,7 +1009,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateExpectedSlots(
+        internal static void ValidateExpectedSlots(
             string monsterId,
             HashSet<SkillSlot> slots,
             SkillSlot first,
@@ -1024,7 +1029,7 @@ namespace Pakuri.Data
         /*
          * 적 CSV 한 행의 기본 능력치와 장착 스킬 ID를 보관한다.
          */
-        private sealed class EnemyMigrationRow
+        internal sealed class EnemyMigrationRow
         {
             public string Id;
             public string StageId;
@@ -1055,7 +1060,7 @@ namespace Pakuri.Data
         /*
          * 적 스킬 CSV 한 행의 실행 방식과 전투 값을 보관한다.
          */
-        private sealed class EnemyBaseSkillRow
+        internal sealed class EnemyBaseSkillRow
         {
             public SkillRow Skill;
             public string ExecutionProfile;
@@ -1086,7 +1091,7 @@ namespace Pakuri.Data
         /*
          * 적 스킬 Trigger 한 행의 실행 대상과 순서를 보관한다.
          */
-        private sealed class EnemyMigrationTriggerRow
+        internal sealed class EnemyMigrationTriggerRow
         {
             public string Id;
             public string SourceSkillId;
@@ -1100,7 +1105,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        private static EnemyMigrationRow ParseEnemyMigrationRow(CsvRecord record)
+        internal static EnemyMigrationRow ParseEnemyMigrationRow(CsvRecord record)
         {
             return new EnemyMigrationRow
             {
@@ -1134,7 +1139,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        private static EnemyBaseSkillRow ParseEnemyBaseSkillRow(CsvRecord record, string tableName)
+        internal static EnemyBaseSkillRow ParseEnemyBaseSkillRow(CsvRecord record, string tableName)
         {
             if (string.Equals(tableName, "skills_passive.csv", StringComparison.OrdinalIgnoreCase))
             {
@@ -1185,7 +1190,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        private static EnemyBaseSkillRow ParseEnemyPassiveSkillRow(CsvRecord record)
+        internal static EnemyBaseSkillRow ParseEnemyPassiveSkillRow(CsvRecord record)
         {
             return new EnemyBaseSkillRow
             {
@@ -1209,7 +1214,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        private static EnemyMigrationTriggerRow ParseEnemyMigrationTriggerRow(CsvRecord record)
+        internal static EnemyMigrationTriggerRow ParseEnemyMigrationTriggerRow(CsvRecord record)
         {
             return new EnemyMigrationTriggerRow
             {
@@ -1226,7 +1231,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateEnemyMigrationRows(SourceModel model, List<string> errors)
+        internal static void ValidateEnemyMigrationRows(SourceModel model, List<string> errors)
         {
             var referencedActiveSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var referencedPassiveIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -1300,7 +1305,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateEnemySkillSlot(
+        internal static void ValidateEnemySkillSlot(
             SourceModel model,
             EnemyMigrationRow enemy,
             string skillId,
@@ -1329,7 +1334,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateEnemyPassive(
+        internal static void ValidateEnemyPassive(
             SourceModel model,
             EnemyMigrationRow enemy,
             HashSet<string> referencedPassiveIds,
@@ -1372,7 +1377,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateEnemyCombatStartTrigger(
+        internal static void ValidateEnemyCombatStartTrigger(
             SourceModel model,
             string skillId,
             SkillRuntimeKind runtimeKind,
@@ -1395,6 +1400,357 @@ namespace Pakuri.Data
             {
                 errors.Add($"Enemy skill '{skillId}' requires exactly one enabled CombatStart trigger; found '{count}'.");
             }
+        }
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
+        internal static SourceModel LoadSourceModel(CsvRuntimeCatalog sourceCatalog)
+        {
+            var model = new SourceModel();
+
+            var catalogMonsterTable = CsvTable.Load(sourceCatalog.CatalogMonsters, CatalogMonstersFileName);
+            var monsterTable = CsvTable.Load(sourceCatalog.Monsters, MonstersFileName);
+            var rewardChoiceTable = CsvTable.Load(sourceCatalog.MonsterRewardChoices, MonsterRewardChoicesFileName);
+            var projectileSkillAssets = sourceCatalog.MonsterSkillsProjectileFiles;
+            var lineAttackSkillAssets = sourceCatalog.MonsterSkillsLineAttackFiles;
+            var areaAttackSkillAssets = sourceCatalog.MonsterSkillsAreaAttackFiles;
+            var singleAttackSkillAssets = sourceCatalog.MonsterSkillsSingleAttackFiles;
+            var buffSkillAssets = sourceCatalog.MonsterSkillsBuffFiles;
+            var passiveSkillAssets = sourceCatalog.MonsterSkillsPassiveFiles;
+            var skillTriggerAssets = sourceCatalog.MonsterSkillTriggerFiles;
+            var skillGraphNodeAssets = sourceCatalog.MonsterSkillGraphNodeFiles;
+            var skillNodeDefinitionTable = CsvTable.Load(
+                sourceCatalog.MonsterSkillNodeDefinitions,
+                MonsterSkillNodeDefinitionsFileName);
+            var skillNodeDefinitionParamTable = CsvTable.Load(
+                sourceCatalog.MonsterSkillNodeDefinitionParams,
+                MonsterSkillNodeDefinitionParamsFileName);
+            var projectileChoiceAssets = sourceCatalog.MonsterSkillChoicesProjectileFiles;
+            var lineAttackChoiceAssets = sourceCatalog.MonsterSkillChoicesLineAttackFiles;
+            var areaAttackChoiceAssets = sourceCatalog.MonsterSkillChoicesAreaAttackFiles;
+            var singleAttackChoiceAssets = sourceCatalog.MonsterSkillChoicesSingleAttackFiles;
+            var buffChoiceAssets = sourceCatalog.MonsterSkillChoicesBuffFiles;
+            var passiveChoiceAssets = sourceCatalog.MonsterSkillChoicesPassiveFiles;
+            var statusEffectTable = CsvTable.Load(sourceCatalog.StatusEffects, StatusEffectsFileName);
+            var enemyTable = CsvTable.Load(sourceCatalog.Enemies, EnemiesFileName);
+
+            foreach (var record in catalogMonsterTable.Records)
+            {
+                var row = ParseCatalogEntry(record, "monster_id");
+                AddUnique(model.CatalogMonsters, row.Id, row, record);
+            }
+
+            foreach (var record in monsterTable.Records)
+            {
+                var row = ParseMonsterRow(record);
+                AddUnique(model.Monsters, row.Id, row, record);
+            }
+
+            foreach (var record in rewardChoiceTable.Records)
+            {
+                var row = ParseRewardChoiceRow(record);
+                AddUnique(model.RewardChoices, row.Id, row, record);
+            }
+
+            LoadSkillRows(
+                model,
+                projectileSkillAssets,
+                MonsterSkillsProjectileFileName,
+                SkillRuntimeKind.MagazineProjectile,
+                SkillRuntimeKind.CooldownProjectile);
+            LoadSkillRows(
+                model,
+                lineAttackSkillAssets,
+                MonsterSkillsLineAttackFileName,
+                SkillRuntimeKind.LineAttack);
+            LoadSkillRows(
+                model,
+                areaAttackSkillAssets,
+                MonsterSkillsAreaAttackFileName,
+                SkillRuntimeKind.AreaAttack,
+                SkillRuntimeKind.Field);
+            LoadSkillRows(
+                model,
+                singleAttackSkillAssets,
+                MonsterSkillsSingleAttackFileName,
+                SkillRuntimeKind.SingleAttack);
+            LoadSkillRows(
+                model,
+                buffSkillAssets,
+                MonsterSkillsBuffFileName,
+                SkillRuntimeKind.Buff,
+                SkillRuntimeKind.Shield);
+            LoadSkillRows(
+                model,
+                passiveSkillAssets,
+                MonsterSkillsPassiveFileName,
+                SkillRuntimeKind.Passive);
+
+            foreach (var record in skillNodeDefinitionTable.Records)
+            {
+                var row = ParseSkillNodeTypeRow(record);
+                AddUnique(model.SkillNodeTypes, row.Id, row, record);
+            }
+
+            foreach (var record in skillNodeDefinitionParamTable.Records)
+            {
+                model.SkillNodeTypeParams.Add(ParseSkillNodeTypeParamRow(record));
+            }
+
+            for (var assetIndex = 0; assetIndex < skillTriggerAssets.Length; assetIndex++)
+            {
+                var skillTriggerTable = CsvTable.Load(
+                    skillTriggerAssets[assetIndex],
+                    GetTextAssetCsvTableName(skillTriggerAssets[assetIndex], MonsterSkillTriggersFileName));
+                foreach (var record in skillTriggerTable.Records)
+                {
+                    var row = ParseSkillTriggerRow(record, skillTriggerTable.TableName);
+                    AddUnique(model.SkillTriggers, row.Id, row, record);
+                }
+            }
+
+            LoadSkillChoiceRows(
+                model,
+                projectileChoiceAssets,
+                MonsterSkillChoicesProjectileFileName,
+                SkillRuntimeKind.MagazineProjectile,
+                SkillRuntimeKind.CooldownProjectile);
+            LoadSkillChoiceRows(
+                model,
+                lineAttackChoiceAssets,
+                MonsterSkillChoicesLineAttackFileName,
+                SkillRuntimeKind.LineAttack);
+            LoadSkillChoiceRows(
+                model,
+                areaAttackChoiceAssets,
+                MonsterSkillChoicesAreaAttackFileName,
+                SkillRuntimeKind.AreaAttack,
+                SkillRuntimeKind.Field);
+            LoadSkillChoiceRows(
+                model,
+                singleAttackChoiceAssets,
+                MonsterSkillChoicesSingleAttackFileName,
+                SkillRuntimeKind.SingleAttack);
+            LoadSkillChoiceRows(
+                model,
+                buffChoiceAssets,
+                MonsterSkillChoicesBuffFileName,
+                SkillRuntimeKind.Buff,
+                SkillRuntimeKind.Shield);
+            LoadSkillChoiceRows(
+                model,
+                passiveChoiceAssets,
+                MonsterSkillChoicesPassiveFileName,
+                SkillRuntimeKind.Passive);
+
+            for (var assetIndex = 0; assetIndex < skillGraphNodeAssets.Length; assetIndex++)
+            {
+                var graphNodeTable = CsvTable.Load(
+                    skillGraphNodeAssets[assetIndex],
+                    GetTextAssetCsvTableName(skillGraphNodeAssets[assetIndex], "skill_graph_nodes.csv"));
+                foreach (var record in graphNodeTable.Records)
+                {
+                    model.SkillGraphNodes.Add(ParseSkillGraphNodeRow(record));
+                }
+            }
+
+            MaterializeSkillGraphRows(model);
+
+            foreach (var record in statusEffectTable.Records)
+            {
+                var row = ParseStatusEffectRow(record);
+                AddUnique(model.StatusEffects, row.Id, row, record);
+            }
+
+            foreach (var record in enemyTable.Records)
+            {
+                var row = ParseEnemyMigrationRow(record);
+                AddUnique(model.Enemies, row.Id, row, record);
+            }
+
+            var enemyBaseAssets = sourceCatalog.EnemySkillBaseFiles ?? Array.Empty<TextAsset>();
+            for (var assetIndex = 0; assetIndex < enemyBaseAssets.Length; assetIndex++)
+            {
+                var asset = enemyBaseAssets[assetIndex];
+                var tableName = GetTextAssetCsvTableName(asset, "enemy_base_skills.csv");
+                var table = CsvTable.Load(asset, tableName);
+                foreach (var record in table.Records)
+                {
+                    var row = ParseEnemyBaseSkillRow(record, tableName);
+                    AddUnique(model.EnemyBaseSkills, row.Skill.Id, row, record);
+                }
+            }
+
+            var enemyTriggerAssets = sourceCatalog.EnemySkillTriggerFiles ?? Array.Empty<TextAsset>();
+            for (var assetIndex = 0; assetIndex < enemyTriggerAssets.Length; assetIndex++)
+            {
+                var asset = enemyTriggerAssets[assetIndex];
+                var table = CsvTable.Load(asset, GetTextAssetCsvTableName(asset, "enemy_skill_triger.csv"));
+                foreach (var record in table.Records)
+                {
+                    var row = ParseEnemyMigrationTriggerRow(record);
+                    AddUnique(model.EnemyMigrationTriggers, row.Id, row, record);
+                }
+            }
+
+            return model;
+        }
+
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
+        internal static void LoadSkillRows(
+            SourceModel model,
+            TextAsset[] skillAssets,
+            string fallbackTableName,
+            params SkillRuntimeKind[] allowedRuntimeKinds)
+        {
+            for (var assetIndex = 0; assetIndex < skillAssets.Length; assetIndex++)
+            {
+                var skillAsset = skillAssets[assetIndex];
+                LoadSkillRows(
+                    model,
+                    skillAsset,
+                    GetTextAssetCsvTableName(skillAsset, fallbackTableName),
+                    allowedRuntimeKinds);
+            }
+        }
+
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
+        internal static void LoadSkillRows(
+            SourceModel model,
+            TextAsset skillAsset,
+            string tableName,
+            params SkillRuntimeKind[] allowedRuntimeKinds)
+        {
+            var skillTable = CsvTable.Load(skillAsset, tableName);
+            foreach (var record in skillTable.Records)
+            {
+                var row = ParseSkillRow(record, tableName);
+                if (!IsAllowedSkillRuntimeKind(row.RuntimeKind, allowedRuntimeKinds))
+                {
+                    throw new CsvFatalException(
+                        $"CSV table '{tableName}' contains skill '{row.Id}' with unsupported runtime_kind '{row.RuntimeKind}'.",
+                        new List<string>
+                        {
+                            $"Move skill '{row.Id}' to the split monster skill CSV that owns runtime_kind '{row.RuntimeKind}'."
+                        });
+                }
+
+                AddUnique(model.Skills, row.Id, row, record);
+            }
+        }
+
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
+        internal static void LoadSkillChoiceRows(
+            SourceModel model,
+            TextAsset[] choiceAssets,
+            string fallbackTableName,
+            params SkillRuntimeKind[] allowedOwnerRuntimeKinds)
+        {
+            for (var assetIndex = 0; assetIndex < choiceAssets.Length; assetIndex++)
+            {
+                var choiceAsset = choiceAssets[assetIndex];
+                LoadSkillChoiceRows(
+                    model,
+                    choiceAsset,
+                    GetTextAssetCsvTableName(choiceAsset, fallbackTableName),
+                    allowedOwnerRuntimeKinds);
+            }
+        }
+
+        /*
+         * 필요한 CSV 또는 자산을 불러온다.
+         */
+        internal static void LoadSkillChoiceRows(
+            SourceModel model,
+            TextAsset choiceAsset,
+            string tableName,
+            params SkillRuntimeKind[] allowedOwnerRuntimeKinds)
+        {
+            var choiceTable = CsvTable.Load(choiceAsset, tableName);
+            foreach (var record in choiceTable.Records)
+            {
+                var row = ParseSkillChoiceRow(record, tableName);
+                if (!model.Skills.TryGetValue(row.SkillId, out var ownerSkill))
+                {
+                    throw new CsvFatalException(
+                        $"CSV table '{tableName}' contains choice '{row.Id}' for unknown owner skill '{row.SkillId}'.",
+                        new List<string>
+                        {
+                            $"Define skill '{row.SkillId}' in the split monster skill CSV before adding its choices."
+                        });
+                }
+
+                if (!IsAllowedSkillRuntimeKind(ownerSkill.RuntimeKind, allowedOwnerRuntimeKinds))
+                {
+                    throw new CsvFatalException(
+                        $"CSV table '{tableName}' contains choice '{row.Id}' for skill '{row.SkillId}' with unsupported owner runtime_kind '{ownerSkill.RuntimeKind}'.",
+                        new List<string>
+                        {
+                            $"Move choice '{row.Id}' to the split monster skill choice CSV that owns runtime_kind '{ownerSkill.RuntimeKind}'."
+                        });
+                }
+
+                AddUnique(model.SkillChoices, row.Id, row, record);
+            }
+        }
+
+        /*
+         * 필요한 조건을 만족하는지 확인한다.
+         */
+        internal static bool IsAllowedSkillRuntimeKind(
+            SkillRuntimeKind runtimeKind,
+            SkillRuntimeKind[] allowedRuntimeKinds)
+        {
+            for (var i = 0; i < allowedRuntimeKinds.Length; i++)
+            {
+                if (allowedRuntimeKinds[i] == runtimeKind)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /*
+         * TextAsset 이름으로 CSV 테이블 이름을 만든다.
+         */
+        internal static string GetTextAssetCsvTableName(TextAsset asset, string fallbackTableName)
+        {
+            if (asset == null || string.IsNullOrWhiteSpace(asset.name))
+            {
+                return fallbackTableName;
+            }
+
+            return asset.name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                ? asset.name
+                : asset.name + ".csv";
+        }
+
+        /*
+         * 중복 ID를 거부하고 원본 행을 사전에 추가한다.
+         */
+        internal static void AddUnique<T>(Dictionary<string, T> dictionary, string id, T value, CsvRecord record)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                throw new CsvFatalException(
+                    $"CSV row {record.RowNumber} in '{record.TableName}' is missing a required id value.");
+            }
+
+            if (dictionary.ContainsKey(id))
+            {
+                throw new CsvFatalException(
+                    $"CSV row {record.RowNumber} in '{record.TableName}' uses duplicate id '{id}'.");
+            }
+
+            dictionary.Add(id, value);
         }
     }
 }

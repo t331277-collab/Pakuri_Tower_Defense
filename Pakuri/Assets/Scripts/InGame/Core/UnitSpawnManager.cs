@@ -124,7 +124,7 @@ namespace Pakuri.InGame
             // 현현 유닛은 세션 파티 상태를 먼저 확보한 뒤 학습 스킬 런타임을 복원한다.
             var runState = activeSession.EnsurePartyMemberState(monster);
             var model = unitFactory.CreateManifestedMonster(monster, runState, partySlotIndex);
-            SkillRuntimeFactory.RebuildLearnedActiveSet(model);
+            SkillRuntimeFactory.RebuildLearnedSkillSet(model);
 
             var spawnPoint = ResolveManifestSpawnPoint(partySlotIndex);
             var spawnPosition = spawnPoint.position;
@@ -152,7 +152,7 @@ namespace Pakuri.InGame
             // 저장된 파티 상태가 없으면 현재 몬스터 정의로 새 상태를 만든다.
             var runState = activeSession.GetPartyMemberState(monster.MonsterId) ?? activeSession.EnsurePartyMemberState(monster);
             model = unitFactory.CreateSelectedMonster(monster, runState, 0);
-            SkillRuntimeFactory.RebuildLearnedActiveSet(model);
+            SkillRuntimeFactory.RebuildLearnedSkillSet(model);
 
             var spawnPosition = playerSpawnPoint.position;
             var spawnRotation = playerSpawnPoint.rotation;
@@ -333,7 +333,7 @@ namespace Pakuri.InGame
             CopyListToSet(state.LearnedActives, model.State.LearnedActiveSkillIds);
             CopyListToSet(state.LearnedPassives, model.State.LearnedPassiveSkillIds);
             CopyListToSet(state.ChosenChoiceIds, model.State.ChosenChoiceIds);
-            SkillRuntimeFactory.RebuildLearnedActiveSet(model);
+            SkillRuntimeFactory.RebuildLearnedSkillSet(model);
         }
 
         /*
@@ -391,7 +391,7 @@ namespace Pakuri.InGame
             var monster = ResolveMonsterDefinition(monsterId);
             session = RunSession.Begin(monster);
             var model = unitFactory.CreateSelectedMonster(monster, session.GetPartyMemberState(monster.MonsterId), 0);
-            SkillRuntimeFactory.RebuildLearnedActiveSet(model);
+            SkillRuntimeFactory.RebuildLearnedSkillSet(model);
             return model;
         }
 

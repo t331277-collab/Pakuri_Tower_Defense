@@ -37,45 +37,37 @@ namespace Pakuri.Data
 
         public MonsterDefinition[] GetMonsters()
         {
-            return lookup.GetMonsters(this);
+            return Monsters;
         }
 
         public MonsterDefinition ResolveMonster(string id)
         {
-            return lookup.ResolveMonster(id, this);
+            return lookup.ResolveMonster(id);
         }
 
-        public SkillDefinition[] GetActiveSkills(string monsterId, MonsterDefinition fallbackMonster = null)
+        public SkillDefinition[] GetActiveSkills(string monsterId)
         {
-            return lookup.GetActiveSkills(monsterId, fallbackMonster);
+            return lookup.GetActiveSkills(monsterId);
         }
 
-        public PassiveDefinition[] GetPassiveSkills(string monsterId, MonsterDefinition fallbackMonster = null)
+        public PassiveDefinition[] GetPassiveSkills(string monsterId)
         {
-            return lookup.GetPassiveSkills(monsterId, fallbackMonster);
+            return lookup.GetPassiveSkills(monsterId);
         }
 
-        public MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(
-            string monsterId,
-            MonsterDefinition fallbackMonster = null)
+        public MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(string monsterId)
         {
-            return lookup.GetRewardChoices(monsterId, fallbackMonster);
+            return lookup.GetRewardChoices(monsterId);
         }
 
-        public SkillDefinition ResolveActiveSkill(
-            string monsterId,
-            SkillSlot slot,
-            MonsterDefinition fallbackMonster = null)
+        public SkillDefinition ResolveActiveSkill(string monsterId, SkillSlot slot)
         {
-            return lookup.ResolveActiveSkill(monsterId, slot, fallbackMonster);
+            return lookup.ResolveActiveSkill(monsterId, slot);
         }
 
-        public PassiveDefinition ResolvePassiveSkill(
-            string monsterId,
-            SkillSlot slot,
-            MonsterDefinition fallbackMonster = null)
+        public PassiveDefinition ResolvePassiveSkill(string monsterId, SkillSlot slot)
         {
-            return lookup.ResolvePassiveSkill(monsterId, slot, fallbackMonster);
+            return lookup.ResolvePassiveSkill(monsterId, slot);
         }
     }
 }

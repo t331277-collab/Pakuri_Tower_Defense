@@ -74,6 +74,7 @@ namespace Pakuri.InGame
             skill.Description = source.DescriptionText;
             skill.Icon = source.SkillIcon;
             skill.SkillEffectPrefab = source.SkillEffectPrefab;
+            skill.BaseModifierChoices = MapChoices(source.BaseModifierChoices);
             skill.EnhancementChoices = MapChoices(source.EnhancementChoices);
             skill.MasterChoices = Array.Empty<SkillChoiceRuntimeData>();
             skill.MultiEffects = source.PassiveEffects ?? Array.Empty<SkillEffectDefinition>();
@@ -635,202 +636,18 @@ namespace Pakuri.InGame
          */
         private static SkillChoiceRuntimeData[] MapChoices(SkillChoiceDefinition[] source)
         {
-            if (source == null || source.Length == 0)
-            {
-                return Array.Empty<SkillChoiceRuntimeData>();
-            }
-
             var mapped = new SkillChoiceRuntimeData[source.Length];
             for (var i = 0; i < source.Length; i++)
             {
                 var choice = source[i];
-                var spec = new SkillChoiceRuntimeData
+                mapped[i] = new SkillChoiceRuntimeData
                 {
-                    ChoiceId = choice != null ? choice.ChoiceId : string.Empty,
-                    Title = choice != null ? choice.Title : string.Empty,
-                    Description = choice != null ? choice.DescriptionText : string.Empty,
-                    Icon = choice != null ? choice.SkillIcon : null,
-                    SkillEffectPrefab = choice != null ? choice.SkillEffectPrefab : null,
-                    HasDamageMultiplier = choice != null && choice.HasDamageMultiplier,
-                    DamageMultiplier = choice != null && choice.HasDamageMultiplier ? choice.DamageMultiplier : 1f,
-                    HasShieldAmountMultiplier = false,
-                    ShieldAmountMultiplier = 1f,
-                    BaseDamageBonus = choice != null ? choice.BaseDamageBonus : 0f,
-                    HasCooldownMultiplier = choice != null && choice.HasCooldownMultiplier,
-                    CooldownMultiplier = choice != null && choice.HasCooldownMultiplier ? choice.CooldownMultiplier : 1f,
-                    HasRadiusMultiplier = choice != null && choice.HasRadiusMultiplier,
-                    RadiusMultiplier = choice != null && choice.HasRadiusMultiplier ? choice.RadiusMultiplier : 1f,
-                    RadiusBonus = choice != null ? choice.RadiusBonus : 0f,
-                    BeamWidthBonus = choice != null ? choice.BeamWidthBonus : 0f,
-                    HasKnockbackDistanceMultiplier = choice != null && choice.HasKnockbackDistanceMultiplier,
-                    KnockbackDistanceMultiplier = choice != null && choice.HasKnockbackDistanceMultiplier ? choice.KnockbackDistanceMultiplier : 1f,
-                    HasExecuteHealthRatioBonus = choice != null && choice.HasExecuteHealthRatioBonus,
-                    ExecuteHealthRatioBonus = choice != null ? choice.ExecuteHealthRatioBonus : 0f,
-                    HasDurationMultiplier = choice != null && choice.HasDurationMultiplier,
-                    DurationMultiplier = choice != null && choice.HasDurationMultiplier ? choice.DurationMultiplier : 1f,
-                    DurationBonus = choice != null ? choice.DurationBonus : 0f,
-                    HasMagazineBonus = choice != null && choice.HasMagazineBonus,
-                    MagazineBonus = choice != null ? choice.MagazineBonus : 0,
-                    AdditionalProjectileBonus = choice != null ? choice.AdditionalProjectileBonus : 0,
-                    PierceBonus = choice != null ? choice.PierceBonus : 0,
-                    HasReloadTimeMultiplier = choice != null && choice.HasReloadTimeMultiplier,
-                    ReloadTimeMultiplier = choice != null && choice.HasReloadTimeMultiplier ? choice.ReloadTimeMultiplier : 1f,
-                    HasShotIntervalMultiplier = choice != null && choice.HasShotIntervalMultiplier,
-                    ShotIntervalMultiplier = choice != null && choice.HasShotIntervalMultiplier ? choice.ShotIntervalMultiplier : 1f,
-                    HasBurstDamageProjectileIndex = choice != null && choice.HasBurstDamageProjectileIndex,
-                    BurstDamageProjectileIndex = choice != null ? choice.BurstDamageProjectileIndex : 0,
-                    HasBurstDamageMultiplier = choice != null && choice.HasBurstDamageMultiplier,
-                    BurstDamageMultiplier = choice != null && choice.HasBurstDamageMultiplier ? choice.BurstDamageMultiplier : 1f,
-                    HasBurstStatusProjectileIndex = choice != null && choice.HasBurstStatusProjectileIndex,
-                    BurstStatusProjectileIndex = choice != null ? choice.BurstStatusProjectileIndex : 0,
-                    BurstStatusStacksBonus = choice != null ? choice.BurstStatusStacksBonus : 0,
-                    FollowUpProjectileCount = choice != null ? choice.FollowUpProjectileCount : 0,
-                    FollowUpProjectileDelaySeconds = choice != null ? choice.FollowUpProjectileDelaySeconds : 0f,
-                    FollowUpProjectileDamageMultiplier = choice != null && choice.FollowUpProjectileDamageMultiplier > 0f ? choice.FollowUpProjectileDamageMultiplier : 1f,
-                    HasStatusChanceBonus = choice != null && choice.HasStatusChanceBonus,
-                    StatusChanceBonus = choice != null ? choice.StatusChanceBonus : 0f,
-                    BranchChanceBonus = choice != null ? choice.BranchChanceBonus : 0f,
-                    HasBranchChanceSet = choice != null && choice.HasBranchChanceSet,
-                    BranchChanceSet = choice != null ? choice.BranchChanceSet : 0f,
-                    HasBranchCount = choice != null && choice.HasBranchCount,
-                    BranchCount = choice != null ? choice.BranchCount : 0,
-                    HasBranchDamageMultiplier = choice != null && choice.HasBranchDamageMultiplier,
-                    BranchDamageMultiplier = choice != null && choice.HasBranchDamageMultiplier ? choice.BranchDamageMultiplier : 1f,
-                    HasBranchSearchRadius = choice != null && choice.HasBranchSearchRadius,
-                    BranchSearchRadius = choice != null ? choice.BranchSearchRadius : 0f,
-                    BranchLaunchPeriod = choice != null ? choice.BranchLaunchPeriod : 0,
-                    HasBranchLaunchChanceSet = choice != null && choice.HasBranchLaunchChanceSet,
-                    BranchLaunchChanceSet = choice != null ? choice.BranchLaunchChanceSet : 0f,
-                    HasMaxHealthBonus = choice != null && choice.HasMaxHealthBonus,
-                    MaxHealthBonus = choice != null ? choice.MaxHealthBonus : 0f,
-                    HitTargetCountBonus = choice != null ? choice.HitTargetCountBonus : 0,
-                    CritChanceBonus = choice != null ? choice.CritChanceBonus : 0f,
-                    CritDamageBonus = choice != null ? choice.CritDamageBonus : 0f,
-                    ExecuteCritChanceBonus = choice != null ? choice.ExecuteCritChanceBonus : 0f,
-                    HasBossDamageMultiplier = choice != null && choice.HasBossDamageMultiplier,
-                    BossDamageMultiplier = choice != null && choice.HasBossDamageMultiplier ? choice.BossDamageMultiplier : 1f,
-                    HasKillCooldownRefundRatioBonus = choice != null && choice.HasKillCooldownRefundRatioBonus,
-                    KillCooldownRefundRatioBonus = choice != null ? choice.KillCooldownRefundRatioBonus : 0f,
-                    KillResetsCooldown = choice != null && choice.KillResetsCooldown,
-                    KillResetsCooldownRequiresExecute = choice != null && choice.KillResetsCooldownRequiresExecute,
-                    StatusTag = choice != null ? choice.StatusTag : string.Empty,
-                    HasStatusActionSpeedBonus = choice != null && choice.HasStatusActionSpeedBonus,
-                    StatusActionSpeedBonus = choice != null ? choice.StatusActionSpeedBonus : 0f,
-                    HasStatusAttackPowerBonus = choice != null && choice.HasStatusAttackPowerBonus,
-                    StatusAttackPowerBonus = choice != null ? choice.StatusAttackPowerBonus : 0f,
-                    StatusStacksBonus = choice != null ? choice.StatusStacksBonus : 0,
-                    HasStatusStacksSet = choice != null && choice.HasStatusStacksSet,
-                    StatusStacksSet = choice != null ? choice.StatusStacksSet : 0,
-                    HasStatusElementDamageTakenBonus = choice != null && choice.HasStatusElementDamageTakenBonus,
-                    StatusElementDamageTakenBonus = choice != null ? choice.StatusElementDamageTakenBonus : 0f,
-                    HasStatusCriticalDamageTakenBonus = choice != null && choice.HasStatusCriticalDamageTakenBonus,
-                    StatusCriticalDamageTakenBonus = choice != null ? choice.StatusCriticalDamageTakenBonus : 0f,
-                    HasStatusAilmentResistanceBonus = choice != null && choice.HasStatusAilmentResistanceBonus,
-                    StatusAilmentResistanceBonus = choice != null ? choice.StatusAilmentResistanceBonus : 0f,
-                    StatusMaxStacksBonusStatusId = choice != null ? choice.StatusMaxStacksBonusStatusId : string.Empty,
-                    StatusMaxStacksBonus = choice != null ? choice.StatusMaxStacksBonus : 0,
-                    StatusDurationBonusStatusId = choice != null ? choice.StatusDurationBonusStatusId : string.Empty,
-                    StatusDurationBonus = choice != null ? choice.StatusDurationBonus : 0f,
-                    ThresholdStatusId = choice != null ? choice.ThresholdStatusId : string.Empty,
-                    ThresholdStatusMinStacks = choice != null ? choice.ThresholdStatusMinStacks : 0,
-                    ThresholdApplyStatusId = choice != null ? choice.ThresholdApplyStatusId : string.Empty,
-                    HasTargetStatusStackDamageMultiplier = choice != null && choice.HasTargetStatusStackDamageMultiplier,
-                    TargetStatusStackDamageMultiplier = choice != null && choice.HasTargetStatusStackDamageMultiplier ? choice.TargetStatusStackDamageMultiplier : 1f,
-                    HasConsumeTargetStatusRatioOverride = choice != null && choice.HasConsumeTargetStatusRatioOverride,
-                    ConsumeTargetStatusRatioOverride = choice != null ? choice.ConsumeTargetStatusRatioOverride : 0f,
-                    HasConsumeTargetStatusStacksOverride = choice != null && choice.HasConsumeTargetStatusStacksOverride,
-                    ConsumeTargetStatusStacksOverride = choice != null ? choice.ConsumeTargetStatusStacksOverride : 0,
-                    ConditionalCritChanceBonus = choice != null ? choice.ConditionalCritChanceBonus : 0f,
-                    ConditionalCritTargetStatusId = choice != null ? choice.ConditionalCritTargetStatusId : string.Empty,
-                    ConditionalCritTargetStatusMinStacks = choice != null ? choice.ConditionalCritTargetStatusMinStacks : 0,
-                    RedistributeConsumedStatusRatioOnKill = choice != null ? choice.RedistributeConsumedStatusRatioOnKill : 0f,
-                    RedistributeConsumedStatusId = choice != null ? choice.RedistributeConsumedStatusId : string.Empty,
-                    RedistributeConsumedStatusSearchRadius = choice != null ? choice.RedistributeConsumedStatusSearchRadius : 0f,
-                    RedistributeConsumedStatusTargetCount = choice != null ? choice.RedistributeConsumedStatusTargetCount : 0,
-                    CountStatusId = choice != null ? choice.CountStatusId : string.Empty,
-                    CountTargetSide = choice != null ? choice.CountTargetSide : SkillMultiEffectTargetSide.Enemy,
-                    DamageMultiplierPerCount = choice != null ? choice.DamageMultiplierPerCount : 0f,
-                    CountMax = choice != null ? choice.CountMax : 0,
-                    ConsecutiveHitBonusRate = choice != null ? choice.ConsecutiveHitBonusRate : 0f,
-                    ConsecutiveHitMax = choice != null ? choice.ConsecutiveHitMax : 0f,
-                    HasStatusConditionalDamageTakenBonus = choice != null && choice.HasStatusConditionalDamageTakenBonus,
-                    StatusConditionalDamageTakenBonus = choice != null ? choice.StatusConditionalDamageTakenBonus : 0f,
-                    StatusConditionalSourceStatusId = choice != null ? choice.StatusConditionalSourceStatusId : string.Empty,
-                    HasConditionalDamageMultiplier = choice != null && choice.HasConditionalDamageMultiplier,
-                    ConditionalDamageMultiplier = choice != null && choice.HasConditionalDamageMultiplier ? choice.ConditionalDamageMultiplier : 1f,
-                    ConditionalTargetStatusId = choice != null ? choice.ConditionalTargetStatusId : string.Empty,
-                    ConditionalTargetStatusMinStacks = choice != null ? choice.ConditionalTargetStatusMinStacks : 0,
-                    HasOnHitAdditionalDamage = choice != null && choice.HasOnHitAdditionalDamage,
-                    OnHitAdditionalDamageChance = choice != null ? choice.OnHitAdditionalDamageChance : 0f,
-                    OnHitAdditionalDamageMultiplier = choice != null ? choice.OnHitAdditionalDamageMultiplier : 1f,
-                    OnHitAdditionalDamageAttribute = choice != null ? choice.OnHitAdditionalDamageAttribute : DamageAttribute.Physical,
-                    OnHitAdditionalDamageTarget = choice != null ? choice.OnHitAdditionalDamageTarget : string.Empty,
-                    OnHitChainHitPeriod = choice != null ? choice.OnHitChainHitPeriod : 0,
-                    OnHitChainTargetCount = choice != null ? choice.OnHitChainTargetCount : 0,
-                    OnHitChainSearchRadius = choice != null ? choice.OnHitChainSearchRadius : 0f,
-                    OnHitChainDamageMultiplier = choice != null ? choice.OnHitChainDamageMultiplier : 1f,
-                    OnHitChainDamageAttribute = choice != null ? choice.OnHitChainDamageAttribute : DamageAttribute.Physical,
-                    ReloadReduceTargetSkillId = choice != null ? choice.ReloadReduceTargetSkillId : string.Empty,
-                    ReloadReduceSecondsPerHit = choice != null ? choice.ReloadReduceSecondsPerHit : 0f,
-                    CoreHitboxName = choice != null ? choice.CoreHitboxName : string.Empty,
-                    HasCoreDamageMultiplier = choice != null && choice.HasCoreDamageMultiplier,
-                    CoreDamageMultiplier = choice != null && choice.HasCoreDamageMultiplier ? choice.CoreDamageMultiplier : 1f,
-                    HasCoreOnHitAdditionalDamage = choice != null && choice.HasCoreOnHitAdditionalDamage,
-                    CoreOnHitAdditionalDamageChance = choice != null ? choice.CoreOnHitAdditionalDamageChance : 0f,
-                    CoreOnHitAdditionalDamageMultiplier = choice != null ? choice.CoreOnHitAdditionalDamageMultiplier : 1f,
-                    CoreOnHitAdditionalDamageAttribute = choice != null ? choice.CoreOnHitAdditionalDamageAttribute : DamageAttribute.Physical,
-                    HitCountCooldownRefundTargetSkillId = choice != null ? choice.HitCountCooldownRefundTargetSkillId : string.Empty,
-                    HitCountCooldownRefundMinTargets = choice != null ? choice.HitCountCooldownRefundMinTargets : 0,
-                    HitCountCooldownRefundRatio = choice != null ? choice.HitCountCooldownRefundRatio : 0f,
-                    RequiredSourceStatusId = choice != null ? choice.RequiredSourceStatusId : string.Empty,
-                    RequiredSourceStatusMinStacks = choice != null ? choice.RequiredSourceStatusMinStacks : 0,
-                    RepeatCountPerTarget = choice != null ? choice.RepeatCountPerTarget : 0,
-                    RepeatIntervalSeconds = choice != null ? choice.RepeatIntervalSeconds : 0f,
-                    RepeatDamageMultiplier = choice != null && choice.RepeatDamageMultiplier > 0f ? choice.RepeatDamageMultiplier : 1f,
-                    NormalizedPlanNodes = choice != null ? MapSkillNodeDefinitions(choice.NormalizedPlanNodes) : Array.Empty<SkillExecutionPlanNode>()
+                    Source = choice,
+                    PlanNodes = MapSkillNodeDefinitions(choice.NormalizedPlanNodes)
                 };
-
-                if (choice != null && !HasNormalizedPlanNodes(choice))
-                {
-                    ApplyNormalizedChoiceNodes(spec, choice.NormalizedPlanNodes);
-                }
-
-                mapped[i] = spec;
             }
 
             return mapped;
-        }
-
-        /*
-         * 정규화된 계획 노드를 보유하고 있는지 확인한다.
-         */
-        private static bool HasNormalizedPlanNodes(SkillChoiceDefinition choice)
-        {
-            return choice != null
-                && choice.NormalizedPlanNodes != null
-                && choice.NormalizedPlanNodes.Length > 0;
-        }
-
-        /*
-         * 정규화된 선택지 노드를 적용한다.
-         */
-        internal static void ApplyNormalizedChoiceNodes(SkillChoiceRuntimeData spec, SkillNodeDefinition[] nodes)
-        {
-            if (spec == null || nodes == null || nodes.Length == 0)
-            {
-                return;
-            }
-
-            for (var i = 0; i < nodes.Length; i++)
-            {
-                var node = nodes[i];
-                if (node == null || !node.EnabledByDefault)
-                {
-                    continue;
-                }
-
-                ApplyNormalizedChoiceNode(spec, node);
-            }
         }
 
         /*
@@ -878,11 +695,12 @@ namespace Pakuri.InGame
          */
         private static void ApplyNormalizedChoiceNode(SkillChoiceRuntimeData spec, SkillNodeDefinition node)
         {
+            var choice = spec.Source;
             var handlerId = node.HandlerId ?? string.Empty;
             if (string.Equals(handlerId, "DamageMultiplier", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasDamageMultiplier = true;
-                spec.DamageMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                choice.HasDamageMultiplier = true;
+                choice.DamageMultiplier *= GetFloatParam(node, "multiplier", 1f);
                 return;
             }
 
@@ -895,203 +713,203 @@ namespace Pakuri.InGame
 
             if (string.Equals(handlerId, "CountStatusDamageMultiplier", StringComparison.OrdinalIgnoreCase))
             {
-                spec.CountStatusId = GetParam(node, "status_id");
-                spec.CountTargetSide = GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.AllAllies);
-                spec.DamageMultiplierPerCount += GetFloatParam(node, "amount_per_count", 0f);
-                spec.CountMax = GetIntParam(node, "max_count", spec.CountMax);
+                choice.CountStatusId = GetParam(node, "status_id");
+                choice.CountTargetSide = GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.AllAllies);
+                choice.DamageMultiplierPerCount += GetFloatParam(node, "amount_per_count", 0f);
+                choice.CountMax = GetIntParam(node, "max_count", choice.CountMax);
                 return;
             }
 
             if (string.Equals(handlerId, "CooldownMultiplier", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasCooldownMultiplier = true;
-                spec.CooldownMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                choice.HasCooldownMultiplier = true;
+                choice.CooldownMultiplier *= GetFloatParam(node, "multiplier", 1f);
                 return;
             }
 
             if (string.Equals(handlerId, "CritChanceBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.CritChanceBonus += GetFloatParam(node, "bonus", 0f);
+                choice.CritChanceBonus += GetFloatParam(node, "bonus", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "CritDamageBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.CritDamageBonus += GetFloatParam(node, "bonus", 0f);
+                choice.CritDamageBonus += GetFloatParam(node, "bonus", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "MagazineBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasMagazineBonus = true;
-                spec.MagazineBonus += GetIntParam(node, "bonus", 0);
+                choice.HasMagazineBonus = true;
+                choice.MagazineBonus += GetIntParam(node, "bonus", 0);
                 return;
             }
 
             if (string.Equals(handlerId, "ReloadTimeMultiplier", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasReloadTimeMultiplier = true;
-                spec.ReloadTimeMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                choice.HasReloadTimeMultiplier = true;
+                choice.ReloadTimeMultiplier *= GetFloatParam(node, "multiplier", 1f);
                 return;
             }
 
             if (string.Equals(handlerId, "PierceBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.PierceBonus += GetIntParam(node, "bonus", 0);
+                choice.PierceBonus += GetIntParam(node, "bonus", 0);
                 return;
             }
 
             if (string.Equals(handlerId, "HitTargetCountBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HitTargetCountBonus += GetIntParam(node, "bonus", 0);
+                choice.HitTargetCountBonus += GetIntParam(node, "bonus", 0);
                 return;
             }
 
             if (string.Equals(handlerId, "RadiusMultiplier", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasRadiusMultiplier = true;
-                spec.RadiusMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                choice.HasRadiusMultiplier = true;
+                choice.RadiusMultiplier *= GetFloatParam(node, "multiplier", 1f);
                 return;
             }
 
             if (string.Equals(handlerId, "RadiusBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.RadiusBonus += GetFloatParam(node, "bonus", 0f);
+                choice.RadiusBonus += GetFloatParam(node, "bonus", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "BeamWidthBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.BeamWidthBonus += GetFloatParam(node, "bonus", 0f);
+                choice.BeamWidthBonus += GetFloatParam(node, "bonus", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "KnockbackDistanceMultiplier", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasKnockbackDistanceMultiplier = true;
-                spec.KnockbackDistanceMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                choice.HasKnockbackDistanceMultiplier = true;
+                choice.KnockbackDistanceMultiplier *= GetFloatParam(node, "multiplier", 1f);
                 return;
             }
 
             if (string.Equals(handlerId, "ReloadReducePerHit", StringComparison.OrdinalIgnoreCase))
             {
-                spec.ReloadReduceTargetSkillId = GetParam(node, "target_skill_id");
-                spec.ReloadReduceSecondsPerHit += GetFloatParam(node, "seconds_per_hit", 0f);
+                choice.ReloadReduceTargetSkillId = GetParam(node, "target_skill_id");
+                choice.ReloadReduceSecondsPerHit += GetFloatParam(node, "seconds_per_hit", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "CoreDamageMultiplier", StringComparison.OrdinalIgnoreCase))
             {
-                spec.CoreHitboxName = GetParam(node, "hitbox_name");
-                spec.HasCoreDamageMultiplier = true;
-                spec.CoreDamageMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                choice.CoreHitboxName = GetParam(node, "hitbox_name");
+                choice.HasCoreDamageMultiplier = true;
+                choice.CoreDamageMultiplier *= GetFloatParam(node, "multiplier", 1f);
                 return;
             }
 
             if (string.Equals(handlerId, "CoreAdditionalDamage", StringComparison.OrdinalIgnoreCase))
             {
-                spec.CoreHitboxName = GetParam(node, "hitbox_name");
-                spec.HasCoreOnHitAdditionalDamage = true;
-                spec.CoreOnHitAdditionalDamageChance = GetFloatParam(node, "chance", 1f);
-                spec.CoreOnHitAdditionalDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
-                spec.CoreOnHitAdditionalDamageAttribute = GetEnumParam(node, "attribute", DamageAttribute.Physical);
+                choice.CoreHitboxName = GetParam(node, "hitbox_name");
+                choice.HasCoreOnHitAdditionalDamage = true;
+                choice.CoreOnHitAdditionalDamageChance = GetFloatParam(node, "chance", 1f);
+                choice.CoreOnHitAdditionalDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
+                choice.CoreOnHitAdditionalDamageAttribute = GetEnumParam(node, "attribute", DamageAttribute.Physical);
                 return;
             }
 
             if (string.Equals(handlerId, "HitCountCooldownRefund", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HitCountCooldownRefundTargetSkillId = GetParam(node, "target_skill_id");
-                spec.HitCountCooldownRefundMinTargets = GetIntParam(node, "min_targets", 0);
-                spec.HitCountCooldownRefundRatio = GetFloatParam(node, "ratio", 0f);
+                choice.HitCountCooldownRefundTargetSkillId = GetParam(node, "target_skill_id");
+                choice.HitCountCooldownRefundMinTargets = GetIntParam(node, "min_targets", 0);
+                choice.HitCountCooldownRefundRatio = GetFloatParam(node, "ratio", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "DurationBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.DurationBonus += GetFloatParam(node, "bonus_seconds", 0f);
+                choice.DurationBonus += GetFloatParam(node, "bonus_seconds", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "DamageDelayMultiplier", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasDamageDelayMultiplier = true;
-                spec.DamageDelayMultiplier *= GetFloatParam(node, "multiplier", 1f);
+                choice.HasDamageDelayMultiplier = true;
+                choice.DamageDelayMultiplier *= GetFloatParam(node, "multiplier", 1f);
                 return;
             }
 
             if (string.Equals(handlerId, "ConsecutiveHitDamageBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.ConsecutiveHitBonusRate += GetFloatParam(node, "bonus_rate", 0f);
-                spec.ConsecutiveHitMax += GetFloatParam(node, "max_bonus", 0f);
+                choice.ConsecutiveHitBonusRate += GetFloatParam(node, "bonus_rate", 0f);
+                choice.ConsecutiveHitMax += GetFloatParam(node, "max_bonus", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "BurstDamageRule", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasBurstDamageProjectileIndex = true;
-                spec.BurstDamageProjectileIndex = GetIntParam(node, "projectile_index", 0);
-                spec.HasBurstDamageMultiplier = true;
-                spec.BurstDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
+                choice.HasBurstDamageProjectileIndex = true;
+                choice.BurstDamageProjectileIndex = GetIntParam(node, "projectile_index", 0);
+                choice.HasBurstDamageMultiplier = true;
+                choice.BurstDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
                 return;
             }
 
             if (string.Equals(handlerId, "FollowUpProjectile", StringComparison.OrdinalIgnoreCase))
             {
-                spec.FollowUpProjectileCount = GetIntParam(node, "count", 0);
-                spec.FollowUpProjectileDelaySeconds = GetFloatParam(node, "delay_seconds", 0f);
-                spec.FollowUpProjectileDamageMultiplier = GetFloatParam(node, "damage_multiplier", 1f);
+                choice.FollowUpProjectileCount = GetIntParam(node, "count", 0);
+                choice.FollowUpProjectileDelaySeconds = GetFloatParam(node, "delay_seconds", 0f);
+                choice.FollowUpProjectileDamageMultiplier = GetFloatParam(node, "damage_multiplier", 1f);
                 return;
             }
 
             if (string.Equals(handlerId, "ThresholdApplyStatus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.ThresholdStatusId = GetParam(node, "source_status_id");
-                spec.ThresholdStatusMinStacks = GetIntParam(node, "min_stacks", 0);
-                spec.ThresholdApplyStatusId = GetParam(node, "apply_status_id");
+                choice.ThresholdStatusId = GetParam(node, "source_status_id");
+                choice.ThresholdStatusMinStacks = GetIntParam(node, "min_stacks", 0);
+                choice.ThresholdApplyStatusId = GetParam(node, "apply_status_id");
                 return;
             }
 
             if (string.Equals(handlerId, "TargetStatusStackDamageMultiplier", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasTargetStatusStackDamageMultiplier = true;
-                spec.TargetStatusStackDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
+                choice.HasTargetStatusStackDamageMultiplier = true;
+                choice.TargetStatusStackDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
                 return;
             }
 
             if (string.Equals(handlerId, "ConsumeTargetStatusRatioOverride", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasConsumeTargetStatusRatioOverride = true;
-                spec.ConsumeTargetStatusRatioOverride = GetFloatParam(node, "ratio", 0f);
+                choice.HasConsumeTargetStatusRatioOverride = true;
+                choice.ConsumeTargetStatusRatioOverride = GetFloatParam(node, "ratio", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "BurstStatusStacksBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasBurstStatusProjectileIndex = true;
-                spec.BurstStatusProjectileIndex = GetIntParam(node, "projectile_index", 0);
-                spec.BurstStatusStacksBonus = GetIntParam(node, "bonus", 0);
+                choice.HasBurstStatusProjectileIndex = true;
+                choice.BurstStatusProjectileIndex = GetIntParam(node, "projectile_index", 0);
+                choice.BurstStatusStacksBonus = GetIntParam(node, "bonus", 0);
                 return;
             }
 
             if (string.Equals(handlerId, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasStatusActionSpeedBonus = true;
+                choice.HasStatusActionSpeedBonus = true;
                 spec.StatusActionSpeedBonusStatusId = GetParam(node, "status_id");
-                spec.StatusActionSpeedBonus += GetFloatParam(node, "bonus", 0f);
+                choice.StatusActionSpeedBonus += GetFloatParam(node, "bonus", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasStatusAttackPowerBonus = true;
-                spec.StatusAttackPowerBonus += GetFloatParam(node, "bonus", 0f);
+                choice.HasStatusAttackPowerBonus = true;
+                choice.StatusAttackPowerBonus += GetFloatParam(node, "bonus", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "StatusAilmentResistanceBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasStatusAilmentResistanceBonus = true;
-                spec.StatusAilmentResistanceBonus += GetFloatParam(node, "bonus", 0f);
+                choice.HasStatusAilmentResistanceBonus = true;
+                choice.StatusAilmentResistanceBonus += GetFloatParam(node, "bonus", 0f);
                 return;
             }
 
@@ -1132,41 +950,41 @@ namespace Pakuri.InGame
 
             if (string.Equals(handlerId, "StatusDurationBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.StatusDurationBonusStatusId = GetParam(node, "status_id");
-                spec.StatusDurationBonus += GetFloatParam(node, "bonus_seconds", 0f);
+                choice.StatusDurationBonusStatusId = GetParam(node, "status_id");
+                choice.StatusDurationBonus += GetFloatParam(node, "bonus_seconds", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "StatusConditionalDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasStatusConditionalDamageTakenBonus = true;
-                spec.StatusConditionalSourceStatusId = GetParam(node, "source_status_id");
-                spec.StatusConditionalDamageTakenBonus += GetFloatParam(node, "bonus", 0f);
+                choice.HasStatusConditionalDamageTakenBonus = true;
+                choice.StatusConditionalSourceStatusId = GetParam(node, "source_status_id");
+                choice.StatusConditionalDamageTakenBonus += GetFloatParam(node, "bonus", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasStatusElementDamageTakenBonus = true;
-                spec.StatusElementDamageTakenBonus += GetFloatParam(node, "bonus", 0f);
+                choice.HasStatusElementDamageTakenBonus = true;
+                choice.StatusElementDamageTakenBonus += GetFloatParam(node, "bonus", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "StatusCriticalDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasStatusCriticalDamageTakenBonus = true;
-                spec.StatusCriticalDamageTakenBonus += GetFloatParam(node, "bonus", 0f);
+                choice.HasStatusCriticalDamageTakenBonus = true;
+                choice.StatusCriticalDamageTakenBonus += GetFloatParam(node, "bonus", 0f);
                 return;
             }
 
             if (string.Equals(handlerId, "AdditionalDamage", StringComparison.OrdinalIgnoreCase))
             {
-                spec.HasOnHitAdditionalDamage = true;
-                spec.OnHitAdditionalDamageChance = GetFloatParam(node, "chance", 1f);
-                spec.OnHitAdditionalDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
-                spec.OnHitAdditionalDamageAttribute = GetEnumParam(node, "attribute", DamageAttribute.Physical);
+                choice.HasOnHitAdditionalDamage = true;
+                choice.OnHitAdditionalDamageChance = GetFloatParam(node, "chance", 1f);
+                choice.OnHitAdditionalDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
+                choice.OnHitAdditionalDamageAttribute = GetEnumParam(node, "attribute", DamageAttribute.Physical);
                 var target = GetParam(node, "target");
-                spec.OnHitAdditionalDamageTarget = string.IsNullOrWhiteSpace(target)
+                choice.OnHitAdditionalDamageTarget = string.IsNullOrWhiteSpace(target)
                     ? GetParam(node, "target_side")
                     : target;
                 return;
@@ -1174,36 +992,36 @@ namespace Pakuri.InGame
 
             if (string.Equals(handlerId, "EveryNthHitChainDamage", StringComparison.OrdinalIgnoreCase))
             {
-                spec.OnHitChainHitPeriod = GetIntParam(node, "hit_count", 0);
-                spec.OnHitChainTargetCount = GetIntParam(node, "max_targets", spec.OnHitChainTargetCount);
-                spec.OnHitChainSearchRadius = GetFloatParam(node, "radius", spec.OnHitChainSearchRadius);
-                spec.OnHitChainDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
-                spec.OnHitChainDamageAttribute = GetEnumParam(node, "attribute", DamageAttribute.Physical);
+                choice.OnHitChainHitPeriod = GetIntParam(node, "hit_count", 0);
+                choice.OnHitChainTargetCount = GetIntParam(node, "max_targets", choice.OnHitChainTargetCount);
+                choice.OnHitChainSearchRadius = GetFloatParam(node, "radius", choice.OnHitChainSearchRadius);
+                choice.OnHitChainDamageMultiplier = GetFloatParam(node, "multiplier", 1f);
+                choice.OnHitChainDamageAttribute = GetEnumParam(node, "attribute", DamageAttribute.Physical);
                 return;
             }
 
             if (string.Equals(handlerId, "RepeatPerTarget", StringComparison.OrdinalIgnoreCase))
             {
-                spec.RepeatCountPerTarget = GetIntParam(node, "repeat_count", 0);
-                spec.RepeatIntervalSeconds = GetFloatParam(node, "repeat_interval_seconds", 0f);
-                spec.RepeatDamageMultiplier = GetFloatParam(node, "repeat_damage_multiplier", 1f);
+                choice.RepeatCountPerTarget = GetIntParam(node, "repeat_count", 0);
+                choice.RepeatIntervalSeconds = GetFloatParam(node, "repeat_interval_seconds", 0f);
+                choice.RepeatDamageMultiplier = GetFloatParam(node, "repeat_damage_multiplier", 1f);
                 return;
             }
 
             if (string.Equals(handlerId, "TargetStatusCritBonus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.ConditionalCritChanceBonus += GetFloatParam(node, "crit_chance_bonus", 0f);
-                spec.ConditionalCritTargetStatusId = GetParam(node, "status_id");
-                spec.ConditionalCritTargetStatusMinStacks = GetIntParam(node, "min_stacks", 0);
+                choice.ConditionalCritChanceBonus += GetFloatParam(node, "crit_chance_bonus", 0f);
+                choice.ConditionalCritTargetStatusId = GetParam(node, "status_id");
+                choice.ConditionalCritTargetStatusMinStacks = GetIntParam(node, "min_stacks", 0);
                 return;
             }
 
             if (string.Equals(handlerId, "RedistributeConsumedStatus", StringComparison.OrdinalIgnoreCase))
             {
-                spec.RedistributeConsumedStatusRatioOnKill = GetFloatParam(node, "ratio", 0f);
-                spec.RedistributeConsumedStatusId = GetParam(node, "status_id");
-                spec.RedistributeConsumedStatusSearchRadius = GetFloatParam(node, "radius", 0f);
-                spec.RedistributeConsumedStatusTargetCount = GetIntParam(node, "target_count", 0);
+                choice.RedistributeConsumedStatusRatioOnKill = GetFloatParam(node, "ratio", 0f);
+                choice.RedistributeConsumedStatusId = GetParam(node, "status_id");
+                choice.RedistributeConsumedStatusSearchRadius = GetFloatParam(node, "radius", 0f);
+                choice.RedistributeConsumedStatusTargetCount = GetIntParam(node, "target_count", 0);
             }
         }
 

@@ -1,17 +1,16 @@
 using System;
 using Pakuri.Data;
-using UnityEngine;
 
 namespace Pakuri.InGame
 {
     /*
-     * 선택지 원본 정의에 런타임에서 계산된 보정값만 추가한다.
+     * 선택지 원본과 실행용 계산값을 함께 보관한다.
      */
     [Serializable]
-    public sealed class SkillChoiceRuntimeData : SkillChoiceDefinition
+    public sealed class SkillChoiceRuntimeData
     {
-        public string Description;
-        public Sprite Icon;
+        public SkillChoiceDefinition Source;
+        public SkillExecutionPlanNode[] PlanNodes = Array.Empty<SkillExecutionPlanNode>();
         public bool HasShieldAmountMultiplier;
         public float ShieldAmountMultiplier = 1f;
         public BuffModifierSpec AddedModifiers = new BuffModifierSpec();
@@ -26,6 +25,7 @@ namespace Pakuri.InGame
         public bool HasStatusFlatElementResistReduction;
         public float StatusFlatElementResistReduction;
         public string StatusActionSpeedBonusStatusId;
-        public new SkillExecutionPlanNode[] NormalizedPlanNodes = Array.Empty<SkillExecutionPlanNode>();
+
+        public string ChoiceId => Source.ChoiceId;
     }
 }

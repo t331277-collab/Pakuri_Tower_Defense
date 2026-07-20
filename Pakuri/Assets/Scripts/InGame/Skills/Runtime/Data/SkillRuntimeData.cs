@@ -483,6 +483,9 @@ namespace Pakuri.InGame
      */
     public sealed class PassiveSkillRuntimeData : SkillRuntimeData
     {
+        [Header("Choices")]
+        public SkillChoiceRuntimeData[] BaseModifierChoices = Array.Empty<SkillChoiceRuntimeData>();
+
         [Header("Trigger")]
         public PassiveTrigger TriggerType;
         public string ConditionTag;

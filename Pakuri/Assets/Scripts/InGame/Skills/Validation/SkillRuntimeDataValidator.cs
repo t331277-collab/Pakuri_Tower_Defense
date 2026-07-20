@@ -113,10 +113,10 @@ namespace Pakuri.InGame
         /*
          * 카탈로그를 검증한다.
          */
-        public static SkillRuntimeDataValidationReport ValidateCatalog(GameDataCatalog fallbackCatalog = null)
+        public static SkillRuntimeDataValidationReport ValidateCatalog()
         {
             var report = new SkillRuntimeDataValidationReport();
-            var catalog = CsvDataLoader.ResolveCatalogOrFallback(fallbackCatalog);
+            var catalog = CsvDataLoader.CurrentCatalog;
             if (catalog == null)
             {
                 AddError(report, "CatalogMissing", "No GameDataCatalog could be resolved from CSV runtime data or fallback catalog.", string.Empty, string.Empty, string.Empty);

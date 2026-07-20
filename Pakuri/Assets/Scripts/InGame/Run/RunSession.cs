@@ -4,6 +4,9 @@ using Pakuri.Data;
 
 namespace Pakuri.Run
 {
+    /*
+     * 현재 런의 스테이지·일차·파티·학습 스킬·보상 상태를 보관한다.
+     */
     public enum RunCombatType
     {
         Normal,

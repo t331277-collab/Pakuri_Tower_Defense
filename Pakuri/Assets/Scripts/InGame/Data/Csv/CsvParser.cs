@@ -5,17 +5,18 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 
+
 namespace Pakuri.Data
 {
     /*
      * CSV 텍스트를 표와 행으로 나누고 각 값을 필요한 자료형으로 읽는다.
      */
-    public static partial class CsvDataLoader
+    internal static class CsvParser
     {
         /*
          * CSV 로딩을 중단해야 하는 오류와 세부 오류 목록을 전달한다.
          */
-        private sealed class CsvFatalException : Exception
+        internal sealed class CsvFatalException : Exception
         {
             /*
              * CSV 치명 오류와 세부 오류 목록을 보관한다.
@@ -50,12 +51,12 @@ namespace Pakuri.Data
         /*
          * CSV의 헤더, 자료형, 데이터 행을 한 묶음으로 보관한다.
          */
-        private sealed class CsvTable
+        internal sealed class CsvTable
         {
             /*
              * CSV 헤더와 행 목록을 구성한다.
              */
-            private CsvTable(string tableName, string[] headers, string[] types, List<CsvRecord> records)
+            internal CsvTable(string tableName, string[] headers, string[] types, List<CsvRecord> records)
             {
                 TableName = tableName;
                 Headers = headers;
@@ -97,7 +98,7 @@ namespace Pakuri.Data
             /*
              * 필요한 CSV 또는 자산을 불러온다.
              */
-            private static CsvTable Load(string tableName, string contents)
+            internal static CsvTable Load(string tableName, string contents)
             {
                 var normalizedContents = string.IsNullOrEmpty(contents)
                     ? string.Empty
@@ -148,10 +149,10 @@ namespace Pakuri.Data
         /*
          * CSV 한 행의 값과 헤더별 열 위치를 보관한다.
          */
-        private sealed class CsvRecord
+        internal sealed class CsvRecord
         {
-            private readonly string[] cells;
-            private readonly Dictionary<string, int> headerLookup;
+            internal readonly string[] cells;
+            internal readonly Dictionary<string, int> headerLookup;
 
             /*
              * CSV 한 행과 열 위치 정보를 구성한다.
@@ -286,7 +287,7 @@ namespace Pakuri.Data
             /*
              * 계산에 필요한 값을 반환한다.
              */
-            private string GetCell(string columnName)
+            internal string GetCell(string columnName)
             {
                 if (!headerLookup.TryGetValue(columnName, out var index))
                 {
@@ -306,7 +307,7 @@ namespace Pakuri.Data
         /*
          * 따옴표로 묶인 쉼표와 연속 따옴표를 구분해 CSV 한 줄을 열 단위로 나눈다.
          */
-        private static string[] SplitCsvLine(string line)
+        internal static string[] SplitCsvLine(string line)
         {
             var values = new List<string>();
             var builder = new StringBuilder();
@@ -353,7 +354,7 @@ namespace Pakuri.Data
         /*
          * CSV 셀 안의 줄바꿈 표기를 실제 줄바꿈으로 바꾼다.
          */
-        private static string UnescapeCsvCell(string value)
+        internal static string UnescapeCsvCell(string value)
         {
             if (string.IsNullOrEmpty(value))
             {

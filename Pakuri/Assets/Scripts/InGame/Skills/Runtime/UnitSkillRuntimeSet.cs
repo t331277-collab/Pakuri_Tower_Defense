@@ -10,9 +10,11 @@ namespace Pakuri.InGame
     public sealed class UnitSkillRuntimeSet
     {
         private readonly List<SkillRuntimeInstance> activeSkills = new List<SkillRuntimeInstance>();
+        private readonly List<SkillRuntimeInstance> passiveSkills = new List<SkillRuntimeInstance>();
 
         public IReadOnlyList<SkillRuntimeInstance> ActiveSkills => activeSkills;
-        public int Count => activeSkills.Count;
+        public IReadOnlyList<SkillRuntimeInstance> PassiveSkills => passiveSkills;
+        public int Count => activeSkills.Count + passiveSkills.Count;
 
         /*
          * 유닛의 스킬 런타임 목록을 비운다.
@@ -20,6 +22,7 @@ namespace Pakuri.InGame
         public void Clear()
         {
             activeSkills.Clear();
+            passiveSkills.Clear();
         }
 
         /*
@@ -27,19 +30,15 @@ namespace Pakuri.InGame
          */
         public void AddOrReplace(SkillRuntimeInstance instance)
         {
-            if (instance == null || string.IsNullOrWhiteSpace(instance.SkillId))
-            {
-                return;
-            }
-
-            var existingIndex = FindIndexBySkillId(instance.SkillId);
+            var skills = instance.Data.IsActive ? activeSkills : passiveSkills;
+            var existingIndex = FindIndexBySkillId(skills, instance.SkillId);
             if (existingIndex >= 0)
             {
-                activeSkills[existingIndex] = instance;
+                skills[existingIndex] = instance;
                 return;
             }
 
-            activeSkills.Add(instance);
+            skills.Add(instance);
         }
 
         /*
@@ -47,8 +46,40 @@ namespace Pakuri.InGame
          */
         public SkillRuntimeInstance FindBySkillId(string skillId)
         {
-            var index = FindIndexBySkillId(skillId);
-            return index >= 0 ? activeSkills[index] : null;
+            var index = FindIndexBySkillId(activeSkills, skillId);
+            if (index >= 0)
+            {
+                return activeSkills[index];
+            }
+
+            index = FindIndexBySkillId(passiveSkills, skillId);
+            return index >= 0 ? passiveSkills[index] : null;
+        }
+
+        /*
+         * 선택지 ID가 일치하는 컴파일 결과를 찾는다.
+         */
+        public SkillChoiceRuntimeData FindChoice(string choiceId)
+        {
+            for (var i = 0; i < activeSkills.Count; i++)
+            {
+                var choice = FindChoice(activeSkills[i].Data, choiceId);
+                if (choice != null)
+                {
+                    return choice;
+                }
+            }
+
+            for (var i = 0; i < passiveSkills.Count; i++)
+            {
+                var choice = FindChoice(passiveSkills[i].Data, choiceId);
+                if (choice != null)
+                {
+                    return choice;
+                }
+            }
+
+            return null;
         }
 
         /*
@@ -86,16 +117,11 @@ namespace Pakuri.InGame
         /*
          * 스킬 ID가 일치하는 런타임의 목록 위치를 찾는다.
          */
-        private int FindIndexBySkillId(string skillId)
+        private static int FindIndexBySkillId(List<SkillRuntimeInstance> skills, string skillId)
         {
-            if (string.IsNullOrWhiteSpace(skillId))
+            for (var i = 0; i < skills.Count; i++)
             {
-                return -1;
-            }
-
-            for (var i = 0; i < activeSkills.Count; i++)
-            {
-                var runtime = activeSkills[i];
+                var runtime = skills[i];
                 if (runtime != null && string.Equals(runtime.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
                 {
                     return i;
@@ -103,6 +129,37 @@ namespace Pakuri.InGame
             }
 
             return -1;
+        }
+
+        private static SkillChoiceRuntimeData FindChoice(SkillRuntimeData skill, string choiceId)
+        {
+            var choice = FindChoice(skill.EnhancementChoices, choiceId);
+            if (choice != null)
+            {
+                return choice;
+            }
+
+            choice = FindChoice(skill.MasterChoices, choiceId);
+            if (choice != null)
+            {
+                return choice;
+            }
+
+            var passive = skill as PassiveSkillRuntimeData;
+            return passive != null ? FindChoice(passive.BaseModifierChoices, choiceId) : null;
+        }
+
+        private static SkillChoiceRuntimeData FindChoice(SkillChoiceRuntimeData[] choices, string choiceId)
+        {
+            for (var i = 0; i < choices.Length; i++)
+            {
+                if (string.Equals(choices[i].ChoiceId, choiceId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return choices[i];
+                }
+            }
+
+            return null;
         }
     }
 }

@@ -97,7 +97,7 @@ namespace Pakuri.Data
 
             try
             {
-                CsvDataLoader.SyncImportedSourceCatalogsForEditor();
+                CsvCatalogSync.SyncImportedSourceCatalogsForEditor();
             }
             catch (Exception ex)
             {

@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 넥서스 모델과 체력 표시, 피격 판정, 패배 통지를 관리하는 컴포넌트.
+     */
     [DisallowMultipleComponent]
     [RequireComponent(typeof(BoxCollider2D))]
     public sealed class NexusUnitActor : MonoBehaviour

@@ -2,6 +2,9 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 적 모델과 이름·체력·보호막·피해 숫자 표시를 연결하는 컴포넌트.
+     */
     [DisallowMultipleComponent]
     public sealed class EnemyUnitActor : MonoBehaviour
     {

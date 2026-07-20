@@ -8,6 +8,9 @@ using UnityEngine.UI;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 파티원별 피해 기록을 정렬하고 피해량 패널에 표시하는 UI 컴포넌트.
+     */
     [DisallowMultipleComponent]
     [RequireComponent(typeof(DamageMeterRuntimeTracker))]
     public sealed class DamageMeterUIController : MonoBehaviour

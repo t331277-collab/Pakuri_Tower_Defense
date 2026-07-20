@@ -8,6 +8,9 @@ using UnityEngine.UI;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 런타임 스킬 학습과 강화 선택을 시험하는 디버그 UI 컴포넌트.
+     */
     [DisallowMultipleComponent]
     public sealed class DebugUI : MonoBehaviour
     {
@@ -125,8 +128,7 @@ namespace Pakuri.InGame
 
             var sourceSkill = CsvDataLoader.CurrentCatalog.ResolveActiveSkill(
                 monster.MonsterId,
-                DebugSlots[slotIndex],
-                monster);
+                DebugSlots[slotIndex]);
             if (sourceSkill == null || string.IsNullOrWhiteSpace(sourceSkill.SkillId))
             {
                 return;
@@ -160,8 +162,7 @@ namespace Pakuri.InGame
 
             var passive = CsvDataLoader.CurrentCatalog.ResolvePassiveSkill(
                 monster.MonsterId,
-                DebugSlots[slotIndex],
-                monster);
+                DebugSlots[slotIndex]);
             if (passive == null || string.IsNullOrWhiteSpace(passive.PassiveId))
             {
                 return;
@@ -193,7 +194,7 @@ namespace Pakuri.InGame
                 }
 
                 SyncModelStateFromSession(session, model);
-                SkillRuntimeFactory.RebuildLearnedActiveSet(model);
+                SkillRuntimeFactory.RebuildLearnedSkillSet(model);
                 manager.Roster.RefreshActor(model);
             }
         }
@@ -265,10 +266,10 @@ namespace Pakuri.InGame
                 var slot = DebugSlots[i];
                 var isPassiveSlot = IsPassiveSlot(i);
                 var activeSkill = !isPassiveSlot && monster != null
-                    ? CsvDataLoader.CurrentCatalog.ResolveActiveSkill(monster.MonsterId, slot, monster)
+                    ? CsvDataLoader.CurrentCatalog.ResolveActiveSkill(monster.MonsterId, slot)
                     : null;
                 var passiveSkill = isPassiveSlot && monster != null
-                    ? CsvDataLoader.CurrentCatalog.ResolvePassiveSkill(monster.MonsterId, slot, monster)
+                    ? CsvDataLoader.CurrentCatalog.ResolvePassiveSkill(monster.MonsterId, slot)
                     : null;
                 var hasSkill = isPassiveSlot
                     ? passiveSkill != null && !string.IsNullOrWhiteSpace(passiveSkill.PassiveId)
@@ -877,8 +878,7 @@ namespace Pakuri.InGame
 
             sourceSkill = CsvDataLoader.CurrentCatalog.ResolveActiveSkill(
                 monster.MonsterId,
-                DebugSlots[slotIndex],
-                monster);
+                DebugSlots[slotIndex]);
             return sourceSkill != null;
         }
 
@@ -913,8 +913,7 @@ namespace Pakuri.InGame
 
             passive = CsvDataLoader.CurrentCatalog.ResolvePassiveSkill(
                 monster.MonsterId,
-                DebugSlots[slotIndex],
-                monster);
+                DebugSlots[slotIndex]);
             return passive != null;
         }
 
@@ -970,7 +969,7 @@ namespace Pakuri.InGame
                 return choice.ChoiceId;
             }
 
-            var rewards = CsvDataLoader.CurrentCatalog.GetRewardChoices(monster.MonsterId, monster);
+            var rewards = CsvDataLoader.CurrentCatalog.GetRewardChoices(monster.MonsterId);
             var choiceId = choice.ChoiceId;
             for (var i = 0; i < rewards.Length; i++)
             {

@@ -3,6 +3,9 @@ using Pakuri.Combat;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 유닛의 속성별 방어력을 보관하고 해당 속성의 방어력을 반환하는 데이터.
+     */
     [Serializable]
     public sealed class UnitDefenseRuntime
     {

@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 모든 전투 유닛이 공유하는 식별 정보, 능력치, 자원, 상태 효과를 정의한다.
+     */
     public readonly struct ShieldAbsorbRecord
     {
         public ShieldAbsorbRecord(UnitStatusRuntime status, float absorbedAmount)

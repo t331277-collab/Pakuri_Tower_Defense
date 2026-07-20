@@ -216,22 +216,18 @@ namespace Pakuri.InGame
             IDictionary<string, PassiveStatusBinding> desiredBindings,
             ISet<float> nextHealthRatioThresholds)
         {
-            if (string.IsNullOrWhiteSpace(passiveId)
-                || CsvDataLoader.CurrentCatalog == null
-                || !CsvDataLoader.CurrentCatalog.TryGetData(passiveId, out PassiveDefinition passive)
-                || passive == null
-                || passive.PassiveEffects == null
-                || passive.PassiveEffects.Length == 0)
+            var passive = owner.SkillRuntime.FindBySkillId(passiveId)?.Data as PassiveSkillRuntimeData;
+            if (passive == null || passive.MultiEffects.Length == 0)
             {
                 return;
             }
 
             var context = new SkillExecutionContext(combatManager, roster, ownerEntry, null, 0f);
-            var fallbackCenter = ownerEntry.Transform != null ? (Vector2)ownerEntry.Transform.position : Vector2.zero;
+            var ownerPosition = (Vector2)ownerEntry.Transform.position;
             var snapshot = BuildPassiveChoiceSnapshot(owner, passiveId);
-            for (var i = 0; i < passive.PassiveEffects.Length; i++)
+            for (var i = 0; i < passive.MultiEffects.Length; i++)
             {
-                var effect = passive.PassiveEffects[i];
+                var effect = passive.MultiEffects[i];
                 if (effect == null
                     || !HasAllLearnedPassives(owner, effect.RequiresPassiveSkillId)
                     || HasAnyLearnedPassive(owner, effect.ExcludesPassiveSkillId))
@@ -241,7 +237,7 @@ namespace Pakuri.InGame
 
                 if (effect.ApplyOnce)
                 {
-                    ApplyOneShotEffect(context, snapshot, effect, fallbackCenter, owner, passiveId);
+                    ApplyOneShotEffect(context, snapshot, effect, ownerPosition, owner, passiveId);
                     continue;
                 }
 
@@ -286,7 +282,7 @@ namespace Pakuri.InGame
                             snapshot,
                             effect,
                             target,
-                            fallbackCenter))
+                            ownerPosition))
                     {
                         activeStatusBindings[bindingKey] = binding;
                     }
@@ -305,7 +301,7 @@ namespace Pakuri.InGame
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
             SkillEffectDefinition effect,
-            Vector2 fallbackCenter,
+            Vector2 ownerPosition,
             BaseUnitRuntimeModel owner,
             string passiveId)
         {
@@ -320,7 +316,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            SkillMultiEffectExecutor.Execute(context, snapshot, new[] { effect }, fallbackCenter);
+            SkillMultiEffectExecutor.Execute(context, snapshot, new[] { effect }, ownerPosition);
             appliedOneShotEffectKeys.Add(key);
         }
 
@@ -373,29 +369,29 @@ namespace Pakuri.InGame
                 return snapshot;
             }
 
-            var manager = CsvDataLoader.CurrentCatalog;
             foreach (var choiceId in chosenChoiceIds)
             {
-                if (manager == null || !manager.TryGetData(choiceId, out SkillChoiceDefinition choice) || choice == null)
+                var choice = owner.SkillRuntime.FindChoice(choiceId);
+                if (choice == null)
                 {
                     continue;
                 }
 
-                var targetSkillId = !string.IsNullOrWhiteSpace(choice.TargetSkillId)
-                    ? choice.TargetSkillId
-                    : choice.SkillId;
+                var targetSkillId = !string.IsNullOrWhiteSpace(choice.Source.TargetSkillId)
+                    ? choice.Source.TargetSkillId
+                    : choice.Source.SkillId;
                 if (!string.Equals(targetSkillId, passiveId, System.StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                if (!MeetsSourceStatusRequirement(choice, owner))
+                if (!MeetsSourceStatusRequirement(choice.Source, owner))
                 {
                     continue;
                 }
 
                 snapshot.AddActiveChoiceId(choice.ChoiceId);
-                snapshot.ApplyChoiceDefinition(choice);
+                snapshot.ApplyChoiceSpec(choice);
             }
 
             return snapshot;

@@ -2,18 +2,26 @@ using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.InGame;
+using static Pakuri.Data.CsvAssetReferenceCollector;
+using static Pakuri.Data.CsvDataLoader;
+using static Pakuri.Data.CsvParser;
+using static Pakuri.Data.CsvRowParser;
+using static Pakuri.Data.CsvSourceModel;
+using static Pakuri.Data.GameDataBuilder;
+using static Pakuri.Data.SkillGraphBuilder;
+
 
 namespace Pakuri.Data
 {
     /*
      * CSV 필수 행, 참조 관계, 실행 지원 상태, 자산 경로를 검사한다.
      */
-    public static partial class CsvDataLoader
+    internal static class CsvDataValidator
     {
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateSourceModelOrThrow(SourceModel model, CsvRuntimeCatalog assetCatalog)
+        internal static void ValidateSourceModelOrThrow(SourceModel model, CsvRuntimeCatalog assetCatalog)
         {
             var errors = new List<string>();
 
@@ -338,7 +346,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateRuntimeStatusColumns(
+        internal static void ValidateRuntimeStatusColumns(
             SkillRow skill,
             Dictionary<string, StatusEffectRow> statusEffects,
             List<string> errors)
@@ -453,7 +461,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateSkillTriggerRow(
+        internal static void ValidateSkillTriggerRow(
             SkillTriggerRow trigger,
             SourceModel model,
             List<string> errors)
@@ -654,7 +662,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static bool ValidateSkillRuntimeKindList(string rawValue)
+        internal static bool ValidateSkillRuntimeKindList(string rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
@@ -688,7 +696,7 @@ namespace Pakuri.Data
         /*
          * 필요한 조건을 만족하는지 확인한다.
          */
-        private static bool HasPositiveDamagePayload(float baseDamage, float attackPowerCoefficient, float spellPowerCoefficient)
+        internal static bool HasPositiveDamagePayload(float baseDamage, float attackPowerCoefficient, float spellPowerCoefficient)
         {
             return baseDamage > 0f
                 || attackPowerCoefficient > 0f
@@ -698,7 +706,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateSkillIdList(
+        internal static void ValidateSkillIdList(
             string rawSkillIds,
             SkillTriggerRow trigger,
             SourceModel model,
@@ -729,7 +737,7 @@ namespace Pakuri.Data
         /*
          * 필요한 조건을 만족하는지 확인한다.
          */
-        private static bool HasSkillEffectSource(SourceModel model, string effectId)
+        internal static bool HasSkillEffectSource(SourceModel model, string effectId)
         {
             if (model == null || string.IsNullOrWhiteSpace(effectId))
             {
@@ -753,7 +761,7 @@ namespace Pakuri.Data
         /*
          * 필요한 조건을 만족하는지 확인한다.
          */
-        private static bool HasSkillGraphSource(SourceModel model, SkillTriggerRow trigger)
+        internal static bool HasSkillGraphSource(SourceModel model, SkillTriggerRow trigger)
         {
             if (model == null || !HasSkillGraphReference(trigger))
             {
@@ -779,7 +787,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static bool ValidateEventSourceScope(string rawValue)
+        internal static bool ValidateEventSourceScope(string rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
@@ -794,7 +802,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static bool ValidateTriggerAttributes(string rawValue)
+        internal static bool ValidateTriggerAttributes(string rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
@@ -822,7 +830,7 @@ namespace Pakuri.Data
         /*
          * 필요한 조건을 만족하는지 확인한다.
          */
-        private static bool IsSupportedHitTargetCount(string rawValue)
+        internal static bool IsSupportedHitTargetCount(string rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
@@ -842,7 +850,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateTriggerChoiceReference(
+        internal static void ValidateTriggerChoiceReference(
             string choiceId,
             SkillTriggerRow trigger,
             SourceModel model,
@@ -879,7 +887,7 @@ namespace Pakuri.Data
         /*
          * 선택지가 해당 스킬에 적용되는지 확인한다.
          */
-        private static bool ChoiceAppliesToSkillId(SkillChoiceRow choice, string skillId)
+        internal static bool ChoiceAppliesToSkillId(SkillChoiceRow choice, string skillId)
         {
             if (choice == null || string.IsNullOrWhiteSpace(skillId))
             {
@@ -902,7 +910,7 @@ namespace Pakuri.Data
         /*
          * 선택지가 해당 스킬에 적용되는지 확인한다.
          */
-        private static bool ChoiceTargetsKnownSkills(SkillChoiceRow choice, SourceModel model, out string unknownSkillId)
+        internal static bool ChoiceTargetsKnownSkills(SkillChoiceRow choice, SourceModel model, out string unknownSkillId)
         {
             unknownSkillId = string.Empty;
             if (choice == null || model == null || string.IsNullOrWhiteSpace(choice.RuntimeTargetSkillIds))
@@ -932,7 +940,7 @@ namespace Pakuri.Data
         /*
          * 선택지가 해당 스킬에 적용되는지 확인한다.
          */
-        private static bool ChoiceTargetsOnlyMonsterSkills(SkillChoiceRow choice, SourceModel model, out string foreignSkillId)
+        internal static bool ChoiceTargetsOnlyMonsterSkills(SkillChoiceRow choice, SourceModel model, out string foreignSkillId)
         {
             foreignSkillId = string.Empty;
             if (choice == null || model == null || string.IsNullOrWhiteSpace(choice.RuntimeTargetSkillIds))
@@ -963,7 +971,7 @@ namespace Pakuri.Data
         /*
          * 필요한 조건을 만족하는지 확인한다.
          */
-        private static bool MatchesDelimitedValue(string rawValues, string expected)
+        internal static bool MatchesDelimitedValue(string rawValues, string expected)
         {
             if (string.IsNullOrWhiteSpace(rawValues) || string.IsNullOrWhiteSpace(expected))
             {
@@ -987,7 +995,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateStatusEffectRow(StatusEffectRow status, List<string> errors)
+        internal static void ValidateStatusEffectRow(StatusEffectRow status, List<string> errors)
         {
             if (status == null)
             {
@@ -1019,7 +1027,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateReferencedAssetCoverage(
+        internal static void ValidateReferencedAssetCoverage(
             SourceModel model,
             CsvRuntimeCatalog assetCatalog,
             List<string> errors)
@@ -1050,7 +1058,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateSpritePath(
+        internal static void ValidateSpritePath(
             CsvRuntimeCatalog assetCatalog,
             string assetPath,
             string ownerLabel,
@@ -1070,7 +1078,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidatePrefabPath(
+        internal static void ValidatePrefabPath(
             CsvRuntimeCatalog assetCatalog,
             string assetPath,
             string ownerLabel,
@@ -1090,7 +1098,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateAnimatorControllerPath(
+        internal static void ValidateAnimatorControllerPath(
             CsvRuntimeCatalog assetCatalog,
             string assetPath,
             string ownerLabel,
@@ -1110,7 +1118,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateRuntimeCatalogOrThrow(GameDataCatalog catalog, SourceModel sourceModel)
+        internal static void ValidateRuntimeCatalogOrThrow(GameDataCatalog catalog, SourceModel sourceModel)
         {
             var errors = new List<string>();
             if (catalog == null)
@@ -1156,7 +1164,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateRuntimeMonsterAssets(
+        internal static void ValidateRuntimeMonsterAssets(
             MonsterDefinition[] monsters,
             SourceModel sourceModel,
             List<string> errors)
@@ -1188,7 +1196,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateRuntimeEnemyAssets(
+        internal static void ValidateRuntimeEnemyAssets(
             EnemyDefinition[] enemies,
             Dictionary<string, EnemyMigrationRow> sourceEnemies,
             List<string> errors)
@@ -1218,7 +1226,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateRuntimeActiveSkillAssets(
+        internal static void ValidateRuntimeActiveSkillAssets(
             SkillDefinition[] skills,
             SourceModel sourceModel,
             string monsterId,
@@ -1270,7 +1278,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateRuntimePassiveSkillAssets(
+        internal static void ValidateRuntimePassiveSkillAssets(
             PassiveDefinition[] skills,
             SourceModel sourceModel,
             string monsterId,
@@ -1308,7 +1316,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        private static void ValidateRuntimeSkillChoiceAssets(
+        internal static void ValidateRuntimeSkillChoiceAssets(
             SkillChoiceDefinition[] choices,
             SourceModel sourceModel,
             string skillId,

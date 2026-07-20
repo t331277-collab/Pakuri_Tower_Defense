@@ -19,14 +19,11 @@ namespace Pakuri.Data
         private readonly Dictionary<string, PassiveDefinition[]> passiveSkillsByMonster = new Dictionary<string, PassiveDefinition[]>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, MonsterDefinition.RewardChoiceDefinition[]> rewardChoicesByMonster = new Dictionary<string, MonsterDefinition.RewardChoiceDefinition[]>(StringComparer.OrdinalIgnoreCase);
 
-        public GameDataCatalog CurrentCatalog { get; private set; }
-
         /*
          * 새 카탈로그를 기준으로 모든 런타임 조회 표를 다시 구성한다.
          */
         public void RegisterCatalog(GameDataCatalog catalog)
         {
-            CurrentCatalog = catalog;
             monsters.Clear();
             enemies.Clear();
             activeSkills.Clear();
@@ -123,59 +120,17 @@ namespace Pakuri.Data
         }
 
         /*
-         * 현재 등록된 카탈로그를 우선하고 없으면 전달받은 카탈로그를 사용한다.
+         * ID에 맞는 몬스터를 반환한다.
          */
-        public GameDataCatalog GetCatalog(GameDataCatalog fallbackCatalog = null)
+        public MonsterDefinition ResolveMonster(string id)
         {
-            return CurrentCatalog ?? fallbackCatalog;
-        }
-
-        /*
-         * 현재 카탈로그 또는 대체 카탈로그의 몬스터 목록을 반환한다.
-         */
-        public MonsterDefinition[] GetMonsters(GameDataCatalog fallbackCatalog = null)
-        {
-            var catalog = GetCatalog(fallbackCatalog);
-            var monstersFromCatalog = catalog != null ? catalog.Monsters : null;
-            if (monstersFromCatalog != null && monstersFromCatalog.Length > 0)
-            {
-                return monstersFromCatalog;
-            }
-
-            return Array.Empty<MonsterDefinition>();
-        }
-
-        /*
-         * ID에 맞는 몬스터를 찾고 없으면 대체 목록의 첫 몬스터를 반환한다.
-         */
-        public MonsterDefinition ResolveMonster(string id, GameDataCatalog fallbackCatalog = null)
-        {
-            var resolvedMonster = GetData<MonsterDefinition>(id);
-            if (resolvedMonster != null)
-            {
-                return resolvedMonster;
-            }
-
-            var monsters = GetMonsters(fallbackCatalog);
-            if (!string.IsNullOrWhiteSpace(id))
-            {
-                for (var i = 0; i < monsters.Length; i++)
-                {
-                    var monster = monsters[i];
-                    if (monster != null && string.Equals(monster.MonsterId, id, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return monster;
-                    }
-                }
-            }
-
-            return monsters.Length > 0 ? monsters[0] : null;
+            return GetData<MonsterDefinition>(id);
         }
 
         /*
          * 몬스터에 등록된 액티브 스킬 목록을 반환한다.
          */
-        public SkillDefinition[] GetActiveSkills(string monsterId, MonsterDefinition fallbackMonster = null)
+        public SkillDefinition[] GetActiveSkills(string monsterId)
         {
             if (!string.IsNullOrWhiteSpace(monsterId)
                 && activeSkillsByMonster.TryGetValue(monsterId, out var registeredSkills)
@@ -185,21 +140,13 @@ namespace Pakuri.Data
                 return registeredSkills;
             }
 
-            if (fallbackMonster != null
-                && string.Equals(fallbackMonster.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase)
-                && fallbackMonster.ActiveSkills != null
-                && fallbackMonster.ActiveSkills.Length > 0)
-            {
-                return fallbackMonster.ActiveSkills;
-            }
-
             return Array.Empty<SkillDefinition>();
         }
 
         /*
          * 몬스터에 등록된 패시브 스킬 목록을 반환한다.
          */
-        public PassiveDefinition[] GetPassiveSkills(string monsterId, MonsterDefinition fallbackMonster = null)
+        public PassiveDefinition[] GetPassiveSkills(string monsterId)
         {
             if (!string.IsNullOrWhiteSpace(monsterId)
                 && passiveSkillsByMonster.TryGetValue(monsterId, out var registeredPassives)
@@ -209,21 +156,13 @@ namespace Pakuri.Data
                 return registeredPassives;
             }
 
-            if (fallbackMonster != null
-                && string.Equals(fallbackMonster.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase)
-                && fallbackMonster.PassiveSkills != null
-                && fallbackMonster.PassiveSkills.Length > 0)
-            {
-                return fallbackMonster.PassiveSkills;
-            }
-
             return Array.Empty<PassiveDefinition>();
         }
 
         /*
          * 몬스터에 등록된 초기 보상 선택지 목록을 반환한다.
          */
-        public MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(string monsterId, MonsterDefinition fallbackMonster = null)
+        public MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(string monsterId)
         {
             if (!string.IsNullOrWhiteSpace(monsterId)
                 && rewardChoicesByMonster.TryGetValue(monsterId, out var registeredRewards)
@@ -233,23 +172,15 @@ namespace Pakuri.Data
                 return registeredRewards;
             }
 
-            if (fallbackMonster != null
-                && string.Equals(fallbackMonster.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase)
-                && fallbackMonster.InitialRewardChoices != null
-                && fallbackMonster.InitialRewardChoices.Length > 0)
-            {
-                return fallbackMonster.InitialRewardChoices;
-            }
-
             return Array.Empty<MonsterDefinition.RewardChoiceDefinition>();
         }
 
         /*
          * 몬스터의 액티브 스킬 중 요청 슬롯에 배치된 스킬을 찾는다.
          */
-        public SkillDefinition ResolveActiveSkill(string monsterId, SkillSlot slot, MonsterDefinition fallbackMonster = null)
+        public SkillDefinition ResolveActiveSkill(string monsterId, SkillSlot slot)
         {
-            var skills = GetActiveSkills(monsterId, fallbackMonster);
+            var skills = GetActiveSkills(monsterId);
             for (var i = 0; i < skills.Length; i++)
             {
                 var skill = skills[i];
@@ -265,9 +196,9 @@ namespace Pakuri.Data
         /*
          * 몬스터의 패시브 스킬 중 요청 슬롯에 배치된 스킬을 찾는다.
          */
-        public PassiveDefinition ResolvePassiveSkill(string monsterId, SkillSlot slot, MonsterDefinition fallbackMonster = null)
+        public PassiveDefinition ResolvePassiveSkill(string monsterId, SkillSlot slot)
         {
-            var passives = GetPassiveSkills(monsterId, fallbackMonster);
+            var passives = GetPassiveSkills(monsterId);
             for (var i = 0; i < passives.Length; i++)
             {
                 var passive = passives[i];

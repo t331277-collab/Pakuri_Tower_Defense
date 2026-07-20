@@ -490,14 +490,10 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var manager = CsvDataLoader.CurrentCatalog;
             foreach (var passiveId in owner.State.LearnedPassiveSkillIds)
             {
-                if (manager == null
-                    || !manager.TryGetData(passiveId, out PassiveDefinition passive)
-                    || passive == null
-                    || passive.BaseModifierChoices == null
-                    || passive.BaseModifierChoices.Length == 0)
+                var passive = owner.SkillRuntime.FindBySkillId(passiveId)?.Data as PassiveSkillRuntimeData;
+                if (passive == null)
                 {
                     continue;
                 }
@@ -505,9 +501,9 @@ namespace Pakuri.InGame
                 for (var i = 0; i < passive.BaseModifierChoices.Length; i++)
                 {
                     var modifier = passive.BaseModifierChoices[i];
-                    if (modifier != null && AppliesToSkill(modifier, skillData))
+                    if (modifier != null && AppliesToSkill(modifier.Source, skillData))
                     {
-                        snapshot.ApplyChoiceDefinition(modifier);
+                        snapshot.ApplyChoiceSpec(modifier);
                     }
                 }
             }
@@ -528,17 +524,16 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var manager = CsvDataLoader.CurrentCatalog;
             foreach (var choiceId in chosenChoiceIds)
             {
-                if (manager != null
-                    && manager.TryGetData(choiceId, out SkillChoiceDefinition choice)
-                    && AppliesToSkill(choice, skillData)
-                    && MeetsSourceStatusRequirement(choice, owner))
+                var choice = owner.SkillRuntime.FindChoice(choiceId);
+                if (choice != null
+                    && AppliesToSkill(choice.Source, skillData)
+                    && MeetsSourceStatusRequirement(choice.Source, owner))
                 {
                     snapshot.AddActiveChoiceId(choice.ChoiceId);
-                    snapshot.ApplyChoiceDefinition(choice);
-                    ApplyDynamicChoiceRules(snapshot, choice, owner, roster);
+                    snapshot.ApplyChoiceSpec(choice);
+                    ApplyDynamicChoiceRules(snapshot, choice.Source, owner, roster);
                 }
             }
         }

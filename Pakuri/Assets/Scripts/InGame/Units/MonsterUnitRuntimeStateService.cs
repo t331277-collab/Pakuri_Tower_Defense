@@ -2,6 +2,9 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 아군 몬스터의 일시적인 전투 상태와 자원을 다음 전투용으로 초기화하는 서비스.
+     */
     internal static class MonsterUnitRuntimeStateService
     {
         public static void RestoreForNextDay(MonsterUnitRuntimeModel model)

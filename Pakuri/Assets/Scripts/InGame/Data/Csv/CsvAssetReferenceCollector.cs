@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
+using static Pakuri.Data.CsvSourceModel;
+using static Pakuri.Data.SkillGraphBuilder;
+
 
 namespace Pakuri.Data
 {
     /*
      * CSV가 참조하는 Sprite, Prefab, Animator 경로를 수집하고 중복을 정리한다.
      */
-    public static partial class CsvDataLoader
+    internal static class CsvAssetReferenceCollector
     {
-        private readonly struct ReferencedAssetPath
+        internal readonly struct ReferencedAssetPath
         {
             /*
              * 참조 자산 경로를 구성한다.
@@ -26,11 +29,11 @@ namespace Pakuri.Data
         /*
          * 종류별 자산 경로와 중복 확인용 경로 집합을 보관한다.
          */
-        private sealed class ReferencedAssetSet
+        internal sealed class ReferencedAssetSet
         {
-            private readonly HashSet<string> spritePathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            private readonly HashSet<string> prefabPathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            private readonly HashSet<string> animatorControllerPathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            internal readonly HashSet<string> spritePathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            internal readonly HashSet<string> prefabPathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            internal readonly HashSet<string> animatorControllerPathLookup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             public List<ReferencedAssetPath> SpritePaths { get; } = new List<ReferencedAssetPath>();
             public List<ReferencedAssetPath> PrefabPaths { get; } = new List<ReferencedAssetPath>();
@@ -63,7 +66,7 @@ namespace Pakuri.Data
             /*
              * 항목을 대상 목록에 추가한다.
              */
-            private static void Add(
+            internal static void Add(
                 string assetPath,
                 string ownerLabel,
                 HashSet<string> lookup,
@@ -85,7 +88,7 @@ namespace Pakuri.Data
         /*
          * 원본 모델이 사용하는 Sprite, Prefab, Animator 참조를 모은다.
          */
-        private static ReferencedAssetSet CollectReferencedAssets(SourceModel model)
+        internal static ReferencedAssetSet CollectReferencedAssets(SourceModel model)
         {
             var assets = new ReferencedAssetSet();
             if (model == null)

@@ -1140,29 +1140,32 @@ namespace Pakuri.InGame
                 return snapshot;
             }
 
-            var manager = CsvDataLoader.CurrentCatalog;
             foreach (var choiceId in chosenChoiceIds)
             {
-                if (manager == null || !manager.TryGetData(choiceId, out SkillChoiceDefinition choice) || choice == null)
+                var choice = owner.SkillRuntime.FindChoice(choiceId);
+                if (choice == null)
                 {
                     continue;
                 }
 
-                var targetSkillId = !string.IsNullOrWhiteSpace(choice.TargetSkillId)
-                    ? choice.TargetSkillId
-                    : choice.SkillId;
+                var targetSkillId = !string.IsNullOrWhiteSpace(choice.Source.TargetSkillId)
+                    ? choice.Source.TargetSkillId
+                    : choice.Source.SkillId;
                 if (!string.Equals(targetSkillId, passiveId, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                if (!MeetsSourceStatusRequirement(owner, choice.RequiredSourceStatusId, choice.RequiredSourceStatusMinStacks))
+                if (!MeetsSourceStatusRequirement(
+                        owner,
+                        choice.Source.RequiredSourceStatusId,
+                        choice.Source.RequiredSourceStatusMinStacks))
                 {
                     continue;
                 }
 
                 snapshot.AddActiveChoiceId(choice.ChoiceId);
-                snapshot.ApplyChoiceDefinition(choice);
+                snapshot.ApplyChoiceSpec(choice);
             }
 
             return snapshot;
@@ -1180,26 +1183,29 @@ namespace Pakuri.InGame
                 return snapshot;
             }
 
-            var manager = CsvDataLoader.CurrentCatalog;
             foreach (var choiceId in chosenChoiceIds)
             {
-                if (manager == null || !manager.TryGetData(choiceId, out SkillChoiceDefinition choice) || choice == null)
+                var choice = owner.SkillRuntime.FindChoice(choiceId);
+                if (choice == null)
                 {
                     continue;
                 }
 
-                if (!string.Equals(choice.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(choice.Source.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                if (!MeetsSourceStatusRequirement(owner, choice.RequiredSourceStatusId, choice.RequiredSourceStatusMinStacks))
+                if (!MeetsSourceStatusRequirement(
+                        owner,
+                        choice.Source.RequiredSourceStatusId,
+                        choice.Source.RequiredSourceStatusMinStacks))
                 {
                     continue;
                 }
 
                 snapshot.AddActiveChoiceId(choice.ChoiceId);
-                snapshot.ApplyChoiceDefinition(choice);
+                snapshot.ApplyChoiceSpec(choice);
             }
 
             return snapshot;

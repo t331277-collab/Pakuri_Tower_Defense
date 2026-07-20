@@ -4,13 +4,19 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using static Pakuri.Data.CsvAssetReferenceCollector;
+using static Pakuri.Data.CsvDataLoader;
+using static Pakuri.Data.CsvParser;
+using static Pakuri.Data.CsvRowParser;
+using static Pakuri.Data.CsvSourceModel;
+
 
 namespace Pakuri.Data
 {
     /*
      * Unity Editor에서 CSV와 런타임 Source·Asset 카탈로그를 동기화한다.
      */
-    public static partial class CsvDataLoader
+    public static class CsvCatalogSync
     {
         /*
          * 가져온 CSV 원본으로 런타임 카탈로그 자산을 갱신한다.
@@ -37,7 +43,7 @@ namespace Pakuri.Data
         /*
          * Unity 메뉴에서 런타임 카탈로그 자산 동기화를 실행한다.
          */
-        private static void SyncRuntimeCatalogAssetsMenu()
+        internal static void SyncRuntimeCatalogAssetsMenu()
         {
             SyncImportedSourceCatalogsForEditor();
             Debug.Log(
@@ -48,7 +54,7 @@ namespace Pakuri.Data
         /*
          * Unity 메뉴에서 CSV 원본 검증을 실행한다.
          */
-        private static void ValidateSourceDataMenu()
+        internal static void ValidateSourceDataMenu()
         {
             try
             {
@@ -70,7 +76,7 @@ namespace Pakuri.Data
         /*
          * 원본 CSV와 런타임 자산을 동기화한다.
          */
-        private static void SyncRuntimeCatalogAssetsFromImportedSource()
+        internal static void SyncRuntimeCatalogAssetsFromImportedSource()
         {
             EnsureRuntimeResourcesFolderExists();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
@@ -153,7 +159,7 @@ namespace Pakuri.Data
         /*
          * 작업에 필요한 상태를 준비한다.
          */
-        private static void EnsureRuntimeResourcesFolderExists()
+        internal static void EnsureRuntimeResourcesFolderExists()
         {
             var resourceFolder = Path.Combine(Application.dataPath, "Resources");
             var pakuriFolder = Path.Combine(resourceFolder, "Pakuri");
@@ -166,7 +172,7 @@ namespace Pakuri.Data
         /*
          * 필요한 CSV 또는 자산을 불러온다.
          */
-        private static T LoadOrCreateAsset<T>(string assetPath)
+        internal static T LoadOrCreateAsset<T>(string assetPath)
             where T : ScriptableObject
         {
             var asset = AssetDatabase.LoadAssetAtPath<T>(assetPath);
@@ -183,7 +189,7 @@ namespace Pakuri.Data
         /*
          * 필요한 CSV 또는 자산을 불러온다.
          */
-        private static TextAsset LoadImportedSourceTextAssetOrThrow(string fileName)
+        internal static TextAsset LoadImportedSourceTextAssetOrThrow(string fileName)
         {
             var assetPath = GetImportedSourceAssetPath(fileName);
             return LoadTextAssetOrThrow(
@@ -194,7 +200,7 @@ namespace Pakuri.Data
         /*
          * 필요한 CSV 또는 자산을 불러온다.
          */
-        private static TextAsset[] LoadImportedSourceTextAssetsBySuffix(string folderAssetPath, string fileNameSuffix)
+        internal static TextAsset[] LoadImportedSourceTextAssetsBySuffix(string folderAssetPath, string fileNameSuffix)
         {
             var absoluteFolderPath = GetAbsoluteAssetPath(folderAssetPath);
             if (!Directory.Exists(absoluteFolderPath))
@@ -236,7 +242,7 @@ namespace Pakuri.Data
         /*
          * 필요한 CSV 또는 자산을 불러온다.
          */
-        private static TextAsset[] LoadImportedSourceTextAssetsByPrefix(string folderAssetPath, string fileNamePrefix)
+        internal static TextAsset[] LoadImportedSourceTextAssetsByPrefix(string folderAssetPath, string fileNamePrefix)
         {
             var absoluteFolderPath = GetAbsoluteAssetPath(folderAssetPath);
             if (!Directory.Exists(absoluteFolderPath))
@@ -278,7 +284,7 @@ namespace Pakuri.Data
         /*
          * 필요한 CSV 또는 자산을 불러온다.
          */
-        private static TextAsset LoadTextAssetOrThrow(string assetPath, string instruction)
+        internal static TextAsset LoadTextAssetOrThrow(string assetPath, string instruction)
         {
             var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
             if (asset == null)
@@ -300,7 +306,7 @@ namespace Pakuri.Data
         /*
          * 해당 자료 변환에 필요한 값을 구성한다.
          */
-        private static void TryImportTextAsset(string assetPath)
+        internal static void TryImportTextAsset(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))
             {
@@ -322,7 +328,7 @@ namespace Pakuri.Data
         /*
          * 계산에 필요한 값을 반환한다.
          */
-        private static string GetAbsoluteAssetPath(string assetPath)
+        internal static string GetAbsoluteAssetPath(string assetPath)
         {
             const string assetsPrefix = "Assets/";
             if (!assetPath.StartsWith(assetsPrefix, StringComparison.OrdinalIgnoreCase))
@@ -337,7 +343,7 @@ namespace Pakuri.Data
         /*
          * 계산에 필요한 값을 반환한다.
          */
-        private static string GetAssetPathFromAbsolutePath(string absolutePath)
+        internal static string GetAssetPathFromAbsolutePath(string absolutePath)
         {
             var fullPath = Path.GetFullPath(absolutePath).Replace('\\', '/');
             var assetsRoot = Path.GetFullPath(Application.dataPath).Replace('\\', '/');
@@ -352,7 +358,7 @@ namespace Pakuri.Data
         /*
          * 원본 값으로 런타임 자료를 만든다.
          */
-        private static CsvRuntimeCatalog.SpriteEntry[] BuildSpriteEntries(SourceModel sourceModel)
+        internal static CsvRuntimeCatalog.SpriteEntry[] BuildSpriteEntries(SourceModel sourceModel)
         {
             var entries = new List<CsvRuntimeCatalog.SpriteEntry>();
             foreach (var asset in CollectReferencedAssets(sourceModel).SpritePaths)
@@ -377,7 +383,7 @@ namespace Pakuri.Data
         /*
          * 원본 값으로 런타임 자료를 만든다.
          */
-        private static CsvRuntimeCatalog.PrefabEntry[] BuildPrefabEntries(SourceModel sourceModel)
+        internal static CsvRuntimeCatalog.PrefabEntry[] BuildPrefabEntries(SourceModel sourceModel)
         {
             var entries = new List<CsvRuntimeCatalog.PrefabEntry>();
             foreach (var asset in CollectReferencedAssets(sourceModel).PrefabPaths)
@@ -402,7 +408,7 @@ namespace Pakuri.Data
         /*
          * 원본 값으로 런타임 자료를 만든다.
          */
-        private static CsvRuntimeCatalog.AnimatorControllerEntry[] BuildAnimatorControllerEntries(SourceModel sourceModel)
+        internal static CsvRuntimeCatalog.AnimatorControllerEntry[] BuildAnimatorControllerEntries(SourceModel sourceModel)
         {
             var entries = new List<CsvRuntimeCatalog.AnimatorControllerEntry>();
             foreach (var asset in CollectReferencedAssets(sourceModel).AnimatorControllerPaths)
@@ -427,7 +433,7 @@ namespace Pakuri.Data
         /*
          * 에디터 동기화 뒤 런타임 캐시를 초기화한다.
          */
-        private static void ResetRuntimeState()
+        internal static void ResetRuntimeState()
         {
             initialized = false;
             failed = false;

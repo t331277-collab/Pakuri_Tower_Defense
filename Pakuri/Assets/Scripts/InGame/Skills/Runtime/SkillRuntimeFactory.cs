@@ -19,9 +19,9 @@ namespace Pakuri.InGame
         };
 
         /*
-         * 학습한 활성 목록을 다시 구성한다.
+         * 학습한 활성 스킬과 패시브 목록을 다시 구성한다.
          */
-        public static void RebuildLearnedActiveSet(BaseUnitRuntimeModel owner)
+        public static void RebuildLearnedSkillSet(BaseUnitRuntimeModel owner)
         {
             if (owner == null)
             {
@@ -29,7 +29,7 @@ namespace Pakuri.InGame
             }
 
             owner.SkillRuntime.Clear();
-            PopulateLearnedActiveSet(owner, owner.SkillRuntime);
+            PopulateLearnedSkillSet(owner, owner.SkillRuntime);
         }
 
         /*
@@ -63,9 +63,9 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 학습한 활성 목록을 필요한 항목으로 채운다.
+         * 학습한 활성 스킬과 패시브를 목록에 채운다.
          */
-        private static void PopulateLearnedActiveSet(
+        private static void PopulateLearnedSkillSet(
             BaseUnitRuntimeModel owner,
             UnitSkillRuntimeSet target)
         {
@@ -80,75 +80,31 @@ namespace Pakuri.InGame
                 return;
             }
 
+            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             for (var i = 0; i < ActiveSlots.Length; i++)
             {
-                if (!TryCreateActiveSkillData(monsterId, ActiveSlots[i], out var skillData))
+                var source = CsvDataLoader.CurrentCatalog.ResolveActiveSkill(monsterId, ActiveSlots[i]);
+                if (source == null)
                 {
                     continue;
                 }
 
-                if (!IsLearnedActive(owner.State, skillData))
+                var skillData = SkillRuntimeCompiler.CompileActive(monster, source);
+                if (ContainsId(owner.State.LearnedActiveSkillIds, skillData.SkillId))
                 {
-                    continue;
-                }
-
-                target.AddOrReplace(new SkillRuntimeInstance(owner, skillData));
-            }
-        }
-
-        /*
-         * 카탈로그 정의를 조회해 실행용 활성 스킬 데이터를 만든다.
-         */
-        private static bool TryCreateActiveSkillData(
-            string monsterId,
-            SkillSlot slot,
-            out SkillRuntimeData skillData)
-        {
-            skillData = null;
-            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
-            var source = monster != null
-                ? CsvDataLoader.CurrentCatalog.ResolveActiveSkill(monster.MonsterId, slot, monster)
-                : ResolveActiveSkillWithoutMonster(monsterId, slot);
-            if (source == null)
-            {
-                return false;
-            }
-
-            skillData = monster != null
-                ? SkillRuntimeCompiler.CompileActive(monster, source)
-                : SkillRuntimeCompiler.CompileActive(monsterId, source);
-            return skillData != null;
-        }
-
-        /*
-         * 몬스터 정의가 없을 때 등록된 스킬 목록에서 슬롯을 찾는다.
-         */
-        private static SkillDefinition ResolveActiveSkillWithoutMonster(string monsterId, SkillSlot slot)
-        {
-            var skills = CsvDataLoader.CurrentCatalog.GetActiveSkills(monsterId);
-            for (var i = 0; i < skills.Length; i++)
-            {
-                var skill = skills[i];
-                if (skill != null && skill.Slot == slot)
-                {
-                    return skill;
+                    target.AddOrReplace(new SkillRuntimeInstance(owner, skillData));
                 }
             }
 
-            return null;
-        }
-
-        /*
-         * 활성 스킬이 학습 목록에 포함되는지 확인한다.
-         */
-        private static bool IsLearnedActive(UnitStateBucket state, SkillRuntimeData skillData)
-        {
-            if (state == null || skillData == null || string.IsNullOrWhiteSpace(skillData.SkillId))
+            var passives = CsvDataLoader.CurrentCatalog.GetPassiveSkills(monsterId);
+            for (var i = 0; i < passives.Length; i++)
             {
-                return false;
+                var passive = SkillRuntimeCompiler.CompilePassive(monster, passives[i]);
+                if (ContainsId(owner.State.LearnedPassiveSkillIds, passive.SkillId))
+                {
+                    target.AddOrReplace(new SkillRuntimeInstance(owner, passive));
+                }
             }
-
-            return ContainsId(state.LearnedActiveSkillIds, skillData.SkillId);
         }
 
         /*

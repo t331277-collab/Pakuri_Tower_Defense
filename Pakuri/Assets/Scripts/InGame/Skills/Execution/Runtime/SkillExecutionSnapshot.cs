@@ -393,9 +393,16 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (spec.HasDamageMultiplier)
+            var choice = spec.Source;
+            if (HasNormalizedPlanNodes(choice))
             {
-                DamageMultiplier *= PositiveOrDefault(spec.DamageMultiplier, 1f);
+                ApplyNodeBackedChoiceDefinition(choice);
+                return;
+            }
+
+            if (choice.HasDamageMultiplier)
+            {
+                DamageMultiplier *= PositiveOrDefault(choice.DamageMultiplier, 1f);
             }
 
             if (spec.HasShieldAmountMultiplier)
@@ -403,204 +410,204 @@ namespace Pakuri.InGame
                 ShieldAmountMultiplier *= PositiveOrDefault(spec.ShieldAmountMultiplier, 1f);
             }
 
-            BaseDamageBonus += spec.BaseDamageBonus;
+            BaseDamageBonus += choice.BaseDamageBonus;
 
-            if (spec.HasCooldownMultiplier)
+            if (choice.HasCooldownMultiplier)
             {
-                CooldownMultiplier *= PositiveOrDefault(spec.CooldownMultiplier, 1f);
+                CooldownMultiplier *= PositiveOrDefault(choice.CooldownMultiplier, 1f);
             }
 
-            if (spec.HasRadiusMultiplier)
+            if (choice.HasRadiusMultiplier)
             {
-                RadiusMultiplier *= PositiveOrDefault(spec.RadiusMultiplier, 1f);
+                RadiusMultiplier *= PositiveOrDefault(choice.RadiusMultiplier, 1f);
             }
 
-            RadiusBonus += spec.RadiusBonus;
-            BeamWidthBonus += spec.BeamWidthBonus;
-            if (spec.HasKnockbackDistanceMultiplier)
+            RadiusBonus += choice.RadiusBonus;
+            BeamWidthBonus += choice.BeamWidthBonus;
+            if (choice.HasKnockbackDistanceMultiplier)
             {
-                KnockbackDistanceMultiplier *= PositiveOrDefault(spec.KnockbackDistanceMultiplier, 1f);
+                KnockbackDistanceMultiplier *= PositiveOrDefault(choice.KnockbackDistanceMultiplier, 1f);
             }
 
-            if (spec.HasDamageDelayMultiplier)
+            if (choice.HasDamageDelayMultiplier)
             {
-                DamageDelayMultiplier *= PositiveOrDefault(spec.DamageDelayMultiplier, 1f);
+                DamageDelayMultiplier *= PositiveOrDefault(choice.DamageDelayMultiplier, 1f);
             }
 
-            if (spec.HasExecuteHealthRatioBonus)
+            if (choice.HasExecuteHealthRatioBonus)
             {
-                ExecuteHealthRatioBonus += spec.ExecuteHealthRatioBonus;
+                ExecuteHealthRatioBonus += choice.ExecuteHealthRatioBonus;
             }
 
-            if (spec.HasDurationMultiplier)
+            if (choice.HasDurationMultiplier)
             {
-                DurationMultiplier *= PositiveOrDefault(spec.DurationMultiplier, 1f);
+                DurationMultiplier *= PositiveOrDefault(choice.DurationMultiplier, 1f);
             }
 
-            DurationBonus += spec.DurationBonus;
+            DurationBonus += choice.DurationBonus;
 
-            if (spec.HasMagazineBonus)
+            if (choice.HasMagazineBonus)
             {
-                MagazineBonus += spec.MagazineBonus;
+                MagazineBonus += choice.MagazineBonus;
             }
 
-            AdditionalProjectileBonus += spec.AdditionalProjectileBonus;
-            PierceBonus += spec.PierceBonus;
+            AdditionalProjectileBonus += choice.AdditionalProjectileBonus;
+            PierceBonus += choice.PierceBonus;
 
-            if (spec.HasReloadTimeMultiplier)
+            if (choice.HasReloadTimeMultiplier)
             {
-                ReloadTimeMultiplier *= PositiveOrDefault(spec.ReloadTimeMultiplier, 1f);
+                ReloadTimeMultiplier *= PositiveOrDefault(choice.ReloadTimeMultiplier, 1f);
             }
 
-            if (spec.HasShotIntervalMultiplier)
+            if (choice.HasShotIntervalMultiplier)
             {
-                ShotIntervalMultiplier *= PositiveOrDefault(spec.ShotIntervalMultiplier, 1f);
+                ShotIntervalMultiplier *= PositiveOrDefault(choice.ShotIntervalMultiplier, 1f);
             }
 
-            if (spec.HasBurstDamageMultiplier
-                && spec.BurstDamageMultiplier > 0f
-                && spec.HasBurstDamageProjectileIndex)
+            if (choice.HasBurstDamageMultiplier
+                && choice.BurstDamageMultiplier > 0f
+                && choice.HasBurstDamageProjectileIndex)
             {
                 burstDamageRules.Add(new BurstDamageRule(
-                    spec.BurstDamageProjectileIndex,
-                    spec.BurstDamageMultiplier));
+                    choice.BurstDamageProjectileIndex,
+                    choice.BurstDamageMultiplier));
             }
 
-            if (spec.HasBurstStatusProjectileIndex && spec.BurstStatusStacksBonus != 0)
+            if (choice.HasBurstStatusProjectileIndex && choice.BurstStatusStacksBonus != 0)
             {
                 burstStatusRules.Add(new BurstStatusRule(
-                    spec.BurstStatusProjectileIndex,
-                    spec.BurstStatusStacksBonus));
+                    choice.BurstStatusProjectileIndex,
+                    choice.BurstStatusStacksBonus));
             }
 
-            if (spec.FollowUpProjectileCount > 0)
+            if (choice.FollowUpProjectileCount > 0)
             {
-                FollowUpProjectileCount = spec.FollowUpProjectileCount;
-                FollowUpProjectileDelaySeconds = Mathf.Max(0f, spec.FollowUpProjectileDelaySeconds);
-                FollowUpProjectileDamageMultiplier = Mathf.Max(0f, spec.FollowUpProjectileDamageMultiplier);
+                FollowUpProjectileCount = choice.FollowUpProjectileCount;
+                FollowUpProjectileDelaySeconds = Mathf.Max(0f, choice.FollowUpProjectileDelaySeconds);
+                FollowUpProjectileDamageMultiplier = Mathf.Max(0f, choice.FollowUpProjectileDamageMultiplier);
             }
 
-            if (spec.HasStatusChanceBonus)
+            if (choice.HasStatusChanceBonus)
             {
-                StatusChanceBonus += spec.StatusChanceBonus;
+                StatusChanceBonus += choice.StatusChanceBonus;
             }
 
-            if (spec.HasStatusActionSpeedBonus)
+            if (choice.HasStatusActionSpeedBonus)
             {
                 HasStatusActionSpeedBonus = true;
                 if (string.IsNullOrWhiteSpace(spec.StatusActionSpeedBonusStatusId))
                 {
-                    StatusActionSpeedBonus += spec.StatusActionSpeedBonus;
+                    StatusActionSpeedBonus += choice.StatusActionSpeedBonus;
                 }
                 else
                 {
                     StatusActionSpeedBonusStatusId = spec.StatusActionSpeedBonusStatusId;
                     if (statusActionSpeedBonuses.TryGetValue(spec.StatusActionSpeedBonusStatusId, out var currentBonus))
                     {
-                        statusActionSpeedBonuses[spec.StatusActionSpeedBonusStatusId] = currentBonus + spec.StatusActionSpeedBonus;
+                        statusActionSpeedBonuses[spec.StatusActionSpeedBonusStatusId] = currentBonus + choice.StatusActionSpeedBonus;
                     }
                     else
                     {
-                        statusActionSpeedBonuses[spec.StatusActionSpeedBonusStatusId] = spec.StatusActionSpeedBonus;
+                        statusActionSpeedBonuses[spec.StatusActionSpeedBonusStatusId] = choice.StatusActionSpeedBonus;
                     }
                 }
             }
 
-            if (spec.HasStatusAttackPowerBonus)
+            if (choice.HasStatusAttackPowerBonus)
             {
                 HasStatusAttackPowerBonus = true;
-                StatusAttackPowerBonus += spec.StatusAttackPowerBonus;
+                StatusAttackPowerBonus += choice.StatusAttackPowerBonus;
             }
 
-            BranchChanceBonus += spec.BranchChanceBonus;
+            BranchChanceBonus += choice.BranchChanceBonus;
 
-            if (spec.HasBranchChanceSet)
+            if (choice.HasBranchChanceSet)
             {
                 HasBranchChanceSet = true;
-                BranchChanceSet = spec.BranchChanceSet;
+                BranchChanceSet = choice.BranchChanceSet;
             }
 
-            if (spec.HasBranchCount)
+            if (choice.HasBranchCount)
             {
                 HasBranchCount = true;
-                BranchCount = spec.BranchCount;
+                BranchCount = choice.BranchCount;
             }
 
-            if (spec.HasBranchDamageMultiplier)
+            if (choice.HasBranchDamageMultiplier)
             {
                 HasBranchDamageMultiplier = true;
-                BranchDamageMultiplier = spec.BranchDamageMultiplier;
+                BranchDamageMultiplier = choice.BranchDamageMultiplier;
             }
 
-            if (spec.HasBranchSearchRadius)
+            if (choice.HasBranchSearchRadius)
             {
                 HasBranchSearchRadius = true;
-                BranchSearchRadius = spec.BranchSearchRadius;
+                BranchSearchRadius = choice.BranchSearchRadius;
             }
 
-            if (spec.BranchLaunchPeriod > 0)
+            if (choice.BranchLaunchPeriod > 0)
             {
-                BranchLaunchPeriod = spec.BranchLaunchPeriod;
+                BranchLaunchPeriod = choice.BranchLaunchPeriod;
             }
 
-            if (spec.HasBranchLaunchChanceSet)
+            if (choice.HasBranchLaunchChanceSet)
             {
                 HasBranchLaunchChanceSet = true;
-                BranchLaunchChanceSet = spec.BranchLaunchChanceSet;
+                BranchLaunchChanceSet = choice.BranchLaunchChanceSet;
             }
 
-            HitTargetCountBonus += spec.HitTargetCountBonus;
-            CritChanceBonus += spec.CritChanceBonus;
-            CritDamageBonus += spec.CritDamageBonus;
-            ExecuteCritChanceBonus += spec.ExecuteCritChanceBonus;
-            if (spec.HasBossDamageMultiplier)
+            HitTargetCountBonus += choice.HitTargetCountBonus;
+            CritChanceBonus += choice.CritChanceBonus;
+            CritDamageBonus += choice.CritDamageBonus;
+            ExecuteCritChanceBonus += choice.ExecuteCritChanceBonus;
+            if (choice.HasBossDamageMultiplier)
             {
-                BossDamageMultiplier *= PositiveOrDefault(spec.BossDamageMultiplier, 1f);
+                BossDamageMultiplier *= PositiveOrDefault(choice.BossDamageMultiplier, 1f);
             }
 
-            if (spec.HasKillCooldownRefundRatioBonus)
+            if (choice.HasKillCooldownRefundRatioBonus)
             {
-                KillCooldownRefundRatioBonus += spec.KillCooldownRefundRatioBonus;
+                KillCooldownRefundRatioBonus += choice.KillCooldownRefundRatioBonus;
             }
 
-            if (spec.KillResetsCooldown)
+            if (choice.KillResetsCooldown)
             {
                 KillResetsCooldown = true;
             }
 
-            if (spec.KillResetsCooldownRequiresExecute)
+            if (choice.KillResetsCooldownRequiresExecute)
             {
                 KillResetsCooldownRequiresExecute = true;
             }
 
-            if (!string.IsNullOrWhiteSpace(spec.StatusTag))
+            if (!string.IsNullOrWhiteSpace(choice.StatusTag))
             {
-                StatusTag = spec.StatusTag;
+                StatusTag = choice.StatusTag;
             }
 
-            StatusStacksBonus += spec.StatusStacksBonus;
-            if (spec.HasStatusStacksSet)
+            StatusStacksBonus += choice.StatusStacksBonus;
+            if (choice.HasStatusStacksSet)
             {
                 HasStatusStacksSet = true;
-                StatusStacksSet = spec.StatusStacksSet;
+                StatusStacksSet = choice.StatusStacksSet;
             }
 
-            if (spec.HasStatusElementDamageTakenBonus)
+            if (choice.HasStatusElementDamageTakenBonus)
             {
                 HasStatusElementDamageTakenBonus = true;
-                StatusElementDamageTakenBonus += spec.StatusElementDamageTakenBonus;
+                StatusElementDamageTakenBonus += choice.StatusElementDamageTakenBonus;
             }
 
-            if (spec.HasStatusCriticalDamageTakenBonus)
+            if (choice.HasStatusCriticalDamageTakenBonus)
             {
                 HasStatusCriticalDamageTakenBonus = true;
-                StatusCriticalDamageTakenBonus += spec.StatusCriticalDamageTakenBonus;
+                StatusCriticalDamageTakenBonus += choice.StatusCriticalDamageTakenBonus;
             }
 
-            if (spec.HasStatusAilmentResistanceBonus)
+            if (choice.HasStatusAilmentResistanceBonus)
             {
                 HasStatusAilmentResistanceBonus = true;
-                StatusAilmentResistanceBonus += spec.StatusAilmentResistanceBonus;
+                StatusAilmentResistanceBonus += choice.StatusAilmentResistanceBonus;
             }
 
             if (spec.HasStatusDamageBonusRate)
@@ -633,188 +640,188 @@ namespace Pakuri.InGame
                 StatusFlatElementResistReduction += spec.StatusFlatElementResistReduction;
             }
 
-            if (!string.IsNullOrWhiteSpace(spec.StatusMaxStacksBonusStatusId)
-                && spec.StatusMaxStacksBonus != 0)
+            if (!string.IsNullOrWhiteSpace(choice.StatusMaxStacksBonusStatusId)
+                && choice.StatusMaxStacksBonus != 0)
             {
-                if (statusMaxStacksBonuses.TryGetValue(spec.StatusMaxStacksBonusStatusId, out var currentBonus))
+                if (statusMaxStacksBonuses.TryGetValue(choice.StatusMaxStacksBonusStatusId, out var currentBonus))
                 {
-                    statusMaxStacksBonuses[spec.StatusMaxStacksBonusStatusId] = currentBonus + spec.StatusMaxStacksBonus;
+                    statusMaxStacksBonuses[choice.StatusMaxStacksBonusStatusId] = currentBonus + choice.StatusMaxStacksBonus;
                 }
                 else
                 {
-                    statusMaxStacksBonuses[spec.StatusMaxStacksBonusStatusId] = spec.StatusMaxStacksBonus;
+                    statusMaxStacksBonuses[choice.StatusMaxStacksBonusStatusId] = choice.StatusMaxStacksBonus;
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(spec.StatusDurationBonusStatusId)
-                && !Mathf.Approximately(spec.StatusDurationBonus, 0f))
+            if (!string.IsNullOrWhiteSpace(choice.StatusDurationBonusStatusId)
+                && !Mathf.Approximately(choice.StatusDurationBonus, 0f))
             {
-                if (statusDurationBonuses.TryGetValue(spec.StatusDurationBonusStatusId, out var currentBonus))
+                if (statusDurationBonuses.TryGetValue(choice.StatusDurationBonusStatusId, out var currentBonus))
                 {
-                    statusDurationBonuses[spec.StatusDurationBonusStatusId] = currentBonus + spec.StatusDurationBonus;
+                    statusDurationBonuses[choice.StatusDurationBonusStatusId] = currentBonus + choice.StatusDurationBonus;
                 }
                 else
                 {
-                    statusDurationBonuses[spec.StatusDurationBonusStatusId] = spec.StatusDurationBonus;
+                    statusDurationBonuses[choice.StatusDurationBonusStatusId] = choice.StatusDurationBonus;
                 }
             }
 
-            if (spec.HasStatusConditionalDamageTakenBonus)
+            if (choice.HasStatusConditionalDamageTakenBonus)
             {
                 HasStatusConditionalDamageTakenBonus = true;
-                StatusConditionalDamageTakenBonus = spec.StatusConditionalDamageTakenBonus;
-                StatusConditionalSourceStatusId = spec.StatusConditionalSourceStatusId;
+                StatusConditionalDamageTakenBonus = choice.StatusConditionalDamageTakenBonus;
+                StatusConditionalSourceStatusId = choice.StatusConditionalSourceStatusId;
             }
 
-            if (spec.HasOnHitAdditionalDamage)
+            if (choice.HasOnHitAdditionalDamage)
             {
                 HasOnHitAdditionalDamage = true;
-                OnHitAdditionalDamageChance = Mathf.Clamp01(spec.OnHitAdditionalDamageChance);
-                OnHitAdditionalDamageMultiplier = Mathf.Max(0f, spec.OnHitAdditionalDamageMultiplier);
-                OnHitAdditionalDamageAttribute = spec.OnHitAdditionalDamageAttribute;
-                OnHitAdditionalDamageTarget = spec.OnHitAdditionalDamageTarget;
+                OnHitAdditionalDamageChance = Mathf.Clamp01(choice.OnHitAdditionalDamageChance);
+                OnHitAdditionalDamageMultiplier = Mathf.Max(0f, choice.OnHitAdditionalDamageMultiplier);
+                OnHitAdditionalDamageAttribute = choice.OnHitAdditionalDamageAttribute;
+                OnHitAdditionalDamageTarget = choice.OnHitAdditionalDamageTarget;
             }
 
-            if (spec.OnHitChainHitPeriod > 0)
+            if (choice.OnHitChainHitPeriod > 0)
             {
-                OnHitChainHitPeriod = spec.OnHitChainHitPeriod;
+                OnHitChainHitPeriod = choice.OnHitChainHitPeriod;
             }
 
-            if (spec.OnHitChainTargetCount > 0)
+            if (choice.OnHitChainTargetCount > 0)
             {
-                OnHitChainTargetCount = spec.OnHitChainTargetCount;
+                OnHitChainTargetCount = choice.OnHitChainTargetCount;
             }
 
-            if (spec.OnHitChainSearchRadius > 0f)
+            if (choice.OnHitChainSearchRadius > 0f)
             {
-                OnHitChainSearchRadius = spec.OnHitChainSearchRadius;
+                OnHitChainSearchRadius = choice.OnHitChainSearchRadius;
             }
 
-            if (spec.OnHitChainDamageMultiplier > 0f)
+            if (choice.OnHitChainDamageMultiplier > 0f)
             {
-            OnHitChainDamageMultiplier = spec.OnHitChainDamageMultiplier;
+            OnHitChainDamageMultiplier = choice.OnHitChainDamageMultiplier;
             }
 
-            OnHitChainDamageAttribute = spec.OnHitChainDamageAttribute;
+            OnHitChainDamageAttribute = choice.OnHitChainDamageAttribute;
 
-            if (!string.IsNullOrWhiteSpace(spec.ReloadReduceTargetSkillId)
-                && spec.ReloadReduceSecondsPerHit > 0f)
+            if (!string.IsNullOrWhiteSpace(choice.ReloadReduceTargetSkillId)
+                && choice.ReloadReduceSecondsPerHit > 0f)
             {
-                ReloadReduceTargetSkillId = spec.ReloadReduceTargetSkillId;
-                ReloadReduceSecondsPerHit += spec.ReloadReduceSecondsPerHit;
+                ReloadReduceTargetSkillId = choice.ReloadReduceTargetSkillId;
+                ReloadReduceSecondsPerHit += choice.ReloadReduceSecondsPerHit;
             }
 
-            if (!string.IsNullOrWhiteSpace(spec.CoreHitboxName))
+            if (!string.IsNullOrWhiteSpace(choice.CoreHitboxName))
             {
-                CoreHitboxName = spec.CoreHitboxName.Trim();
+                CoreHitboxName = choice.CoreHitboxName.Trim();
             }
 
-            if (spec.HasCoreDamageMultiplier)
+            if (choice.HasCoreDamageMultiplier)
             {
                 HasCoreDamageMultiplier = true;
-                CoreDamageMultiplier = PositiveOrDefault(spec.CoreDamageMultiplier, 1f);
+                CoreDamageMultiplier = PositiveOrDefault(choice.CoreDamageMultiplier, 1f);
             }
 
-            if (spec.HasCoreOnHitAdditionalDamage)
+            if (choice.HasCoreOnHitAdditionalDamage)
             {
                 HasCoreOnHitAdditionalDamage = true;
-                CoreOnHitAdditionalDamageChance = Mathf.Clamp01(spec.CoreOnHitAdditionalDamageChance);
-                CoreOnHitAdditionalDamageMultiplier = Mathf.Max(0f, spec.CoreOnHitAdditionalDamageMultiplier);
-                CoreOnHitAdditionalDamageAttribute = spec.CoreOnHitAdditionalDamageAttribute;
+                CoreOnHitAdditionalDamageChance = Mathf.Clamp01(choice.CoreOnHitAdditionalDamageChance);
+                CoreOnHitAdditionalDamageMultiplier = Mathf.Max(0f, choice.CoreOnHitAdditionalDamageMultiplier);
+                CoreOnHitAdditionalDamageAttribute = choice.CoreOnHitAdditionalDamageAttribute;
             }
 
-            if (!string.IsNullOrWhiteSpace(spec.HitCountCooldownRefundTargetSkillId)
-                && spec.HitCountCooldownRefundMinTargets > 0
-                && spec.HitCountCooldownRefundRatio > 0f)
+            if (!string.IsNullOrWhiteSpace(choice.HitCountCooldownRefundTargetSkillId)
+                && choice.HitCountCooldownRefundMinTargets > 0
+                && choice.HitCountCooldownRefundRatio > 0f)
             {
-                HitCountCooldownRefundTargetSkillId = spec.HitCountCooldownRefundTargetSkillId;
-                HitCountCooldownRefundMinTargets = spec.HitCountCooldownRefundMinTargets;
-                HitCountCooldownRefundRatio = Mathf.Clamp01(spec.HitCountCooldownRefundRatio);
+                HitCountCooldownRefundTargetSkillId = choice.HitCountCooldownRefundTargetSkillId;
+                HitCountCooldownRefundMinTargets = choice.HitCountCooldownRefundMinTargets;
+                HitCountCooldownRefundRatio = Mathf.Clamp01(choice.HitCountCooldownRefundRatio);
             }
 
-            if (spec.RepeatCountPerTarget > 0)
+            if (choice.RepeatCountPerTarget > 0)
             {
-                RepeatCountPerTarget += spec.RepeatCountPerTarget;
-                RepeatIntervalSeconds = Mathf.Max(RepeatIntervalSeconds, spec.RepeatIntervalSeconds);
-                if (spec.RepeatDamageMultiplier > 0f)
+                RepeatCountPerTarget += choice.RepeatCountPerTarget;
+                RepeatIntervalSeconds = Mathf.Max(RepeatIntervalSeconds, choice.RepeatIntervalSeconds);
+                if (choice.RepeatDamageMultiplier > 0f)
                 {
-                    RepeatDamageMultiplier *= PositiveOrDefault(spec.RepeatDamageMultiplier, 1f);
+                    RepeatDamageMultiplier *= PositiveOrDefault(choice.RepeatDamageMultiplier, 1f);
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(spec.ThresholdStatusId)
-                && spec.ThresholdStatusMinStacks > 0
-                && !string.IsNullOrWhiteSpace(spec.ThresholdApplyStatusId))
+            if (!string.IsNullOrWhiteSpace(choice.ThresholdStatusId)
+                && choice.ThresholdStatusMinStacks > 0
+                && !string.IsNullOrWhiteSpace(choice.ThresholdApplyStatusId))
             {
-                ThresholdStatusId = spec.ThresholdStatusId;
-                ThresholdStatusMinStacks = spec.ThresholdStatusMinStacks;
-                ThresholdApplyStatusId = spec.ThresholdApplyStatusId;
+                ThresholdStatusId = choice.ThresholdStatusId;
+                ThresholdStatusMinStacks = choice.ThresholdStatusMinStacks;
+                ThresholdApplyStatusId = choice.ThresholdApplyStatusId;
             }
 
-            if (spec.HasTargetStatusStackDamageMultiplier && spec.TargetStatusStackDamageMultiplier > 0f)
+            if (choice.HasTargetStatusStackDamageMultiplier && choice.TargetStatusStackDamageMultiplier > 0f)
             {
-                TargetStatusStackDamageMultiplier *= PositiveOrDefault(spec.TargetStatusStackDamageMultiplier, 1f);
+                TargetStatusStackDamageMultiplier *= PositiveOrDefault(choice.TargetStatusStackDamageMultiplier, 1f);
             }
 
-            if (spec.HasConsumeTargetStatusRatioOverride)
+            if (choice.HasConsumeTargetStatusRatioOverride)
             {
                 HasConsumeTargetStatusRatioOverride = true;
-                ConsumeTargetStatusRatioOverride = Mathf.Clamp01(spec.ConsumeTargetStatusRatioOverride);
+                ConsumeTargetStatusRatioOverride = Mathf.Clamp01(choice.ConsumeTargetStatusRatioOverride);
             }
 
-            if (spec.HasConsumeTargetStatusStacksOverride)
+            if (choice.HasConsumeTargetStatusStacksOverride)
             {
                 HasConsumeTargetStatusStacksOverride = true;
-                ConsumeTargetStatusStacksOverride = Mathf.Max(0, spec.ConsumeTargetStatusStacksOverride);
+                ConsumeTargetStatusStacksOverride = Mathf.Max(0, choice.ConsumeTargetStatusStacksOverride);
             }
 
-            if (spec.HasConditionalDamageMultiplier
-                && spec.ConditionalDamageMultiplier > 0f
-                && !string.IsNullOrWhiteSpace(spec.ConditionalTargetStatusId)
-                && spec.ConditionalTargetStatusMinStacks > 0)
+            if (choice.HasConditionalDamageMultiplier
+                && choice.ConditionalDamageMultiplier > 0f
+                && !string.IsNullOrWhiteSpace(choice.ConditionalTargetStatusId)
+                && choice.ConditionalTargetStatusMinStacks > 0)
             {
                 conditionalDamageRules.Add(new ConditionalDamageRule(
-                    spec.ConditionalDamageMultiplier,
-                    spec.ConditionalTargetStatusId,
-                    spec.ConditionalTargetStatusMinStacks));
+                    choice.ConditionalDamageMultiplier,
+                    choice.ConditionalTargetStatusId,
+                    choice.ConditionalTargetStatusMinStacks));
             }
 
-            if (!Mathf.Approximately(spec.ConditionalCritChanceBonus, 0f)
-                && !string.IsNullOrWhiteSpace(spec.ConditionalCritTargetStatusId)
-                && spec.ConditionalCritTargetStatusMinStacks > 0)
+            if (!Mathf.Approximately(choice.ConditionalCritChanceBonus, 0f)
+                && !string.IsNullOrWhiteSpace(choice.ConditionalCritTargetStatusId)
+                && choice.ConditionalCritTargetStatusMinStacks > 0)
             {
                 conditionalCritChanceRules.Add(new ConditionalCritChanceRule(
-                    spec.ConditionalCritChanceBonus,
-                    spec.ConditionalCritTargetStatusId,
-                    spec.ConditionalCritTargetStatusMinStacks));
+                    choice.ConditionalCritChanceBonus,
+                    choice.ConditionalCritTargetStatusId,
+                    choice.ConditionalCritTargetStatusMinStacks));
             }
 
-            if (spec.RedistributeConsumedStatusRatioOnKill > 0f
-                && !string.IsNullOrWhiteSpace(spec.RedistributeConsumedStatusId)
-                && spec.RedistributeConsumedStatusSearchRadius > 0f)
+            if (choice.RedistributeConsumedStatusRatioOnKill > 0f
+                && !string.IsNullOrWhiteSpace(choice.RedistributeConsumedStatusId)
+                && choice.RedistributeConsumedStatusSearchRadius > 0f)
             {
-                RedistributeConsumedStatusRatioOnKill = Mathf.Clamp01(spec.RedistributeConsumedStatusRatioOnKill);
-                RedistributeConsumedStatusId = spec.RedistributeConsumedStatusId;
-                RedistributeConsumedStatusSearchRadius = Mathf.Max(0f, spec.RedistributeConsumedStatusSearchRadius);
-                RedistributeConsumedStatusTargetCount = Mathf.Max(0, spec.RedistributeConsumedStatusTargetCount);
+                RedistributeConsumedStatusRatioOnKill = Mathf.Clamp01(choice.RedistributeConsumedStatusRatioOnKill);
+                RedistributeConsumedStatusId = choice.RedistributeConsumedStatusId;
+                RedistributeConsumedStatusSearchRadius = Mathf.Max(0f, choice.RedistributeConsumedStatusSearchRadius);
+                RedistributeConsumedStatusTargetCount = Mathf.Max(0, choice.RedistributeConsumedStatusTargetCount);
             }
 
-            if (spec.ConsecutiveHitBonusRate > 0f)
+            if (choice.ConsecutiveHitBonusRate > 0f)
             {
-                ConsecutiveHitBonusRate = Mathf.Max(0f, spec.ConsecutiveHitBonusRate);
+                ConsecutiveHitBonusRate = Mathf.Max(0f, choice.ConsecutiveHitBonusRate);
             }
 
-            if (spec.ConsecutiveHitMax > 0f)
+            if (choice.ConsecutiveHitMax > 0f)
             {
-                ConsecutiveHitMax = Mathf.Max(0f, spec.ConsecutiveHitMax);
+                ConsecutiveHitMax = Mathf.Max(0f, choice.ConsecutiveHitMax);
             }
 
-            if (spec.SkillEffectPrefab != null)
+            if (choice.SkillEffectPrefab != null)
             {
-                SkillEffectPrefab = spec.SkillEffectPrefab;
+                SkillEffectPrefab = choice.SkillEffectPrefab;
             }
 
-            AddNormalizedPlanNodes(spec.NormalizedPlanNodes);
+            AddNormalizedPlanNodes(spec.PlanNodes);
             RefreshSingleAttackOperationBridges();
             RebuildExecutionPlan();
         }
@@ -825,173 +832,6 @@ namespace Pakuri.InGame
         public void ApplyDynamicDamageMultiplier(float multiplier)
         {
             DamageMultiplier *= PositiveOrDefault(multiplier, 1f);
-        }
-
-        /*
-         * 선택지 정의를 적용한다.
-         */
-        public void ApplyChoiceDefinition(SkillChoiceDefinition choice)
-        {
-            if (choice == null)
-            {
-                return;
-            }
-
-            if (HasNormalizedPlanNodes(choice))
-            {
-                ApplyNodeBackedChoiceDefinition(choice);
-                return;
-            }
-
-            var spec = new SkillChoiceRuntimeData
-            {
-                ChoiceId = choice.ChoiceId,
-                Title = choice.Title,
-                Description = choice.DescriptionText,
-                Icon = choice.SkillIcon,
-                SkillEffectPrefab = choice.SkillEffectPrefab,
-                HasDamageMultiplier = choice.HasDamageMultiplier,
-                DamageMultiplier = choice.DamageMultiplier,
-                HasShieldAmountMultiplier = false,
-                ShieldAmountMultiplier = 1f,
-                BaseDamageBonus = choice.BaseDamageBonus,
-                HasCooldownMultiplier = choice.HasCooldownMultiplier,
-                CooldownMultiplier = choice.CooldownMultiplier,
-                HasRadiusMultiplier = choice.HasRadiusMultiplier,
-                RadiusMultiplier = choice.RadiusMultiplier,
-                RadiusBonus = choice.RadiusBonus,
-                BeamWidthBonus = choice.BeamWidthBonus,
-                HasKnockbackDistanceMultiplier = choice.HasKnockbackDistanceMultiplier,
-                KnockbackDistanceMultiplier = choice.KnockbackDistanceMultiplier,
-                HasDamageDelayMultiplier = choice.HasDamageDelayMultiplier,
-                DamageDelayMultiplier = choice.DamageDelayMultiplier,
-                HasExecuteHealthRatioBonus = choice.HasExecuteHealthRatioBonus,
-                ExecuteHealthRatioBonus = choice.ExecuteHealthRatioBonus,
-                HasDurationMultiplier = choice.HasDurationMultiplier,
-                DurationMultiplier = choice.DurationMultiplier,
-                DurationBonus = choice.DurationBonus,
-                HasMagazineBonus = choice.HasMagazineBonus,
-                MagazineBonus = choice.MagazineBonus,
-                AdditionalProjectileBonus = choice.AdditionalProjectileBonus,
-                PierceBonus = choice.PierceBonus,
-                HasReloadTimeMultiplier = choice.HasReloadTimeMultiplier,
-                ReloadTimeMultiplier = choice.ReloadTimeMultiplier,
-                HasShotIntervalMultiplier = choice.HasShotIntervalMultiplier,
-                ShotIntervalMultiplier = choice.ShotIntervalMultiplier,
-                HasBurstDamageProjectileIndex = choice.HasBurstDamageProjectileIndex,
-                BurstDamageProjectileIndex = choice.BurstDamageProjectileIndex,
-                HasBurstDamageMultiplier = choice.HasBurstDamageMultiplier,
-                BurstDamageMultiplier = choice.BurstDamageMultiplier,
-                HasBurstStatusProjectileIndex = choice.HasBurstStatusProjectileIndex,
-                BurstStatusProjectileIndex = choice.BurstStatusProjectileIndex,
-                BurstStatusStacksBonus = choice.BurstStatusStacksBonus,
-                FollowUpProjectileCount = choice.FollowUpProjectileCount,
-                FollowUpProjectileDelaySeconds = choice.FollowUpProjectileDelaySeconds,
-                FollowUpProjectileDamageMultiplier = choice.FollowUpProjectileDamageMultiplier,
-                HasStatusChanceBonus = choice.HasStatusChanceBonus,
-                StatusChanceBonus = choice.StatusChanceBonus,
-                BranchChanceBonus = choice.BranchChanceBonus,
-                HasBranchChanceSet = choice.HasBranchChanceSet,
-                BranchChanceSet = choice.BranchChanceSet,
-                HasBranchCount = choice.HasBranchCount,
-                BranchCount = choice.BranchCount,
-                HasBranchDamageMultiplier = choice.HasBranchDamageMultiplier,
-                BranchDamageMultiplier = choice.BranchDamageMultiplier,
-                HasBranchSearchRadius = choice.HasBranchSearchRadius,
-                BranchSearchRadius = choice.BranchSearchRadius,
-                BranchLaunchPeriod = choice.BranchLaunchPeriod,
-                HasBranchLaunchChanceSet = choice.HasBranchLaunchChanceSet,
-                BranchLaunchChanceSet = choice.BranchLaunchChanceSet,
-                HasMaxHealthBonus = choice.HasMaxHealthBonus,
-                MaxHealthBonus = choice.MaxHealthBonus,
-                HitTargetCountBonus = choice.HitTargetCountBonus,
-                CritChanceBonus = choice.CritChanceBonus,
-                CritDamageBonus = choice.CritDamageBonus,
-                ExecuteCritChanceBonus = choice.ExecuteCritChanceBonus,
-                HasBossDamageMultiplier = choice.HasBossDamageMultiplier,
-                BossDamageMultiplier = choice.BossDamageMultiplier,
-                HasKillCooldownRefundRatioBonus = choice.HasKillCooldownRefundRatioBonus,
-                KillCooldownRefundRatioBonus = choice.KillCooldownRefundRatioBonus,
-                KillResetsCooldown = choice.KillResetsCooldown,
-                KillResetsCooldownRequiresExecute = choice.KillResetsCooldownRequiresExecute,
-                StatusTag = choice.StatusTag,
-                HasStatusActionSpeedBonus = choice.HasStatusActionSpeedBonus,
-                StatusActionSpeedBonusStatusId = string.Empty,
-                StatusActionSpeedBonus = choice.StatusActionSpeedBonus,
-                HasStatusAttackPowerBonus = choice.HasStatusAttackPowerBonus,
-                StatusAttackPowerBonus = choice.StatusAttackPowerBonus,
-                StatusStacksBonus = choice.StatusStacksBonus,
-                HasStatusStacksSet = choice.HasStatusStacksSet,
-                StatusStacksSet = choice.StatusStacksSet,
-                HasStatusElementDamageTakenBonus = choice.HasStatusElementDamageTakenBonus,
-                StatusElementDamageTakenBonus = choice.StatusElementDamageTakenBonus,
-                HasStatusCriticalDamageTakenBonus = choice.HasStatusCriticalDamageTakenBonus,
-                StatusCriticalDamageTakenBonus = choice.StatusCriticalDamageTakenBonus,
-                HasStatusAilmentResistanceBonus = choice.HasStatusAilmentResistanceBonus,
-                StatusAilmentResistanceBonus = choice.StatusAilmentResistanceBonus,
-                StatusMaxStacksBonusStatusId = choice.StatusMaxStacksBonusStatusId,
-                StatusMaxStacksBonus = choice.StatusMaxStacksBonus,
-                StatusDurationBonusStatusId = choice.StatusDurationBonusStatusId,
-                StatusDurationBonus = choice.StatusDurationBonus,
-                ThresholdStatusId = choice.ThresholdStatusId,
-                ThresholdStatusMinStacks = choice.ThresholdStatusMinStacks,
-                ThresholdApplyStatusId = choice.ThresholdApplyStatusId,
-                HasTargetStatusStackDamageMultiplier = choice.HasTargetStatusStackDamageMultiplier,
-                TargetStatusStackDamageMultiplier = choice.TargetStatusStackDamageMultiplier,
-                HasConsumeTargetStatusRatioOverride = choice.HasConsumeTargetStatusRatioOverride,
-                ConsumeTargetStatusRatioOverride = choice.ConsumeTargetStatusRatioOverride,
-                HasConsumeTargetStatusStacksOverride = choice.HasConsumeTargetStatusStacksOverride,
-                ConsumeTargetStatusStacksOverride = choice.ConsumeTargetStatusStacksOverride,
-                HasConditionalDamageMultiplier = choice.HasConditionalDamageMultiplier,
-                ConditionalDamageMultiplier = choice.ConditionalDamageMultiplier,
-                ConditionalTargetStatusId = choice.ConditionalTargetStatusId,
-                ConditionalTargetStatusMinStacks = choice.ConditionalTargetStatusMinStacks,
-                ConditionalCritChanceBonus = choice.ConditionalCritChanceBonus,
-                ConditionalCritTargetStatusId = choice.ConditionalCritTargetStatusId,
-                ConditionalCritTargetStatusMinStacks = choice.ConditionalCritTargetStatusMinStacks,
-                RedistributeConsumedStatusRatioOnKill = choice.RedistributeConsumedStatusRatioOnKill,
-                RedistributeConsumedStatusId = choice.RedistributeConsumedStatusId,
-                RedistributeConsumedStatusSearchRadius = choice.RedistributeConsumedStatusSearchRadius,
-                RedistributeConsumedStatusTargetCount = choice.RedistributeConsumedStatusTargetCount,
-                CountStatusId = choice.CountStatusId,
-                CountTargetSide = choice.CountTargetSide,
-                DamageMultiplierPerCount = choice.DamageMultiplierPerCount,
-                CountMax = choice.CountMax,
-                ConsecutiveHitBonusRate = choice.ConsecutiveHitBonusRate,
-                ConsecutiveHitMax = choice.ConsecutiveHitMax,
-                HasStatusConditionalDamageTakenBonus = choice.HasStatusConditionalDamageTakenBonus,
-                StatusConditionalDamageTakenBonus = choice.StatusConditionalDamageTakenBonus,
-                StatusConditionalSourceStatusId = choice.StatusConditionalSourceStatusId,
-                HasOnHitAdditionalDamage = choice.HasOnHitAdditionalDamage,
-                OnHitAdditionalDamageChance = choice.OnHitAdditionalDamageChance,
-                OnHitAdditionalDamageMultiplier = choice.OnHitAdditionalDamageMultiplier,
-                OnHitAdditionalDamageAttribute = choice.OnHitAdditionalDamageAttribute,
-                OnHitAdditionalDamageTarget = choice.OnHitAdditionalDamageTarget,
-                OnHitChainHitPeriod = choice.OnHitChainHitPeriod,
-                OnHitChainTargetCount = choice.OnHitChainTargetCount,
-                OnHitChainSearchRadius = choice.OnHitChainSearchRadius,
-                OnHitChainDamageMultiplier = choice.OnHitChainDamageMultiplier,
-                OnHitChainDamageAttribute = choice.OnHitChainDamageAttribute,
-                ReloadReduceTargetSkillId = choice.ReloadReduceTargetSkillId,
-                ReloadReduceSecondsPerHit = choice.ReloadReduceSecondsPerHit,
-                CoreHitboxName = choice.CoreHitboxName,
-                HasCoreDamageMultiplier = choice.HasCoreDamageMultiplier,
-                CoreDamageMultiplier = choice.CoreDamageMultiplier,
-                HasCoreOnHitAdditionalDamage = choice.HasCoreOnHitAdditionalDamage,
-                CoreOnHitAdditionalDamageChance = choice.CoreOnHitAdditionalDamageChance,
-                CoreOnHitAdditionalDamageMultiplier = choice.CoreOnHitAdditionalDamageMultiplier,
-                CoreOnHitAdditionalDamageAttribute = choice.CoreOnHitAdditionalDamageAttribute,
-                HitCountCooldownRefundTargetSkillId = choice.HitCountCooldownRefundTargetSkillId,
-                HitCountCooldownRefundMinTargets = choice.HitCountCooldownRefundMinTargets,
-                HitCountCooldownRefundRatio = choice.HitCountCooldownRefundRatio,
-                RepeatCountPerTarget = choice.RepeatCountPerTarget,
-                RepeatIntervalSeconds = choice.RepeatIntervalSeconds,
-                RepeatDamageMultiplier = choice.RepeatDamageMultiplier,
-                NormalizedPlanNodes = SkillRuntimeCompiler.MapSkillNodeDefinitions(choice.NormalizedPlanNodes)
-            };
-
-            SkillRuntimeCompiler.ApplyNormalizedChoiceNodes(spec, choice.NormalizedPlanNodes);
-            ApplyChoiceSpec(spec);
         }
 
         /*
@@ -1007,7 +847,7 @@ namespace Pakuri.InGame
             var targetNodes = SkillRuntimeCompiler.FilterSkillNodeDefinitionsForTarget(
                 choice.NormalizedPlanNodes,
                 SkillId);
-            var compatibilitySpec = new SkillChoiceRuntimeData();
+            var compatibilitySpec = new SkillChoiceRuntimeData { Source = new SkillChoiceDefinition() };
             SkillRuntimeCompiler.ApplyNormalizedChoiceCompatibilityNodes(
                 compatibilitySpec,
                 targetNodes);
@@ -1025,77 +865,78 @@ namespace Pakuri.InGame
          */
         private void ApplyNodeBackedChoiceFields(SkillChoiceRuntimeData spec)
         {
-            if (spec.HasBurstDamageMultiplier
-                && spec.BurstDamageMultiplier > 0f
-                && spec.HasBurstDamageProjectileIndex)
+            var choice = spec.Source;
+            if (choice.HasBurstDamageMultiplier
+                && choice.BurstDamageMultiplier > 0f
+                && choice.HasBurstDamageProjectileIndex)
             {
                 burstDamageRules.Add(new BurstDamageRule(
-                    spec.BurstDamageProjectileIndex,
-                    spec.BurstDamageMultiplier));
+                    choice.BurstDamageProjectileIndex,
+                    choice.BurstDamageMultiplier));
             }
 
-            if (spec.HasBurstStatusProjectileIndex && spec.BurstStatusStacksBonus != 0)
+            if (choice.HasBurstStatusProjectileIndex && choice.BurstStatusStacksBonus != 0)
             {
                 burstStatusRules.Add(new BurstStatusRule(
-                    spec.BurstStatusProjectileIndex,
-                    spec.BurstStatusStacksBonus));
+                    choice.BurstStatusProjectileIndex,
+                    choice.BurstStatusStacksBonus));
             }
 
-            if (spec.FollowUpProjectileCount > 0)
+            if (choice.FollowUpProjectileCount > 0)
             {
-                FollowUpProjectileCount = spec.FollowUpProjectileCount;
-                FollowUpProjectileDelaySeconds = Mathf.Max(0f, spec.FollowUpProjectileDelaySeconds);
-                FollowUpProjectileDamageMultiplier = Mathf.Max(0f, spec.FollowUpProjectileDamageMultiplier);
+                FollowUpProjectileCount = choice.FollowUpProjectileCount;
+                FollowUpProjectileDelaySeconds = Mathf.Max(0f, choice.FollowUpProjectileDelaySeconds);
+                FollowUpProjectileDamageMultiplier = Mathf.Max(0f, choice.FollowUpProjectileDamageMultiplier);
             }
 
-            if (!string.IsNullOrWhiteSpace(spec.ThresholdStatusId)
-                && spec.ThresholdStatusMinStacks > 0
-                && !string.IsNullOrWhiteSpace(spec.ThresholdApplyStatusId))
+            if (!string.IsNullOrWhiteSpace(choice.ThresholdStatusId)
+                && choice.ThresholdStatusMinStacks > 0
+                && !string.IsNullOrWhiteSpace(choice.ThresholdApplyStatusId))
             {
-                ThresholdStatusId = spec.ThresholdStatusId;
-                ThresholdStatusMinStacks = spec.ThresholdStatusMinStacks;
-                ThresholdApplyStatusId = spec.ThresholdApplyStatusId;
+                ThresholdStatusId = choice.ThresholdStatusId;
+                ThresholdStatusMinStacks = choice.ThresholdStatusMinStacks;
+                ThresholdApplyStatusId = choice.ThresholdApplyStatusId;
             }
 
-            if (spec.HasTargetStatusStackDamageMultiplier && spec.TargetStatusStackDamageMultiplier > 0f)
+            if (choice.HasTargetStatusStackDamageMultiplier && choice.TargetStatusStackDamageMultiplier > 0f)
             {
-                TargetStatusStackDamageMultiplier *= PositiveOrDefault(spec.TargetStatusStackDamageMultiplier, 1f);
+                TargetStatusStackDamageMultiplier *= PositiveOrDefault(choice.TargetStatusStackDamageMultiplier, 1f);
             }
 
-            if (spec.HasConsumeTargetStatusRatioOverride)
+            if (choice.HasConsumeTargetStatusRatioOverride)
             {
                 HasConsumeTargetStatusRatioOverride = true;
-                ConsumeTargetStatusRatioOverride = Mathf.Clamp01(spec.ConsumeTargetStatusRatioOverride);
+                ConsumeTargetStatusRatioOverride = Mathf.Clamp01(choice.ConsumeTargetStatusRatioOverride);
             }
 
-            if (spec.RepeatCountPerTarget > 0)
+            if (choice.RepeatCountPerTarget > 0)
             {
-                RepeatCountPerTarget += spec.RepeatCountPerTarget;
-                RepeatIntervalSeconds = Mathf.Max(RepeatIntervalSeconds, spec.RepeatIntervalSeconds);
-                if (spec.RepeatDamageMultiplier > 0f)
+                RepeatCountPerTarget += choice.RepeatCountPerTarget;
+                RepeatIntervalSeconds = Mathf.Max(RepeatIntervalSeconds, choice.RepeatIntervalSeconds);
+                if (choice.RepeatDamageMultiplier > 0f)
                 {
-                    RepeatDamageMultiplier *= PositiveOrDefault(spec.RepeatDamageMultiplier, 1f);
+                    RepeatDamageMultiplier *= PositiveOrDefault(choice.RepeatDamageMultiplier, 1f);
                 }
             }
 
-            if (!Mathf.Approximately(spec.ConditionalCritChanceBonus, 0f)
-                && !string.IsNullOrWhiteSpace(spec.ConditionalCritTargetStatusId)
-                && spec.ConditionalCritTargetStatusMinStacks > 0)
+            if (!Mathf.Approximately(choice.ConditionalCritChanceBonus, 0f)
+                && !string.IsNullOrWhiteSpace(choice.ConditionalCritTargetStatusId)
+                && choice.ConditionalCritTargetStatusMinStacks > 0)
             {
                 conditionalCritChanceRules.Add(new ConditionalCritChanceRule(
-                    spec.ConditionalCritChanceBonus,
-                    spec.ConditionalCritTargetStatusId,
-                    spec.ConditionalCritTargetStatusMinStacks));
+                    choice.ConditionalCritChanceBonus,
+                    choice.ConditionalCritTargetStatusId,
+                    choice.ConditionalCritTargetStatusMinStacks));
             }
 
-            if (spec.RedistributeConsumedStatusRatioOnKill > 0f
-                && !string.IsNullOrWhiteSpace(spec.RedistributeConsumedStatusId)
-                && spec.RedistributeConsumedStatusSearchRadius > 0f)
+            if (choice.RedistributeConsumedStatusRatioOnKill > 0f
+                && !string.IsNullOrWhiteSpace(choice.RedistributeConsumedStatusId)
+                && choice.RedistributeConsumedStatusSearchRadius > 0f)
             {
-                RedistributeConsumedStatusRatioOnKill = Mathf.Clamp01(spec.RedistributeConsumedStatusRatioOnKill);
-                RedistributeConsumedStatusId = spec.RedistributeConsumedStatusId;
-                RedistributeConsumedStatusSearchRadius = Mathf.Max(0f, spec.RedistributeConsumedStatusSearchRadius);
-                RedistributeConsumedStatusTargetCount = Mathf.Max(0, spec.RedistributeConsumedStatusTargetCount);
+                RedistributeConsumedStatusRatioOnKill = Mathf.Clamp01(choice.RedistributeConsumedStatusRatioOnKill);
+                RedistributeConsumedStatusId = choice.RedistributeConsumedStatusId;
+                RedistributeConsumedStatusSearchRadius = Mathf.Max(0f, choice.RedistributeConsumedStatusSearchRadius);
+                RedistributeConsumedStatusTargetCount = Mathf.Max(0, choice.RedistributeConsumedStatusTargetCount);
             }
         }
 
