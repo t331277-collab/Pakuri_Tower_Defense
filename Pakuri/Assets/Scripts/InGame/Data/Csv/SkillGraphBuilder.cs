@@ -10,11 +10,13 @@ using static Pakuri.Data.CsvDataValidator;
 using static Pakuri.Data.GameDataBuilder;
 
 
+/*
+ * 정규화된 스킬 노드와 그래프 CSV를 공통 실행 구조로 만드는 빌더.
+ * 노드 형식·파라미터·소유자·선택 조건을 읽고 스키마와 참조를 검사하며
+ * 기존 열과의 중복을 확인한 뒤 실행 가능한 그래프 노드와 효과 연결을 생성한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * 스킬 노드, 그래프, Trigger CSV를 공통 실행 구조로 읽고 검사한다.
-     */
     internal static class SkillGraphBuilder
     {
         internal enum SkillNodeOwnerKind

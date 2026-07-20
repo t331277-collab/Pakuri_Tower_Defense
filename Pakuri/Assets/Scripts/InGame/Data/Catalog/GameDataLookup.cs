@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 
+/*
+ * 생성된 게임 데이터 카탈로그를 빠르게 조회할 수 있도록 색인을 만드는 내부 서비스.
+ * 몬스터, 적, 상태 효과, 활성·패시브 스킬, 선택지를 ID와 몬스터별로 등록하고
+ * 전투와 UI가 필요한 정의를 같은 조회 규칙으로 가져가게 한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * 생성된 게임 데이터 카탈로그를 등록하고 ID와 몬스터별 데이터 조회를 제공한다.
-     */
     internal sealed class GameDataLookup
     {
         private readonly Dictionary<string, MonsterDefinition> monsters = new Dictionary<string, MonsterDefinition>(StringComparer.OrdinalIgnoreCase);

@@ -1,10 +1,10 @@
 using UnityEngine;
 
+/*
+ * 아군 몬스터 모델과 상태 표시, 피격·공격·사망 애니메이션을 연결하는 컴포넌트.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 아군 몬스터 모델과 상태 표시, 피격·공격·사망 애니메이션을 연결하는 컴포넌트.
-     */
     [DisallowMultipleComponent]
     public sealed class MonsterUnitActor : MonoBehaviour
     {

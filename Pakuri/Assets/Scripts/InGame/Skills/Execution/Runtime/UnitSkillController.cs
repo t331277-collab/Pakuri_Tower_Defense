@@ -1,10 +1,12 @@
 using UnityEngine;
 
+/*
+ * 유닛 하나의 스킬 Tick과 자동·수동 실행 요청을 만드는 컨트롤러.
+ * 스킬 사용 가능 여부와 선택 대상을 확인해 SkillExecutionSystem으로 요청을 보내고
+ * 실행이 시작되면 해당 Actor의 공격 애니메이션을 알린다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 유닛 스킬 컨트롤러의 입력과 실행 상태를 관리한다.
-     */
     public sealed class UnitSkillController
     {
         /*

@@ -1,11 +1,11 @@
 using System;
 using UnityEngine;
 
+/*
+ * 런타임 정의와 ID 조회 표를 한곳에 모아 제공한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * 런타임 정의와 ID 조회 표를 한곳에 모아 제공한다.
-     */
     public sealed class GameDataCatalog : ScriptableObject
     {
         private readonly GameDataLookup lookup = new GameDataLookup();

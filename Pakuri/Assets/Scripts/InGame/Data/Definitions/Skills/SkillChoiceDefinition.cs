@@ -2,11 +2,11 @@ using System;
 using Pakuri.Combat;
 using UnityEngine;
 
+/*
+ * 선택지가 액티브·패시브의 어느 성장 단계인지 구분한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * 선택지가 액티브·패시브의 어느 성장 단계인지 구분한다.
-     */
     public enum SkillChoiceGroup
     {
         ActiveEnhancement,

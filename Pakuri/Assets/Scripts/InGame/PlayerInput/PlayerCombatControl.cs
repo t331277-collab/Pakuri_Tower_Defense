@@ -3,11 +3,13 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
+/*
+ * 선택된 플레이어 몬스터의 수동 스킬 입력과 자동 사용 모드를 처리하는 컴포넌트.
+ * 포인터와 스킬 키 입력을 실행 요청으로 바꾸고 적 가시성과 스킬 상태를 확인하며
+ * 자동 모드 변경을 선택 유닛의 AutoSkillEnabled 값에 반영한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 선택 플레이어의 수동 조준과 자동 스킬 허용 조건을 처리한다.
-     */
 
     public class PlayerCombatControl : MonoBehaviour
     {

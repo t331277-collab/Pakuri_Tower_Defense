@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/*
+ * 스킬 배치 반복 방식에서 사용하는 선택 값을 정의한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 스킬 배치 반복 방식에서 사용하는 선택 값을 정의한다.
-     */
     internal enum SkillDeploymentRepeatMode
     {
         RepeatNearest,

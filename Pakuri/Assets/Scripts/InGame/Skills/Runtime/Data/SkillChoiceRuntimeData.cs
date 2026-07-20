@@ -1,11 +1,11 @@
 using System;
 using Pakuri.Data;
 
+/*
+ * 선택지 원본과 실행용 계산값을 함께 보관한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 선택지 원본과 실행용 계산값을 함께 보관한다.
-     */
     [Serializable]
     public sealed class SkillChoiceRuntimeData
     {

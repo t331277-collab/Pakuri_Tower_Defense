@@ -6,11 +6,11 @@ using System.Text;
 using UnityEngine;
 
 
+/*
+ * CSV 텍스트를 표와 행으로 나누고 각 값을 필요한 자료형으로 읽는다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * CSV 텍스트를 표와 행으로 나누고 각 값을 필요한 자료형으로 읽는다.
-     */
     internal static class CsvParser
     {
         /*

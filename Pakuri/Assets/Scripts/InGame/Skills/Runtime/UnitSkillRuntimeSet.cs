@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 
+/*
+ * 유닛이 보유한 스킬 런타임 목록을 관리한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 유닛이 보유한 스킬 런타임 목록을 관리한다.
-     */
     public sealed class UnitSkillRuntimeSet
     {
         private readonly List<SkillRuntimeInstance> activeSkills = new List<SkillRuntimeInstance>();

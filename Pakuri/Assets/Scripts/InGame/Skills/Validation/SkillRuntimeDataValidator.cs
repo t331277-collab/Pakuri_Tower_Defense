@@ -6,11 +6,13 @@ using UnityEditor;
 using UnityEngine;
 #endif
 
+/*
+ * 카탈로그의 스킬 정의가 런타임 컴파일과 실행 조건을 만족하는지 검사한다.
+ * ID 중복, 몬스터 소유권, 슬롯, 실행 형식, 시간 설정과 컴파일 결과를 확인하고
+ * 오류·경고 보고서와 Unity Editor 검증 메뉴를 제공한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 인게임 스킬 검증 심각도에서 사용하는 선택 값을 정의한다.
-     */
     public enum SkillRuntimeValidationSeverity
     {
         Warning,

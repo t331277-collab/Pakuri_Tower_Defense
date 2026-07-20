@@ -2,11 +2,11 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * I 스킬 시전 조건 구현에 필요한 계약을 정의한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * I 스킬 시전 조건 구현에 필요한 계약을 정의한다.
-     */
     internal interface ISkillCastCondition
     {
         /*

@@ -1,11 +1,11 @@
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 생성된 효과 오브젝트의 외형과 애니메이션 수명을 계산한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 생성된 효과 오브젝트의 외형과 애니메이션 수명을 계산한다.
-     */
     internal static class EffectVisualUtility
     {
         /*

@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+/*
+ * 전투 유닛의 모델, Actor, Transform, 피격 영역을 한 항목으로 연결하는 로스터 서비스.
+ * 플레이어와 적 목록을 유지하고 모델·Collider 기준 조회를 제공하며
+ * 유닛 유형에 맞는 화면 갱신·피해 표시·패배 처리와 Hitbox 포함 판정을 이어준다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 전투 유닛을 진영별로 등록하고 액터와 피격 대상을 찾는 서비스.
-     */
     public sealed class UnitRosterService
     {
         private readonly List<UnitRosterEntry> entries = new List<UnitRosterEntry>();

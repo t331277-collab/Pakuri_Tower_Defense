@@ -10,11 +10,13 @@ using static Pakuri.Data.CsvSourceModel;
 using static Pakuri.Data.SkillGraphBuilder;
 
 
+/*
+ * 검증된 SourceModel을 게임이 직접 사용하는 GameDataCatalog로 변환한다.
+ * 몬스터·적·상태·스킬·Choice 정의를 만들고 노드, 효과, Trigger, 상태 Payload를 연결하며
+ * 각 정의가 참조하는 Sprite, Prefab, Animator 자산도 함께 해석한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * 검증된 CSV 원본 모델을 게임에서 사용하는 데이터 정의로 변환한다.
-     */
     internal static class GameDataBuilder
     {
         /*

@@ -3,11 +3,11 @@ using System;
 using UnityEditor;
 using UnityEngine;
 
+/*
+ * Unity Editor에서 CSV 변경을 감지하고 런타임 카탈로그 동기화를 예약한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * Unity Editor에서 CSV 변경을 감지하고 런타임 카탈로그 동기화를 예약한다.
-     */
     internal sealed class CsvCatalogPostprocessor : AssetPostprocessor
     {
         private static bool syncQueued;

@@ -1,16 +1,17 @@
 using System;
 using System.Collections.Generic;
 using Pakuri.Data;
-using Pakuri.Run;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+/*
+ * DamageMeterRuntimeTracker의 기록을 파티원별 피해량 패널로 표현하는 UI 컴포넌트.
+ * 파티 순서와 선두 피해량을 기준으로 표시 값을 계산하고
+ * 스킬·패시브·Trigger 출처 이름과 비율 구간을 카탈로그 정보로 구성한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 파티원별 피해 기록을 정렬하고 피해량 패널에 표시하는 UI 컴포넌트.
-     */
     [DisallowMultipleComponent]
     [RequireComponent(typeof(DamageMeterRuntimeTracker))]
     public sealed class DamageMeterUIController : MonoBehaviour
@@ -22,6 +23,7 @@ namespace Pakuri.InGame
         [SerializeField] private GameObject meterRoot;
         [SerializeField] private Button closeButton;
         [SerializeField] private DamagePanelView[] panels = new DamagePanelView[MaxPartySlots];
+        [SerializeField] private StageManager stageManager;
         [SerializeField] private UnitSpawnManager unitSpawnManager;
         [SerializeField] private DamageMeterRuntimeTracker tracker;
 
@@ -107,7 +109,7 @@ namespace Pakuri.InGame
         {
             Array.Clear(partyMonsterIds, 0, partyMonsterIds.Length);
 
-            var session = unitSpawnManager != null ? unitSpawnManager.ActiveSession : null;
+            var session = stageManager != null ? stageManager.ActiveSession : null;
             if (session != null && !string.IsNullOrWhiteSpace(session.SelectedMonsterId))
             {
                 partyMonsterIds[0] = session.SelectedMonsterId;
@@ -377,6 +379,11 @@ namespace Pakuri.InGame
 
         private void ResolveReferences()
         {
+            if (stageManager == null)
+            {
+                stageManager = FindSceneObject<StageManager>();
+            }
+
             if (unitSpawnManager == null)
             {
                 unitSpawnManager = FindSceneObject<UnitSpawnManager>();

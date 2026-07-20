@@ -1,13 +1,13 @@
 using System.Collections;
 using UnityEngine;
 
+/*
+ * 몬스터 유닛의 Animator를 제어하는 컴포넌트.
+ * 대기, 공격, 피격, 사망, 부활 애니메이션을 재생하고
+ * 사망 애니메이션이 끝나면 마지막 프레임을 유지한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 몬스터 유닛의 Animator를 제어하는 컴포넌트.
-     * 대기, 공격, 피격, 사망, 부활 애니메이션을 재생하고
-     * 사망 애니메이션이 끝나면 마지막 프레임을 유지한다.
-     */
     public class Animation_Controller : MonoBehaviour
     {
         private const string AttackTriggerName = "Attack";

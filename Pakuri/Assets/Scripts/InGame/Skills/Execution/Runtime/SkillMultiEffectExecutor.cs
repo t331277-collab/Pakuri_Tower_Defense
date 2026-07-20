@@ -5,12 +5,14 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 스킬과 패시브에 연결된 추가 효과를 조건과 실행 시점에 맞춰 처리한다.
+ * Choice·패시브·상태·체력 조건과 지연 시간을 검사하고
+ * 추가 피해, 상태 적용·연장, 지속 범위, 영구 패시브 상태와 시각 효과를 실행한다.
+ */
 namespace Pakuri.InGame
 {
 
-    /*
-     * 스킬 다중 효과을 실행한다.
-     */
     internal static class SkillMultiEffectExecutor
     {
         /*

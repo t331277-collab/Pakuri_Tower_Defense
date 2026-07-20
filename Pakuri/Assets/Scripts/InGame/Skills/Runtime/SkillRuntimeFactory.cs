@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 
+/*
+ * 유닛 정의와 학습 상태로 스킬 런타임 목록을 구성한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 유닛 정의와 학습 상태로 스킬 런타임 목록을 구성한다.
-     */
     public static class SkillRuntimeFactory
     {
         private static readonly SkillSlot[] ActiveSlots =

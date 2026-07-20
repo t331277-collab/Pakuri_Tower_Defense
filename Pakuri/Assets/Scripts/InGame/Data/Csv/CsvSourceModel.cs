@@ -6,11 +6,11 @@ using static Pakuri.Data.CsvRowParser;
 using static Pakuri.Data.SkillGraphBuilder;
 
 
+/*
+ * CSV 스킬 행이 능동 또는 패시브인지 구분한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * CSV 스킬 행이 능동 또는 패시브인지 구분한다.
-     */
     internal enum PakuriCsvSkillKind
     {
         Active,

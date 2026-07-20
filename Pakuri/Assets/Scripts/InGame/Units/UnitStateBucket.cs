@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 
+/*
+ * 유닛이 학습한 활성·패시브 스킬과 선택한 선택지 ID를 보관하는 상태 데이터.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 유닛이 학습한 활성·패시브 스킬과 선택한 선택지 ID를 보관하는 상태 데이터.
-     */
     [Serializable]
     public sealed class UnitStateBucket
     {

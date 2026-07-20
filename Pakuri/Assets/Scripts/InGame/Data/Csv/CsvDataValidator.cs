@@ -11,11 +11,13 @@ using static Pakuri.Data.GameDataBuilder;
 using static Pakuri.Data.SkillGraphBuilder;
 
 
+/*
+ * CSV 원본 모델과 완성된 런타임 카탈로그의 무결성을 검사한다.
+ * 필수 행과 ID 참조, 스킬 Trigger·Choice·그래프 연결, 지원 실행 형식,
+ * Sprite·Prefab·Animator 경로 누락을 모아 초기화 전에 오류로 보고한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * CSV 필수 행, 참조 관계, 실행 지원 상태, 자산 경로를 검사한다.
-     */
     internal static class CsvDataValidator
     {
         /*

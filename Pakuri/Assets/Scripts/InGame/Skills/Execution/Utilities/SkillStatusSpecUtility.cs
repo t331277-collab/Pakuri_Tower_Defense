@@ -3,11 +3,11 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 스킬 상태 설정 계산과 변환 기능을 제공한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 스킬 상태 설정 계산과 변환 기능을 제공한다.
-     */
     internal static class SkillStatusSpecUtility
     {
 

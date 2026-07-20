@@ -2,16 +2,18 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
-using Pakuri.Run;
+using Pakuri.Data;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+/*
+ * 현재 런 세션의 날짜별 전투 진행을 관리하는 컴포넌트.
+ * 스테이지 표에서 인카운터와 보상을 읽어 적 생성, 전투 종료 대기, 보상 준비,
+ * 다음 날짜 진행을 순서대로 실행하고 넥서스 체력 보존과 최종 승패 화면도 처리한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 날짜별 적 생성, 전투 종료, 보상, 넥서스 승패 흐름을 관리한다.
-     */
 
     public class StageManager : MonoBehaviour
     {
@@ -136,7 +138,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            unitSpawnManager.RestorePlayerPartyFromSession();
+            unitSpawnManager.RestorePlayerPartyFromSession(activeSession);
             var players = combatManager.Roster.Players;
 
             for (var i = 0; i < players.Count; i++)
@@ -162,11 +164,15 @@ namespace Pakuri.InGame
          */
         private IEnumerator RunCurrentDayFlow()
         {
-            unitSpawnManager.SpawnSelectedPlayerUnit();
+            if (activeSession == null)
+            {
+                BeginRunSession();
+            }
+
+            unitSpawnManager.SpawnSelectedPlayerUnit(activeSession);
 
             EnsureNexusRegistered();
 
-            activeSession = unitSpawnManager.ActiveSession;
             // 세션의 날짜를 기준으로 날짜 행, 보상 행, 인카운터 행을 차례로 연결한다.
             currentDay = table.FindDay(activeSession.StageIndex, activeSession.DayIndex);
             currentReward = table.FindReward(currentDay.RewardRuleId);
@@ -190,6 +196,16 @@ namespace Pakuri.InGame
             PrepareReward();
             State = StageState.RewardReady;
             flowCoroutine = null;
+        }
+
+        /*
+         * 씬 전환으로 전달된 선택 몬스터를 기준으로 새 런 세션을 시작한다.
+         */
+        private void BeginRunSession()
+        {
+            var monster = CsvDataLoader.CurrentCatalog.GetData<MonsterDefinition>(StartContext.SelectedMonsterId);
+            activeSession = RunSession.Begin(monster);
+            StartContext.Clear();
         }
 
         /*
@@ -542,6 +558,30 @@ namespace Pakuri.InGame
         private void LoadTables()
         {
             table = StageFlowTable.Load(stageDayCsv, stageEncounterCsv, stageRewardCsv);
+        }
+    }
+
+    /*
+     * 씬 전환 사이에 선택 몬스터 ID를 임시 보관한다.
+     */
+    public static class StartContext
+    {
+        public static string SelectedMonsterId { get; private set; }
+
+        /*
+         * 다음 인게임 씬에서 사용할 선택 몬스터 ID를 저장한다.
+         */
+        public static void Prepare(string selectedMonsterId)
+        {
+            SelectedMonsterId = string.IsNullOrWhiteSpace(selectedMonsterId) ? string.Empty : selectedMonsterId;
+        }
+
+        /*
+         * 사용이 끝난 선택 몬스터 ID를 비운다.
+         */
+        public static void Clear()
+        {
+            SelectedMonsterId = string.Empty;
         }
     }
 

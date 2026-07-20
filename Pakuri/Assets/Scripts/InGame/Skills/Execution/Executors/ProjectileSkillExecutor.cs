@@ -5,12 +5,14 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 투사체 스킬의 발사 수, 분기, 연속 발사와 후속 투사체를 구성한다.
+ * 스킬 Snapshot에서 피해와 상태 효과를 해석해 Projectile Actor에 전달하고
+ * 직접 적중 형식과 지연 충돌, 발사체별 보정도 함께 처리한다.
+ */
 namespace Pakuri.InGame
 {
 
-    /*
-     * 투사체 스킬을 실행한다.
-     */
     public sealed class ProjectileSkillExecutor : TypedSkillExecutor<ProjectileSkillRuntimeData>
     {
         /*

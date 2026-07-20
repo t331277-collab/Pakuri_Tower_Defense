@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 로스터·체력·보호막·상태 변화를 받아 학습된 패시브 효과를 갱신한다.
+ * 변경 통지를 모아 한 번에 처리하고 활성 조건에 맞는 지속 상태를 적용·제거하며
+ * 일회성 효과와 Trigger 재사용 대기시간·누적 횟수도 전투 단위로 관리한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 인게임 패시브 효과 런타임의 전투 중 상태와 실행을 관리한다.
-     */
     internal sealed class InGamePassiveEffectRuntime
     {
         private const int MaxRefreshPasses = 8;

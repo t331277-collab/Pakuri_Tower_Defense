@@ -1,10 +1,10 @@
 using UnityEngine;
 
+/*
+ * 스킬 범위 계산과 변환 기능을 제공한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 스킬 범위 계산과 변환 기능을 제공한다.
-     */
     internal static class SkillAreaUtility
     {
         /*

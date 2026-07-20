@@ -1,10 +1,10 @@
 using Pakuri.Data;
 
+/*
+ * 카탈로그 상태 정의와 스킬 설정으로 실행용 상태 데이터를 만든다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 카탈로그 상태 정의와 스킬 설정으로 실행용 상태 데이터를 만든다.
-     */
     public static class StatusEffectFactory
     {
         public static RuntimeStatusData Create(

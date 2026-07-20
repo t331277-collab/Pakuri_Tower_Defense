@@ -2,11 +2,13 @@ using System;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 컴파일된 스킬 하나가 전투 중 가지는 변경 가능한 실행 상태를 관리한다.
+ * 재사용 대기시간, 탄창·재장전, Tick, 연속 발사, 적중 횟수를 갱신하고
+ * 현재 Choice Snapshot에 따른 시전 가능 여부와 시간 보정값을 적용한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 스킬 하나의 재사용 대기시간, 시전, 연속 발사 상태를 관리한다.
-     */
     public sealed class SkillRuntimeInstance
     {
         /*

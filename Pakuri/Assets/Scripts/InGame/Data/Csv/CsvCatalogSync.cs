@@ -11,11 +11,13 @@ using static Pakuri.Data.CsvRowParser;
 using static Pakuri.Data.CsvSourceModel;
 
 
+/*
+ * Unity Editor에서 authoring CSV를 런타임 카탈로그 자산으로 동기화한다.
+ * CSV TextAsset을 수집해 원본·자산 참조 카탈로그를 갱신하고
+ * Sprite, Prefab, Animator 참조를 다시 구성한 뒤 검증과 재초기화를 실행한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * Unity Editor에서 CSV와 런타임 Source·Asset 카탈로그를 동기화한다.
-     */
     public static class CsvCatalogSync
     {
         /*

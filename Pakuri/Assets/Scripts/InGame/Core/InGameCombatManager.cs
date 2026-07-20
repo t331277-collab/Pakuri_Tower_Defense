@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using Pakuri.Combat;
 using UnityEngine;
 
+/*
+ * 인게임 전투 흐름을 조율하는 중앙 컴포넌트와 피해 적용 데이터를 정의한다.
+ * 유닛 로스터를 기준으로 스킬, 입력, 적 행동, 패시브, 상태 갱신 순서를 연결하고
+ * 피해·회복·상태 변화 결과를 액터 표시, 효과, Trigger, 사망 처리에 전달한다.
+ * 실제 피해 계산, 스킬 실행, 적 행동, 시각 효과는 각 전용 시스템에 맡긴다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 한 번의 피해 적용에 필요한 공격자, 치명타, 스킬 출처 정보를 보관한다.
-     */
     public readonly struct DamageApplicationOptions
     {
         /*

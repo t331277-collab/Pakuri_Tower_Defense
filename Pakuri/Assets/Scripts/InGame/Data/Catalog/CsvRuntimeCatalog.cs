@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+/*
+ * 런타임 카탈로그 생성에 필요한 CSV와 Unity 자산 참조를 함께 보관한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * 런타임 카탈로그 생성에 필요한 CSV와 Unity 자산 참조를 함께 보관한다.
-     */
     public sealed class CsvRuntimeCatalog : ScriptableObject
     {
         [Serializable]

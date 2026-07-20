@@ -1,10 +1,10 @@
 using Pakuri.Data;
 
+/*
+ * I 인게임 스킬 구현에 필요한 계약을 정의한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * I 인게임 스킬 구현에 필요한 계약을 정의한다.
-     */
     public interface IInGameSkillExecutor
     {
         /*

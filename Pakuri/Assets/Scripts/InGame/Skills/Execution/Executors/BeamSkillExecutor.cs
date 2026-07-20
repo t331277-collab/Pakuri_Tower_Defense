@@ -5,12 +5,12 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 빔 스킬을 실행한다.
+ */
 namespace Pakuri.InGame
 {
 
-    /*
-     * 빔 스킬을 실행한다.
-     */
     public sealed class BeamSkillExecutor : TypedSkillExecutor<BeamSkillRuntimeData>
     {
         private const float DefaultBeamLength = 31f;

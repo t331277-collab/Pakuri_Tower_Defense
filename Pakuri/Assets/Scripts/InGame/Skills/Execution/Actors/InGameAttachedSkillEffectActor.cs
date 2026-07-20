@@ -1,10 +1,10 @@
 using UnityEngine;
 
+/*
+ * 인게임 부착 효과 스킬 효과의 위치, 충돌, 수명 주기를 처리한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 인게임 부착 효과 스킬 효과의 위치, 충돌, 수명 주기를 처리한다.
-     */
     [DisallowMultipleComponent]
     public sealed class InGameAttachedSkillEffectActor : MonoBehaviour
     {

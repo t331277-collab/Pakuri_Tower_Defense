@@ -3,11 +3,11 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+/*
+ * 전투 중 파티 몬스터의 초상화와 체력, 활성 스킬 상태를 표시하는 컴포넌트.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 전투 중 파티 몬스터의 초상화와 체력, 활성 스킬 상태를 표시하는 컴포넌트.
-     */
     [DisallowMultipleComponent]
     public sealed class MonsterPanelUI : MonoBehaviour
     {

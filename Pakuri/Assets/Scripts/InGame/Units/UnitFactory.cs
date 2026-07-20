@@ -2,13 +2,12 @@ using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
-using Pakuri.Run;
 
+/*
+ * 정의 데이터와 런 상태를 이용해 아군·적 런타임 모델을 만드는 팩토리.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 정의 데이터와 런 상태를 이용해 아군·적 런타임 모델을 만드는 팩토리.
-     */
     public sealed class UnitFactory
     {
         public const string DefaultPhase2AMonsterId = "eve";

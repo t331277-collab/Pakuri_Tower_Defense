@@ -2,11 +2,13 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 전투 로스터에 등록된 적들의 매 프레임 행동을 조율하는 일반 C# 컨트롤러.
+ * 상태 효과에 따른 행동 가능 여부를 확인하고 대상 선택, 이동, 공격 스킬 우선순위,
+ * 지원 스킬 사용과 넥서스 접촉 공격을 SkillExecutionSystem과 전투 Manager에 전달한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 등록된 모든 적의 대상 선택, 이동, 스킬 사용, 넥서스 공격을 조율한다.
-     */
     public class EnemyController
     {
         private readonly UnitRosterService roster;

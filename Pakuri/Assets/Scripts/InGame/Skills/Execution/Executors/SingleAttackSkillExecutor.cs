@@ -5,12 +5,14 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 단일 공격 계열 스킬의 배치와 적중 처리를 실행한다.
+ * 중심점과 대상 수를 정해 즉시·반복·지연 공격을 배치하고 Prefab Hitbox 또는 범위 판정을 사용하며
+ * 피해, 상태 적용, 적중 횟수 효과, 조건부 후속 공격과 사망 시 상태 재분배를 연결한다.
+ */
 namespace Pakuri.InGame
 {
 
-    /*
-     * 단일 공격 스킬을 실행한다.
-     */
     public sealed class SingleAttackSkillExecutor : TypedSkillExecutor<SingleAttackSkillRuntimeData>
     {
         private const float DefaultVisualLifetimeSeconds = 1f;

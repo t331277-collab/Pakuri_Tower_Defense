@@ -5,11 +5,13 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 카탈로그의 활성·패시브 스킬 정의를 구체적인 SkillRuntimeData로 컴파일한다.
+ * 공통 수치와 실행 형식별 설정을 옮기고 Choice·Trigger·상태·시각 효과를 연결하며
+ * 정규화된 스킬 노드를 실행 계획과 호환 데이터로 변환한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * CSV 스킬 정의를 전투에서 사용하는 스킬 데이터로 변환한다.
-     */
     public static class SkillRuntimeCompiler
     {
         /*

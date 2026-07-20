@@ -1,10 +1,10 @@
 using UnityEngine;
 
+/*
+ * 스킬 실행 정보에 필요한 값을 보관한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 스킬 실행 정보에 필요한 값을 보관한다.
-     */
     public sealed class SkillExecutionContext
     {
         /*

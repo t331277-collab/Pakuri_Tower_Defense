@@ -2,11 +2,13 @@ using System;
 using Pakuri.Combat;
 using UnityEngine;
 
+/*
+ * 모든 전투 유닛이 공유하는 런타임 상태와 상태 효과 저장 구조를 정의한다.
+ * 식별 정보, 능력치, 체력·보호막, 스킬, 돌진 상태를 보관하고
+ * 상태 중첩·지속시간·출처·보호막 흡수와 받은 속성 피해 기록을 관리한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 모든 전투 유닛이 공유하는 식별 정보, 능력치, 자원, 상태 효과를 정의한다.
-     */
     public readonly struct ShieldAbsorbRecord
     {
         public ShieldAbsorbRecord(UnitStatusRuntime status, float absorbedAmount)

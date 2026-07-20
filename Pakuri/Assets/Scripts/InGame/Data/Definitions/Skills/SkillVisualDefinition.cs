@@ -2,11 +2,11 @@ using System;
 using Pakuri.Combat;
 using UnityEngine;
 
+/*
+ * 추가 효과의 시각 오브젝트가 붙을 위치를 구분한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * 추가 효과의 시각 오브젝트가 붙을 위치를 구분한다.
-     */
     public enum SkillMultiEffectVisualAnchorMode
     {
         Center,

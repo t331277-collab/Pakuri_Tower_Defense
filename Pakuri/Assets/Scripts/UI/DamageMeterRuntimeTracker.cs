@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+/*
+ * 전투 피해 이벤트를 받아 몬스터와 스킬별 누적 피해량을 기록하는 컴포넌트.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 전투 피해 이벤트를 받아 몬스터와 스킬별 누적 피해량을 기록하는 컴포넌트.
-     */
     [DisallowMultipleComponent]
     public sealed class DamageMeterRuntimeTracker : MonoBehaviour
     {

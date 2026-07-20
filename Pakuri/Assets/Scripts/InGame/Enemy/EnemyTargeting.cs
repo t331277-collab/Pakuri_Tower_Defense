@@ -1,10 +1,10 @@
 using UnityEngine;
 
+/*
+ * 적이 공격 대상과 회복 대상을 선택할 때 사용하는 검색 규칙을 제공한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 적이 공격 대상과 회복 대상을 선택할 때 사용하는 검색 규칙을 제공한다.
-     */
     internal static class EnemyTargeting
     {
         /*

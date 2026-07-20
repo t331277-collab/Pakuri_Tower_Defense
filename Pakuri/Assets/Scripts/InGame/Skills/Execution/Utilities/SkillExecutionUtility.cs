@@ -5,12 +5,12 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 스킬 실행 계산과 변환 기능을 제공한다.
+ */
 namespace Pakuri.InGame
 {
 
-    /*
-     * 스킬 실행 계산과 변환 기능을 제공한다.
-     */
     internal static class SkillExecutionUtility
     {
         /*

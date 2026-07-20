@@ -4,11 +4,11 @@ using static Pakuri.Data.CsvSourceModel;
 using static Pakuri.Data.SkillGraphBuilder;
 
 
+/*
+ * CSV가 참조하는 Sprite, Prefab, Animator 경로를 수집하고 중복을 정리한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * CSV가 참조하는 Sprite, Prefab, Animator 경로를 수집하고 중복을 정리한다.
-     */
     internal static class CsvAssetReferenceCollector
     {
         internal readonly struct ReferencedAssetPath

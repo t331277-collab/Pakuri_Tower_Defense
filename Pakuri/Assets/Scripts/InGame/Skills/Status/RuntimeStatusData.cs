@@ -2,11 +2,11 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 카탈로그 상태 정의에 스킬 출처별 실행 설정을 더해 보관한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 카탈로그 상태 정의에 스킬 출처별 실행 설정을 더해 보관한다.
-     */
     public sealed class RuntimeStatusData
     {
         public StatusEffectDefinition Definition;

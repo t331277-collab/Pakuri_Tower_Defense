@@ -3,11 +3,11 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 상태 효과 종류에서 사용하는 선택 값을 정의한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 상태 효과 종류에서 사용하는 선택 값을 정의한다.
-     */
     public enum StatusEffectKind
     {
         None,

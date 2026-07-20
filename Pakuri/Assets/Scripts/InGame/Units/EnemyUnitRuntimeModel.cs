@@ -2,11 +2,11 @@ using System;
 using Pakuri.Combat;
 using Pakuri.Data;
 
+/*
+ * 적의 전투 수치와 패시브 배율을 보관하고 적용하는 런타임 데이터.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 적의 전투 수치와 패시브 배율을 보관하고 적용하는 런타임 데이터.
-     */
     public sealed class EnemyUnitRuntimeModel : BaseUnitRuntimeModel
     {
         public EnemyEncounterRole EncounterRole;

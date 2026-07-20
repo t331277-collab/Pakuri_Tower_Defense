@@ -1,11 +1,11 @@
 using System;
 using Pakuri.Data;
 
+/*
+ * 실행 계획의 효과와 트리거 행동을 실제 런타임 처리로 전달한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 실행 계획의 효과와 트리거 행동을 실제 런타임 처리로 전달한다.
-     */
     internal static class SkillPlanActionDispatcher
     {
         /*

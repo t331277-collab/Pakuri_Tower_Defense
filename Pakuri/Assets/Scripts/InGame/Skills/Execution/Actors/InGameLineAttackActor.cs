@@ -3,11 +3,11 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 인게임 직선 공격의 위치, 충돌, 수명 주기를 처리한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 인게임 직선 공격의 위치, 충돌, 수명 주기를 처리한다.
-     */
     [DisallowMultipleComponent]
     public sealed class InGameLineAttackActor : MonoBehaviour
     {

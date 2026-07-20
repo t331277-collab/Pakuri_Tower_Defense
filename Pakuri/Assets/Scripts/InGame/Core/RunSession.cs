@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 
-namespace Pakuri.Run
+/*
+ * 한 번의 런에서 유지되는 진행 상태와 파티별 성장 상태를 보관한다.
+ * 스테이지·일차·전투 종류, 재화·포로, 선택 및 현현 몬스터,
+ * 몬스터별 학습 스킬과 Choice를 기록하고 보상 적용과 다음 날짜 진행을 처리한다.
+ */
+namespace Pakuri.InGame
 {
-    /*
-     * 현재 런의 스테이지·일차·파티·학습 스킬·보상 상태를 보관한다.
-     */
     public enum RunCombatType
     {
         Normal,

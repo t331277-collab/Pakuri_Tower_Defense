@@ -1,11 +1,11 @@
 using Pakuri.Combat;
 using UnityEngine;
 
+/*
+ * 스킬 상태 효과의 확률, 지속시간, 적용 조건을 계산한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 스킬 상태 효과의 확률, 지속시간, 적용 조건을 계산한다.
-     */
     internal static class SkillStatusApplyUtility
     {
         /*

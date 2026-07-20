@@ -2,11 +2,13 @@ using System;
 using Pakuri.InGame;
 using UnityEngine;
 
+/*
+ * 전투에서 사용하는 피해 속성과 최종 피해 계산 규칙을 정의한다.
+ * 기본 피해에 대상 방어력, 방어력 감소, 치명타, 상태 효과와 적 패시브 배율을 반영하고
+ * InGameCombatManager가 자원에 적용할 정수 피해량을 반환한다.
+ */
 namespace Pakuri.Combat
 {
-    /*
-     * 피해 계산에 사용되는 물리 및 원소 속성을 정의한다.
-     */
     public enum DamageAttribute
     {
         Physical,

@@ -4,11 +4,13 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 상태 효과 데이터를 만들고 전투 수치에 반영하는 공통 규칙 모음.
+ * 이동·행동·공격·보호막·치명타·주는 피해·받는 피해 배율을 계산하고
+ * 상태 병합 정책, 대상 범위, 조건식, 속성과 스킬 출처 일치 여부를 해석한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 상태 효과 런타임의 전투 중 상태와 실행을 관리한다.
-     */
     public static class StatusEffectRules
     {
         private const float MinimumActionMultiplier = 0.05f;

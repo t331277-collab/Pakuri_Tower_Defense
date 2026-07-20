@@ -3,11 +3,13 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * CSV 스킬 정의를 전투에서 실행할 때 사용하는 공통 런타임 데이터 구조.
+ * 대상 지정, 피해, 상태, 투사체, 범위, 버프 설정과 실행 계획을 보관하고
+ * 버프·회복·연쇄·돌진·빔·투사체·단일·범위·보호막·패시브별 세부 데이터를 정의한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 능력치 출처에서 사용하는 선택 값을 정의한다.
-     */
     public enum StatSource
     {
         Attack,

@@ -8,11 +8,13 @@ using static Pakuri.Data.CsvSourceModel;
 using static Pakuri.Data.SkillGraphBuilder;
 
 
+/*
+ * authoring CSV 행을 런타임 카탈로그 생성 전의 SourceModel 행 데이터로 변환한다.
+ * 몬스터, 보상, 스킬, Choice, Trigger, 적 스킬 행을 읽고
+ * 분리된 표 이름에서 소유자와 실행 형식을 해석하며 적 마이그레이션 규칙도 검사한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * 몬스터와 적 CSV 행을 읽고 현재 데이터 규칙을 검사한다.
-     */
     internal static class CsvRowParser
     {
         /*

@@ -3,11 +3,11 @@ using Pakuri.Combat;
 using Pakuri.InGame;
 using UnityEngine;
 
+/*
+ * CSV에서 구성되는 플레이어 몬스터의 능력치, 외형, 스킬 정보를 보관한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * CSV에서 구성되는 플레이어 몬스터의 능력치, 외형, 스킬 정보를 보관한다.
-     */
     public class MonsterDefinition : ScriptableObject
     {
         [Serializable]

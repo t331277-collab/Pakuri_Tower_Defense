@@ -5,12 +5,12 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 지속 범위 스킬을 실행한다.
+ */
 namespace Pakuri.InGame
 {
 
-    /*
-     * 지속 범위 스킬을 실행한다.
-     */
     public sealed class ZoneSkillExecutor : TypedSkillExecutor<ZoneSkillRuntimeData>
     {
         /*

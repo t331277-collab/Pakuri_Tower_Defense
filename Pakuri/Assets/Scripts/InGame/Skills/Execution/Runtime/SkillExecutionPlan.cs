@@ -1,11 +1,13 @@
 using Pakuri.Data;
 using System.Collections.Generic;
 
+/*
+ * 스킬 한 번의 실행에 사용할 조건, 수치 변경, 행동, 효과, Trigger 노드를 정의한다.
+ * SkillRuntimeData와 현재 Choice Snapshot을 정규화된 노드 순서로 컴파일해
+ * Executor와 Trigger Runtime이 같은 실행 계획을 사용하도록 한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 스킬 실행 계획 작성 출처에서 사용하는 선택 값을 정의한다.
-     */
     public enum SkillExecutionPlanAuthoringSource
     {
         LegacyWideColumn,

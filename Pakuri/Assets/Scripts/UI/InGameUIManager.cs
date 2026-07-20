@@ -1,16 +1,17 @@
 using System;
 using System.Collections.Generic;
 using Pakuri.Data;
-using Pakuri.Run;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+/*
+ * 인게임 진행과 보상 선택 화면을 한 흐름으로 연결하는 UI 컴포넌트.
+ * 스테이지·재화·감옥 파티 정보를 갱신하고 전투 보상 버튼을 구성하며
+ * Offering의 스킬·강화 선택과 포로 Menifest 결과를 RunSession과 전투 모델에 반영한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 스테이지 정보, 보상 선택, 감옥 파티 화면을 갱신하고 입력을 연결하는 컴포넌트.
-     */
     [DisallowMultipleComponent]
     public sealed class InGameUIManager : MonoBehaviour
     {
@@ -572,12 +573,7 @@ namespace Pakuri.InGame
 
         private RunSession ResolveSession()
         {
-            if (stageManager != null && stageManager.ActiveSession != null)
-            {
-                return stageManager.ActiveSession;
-            }
-
-            return unitSpawnManager != null ? unitSpawnManager.ActiveSession : null;
+            return stageManager != null ? stageManager.ActiveSession : null;
         }
 
         private GameDataCatalog ResolveCatalog()
@@ -1715,7 +1711,7 @@ namespace Pakuri.InGame
             var unitSpawnManager = resolveUnitSpawnManager?.Invoke();
             if (unitSpawnManager != null)
             {
-                unitSpawnManager.SpawnManifestedMonster(pendingManifestMonster, slotIndex);
+                unitSpawnManager.SpawnManifestedMonster(session, pendingManifestMonster, slotIndex);
             }
 
             pendingManifestMonster = null;

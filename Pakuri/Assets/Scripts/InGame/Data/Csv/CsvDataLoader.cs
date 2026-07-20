@@ -12,11 +12,13 @@ using UnityEditor;
 #endif
 
 
+/*
+ * Scene 로드 전에 CSV 런타임 데이터를 한 번 초기화하는 진입점.
+ * Resources의 런타임 카탈로그를 불러와 원본 행 파싱, 그래프 구성, 데이터 변환,
+ * 참조 검증을 순서대로 실행하고 완성된 GameDataCatalog를 전역 조회 대상으로 제공한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * CSV 자산을 불러와 검증과 런타임 카탈로그 생성을 조율한다.
-     */
     public static class CsvDataLoader
     {
         internal const string CsvDataAssetRoot = "Assets/CSVdata";

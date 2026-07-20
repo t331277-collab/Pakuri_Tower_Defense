@@ -3,11 +3,11 @@ using Pakuri.Combat;
 using Pakuri.InGame;
 using UnityEngine;
 
+/*
+ * 스테이지에서 적이 맡는 전투 위치를 구분한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * 스테이지에서 적이 맡는 전투 위치를 구분한다.
-     */
     public enum EnemyEncounterRole
     {
         Normal,

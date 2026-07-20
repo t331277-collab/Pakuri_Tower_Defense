@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using Pakuri.Combat;
 using UnityEngine;
 
+/*
+ * 스킬 대상 지정 계산과 변환 기능을 제공한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 스킬 대상 지정 계산과 변환 기능을 제공한다.
-     */
     internal static class SkillTargetingUtility
     {
         /*

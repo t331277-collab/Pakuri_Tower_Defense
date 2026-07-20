@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
 using Pakuri.Data;
-using Pakuri.Run;
 using UnityEngine;
 
+/*
+ * 런 세션 상태를 실제 전투 유닛으로 만드는 생성 관리 컴포넌트.
+ * 선택 몬스터와 현현 파티를 생성·복원하고 스테이지 적을 생성하며
+ * 모델 작성, 프리팹 인스턴스화, Actor 연결, 전투 로스터 등록을 이어준다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 런 세션을 시작하고 몬스터와 적의 생성, 부활, 로스터 등록을 관리한다.
-     */
 
     public class UnitSpawnManager : MonoBehaviour
     {
@@ -34,7 +35,6 @@ namespace Pakuri.InGame
         private GameObject spawnedPlayerUnit;
 
         public MonsterUnitRuntimeModel SpawnedPlayerModel { get; private set; }
-        public RunSession ActiveSession { get; private set; }
 
         /*
          * 적 ID와 생성 프리팹의 연결 정보를 보관한다.
@@ -50,47 +50,34 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 런에서 선택된 플레이어 몬스터를 생성한다.
+         * 전달받은 세션의 선택 몬스터로 플레이어 유닛을 만든다.
          */
-        private void Start()
-        {
-            SpawnSelectedPlayerUnit();
-        }
-
-        /*
-         * 시작 컨텍스트의 선택 몬스터로 세션과 플레이어 유닛을 만든다.
-         */
-        public void SpawnSelectedPlayerUnit()
+        public void SpawnSelectedPlayerUnit(RunSession session)
         {
             if (spawnedPlayerUnit != null)
             {
                 return;
             }
 
-            var selectedMonsterId = StartContext.SelectedMonsterId;
             spawnedPlayerUnit = CreateSelectedPlayerUnit(
-                selectedMonsterId,
+                session,
                 out var model,
-                out _,
-                out var session);
+                out _);
 
             SpawnedPlayerModel = model;
-            ActiveSession = session;
-            // 씬 전환용 선택값은 세션을 만든 뒤 한 번만 소비한다.
-            StartContext.Clear();
         }
 
         /*
-         * 선택 몬스터의 새 세션, 모델, Actor를 만들고 플레이어로 등록한다.
+         * 세션의 선택 몬스터 모델과 Actor를 만들고 플레이어로 등록한다.
          */
         private GameObject CreateSelectedPlayerUnit(
-            string selectedMonsterId,
+            RunSession session,
             out MonsterUnitRuntimeModel model,
-            out MonsterUnitActor actor,
-            out RunSession session)
+            out MonsterUnitActor actor)
         {
+            var selectedMonsterId = session.SelectedMonsterId;
             var prefab = ResolveMonsterPrefab(selectedMonsterId);
-            model = CreateSelectedModel(selectedMonsterId, out session);
+            model = CreateSelectedModel(session);
 
             var spawnPosition = playerSpawnPoint.position;
             var spawnRotation = playerSpawnPoint.rotation;
@@ -105,10 +92,11 @@ namespace Pakuri.InGame
          * 현재 세션의 지정 파티 슬롯에 현현 몬스터를 생성한다.
          */
         public GameObject SpawnManifestedMonster(
+            RunSession session,
             MonsterDefinition monster,
             int partySlotIndex)
         {
-            return CreateManifestedMonster(monster, ActiveSession, partySlotIndex);
+            return CreateManifestedMonster(monster, session, partySlotIndex);
         }
 
         /*
@@ -145,7 +133,6 @@ namespace Pakuri.InGame
             out MonsterUnitRuntimeModel model,
             out MonsterUnitActor actor)
         {
-            var catalog = ResolveCatalog();
             var monster = ResolveMonsterDefinition(activeSession.SelectedMonsterId);
             var prefab = ResolveMonsterPrefab(monster.MonsterId);
 
@@ -166,10 +153,10 @@ namespace Pakuri.InGame
         /*
          * 세션의 선택 몬스터와 현현 파티를 기존 Actor 또는 새 인스턴스로 복원한다.
          */
-        public void RestorePlayerPartyFromSession()
+        public void RestorePlayerPartyFromSession(RunSession session)
         {
             RestorePlayerParty(
-                ActiveSession,
+                session,
                 out spawnedPlayerUnit,
                 out var model);
 
@@ -240,8 +227,6 @@ namespace Pakuri.InGame
          */
         private void RestoreManifestedPlayersFromSession(RunSession activeSession)
         {
-            var catalog = ResolveCatalog();
-
             for (var i = 0; i < activeSession.ManifestedMonsterIds.Count; i++)
             {
                 // 선택 몬스터가 1P이므로 현현 목록은 순서대로 2P부터 배치한다.
@@ -381,15 +366,11 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 선택 몬스터의 새 RunSession과 런타임 모델을 만든다.
+         * 세션 상태로 선택 몬스터의 런타임 모델을 만든다.
          */
-        private MonsterUnitRuntimeModel CreateSelectedModel(
-            string monsterId,
-            out RunSession session)
+        private MonsterUnitRuntimeModel CreateSelectedModel(RunSession session)
         {
-            var catalog = ResolveCatalog();
-            var monster = ResolveMonsterDefinition(monsterId);
-            session = RunSession.Begin(monster);
+            var monster = ResolveMonsterDefinition(session.SelectedMonsterId);
             var model = unitFactory.CreateSelectedMonster(monster, session.GetPartyMemberState(monster.MonsterId), 0);
             SkillRuntimeFactory.RebuildLearnedSkillSet(model);
             return model;
@@ -435,14 +416,6 @@ namespace Pakuri.InGame
             // 로스터 등록 전에 A/B 스킬과 전투 시작 Trigger 런타임을 완성한다.
             SkillRuntimeFactory.RebuildAssignedActiveSet(model, enemy.ActiveSkills, enemy.SkillTriggers);
             return model;
-        }
-
-        /*
-         * 현재 등록된 게임 데이터 카탈로그를 반환한다.
-         */
-        private GameDataCatalog ResolveCatalog()
-        {
-            return CsvDataLoader.CurrentCatalog;
         }
 
         /*
@@ -588,27 +561,4 @@ namespace Pakuri.InGame
         }
     }
 
-    /*
-     * 씬 전환 사이에 선택 몬스터 ID를 임시 보관한다.
-     */
-    public static class StartContext
-    {
-        public static string SelectedMonsterId { get; private set; }
-
-        /*
-         * 다음 인게임 씬에서 사용할 선택 몬스터 ID를 저장한다.
-         */
-        public static void Prepare(string selectedMonsterId)
-        {
-            SelectedMonsterId = string.IsNullOrWhiteSpace(selectedMonsterId) ? string.Empty : selectedMonsterId;
-        }
-
-        /*
-         * 사용이 끝난 선택 몬스터 ID를 비운다.
-         */
-        public static void Clear()
-        {
-            SelectedMonsterId = string.Empty;
-        }
-    }
 }

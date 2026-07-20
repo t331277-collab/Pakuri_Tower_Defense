@@ -3,11 +3,13 @@ using Pakuri.Combat;
 using System.Collections.Generic;
 using UnityEngine;
 
+/*
+ * 스킬 시전 순간에 적용할 모든 Choice와 조건부 보정값을 모은 Snapshot을 정의한다.
+ * 피해·치명타·투사체·상태·재사용 대기시간 변경과 조건 행동을 누적하고
+ * 대상 상태와 발사 순서에 따른 최종 배율을 계산해 실행 계획을 다시 구성한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 시전 조건 규칙 종류에서 사용하는 선택 값을 정의한다.
-     */
     public enum CastConditionOpKind
     {
         TargetHealthRatioBonus

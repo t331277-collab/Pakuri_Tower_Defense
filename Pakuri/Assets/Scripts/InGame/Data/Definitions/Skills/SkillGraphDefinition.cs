@@ -2,11 +2,11 @@ using System;
 using Pakuri.Combat;
 using UnityEngine;
 
+/*
+ * 한 스킬에 연결되는 추가 효과의 동작을 구분한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * 한 스킬에 연결되는 추가 효과의 동작을 구분한다.
-     */
     public enum SkillMultiEffectKind
     {
         Damage,

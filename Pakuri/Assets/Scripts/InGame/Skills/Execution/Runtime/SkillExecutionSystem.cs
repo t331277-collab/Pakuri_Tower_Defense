@@ -2,11 +2,13 @@ using System.Collections.Generic;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 모든 유닛의 스킬 상태 갱신과 실행 요청 라우팅을 담당하는 전투 시스템.
+ * 유닛별 Controller를 유지하고 자동·수동·Trigger 요청을 검증한 뒤
+ * Choice Snapshot을 만들고 스킬 형식에 맞는 Executor 실행과 시전 Trigger를 연결한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 스킬 실행 시스템의 실행 순서와 상태를 조율한다.
-     */
     public sealed class SkillExecutionSystem
     {
         /*

@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 전투 중 사용하는 스킬과 상태 효과의 시각 오브젝트를 관리하는 컴포넌트.
+ * 몬스터·스킬별 프리팹을 찾고 효과를 생성하거나 대상에 부착하며
+ * 애니메이션 수명, 상태 효과 갱신, 전투 종료 시 일괄 제거를 처리한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 런타임 스킬 비주얼과 프리팹의 생성 위치, 제거를 관리한다.
-     */
     public class EffectManager : MonoBehaviour
     {
         /*

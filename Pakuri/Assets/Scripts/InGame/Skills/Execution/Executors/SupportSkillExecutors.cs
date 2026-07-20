@@ -5,11 +5,13 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 아군 지원과 특수 행동 계열 스킬 Executor를 함께 정의한다.
+ * 버프·보호막·회복 대상과 부착 효과를 처리하고
+ * 연쇄 공격의 지연 피해와 돌진 이동·접촉 판정도 각 실행 형식에 맞게 전달한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 버프 스킬을 실행한다.
-     */
     public sealed class BuffSkillExecutor : TypedSkillExecutor<BuffSkillRuntimeData>
     {
         /*

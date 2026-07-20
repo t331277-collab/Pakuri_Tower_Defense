@@ -2,11 +2,11 @@ using System;
 using Pakuri.Combat;
 using UnityEngine;
 
+/*
+ * 몬스터가 보유할 수 있는 스킬 슬롯을 구분한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * 몬스터가 보유할 수 있는 스킬 슬롯을 구분한다.
-     */
     public enum SkillSlot
     {
         A,

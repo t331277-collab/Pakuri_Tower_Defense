@@ -2,11 +2,11 @@ using System;
 using Pakuri.Combat;
 using UnityEngine;
 
+/*
+ * 상태 효과가 이로운 효과인지 해로운 효과인지 구분한다.
+ */
 namespace Pakuri.Data
 {
-    /*
-     * 상태 효과가 이로운 효과인지 해로운 효과인지 구분한다.
-     */
     public enum StatusEffectClassification
     {
         Buff,

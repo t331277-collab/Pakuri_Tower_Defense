@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/*
+ * 유닛의 이름·체력·보호막 표시와 피해 숫자 팝업을 갱신하는 화면 유틸리티.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 유닛의 이름·체력·보호막 표시와 피해 숫자 팝업을 갱신하는 화면 유틸리티.
-     */
     internal static class UnitActorView
     {
         public const string NameLabelObjectName = "MonsterNameLabel";

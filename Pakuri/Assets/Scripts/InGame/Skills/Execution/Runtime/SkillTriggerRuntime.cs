@@ -5,11 +5,13 @@ using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * 전투 사건을 SkillTriggerDefinition의 조건과 행동으로 연결하는 정적 실행기.
+ * 전투 시작, 시전, 적중, 피해, 처치, 상태·보호막 만료 사건을 받아
+ * 확률·횟수·재사용 대기시간·출처 조건을 검사하고 스킬, 피해, 상태, 효과 행동을 실행한다.
+ */
 namespace Pakuri.InGame
 {
-    /*
-     * 스킬 트리거 런타임의 전투 중 상태와 실행을 관리한다.
-     */
     internal static class SkillTriggerRuntime
     {
         /*
