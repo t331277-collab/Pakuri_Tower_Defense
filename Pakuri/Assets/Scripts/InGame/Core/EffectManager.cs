@@ -133,7 +133,7 @@ namespace Pakuri.InGame
         public void SpawnOrRefreshStatusVisual(
             BaseUnitRuntimeModel target,
             Transform targetTransform,
-            StatusEffectData statusData,
+            RuntimeStatusData statusData,
             UnitStatusRuntime status)
         {
             if (target == null || targetTransform == null || statusData == null || status == null)

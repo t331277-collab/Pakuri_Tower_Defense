@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Combat;
@@ -8,8 +8,14 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
+    /*
+     * 스킬 다중 효과을 실행한다.
+     */
     internal static class SkillMultiEffectExecutor
     {
+        /*
+         * 요청받은 스킬 다중 효과을 실행한다.
+         */
         public static bool Execute(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -19,6 +25,9 @@ namespace Pakuri.InGame
             return ExecuteFiltered(context, snapshot, effects, fallbackCenter, null, false);
         }
 
+        /*
+         * 효과를 지연 없이 즉시 실행한다.
+         */
         internal static bool ExecuteDirect(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -34,6 +43,9 @@ namespace Pakuri.InGame
             return SkillPlanActionDispatcher.ExecuteEffect(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot);
         }
 
+        /*
+         * 포함 상태 지속시간 보정을 실행한다.
+         */
         internal static bool ExecuteWithStatusDurationScaling(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -43,6 +55,9 @@ namespace Pakuri.InGame
             return ExecuteFiltered(context, snapshot, effects, fallbackCenter, null, true);
         }
 
+        /*
+         * 스킬 오브젝트가 종료될 때 연결된 효과를 실행한다.
+         */
         internal static bool ExecuteOnExpire(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -52,6 +67,9 @@ namespace Pakuri.InGame
             return ExecuteFiltered(context, snapshot, effects, fallbackCenter, SkillMultiEffectTiming.OnExpire, false);
         }
 
+        /*
+         * 배치 시전을 실행한다.
+         */
         internal static bool ExecuteOnDeploymentCast(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -61,6 +79,9 @@ namespace Pakuri.InGame
             return ExecuteFiltered(context, snapshot, effects, fallbackCenter, SkillMultiEffectTiming.OnDeploymentCast, false);
         }
 
+        /*
+         * 적중을 실행한다.
+         */
         internal static bool ExecuteOnHit(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -88,6 +109,9 @@ namespace Pakuri.InGame
             return ExecuteFiltered(hitContext, snapshot, effects, fallbackCenter, SkillMultiEffectTiming.OnHit, false);
         }
 
+        /*
+         * 적중 횟수를 실행한다.
+         */
         internal static bool ExecuteOnHitCount(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -98,6 +122,9 @@ namespace Pakuri.InGame
             return ExecuteFiltered(context, snapshot, effects, fallbackCenter, SkillMultiEffectTiming.OnHitCount, false, hitCount);
         }
 
+        /*
+         * 조건 선별을 실행한다.
+         */
         private static bool ExecuteFiltered(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -154,6 +181,9 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /*
+         * 지정한 지연시간이 지난 뒤 효과를 실행한다.
+         */
         private static IEnumerator ExecuteDelayed(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -174,6 +204,9 @@ namespace Pakuri.InGame
             SkillPlanActionDispatcher.ExecuteEffect(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot);
         }
 
+        /*
+         * 선택지, 패시브, 출처 상태 조건을 만족해 효과를 실행할 수 있는지 확인한다.
+         */
         internal static bool ShouldRun(SkillExecutionContext context, SkillEffectDefinition effect, SkillExecutionSnapshot snapshot)
         {
             if (effect == null)
@@ -201,10 +234,14 @@ namespace Pakuri.InGame
                 return false;
             }
 
+            // 필수 조건을 통과한 뒤 제외 패시브와 출처 상태 조건을 마지막으로 확인한다.
             return !HasAnyLearnedPassive(context, effect.ExcludesPassiveSkillId)
                 && HasRequiredSourceStatus(context, effect.RequiredSourceStatusId, effect.RequiredSourceStatusMinStacks);
         }
 
+        /*
+         * 모든 선택지를 보유하고 있는지 확인한다.
+         */
         private static bool HasAllChoices(SkillExecutionSnapshot snapshot, string choiceList)
         {
             if (string.IsNullOrWhiteSpace(choiceList))
@@ -230,6 +267,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 하나 이상의 선택지를 보유하고 있는지 확인한다.
+         */
         private static bool HasAnyChoice(SkillExecutionSnapshot snapshot, string choiceList)
         {
             if (string.IsNullOrWhiteSpace(choiceList) || snapshot == null)
@@ -250,6 +290,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 모든 학습한 패시브를 보유하고 있는지 확인한다.
+         */
         private static bool HasAllLearnedPassives(SkillExecutionContext context, string passiveList)
         {
             if (string.IsNullOrWhiteSpace(passiveList))
@@ -270,6 +313,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 하나 이상의 학습한 패시브를 보유하고 있는지 확인한다.
+         */
         private static bool HasAnyLearnedPassive(SkillExecutionContext context, string passiveList)
         {
             if (string.IsNullOrWhiteSpace(passiveList))
@@ -290,6 +336,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 학습한 패시브를 보유하고 있는지 확인한다.
+         */
         private static bool HasLearnedPassive(SkillExecutionContext context, string passiveId)
         {
             var monster = context != null ? context.Caster as MonsterUnitRuntimeModel : null;
@@ -299,6 +348,9 @@ namespace Pakuri.InGame
                 && monster.State.LearnedPassiveSkillIds.Contains(passiveId);
         }
 
+        /*
+         * 필수 출처 상태를 보유하고 있는지 확인한다.
+         */
         private static bool HasRequiredSourceStatus(SkillExecutionContext context, string statusId, int minStacks)
         {
             if (string.IsNullOrWhiteSpace(statusId))
@@ -324,6 +376,9 @@ namespace Pakuri.InGame
                 && caster.Statuses.GetStacks(kind) >= Mathf.Max(1, minStacks);
         }
 
+        /*
+         * 피해 효과 행동을 실행한다.
+         */
         internal static bool ExecuteDamageEffectAction(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -335,7 +390,7 @@ namespace Pakuri.InGame
             var damageSpec = new SkillDamageSpec
             {
                 SkillId = effect.SkillId,
-                Element = (ElementType)(int)effect.Attribute,
+                Element = (DamageAttribute)(int)effect.Attribute,
                 BaseDamage = effect.BaseDamage,
                 StatCoefficient = Mathf.Abs(effect.SpellPowerCoefficient) >= Mathf.Abs(effect.AttackPowerCoefficient)
                     ? effect.SpellPowerCoefficient
@@ -410,6 +465,9 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /*
+         * 런타임 히트박스 피해 효과를 실행하고 성공 여부를 반환한다.
+         */
         private static bool TryExecuteRuntimeHitboxDamageEffect(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -482,6 +540,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 연장 상태 지속시간 효과 행동을 실행한다.
+         */
         internal static bool ExecuteExtendStatusDurationEffectAction(
             SkillExecutionContext context,
             SkillEffectDefinition effect)
@@ -522,6 +583,9 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /*
+         * 상태 효과 행동을 실행한다.
+         */
         internal static bool ExecuteStatusEffectAction(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -689,6 +753,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 상태 대상을 결정한다.
+         */
         private static IReadOnlyList<UnitRosterEntry> ResolveStatusTargets(
             SkillExecutionContext context,
             SkillEffectDefinition effect,
@@ -703,6 +770,9 @@ namespace Pakuri.InGame
                 : SkillExecutionUtility.ResolveTargetList(context.CasterEntry, context.Roster, targeting);
         }
 
+        /*
+         * 대상이 효과의 체력과 상태 조건을 만족하는지 확인한다.
+         */
         internal static bool TargetMatchesCondition(BaseUnitRuntimeModel target, SkillEffectDefinition effect)
         {
             if (effect == null)
@@ -713,7 +783,7 @@ namespace Pakuri.InGame
             var statusMatches = true;
             if (!string.IsNullOrWhiteSpace(effect.ConditionStatusId))
             {
-                statusMatches = StatusEffectRuntime.MatchesConditionStatus(
+                statusMatches = StatusEffectRules.MatchesConditionStatus(
                     target,
                     effect.ConditionStatusId,
                     effect.ConditionStatusSourceSkillId);
@@ -734,11 +804,17 @@ namespace Pakuri.InGame
             return statusMatches && skillMatches && healthRatioMatches;
         }
 
+        /*
+         * 현재 적중 횟수가 효과 실행 조건을 만족하는지 확인한다.
+         */
         private static bool MatchesHitCountCondition(SkillEffectDefinition effect, int hitCount)
         {
             return effect == null || effect.ConditionHitCountMin <= 0 || hitCount >= effect.ConditionHitCountMin;
         }
 
+        /*
+         * 대상 체력 비율이 지정 범위 안인지 확인한다.
+         */
         private static bool IsWithinHealthRatio(BaseUnitRuntimeModel target, float maxRatio)
         {
             var resources = target != null ? target.Resources : null;
@@ -749,9 +825,12 @@ namespace Pakuri.InGame
                 && resources.CurrentHealth / stats.MaxHealth <= Mathf.Clamp01(maxRatio);
         }
 
+        /*
+         * 상태 지속시간 보너스를 결정한다.
+         */
         private static float ResolveStatusDurationBonus(
             SkillExecutionSnapshot snapshot,
-            StatusEffectData statusData,
+            RuntimeStatusData statusData,
             StatusEffectKind kind)
         {
             if (snapshot == null)
@@ -765,6 +844,9 @@ namespace Pakuri.InGame
             return snapshot.ResolveStatusDurationBonus(statusId);
         }
 
+        /*
+         * 상태 설정을 결정한다.
+         */
         internal static ProjectileStatusHitSpec ResolveStatusSpec(
             SkillEffectDefinition effect,
             SkillExecutionSnapshot snapshot = null,
@@ -804,7 +886,10 @@ namespace Pakuri.InGame
             };
         }
 
-        private static StatusEffectData CreateStatusData(SkillEffectDefinition effect)
+        /*
+         * 상태 데이터를 생성한다.
+         */
+        private static RuntimeStatusData CreateStatusData(SkillEffectDefinition effect)
         {
             if (effect == null)
             {
@@ -819,7 +904,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var status = StatusEffectRuntime.CreateStatusData(kind, effect.StatusEffectLabel);
+            var status = StatusEffectFactory.Create(kind, effect.StatusEffectLabel);
             if (status == null)
             {
                 return null;
@@ -831,15 +916,15 @@ namespace Pakuri.InGame
                 status.StatusEffectPrefab = effect.StatusEffectPrefab;
             }
 
-            if (StatusEffectRuntime.TryParseStatusTargetScope(effect.StatusTargetScope, out var scope))
+            if (StatusEffectFactory.TryParseTargetScope(effect.StatusTargetScope, out var scope))
             {
                 status.TargetScope = scope;
             }
 
-            status.MergePolicy = StatusEffectRuntime.TryParseStatusMergePolicy(effect.StatusMergePolicy, out var mergePolicy)
+            status.MergePolicy = StatusEffectFactory.TryParseMergePolicy(effect.StatusMergePolicy, out var mergePolicy)
                 ? mergePolicy
                 : StatusMergePolicy.SameSourceRefresh;
-            status.ShieldAmountRefreshPolicy = StatusEffectRuntime.TryParseShieldRefreshPolicy(effect.ShieldAmountRefreshPolicy, out var shieldPolicy)
+            status.ShieldAmountRefreshPolicy = StatusEffectFactory.TryParseShieldRefreshRule(effect.ShieldAmountRefreshPolicy, out var shieldPolicy)
                 ? shieldPolicy
                 : ShieldRefreshRule.TakeHighest;
             if (effect.StatusDurationSeconds > 0f)
@@ -888,18 +973,21 @@ namespace Pakuri.InGame
                 || !Mathf.Approximately(effect.StatusElementResistReduction, 0f)
                 || !Mathf.Approximately(effect.StatusFlatElementResistReduction, 0f)
                 || !Mathf.Approximately(effect.StatusElementDamageTakenBonus, 0f);
-            status.ElementModifierTarget = (ElementType)(int)effect.Attribute;
+            status.ElementModifierTarget = (DamageAttribute)(int)effect.Attribute;
             status.Modifiers.ResistReduction = status.ElementResistReduction;
             status.Modifiers.ResistReductionElement = status.ElementModifierTarget;
             return status;
         }
 
+        /*
+         * 활성 스킬 속성을 보유하고 있는지 확인한다.
+         */
         private static bool HasActiveSkillAttribute(BaseUnitRuntimeModel target, string rawAttribute)
         {
             if (target == null
                 || target.SkillRuntime == null
                 || string.IsNullOrWhiteSpace(rawAttribute)
-                || !Enum.TryParse(rawAttribute.Trim(), true, out ElementType attribute))
+                || !Enum.TryParse(rawAttribute.Trim(), true, out DamageAttribute attribute))
             {
                 return false;
             }
@@ -917,6 +1005,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 상태 효과 보호막 수치를 결정한다.
+         */
         private static float ResolveStatusEffectShieldAmount(BaseUnitRuntimeModel caster, SkillEffectDefinition effect, SkillExecutionSnapshot snapshot)
         {
             if (effect == null)
@@ -930,8 +1021,8 @@ namespace Pakuri.InGame
             if (stats != null)
             {
                 stat = useSpellPower
-                    ? stats.SpellPower * StatusEffectRuntime.ResolveSpellPowerMultiplier(caster)
-                    : stats.AttackPower * StatusEffectRuntime.ResolveAttackPowerMultiplier(caster);
+                    ? stats.SpellPower * StatusEffectRules.ResolveSpellPowerMultiplier(caster)
+                    : stats.AttackPower * StatusEffectRules.ResolveAttackPowerMultiplier(caster);
             }
 
             var coefficient = useSpellPower ? effect.SpellPowerCoefficient : effect.AttackPowerCoefficient;
@@ -944,6 +1035,9 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, shield);
         }
 
+        /*
+         * 대상 지정을 구성한다.
+         */
         private static SkillTargetingSpec BuildTargeting(SkillEffectDefinition effect)
         {
             return new SkillTargetingSpec
@@ -956,6 +1050,9 @@ namespace Pakuri.InGame
             };
         }
 
+        /*
+         * 대상 진영을 런타임 값으로 변환한다.
+         */
         private static SkillTargetSide MapTargetSide(SkillMultiEffectTargetSide side)
         {
             switch (side)
@@ -969,6 +1066,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 대상 선택 방식을 런타임 값으로 변환한다.
+         */
         private static SkillTargetSelection MapTargetSelection(SkillMultiEffectTargetSelection selection)
         {
             switch (selection)
@@ -982,6 +1082,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 대상 형태를 런타임 값으로 변환한다.
+         */
         private static SkillTargetShape MapTargetShape(SkillMultiEffectTargetShape shape)
         {
             switch (shape)
@@ -995,6 +1098,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 효과 중심점을 결정한다.
+         */
         private static Vector2 ResolveEffectCenter(
             SkillExecutionContext context,
             SkillEffectDefinition effect,
@@ -1047,11 +1153,17 @@ namespace Pakuri.InGame
             return fallbackCenter;
         }
 
+        /*
+         * 지속형 지속 범위를 보유하고 있는지 확인한다.
+         */
         private static bool HasPersistentZone(SkillEffectDefinition effect)
         {
             return effect != null && effect.ActiveDurationSeconds > 0f && effect.TickIntervalSeconds > 0f;
         }
 
+        /*
+         * 명시된 이벤트 대상을 결정한다.
+         */
         private static BaseUnitRuntimeModel ResolveExplicitEventTarget(SkillExecutionContext context, SkillEffectDefinition effect)
         {
             return effect != null
@@ -1060,6 +1172,9 @@ namespace Pakuri.InGame
                 : null;
         }
 
+        /*
+         * 지속형 피해 지속 범위를 생성한다.
+         */
         private static bool SpawnPersistentDamageZone(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -1158,6 +1273,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 비주얼을 생성한다.
+         */
         private static void SpawnVisual(SkillExecutionContext context, SkillEffectDefinition effect, Vector2 center)
         {
             if (effect == null || context == null || context.CombatManager == null || context.CombatManager.Effects == null)
@@ -1184,6 +1302,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 비주얼 대상을 생성한다.
+         */
         private static void SpawnVisualOnTargets(
             SkillExecutionContext context,
             SkillEffectDefinition effect,
@@ -1232,6 +1353,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 반경을 결정한다.
+         */
         private static float ResolveRadius(SkillEffectDefinition effect, SkillExecutionSnapshot snapshot)
         {
             return SkillAreaUtility.ResolveRadius(effect != null ? effect.Radius : 0f, snapshot);

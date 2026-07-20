@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Combat;
@@ -8,13 +8,19 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    public sealed class BeamSkillExecutor : TypedSkillExecutor<BeamSkillData>
+    /*
+     * 빔 스킬을 실행한다.
+     */
+    public sealed class BeamSkillExecutor : TypedSkillExecutor<BeamSkillRuntimeData>
     {
         private const float DefaultBeamLength = 31f;
 
+        /*
+         * 요청받은 빔 스킬을 실행한다.
+         */
         public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
         {
-            var skill = context != null ? context.SkillData as BeamSkillData : null;
+            var skill = context != null ? context.SkillRuntimeData as BeamSkillRuntimeData : null;
             if (skill == null || context.CombatManager == null || context.CasterEntry == null)
             {
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
@@ -135,7 +141,10 @@ namespace Pakuri.InGame
             return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
         }
 
-        private static float ResolveBeamLength(BeamSkillData skill)
+        /*
+         * 빔 길이를 결정한다.
+         */
+        private static float ResolveBeamLength(BeamSkillRuntimeData skill)
         {
             if (skill != null && skill.BeamLength > 0f)
             {
@@ -146,7 +155,10 @@ namespace Pakuri.InGame
             return DefaultBeamLength;
         }
 
-        private static float ResolveDuration(BeamSkillData skill, SkillExecutionSnapshot snapshot)
+        /*
+         * 지속시간을 결정한다.
+         */
+        private static float ResolveDuration(BeamSkillRuntimeData skill, SkillExecutionSnapshot snapshot)
         {
             var timing = skill != null ? skill.Timing : null;
             var duration = timing != null && timing.ActiveDuration > 0f
@@ -160,7 +172,10 @@ namespace Pakuri.InGame
             return Mathf.Max(0.05f, duration);
         }
 
-        private static float ResolveBeamWidth(BeamSkillData skill, SkillExecutionSnapshot snapshot)
+        /*
+         * 빔 너비를 결정한다.
+         */
+        private static float ResolveBeamWidth(BeamSkillRuntimeData skill, SkillExecutionSnapshot snapshot)
         {
             var width = skill != null ? skill.BeamWidth : 0f;
             if (snapshot != null)
@@ -171,7 +186,10 @@ namespace Pakuri.InGame
             return Mathf.Max(0.1f, width);
         }
 
-        private static float ResolveKnockbackDistance(BeamSkillData skill, SkillExecutionSnapshot snapshot)
+        /*
+         * 밀쳐내기 거리를 결정한다.
+         */
+        private static float ResolveKnockbackDistance(BeamSkillRuntimeData skill, SkillExecutionSnapshot snapshot)
         {
             var distance = skill != null ? Mathf.Max(0f, skill.KnockbackDistance) : 0f;
             if (snapshot != null)
@@ -182,6 +200,9 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, distance);
         }
 
+        /*
+         * 빔 비주얼 너비 크기를 결정한다.
+         */
         private static float ResolveBeamVisualWidthScale(SkillExecutionSnapshot snapshot)
         {
             return snapshot != null
@@ -189,7 +210,10 @@ namespace Pakuri.InGame
                 : 1f;
         }
 
-        private static float ResolveTickInterval(BeamSkillData skill, SkillExecutionSnapshot snapshot)
+        /*
+         * 주기 간격을 결정한다.
+         */
+        private static float ResolveTickInterval(BeamSkillRuntimeData skill, SkillExecutionSnapshot snapshot)
         {
             var interval = ResolveTickInterval(skill);
             if (snapshot != null)
@@ -200,7 +224,10 @@ namespace Pakuri.InGame
             return Mathf.Max(0.05f, interval);
         }
 
-        private static float ResolveTickInterval(BeamSkillData skill)
+        /*
+         * 주기 간격을 결정한다.
+         */
+        private static float ResolveTickInterval(BeamSkillRuntimeData skill)
         {
             var timing = skill != null ? skill.Timing : null;
             return timing != null && timing.TickInterval > 0f
@@ -208,6 +235,9 @@ namespace Pakuri.InGame
                 : 0.1f;
         }
 
+        /*
+         * 적중 상태 효과를 결정한다.
+         */
         private static SkillEffectDefinition[] ResolveOnHitStatusEffects(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -237,6 +267,9 @@ namespace Pakuri.InGame
             return resolved.Count > 0 ? resolved.ToArray() : Array.Empty<SkillEffectDefinition>();
         }
 
+        /*
+         * 시전 효과를 결정한다.
+         */
         private static SkillEffectDefinition[] ResolveCastEffects(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,

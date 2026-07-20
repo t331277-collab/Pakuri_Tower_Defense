@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 인게임 패시브 효과 런타임의 전투 중 상태와 실행을 관리한다.
+     */
     internal sealed class InGamePassiveEffectRuntime
     {
         private const int MaxRefreshPasses = 8;
@@ -21,6 +24,9 @@ namespace Pakuri.InGame
         private bool refreshRequested;
         private bool isRefreshing;
 
+        /*
+         * 패시브 효과 연결과 대기 중인 변경 상태를 초기화한다.
+         */
         public void Reset()
         {
             appliedOneShotEffectKeys.Clear();
@@ -34,7 +40,7 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 패시브 Trigger의 재사용 대기시간을 확인하고 다음 준비 시간을 기록한다.
+         * 패시브 트리거의 재사용 대기시간을 확인하고 다음 준비 시간을 기록한다.
          */
         public bool ConsumeTriggerCooldown(string key, float cooldownSeconds)
         {
@@ -57,7 +63,7 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 패시브 Trigger 횟수를 누적하고 지정 주기마다 실행을 허용한다.
+         * 패시브 트리거 횟수를 누적하고 지정 주기마다 실행을 허용한다.
          */
         public bool ConsumeTriggerCount(string key, int triggerEveryCount)
         {
@@ -157,6 +163,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 학습한 패시브 효과를 현재 상태에 맞게 다시 구성한다.
+         */
         private void RefreshLearnedPassiveEffects(InGameCombatManager combatManager, UnitRosterService roster)
         {
             var desiredBindings = new Dictionary<string, PassiveStatusBinding>(StringComparer.OrdinalIgnoreCase);
@@ -195,6 +204,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 패시브 효과를 수집한다.
+         */
         private void CollectPassiveEffects(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -205,8 +217,8 @@ namespace Pakuri.InGame
             ISet<float> nextHealthRatioThresholds)
         {
             if (string.IsNullOrWhiteSpace(passiveId)
-                || PakuriDataManager.Instance == null
-                || !PakuriDataManager.Instance.TryGetData(passiveId, out PassiveDefinition passive)
+                || CsvDataLoader.CurrentCatalog == null
+                || !CsvDataLoader.CurrentCatalog.TryGetData(passiveId, out PassiveDefinition passive)
                 || passive == null
                 || passive.PassiveEffects == null
                 || passive.PassiveEffects.Length == 0)
@@ -286,6 +298,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 일회성 실행 효과를 적용한다.
+         */
         private void ApplyOneShotEffect(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -309,6 +324,9 @@ namespace Pakuri.InGame
             appliedOneShotEffectKeys.Add(key);
         }
 
+        /*
+         * 비활성 연결을 제거한다.
+         */
         private void RemoveInactiveBindings(
             InGameCombatManager combatManager,
             IReadOnlyDictionary<string, PassiveStatusBinding> desiredBindings)
@@ -332,6 +350,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 패시브가 전투 동안 유지해야 하는 상태 효과인지 확인한다.
+         */
         private static bool IsPersistentStatusEffect(SkillEffectDefinition effect)
         {
             return effect != null
@@ -340,6 +361,9 @@ namespace Pakuri.InGame
                 && effect.DelaySeconds <= 0f;
         }
 
+        /*
+         * 패시브 선택지 실행 정보를 구성한다.
+         */
         private static SkillExecutionSnapshot BuildPassiveChoiceSnapshot(BaseUnitRuntimeModel owner, string passiveId)
         {
             var snapshot = new SkillExecutionSnapshot(null);
@@ -349,7 +373,7 @@ namespace Pakuri.InGame
                 return snapshot;
             }
 
-            var manager = PakuriDataManager.Instance;
+            var manager = CsvDataLoader.CurrentCatalog;
             foreach (var choiceId in chosenChoiceIds)
             {
                 if (manager == null || !manager.TryGetData(choiceId, out SkillChoiceDefinition choice) || choice == null)
@@ -377,6 +401,9 @@ namespace Pakuri.InGame
             return snapshot;
         }
 
+        /*
+         * 출처 유닛이 필수 상태와 최소 중첩을 만족하는지 확인한다.
+         */
         private static bool MeetsSourceStatusRequirement(SkillChoiceDefinition choice, BaseUnitRuntimeModel owner)
         {
             if (choice == null || string.IsNullOrWhiteSpace(choice.RequiredSourceStatusId))
@@ -401,6 +428,9 @@ namespace Pakuri.InGame
                 && owner.Statuses.GetStacks(kind) >= Mathf.Max(1, choice.RequiredSourceStatusMinStacks);
         }
 
+        /*
+         * 모든 학습한 패시브를 보유하고 있는지 확인한다.
+         */
         private static bool HasAllLearnedPassives(BaseUnitRuntimeModel owner, string passiveList)
         {
             if (string.IsNullOrWhiteSpace(passiveList))
@@ -421,6 +451,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 하나 이상의 학습한 패시브를 보유하고 있는지 확인한다.
+         */
         private static bool HasAnyLearnedPassive(BaseUnitRuntimeModel owner, string passiveList)
         {
             if (string.IsNullOrWhiteSpace(passiveList))
@@ -441,6 +474,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 학습한 패시브를 보유하고 있는지 확인한다.
+         */
         private static bool HasLearnedPassive(BaseUnitRuntimeModel owner, string passiveId)
         {
             return owner != null
@@ -449,6 +485,9 @@ namespace Pakuri.InGame
                 && owner.State.LearnedPassiveSkillIds.Contains(passiveId);
         }
 
+        /*
+         * 일회성 실행 키를 구성한다.
+         */
         private static string BuildOneShotKey(BaseUnitRuntimeModel owner, string passiveId, SkillEffectDefinition effect)
         {
             var unitId = ResolveUnitKey(owner);
@@ -456,6 +495,9 @@ namespace Pakuri.InGame
             return unitId + ":" + passiveId + ":" + effectId;
         }
 
+        /*
+         * 연결 정보 키를 구성한다.
+         */
         private static string BuildBindingKey(
             BaseUnitRuntimeModel owner,
             string passiveId,
@@ -469,6 +511,9 @@ namespace Pakuri.InGame
                 + ":" + ResolveUnitKey(target);
         }
 
+        /*
+         * 유닛 키를 결정한다.
+         */
         private static string ResolveUnitKey(BaseUnitRuntimeModel unit)
         {
             return unit != null && unit.Identity != null && !string.IsNullOrWhiteSpace(unit.Identity.UnitId)
@@ -476,8 +521,14 @@ namespace Pakuri.InGame
                 : unit != null ? unit.GetHashCode().ToString() : "unknown";
         }
 
+        /*
+         * 패시브 상태 연결 정보에 필요한 값을 보관한다.
+         */
         private readonly struct PassiveStatusBinding
         {
+            /*
+             * 패시브 상태 연결 정보에 필요한 값을 초기화한다.
+             */
             public PassiveStatusBinding(BaseUnitRuntimeModel target, StatusEffectKind kind, string sourceSkillId)
             {
                 Target = target;

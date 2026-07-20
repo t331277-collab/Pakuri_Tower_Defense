@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Combat;
@@ -8,14 +8,23 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    public sealed class SingleAttackSkillExecutor : TypedSkillExecutor<SingleAttackData>
+    /*
+     * 단일 공격 스킬을 실행한다.
+     */
+    public sealed class SingleAttackSkillExecutor : TypedSkillExecutor<SingleAttackSkillRuntimeData>
     {
         private const float DefaultVisualLifetimeSeconds = 1f;
         private const float DefaultMultiDeploymentLineLength = 31f;
         private const float PostDamageLifetimePaddingSeconds = 0.05f;
 
+        /*
+         * 단일 공격 실행 결과에 필요한 값을 보관한다.
+         */
         private readonly struct SingleAttackExecutionOutcome
         {
+            /*
+             * 단일 공격 실행 결과에 필요한 값을 초기화한다.
+             */
             public SingleAttackExecutionOutcome(bool routed, bool castCommitted)
             {
                 Routed = routed;
@@ -26,8 +35,14 @@ namespace Pakuri.InGame
             public bool CastCommitted { get; }
         }
 
+        /*
+         * 단일 공격 후속 설정에 필요한 값을 보관한다.
+         */
         private readonly struct SingleAttackFollowUpSpec
         {
+            /*
+             * 단일 공격 후속 설정에 필요한 값을 초기화한다.
+             */
             public SingleAttackFollowUpSpec(string requiredStatusId, int repeatCount, float intervalSeconds, float damageMultiplier, GameObject prefab)
             {
                 RequiredStatusId = requiredStatusId;
@@ -44,8 +59,14 @@ namespace Pakuri.InGame
             public GameObject Prefab { get; }
         }
 
+        /*
+         * 단일 공격 후속 대상에 필요한 값을 보관한다.
+         */
         private readonly struct SingleAttackFollowUpTarget
         {
+            /*
+             * 단일 공격 후속 대상에 필요한 값을 초기화한다.
+             */
             public SingleAttackFollowUpTarget(BaseUnitRuntimeModel model, Vector2 center)
             {
                 Model = model;
@@ -56,8 +77,14 @@ namespace Pakuri.InGame
             public Vector2 Center { get; }
         }
 
+        /*
+         * 대상 피해 결과에 필요한 값을 보관한다.
+         */
         private readonly struct TargetDamageResolution
         {
+            /*
+             * 대상 피해 결과에 필요한 값을 초기화한다.
+             */
             public TargetDamageResolution(float damage, float critChanceBonus, bool isExecute, int plannedConsumedStacks)
             {
                 Damage = damage;
@@ -72,9 +99,12 @@ namespace Pakuri.InGame
             public int PlannedConsumedStacks { get; }
         }
 
+        /*
+         * 요청받은 단일 공격 스킬을 실행한다.
+         */
         public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
         {
-            var skill = context != null ? context.SkillData as SingleAttackData : null;
+            var skill = context != null ? context.SkillRuntimeData as SingleAttackSkillRuntimeData : null;
             if (skill == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
             {
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
@@ -104,6 +134,9 @@ namespace Pakuri.InGame
                 GetType().Name);
         }
 
+        /*
+         * 범위 중심점을 결정한다.
+         */
         private static Vector2 ResolveAreaCenter(
             SkillExecutionContext context,
             SkillTargetingSpec targeting,
@@ -112,14 +145,20 @@ namespace Pakuri.InGame
             return SkillAreaUtility.ResolveAreaCenter(context, targeting, area);
         }
 
-        private static float ResolveRadius(SingleAttackData skill, SkillExecutionSnapshot snapshot)
+        /*
+         * 반경을 결정한다.
+         */
+        private static float ResolveRadius(SingleAttackSkillRuntimeData skill, SkillExecutionSnapshot snapshot)
         {
             var area = skill != null ? skill.Area : null;
             var targeting = skill != null ? skill.Targeting : null;
             return SkillAreaUtility.ResolveRadius(SkillAreaUtility.ResolveBaseRadius(targeting, area), snapshot);
         }
 
-        private static GameObject ResolvePrefab(SkillExecutionContext context, SkillExecutionSnapshot snapshot, SingleAttackData skill)
+        /*
+         * 프리팹을 결정한다.
+         */
+        private static GameObject ResolvePrefab(SkillExecutionContext context, SkillExecutionSnapshot snapshot, SingleAttackSkillRuntimeData skill)
         {
             return snapshot != null && snapshot.SkillEffectPrefab != null
                 ? snapshot.SkillEffectPrefab
@@ -128,6 +167,9 @@ namespace Pakuri.InGame
                     : null;
         }
 
+        /*
+         * 비주얼을 생성한다.
+         */
         private static void SpawnVisual(
             SkillExecutionContext context,
             RuntimeSkillVisualSpec runtimeVisual,
@@ -155,7 +197,10 @@ namespace Pakuri.InGame
             }
         }
 
-        private static Vector2 ResolvePrefabHitboxCenter(SkillExecutionContext context, Vector2 fallbackCenter, SingleAttackData skill)
+        /*
+         * 프리팹 히트박스 중심점을 결정한다.
+         */
+        private static Vector2 ResolvePrefabHitboxCenter(SkillExecutionContext context, Vector2 fallbackCenter, SingleAttackSkillRuntimeData skill)
         {
             if (skill != null
                 && skill.HitAllTargets
@@ -169,7 +214,10 @@ namespace Pakuri.InGame
             return fallbackCenter;
         }
 
-        private static int ResolveDeploymentCount(SingleAttackData skill, SkillExecutionSnapshot snapshot)
+        /*
+         * 배치 횟수를 결정한다.
+         */
+        private static int ResolveDeploymentCount(SingleAttackSkillRuntimeData skill, SkillExecutionSnapshot snapshot)
         {
             if (skill == null || !skill.UseMultiDeployment)
             {
@@ -180,19 +228,28 @@ namespace Pakuri.InGame
             return Mathf.Max(1, skill.DeploymentCount + bonus);
         }
 
-        private static bool UsesStatusFilteredDeployments(SingleAttackData skill)
+        /*
+         * 상태 조건 선별 배치를 사용하는 구성인지 확인한다.
+         */
+        private static bool UsesStatusFilteredDeployments(SingleAttackSkillRuntimeData skill)
         {
             return skill != null && !string.IsNullOrWhiteSpace(skill.DeploymentRequiredTargetStatusId);
         }
 
-        private static bool UsesLineStyleMultiDeploymentVisual(SingleAttackData skill)
+        /*
+         * 직선 형태 다중 배치 비주얼을 사용하는 구성인지 확인한다.
+         */
+        private static bool UsesLineStyleMultiDeploymentVisual(SingleAttackSkillRuntimeData skill)
         {
             return skill != null
                 && skill.UseMultiDeployment
                 && !UsesStatusFilteredDeployments(skill);
         }
 
-        private static int ResolveEffectiveHitTargetCount(SingleAttackData skill, SkillExecutionSnapshot snapshot)
+        /*
+         * 실제 적중 대상 횟수를 결정한다.
+         */
+        private static int ResolveEffectiveHitTargetCount(SingleAttackSkillRuntimeData skill, SkillExecutionSnapshot snapshot)
         {
             if (skill == null)
             {
@@ -210,15 +267,21 @@ namespace Pakuri.InGame
             return Mathf.Max(1, skill.HitTargetCount + hitTargetCountBonus);
         }
 
-        private static bool UsesResolvedDeployments(SingleAttackData skill)
+        /*
+         * 결정된 배치를 사용하는 구성인지 확인한다.
+         */
+        private static bool UsesResolvedDeployments(SingleAttackSkillRuntimeData skill)
         {
             return skill != null
                 && (skill.UseMultiDeployment || UsesStatusFilteredDeployments(skill));
         }
 
+        /*
+         * 배치 중심점을 결정한다.
+         */
         private static List<Vector2> ResolveDeploymentCenters(
             SkillExecutionContext context,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             Vector2 primaryCenter,
             int deploymentCount)
         {
@@ -255,10 +318,13 @@ namespace Pakuri.InGame
                 SkillDeploymentRepeatMode.RepeatNearest);
         }
 
+        /*
+         * 결정된 배치를 실행한다.
+         */
         private static SingleAttackExecutionOutcome ExecuteResolvedDeployments(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             Vector2 primaryCenter,
             RuntimeSkillVisualSpec runtimeVisual,
             GameObject prefab)
@@ -284,10 +350,13 @@ namespace Pakuri.InGame
             return new SingleAttackExecutionOutcome(routed, castCommitted);
         }
 
+        /*
+         * 반복 배치를 예약한다.
+         */
         private static void ScheduleRepeatedDeployments(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             Vector2 center,
             RuntimeSkillVisualSpec runtimeVisual,
             GameObject prefab)
@@ -329,10 +398,13 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 지정 간격 후 다음 반복 배치를 실행한다.
+         */
         private static IEnumerator ExecuteRepeatedDeploymentAfterDelay(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             Vector2 center,
             RuntimeSkillVisualSpec runtimeVisual,
             GameObject prefab,
@@ -358,10 +430,13 @@ namespace Pakuri.InGame
                 center);
         }
 
+        /*
+         * 다중 배치 프리팹의 방향과 길이를 설정한다.
+         */
         private static void ConfigureMultiDeploymentPrefabVisual(
             Transform transform,
             SkillExecutionContext context,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             SkillExecutionSnapshot snapshot,
             Vector2 center)
         {
@@ -405,10 +480,13 @@ namespace Pakuri.InGame
             SkillExecutionUtility.ApplyPrefabScale(transform, SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area), snapshot);
         }
 
+        /*
+         * 지정한 중심점에서 단일 공격 판정을 실행한다.
+         */
         private static SingleAttackExecutionOutcome ExecuteAtCenter(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             Vector2 center,
             RuntimeSkillVisualSpec runtimeVisual,
             GameObject prefab,
@@ -436,6 +514,7 @@ namespace Pakuri.InGame
             var castCommitted = false;
 
             var hasRuntimeVisual = EffectVisualUtility.HasVisual(runtimeVisual);
+            // 히트박스가 있는 비주얼은 실제 콜라이더를 기준으로 피해 대상을 판정한다.
             if (skill.UsePrefabHitbox && (hasRuntimeVisual || prefab != null) && context.CombatManager.Effects != null)
             {
                 center = ResolvePrefabHitboxCenter(context, center, skill);
@@ -511,6 +590,7 @@ namespace Pakuri.InGame
 
             if (!spawnedHitbox)
             {
+                // 히트박스를 만들지 못한 경우에는 설정된 중심점과 반경으로 대상을 직접 찾는다.
                 castCommitted = true;
                 if (damageDelaySeconds > 0f)
                 {
@@ -572,10 +652,13 @@ namespace Pakuri.InGame
             return new SingleAttackExecutionOutcome(routed, castCommitted);
         }
 
+        /*
+         * 비 프리팹 대상을 적용한다.
+         */
         private static bool ApplyNonPrefabTargets(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             Vector2 center,
             float radius,
             bool coverAll,
@@ -645,10 +728,13 @@ namespace Pakuri.InGame
                 followUpTargets);
         }
 
+        /*
+         * 지연시간 후 좌표 기반 대상에게 피해를 적용한다.
+         */
         private static IEnumerator ApplyNonPrefabTargetsAfterDelay(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             Vector2 center,
             float radius,
             bool coverAll,
@@ -693,10 +779,13 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 지연시간 후 프리팹 히트박스의 대상에게 피해를 적용한다.
+         */
         private static IEnumerator ApplyPrefabHitboxAfterDelay(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             GameObject instance,
             int effectiveHitTargetCount,
             float damage,
@@ -753,11 +842,14 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 프리팹 히트박스를 적용한다.
+         */
         private static bool ApplyPrefabHitbox(
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
             UnitRosterService unitRoster,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             SkillTargetingSpec targetingSpec,
             GameObject hitboxObject,
             int maxTargets,
@@ -837,11 +929,14 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /*
+         * 제한된 대상을 적용한다.
+         */
         private static bool ApplyLimitedTargets(
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
             UnitRosterService unitRoster,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             SkillTargetingSpec targetingSpec,
             int maxTargets,
             float damage,
@@ -903,11 +998,14 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /*
+         * 범위 대상을 적용한다.
+         */
         private static bool ApplyAreaTargets(
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
             UnitRosterService unitRoster,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             SkillTargetingSpec targetingSpec,
             Vector2 center,
             float radius,
@@ -1014,11 +1112,17 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /*
+         * 대상이 현재 히트박스 안에 있는지 확인한다.
+         */
         private static bool IsTargetInsideHitbox(Collider2D[] hitboxColliders, UnitRosterEntry target)
         {
             return UnitHitboxUtility.IsTargetInsideHitbox(hitboxColliders, target);
         }
 
+        /*
+         * 핵심 히트박스 콜라이더를 결정한다.
+         */
         private static Collider2D[] ResolveCoreHitboxColliders(GameObject hitboxObject, SkillExecutionSnapshot snapshot)
         {
             if (hitboxObject == null || snapshot == null || string.IsNullOrWhiteSpace(snapshot.CoreHitboxName))
@@ -1046,6 +1150,9 @@ namespace Pakuri.InGame
             return result.Count > 0 ? result.ToArray() : Array.Empty<Collider2D>();
         }
 
+        /*
+         * 적중 상태 효과를 결정한다.
+         */
         private static SkillEffectDefinition[] ResolveOnHitStatusEffects(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -1075,6 +1182,9 @@ namespace Pakuri.InGame
             return resolved.Count > 0 ? resolved.ToArray() : Array.Empty<SkillEffectDefinition>();
         }
 
+        /*
+         * 적중 상태 효과를 적용하고 성공 여부를 반환한다.
+         */
         private static void TryApplyOnHitStatusEffects(
             InGameCombatManager manager,
             BaseUnitRuntimeModel target,
@@ -1104,6 +1214,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 핵심 적중 추가 피해를 적용하고 성공 여부를 반환한다.
+         */
         private static void TryApplyCoreOnHitAdditionalDamage(
             InGameCombatManager manager,
             SkillExecutionSnapshot snapshot,
@@ -1140,6 +1253,9 @@ namespace Pakuri.InGame
                 true);
         }
 
+        /*
+         * 적중 횟수 재사용 대기시간 반환을 적용하고 성공 여부를 반환한다.
+         */
         private static void TryApplyHitCountCooldownRefund(
             SkillRuntimeInstance sourceRuntime,
             SkillExecutionSnapshot snapshot,
@@ -1165,12 +1281,15 @@ namespace Pakuri.InGame
             targetRuntime.ReduceCooldownRemaining(targetRuntime.EffectiveCooldownDuration * Mathf.Clamp01(snapshot.HitCountCooldownRefundRatio));
         }
 
+        /*
+         * 적중 횟수 효과를 실행하고 성공 여부를 반환한다.
+         */
         private static void TryExecuteOnHitCountEffects(
             InGameCombatManager manager,
             UnitRosterService roster,
             UnitRosterEntry sourceEntry,
             SkillRuntimeInstance sourceRuntime,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             SkillExecutionSnapshot snapshot,
             int hitCount,
             Vector2 center)
@@ -1193,6 +1312,9 @@ namespace Pakuri.InGame
                 hitCount);
         }
 
+        /*
+         * 비주얼 수명을 결정한다.
+         */
         private static float ResolveVisualLifetime(GameObject instance, float minimumLifetimeSeconds)
         {
             var minimum = Mathf.Max(0.01f, minimumLifetimeSeconds);
@@ -1200,6 +1322,9 @@ namespace Pakuri.InGame
             return Mathf.Max(minimum, animationLength > 0f ? animationLength : DefaultVisualLifetimeSeconds);
         }
 
+        /*
+         * 애니메이션 길이를 결정한다.
+         */
         private static float ResolveAnimationLength(GameObject instance)
         {
             if (instance == null)
@@ -1249,6 +1374,9 @@ namespace Pakuri.InGame
             return maxLength;
         }
 
+        /*
+         * 후속 설정을 결정한다.
+         */
         private static SingleAttackFollowUpSpec? ResolveFollowUpSpec(
             SkillExecutionSnapshot snapshot,
             ProjectileStatusHitSpec statusSpec,
@@ -1285,6 +1413,9 @@ namespace Pakuri.InGame
                 prefab);
         }
 
+        /*
+         * 후속 대상을 등록한다.
+         */
         private static void RegisterFollowUpTarget(
             List<SingleAttackFollowUpTarget> followUpTargets,
             SingleAttackFollowUpSpec? followUpSpec,
@@ -1311,10 +1442,13 @@ namespace Pakuri.InGame
             followUpTargets.Add(new SingleAttackFollowUpTarget(target.Model, center));
         }
 
+        /*
+         * 조건부 후속을 예약한다.
+         */
         private static void ScheduleConditionalFollowUps(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             SingleAttackFollowUpSpec? followUpSpec,
             List<SingleAttackFollowUpTarget> followUpTargets)
         {
@@ -1348,10 +1482,13 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 지연시간 후 조건부 후속 공격을 실행한다.
+         */
         private static IEnumerator ExecuteConditionalFollowUpAfterDelay(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             SingleAttackFollowUpTarget followUpTarget,
             SingleAttackFollowUpSpec followUpSpec,
             float delaySeconds)
@@ -1378,6 +1515,9 @@ namespace Pakuri.InGame
             ExecuteAtCenter(context, followUpSnapshot, skill, center, null, followUpSpec.Prefab, false);
         }
 
+        /*
+         * 실행 정보 포함 피해 배율을 복사본을 생성한다.
+         */
         private static SkillExecutionSnapshot CloneSnapshotWithDamageMultiplier(
             SkillExecutionSnapshot snapshot,
             float damageMultiplier)
@@ -1388,7 +1528,7 @@ namespace Pakuri.InGame
             }
 
             var clone = new SkillExecutionSnapshot(snapshot.Source);
-            clone.ApplyChoiceSpec(new SkillChoiceEffectSpec
+            clone.ApplyChoiceSpec(new SkillChoiceRuntimeData
             {
                 HasDamageMultiplier = true,
                 DamageMultiplier = snapshot.DamageMultiplier * Mathf.Max(0f, damageMultiplier),
@@ -1476,9 +1616,12 @@ namespace Pakuri.InGame
             return clone;
         }
 
+        /*
+         * 대상 피해를 결정한다.
+         */
         private static TargetDamageResolution ResolveTargetDamage(
             BaseUnitRuntimeModel caster,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             SkillExecutionSnapshot snapshot,
             float baseDamage,
             BaseUnitRuntimeModel target,
@@ -1508,9 +1651,12 @@ namespace Pakuri.InGame
                 plannedConsumedStacks);
         }
 
+        /*
+         * 대상 상태 중첩 추가 피해를 결정한다.
+         */
         private static float ResolveTargetStatusStackAdditionalDamage(
             BaseUnitRuntimeModel caster,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             SkillExecutionSnapshot snapshot,
             BaseUnitRuntimeModel target,
             float baseDamage)
@@ -1545,8 +1691,11 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, stacks * perStackTotal);
         }
 
+        /*
+         * 계획된 소모할 중첩을 결정한다.
+         */
         private static int ResolvePlannedConsumedStacks(
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             SkillExecutionSnapshot snapshot,
             BaseUnitRuntimeModel target)
         {
@@ -1584,10 +1733,13 @@ namespace Pakuri.InGame
             return Mathf.Clamp(Mathf.FloorToInt(currentStacks * Mathf.Clamp01(ratio)), 0, currentStacks);
         }
 
+        /*
+         * 계획된 대상 상태 중첩을 소모하고 적용 결과를 반환한다.
+         */
         private static int ConsumePlannedTargetStatusStacks(
             InGameCombatManager manager,
             BaseUnitRuntimeModel target,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             TargetDamageResolution damageResolution)
         {
             if (manager == null
@@ -1602,6 +1754,9 @@ namespace Pakuri.InGame
             return manager.ConsumeStatusStacks(target, skill.ConsumeTargetStatusId, damageResolution.PlannedConsumedStacks);
         }
 
+        /*
+         * 소모할 상태 처치를 재분배하고 성공 여부를 반환한다.
+         */
         private static void TryRedistributeConsumedStatusOnKill(
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
@@ -1665,6 +1820,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 재분배 대상을 결정한다.
+         */
         private static List<UnitRosterEntry> ResolveRedistributionTargets(
             UnitRosterEntry sourceEntry,
             UnitRosterService roster,
@@ -1723,6 +1881,9 @@ namespace Pakuri.InGame
             return result;
         }
 
+        /*
+         * 상태 중첩을 결정한다.
+         */
         private static int ResolveStatusStacks(BaseUnitRuntimeModel target, string statusId)
         {
             if (target == null || string.IsNullOrWhiteSpace(statusId))
@@ -1743,6 +1904,9 @@ namespace Pakuri.InGame
             return target.Statuses != null ? target.Statuses.GetStacks(kind) : 0;
         }
 
+        /*
+         * 상태를 보유하고 있는지 확인한다.
+         */
         private static bool HasStatus(BaseUnitRuntimeModel target, string statusId)
         {
             return target != null
@@ -1751,6 +1915,9 @@ namespace Pakuri.InGame
                 && target.Statuses.Has(statusId);
         }
 
+        /*
+         * 상태를 적용하고 성공 여부를 반환한다.
+         */
         private static void TryApplyStatus(InGameCombatManager manager, BaseUnitRuntimeModel target, ProjectileStatusHitSpec statusSpec, BaseUnitRuntimeModel source)
         {
             SkillStatusApplyUtility.TryApplyStatus(manager, target, statusSpec, source);

@@ -124,7 +124,7 @@ namespace Pakuri.InGame
             // 현현 유닛은 세션 파티 상태를 먼저 확보한 뒤 학습 스킬 런타임을 복원한다.
             var runState = activeSession.EnsurePartyMemberState(monster);
             var model = unitFactory.CreateManifestedMonster(monster, runState, partySlotIndex);
-            SkillRuntimeFactory.RebuildLearnedActiveSet(model, new InGameSkillCatalog(ResolveCatalog()));
+            SkillRuntimeFactory.RebuildLearnedActiveSet(model);
 
             var spawnPoint = ResolveManifestSpawnPoint(partySlotIndex);
             var spawnPosition = spawnPoint.position;
@@ -152,7 +152,7 @@ namespace Pakuri.InGame
             // 저장된 파티 상태가 없으면 현재 몬스터 정의로 새 상태를 만든다.
             var runState = activeSession.GetPartyMemberState(monster.MonsterId) ?? activeSession.EnsurePartyMemberState(monster);
             model = unitFactory.CreateSelectedMonster(monster, runState, 0);
-            SkillRuntimeFactory.RebuildLearnedActiveSet(model, new InGameSkillCatalog(catalog));
+            SkillRuntimeFactory.RebuildLearnedActiveSet(model);
 
             var spawnPosition = playerSpawnPoint.position;
             var spawnRotation = playerSpawnPoint.rotation;
@@ -257,7 +257,7 @@ namespace Pakuri.InGame
                 }
 
                 var monsterId = activeSession.ManifestedMonsterIds[i];
-                var monster = PakuriDataManager.Instance.ResolveMonster(monsterId, catalog)
+                var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId)
                     ?? throw new InvalidOperationException($"Manifested monster data '{monsterId}' is required.");
 
                 CreateManifestedMonster(monster, activeSession, slotIndex);
@@ -333,7 +333,7 @@ namespace Pakuri.InGame
             CopyListToSet(state.LearnedActives, model.State.LearnedActiveSkillIds);
             CopyListToSet(state.LearnedPassives, model.State.LearnedPassiveSkillIds);
             CopyListToSet(state.ChosenChoiceIds, model.State.ChosenChoiceIds);
-            SkillRuntimeFactory.RebuildLearnedActiveSet(model, new InGameSkillCatalog(ResolveCatalog()));
+            SkillRuntimeFactory.RebuildLearnedActiveSet(model);
         }
 
         /*
@@ -391,7 +391,7 @@ namespace Pakuri.InGame
             var monster = ResolveMonsterDefinition(monsterId);
             session = RunSession.Begin(monster);
             var model = unitFactory.CreateSelectedMonster(monster, session.GetPartyMemberState(monster.MonsterId), 0);
-            SkillRuntimeFactory.RebuildLearnedActiveSet(model, new InGameSkillCatalog(catalog));
+            SkillRuntimeFactory.RebuildLearnedActiveSet(model);
             return model;
         }
 
@@ -442,7 +442,7 @@ namespace Pakuri.InGame
          */
         private GameDataCatalog ResolveCatalog()
         {
-            return PakuriDataManager.Instance.CurrentCatalog;
+            return CsvDataLoader.CurrentCatalog;
         }
 
         /*
@@ -450,7 +450,7 @@ namespace Pakuri.InGame
          */
         private MonsterDefinition ResolveMonsterDefinition(string monsterId)
         {
-            return PakuriDataManager.Instance.GetData<MonsterDefinition>(monsterId)
+            return CsvDataLoader.CurrentCatalog.GetData<MonsterDefinition>(monsterId)
                 ?? throw new InvalidOperationException($"Monster data '{monsterId}' is required.");
         }
 
@@ -459,7 +459,7 @@ namespace Pakuri.InGame
          */
         private EnemyDefinition ResolveEnemyDefinition(string enemyId)
         {
-            return PakuriDataManager.Instance.GetData<EnemyDefinition>(enemyId)
+            return CsvDataLoader.CurrentCatalog.GetData<EnemyDefinition>(enemyId)
                 ?? throw new InvalidOperationException($"Enemy data '{enemyId}' is required.");
         }
 

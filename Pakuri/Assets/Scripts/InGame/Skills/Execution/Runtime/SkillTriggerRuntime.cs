@@ -7,10 +7,19 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 스킬 트리거 런타임의 전투 중 상태와 실행을 관리한다.
+     */
     internal static class SkillTriggerRuntime
     {
+        /*
+         * 트리거 실행 정보에 필요한 값을 보관한다.
+         */
         internal readonly struct TriggerExecutionContext
         {
+            /*
+             * 트리거 실행 정보에 필요한 값을 초기화한다.
+             */
             public TriggerExecutionContext(
                 BaseUnitRuntimeModel eventTarget,
                 BaseUnitRuntimeModel attacker,
@@ -50,6 +59,9 @@ namespace Pakuri.InGame
             public string EventTriggerSourceSkillId { get; }
         }
 
+        /*
+         * 투사체 적중을 실행한다.
+         */
         public static void ExecuteProjectileHit(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -72,6 +84,9 @@ namespace Pakuri.InGame
                 new TriggerExecutionContext(source, null, eventCenter, null, 0f, 0f, DamageAttribute.Physical, sourceSkillId, source));
         }
 
+        /*
+         * 전투 시작 트리거를 실행한다.
+         */
         public static void ExecuteCombatStart(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -116,6 +131,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 보호막 종료 트리거를 실행한다.
+         */
         public static void ExecuteShieldExpire(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -146,6 +164,9 @@ namespace Pakuri.InGame
             ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnShieldExpire, triggerContext);
         }
 
+        /*
+         * 보호막 흡수를 실행한다.
+         */
         public static void ExecuteShieldAbsorb(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -181,7 +202,7 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 한 피해에서 보호막이 흡수한 기록을 순서대로 Trigger에 전달한다.
+         * 한 피해에서 보호막이 흡수한 기록을 순서대로 트리거에 전달한다.
          */
         public static void ExecuteShieldAbsorbs(
             InGameCombatManager combatManager,
@@ -208,6 +229,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 상태 효과 종료 트리거를 실행한다.
+         */
         public static void ExecuteStatusExpire(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -239,7 +263,7 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 제거된 상태의 일반 만료와 보호막 만료 Trigger를 함께 실행한다.
+         * 제거된 상태의 일반 만료와 보호막 만료 트리거를 함께 실행한다.
          */
         public static void ExecuteExpiredStatuses(
             InGameCombatManager combatManager,
@@ -257,7 +281,7 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 제거된 보호막 상태만 보호막 만료 Trigger에 전달한다.
+         * 제거된 보호막 상태만 보호막 만료 트리거에 전달한다.
          */
         public static void ExecuteShieldExpires(
             InGameCombatManager combatManager,
@@ -275,6 +299,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 주는 피해를 실행한다.
+         */
         public static void ExecuteOutgoingDamage(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -319,6 +346,9 @@ namespace Pakuri.InGame
                 triggerContext);
         }
 
+        /*
+         * 스킬 시전을 실행한다.
+         */
         public static void ExecuteSkillCast(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -348,6 +378,9 @@ namespace Pakuri.InGame
             ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnSkillCast, triggerContext);
         }
 
+        /*
+         * 처치를 실행한다.
+         */
         public static void ExecuteKill(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -387,6 +420,9 @@ namespace Pakuri.InGame
             ExecutePassiveOwnerTriggers(combatManager, roster, SkillTriggerEvent.OnKill, triggerContext);
         }
 
+        /*
+         * 출처 소유 트리거를 실행한다.
+         */
         private static void ExecuteSourceOwnedTriggers(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -401,7 +437,7 @@ namespace Pakuri.InGame
             }
 
             var monsterId = source.Identity != null ? source.Identity.DefinitionId : string.Empty;
-            var monster = PakuriDataManager.Instance.ResolveMonster(monsterId);
+            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             var triggers = ResolveSourceOwnedPlanTriggers(source, sourceSkillId, monster != null ? monster.SkillTriggers : null);
             if (triggers == null || triggers.Length == 0)
             {
@@ -420,6 +456,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 출처 소유 계획 트리거를 결정한다.
+         */
         private static SkillTriggerDefinition[] ResolveSourceOwnedPlanTriggers(
             BaseUnitRuntimeModel source,
             string sourceSkillId,
@@ -431,6 +470,9 @@ namespace Pakuri.InGame
             return SkillPlanActionDispatcher.ResolveTriggers(runtime, fallbackTriggers);
         }
 
+        /*
+         * 패시브 소유자 트리거를 실행한다.
+         */
         private static void ExecutePassiveOwnerTriggers(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -453,7 +495,7 @@ namespace Pakuri.InGame
                 }
 
                 var monsterId = owner.Identity != null ? owner.Identity.DefinitionId : string.Empty;
-                var monster = PakuriDataManager.Instance.ResolveMonster(monsterId);
+                var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
                 var triggers = monster != null ? monster.SkillTriggers : null;
                 if (triggers == null || triggers.Length == 0)
                 {
@@ -483,6 +525,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 실행 출처 소유 트리거를 실행해야 하는지 확인한다.
+         */
         private static bool ShouldRunSourceOwnedTrigger(
             SkillTriggerDefinition trigger,
             BaseUnitRuntimeModel source,
@@ -490,17 +535,21 @@ namespace Pakuri.InGame
             SkillTriggerEvent triggerEvent,
             TriggerExecutionContext triggerContext)
         {
+            // 출처 스킬, 발생 이벤트, 선택지, 상태 조건을 모두 만족해야 출처 소유 트리거를 실행한다.
             return trigger != null
                 && trigger.TriggerEvent == triggerEvent
                 && string.Equals(trigger.SourceSkillId, sourceSkillId, StringComparison.OrdinalIgnoreCase)
                 && MatchesEventSkillId(trigger.EventSkillId, triggerContext.EventSourceSkillId)
-                && StatusEffectRuntime.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKinds, triggerContext.EventSourceSkillId)
+                && StatusEffectRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKinds, triggerContext.EventSourceSkillId)
                 && (!trigger.RequireEventExecute || triggerContext.EventWasExecute)
                 && HasAllChoices(source, trigger.RequiresActiveChoiceId)
                 && !HasAnyChoice(source, trigger.ExcludesActiveChoiceId)
                 && MeetsSourceStatusRequirement(source, trigger.RequiredSourceStatusId, trigger.RequiredSourceStatusMinStacks);
         }
 
+        /*
+         * 실행 패시브 소유자 트리거를 실행해야 하는지 확인한다.
+         */
         private static bool ShouldRunPassiveOwnerTrigger(
             SkillTriggerDefinition trigger,
             BaseUnitRuntimeModel owner,
@@ -514,7 +563,7 @@ namespace Pakuri.InGame
                 || string.IsNullOrWhiteSpace(trigger.SourceSkillId)
                 || !owner.State.LearnedPassiveSkillIds.Contains(trigger.SourceSkillId)
                 || !MatchesEventSkillId(trigger.EventSkillId, triggerContext.EventSourceSkillId)
-                || !StatusEffectRuntime.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKinds, triggerContext.EventSourceSkillId)
+                || !StatusEffectRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKinds, triggerContext.EventSourceSkillId)
                 || (trigger.RequireEventExecute && !triggerContext.EventWasExecute)
                 || !HasAllChoices(owner, trigger.RequiresActiveChoiceId)
                 || HasAnyChoice(owner, trigger.ExcludesActiveChoiceId)
@@ -528,6 +577,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
+            // 상태 출처와 피해 속성, 이벤트 발생 주체 조건은 기본 소유 조건을 통과한 뒤 검사한다.
             if (!MatchesConditionStatusSourceSkill(
                     trigger.ConditionStatusSourceSkillId,
                     triggerContext.EventTarget,
@@ -540,6 +590,9 @@ namespace Pakuri.InGame
                 && MatchesEventSourceScope(trigger.EventSourceScope, owner, triggerContext.EventSource);
         }
 
+        /*
+         * 모든 선택지를 보유하고 있는지 확인한다.
+         */
         private static bool HasAllChoices(BaseUnitRuntimeModel source, string choiceList)
         {
             if (string.IsNullOrWhiteSpace(choiceList))
@@ -565,6 +618,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 하나 이상의 선택지를 보유하고 있는지 확인한다.
+         */
         private static bool HasAnyChoice(BaseUnitRuntimeModel source, string choiceList)
         {
             if (string.IsNullOrWhiteSpace(choiceList) || source == null || source.State == null)
@@ -585,6 +641,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 출처 유닛이 필수 상태와 최소 중첩을 만족하는지 확인한다.
+         */
         private static bool MeetsSourceStatusRequirement(BaseUnitRuntimeModel owner, string statusId, int minStacks)
         {
             if (string.IsNullOrWhiteSpace(statusId))
@@ -609,11 +668,17 @@ namespace Pakuri.InGame
                 && owner.Statuses.GetStacks(kind) >= Mathf.Max(1, minStacks);
         }
 
+        /*
+         * 만료되거나 적용된 상태가 트리거 조건과 일치하는지 확인한다.
+         */
         private static bool MatchesConditionStatus(SkillTriggerDefinition trigger, UnitStatusRuntime status)
         {
-            return trigger == null || StatusEffectRuntime.MatchesConditionStatus(status, trigger.ConditionStatusId);
+            return trigger == null || StatusEffectRules.MatchesConditionStatus(status, trigger.ConditionStatusId);
         }
 
+        /*
+         * 피해 속성이 트리거 조건과 일치하는지 확인한다.
+         */
         private static bool MatchesTriggerAttribute(string rawAttribute, DamageAttribute eventAttribute)
         {
             if (string.IsNullOrWhiteSpace(rawAttribute))
@@ -639,6 +704,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 트리거 확률 조건을 통과하는지 확인한다.
+         */
         private static bool PassesProcGate(InGameCombatManager combatManager, BaseUnitRuntimeModel owner, SkillTriggerDefinition trigger)
         {
             if (combatManager == null || owner == null || trigger == null)
@@ -661,6 +729,9 @@ namespace Pakuri.InGame
                 trigger.InternalCooldownSeconds);
         }
 
+        /*
+         * 트리거 횟수 조건을 통과하는지 확인한다.
+         */
         private static bool PassesCountGate(InGameCombatManager combatManager, BaseUnitRuntimeModel owner, SkillTriggerDefinition trigger)
         {
             if (combatManager == null || owner == null || trigger == null)
@@ -673,6 +744,9 @@ namespace Pakuri.InGame
                 trigger.TriggerEveryCount);
         }
 
+        /*
+         * 이벤트 발생 유닛이 허용된 출처 범위인지 확인한다.
+         */
         private static bool MatchesEventSourceScope(string scope, BaseUnitRuntimeModel owner, BaseUnitRuntimeModel eventSource)
         {
             if (string.IsNullOrWhiteSpace(scope))
@@ -701,6 +775,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 이벤트를 발생시킨 스킬 ID가 트리거 조건과 일치하는지 확인한다.
+         */
         private static bool MatchesEventSkillId(string rawSkillIds, string eventSkillId)
         {
             if (string.IsNullOrWhiteSpace(rawSkillIds))
@@ -727,6 +804,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 조건 상태를 부여한 스킬이 지정 출처와 일치하는지 확인한다.
+         */
         private static bool MatchesConditionStatusSourceSkill(
             string rawSourceSkillId,
             BaseUnitRuntimeModel target,
@@ -778,6 +858,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 두 전투 모델이 같은 유닛인지 확인한다.
+         */
         private static bool IsSameUnit(BaseUnitRuntimeModel left, BaseUnitRuntimeModel right)
         {
             if (ReferenceEquals(left, right))
@@ -791,6 +874,9 @@ namespace Pakuri.InGame
                 && string.Equals(leftId, rightId, StringComparison.OrdinalIgnoreCase);
         }
 
+        /*
+         * 패시브 트리거 재사용 대기시간 키를 구성한다.
+         */
         private static string BuildPassiveTriggerCooldownKey(BaseUnitRuntimeModel owner, SkillTriggerDefinition trigger)
         {
             var unitId = owner != null && owner.Identity != null && !string.IsNullOrWhiteSpace(owner.Identity.UnitId)
@@ -802,6 +888,9 @@ namespace Pakuri.InGame
             return unitId + ":" + triggerId;
         }
 
+        /*
+         * 트리거를 실행한다.
+         */
         private static void ExecuteTrigger(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -837,6 +926,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 지정한 지연시간이 지난 뒤 트리거를 실행한다.
+         */
         private static IEnumerator ExecuteDelayed(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -850,6 +942,9 @@ namespace Pakuri.InGame
             ExecuteOnce(combatManager, roster, sourceEntry, source, trigger, triggerContext);
         }
 
+        /*
+         * 트리거 행동 한 건을 실행한다.
+         */
         private static void ExecuteOnce(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -861,6 +956,9 @@ namespace Pakuri.InGame
             SkillPlanActionDispatcher.ExecuteTriggerAction(combatManager, roster, sourceEntry, source, trigger, triggerContext);
         }
 
+        /*
+         * 트리거된 스킬 행동을 실행한다.
+         */
         internal static bool ExecuteTriggeredSkillAction(
             InGameCombatManager combatManager,
             UnitRosterEntry sourceEntry,
@@ -901,6 +999,9 @@ namespace Pakuri.InGame
                 trigger.SourceSkillId);
         }
 
+        /*
+         * 효과 행동을 실행한다.
+         */
         internal static bool ExecuteEffectAction(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -934,6 +1035,9 @@ namespace Pakuri.InGame
             return SkillMultiEffectExecutor.ExecuteDirect(context, snapshot, effect, triggerContext.EventCenter);
         }
 
+        /*
+         * 트리거된 효과를 결정한다.
+         */
         private static SkillEffectDefinition ResolveTriggeredEffect(BaseUnitRuntimeModel source, string effectId)
         {
             if (source == null || source.Identity == null || string.IsNullOrWhiteSpace(effectId))
@@ -941,7 +1045,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var monster = PakuriDataManager.Instance.ResolveMonster(source.Identity.DefinitionId);
+            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(source.Identity.DefinitionId);
             if (monster == null)
             {
                 return null;
@@ -956,6 +1060,9 @@ namespace Pakuri.InGame
             return FindEffect(monster.PassiveSkills, effectId);
         }
 
+        /*
+         * 효과를 찾는다.
+         */
         private static SkillEffectDefinition FindEffect(SkillDefinition[] skills, string effectId)
         {
             if (skills == null || string.IsNullOrWhiteSpace(effectId))
@@ -976,6 +1083,9 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * 효과를 찾는다.
+         */
         private static SkillEffectDefinition FindEffect(PassiveDefinition[] skills, string effectId)
         {
             if (skills == null || string.IsNullOrWhiteSpace(effectId))
@@ -996,6 +1106,9 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * 효과를 찾는다.
+         */
         private static SkillEffectDefinition FindEffect(SkillEffectDefinition[] effects, string effectId)
         {
             if (effects == null || string.IsNullOrWhiteSpace(effectId))
@@ -1015,6 +1128,9 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * 패시브 선택지 실행 정보를 구성한다.
+         */
         private static SkillExecutionSnapshot BuildPassiveChoiceSnapshot(BaseUnitRuntimeModel owner, string passiveId)
         {
             var snapshot = new SkillExecutionSnapshot(null);
@@ -1024,7 +1140,7 @@ namespace Pakuri.InGame
                 return snapshot;
             }
 
-            var manager = PakuriDataManager.Instance;
+            var manager = CsvDataLoader.CurrentCatalog;
             foreach (var choiceId in chosenChoiceIds)
             {
                 if (manager == null || !manager.TryGetData(choiceId, out SkillChoiceDefinition choice) || choice == null)
@@ -1052,6 +1168,9 @@ namespace Pakuri.InGame
             return snapshot;
         }
 
+        /*
+         * 활성 선택지 실행 정보를 구성한다.
+         */
         private static SkillExecutionSnapshot BuildActiveChoiceSnapshot(BaseUnitRuntimeModel owner, string skillId)
         {
             var snapshot = new SkillExecutionSnapshot(null);
@@ -1061,7 +1180,7 @@ namespace Pakuri.InGame
                 return snapshot;
             }
 
-            var manager = PakuriDataManager.Instance;
+            var manager = CsvDataLoader.CurrentCatalog;
             foreach (var choiceId in chosenChoiceIds)
             {
                 if (manager == null || !manager.TryGetData(choiceId, out SkillChoiceDefinition choice) || choice == null)
@@ -1086,6 +1205,9 @@ namespace Pakuri.InGame
             return snapshot;
         }
 
+        /*
+         * 대상 재사용 대기시간 행동을 감소시킨다.
+         */
         internal static bool ReduceTargetCooldownAction(UnitRosterService roster, UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
         {
             if (trigger == null || trigger.CooldownRefundRatio <= 0f)
@@ -1109,6 +1231,9 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /*
+         * 대상 재장전 행동을 감소시킨다.
+         */
         internal static bool ReduceTargetReloadAction(UnitRosterService roster, UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
         {
             if (trigger == null || trigger.ReloadReduceRatio <= 0f)
@@ -1132,6 +1257,9 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /*
+         * 대상 런타임을 결정한다.
+         */
         private static List<SkillRuntimeInstance> ResolveTargetRuntimes(UnitRosterService roster, UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
         {
             var runtimes = new List<SkillRuntimeInstance>();
@@ -1174,6 +1302,9 @@ namespace Pakuri.InGame
             return runtimes;
         }
 
+        /*
+         * 재사용 대기시간 대상 유닛 항목을 결정한다.
+         */
         private static List<UnitRosterEntry> ResolveCooldownTargetEntries(UnitRosterService roster, UnitRosterEntry sourceEntry, SkillTriggerDefinition trigger)
         {
             var entries = new List<UnitRosterEntry>();
@@ -1210,6 +1341,9 @@ namespace Pakuri.InGame
             return entries;
         }
 
+        /*
+         * 단일 공격 행동을 실행한다.
+         */
         internal static bool ExecuteSingleAttackAction(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -1309,6 +1443,9 @@ namespace Pakuri.InGame
             return routedArea;
         }
 
+        /*
+         * 직선 공격 행동을 실행한다.
+         */
         internal static bool ExecuteLineAttackAction(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -1405,6 +1542,9 @@ namespace Pakuri.InGame
                 trigger.TriggerId);
         }
 
+        /*
+         * 트리거된 직선 런타임 비주얼을 결정한다.
+         */
         private static RuntimeSkillVisualSpec ResolveTriggeredLineRuntimeVisual(
             BaseUnitRuntimeModel source,
             SkillTriggerDefinition trigger)
@@ -1425,6 +1565,9 @@ namespace Pakuri.InGame
                 : null;
         }
 
+        /*
+         * 트리거된 적중 상태 효과를 결정한다.
+         */
         private static SkillEffectDefinition ResolveTriggeredOnHitStatusEffect(BaseUnitRuntimeModel source, SkillTriggerDefinition trigger)
         {
             if (source == null || trigger == null || string.IsNullOrWhiteSpace(trigger.TriggeredEffectId))
@@ -1441,6 +1584,9 @@ namespace Pakuri.InGame
                     : null;
         }
 
+        /*
+         * 트리거된 피해 출처 스킬 ID를 결정한다.
+         */
         private static string ResolveTriggeredDamageSourceSkillId(SkillTriggerDefinition trigger)
         {
             if (!string.IsNullOrWhiteSpace(trigger != null ? trigger.TriggeredSkillId : string.Empty))
@@ -1451,6 +1597,9 @@ namespace Pakuri.InGame
             return trigger != null ? trigger.SourceSkillId : string.Empty;
         }
 
+        /*
+         * 트리거된 직선 길이를 결정한다.
+         */
         private static float ResolveTriggeredLineLength()
         {
             // Code Builder: Trigger 선형 공격의 기본 길이는 Trigger 실행기가 직접 소유한다.
@@ -1458,6 +1607,9 @@ namespace Pakuri.InGame
             return defaultBeamLength;
         }
 
+        /*
+         * 트리거된 직선 공격의 비주얼과 히트박스를 설정한다.
+         */
         private static void ConfigureTriggeredLineVisual(Transform transform, float length, float width)
         {
             if (transform == null)
@@ -1486,6 +1638,9 @@ namespace Pakuri.InGame
             transform.localScale = scale;
         }
 
+        /*
+         * 대상 지정을 구성한다.
+         */
         private static SkillTargetingSpec BuildTargeting(SkillTriggerDefinition trigger)
         {
             return new SkillTargetingSpec
@@ -1510,6 +1665,9 @@ namespace Pakuri.InGame
             };
         }
 
+        /*
+         * 중심점을 결정한다.
+         */
         private static Vector2 ResolveCenter(
             UnitRosterEntry sourceEntry,
             UnitRosterService roster,
@@ -1534,6 +1692,9 @@ namespace Pakuri.InGame
             return triggerContext.EventCenter;
         }
 
+        /*
+         * 피해를 결정한다.
+         */
         private static float ResolveDamage(BaseUnitRuntimeModel source, SkillTriggerDefinition trigger, TriggerExecutionContext triggerContext)
         {
             switch (trigger.DamageSource)
@@ -1565,7 +1726,7 @@ namespace Pakuri.InGame
                     var damageSpec = new SkillDamageSpec
                     {
                         SkillId = trigger.SourceSkillId,
-                        Element = (ElementType)(int)trigger.Attribute,
+                        Element = (DamageAttribute)(int)trigger.Attribute,
                         BaseDamage = trigger.BaseDamage,
                         StatCoefficient = useSpellPower ? trigger.SpellPowerCoefficient : trigger.AttackPowerCoefficient,
                         StatSource = useSpellPower ? StatSource.Intelligence : StatSource.Attack,
@@ -1575,6 +1736,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 프리팹 히트박스를 적용한다.
+         */
         private static bool ApplyPrefabHitbox(
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
@@ -1625,6 +1789,9 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /*
+         * 정렬된 대상을 결정한다.
+         */
         private static List<UnitRosterEntry> ResolveOrderedTargets(
             UnitRosterEntry sourceEntry,
             UnitRosterService roster,
@@ -1662,6 +1829,9 @@ namespace Pakuri.InGame
             return targets;
         }
 
+        /*
+         * 범위 트리거를 적용한다.
+         */
         private static bool ApplyAreaTrigger(
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
@@ -1732,6 +1902,9 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /*
+         * 트리거된 적중 상태 효과를 적용하고 성공 여부를 반환한다.
+         */
         private static void TryApplyTriggeredOnHitStatusEffect(
             InGameCombatManager manager,
             BaseUnitRuntimeModel target,
@@ -1757,16 +1930,25 @@ namespace Pakuri.InGame
             SkillStatusApplyUtility.TryApplyStatus(manager, target, status, source);
         }
 
+        /*
+         * 우선 유닛 항목을 찾는다.
+         */
         private static UnitRosterEntry FindPreferredEntry(UnitRosterService roster, BaseUnitRuntimeModel preferredTarget)
         {
             return preferredTarget != null && roster != null ? roster.Find(preferredTarget) : null;
         }
 
+        /*
+         * 유닛 모델이 지정한 대상과 일치하는지 확인한다.
+         */
         private static bool MatchesModel(UnitRosterEntry entry, BaseUnitRuntimeModel preferredTarget)
         {
             return entry != null && preferredTarget != null && entry.Model == preferredTarget;
         }
 
+        /*
+         * 추적할 속성을 결정한다.
+         */
         private static DamageAttribute ResolveTrackedAttribute(SkillTriggerDefinition trigger)
         {
             if (trigger == null)
@@ -1779,11 +1961,17 @@ namespace Pakuri.InGame
                 : trigger.TrackedAttribute;
         }
 
+        /*
+         * 대상이 현재 히트박스 안에 있는지 확인한다.
+         */
         private static bool IsTargetInsideHitbox(Collider2D[] hitboxColliders, UnitRosterEntry target)
         {
             return UnitHitboxUtility.IsTargetInsideHitbox(hitboxColliders, target);
         }
 
+        /*
+         * 출처 모델을 결정한다.
+         */
         private static BaseUnitRuntimeModel ResolveSourceModel(UnitRosterService roster, string sourceUnitId, string sourceDefinitionId)
         {
             if (roster == null)
@@ -1822,12 +2010,18 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * 유닛 위치를 결정한다.
+         */
         private static Vector2 ResolveUnitPosition(UnitRosterService roster, BaseUnitRuntimeModel model)
         {
             var entry = roster != null ? roster.Find(model) : null;
             return entry != null && entry.Transform != null ? (Vector2)entry.Transform.position : Vector2.zero;
         }
 
+        /*
+         * 거리 제곱을 결정한다.
+         */
         private static float ResolveDistanceSquared(UnitRosterEntry sourceEntry, UnitRosterEntry target)
         {
             if (sourceEntry == null || sourceEntry.Transform == null || target == null || target.Transform == null)
@@ -1840,46 +2034,58 @@ namespace Pakuri.InGame
             return offset.sqrMagnitude;
         }
 
+        /*
+         * 프리팹 히트박스가 Trigger 콜라이더인지 확인한다.
+         */
         private static bool IsPrefabHitboxTrigger(SkillTriggerDefinition trigger)
         {
             return trigger != null && trigger.SkillEffectPrefab != null;
         }
 
+        /*
+         * 적중 횟수 조건이 모든 적중을 뜻하는지 확인한다.
+         */
         private static bool IsGlobalHitCount(string rawValue)
         {
             return string.Equals(rawValue, "global", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(rawValue, "all", StringComparison.OrdinalIgnoreCase);
         }
 
+        /*
+         * 적중 대상 횟수를 해석한다.
+         */
         private static int ParseHitTargetCount(string rawValue)
         {
             return int.TryParse(rawValue, out var count) ? Mathf.Max(1, count) : 1;
         }
 
-        private static bool MatchesRuntimeKind(SkillData data, SkillRuntimeKind runtimeKind)
+        /*
+         * 스킬 정의의 실행 종류가 트리거 종류와 일치하는지 확인한다.
+         */
+        private static bool MatchesRuntimeKind(SkillRuntimeData data, SkillRuntimeKind runtimeKind)
         {
             switch (runtimeKind)
             {
                 case SkillRuntimeKind.MagazineProjectile:
                 case SkillRuntimeKind.CooldownProjectile:
-                    return data is ProjectileSkillData;
+                    return data is ProjectileSkillRuntimeData;
                 case SkillRuntimeKind.LineAttack:
-                    return data is BeamSkillData;
+                    return data is BeamSkillRuntimeData;
                 case SkillRuntimeKind.SingleAttack:
-                    return data is SingleAttackData;
+                    return data is SingleAttackSkillRuntimeData;
                 case SkillRuntimeKind.AreaAttack:
                 case SkillRuntimeKind.Field:
                 case SkillRuntimeKind.Mark:
                 case SkillRuntimeKind.Execute:
-                    return data is ZoneSkillData;
+                    return data is ZoneSkillRuntimeData;
                 case SkillRuntimeKind.Buff:
-                    return data is BuffSkillData || data is ChargeSkillData;
+                    return data is BuffSkillRuntimeData || data is ChargeSkillRuntimeData;
                 case SkillRuntimeKind.Heal:
-                    return data is BuffSkillData;
+                    return data is BuffSkillRuntimeData;
                 case SkillRuntimeKind.Shield:
-                    return data is ShieldSkillData;
+                    return data is ShieldSkillRuntimeData;
                 case SkillRuntimeKind.Passive:
-                    return data is PassiveSkillData;
+                    return data is PassiveSkillRuntimeData;
                 default:
                     return false;
             }

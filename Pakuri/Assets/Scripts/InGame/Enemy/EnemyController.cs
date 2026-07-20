@@ -75,9 +75,9 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var canAct = StatusEffectRuntime.CanAct(enemyModel);
-            var canUseSpecialSkill = canAct && StatusEffectRuntime.CanUseSpecialSkill(enemyModel);
-            var specialRuntime = ResolveSelectableRuntime(enemyModel, InGameSkillSlot.B);
+            var canAct = StatusEffectRules.CanAct(enemyModel);
+            var canUseSpecialSkill = canAct && StatusEffectRules.CanUseSpecialSkill(enemyModel);
+            var specialRuntime = ResolveSelectableRuntime(enemyModel, SkillSlot.B);
             // 사용 가능한 특수 지원 스킬은 공격 대상과 무관하게 적 아군 대상으로 먼저 시도한다.
             var usedSupportSkill = canUseSpecialSkill
                 && IsSupportSkill(specialRuntime)
@@ -107,7 +107,7 @@ namespace Pakuri.InGame
             // 사거리 밖에서는 공격하지 않고 이동만 시도한다.
             if (distance > attackRange)
             {
-                if (StatusEffectRuntime.CanMove(enemyModel))
+                if (StatusEffectRules.CanMove(enemyModel))
                 {
                     MoveToward(enemyEntry, target, enemyModel, deltaTime);
                 }
@@ -145,7 +145,7 @@ namespace Pakuri.InGame
                 return specialRuntime;
             }
 
-            var basicRuntime = ResolveSelectableRuntime(enemyModel, InGameSkillSlot.A);
+            var basicRuntime = ResolveSelectableRuntime(enemyModel, SkillSlot.A);
             // B 슬롯을 쓸 수 없으면 실행 가능한 A 슬롯 공격 스킬을 선택한다.
             if (basicRuntime != null
                 && !IsSupportSkill(basicRuntime)
@@ -179,7 +179,7 @@ namespace Pakuri.InGame
          */
         private static SkillRuntimeInstance ResolveSelectableRuntime(
             EnemyUnitRuntimeModel enemyModel,
-            InGameSkillSlot slot)
+            SkillSlot slot)
         {
             var runtime = enemyModel.SkillRuntime.FindBySlot(slot);
             return HasCombatStartTrigger(runtime) ? null : runtime;
@@ -221,7 +221,7 @@ namespace Pakuri.InGame
         private bool CanExecuteSupportSkill(SkillRuntimeInstance runtime)
         {
             // 회복 스킬만 부상당한 아군 존재 여부를 추가로 확인한다.
-            return !(runtime.Data is HealSkillData)
+            return !(runtime.Data is HealSkillRuntimeData)
                 || EnemyTargeting.FindLowestHealthEnemyAlly(roster) != null;
         }
 
@@ -261,7 +261,7 @@ namespace Pakuri.InGame
             float deltaTime)
         {
             var moveSpeed = Mathf.Max(0f, enemyModel.Stats.MoveSpeed);
-            moveSpeed *= StatusEffectRuntime.ResolveMoveSpeedMultiplier(enemyModel);
+            moveSpeed *= StatusEffectRules.ResolveMoveSpeedMultiplier(enemyModel);
             if (moveSpeed <= 0f)
             {
                 return;
@@ -287,7 +287,7 @@ namespace Pakuri.InGame
         {
             if (!IsTouchingNexus(enemyEntry, nexusTarget))
             {
-                if (StatusEffectRuntime.CanMove(enemyModel))
+                if (StatusEffectRules.CanMove(enemyModel))
                 {
                     MoveToward(enemyEntry, nexusTarget, enemyModel, deltaTime);
                 }

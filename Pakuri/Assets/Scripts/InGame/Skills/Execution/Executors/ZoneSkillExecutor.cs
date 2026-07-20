@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Combat;
@@ -8,15 +8,21 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    public sealed class ZoneSkillExecutor : TypedSkillExecutor<ZoneSkillData>
+    /*
+     * 지속 범위 스킬을 실행한다.
+     */
+    public sealed class ZoneSkillExecutor : TypedSkillExecutor<ZoneSkillRuntimeData>
     {
+        /*
+         * 재시전을 실행한다.
+         */
         internal static bool ExecuteRecast(
             SkillExecutionContext context,
             SkillExecutionSnapshot inheritedSnapshot,
             SkillEffectDefinition effect,
             Vector2 center)
         {
-            var skill = context != null ? context.SkillData as ZoneSkillData : null;
+            var skill = context != null ? context.SkillRuntimeData as ZoneSkillRuntimeData : null;
             if (skill == null
                 || effect == null
                 || context.CombatManager == null
@@ -128,9 +134,12 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 요청받은 지속 범위 스킬을 실행한다.
+         */
         public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
         {
-            var skill = context != null ? context.SkillData as ZoneSkillData : null;
+            var skill = context != null ? context.SkillRuntimeData as ZoneSkillRuntimeData : null;
             if (skill == null
                 || context.CombatManager == null
                 || context.CombatManager.Effects == null
@@ -234,12 +243,18 @@ namespace Pakuri.InGame
                 GetType().Name);
         }
 
+        /*
+         * 배치 횟수를 결정한다.
+         */
         private static int ResolveDeploymentCount(SkillExecutionSnapshot snapshot)
         {
             return 1 + (snapshot != null && snapshot.HasBranchCount ? Math.Max(0, snapshot.BranchCount) : 0);
         }
 
-        private static int ResolveHitTargetCount(ZoneSkillData skill, SkillExecutionSnapshot snapshot)
+        /*
+         * 적중 대상 횟수를 결정한다.
+         */
+        private static int ResolveHitTargetCount(ZoneSkillRuntimeData skill, SkillExecutionSnapshot snapshot)
         {
             if (skill == null || skill.HitAllTargets || !skill.UsesHitTargetCount)
             {
@@ -251,6 +266,9 @@ namespace Pakuri.InGame
             return Math.Max(1, baseCount + bonus);
         }
 
+        /*
+         * 범위 중심점을 결정한다.
+         */
         private static List<Vector2> ResolveAreaCenters(
             SkillExecutionContext context,
             SkillTargetingSpec targeting,
@@ -269,6 +287,9 @@ namespace Pakuri.InGame
                 SkillDeploymentRepeatMode.RandomExisting);
         }
 
+        /*
+         * 범위 중심점을 결정한다.
+         */
         private static Vector2 ResolveAreaCenter(
             SkillExecutionContext context,
             SkillTargetingSpec targeting,
@@ -277,14 +298,20 @@ namespace Pakuri.InGame
             return SkillAreaUtility.ResolveAreaCenter(context, targeting, area);
         }
 
-        private static float ResolveRadius(ZoneSkillData skill, SkillExecutionSnapshot snapshot)
+        /*
+         * 반경을 결정한다.
+         */
+        private static float ResolveRadius(ZoneSkillRuntimeData skill, SkillExecutionSnapshot snapshot)
         {
             var area = skill != null ? skill.Area : null;
             var targeting = skill != null ? skill.Targeting : null;
             return SkillAreaUtility.ResolveRadius(SkillAreaUtility.ResolveBaseRadius(targeting, area), snapshot);
         }
 
-        private static float ResolveDuration(ZoneSkillData skill, SkillExecutionSnapshot snapshot)
+        /*
+         * 지속시간을 결정한다.
+         */
+        private static float ResolveDuration(ZoneSkillRuntimeData skill, SkillExecutionSnapshot snapshot)
         {
             var area = skill != null ? skill.Area : null;
             var timing = skill != null ? skill.Timing : null;
@@ -304,7 +331,10 @@ namespace Pakuri.InGame
             return Mathf.Max(0.05f, duration);
         }
 
-        private static float ResolveTickInterval(ZoneSkillData skill, SkillExecutionSnapshot snapshot)
+        /*
+         * 주기 간격을 결정한다.
+         */
+        private static float ResolveTickInterval(ZoneSkillRuntimeData skill, SkillExecutionSnapshot snapshot)
         {
             var area = skill != null ? skill.Area : null;
             var timing = skill != null ? skill.Timing : null;
@@ -319,6 +349,9 @@ namespace Pakuri.InGame
             return Mathf.Max(0.05f, interval);
         }
 
+        /*
+         * 종료 효과를 결정한다.
+         */
         private static SkillEffectDefinition[] ResolveOnExpireEffects(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -346,6 +379,9 @@ namespace Pakuri.InGame
             return resolved.Count > 0 ? resolved.ToArray() : Array.Empty<SkillEffectDefinition>();
         }
 
+        /*
+         * 프리팹에 실제 판정에 사용할 히트박스가 있는지 확인한다.
+         */
         private static bool PrefabHasHitbox(GameObject hitboxObject)
         {
             if (hitboxObject == null)

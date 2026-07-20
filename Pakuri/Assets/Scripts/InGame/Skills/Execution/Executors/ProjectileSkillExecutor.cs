@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Combat;
@@ -8,11 +8,17 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-    public sealed class ProjectileSkillExecutor : TypedSkillExecutor<ProjectileSkillData>
+    /*
+     * 투사체 스킬을 실행한다.
+     */
+    public sealed class ProjectileSkillExecutor : TypedSkillExecutor<ProjectileSkillRuntimeData>
     {
+        /*
+         * 요청받은 투사체 스킬을 실행한다.
+         */
         public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
         {
-            var skill = context != null ? context.SkillData as ProjectileSkillData : null;
+            var skill = context != null ? context.SkillRuntimeData as ProjectileSkillRuntimeData : null;
             if (skill == null || context.CombatManager == null || context.CasterEntry == null)
             {
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
@@ -223,6 +229,9 @@ namespace Pakuri.InGame
             return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
         }
 
+        /*
+         * 투사체 확산 방향을 결정한다.
+         */
         private static Vector2 ResolveProjectileSpreadDirection(Vector2 direction, int index, int count)
         {
             if (count <= 1)
@@ -235,6 +244,9 @@ namespace Pakuri.InGame
             return RotateDirection(direction, offset);
         }
 
+        /*
+         * 기준 방향을 지정한 각도만큼 회전한다.
+         */
         private static Vector2 RotateDirection(Vector2 direction, float degrees)
         {
             if (direction.sqrMagnitude <= 0.0001f)
@@ -249,6 +261,9 @@ namespace Pakuri.InGame
                 direction.x * cos - direction.y * sin,
                 direction.x * sin + direction.y * cos).normalized;
         }
+        /*
+         * 분기 피해 설정을 결정한다.
+         */
         private static ProjectileBranchDamageSpec ResolveBranchDamageSpec(
             SkillExecutionSnapshot snapshot,
             int projectileLaunchIndex)
@@ -276,6 +291,9 @@ namespace Pakuri.InGame
             };
         }
 
+        /*
+         * 분기 확률을 결정한다.
+         */
         private static float ResolveBranchChance(SkillExecutionSnapshot snapshot, int projectileLaunchIndex)
         {
             var chance = snapshot.HasBranchChanceSet ? snapshot.BranchChanceSet : snapshot.BranchChanceBonus;
@@ -289,8 +307,11 @@ namespace Pakuri.InGame
             return chance;
         }
 
+        /*
+         * 연속 발사 피해 배율을 결정한다.
+         */
         private static float ResolveBurstDamageMultiplier(
-            ProjectileSkillData skill,
+            ProjectileSkillRuntimeData skill,
             SkillExecutionSnapshot snapshot,
             int projectileIndex,
             int burstProjectileCount)
@@ -312,6 +333,9 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, multiplier);
         }
 
+        /*
+         * 현재 투사체가 연속 발사 보정 대상 순번인지 확인한다.
+         */
         private static bool MatchesBurstProjectileIndex(int configuredIndex, int projectileIndex, int burstProjectileCount)
         {
             if (configuredIndex == 0)
@@ -322,10 +346,13 @@ namespace Pakuri.InGame
             return configuredIndex > 0 && configuredIndex == projectileIndex;
         }
 
+        /*
+         * 후속 투사체를 예약하고 성공 여부를 반환한다.
+         */
         private static void TryScheduleFollowUpProjectile(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            ProjectileSkillData skill,
+            ProjectileSkillRuntimeData skill,
             RuntimeSkillVisualSpec runtimeVisual,
             GameObject prefab,
             ProjectileStatusHitSpec statusSpec,
@@ -372,10 +399,13 @@ namespace Pakuri.InGame
                 lifetime));
         }
 
+        /*
+         * 지연시간 후 후속 투사체를 발사한다.
+         */
         private static IEnumerator ExecuteFollowUpProjectilesAfterDelay(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            ProjectileSkillData skill,
+            ProjectileSkillRuntimeData skill,
             RuntimeSkillVisualSpec runtimeVisual,
             GameObject prefab,
             ProjectileStatusHitSpec statusSpec,
@@ -431,10 +461,13 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 투사체를 생성한다.
+         */
         private static void SpawnProjectileActor(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            ProjectileSkillData skill,
+            ProjectileSkillRuntimeData skill,
             RuntimeSkillVisualSpec runtimeVisual,
             GameObject prefab,
             ProjectileStatusHitSpec statusSpec,
@@ -521,6 +554,9 @@ namespace Pakuri.InGame
                 snapshot != null ? snapshot.CritDamageBonus : 0f);
         }
 
+        /*
+         * 직접 상태를 적용하고 성공 여부를 반환한다.
+         */
         private static void TryApplyDirectStatus(
             InGameCombatManager combatManager,
             BaseUnitRuntimeModel target,
@@ -530,9 +566,12 @@ namespace Pakuri.InGame
             SkillStatusApplyUtility.TryApplyStatus(combatManager, target, statusSpec, source);
         }
 
+        /*
+         * 직접 투사체 적중을 적용한다.
+         */
         private static void ApplyDirectProjectileHit(
             SkillExecutionContext context,
-            ProjectileSkillData skill,
+            ProjectileSkillRuntimeData skill,
             SkillExecutionSnapshot snapshot,
             UnitRosterEntry target,
             ProjectileStatusHitSpec statusSpec,
@@ -575,7 +614,10 @@ namespace Pakuri.InGame
                 resolvedDamage);
         }
 
-        private static float ResolveImpactDelay(ProjectileSkillData skill, SkillExecutionSnapshot snapshot)
+        /*
+         * 충돌 지연을 결정한다.
+         */
+        private static float ResolveImpactDelay(ProjectileSkillRuntimeData skill, SkillExecutionSnapshot snapshot)
         {
             var delay = skill != null ? skill.ImpactDelaySeconds : 0f;
             if (snapshot != null)
@@ -586,6 +628,9 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, delay);
         }
 
+        /*
+         * 연속 발사 상태 설정을 결정한다.
+         */
         private static ProjectileStatusHitSpec ResolveBurstStatusSpec(
             ProjectileStatusHitSpec baseStatusSpec,
             SkillExecutionSnapshot snapshot,
@@ -606,6 +651,9 @@ namespace Pakuri.InGame
             return CloneStatusSpecWithStacks(baseStatusSpec, Mathf.Max(1, baseStatusSpec.Stacks + stacksBonus));
         }
 
+        /*
+         * 상태 설정 포함 중첩을 복사본을 생성한다.
+         */
         private static ProjectileStatusHitSpec CloneStatusSpecWithStacks(ProjectileStatusHitSpec source, int stacks)
         {
             if (source == null)
@@ -630,6 +678,9 @@ namespace Pakuri.InGame
             };
         }
 
+        /*
+         * 시간 기반 효과를 결정한다.
+         */
         private static SkillEffectDefinition[] ResolveTimedEffects(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,

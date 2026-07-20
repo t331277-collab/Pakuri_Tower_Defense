@@ -7,11 +7,17 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
-    public sealed class BuffSkillExecutor : TypedSkillExecutor<BuffSkillData>
+    /*
+     * 버프 스킬을 실행한다.
+     */
+    public sealed class BuffSkillExecutor : TypedSkillExecutor<BuffSkillRuntimeData>
     {
+        /*
+         * 요청받은 버프 스킬을 실행한다.
+         */
         public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
         {
-            var skill = context != null ? context.SkillData as BuffSkillData : null;
+            var skill = context != null ? context.SkillRuntimeData as BuffSkillRuntimeData : null;
             if (skill == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
             {
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
@@ -102,7 +108,10 @@ namespace Pakuri.InGame
             return new SkillExecutionResult(routed || castCommitted || multiEffectRouted ? SkillExecutionStatus.Routed : SkillExecutionStatus.Rejected, skill.SkillId, GetType().Name);
         }
 
-        private static ProjectileStatusHitSpec ResolveBuffStatusSpec(BuffSkillData skill, SkillExecutionSnapshot snapshot)
+        /*
+         * 버프 상태 설정을 결정한다.
+         */
+        private static ProjectileStatusHitSpec ResolveBuffStatusSpec(BuffSkillRuntimeData skill, SkillExecutionSnapshot snapshot)
         {
             if (skill == null)
             {
@@ -118,7 +127,7 @@ namespace Pakuri.InGame
             if (!string.IsNullOrWhiteSpace(skill.ApplyStatusTag)
                 && StatusEffectUtility.TryParse(skill.ApplyStatusTag, out var kind))
             {
-                var statusData = StatusEffectRuntime.CreateStatusData(kind, skill.ApplyStatusTag);
+                var statusData = StatusEffectFactory.Create(kind, skill.ApplyStatusTag);
                 if (statusData != null)
                 {
                     statusData.SourceSkillId = skill.SkillId;
@@ -145,6 +154,9 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * 버프 대상을 결정한다.
+         */
         internal static System.Collections.Generic.IReadOnlyList<UnitRosterEntry> ResolveBuffTargets(
             UnitRosterEntry caster,
             UnitRosterService roster,
@@ -169,6 +181,9 @@ namespace Pakuri.InGame
                 });
         }
 
+        /*
+         * 설정된 대상을 결정한다.
+         */
         internal static IReadOnlyList<UnitRosterEntry> ResolveConfiguredTargets(
             UnitRosterEntry caster,
             UnitRosterService roster,
@@ -189,11 +204,17 @@ namespace Pakuri.InGame
         }
     }
 
-    public sealed class ShieldSkillExecutor : TypedSkillExecutor<ShieldSkillData>
+    /*
+     * 보호막 스킬을 실행한다.
+     */
+    public sealed class ShieldSkillExecutor : TypedSkillExecutor<ShieldSkillRuntimeData>
     {
+        /*
+         * 요청받은 보호막 스킬을 실행한다.
+         */
         public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
         {
-            var skill = context != null ? context.SkillData as ShieldSkillData : null;
+            var skill = context != null ? context.SkillRuntimeData as ShieldSkillRuntimeData : null;
             if (skill == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
             {
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
@@ -290,11 +311,17 @@ namespace Pakuri.InGame
         }
     }
 
-    public sealed class HealSkillExecutor : TypedSkillExecutor<HealSkillData>
+    /*
+     * 회복 스킬을 실행한다.
+     */
+    public sealed class HealSkillExecutor : TypedSkillExecutor<HealSkillRuntimeData>
     {
+        /*
+         * 요청받은 회복 스킬을 실행한다.
+         */
         public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
         {
-            var skill = context != null ? context.SkillData as HealSkillData : null;
+            var skill = context != null ? context.SkillRuntimeData as HealSkillRuntimeData : null;
             if (skill == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
             {
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
@@ -318,9 +345,12 @@ namespace Pakuri.InGame
             return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
         }
 
+        /*
+         * 부착 효과 비주얼을 생성한다.
+         */
         internal static void SpawnAttachedVisual(
             SkillExecutionContext context,
-            SkillData skill,
+            SkillRuntimeData skill,
             UnitRosterEntry target,
             float lifetime)
         {
@@ -353,11 +383,17 @@ namespace Pakuri.InGame
         }
     }
 
-    public sealed class ChainAttackSkillExecutor : TypedSkillExecutor<ChainAttackSkillData>
+    /*
+     * 연쇄 공격 스킬을 실행한다.
+     */
+    public sealed class ChainAttackSkillExecutor : TypedSkillExecutor<ChainAttackSkillRuntimeData>
     {
+        /*
+         * 요청받은 연쇄 공격 스킬을 실행한다.
+         */
         public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
         {
-            var skill = context != null ? context.SkillData as ChainAttackSkillData : null;
+            var skill = context != null ? context.SkillRuntimeData as ChainAttackSkillRuntimeData : null;
             if (skill == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
             {
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
@@ -383,20 +419,26 @@ namespace Pakuri.InGame
             return new SkillExecutionResult(SkillExecutionStatus.Routed, skill.SkillId, GetType().Name);
         }
 
+        /*
+         * 지정 간격 후 다음 연쇄 공격을 실행한다.
+         */
         private static IEnumerator ExecuteChainAfterDelay(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            ChainAttackSkillData skill,
+            ChainAttackSkillRuntimeData skill,
             BaseUnitRuntimeModel primary)
         {
             yield return new WaitForSeconds(Mathf.Max(0f, skill.ChainDelaySeconds));
             ExecuteChain(context, snapshot, skill, primary);
         }
 
+        /*
+         * 연쇄를 실행한다.
+         */
         private static void ExecuteChain(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            ChainAttackSkillData skill,
+            ChainAttackSkillRuntimeData skill,
             BaseUnitRuntimeModel primary)
         {
             if (context == null || context.Roster == null || context.CasterEntry == null)
@@ -442,10 +484,13 @@ namespace Pakuri.InGame
             HealSkillExecutor.SpawnAttachedVisual(context, skill, best, 0.8f);
         }
 
+        /*
+         * 피해를 적용한다.
+         */
         private static void ApplyDamage(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            ChainAttackSkillData skill,
+            ChainAttackSkillRuntimeData skill,
             UnitRosterEntry target,
             float multiplier)
         {
@@ -461,11 +506,17 @@ namespace Pakuri.InGame
         }
     }
 
-    public sealed class ChargeSkillExecutor : TypedSkillExecutor<ChargeSkillData>
+    /*
+     * 돌진 스킬을 실행한다.
+     */
+    public sealed class ChargeSkillExecutor : TypedSkillExecutor<ChargeSkillRuntimeData>
     {
+        /*
+         * 요청받은 돌진 스킬을 실행한다.
+         */
         public override SkillExecutionResult Execute(SkillExecutionContext context, SkillExecutionSnapshot snapshot)
         {
-            var skill = context != null ? context.SkillData as ChargeSkillData : null;
+            var skill = context != null ? context.SkillRuntimeData as ChargeSkillRuntimeData : null;
             if (skill == null || context.Caster == null || context.CasterEntry == null || context.Roster == null)
             {
                 return new SkillExecutionResult(SkillExecutionStatus.Rejected, snapshot != null ? snapshot.SkillId : string.Empty, GetType().Name);
@@ -491,8 +542,14 @@ namespace Pakuri.InGame
         }
     }
 
+    /*
+     * 돌진 중인 유닛과 목표, 접촉 판정을 추적한다.
+     */
     public static class SharedChargeSkillRuntime
     {
+        /*
+         * 돌진 이동과 대상 접촉을 갱신하고 종료 여부를 반환한다.
+         */
         public static bool Tick(
             UnitRosterEntry casterEntry,
             UnitRosterService roster,
@@ -538,8 +595,8 @@ namespace Pakuri.InGame
             var ramp = charge.RampSeconds > 0f ? Mathf.Clamp01(charge.ElapsedSeconds / charge.RampSeconds) : 1f;
             var speedMultiplier = Mathf.Lerp(1f, Mathf.Max(1f, charge.MaxMoveSpeedMultiplier), ramp);
             var baseSpeed = caster.Stats != null ? Mathf.Max(0f, caster.Stats.MoveSpeed) : 0f;
-            var speed = baseSpeed * speedMultiplier * StatusEffectRuntime.ResolveMoveSpeedMultiplier(caster);
-            if (speed > 0f && StatusEffectRuntime.CanMove(caster))
+            var speed = baseSpeed * speedMultiplier * StatusEffectRules.ResolveMoveSpeedMultiplier(caster);
+            if (speed > 0f && StatusEffectRules.CanMove(caster))
             {
                 var current = casterEntry.Transform.position;
                 var next = Vector3.MoveTowards(current, target.Transform.position, speed * Mathf.Max(0f, deltaTime));
@@ -555,6 +612,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 대상 기준 유닛 ID를 찾는다.
+         */
         private static UnitRosterEntry FindTargetByUnitId(
             UnitRosterEntry casterEntry,
             UnitRosterService roster,
@@ -576,6 +636,9 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * 적중 대상을 찾는다.
+         */
         private static UnitRosterEntry FindHitTarget(UnitRosterEntry casterEntry, UnitRosterService roster)
         {
             var targets = SkillExecutionUtility.ResolveTargetList(
@@ -595,6 +658,9 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * 돌진 접촉을 보유하고 있는지 확인한다.
+         */
         private static bool HasChargeContact(
             UnitRosterEntry casterEntry,
             Collider2D[] casterColliders,
@@ -616,6 +682,9 @@ namespace Pakuri.InGame
             return ((Vector2)casterEntry.Transform.position - (Vector2)target.Transform.position).sqrMagnitude <= 0.0025f;
         }
 
+        /*
+         * 적중을 결정한다.
+         */
         private static void ResolveHit(
             BaseUnitRuntimeModel caster,
             UnitRosterEntry target,

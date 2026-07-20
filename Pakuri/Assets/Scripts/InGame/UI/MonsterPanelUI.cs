@@ -169,8 +169,7 @@ namespace Pakuri.InGame
 
         private GameDataCatalog ResolveCatalog()
         {
-            var catalog = PakuriDataManager.Instance.CurrentCatalog;
-            return catalog != null ? catalog : PakuriCsvRuntimeData.ResolveCatalogOrFallback(null);
+            return CsvDataLoader.CurrentCatalog;
         }
 
         private static Image FindImage(Transform root, string path)
@@ -256,7 +255,7 @@ namespace Pakuri.InGame
                 }
 
                 lastMonsterId = monsterId;
-                var monster = PakuriDataManager.Instance.ResolveMonster(monsterId, catalog);
+                var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
                 if (monster != null && monster.UnitSprite != null)
                 {
                     monsterImage.sprite = monster.UnitSprite;

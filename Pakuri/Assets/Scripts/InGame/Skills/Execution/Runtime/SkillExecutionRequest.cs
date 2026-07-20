@@ -2,8 +2,14 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 스킬 실행 요청에 필요한 값을 보관한다.
+     */
     public readonly struct SkillExecutionRequest
     {
+        /*
+         * 스킬 실행 요청에 필요한 값을 초기화한다.
+         */
         public SkillExecutionRequest(
             UnitRosterEntry entry,
             SkillRuntimeInstance runtime,

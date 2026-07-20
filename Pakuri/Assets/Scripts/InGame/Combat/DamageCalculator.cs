@@ -111,7 +111,7 @@ namespace Pakuri.Combat
             var criticalAllowed = options.CriticalAllowed;
             var sourceStats = options.Source.Stats;
             var criticalChance = criticalAllowed
-                ? sourceStats.CriticalChance + StatusEffectRuntime.ResolveCriticalChanceBonus(options.Source)
+                ? sourceStats.CriticalChance + StatusEffectRules.ResolveCriticalChanceBonus(options.Source)
                 : BaseCriticalChance;
             var criticalDamage = criticalAllowed
                 ? sourceStats.CriticalDamage
@@ -119,14 +119,14 @@ namespace Pakuri.Combat
 
             if (criticalAllowed)
             {
-                criticalDamage += StatusEffectRuntime.ResolveCriticalDamageBonus(options.Source);
+                criticalDamage += StatusEffectRules.ResolveCriticalDamageBonus(options.Source);
             }
 
             var criticalResistance = criticalAllowed
-                ? target.Stats.CriticalResistance + StatusEffectRuntime.ResolveCriticalResistanceBonus(target)
+                ? target.Stats.CriticalResistance + StatusEffectRules.ResolveCriticalResistanceBonus(target)
                 : 0f;
             var criticalDamageTaken = criticalAllowed
-                ? StatusEffectRuntime.ResolveCriticalDamageTakenBonus(target)
+                ? StatusEffectRules.ResolveCriticalDamageTakenBonus(target)
                 : 0f;
 
             // 공격자 치명타 보정과 대상의 방어·받는 피해 보정을 최종 계산기로 전달한다.
@@ -135,8 +135,8 @@ namespace Pakuri.Combat
                 attribute,
                 CopyDefenses(target.Defenses),
                 criticalAllowed,
-                flatDefenseReduction: StatusEffectRuntime.ResolveFlatElementResistReduction(target, attribute),
-                percentDefenseReductions: new[] { StatusEffectRuntime.ResolveElementResistReduction(target, attribute) },
+                flatDefenseReduction: StatusEffectRules.ResolveFlatElementResistReduction(target, attribute),
+                percentDefenseReductions: new[] { StatusEffectRules.ResolveElementResistReduction(target, attribute) },
                 criticalChanceBonus: criticalChance + options.CritChanceBonus - BaseCriticalChance,
                 criticalMultiplierBonus: criticalDamage + options.CritDamageBonus - BaseCriticalMultiplier,
                 targetCriticalResistance: criticalResistance,
@@ -171,7 +171,7 @@ namespace Pakuri.Combat
             DamageAttribute attribute,
             string sourceSkillId)
         {
-            var statusMultiplier = StatusEffectRuntime.ResolveIncomingDamageMultiplier(
+            var statusMultiplier = StatusEffectRules.ResolveIncomingDamageMultiplier(
                 target,
                 source,
                 attribute,

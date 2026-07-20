@@ -3,8 +3,14 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 스킬 상태 효과의 확률, 지속시간, 적용 조건을 계산한다.
+     */
     internal static class SkillStatusApplyUtility
     {
+        /*
+         * 상태를 적용하고 성공 여부를 반환한다.
+         */
         public static bool TryApplyStatus(
             InGameCombatManager manager,
             BaseUnitRuntimeModel target,
@@ -42,6 +48,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 적용 확률을 결정한다.
+         */
         public static float ResolveApplicationChance(BaseUnitRuntimeModel target, ProjectileStatusHitSpec status, BaseUnitRuntimeModel source = null)
         {
             if (status == null || !status.Enabled)
@@ -49,15 +58,18 @@ namespace Pakuri.InGame
                 return 0f;
             }
 
-            var chance = Mathf.Clamp01(status.Chance + StatusEffectRuntime.ResolveConditionalStatusChanceBonus(source, target));
+            var chance = Mathf.Clamp01(status.Chance + StatusEffectRules.ResolveConditionalStatusChanceBonus(source, target));
             if (chance <= 0f || target == null || !IsDebuff(status.StatusData))
             {
                 return chance;
             }
 
-            return Mathf.Clamp01(chance - StatusEffectRuntime.ResolveAilmentResistanceBonus(target));
+            return Mathf.Clamp01(chance - StatusEffectRules.ResolveAilmentResistanceBonus(target));
         }
 
+        /*
+         * 지속시간 초를 결정한다.
+         */
         private static float ResolveDurationSeconds(ProjectileStatusHitSpec status, BaseUnitRuntimeModel source)
         {
             if (status == null)
@@ -69,13 +81,16 @@ namespace Pakuri.InGame
             var statusId = ResolveStatusId(status);
             if (!string.IsNullOrWhiteSpace(statusId))
             {
-                duration = Mathf.Max(0f, duration + StatusEffectRuntime.ResolveAppliedStatusDurationBonus(source, statusId));
+                duration = Mathf.Max(0f, duration + StatusEffectRules.ResolveAppliedStatusDurationBonus(source, statusId));
             }
 
             return duration;
         }
 
-        private static bool IsDebuff(StatusEffectData statusData)
+        /*
+         * 대상에게 불리한 상태 효과인지 확인한다.
+         */
+        private static bool IsDebuff(RuntimeStatusData statusData)
         {
             if (statusData == null)
             {
@@ -96,6 +111,9 @@ namespace Pakuri.InGame
                 || statusData.Modifiers.DamageBonusRate < 0f;
         }
 
+        /*
+         * 임계값 상태를 적용하고 성공 여부를 반환한다.
+         */
         private static void TryApplyThresholdStatus(
             InGameCombatManager manager,
             BaseUnitRuntimeModel target,
@@ -132,6 +150,9 @@ namespace Pakuri.InGame
                 source);
         }
 
+        /*
+         * 상태 ID를 결정한다.
+         */
         private static string ResolveStatusId(ProjectileStatusHitSpec status)
         {
             var statusData = status != null ? status.StatusData : null;

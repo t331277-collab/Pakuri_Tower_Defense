@@ -327,7 +327,7 @@ namespace Pakuri.InGame
          */
         public UnitStatusRuntime ApplyStatus(
             BaseUnitRuntimeModel target,
-            StatusEffectData statusData,
+            RuntimeStatusData statusData,
             int stacks,
             float durationSeconds,
             int maxStacks,
@@ -361,7 +361,7 @@ namespace Pakuri.InGame
          */
         public UnitStatusRuntime ApplyShieldStatus(
             BaseUnitRuntimeModel target,
-            StatusEffectData statusData,
+            RuntimeStatusData statusData,
             float shieldAmount,
             float durationSeconds,
             int stacks,
@@ -377,7 +377,7 @@ namespace Pakuri.InGame
             }
 
             // 대상의 보호막 수신 배율을 먼저 반영한다.
-            var adjustedShieldAmount = Mathf.Max(0f, shieldAmount) * StatusEffectRuntime.ResolveShieldReceivedMultiplier(target);
+            var adjustedShieldAmount = Mathf.Max(0f, shieldAmount) * StatusEffectRules.ResolveShieldReceivedMultiplier(target);
             var status = target.Statuses.Apply(
                 statusData,
                 stacks,
@@ -557,7 +557,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var specs = StatusEffectRuntime.ResolveOutgoingAdditionalDamageSpecs(options.Source, triggerAttribute);
+            var specs = StatusEffectRules.ResolveOutgoingAdditionalDamageSpecs(options.Source, triggerAttribute);
             for (var i = 0; i < specs.Count; i++)
             {
                 if (target.Resources.CurrentHealth <= 0f)

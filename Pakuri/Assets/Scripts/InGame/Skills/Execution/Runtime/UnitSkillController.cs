@@ -2,13 +2,22 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 유닛 스킬 컨트롤러의 입력과 실행 상태를 관리한다.
+     */
     public sealed class UnitSkillController
     {
+        /*
+         * 스킬 전달 요청 호출 형식을 정의한다.
+         */
         public delegate bool SkillRouteRequest(SkillExecutionRequest request);
 
         private readonly UnitRosterEntry entry;
         private readonly SkillRouteRequest routeSkill;
 
+        /*
+         * 유닛 스킬 컨트롤러에 필요한 값을 초기화한다.
+         */
         public UnitSkillController(
             UnitRosterEntry entry,
             SkillRouteRequest routeSkill)
@@ -17,6 +26,9 @@ namespace Pakuri.InGame
             this.routeSkill = routeSkill;
         }
 
+        /*
+         * 유닛의 스킬 시간과 자동 시전을 갱신한다.
+         */
         public void Tick(
             UnitRosterService roster,
             InGameCombatManager combatManager,
@@ -32,7 +44,7 @@ namespace Pakuri.InGame
             }
 
             skillRuntime.Tick(deltaTime);
-            if (model == null || !model.AutoSkillEnabled || !entry.IsAlive || !StatusEffectRuntime.CanAct(model))
+            if (model == null || !model.AutoSkillEnabled || !entry.IsAlive || !StatusEffectRules.CanAct(model))
             {
                 return;
             }
@@ -50,6 +62,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 수동을 실행하고 성공 여부를 반환한다.
+         */
         public bool TryExecuteManual(
             SkillRuntimeInstance runtime,
             UnitRosterService roster,
@@ -69,6 +84,9 @@ namespace Pakuri.InGame
                 logRoutedContracts));
         }
 
+        /*
+         * 선택된을 실행하고 성공 여부를 반환한다.
+         */
         public bool TryExecuteSelected(
             SkillRuntimeInstance runtime,
             UnitRosterService roster,
@@ -84,6 +102,9 @@ namespace Pakuri.InGame
                 logRoutedContracts));
         }
 
+        /*
+         * 자동 요청을 생성한다.
+         */
         private SkillExecutionRequest CreateAutoRequest(
             SkillRuntimeInstance runtime,
             UnitRosterService roster,
@@ -105,6 +126,9 @@ namespace Pakuri.InGame
                 NotifyActiveSkillAnimation);
         }
 
+        /*
+         * 수동 요청을 생성한다.
+         */
         private SkillExecutionRequest CreateManualRequest(
             SkillRuntimeInstance runtime,
             UnitRosterService roster,
@@ -128,6 +152,9 @@ namespace Pakuri.InGame
                 NotifyActiveSkillAnimation);
         }
 
+        /*
+         * 활성 스킬 애니메이션을 변경 사실을 전달한다.
+         */
         private void NotifyActiveSkillAnimation(UnitRosterEntry routedEntry)
         {
             var monsterActor = routedEntry != null ? routedEntry.Actor as MonsterUnitActor : null;

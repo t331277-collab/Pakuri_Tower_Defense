@@ -66,7 +66,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < activeSkills.Count; i++)
             {
                 var runtime = activeSkills[i];
-                var isProjectile = runtime.Data is ProjectileSkillData;
+                var isProjectile = runtime.Data is ProjectileSkillRuntimeData;
                 // 각 스킬은 클릭·홀드·연속 발사 규칙에 맞는 입력만 선택한다.
                 if (!TryGetSkillInput(
                         runtime,
@@ -275,7 +275,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < skills.Count; i++)
             {
                 var runtime = skills[i];
-                if (runtime.Data is ProjectileSkillData && runtime.IsBursting)
+                if (runtime.Data is ProjectileSkillRuntimeData && runtime.IsBursting)
                 {
                     return true;
                 }

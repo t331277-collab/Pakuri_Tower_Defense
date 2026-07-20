@@ -1,13 +1,19 @@
-﻿using System;
+using System;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 스킬 상태 설정 계산과 변환 기능을 제공한다.
+     */
     internal static class SkillStatusSpecUtility
     {
 
+        /*
+         * 상태 설정을 결정한다.
+         */
         internal static ProjectileStatusHitSpec ResolveStatusSpec(
             StatusApplicationSpec baseStatus,
             SkillExecutionSnapshot snapshot)
@@ -95,6 +101,9 @@ namespace Pakuri.InGame
             };
         }
 
+        /*
+         * 직접 상태 설정을 생성한다.
+         */
         internal static ProjectileStatusHitSpec CreateDirectStatusSpec(
             string statusId,
             int stacks,
@@ -107,7 +116,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var statusData = ResolveStatusData(StatusEffectRuntime.CreateStatusData(kind, null), kind, snapshot);
+            var statusData = ResolveStatusData(StatusEffectFactory.Create(kind, null), kind, snapshot);
             if (statusData == null)
             {
                 return null;
@@ -142,8 +151,11 @@ namespace Pakuri.InGame
             };
         }
 
-        internal static StatusEffectData ResolveStatusData(
-            StatusEffectData statusData,
+        /*
+         * 상태 데이터를 결정한다.
+         */
+        internal static RuntimeStatusData ResolveStatusData(
+            RuntimeStatusData statusData,
             StatusEffectKind kind,
             SkillExecutionSnapshot snapshot)
         {
@@ -164,7 +176,7 @@ namespace Pakuri.InGame
             var needsChoiceAttackPowerOverride = snapshot != null && snapshot.HasStatusAttackPowerBonus;
             if (statusData == null || statusData.Kind != kind)
             {
-                statusData = StatusEffectRuntime.CreateStatusData(kind, null);
+                statusData = StatusEffectFactory.Create(kind, null);
             }
 
             if (statusData == null
@@ -183,8 +195,7 @@ namespace Pakuri.InGame
                 return statusData;
             }
 
-            var overriddenStatus = UnityEngine.Object.Instantiate(statusData);
-            overriddenStatus.hideFlags = HideFlags.DontSave;
+            var overriddenStatus = statusData.Clone();
             if (needsChoiceElementDamageOverride)
             {
                 overriddenStatus.ElementDamageTakenBonus += snapshot.StatusElementDamageTakenBonus;
@@ -244,9 +255,12 @@ namespace Pakuri.InGame
             return overriddenStatus;
         }
 
+        /*
+         * 상태 지속시간 보너스를 결정한다.
+         */
         private static float ResolveStatusDurationBonus(
             SkillExecutionSnapshot snapshot,
-            StatusEffectData statusData,
+            RuntimeStatusData statusData,
             StatusEffectKind kind)
         {
             if (snapshot == null)
@@ -260,9 +274,12 @@ namespace Pakuri.InGame
             return snapshot.ResolveStatusDurationBonus(statusId);
         }
 
+        /*
+         * 상태 최대 중첩 보너스를 결정한다.
+         */
         private static int ResolveStatusMaxStacksBonus(
             SkillExecutionSnapshot snapshot,
-            StatusEffectData statusData,
+            RuntimeStatusData statusData,
             StatusEffectKind kind)
         {
             if (snapshot == null)
@@ -276,6 +293,9 @@ namespace Pakuri.InGame
             return snapshot.ResolveStatusMaxStacksBonus(statusId);
         }
 
+        /*
+         * 임계값 상태 설정을 결정한다.
+         */
         private static ProjectileStatusHitSpec ResolveThresholdStatusSpec(SkillExecutionSnapshot snapshot)
         {
             if (snapshot == null
@@ -285,7 +305,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var statusData = StatusEffectRuntime.CreateStatusData(kind, null);
+            var statusData = StatusEffectFactory.Create(kind, null);
             if (statusData == null)
             {
                 return null;

@@ -3,14 +3,23 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 스킬 배치 반복 방식에서 사용하는 선택 값을 정의한다.
+     */
     internal enum SkillDeploymentRepeatMode
     {
         RepeatNearest,
         RandomExisting
     }
 
+    /*
+     * 스킬 배치 중심점 계산과 변환 기능을 제공한다.
+     */
     internal static class SkillDeploymentCenterUtility
     {
+        /*
+         * 대상 기준 중심점을 결정한다.
+         */
         public static List<Vector2> ResolveTargetAnchoredCenters(
             SkillExecutionContext context,
             SkillTargetingSpec targeting,

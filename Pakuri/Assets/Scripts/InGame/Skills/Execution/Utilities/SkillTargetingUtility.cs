@@ -5,8 +5,14 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 스킬 대상 지정 계산과 변환 기능을 제공한다.
+     */
     internal static class SkillTargetingUtility
     {
+        /*
+         * 가장 가까운 대상을 찾는다.
+         */
         public static UnitRosterEntry FindNearestTarget(
             UnitRosterEntry caster,
             UnitRosterService roster,
@@ -169,6 +175,9 @@ namespace Pakuri.InGame
             return best;
         }
 
+        /*
+         * 대상을 방향을 계산한다.
+         */
         public static Vector2 DirectionToTarget(Vector3 origin, UnitRosterEntry target)
         {
             if (target == null || target.Transform == null)
@@ -181,6 +190,9 @@ namespace Pakuri.InGame
             return direction;
         }
 
+        /*
+         * 대상 목록을 결정한다.
+         */
         public static IReadOnlyList<UnitRosterEntry> ResolveTargetList(
             UnitRosterEntry caster,
             UnitRosterService roster,
@@ -189,6 +201,9 @@ namespace Pakuri.InGame
             return ResolveTargetList(caster, roster, targeting, null, 0);
         }
 
+        /*
+         * 대상 목록을 결정한다.
+         */
         public static IReadOnlyList<UnitRosterEntry> ResolveTargetList(
             UnitRosterEntry caster,
             UnitRosterService roster,
@@ -256,6 +271,9 @@ namespace Pakuri.InGame
             return filtered;
         }
 
+        /*
+         * 넥서스 대상을 포함하는지 확인한다.
+         */
         private static bool ContainsNexusTarget(IReadOnlyList<UnitRosterEntry> targets)
         {
             for (var i = 0; targets != null && i < targets.Count; i++)
@@ -269,12 +287,18 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 유닛이 현재 스킬의 대상으로 지정될 수 있는지 확인한다.
+         */
         private static bool IsSkillTargetable(UnitRosterEntry entry)
         {
             var identity = entry != null && entry.Model != null ? entry.Model.Identity : null;
             return identity == null || identity.Role != UnitRole.Nexus;
         }
 
+        /*
+         * 필수 상태를 보유하고 있는지 확인한다.
+         */
         private static bool HasRequiredStatus(BaseUnitRuntimeModel model, string statusId, int minimumStacks)
         {
             if (model == null || string.IsNullOrWhiteSpace(statusId))
@@ -296,6 +320,9 @@ namespace Pakuri.InGame
             return model.Statuses != null && model.Statuses.GetStacks(kind) >= minStacks;
         }
 
+        /*
+         * 상태 중첩을 결정한다.
+         */
         private static int ResolveStatusStacks(BaseUnitRuntimeModel model, string statusId)
         {
             if (model == null || string.IsNullOrWhiteSpace(statusId))

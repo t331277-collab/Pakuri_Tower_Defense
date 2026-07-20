@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 인게임 직선 공격의 위치, 충돌, 수명 주기를 처리한다.
+     */
     [DisallowMultipleComponent]
     public sealed class InGameLineAttackActor : MonoBehaviour
     {
@@ -35,6 +38,9 @@ namespace Pakuri.InGame
         private readonly HashSet<string> appliedEffectStatusTargets = new HashSet<string>();
         private readonly List<Collider2D> lineOverlapResults = new List<Collider2D>(32);
 
+        /*
+         * 인게임 직선 공격 실행에 필요한 위치, 대상, 피해 정보를 설정한다.
+         */
         public void Initialize(
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
@@ -113,6 +119,9 @@ namespace Pakuri.InGame
                 lineOverlapResults);
         }
 
+        /*
+         * 직선 주기를 적용한다.
+         */
         public static bool ApplyLineTick(
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
@@ -211,6 +220,9 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /*
+         * 인게임 직선 공격의 이동, 수명, 주기 처리를 매 프레임 갱신한다.
+         */
         private void Update()
         {
             if (combatManager == null)
@@ -258,6 +270,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 직선 공격 비주얼과 히트박스 크기를 설정한다.
+         */
         private void ConfigureVisual()
         {
             transform.position = origin + direction * (length * 0.5f);
@@ -283,6 +298,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 대상이 직선 공격 히트박스 안에 있는지 확인한다.
+         */
         private static bool IsInsideLineHitbox(
             IReadOnlyList<Collider2D> overlappedColliders,
             UnitRosterEntry target,
@@ -321,6 +339,9 @@ namespace Pakuri.InGame
                 && IsPointInsideLine(lineOrigin, normalizedDirection, lineLength, lineWidth, target.Transform.position);
         }
 
+        /*
+         * 지점이 직선 공격 범위 안에 있는지 확인한다.
+         */
         private static bool IsPointInsideLine(
             Vector2 lineOrigin,
             Vector2 normalizedDirection,
@@ -340,6 +361,9 @@ namespace Pakuri.InGame
             return perpendicularDistance <= Mathf.Max(0.05f, lineWidth * 0.5f);
         }
 
+        /*
+         * 밀쳐내기를 적용하고 성공 여부를 반환한다.
+         */
         private static void TryApplyKnockback(UnitRosterEntry target, Vector2 normalizedDirection, float distance)
         {
             if (target == null
@@ -353,6 +377,9 @@ namespace Pakuri.InGame
             target.Transform.position += (Vector3)(normalizedDirection.normalized * distance);
         }
 
+        /*
+         * 상태를 적용하고 성공 여부를 반환한다.
+         */
         private static void TryApplyStatus(
             InGameCombatManager manager,
             BaseUnitRuntimeModel target,
@@ -379,6 +406,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 적중 효과를 적용하고 성공 여부를 반환한다.
+         */
         private static void TryApplyOnHitEffects(
             InGameCombatManager manager,
             BaseUnitRuntimeModel target,
@@ -425,6 +455,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 대상 키를 결정한다.
+         */
         private static string ResolveTargetKey(BaseUnitRuntimeModel target)
         {
             var unitId = target != null && target.Identity != null ? target.Identity.UnitId : null;
@@ -436,6 +469,9 @@ namespace Pakuri.InGame
             return target != null ? target.GetHashCode().ToString() : string.Empty;
         }
 
+        /*
+         * 효과 대상 키를 구성한다.
+         */
         private static string BuildEffectTargetKey(string effectId, string targetKey)
         {
             if (string.IsNullOrWhiteSpace(targetKey))

@@ -4,11 +4,17 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 스킬 적중 추가 피해 계산과 변환 기능을 제공한다.
+     */
     internal static class SkillOnHitAdditionalDamageUtility
     {
         private const string HitTarget = "HitTarget";
         private static bool applyingAdditionalDamage;
 
+        /*
+         * 적중 후 추가 피해와 재장전 감소 효과를 적용한다.
+         */
         public static void TryApply(
             InGameCombatManager manager,
             UnitRosterService roster,
@@ -48,6 +54,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 적중 대상 피해를 적용한다.
+         */
         private static void ApplyHitTargetDamage(
             InGameCombatManager manager,
             SkillExecutionSnapshot snapshot,
@@ -79,6 +88,9 @@ namespace Pakuri.InGame
                 true);
         }
 
+        /*
+         * 연쇄 피해를 적용한다.
+         */
         private static void ApplyChainDamage(
             InGameCombatManager manager,
             UnitRosterService roster,
@@ -121,6 +133,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 연쇄 대상을 결정한다.
+         */
         private static List<UnitRosterEntry> ResolveChainTargets(
             UnitRosterService roster,
             UnitRosterEntry sourceEntry,
@@ -175,6 +190,9 @@ namespace Pakuri.InGame
             return result;
         }
 
+        /*
+         * 적대 유닛 항목을 결정한다.
+         */
         private static IReadOnlyList<UnitRosterEntry> ResolveOpposingEntries(
             UnitRosterService roster,
             UnitRosterEntry sourceEntry,
@@ -188,17 +206,26 @@ namespace Pakuri.InGame
             return side == UnitSide.Enemy ? roster.Players : roster.Enemies;
         }
 
+        /*
+         * 유닛 ID를 결정한다.
+         */
         private static string ResolveUnitId(BaseUnitRuntimeModel model)
         {
             return model != null && model.Identity != null ? model.Identity.UnitId : string.Empty;
         }
 
+        /*
+         * 효과 대상 목록에 현재 적중 대상이 포함되는지 확인한다.
+         */
         private static bool TargetsHitTarget(string target)
         {
             return string.IsNullOrWhiteSpace(target)
                 || string.Equals(target, HitTarget, System.StringComparison.OrdinalIgnoreCase);
         }
 
+        /*
+         * 재장전 감소 동작을 보유하고 있는지 확인한다.
+         */
         private static bool HasReloadReductionBehavior(SkillExecutionSnapshot snapshot)
         {
             return snapshot != null
@@ -206,6 +233,9 @@ namespace Pakuri.InGame
                 && snapshot.ReloadReduceSecondsPerHit > 0f;
         }
 
+        /*
+         * 재장전 감소를 적용한다.
+         */
         private static void ApplyReloadReduction(SkillRuntimeInstance runtime, SkillExecutionSnapshot snapshot)
         {
             if (runtime == null

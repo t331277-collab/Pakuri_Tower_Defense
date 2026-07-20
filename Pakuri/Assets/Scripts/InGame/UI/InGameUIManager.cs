@@ -377,7 +377,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var monster = PakuriDataManager.Instance.ResolveMonster(monsterId, ResolveCatalog());
+            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             if (slot.NameText != null)
             {
                 slot.NameText.text = monster != null && !string.IsNullOrWhiteSpace(monster.DisplayName)
@@ -579,14 +579,12 @@ namespace Pakuri.InGame
 
         private GameDataCatalog ResolveCatalog()
         {
-            var catalog = PakuriDataManager.Instance.CurrentCatalog;
-            return catalog != null ? catalog : PakuriCsvRuntimeData.ResolveCatalogOrFallback(null);
+            return CsvDataLoader.CurrentCatalog;
         }
 
         private string ResolvePrisonerDisplayName(string prisonerId)
         {
-            var catalog = ResolveCatalog();
-            var enemy = catalog != null ? catalog.GetEnemyById(prisonerId) : null;
+            var enemy = CsvDataLoader.CurrentCatalog.GetData<EnemyDefinition>(prisonerId);
             if (enemy != null && !string.IsNullOrWhiteSpace(enemy.DisplayName))
             {
                 return enemy.DisplayName;
@@ -906,7 +904,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var monster = PakuriDataManager.Instance.ResolveMonster(monsterId, resolveCatalog?.Invoke());
+            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             if (monster == null)
             {
                 return;
@@ -933,7 +931,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var skills = PakuriDataManager.Instance.GetActiveSkills(monster.MonsterId, monster);
+            var skills = CsvDataLoader.CurrentCatalog.GetActiveSkills(monster.MonsterId, monster);
             for (var i = 0; i < skills.Length; i++)
             {
                 var skill = skills[i];
@@ -964,7 +962,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var passives = PakuriDataManager.Instance.GetPassiveSkills(monster.MonsterId, monster);
+            var passives = CsvDataLoader.CurrentCatalog.GetPassiveSkills(monster.MonsterId, monster);
             for (var i = 0; i < passives.Length; i++)
             {
                 var passive = passives[i];
@@ -1000,7 +998,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var rewards = PakuriDataManager.Instance.GetRewardChoices(monster.MonsterId, monster);
+            var rewards = CsvDataLoader.CurrentCatalog.GetRewardChoices(monster.MonsterId, monster);
             for (var i = 0; i < rewards.Length; i++)
             {
                 var reward = rewards[i];
@@ -1047,7 +1045,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var manager = PakuriDataManager.Instance;
+            var manager = CsvDataLoader.CurrentCatalog;
             if (manager == null || !manager.TryGetData(choiceId, out SkillChoiceDefinition choice))
             {
                 return null;
@@ -1068,7 +1066,7 @@ namespace Pakuri.InGame
                 return choice.SkillIcon;
             }
 
-            var manager = PakuriDataManager.Instance;
+            var manager = CsvDataLoader.CurrentCatalog;
             if (manager == null || string.IsNullOrWhiteSpace(choice.SkillId))
             {
                 return null;
@@ -1158,7 +1156,7 @@ namespace Pakuri.InGame
                 }
             }
 
-            var manager = PakuriDataManager.Instance;
+            var manager = CsvDataLoader.CurrentCatalog;
             if (manager != null)
             {
                 if (manager.TryGetData(skillId, out SkillDefinition activeSkill) && activeSkill != null)
@@ -1232,7 +1230,6 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var skillCatalog = new InGameSkillCatalog(resolveCatalog?.Invoke());
             var players = combatManager.Roster.Players;
             for (var i = 0; i < players.Count; i++)
             {
@@ -1240,15 +1237,15 @@ namespace Pakuri.InGame
                 if (model != null)
                 {
                     SyncModelStateFromSession(session, model);
-                    SkillRuntimeFactory.RebuildLearnedActiveSet(model, skillCatalog);
+                    SkillRuntimeFactory.RebuildLearnedActiveSet(model);
                     combatManager.Roster.RefreshActor(model);
                 }
             }
 
-            RefreshSceneMonsterActorSkillModels(session, skillCatalog);
+            RefreshSceneMonsterActorSkillModels(session);
         }
 
-        private static void RefreshSceneMonsterActorSkillModels(RunSession session, InGameSkillCatalog skillCatalog)
+        private static void RefreshSceneMonsterActorSkillModels(RunSession session)
         {
             var actors = Resources.FindObjectsOfTypeAll<MonsterUnitActor>();
             for (var i = 0; i < actors.Length; i++)
@@ -1266,7 +1263,7 @@ namespace Pakuri.InGame
                 }
 
                 SyncModelStateFromSession(session, model);
-                SkillRuntimeFactory.RebuildLearnedActiveSet(model, skillCatalog);
+                SkillRuntimeFactory.RebuildLearnedActiveSet(model);
                 actor.RefreshDebugView();
             }
         }
@@ -1319,7 +1316,7 @@ namespace Pakuri.InGame
 
         private bool HasLearnedRequiredActive(RunSession session, MonsterDefinition monster, RunSession.RunMonsterState state, SkillSlot slot)
         {
-            var skills = PakuriDataManager.Instance.GetActiveSkills(monster.MonsterId, monster);
+            var skills = CsvDataLoader.CurrentCatalog.GetActiveSkills(monster.MonsterId, monster);
             for (var i = 0; i < skills.Length; i++)
             {
                 var skill = skills[i];
@@ -1726,7 +1723,7 @@ namespace Pakuri.InGame
 
         private MonsterDefinition ResolveNextManifestCandidate(RunSession session)
         {
-            var monsters = PakuriDataManager.Instance.GetMonsters(resolveCatalog?.Invoke());
+            var monsters = CsvDataLoader.CurrentCatalog.GetMonsters();
             var candidates = new System.Collections.Generic.List<MonsterDefinition>();
             for (var i = 0; i < monsters.Length; i++)
             {

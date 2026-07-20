@@ -91,7 +91,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var monster = PakuriDataManager.Instance.ResolveMonster(monsterId, catalog);
+                var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
                 tracker.TryGetRecord(monsterId, out var record);
                 panel.SetRuntime(monster, record, leaderDamage, ResolveDisplayName, ResolveSortKey);
             }
@@ -145,8 +145,8 @@ namespace Pakuri.InGame
 
         private string ResolveDisplayName(string monsterId, string sourceId)
         {
-            var manager = PakuriDataManager.Instance;
-            var monster = manager.ResolveMonster(monsterId, ResolveCatalog());
+            var manager = CsvDataLoader.CurrentCatalog;
+            var monster = manager.ResolveMonster(monsterId);
             if (monster != null)
             {
                 var activeName = ResolveActiveSkillDisplayName(monster, sourceId);
@@ -186,7 +186,7 @@ namespace Pakuri.InGame
 
         private int ResolveSortKey(string monsterId, string sourceId, int firstSeenIndex)
         {
-            var monster = PakuriDataManager.Instance.ResolveMonster(monsterId, ResolveCatalog());
+            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             var activeSkills = monster != null ? monster.ActiveSkills : null;
             if (activeSkills != null)
             {
@@ -299,7 +299,7 @@ namespace Pakuri.InGame
 
         private static string ResolveChoiceTitle(string choiceId)
         {
-            var choice = PakuriDataManager.Instance.GetData<SkillChoiceDefinition>(choiceId);
+            var choice = CsvDataLoader.CurrentCatalog.GetData<SkillChoiceDefinition>(choiceId);
             return choice != null ? choice.Title : string.Empty;
         }
 
@@ -434,8 +434,7 @@ namespace Pakuri.InGame
 
         private GameDataCatalog ResolveCatalog()
         {
-            var catalog = PakuriDataManager.Instance.CurrentCatalog;
-            return catalog != null ? catalog : PakuriCsvRuntimeData.ResolveCatalogOrFallback(null);
+            return CsvDataLoader.CurrentCatalog;
         }
 
         private static T FindSceneObject<T>() where T : UnityEngine.Object

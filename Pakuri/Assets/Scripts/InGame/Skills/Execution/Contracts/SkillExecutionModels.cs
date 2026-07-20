@@ -2,8 +2,14 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 스킬 실행 정보에 필요한 값을 보관한다.
+     */
     public sealed class SkillExecutionContext
     {
+        /*
+         * 스킬 실행 정보에 필요한 값을 초기화한다.
+         */
         public SkillExecutionContext(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -43,9 +49,12 @@ namespace Pakuri.InGame
         public int RecastGeneration { get; }
 
         public BaseUnitRuntimeModel Caster => CasterEntry != null ? CasterEntry.Model : null;
-        public SkillData SkillData => Runtime != null ? Runtime.Data : null;
+        public SkillRuntimeData SkillRuntimeData => Runtime != null ? Runtime.Data : null;
     }
 
+    /*
+     * 스킬 실행 상태에서 사용하는 선택 값을 정의한다.
+     */
     public enum SkillExecutionStatus
     {
         None,
@@ -53,6 +62,9 @@ namespace Pakuri.InGame
         Routed
     }
 
+    /*
+     * 스킬 실행 결과에 필요한 값을 보관한다.
+     */
     public sealed class SkillExecutionResult
     {
         public static readonly SkillExecutionResult None = new SkillExecutionResult(
@@ -60,6 +72,9 @@ namespace Pakuri.InGame
             string.Empty,
             string.Empty);
 
+        /*
+         * 스킬 실행 결과에 필요한 값을 초기화한다.
+         */
         public SkillExecutionResult(SkillExecutionStatus status, string skillId, string executorName)
         {
             Status = status;

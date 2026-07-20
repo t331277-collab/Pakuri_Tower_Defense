@@ -141,12 +141,12 @@ namespace Pakuri.InGame
             bool refreshDuration = true,
             float shieldAmount = 0f)
         {
-            var statusData = StatusEffectRuntime.CreateStatusData(kind, null);
+            var statusData = StatusEffectFactory.Create(kind, null);
             return Apply(statusData, stacks, durationSeconds, maxStacks, permanent, refreshDuration, shieldAmount);
         }
 
         public UnitStatusRuntime Apply(
-            StatusEffectData statusData,
+            RuntimeStatusData statusData,
             int stacks,
             float durationSeconds,
             int maxStacks = 0,
@@ -491,14 +491,14 @@ namespace Pakuri.InGame
             return null;
         }
 
-        private static bool HasSourceAwareIdentity(StatusEffectData statusData)
+        private static bool HasSourceAwareIdentity(RuntimeStatusData statusData)
         {
             return statusData != null
                 && !string.IsNullOrWhiteSpace(statusData.SourceSkillId)
                 && statusData.MergePolicy != StatusMergePolicy.Unspecified;
         }
 
-        private static bool ShouldReplaceSourceData(StatusEffectData current, StatusEffectData incoming)
+        private static bool ShouldReplaceSourceData(RuntimeStatusData current, RuntimeStatusData incoming)
         {
             if (incoming == null)
             {
@@ -510,7 +510,7 @@ namespace Pakuri.InGame
                 return true;
             }
 
-            return StatusEffectRuntime.ComputeModifierMagnitude(incoming) >= StatusEffectRuntime.ComputeModifierMagnitude(current);
+            return StatusEffectRules.ComputeModifierMagnitude(incoming) >= StatusEffectRules.ComputeModifierMagnitude(current);
         }
     }
 
@@ -528,7 +528,7 @@ namespace Pakuri.InGame
         public string DisplayName => SourceData != null && !string.IsNullOrWhiteSpace(SourceData.StatusName)
             ? SourceData.StatusName
             : StatusEffectUtility.ToDisplayName(Kind);
-        public StatusEffectData SourceData { get; private set; }
+        public RuntimeStatusData SourceData { get; private set; }
         public string SourceSkillId { get; private set; }
         public string SourceUnitId { get; private set; }
         public string SourceDefinitionId { get; private set; }
@@ -545,7 +545,7 @@ namespace Pakuri.InGame
         public bool IsTimed => !Permanent && DurationRemaining > 0f;
         public bool IsShieldStatus => Kind == StatusEffectKind.Shield;
 
-        public void SetSourceData(StatusEffectData sourceData)
+        public void SetSourceData(RuntimeStatusData sourceData)
         {
             if (sourceData != null)
             {
@@ -553,7 +553,7 @@ namespace Pakuri.InGame
             }
         }
 
-        public void SetSourceMetadata(StatusEffectData sourceData)
+        public void SetSourceMetadata(RuntimeStatusData sourceData)
         {
             if (sourceData == null)
             {

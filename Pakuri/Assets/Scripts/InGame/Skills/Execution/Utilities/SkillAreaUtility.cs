@@ -2,8 +2,14 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 스킬 범위 계산과 변환 기능을 제공한다.
+     */
     internal static class SkillAreaUtility
     {
+        /*
+         * 범위 중심점을 결정한다.
+         */
         public static Vector2 ResolveAreaCenter(
             SkillExecutionContext context,
             SkillTargetingSpec targeting,
@@ -31,6 +37,9 @@ namespace Pakuri.InGame
                 : (Vector2)origin;
         }
 
+        /*
+         * 기본 반경을 결정한다.
+         */
         public static float ResolveBaseRadius(SkillTargetingSpec targeting, AreaBlueprintSpec area)
         {
             return area != null && area.Radius > 0f
@@ -38,6 +47,9 @@ namespace Pakuri.InGame
                 : targeting != null ? targeting.Radius : 0f;
         }
 
+        /*
+         * 반경을 결정한다.
+         */
         public static float ResolveRadius(float baseRadius, SkillExecutionSnapshot snapshot)
         {
             var radius = baseRadius;
@@ -49,6 +61,9 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, radius);
         }
 
+        /*
+         * 프리팹 크기 배율을 결정한다.
+         */
         public static float ResolvePrefabScaleFactor(float baseRadius, SkillExecutionSnapshot snapshot)
         {
             if (snapshot == null)

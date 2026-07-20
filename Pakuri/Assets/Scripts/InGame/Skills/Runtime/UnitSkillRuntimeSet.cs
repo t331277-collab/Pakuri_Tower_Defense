@@ -1,8 +1,12 @@
 using System;
 using System.Collections.Generic;
+using Pakuri.Data;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 유닛이 보유한 스킬 런타임 목록을 관리한다.
+     */
     public sealed class UnitSkillRuntimeSet
     {
         private readonly List<SkillRuntimeInstance> activeSkills = new List<SkillRuntimeInstance>();
@@ -10,11 +14,17 @@ namespace Pakuri.InGame
         public IReadOnlyList<SkillRuntimeInstance> ActiveSkills => activeSkills;
         public int Count => activeSkills.Count;
 
+        /*
+         * 유닛의 스킬 런타임 목록을 비운다.
+         */
         public void Clear()
         {
             activeSkills.Clear();
         }
 
+        /*
+         * 같은 ID의 스킬을 교체하거나 새 스킬을 추가한다.
+         */
         public void AddOrReplace(SkillRuntimeInstance instance)
         {
             if (instance == null || string.IsNullOrWhiteSpace(instance.SkillId))
@@ -32,13 +42,19 @@ namespace Pakuri.InGame
             activeSkills.Add(instance);
         }
 
+        /*
+         * 스킬 ID가 일치하는 런타임을 찾는다.
+         */
         public SkillRuntimeInstance FindBySkillId(string skillId)
         {
             var index = FindIndexBySkillId(skillId);
             return index >= 0 ? activeSkills[index] : null;
         }
 
-        public SkillRuntimeInstance FindBySlot(InGameSkillSlot slot)
+        /*
+         * 스킬 슬롯이 일치하는 런타임을 찾는다.
+         */
+        public SkillRuntimeInstance FindBySlot(SkillSlot slot)
         {
             for (var i = 0; i < activeSkills.Count; i++)
             {
@@ -51,6 +67,9 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * 유닛이 보유한 모든 스킬 런타임 시간을 갱신한다.
+         */
         public void Tick(float deltaTime)
         {
             if (deltaTime <= 0f)
@@ -64,6 +83,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 스킬 ID가 일치하는 런타임의 목록 위치를 찾는다.
+         */
         private int FindIndexBySkillId(string skillId)
         {
             if (string.IsNullOrWhiteSpace(skillId))

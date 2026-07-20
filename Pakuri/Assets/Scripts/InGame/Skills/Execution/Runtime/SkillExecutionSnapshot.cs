@@ -5,28 +5,43 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 시전 조건 규칙 종류에서 사용하는 선택 값을 정의한다.
+     */
     public enum CastConditionOpKind
     {
         TargetHealthRatioBonus
     }
 
+    /*
+     * 피해 보정값 규칙 종류에서 사용하는 선택 값을 정의한다.
+     */
     public enum DamageModifierOpKind
     {
         BossMultiplier,
         ExecuteMultiplier
     }
 
+    /*
+     * 치명타 보정값 규칙 종류에서 사용하는 선택 값을 정의한다.
+     */
     public enum CritModifierOpKind
     {
         ExecuteChanceBonus
     }
 
+    /*
+     * 처치 행동 규칙 종류에서 사용하는 선택 값을 정의한다.
+     */
     public enum KillActionOpKind
     {
         CooldownReset,
         CooldownRefundBonus
     }
 
+    /*
+     * 스킬 행동 규칙 종류에서 사용하는 선택 값을 정의한다.
+     */
     public enum SkillActionOpKind
     {
         DamageMultiplier,
@@ -66,8 +81,14 @@ namespace Pakuri.InGame
         StatusCriticalDamageTakenBonus
     }
 
+    /*
+     * 시전 조건 규칙에 필요한 값을 보관한다.
+     */
     public readonly struct CastConditionOp
     {
+        /*
+         * 시전 조건 규칙에 필요한 값을 초기화한다.
+         */
         public CastConditionOp(CastConditionOpKind kind, float value)
         {
             Kind = kind;
@@ -78,8 +99,14 @@ namespace Pakuri.InGame
         public float Value { get; }
     }
 
+    /*
+     * 피해 보정값 규칙에 필요한 값을 보관한다.
+     */
     public readonly struct DamageModifierOp
     {
+        /*
+         * 피해 보정값 규칙에 필요한 값을 초기화한다.
+         */
         public DamageModifierOp(DamageModifierOpKind kind, float multiplier)
         {
             Kind = kind;
@@ -90,8 +117,14 @@ namespace Pakuri.InGame
         public float Multiplier { get; }
     }
 
+    /*
+     * 치명타 보정값 규칙에 필요한 값을 보관한다.
+     */
     public readonly struct CritModifierOp
     {
+        /*
+         * 치명타 보정값 규칙에 필요한 값을 초기화한다.
+         */
         public CritModifierOp(CritModifierOpKind kind, float chanceBonus)
         {
             Kind = kind;
@@ -102,8 +135,14 @@ namespace Pakuri.InGame
         public float ChanceBonus { get; }
     }
 
+    /*
+     * 처치 행동 규칙에 필요한 값을 보관한다.
+     */
     public readonly struct KillActionOp
     {
+        /*
+         * 처치 행동 규칙에 필요한 값을 초기화한다.
+         */
         public KillActionOp(KillActionOpKind kind, float ratioBonus, bool requiresExecute)
         {
             Kind = kind;
@@ -116,8 +155,14 @@ namespace Pakuri.InGame
         public bool RequiresExecute { get; }
     }
 
+    /*
+     * 스킬 행동 규칙에 필요한 값을 보관한다.
+     */
     public readonly struct SkillActionOp
     {
+        /*
+         * 스킬 행동 규칙에 필요한 값을 초기화한다.
+         */
         public SkillActionOp(
             SkillActionOpKind kind,
             float floatValue = 0f,
@@ -148,9 +193,15 @@ namespace Pakuri.InGame
         public float ThirdFloatValue { get; }
     }
 
+    /*
+     * 스킬 실행 실행 정보에 필요한 값을 보관한다.
+     */
     public sealed class SkillExecutionSnapshot
     {
-        public SkillExecutionSnapshot(SkillData source)
+        /*
+         * 스킬 실행 실행 정보에 필요한 값을 초기화한다.
+         */
+        public SkillExecutionSnapshot(SkillRuntimeData source)
         {
             Source = source;
             SkillId = source != null ? source.SkillId : string.Empty;
@@ -172,7 +223,7 @@ namespace Pakuri.InGame
             RebuildExecutionPlan();
         }
 
-        public SkillData Source { get; }
+        public SkillRuntimeData Source { get; }
         public string SkillId { get; }
         public SkillExecutionPlan Plan { get; private set; }
         public float DamageMultiplier { get; private set; }
@@ -332,7 +383,10 @@ namespace Pakuri.InGame
             FollowUpProjectileCount > 0
             && FollowUpProjectileDamageMultiplier > 0f;
 
-        public void ApplyChoiceSpec(SkillChoiceEffectSpec spec)
+        /*
+         * 선택지 설정을 적용한다.
+         */
+        public void ApplyChoiceSpec(SkillChoiceRuntimeData spec)
         {
             if (spec == null)
             {
@@ -765,11 +819,17 @@ namespace Pakuri.InGame
             RebuildExecutionPlan();
         }
 
+        /*
+         * 동적 피해 배율을 적용한다.
+         */
         public void ApplyDynamicDamageMultiplier(float multiplier)
         {
             DamageMultiplier *= PositiveOrDefault(multiplier, 1f);
         }
 
+        /*
+         * 선택지 정의를 적용한다.
+         */
         public void ApplyChoiceDefinition(SkillChoiceDefinition choice)
         {
             if (choice == null)
@@ -783,7 +843,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var spec = new SkillChoiceEffectSpec
+            var spec = new SkillChoiceRuntimeData
             {
                 ChoiceId = choice.ChoiceId,
                 Title = choice.Title,
@@ -927,13 +987,16 @@ namespace Pakuri.InGame
                 RepeatCountPerTarget = choice.RepeatCountPerTarget,
                 RepeatIntervalSeconds = choice.RepeatIntervalSeconds,
                 RepeatDamageMultiplier = choice.RepeatDamageMultiplier,
-                NormalizedPlanNodes = InGameSkillDefinitionMapper.MapSkillNodeDefinitions(choice.NormalizedPlanNodes)
+                NormalizedPlanNodes = SkillRuntimeCompiler.MapSkillNodeDefinitions(choice.NormalizedPlanNodes)
             };
 
-            InGameSkillDefinitionMapper.ApplyNormalizedChoiceNodes(spec, choice.NormalizedPlanNodes);
+            SkillRuntimeCompiler.ApplyNormalizedChoiceNodes(spec, choice.NormalizedPlanNodes);
             ApplyChoiceSpec(spec);
         }
 
+        /*
+         * 노드 기반 선택지 정의를 적용한다.
+         */
         private void ApplyNodeBackedChoiceDefinition(SkillChoiceDefinition choice)
         {
             if (choice.SkillEffectPrefab != null)
@@ -941,23 +1004,26 @@ namespace Pakuri.InGame
                 SkillEffectPrefab = choice.SkillEffectPrefab;
             }
 
-            var targetNodes = InGameSkillDefinitionMapper.FilterSkillNodeDefinitionsForTarget(
+            var targetNodes = SkillRuntimeCompiler.FilterSkillNodeDefinitionsForTarget(
                 choice.NormalizedPlanNodes,
                 SkillId);
-            var compatibilitySpec = new SkillChoiceEffectSpec();
-            InGameSkillDefinitionMapper.ApplyNormalizedChoiceCompatibilityNodes(
+            var compatibilitySpec = new SkillChoiceRuntimeData();
+            SkillRuntimeCompiler.ApplyNormalizedChoiceCompatibilityNodes(
                 compatibilitySpec,
                 targetNodes);
             ApplyNodeBackedChoiceFields(compatibilitySpec);
 
-            var nodes = InGameSkillDefinitionMapper.MapSkillNodeDefinitions(targetNodes);
+            var nodes = SkillRuntimeCompiler.MapSkillNodeDefinitions(targetNodes);
             AddNormalizedPlanNodes(nodes);
             ApplyPlanActionNodes(nodes);
             RefreshSingleAttackOperationBridges();
             RebuildExecutionPlan();
         }
 
-        private void ApplyNodeBackedChoiceFields(SkillChoiceEffectSpec spec)
+        /*
+         * 노드 기반 선택지 필드를 적용한다.
+         */
+        private void ApplyNodeBackedChoiceFields(SkillChoiceRuntimeData spec)
         {
             if (spec.HasBurstDamageMultiplier
                 && spec.BurstDamageMultiplier > 0f
@@ -1033,6 +1099,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 정규화된 계획 노드를 보유하고 있는지 확인한다.
+         */
         private static bool HasNormalizedPlanNodes(SkillChoiceDefinition choice)
         {
             return choice != null
@@ -1040,6 +1109,9 @@ namespace Pakuri.InGame
                 && choice.NormalizedPlanNodes.Length > 0;
         }
 
+        /*
+         * 계획 행동 노드를 적용한다.
+         */
         private void ApplyPlanActionNodes(IReadOnlyList<SkillExecutionPlanNode> nodes)
         {
             if (nodes == null || nodes.Count == 0)
@@ -1057,8 +1129,12 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 계획 행동을 적용한다.
+         */
         private void ApplyPlanAction(SkillActionOp action)
         {
+            // 각 노드는 기존 실행값에 곱하거나 더하며, 별도 규칙이 필요한 값은 전용 목록에 보관한다.
             switch (action.Kind)
             {
                 case SkillActionOpKind.DamageMultiplier:
@@ -1206,6 +1282,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 상태 행동 속도 보너스를 적용한다.
+         */
         private void ApplyStatusActionSpeedBonus(string statusId, float bonus)
         {
             HasStatusActionSpeedBonus = true;
@@ -1221,6 +1300,9 @@ namespace Pakuri.InGame
                 : bonus;
         }
 
+        /*
+         * 상태 지속시간 보너스를 적용한다.
+         */
         private void ApplyStatusDurationBonus(string statusId, float bonus)
         {
             if (string.IsNullOrWhiteSpace(statusId) || Mathf.Approximately(bonus, 0f))
@@ -1233,6 +1315,9 @@ namespace Pakuri.InGame
                 : bonus;
         }
 
+        /*
+         * 조건부 피해 규칙을 추가한다.
+         */
         private void AddConditionalDamageRule(float multiplier, string statusId, int minStacks)
         {
             if (string.IsNullOrWhiteSpace(statusId) || multiplier <= 0f)
@@ -1243,6 +1328,9 @@ namespace Pakuri.InGame
             conditionalDamageRules.Add(new ConditionalDamageRule(multiplier, statusId, Mathf.Max(1, minStacks)));
         }
 
+        /*
+         * 활성 선택지 ID를 추가한다.
+         */
         public void AddActiveChoiceId(string choiceId)
         {
             if (!string.IsNullOrWhiteSpace(choiceId))
@@ -1251,11 +1339,17 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 활성 선택지를 보유하고 있는지 확인한다.
+         */
         public bool HasActiveChoice(string choiceId)
         {
             return !string.IsNullOrWhiteSpace(choiceId) && activeChoiceIds.Contains(choiceId);
         }
 
+        /*
+         * 상태 지속시간 보너스를 결정한다.
+         */
         public float ResolveStatusDurationBonus(string statusId)
         {
             if (string.IsNullOrWhiteSpace(statusId))
@@ -1266,6 +1360,9 @@ namespace Pakuri.InGame
             return statusDurationBonuses.TryGetValue(statusId, out var bonus) ? bonus : 0f;
         }
 
+        /*
+         * 상태 행동 속도 보너스를 결정한다.
+         */
         public float ResolveStatusActionSpeedBonus(string statusId)
         {
             var bonus = StatusActionSpeedBonus;
@@ -1278,6 +1375,9 @@ namespace Pakuri.InGame
             return bonus;
         }
 
+        /*
+         * 상태 최대 중첩 보너스를 결정한다.
+         */
         public int ResolveStatusMaxStacksBonus(string statusId)
         {
             if (string.IsNullOrWhiteSpace(statusId))
@@ -1288,6 +1388,9 @@ namespace Pakuri.InGame
             return statusMaxStacksBonuses.TryGetValue(statusId, out var bonus) ? bonus : 0;
         }
 
+        /*
+         * 대상 상태 중첩 피해 비율 보너스를 결정한다.
+         */
         public float ResolveTargetStatusStackDamageRateBonus(string statusId)
         {
             if (string.IsNullOrWhiteSpace(statusId))
@@ -1298,6 +1401,9 @@ namespace Pakuri.InGame
             return targetStatusStackDamageRateBonuses.TryGetValue(statusId, out var bonus) ? bonus : 0f;
         }
 
+        /*
+         * 트리거 발동 확률 보너스를 결정한다.
+         */
         public float ResolveTriggerProcChanceBonus(string triggerId)
         {
             if (string.IsNullOrWhiteSpace(triggerId))
@@ -1308,6 +1414,9 @@ namespace Pakuri.InGame
             return triggerProcChanceBonuses.TryGetValue(triggerId, out var bonus) ? bonus : 0f;
         }
 
+        /*
+         * 조건부 피해 배율을 결정한다.
+         */
         public float ResolveConditionalDamageMultiplier(BaseUnitRuntimeModel target)
         {
             if (target == null || conditionalDamageRules.Count == 0)
@@ -1330,6 +1439,9 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
+        /*
+         * 조건부 치명타 확률 보너스를 결정한다.
+         */
         public float ResolveConditionalCritChanceBonus(BaseUnitRuntimeModel target)
         {
             if (target == null || conditionalCritChanceRules.Count == 0)
@@ -1352,6 +1464,9 @@ namespace Pakuri.InGame
             return bonus;
         }
 
+        /*
+         * 연속 발사 피해 배율을 결정한다.
+         */
         public float ResolveBurstDamageMultiplier(int projectileIndex, int burstProjectileCount)
         {
             if (projectileIndex <= 0 || burstDamageRules.Count == 0)
@@ -1374,6 +1489,9 @@ namespace Pakuri.InGame
             return multiplier;
         }
 
+        /*
+         * 연속 발사 상태 중첩 보너스를 결정한다.
+         */
         public int ResolveBurstStatusStacksBonus(int projectileIndex, int burstProjectileCount)
         {
             if (projectileIndex <= 0 || burstStatusRules.Count == 0)
@@ -1396,6 +1514,9 @@ namespace Pakuri.InGame
             return bonus;
         }
 
+        /*
+         * 필수 중첩을 보유하고 있는지 확인한다.
+         */
         private static bool HasRequiredStacks(BaseUnitRuntimeModel target, string statusId, int minimumStacks)
         {
             if (target == null || minimumStacks <= 0 || string.IsNullOrWhiteSpace(statusId))
@@ -1416,6 +1537,9 @@ namespace Pakuri.InGame
             return target.Statuses != null && target.Statuses.GetStacks(kind) >= minimumStacks;
         }
 
+        /*
+         * 현재 투사체가 연속 발사 보정 대상 순번인지 확인한다.
+         */
         private static bool MatchesBurstProjectileIndex(int configuredIndex, int projectileIndex, int burstProjectileCount)
         {
             if (configuredIndex == 0)
@@ -1426,11 +1550,17 @@ namespace Pakuri.InGame
             return configuredIndex == projectileIndex;
         }
 
+        /*
+         * 값이 양수이면 사용하고 아니면 기본값을 반환한다.
+         */
         private static float PositiveOrDefault(float value, float fallback)
         {
             return value > 0f ? value : fallback;
         }
 
+        /*
+         * 정규화된 단일 공격 노드를 기존 실행 규칙 목록과 맞춘다.
+         */
         private void RefreshSingleAttackOperationBridges()
         {
             castConditionOps.Clear();
@@ -1464,11 +1594,17 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 실행 계획을 다시 구성한다.
+         */
         private void RebuildExecutionPlan()
         {
             Plan = SkillExecutionPlanCompiler.Compile(Source, this, normalizedPlanNodes);
         }
 
+        /*
+         * 정규화된 계획 노드를 추가한다.
+         */
         private void AddNormalizedPlanNodes(IReadOnlyList<SkillExecutionPlanNode> nodes)
         {
             if (nodes == null || nodes.Count == 0)
@@ -1485,8 +1621,14 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 조건부 피해 규칙에 필요한 값을 보관한다.
+         */
         private readonly struct ConditionalDamageRule
         {
+            /*
+             * 조건부 피해 규칙에 필요한 값을 초기화한다.
+             */
             public ConditionalDamageRule(float damageMultiplier, string statusId, int minStacks)
             {
                 DamageMultiplier = damageMultiplier;
@@ -1499,8 +1641,14 @@ namespace Pakuri.InGame
             public int MinStacks { get; }
         }
 
+        /*
+         * 조건부 치명타 확률 규칙에 필요한 값을 보관한다.
+         */
         private readonly struct ConditionalCritChanceRule
         {
+            /*
+             * 조건부 치명타 확률 규칙에 필요한 값을 초기화한다.
+             */
             public ConditionalCritChanceRule(float critChanceBonus, string statusId, int minStacks)
             {
                 CritChanceBonus = critChanceBonus;
@@ -1513,8 +1661,14 @@ namespace Pakuri.InGame
             public int MinStacks { get; }
         }
 
+        /*
+         * 연속 발사 피해 규칙에 필요한 값을 보관한다.
+         */
         private readonly struct BurstDamageRule
         {
+            /*
+             * 연속 발사 피해 규칙에 필요한 값을 초기화한다.
+             */
             public BurstDamageRule(int projectileIndex, float damageMultiplier)
             {
                 ProjectileIndex = projectileIndex;
@@ -1525,8 +1679,14 @@ namespace Pakuri.InGame
             public float DamageMultiplier { get; }
         }
 
+        /*
+         * 연속 발사 상태 규칙에 필요한 값을 보관한다.
+         */
         private readonly struct BurstStatusRule
         {
+            /*
+             * 연속 발사 상태 규칙에 필요한 값을 초기화한다.
+             */
             public BurstStatusRule(int projectileIndex, int stacksBonus)
             {
                 ProjectileIndex = projectileIndex;

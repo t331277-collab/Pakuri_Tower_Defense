@@ -3,8 +3,14 @@ using Pakuri.Data;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 실행 계획의 효과와 트리거 행동을 실제 런타임 처리로 전달한다.
+     */
     internal static class SkillPlanActionDispatcher
     {
+        /*
+         * 효과를 실행한다.
+         */
         public static bool ExecuteEffect(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
@@ -32,6 +38,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 트리거 행동을 실행한다.
+         */
         public static bool ExecuteTriggerAction(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -57,6 +66,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 트리거 행동을 결정한다.
+         */
         private static SkillTriggerActionKind ResolveTriggerAction(SkillTriggerDefinition trigger)
         {
             if (trigger == null)
@@ -74,6 +86,9 @@ namespace Pakuri.InGame
                 : SkillTriggerActionKind.TriggeredSkill;
         }
 
+        /*
+         * 실행 계획에서 효과 행동만 가져온다.
+         */
         public static SkillEffectDefinition[] ResolveEffects(
             SkillExecutionSnapshot snapshot,
             SkillEffectDefinition[] fallbackEffects)
@@ -95,6 +110,9 @@ namespace Pakuri.InGame
             return resolved;
         }
 
+        /*
+         * 트리거를 결정한다.
+         */
         public static SkillTriggerDefinition[] ResolveTriggers(
             SkillExecutionSnapshot snapshot,
             SkillTriggerDefinition[] fallbackTriggers)
@@ -116,6 +134,9 @@ namespace Pakuri.InGame
             return resolved;
         }
 
+        /*
+         * 트리거를 결정한다.
+         */
         public static SkillTriggerDefinition[] ResolveTriggers(
             SkillRuntimeInstance runtime,
             SkillTriggerDefinition[] fallbackTriggers)

@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 인게임 투사체의 위치, 충돌, 수명 주기를 처리한다.
+     */
     [DisallowMultipleComponent]
     public sealed class InGameProjectileActor : MonoBehaviour
     {
@@ -48,6 +51,9 @@ namespace Pakuri.InGame
         private bool impactResolved;
         private bool awaitingExpireEffects;
 
+        /*
+         * 인게임 투사체 실행에 필요한 위치, 대상, 피해 정보를 설정한다.
+         */
         public void Initialize(
             InGameCombatManager manager,
             BaseUnitRuntimeModel source,
@@ -100,6 +106,9 @@ namespace Pakuri.InGame
             EnsurePhysicsRelay();
         }
 
+        /*
+         * 투사체가 사라질 좌우 경계 위치를 결정한다.
+         */
         internal static float ResolveDestroyBoundaryX(
             Vector2 origin,
             Vector2 fireDirection,
@@ -115,6 +124,9 @@ namespace Pakuri.InGame
             return origin.x + normalizedDirection.x * maxTravelDistance;
         }
 
+        /*
+         * 인게임 투사체 실행에 필요한 위치, 대상, 피해 정보를 설정한다.
+         */
         public void Initialize(
             InGameCombatManager manager,
             BaseUnitRuntimeModel source,
@@ -185,11 +197,17 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 투사체 충돌 처리에 필요한 물리 릴레이를 준비한다.
+         */
         private void Awake()
         {
             EnsurePhysicsRelay();
         }
 
+        /*
+         * 인게임 투사체의 이동, 수명, 주기 처리를 매 프레임 갱신한다.
+         */
         private void Update()
         {
             var deltaTime = Time.deltaTime;
@@ -215,6 +233,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 투사체가 충돌한 콜라이더의 유닛에게 적중 처리를 시도한다.
+         */
         private void OnTriggerEnter2D(Collider2D other)
         {
             if (combatManager == null || other == null || owner == null)
@@ -226,6 +247,9 @@ namespace Pakuri.InGame
             TryHitTarget(target);
         }
 
+        /*
+         * 적중 로스터 대상을 처리 조건을 확인하고 성공 여부를 반환한다.
+         */
         private void TryHitRosterTargets()
         {
             if (combatManager == null || owner == null)
@@ -268,6 +292,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 적중 대상을 처리 조건을 확인하고 성공 여부를 반환한다.
+         */
         private bool TryHitTarget(UnitRosterEntry target)
         {
             if (target == null || target.Model == null || !target.IsAlive || IsSameSide(target.Model))
@@ -320,6 +347,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 적중 피해를 결정한다.
+         */
         private float ResolveHitDamage(BaseUnitRuntimeModel target)
         {
             var hitDamage = damage;
@@ -331,11 +361,17 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, hitDamage);
         }
 
+        /*
+         * 상태를 적용하고 성공 여부를 반환한다.
+         */
         private void TryApplyStatus(BaseUnitRuntimeModel target)
         {
             SkillStatusApplyUtility.TryApplyStatus(combatManager, target, statusOnHit, owner);
         }
 
+        /*
+         * 적중 효과를 적용하고 성공 여부를 반환한다.
+         */
         private void TryApplyOnHitEffects(UnitRosterEntry target, Vector2 hitPosition)
         {
             if (target == null || onHitEffects == null || onHitEffects.Length == 0)
@@ -353,6 +389,9 @@ namespace Pakuri.InGame
             SkillMultiEffectExecutor.ExecuteOnHit(context, executionSnapshot, onHitEffects, hitPosition, target.Model);
         }
 
+        /*
+         * 투사체 적중 트리거를 실행 조건을 확인하고 성공 여부를 반환한다.
+         */
         private void TryRunProjectileHitTriggers()
         {
             if (!isMagazineLastProjectile || magazineLastProjectileTriggerFired)
@@ -370,6 +409,9 @@ namespace Pakuri.InGame
                 transform.position);
         }
 
+        /*
+         * 분기 피해를 적용하고 성공 여부를 반환한다.
+         */
         private void TryApplyBranchDamage(
             UnitRosterEntry hitTarget,
             Vector2 hitPosition,
@@ -424,6 +466,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 가장 가까운 분기 대상을 찾는다.
+         */
         private UnitRosterEntry FindNearestBranchTarget(
             IReadOnlyList<UnitRosterEntry> candidates,
             UnitRosterEntry hitTarget,
@@ -465,6 +510,9 @@ namespace Pakuri.InGame
             return best;
         }
 
+        /*
+         * 분기 피해 직선을 생성한다.
+         */
         private void SpawnBranchDamageLine(Vector2 origin, Vector2 target)
         {
             var shader = Shader.Find("Sprites/Default");
@@ -498,6 +546,9 @@ namespace Pakuri.InGame
             combatManager.Effects.DestroyAfter(lineObject, durationSeconds);
         }
 
+        /*
+         * 두 유닛이 같은 진영인지 확인한다.
+         */
         private bool IsSameSide(BaseUnitRuntimeModel target)
         {
             var ownerIdentity = owner.Identity;
@@ -507,6 +558,9 @@ namespace Pakuri.InGame
                 && ownerIdentity.Side == targetIdentity.Side;
         }
 
+        /*
+         * 투사체가 제거 경계를 통과했는지 확인한다.
+         */
         private bool HasPassedDestroyBoundary()
         {
             if (impactArmed)
@@ -519,6 +573,9 @@ namespace Pakuri.InGame
                 : transform.position.x < destroyBeyondX;
         }
 
+        /*
+         * 충돌을 후속 처리를 준비한다.
+         */
         private void ArmImpact(UnitRosterEntry target, Vector2 hitPosition)
         {
             impactArmed = true;
@@ -537,6 +594,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 충돌을 결정한다.
+         */
         private void ResolveImpact()
         {
             if (impactResolved || combatManager == null)
@@ -600,6 +660,9 @@ namespace Pakuri.InGame
             Destroy(gameObject);
         }
 
+        /*
+         * 투사체 수명 종료 후 지연 효과를 실행한다.
+         */
         private System.Collections.IEnumerator ExecuteOnExpireAfterDelay(float delaySeconds)
         {
             var delay = Mathf.Max(0.01f, delaySeconds);
@@ -612,6 +675,9 @@ namespace Pakuri.InGame
             Destroy(gameObject);
         }
 
+        /*
+         * 종료 효과를 실행하고 성공 여부를 반환한다.
+         */
         private void TryExecuteOnExpireEffects()
         {
             if (!awaitingExpireEffects && !impactResolved)
@@ -638,6 +704,9 @@ namespace Pakuri.InGame
             awaitingExpireEffects = false;
         }
 
+        /*
+         * 충돌 대상 지정을 구성한다.
+         */
         private SkillTargetingSpec BuildImpactTargeting()
         {
             return new SkillTargetingSpec
@@ -650,6 +719,9 @@ namespace Pakuri.InGame
             };
         }
 
+        /*
+         * 투사체 충돌을 전달할 물리 릴레이를 준비한다.
+         */
         private void EnsurePhysicsRelay()
         {
             var collider = GetComponent<Collider2D>();
@@ -672,6 +744,9 @@ namespace Pakuri.InGame
             // to automatic combat fire. This projectile only relays movement and hits.
         }
 
+        /*
+         * 회전을 결정한다.
+         */
         private static Quaternion ResolveRotation(Vector3 direction)
         {
             if (direction.sqrMagnitude <= 0.0001f)
@@ -684,11 +759,14 @@ namespace Pakuri.InGame
         }
     }
 
+    /*
+     * 투사체 상태 적중 설정에 필요한 값을 보관한다.
+     */
     public sealed class ProjectileStatusHitSpec
     {
         public bool Enabled;
         public StatusEffectKind Kind;
-        public StatusEffectData StatusData;
+        public RuntimeStatusData StatusData;
         public float Chance;
         public int Stacks;
         public float DurationSeconds;
@@ -700,6 +778,9 @@ namespace Pakuri.InGame
         public ProjectileStatusHitSpec ThresholdStatusSpec;
     }
 
+    /*
+     * 투사체 분기 피해 설정에 필요한 값을 보관한다.
+     */
     public sealed class ProjectileBranchDamageSpec
     {
         public bool Enabled;

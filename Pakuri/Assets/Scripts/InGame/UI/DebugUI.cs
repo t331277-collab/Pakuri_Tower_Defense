@@ -15,18 +15,18 @@ namespace Pakuri.InGame
         private const int MasterButtonCount = 2;
         private const int PassiveTraitButtonCount = 3;
 
-        private static readonly InGameSkillSlot[] DebugSlots =
+        private static readonly SkillSlot[] DebugSlots =
         {
-            InGameSkillSlot.A,
-            InGameSkillSlot.B,
-            InGameSkillSlot.C,
-            InGameSkillSlot.D,
-            InGameSkillSlot.E,
-            InGameSkillSlot.F,
-            InGameSkillSlot.G,
-            InGameSkillSlot.H,
-            InGameSkillSlot.I,
-            InGameSkillSlot.J
+            SkillSlot.A,
+            SkillSlot.B,
+            SkillSlot.C,
+            SkillSlot.D,
+            SkillSlot.E,
+            SkillSlot.F,
+            SkillSlot.G,
+            SkillSlot.H,
+            SkillSlot.I,
+            SkillSlot.J
         };
 
         [SerializeField] private GameObject debugRootPanel;
@@ -117,15 +117,15 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var monster = PakuriDataManager.Instance.ResolveMonster(monsterId, catalog);
+            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             if (monster == null)
             {
                 return;
             }
 
-            var sourceSkill = PakuriDataManager.Instance.ResolveActiveSkill(
+            var sourceSkill = CsvDataLoader.CurrentCatalog.ResolveActiveSkill(
                 monster.MonsterId,
-                InGameSkillDefinitionMapper.MapSlot(DebugSlots[slotIndex]),
+                DebugSlots[slotIndex],
                 monster);
             if (sourceSkill == null || string.IsNullOrWhiteSpace(sourceSkill.SkillId))
             {
@@ -152,15 +152,15 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var monster = PakuriDataManager.Instance.ResolveMonster(monsterId, catalog);
+            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             if (monster == null)
             {
                 return;
             }
 
-            var passive = PakuriDataManager.Instance.ResolvePassiveSkill(
+            var passive = CsvDataLoader.CurrentCatalog.ResolvePassiveSkill(
                 monster.MonsterId,
-                InGameSkillDefinitionMapper.MapSlot(DebugSlots[slotIndex]),
+                DebugSlots[slotIndex],
                 monster);
             if (passive == null || string.IsNullOrWhiteSpace(passive.PassiveId))
             {
@@ -175,7 +175,7 @@ namespace Pakuri.InGame
             CommitDebugOfferingChoice(session, catalog, monster, null, string.Empty, passive.PassiveId);
         }
 
-        private void RefreshRuntimeSkillModels(RunSession session, GameDataCatalog catalog)
+        private void RefreshRuntimeSkillModels(RunSession session)
         {
             var manager = ResolveCombatManager();
             if (session == null || manager == null)
@@ -183,7 +183,6 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var skillCatalog = new InGameSkillCatalog(catalog);
             var players = manager.Roster.Players;
             for (var i = 0; i < players.Count; i++)
             {
@@ -194,7 +193,7 @@ namespace Pakuri.InGame
                 }
 
                 SyncModelStateFromSession(session, model);
-                SkillRuntimeFactory.RebuildLearnedActiveSet(model, skillCatalog);
+                SkillRuntimeFactory.RebuildLearnedActiveSet(model);
                 manager.Roster.RefreshActor(model);
             }
         }
@@ -252,7 +251,7 @@ namespace Pakuri.InGame
             var selectedEntry = ResolveSelectedPlayerEntry();
             var model = selectedEntry != null ? selectedEntry.Model as MonsterUnitRuntimeModel : null;
             var monsterId = ResolveMonsterId(session, model);
-            var monster = PakuriDataManager.Instance.ResolveMonster(monsterId, catalog);
+            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
 
             for (var i = 0; i < skillButtons.Length && i < DebugSlots.Length; i++)
             {
@@ -266,10 +265,10 @@ namespace Pakuri.InGame
                 var slot = DebugSlots[i];
                 var isPassiveSlot = IsPassiveSlot(i);
                 var activeSkill = !isPassiveSlot && monster != null
-                    ? PakuriDataManager.Instance.ResolveActiveSkill(monster.MonsterId, InGameSkillDefinitionMapper.MapSlot(slot), monster)
+                    ? CsvDataLoader.CurrentCatalog.ResolveActiveSkill(monster.MonsterId, slot, monster)
                     : null;
                 var passiveSkill = isPassiveSlot && monster != null
-                    ? PakuriDataManager.Instance.ResolvePassiveSkill(monster.MonsterId, InGameSkillDefinitionMapper.MapSlot(slot), monster)
+                    ? CsvDataLoader.CurrentCatalog.ResolvePassiveSkill(monster.MonsterId, slot, monster)
                     : null;
                 var hasSkill = isPassiveSlot
                     ? passiveSkill != null && !string.IsNullOrWhiteSpace(passiveSkill.PassiveId)
@@ -539,8 +538,7 @@ namespace Pakuri.InGame
 
         private GameDataCatalog ResolveCatalog()
         {
-            var catalog = PakuriDataManager.Instance.CurrentCatalog;
-            return catalog != null ? catalog : PakuriCsvRuntimeData.ResolveCatalogOrFallback(null);
+            return CsvDataLoader.CurrentCatalog;
         }
 
         private InGameCombatManager ResolveCombatManager()
@@ -871,15 +869,15 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            monster = PakuriDataManager.Instance.ResolveMonster(monsterId, catalog);
+            monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             if (monster == null)
             {
                 return false;
             }
 
-            sourceSkill = PakuriDataManager.Instance.ResolveActiveSkill(
+            sourceSkill = CsvDataLoader.CurrentCatalog.ResolveActiveSkill(
                 monster.MonsterId,
-                InGameSkillDefinitionMapper.MapSlot(DebugSlots[slotIndex]),
+                DebugSlots[slotIndex],
                 monster);
             return sourceSkill != null;
         }
@@ -907,15 +905,15 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            monster = PakuriDataManager.Instance.ResolveMonster(monsterId, catalog);
+            monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             if (monster == null)
             {
                 return false;
             }
 
-            passive = PakuriDataManager.Instance.ResolvePassiveSkill(
+            passive = CsvDataLoader.CurrentCatalog.ResolvePassiveSkill(
                 monster.MonsterId,
-                InGameSkillDefinitionMapper.MapSlot(DebugSlots[slotIndex]),
+                DebugSlots[slotIndex],
                 monster);
             return passive != null;
         }
@@ -950,7 +948,7 @@ namespace Pakuri.InGame
                     choice.HasStatusChanceBonus ? choice.StatusChanceBonus : 0f);
             }
 
-            RefreshRuntimeSkillModels(session, catalog);
+            RefreshRuntimeSkillModels(session);
             RefreshButtonLabels();
             RefreshModifierChoiceButtons();
             monsterPanelUI?.RefreshNow();
@@ -972,7 +970,7 @@ namespace Pakuri.InGame
                 return choice.ChoiceId;
             }
 
-            var rewards = PakuriDataManager.Instance.GetRewardChoices(monster.MonsterId, monster);
+            var rewards = CsvDataLoader.CurrentCatalog.GetRewardChoices(monster.MonsterId, monster);
             var choiceId = choice.ChoiceId;
             for (var i = 0; i < rewards.Length; i++)
             {
@@ -1075,7 +1073,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            return PakuriDataManager.Instance.TryGetData(choiceId, out SkillChoiceDefinition choice)
+            return CsvDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoiceDefinition choice)
                 ? choice
                 : null;
         }
@@ -1084,12 +1082,12 @@ namespace Pakuri.InGame
         {
             return slotIndex >= 0
                 && slotIndex < DebugSlots.Length
-                && DebugSlots[slotIndex] >= InGameSkillSlot.F;
+                && DebugSlots[slotIndex] >= SkillSlot.F;
         }
 
-        private static string ResolveModifierButtonName(InGameSkillSlot slot)
+        private static string ResolveModifierButtonName(SkillSlot slot)
         {
-            return slot >= InGameSkillSlot.E ? "EmodifierBtn" : $"{slot}modifierBtn";
+            return slot >= SkillSlot.E ? "EmodifierBtn" : $"{slot}modifierBtn";
         }
 
         private static bool ContainsText(System.Collections.Generic.IReadOnlyList<string> values, string target)

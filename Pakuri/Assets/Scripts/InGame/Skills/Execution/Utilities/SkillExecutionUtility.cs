@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Combat;
@@ -8,8 +8,14 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
+    /*
+     * 스킬 실행 계산과 변환 기능을 제공한다.
+     */
     internal static class SkillExecutionUtility
     {
+        /*
+         * 가장 가까운 대상을 찾는다.
+         */
         public static UnitRosterEntry FindNearestTarget(
             UnitRosterEntry caster,
             UnitRosterService roster,
@@ -18,11 +24,17 @@ namespace Pakuri.InGame
             return SkillTargetingUtility.FindNearestTarget(caster, roster, targeting);
         }
 
+        /*
+         * 대상을 방향을 계산한다.
+         */
         public static Vector2 DirectionToTarget(Vector3 origin, UnitRosterEntry target)
         {
             return SkillTargetingUtility.DirectionToTarget(origin, target);
         }
 
+        /*
+         * 회전을 결정한다.
+         */
         public static Quaternion ResolveRotation(Vector2 direction)
         {
             if (direction.sqrMagnitude <= 0.0001f)
@@ -34,6 +46,9 @@ namespace Pakuri.InGame
             return Quaternion.Euler(0f, 0f, angle);
         }
 
+        /*
+         * 프리팹 크기를 적용한다.
+         */
         public static void ApplyPrefabScale(Transform target, float baseRadius, SkillExecutionSnapshot snapshot)
         {
             if (target == null || snapshot == null)
@@ -50,6 +65,9 @@ namespace Pakuri.InGame
             target.localScale *= scaleFactor;
         }
 
+        /*
+         * 정렬된 대상을 결정한다.
+         */
         public static List<UnitRosterEntry> ResolveOrderedTargets(
             UnitRosterEntry sourceEntry,
             UnitRosterService unitRoster,
@@ -58,6 +76,9 @@ namespace Pakuri.InGame
             return ResolveOrderedTargets(sourceEntry, unitRoster, targetingSpec, null, 0);
         }
 
+        /*
+         * 정렬된 대상을 결정한다.
+         */
         public static List<UnitRosterEntry> ResolveOrderedTargets(
             UnitRosterEntry sourceEntry,
             UnitRosterService unitRoster,
@@ -86,6 +107,9 @@ namespace Pakuri.InGame
             return targets;
         }
 
+        /*
+         * 피해를 결정한다.
+         */
         public static float ResolveDamage(
             BaseUnitRuntimeModel caster,
             SkillDamageSpec damage,
@@ -102,7 +126,7 @@ namespace Pakuri.InGame
                 baseDamage = (baseDamage + snapshot.BaseDamageBonus) * Mathf.Max(0f, snapshot.DamageMultiplier);
             }
 
-            baseDamage *= StatusEffectRuntime.ResolveOutgoingDamageMultiplier(caster, MapAttribute(damage.Element), damage.SkillId);
+            baseDamage *= StatusEffectRules.ResolveOutgoingDamageMultiplier(caster, MapAttribute(damage.Element), damage.SkillId);
             if (caster is EnemyUnitRuntimeModel enemy)
             {
                 baseDamage *= EnemyPassiveRuntime.ResolveOutgoingDamageMultiplier(
@@ -113,6 +137,9 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, baseDamage);
         }
 
+        /*
+         * 능력치 값을 결정한다.
+         */
         public static float ResolvePowerValue(BaseUnitRuntimeModel caster, SkillDamageSpec spec)
         {
             if (spec == null)
@@ -135,7 +162,10 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, spec.BaseDamage + stat * spec.StatCoefficient);
         }
 
-        public static float ResolveShield(BaseUnitRuntimeModel caster, ShieldSkillData skill, SkillExecutionSnapshot snapshot = null)
+        /*
+         * 보호막을 결정한다.
+         */
+        public static float ResolveShield(BaseUnitRuntimeModel caster, ShieldSkillRuntimeData skill, SkillExecutionSnapshot snapshot = null)
         {
             if (skill == null)
             {
@@ -154,7 +184,10 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, shield);
         }
 
-        public static float ResolveProjectileLifetime(ProjectileSkillData skill)
+        /*
+         * 투사체 수명을 결정한다.
+         */
+        public static float ResolveProjectileLifetime(ProjectileSkillRuntimeData skill)
         {
             var projectile = skill != null ? skill.Projectile : null;
             if (projectile != null && projectile.LifetimeSeconds > 0f)
@@ -167,6 +200,9 @@ namespace Pakuri.InGame
             return Mathf.Max(0.25f, battlefieldTravelDistance / speed + 0.5f);
         }
 
+        /*
+         * 대상의 방어와 상태를 반영한 최종 피해를 계산한다.
+         */
         public static float ResolveDamageAgainstTarget(
             float baseDamage,
             SkillExecutionSnapshot snapshot,
@@ -180,11 +216,17 @@ namespace Pakuri.InGame
             return Mathf.Max(0f, baseDamage * snapshot.ResolveConditionalDamageMultiplier(target));
         }
 
-        public static DamageAttribute MapAttribute(ElementType element)
+        /*
+         * 속성을 런타임 값으로 변환한다.
+         */
+        public static DamageAttribute MapAttribute(DamageAttribute element)
         {
             return (DamageAttribute)(int)element;
         }
 
+        /*
+         * 능력치를 결정한다.
+         */
         private static float ResolveStat(BaseUnitRuntimeModel caster, StatSource source)
         {
             var stats = caster != null ? caster.Stats : null;
@@ -195,12 +237,15 @@ namespace Pakuri.InGame
 
             if (source == StatSource.Attack)
             {
-                return stats.AttackPower * StatusEffectRuntime.ResolveAttackPowerMultiplier(caster);
+                return stats.AttackPower * StatusEffectRules.ResolveAttackPowerMultiplier(caster);
             }
 
-            return stats.SpellPower * StatusEffectRuntime.ResolveSpellPowerMultiplier(caster);
+            return stats.SpellPower * StatusEffectRules.ResolveSpellPowerMultiplier(caster);
         }
 
+        /*
+         * 대상 목록을 결정한다.
+         */
         public static System.Collections.Generic.IReadOnlyList<UnitRosterEntry> ResolveTargetList(
             UnitRosterEntry caster,
             UnitRosterService roster,
@@ -209,6 +254,9 @@ namespace Pakuri.InGame
             return SkillTargetingUtility.ResolveTargetList(caster, roster, targeting);
         }
 
+        /*
+         * 대상을 비교한다.
+         */
         private static int CompareTargets(
             UnitRosterEntry sourceEntry,
             SkillTargetingSpec targetingSpec,
@@ -264,6 +312,9 @@ namespace Pakuri.InGame
             return leftDistance.CompareTo(rightDistance);
         }
 
+        /*
+         * 거리 제곱을 결정한다.
+         */
         private static float ResolveDistanceSquared(UnitRosterEntry sourceEntry, UnitRosterEntry target)
         {
             if (sourceEntry == null || sourceEntry.Transform == null || target == null || target.Transform == null)
@@ -276,6 +327,9 @@ namespace Pakuri.InGame
             return offset.sqrMagnitude;
         }
 
+        /*
+         * 상태 중첩을 결정한다.
+         */
         private static int ResolveStatusStacks(BaseUnitRuntimeModel model, string statusId)
         {
             if (model == null || string.IsNullOrWhiteSpace(statusId))

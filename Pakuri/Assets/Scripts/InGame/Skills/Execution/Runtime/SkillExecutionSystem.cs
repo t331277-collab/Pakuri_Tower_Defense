@@ -4,8 +4,14 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 스킬 실행 시스템의 실행 순서와 상태를 조율한다.
+     */
     public sealed class SkillExecutionSystem
     {
+        /*
+         * 스킬 자동 전달 조건 함수 호출 형식을 정의한다.
+         */
         public delegate bool SkillAutoRoutePredicate(UnitRosterEntry entry, SkillRuntimeInstance runtime);
 
         private readonly SkillExecutorRegistry registry = new SkillExecutorRegistry();
@@ -14,6 +20,9 @@ namespace Pakuri.InGame
             new Dictionary<UnitRosterEntry, UnitSkillController>();
         private readonly List<UnitRosterEntry> staleControllerEntries = new List<UnitRosterEntry>();
 
+        /*
+         * 로스터의 모든 유닛 스킬 상태와 자동 시전을 갱신한다.
+         */
         public void Tick(
             UnitRosterService roster,
             InGameCombatManager combatManager,
@@ -35,6 +44,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 수동을 실행하고 성공 여부를 반환한다.
+         */
         public bool TryExecuteManual(
             UnitRosterEntry entry,
             SkillRuntimeInstance runtime,
@@ -61,6 +73,9 @@ namespace Pakuri.InGame
                 logRoutedContracts);
         }
 
+        /*
+         * 처형 선택된을 가능한 상태인지 확인한다.
+         */
         public bool CanExecuteSelected(
             UnitRosterEntry entry,
             SkillRuntimeInstance runtime,
@@ -68,7 +83,7 @@ namespace Pakuri.InGame
         {
             if (entry == null
                 || runtime == null
-                || !StatusEffectRuntime.CanAct(entry.Model)
+                || !StatusEffectRules.CanAct(entry.Model)
                 || !registry.TryResolve(runtime.Data, out _))
             {
                 return false;
@@ -78,6 +93,9 @@ namespace Pakuri.InGame
             return runtime.CanCastWithSnapshot(snapshot);
         }
 
+        /*
+         * 선택된을 실행하고 성공 여부를 반환한다.
+         */
         public bool TryExecuteSelected(
             UnitRosterEntry entry,
             SkillRuntimeInstance runtime,
@@ -100,6 +118,9 @@ namespace Pakuri.InGame
                 logRoutedContracts);
         }
 
+        /*
+         * 트리거된을 실행하고 성공 여부를 반환한다.
+         */
         public bool TryExecuteTriggered(
             UnitRosterEntry entry,
             SkillRuntimeInstance runtime,
@@ -134,6 +155,9 @@ namespace Pakuri.InGame
                 triggerSourceSkillId);
         }
 
+        /*
+         * 유닛 항목을 시간 흐름에 따라 갱신한다.
+         */
         private void TickEntry(
             UnitRosterEntry entry,
             UnitRosterService roster,
@@ -151,6 +175,9 @@ namespace Pakuri.InGame
             controller.Tick(roster, combatManager, deltaTime, logRoutedContracts, canAutoRoute);
         }
 
+        /*
+         * 유닛의 스킬 컨트롤러를 조회하고 없으면 생성한다.
+         */
         private UnitSkillController GetOrCreateController(UnitRosterEntry entry)
         {
             if (!unitControllers.TryGetValue(entry, out var controller))
@@ -162,6 +189,9 @@ namespace Pakuri.InGame
             return controller;
         }
 
+        /*
+         * 컨트롤러 캐시를 더 이상 필요한 값이 아닌 항목을 정리한다.
+         */
         private void PruneControllerCache(IReadOnlyList<UnitRosterEntry> activeEntries)
         {
             if (unitControllers.Count == 0)
@@ -186,6 +216,9 @@ namespace Pakuri.InGame
             staleControllerEntries.Clear();
         }
 
+        /*
+         * 유닛 항목을 포함하는지 확인한다.
+         */
         private static bool ContainsEntry(IReadOnlyList<UnitRosterEntry> entries, UnitRosterEntry candidate)
         {
             for (var i = 0; i < entries.Count; i++)
@@ -199,15 +232,19 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 스킬 데이터에 맞는 실행기로 요청 전달을 시도한다.
+         */
         private bool TryRouteSkill(SkillExecutionRequest request)
         {
             var entry = request.Entry;
             var runtime = request.Runtime;
-            if (runtime == null || entry == null || !StatusEffectRuntime.CanAct(entry.Model))
+            if (runtime == null || entry == null || !StatusEffectRules.CanAct(entry.Model))
             {
                 return false;
             }
 
+            // 실행 직전에 학습 선택지를 반영한 스냅샷으로 시전 가능 여부를 판단한다.
             var snapshot = choiceResolver.Resolve(entry != null ? entry.Model : null, runtime, request.Roster);
             if (!runtime.CanCastWithSnapshot(snapshot))
             {
@@ -232,6 +269,7 @@ namespace Pakuri.InGame
             var result = executor.Execute(context, snapshot);
             if (result.Routed)
             {
+                // 실행기가 요청을 처리한 경우에만 재사용 대기시간과 시전 트리거를 시작한다.
                 if (!runtime.TryBeginCast(snapshot))
                 {
                     return false;
@@ -248,6 +286,9 @@ namespace Pakuri.InGame
             return result.Routed;
         }
 
+        /*
+         * 스킬 시전 사실을 트리거 런타임에 전달한다.
+         */
         private static void NotifySkillCastTriggers(
             InGameCombatManager combatManager,
             UnitRosterService roster,
@@ -273,6 +314,9 @@ namespace Pakuri.InGame
                 triggerSourceSkillId);
         }
 
+        /*
+         * 트리거된 스킬을 실행하고 성공 여부를 반환한다.
+         */
         private bool TryExecuteTriggeredSkill(
             UnitRosterEntry entry,
             SkillRuntimeInstance runtime,
@@ -326,11 +370,17 @@ namespace Pakuri.InGame
         }
     }
 
+    /*
+     * 스킬 데이터 형식에 맞는 실행기를 등록하고 조회한다.
+     */
     internal sealed class SkillExecutorRegistry
     {
         private readonly System.Collections.Generic.List<IInGameSkillExecutor> executors =
             new System.Collections.Generic.List<IInGameSkillExecutor>();
 
+        /*
+         * 스킬 등록소에 필요한 값을 초기화한다.
+         */
         public SkillExecutorRegistry()
         {
             RegisterDefaults();
@@ -338,6 +388,9 @@ namespace Pakuri.InGame
 
         public int Count => executors.Count;
 
+        /*
+         * 스킬 실행기를 자료형 기준으로 등록한다.
+         */
         public void Register(IInGameSkillExecutor executor)
         {
             if (executor != null && !executors.Contains(executor))
@@ -346,7 +399,10 @@ namespace Pakuri.InGame
             }
         }
 
-        public bool TryResolve(SkillData skillData, out IInGameSkillExecutor executor)
+        /*
+         * 스킬 데이터에 맞는 실행기를 찾는다.
+         */
+        public bool TryResolve(SkillRuntimeData skillData, out IInGameSkillExecutor executor)
         {
             executor = null;
             if (skillData == null)
@@ -366,6 +422,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 기본 실행기를 등록한다.
+         */
         private void RegisterDefaults()
         {
             Register(new ProjectileSkillExecutor());
@@ -380,13 +439,22 @@ namespace Pakuri.InGame
         }
     }
 
+    /*
+     * 학습한 선택지를 스킬 실행 상태에 적용한다.
+     */
     internal sealed class SkillChoiceResolver
     {
+        /*
+         * 유닛이 학습한 선택지를 현재 스킬 실행 정보에 적용한다.
+         */
         public SkillExecutionSnapshot Resolve(BaseUnitRuntimeModel owner, SkillRuntimeInstance runtime)
         {
             return Resolve(owner, runtime, null);
         }
 
+        /*
+         * 유닛이 학습한 선택지를 현재 스킬 실행 정보에 적용한다.
+         */
         public SkillExecutionSnapshot Resolve(BaseUnitRuntimeModel owner, SkillRuntimeInstance runtime, UnitRosterService roster)
         {
             var skillData = runtime != null ? runtime.Data : null;
@@ -404,10 +472,13 @@ namespace Pakuri.InGame
             return snapshot;
         }
 
+        /*
+         * 패시브 기본 보정값을 적용한다.
+         */
         private static void ApplyPassiveBaseModifiers(
             SkillExecutionSnapshot snapshot,
             MonsterUnitRuntimeModel owner,
-            SkillData skillData)
+            SkillRuntimeData skillData)
         {
             if (snapshot == null
                 || owner == null
@@ -419,7 +490,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var manager = PakuriDataManager.Instance;
+            var manager = CsvDataLoader.CurrentCatalog;
             foreach (var passiveId in owner.State.LearnedPassiveSkillIds)
             {
                 if (manager == null
@@ -442,10 +513,13 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 선택지를 적용한다.
+         */
         private static void ApplyChoices(
             SkillExecutionSnapshot snapshot,
             System.Collections.Generic.ICollection<string> chosenChoiceIds,
-            SkillData skillData,
+            SkillRuntimeData skillData,
             BaseUnitRuntimeModel owner,
             UnitRosterService roster)
         {
@@ -454,7 +528,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var manager = PakuriDataManager.Instance;
+            var manager = CsvDataLoader.CurrentCatalog;
             foreach (var choiceId in chosenChoiceIds)
             {
                 if (manager != null
@@ -469,6 +543,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 동적 선택지 규칙을 적용한다.
+         */
         private static void ApplyDynamicChoiceRules(
             SkillExecutionSnapshot snapshot,
             SkillChoiceDefinition choice,
@@ -493,10 +570,10 @@ namespace Pakuri.InGame
                     choice.CountMax);
             }
 
-            var targetNodes = InGameSkillDefinitionMapper.FilterSkillNodeDefinitionsForTarget(
+            var targetNodes = SkillRuntimeCompiler.FilterSkillNodeDefinitionsForTarget(
                 choice.NormalizedPlanNodes,
                 snapshot.SkillId);
-            var nodes = InGameSkillDefinitionMapper.MapSkillNodeDefinitions(targetNodes);
+            var nodes = SkillRuntimeCompiler.MapSkillNodeDefinitions(targetNodes);
             for (var i = 0; i < nodes.Length; i++)
             {
                 var action = nodes[i] != null ? nodes[i].Action : null;
@@ -516,6 +593,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 횟수 상태 피해 배율을 적용한다.
+         */
         private static void ApplyCountStatusDamageMultiplier(
             SkillExecutionSnapshot snapshot,
             BaseUnitRuntimeModel owner,
@@ -547,6 +627,9 @@ namespace Pakuri.InGame
             snapshot.ApplyDynamicDamageMultiplier(1f + count * amountPerCount);
         }
 
+        /*
+         * 선택지 조건과 일치하는 대상 수를 계산한다.
+         */
         private static int CountMatchingTargets(
             BaseUnitRuntimeModel owner,
             UnitRosterService roster,
@@ -577,6 +660,9 @@ namespace Pakuri.InGame
             return count;
         }
 
+        /*
+         * 횟수 유닛 항목을 결정한다.
+         */
         private static System.Collections.Generic.IReadOnlyList<UnitRosterEntry> ResolveCountEntries(
             BaseUnitRuntimeModel owner,
             UnitRosterService roster,
@@ -600,6 +686,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 스킬 대상을 조건에 맞는 값만 선별한다.
+         */
         private static System.Collections.Generic.IReadOnlyList<UnitRosterEntry> FilterSkillTargets(
             System.Collections.Generic.IReadOnlyList<UnitRosterEntry> entries)
         {
@@ -623,12 +712,18 @@ namespace Pakuri.InGame
             return filtered;
         }
 
+        /*
+         * 유닛이 선택지 효과의 적용 대상인지 확인한다.
+         */
         private static bool IsSkillTarget(UnitRosterEntry entry)
         {
             var identity = entry != null && entry.Model != null ? entry.Model.Identity : null;
             return entry != null && (identity == null || identity.Role != UnitRole.Nexus);
         }
 
+        /*
+         * 유닛 항목 대상 모델을 찾는다.
+         */
         private static UnitRosterEntry FindEntryForModel(
             BaseUnitRuntimeModel model,
             System.Collections.Generic.IReadOnlyList<UnitRosterEntry> entries)
@@ -649,6 +744,9 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * 상태를 보유하고 있는지 확인한다.
+         */
         private static bool HasStatus(BaseUnitRuntimeModel model, string statusId, int minimumStacks = 1)
         {
             if (model == null || string.IsNullOrWhiteSpace(statusId) || minimumStacks <= 0)
@@ -669,7 +767,10 @@ namespace Pakuri.InGame
             return model.Statuses != null && model.Statuses.GetStacks(kind) >= minimumStacks;
         }
 
-        private static bool AppliesToSkill(SkillChoiceDefinition choice, SkillData skillData)
+        /*
+         * 선택지 효과가 현재 스킬에 적용되는지 확인한다.
+         */
+        private static bool AppliesToSkill(SkillChoiceDefinition choice, SkillRuntimeData skillData)
         {
             if (choice == null || skillData == null)
             {
@@ -678,7 +779,7 @@ namespace Pakuri.InGame
 
             if (choice.NormalizedPlanNodes != null && choice.NormalizedPlanNodes.Length > 0)
             {
-                return InGameSkillDefinitionMapper.HasSkillNodeForTarget(
+                return SkillRuntimeCompiler.HasSkillNodeForTarget(
                     choice.NormalizedPlanNodes,
                     skillData.SkillId);
             }
@@ -690,6 +791,9 @@ namespace Pakuri.InGame
                 && string.Equals(targetSkillId, skillData.SkillId, System.StringComparison.OrdinalIgnoreCase);
         }
 
+        /*
+         * 출처 유닛이 필수 상태와 최소 중첩을 만족하는지 확인한다.
+         */
         private static bool MeetsSourceStatusRequirement(SkillChoiceDefinition choice, BaseUnitRuntimeModel owner)
         {
             if (choice == null || string.IsNullOrWhiteSpace(choice.RequiredSourceStatusId))

@@ -1,11 +1,18 @@
 using System;
+using Pakuri.Data;
 using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 스킬 하나의 재사용 대기시간, 시전, 연속 발사 상태를 관리한다.
+     */
     public sealed class SkillRuntimeInstance
     {
-        public SkillRuntimeInstance(BaseUnitRuntimeModel owner, SkillData data)
+        /*
+         * 스킬 런타임 인스턴스에 필요한 값을 초기화한다.
+         */
+        public SkillRuntimeInstance(BaseUnitRuntimeModel owner, SkillRuntimeData data)
         {
             Owner = owner;
             Data = data;
@@ -14,10 +21,10 @@ namespace Pakuri.InGame
         }
 
         public BaseUnitRuntimeModel Owner { get; }
-        public SkillData Data { get; }
+        public SkillRuntimeData Data { get; }
         public SkillExecutionPlan BasePlan { get; }
         public string SkillId => Data != null ? Data.SkillId : string.Empty;
-        public InGameSkillSlot Slot => Data != null ? Data.Slot : default;
+        public SkillSlot Slot => Data != null ? Data.Slot : default;
         public float CooldownRemaining { get; private set; }
         public float CastRemaining { get; private set; }
         public float ActiveDurationRemaining { get; private set; }
@@ -49,6 +56,9 @@ namespace Pakuri.InGame
         public bool HasMagazine => !UsesMagazine || MagazineRemaining > 0;
         public bool CanCast => CanCastWithSnapshot(null);
 
+        /*
+         * 런타임 상태값을 초기화한다.
+         */
         public void ResetRuntimeState()
         {
             effectiveMaxMagazineSize = ResolveMaxMagazineSize(Data);
@@ -70,6 +80,9 @@ namespace Pakuri.InGame
             consecutiveHitRepeatCount = 0;
         }
 
+        /*
+         * 투사체 발사 횟수를 증가시키고 현재 횟수를 반환한다.
+         */
         public int AdvanceProjectileLaunchCount()
         {
             if (ProjectileLaunchCount == int.MaxValue)
@@ -81,6 +94,9 @@ namespace Pakuri.InGame
             return ProjectileLaunchCount;
         }
 
+        /*
+         * 스킬 적중 횟수를 증가시키고 현재 횟수를 반환한다.
+         */
         public int AdvanceSkillHitCount()
         {
             if (SkillHitCount == int.MaxValue)
@@ -92,6 +108,9 @@ namespace Pakuri.InGame
             return SkillHitCount;
         }
 
+        /*
+         * 같은 대상을 연속으로 적중했을 때 적용할 피해 배율을 결정한다.
+         */
         public float ResolveConsecutiveHitDamageMultiplier(BaseUnitRuntimeModel target, SkillExecutionSnapshot snapshot)
         {
             if (target == null)
@@ -99,7 +118,7 @@ namespace Pakuri.InGame
                 return 1f;
             }
 
-            var projectileData = Data as ProjectileSkillData;
+            var projectileData = Data as ProjectileSkillRuntimeData;
             var bonusRate = snapshot != null && snapshot.ConsecutiveHitBonusRate > 0f
                 ? snapshot.ConsecutiveHitBonusRate
                 : projectileData != null ? projectileData.ConsecutiveHitBonusRate : 0f;
@@ -135,6 +154,9 @@ namespace Pakuri.InGame
             return 1f + bonus;
         }
 
+        /*
+         * 스킬의 시전, 지속시간, 재사용 대기시간을 갱신한다.
+         */
         public void Tick(float deltaTime)
         {
             if (deltaTime <= 0f)
@@ -142,7 +164,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var actionDeltaTime = deltaTime * StatusEffectRuntime.ResolveActionSpeedMultiplier(Owner);
+            var actionDeltaTime = deltaTime * StatusEffectRules.ResolveActionSpeedMultiplier(Owner);
             CooldownRemaining = TickDown(CooldownRemaining, actionDeltaTime);
             CastRemaining = TickDown(CastRemaining, actionDeltaTime);
             ActiveDurationRemaining = TickDown(ActiveDurationRemaining, deltaTime);
@@ -159,6 +181,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 시전 포함 실행 정보를 가능한 상태인지 확인한다.
+         */
         public bool CanCastWithSnapshot(SkillExecutionSnapshot snapshot)
         {
             RefreshRuntimeModifiers(snapshot);
@@ -180,11 +205,17 @@ namespace Pakuri.InGame
                 && HasMagazine;
         }
 
+        /*
+         * 시전을 시작하고 성공 여부를 반환한다.
+         */
         public bool TryBeginCast()
         {
             return TryBeginCast(null);
         }
 
+        /*
+         * 시전을 시작하고 성공 여부를 반환한다.
+         */
         public bool TryBeginCast(SkillExecutionSnapshot snapshot)
         {
             RefreshRuntimeModifiers(snapshot);
@@ -228,17 +259,26 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 다음 주기 효과를 실행할 시간이 되었는지 확인한다.
+         */
         public bool IsTickReady()
         {
             var timing = Data != null ? Data.Timing : null;
             return timing != null && timing.TickInterval > 0f && TickRemaining <= 0f;
         }
 
+        /*
+         * 주기 간격을 초기화한다.
+         */
         public void ResetTickInterval()
         {
             TickRemaining = effectiveTickInterval;
         }
 
+        /*
+         * 현재 연속 발사에서 몇 번째 투사체인지 계산한다.
+         */
         public int ResolveCurrentBurstProjectileIndex()
         {
             if (effectiveBurstProjectileCount <= 1 || !IsBursting)
@@ -252,6 +292,9 @@ namespace Pakuri.InGame
                 effectiveBurstProjectileCount);
         }
 
+        /*
+         * 남은 재장전 시간을 감소시킨다.
+         */
         public bool ReduceReloadRemaining(float seconds)
         {
             if (seconds <= 0f || ReloadRemaining <= 0f)
@@ -268,6 +311,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 남은 재사용 대기시간을 감소시킨다.
+         */
         public bool ReduceCooldownRemaining(float seconds)
         {
             if (seconds <= 0f || CooldownRemaining <= 0f)
@@ -284,6 +330,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * 재사용 대기시간을 초기화한다.
+         */
         public void ResetCooldown()
         {
             CooldownRemaining = 0f;
@@ -293,16 +342,25 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 남은 시간을 0 이하로 내려가지 않게 감소시킨다.
+         */
         private static float TickDown(float value, float deltaTime)
         {
             return value > 0f ? Mathf.Max(0f, value - deltaTime) : 0f;
         }
 
+        /*
+         * 다음 시전을 실행할 간격이 지났는지 확인한다.
+         */
         private bool IsCastIntervalReady()
         {
             return effectiveTickInterval <= 0f || TickRemaining <= 0f;
         }
 
+        /*
+         * 현재 선택지에 맞춰 스킬 런타임 보정값을 다시 계산한다.
+         */
         private void RefreshRuntimeModifiers(SkillExecutionSnapshot snapshot)
         {
             var previousMax = effectiveMaxMagazineSize;
@@ -355,37 +413,52 @@ namespace Pakuri.InGame
             }
         }
 
-        private static int ResolveMaxMagazineSize(SkillData data)
+        /*
+         * 최대 탄창 크기를 결정한다.
+         */
+        private static int ResolveMaxMagazineSize(SkillRuntimeData data)
         {
             return data != null
                 ? Math.Max(0, data.MagazineCapacity)
                 : 0;
         }
 
-        private static int ResolveBurstProjectileCount(SkillData data)
+        /*
+         * 연속 발사 투사체 횟수를 결정한다.
+         */
+        private static int ResolveBurstProjectileCount(SkillRuntimeData data)
         {
-            var projectile = data as ProjectileSkillData;
+            var projectile = data as ProjectileSkillRuntimeData;
             return projectile != null && projectile.Projectile != null
                 ? Math.Max(1, projectile.Projectile.BurstProjectileCount)
                 : 1;
         }
 
-        private static float ResolveReloadDuration(SkillData data)
+        /*
+         * 재장전 지속시간을 결정한다.
+         */
+        private static float ResolveReloadDuration(SkillRuntimeData data)
         {
             return data != null
                 ? Mathf.Max(0f, data.ReloadSeconds)
                 : 0f;
         }
 
-        private static float ResolveTickInterval(SkillData data)
+        /*
+         * 주기 간격을 결정한다.
+         */
+        private static float ResolveTickInterval(SkillRuntimeData data)
         {
             var timing = data != null ? data.Timing : null;
             return timing != null ? Mathf.Max(0f, timing.TickInterval) : 0f;
         }
 
-        private static float ResolveBurstInterval(SkillData data)
+        /*
+         * 연속 발사 간격을 결정한다.
+         */
+        private static float ResolveBurstInterval(SkillRuntimeData data)
         {
-            var projectile = data as ProjectileSkillData;
+            var projectile = data as ProjectileSkillRuntimeData;
             if (projectile != null && projectile.Projectile != null)
             {
                 var burstInterval = projectile.Projectile.BurstIntervalSeconds;
@@ -398,12 +471,18 @@ namespace Pakuri.InGame
             return ResolveTickInterval(data);
         }
 
-        private static float ResolveCooldownDuration(SkillData data)
+        /*
+         * 재사용 대기시간 지속시간을 결정한다.
+         */
+        private static float ResolveCooldownDuration(SkillRuntimeData data)
         {
             var timing = data != null ? data.Timing : null;
             return timing != null ? Mathf.Max(0f, timing.Cooldown) : 0f;
         }
 
+        /*
+         * 발사나 시전이 끝났다면 재사용 대기 또는 재장전을 시작한다.
+         */
         private void BeginRecoveryIfNeeded()
         {
             if (!UsesMagazine)

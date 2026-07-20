@@ -4,23 +4,47 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * I 스킬 시전 조건 구현에 필요한 계약을 정의한다.
+     */
     internal interface ISkillCastCondition
     {
-        bool ShouldReject(SkillExecutionContext context, SkillExecutionSnapshot snapshot, SingleAttackData skill);
+        /*
+         * 거부를 실행해야 하는지 확인한다.
+         */
+        bool ShouldReject(SkillExecutionContext context, SkillExecutionSnapshot snapshot, SingleAttackSkillRuntimeData skill);
     }
 
+    /*
+     * I 스킬 피해 보정값 구현에 필요한 계약을 정의한다.
+     */
     internal interface ISkillDamageModifier
     {
-        void Apply(SingleAttackData skill, SkillExecutionSnapshot snapshot, BaseUnitRuntimeModel target, ref SingleAttackDamageModifierState state);
+        /*
+         * 대상과 스킬 조건에 맞는 피해 보정값을 적용한다.
+         */
+        void Apply(SingleAttackSkillRuntimeData skill, SkillExecutionSnapshot snapshot, BaseUnitRuntimeModel target, ref SingleAttackDamageModifierState state);
     }
 
+    /*
+     * I 스킬 적중 후 적중 행동 구현에 필요한 계약을 정의한다.
+     */
     internal interface ISkillPostHitAction
     {
-        bool TryApply(SkillRuntimeInstance sourceRuntime, SingleAttackData skill, SkillExecutionSnapshot snapshot, InGameResourceChangeResult result, bool wasExecute);
+        /*
+         * 적중 결과에 후속 행동을 적용한다.
+         */
+        bool TryApply(SkillRuntimeInstance sourceRuntime, SingleAttackSkillRuntimeData skill, SkillExecutionSnapshot snapshot, InGameResourceChangeResult result, bool wasExecute);
     }
 
+    /*
+     * 단일 공격 피해 보정값 상태값에 필요한 값을 보관한다.
+     */
     internal struct SingleAttackDamageModifierState
     {
+        /*
+         * 단일 공격 피해 보정값 상태값에 필요한 값을 초기화한다.
+         */
         public SingleAttackDamageModifierState(float damageMultiplier, float critChanceBonus)
         {
             DamageMultiplier = damageMultiplier;
@@ -33,6 +57,9 @@ namespace Pakuri.InGame
         public bool IsExecute;
     }
 
+    /*
+     * 단일 공격의 시전 조건, 피해 보정, 처치 후 처리를 조율한다.
+     */
     internal static class SingleAttackSkillRuleHandlers
     {
         private static readonly ISkillCastCondition ExecuteCastCondition = new TargetHealthRatioCastCondition();
@@ -48,16 +75,22 @@ namespace Pakuri.InGame
             new KillCooldownRefundAction()
         };
 
+        /*
+         * 처형 체력 조건 때문에 시전을 거부해야 하는지 확인한다.
+         */
         public static bool ShouldRejectCastForExecuteThreshold(
             SkillExecutionContext context,
             SkillExecutionSnapshot snapshot,
-            SingleAttackData skill)
+            SingleAttackSkillRuntimeData skill)
         {
             return ExecuteCastCondition.ShouldReject(context, snapshot, skill);
         }
 
+        /*
+         * 피해 보정값을 적용한다.
+         */
         public static SingleAttackDamageModifierState ApplyDamageModifiers(
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             SkillExecutionSnapshot snapshot,
             BaseUnitRuntimeModel target,
             float damageMultiplier,
@@ -72,9 +105,12 @@ namespace Pakuri.InGame
             return state;
         }
 
+        /*
+         * 대상 처치 결과에 따라 재사용 대기시간 회복을 처리한다.
+         */
         public static void HandleKillRecovery(
             SkillRuntimeInstance sourceRuntime,
-            SingleAttackData skill,
+            SingleAttackSkillRuntimeData skill,
             SkillExecutionSnapshot snapshot,
             InGameResourceChangeResult result,
             bool wasExecute)
@@ -94,9 +130,15 @@ namespace Pakuri.InGame
         }
     }
 
+    /*
+     * 대상 체력 비율을 기준으로 단일 공격 시전 가능 여부를 판단한다.
+     */
     internal sealed class TargetHealthRatioCastCondition : ISkillCastCondition
     {
-        public bool ShouldReject(SkillExecutionContext context, SkillExecutionSnapshot snapshot, SingleAttackData skill)
+        /*
+         * 거부를 실행해야 하는지 확인한다.
+         */
+        public bool ShouldReject(SkillExecutionContext context, SkillExecutionSnapshot snapshot, SingleAttackSkillRuntimeData skill)
         {
             if (context == null
                 || skill == null
@@ -115,7 +157,10 @@ namespace Pakuri.InGame
             return target == null || target.Model == null || !IsWithinThreshold(target.Model, threshold);
         }
 
-        public static bool TryResolveThreshold(SingleAttackData skill, SkillExecutionSnapshot snapshot, out float threshold)
+        /*
+         * 임계값을 결정하고 성공 여부를 반환한다.
+         */
+        public static bool TryResolveThreshold(SingleAttackSkillRuntimeData skill, SkillExecutionSnapshot snapshot, out float threshold)
         {
             var bonus = 0f;
             var ops = snapshot != null && snapshot.Plan != null ? snapshot.Plan.CastConditions : null;
@@ -135,6 +180,9 @@ namespace Pakuri.InGame
             return threshold > 0f;
         }
 
+        /*
+         * 현재 체력 비율이 지정한 임계값 안인지 확인한다.
+         */
         public static bool IsWithinThreshold(BaseUnitRuntimeModel target, float threshold)
         {
             var resources = target != null ? target.Resources : null;
@@ -148,9 +196,15 @@ namespace Pakuri.InGame
         }
     }
 
+    /*
+     * 처형 조건을 만족한 대상에게 피해 배율을 적용한다.
+     */
     internal sealed class ExecuteDamageModifier : ISkillDamageModifier
     {
-        public void Apply(SingleAttackData skill, SkillExecutionSnapshot snapshot, BaseUnitRuntimeModel target, ref SingleAttackDamageModifierState state)
+        /*
+         * 처형 체력 조건을 만족하면 피해 배율을 적용한다.
+         */
+        public void Apply(SingleAttackSkillRuntimeData skill, SkillExecutionSnapshot snapshot, BaseUnitRuntimeModel target, ref SingleAttackDamageModifierState state)
         {
             if (skill == null
                 || target == null
@@ -192,9 +246,15 @@ namespace Pakuri.InGame
         }
     }
 
+    /*
+     * 보스 대상에게 지정된 피해 배율을 적용한다.
+     */
     internal sealed class BossDamageModifier : ISkillDamageModifier
     {
-        public void Apply(SingleAttackData skill, SkillExecutionSnapshot snapshot, BaseUnitRuntimeModel target, ref SingleAttackDamageModifierState state)
+        /*
+         * 대상이 보스이면 지정된 피해 배율을 적용한다.
+         */
+        public void Apply(SingleAttackSkillRuntimeData skill, SkillExecutionSnapshot snapshot, BaseUnitRuntimeModel target, ref SingleAttackDamageModifierState state)
         {
             if (skill == null || target == null || !target.IsBoss)
             {
@@ -219,9 +279,15 @@ namespace Pakuri.InGame
         }
     }
 
+    /*
+     * 처치 성공 시 스킬 재사용 대기시간을 초기화한다.
+     */
     internal sealed class KillCooldownResetAction : ISkillPostHitAction
     {
-        public bool TryApply(SkillRuntimeInstance sourceRuntime, SingleAttackData skill, SkillExecutionSnapshot snapshot, InGameResourceChangeResult result, bool wasExecute)
+        /*
+         * 처치 성공 시 재사용 대기시간 초기화를 시도한다.
+         */
+        public bool TryApply(SkillRuntimeInstance sourceRuntime, SingleAttackSkillRuntimeData skill, SkillExecutionSnapshot snapshot, InGameResourceChangeResult result, bool wasExecute)
         {
             if (sourceRuntime == null
                 || !result.IsDead
@@ -254,9 +320,15 @@ namespace Pakuri.InGame
         }
     }
 
+    /*
+     * 처치 성공 시 스킬 재사용 대기시간 일부를 돌려준다.
+     */
     internal sealed class KillCooldownRefundAction : ISkillPostHitAction
     {
-        public bool TryApply(SkillRuntimeInstance sourceRuntime, SingleAttackData skill, SkillExecutionSnapshot snapshot, InGameResourceChangeResult result, bool wasExecute)
+        /*
+         * 처치 성공 시 재사용 대기시간 반환을 시도한다.
+         */
+        public bool TryApply(SkillRuntimeInstance sourceRuntime, SingleAttackSkillRuntimeData skill, SkillExecutionSnapshot snapshot, InGameResourceChangeResult result, bool wasExecute)
         {
             if (sourceRuntime == null || !result.IsDead)
             {

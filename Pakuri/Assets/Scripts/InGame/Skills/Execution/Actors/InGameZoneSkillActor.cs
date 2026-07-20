@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace Pakuri.InGame
 {
+    /*
+     * 인게임 지속 범위 스킬의 위치, 충돌, 수명 주기를 처리한다.
+     */
     [DisallowMultipleComponent]
     public sealed class InGameZoneSkillActor : MonoBehaviour
     {
@@ -34,6 +37,9 @@ namespace Pakuri.InGame
         private bool usePrefabHitbox;
         private int recastGeneration;
 
+        /*
+         * 인게임 지속 범위 스킬 실행에 필요한 위치, 대상, 피해 정보를 설정한다.
+         */
         public void Initialize(
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
@@ -89,6 +95,9 @@ namespace Pakuri.InGame
             ApplyCurrentAreaTick();
         }
 
+        /*
+         * 범위 주기를 적용한다.
+         */
         public static bool ApplyAreaTick(
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
@@ -187,6 +196,9 @@ namespace Pakuri.InGame
                 executionSnapshot);
         }
 
+        /*
+         * 인게임 지속 범위 스킬의 이동, 수명, 주기 처리를 매 프레임 갱신한다.
+         */
         private void Update()
         {
             if (combatManager == null)
@@ -212,6 +224,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 종료 효과를 실행하고 성공 여부를 반환한다.
+         */
         private void TryExecuteExpireEffects()
         {
             if (onExpireEffects == null || onExpireEffects.Length == 0 || combatManager == null || casterEntry == null || roster == null)
@@ -230,6 +245,9 @@ namespace Pakuri.InGame
             onExpireEffects = null;
         }
 
+        /*
+         * 지속 범위 비주얼과 히트박스 크기를 설정한다.
+         */
         private void ConfigureVisual()
         {
             transform.position = center;
@@ -265,6 +283,9 @@ namespace Pakuri.InGame
             transform.localScale = scale;
         }
 
+        /*
+         * 현재 범위 주기를 적용한다.
+         */
         private bool ApplyCurrentAreaTick()
         {
             if (usePrefabHitbox)
@@ -310,6 +331,9 @@ namespace Pakuri.InGame
                 snapshot);
         }
 
+        /*
+         * 콜라이더 범위 주기를 적용한다.
+         */
         internal static bool ApplyColliderAreaTick(
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
@@ -406,6 +430,9 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /*
+         * 이번 주기에 결정된 적중 결과를 적용한다.
+         */
         private static bool ApplyResolvedHits(
             InGameCombatManager manager,
             UnitRosterEntry sourceEntry,
@@ -458,6 +485,9 @@ namespace Pakuri.InGame
             return routed;
         }
 
+        /*
+         * 대상 대상 주기를 선택한다.
+         */
         private static List<UnitRosterEntry> SelectTargetsForTick(List<UnitRosterEntry> eligibleTargets, int maxTargetsPerTick)
         {
             if (eligibleTargets == null || eligibleTargets.Count == 0)
@@ -481,6 +511,9 @@ namespace Pakuri.InGame
             return selectedTargets;
         }
 
+        /*
+         * 대상의 방어와 상태를 반영한 최종 피해를 계산한다.
+         */
         private static float ResolveDamageAgainstTarget(
             float baseDamage,
             SkillExecutionSnapshot executionSnapshot,
@@ -489,6 +522,9 @@ namespace Pakuri.InGame
             return SkillExecutionUtility.ResolveDamageAgainstTarget(baseDamage, executionSnapshot, target);
         }
 
+        /*
+         * 대상이 현재 히트박스 안에 있는지 확인한다.
+         */
         private static bool IsTargetInsideHitbox(
             Collider2D[] hitboxColliders,
             UnitRosterEntry target,
@@ -548,11 +584,17 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * 디버그 스킬 ID를 반환한다.
+         */
         private string GetDebugSkillId()
         {
             return runtime != null ? runtime.SkillId : string.Empty;
         }
 
+        /*
+         * 프리팹 히트박스 초기화를 진단 정보를 기록한다.
+         */
         private void LogPrefabHitboxInitialization()
         {
             var debugSkillId = GetDebugSkillId();
@@ -564,12 +606,18 @@ namespace Pakuri.InGame
             Debug.Log($"[ZoneHitboxDebug:{debugSkillId}] Initialize usePrefabHitbox={usePrefabHitbox} center={center} radius={radius} scale={transform.localScale} hitboxes={DescribeColliderCollection(prefabHitboxColliders)}");
         }
 
+        /*
+         * 현재 스킬이 히트박스 진단 대상인지 확인한다.
+         */
         private static bool IsDebugSkill(string skillId)
         {
             return !string.IsNullOrWhiteSpace(skillId)
                 && string.Equals(skillId, "eve-c", System.StringComparison.OrdinalIgnoreCase);
         }
 
+        /*
+         * 대상을 진단용 설명 문자열을 만든다.
+         */
         private static string DescribeTarget(UnitRosterEntry target)
         {
             if (target == null)
@@ -583,6 +631,9 @@ namespace Pakuri.InGame
             return $"{name}/{unitId}@{pos}";
         }
 
+        /*
+         * 콜라이더 목록을 진단용 설명 문자열을 만든다.
+         */
         private static string DescribeColliderCollection(Collider2D[] colliders)
         {
             if (colliders == null || colliders.Length == 0)
@@ -606,6 +657,9 @@ namespace Pakuri.InGame
             return sb.ToString();
         }
 
+        /*
+         * 콜라이더를 진단용 설명 문자열을 만든다.
+         */
         private static string DescribeCollider(Collider2D collider)
         {
             if (collider == null)
@@ -617,6 +671,9 @@ namespace Pakuri.InGame
             return $"{collider.GetType().Name}:{collider.name}:enabled={collider.enabled}:trigger={collider.isTrigger}:center={bounds.center}:size={bounds.size}";
         }
 
+        /*
+         * 상태를 적용하고 성공 여부를 반환한다.
+         */
         private static void TryApplyStatus(
             InGameCombatManager manager,
             BaseUnitRuntimeModel target,
@@ -626,6 +683,9 @@ namespace Pakuri.InGame
             SkillStatusApplyUtility.TryApplyStatus(manager, target, status, source);
         }
 
+        /*
+         * 출처 스킬 ID를 결정한다.
+         */
         private static string ResolveSourceSkillId(SkillExecutionSnapshot executionSnapshot, SkillRuntimeInstance sourceRuntime)
         {
             if (sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId))
