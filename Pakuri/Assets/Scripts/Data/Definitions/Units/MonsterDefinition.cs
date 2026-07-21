@@ -30,7 +30,7 @@ namespace Pakuri.Data
         public string ActiveSkillName = "Skill A";
         public string PassiveSkillName = "Passive F";
         public Sprite MonsterIconImage;
-        public UnitStatsRuntime BaseStats = new UnitStatsRuntime
+        public UnitCombatStats BaseStats = new UnitCombatStats
         {
             MaxHealth = 100f,
             AttackPower = 30f,

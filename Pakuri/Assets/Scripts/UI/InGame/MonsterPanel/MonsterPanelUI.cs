@@ -58,18 +58,18 @@ namespace Pakuri.InGame
             }
         }
 
-        private MonsterUnitRuntimeModel[] ResolvePlayerModelsBySlot()
+        private MonsterCombatState[] ResolvePlayerModelsBySlot()
         {
-            var models = new MonsterUnitRuntimeModel[MaxPartySlots];
-            var players = combatManager != null && combatManager.Roster != null
-                ? combatManager.Roster.Players
+            var models = new MonsterCombatState[MaxPartySlots];
+            var players = combatManager != null && combatManager.UnitRegistry != null
+                ? combatManager.UnitRegistry.Players
                 : null;
             if (players != null)
             {
                 for (var i = 0; i < players.Count; i++)
                 {
                     var entry = players[i];
-                    var model = entry != null ? entry.Model as MonsterUnitRuntimeModel : null;
+                    var model = entry != null ? entry.Model as MonsterCombatState : null;
                     var identity = model != null ? model.Identity : null;
                     if (identity == null || identity.Side != UnitSide.Player)
                     {
@@ -229,7 +229,7 @@ namespace Pakuri.InGame
                 ResolveChildren();
             }
 
-            public void SetRuntime(MonsterUnitRuntimeModel model, GameDataCatalog catalog)
+            public void SetRuntime(MonsterCombatState model, GameDataCatalog catalog)
             {
                 ResolveChildren();
                 if (root == null)
@@ -270,7 +270,7 @@ namespace Pakuri.InGame
                 monsterImage.enabled = false;
             }
 
-            private void RefreshActiveSlots(MonsterUnitRuntimeModel model)
+            private void RefreshActiveSlots(MonsterCombatState model)
             {
                 var runtimes = model != null && model.SkillRuntime != null ? model.SkillRuntime.ActiveSkills : null;
                 var runtimeCount = runtimes != null ? runtimes.Count : 0;

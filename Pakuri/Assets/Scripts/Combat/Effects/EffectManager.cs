@@ -52,7 +52,7 @@ namespace Pakuri.InGame
         /*
          * 시전자의 몬스터 ID와 스킬 ID에 등록된 효과 프리팹을 찾는다.
          */
-        public GameObject ResolveMonsterSkillEffectPrefab(BaseUnitRuntimeModel caster, string skillId)
+        public GameObject ResolveMonsterSkillEffectPrefab(UnitCombatState caster, string skillId)
         {
             if (caster == null || caster.Identity == null)
             {
@@ -86,7 +86,7 @@ namespace Pakuri.InGame
          * 우선 프리팹, 몬스터 등록 프리팹, 후순위 프리팹 순서로 사용할 효과를 찾는다.
          */
         public GameObject ResolveSkillEffectPrefab(
-            BaseUnitRuntimeModel caster,
+            UnitCombatState caster,
             string skillId,
             GameObject preferredPrefab = null,
             GameObject fallbackPrefab = null)
@@ -191,7 +191,7 @@ namespace Pakuri.InGame
             string objectName,
             Vector3 position,
             float baseRadius,
-            SkillExecutionSnapshot snapshot,
+            SkillSnapshot snapshot,
             bool createEmptyObject = false,
             float radiusMultiplier = 1f,
             bool requireHitbox = false)
@@ -226,7 +226,7 @@ namespace Pakuri.InGame
             string objectName,
             Vector3 position,
             float baseRadius,
-            SkillExecutionSnapshot snapshot,
+            SkillSnapshot snapshot,
             float durationSeconds,
             bool requireHitbox = false)
         {
@@ -327,7 +327,7 @@ namespace Pakuri.InGame
          */
         public void SpawnEffectVisualOnTargets(
             SkillEffectDefinition effect,
-            IReadOnlyList<UnitRosterEntry> targets,
+            IReadOnlyList<CombatUnitEntry> targets,
             float durationSeconds)
         {
             if (effect == null || targets == null)
@@ -361,10 +361,10 @@ namespace Pakuri.InGame
          * 적용된 상태의 런타임 비주얼 또는 프리팹을 생성하고 대상에게 붙인다.
          */
         public void SpawnOrRefreshStatusVisual(
-            BaseUnitRuntimeModel target,
+            UnitCombatState target,
             Transform targetTransform,
-            RuntimeStatusData statusData,
-            UnitStatusRuntime status)
+            StatusRuntimeData statusData,
+            StatusRuntimeInstance status)
         {
             if (target == null || targetTransform == null || statusData == null || status == null)
             {
@@ -422,7 +422,7 @@ namespace Pakuri.InGame
         }
 
         // 조건이 끝난 영구 패시브 상태의 연결 비주얼을 출처 키로 즉시 정리한다.
-        public void RemoveStatusVisual(BaseUnitRuntimeModel target, UnitStatusRuntime status)
+        public void RemoveStatusVisual(UnitCombatState target, StatusRuntimeInstance status)
         {
             var statusData = status != null ? status.SourceData : null;
             if (target == null || status == null || statusData == null)
@@ -582,7 +582,7 @@ namespace Pakuri.InGame
         public bool ConfigureAreaEffect(
             GameObject instance,
             float baseRadius,
-            SkillExecutionSnapshot snapshot,
+            SkillSnapshot snapshot,
             float radiusMultiplier = 1f,
             bool requireHitbox = false)
         {
@@ -608,7 +608,7 @@ namespace Pakuri.InGame
             GameObject instance,
             SkillExecutionContext context,
             SingleSkillRuntimeData skill,
-            SkillExecutionSnapshot snapshot,
+            SkillSnapshot snapshot,
             Vector2 center)
         {
             EffectVisualUtility.ConfigureSingleAttackLine(

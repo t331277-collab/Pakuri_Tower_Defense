@@ -99,7 +99,7 @@ namespace Pakuri.Data
         public EnemyEncounterRole EncounterRole;
         public EnemyAttackType AttackType;
         public DamageAttribute Attribute;
-        public UnitStatsRuntime Stats = new UnitStatsRuntime
+        public UnitCombatStats Stats = new UnitCombatStats
         {
             MaxHealth = 100f,
             AttackPower = 30f,

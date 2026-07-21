@@ -17,7 +17,7 @@ namespace Pakuri.InGame
          * 피해 적용 옵션을 구성한다.
          */
         public DamageApplicationOptions(
-            BaseUnitRuntimeModel source,
+            UnitCombatState source,
             bool criticalAllowed,
             float critChanceBonus,
             float critDamageBonus,
@@ -36,7 +36,7 @@ namespace Pakuri.InGame
             DamageMeterSourceId = damageMeterSourceId;
         }
 
-        public BaseUnitRuntimeModel Source { get; }
+        public UnitCombatState Source { get; }
         public bool CriticalAllowed { get; }
         public float CritChanceBonus { get; }
         public float CritDamageBonus { get; }
@@ -51,33 +51,32 @@ namespace Pakuri.InGame
      */
     public class InGameCombatManager : MonoBehaviour
     {
-        private readonly UnitRosterService roster = new UnitRosterService();
-        private EnemyCombatController enemyController;
-        private readonly SkillExecutionSystem skillExecution = new SkillExecutionSystem();
-        private readonly PassiveEffectRuntime passiveEffects = new PassiveEffectRuntime();
+        private readonly CombatUnitRegistry unitRegistry = new CombatUnitRegistry();
+        private EnemyActionController enemyActionController;
+        private readonly SkillExecution skillExecution = new SkillExecution();
+        private readonly PassiveSkill passiveEffects = new PassiveSkill();
         [SerializeField] private PlayerCombatInputController playerCombatControl;
-        private readonly HashSet<BaseUnitRuntimeModel> combatStartDispatchedUnits = new HashSet<BaseUnitRuntimeModel>();
+        private readonly HashSet<UnitCombatState> combatStartDispatchedUnits = new HashSet<UnitCombatState>();
         [SerializeField] private bool enemyCombatSimulationEnabled = true;
         [SerializeField] private bool skillExecutionEnabled = true;
-        [SerializeField] private bool logSkillExecutionContracts;
         [SerializeField] private EffectManager effectManager;
 
-        public UnitRosterService Roster => roster;
+        public CombatUnitRegistry UnitRegistry => unitRegistry;
         public EffectManager Effects => effectManager;
-        internal PassiveEffectRuntime PassiveEffects => passiveEffects;
-        internal SkillExecutionSystem SkillExecution => skillExecution;
-        internal bool LogSkillExecutionContracts => logSkillExecutionContracts;
+        internal PassiveSkill PassiveEffects => passiveEffects;
+        internal SkillExecution SkillExecution => skillExecution;
 
-        public int ActiveEnemyCount => roster.EnemyCount;
+        public int ActiveEnemyCount => unitRegistry.EnemyCount;
         public event Action<DamageApplicationOptions, InGameResourceChangeResult> DamageApplied;
+        public event Action<UnitCombatState> UnitDefeated;
 
         /*
          * 전투 시작 전에 로스터와 전투 기록을 초기화한다.
          */
         private void Awake()
         {
-            enemyController = new EnemyCombatController(roster, skillExecution, this);
-            roster.Clear();
+            enemyActionController = new EnemyActionController(unitRegistry, skillExecution, this);
+            unitRegistry.Clear();
             combatStartDispatchedUnits.Clear();
             passiveEffects.Reset();
         }
@@ -92,22 +91,19 @@ namespace Pakuri.InGame
             if (skillExecutionEnabled)
             {
                 skillExecution.Tick(
-                    roster,
+                    unitRegistry,
                     this,
                     Time.deltaTime,
-                    logSkillExecutionContracts,
-                    (entry, runtime) => playerCombatControl.CanUseAutoSkill(entry, roster));
+                    (entry, runtime) => playerCombatControl.CanUseAutoSkill(entry, unitRegistry));
                 playerCombatControl.HandleManualInput(
-                    roster,
+                    unitRegistry,
                     skillExecution,
-                    this,
-                    Time.deltaTime,
-                    logSkillExecutionContracts);
+                    this);
             }
 
             if (enemyCombatSimulationEnabled)
             {
-                enemyController.Tick(Time.deltaTime);
+                enemyActionController.Tick(Time.deltaTime);
             }
 
             TickUnitStatuses(Time.deltaTime);
@@ -117,13 +113,13 @@ namespace Pakuri.InGame
         /*
          * 플레이어 몬스터를 등록하고 전투 시작 처리를 실행한다.
          */
-        public UnitRosterEntry RegisterPlayerMonster(MonsterUnitRuntimeModel model, MonsterUnitActor actor, Transform hitboxRoot)
+        public CombatUnitEntry RegisterPlayerMonster(MonsterCombatState model, MonsterActor actor, Transform hitboxRoot)
         {
-            var entry = roster.Register(model, actor, hitboxRoot);
+            var entry = unitRegistry.Register(model, actor, hitboxRoot);
             passiveEffects.NotifyRosterChanged();
             if (PlayerCombatInputController.IsSelectedPlayerModel(model))
             {
-                playerCombatControl.ApplyAutoSkillModeToSelectedPlayer(roster);
+                playerCombatControl.ApplyAutoSkillModeToSelectedPlayer(unitRegistry);
             }
 
             DispatchCombatStartOnce(model);
@@ -133,9 +129,9 @@ namespace Pakuri.InGame
         /*
          * 적을 등록하고 전투 시작 처리를 실행한다.
          */
-        public UnitRosterEntry RegisterEnemy(EnemyUnitRuntimeModel model, EnemyUnitActor actor, Transform hitboxRoot)
+        public CombatUnitEntry RegisterEnemy(EnemyCombatState model, EnemyActor actor, Transform hitboxRoot)
         {
-            var entry = roster.Register(model, actor, hitboxRoot);
+            var entry = unitRegistry.Register(model, actor, hitboxRoot);
             passiveEffects.NotifyRosterChanged();
             DispatchCombatStartOnce(model);
             return entry;
@@ -144,9 +140,9 @@ namespace Pakuri.InGame
         /*
          * 넥서스를 전투 로스터에 등록한다.
          */
-        public UnitRosterEntry RegisterNexus(NexusUnitRuntimeModel model, NexusUnitActor actor, Transform hitboxRoot)
+        public CombatUnitEntry RegisterNexus(NexusCombatState model, NexusActor actor, Transform hitboxRoot)
         {
-            var entry = roster.Register(model, actor, hitboxRoot);
+            var entry = unitRegistry.Register(model, actor, hitboxRoot);
             passiveEffects.NotifyRosterChanged();
             return entry;
         }
@@ -154,11 +150,11 @@ namespace Pakuri.InGame
         /*
          * 유닛을 로스터에서 해제하고 연결된 Actor를 제거한다.
          */
-        public bool DespawnUnit(BaseUnitRuntimeModel model)
+        public bool DespawnUnit(UnitCombatState model)
         {
-            var entry = roster.Find(model);
+            var entry = unitRegistry.Find(model);
             var actor = entry.Actor;
-            roster.Unregister(model);
+            unitRegistry.Unregister(model);
             passiveEffects.NotifyRosterChanged();
             Destroy(actor.gameObject);
 
@@ -169,10 +165,10 @@ namespace Pakuri.InGame
          * 피해를 적용하고 표시, Trigger, 사망 처리를 실행한다.
          */
         public InGameResourceChangeResult ApplyDamage(
-            BaseUnitRuntimeModel target,
+            UnitCombatState target,
             float baseDamage,
             DamageAttribute attribute,
-            BaseUnitRuntimeModel source,
+            UnitCombatState source,
             bool criticalAllowed = false,
             float critChanceBonus = 0f,
             float critDamageBonus = 0f,
@@ -181,8 +177,8 @@ namespace Pakuri.InGame
             bool sourceHitWasExecute = false,
             string damageMeterSourceId = null)
         {
-            var depletedShields = new List<UnitStatusRuntime>();
-            var absorbedShields = new List<ShieldAbsorbRecord>();
+            var depletedShields = new List<StatusRuntimeInstance>();
+            var absorbedShields = new List<ShieldAbsorptionRecord>();
             var options = new DamageApplicationOptions(source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId, suppressOutgoingDamageTriggers, sourceHitWasExecute, damageMeterSourceId);
             var result = ApplyDamageToResources(target, baseDamage, attribute, options, depletedShields, absorbedShields);
             // 자원 변화가 없으면 표시와 Trigger도 실행하지 않는다.
@@ -199,17 +195,17 @@ namespace Pakuri.InGame
             }
             // 통계와 UI에는 실제 자원 변화 결과만 전달한다.
             DamageApplied?.Invoke(options, result);
-            var damagedEntry = roster.Find(result.Target);
-            damagedEntry.RefreshActor();
+            var damagedEntry = unitRegistry.Find(result.Target);
+            damagedEntry.RefreshDisplay();
             damagedEntry.ShowDamage(result.AppliedDamage, result.IsDead);
-            SkillTriggerRuntime.ExecuteShieldAbsorbs(this, roster, target, source, absorbedShields);
-            SkillTriggerRuntime.ExecuteExpiredStatuses(this, roster, target, depletedShields);
+            SkillTrigger.ExecuteShieldAbsorbs(this, unitRegistry, target, source, absorbedShields);
+            SkillTrigger.ExecuteExpiredStatuses(this, unitRegistry, target, depletedShields);
             DispatchOutgoingDamageTriggers(target, attribute, options, result, baseDamage);
             if (result.IsDead && options.Source != null)
             {
-                SkillTriggerRuntime.ExecuteKill(
+                SkillTrigger.ExecuteKill(
                     this,
-                    roster,
+                    unitRegistry,
                     options.Source,
                     options.SourceSkillId,
                     target,
@@ -225,7 +221,7 @@ namespace Pakuri.InGame
         /*
          * 넥서스를 제외한 대상의 체력을 회복한다.
          */
-        public InGameResourceChangeResult Heal(BaseUnitRuntimeModel target, float amount)
+        public InGameResourceChangeResult Heal(UnitCombatState target, float amount)
         {
             // 넥서스는 회복량을 0으로 처리한다.
             var result = HealResources(target, target.IsNexus ? 0f : amount);
@@ -235,7 +231,7 @@ namespace Pakuri.InGame
             }
 
             passiveEffects.NotifyResourceChanged(result);
-            roster.Find(result.Target).RefreshActor();
+            unitRegistry.Find(result.Target).RefreshDisplay();
             return result;
         }
 
@@ -243,12 +239,12 @@ namespace Pakuri.InGame
          * 피해를 보호막과 체력에 적용하고 변경 결과를 만든다.
          */
         private static InGameResourceChangeResult ApplyDamageToResources(
-            BaseUnitRuntimeModel target,
+            UnitCombatState target,
             float baseDamage,
             DamageAttribute attribute,
             DamageApplicationOptions options,
-            ICollection<UnitStatusRuntime> depletedShields,
-            ICollection<ShieldAbsorbRecord> absorbedShields)
+            ICollection<StatusRuntimeInstance> depletedShields,
+            ICollection<ShieldAbsorptionRecord> absorbedShields)
         {
             var resources = target.Resources;
             var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
@@ -290,7 +286,7 @@ namespace Pakuri.InGame
         /*
          * 체력을 최대 체력 범위에서 회복하고 변경 결과를 만든다.
          */
-        private static InGameResourceChangeResult HealResources(BaseUnitRuntimeModel target, float amount)
+        private static InGameResourceChangeResult HealResources(UnitCombatState target, float amount)
         {
             var resources = target.Resources;
             var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
@@ -328,15 +324,15 @@ namespace Pakuri.InGame
         /*
          * 일반 상태를 적용하고 상태 표시와 패시브 조건을 갱신한다.
          */
-        public UnitStatusRuntime ApplyStatus(
-            BaseUnitRuntimeModel target,
-            RuntimeStatusData statusData,
+        public StatusRuntimeInstance ApplyStatus(
+            UnitCombatState target,
+            StatusRuntimeData statusData,
             int stacks,
             float durationSeconds,
             int maxStacks,
             bool permanent,
             bool refreshDuration,
-            BaseUnitRuntimeModel source)
+            UnitCombatState source)
         {
             // 넥서스에는 일반 상태를 적용하지 않는다.
             if (statusData.Kind == StatusEffectKind.None || target.IsNexus)
@@ -354,24 +350,24 @@ namespace Pakuri.InGame
             status.SetSourceUnit(source);
             passiveEffects.NotifyStatusChanged(target);
             target.SyncShield();
-            roster.RefreshActor(target);
-            effectManager.SpawnOrRefreshStatusVisual(target, roster.Find(target).Transform, statusData, status);
+            unitRegistry.RefreshDisplay(target);
+            effectManager.SpawnOrRefreshStatusVisual(target, unitRegistry.Find(target).Transform, statusData, status);
             return status;
         }
 
         /*
          * 보호막 상태를 적용하고 상태 표시와 패시브 조건을 갱신한다.
          */
-        public UnitStatusRuntime ApplyShieldStatus(
-            BaseUnitRuntimeModel target,
-            RuntimeStatusData statusData,
+        public StatusRuntimeInstance ApplyShieldStatus(
+            UnitCombatState target,
+            StatusRuntimeData statusData,
             float shieldAmount,
             float durationSeconds,
             int stacks,
             int maxStacks,
             bool permanent,
             bool refreshDuration,
-            BaseUnitRuntimeModel source)
+            UnitCombatState source)
         {
             // 넥서스에는 보호막 상태를 적용하지 않는다.
             if (statusData.Kind != StatusEffectKind.Shield || target.IsNexus)
@@ -380,7 +376,7 @@ namespace Pakuri.InGame
             }
 
             // 대상의 보호막 수신 배율을 먼저 반영한다.
-            var adjustedShieldAmount = Mathf.Max(0f, shieldAmount) * StatusEffectRules.ResolveShieldReceivedMultiplier(target);
+            var adjustedShieldAmount = Mathf.Max(0f, shieldAmount) * StatusCombatRules.ResolveShieldReceivedMultiplier(target);
             var status = target.Statuses.Apply(
                 statusData,
                 stacks,
@@ -393,15 +389,15 @@ namespace Pakuri.InGame
             passiveEffects.NotifyStatusChanged(target);
 
             target.SyncShield();
-            roster.RefreshActor(target);
-            effectManager.SpawnOrRefreshStatusVisual(target, roster.Find(target).Transform, statusData, status);
+            unitRegistry.RefreshDisplay(target);
+            effectManager.SpawnOrRefreshStatusVisual(target, unitRegistry.Find(target).Transform, statusData, status);
             return status;
         }
 
         /*
          * 지정한 상태의 지속시간을 연장하고 표시를 갱신한다.
          */
-        public bool ExtendStatusDuration(BaseUnitRuntimeModel target, StatusEffectKind kind, float durationDelta)
+        public bool ExtendStatusDuration(UnitCombatState target, StatusEffectKind kind, float durationDelta)
         {
             if (kind == StatusEffectKind.None || durationDelta <= 0f || target.IsNexus)
             {
@@ -419,7 +415,7 @@ namespace Pakuri.InGame
             }
 
             target.SyncShield();
-            roster.RefreshActor(target);
+            unitRegistry.RefreshDisplay(target);
 
             var activeStatuses = target.Statuses.ActiveStatuses;
             for (var i = 0; i < activeStatuses.Count; i++)
@@ -430,7 +426,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                effectManager.SpawnOrRefreshStatusVisual(target, roster.Find(target).Transform, status.SourceData, status);
+                effectManager.SpawnOrRefreshStatusVisual(target, unitRegistry.Find(target).Transform, status.SourceData, status);
             }
 
             return true;
@@ -448,16 +444,16 @@ namespace Pakuri.InGame
             combatStartDispatchedUnits.Clear();
             passiveEffects.Reset();
 
-            var entries = roster.Entries;
+            var entries = unitRegistry.Entries;
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
                 var model = entry.Model;
 
                 // 몬스터는 전용 서비스로, 나머지는 공통 상태만 초기화한다.
-                if (model is MonsterUnitRuntimeModel monsterModel)
+                if (model is MonsterCombatState monsterModel)
                 {
-                    MonsterUnitRuntimeStateService.ResetTransientCombatState(monsterModel);
+                    UnitCombatReset.ResetTransient(monsterModel);
                 }
                 else
                 {
@@ -467,14 +463,14 @@ namespace Pakuri.InGame
                 }
 
                 model.SyncShield();
-                entry.RefreshActor();
+                entry.RefreshDisplay();
             }
         }
 
         /*
          * 유닛별 전투 시작 Trigger를 한 번만 실행한다.
          */
-        private void DispatchCombatStartOnce(BaseUnitRuntimeModel source)
+        private void DispatchCombatStartOnce(UnitCombatState source)
         {
             // 같은 유닛의 전투 시작 Trigger는 다시 보내지 않는다.
             if (!combatStartDispatchedUnits.Add(source))
@@ -482,7 +478,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            SkillTriggerRuntime.ExecuteCombatStart(this, roster, source);
+            SkillTrigger.ExecuteCombatStart(this, unitRegistry, source);
         }
 
         /*
@@ -490,15 +486,15 @@ namespace Pakuri.InGame
          */
         private void FlushPassiveEffectChanges()
         {
-            passiveEffects.FlushPendingChanges(this, roster);
+            passiveEffects.FlushPendingChanges(this, unitRegistry);
         }
 
         /*
          * 지정한 패시브 출처가 만든 상태를 제거한다.
          */
-        internal bool RemovePassiveStatus(BaseUnitRuntimeModel target, StatusEffectKind kind, string sourceSkillId)
+        internal bool RemovePassiveStatus(UnitCombatState target, StatusEffectKind kind, string sourceSkillId)
         {
-            var removedStatuses = new List<UnitStatusRuntime>();
+            var removedStatuses = new List<StatusRuntimeInstance>();
             // 같은 종류라도 해당 패시브 출처가 만든 상태만 제거한다.
             if (!target.Statuses.Remove(kind, sourceSkillId, removedStatuses))
             {
@@ -506,13 +502,13 @@ namespace Pakuri.InGame
             }
 
             target.SyncShield();
-            roster.RefreshActor(target);
+            unitRegistry.RefreshDisplay(target);
             for (var i = 0; i < removedStatuses.Count; i++)
             {
                 effectManager.RemoveStatusVisual(target, removedStatuses[i]);
             }
 
-            SkillTriggerRuntime.ExecuteExpiredStatuses(this, roster, target, removedStatuses);
+            SkillTrigger.ExecuteExpiredStatuses(this, unitRegistry, target, removedStatuses);
             passiveEffects.NotifyStatusChanged(target);
             return true;
         }
@@ -521,7 +517,7 @@ namespace Pakuri.InGame
          * 공격자의 피해 Trigger와 추가 피해 상태를 실행한다.
          */
         private void DispatchOutgoingDamageTriggers(
-            BaseUnitRuntimeModel target,
+            UnitCombatState target,
             DamageAttribute attribute,
             DamageApplicationOptions options,
             InGameResourceChangeResult result,
@@ -533,9 +529,9 @@ namespace Pakuri.InGame
                 return;
             }
 
-            SkillTriggerRuntime.ExecuteOutgoingDamage(
+            SkillTrigger.ExecuteOutgoingDamage(
                 this,
-                roster,
+                unitRegistry,
                 options.Source,
                 options.SourceSkillId,
                 target,
@@ -550,7 +546,7 @@ namespace Pakuri.InGame
          * 공격자 상태가 제공하는 추가 속성 피해를 적용한다.
          */
         private void ApplyOutgoingAdditionalDamageStatuses(
-            BaseUnitRuntimeModel target,
+            UnitCombatState target,
             DamageAttribute triggerAttribute,
             DamageApplicationOptions options,
             float sourceBaseDamage)
@@ -560,7 +556,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var specs = StatusEffectRules.ResolveOutgoingAdditionalDamageSpecs(options.Source, triggerAttribute);
+            var specs = StatusCombatRules.ResolveOutgoingAdditionalDamageSpecs(options.Source, triggerAttribute);
             for (var i = 0; i < specs.Count; i++)
             {
                 if (target.Resources.CurrentHealth <= 0f)
@@ -591,7 +587,7 @@ namespace Pakuri.InGame
         /*
          * 문자열 태그 상태를 지정 수만큼 소비한다.
          */
-        public int ConsumeStatusStacks(BaseUnitRuntimeModel target, string statusTag, int stacks)
+        public int ConsumeStatusStacks(UnitCombatState target, string statusTag, int stacks)
         {
             if (stacks <= 0)
             {
@@ -602,7 +598,7 @@ namespace Pakuri.InGame
             if (consumed > 0)
             {
                 target.SyncShield();
-                roster.RefreshActor(target);
+                unitRegistry.RefreshDisplay(target);
                 passiveEffects.NotifyStatusChanged(target);
             }
 
@@ -619,18 +615,18 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var entries = roster.Entries;
+            var entries = unitRegistry.Entries;
             for (var i = 0; i < entries.Count; i++)
             {
                 var model = entries[i].Model;
 
-                var removedStatuses = new List<UnitStatusRuntime>();
+                var removedStatuses = new List<StatusRuntimeInstance>();
                 if (model.Statuses.Tick(deltaTime, removedStatuses))
                 {
                     model.SyncShield();
-                    roster.RefreshActor(model);
+                    unitRegistry.RefreshDisplay(model);
                     // 만료 상태는 일반 만료와 보호막 만료 Trigger에 각각 전달한다.
-                    SkillTriggerRuntime.ExecuteExpiredStatuses(this, roster, model, removedStatuses);
+                    SkillTrigger.ExecuteExpiredStatuses(this, unitRegistry, model, removedStatuses);
                     passiveEffects.NotifyStatusChanged(model);
                 }
             }
@@ -646,11 +642,11 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var entry = roster.Find(result.Target);
-            roster.Unregister(result.Target);
+            var entry = unitRegistry.Find(result.Target);
+            unitRegistry.Unregister(result.Target);
             passiveEffects.NotifyRosterChanged();
-            // Actor가 유닛 유형에 맞는 패배 연출과 통지를 처리한다.
-            entry.ShowDefeated();
+            entry.HandleDefeat();
+            UnitDefeated?.Invoke(result.Target);
         }
 
     }
@@ -664,7 +660,7 @@ namespace Pakuri.InGame
          * 자원 변경 결과를 구성한다.
          */
         public InGameResourceChangeResult(
-            BaseUnitRuntimeModel target,
+            UnitCombatState target,
             float previousHealth,
             float currentHealth,
             float previousShield,
@@ -681,7 +677,7 @@ namespace Pakuri.InGame
             IsDead = isDead;
         }
 
-        public BaseUnitRuntimeModel Target { get; }
+        public UnitCombatState Target { get; }
         public float PreviousHealth { get; }
         public float CurrentHealth { get; }
         public float PreviousShield { get; }

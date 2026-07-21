@@ -18,7 +18,7 @@ namespace Pakuri.InGame
         private const string RinMonsterId = "rin";
         private const string SeinMonsterId = "sein";
         private const string VegaMonsterId = "vega";
-        private readonly UnitFactory unitFactory = new UnitFactory();
+        private readonly UnitCombatStateFactory unitStateFactory = new UnitCombatStateFactory();
 
         [SerializeField] private InGameCombatManager combatManager;
         [SerializeField] private Transform playerSpawnPoint;
@@ -34,7 +34,17 @@ namespace Pakuri.InGame
 
         private GameObject spawnedPlayerUnit;
 
-        public MonsterUnitRuntimeModel SpawnedPlayerModel { get; private set; }
+        public MonsterCombatState SpawnedPlayerModel { get; private set; }
+
+        /*
+         * Nexus 상태를 만들고 Actor와 전투 등록소에 연결한다.
+         */
+        public void RegisterNexus(NexusActor actor)
+        {
+            var model = unitStateFactory.CreateNexus(actor.MaxHealth);
+            actor.Initialize(model);
+            combatManager.RegisterNexus(model, actor, actor.transform);
+        }
 
         /*
          * 적 ID와 생성 프리팹의 연결 정보를 보관한다.
@@ -72,8 +82,8 @@ namespace Pakuri.InGame
          */
         private GameObject CreateSelectedPlayerUnit(
             RunSession session,
-            out MonsterUnitRuntimeModel model,
-            out MonsterUnitActor actor)
+            out MonsterCombatState model,
+            out MonsterActor actor)
         {
             var selectedMonsterId = session.SelectedMonsterId;
             var prefab = ResolveMonsterPrefab(selectedMonsterId);
@@ -111,8 +121,8 @@ namespace Pakuri.InGame
 
             // 현현 유닛은 세션 파티 상태를 먼저 확보한 뒤 학습 스킬 런타임을 복원한다.
             var runState = activeSession.EnsurePartyMemberState(monster);
-            var model = unitFactory.CreateManifestedMonster(monster, runState, partySlotIndex);
-            SkillRuntimeFactory.RebuildLearnedSkillSet(model);
+            var model = unitStateFactory.CreateManifestedMonster(monster, runState, partySlotIndex);
+            UnitSkillRuntimeBuilder.RebuildLearnedSkillSet(model);
 
             var spawnPoint = ResolveManifestSpawnPoint(partySlotIndex);
             var spawnPosition = spawnPoint.position;
@@ -130,16 +140,16 @@ namespace Pakuri.InGame
          */
         private GameObject RespawnSelectedPlayerUnit(
             RunSession activeSession,
-            out MonsterUnitRuntimeModel model,
-            out MonsterUnitActor actor)
+            out MonsterCombatState model,
+            out MonsterActor actor)
         {
             var monster = ResolveMonsterDefinition(activeSession.SelectedMonsterId);
             var prefab = ResolveMonsterPrefab(monster.MonsterId);
 
             // 저장된 파티 상태가 없으면 현재 몬스터 정의로 새 상태를 만든다.
             var runState = activeSession.GetPartyMemberState(monster.MonsterId) ?? activeSession.EnsurePartyMemberState(monster);
-            model = unitFactory.CreateSelectedMonster(monster, runState, 0);
-            SkillRuntimeFactory.RebuildLearnedSkillSet(model);
+            model = unitStateFactory.CreateSelectedMonster(monster, runState, 0);
+            UnitSkillRuntimeBuilder.RebuildLearnedSkillSet(model);
 
             var spawnPosition = playerSpawnPoint.position;
             var spawnRotation = playerSpawnPoint.rotation;
@@ -169,7 +179,7 @@ namespace Pakuri.InGame
         private void RestorePlayerParty(
             RunSession activeSession,
             out GameObject selectedPlayerUnit,
-            out MonsterUnitRuntimeModel selectedPlayerModel)
+            out MonsterCombatState selectedPlayerModel)
         {
             RestoreSelectedPlayerFromSession(
                 activeSession,
@@ -200,7 +210,7 @@ namespace Pakuri.InGame
         private void RestoreSelectedPlayerFromSession(
             RunSession activeSession,
             out GameObject selectedPlayerUnit,
-            out MonsterUnitRuntimeModel selectedPlayerModel)
+            out MonsterCombatState selectedPlayerModel)
         {
             // 등록된 로스터, 씬에 남은 Actor, 새 프리팹 생성 순서로 중복 생성을 피한다.
             var selectedEntry = FindPlayerEntryBySlot(0);
@@ -253,21 +263,21 @@ namespace Pakuri.InGame
          * 선택 플레이어 로스터 항목의 GameObject와 모델을 반환한다.
          */
         private static void CaptureSelectedPlayer(
-            UnitRosterEntry entry,
+            CombatUnitEntry entry,
             out GameObject selectedPlayerUnit,
-            out MonsterUnitRuntimeModel selectedPlayerModel)
+            out MonsterCombatState selectedPlayerModel)
         {
-            var actor = (MonsterUnitActor)entry.Actor;
+            var actor = (MonsterActor)entry.Actor;
             selectedPlayerUnit = actor.gameObject;
-            selectedPlayerModel = (MonsterUnitRuntimeModel)entry.Model;
+            selectedPlayerModel = (MonsterCombatState)entry.Model;
         }
 
         /*
          * 플레이어 로스터에서 지정 파티 슬롯의 몬스터를 찾는다.
          */
-        private UnitRosterEntry FindPlayerEntryBySlot(int slotIndex)
+        private CombatUnitEntry FindPlayerEntryBySlot(int slotIndex)
         {
-            var players = combatManager.Roster.Players;
+            var players = combatManager.UnitRegistry.Players;
             for (var i = 0; i < players.Count; i++)
             {
                 var entry = players[i];
@@ -289,7 +299,7 @@ namespace Pakuri.InGame
         private bool TryReviveExistingPlayerBySlot(
             RunSession activeSession,
             int slotIndex,
-            out UnitRosterEntry revivedEntry)
+            out CombatUnitEntry revivedEntry)
         {
             revivedEntry = null;
             var actor = FindExistingPlayerActorBySlot(slotIndex);
@@ -301,8 +311,8 @@ namespace Pakuri.InGame
             var model = actor.Model;
             // 기존 모델을 세션과 맞춘 뒤 다음 날짜에 필요한 전투 상태만 복구한다.
             SyncExistingMonsterModelFromSession(activeSession, model);
-            MonsterUnitRuntimeStateService.RestoreForNextDay(model);
-            actor.ReviveForNextDay();
+            MonsterDayRecovery.Restore(model);
+            actor.Revive();
             revivedEntry = combatManager.RegisterPlayerMonster(model, actor, actor.transform);
             return true;
         }
@@ -312,13 +322,13 @@ namespace Pakuri.InGame
          */
         private void SyncExistingMonsterModelFromSession(
             RunSession activeSession,
-            MonsterUnitRuntimeModel model)
+            MonsterCombatState model)
         {
             var state = activeSession.GetPartyMemberState(model.Identity.DefinitionId);
-            CopyListToSet(state.LearnedActives, model.State.LearnedActiveSkillIds);
-            CopyListToSet(state.LearnedPassives, model.State.LearnedPassiveSkillIds);
-            CopyListToSet(state.ChosenChoiceIds, model.State.ChosenChoiceIds);
-            SkillRuntimeFactory.RebuildLearnedSkillSet(model);
+            CopyListToSet(state.LearnedActives, model.SkillProgress.LearnedActiveSkillIds);
+            CopyListToSet(state.LearnedPassives, model.SkillProgress.LearnedPassiveSkillIds);
+            CopyListToSet(state.ChosenChoiceIds, model.SkillProgress.ChosenChoiceIds);
+            UnitSkillRuntimeBuilder.RebuildLearnedSkillSet(model);
         }
 
         /*
@@ -339,10 +349,10 @@ namespace Pakuri.InGame
         /*
          * 로드된 씬에서 지정 플레이어 슬롯의 기존 Actor를 찾는다.
          */
-        private static MonsterUnitActor FindExistingPlayerActorBySlot(int slotIndex)
+        private static MonsterActor FindExistingPlayerActorBySlot(int slotIndex)
         {
             // 전체 로드 객체 검색에는 에셋도 포함되므로 실제 씬에 속한 Actor만 사용한다.
-            var actors = Resources.FindObjectsOfTypeAll<MonsterUnitActor>();
+            var actors = Resources.FindObjectsOfTypeAll<MonsterActor>();
             for (var i = 0; i < actors.Length; i++)
             {
                 var actor = actors[i];
@@ -368,11 +378,11 @@ namespace Pakuri.InGame
         /*
          * 세션 상태로 선택 몬스터의 런타임 모델을 만든다.
          */
-        private MonsterUnitRuntimeModel CreateSelectedModel(RunSession session)
+        private MonsterCombatState CreateSelectedModel(RunSession session)
         {
             var monster = ResolveMonsterDefinition(session.SelectedMonsterId);
-            var model = unitFactory.CreateSelectedMonster(monster, session.GetPartyMemberState(monster.MonsterId), 0);
-            SkillRuntimeFactory.RebuildLearnedSkillSet(model);
+            var model = unitStateFactory.CreateSelectedMonster(monster, session.GetPartyMemberState(monster.MonsterId), 0);
+            UnitSkillRuntimeBuilder.RebuildLearnedSkillSet(model);
             return model;
         }
 
@@ -409,12 +419,12 @@ namespace Pakuri.InGame
         /*
          * 적 정의로 런타임 모델을 만들고 배정 스킬을 구성한다.
          */
-        private EnemyUnitRuntimeModel CreateEnemyModel(string enemyId, int slotIndex, bool isBoss)
+        private EnemyCombatState CreateEnemyModel(string enemyId, int slotIndex, bool isBoss)
         {
             var enemy = ResolveEnemyDefinition(enemyId);
-            var model = unitFactory.CreateEnemy(enemy, slotIndex, isBoss);
+            var model = unitStateFactory.CreateEnemy(enemy, slotIndex, isBoss);
             // 로스터 등록 전에 A/B 스킬과 전투 시작 Trigger 런타임을 완성한다.
-            SkillRuntimeFactory.RebuildAssignedActiveSet(model, enemy.ActiveSkills, enemy.SkillTriggers);
+            UnitSkillRuntimeBuilder.RebuildAssignedActiveSet(model, enemy.ActiveSkills, enemy.SkillTriggers);
             return model;
         }
 
@@ -439,9 +449,9 @@ namespace Pakuri.InGame
         /*
          * 생성된 몬스터 프리팹의 Actor를 런타임 모델로 초기화한다.
          */
-        private MonsterUnitActor BindMonsterActor(GameObject spawnedUnit, MonsterUnitRuntimeModel model)
+        private MonsterActor BindMonsterActor(GameObject spawnedUnit, MonsterCombatState model)
         {
-            var actor = spawnedUnit.GetComponentInChildren<MonsterUnitActor>(true);
+            var actor = spawnedUnit.GetComponentInChildren<MonsterActor>(true);
             actor.Initialize(model);
             return actor;
         }
@@ -449,9 +459,9 @@ namespace Pakuri.InGame
         /*
          * 생성된 적 프리팹의 Actor를 런타임 모델로 초기화한다.
          */
-        private EnemyUnitActor BindEnemyActor(GameObject spawnedUnit, EnemyUnitRuntimeModel model)
+        private EnemyActor BindEnemyActor(GameObject spawnedUnit, EnemyCombatState model)
         {
-            var actor = spawnedUnit.GetComponentInChildren<EnemyUnitActor>(true);
+            var actor = spawnedUnit.GetComponentInChildren<EnemyActor>(true);
             actor.Initialize(model);
             return actor;
         }
@@ -459,7 +469,7 @@ namespace Pakuri.InGame
         /*
          * 몬스터 모델과 Actor를 플레이어 로스터에 등록한다.
          */
-        private void RegisterPlayer(MonsterUnitRuntimeModel model, MonsterUnitActor actor, Transform hitboxRoot)
+        private void RegisterPlayer(MonsterCombatState model, MonsterActor actor, Transform hitboxRoot)
         {
             combatManager.RegisterPlayerMonster(model, actor, hitboxRoot);
         }
@@ -467,7 +477,7 @@ namespace Pakuri.InGame
         /*
          * 적 모델과 Actor를 적 로스터에 등록한다.
          */
-        private void RegisterEnemy(EnemyUnitRuntimeModel model, EnemyUnitActor actor, Transform hitboxRoot)
+        private void RegisterEnemy(EnemyCombatState model, EnemyActor actor, Transform hitboxRoot)
         {
             combatManager.RegisterEnemy(model, actor, hitboxRoot);
         }
@@ -535,7 +545,7 @@ namespace Pakuri.InGame
         /*
          * 적의 최대 체력과 현재 체력에 인카운터 체력 배율을 적용한다.
          */
-        private static void ApplyEnemyHealthMultiplier(EnemyUnitRuntimeModel model, float healthMultiplier)
+        private static void ApplyEnemyHealthMultiplier(EnemyCombatState model, float healthMultiplier)
         {
             if (healthMultiplier <= 0f)
             {

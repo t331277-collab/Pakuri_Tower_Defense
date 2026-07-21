@@ -443,14 +443,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 865f6a2c8780ea04fa1965d473b8f92f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.MonsterUnitActor
-  monsterNameLabel: {fileID: 0}
-  monsterHpLabel: {fileID: 0}
-  damageTextLabel: {fileID: 0}
-  hpBackground: {fileID: 0}
-  hpFill: {fileID: 0}
-  shieldFill: {fileID: 0}
-  damageTextPopup: {fileID: 0}
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.MonsterActor
   animationController: {fileID: 900100000000002}
 --- !u!61 &2125345698689039103
 BoxCollider2D:

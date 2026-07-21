@@ -1229,15 +1229,15 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var players = combatManager.Roster.Players;
+            var players = combatManager.UnitRegistry.Players;
             for (var i = 0; i < players.Count; i++)
             {
-                var model = players[i] != null ? players[i].Model as MonsterUnitRuntimeModel : null;
+                var model = players[i] != null ? players[i].Model as MonsterCombatState : null;
                 if (model != null)
                 {
                     SyncModelStateFromSession(session, model);
-                    SkillRuntimeFactory.RebuildLearnedSkillSet(model);
-                    combatManager.Roster.RefreshActor(model);
+                    UnitSkillRuntimeBuilder.RebuildLearnedSkillSet(model);
+                    combatManager.UnitRegistry.RefreshDisplay(model);
                 }
             }
 
@@ -1246,7 +1246,7 @@ namespace Pakuri.InGame
 
         private static void RefreshSceneMonsterActorSkillModels(RunSession session)
         {
-            var actors = Resources.FindObjectsOfTypeAll<MonsterUnitActor>();
+            var actors = Resources.FindObjectsOfTypeAll<MonsterActor>();
             for (var i = 0; i < actors.Length; i++)
             {
                 var actor = actors[i];
@@ -1262,12 +1262,12 @@ namespace Pakuri.InGame
                 }
 
                 SyncModelStateFromSession(session, model);
-                SkillRuntimeFactory.RebuildLearnedSkillSet(model);
-                actor.RefreshDebugView();
+                UnitSkillRuntimeBuilder.RebuildLearnedSkillSet(model);
+                actor.RefreshDisplay();
             }
         }
 
-        private static void SyncModelStateFromSession(RunSession session, MonsterUnitRuntimeModel model)
+        private static void SyncModelStateFromSession(RunSession session, MonsterCombatState model)
         {
             if (session == null || model == null || model.Identity == null)
             {
@@ -1286,14 +1286,14 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (model.State == null)
+            if (model.SkillProgress == null)
             {
-                model.State = new UnitStateBucket();
+                model.SkillProgress = new UnitSkillProgress();
             }
 
-            CopyListToSet(state.LearnedActives, model.State.LearnedActiveSkillIds);
-            CopyListToSet(state.LearnedPassives, model.State.LearnedPassiveSkillIds);
-            CopyListToSet(state.ChosenChoiceIds, model.State.ChosenChoiceIds);
+            CopyListToSet(state.LearnedActives, model.SkillProgress.LearnedActiveSkillIds);
+            CopyListToSet(state.LearnedPassives, model.SkillProgress.LearnedPassiveSkillIds);
+            CopyListToSet(state.ChosenChoiceIds, model.SkillProgress.ChosenChoiceIds);
         }
 
         private static void CopyListToSet(System.Collections.Generic.IReadOnlyList<string> source, System.Collections.Generic.ISet<string> target)

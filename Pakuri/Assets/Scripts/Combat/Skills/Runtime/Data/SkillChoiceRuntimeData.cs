@@ -10,7 +10,7 @@ namespace Pakuri.InGame
     public sealed class SkillChoiceRuntimeData
     {
         public SkillChoiceDefinition Source;
-        public SkillExecutionPlanNode[] PlanNodes = Array.Empty<SkillExecutionPlanNode>();
+        public SkillNode[] PlanNodes = Array.Empty<SkillNode>();
         public bool HasShieldAmountMultiplier;
         public float ShieldAmountMultiplier = 1f;
         public BuffModifierSpec AddedModifiers = new BuffModifierSpec();

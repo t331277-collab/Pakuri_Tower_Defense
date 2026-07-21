@@ -10,6 +10,31 @@ namespace Pakuri.InGame
     {
         private const float DefaultSingleAttackLineLength = 31f;
 
+        public static Quaternion ResolveRotation(Vector2 direction)
+        {
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                return Quaternion.identity;
+            }
+
+            var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            return Quaternion.Euler(0f, 0f, angle);
+        }
+
+        public static void ApplyPrefabScale(Transform target, float baseRadius, SkillSnapshot snapshot)
+        {
+            if (target == null || snapshot == null)
+            {
+                return;
+            }
+
+            var scaleFactor = SkillTargeting.ResolvePrefabScaleFactor(baseRadius, snapshot);
+            if (!Mathf.Approximately(scaleFactor, 1f))
+            {
+                target.localScale *= scaleFactor;
+            }
+        }
+
         /*
          * 런타임 비주얼에 실제로 생성할 외형이나 충돌 영역이 있는지 확인한다.
          */
@@ -102,7 +127,7 @@ namespace Pakuri.InGame
         public static void ConfigureAreaScale(
             Transform transform,
             float baseRadius,
-            SkillExecutionSnapshot snapshot,
+            SkillSnapshot snapshot,
             float radiusMultiplier)
         {
             if (transform == null)
@@ -110,7 +135,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            SkillExecutionUtility.ApplyPrefabScale(transform, baseRadius, snapshot);
+            EffectVisualUtility.ApplyPrefabScale(transform, baseRadius, snapshot);
             transform.localScale *= Mathf.Max(0f, radiusMultiplier);
         }
 
@@ -121,7 +146,7 @@ namespace Pakuri.InGame
             Transform transform,
             SkillExecutionContext context,
             SingleSkillRuntimeData skill,
-            SkillExecutionSnapshot snapshot,
+            SkillSnapshot snapshot,
             Vector2 center)
         {
             if (transform == null || skill == null)
@@ -141,10 +166,10 @@ namespace Pakuri.InGame
             }
 
             transform.position = center;
-            transform.rotation = SkillExecutionUtility.ResolveRotation(direction.normalized);
+            transform.rotation = EffectVisualUtility.ResolveRotation(direction.normalized);
 
-            var width = SkillAreaUtility.ResolveRadius(
-                SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area),
+            var width = SkillTargeting.ResolveRadius(
+                SkillTargeting.ResolveBaseRadius(skill.Targeting, skill.Area),
                 snapshot);
             var spriteRenderer = transform.GetComponent<SpriteRenderer>();
             if (spriteRenderer != null && spriteRenderer.sprite != null)
@@ -167,9 +192,9 @@ namespace Pakuri.InGame
                 return;
             }
 
-            SkillExecutionUtility.ApplyPrefabScale(
+            EffectVisualUtility.ApplyPrefabScale(
                 transform,
-                SkillAreaUtility.ResolveBaseRadius(skill.Targeting, skill.Area),
+                SkillTargeting.ResolveBaseRadius(skill.Targeting, skill.Area),
                 snapshot);
         }
 

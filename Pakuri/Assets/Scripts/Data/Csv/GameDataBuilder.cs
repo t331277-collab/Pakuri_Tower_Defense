@@ -53,7 +53,7 @@ namespace Pakuri.Data
                 monster.PowerStat = sourceMonster.PowerStat;
                 monster.BaseDamage = sourceMonster.BaseDamage;
                 monster.PowerCoefficient = sourceMonster.PowerCoefficient;
-                monster.BaseStats = new UnitStatsRuntime
+                monster.BaseStats = new UnitCombatStats
                 {
                     MaxHealth = sourceMonster.MaxHealth,
                     AttackPower = sourceMonster.BaseAttackPower,
@@ -139,7 +139,7 @@ namespace Pakuri.Data
                 enemy.EncounterRole = sourceEnemy.EncounterRole;
                 enemy.AttackType = sourceEnemy.AttackType;
                 enemy.Attribute = sourceEnemy.Attribute;
-                enemy.Stats = new UnitStatsRuntime
+                enemy.Stats = new UnitCombatStats
                 {
                     MaxHealth = sourceEnemy.MaxHealth,
                     AttackPower = sourceEnemy.AttackPower,

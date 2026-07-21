@@ -26,11 +26,9 @@ namespace Pakuri.InGame
          * 선택 플레이어의 입력을 읽고 실행 가능한 액티브 스킬에 전달한다.
          */
         internal void HandleManualInput(
-            UnitRosterService roster,
-            SkillExecutionSystem skillExecution,
-            InGameCombatManager combatManager,
-            float deltaTime,
-            bool logExecution)
+            CombatUnitRegistry roster,
+            SkillExecution skillExecution,
+            InGameCombatManager combatManager)
         {
             if (autoSkillEnabled)
             {
@@ -89,10 +87,8 @@ namespace Pakuri.InGame
                     runtime,
                     roster,
                     combatManager,
-                    deltaTime,
                     aim,
-                    target,
-                    logExecution);
+                    target);
             }
 
             if (!held && !HasBurstingProjectile(activeSkills))
@@ -105,10 +101,10 @@ namespace Pakuri.InGame
          * 유닛이 자동 스킬을 사용할 수 있는 상태인지 반환한다.
          */
         public bool CanUseAutoSkill(
-            UnitRosterEntry entry,
-            UnitRosterService roster)
+            CombatUnitEntry entry,
+            CombatUnitRegistry roster)
         {
-            if (entry.Model is EnemyUnitRuntimeModel)
+            if (entry.Model is EnemyCombatState)
             {
                 return false;
             }
@@ -126,7 +122,7 @@ namespace Pakuri.InGame
         /*
          * 선택 플레이어의 자동 스킬 사용 여부를 전환한다.
          */
-        public void ToggleAutoSkillMode(UnitRosterService roster)
+        public void ToggleAutoSkillMode(CombatUnitRegistry roster)
         {
             autoSkillEnabled = !autoSkillEnabled;
             // 표시 상태와 실제 플레이어 모델의 자동 스킬 설정을 함께 갱신한다.
@@ -136,7 +132,7 @@ namespace Pakuri.InGame
         /*
          * 현재 자동 스킬 설정을 선택 플레이어 모델에 적용한다.
          */
-        public void ApplyAutoSkillModeToSelectedPlayer(UnitRosterService roster)
+        public void ApplyAutoSkillModeToSelectedPlayer(CombatUnitRegistry roster)
         {
             var player = FindSelectedPlayer(roster);
             if (player != null)
@@ -148,7 +144,7 @@ namespace Pakuri.InGame
         /*
          * 플레이어 진영의 첫 번째 몬스터를 선택 플레이어로 찾는다.
          */
-        public UnitRosterEntry FindSelectedPlayer(UnitRosterService roster)
+        public CombatUnitEntry FindSelectedPlayer(CombatUnitRegistry roster)
         {
             var players = roster.Players;
             for (var i = 0; i < players.Count; i++)
@@ -166,7 +162,7 @@ namespace Pakuri.InGame
         /*
          * 모델이 수동 입력을 받는 첫 번째 플레이어 몬스터인지 반환한다.
          */
-        public static bool IsSelectedPlayerModel(BaseUnitRuntimeModel model)
+        public static bool IsSelectedPlayerModel(UnitCombatState model)
         {
             return model.Identity.Side == UnitSide.Player
                 && model.Identity.Role == UnitRole.Monster
@@ -187,7 +183,7 @@ namespace Pakuri.InGame
          * 현재 마우스 입력에서 조준 방향과 목표 지점을 만든다.
          */
         private bool TryGetCurrentInput(
-            UnitRosterEntry player,
+            CombatUnitEntry player,
             bool wantsInput,
             bool pointerOverUi,
             out Vector2 aimDirection,
@@ -289,7 +285,7 @@ namespace Pakuri.InGame
         /*
          * 화면 안에 살아 있는 적이 있는지 반환한다.
          */
-        private bool HasVisibleEnemy(UnitRosterService roster)
+        private bool HasVisibleEnemy(CombatUnitRegistry roster)
         {
             var enemies = roster.Enemies;
             for (var i = 0; i < enemies.Count; i++)

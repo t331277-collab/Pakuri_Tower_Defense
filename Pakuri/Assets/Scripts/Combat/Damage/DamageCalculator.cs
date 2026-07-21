@@ -3,8 +3,8 @@ using Pakuri.InGame;
 using UnityEngine;
 
 /*
- * 전투에서 사용하는 피해 속성과 최종 피해 계산 규칙을 정의한다.
- * 기본 피해에 대상 방어력, 방어력 감소, 치명타, 상태 효과와 적 패시브 배율을 반영하고
+ * SkillValueCalculator가 만든 스킬 피해 또는 다른 공격 원본 피해를 대상의 최종 피해로 확정한다.
+ * 대상 방어력, 방어력 감소, 치명타, 받는 피해 상태 효과와 적 패시브 배율을 반영하고
  * InGameCombatManager가 자원에 적용할 정수 피해량을 반환한다.
  */
 namespace Pakuri.Combat
@@ -112,7 +112,7 @@ namespace Pakuri.Combat
          * 유닛 능력치와 상태 효과를 반영해 실제 적용할 최종 피해를 계산한다.
          */
         public static float CalculateDamage(
-            BaseUnitRuntimeModel target,
+            UnitCombatState target,
             float baseDamage,
             DamageAttribute attribute,
             DamageApplicationOptions options)
@@ -125,9 +125,9 @@ namespace Pakuri.Combat
             if (criticalAllowed)
             {
                 criticalChance = sourceStats.CriticalChance
-                    + StatusEffectRules.ResolveCriticalChanceBonus(options.Source);
+                    + StatusCombatRules.ResolveCriticalChanceBonus(options.Source);
                 criticalDamage = sourceStats.CriticalDamage;
-                criticalDamage += StatusEffectRules.ResolveCriticalDamageBonus(options.Source);
+                criticalDamage += StatusCombatRules.ResolveCriticalDamageBonus(options.Source);
             }
 
             var criticalResistance = 0f;
@@ -135,8 +135,8 @@ namespace Pakuri.Combat
             if (criticalAllowed)
             {
                 criticalResistance = target.Stats.CriticalResistance
-                    + StatusEffectRules.ResolveCriticalResistanceBonus(target);
-                criticalDamageTaken = StatusEffectRules.ResolveCriticalDamageTakenBonus(target);
+                    + StatusCombatRules.ResolveCriticalResistanceBonus(target);
+                criticalDamageTaken = StatusCombatRules.ResolveCriticalDamageTakenBonus(target);
             }
 
             // 공격자 치명타 보정과 대상의 방어·받는 피해 보정을 최종 계산기로 전달한다.
@@ -145,8 +145,8 @@ namespace Pakuri.Combat
                 attribute,
                 CopyDefenses(target.Defenses),
                 criticalAllowed,
-                flatDefenseReduction: StatusEffectRules.ResolveFlatElementResistReduction(target, attribute),
-                percentDefenseReductions: new[] { StatusEffectRules.ResolveElementResistReduction(target, attribute) },
+                flatDefenseReduction: StatusCombatRules.ResolveFlatElementResistReduction(target, attribute),
+                percentDefenseReductions: new[] { StatusCombatRules.ResolveElementResistReduction(target, attribute) },
                 criticalChanceBonus: criticalChance + options.CritChanceBonus - BaseCriticalChance,
                 criticalMultiplierBonus: criticalDamage + options.CritDamageBonus - BaseCriticalMultiplier,
                 targetCriticalResistance: criticalResistance,
@@ -159,7 +159,7 @@ namespace Pakuri.Combat
         /*
          * 유닛 방어력 값을 피해 계산 형식으로 복사한다.
          */
-        private static AttributeDefenseSet CopyDefenses(UnitDefenseRuntime defenses)
+        private static AttributeDefenseSet CopyDefenses(UnitDefenseStats defenses)
         {
             return new AttributeDefenseSet
             {
@@ -176,17 +176,17 @@ namespace Pakuri.Combat
          * 상태 효과와 적 패시브의 받는 피해 배율을 합친다.
          */
         private static float GetIncomingDamageMultiplier(
-            BaseUnitRuntimeModel target,
-            BaseUnitRuntimeModel source,
+            UnitCombatState target,
+            UnitCombatState source,
             DamageAttribute attribute,
             string sourceSkillId)
         {
-            var statusMultiplier = StatusEffectRules.ResolveIncomingDamageMultiplier(
+            var statusMultiplier = StatusCombatRules.ResolveIncomingDamageMultiplier(
                 target,
                 source,
                 attribute,
                 sourceSkillId);
-            var enemy = target as EnemyUnitRuntimeModel;
+            var enemy = target as EnemyCombatState;
             if (enemy == null)
             {
                 return statusMultiplier;

@@ -201,7 +201,7 @@ namespace Pakuri.InGame
     [Serializable]
     public sealed class StatusApplicationSpec
     {
-        public RuntimeStatusData Status;
+        public StatusRuntimeData Status;
         [Range(0f, 1f)] public float Chance = 1f;
         [Min(0)] public int Stacks = 1;
         public bool RefreshDuration = true;
@@ -301,7 +301,7 @@ namespace Pakuri.InGame
         public SkillChoiceRuntimeData[] MasterChoices = Array.Empty<SkillChoiceRuntimeData>();
         public SkillEffectDefinition[] MultiEffects = Array.Empty<SkillEffectDefinition>();
         public SkillTriggerDefinition[] SkillTriggers = Array.Empty<SkillTriggerDefinition>();
-        public SkillExecutionPlanNode[] NormalizedPlanNodes = Array.Empty<SkillExecutionPlanNode>();
+        public SkillNode[] NormalizedPlanNodes = Array.Empty<SkillNode>();
     }
 
     /*
@@ -470,7 +470,7 @@ namespace Pakuri.InGame
         public StatSource ShieldStatSource;
         public float ShieldDuration;
         public ShieldRefreshRule RefreshRule;
-        public RuntimeStatusData ShieldStatus;
+        public StatusRuntimeData ShieldStatus;
 
         [Header("Reflect")]
         public bool CanReflectDamage;

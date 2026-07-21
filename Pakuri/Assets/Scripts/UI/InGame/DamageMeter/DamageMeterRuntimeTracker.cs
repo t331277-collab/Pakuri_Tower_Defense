@@ -79,7 +79,7 @@ namespace Pakuri.InGame
             var identity = source != null ? source.Identity : null;
             if (identity == null
                 || identity.Side != UnitSide.Player
-                || !(source is MonsterUnitRuntimeModel)
+                || !(source is MonsterCombatState)
                 || string.IsNullOrWhiteSpace(identity.DefinitionId))
             {
                 return;

@@ -623,14 +623,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c05d861bf6fd7644b8181d2145054c0a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.EnemyUnitActor
-  enemyNameLabel: {fileID: 0}
-  enemyHpLabel: {fileID: 0}
-  damageTextLabel: {fileID: 0}
-  hpBackground: {fileID: 0}
-  hpFill: {fileID: 0}
-  shieldFill: {fileID: 0}
-  damageTextPopup: {fileID: 0}
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.EnemyActor
 --- !u!61 &-3007152987031685891
 BoxCollider2D:
   m_ObjectHideFlags: 0

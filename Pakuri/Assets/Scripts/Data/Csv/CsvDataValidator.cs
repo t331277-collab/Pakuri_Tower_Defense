@@ -185,61 +185,61 @@ namespace Pakuri.Data
                 }
 
                 if (!string.IsNullOrWhiteSpace(choice.CountStatusId)
-                    && !StatusEffectUtility.TryParse(choice.CountStatusId, out _))
+                    && !StatusEffectLookup.TryParse(choice.CountStatusId, out _))
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported count_status_id '{choice.CountStatusId}'.");
                 }
 
                 if (!string.IsNullOrWhiteSpace(choice.StatusConditionalSourceStatusId)
-                    && !StatusEffectUtility.TryParse(choice.StatusConditionalSourceStatusId, out _))
+                    && !StatusEffectLookup.TryParse(choice.StatusConditionalSourceStatusId, out _))
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported status_conditional_source_status_id '{choice.StatusConditionalSourceStatusId}'.");
                 }
 
                 if (!string.IsNullOrWhiteSpace(choice.StatusDurationBonusStatusId)
-                    && !StatusEffectUtility.TryParse(choice.StatusDurationBonusStatusId, out _))
+                    && !StatusEffectLookup.TryParse(choice.StatusDurationBonusStatusId, out _))
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported status_duration_bonus_status_id '{choice.StatusDurationBonusStatusId}'.");
                 }
 
                 if (!string.IsNullOrWhiteSpace(choice.StatusMaxStacksBonusStatusId)
-                    && !StatusEffectUtility.TryParse(choice.StatusMaxStacksBonusStatusId, out _))
+                    && !StatusEffectLookup.TryParse(choice.StatusMaxStacksBonusStatusId, out _))
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported status_max_stacks_bonus_status_id '{choice.StatusMaxStacksBonusStatusId}'.");
                 }
 
                 if (!string.IsNullOrWhiteSpace(choice.ThresholdStatusId)
-                    && !StatusEffectUtility.TryParse(choice.ThresholdStatusId, out _))
+                    && !StatusEffectLookup.TryParse(choice.ThresholdStatusId, out _))
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported threshold_status_id '{choice.ThresholdStatusId}'.");
                 }
 
                 if (!string.IsNullOrWhiteSpace(choice.ThresholdApplyStatusId)
-                    && !StatusEffectUtility.TryParse(choice.ThresholdApplyStatusId, out _))
+                    && !StatusEffectLookup.TryParse(choice.ThresholdApplyStatusId, out _))
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported threshold_apply_status_id '{choice.ThresholdApplyStatusId}'.");
                 }
 
                 if (!string.IsNullOrWhiteSpace(choice.ConditionalTargetStatusId)
-                    && !StatusEffectUtility.TryParse(choice.ConditionalTargetStatusId, out _))
+                    && !StatusEffectLookup.TryParse(choice.ConditionalTargetStatusId, out _))
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported conditional_target_status_id '{choice.ConditionalTargetStatusId}'.");
                 }
 
                 if (!string.IsNullOrWhiteSpace(choice.ConditionalCritTargetStatusId)
-                    && !StatusEffectUtility.TryParse(choice.ConditionalCritTargetStatusId, out _))
+                    && !StatusEffectLookup.TryParse(choice.ConditionalCritTargetStatusId, out _))
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported conditional_crit_target_status_id '{choice.ConditionalCritTargetStatusId}'.");
                 }
 
                 if (!string.IsNullOrWhiteSpace(choice.RedistributeConsumedStatusId)
-                    && !StatusEffectUtility.TryParse(choice.RedistributeConsumedStatusId, out _))
+                    && !StatusEffectLookup.TryParse(choice.RedistributeConsumedStatusId, out _))
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported redistribute_consumed_status_id '{choice.RedistributeConsumedStatusId}'.");
                 }
 
                 if (!string.IsNullOrWhiteSpace(choice.RequiredSourceStatusId)
-                    && !StatusEffectUtility.TryParse(choice.RequiredSourceStatusId, out _))
+                    && !StatusEffectLookup.TryParse(choice.RequiredSourceStatusId, out _))
                 {
                     errors.Add($"Skill choice '{choice.Id}' uses unsupported required_source_status_id '{choice.RequiredSourceStatusId}'.");
                 }
@@ -371,25 +371,25 @@ namespace Pakuri.Data
             }
 
             if (!string.IsNullOrWhiteSpace(skill.DeploymentRequiredTargetStatusId)
-                && !StatusEffectUtility.TryParse(skill.DeploymentRequiredTargetStatusId, out _))
+                && !StatusEffectLookup.TryParse(skill.DeploymentRequiredTargetStatusId, out _))
             {
                 errors.Add($"Skill '{skill.Id}' uses unsupported deployment_required_target_status_id '{skill.DeploymentRequiredTargetStatusId}'.");
             }
 
             if (!string.IsNullOrWhiteSpace(skill.TargetSelectionStatusId)
-                && !StatusEffectUtility.TryParse(skill.TargetSelectionStatusId, out _))
+                && !StatusEffectLookup.TryParse(skill.TargetSelectionStatusId, out _))
             {
                 errors.Add($"Skill '{skill.Id}' uses unsupported target_selection_status_id '{skill.TargetSelectionStatusId}'.");
             }
 
             if (!string.IsNullOrWhiteSpace(skill.TargetStatusStackStatusId)
-                && !StatusEffectUtility.TryParse(skill.TargetStatusStackStatusId, out _))
+                && !StatusEffectLookup.TryParse(skill.TargetStatusStackStatusId, out _))
             {
                 errors.Add($"Skill '{skill.Id}' uses unsupported target_status_stack_status_id '{skill.TargetStatusStackStatusId}'.");
             }
 
             if (!string.IsNullOrWhiteSpace(skill.ConsumeTargetStatusId)
-                && !StatusEffectUtility.TryParse(skill.ConsumeTargetStatusId, out _))
+                && !StatusEffectLookup.TryParse(skill.ConsumeTargetStatusId, out _))
             {
                 errors.Add($"Skill '{skill.Id}' uses unsupported consume_target_status_id '{skill.ConsumeTargetStatusId}'.");
             }
@@ -411,7 +411,7 @@ namespace Pakuri.Data
                 return;
             }
 
-            var hasSupportedStatus = StatusEffectUtility.TryParse(statusKey, out var kind);
+            var hasSupportedStatus = StatusEffectLookup.TryParse(statusKey, out var kind);
             if (status.StatusChance > 0f && !hasSupportedStatus)
             {
                 errors.Add(
@@ -420,7 +420,7 @@ namespace Pakuri.Data
 
             if (status.StatusChance > 0f && hasSupportedStatus)
             {
-                var statusId = StatusEffectUtility.ToId(kind);
+                var statusId = StatusEffectLookup.ToId(kind);
                 if (!string.IsNullOrWhiteSpace(statusId)
                     && (statusEffects == null || !statusEffects.ContainsKey(statusId)))
                 {
@@ -430,12 +430,12 @@ namespace Pakuri.Data
 
             if (skill.RuntimeKind == SkillRuntimeKind.Buff || skill.RuntimeKind == SkillRuntimeKind.Shield)
             {
-                if (!StatusEffectFactory.TryParseTargetScope(status.StatusTargetScope, out _))
+                if (!StatusRuntimeDataFactory.TryParseTargetScope(status.StatusTargetScope, out _))
                 {
                     errors.Add($"Skill '{skill.Id}' requires supported status_target_scope for {skill.RuntimeKind}. Expected self or all_allies.");
                 }
 
-                if (!StatusEffectFactory.TryParseMergePolicy(status.StatusMergePolicy, out _))
+                if (!StatusRuntimeDataFactory.TryParseMergePolicy(status.StatusMergePolicy, out _))
                 {
                     errors.Add($"Skill '{skill.Id}' requires supported status_merge_policy for {skill.RuntimeKind}.");
                 }
@@ -448,7 +448,7 @@ namespace Pakuri.Data
                     errors.Add($"Shield skill '{skill.Id}' must use canonical status_effect_id 'shield'.");
                 }
 
-                if (!StatusEffectFactory.TryParseShieldRefreshRule(status.ShieldAmountRefreshPolicy, out _))
+                if (!StatusRuntimeDataFactory.TryParseShieldRefreshRule(status.ShieldAmountRefreshPolicy, out _))
                 {
                     errors.Add($"Shield skill '{skill.Id}' requires supported shield_amount_refresh_policy.");
                 }
@@ -488,7 +488,7 @@ namespace Pakuri.Data
             }
 
             if (!string.IsNullOrWhiteSpace(trigger.RequiredSourceStatusId)
-                && !StatusEffectUtility.TryParse(trigger.RequiredSourceStatusId, out _))
+                && !StatusEffectLookup.TryParse(trigger.RequiredSourceStatusId, out _))
             {
                 errors.Add($"Skill trigger '{trigger.Id}' uses unsupported required_source_status_id '{trigger.RequiredSourceStatusId}'.");
             }
@@ -642,7 +642,7 @@ namespace Pakuri.Data
             ValidateTriggerChoiceReference(trigger.ExcludesActiveChoiceId, trigger, model, "excludes_active_choice_id", errors);
 
             if (!string.IsNullOrWhiteSpace(trigger.ConditionStatusId)
-                && !StatusEffectRules.TryParseConditionStatusExpression(trigger.ConditionStatusId, out _))
+                && !StatusConditionRules.TryParseConditionStatusExpression(trigger.ConditionStatusId, out _))
             {
                 errors.Add($"Skill trigger '{trigger.Id}' uses unsupported condition_status_id '{trigger.ConditionStatusId}'.");
             }
@@ -1004,7 +1004,7 @@ namespace Pakuri.Data
                 return;
             }
 
-            if (!StatusEffectUtility.TryParse(status.Id, out var kind) || kind == StatusEffectKind.None)
+            if (!StatusEffectLookup.TryParse(status.Id, out var kind) || kind == StatusEffectKind.None)
             {
                 errors.Add($"Status effect '{status.Id}' is not supported by StatusEffectKind.");
             }

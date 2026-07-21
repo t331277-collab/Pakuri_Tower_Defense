@@ -23565,7 +23565,6 @@ MonoBehaviour:
   enemyCombatSimulationEnabled: 1
   skillExecutionEnabled: 1
   logEnemyAttackAttempts: 0
-  logSkillExecutionContracts: 0
   playerCombatControl: {fileID: 1427799832}
   effectManager: {fileID: 1427799831}
 --- !u!114 &1427799829
@@ -28563,9 +28562,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 62b7ebc9d88913a42a508dc290bb8200, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.NexusUnitActor
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.NexusActor
   maxHealth: 20
-  nexusHpInfo: {fileID: 0}
+  nexusHpInfo: {fileID: 1017704295}
 --- !u!61 &1747029716
 BoxCollider2D:
   m_ObjectHideFlags: 0

@@ -114,7 +114,7 @@ namespace Pakuri.InGame
             var session = ResolveSession();
             var catalog = ResolveCatalog();
             var selectedEntry = ResolveSelectedPlayerEntry();
-            var model = selectedEntry != null ? selectedEntry.Model as MonsterUnitRuntimeModel : null;
+            var model = selectedEntry != null ? selectedEntry.Model as MonsterCombatState : null;
             var monsterId = ResolveMonsterId(session, model);
             if (session == null || string.IsNullOrWhiteSpace(monsterId))
             {
@@ -148,7 +148,7 @@ namespace Pakuri.InGame
             var session = ResolveSession();
             var catalog = ResolveCatalog();
             var selectedEntry = ResolveSelectedPlayerEntry();
-            var model = selectedEntry != null ? selectedEntry.Model as MonsterUnitRuntimeModel : null;
+            var model = selectedEntry != null ? selectedEntry.Model as MonsterCombatState : null;
             var monsterId = ResolveMonsterId(session, model);
             if (session == null || string.IsNullOrWhiteSpace(monsterId))
             {
@@ -185,22 +185,22 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var players = manager.Roster.Players;
+            var players = manager.UnitRegistry.Players;
             for (var i = 0; i < players.Count; i++)
             {
-                var model = players[i] != null ? players[i].Model as MonsterUnitRuntimeModel : null;
+                var model = players[i] != null ? players[i].Model as MonsterCombatState : null;
                 if (model == null)
                 {
                     continue;
                 }
 
                 SyncModelStateFromSession(session, model);
-                SkillRuntimeFactory.RebuildLearnedSkillSet(model);
-                manager.Roster.RefreshActor(model);
+                UnitSkillRuntimeBuilder.RebuildLearnedSkillSet(model);
+                manager.UnitRegistry.RefreshDisplay(model);
             }
         }
 
-        private static void SyncModelStateFromSession(RunSession session, MonsterUnitRuntimeModel model)
+        private static void SyncModelStateFromSession(RunSession session, MonsterCombatState model)
         {
             if (session == null || model == null || model.Identity == null)
             {
@@ -219,14 +219,14 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (model.State == null)
+            if (model.SkillProgress == null)
             {
-                model.State = new UnitStateBucket();
+                model.SkillProgress = new UnitSkillProgress();
             }
 
-            CopyListToSet(state.LearnedActives, model.State.LearnedActiveSkillIds);
-            CopyListToSet(state.LearnedPassives, model.State.LearnedPassiveSkillIds);
-            CopyListToSet(state.ChosenChoiceIds, model.State.ChosenChoiceIds);
+            CopyListToSet(state.LearnedActives, model.SkillProgress.LearnedActiveSkillIds);
+            CopyListToSet(state.LearnedPassives, model.SkillProgress.LearnedPassiveSkillIds);
+            CopyListToSet(state.ChosenChoiceIds, model.SkillProgress.ChosenChoiceIds);
         }
 
         private static void CopyListToSet(System.Collections.Generic.IReadOnlyList<string> source, System.Collections.Generic.HashSet<string> target)
@@ -251,7 +251,7 @@ namespace Pakuri.InGame
             var session = ResolveSession();
             var catalog = ResolveCatalog();
             var selectedEntry = ResolveSelectedPlayerEntry();
-            var model = selectedEntry != null ? selectedEntry.Model as MonsterUnitRuntimeModel : null;
+            var model = selectedEntry != null ? selectedEntry.Model as MonsterCombatState : null;
             var monsterId = ResolveMonsterId(session, model);
             var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
 
@@ -544,13 +544,13 @@ namespace Pakuri.InGame
             return combatManager;
         }
 
-        private UnitRosterEntry ResolveSelectedPlayerEntry()
+        private CombatUnitEntry ResolveSelectedPlayerEntry()
         {
             var manager = ResolveCombatManager();
-            return manager != null && manager.Roster.Players.Count > 0 ? manager.Roster.Players[0] : null;
+            return manager != null && manager.UnitRegistry.Players.Count > 0 ? manager.UnitRegistry.Players[0] : null;
         }
 
-        private static string ResolveMonsterId(RunSession session, MonsterUnitRuntimeModel model)
+        private static string ResolveMonsterId(RunSession session, MonsterCombatState model)
         {
             if (model != null && model.Identity != null && !string.IsNullOrWhiteSpace(model.Identity.DefinitionId))
             {
@@ -859,7 +859,7 @@ namespace Pakuri.InGame
 
             var catalog = ResolveCatalog();
             var selectedEntry = ResolveSelectedPlayerEntry();
-            var model = selectedEntry != null ? selectedEntry.Model as MonsterUnitRuntimeModel : null;
+            var model = selectedEntry != null ? selectedEntry.Model as MonsterCombatState : null;
             var monsterId = ResolveMonsterId(session, model);
             if (string.IsNullOrWhiteSpace(monsterId))
             {
@@ -894,7 +894,7 @@ namespace Pakuri.InGame
 
             var catalog = ResolveCatalog();
             var selectedEntry = ResolveSelectedPlayerEntry();
-            var model = selectedEntry != null ? selectedEntry.Model as MonsterUnitRuntimeModel : null;
+            var model = selectedEntry != null ? selectedEntry.Model as MonsterCombatState : null;
             var monsterId = ResolveMonsterId(session, model);
             if (string.IsNullOrWhiteSpace(monsterId))
             {
