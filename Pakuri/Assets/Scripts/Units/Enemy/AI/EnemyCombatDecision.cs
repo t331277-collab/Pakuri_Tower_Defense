@@ -171,29 +171,6 @@ namespace Pakuri.InGame
             return true;
         }
 
-        /*
-         * 스킬 사거리를 우선하고, 설정이 없으면 적 공격 유형의 기본 사거리를 사용한다.
-         */
-        public static float ResolveAttackRange(EnemyCombatState enemyModel, SkillRuntimeInstance runtime)
-        {
-            var range = runtime.Data.Targeting.Range;
-            if (range > 0f)
-            {
-                return Mathf.Max(0.1f, range);
-            }
-
-            switch (enemyModel.AttackType)
-            {
-                case EnemyAttackType.Ranged:
-                case EnemyAttackType.Buffer:
-                    return 5f;
-                case EnemyAttackType.MeleeAndRanged:
-                    return 4f;
-                default:
-                    return 1.4f;
-            }
-        }
-
         private static bool HasCombatStartTrigger(SkillRuntimeInstance runtime)
         {
             if (runtime == null)

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
@@ -557,22 +557,38 @@ namespace Pakuri.InGame
          */
         private static bool MatchesConditionalTargetStatus(UnitCombatState target, StatusRuntimeData data)
         {
-            if (data == null || string.IsNullOrWhiteSpace(data.ConditionalTargetStatusTag))
+            if (data == null
+                || data.ConditionalTargetStatusKinds == null
+                || data.ConditionalTargetStatusKinds.Length == 0)
             {
                 return false;
             }
 
-            if (target == null || data.ConditionalTargetStatusKind == StatusEffectKind.None)
+            if (target == null)
             {
                 return false;
             }
 
-            if (data.ConditionalTargetStatusKind == StatusEffectKind.Shield)
+            for (var i = 0; i < data.ConditionalTargetStatusKinds.Length; i++)
             {
-                return target.Resources != null && target.Resources.CurrentShield > 0f;
+                var kind = data.ConditionalTargetStatusKinds[i];
+                if (kind == StatusEffectKind.Shield)
+                {
+                    if (target.Resources != null && target.Resources.CurrentShield > 0f)
+                    {
+                        return true;
+                    }
+
+                    continue;
+                }
+
+                if (target.Statuses != null && target.Statuses.Has(kind))
+                {
+                    return true;
+                }
             }
 
-            return target.Statuses != null && target.Statuses.Has(data.ConditionalTargetStatusKind);
+            return false;
         }
     }
 
@@ -691,7 +707,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var catalog = CsvDataLoader.CurrentCatalog;
+            var catalog = GameDataLoader.CurrentCatalog;
             if (catalog == null
                 || !catalog.TryGetData(sourceSkillId, out SkillDefinition skill)
                 || skill == null)

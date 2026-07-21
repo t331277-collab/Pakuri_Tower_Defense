@@ -119,9 +119,9 @@ namespace Pakuri.InGame
         internal static System.Collections.Generic.IReadOnlyList<CombatUnitEntry> ResolveBuffTargets(
             CombatUnitEntry caster,
             CombatUnitRegistry roster,
-            BuffTarget targetMode)
+            SkillTargetSide targetMode)
         {
-            if (targetMode == BuffTarget.Self)
+            if (targetMode == SkillTargetSide.Self)
             {
                 return caster != null
                     ? new[] { caster }

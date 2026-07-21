@@ -10,7 +10,7 @@ namespace Pakuri.InGame
     /*
      * 학습한 선택지를 스킬 실행 상태에 적용한다.
      */
-    internal sealed class SkillUpgrade
+    internal class SkillUpgrade
     {
         /*
          * 유닛이 학습한 선택지를 현재 스킬 실행 정보에 적용한다.
@@ -31,7 +31,7 @@ namespace Pakuri.InGame
                 skillData = runtime.Data;
             }
             var snapshot = new SkillSnapshot(skillData);
-            ApplyPassiveBaseModifiers(snapshot, owner as MonsterCombatState, skillData);
+            ApplyPassiveBaseModifiers(snapshot, owner, skillData);
             System.Collections.Generic.ICollection<string> chosenChoiceIds = null;
             if (owner != null && owner.SkillProgress != null)
             {
@@ -51,11 +51,12 @@ namespace Pakuri.InGame
          */
         private static void ApplyPassiveBaseModifiers(
             SkillSnapshot snapshot,
-            MonsterCombatState owner,
+            UnitCombatState owner,
             SkillRuntimeData skillData)
         {
             if (snapshot == null
                 || owner == null
+                || owner.Identity.Role != UnitRole.Monster
                 || owner.SkillProgress == null
                 || skillData == null
                 || owner.SkillProgress.LearnedPassiveSkillIds == null

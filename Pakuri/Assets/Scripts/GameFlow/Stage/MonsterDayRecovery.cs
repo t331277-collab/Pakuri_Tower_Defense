@@ -1,13 +1,29 @@
 using UnityEngine;
 
 /*
- * 하루가 끝난 뒤 아군 Monster의 체력과 자동 행동 설정을 다음 전투 상태로 회복한다.
+ * 하루가 끝난 뒤 Monster의 임시 전투 상태, 체력, 자동 행동 설정을 다음 전투 상태로 회복한다.
  */
 namespace Pakuri.InGame
 {
-    internal static class MonsterDayRecovery
+    static class MonsterDayRecovery
     {
-        public static void Restore(MonsterCombatState model)
+        /*
+         * 한 전투에서만 유지되는 상태 효과, 보호막, 스킬 실행 상태를 초기화한다.
+         */
+        public static void ResetTransient(UnitCombatState model)
+        {
+            model.Statuses.Clear();
+            model.Resources.DirectShield = 0f;
+            model.Resources.CurrentShield = 0f;
+
+            var activeSkills = model.SkillRuntime.ActiveSkills;
+            for (var i = 0; i < activeSkills.Count; i++)
+            {
+                activeSkills[i].ResetRuntimeState();
+            }
+        }
+
+        public static void Restore(UnitCombatState model)
         {
             model.AutoAttackEnabled = true;
             if (!IsSelectedPlayerMonster(model))
@@ -15,11 +31,11 @@ namespace Pakuri.InGame
                 model.AutoSkillEnabled = true;
             }
 
-            UnitCombatReset.ResetTransient(model);
+            ResetTransient(model);
             model.Resources.CurrentHealth = Mathf.Max(0f, model.Stats.MaxHealth);
         }
 
-        private static bool IsSelectedPlayerMonster(MonsterCombatState model)
+        private static bool IsSelectedPlayerMonster(UnitCombatState model)
         {
             return model.Identity.Side == UnitSide.Player
                 && model.Identity.Role == UnitRole.Monster

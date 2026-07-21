@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -204,7 +204,7 @@ namespace Pakuri.InGame
          */
         private void BeginRunSession()
         {
-            var monster = CsvDataLoader.CurrentCatalog.GetData<MonsterDefinition>(StartContext.SelectedMonsterId);
+            var monster = GameDataLoader.CurrentCatalog.GetData<MonsterDefinition>(StartContext.SelectedMonsterId);
             activeSession = RunSession.Begin(monster);
             StartContext.Clear();
         }

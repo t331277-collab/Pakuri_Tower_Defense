@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 using TMPro;
@@ -12,9 +12,7 @@ using UnityEngine.UI;
  */
 namespace Pakuri.InGame
 {
-    [DisallowMultipleComponent]
-    [RequireComponent(typeof(DamageMeterRuntimeTracker))]
-    public sealed class DamageMeterUIController : MonoBehaviour
+    public class DamageMeterUIController : MonoBehaviour
     {
         private const int MaxPartySlots = 5;
         private const float RefreshIntervalSeconds = 0.2f;
@@ -96,7 +94,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+                var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
                 tracker.TryGetRecord(monsterId, out var record);
                 panel.SetRuntime(monster, record, leaderDamage, ResolveDisplayName, ResolveSortKey);
             }
@@ -150,7 +148,7 @@ namespace Pakuri.InGame
 
         private string ResolveDisplayName(string monsterId, string sourceId)
         {
-            var manager = CsvDataLoader.CurrentCatalog;
+            var manager = GameDataLoader.CurrentCatalog;
             var monster = manager.ResolveMonster(monsterId);
             if (monster != null)
             {
@@ -191,7 +189,7 @@ namespace Pakuri.InGame
 
         private int ResolveSortKey(string monsterId, string sourceId, int firstSeenIndex)
         {
-            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             var activeSkills = monster != null ? monster.ActiveSkills : null;
             if (activeSkills != null)
             {
@@ -304,7 +302,7 @@ namespace Pakuri.InGame
 
         private static string ResolveChoiceTitle(string choiceId)
         {
-            var choice = CsvDataLoader.CurrentCatalog.GetData<SkillChoiceDefinition>(choiceId);
+            var choice = GameDataLoader.CurrentCatalog.GetData<SkillChoiceDefinition>(choiceId);
             return choice != null ? choice.Title : string.Empty;
         }
 
@@ -444,7 +442,7 @@ namespace Pakuri.InGame
 
         private GameDataCatalog ResolveCatalog()
         {
-            return CsvDataLoader.CurrentCatalog;
+            return GameDataLoader.CurrentCatalog;
         }
 
         private static T FindSceneObject<T>() where T : UnityEngine.Object
@@ -463,7 +461,7 @@ namespace Pakuri.InGame
         }
 
         [Serializable]
-        private sealed class DamagePanelView
+        private class DamagePanelView
         {
             [SerializeField] private GameObject root;
             [SerializeField] private Image monsterImage;

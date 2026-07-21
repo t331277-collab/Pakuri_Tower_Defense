@@ -6,18 +6,17 @@ using UnityEngine;
  */
 namespace Pakuri.InGame
 {
-    [DisallowMultipleComponent]
-    public sealed class MonsterActor : MonoBehaviour
+    public class MonsterActor : MonoBehaviour
     {
         [SerializeField] private AnimationController animationController;
 
         private UnitWorldDisplay display;
         private bool defeated;
 
-        public MonsterCombatState Model { get; private set; }
+        public UnitCombatState Model { get; private set; }
         public bool IsDefeated => defeated;
 
-        public void Initialize(MonsterCombatState model)
+        public void Initialize(UnitCombatState model)
         {
             Model = model;
             display = new UnitWorldDisplay(this);

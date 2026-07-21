@@ -95,10 +95,7 @@ namespace Pakuri.InGame
             {
                 for (var i = 0; i < ops.Count; i++)
                 {
-                    if (ops[i].Kind == CastConditionOpKind.TargetHealthRatioBonus)
-                    {
-                        bonus += ops[i].Value;
-                    }
+                    bonus += ops[i].TargetHealthRatioBonus;
                 }
             }
 
@@ -154,10 +151,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < plan.CritModifiers.Count; i++)
             {
                 var op = plan.CritModifiers[i];
-                if (op.Kind == CritModifierOpKind.ExecuteChanceBonus)
-                {
-                    state.CritChanceBonus += op.ChanceBonus;
-                }
+                state.CritChanceBonus += op.ChanceBonus;
             }
         }
 
@@ -250,4 +244,3 @@ namespace Pakuri.InGame
         }
     }
 }
-

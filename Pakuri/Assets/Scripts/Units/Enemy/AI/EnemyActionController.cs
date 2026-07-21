@@ -72,7 +72,7 @@ namespace Pakuri.InGame
             // 일반 플레이어가 모두 사라진 뒤 선택된 넥서스는 별도 접촉 공격으로 처리한다.
             if (target != null && target.Model.IsNexus)
             {
-                EnemyNexusAttack.Tick(enemyEntry, enemyModel, target, deltaTime, combatManager);
+                TickNexusAttack(enemyEntry, enemyModel, target, deltaTime);
                 return;
             }
 
@@ -105,13 +105,13 @@ namespace Pakuri.InGame
             }
 
             var distance = Vector2.Distance(enemyEntry.Transform.position, target.Transform.position);
-            var attackRange = EnemyCombatDecision.ResolveAttackRange(enemyModel, offensiveRuntime);
+            var attackRange = offensiveRuntime.Data.Targeting.Range;
             // 사거리 밖에서는 공격하지 않고 이동만 시도한다.
             if (distance > attackRange)
             {
                 if (StatusCombatRules.CanMove(enemyModel))
                 {
-                    EnemyMovement.MoveToward(enemyEntry, target, enemyModel, deltaTime);
+                    MoveToward(enemyEntry, target, enemyModel, deltaTime);
                 }
 
                 return;
@@ -140,6 +140,80 @@ namespace Pakuri.InGame
                 runtime,
                 registry,
                 combatManager);
+        }
+
+        /*
+         * 상태 효과가 반영된 이동 속도로 선택된 대상 쪽으로 이동한다.
+         */
+        private static void MoveToward(
+            CombatUnitEntry enemyEntry,
+            CombatUnitEntry target,
+            EnemyCombatState enemyModel,
+            float deltaTime)
+        {
+            var moveSpeed = enemyModel.Stats.MoveSpeed;
+            moveSpeed *= StatusCombatRules.ResolveMoveSpeedMultiplier(enemyModel);
+            if (moveSpeed <= 0f)
+            {
+                return;
+            }
+
+            var current = enemyEntry.Transform.position;
+            var targetPosition = target.Transform.position;
+            targetPosition.z = current.z;
+            enemyEntry.Transform.position = Vector3.MoveTowards(
+                current,
+                targetPosition,
+                moveSpeed * deltaTime);
+        }
+
+        /*
+         * 적을 Nexus로 이동시키고 접촉하면 정의된 피해를 적용한 뒤 적을 제거한다.
+         */
+        private void TickNexusAttack(
+            CombatUnitEntry enemyEntry,
+            EnemyCombatState enemyModel,
+            CombatUnitEntry nexusTarget,
+            float deltaTime)
+        {
+            if (!IsTouchingNexus(enemyEntry, nexusTarget))
+            {
+                if (StatusCombatRules.CanMove(enemyModel))
+                {
+                    MoveToward(enemyEntry, nexusTarget, enemyModel, deltaTime);
+                }
+
+                return;
+            }
+
+            combatManager.ApplyDamage(
+                nexusTarget.Model,
+                enemyModel.NexusDamage,
+                DamageAttribute.Physical,
+                enemyModel,
+                false);
+            combatManager.DespawnUnit(enemyModel);
+        }
+
+        private static bool IsTouchingNexus(CombatUnitEntry enemyEntry, CombatUnitEntry nexusTarget)
+        {
+            var enemyPoint = enemyEntry.ResolveTargetPoint();
+            var targetColliders = nexusTarget.GetHitboxColliders();
+            for (var i = 0; i < targetColliders.Length; i++)
+            {
+                var collider = targetColliders[i];
+                if (collider.enabled && collider.OverlapPoint(enemyPoint))
+                {
+                    return true;
+                }
+            }
+
+            if (UnitHitboxOverlap.IsTargetInsideHitbox(enemyEntry.GetHitboxColliders(), nexusTarget))
+            {
+                return true;
+            }
+
+            return Vector2.Distance(enemyEntry.Transform.position, nexusTarget.Transform.position) <= 0.25f;
         }
 
     }

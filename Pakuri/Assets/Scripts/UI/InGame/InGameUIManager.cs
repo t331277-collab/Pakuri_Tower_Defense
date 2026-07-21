@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 using TMPro;
@@ -12,8 +12,7 @@ using UnityEngine.UI;
  */
 namespace Pakuri.InGame
 {
-    [DisallowMultipleComponent]
-    public sealed class InGameUIManager : MonoBehaviour
+    public class InGameUIManager : MonoBehaviour
     {
         private const int PrisonPartySlotCount = 5;
 
@@ -381,7 +380,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             if (slot.NameText != null)
             {
                 slot.NameText.text = monster != null && !string.IsNullOrWhiteSpace(monster.DisplayName)
@@ -441,7 +440,12 @@ namespace Pakuri.InGame
                 return vegaPrisonPortrait;
             }
 
-            return monster != null ? monster.UnitSprite : null;
+            if (monster != null)
+            {
+                return monster.MonsterIconImage;
+            }
+
+            return null;
         }
 
         private void BindStaticButtons()
@@ -578,12 +582,12 @@ namespace Pakuri.InGame
 
         private GameDataCatalog ResolveCatalog()
         {
-            return CsvDataLoader.CurrentCatalog;
+            return GameDataLoader.CurrentCatalog;
         }
 
         private string ResolvePrisonerDisplayName(string prisonerId)
         {
-            var enemy = CsvDataLoader.CurrentCatalog.GetData<EnemyDefinition>(prisonerId);
+            var enemy = GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(prisonerId);
             if (enemy != null && !string.IsNullOrWhiteSpace(enemy.DisplayName))
             {
                 return enemy.DisplayName;
@@ -695,7 +699,7 @@ namespace Pakuri.InGame
             return null;
         }
 
-        private sealed class PrisonPartySlotView
+        private class PrisonPartySlotView
         {
             public PrisonPartySlotView(
                 Image image,
@@ -718,7 +722,7 @@ namespace Pakuri.InGame
             public GameObject MenifestedLabel { get; }
         }
 
-        internal sealed class RewardButtonView
+        internal class RewardButtonView
         {
             private readonly Color originalColor;
 
@@ -761,7 +765,7 @@ namespace Pakuri.InGame
         }
     }
 
-    internal sealed class OfferingUI
+    internal class OfferingUI
     {
         private const int MaxOfferingChoices = 3;
         private const int MaxAdditionalActiveSkillCount = 2;
@@ -903,7 +907,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             if (monster == null)
             {
                 return;
@@ -930,7 +934,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var skills = CsvDataLoader.CurrentCatalog.GetActiveSkills(monster.MonsterId);
+            var skills = GameDataLoader.CurrentCatalog.GetActiveSkills(monster.MonsterId);
             for (var i = 0; i < skills.Length; i++)
             {
                 var skill = skills[i];
@@ -961,7 +965,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var passives = CsvDataLoader.CurrentCatalog.GetPassiveSkills(monster.MonsterId);
+            var passives = GameDataLoader.CurrentCatalog.GetPassiveSkills(monster.MonsterId);
             for (var i = 0; i < passives.Length; i++)
             {
                 var passive = passives[i];
@@ -997,7 +1001,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var rewards = CsvDataLoader.CurrentCatalog.GetRewardChoices(monster.MonsterId);
+            var rewards = GameDataLoader.CurrentCatalog.GetRewardChoices(monster.MonsterId);
             for (var i = 0; i < rewards.Length; i++)
             {
                 var reward = rewards[i];
@@ -1044,7 +1048,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var manager = CsvDataLoader.CurrentCatalog;
+            var manager = GameDataLoader.CurrentCatalog;
             if (manager == null || !manager.TryGetData(choiceId, out SkillChoiceDefinition choice))
             {
                 return null;
@@ -1065,7 +1069,7 @@ namespace Pakuri.InGame
                 return choice.SkillIcon;
             }
 
-            var manager = CsvDataLoader.CurrentCatalog;
+            var manager = GameDataLoader.CurrentCatalog;
             if (manager == null || string.IsNullOrWhiteSpace(choice.SkillId))
             {
                 return null;
@@ -1155,7 +1159,7 @@ namespace Pakuri.InGame
                 }
             }
 
-            var manager = CsvDataLoader.CurrentCatalog;
+            var manager = GameDataLoader.CurrentCatalog;
             if (manager != null)
             {
                 if (manager.TryGetData(skillId, out SkillDefinition activeSkill) && activeSkill != null)
@@ -1232,9 +1236,10 @@ namespace Pakuri.InGame
             var players = combatManager.UnitRegistry.Players;
             for (var i = 0; i < players.Count; i++)
             {
-                var model = players[i] != null ? players[i].Model as MonsterCombatState : null;
-                if (model != null)
+                var entry = players[i];
+                if (entry != null && entry.Model.Identity.Role == UnitRole.Monster)
                 {
+                    var model = entry.Model;
                     SyncModelStateFromSession(session, model);
                     UnitSkillRuntimeBuilder.RebuildLearnedSkillSet(model);
                     combatManager.UnitRegistry.RefreshDisplay(model);
@@ -1267,7 +1272,7 @@ namespace Pakuri.InGame
             }
         }
 
-        private static void SyncModelStateFromSession(RunSession session, MonsterCombatState model)
+        private static void SyncModelStateFromSession(RunSession session, UnitCombatState model)
         {
             if (session == null || model == null || model.Identity == null)
             {
@@ -1315,7 +1320,7 @@ namespace Pakuri.InGame
 
         private bool HasLearnedRequiredActive(RunSession session, MonsterDefinition monster, RunSession.RunMonsterState state, SkillSlot slot)
         {
-            var skills = CsvDataLoader.CurrentCatalog.GetActiveSkills(monster.MonsterId);
+            var skills = GameDataLoader.CurrentCatalog.GetActiveSkills(monster.MonsterId);
             for (var i = 0; i < skills.Length; i++)
             {
                 var skill = skills[i];
@@ -1491,7 +1496,7 @@ namespace Pakuri.InGame
             Enhancement
         }
 
-        private sealed class OfferingChoiceView
+        private class OfferingChoiceView
         {
             public OfferingChoiceKind Kind;
             public string MonsterId;
@@ -1512,7 +1517,7 @@ namespace Pakuri.InGame
             public float StatusChanceBonus;
         }
 
-        private sealed class OfferingButtonView
+        private class OfferingButtonView
         {
             public Button Button;
             public TMP_Text SummaryLabel;
@@ -1570,7 +1575,7 @@ namespace Pakuri.InGame
         }
     }
 
-    internal sealed class MenifestUI
+    internal class MenifestUI
     {
         private readonly GameObject manifestedFailPopUp;
         private readonly Button manifestedFailBackButton;
@@ -1679,8 +1684,13 @@ namespace Pakuri.InGame
 
             if (monsterImage != null)
             {
-                monsterImage.sprite = monster != null ? monster.UnitSprite : null;
-                monsterImage.color = monster != null && monster.UnitSprite != null ? Color.white : new Color(0f, 0f, 0f, 0.3f);
+                monsterImage.sprite = null;
+                monsterImage.color = new Color(0f, 0f, 0f, 0.3f);
+                if (monster != null && monster.MonsterIconImage != null)
+                {
+                    monsterImage.sprite = monster.MonsterIconImage;
+                    monsterImage.color = Color.white;
+                }
             }
         }
 
@@ -1722,7 +1732,7 @@ namespace Pakuri.InGame
 
         private MonsterDefinition ResolveNextManifestCandidate(RunSession session)
         {
-            var monsters = CsvDataLoader.CurrentCatalog.GetMonsters();
+            var monsters = GameDataLoader.CurrentCatalog.GetMonsters();
             var candidates = new System.Collections.Generic.List<MonsterDefinition>();
             for (var i = 0; i < monsters.Length; i++)
             {
@@ -1751,7 +1761,7 @@ namespace Pakuri.InGame
             return
                 $"{monster.RoleSummary}\n" +
                 $"속성: {monster.ElementLabel}\n" +
-                $"HP: {monster.MaxHealth:0} / 전투력: {monster.PowerStat:0}\n" +
+                $"HP: {monster.BaseStats.MaxHealth:0} / 전투력: {monster.PowerStat:0}\n" +
                 $"A: {monster.ActiveSkillName} / F: {monster.PassiveSkillName}";
         }
 

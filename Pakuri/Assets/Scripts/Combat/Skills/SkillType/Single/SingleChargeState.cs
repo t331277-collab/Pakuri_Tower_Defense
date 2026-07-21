@@ -5,7 +5,7 @@ using Pakuri.Combat;
  */
 namespace Pakuri.InGame
 {
-    public sealed class SingleChargeState
+    public class SingleChargeState
     {
         public string SkillId;
         public string TargetUnitId;

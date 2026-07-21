@@ -8,7 +8,7 @@ namespace Pakuri.InGame
 {
     internal static class NexusHealthDisplay
     {
-        public static void Refresh(TextMeshProUGUI label, NexusCombatState model)
+        public static void Refresh(TextMeshProUGUI label, UnitCombatState model)
         {
             var current = Mathf.CeilToInt(Mathf.Max(0f, model.Resources.CurrentHealth));
             var maximum = Mathf.CeilToInt(Mathf.Max(0f, model.Stats.MaxHealth));

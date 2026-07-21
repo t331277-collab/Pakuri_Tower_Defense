@@ -6,8 +6,7 @@ using UnityEngine;
  */
 namespace Pakuri.InGame
 {
-    [DisallowMultipleComponent]
-    public sealed class EnemyActor : MonoBehaviour
+    public class EnemyActor : MonoBehaviour
     {
         private UnitWorldDisplay display;
 

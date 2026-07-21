@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 using UnityEngine;
@@ -794,10 +794,10 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             for (var i = 0; i < ActiveSlots.Length; i++)
             {
-                var source = CsvDataLoader.CurrentCatalog.ResolveActiveSkill(monsterId, ActiveSlots[i]);
+                var source = GameDataLoader.CurrentCatalog.ResolveActiveSkill(monsterId, ActiveSlots[i]);
                 if (source == null)
                 {
                     continue;
@@ -810,7 +810,7 @@ namespace Pakuri.InGame
                 }
             }
 
-            var passives = CsvDataLoader.CurrentCatalog.GetPassiveSkills(monsterId);
+            var passives = GameDataLoader.CurrentCatalog.GetPassiveSkills(monsterId);
             for (var i = 0; i < passives.Length; i++)
             {
                 var passive = SkillRuntimeCompiler.CompilePassive(monster, passives[i]);

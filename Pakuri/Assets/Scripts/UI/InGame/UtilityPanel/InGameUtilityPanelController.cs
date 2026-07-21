@@ -6,8 +6,7 @@ using UnityEngine.UI;
  */
 namespace Pakuri.InGame
 {
-    [DisallowMultipleComponent]
-    public sealed class InGameUtilityPanelController : MonoBehaviour
+    public class InGameUtilityPanelController : MonoBehaviour
     {
         private static readonly float[] TimeScales = { 1f, 1.5f, 2f };
 

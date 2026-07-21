@@ -8,7 +8,7 @@ using UnityEngine;
  */
 namespace Pakuri.InGame
 {
-    public sealed class ProjectileSkillActor : MonoBehaviour
+    public class ProjectileSkillActor : MonoBehaviour
     {
         private readonly HashSet<string> hitUnitIds = new HashSet<string>();
 
@@ -754,7 +754,7 @@ namespace Pakuri.InGame
     /*
      * 투사체 상태 적중 설정에 필요한 값을 보관한다.
      */
-    public sealed class ProjectileStatusHitSpec
+    public class ProjectileStatusHitSpec
     {
         public bool Enabled;
         public StatusEffectKind Kind;
@@ -773,7 +773,7 @@ namespace Pakuri.InGame
     /*
      * 투사체 분기 피해 설정에 필요한 값을 보관한다.
      */
-    public sealed class ProjectileBranchDamageSpec
+    public class ProjectileBranchDamageSpec
     {
         public bool Enabled;
         public float Chance;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Combat;
@@ -192,7 +192,7 @@ internal static class SkillTrigger
 			return;
 		}
 		string id = ((source.Identity != null) ? source.Identity.DefinitionId : string.Empty);
-		MonsterDefinition monsterDefinition = CsvDataLoader.CurrentCatalog.ResolveMonster(id);
+		MonsterDefinition monsterDefinition = GameDataLoader.CurrentCatalog.ResolveMonster(id);
 		SkillTriggerDefinition[] array = ResolveSourceOwnedPlanTriggers(source, sourceSkillId, (monsterDefinition != null) ? monsterDefinition.SkillTriggers : null);
 		if (array == null || array.Length == 0)
 		{
@@ -228,7 +228,7 @@ internal static class SkillTrigger
 				continue;
 			}
 			string id = ((unitState.Identity != null) ? unitState.Identity.DefinitionId : string.Empty);
-			MonsterDefinition monsterDefinition = CsvDataLoader.CurrentCatalog.ResolveMonster(id);
+			MonsterDefinition monsterDefinition = GameDataLoader.CurrentCatalog.ResolveMonster(id);
 			SkillTriggerDefinition[] array = ((monsterDefinition != null) ? monsterDefinition.SkillTriggers : null);
 			if (array == null || array.Length == 0)
 			{
@@ -578,7 +578,7 @@ internal static class SkillTrigger
 		{
 			return null;
 		}
-		MonsterDefinition monsterDefinition = CsvDataLoader.CurrentCatalog.ResolveMonster(source.Identity.DefinitionId);
+		MonsterDefinition monsterDefinition = GameDataLoader.CurrentCatalog.ResolveMonster(source.Identity.DefinitionId);
 		if (monsterDefinition == null)
 		{
 			return null;

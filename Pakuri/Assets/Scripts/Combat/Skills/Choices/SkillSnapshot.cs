@@ -455,7 +455,7 @@ public class SkillSnapshot
 		{
 			Source = new SkillChoiceDefinition()
 		};
-		SkillChoiceCompiler.ApplyNormalizedChoiceCompatibilityNodes(spec, array);
+		SkillChoiceCompiler.ApplyChoiceFieldNodes(spec, array);
 		ApplyNodeBackedChoiceFields(spec);
 		SkillNode[] nodes = SkillNodeMapper.MapSkillNodeDefinitions(array);
 		AddNormalizedPlanNodes(nodes);
@@ -467,6 +467,54 @@ public class SkillSnapshot
 	private void ApplyNodeBackedChoiceFields(SkillChoiceRuntimeData spec)
 	{
 		SkillChoiceDefinition source = spec.Source;
+		CritChanceBonus += source.CritChanceBonus;
+		CritDamageBonus += source.CritDamageBonus;
+		BeamWidthBonus += source.BeamWidthBonus;
+		if (source.HasKnockbackDistanceMultiplier)
+		{
+			KnockbackDistanceMultiplier *= source.KnockbackDistanceMultiplier;
+		}
+		if (!string.IsNullOrWhiteSpace(source.ReloadReduceTargetSkillId))
+		{
+			ReloadReduceTargetSkillId = source.ReloadReduceTargetSkillId;
+			ReloadReduceSecondsPerHit += source.ReloadReduceSecondsPerHit;
+		}
+		if (source.HasCoreDamageMultiplier)
+		{
+			CoreHitboxName = source.CoreHitboxName;
+			HasCoreDamageMultiplier = true;
+			CoreDamageMultiplier *= source.CoreDamageMultiplier;
+		}
+		if (source.HasCoreOnHitAdditionalDamage)
+		{
+			CoreHitboxName = source.CoreHitboxName;
+			HasCoreOnHitAdditionalDamage = true;
+			CoreOnHitAdditionalDamageChance = source.CoreOnHitAdditionalDamageChance;
+			CoreOnHitAdditionalDamageMultiplier = source.CoreOnHitAdditionalDamageMultiplier;
+			CoreOnHitAdditionalDamageAttribute = source.CoreOnHitAdditionalDamageAttribute;
+		}
+		if (!string.IsNullOrWhiteSpace(source.HitCountCooldownRefundTargetSkillId))
+		{
+			HitCountCooldownRefundTargetSkillId = source.HitCountCooldownRefundTargetSkillId;
+			HitCountCooldownRefundMinTargets = source.HitCountCooldownRefundMinTargets;
+			HitCountCooldownRefundRatio = source.HitCountCooldownRefundRatio;
+		}
+		if (source.HasOnHitAdditionalDamage)
+		{
+			HasOnHitAdditionalDamage = true;
+			OnHitAdditionalDamageChance = source.OnHitAdditionalDamageChance;
+			OnHitAdditionalDamageMultiplier = source.OnHitAdditionalDamageMultiplier;
+			OnHitAdditionalDamageAttribute = source.OnHitAdditionalDamageAttribute;
+			OnHitAdditionalDamageTarget = source.OnHitAdditionalDamageTarget;
+		}
+		if (source.OnHitChainHitPeriod > 0)
+		{
+			OnHitChainHitPeriod = source.OnHitChainHitPeriod;
+			OnHitChainTargetCount = source.OnHitChainTargetCount;
+			OnHitChainSearchRadius = source.OnHitChainSearchRadius;
+			OnHitChainDamageMultiplier = source.OnHitChainDamageMultiplier;
+			OnHitChainDamageAttribute = source.OnHitChainDamageAttribute;
+		}
 		if (source.HasBurstDamageMultiplier && source.BurstDamageMultiplier > 0f && source.HasBurstDamageProjectileIndex)
 		{
 			burstDamageRules.Add(new BurstDamageRule(source.BurstDamageProjectileIndex, source.BurstDamageMultiplier));
@@ -939,7 +987,7 @@ public class SkillSnapshot
 		killActionOps.Clear();
 		if (!Mathf.Approximately(ExecuteHealthRatioBonus, 0f))
 		{
-			castConditionOps.Add(new CastConditionOp(CastConditionOpKind.TargetHealthRatioBonus, ExecuteHealthRatioBonus));
+			castConditionOps.Add(new CastConditionOp(ExecuteHealthRatioBonus));
 		}
 		if (!Mathf.Approximately(BossDamageMultiplier, 1f))
 		{
@@ -947,7 +995,7 @@ public class SkillSnapshot
 		}
 		if (!Mathf.Approximately(ExecuteCritChanceBonus, 0f))
 		{
-			critModifierOps.Add(new CritModifierOp(CritModifierOpKind.ExecuteChanceBonus, ExecuteCritChanceBonus));
+			critModifierOps.Add(new CritModifierOp(ExecuteCritChanceBonus));
 		}
 		if (KillResetsCooldown)
 		{

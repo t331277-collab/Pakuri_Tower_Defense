@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Combat;
@@ -951,7 +951,7 @@ static class SkillStatus
 
         if (statusData == null || statusData.Kind != kind)
         {
-            statusData = StatusDataCompiler.Create(kind, null);
+            statusData = StatusRuntimeCompiler.Create(kind, null);
         }
 
         var resolvedStatusData = ResolveStatusData(statusData, kind, snapshot);
@@ -1020,7 +1020,7 @@ static class SkillStatus
             return null;
         }
 
-        var statusData = StatusDataCompiler.Create(kind, null);
+        var statusData = StatusRuntimeCompiler.Create(kind, null);
         statusData = ResolveStatusData(statusData, kind, snapshot);
         var duration = statusData.Duration;
         var durationBonus = ResolveStatusDurationBonus(snapshot, statusData);
@@ -1166,7 +1166,7 @@ static class SkillStatus
         }
 
         var kind = snapshot.ThresholdApplyStatusKind;
-        var statusData = StatusDataCompiler.Create(kind, null);
+        var statusData = StatusRuntimeCompiler.Create(kind, null);
         var duration = statusData.Duration;
         var durationBonus = ResolveStatusDurationBonus(snapshot, statusData);
         if (!Mathf.Approximately(durationBonus, 0f))

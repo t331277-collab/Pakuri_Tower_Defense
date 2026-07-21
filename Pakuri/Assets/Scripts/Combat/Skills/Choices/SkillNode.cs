@@ -9,20 +9,10 @@ using System.Collections.Generic;
  */
 namespace Pakuri.InGame
 {
-    public enum CastConditionOpKind
-    {
-        TargetHealthRatioBonus
-    }
-
     public enum DamageModifierOpKind
     {
         BossMultiplier,
         ExecuteMultiplier
-    }
-
-    public enum CritModifierOpKind
-    {
-        ExecuteChanceBonus
     }
 
     public enum KillActionOpKind
@@ -75,14 +65,12 @@ namespace Pakuri.InGame
      */
     public readonly struct CastConditionOp
     {
-        public CastConditionOp(CastConditionOpKind kind, float value)
+        public CastConditionOp(float targetHealthRatioBonus)
         {
-            Kind = kind;
-            Value = value;
+            TargetHealthRatioBonus = targetHealthRatioBonus;
         }
 
-        public CastConditionOpKind Kind { get; }
-        public float Value { get; }
+        public float TargetHealthRatioBonus { get; }
     }
 
     public readonly struct DamageModifierOp
@@ -99,13 +87,11 @@ namespace Pakuri.InGame
 
     public readonly struct CritModifierOp
     {
-        public CritModifierOp(CritModifierOpKind kind, float chanceBonus)
+        public CritModifierOp(float chanceBonus)
         {
-            Kind = kind;
             ChanceBonus = chanceBonus;
         }
 
-        public CritModifierOpKind Kind { get; }
         public float ChanceBonus { get; }
     }
 
@@ -159,26 +145,9 @@ namespace Pakuri.InGame
     }
 
     /*
-     * 스킬 실행 계획 노드 종류에서 사용하는 선택 값을 정의한다.
-     */
-    public enum SkillNodeKind
-    {
-        SkillBase,
-        CastCondition,
-        Action,
-        DamageModifier,
-        CritModifier,
-        OnHitAction,
-        OnKillAction,
-        OnExpireAction,
-        Trigger,
-        Visual
-    }
-
-    /*
      * 스킬 실행 계획에 포함될 조건, 보정, 행동 노드를 보관한다.
      */
-    public sealed class SkillNode
+    public class SkillNode
     {
         /*
          * 스킬 실행 계획 노드에 필요한 값을 초기화한다.
@@ -283,7 +252,7 @@ namespace Pakuri.InGame
     /*
      * 스킬 효과 행동에 필요한 값을 보관한다.
      */
-    public sealed class SkillEffectAction
+    public class SkillEffectAction
     {
         /*
          * 스킬 효과 행동에 필요한 값을 초기화한다.
@@ -299,7 +268,7 @@ namespace Pakuri.InGame
     /*
      * 스킬 트리거 행동에 필요한 값을 보관한다.
      */
-    public sealed class SkillTriggerAction
+    public class SkillTriggerAction
     {
         /*
          * 스킬 트리거 행동에 필요한 값을 초기화한다.
@@ -315,7 +284,7 @@ namespace Pakuri.InGame
     /*
      * 스킬 실행에 사용할 조건, 보정, 행동 목록을 보관한다.
      */
-    public sealed class SkillNodePlan
+    public class SkillNodePlan
     {
         /*
          * 스킬 실행 계획에 필요한 값을 초기화한다.

@@ -1,5 +1,5 @@
 "choice_id","skill_id","monster_id","choice_group","sort_order","title","description_text"
-"id","string","string","enum:PakuriCsvChoiceGroup","int","string","string"
+"id","string","string","enum:SkillChoiceGroup","int","string","string"
 "ariel-b-trait-1","ariel-b","ariel","ActiveEnhancement","0","특성 1","방어막량 +30%"
 "ariel-b-trait-2","ariel-b","ariel","ActiveEnhancement","1","특성 2","지속시간 +2초"
 "ariel-b-trait-3","ariel-b","ariel","ActiveEnhancement","2","특성 3","쿨타임 -20%"

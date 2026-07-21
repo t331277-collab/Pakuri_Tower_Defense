@@ -1,12 +1,77 @@
+using System;
+using System.Collections.Generic;
 using Pakuri.Combat;
 using UnityEngine;
 
 /*
- * 모든 전투 유닛이 공유하는 모델들을 한 전투 상태로 묶어 보관한다.
- * 피해 계산과 상태 효과 처리는 각 Combat 스크립트가 이 상태를 읽고 갱신한다.
+ * 모든 전투 유닛의 식별, 능력치, 자원, 방어력과 스킬 진행 상태를 한곳에 정의한다.
+ * 적 전용 상태만 EnemyCombatState에 추가하고 몬스터와 Nexus는 역할 값으로 구분한다.
  */
 namespace Pakuri.InGame
 {
+    public enum UnitSide
+    {
+        Player,
+        Enemy
+    }
+
+    public enum UnitRole
+    {
+        Monster,
+        Enemy,
+        Nexus
+    }
+
+    [Serializable]
+    public class UnitIdentity
+    {
+        public string UnitId;
+        public string DefinitionId;
+        public string DisplayName;
+        public UnitSide Side;
+        public UnitRole Role;
+        public int SlotIndex;
+    }
+
+    [Serializable]
+    public class UnitCombatStats
+    {
+        public float MaxHealth;
+        public float AttackPower;
+        public float SpellPower;
+        public float MoveSpeed;
+        public float CriticalChance;
+        public float CriticalDamage;
+        public float CriticalResistance;
+    }
+
+    [Serializable]
+    public class UnitDefenseStats
+    {
+        public float Physical;
+        public float Fire;
+        public float Lightning;
+        public float Ice;
+        public float Darkness;
+        public float Holy;
+    }
+
+    [Serializable]
+    public class UnitCombatResources
+    {
+        public float CurrentHealth;
+        public float CurrentShield;
+        public float DirectShield;
+    }
+
+    [Serializable]
+    public class UnitSkillProgress
+    {
+        public readonly HashSet<string> LearnedActiveSkillIds = new HashSet<string>();
+        public readonly HashSet<string> LearnedPassiveSkillIds = new HashSet<string>();
+        public readonly HashSet<string> ChosenChoiceIds = new HashSet<string>();
+    }
+
     public class UnitCombatState
     {
         public UnitIdentity Identity = new UnitIdentity();
@@ -41,5 +106,19 @@ namespace Pakuri.InGame
             Resources.DirectShield = Mathf.Round(Mathf.Max(0f, Resources.DirectShield));
             Resources.CurrentShield = GetTotalShield();
         }
+    }
+
+    public class EnemyCombatState : UnitCombatState
+    {
+        public DamageAttribute Attribute;
+        public float NexusDamage = 1f;
+        public float PassivePhysicalDamageMultiplier = 1f;
+        public float PassiveFireDamageMultiplier = 1f;
+        public float PassiveLightningDamageMultiplier = 1f;
+        public float PassiveIceDamageMultiplier = 1f;
+        public float PassiveDarknessDamageMultiplier = 1f;
+        public float PassiveHolyDamageMultiplier = 1f;
+        public float PassiveIncomingDamageMultiplier = 1f;
+        public float PassiveHealingMultiplier = 1f;
     }
 }

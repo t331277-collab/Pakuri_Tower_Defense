@@ -1,5 +1,5 @@
 "choice_id","skill_id","monster_id","target_skill_id","choice_group","sort_order","title","description_text"
-"id","string","string","string","enum:PakuriCsvChoiceGroup","int","string","string"
+"id","string","string","string","enum:SkillChoiceGroup","int","string","string"
 "ariel-f-trait-1","ariel-f","ariel","","PassiveEnhancement","0","특성 1","모든 아군 신성 피해 +6%"
 "ariel-f-trait-2","ariel-f","ariel","ariel-a","PassiveEnhancement","1","특성 2","심판의 빛 탄창 +2"
 "ariel-f-trait-3","ariel-f","ariel","","PassiveEnhancement","2","특성 3","신성 스킬을 보유한 아군의 치명타 확률 +8%"

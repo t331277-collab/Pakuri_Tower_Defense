@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Pakuri.Data;
 using TMPro;
 using UnityEngine;
@@ -12,8 +12,7 @@ using UnityEngine.UI;
  */
 namespace Pakuri.InGame
 {
-    [DisallowMultipleComponent]
-    public sealed class DebugUI : MonoBehaviour
+    public class DebugUI : MonoBehaviour
     {
         private const int TraitButtonCount = 5;
         private const int MasterButtonCount = 2;
@@ -114,20 +113,24 @@ namespace Pakuri.InGame
             var session = ResolveSession();
             var catalog = ResolveCatalog();
             var selectedEntry = ResolveSelectedPlayerEntry();
-            var model = selectedEntry != null ? selectedEntry.Model as MonsterCombatState : null;
+            UnitCombatState model = null;
+            if (selectedEntry != null)
+            {
+                model = selectedEntry.Model;
+            }
             var monsterId = ResolveMonsterId(session, model);
             if (session == null || string.IsNullOrWhiteSpace(monsterId))
             {
                 return;
             }
 
-            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             if (monster == null)
             {
                 return;
             }
 
-            var sourceSkill = CsvDataLoader.CurrentCatalog.ResolveActiveSkill(
+            var sourceSkill = GameDataLoader.CurrentCatalog.ResolveActiveSkill(
                 monster.MonsterId,
                 DebugSlots[slotIndex]);
             if (sourceSkill == null || string.IsNullOrWhiteSpace(sourceSkill.SkillId))
@@ -148,20 +151,24 @@ namespace Pakuri.InGame
             var session = ResolveSession();
             var catalog = ResolveCatalog();
             var selectedEntry = ResolveSelectedPlayerEntry();
-            var model = selectedEntry != null ? selectedEntry.Model as MonsterCombatState : null;
+            UnitCombatState model = null;
+            if (selectedEntry != null)
+            {
+                model = selectedEntry.Model;
+            }
             var monsterId = ResolveMonsterId(session, model);
             if (session == null || string.IsNullOrWhiteSpace(monsterId))
             {
                 return;
             }
 
-            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             if (monster == null)
             {
                 return;
             }
 
-            var passive = CsvDataLoader.CurrentCatalog.ResolvePassiveSkill(
+            var passive = GameDataLoader.CurrentCatalog.ResolvePassiveSkill(
                 monster.MonsterId,
                 DebugSlots[slotIndex]);
             if (passive == null || string.IsNullOrWhiteSpace(passive.PassiveId))
@@ -188,19 +195,20 @@ namespace Pakuri.InGame
             var players = manager.UnitRegistry.Players;
             for (var i = 0; i < players.Count; i++)
             {
-                var model = players[i] != null ? players[i].Model as MonsterCombatState : null;
-                if (model == null)
+                var entry = players[i];
+                if (entry == null || entry.Model.Identity.Role != UnitRole.Monster)
                 {
                     continue;
                 }
 
+                var model = entry.Model;
                 SyncModelStateFromSession(session, model);
                 UnitSkillRuntimeBuilder.RebuildLearnedSkillSet(model);
                 manager.UnitRegistry.RefreshDisplay(model);
             }
         }
 
-        private static void SyncModelStateFromSession(RunSession session, MonsterCombatState model)
+        private static void SyncModelStateFromSession(RunSession session, UnitCombatState model)
         {
             if (session == null || model == null || model.Identity == null)
             {
@@ -251,9 +259,13 @@ namespace Pakuri.InGame
             var session = ResolveSession();
             var catalog = ResolveCatalog();
             var selectedEntry = ResolveSelectedPlayerEntry();
-            var model = selectedEntry != null ? selectedEntry.Model as MonsterCombatState : null;
+            UnitCombatState model = null;
+            if (selectedEntry != null)
+            {
+                model = selectedEntry.Model;
+            }
             var monsterId = ResolveMonsterId(session, model);
-            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
 
             for (var i = 0; i < skillButtons.Length && i < DebugSlots.Length; i++)
             {
@@ -267,10 +279,10 @@ namespace Pakuri.InGame
                 var slot = DebugSlots[i];
                 var isPassiveSlot = IsPassiveSlot(i);
                 var activeSkill = !isPassiveSlot && monster != null
-                    ? CsvDataLoader.CurrentCatalog.ResolveActiveSkill(monster.MonsterId, slot)
+                    ? GameDataLoader.CurrentCatalog.ResolveActiveSkill(monster.MonsterId, slot)
                     : null;
                 var passiveSkill = isPassiveSlot && monster != null
-                    ? CsvDataLoader.CurrentCatalog.ResolvePassiveSkill(monster.MonsterId, slot)
+                    ? GameDataLoader.CurrentCatalog.ResolvePassiveSkill(monster.MonsterId, slot)
                     : null;
                 var hasSkill = isPassiveSlot
                     ? passiveSkill != null && !string.IsNullOrWhiteSpace(passiveSkill.PassiveId)
@@ -535,7 +547,7 @@ namespace Pakuri.InGame
 
         private GameDataCatalog ResolveCatalog()
         {
-            return CsvDataLoader.CurrentCatalog;
+            return GameDataLoader.CurrentCatalog;
         }
 
         private InGameCombatManager ResolveCombatManager()
@@ -547,17 +559,37 @@ namespace Pakuri.InGame
         private CombatUnitEntry ResolveSelectedPlayerEntry()
         {
             var manager = ResolveCombatManager();
-            return manager != null && manager.UnitRegistry.Players.Count > 0 ? manager.UnitRegistry.Players[0] : null;
+            if (manager == null)
+            {
+                return null;
+            }
+
+            var players = manager.UnitRegistry.Players;
+            for (var i = 0; i < players.Count; i++)
+            {
+                var identity = players[i].Model.Identity;
+                if (identity.Role == UnitRole.Monster && identity.SlotIndex == 0)
+                {
+                    return players[i];
+                }
+            }
+
+            return null;
         }
 
-        private static string ResolveMonsterId(RunSession session, MonsterCombatState model)
+        private static string ResolveMonsterId(RunSession session, UnitCombatState model)
         {
             if (model != null && model.Identity != null && !string.IsNullOrWhiteSpace(model.Identity.DefinitionId))
             {
                 return model.Identity.DefinitionId;
             }
 
-            return session != null ? session.SelectedMonsterId : string.Empty;
+            if (session != null)
+            {
+                return session.SelectedMonsterId;
+            }
+
+            return string.Empty;
         }
 
         private void SetDebugRootPanelVisible(bool visible)
@@ -859,20 +891,24 @@ namespace Pakuri.InGame
 
             var catalog = ResolveCatalog();
             var selectedEntry = ResolveSelectedPlayerEntry();
-            var model = selectedEntry != null ? selectedEntry.Model as MonsterCombatState : null;
+            UnitCombatState model = null;
+            if (selectedEntry != null)
+            {
+                model = selectedEntry.Model;
+            }
             var monsterId = ResolveMonsterId(session, model);
             if (string.IsNullOrWhiteSpace(monsterId))
             {
                 return false;
             }
 
-            monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             if (monster == null)
             {
                 return false;
             }
 
-            sourceSkill = CsvDataLoader.CurrentCatalog.ResolveActiveSkill(
+            sourceSkill = GameDataLoader.CurrentCatalog.ResolveActiveSkill(
                 monster.MonsterId,
                 DebugSlots[slotIndex]);
             return sourceSkill != null;
@@ -894,20 +930,24 @@ namespace Pakuri.InGame
 
             var catalog = ResolveCatalog();
             var selectedEntry = ResolveSelectedPlayerEntry();
-            var model = selectedEntry != null ? selectedEntry.Model as MonsterCombatState : null;
+            UnitCombatState model = null;
+            if (selectedEntry != null)
+            {
+                model = selectedEntry.Model;
+            }
             var monsterId = ResolveMonsterId(session, model);
             if (string.IsNullOrWhiteSpace(monsterId))
             {
                 return false;
             }
 
-            monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
             if (monster == null)
             {
                 return false;
             }
 
-            passive = CsvDataLoader.CurrentCatalog.ResolvePassiveSkill(
+            passive = GameDataLoader.CurrentCatalog.ResolvePassiveSkill(
                 monster.MonsterId,
                 DebugSlots[slotIndex]);
             return passive != null;
@@ -965,7 +1005,7 @@ namespace Pakuri.InGame
                 return choice.ChoiceId;
             }
 
-            var rewards = CsvDataLoader.CurrentCatalog.GetRewardChoices(monster.MonsterId);
+            var rewards = GameDataLoader.CurrentCatalog.GetRewardChoices(monster.MonsterId);
             var choiceId = choice.ChoiceId;
             for (var i = 0; i < rewards.Length; i++)
             {
@@ -1068,7 +1108,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            return CsvDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoiceDefinition choice)
+            return GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoiceDefinition choice)
                 ? choice
                 : null;
         }

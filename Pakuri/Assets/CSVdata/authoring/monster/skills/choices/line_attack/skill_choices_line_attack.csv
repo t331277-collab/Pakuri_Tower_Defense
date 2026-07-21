@@ -1,5 +1,5 @@
 "choice_id","skill_id","monster_id","choice_group","sort_order","title","description_text"
-"id","string","string","enum:PakuriCsvChoiceGroup","int","string","string"
+"id","string","string","enum:SkillChoiceGroup","int","string","string"
 "eve-b-trait-1","eve-b","eve","ActiveEnhancement","0","특성 1","위력 +25%, 피해 주기 속도 +25%"
 "eve-b-trait-2","eve-b","eve","ActiveEnhancement","1","특성 2","위력 +30%, 광선 폭 +30%"
 "eve-b-trait-3","eve-b","eve","ActiveEnhancement","2","특성 3","충전 속도 +35%, 지속시간 +15%"

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 using UnityEngine;
@@ -34,7 +34,7 @@ namespace Pakuri.InGame
 
         private GameObject spawnedPlayerUnit;
 
-        public MonsterCombatState SpawnedPlayerModel { get; private set; }
+        public UnitCombatState SpawnedPlayerModel { get; private set; }
 
         /*
          * Nexus 상태를 만들고 Actor와 전투 등록소에 연결한다.
@@ -82,7 +82,7 @@ namespace Pakuri.InGame
          */
         private GameObject CreateSelectedPlayerUnit(
             RunSession session,
-            out MonsterCombatState model,
+            out UnitCombatState model,
             out MonsterActor actor)
         {
             var selectedMonsterId = session.SelectedMonsterId;
@@ -140,7 +140,7 @@ namespace Pakuri.InGame
          */
         private GameObject RespawnSelectedPlayerUnit(
             RunSession activeSession,
-            out MonsterCombatState model,
+            out UnitCombatState model,
             out MonsterActor actor)
         {
             var monster = ResolveMonsterDefinition(activeSession.SelectedMonsterId);
@@ -179,7 +179,7 @@ namespace Pakuri.InGame
         private void RestorePlayerParty(
             RunSession activeSession,
             out GameObject selectedPlayerUnit,
-            out MonsterCombatState selectedPlayerModel)
+            out UnitCombatState selectedPlayerModel)
         {
             RestoreSelectedPlayerFromSession(
                 activeSession,
@@ -210,7 +210,7 @@ namespace Pakuri.InGame
         private void RestoreSelectedPlayerFromSession(
             RunSession activeSession,
             out GameObject selectedPlayerUnit,
-            out MonsterCombatState selectedPlayerModel)
+            out UnitCombatState selectedPlayerModel)
         {
             // 등록된 로스터, 씬에 남은 Actor, 새 프리팹 생성 순서로 중복 생성을 피한다.
             var selectedEntry = FindPlayerEntryBySlot(0);
@@ -252,7 +252,7 @@ namespace Pakuri.InGame
                 }
 
                 var monsterId = activeSession.ManifestedMonsterIds[i];
-                var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId)
+                var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId)
                     ?? throw new InvalidOperationException($"Manifested monster data '{monsterId}' is required.");
 
                 CreateManifestedMonster(monster, activeSession, slotIndex);
@@ -265,11 +265,11 @@ namespace Pakuri.InGame
         private static void CaptureSelectedPlayer(
             CombatUnitEntry entry,
             out GameObject selectedPlayerUnit,
-            out MonsterCombatState selectedPlayerModel)
+            out UnitCombatState selectedPlayerModel)
         {
             var actor = (MonsterActor)entry.Actor;
             selectedPlayerUnit = actor.gameObject;
-            selectedPlayerModel = (MonsterCombatState)entry.Model;
+            selectedPlayerModel = entry.Model;
         }
 
         /*
@@ -322,7 +322,7 @@ namespace Pakuri.InGame
          */
         private void SyncExistingMonsterModelFromSession(
             RunSession activeSession,
-            MonsterCombatState model)
+            UnitCombatState model)
         {
             var state = activeSession.GetPartyMemberState(model.Identity.DefinitionId);
             CopyListToSet(state.LearnedActives, model.SkillProgress.LearnedActiveSkillIds);
@@ -378,7 +378,7 @@ namespace Pakuri.InGame
         /*
          * 세션 상태로 선택 몬스터의 런타임 모델을 만든다.
          */
-        private MonsterCombatState CreateSelectedModel(RunSession session)
+        private UnitCombatState CreateSelectedModel(RunSession session)
         {
             var monster = ResolveMonsterDefinition(session.SelectedMonsterId);
             var model = unitStateFactory.CreateSelectedMonster(monster, session.GetPartyMemberState(monster.MonsterId), 0);
@@ -433,7 +433,7 @@ namespace Pakuri.InGame
          */
         private MonsterDefinition ResolveMonsterDefinition(string monsterId)
         {
-            return CsvDataLoader.CurrentCatalog.GetData<MonsterDefinition>(monsterId)
+            return GameDataLoader.CurrentCatalog.GetData<MonsterDefinition>(monsterId)
                 ?? throw new InvalidOperationException($"Monster data '{monsterId}' is required.");
         }
 
@@ -442,14 +442,14 @@ namespace Pakuri.InGame
          */
         private EnemyDefinition ResolveEnemyDefinition(string enemyId)
         {
-            return CsvDataLoader.CurrentCatalog.GetData<EnemyDefinition>(enemyId)
+            return GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(enemyId)
                 ?? throw new InvalidOperationException($"Enemy data '{enemyId}' is required.");
         }
 
         /*
          * 생성된 몬스터 프리팹의 Actor를 런타임 모델로 초기화한다.
          */
-        private MonsterActor BindMonsterActor(GameObject spawnedUnit, MonsterCombatState model)
+        private MonsterActor BindMonsterActor(GameObject spawnedUnit, UnitCombatState model)
         {
             var actor = spawnedUnit.GetComponentInChildren<MonsterActor>(true);
             actor.Initialize(model);
@@ -469,7 +469,7 @@ namespace Pakuri.InGame
         /*
          * 몬스터 모델과 Actor를 플레이어 로스터에 등록한다.
          */
-        private void RegisterPlayer(MonsterCombatState model, MonsterActor actor, Transform hitboxRoot)
+        private void RegisterPlayer(UnitCombatState model, MonsterActor actor, Transform hitboxRoot)
         {
             combatManager.RegisterPlayerMonster(model, actor, hitboxRoot);
         }

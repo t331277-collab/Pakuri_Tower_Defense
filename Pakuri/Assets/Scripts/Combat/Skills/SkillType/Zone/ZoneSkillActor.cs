@@ -8,8 +8,7 @@ using UnityEngine;
  */
 namespace Pakuri.InGame
 {
-    [DisallowMultipleComponent]
-    public sealed class ZoneSkillActor : MonoBehaviour
+    public class ZoneSkillActor : MonoBehaviour
     {
         private InGameCombatManager combatManager;
         private CombatUnitEntry casterEntry;

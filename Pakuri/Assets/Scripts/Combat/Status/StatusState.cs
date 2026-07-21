@@ -407,7 +407,7 @@ namespace Pakuri.InGame
                     return SourceData.StatusTag;
                 }
 
-                return StatusEffectLookup.ToId(Kind);
+                return string.Empty;
             }
         }
 

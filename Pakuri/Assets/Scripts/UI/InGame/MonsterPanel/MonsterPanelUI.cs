@@ -1,4 +1,4 @@
-using Pakuri.Data;
+﻿using Pakuri.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,8 +8,7 @@ using UnityEngine.UI;
  */
 namespace Pakuri.InGame
 {
-    [DisallowMultipleComponent]
-    public sealed class MonsterPanelUI : MonoBehaviour
+    public class MonsterPanelUI : MonoBehaviour
     {
         private const int MaxPartySlots = 5;
         private const int MaxVisibleActiveSlots = 3;
@@ -58,20 +57,28 @@ namespace Pakuri.InGame
             }
         }
 
-        private MonsterCombatState[] ResolvePlayerModelsBySlot()
+        private UnitCombatState[] ResolvePlayerModelsBySlot()
         {
-            var models = new MonsterCombatState[MaxPartySlots];
-            var players = combatManager != null && combatManager.UnitRegistry != null
-                ? combatManager.UnitRegistry.Players
-                : null;
+            var models = new UnitCombatState[MaxPartySlots];
+            System.Collections.Generic.IReadOnlyList<CombatUnitEntry> players = null;
+            if (combatManager != null && combatManager.UnitRegistry != null)
+            {
+                players = combatManager.UnitRegistry.Players;
+            }
+
             if (players != null)
             {
                 for (var i = 0; i < players.Count; i++)
                 {
                     var entry = players[i];
-                    var model = entry != null ? entry.Model as MonsterCombatState : null;
-                    var identity = model != null ? model.Identity : null;
-                    if (identity == null || identity.Side != UnitSide.Player)
+                    if (entry == null)
+                    {
+                        continue;
+                    }
+
+                    var model = entry.Model;
+                    var identity = model.Identity;
+                    if (identity.Side != UnitSide.Player || identity.Role != UnitRole.Monster)
                     {
                         continue;
                     }
@@ -172,7 +179,7 @@ namespace Pakuri.InGame
 
         private GameDataCatalog ResolveCatalog()
         {
-            return CsvDataLoader.CurrentCatalog;
+            return GameDataLoader.CurrentCatalog;
         }
 
         private static Image FindImage(Transform root, string path)
@@ -205,7 +212,7 @@ namespace Pakuri.InGame
         }
 
         [System.Serializable]
-        private sealed class MonsterPanelSlotView
+        private class MonsterPanelSlotView
         {
             [SerializeField] private GameObject root;
             [SerializeField] private Image monsterImage;
@@ -229,7 +236,7 @@ namespace Pakuri.InGame
                 ResolveChildren();
             }
 
-            public void SetRuntime(MonsterCombatState model, GameDataCatalog catalog)
+            public void SetRuntime(UnitCombatState model, GameDataCatalog catalog)
             {
                 ResolveChildren();
                 if (root == null)
@@ -237,7 +244,11 @@ namespace Pakuri.InGame
                     return;
                 }
 
-                var monsterId = model != null && model.Identity != null ? model.Identity.DefinitionId : string.Empty;
+                var monsterId = string.Empty;
+                if (model != null)
+                {
+                    monsterId = model.Identity.DefinitionId;
+                }
                 if (string.IsNullOrWhiteSpace(monsterId))
                 {
                     SetVisible(false);
@@ -258,10 +269,10 @@ namespace Pakuri.InGame
                 }
 
                 lastMonsterId = monsterId;
-                var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
-                if (monster != null && monster.UnitSprite != null)
+                var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+                if (monster != null && monster.MonsterIconImage != null)
                 {
-                    monsterImage.sprite = monster.UnitSprite;
+                    monsterImage.sprite = monster.MonsterIconImage;
                     monsterImage.enabled = true;
                     return;
                 }
@@ -270,10 +281,20 @@ namespace Pakuri.InGame
                 monsterImage.enabled = false;
             }
 
-            private void RefreshActiveSlots(MonsterCombatState model)
+            private void RefreshActiveSlots(UnitCombatState model)
             {
-                var runtimes = model != null && model.SkillRuntime != null ? model.SkillRuntime.ActiveSkills : null;
-                var runtimeCount = runtimes != null ? runtimes.Count : 0;
+                System.Collections.Generic.IReadOnlyList<SkillRuntimeInstance> runtimes = null;
+                if (model != null && model.SkillRuntime != null)
+                {
+                    runtimes = model.SkillRuntime.ActiveSkills;
+                }
+
+                var runtimeCount = 0;
+                if (runtimes != null)
+                {
+                    runtimeCount = runtimes.Count;
+                }
+
                 for (var i = 0; i < activeSlots.Length && i < MaxVisibleActiveSlots; i++)
                 {
                     var view = activeSlots[i];
@@ -282,7 +303,11 @@ namespace Pakuri.InGame
                         continue;
                     }
 
-                    var runtime = i < runtimeCount ? runtimes[i] : null;
+                    SkillRuntimeInstance runtime = null;
+                    if (i < runtimeCount)
+                    {
+                        runtime = runtimes[i];
+                    }
                     view.SetRuntime(runtime);
                 }
             }
@@ -362,7 +387,7 @@ namespace Pakuri.InGame
         }
 
         [System.Serializable]
-        private sealed class ActiveSkillSlotView
+        private class ActiveSkillSlotView
         {
             [SerializeField] private GameObject root;
             [SerializeField] private Image skillImage;

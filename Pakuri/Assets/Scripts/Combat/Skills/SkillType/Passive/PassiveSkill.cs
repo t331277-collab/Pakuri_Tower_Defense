@@ -10,7 +10,7 @@ using UnityEngine;
  */
 namespace Pakuri.InGame
 {
-    internal sealed class PassiveSkill
+    internal class PassiveSkill
     {
         private const int MaxRefreshPasses = 8;
 
@@ -416,7 +416,6 @@ namespace Pakuri.InGame
         }
     }
 }
-
 
 
 

@@ -15,7 +15,6 @@ namespace Pakuri.InGame
         {
             if (enemy == null
                 || passive == null
-                || passive.ApplyTarget != EnemyPassiveTarget.Self
                 || passive.ModifierKind == EnemyPassiveModifierKind.None)
             {
                 return;
@@ -29,44 +28,18 @@ namespace Pakuri.InGame
 
             switch (passive.ModifierKind)
             {
-                case EnemyPassiveModifierKind.PhysicalDamageUp:
-                    enemy.PassivePhysicalDamageMultiplier *= 1f + value;
-                    break;
-                case EnemyPassiveModifierKind.FireDamageUp:
-                    enemy.PassiveFireDamageMultiplier *= 1f + value;
-                    break;
-                case EnemyPassiveModifierKind.LightningDamageUp:
-                    enemy.PassiveLightningDamageMultiplier *= 1f + value;
-                    break;
-                case EnemyPassiveModifierKind.IceDamageUp:
-                    enemy.PassiveIceDamageMultiplier *= 1f + value;
-                    break;
-                case EnemyPassiveModifierKind.DarknessDamageUp:
-                    enemy.PassiveDarknessDamageMultiplier *= 1f + value;
-                    break;
-                case EnemyPassiveModifierKind.HolyDamageUp:
-                    enemy.PassiveHolyDamageMultiplier *= 1f + value;
+                case EnemyPassiveModifierKind.DamageUp:
+                    MultiplyOutgoingDamage(enemy, passive.Attribute, 1f + value);
                     break;
                 case EnemyPassiveModifierKind.DefenseUp:
-                    MultiplyDefenses(enemy.Defenses, 1f + value);
-                    break;
-                case EnemyPassiveModifierKind.PhysicalDefenseUp:
-                    MultiplyDefense(enemy.Defenses, DamageAttribute.Physical, 1f + value);
-                    break;
-                case EnemyPassiveModifierKind.FireDefenseUp:
-                    MultiplyDefense(enemy.Defenses, DamageAttribute.Fire, 1f + value);
-                    break;
-                case EnemyPassiveModifierKind.LightningDefenseUp:
-                    MultiplyDefense(enemy.Defenses, DamageAttribute.Lightning, 1f + value);
-                    break;
-                case EnemyPassiveModifierKind.IceDefenseUp:
-                    MultiplyDefense(enemy.Defenses, DamageAttribute.Ice, 1f + value);
-                    break;
-                case EnemyPassiveModifierKind.DarknessDefenseUp:
-                    MultiplyDefense(enemy.Defenses, DamageAttribute.Darkness, 1f + value);
-                    break;
-                case EnemyPassiveModifierKind.HolyDefenseUp:
-                    MultiplyDefense(enemy.Defenses, DamageAttribute.Holy, 1f + value);
+                    if (passive.HasAttribute)
+                    {
+                        MultiplyDefense(enemy.Defenses, passive.Attribute, 1f + value);
+                    }
+                    else
+                    {
+                        MultiplyDefenses(enemy.Defenses, 1f + value);
+                    }
                     break;
                 case EnemyPassiveModifierKind.CritChanceUp:
                     if (enemy.Stats != null)
@@ -102,6 +75,8 @@ namespace Pakuri.InGame
 
             switch (attribute)
             {
+                case DamageAttribute.Physical:
+                    return Math.Max(0f, enemy.PassivePhysicalDamageMultiplier);
                 case DamageAttribute.Fire:
                     return Math.Max(0f, enemy.PassiveFireDamageMultiplier);
                 case DamageAttribute.Lightning:
@@ -112,8 +87,36 @@ namespace Pakuri.InGame
                     return Math.Max(0f, enemy.PassiveDarknessDamageMultiplier);
                 case DamageAttribute.Holy:
                     return Math.Max(0f, enemy.PassiveHolyDamageMultiplier);
-                default:
-                    return Math.Max(0f, enemy.PassivePhysicalDamageMultiplier);
+            }
+
+            throw new InvalidOperationException("Unsupported damage attribute: " + attribute);
+        }
+
+        private static void MultiplyOutgoingDamage(
+            EnemyCombatState enemy,
+            DamageAttribute attribute,
+            float multiplier)
+        {
+            switch (attribute)
+            {
+                case DamageAttribute.Physical:
+                    enemy.PassivePhysicalDamageMultiplier *= multiplier;
+                    break;
+                case DamageAttribute.Fire:
+                    enemy.PassiveFireDamageMultiplier *= multiplier;
+                    break;
+                case DamageAttribute.Lightning:
+                    enemy.PassiveLightningDamageMultiplier *= multiplier;
+                    break;
+                case DamageAttribute.Ice:
+                    enemy.PassiveIceDamageMultiplier *= multiplier;
+                    break;
+                case DamageAttribute.Darkness:
+                    enemy.PassiveDarknessDamageMultiplier *= multiplier;
+                    break;
+                case DamageAttribute.Holy:
+                    enemy.PassiveHolyDamageMultiplier *= multiplier;
+                    break;
             }
         }
 
@@ -144,6 +147,9 @@ namespace Pakuri.InGame
 
             switch (attribute)
             {
+                case DamageAttribute.Physical:
+                    defenses.Physical *= multiplier;
+                    break;
                 case DamageAttribute.Fire:
                     defenses.Fire *= multiplier;
                     break;
@@ -158,9 +164,6 @@ namespace Pakuri.InGame
                     break;
                 case DamageAttribute.Holy:
                     defenses.Holy *= multiplier;
-                    break;
-                default:
-                    defenses.Physical *= multiplier;
                     break;
             }
         }

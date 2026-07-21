@@ -114,7 +114,7 @@ namespace Pakuri.InGame
         /*
          * 플레이어 몬스터를 등록하고 전투 시작 처리를 실행한다.
          */
-        public CombatUnitEntry RegisterPlayerMonster(MonsterCombatState model, MonsterActor actor, Transform hitboxRoot)
+        public CombatUnitEntry RegisterPlayerMonster(UnitCombatState model, MonsterActor actor, Transform hitboxRoot)
         {
             var entry = unitRegistry.Register(model, actor, hitboxRoot);
             passiveEffects.NotifyRosterChanged();
@@ -141,7 +141,7 @@ namespace Pakuri.InGame
         /*
          * 넥서스를 전투 로스터에 등록한다.
          */
-        public CombatUnitEntry RegisterNexus(NexusCombatState model, NexusActor actor, Transform hitboxRoot)
+        public CombatUnitEntry RegisterNexus(UnitCombatState model, NexusActor actor, Transform hitboxRoot)
         {
             var entry = unitRegistry.Register(model, actor, hitboxRoot);
             passiveEffects.NotifyRosterChanged();
@@ -452,9 +452,9 @@ namespace Pakuri.InGame
                 var model = entry.Model;
 
                 // 몬스터는 전용 서비스로, 나머지는 공통 상태만 초기화한다.
-                if (model is MonsterCombatState monsterModel)
+                if (model.Identity.Role == UnitRole.Monster)
                 {
-                    UnitCombatReset.ResetTransient(monsterModel);
+                    MonsterDayRecovery.ResetTransient(model);
                 }
                 else
                 {

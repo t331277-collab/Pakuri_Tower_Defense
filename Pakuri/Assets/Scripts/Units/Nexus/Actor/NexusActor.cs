@@ -7,9 +7,7 @@ using UnityEngine;
  */
 namespace Pakuri.InGame
 {
-    [DisallowMultipleComponent]
-    [RequireComponent(typeof(BoxCollider2D))]
-    public sealed class NexusActor : MonoBehaviour
+    public class NexusActor : MonoBehaviour
     {
         private const float DefaultMaxHealth = 20f;
 
@@ -17,9 +15,9 @@ namespace Pakuri.InGame
         [SerializeField] private TextMeshProUGUI nexusHpInfo;
 
         public float MaxHealth => maxHealth;
-        public NexusCombatState Model { get; private set; }
+        public UnitCombatState Model { get; private set; }
 
-        public void Initialize(NexusCombatState model)
+        public void Initialize(UnitCombatState model)
         {
             Model = model;
             GetComponent<BoxCollider2D>().isTrigger = true;

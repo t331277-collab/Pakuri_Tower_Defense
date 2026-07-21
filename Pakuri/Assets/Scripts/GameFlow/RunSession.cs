@@ -65,7 +65,7 @@ namespace Pakuri.InGame
     public class RunSession
     {
         [Serializable]
-        public sealed class RunMonsterState
+        public class RunMonsterState
         {
             public string MonsterId;
             public string MonsterName;

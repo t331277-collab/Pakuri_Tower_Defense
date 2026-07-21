@@ -7,8 +7,7 @@ using UnityEngine;
  */
 namespace Pakuri.InGame
 {
-    [DisallowMultipleComponent]
-    public sealed class DamageMeterRuntimeTracker : MonoBehaviour
+    public class DamageMeterRuntimeTracker : MonoBehaviour
     {
         private readonly Dictionary<string, MonsterDamageRecord> records = new Dictionary<string, MonsterDamageRecord>(StringComparer.OrdinalIgnoreCase);
 
@@ -79,7 +78,7 @@ namespace Pakuri.InGame
             var identity = source != null ? source.Identity : null;
             if (identity == null
                 || identity.Side != UnitSide.Player
-                || !(source is MonsterCombatState)
+                || identity.Role != UnitRole.Monster
                 || string.IsNullOrWhiteSpace(identity.DefinitionId))
             {
                 return;
@@ -113,7 +112,7 @@ namespace Pakuri.InGame
         }
     }
 
-    public sealed class MonsterDamageRecord
+    public class MonsterDamageRecord
     {
         private readonly Dictionary<string, SkillDamageRecord> sources = new Dictionary<string, SkillDamageRecord>(StringComparer.OrdinalIgnoreCase);
         private readonly List<SkillDamageRecord> orderedSources = new List<SkillDamageRecord>();
@@ -141,7 +140,7 @@ namespace Pakuri.InGame
         }
     }
 
-    public sealed class SkillDamageRecord
+    public class SkillDamageRecord
     {
         public SkillDamageRecord(string sourceId)
         {

@@ -8,7 +8,7 @@ using UnityEngine;
  */
 namespace Pakuri.InGame
 {
-    internal sealed class UnitWorldDisplay
+    internal class UnitWorldDisplay
     {
         private const string NameLabelObjectName = "MonsterNameLabel";
         private const string HpLabelObjectName = "MonsterHpLabel";

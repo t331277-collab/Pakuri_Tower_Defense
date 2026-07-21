@@ -6,7 +6,7 @@ using UnityEngine;
  */
 namespace Pakuri.InGame
 {
-    internal sealed class DamageNumberPopup : MonoBehaviour
+    internal class DamageNumberPopup : MonoBehaviour
     {
         private const float DefaultDurationSeconds = 1f;
         private const float DefaultRiseDistance = 1f;
@@ -166,7 +166,7 @@ namespace Pakuri.InGame
                 Mathf.Max(0.01f, durationSeconds)));
         }
 
-        private sealed class ActiveDamagePopup
+        private class ActiveDamagePopup
         {
             public ActiveDamagePopup(
                 GameObject instance,

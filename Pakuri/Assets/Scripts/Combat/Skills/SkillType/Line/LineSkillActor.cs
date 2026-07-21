@@ -8,7 +8,7 @@ using UnityEngine;
  */
 namespace Pakuri.InGame
 {
-    public sealed class LineSkillActor : MonoBehaviour
+    public class LineSkillActor : MonoBehaviour
     {
         private InGameCombatManager combatManager;
         private CombatUnitEntry casterEntry;
