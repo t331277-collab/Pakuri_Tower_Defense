@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
+using Pakuri.Data;
 using UnityEngine;
 
 /*
@@ -21,21 +22,21 @@ namespace Pakuri.InGame
             CombatUnitRegistry unitRoster,
             SkillTargetingSpec targetingSpec)
         {
-            return ResolveOrderedTargets(sourceEntry, unitRoster, targetingSpec, null, 0);
+            return ResolveOrderedTargets(sourceEntry, unitRoster, targetingSpec, StatusEffectKind.None, 0);
         }
 
         public static List<CombatUnitEntry> ResolveOrderedTargets(
             CombatUnitEntry sourceEntry,
             CombatUnitRegistry unitRoster,
             SkillTargetingSpec targetingSpec,
-            string requiredStatusId,
+            StatusEffectKind requiredStatusKind,
             int requiredStatusMinStacks)
         {
             var candidates = ResolveTargetList(
                 sourceEntry,
                 unitRoster,
                 targetingSpec,
-                requiredStatusId,
+                requiredStatusKind,
                 requiredStatusMinStacks);
             var targets = new List<CombatUnitEntry>();
             for (var i = 0; i < candidates.Count; i++)
@@ -72,8 +73,13 @@ namespace Pakuri.InGame
             var bestLowestHealth = float.MaxValue;
             var bestStacks = int.MinValue;
             var origin = caster.Transform.position;
-            var selectionStatusId = targeting != null ? targeting.SelectionStatusId : string.Empty;
-            var selectionStatusMinStacks = targeting != null ? targeting.SelectionStatusMinStacks : 0;
+            var selectionStatusKind = StatusEffectKind.None;
+            var selectionStatusMinStacks = 0;
+            if (targeting != null)
+            {
+                selectionStatusKind = targeting.SelectionStatusKind;
+                selectionStatusMinStacks = targeting.SelectionStatusMinStacks;
+            }
 
             if (selection == SkillTargetSelection.Random)
             {
@@ -164,7 +170,7 @@ namespace Pakuri.InGame
 
                 if (selection == SkillTargetSelection.HighestStacks)
                 {
-                    var stacks = ResolveStatusStacks(candidate.Model, selectionStatusId);
+                    var stacks = ResolveStatusStacks(candidate.Model, selectionStatusKind);
                     if (stacks < Mathf.Max(0, selectionStatusMinStacks))
                     {
                         continue;
@@ -239,7 +245,7 @@ namespace Pakuri.InGame
             CombatUnitRegistry roster,
             SkillTargetingSpec targeting)
         {
-            return ResolveTargetList(caster, roster, targeting, null, 0);
+            return ResolveTargetList(caster, roster, targeting, StatusEffectKind.None, 0);
         }
 
         /*
@@ -249,7 +255,7 @@ namespace Pakuri.InGame
             CombatUnitEntry caster,
             CombatUnitRegistry roster,
             SkillTargetingSpec targeting,
-            string requiredStatusId,
+            StatusEffectKind requiredStatusKind,
             int requiredStatusMinStacks)
         {
             if (caster == null || roster == null)
@@ -275,11 +281,16 @@ namespace Pakuri.InGame
                         ? roster.Players
                         : roster.Enemies;
 
-            var selectionStatusId = targeting != null ? targeting.SelectionStatusId : string.Empty;
-            var selectionStatusMinStacks = targeting != null ? Mathf.Max(0, targeting.SelectionStatusMinStacks) : 0;
-            var useSelectionStatusFilter = !string.IsNullOrWhiteSpace(selectionStatusId) && selectionStatusMinStacks > 0;
+            var selectionStatusKind = StatusEffectKind.None;
+            var selectionStatusMinStacks = 0;
+            if (targeting != null)
+            {
+                selectionStatusKind = targeting.SelectionStatusKind;
+                selectionStatusMinStacks = Mathf.Max(0, targeting.SelectionStatusMinStacks);
+            }
+            var useSelectionStatusFilter = selectionStatusKind != StatusEffectKind.None && selectionStatusMinStacks > 0;
             var mustFilterNexus = ContainsNexusTarget(targets);
-            if (string.IsNullOrWhiteSpace(requiredStatusId) && !useSelectionStatusFilter && !mustFilterNexus)
+            if (requiredStatusKind == StatusEffectKind.None && !useSelectionStatusFilter && !mustFilterNexus)
             {
                 return targets;
             }
@@ -294,14 +305,14 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                if (!string.IsNullOrWhiteSpace(requiredStatusId)
-                    && !HasRequiredStatus(model, requiredStatusId, requiredStatusMinStacks))
+                if (requiredStatusKind != StatusEffectKind.None
+                    && !HasRequiredStatus(model, requiredStatusKind, requiredStatusMinStacks))
                 {
                     continue;
                 }
 
                 if (useSelectionStatusFilter
-                    && !HasRequiredStatus(model, selectionStatusId, selectionStatusMinStacks))
+                    && !HasRequiredStatus(model, selectionStatusKind, selectionStatusMinStacks))
                 {
                     continue;
                 }
@@ -521,9 +532,13 @@ namespace Pakuri.InGame
 
             if (selection == SkillTargetSelection.HighestStacks)
             {
-                var statusId = targetingSpec != null ? targetingSpec.SelectionStatusId : string.Empty;
-                var leftStacks = ResolveStatusStacks(left.Model, statusId);
-                var rightStacks = ResolveStatusStacks(right.Model, statusId);
+                var statusKind = StatusEffectKind.None;
+                if (targetingSpec != null)
+                {
+                    statusKind = targetingSpec.SelectionStatusKind;
+                }
+                var leftStacks = ResolveStatusStacks(left.Model, statusKind);
+                var rightStacks = ResolveStatusStacks(right.Model, statusKind);
                 if (leftStacks != rightStacks)
                 {
                     return rightStacks.CompareTo(leftStacks);
@@ -564,19 +579,14 @@ namespace Pakuri.InGame
         /*
          * 필수 상태를 보유하고 있는지 확인한다.
          */
-        private static bool HasRequiredStatus(UnitCombatState model, string statusId, int minimumStacks)
+        private static bool HasRequiredStatus(UnitCombatState model, StatusEffectKind kind, int minimumStacks)
         {
-            if (model == null || string.IsNullOrWhiteSpace(statusId))
+            if (model == null || kind == StatusEffectKind.None)
             {
                 return false;
             }
 
             var minStacks = Mathf.Max(1, minimumStacks);
-            if (!StatusEffectLookup.TryParse(statusId, out var kind))
-            {
-                return false;
-            }
-
             if (kind == StatusEffectKind.Shield)
             {
                 return model.Resources != null && model.Resources.CurrentShield > 0f;
@@ -588,24 +598,29 @@ namespace Pakuri.InGame
         /*
          * 상태 중첩을 결정한다.
          */
-        private static int ResolveStatusStacks(UnitCombatState model, string statusId)
+        private static int ResolveStatusStacks(UnitCombatState model, StatusEffectKind kind)
         {
-            if (model == null || string.IsNullOrWhiteSpace(statusId))
-            {
-                return 0;
-            }
-
-            if (!StatusEffectLookup.TryParse(statusId, out var kind))
+            if (model == null || kind == StatusEffectKind.None)
             {
                 return 0;
             }
 
             if (kind == StatusEffectKind.Shield)
             {
-                return model.Resources != null && model.Resources.CurrentShield > 0f ? 1 : 0;
+                if (model.Resources != null && model.Resources.CurrentShield > 0f)
+                {
+                    return 1;
+                }
+
+                return 0;
             }
 
-            return model.Statuses != null ? model.Statuses.GetStacks(kind) : 0;
+            if (model.Statuses != null)
+            {
+                return model.Statuses.GetStacks(kind);
+            }
+
+            return 0;
         }
     }
 }

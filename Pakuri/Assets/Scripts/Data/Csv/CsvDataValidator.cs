@@ -12,9 +12,9 @@ using static Pakuri.Data.SkillGraphBuilder;
 
 
 /*
- * CSV 원본 모델과 완성된 런타임 카탈로그의 무결성을 검사한다.
- * 필수 행과 ID 참조, 스킬 Trigger·Choice·그래프 연결, 지원 실행 형식,
- * Sprite·Prefab·Animator 경로 누락을 모아 초기화 전에 오류로 보고한다.
+ * CSV를 게임 데이터로 등록하기 전에 원본 행, 참조 관계, 실행 수치와
+ * 완성된 스킬 컴파일 결과를 한 번 검사한다. 전투 실행 코드는 이 검사를
+ * 통과한 데이터만 받으며 같은 데이터 조건을 다시 검사하지 않는다.
  */
 namespace Pakuri.Data
 {
@@ -138,6 +138,7 @@ namespace Pakuri.Data
                     errors.Add($"Passive skill '{skill.Id}' uses active slot '{skill.Slot}'.");
                 }
 
+                ValidateSkillRuntimeValues(skill, errors);
                 ValidateRuntimeStatusColumns(skill, model.StatusEffects, errors);
             }
 
@@ -430,12 +431,12 @@ namespace Pakuri.Data
 
             if (skill.RuntimeKind == SkillRuntimeKind.Buff || skill.RuntimeKind == SkillRuntimeKind.Shield)
             {
-                if (!StatusRuntimeDataFactory.TryParseTargetScope(status.StatusTargetScope, out _))
+                if (!StatusDataCompiler.TryParseTargetScope(status.StatusTargetScope, out _))
                 {
                     errors.Add($"Skill '{skill.Id}' requires supported status_target_scope for {skill.RuntimeKind}. Expected self or all_allies.");
                 }
 
-                if (!StatusRuntimeDataFactory.TryParseMergePolicy(status.StatusMergePolicy, out _))
+                if (!StatusDataCompiler.TryParseMergePolicy(status.StatusMergePolicy, out _))
                 {
                     errors.Add($"Skill '{skill.Id}' requires supported status_merge_policy for {skill.RuntimeKind}.");
                 }
@@ -448,7 +449,7 @@ namespace Pakuri.Data
                     errors.Add($"Shield skill '{skill.Id}' must use canonical status_effect_id 'shield'.");
                 }
 
-                if (!StatusRuntimeDataFactory.TryParseShieldRefreshRule(status.ShieldAmountRefreshPolicy, out _))
+                if (!StatusDataCompiler.TryParseShieldRefreshRule(status.ShieldAmountRefreshPolicy, out _))
                 {
                     errors.Add($"Shield skill '{skill.Id}' requires supported shield_amount_refresh_policy.");
                 }
@@ -642,7 +643,7 @@ namespace Pakuri.Data
             ValidateTriggerChoiceReference(trigger.ExcludesActiveChoiceId, trigger, model, "excludes_active_choice_id", errors);
 
             if (!string.IsNullOrWhiteSpace(trigger.ConditionStatusId)
-                && !StatusConditionRules.TryParseConditionStatusExpression(trigger.ConditionStatusId, out _))
+                && !StatusDataCompiler.TryParseConditionStatusExpression(trigger.ConditionStatusId, out _))
             {
                 errors.Add($"Skill trigger '{trigger.Id}' uses unsupported condition_status_id '{trigger.ConditionStatusId}'.");
             }
@@ -733,6 +734,82 @@ namespace Pakuri.Data
                 {
                     errors.Add($"Skill trigger '{trigger.Id}' {columnName} references unknown skill '{skillId}'.");
                 }
+            }
+        }
+
+        /*
+         * 스킬 행이 공용 실행기로 변환될 수 있는 종류와 필수 수치를 검사한다.
+         */
+        internal static void ValidateSkillRuntimeValues(SkillRow skill, List<string> errors)
+        {
+            if (skill.SkillKind == PakuriCsvSkillKind.Active && skill.RuntimeKind == SkillRuntimeKind.Passive)
+            {
+                errors.Add($"Active skill '{skill.Id}' cannot use Passive runtime_kind.");
+            }
+
+            if (skill.SkillKind == PakuriCsvSkillKind.Passive && skill.RuntimeKind != SkillRuntimeKind.Passive)
+            {
+                errors.Add($"Passive skill '{skill.Id}' must use Passive runtime_kind.");
+            }
+
+            if (skill.Radius < 0f
+                || skill.DamageDelaySeconds < 0f
+                || skill.CooldownSeconds < 0f
+                || skill.ReloadSeconds < 0f
+                || skill.ShotIntervalSeconds < 0f
+                || skill.MagazineCapacity < 0
+                || skill.ProjectileBurstCount < 0
+                || skill.ProjectileSpeed < 0f
+                || skill.PierceCount < 0
+                || skill.Status.StatusChance < 0f
+                || skill.Status.StatusChance > 1f)
+            {
+                errors.Add($"Skill '{skill.Id}' contains a negative runtime value or a status chance outside 0..1.");
+            }
+
+            if (skill.SkillKind == PakuriCsvSkillKind.Passive)
+            {
+                return;
+            }
+
+            if (skill.RuntimeKind == SkillRuntimeKind.MagazineProjectile)
+            {
+                if (skill.MagazineCapacity <= 0)
+                {
+                    errors.Add($"Magazine projectile '{skill.Id}' requires positive magazine_capacity.");
+                }
+
+                if (skill.ReloadSeconds <= 0f)
+                {
+                    errors.Add($"Magazine projectile '{skill.Id}' requires positive reload_seconds.");
+                }
+
+                if (skill.ShotIntervalSeconds <= 0f)
+                {
+                    errors.Add($"Magazine projectile '{skill.Id}' requires positive shot_interval_seconds.");
+                }
+
+                if (skill.ProjectileSpeed <= 0f)
+                {
+                    errors.Add($"Projectile skill '{skill.Id}' requires positive projectile_speed.");
+                }
+
+                return;
+            }
+
+            if (skill.RuntimeKind == SkillRuntimeKind.CooldownProjectile)
+            {
+                if (skill.ProjectileSpeed <= 0f)
+                {
+                    errors.Add($"Projectile skill '{skill.Id}' requires positive projectile_speed.");
+                }
+
+                return;
+            }
+
+            if (skill.CooldownSeconds <= 0f)
+            {
+                errors.Add($"Active skill '{skill.Id}' requires positive cooldown_seconds.");
             }
         }
 
@@ -1354,6 +1431,105 @@ namespace Pakuri.Data
                 {
                     errors.Add($"Runtime skill choice '{choice.ChoiceId}' is missing SkillEffectPrefab for '{skillEffectPrefabPath}'.");
                 }
+            }
+        }
+
+        /*
+         * 조회 등록이 끝난 카탈로그의 모든 스킬을 실행 데이터로 변환해 검사한다.
+         */
+        internal static void ValidateCompiledSkillDataOrThrow(GameDataCatalog catalog)
+        {
+            var errors = new List<string>();
+            ValidateCompiledMonsterSkills(catalog.Monsters, errors);
+            ValidateCompiledEnemySkills(catalog.StageOneEnemies, errors);
+            ValidateCompiledEnemySkills(catalog.StageTwoEnemies, errors);
+
+            if (errors.Count > 0)
+            {
+                throw new CsvFatalException("Compiled skill data validation failed.", errors);
+            }
+        }
+
+        /*
+         * 플레이어 몬스터의 스킬 정의가 완성된 실행 데이터로 변환되는지 검사한다.
+         */
+        internal static void ValidateCompiledMonsterSkills(MonsterDefinition[] monsters, List<string> errors)
+        {
+            for (var monsterIndex = 0; monsterIndex < monsters.Length; monsterIndex++)
+            {
+                var monster = monsters[monsterIndex];
+                for (var skillIndex = 0; skillIndex < monster.ActiveSkills.Length; skillIndex++)
+                {
+                    var source = monster.ActiveSkills[skillIndex];
+                    var compiled = SkillRuntimeCompiler.CompileActive(monster, source);
+                    ValidateCompiledSkill(source.SkillId, source.Slot, true, compiled, errors);
+                }
+
+                for (var skillIndex = 0; skillIndex < monster.PassiveSkills.Length; skillIndex++)
+                {
+                    var source = monster.PassiveSkills[skillIndex];
+                    var compiled = SkillRuntimeCompiler.CompilePassive(monster, source);
+                    ValidateCompiledSkill(source.PassiveId, source.Slot, false, compiled, errors);
+                }
+            }
+        }
+
+        /*
+         * 적 스킬 정의가 완성된 실행 데이터로 변환되는지 검사한다.
+         */
+        internal static void ValidateCompiledEnemySkills(EnemyDefinition[] enemies, List<string> errors)
+        {
+            for (var enemyIndex = 0; enemyIndex < enemies.Length; enemyIndex++)
+            {
+                var enemy = enemies[enemyIndex];
+                for (var skillIndex = 0; skillIndex < enemy.ActiveSkills.Length; skillIndex++)
+                {
+                    var source = enemy.ActiveSkills[skillIndex];
+                    var compiled = SkillRuntimeCompiler.CompileActive(enemy.EnemyId, source, enemy.SkillTriggers);
+                    ValidateCompiledSkill(source.SkillId, source.Slot, true, compiled, errors);
+                }
+            }
+        }
+
+        /*
+         * 변환된 스킬의 식별 정보와 공통 실행 설정을 검사한다.
+         */
+        internal static void ValidateCompiledSkill(
+            string skillId,
+            SkillSlot slot,
+            bool active,
+            SkillRuntimeData compiled,
+            List<string> errors)
+        {
+            if (compiled == null)
+            {
+                errors.Add($"Skill compiler returned null for '{skillId}'.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(compiled.SkillId))
+            {
+                errors.Add($"Compiled skill '{skillId}' has an empty skill id.");
+            }
+
+            if (compiled.IsActive != active)
+            {
+                errors.Add($"Compiled skill '{skillId}' has an incorrect active flag.");
+            }
+
+            if (compiled.Slot != slot)
+            {
+                errors.Add($"Compiled skill '{skillId}' changed slot from '{slot}' to '{compiled.Slot}'.");
+            }
+
+            if (compiled.Timing == null)
+            {
+                errors.Add($"Compiled skill '{skillId}' has no timing data.");
+            }
+
+            if (compiled.Targeting == null)
+            {
+                errors.Add($"Compiled skill '{skillId}' has no targeting data.");
             }
         }
     }

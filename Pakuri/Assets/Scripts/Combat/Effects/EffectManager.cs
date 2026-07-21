@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 using UnityEngine;
@@ -12,97 +11,23 @@ namespace Pakuri.InGame
 {
     public class EffectManager : MonoBehaviour
     {
-        /*
-         * 스킬 ID와 해당 효과 프리팹의 연결 정보를 보관한다.
-         */
-        [Serializable]
-        private class MonsterSkillEffectEntry
-        {
-            public string SkillId = string.Empty;
-            public GameObject Prefab = null;
-        }
-
-        /*
-         * 몬스터 하나가 사용하는 스킬 효과 목록을 보관한다.
-         */
-        [Serializable]
-        private class MonsterSkillEffectGroup
-        {
-            public string MonsterId = string.Empty;
-            public List<MonsterSkillEffectEntry> SkillEffects = new List<MonsterSkillEffectEntry>();
-        }
-
         [SerializeField] private Transform runtimeSkillRoot;
-        [SerializeField] private List<MonsterSkillEffectGroup> monsterSkillEffects = new List<MonsterSkillEffectGroup>();
-
-        private readonly Dictionary<string, Dictionary<string, GameObject>> monsterLookup =
-            new Dictionary<string, Dictionary<string, GameObject>>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, GameObject> statusEffectVisuals = new Dictionary<string, GameObject>();
-
-        private bool lookupDirty = true;
 
         /*
          * 런타임 비주얼에 생성할 외형이 있는지 확인한다.
          */
-        public bool HasVisual(RuntimeSkillVisualSpec visual)
+        public static bool HasVisual(RuntimeSkillVisualSpec visual)
         {
-            return EffectVisualUtility.HasVisual(visual);
+            return visual != null && visual.HasVisual();
         }
 
         /*
-         * 시전자의 몬스터 ID와 스킬 ID에 등록된 효과 프리팹을 찾는다.
+         * 방향 벡터를 효과 회전값으로 바꾼다.
          */
-        public GameObject ResolveMonsterSkillEffectPrefab(UnitCombatState caster, string skillId)
+        public static Quaternion ResolveRotation(Vector2 direction)
         {
-            if (caster == null || caster.Identity == null)
-            {
-                return null;
-            }
-
-            return ResolveMonsterSkillEffectPrefab(caster.Identity.DefinitionId, skillId);
-        }
-
-        /*
-         * 몬스터 ID와 스킬 ID에 등록된 효과 프리팹을 찾는다.
-         */
-        public GameObject ResolveMonsterSkillEffectPrefab(string monsterId, string skillId)
-        {
-            if (string.IsNullOrWhiteSpace(monsterId) || string.IsNullOrWhiteSpace(skillId))
-            {
-                return null;
-            }
-
-            EnsureLookup();
-            if (!monsterLookup.TryGetValue(monsterId.Trim(), out var skillMap))
-            {
-                return null;
-            }
-
-            skillMap.TryGetValue(skillId.Trim(), out var prefab);
-            return prefab;
-        }
-
-        /*
-         * 우선 프리팹, 몬스터 등록 프리팹, 후순위 프리팹 순서로 사용할 효과를 찾는다.
-         */
-        public GameObject ResolveSkillEffectPrefab(
-            UnitCombatState caster,
-            string skillId,
-            GameObject preferredPrefab = null,
-            GameObject fallbackPrefab = null)
-        {
-            if (preferredPrefab != null)
-            {
-                return preferredPrefab;
-            }
-
-            var registeredPrefab = ResolveMonsterSkillEffectPrefab(caster, skillId);
-            if (registeredPrefab != null)
-            {
-                return registeredPrefab;
-            }
-
-            return fallbackPrefab;
+            return EffectVisualBuilder.ResolveRotation(direction);
         }
 
         /*
@@ -116,13 +41,13 @@ namespace Pakuri.InGame
             bool hitboxIsTrigger = false,
             bool includeHitbox = true)
         {
-            if (!EffectVisualUtility.HasVisual(visual))
+            if (!HasVisual(visual))
             {
                 return null;
             }
 
             var instance = CreateRuntimeSkillObject(objectName, position, rotation);
-            EffectVisualUtility.Configure(instance, visual, hitboxIsTrigger, includeHitbox);
+            EffectVisualBuilder.Configure(instance, visual, hitboxIsTrigger, includeHitbox);
             return instance;
         }
 
@@ -243,21 +168,6 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 코드 비주얼을 생성하고 지정한 시간이 지나면 제거한다.
-         */
-        public GameObject SpawnTransient(
-            RuntimeSkillVisualSpec visual,
-            string objectName,
-            Vector3 position,
-            Quaternion rotation,
-            float durationSeconds)
-        {
-            var instance = CreateRuntimeVisual(visual, objectName, position, rotation);
-            DestroyAfter(instance, durationSeconds);
-            return instance;
-        }
-
-        /*
          * 효과를 생성하고 애니메이션 또는 기본 수명에 맞춰 제거한다.
          */
         public GameObject SpawnAnimatedEffect(
@@ -266,16 +176,12 @@ namespace Pakuri.InGame
             string objectName,
             Vector3 position,
             Quaternion rotation,
-            float minimumLifetimeSeconds,
-            float fallbackLifetimeSeconds)
+            float minimumLifetimeSeconds)
         {
             var instance = CreateEffectObject(visual, prefab, objectName, position, rotation);
             if (instance != null)
             {
-                DestroyAfterAnimation(
-                    instance,
-                    minimumLifetimeSeconds,
-                    fallbackLifetimeSeconds);
+                DestroyAfterAnimation(instance, minimumLifetimeSeconds);
             }
 
             return instance;
@@ -310,9 +216,11 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var objectName = string.IsNullOrWhiteSpace(effect.EffectId)
-                ? "SkillEffectVisual"
-                : $"SkillEffectVisual_{effect.EffectId}";
+            var objectName = "SkillEffectVisual";
+            if (!string.IsNullOrWhiteSpace(effect.EffectId))
+            {
+                objectName = $"SkillEffectVisual_{effect.EffectId}";
+            }
             return SpawnTransient(
                 effect.RuntimeVisual,
                 effect.SkillEffectPrefab,
@@ -336,9 +244,11 @@ namespace Pakuri.InGame
             }
 
             var lifetime = Mathf.Max(0.1f, durationSeconds);
-            var objectName = string.IsNullOrWhiteSpace(effect.EffectId)
-                ? "SkillEffectVisual"
-                : $"SkillEffectVisual_{effect.EffectId}";
+            var objectName = "SkillEffectVisual";
+            if (!string.IsNullOrWhiteSpace(effect.EffectId))
+            {
+                objectName = $"SkillEffectVisual_{effect.EffectId}";
+            }
             for (var i = 0; i < targets.Count; i++)
             {
                 var target = targets[i];
@@ -371,21 +281,14 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var hasRuntimeVisual = EffectVisualUtility.HasVisual(statusData.RuntimeVisual);
+            var hasRuntimeVisual = HasVisual(statusData.RuntimeVisual);
             if (!hasRuntimeVisual && statusData.StatusEffectPrefab == null)
             {
                 return;
             }
 
-            var unitId = target.Identity != null ? target.Identity.UnitId : string.Empty;
-            var sourceId = !string.IsNullOrWhiteSpace(status.SourceSkillId)
-                ? status.SourceSkillId
-                : statusData.SourceSkillId;
-            var visualId = hasRuntimeVisual
-                ? statusData.RuntimeVisual.GetHashCode()
-                : statusData.StatusEffectPrefab.GetInstanceID();
-            // 대상·상태·출처·비주얼이 같으면 기존 인스턴스를 다시 사용한다.
-            var key = $"{unitId}:{status.Kind}:{sourceId}:{visualId}";
+            var sourceId = ResolveStatusSourceId(status, statusData);
+            var key = CreateStatusVisualKey(target, statusData, status, sourceId, hasRuntimeVisual);
 
             // Unity에서 이미 파괴된 참조는 조회표에서도 제거한다.
             if (statusEffectVisuals.TryGetValue(key, out var instance) && instance == null)
@@ -394,15 +297,25 @@ namespace Pakuri.InGame
                 instance = null;
             }
 
-            // 영구 상태는 상태 제거 시 직접 정리하므로 충분히 긴 추적 시간을 사용한다.
-            var lifetime = status.Permanent ? 3600f : Mathf.Max(0.1f, status.DurationRemaining);
+            var lifetime = 0f;
+            if (!status.Permanent)
+            {
+                lifetime = Mathf.Max(0.1f, status.DurationRemaining);
+            }
+
             if (instance == null)
             {
                 if (hasRuntimeVisual)
                 {
+                    var objectName = "RuntimeStatusVisual";
+                    if (!string.IsNullOrWhiteSpace(sourceId))
+                    {
+                        objectName = $"RuntimeStatusVisual_{sourceId}";
+                    }
+
                     instance = CreateRuntimeVisual(
                         statusData.RuntimeVisual,
-                        string.IsNullOrWhiteSpace(sourceId) ? "RuntimeStatusVisual" : $"RuntimeStatusVisual_{sourceId}",
+                        objectName,
                         targetTransform.position,
                         Quaternion.identity,
                         includeHitbox: false);
@@ -424,26 +337,25 @@ namespace Pakuri.InGame
         // 조건이 끝난 영구 패시브 상태의 연결 비주얼을 출처 키로 즉시 정리한다.
         public void RemoveStatusVisual(UnitCombatState target, StatusRuntimeInstance status)
         {
-            var statusData = status != null ? status.SourceData : null;
-            if (target == null || status == null || statusData == null)
+            if (target == null || status == null)
             {
                 return;
             }
 
-            var hasRuntimeVisual = EffectVisualUtility.HasVisual(statusData.RuntimeVisual);
+            var statusData = status.SourceData;
+            if (statusData == null)
+            {
+                return;
+            }
+
+            var hasRuntimeVisual = HasVisual(statusData.RuntimeVisual);
             if (!hasRuntimeVisual && statusData.StatusEffectPrefab == null)
             {
                 return;
             }
 
-            var unitId = target.Identity != null ? target.Identity.UnitId : string.Empty;
-            var sourceId = !string.IsNullOrWhiteSpace(status.SourceSkillId)
-                ? status.SourceSkillId
-                : statusData.SourceSkillId;
-            var visualId = hasRuntimeVisual
-                ? statusData.RuntimeVisual.GetHashCode()
-                : statusData.StatusEffectPrefab.GetInstanceID();
-            var key = $"{unitId}:{status.Kind}:{sourceId}:{visualId}";
+            var sourceId = ResolveStatusSourceId(status, statusData);
+            var key = CreateStatusVisualKey(target, statusData, status, sourceId, hasRuntimeVisual);
             if (!statusEffectVisuals.TryGetValue(key, out var instance))
             {
                 return;
@@ -456,18 +368,40 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 프리팹 비주얼을 생성하고 지정한 시간이 지나면 제거한다.
-         */
-        public GameObject SpawnTransient(
-            GameObject prefab,
-            Vector3 position,
-            Quaternion rotation,
-            float durationSeconds)
+        private static string ResolveStatusSourceId(StatusRuntimeInstance status, StatusRuntimeData statusData)
         {
-            var instance = InstantiateSkillPrefab(prefab, position, rotation);
-            DestroyAfter(instance, durationSeconds);
-            return instance;
+            if (!string.IsNullOrWhiteSpace(status.SourceSkillId))
+            {
+                return status.SourceSkillId;
+            }
+
+            return statusData.SourceSkillId;
+        }
+
+        private static string CreateStatusVisualKey(
+            UnitCombatState target,
+            StatusRuntimeData statusData,
+            StatusRuntimeInstance status,
+            string sourceId,
+            bool hasRuntimeVisual)
+        {
+            var unitId = string.Empty;
+            if (target.Identity != null)
+            {
+                unitId = target.Identity.UnitId;
+            }
+
+            var visualId = 0;
+            if (hasRuntimeVisual)
+            {
+                visualId = statusData.RuntimeVisual.GetHashCode();
+            }
+            else
+            {
+                visualId = statusData.StatusEffectPrefab.GetInstanceID();
+            }
+
+            return $"{unitId}:{status.Kind}:{sourceId}:{visualId}";
         }
 
         /*
@@ -475,13 +409,9 @@ namespace Pakuri.InGame
          */
         public float DestroyAfterAnimation(
             GameObject instance,
-            float minimumLifetimeSeconds,
-            float fallbackLifetimeSeconds = 0f)
+            float minimumLifetimeSeconds)
         {
-            var lifetime = EffectVisualUtility.ResolveLifetime(
-                instance,
-                minimumLifetimeSeconds,
-                fallbackLifetimeSeconds);
+            var lifetime = EffectVisualBuilder.ResolveLifetime(instance, minimumLifetimeSeconds);
             DestroyAfter(instance, lifetime);
             return lifetime;
         }
@@ -500,14 +430,6 @@ namespace Pakuri.InGame
             }
 
             statusEffectVisuals.Clear();
-        }
-
-        /*
-         * Inspector의 등록값이 바뀌면 프리팹 조회표를 다시 만들도록 표시한다.
-         */
-        private void OnValidate()
-        {
-            lookupDirty = true;
         }
 
         /*
@@ -587,12 +509,12 @@ namespace Pakuri.InGame
             bool requireHitbox = false)
         {
             if (instance == null
-                || (requireHitbox && !EffectVisualUtility.HasHitbox(instance)))
+                || (requireHitbox && !EffectVisualBuilder.HasHitbox(instance)))
             {
                 return false;
             }
 
-            EffectVisualUtility.ConfigureAreaScale(
+            EffectVisualBuilder.ConfigureAreaScale(
                 instance.transform,
                 baseRadius,
                 snapshot,
@@ -611,8 +533,14 @@ namespace Pakuri.InGame
             SkillSnapshot snapshot,
             Vector2 center)
         {
-            EffectVisualUtility.ConfigureSingleAttackLine(
-                instance != null ? instance.transform : null,
+            Transform effectTransform = null;
+            if (instance != null)
+            {
+                effectTransform = instance.transform;
+            }
+
+            EffectVisualBuilder.ConfigureSingleAttackLine(
+                effectTransform,
                 context,
                 skill,
                 snapshot,
@@ -627,45 +555,49 @@ namespace Pakuri.InGame
             Destroy(instance, Mathf.Max(0.01f, durationSeconds));
         }
 
-        /*
-         * 몬스터, 스킬 프리팹 목록을 조회표로 만든다.
-         */
-        private void EnsureLookup()
+    }
+
+    class FollowEffectActor : MonoBehaviour
+    {
+        private Transform target;
+        private Vector3 offset;
+        private float lifetime;
+        private bool hasLifetime;
+
+        public void Initialize(Transform followTarget, float durationSeconds, Vector3 localOffset)
         {
-            if (!lookupDirty)
+            target = followTarget;
+            offset = localOffset;
+            hasLifetime = durationSeconds > 0f;
+            if (hasLifetime)
+            {
+                lifetime = Mathf.Max(0.1f, durationSeconds);
+            }
+
+            if (target != null)
+            {
+                transform.position = target.position + offset;
+            }
+        }
+
+        private void Update()
+        {
+            if (target == null)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            transform.position = target.position + offset;
+            if (!hasLifetime)
             {
                 return;
             }
 
-            lookupDirty = false;
-            monsterLookup.Clear();
-
-            for (var i = 0; i < monsterSkillEffects.Count; i++)
+            lifetime -= Time.deltaTime;
+            if (lifetime <= 0f)
             {
-                var group = monsterSkillEffects[i];
-                if (group == null || string.IsNullOrWhiteSpace(group.MonsterId))
-                {
-                    continue;
-                }
-
-                var monsterId = group.MonsterId.Trim();
-                if (!monsterLookup.TryGetValue(monsterId, out var skillMap))
-                {
-                    skillMap = new Dictionary<string, GameObject>(StringComparer.OrdinalIgnoreCase);
-                    monsterLookup.Add(monsterId, skillMap);
-                }
-
-                for (var j = 0; j < group.SkillEffects.Count; j++)
-                {
-                    var entry = group.SkillEffects[j];
-                    if (entry == null || string.IsNullOrWhiteSpace(entry.SkillId) || entry.Prefab == null)
-                    {
-                        continue;
-                    }
-
-                    // 같은 스킬 ID가 중복되면 Inspector의 마지막 등록값을 사용한다.
-                    skillMap[entry.SkillId.Trim()] = entry.Prefab;
-                }
+                Destroy(gameObject);
             }
         }
     }

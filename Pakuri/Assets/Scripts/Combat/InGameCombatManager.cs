@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
+using Pakuri.Data;
 using UnityEngine;
 
 /*
@@ -585,16 +586,16 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 문자열 태그 상태를 지정 수만큼 소비한다.
+         * 지정한 종류의 상태를 필요한 수만큼 소비한다.
          */
-        public int ConsumeStatusStacks(UnitCombatState target, string statusTag, int stacks)
+        public int ConsumeStatusStacks(UnitCombatState target, StatusEffectKind kind, int stacks)
         {
             if (stacks <= 0)
             {
                 return 0;
             }
 
-            var consumed = target.Statuses.ConsumeStacks(statusTag, stacks);
+            var consumed = target.Statuses.ConsumeStacks(kind, stacks);
             if (consumed > 0)
             {
                 target.SyncShield();

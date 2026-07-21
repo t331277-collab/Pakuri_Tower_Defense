@@ -246,16 +246,16 @@ internal static class SkillTrigger
 
 	private static bool ShouldRunSourceOwnedTrigger(SkillTriggerDefinition trigger, UnitCombatState source, string sourceSkillId, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
 	{
-		if (trigger != null && trigger.TriggerEvent == triggerEvent && string.Equals(trigger.SourceSkillId, sourceSkillId, StringComparison.OrdinalIgnoreCase) && MatchesEventSkillId(trigger.EventSkillId, triggerContext.EventSourceSkillId) && StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKinds, triggerContext.EventSourceSkillId) && (!trigger.RequireEventExecute || triggerContext.EventWasExecute) && HasAllChoices(source, trigger.RequiresActiveChoiceId) && !HasAnyChoice(source, trigger.ExcludesActiveChoiceId))
+		if (trigger != null && trigger.TriggerEvent == triggerEvent && string.Equals(trigger.SourceSkillId, sourceSkillId, StringComparison.OrdinalIgnoreCase) && MatchesEventSkillId(trigger.EventSkillId, triggerContext.EventSourceSkillId) && StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillId) && (!trigger.RequireEventExecute || triggerContext.EventWasExecute) && HasAllChoices(source, trigger.RequiresActiveChoiceId) && !HasAnyChoice(source, trigger.ExcludesActiveChoiceId))
 		{
-			return MeetsSourceStatusRequirement(source, trigger.RequiredSourceStatusId, trigger.RequiredSourceStatusMinStacks);
+			return MeetsSourceStatusRequirement(source, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks);
 		}
 		return false;
 	}
 
 	private static bool ShouldRunPassiveOwnerTrigger(SkillTriggerDefinition trigger, UnitCombatState owner, SkillTriggerEvent triggerEvent, TriggerExecutionContext triggerContext)
 	{
-		if (trigger == null || owner == null || owner.SkillProgress == null || trigger.TriggerEvent != triggerEvent || string.IsNullOrWhiteSpace(trigger.SourceSkillId) || !owner.SkillProgress.LearnedPassiveSkillIds.Contains(trigger.SourceSkillId) || !MatchesEventSkillId(trigger.EventSkillId, triggerContext.EventSourceSkillId) || !StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKinds, triggerContext.EventSourceSkillId) || (trigger.RequireEventExecute && !triggerContext.EventWasExecute) || !HasAllChoices(owner, trigger.RequiresActiveChoiceId) || HasAnyChoice(owner, trigger.ExcludesActiveChoiceId) || !MeetsSourceStatusRequirement(owner, trigger.RequiredSourceStatusId, trigger.RequiredSourceStatusMinStacks))
+		if (trigger == null || owner == null || owner.SkillProgress == null || trigger.TriggerEvent != triggerEvent || string.IsNullOrWhiteSpace(trigger.SourceSkillId) || !owner.SkillProgress.LearnedPassiveSkillIds.Contains(trigger.SourceSkillId) || !MatchesEventSkillId(trigger.EventSkillId, triggerContext.EventSourceSkillId) || !StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillId) || (trigger.RequireEventExecute && !triggerContext.EventWasExecute) || !HasAllChoices(owner, trigger.RequiresActiveChoiceId) || HasAnyChoice(owner, trigger.ExcludesActiveChoiceId) || !MeetsSourceStatusRequirement(owner, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks))
 		{
 			return false;
 		}
@@ -263,7 +263,7 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		if (!MatchesConditionStatusSourceSkill(trigger.ConditionStatusSourceSkillId, triggerContext.EventTarget, triggerContext.EventTriggerSourceSkillId))
+		if (!MatchesConditionStatusSourceSkill(trigger.ConditionStatusSourceSkillIds, triggerContext.EventTarget, triggerContext.EventTriggerSourceSkillId))
 		{
 			return false;
 		}
@@ -314,17 +314,13 @@ internal static class SkillTrigger
 		return false;
 	}
 
-	private static bool MeetsSourceStatusRequirement(UnitCombatState owner, string statusId, int minStacks)
+	private static bool MeetsSourceStatusRequirement(UnitCombatState owner, StatusEffectKind statusKind, int minStacks)
 	{
-		if (string.IsNullOrWhiteSpace(statusId))
+		if (statusKind == StatusEffectKind.None)
 		{
 			return true;
 		}
-		if (!StatusEffectLookup.TryParse(statusId, out var kind))
-		{
-			return false;
-		}
-		if (kind == StatusEffectKind.Shield)
+		if (statusKind == StatusEffectKind.Shield)
 		{
 			if (owner != null && owner.Resources != null)
 			{
@@ -334,7 +330,7 @@ internal static class SkillTrigger
 		}
 		if (owner != null && owner.Statuses != null)
 		{
-			return owner.Statuses.GetStacks(kind) >= Mathf.Max(1, minStacks);
+			return owner.Statuses.GetStacks(statusKind) >= Mathf.Max(1, minStacks);
 		}
 		return false;
 	}
@@ -343,7 +339,7 @@ internal static class SkillTrigger
 	{
 		if (trigger != null)
 		{
-			return StatusConditionRules.MatchesConditionStatus(status, trigger.ConditionStatusId);
+			return StatusConditionRules.MatchesConditionStatus(status, trigger.ConditionStatuses);
 		}
 		return true;
 	}
@@ -438,24 +434,35 @@ internal static class SkillTrigger
 		return false;
 	}
 
-	private static bool MatchesConditionStatusSourceSkill(string rawSourceSkillId, UnitCombatState target, string eventTriggerSourceSkillId = null)
+	private static bool MatchesConditionStatusSourceSkill(string[] sourceSkillIds, UnitCombatState target, string eventTriggerSourceSkillId = null)
 	{
-		if (string.IsNullOrWhiteSpace(rawSourceSkillId))
+		if (sourceSkillIds == null || sourceSkillIds.Length == 0)
 		{
 			return true;
 		}
-		IReadOnlyList<StatusRuntimeInstance> readOnlyList = ((target != null && target.Statuses != null) ? target.Statuses.ActiveStatuses : null);
-		string[] array = rawSourceSkillId.Split(';', ',');
+		IReadOnlyList<StatusRuntimeInstance> readOnlyList = null;
+		if (target != null && target.Statuses != null)
+		{
+			readOnlyList = target.Statuses.ActiveStatuses;
+		}
 		int num = 0;
 		while (readOnlyList != null && num < readOnlyList.Count)
 		{
-			StatusRuntimeData runtimeStatusData = readOnlyList[num]?.SourceData;
-			string text = ((runtimeStatusData != null) ? runtimeStatusData.SourceSkillId : string.Empty);
+			StatusRuntimeData runtimeStatusData = null;
+			if (readOnlyList[num] != null)
+			{
+				runtimeStatusData = readOnlyList[num].SourceData;
+			}
+			string text = string.Empty;
+			if (runtimeStatusData != null)
+			{
+				text = runtimeStatusData.SourceSkillId;
+			}
 			if (!string.IsNullOrWhiteSpace(text))
 			{
-				for (int i = 0; i < array.Length; i++)
+				for (int i = 0; i < sourceSkillIds.Length; i++)
 				{
-					string text2 = ((array[i] != null) ? array[i].Trim() : string.Empty);
+					string text2 = sourceSkillIds[i];
 					if (!string.IsNullOrWhiteSpace(text2) && string.Equals(text2, text, StringComparison.OrdinalIgnoreCase))
 					{
 						return true;
@@ -468,9 +475,9 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		for (int j = 0; j < array.Length; j++)
+		for (int j = 0; j < sourceSkillIds.Length; j++)
 		{
-			string text3 = ((array[j] != null) ? array[j].Trim() : string.Empty);
+			string text3 = sourceSkillIds[j];
 			if (!string.IsNullOrWhiteSpace(text3) && string.Equals(text3, eventTriggerSourceSkillId, StringComparison.OrdinalIgnoreCase))
 			{
 				return true;
@@ -754,7 +761,7 @@ internal static class SkillTrigger
 		SkillEffectDefinition onHitStatusEffect = ResolveTriggeredOnHitStatusEffect(source, trigger);
 		SkillSnapshot onHitSnapshot = SkillUpgrade.ResolveActiveChoices(source, trigger.SourceSkillId);
 		RuntimeSkillVisualSpec runtimeVisual = trigger.RuntimeVisual;
-		bool flag = EffectVisualUtility.HasVisual(runtimeVisual);
+		bool flag = EffectManager.HasVisual(runtimeVisual);
 		bool flag2 = runtimeVisual != null && runtimeVisual.Hitbox != null && runtimeVisual.Hitbox.HasHitbox();
 		if ((flag2 || IsPrefabHitboxTrigger(trigger)) && combatManager.Effects != null)
 		{
@@ -769,13 +776,18 @@ internal static class SkillTrigger
 			return result;
 		}
 		bool flag3 = ApplyAreaTrigger(combatManager, sourceEntry, roster, targeting, vector, Mathf.Max(0f, trigger.Radius), trigger.CoverAll || trigger.TargetShape == SkillMultiEffectTargetShape.Battlefield, IsGlobalHitCount(trigger.HitTargetCount) ? int.MaxValue : ParseHitTargetCount(trigger.HitTargetCount), num, trigger.Attribute, sourceSkillId, trigger.TriggerId, triggerContext.EventTarget, trigger.TargetSelection == SkillMultiEffectTargetSelection.EventTarget, onHitStatusEffect, onHitSnapshot);
+		string visualName = "RuntimeTriggerVisual";
+		if (!string.IsNullOrWhiteSpace(trigger.TriggerId))
+		{
+			visualName = "RuntimeTriggerVisual_" + trigger.TriggerId;
+		}
 		if (flag3 && flag && combatManager.Effects != null)
 		{
-			combatManager.Effects.SpawnTransient(runtimeVisual, string.IsNullOrWhiteSpace(trigger.TriggerId) ? "RuntimeTriggerVisual" : ("RuntimeTriggerVisual_" + trigger.TriggerId), vector, Quaternion.identity, 1f);
+			combatManager.Effects.SpawnTransient(runtimeVisual, null, visualName, vector, Quaternion.identity, 1f);
 		}
 		else if (flag3 && trigger.SkillEffectPrefab != null && combatManager.Effects != null)
 		{
-			combatManager.Effects.SpawnTransient(trigger.SkillEffectPrefab, vector, Quaternion.identity, 1f);
+			combatManager.Effects.SpawnTransient(null, trigger.SkillEffectPrefab, visualName, vector, Quaternion.identity, 1f);
 		}
 		return flag3;
 	}
@@ -810,17 +822,22 @@ internal static class SkillTrigger
 		float num2 = ResolveTriggeredLineLength();
 		float num3 = Mathf.Max(0.1f, trigger.Radius);
 		Vector2 vector3 = vector + vector2 * (num2 * 0.5f);
-		RuntimeSkillVisualSpec visual = ResolveTriggeredLineRuntimeVisual(source, trigger);
-		bool num4 = EffectVisualUtility.HasVisual(visual);
+		RuntimeSkillVisualSpec visual = trigger.RuntimeVisual;
+		bool num4 = EffectManager.HasVisual(visual);
 		EffectManager effects = combatManager.Effects;
 		GameObject gameObject = null;
 		if (num4 && effects != null)
 		{
-			gameObject = effects.CreateRuntimeVisual(visual, string.IsNullOrWhiteSpace(trigger.TriggerId) ? "RuntimeTriggerLineVisual" : ("RuntimeTriggerLineVisual_" + trigger.TriggerId), vector3, EffectVisualUtility.ResolveRotation(vector2));
+			string visualName = "RuntimeTriggerLineVisual";
+			if (!string.IsNullOrWhiteSpace(trigger.TriggerId))
+			{
+				visualName = "RuntimeTriggerLineVisual_" + trigger.TriggerId;
+			}
+			gameObject = effects.CreateRuntimeVisual(visual, visualName, vector3, EffectManager.ResolveRotation(vector2));
 		}
 		else if (trigger.SkillEffectPrefab != null && effects != null)
 		{
-			gameObject = effects.InstantiateSkillPrefab(trigger.SkillEffectPrefab, vector3, EffectVisualUtility.ResolveRotation(vector2));
+			gameObject = effects.InstantiateSkillPrefab(trigger.SkillEffectPrefab, vector3, EffectManager.ResolveRotation(vector2));
 		}
 		if (gameObject != null)
 		{
@@ -828,21 +845,6 @@ internal static class SkillTrigger
 			effects.DestroyAfterAnimation(gameObject, 0.1f);
 		}
 		return LineSkillActor.ApplyLineTick(combatManager, sourceEntry, roster, skillTargetingSpec, vector, vector2, num2, num3, 0f, num, trigger.Attribute, null, onHitEffects, null, skillExecutionSnapshot, source, ResolveTriggeredDamageSourceSkillId(trigger), criticalAllowed: true, skillExecutionSnapshot?.CritChanceBonus ?? 0f, skillExecutionSnapshot?.CritDamageBonus ?? 0f, null, null, trigger.TriggerId);
-	}
-
-	private static RuntimeSkillVisualSpec ResolveTriggeredLineRuntimeVisual(UnitCombatState source, SkillTriggerDefinition trigger)
-	{
-		if (trigger == null || EffectVisualUtility.HasVisual(trigger.RuntimeVisual))
-		{
-			return trigger?.RuntimeVisual;
-		}
-		string skillId = ((!string.IsNullOrWhiteSpace(trigger.TriggeredSkillId)) ? trigger.TriggeredSkillId : trigger.SourceSkillId);
-		SkillRuntimeInstance skillRuntimeInstance = ((source != null && source.SkillRuntime != null) ? source.SkillRuntime.FindBySkillId(skillId) : null);
-		if (skillRuntimeInstance == null || skillRuntimeInstance.Data == null)
-		{
-			return null;
-		}
-		return skillRuntimeInstance.Data.RuntimeVisual;
 	}
 
 	private static SkillEffectDefinition ResolveTriggeredOnHitStatusEffect(UnitCombatState source, SkillTriggerDefinition trigger)
@@ -966,7 +968,7 @@ internal static class SkillTrigger
 				StatSource = (flag ? StatSource.Intelligence : StatSource.Attack),
 				CriticalAllowed = true
 			};
-			return SkillValueCalculator.ResolveDamage(source, damage, null) * Mathf.Max(0f, trigger.DamageMultiplier);
+			return DamageCalculator.ResolveDamage(source, damage, null) * Mathf.Max(0f, trigger.DamageMultiplier);
 		}
 		}
 	}
@@ -990,8 +992,11 @@ internal static class SkillTrigger
 			CombatUnitEntry unitEntry = list[i];
 			if (IsTargetInsideHitbox(componentsInChildren, unitEntry))
 			{
-				manager.ApplyDamage(unitEntry.Model, damage, attribute, sourceEntry.Model, criticalAllowed: true, 0f, 0f, sourceSkillId, suppressOutgoingDamageTriggers: false, sourceHitWasExecute: false, damageMeterSourceId);
-				TryApplyTriggeredOnHitStatusEffect(manager, unitEntry.Model, onHitStatusEffect, onHitSnapshot, sourceEntry.Model);
+				InGameResourceChangeResult damageResult = manager.ApplyDamage(unitEntry.Model, damage, attribute, sourceEntry.Model, criticalAllowed: true, 0f, 0f, sourceSkillId, suppressOutgoingDamageTriggers: false, sourceHitWasExecute: false, damageMeterSourceId);
+				if (!damageResult.IsDead)
+				{
+					TryApplyTriggeredOnHitStatusEffect(manager, unitEntry.Model, onHitStatusEffect, onHitSnapshot, sourceEntry.Model);
+				}
 				result = true;
 				num++;
 				if (num >= maxTargets)
@@ -1051,8 +1056,11 @@ internal static class SkillTrigger
 			{
 				return false;
 			}
-			manager.ApplyDamage(unitEntry.Model, damage, attribute, sourceEntry.Model, criticalAllowed: true, 0f, 0f, sourceSkillId, suppressOutgoingDamageTriggers: false, sourceHitWasExecute: false, damageMeterSourceId);
-			TryApplyTriggeredOnHitStatusEffect(manager, unitEntry.Model, onHitStatusEffect, onHitSnapshot, sourceEntry.Model);
+			InGameResourceChangeResult damageResult = manager.ApplyDamage(unitEntry.Model, damage, attribute, sourceEntry.Model, criticalAllowed: true, 0f, 0f, sourceSkillId, suppressOutgoingDamageTriggers: false, sourceHitWasExecute: false, damageMeterSourceId);
+			if (!damageResult.IsDead)
+			{
+				TryApplyTriggeredOnHitStatusEffect(manager, unitEntry.Model, onHitStatusEffect, onHitSnapshot, sourceEntry.Model);
+			}
 			return true;
 		}
 		bool result = false;
@@ -1063,8 +1071,11 @@ internal static class SkillTrigger
 			CombatUnitEntry unitEntry2 = list[i];
 			if (unitEntry2 != null && unitEntry2.IsAlive && unitEntry2.Model != null && !(unitEntry2.Transform == null) && (coverAll || !(((Vector2)unitEntry2.Transform.position - center).sqrMagnitude > num2)))
 			{
-				manager.ApplyDamage(unitEntry2.Model, damage, attribute, sourceEntry.Model, criticalAllowed: true, 0f, 0f, sourceSkillId, suppressOutgoingDamageTriggers: false, sourceHitWasExecute: false, damageMeterSourceId);
-				TryApplyTriggeredOnHitStatusEffect(manager, unitEntry2.Model, onHitStatusEffect, onHitSnapshot, sourceEntry.Model);
+				InGameResourceChangeResult damageResult2 = manager.ApplyDamage(unitEntry2.Model, damage, attribute, sourceEntry.Model, criticalAllowed: true, 0f, 0f, sourceSkillId, suppressOutgoingDamageTriggers: false, sourceHitWasExecute: false, damageMeterSourceId);
+				if (!damageResult2.IsDead)
+				{
+					TryApplyTriggeredOnHitStatusEffect(manager, unitEntry2.Model, onHitStatusEffect, onHitSnapshot, sourceEntry.Model);
+				}
 				result = true;
 				num++;
 				if (num >= maxTargets)
@@ -1083,7 +1094,7 @@ internal static class SkillTrigger
 			ProjectileStatusHitSpec projectileStatusHitSpec = SkillEffect.ResolveStatusSpec(onHitStatusEffect, onHitSnapshot);
 			if (projectileStatusHitSpec != null && projectileStatusHitSpec.Enabled)
 			{
-				SkillStatus.TryApplyStatus(manager, target, projectileStatusHitSpec, source);
+				StatusCombatRules.ApplyStatus(manager, target, projectileStatusHitSpec, source);
 			}
 		}
 	}

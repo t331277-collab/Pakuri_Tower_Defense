@@ -1,3 +1,4 @@
+using System;
 using Pakuri.Data;
 using UnityEngine;
 
@@ -8,7 +9,7 @@ using UnityEngine;
  */
 namespace Pakuri.InGame
 {
-    public sealed class SkillExecutionContext
+    public class SkillExecutionContext
     {
         /*
          * 한 번의 스킬 실행에 필요한 전투 대상과 조준 정보를 보관한다.
@@ -62,7 +63,7 @@ namespace Pakuri.InGame
         }
     }
 
-    public sealed class SkillExecution
+    public class SkillExecution
     {
         /*
          * 스킬 자동 전달 조건 함수 호출 형식을 정의한다.
@@ -89,12 +90,13 @@ namespace Pakuri.InGame
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
-                var model = entry != null ? entry.Model : null;
-                var skillRuntime = model != null ? model.SkillRuntime : null;
-                if (skillRuntime == null)
+                if (entry == null || entry.Model == null)
                 {
                     continue;
                 }
+
+                var model = entry.Model;
+                var skillRuntime = model.SkillRuntime;
 
                 skillRuntime.Tick(deltaTime);
                 if (!model.AutoSkillEnabled || !entry.IsAlive || !StatusCombatRules.CanAct(model))
@@ -140,8 +142,7 @@ namespace Pakuri.InGame
         {
             if (entry == null
                 || runtime == null
-                || !StatusCombatRules.CanAct(entry.Model)
-                || !CanExecute(runtime.Data))
+                || !StatusCombatRules.CanAct(entry.Model))
             {
                 return false;
             }
@@ -180,9 +181,11 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var aimDirection = entry.Transform != null && hasTargetPoint
-                ? targetPoint - (Vector2)entry.Transform.position
-                : default;
+            var aimDirection = default(Vector2);
+            if (entry.Transform != null && hasTargetPoint)
+            {
+                aimDirection = targetPoint - (Vector2)entry.Transform.position;
+            }
             var hasAimDirection = hasTargetPoint && aimDirection.sqrMagnitude > 0.0001f;
             return TryExecuteTriggeredSkill(
                 entry,
@@ -263,14 +266,15 @@ namespace Pakuri.InGame
             SkillExecutionContext context,
             string triggerSourceSkillId = null)
         {
-            if (combatManager == null || entry == null || runtime == null || runtime.Data == null)
+            var center = Vector2.zero;
+            if (entry.Transform != null)
             {
-                return;
+                center = entry.Transform.position;
             }
-
-            var center = context != null && context.HasManualTargetPoint
-                ? context.ManualTargetPoint
-                : entry.Transform != null ? (Vector2)entry.Transform.position : Vector2.zero;
+            if (context.HasManualTargetPoint)
+            {
+                center = context.ManualTargetPoint;
+            }
             SkillTrigger.ExecuteSkillCast(
                 combatManager,
                 roster,
@@ -295,11 +299,6 @@ namespace Pakuri.InGame
             float triggeredDamageMultiplier,
             string triggerSourceSkillId)
         {
-            if (runtime == null || entry == null)
-            {
-                return false;
-            }
-
             var snapshot = choiceResolver.Resolve(entry.Model, runtime, roster);
             if (!Mathf.Approximately(triggeredDamageMultiplier, 1f))
             {
@@ -377,25 +376,134 @@ namespace Pakuri.InGame
                 return SingleSkillExecutor.Execute(context, snapshot, charge);
             }
 
-            return false;
-        }
-
-        /*
-         * 현재 실행 시스템이 처리하는 스킬 자료형인지 확인한다.
-         */
-        private static bool CanExecute(SkillRuntimeData skillData)
-        {
-            return skillData is ProjectileSkillRuntimeData
-                || skillData is LineSkillRuntimeData
-                || skillData is SingleSkillRuntimeData
-                || skillData is ZoneSkillRuntimeData
-                || skillData is BuffSkillRuntimeData
-                || skillData is BuffShieldSkillRuntimeData
-                || skillData is BuffHealSkillRuntimeData
-                || skillData is SingleChainSkillRuntimeData
-                || skillData is SingleChargeSkillRuntimeData;
+            throw new InvalidOperationException("Unsupported compiled skill data: " + skillData.GetType().Name);
         }
     }
 
 }
 
+
+
+/*
+ * 스킬 효과와 패시브가 요구하는 선택지·패시브·상태 조건을 판정한다.
+ */
+namespace Pakuri.InGame
+{
+    internal static class SkillRequirement
+    {
+        internal static bool HasAllActiveChoices(SkillSnapshot snapshot, string choiceList)
+        {
+            if (string.IsNullOrWhiteSpace(choiceList))
+            {
+                return true;
+            }
+
+            if (snapshot == null)
+            {
+                return false;
+            }
+
+            var choices = choiceList.Split(';', ',');
+            for (var i = 0; i < choices.Length; i++)
+            {
+                var choiceId = choices[i].Trim();
+                if (choiceId.Length > 0 && !snapshot.HasActiveChoice(choiceId))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        internal static bool HasAnyActiveChoice(SkillSnapshot snapshot, string choiceList)
+        {
+            if (string.IsNullOrWhiteSpace(choiceList) || snapshot == null)
+            {
+                return false;
+            }
+
+            var choices = choiceList.Split(';', ',');
+            for (var i = 0; i < choices.Length; i++)
+            {
+                var choiceId = choices[i].Trim();
+                if (choiceId.Length > 0 && snapshot.HasActiveChoice(choiceId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static bool HasAllLearnedPassives(UnitCombatState owner, string passiveList)
+        {
+            if (string.IsNullOrWhiteSpace(passiveList))
+            {
+                return true;
+            }
+
+            var passives = passiveList.Split(';', ',');
+            for (var i = 0; i < passives.Length; i++)
+            {
+                var passiveId = passives[i].Trim();
+                if (passiveId.Length > 0 && !HasLearnedPassive(owner, passiveId))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        internal static bool HasAnyLearnedPassive(UnitCombatState owner, string passiveList)
+        {
+            if (string.IsNullOrWhiteSpace(passiveList))
+            {
+                return false;
+            }
+
+            var passives = passiveList.Split(';', ',');
+            for (var i = 0; i < passives.Length; i++)
+            {
+                var passiveId = passives[i].Trim();
+                if (passiveId.Length > 0 && HasLearnedPassive(owner, passiveId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static bool MeetsSourceStatus(SkillChoiceDefinition choice, UnitCombatState owner)
+        {
+            return choice == null
+                || HasSourceStatus(owner, choice.RequiredSourceStatusKind, choice.RequiredSourceStatusMinStacks);
+        }
+
+        internal static bool HasSourceStatus(UnitCombatState owner, StatusEffectKind statusKind, int minimumStacks)
+        {
+            if (statusKind == StatusEffectKind.None)
+            {
+                return true;
+            }
+
+            if (statusKind == StatusEffectKind.Shield)
+            {
+                return owner != null && owner.Resources != null && owner.Resources.CurrentShield > 0f;
+            }
+
+            return owner != null
+                && owner.Statuses != null
+                && owner.Statuses.GetStacks(statusKind) >= Mathf.Max(1, minimumStacks);
+        }
+
+        private static bool HasLearnedPassive(UnitCombatState owner, string passiveId)
+        {
+            return owner != null
+                && owner.SkillProgress != null
+                && owner.SkillProgress.LearnedPassiveSkillIds.Contains(passiveId);
+        }
+    }
+}

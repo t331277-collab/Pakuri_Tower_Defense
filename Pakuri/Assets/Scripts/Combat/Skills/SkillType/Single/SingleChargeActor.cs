@@ -176,7 +176,7 @@ namespace Pakuri.InGame
             var maxHealth = target.Model != null && target.Model.Stats != null
                 ? Mathf.Max(0f, target.Model.Stats.MaxHealth)
                 : 0f;
-            combatManager.ApplyDamage(
+            var damageResult = combatManager.ApplyDamage(
                 target.Model,
                 maxHealth * Mathf.Max(0f, charge.DamageTargetMaxHealthRatio),
                 charge.Attribute,
@@ -185,14 +185,12 @@ namespace Pakuri.InGame
                 sourceSkillId: charge.SkillId);
 
             var statusSpec = SkillStatus.ResolveStatusSpec(charge.OnHitStatus, null);
-            if (statusSpec != null)
+            if (!damageResult.IsDead && statusSpec != null)
             {
-                SkillStatus.TryApplyStatus(combatManager, target.Model, statusSpec, caster);
+                StatusCombatRules.ApplyStatus(combatManager, target.Model, statusSpec, caster);
             }
 
             caster.ActiveCharge = null;
         }
     }
 }
-
-

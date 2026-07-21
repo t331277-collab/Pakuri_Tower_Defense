@@ -50,7 +50,7 @@ namespace Pakuri.InGame
             var duration = Mathf.Max(0.05f, effect.RecastDurationSeconds);
             var tickInterval = ResolveTickInterval(skill, snapshot);
             var hitTargetCount = ResolveHitTargetCount(skill, snapshot);
-            var damage = SkillValueCalculator.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
+            var damage = DamageCalculator.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
             var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnTickStatus, snapshot);
             var planEffects = SkillNodeAction.ResolveEffects(snapshot, skill.MultiEffects);
@@ -59,11 +59,11 @@ namespace Pakuri.InGame
                 || (skill.Targeting != null && skill.Targeting.CoverAll);
             var effects = context.CombatManager.Effects;
             var runtimeVisual = skill.RuntimeVisual;
-            var preferredPrefab = snapshot != null ? snapshot.SkillEffectPrefab : null;
-            var prefab = effects.ResolveSkillEffectPrefab(
-                context.Caster,
-                skill.SkillId,
-                preferredPrefab);
+            var prefab = skill.SkillEffectPrefab;
+            if (snapshot != null && snapshot.SkillEffectPrefab != null)
+            {
+                prefab = snapshot.SkillEffectPrefab;
+            }
             var instance = effects.CreateEffectObject(
                 runtimeVisual,
                 prefab,
@@ -125,7 +125,7 @@ namespace Pakuri.InGame
             var duration = ResolveDuration(skill, snapshot);
             var tickInterval = ResolveTickInterval(skill, snapshot);
             var hitTargetCount = ResolveHitTargetCount(skill, snapshot);
-            var damage = SkillValueCalculator.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
+            var damage = DamageCalculator.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
             var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnTickStatus, snapshot);
             var planEffects = SkillNodeAction.ResolveEffects(snapshot, skill.MultiEffects);
@@ -134,11 +134,11 @@ namespace Pakuri.InGame
                 || (skill.Targeting != null && skill.Targeting.CoverAll);
             var effects = context.CombatManager.Effects;
             var runtimeVisual = skill.RuntimeVisual;
-            var preferredPrefab = snapshot != null ? snapshot.SkillEffectPrefab : null;
-            var prefab = effects.ResolveSkillEffectPrefab(
-                context.Caster,
-                skill.SkillId,
-                preferredPrefab);
+            var prefab = skill.SkillEffectPrefab;
+            if (snapshot != null && snapshot.SkillEffectPrefab != null)
+            {
+                prefab = snapshot.SkillEffectPrefab;
+            }
 
             var routed = false;
             for (var i = 0; i < centers.Count; i++)

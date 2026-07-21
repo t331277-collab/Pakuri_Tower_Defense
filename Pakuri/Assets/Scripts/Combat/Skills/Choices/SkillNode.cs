@@ -133,7 +133,8 @@ namespace Pakuri.InGame
             string secondaryStringValue = null,
             SkillMultiEffectTargetSide targetSide = SkillMultiEffectTargetSide.Enemy,
             float secondaryFloatValue = 0f,
-            float thirdFloatValue = 0f)
+            float thirdFloatValue = 0f,
+            StatusEffectKind statusKind = StatusEffectKind.None)
         {
             Kind = kind;
             FloatValue = floatValue;
@@ -143,6 +144,7 @@ namespace Pakuri.InGame
             TargetSide = targetSide;
             SecondaryFloatValue = secondaryFloatValue;
             ThirdFloatValue = thirdFloatValue;
+            StatusKind = statusKind;
         }
 
         public SkillActionOpKind Kind { get; }
@@ -153,6 +155,7 @@ namespace Pakuri.InGame
         public SkillMultiEffectTargetSide TargetSide { get; }
         public float SecondaryFloatValue { get; }
         public float ThirdFloatValue { get; }
+        public StatusEffectKind StatusKind { get; }
     }
 
     /*

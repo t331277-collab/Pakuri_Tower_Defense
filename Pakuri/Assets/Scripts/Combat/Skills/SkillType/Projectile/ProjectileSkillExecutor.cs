@@ -43,14 +43,14 @@ namespace Pakuri.InGame
                 direction = Vector2.right;
             }
 
-            var damage = SkillValueCalculator.ResolveDamage(context.Caster, skill.Damage, snapshot);
+            var damage = DamageCalculator.ResolveDamage(context.Caster, skill.Damage, snapshot);
             var attribute = skill.Damage != null ? skill.Damage.Element : skill.Element;
             var currentBurstProjectileIndex = context.Runtime != null
                 ? context.Runtime.ResolveCurrentBurstProjectileIndex()
                 : 1;
             var effects = context.CombatManager.Effects;
             var runtimeVisual = skill.RuntimeVisual;
-            var hasRuntimeVisual = effects != null && effects.HasVisual(runtimeVisual);
+            var hasRuntimeVisual = effects != null && EffectManager.HasVisual(runtimeVisual);
 
             var baseStatusSpec = SkillStatus.ResolveStatusSpec(skill.OnHitStatus, snapshot);
             var planEffects = SkillNodeAction.ResolveEffects(snapshot, skill.MultiEffects);
@@ -123,7 +123,7 @@ namespace Pakuri.InGame
                     ? context.Runtime.AdvanceProjectileLaunchCount()
                     : 0;
                 var branchSpec = ResolveBranchDamageSpec(snapshot, projectileLaunchIndex);
-                var rotation = EffectVisualUtility.ResolveRotation(spreadDirection);
+                var rotation = EffectManager.ResolveRotation(spreadDirection);
                 var instance = effects.CreateEffectObject(
                     runtimeVisual,
                     null,
@@ -355,7 +355,7 @@ namespace Pakuri.InGame
                 || skill == null
                 || snapshot == null
                 || !snapshot.HasFollowUpProjectile
-                || !context.CombatManager.Effects.HasVisual(runtimeVisual)
+                || !EffectManager.HasVisual(runtimeVisual)
                 || currentBurstProjectileIndex < burstProjectileCount)
             {
                 return;
@@ -412,7 +412,7 @@ namespace Pakuri.InGame
                 || context.CombatManager == null
                 || context.CombatManager.Effects == null
                 || skill == null
-                || !context.CombatManager.Effects.HasVisual(runtimeVisual))
+                || !EffectManager.HasVisual(runtimeVisual))
             {
                 yield break;
             }
@@ -465,7 +465,7 @@ namespace Pakuri.InGame
                 || context.CombatManager == null
                 || skill == null
                 || context.CombatManager.Effects == null
-                || !context.CombatManager.Effects.HasVisual(runtimeVisual))
+                || !EffectManager.HasVisual(runtimeVisual))
             {
                 return;
             }
@@ -480,7 +480,7 @@ namespace Pakuri.InGame
                 ? context.Runtime.AdvanceProjectileLaunchCount()
                 : 0;
             var branchSpec = ResolveBranchDamageSpec(snapshot, projectileLaunchIndex);
-            var rotation = EffectVisualUtility.ResolveRotation(direction);
+            var rotation = EffectManager.ResolveRotation(direction);
             var instance = effects.CreateEffectObject(
                 runtimeVisual,
                 null,
@@ -542,7 +542,7 @@ namespace Pakuri.InGame
             ProjectileStatusHitSpec statusSpec,
             UnitCombatState source)
         {
-            SkillStatus.TryApplyStatus(combatManager, target, statusSpec, source);
+            StatusCombatRules.ApplyStatus(combatManager, target, statusSpec, source);
         }
 
         /*
@@ -563,14 +563,14 @@ namespace Pakuri.InGame
             }
 
             var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-            var resolvedDamage = SkillValueCalculator.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
+            var resolvedDamage = DamageCalculator.ResolveDamageAgainstTarget(damage, snapshot, target.Model);
             if (context.Runtime != null && snapshot != null)
             {
                 resolvedDamage *= context.Runtime.ResolveConsecutiveHitDamageMultiplier(target.Model, snapshot);
             }
 
             resolvedDamage = Mathf.Max(0f, resolvedDamage);
-            context.CombatManager.ApplyDamage(
+            var damageResult = context.CombatManager.ApplyDamage(
                 target.Model,
                 resolvedDamage,
                 attribute,
@@ -579,7 +579,10 @@ namespace Pakuri.InGame
                 snapshot != null ? snapshot.CritChanceBonus : 0f,
                 snapshot != null ? snapshot.CritDamageBonus : 0f,
                 skill.SkillId);
-            TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec, context.Caster);
+            if (!damageResult.IsDead)
+            {
+                TryApplyDirectStatus(context.CombatManager, target.Model, statusSpec, context.Caster);
+            }
             SkillOnHitEffect.TryApply(
                 context.CombatManager,
                 context.Roster,
@@ -651,7 +654,7 @@ namespace Pakuri.InGame
                 MaxStacks = source.MaxStacks,
                 Permanent = source.Permanent,
                 RefreshDuration = source.RefreshDuration,
-                ThresholdSourceStatusId = source.ThresholdSourceStatusId,
+                ThresholdSourceStatusKind = source.ThresholdSourceStatusKind,
                 ThresholdSourceMinStacks = source.ThresholdSourceMinStacks,
                 ThresholdStatusSpec = source.ThresholdStatusSpec
             };

@@ -28,7 +28,7 @@ internal static class SingleSkillExecutor
 
 	private readonly struct SingleFollowUpSpec
 	{
-		public string RequiredStatusId { get; }
+		public StatusEffectKind RequiredStatusKind { get; }
 
 		public int RepeatCount { get; }
 
@@ -38,9 +38,9 @@ internal static class SingleSkillExecutor
 
 		public GameObject Prefab { get; }
 
-		public SingleFollowUpSpec(string requiredStatusId, int repeatCount, float intervalSeconds, float damageMultiplier, GameObject prefab)
+		public SingleFollowUpSpec(StatusEffectKind requiredStatusKind, int repeatCount, float intervalSeconds, float damageMultiplier, GameObject prefab)
 		{
-			RequiredStatusId = requiredStatusId;
+			RequiredStatusKind = requiredStatusKind;
 			RepeatCount = repeatCount;
 			IntervalSeconds = intervalSeconds;
 			DamageMultiplier = damageMultiplier;
@@ -162,7 +162,7 @@ internal static class SingleSkillExecutor
 
 	private static void ApplyChainHit(SkillExecutionContext context, SkillSnapshot snapshot, SingleChainSkillRuntimeData skill, CombatUnitEntry target, float multiplier)
 	{
-		float baseDamage = SkillValueCalculator.ResolveDamage(context.Caster, skill.Damage, snapshot) * Mathf.Max(0f, multiplier);
+		float baseDamage = DamageCalculator.ResolveDamage(context.Caster, skill.Damage, snapshot) * Mathf.Max(0f, multiplier);
 		context.CombatManager.ApplyDamage(target.Model, baseDamage, skill.Damage.Element, context.Caster, skill.Damage.CriticalAllowed, 0f, 0f, skill.SkillId);
 		EffectManager effects = context.CombatManager.Effects;
 		if (effects != null)
@@ -180,9 +180,16 @@ internal static class SingleSkillExecutor
 		Vector2 vector = ResolveAreaCenter(context, skill.Targeting, skill.Area);
 		EffectManager effects = context.CombatManager.Effects;
 		RuntimeSkillVisualSpec runtimeVisual = skill.RuntimeVisual;
-		bool num = effects != null && effects.HasVisual(runtimeVisual);
-		GameObject preferredPrefab = snapshot?.SkillEffectPrefab;
-		GameObject prefab = ((num || effects == null) ? null : effects.ResolveSkillEffectPrefab(context.Caster, skill.SkillId, preferredPrefab));
+		bool num = effects != null && EffectManager.HasVisual(runtimeVisual);
+		GameObject prefab = skill.SkillEffectPrefab;
+		if (snapshot != null && snapshot.SkillEffectPrefab != null)
+		{
+			prefab = snapshot.SkillEffectPrefab;
+		}
+		if (num || effects == null)
+		{
+			prefab = null;
+		}
 		SingleExecutionOutcome singleExecutionOutcome = (UsesResolvedDeployments(skill) ? ExecuteResolvedDeployments(context, snapshot, skill, vector, runtimeVisual, prefab) : ExecuteAtCenter(context, snapshot, skill, vector, runtimeVisual, prefab, allowConditionalFollowUp: true));
 		bool flag = SkillEffect.Execute(context, snapshot, SkillNodeAction.ResolveEffects(snapshot, skill.MultiEffects), vector);
 		if (!(singleExecutionOutcome.Routed || flag))
@@ -235,13 +242,23 @@ internal static class SingleSkillExecutor
 		return false;
 	}
 
+	private static bool UsesSingleLineVisual(SingleSkillRuntimeData skill)
+	{
+		if (skill == null || !skill.UseMultiDeployment)
+		{
+			return false;
+		}
+
+		return string.IsNullOrWhiteSpace(skill.DeploymentRequiredTargetStatusId);
+	}
+
 	private static int ResolveEffectiveHitTargetCount(SingleSkillRuntimeData skill, SkillSnapshot snapshot)
 	{
 		if (skill == null)
 		{
 			return 1;
 		}
-		if (EffectVisualUtility.UsesSingleLineVisual(skill) || skill.HitAllTargets || skill.HitTargetCount == int.MaxValue)
+		if (UsesSingleLineVisual(skill) || skill.HitAllTargets || skill.HitTargetCount == int.MaxValue)
 		{
 			return int.MaxValue;
 		}
@@ -267,7 +284,14 @@ internal static class SingleSkillExecutor
 		if (UsesStatusFilteredDeployments(skill))
 		{
 			int requiredStatusMinStacks = Mathf.Max(1, skill.DeploymentRequiredTargetStatusMinStacks);
-			List<CombatUnitEntry> list = SkillTargeting.ResolveOrderedTargets(context?.CasterEntry, context?.Roster, skill.Targeting, skill.DeploymentRequiredTargetStatusId, requiredStatusMinStacks);
+			CombatUnitEntry casterEntry = null;
+			CombatUnitRegistry roster = null;
+			if (context != null)
+			{
+				casterEntry = context.CasterEntry;
+				roster = context.Roster;
+			}
+			List<CombatUnitEntry> list = SkillTargeting.ResolveOrderedTargets(casterEntry, roster, skill.Targeting, skill.DeploymentRequiredTargetStatusKind, requiredStatusMinStacks);
 			List<Vector2> list2 = new List<Vector2>(list.Count);
 			for (int i = 0; i < list.Count; i++)
 			{
@@ -280,7 +304,12 @@ internal static class SingleSkillExecutor
 			return list2;
 		}
 		bool coverAll = (skill != null && skill.Area != null && skill.Area.CoverAll) || (skill != null && skill.Targeting != null && skill.Targeting.CoverAll);
-		return SkillTargeting.ResolveTargetAnchoredCenters(context, skill?.Targeting, primaryCenter, deploymentCount, coverAll, SkillDeploymentRepeatMode.RepeatNearest);
+		SkillTargetingSpec targeting = null;
+		if (skill != null)
+		{
+			targeting = skill.Targeting;
+		}
+		return SkillTargeting.ResolveTargetAnchoredCenters(context, targeting, primaryCenter, deploymentCount, coverAll, SkillDeploymentRepeatMode.RepeatNearest);
 	}
 
 	private static SingleExecutionOutcome ExecuteResolvedDeployments(SkillExecutionContext context, SkillSnapshot snapshot, SingleSkillRuntimeData skill, Vector2 primaryCenter, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab)
@@ -337,7 +366,7 @@ internal static class SingleSkillExecutor
 	{
 		float radius = ResolveRadius(skill, snapshot);
 		bool coverAll = (skill.Area != null && skill.Area.CoverAll) || (skill.Targeting != null && skill.Targeting.CoverAll);
-		float damage = SkillValueCalculator.ResolveDamage(context.Caster, skill.Damage, snapshot);
+		float damage = DamageCalculator.ResolveDamage(context.Caster, skill.Damage, snapshot);
 		DamageAttribute attribute = (skill.Damage != null) ? skill.Damage.Element : skill.Element;
 		ProjectileStatusHitSpec statusSpec = SkillStatus.ResolveStatusSpec(skill.OnHitStatus, snapshot);
 		SkillEffectDefinition[] onHitStatusEffects = ResolveOnHitStatusEffects(context, snapshot, SkillNodeAction.ResolveEffects(snapshot, skill.MultiEffects));
@@ -352,7 +381,7 @@ internal static class SingleSkillExecutor
 		bool flag2 = false;
 		bool castCommitted = false;
 		EffectManager effects = context.CombatManager.Effects;
-		bool flag3 = effects != null && effects.HasVisual(runtimeVisual);
+		bool flag3 = effects != null && EffectManager.HasVisual(runtimeVisual);
 		if (skill.UsePrefabHitbox && (flag3 || prefab != null) && effects != null)
 		{
 			center = ResolvePrefabHitboxCenter(context, center, skill);
@@ -361,7 +390,7 @@ internal static class SingleSkillExecutor
 			{
 				flag = true;
 				castCommitted = true;
-				if (EffectVisualUtility.UsesSingleLineVisual(skill))
+				if (UsesSingleLineVisual(skill))
 				{
 					effects.ConfigureSingleLineEffect(gameObject, context, skill, snapshot, center);
 				}
@@ -378,7 +407,8 @@ internal static class SingleSkillExecutor
 					Physics2D.SyncTransforms();
 					flag2 = ApplyPrefabHitbox(context.CombatManager, context.CasterEntry, context.Roster, skill, skill.Targeting, gameObject, num, damage, attribute, statusSpec, onHitStatusEffects, context.Caster, skill.SkillId, skillRuntimeInstance, skill.Damage != null && skill.Damage.CriticalAllowed, critChanceBonus, critDamageBonus, snapshot, followUpSpec, followUpTargets);
 				}
-				effects.DestroyAfterAnimation(gameObject, num2 + 0.05f, 1f);
+				float visualLifetime = Mathf.Max(num2 + 0.05f, 1f);
+				effects.DestroyAfterAnimation(gameObject, visualLifetime);
 			}
 		}
 		if (!flag)
@@ -388,7 +418,8 @@ internal static class SingleSkillExecutor
 			{
 				if (effects != null)
 				{
-					effects.SpawnAnimatedEffect(runtimeVisual, prefab, "RuntimeSingleVisual", center, Quaternion.identity, num2 + 0.05f, 1f);
+					float visualLifetime = Mathf.Max(num2 + 0.05f, 1f);
+					effects.SpawnAnimatedEffect(runtimeVisual, prefab, "RuntimeSingleVisual", center, Quaternion.identity, visualLifetime);
 				}
 				context.CombatManager.StartCoroutine(ApplyNonPrefabTargetsAfterDelay(context, snapshot, skill, center, radius, coverAll, num, damage, attribute, statusSpec, onHitStatusEffects, skillRuntimeInstance, skill.Damage != null && skill.Damage.CriticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets, num2, allowConditionalFollowUp));
 			}
@@ -397,7 +428,7 @@ internal static class SingleSkillExecutor
 				flag2 = ApplyNonPrefabTargets(context, snapshot, skill, center, radius, coverAll, num, damage, attribute, statusSpec, onHitStatusEffects, skillRuntimeInstance, skill.Damage != null && skill.Damage.CriticalAllowed, critChanceBonus, critDamageBonus, followUpSpec, followUpTargets);
 				if (flag2 && effects != null)
 				{
-					effects.SpawnAnimatedEffect(runtimeVisual, prefab, "RuntimeSingleVisual", center, Quaternion.identity, 0.05f, 1f);
+					effects.SpawnAnimatedEffect(runtimeVisual, prefab, "RuntimeSingleVisual", center, Quaternion.identity, 1f);
 				}
 			}
 		}
@@ -473,8 +504,11 @@ internal static class SingleSkillExecutor
 				int consumedStacks = ConsumePlannedTargetStatusStacks(manager, unitEntry.Model, skill, damageResolution);
 				SingleSkillRules.HandleKillRecovery(sourceRuntime, skill, snapshot, result2, damageResolution.IsExecute);
 				TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result2, consumedStacks);
-				TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
-				TryApplyOnHitStatusEffects(manager, unitEntry.Model, onHitStatusEffects, source);
+				if (!result2.IsDead)
+				{
+					TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
+					TryApplyOnHitStatusEffects(manager, unitEntry.Model, onHitStatusEffects, source);
+				}
 				TryApplyCoreOnHitAdditionalDamage(manager, snapshot, source, sourceSkillId, unitEntry, damageResolution.Damage, isCoreHit);
 				SkillOnHitEffect.TryApply(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
 				result = true;
@@ -509,8 +543,11 @@ internal static class SingleSkillExecutor
 			int consumedStacks = ConsumePlannedTargetStatusStacks(manager, unitEntry.Model, skill, damageResolution);
 			SingleSkillRules.HandleKillRecovery(sourceRuntime, skill, snapshot, result2, damageResolution.IsExecute);
 			TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result2, consumedStacks);
-			TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
-			TryApplyOnHitStatusEffects(manager, unitEntry.Model, onHitStatusEffects, source);
+			if (!result2.IsDead)
+			{
+				TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
+				TryApplyOnHitStatusEffects(manager, unitEntry.Model, onHitStatusEffects, source);
+			}
 			SkillOnHitEffect.TryApply(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
 			result = true;
 			num++;
@@ -545,8 +582,11 @@ internal static class SingleSkillExecutor
 			int consumedStacks = ConsumePlannedTargetStatusStacks(manager, unitEntry.Model, skill, damageResolution);
 			SingleSkillRules.HandleKillRecovery(sourceRuntime, skill, snapshot, result, damageResolution.IsExecute);
 			TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry, result, consumedStacks);
-			TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
-			TryApplyOnHitStatusEffects(manager, unitEntry.Model, onHitStatusEffects, source);
+			if (!result.IsDead)
+			{
+				TryApplyStatus(manager, unitEntry.Model, statusSpec, source);
+				TryApplyOnHitStatusEffects(manager, unitEntry.Model, onHitStatusEffects, source);
+			}
 			SkillOnHitEffect.TryApply(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry, hitPosition, damageResolution.Damage);
 			TryApplyHitCountCooldownRefund(sourceRuntime, snapshot, 1);
 			TryExecuteOnHitCountEffects(manager, unitRoster, sourceEntry, sourceRuntime, skill, snapshot, 1, center);
@@ -567,8 +607,11 @@ internal static class SingleSkillExecutor
 				int consumedStacks2 = ConsumePlannedTargetStatusStacks(manager, unitEntry2.Model, skill, damageResolution2);
 				SingleSkillRules.HandleKillRecovery(sourceRuntime, skill, snapshot, result3, damageResolution2.IsExecute);
 				TryRedistributeConsumedStatusOnKill(manager, sourceEntry, unitRoster, source, snapshot, unitEntry2, result3, consumedStacks2);
-				TryApplyStatus(manager, unitEntry2.Model, statusSpec, source);
-				TryApplyOnHitStatusEffects(manager, unitEntry2.Model, onHitStatusEffects, source);
+				if (!result3.IsDead)
+				{
+					TryApplyStatus(manager, unitEntry2.Model, statusSpec, source);
+					TryApplyOnHitStatusEffects(manager, unitEntry2.Model, onHitStatusEffects, source);
+				}
 				SkillOnHitEffect.TryApply(manager, unitRoster, sourceRuntime, snapshot, sourceEntry, source, sourceSkillId, unitEntry2, hitPosition2, damageResolution2.Damage);
 				result2 = true;
 				num++;
@@ -644,7 +687,7 @@ internal static class SingleSkillExecutor
 				ProjectileStatusHitSpec projectileStatusHitSpec = SkillEffect.ResolveStatusSpec(skillEffectDefinition);
 				if (projectileStatusHitSpec != null && projectileStatusHitSpec.Enabled)
 				{
-					SkillStatus.TryApplyStatus(manager, target, projectileStatusHitSpec, source);
+					StatusCombatRules.ApplyStatus(manager, target, projectileStatusHitSpec, source);
 				}
 			}
 		}
@@ -681,17 +724,16 @@ internal static class SingleSkillExecutor
 		{
 			return null;
 		}
-		string text = ((!string.IsNullOrWhiteSpace(snapshot.StatusTag)) ? snapshot.StatusTag : ((statusSpec != null && statusSpec.StatusData != null) ? statusSpec.StatusData.StatusTag : ((statusSpec != null) ? StatusEffectLookup.ToId(statusSpec.Kind) : string.Empty)));
-		if (string.IsNullOrWhiteSpace(text))
+		if (statusSpec == null || statusSpec.Kind == StatusEffectKind.None)
 		{
 			return null;
 		}
-		return new SingleFollowUpSpec(text, snapshot.BranchCount, snapshot.BranchSearchRadius, snapshot.BranchDamageMultiplier, prefab);
+		return new SingleFollowUpSpec(statusSpec.Kind, snapshot.BranchCount, snapshot.BranchSearchRadius, snapshot.BranchDamageMultiplier, prefab);
 	}
 
 	private static void RegisterFollowUpTarget(List<SingleFollowUpTarget> followUpTargets, SingleFollowUpSpec? followUpSpec, CombatUnitEntry target, Vector2 center)
 	{
-		if (followUpTargets == null || !followUpSpec.HasValue || target == null || target.Model == null || !HasStatus(target.Model, followUpSpec.Value.RequiredStatusId))
+		if (followUpTargets == null || !followUpSpec.HasValue || target == null || target.Model == null || !HasStatus(target.Model, followUpSpec.Value.RequiredStatusKind))
 		{
 			return;
 		}
@@ -755,11 +797,11 @@ internal static class SingleSkillExecutor
 
 	private static float ResolveTargetStatusStackAdditionalDamage(UnitCombatState caster, SingleSkillRuntimeData skill, SkillSnapshot snapshot, UnitCombatState target, float baseDamage)
 	{
-		if (caster == null || skill == null || target == null || skill.TargetStatusStackDamage == null || string.IsNullOrWhiteSpace(skill.TargetStatusStackStatusId))
+		if (caster == null || skill == null || target == null || skill.TargetStatusStackDamage == null || skill.TargetStatusStackStatusKind == StatusEffectKind.None)
 		{
 			return 0f;
 		}
-		int num = ResolveStatusStacks(target, skill.TargetStatusStackStatusId);
+		int num = ResolveStatusStacks(target, skill.TargetStatusStackStatusKind);
 		if (num <= 0)
 		{
 			return 0f;
@@ -768,20 +810,25 @@ internal static class SingleSkillExecutor
 		{
 			num = Mathf.Min(num, skill.TargetStatusStackMaxStacks);
 		}
-		float num2 = SkillValueCalculator.ResolveDamage(caster, skill.TargetStatusStackDamage, snapshot);
-		float b = snapshot?.TargetStatusStackDamageMultiplier ?? 1f;
-		float num3 = snapshot?.ResolveTargetStatusStackDamageRateBonus(skill.TargetStatusStackStatusId) ?? 0f;
+		float num2 = DamageCalculator.ResolveDamage(caster, skill.TargetStatusStackDamage, snapshot);
+		float b = 1f;
+		float num3 = 0f;
+		if (snapshot != null)
+		{
+			b = snapshot.TargetStatusStackDamageMultiplier;
+			num3 = snapshot.ResolveTargetStatusStackDamageRateBonus(skill.TargetStatusStackStatusId);
+		}
 		float num4 = num2 * Mathf.Max(0f, b) + Mathf.Max(0f, baseDamage) * num3;
 		return Mathf.Max(0f, (float)num * num4);
 	}
 
 	private static int ResolvePlannedConsumedStacks(SingleSkillRuntimeData skill, SkillSnapshot snapshot, UnitCombatState target)
 	{
-		if (skill == null || target == null || string.IsNullOrWhiteSpace(skill.ConsumeTargetStatusId))
+		if (skill == null || target == null || skill.ConsumeTargetStatusKind == StatusEffectKind.None)
 		{
 			return 0;
 		}
-		int num = ResolveStatusStacks(target, skill.ConsumeTargetStatusId);
+		int num = ResolveStatusStacks(target, skill.ConsumeTargetStatusKind);
 		if (num <= 0)
 		{
 			return 0;
@@ -794,7 +841,11 @@ internal static class SingleSkillExecutor
 		{
 			return Mathf.Clamp(skill.ConsumeTargetStatusStacks, 0, num);
 		}
-		float num2 = ((snapshot != null && snapshot.HasConsumeTargetStatusRatioOverride) ? snapshot.ConsumeTargetStatusRatioOverride : skill.ConsumeTargetStatusRatio);
+		float num2 = skill.ConsumeTargetStatusRatio;
+		if (snapshot != null && snapshot.HasConsumeTargetStatusRatioOverride)
+		{
+			num2 = snapshot.ConsumeTargetStatusRatioOverride;
+		}
 		if (num2 <= 0f)
 		{
 			return 0;
@@ -804,16 +855,16 @@ internal static class SingleSkillExecutor
 
 	private static int ConsumePlannedTargetStatusStacks(InGameCombatManager manager, UnitCombatState target, SingleSkillRuntimeData skill, TargetDamageResolution damageResolution)
 	{
-		if (manager == null || target == null || skill == null || damageResolution.PlannedConsumedStacks <= 0 || string.IsNullOrWhiteSpace(skill.ConsumeTargetStatusId))
+		if (manager == null || target == null || skill == null || damageResolution.PlannedConsumedStacks <= 0 || skill.ConsumeTargetStatusKind == StatusEffectKind.None)
 		{
 			return 0;
 		}
-		return manager.ConsumeStatusStacks(target, skill.ConsumeTargetStatusId, damageResolution.PlannedConsumedStacks);
+		return manager.ConsumeStatusStacks(target, skill.ConsumeTargetStatusKind, damageResolution.PlannedConsumedStacks);
 	}
 
 	private static void TryRedistributeConsumedStatusOnKill(InGameCombatManager manager, CombatUnitEntry sourceEntry, CombatUnitRegistry roster, UnitCombatState source, SkillSnapshot snapshot, CombatUnitEntry defeatedTarget, InGameResourceChangeResult result, int consumedStacks)
 	{
-		if (manager == null || sourceEntry == null || roster == null || source == null || snapshot == null || defeatedTarget == null || defeatedTarget.Transform == null || !result.IsDead || consumedStacks <= 0 || snapshot.RedistributeConsumedStatusRatioOnKill <= 0f || string.IsNullOrWhiteSpace(snapshot.RedistributeConsumedStatusId) || snapshot.RedistributeConsumedStatusSearchRadius <= 0f)
+		if (manager == null || sourceEntry == null || roster == null || source == null || snapshot == null || defeatedTarget == null || defeatedTarget.Transform == null || !result.IsDead || consumedStacks <= 0 || snapshot.RedistributeConsumedStatusRatioOnKill <= 0f || snapshot.RedistributeConsumedStatusKind == StatusEffectKind.None || snapshot.RedistributeConsumedStatusSearchRadius <= 0f)
 		{
 			return;
 		}
@@ -832,13 +883,17 @@ internal static class SingleSkillExecutor
 		for (int i = 0; i < list.Count; i++)
 		{
 			CombatUnitEntry unitEntry = list[i];
-			int num4 = num2 + ((i < num3) ? 1 : 0);
+			int num4 = num2;
+			if (i < num3)
+			{
+				num4++;
+			}
 			if (unitEntry != null && unitEntry.Model != null && num4 > 0)
 			{
-				ProjectileStatusHitSpec projectileStatusHitSpec = SkillStatus.CreateDirectStatusSpec(snapshot.RedistributeConsumedStatusId, num4, snapshot);
+				ProjectileStatusHitSpec projectileStatusHitSpec = SkillStatus.CreateDirectStatusSpec(snapshot.RedistributeConsumedStatusKind, num4, snapshot);
 				if (projectileStatusHitSpec != null)
 				{
-					SkillStatus.TryApplyStatus(manager, unitEntry.Model, projectileStatusHitSpec, source);
+					StatusCombatRules.ApplyStatus(manager, unitEntry.Model, projectileStatusHitSpec, source);
 				}
 			}
 		}
@@ -880,13 +935,9 @@ internal static class SingleSkillExecutor
 		return list;
 	}
 
-	private static int ResolveStatusStacks(UnitCombatState target, string statusId)
+	private static int ResolveStatusStacks(UnitCombatState target, StatusEffectKind kind)
 	{
-		if (target == null || string.IsNullOrWhiteSpace(statusId))
-		{
-			return 0;
-		}
-		if (!StatusEffectLookup.TryParse(statusId, out var kind))
+		if (target == null || kind == StatusEffectKind.None)
 		{
 			return 0;
 		}
@@ -905,18 +956,18 @@ internal static class SingleSkillExecutor
 		return target.Statuses.GetStacks(kind);
 	}
 
-	private static bool HasStatus(UnitCombatState target, string statusId)
+	private static bool HasStatus(UnitCombatState target, StatusEffectKind kind)
 	{
-		if (target != null && target.Statuses != null && !string.IsNullOrWhiteSpace(statusId))
+		if (target != null && target.Statuses != null && kind != StatusEffectKind.None)
 		{
-			return target.Statuses.Has(statusId);
+			return target.Statuses.Has(kind);
 		}
 		return false;
 	}
 
 	private static void TryApplyStatus(InGameCombatManager manager, UnitCombatState target, ProjectileStatusHitSpec statusSpec, UnitCombatState source)
 	{
-		SkillStatus.TryApplyStatus(manager, target, statusSpec, source);
+		StatusCombatRules.ApplyStatus(manager, target, statusSpec, source);
 	}
 }
 

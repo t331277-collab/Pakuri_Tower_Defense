@@ -1,45 +1,19 @@
 using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
+using Pakuri.Data;
 
 /*
- * 한 유닛에게 적용된 모든 상태 효과의 추가, 중첩, 제거, 보호막 흡수를 관리한다.
+ * 유닛의 상태 목록, 개별 상태 실행값, 보호막 흡수 결과를 한곳에서 관리한다.
  */
 namespace Pakuri.InGame
 {
-    public sealed class UnitStatusCollection
+    public class UnitStatusCollection
     {
         private readonly List<StatusRuntimeInstance> statuses = new List<StatusRuntimeInstance>();
 
         public IReadOnlyList<StatusRuntimeInstance> ActiveStatuses => statuses;
         public int Count => statuses.Count;
-
-        public StatusRuntimeInstance Apply(
-            string tag,
-            int stacks,
-            float durationSeconds,
-            int maxStacks = 0,
-            bool permanent = false,
-            bool refreshDuration = true,
-            float shieldAmount = 0f)
-        {
-            return StatusEffectLookup.TryParse(tag, out var kind)
-                ? Apply(kind, stacks, durationSeconds, maxStacks, permanent, refreshDuration, shieldAmount)
-                : null;
-        }
-
-        public StatusRuntimeInstance Apply(
-            StatusEffectKind kind,
-            int stacks,
-            float durationSeconds,
-            int maxStacks = 0,
-            bool permanent = false,
-            bool refreshDuration = true,
-            float shieldAmount = 0f)
-        {
-            var statusData = StatusRuntimeDataFactory.Create(kind, null);
-            return Apply(statusData, stacks, durationSeconds, maxStacks, permanent, refreshDuration, shieldAmount);
-        }
 
         public StatusRuntimeInstance Apply(
             StatusRuntimeData statusData,
@@ -55,15 +29,31 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var resolvedDuration = durationSeconds > 0f ? durationSeconds : statusData.Duration;
-            var resolvedMaxStacks = maxStacks > 0 ? maxStacks : statusData.MaxStacks;
+            var resolvedDuration = statusData.Duration;
+            if (durationSeconds > 0f)
+            {
+                resolvedDuration = durationSeconds;
+            }
+
+            var resolvedMaxStacks = statusData.MaxStacks;
+            if (maxStacks > 0)
+            {
+                resolvedMaxStacks = maxStacks;
+            }
+
             var resolvedPermanent = permanent || statusData.Permanent;
             var kind = statusData.Kind;
             var sourceAware = HasSourceAwareIdentity(statusData);
             var mergedExisting = sourceAware && statusData.MergePolicy != StatusMergePolicy.AlwaysStack;
-            var status = mergedExisting
-                ? Find(kind, statusData.SourceSkillId)
-                : Find(kind);
+            StatusRuntimeInstance status;
+            if (mergedExisting)
+            {
+                status = Find(kind, statusData.SourceSkillId);
+            }
+            else
+            {
+                status = Find(kind);
+            }
             if (status == null || (sourceAware && statusData.MergePolicy == StatusMergePolicy.AlwaysStack))
             {
                 status = new StatusRuntimeInstance(kind);
@@ -131,11 +121,6 @@ namespace Pakuri.InGame
             return changed;
         }
 
-        public bool Has(string tag)
-        {
-            return StatusEffectLookup.TryParse(tag, out var kind) && Has(kind);
-        }
-
         public bool Has(StatusEffectKind kind)
         {
             for (var i = 0; i < statuses.Count; i++)
@@ -159,11 +144,6 @@ namespace Pakuri.InGame
             return status != null && status.Stacks > 0;
         }
 
-        public int GetStacks(string tag)
-        {
-            return StatusEffectLookup.TryParse(tag, out var kind) ? GetStacks(kind) : 0;
-        }
-
         public int GetStacks(StatusEffectKind kind)
         {
             var total = 0;
@@ -177,16 +157,6 @@ namespace Pakuri.InGame
             }
 
             return total;
-        }
-
-        public bool Remove(string tag)
-        {
-            return StatusEffectLookup.TryParse(tag, out var kind) && Remove(kind);
-        }
-
-        public int ConsumeStacks(string tag, int stacks)
-        {
-            return StatusEffectLookup.TryParse(tag, out var kind) ? ConsumeStacks(kind, stacks) : 0;
         }
 
         public int ConsumeStacks(StatusEffectKind kind, int stacks)
@@ -248,7 +218,10 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                removedStatuses?.Add(status);
+                if (removedStatuses != null)
+                {
+                    removedStatuses.Add(status);
+                }
                 statuses.RemoveAt(i);
                 removed = true;
             }
@@ -412,5 +385,248 @@ namespace Pakuri.InGame
 
             return StatusCombatRules.ComputeModifierMagnitude(incoming) >= StatusCombatRules.ComputeModifierMagnitude(current);
         }
+    }
+
+    /*
+     * 적용된 상태 효과 하나의 출처, 중첩, 지속시간, 보호막과 피해 기록을 보관한다.
+     */
+    public class StatusRuntimeInstance
+    {
+        public StatusRuntimeInstance(StatusEffectKind kind)
+        {
+            Kind = kind;
+        }
+
+        public StatusEffectKind Kind { get; }
+        public string Tag
+        {
+            get
+            {
+                if (SourceData != null && !string.IsNullOrWhiteSpace(SourceData.StatusTag))
+                {
+                    return SourceData.StatusTag;
+                }
+
+                return StatusEffectLookup.ToId(Kind);
+            }
+        }
+
+        public string DisplayName
+        {
+            get
+            {
+                if (SourceData != null && !string.IsNullOrWhiteSpace(SourceData.StatusName))
+                {
+                    return SourceData.StatusName;
+                }
+
+                return StatusEffectLookup.ToDisplayName(Kind);
+            }
+        }
+
+        public StatusRuntimeData SourceData { get; private set; }
+        public string SourceSkillId { get; private set; }
+        public string SourceUnitId { get; private set; }
+        public string SourceDefinitionId { get; private set; }
+        public StatusTargetScope TargetScope { get; private set; } = StatusTargetScope.Unspecified;
+        public StatusMergePolicy MergePolicy { get; private set; } = StatusMergePolicy.Unspecified;
+        public ShieldRefreshRule ShieldAmountRefreshPolicy { get; private set; } = ShieldRefreshRule.TakeHighest;
+        public int Stacks { get; private set; }
+        public float DurationRemaining { get; private set; }
+        public bool Permanent { get; private set; }
+        public float AppliedShieldAmount { get; private set; }
+        public float RemainingShieldAmount { get; private set; }
+        private readonly float[] trackedIncomingDamageTotals = new float[Enum.GetValues(typeof(DamageAttribute)).Length];
+
+        public bool IsTimed => !Permanent && DurationRemaining > 0f;
+        public bool IsShieldStatus => Kind == StatusEffectKind.Shield;
+
+        public void SetSourceData(StatusRuntimeData sourceData)
+        {
+            SourceData = sourceData;
+        }
+
+        public void SetSourceMetadata(StatusRuntimeData sourceData)
+        {
+            SourceSkillId = sourceData.SourceSkillId;
+            TargetScope = sourceData.TargetScope;
+            MergePolicy = sourceData.MergePolicy;
+            ShieldAmountRefreshPolicy = sourceData.ShieldAmountRefreshPolicy;
+        }
+
+        public void SetSourceUnit(UnitCombatState source)
+        {
+            SourceUnitId = string.Empty;
+            SourceDefinitionId = string.Empty;
+            if (source == null || source.Identity == null)
+            {
+                return;
+            }
+
+            SourceUnitId = source.Identity.UnitId;
+            SourceDefinitionId = source.Identity.DefinitionId;
+        }
+
+        public void AddStacks(int stacks, int maxStacks)
+        {
+            var nextStacks = Stacks + Math.Max(0, stacks);
+            Stacks = nextStacks;
+            if (maxStacks > 0)
+            {
+                Stacks = Math.Min(maxStacks, nextStacks);
+            }
+        }
+
+        public void RefreshStacks(int stacks, int maxStacks)
+        {
+            var incomingStacks = Math.Max(0, stacks);
+            if (incomingStacks <= 0)
+            {
+                return;
+            }
+
+            var nextStacks = Math.Max(Stacks, incomingStacks);
+            Stacks = nextStacks;
+            if (maxStacks > 0)
+            {
+                Stacks = Math.Min(maxStacks, nextStacks);
+            }
+        }
+
+        public int ConsumeStacks(int stacks)
+        {
+            var consumed = Math.Min(Math.Max(0, stacks), Math.Max(0, Stacks));
+            Stacks = Math.Max(0, Stacks - consumed);
+            return consumed;
+        }
+
+        public void SetDuration(float durationSeconds)
+        {
+            DurationRemaining = Math.Max(0f, durationSeconds);
+        }
+
+        public bool ExtendDuration(float durationDelta)
+        {
+            if (Permanent || durationDelta <= 0f)
+            {
+                return false;
+            }
+
+            DurationRemaining = Math.Max(0f, DurationRemaining + durationDelta);
+            return true;
+        }
+
+        public void SetPermanent(bool permanent)
+        {
+            Permanent = permanent;
+            if (Permanent)
+            {
+                DurationRemaining = 0f;
+            }
+        }
+
+        public void ApplyShield(float amount, ShieldRefreshRule refreshRule, bool mergedExisting)
+        {
+            var resolvedAmount = Math.Max(0f, amount);
+            ShieldAmountRefreshPolicy = refreshRule;
+            if (!mergedExisting)
+            {
+                AppliedShieldAmount = resolvedAmount;
+                RemainingShieldAmount = resolvedAmount;
+                return;
+            }
+
+            switch (refreshRule)
+            {
+                case ShieldRefreshRule.Replace:
+                    AppliedShieldAmount = resolvedAmount;
+                    RemainingShieldAmount = resolvedAmount;
+                    break;
+                case ShieldRefreshRule.Stack:
+                    AppliedShieldAmount += resolvedAmount;
+                    RemainingShieldAmount += resolvedAmount;
+                    break;
+                case ShieldRefreshRule.TakeHighest:
+                    var chosenAmount = Math.Max(RemainingShieldAmount, resolvedAmount);
+                    AppliedShieldAmount = chosenAmount;
+                    RemainingShieldAmount = chosenAmount;
+                    break;
+            }
+        }
+
+        public float ConsumeShield(float amount)
+        {
+            if (!IsShieldStatus || RemainingShieldAmount <= 0f || amount <= 0f)
+            {
+                return 0f;
+            }
+
+            var consumed = Math.Min(RemainingShieldAmount, amount);
+            RemainingShieldAmount = Math.Max(0f, RemainingShieldAmount - consumed);
+            return consumed;
+        }
+
+        public void RecordIncomingDamage(DamageAttribute attribute, float amount)
+        {
+            if (amount <= 0f)
+            {
+                return;
+            }
+
+            var index = (int)attribute;
+            if (index < 0 || index >= trackedIncomingDamageTotals.Length)
+            {
+                return;
+            }
+
+            trackedIncomingDamageTotals[index] += amount;
+        }
+
+        public float GetTrackedIncomingDamage(DamageAttribute attribute)
+        {
+            var index = (int)attribute;
+            if (index < 0 || index >= trackedIncomingDamageTotals.Length)
+            {
+                return 0f;
+            }
+
+            return trackedIncomingDamageTotals[index];
+        }
+
+        public bool Tick(float deltaTime)
+        {
+            if (IsShieldStatus && RemainingShieldAmount <= 0f)
+            {
+                return true;
+            }
+
+            if (Permanent)
+            {
+                return false;
+            }
+
+            if (DurationRemaining <= 0f)
+            {
+                return IsShieldStatus;
+            }
+
+            DurationRemaining = Math.Max(0f, DurationRemaining - deltaTime);
+            return DurationRemaining <= 0f;
+        }
+    }
+
+    /*
+     * 상태 보호막이 흡수한 피해량과 해당 상태를 함께 전달한다.
+     */
+    public struct ShieldAbsorptionRecord
+    {
+        public ShieldAbsorptionRecord(StatusRuntimeInstance status, float absorbedAmount)
+        {
+            Status = status;
+            AbsorbedAmount = absorbedAmount;
+        }
+
+        public StatusRuntimeInstance Status { get; }
+        public float AbsorbedAmount { get; }
     }
 }

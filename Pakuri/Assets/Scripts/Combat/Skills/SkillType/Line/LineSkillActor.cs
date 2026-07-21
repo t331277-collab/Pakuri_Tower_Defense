@@ -196,12 +196,15 @@ namespace Pakuri.InGame
                 }
 
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-                var resolvedDamage = SkillValueCalculator.ResolveDamageAgainstTarget(damagePerTick, snapshot, target.Model);
-                manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, skillId, false, false, damageMeterSourceId);
+                var resolvedDamage = DamageCalculator.ResolveDamageAgainstTarget(damagePerTick, snapshot, target.Model);
+                var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, skillId, false, false, damageMeterSourceId);
                 TryApplyKnockback(target, normalizedDirection, lineKnockbackDistance);
-                var targetKey = ResolveTargetKey(target.Model);
-                TryApplyStatus(manager, target.Model, onHitStatus, source, targetKey, baseStatusAppliedTargets);
-                TryApplyOnHitEffects(manager, target.Model, onHitEffects, snapshot, source, targetKey, effectStatusAppliedTargets);
+                if (!damageResult.IsDead)
+                {
+                    var targetKey = ResolveTargetKey(target.Model);
+                    TryApplyStatus(manager, target.Model, onHitStatus, source, targetKey, baseStatusAppliedTargets);
+                    TryApplyOnHitEffects(manager, target.Model, onHitEffects, snapshot, source, targetKey, effectStatusAppliedTargets);
+                }
                 SkillOnHitEffect.TryApply(
                     manager,
                     unitRoster,
@@ -397,7 +400,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (SkillStatus.TryApplyStatus(manager, target, status, source)
+            if (StatusCombatRules.ApplyStatus(manager, target, status, source)
                 && appliedTargets != null
                 && !string.IsNullOrWhiteSpace(targetKey))
             {
@@ -445,7 +448,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                if (SkillStatus.TryApplyStatus(manager, target, status, source)
+                if (StatusCombatRules.ApplyStatus(manager, target, status, source)
                     && appliedEffects != null
                     && !string.IsNullOrWhiteSpace(effectKey))
                 {

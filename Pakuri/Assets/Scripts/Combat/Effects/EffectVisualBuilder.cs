@@ -1,12 +1,9 @@
 using Pakuri.Data;
 using UnityEngine;
 
-/*
- * 생성된 효과 오브젝트의 외형과 애니메이션 수명을 계산한다.
- */
 namespace Pakuri.InGame
 {
-    internal static class EffectVisualUtility
+    static class EffectVisualBuilder
     {
         private const float DefaultSingleAttackLineLength = 31f;
 
@@ -21,31 +18,6 @@ namespace Pakuri.InGame
             return Quaternion.Euler(0f, 0f, angle);
         }
 
-        public static void ApplyPrefabScale(Transform target, float baseRadius, SkillSnapshot snapshot)
-        {
-            if (target == null || snapshot == null)
-            {
-                return;
-            }
-
-            var scaleFactor = SkillTargeting.ResolvePrefabScaleFactor(baseRadius, snapshot);
-            if (!Mathf.Approximately(scaleFactor, 1f))
-            {
-                target.localScale *= scaleFactor;
-            }
-        }
-
-        /*
-         * 런타임 비주얼에 실제로 생성할 외형이나 충돌 영역이 있는지 확인한다.
-         */
-        public static bool HasVisual(RuntimeSkillVisualSpec visual)
-        {
-            return visual != null && visual.HasVisual();
-        }
-
-        /*
-         * 런타임 비주얼 정보로 크기, 스프라이트, 애니메이터, 충돌 영역을 설정한다.
-         */
         public static void Configure(
             GameObject instance,
             RuntimeSkillVisualSpec visual,
@@ -58,7 +30,12 @@ namespace Pakuri.InGame
             }
             else
             {
-                var scale = visual.Scale > 0f ? visual.Scale : 1f;
+                var scale = visual.Scale;
+                if (scale <= 0f)
+                {
+                    scale = 1f;
+                }
+
                 instance.transform.localScale = new Vector3(scale, scale, scale);
             }
 
@@ -91,25 +68,13 @@ namespace Pakuri.InGame
             }
         }
 
-        /*
-         * 실제 애니메이션 클립 길이와 호출자가 요구한 최소 수명 중 큰 값을 반환한다.
-         */
-        public static float ResolveLifetime(
-            GameObject instance,
-            float minimumLifetimeSeconds,
-            float fallbackLifetimeSeconds = 0f)
+        public static float ResolveLifetime(GameObject instance, float minimumLifetimeSeconds)
         {
             var minimum = Mathf.Max(0.01f, minimumLifetimeSeconds);
             var animationLength = ResolveAnimationLength(instance);
-            var resolvedLength = animationLength > 0f
-                ? animationLength
-                : Mathf.Max(0f, fallbackLifetimeSeconds);
-            return Mathf.Max(minimum, resolvedLength);
+            return Mathf.Max(minimum, animationLength);
         }
 
-        /*
-         * 효과 오브젝트에 판정용 2D 충돌 영역이 있는지 확인한다.
-         */
         public static bool HasHitbox(GameObject instance)
         {
             if (instance == null)
@@ -118,99 +83,103 @@ namespace Pakuri.InGame
             }
 
             var colliders = instance.GetComponentsInChildren<Collider2D>();
-            return colliders != null && colliders.Length > 0;
+            return colliders.Length > 0;
         }
 
-        /*
-         * 범위 효과의 기본 반경과 스킬 배율을 오브젝트 크기에 반영한다.
-         */
         public static void ConfigureAreaScale(
-            Transform transform,
+            Transform target,
             float baseRadius,
             SkillSnapshot snapshot,
             float radiusMultiplier)
         {
-            if (transform == null)
+            if (target == null)
             {
                 return;
             }
 
-            EffectVisualUtility.ApplyPrefabScale(transform, baseRadius, snapshot);
-            transform.localScale *= Mathf.Max(0f, radiusMultiplier);
+            ApplyPrefabScale(target, baseRadius, snapshot);
+            target.localScale *= Mathf.Max(0f, radiusMultiplier);
         }
 
-        /*
-         * 단일 공격의 직선형 다중 배치 비주얼 방향과 길이를 설정한다.
-         */
         public static void ConfigureSingleAttackLine(
-            Transform transform,
+            Transform target,
             SkillExecutionContext context,
             SingleSkillRuntimeData skill,
             SkillSnapshot snapshot,
             Vector2 center)
         {
-            if (transform == null || skill == null)
+            if (target == null || skill == null)
             {
                 return;
             }
 
-            var origin = context != null
+            var origin = center;
+            if (context != null
                 && context.CasterEntry != null
-                && context.CasterEntry.Transform != null
-                    ? (Vector2)context.CasterEntry.Transform.position
-                    : center;
+                && context.CasterEntry.Transform != null)
+            {
+                origin = context.CasterEntry.Transform.position;
+            }
+
             var direction = center - origin;
             if (direction.sqrMagnitude <= 0.0001f)
             {
                 direction = Vector2.right;
             }
 
-            transform.position = center;
-            transform.rotation = EffectVisualUtility.ResolveRotation(direction.normalized);
+            target.position = center;
+            target.rotation = ResolveRotation(direction.normalized);
 
-            var width = SkillTargeting.ResolveRadius(
-                SkillTargeting.ResolveBaseRadius(skill.Targeting, skill.Area),
-                snapshot);
-            var spriteRenderer = transform.GetComponent<SpriteRenderer>();
-            if (spriteRenderer != null && spriteRenderer.sprite != null)
+            var baseRadius = SkillTargeting.ResolveBaseRadius(skill.Targeting, skill.Area);
+            var width = SkillTargeting.ResolveRadius(baseRadius, snapshot);
+            var spriteRenderer = target.GetComponent<SpriteRenderer>();
+            if (spriteRenderer == null || spriteRenderer.sprite == null)
             {
-                var size = spriteRenderer.sprite.bounds.size;
-                var scale = transform.localScale;
-                if (size.x > 0.0001f)
-                {
-                    scale.x = Mathf.Sign(scale.x == 0f ? 1f : scale.x)
-                        * (DefaultSingleAttackLineLength / size.x);
-                }
-
-                if (size.y > 0.0001f)
-                {
-                    scale.y = Mathf.Sign(scale.y == 0f ? 1f : scale.y)
-                        * (width / size.y);
-                }
-
-                transform.localScale = scale;
+                ApplyPrefabScale(target, baseRadius, snapshot);
                 return;
             }
 
-            EffectVisualUtility.ApplyPrefabScale(
-                transform,
-                SkillTargeting.ResolveBaseRadius(skill.Targeting, skill.Area),
-                snapshot);
+            var size = spriteRenderer.sprite.bounds.size;
+            var scale = target.localScale;
+            if (size.x > 0.0001f)
+            {
+                var xSign = 1f;
+                if (scale.x < 0f)
+                {
+                    xSign = -1f;
+                }
+
+                scale.x = xSign * (DefaultSingleAttackLineLength / size.x);
+            }
+
+            if (size.y > 0.0001f)
+            {
+                var ySign = 1f;
+                if (scale.y < 0f)
+                {
+                    ySign = -1f;
+                }
+
+                scale.y = ySign * (width / size.y);
+            }
+
+            target.localScale = scale;
         }
 
-        /*
-         * 단일 공격이 직선 형태 다중 배치 비주얼을 사용하는지 확인한다.
-         */
-        public static bool UsesSingleLineVisual(SingleSkillRuntimeData skill)
+        private static void ApplyPrefabScale(Transform target, float baseRadius, SkillSnapshot snapshot)
         {
-            return skill != null
-                && skill.UseMultiDeployment
-                && string.IsNullOrWhiteSpace(skill.DeploymentRequiredTargetStatusId);
+            if (target == null || snapshot == null)
+            {
+                return;
+            }
+
+            var scaleFactor = SkillTargeting.ResolvePrefabScaleFactor(baseRadius, snapshot);
+            if (!Mathf.Approximately(scaleFactor, 1f))
+            {
+                target.localScale *= scaleFactor;
+            }
         }
 
-        /*
-         * 런타임 비주얼의 사각 충돌 영역을 설정한다.
-         */
         private static void ConfigureHitbox(
             GameObject instance,
             RuntimeSkillHitboxSpec hitbox,
@@ -227,9 +196,6 @@ namespace Pakuri.InGame
             collider.isTrigger = hitboxIsTrigger;
         }
 
-        /*
-         * Animator와 Animation에 연결된 클립 중 가장 긴 재생 시간을 찾는다.
-         */
         private static float ResolveAnimationLength(GameObject instance)
         {
             if (instance == null)
@@ -241,9 +207,12 @@ namespace Pakuri.InGame
             var animators = instance.GetComponentsInChildren<Animator>(true);
             for (var i = 0; i < animators.Length; i++)
             {
-                var controller = animators[i] != null
-                    ? animators[i].runtimeAnimatorController
-                    : null;
+                if (animators[i] == null)
+                {
+                    continue;
+                }
+
+                var controller = animators[i].runtimeAnimatorController;
                 if (controller == null)
                 {
                     continue;

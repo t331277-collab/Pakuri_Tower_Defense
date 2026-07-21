@@ -308,8 +308,11 @@ namespace Pakuri.InGame
             if (contactDamageEnabled)
             {
                 resolvedDamage = ResolveHitDamage(target.Model);
-                combatManager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
-                TryApplyStatus(target.Model);
+                var damageResult = combatManager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, owner, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                if (!damageResult.IsDead)
+                {
+                    TryApplyStatus(target.Model);
+                }
                 SkillOnHitEffect.TryApply(
                     combatManager,
                     combatManager != null ? combatManager.UnitRegistry : null,
@@ -361,7 +364,7 @@ namespace Pakuri.InGame
          */
         private void TryApplyStatus(UnitCombatState target)
         {
-            SkillStatus.TryApplyStatus(combatManager, target, statusOnHit, owner);
+            StatusCombatRules.ApplyStatus(combatManager, target, statusOnHit, owner);
         }
 
         /*
@@ -602,7 +605,7 @@ namespace Pakuri.InGame
             var impactVisualLifetime = 0.05f;
             var effects = combatManager.Effects;
             GameObject instance = null;
-            if (effects != null && EffectVisualUtility.HasVisual(impactRuntimeVisual))
+            if (effects != null && EffectManager.HasVisual(impactRuntimeVisual))
             {
                 instance = effects.CreateRuntimeVisual(
                     impactRuntimeVisual,
@@ -762,7 +765,7 @@ namespace Pakuri.InGame
         public int MaxStacks;
         public bool Permanent;
         public bool RefreshDuration = true;
-        public string ThresholdSourceStatusId;
+        public StatusEffectKind ThresholdSourceStatusKind;
         public int ThresholdSourceMinStacks;
         public ProjectileStatusHitSpec ThresholdStatusSpec;
     }

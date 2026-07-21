@@ -1,10 +1,11 @@
 using System;
+using Pakuri.Data;
 using Pakuri.InGame;
 using UnityEngine;
 
 /*
- * SkillValueCalculator가 만든 스킬 피해 또는 다른 공격 원본 피해를 대상의 최종 피해로 확정한다.
- * 대상 방어력, 방어력 감소, 치명타, 받는 피해 상태 효과와 적 패시브 배율을 반영하고
+ * 시전자의 능력치와 스킬 데이터로 원본 수치를 만들고 대상의 최종 피해로 확정한다.
+ * 공격자와 대상의 상태 효과, 방어력, 치명타, 적 패시브 배율을 순서대로 반영하고
  * InGameCombatManager가 자원에 적용할 정수 피해량을 반환한다.
  */
 namespace Pakuri.Combat
@@ -27,6 +28,99 @@ namespace Pakuri.Combat
     {
         public const float BaseCriticalChance = 0.05f;
         public const float BaseCriticalMultiplier = 1.5f;
+
+        /*
+         * 공격력 계수와 스킬 강화, 공격자의 주는 피해 보정을 적용한다.
+         */
+        internal static float ResolveDamage(
+            UnitCombatState caster,
+            SkillDamageSpec damage,
+            SkillSnapshot snapshot)
+        {
+            if (damage == null)
+            {
+                return 0f;
+            }
+
+            var baseDamage = ResolvePowerValue(caster, damage);
+            if (snapshot != null)
+            {
+                baseDamage = (baseDamage + snapshot.BaseDamageBonus) * Mathf.Max(0f, snapshot.DamageMultiplier);
+            }
+
+            baseDamage *= StatusCombatRules.ResolveOutgoingDamageMultiplier(caster, damage.Element, damage.SkillId);
+            if (caster is EnemyCombatState enemy)
+            {
+                baseDamage *= EnemyPassiveModifiers.ResolveOutgoingDamageMultiplier(
+                    enemy,
+                    damage.Element);
+            }
+
+            return Mathf.Max(0f, baseDamage);
+        }
+
+        /*
+         * 스킬 기본값과 공격력 또는 주문력 계수로 원본 수치를 만든다.
+         */
+        internal static float ResolvePowerValue(UnitCombatState caster, SkillDamageSpec spec)
+        {
+            if (spec == null)
+            {
+                return 0f;
+            }
+
+            if (spec.UseCombinedStatCoefficients)
+            {
+                var attack = ResolveStat(caster, StatSource.Attack);
+                var spell = ResolveStat(caster, StatSource.Intelligence);
+                return Mathf.Max(
+                    0f,
+                    spec.BaseDamage
+                    + attack * spec.AttackPowerCoefficient
+                    + spell * spec.SpellPowerCoefficient);
+            }
+
+            var stat = ResolveStat(caster, spec.StatSource);
+            return Mathf.Max(0f, spec.BaseDamage + stat * spec.StatCoefficient);
+        }
+
+        /*
+         * 스킬 능력치 계수와 강화 배율로 보호막 수치를 만든다.
+         */
+        internal static float ResolveShield(UnitCombatState caster, BuffShieldSkillRuntimeData skill, SkillSnapshot snapshot = null)
+        {
+            if (skill == null)
+            {
+                return 0f;
+            }
+
+            var stat = ResolveStat(caster, skill.ShieldStatSource);
+            var shield = Mathf.Max(0f, skill.ShieldBase + stat * skill.ShieldCoefficient);
+            if (snapshot != null)
+            {
+                shield = (shield + snapshot.BaseDamageBonus)
+                    * Mathf.Max(0f, snapshot.DamageMultiplier)
+                    * Mathf.Max(0f, snapshot.ShieldAmountMultiplier);
+            }
+
+            return Mathf.Max(0f, shield);
+        }
+
+        /*
+         * 대상 조건에 따른 스킬 피해 배율을 적용한다.
+         */
+        internal static float ResolveDamageAgainstTarget(
+            float baseDamage,
+            SkillSnapshot snapshot,
+            UnitCombatState target)
+        {
+            if (snapshot == null || target == null)
+            {
+                return Mathf.Max(0f, baseDamage);
+            }
+
+            return Mathf.Max(0f, baseDamage * snapshot.ResolveConditionalDamageMultiplier(target));
+        }
 
         /*
          * 물리와 각 원소 속성의 방어력을 한 묶음으로 보관한다.
@@ -193,6 +287,24 @@ namespace Pakuri.Combat
             }
 
             return Mathf.Max(0f, enemy.PassiveIncomingDamageMultiplier) * statusMultiplier;
+        }
+
+        /*
+         * 스킬 계수에 사용할 공격력 또는 주문력을 반환한다.
+         */
+        private static float ResolveStat(UnitCombatState caster, StatSource source)
+        {
+            if (caster == null || caster.Stats == null)
+            {
+                return 0f;
+            }
+
+            if (source == StatSource.Attack)
+            {
+                return caster.Stats.AttackPower * StatusCombatRules.ResolveAttackPowerMultiplier(caster);
+            }
+
+            return caster.Stats.SpellPower * StatusCombatRules.ResolveSpellPowerMultiplier(caster);
         }
 
         /*

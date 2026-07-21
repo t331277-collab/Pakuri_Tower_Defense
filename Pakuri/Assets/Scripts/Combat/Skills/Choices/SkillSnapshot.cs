@@ -10,20 +10,20 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
-public sealed class SkillSnapshot
+public class SkillSnapshot
 {
 	private readonly struct ConditionalDamageRule
 	{
 		public float DamageMultiplier { get; }
 
-		public string StatusId { get; }
+		public StatusEffectKind StatusKind { get; }
 
 		public int MinStacks { get; }
 
-		public ConditionalDamageRule(float damageMultiplier, string statusId, int minStacks)
+		public ConditionalDamageRule(float damageMultiplier, StatusEffectKind statusKind, int minStacks)
 		{
 			DamageMultiplier = damageMultiplier;
-			StatusId = statusId;
+			StatusKind = statusKind;
 			MinStacks = minStacks;
 		}
 	}
@@ -32,14 +32,14 @@ public sealed class SkillSnapshot
 	{
 		public float CritChanceBonus { get; }
 
-		public string StatusId { get; }
+		public StatusEffectKind StatusKind { get; }
 
 		public int MinStacks { get; }
 
-		public ConditionalCritChanceRule(float critChanceBonus, string statusId, int minStacks)
+		public ConditionalCritChanceRule(float critChanceBonus, StatusEffectKind statusKind, int minStacks)
 		{
 			CritChanceBonus = critChanceBonus;
-			StatusId = statusId;
+			StatusKind = statusKind;
 			MinStacks = minStacks;
 		}
 	}
@@ -246,7 +246,7 @@ public sealed class SkillSnapshot
 
 	public float StatusConditionalDamageTakenBonus { get; private set; }
 
-	public string StatusConditionalSourceStatusId { get; private set; }
+	public StatusEffectKind StatusConditionalSourceStatusKind { get; private set; }
 
 	public bool HasOnHitAdditionalDamage { get; private set; }
 
@@ -298,11 +298,11 @@ public sealed class SkillSnapshot
 
 	public float RepeatDamageMultiplier { get; private set; } = 1f;
 
-	public string ThresholdStatusId { get; private set; }
+	public StatusEffectKind ThresholdStatusKind { get; private set; }
 
 	public int ThresholdStatusMinStacks { get; private set; }
 
-	public string ThresholdApplyStatusId { get; private set; }
+	public StatusEffectKind ThresholdApplyStatusKind { get; private set; }
 
 	public float TargetStatusStackDamageMultiplier { get; private set; } = 1f;
 
@@ -316,7 +316,7 @@ public sealed class SkillSnapshot
 
 	public float RedistributeConsumedStatusRatioOnKill { get; private set; }
 
-	public string RedistributeConsumedStatusId { get; private set; }
+	public StatusEffectKind RedistributeConsumedStatusKind { get; private set; }
 
 	public float RedistributeConsumedStatusSearchRadius { get; private set; }
 
@@ -397,7 +397,11 @@ public sealed class SkillSnapshot
 	public SkillSnapshot(SkillRuntimeData source)
 	{
 		Source = source;
-		SkillId = ((source != null) ? source.SkillId : string.Empty);
+		SkillId = string.Empty;
+		if (source != null)
+		{
+			SkillId = source.SkillId;
+		}
 		DamageMultiplier = 1f;
 		ShieldAmountMultiplier = 1f;
 		CooldownMultiplier = 1f;
@@ -411,8 +415,11 @@ public sealed class SkillSnapshot
 		BranchDamageMultiplier = 1f;
 		OnHitAdditionalDamageMultiplier = 1f;
 		OnHitChainDamageMultiplier = 1f;
-		SkillEffectPrefab = source?.SkillEffectPrefab;
-		AddNormalizedPlanNodes(source?.NormalizedPlanNodes);
+		if (source != null)
+		{
+			SkillEffectPrefab = source.SkillEffectPrefab;
+			AddNormalizedPlanNodes(source.NormalizedPlanNodes);
+		}
 		RebuildExecutionPlan();
 	}
 
@@ -474,11 +481,11 @@ public sealed class SkillSnapshot
 			FollowUpProjectileDelaySeconds = Mathf.Max(0f, source.FollowUpProjectileDelaySeconds);
 			FollowUpProjectileDamageMultiplier = Mathf.Max(0f, source.FollowUpProjectileDamageMultiplier);
 		}
-		if (!string.IsNullOrWhiteSpace(source.ThresholdStatusId) && source.ThresholdStatusMinStacks > 0 && !string.IsNullOrWhiteSpace(source.ThresholdApplyStatusId))
+		if (source.ThresholdStatusKind != StatusEffectKind.None && source.ThresholdStatusMinStacks > 0 && source.ThresholdApplyStatusKind != StatusEffectKind.None)
 		{
-			ThresholdStatusId = source.ThresholdStatusId;
+			ThresholdStatusKind = source.ThresholdStatusKind;
 			ThresholdStatusMinStacks = source.ThresholdStatusMinStacks;
-			ThresholdApplyStatusId = source.ThresholdApplyStatusId;
+			ThresholdApplyStatusKind = source.ThresholdApplyStatusKind;
 		}
 		if (source.HasTargetStatusStackDamageMultiplier && source.TargetStatusStackDamageMultiplier > 0f)
 		{
@@ -498,14 +505,14 @@ public sealed class SkillSnapshot
 				RepeatDamageMultiplier *= PositiveOrDefault(source.RepeatDamageMultiplier, 1f);
 			}
 		}
-		if (!Mathf.Approximately(source.ConditionalCritChanceBonus, 0f) && !string.IsNullOrWhiteSpace(source.ConditionalCritTargetStatusId) && source.ConditionalCritTargetStatusMinStacks > 0)
+		if (!Mathf.Approximately(source.ConditionalCritChanceBonus, 0f) && source.ConditionalCritTargetStatusKind != StatusEffectKind.None && source.ConditionalCritTargetStatusMinStacks > 0)
 		{
-			conditionalCritChanceRules.Add(new ConditionalCritChanceRule(source.ConditionalCritChanceBonus, source.ConditionalCritTargetStatusId, source.ConditionalCritTargetStatusMinStacks));
+			conditionalCritChanceRules.Add(new ConditionalCritChanceRule(source.ConditionalCritChanceBonus, source.ConditionalCritTargetStatusKind, source.ConditionalCritTargetStatusMinStacks));
 		}
-		if (source.RedistributeConsumedStatusRatioOnKill > 0f && !string.IsNullOrWhiteSpace(source.RedistributeConsumedStatusId) && source.RedistributeConsumedStatusSearchRadius > 0f)
+		if (source.RedistributeConsumedStatusRatioOnKill > 0f && source.RedistributeConsumedStatusKind != StatusEffectKind.None && source.RedistributeConsumedStatusSearchRadius > 0f)
 		{
 			RedistributeConsumedStatusRatioOnKill = Mathf.Clamp01(source.RedistributeConsumedStatusRatioOnKill);
-			RedistributeConsumedStatusId = source.RedistributeConsumedStatusId;
+			RedistributeConsumedStatusKind = source.RedistributeConsumedStatusKind;
 			RedistributeConsumedStatusSearchRadius = Mathf.Max(0f, source.RedistributeConsumedStatusSearchRadius);
 			RedistributeConsumedStatusTargetCount = Mathf.Max(0, source.RedistributeConsumedStatusTargetCount);
 		}
@@ -528,7 +535,12 @@ public sealed class SkillSnapshot
 		}
 		for (int i = 0; i < nodes.Count; i++)
 		{
-			SkillActionOp? skillActionOp = ((nodes[i] != null) ? nodes[i].Action : ((SkillActionOp?)null));
+			if (nodes[i] == null)
+			{
+				continue;
+			}
+
+			var skillActionOp = nodes[i].Action;
 			if (skillActionOp.HasValue)
 			{
 				ApplyPlanAction(skillActionOp.Value);
@@ -616,7 +628,7 @@ public sealed class SkillSnapshot
 			}
 			break;
 		case SkillActionOpKind.ConditionalDamageMultiplier:
-			AddConditionalDamageRule(action.FloatValue, action.StringValue, action.IntValue);
+			AddConditionalDamageRule(action.FloatValue, action.StatusKind, action.IntValue);
 			break;
 		case SkillActionOpKind.TargetStatusStackDamageRateBonus:
 			if (!string.IsNullOrWhiteSpace(action.StringValue) && !Mathf.Approximately(action.FloatValue, 0f))
@@ -672,7 +684,7 @@ public sealed class SkillSnapshot
 		case SkillActionOpKind.StatusConditionalDamageTakenBonus:
 			HasStatusConditionalDamageTakenBonus = true;
 			StatusConditionalDamageTakenBonus += action.FloatValue;
-			StatusConditionalSourceStatusId = action.StringValue;
+			StatusConditionalSourceStatusKind = action.StatusKind;
 			break;
 		case SkillActionOpKind.StatusElementDamageTakenBonus:
 			HasStatusElementDamageTakenBonus = true;
@@ -696,22 +708,32 @@ public sealed class SkillSnapshot
 			return;
 		}
 		StatusActionSpeedBonusStatusId = statusId;
-		statusActionSpeedBonuses[statusId] = (statusActionSpeedBonuses.TryGetValue(statusId, out var value) ? (value + bonus) : bonus);
+		float total = bonus;
+		if (statusActionSpeedBonuses.TryGetValue(statusId, out var value))
+		{
+			total += value;
+		}
+		statusActionSpeedBonuses[statusId] = total;
 	}
 
 	private void ApplyStatusDurationBonus(string statusId, float bonus)
 	{
 		if (!string.IsNullOrWhiteSpace(statusId) && !Mathf.Approximately(bonus, 0f))
 		{
-			statusDurationBonuses[statusId] = (statusDurationBonuses.TryGetValue(statusId, out var value) ? (value + bonus) : bonus);
+			float total = bonus;
+			if (statusDurationBonuses.TryGetValue(statusId, out var value))
+			{
+				total += value;
+			}
+			statusDurationBonuses[statusId] = total;
 		}
 	}
 
-	private void AddConditionalDamageRule(float multiplier, string statusId, int minStacks)
+	private void AddConditionalDamageRule(float multiplier, StatusEffectKind statusKind, int minStacks)
 	{
-		if (!string.IsNullOrWhiteSpace(statusId) && !(multiplier <= 0f))
+		if (statusKind != StatusEffectKind.None && !(multiplier <= 0f))
 		{
-			conditionalDamageRules.Add(new ConditionalDamageRule(multiplier, statusId, Mathf.Max(1, minStacks)));
+			conditionalDamageRules.Add(new ConditionalDamageRule(multiplier, statusKind, Mathf.Max(1, minStacks)));
 		}
 	}
 
@@ -804,7 +826,7 @@ public sealed class SkillSnapshot
 		for (int i = 0; i < conditionalDamageRules.Count; i++)
 		{
 			ConditionalDamageRule conditionalDamageRule = conditionalDamageRules[i];
-			if (HasRequiredStacks(target, conditionalDamageRule.StatusId, conditionalDamageRule.MinStacks))
+			if (HasRequiredStacks(target, conditionalDamageRule.StatusKind, conditionalDamageRule.MinStacks))
 			{
 				num *= PositiveOrDefault(conditionalDamageRule.DamageMultiplier, 1f);
 			}
@@ -822,7 +844,7 @@ public sealed class SkillSnapshot
 		for (int i = 0; i < conditionalCritChanceRules.Count; i++)
 		{
 			ConditionalCritChanceRule conditionalCritChanceRule = conditionalCritChanceRules[i];
-			if (HasRequiredStacks(target, conditionalCritChanceRule.StatusId, conditionalCritChanceRule.MinStacks))
+			if (HasRequiredStacks(target, conditionalCritChanceRule.StatusKind, conditionalCritChanceRule.MinStacks))
 			{
 				num += conditionalCritChanceRule.CritChanceBonus;
 			}
@@ -866,17 +888,13 @@ public sealed class SkillSnapshot
 		return num;
 	}
 
-	private static bool HasRequiredStacks(UnitCombatState target, string statusId, int minimumStacks)
+	private static bool HasRequiredStacks(UnitCombatState target, StatusEffectKind statusKind, int minimumStacks)
 	{
-		if (target == null || minimumStacks <= 0 || string.IsNullOrWhiteSpace(statusId))
+		if (target == null || minimumStacks <= 0 || statusKind == StatusEffectKind.None)
 		{
 			return false;
 		}
-		if (!StatusEffectLookup.TryParse(statusId, out var kind))
-		{
-			return false;
-		}
-		if (kind == StatusEffectKind.Shield)
+		if (statusKind == StatusEffectKind.Shield)
 		{
 			if (target.Resources != null)
 			{
@@ -886,7 +904,7 @@ public sealed class SkillSnapshot
 		}
 		if (target.Statuses != null)
 		{
-			return target.Statuses.GetStacks(kind) >= minimumStacks;
+			return target.Statuses.GetStacks(statusKind) >= minimumStacks;
 		}
 		return false;
 	}

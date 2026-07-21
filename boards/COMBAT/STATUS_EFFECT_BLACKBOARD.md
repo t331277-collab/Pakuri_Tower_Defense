@@ -320,3 +320,52 @@ Implemented and compile-verified. Unity-MCP script validation was unavailable be
 
 - 2026-07-11: User requested Code Builder to make `InGameCombatManager` call `DamageCalculator` for actual damage regardless of whether criticals are allowed.
 - 2026-07-11: Code Builder implemented the single calculation route, preserved the existing public overload and non-critical RNG behavior, and completed local build verification.
+
+## Task: 2026-07-21 Damage Calculator File Unification
+
+### Task title
+
+Merge raw skill-value calculation and final target-damage calculation into `DamageCalculator.cs`.
+
+### Goals
+
+- Keep one damage calculation script under `Pakuri/Assets/Scripts/Combat/Damage`.
+- Preserve the existing calculation order from caster power through target defense and incoming-damage modifiers.
+- Remove the separate `SkillValueCalculator` type and all of its call sites.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not add fallback helpers or ternary expressions while moving the calculation code.
+- Preserve cast-time raw calculation and hit-time target/final calculation as separate methods.
+- Preserve public damage APIs, serialized defense data, player-facing formulas, and unrelated user changes.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated. User Play Mode verification remains.
+
+### Next Actions
+
+- User verifies representative projectile, line, zone, single, trigger, shield, and healing skills in Play Mode.
+- User verifies critical, defense reduction, outgoing-damage, conditional-target, and incoming-damage modifiers retain their previous results.
+
+### Evidence
+
+- `DamageCalculator.cs` now owns `ResolveDamage`, `ResolvePowerValue`, `ResolveShield`, `ResolveDamageAgainstTarget`, `ResolveStat`, and the existing final-damage methods.
+- `SkillValueCalculator.cs` and its `.meta` were deleted; its former GUID had no asset reference outside its own `.meta`.
+- Nine skill execution files now call `DamageCalculator`; repository search reports zero remaining `SkillValueCalculator` references.
+- `Pakuri/Assets/Scripts/Combat/Damage` now contains only `DamageCalculator.cs` and its `.meta`.
+- `DamageCalculator.cs` contains no question-mark expression; the moved stat lookup uses an explicit `if` branch.
+- `git diff --check` passed with line-ending notices only.
+- Unity script refresh regenerated the project source list, `DamageCalculator.cs` validation returned 0 warnings and 0 errors, and Unity Console error query returned 0 entries.
+- Runtime and Editor `dotnet build --no-restore /p:UseSharedCompilation=false` each passed with 0 errors and the existing 2 `MSB3277` assembly-version warnings.
+
+### History
+
+- 2026-07-21: User switched to Code Builder, requested the two damage scripts be unified, and prohibited new fallback helpers and question-mark expressions in code changes.
+- 2026-07-21: Code Builder moved raw-value methods into `DamageCalculator`, changed all callers, deleted the obsolete script and meta, refreshed Unity, and completed local verification.

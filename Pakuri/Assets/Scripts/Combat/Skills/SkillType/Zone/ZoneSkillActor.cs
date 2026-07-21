@@ -131,8 +131,11 @@ namespace Pakuri.InGame
 
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
                 var resolvedDamage = ResolveDamageAgainstTarget(damagePerTick, executionSnapshot, target.Model);
-                manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
-                TryApplyStatus(manager, target.Model, onHitStatus, source);
+                var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                if (!damageResult.IsDead)
+                {
+                    TryApplyStatus(manager, target.Model, onHitStatus, source);
+                }
                 SkillOnHitEffect.TryApply(
                     manager,
                     sourceRuntime != null ? unitRoster : null,
@@ -428,8 +431,11 @@ namespace Pakuri.InGame
 
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
                 var resolvedDamage = ResolveDamageAgainstTarget(damagePerTick, executionSnapshot, target.Model);
-                manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
-                TryApplyStatus(manager, target.Model, onHitStatus, source);
+                var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
+                if (!damageResult.IsDead)
+                {
+                    TryApplyStatus(manager, target.Model, onHitStatus, source);
+                }
                 SkillOnHitEffect.TryApply(
                     manager,
                     sourceRuntime != null ? manager.UnitRegistry : null,
@@ -481,7 +487,7 @@ namespace Pakuri.InGame
             SkillSnapshot executionSnapshot,
             UnitCombatState target)
         {
-            return SkillValueCalculator.ResolveDamageAgainstTarget(baseDamage, executionSnapshot, target);
+            return DamageCalculator.ResolveDamageAgainstTarget(baseDamage, executionSnapshot, target);
         }
 
         /*
@@ -493,7 +499,7 @@ namespace Pakuri.InGame
             ProjectileStatusHitSpec status,
             UnitCombatState source)
         {
-            SkillStatus.TryApplyStatus(manager, target, status, source);
+            StatusCombatRules.ApplyStatus(manager, target, status, source);
         }
 
         /*

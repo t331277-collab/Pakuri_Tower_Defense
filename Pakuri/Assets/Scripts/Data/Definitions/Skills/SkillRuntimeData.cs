@@ -153,7 +153,7 @@ namespace Pakuri.InGame
      * 스킬 실행 시간 설정에 필요한 값을 보관한다.
      */
     [Serializable]
-    public sealed class SkillTimingSpec
+    public class SkillTimingSpec
     {
         [Min(0f)] public float Cooldown;
         [Min(0f)] public float CastTime;
@@ -165,11 +165,12 @@ namespace Pakuri.InGame
      * 스킬 대상 지정 설정에 필요한 값을 보관한다.
      */
     [Serializable]
-    public sealed class SkillTargetingSpec
+    public class SkillTargetingSpec
     {
         public SkillTargetSide TargetSide = SkillTargetSide.Enemy;
         public SkillTargetSelection Selection = SkillTargetSelection.Nearest;
         public string SelectionStatusId;
+        public StatusEffectKind SelectionStatusKind;
         [Min(0)] public int SelectionStatusMinStacks;
         public SkillTargetShape Shape = SkillTargetShape.Single;
         [Tooltip("Deprecated. InGame skills target the whole battlefield; runtime ignores this value.")]
@@ -182,7 +183,7 @@ namespace Pakuri.InGame
      * 스킬 피해 설정에 필요한 값을 보관한다.
      */
     [Serializable]
-    public sealed class SkillDamageSpec
+    public class SkillDamageSpec
     {
         public string SkillId;
         public DamageAttribute Element;
@@ -199,7 +200,7 @@ namespace Pakuri.InGame
      * 상태 적용 설정에 필요한 값을 보관한다.
      */
     [Serializable]
-    public sealed class StatusApplicationSpec
+    public class StatusApplicationSpec
     {
         public StatusRuntimeData Status;
         [Range(0f, 1f)] public float Chance = 1f;
@@ -211,7 +212,7 @@ namespace Pakuri.InGame
      * 투사체 설계값 설정에 필요한 값을 보관한다.
      */
     [Serializable]
-    public sealed class ProjectileBlueprintSpec
+    public class ProjectileBlueprintSpec
     {
         [Min(0)] public int MagazineSize;
         [Min(0f)] public float ReloadTime;
@@ -230,7 +231,7 @@ namespace Pakuri.InGame
      * 범위 설계값 설정에 필요한 값을 보관한다.
      */
     [Serializable]
-    public sealed class AreaBlueprintSpec
+    public class AreaBlueprintSpec
     {
         public ZoneAnchorMode AnchorMode = ZoneAnchorMode.GroundPosition;
         public ZoneTickMode TickMode = ZoneTickMode.OnInterval;
@@ -245,7 +246,7 @@ namespace Pakuri.InGame
      * 아군 효과 설정에 필요한 값을 보관한다.
      */
     [Serializable]
-    public sealed class AllyEffectSpec
+    public class AllyEffectSpec
     {
         public bool Enabled;
         [Min(0f)] public float ShieldBase;
@@ -259,7 +260,7 @@ namespace Pakuri.InGame
      * 버프 보정값 설정에 필요한 값을 보관한다.
      */
     [Serializable]
-    public sealed class BuffModifierSpec
+    public class BuffModifierSpec
     {
         public float ActionSpeedBonus;
         public float AttackPowerBonus;
@@ -307,14 +308,13 @@ namespace Pakuri.InGame
     /*
      * 버프 스킬 데이터에 필요한 값을 보관한다.
      */
-    public sealed class BuffSkillRuntimeData : SkillRuntimeData
+    public class BuffSkillRuntimeData : SkillRuntimeData
     {
         [Header("Buff")]
         public float BuffDuration;
         public BuffTarget Target;
         public bool UseConfiguredTargeting;
         public bool AttachVisualToCaster;
-        public string ApplyStatusTag;
 
         [Header("Modifiers")]
         public BuffModifierSpec Modifiers = new BuffModifierSpec();
@@ -329,7 +329,7 @@ namespace Pakuri.InGame
     /*
      * 회복 스킬 데이터에 필요한 값을 보관한다.
      */
-    public sealed class BuffHealSkillRuntimeData : SkillRuntimeData
+    public class BuffHealSkillRuntimeData : SkillRuntimeData
     {
         public SkillDamageSpec Healing = new SkillDamageSpec();
         public bool AttachVisualToTarget = true;
@@ -338,7 +338,7 @@ namespace Pakuri.InGame
     /*
      * Single 계열의 연쇄 공격 값을 보관한다.
      */
-    public sealed class SingleChainSkillRuntimeData : SkillRuntimeData
+    public class SingleChainSkillRuntimeData : SkillRuntimeData
     {
         public SkillDamageSpec Damage = new SkillDamageSpec();
         public float ChainDamageMultiplier = 0.5f;
@@ -350,7 +350,7 @@ namespace Pakuri.InGame
     /*
      * Single 계열의 돌진 공격 값을 보관한다.
      */
-    public sealed class SingleChargeSkillRuntimeData : SkillRuntimeData
+    public class SingleChargeSkillRuntimeData : SkillRuntimeData
     {
         public float TargetMaxHealthRatio = 1f;
         public float RampSeconds = 3f;
@@ -361,7 +361,7 @@ namespace Pakuri.InGame
     /*
      * Line 스킬 데이터에 필요한 값을 보관한다.
      */
-    public sealed class LineSkillRuntimeData : SkillRuntimeData
+    public class LineSkillRuntimeData : SkillRuntimeData
     {
         [Header("Line")]
         public float LineWidth;
@@ -377,7 +377,7 @@ namespace Pakuri.InGame
     /*
      * 투사체 스킬 데이터에 필요한 값을 보관한다.
      */
-    public sealed class ProjectileSkillRuntimeData : SkillRuntimeData
+    public class ProjectileSkillRuntimeData : SkillRuntimeData
     {
         [Header("Projectile")]
         public ProjectileBlueprintSpec Projectile = new ProjectileBlueprintSpec();
@@ -404,7 +404,7 @@ namespace Pakuri.InGame
     /*
      * 단일 공격 데이터에 필요한 값을 보관한다.
      */
-    public sealed class SingleSkillRuntimeData : SkillRuntimeData
+    public class SingleSkillRuntimeData : SkillRuntimeData
     {
         [Header("Area")]
         public AreaBlueprintSpec Area = new AreaBlueprintSpec();
@@ -415,10 +415,13 @@ namespace Pakuri.InGame
         [Min(1)] public int HitTargetCount = 1;
         [Min(1)] public int DeploymentCount = 1;
         public string DeploymentRequiredTargetStatusId;
+        public StatusEffectKind DeploymentRequiredTargetStatusKind;
         [Min(0)] public int DeploymentRequiredTargetStatusMinStacks;
         public string TargetStatusStackStatusId;
+        public StatusEffectKind TargetStatusStackStatusKind;
         [Min(0)] public int TargetStatusStackMaxStacks;
         public string ConsumeTargetStatusId;
+        public StatusEffectKind ConsumeTargetStatusKind;
         [Range(0f, 1f)] public float ConsumeTargetStatusRatio;
         [Min(0)] public int ConsumeTargetStatusStacks;
         [Min(0f)] public float DamageDelaySeconds;
@@ -440,7 +443,7 @@ namespace Pakuri.InGame
     /*
      * 지속 범위 스킬 데이터에 필요한 값을 보관한다.
      */
-    public sealed class ZoneSkillRuntimeData : SkillRuntimeData
+    public class ZoneSkillRuntimeData : SkillRuntimeData
     {
         [Header("Area")]
         public AreaBlueprintSpec Area = new AreaBlueprintSpec();
@@ -459,7 +462,7 @@ namespace Pakuri.InGame
     /*
      * 보호막 스킬 데이터에 필요한 값을 보관한다.
      */
-    public sealed class BuffShieldSkillRuntimeData : SkillRuntimeData
+    public class BuffShieldSkillRuntimeData : SkillRuntimeData
     {
         [Header("Shield")]
         public BuffTarget Target;
@@ -481,7 +484,7 @@ namespace Pakuri.InGame
     /*
      * 패시브 스킬 데이터에 필요한 값을 보관한다.
      */
-    public sealed class PassiveSkillRuntimeData : SkillRuntimeData
+    public class PassiveSkillRuntimeData : SkillRuntimeData
     {
         [Header("Choices")]
         public SkillChoiceRuntimeData[] BaseModifierChoices = Array.Empty<SkillChoiceRuntimeData>();
@@ -513,5 +516,35 @@ namespace Pakuri.InGame
         public int SecondaryConditionMinStacks;
         [Range(0f, 1f)] public float SecondaryTriggerChance = 1f;
         public int SecondaryTriggerHitCount;
+    }
+}
+
+
+/*
+ * 선택지 원본과 실행용 계산값을 함께 보관한다.
+ */
+namespace Pakuri.InGame
+{
+    [Serializable]
+    public class SkillChoiceRuntimeData
+    {
+        public SkillChoiceDefinition Source;
+        public SkillNode[] PlanNodes = Array.Empty<SkillNode>();
+        public bool HasShieldAmountMultiplier;
+        public float ShieldAmountMultiplier = 1f;
+        public BuffModifierSpec AddedModifiers = new BuffModifierSpec();
+        public bool HasStatusDamageBonusRate;
+        public float StatusDamageBonusRate;
+        public bool HasStatusShieldReceivedBonus;
+        public float StatusShieldReceivedBonus;
+        public bool HasStatusCriticalChanceBonus;
+        public float StatusCriticalChanceBonus;
+        public bool HasStatusDamageTakenBonus;
+        public float StatusDamageTakenBonus;
+        public bool HasStatusFlatElementResistReduction;
+        public float StatusFlatElementResistReduction;
+        public string StatusActionSpeedBonusStatusId;
+
+        public string ChoiceId => Source.ChoiceId;
     }
 }

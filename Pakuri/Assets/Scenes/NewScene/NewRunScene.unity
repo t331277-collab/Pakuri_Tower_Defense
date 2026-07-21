@@ -23664,11 +23664,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.EffectManager
   runtimeSkillRoot: {fileID: 502722560}
-  monsterSkillEffects:
-  - MonsterId: rin
-    SkillEffects:
-    - SkillId: rin-d
-      Prefab: {fileID: 4571567099965563202, guid: 4fb536ec34e06544ab6226bf8f02cb08, type: 3}
 --- !u!114 &1427799832
 MonoBehaviour:
   m_ObjectHideFlags: 0

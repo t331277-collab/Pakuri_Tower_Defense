@@ -25,12 +25,18 @@ namespace Pakuri.InGame
          */
         public SkillSnapshot Resolve(UnitCombatState owner, SkillRuntimeInstance runtime, CombatUnitRegistry roster)
         {
-            var skillData = runtime != null ? runtime.Data : null;
+            SkillRuntimeData skillData = null;
+            if (runtime != null)
+            {
+                skillData = runtime.Data;
+            }
             var snapshot = new SkillSnapshot(skillData);
             ApplyPassiveBaseModifiers(snapshot, owner as MonsterCombatState, skillData);
-            var chosenChoiceIds = owner != null && owner.SkillProgress != null
-                ? owner.SkillProgress.ChosenChoiceIds
-                : null;
+            System.Collections.Generic.ICollection<string> chosenChoiceIds = null;
+            if (owner != null && owner.SkillProgress != null)
+            {
+                chosenChoiceIds = owner.SkillProgress.ChosenChoiceIds;
+            }
             if (skillData == null || chosenChoiceIds == null || chosenChoiceIds.Count == 0)
             {
                 return snapshot;
@@ -60,7 +66,12 @@ namespace Pakuri.InGame
 
             foreach (var passiveId in owner.SkillProgress.LearnedPassiveSkillIds)
             {
-                var passive = owner.SkillRuntime.FindBySkillId(passiveId)?.Data as PassiveSkillRuntimeData;
+                var passiveRuntime = owner.SkillRuntime.FindBySkillId(passiveId);
+                PassiveSkillRuntimeData passive = null;
+                if (passiveRuntime != null)
+                {
+                    passive = passiveRuntime.Data as PassiveSkillRuntimeData;
+                }
                 if (passive == null)
                 {
                     continue;
@@ -120,7 +131,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (!string.IsNullOrWhiteSpace(choice.CountStatusId)
+            if (choice.CountStatusKind != StatusEffectKind.None
                 && choice.DamageMultiplierPerCount > 0f)
             {
                 ApplyCountStatusDamageMultiplier(
@@ -128,7 +139,7 @@ namespace Pakuri.InGame
                     owner,
                     roster,
                     choice.CountTargetSide,
-                    choice.CountStatusId,
+                    choice.CountStatusKind,
                     choice.DamageMultiplierPerCount,
                     choice.CountMax);
             }
@@ -139,7 +150,12 @@ namespace Pakuri.InGame
             var nodes = SkillNodeMapper.MapSkillNodeDefinitions(targetNodes);
             for (var i = 0; i < nodes.Length; i++)
             {
-                var action = nodes[i] != null ? nodes[i].Action : null;
+                if (nodes[i] == null)
+                {
+                    continue;
+                }
+
+                var action = nodes[i].Action;
                 if (!action.HasValue || action.Value.Kind != SkillActionOpKind.CountStatusDamageMultiplier)
                 {
                     continue;
@@ -150,7 +166,7 @@ namespace Pakuri.InGame
                     owner,
                     roster,
                     action.Value.TargetSide,
-                    action.Value.StringValue,
+                    action.Value.StatusKind,
                     action.Value.FloatValue,
                     action.Value.IntValue);
             }
@@ -164,19 +180,19 @@ namespace Pakuri.InGame
             UnitCombatState owner,
             CombatUnitRegistry roster,
             SkillMultiEffectTargetSide targetSide,
-            string statusId,
+            StatusEffectKind statusKind,
             float amountPerCount,
             int countMax)
         {
             if (snapshot == null
-                || string.IsNullOrWhiteSpace(statusId)
+                || statusKind == StatusEffectKind.None
                 || amountPerCount <= 0f
                 || roster == null)
             {
                 return;
             }
 
-            var count = CountMatchingTargets(owner, roster, targetSide, statusId);
+            var count = CountMatchingTargets(owner, roster, targetSide, statusKind);
             if (countMax > 0)
             {
                 count = Mathf.Min(count, countMax);
@@ -197,9 +213,9 @@ namespace Pakuri.InGame
             UnitCombatState owner,
             CombatUnitRegistry roster,
             SkillMultiEffectTargetSide side,
-            string statusId)
+            StatusEffectKind statusKind)
         {
-            if (owner == null || roster == null || string.IsNullOrWhiteSpace(statusId))
+            if (owner == null || roster == null || statusKind == StatusEffectKind.None)
             {
                 return 0;
             }
@@ -214,7 +230,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                if (HasStatus(entry.Model, statusId))
+                if (HasStatus(entry.Model, statusKind))
                 {
                     count++;
                 }
@@ -240,12 +256,29 @@ namespace Pakuri.InGame
             switch (side)
             {
                 case SkillMultiEffectTargetSide.Self:
-                    var self = FindEntryForModel(owner, ownerIsEnemy ? roster.Enemies : roster.Players);
-                    return IsSkillTarget(self) ? new[] { self } : System.Array.Empty<CombatUnitEntry>();
+                    var allies = roster.Players;
+                    if (ownerIsEnemy)
+                    {
+                        allies = roster.Enemies;
+                    }
+                    var self = FindEntryForModel(owner, allies);
+                    if (IsSkillTarget(self))
+                    {
+                        return new[] { self };
+                    }
+                    return System.Array.Empty<CombatUnitEntry>();
                 case SkillMultiEffectTargetSide.AllAllies:
-                    return FilterSkillTargets(ownerIsEnemy ? roster.Enemies : roster.Players);
+                    if (ownerIsEnemy)
+                    {
+                        return FilterSkillTargets(roster.Enemies);
+                    }
+                    return FilterSkillTargets(roster.Players);
                 default:
-                    return FilterSkillTargets(ownerIsEnemy ? roster.Players : roster.Enemies);
+                    if (ownerIsEnemy)
+                    {
+                        return FilterSkillTargets(roster.Players);
+                    }
+                    return FilterSkillTargets(roster.Enemies);
             }
         }
 
@@ -280,7 +313,11 @@ namespace Pakuri.InGame
          */
         private static bool IsSkillTarget(CombatUnitEntry entry)
         {
-            var identity = entry != null && entry.Model != null ? entry.Model.Identity : null;
+            UnitIdentity identity = null;
+            if (entry != null && entry.Model != null)
+            {
+                identity = entry.Model.Identity;
+            }
             return entry != null && (identity == null || identity.Role != UnitRole.Nexus);
         }
 
@@ -310,24 +347,19 @@ namespace Pakuri.InGame
         /*
          * 상태를 보유하고 있는지 확인한다.
          */
-        private static bool HasStatus(UnitCombatState model, string statusId, int minimumStacks = 1)
+        private static bool HasStatus(UnitCombatState model, StatusEffectKind statusKind, int minimumStacks = 1)
         {
-            if (model == null || string.IsNullOrWhiteSpace(statusId) || minimumStacks <= 0)
+            if (model == null || statusKind == StatusEffectKind.None || minimumStacks <= 0)
             {
                 return false;
             }
 
-            if (!StatusEffectLookup.TryParse(statusId, out var kind))
-            {
-                return false;
-            }
-
-            if (kind == StatusEffectKind.Shield)
+            if (statusKind == StatusEffectKind.Shield)
             {
                 return model.Resources != null && model.Resources.CurrentShield > 0f;
             }
 
-            return model.Statuses != null && model.Statuses.GetStacks(kind) >= minimumStacks;
+            return model.Statuses != null && model.Statuses.GetStacks(statusKind) >= minimumStacks;
         }
 
         /*
@@ -347,9 +379,11 @@ namespace Pakuri.InGame
                     skillData.SkillId);
             }
 
-            var targetSkillId = !string.IsNullOrWhiteSpace(choice.TargetSkillId)
-                ? choice.TargetSkillId
-                : choice.SkillId;
+            var targetSkillId = choice.SkillId;
+            if (!string.IsNullOrWhiteSpace(choice.TargetSkillId))
+            {
+                targetSkillId = choice.TargetSkillId;
+            }
             return !string.IsNullOrWhiteSpace(targetSkillId)
                 && string.Equals(targetSkillId, skillData.SkillId, System.StringComparison.OrdinalIgnoreCase);
         }
@@ -373,7 +407,11 @@ namespace Pakuri.InGame
         private static SkillSnapshot ResolveChoices(UnitCombatState owner, string skillId, bool useTargetSkillId)
         {
             var snapshot = new SkillSnapshot(null);
-            var chosenChoiceIds = owner != null && owner.SkillProgress != null ? owner.SkillProgress.ChosenChoiceIds : null;
+            System.Collections.Generic.ICollection<string> chosenChoiceIds = null;
+            if (owner != null && owner.SkillProgress != null)
+            {
+                chosenChoiceIds = owner.SkillProgress.ChosenChoiceIds;
+            }
             if (chosenChoiceIds == null || chosenChoiceIds.Count == 0 || string.IsNullOrWhiteSpace(skillId))
             {
                 return snapshot;

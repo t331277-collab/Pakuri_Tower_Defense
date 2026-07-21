@@ -14,8 +14,8 @@ using UnityEditor;
 
 /*
  * Scene 로드 전에 CSV 런타임 데이터를 한 번 초기화하는 진입점.
- * Resources의 런타임 카탈로그를 불러와 원본 행 파싱, 그래프 구성, 데이터 변환,
- * 참조 검증을 순서대로 실행하고 완성된 GameDataCatalog를 전역 조회 대상으로 제공한다.
+ * Resources 원본을 파싱하고 카탈로그 조회를 등록한 뒤 참조와 스킬 컴파일 결과를
+ * 한 번 검증해 완성된 GameDataCatalog를 전역 조회 대상으로 제공한다.
  */
 namespace Pakuri.Data
 {
@@ -69,8 +69,18 @@ namespace Pakuri.Data
         {
             get
             {
+                if (runtimeCatalog != null)
+                {
+                    return runtimeCatalog;
+                }
+
                 EnsureInitialized();
-                return failed ? null : runtimeCatalog;
+                if (failed)
+                {
+                    return null;
+                }
+
+                return runtimeCatalog;
             }
         }
 
@@ -185,6 +195,18 @@ namespace Pakuri.Data
             var catalog = BuildRuntimeCatalog(source);
             ValidateRuntimeCatalogOrThrow(catalog, source);
             catalog.RebuildLookup();
+            runtimeCatalog = catalog;
+            try
+            {
+                ValidateCompiledSkillDataOrThrow(catalog);
+            }
+            catch
+            {
+                runtimeCatalog = null;
+                throw;
+            }
+
+            initialized = true;
             return catalog;
         }
 

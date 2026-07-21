@@ -869,16 +869,24 @@ namespace Pakuri.Data
             if (string.Equals(handlerId, "ConditionStatus", StringComparison.OrdinalIgnoreCase))
             {
                 definition.ConditionStatusId = BuildConditionStatusExpression(parameters);
+                definition.ConditionStatuses = StatusDataCompiler.ParseConditionStatusExpression(
+                    definition.ConditionStatusId);
                 definition.ConditionTargetSide = GetSkillNodeEnumParam(parameters, "target_side", definition.TargetSide);
                 definition.ConditionStatusSourceSkillId = GetSkillNodeStringParam(parameters, "source_skill_id");
+                definition.ConditionStatusSourceSkillIds = StatusDataCompiler.ParseIdList(
+                    definition.ConditionStatusSourceSkillId);
                 return;
             }
 
             if (string.Equals(handlerId, "ConditionAnyStatus", StringComparison.OrdinalIgnoreCase))
             {
                 definition.ConditionStatusId = GetSkillNodeStringParam(parameters, "status_ids");
+                definition.ConditionStatuses = StatusDataCompiler.ParseConditionStatusExpression(
+                    definition.ConditionStatusId);
                 definition.ConditionTargetSide = GetSkillNodeEnumParam(parameters, "target_side", definition.TargetSide);
                 definition.ConditionStatusSourceSkillId = GetSkillNodeStringParam(parameters, "source_skill_id");
+                definition.ConditionStatusSourceSkillIds = StatusDataCompiler.ParseIdList(
+                    definition.ConditionStatusSourceSkillId);
                 return;
             }
 
@@ -1110,11 +1118,15 @@ namespace Pakuri.Data
                     RequiredSourceStatusId = trigger.RequiredSourceStatusId,
                     RequiredSourceStatusMinStacks = trigger.RequiredSourceStatusMinStacks,
                     ConditionStatusId = trigger.ConditionStatusId,
+                    ConditionStatuses = StatusDataCompiler.ParseConditionStatusExpression(trigger.ConditionStatusId),
                     ConditionStatusSourceSkillId = trigger.ConditionStatusSourceSkillId,
+                    ConditionStatusSourceSkillIds = StatusDataCompiler.ParseIdList(trigger.ConditionStatusSourceSkillId),
                     TriggerAttribute = trigger.TriggerAttribute,
                     TriggerAction = trigger.TriggerAction,
                     EventSkillId = trigger.EventSkillId,
                     EventSkillRuntimeKinds = trigger.EventSkillRuntimeKinds,
+                    EventSkillRuntimeKindValues = StatusDataCompiler.ParseSkillRuntimeKindConditions(
+                        trigger.EventSkillRuntimeKinds),
                     ProcChance = trigger.ProcChance,
                     InternalCooldownSeconds = trigger.InternalCooldownSeconds,
                     TriggeredSkillId = trigger.TriggeredSkillId,

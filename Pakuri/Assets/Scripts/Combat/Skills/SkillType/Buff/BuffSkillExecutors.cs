@@ -31,10 +31,11 @@ namespace Pakuri.InGame
                 : ResolveBuffTargets(context.CasterEntry, context.Roster, skill.Target);
             var effects = context.CombatManager.Effects;
             var runtimeVisual = skill.RuntimeVisual;
-            var preferredPrefab = snapshot != null ? snapshot.SkillEffectPrefab : null;
-            var prefab = effects != null
-                ? effects.ResolveSkillEffectPrefab(context.Caster, skill.SkillId, preferredPrefab)
-                : null;
+            var prefab = skill.SkillEffectPrefab;
+            if (snapshot != null && snapshot.SkillEffectPrefab != null)
+            {
+                prefab = snapshot.SkillEffectPrefab;
+            }
             var routed = false;
             var castCommitted = false;
             var casterVisualSpawned = false;
@@ -109,40 +110,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            var spec = SkillStatus.ResolveStatusSpec(skill.AttachedStatus, snapshot);
-            if (spec != null)
-            {
-                return spec;
-            }
-
-            if (!string.IsNullOrWhiteSpace(skill.ApplyStatusTag)
-                && StatusEffectLookup.TryParse(skill.ApplyStatusTag, out var kind))
-            {
-                var statusData = StatusRuntimeDataFactory.Create(kind, skill.ApplyStatusTag);
-                if (statusData != null)
-                {
-                    statusData.SourceSkillId = skill.SkillId;
-                    statusData.TargetScope = skill.Target == BuffTarget.Self
-                        ? StatusTargetScope.Self
-                        : StatusTargetScope.AllAllies;
-                    statusData.MergePolicy = StatusMergePolicy.SameSourceRefresh;
-                }
-
-                return new ProjectileStatusHitSpec
-                {
-                    Enabled = true,
-                    Kind = kind,
-                    StatusData = statusData,
-                    Chance = 1f,
-                    Stacks = statusData != null ? Math.Max(1, statusData.BaseStackAmount) : 1,
-                    DurationSeconds = statusData != null ? statusData.Duration : 0f,
-                    MaxStacks = statusData != null ? statusData.MaxStacks : 0,
-                    Permanent = statusData != null && statusData.Permanent,
-                    RefreshDuration = true
-                };
-            }
-
-            return null;
+            return SkillStatus.ResolveStatusSpec(skill.AttachedStatus, snapshot);
         }
 
         /*
@@ -208,7 +176,7 @@ namespace Pakuri.InGame
             SkillSnapshot snapshot,
             BuffShieldSkillRuntimeData skill)
         {
-            var shield = SkillValueCalculator.ResolveShield(context.Caster, skill, snapshot);
+            var shield = DamageCalculator.ResolveShield(context.Caster, skill, snapshot);
             var duration = skill.ShieldDuration > 0f
                 ? skill.ShieldDuration
                 : skill.ShieldStatus != null ? skill.ShieldStatus.Duration : 0f;
@@ -227,10 +195,11 @@ namespace Pakuri.InGame
 
             var effects = context.CombatManager.Effects;
             var runtimeVisual = skill.RuntimeVisual;
-            var preferredPrefab = snapshot != null ? snapshot.SkillEffectPrefab : null;
-            var prefab = effects != null
-                ? effects.ResolveSkillEffectPrefab(context.Caster, skill.SkillId, preferredPrefab)
-                : null;
+            var prefab = skill.SkillEffectPrefab;
+            if (snapshot != null && snapshot.SkillEffectPrefab != null)
+            {
+                prefab = snapshot.SkillEffectPrefab;
+            }
 
             var targets = skill.UseConfiguredTargeting
                 ? BuffSkillExecutor.ResolveConfiguredTargets(context.CasterEntry, context.Roster, skill.Targeting)
@@ -313,7 +282,7 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var amount = SkillValueCalculator.ResolvePowerValue(context.Caster, skill.Healing);
+            var amount = DamageCalculator.ResolvePowerValue(context.Caster, skill.Healing);
             if (context.Caster is EnemyCombatState enemy)
             {
                 amount *= Mathf.Max(0f, enemy.PassiveHealingMultiplier);
@@ -330,4 +299,3 @@ namespace Pakuri.InGame
     }
 
 }
-

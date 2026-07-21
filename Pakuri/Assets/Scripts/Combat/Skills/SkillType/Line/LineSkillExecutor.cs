@@ -39,7 +39,7 @@ namespace Pakuri.InGame
             }
 
             direction.Normalize();
-            var damage = SkillValueCalculator.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
+            var damage = DamageCalculator.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
             var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnHitStatus, snapshot);
             var length = ResolveLineLength(skill);
@@ -53,12 +53,13 @@ namespace Pakuri.InGame
             var center = (Vector2)origin + direction * (length * 0.5f);
             var effects = context.CombatManager.Effects;
             var runtimeVisual = skill.RuntimeVisual;
-            var preferredPrefab = snapshot != null ? snapshot.SkillEffectPrefab : null;
-            var prefab = effects != null
-                ? effects.ResolveSkillEffectPrefab(context.Caster, skill.SkillId, preferredPrefab)
-                : null;
+            var prefab = skill.SkillEffectPrefab;
+            if (snapshot != null && snapshot.SkillEffectPrefab != null)
+            {
+                prefab = snapshot.SkillEffectPrefab;
+            }
             var hasEffectVisual = effects != null
-                && (effects.HasVisual(runtimeVisual) || prefab != null);
+                && (EffectManager.HasVisual(runtimeVisual) || prefab != null);
 
             if (!hasEffectVisual)
             {
@@ -90,7 +91,7 @@ namespace Pakuri.InGame
                 return true;
             }
 
-            var rotation = EffectVisualUtility.ResolveRotation(direction);
+            var rotation = EffectManager.ResolveRotation(direction);
             var instance = effects.CreateEffectObject(
                 runtimeVisual,
                 prefab,
@@ -297,4 +298,3 @@ namespace Pakuri.InGame
         }
     }
 }
-

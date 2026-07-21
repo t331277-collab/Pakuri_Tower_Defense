@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Pakuri.Data;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ using UnityEngine;
  */
 namespace Pakuri.InGame
 {
-    public sealed class SkillRuntimeInstance
+    public class SkillRuntimeInstance
     {
         /*
          * 스킬 런타임 인스턴스에 필요한 값을 초기화한다.
@@ -18,15 +19,15 @@ namespace Pakuri.InGame
         {
             Owner = owner;
             Data = data;
-            BasePlan = SkillNodeCompiler.Compile(data, null, data != null ? data.NormalizedPlanNodes : null);
+            BasePlan = SkillNodeCompiler.Compile(data, null, data.NormalizedPlanNodes);
             ResetRuntimeState();
         }
 
         public UnitCombatState Owner { get; }
         public SkillRuntimeData Data { get; }
         public SkillNodePlan BasePlan { get; }
-        public string SkillId => Data != null ? Data.SkillId : string.Empty;
-        public SkillSlot Slot => Data != null ? Data.Slot : default;
+        public string SkillId => Data.SkillId;
+        public SkillSlot Slot => Data.Slot;
         public float CooldownRemaining { get; private set; }
         public float CastRemaining { get; private set; }
         public float ActiveDurationRemaining { get; private set; }
@@ -121,18 +122,31 @@ namespace Pakuri.InGame
             }
 
             var projectileData = Data as ProjectileSkillRuntimeData;
-            var bonusRate = snapshot != null && snapshot.ConsecutiveHitBonusRate > 0f
-                ? snapshot.ConsecutiveHitBonusRate
-                : projectileData != null ? projectileData.ConsecutiveHitBonusRate : 0f;
-            var bonusMax = snapshot != null && snapshot.ConsecutiveHitMax > 0f
-                ? snapshot.ConsecutiveHitMax
-                : projectileData != null ? projectileData.ConsecutiveHitMax : 0f;
+            var bonusRate = 0f;
+            var bonusMax = 0f;
+            if (projectileData != null)
+            {
+                bonusRate = projectileData.ConsecutiveHitBonusRate;
+                bonusMax = projectileData.ConsecutiveHitMax;
+            }
+            if (snapshot != null && snapshot.ConsecutiveHitBonusRate > 0f)
+            {
+                bonusRate = snapshot.ConsecutiveHitBonusRate;
+            }
+            if (snapshot != null && snapshot.ConsecutiveHitMax > 0f)
+            {
+                bonusMax = snapshot.ConsecutiveHitMax;
+            }
             if (bonusRate <= 0f || bonusMax <= 0f)
             {
                 return 1f;
             }
 
-            var unitId = target.Identity != null ? target.Identity.UnitId : string.Empty;
+            var unitId = string.Empty;
+            if (target.Identity != null)
+            {
+                unitId = target.Identity.UnitId;
+            }
             if (string.IsNullOrWhiteSpace(unitId))
             {
                 consecutiveHitTargetUnitId = string.Empty;
@@ -248,10 +262,14 @@ namespace Pakuri.InGame
             }
 
             var timing = Data.Timing;
-            CastRemaining = timing != null ? Mathf.Max(0f, timing.CastTime) : 0f;
-            ActiveDurationRemaining = timing != null ? Mathf.Max(0f, timing.ActiveDuration) : 0f;
+            CastRemaining = Mathf.Max(0f, timing.CastTime);
+            ActiveDurationRemaining = Mathf.Max(0f, timing.ActiveDuration);
             queuedBurstShotsRemaining = Math.Max(0, effectiveBurstProjectileCount - 1);
-            TickRemaining = IsBursting ? effectiveBurstInterval : effectiveTickInterval;
+            TickRemaining = effectiveTickInterval;
+            if (IsBursting)
+            {
+                TickRemaining = effectiveBurstInterval;
+            }
 
             if (!IsBursting)
             {
@@ -266,8 +284,7 @@ namespace Pakuri.InGame
          */
         public bool IsTickReady()
         {
-            var timing = Data != null ? Data.Timing : null;
-            return timing != null && timing.TickInterval > 0f && TickRemaining <= 0f;
+            return Data.Timing.TickInterval > 0f && TickRemaining <= 0f;
         }
 
         /*
@@ -349,7 +366,12 @@ namespace Pakuri.InGame
          */
         private static float TickDown(float value, float deltaTime)
         {
-            return value > 0f ? Mathf.Max(0f, value - deltaTime) : 0f;
+            if (value > 0f)
+            {
+                return Mathf.Max(0f, value - deltaTime);
+            }
+
+            return 0f;
         }
 
         /*
@@ -420,9 +442,7 @@ namespace Pakuri.InGame
          */
         private static int ResolveMaxMagazineSize(SkillRuntimeData data)
         {
-            return data != null
-                ? Math.Max(0, data.MagazineCapacity)
-                : 0;
+            return Math.Max(0, data.MagazineCapacity);
         }
 
         /*
@@ -431,9 +451,12 @@ namespace Pakuri.InGame
         private static int ResolveBurstProjectileCount(SkillRuntimeData data)
         {
             var projectile = data as ProjectileSkillRuntimeData;
-            return projectile != null && projectile.Projectile != null
-                ? Math.Max(1, projectile.Projectile.BurstProjectileCount)
-                : 1;
+            if (projectile != null && projectile.Projectile != null)
+            {
+                return Math.Max(1, projectile.Projectile.BurstProjectileCount);
+            }
+
+            return 1;
         }
 
         /*
@@ -441,9 +464,7 @@ namespace Pakuri.InGame
          */
         private static float ResolveReloadDuration(SkillRuntimeData data)
         {
-            return data != null
-                ? Mathf.Max(0f, data.ReloadSeconds)
-                : 0f;
+            return Mathf.Max(0f, data.ReloadSeconds);
         }
 
         /*
@@ -451,8 +472,7 @@ namespace Pakuri.InGame
          */
         private static float ResolveTickInterval(SkillRuntimeData data)
         {
-            var timing = data != null ? data.Timing : null;
-            return timing != null ? Mathf.Max(0f, timing.TickInterval) : 0f;
+            return Mathf.Max(0f, data.Timing.TickInterval);
         }
 
         /*
@@ -478,8 +498,7 @@ namespace Pakuri.InGame
          */
         private static float ResolveCooldownDuration(SkillRuntimeData data)
         {
-            var timing = data != null ? data.Timing : null;
-            return timing != null ? Mathf.Max(0f, timing.Cooldown) : 0f;
+            return Mathf.Max(0f, data.Timing.Cooldown);
         }
 
         /*
@@ -509,6 +528,318 @@ namespace Pakuri.InGame
             {
                 MagazineRemaining = MaxMagazineSize;
             }
+        }
+    }
+}
+
+
+/*
+ * 유닛이 보유한 스킬 런타임 목록을 관리한다.
+ */
+namespace Pakuri.InGame
+{
+    public class UnitSkillRuntimeSet
+    {
+        private readonly List<SkillRuntimeInstance> activeSkills = new List<SkillRuntimeInstance>();
+        private readonly List<SkillRuntimeInstance> passiveSkills = new List<SkillRuntimeInstance>();
+
+        public IReadOnlyList<SkillRuntimeInstance> ActiveSkills => activeSkills;
+        public IReadOnlyList<SkillRuntimeInstance> PassiveSkills => passiveSkills;
+        public int Count => activeSkills.Count + passiveSkills.Count;
+
+        /*
+         * 유닛의 스킬 런타임 목록을 비운다.
+         */
+        public void Clear()
+        {
+            activeSkills.Clear();
+            passiveSkills.Clear();
+        }
+
+        /*
+         * 같은 ID의 스킬을 교체하거나 새 스킬을 추가한다.
+         */
+        public void AddOrReplace(SkillRuntimeInstance instance)
+        {
+            var skills = passiveSkills;
+            if (instance.Data.IsActive)
+            {
+                skills = activeSkills;
+            }
+            var existingIndex = FindIndexBySkillId(skills, instance.SkillId);
+            if (existingIndex >= 0)
+            {
+                skills[existingIndex] = instance;
+                return;
+            }
+
+            skills.Add(instance);
+        }
+
+        /*
+         * 스킬 ID가 일치하는 런타임을 찾는다.
+         */
+        public SkillRuntimeInstance FindBySkillId(string skillId)
+        {
+            var index = FindIndexBySkillId(activeSkills, skillId);
+            if (index >= 0)
+            {
+                return activeSkills[index];
+            }
+
+            index = FindIndexBySkillId(passiveSkills, skillId);
+            if (index >= 0)
+            {
+                return passiveSkills[index];
+            }
+
+            return null;
+        }
+
+        /*
+         * 선택지 ID가 일치하는 컴파일 결과를 찾는다.
+         */
+        public SkillChoiceRuntimeData FindChoice(string choiceId)
+        {
+            for (var i = 0; i < activeSkills.Count; i++)
+            {
+                var choice = FindChoice(activeSkills[i].Data, choiceId);
+                if (choice != null)
+                {
+                    return choice;
+                }
+            }
+
+            for (var i = 0; i < passiveSkills.Count; i++)
+            {
+                var choice = FindChoice(passiveSkills[i].Data, choiceId);
+                if (choice != null)
+                {
+                    return choice;
+                }
+            }
+
+            return null;
+        }
+
+        /*
+         * 스킬 슬롯이 일치하는 런타임을 찾는다.
+         */
+        public SkillRuntimeInstance FindBySlot(SkillSlot slot)
+        {
+            for (var i = 0; i < activeSkills.Count; i++)
+            {
+                if (activeSkills[i] != null && activeSkills[i].Slot == slot)
+                {
+                    return activeSkills[i];
+                }
+            }
+
+            return null;
+        }
+
+        /*
+         * 유닛이 보유한 모든 스킬 런타임 시간을 갱신한다.
+         */
+        public void Tick(float deltaTime)
+        {
+            if (deltaTime <= 0f)
+            {
+                return;
+            }
+
+            for (var i = 0; i < activeSkills.Count; i++)
+            {
+                activeSkills[i].Tick(deltaTime);
+            }
+        }
+
+        /*
+         * 스킬 ID가 일치하는 런타임의 목록 위치를 찾는다.
+         */
+        private static int FindIndexBySkillId(List<SkillRuntimeInstance> skills, string skillId)
+        {
+            for (var i = 0; i < skills.Count; i++)
+            {
+                var runtime = skills[i];
+                if (runtime != null && string.Equals(runtime.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private static SkillChoiceRuntimeData FindChoice(SkillRuntimeData skill, string choiceId)
+        {
+            var choice = FindChoice(skill.EnhancementChoices, choiceId);
+            if (choice != null)
+            {
+                return choice;
+            }
+
+            choice = FindChoice(skill.MasterChoices, choiceId);
+            if (choice != null)
+            {
+                return choice;
+            }
+
+            var passive = skill as PassiveSkillRuntimeData;
+            if (passive != null)
+            {
+                return FindChoice(passive.BaseModifierChoices, choiceId);
+            }
+
+            return null;
+        }
+
+        private static SkillChoiceRuntimeData FindChoice(SkillChoiceRuntimeData[] choices, string choiceId)
+        {
+            for (var i = 0; i < choices.Length; i++)
+            {
+                if (string.Equals(choices[i].ChoiceId, choiceId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return choices[i];
+                }
+            }
+
+            return null;
+        }
+    }
+}
+
+
+/*
+ * 유닛 정의와 학습 상태를 읽어 유닛이 사용할 스킬 런타임 목록을 다시 구성한다.
+ * 목록 저장과 조회를 담당하는 UnitSkillRuntimeSet과 달리 데이터 선택과 인스턴스 생성을 맡는다.
+ */
+namespace Pakuri.InGame
+{
+    public static class UnitSkillRuntimeBuilder
+    {
+        private static readonly SkillSlot[] ActiveSlots =
+        {
+            SkillSlot.A,
+            SkillSlot.B,
+            SkillSlot.C,
+            SkillSlot.D,
+            SkillSlot.E
+        };
+
+        /*
+         * 학습한 활성 스킬과 패시브 목록을 다시 구성한다.
+         */
+        public static void RebuildLearnedSkillSet(UnitCombatState owner)
+        {
+            if (owner == null)
+            {
+                return;
+            }
+
+            owner.SkillRuntime.Clear();
+            PopulateLearnedSkillSet(owner, owner.SkillRuntime);
+        }
+
+        /*
+         * 지정된 활성 목록을 다시 구성한다.
+         */
+        public static void RebuildAssignedActiveSet(
+            UnitCombatState owner,
+            SkillDefinition[] definitions,
+            SkillTriggerDefinition[] triggers)
+        {
+            if (owner == null)
+            {
+                return;
+            }
+
+            owner.SkillRuntime.Clear();
+            if (definitions == null)
+            {
+                return;
+            }
+
+            var ownerId = string.Empty;
+            if (owner.Identity != null)
+            {
+                ownerId = owner.Identity.DefinitionId;
+            }
+            for (var i = 0; i < definitions.Length; i++)
+            {
+                var data = SkillRuntimeCompiler.CompileActive(ownerId, definitions[i], triggers);
+                owner.SkillRuntime.AddOrReplace(new SkillRuntimeInstance(owner, data));
+            }
+        }
+
+        /*
+         * 학습한 활성 스킬과 패시브를 목록에 채운다.
+         */
+        private static void PopulateLearnedSkillSet(
+            UnitCombatState owner,
+            UnitSkillRuntimeSet target)
+        {
+            if (owner == null || target == null)
+            {
+                return;
+            }
+
+            string monsterId = null;
+            if (owner.Identity != null)
+            {
+                monsterId = owner.Identity.DefinitionId;
+            }
+            if (string.IsNullOrWhiteSpace(monsterId))
+            {
+                return;
+            }
+
+            var monster = CsvDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            for (var i = 0; i < ActiveSlots.Length; i++)
+            {
+                var source = CsvDataLoader.CurrentCatalog.ResolveActiveSkill(monsterId, ActiveSlots[i]);
+                if (source == null)
+                {
+                    continue;
+                }
+
+                var skillData = SkillRuntimeCompiler.CompileActive(monster, source);
+                if (ContainsId(owner.SkillProgress.LearnedActiveSkillIds, skillData.SkillId))
+                {
+                    target.AddOrReplace(new SkillRuntimeInstance(owner, skillData));
+                }
+            }
+
+            var passives = CsvDataLoader.CurrentCatalog.GetPassiveSkills(monsterId);
+            for (var i = 0; i < passives.Length; i++)
+            {
+                var passive = SkillRuntimeCompiler.CompilePassive(monster, passives[i]);
+                if (ContainsId(owner.SkillProgress.LearnedPassiveSkillIds, passive.SkillId))
+                {
+                    target.AddOrReplace(new SkillRuntimeInstance(owner, passive));
+                }
+            }
+        }
+
+        /*
+         * ID를 포함하는지 확인한다.
+         */
+        private static bool ContainsId(IEnumerable<string> ids, string targetId)
+        {
+            if (ids == null || string.IsNullOrWhiteSpace(targetId))
+            {
+                return false;
+            }
+
+            foreach (var id in ids)
+            {
+                if (string.Equals(id, targetId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
