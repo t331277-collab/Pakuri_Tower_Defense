@@ -381,7 +381,7 @@ namespace Pakuri.InGame
             var hitDamage = damage;
             if (executionData != null)
             {
-                hitDamage *= executionData.ResolveConditionalDamageMultiplier(target);
+                hitDamage *= SkillExecutionRuleResolver.ResolveConditionalDamageMultiplier(executionData, target);
             }
 
             if (runtime != null && executionData != null)

@@ -306,7 +306,7 @@ namespace Pakuri.InGame
             var hasRuntimeVisual = effects != null && runtimeVisual != null && runtimeVisual.HasVisual();
 
             var baseStatusSpec = SkillStatus.ResolveStatusSpec(skill.OnHitStatus, snapshot);
-            var planEffects = snapshot.CollectEffects(skill.MultiEffects);
+            var planEffects = skill.MultiEffects;
             var onHitEffects = ResolveTimedEffects(context, snapshot, planEffects, SkillMultiEffectTiming.OnHit);
             var onExpireEffects = ResolveTimedEffects(context, snapshot, planEffects, SkillMultiEffectTiming.OnExpire);
             var projectile = skill.Projectile;
@@ -577,7 +577,7 @@ namespace Pakuri.InGame
 
             if (snapshot != null)
             {
-                multiplier *= snapshot.ResolveBurstDamageMultiplier(projectileIndex, burstProjectileCount);
+                multiplier *= SkillExecutionRuleResolver.ResolveBurstDamageMultiplier(snapshot, projectileIndex, burstProjectileCount);
             }
 
             return Mathf.Max(0f, multiplier);
@@ -850,7 +850,7 @@ namespace Pakuri.InGame
             var resolvedDamage = damage;
             if (snapshot != null)
             {
-                resolvedDamage *= snapshot.ResolveConditionalDamageMultiplier(target.Model);
+                resolvedDamage *= SkillExecutionRuleResolver.ResolveConditionalDamageMultiplier(snapshot, target.Model);
             }
             if (context.Runtime != null && snapshot != null)
             {
@@ -912,7 +912,7 @@ namespace Pakuri.InGame
                 return baseStatusSpec;
             }
 
-            var stacksBonus = snapshot.ResolveBurstStatusStacksBonus(projectileIndex, burstProjectileCount);
+            var stacksBonus = SkillExecutionRuleResolver.ResolveBurstStatusStacksBonus(snapshot, projectileIndex, burstProjectileCount);
             if (stacksBonus == 0)
             {
                 return baseStatusSpec;

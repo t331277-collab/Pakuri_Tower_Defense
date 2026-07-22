@@ -14,11 +14,10 @@ namespace Pakuri.InGame
 internal static class SkillTrigger
 {
 	/*
-	 * 기본 Trigger와 선택한 노드 Trigger를 하나의 실행 목록으로 만든다.
+	 * null 항목을 제외한 기본 Trigger 실행 목록을 만든다.
 	 */
 	private static SkillTriggerDefinition[] CollectTriggers(
-		SkillTriggerDefinition[] baseTriggers /* 유닛 기본 Trigger 목록 */,
-		IReadOnlyList<SkillNode> nodes /* 선택한 강화 노드 목록 */)
+		SkillTriggerDefinition[] baseTriggers /* 유닛 기본 Trigger 목록 */)
 	{
 		var triggers = new List<SkillTriggerDefinition>();
 		if (baseTriggers != null)
@@ -28,17 +27,6 @@ internal static class SkillTrigger
 				if (baseTriggers[i] != null)
 				{
 					triggers.Add(baseTriggers[i]);
-				}
-			}
-		}
-
-		if (nodes != null)
-		{
-			for (var i = 0; i < nodes.Count; i++)
-			{
-				if (nodes[i] != null && nodes[i].Trigger != null)
-				{
-					triggers.Add(nodes[i].Trigger);
 				}
 			}
 		}
@@ -299,7 +287,7 @@ internal static class SkillTrigger
 			return baseTriggers;
 		}
 
-		return CollectTriggers(sourceSkill.Data.SkillTriggers, sourceSkill.Data.NormalizedPlanNodes);
+		return CollectTriggers(sourceSkill.Data.SkillTriggers);
 	}
 
 	/*

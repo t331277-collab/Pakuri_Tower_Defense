@@ -132,7 +132,7 @@ namespace Pakuri.InGame
                 var resolvedDamage = damagePerTick;
                 if (executionData != null)
                 {
-                    resolvedDamage *= executionData.ResolveConditionalDamageMultiplier(target.Model);
+                    resolvedDamage *= SkillExecutionRuleResolver.ResolveConditionalDamageMultiplier(executionData, target.Model);
                 }
                 resolvedDamage = Mathf.Max(0f, resolvedDamage);
                 var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
@@ -437,7 +437,7 @@ namespace Pakuri.InGame
                 var resolvedDamage = damagePerTick;
                 if (executionData != null)
                 {
-                    resolvedDamage *= executionData.ResolveConditionalDamageMultiplier(target.Model);
+                    resolvedDamage *= SkillExecutionRuleResolver.ResolveConditionalDamageMultiplier(executionData, target.Model);
                 }
                 resolvedDamage = Mathf.Max(0f, resolvedDamage);
                 var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);

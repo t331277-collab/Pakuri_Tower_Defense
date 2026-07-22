@@ -17,88 +17,6 @@ namespace Pakuri.InGame
 public class SkillExecutionData
 {
 	/*
-	 * 대상이 필요한 상태 중첩을 가지고 있을 때 적용할 피해 배율을 보관한다.
-	 */
-	private readonly struct ConditionalDamageRule
-	{
-		public float DamageMultiplier { get; }
-
-		public StatusEffectKind StatusKind { get; }
-
-		public int MinStacks { get; }
-
-		/*
-		 * ConditionalDamageRule에 필요한 값을 초기화한다.
-		 */
-		public ConditionalDamageRule(float damageMultiplier /* 피해량에 곱할 배율 */, StatusEffectKind statusKind /* 상태 효과 종류 */, int minStacks /* 최소 중첩 수 */)
-		{
-			DamageMultiplier = damageMultiplier;
-			StatusKind = statusKind;
-			MinStacks = minStacks;
-		}
-	}
-
-	/*
-	 * 대상의 상태 중첩 조건에 따라 추가할 치명타 확률을 보관한다.
-	 */
-	private readonly struct ConditionalCritChanceRule
-	{
-		public float CritChanceBonus { get; }
-
-		public StatusEffectKind StatusKind { get; }
-
-		public int MinStacks { get; }
-
-		/*
-		 * ConditionalCritChanceRule에 필요한 값을 초기화한다.
-		 */
-		public ConditionalCritChanceRule(float critChanceBonus /* 추가 치명타 확률 */, StatusEffectKind statusKind /* 상태 효과 종류 */, int minStacks /* 최소 중첩 수 */)
-		{
-			CritChanceBonus = critChanceBonus;
-			StatusKind = statusKind;
-			MinStacks = minStacks;
-		}
-	}
-
-	/*
-	 * 연속 발사 중 특정 투사체에 적용할 피해 배율을 보관한다.
-	 */
-	private readonly struct BurstDamageRule
-	{
-		public int ProjectileIndex { get; }
-
-		public float DamageMultiplier { get; }
-
-		/*
-		 * BurstDamageRule에 필요한 값을 초기화한다.
-		 */
-		public BurstDamageRule(int projectileIndex /* 투사체 순서 번호 */, float damageMultiplier /* 피해량에 곱할 배율 */)
-		{
-			ProjectileIndex = projectileIndex;
-			DamageMultiplier = damageMultiplier;
-		}
-	}
-
-	/*
-	 * 연속 발사 중 특정 투사체가 추가할 상태 중첩을 보관한다.
-	 */
-	private readonly struct BurstStatusRule
-	{
-		public int ProjectileIndex { get; }
-
-		public int StacksBonus { get; }
-
-		/*
-		 * BurstStatusRule에 필요한 값을 초기화한다.
-		 */
-		public BurstStatusRule(int projectileIndex /* 투사체 순서 번호 */, int stacksBonus /* 중첩 수 추가값 */)
-		{
-			ProjectileIndex = projectileIndex;
-			StacksBonus = stacksBonus;
-		}
-	}
-
-	/*
 	 * 적용한 선택지와 상태, Trigger별 누적 보너스를 이름으로 관리한다.
 	 */
 	private readonly HashSet<string> activeChoiceIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -116,13 +34,13 @@ public class SkillExecutionData
 	/*
 	 * 대상 조건과 연속 발사 순서에 따라 실행 중 계산할 규칙을 보관한다.
 	 */
-	private readonly List<ConditionalDamageRule> conditionalDamageRules = new List<ConditionalDamageRule>();
+	private readonly List<ConditionalDamageActionOp> conditionalDamageActions = new List<ConditionalDamageActionOp>();
 
-	private readonly List<ConditionalCritChanceRule> conditionalCritChanceRules = new List<ConditionalCritChanceRule>();
+	private readonly List<ConditionalCritChanceActionOp> conditionalCritChanceActions = new List<ConditionalCritChanceActionOp>();
 
-	private readonly List<BurstDamageRule> burstDamageRules = new List<BurstDamageRule>();
+	private readonly List<BurstDamageActionOp> burstDamageActions = new List<BurstDamageActionOp>();
 
-	private readonly List<BurstStatusRule> burstStatusRules = new List<BurstStatusRule>();
+	private readonly List<BurstStatusActionOp> burstStatusActions = new List<BurstStatusActionOp>();
 
 	/*
 	 * 선택지 값에서 만든 조건, 보정, 처치 행동과 정규화된 노드를 보관한다.
@@ -134,8 +52,6 @@ public class SkillExecutionData
 	private readonly List<CritModifierOp> critModifierOps = new List<CritModifierOp>();
 
 	private readonly List<KillActionOp> killActionOps = new List<KillActionOp>();
-
-	private readonly List<SkillNode> normalizedPlanNodes = new List<SkillNode>();
 
 	/*
 	 * 강화 수치를 적용할 원본 스킬을 나타낸다.
@@ -186,8 +102,6 @@ public class SkillExecutionData
 	/*
 	 * 처형, 분기 공격, 치명타와 처치 후 행동에 필요한 값을 보관한다.
 	 */
-	public float ExecuteHealthRatioBonus { get; private set; }
-
 	public float DurationBonus { get; private set; }
 
 	public float BranchChanceBonus { get; private set; }
@@ -220,19 +134,9 @@ public class SkillExecutionData
 
 	public float CritDamageBonus { get; private set; }
 
-	public float ExecuteCritChanceBonus { get; private set; }
-
 	public float ConsecutiveHitBonusRate { get; private set; }
 
 	public float ConsecutiveHitMax { get; private set; }
-
-	public float BossDamageMultiplier { get; private set; }
-
-	public float KillCooldownRefundRatioBonus { get; private set; }
-
-	public bool KillResetsCooldown { get; private set; }
-
-	public bool KillResetsCooldownRequiresExecute { get; private set; }
 
 	/*
 	 * 상태 효과의 적용 확률, 중첩과 전투 능력치 보너스를 보관한다.
@@ -391,35 +295,13 @@ public class SkillExecutionData
 
 	public IReadOnlyList<KillActionOp> KillActionOps => killActionOps;
 
-	public IReadOnlyList<SkillNode> NormalizedPlanNodes => normalizedPlanNodes;
+	internal IReadOnlyList<ConditionalDamageActionOp> ConditionalDamageActions => conditionalDamageActions;
 
-	/*
-	 * 기본 효과와 현재 유닛이 선택한 노드 효과를 실행 목록으로 반환한다.
-	 */
-	public SkillEffectDefinition[] CollectEffects(SkillEffectDefinition[] baseEffects /* 스킬 기본 효과 목록 */)
-	{
-		var effects = new List<SkillEffectDefinition>();
-		if (baseEffects != null)
-		{
-			for (var i = 0; i < baseEffects.Length; i++)
-			{
-				if (baseEffects[i] != null)
-				{
-					effects.Add(baseEffects[i]);
-				}
-			}
-		}
+	internal IReadOnlyList<ConditionalCritChanceActionOp> ConditionalCritChanceActions => conditionalCritChanceActions;
 
-		for (var i = 0; i < normalizedPlanNodes.Count; i++)
-		{
-			var node = normalizedPlanNodes[i];
-			if (node != null && node.Effect != null)
-			{
-				effects.Add(node.Effect);
-			}
-		}
-		return effects.ToArray();
-	}
+	internal IReadOnlyList<BurstDamageActionOp> BurstDamageActions => burstDamageActions;
+
+	internal IReadOnlyList<BurstStatusActionOp> BurstStatusActions => burstStatusActions;
 
 	/*
 	 * 분기 공격에 필요한 확률, 횟수, 피해 또는 발사 주기가 하나라도 있는지 확인한다.
@@ -516,14 +398,13 @@ public class SkillExecutionData
 		DamageDelayMultiplier = 1f;
 		ReloadTimeMultiplier = 1f;
 		ShotIntervalMultiplier = 1f;
-		BossDamageMultiplier = 1f;
 		BranchDamageMultiplier = 1f;
 		OnHitAdditionalDamageMultiplier = 1f;
 		OnHitChainDamageMultiplier = 1f;
 		if (source != null)
 		{
 			SkillEffectPrefab = source.SkillEffectPrefab;
-			AddNormalizedPlanNodes(source.NormalizedPlanNodes);
+			ApplyPlanNodes(source.NormalizedPlanNodes);
 		}
 	}
 
@@ -536,7 +417,7 @@ public class SkillExecutionData
 		{
 			return;
 		}
-		ApplyNodeBackedChoiceDefinition(spec.Source);
+		ApplyNodeBackedChoice(spec);
 	}
 
 	/*
@@ -560,128 +441,16 @@ public class SkillExecutionData
 	/*
 	 * 선택지 노드를 현재 스킬 대상으로 한정한 뒤 필드와 행동 노드에 반영한다.
 	 */
-	private void ApplyNodeBackedChoiceDefinition(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */)
+	private void ApplyNodeBackedChoice(SkillChoice choiceSpec /* 적용하거나 검사할 스킬 선택지 */)
 	{
+		SkillChoiceDefinition choice = choiceSpec.Source;
 		if (choice.SkillEffectPrefab != null)
 		{
 			SkillEffectPrefab = choice.SkillEffectPrefab;
 		}
-		SkillNodeDefinition[] array = SkillNodeMapper.FilterSkillNodeDefinitionsForTarget(choice.NormalizedPlanNodes, SkillId);
-		SkillChoice spec = new SkillChoice
-		{
-			Source = new SkillChoiceDefinition()
-		};
-		SkillChoiceCompiler.ApplyChoiceFieldNodes(spec, array);
-		ApplyNodeBackedChoiceFields(spec);
-		SkillNode[] nodes = SkillNodeMapper.MapSkillNodeDefinitions(array);
-		AddNormalizedPlanNodes(nodes);
-		ApplyPlanActionNodes(nodes);
-		RefreshSingleOperationBridges();
-	}
-
-	/*
-	 * 선택지 컴파일 결과 중 개별 속성으로 표현되는 특수 강화 값을 누적한다.
-	 */
-	private void ApplyNodeBackedChoiceFields(SkillChoice spec /* 처리에 사용할 설정 */)
-	{
-		SkillChoiceDefinition source = spec.Source;
-		CritChanceBonus += source.CritChanceBonus;
-		CritDamageBonus += source.CritDamageBonus;
-		BeamWidthBonus += source.BeamWidthBonus;
-		if (source.HasKnockbackDistanceMultiplier)
-		{
-			KnockbackDistanceMultiplier *= source.KnockbackDistanceMultiplier;
-		}
-		if (!string.IsNullOrWhiteSpace(source.ReloadReduceTargetSkillId))
-		{
-			ReloadReduceTargetSkillId = source.ReloadReduceTargetSkillId;
-			ReloadReduceSecondsPerHit += source.ReloadReduceSecondsPerHit;
-		}
-		if (source.HasCoreDamageMultiplier)
-		{
-			CoreHitboxName = source.CoreHitboxName;
-			HasCoreDamageMultiplier = true;
-			CoreDamageMultiplier *= source.CoreDamageMultiplier;
-		}
-		if (source.HasCoreOnHitAdditionalDamage)
-		{
-			CoreHitboxName = source.CoreHitboxName;
-			HasCoreOnHitAdditionalDamage = true;
-			CoreOnHitAdditionalDamageChance = source.CoreOnHitAdditionalDamageChance;
-			CoreOnHitAdditionalDamageMultiplier = source.CoreOnHitAdditionalDamageMultiplier;
-			CoreOnHitAdditionalDamageAttribute = source.CoreOnHitAdditionalDamageAttribute;
-		}
-		if (!string.IsNullOrWhiteSpace(source.HitCountCooldownRefundTargetSkillId))
-		{
-			HitCountCooldownRefundTargetSkillId = source.HitCountCooldownRefundTargetSkillId;
-			HitCountCooldownRefundMinTargets = source.HitCountCooldownRefundMinTargets;
-			HitCountCooldownRefundRatio = source.HitCountCooldownRefundRatio;
-		}
-		if (source.HasOnHitAdditionalDamage)
-		{
-			HasOnHitAdditionalDamage = true;
-			OnHitAdditionalDamageChance = source.OnHitAdditionalDamageChance;
-			OnHitAdditionalDamageMultiplier = source.OnHitAdditionalDamageMultiplier;
-			OnHitAdditionalDamageAttribute = source.OnHitAdditionalDamageAttribute;
-			OnHitAdditionalDamageTarget = source.OnHitAdditionalDamageTarget;
-		}
-		if (source.OnHitChainHitPeriod > 0)
-		{
-			OnHitChainHitPeriod = source.OnHitChainHitPeriod;
-			OnHitChainTargetCount = source.OnHitChainTargetCount;
-			OnHitChainSearchRadius = source.OnHitChainSearchRadius;
-			OnHitChainDamageMultiplier = source.OnHitChainDamageMultiplier;
-			OnHitChainDamageAttribute = source.OnHitChainDamageAttribute;
-		}
-		if (source.HasBurstDamageMultiplier && source.BurstDamageMultiplier > 0f && source.HasBurstDamageProjectileIndex)
-		{
-			burstDamageRules.Add(new BurstDamageRule(source.BurstDamageProjectileIndex, source.BurstDamageMultiplier));
-		}
-		if (source.HasBurstStatusProjectileIndex && source.BurstStatusStacksBonus != 0)
-		{
-			burstStatusRules.Add(new BurstStatusRule(source.BurstStatusProjectileIndex, source.BurstStatusStacksBonus));
-		}
-		if (source.FollowUpProjectileCount > 0)
-		{
-			FollowUpProjectileCount = source.FollowUpProjectileCount;
-			FollowUpProjectileDelaySeconds = Mathf.Max(0f, source.FollowUpProjectileDelaySeconds);
-			FollowUpProjectileDamageMultiplier = Mathf.Max(0f, source.FollowUpProjectileDamageMultiplier);
-		}
-		if (source.ThresholdStatusKind != StatusEffectKind.None && source.ThresholdStatusMinStacks > 0 && source.ThresholdApplyStatusKind != StatusEffectKind.None)
-		{
-			ThresholdStatusKind = source.ThresholdStatusKind;
-			ThresholdStatusMinStacks = source.ThresholdStatusMinStacks;
-			ThresholdApplyStatusKind = source.ThresholdApplyStatusKind;
-		}
-		if (source.HasTargetStatusStackDamageMultiplier && source.TargetStatusStackDamageMultiplier > 0f)
-		{
-			TargetStatusStackDamageMultiplier *= PositiveOrDefault(source.TargetStatusStackDamageMultiplier, 1f);
-		}
-		if (source.HasConsumeTargetStatusRatioOverride)
-		{
-			HasConsumeTargetStatusRatioOverride = true;
-			ConsumeTargetStatusRatioOverride = Mathf.Clamp01(source.ConsumeTargetStatusRatioOverride);
-		}
-		if (source.RepeatCountPerTarget > 0)
-		{
-			RepeatCountPerTarget += source.RepeatCountPerTarget;
-			RepeatIntervalSeconds = Mathf.Max(RepeatIntervalSeconds, source.RepeatIntervalSeconds);
-			if (source.RepeatDamageMultiplier > 0f)
-			{
-				RepeatDamageMultiplier *= PositiveOrDefault(source.RepeatDamageMultiplier, 1f);
-			}
-		}
-		if (!Mathf.Approximately(source.ConditionalCritChanceBonus, 0f) && source.ConditionalCritTargetStatusKind != StatusEffectKind.None && source.ConditionalCritTargetStatusMinStacks > 0)
-		{
-			conditionalCritChanceRules.Add(new ConditionalCritChanceRule(source.ConditionalCritChanceBonus, source.ConditionalCritTargetStatusKind, source.ConditionalCritTargetStatusMinStacks));
-		}
-		if (source.RedistributeConsumedStatusRatioOnKill > 0f && source.RedistributeConsumedStatusKind != StatusEffectKind.None && source.RedistributeConsumedStatusSearchRadius > 0f)
-		{
-			RedistributeConsumedStatusRatioOnKill = Mathf.Clamp01(source.RedistributeConsumedStatusRatioOnKill);
-			RedistributeConsumedStatusKind = source.RedistributeConsumedStatusKind;
-			RedistributeConsumedStatusSearchRadius = Mathf.Max(0f, source.RedistributeConsumedStatusSearchRadius);
-			RedistributeConsumedStatusTargetCount = Mathf.Max(0, source.RedistributeConsumedStatusTargetCount);
-		}
+		SkillChoiceRuntimePlan plan = SkillNodeMapper.ResolveChoiceRuntimePlan(choiceSpec, SkillId);
+		SkillNode[] nodes = plan.Nodes;
+		ApplyPlanNodes(nodes);
 	}
 
 	/*
@@ -699,7 +468,7 @@ public class SkillExecutionData
 	/*
 	 * 선택지 노드의 단순 행동과 복합 행동을 현재 실행 데이터에 적용한다.
 	 */
-	private void ApplyPlanActionNodes(IReadOnlyList<SkillNode> nodes /* 노드 목록 */)
+	private void ApplyPlanNodes(IReadOnlyList<SkillNode> nodes /* 노드 목록 */)
 	{
 		if (nodes == null || nodes.Count == 0)
 		{
@@ -710,6 +479,35 @@ public class SkillExecutionData
 			if (nodes[i] == null)
 			{
 				continue;
+			}
+
+			/*
+			 * SingleSkillRules가 시전·대상·처치 시점에 평가해야 하는 규칙은 여기서 계산 결과로
+			 * 평탄화하지 않고 Op 목록에 보존한다. 이전 코드는 이 네 payload를 건너뛰어
+			 * 정규화 노드가 실제 Single 규칙까지 전달되지 않았다.
+			 */
+			CastConditionOp? castCondition = nodes[i].CastCondition;
+			if (castCondition.HasValue)
+			{
+				castConditionOps.Add(castCondition.Value);
+			}
+
+			DamageModifierOp? damageModifier = nodes[i].DamageModifier;
+			if (damageModifier.HasValue)
+			{
+				damageModifierOps.Add(damageModifier.Value);
+			}
+
+			CritModifierOp? critModifier = nodes[i].CritModifier;
+			if (critModifier.HasValue)
+			{
+				critModifierOps.Add(critModifier.Value);
+			}
+
+			KillActionOp? killAction = nodes[i].KillAction;
+			if (killAction.HasValue)
+			{
+				killActionOps.Add(killAction.Value);
 			}
 
 			SkillActionOp? skillActionOp = nodes[i].Action;
@@ -736,10 +534,88 @@ public class SkillExecutionData
 				ApplyConditionalDamageAction(conditionalDamageAction.Value);
 			}
 
+			ConditionalCritChanceActionOp? conditionalCritAction = nodes[i].ConditionalCritChanceAction;
+			if (conditionalCritAction.HasValue)
+			{
+				ApplyConditionalCritChanceAction(conditionalCritAction.Value);
+			}
+
+			BurstDamageActionOp? burstDamageAction = nodes[i].BurstDamageAction;
+			if (burstDamageAction.HasValue)
+			{
+				ApplyBurstDamageAction(burstDamageAction.Value);
+			}
+
+			BurstStatusActionOp? burstStatusAction = nodes[i].BurstStatusAction;
+			if (burstStatusAction.HasValue)
+			{
+				ApplyBurstStatusAction(burstStatusAction.Value);
+			}
+
 			StatusConditionalDamageTakenActionOp? statusDamageTakenAction = nodes[i].StatusConditionalDamageTakenAction;
 			if (statusDamageTakenAction.HasValue)
 			{
 				ApplyStatusConditionalDamageTakenAction(statusDamageTakenAction.Value);
+			}
+
+			FollowUpProjectileActionOp? followUpAction = nodes[i].FollowUpProjectileAction;
+			if (followUpAction.HasValue)
+			{
+				ApplyFollowUpProjectileAction(followUpAction.Value);
+			}
+
+			ThresholdStatusActionOp? thresholdStatusAction = nodes[i].ThresholdStatusAction;
+			if (thresholdStatusAction.HasValue)
+			{
+				ApplyThresholdStatusAction(thresholdStatusAction.Value);
+			}
+
+			RepeatPerTargetActionOp? repeatAction = nodes[i].RepeatPerTargetAction;
+			if (repeatAction.HasValue)
+			{
+				ApplyRepeatPerTargetAction(repeatAction.Value);
+			}
+
+			RedistributeConsumedStatusActionOp? redistributeAction = nodes[i].RedistributeConsumedStatusAction;
+			if (redistributeAction.HasValue)
+			{
+				ApplyRedistributeConsumedStatusAction(redistributeAction.Value);
+			}
+
+			AdditionalDamageActionOp? additionalDamageAction = nodes[i].AdditionalDamageAction;
+			if (additionalDamageAction.HasValue)
+			{
+				ApplyAdditionalDamageAction(additionalDamageAction.Value);
+			}
+
+			CoreDamageActionOp? coreDamageAction = nodes[i].CoreDamageAction;
+			if (coreDamageAction.HasValue)
+			{
+				ApplyCoreDamageAction(coreDamageAction.Value);
+			}
+
+			CoreAdditionalDamageActionOp? coreAdditionalDamageAction = nodes[i].CoreAdditionalDamageAction;
+			if (coreAdditionalDamageAction.HasValue)
+			{
+				ApplyCoreAdditionalDamageAction(coreAdditionalDamageAction.Value);
+			}
+
+			HitChainDamageActionOp? hitChainAction = nodes[i].HitChainDamageAction;
+			if (hitChainAction.HasValue)
+			{
+				ApplyHitChainDamageAction(hitChainAction.Value);
+			}
+
+			HitCountCooldownRefundActionOp? hitCountRefundAction = nodes[i].HitCountCooldownRefundAction;
+			if (hitCountRefundAction.HasValue)
+			{
+				ApplyHitCountCooldownRefundAction(hitCountRefundAction.Value);
+			}
+
+			ReloadReducePerHitActionOp? reloadReduceAction = nodes[i].ReloadReducePerHitAction;
+			if (reloadReduceAction.HasValue)
+			{
+				ApplyReloadReducePerHitAction(reloadReduceAction.Value);
 			}
 		}
 	}
@@ -863,6 +739,25 @@ public class SkillExecutionData
 			HasStatusCriticalDamageTakenBonus = true;
 			StatusCriticalDamageTakenBonus += action.Amount;
 			break;
+		case SkillActionOpKind.CritChanceBonus:
+			CritChanceBonus += action.Amount;
+			break;
+		case SkillActionOpKind.CritDamageBonus:
+			CritDamageBonus += action.Amount;
+			break;
+		case SkillActionOpKind.BeamWidthBonus:
+			BeamWidthBonus += action.Amount;
+			break;
+		case SkillActionOpKind.KnockbackDistanceMultiplier:
+			KnockbackDistanceMultiplier *= PositiveOrDefault(action.Amount, 1f);
+			break;
+		case SkillActionOpKind.TargetStatusStackDamageMultiplier:
+			TargetStatusStackDamageMultiplier *= PositiveOrDefault(action.Amount, 1f);
+			break;
+		case SkillActionOpKind.ConsumeTargetStatusRatioOverride:
+			HasConsumeTargetStatusRatioOverride = true;
+			ConsumeTargetStatusRatioOverride = Mathf.Clamp01(action.Amount);
+			break;
 		}
 	}
 
@@ -903,7 +798,38 @@ public class SkillExecutionData
 	 */
 	private void ApplyConditionalDamageAction(ConditionalDamageActionOp action /* 상태 조건 피해 동작 */)
 	{
-		AddConditionalDamageRule(action.DamageMultiplier, action.RequiredStatus, action.MinimumStacks);
+		if (action.RequiredStatus != StatusEffectKind.None
+			&& action.MinimumStacks > 0
+			&& action.DamageMultiplier > 0f)
+		{
+			conditionalDamageActions.Add(action);
+		}
+	}
+
+	private void ApplyConditionalCritChanceAction(ConditionalCritChanceActionOp action)
+	{
+		if (action.Condition.StatusKind != StatusEffectKind.None
+			&& action.Condition.MinimumStacks > 0
+			&& !Mathf.Approximately(action.ChanceBonus, 0f))
+		{
+			conditionalCritChanceActions.Add(action);
+		}
+	}
+
+	private void ApplyBurstDamageAction(BurstDamageActionOp action)
+	{
+		if (action.DamageMultiplier > 0f)
+		{
+			burstDamageActions.Add(action);
+		}
+	}
+
+	private void ApplyBurstStatusAction(BurstStatusActionOp action)
+	{
+		if (action.StacksBonus != 0)
+		{
+			burstStatusActions.Add(action);
+		}
 	}
 
 	/*
@@ -914,6 +840,122 @@ public class SkillExecutionData
 		HasStatusConditionalDamageTakenBonus = true;
 		StatusConditionalDamageTakenBonus += action.Bonus;
 		StatusConditionalSourceStatusKind = action.RequiredSourceStatus;
+	}
+
+	private void ApplyFollowUpProjectileAction(FollowUpProjectileActionOp action)
+	{
+		if (action.Count <= 0)
+		{
+			return;
+		}
+
+		FollowUpProjectileCount = action.Count;
+		FollowUpProjectileDelaySeconds = Mathf.Max(0f, action.DelaySeconds);
+		FollowUpProjectileDamageMultiplier = Mathf.Max(0f, action.DamageMultiplier);
+	}
+
+	private void ApplyThresholdStatusAction(ThresholdStatusActionOp action)
+	{
+		if (action.Condition.StatusKind == StatusEffectKind.None
+			|| action.Condition.MinimumStacks <= 0
+			|| action.AppliedStatus == StatusEffectKind.None)
+		{
+			return;
+		}
+
+		ThresholdStatusKind = action.Condition.StatusKind;
+		ThresholdStatusMinStacks = action.Condition.MinimumStacks;
+		ThresholdApplyStatusKind = action.AppliedStatus;
+	}
+
+	private void ApplyRepeatPerTargetAction(RepeatPerTargetActionOp action)
+	{
+		if (action.Count <= 0)
+		{
+			return;
+		}
+
+		RepeatCountPerTarget += action.Count;
+		RepeatIntervalSeconds = Mathf.Max(RepeatIntervalSeconds, action.IntervalSeconds);
+		if (action.DamageMultiplier > 0f)
+		{
+			RepeatDamageMultiplier *= action.DamageMultiplier;
+		}
+	}
+
+	private void ApplyRedistributeConsumedStatusAction(RedistributeConsumedStatusActionOp action)
+	{
+		if (action.Ratio <= 0f || action.StatusKind == StatusEffectKind.None || action.SearchRadius <= 0f)
+		{
+			return;
+		}
+
+		RedistributeConsumedStatusRatioOnKill = Mathf.Clamp01(action.Ratio);
+		RedistributeConsumedStatusKind = action.StatusKind;
+		RedistributeConsumedStatusSearchRadius = Mathf.Max(0f, action.SearchRadius);
+		RedistributeConsumedStatusTargetCount = Mathf.Max(0, action.TargetCount);
+	}
+
+	private void ApplyAdditionalDamageAction(AdditionalDamageActionOp action)
+	{
+		HasOnHitAdditionalDamage = true;
+		OnHitAdditionalDamageChance = action.Chance;
+		OnHitAdditionalDamageMultiplier = action.Multiplier;
+		OnHitAdditionalDamageAttribute = action.Attribute;
+		OnHitAdditionalDamageTarget = action.Target;
+	}
+
+	private void ApplyCoreDamageAction(CoreDamageActionOp action)
+	{
+		CoreHitboxName = action.HitboxName;
+		HasCoreDamageMultiplier = true;
+		CoreDamageMultiplier *= action.Multiplier;
+	}
+
+	private void ApplyCoreAdditionalDamageAction(CoreAdditionalDamageActionOp action)
+	{
+		CoreHitboxName = action.HitboxName;
+		HasCoreOnHitAdditionalDamage = true;
+		CoreOnHitAdditionalDamageChance = action.Chance;
+		CoreOnHitAdditionalDamageMultiplier = action.Multiplier;
+		CoreOnHitAdditionalDamageAttribute = action.Attribute;
+	}
+
+	private void ApplyHitChainDamageAction(HitChainDamageActionOp action)
+	{
+		if (action.HitPeriod <= 0)
+		{
+			return;
+		}
+
+		OnHitChainHitPeriod = action.HitPeriod;
+		OnHitChainTargetCount = action.TargetCount;
+		OnHitChainSearchRadius = action.SearchRadius;
+		OnHitChainDamageMultiplier = action.Multiplier;
+		OnHitChainDamageAttribute = action.Attribute;
+	}
+
+	private void ApplyHitCountCooldownRefundAction(HitCountCooldownRefundActionOp action)
+	{
+		if (string.IsNullOrWhiteSpace(action.TargetSkillId))
+		{
+			return;
+		}
+
+		HitCountCooldownRefundTargetSkillId = action.TargetSkillId;
+		HitCountCooldownRefundMinTargets = action.MinimumTargets;
+		HitCountCooldownRefundRatio = action.Ratio;
+	}
+
+	private void ApplyReloadReducePerHitAction(ReloadReducePerHitActionOp action)
+	{
+		if (string.IsNullOrWhiteSpace(action.TargetSkillId))
+		{
+			return;
+		}
+
+		ReloadReduceTargetSkillId = action.TargetSkillId;
+		ReloadReduceSecondsPerHit += action.SecondsPerHit;
 	}
 
 	/*
@@ -949,17 +991,6 @@ public class SkillExecutionData
 				total += value;
 			}
 			statusDurationBonuses[statusId] = total;
-		}
-	}
-
-	/*
-	 * 상태 종류와 최소 중첩 조건을 만족할 때 사용할 피해 배율 규칙을 추가한다.
-	 */
-	private void AddConditionalDamageRule(float multiplier /* 값에 곱할 배율 */, StatusEffectKind statusKind /* 상태 효과 종류 */, int minStacks /* 최소 중첩 수 */)
-	{
-		if (statusKind != StatusEffectKind.None && !(multiplier <= 0f))
-		{
-			conditionalDamageRules.Add(new ConditionalDamageRule(multiplier, statusKind, Mathf.Max(1, minStacks)));
 		}
 	}
 
@@ -1064,130 +1095,6 @@ public class SkillExecutionData
 	}
 
 	/*
-	 * 대상이 만족하는 상태 중첩 규칙의 피해 배율을 모두 곱해 반환한다.
-	 */
-	public float ResolveConditionalDamageMultiplier(UnitCombatState target /* 효과를 받을 대상 유닛 */)
-	{
-		if (target == null || conditionalDamageRules.Count == 0)
-		{
-			return 1f;
-		}
-		float num = 1f;
-		for (int i = 0; i < conditionalDamageRules.Count; i++)
-		{
-			ConditionalDamageRule conditionalDamageRule = conditionalDamageRules[i];
-			if (HasRequiredStacks(target, conditionalDamageRule.StatusKind, conditionalDamageRule.MinStacks))
-			{
-				num *= PositiveOrDefault(conditionalDamageRule.DamageMultiplier, 1f);
-			}
-		}
-		return num;
-	}
-
-	/*
-	 * 대상이 만족하는 상태 중첩 규칙의 치명타 확률 보너스를 모두 더해 반환한다.
-	 */
-	public float ResolveConditionalCritChanceBonus(UnitCombatState target /* 효과를 받을 대상 유닛 */)
-	{
-		if (target == null || conditionalCritChanceRules.Count == 0)
-		{
-			return 0f;
-		}
-		float num = 0f;
-		for (int i = 0; i < conditionalCritChanceRules.Count; i++)
-		{
-			ConditionalCritChanceRule conditionalCritChanceRule = conditionalCritChanceRules[i];
-			if (HasRequiredStacks(target, conditionalCritChanceRule.StatusKind, conditionalCritChanceRule.MinStacks))
-			{
-				num += conditionalCritChanceRule.CritChanceBonus;
-			}
-		}
-		return num;
-	}
-
-	/*
-	 * 현재 투사체 순서에 맞는 연속 발사 피해 배율을 모두 곱해 반환한다.
-	 */
-	public float ResolveBurstDamageMultiplier(int projectileIndex /* 투사체 순서 번호 */, int burstProjectileCount /* 연속 발사 투사체 개수 */)
-	{
-		if (projectileIndex <= 0 || burstDamageRules.Count == 0)
-		{
-			return 1f;
-		}
-		float num = 1f;
-		for (int i = 0; i < burstDamageRules.Count; i++)
-		{
-			BurstDamageRule burstDamageRule = burstDamageRules[i];
-			if (MatchesBurstProjectileIndex(burstDamageRule.ProjectileIndex, projectileIndex, burstProjectileCount))
-			{
-				num *= PositiveOrDefault(burstDamageRule.DamageMultiplier, 1f);
-			}
-		}
-		return num;
-	}
-
-	/*
-	 * 현재 투사체 순서에 맞는 연속 발사 상태 중첩 보너스를 모두 더해 반환한다.
-	 */
-	public int ResolveBurstStatusStacksBonus(int projectileIndex /* 투사체 순서 번호 */, int burstProjectileCount /* 연속 발사 투사체 개수 */)
-	{
-		if (projectileIndex <= 0 || burstStatusRules.Count == 0)
-		{
-			return 0;
-		}
-		int num = 0;
-		for (int i = 0; i < burstStatusRules.Count; i++)
-		{
-			BurstStatusRule burstStatusRule = burstStatusRules[i];
-			if (MatchesBurstProjectileIndex(burstStatusRule.ProjectileIndex, projectileIndex, burstProjectileCount))
-			{
-				num += burstStatusRule.StacksBonus;
-			}
-		}
-		return num;
-	}
-
-	/*
-	 * 대상이 지정한 상태 또는 보호막의 최소 중첩 조건을 만족하는지 확인한다.
-	 */
-	private static bool HasRequiredStacks(UnitCombatState target /* 효과를 받을 대상 유닛 */, StatusEffectKind statusKind /* 상태 효과 종류 */, int minimumStacks /* 최소 중첩 수 */)
-	{
-		if (target == null || minimumStacks <= 0 || statusKind == StatusEffectKind.None)
-		{
-			return false;
-		}
-		if (statusKind == StatusEffectKind.Shield)
-		{
-			if (target.Resources != null)
-			{
-				return target.Resources.CurrentShield > 0f;
-			}
-			return false;
-		}
-		if (target.Statuses != null)
-		{
-			return target.Statuses.GetStacks(statusKind) >= minimumStacks;
-		}
-		return false;
-	}
-
-	/*
-	 * 설정한 순서가 현재 투사체와 같은지 확인하며 0은 마지막 투사체로 처리한다.
-	 */
-	private static bool MatchesBurstProjectileIndex(int configuredIndex /* 설정된 순서 번호 */, int projectileIndex /* 투사체 순서 번호 */, int burstProjectileCount /* 연속 발사 투사체 개수 */)
-	{
-		if (configuredIndex == 0)
-		{
-			if (burstProjectileCount > 0)
-			{
-				return projectileIndex == burstProjectileCount;
-			}
-			return false;
-		}
-		return configuredIndex == projectileIndex;
-	}
-
-	/*
 	 * 양수인 값만 사용하고 그렇지 않으면 전달받은 기본값을 반환한다.
 	 */
 	private static float PositiveOrDefault(float value /* 처리할 값 */, float fallback /* 기본 결과가 없을 때 사용할 값 */)
@@ -1199,54 +1106,6 @@ public class SkillExecutionData
 		return value;
 	}
 
-	/*
-	 * 누적된 단일 속성 값을 실행기가 사용하는 조건·보정·처치 행동 목록으로 다시 만든다.
-	 */
-	private void RefreshSingleOperationBridges()
-	{
-		castConditionOps.Clear();
-		damageModifierOps.Clear();
-		critModifierOps.Clear();
-		killActionOps.Clear();
-		if (!Mathf.Approximately(ExecuteHealthRatioBonus, 0f))
-		{
-			castConditionOps.Add(new CastConditionOp(ExecuteHealthRatioBonus));
-		}
-		if (!Mathf.Approximately(BossDamageMultiplier, 1f))
-		{
-			damageModifierOps.Add(new DamageModifierOp(DamageModifierOpKind.BossMultiplier, BossDamageMultiplier));
-		}
-		if (!Mathf.Approximately(ExecuteCritChanceBonus, 0f))
-		{
-			critModifierOps.Add(new CritModifierOp(ExecuteCritChanceBonus));
-		}
-		if (KillResetsCooldown)
-		{
-			killActionOps.Add(new KillActionOp(KillActionOpKind.CooldownReset, 0f, KillResetsCooldownRequiresExecute));
-		}
-		if (!Mathf.Approximately(KillCooldownRefundRatioBonus, 0f))
-		{
-			killActionOps.Add(new KillActionOp(KillActionOpKind.CooldownRefundBonus, KillCooldownRefundRatioBonus, requiresExecute: false));
-		}
-	}
-
-	/*
-	 * null이 아닌 정규화 노드만 현재 실행 계획 원본 목록에 추가한다.
-	 */
-	private void AddNormalizedPlanNodes(IReadOnlyList<SkillNode> nodes /* 노드 목록 */)
-	{
-		if (nodes == null || nodes.Count == 0)
-		{
-			return;
-		}
-		for (int i = 0; i < nodes.Count; i++)
-		{
-			if (nodes[i] != null)
-			{
-				normalizedPlanNodes.Add(nodes[i]);
-			}
-		}
-	}
 }
 
 }

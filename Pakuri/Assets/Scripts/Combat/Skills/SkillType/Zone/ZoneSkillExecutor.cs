@@ -223,7 +223,7 @@ namespace Pakuri.InGame
                 var targetDamage = damage;
                 if (skillData != null)
                 {
-                    targetDamage *= skillData.ResolveConditionalDamageMultiplier(eventTarget);
+                    targetDamage *= SkillExecutionRuleResolver.ResolveConditionalDamageMultiplier(skillData, eventTarget);
                 }
                 targetDamage = Mathf.Max(0f, targetDamage);
                 var result = context.CombatManager.ApplyDamage(
@@ -589,7 +589,7 @@ namespace Pakuri.InGame
             var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
             var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnTickStatus, snapshot);
-            var planEffects = snapshot.CollectEffects(skill.MultiEffects);
+            var planEffects = skill.MultiEffects;
             var expireEffects = ResolveOnExpireEffects(context, snapshot, planEffects);
             var coverAll = (skill.Area != null && skill.Area.CoverAll)
                 || (skill.Targeting != null && skill.Targeting.CoverAll);
@@ -672,7 +672,7 @@ namespace Pakuri.InGame
             var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
             var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnTickStatus, snapshot);
-            var planEffects = snapshot.CollectEffects(skill.MultiEffects);
+            var planEffects = skill.MultiEffects;
             var expireEffects = ResolveOnExpireEffects(context, snapshot, planEffects);
             var coverAll = (skill.Area != null && skill.Area.CoverAll)
                 || (skill.Targeting != null && skill.Targeting.CoverAll);

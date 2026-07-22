@@ -493,7 +493,7 @@ internal static class SingleSkillExecutor
 			prefab = null;
 		}
 		SingleExecutionOutcome singleExecutionOutcome = (UsesResolvedDeployments(skill) ? ExecuteResolvedDeployments(context, snapshot, skill, vector, runtimeVisual, prefab) : ExecuteAtCenter(context, snapshot, skill, vector, runtimeVisual, prefab, allowConditionalFollowUp: true));
-		bool flag = ExecuteAdditionalEffects(context, snapshot, snapshot.CollectEffects(skill.MultiEffects), vector, false, SkillMultiEffectTiming.OnCast, false);
+		bool flag = ExecuteAdditionalEffects(context, snapshot, skill.MultiEffects, vector, false, SkillMultiEffectTiming.OnCast, false);
 		if (!(singleExecutionOutcome.Routed || flag))
 		{
 			return singleExecutionOutcome.CastCommitted;
@@ -665,7 +665,7 @@ internal static class SingleSkillExecutor
 			SingleExecutionOutcome singleExecutionOutcome = ExecuteAtCenter(context, snapshot, skill, vector, runtimeVisual, prefab, allowConditionalFollowUp: true);
 			flag = flag || singleExecutionOutcome.Routed;
 			flag2 = flag2 || singleExecutionOutcome.CastCommitted;
-			flag = ExecuteAdditionalEffects(context, snapshot, snapshot.CollectEffects(skill.MultiEffects), vector, true, SkillMultiEffectTiming.OnDeploymentCast, false) || flag;
+			flag = ExecuteAdditionalEffects(context, snapshot, skill.MultiEffects, vector, true, SkillMultiEffectTiming.OnDeploymentCast, false) || flag;
 			ScheduleRepeatedDeployments(context, snapshot, skill, vector, runtimeVisual, prefab);
 		}
 		return new SingleExecutionOutcome(flag, flag2);
@@ -691,7 +691,7 @@ internal static class SingleSkillExecutor
 			if (num <= 0f)
 			{
 				ExecuteAtCenter(context, snapshot2, skill, center, runtimeVisual, prefab, allowConditionalFollowUp: false);
-				ExecuteAdditionalEffects(context, snapshot2, snapshot2.CollectEffects(skill.MultiEffects), center, true, SkillMultiEffectTiming.OnDeploymentCast, false);
+				ExecuteAdditionalEffects(context, snapshot2, skill.MultiEffects, center, true, SkillMultiEffectTiming.OnDeploymentCast, false);
 			}
 			else
 			{
@@ -709,7 +709,7 @@ internal static class SingleSkillExecutor
 		if (context != null && !(context.CombatManager == null) && context.Roster != null && context.CasterEntry != null && context.Caster != null && skill != null)
 		{
 			ExecuteAtCenter(context, snapshot, skill, center, runtimeVisual, prefab, allowConditionalFollowUp: false);
-			ExecuteAdditionalEffects(context, snapshot, snapshot.CollectEffects(skill.MultiEffects), center, true, SkillMultiEffectTiming.OnDeploymentCast, false);
+			ExecuteAdditionalEffects(context, snapshot, skill.MultiEffects, center, true, SkillMultiEffectTiming.OnDeploymentCast, false);
 		}
 	}
 
@@ -723,7 +723,7 @@ internal static class SingleSkillExecutor
 		float damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
 		DamageAttribute attribute = (skill.Damage != null) ? skill.Damage.Element : skill.Element;
 		ProjectileStatusHitSpec statusSpec = SkillStatus.ResolveStatusSpec(skill.OnHitStatus, snapshot);
-		SkillEffectDefinition[] onHitStatusEffects = ResolveOnHitStatusEffects(context, snapshot, snapshot.CollectEffects(skill.MultiEffects));
+		SkillEffectDefinition[] onHitStatusEffects = ResolveOnHitStatusEffects(context, snapshot, skill.MultiEffects);
 		float critChanceBonus = snapshot?.CritChanceBonus ?? 0f;
 		float critDamageBonus = snapshot?.CritDamageBonus ?? 0f;
 		int num = ResolveEffectiveHitTargetCount(skill, snapshot);
@@ -1132,7 +1132,7 @@ internal static class SingleSkillExecutor
 			ExecuteAdditionalEffects(
 				new SkillExecutionContext(manager, roster, sourceEntry, sourceRuntime),
 				snapshot,
-				snapshot.CollectEffects(skill.MultiEffects),
+				skill.MultiEffects,
 				center,
 				true,
 				SkillMultiEffectTiming.OnHitCount,
@@ -1226,8 +1226,8 @@ internal static class SingleSkillExecutor
 		float critChanceBonus = baseCritChanceBonus;
 		if (snapshot != null)
 		{
-			num2 = snapshot.ResolveConditionalDamageMultiplier(target);
-			critChanceBonus += snapshot.ResolveConditionalCritChanceBonus(target);
+			num2 = SkillExecutionRuleResolver.ResolveConditionalDamageMultiplier(snapshot, target);
+			critChanceBonus += SkillExecutionRuleResolver.ResolveConditionalCritChanceBonus(snapshot, target);
 		}
 		bool flag = false;
 		int plannedConsumedStacks = ResolvePlannedConsumedStacks(skill, snapshot, target);

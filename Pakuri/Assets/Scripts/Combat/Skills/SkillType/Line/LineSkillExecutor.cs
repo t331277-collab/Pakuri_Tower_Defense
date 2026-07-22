@@ -300,7 +300,7 @@ namespace Pakuri.InGame
             var knockbackDistance = ResolveKnockbackDistance(skill, snapshot);
             var duration = ResolveDuration(skill, snapshot);
             var tickInterval = ResolveTickInterval(skill, snapshot);
-            var planEffects = snapshot.CollectEffects(skill.MultiEffects);
+            var planEffects = skill.MultiEffects;
             var onHitStatusEffects = ResolveOnHitStatusEffects(context, snapshot, planEffects);
             var castEffects = ResolveCastEffects(context, snapshot, planEffects);
             var center = (Vector2)origin + direction * (length * 0.5f);

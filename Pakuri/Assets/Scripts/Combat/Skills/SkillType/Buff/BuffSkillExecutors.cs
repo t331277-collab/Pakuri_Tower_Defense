@@ -247,7 +247,7 @@ namespace Pakuri.InGame
             }
 
             var multiEffectRouted = false;
-            var planEffects = snapshot.CollectEffects(skill.MultiEffects);
+            var planEffects = skill.MultiEffects;
             if (routed && planEffects.Length > 0)
             {
                 var center = context.CasterEntry.Transform != null
@@ -448,7 +448,7 @@ namespace Pakuri.InGame
             }
 
             var multiEffectRouted = false;
-            var planEffects = snapshot.CollectEffects(skill.MultiEffects);
+            var planEffects = skill.MultiEffects;
             if (routed && planEffects.Length > 0)
             {
                 var center = Vector2.zero;

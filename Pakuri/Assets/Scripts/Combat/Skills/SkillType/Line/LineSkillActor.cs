@@ -216,7 +216,7 @@ namespace Pakuri.InGame
                 var resolvedDamage = damagePerTick;
                 if (snapshot != null)
                 {
-                    resolvedDamage *= snapshot.ResolveConditionalDamageMultiplier(target.Model);
+                    resolvedDamage *= SkillExecutionRuleResolver.ResolveConditionalDamageMultiplier(snapshot, target.Model);
                 }
                 resolvedDamage = Mathf.Max(0f, resolvedDamage);
                 var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, skillId, false, false, damageMeterSourceId);

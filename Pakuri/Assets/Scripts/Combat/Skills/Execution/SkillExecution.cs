@@ -1268,11 +1268,11 @@ namespace Pakuri.InGame
                 var choice = owner.SkillState.FindChoice(choiceId);
                 if (choice != null
                     && AppliesToSkill(choice.Source, skillData)
-                    && SkillRequirement.MeetsSourceStatus(choice.Source, owner))
+                    && SkillExecutionRuleResolver.MeetsSourceStatusRequirements(choice, skillData.SkillId, owner))
                 {
                     snapshot.AddActiveChoiceId(choice.ChoiceId);
                     snapshot.ApplyChoiceSpec(choice);
-                    ApplyDynamicChoiceRules(snapshot, choice.Source, owner, roster);
+                    ApplyDynamicChoiceRules(snapshot, choice, owner, roster);
                 }
             }
         }
@@ -1282,32 +1282,16 @@ namespace Pakuri.InGame
          */
         private static void ApplyDynamicChoiceRules(
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
-            SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */,
+            SkillChoice choice /* 적용하거나 검사할 스킬 선택지 */,
             UnitCombatState owner /* 정보를 소유한 유닛 */,
             CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
         {
-            if (snapshot == null || choice == null || roster == null)
+            if (snapshot == null || choice == null || choice.Source == null || roster == null)
             {
                 return;
             }
 
-            if (choice.CountStatusKind != StatusEffectKind.None
-                && choice.DamageMultiplierPerCount > 0f)
-            {
-                ApplyCountStatusDamageMultiplier(
-                    snapshot,
-                    owner,
-                    roster,
-                    choice.CountTargetSide,
-                    choice.CountStatusKind,
-                    choice.DamageMultiplierPerCount,
-                    choice.CountMax);
-            }
-
-            SkillNodeDefinition[] targetNodes = SkillNodeMapper.FilterSkillNodeDefinitionsForTarget(
-                choice.NormalizedPlanNodes,
-                snapshot.SkillId);
-            SkillNode[] nodes = SkillNodeMapper.MapSkillNodeDefinitions(targetNodes);
+            SkillNode[] nodes = SkillNodeMapper.ResolveChoiceRuntimePlan(choice, snapshot.SkillId).Nodes;
             for (int i = 0; i < nodes.Length; i++)
             {
                 if (nodes[i] == null)
@@ -1605,7 +1589,7 @@ namespace Pakuri.InGame
                 }
 
                 if (!string.Equals(choiceSkillId, skillId, System.StringComparison.OrdinalIgnoreCase)
-                    || !SkillRequirement.MeetsSourceStatus(choice.Source, owner))
+                    || !SkillExecutionRuleResolver.MeetsSourceStatusRequirements(choice, skillId, owner))
                 {
                     continue;
                 }
