@@ -51,7 +51,7 @@ namespace Pakuri.Data
 
         [Header("Full Skill Data")]
         // 공용 스킬 런타임으로 전달할 전체 스킬과 Trigger
-        public SkillDefinition[] ActiveSkills = Array.Empty<SkillDefinition>();
+        public SkillSourceDefinition[] ActiveSkills = Array.Empty<SkillSourceDefinition>();
         public PassiveDefinition[] PassiveSkills = Array.Empty<PassiveDefinition>();
         public SkillTriggerDefinition[] SkillTriggers = Array.Empty<SkillTriggerDefinition>();
     }

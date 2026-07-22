@@ -28,7 +28,7 @@ namespace Pakuri.InGame
         private ProjectileStatusHitSpec statusSpec;
         private SkillEffectDefinition[] onHitStatusEffects;
         private SkillUseState runtime;
-        private SkillSnapshot executionSnapshot;
+        private SkillExecutionData executionData;
         private UnitCombatState sourceModel;
         private string sourceSkillId;
         private bool criticalAllowed;
@@ -59,7 +59,7 @@ namespace Pakuri.InGame
             ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
             SkillEffectDefinition[] onHitEffects /* 발생 시 적중 효과 목록 */,
             SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
             string skillId /* 스킬 식별자 */,
             bool allowCritical /* 허용 치명타 여부 */,
@@ -85,7 +85,7 @@ namespace Pakuri.InGame
             statusSpec = onHitStatus;
             onHitStatusEffects = onHitEffects;
             runtime = sourceRuntime;
-            executionSnapshot = snapshot;
+            executionData = snapshot;
             sourceModel = source;
             sourceSkillId = skillId;
             criticalAllowed = allowCritical;
@@ -110,7 +110,7 @@ namespace Pakuri.InGame
                 statusSpec,
                 onHitStatusEffects,
                 runtime,
-                executionSnapshot,
+                executionData,
                 sourceModel,
                 sourceSkillId,
                 criticalAllowed,
@@ -153,7 +153,7 @@ namespace Pakuri.InGame
             ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
             SkillEffectDefinition[] onHitEffects /* 발생 시 적중 효과 목록 */,
             SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
             string skillId /* 스킬 식별자 */,
             bool criticalAllowed /* 치명타 허용 여부 */,
@@ -227,7 +227,7 @@ namespace Pakuri.InGame
                     TryApplyStatus(manager, target.Model, onHitStatus, source, targetKey, baseStatusAppliedTargets);
                     TryApplyOnHitEffects(manager, target.Model, onHitEffects, snapshot, source, targetKey, effectStatusAppliedTargets);
                 }
-                SkillOnHitEffect.TryApply(
+                LineSkillExecutor.ApplyHitEnhancements(
                     manager,
                     unitRoster,
                     sourceRuntime,
@@ -272,7 +272,7 @@ namespace Pakuri.InGame
                         statusSpec,
                         onHitStatusEffects,
                         runtime,
-                        executionSnapshot,
+                        executionData,
                         sourceModel,
                         sourceSkillId,
                         criticalAllowed,
@@ -434,7 +434,7 @@ namespace Pakuri.InGame
             InGameCombatManager manager /* 전투 진행 관리자 */,
             UnitCombatState target /* 효과를 받을 대상 유닛 */,
             SkillEffectDefinition[] effects /* 실행할 효과 목록 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
             string targetKey /* 대상 조회 키 */,
             HashSet<string> appliedEffects /* 적용된 효과 목록 */)
@@ -450,7 +450,7 @@ namespace Pakuri.InGame
                 if (effect == null
                     || effect.EffectTiming != SkillMultiEffectTiming.OnHit
                     || effect.EffectKind != SkillMultiEffectKind.Status
-                    || !SkillEffect.TargetMatchesCondition(target, effect))
+                    || !SkillTargeting.MatchesEffectTarget(target, effect))
                 {
                     continue;
                 }
@@ -461,7 +461,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var status = SkillEffect.ResolveStatusSpec(effect, snapshot);
+                var status = SkillStatus.ResolveEffectStatusSpec(effect, snapshot);
                 if (status == null || !status.Enabled)
                 {
                     continue;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Pakuri.Combat;
@@ -193,16 +193,16 @@ namespace Pakuri.Data
         /*
          * 원본 값으로 런타임 자료를 만든다.
          */
-        internal static SkillDefinition[] BuildEnemyAssignedActiveSkills(SourceModel model /* CSV에서 읽은 원본 데이터 */, string enemyId /* 적 식별자 */)
+        internal static SkillSourceDefinition[] BuildEnemyAssignedActiveSkills(SourceModel model /* CSV에서 읽은 원본 데이터 */, string enemyId /* 적 식별자 */)
         {
             if (model == null
                 || string.IsNullOrWhiteSpace(enemyId)
                 || !model.Enemies.TryGetValue(enemyId, out var enemyRow))
             {
-                return Array.Empty<SkillDefinition>();
+                return Array.Empty<SkillSourceDefinition>();
             }
 
-            var definitions = new List<SkillDefinition>(2);
+            var definitions = new List<SkillSourceDefinition>(2);
             TryAddEnemyAssignedSkillDefinition(model, enemyRow.SkillSlotAId, SkillSlot.A, definitions);
             TryAddEnemyAssignedSkillDefinition(model, enemyRow.SkillSlotBId, SkillSlot.B, definitions);
 
@@ -216,7 +216,7 @@ namespace Pakuri.Data
             SourceModel model /* CSV에서 읽은 원본 데이터 */,
             string skillId /* 스킬 식별자 */,
             SkillSlot runtimeSlot /* 런타임 슬롯 */,
-            List<SkillDefinition> definitions /* 정의 목록 */)
+            List<SkillSourceDefinition> definitions /* 정의 목록 */)
         {
             if (model == null
                 || definitions == null
@@ -234,10 +234,10 @@ namespace Pakuri.Data
         /*
          * 원본 값으로 런타임 자료를 만든다.
          */
-        internal static SkillDefinition BuildEnemyAssignedSkillDefinition(EnemyBaseSkillRow source /* 효과를 발생시킨 원본 */, SkillSlot runtimeSlot /* 런타임 슬롯 */)
+        internal static SkillSourceDefinition BuildEnemyAssignedSkillDefinition(EnemyBaseSkillRow source /* 효과를 발생시킨 원본 */, SkillSlot runtimeSlot /* 런타임 슬롯 */)
         {
             var row = source.Skill;
-            var definition = new SkillDefinition
+            var definition = new SkillSourceDefinition
             {
                 SkillId = row.Id,
                 DisplayName = row.DisplayName,
@@ -287,7 +287,7 @@ namespace Pakuri.Data
         /*
          * 계산된 값을 대상 정의에 적용한다.
          */
-        internal static void ApplyEnemyExecutionProfile(SkillDefinition definition /* 변환하거나 검사할 정의 */)
+        internal static void ApplyEnemyExecutionProfile(SkillSourceDefinition definition /* 변환하거나 검사할 정의 */)
         {
             if (definition == null)
             {
@@ -464,7 +464,7 @@ namespace Pakuri.Data
         /*
          * 원본 값으로 런타임 자료를 만든다.
          */
-        internal static SkillDefinition[] BuildActiveSkills(SourceModel model /* CSV에서 읽은 원본 데이터 */, string monsterId /* 몬스터 식별자 */)
+        internal static SkillSourceDefinition[] BuildActiveSkills(SourceModel model /* CSV에서 읽은 원본 데이터 */, string monsterId /* 몬스터 식별자 */)
         {
             var skills = FilterAndSort(
                 model.Skills.Values,
@@ -472,11 +472,11 @@ namespace Pakuri.Data
                     && string.Equals(skill.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase),
                 (left, right) => left.Slot.CompareTo(right.Slot));
 
-            var definitions = new SkillDefinition[skills.Count];
+            var definitions = new SkillSourceDefinition[skills.Count];
             for (var i = 0; i < skills.Count; i++)
             {
                 var skill = skills[i];
-                var definition = new SkillDefinition
+                var definition = new SkillSourceDefinition
                 {
                     SkillId = skill.Id,
                     DisplayName = skill.DisplayName,
@@ -698,7 +698,7 @@ namespace Pakuri.Data
                 definition.DelaySeconds = GetSkillNodeFloatParam(parameters, "delay_seconds", 0f);
                 definition.RecastDurationSeconds = GetSkillNodeFloatParam(parameters, "duration_seconds", 0f);
                 definition.RecastRadiusMultiplier = GetSkillNodeFloatParam(parameters, "radius_multiplier", 1f);
-                definition.RecastInheritSnapshot = GetSkillNodeBoolParam(parameters, "inherit_snapshot", true);
+                definition.RecastInheritSkillData = GetSkillNodeBoolParam(parameters, "inherit_snapshot", true);
                 definition.RecastMaxGeneration = GetSkillNodeIntParam(parameters, "max_generation", 1);
             }
             else if (string.Equals(node.HandlerId, "EffectExtendStatusDuration", StringComparison.OrdinalIgnoreCase))
@@ -1538,7 +1538,7 @@ namespace Pakuri.Data
         /*
          * 계산된 값을 대상 정의에 적용한다.
          */
-        internal static void ApplyStatusPayload(SkillDefinition definition /* 변환하거나 검사할 정의 */, StatusPayloadRow payload /* 적용 데이터 */)
+        internal static void ApplyStatusPayload(SkillSourceDefinition definition /* 변환하거나 검사할 정의 */, StatusPayloadRow payload /* 적용 데이터 */)
         {
             if (definition == null || payload == null)
             {

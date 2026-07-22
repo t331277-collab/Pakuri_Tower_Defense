@@ -6,7 +6,7 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * 작성된 Active와 Passive 스킬 데이터를 전투용 SkillExecutionDefinition로 변환한다.
+ * 작성된 Active와 Passive 스킬 데이터를 전투용 SkillDefinition으로 변환한다.
  * Choice 변환은 SkillChoiceCompiler, 노드 정의 변환은 SkillNodeMapper에 맡긴다.
  */
 namespace Pakuri.InGame
@@ -15,11 +15,50 @@ namespace Pakuri.InGame
 public static class SkillDefinitionCompiler
 {
 	/*
+	 * 런 세션에서 확정된 학습 스킬과 Choice ID를 유닛 저장소에 복사한다.
+	 */
+	public static void ApplyLearnedSkills(
+		UnitSkills target /* 학습 결과를 저장할 유닛 스킬 정보 */,
+		IReadOnlyList<string> activeSkillIds /* 학습한 액티브 스킬 식별자 목록 */,
+		IReadOnlyList<string> passiveSkillIds /* 학습한 패시브 스킬 식별자 목록 */,
+		IReadOnlyList<string> choiceIds /* 선택한 강화·마스터 식별자 목록 */)
+	{
+		target.Clear();
+		for (int i = 0; i < activeSkillIds.Count; i++)
+		{
+			target.AddActiveSkill(activeSkillIds[i]);
+		}
+
+		for (int i = 0; i < passiveSkillIds.Count; i++)
+		{
+			target.AddPassiveSkill(passiveSkillIds[i]);
+		}
+
+		for (int i = 0; i < choiceIds.Count; i++)
+		{
+			string choiceId = choiceIds[i];
+			if (!GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoiceDefinition choice))
+			{
+				throw new InvalidOperationException($"Unknown learned skill choice '{choiceId}'.");
+			}
+
+			if (choice.ChoiceGroup == SkillChoiceGroup.ActiveMaster)
+			{
+				target.AddMasterSkill(choiceId);
+			}
+			else
+			{
+				target.AddEnhancement(choiceId);
+			}
+		}
+	}
+
+	/*
 	 * CompileActive 작업 결과를 반환한다.
 	 */
-	public static SkillExecutionDefinition CompileActive(MonsterDefinition monster /* 몬스터 */, SkillDefinition source /* 변환할 스킬 정의 */)
+	public static SkillDefinition CompileActive(MonsterDefinition monster /* 몬스터 */, SkillSourceDefinition source /* 변환할 스킬 정의 */)
 	{
-		SkillExecutionDefinition skillRuntimeData = CreateConcreteActiveSkill(source);
+		SkillDefinition skillRuntimeData = CreateConcreteActiveSkill(source);
 		string monsterId = string.Empty;
 		SkillTriggerDefinition[] triggers = null;
 		if (monster != null)
@@ -35,7 +74,7 @@ public static class SkillDefinitionCompiler
 	/*
 	 * CompileActive 작업 결과를 반환한다.
 	 */
-	public static SkillExecutionDefinition CompileActive(string monsterId /* 몬스터 식별자 */, SkillDefinition source /* 변환할 스킬 정의 */)
+	public static SkillDefinition CompileActive(string monsterId /* 몬스터 식별자 */, SkillSourceDefinition source /* 변환할 스킬 정의 */)
 	{
 		return CompileActive(monsterId, source, null);
 	}
@@ -43,9 +82,9 @@ public static class SkillDefinitionCompiler
 	/*
 	 * CompileActive 작업 결과를 반환한다.
 	 */
-	public static SkillExecutionDefinition CompileActive(string ownerId /* 소유자 식별자 */, SkillDefinition source /* 변환할 스킬 정의 */, SkillTriggerDefinition[] triggers /* 트리거 목록 */)
+	public static SkillDefinition CompileActive(string ownerId /* 소유자 식별자 */, SkillSourceDefinition source /* 변환할 스킬 정의 */, SkillTriggerDefinition[] triggers /* 트리거 목록 */)
 	{
-		SkillExecutionDefinition skillRuntimeData = CreateConcreteActiveSkill(source);
+		SkillDefinition skillRuntimeData = CreateConcreteActiveSkill(source);
 		MapCommonFields(skillRuntimeData, ownerId, source, triggers);
 		MapActiveFields(skillRuntimeData, null, source);
 		return skillRuntimeData;
@@ -88,7 +127,7 @@ public static class SkillDefinitionCompiler
 	/*
 	 * CreateConcreteActiveSkill에 필요한 결과를 만들어 반환한다.
 	 */
-	private static SkillExecutionDefinition CreateConcreteActiveSkill(SkillDefinition source /* 변환할 스킬 정의 */)
+	private static SkillDefinition CreateConcreteActiveSkill(SkillSourceDefinition source /* 변환할 스킬 정의 */)
 	{
 		if (MatchesProfile(source, "DamageArea"))
 		{
@@ -136,7 +175,7 @@ public static class SkillDefinitionCompiler
 	/*
 	 * CreateRuntimeData에 필요한 결과를 만들어 반환한다.
 	 */
-	private static T CreateRuntimeData<T>() where T : SkillExecutionDefinition, new()
+	private static T CreateRuntimeData<T>() where T : SkillDefinition, new()
 	{
 		return new T();
 	}
@@ -144,7 +183,7 @@ public static class SkillDefinitionCompiler
 	/*
 	 * MapCommonFields에 필요한 값을 변환해 현재 상태에 반영한다.
 	 */
-	private static void MapCommonFields(SkillExecutionDefinition skill /* 실행하거나 검사할 스킬 */, string monsterId /* 몬스터 식별자 */, SkillDefinition source /* 변환할 스킬 정의 */, SkillTriggerDefinition[] monsterTriggers = null /* 몬스터 트리거 목록 */)
+	private static void MapCommonFields(SkillDefinition skill /* 실행하거나 검사할 스킬 */, string monsterId /* 몬스터 식별자 */, SkillSourceDefinition source /* 변환할 스킬 정의 */, SkillTriggerDefinition[] monsterTriggers = null /* 몬스터 트리거 목록 */)
 	{
 		skill.SkillId = source.SkillId;
 		skill.SkillName = source.DisplayName;
@@ -238,7 +277,7 @@ public static class SkillDefinitionCompiler
 	/*
 	 * MapActiveFields에 필요한 값을 변환해 현재 상태에 반영한다.
 	 */
-	private static void MapActiveFields(SkillExecutionDefinition skill /* 실행하거나 검사할 스킬 */, MonsterDefinition monster /* 몬스터 */, SkillDefinition source /* 변환할 스킬 정의 */)
+	private static void MapActiveFields(SkillDefinition skill /* 실행하거나 검사할 스킬 */, MonsterDefinition monster /* 몬스터 */, SkillSourceDefinition source /* 변환할 스킬 정의 */)
 	{
 		if (skill is ProjectileSkillDefinition projectileSkillExecutionDefinition)
 		{
@@ -441,7 +480,7 @@ public static class SkillDefinitionCompiler
 	/*
 	 * MapDamage에 필요한 값을 변환해 현재 상태에 반영한다.
 	 */
-	private static void MapDamage(SkillDamageSpec damage /* 피해량 계산 설정 */, SkillDefinition source /* 변환할 스킬 정의 */)
+	private static void MapDamage(SkillDamageSpec damage /* 피해량 계산 설정 */, SkillSourceDefinition source /* 변환할 스킬 정의 */)
 	{
 		damage.SkillId = source.SkillId;
 		damage.Element = source.Attribute;
@@ -477,7 +516,7 @@ public static class SkillDefinitionCompiler
 	/*
 	 * MatchesProfile 조건을 만족하는지 확인한다.
 	 */
-	private static bool MatchesProfile(SkillDefinition source /* 변환할 스킬 정의 */, string profile /* 실행 설정 */)
+	private static bool MatchesProfile(SkillSourceDefinition source /* 변환할 스킬 정의 */, string profile /* 실행 설정 */)
 	{
 		return string.Equals(source.ExecutionProfile, profile, StringComparison.OrdinalIgnoreCase);
 	}
@@ -485,7 +524,7 @@ public static class SkillDefinitionCompiler
 	/*
 	 * GetDominantCoefficient에 해당하는 값을 찾아 반환한다.
 	 */
-	private static float GetDominantCoefficient(SkillDefinition source /* 변환할 스킬 정의 */, out StatSource statSource /* 능력치 발생 원본 */)
+	private static float GetDominantCoefficient(SkillSourceDefinition source /* 변환할 스킬 정의 */, out StatSource statSource /* 능력치 발생 원본 */)
 	{
 		if (Mathf.Abs(source.SpellPowerCoefficient) >= Mathf.Abs(source.AttackPowerCoefficient))
 		{
@@ -513,7 +552,7 @@ public static class SkillDefinitionCompiler
 	/*
 	 * CreateStatusApplication에 필요한 결과를 만들어 반환한다.
 	 */
-	private static StatusApplicationSpec CreateStatusApplication(SkillDefinition source /* 변환할 스킬 정의 */)
+	private static StatusApplicationSpec CreateStatusApplication(SkillSourceDefinition source /* 변환할 스킬 정의 */)
 	{
 		StatusApplicationSpec statusApplicationSpec = new StatusApplicationSpec();
 		StatusRuntimeData runtimeStatusData = (statusApplicationSpec.Status = CreateStatusRuntimeData(source));
@@ -530,7 +569,7 @@ public static class SkillDefinitionCompiler
 	/*
 	 * CreateStatusRuntimeData에 필요한 결과를 만들어 반환한다.
 	 */
-	private static StatusRuntimeData CreateStatusRuntimeData(SkillDefinition source /* 변환할 스킬 정의 */)
+	private static StatusRuntimeData CreateStatusRuntimeData(SkillSourceDefinition source /* 변환할 스킬 정의 */)
 	{
 		if (string.IsNullOrWhiteSpace(source.StatusEffectId))
 		{
@@ -570,7 +609,7 @@ public static class SkillDefinitionCompiler
 	/*
 	 * MapBuffTarget에 필요한 형식으로 변환해 반환한다.
 	 */
-	private static SkillTargetSide MapBuffTarget(SkillDefinition source /* 변환할 스킬 정의 */)
+	private static SkillTargetSide MapBuffTarget(SkillSourceDefinition source /* 변환할 스킬 정의 */)
 	{
 		StatusRuntimeCompiler.TryParseTargetScope(source.StatusTargetScope, out var scope);
 		if (scope == StatusTargetScope.Self)
@@ -584,7 +623,7 @@ public static class SkillDefinitionCompiler
 	/*
 	 * ResolveStatusDuration 결과를 계산해 반환한다.
 	 */
-	private static float ResolveStatusDuration(SkillDefinition source /* 변환할 스킬 정의 */)
+	private static float ResolveStatusDuration(SkillSourceDefinition source /* 변환할 스킬 정의 */)
 	{
 		if (source.StatusDurationSeconds > 0f)
 		{
@@ -660,7 +699,7 @@ public static class SkillDefinitionCompiler
 
 /*
  * 작성 데이터의 SkillNodeDefinition을 전투 실행용 SkillNode로 변환한다.
- * 실행 순서를 만드는 SkillNodeCompiler와 달리 노드 종류와 파라미터 해석만 담당한다.
+ * 노드 종류와 파라미터를 해석해 SkillNode 설계 데이터로 옮긴다.
  */
 namespace Pakuri.InGame
 {

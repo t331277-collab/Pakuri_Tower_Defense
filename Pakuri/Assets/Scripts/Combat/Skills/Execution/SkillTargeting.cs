@@ -376,33 +376,29 @@ namespace Pakuri.InGame
         /*
          * 선택지의 반경 배율과 추가값을 적용한다.
          */
-        public static float ResolveRadius(float baseRadius /* 기본 반지름 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        public static float ResolveRadius(
+            float baseRadius /* 기본 반지름 */,
+            float radiusMultiplier /* 적용할 반지름 배율 */,
+            float radiusBonus /* 추가할 반지름 */)
         {
-            var radius = baseRadius;
-            if (snapshot != null)
-            {
-                radius = radius * Mathf.Max(0f, snapshot.RadiusMultiplier) + snapshot.RadiusBonus;
-            }
-
+            var radius = baseRadius * Mathf.Max(0f, radiusMultiplier) + radiusBonus;
             return Mathf.Max(0f, radius);
         }
 
         /*
          * 반경 변화에 맞는 프리팹 크기 배율을 결정한다.
          */
-        public static float ResolvePrefabScaleFactor(float baseRadius /* 기본 반지름 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        public static float ResolvePrefabScaleFactor(
+            float baseRadius /* 기본 반지름 */,
+            float radiusMultiplier /* 적용할 반지름 배율 */,
+            float radiusBonus /* 추가할 반지름 */)
         {
-            if (snapshot == null)
-            {
-                return 1f;
-            }
-
             if (baseRadius <= 0.0001f)
             {
-                return Mathf.Max(0.01f, snapshot.RadiusMultiplier);
+                return Mathf.Max(0.01f, radiusMultiplier);
             }
 
-            return Mathf.Max(0.01f, ResolveRadius(baseRadius, snapshot) / baseRadius);
+            return Mathf.Max(0.01f, ResolveRadius(baseRadius, radiusMultiplier, radiusBonus) / baseRadius);
         }
 
         /*
@@ -634,6 +630,290 @@ namespace Pakuri.InGame
 
             return 0;
         }
+
+        /*
+         * 추가 효과 정의를 실행용 대상 설정으로 변환한다.
+         */
+        public static SkillTargetingSpec BuildEffectTargeting(SkillEffectDefinition effect /* 적용할 추가 효과 */)
+        {
+            var targetSide = SkillTargetSide.Enemy;
+            if (effect.TargetSide == SkillMultiEffectTargetSide.Self)
+            {
+                targetSide = SkillTargetSide.Self;
+            }
+            else if (effect.TargetSide == SkillMultiEffectTargetSide.AllAllies)
+            {
+                targetSide = SkillTargetSide.AllAllies;
+            }
+
+            var selection = SkillTargetSelection.Nearest;
+            if (effect.TargetSelection == SkillMultiEffectTargetSelection.Owner)
+            {
+                selection = SkillTargetSelection.Owner;
+            }
+
+            var shape = SkillTargetShape.Circle;
+            if (effect.TargetShape == SkillMultiEffectTargetShape.Battlefield)
+            {
+                shape = SkillTargetShape.Battlefield;
+            }
+            else if (effect.TargetShape == SkillMultiEffectTargetShape.Single)
+            {
+                shape = SkillTargetShape.Single;
+            }
+
+            return new SkillTargetingSpec
+            {
+                TargetSide = targetSide,
+                Selection = selection,
+                Shape = shape,
+                Radius = effect.Radius,
+                CoverAll = effect.CoverAll || effect.TargetShape == SkillMultiEffectTargetShape.Battlefield
+            };
+        }
+
+        /*
+         * 추가 효과가 적용될 중심 위치를 결정한다.
+         */
+        public static Vector2 ResolveEffectCenter(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillEffectDefinition effect /* 적용할 추가 효과 */,
+            SkillTargetingSpec targeting /* 대상 선택 설정 */,
+            Vector2 defaultCenter /* 기본 중심 위치 */)
+        {
+            if (effect != null)
+            {
+                if (effect.CenterMode == SkillMultiEffectCenterMode.EffectTarget)
+                {
+                    if (context != null && context.EventTarget != null && context.Roster != null)
+                    {
+                        var eventEntry = context.Roster.Find(context.EventTarget);
+                        if (eventEntry != null && eventEntry.Transform != null)
+                        {
+                            return eventEntry.Transform.position;
+                        }
+                    }
+                    return defaultCenter;
+                }
+
+                if (effect.CenterMode == SkillMultiEffectCenterMode.PrimarySkillCenter)
+                {
+                    return defaultCenter;
+                }
+
+                if (effect.CenterMode == SkillMultiEffectCenterMode.Caster)
+                {
+                    if (context != null && context.CasterEntry != null && context.CasterEntry.Transform != null)
+                    {
+                        return context.CasterEntry.Transform.position;
+                    }
+                    return defaultCenter;
+                }
+
+                if (effect.CenterMode == SkillMultiEffectCenterMode.NearestEnemy)
+                {
+                    var enemyTargeting = new SkillTargetingSpec
+                    {
+                        TargetSide = SkillTargetSide.Enemy,
+                        Selection = SkillTargetSelection.Nearest,
+                        Shape = SkillTargetShape.Circle,
+                        Radius = effect.Radius,
+                        CoverAll = false
+                    };
+                    var enemy = FindNearestTarget(context.CasterEntry, context.Roster, enemyTargeting);
+                    if (enemy != null && enemy.Transform != null)
+                    {
+                        return enemy.Transform.position;
+                    }
+                    return defaultCenter;
+                }
+            }
+
+            var target = FindNearestTarget(context.CasterEntry, context.Roster, targeting);
+            if (target != null && target.Transform != null)
+            {
+                return target.Transform.position;
+            }
+            return defaultCenter;
+        }
+
+        /*
+         * 사건 대상이 지정되면 그 대상만 반환하고 아니면 일반 대상 목록을 반환한다.
+         */
+        public static IReadOnlyList<CombatUnitEntry> ResolveEffectTargets(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillEffectDefinition effect /* 적용할 추가 효과 */,
+            SkillTargetingSpec targeting /* 대상 선택 설정 */)
+        {
+            if (effect != null
+                && effect.TargetSelection == SkillMultiEffectTargetSelection.EventTarget
+                && context != null
+                && context.EventTarget != null
+                && context.Roster != null)
+            {
+                var eventEntry = context.Roster.Find(context.EventTarget);
+                if (eventEntry != null)
+                {
+                    return new CombatUnitEntry[] { eventEntry };
+                }
+            }
+
+            return ResolveTargetList(context.CasterEntry, context.Roster, targeting);
+        }
+
+        /*
+         * 대상이 추가 효과의 상태, 속성, 체력 조건을 만족하는지 확인한다.
+         */
+        public static bool MatchesEffectTarget(UnitCombatState target /* 효과를 받을 대상 */, SkillEffectDefinition effect /* 적용할 추가 효과 */)
+        {
+            if (effect == null)
+            {
+                return true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(effect.ConditionStatusId)
+                && !StatusConditionRules.MatchesConditionStatus(target, effect.ConditionStatuses, effect.ConditionStatusSourceSkillIds))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(effect.ConditionSkillAttribute)
+                && !HasActiveSkillAttribute(target, effect.ConditionSkillAttribute))
+            {
+                return false;
+            }
+
+            if (effect.ConditionHealthRatioMax > 0f)
+            {
+                if (target == null || target.Resources == null || target.Stats == null || target.Stats.MaxHealth <= 0f)
+                {
+                    return false;
+                }
+
+                var healthRatio = target.Resources.CurrentHealth / target.Stats.MaxHealth;
+                if (healthRatio > Mathf.Clamp01(effect.ConditionHealthRatioMax))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /*
+         * 대상이 지정한 속성의 액티브 스킬을 가지고 있는지 확인한다.
+         */
+        private static bool HasActiveSkillAttribute(UnitCombatState target /* 검사할 대상 */, string rawAttribute /* 피해 속성 이름 */)
+        {
+            if (target == null || target.Skills == null || string.IsNullOrWhiteSpace(rawAttribute))
+            {
+                return false;
+            }
+
+            DamageAttribute attribute;
+            if (!Enum.TryParse(rawAttribute.Trim(), true, out attribute))
+            {
+                return false;
+            }
+
+            var activeSkills = target.SkillState.ActiveSkills;
+            for (var i = 0; i < activeSkills.Count; i++)
+            {
+                var activeSkill = activeSkills[i];
+                if (activeSkill != null && activeSkill.Data != null && activeSkill.Data.Element == attribute)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /*
+         * 최초 적중 대상과 Nexus를 제외한 반대 진영 유닛을 거리순으로 찾는다.
+         */
+        public static List<CombatUnitEntry> ResolveChainTargets(
+            CombatUnitRegistry roster /* 전투 유닛 목록 */,
+            CombatUnitEntry sourceEntry /* 시전자 등록 정보 */,
+            UnitCombatState source /* 시전자 */,
+            CombatUnitEntry hitTarget /* 최초 적중 대상 */,
+            Vector2 hitPosition /* 최초 적중 위치 */,
+            float searchRadius /* 검색 반지름 */)
+        {
+            var resolved = new List<CombatUnitEntry>();
+            if (roster == null || source == null || searchRadius <= 0f)
+            {
+                return resolved;
+            }
+
+            UnitCombatState hitModel = null;
+            if (hitTarget != null)
+            {
+                hitModel = hitTarget.Model;
+            }
+
+            var hitId = string.Empty;
+            if (hitModel != null && hitModel.Identity != null)
+            {
+                hitId = hitModel.Identity.UnitId;
+            }
+
+            var sourceSide = UnitSide.Player;
+            if (source.Identity != null)
+            {
+                sourceSide = source.Identity.Side;
+            }
+            else if (sourceEntry != null && sourceEntry.Model != null && sourceEntry.Model.Identity != null)
+            {
+                sourceSide = sourceEntry.Model.Identity.Side;
+            }
+
+            IReadOnlyList<CombatUnitEntry> candidates = roster.Enemies;
+            if (sourceSide == UnitSide.Enemy)
+            {
+                candidates = roster.Players;
+            }
+
+            var searchRadiusSquared = searchRadius * searchRadius;
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                var candidate = candidates[i];
+                if (candidate == null || !candidate.IsAlive || candidate.Model == null || candidate.Transform == null)
+                {
+                    continue;
+                }
+                if (candidate.Model.Identity != null && candidate.Model.Identity.Role == UnitRole.Nexus)
+                {
+                    continue;
+                }
+
+                var candidateId = string.Empty;
+                if (candidate.Model.Identity != null)
+                {
+                    candidateId = candidate.Model.Identity.UnitId;
+                }
+                if (!string.IsNullOrWhiteSpace(hitId) && candidateId == hitId)
+                {
+                    continue;
+                }
+                if (candidate.Model == hitModel)
+                {
+                    continue;
+                }
+                if (((Vector2)candidate.Transform.position - hitPosition).sqrMagnitude <= searchRadiusSquared)
+                {
+                    resolved.Add(candidate);
+                }
+            }
+
+            resolved.Sort(delegate(CombatUnitEntry left, CombatUnitEntry right)
+            {
+                var leftDistance = ((Vector2)left.Transform.position - hitPosition).sqrMagnitude;
+                var rightDistance = ((Vector2)right.Transform.position - hitPosition).sqrMagnitude;
+                return leftDistance.CompareTo(rightDistance);
+            });
+            return resolved;
+        }
     }
 }
 
@@ -646,16 +926,62 @@ namespace Pakuri.InGame
     static class SkillRequirement
     {
         /*
-         * 목록에 적힌 모든 Choice가 현재 Snapshot에 적용되었는지 확인한다.
+         * 추가 효과에 설정된 Choice, 패시브, 시전자 상태 조건을 확인한다.
          */
-        public static bool HasAllActiveChoices(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, string choiceList /* 선택지 목록 */)
+        public static bool CanRunEffect(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillEffectDefinition effect /* 검사할 추가 효과 */)
+        {
+            if (effect == null)
+            {
+                return false;
+            }
+            if (!effect.EnabledByDefault && string.IsNullOrWhiteSpace(effect.RequiresActiveChoiceId))
+            {
+                return false;
+            }
+            if (!HasAllActiveChoices(context.Caster, effect.RequiresActiveChoiceId))
+            {
+                return false;
+            }
+            if (HasAnyActiveChoice(context.Caster, effect.ExcludesActiveChoiceId))
+            {
+                return false;
+            }
+            if (!HasAllLearnedPassives(context.Caster, effect.RequiresPassiveSkillId))
+            {
+                return false;
+            }
+            if (HasAnyLearnedPassive(context.Caster, effect.ExcludesPassiveSkillId))
+            {
+                return false;
+            }
+            return HasSourceStatus(context.Caster, effect.RequiredSourceStatusKind, effect.RequiredSourceStatusMinStacks);
+        }
+
+        /*
+         * 현재 적중 횟수가 추가 효과의 최소 횟수를 만족하는지 확인한다.
+         */
+        public static bool MatchesEffectHitCount(SkillEffectDefinition effect /* 검사할 추가 효과 */, int hitCount /* 현재 적중 횟수 */)
+        {
+            if (effect != null && effect.ConditionHitCountMin > 0)
+            {
+                return hitCount >= effect.ConditionHitCountMin;
+            }
+            return true;
+        }
+
+        /*
+         * 목록에 적힌 모든 Choice가 현재 실행 데이터에 적용되었는지 확인한다.
+         */
+        public static bool HasAllActiveChoices(UnitCombatState owner /* 스킬을 사용하는 유닛 */, string choiceList /* 선택지 목록 */)
         {
             if (string.IsNullOrWhiteSpace(choiceList))
             {
                 return true;
             }
 
-            if (snapshot == null)
+            if (owner == null || owner.Skills == null)
             {
                 return false;
             }
@@ -664,7 +990,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < choices.Length; i++)
             {
                 var choiceId = choices[i].Trim();
-                if (choiceId.Length > 0 && !snapshot.HasActiveChoice(choiceId))
+                if (choiceId.Length > 0 && !owner.Skills.HasChoice(choiceId))
                 {
                     return false;
                 }
@@ -674,11 +1000,11 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 목록에 적힌 Choice 중 하나라도 현재 Snapshot에 적용되었는지 확인한다.
+         * 목록에 적힌 Choice 중 하나라도 현재 실행 데이터에 적용되었는지 확인한다.
          */
-        public static bool HasAnyActiveChoice(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, string choiceList /* 선택지 목록 */)
+        public static bool HasAnyActiveChoice(UnitCombatState owner /* 스킬을 사용하는 유닛 */, string choiceList /* 선택지 목록 */)
         {
-            if (string.IsNullOrWhiteSpace(choiceList) || snapshot == null)
+            if (string.IsNullOrWhiteSpace(choiceList) || owner == null || owner.Skills == null)
             {
                 return false;
             }
@@ -687,7 +1013,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < choices.Length; i++)
             {
                 var choiceId = choices[i].Trim();
-                if (choiceId.Length > 0 && snapshot.HasActiveChoice(choiceId))
+                if (choiceId.Length > 0 && owner.Skills.HasChoice(choiceId))
                 {
                     return true;
                 }
@@ -782,7 +1108,7 @@ namespace Pakuri.InGame
         {
             return owner != null
                 && owner.Skills != null
-                && owner.Skills.LearnedPassiveSkillIds.Contains(passiveId);
+                && owner.Skills.HasPassiveSkill(passiveId);
         }
     }
 }

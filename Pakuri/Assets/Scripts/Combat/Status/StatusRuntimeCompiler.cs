@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.InGame;
@@ -167,7 +167,7 @@ namespace Pakuri.Data
         /*
          * Create에 필요한 결과를 만들어 반환한다.
          */
-        public static StatusRuntimeData Create(StatusEffectKind kind /* 처리할 종류 */, string label /* 표시 문구 */, SkillDefinition source /* 변환할 스킬 정의 */)
+        public static StatusRuntimeData Create(StatusEffectKind kind /* 처리할 종류 */, string label /* 표시 문구 */, SkillSourceDefinition source /* 변환할 스킬 정의 */)
         {
             var status = Create(kind, label);
             if (source == null)

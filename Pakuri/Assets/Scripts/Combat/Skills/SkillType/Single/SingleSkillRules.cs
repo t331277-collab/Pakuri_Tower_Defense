@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
 using UnityEngine;
@@ -31,7 +32,7 @@ namespace Pakuri.InGame
          */
         internal static bool ShouldRejectCastForExecuteThreshold(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
             if (!skill.RequireExecuteThresholdToCast
@@ -53,7 +54,7 @@ namespace Pakuri.InGame
          */
         internal static SingleDamageModifierState ApplyDamageModifiers(
             SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             UnitCombatState target /* 효과를 받을 대상 유닛 */,
             float damageMultiplier /* 피해량에 곱할 배율 */,
             float critChanceBonus /* 추가 치명타 확률 */)
@@ -70,7 +71,7 @@ namespace Pakuri.InGame
         internal static void HandleKillRecovery(
             SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
             SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             InGameResourceChangeResult result /* 처리 결과 */,
             bool wasExecute /* 발생 처형 여부 */)
         {
@@ -92,11 +93,15 @@ namespace Pakuri.InGame
          */
         private static bool TryResolveThreshold(
             SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             out float threshold /* 기준값 */)
         {
             var bonus = 0f;
-            var ops = snapshot != null && snapshot.Plan != null ? snapshot.Plan.CastConditions : null;
+            IReadOnlyList<CastConditionOp> ops = null;
+            if (snapshot != null)
+            {
+                ops = snapshot.CastConditionOps;
+            }
             if (ops != null)
             {
                 for (var i = 0; i < ops.Count; i++)
@@ -129,7 +134,7 @@ namespace Pakuri.InGame
          */
         private static void ApplyExecuteDamageModifier(
             SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             UnitCombatState target /* 효과를 받을 대상 유닛 */,
             ref SingleDamageModifierState state /* 상태 */)
         {
@@ -145,24 +150,23 @@ namespace Pakuri.InGame
                 state.DamageMultiplier *= skill.ExecuteDamageMultiplier;
             }
 
-            var plan = snapshot != null ? snapshot.Plan : null;
-            if (plan == null)
+            if (snapshot == null)
             {
                 return;
             }
 
-            for (var i = 0; i < plan.DamageModifiers.Count; i++)
+            for (var i = 0; i < snapshot.DamageModifierOps.Count; i++)
             {
-                var op = plan.DamageModifiers[i];
+                var op = snapshot.DamageModifierOps[i];
                 if (op.Kind == DamageModifierOpKind.ExecuteMultiplier)
                 {
                     state.DamageMultiplier *= op.Multiplier;
                 }
             }
 
-            for (var i = 0; i < plan.CritModifiers.Count; i++)
+            for (var i = 0; i < snapshot.CritModifierOps.Count; i++)
             {
-                var op = plan.CritModifiers[i];
+                var op = snapshot.CritModifierOps[i];
                 state.CritChanceBonus += op.ChanceBonus;
             }
         }
@@ -172,7 +176,7 @@ namespace Pakuri.InGame
          */
         private static void ApplyBossDamageModifier(
             SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             UnitCombatState target /* 효과를 받을 대상 유닛 */,
             ref SingleDamageModifierState state /* 상태 */)
         {
@@ -186,15 +190,14 @@ namespace Pakuri.InGame
                 state.DamageMultiplier *= skill.BossDamageMultiplier;
             }
 
-            var plan = snapshot != null ? snapshot.Plan : null;
-            if (plan == null)
+            if (snapshot == null)
             {
                 return;
             }
 
-            for (var i = 0; i < plan.DamageModifiers.Count; i++)
+            for (var i = 0; i < snapshot.DamageModifierOps.Count; i++)
             {
-                var op = plan.DamageModifiers[i];
+                var op = snapshot.DamageModifierOps[i];
                 if (op.Kind == DamageModifierOpKind.BossMultiplier)
                 {
                     state.DamageMultiplier *= op.Multiplier;
@@ -207,18 +210,17 @@ namespace Pakuri.InGame
          */
         private static bool TryResetCooldown(
             SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             bool wasExecute /* 발생 처형 여부 */)
         {
-            var plan = snapshot != null ? snapshot.Plan : null;
-            if (plan == null)
+            if (snapshot == null)
             {
                 return false;
             }
 
-            for (var i = 0; i < plan.KillActions.Count; i++)
+            for (var i = 0; i < snapshot.KillActionOps.Count; i++)
             {
-                var op = plan.KillActions[i];
+                var op = snapshot.KillActionOps[i];
                 if (op.Kind != KillActionOpKind.CooldownReset
                     || (op.RequiresExecute && !wasExecute))
                 {
@@ -238,15 +240,14 @@ namespace Pakuri.InGame
         private static bool TryRefundCooldown(
             SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
             SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             var refundBonus = 0f;
-            var plan = snapshot != null ? snapshot.Plan : null;
-            if (plan != null)
+            if (snapshot != null)
             {
-                for (var i = 0; i < plan.KillActions.Count; i++)
+                for (var i = 0; i < snapshot.KillActionOps.Count; i++)
                 {
-                    var op = plan.KillActions[i];
+                    var op = snapshot.KillActionOps[i];
                     if (op.Kind == KillActionOpKind.CooldownRefundBonus)
                     {
                         refundBonus += op.RatioBonus;

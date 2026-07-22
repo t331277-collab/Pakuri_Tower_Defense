@@ -32,7 +32,8 @@ namespace Pakuri.Combat
         internal static float CalculateRawDamage(
             UnitCombatState caster, /* 스킬을 사용하는 유닛 */
             SkillDamageSpec damage /* 피해량 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+            float baseDamageBonus /* 강화로 추가할 기본 피해 */,
+            float damageMultiplier /* 강화로 적용할 피해 배율 */)
         {
             var rawDamage = damage.BaseDamage;
             if (damage.UseCombinedStatCoefficients)
@@ -58,10 +59,7 @@ namespace Pakuri.Combat
             }
             rawDamage = Mathf.Max(0f, rawDamage);
 
-            if (snapshot != null)
-            {
-                rawDamage = (rawDamage + snapshot.BaseDamageBonus) * Mathf.Max(0f, snapshot.DamageMultiplier);
-            }
+            rawDamage = (rawDamage + baseDamageBonus) * Mathf.Max(0f, damageMultiplier);
 
             rawDamage *= StatusCombatRules.ResolveOutgoingDamageMultiplier(caster, damage.Element, damage.SkillId);
             if (caster is EnemyCombatState enemy)

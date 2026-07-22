@@ -26,7 +26,7 @@ namespace Pakuri.InGame
         private ProjectileStatusHitSpec statusOnHit;
         private ProjectileBranchDamageSpec branchDamageOnHit;
         private SkillUseState runtime;
-        private SkillSnapshot executionSnapshot;
+        private SkillExecutionData executionData;
         private string sourceSkillId;
         private bool isMagazineLastProjectile;
         private bool magazineLastProjectileTriggerFired;
@@ -81,7 +81,7 @@ namespace Pakuri.InGame
             statusOnHit = null;
             branchDamageOnHit = null;
             runtime = null;
-            executionSnapshot = null;
+            executionData = null;
             sourceSkillId = null;
             isMagazineLastProjectile = false;
             magazineLastProjectileTriggerFired = false;
@@ -164,7 +164,7 @@ namespace Pakuri.InGame
             float impactAreaRadius /* 충돌 범위 반지름 */,
             float delayedImpactDamage /* 지연 충돌 피해 */,
             SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             string ignoredUnitId = null /* 무시할 유닛 식별자 */,
             string skillId = null /* 스킬 식별자 */,
             bool magazineLastProjectile = false /* 탄창 마지막 투사체 여부 */,
@@ -196,7 +196,7 @@ namespace Pakuri.InGame
             impactRadius = Mathf.Max(0f, impactAreaRadius);
             impactDamage = Mathf.Max(0f, delayedImpactDamage);
             runtime = sourceRuntime;
-            executionSnapshot = snapshot;
+            executionData = snapshot;
             sourceSkillId = skillId;
             isMagazineLastProjectile = magazineLastProjectile;
             magazineLastProjectileTriggerFired = false;
@@ -341,11 +341,11 @@ namespace Pakuri.InGame
                 {
                     TryApplyStatus(target.Model);
                 }
-                SkillOnHitEffect.TryApply(
+                ProjectileSkillExecutor.ApplyHitEnhancements(
                     combatManager,
                     combatManager != null ? combatManager.UnitRegistry : null,
                     runtime,
-                    executionSnapshot,
+                    executionData,
                     combatManager != null && combatManager.UnitRegistry != null ? combatManager.UnitRegistry.Find(owner) : null,
                     owner,
                     sourceSkillId,
@@ -379,14 +379,14 @@ namespace Pakuri.InGame
         private float ResolveHitDamage(UnitCombatState target /* 효과를 받을 대상 유닛 */)
         {
             var hitDamage = damage;
-            if (executionSnapshot != null)
+            if (executionData != null)
             {
-                hitDamage *= executionSnapshot.ResolveConditionalDamageMultiplier(target);
+                hitDamage *= executionData.ResolveConditionalDamageMultiplier(target);
             }
 
-            if (runtime != null && executionSnapshot != null)
+            if (runtime != null && executionData != null)
             {
-                hitDamage *= runtime.ResolveConsecutiveHitDamageMultiplier(target, executionSnapshot);
+                hitDamage *= runtime.ResolveConsecutiveHitDamageMultiplier(target, executionData);
             }
 
             return Mathf.Max(0f, hitDamage);
@@ -416,7 +416,17 @@ namespace Pakuri.InGame
                 combatManager != null && combatManager.UnitRegistry != null ? combatManager.UnitRegistry.Find(owner) : null,
                 runtime,
                 target.Model);
-            SkillEffect.ExecuteOnHit(context, executionSnapshot, onHitEffects, hitPosition, target.Model);
+            ProjectileSkillExecutor.ExecuteAdditionalEffects(
+                context,
+                executionData,
+                onHitEffects,
+                hitPosition,
+                true,
+                SkillMultiEffectTiming.OnHit,
+                false,
+                0,
+                target.Model,
+                true);
         }
 
         /*
@@ -692,7 +702,7 @@ namespace Pakuri.InGame
                     critChanceBonus,
                     critDamageBonus,
                     int.MaxValue,
-                    executionSnapshot);
+                    executionData);
             }
 
             if (onExpireEffects != null && onExpireEffects.Length > 0 && combatManager != null)
@@ -743,7 +753,14 @@ namespace Pakuri.InGame
                 sourceEntry,
                 runtime,
                 impactTarget);
-            SkillEffect.ExecuteOnExpire(context, executionSnapshot, onExpireEffects, impactCenter);
+            ProjectileSkillExecutor.ExecuteAdditionalEffects(
+                context,
+                executionData,
+                onExpireEffects,
+                impactCenter,
+                true,
+                SkillMultiEffectTiming.OnExpire,
+                false);
             onExpireEffects = System.Array.Empty<SkillEffectDefinition>();
             awaitingExpireEffects = false;
         }

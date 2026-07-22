@@ -1,11 +1,9 @@
-using System;
 using Pakuri.Data;
-using System.Collections.Generic;
 
 /*
- * 스킬 한 번의 실행에 사용할 조건, 수치 변경, 행동, 효과, Trigger 노드를 정의한다.
- * SkillExecutionDefinition와 현재 Choice Snapshot을 정규화된 노드 순서로 컴파일해
- * Executor와 SkillTrigger가 같은 실행 계획을 사용하도록 한다.
+ * 스킬 강화 노드의 조건, 수치 변경, 행동, 효과, Trigger를 정의한다.
+ * 각 노드가 어떤 실행 정보를 담는지 나타내는 설계도만 보관한다.
+ * 효과와 Trigger 목록의 조합 및 실행은 담당 실행 스크립트가 처리한다.
  */
 namespace Pakuri.InGame
 {
@@ -311,14 +309,14 @@ namespace Pakuri.InGame
         /*
          * 스킬 실행 계획 노드에 필요한 값을 초기화한다.
          */
-        public SkillNode(
+        private SkillNode(
             CastConditionOp? castCondition = null /* 스킬 사용 조건 */,
             SkillActionOp? action = null /* 동작 */,
             DamageModifierOp? damageModifier = null /* 피해 보정 */,
             CritModifierOp? critModifier = null /* 치명타 보정 */,
             KillActionOp? killAction = null /* 처치 동작 */,
-            SkillEffectAction effectAction = null /* 효과 동작 */,
-            SkillTriggerAction triggerAction = null /* 트리거 동작 */,
+            SkillEffectDefinition effect = null /* 스킬 효과 정의 */,
+            SkillTriggerDefinition trigger = null /* 스킬 Trigger 정의 */,
             ConsecutiveHitActionOp? consecutiveHitAction = null /* 연속 적중 피해 동작 */,
             BranchDamageActionOp? branchDamageAction = null /* 분기 피해 동작 */,
             ConditionalDamageActionOp? conditionalDamageAction = null /* 상태 조건 피해 동작 */,
@@ -330,8 +328,8 @@ namespace Pakuri.InGame
             DamageModifier = damageModifier;
             CritModifier = critModifier;
             KillAction = killAction;
-            EffectAction = effectAction;
-            TriggerAction = triggerAction;
+            Effect = effect;
+            Trigger = trigger;
             ConsecutiveHitAction = consecutiveHitAction;
             BranchDamageAction = branchDamageAction;
             ConditionalDamageAction = conditionalDamageAction;
@@ -344,8 +342,8 @@ namespace Pakuri.InGame
         public DamageModifierOp? DamageModifier { get; }
         public CritModifierOp? CritModifier { get; }
         public KillActionOp? KillAction { get; }
-        public SkillEffectAction EffectAction { get; }
-        public SkillTriggerAction TriggerAction { get; }
+        public SkillEffectDefinition Effect { get; }
+        public SkillTriggerDefinition Trigger { get; }
         public ConsecutiveHitActionOp? ConsecutiveHitAction { get; }
         public BranchDamageActionOp? BranchDamageAction { get; }
         public ConditionalDamageActionOp? ConditionalDamageAction { get; }
@@ -459,7 +457,7 @@ namespace Pakuri.InGame
             SkillEffectDefinition effect /* 실행하거나 변환할 효과 */)
         {
             return new SkillNode(
-                effectAction: new SkillEffectAction(effect));
+                effect: effect);
         }
 
         /*
@@ -469,422 +467,8 @@ namespace Pakuri.InGame
             SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */)
         {
             return new SkillNode(
-                triggerAction: new SkillTriggerAction(trigger));
-        }
-    }
-
-    /*
-     * 스킬 효과 행동에 필요한 값을 보관한다.
-     */
-    public class SkillEffectAction
-    {
-        /*
-         * 스킬 효과 행동에 필요한 값을 초기화한다.
-         */
-        public SkillEffectAction(SkillEffectDefinition definition /* 변환하거나 검사할 정의 */)
-        {
-            Definition = definition;
+                trigger: trigger);
         }
 
-        internal SkillEffectDefinition Definition { get; }
-    }
-
-    /*
-     * 스킬 트리거 행동에 필요한 값을 보관한다.
-     */
-    public class SkillTriggerAction
-    {
-        /*
-         * 스킬 트리거 행동에 필요한 값을 초기화한다.
-         */
-        public SkillTriggerAction(SkillTriggerDefinition definition /* 변환하거나 검사할 정의 */)
-        {
-            Definition = definition;
-        }
-
-        internal SkillTriggerDefinition Definition { get; }
-    }
-
-    /*
-     * 스킬 실행에 사용할 조건, 보정, 행동 목록을 보관한다.
-     */
-    public class SkillNodePlan
-    {
-        /*
-         * 스킬 실행 계획에 필요한 값을 초기화한다.
-         */
-        public SkillNodePlan(
-            IReadOnlyList<CastConditionOp> castConditions /* 스킬 사용 조건 목록 */,
-            IReadOnlyList<DamageModifierOp> damageModifiers /* 피해 보정 목록 */,
-            IReadOnlyList<CritModifierOp> critModifiers /* 치명타 보정 목록 */,
-            IReadOnlyList<KillActionOp> killActions /* 처치 시 실행할 동작 목록 */,
-            IReadOnlyList<SkillNode> nodes = null /* 노드 목록 */)
-        {
-            var copiedNodes = Copy(nodes);
-            CastConditions = CopyOps(castConditions, copiedNodes, node => node.CastCondition);
-            DamageModifiers = CopyOps(damageModifiers, copiedNodes, node => node.DamageModifier);
-            CritModifiers = CopyOps(critModifiers, copiedNodes, node => node.CritModifier);
-            KillActions = CopyOps(killActions, copiedNodes, node => node.KillAction);
-            EffectActions = CopyNodeReferences(copiedNodes, node => node.EffectAction);
-            TriggerActions = CopyNodeReferences(copiedNodes, node => node.TriggerAction);
-        }
-
-        public IReadOnlyList<CastConditionOp> CastConditions { get; }
-        public IReadOnlyList<DamageModifierOp> DamageModifiers { get; }
-        public IReadOnlyList<CritModifierOp> CritModifiers { get; }
-        public IReadOnlyList<KillActionOp> KillActions { get; }
-        public IReadOnlyList<SkillEffectAction> EffectActions { get; }
-        public IReadOnlyList<SkillTriggerAction> TriggerActions { get; }
-
-        /*
-         * 실행 계획 목록을 새 배열로 복사한다.
-         */
-        private static T[] Copy<T>(IReadOnlyList<T> source /* 효과를 발생시킨 원본 */)
-        {
-            if (source == null || source.Count == 0)
-            {
-                return new T[0];
-            }
-
-            var copy = new T[source.Count];
-            for (var i = 0; i < source.Count; i++)
-            {
-                copy[i] = source[i];
-            }
-
-            return copy;
-        }
-
-        /*
-         * 규칙을 복사한다.
-         */
-        private static T[] CopyOps<T>(
-            IReadOnlyList<T> legacyOps /* 이전 형식의 동작 목록 */,
-            IReadOnlyList<SkillNode> nodes /* 노드 목록 */,
-            System.Func<SkillNode, T?> selector /* 선택 함수 */)
-            where T : struct
-        {
-            var legacyCount = legacyOps != null ? legacyOps.Count : 0;
-            var nodeCount = CountNodeOps(nodes, selector);
-            if (legacyCount + nodeCount == 0)
-            {
-                return new T[0];
-            }
-
-            var copy = new T[legacyCount + nodeCount];
-            for (var i = 0; i < legacyCount; i++)
-            {
-                copy[i] = legacyOps[i];
-            }
-
-            var index = legacyCount;
-            if (nodes != null)
-            {
-                for (var i = 0; i < nodes.Count; i++)
-                {
-                    var value = selector(nodes[i]);
-                    if (value.HasValue)
-                    {
-                        copy[index] = value.Value;
-                        index++;
-                    }
-                }
-            }
-
-            return copy;
-        }
-
-        /*
-         * 노드 규칙을 개수를 계산한다.
-         */
-        private static int CountNodeOps<T>(
-            IReadOnlyList<SkillNode> nodes /* 노드 목록 */,
-            System.Func<SkillNode, T?> selector /* 선택 함수 */)
-            where T : struct
-        {
-            if (nodes == null || nodes.Count == 0)
-            {
-                return 0;
-            }
-
-            var count = 0;
-            for (var i = 0; i < nodes.Count; i++)
-            {
-                if (selector(nodes[i]).HasValue)
-                {
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
-        /*
-         * 노드 참조를 복사한다.
-         */
-        private static T[] CopyNodeReferences<T>(
-            IReadOnlyList<SkillNode> nodes /* 노드 목록 */,
-            System.Func<SkillNode, T> selector /* 선택 함수 */)
-            where T : class
-        {
-            if (nodes == null || nodes.Count == 0)
-            {
-                return new T[0];
-            }
-
-            var count = 0;
-            for (var i = 0; i < nodes.Count; i++)
-            {
-                if (selector(nodes[i]) != null)
-                {
-                    count++;
-                }
-            }
-
-            if (count == 0)
-            {
-                return new T[0];
-            }
-
-            var copy = new T[count];
-            var index = 0;
-            for (var i = 0; i < nodes.Count; i++)
-            {
-                var value = selector(nodes[i]);
-                if (value != null)
-                {
-                    copy[index] = value;
-                    index++;
-                }
-            }
-
-            return copy;
-        }
-    }
-
-    /*
-     * 스킬 정의와 선택지 노드를 하나의 실행 계획으로 조합한다.
-     */
-    public static class SkillNodeCompiler
-    {
-        /*
-         * 스킬과 현재 선택지 상태를 하나의 실행 계획으로 조합한다.
-         */
-        public static SkillNodePlan Compile(
-            SkillExecutionDefinition source /* 복사하거나 변환할 스킬 실행 데이터 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
-            IReadOnlyList<SkillNode> normalizedRows /* 정규화된 행 목록 */)
-        {
-            var nodes = BuildPlanNodes(source, normalizedRows);
-            return new SkillNodePlan(
-                snapshot != null ? snapshot.CastConditionOps : null,
-                snapshot != null ? snapshot.DamageModifierOps : null,
-                snapshot != null ? snapshot.CritModifierOps : null,
-                snapshot != null ? snapshot.KillActionOps : null,
-                nodes);
-        }
-
-        /*
-         * 계획 노드를 구성한다.
-         */
-        private static IReadOnlyList<SkillNode> BuildPlanNodes(
-            SkillExecutionDefinition source /* 복사하거나 변환할 스킬 실행 데이터 */,
-            IReadOnlyList<SkillNode> normalizedRows /* 정규화된 행 목록 */)
-        {
-            var effectCount = source != null && source.MultiEffects != null ? source.MultiEffects.Length : 0;
-            var triggerCount = source != null && source.SkillTriggers != null ? source.SkillTriggers.Length : 0;
-            var normalizedCount = normalizedRows != null ? normalizedRows.Count : 0;
-            if (effectCount + triggerCount + normalizedCount == 0)
-            {
-                return normalizedRows;
-            }
-
-            var nodes = new List<SkillNode>(effectCount + triggerCount + normalizedCount);
-            for (var i = 0; i < effectCount; i++)
-            {
-                var effect = source.MultiEffects[i];
-                if (effect != null)
-                {
-                    nodes.Add(SkillNode.FromEffect(
-                        effect));
-                }
-            }
-
-            for (var i = 0; i < triggerCount; i++)
-            {
-                var trigger = source.SkillTriggers[i];
-                if (trigger != null)
-                {
-                    nodes.Add(SkillNode.FromTrigger(
-                        trigger));
-                }
-            }
-
-            if (normalizedRows != null)
-            {
-                for (var i = 0; i < normalizedRows.Count; i++)
-                {
-                    if (normalizedRows[i] != null)
-                    {
-                        nodes.Add(normalizedRows[i]);
-                    }
-                }
-            }
-
-            return nodes;
-        }
-    }
-
-    internal static class SkillNodeAction
-    {
-        /*
-         * 효과를 실행한다.
-         */
-        public static bool ExecuteEffect(
-            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
-            SkillEffectDefinition effect /* 실행하거나 변환할 효과 */,
-            UnityEngine.Vector2 fallbackCenter /* 중심을 정하지 못했을 때 사용할 위치 */,
-            bool scaleStatusDurationWithSnapshot = false /* 강화 배율을 상태 효과 지속 시간에 적용할지 여부 */)
-        {
-            if (effect == null || context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
-            {
-                return false;
-            }
-
-            switch (effect.EffectKind)
-            {
-                case SkillMultiEffectKind.Damage:
-                    return SkillEffect.ExecuteDamageEffectAction(context, snapshot, effect, fallbackCenter);
-                case SkillMultiEffectKind.Status:
-                    return SkillEffect.ExecuteStatusEffectAction(context, snapshot, effect, fallbackCenter, scaleStatusDurationWithSnapshot);
-                case SkillMultiEffectKind.ExtendStatusDuration:
-                    return SkillEffect.ExecuteExtendStatusDurationEffectAction(context, effect);
-                case SkillMultiEffectKind.RecastZone:
-                    return ZoneSkillExecutor.ExecuteRecast(context, snapshot, effect, fallbackCenter);
-            }
-
-            return false;
-        }
-
-        /*
-         * 트리거 행동을 실행한다.
-         */
-        public static bool ExecuteTriggerAction(
-            InGameCombatManager combatManager /* 전투 진행 관리자 */,
-            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
-            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
-            UnitCombatState source /* 효과를 발생시킨 유닛 */,
-            SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */,
-            SkillTrigger.TriggerExecutionContext triggerContext /* 트리거 실행에 필요한 정보 */)
-        {
-            switch (ResolveTriggerAction(trigger))
-            {
-                case SkillTriggerActionKind.SingleAttack:
-                    return SkillTrigger.ExecuteSingleAttackAction(combatManager, roster, sourceEntry, source, trigger, triggerContext);
-                case SkillTriggerActionKind.LineAttack:
-                    return SkillTrigger.ExecuteLineAttackAction(combatManager, roster, sourceEntry, source, trigger, triggerContext);
-                case SkillTriggerActionKind.Effect:
-                    return SkillTrigger.ExecuteEffectAction(combatManager, roster, sourceEntry, trigger, triggerContext);
-                case SkillTriggerActionKind.CooldownRefund:
-                    return SkillTrigger.ReduceTargetCooldownAction(roster, sourceEntry, trigger);
-                case SkillTriggerActionKind.ReloadReduce:
-                    return SkillTrigger.ReduceTargetReloadAction(roster, sourceEntry, trigger);
-                default:
-                    return SkillTrigger.ExecuteTriggeredSkillAction(combatManager, sourceEntry, trigger, triggerContext);
-            }
-        }
-
-        /*
-         * 트리거 행동을 결정한다.
-         */
-        private static SkillTriggerActionKind ResolveTriggerAction(SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */)
-        {
-            if (trigger == null)
-            {
-                return SkillTriggerActionKind.Auto;
-            }
-
-            if (trigger.TriggerAction != SkillTriggerActionKind.Auto)
-            {
-                return trigger.TriggerAction;
-            }
-
-            return trigger.RuntimeKind == SkillRuntimeKind.SingleAttack
-                ? SkillTriggerActionKind.SingleAttack
-                : SkillTriggerActionKind.TriggeredSkill;
-        }
-
-        /*
-         * 실행 계획에서 효과 행동만 가져온다.
-         */
-        public static SkillEffectDefinition[] ResolveEffects(
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
-            SkillEffectDefinition[] fallbackEffects /* 대체 효과 목록 */)
-        {
-            var actions = snapshot != null && snapshot.Plan != null
-                ? snapshot.Plan.EffectActions
-                : null;
-            if (actions == null || actions.Count == 0)
-            {
-                return fallbackEffects ?? Array.Empty<SkillEffectDefinition>();
-            }
-
-            var resolved = new SkillEffectDefinition[actions.Count];
-            for (var i = 0; i < actions.Count; i++)
-            {
-                resolved[i] = actions[i] != null ? actions[i].Definition : null;
-            }
-
-            return resolved;
-        }
-
-        /*
-         * 트리거를 결정한다.
-         */
-        public static SkillTriggerDefinition[] ResolveTriggers(
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
-            SkillTriggerDefinition[] fallbackTriggers /* 대체 트리거 목록 */)
-        {
-            var actions = snapshot != null && snapshot.Plan != null
-                ? snapshot.Plan.TriggerActions
-                : null;
-            if (actions == null || actions.Count == 0)
-            {
-                return fallbackTriggers ?? Array.Empty<SkillTriggerDefinition>();
-            }
-
-            var resolved = new SkillTriggerDefinition[actions.Count];
-            for (var i = 0; i < actions.Count; i++)
-            {
-                resolved[i] = actions[i] != null ? actions[i].Definition : null;
-            }
-
-            return resolved;
-        }
-
-        /*
-         * 트리거를 결정한다.
-         */
-        public static SkillTriggerDefinition[] ResolveTriggers(
-            SkillUseState runtime /* 실행 중인 스킬 정보 */,
-            SkillTriggerDefinition[] fallbackTriggers /* 대체 트리거 목록 */)
-        {
-            var actions = runtime != null && runtime.BasePlan != null
-                ? runtime.BasePlan.TriggerActions
-                : null;
-            if (actions == null || actions.Count == 0)
-            {
-                return fallbackTriggers ?? Array.Empty<SkillTriggerDefinition>();
-            }
-
-            var resolved = new SkillTriggerDefinition[actions.Count];
-            for (var i = 0; i < actions.Count; i++)
-            {
-                resolved[i] = actions[i] != null ? actions[i].Definition : null;
-            }
-
-            return resolved;
-        }
     }
 }

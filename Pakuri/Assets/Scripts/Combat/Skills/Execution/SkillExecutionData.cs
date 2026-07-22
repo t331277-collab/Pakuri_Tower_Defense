@@ -5,16 +5,16 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * 스킬 실행 순간의 능력치, 강화 선택, 노드 결과를 고정해 보관한다.
+ * 스킬 실행에 사용할 능력치, 강화 선택, 노드 결과를 보관한다.
  */
 namespace Pakuri.InGame
 {
 
 /*
  * 원본 스킬과 선택한 강화 노드를 합쳐 한 번의 스킬 실행에 사용할 값을 만든다.
- * 실행기는 이 객체에 저장된 최종 수치와 SkillNodePlan을 읽어 같은 강화 결과를 사용한다.
+ * 실행기는 이 객체에 저장된 최종 수치와 선택한 SkillNode를 읽어 같은 강화 결과를 사용한다.
  */
-public class SkillSnapshot
+public class SkillExecutionData
 {
 	/*
 	 * 대상이 필요한 상태 중첩을 가지고 있을 때 적용할 피해 배율을 보관한다.
@@ -138,13 +138,11 @@ public class SkillSnapshot
 	private readonly List<SkillNode> normalizedPlanNodes = new List<SkillNode>();
 
 	/*
-	 * 스냅샷의 원본 스킬과 현재 조합된 실행 계획을 나타낸다.
+	 * 강화 수치를 적용할 원본 스킬을 나타낸다.
 	 */
-	public SkillExecutionDefinition Source { get; }
+	public SkillDefinition Source { get; }
 
 	public string SkillId { get; }
-
-	public SkillNodePlan Plan { get; private set; }
 
 	/*
 	 * 피해, 보호막, 재사용 대기시간과 투사체에 적용할 기본 강화 수치를 보관한다.
@@ -396,6 +394,34 @@ public class SkillSnapshot
 	public IReadOnlyList<SkillNode> NormalizedPlanNodes => normalizedPlanNodes;
 
 	/*
+	 * 기본 효과와 현재 유닛이 선택한 노드 효과를 실행 목록으로 반환한다.
+	 */
+	public SkillEffectDefinition[] CollectEffects(SkillEffectDefinition[] baseEffects /* 스킬 기본 효과 목록 */)
+	{
+		var effects = new List<SkillEffectDefinition>();
+		if (baseEffects != null)
+		{
+			for (var i = 0; i < baseEffects.Length; i++)
+			{
+				if (baseEffects[i] != null)
+				{
+					effects.Add(baseEffects[i]);
+				}
+			}
+		}
+
+		for (var i = 0; i < normalizedPlanNodes.Count; i++)
+		{
+			var node = normalizedPlanNodes[i];
+			if (node != null && node.Effect != null)
+			{
+				effects.Add(node.Effect);
+			}
+		}
+		return effects.ToArray();
+	}
+
+	/*
 	 * 분기 공격에 필요한 확률, 횟수, 피해 또는 발사 주기가 하나라도 있는지 확인한다.
 	 */
 	public bool HasBranchBehavior
@@ -473,7 +499,7 @@ public class SkillSnapshot
 	/*
 	 * 원본 스킬의 식별자, 기본 배율, 이펙트와 노드를 사용해 최초 실행 계획을 만든다.
 	 */
-	public SkillSnapshot(SkillExecutionDefinition source /* 복사하거나 변환할 스킬 실행 데이터 */)
+	public SkillExecutionData(SkillDefinition source /* 복사하거나 변환할 스킬 실행 데이터 */)
 	{
 		Source = source;
 		SkillId = string.Empty;
@@ -499,7 +525,6 @@ public class SkillSnapshot
 			SkillEffectPrefab = source.SkillEffectPrefab;
 			AddNormalizedPlanNodes(source.NormalizedPlanNodes);
 		}
-		RebuildExecutionPlan();
 	}
 
 	/*
@@ -523,11 +548,11 @@ public class SkillSnapshot
 	}
 
 	/*
-	 * 현재 스냅샷을 복사하고 복사본에만 별도 피해 배율을 적용한다.
+	 * 현재 실행 데이터를 복사하고 복사본에만 별도 피해 배율을 적용한다.
 	 */
-	internal SkillSnapshot CopyWithDamageMultiplier(float multiplier /* 값에 곱할 배율 */)
+	internal SkillExecutionData CopyWithDamageMultiplier(float multiplier /* 값에 곱할 배율 */)
 	{
-		SkillSnapshot copy = (SkillSnapshot)MemberwiseClone();
+		SkillExecutionData copy = (SkillExecutionData)MemberwiseClone();
 		copy.DamageMultiplier *= Mathf.Max(0f, multiplier);
 		return copy;
 	}
@@ -552,7 +577,6 @@ public class SkillSnapshot
 		AddNormalizedPlanNodes(nodes);
 		ApplyPlanActionNodes(nodes);
 		RefreshSingleOperationBridges();
-		RebuildExecutionPlan();
 	}
 
 	/*
@@ -673,7 +697,7 @@ public class SkillSnapshot
 	}
 
 	/*
-	 * 선택지 노드의 단순 행동과 복합 행동을 현재 스냅샷에 적용한다.
+	 * 선택지 노드의 단순 행동과 복합 행동을 현재 실행 데이터에 적용한다.
 	 */
 	private void ApplyPlanActionNodes(IReadOnlyList<SkillNode> nodes /* 노드 목록 */)
 	{
@@ -721,7 +745,7 @@ public class SkillSnapshot
 	}
 
 	/*
-	 * 행동 종류에 맞는 스냅샷 속성이나 상태별 보너스에 값을 누적한다.
+	 * 행동 종류에 맞는 실행 데이터 속성이나 상태별 보너스에 값을 누적한다.
 	 */
 	private void ApplyPlanAction(SkillActionOp action /* 동작 */)
 	{
@@ -843,7 +867,7 @@ public class SkillSnapshot
 	}
 
 	/*
-	 * 연속 적중 피해 증가값을 현재 스냅샷에 누적한다.
+	 * 연속 적중 피해 증가값을 현재 실행 데이터에 누적한다.
 	 */
 	private void ApplyConsecutiveHitAction(ConsecutiveHitActionOp action /* 연속 적중 피해 동작 */)
 	{
@@ -852,7 +876,7 @@ public class SkillSnapshot
 	}
 
 	/*
-	 * 분기 공격 값을 현재 스냅샷에 적용한다.
+	 * 분기 공격 값을 현재 실행 데이터에 적용한다.
 	 */
 	private void ApplyBranchDamageAction(BranchDamageActionOp action /* 분기 피해 동작 */)
 	{
@@ -883,7 +907,7 @@ public class SkillSnapshot
 	}
 
 	/*
-	 * 공격자 상태 효과 조건에 따른 받는 피해 증가값을 현재 스냅샷에 적용한다.
+	 * 공격자 상태 효과 조건에 따른 받는 피해 증가값을 현재 실행 데이터에 적용한다.
 	 */
 	private void ApplyStatusConditionalDamageTakenAction(StatusConditionalDamageTakenActionOp action /* 공격자 상태 조건 받는 피해 동작 */)
 	{
@@ -940,7 +964,7 @@ public class SkillSnapshot
 	}
 
 	/*
-	 * 현재 스냅샷에 적용된 선택지 식별자를 기록한다.
+	 * 현재 실행 데이터에 적용된 선택지 식별자를 기록한다.
 	 */
 	public void AddActiveChoiceId(string choiceId /* 스킬 선택지 식별자 */)
 	{
@@ -951,7 +975,7 @@ public class SkillSnapshot
 	}
 
 	/*
-	 * 지정한 선택지가 현재 스냅샷에 적용되었는지 확인한다.
+	 * 지정한 선택지가 현재 실행 데이터에 적용되었는지 확인한다.
 	 */
 	public bool HasActiveChoice(string choiceId /* 스킬 선택지 식별자 */)
 	{
@@ -1204,14 +1228,6 @@ public class SkillSnapshot
 		{
 			killActionOps.Add(new KillActionOp(KillActionOpKind.CooldownRefundBonus, KillCooldownRefundRatioBonus, requiresExecute: false));
 		}
-	}
-
-	/*
-	 * 원본 스킬, 현재 스냅샷과 정규화 노드로 최종 실행 계획을 다시 만든다.
-	 */
-	private void RebuildExecutionPlan()
-	{
-		Plan = SkillNodeCompiler.Compile(Source, this, normalizedPlanNodes);
 	}
 
 	/*

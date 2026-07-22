@@ -177,7 +177,7 @@ namespace Pakuri.InGame
          */
         public bool CanLearnActive(
             MonsterDefinition monster /* 스킬을 학습할 몬스터 */,
-            SkillDefinition skill /* 학습 후보 액티브 스킬 */)
+            SkillSourceDefinition skill /* 학습 후보 액티브 스킬 */)
         {
             if (monster == null || skill == null || string.IsNullOrWhiteSpace(skill.SkillId))
             {

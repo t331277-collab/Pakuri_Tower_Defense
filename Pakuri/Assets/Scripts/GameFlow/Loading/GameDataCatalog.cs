@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System;
 using UnityEngine;
 
@@ -61,7 +61,7 @@ namespace Pakuri.Data
         /*
          * GetActiveSkills에 해당하는 값을 찾아 반환한다.
          */
-        public SkillDefinition[] GetActiveSkills(string monsterId /* 몬스터 식별자 */)
+        public SkillSourceDefinition[] GetActiveSkills(string monsterId /* 몬스터 식별자 */)
         {
             return lookup.GetActiveSkills(monsterId);
         }
@@ -85,7 +85,7 @@ namespace Pakuri.Data
         /*
          * ResolveActiveSkill 결과를 계산해 반환한다.
          */
-        public SkillDefinition ResolveActiveSkill(string monsterId /* 몬스터 식별자 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
+        public SkillSourceDefinition ResolveActiveSkill(string monsterId /* 몬스터 식별자 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
         {
             return lookup.ResolveActiveSkill(monsterId, slot);
         }
@@ -112,12 +112,12 @@ namespace Pakuri.Data
     {
         private readonly Dictionary<string, MonsterDefinition> monsters = new Dictionary<string, MonsterDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, EnemyDefinition> enemies = new Dictionary<string, EnemyDefinition>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, SkillDefinition> activeSkills = new Dictionary<string, SkillDefinition>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, SkillSourceDefinition> activeSkills = new Dictionary<string, SkillSourceDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, PassiveDefinition> passiveSkills = new Dictionary<string, PassiveDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, StatusEffectDefinition> statusEffects = new Dictionary<string, StatusEffectDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, SkillChoiceDefinition> skillChoices = new Dictionary<string, SkillChoiceDefinition>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, MonsterDefinition.RewardChoiceDefinition> rewardChoices = new Dictionary<string, MonsterDefinition.RewardChoiceDefinition>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, SkillDefinition[]> activeSkillsByMonster = new Dictionary<string, SkillDefinition[]>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, SkillSourceDefinition[]> activeSkillsByMonster = new Dictionary<string, SkillSourceDefinition[]>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, PassiveDefinition[]> passiveSkillsByMonster = new Dictionary<string, PassiveDefinition[]>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, MonsterDefinition.RewardChoiceDefinition[]> rewardChoicesByMonster = new Dictionary<string, MonsterDefinition.RewardChoiceDefinition[]>(StringComparer.OrdinalIgnoreCase);
 
@@ -186,7 +186,7 @@ namespace Pakuri.Data
                 enemies.TryGetValue(id, out var enemy);
                 resolved = enemy;
             }
-            else if (targetType == typeof(SkillDefinition))
+            else if (targetType == typeof(SkillSourceDefinition))
             {
                 activeSkills.TryGetValue(id, out var activeSkill);
                 resolved = activeSkill;
@@ -232,7 +232,7 @@ namespace Pakuri.Data
         /*
          * 몬스터에 등록된 액티브 스킬 목록을 반환한다.
          */
-        public SkillDefinition[] GetActiveSkills(string monsterId /* 몬스터 식별자 */)
+        public SkillSourceDefinition[] GetActiveSkills(string monsterId /* 몬스터 식별자 */)
         {
             if (!string.IsNullOrWhiteSpace(monsterId)
                 && activeSkillsByMonster.TryGetValue(monsterId, out var registeredSkills)
@@ -242,7 +242,7 @@ namespace Pakuri.Data
                 return registeredSkills;
             }
 
-            return Array.Empty<SkillDefinition>();
+            return Array.Empty<SkillSourceDefinition>();
         }
 
         /*
@@ -280,7 +280,7 @@ namespace Pakuri.Data
         /*
          * 몬스터의 액티브 스킬 중 요청 슬롯에 배치된 스킬을 찾는다.
          */
-        public SkillDefinition ResolveActiveSkill(string monsterId /* 몬스터 식별자 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
+        public SkillSourceDefinition ResolveActiveSkill(string monsterId /* 몬스터 식별자 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
         {
             var skills = GetActiveSkills(monsterId);
             for (var i = 0; i < skills.Length; i++)
@@ -335,7 +335,7 @@ namespace Pakuri.Data
                 var monsterActiveSkills = monster.ActiveSkills;
                 if (monsterActiveSkills == null)
                 {
-                    monsterActiveSkills = Array.Empty<SkillDefinition>();
+                    monsterActiveSkills = Array.Empty<SkillSourceDefinition>();
                 }
                 activeSkillsByMonster[monster.MonsterId] = monsterActiveSkills;
 
@@ -432,7 +432,7 @@ namespace Pakuri.Data
         /*
          * 액티브 스킬과 그 성장 선택지를 조회 표에 등록한다.
          */
-        private void RegisterActiveSkill(SkillDefinition skill /* 처리할 스킬 정의 */)
+        private void RegisterActiveSkill(SkillSourceDefinition skill /* 처리할 스킬 정의 */)
         {
             if (skill == null || string.IsNullOrWhiteSpace(skill.SkillId))
             {

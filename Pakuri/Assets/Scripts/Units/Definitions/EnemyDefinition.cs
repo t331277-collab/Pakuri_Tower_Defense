@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Pakuri.Combat;
 using Pakuri.InGame;
 using UnityEngine;
@@ -75,7 +75,7 @@ namespace Pakuri.Data
 
         [Header("Shared Runtime Skills")]
         // 공용 스킬 런타임으로 전달할 액티브 스킬과 Trigger
-        public SkillDefinition[] ActiveSkills = Array.Empty<SkillDefinition>();
+        public SkillSourceDefinition[] ActiveSkills = Array.Empty<SkillSourceDefinition>();
         public SkillTriggerDefinition[] SkillTriggers = Array.Empty<SkillTriggerDefinition>();
 
         [Header("Passive")]

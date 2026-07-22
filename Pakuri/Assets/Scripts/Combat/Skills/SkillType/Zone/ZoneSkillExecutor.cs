@@ -14,11 +14,547 @@ namespace Pakuri.InGame
     internal static class ZoneSkillExecutor
     {
         /*
+         * 현재 스킬의 노드 효과 중 요청한 실행 시점에 맞는 효과를 적용한다.
+         */
+        internal static bool ExecuteAdditionalEffects(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
+            SkillEffectDefinition[] effects /* 적용할 추가 효과 목록 */,
+            Vector2 defaultCenter /* 기본 효과 중심 */,
+            bool requireTiming /* 특정 실행 시점만 처리할지 여부 */,
+            SkillMultiEffectTiming timing /* 처리할 실행 시점 */,
+            bool scaleStatusDuration /* 상태 지속시간 보정 여부 */,
+            int hitCount = 0 /* 현재 적중 횟수 */,
+            UnitCombatState eventTarget = null /* 현재 적중 대상 */,
+            bool useEventTarget = false /* 적중 대상을 문맥에 넣을지 여부 */)
+        {
+            if (context == null || context.CombatManager == null || effects == null || effects.Length == 0)
+            {
+                return false;
+            }
+
+            var effectContext = context;
+            if (useEventTarget)
+            {
+                effectContext = new SkillExecutionContext(
+                    context.CombatManager,
+                    context.Roster,
+                    context.CasterEntry,
+                    context.Runtime,
+                    eventTarget,
+                    context.HasManualAimDirection,
+                    context.ManualAimDirection,
+                    context.HasManualTargetPoint,
+                    context.ManualTargetPoint,
+                    context.RecastGeneration);
+            }
+
+            var applied = false;
+            for (var i = 0; i < effects.Length; i++)
+            {
+                var effect = effects[i];
+                if (!SkillRequirement.CanRunEffect(effectContext, effect))
+                {
+                    continue;
+                }
+                if (requireTiming)
+                {
+                    if (effect.EffectTiming != timing)
+                    {
+                        continue;
+                    }
+                }
+                else if (effect.EffectTiming == SkillMultiEffectTiming.OnHit
+                    || effect.EffectTiming == SkillMultiEffectTiming.OnDeploymentCast
+                    || effect.EffectTiming == SkillMultiEffectTiming.OnExpire
+                    || effect.EffectTiming == SkillMultiEffectTiming.OnHitCount)
+                {
+                    continue;
+                }
+                if (!SkillRequirement.MatchesEffectHitCount(effect, hitCount))
+                {
+                    continue;
+                }
+
+                if (effect.EffectTiming == SkillMultiEffectTiming.Delayed || effect.DelaySeconds > 0f)
+                {
+                    effectContext.CombatManager.StartCoroutine(ApplyAdditionalEffectAfterDelay(
+                        effectContext,
+                        skillData,
+                        effect,
+                        defaultCenter,
+                        scaleStatusDuration));
+                    applied = true;
+                }
+                else
+                {
+                    applied = ApplyAdditionalEffect(
+                        effectContext,
+                        skillData,
+                        effect,
+                        defaultCenter,
+                        scaleStatusDuration) || applied;
+                }
+            }
+            return applied;
+        }
+
+        /*
+         * 추가 효과의 지연시간이 지난 뒤 같은 Executor에서 효과를 적용한다.
+         */
+        private static IEnumerator ApplyAdditionalEffectAfterDelay(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
+            SkillEffectDefinition effect /* 적용할 추가 효과 */,
+            Vector2 defaultCenter /* 기본 효과 중심 */,
+            bool scaleStatusDuration /* 상태 지속시간 보정 여부 */)
+        {
+            var delay = Mathf.Max(0f, effect.DelaySeconds);
+            if (delay > 0f)
+            {
+                yield return new WaitForSeconds(delay);
+            }
+            else
+            {
+                yield return null;
+            }
+            ApplyAdditionalEffect(context, skillData, effect, defaultCenter, scaleStatusDuration);
+        }
+
+        /*
+         * 추가 효과 종류에 맞는 실제 적용 기능을 호출한다.
+         */
+        private static bool ApplyAdditionalEffect(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
+            SkillEffectDefinition effect /* 적용할 추가 효과 */,
+            Vector2 defaultCenter /* 기본 효과 중심 */,
+            bool scaleStatusDuration /* 상태 지속시간 보정 여부 */)
+        {
+            if (effect == null || context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null)
+            {
+                return false;
+            }
+
+            if (effect.EffectKind == SkillMultiEffectKind.Damage)
+            {
+                return ZoneSkillExecutor.ApplyAdditionalDamageEffect(context, skillData, effect, defaultCenter);
+            }
+            if (effect.EffectKind == SkillMultiEffectKind.Status)
+            {
+                return SkillStatus.ApplyEffect(context, skillData, effect, defaultCenter, scaleStatusDuration);
+            }
+            if (effect.EffectKind == SkillMultiEffectKind.ExtendStatusDuration)
+            {
+                return SkillStatus.ExtendEffectDuration(context, effect);
+            }
+            if (effect.EffectKind == SkillMultiEffectKind.RecastZone)
+            {
+                return ZoneSkillExecutor.ExecuteRecast(context, skillData, effect, defaultCenter);
+            }
+            return false;
+        }
+
+        /*
+         * 노드 피해 효과를 대상, 범위 또는 지속 영역에 적용한다.
+         */
+        internal static bool ApplyAdditionalDamageEffect(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
+            SkillEffectDefinition effect /* 적용할 추가 효과 */,
+            Vector2 defaultCenter /* 기본 효과 중심 */)
+        {
+            var targeting = SkillTargeting.BuildEffectTargeting(effect);
+            var center = SkillTargeting.ResolveEffectCenter(context, effect, targeting, defaultCenter);
+            var coefficient = effect.AttackPowerCoefficient;
+            var statSource = StatSource.Attack;
+            if (Mathf.Abs(effect.SpellPowerCoefficient) >= Mathf.Abs(effect.AttackPowerCoefficient))
+            {
+                coefficient = effect.SpellPowerCoefficient;
+                statSource = StatSource.Intelligence;
+            }
+
+            var damageSpec = new SkillDamageSpec
+            {
+                SkillId = effect.SkillId,
+                Element = effect.Attribute,
+                BaseDamage = effect.BaseDamage,
+                StatCoefficient = coefficient,
+                StatSource = statSource,
+                CriticalAllowed = true
+            };
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, damageSpec, skillData.BaseDamageBonus, skillData.DamageMultiplier)
+                * Mathf.Max(0f, effect.DamageMultiplier);
+            var statusSpec = SkillStatus.ResolveEffectStatusSpec(effect, skillData);
+
+            if (effect.ActiveDurationSeconds > 0f && effect.TickIntervalSeconds > 0f)
+            {
+                return CreateAdditionalDamageZone(context, skillData, effect, targeting, center, damage, statusSpec);
+            }
+
+            bool routed;
+            if (TryApplyRuntimeHitboxEffect(context, skillData, effect, targeting, center, damage, statusSpec, out routed))
+            {
+                return routed;
+            }
+
+            UnitCombatState eventTarget = null;
+            if (effect.TargetSelection == SkillMultiEffectTargetSelection.EventTarget)
+            {
+                eventTarget = context.EventTarget;
+            }
+
+            var criticalChanceBonus = 0f;
+            var criticalDamageBonus = 0f;
+            if (skillData != null)
+            {
+                criticalChanceBonus = skillData.CritChanceBonus;
+                criticalDamageBonus = skillData.CritDamageBonus;
+            }
+
+            var effectId = effect.SkillId;
+            if (!string.IsNullOrWhiteSpace(effect.EffectId))
+            {
+                effectId = effect.EffectId;
+            }
+
+            if (eventTarget != null)
+            {
+                var targetDamage = damage;
+                if (skillData != null)
+                {
+                    targetDamage *= skillData.ResolveConditionalDamageMultiplier(eventTarget);
+                }
+                targetDamage = Mathf.Max(0f, targetDamage);
+                var result = context.CombatManager.ApplyDamage(
+                    eventTarget,
+                    targetDamage,
+                    effect.Attribute,
+                    context.Caster,
+                    damageSpec.CriticalAllowed,
+                    criticalChanceBonus,
+                    criticalDamageBonus,
+                    effectId);
+                if (!result.IsDead)
+                {
+                    StatusCombatRules.ApplyStatus(context.CombatManager, eventTarget, statusSpec, context.Caster);
+                }
+                if (context.CombatManager.Effects != null)
+                {
+                    context.CombatManager.Effects.ShowTimedSkillEffect(effect, center, 1f);
+                }
+                return true;
+            }
+
+            var hit = ZoneSkillActor.ApplyAreaTick(
+                context.CombatManager,
+                context.CasterEntry,
+                context.Roster,
+                targeting,
+                center,
+                SkillTargeting.ResolveRadius(effect.Radius, skillData.RadiusMultiplier, skillData.RadiusBonus),
+                effect.CoverAll || effect.TargetShape == SkillMultiEffectTargetShape.Battlefield,
+                damage,
+                effect.Attribute,
+                statusSpec,
+                context.Caster,
+                effectId,
+                null,
+                damageSpec.CriticalAllowed,
+                criticalChanceBonus,
+                criticalDamageBonus);
+            if (hit && context.CombatManager.Effects != null)
+            {
+                context.CombatManager.Effects.ShowTimedSkillEffect(effect, center, 1f);
+            }
+            return hit;
+        }
+
+        /*
+         * 추가 피해의 런타임 비주얼 충돌체를 사용해 범위 피해를 적용한다.
+         */
+        private static bool TryApplyRuntimeHitboxEffect(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
+            SkillEffectDefinition effect /* 적용할 추가 효과 */,
+            SkillTargetingSpec targeting /* 대상 선택 설정 */,
+            Vector2 center /* 효과 중심 */,
+            float damage /* 적용할 피해 */,
+            ProjectileStatusHitSpec statusSpec /* 적중 상태 설정 */,
+            out bool routed /* 실제 피해 적용 여부 */)
+        {
+            routed = false;
+            var visual = effect.RuntimeVisual;
+            RuntimeSkillHitboxSpec hitbox = null;
+            if (visual != null)
+            {
+                hitbox = visual.Hitbox;
+            }
+            if (hitbox == null || !hitbox.HasHitbox())
+            {
+                return false;
+            }
+            if (context == null || context.CombatManager == null || context.CombatManager.Effects == null)
+            {
+                return true;
+            }
+
+            var objectName = "SkillEffectVisual";
+            if (!string.IsNullOrWhiteSpace(effect.EffectId))
+            {
+                objectName = "SkillEffectVisual_" + effect.EffectId;
+            }
+            var instance = context.CombatManager.Effects.CreateEffect(visual, null, objectName, center, Quaternion.identity);
+            if (instance == null)
+            {
+                return true;
+            }
+
+            EffectVisualBuilder.ConfigureAreaEffect(instance, effect.Radius, skillData.RadiusMultiplier, skillData.RadiusBonus);
+            SingleSkillActor.Attach(instance).InitializeTimed(context.CombatManager.Effects, 1f);
+            var colliders = instance.GetComponentsInChildren<Collider2D>();
+            if (colliders == null || colliders.Length == 0)
+            {
+                return true;
+            }
+
+            var criticalChanceBonus = 0f;
+            var criticalDamageBonus = 0f;
+            if (skillData != null)
+            {
+                criticalChanceBonus = skillData.CritChanceBonus;
+                criticalDamageBonus = skillData.CritDamageBonus;
+            }
+            var effectId = effect.SkillId;
+            if (!string.IsNullOrWhiteSpace(effect.EffectId))
+            {
+                effectId = effect.EffectId;
+            }
+
+            routed = ZoneSkillActor.ApplyColliderAreaTick(
+                context.CombatManager,
+                context.CasterEntry,
+                context.Roster,
+                targeting,
+                colliders,
+                int.MaxValue,
+                damage,
+                effect.Attribute,
+                statusSpec,
+                context.Caster,
+                effectId,
+                null,
+                true,
+                criticalChanceBonus,
+                criticalDamageBonus,
+                null);
+            return true;
+        }
+
+        /*
+         * 지속 피해 추가 효과용 Zone Actor를 생성하고 실행 정보를 전달한다.
+         */
+        private static bool CreateAdditionalDamageZone(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
+            SkillEffectDefinition effect /* 적용할 추가 효과 */,
+            SkillTargetingSpec targeting /* 대상 선택 설정 */,
+            Vector2 center /* 효과 중심 */,
+            float damage /* Tick 피해 */,
+            ProjectileStatusHitSpec statusSpec /* 적중 상태 설정 */)
+        {
+            if (context == null
+                || context.CombatManager == null
+                || context.CombatManager.Effects == null
+                || context.CasterEntry == null
+                || context.Roster == null)
+            {
+                return false;
+            }
+
+            var duration = effect.ActiveDurationSeconds;
+            var interval = effect.TickIntervalSeconds;
+            if (skillData != null)
+            {
+                duration = duration * Mathf.Max(0f, skillData.DurationMultiplier) + skillData.DurationBonus;
+                interval *= Mathf.Max(0.05f, skillData.ShotIntervalMultiplier);
+            }
+            duration = Mathf.Max(0.05f, duration);
+            interval = Mathf.Max(0.05f, interval);
+
+            var objectName = "SkillEffectZone";
+            if (!string.IsNullOrWhiteSpace(effect.EffectId))
+            {
+                objectName = "SkillEffectZone_" + effect.EffectId;
+            }
+            var instance = context.CombatManager.Effects.CreateEffect(
+                effect.RuntimeVisual,
+                effect.SkillEffectPrefab,
+                objectName,
+                center,
+                Quaternion.identity);
+            if (instance != null)
+            {
+                EffectVisualBuilder.ConfigureAreaEffect(instance, effect.Radius, skillData.RadiusMultiplier, skillData.RadiusBonus);
+            }
+            else
+            {
+                instance = context.CombatManager.Effects.CreateSkillActorObject(objectName, center, Quaternion.identity);
+            }
+
+            var actor = instance.GetComponent<ZoneSkillActor>();
+            if (actor == null)
+            {
+                actor = instance.AddComponent<ZoneSkillActor>();
+            }
+            var criticalChanceBonus = 0f;
+            var criticalDamageBonus = 0f;
+            if (skillData != null)
+            {
+                criticalChanceBonus = skillData.CritChanceBonus;
+                criticalDamageBonus = skillData.CritDamageBonus;
+            }
+            actor.Initialize(
+                context.CombatManager,
+                context.CasterEntry,
+                context.Roster,
+                targeting,
+                center,
+                SkillTargeting.ResolveRadius(effect.Radius, skillData.RadiusMultiplier, skillData.RadiusBonus),
+                effect.CoverAll || effect.TargetShape == SkillMultiEffectTargetShape.Battlefield,
+                duration,
+                interval,
+                int.MaxValue,
+                damage,
+                effect.Attribute,
+                statusSpec,
+                context.Runtime,
+                skillData,
+                Array.Empty<SkillEffectDefinition>(),
+                context.Caster,
+                true,
+                criticalChanceBonus,
+                criticalDamageBonus);
+            return true;
+        }
+
+        private static bool applyingHitEnhancement;
+
+        /*
+         * 적중 후 추가 피해, 연쇄 피해, 재장전 감소 강화 효과를 적용한다.
+         */
+        internal static void ApplyHitEnhancements(
+            InGameCombatManager manager /* 전투 진행 관리자 */,
+            CombatUnitRegistry roster /* 전투 유닛 목록 */,
+            SkillUseState runtime /* 실행 중인 스킬 */,
+            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
+            CombatUnitEntry sourceEntry /* 시전자 등록 정보 */,
+            UnitCombatState source /* 시전자 */,
+            string sourceSkillId /* 원본 스킬 식별자 */,
+            CombatUnitEntry hitTarget /* 최초 적중 대상 */,
+            Vector2 hitPosition /* 최초 적중 위치 */,
+            float primaryBaseDamage /* 최초 적중 기본 피해 */)
+        {
+            if (manager == null
+                || roster == null
+                || skillData == null
+                || source == null
+                || hitTarget == null
+                || hitTarget.Model == null
+                || primaryBaseDamage <= 0f
+                || applyingHitEnhancement)
+            {
+                return;
+            }
+
+            var hasReloadReduction = !string.IsNullOrWhiteSpace(skillData.ReloadReduceTargetSkillId)
+                && skillData.ReloadReduceSecondsPerHit > 0f;
+            if (!skillData.HasOnHitAdditionalDamageBehavior && !hasReloadReduction)
+            {
+                return;
+            }
+
+            var hitIndex = 0;
+            if (runtime != null)
+            {
+                hitIndex = runtime.AdvanceSkillHitCount();
+            }
+
+            applyingHitEnhancement = true;
+            try
+            {
+                if (hasReloadReduction && runtime != null && runtime.Owner != null && runtime.Owner.Skills != null)
+                {
+                    var reloadSkill = runtime.Owner.SkillState.FindBySkillId(skillData.ReloadReduceTargetSkillId);
+                    if (reloadSkill != null && reloadSkill.IsReloading)
+                    {
+                        reloadSkill.ReduceReloadRemaining(skillData.ReloadReduceSecondsPerHit);
+                    }
+                }
+
+                var targetsHitUnit = string.IsNullOrWhiteSpace(skillData.OnHitAdditionalDamageTarget)
+                    || string.Equals(skillData.OnHitAdditionalDamageTarget, "HitTarget", StringComparison.OrdinalIgnoreCase);
+                if (skillData.HasOnHitAdditionalDamage
+                    && skillData.OnHitAdditionalDamageMultiplier > 0f
+                    && targetsHitUnit
+                    && hitTarget.IsAlive
+                    && UnityEngine.Random.value <= Mathf.Clamp01(skillData.OnHitAdditionalDamageChance))
+                {
+                    manager.ApplyDamage(
+                        hitTarget.Model,
+                        primaryBaseDamage * skillData.OnHitAdditionalDamageMultiplier,
+                        skillData.OnHitAdditionalDamageAttribute,
+                        source,
+                        criticalAllowed: false,
+                        0f,
+                        0f,
+                        sourceSkillId,
+                        suppressOutgoingDamageTriggers: true);
+                }
+
+                if (skillData.HasOnHitChainDamageBehavior
+                    && hitIndex > 0
+                    && hitIndex % skillData.OnHitChainHitPeriod == 0)
+                {
+                    var chainTargets = SkillTargeting.ResolveChainTargets(
+                        roster,
+                        sourceEntry,
+                        source,
+                        hitTarget,
+                        hitPosition,
+                        skillData.OnHitChainSearchRadius);
+                    var targetCount = Mathf.Min(skillData.OnHitChainTargetCount, chainTargets.Count);
+                    for (var i = 0; i < targetCount; i++)
+                    {
+                        var chainTarget = chainTargets[i];
+                        if (chainTarget != null && chainTarget.IsAlive && chainTarget.Model != null)
+                        {
+                            manager.ApplyDamage(
+                                chainTarget.Model,
+                                primaryBaseDamage * skillData.OnHitChainDamageMultiplier,
+                                skillData.OnHitChainDamageAttribute,
+                                source,
+                                criticalAllowed: false,
+                                0f,
+                                0f,
+                                sourceSkillId,
+                                suppressOutgoingDamageTriggers: true);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                applyingHitEnhancement = false;
+            }
+        }
+
+        /*
          * 재시전을 실행한다.
          */
         internal static bool ExecuteRecast(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillSnapshot inheritedSnapshot /* 앞 실행에서 이어받은 스킬 강화 정보 */,
+            SkillExecutionData inheritedData /* 앞 실행에서 이어받은 스킬 강화 정보 */,
             SkillEffectDefinition effect /* 실행하거나 변환할 효과 */,
             Vector2 center /* 효과가 적용될 중심 위치 */)
         {
@@ -43,17 +579,17 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var snapshot = effect.RecastInheritSnapshot
-                ? inheritedSnapshot
-                : new SkillSnapshot(skill);
+            var snapshot = effect.RecastInheritSkillData
+                ? inheritedData
+                : new SkillExecutionData(skill);
             var radius = ResolveRadius(skill, snapshot) * Mathf.Max(0f, effect.RecastRadiusMultiplier);
             var duration = Mathf.Max(0.05f, effect.RecastDurationSeconds);
             var tickInterval = ResolveTickInterval(skill, snapshot);
             var hitTargetCount = ResolveHitTargetCount(skill, snapshot);
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot);
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
             var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnTickStatus, snapshot);
-            var planEffects = SkillNodeAction.ResolveEffects(snapshot, skill.MultiEffects);
+            var planEffects = snapshot.CollectEffects(skill.MultiEffects);
             var expireEffects = ResolveOnExpireEffects(context, snapshot, planEffects);
             var coverAll = (skill.Area != null && skill.Area.CoverAll)
                 || (skill.Targeting != null && skill.Targeting.CoverAll);
@@ -84,7 +620,8 @@ namespace Pakuri.InGame
             EffectVisualBuilder.ConfigureAreaEffect(
                 instance,
                 SkillTargeting.ResolveBaseRadius(skill.Targeting, skill.Area),
-                snapshot,
+                snapshot.RadiusMultiplier,
+                snapshot.RadiusBonus,
                 effect.RecastRadiusMultiplier);
 
             var actor = instance.GetComponent<ZoneSkillActor>();
@@ -123,7 +660,7 @@ namespace Pakuri.InGame
          */
         internal static bool Execute(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
             var deploymentCount = ResolveDeploymentCount(snapshot);
@@ -132,10 +669,10 @@ namespace Pakuri.InGame
             var duration = ResolveDuration(skill, snapshot);
             var tickInterval = ResolveTickInterval(skill, snapshot);
             var hitTargetCount = ResolveHitTargetCount(skill, snapshot);
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot);
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
             var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnTickStatus, snapshot);
-            var planEffects = SkillNodeAction.ResolveEffects(snapshot, skill.MultiEffects);
+            var planEffects = snapshot.CollectEffects(skill.MultiEffects);
             var expireEffects = ResolveOnExpireEffects(context, snapshot, planEffects);
             var coverAll = (skill.Area != null && skill.Area.CoverAll)
                 || (skill.Targeting != null && skill.Targeting.CoverAll);
@@ -171,7 +708,8 @@ namespace Pakuri.InGame
                 EffectVisualBuilder.ConfigureAreaEffect(
                     instance,
                     SkillTargeting.ResolveBaseRadius(skill.Targeting, skill.Area),
-                    snapshot);
+                    snapshot.RadiusMultiplier,
+                    snapshot.RadiusBonus);
 
                 var actor = instance.GetComponent<ZoneSkillActor>();
                 if (actor == null)
@@ -201,7 +739,7 @@ namespace Pakuri.InGame
                     snapshot != null ? snapshot.CritChanceBonus : 0f,
                     snapshot != null ? snapshot.CritDamageBonus : 0f);
                 routed = true;
-            routed = SkillEffect.Execute(context, snapshot, planEffects, center) || routed;
+            routed = ExecuteAdditionalEffects(context, snapshot, planEffects, center, false, SkillMultiEffectTiming.OnCast, false) || routed;
             }
 
             return routed;
@@ -210,7 +748,7 @@ namespace Pakuri.InGame
         /*
          * 배치 횟수를 결정한다.
          */
-        private static int ResolveDeploymentCount(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static int ResolveDeploymentCount(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             return 1 + (snapshot != null && snapshot.HasBranchCount ? Math.Max(0, snapshot.BranchCount) : 0);
         }
@@ -218,7 +756,7 @@ namespace Pakuri.InGame
         /*
          * 적중 대상 횟수를 결정한다.
          */
-        private static int ResolveHitTargetCount(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static int ResolveHitTargetCount(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             if (skill == null || skill.HitAllTargets || !skill.UsesHitTargetCount)
             {
@@ -265,17 +803,20 @@ namespace Pakuri.InGame
         /*
          * 반경을 결정한다.
          */
-        private static float ResolveRadius(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static float ResolveRadius(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             var area = skill != null ? skill.Area : null;
             var targeting = skill != null ? skill.Targeting : null;
-            return SkillTargeting.ResolveRadius(SkillTargeting.ResolveBaseRadius(targeting, area), snapshot);
+            return SkillTargeting.ResolveRadius(
+                SkillTargeting.ResolveBaseRadius(targeting, area),
+                snapshot.RadiusMultiplier,
+                snapshot.RadiusBonus);
         }
 
         /*
          * 지속시간을 결정한다.
          */
-        private static float ResolveDuration(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static float ResolveDuration(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             var area = skill != null ? skill.Area : null;
             var timing = skill != null ? skill.Timing : null;
@@ -298,7 +839,7 @@ namespace Pakuri.InGame
         /*
          * 주기 간격을 결정한다.
          */
-        private static float ResolveTickInterval(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static float ResolveTickInterval(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
             var area = skill != null ? skill.Area : null;
             var timing = skill != null ? skill.Timing : null;
@@ -318,7 +859,7 @@ namespace Pakuri.InGame
          */
         private static SkillEffectDefinition[] ResolveOnExpireEffects(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             SkillEffectDefinition[] effects /* 실행할 효과 목록 */)
         {
             if (effects == null || effects.Length == 0)
@@ -332,7 +873,7 @@ namespace Pakuri.InGame
                 var effect = effects[i];
                 if (effect == null
                     || effect.EffectTiming != SkillMultiEffectTiming.OnExpire
-                    || !SkillEffect.ShouldRun(context, effect, snapshot))
+                    || !SkillRequirement.CanRunEffect(context, effect))
                 {
                     continue;
                 }

@@ -104,6 +104,71 @@ namespace Pakuri.InGame
         }
 
         /*
+         * 추가 효과 비주얼을 만들고 지정한 시간이 지나면 제거하도록 Actor에 전달한다.
+         */
+        public void ShowTimedSkillEffect(
+            SkillEffectDefinition effect /* 표시할 추가 효과 */,
+            Vector3 position /* 표시할 위치 */,
+            float durationSeconds /* 표시 시간 */)
+        {
+            var objectName = "SkillEffectVisual";
+            if (!string.IsNullOrWhiteSpace(effect.EffectId))
+            {
+                objectName = "SkillEffectVisual_" + effect.EffectId;
+            }
+
+            var instance = CreateEffect(
+                effect.RuntimeVisual,
+                effect.SkillEffectPrefab,
+                objectName,
+                position,
+                Quaternion.identity);
+            if (instance != null)
+            {
+                SingleSkillActor.Attach(instance).InitializeTimed(this, durationSeconds);
+            }
+        }
+
+        /*
+         * 추가 효과 비주얼을 적용 대상에게 붙이고 수명 관리를 Actor에 전달한다.
+         */
+        public void ShowFollowingSkillEffects(
+            SkillEffectDefinition effect /* 표시할 추가 효과 */,
+            IReadOnlyList<CombatUnitEntry> targets /* 비주얼을 붙일 대상 목록 */,
+            float durationSeconds /* 표시 시간 */)
+        {
+            var objectName = "SkillEffectVisual";
+            if (!string.IsNullOrWhiteSpace(effect.EffectId))
+            {
+                objectName = "SkillEffectVisual_" + effect.EffectId;
+            }
+
+            for (var i = 0; i < targets.Count; i++)
+            {
+                var target = targets[i];
+                if (target == null || target.Transform == null)
+                {
+                    continue;
+                }
+
+                var instance = CreateEffect(
+                    effect.RuntimeVisual,
+                    effect.SkillEffectPrefab,
+                    objectName,
+                    target.Transform.position,
+                    Quaternion.identity);
+                if (instance != null)
+                {
+                    BuffSkillActor.Attach(instance).Initialize(
+                        this,
+                        target.Transform,
+                        durationSeconds,
+                        Vector3.zero);
+                }
+            }
+        }
+
+        /*
          * 효과 등록을 해제하고 오브젝트를 삭제한다.
          */
         public void RemoveEffect(

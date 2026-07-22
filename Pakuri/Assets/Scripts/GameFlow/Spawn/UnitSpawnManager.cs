@@ -122,7 +122,7 @@ namespace Pakuri.InGame
             // 현현 유닛은 세션 파티 상태를 먼저 확보한 뒤 학습 스킬 런타임을 복원한다.
             var runState = activeSession.EnsurePartyMemberState(monster);
             var model = unitStateFactory.CreateManifestedMonster(monster, runState, partySlotIndex);
-            UnitSkillsBuilder.RebuildLearnedSkillSet(model);
+            SkillExecution.RebuildLearnedSkillState(model);
 
             var spawnPoint = ResolveManifestSpawnPoint(partySlotIndex);
             var spawnPosition = spawnPoint.position;
@@ -149,7 +149,7 @@ namespace Pakuri.InGame
             // 저장된 파티 상태가 없으면 현재 몬스터 정의로 새 상태를 만든다.
             var runState = activeSession.GetPartyMemberState(monster.MonsterId) ?? activeSession.EnsurePartyMemberState(monster);
             model = unitStateFactory.CreateSelectedMonster(monster, runState, 0);
-            UnitSkillsBuilder.RebuildLearnedSkillSet(model);
+            SkillExecution.RebuildLearnedSkillState(model);
 
             var spawnPosition = playerSpawnPoint.position;
             var spawnRotation = playerSpawnPoint.rotation;
@@ -325,25 +325,12 @@ namespace Pakuri.InGame
             UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             var state = activeSession.GetPartyMemberState(model.Identity.DefinitionId);
-            CopyListToSet(state.LearnedActives, model.Skills.LearnedActiveSkillIds);
-            CopyListToSet(state.LearnedPassives, model.Skills.LearnedPassiveSkillIds);
-            CopyListToSet(state.ChosenChoiceIds, model.Skills.ChosenChoiceIds);
-            UnitSkillsBuilder.RebuildLearnedSkillSet(model);
-        }
-
-        /*
-         * 문자열 목록의 유효한 항목을 대상 Set에 다시 채운다.
-         */
-        private static void CopyListToSet(IReadOnlyList<string> source /* 효과를 발생시킨 원본 */, ISet<string> target /* 처리할 대상 */)
-        {
-            target.Clear();
-            for (var i = 0; i < source.Count; i++)
-            {
-                if (!string.IsNullOrWhiteSpace(source[i]))
-                {
-                    target.Add(source[i]);
-                }
-            }
+            SkillDefinitionCompiler.ApplyLearnedSkills(
+                model.Skills,
+                state.LearnedActives,
+                state.LearnedPassives,
+                state.ChosenChoiceIds);
+            SkillExecution.RebuildLearnedSkillState(model);
         }
 
         /*
@@ -382,7 +369,7 @@ namespace Pakuri.InGame
         {
             var monster = ResolveMonsterDefinition(session.SelectedMonsterId);
             var model = unitStateFactory.CreateSelectedMonster(monster, session.GetPartyMemberState(monster.MonsterId), 0);
-            UnitSkillsBuilder.RebuildLearnedSkillSet(model);
+            SkillExecution.RebuildLearnedSkillState(model);
             return model;
         }
 
@@ -424,7 +411,7 @@ namespace Pakuri.InGame
             var enemy = ResolveEnemyDefinition(enemyId);
             var model = unitStateFactory.CreateEnemy(enemy, slotIndex, isBoss);
             // 로스터 등록 전에 A/B 스킬과 전투 시작 Trigger 런타임을 완성한다.
-            UnitSkillsBuilder.RebuildAssignedActiveSet(model, enemy.ActiveSkills, enemy.SkillTriggers);
+            SkillExecution.RebuildAssignedSkillState(model, enemy.ActiveSkills, enemy.SkillTriggers);
             return model;
         }
 

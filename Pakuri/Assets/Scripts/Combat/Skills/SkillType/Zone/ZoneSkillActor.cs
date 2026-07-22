@@ -25,7 +25,7 @@ namespace Pakuri.InGame
         private DamageAttribute attribute;
         private ProjectileStatusHitSpec statusSpec;
         private SkillUseState runtime;
-        private SkillSnapshot snapshot;
+        private SkillExecutionData snapshot;
         private SkillEffectDefinition[] onExpireEffects;
         private UnitCombatState sourceModel;
         private bool criticalAllowed;
@@ -53,7 +53,7 @@ namespace Pakuri.InGame
             DamageAttribute damageAttribute /* 적용할 피해 속성 */,
             ProjectileStatusHitSpec onTickStatus /* 발생 시 반복 적용 상태 효과 */,
             SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
-            SkillSnapshot executionSnapshot /* 실행 시점의 스킬 강화 정보 */,
+            SkillExecutionData executionData /* 실행 시점의 스킬 강화 정보 */,
             SkillEffectDefinition[] expireEffects /* 만료 효과 목록 */,
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
             bool allowCritical /* 허용 치명타 여부 */,
@@ -76,7 +76,7 @@ namespace Pakuri.InGame
             attribute = damageAttribute;
             statusSpec = onTickStatus;
             runtime = sourceRuntime;
-            snapshot = executionSnapshot;
+            snapshot = executionData;
             onExpireEffects = expireEffects;
             sourceModel = source;
             criticalAllowed = allowCritical;
@@ -112,7 +112,7 @@ namespace Pakuri.InGame
             float critChanceBonus /* 추가 치명타 확률 */,
             float critDamageBonus /* 추가 치명타 피해 배율 */,
             int maxTargetsPerTick = int.MaxValue /* 최대 대상 목록 개별 반복 적용 */,
-            SkillSnapshot executionSnapshot = null /* 실행 시점의 스킬 강화 정보 */)
+            SkillExecutionData executionData = null /* 실행 시점의 스킬 강화 정보 */)
         {
             if (manager == null || sourceEntry == null || unitRoster == null)
             {
@@ -130,9 +130,9 @@ namespace Pakuri.InGame
 
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
                 var resolvedDamage = damagePerTick;
-                if (executionSnapshot != null)
+                if (executionData != null)
                 {
-                    resolvedDamage *= executionSnapshot.ResolveConditionalDamageMultiplier(target.Model);
+                    resolvedDamage *= executionData.ResolveConditionalDamageMultiplier(target.Model);
                 }
                 resolvedDamage = Mathf.Max(0f, resolvedDamage);
                 var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
@@ -140,11 +140,11 @@ namespace Pakuri.InGame
                 {
                     TryApplyStatus(manager, target.Model, onHitStatus, source);
                 }
-                SkillOnHitEffect.TryApply(
+                ZoneSkillExecutor.ApplyHitEnhancements(
                     manager,
                     sourceRuntime != null ? unitRoster : null,
                     sourceRuntime,
-                    executionSnapshot,
+                    executionData,
                     sourceEntry,
                     source,
                     sourceSkillId,
@@ -197,7 +197,7 @@ namespace Pakuri.InGame
                 criticalAllowed,
                 critChanceBonus,
                 critDamageBonus,
-                executionSnapshot);
+                executionData);
         }
 
         /*
@@ -237,7 +237,14 @@ namespace Pakuri.InGame
                 casterEntry,
                 runtime,
                 recastGeneration: recastGeneration);
-            SkillEffect.ExecuteOnExpire(context, snapshot, onExpireEffects, center);
+            ZoneSkillExecutor.ExecuteAdditionalEffects(
+                context,
+                snapshot,
+                onExpireEffects,
+                center,
+                true,
+                SkillMultiEffectTiming.OnExpire,
+                false);
             onExpireEffects = null;
         }
 
@@ -345,7 +352,7 @@ namespace Pakuri.InGame
             bool criticalAllowed /* 치명타 허용 여부 */,
             float critChanceBonus /* 추가 치명타 확률 */,
             float critDamageBonus /* 추가 치명타 피해 배율 */,
-            SkillSnapshot executionSnapshot /* 실행 시점의 스킬 강화 정보 */)
+            SkillExecutionData executionData /* 실행 시점의 스킬 강화 정보 */)
         {
             if (manager == null || sourceEntry == null || unitRoster == null || hitboxColliders == null || hitboxColliders.Length == 0)
             {
@@ -388,7 +395,7 @@ namespace Pakuri.InGame
                 criticalAllowed,
                 critChanceBonus,
                 critDamageBonus,
-                executionSnapshot);
+                executionData);
             return routed;
         }
 
@@ -409,7 +416,7 @@ namespace Pakuri.InGame
             bool criticalAllowed /* 치명타 허용 여부 */,
             float critChanceBonus /* 추가 치명타 확률 */,
             float critDamageBonus /* 추가 치명타 피해 배율 */,
-            SkillSnapshot executionSnapshot /* 실행 시점의 스킬 강화 정보 */)
+            SkillExecutionData executionData /* 실행 시점의 스킬 강화 정보 */)
         {
             if (manager == null || eligibleTargets == null || eligibleTargets.Count == 0)
             {
@@ -428,9 +435,9 @@ namespace Pakuri.InGame
 
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
                 var resolvedDamage = damagePerTick;
-                if (executionSnapshot != null)
+                if (executionData != null)
                 {
-                    resolvedDamage *= executionSnapshot.ResolveConditionalDamageMultiplier(target.Model);
+                    resolvedDamage *= executionData.ResolveConditionalDamageMultiplier(target.Model);
                 }
                 resolvedDamage = Mathf.Max(0f, resolvedDamage);
                 var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
@@ -438,11 +445,11 @@ namespace Pakuri.InGame
                 {
                     TryApplyStatus(manager, target.Model, onHitStatus, source);
                 }
-                SkillOnHitEffect.TryApply(
+                ZoneSkillExecutor.ApplyHitEnhancements(
                     manager,
                     sourceRuntime != null ? manager.UnitRegistry : null,
                     sourceRuntime,
-                    executionSnapshot,
+                    executionData,
                     sourceEntry,
                     source,
                     sourceSkillId,
@@ -496,14 +503,19 @@ namespace Pakuri.InGame
         /*
          * 출처 스킬 ID를 결정한다.
          */
-        private static string ResolveSourceSkillId(SkillSnapshot executionSnapshot /* 실행 시점의 스킬 강화 정보 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */)
+        private static string ResolveSourceSkillId(SkillExecutionData executionData /* 실행 시점의 스킬 강화 정보 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */)
         {
             if (sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId))
             {
                 return sourceRuntime.SkillId;
             }
 
-            return executionSnapshot != null ? executionSnapshot.SkillId : string.Empty;
+            if (executionData != null)
+            {
+                return executionData.SkillId;
+            }
+
+            return string.Empty;
         }
     }
 }

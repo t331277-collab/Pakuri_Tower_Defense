@@ -144,7 +144,7 @@ namespace Pakuri.InGame
          */
         public static SkillUseState ResolveSelectableSkill(EnemyCombatState enemyModel /* 적 상태 모델 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
         {
-            var runtime = enemyModel.Skills.FindBySlot(slot);
+            var runtime = enemyModel.SkillState.FindBySlot(slot);
             if (HasCombatStartTrigger(runtime))
             {
                 return null;

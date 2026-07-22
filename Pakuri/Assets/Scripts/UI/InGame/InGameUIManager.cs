@@ -1212,7 +1212,7 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            if (manager.TryGetData(choice.SkillId, out SkillDefinition activeSkill) && activeSkill != null)
+            if (manager.TryGetData(choice.SkillId, out SkillSourceDefinition activeSkill) && activeSkill != null)
             {
                 return activeSkill.SkillIcon;
             }
@@ -1308,7 +1308,7 @@ namespace Pakuri.InGame
             var manager = GameDataLoader.CurrentCatalog;
             if (manager != null)
             {
-                if (manager.TryGetData(skillId, out SkillDefinition activeSkill) && activeSkill != null)
+                if (manager.TryGetData(skillId, out SkillSourceDefinition activeSkill) && activeSkill != null)
                 {
                     return ResolveChoiceDisplayName(activeSkill.DisplayName, activeSkill.SkillId);
                 }
@@ -1350,7 +1350,7 @@ namespace Pakuri.InGame
                 {
                     var model = entry.Model;
                     SyncModelStateFromSession(session, model);
-                    UnitSkillsBuilder.RebuildLearnedSkillSet(model);
+                    SkillExecution.RebuildLearnedSkillState(model);
                     combatManager.UnitRegistry.RefreshDisplay(model);
                 }
             }
@@ -1379,7 +1379,7 @@ namespace Pakuri.InGame
                 }
 
                 SyncModelStateFromSession(session, model);
-                UnitSkillsBuilder.RebuildLearnedSkillSet(model);
+                SkillExecution.RebuildLearnedSkillState(model);
                 actor.RefreshDisplay();
             }
         }
@@ -1411,29 +1411,11 @@ namespace Pakuri.InGame
                 model.Skills = new UnitSkills();
             }
 
-            CopyListToSet(state.LearnedActives, model.Skills.LearnedActiveSkillIds);
-            CopyListToSet(state.LearnedPassives, model.Skills.LearnedPassiveSkillIds);
-            CopyListToSet(state.ChosenChoiceIds, model.Skills.ChosenChoiceIds);
-        }
-
-        /*
-         * CopyListToSet에 필요한 값을 복사한다.
-         */
-        private static void CopyListToSet(System.Collections.Generic.IReadOnlyList<string> source /* 효과를 발생시킨 원본 */, System.Collections.Generic.ISet<string> target /* 처리할 대상 */)
-        {
-            if (source == null || target == null)
-            {
-                return;
-            }
-
-            target.Clear();
-            for (var i = 0; i < source.Count; i++)
-            {
-                if (!string.IsNullOrWhiteSpace(source[i]))
-                {
-                    target.Add(source[i]);
-                }
-            }
+            SkillDefinitionCompiler.ApplyLearnedSkills(
+                model.Skills,
+                state.LearnedActives,
+                state.LearnedPassives,
+                state.ChosenChoiceIds);
         }
 
         /*

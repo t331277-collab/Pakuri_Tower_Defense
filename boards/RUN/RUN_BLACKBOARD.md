@@ -581,3 +581,50 @@ Implemented and solution-build verified.
 ### History
 
 - 2026-07-22: Code Builder consolidated learned skill state, renamed required execution data/state types, removed the Runtime folder, and centralized acquisition checks.
+
+## Task: 2026-07-22 SkillNode Blueprint Direct Execution
+
+### Task title
+
+Remove duplicate skill-plan and snapshot layers while keeping SkillNode as the execution blueprint.
+
+### Goals
+
+- Keep `SkillNode.cs` as condition, modifier, effect, and Trigger blueprint data.
+- Make each Executor combine the base effect list with the selected SkillNode list directly.
+- Keep learned choices and per-cast resolved values in `UnitSkills.cs`.
+- Remove the separate execution-definition and snapshot files.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No new fallback function or added ternary expression.
+- Existing skill values and CSV schema remain unchanged.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and solution-build verified.
+
+### Next Actions
+
+- User verifies active, passive, Enhancement, Master, Trigger, Enemy A/B, projectile, line, zone, buff, and single-skill behavior in Play Mode.
+
+### Evidence
+
+- `SkillExecutionDefinition.cs` and `SkillSnapshot.cs`, including their meta files, are deleted; their required declarations now live in `SkillDefinition.cs` and `UnitSkills.cs`.
+- `SkillNodePlan`, `SkillNodeCompiler`, `SkillNodeAction`, `SkillEffectAction`, and `SkillTriggerAction` are removed from `SkillNode.cs`.
+- `SkillNode` stores `SkillEffectDefinition` and `SkillTriggerDefinition` directly; Executors call `SkillNode.CollectEffects(...)`, while Trigger execution calls `SkillNode.CollectTriggers(...)`.
+- Effect-kind dispatch moved to `SkillEffect.cs`; Trigger-action dispatch moved to `SkillTrigger.cs`.
+- The former `SkillSnapshot` type is now `UnitSkillData` inside `UnitSkills.cs`; `SkillExecution.cs` obtains it through `CreateExecutionData(...)`.
+- Script count under `Pakuri/Assets/Scripts` is 68 after deleting the two redundant scripts.
+- Repository search found no remaining `SkillExecutionDefinition`, `SkillSnapshot`, `SkillNodePlan`, `SkillNodeCompiler`, or `SkillNodeAction` symbols.
+- `dotnet build Pakuri/Assembly-CSharp.csproj -v:minimal` completed with 0 errors and the existing 2 assembly-version warnings.
+
+### History
+
+- 2026-07-22: Code Builder removed the duplicated plan/action wrappers and connected Executors directly to the SkillNode blueprint.

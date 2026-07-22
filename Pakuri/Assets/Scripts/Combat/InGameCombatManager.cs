@@ -122,7 +122,7 @@ namespace Pakuri.InGame
                 var entry = entries[i];
                 if (entry != null && entry.Model != null)
                 {
-                    entry.Model.Skills.Tick(deltaTime);
+                    entry.Model.SkillState.Tick(deltaTime);
                 }
             }
         }

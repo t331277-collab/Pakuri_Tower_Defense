@@ -227,7 +227,7 @@ namespace Pakuri.InGame
 
                 var model = entry.Model;
                 SyncModelStateFromSession(session, model);
-                UnitSkillsBuilder.RebuildLearnedSkillSet(model);
+                SkillExecution.RebuildLearnedSkillState(model);
                 manager.UnitRegistry.RefreshDisplay(model);
             }
         }
@@ -259,29 +259,11 @@ namespace Pakuri.InGame
                 model.Skills = new UnitSkills();
             }
 
-            CopyListToSet(state.LearnedActives, model.Skills.LearnedActiveSkillIds);
-            CopyListToSet(state.LearnedPassives, model.Skills.LearnedPassiveSkillIds);
-            CopyListToSet(state.ChosenChoiceIds, model.Skills.ChosenChoiceIds);
-        }
-
-        /*
-         * CopyListToSet에 필요한 값을 복사한다.
-         */
-        private static void CopyListToSet(System.Collections.Generic.IReadOnlyList<string> source /* 효과를 발생시킨 원본 */, System.Collections.Generic.HashSet<string> target /* 처리할 대상 */)
-        {
-            if (source == null || target == null)
-            {
-                return;
-            }
-
-            target.Clear();
-            for (var i = 0; i < source.Count; i++)
-            {
-                if (!string.IsNullOrWhiteSpace(source[i]))
-                {
-                    target.Add(source[i]);
-                }
-            }
+            SkillDefinitionCompiler.ApplyLearnedSkills(
+                model.Skills,
+                state.LearnedActives,
+                state.LearnedPassives,
+                state.ChosenChoiceIds);
         }
 
         /*
@@ -1010,7 +992,7 @@ namespace Pakuri.InGame
         private bool TryResolveModifierContext(
             int slotIndex /* 배치할 슬롯 순서 번호 */,
             out RunSession session /* 현재 게임 진행 상태 */,
-            out SkillDefinition sourceSkill /* 발생 원본 스킬 */,
+            out SkillSourceDefinition sourceSkill /* 발생 원본 스킬 */,
             out MonsterDefinition monster /* 몬스터 */)
         {
             session = ResolveSession();

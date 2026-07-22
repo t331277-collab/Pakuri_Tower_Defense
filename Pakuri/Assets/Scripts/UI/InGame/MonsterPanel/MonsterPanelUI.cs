@@ -340,7 +340,7 @@ namespace Pakuri.InGame
                 System.Collections.Generic.IReadOnlyList<SkillUseState> runtimes = null;
                 if (model != null && model.Skills != null)
                 {
-                    runtimes = model.Skills.ActiveSkills;
+                    runtimes = model.SkillState.ActiveSkills;
                 }
 
                 var runtimeCount = 0;

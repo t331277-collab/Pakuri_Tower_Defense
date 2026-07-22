@@ -54,7 +54,7 @@ namespace Pakuri.InGame
                 pointerOverUi,
                 out var currentAim,
                 out var currentTarget);
-            var activeSkills = player.Model.Skills.ActiveSkills;
+            var activeSkills = player.Model.SkillState.ActiveSkills;
 
             // 연속 발사 중이면 새 마우스 입력이 없어도 저장된 조준으로 남은 탄을 처리한다.
             if (!hasInput && !HasBurstingProjectile(activeSkills))

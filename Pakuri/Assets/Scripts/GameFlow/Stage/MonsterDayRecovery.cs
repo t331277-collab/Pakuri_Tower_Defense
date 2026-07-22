@@ -16,7 +16,7 @@ namespace Pakuri.InGame
             model.Resources.DirectShield = 0f;
             model.Resources.CurrentShield = 0f;
 
-            var activeSkills = model.Skills.ActiveSkills;
+            var activeSkills = model.SkillState.ActiveSkills;
             for (var i = 0; i < activeSkills.Count; i++)
             {
                 activeSkills[i].ResetRuntimeState();

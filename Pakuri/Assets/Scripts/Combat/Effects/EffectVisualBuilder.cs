@@ -97,7 +97,8 @@ namespace Pakuri.InGame
         public static void ConfigureAreaScale(
             Transform target /* 효과가 따라갈 위치 정보 */,
             float baseRadius /* 기본 반지름 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            float skillRadiusMultiplier /* 스킬 강화 반지름 배율 */,
+            float skillRadiusBonus /* 스킬 강화 추가 반지름 */,
             float radiusMultiplier /* 반지름 배율 */)
         {
             if (target == null)
@@ -105,7 +106,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            ApplyPrefabScale(target, baseRadius, snapshot);
+            ApplyPrefabScale(target, baseRadius, skillRadiusMultiplier, skillRadiusBonus);
             target.localScale *= Mathf.Max(0f, radiusMultiplier);
         }
 
@@ -115,10 +116,11 @@ namespace Pakuri.InGame
         public static void ConfigureAreaEffect(
             GameObject instance /* 생성된 효과 오브젝트 */,
             float baseRadius /* 기본 반지름 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            float skillRadiusMultiplier /* 스킬 강화 반지름 배율 */,
+            float skillRadiusBonus /* 스킬 강화 추가 반지름 */,
             float radiusMultiplier = 1f /* 반지름 배율 */)
         {
-            ConfigureAreaScale(instance.transform, baseRadius, snapshot, radiusMultiplier);
+            ConfigureAreaScale(instance.transform, baseRadius, skillRadiusMultiplier, skillRadiusBonus, radiusMultiplier);
             Physics2D.SyncTransforms();
         }
 
@@ -129,7 +131,8 @@ namespace Pakuri.InGame
             Transform target /* 효과가 따라갈 위치 정보 */,
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            float radiusMultiplier /* 적용할 반지름 배율 */,
+            float radiusBonus /* 추가할 반지름 */,
             Vector2 center /* 효과가 적용될 중심 위치 */)
         {
             if (target == null || skill == null)
@@ -155,11 +158,11 @@ namespace Pakuri.InGame
             target.rotation = ResolveRotation(direction.normalized);
 
             var baseRadius = SkillTargeting.ResolveBaseRadius(skill.Targeting, skill.Area);
-            var width = SkillTargeting.ResolveRadius(baseRadius, snapshot);
+            var width = SkillTargeting.ResolveRadius(baseRadius, radiusMultiplier, radiusBonus);
             var spriteRenderer = target.GetComponent<SpriteRenderer>();
             if (spriteRenderer == null || spriteRenderer.sprite == null)
             {
-                ApplyPrefabScale(target, baseRadius, snapshot);
+                ApplyPrefabScale(target, baseRadius, radiusMultiplier, radiusBonus);
                 return;
             }
 
@@ -193,14 +196,18 @@ namespace Pakuri.InGame
         /*
          * 기본 반경과 스킬 강화에서 계산한 프리팹 크기 배율을 적용한다.
          */
-        private static void ApplyPrefabScale(Transform target /* 효과가 따라갈 위치 정보 */, float baseRadius /* 기본 반지름 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static void ApplyPrefabScale(
+            Transform target /* 효과가 따라갈 위치 정보 */,
+            float baseRadius /* 기본 반지름 */,
+            float radiusMultiplier /* 적용할 반지름 배율 */,
+            float radiusBonus /* 추가할 반지름 */)
         {
-            if (target == null || snapshot == null)
+            if (target == null)
             {
                 return;
             }
 
-            var scaleFactor = SkillTargeting.ResolvePrefabScaleFactor(baseRadius, snapshot);
+            var scaleFactor = SkillTargeting.ResolvePrefabScaleFactor(baseRadius, radiusMultiplier, radiusBonus);
             if (!Mathf.Approximately(scaleFactor, 1f))
             {
                 target.localScale *= scaleFactor;

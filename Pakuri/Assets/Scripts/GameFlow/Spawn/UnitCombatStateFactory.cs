@@ -185,23 +185,11 @@ namespace Pakuri.InGame
                 return;
             }
 
-            AddRange(target.LearnedActiveSkillIds, runState.LearnedActives);
-            AddRange(target.LearnedPassiveSkillIds, runState.LearnedPassives);
-            AddRange(target.ChosenChoiceIds, runState.ChosenChoiceIds);
-        }
-
-        /*
-         * AddRange 작업을 수행한다.
-         */
-        private static void AddRange(HashSet<string> target /* 처리할 대상 */, IReadOnlyList<string> source /* 효과를 발생시킨 원본 */)
-        {
-            for (var i = 0; i < source.Count; i++)
-            {
-                if (!string.IsNullOrWhiteSpace(source[i]))
-                {
-                    target.Add(source[i]);
-                }
-            }
+            SkillDefinitionCompiler.ApplyLearnedSkills(
+                target,
+                runState.LearnedActives,
+                runState.LearnedPassives,
+                runState.ChosenChoiceIds);
         }
 
         /*

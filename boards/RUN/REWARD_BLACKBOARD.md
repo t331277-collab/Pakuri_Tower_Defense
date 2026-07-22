@@ -132,3 +132,44 @@ Implemented and solution-build verified.
 ### History
 
 - 2026-07-22: Code Builder centralized skill acquisition eligibility in RunSession and removed duplicate UI logic.
+
+## Task: 2026-07-22 Learned Choice Execution Data Consolidation
+
+### Task title
+
+Keep learned Choice state and resolved skill values in UnitSkills without a separate SkillSnapshot file.
+
+### Goals
+
+- Preserve RunSession acquisition eligibility and selected Choice IDs.
+- Build the current skill's resolved values from UnitSkills-owned state.
+- Let Executors read selected SkillNode definitions directly.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Reward choice limits and saved IDs remain unchanged.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and solution-build verified.
+
+### Next Actions
+
+- User verifies Enhancement and Master selections still affect the correct learned skill in Play Mode.
+
+### Evidence
+
+- `SkillSnapshot.cs` is deleted and its required resolved-value data is now the `UnitSkillData` declaration inside `UnitSkills.cs`.
+- `UnitSkills.CreateExecutionData(...)` combines learned Choice IDs with the selected SkillNode definitions before `SkillExecution` calls an Executor.
+- RunSession acquisition methods and stored Choice ID lists were not removed by this consolidation.
+- `dotnet build Pakuri/Assembly-CSharp.csproj -v:minimal` completed with 0 errors and the existing 2 assembly-version warnings.
+
+### History
+
+- 2026-07-22: Code Builder removed the separate snapshot file while retaining Choice-driven execution values under UnitSkills.

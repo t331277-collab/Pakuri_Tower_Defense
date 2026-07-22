@@ -34,7 +34,7 @@ Code Builder
 
 ### Status
 
-Implemented and compile-verified. User Play Mode verification remains.
+Corrected implementation complete and compile-verified. User Play Mode verification remains.
 
 ### Next Actions
 
@@ -369,3 +369,53 @@ Implemented and compile/editor validated. User Play Mode verification remains.
 
 - 2026-07-21: User switched to Code Builder, requested the two damage scripts be unified, and prohibited new fallback helpers and question-mark expressions in code changes.
 - 2026-07-21: Code Builder moved raw-value methods into `DamageCalculator`, changed all callers, deleted the obsolete script and meta, refreshed Unity, and completed local verification.
+
+## Task: 2026-07-22 Skill Effect Responsibility Split
+
+### Task title
+
+Delete the ambiguous `SkillEffect.cs` script and keep `SkillNode` as execution blueprint data.
+
+### Goals
+
+- Remove `SkillEffect.cs` without losing the effect behavior used by skill Executors and Actors.
+- Keep `SkillNode.cs` limited to node kinds, stored values, and explicit node factories.
+- Place shared status-data composition with the existing combat status rules.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not add fallback helpers or question-mark conditional expressions.
+- Preserve the existing skill effect results while changing ownership.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile-verified. User Play Mode verification remains.
+
+### Next Actions
+
+- Verify representative projectile, line, zone, single, buff, passive, and Trigger effects in Play Mode.
+- Verify status chance, stack, duration, threshold, and hit-count effects retain their previous results.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/SkillEffect.cs` and its meta were deleted; `Test-Path` returned `False`.
+- `SkillNodeEffectExecutor.cs`, `SkillEffect.cs`, and their meta files are deleted; repository search found no remaining `SkillNodeEffectExecutor`, `SkillHitExecutor`, or old effect-script reference.
+- Projectile, Line, Zone, Single, and Buff Executors now select the node effect timing and dispatch the effect kind themselves; Passive and Trigger own their corresponding effect dispatch.
+- Projectile, Line, Zone, and Single Actors report hit or expiry events to their matching family Executor instead of a shared effect Executor.
+- `UnitSkillData.CollectEffects(...)` reads the base effects and the unit's selected `SkillNode` effects; `SkillNode.cs` remains definition and named factory data only.
+- Status composition and application live in `Combat/Status/StatusRules.cs`; effect target rules live in `SkillTargeting.cs`; effect visual creation lives in `EffectManager.cs`.
+- Repository search found no added question-mark conditional expression in the changed scripts.
+- `dotnet build Pakuri/Assembly-CSharp.csproj -v:minimal` passed with 0 errors and the existing 2 `MSB3277` warnings.
+- `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore -v:minimal` passed with 0 errors; it retained the 2 `MSB3277` warnings and the empty Editor source warning.
+- `git diff --check` passed with line-ending notices only.
+
+### History
+
+- 2026-07-22: Initial Code Builder pass incorrectly replaced `SkillEffect.cs` with another central `SkillNodeEffectExecutor.cs`.
+- 2026-07-22: Corrective Code Builder pass deleted the central executor, moved timing and hit enhancement execution to family Executors, and kept only target, status, and visual rules in their owning systems.

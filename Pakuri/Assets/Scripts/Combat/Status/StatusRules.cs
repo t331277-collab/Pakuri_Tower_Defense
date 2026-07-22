@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Pakuri.Combat;
 using Pakuri.Data;
@@ -733,7 +733,7 @@ namespace Pakuri.InGame
 
             var catalog = GameDataLoader.CurrentCatalog;
             if (catalog == null
-                || !catalog.TryGetData(sourceSkillId, out SkillDefinition skill)
+                || !catalog.TryGetData(sourceSkillId, out SkillSourceDefinition skill)
                 || skill == null)
             {
                 return false;
@@ -801,7 +801,7 @@ namespace Pakuri.InGame
         /*
          * IsAreaLikeSkill 조건을 만족하는지 확인한다.
          */
-        private static bool IsAreaLikeSkill(SkillDefinition skill /* 처리할 스킬 정의 */)
+        private static bool IsAreaLikeSkill(SkillSourceDefinition skill /* 처리할 스킬 정의 */)
         {
             if (skill.RuntimeKind == SkillRuntimeKind.AreaAttack
                 || skill.RuntimeKind == SkillRuntimeKind.Field)
@@ -818,4 +818,591 @@ namespace Pakuri.InGame
                 || skill.Radius > 0f;
         }
     }
+
+/*
+ * 기본 상태 설정에 선택지의 확률, 중첩, 지속시간과 능력치 보정을 반영한다.
+ */
+static class SkillStatus
+{
+    /*
+     * 추가 효과 정의의 상태 데이터와 현재 강화 정보를 적중 설정으로 만든다.
+     */
+    public static ProjectileStatusHitSpec ResolveEffectStatusSpec(
+        SkillEffectDefinition effect /* 적용할 추가 효과 */,
+        SkillExecutionData skillData = null /* 현재 스킬 강화 정보 */,
+        bool scaleDurationWithSkillData = false /* 스킬 지속시간 보정 적용 여부 */)
+    {
+        var statusData = ResolveStatusData(effect.CompiledStatusData, effect.CompiledStatusData.Kind, skillData);
+        var duration = statusData.Duration;
+        if (skillData != null)
+        {
+            var durationBonus = skillData.ResolveStatusDurationBonus(statusData.StatusTag);
+            if (!Mathf.Approximately(durationBonus, 0f))
+            {
+                duration = Mathf.Max(0f, duration + durationBonus);
+            }
+
+            if (scaleDurationWithSkillData)
+            {
+                duration = duration * Mathf.Max(0f, skillData.DurationMultiplier) + skillData.DurationBonus;
+            }
+        }
+
+        return new ProjectileStatusHitSpec
+        {
+            Enabled = true,
+            Kind = statusData.Kind,
+            StatusData = statusData,
+            Chance = Mathf.Clamp01(effect.StatusChance),
+            Stacks = effect.StatusStackAmount,
+            DurationSeconds = duration,
+            MaxStacks = statusData.MaxStacks,
+            Permanent = statusData.Permanent,
+            RefreshDuration = true
+        };
+    }
+
+    /*
+     * 추가 효과에 지정된 상태를 대상에게 적용한다.
+     */
+    public static bool ApplyEffect(
+        SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+        SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
+        SkillEffectDefinition effect /* 적용할 추가 효과 */,
+        Vector2 defaultCenter /* 기본 효과 중심 */,
+        bool scaleDurationWithSkillData /* 스킬 지속시간 보정 적용 여부 */)
+    {
+        var statusSpec = ResolveEffectStatusSpec(effect, skillData, scaleDurationWithSkillData);
+        if (context == null || context.CombatManager == null || statusSpec == null || !statusSpec.Enabled)
+        {
+            return false;
+        }
+
+        var targeting = SkillTargeting.BuildEffectTargeting(effect);
+        var targets = SkillTargeting.ResolveEffectTargets(context, effect, targeting);
+        List<CombatUnitEntry> visualTargets = null;
+        if (effect.VisualAnchorMode == SkillMultiEffectVisualAnchorMode.AppliedTargets)
+        {
+            visualTargets = new List<CombatUnitEntry>();
+        }
+
+        var applied = false;
+        for (var i = 0; i < targets.Count; i++)
+        {
+            var target = targets[i];
+            if (target == null || !target.IsAlive || target.Model == null || !SkillTargeting.MatchesEffectTarget(target.Model, effect))
+            {
+                continue;
+            }
+
+            if (statusSpec.StatusData != null && statusSpec.StatusData.Kind == StatusEffectKind.Shield)
+            {
+                context.CombatManager.ApplyShieldStatus(
+                    target.Model,
+                    statusSpec.StatusData,
+                    ResolveEffectShieldAmount(context.Caster, effect, skillData),
+                    statusSpec.DurationSeconds,
+                    statusSpec.Stacks,
+                    statusSpec.MaxStacks,
+                    statusSpec.Permanent,
+                    statusSpec.RefreshDuration,
+                    context.Caster);
+            }
+            else if (!StatusCombatRules.ApplyStatus(context.CombatManager, target.Model, statusSpec, context.Caster))
+            {
+                continue;
+            }
+
+            if (visualTargets != null)
+            {
+                visualTargets.Add(target);
+            }
+            applied = true;
+        }
+
+        if (!applied || context.CombatManager.Effects == null)
+        {
+            return applied;
+        }
+
+        if (visualTargets != null)
+        {
+            context.CombatManager.Effects.ShowFollowingSkillEffects(effect, visualTargets, statusSpec.DurationSeconds);
+        }
+        else
+        {
+            var center = SkillTargeting.ResolveEffectCenter(context, effect, targeting, defaultCenter);
+            context.CombatManager.Effects.ShowTimedSkillEffect(effect, center, 1f);
+        }
+        return true;
+    }
+
+    /*
+     * 추가 효과 대상의 지정 상태 지속시간을 늘린다.
+     */
+    public static bool ExtendEffectDuration(
+        SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+        SkillEffectDefinition effect /* 적용할 추가 효과 */)
+    {
+        if (context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null || effect == null)
+        {
+            return false;
+        }
+
+        var duration = Mathf.Max(0f, effect.StatusDurationSeconds);
+        if (duration <= 0f)
+        {
+            return false;
+        }
+
+        var targeting = SkillTargeting.BuildEffectTargeting(effect);
+        var targets = SkillTargeting.ResolveTargetList(context.CasterEntry, context.Roster, targeting);
+        var extended = false;
+        for (var i = 0; i < targets.Count; i++)
+        {
+            var target = targets[i];
+            if (target != null && target.IsAlive && target.Model != null)
+            {
+                extended = context.CombatManager.ExtendStatusDuration(target.Model, effect.StatusKind, duration) || extended;
+            }
+        }
+        return extended;
+    }
+
+    /*
+     * 지속 패시브 상태를 적용할 수 있는 대상 목록을 반환한다.
+     */
+    public static List<CombatUnitEntry> ResolvePassiveEffectTargets(
+        SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+        SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
+        SkillEffectDefinition effect /* 적용할 추가 효과 */)
+    {
+        var resolved = new List<CombatUnitEntry>();
+        if (context == null
+            || effect == null
+            || effect.EffectKind != SkillMultiEffectKind.Status
+            || !SkillRequirement.CanRunEffect(context, effect))
+        {
+            return resolved;
+        }
+
+        var targeting = SkillTargeting.BuildEffectTargeting(effect);
+        var targets = SkillTargeting.ResolveEffectTargets(context, effect, targeting);
+        for (var i = 0; i < targets.Count; i++)
+        {
+            var target = targets[i];
+            if (target != null && target.IsAlive && target.Model != null && SkillTargeting.MatchesEffectTarget(target.Model, effect))
+            {
+                resolved.Add(target);
+            }
+        }
+        return resolved;
+    }
+
+    /*
+     * 패시브가 유지되는 동안 대상에게 영구 상태를 적용한다.
+     */
+    public static bool ApplyPersistentEffect(
+        SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+        SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
+        SkillEffectDefinition effect /* 적용할 추가 효과 */,
+        CombatUnitEntry target /* 효과를 받을 대상 */,
+        Vector2 defaultCenter /* 기본 효과 중심 */)
+    {
+        if (context == null
+            || context.CombatManager == null
+            || effect == null
+            || target == null
+            || !target.IsAlive
+            || target.Model == null
+            || !SkillTargeting.MatchesEffectTarget(target.Model, effect))
+        {
+            return false;
+        }
+
+        var statusSpec = ResolveEffectStatusSpec(effect, skillData);
+        if (statusSpec == null || !statusSpec.Enabled || statusSpec.StatusData == null)
+        {
+            return false;
+        }
+
+        var visualDuration = statusSpec.DurationSeconds;
+        statusSpec.Permanent = true;
+        statusSpec.DurationSeconds = 0f;
+        statusSpec.RefreshDuration = false;
+        var applied = false;
+        if (statusSpec.StatusData.Kind == StatusEffectKind.Shield)
+        {
+            var shield = context.CombatManager.ApplyShieldStatus(
+                target.Model,
+                statusSpec.StatusData,
+                ResolveEffectShieldAmount(context.Caster, effect, skillData),
+                statusSpec.DurationSeconds,
+                statusSpec.Stacks,
+                statusSpec.MaxStacks,
+                statusSpec.Permanent,
+                statusSpec.RefreshDuration,
+                context.Caster);
+            applied = shield != null;
+        }
+        else
+        {
+            applied = StatusCombatRules.ApplyStatus(context.CombatManager, target.Model, statusSpec, context.Caster);
+        }
+
+        if (!applied || context.CombatManager.Effects == null)
+        {
+            return applied;
+        }
+
+        if (effect.VisualAnchorMode == SkillMultiEffectVisualAnchorMode.AppliedTargets)
+        {
+            context.CombatManager.Effects.ShowFollowingSkillEffects(effect, new CombatUnitEntry[] { target }, visualDuration);
+        }
+        else
+        {
+            var targeting = SkillTargeting.BuildEffectTargeting(effect);
+            var center = SkillTargeting.ResolveEffectCenter(context, effect, targeting, defaultCenter);
+            context.CombatManager.Effects.ShowTimedSkillEffect(effect, center, 1f);
+        }
+        return true;
+    }
+
+    /*
+     * 추가 보호막 효과의 기본값과 시전자 능력치 계수를 계산한다.
+     */
+    private static float ResolveEffectShieldAmount(
+        UnitCombatState caster /* 스킬을 사용하는 유닛 */,
+        SkillEffectDefinition effect /* 적용할 추가 효과 */,
+        SkillExecutionData skillData /* 현재 스킬 강화 정보 */)
+    {
+        var useSpellPower = Mathf.Abs(effect.SpellPowerCoefficient) >= Mathf.Abs(effect.AttackPowerCoefficient);
+        var power = 0f;
+        if (caster != null && caster.Stats != null)
+        {
+            if (useSpellPower)
+            {
+                power = caster.Stats.SpellPower * StatusCombatRules.ResolveSpellPowerMultiplier(caster);
+            }
+            else
+            {
+                power = caster.Stats.AttackPower * StatusCombatRules.ResolveAttackPowerMultiplier(caster);
+            }
+        }
+
+        var coefficient = effect.AttackPowerCoefficient;
+        if (useSpellPower)
+        {
+            coefficient = effect.SpellPowerCoefficient;
+        }
+
+        var amount = (effect.BaseDamage + power * coefficient) * Mathf.Max(0f, effect.DamageMultiplier);
+        if (skillData != null)
+        {
+            amount = (amount + skillData.BaseDamageBonus) * Mathf.Max(0f, skillData.ShieldAmountMultiplier);
+        }
+        return Mathf.Max(0f, amount);
+    }
+
+    /*
+     * 스킬의 기본 상태 설정과 실행 데이터 보정을 합쳐 투사체 적중 설정을 만든다.
+     */
+    public static ProjectileStatusHitSpec ResolveStatusSpec(
+        StatusApplicationSpec baseStatus /* 기본 상태 효과 */,
+        SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+    {
+        StatusRuntimeData statusData = null;
+        if (baseStatus != null)
+        {
+            statusData = baseStatus.Status;
+        }
+
+        if (statusData == null)
+        {
+            return null;
+        }
+
+        var kind = statusData.Kind;
+        var stacks = 1;
+        var chance = 1f;
+        var refreshDuration = true;
+        if (baseStatus != null)
+        {
+            stacks = Math.Max(0, baseStatus.Stacks);
+            chance = Mathf.Clamp01(baseStatus.Chance);
+            refreshDuration = baseStatus.RefreshDuration;
+        }
+
+        if (snapshot != null)
+        {
+            chance = Mathf.Clamp01(chance + snapshot.StatusChanceBonus);
+            if (snapshot.HasStatusStacksSet)
+            {
+                stacks = Math.Max(0, snapshot.StatusStacksSet);
+            }
+            else
+            {
+                stacks = Math.Max(0, stacks + snapshot.StatusStacksBonus);
+            }
+        }
+
+        if (stacks <= 0 || chance <= 0f)
+        {
+            return null;
+        }
+
+        if (statusData == null || statusData.Kind != kind)
+        {
+            statusData = StatusRuntimeCompiler.Create(kind, null);
+        }
+
+        var resolvedStatusData = ResolveStatusData(statusData, kind, snapshot);
+        var duration = resolvedStatusData.Duration;
+        var maxStacks = resolvedStatusData.MaxStacks;
+        var maxStacksBonus = ResolveStatusMaxStacksBonus(snapshot, resolvedStatusData);
+        if (maxStacksBonus != 0)
+        {
+            maxStacks = Mathf.Max(0, maxStacks + maxStacksBonus);
+        }
+
+        var permanent = resolvedStatusData.Permanent;
+        if (snapshot != null
+            && (!Mathf.Approximately(snapshot.DurationMultiplier, 1f)
+                || !Mathf.Approximately(snapshot.DurationBonus, 0f)))
+        {
+            duration = duration * Mathf.Max(0f, snapshot.DurationMultiplier) + snapshot.DurationBonus;
+            if (duration > 0f)
+            {
+                permanent = false;
+            }
+        }
+
+        var durationBonus = ResolveStatusDurationBonus(snapshot, resolvedStatusData);
+        if (!Mathf.Approximately(durationBonus, 0f))
+        {
+            duration = Mathf.Max(0f, duration + durationBonus);
+            if (duration > 0f)
+            {
+                permanent = false;
+            }
+        }
+
+        var thresholdStatusKind = StatusEffectKind.None;
+        var thresholdStatusMinStacks = 0;
+        if (snapshot != null)
+        {
+            thresholdStatusKind = snapshot.ThresholdStatusKind;
+            thresholdStatusMinStacks = snapshot.ThresholdStatusMinStacks;
+        }
+
+        return new ProjectileStatusHitSpec
+        {
+            Enabled = true,
+            Kind = kind,
+            StatusData = resolvedStatusData,
+            Chance = chance,
+            Stacks = stacks,
+            DurationSeconds = duration,
+            MaxStacks = maxStacks,
+            Permanent = permanent,
+            RefreshDuration = refreshDuration,
+            ThresholdSourceStatusKind = thresholdStatusKind,
+            ThresholdSourceMinStacks = thresholdStatusMinStacks,
+            ThresholdStatusSpec = ResolveThresholdStatusSpec(snapshot)
+        };
+    }
+
+    /*
+     * 상태 종류와 중첩 수만으로 즉시 적용할 상태 적중 설정을 만든다.
+     */
+    public static ProjectileStatusHitSpec CreateDirectStatusSpec(
+        StatusEffectKind kind /* 처리할 종류 */,
+        int stacks /* 중첩 수 */,
+        SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+    {
+        if (kind == StatusEffectKind.None || stacks <= 0)
+        {
+            return null;
+        }
+
+        var statusData = StatusRuntimeCompiler.Create(kind, null);
+        statusData = ResolveStatusData(statusData, kind, snapshot);
+        var duration = statusData.Duration;
+        var durationBonus = ResolveStatusDurationBonus(snapshot, statusData);
+        if (!Mathf.Approximately(durationBonus, 0f))
+        {
+            duration = Mathf.Max(0f, duration + durationBonus);
+        }
+
+        var maxStacks = statusData.MaxStacks;
+        var maxStacksBonus = ResolveStatusMaxStacksBonus(snapshot, statusData);
+        if (maxStacksBonus != 0)
+        {
+            maxStacks = Mathf.Max(0, maxStacks + maxStacksBonus);
+        }
+
+        return new ProjectileStatusHitSpec
+        {
+            Enabled = true,
+            Kind = kind,
+            StatusData = statusData,
+            Chance = 1f,
+            Stacks = stacks,
+            DurationSeconds = duration,
+            MaxStacks = maxStacks,
+            Permanent = statusData.Permanent && duration <= 0f,
+            RefreshDuration = true
+        };
+    }
+
+    /*
+     * 실행 데이터의 상태 능력치 보너스를 복사한 상태 데이터에 적용한다.
+     */
+    public static StatusRuntimeData ResolveStatusData(
+        StatusRuntimeData statusData /* 상태 효과 실행 데이터 */,
+        StatusEffectKind kind /* 처리할 종류 */,
+        SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+    {
+        if (snapshot == null)
+        {
+            return statusData;
+        }
+
+        var actionSpeedBonus = snapshot.ResolveStatusActionSpeedBonus(statusData.StatusTag);
+        var hasActionSpeedBonus = !Mathf.Approximately(actionSpeedBonus, 0f);
+        var hasOverride = snapshot.HasStatusElementDamageTakenBonus
+            || snapshot.HasStatusCriticalDamageTakenBonus
+            || snapshot.HasStatusAilmentResistanceBonus
+            || snapshot.HasStatusDamageBonusRate
+            || snapshot.HasStatusShieldReceivedBonus
+            || snapshot.HasStatusCriticalChanceBonus
+            || snapshot.HasStatusDamageTakenBonus
+            || snapshot.HasStatusFlatElementResistReduction
+            || snapshot.HasStatusConditionalDamageTakenBonus
+            || snapshot.HasStatusAttackPowerBonus
+            || hasActionSpeedBonus;
+        if (!hasOverride)
+        {
+            return statusData;
+        }
+
+        var resolvedStatus = statusData.Clone();
+        if (snapshot.HasStatusElementDamageTakenBonus)
+        {
+            resolvedStatus.ElementDamageTakenBonus += snapshot.StatusElementDamageTakenBonus;
+        }
+
+        if (snapshot.HasStatusCriticalDamageTakenBonus)
+        {
+            resolvedStatus.CriticalDamageTakenBonus += snapshot.StatusCriticalDamageTakenBonus;
+        }
+
+        if (snapshot.HasStatusAilmentResistanceBonus)
+        {
+            resolvedStatus.AilmentResistanceBonus += snapshot.StatusAilmentResistanceBonus;
+        }
+
+        if (snapshot.HasStatusDamageBonusRate)
+        {
+            resolvedStatus.Modifiers.DamageBonusRate += snapshot.StatusDamageBonusRate;
+        }
+
+        if (snapshot.HasStatusShieldReceivedBonus)
+        {
+            resolvedStatus.Modifiers.ShieldReceivedBonus += snapshot.StatusShieldReceivedBonus;
+        }
+
+        if (snapshot.HasStatusCriticalChanceBonus)
+        {
+            resolvedStatus.Modifiers.CritChanceBonusRate += snapshot.StatusCriticalChanceBonus;
+        }
+
+        if (snapshot.HasStatusDamageTakenBonus)
+        {
+            resolvedStatus.DamageTakenBonus += snapshot.StatusDamageTakenBonus;
+        }
+
+        if (snapshot.HasStatusFlatElementResistReduction)
+        {
+            resolvedStatus.FlatElementResistReduction += snapshot.StatusFlatElementResistReduction;
+        }
+
+        if (snapshot.HasStatusConditionalDamageTakenBonus)
+        {
+            resolvedStatus.ConditionalSourceStatusKind = snapshot.StatusConditionalSourceStatusKind;
+            resolvedStatus.ConditionalDamageTakenBonus = snapshot.StatusConditionalDamageTakenBonus;
+        }
+
+        if (hasActionSpeedBonus)
+        {
+            resolvedStatus.Modifiers.ActionSpeedBonus += actionSpeedBonus;
+        }
+
+        if (snapshot.HasStatusAttackPowerBonus)
+        {
+            resolvedStatus.Modifiers.AttackPowerBonus += snapshot.StatusAttackPowerBonus;
+        }
+
+        return resolvedStatus;
+    }
+
+    /*
+     * 상태 태그에 연결된 실행 데이터 지속시간 보너스를 반환한다.
+     */
+    private static float ResolveStatusDurationBonus(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, StatusRuntimeData statusData /* 상태 효과 실행 데이터 */)
+    {
+        if (snapshot == null)
+        {
+            return 0f;
+        }
+
+        return snapshot.ResolveStatusDurationBonus(statusData.StatusTag);
+    }
+
+    /*
+     * 상태 태그에 연결된 실행 데이터 최대 중첩 보너스를 반환한다.
+     */
+    private static int ResolveStatusMaxStacksBonus(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, StatusRuntimeData statusData /* 상태 효과 실행 데이터 */)
+    {
+        if (snapshot == null)
+        {
+            return 0;
+        }
+
+        return snapshot.ResolveStatusMaxStacksBonus(statusData.StatusTag);
+    }
+
+    /*
+     * 임계 중첩에 도달했을 때 추가로 적용할 상태 설정을 만든다.
+     */
+    private static ProjectileStatusHitSpec ResolveThresholdStatusSpec(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
+    {
+        if (snapshot == null || snapshot.ThresholdApplyStatusKind == StatusEffectKind.None)
+        {
+            return null;
+        }
+
+        var kind = snapshot.ThresholdApplyStatusKind;
+        var statusData = StatusRuntimeCompiler.Create(kind, null);
+        var duration = statusData.Duration;
+        var durationBonus = ResolveStatusDurationBonus(snapshot, statusData);
+        if (!Mathf.Approximately(durationBonus, 0f))
+        {
+            duration = Mathf.Max(0f, duration + durationBonus);
+        }
+
+        return new ProjectileStatusHitSpec
+        {
+            Enabled = true,
+            Kind = kind,
+            StatusData = statusData,
+            Chance = 1f,
+            Stacks = statusData.BaseStackAmount,
+            DurationSeconds = duration,
+            MaxStacks = statusData.MaxStacks,
+            Permanent = statusData.Permanent && duration <= 0f,
+            RefreshDuration = true
+        };
+    }
+}
 }

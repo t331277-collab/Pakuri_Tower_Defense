@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Data;
 using UnityEngine;
@@ -177,8 +178,12 @@ namespace Pakuri.InGame
             for (var i = 0; i < entries.Count; i++)
             {
                 var ownerEntry = entries[i];
-                var owner = ownerEntry != null ? ownerEntry.Model : null;
-                HashSet<string> learnedPassives = null;
+                UnitCombatState owner = null;
+                if (ownerEntry != null)
+                {
+                    owner = ownerEntry.Model;
+                }
+                IReadOnlyCollection<string> learnedPassives = null;
                 if (owner != null && owner.Skills != null)
                 {
                     learnedPassives = owner.Skills.LearnedPassiveSkillIds;
@@ -222,7 +227,12 @@ namespace Pakuri.InGame
             IDictionary<string, PassiveStatusBinding> desiredBindings /* 필요한 연결 정보 */,
             ISet<float> nextHealthRatioThresholds /* 다음 체력 비율 기준값 목록 */)
         {
-            var passive = owner.Skills.FindBySkillId(passiveId)?.Data as PassiveSkillDefinition;
+            var passiveRuntime = owner.SkillState.FindBySkillId(passiveId);
+            PassiveSkillDefinition passive = null;
+            if (passiveRuntime != null)
+            {
+                passive = passiveRuntime.Data as PassiveSkillDefinition;
+            }
             if (passive == null || passive.MultiEffects.Length == 0)
             {
                 return;
@@ -230,7 +240,7 @@ namespace Pakuri.InGame
 
             var context = new SkillExecutionContext(combatManager, roster, ownerEntry, null);
             var ownerPosition = (Vector2)ownerEntry.Transform.position;
-            var snapshot = UnitSkills.ResolvePassiveChoices(owner, passiveId);
+            var snapshot = SkillExecutionState.ResolvePassiveChoices(owner, passiveId);
             for (var i = 0; i < passive.MultiEffects.Length; i++)
             {
                 var effect = passive.MultiEffects[i];
@@ -248,7 +258,7 @@ namespace Pakuri.InGame
                 }
 
                 if (!IsPersistentStatusEffect(effect)
-                    || !SkillEffect.ShouldRun(context, effect, snapshot))
+                    || !SkillRequirement.CanRunEffect(context, effect))
                 {
                     continue;
                 }
@@ -258,13 +268,13 @@ namespace Pakuri.InGame
                     nextHealthRatioThresholds.Add(Mathf.Clamp01(effect.ConditionHealthRatioMax));
                 }
 
-                var statusSpec = SkillEffect.ResolveStatusSpec(effect, snapshot);
+                var statusSpec = SkillStatus.ResolveEffectStatusSpec(effect, snapshot);
                 if (statusSpec == null || !statusSpec.Enabled || statusSpec.StatusData == null)
                 {
                     continue;
                 }
 
-                var targets = SkillEffect.ResolvePassiveStatusTargets(context, snapshot, effect);
+                var targets = SkillStatus.ResolvePassiveEffectTargets(context, snapshot, effect);
                 for (var targetIndex = 0; targetIndex < targets.Count; targetIndex++)
                 {
                     var target = targets[targetIndex];
@@ -283,7 +293,7 @@ namespace Pakuri.InGame
                         continue;
                     }
 
-                    if (SkillEffect.ApplyPersistentPassiveStatus(
+                    if (SkillStatus.ApplyPersistentEffect(
                             context,
                             snapshot,
                             effect,
@@ -305,13 +315,13 @@ namespace Pakuri.InGame
          */
         private void ApplyOneShotEffect(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             SkillEffectDefinition effect /* 실행하거나 변환할 효과 */,
             Vector2 ownerPosition /* 소유자 위치 */,
             UnitCombatState owner /* 정보를 소유한 유닛 */,
             string passiveId /* 패시브 식별자 */)
         {
-            if (!SkillEffect.ShouldRun(context, effect, snapshot))
+            if (!SkillRequirement.CanRunEffect(context, effect))
             {
                 return;
             }
@@ -322,8 +332,82 @@ namespace Pakuri.InGame
                 return;
             }
 
-            SkillEffect.Execute(context, snapshot, new[] { effect }, ownerPosition);
+            ExecuteOneShotEffect(context, snapshot, effect, ownerPosition);
             appliedOneShotEffectKeys.Add(key);
+        }
+
+        /*
+         * 패시브가 가진 일회성 추가 효과를 패시브 실행기에서 적용한다.
+         */
+        private static bool ExecuteOneShotEffect(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
+            SkillEffectDefinition effect /* 적용할 추가 효과 */,
+            Vector2 defaultCenter /* 기본 효과 중심 */)
+        {
+            if (effect.EffectTiming == SkillMultiEffectTiming.OnHit
+                || effect.EffectTiming == SkillMultiEffectTiming.OnDeploymentCast
+                || effect.EffectTiming == SkillMultiEffectTiming.OnExpire
+                || effect.EffectTiming == SkillMultiEffectTiming.OnHitCount)
+            {
+                return false;
+            }
+
+            if (effect.EffectTiming == SkillMultiEffectTiming.Delayed || effect.DelaySeconds > 0f)
+            {
+                context.CombatManager.StartCoroutine(ExecuteOneShotEffectAfterDelay(context, skillData, effect, defaultCenter));
+                return true;
+            }
+            return ApplyOneShotEffectValue(context, skillData, effect, defaultCenter);
+        }
+
+        /*
+         * 패시브 추가 효과의 지연시간이 지난 뒤 효과를 적용한다.
+         */
+        private static IEnumerator ExecuteOneShotEffectAfterDelay(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
+            SkillEffectDefinition effect /* 적용할 추가 효과 */,
+            Vector2 defaultCenter /* 기본 효과 중심 */)
+        {
+            var delay = Mathf.Max(0f, effect.DelaySeconds);
+            if (delay > 0f)
+            {
+                yield return new WaitForSeconds(delay);
+            }
+            else
+            {
+                yield return null;
+            }
+            ApplyOneShotEffectValue(context, skillData, effect, defaultCenter);
+        }
+
+        /*
+         * 패시브 추가 효과 종류에 맞는 적용 기능을 호출한다.
+         */
+        private static bool ApplyOneShotEffectValue(
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillExecutionData skillData /* 현재 스킬 강화 정보 */,
+            SkillEffectDefinition effect /* 적용할 추가 효과 */,
+            Vector2 defaultCenter /* 기본 효과 중심 */)
+        {
+            if (effect.EffectKind == SkillMultiEffectKind.Damage)
+            {
+                return ZoneSkillExecutor.ApplyAdditionalDamageEffect(context, skillData, effect, defaultCenter);
+            }
+            if (effect.EffectKind == SkillMultiEffectKind.Status)
+            {
+                return SkillStatus.ApplyEffect(context, skillData, effect, defaultCenter, false);
+            }
+            if (effect.EffectKind == SkillMultiEffectKind.ExtendStatusDuration)
+            {
+                return SkillStatus.ExtendEffectDuration(context, effect);
+            }
+            if (effect.EffectKind == SkillMultiEffectKind.RecastZone)
+            {
+                return ZoneSkillExecutor.ExecuteRecast(context, skillData, effect, defaultCenter);
+            }
+            return false;
         }
 
         /*
