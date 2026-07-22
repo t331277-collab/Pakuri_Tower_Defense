@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Combat;
@@ -72,7 +72,11 @@ internal static class SkillTrigger
 	 */
 	public static void ExecuteCombatStart(InGameCombatManager combatManager /* 전투 진행 관리자 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, UnitCombatState source /* 효과를 발생시킨 유닛 */)
 	{
-		IReadOnlyList<SkillRuntimeInstance> readOnlyList = ((source != null && source.SkillRuntime != null) ? source.SkillRuntime.ActiveSkills : null);
+		IReadOnlyList<SkillUseState> readOnlyList = null;
+		if (source != null && source.Skills != null)
+		{
+			readOnlyList = source.Skills.ActiveSkills;
+		}
 		if (combatManager == null || roster == null || source == null || readOnlyList == null)
 		{
 			return;
@@ -80,7 +84,7 @@ internal static class SkillTrigger
 		Vector2 eventCenter = ResolveUnitPosition(roster, source);
 		for (int i = 0; i < readOnlyList.Count; i++)
 		{
-			SkillRuntimeInstance skillRuntimeInstance = readOnlyList[i];
+			SkillUseState skillRuntimeInstance = readOnlyList[i];
 			string text = ((skillRuntimeInstance != null && skillRuntimeInstance.Data != null) ? skillRuntimeInstance.Data.SkillId : string.Empty);
 			if (!string.IsNullOrWhiteSpace(text))
 			{
@@ -251,7 +255,13 @@ internal static class SkillTrigger
 	 */
 	private static SkillTriggerDefinition[] ResolveSourceOwnedPlanTriggers(UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, SkillTriggerDefinition[] fallbackTriggers /* 대체 트리거 목록 */)
 	{
-		return SkillNodeAction.ResolveTriggers((source != null && source.SkillRuntime != null) ? source.SkillRuntime.FindBySkillId(sourceSkillId) : null, fallbackTriggers);
+		SkillUseState sourceSkill = null;
+		if (source != null && source.Skills != null)
+		{
+			sourceSkill = source.Skills.FindBySkillId(sourceSkillId);
+		}
+
+		return SkillNodeAction.ResolveTriggers(sourceSkill, fallbackTriggers);
 	}
 
 	/*
@@ -268,7 +278,7 @@ internal static class SkillTrigger
 		{
 			CombatUnitEntry unitEntry = entries[i];
 			UnitCombatState unitState = unitEntry?.Model;
-			if (unitEntry == null || unitState == null || unitState.SkillProgress == null || unitState.SkillProgress.LearnedPassiveSkillIds.Count == 0)
+			if (unitEntry == null || unitState == null || unitState.Skills == null || unitState.Skills.LearnedPassiveSkillIds.Count == 0)
 			{
 				continue;
 			}
@@ -306,7 +316,7 @@ internal static class SkillTrigger
 	 */
 	private static bool ShouldRunPassiveOwnerTrigger(SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */, UnitCombatState owner /* 정보를 소유한 유닛 */, SkillTriggerEvent triggerEvent /* 트리거를 발생시킨 사건 종류 */, TriggerExecutionContext triggerContext /* 트리거 실행에 필요한 정보 */)
 	{
-		if (trigger == null || owner == null || owner.SkillProgress == null || trigger.TriggerEvent != triggerEvent || string.IsNullOrWhiteSpace(trigger.SourceSkillId) || !owner.SkillProgress.LearnedPassiveSkillIds.Contains(trigger.SourceSkillId) || !MatchesEventSkillId(trigger.EventSkillId, triggerContext.EventSourceSkillId) || !StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillId) || (trigger.RequireEventExecute && !triggerContext.EventWasExecute) || !HasAllChoices(owner, trigger.RequiresActiveChoiceId) || HasAnyChoice(owner, trigger.ExcludesActiveChoiceId) || !MeetsSourceStatusRequirement(owner, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks))
+		if (trigger == null || owner == null || owner.Skills == null || trigger.TriggerEvent != triggerEvent || string.IsNullOrWhiteSpace(trigger.SourceSkillId) || !owner.Skills.LearnedPassiveSkillIds.Contains(trigger.SourceSkillId) || !MatchesEventSkillId(trigger.EventSkillId, triggerContext.EventSourceSkillId) || !StatusConditionRules.MatchesSkillRuntimeKinds(trigger.EventSkillRuntimeKindValues, triggerContext.EventSourceSkillId) || (trigger.RequireEventExecute && !triggerContext.EventWasExecute) || !HasAllChoices(owner, trigger.RequiresActiveChoiceId) || HasAnyChoice(owner, trigger.ExcludesActiveChoiceId) || !MeetsSourceStatusRequirement(owner, trigger.RequiredSourceStatusKind, trigger.RequiredSourceStatusMinStacks))
 		{
 			return false;
 		}
@@ -334,7 +344,7 @@ internal static class SkillTrigger
 		{
 			return true;
 		}
-		if (source == null || source.SkillProgress == null)
+		if (source == null || source.Skills == null)
 		{
 			return false;
 		}
@@ -342,7 +352,7 @@ internal static class SkillTrigger
 		for (int i = 0; i < array.Length; i++)
 		{
 			string text = ((array[i] != null) ? array[i].Trim() : string.Empty);
-			if (!string.IsNullOrWhiteSpace(text) && !source.SkillProgress.ChosenChoiceIds.Contains(text))
+			if (!string.IsNullOrWhiteSpace(text) && !source.Skills.ChosenChoiceIds.Contains(text))
 			{
 				return false;
 			}
@@ -355,7 +365,7 @@ internal static class SkillTrigger
 	 */
 	private static bool HasAnyChoice(UnitCombatState source /* 효과를 발생시킨 유닛 */, string choiceList /* 선택지 목록 */)
 	{
-		if (string.IsNullOrWhiteSpace(choiceList) || source == null || source.SkillProgress == null)
+		if (string.IsNullOrWhiteSpace(choiceList) || source == null || source.Skills == null)
 		{
 			return false;
 		}
@@ -363,7 +373,7 @@ internal static class SkillTrigger
 		for (int i = 0; i < array.Length; i++)
 		{
 			string text = ((array[i] != null) ? array[i].Trim() : string.Empty);
-			if (!string.IsNullOrWhiteSpace(text) && source.SkillProgress.ChosenChoiceIds.Contains(text))
+			if (!string.IsNullOrWhiteSpace(text) && source.Skills.ChosenChoiceIds.Contains(text))
 			{
 				return true;
 			}
@@ -437,7 +447,7 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		float num = SkillUpgrade.ResolvePassiveChoices(owner, trigger.SourceSkillId).ResolveTriggerProcChanceBonus(trigger.TriggerId);
+		float num = UnitSkills.ResolvePassiveChoices(owner, trigger.SourceSkillId).ResolveTriggerProcChanceBonus(trigger.TriggerId);
 		float num2 = ((trigger.ProcChance > 0f) ? Mathf.Clamp01(trigger.ProcChance + num) : Mathf.Clamp01(1f + num));
 		if (num2 <= 0f || UnityEngine.Random.value > num2)
 		{
@@ -641,11 +651,11 @@ internal static class SkillTrigger
 	 */
 	internal static bool ExecuteTriggeredSkillAction(InGameCombatManager combatManager /* 전투 진행 관리자 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */, TriggerExecutionContext triggerContext /* 트리거 실행에 필요한 정보 */)
 	{
-		if (combatManager == null || sourceEntry == null || trigger == null || sourceEntry.Model == null || sourceEntry.Model.SkillRuntime == null || string.IsNullOrWhiteSpace(trigger.TriggeredSkillId))
+		if (combatManager == null || sourceEntry == null || trigger == null || sourceEntry.Model == null || sourceEntry.Model.Skills == null || string.IsNullOrWhiteSpace(trigger.TriggeredSkillId))
 		{
 			return false;
 		}
-		SkillRuntimeInstance skillRuntimeInstance = sourceEntry.Model.SkillRuntime.FindBySkillId(trigger.TriggeredSkillId);
+		SkillUseState skillRuntimeInstance = sourceEntry.Model.Skills.FindBySkillId(trigger.TriggeredSkillId);
 		if (skillRuntimeInstance == null || skillRuntimeInstance.Data == null || !MatchesRuntimeKind(skillRuntimeInstance.Data, trigger.RuntimeKind))
 		{
 			return false;
@@ -670,7 +680,7 @@ internal static class SkillTrigger
 			return false;
 		}
 		SkillExecutionContext context = new SkillExecutionContext(combatManager, roster, sourceEntry, null, triggerContext.EventTarget);
-		SkillSnapshot snapshot = SkillUpgrade.ResolvePassiveChoices(sourceEntry.Model, trigger.SourceSkillId);
+		SkillSnapshot snapshot = UnitSkills.ResolvePassiveChoices(sourceEntry.Model, trigger.SourceSkillId);
 		return SkillEffect.ExecuteDirect(context, snapshot, skillEffectDefinition, triggerContext.EventCenter);
 	}
 
@@ -765,11 +775,11 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		List<SkillRuntimeInstance> list = ResolveTargetRuntimes(roster, sourceEntry, trigger);
+		List<SkillUseState> list = ResolveTargetRuntimes(roster, sourceEntry, trigger);
 		bool flag = false;
 		for (int i = 0; i < list.Count; i++)
 		{
-			SkillRuntimeInstance skillRuntimeInstance = list[i];
+			SkillUseState skillRuntimeInstance = list[i];
 			if (skillRuntimeInstance != null)
 			{
 				flag = skillRuntimeInstance.ReduceCooldownRemaining(skillRuntimeInstance.EffectiveCooldownDuration * Mathf.Clamp01(trigger.CooldownRefundRatio)) || flag;
@@ -787,11 +797,11 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		List<SkillRuntimeInstance> list = ResolveTargetRuntimes(roster, sourceEntry, trigger);
+		List<SkillUseState> list = ResolveTargetRuntimes(roster, sourceEntry, trigger);
 		bool flag = false;
 		for (int i = 0; i < list.Count; i++)
 		{
-			SkillRuntimeInstance skillRuntimeInstance = list[i];
+			SkillUseState skillRuntimeInstance = list[i];
 			if (skillRuntimeInstance != null)
 			{
 				flag = skillRuntimeInstance.ReduceReloadRemaining(skillRuntimeInstance.ReloadDuration * Mathf.Clamp01(trigger.ReloadReduceRatio)) || flag;
@@ -803,33 +813,37 @@ internal static class SkillTrigger
 	/*
 	 * ResolveTargetRuntimes 결과를 계산해 반환한다.
 	 */
-	private static List<SkillRuntimeInstance> ResolveTargetRuntimes(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */)
+	private static List<SkillUseState> ResolveTargetRuntimes(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */)
 	{
-		List<SkillRuntimeInstance> list = new List<SkillRuntimeInstance>();
+		List<SkillUseState> list = new List<SkillUseState>();
 		List<CombatUnitEntry> list2 = ResolveCooldownTargetEntries(roster, sourceEntry, trigger);
 		string text = ((trigger != null && !string.IsNullOrWhiteSpace(trigger.TargetSkillId)) ? trigger.TargetSkillId : ((trigger != null) ? trigger.TriggeredSkillId : string.Empty));
 		for (int i = 0; i < list2.Count; i++)
 		{
 			CombatUnitEntry unitEntry = list2[i];
-			UnitSkillRuntimeSet unitSkillRuntimeSet = ((unitEntry != null && unitEntry.Model != null) ? unitEntry.Model.SkillRuntime : null);
+			UnitSkills unitSkillRuntimeSet = null;
+			if (unitEntry != null && unitEntry.Model != null)
+			{
+				unitSkillRuntimeSet = unitEntry.Model.Skills;
+			}
 			if (unitSkillRuntimeSet == null)
 			{
 				continue;
 			}
 			if (!string.IsNullOrWhiteSpace(text))
 			{
-				SkillRuntimeInstance skillRuntimeInstance = unitSkillRuntimeSet.FindBySkillId(text);
+				SkillUseState skillRuntimeInstance = unitSkillRuntimeSet.FindBySkillId(text);
 				if (skillRuntimeInstance != null)
 				{
 					list.Add(skillRuntimeInstance);
 				}
 				continue;
 			}
-			IReadOnlyList<SkillRuntimeInstance> activeSkills = unitSkillRuntimeSet.ActiveSkills;
+			IReadOnlyList<SkillUseState> activeSkills = unitSkillRuntimeSet.ActiveSkills;
 			int num = 0;
 			while (activeSkills != null && num < activeSkills.Count)
 			{
-				SkillRuntimeInstance skillRuntimeInstance2 = activeSkills[num];
+				SkillUseState skillRuntimeInstance2 = activeSkills[num];
 				if (skillRuntimeInstance2 != null)
 				{
 					list.Add(skillRuntimeInstance2);
@@ -888,7 +902,7 @@ internal static class SkillTrigger
 		}
 		string sourceSkillId = ResolveTriggeredDamageSourceSkillId(trigger);
 		SkillEffectDefinition onHitStatusEffect = ResolveTriggeredOnHitStatusEffect(source, trigger);
-		SkillSnapshot onHitSnapshot = SkillUpgrade.ResolveActiveChoices(source, trigger.SourceSkillId);
+		SkillSnapshot onHitSnapshot = UnitSkills.ResolveActiveChoices(source, trigger.SourceSkillId);
 		RuntimeSkillVisualSpec runtimeVisual = trigger.RuntimeVisual;
 		bool flag = runtimeVisual != null && runtimeVisual.HasVisual();
 		bool flag2 = runtimeVisual != null && runtimeVisual.Hitbox != null && runtimeVisual.Hitbox.HasHitbox();
@@ -988,7 +1002,7 @@ internal static class SkillTrigger
 		{
 			return false;
 		}
-		SkillSnapshot skillExecutionSnapshot = SkillUpgrade.ResolveActiveChoices(source, trigger.SourceSkillId);
+		SkillSnapshot skillExecutionSnapshot = UnitSkills.ResolveActiveChoices(source, trigger.SourceSkillId);
 		SkillEffectDefinition skillEffectDefinition = ResolveTriggeredOnHitStatusEffect(source, trigger);
 		SkillEffectDefinition[] onHitEffects;
 		if (skillEffectDefinition == null)
@@ -1467,34 +1481,34 @@ internal static class SkillTrigger
 	/*
 	 * MatchesRuntimeKind 조건을 만족하는지 확인한다.
 	 */
-	private static bool MatchesRuntimeKind(SkillRuntimeData data /* 처리할 실행 데이터 */, SkillRuntimeKind runtimeKind /* 런타임 종류 */)
+	private static bool MatchesRuntimeKind(SkillExecutionDefinition data /* 처리할 실행 데이터 */, SkillRuntimeKind runtimeKind /* 런타임 종류 */)
 	{
 		switch (runtimeKind)
 		{
 		case SkillRuntimeKind.MagazineProjectile:
 		case SkillRuntimeKind.CooldownProjectile:
-			return data is ProjectileSkillRuntimeData;
+			return data is ProjectileSkillDefinition;
 		case SkillRuntimeKind.LineAttack:
-			return data is LineSkillRuntimeData;
+			return data is LineSkillDefinition;
 		case SkillRuntimeKind.SingleAttack:
-			return data is SingleSkillRuntimeData;
+			return data is SingleSkillDefinition;
 		case SkillRuntimeKind.AreaAttack:
 		case SkillRuntimeKind.Field:
 		case SkillRuntimeKind.Mark:
 		case SkillRuntimeKind.Execute:
-			return data is ZoneSkillRuntimeData;
+			return data is ZoneSkillDefinition;
 		case SkillRuntimeKind.Buff:
-			if (!(data is BuffSkillRuntimeData))
+			if (!(data is BuffSkillDefinition))
 			{
-				return data is SingleChargeSkillRuntimeData;
+				return data is SingleChargeSkillDefinition;
 			}
 			return true;
 		case SkillRuntimeKind.Heal:
-			return data is BuffSkillRuntimeData;
+			return data is BuffSkillDefinition;
 		case SkillRuntimeKind.Shield:
-			return data is BuffShieldSkillRuntimeData;
+			return data is BuffShieldSkillDefinition;
 		case SkillRuntimeKind.Passive:
-			return data is PassiveSkillRuntimeData;
+			return data is PassiveSkillDefinition;
 		default:
 			return false;
 		}

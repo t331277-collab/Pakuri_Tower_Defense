@@ -88,24 +88,15 @@ namespace Pakuri.InGame
         public float DirectShield;
     }
 
-    [Serializable]
-    public class UnitSkillProgress
-    {
-        public readonly HashSet<string> LearnedActiveSkillIds = new HashSet<string>();
-        public readonly HashSet<string> LearnedPassiveSkillIds = new HashSet<string>();
-        public readonly HashSet<string> ChosenChoiceIds = new HashSet<string>();
-    }
-
     public class UnitCombatState
     {
         public UnitIdentity Identity = new UnitIdentity();
         public UnitCombatStats Stats = new UnitCombatStats();
         public UnitDefenseStats Defenses = new UnitDefenseStats();
         public UnitCombatResources Resources = new UnitCombatResources();
-        public UnitSkillRuntimeSet SkillRuntime = new UnitSkillRuntimeSet();
+        public UnitSkills Skills = new UnitSkills();
         public SingleChargeState ActiveCharge;
         public UnitStatusCollection Statuses = new UnitStatusCollection();
-        public UnitSkillProgress SkillProgress = new UnitSkillProgress();
         public bool IsBoss;
         public bool AutoAttackEnabled = true;
         public bool AutoSkillEnabled = true;

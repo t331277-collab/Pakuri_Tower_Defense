@@ -21,7 +21,7 @@ namespace Pakuri.InGame
         internal static bool Execute(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
-            ProjectileSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
+            ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
             var origin = context.CasterEntry.Transform != null
                 ? context.CasterEntry.Transform.position
@@ -300,7 +300,7 @@ namespace Pakuri.InGame
          * 연속 발사 피해 배율을 결정한다.
          */
         private static float ResolveBurstDamageMultiplier(
-            ProjectileSkillRuntimeData skill /* 실행하거나 검사할 스킬 */,
+            ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
             int projectileIndex /* 투사체 순서 번호 */,
             int burstProjectileCount /* 연속 발사 투사체 개수 */)
@@ -341,7 +341,7 @@ namespace Pakuri.InGame
         private static void TryScheduleFollowUpProjectile(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
-            ProjectileSkillRuntimeData skill /* 실행하거나 검사할 스킬 */,
+            ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */,
             RuntimeSkillVisualSpec runtimeVisual /* 런타임 시각 효과 설정 */,
             ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */,
             SkillEffectDefinition[] onHitEffects /* 발생 시 적중 효과 목록 */,
@@ -394,7 +394,7 @@ namespace Pakuri.InGame
         private static IEnumerator ExecuteFollowUpProjectilesAfterDelay(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
-            ProjectileSkillRuntimeData skill /* 실행하거나 검사할 스킬 */,
+            ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */,
             RuntimeSkillVisualSpec runtimeVisual /* 런타임 시각 효과 설정 */,
             ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */,
             SkillEffectDefinition[] onHitEffects /* 발생 시 적중 효과 목록 */,
@@ -456,7 +456,7 @@ namespace Pakuri.InGame
         private static void SpawnProjectileActor(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
-            ProjectileSkillRuntimeData skill /* 실행하거나 검사할 스킬 */,
+            ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */,
             RuntimeSkillVisualSpec runtimeVisual /* 런타임 시각 효과 설정 */,
             ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */,
             SkillEffectDefinition[] onHitEffects /* 발생 시 적중 효과 목록 */,
@@ -565,7 +565,7 @@ namespace Pakuri.InGame
          */
         private static void ApplyDirectProjectileHit(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            ProjectileSkillRuntimeData skill /* 실행하거나 검사할 스킬 */,
+            ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
             CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */,
             ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */,
@@ -618,7 +618,7 @@ namespace Pakuri.InGame
         /*
          * 충돌 지연을 결정한다.
          */
-        private static float ResolveImpactDelay(ProjectileSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static float ResolveImpactDelay(ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var delay = skill != null ? skill.ImpactDelaySeconds : 0f;
             if (snapshot != null)
@@ -713,7 +713,7 @@ namespace Pakuri.InGame
         /*
          * ResolveProjectileLifetime 결과를 계산해 반환한다.
          */
-        private static float ResolveProjectileLifetime(ProjectileSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
+        private static float ResolveProjectileLifetime(ProjectileSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
             var projectile = skill.Projectile;
             if (projectile.LifetimeSeconds > 0f)

@@ -533,3 +533,51 @@ Phase 1 implemented and compile/editor validated. Play Mode run verification rem
 ### History
 
 - 2026-07-19: Code Builder completed the first combat-manager split while retaining run/Nexus lifecycle ownership in `StageManager`.
+
+## Task: 2026-07-22 Skill Execution Ownership Consolidation
+
+### Task title
+
+Consolidate learned-skill state and clarify definition, execution, Executor, and Actor boundaries.
+
+### Goals
+
+- Keep learned active/passive IDs, Choice IDs, Snapshot construction, and mutable skill-use state under `UnitSkills`.
+- Keep `SkillExecution` responsible for cast checks, Snapshot preparation, cast routing, and Executor dispatch.
+- Remove the abstract `Combat/Skills/Runtime` folder and retain required data conversion at the loading boundary.
+- Make `RunSession` the shared authority for skill and Choice acquisition eligibility.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Existing Executor and Actor skill behavior remains unchanged.
+- No new fallback behavior or added ternary expression.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and solution-build verified.
+
+### Next Actions
+
+- User verifies default skill use, learned A-E skills, passive effects, Enhancements, Master choices, Trigger casts, Enemy A/B casts, cooldowns, magazines, and Actor lifetime in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/Combat/Skills/UnitSkills.cs` now owns learned IDs, selected Choice IDs, Snapshot construction, mutable `SkillUseState`, and skill-list rebuilding; former `SkillUpgrade.cs` is deleted.
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/SkillExecution.cs` no longer ticks skill state and uses one shared execution route for automatic, manual, and Trigger requests.
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/SkillTargeting.cs` now contains shared pre-execution requirement checks instead of keeping them in `SkillExecution.cs`.
+- `SkillRuntime.cs`, `SkillRuntimeData.cs`, and `SkillRuntimeCompiler.cs` were replaced by `UnitSkills.cs`, `Definitions/SkillExecutionDefinition.cs`, and `GameFlow/Loading/SkillDefinitionCompiler.cs`; the former Runtime folder is removed.
+- `RunSession.cs` owns active, passive, Enhancement, and Master acquisition eligibility; both `InGameUIManager.cs` and `DebugUI.cs` call those rules.
+- Script count under `Pakuri/Assets/Scripts` changed from 71 to 70.
+- Repository search found no remaining old Runtime type names or `SkillUpgrade` references.
+- Added-line scan found no ternary expressions; `git diff --check` passed.
+- `dotnet build Pakuri/Assembly-CSharp.csproj -v:minimal` completed with 0 errors and the existing 2 assembly-version warnings.
+
+### History
+
+- 2026-07-22: Code Builder consolidated learned skill state, renamed required execution data/state types, removed the Runtime folder, and centralized acquisition checks.

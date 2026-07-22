@@ -133,7 +133,7 @@ namespace Pakuri.InGame
          */
         private bool TryUseSkill(
             CombatUnitEntry enemyEntry /* 적 등록 정보 */,
-            SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */)
+            SkillUseState runtime /* 실행 중인 스킬 정보 */)
         {
             return skillExecution.TryExecuteSelected(
                 enemyEntry,

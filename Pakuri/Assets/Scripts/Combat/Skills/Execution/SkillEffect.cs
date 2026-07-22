@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Pakuri.Combat;
@@ -599,14 +599,14 @@ static class SkillEffect
 	 */
 	private static bool HasActiveSkillAttribute(UnitCombatState target /* 효과를 받을 대상 유닛 */, string rawAttribute /* 변환 전 속성 */)
 	{
-		if (target == null || target.SkillRuntime == null || string.IsNullOrWhiteSpace(rawAttribute) || !Enum.TryParse<DamageAttribute>(rawAttribute.Trim(), ignoreCase: true, out var result))
+		if (target == null || target.Skills == null || string.IsNullOrWhiteSpace(rawAttribute) || !Enum.TryParse<DamageAttribute>(rawAttribute.Trim(), ignoreCase: true, out var result))
 		{
 			return false;
 		}
-		IReadOnlyList<SkillRuntimeInstance> activeSkills = target.SkillRuntime.ActiveSkills;
+		IReadOnlyList<SkillUseState> activeSkills = target.Skills.ActiveSkills;
 		for (int i = 0; i < activeSkills.Count; i++)
 		{
-			SkillRuntimeInstance skillRuntimeInstance = activeSkills[i];
+			SkillUseState skillRuntimeInstance = activeSkills[i];
 			if (skillRuntimeInstance != null && skillRuntimeInstance.Data != null && skillRuntimeInstance.Data.Element == result)
 			{
 				return true;
@@ -943,7 +943,7 @@ static class SkillOnHitEffect
 	/*
 	 * 적중 횟수를 갱신하고 현재 Snapshot에 설정된 적중 후 행동을 한 번 적용한다.
 	 */
-	public static void TryApply(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, CombatUnitEntry hitTarget /* 적중 대상 */, Vector2 hitPosition /* 적중 위치 */, float primaryBaseDamage /* 주 대상 기본 피해 */)
+	public static void TryApply(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, SkillUseState runtime /* 실행 중인 스킬 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, CombatUnitEntry hitTarget /* 적중 대상 */, Vector2 hitPosition /* 적중 위치 */, float primaryBaseDamage /* 주 대상 기본 피해 */)
 	{
 		if (manager == null || roster == null || snapshot == null || (!snapshot.HasOnHitAdditionalDamageBehavior && !HasReloadReductionBehavior(snapshot)) || source == null || hitTarget == null || hitTarget.Model == null || primaryBaseDamage <= 0f || applyingAdditionalDamage)
 		{
@@ -1103,11 +1103,11 @@ static class SkillOnHitEffect
 	/*
 	 * 지정한 스킬이 재장전 중이면 남은 시간을 설정값만큼 줄인다.
 	 */
-	private static void ApplyReloadReduction(SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+	private static void ApplyReloadReduction(SkillUseState runtime /* 실행 중인 스킬 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
 	{
-		if (runtime != null && runtime.Owner != null && runtime.Owner.SkillRuntime != null && HasReloadReductionBehavior(snapshot))
+		if (runtime != null && runtime.Owner != null && runtime.Owner.Skills != null && HasReloadReductionBehavior(snapshot))
 		{
-			SkillRuntimeInstance skillRuntimeInstance = runtime.Owner.SkillRuntime.FindBySkillId(snapshot.ReloadReduceTargetSkillId);
+			SkillUseState skillRuntimeInstance = runtime.Owner.Skills.FindBySkillId(snapshot.ReloadReduceTargetSkillId);
 			if (skillRuntimeInstance != null && skillRuntimeInstance.IsReloading)
 			{
 				skillRuntimeInstance.ReduceReloadRemaining(snapshot.ReloadReduceSecondsPerHit);

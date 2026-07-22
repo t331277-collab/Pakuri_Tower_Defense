@@ -636,3 +636,153 @@ namespace Pakuri.InGame
         }
     }
 }
+
+/*
+ * 스킬 실행 전에 필요한 Choice, 패시브, 시전자 상태 조건을 판정한다.
+ * SkillExecution과 각 Executor가 같은 사전 조건 판정을 공유하도록 한다.
+ */
+namespace Pakuri.InGame
+{
+    static class SkillRequirement
+    {
+        /*
+         * 목록에 적힌 모든 Choice가 현재 Snapshot에 적용되었는지 확인한다.
+         */
+        public static bool HasAllActiveChoices(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, string choiceList /* 선택지 목록 */)
+        {
+            if (string.IsNullOrWhiteSpace(choiceList))
+            {
+                return true;
+            }
+
+            if (snapshot == null)
+            {
+                return false;
+            }
+
+            var choices = choiceList.Split(';', ',');
+            for (var i = 0; i < choices.Length; i++)
+            {
+                var choiceId = choices[i].Trim();
+                if (choiceId.Length > 0 && !snapshot.HasActiveChoice(choiceId))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /*
+         * 목록에 적힌 Choice 중 하나라도 현재 Snapshot에 적용되었는지 확인한다.
+         */
+        public static bool HasAnyActiveChoice(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, string choiceList /* 선택지 목록 */)
+        {
+            if (string.IsNullOrWhiteSpace(choiceList) || snapshot == null)
+            {
+                return false;
+            }
+
+            var choices = choiceList.Split(';', ',');
+            for (var i = 0; i < choices.Length; i++)
+            {
+                var choiceId = choices[i].Trim();
+                if (choiceId.Length > 0 && snapshot.HasActiveChoice(choiceId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /*
+         * 목록에 적힌 모든 패시브를 유닛이 학습했는지 확인한다.
+         */
+        public static bool HasAllLearnedPassives(UnitCombatState owner /* 정보를 소유한 유닛 */, string passiveList /* 패시브 목록 */)
+        {
+            if (string.IsNullOrWhiteSpace(passiveList))
+            {
+                return true;
+            }
+
+            var passives = passiveList.Split(';', ',');
+            for (var i = 0; i < passives.Length; i++)
+            {
+                var passiveId = passives[i].Trim();
+                if (passiveId.Length > 0 && !HasLearnedPassive(owner, passiveId))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /*
+         * 목록에 적힌 패시브 중 하나라도 유닛이 학습했는지 확인한다.
+         */
+        public static bool HasAnyLearnedPassive(UnitCombatState owner /* 정보를 소유한 유닛 */, string passiveList /* 패시브 목록 */)
+        {
+            if (string.IsNullOrWhiteSpace(passiveList))
+            {
+                return false;
+            }
+
+            var passives = passiveList.Split(';', ',');
+            for (var i = 0; i < passives.Length; i++)
+            {
+                var passiveId = passives[i].Trim();
+                if (passiveId.Length > 0 && HasLearnedPassive(owner, passiveId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /*
+         * Choice가 요구하는 시전자 상태 중첩 조건을 만족하는지 확인한다.
+         */
+        public static bool MeetsSourceStatus(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */, UnitCombatState owner /* 정보를 소유한 유닛 */)
+        {
+            if (choice == null)
+            {
+                return true;
+            }
+
+            return HasSourceStatus(owner, choice.RequiredSourceStatusKind, choice.RequiredSourceStatusMinStacks);
+        }
+
+        /*
+         * 시전자가 지정한 상태 또는 보호막 조건을 만족하는지 확인한다.
+         */
+        public static bool HasSourceStatus(UnitCombatState owner /* 정보를 소유한 유닛 */, StatusEffectKind statusKind /* 상태 효과 종류 */, int minimumStacks /* 최소 중첩 수 */)
+        {
+            if (statusKind == StatusEffectKind.None)
+            {
+                return true;
+            }
+
+            if (statusKind == StatusEffectKind.Shield)
+            {
+                return owner != null && owner.Resources != null && owner.Resources.CurrentShield > 0f;
+            }
+
+            return owner != null
+                && owner.Statuses != null
+                && owner.Statuses.GetStacks(statusKind) >= Mathf.Max(1, minimumStacks);
+        }
+
+        /*
+         * 유닛의 학습한 패시브 목록에 지정한 ID가 있는지 확인한다.
+         */
+        private static bool HasLearnedPassive(UnitCombatState owner /* 정보를 소유한 유닛 */, string passiveId /* 패시브 식별자 */)
+        {
+            return owner != null
+                && owner.Skills != null
+                && owner.Skills.LearnedPassiveSkillIds.Contains(passiveId);
+        }
+    }
+}

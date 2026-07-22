@@ -4,7 +4,7 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * CSV 스킬 정의를 전투에서 실행할 때 사용하는 공통 런타임 데이터 구조.
+ * CSV 스킬 정의를 전투에서 실행할 때 사용하는 공통 실행 데이터 구조.
  * 대상 지정, 피해, 상태, 투사체, 범위, 버프 설정과 실행 계획을 보관하고
  * 버프·회복·연쇄·돌진·빔·투사체·단일·범위·보호막·패시브별 세부 데이터를 정의한다.
  */
@@ -208,7 +208,7 @@ namespace Pakuri.InGame
     /*
      * 스킬 데이터에 필요한 값을 보관한다.
      */
-    public abstract class SkillRuntimeData
+    public abstract class SkillExecutionDefinition
     {
         [Header("Identity")]
         public string SkillId;
@@ -230,8 +230,8 @@ namespace Pakuri.InGame
         public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
 
         [Header("Choices")]
-        public SkillChoiceRuntimeData[] EnhancementChoices = Array.Empty<SkillChoiceRuntimeData>();
-        public SkillChoiceRuntimeData[] MasterChoices = Array.Empty<SkillChoiceRuntimeData>();
+        public SkillChoice[] EnhancementChoices = Array.Empty<SkillChoice>();
+        public SkillChoice[] MasterChoices = Array.Empty<SkillChoice>();
         public SkillEffectDefinition[] MultiEffects = Array.Empty<SkillEffectDefinition>();
         public SkillTriggerDefinition[] SkillTriggers = Array.Empty<SkillTriggerDefinition>();
         public SkillNode[] NormalizedPlanNodes = Array.Empty<SkillNode>();
@@ -240,7 +240,7 @@ namespace Pakuri.InGame
     /*
      * 버프 스킬 데이터에 필요한 값을 보관한다.
      */
-    public class BuffSkillRuntimeData : SkillRuntimeData
+    public class BuffSkillDefinition : SkillExecutionDefinition
     {
         [Header("Buff")]
         public float BuffDuration;
@@ -261,7 +261,7 @@ namespace Pakuri.InGame
     /*
      * 회복 스킬 데이터에 필요한 값을 보관한다.
      */
-    public class BuffHealSkillRuntimeData : SkillRuntimeData
+    public class BuffHealSkillDefinition : SkillExecutionDefinition
     {
         public SkillDamageSpec Healing = new SkillDamageSpec();
         public bool AttachVisualToTarget = true;
@@ -270,7 +270,7 @@ namespace Pakuri.InGame
     /*
      * Single 계열의 연쇄 공격 값을 보관한다.
      */
-    public class SingleChainSkillRuntimeData : SkillRuntimeData
+    public class SingleChainSkillDefinition : SkillExecutionDefinition
     {
         public SkillDamageSpec Damage = new SkillDamageSpec();
         public float ChainDamageMultiplier = 0.5f;
@@ -282,7 +282,7 @@ namespace Pakuri.InGame
     /*
      * Single 계열의 돌진 공격 값을 보관한다.
      */
-    public class SingleChargeSkillRuntimeData : SkillRuntimeData
+    public class SingleChargeSkillDefinition : SkillExecutionDefinition
     {
         public float TargetMaxHealthRatio = 1f;
         public float RampSeconds = 3f;
@@ -293,7 +293,7 @@ namespace Pakuri.InGame
     /*
      * Line 스킬 데이터에 필요한 값을 보관한다.
      */
-    public class LineSkillRuntimeData : SkillRuntimeData
+    public class LineSkillDefinition : SkillExecutionDefinition
     {
         [Header("Line")]
         public float LineWidth;
@@ -309,7 +309,7 @@ namespace Pakuri.InGame
     /*
      * 투사체 스킬 데이터에 필요한 값을 보관한다.
      */
-    public class ProjectileSkillRuntimeData : SkillRuntimeData
+    public class ProjectileSkillDefinition : SkillExecutionDefinition
     {
         [Header("Projectile")]
         public ProjectileBlueprintSpec Projectile = new ProjectileBlueprintSpec();
@@ -336,7 +336,7 @@ namespace Pakuri.InGame
     /*
      * 단일 공격 데이터에 필요한 값을 보관한다.
      */
-    public class SingleSkillRuntimeData : SkillRuntimeData
+    public class SingleSkillDefinition : SkillExecutionDefinition
     {
         [Header("Area")]
         public AreaBlueprintSpec Area = new AreaBlueprintSpec();
@@ -375,7 +375,7 @@ namespace Pakuri.InGame
     /*
      * 지속 범위 스킬 데이터에 필요한 값을 보관한다.
      */
-    public class ZoneSkillRuntimeData : SkillRuntimeData
+    public class ZoneSkillDefinition : SkillExecutionDefinition
     {
         [Header("Area")]
         public AreaBlueprintSpec Area = new AreaBlueprintSpec();
@@ -394,7 +394,7 @@ namespace Pakuri.InGame
     /*
      * 보호막 스킬 데이터에 필요한 값을 보관한다.
      */
-    public class BuffShieldSkillRuntimeData : SkillRuntimeData
+    public class BuffShieldSkillDefinition : SkillExecutionDefinition
     {
         [Header("Shield")]
         public SkillTargetSide Target = SkillTargetSide.AllAllies;
@@ -416,10 +416,10 @@ namespace Pakuri.InGame
     /*
      * 패시브 스킬 데이터에 필요한 값을 보관한다.
      */
-    public class PassiveSkillRuntimeData : SkillRuntimeData
+    public class PassiveSkillDefinition : SkillExecutionDefinition
     {
         [Header("Choices")]
-        public SkillChoiceRuntimeData[] BaseModifierChoices = Array.Empty<SkillChoiceRuntimeData>();
+        public SkillChoice[] BaseModifierChoices = Array.Empty<SkillChoice>();
 
         [Header("Trigger")]
         public string ConditionTag;
@@ -455,7 +455,7 @@ namespace Pakuri.InGame
 namespace Pakuri.InGame
 {
     [Serializable]
-    public class SkillChoiceRuntimeData
+    public class SkillChoice
     {
         public SkillChoiceDefinition Source;
         public bool HasShieldAmountMultiplier;

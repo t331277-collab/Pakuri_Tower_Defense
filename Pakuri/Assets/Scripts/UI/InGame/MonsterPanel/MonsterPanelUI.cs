@@ -1,4 +1,4 @@
-﻿using Pakuri.Data;
+using Pakuri.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -337,10 +337,10 @@ namespace Pakuri.InGame
              */
             private void RefreshActiveSlots(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
             {
-                System.Collections.Generic.IReadOnlyList<SkillRuntimeInstance> runtimes = null;
-                if (model != null && model.SkillRuntime != null)
+                System.Collections.Generic.IReadOnlyList<SkillUseState> runtimes = null;
+                if (model != null && model.Skills != null)
                 {
-                    runtimes = model.SkillRuntime.ActiveSkills;
+                    runtimes = model.Skills.ActiveSkills;
                 }
 
                 var runtimeCount = 0;
@@ -357,7 +357,7 @@ namespace Pakuri.InGame
                         continue;
                     }
 
-                    SkillRuntimeInstance runtime = null;
+                    SkillUseState runtime = null;
                     if (i < runtimeCount)
                     {
                         runtime = runtimes[i];
@@ -488,7 +488,7 @@ namespace Pakuri.InGame
             /*
              * SetRuntime에 필요한 값을 설정한다.
              */
-            public void SetRuntime(SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */)
+            public void SetRuntime(SkillUseState runtime /* 실행 중인 스킬 정보 */)
             {
                 ResolveChildren();
 
@@ -522,7 +522,7 @@ namespace Pakuri.InGame
             /*
              * RefreshLabel 대상의 현재 상태를 갱신한다.
              */
-            private void RefreshLabel(SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */)
+            private void RefreshLabel(SkillUseState runtime /* 실행 중인 스킬 정보 */)
             {
                 if (label == null)
                 {
@@ -543,7 +543,7 @@ namespace Pakuri.InGame
             /*
              * RefreshCooldownOverlay 대상의 현재 상태를 갱신한다.
              */
-            private void RefreshCooldownOverlay(SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */)
+            private void RefreshCooldownOverlay(SkillUseState runtime /* 실행 중인 스킬 정보 */)
             {
                 if (cooldownOverlay == null)
                 {

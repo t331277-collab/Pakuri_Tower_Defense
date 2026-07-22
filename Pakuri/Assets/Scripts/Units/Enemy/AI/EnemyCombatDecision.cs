@@ -112,10 +112,10 @@ namespace Pakuri.InGame
         /*
          * 실행 가능한 특수 공격을 우선하고, 없으면 기본 공격을 선택한다.
          */
-        public static SkillRuntimeInstance ResolveOffensiveSkill(
+        public static SkillUseState ResolveOffensiveSkill(
             CombatUnitEntry enemyEntry /* 적 등록 정보 */,
             EnemyCombatState enemyModel /* 적 상태 모델 */,
-            SkillRuntimeInstance specialRuntime /* 특수 런타임 */,
+            SkillUseState specialRuntime /* 특수 런타임 */,
             bool canUseSpecialSkill /* 가능 사용 특수 스킬 여부 */,
             SkillExecution skillExecution /* 스킬 실행 */,
             CombatUnitRegistry registry /* 전투 유닛 등록 관리자 */)
@@ -142,9 +142,9 @@ namespace Pakuri.InGame
         /*
          * 지정 슬롯의 스킬을 찾고 전투 시작 전용 스킬은 일반 행동에서 제외한다.
          */
-        public static SkillRuntimeInstance ResolveSelectableSkill(EnemyCombatState enemyModel /* 적 상태 모델 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
+        public static SkillUseState ResolveSelectableSkill(EnemyCombatState enemyModel /* 적 상태 모델 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
         {
-            var runtime = enemyModel.SkillRuntime.FindBySlot(slot);
+            var runtime = enemyModel.Skills.FindBySlot(slot);
             if (HasCombatStartTrigger(runtime))
             {
                 return null;
@@ -156,7 +156,7 @@ namespace Pakuri.InGame
         /*
          * IsSupportSkill 조건을 만족하는지 확인한다.
          */
-        public static bool IsSupportSkill(SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */)
+        public static bool IsSupportSkill(SkillUseState runtime /* 실행 중인 스킬 정보 */)
         {
             return runtime != null && runtime.Data.Targeting.TargetSide != SkillTargetSide.Enemy;
         }
@@ -164,9 +164,9 @@ namespace Pakuri.InGame
         /*
          * 회복 스킬은 체력이 감소한 적 아군이 있을 때만 사용한다.
          */
-        public static bool CanExecuteSupportSkill(SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */, CombatUnitRegistry registry /* 전투 유닛 등록 관리자 */)
+        public static bool CanExecuteSupportSkill(SkillUseState runtime /* 실행 중인 스킬 정보 */, CombatUnitRegistry registry /* 전투 유닛 등록 관리자 */)
         {
-            if (runtime.Data is BuffHealSkillRuntimeData)
+            if (runtime.Data is BuffHealSkillDefinition)
             {
                 return FindLowestHealthEnemyAlly(registry) != null;
             }
@@ -177,7 +177,7 @@ namespace Pakuri.InGame
         /*
          * HasCombatStartTrigger 조건을 만족하는지 확인한다.
          */
-        private static bool HasCombatStartTrigger(SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */)
+        private static bool HasCombatStartTrigger(SkillUseState runtime /* 실행 중인 스킬 정보 */)
         {
             if (runtime == null)
             {

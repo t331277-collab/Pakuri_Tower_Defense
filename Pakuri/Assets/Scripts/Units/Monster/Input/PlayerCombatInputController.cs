@@ -54,7 +54,7 @@ namespace Pakuri.InGame
                 pointerOverUi,
                 out var currentAim,
                 out var currentTarget);
-            var activeSkills = player.Model.SkillRuntime.ActiveSkills;
+            var activeSkills = player.Model.Skills.ActiveSkills;
 
             // 연속 발사 중이면 새 마우스 입력이 없어도 저장된 조준으로 남은 탄을 처리한다.
             if (!hasInput && !HasBurstingProjectile(activeSkills))
@@ -66,7 +66,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < activeSkills.Count; i++)
             {
                 var runtime = activeSkills[i];
-                var isProjectile = runtime.Data is ProjectileSkillRuntimeData;
+                var isProjectile = runtime.Data is ProjectileSkillDefinition;
                 // 각 스킬은 클릭·홀드·연속 발사 규칙에 맞는 입력만 선택한다.
                 if (!TryGetSkillInput(
                         runtime,
@@ -220,7 +220,7 @@ namespace Pakuri.InGame
          * 스킬 종류와 연속 발사 상태에 맞는 조준 입력을 선택한다.
          */
         private bool TryGetSkillInput(
-            SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */,
+            SkillUseState runtime /* 실행 중인 스킬 정보 */,
             bool isProjectile /* 여부 투사체 여부 */,
             bool pressed /* 누름 여부 */,
             bool held /* 누르고 있음 여부 */,
@@ -268,12 +268,12 @@ namespace Pakuri.InGame
         /*
          * 연속 발사 중인 투사체 스킬이 있는지 반환한다.
          */
-        private static bool HasBurstingProjectile(IReadOnlyList<SkillRuntimeInstance> skills /* 스킬 목록 */)
+        private static bool HasBurstingProjectile(IReadOnlyList<SkillUseState> skills /* 스킬 목록 */)
         {
             for (var i = 0; i < skills.Count; i++)
             {
                 var runtime = skills[i];
-                if (runtime.Data is ProjectileSkillRuntimeData && runtime.IsBursting)
+                if (runtime.Data is ProjectileSkillDefinition && runtime.IsBursting)
                 {
                     return true;
                 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Pakuri.Combat;
@@ -6,20 +6,20 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * 작성된 Active와 Passive 스킬 데이터를 전투용 SkillRuntimeData로 변환한다.
+ * 작성된 Active와 Passive 스킬 데이터를 전투용 SkillExecutionDefinition로 변환한다.
  * Choice 변환은 SkillChoiceCompiler, 노드 정의 변환은 SkillNodeMapper에 맡긴다.
  */
 namespace Pakuri.InGame
 {
 
-public static class SkillRuntimeCompiler
+public static class SkillDefinitionCompiler
 {
 	/*
 	 * CompileActive 작업 결과를 반환한다.
 	 */
-	public static SkillRuntimeData CompileActive(MonsterDefinition monster /* 몬스터 */, SkillDefinition source /* 변환할 스킬 정의 */)
+	public static SkillExecutionDefinition CompileActive(MonsterDefinition monster /* 몬스터 */, SkillDefinition source /* 변환할 스킬 정의 */)
 	{
-		SkillRuntimeData skillRuntimeData = CreateConcreteActiveSkill(source);
+		SkillExecutionDefinition skillRuntimeData = CreateConcreteActiveSkill(source);
 		string monsterId = string.Empty;
 		SkillTriggerDefinition[] triggers = null;
 		if (monster != null)
@@ -35,7 +35,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * CompileActive 작업 결과를 반환한다.
 	 */
-	public static SkillRuntimeData CompileActive(string monsterId /* 몬스터 식별자 */, SkillDefinition source /* 변환할 스킬 정의 */)
+	public static SkillExecutionDefinition CompileActive(string monsterId /* 몬스터 식별자 */, SkillDefinition source /* 변환할 스킬 정의 */)
 	{
 		return CompileActive(monsterId, source, null);
 	}
@@ -43,9 +43,9 @@ public static class SkillRuntimeCompiler
 	/*
 	 * CompileActive 작업 결과를 반환한다.
 	 */
-	public static SkillRuntimeData CompileActive(string ownerId /* 소유자 식별자 */, SkillDefinition source /* 변환할 스킬 정의 */, SkillTriggerDefinition[] triggers /* 트리거 목록 */)
+	public static SkillExecutionDefinition CompileActive(string ownerId /* 소유자 식별자 */, SkillDefinition source /* 변환할 스킬 정의 */, SkillTriggerDefinition[] triggers /* 트리거 목록 */)
 	{
-		SkillRuntimeData skillRuntimeData = CreateConcreteActiveSkill(source);
+		SkillExecutionDefinition skillRuntimeData = CreateConcreteActiveSkill(source);
 		MapCommonFields(skillRuntimeData, ownerId, source, triggers);
 		MapActiveFields(skillRuntimeData, null, source);
 		return skillRuntimeData;
@@ -54,80 +54,80 @@ public static class SkillRuntimeCompiler
 	/*
 	 * CompilePassive 작업 결과를 반환한다.
 	 */
-	public static PassiveSkillRuntimeData CompilePassive(MonsterDefinition monster /* 몬스터 */, PassiveDefinition source /* 변환할 패시브 정의 */)
+	public static PassiveSkillDefinition CompilePassive(MonsterDefinition monster /* 몬스터 */, PassiveDefinition source /* 변환할 패시브 정의 */)
 	{
-		PassiveSkillRuntimeData passiveSkillRuntimeData = CreateRuntimeData<PassiveSkillRuntimeData>();
-		passiveSkillRuntimeData.SkillId = source.PassiveId;
-		passiveSkillRuntimeData.SkillName = source.DisplayName;
-		passiveSkillRuntimeData.Slot = source.Slot;
-		passiveSkillRuntimeData.IsActive = false;
-		passiveSkillRuntimeData.Element = DamageAttribute.Physical;
+		PassiveSkillDefinition passiveSkillExecutionDefinition = CreateRuntimeData<PassiveSkillDefinition>();
+		passiveSkillExecutionDefinition.SkillId = source.PassiveId;
+		passiveSkillExecutionDefinition.SkillName = source.DisplayName;
+		passiveSkillExecutionDefinition.Slot = source.Slot;
+		passiveSkillExecutionDefinition.IsActive = false;
+		passiveSkillExecutionDefinition.Element = DamageAttribute.Physical;
 		if (monster != null)
 		{
-			passiveSkillRuntimeData.Element = monster.PrimaryAttribute;
+			passiveSkillExecutionDefinition.Element = monster.PrimaryAttribute;
 		}
-		passiveSkillRuntimeData.Description = source.DescriptionText;
-		passiveSkillRuntimeData.Icon = source.SkillIcon;
-		passiveSkillRuntimeData.SkillEffectPrefab = source.SkillEffectPrefab;
-		passiveSkillRuntimeData.BaseModifierChoices = SkillChoiceCompiler.Compile(source.BaseModifierChoices);
-		passiveSkillRuntimeData.EnhancementChoices = SkillChoiceCompiler.Compile(source.EnhancementChoices);
-		passiveSkillRuntimeData.MasterChoices = Array.Empty<SkillChoiceRuntimeData>();
-		passiveSkillRuntimeData.MultiEffects = source.PassiveEffects;
-		StatusRuntimeCompiler.CompileSkillEffects(passiveSkillRuntimeData.MultiEffects);
+		passiveSkillExecutionDefinition.Description = source.DescriptionText;
+		passiveSkillExecutionDefinition.Icon = source.SkillIcon;
+		passiveSkillExecutionDefinition.SkillEffectPrefab = source.SkillEffectPrefab;
+		passiveSkillExecutionDefinition.BaseModifierChoices = SkillChoiceCompiler.Compile(source.BaseModifierChoices);
+		passiveSkillExecutionDefinition.EnhancementChoices = SkillChoiceCompiler.Compile(source.EnhancementChoices);
+		passiveSkillExecutionDefinition.MasterChoices = Array.Empty<SkillChoice>();
+		passiveSkillExecutionDefinition.MultiEffects = source.PassiveEffects;
+		StatusRuntimeCompiler.CompileSkillEffects(passiveSkillExecutionDefinition.MultiEffects);
 		SkillTriggerDefinition[] triggers = null;
 		if (monster != null)
 		{
 			triggers = monster.SkillTriggers;
 		}
-		passiveSkillRuntimeData.SkillTriggers = FilterSkillTriggersForSkill(triggers, source.PassiveId);
-		StatusRuntimeCompiler.CompileTriggers(passiveSkillRuntimeData.SkillTriggers);
-		passiveSkillRuntimeData.NormalizedPlanNodes = SkillNodeMapper.MapSkillNodeDefinitions(source.NormalizedPlanNodes);
-		return passiveSkillRuntimeData;
+		passiveSkillExecutionDefinition.SkillTriggers = FilterSkillTriggersForSkill(triggers, source.PassiveId);
+		StatusRuntimeCompiler.CompileTriggers(passiveSkillExecutionDefinition.SkillTriggers);
+		passiveSkillExecutionDefinition.NormalizedPlanNodes = SkillNodeMapper.MapSkillNodeDefinitions(source.NormalizedPlanNodes);
+		return passiveSkillExecutionDefinition;
 	}
 
 	/*
 	 * CreateConcreteActiveSkill에 필요한 결과를 만들어 반환한다.
 	 */
-	private static SkillRuntimeData CreateConcreteActiveSkill(SkillDefinition source /* 변환할 스킬 정의 */)
+	private static SkillExecutionDefinition CreateConcreteActiveSkill(SkillDefinition source /* 변환할 스킬 정의 */)
 	{
 		if (MatchesProfile(source, "DamageArea"))
 		{
-			return CreateRuntimeData<SingleSkillRuntimeData>();
+			return CreateRuntimeData<SingleSkillDefinition>();
 		}
 		if (MatchesProfile(source, "DamageThenDelayedChain"))
 		{
-			return CreateRuntimeData<SingleChainSkillRuntimeData>();
+			return CreateRuntimeData<SingleChainSkillDefinition>();
 		}
 		if (MatchesProfile(source, "ChargeDamageStatus"))
 		{
-			return CreateRuntimeData<SingleChargeSkillRuntimeData>();
+			return CreateRuntimeData<SingleChargeSkillDefinition>();
 		}
 		if (source.RuntimeKind == SkillRuntimeKind.Heal)
 		{
-			return CreateRuntimeData<BuffHealSkillRuntimeData>();
+			return CreateRuntimeData<BuffHealSkillDefinition>();
 		}
 		if (MatchesProfile(source, "ApplySelfIncomingDamageMultiplier"))
 		{
-			return CreateRuntimeData<BuffSkillRuntimeData>();
+			return CreateRuntimeData<BuffSkillDefinition>();
 		}
 		switch (source.RuntimeKind)
 		{
 		case SkillRuntimeKind.MagazineProjectile:
 		case SkillRuntimeKind.CooldownProjectile:
-			return CreateRuntimeData<ProjectileSkillRuntimeData>();
+			return CreateRuntimeData<ProjectileSkillDefinition>();
 		case SkillRuntimeKind.LineAttack:
-			return CreateRuntimeData<LineSkillRuntimeData>();
+			return CreateRuntimeData<LineSkillDefinition>();
 		case SkillRuntimeKind.SingleAttack:
 		case SkillRuntimeKind.Mark:
 		case SkillRuntimeKind.Execute:
-			return CreateRuntimeData<SingleSkillRuntimeData>();
+			return CreateRuntimeData<SingleSkillDefinition>();
 		case SkillRuntimeKind.AreaAttack:
 		case SkillRuntimeKind.Field:
-			return CreateRuntimeData<ZoneSkillRuntimeData>();
+			return CreateRuntimeData<ZoneSkillDefinition>();
 		case SkillRuntimeKind.Buff:
-			return CreateRuntimeData<BuffSkillRuntimeData>();
+			return CreateRuntimeData<BuffSkillDefinition>();
 		case SkillRuntimeKind.Shield:
-			return CreateRuntimeData<BuffShieldSkillRuntimeData>();
+			return CreateRuntimeData<BuffShieldSkillDefinition>();
 		default:
 			throw new InvalidOperationException("Unsupported active skill runtime kind: " + source.RuntimeKind);
 		}
@@ -136,7 +136,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * CreateRuntimeData에 필요한 결과를 만들어 반환한다.
 	 */
-	private static T CreateRuntimeData<T>() where T : SkillRuntimeData, new()
+	private static T CreateRuntimeData<T>() where T : SkillExecutionDefinition, new()
 	{
 		return new T();
 	}
@@ -144,7 +144,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * MapCommonFields에 필요한 값을 변환해 현재 상태에 반영한다.
 	 */
-	private static void MapCommonFields(SkillRuntimeData skill /* 실행하거나 검사할 스킬 */, string monsterId /* 몬스터 식별자 */, SkillDefinition source /* 변환할 스킬 정의 */, SkillTriggerDefinition[] monsterTriggers = null /* 몬스터 트리거 목록 */)
+	private static void MapCommonFields(SkillExecutionDefinition skill /* 실행하거나 검사할 스킬 */, string monsterId /* 몬스터 식별자 */, SkillDefinition source /* 변환할 스킬 정의 */, SkillTriggerDefinition[] monsterTriggers = null /* 몬스터 트리거 목록 */)
 	{
 		skill.SkillId = source.SkillId;
 		skill.SkillName = source.DisplayName;
@@ -238,72 +238,72 @@ public static class SkillRuntimeCompiler
 	/*
 	 * MapActiveFields에 필요한 값을 변환해 현재 상태에 반영한다.
 	 */
-	private static void MapActiveFields(SkillRuntimeData skill /* 실행하거나 검사할 스킬 */, MonsterDefinition monster /* 몬스터 */, SkillDefinition source /* 변환할 스킬 정의 */)
+	private static void MapActiveFields(SkillExecutionDefinition skill /* 실행하거나 검사할 스킬 */, MonsterDefinition monster /* 몬스터 */, SkillDefinition source /* 변환할 스킬 정의 */)
 	{
-		if (skill is ProjectileSkillRuntimeData projectileSkillRuntimeData)
+		if (skill is ProjectileSkillDefinition projectileSkillExecutionDefinition)
 		{
-			projectileSkillRuntimeData.Projectile.MagazineSize = source.MagazineCapacity;
-			projectileSkillRuntimeData.Projectile.ReloadTime = source.ReloadSeconds;
-			projectileSkillRuntimeData.Projectile.BurstProjectileCount = Math.Max(1, source.ProjectileBurstCount);
-			projectileSkillRuntimeData.Projectile.BurstIntervalSeconds = source.ShotIntervalSeconds;
+			projectileSkillExecutionDefinition.Projectile.MagazineSize = source.MagazineCapacity;
+			projectileSkillExecutionDefinition.Projectile.ReloadTime = source.ReloadSeconds;
+			projectileSkillExecutionDefinition.Projectile.BurstProjectileCount = Math.Max(1, source.ProjectileBurstCount);
+			projectileSkillExecutionDefinition.Projectile.BurstIntervalSeconds = source.ShotIntervalSeconds;
 			if (source.BurstIntervalSeconds > 0f)
 			{
-				projectileSkillRuntimeData.Projectile.BurstIntervalSeconds = source.BurstIntervalSeconds;
+				projectileSkillExecutionDefinition.Projectile.BurstIntervalSeconds = source.BurstIntervalSeconds;
 			}
-			projectileSkillRuntimeData.Projectile.BurstDamageProjectileIndex = source.BurstDamageProjectileIndex;
-			projectileSkillRuntimeData.Projectile.BurstDamageMultiplier = 1f;
+			projectileSkillExecutionDefinition.Projectile.BurstDamageProjectileIndex = source.BurstDamageProjectileIndex;
+			projectileSkillExecutionDefinition.Projectile.BurstDamageMultiplier = 1f;
 			if (source.BurstDamageMultiplier > 0f)
 			{
-				projectileSkillRuntimeData.Projectile.BurstDamageMultiplier = source.BurstDamageMultiplier;
+				projectileSkillExecutionDefinition.Projectile.BurstDamageMultiplier = source.BurstDamageMultiplier;
 			}
-			projectileSkillRuntimeData.Projectile.ProjectilesPerShot = 1;
-			projectileSkillRuntimeData.Projectile.PierceCount = source.PierceCount;
-			projectileSkillRuntimeData.Projectile.ProjectileSpeed = source.ProjectileSpeed;
-			projectileSkillRuntimeData.Projectile.LifetimeSeconds = source.ProjectileLifetimeSeconds;
-			projectileSkillRuntimeData.ContactDamageEnabled = source.DamageDelaySeconds <= 0f;
-			projectileSkillRuntimeData.StopOnFirstHit = source.DamageDelaySeconds > 0f;
-			projectileSkillRuntimeData.ImpactDelaySeconds = Mathf.Max(0f, source.DamageDelaySeconds);
-			projectileSkillRuntimeData.ImpactRuntimeVisual = source.ImpactRuntimeVisual;
-			projectileSkillRuntimeData.HasImpactArea = source.DamageDelaySeconds > 0f;
-			projectileSkillRuntimeData.ImpactArea.Radius = source.Radius;
-			projectileSkillRuntimeData.ImpactArea.CoverAll = false;
-			MapDamage(projectileSkillRuntimeData.Damage, source);
-			MapDamage(projectileSkillRuntimeData.ImpactDamage, source);
-			projectileSkillRuntimeData.OnHitStatus = CreateStatusApplication(source);
-			projectileSkillRuntimeData.ImpactStatus = CreateStatusApplication(source);
+			projectileSkillExecutionDefinition.Projectile.ProjectilesPerShot = 1;
+			projectileSkillExecutionDefinition.Projectile.PierceCount = source.PierceCount;
+			projectileSkillExecutionDefinition.Projectile.ProjectileSpeed = source.ProjectileSpeed;
+			projectileSkillExecutionDefinition.Projectile.LifetimeSeconds = source.ProjectileLifetimeSeconds;
+			projectileSkillExecutionDefinition.ContactDamageEnabled = source.DamageDelaySeconds <= 0f;
+			projectileSkillExecutionDefinition.StopOnFirstHit = source.DamageDelaySeconds > 0f;
+			projectileSkillExecutionDefinition.ImpactDelaySeconds = Mathf.Max(0f, source.DamageDelaySeconds);
+			projectileSkillExecutionDefinition.ImpactRuntimeVisual = source.ImpactRuntimeVisual;
+			projectileSkillExecutionDefinition.HasImpactArea = source.DamageDelaySeconds > 0f;
+			projectileSkillExecutionDefinition.ImpactArea.Radius = source.Radius;
+			projectileSkillExecutionDefinition.ImpactArea.CoverAll = false;
+			MapDamage(projectileSkillExecutionDefinition.Damage, source);
+			MapDamage(projectileSkillExecutionDefinition.ImpactDamage, source);
+			projectileSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source);
+			projectileSkillExecutionDefinition.ImpactStatus = CreateStatusApplication(source);
 		}
-		else if (skill is LineSkillRuntimeData lineSkillRuntimeData)
+		else if (skill is LineSkillDefinition lineSkillExecutionDefinition)
 		{
-			lineSkillRuntimeData.LineLength = 0f;
-			lineSkillRuntimeData.LineWidth = source.Radius;
-			lineSkillRuntimeData.KnockbackDistance = source.KnockbackDistance;
-			MapDamage(lineSkillRuntimeData.DamagePerTick, source);
-			lineSkillRuntimeData.OnHitStatus = CreateStatusApplication(source);
+			lineSkillExecutionDefinition.LineLength = 0f;
+			lineSkillExecutionDefinition.LineWidth = source.Radius;
+			lineSkillExecutionDefinition.KnockbackDistance = source.KnockbackDistance;
+			MapDamage(lineSkillExecutionDefinition.DamagePerTick, source);
+			lineSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source);
 		}
-		else if (skill is ZoneSkillRuntimeData zoneSkillRuntimeData)
+		else if (skill is ZoneSkillDefinition zoneSkillExecutionDefinition)
 		{
 			bool hitAllTargets;
 			int hitTargetCount;
 			bool usesHitTargetCount = TryResolveHitTargetCount(source.HitTargetCount, out hitAllTargets, out hitTargetCount);
-			zoneSkillRuntimeData.Area.Radius = source.Radius;
-			zoneSkillRuntimeData.Area.Duration = source.CooldownSeconds;
+			zoneSkillExecutionDefinition.Area.Radius = source.Radius;
+			zoneSkillExecutionDefinition.Area.Duration = source.CooldownSeconds;
 			if (source.ActiveDurationSeconds > 0f)
 			{
-				zoneSkillRuntimeData.Area.Duration = source.ActiveDurationSeconds;
+				zoneSkillExecutionDefinition.Area.Duration = source.ActiveDurationSeconds;
 			}
-			zoneSkillRuntimeData.Area.TickInterval = source.ShotIntervalSeconds;
-			zoneSkillRuntimeData.UsesHitTargetCount = usesHitTargetCount;
-			zoneSkillRuntimeData.HitAllTargets = hitAllTargets;
-			zoneSkillRuntimeData.HitTargetCount = hitTargetCount;
+			zoneSkillExecutionDefinition.Area.TickInterval = source.ShotIntervalSeconds;
+			zoneSkillExecutionDefinition.UsesHitTargetCount = usesHitTargetCount;
+			zoneSkillExecutionDefinition.HitAllTargets = hitAllTargets;
+			zoneSkillExecutionDefinition.HitTargetCount = hitTargetCount;
 			if (hitAllTargets)
 			{
-				zoneSkillRuntimeData.HitTargetCount = int.MaxValue;
+				zoneSkillExecutionDefinition.HitTargetCount = int.MaxValue;
 			}
-			zoneSkillRuntimeData.Area.CoverAll = hitAllTargets;
-			MapDamage(zoneSkillRuntimeData.DamagePerTick, source);
-			zoneSkillRuntimeData.OnTickStatus = CreateStatusApplication(source);
+			zoneSkillExecutionDefinition.Area.CoverAll = hitAllTargets;
+			MapDamage(zoneSkillExecutionDefinition.DamagePerTick, source);
+			zoneSkillExecutionDefinition.OnTickStatus = CreateStatusApplication(source);
 		}
-		else if (skill is SingleSkillRuntimeData singleSkillRuntimeData)
+		else if (skill is SingleSkillDefinition singleSkillExecutionDefinition)
 		{
 			bool hitAllTargets2;
 			int hitTargetCount2;
@@ -311,130 +311,130 @@ public static class SkillRuntimeCompiler
 			bool flag2 = !string.IsNullOrWhiteSpace(source.DeploymentRequiredTargetStatusId);
 			bool flag3 = source.RuntimeVisual != null && source.RuntimeVisual.Hitbox != null && source.RuntimeVisual.Hitbox.HasHitbox();
 			bool flag4 = !hitAllTargets2 && flag && hitTargetCount2 > 1 && (source.SkillEffectPrefab != null || flag3);
-			singleSkillRuntimeData.Area.Radius = source.Radius;
-			singleSkillRuntimeData.Area.Duration = 0f;
-			singleSkillRuntimeData.Area.TickInterval = 0f;
-			singleSkillRuntimeData.UsesHitTargetCount = !flag4 && (flag || source.Radius <= 0f);
-			singleSkillRuntimeData.UsePrefabHitbox = source.UsePrefabHitbox || hitAllTargets2 || flag4 || flag2;
-			singleSkillRuntimeData.UseMultiDeployment = flag4 || flag2;
-			singleSkillRuntimeData.HitAllTargets = hitAllTargets2;
-			singleSkillRuntimeData.HitTargetCount = hitTargetCount2;
+			singleSkillExecutionDefinition.Area.Radius = source.Radius;
+			singleSkillExecutionDefinition.Area.Duration = 0f;
+			singleSkillExecutionDefinition.Area.TickInterval = 0f;
+			singleSkillExecutionDefinition.UsesHitTargetCount = !flag4 && (flag || source.Radius <= 0f);
+			singleSkillExecutionDefinition.UsePrefabHitbox = source.UsePrefabHitbox || hitAllTargets2 || flag4 || flag2;
+			singleSkillExecutionDefinition.UseMultiDeployment = flag4 || flag2;
+			singleSkillExecutionDefinition.HitAllTargets = hitAllTargets2;
+			singleSkillExecutionDefinition.HitTargetCount = hitTargetCount2;
 			if (hitAllTargets2 || (source.UsePrefabHitbox && !flag))
 			{
-				singleSkillRuntimeData.HitTargetCount = int.MaxValue;
+				singleSkillExecutionDefinition.HitTargetCount = int.MaxValue;
 			}
-			singleSkillRuntimeData.DeploymentCount = 1;
+			singleSkillExecutionDefinition.DeploymentCount = 1;
 			if (flag4)
 			{
-				singleSkillRuntimeData.DeploymentCount = hitTargetCount2;
+				singleSkillExecutionDefinition.DeploymentCount = hitTargetCount2;
 			}
-			singleSkillRuntimeData.DeploymentRequiredTargetStatusId = source.DeploymentRequiredTargetStatusId;
-			singleSkillRuntimeData.DeploymentRequiredTargetStatusMinStacks = Mathf.Max(0, source.DeploymentRequiredTargetStatusMinStacks);
-			singleSkillRuntimeData.TargetStatusStackStatusId = source.TargetStatusStackStatusId;
-			singleSkillRuntimeData.TargetStatusStackMaxStacks = Mathf.Max(0, source.TargetStatusStackMaxStacks);
-			singleSkillRuntimeData.ConsumeTargetStatusId = source.ConsumeTargetStatusId;
-			singleSkillRuntimeData.ConsumeTargetStatusRatio = Mathf.Clamp01(source.ConsumeTargetStatusRatio);
-			singleSkillRuntimeData.ConsumeTargetStatusStacks = Mathf.Max(0, source.ConsumeTargetStatusStacks);
-			singleSkillRuntimeData.DamageDelaySeconds = Mathf.Max(0f, source.DamageDelaySeconds);
-			singleSkillRuntimeData.ExecuteHealthRatioThreshold = Mathf.Clamp01(source.ExecuteHealthRatioThreshold);
-			singleSkillRuntimeData.RequireExecuteThresholdToCast = source.RequireExecuteThresholdToCast;
-			singleSkillRuntimeData.ExecuteDamageMultiplier = 1f;
+			singleSkillExecutionDefinition.DeploymentRequiredTargetStatusId = source.DeploymentRequiredTargetStatusId;
+			singleSkillExecutionDefinition.DeploymentRequiredTargetStatusMinStacks = Mathf.Max(0, source.DeploymentRequiredTargetStatusMinStacks);
+			singleSkillExecutionDefinition.TargetStatusStackStatusId = source.TargetStatusStackStatusId;
+			singleSkillExecutionDefinition.TargetStatusStackMaxStacks = Mathf.Max(0, source.TargetStatusStackMaxStacks);
+			singleSkillExecutionDefinition.ConsumeTargetStatusId = source.ConsumeTargetStatusId;
+			singleSkillExecutionDefinition.ConsumeTargetStatusRatio = Mathf.Clamp01(source.ConsumeTargetStatusRatio);
+			singleSkillExecutionDefinition.ConsumeTargetStatusStacks = Mathf.Max(0, source.ConsumeTargetStatusStacks);
+			singleSkillExecutionDefinition.DamageDelaySeconds = Mathf.Max(0f, source.DamageDelaySeconds);
+			singleSkillExecutionDefinition.ExecuteHealthRatioThreshold = Mathf.Clamp01(source.ExecuteHealthRatioThreshold);
+			singleSkillExecutionDefinition.RequireExecuteThresholdToCast = source.RequireExecuteThresholdToCast;
+			singleSkillExecutionDefinition.ExecuteDamageMultiplier = 1f;
 			if (source.ExecuteDamageMultiplier > 0f)
 			{
-				singleSkillRuntimeData.ExecuteDamageMultiplier = source.ExecuteDamageMultiplier;
+				singleSkillExecutionDefinition.ExecuteDamageMultiplier = source.ExecuteDamageMultiplier;
 			}
-			singleSkillRuntimeData.KillCooldownRefundRatio = Mathf.Clamp01(source.KillCooldownRefundRatio);
-			singleSkillRuntimeData.BossDamageMultiplier = 1f;
+			singleSkillExecutionDefinition.KillCooldownRefundRatio = Mathf.Clamp01(source.KillCooldownRefundRatio);
+			singleSkillExecutionDefinition.BossDamageMultiplier = 1f;
 			if (source.BossDamageMultiplier > 0f)
 			{
-				singleSkillRuntimeData.BossDamageMultiplier = source.BossDamageMultiplier;
+				singleSkillExecutionDefinition.BossDamageMultiplier = source.BossDamageMultiplier;
 			}
-			singleSkillRuntimeData.Area.CoverAll = hitAllTargets2 || (!singleSkillRuntimeData.UsesHitTargetCount && source.Radius <= 0f && string.IsNullOrWhiteSpace(source.TargetSelection));
-			MapDamage(singleSkillRuntimeData.Damage, source);
-			singleSkillRuntimeData.TargetStatusStackDamage.Element = source.Attribute;
-			singleSkillRuntimeData.TargetStatusStackDamage.BaseDamage = source.TargetStatusStackBaseDamage;
-			singleSkillRuntimeData.TargetStatusStackDamage.StatCoefficient = GetDominantCoefficient(source.TargetStatusStackAttackPowerCoefficient, source.TargetStatusStackSpellPowerCoefficient, out var statSource);
-			singleSkillRuntimeData.TargetStatusStackDamage.StatSource = statSource;
-			singleSkillRuntimeData.TargetStatusStackDamage.CriticalAllowed = false;
-			ApplySingleBasePlanNodes(singleSkillRuntimeData, source.NormalizedPlanNodes, source.Attribute);
-			if (!string.IsNullOrWhiteSpace(singleSkillRuntimeData.DeploymentRequiredTargetStatusId))
+			singleSkillExecutionDefinition.Area.CoverAll = hitAllTargets2 || (!singleSkillExecutionDefinition.UsesHitTargetCount && source.Radius <= 0f && string.IsNullOrWhiteSpace(source.TargetSelection));
+			MapDamage(singleSkillExecutionDefinition.Damage, source);
+			singleSkillExecutionDefinition.TargetStatusStackDamage.Element = source.Attribute;
+			singleSkillExecutionDefinition.TargetStatusStackDamage.BaseDamage = source.TargetStatusStackBaseDamage;
+			singleSkillExecutionDefinition.TargetStatusStackDamage.StatCoefficient = GetDominantCoefficient(source.TargetStatusStackAttackPowerCoefficient, source.TargetStatusStackSpellPowerCoefficient, out var statSource);
+			singleSkillExecutionDefinition.TargetStatusStackDamage.StatSource = statSource;
+			singleSkillExecutionDefinition.TargetStatusStackDamage.CriticalAllowed = false;
+			ApplySingleBasePlanNodes(singleSkillExecutionDefinition, source.NormalizedPlanNodes, source.Attribute);
+			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.DeploymentRequiredTargetStatusId))
 			{
-				singleSkillRuntimeData.DeploymentRequiredTargetStatusKind = StatusRuntimeCompiler.ParseStatusKind(
-					singleSkillRuntimeData.DeploymentRequiredTargetStatusId);
+				singleSkillExecutionDefinition.DeploymentRequiredTargetStatusKind = StatusRuntimeCompiler.ParseStatusKind(
+					singleSkillExecutionDefinition.DeploymentRequiredTargetStatusId);
 			}
-			if (!string.IsNullOrWhiteSpace(singleSkillRuntimeData.TargetStatusStackStatusId))
+			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.TargetStatusStackStatusId))
 			{
-				singleSkillRuntimeData.TargetStatusStackStatusKind = StatusRuntimeCompiler.ParseStatusKind(
-					singleSkillRuntimeData.TargetStatusStackStatusId);
+				singleSkillExecutionDefinition.TargetStatusStackStatusKind = StatusRuntimeCompiler.ParseStatusKind(
+					singleSkillExecutionDefinition.TargetStatusStackStatusId);
 			}
-			if (!string.IsNullOrWhiteSpace(singleSkillRuntimeData.ConsumeTargetStatusId))
+			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.ConsumeTargetStatusId))
 			{
-				singleSkillRuntimeData.ConsumeTargetStatusKind = StatusRuntimeCompiler.ParseStatusKind(
-					singleSkillRuntimeData.ConsumeTargetStatusId);
+				singleSkillExecutionDefinition.ConsumeTargetStatusKind = StatusRuntimeCompiler.ParseStatusKind(
+					singleSkillExecutionDefinition.ConsumeTargetStatusId);
 			}
-			if (!string.IsNullOrWhiteSpace(singleSkillRuntimeData.DeploymentRequiredTargetStatusId))
+			if (!string.IsNullOrWhiteSpace(singleSkillExecutionDefinition.DeploymentRequiredTargetStatusId))
 			{
-				singleSkillRuntimeData.UsePrefabHitbox = true;
-				singleSkillRuntimeData.UseMultiDeployment = true;
+				singleSkillExecutionDefinition.UsePrefabHitbox = true;
+				singleSkillExecutionDefinition.UseMultiDeployment = true;
 			}
-			singleSkillRuntimeData.OnHitStatus = CreateStatusApplication(source);
+			singleSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source);
 		}
-		else if (skill is SingleChainSkillRuntimeData singleChainSkillRuntimeData)
+		else if (skill is SingleChainSkillDefinition singleChainSkillExecutionDefinition)
 		{
-			MapDamage(singleChainSkillRuntimeData.Damage, source);
-			singleChainSkillRuntimeData.ChainDamageMultiplier = source.ChainDamageMultiplier;
-			singleChainSkillRuntimeData.ChainDelaySeconds = source.ChainDelaySeconds;
-			singleChainSkillRuntimeData.ChainRadius = source.Radius;
+			MapDamage(singleChainSkillExecutionDefinition.Damage, source);
+			singleChainSkillExecutionDefinition.ChainDamageMultiplier = source.ChainDamageMultiplier;
+			singleChainSkillExecutionDefinition.ChainDelaySeconds = source.ChainDelaySeconds;
+			singleChainSkillExecutionDefinition.ChainRadius = source.Radius;
 			if (source.ChainRadius > 0f)
 			{
-				singleChainSkillRuntimeData.ChainRadius = source.ChainRadius;
+				singleChainSkillExecutionDefinition.ChainRadius = source.ChainRadius;
 			}
-			singleChainSkillRuntimeData.ExcludePrimaryTarget = source.ExcludePrimaryTarget;
+			singleChainSkillExecutionDefinition.ExcludePrimaryTarget = source.ExcludePrimaryTarget;
 		}
-		else if (skill is SingleChargeSkillRuntimeData singleChargeSkillRuntimeData)
+		else if (skill is SingleChargeSkillDefinition singleChargeSkillExecutionDefinition)
 		{
-			singleChargeSkillRuntimeData.TargetMaxHealthRatio = source.TargetMaxHealthRatio;
-			singleChargeSkillRuntimeData.RampSeconds = source.ChargeRampSeconds;
-			singleChargeSkillRuntimeData.MaxMoveSpeedMultiplier = source.ChargeMoveSpeedMultiplier;
+			singleChargeSkillExecutionDefinition.TargetMaxHealthRatio = source.TargetMaxHealthRatio;
+			singleChargeSkillExecutionDefinition.RampSeconds = source.ChargeRampSeconds;
+			singleChargeSkillExecutionDefinition.MaxMoveSpeedMultiplier = source.ChargeMoveSpeedMultiplier;
 			if (source.MoveSpeedMultiplier > 1f)
 			{
-				singleChargeSkillRuntimeData.MaxMoveSpeedMultiplier = source.MoveSpeedMultiplier;
+				singleChargeSkillExecutionDefinition.MaxMoveSpeedMultiplier = source.MoveSpeedMultiplier;
 			}
-			singleChargeSkillRuntimeData.OnHitStatus = CreateStatusApplication(source);
+			singleChargeSkillExecutionDefinition.OnHitStatus = CreateStatusApplication(source);
 		}
-		else if (skill is BuffHealSkillRuntimeData buffHealSkillRuntimeData)
+		else if (skill is BuffHealSkillDefinition buffHealSkillExecutionDefinition)
 		{
-			MapDamage(buffHealSkillRuntimeData.Healing, source);
-			buffHealSkillRuntimeData.Healing.BaseDamage = source.FlatValue;
+			MapDamage(buffHealSkillExecutionDefinition.Healing, source);
+			buffHealSkillExecutionDefinition.Healing.BaseDamage = source.FlatValue;
 		}
-		else if (skill is BuffSkillRuntimeData buffSkillRuntimeData)
+		else if (skill is BuffSkillDefinition buffSkillExecutionDefinition)
 		{
-			buffSkillRuntimeData.Target = MapBuffTarget(source);
-			buffSkillRuntimeData.UseConfiguredTargeting = !string.IsNullOrWhiteSpace(source.TargetScope);
-			buffSkillRuntimeData.AttachVisualToCaster = MatchesProfile(source, "ApplyAllyMoveAndDamageMultiplier");
-			buffSkillRuntimeData.BuffDuration = ResolveStatusDuration(source);
-			buffSkillRuntimeData.HasAttachedDamage = source.BaseDamage > 0f;
-			MapDamage(buffSkillRuntimeData.AttachedDamage, source);
-			buffSkillRuntimeData.AttachedDamageRadius = source.Radius;
-			buffSkillRuntimeData.AttachedStatus = CreateStatusApplication(source);
+			buffSkillExecutionDefinition.Target = MapBuffTarget(source);
+			buffSkillExecutionDefinition.UseConfiguredTargeting = !string.IsNullOrWhiteSpace(source.TargetScope);
+			buffSkillExecutionDefinition.AttachVisualToCaster = MatchesProfile(source, "ApplyAllyMoveAndDamageMultiplier");
+			buffSkillExecutionDefinition.BuffDuration = ResolveStatusDuration(source);
+			buffSkillExecutionDefinition.HasAttachedDamage = source.BaseDamage > 0f;
+			MapDamage(buffSkillExecutionDefinition.AttachedDamage, source);
+			buffSkillExecutionDefinition.AttachedDamageRadius = source.Radius;
+			buffSkillExecutionDefinition.AttachedStatus = CreateStatusApplication(source);
 		}
-		else if (skill is BuffShieldSkillRuntimeData buffShieldSkillRuntimeData)
+		else if (skill is BuffShieldSkillDefinition buffShieldSkillExecutionDefinition)
 		{
-			buffShieldSkillRuntimeData.Target = MapBuffTarget(source);
-			buffShieldSkillRuntimeData.UseConfiguredTargeting = !string.IsNullOrWhiteSpace(source.TargetScope);
-			buffShieldSkillRuntimeData.AttachVisualToCaster = MatchesProfile(source, "GrantShieldToEnemyAllies");
-			buffShieldSkillRuntimeData.ShieldBase = source.BaseDamage;
-			buffShieldSkillRuntimeData.ShieldCoefficient = GetDominantCoefficient(source, out var statSource2);
-			buffShieldSkillRuntimeData.ShieldStatSource = statSource2;
-			buffShieldSkillRuntimeData.ShieldDuration = ResolveStatusDuration(source);
+			buffShieldSkillExecutionDefinition.Target = MapBuffTarget(source);
+			buffShieldSkillExecutionDefinition.UseConfiguredTargeting = !string.IsNullOrWhiteSpace(source.TargetScope);
+			buffShieldSkillExecutionDefinition.AttachVisualToCaster = MatchesProfile(source, "GrantShieldToEnemyAllies");
+			buffShieldSkillExecutionDefinition.ShieldBase = source.BaseDamage;
+			buffShieldSkillExecutionDefinition.ShieldCoefficient = GetDominantCoefficient(source, out var statSource2);
+			buffShieldSkillExecutionDefinition.ShieldStatSource = statSource2;
+			buffShieldSkillExecutionDefinition.ShieldDuration = ResolveStatusDuration(source);
 			ShieldRefreshRule rule;
 		if (!StatusRuntimeCompiler.TryParseShieldRefreshRule(source.ShieldAmountRefreshPolicy, out rule))
 			{
 				rule = ShieldRefreshRule.TakeHighest;
 			}
-			buffShieldSkillRuntimeData.RefreshRule = rule;
-			buffShieldSkillRuntimeData.ShieldStatus = CreateStatusRuntimeData(source);
-			buffShieldSkillRuntimeData.ReflectElement = source.Attribute;
+			buffShieldSkillExecutionDefinition.RefreshRule = rule;
+			buffShieldSkillExecutionDefinition.ShieldStatus = CreateStatusRuntimeData(source);
+			buffShieldSkillExecutionDefinition.ReflectElement = source.Attribute;
 		}
 	}
 
@@ -601,7 +601,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * ApplySingleBasePlanNodes 처리를 대상에 적용한다.
 	 */
-	private static void ApplySingleBasePlanNodes(SingleSkillRuntimeData single /* 단일 */, SkillNodeDefinition[] nodes /* 노드 목록 */, DamageAttribute attribute /* 피해 속성 */)
+	private static void ApplySingleBasePlanNodes(SingleSkillDefinition single /* 단일 */, SkillNodeDefinition[] nodes /* 노드 목록 */, DamageAttribute attribute /* 피해 속성 */)
 	{
 		foreach (SkillNodeDefinition skillNodeDefinition in nodes)
 		{
@@ -1152,7 +1152,7 @@ namespace Pakuri.InGame
 
 /*
  * Enhancement와 Master 선택지를 전투용 데이터와 실행 노드로 변환한다.
- * 스킬 전체 변환을 조율하는 SkillRuntimeCompiler와 달리 선택지 필드 변환만 담당한다.
+ * 스킬 전체 변환을 조율하는 SkillDefinitionCompiler와 달리 선택지 필드 변환만 담당한다.
  */
 namespace Pakuri.InGame
 {
@@ -1161,9 +1161,9 @@ namespace Pakuri.InGame
 	/*
 	 * Compile 작업 결과를 반환한다.
 	 */
-	internal static SkillChoiceRuntimeData[] Compile(SkillChoiceDefinition[] source /* 변환할 스킬 선택지 정의 목록 */)
+	internal static SkillChoice[] Compile(SkillChoiceDefinition[] source /* 변환할 스킬 선택지 정의 목록 */)
 	{
-		SkillChoiceRuntimeData[] array = new SkillChoiceRuntimeData[source.Length];
+		SkillChoice[] array = new SkillChoice[source.Length];
 		for (int i = 0; i < source.Length; i++)
 		{
 			SkillChoiceDefinition skillChoiceDefinition = source[i];
@@ -1182,7 +1182,7 @@ namespace Pakuri.InGame
 				skillChoiceDefinition.RequiredSourceStatusKind = StatusRuntimeCompiler.ParseStatusKind(
 					skillChoiceDefinition.RequiredSourceStatusId);
 			}
-			array[i] = new SkillChoiceRuntimeData
+			array[i] = new SkillChoice
 			{
 				Source = skillChoiceDefinition
 			};
@@ -1193,7 +1193,7 @@ namespace Pakuri.InGame
 	/*
 	 * ApplyChoiceFieldNodes 처리를 대상에 적용한다.
 	 */
-	internal static void ApplyChoiceFieldNodes(SkillChoiceRuntimeData spec /* 처리에 사용할 설정 */, SkillNodeDefinition[] nodes /* 노드 목록 */)
+	internal static void ApplyChoiceFieldNodes(SkillChoice spec /* 처리에 사용할 설정 */, SkillNodeDefinition[] nodes /* 노드 목록 */)
 	{
 		if (spec == null || nodes == null || nodes.Length == 0)
 		{
@@ -1245,7 +1245,7 @@ namespace Pakuri.InGame
 	/*
 	 * ApplyNormalizedChoiceNode 처리를 대상에 적용한다.
 	 */
-	private static void ApplyNormalizedChoiceNode(SkillChoiceRuntimeData spec /* 처리에 사용할 설정 */, SkillNodeDefinition node /* 노드 */)
+	private static void ApplyNormalizedChoiceNode(SkillChoice spec /* 처리에 사용할 설정 */, SkillNodeDefinition node /* 노드 */)
 	{
 		SkillChoiceDefinition source = spec.Source;
 		string a = node.HandlerId;

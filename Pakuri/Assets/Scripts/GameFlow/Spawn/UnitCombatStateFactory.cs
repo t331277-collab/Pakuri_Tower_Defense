@@ -59,7 +59,6 @@ namespace Pakuri.InGame
                     CurrentHealth = maxHealth,
                     CurrentShield = 0f
                 },
-                SkillProgress = new UnitSkillProgress(),
                 IsBoss = isBoss,
                 AutoAttackEnabled = true,
                 AutoSkillEnabled = true
@@ -135,12 +134,11 @@ namespace Pakuri.InGame
                     CurrentHealth = maxHealth,
                     CurrentShield = 0f
                 },
-                SkillProgress = new UnitSkillProgress(),
                 AutoAttackEnabled = true,
                 AutoSkillEnabled = true
             };
 
-            ApplyRunState(model.SkillProgress, runState);
+            ApplyRunState(model.Skills, runState);
             return model;
         }
 
@@ -180,7 +178,7 @@ namespace Pakuri.InGame
         /*
          * ApplyRunState 처리를 대상에 적용한다.
          */
-        private static void ApplyRunState(UnitSkillProgress target /* 변경할 스킬 성장 정보 */, RunSession.RunMonsterState runState /* 게임 진행 상태 */)
+        private static void ApplyRunState(UnitSkills target /* 유닛이 보유한 스킬 정보 */, RunSession.RunMonsterState runState /* 게임 진행 상태 */)
         {
             if (runState == null)
             {

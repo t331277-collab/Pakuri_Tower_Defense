@@ -91,3 +91,44 @@ Implemented and compile/editor validated; user Play Mode verification pending.
 ### History
 
 - 2026-07-17: Code Builder implemented the approved per-unit reinforcement and reward-panel return routing.
+
+## Task: 2026-07-22 Skill Acquisition Eligibility Ownership
+
+### Task title
+
+Move active, passive, Enhancement, and Master eligibility checks into RunSession.
+
+### Goals
+
+- Use one acquisition rule source for normal Offering UI and Debug UI.
+- Keep selected rewards and Choice IDs as persistent run progression data.
+- Remove duplicated UI-side Choice counting and target-skill resolution.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Existing active/passive caps and Enhancement/Master limits remain unchanged.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and solution-build verified.
+
+### Next Actions
+
+- User verifies active/passive acquisition caps, three Enhancements before Master, duplicate prevention, and passive prerequisites in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/GameFlow/RunSession.cs` provides `CanLearnActive`, `CanLearnPassive`, and two `CanChooseSkillChoice` entry points.
+- `InGameUIManager.cs` and `DebugUI.cs` use the same RunSession methods; Debug UI duplicate Choice counting helpers were removed.
+- Choice counting recognizes both `SkillId` and `TargetSkillId` instead of silently choosing a UI-only path.
+- `dotnet build Pakuri/Assembly-CSharp.csproj -v:minimal` completed with 0 errors and the existing 2 assembly-version warnings.
+
+### History
+
+- 2026-07-22: Code Builder centralized skill acquisition eligibility in RunSession and removed duplicate UI logic.

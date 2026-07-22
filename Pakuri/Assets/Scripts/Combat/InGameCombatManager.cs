@@ -91,10 +91,10 @@ namespace Pakuri.InGame
 
             if (skillExecutionEnabled)
             {
-                skillExecution.Tick(
+                TickSkillStates(Time.deltaTime);
+                skillExecution.TryExecuteAutomaticSkills(
                     unitRegistry,
                     this,
-                    Time.deltaTime,
                     (entry, runtime) => playerCombatControl.CanUseAutoSkill(entry, unitRegistry));
                 playerCombatControl.HandleManualInput(
                     unitRegistry,
@@ -109,6 +109,22 @@ namespace Pakuri.InGame
 
             TickUnitStatuses(Time.deltaTime);
             FlushPassiveEffectChanges();
+        }
+
+        /*
+         * 전투에 등록된 유닛이 보유한 스킬의 쿨타임과 탄창 시간을 갱신한다.
+         */
+        private void TickSkillStates(float deltaTime /* 이전 갱신 이후 지난 시간 */)
+        {
+            var entries = unitRegistry.Entries;
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                if (entry != null && entry.Model != null)
+                {
+                    entry.Model.Skills.Tick(deltaTime);
+                }
+            }
         }
 
         /*

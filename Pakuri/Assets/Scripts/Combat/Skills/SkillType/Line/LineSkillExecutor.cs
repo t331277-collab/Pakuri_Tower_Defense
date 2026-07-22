@@ -21,7 +21,7 @@ namespace Pakuri.InGame
         internal static bool Execute(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
-            LineSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
+            LineSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
             var origin = context.CasterEntry.Transform != null
                 ? context.CasterEntry.Transform.position
@@ -148,7 +148,7 @@ namespace Pakuri.InGame
         /*
          * Line 길이를 결정한다.
          */
-        private static float ResolveLineLength(LineSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
+        private static float ResolveLineLength(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
             if (skill != null && skill.LineLength > 0f)
             {
@@ -162,7 +162,7 @@ namespace Pakuri.InGame
         /*
          * 지속시간을 결정한다.
          */
-        private static float ResolveDuration(LineSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static float ResolveDuration(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var timing = skill != null ? skill.Timing : null;
             var duration = timing != null && timing.ActiveDuration > 0f
@@ -179,7 +179,7 @@ namespace Pakuri.InGame
         /*
          * Line 너비를 결정한다.
          */
-        private static float ResolveLineWidth(LineSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static float ResolveLineWidth(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var width = skill != null ? skill.LineWidth : 0f;
             if (snapshot != null)
@@ -193,7 +193,7 @@ namespace Pakuri.InGame
         /*
          * 밀쳐내기 거리를 결정한다.
          */
-        private static float ResolveKnockbackDistance(LineSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static float ResolveKnockbackDistance(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var distance = skill != null ? Mathf.Max(0f, skill.KnockbackDistance) : 0f;
             if (snapshot != null)
@@ -217,7 +217,7 @@ namespace Pakuri.InGame
         /*
          * 주기 간격을 결정한다.
          */
-        private static float ResolveTickInterval(LineSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static float ResolveTickInterval(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var interval = ResolveTickInterval(skill);
             if (snapshot != null)
@@ -231,7 +231,7 @@ namespace Pakuri.InGame
         /*
          * 주기 간격을 결정한다.
          */
-        private static float ResolveTickInterval(LineSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
+        private static float ResolveTickInterval(LineSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
             var timing = skill != null ? skill.Timing : null;
             return timing != null && timing.TickInterval > 0f

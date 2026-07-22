@@ -18,7 +18,7 @@ namespace Pakuri.InGame
         internal static bool Execute(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
-            BuffSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
+            BuffSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
             var statusSpec = ResolveBuffStatusSpec(skill, snapshot);
             if (statusSpec == null)
@@ -119,7 +119,7 @@ namespace Pakuri.InGame
         /*
          * 버프 상태 설정을 결정한다.
          */
-        private static ProjectileStatusHitSpec ResolveBuffStatusSpec(BuffSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static ProjectileStatusHitSpec ResolveBuffStatusSpec(BuffSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             if (skill == null)
             {
@@ -190,7 +190,7 @@ namespace Pakuri.InGame
         internal static bool Execute(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
-            BuffShieldSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
+            BuffShieldSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
             var shieldStat = context.Caster.Stats.SpellPower;
             shieldStat *= StatusCombatRules.ResolveSpellPowerMultiplier(context.Caster);
@@ -331,7 +331,7 @@ namespace Pakuri.InGame
         internal static bool Execute(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
-            BuffHealSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
+            BuffHealSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
             var targets = SkillTargeting.ResolveOrderedTargets(context.CasterEntry, context.Roster, skill.Targeting);
             CombatUnitEntry target = null;

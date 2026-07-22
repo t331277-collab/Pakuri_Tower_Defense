@@ -178,7 +178,11 @@ namespace Pakuri.InGame
             {
                 var ownerEntry = entries[i];
                 var owner = ownerEntry != null ? ownerEntry.Model : null;
-                var learnedPassives = owner != null && owner.SkillProgress != null ? owner.SkillProgress.LearnedPassiveSkillIds : null;
+                HashSet<string> learnedPassives = null;
+                if (owner != null && owner.Skills != null)
+                {
+                    learnedPassives = owner.Skills.LearnedPassiveSkillIds;
+                }
                 if (ownerEntry == null || owner == null || learnedPassives == null || learnedPassives.Count == 0)
                 {
                     continue;
@@ -218,7 +222,7 @@ namespace Pakuri.InGame
             IDictionary<string, PassiveStatusBinding> desiredBindings /* 필요한 연결 정보 */,
             ISet<float> nextHealthRatioThresholds /* 다음 체력 비율 기준값 목록 */)
         {
-            var passive = owner.SkillRuntime.FindBySkillId(passiveId)?.Data as PassiveSkillRuntimeData;
+            var passive = owner.Skills.FindBySkillId(passiveId)?.Data as PassiveSkillDefinition;
             if (passive == null || passive.MultiEffects.Length == 0)
             {
                 return;
@@ -226,7 +230,7 @@ namespace Pakuri.InGame
 
             var context = new SkillExecutionContext(combatManager, roster, ownerEntry, null);
             var ownerPosition = (Vector2)ownerEntry.Transform.position;
-            var snapshot = SkillUpgrade.ResolvePassiveChoices(owner, passiveId);
+            var snapshot = UnitSkills.ResolvePassiveChoices(owner, passiveId);
             for (var i = 0; i < passive.MultiEffects.Length; i++)
             {
                 var effect = passive.MultiEffects[i];
@@ -416,4 +420,3 @@ namespace Pakuri.InGame
         }
     }
 }
-

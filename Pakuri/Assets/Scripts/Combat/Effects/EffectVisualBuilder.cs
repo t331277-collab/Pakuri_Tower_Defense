@@ -128,7 +128,7 @@ namespace Pakuri.InGame
         public static void ConfigureSingleAttackLine(
             Transform target /* 효과가 따라갈 위치 정보 */,
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
-            SingleSkillRuntimeData skill /* 실행하거나 검사할 스킬 */,
+            SingleSkillDefinition skill /* 실행하거나 검사할 스킬 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
             Vector2 center /* 효과가 적용될 중심 위치 */)
         {

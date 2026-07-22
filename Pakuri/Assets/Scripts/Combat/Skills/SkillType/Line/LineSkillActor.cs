@@ -27,7 +27,7 @@ namespace Pakuri.InGame
         private DamageAttribute attribute;
         private ProjectileStatusHitSpec statusSpec;
         private SkillEffectDefinition[] onHitStatusEffects;
-        private SkillRuntimeInstance runtime;
+        private SkillUseState runtime;
         private SkillSnapshot executionSnapshot;
         private UnitCombatState sourceModel;
         private string sourceSkillId;
@@ -58,7 +58,7 @@ namespace Pakuri.InGame
             DamageAttribute damageAttribute /* 적용할 피해 속성 */,
             ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
             SkillEffectDefinition[] onHitEffects /* 발생 시 적중 효과 목록 */,
-            SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
+            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
             string skillId /* 스킬 식별자 */,
@@ -152,7 +152,7 @@ namespace Pakuri.InGame
             DamageAttribute damageAttribute /* 적용할 피해 속성 */,
             ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
             SkillEffectDefinition[] onHitEffects /* 발생 시 적중 효과 목록 */,
-            SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
+            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
             string skillId /* 스킬 식별자 */,

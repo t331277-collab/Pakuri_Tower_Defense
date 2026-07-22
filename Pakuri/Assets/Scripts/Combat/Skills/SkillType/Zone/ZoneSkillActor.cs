@@ -24,7 +24,7 @@ namespace Pakuri.InGame
         private float damage;
         private DamageAttribute attribute;
         private ProjectileStatusHitSpec statusSpec;
-        private SkillRuntimeInstance runtime;
+        private SkillUseState runtime;
         private SkillSnapshot snapshot;
         private SkillEffectDefinition[] onExpireEffects;
         private UnitCombatState sourceModel;
@@ -52,7 +52,7 @@ namespace Pakuri.InGame
             float damagePerTick /* 피해 개별 반복 적용 */,
             DamageAttribute damageAttribute /* 적용할 피해 속성 */,
             ProjectileStatusHitSpec onTickStatus /* 발생 시 반복 적용 상태 효과 */,
-            SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
+            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
             SkillSnapshot executionSnapshot /* 실행 시점의 스킬 강화 정보 */,
             SkillEffectDefinition[] expireEffects /* 만료 효과 목록 */,
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
@@ -107,7 +107,7 @@ namespace Pakuri.InGame
             ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
             string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */,
-            SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
+            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
             bool criticalAllowed /* 치명타 허용 여부 */,
             float critChanceBonus /* 추가 치명타 확률 */,
             float critDamageBonus /* 추가 치명타 피해 배율 */,
@@ -341,7 +341,7 @@ namespace Pakuri.InGame
             ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
             string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */,
-            SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
+            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
             bool criticalAllowed /* 치명타 허용 여부 */,
             float critChanceBonus /* 추가 치명타 확률 */,
             float critDamageBonus /* 추가 치명타 피해 배율 */,
@@ -405,7 +405,7 @@ namespace Pakuri.InGame
             ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
             UnitCombatState source /* 효과를 발생시킨 유닛 */,
             string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */,
-            SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
+            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
             bool criticalAllowed /* 치명타 허용 여부 */,
             float critChanceBonus /* 추가 치명타 확률 */,
             float critDamageBonus /* 추가 치명타 피해 배율 */,
@@ -496,7 +496,7 @@ namespace Pakuri.InGame
         /*
          * 출처 스킬 ID를 결정한다.
          */
-        private static string ResolveSourceSkillId(SkillSnapshot executionSnapshot /* 실행 시점의 스킬 강화 정보 */, SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */)
+        private static string ResolveSourceSkillId(SkillSnapshot executionSnapshot /* 실행 시점의 스킬 강화 정보 */, SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */)
         {
             if (sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId))
             {

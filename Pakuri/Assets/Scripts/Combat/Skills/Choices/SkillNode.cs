@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 /*
  * 스킬 한 번의 실행에 사용할 조건, 수치 변경, 행동, 효과, Trigger 노드를 정의한다.
- * SkillRuntimeData와 현재 Choice Snapshot을 정규화된 노드 순서로 컴파일해
+ * SkillExecutionDefinition와 현재 Choice Snapshot을 정규화된 노드 순서로 컴파일해
  * Executor와 SkillTrigger가 같은 실행 계획을 사용하도록 한다.
  */
 namespace Pakuri.InGame
@@ -671,7 +671,7 @@ namespace Pakuri.InGame
          * 스킬과 현재 선택지 상태를 하나의 실행 계획으로 조합한다.
          */
         public static SkillNodePlan Compile(
-            SkillRuntimeData source /* 복사하거나 변환할 스킬 실행 데이터 */,
+            SkillExecutionDefinition source /* 복사하거나 변환할 스킬 실행 데이터 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
             IReadOnlyList<SkillNode> normalizedRows /* 정규화된 행 목록 */)
         {
@@ -688,7 +688,7 @@ namespace Pakuri.InGame
          * 계획 노드를 구성한다.
          */
         private static IReadOnlyList<SkillNode> BuildPlanNodes(
-            SkillRuntimeData source /* 복사하거나 변환할 스킬 실행 데이터 */,
+            SkillExecutionDefinition source /* 복사하거나 변환할 스킬 실행 데이터 */,
             IReadOnlyList<SkillNode> normalizedRows /* 정규화된 행 목록 */)
         {
             var effectCount = source != null && source.MultiEffects != null ? source.MultiEffects.Length : 0;
@@ -867,7 +867,7 @@ namespace Pakuri.InGame
          * 트리거를 결정한다.
          */
         public static SkillTriggerDefinition[] ResolveTriggers(
-            SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */,
+            SkillUseState runtime /* 실행 중인 스킬 정보 */,
             SkillTriggerDefinition[] fallbackTriggers /* 대체 트리거 목록 */)
         {
             var actions = runtime != null && runtime.BasePlan != null

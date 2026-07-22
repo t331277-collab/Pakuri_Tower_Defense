@@ -12,6 +12,9 @@ namespace Pakuri.InGame
     [Serializable]
     public class RunSession
     {
+        private const int MaxAdditionalActiveSkillCount = 2;
+        private const int MaxPassiveSkillCount = 5;
+
         [Serializable]
         public class RunMonsterState
         {
@@ -170,6 +173,165 @@ namespace Pakuri.InGame
         }
 
         /*
+         * 파티원이 지정한 액티브 스킬을 새로 학습할 수 있는지 확인한다.
+         */
+        public bool CanLearnActive(
+            MonsterDefinition monster /* 스킬을 학습할 몬스터 */,
+            SkillDefinition skill /* 학습 후보 액티브 스킬 */)
+        {
+            if (monster == null || skill == null || string.IsNullOrWhiteSpace(skill.SkillId))
+            {
+                return false;
+            }
+
+            var member = GetPartyMemberState(monster.MonsterId);
+            if (member == null || member.LearnedActives.Contains(skill.SkillId))
+            {
+                return false;
+            }
+
+            var additionalCount = 0;
+            for (var i = 0; i < member.LearnedActives.Count; i++)
+            {
+                if (!IsDefaultActiveSkill(monster, member.LearnedActives[i]))
+                {
+                    additionalCount++;
+                }
+            }
+
+            return additionalCount < MaxAdditionalActiveSkillCount;
+        }
+
+        /*
+         * 파티원이 요구 액티브 스킬을 갖추고 패시브를 새로 학습할 수 있는지 확인한다.
+         */
+        public bool CanLearnPassive(
+            MonsterDefinition monster /* 스킬을 학습할 몬스터 */,
+            PassiveDefinition passive /* 학습 후보 패시브 스킬 */)
+        {
+            if (monster == null || passive == null || string.IsNullOrWhiteSpace(passive.PassiveId))
+            {
+                return false;
+            }
+
+            var member = GetPartyMemberState(monster.MonsterId);
+            if (member == null
+                || member.LearnedPassives.Contains(passive.PassiveId)
+                || member.LearnedPassives.Count >= MaxPassiveSkillCount)
+            {
+                return false;
+            }
+
+            if (passive.IsAvailableWithoutActiveRequirement)
+            {
+                return true;
+            }
+
+            for (var i = 0; i < monster.ActiveSkills.Length; i++)
+            {
+                var active = monster.ActiveSkills[i];
+                if (active != null
+                    && active.Slot == passive.RequiredActiveSlot
+                    && member.LearnedActives.Contains(active.SkillId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /*
+         * 파티원이 요구 스킬과 선행 강화를 갖추고 Choice를 선택할 수 있는지 확인한다.
+         */
+        public bool CanChooseSkillChoice(
+            string monsterId /* 몬스터 식별자 */,
+            MonsterDefinition.RewardChoiceDefinition reward /* Choice와 연결된 보상 */,
+            SkillChoiceDefinition choice /* 선택 후보 강화 효과 */)
+        {
+            var member = GetPartyMemberState(monsterId);
+            if (member == null || reward == null || choice == null)
+            {
+                return false;
+            }
+
+            if (member.ChosenRewardIds.Contains(reward.RewardId)
+                || member.ChosenChoiceIds.Contains(choice.ChoiceId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(reward.ActiveSkillId)
+                && !member.LearnedActives.Contains(reward.ActiveSkillId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(reward.PassiveSkillId)
+                && !member.LearnedPassives.Contains(reward.PassiveSkillId))
+            {
+                return false;
+            }
+
+            var sourceSkillId = reward.ActiveSkillId;
+            if (string.IsNullOrWhiteSpace(sourceSkillId))
+            {
+                sourceSkillId = reward.PassiveSkillId;
+            }
+
+            return CanChooseSkillChoice(monsterId, sourceSkillId, choice);
+        }
+
+        /*
+         * 파티원의 선택 기록과 성장 단계 제한을 기준으로 Choice를 선택할 수 있는지 확인한다.
+         */
+        public bool CanChooseSkillChoice(
+            string monsterId /* 몬스터 식별자 */,
+            string sourceSkillId /* Choice가 연결된 원본 스킬 식별자 */,
+            SkillChoiceDefinition choice /* 선택 후보 강화 효과 */)
+        {
+            var member = GetPartyMemberState(monsterId);
+            if (member == null || choice == null || string.IsNullOrWhiteSpace(choice.ChoiceId))
+            {
+                return false;
+            }
+
+            if (member.ChosenChoiceIds.Contains(choice.ChoiceId))
+            {
+                return false;
+            }
+
+            var targetSkillId = choice.SkillId;
+            if (string.IsNullOrWhiteSpace(targetSkillId))
+            {
+                targetSkillId = choice.TargetSkillId;
+            }
+            if (string.IsNullOrWhiteSpace(targetSkillId))
+            {
+                targetSkillId = sourceSkillId;
+            }
+
+            var enhancementCount = CountChosenChoices(member, targetSkillId, SkillChoiceGroup.ActiveEnhancement);
+            var masterCount = CountChosenChoices(member, targetSkillId, SkillChoiceGroup.ActiveMaster);
+            var passiveEnhancementCount = CountChosenChoices(member, targetSkillId, SkillChoiceGroup.PassiveEnhancement);
+
+            if (choice.ChoiceGroup == SkillChoiceGroup.ActiveEnhancement)
+            {
+                return enhancementCount < 3;
+            }
+            if (choice.ChoiceGroup == SkillChoiceGroup.ActiveMaster)
+            {
+                return enhancementCount >= 3 && masterCount < 1;
+            }
+            if (choice.ChoiceGroup == SkillChoiceGroup.PassiveEnhancement)
+            {
+                return passiveEnhancementCount < 1;
+            }
+
+            return true;
+        }
+
+        /*
          * 획득한 골드와 어둠의 흔적을 런 재화에 더한다.
          */
         public void ClaimMaterialReward(int goldReward /* 골드 보상 */, int darkTraceReward /* 어둠 흔적 보상 */)
@@ -276,6 +438,75 @@ namespace Pakuri.InGame
             }
 
             return null;
+        }
+
+        /*
+         * 지정한 스킬과 성장 단계에 해당하는 선택 완료 Choice 수를 계산한다.
+         */
+        private static int CountChosenChoices(
+            RunMonsterState member /* 파티원의 런 성장 상태 */,
+            string skillId /* Choice가 강화하는 스킬 식별자 */,
+            SkillChoiceGroup group /* 계산할 성장 단계 */)
+        {
+            if (member == null || string.IsNullOrWhiteSpace(skillId))
+            {
+                return 0;
+            }
+
+            var count = 0;
+            for (var i = 0; i < member.ChosenChoiceIds.Count; i++)
+            {
+                var choiceId = member.ChosenChoiceIds[i];
+                if (GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoiceDefinition choice)
+                    && choice != null
+                    && choice.ChoiceGroup == group
+                    && ChoiceTargetsSkill(choice, skillId))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        /*
+         * Choice가 지정한 스킬 ID와 검사할 스킬 ID가 같은지 확인한다.
+         */
+        private static bool ChoiceTargetsSkill(
+            SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */,
+            string skillId /* 검사할 스킬 식별자 */)
+        {
+            var targetSkillId = choice.SkillId;
+            if (string.IsNullOrWhiteSpace(targetSkillId))
+            {
+                targetSkillId = choice.TargetSkillId;
+            }
+
+            return string.Equals(targetSkillId, skillId, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /*
+         * 지정한 액티브 스킬이 몬스터의 런 시작 기본 스킬인지 확인한다.
+         */
+        private static bool IsDefaultActiveSkill(MonsterDefinition monster /* 몬스터 */, string skillId /* 스킬 식별자 */)
+        {
+            if (monster == null || string.IsNullOrWhiteSpace(skillId))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < monster.ActiveSkills.Length; i++)
+            {
+                var skill = monster.ActiveSkills[i];
+                if (skill != null
+                    && skill.IsDefaultLearned
+                    && string.Equals(skill.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /*

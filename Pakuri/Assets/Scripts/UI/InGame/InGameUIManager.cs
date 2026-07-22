@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Pakuri.Data;
 using TMPro;
@@ -897,8 +897,6 @@ namespace Pakuri.InGame
     internal class OfferingUI
     {
         private const int MaxOfferingChoices = 3;
-        private const int MaxAdditionalActiveSkillCount = 2;
-        private const int MaxRunPassiveSkillCount = 5;
 
         private readonly System.Collections.Generic.List<OfferingChoiceView> offeringChoices =
             new System.Collections.Generic.List<OfferingChoiceView>();
@@ -1069,9 +1067,7 @@ namespace Pakuri.InGame
          */
         private void AddActiveSkillChoices(RunSession session /* 현재 게임 진행 상태 */, MonsterDefinition monster /* 몬스터 */, RunSession.RunMonsterState state /* 상태 */)
         {
-            if (monster == null
-                || state == null
-                || CountLearnedAdditionalActiveSkills(monster, state) >= MaxAdditionalActiveSkillCount)
+            if (monster == null || state == null)
             {
                 return;
             }
@@ -1080,7 +1076,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < skills.Length; i++)
             {
                 var skill = skills[i];
-                if (skill == null || string.IsNullOrWhiteSpace(skill.SkillId) || session.HasLearnedActive(state.MonsterId, skill.SkillId))
+                if (!session.CanLearnActive(monster, skill))
                 {
                     continue;
                 }
@@ -1104,7 +1100,7 @@ namespace Pakuri.InGame
          */
         private void AddPassiveSkillChoices(RunSession session /* 현재 게임 진행 상태 */, MonsterDefinition monster /* 몬스터 */, RunSession.RunMonsterState state /* 상태 */)
         {
-            if (monster == null || state == null || state.LearnedPassives.Count >= MaxRunPassiveSkillCount)
+            if (monster == null || state == null)
             {
                 return;
             }
@@ -1113,12 +1109,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < passives.Length; i++)
             {
                 var passive = passives[i];
-                if (passive == null || string.IsNullOrWhiteSpace(passive.PassiveId) || session.HasLearnedPassive(state.MonsterId, passive.PassiveId))
-                {
-                    continue;
-                }
-
-                if (!passive.IsAvailableWithoutActiveRequirement && !HasLearnedRequiredActive(session, monster, state, passive.RequiredActiveSlot))
+                if (!session.CanLearnPassive(monster, passive))
                 {
                     continue;
                 }
@@ -1158,7 +1149,7 @@ namespace Pakuri.InGame
 
                 var choiceData = ResolveChoice(reward.RewardId);
                 if (choiceData == null
-                    || !IsRewardChoiceAvailableForState(session, state, reward, choiceData))
+                    || !session.CanChooseSkillChoice(state.MonsterId, reward, choiceData))
                 {
                     continue;
                 }
@@ -1340,52 +1331,6 @@ namespace Pakuri.InGame
         }
 
         /*
-         * IsRewardChoiceAvailableForState 조건을 만족하는지 확인한다.
-         */
-        private static bool IsRewardChoiceAvailableForState(
-            RunSession session /* 현재 게임 진행 상태 */,
-            RunSession.RunMonsterState state /* 상태 */,
-            MonsterDefinition.RewardChoiceDefinition reward /* 보상 */,
-            SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */)
-        {
-            if (session == null || state == null || reward == null || choice == null)
-            {
-                return false;
-            }
-
-            if (!string.IsNullOrWhiteSpace(reward.ActiveSkillId)
-                && !session.HasLearnedActive(state.MonsterId, reward.ActiveSkillId))
-            {
-                return false;
-            }
-
-            if (!string.IsNullOrWhiteSpace(reward.PassiveSkillId)
-                && !session.HasLearnedPassive(state.MonsterId, reward.PassiveSkillId))
-            {
-                return false;
-            }
-
-            var targetSkillId = !string.IsNullOrWhiteSpace(choice.SkillId)
-                ? choice.SkillId
-                : !string.IsNullOrWhiteSpace(reward.ActiveSkillId)
-                    ? reward.ActiveSkillId
-                    : reward.PassiveSkillId;
-
-            switch (choice.ChoiceGroup)
-            {
-                case SkillChoiceGroup.ActiveEnhancement:
-                    return CountChosenChoices(state, targetSkillId, SkillChoiceGroup.ActiveEnhancement) < 3;
-                case SkillChoiceGroup.ActiveMaster:
-                    return CountChosenChoices(state, targetSkillId, SkillChoiceGroup.ActiveEnhancement) >= 3
-                        && CountChosenChoices(state, targetSkillId, SkillChoiceGroup.ActiveMaster) < 1;
-                case SkillChoiceGroup.PassiveEnhancement:
-                    return CountChosenChoices(state, targetSkillId, SkillChoiceGroup.PassiveEnhancement) < 1;
-                default:
-                    return true;
-            }
-        }
-
-        /*
          * RefreshRuntimeSkillModels 대상의 현재 상태를 갱신한다.
          */
         private void RefreshRuntimeSkillModels()
@@ -1405,7 +1350,7 @@ namespace Pakuri.InGame
                 {
                     var model = entry.Model;
                     SyncModelStateFromSession(session, model);
-                    UnitSkillRuntimeBuilder.RebuildLearnedSkillSet(model);
+                    UnitSkillsBuilder.RebuildLearnedSkillSet(model);
                     combatManager.UnitRegistry.RefreshDisplay(model);
                 }
             }
@@ -1434,7 +1379,7 @@ namespace Pakuri.InGame
                 }
 
                 SyncModelStateFromSession(session, model);
-                UnitSkillRuntimeBuilder.RebuildLearnedSkillSet(model);
+                UnitSkillsBuilder.RebuildLearnedSkillSet(model);
                 actor.RefreshDisplay();
             }
         }
@@ -1461,14 +1406,14 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (model.SkillProgress == null)
+            if (model.Skills == null)
             {
-                model.SkillProgress = new UnitSkillProgress();
+                model.Skills = new UnitSkills();
             }
 
-            CopyListToSet(state.LearnedActives, model.SkillProgress.LearnedActiveSkillIds);
-            CopyListToSet(state.LearnedPassives, model.SkillProgress.LearnedPassiveSkillIds);
-            CopyListToSet(state.ChosenChoiceIds, model.SkillProgress.ChosenChoiceIds);
+            CopyListToSet(state.LearnedActives, model.Skills.LearnedActiveSkillIds);
+            CopyListToSet(state.LearnedPassives, model.Skills.LearnedPassiveSkillIds);
+            CopyListToSet(state.ChosenChoiceIds, model.Skills.ChosenChoiceIds);
         }
 
         /*
@@ -1489,24 +1434,6 @@ namespace Pakuri.InGame
                     target.Add(source[i]);
                 }
             }
-        }
-
-        /*
-         * HasLearnedRequiredActive 조건을 만족하는지 확인한다.
-         */
-        private bool HasLearnedRequiredActive(RunSession session /* 현재 게임 진행 상태 */, MonsterDefinition monster /* 몬스터 */, RunSession.RunMonsterState state /* 상태 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
-        {
-            var skills = GameDataLoader.CurrentCatalog.GetActiveSkills(monster.MonsterId);
-            for (var i = 0; i < skills.Length; i++)
-            {
-                var skill = skills[i];
-                if (skill != null && skill.Slot == slot && session.HasLearnedActive(state.MonsterId, skill.SkillId))
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         /*
@@ -1534,83 +1461,6 @@ namespace Pakuri.InGame
             }
 
             return string.IsNullOrWhiteSpace(summary) ? fallback : summary;
-        }
-
-        /*
-         * CountChosenChoices 결과를 계산해 반환한다.
-         */
-        private static int CountChosenChoices(
-            RunSession.RunMonsterState state /* 상태 */,
-            string skillId /* 스킬 식별자 */,
-            SkillChoiceGroup group /* 그룹 */)
-        {
-            if (state == null || string.IsNullOrWhiteSpace(skillId))
-            {
-                return 0;
-            }
-
-            var count = 0;
-            for (var i = 0; i < state.ChosenChoiceIds.Count; i++)
-            {
-                var chosen = ResolveChoice(state.ChosenChoiceIds[i]);
-                if (chosen != null
-                    && chosen.ChoiceGroup == group
-                    && string.Equals(chosen.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
-                {
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
-        /*
-         * CountLearnedAdditionalActiveSkills 결과를 계산해 반환한다.
-         */
-        private static int CountLearnedAdditionalActiveSkills(MonsterDefinition monster /* 몬스터 */, RunSession.RunMonsterState state /* 상태 */)
-        {
-            if (monster == null || state == null || state.LearnedActives == null || state.LearnedActives.Count == 0)
-            {
-                return 0;
-            }
-
-            var count = 0;
-            for (var i = 0; i < state.LearnedActives.Count; i++)
-            {
-                var skillId = state.LearnedActives[i];
-                if (string.IsNullOrWhiteSpace(skillId) || IsDefaultActiveSkill(monster, skillId))
-                {
-                    continue;
-                }
-
-                count++;
-            }
-
-            return count;
-        }
-
-        /*
-         * IsDefaultActiveSkill 조건을 만족하는지 확인한다.
-         */
-        private static bool IsDefaultActiveSkill(MonsterDefinition monster /* 몬스터 */, string skillId /* 스킬 식별자 */)
-        {
-            if (monster == null || monster.ActiveSkills == null || string.IsNullOrWhiteSpace(skillId))
-            {
-                return false;
-            }
-
-            for (var i = 0; i < monster.ActiveSkills.Length; i++)
-            {
-                var skill = monster.ActiveSkills[i];
-                if (skill == null || !string.Equals(skill.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                return skill.IsDefaultLearned || skill.Slot == SkillSlot.A;
-            }
-
-            return false;
         }
 
         /*

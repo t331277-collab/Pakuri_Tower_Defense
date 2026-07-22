@@ -23,7 +23,7 @@ namespace Pakuri.InGame
             Vector2 center /* 효과가 적용될 중심 위치 */)
         {
             var skill = context != null && context.Runtime != null
-                ? context.Runtime.Data as ZoneSkillRuntimeData
+                ? context.Runtime.Data as ZoneSkillDefinition
                 : null;
             if (skill == null
                 || effect == null
@@ -124,7 +124,7 @@ namespace Pakuri.InGame
         internal static bool Execute(
             SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
-            ZoneSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
+            ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */)
         {
             var deploymentCount = ResolveDeploymentCount(snapshot);
             var centers = ResolveAreaCenters(context, skill.Targeting, skill.Area, deploymentCount);
@@ -218,7 +218,7 @@ namespace Pakuri.InGame
         /*
          * 적중 대상 횟수를 결정한다.
          */
-        private static int ResolveHitTargetCount(ZoneSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static int ResolveHitTargetCount(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             if (skill == null || skill.HitAllTargets || !skill.UsesHitTargetCount)
             {
@@ -265,7 +265,7 @@ namespace Pakuri.InGame
         /*
          * 반경을 결정한다.
          */
-        private static float ResolveRadius(ZoneSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static float ResolveRadius(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var area = skill != null ? skill.Area : null;
             var targeting = skill != null ? skill.Targeting : null;
@@ -275,7 +275,7 @@ namespace Pakuri.InGame
         /*
          * 지속시간을 결정한다.
          */
-        private static float ResolveDuration(ZoneSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static float ResolveDuration(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var area = skill != null ? skill.Area : null;
             var timing = skill != null ? skill.Timing : null;
@@ -298,7 +298,7 @@ namespace Pakuri.InGame
         /*
          * 주기 간격을 결정한다.
          */
-        private static float ResolveTickInterval(ZoneSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
+        private static float ResolveTickInterval(ZoneSkillDefinition skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var area = skill != null ? skill.Area : null;
             var timing = skill != null ? skill.Timing : null;

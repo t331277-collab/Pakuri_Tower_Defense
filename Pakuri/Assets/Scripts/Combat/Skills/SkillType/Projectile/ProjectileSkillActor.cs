@@ -25,7 +25,7 @@ namespace Pakuri.InGame
         private bool destroyWhenGreaterThanBoundary = true;
         private ProjectileStatusHitSpec statusOnHit;
         private ProjectileBranchDamageSpec branchDamageOnHit;
-        private SkillRuntimeInstance runtime;
+        private SkillUseState runtime;
         private SkillSnapshot executionSnapshot;
         private string sourceSkillId;
         private bool isMagazineLastProjectile;
@@ -163,7 +163,7 @@ namespace Pakuri.InGame
             bool enableImpactArea /* 활성화 충돌 범위 여부 */,
             float impactAreaRadius /* 충돌 범위 반지름 */,
             float delayedImpactDamage /* 지연 충돌 피해 */,
-            SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
+            SkillUseState sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
             SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
             string ignoredUnitId = null /* 무시할 유닛 식별자 */,
             string skillId = null /* 스킬 식별자 */,

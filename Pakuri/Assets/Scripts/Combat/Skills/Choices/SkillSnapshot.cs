@@ -140,7 +140,7 @@ public class SkillSnapshot
 	/*
 	 * 스냅샷의 원본 스킬과 현재 조합된 실행 계획을 나타낸다.
 	 */
-	public SkillRuntimeData Source { get; }
+	public SkillExecutionDefinition Source { get; }
 
 	public string SkillId { get; }
 
@@ -473,7 +473,7 @@ public class SkillSnapshot
 	/*
 	 * 원본 스킬의 식별자, 기본 배율, 이펙트와 노드를 사용해 최초 실행 계획을 만든다.
 	 */
-	public SkillSnapshot(SkillRuntimeData source /* 복사하거나 변환할 스킬 실행 데이터 */)
+	public SkillSnapshot(SkillExecutionDefinition source /* 복사하거나 변환할 스킬 실행 데이터 */)
 	{
 		Source = source;
 		SkillId = string.Empty;
@@ -505,7 +505,7 @@ public class SkillSnapshot
 	/*
 	 * 선택지의 정규화된 노드를 현재 수치와 실행 계획에 반영한다.
 	 */
-	public void ApplyChoiceSpec(SkillChoiceRuntimeData spec /* 처리에 사용할 설정 */)
+	public void ApplyChoiceSpec(SkillChoice spec /* 처리에 사용할 설정 */)
 	{
 		if (spec == null || !HasNormalizedPlanNodes(spec.Source))
 		{
@@ -542,7 +542,7 @@ public class SkillSnapshot
 			SkillEffectPrefab = choice.SkillEffectPrefab;
 		}
 		SkillNodeDefinition[] array = SkillNodeMapper.FilterSkillNodeDefinitionsForTarget(choice.NormalizedPlanNodes, SkillId);
-		SkillChoiceRuntimeData spec = new SkillChoiceRuntimeData
+		SkillChoice spec = new SkillChoice
 		{
 			Source = new SkillChoiceDefinition()
 		};
@@ -558,7 +558,7 @@ public class SkillSnapshot
 	/*
 	 * 선택지 컴파일 결과 중 개별 속성으로 표현되는 특수 강화 값을 누적한다.
 	 */
-	private void ApplyNodeBackedChoiceFields(SkillChoiceRuntimeData spec /* 처리에 사용할 설정 */)
+	private void ApplyNodeBackedChoiceFields(SkillChoice spec /* 처리에 사용할 설정 */)
 	{
 		SkillChoiceDefinition source = spec.Source;
 		CritChanceBonus += source.CritChanceBonus;

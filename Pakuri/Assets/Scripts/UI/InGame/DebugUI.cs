@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Pakuri.Data;
 using TMPro;
 using UnityEngine;
@@ -156,7 +156,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (session.HasLearnedActive(monster.MonsterId, sourceSkill.SkillId))
+            if (!session.CanLearnActive(monster, sourceSkill))
             {
                 return;
             }
@@ -197,7 +197,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (session.HasLearnedPassive(monster.MonsterId, passive.PassiveId))
+            if (!session.CanLearnPassive(monster, passive))
             {
                 return;
             }
@@ -227,7 +227,7 @@ namespace Pakuri.InGame
 
                 var model = entry.Model;
                 SyncModelStateFromSession(session, model);
-                UnitSkillRuntimeBuilder.RebuildLearnedSkillSet(model);
+                UnitSkillsBuilder.RebuildLearnedSkillSet(model);
                 manager.UnitRegistry.RefreshDisplay(model);
             }
         }
@@ -254,14 +254,14 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (model.SkillProgress == null)
+            if (model.Skills == null)
             {
-                model.SkillProgress = new UnitSkillProgress();
+                model.Skills = new UnitSkills();
             }
 
-            CopyListToSet(state.LearnedActives, model.SkillProgress.LearnedActiveSkillIds);
-            CopyListToSet(state.LearnedPassives, model.SkillProgress.LearnedPassiveSkillIds);
-            CopyListToSet(state.ChosenChoiceIds, model.SkillProgress.ChosenChoiceIds);
+            CopyListToSet(state.LearnedActives, model.Skills.LearnedActiveSkillIds);
+            CopyListToSet(state.LearnedPassives, model.Skills.LearnedPassiveSkillIds);
+            CopyListToSet(state.ChosenChoiceIds, model.Skills.ChosenChoiceIds);
         }
 
         /*
@@ -826,7 +826,7 @@ namespace Pakuri.InGame
             }
 
             var choice = choices[choiceIndex];
-            if (!IsChoiceAvailableForState(session, state, sourceSkill.SkillId, choice))
+            if (!session.CanChooseSkillChoice(state.MonsterId, sourceSkill.SkillId, choice))
             {
                 return;
             }
@@ -859,7 +859,7 @@ namespace Pakuri.InGame
             }
 
             var choice = choices[choiceIndex];
-            if (!IsChoiceAvailableForState(session, state, passive.PassiveId, choice))
+            if (!session.CanChooseSkillChoice(state.MonsterId, passive.PassiveId, choice))
             {
                 return;
             }
@@ -960,7 +960,7 @@ namespace Pakuri.InGame
 
                 var hasChoice = choices != null && i < choices.Length && choices[i] != null;
                 button.gameObject.SetActive(hasChoice);
-                button.interactable = hasChoice && IsChoiceAvailableForState(session, state, sourceSkillId, choices[i]);
+                button.interactable = hasChoice && session.CanChooseSkillChoice(state.MonsterId, sourceSkillId, choices[i]);
 
                 var label = button.GetComponentInChildren<TMP_Text>(true);
                 if (label != null)
@@ -1163,106 +1163,6 @@ namespace Pakuri.InGame
             }
 
             return choiceId;
-        }
-
-        /*
-         * IsChoiceAvailableForState 조건을 만족하는지 확인한다.
-         */
-        private static bool IsChoiceAvailableForState(
-            RunSession session /* 현재 게임 진행 상태 */,
-            RunSession.RunMonsterState state /* 상태 */,
-            string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */,
-            SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */)
-        {
-            if (session == null || state == null || choice == null || string.IsNullOrWhiteSpace(choice.ChoiceId))
-            {
-                return false;
-            }
-
-            if (state.ChosenChoiceIds.Contains(choice.ChoiceId))
-            {
-                return false;
-            }
-
-            var targetSkillId = ResolveChoiceTargetSkillId(choice, sourceSkillId);
-            switch (choice.ChoiceGroup)
-            {
-                case SkillChoiceGroup.ActiveEnhancement:
-                    return CountChosenChoices(state, targetSkillId, SkillChoiceGroup.ActiveEnhancement) < 3;
-                case SkillChoiceGroup.ActiveMaster:
-                    return CountChosenChoices(state, targetSkillId, SkillChoiceGroup.ActiveEnhancement) >= 3
-                        && CountChosenChoices(state, targetSkillId, SkillChoiceGroup.ActiveMaster) < 1;
-                case SkillChoiceGroup.PassiveEnhancement:
-                    return CountChosenChoices(state, targetSkillId, SkillChoiceGroup.PassiveEnhancement) < 1;
-                default:
-                    return true;
-            }
-        }
-
-        /*
-         * ResolveChoiceTargetSkillId 결과를 계산해 반환한다.
-         */
-        private static string ResolveChoiceTargetSkillId(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */, string fallbackSkillId /* 대체 스킬 식별자 */)
-        {
-            if (choice == null)
-            {
-                return fallbackSkillId;
-            }
-
-            if (!string.IsNullOrWhiteSpace(choice.SkillId))
-            {
-                return choice.SkillId;
-            }
-
-            if (!string.IsNullOrWhiteSpace(choice.TargetSkillId))
-            {
-                return choice.TargetSkillId;
-            }
-
-            return fallbackSkillId;
-        }
-
-        /*
-         * CountChosenChoices 결과를 계산해 반환한다.
-         */
-        private static int CountChosenChoices(
-            RunSession.RunMonsterState state /* 상태 */,
-            string skillId /* 스킬 식별자 */,
-            SkillChoiceGroup group /* 그룹 */)
-        {
-            if (state == null || string.IsNullOrWhiteSpace(skillId))
-            {
-                return 0;
-            }
-
-            var count = 0;
-            for (var i = 0; i < state.ChosenChoiceIds.Count; i++)
-            {
-                var chosen = ResolveChoice(state.ChosenChoiceIds[i]);
-                if (chosen != null
-                    && chosen.ChoiceGroup == group
-                    && string.Equals(ResolveChoiceTargetSkillId(chosen, chosen.SkillId), skillId, StringComparison.OrdinalIgnoreCase))
-                {
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
-        /*
-         * ResolveChoice 결과를 계산해 반환한다.
-         */
-        private static SkillChoiceDefinition ResolveChoice(string choiceId /* 스킬 선택지 식별자 */)
-        {
-            if (string.IsNullOrWhiteSpace(choiceId))
-            {
-                return null;
-            }
-
-            return GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoiceDefinition choice)
-                ? choice
-                : null;
         }
 
         /*
