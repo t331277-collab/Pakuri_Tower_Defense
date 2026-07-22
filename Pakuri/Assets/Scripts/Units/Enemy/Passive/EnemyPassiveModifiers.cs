@@ -13,8 +13,8 @@ namespace Pakuri.InGame
          * Apply 처리를 대상에 적용한다.
          */
         public static void Apply(
-            EnemyCombatState enemy,
-            EnemyPassiveDefinition passive)
+            EnemyCombatState enemy /* 적 */,
+            EnemyPassiveDefinition passive /* 패시브 */)
         {
             if (enemy == null
                 || passive == null
@@ -71,8 +71,8 @@ namespace Pakuri.InGame
          * ResolveOutgoingDamageMultiplier 결과를 계산해 반환한다.
          */
         public static float ResolveOutgoingDamageMultiplier(
-            EnemyCombatState enemy,
-            DamageAttribute attribute)
+            EnemyCombatState enemy /* 적 */,
+            DamageAttribute attribute /* 피해 속성 */)
         {
             if (enemy == null)
             {
@@ -102,9 +102,9 @@ namespace Pakuri.InGame
          * MultiplyOutgoingDamage 작업을 수행한다.
          */
         private static void MultiplyOutgoingDamage(
-            EnemyCombatState enemy,
-            DamageAttribute attribute,
-            float multiplier)
+            EnemyCombatState enemy /* 적 */,
+            DamageAttribute attribute /* 피해 속성 */,
+            float multiplier /* 값에 곱할 배율 */)
         {
             switch (attribute)
             {
@@ -132,7 +132,7 @@ namespace Pakuri.InGame
         /*
          * MultiplyDefenses 작업을 수행한다.
          */
-        private static void MultiplyDefenses(UnitDefenseStats defenses, float multiplier)
+        private static void MultiplyDefenses(UnitDefenseStats defenses /* 방어력 묶음 */, float multiplier /* 값에 곱할 배율 */)
         {
             if (defenses == null)
             {
@@ -151,9 +151,9 @@ namespace Pakuri.InGame
          * MultiplyDefense 작업을 수행한다.
          */
         private static void MultiplyDefense(
-            UnitDefenseStats defenses,
-            DamageAttribute attribute,
-            float multiplier)
+            UnitDefenseStats defenses /* 방어력 묶음 */,
+            DamageAttribute attribute /* 피해 속성 */,
+            float multiplier /* 값에 곱할 배율 */)
         {
             if (defenses == null)
             {

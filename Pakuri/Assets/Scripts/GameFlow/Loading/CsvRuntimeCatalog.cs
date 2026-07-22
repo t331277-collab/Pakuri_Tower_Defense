@@ -67,7 +67,7 @@ namespace Pakuri.Data
         /*
          * TryGetSprite 작업을 시도하고 성공 여부를 반환한다.
          */
-        public bool TryGetSprite(string assetPath, out Sprite sprite)
+        public bool TryGetSprite(string assetPath /* 에셋 경로 */, out Sprite sprite /* 스프라이트 */)
         {
             EnsureLookups();
             return spriteLookup.TryGetValue(Normalize(assetPath), out sprite);
@@ -76,7 +76,7 @@ namespace Pakuri.Data
         /*
          * TryGetPrefab 작업을 시도하고 성공 여부를 반환한다.
          */
-        public bool TryGetPrefab(string assetPath, out GameObject prefab)
+        public bool TryGetPrefab(string assetPath /* 에셋 경로 */, out GameObject prefab /* 생성할 프리팹 */)
         {
             EnsureLookups();
             return prefabLookup.TryGetValue(Normalize(assetPath), out prefab);
@@ -86,8 +86,8 @@ namespace Pakuri.Data
          * TryGetAnimatorController 작업을 시도하고 성공 여부를 반환한다.
          */
         public bool TryGetAnimatorController(
-            string assetPath,
-            out RuntimeAnimatorController animatorController)
+            string assetPath /* 에셋 경로 */,
+            out RuntimeAnimatorController animatorController /* 애니메이터 제어기 */)
         {
             EnsureLookups();
             return animatorControllerLookup.TryGetValue(Normalize(assetPath), out animatorController);
@@ -96,7 +96,7 @@ namespace Pakuri.Data
         /*
          * HasSprite 조건을 만족하는지 확인한다.
          */
-        public bool HasSprite(string assetPath)
+        public bool HasSprite(string assetPath /* 에셋 경로 */)
         {
             EnsureLookups();
             return spriteLookup.ContainsKey(Normalize(assetPath));
@@ -105,7 +105,7 @@ namespace Pakuri.Data
         /*
          * HasPrefab 조건을 만족하는지 확인한다.
          */
-        public bool HasPrefab(string assetPath)
+        public bool HasPrefab(string assetPath /* 에셋 경로 */)
         {
             EnsureLookups();
             return prefabLookup.ContainsKey(Normalize(assetPath));
@@ -114,7 +114,7 @@ namespace Pakuri.Data
         /*
          * HasAnimatorController 조건을 만족하는지 확인한다.
          */
-        public bool HasAnimatorController(string assetPath)
+        public bool HasAnimatorController(string assetPath /* 에셋 경로 */)
         {
             EnsureLookups();
             return animatorControllerLookup.ContainsKey(Normalize(assetPath));
@@ -165,10 +165,10 @@ namespace Pakuri.Data
          * AddEntries 작업을 수행한다.
          */
         private static void AddEntries<TEntry, TAsset>(
-            TEntry[] entries,
-            Dictionary<string, TAsset> lookup,
-            Func<TEntry, string> getPath,
-            Func<TEntry, TAsset> getAsset)
+            TEntry[] entries /* 등록 정보 목록 */,
+            Dictionary<string, TAsset> lookup /* 조회표 */,
+            Func<TEntry, string> getPath /* 가져오기 경로 */,
+            Func<TEntry, TAsset> getAsset /* 가져오기 에셋 */)
             where TAsset : UnityEngine.Object
         {
             if (entries == null)
@@ -192,7 +192,7 @@ namespace Pakuri.Data
         /*
          * Normalize 작업 결과를 반환한다.
          */
-        private static string Normalize(string assetPath)
+        private static string Normalize(string assetPath /* 에셋 경로 */)
         {
             if (string.IsNullOrWhiteSpace(assetPath))
             {

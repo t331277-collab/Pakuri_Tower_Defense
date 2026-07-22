@@ -4,69 +4,11 @@ using Pakuri.Data;
 
 /*
  * 한 번의 런에서 유지되는 진행 상태와 파티별 성장 상태를 보관한다.
- * 스테이지·일차·전투 종류, 재화·포로, 선택 및 현현 몬스터,
- * 몬스터별 학습 스킬과 Choice를 기록하고 보상 적용과 다음 날짜 진행을 처리한다.
+ * 스테이지·일차, 재화·포로, 선택 및 현현 몬스터,
+ * 몬스터별 학습 스킬과 Choice를 기록한다.
  */
 namespace Pakuri.InGame
 {
-    public enum RunCombatType
-    {
-        Normal,
-        Elite,
-        Day5Midboss,
-        Day10Midboss,
-        Boss,
-        Shop
-    }
-
-    [Serializable]
-    public readonly struct RunDayModel
-    {
-        /*
-         * RunDayModel에 필요한 값을 초기화한다.
-         */
-        public RunDayModel(int stageIndex, int dayIndex, RunCombatType combatType, bool hasEliteOption, bool hasShopOption)
-        {
-            StageIndex = Math.Max(1, Math.Min(stageIndex, 4));
-            DayIndex = Math.Max(1, Math.Min(dayIndex, 11));
-            CombatType = combatType;
-            HasEliteOption = hasEliteOption;
-            HasShopOption = hasShopOption;
-        }
-
-        public int StageIndex { get; }
-        public int DayIndex { get; }
-        public RunCombatType CombatType { get; }
-        public bool HasEliteOption { get; }
-        public bool HasShopOption { get; }
-
-        /*
-         * Resolve 결과를 계산해 반환한다.
-         */
-        public static RunDayModel Resolve(int stageIndex, int dayIndex)
-        {
-            var clampedDay = Math.Max(1, Math.Min(dayIndex, 11));
-            if (clampedDay == 5)
-            {
-                return new RunDayModel(stageIndex, clampedDay, RunCombatType.Day5Midboss, false, false);
-            }
-
-            if (clampedDay == 10)
-            {
-                return new RunDayModel(stageIndex, clampedDay, RunCombatType.Day10Midboss, false, false);
-            }
-
-            if (clampedDay == 11)
-            {
-                return new RunDayModel(stageIndex, clampedDay, RunCombatType.Boss, false, false);
-            }
-
-            var canOfferElite = clampedDay >= 2 && clampedDay <= 4 || clampedDay >= 6 && clampedDay <= 9;
-            var canOfferShop = clampedDay >= 6 && clampedDay <= 9;
-            return new RunDayModel(stageIndex, clampedDay, RunCombatType.Normal, canOfferElite, canOfferShop);
-        }
-    }
-
     [Serializable]
     public class RunSession
     {
@@ -79,12 +21,7 @@ namespace Pakuri.InGame
             public readonly List<string> LearnedPassives = new List<string>();
             public readonly List<string> ChosenRewardIds = new List<string>();
             public readonly List<string> ChosenChoiceIds = new List<string>();
-            public float DamageMultiplier = 1f;
-            public int MagazineBonus;
-            public float ShotIntervalMultiplier = 1f;
-            public float ReloadDurationMultiplier = 1f;
             public float MaxHealthBonus;
-            public float StatusChanceBonus;
         }
 
         public string SelectedMonsterId;
@@ -95,56 +32,38 @@ namespace Pakuri.InGame
         public string PassiveSkillName;
         public int StageIndex = 1;
         public int DayIndex = 1;
-        public RunCombatType CurrentCombatType = RunCombatType.Normal;
-        public RunDayModel CurrentDayModel;
         public int Gold;
         public int DarkTrace;
         public int PrisonersSeen;
-        public float DamageMultiplier = 1f;
-        public int MagazineBonus;
-        public float ShotIntervalMultiplier = 1f;
-        public float ReloadDurationMultiplier = 1f;
-        public float MaxHealthBonus;
-        public float StatusChanceBonus;
-        public readonly List<string> LearnedActives = new List<string>();
-        public readonly List<string> LearnedPassives = new List<string>();
-        public readonly List<string> ChosenRewardIds = new List<string>();
-        public readonly List<string> ChosenChoiceIds = new List<string>();
         public readonly List<string> PrisonerNames = new List<string>();
         public readonly List<string> ManifestedMonsterIds = new List<string>();
         public readonly List<RunMonsterState> PartyMembers = new List<RunMonsterState>();
 
         /*
-         * Begin 작업 결과를 반환한다.
+         * 선택한 몬스터로 첫 스테이지의 런 진행 상태를 만든다.
          */
-        public static RunSession Begin(MonsterDefinition monster)
+        public static RunSession Begin(MonsterDefinition monster /* 몬스터 */)
         {
             var session = new RunSession
             {
-                SelectedMonsterId = monster != null ? monster.MonsterId : string.Empty,
-                SelectedMonsterName = monster != null ? monster.DisplayName : "Unknown",
+                SelectedMonsterId = monster.MonsterId,
+                SelectedMonsterName = monster.DisplayName,
                 ActiveSkillId = ResolveDefaultActiveSkillId(monster),
                 PassiveSkillId = ResolveDefaultPassiveSkillId(monster),
-                ActiveSkillName = monster != null ? monster.ActiveSkillName : string.Empty,
-                PassiveSkillName = monster != null ? monster.PassiveSkillName : string.Empty,
+                ActiveSkillName = monster.ActiveSkillName,
+                PassiveSkillName = monster.PassiveSkillName,
                 StageIndex = 1,
                 DayIndex = 1
             };
 
-            if (!string.IsNullOrWhiteSpace(session.ActiveSkillId))
-            {
-                session.AddLearnedActive(session.ActiveSkillId);
-            }
-
             session.EnsurePartyMemberState(monster);
-            session.RefreshDayModel();
             return session;
         }
 
         /*
-         * ResolveDefaultActiveSkillId 결과를 계산해 반환한다.
+         * 런 시작 시 기본 습득할 A 슬롯 액티브 스킬을 찾는다.
          */
-        private static string ResolveDefaultActiveSkillId(MonsterDefinition monster)
+        private static string ResolveDefaultActiveSkillId(MonsterDefinition monster /* 몬스터 */)
         {
             if (monster == null || monster.ActiveSkills == null)
             {
@@ -154,16 +73,10 @@ namespace Pakuri.InGame
             for (var i = 0; i < monster.ActiveSkills.Length; i++)
             {
                 var skill = monster.ActiveSkills[i];
-                if (skill != null && skill.IsDefaultLearned && !string.IsNullOrWhiteSpace(skill.SkillId))
-                {
-                    return skill.SkillId;
-                }
-            }
-
-            for (var i = 0; i < monster.ActiveSkills.Length; i++)
-            {
-                var skill = monster.ActiveSkills[i];
-                if (skill != null && skill.Slot == SkillSlot.A && !string.IsNullOrWhiteSpace(skill.SkillId))
+                if (skill != null
+                    && skill.Slot == SkillSlot.A
+                    && skill.IsDefaultLearned
+                    && !string.IsNullOrWhiteSpace(skill.SkillId))
                 {
                     return skill.SkillId;
                 }
@@ -173,9 +86,9 @@ namespace Pakuri.InGame
         }
 
         /*
-         * ResolveDefaultPassiveSkillId 결과를 계산해 반환한다.
+         * 런 시작 시 사용할 F 슬롯 기본 패시브를 찾는다.
          */
-        private static string ResolveDefaultPassiveSkillId(MonsterDefinition monster)
+        private static string ResolveDefaultPassiveSkillId(MonsterDefinition monster /* 몬스터 */)
         {
             if (monster == null || monster.PassiveSkills == null)
             {
@@ -198,233 +111,77 @@ namespace Pakuri.InGame
         }
 
         /*
-         * HasChosenReward 조건을 만족하는지 확인한다.
+         * 지정한 파티원이 이미 선택한 보상인지 확인한다.
          */
-        public bool HasChosenReward(string rewardId)
+        public bool HasChosenReward(string monsterId /* 몬스터 식별자 */, string rewardId /* 보상 식별자 */)
         {
-            return HasChosenReward(SelectedMonsterId, rewardId);
+            RunMonsterState member = GetPartyMemberState(monsterId);
+            return member.ChosenRewardIds.Contains(rewardId);
         }
 
         /*
-         * HasChosenReward 조건을 만족하는지 확인한다.
-         */
-        public bool HasChosenReward(string monsterId, string rewardId)
-        {
-            if (string.IsNullOrWhiteSpace(rewardId))
-            {
-                return false;
-            }
-
-            var member = GetPartyMemberState(monsterId);
-            var values = member != null ? member.ChosenRewardIds : ChosenRewardIds;
-            for (var i = 0; i < values.Count; i++)
-            {
-                if (string.Equals(values[i], rewardId, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /*
-         * RecordOfferingChoice 작업을 수행한다.
-         */
-        public void RecordOfferingChoice(string rewardId, string linkedChoiceId, string activeSkillId, string passiveSkillId)
-        {
-            RecordOfferingChoice(SelectedMonsterId, rewardId, linkedChoiceId, activeSkillId, passiveSkillId);
-        }
-
-        /*
-         * RecordOfferingChoice 작업을 수행한다.
+         * 지정한 파티원이 선택한 Offering 보상과 습득 스킬을 기록한다.
          */
         public void RecordOfferingChoice(
-            string monsterId,
-            string rewardId,
-            string linkedChoiceId,
-            string activeSkillId,
-            string passiveSkillId)
+            string monsterId /* 몬스터 식별자 */,
+            string rewardId /* 보상 식별자 */,
+            string linkedChoiceId /* 연결된 선택지 식별자 */,
+            string activeSkillId /* 액티브 스킬 식별자 */,
+            string passiveSkillId /* 패시브 스킬 식별자 */)
         {
-            var member = GetPartyMemberState(monsterId);
-            var chosenRewards = member != null ? member.ChosenRewardIds : ChosenRewardIds;
+            RunMonsterState member = GetPartyMemberState(monsterId);
             if (!string.IsNullOrWhiteSpace(rewardId) && !HasChosenReward(monsterId, rewardId))
             {
-                AddUniqueText(chosenRewards, rewardId);
-                if (IsSelectedMonster(monsterId))
-                {
-                    AddUniqueText(ChosenRewardIds, rewardId);
-                }
+                member.ChosenRewardIds.Add(rewardId);
             }
 
-            var chosenChoices = member != null ? member.ChosenChoiceIds : ChosenChoiceIds;
-            AddUniqueText(chosenChoices, linkedChoiceId);
-            if (IsSelectedMonster(monsterId))
+            if (!string.IsNullOrWhiteSpace(linkedChoiceId) && !member.ChosenChoiceIds.Contains(linkedChoiceId))
             {
-                AddUniqueText(ChosenChoiceIds, linkedChoiceId);
+                member.ChosenChoiceIds.Add(linkedChoiceId);
             }
 
-            AddLearnedActive(monsterId, activeSkillId);
-            AddLearnedPassive(monsterId, passiveSkillId);
-        }
-
-        /*
-         * AddLearnedActive 작업을 수행한다.
-         */
-        public void AddLearnedActive(string activeSkillId)
-        {
-            AddLearnedActive(SelectedMonsterId, activeSkillId);
-        }
-
-        /*
-         * AddLearnedActive 작업을 수행한다.
-         */
-        public void AddLearnedActive(string monsterId, string activeSkillId)
-        {
-            var member = GetPartyMemberState(monsterId);
-            AddUniqueText(member != null ? member.LearnedActives : LearnedActives, activeSkillId);
-            if (IsSelectedMonster(monsterId))
+            if (!string.IsNullOrWhiteSpace(activeSkillId) && !HasLearnedActive(monsterId, activeSkillId))
             {
-                AddUniqueText(LearnedActives, activeSkillId);
+                member.LearnedActives.Add(activeSkillId);
             }
-        }
 
-        /*
-         * AddLearnedPassive 작업을 수행한다.
-         */
-        public void AddLearnedPassive(string passiveSkillId)
-        {
-            AddLearnedPassive(SelectedMonsterId, passiveSkillId);
-        }
-
-        /*
-         * AddLearnedPassive 작업을 수행한다.
-         */
-        public void AddLearnedPassive(string monsterId, string passiveSkillId)
-        {
-            var member = GetPartyMemberState(monsterId);
-            AddUniqueText(member != null ? member.LearnedPassives : LearnedPassives, passiveSkillId);
-            if (IsSelectedMonster(monsterId))
+            if (!string.IsNullOrWhiteSpace(passiveSkillId) && !HasLearnedPassive(monsterId, passiveSkillId))
             {
-                AddUniqueText(LearnedPassives, passiveSkillId);
+                member.LearnedPassives.Add(passiveSkillId);
             }
         }
 
         /*
-         * HasLearnedActive 조건을 만족하는지 확인한다.
+         * 지정한 파티원이 액티브 스킬을 습득했는지 확인한다.
          */
-        public bool HasLearnedActive(string activeSkillId)
+        public bool HasLearnedActive(string monsterId /* 몬스터 식별자 */, string activeSkillId /* 액티브 스킬 식별자 */)
         {
-            return HasLearnedActive(SelectedMonsterId, activeSkillId);
+            RunMonsterState member = GetPartyMemberState(monsterId);
+            return member.LearnedActives.Contains(activeSkillId);
         }
 
         /*
-         * HasLearnedActive 조건을 만족하는지 확인한다.
+         * 지정한 파티원이 패시브 스킬을 습득했는지 확인한다.
          */
-        public bool HasLearnedActive(string monsterId, string activeSkillId)
+        public bool HasLearnedPassive(string monsterId /* 몬스터 식별자 */, string passiveSkillId /* 패시브 스킬 식별자 */)
         {
-            var member = GetPartyMemberState(monsterId);
-            return ContainsText(member != null ? member.LearnedActives : LearnedActives, activeSkillId);
+            RunMonsterState member = GetPartyMemberState(monsterId);
+            return member.LearnedPassives.Contains(passiveSkillId);
         }
 
         /*
-         * HasLearnedPassive 조건을 만족하는지 확인한다.
+         * 획득한 골드와 어둠의 흔적을 런 재화에 더한다.
          */
-        public bool HasLearnedPassive(string passiveSkillId)
-        {
-            return HasLearnedPassive(SelectedMonsterId, passiveSkillId);
-        }
-
-        /*
-         * HasLearnedPassive 조건을 만족하는지 확인한다.
-         */
-        public bool HasLearnedPassive(string monsterId, string passiveSkillId)
-        {
-            var member = GetPartyMemberState(monsterId);
-            return ContainsText(member != null ? member.LearnedPassives : LearnedPassives, passiveSkillId);
-        }
-
-        /*
-         * AddUniqueText 작업을 수행한다.
-         */
-        private static void AddUniqueText(List<string> values, string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return;
-            }
-
-            if (!ContainsText(values, value))
-            {
-                values.Add(value);
-            }
-        }
-
-        /*
-         * ContainsText 조건을 만족하는지 확인한다.
-         */
-        private static bool ContainsText(IReadOnlyList<string> values, string target)
-        {
-            if (string.IsNullOrWhiteSpace(target))
-            {
-                return false;
-            }
-
-            for (var i = 0; i < values.Count; i++)
-            {
-                if (string.Equals(values[i], target, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /*
-         * ApplyPostCombatSummary 처리를 대상에 적용한다.
-         */
-        public void ApplyPostCombatSummary(int goldReward, int darkTraceReward, int prisonerCount)
-        {
-            ApplyPostCombatSummary(goldReward, darkTraceReward, prisonerCount, null);
-        }
-
-        /*
-         * ApplyPostCombatSummary 처리를 대상에 적용한다.
-         */
-        public void ApplyPostCombatSummary(int goldReward, int darkTraceReward, int prisonerCount, IReadOnlyList<string> prisonerNames)
-        {
-            Gold += goldReward;
-            DarkTrace += darkTraceReward;
-            PrisonersSeen += prisonerCount;
-
-            if (prisonerNames == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < prisonerNames.Count; i++)
-            {
-                if (!string.IsNullOrWhiteSpace(prisonerNames[i]))
-                {
-                    PrisonerNames.Add(prisonerNames[i]);
-                }
-            }
-        }
-
-        /*
-         * ClaimMaterialReward 작업을 수행한다.
-         */
-        public void ClaimMaterialReward(int goldReward, int darkTraceReward)
+        public void ClaimMaterialReward(int goldReward /* 골드 보상 */, int darkTraceReward /* 어둠 흔적 보상 */)
         {
             Gold += Math.Max(0, goldReward);
             DarkTrace += Math.Max(0, darkTraceReward);
         }
 
         /*
-         * ClaimPrisonerReward 작업을 수행한다.
+         * 선택한 포로를 획득 목록에 추가한다.
          */
-        public void ClaimPrisonerReward(string prisonerName)
+        public void ClaimPrisonerReward(string prisonerName /* 수감자 이름 */)
         {
             if (string.IsNullOrWhiteSpace(prisonerName))
             {
@@ -436,37 +193,17 @@ namespace Pakuri.InGame
         }
 
         /*
-         * HasManifestedMonster 조건을 만족하는지 확인한다.
+         * 지정한 몬스터가 이미 현현했는지 확인한다.
          */
-        public bool HasManifestedMonster(string monsterId)
+        public bool HasManifestedMonster(string monsterId /* 몬스터 식별자 */)
         {
-            if (string.IsNullOrWhiteSpace(monsterId))
-            {
-                return false;
-            }
-
-            return ContainsText(ManifestedMonsterIds, monsterId);
+            return ManifestedMonsterIds.Contains(monsterId);
         }
 
         /*
-         * RecordManifestedMonster 작업을 수행한다.
+         * 새로 현현한 몬스터를 파티 목록과 진행 상태에 등록한다.
          */
-        public void RecordManifestedMonster(string monsterId)
-        {
-            if (string.IsNullOrWhiteSpace(monsterId)
-                || IsSelectedMonster(monsterId)
-                || HasManifestedMonster(monsterId))
-            {
-                return;
-            }
-
-            ManifestedMonsterIds.Add(monsterId);
-        }
-
-        /*
-         * RecordManifestedMonster 작업을 수행한다.
-         */
-        public void RecordManifestedMonster(MonsterDefinition monster)
+        public void RecordManifestedMonster(MonsterDefinition monster /* 몬스터 */)
         {
             if (monster == null
                 || string.IsNullOrWhiteSpace(monster.MonsterId)
@@ -481,60 +218,20 @@ namespace Pakuri.InGame
         }
 
         /*
-         * AccumulateReward 작업을 수행한다.
+         * 지정한 파티원의 영구 최대 체력 증가값을 기록한다.
          */
-        public void AccumulateReward(
-            float damageMultiplier,
-            int magazineBonus,
-            float shotIntervalMultiplier,
-            float reloadDurationMultiplier,
-            float maxHealthBonus,
-            float statusChanceBonus)
+        public void AddMaxHealthBonus(
+            string monsterId /* 몬스터 식별자 */,
+            float maxHealthBonus /* 최대 체력 추가값 */)
         {
-            DamageMultiplier *= damageMultiplier > 0f ? damageMultiplier : 1f;
-            MagazineBonus += magazineBonus;
-            ShotIntervalMultiplier *= shotIntervalMultiplier > 0f ? shotIntervalMultiplier : 1f;
-            ReloadDurationMultiplier *= reloadDurationMultiplier > 0f ? reloadDurationMultiplier : 1f;
-            MaxHealthBonus += maxHealthBonus;
-            StatusChanceBonus += statusChanceBonus;
-        }
-
-        /*
-         * AccumulateReward 작업을 수행한다.
-         */
-        public void AccumulateReward(
-            string monsterId,
-            float damageMultiplier,
-            int magazineBonus,
-            float shotIntervalMultiplier,
-            float reloadDurationMultiplier,
-            float maxHealthBonus,
-            float statusChanceBonus)
-        {
-            var member = GetPartyMemberState(monsterId);
-            if (member == null)
-            {
-                AccumulateReward(damageMultiplier, magazineBonus, shotIntervalMultiplier, reloadDurationMultiplier, maxHealthBonus, statusChanceBonus);
-                return;
-            }
-
-            if (IsSelectedMonster(monsterId))
-            {
-                AccumulateReward(damageMultiplier, magazineBonus, shotIntervalMultiplier, reloadDurationMultiplier, maxHealthBonus, statusChanceBonus);
-            }
-
-            member.DamageMultiplier *= damageMultiplier > 0f ? damageMultiplier : 1f;
-            member.MagazineBonus += magazineBonus;
-            member.ShotIntervalMultiplier *= shotIntervalMultiplier > 0f ? shotIntervalMultiplier : 1f;
-            member.ReloadDurationMultiplier *= reloadDurationMultiplier > 0f ? reloadDurationMultiplier : 1f;
+            RunMonsterState member = GetPartyMemberState(monsterId);
             member.MaxHealthBonus += maxHealthBonus;
-            member.StatusChanceBonus += statusChanceBonus;
         }
 
         /*
-         * EnsurePartyMemberState에 필요한 상태가 준비되어 있는지 확인하고 구성한다.
+         * 몬스터의 파티 진행 상태가 없으면 기본 스킬과 함께 새로 만든다.
          */
-        public RunMonsterState EnsurePartyMemberState(MonsterDefinition monster)
+        public RunMonsterState EnsurePartyMemberState(MonsterDefinition monster /* 몬스터 */)
         {
             if (monster == null || string.IsNullOrWhiteSpace(monster.MonsterId))
             {
@@ -553,24 +250,16 @@ namespace Pakuri.InGame
                 MonsterName = monster.DisplayName
             };
 
-            AddUniqueText(state.LearnedActives, ResolveDefaultActiveSkillId(monster));
+            state.LearnedActives.Add(ResolveDefaultActiveSkillId(monster));
             PartyMembers.Add(state);
-
-            if (string.Equals(monster.MonsterId, SelectedMonsterId, StringComparison.OrdinalIgnoreCase))
-            {
-                CopyUnique(LearnedActives, state.LearnedActives);
-                CopyUnique(LearnedPassives, state.LearnedPassives);
-                CopyUnique(ChosenRewardIds, state.ChosenRewardIds);
-                CopyUnique(ChosenChoiceIds, state.ChosenChoiceIds);
-            }
 
             return state;
         }
 
         /*
-         * GetPartyMemberState에 해당하는 값을 찾아 반환한다.
+         * 몬스터 식별자와 일치하는 파티 진행 상태를 찾는다.
          */
-        public RunMonsterState GetPartyMemberState(string monsterId)
+        public RunMonsterState GetPartyMemberState(string monsterId /* 몬스터 식별자 */)
         {
             if (string.IsNullOrWhiteSpace(monsterId))
             {
@@ -590,54 +279,13 @@ namespace Pakuri.InGame
         }
 
         /*
-         * IsSelectedMonster 조건을 만족하는지 확인한다.
+         * 지정한 몬스터가 런 시작 시 선택한 몬스터인지 확인한다.
          */
-        private bool IsSelectedMonster(string monsterId)
+        private bool IsSelectedMonster(string monsterId /* 몬스터 식별자 */)
         {
             return !string.IsNullOrWhiteSpace(monsterId)
                 && string.Equals(SelectedMonsterId, monsterId, StringComparison.OrdinalIgnoreCase);
         }
 
-        /*
-         * CopyUnique에 필요한 값을 복사한다.
-         */
-        private static void CopyUnique(IReadOnlyList<string> source, List<string> target)
-        {
-            if (source == null || target == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < source.Count; i++)
-            {
-                AddUniqueText(target, source[i]);
-            }
-        }
-
-        /*
-         * AdvanceDay 작업을 수행한다.
-         */
-        public void AdvanceDay()
-        {
-            DayIndex += 1;
-            if (DayIndex <= 11)
-            {
-                RefreshDayModel();
-                return;
-            }
-
-            DayIndex = 1;
-            StageIndex = Math.Min(StageIndex + 1, 4);
-            RefreshDayModel();
-        }
-
-        /*
-         * RefreshDayModel 대상의 현재 상태를 갱신한다.
-         */
-        public void RefreshDayModel()
-        {
-            CurrentDayModel = RunDayModel.Resolve(StageIndex, DayIndex);
-            CurrentCombatType = CurrentDayModel.CombatType;
-        }
     }
 }

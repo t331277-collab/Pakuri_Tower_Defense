@@ -86,7 +86,7 @@ public class MainMenuUIManager : MonoBehaviour
     /*
      * 버튼과 동작이 모두 있을 때 클릭 동작을 등록한다.
      */
-    private static void Bind(Button button, UnityEngine.Events.UnityAction action)
+    private static void Bind(Button button /* 연결하거나 갱신할 버튼 */, UnityEngine.Events.UnityAction action /* 동작 */)
     {
         if (button == null || action == null)
         {
@@ -123,7 +123,7 @@ public class MainMenuUIManager : MonoBehaviour
     /*
      * 다음 Run에서 사용할 몬스터 식별자를 저장한다.
      */
-    private void SelectMonster(string monsterId)
+    private void SelectMonster(string monsterId /* 몬스터 식별자 */)
     {
         selectedMonsterId = monsterId;
     }
@@ -148,7 +148,7 @@ public class MainMenuUIManager : MonoBehaviour
     /*
      * 지정한 패널만 켜고 나머지 메뉴 패널을 끈다.
      */
-    private void SetOnlyActive(GameObject activePanel)
+    private void SetOnlyActive(GameObject activePanel /* 활성 패널 여부 */)
     {
         SetActive(introPanel, introPanel == activePanel);
         SetActive(mainMenuPanel, mainMenuPanel == activePanel);
@@ -158,7 +158,7 @@ public class MainMenuUIManager : MonoBehaviour
     /*
      * UI 오브젝트가 있을 때 활성 상태를 변경한다.
      */
-    private static void SetActive(GameObject target, bool active)
+    private static void SetActive(GameObject target /* 활성화하거나 변경할 게임 오브젝트 */, bool active /* 대상 활성화 여부 */)
     {
         if (target != null)
         {
@@ -169,7 +169,7 @@ public class MainMenuUIManager : MonoBehaviour
     /*
      * 현재 참조를 사용하거나 전달받은 이름 순서대로 씬 오브젝트를 찾는다.
      */
-    private static GameObject ResolveGameObject(GameObject current, params string[] names)
+    private static GameObject ResolveGameObject(GameObject current /* 현재 */, params string[] names /* 이름 목록 */)
     {
         if (current != null)
         {
@@ -191,7 +191,7 @@ public class MainMenuUIManager : MonoBehaviour
     /*
      * 현재 버튼을 사용하거나 지정한 UI 아래에서 버튼을 찾는다.
      */
-    private static Button ResolveButton(Button current, GameObject root, string childName)
+    private static Button ResolveButton(Button current /* 현재 */, GameObject root /* 검색이나 배치의 기준 오브젝트 */, string childName /* 자식 오브젝트 이름 */)
     {
         if (current != null)
         {
@@ -210,7 +210,7 @@ public class MainMenuUIManager : MonoBehaviour
     /*
      * 지정한 계층에서 이름이 같은 자식 오브젝트를 재귀적으로 찾는다.
      */
-    private static GameObject FindChild(Transform root, string childName)
+    private static GameObject FindChild(Transform root /* 검색이나 배치의 기준 오브젝트 */, string childName /* 자식 오브젝트 이름 */)
     {
         if (root == null || string.IsNullOrWhiteSpace(childName))
         {
@@ -237,7 +237,7 @@ public class MainMenuUIManager : MonoBehaviour
     /*
      * 현재 씬에 속한 오브젝트 중 이름이 같은 오브젝트를 찾는다.
      */
-    private static GameObject FindSceneGameObject(string objectName)
+    private static GameObject FindSceneGameObject(string objectName /* 게임 오브젝트 이름 */)
     {
         if (string.IsNullOrWhiteSpace(objectName))
         {

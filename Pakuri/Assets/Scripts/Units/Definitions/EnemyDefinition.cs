@@ -71,7 +71,7 @@ namespace Pakuri.Data
             CriticalDamage = DamageCalculator.BaseCriticalMultiplier,
             CriticalResistance = 0f
         };
-        public DamageCalculator.AttributeDefenseSet Defenses = new DamageCalculator.AttributeDefenseSet();
+        public UnitDefenseStats Defenses = new UnitDefenseStats();
 
         [Header("Shared Runtime Skills")]
         // 공용 스킬 런타임으로 전달할 액티브 스킬과 Trigger

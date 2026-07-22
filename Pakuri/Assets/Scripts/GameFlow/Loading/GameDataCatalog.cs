@@ -27,7 +27,7 @@ namespace Pakuri.Data
         /*
          * GetData에 해당하는 값을 찾아 반환한다.
          */
-        public T GetData<T>(string id)
+        public T GetData<T>(string id /* 대상을 구분하는 식별자 */)
             where T : class
         {
             return lookup.GetData<T>(id);
@@ -36,7 +36,7 @@ namespace Pakuri.Data
         /*
          * TryGetData 작업을 시도하고 성공 여부를 반환한다.
          */
-        public bool TryGetData<T>(string id, out T value)
+        public bool TryGetData<T>(string id /* 대상을 구분하는 식별자 */, out T value /* 처리할 값 */)
             where T : class
         {
             return lookup.TryGetData(id, out value);
@@ -53,7 +53,7 @@ namespace Pakuri.Data
         /*
          * ResolveMonster 결과를 계산해 반환한다.
          */
-        public MonsterDefinition ResolveMonster(string id)
+        public MonsterDefinition ResolveMonster(string id /* 대상을 구분하는 식별자 */)
         {
             return lookup.ResolveMonster(id);
         }
@@ -61,7 +61,7 @@ namespace Pakuri.Data
         /*
          * GetActiveSkills에 해당하는 값을 찾아 반환한다.
          */
-        public SkillDefinition[] GetActiveSkills(string monsterId)
+        public SkillDefinition[] GetActiveSkills(string monsterId /* 몬스터 식별자 */)
         {
             return lookup.GetActiveSkills(monsterId);
         }
@@ -69,7 +69,7 @@ namespace Pakuri.Data
         /*
          * GetPassiveSkills에 해당하는 값을 찾아 반환한다.
          */
-        public PassiveDefinition[] GetPassiveSkills(string monsterId)
+        public PassiveDefinition[] GetPassiveSkills(string monsterId /* 몬스터 식별자 */)
         {
             return lookup.GetPassiveSkills(monsterId);
         }
@@ -77,7 +77,7 @@ namespace Pakuri.Data
         /*
          * GetRewardChoices에 해당하는 값을 찾아 반환한다.
          */
-        public MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(string monsterId)
+        public MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(string monsterId /* 몬스터 식별자 */)
         {
             return lookup.GetRewardChoices(monsterId);
         }
@@ -85,7 +85,7 @@ namespace Pakuri.Data
         /*
          * ResolveActiveSkill 결과를 계산해 반환한다.
          */
-        public SkillDefinition ResolveActiveSkill(string monsterId, SkillSlot slot)
+        public SkillDefinition ResolveActiveSkill(string monsterId /* 몬스터 식별자 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
         {
             return lookup.ResolveActiveSkill(monsterId, slot);
         }
@@ -93,7 +93,7 @@ namespace Pakuri.Data
         /*
          * ResolvePassiveSkill 결과를 계산해 반환한다.
          */
-        public PassiveDefinition ResolvePassiveSkill(string monsterId, SkillSlot slot)
+        public PassiveDefinition ResolvePassiveSkill(string monsterId /* 몬스터 식별자 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
         {
             return lookup.ResolvePassiveSkill(monsterId, slot);
         }
@@ -124,7 +124,7 @@ namespace Pakuri.Data
         /*
          * 새 카탈로그를 기준으로 모든 런타임 조회 표를 다시 구성한다.
          */
-        public void RegisterCatalog(GameDataCatalog catalog)
+        public void RegisterCatalog(GameDataCatalog catalog /* 불러온 게임 데이터 목록 */)
         {
             monsters.Clear();
             enemies.Clear();
@@ -151,7 +151,7 @@ namespace Pakuri.Data
         /*
          * ID와 요청 자료형에 맞는 데이터를 조회하고 없으면 null을 반환한다.
          */
-        public T GetData<T>(string id)
+        public T GetData<T>(string id /* 대상을 구분하는 식별자 */)
             where T : class
         {
             if (TryGetData(id, out T value))
@@ -165,7 +165,7 @@ namespace Pakuri.Data
         /*
          * ID와 요청 자료형에 맞는 데이터를 찾아 반환한다.
          */
-        public bool TryGetData<T>(string id, out T value)
+        public bool TryGetData<T>(string id /* 대상을 구분하는 식별자 */, out T value /* 처리할 값 */)
             where T : class
         {
             value = null;
@@ -224,7 +224,7 @@ namespace Pakuri.Data
         /*
          * ID에 맞는 몬스터를 반환한다.
          */
-        public MonsterDefinition ResolveMonster(string id)
+        public MonsterDefinition ResolveMonster(string id /* 대상을 구분하는 식별자 */)
         {
             return GetData<MonsterDefinition>(id);
         }
@@ -232,7 +232,7 @@ namespace Pakuri.Data
         /*
          * 몬스터에 등록된 액티브 스킬 목록을 반환한다.
          */
-        public SkillDefinition[] GetActiveSkills(string monsterId)
+        public SkillDefinition[] GetActiveSkills(string monsterId /* 몬스터 식별자 */)
         {
             if (!string.IsNullOrWhiteSpace(monsterId)
                 && activeSkillsByMonster.TryGetValue(monsterId, out var registeredSkills)
@@ -248,7 +248,7 @@ namespace Pakuri.Data
         /*
          * 몬스터에 등록된 패시브 스킬 목록을 반환한다.
          */
-        public PassiveDefinition[] GetPassiveSkills(string monsterId)
+        public PassiveDefinition[] GetPassiveSkills(string monsterId /* 몬스터 식별자 */)
         {
             if (!string.IsNullOrWhiteSpace(monsterId)
                 && passiveSkillsByMonster.TryGetValue(monsterId, out var registeredPassives)
@@ -264,7 +264,7 @@ namespace Pakuri.Data
         /*
          * 몬스터에 등록된 초기 보상 선택지 목록을 반환한다.
          */
-        public MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(string monsterId)
+        public MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(string monsterId /* 몬스터 식별자 */)
         {
             if (!string.IsNullOrWhiteSpace(monsterId)
                 && rewardChoicesByMonster.TryGetValue(monsterId, out var registeredRewards)
@@ -280,7 +280,7 @@ namespace Pakuri.Data
         /*
          * 몬스터의 액티브 스킬 중 요청 슬롯에 배치된 스킬을 찾는다.
          */
-        public SkillDefinition ResolveActiveSkill(string monsterId, SkillSlot slot)
+        public SkillDefinition ResolveActiveSkill(string monsterId /* 몬스터 식별자 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
         {
             var skills = GetActiveSkills(monsterId);
             for (var i = 0; i < skills.Length; i++)
@@ -298,7 +298,7 @@ namespace Pakuri.Data
         /*
          * 몬스터의 패시브 스킬 중 요청 슬롯에 배치된 스킬을 찾는다.
          */
-        public PassiveDefinition ResolvePassiveSkill(string monsterId, SkillSlot slot)
+        public PassiveDefinition ResolvePassiveSkill(string monsterId /* 몬스터 식별자 */, SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
         {
             var passives = GetPassiveSkills(monsterId);
             for (var i = 0; i < passives.Length; i++)
@@ -316,7 +316,7 @@ namespace Pakuri.Data
         /*
          * 몬스터와 몬스터가 소유한 스킬 및 보상 선택지를 조회 표에 등록한다.
          */
-        private void RegisterMonsters(MonsterDefinition[] catalogMonsters)
+        private void RegisterMonsters(MonsterDefinition[] catalogMonsters /* 데이터 목록 몬스터 목록 */)
         {
             if (catalogMonsters == null)
             {
@@ -388,7 +388,7 @@ namespace Pakuri.Data
         /*
          * 적 정의를 전역 ID 조회 표에 등록한다.
          */
-        private void RegisterEnemies(EnemyDefinition[] catalogEnemies)
+        private void RegisterEnemies(EnemyDefinition[] catalogEnemies /* 데이터 목록 적 목록 */)
         {
             if (catalogEnemies == null)
             {
@@ -410,7 +410,7 @@ namespace Pakuri.Data
         /*
          * 상태 효과 정의를 ID 조회 표에 등록한다.
          */
-        private void RegisterStatusEffects(StatusEffectDefinition[] catalogStatusEffects)
+        private void RegisterStatusEffects(StatusEffectDefinition[] catalogStatusEffects /* 카탈로그에 등록할 상태 효과 정의 목록 */)
         {
             if (catalogStatusEffects == null)
             {
@@ -432,7 +432,7 @@ namespace Pakuri.Data
         /*
          * 액티브 스킬과 그 성장 선택지를 조회 표에 등록한다.
          */
-        private void RegisterActiveSkill(SkillDefinition skill)
+        private void RegisterActiveSkill(SkillDefinition skill /* 처리할 스킬 정의 */)
         {
             if (skill == null || string.IsNullOrWhiteSpace(skill.SkillId))
             {
@@ -447,7 +447,7 @@ namespace Pakuri.Data
         /*
          * 패시브 스킬과 그 성장 선택지를 조회 표에 등록한다.
          */
-        private void RegisterPassiveSkill(PassiveDefinition passive)
+        private void RegisterPassiveSkill(PassiveDefinition passive /* 패시브 */)
         {
             if (passive == null || string.IsNullOrWhiteSpace(passive.PassiveId))
             {
@@ -461,7 +461,7 @@ namespace Pakuri.Data
         /*
          * 스킬 성장 선택지를 ID 조회 표에 등록한다.
          */
-        private void RegisterSkillChoices(SkillChoiceDefinition[] choices)
+        private void RegisterSkillChoices(SkillChoiceDefinition[] choices /* 선택지 목록 */)
         {
             if (choices == null)
             {

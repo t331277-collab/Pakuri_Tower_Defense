@@ -54,6 +54,30 @@ namespace Pakuri.InGame
         public float Ice;
         public float Darkness;
         public float Holy;
+
+        /*
+         * 피해 속성에 해당하는 방어력을 반환한다.
+         */
+        public float Get(DamageAttribute attribute /* 피해 속성 */)
+        {
+            switch (attribute)
+            {
+                case DamageAttribute.Physical:
+                    return Physical;
+                case DamageAttribute.Fire:
+                    return Fire;
+                case DamageAttribute.Lightning:
+                    return Lightning;
+                case DamageAttribute.Ice:
+                    return Ice;
+                case DamageAttribute.Darkness:
+                    return Darkness;
+                case DamageAttribute.Holy:
+                    return Holy;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(attribute), attribute, null);
+            }
+        }
     }
 
     [Serializable]

@@ -9,6 +9,52 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-22 Damage And Defense Type Simplification
+
+### Task title
+
+Keep one defense data type and reduce DamageCalculator to raw and final damage calculation.
+
+### Goals
+
+- Use `UnitDefenseStats` for definition and runtime defense values.
+- Copy definition defenses only once when creating a mutable runtime unit.
+- Remove per-hit defense conversion and unused damage calculation layers.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- CSV columns and authored defense values remain unchanged.
+- Existing defense reduction, critical, incoming-damage, shield, and healing formulas remain unchanged.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and solution-build verified.
+
+### Next Actions
+
+- User verifies physical/elemental defense, critical hits, shield amounts, healing, and conditional projectile damage in Play Mode.
+
+### Evidence
+
+- `DamageCalculator.cs` now contains only `CalculateRawDamage(...)` and `CalculateFinalDamage(...)` as calculation methods.
+- `AttributeDefenseSet`, `CopyDefenses`, `ResolveDefense`, `ResolveDamageAgainstTarget`, shield calculation, and healing power calculation were removed from `DamageCalculator`.
+- `MonsterDefinition`, `EnemyDefinition`, and `GameDataCatalogBuilder` now use `UnitDefenseStats` directly without changing CSV fields.
+- `UnitCombatStateFactory.CreateRuntimeDefenses(...)` retains the one required copy before runtime passives mutate unit defenses.
+- `ProjectileSkillActor.ResolveHitDamage(...)` now applies the same snapshot conditional damage multiplier as the other projectile hit path.
+- Search under `Pakuri/Assets/Scripts` found zero references to the removed defense and damage helper symbols.
+- `git diff --check` passed for the edited scripts.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 assembly-version warnings.
+
+### History
+
+- 2026-07-22: Code Builder unified defense representation, removed per-hit defense allocation, and reduced DamageCalculator to the two requested damage stages.
+
 ## Task: 2026-07-19 Stage Parser Dead Value Removal
 
 ### Task title

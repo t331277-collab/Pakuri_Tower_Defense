@@ -14,7 +14,7 @@ namespace Pakuri.Data
         /*
          * CompileSkillEffects 작업을 수행한다.
          */
-        public static void CompileSkillEffects(SkillEffectDefinition[] effects)
+        public static void CompileSkillEffects(SkillEffectDefinition[] effects /* 실행할 효과 목록 */)
         {
             if (effects == null)
             {
@@ -53,7 +53,7 @@ namespace Pakuri.Data
         /*
          * CompileTriggers 작업을 수행한다.
          */
-        public static void CompileTriggers(SkillTriggerDefinition[] triggers)
+        public static void CompileTriggers(SkillTriggerDefinition[] triggers /* 트리거 목록 */)
         {
             if (triggers == null)
             {
@@ -83,7 +83,7 @@ namespace Pakuri.Data
         /*
          * ParseStatusKind에 필요한 데이터를 읽어 변환한다.
          */
-        public static StatusEffectKind ParseStatusKind(string value)
+        public static StatusEffectKind ParseStatusKind(string value /* 처리할 값 */)
         {
             if (StatusEffectLookup.TryParse(value, out var kind))
             {
@@ -96,7 +96,7 @@ namespace Pakuri.Data
         /*
          * ParseStatusKinds에 필요한 데이터를 읽어 변환한다.
          */
-        public static StatusEffectKind[] ParseStatusKinds(string rawValue)
+        public static StatusEffectKind[] ParseStatusKinds(string rawValue /* 변환 전 원본 문자열 */)
         {
             var statusIds = ParseIdList(rawValue);
             var kinds = new StatusEffectKind[statusIds.Length];
@@ -111,7 +111,7 @@ namespace Pakuri.Data
         /*
          * Create에 필요한 결과를 만들어 반환한다.
          */
-        public static StatusRuntimeData Create(StatusEffectKind kind, string label)
+        public static StatusRuntimeData Create(StatusEffectKind kind /* 처리할 종류 */, string label /* 표시 문구 */)
         {
             if (kind == StatusEffectKind.None)
             {
@@ -167,7 +167,7 @@ namespace Pakuri.Data
         /*
          * Create에 필요한 결과를 만들어 반환한다.
          */
-        public static StatusRuntimeData Create(StatusEffectKind kind, string label, SkillDefinition source)
+        public static StatusRuntimeData Create(StatusEffectKind kind /* 처리할 종류 */, string label /* 표시 문구 */, SkillDefinition source /* 변환할 스킬 정의 */)
         {
             var status = Create(kind, label);
             if (source == null)
@@ -285,7 +285,7 @@ namespace Pakuri.Data
         /*
          * Create에 필요한 결과를 만들어 반환한다.
          */
-        public static StatusRuntimeData Create(SkillEffectDefinition effect)
+        public static StatusRuntimeData Create(SkillEffectDefinition effect /* 실행하거나 변환할 효과 */)
         {
             var kind = ParseStatusKind(effect.StatusEffectId);
             var status = Create(kind, effect.StatusEffectLabel);
@@ -383,8 +383,8 @@ namespace Pakuri.Data
          * TryParseConditionStatusExpression 작업을 시도하고 성공 여부를 반환한다.
          */
         public static bool TryParseConditionStatusExpression(
-            string rawValue,
-            out StatusConditionGroup[] groups)
+            string rawValue /* 변환 전 원본 문자열 */,
+            out StatusConditionGroup[] groups /* 그룹 목록 */)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
@@ -460,7 +460,7 @@ namespace Pakuri.Data
         /*
          * ParseConditionStatusExpression에 필요한 데이터를 읽어 변환한다.
          */
-        public static StatusConditionGroup[] ParseConditionStatusExpression(string rawValue)
+        public static StatusConditionGroup[] ParseConditionStatusExpression(string rawValue /* 변환 전 원본 문자열 */)
         {
             if (TryParseConditionStatusExpression(rawValue, out var groups))
             {
@@ -473,7 +473,7 @@ namespace Pakuri.Data
         /*
          * ParseSkillRuntimeKindConditions에 필요한 데이터를 읽어 변환한다.
          */
-        public static SkillRuntimeKindCondition[] ParseSkillRuntimeKindConditions(string rawValue)
+        public static SkillRuntimeKindCondition[] ParseSkillRuntimeKindConditions(string rawValue /* 변환 전 원본 문자열 */)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
@@ -507,7 +507,7 @@ namespace Pakuri.Data
         /*
          * ParseIdList에 필요한 데이터를 읽어 변환한다.
          */
-        public static string[] ParseIdList(string rawValue)
+        public static string[] ParseIdList(string rawValue /* 변환 전 원본 문자열 */)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
             {
@@ -531,7 +531,7 @@ namespace Pakuri.Data
         /*
          * TryParseTargetScope 작업을 시도하고 성공 여부를 반환한다.
          */
-        public static bool TryParseTargetScope(string rawValue, out StatusTargetScope scope)
+        public static bool TryParseTargetScope(string rawValue /* 변환 전 원본 문자열 */, out StatusTargetScope scope /* 적용 범위 */)
         {
             scope = StatusTargetScope.Unspecified;
             if (string.IsNullOrWhiteSpace(rawValue))
@@ -555,7 +555,7 @@ namespace Pakuri.Data
         /*
          * TryParseMergePolicy 작업을 시도하고 성공 여부를 반환한다.
          */
-        public static bool TryParseMergePolicy(string rawValue, out StatusMergePolicy policy)
+        public static bool TryParseMergePolicy(string rawValue /* 변환 전 원본 문자열 */, out StatusMergePolicy policy /* 정책 */)
         {
             policy = StatusMergePolicy.Unspecified;
             if (string.IsNullOrWhiteSpace(rawValue))
@@ -582,7 +582,7 @@ namespace Pakuri.Data
         /*
          * TryParseShieldRefreshRule 작업을 시도하고 성공 여부를 반환한다.
          */
-        public static bool TryParseShieldRefreshRule(string rawValue, out ShieldRefreshRule rule)
+        public static bool TryParseShieldRefreshRule(string rawValue /* 변환 전 원본 문자열 */, out ShieldRefreshRule rule /* 규칙 */)
         {
             rule = ShieldRefreshRule.TakeHighest;
             if (string.IsNullOrWhiteSpace(rawValue))
@@ -609,7 +609,7 @@ namespace Pakuri.Data
         /*
          * ParseTargetScope에 필요한 데이터를 읽어 변환한다.
          */
-        public static StatusTargetScope ParseTargetScope(string rawValue)
+        public static StatusTargetScope ParseTargetScope(string rawValue /* 변환 전 원본 문자열 */)
         {
             if (TryParseTargetScope(rawValue, out var scope))
             {
@@ -622,7 +622,7 @@ namespace Pakuri.Data
         /*
          * ParseMergePolicy에 필요한 데이터를 읽어 변환한다.
          */
-        public static StatusMergePolicy ParseMergePolicy(string rawValue)
+        public static StatusMergePolicy ParseMergePolicy(string rawValue /* 변환 전 원본 문자열 */)
         {
             if (TryParseMergePolicy(rawValue, out var policy))
             {
@@ -635,7 +635,7 @@ namespace Pakuri.Data
         /*
          * ParseShieldRefreshRule에 필요한 데이터를 읽어 변환한다.
          */
-        public static ShieldRefreshRule ParseShieldRefreshRule(string rawValue)
+        public static ShieldRefreshRule ParseShieldRefreshRule(string rawValue /* 변환 전 원본 문자열 */)
         {
             if (TryParseShieldRefreshRule(rawValue, out var rule))
             {

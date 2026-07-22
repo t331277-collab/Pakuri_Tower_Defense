@@ -124,9 +124,24 @@ namespace Pakuri.InGame
             PreserveCurrentNexusHealth();
             combatManager.ResetCombatState();
 
-            activeSession.AdvanceDay();
+            AdvanceDay();
             RestorePlayerHealthForNextDay();
             StartCurrentDay();
+        }
+
+        /*
+         * 다음 일차로 이동하고 11일차 다음에는 다음 스테이지의 1일차로 이동한다.
+         */
+        private void AdvanceDay()
+        {
+            activeSession.DayIndex += 1;
+            if (activeSession.DayIndex <= 11)
+            {
+                return;
+            }
+
+            activeSession.DayIndex = 1;
+            activeSession.StageIndex = Math.Min(activeSession.StageIndex + 1, 4);
         }
 
         /*
@@ -212,7 +227,7 @@ namespace Pakuri.InGame
         /*
          * 전투표 순서와 간격에 맞춰 적을 생성한다.
          */
-        private IEnumerator SpawnEncounterRows(IReadOnlyList<StageEncounterRow> rows)
+        private IEnumerator SpawnEncounterRows(IReadOnlyList<StageEncounterRow> rows /* 행 목록 */)
         {
             var spawnIndex = 0;
 
@@ -332,7 +347,7 @@ namespace Pakuri.InGame
         /*
          * 유효한 적 ID를 포로 목록에 추가한다.
          */
-        private void AddPrisoner(string enemyId)
+        private void AddPrisoner(string enemyId /* 적 식별자 */)
         {
             if (string.IsNullOrWhiteSpace(enemyId))
             {
@@ -345,7 +360,7 @@ namespace Pakuri.InGame
         /*
          * 지정 적 ID와 일치하는 포로 후보 하나를 제거한다.
          */
-        private void RemoveOnePrisonerCandidate(string enemyId)
+        private void RemoveOnePrisonerCandidate(string enemyId /* 적 식별자 */)
         {
             if (string.IsNullOrWhiteSpace(enemyId))
             {
@@ -399,7 +414,7 @@ namespace Pakuri.InGame
         /*
          * 전투 유형과 행 설정을 기준으로 보스 생성 여부를 반환한다.
          */
-        private bool IsBossEncounter(StageEncounterRow row)
+        private bool IsBossEncounter(StageEncounterRow row /* 스테이지 전투 조우 행 */)
         {
             if (row.SelectedAsBoss)
             {
@@ -407,8 +422,7 @@ namespace Pakuri.InGame
             }
 
             // 5일과 10일 중간 보스 전투에서는 보스 설정 행을 모두 보스로 취급한다.
-            var isMidbossCombat = activeSession.CurrentCombatType == RunCombatType.Day5Midboss
-                || activeSession.CurrentCombatType == RunCombatType.Day10Midboss;
+            var isMidbossCombat = activeSession.DayIndex == 5 || activeSession.DayIndex == 10;
             return isMidbossCombat && (row.IsGuaranteedBoss || row.IsBossCandidate);
         }
 
@@ -464,7 +478,7 @@ namespace Pakuri.InGame
         /*
          * 넥서스 패배 시 날짜 흐름을 중단하고 패배 화면을 표시한다.
          */
-        private void OnUnitDefeated(UnitCombatState defeatedUnit)
+        private void OnUnitDefeated(UnitCombatState defeatedUnit /* 쓰러진 유닛 */)
         {
             if (!defeatedUnit.IsNexus)
             {
@@ -549,7 +563,7 @@ namespace Pakuri.InGame
         /*
          * 지정 오브젝트의 활성 상태를 변경한다.
          */
-        private static void SetActive(GameObject target, bool active)
+        private static void SetActive(GameObject target /* 활성화하거나 변경할 게임 오브젝트 */, bool active /* 대상 활성화 여부 */)
         {
             target.SetActive(active);
         }
@@ -573,7 +587,7 @@ namespace Pakuri.InGame
         /*
          * 다음 인게임 씬에서 사용할 선택 몬스터 ID를 저장한다.
          */
-        public static void Prepare(string selectedMonsterId)
+        public static void Prepare(string selectedMonsterId /* 선택된 몬스터 식별자 */)
         {
             SelectedMonsterId = string.IsNullOrWhiteSpace(selectedMonsterId) ? string.Empty : selectedMonsterId;
         }
@@ -679,7 +693,7 @@ namespace Pakuri.InGame
         /*
          * 세 CSV에서 스테이지 표를 만든다.
          */
-        public static StageFlowTable Load(TextAsset dayCsv, TextAsset encounterCsv, TextAsset rewardCsv)
+        public static StageFlowTable Load(TextAsset dayCsv /* 일차 CSV */, TextAsset encounterCsv /* 전투 조우 CSV */, TextAsset rewardCsv /* 보상 CSV */)
         {
             var table = new StageFlowTable();
             table.LoadDays(dayCsv);
@@ -691,7 +705,7 @@ namespace Pakuri.InGame
         /*
          * 스테이지와 날짜가 일치하는 날짜 행을 찾는다.
          */
-        public StageDayRow FindDay(int stage, int day)
+        public StageDayRow FindDay(int stage /* 스테이지 */, int day /* 일차 */)
         {
             for (var i = 0; i < days.Count; i++)
             {
@@ -708,7 +722,7 @@ namespace Pakuri.InGame
         /*
          * ID가 일치하는 보상 행을 찾는다.
          */
-        public StageRewardRow FindReward(string rewardRuleId)
+        public StageRewardRow FindReward(string rewardRuleId /* 보상 규칙 식별자 */)
         {
             for (var i = 0; i < rewards.Count; i++)
             {
@@ -725,7 +739,7 @@ namespace Pakuri.InGame
         /*
          * ID가 일치하는 전투 행을 생성 순서로 반환한다.
          */
-        public void FindEncounterRows(string encounterId, List<StageEncounterRow> results)
+        public void FindEncounterRows(string encounterId /* 전투 조우 식별자 */, List<StageEncounterRow> results /* 처리 결과 목록 */)
         {
             results.Clear();
 
@@ -745,7 +759,7 @@ namespace Pakuri.InGame
         /*
          * 날짜 CSV 행을 런타임 목록에 추가한다.
          */
-        private void LoadDays(TextAsset csv)
+        private void LoadDays(TextAsset csv /* CSV */)
         {
             foreach (var row in ReadRows(csv))
             {
@@ -762,7 +776,7 @@ namespace Pakuri.InGame
         /*
          * 전투 CSV 행을 런타임 목록에 추가한다.
          */
-        private void LoadEncounters(TextAsset csv)
+        private void LoadEncounters(TextAsset csv /* CSV */)
         {
             foreach (var row in ReadRows(csv))
             {
@@ -788,7 +802,7 @@ namespace Pakuri.InGame
         /*
          * 보상 CSV 행을 런타임 목록에 추가한다.
          */
-        private void LoadRewards(TextAsset csv)
+        private void LoadRewards(TextAsset csv /* CSV */)
         {
             foreach (var row in ReadRows(csv))
             {
@@ -811,7 +825,7 @@ namespace Pakuri.InGame
         /*
          * CSV 본문을 헤더 기준의 문자열 사전으로 변환한다.
          */
-        private static IEnumerable<Dictionary<string, string>> ReadRows(TextAsset csv)
+        private static IEnumerable<Dictionary<string, string>> ReadRows(TextAsset csv /* CSV */)
         {
             if (string.IsNullOrWhiteSpace(csv.text))
             {
@@ -844,7 +858,7 @@ namespace Pakuri.InGame
         /*
          * 따옴표와 이스케이프 따옴표를 처리해 CSV 한 줄을 분리한다.
          */
-        private static List<string> SplitCsvLine(string line)
+        private static List<string> SplitCsvLine(string line /* 직선 */)
         {
             var values = new List<string>();
             var current = string.Empty;
@@ -885,7 +899,7 @@ namespace Pakuri.InGame
         /*
          * CSV 행에서 문자열 값을 읽고 앞뒤 공백을 제거한다.
          */
-        private static string Read(Dictionary<string, string> row, string key)
+        private static string Read(Dictionary<string, string> row /* 열 이름과 값으로 구성된 CSV 행 */, string key /* 조회 키 */)
         {
             return row.TryGetValue(key, out var value) ? value.Trim() : string.Empty;
         }
@@ -893,7 +907,7 @@ namespace Pakuri.InGame
         /*
          * CSV 행의 값을 정수로 변환한다.
          */
-        private static int ParseInt(Dictionary<string, string> row, string key)
+        private static int ParseInt(Dictionary<string, string> row /* 열 이름과 값으로 구성된 CSV 행 */, string key /* 조회 키 */)
         {
             return int.Parse(Read(row, key), NumberStyles.Integer, CultureInfo.InvariantCulture);
         }
@@ -901,7 +915,7 @@ namespace Pakuri.InGame
         /*
          * CSV 행의 값을 실수로 변환한다.
          */
-        private static float ParseFloat(Dictionary<string, string> row, string key)
+        private static float ParseFloat(Dictionary<string, string> row /* 열 이름과 값으로 구성된 CSV 행 */, string key /* 조회 키 */)
         {
             return float.Parse(Read(row, key), NumberStyles.Float, CultureInfo.InvariantCulture);
         }
@@ -909,7 +923,7 @@ namespace Pakuri.InGame
         /*
          * CSV 행의 값을 논리값으로 변환한다.
          */
-        private static bool ParseBool(Dictionary<string, string> row, string key)
+        private static bool ParseBool(Dictionary<string, string> row /* 열 이름과 값으로 구성된 CSV 행 */, string key /* 조회 키 */)
         {
             return bool.TryParse(Read(row, key), out var value) && value;
         }

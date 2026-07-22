@@ -12,7 +12,7 @@ namespace Pakuri.InGame
         /*
          * SingleDamageModifierState에 필요한 값을 초기화한다.
          */
-        public SingleDamageModifierState(float damageMultiplier, float critChanceBonus)
+        public SingleDamageModifierState(float damageMultiplier /* 피해량에 곱할 배율 */, float critChanceBonus /* 추가 치명타 확률 */)
         {
             DamageMultiplier = damageMultiplier;
             CritChanceBonus = critChanceBonus;
@@ -30,9 +30,9 @@ namespace Pakuri.InGame
          * 처형 전용 스킬의 대상 체력이 시전 기준을 벗어났는지 확인한다.
          */
         internal static bool ShouldRejectCastForExecuteThreshold(
-            SkillExecutionContext context,
-            SkillSnapshot snapshot,
-            SingleSkillRuntimeData skill)
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SingleSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
         {
             if (!skill.RequireExecuteThresholdToCast
                 || !TryResolveThreshold(skill, snapshot, out var threshold))
@@ -52,11 +52,11 @@ namespace Pakuri.InGame
          * 처형·보스 조건에 해당하는 피해와 치명타 보정을 적용한다.
          */
         internal static SingleDamageModifierState ApplyDamageModifiers(
-            SingleSkillRuntimeData skill,
-            SkillSnapshot snapshot,
-            UnitCombatState target,
-            float damageMultiplier,
-            float critChanceBonus)
+            SingleSkillRuntimeData skill /* 실행하거나 검사할 스킬 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            UnitCombatState target /* 효과를 받을 대상 유닛 */,
+            float damageMultiplier /* 피해량에 곱할 배율 */,
+            float critChanceBonus /* 추가 치명타 확률 */)
         {
             var state = new SingleDamageModifierState(damageMultiplier, critChanceBonus);
             ApplyExecuteDamageModifier(skill, snapshot, target, ref state);
@@ -68,11 +68,11 @@ namespace Pakuri.InGame
          * 처치 조건에 맞춰 재사용 대기시간을 초기화하거나 일부 돌려준다.
          */
         internal static void HandleKillRecovery(
-            SkillRuntimeInstance sourceRuntime,
-            SingleSkillRuntimeData skill,
-            SkillSnapshot snapshot,
-            InGameResourceChangeResult result,
-            bool wasExecute)
+            SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
+            SingleSkillRuntimeData skill /* 실행하거나 검사할 스킬 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            InGameResourceChangeResult result /* 처리 결과 */,
+            bool wasExecute /* 발생 처형 여부 */)
         {
             if (sourceRuntime == null || !result.IsDead)
             {
@@ -91,9 +91,9 @@ namespace Pakuri.InGame
          * TryResolveThreshold 작업을 시도하고 성공 여부를 반환한다.
          */
         private static bool TryResolveThreshold(
-            SingleSkillRuntimeData skill,
-            SkillSnapshot snapshot,
-            out float threshold)
+            SingleSkillRuntimeData skill /* 실행하거나 검사할 스킬 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            out float threshold /* 기준값 */)
         {
             var bonus = 0f;
             var ops = snapshot != null && snapshot.Plan != null ? snapshot.Plan.CastConditions : null;
@@ -112,7 +112,7 @@ namespace Pakuri.InGame
         /*
          * IsWithinThreshold 조건을 만족하는지 확인한다.
          */
-        private static bool IsWithinThreshold(UnitCombatState target, float threshold)
+        private static bool IsWithinThreshold(UnitCombatState target /* 효과를 받을 대상 유닛 */, float threshold /* 기준값 */)
         {
             var resources = target.Resources;
             var stats = target.Stats;
@@ -128,10 +128,10 @@ namespace Pakuri.InGame
          * ApplyExecuteDamageModifier 처리를 대상에 적용한다.
          */
         private static void ApplyExecuteDamageModifier(
-            SingleSkillRuntimeData skill,
-            SkillSnapshot snapshot,
-            UnitCombatState target,
-            ref SingleDamageModifierState state)
+            SingleSkillRuntimeData skill /* 실행하거나 검사할 스킬 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            UnitCombatState target /* 효과를 받을 대상 유닛 */,
+            ref SingleDamageModifierState state /* 상태 */)
         {
             if (!TryResolveThreshold(skill, snapshot, out var threshold)
                 || !IsWithinThreshold(target, threshold))
@@ -171,10 +171,10 @@ namespace Pakuri.InGame
          * ApplyBossDamageModifier 처리를 대상에 적용한다.
          */
         private static void ApplyBossDamageModifier(
-            SingleSkillRuntimeData skill,
-            SkillSnapshot snapshot,
-            UnitCombatState target,
-            ref SingleDamageModifierState state)
+            SingleSkillRuntimeData skill /* 실행하거나 검사할 스킬 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            UnitCombatState target /* 효과를 받을 대상 유닛 */,
+            ref SingleDamageModifierState state /* 상태 */)
         {
             if (!target.IsBoss)
             {
@@ -206,9 +206,9 @@ namespace Pakuri.InGame
          * TryResetCooldown 작업을 시도하고 성공 여부를 반환한다.
          */
         private static bool TryResetCooldown(
-            SkillRuntimeInstance sourceRuntime,
-            SkillSnapshot snapshot,
-            bool wasExecute)
+            SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            bool wasExecute /* 발생 처형 여부 */)
         {
             var plan = snapshot != null ? snapshot.Plan : null;
             if (plan == null)
@@ -236,9 +236,9 @@ namespace Pakuri.InGame
          * TryRefundCooldown 작업을 시도하고 성공 여부를 반환한다.
          */
         private static bool TryRefundCooldown(
-            SkillRuntimeInstance sourceRuntime,
-            SingleSkillRuntimeData skill,
-            SkillSnapshot snapshot)
+            SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
+            SingleSkillRuntimeData skill /* 실행하거나 검사할 스킬 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var refundBonus = 0f;
             var plan = snapshot != null ? snapshot.Plan : null;

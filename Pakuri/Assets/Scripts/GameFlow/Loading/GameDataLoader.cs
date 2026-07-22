@@ -87,7 +87,7 @@ namespace Pakuri.Data
         /*
          * 계산에 필요한 값을 반환한다.
          */
-        public static string GetImportedSourceAssetPath(string fileName)
+        public static string GetImportedSourceAssetPath(string fileName /* 파일 이름 */)
         {
             return GetAuthoringSourceAssetPath(fileName);
         }
@@ -95,7 +95,7 @@ namespace Pakuri.Data
         /*
          * 계산에 필요한 값을 반환한다.
          */
-        public static string GetAuthoringSourceAssetPath(string fileName)
+        public static string GetAuthoringSourceAssetPath(string fileName /* 파일 이름 */)
         {
             switch (fileName)
             {
@@ -135,7 +135,7 @@ namespace Pakuri.Data
         /*
          * 필요한 조건을 만족하는지 확인한다.
          */
-        public static bool IsAuthoringCsvSourceAssetPath(string assetPath)
+        public static bool IsAuthoringCsvSourceAssetPath(string assetPath /* 에셋 경로 */)
         {
             if (string.IsNullOrWhiteSpace(assetPath))
             {
@@ -202,7 +202,7 @@ namespace Pakuri.Data
         /*
          * 로그에 사용할 설명 문자열을 만든다.
          */
-        internal static string FormatRuntimeCatalogSummary(GameDataCatalog catalog)
+        internal static string FormatRuntimeCatalogSummary(GameDataCatalog catalog /* 불러온 게임 데이터 목록 */)
         {
             return
                 $"GameDataLoader loaded runtime catalog from resource source '{RuntimeCatalogResourcesPath}' " +
@@ -213,7 +213,7 @@ namespace Pakuri.Data
         /*
          * 치명적인 CSV 오류를 기록하고 실행을 종료한다.
          */
-        internal static void FailAndQuit(string message, List<string> errors)
+        internal static void FailAndQuit(string message /* 메시지 */, List<string> errors /* 검증 오류를 모을 목록 */)
         {
             failed = true;
             Debug.LogError(message);

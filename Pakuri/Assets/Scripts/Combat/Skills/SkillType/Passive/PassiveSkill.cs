@@ -44,7 +44,7 @@ namespace Pakuri.InGame
         /*
          * 패시브 트리거의 재사용 대기시간을 확인하고 다음 준비 시간을 기록한다.
          */
-        public bool ConsumeTriggerCooldown(string key, float cooldownSeconds)
+        public bool ConsumeTriggerCooldown(string key /* 조회 키 */, float cooldownSeconds /* 재사용 대기시간 초 */)
         {
             var now = Time.time;
             if (triggerCooldowns.TryGetValue(key, out var readyAt) && readyAt > now)
@@ -67,7 +67,7 @@ namespace Pakuri.InGame
         /*
          * 패시브 트리거 횟수를 누적하고 지정 주기마다 실행을 허용한다.
          */
-        public bool ConsumeTriggerCount(string key, int triggerEveryCount)
+        public bool ConsumeTriggerCount(string key /* 조회 키 */, int triggerEveryCount /* 트리거 반복 주기 개수 */)
         {
             if (triggerEveryCount <= 1)
             {
@@ -89,7 +89,7 @@ namespace Pakuri.InGame
         /*
          * 체력과 보호막 변경을 패시브 조건 갱신에 반영한다.
          */
-        public void NotifyResourceChanged(InGameResourceChangeResult result)
+        public void NotifyResourceChanged(InGameResourceChangeResult result /* 처리 결과 */)
         {
             NotifyHealthChanged(result.Target, result.PreviousHealth, result.CurrentHealth);
             NotifyShieldChanged(result.Target, result.PreviousShield, result.CurrentShield);
@@ -102,7 +102,7 @@ namespace Pakuri.InGame
         }
 
         // Code Builder: 상태 추가·중첩·제거·만료 시 조건형 패시브만 다시 계산하도록 표시한다.
-        public void NotifyStatusChanged(UnitCombatState target)
+        public void NotifyStatusChanged(UnitCombatState target /* 효과를 받을 대상 유닛 */)
         {
             if (target != null)
             {
@@ -111,7 +111,7 @@ namespace Pakuri.InGame
         }
 
         // Code Builder: 보호막 보유 여부가 바뀐 경우에만 보호막 조건 패시브를 다시 계산한다.
-        public void NotifyShieldChanged(UnitCombatState target, float previousShield, float currentShield)
+        public void NotifyShieldChanged(UnitCombatState target /* 효과를 받을 대상 유닛 */, float previousShield /* 이전 보호막 */, float currentShield /* 현재 보호막 */)
         {
             if (target != null && (previousShield > 0f) != (currentShield > 0f))
             {
@@ -120,7 +120,7 @@ namespace Pakuri.InGame
         }
 
         // Code Builder: 피해·회복 자체가 아니라 실제 체력 조건 경계를 통과할 때만 갱신을 요청한다.
-        public void NotifyHealthChanged(UnitCombatState target, float previousHealth, float currentHealth)
+        public void NotifyHealthChanged(UnitCombatState target /* 효과를 받을 대상 유닛 */, float previousHealth /* 이전 체력 */, float currentHealth /* 현재 체력 */)
         {
             var maxHealth = target != null && target.Stats != null ? target.Stats.MaxHealth : 0f;
             if (maxHealth <= 0f || Mathf.Approximately(previousHealth, currentHealth))
@@ -141,7 +141,7 @@ namespace Pakuri.InGame
         }
 
         // Code Builder: 관리자는 호출 순서만 정하고 실제 조건 검사와 효과 수명은 패시브 런타임이 소유한다.
-        public void FlushPendingChanges(InGameCombatManager combatManager, CombatUnitRegistry roster)
+        public void FlushPendingChanges(InGameCombatManager combatManager /* 전투 진행 관리자 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
         {
             if (!refreshRequested || isRefreshing || combatManager == null || roster == null)
             {
@@ -168,7 +168,7 @@ namespace Pakuri.InGame
         /*
          * 학습한 패시브 효과를 현재 상태에 맞게 다시 구성한다.
          */
-        private void RefreshLearnedPassiveEffects(InGameCombatManager combatManager, CombatUnitRegistry roster)
+        private void RefreshLearnedPassiveEffects(InGameCombatManager combatManager /* 전투 진행 관리자 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
         {
             var desiredBindings = new Dictionary<string, PassiveStatusBinding>(StringComparer.OrdinalIgnoreCase);
             var nextHealthRatioThresholds = new HashSet<float>();
@@ -210,13 +210,13 @@ namespace Pakuri.InGame
          * 패시브 효과를 수집한다.
          */
         private void CollectPassiveEffects(
-            InGameCombatManager combatManager,
-            CombatUnitRegistry roster,
-            CombatUnitEntry ownerEntry,
-            UnitCombatState owner,
-            string passiveId,
-            IDictionary<string, PassiveStatusBinding> desiredBindings,
-            ISet<float> nextHealthRatioThresholds)
+            InGameCombatManager combatManager /* 전투 진행 관리자 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            CombatUnitEntry ownerEntry /* 소유자 등록 정보 */,
+            UnitCombatState owner /* 정보를 소유한 유닛 */,
+            string passiveId /* 패시브 식별자 */,
+            IDictionary<string, PassiveStatusBinding> desiredBindings /* 필요한 연결 정보 */,
+            ISet<float> nextHealthRatioThresholds /* 다음 체력 비율 기준값 목록 */)
         {
             var passive = owner.SkillRuntime.FindBySkillId(passiveId)?.Data as PassiveSkillRuntimeData;
             if (passive == null || passive.MultiEffects.Length == 0)
@@ -300,12 +300,12 @@ namespace Pakuri.InGame
          * 일회성 실행 효과를 적용한다.
          */
         private void ApplyOneShotEffect(
-            SkillExecutionContext context,
-            SkillSnapshot snapshot,
-            SkillEffectDefinition effect,
-            Vector2 ownerPosition,
-            UnitCombatState owner,
-            string passiveId)
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillEffectDefinition effect /* 실행하거나 변환할 효과 */,
+            Vector2 ownerPosition /* 소유자 위치 */,
+            UnitCombatState owner /* 정보를 소유한 유닛 */,
+            string passiveId /* 패시브 식별자 */)
         {
             if (!SkillEffect.ShouldRun(context, effect, snapshot))
             {
@@ -326,8 +326,8 @@ namespace Pakuri.InGame
          * 비활성 연결을 제거한다.
          */
         private void RemoveInactiveBindings(
-            InGameCombatManager combatManager,
-            IReadOnlyDictionary<string, PassiveStatusBinding> desiredBindings)
+            InGameCombatManager combatManager /* 전투 진행 관리자 */,
+            IReadOnlyDictionary<string, PassiveStatusBinding> desiredBindings /* 필요한 연결 정보 */)
         {
             staleBindingKeys.Clear();
             foreach (var pair in activeStatusBindings)
@@ -351,7 +351,7 @@ namespace Pakuri.InGame
         /*
          * 패시브가 전투 동안 유지해야 하는 상태 효과인지 확인한다.
          */
-        private static bool IsPersistentStatusEffect(SkillEffectDefinition effect)
+        private static bool IsPersistentStatusEffect(SkillEffectDefinition effect /* 실행하거나 변환할 효과 */)
         {
             return effect != null
                 && effect.EffectKind == SkillMultiEffectKind.Status
@@ -362,7 +362,7 @@ namespace Pakuri.InGame
         /*
          * 일회성 실행 키를 구성한다.
          */
-        private static string BuildOneShotKey(UnitCombatState owner, string passiveId, SkillEffectDefinition effect)
+        private static string BuildOneShotKey(UnitCombatState owner /* 정보를 소유한 유닛 */, string passiveId /* 패시브 식별자 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */)
         {
             var unitId = ResolveUnitKey(owner);
             var effectId = !string.IsNullOrWhiteSpace(effect.EffectId) ? effect.EffectId : effect.SkillId;
@@ -373,10 +373,10 @@ namespace Pakuri.InGame
          * 연결 정보 키를 구성한다.
          */
         private static string BuildBindingKey(
-            UnitCombatState owner,
-            string passiveId,
-            SkillEffectDefinition effect,
-            UnitCombatState target)
+            UnitCombatState owner /* 정보를 소유한 유닛 */,
+            string passiveId /* 패시브 식별자 */,
+            SkillEffectDefinition effect /* 실행하거나 변환할 효과 */,
+            UnitCombatState target /* 효과를 받을 대상 유닛 */)
         {
             var effectId = !string.IsNullOrWhiteSpace(effect.EffectId) ? effect.EffectId : effect.SkillId;
             return ResolveUnitKey(owner)
@@ -388,7 +388,7 @@ namespace Pakuri.InGame
         /*
          * 유닛 키를 결정한다.
          */
-        private static string ResolveUnitKey(UnitCombatState unit)
+        private static string ResolveUnitKey(UnitCombatState unit /* 유닛 */)
         {
             return unit != null && unit.Identity != null && !string.IsNullOrWhiteSpace(unit.Identity.UnitId)
                 ? unit.Identity.UnitId
@@ -403,7 +403,7 @@ namespace Pakuri.InGame
             /*
              * 패시브 상태 연결 정보에 필요한 값을 초기화한다.
              */
-            public PassiveStatusBinding(UnitCombatState target, StatusEffectKind kind, string sourceSkillId)
+            public PassiveStatusBinding(UnitCombatState target /* 효과를 받을 대상 유닛 */, StatusEffectKind kind /* 처리할 종류 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */)
             {
                 Target = target;
                 Kind = kind;
@@ -416,6 +416,4 @@ namespace Pakuri.InGame
         }
     }
 }
-
-
 

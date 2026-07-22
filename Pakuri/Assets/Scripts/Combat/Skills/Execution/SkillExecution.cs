@@ -18,16 +18,16 @@ namespace Pakuri.InGame
          * 전달받은 전투 참조와 조준 정보를 실행 문맥에 기록한다.
          */
         public SkillExecutionContext(
-            InGameCombatManager combatManager,
-            CombatUnitRegistry roster,
-            CombatUnitEntry casterEntry,
-            SkillRuntimeInstance runtime,
-            UnitCombatState eventTarget = null,
-            bool hasManualAimDirection = false,
-            Vector2 manualAimDirection = default,
-            bool hasManualTargetPoint = false,
-            Vector2 manualTargetPoint = default,
-            int recastGeneration = 0)
+            InGameCombatManager combatManager /* 전투 진행 관리자 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            CombatUnitEntry casterEntry /* 스킬 사용자의 전투 등록 정보 */,
+            SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */,
+            UnitCombatState eventTarget = null /* 사건 대상 */,
+            bool hasManualAimDirection = false /* 보유 수동 조준 방향 여부 */,
+            Vector2 manualAimDirection = default /* 수동 조준 방향 */,
+            bool hasManualTargetPoint = false /* 보유 수동 대상 위치 여부 */,
+            Vector2 manualTargetPoint = default /* 수동 대상 위치 */,
+            int recastGeneration = 0 /* 재시전 실행 세대 */)
         {
             CombatManager = combatManager;
             Roster = roster;
@@ -74,7 +74,7 @@ namespace Pakuri.InGame
         /*
          * 자동 시전 요청을 실행기로 전달해도 되는지 판단하는 함수 형식을 정의한다.
          */
-        public delegate bool SkillAutoRoutePredicate(CombatUnitEntry entry, SkillRuntimeInstance runtime);
+        public delegate bool SkillAutoRoutePredicate(CombatUnitEntry entry /* 처리할 등록 정보 */, SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */);
 
         private readonly SkillUpgrade choiceResolver = new SkillUpgrade();
 
@@ -82,10 +82,10 @@ namespace Pakuri.InGame
          * 로스터의 모든 유닛 스킬 상태와 자동 시전을 갱신한다.
          */
         public void Tick(
-            CombatUnitRegistry roster,
-            InGameCombatManager combatManager,
-            float deltaTime,
-            SkillAutoRoutePredicate canAutoRoute = null)
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            InGameCombatManager combatManager /* 전투 진행 관리자 */,
+            float deltaTime /* 이전 갱신 이후 지난 시간 */,
+            SkillAutoRoutePredicate canAutoRoute = null /* 가능 자동 실행 경로 여부 */)
         {
             if (roster == null || deltaTime <= 0f)
             {
@@ -128,12 +128,12 @@ namespace Pakuri.InGame
          * 수동 조준 방향과 목표 지점을 사용해 선택한 스킬의 실행을 요청한다.
          */
         public bool TryExecuteManual(
-            CombatUnitEntry entry,
-            SkillRuntimeInstance runtime,
-            CombatUnitRegistry roster,
-            InGameCombatManager combatManager,
-            Vector2 aimDirection,
-            Vector2 targetPoint)
+            CombatUnitEntry entry /* 처리할 등록 정보 */,
+            SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            InGameCombatManager combatManager /* 전투 진행 관리자 */,
+            Vector2 aimDirection /* 조준 방향 */,
+            Vector2 targetPoint /* 지정한 대상 위치 */)
         {
             return TryRouteSkill(entry, runtime, roster, combatManager, true, aimDirection, true, targetPoint);
         }
@@ -142,9 +142,9 @@ namespace Pakuri.InGame
          * 현재 상태와 선택지 보정을 반영해 선택한 스킬을 시전할 수 있는지 확인한다.
          */
         public bool CanExecuteSelected(
-            CombatUnitEntry entry,
-            SkillRuntimeInstance runtime,
-            CombatUnitRegistry roster)
+            CombatUnitEntry entry /* 처리할 등록 정보 */,
+            SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
         {
             if (entry == null
                 || runtime == null
@@ -161,10 +161,10 @@ namespace Pakuri.InGame
          * 자동 조준 방식으로 선택한 스킬의 실행을 요청한다.
          */
         public bool TryExecuteSelected(
-            CombatUnitEntry entry,
-            SkillRuntimeInstance runtime,
-            CombatUnitRegistry roster,
-            InGameCombatManager combatManager)
+            CombatUnitEntry entry /* 처리할 등록 정보 */,
+            SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            InGameCombatManager combatManager /* 전투 진행 관리자 */)
         {
             return TryRouteSkill(entry, runtime, roster, combatManager, false, default, false, default);
         }
@@ -173,14 +173,14 @@ namespace Pakuri.InGame
          * Trigger가 전달한 목표 지점과 피해 배율로 스킬 실행을 요청한다.
          */
         public bool TryExecuteTriggered(
-            CombatUnitEntry entry,
-            SkillRuntimeInstance runtime,
-            CombatUnitRegistry roster,
-            InGameCombatManager combatManager,
-            Vector2 targetPoint,
-            bool hasTargetPoint,
-            float triggeredDamageMultiplier = 1f,
-            string triggerSourceSkillId = null)
+            CombatUnitEntry entry /* 처리할 등록 정보 */,
+            SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            InGameCombatManager combatManager /* 전투 진행 관리자 */,
+            Vector2 targetPoint /* 지정한 대상 위치 */,
+            bool hasTargetPoint /* 보유 대상 위치 여부 */,
+            float triggeredDamageMultiplier = 1f /* 트리거로 실행된 피해 배율 */,
+            string triggerSourceSkillId = null /* 트리거 발생 원본 스킬 식별자 */)
         {
             if (runtime == null || entry == null)
             {
@@ -210,14 +210,14 @@ namespace Pakuri.InGame
          * 일반 실행 요청에 현재 선택지 Snapshot을 적용하고 스킬 종류별 실행기로 전달한다.
          */
         private bool TryRouteSkill(
-            CombatUnitEntry entry,
-            SkillRuntimeInstance runtime,
-            CombatUnitRegistry roster,
-            InGameCombatManager combatManager,
-            bool hasManualAimDirection,
-            Vector2 manualAimDirection,
-            bool hasManualTargetPoint,
-            Vector2 manualTargetPoint)
+            CombatUnitEntry entry /* 처리할 등록 정보 */,
+            SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            InGameCombatManager combatManager /* 전투 진행 관리자 */,
+            bool hasManualAimDirection /* 보유 수동 조준 방향 여부 */,
+            Vector2 manualAimDirection /* 수동 조준 방향 */,
+            bool hasManualTargetPoint /* 보유 수동 대상 위치 여부 */,
+            Vector2 manualTargetPoint /* 수동 대상 위치 */)
         {
             if (runtime == null || entry == null || !StatusCombatRules.CanAct(entry.Model))
             {
@@ -265,12 +265,12 @@ namespace Pakuri.InGame
          * 완료된 스킬 시전 위치와 출처를 SkillTrigger에 전달한다.
          */
         private static void NotifySkillCastTriggers(
-            InGameCombatManager combatManager,
-            CombatUnitRegistry roster,
-            CombatUnitEntry entry,
-            SkillRuntimeInstance runtime,
-            SkillExecutionContext context,
-            string triggerSourceSkillId = null)
+            InGameCombatManager combatManager /* 전투 진행 관리자 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            CombatUnitEntry entry /* 처리할 등록 정보 */,
+            SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */,
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            string triggerSourceSkillId = null /* 트리거 발생 원본 스킬 식별자 */)
         {
             var center = Vector2.zero;
             if (entry.Transform != null)
@@ -294,16 +294,16 @@ namespace Pakuri.InGame
          * Trigger 전용 피해 배율을 Snapshot에 적용한 뒤 스킬을 실행한다.
          */
         private bool TryExecuteTriggeredSkill(
-            CombatUnitEntry entry,
-            SkillRuntimeInstance runtime,
-            CombatUnitRegistry roster,
-            InGameCombatManager combatManager,
-            bool hasManualAimDirection,
-            Vector2 manualAimDirection,
-            bool hasManualTargetPoint,
-            Vector2 manualTargetPoint,
-            float triggeredDamageMultiplier,
-            string triggerSourceSkillId)
+            CombatUnitEntry entry /* 처리할 등록 정보 */,
+            SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            InGameCombatManager combatManager /* 전투 진행 관리자 */,
+            bool hasManualAimDirection /* 보유 수동 조준 방향 여부 */,
+            Vector2 manualAimDirection /* 수동 조준 방향 */,
+            bool hasManualTargetPoint /* 보유 수동 대상 위치 여부 */,
+            Vector2 manualTargetPoint /* 수동 대상 위치 */,
+            float triggeredDamageMultiplier /* 트리거로 실행된 피해 배율 */,
+            string triggerSourceSkillId /* 트리거 발생 원본 스킬 식별자 */)
         {
             var snapshot = choiceResolver.Resolve(entry.Model, runtime, roster);
             if (!Mathf.Approximately(triggeredDamageMultiplier, 1f))
@@ -333,9 +333,9 @@ namespace Pakuri.InGame
          * 컴파일된 런타임 자료형에 맞는 스킬 실행기를 호출한다.
          */
         private static bool ExecuteSkill(
-            SkillExecutionContext context,
-            SkillSnapshot snapshot,
-            SkillRuntimeData skillData)
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillRuntimeData skillData /* 스킬 실행 데이터 */)
         {
             if (skillData is ProjectileSkillRuntimeData projectile)
             {
@@ -400,7 +400,7 @@ namespace Pakuri.InGame
         /*
          * 목록에 적힌 모든 Choice가 현재 Snapshot에 적용되었는지 확인한다.
          */
-        internal static bool HasAllActiveChoices(SkillSnapshot snapshot, string choiceList)
+        internal static bool HasAllActiveChoices(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, string choiceList /* 선택지 목록 */)
         {
             if (string.IsNullOrWhiteSpace(choiceList))
             {
@@ -428,7 +428,7 @@ namespace Pakuri.InGame
         /*
          * 목록에 적힌 Choice 중 하나라도 현재 Snapshot에 적용되었는지 확인한다.
          */
-        internal static bool HasAnyActiveChoice(SkillSnapshot snapshot, string choiceList)
+        internal static bool HasAnyActiveChoice(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, string choiceList /* 선택지 목록 */)
         {
             if (string.IsNullOrWhiteSpace(choiceList) || snapshot == null)
             {
@@ -451,7 +451,7 @@ namespace Pakuri.InGame
         /*
          * 목록에 적힌 모든 패시브를 유닛이 학습했는지 확인한다.
          */
-        internal static bool HasAllLearnedPassives(UnitCombatState owner, string passiveList)
+        internal static bool HasAllLearnedPassives(UnitCombatState owner /* 정보를 소유한 유닛 */, string passiveList /* 패시브 목록 */)
         {
             if (string.IsNullOrWhiteSpace(passiveList))
             {
@@ -474,7 +474,7 @@ namespace Pakuri.InGame
         /*
          * 목록에 적힌 패시브 중 하나라도 유닛이 학습했는지 확인한다.
          */
-        internal static bool HasAnyLearnedPassive(UnitCombatState owner, string passiveList)
+        internal static bool HasAnyLearnedPassive(UnitCombatState owner /* 정보를 소유한 유닛 */, string passiveList /* 패시브 목록 */)
         {
             if (string.IsNullOrWhiteSpace(passiveList))
             {
@@ -497,7 +497,7 @@ namespace Pakuri.InGame
         /*
          * Choice가 요구하는 시전자 상태 중첩 조건을 만족하는지 확인한다.
          */
-        internal static bool MeetsSourceStatus(SkillChoiceDefinition choice, UnitCombatState owner)
+        internal static bool MeetsSourceStatus(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */, UnitCombatState owner /* 정보를 소유한 유닛 */)
         {
             return choice == null
                 || HasSourceStatus(owner, choice.RequiredSourceStatusKind, choice.RequiredSourceStatusMinStacks);
@@ -506,7 +506,7 @@ namespace Pakuri.InGame
         /*
          * 시전자가 지정한 상태 또는 보호막 조건을 만족하는지 확인한다.
          */
-        internal static bool HasSourceStatus(UnitCombatState owner, StatusEffectKind statusKind, int minimumStacks)
+        internal static bool HasSourceStatus(UnitCombatState owner /* 정보를 소유한 유닛 */, StatusEffectKind statusKind /* 상태 효과 종류 */, int minimumStacks /* 최소 중첩 수 */)
         {
             if (statusKind == StatusEffectKind.None)
             {
@@ -526,7 +526,7 @@ namespace Pakuri.InGame
         /*
          * 유닛의 학습한 패시브 목록에 지정한 ID가 있는지 확인한다.
          */
-        private static bool HasLearnedPassive(UnitCombatState owner, string passiveId)
+        private static bool HasLearnedPassive(UnitCombatState owner /* 정보를 소유한 유닛 */, string passiveId /* 패시브 식별자 */)
         {
             return owner != null
                 && owner.SkillProgress != null

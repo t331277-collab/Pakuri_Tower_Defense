@@ -39,27 +39,27 @@ namespace Pakuri.InGame
          * 인게임 지속 범위 스킬 실행에 필요한 위치, 대상, 피해 정보를 설정한다.
          */
         public void Initialize(
-            InGameCombatManager manager,
-            CombatUnitEntry sourceEntry,
-            CombatUnitRegistry unitRoster,
-            SkillTargetingSpec targetingSpec,
-            Vector2 areaCenter,
-            float areaRadius,
-            bool areaCoversAll,
-            float durationSeconds,
-            float tickIntervalSeconds,
-            int maxTargetsPerTick,
-            float damagePerTick,
-            DamageAttribute damageAttribute,
-            ProjectileStatusHitSpec onTickStatus,
-            SkillRuntimeInstance sourceRuntime,
-            SkillSnapshot executionSnapshot,
-            SkillEffectDefinition[] expireEffects,
-            UnitCombatState source,
-            bool allowCritical,
-            float criticalChanceBonus,
-            float criticalDamageBonus,
-            int generation = 0)
+            InGameCombatManager manager /* 전투 진행 관리자 */,
+            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
+            CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
+            SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
+            Vector2 areaCenter /* 범위 중심 위치 */,
+            float areaRadius /* 범위 반지름 */,
+            bool areaCoversAll /* 범위 포함 전체 여부 */,
+            float durationSeconds /* 지속 시간(초) */,
+            float tickIntervalSeconds /* 반복 적용 간격(초) */,
+            int maxTargetsPerTick /* 최대 대상 목록 개별 반복 적용 */,
+            float damagePerTick /* 피해 개별 반복 적용 */,
+            DamageAttribute damageAttribute /* 적용할 피해 속성 */,
+            ProjectileStatusHitSpec onTickStatus /* 발생 시 반복 적용 상태 효과 */,
+            SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
+            SkillSnapshot executionSnapshot /* 실행 시점의 스킬 강화 정보 */,
+            SkillEffectDefinition[] expireEffects /* 만료 효과 목록 */,
+            UnitCombatState source /* 효과를 발생시킨 유닛 */,
+            bool allowCritical /* 허용 치명타 여부 */,
+            float criticalChanceBonus /* 치명타 확률 추가값 */,
+            float criticalDamageBonus /* 치명타 피해 추가값 */,
+            int generation = 0 /* 실행 세대 */)
         {
             combatManager = manager;
             casterEntry = sourceEntry;
@@ -95,24 +95,24 @@ namespace Pakuri.InGame
          * 범위 주기를 적용한다.
          */
         public static bool ApplyAreaTick(
-            InGameCombatManager manager,
-            CombatUnitEntry sourceEntry,
-            CombatUnitRegistry unitRoster,
-            SkillTargetingSpec targetingSpec,
-            Vector2 areaCenter,
-            float areaRadius,
-            bool areaCoversAll,
-            float damagePerTick,
-            DamageAttribute damageAttribute,
-            ProjectileStatusHitSpec onHitStatus,
-            UnitCombatState source,
-            string sourceSkillId,
-            SkillRuntimeInstance sourceRuntime,
-            bool criticalAllowed,
-            float critChanceBonus,
-            float critDamageBonus,
-            int maxTargetsPerTick = int.MaxValue,
-            SkillSnapshot executionSnapshot = null)
+            InGameCombatManager manager /* 전투 진행 관리자 */,
+            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
+            CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
+            SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
+            Vector2 areaCenter /* 범위 중심 위치 */,
+            float areaRadius /* 범위 반지름 */,
+            bool areaCoversAll /* 범위 포함 전체 여부 */,
+            float damagePerTick /* 피해 개별 반복 적용 */,
+            DamageAttribute damageAttribute /* 적용할 피해 속성 */,
+            ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
+            UnitCombatState source /* 효과를 발생시킨 유닛 */,
+            string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */,
+            SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
+            bool criticalAllowed /* 치명타 허용 여부 */,
+            float critChanceBonus /* 추가 치명타 확률 */,
+            float critDamageBonus /* 추가 치명타 피해 배율 */,
+            int maxTargetsPerTick = int.MaxValue /* 최대 대상 목록 개별 반복 적용 */,
+            SkillSnapshot executionSnapshot = null /* 실행 시점의 스킬 강화 정보 */)
         {
             if (manager == null || sourceEntry == null || unitRoster == null)
             {
@@ -129,7 +129,12 @@ namespace Pakuri.InGame
                 }
 
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-                var resolvedDamage = ResolveDamageAgainstTarget(damagePerTick, executionSnapshot, target.Model);
+                var resolvedDamage = damagePerTick;
+                if (executionSnapshot != null)
+                {
+                    resolvedDamage *= executionSnapshot.ResolveConditionalDamageMultiplier(target.Model);
+                }
+                resolvedDamage = Mathf.Max(0f, resolvedDamage);
                 var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
                 if (!damageResult.IsDead)
                 {
@@ -200,13 +205,6 @@ namespace Pakuri.InGame
          */
         private void Update()
         {
-            if (combatManager == null)
-            {
-                TryExecuteExpireEffects();
-                Destroy(gameObject);
-                return;
-            }
-
             var deltaTime = Time.deltaTime;
             remainingDuration -= deltaTime;
             tickRemaining -= deltaTime;
@@ -219,7 +217,7 @@ namespace Pakuri.InGame
             if (remainingDuration <= 0f)
             {
                 TryExecuteExpireEffects();
-                Destroy(gameObject);
+                combatManager.Effects.RemoveEffect(gameObject);
             }
         }
 
@@ -332,22 +330,22 @@ namespace Pakuri.InGame
          * 콜라이더 범위 주기를 적용한다.
          */
         internal static bool ApplyColliderAreaTick(
-            InGameCombatManager manager,
-            CombatUnitEntry sourceEntry,
-            CombatUnitRegistry unitRoster,
-            SkillTargetingSpec targetingSpec,
-            Collider2D[] hitboxColliders,
-            int maxTargetsPerTick,
-            float damagePerTick,
-            DamageAttribute damageAttribute,
-            ProjectileStatusHitSpec onHitStatus,
-            UnitCombatState source,
-            string sourceSkillId,
-            SkillRuntimeInstance sourceRuntime,
-            bool criticalAllowed,
-            float critChanceBonus,
-            float critDamageBonus,
-            SkillSnapshot executionSnapshot)
+            InGameCombatManager manager /* 전투 진행 관리자 */,
+            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
+            CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
+            SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */,
+            Collider2D[] hitboxColliders /* 피격 판정 콜라이더 목록 */,
+            int maxTargetsPerTick /* 최대 대상 목록 개별 반복 적용 */,
+            float damagePerTick /* 피해 개별 반복 적용 */,
+            DamageAttribute damageAttribute /* 적용할 피해 속성 */,
+            ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
+            UnitCombatState source /* 효과를 발생시킨 유닛 */,
+            string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */,
+            SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
+            bool criticalAllowed /* 치명타 허용 여부 */,
+            float critChanceBonus /* 추가 치명타 확률 */,
+            float critDamageBonus /* 추가 치명타 피해 배율 */,
+            SkillSnapshot executionSnapshot /* 실행 시점의 스킬 강화 정보 */)
         {
             if (manager == null || sourceEntry == null || unitRoster == null || hitboxColliders == null || hitboxColliders.Length == 0)
             {
@@ -398,20 +396,20 @@ namespace Pakuri.InGame
          * 이번 주기에 결정된 적중 결과를 적용한다.
          */
         private static bool ApplyResolvedHits(
-            InGameCombatManager manager,
-            CombatUnitEntry sourceEntry,
-            List<CombatUnitEntry> eligibleTargets,
-            int maxTargetsPerTick,
-            float damagePerTick,
-            DamageAttribute damageAttribute,
-            ProjectileStatusHitSpec onHitStatus,
-            UnitCombatState source,
-            string sourceSkillId,
-            SkillRuntimeInstance sourceRuntime,
-            bool criticalAllowed,
-            float critChanceBonus,
-            float critDamageBonus,
-            SkillSnapshot executionSnapshot)
+            InGameCombatManager manager /* 전투 진행 관리자 */,
+            CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */,
+            List<CombatUnitEntry> eligibleTargets /* 적용 가능한 대상 목록 */,
+            int maxTargetsPerTick /* 최대 대상 목록 개별 반복 적용 */,
+            float damagePerTick /* 피해 개별 반복 적용 */,
+            DamageAttribute damageAttribute /* 적용할 피해 속성 */,
+            ProjectileStatusHitSpec onHitStatus /* 발생 시 적중 상태 효과 */,
+            UnitCombatState source /* 효과를 발생시킨 유닛 */,
+            string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */,
+            SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */,
+            bool criticalAllowed /* 치명타 허용 여부 */,
+            float critChanceBonus /* 추가 치명타 확률 */,
+            float critDamageBonus /* 추가 치명타 피해 배율 */,
+            SkillSnapshot executionSnapshot /* 실행 시점의 스킬 강화 정보 */)
         {
             if (manager == null || eligibleTargets == null || eligibleTargets.Count == 0)
             {
@@ -429,7 +427,12 @@ namespace Pakuri.InGame
                 }
 
                 var hitPosition = target.Transform != null ? (Vector2)target.Transform.position : Vector2.zero;
-                var resolvedDamage = ResolveDamageAgainstTarget(damagePerTick, executionSnapshot, target.Model);
+                var resolvedDamage = damagePerTick;
+                if (executionSnapshot != null)
+                {
+                    resolvedDamage *= executionSnapshot.ResolveConditionalDamageMultiplier(target.Model);
+                }
+                resolvedDamage = Mathf.Max(0f, resolvedDamage);
                 var damageResult = manager.ApplyDamage(target.Model, resolvedDamage, damageAttribute, source, criticalAllowed, critChanceBonus, critDamageBonus, sourceSkillId);
                 if (!damageResult.IsDead)
                 {
@@ -455,7 +458,7 @@ namespace Pakuri.InGame
         /*
          * 대상 대상 주기를 선택한다.
          */
-        private static List<CombatUnitEntry> SelectTargetsForTick(List<CombatUnitEntry> eligibleTargets, int maxTargetsPerTick)
+        private static List<CombatUnitEntry> SelectTargetsForTick(List<CombatUnitEntry> eligibleTargets /* 적용 가능한 대상 목록 */, int maxTargetsPerTick /* 최대 대상 목록 개별 반복 적용 */)
         {
             if (eligibleTargets == null || eligibleTargets.Count == 0)
             {
@@ -479,24 +482,13 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 대상의 방어와 상태를 반영한 최종 피해를 계산한다.
-         */
-        private static float ResolveDamageAgainstTarget(
-            float baseDamage,
-            SkillSnapshot executionSnapshot,
-            UnitCombatState target)
-        {
-            return DamageCalculator.ResolveDamageAgainstTarget(baseDamage, executionSnapshot, target);
-        }
-
-        /*
          * 상태를 적용하고 성공 여부를 반환한다.
          */
         private static void TryApplyStatus(
-            InGameCombatManager manager,
-            UnitCombatState target,
-            ProjectileStatusHitSpec status,
-            UnitCombatState source)
+            InGameCombatManager manager /* 전투 진행 관리자 */,
+            UnitCombatState target /* 효과를 받을 대상 유닛 */,
+            ProjectileStatusHitSpec status /* 적용하거나 검사할 상태 효과 */,
+            UnitCombatState source /* 효과를 발생시킨 유닛 */)
         {
             StatusCombatRules.ApplyStatus(manager, target, status, source);
         }
@@ -504,7 +496,7 @@ namespace Pakuri.InGame
         /*
          * 출처 스킬 ID를 결정한다.
          */
-        private static string ResolveSourceSkillId(SkillSnapshot executionSnapshot, SkillRuntimeInstance sourceRuntime)
+        private static string ResolveSourceSkillId(SkillSnapshot executionSnapshot /* 실행 시점의 스킬 강화 정보 */, SkillRuntimeInstance sourceRuntime /* 효과를 발생시킨 스킬 실행 정보 */)
         {
             if (sourceRuntime != null && !string.IsNullOrWhiteSpace(sourceRuntime.SkillId))
             {

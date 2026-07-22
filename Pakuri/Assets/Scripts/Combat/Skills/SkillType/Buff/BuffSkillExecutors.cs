@@ -16,9 +16,9 @@ namespace Pakuri.InGame
          * 요청받은 버프 스킬을 실행한다.
          */
         internal static bool Execute(
-            SkillExecutionContext context,
-            SkillSnapshot snapshot,
-            BuffSkillRuntimeData skill)
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            BuffSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
         {
             var statusSpec = ResolveBuffStatusSpec(skill, snapshot);
             if (statusSpec == null)
@@ -63,20 +63,36 @@ namespace Pakuri.InGame
                     statusSpec.RefreshDuration,
                     context.Caster);
 
-                var visualTarget = skill.AttachVisualToCaster ? context.CasterEntry.Transform : target.Transform;
+                var visualTarget = target.Transform;
+                if (skill.AttachVisualToCaster)
+                {
+                    visualTarget = context.CasterEntry.Transform;
+                }
+
                 var canSpawnVisual = !skill.AttachVisualToCaster || !casterVisualSpawned;
                 GameObject visualInstance = null;
                 if (canSpawnVisual && visualTarget != null && effects != null)
                 {
-                    visualInstance = effects.SpawnAttachedEffect(
+                    var visualName = "RuntimeBuffVisual";
+                    if (!string.IsNullOrWhiteSpace(skill.SkillId))
+                    {
+                        visualName = "RuntimeBuffVisual_" + skill.SkillId;
+                    }
+
+                    visualInstance = effects.CreateEffect(
                         runtimeVisual,
                         prefab,
-                        string.IsNullOrWhiteSpace(skill.SkillId)
-                            ? "RuntimeBuffVisual"
-                            : $"RuntimeBuffVisual_{skill.SkillId}",
-                        visualTarget,
-                        statusSpec.DurationSeconds,
-                        Vector3.zero);
+                        visualName,
+                        visualTarget.position,
+                        Quaternion.identity);
+                    if (visualInstance != null)
+                    {
+                        BuffSkillActor.Attach(visualInstance).Initialize(
+                            effects,
+                            visualTarget,
+                            statusSpec.DurationSeconds,
+                            Vector3.zero);
+                    }
                 }
 
                 if (visualInstance != null)
@@ -103,7 +119,7 @@ namespace Pakuri.InGame
         /*
          * 버프 상태 설정을 결정한다.
          */
-        private static ProjectileStatusHitSpec ResolveBuffStatusSpec(BuffSkillRuntimeData skill, SkillSnapshot snapshot)
+        private static ProjectileStatusHitSpec ResolveBuffStatusSpec(BuffSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             if (skill == null)
             {
@@ -117,9 +133,9 @@ namespace Pakuri.InGame
          * 버프 대상을 결정한다.
          */
         internal static System.Collections.Generic.IReadOnlyList<CombatUnitEntry> ResolveBuffTargets(
-            CombatUnitEntry caster,
-            CombatUnitRegistry roster,
-            SkillTargetSide targetMode)
+            CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            SkillTargetSide targetMode /* 대상 방식 */)
         {
             if (targetMode == SkillTargetSide.Self)
             {
@@ -144,9 +160,9 @@ namespace Pakuri.InGame
          * 설정된 대상을 결정한다.
          */
         internal static IReadOnlyList<CombatUnitEntry> ResolveConfiguredTargets(
-            CombatUnitEntry caster,
-            CombatUnitRegistry roster,
-            SkillTargetingSpec targeting)
+            CombatUnitEntry caster /* 스킬을 사용하는 유닛 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */)
         {
             var targets = SkillTargeting.ResolveOrderedTargets(caster, roster, targeting);
             if (caster == null || caster.Transform == null || targeting == null || targeting.Radius <= 0f)
@@ -172,14 +188,32 @@ namespace Pakuri.InGame
          * 요청받은 보호막 스킬을 실행한다.
          */
         internal static bool Execute(
-            SkillExecutionContext context,
-            SkillSnapshot snapshot,
-            BuffShieldSkillRuntimeData skill)
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            BuffShieldSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
         {
-            var shield = DamageCalculator.ResolveShield(context.Caster, skill, snapshot);
-            var duration = skill.ShieldDuration > 0f
-                ? skill.ShieldDuration
-                : skill.ShieldStatus != null ? skill.ShieldStatus.Duration : 0f;
+            var shieldStat = context.Caster.Stats.SpellPower;
+            shieldStat *= StatusCombatRules.ResolveSpellPowerMultiplier(context.Caster);
+            if (skill.ShieldStatSource == StatSource.Attack)
+            {
+                shieldStat = context.Caster.Stats.AttackPower;
+                shieldStat *= StatusCombatRules.ResolveAttackPowerMultiplier(context.Caster);
+            }
+
+            var shield = Mathf.Max(0f, skill.ShieldBase + shieldStat * skill.ShieldCoefficient);
+            if (snapshot != null)
+            {
+                shield = (shield + snapshot.BaseDamageBonus)
+                    * Mathf.Max(0f, snapshot.DamageMultiplier)
+                    * Mathf.Max(0f, snapshot.ShieldAmountMultiplier);
+            }
+            shield = Mathf.Max(0f, shield);
+
+            var duration = skill.ShieldDuration;
+            if (duration <= 0f && skill.ShieldStatus != null)
+            {
+                duration = skill.ShieldStatus.Duration;
+            }
             if (snapshot != null
                 && (!Mathf.Approximately(snapshot.DurationMultiplier, 1f)
                     || !Mathf.Approximately(snapshot.DurationBonus, 0f)))
@@ -201,9 +235,15 @@ namespace Pakuri.InGame
                 prefab = snapshot.SkillEffectPrefab;
             }
 
-            var targets = skill.UseConfiguredTargeting
-                ? BuffSkillExecutor.ResolveConfiguredTargets(context.CasterEntry, context.Roster, skill.Targeting)
-                : BuffSkillExecutor.ResolveBuffTargets(context.CasterEntry, context.Roster, skill.Target);
+            IReadOnlyList<CombatUnitEntry> targets;
+            if (skill.UseConfiguredTargeting)
+            {
+                targets = BuffSkillExecutor.ResolveConfiguredTargets(context.CasterEntry, context.Roster, skill.Targeting);
+            }
+            else
+            {
+                targets = BuffSkillExecutor.ResolveBuffTargets(context.CasterEntry, context.Roster, skill.Target);
+            }
             var routed = false;
             var casterVisualSpawned = false;
             for (var i = 0; i < targets.Count; i++)
@@ -224,20 +264,36 @@ namespace Pakuri.InGame
                     false,
                     true,
                     context.Caster);
-                var visualTarget = skill.AttachVisualToCaster ? context.CasterEntry.Transform : target.Transform;
+                var visualTarget = target.Transform;
+                if (skill.AttachVisualToCaster)
+                {
+                    visualTarget = context.CasterEntry.Transform;
+                }
+
                 var canSpawnVisual = !skill.AttachVisualToCaster || !casterVisualSpawned;
                 GameObject visualInstance = null;
                 if (canSpawnVisual && visualTarget != null && effects != null)
                 {
-                    visualInstance = effects.SpawnAttachedEffect(
+                    var visualName = "RuntimeShieldVisual";
+                    if (!string.IsNullOrWhiteSpace(skill.SkillId))
+                    {
+                        visualName = $"RuntimeShieldVisual_{skill.SkillId}";
+                    }
+
+                    visualInstance = effects.CreateEffect(
                         runtimeVisual,
                         prefab,
-                        string.IsNullOrWhiteSpace(skill.SkillId)
-                            ? "RuntimeShieldVisual"
-                            : $"RuntimeShieldVisual_{skill.SkillId}",
-                        visualTarget,
-                        duration,
-                        Vector3.zero);
+                        visualName,
+                        visualTarget.position,
+                        Quaternion.identity);
+                    if (visualInstance != null)
+                    {
+                        BuffSkillActor.Attach(visualInstance).Initialize(
+                            effects,
+                            visualTarget,
+                            duration,
+                            Vector3.zero);
+                    }
                 }
 
                 if (visualInstance != null)
@@ -252,9 +308,11 @@ namespace Pakuri.InGame
             var planEffects = SkillNodeAction.ResolveEffects(snapshot, skill.MultiEffects);
             if (routed && planEffects.Length > 0)
             {
-                var center = context.CasterEntry.Transform != null
-                    ? (Vector2)context.CasterEntry.Transform.position
-                    : Vector2.zero;
+                var center = Vector2.zero;
+                if (context.CasterEntry.Transform != null)
+                {
+                    center = context.CasterEntry.Transform.position;
+                }
                 multiEffectRouted = SkillEffect.ExecuteWithStatusDurationScaling(context, snapshot, planEffects, center);
             }
 
@@ -271,18 +329,45 @@ namespace Pakuri.InGame
          * 요청받은 회복 스킬을 실행한다.
          */
         internal static bool Execute(
-            SkillExecutionContext context,
-            SkillSnapshot snapshot,
-            BuffHealSkillRuntimeData skill)
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            BuffHealSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
         {
             var targets = SkillTargeting.ResolveOrderedTargets(context.CasterEntry, context.Roster, skill.Targeting);
-            var target = targets.Count > 0 ? targets[0] : null;
+            CombatUnitEntry target = null;
+            if (targets.Count > 0)
+            {
+                target = targets[0];
+            }
             if (target == null || target.Model == null)
             {
                 return false;
             }
 
-            var amount = DamageCalculator.ResolvePowerValue(context.Caster, skill.Healing);
+            var healing = skill.Healing;
+            var amount = healing.BaseDamage;
+            if (healing.UseCombinedStatCoefficients)
+            {
+                var attack = context.Caster.Stats.AttackPower;
+                attack *= StatusCombatRules.ResolveAttackPowerMultiplier(context.Caster);
+                var spell = context.Caster.Stats.SpellPower;
+                spell *= StatusCombatRules.ResolveSpellPowerMultiplier(context.Caster);
+                amount += attack * healing.AttackPowerCoefficient;
+                amount += spell * healing.SpellPowerCoefficient;
+            }
+            else if (healing.StatSource == StatSource.Attack)
+            {
+                var attack = context.Caster.Stats.AttackPower;
+                attack *= StatusCombatRules.ResolveAttackPowerMultiplier(context.Caster);
+                amount += attack * healing.StatCoefficient;
+            }
+            else
+            {
+                var spell = context.Caster.Stats.SpellPower;
+                spell *= StatusCombatRules.ResolveSpellPowerMultiplier(context.Caster);
+                amount += spell * healing.StatCoefficient;
+            }
+            amount = Mathf.Max(0f, amount);
             if (context.Caster is EnemyCombatState enemy)
             {
                 amount *= Mathf.Max(0f, enemy.PassiveHealingMultiplier);
@@ -292,7 +377,26 @@ namespace Pakuri.InGame
             var effects = context.CombatManager.Effects;
             if (effects != null)
             {
-                effects.SpawnAttachedSkillEffect(skill, target.Transform, 0.8f);
+                var visualName = "RuntimeSupportVisual";
+                if (!string.IsNullOrWhiteSpace(skill.SkillId))
+                {
+                    visualName = "RuntimeSupportVisual_" + skill.SkillId;
+                }
+
+                var visualInstance = effects.CreateEffect(
+                    skill.RuntimeVisual,
+                    null,
+                    visualName,
+                    target.Transform.position,
+                    Quaternion.identity);
+                if (visualInstance != null)
+                {
+                    BuffSkillActor.Attach(visualInstance).Initialize(
+                        effects,
+                        target.Transform,
+                        0.8f,
+                        Vector3.zero);
+                }
             }
             return true;
         }

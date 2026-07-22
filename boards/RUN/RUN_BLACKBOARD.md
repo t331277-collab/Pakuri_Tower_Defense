@@ -9,6 +9,91 @@
 - This active file now keeps only the current `NewRunScene` authority split and the surviving new-scene flow baseline.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-22 Stage Day Ownership And RunSession Helper Cleanup
+
+### Task title
+
+Move day advancement to StageManager and remove generic string-list helpers from run state.
+
+### Goals
+
+- Keep `RunSession` as stored run and party progression state.
+- Make `StageManager` own the 11-day transition and stage increment.
+- Replace generic string-list helpers with direct domain list operations.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Stage/day values, Offering selection, learned skills, and manifestation behavior remain unchanged.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and solution-build verified.
+
+### Next Actions
+
+- User verifies 1-11 to 2-1 progression, day 5/10 midboss spawning, and Offering duplicate prevention in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/GameFlow/Stage/StageManager.cs` now advances `RunSession.DayIndex` and `StageIndex` inside its day-transition flow.
+- `Pakuri/Assets/Scripts/GameFlow/RunSession.cs` removes `RunCombatType`, `RunDayModel`, `CurrentCombatType`, `CurrentDayModel`, `AdvanceDay`, `RefreshDayModel`, `AddUniqueText`, and `ContainsText`.
+- `RecordOfferingChoice` writes non-empty reward, Choice, active, and passive IDs directly to their domain lists while retaining duplicate-selection checks.
+- `Pakuri/Assets/Scripts/UI/InGame/DebugUI.cs` uses `ChosenChoiceIds.Contains(...)` directly and removes its one-use `ContainsText` helper.
+- Repository search found no remaining references to the removed day-model and helper symbols under `Pakuri/Assets/Scripts`.
+- `git diff --check` passed for the three edited scripts.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 assembly-version warnings.
+
+### History
+
+- 2026-07-22: Code Builder moved day progression ownership to StageManager and removed generic run-state string helpers.
+
+## Task: 2026-07-22 RunSession Reward Modifier Ownership Cleanup
+
+### Task title
+
+Keep RunSession as run progression state instead of a duplicate combat modifier store.
+
+### Goals
+
+- Keep learned skills and selected Choice IDs as the combat-upgrade authority.
+- Retain only the persistent maximum-health bonus that unit creation reads directly.
+- Remove unused overloads, fallback state copies, and generic method comments.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Offering selection, party progression, and Choice-based combat modifiers remain unchanged.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and solution-build verified.
+
+### Next Actions
+
+- User verifies Offering enhancement selection, party respawn, and maximum-health bonuses in Play Mode.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/GameFlow/RunSession.cs` removes write-only combat modifier fields, selected-monster mirror lists, unused overloads, and `ApplyPostCombatSummary`.
+- `RunMonsterState.MaxHealthBonus` remains because `UnitCombatStateFactory` reads it while creating a monster combat model.
+- `AccumulateReward` is replaced by `AddMaxHealthBonus(monsterId, maxHealthBonus)`; other combat modifiers continue through `ChosenChoiceIds` and `SkillUpgrade`.
+- `dotnet build Pakuri.sln --no-restore` completed with 0 errors and the existing 2 assembly-version warnings.
+
+### History
+
+- 2026-07-22: Code Builder removed duplicate RunSession combat state and clarified method comments without adding fallback behavior.
+
 ## Task: 2026-07-19 NewRunScene Core Dead Code Removal
 
 ### Task title

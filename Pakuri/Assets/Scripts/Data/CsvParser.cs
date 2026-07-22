@@ -21,7 +21,7 @@ namespace Pakuri.Data
             /*
              * CSV 치명 오류와 세부 오류 목록을 보관한다.
              */
-            public CsvFatalException(string message)
+            public CsvFatalException(string message /* 메시지 */)
                 : this(message, null)
             {
             }
@@ -29,7 +29,7 @@ namespace Pakuri.Data
             /*
              * CSV 치명 오류와 세부 오류 목록을 보관한다.
              */
-            public CsvFatalException(string message, List<string> errors)
+            public CsvFatalException(string message /* 메시지 */, List<string> errors /* 검증 오류를 모을 목록 */)
                 : base(FormatMessage(message, errors))
             {
                 if (errors == null)
@@ -45,7 +45,7 @@ namespace Pakuri.Data
             /*
              * FormatMessage에 맞는 문자열을 만들어 반환한다.
              */
-            private static string FormatMessage(string message, List<string> errors)
+            private static string FormatMessage(string message /* 메시지 */, List<string> errors /* 검증 오류를 모을 목록 */)
             {
                 if (errors == null || errors.Count == 0)
                 {
@@ -75,7 +75,7 @@ namespace Pakuri.Data
             /*
              * CSV 헤더와 행 목록을 구성한다.
              */
-            internal CsvTable(string tableName, string[] headers, string[] types, List<CsvRecord> records)
+            internal CsvTable(string tableName /* CSV 표 이름 */, string[] headers /* 머리글 목록 */, string[] types /* 형식 목록 */, List<CsvRecord> records /* 기록 목록 */)
             {
                 TableName = tableName;
                 Headers = headers;
@@ -91,7 +91,7 @@ namespace Pakuri.Data
             /*
              * 필요한 CSV 또는 자산을 불러온다.
              */
-            public static CsvTable Load(TextAsset asset, string tableName)
+            public static CsvTable Load(TextAsset asset /* 읽을 텍스트 에셋 */, string tableName /* CSV 표 이름 */)
             {
                 if (asset == null)
                 {
@@ -104,7 +104,7 @@ namespace Pakuri.Data
             /*
              * 필요한 CSV 또는 자산을 불러온다.
              */
-            public static CsvTable Load(string path)
+            public static CsvTable Load(string path /* 불러오거나 검사할 경로 */)
             {
                 if (!File.Exists(path))
                 {
@@ -117,7 +117,7 @@ namespace Pakuri.Data
             /*
              * 필요한 CSV 또는 자산을 불러온다.
              */
-            internal static CsvTable Load(string tableName, string contents)
+            internal static CsvTable Load(string tableName /* CSV 표 이름 */, string contents /* 파싱할 CSV 문자열 */)
             {
                 var normalizedContents = string.Empty;
                 if (!string.IsNullOrEmpty(contents))
@@ -178,7 +178,7 @@ namespace Pakuri.Data
             /*
              * CSV 한 행과 열 위치 정보를 구성한다.
              */
-            public CsvRecord(string tableName, int rowNumber, string[] headers, string[] cells)
+            public CsvRecord(string tableName /* CSV 표 이름 */, int rowNumber /* 행 번호 */, string[] headers /* 머리글 목록 */, string[] cells /* 셀 목록 */)
             {
                 TableName = tableName;
                 RowNumber = rowNumber;
@@ -196,7 +196,7 @@ namespace Pakuri.Data
             /*
              * CSV 행에서 필요한 값을 읽는다.
              */
-            public string ReadRequiredString(string columnName)
+            public string ReadRequiredString(string columnName /* 읽거나 검사할 CSV 열 이름 */)
             {
                 var value = ReadString(columnName);
                 if (string.IsNullOrWhiteSpace(value))
@@ -210,7 +210,7 @@ namespace Pakuri.Data
             /*
              * CSV 행에서 필요한 값을 읽는다.
              */
-            public string ReadString(string columnName)
+            public string ReadString(string columnName /* 읽거나 검사할 CSV 열 이름 */)
             {
                 return GetCell(columnName).Trim();
             }
@@ -218,7 +218,7 @@ namespace Pakuri.Data
             /*
              * 필요한 조건을 만족하는지 확인한다.
              */
-            public bool HasColumn(string columnName)
+            public bool HasColumn(string columnName /* 읽거나 검사할 CSV 열 이름 */)
             {
                 return !string.IsNullOrWhiteSpace(columnName)
                     && headerLookup.ContainsKey(columnName);
@@ -227,7 +227,7 @@ namespace Pakuri.Data
             /*
              * CSV 행에서 필요한 값을 읽는다.
              */
-            public int ReadInt(string columnName)
+            public int ReadInt(string columnName /* 읽거나 검사할 CSV 열 이름 */)
             {
                 var value = ReadString(columnName);
                 if (string.IsNullOrWhiteSpace(value))
@@ -247,7 +247,7 @@ namespace Pakuri.Data
             /*
              * CSV 행에서 필요한 값을 읽는다.
              */
-            public float ReadFloat(string columnName)
+            public float ReadFloat(string columnName /* 읽거나 검사할 CSV 열 이름 */)
             {
                 var value = ReadString(columnName);
                 if (string.IsNullOrWhiteSpace(value))
@@ -267,7 +267,7 @@ namespace Pakuri.Data
             /*
              * CSV 행에서 필요한 값을 읽는다.
              */
-            public bool ReadBool(string columnName)
+            public bool ReadBool(string columnName /* 읽거나 검사할 CSV 열 이름 */)
             {
                 var value = ReadString(columnName);
                 if (string.IsNullOrWhiteSpace(value))
@@ -287,7 +287,7 @@ namespace Pakuri.Data
             /*
              * CSV 행에서 필요한 값을 읽는다.
              */
-            public TEnum ReadEnum<TEnum>(string columnName)
+            public TEnum ReadEnum<TEnum>(string columnName /* 읽거나 검사할 CSV 열 이름 */)
                 where TEnum : struct
             {
                 var value = ReadString(columnName);
@@ -308,7 +308,7 @@ namespace Pakuri.Data
             /*
              * 계산에 필요한 값을 반환한다.
              */
-            internal string GetCell(string columnName)
+            internal string GetCell(string columnName /* 읽거나 검사할 CSV 열 이름 */)
             {
                 if (!headerLookup.TryGetValue(columnName, out var index))
                 {
@@ -328,7 +328,7 @@ namespace Pakuri.Data
         /*
          * 따옴표로 묶인 쉼표와 연속 따옴표를 구분해 CSV 한 줄을 열 단위로 나눈다.
          */
-        internal static string[] SplitCsvLine(string line)
+        internal static string[] SplitCsvLine(string line /* 직선 */)
         {
             var values = new List<string>();
             var builder = new StringBuilder();
@@ -375,7 +375,7 @@ namespace Pakuri.Data
         /*
          * CSV 셀 안의 줄바꿈 표기를 실제 줄바꿈으로 바꾼다.
          */
-        internal static string UnescapeCsvCell(string value)
+        internal static string UnescapeCsvCell(string value /* 처리할 값 */)
         {
             if (string.IsNullOrEmpty(value))
             {

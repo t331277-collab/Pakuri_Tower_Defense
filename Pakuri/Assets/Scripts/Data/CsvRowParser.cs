@@ -360,7 +360,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        internal static MonsterRow ParseMonsterRow(CsvRecord record)
+        internal static MonsterRow ParseMonsterRow(CsvRecord record /* 읽을 CSV 행 */)
         {
             return new MonsterRow
             {
@@ -392,7 +392,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        internal static RewardChoiceRow ParseRewardChoiceRow(CsvRecord record)
+        internal static RewardChoiceRow ParseRewardChoiceRow(CsvRecord record /* 읽을 CSV 행 */)
         {
             return new RewardChoiceRow
             {
@@ -408,9 +408,9 @@ namespace Pakuri.Data
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
         internal static SkillRow ParseSkillRow(
-            CsvRecord record,
-            PakuriCsvSkillKind skillKind,
-            string ownerIdOverride = null)
+            CsvRecord record /* 읽을 CSV 행 */,
+            PakuriCsvSkillKind skillKind /* 스킬 종류 */,
+            string ownerIdOverride = null /* 소유자 식별자 덮어쓸 */)
         {
             var slot = record.ReadEnum<SkillSlot>("slot");
             var monsterId = ownerIdOverride;
@@ -503,7 +503,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        internal static SkillChoiceRow ParseSkillChoiceRow(CsvRecord record)
+        internal static SkillChoiceRow ParseSkillChoiceRow(CsvRecord record /* 읽을 CSV 행 */)
         {
             var row = new SkillChoiceRow
             {
@@ -710,7 +710,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        internal static SkillTriggerRow ParseSkillTriggerRow(CsvRecord record)
+        internal static SkillTriggerRow ParseSkillTriggerRow(CsvRecord record /* 읽을 CSV 행 */)
         {
             var row = new SkillTriggerRow
             {
@@ -816,7 +816,7 @@ namespace Pakuri.Data
         /*
          * 패시브 슬롯과 연결되는 액티브 슬롯을 반환한다.
          */
-        internal static SkillSlot GetRequiredActiveSlot(SkillSlot passiveSlot)
+        internal static SkillSlot GetRequiredActiveSlot(SkillSlot passiveSlot /* 패시브 슬롯 */)
         {
             switch (passiveSlot)
             {
@@ -836,7 +836,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        internal static float ReadOptionalFloat(CsvRecord record, string columnName)
+        internal static float ReadOptionalFloat(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */)
         {
             if (TryReadFloat(record, columnName, out var value))
             {
@@ -849,7 +849,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        internal static int ReadOptionalInt(CsvRecord record, string columnName)
+        internal static int ReadOptionalInt(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */)
         {
             if (TryReadInt(record, columnName, out var value))
             {
@@ -862,7 +862,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        internal static int ReadOptionalIntIfColumnExists(CsvRecord record, string columnName)
+        internal static int ReadOptionalIntIfColumnExists(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */)
         {
             if (record.HasColumn(columnName))
             {
@@ -875,7 +875,7 @@ namespace Pakuri.Data
         /*
          * 열이 존재하고 값이 있으면 CSV 값을 읽는다.
          */
-        internal static bool TryReadIntIfColumnExists(CsvRecord record, string columnName, out int value)
+        internal static bool TryReadIntIfColumnExists(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, out int value /* 처리할 값 */)
         {
             value = 0;
             return record.HasColumn(columnName) && TryReadInt(record, columnName, out value);
@@ -884,7 +884,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        internal static float ReadOptionalFloatIfColumnExists(CsvRecord record, string columnName)
+        internal static float ReadOptionalFloatIfColumnExists(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */)
         {
             if (record.HasColumn(columnName))
             {
@@ -897,7 +897,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        internal static float ReadOptionalFloat(CsvRecord record, string columnName, float defaultValue)
+        internal static float ReadOptionalFloat(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, float defaultValue /* 값이 없을 때 사용할 기본값 */)
         {
             if (record.HasColumn(columnName) && TryReadFloat(record, columnName, out var value))
             {
@@ -910,7 +910,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        internal static string ReadOptionalStringIfColumnExists(CsvRecord record, string columnName)
+        internal static string ReadOptionalStringIfColumnExists(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */)
         {
             if (record.HasColumn(columnName))
             {
@@ -923,7 +923,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        internal static bool ReadOptionalBoolIfColumnExists(CsvRecord record, string columnName)
+        internal static bool ReadOptionalBoolIfColumnExists(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */)
         {
             if (!record.HasColumn(columnName))
             {
@@ -937,7 +937,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        internal static bool ReadOptionalBool(CsvRecord record, string columnName, bool defaultValue)
+        internal static bool ReadOptionalBool(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, bool defaultValue /* 값이 없을 때 사용할 기본값 */)
         {
             if (!record.HasColumn(columnName))
             {
@@ -956,7 +956,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        internal static T ReadOptionalEnum<T>(CsvRecord record, string columnName, T defaultValue) where T : struct
+        internal static T ReadOptionalEnum<T>(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, T defaultValue /* 값이 없을 때 사용할 기본값 */) where T : struct
         {
             if (!record.HasColumn(columnName))
             {
@@ -975,7 +975,7 @@ namespace Pakuri.Data
         /*
          * 열이 존재하고 값이 있으면 CSV 값을 읽는다.
          */
-        internal static bool TryReadFloatIfColumnExists(CsvRecord record, string columnName, out float value)
+        internal static bool TryReadFloatIfColumnExists(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, out float value /* 처리할 값 */)
         {
             value = 0f;
             return record.HasColumn(columnName) && TryReadFloat(record, columnName, out value);
@@ -984,7 +984,7 @@ namespace Pakuri.Data
         /*
          * 열이 존재하고 값이 있으면 CSV 값을 읽는다.
          */
-        internal static bool TryReadFloat(CsvRecord record, string columnName, out float value)
+        internal static bool TryReadFloat(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, out float value /* 처리할 값 */)
         {
             var raw = record.ReadString(columnName);
             if (string.IsNullOrWhiteSpace(raw))
@@ -1000,7 +1000,7 @@ namespace Pakuri.Data
         /*
          * 열이 존재하고 값이 있으면 CSV 값을 읽는다.
          */
-        internal static bool TryReadInt(CsvRecord record, string columnName, out int value)
+        internal static bool TryReadInt(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, out int value /* 처리할 값 */)
         {
             var raw = record.ReadString(columnName);
             if (string.IsNullOrWhiteSpace(raw))
@@ -1017,12 +1017,12 @@ namespace Pakuri.Data
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
         internal static void ValidateExpectedSlots(
-            string monsterId,
-            HashSet<SkillSlot> slots,
-            SkillSlot first,
-            SkillSlot last,
-            string kindLabel,
-            List<string> errors)
+            string monsterId /* 몬스터 식별자 */,
+            HashSet<SkillSlot> slots /* 슬롯 목록 */,
+            SkillSlot first /* 첫 번째 */,
+            SkillSlot last /* 마지막 */,
+            string kindLabel /* 종류 표시 문구 */,
+            List<string> errors /* 검증 오류를 모을 목록 */)
         {
             for (var slot = first; slot <= last; slot++)
             {
@@ -1111,7 +1111,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        internal static EnemyRow ParseEnemyRow(CsvRecord record)
+        internal static EnemyRow ParseEnemyRow(CsvRecord record /* 읽을 CSV 행 */)
         {
             return new EnemyRow
             {
@@ -1143,7 +1143,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        internal static EnemyBaseSkillRow ParseEnemyBaseSkillRow(CsvRecord record, string tableName)
+        internal static EnemyBaseSkillRow ParseEnemyBaseSkillRow(CsvRecord record /* 읽을 CSV 행 */, string tableName /* CSV 표 이름 */)
         {
             if (string.Equals(tableName, "skills_passive.csv", StringComparison.OrdinalIgnoreCase))
             {
@@ -1197,7 +1197,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        internal static EnemyBaseSkillRow ParseEnemyPassiveSkillRow(CsvRecord record)
+        internal static EnemyBaseSkillRow ParseEnemyPassiveSkillRow(CsvRecord record /* 읽을 CSV 행 */)
         {
             var modifierKind = record.ReadEnum<EnemyPassiveModifierKind>("modifier_kind");
             var hasAttribute = TryReadDamageAttribute(record, "attribute", out var attribute);
@@ -1224,7 +1224,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        internal static EnemyTriggerRow ParseEnemyTriggerRow(CsvRecord record)
+        internal static EnemyTriggerRow ParseEnemyTriggerRow(CsvRecord record /* 읽을 CSV 행 */)
         {
             return new EnemyTriggerRow
             {
@@ -1241,7 +1241,7 @@ namespace Pakuri.Data
         /*
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
-        internal static void ValidateEnemyRows(SourceModel model, List<string> errors)
+        internal static void ValidateEnemyRows(SourceModel model /* CSV에서 읽은 원본 데이터 */, List<string> errors /* 검증 오류를 모을 목록 */)
         {
             var referencedActiveSkillIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var referencedPassiveIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -1321,12 +1321,12 @@ namespace Pakuri.Data
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
         internal static void ValidateEnemySkillSlot(
-            SourceModel model,
-            EnemyRow enemy,
-            string skillId,
-            SkillSlot slot,
-            HashSet<string> referencedSkillIds,
-            List<string> errors)
+            SourceModel model /* CSV에서 읽은 원본 데이터 */,
+            EnemyRow enemy /* 적 */,
+            string skillId /* 스킬 식별자 */,
+            SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */,
+            HashSet<string> referencedSkillIds /* 참조된 스킬 식별자 목록 */,
+            List<string> errors /* 검증 오류를 모을 목록 */)
         {
             if (!model.EnemyBaseSkills.TryGetValue(skillId, out var skill)
                 || skill == null
@@ -1350,10 +1350,10 @@ namespace Pakuri.Data
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
         internal static void ValidateEnemyPassive(
-            SourceModel model,
-            EnemyRow enemy,
-            HashSet<string> referencedPassiveIds,
-            List<string> errors)
+            SourceModel model /* CSV에서 읽은 원본 데이터 */,
+            EnemyRow enemy /* 적 */,
+            HashSet<string> referencedPassiveIds /* 참조된 패시브 식별자 목록 */,
+            List<string> errors /* 검증 오류를 모을 목록 */)
         {
             var passiveId = string.Empty;
             if (enemy.PassiveId != null)
@@ -1405,10 +1405,10 @@ namespace Pakuri.Data
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
         internal static void ValidateEnemyCombatStartTrigger(
-            SourceModel model,
-            string skillId,
-            SkillRuntimeKind runtimeKind,
-            List<string> errors)
+            SourceModel model /* CSV에서 읽은 원본 데이터 */,
+            string skillId /* 스킬 식별자 */,
+            SkillRuntimeKind runtimeKind /* 런타임 종류 */,
+            List<string> errors /* 검증 오류를 모을 목록 */)
         {
             var count = 0;
             foreach (var trigger in model.EnemyTriggers.Values)
@@ -1431,7 +1431,7 @@ namespace Pakuri.Data
         /*
          * 필요한 CSV 또는 자산을 불러온다.
          */
-        internal static SourceModel LoadSourceModel(CsvRuntimeCatalog sourceCatalog)
+        internal static SourceModel LoadSourceModel(CsvRuntimeCatalog sourceCatalog /* 발생 원본 데이터 목록 */)
         {
             var model = new SourceModel();
 
@@ -1621,10 +1621,10 @@ namespace Pakuri.Data
          * 필요한 CSV 또는 자산을 불러온다.
          */
         internal static void LoadSkillRows(
-            SourceModel model,
-            TextAsset[] skillAssets,
-            PakuriCsvSkillKind skillKind,
-            params SkillRuntimeKind[] allowedRuntimeKinds)
+            SourceModel model /* CSV에서 읽은 원본 데이터 */,
+            TextAsset[] skillAssets /* 스킬 에셋 목록 */,
+            PakuriCsvSkillKind skillKind /* 스킬 종류 */,
+            params SkillRuntimeKind[] allowedRuntimeKinds /* 허용된 런타임 종류 목록 여부 */)
         {
             for (var assetIndex = 0; assetIndex < skillAssets.Length; assetIndex++)
             {
@@ -1642,11 +1642,11 @@ namespace Pakuri.Data
          * 필요한 CSV 또는 자산을 불러온다.
          */
         internal static void LoadSkillRows(
-            SourceModel model,
-            TextAsset skillAsset,
-            string tableName,
-            PakuriCsvSkillKind skillKind,
-            params SkillRuntimeKind[] allowedRuntimeKinds)
+            SourceModel model /* CSV에서 읽은 원본 데이터 */,
+            TextAsset skillAsset /* 스킬 에셋 */,
+            string tableName /* CSV 표 이름 */,
+            PakuriCsvSkillKind skillKind /* 스킬 종류 */,
+            params SkillRuntimeKind[] allowedRuntimeKinds /* 허용된 런타임 종류 목록 여부 */)
         {
             var skillTable = CsvTable.Load(skillAsset, tableName);
             foreach (var record in skillTable.Records)
@@ -1670,9 +1670,9 @@ namespace Pakuri.Data
          * 필요한 CSV 또는 자산을 불러온다.
          */
         internal static void LoadSkillChoiceRows(
-            SourceModel model,
-            TextAsset[] choiceAssets,
-            params SkillRuntimeKind[] allowedOwnerRuntimeKinds)
+            SourceModel model /* CSV에서 읽은 원본 데이터 */,
+            TextAsset[] choiceAssets /* 선택지 에셋 목록 */,
+            params SkillRuntimeKind[] allowedOwnerRuntimeKinds /* 허용된 소유자 런타임 종류 목록 여부 */)
         {
             for (var assetIndex = 0; assetIndex < choiceAssets.Length; assetIndex++)
             {
@@ -1689,10 +1689,10 @@ namespace Pakuri.Data
          * 필요한 CSV 또는 자산을 불러온다.
          */
         internal static void LoadSkillChoiceRows(
-            SourceModel model,
-            TextAsset choiceAsset,
-            string tableName,
-            params SkillRuntimeKind[] allowedOwnerRuntimeKinds)
+            SourceModel model /* CSV에서 읽은 원본 데이터 */,
+            TextAsset choiceAsset /* 선택지 에셋 */,
+            string tableName /* CSV 표 이름 */,
+            params SkillRuntimeKind[] allowedOwnerRuntimeKinds /* 허용된 소유자 런타임 종류 목록 여부 */)
         {
             var choiceTable = CsvTable.Load(choiceAsset, tableName);
             foreach (var record in choiceTable.Records)
@@ -1726,8 +1726,8 @@ namespace Pakuri.Data
          * 필요한 조건을 만족하는지 확인한다.
          */
         internal static bool IsAllowedSkillRuntimeKind(
-            SkillRuntimeKind runtimeKind,
-            SkillRuntimeKind[] allowedRuntimeKinds)
+            SkillRuntimeKind runtimeKind /* 런타임 종류 */,
+            SkillRuntimeKind[] allowedRuntimeKinds /* 허용된 런타임 종류 목록 여부 */)
         {
             for (var i = 0; i < allowedRuntimeKinds.Length; i++)
             {
@@ -1743,7 +1743,7 @@ namespace Pakuri.Data
         /*
          * TextAsset 이름으로 CSV 테이블 이름을 만든다.
          */
-        internal static string GetTextAssetCsvTableName(TextAsset asset)
+        internal static string GetTextAssetCsvTableName(TextAsset asset /* 읽을 텍스트 에셋 */)
         {
             if (asset == null)
             {
@@ -1766,7 +1766,7 @@ namespace Pakuri.Data
         /*
          * 중복 ID를 거부하고 원본 행을 사전에 추가한다.
          */
-        internal static void AddUnique<T>(Dictionary<string, T> dictionary, string id, T value, CsvRecord record)
+        internal static void AddUnique<T>(Dictionary<string, T> dictionary /* 사전 */, string id /* 대상을 구분하는 식별자 */, T value /* 처리할 값 */, CsvRecord record /* 읽을 CSV 행 */)
         {
             if (string.IsNullOrWhiteSpace(id))
             {

@@ -40,7 +40,7 @@ namespace Pakuri.Data
             CriticalDamage = DamageCalculator.BaseCriticalMultiplier,
             CriticalResistance = 0f
         };
-        public DamageCalculator.AttributeDefenseSet Defenses = new DamageCalculator.AttributeDefenseSet();
+        public UnitDefenseStats Defenses = new UnitDefenseStats();
 
         // 런 선택 화면에 표시할 전투력
         public float PowerStat = 30f;

@@ -125,7 +125,7 @@ namespace Pakuri.InGame
         /*
          * ApplyTimeScale 처리를 대상에 적용한다.
          */
-        private void ApplyTimeScale(int index)
+        private void ApplyTimeScale(int index /* 목록에서의 순서 번호 */)
         {
             timeScaleIndex = Mathf.Clamp(index, 0, TimeScales.Length - 1);
             var timeScale = TimeScales[timeScaleIndex];

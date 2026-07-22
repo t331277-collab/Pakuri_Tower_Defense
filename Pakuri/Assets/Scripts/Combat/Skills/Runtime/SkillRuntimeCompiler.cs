@@ -17,7 +17,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * CompileActive 작업 결과를 반환한다.
 	 */
-	public static SkillRuntimeData CompileActive(MonsterDefinition monster, SkillDefinition source)
+	public static SkillRuntimeData CompileActive(MonsterDefinition monster /* 몬스터 */, SkillDefinition source /* 변환할 스킬 정의 */)
 	{
 		SkillRuntimeData skillRuntimeData = CreateConcreteActiveSkill(source);
 		string monsterId = string.Empty;
@@ -35,7 +35,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * CompileActive 작업 결과를 반환한다.
 	 */
-	public static SkillRuntimeData CompileActive(string monsterId, SkillDefinition source)
+	public static SkillRuntimeData CompileActive(string monsterId /* 몬스터 식별자 */, SkillDefinition source /* 변환할 스킬 정의 */)
 	{
 		return CompileActive(monsterId, source, null);
 	}
@@ -43,7 +43,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * CompileActive 작업 결과를 반환한다.
 	 */
-	public static SkillRuntimeData CompileActive(string ownerId, SkillDefinition source, SkillTriggerDefinition[] triggers)
+	public static SkillRuntimeData CompileActive(string ownerId /* 소유자 식별자 */, SkillDefinition source /* 변환할 스킬 정의 */, SkillTriggerDefinition[] triggers /* 트리거 목록 */)
 	{
 		SkillRuntimeData skillRuntimeData = CreateConcreteActiveSkill(source);
 		MapCommonFields(skillRuntimeData, ownerId, source, triggers);
@@ -54,7 +54,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * CompilePassive 작업 결과를 반환한다.
 	 */
-	public static PassiveSkillRuntimeData CompilePassive(MonsterDefinition monster, PassiveDefinition source)
+	public static PassiveSkillRuntimeData CompilePassive(MonsterDefinition monster /* 몬스터 */, PassiveDefinition source /* 변환할 패시브 정의 */)
 	{
 		PassiveSkillRuntimeData passiveSkillRuntimeData = CreateRuntimeData<PassiveSkillRuntimeData>();
 		passiveSkillRuntimeData.SkillId = source.PassiveId;
@@ -88,7 +88,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * CreateConcreteActiveSkill에 필요한 결과를 만들어 반환한다.
 	 */
-	private static SkillRuntimeData CreateConcreteActiveSkill(SkillDefinition source)
+	private static SkillRuntimeData CreateConcreteActiveSkill(SkillDefinition source /* 변환할 스킬 정의 */)
 	{
 		if (MatchesProfile(source, "DamageArea"))
 		{
@@ -144,7 +144,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * MapCommonFields에 필요한 값을 변환해 현재 상태에 반영한다.
 	 */
-	private static void MapCommonFields(SkillRuntimeData skill, string monsterId, SkillDefinition source, SkillTriggerDefinition[] monsterTriggers = null)
+	private static void MapCommonFields(SkillRuntimeData skill /* 실행하거나 검사할 스킬 */, string monsterId /* 몬스터 식별자 */, SkillDefinition source /* 변환할 스킬 정의 */, SkillTriggerDefinition[] monsterTriggers = null /* 몬스터 트리거 목록 */)
 	{
 		skill.SkillId = source.SkillId;
 		skill.SkillName = source.DisplayName;
@@ -192,7 +192,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * FilterSkillTriggersForSkill에 해당하는 값을 찾아 반환한다.
 	 */
-	private static SkillTriggerDefinition[] FilterSkillTriggersForSkill(SkillTriggerDefinition[] triggers, string skillId)
+	private static SkillTriggerDefinition[] FilterSkillTriggersForSkill(SkillTriggerDefinition[] triggers /* 트리거 목록 */, string skillId /* 스킬 식별자 */)
 	{
 		if (triggers == null || triggers.Length == 0 || string.IsNullOrWhiteSpace(skillId))
 		{
@@ -226,7 +226,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * IsTriggerOwnedBySkill 조건을 만족하는지 확인한다.
 	 */
-	private static bool IsTriggerOwnedBySkill(SkillTriggerDefinition trigger, string skillId)
+	private static bool IsTriggerOwnedBySkill(SkillTriggerDefinition trigger /* 실행하거나 검사할 트리거 */, string skillId /* 스킬 식별자 */)
 	{
 		if (trigger != null && !string.IsNullOrWhiteSpace(trigger.SourceSkillId))
 		{
@@ -238,7 +238,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * MapActiveFields에 필요한 값을 변환해 현재 상태에 반영한다.
 	 */
-	private static void MapActiveFields(SkillRuntimeData skill, MonsterDefinition monster, SkillDefinition source)
+	private static void MapActiveFields(SkillRuntimeData skill /* 실행하거나 검사할 스킬 */, MonsterDefinition monster /* 몬스터 */, SkillDefinition source /* 변환할 스킬 정의 */)
 	{
 		if (skill is ProjectileSkillRuntimeData projectileSkillRuntimeData)
 		{
@@ -441,7 +441,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * MapDamage에 필요한 값을 변환해 현재 상태에 반영한다.
 	 */
-	private static void MapDamage(SkillDamageSpec damage, SkillDefinition source)
+	private static void MapDamage(SkillDamageSpec damage /* 피해량 계산 설정 */, SkillDefinition source /* 변환할 스킬 정의 */)
 	{
 		damage.SkillId = source.SkillId;
 		damage.Element = source.Attribute;
@@ -457,7 +457,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * MapEnemyTargetSide에 필요한 형식으로 변환해 반환한다.
 	 */
-	private static SkillTargetSide MapEnemyTargetSide(string targetScope)
+	private static SkillTargetSide MapEnemyTargetSide(string targetScope /* 대상 적용 범위 */)
 	{
 		if (string.IsNullOrWhiteSpace(targetScope))
 		{
@@ -477,7 +477,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * MatchesProfile 조건을 만족하는지 확인한다.
 	 */
-	private static bool MatchesProfile(SkillDefinition source, string profile)
+	private static bool MatchesProfile(SkillDefinition source /* 변환할 스킬 정의 */, string profile /* 실행 설정 */)
 	{
 		return string.Equals(source.ExecutionProfile, profile, StringComparison.OrdinalIgnoreCase);
 	}
@@ -485,7 +485,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * GetDominantCoefficient에 해당하는 값을 찾아 반환한다.
 	 */
-	private static float GetDominantCoefficient(SkillDefinition source, out StatSource statSource)
+	private static float GetDominantCoefficient(SkillDefinition source /* 변환할 스킬 정의 */, out StatSource statSource /* 능력치 발생 원본 */)
 	{
 		if (Mathf.Abs(source.SpellPowerCoefficient) >= Mathf.Abs(source.AttackPowerCoefficient))
 		{
@@ -499,7 +499,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * GetDominantCoefficient에 해당하는 값을 찾아 반환한다.
 	 */
-	private static float GetDominantCoefficient(float attackPowerCoefficient, float spellPowerCoefficient, out StatSource statSource)
+	private static float GetDominantCoefficient(float attackPowerCoefficient /* 공격력 계수 */, float spellPowerCoefficient /* 주문력 계수 */, out StatSource statSource /* 능력치 발생 원본 */)
 	{
 		if (Mathf.Abs(spellPowerCoefficient) >= Mathf.Abs(attackPowerCoefficient))
 		{
@@ -513,7 +513,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * CreateStatusApplication에 필요한 결과를 만들어 반환한다.
 	 */
-	private static StatusApplicationSpec CreateStatusApplication(SkillDefinition source)
+	private static StatusApplicationSpec CreateStatusApplication(SkillDefinition source /* 변환할 스킬 정의 */)
 	{
 		StatusApplicationSpec statusApplicationSpec = new StatusApplicationSpec();
 		StatusRuntimeData runtimeStatusData = (statusApplicationSpec.Status = CreateStatusRuntimeData(source));
@@ -530,7 +530,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * CreateStatusRuntimeData에 필요한 결과를 만들어 반환한다.
 	 */
-	private static StatusRuntimeData CreateStatusRuntimeData(SkillDefinition source)
+	private static StatusRuntimeData CreateStatusRuntimeData(SkillDefinition source /* 변환할 스킬 정의 */)
 	{
 		if (string.IsNullOrWhiteSpace(source.StatusEffectId))
 		{
@@ -548,7 +548,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * TryResolveHitTargetCount 작업을 시도하고 성공 여부를 반환한다.
 	 */
-	private static bool TryResolveHitTargetCount(string rawValue, out bool hitAllTargets, out int hitTargetCount)
+	private static bool TryResolveHitTargetCount(string rawValue /* 변환 전 원본 문자열 */, out bool hitAllTargets /* 적중 전체 대상 목록 여부 */, out int hitTargetCount /* 적중시킬 대상 수 */)
 	{
 		hitAllTargets = false;
 		hitTargetCount = 1;
@@ -570,7 +570,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * MapBuffTarget에 필요한 형식으로 변환해 반환한다.
 	 */
-	private static SkillTargetSide MapBuffTarget(SkillDefinition source)
+	private static SkillTargetSide MapBuffTarget(SkillDefinition source /* 변환할 스킬 정의 */)
 	{
 		StatusRuntimeCompiler.TryParseTargetScope(source.StatusTargetScope, out var scope);
 		if (scope == StatusTargetScope.Self)
@@ -584,7 +584,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * ResolveStatusDuration 결과를 계산해 반환한다.
 	 */
-	private static float ResolveStatusDuration(SkillDefinition source)
+	private static float ResolveStatusDuration(SkillDefinition source /* 변환할 스킬 정의 */)
 	{
 		if (source.StatusDurationSeconds > 0f)
 		{
@@ -601,7 +601,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * ApplySingleBasePlanNodes 처리를 대상에 적용한다.
 	 */
-	private static void ApplySingleBasePlanNodes(SingleSkillRuntimeData single, SkillNodeDefinition[] nodes, DamageAttribute attribute)
+	private static void ApplySingleBasePlanNodes(SingleSkillRuntimeData single /* 단일 */, SkillNodeDefinition[] nodes /* 노드 목록 */, DamageAttribute attribute /* 피해 속성 */)
 	{
 		foreach (SkillNodeDefinition skillNodeDefinition in nodes)
 		{
@@ -637,7 +637,7 @@ public static class SkillRuntimeCompiler
 	/*
 	 * MapShape에 필요한 형식으로 변환해 반환한다.
 	 */
-	private static SkillTargetShape MapShape(SkillRuntimeKind runtimeKind)
+	private static SkillTargetShape MapShape(SkillRuntimeKind runtimeKind /* 런타임 종류 */)
 	{
 		switch (runtimeKind)
 		{
@@ -669,7 +669,7 @@ namespace Pakuri.InGame
 	/*
 	 * MapSkillNodeDefinitions에 필요한 형식으로 변환해 반환한다.
 	 */
-	public static SkillNode[] MapSkillNodeDefinitions(SkillNodeDefinition[] source)
+	public static SkillNode[] MapSkillNodeDefinitions(SkillNodeDefinition[] source /* 변환할 스킬 노드 정의 목록 */)
 	{
 		if (source.Length == 0)
 		{
@@ -694,7 +694,7 @@ namespace Pakuri.InGame
 	/*
 	 * FilterSkillNodeDefinitionsForTarget에 해당하는 값을 찾아 반환한다.
 	 */
-	public static SkillNodeDefinition[] FilterSkillNodeDefinitionsForTarget(SkillNodeDefinition[] source, string targetSkillId)
+	public static SkillNodeDefinition[] FilterSkillNodeDefinitionsForTarget(SkillNodeDefinition[] source /* 변환할 스킬 노드 정의 목록 */, string targetSkillId /* 대상 스킬 식별자 */)
 	{
 		if (source == null || source.Length == 0)
 		{
@@ -722,7 +722,7 @@ namespace Pakuri.InGame
 	/*
 	 * HasSkillNodeForTarget 조건을 만족하는지 확인한다.
 	 */
-	public static bool HasSkillNodeForTarget(SkillNodeDefinition[] source, string targetSkillId)
+	public static bool HasSkillNodeForTarget(SkillNodeDefinition[] source /* 변환할 스킬 노드 정의 목록 */, string targetSkillId /* 대상 스킬 식별자 */)
 	{
 		if (source == null || source.Length == 0 || string.IsNullOrWhiteSpace(targetSkillId))
 		{
@@ -741,7 +741,7 @@ namespace Pakuri.InGame
 	/*
 	 * CanProcessPlanNode 조건을 만족하는지 확인한다.
 	 */
-	internal static bool CanProcessPlanNode(string ownerKind, string handlerId)
+	internal static bool CanProcessPlanNode(string ownerKind /* 소유자 종류 */, string handlerId /* 처리기 식별자 */)
 	{
 		if (string.Equals(ownerKind, "Choice", StringComparison.OrdinalIgnoreCase)
 			&& SkillChoiceCompiler.UsesChoiceFields(handlerId))
@@ -759,7 +759,7 @@ namespace Pakuri.InGame
 	/*
 	 * MapSkillNodeDefinition에 필요한 형식으로 변환해 반환한다.
 	 */
-	private static SkillNode MapSkillNodeDefinition(SkillNodeDefinition node)
+	private static SkillNode MapSkillNodeDefinition(SkillNodeDefinition node /* 노드 */)
 	{
 		if (node == null || !node.EnabledByDefault)
 		{
@@ -816,6 +816,47 @@ namespace Pakuri.InGame
 		{
 			return SkillNode.FromKillAction(new KillActionOp(KillActionOpKind.CooldownRefundBonus, GetFloatParam(node, "ratio_bonus", 0f), requiresExecute: false));
 		}
+		if (string.Equals(text, "CountStatusDamageMultiplier", StringComparison.OrdinalIgnoreCase))
+		{
+			string statusId = GetParam(node, "status_id");
+			StatusEffectKind statusKind = StatusRuntimeCompiler.ParseStatusKind(statusId);
+			return SkillNode.FromCountStatusDamageAction(new CountStatusDamageActionOp(
+				GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.AllAllies),
+				statusKind,
+				GetFloatParam(node, "amount_per_count", 0f),
+				GetIntParam(node, "max_count", 0)));
+		}
+		if (string.Equals(text, "ConsecutiveHitDamageBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromConsecutiveHitAction(new ConsecutiveHitActionOp(
+				GetFloatParam(node, "bonus_rate", 0f),
+				GetFloatParam(node, "max_bonus", 0f)));
+		}
+		if (string.Equals(text, "BranchDamage", StringComparison.OrdinalIgnoreCase))
+		{
+			return SkillNode.FromBranchDamageAction(new BranchDamageActionOp(
+				GetFloatParam(node, "chance_bonus", 0f),
+				GetIntParam(node, "count", 0),
+				GetFloatParam(node, "damage_multiplier", 0f),
+				GetFloatParam(node, "search_radius", 0f)));
+		}
+		if (string.Equals(text, "ConditionalDamageMultiplier", StringComparison.OrdinalIgnoreCase))
+		{
+			string statusId = GetParam(node, "status_id");
+			StatusEffectKind statusKind = StatusRuntimeCompiler.ParseStatusKind(statusId);
+			return SkillNode.FromConditionalDamageAction(new ConditionalDamageActionOp(
+				GetFloatParam(node, "multiplier", 1f),
+				statusKind,
+				GetIntParam(node, "min_stacks", 1)));
+		}
+		if (string.Equals(text, "StatusConditionalDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
+		{
+			string sourceStatusId = GetParam(node, "source_status_id");
+			StatusEffectKind sourceStatusKind = StatusRuntimeCompiler.ParseStatusKind(sourceStatusId);
+			return SkillNode.FromStatusConditionalDamageTakenAction(new StatusConditionalDamageTakenActionOp(
+				GetFloatParam(node, "bonus", 0f),
+				sourceStatusKind));
+		}
 		var skillActionOp = MapSkillActionOp(node, text);
 		return SkillNode.FromAction(skillActionOp);
 	}
@@ -823,7 +864,7 @@ namespace Pakuri.InGame
 	/*
 	 * IsSingleBaseFieldHandler 조건을 만족하는지 확인한다.
 	 */
-	private static bool IsSingleBaseFieldHandler(string handlerId)
+	private static bool IsSingleBaseFieldHandler(string handlerId /* 처리기 식별자 */)
 	{
 		if (string.Equals(handlerId, "StatusFilteredDeployment", StringComparison.OrdinalIgnoreCase))
 		{
@@ -835,7 +876,7 @@ namespace Pakuri.InGame
 	/*
 	 * IsRuntimePlanHandler 조건을 만족하는지 확인한다.
 	 */
-	private static bool IsRuntimePlanHandler(string handlerId)
+	private static bool IsRuntimePlanHandler(string handlerId /* 처리기 식별자 */)
 	{
 		if (string.Equals(handlerId, "TargetHealthRatioCondition", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "TargetHealthRatioThresholdBonus", StringComparison.OrdinalIgnoreCase)
@@ -897,7 +938,7 @@ namespace Pakuri.InGame
 	/*
 	 * MapSkillActionOp에 필요한 형식으로 변환해 반환한다.
 	 */
-	private static SkillActionOp MapSkillActionOp(SkillNodeDefinition node, string handlerId)
+	private static SkillActionOp MapSkillActionOp(SkillNodeDefinition node /* 노드 */, string handlerId /* 처리기 식별자 */)
 	{
 		if (string.Equals(handlerId, "DamageMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
@@ -907,19 +948,13 @@ namespace Pakuri.InGame
 		{
 			return new SkillActionOp(SkillActionOpKind.ShieldAmountMultiplier, GetFloatParam(node, "multiplier", 1f));
 		}
-		if (string.Equals(handlerId, "CountStatusDamageMultiplier", StringComparison.OrdinalIgnoreCase))
-		{
-			string statusId = GetParam(node, "status_id");
-			StatusEffectKind statusKind = StatusRuntimeCompiler.ParseStatusKind(statusId);
-			return new SkillActionOp(SkillActionOpKind.CountStatusDamageMultiplier, GetFloatParam(node, "amount_per_count", 0f), GetIntParam(node, "max_count", 0), statusId, null, GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.AllAllies), 0f, 0f, statusKind);
-		}
 		if (string.Equals(handlerId, "CooldownMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.CooldownMultiplier, GetFloatParam(node, "multiplier", 1f));
 		}
 		if (string.Equals(handlerId, "MagazineBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.MagazineBonus, 0f, GetIntParam(node, "bonus", 0));
+			return new SkillActionOp(SkillActionOpKind.MagazineBonus, GetIntParam(node, "bonus", 0));
 		}
 		if (string.Equals(handlerId, "ReloadTimeMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
@@ -927,7 +962,7 @@ namespace Pakuri.InGame
 		}
 		if (string.Equals(handlerId, "PierceBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.PierceBonus, 0f, GetIntParam(node, "bonus", 0));
+			return new SkillActionOp(SkillActionOpKind.PierceBonus, GetIntParam(node, "bonus", 0));
 		}
 		if (string.Equals(handlerId, "RadiusMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
@@ -951,53 +986,39 @@ namespace Pakuri.InGame
 		}
 		if (string.Equals(handlerId, "AdditionalProjectileBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.AdditionalProjectileBonus, 0f, GetIntParam(node, "bonus", 0));
+			return new SkillActionOp(SkillActionOpKind.AdditionalProjectileBonus, GetIntParam(node, "bonus", 0));
 		}
 		if (string.Equals(handlerId, "ShotIntervalMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			return new SkillActionOp(SkillActionOpKind.ShotIntervalMultiplier, GetFloatParam(node, "multiplier", 1f));
 		}
-		if (string.Equals(handlerId, "ConsecutiveHitDamageBonus", StringComparison.OrdinalIgnoreCase))
-		{
-			return new SkillActionOp(SkillActionOpKind.ConsecutiveHitDamageBonus, GetFloatParam(node, "bonus_rate", 0f), 0, null, null, SkillMultiEffectTargetSide.Enemy, GetFloatParam(node, "max_bonus", 0f));
-		}
-		if (string.Equals(handlerId, "BranchDamage", StringComparison.OrdinalIgnoreCase))
-		{
-			return new SkillActionOp(SkillActionOpKind.BranchDamage, GetFloatParam(node, "chance_bonus", 0f), GetIntParam(node, "count", 0), null, null, SkillMultiEffectTargetSide.Enemy, GetFloatParam(node, "damage_multiplier", 0f), GetFloatParam(node, "search_radius", 0f));
-		}
 		if (string.Equals(handlerId, "StatusStackAmountBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.StatusStackAmountBonus, 0f, GetIntParam(node, "bonus", 0), GetParam(node, "status_id"));
+			return new SkillActionOp(SkillActionOpKind.StatusStackAmountBonus, GetIntParam(node, "bonus", 0));
 		}
 		if (string.Equals(handlerId, "StatusStackAmountSet", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.StatusStackAmountSet, 0f, GetIntParam(node, "value", 0), GetParam(node, "status_id"));
+			return new SkillActionOp(SkillActionOpKind.StatusStackAmountSet, GetIntParam(node, "value", 0));
 		}
 		if (string.Equals(handlerId, "StatusMaxStacksBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.StatusMaxStacksBonus, 0f, GetIntParam(node, "bonus", 0), GetParam(node, "status_id"));
-		}
-		if (string.Equals(handlerId, "ConditionalDamageMultiplier", StringComparison.OrdinalIgnoreCase))
-		{
-			string statusId = GetParam(node, "status_id");
-			StatusEffectKind statusKind = StatusRuntimeCompiler.ParseStatusKind(statusId);
-			return new SkillActionOp(SkillActionOpKind.ConditionalDamageMultiplier, GetFloatParam(node, "multiplier", 1f), GetIntParam(node, "min_stacks", 1), statusId, null, SkillMultiEffectTargetSide.Enemy, 0f, 0f, statusKind);
+			return new SkillActionOp(SkillActionOpKind.StatusMaxStacksBonus, GetParam(node, "status_id"), GetIntParam(node, "bonus", 0));
 		}
 		if (string.Equals(handlerId, "TargetStatusStackDamageRateBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.TargetStatusStackDamageRateBonus, GetFloatParam(node, "bonus_rate_per_stack", 0f), 0, GetParam(node, "status_id"));
+			return new SkillActionOp(SkillActionOpKind.TargetStatusStackDamageRateBonus, GetParam(node, "status_id"), GetFloatParam(node, "bonus_rate_per_stack", 0f));
 		}
 		if (string.Equals(handlerId, "TriggerProcChanceBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.TriggerProcChanceBonus, GetFloatParam(node, "bonus", 0f), 0, GetParam(node, "trigger_id"));
+			return new SkillActionOp(SkillActionOpKind.TriggerProcChanceBonus, GetParam(node, "trigger_id"), GetFloatParam(node, "bonus", 0f));
 		}
 		if (string.Equals(handlerId, "HitTargetCountBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.HitTargetCountBonus, 0f, GetIntParam(node, "bonus", 0));
+			return new SkillActionOp(SkillActionOpKind.HitTargetCountBonus, GetIntParam(node, "bonus", 0));
 		}
 		if (string.Equals(handlerId, "StatusActionSpeedBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.StatusActionSpeedBonus, GetFloatParam(node, "bonus", 0f), 0, GetParam(node, "status_id"));
+			return new SkillActionOp(SkillActionOpKind.StatusActionSpeedBonus, GetParam(node, "status_id"), GetFloatParam(node, "bonus", 0f));
 		}
 		if (string.Equals(handlerId, "StatusAttackPowerBonus", StringComparison.OrdinalIgnoreCase))
 		{
@@ -1029,21 +1050,7 @@ namespace Pakuri.InGame
 		}
 		if (string.Equals(handlerId, "StatusDurationBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return new SkillActionOp(SkillActionOpKind.StatusDurationBonus, GetFloatParam(node, "bonus_seconds", 0f), 0, GetParam(node, "status_id"));
-		}
-		if (string.Equals(handlerId, "StatusConditionalDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
-		{
-			var sourceStatusId = GetParam(node, "source_status_id");
-			return new SkillActionOp(
-				SkillActionOpKind.StatusConditionalDamageTakenBonus,
-				GetFloatParam(node, "bonus", 0f),
-				0,
-				sourceStatusId,
-				null,
-				SkillMultiEffectTargetSide.Enemy,
-				0f,
-				0f,
-				StatusRuntimeCompiler.ParseStatusKind(sourceStatusId));
+			return new SkillActionOp(SkillActionOpKind.StatusDurationBonus, GetParam(node, "status_id"), GetFloatParam(node, "bonus_seconds", 0f));
 		}
 		if (string.Equals(handlerId, "StatusElementDamageTakenBonus", StringComparison.OrdinalIgnoreCase))
 		{
@@ -1059,7 +1066,7 @@ namespace Pakuri.InGame
 	/*
 	 * GetParam에 해당하는 값을 찾아 반환한다.
 	 */
-	internal static string GetParam(SkillNodeDefinition node, string key)
+	internal static string GetParam(SkillNodeDefinition node /* 노드 */, string key /* 조회 키 */)
 	{
 		if (node == null || node.Params == null || string.IsNullOrWhiteSpace(key))
 		{
@@ -1083,7 +1090,7 @@ namespace Pakuri.InGame
 	/*
 	 * GetFloatParam에 해당하는 값을 찾아 반환한다.
 	 */
-	internal static float GetFloatParam(SkillNodeDefinition node, string key, float defaultValue)
+	internal static float GetFloatParam(SkillNodeDefinition node /* 노드 */, string key /* 조회 키 */, float defaultValue /* 값이 없을 때 사용할 기본값 */)
 	{
 		string param = GetParam(node, key);
 		if (string.IsNullOrWhiteSpace(param) || !float.TryParse(param, NumberStyles.Float, CultureInfo.InvariantCulture, out var result))
@@ -1096,7 +1103,7 @@ namespace Pakuri.InGame
 	/*
 	 * GetIntParam에 해당하는 값을 찾아 반환한다.
 	 */
-	internal static int GetIntParam(SkillNodeDefinition node, string key, int defaultValue)
+	internal static int GetIntParam(SkillNodeDefinition node /* 노드 */, string key /* 조회 키 */, int defaultValue /* 값이 없을 때 사용할 기본값 */)
 	{
 		string param = GetParam(node, key);
 		if (string.IsNullOrWhiteSpace(param) || !int.TryParse(param, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
@@ -1109,7 +1116,7 @@ namespace Pakuri.InGame
 	/*
 	 * GetBoolParam에 해당하는 값을 찾아 반환한다.
 	 */
-	internal static bool GetBoolParam(SkillNodeDefinition node, string key, bool defaultValue)
+	internal static bool GetBoolParam(SkillNodeDefinition node /* 노드 */, string key /* 조회 키 */, bool defaultValue /* 값이 없을 때 사용할 기본값 */)
 	{
 		string param = GetParam(node, key);
 		if (string.IsNullOrWhiteSpace(param))
@@ -1130,7 +1137,7 @@ namespace Pakuri.InGame
 	/*
 	 * GetEnumParam에 해당하는 값을 찾아 반환한다.
 	 */
-	internal static T GetEnumParam<T>(SkillNodeDefinition node, string key, T defaultValue) where T : struct
+	internal static T GetEnumParam<T>(SkillNodeDefinition node /* 노드 */, string key /* 조회 키 */, T defaultValue /* 값이 없을 때 사용할 기본값 */) where T : struct
 	{
 		string param = GetParam(node, key);
 		if (string.IsNullOrWhiteSpace(param) || !Enum.TryParse<T>(param, ignoreCase: true, out var result))
@@ -1154,7 +1161,7 @@ namespace Pakuri.InGame
 	/*
 	 * Compile 작업 결과를 반환한다.
 	 */
-	internal static SkillChoiceRuntimeData[] Compile(SkillChoiceDefinition[] source)
+	internal static SkillChoiceRuntimeData[] Compile(SkillChoiceDefinition[] source /* 변환할 스킬 선택지 정의 목록 */)
 	{
 		SkillChoiceRuntimeData[] array = new SkillChoiceRuntimeData[source.Length];
 		for (int i = 0; i < source.Length; i++)
@@ -1186,7 +1193,7 @@ namespace Pakuri.InGame
 	/*
 	 * ApplyChoiceFieldNodes 처리를 대상에 적용한다.
 	 */
-	internal static void ApplyChoiceFieldNodes(SkillChoiceRuntimeData spec, SkillNodeDefinition[] nodes)
+	internal static void ApplyChoiceFieldNodes(SkillChoiceRuntimeData spec /* 처리에 사용할 설정 */, SkillNodeDefinition[] nodes /* 노드 목록 */)
 	{
 		if (spec == null || nodes == null || nodes.Length == 0)
 		{
@@ -1204,7 +1211,7 @@ namespace Pakuri.InGame
 	/*
 	 * UsesChoiceFields 조건을 만족하는지 확인한다.
 	 */
-	internal static bool UsesChoiceFields(string handlerId)
+	internal static bool UsesChoiceFields(string handlerId /* 처리기 식별자 */)
 	{
 		if (string.Equals(handlerId, "BurstDamageRule", StringComparison.OrdinalIgnoreCase)
 			|| string.Equals(handlerId, "FollowUpProjectile", StringComparison.OrdinalIgnoreCase)
@@ -1238,7 +1245,7 @@ namespace Pakuri.InGame
 	/*
 	 * ApplyNormalizedChoiceNode 처리를 대상에 적용한다.
 	 */
-	private static void ApplyNormalizedChoiceNode(SkillChoiceRuntimeData spec, SkillNodeDefinition node)
+	private static void ApplyNormalizedChoiceNode(SkillChoiceRuntimeData spec /* 처리에 사용할 설정 */, SkillNodeDefinition node /* 노드 */)
 	{
 		SkillChoiceDefinition source = spec.Source;
 		string a = node.HandlerId;

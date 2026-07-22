@@ -15,7 +15,7 @@ namespace Pakuri.InGame
         /*
          * 유닛이 학습한 선택지를 현재 스킬 실행 정보에 적용한다.
          */
-        public SkillSnapshot Resolve(UnitCombatState owner, SkillRuntimeInstance runtime)
+        public SkillSnapshot Resolve(UnitCombatState owner /* 정보를 소유한 유닛 */, SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */)
         {
             return Resolve(owner, runtime, null);
         }
@@ -23,7 +23,7 @@ namespace Pakuri.InGame
         /*
          * 유닛이 학습한 선택지를 현재 스킬 실행 정보에 적용한다.
          */
-        public SkillSnapshot Resolve(UnitCombatState owner, SkillRuntimeInstance runtime, CombatUnitRegistry roster)
+        public SkillSnapshot Resolve(UnitCombatState owner /* 정보를 소유한 유닛 */, SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
         {
             SkillRuntimeData skillData = null;
             if (runtime != null)
@@ -50,9 +50,9 @@ namespace Pakuri.InGame
          * 패시브 기본 보정값을 적용한다.
          */
         private static void ApplyPassiveBaseModifiers(
-            SkillSnapshot snapshot,
-            UnitCombatState owner,
-            SkillRuntimeData skillData)
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            UnitCombatState owner /* 정보를 소유한 유닛 */,
+            SkillRuntimeData skillData /* 스킬 실행 데이터 */)
         {
             if (snapshot == null
                 || owner == null
@@ -93,11 +93,11 @@ namespace Pakuri.InGame
          * 선택지를 적용한다.
          */
         private static void ApplyChoices(
-            SkillSnapshot snapshot,
-            System.Collections.Generic.ICollection<string> chosenChoiceIds,
-            SkillRuntimeData skillData,
-            UnitCombatState owner,
-            CombatUnitRegistry roster)
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            System.Collections.Generic.ICollection<string> chosenChoiceIds /* 선택된 선택지 식별자 목록 */,
+            SkillRuntimeData skillData /* 스킬 실행 데이터 */,
+            UnitCombatState owner /* 정보를 소유한 유닛 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
         {
             if (snapshot == null || chosenChoiceIds == null || skillData == null)
             {
@@ -122,10 +122,10 @@ namespace Pakuri.InGame
          * 동적 선택지 규칙을 적용한다.
          */
         private static void ApplyDynamicChoiceRules(
-            SkillSnapshot snapshot,
-            SkillChoiceDefinition choice,
-            UnitCombatState owner,
-            CombatUnitRegistry roster)
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */,
+            UnitCombatState owner /* 정보를 소유한 유닛 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
         {
             if (snapshot == null || choice == null || roster == null)
             {
@@ -145,19 +145,19 @@ namespace Pakuri.InGame
                     choice.CountMax);
             }
 
-            var targetNodes = SkillNodeMapper.FilterSkillNodeDefinitionsForTarget(
+            SkillNodeDefinition[] targetNodes = SkillNodeMapper.FilterSkillNodeDefinitionsForTarget(
                 choice.NormalizedPlanNodes,
                 snapshot.SkillId);
-            var nodes = SkillNodeMapper.MapSkillNodeDefinitions(targetNodes);
-            for (var i = 0; i < nodes.Length; i++)
+            SkillNode[] nodes = SkillNodeMapper.MapSkillNodeDefinitions(targetNodes);
+            for (int i = 0; i < nodes.Length; i++)
             {
                 if (nodes[i] == null)
                 {
                     continue;
                 }
 
-                var action = nodes[i].Action;
-                if (!action.HasValue || action.Value.Kind != SkillActionOpKind.CountStatusDamageMultiplier)
+                CountStatusDamageActionOp? action = nodes[i].CountStatusDamageAction;
+                if (!action.HasValue)
                 {
                     continue;
                 }
@@ -168,8 +168,8 @@ namespace Pakuri.InGame
                     roster,
                     action.Value.TargetSide,
                     action.Value.StatusKind,
-                    action.Value.FloatValue,
-                    action.Value.IntValue);
+                    action.Value.AmountPerCount,
+                    action.Value.MaximumCount);
             }
         }
 
@@ -177,13 +177,13 @@ namespace Pakuri.InGame
          * 횟수 상태 피해 배율을 적용한다.
          */
         private static void ApplyCountStatusDamageMultiplier(
-            SkillSnapshot snapshot,
-            UnitCombatState owner,
-            CombatUnitRegistry roster,
-            SkillMultiEffectTargetSide targetSide,
-            StatusEffectKind statusKind,
-            float amountPerCount,
-            int countMax)
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            UnitCombatState owner /* 정보를 소유한 유닛 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            SkillMultiEffectTargetSide targetSide /* 대상 진영 */,
+            StatusEffectKind statusKind /* 상태 효과 종류 */,
+            float amountPerCount /* 수치 개별 개수 */,
+            int countMax /* 개수 최대 */)
         {
             if (snapshot == null
                 || statusKind == StatusEffectKind.None
@@ -211,10 +211,10 @@ namespace Pakuri.InGame
          * 선택지 조건과 일치하는 대상 수를 계산한다.
          */
         private static int CountMatchingTargets(
-            UnitCombatState owner,
-            CombatUnitRegistry roster,
-            SkillMultiEffectTargetSide side,
-            StatusEffectKind statusKind)
+            UnitCombatState owner /* 정보를 소유한 유닛 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            SkillMultiEffectTargetSide side /* 진영 */,
+            StatusEffectKind statusKind /* 상태 효과 종류 */)
         {
             if (owner == null || roster == null || statusKind == StatusEffectKind.None)
             {
@@ -244,9 +244,9 @@ namespace Pakuri.InGame
          * 횟수 유닛 항목을 결정한다.
          */
         private static System.Collections.Generic.IReadOnlyList<CombatUnitEntry> ResolveCountEntries(
-            UnitCombatState owner,
-            CombatUnitRegistry roster,
-            SkillMultiEffectTargetSide side)
+            UnitCombatState owner /* 정보를 소유한 유닛 */,
+            CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */,
+            SkillMultiEffectTargetSide side /* 진영 */)
         {
             if (roster == null || owner == null || owner.Identity == null)
             {
@@ -287,7 +287,7 @@ namespace Pakuri.InGame
          * 스킬 대상을 조건에 맞는 값만 선별한다.
          */
         private static System.Collections.Generic.IReadOnlyList<CombatUnitEntry> FilterSkillTargets(
-            System.Collections.Generic.IReadOnlyList<CombatUnitEntry> entries)
+            System.Collections.Generic.IReadOnlyList<CombatUnitEntry> entries /* 등록 정보 목록 */)
         {
             if (entries == null || entries.Count == 0)
             {
@@ -312,7 +312,7 @@ namespace Pakuri.InGame
         /*
          * 유닛이 선택지 효과의 적용 대상인지 확인한다.
          */
-        private static bool IsSkillTarget(CombatUnitEntry entry)
+        private static bool IsSkillTarget(CombatUnitEntry entry /* 처리할 등록 정보 */)
         {
             UnitIdentity identity = null;
             if (entry != null && entry.Model != null)
@@ -326,8 +326,8 @@ namespace Pakuri.InGame
          * 유닛 항목 대상 모델을 찾는다.
          */
         private static CombatUnitEntry FindEntryForModel(
-            UnitCombatState model,
-            System.Collections.Generic.IReadOnlyList<CombatUnitEntry> entries)
+            UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */,
+            System.Collections.Generic.IReadOnlyList<CombatUnitEntry> entries /* 등록 정보 목록 */)
         {
             if (model == null || entries == null)
             {
@@ -348,7 +348,7 @@ namespace Pakuri.InGame
         /*
          * 상태를 보유하고 있는지 확인한다.
          */
-        private static bool HasStatus(UnitCombatState model, StatusEffectKind statusKind, int minimumStacks = 1)
+        private static bool HasStatus(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, StatusEffectKind statusKind /* 상태 효과 종류 */, int minimumStacks = 1 /* 최소 중첩 수 */)
         {
             if (model == null || statusKind == StatusEffectKind.None || minimumStacks <= 0)
             {
@@ -366,7 +366,7 @@ namespace Pakuri.InGame
         /*
          * 선택지 효과가 현재 스킬에 적용되는지 확인한다.
          */
-        private static bool AppliesToSkill(SkillChoiceDefinition choice, SkillRuntimeData skillData)
+        private static bool AppliesToSkill(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */, SkillRuntimeData skillData /* 스킬 실행 데이터 */)
         {
             if (choice == null || skillData == null)
             {
@@ -392,7 +392,7 @@ namespace Pakuri.InGame
         /*
          * 패시브에 연결된 강화 선택지를 Snapshot으로 만든다.
          */
-        internal static SkillSnapshot ResolvePassiveChoices(UnitCombatState owner, string passiveId)
+        internal static SkillSnapshot ResolvePassiveChoices(UnitCombatState owner /* 정보를 소유한 유닛 */, string passiveId /* 패시브 식별자 */)
         {
             return ResolveChoices(owner, passiveId, true);
         }
@@ -400,7 +400,7 @@ namespace Pakuri.InGame
         /*
          * 활성 스킬에 연결된 강화와 마스터 선택지를 Snapshot으로 만든다.
          */
-        internal static SkillSnapshot ResolveActiveChoices(UnitCombatState owner, string skillId)
+        internal static SkillSnapshot ResolveActiveChoices(UnitCombatState owner /* 정보를 소유한 유닛 */, string skillId /* 스킬 식별자 */)
         {
             return ResolveChoices(owner, skillId, false);
         }
@@ -408,7 +408,7 @@ namespace Pakuri.InGame
         /*
          * ResolveChoices 결과를 계산해 반환한다.
          */
-        private static SkillSnapshot ResolveChoices(UnitCombatState owner, string skillId, bool useTargetSkillId)
+        private static SkillSnapshot ResolveChoices(UnitCombatState owner /* 정보를 소유한 유닛 */, string skillId /* 스킬 식별자 */, bool useTargetSkillId /* 사용 대상 스킬 식별자 여부 */)
         {
             var snapshot = new SkillSnapshot(null);
             System.Collections.Generic.ICollection<string> chosenChoiceIds = null;

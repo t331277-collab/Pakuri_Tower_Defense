@@ -165,7 +165,7 @@ namespace Pakuri.InGame
         /*
          * ResolveMonsterSlot에 필요한 값을 계산해 현재 상태에 반영한다.
          */
-        private void ResolveMonsterSlot(int slotIndex)
+        private void ResolveMonsterSlot(int slotIndex /* 배치할 슬롯 순서 번호 */)
         {
             if (slotIndex < 0 || slotIndex >= monsterSlots.Length || monsterPanelRoot == null)
             {
@@ -215,7 +215,7 @@ namespace Pakuri.InGame
         /*
          * FindImage에 해당하는 값을 찾아 반환한다.
          */
-        private static Image FindImage(Transform root, string path)
+        private static Image FindImage(Transform root /* 검색이나 배치의 기준 오브젝트 */, string path /* 불러오거나 검사할 경로 */)
         {
             var child = root != null ? root.Find(path) : null;
             return child != null ? child.GetComponent<Image>() : null;
@@ -224,7 +224,7 @@ namespace Pakuri.InGame
         /*
          * SetPanelVisible에 필요한 값을 설정한다.
          */
-        private void SetPanelVisible(bool visible)
+        private void SetPanelVisible(bool visible /* 화면 표시 여부 */)
         {
             if (monsterPanelRoot != null)
             {
@@ -264,7 +264,7 @@ namespace Pakuri.InGame
             /*
              * MonsterPanelSlotView에 필요한 값을 초기화한다.
              */
-            public MonsterPanelSlotView(Transform rootTransform)
+            public MonsterPanelSlotView(Transform rootTransform /* 기준 오브젝트 위치 정보 */)
             {
                 Bind(rootTransform);
             }
@@ -272,7 +272,7 @@ namespace Pakuri.InGame
             /*
              * Bind에 필요한 값을 설정한다.
              */
-            public void Bind(Transform rootTransform)
+            public void Bind(Transform rootTransform /* 기준 오브젝트 위치 정보 */)
             {
                 root = rootTransform != null ? rootTransform.gameObject : null;
                 monsterImage = null;
@@ -284,7 +284,7 @@ namespace Pakuri.InGame
             /*
              * SetRuntime에 필요한 값을 설정한다.
              */
-            public void SetRuntime(UnitCombatState model, GameDataCatalog catalog)
+            public void SetRuntime(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, GameDataCatalog catalog /* 불러온 게임 데이터 목록 */)
             {
                 ResolveChildren();
                 if (root == null)
@@ -312,7 +312,7 @@ namespace Pakuri.InGame
             /*
              * RefreshMonsterImage 대상의 현재 상태를 갱신한다.
              */
-            private void RefreshMonsterImage(string monsterId, GameDataCatalog catalog)
+            private void RefreshMonsterImage(string monsterId /* 몬스터 식별자 */, GameDataCatalog catalog /* 불러온 게임 데이터 목록 */)
             {
                 if (monsterImage == null || string.Equals(lastMonsterId, monsterId, System.StringComparison.OrdinalIgnoreCase))
                 {
@@ -335,7 +335,7 @@ namespace Pakuri.InGame
             /*
              * RefreshActiveSlots 대상의 현재 상태를 갱신한다.
              */
-            private void RefreshActiveSlots(UnitCombatState model)
+            private void RefreshActiveSlots(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
             {
                 System.Collections.Generic.IReadOnlyList<SkillRuntimeInstance> runtimes = null;
                 if (model != null && model.SkillRuntime != null)
@@ -369,7 +369,7 @@ namespace Pakuri.InGame
             /*
              * SetSlotsActive에 필요한 값을 설정한다.
              */
-            private void SetSlotsActive(int count)
+            private void SetSlotsActive(int count /* 처리할 개수 */)
             {
                 for (var i = 0; i < activeSlots.Length; i++)
                 {
@@ -383,7 +383,7 @@ namespace Pakuri.InGame
             /*
              * SetVisible에 필요한 값을 설정한다.
              */
-            private void SetVisible(bool visible)
+            private void SetVisible(bool visible /* 화면 표시 여부 */)
             {
                 if (root != null)
                 {
@@ -415,7 +415,7 @@ namespace Pakuri.InGame
             /*
              * ResolveSlot에 필요한 값을 계산해 현재 상태에 반영한다.
              */
-            private void ResolveSlot(int index, string childName)
+            private void ResolveSlot(int index /* 목록에서의 순서 번호 */, string childName /* 자식 오브젝트 이름 */)
             {
                 if (index < 0 || index >= activeSlots.Length || root == null)
                 {
@@ -468,7 +468,7 @@ namespace Pakuri.InGame
             /*
              * ActiveSkillSlotView에 필요한 값을 초기화한다.
              */
-            public ActiveSkillSlotView(GameObject root)
+            public ActiveSkillSlotView(GameObject root /* 검색이나 배치의 기준 오브젝트 */)
             {
                 Bind(root);
             }
@@ -476,7 +476,7 @@ namespace Pakuri.InGame
             /*
              * Bind에 필요한 값을 설정한다.
              */
-            public void Bind(GameObject root)
+            public void Bind(GameObject root /* 검색이나 배치의 기준 오브젝트 */)
             {
                 this.root = root;
                 skillImage = null;
@@ -488,7 +488,7 @@ namespace Pakuri.InGame
             /*
              * SetRuntime에 필요한 값을 설정한다.
              */
-            public void SetRuntime(SkillRuntimeInstance runtime)
+            public void SetRuntime(SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */)
             {
                 ResolveChildren();
 
@@ -511,7 +511,7 @@ namespace Pakuri.InGame
             /*
              * SetVisible에 필요한 값을 설정한다.
              */
-            public void SetVisible(bool visible)
+            public void SetVisible(bool visible /* 화면 표시 여부 */)
             {
                 if (root != null)
                 {
@@ -522,7 +522,7 @@ namespace Pakuri.InGame
             /*
              * RefreshLabel 대상의 현재 상태를 갱신한다.
              */
-            private void RefreshLabel(SkillRuntimeInstance runtime)
+            private void RefreshLabel(SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */)
             {
                 if (label == null)
                 {
@@ -543,7 +543,7 @@ namespace Pakuri.InGame
             /*
              * RefreshCooldownOverlay 대상의 현재 상태를 갱신한다.
              */
-            private void RefreshCooldownOverlay(SkillRuntimeInstance runtime)
+            private void RefreshCooldownOverlay(SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */)
             {
                 if (cooldownOverlay == null)
                 {

@@ -19,7 +19,7 @@ namespace Pakuri.InGame
         /*
          * Initialize에 필요한 값을 설정한다.
          */
-        public void Initialize(UnitCombatState model)
+        public void Initialize(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             Model = model;
             display = new UnitWorldDisplay(this);
@@ -30,7 +30,7 @@ namespace Pakuri.InGame
         /*
          * ShowDamage 작업을 수행한다.
          */
-        public void ShowDamage(float damageAmount)
+        public void ShowDamage(float damageAmount /* 표시하거나 적용할 피해량 */)
         {
             display.ShowDamage(damageAmount);
         }
@@ -111,7 +111,7 @@ namespace Pakuri.InGame
         /*
          * SetTargetCollidersEnabled에 필요한 값을 설정한다.
          */
-        private void SetTargetCollidersEnabled(bool enabled)
+        private void SetTargetCollidersEnabled(bool enabled /* 기능 활성화 여부 */)
         {
             var colliders = GetComponentsInChildren<Collider2D>();
             for (var i = 0; i < colliders.Length; i++)

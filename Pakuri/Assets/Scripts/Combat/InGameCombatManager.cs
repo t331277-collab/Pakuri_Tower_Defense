@@ -18,14 +18,14 @@ namespace Pakuri.InGame
          * 피해 적용 옵션을 구성한다.
          */
         public DamageApplicationOptions(
-            UnitCombatState source,
-            bool criticalAllowed,
-            float critChanceBonus,
-            float critDamageBonus,
-            string sourceSkillId,
-            bool suppressOutgoingDamageTriggers,
-            bool sourceHitWasExecute,
-            string damageMeterSourceId)
+            UnitCombatState source /* 효과를 발생시킨 유닛 */,
+            bool criticalAllowed /* 치명타 허용 여부 */,
+            float critChanceBonus /* 추가 치명타 확률 */,
+            float critDamageBonus /* 추가 치명타 피해 배율 */,
+            string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */,
+            bool suppressOutgoingDamageTriggers /* 생략 주는 피해 트리거 목록 여부 */,
+            bool sourceHitWasExecute /* 발생 원본 적중 발생 처형 여부 */,
+            string damageMeterSourceId /* 피해량 기록에 사용할 발생 원본 식별자 */)
         {
             Source = source;
             CriticalAllowed = criticalAllowed;
@@ -114,7 +114,7 @@ namespace Pakuri.InGame
         /*
          * 플레이어 몬스터를 등록하고 전투 시작 처리를 실행한다.
          */
-        public CombatUnitEntry RegisterPlayerMonster(UnitCombatState model, MonsterActor actor, Transform hitboxRoot)
+        public CombatUnitEntry RegisterPlayerMonster(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, MonsterActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
         {
             var entry = unitRegistry.Register(model, actor, hitboxRoot);
             passiveEffects.NotifyRosterChanged();
@@ -130,7 +130,7 @@ namespace Pakuri.InGame
         /*
          * 적을 등록하고 전투 시작 처리를 실행한다.
          */
-        public CombatUnitEntry RegisterEnemy(EnemyCombatState model, EnemyActor actor, Transform hitboxRoot)
+        public CombatUnitEntry RegisterEnemy(EnemyCombatState model /* 처리할 상태 모델 */, EnemyActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
         {
             var entry = unitRegistry.Register(model, actor, hitboxRoot);
             passiveEffects.NotifyRosterChanged();
@@ -141,7 +141,7 @@ namespace Pakuri.InGame
         /*
          * 넥서스를 전투 로스터에 등록한다.
          */
-        public CombatUnitEntry RegisterNexus(UnitCombatState model, NexusActor actor, Transform hitboxRoot)
+        public CombatUnitEntry RegisterNexus(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, NexusActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
         {
             var entry = unitRegistry.Register(model, actor, hitboxRoot);
             passiveEffects.NotifyRosterChanged();
@@ -151,7 +151,7 @@ namespace Pakuri.InGame
         /*
          * 유닛을 로스터에서 해제하고 연결된 Actor를 제거한다.
          */
-        public bool DespawnUnit(UnitCombatState model)
+        public bool DespawnUnit(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             var entry = unitRegistry.Find(model);
             var actor = entry.Actor;
@@ -166,17 +166,17 @@ namespace Pakuri.InGame
          * 피해를 적용하고 표시, Trigger, 사망 처리를 실행한다.
          */
         public InGameResourceChangeResult ApplyDamage(
-            UnitCombatState target,
-            float baseDamage,
-            DamageAttribute attribute,
-            UnitCombatState source,
-            bool criticalAllowed = false,
-            float critChanceBonus = 0f,
-            float critDamageBonus = 0f,
-            string sourceSkillId = null,
-            bool suppressOutgoingDamageTriggers = false,
-            bool sourceHitWasExecute = false,
-            string damageMeterSourceId = null)
+            UnitCombatState target /* 효과를 받을 대상 유닛 */,
+            float baseDamage /* 원본 피해량 */,
+            DamageAttribute attribute /* 피해 속성 */,
+            UnitCombatState source /* 효과를 발생시킨 유닛 */,
+            bool criticalAllowed = false /* 치명타 허용 여부 */,
+            float critChanceBonus = 0f /* 추가 치명타 확률 */,
+            float critDamageBonus = 0f /* 추가 치명타 피해 배율 */,
+            string sourceSkillId = null /* 효과를 발생시킨 스킬 식별자 */,
+            bool suppressOutgoingDamageTriggers = false /* 생략 주는 피해 트리거 목록 여부 */,
+            bool sourceHitWasExecute = false /* 발생 원본 적중 발생 처형 여부 */,
+            string damageMeterSourceId = null /* 피해량 기록에 사용할 발생 원본 식별자 */)
         {
             var depletedShields = new List<StatusRuntimeInstance>();
             var absorbedShields = new List<ShieldAbsorptionRecord>();
@@ -193,6 +193,10 @@ namespace Pakuri.InGame
             if (depletedShields.Count > 0)
             {
                 passiveEffects.NotifyStatusChanged(target);
+                for (var i = 0; i < depletedShields.Count; i++)
+                {
+                    effectManager.RemoveEffect(null, depletedShields[i]);
+                }
             }
             // 통계와 UI에는 실제 자원 변화 결과만 전달한다.
             DamageApplied?.Invoke(options, result);
@@ -222,7 +226,7 @@ namespace Pakuri.InGame
         /*
          * 넥서스를 제외한 대상의 체력을 회복한다.
          */
-        public InGameResourceChangeResult Heal(UnitCombatState target, float amount)
+        public InGameResourceChangeResult Heal(UnitCombatState target /* 효과를 받을 대상 유닛 */, float amount /* 적용할 수치 */)
         {
             // 넥서스는 회복량을 0으로 처리한다.
             var result = HealResources(target, target.IsNexus ? 0f : amount);
@@ -240,12 +244,12 @@ namespace Pakuri.InGame
          * 피해를 보호막과 체력에 적용하고 변경 결과를 만든다.
          */
         private static InGameResourceChangeResult ApplyDamageToResources(
-            UnitCombatState target,
-            float baseDamage,
-            DamageAttribute attribute,
-            DamageApplicationOptions options,
-            ICollection<StatusRuntimeInstance> depletedShields,
-            ICollection<ShieldAbsorptionRecord> absorbedShields)
+            UnitCombatState target /* 효과를 받을 대상 유닛 */,
+            float baseDamage /* 방어 계산 전 기본 피해량 */,
+            DamageAttribute attribute /* 피해 속성 */,
+            DamageApplicationOptions options /* 처리에 사용할 추가 설정 */,
+            ICollection<StatusRuntimeInstance> depletedShields /* 소진된 보호막 목록 */,
+            ICollection<ShieldAbsorptionRecord> absorbedShields /* 흡수된 보호막 목록 */)
         {
             var resources = target.Resources;
             var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
@@ -256,7 +260,7 @@ namespace Pakuri.InGame
 
             if (baseDamage > 0f)
             {
-                finalDamage = DamageCalculator.CalculateDamage(target, baseDamage, attribute, options);
+                finalDamage = DamageCalculator.CalculateFinalDamage(target, baseDamage, attribute, options);
 
                 target.Statuses.RecordIncomingDamage(attribute, finalDamage);
 
@@ -287,7 +291,7 @@ namespace Pakuri.InGame
         /*
          * 체력을 최대 체력 범위에서 회복하고 변경 결과를 만든다.
          */
-        private static InGameResourceChangeResult HealResources(UnitCombatState target, float amount)
+        private static InGameResourceChangeResult HealResources(UnitCombatState target /* 효과를 받을 대상 유닛 */, float amount /* 적용할 수치 */)
         {
             var resources = target.Resources;
             var beforeHealth = Mathf.Max(0f, resources.CurrentHealth);
@@ -317,7 +321,7 @@ namespace Pakuri.InGame
         /*
          * 자원 값을 0 이상 정수로 정리한다.
          */
-        private static float Round(float value)
+        private static float Round(float value /* 처리할 값 */)
         {
             return Mathf.Round(Mathf.Max(0f, value));
         }
@@ -326,14 +330,14 @@ namespace Pakuri.InGame
          * 일반 상태를 적용하고 상태 표시와 패시브 조건을 갱신한다.
          */
         public StatusRuntimeInstance ApplyStatus(
-            UnitCombatState target,
-            StatusRuntimeData statusData,
-            int stacks,
-            float durationSeconds,
-            int maxStacks,
-            bool permanent,
-            bool refreshDuration,
-            UnitCombatState source)
+            UnitCombatState target /* 효과를 받을 대상 유닛 */,
+            StatusRuntimeData statusData /* 상태 효과 실행 데이터 */,
+            int stacks /* 중첩 수 */,
+            float durationSeconds /* 지속 시간(초) */,
+            int maxStacks /* 최대 중첩 수 */,
+            bool permanent /* 영구 여부 */,
+            bool refreshDuration /* 갱신 지속 시간 여부 */,
+            UnitCombatState source /* 효과를 발생시킨 유닛 */)
         {
             // 넥서스에는 일반 상태를 적용하지 않는다.
             if (statusData.Kind == StatusEffectKind.None || target.IsNexus)
@@ -352,7 +356,7 @@ namespace Pakuri.InGame
             passiveEffects.NotifyStatusChanged(target);
             target.SyncShield();
             unitRegistry.RefreshDisplay(target);
-            effectManager.SpawnOrRefreshStatusVisual(target, unitRegistry.Find(target).Transform, statusData, status);
+            effectManager.ShowOrRefreshStatusEffect(unitRegistry.Find(target).Transform, status);
             return status;
         }
 
@@ -360,15 +364,15 @@ namespace Pakuri.InGame
          * 보호막 상태를 적용하고 상태 표시와 패시브 조건을 갱신한다.
          */
         public StatusRuntimeInstance ApplyShieldStatus(
-            UnitCombatState target,
-            StatusRuntimeData statusData,
-            float shieldAmount,
-            float durationSeconds,
-            int stacks,
-            int maxStacks,
-            bool permanent,
-            bool refreshDuration,
-            UnitCombatState source)
+            UnitCombatState target /* 효과를 받을 대상 유닛 */,
+            StatusRuntimeData statusData /* 상태 효과 실행 데이터 */,
+            float shieldAmount /* 보호막 수치 */,
+            float durationSeconds /* 지속 시간(초) */,
+            int stacks /* 중첩 수 */,
+            int maxStacks /* 최대 중첩 수 */,
+            bool permanent /* 영구 여부 */,
+            bool refreshDuration /* 갱신 지속 시간 여부 */,
+            UnitCombatState source /* 효과를 발생시킨 유닛 */)
         {
             // 넥서스에는 보호막 상태를 적용하지 않는다.
             if (statusData.Kind != StatusEffectKind.Shield || target.IsNexus)
@@ -391,14 +395,14 @@ namespace Pakuri.InGame
 
             target.SyncShield();
             unitRegistry.RefreshDisplay(target);
-            effectManager.SpawnOrRefreshStatusVisual(target, unitRegistry.Find(target).Transform, statusData, status);
+            effectManager.ShowOrRefreshStatusEffect(unitRegistry.Find(target).Transform, status);
             return status;
         }
 
         /*
          * 지정한 상태의 지속시간을 연장하고 표시를 갱신한다.
          */
-        public bool ExtendStatusDuration(UnitCombatState target, StatusEffectKind kind, float durationDelta)
+        public bool ExtendStatusDuration(UnitCombatState target /* 효과를 받을 대상 유닛 */, StatusEffectKind kind /* 처리할 종류 */, float durationDelta /* 지속 시간 경과 */)
         {
             if (kind == StatusEffectKind.None || durationDelta <= 0f || target.IsNexus)
             {
@@ -427,7 +431,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                effectManager.SpawnOrRefreshStatusVisual(target, unitRegistry.Find(target).Transform, status.SourceData, status);
+                effectManager.ShowOrRefreshStatusEffect(unitRegistry.Find(target).Transform, status);
             }
 
             return true;
@@ -440,7 +444,7 @@ namespace Pakuri.InGame
         {
             StopAllCoroutines();
             playerCombatControl.ClearManualInput();
-            effectManager.ClearRuntimeSkillObjects();
+            effectManager.ClearEffects();
 
             combatStartDispatchedUnits.Clear();
             passiveEffects.Reset();
@@ -471,7 +475,7 @@ namespace Pakuri.InGame
         /*
          * 유닛별 전투 시작 Trigger를 한 번만 실행한다.
          */
-        private void DispatchCombatStartOnce(UnitCombatState source)
+        private void DispatchCombatStartOnce(UnitCombatState source /* 효과를 발생시킨 유닛 */)
         {
             // 같은 유닛의 전투 시작 Trigger는 다시 보내지 않는다.
             if (!combatStartDispatchedUnits.Add(source))
@@ -493,7 +497,7 @@ namespace Pakuri.InGame
         /*
          * 지정한 패시브 출처가 만든 상태를 제거한다.
          */
-        internal bool RemovePassiveStatus(UnitCombatState target, StatusEffectKind kind, string sourceSkillId)
+        internal bool RemovePassiveStatus(UnitCombatState target /* 효과를 받을 대상 유닛 */, StatusEffectKind kind /* 처리할 종류 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */)
         {
             var removedStatuses = new List<StatusRuntimeInstance>();
             // 같은 종류라도 해당 패시브 출처가 만든 상태만 제거한다.
@@ -506,7 +510,7 @@ namespace Pakuri.InGame
             unitRegistry.RefreshDisplay(target);
             for (var i = 0; i < removedStatuses.Count; i++)
             {
-                effectManager.RemoveStatusVisual(target, removedStatuses[i]);
+                effectManager.RemoveEffect(null, removedStatuses[i]);
             }
 
             SkillTrigger.ExecuteExpiredStatuses(this, unitRegistry, target, removedStatuses);
@@ -518,11 +522,11 @@ namespace Pakuri.InGame
          * 공격자의 피해 Trigger와 추가 피해 상태를 실행한다.
          */
         private void DispatchOutgoingDamageTriggers(
-            UnitCombatState target,
-            DamageAttribute attribute,
-            DamageApplicationOptions options,
-            InGameResourceChangeResult result,
-            float sourceBaseDamage)
+            UnitCombatState target /* 효과를 받을 대상 유닛 */,
+            DamageAttribute attribute /* 피해 속성 */,
+            DamageApplicationOptions options /* 처리에 사용할 추가 설정 */,
+            InGameResourceChangeResult result /* 처리 결과 */,
+            float sourceBaseDamage /* 발생 원본 기본 피해 */)
         {
             // 출처나 실제 피해가 없거나 연쇄 Trigger를 막은 피해는 전달하지 않는다.
             if (options.Source == null || options.SuppressOutgoingDamageTriggers || result.AppliedDamage <= 0f)
@@ -547,10 +551,10 @@ namespace Pakuri.InGame
          * 공격자 상태가 제공하는 추가 속성 피해를 적용한다.
          */
         private void ApplyOutgoingAdditionalDamageStatuses(
-            UnitCombatState target,
-            DamageAttribute triggerAttribute,
-            DamageApplicationOptions options,
-            float sourceBaseDamage)
+            UnitCombatState target /* 효과를 받을 대상 유닛 */,
+            DamageAttribute triggerAttribute /* 트리거 속성 */,
+            DamageApplicationOptions options /* 처리에 사용할 추가 설정 */,
+            float sourceBaseDamage /* 발생 원본 기본 피해 */)
         {
             if (target.Resources.CurrentHealth <= 0f)
             {
@@ -588,16 +592,22 @@ namespace Pakuri.InGame
         /*
          * 지정한 종류의 상태를 필요한 수만큼 소비한다.
          */
-        public int ConsumeStatusStacks(UnitCombatState target, StatusEffectKind kind, int stacks)
+        public int ConsumeStatusStacks(UnitCombatState target /* 효과를 받을 대상 유닛 */, StatusEffectKind kind /* 처리할 종류 */, int stacks /* 중첩 수 */)
         {
             if (stacks <= 0)
             {
                 return 0;
             }
 
-            var consumed = target.Statuses.ConsumeStacks(kind, stacks);
+            var removedStatuses = new List<StatusRuntimeInstance>();
+            var consumed = target.Statuses.ConsumeStacks(kind, stacks, removedStatuses);
             if (consumed > 0)
             {
+                for (var i = 0; i < removedStatuses.Count; i++)
+                {
+                    effectManager.RemoveEffect(null, removedStatuses[i]);
+                }
+
                 target.SyncShield();
                 unitRegistry.RefreshDisplay(target);
                 passiveEffects.NotifyStatusChanged(target);
@@ -609,7 +619,7 @@ namespace Pakuri.InGame
         /*
          * 모든 유닛의 상태 지속시간과 만료 처리를 갱신한다.
          */
-        private void TickUnitStatuses(float deltaTime)
+        private void TickUnitStatuses(float deltaTime /* 이전 갱신 이후 지난 시간 */)
         {
             if (deltaTime <= 0f)
             {
@@ -626,6 +636,11 @@ namespace Pakuri.InGame
                 {
                     model.SyncShield();
                     unitRegistry.RefreshDisplay(model);
+                    for (var j = 0; j < removedStatuses.Count; j++)
+                    {
+                        effectManager.RemoveEffect(null, removedStatuses[j]);
+                    }
+
                     // 만료 상태는 일반 만료와 보호막 만료 Trigger에 각각 전달한다.
                     SkillTrigger.ExecuteExpiredStatuses(this, unitRegistry, model, removedStatuses);
                     passiveEffects.NotifyStatusChanged(model);
@@ -636,7 +651,7 @@ namespace Pakuri.InGame
         /*
          * 사망한 유닛을 로스터에서 해제
          */
-        private void RemoveUnitIfDead(InGameResourceChangeResult result)
+        private void RemoveUnitIfDead(InGameResourceChangeResult result /* 처리 결과 */)
         {
             if (!result.IsDead)
             {
@@ -661,13 +676,13 @@ namespace Pakuri.InGame
          * 자원 변경 결과를 구성한다.
          */
         public InGameResourceChangeResult(
-            UnitCombatState target,
-            float previousHealth,
-            float currentHealth,
-            float previousShield,
-            float currentShield,
-            float appliedDamage,
-            bool isDead)
+            UnitCombatState target /* 효과를 받을 대상 유닛 */,
+            float previousHealth /* 이전 체력 */,
+            float currentHealth /* 현재 체력 */,
+            float previousShield /* 이전 보호막 */,
+            float currentShield /* 현재 보호막 */,
+            float appliedDamage /* 적용된 피해 */,
+            bool isDead /* 여부 사망 여부 */)
         {
             Target = target;
             PreviousHealth = previousHealth;

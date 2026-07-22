@@ -18,9 +18,9 @@ namespace Pakuri.InGame
          * 적 행동에 필요한 전투 시스템을 연결한다.
          */
         public EnemyActionController(
-            CombatUnitRegistry registry,
-            SkillExecution skillExecution,
-            InGameCombatManager combatManager)
+            CombatUnitRegistry registry /* 전투 유닛 등록 관리자 */,
+            SkillExecution skillExecution /* 스킬 실행 */,
+            InGameCombatManager combatManager /* 전투 진행 관리자 */)
         {
             this.registry = registry;
             this.skillExecution = skillExecution;
@@ -30,7 +30,7 @@ namespace Pakuri.InGame
         /*
          * 살아 있는 모든 적의 행동을 한 프레임 갱신한다.
          */
-        public void Tick(float deltaTime)
+        public void Tick(float deltaTime /* 이전 갱신 이후 지난 시간 */)
         {
             if (deltaTime <= 0f)
             {
@@ -48,8 +48,8 @@ namespace Pakuri.InGame
          * 한 적의 충전, 대상 선택, 지원 스킬, 이동, 공격 순서를 처리한다.
          */
         private void TickEnemy(
-            CombatUnitEntry enemyEntry,
-            float deltaTime)
+            CombatUnitEntry enemyEntry /* 적 등록 정보 */,
+            float deltaTime /* 이전 갱신 이후 지난 시간 */)
         {
             if (!enemyEntry.IsAlive)
             {
@@ -132,8 +132,8 @@ namespace Pakuri.InGame
          * 선택된 스킬을 실행한다.
          */
         private bool TryUseSkill(
-            CombatUnitEntry enemyEntry,
-            SkillRuntimeInstance runtime)
+            CombatUnitEntry enemyEntry /* 적 등록 정보 */,
+            SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */)
         {
             return skillExecution.TryExecuteSelected(
                 enemyEntry,
@@ -146,10 +146,10 @@ namespace Pakuri.InGame
          * 상태 효과가 반영된 이동 속도로 선택된 대상 쪽으로 이동한다.
          */
         private static void MoveToward(
-            CombatUnitEntry enemyEntry,
-            CombatUnitEntry target,
-            EnemyCombatState enemyModel,
-            float deltaTime)
+            CombatUnitEntry enemyEntry /* 적 등록 정보 */,
+            CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */,
+            EnemyCombatState enemyModel /* 적 상태 모델 */,
+            float deltaTime /* 이전 갱신 이후 지난 시간 */)
         {
             var moveSpeed = enemyModel.Stats.MoveSpeed;
             moveSpeed *= StatusCombatRules.ResolveMoveSpeedMultiplier(enemyModel);
@@ -171,10 +171,10 @@ namespace Pakuri.InGame
          * 적을 Nexus로 이동시키고 접촉하면 정의된 피해를 적용한 뒤 적을 제거한다.
          */
         private void TickNexusAttack(
-            CombatUnitEntry enemyEntry,
-            EnemyCombatState enemyModel,
-            CombatUnitEntry nexusTarget,
-            float deltaTime)
+            CombatUnitEntry enemyEntry /* 적 등록 정보 */,
+            EnemyCombatState enemyModel /* 적 상태 모델 */,
+            CombatUnitEntry nexusTarget /* 넥서스 대상 */,
+            float deltaTime /* 이전 갱신 이후 지난 시간 */)
         {
             if (!IsTouchingNexus(enemyEntry, nexusTarget))
             {
@@ -198,7 +198,7 @@ namespace Pakuri.InGame
         /*
          * IsTouchingNexus 조건을 만족하는지 확인한다.
          */
-        private static bool IsTouchingNexus(CombatUnitEntry enemyEntry, CombatUnitEntry nexusTarget)
+        private static bool IsTouchingNexus(CombatUnitEntry enemyEntry /* 적 등록 정보 */, CombatUnitEntry nexusTarget /* 넥서스 대상 */)
         {
             var enemyPoint = enemyEntry.ResolveTargetPoint();
             var targetColliders = nexusTarget.GetHitboxColliders();

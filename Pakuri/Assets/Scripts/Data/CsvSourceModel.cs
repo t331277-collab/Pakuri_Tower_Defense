@@ -57,7 +57,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        internal static CatalogEntryRow ParseCatalogEntry(CsvRecord record, string refColumnName)
+        internal static CatalogEntryRow ParseCatalogEntry(CsvRecord record /* 읽을 CSV 행 */, string refColumnName /* 참조 열 이름 */)
         {
             return new CatalogEntryRow
             {
@@ -71,10 +71,10 @@ namespace Pakuri.Data
          * 입력값과 참조 관계가 올바른지 검사한다.
          */
         internal static void ValidateCatalogEntries<T>(
-            Dictionary<string, CatalogEntryRow> entries,
-            Dictionary<string, T> targetLookup,
-            string tableName,
-            List<string> errors)
+            Dictionary<string, CatalogEntryRow> entries /* 등록 정보 목록 */,
+            Dictionary<string, T> targetLookup /* 대상 조회표 */,
+            string tableName /* CSV 표 이름 */,
+            List<string> errors /* 검증 오류를 모을 목록 */)
         {
             if (entries.Count == 0)
             {
@@ -122,7 +122,7 @@ namespace Pakuri.Data
         /*
          * CSV 행을 실행에 사용할 자료로 변환한다.
          */
-        internal static StatusEffectRow ParseStatusEffectRow(CsvRecord record)
+        internal static StatusEffectRow ParseStatusEffectRow(CsvRecord record /* 읽을 CSV 행 */)
         {
             return new StatusEffectRow
             {
@@ -153,7 +153,7 @@ namespace Pakuri.Data
         /*
          * 열이 존재하고 값이 있으면 CSV 값을 읽는다.
          */
-        internal static bool TryReadDamageAttribute(CsvRecord record, string columnName, out DamageAttribute attribute)
+        internal static bool TryReadDamageAttribute(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, out DamageAttribute attribute /* 피해 속성 */)
         {
             attribute = default;
             var value = record.ReadString(columnName);
@@ -210,9 +210,9 @@ namespace Pakuri.Data
          * CSV 행에서 필요한 값을 읽는다.
          */
         internal static StatusPayloadRow ReadStatusPayload(
-            CsvRecord record,
-            bool includeEffectOnlyModifiers,
-            bool allowMissingColumns = false)
+            CsvRecord record /* 읽을 CSV 행 */,
+            bool includeEffectOnlyModifiers /* 포함 효과 한정 보정 목록 여부 */,
+            bool allowMissingColumns = false /* 허용 누락된 열 목록 여부 */)
         {
             var payload = new StatusPayloadRow
             {
@@ -261,7 +261,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        internal static string ReadStatusString(CsvRecord record, string columnName, bool allowMissingColumns)
+        internal static string ReadStatusString(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, bool allowMissingColumns /* 허용 누락된 열 목록 여부 */)
         {
             if (allowMissingColumns)
             {
@@ -274,7 +274,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        internal static float ReadStatusFloat(CsvRecord record, string columnName, bool allowMissingColumns)
+        internal static float ReadStatusFloat(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, bool allowMissingColumns /* 허용 누락된 열 목록 여부 */)
         {
             if (allowMissingColumns)
             {
@@ -287,7 +287,7 @@ namespace Pakuri.Data
         /*
          * CSV 행에서 필요한 값을 읽는다.
          */
-        internal static int ReadStatusInt(CsvRecord record, string columnName, bool allowMissingColumns)
+        internal static int ReadStatusInt(CsvRecord record /* 읽을 CSV 행 */, string columnName /* 읽거나 검사할 CSV 열 이름 */, bool allowMissingColumns /* 허용 누락된 열 목록 여부 */)
         {
             if (allowMissingColumns)
             {

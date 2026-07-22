@@ -130,7 +130,7 @@ namespace Pakuri.InGame
          * 전달받은 Animator 상태를 0번 레이어의 첫 프레임부터 재생한다.
          * 상태 이름이 비어 있으면 실행하지 않는다.
          */
-        private void PlayState(string stateName)
+        private void PlayState(string stateName /* 상태 이름 */)
         {
             if (string.IsNullOrWhiteSpace(stateName))
             {
@@ -145,7 +145,7 @@ namespace Pakuri.InGame
          * 사망 클립 길이만큼 기다린 뒤 사망 상태의 마지막 프레임으로 이동한다.
          * Animator 속도를 0으로 설정해 해당 포즈를 유지한다.
          */
-        private IEnumerator FreezeDeathOnLastFrame(float deathLength)
+        private IEnumerator FreezeDeathOnLastFrame(float deathLength /* 사망 길이 */)
         {
             yield return new WaitForSeconds(Mathf.Max(0.01f, deathLength));
             if (string.IsNullOrWhiteSpace(deadState))
@@ -163,7 +163,7 @@ namespace Pakuri.InGame
         /*
          * RuntimeAnimatorController에서 지정된 이름의 AnimationClip 길이를 찾는다.
          */
-        private float ResolveClipLength(string stateName)
+        private float ResolveClipLength(string stateName /* 상태 이름 */)
         {
             var clips = animator.runtimeAnimatorController.animationClips;
             for (var i = 0; i < clips.Length; i++)

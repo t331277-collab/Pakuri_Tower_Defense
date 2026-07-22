@@ -15,7 +15,7 @@ namespace Pakuri.InGame
         /*
          * Initialize에 필요한 값을 설정한다.
          */
-        public void Initialize(EnemyCombatState model)
+        public void Initialize(EnemyCombatState model /* 처리할 상태 모델 */)
         {
             Model = model;
             display = new UnitWorldDisplay(this);
@@ -25,7 +25,7 @@ namespace Pakuri.InGame
         /*
          * ShowDamage 작업을 수행한다.
          */
-        public void ShowDamage(float damageAmount)
+        public void ShowDamage(float damageAmount /* 표시하거나 적용할 피해량 */)
         {
             display.ShowDamage(damageAmount);
         }

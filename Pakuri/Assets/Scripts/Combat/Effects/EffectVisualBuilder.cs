@@ -17,7 +17,7 @@ namespace Pakuri.InGame
         /*
          * 진행 방향을 2D 회전값으로 바꾼다.
          */
-        public static Quaternion ResolveRotation(Vector2 direction)
+        public static Quaternion ResolveRotation(Vector2 direction /* 진행하거나 발사할 방향 */)
         {
             if (direction.sqrMagnitude <= 0.0001f)
             {
@@ -32,10 +32,10 @@ namespace Pakuri.InGame
          * 런타임 시각 설정에 따라 크기, 스프라이트, 애니메이터와 충돌 영역을 구성한다.
          */
         public static void Configure(
-            GameObject instance,
-            RuntimeSkillVisualSpec visual,
-            bool hitboxIsTrigger,
-            bool includeHitbox)
+            GameObject instance /* 생성된 게임 오브젝트 */,
+            RuntimeSkillVisualSpec visual /* 런타임 시각 효과 설정 */,
+            bool hitboxIsTrigger /* 피격 판정 여부 트리거 여부 */,
+            bool includeHitbox /* 포함 피격 판정 여부 */)
         {
             if (visual.UseLocalScale)
             {
@@ -84,7 +84,7 @@ namespace Pakuri.InGame
         /*
          * 최소 유지 시간과 애니메이션 길이 중 더 긴 값을 반환한다.
          */
-        public static float ResolveLifetime(GameObject instance, float minimumLifetimeSeconds)
+        public static float ResolveLifetime(GameObject instance /* 생성된 게임 오브젝트 */, float minimumLifetimeSeconds /* 최소 유지 시간 초 */)
         {
             var minimum = Mathf.Max(0.01f, minimumLifetimeSeconds);
             var animationLength = ResolveAnimationLength(instance);
@@ -92,27 +92,13 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 효과 오브젝트 또는 자식에 2D 충돌 영역이 있는지 확인한다.
-         */
-        public static bool HasHitbox(GameObject instance)
-        {
-            if (instance == null)
-            {
-                return false;
-            }
-
-            var colliders = instance.GetComponentsInChildren<Collider2D>();
-            return colliders.Length > 0;
-        }
-
-        /*
          * 범위 반경과 스킬 강화 배율을 효과 오브젝트 크기에 적용한다.
          */
         public static void ConfigureAreaScale(
-            Transform target,
-            float baseRadius,
-            SkillSnapshot snapshot,
-            float radiusMultiplier)
+            Transform target /* 효과가 따라갈 위치 정보 */,
+            float baseRadius /* 기본 반지름 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            float radiusMultiplier /* 반지름 배율 */)
         {
             if (target == null)
             {
@@ -124,14 +110,27 @@ namespace Pakuri.InGame
         }
 
         /*
+         * 범위 효과의 크기를 적용하고 물리 충돌 영역을 즉시 갱신한다.
+         */
+        public static void ConfigureAreaEffect(
+            GameObject instance /* 생성된 효과 오브젝트 */,
+            float baseRadius /* 기본 반지름 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            float radiusMultiplier = 1f /* 반지름 배율 */)
+        {
+            ConfigureAreaScale(instance.transform, baseRadius, snapshot, radiusMultiplier);
+            Physics2D.SyncTransforms();
+        }
+
+        /*
          * 단일 공격 효과를 시전자에서 대상 방향으로 회전하고 공격 폭에 맞게 조정한다.
          */
         public static void ConfigureSingleAttackLine(
-            Transform target,
-            SkillExecutionContext context,
-            SingleSkillRuntimeData skill,
-            SkillSnapshot snapshot,
-            Vector2 center)
+            Transform target /* 효과가 따라갈 위치 정보 */,
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SingleSkillRuntimeData skill /* 실행하거나 검사할 스킬 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            Vector2 center /* 효과가 적용될 중심 위치 */)
         {
             if (target == null || skill == null)
             {
@@ -194,7 +193,7 @@ namespace Pakuri.InGame
         /*
          * 기본 반경과 스킬 강화에서 계산한 프리팹 크기 배율을 적용한다.
          */
-        private static void ApplyPrefabScale(Transform target, float baseRadius, SkillSnapshot snapshot)
+        private static void ApplyPrefabScale(Transform target /* 효과가 따라갈 위치 정보 */, float baseRadius /* 기본 반지름 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             if (target == null || snapshot == null)
             {
@@ -212,9 +211,9 @@ namespace Pakuri.InGame
          * 런타임 충돌 영역의 크기, 중심과 Trigger 사용 여부를 설정한다.
          */
         private static void ConfigureHitbox(
-            GameObject instance,
-            RuntimeSkillHitboxSpec hitbox,
-            bool hitboxIsTrigger)
+            GameObject instance /* 생성된 게임 오브젝트 */,
+            RuntimeSkillHitboxSpec hitbox /* 피격 판정 */,
+            bool hitboxIsTrigger /* 피격 판정 여부 트리거 여부 */)
         {
             var collider = instance.GetComponent<BoxCollider2D>();
             if (collider == null)
@@ -230,7 +229,7 @@ namespace Pakuri.InGame
         /*
          * Animator와 Animation에 등록된 클립 중 가장 긴 재생 시간을 반환한다.
          */
-        private static float ResolveAnimationLength(GameObject instance)
+        private static float ResolveAnimationLength(GameObject instance /* 생성된 게임 오브젝트 */)
         {
             if (instance == null)
             {

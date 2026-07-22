@@ -39,7 +39,7 @@ namespace Pakuri.InGame
         /*
          * Nexus 상태를 만들고 Actor와 전투 등록소에 연결한다.
          */
-        public void RegisterNexus(NexusActor actor)
+        public void RegisterNexus(NexusActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */)
         {
             var model = unitStateFactory.CreateNexus(actor.MaxHealth);
             actor.Initialize(model);
@@ -62,7 +62,7 @@ namespace Pakuri.InGame
         /*
          * 전달받은 세션의 선택 몬스터로 플레이어 유닛을 만든다.
          */
-        public void SpawnSelectedPlayerUnit(RunSession session)
+        public void SpawnSelectedPlayerUnit(RunSession session /* 현재 게임 진행 상태 */)
         {
             if (spawnedPlayerUnit != null)
             {
@@ -81,9 +81,9 @@ namespace Pakuri.InGame
          * 세션의 선택 몬스터 모델과 Actor를 만들고 플레이어로 등록한다.
          */
         private GameObject CreateSelectedPlayerUnit(
-            RunSession session,
-            out UnitCombatState model,
-            out MonsterActor actor)
+            RunSession session /* 현재 게임 진행 상태 */,
+            out UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */,
+            out MonsterActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */)
         {
             var selectedMonsterId = session.SelectedMonsterId;
             var prefab = ResolveMonsterPrefab(selectedMonsterId);
@@ -102,9 +102,9 @@ namespace Pakuri.InGame
          * 현재 세션의 지정 파티 슬롯에 현현 몬스터를 생성한다.
          */
         public GameObject SpawnManifestedMonster(
-            RunSession session,
-            MonsterDefinition monster,
-            int partySlotIndex)
+            RunSession session /* 현재 게임 진행 상태 */,
+            MonsterDefinition monster /* 몬스터 */,
+            int partySlotIndex /* 파티 슬롯 순서 번호 */)
         {
             return CreateManifestedMonster(monster, session, partySlotIndex);
         }
@@ -113,9 +113,9 @@ namespace Pakuri.InGame
          * 세션 상태로 현현 몬스터를 만들고 지정 파티 슬롯에 등록한다.
          */
         private GameObject CreateManifestedMonster(
-            MonsterDefinition monster,
-            RunSession activeSession,
-            int partySlotIndex)
+            MonsterDefinition monster /* 몬스터 */,
+            RunSession activeSession /* 현재 활성화된 게임 진행 상태 */,
+            int partySlotIndex /* 파티 슬롯 순서 번호 */)
         {
             var prefab = ResolveMonsterPrefab(monster.MonsterId);
 
@@ -139,9 +139,9 @@ namespace Pakuri.InGame
          * 기존 세션 상태로 선택 몬스터의 모델과 Actor를 다시 만든다.
          */
         private GameObject RespawnSelectedPlayerUnit(
-            RunSession activeSession,
-            out UnitCombatState model,
-            out MonsterActor actor)
+            RunSession activeSession /* 현재 활성화된 게임 진행 상태 */,
+            out UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */,
+            out MonsterActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */)
         {
             var monster = ResolveMonsterDefinition(activeSession.SelectedMonsterId);
             var prefab = ResolveMonsterPrefab(monster.MonsterId);
@@ -163,7 +163,7 @@ namespace Pakuri.InGame
         /*
          * 세션의 선택 몬스터와 현현 파티를 기존 Actor 또는 새 인스턴스로 복원한다.
          */
-        public void RestorePlayerPartyFromSession(RunSession session)
+        public void RestorePlayerPartyFromSession(RunSession session /* 현재 게임 진행 상태 */)
         {
             RestorePlayerParty(
                 session,
@@ -177,9 +177,9 @@ namespace Pakuri.InGame
          * 전달받은 세션 상태로 선택 몬스터와 현현 파티를 복원한다.
          */
         private void RestorePlayerParty(
-            RunSession activeSession,
-            out GameObject selectedPlayerUnit,
-            out UnitCombatState selectedPlayerModel)
+            RunSession activeSession /* 현재 활성화된 게임 진행 상태 */,
+            out GameObject selectedPlayerUnit /* 선택된 플레이어 유닛 */,
+            out UnitCombatState selectedPlayerModel /* 선택된 플레이어 상태 모델 */)
         {
             RestoreSelectedPlayerFromSession(
                 activeSession,
@@ -192,13 +192,13 @@ namespace Pakuri.InGame
          * 적 ID와 인카운터 생성값으로 적 유닛을 만든다.
          */
         public GameObject SpawnEnemyById(
-            string enemyId,
-            int spawnIndex,
-            float spawnX,
-            float spawnYMin,
-            float spawnYMax,
-            float healthMultiplier,
-            bool isBoss)
+            string enemyId /* 적 식별자 */,
+            int spawnIndex /* 생성 순서 번호 */,
+            float spawnX /* 생성 X축 */,
+            float spawnYMin /* 생성 Y축 최소 */,
+            float spawnYMax /* 생성 Y축 최대 */,
+            float healthMultiplier /* 체력 배율 */,
+            bool isBoss /* 여부 보스 여부 */)
         {
             var prefab = ResolveEnemyPrefab(enemyId);
             return SpawnEnemyUnit(prefab, enemyId, spawnIndex, spawnX, spawnYMin, spawnYMax, healthMultiplier, isBoss);
@@ -208,9 +208,9 @@ namespace Pakuri.InGame
          * 선택 플레이어를 로스터, 기존 Actor, 새 생성 순서로 복원한다.
          */
         private void RestoreSelectedPlayerFromSession(
-            RunSession activeSession,
-            out GameObject selectedPlayerUnit,
-            out UnitCombatState selectedPlayerModel)
+            RunSession activeSession /* 현재 활성화된 게임 진행 상태 */,
+            out GameObject selectedPlayerUnit /* 선택된 플레이어 유닛 */,
+            out UnitCombatState selectedPlayerModel /* 선택된 플레이어 상태 모델 */)
         {
             // 등록된 로스터, 씬에 남은 Actor, 새 프리팹 생성 순서로 중복 생성을 피한다.
             var selectedEntry = FindPlayerEntryBySlot(0);
@@ -235,7 +235,7 @@ namespace Pakuri.InGame
         /*
          * 세션의 현현 몬스터를 슬롯별로 부활하거나 다시 생성한다.
          */
-        private void RestoreManifestedPlayersFromSession(RunSession activeSession)
+        private void RestoreManifestedPlayersFromSession(RunSession activeSession /* 현재 활성화된 게임 진행 상태 */)
         {
             for (var i = 0; i < activeSession.ManifestedMonsterIds.Count; i++)
             {
@@ -263,9 +263,9 @@ namespace Pakuri.InGame
          * 선택 플레이어 로스터 항목의 GameObject와 모델을 반환한다.
          */
         private static void CaptureSelectedPlayer(
-            CombatUnitEntry entry,
-            out GameObject selectedPlayerUnit,
-            out UnitCombatState selectedPlayerModel)
+            CombatUnitEntry entry /* 처리할 등록 정보 */,
+            out GameObject selectedPlayerUnit /* 선택된 플레이어 유닛 */,
+            out UnitCombatState selectedPlayerModel /* 선택된 플레이어 상태 모델 */)
         {
             var actor = (MonsterActor)entry.Actor;
             selectedPlayerUnit = actor.gameObject;
@@ -275,7 +275,7 @@ namespace Pakuri.InGame
         /*
          * 플레이어 로스터에서 지정 파티 슬롯의 몬스터를 찾는다.
          */
-        private CombatUnitEntry FindPlayerEntryBySlot(int slotIndex)
+        private CombatUnitEntry FindPlayerEntryBySlot(int slotIndex /* 배치할 슬롯 순서 번호 */)
         {
             var players = combatManager.UnitRegistry.Players;
             for (var i = 0; i < players.Count; i++)
@@ -297,9 +297,9 @@ namespace Pakuri.InGame
          * 씬에 남아 있는 슬롯 Actor를 세션 상태로 부활시키고 로스터에 등록한다.
          */
         private bool TryReviveExistingPlayerBySlot(
-            RunSession activeSession,
-            int slotIndex,
-            out CombatUnitEntry revivedEntry)
+            RunSession activeSession /* 현재 활성화된 게임 진행 상태 */,
+            int slotIndex /* 배치할 슬롯 순서 번호 */,
+            out CombatUnitEntry revivedEntry /* 부활한 등록 정보 */)
         {
             revivedEntry = null;
             var actor = FindExistingPlayerActorBySlot(slotIndex);
@@ -321,8 +321,8 @@ namespace Pakuri.InGame
          * 기존 몬스터 모델의 학습 스킬과 선택 정보를 세션 상태에 맞춘다.
          */
         private void SyncExistingMonsterModelFromSession(
-            RunSession activeSession,
-            UnitCombatState model)
+            RunSession activeSession /* 현재 활성화된 게임 진행 상태 */,
+            UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             var state = activeSession.GetPartyMemberState(model.Identity.DefinitionId);
             CopyListToSet(state.LearnedActives, model.SkillProgress.LearnedActiveSkillIds);
@@ -334,7 +334,7 @@ namespace Pakuri.InGame
         /*
          * 문자열 목록의 유효한 항목을 대상 Set에 다시 채운다.
          */
-        private static void CopyListToSet(IReadOnlyList<string> source, ISet<string> target)
+        private static void CopyListToSet(IReadOnlyList<string> source /* 효과를 발생시킨 원본 */, ISet<string> target /* 처리할 대상 */)
         {
             target.Clear();
             for (var i = 0; i < source.Count; i++)
@@ -349,7 +349,7 @@ namespace Pakuri.InGame
         /*
          * 로드된 씬에서 지정 플레이어 슬롯의 기존 Actor를 찾는다.
          */
-        private static MonsterActor FindExistingPlayerActorBySlot(int slotIndex)
+        private static MonsterActor FindExistingPlayerActorBySlot(int slotIndex /* 배치할 슬롯 순서 번호 */)
         {
             // 전체 로드 객체 검색에는 에셋도 포함되므로 실제 씬에 속한 Actor만 사용한다.
             var actors = Resources.FindObjectsOfTypeAll<MonsterActor>();
@@ -378,7 +378,7 @@ namespace Pakuri.InGame
         /*
          * 세션 상태로 선택 몬스터의 런타임 모델을 만든다.
          */
-        private UnitCombatState CreateSelectedModel(RunSession session)
+        private UnitCombatState CreateSelectedModel(RunSession session /* 현재 게임 진행 상태 */)
         {
             var monster = ResolveMonsterDefinition(session.SelectedMonsterId);
             var model = unitStateFactory.CreateSelectedMonster(monster, session.GetPartyMemberState(monster.MonsterId), 0);
@@ -390,14 +390,14 @@ namespace Pakuri.InGame
          * 적 모델과 Actor를 만들고 무작위 Y 위치에 생성한 뒤 로스터에 등록한다.
          */
         private GameObject SpawnEnemyUnit(
-            GameObject prefab,
-            string enemyId,
-            int spawnIndex,
-            float spawnX,
-            float spawnYMin,
-            float spawnYMax,
-            float healthMultiplier,
-            bool isBoss)
+            GameObject prefab /* 생성할 프리팹 */,
+            string enemyId /* 적 식별자 */,
+            int spawnIndex /* 생성 순서 번호 */,
+            float spawnX /* 생성 X축 */,
+            float spawnYMin /* 생성 Y축 최소 */,
+            float spawnYMax /* 생성 Y축 최대 */,
+            float healthMultiplier /* 체력 배율 */,
+            bool isBoss /* 여부 보스 여부 */)
         {
             var model = CreateEnemyModel(enemyId, spawnIndex, isBoss);
             ApplyEnemyHealthMultiplier(model, healthMultiplier);
@@ -419,7 +419,7 @@ namespace Pakuri.InGame
         /*
          * 적 정의로 런타임 모델을 만들고 배정 스킬을 구성한다.
          */
-        private EnemyCombatState CreateEnemyModel(string enemyId, int slotIndex, bool isBoss)
+        private EnemyCombatState CreateEnemyModel(string enemyId /* 적 식별자 */, int slotIndex /* 배치할 슬롯 순서 번호 */, bool isBoss /* 여부 보스 여부 */)
         {
             var enemy = ResolveEnemyDefinition(enemyId);
             var model = unitStateFactory.CreateEnemy(enemy, slotIndex, isBoss);
@@ -431,7 +431,7 @@ namespace Pakuri.InGame
         /*
          * 몬스터 ID에 대응하는 필수 정의를 반환한다.
          */
-        private MonsterDefinition ResolveMonsterDefinition(string monsterId)
+        private MonsterDefinition ResolveMonsterDefinition(string monsterId /* 몬스터 식별자 */)
         {
             return GameDataLoader.CurrentCatalog.GetData<MonsterDefinition>(monsterId)
                 ?? throw new InvalidOperationException($"Monster data '{monsterId}' is required.");
@@ -440,7 +440,7 @@ namespace Pakuri.InGame
         /*
          * 적 ID에 대응하는 필수 정의를 반환한다.
          */
-        private EnemyDefinition ResolveEnemyDefinition(string enemyId)
+        private EnemyDefinition ResolveEnemyDefinition(string enemyId /* 적 식별자 */)
         {
             return GameDataLoader.CurrentCatalog.GetData<EnemyDefinition>(enemyId)
                 ?? throw new InvalidOperationException($"Enemy data '{enemyId}' is required.");
@@ -449,7 +449,7 @@ namespace Pakuri.InGame
         /*
          * 생성된 몬스터 프리팹의 Actor를 런타임 모델로 초기화한다.
          */
-        private MonsterActor BindMonsterActor(GameObject spawnedUnit, UnitCombatState model)
+        private MonsterActor BindMonsterActor(GameObject spawnedUnit /* 생성된 유닛 */, UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             var actor = spawnedUnit.GetComponentInChildren<MonsterActor>(true);
             actor.Initialize(model);
@@ -459,7 +459,7 @@ namespace Pakuri.InGame
         /*
          * 생성된 적 프리팹의 Actor를 런타임 모델로 초기화한다.
          */
-        private EnemyActor BindEnemyActor(GameObject spawnedUnit, EnemyCombatState model)
+        private EnemyActor BindEnemyActor(GameObject spawnedUnit /* 생성된 유닛 */, EnemyCombatState model /* 처리할 상태 모델 */)
         {
             var actor = spawnedUnit.GetComponentInChildren<EnemyActor>(true);
             actor.Initialize(model);
@@ -469,7 +469,7 @@ namespace Pakuri.InGame
         /*
          * 몬스터 모델과 Actor를 플레이어 로스터에 등록한다.
          */
-        private void RegisterPlayer(UnitCombatState model, MonsterActor actor, Transform hitboxRoot)
+        private void RegisterPlayer(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, MonsterActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
         {
             combatManager.RegisterPlayerMonster(model, actor, hitboxRoot);
         }
@@ -477,7 +477,7 @@ namespace Pakuri.InGame
         /*
          * 적 모델과 Actor를 적 로스터에 등록한다.
          */
-        private void RegisterEnemy(EnemyCombatState model, EnemyActor actor, Transform hitboxRoot)
+        private void RegisterEnemy(EnemyCombatState model /* 처리할 상태 모델 */, EnemyActor actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot /* 피격 판정의 기준 위치 */)
         {
             combatManager.RegisterEnemy(model, actor, hitboxRoot);
         }
@@ -485,7 +485,7 @@ namespace Pakuri.InGame
         /*
          * 몬스터 ID에 연결된 필수 프리팹을 반환한다.
          */
-        private GameObject ResolveMonsterPrefab(string monsterId)
+        private GameObject ResolveMonsterPrefab(string monsterId /* 몬스터 식별자 */)
         {
             if (string.Equals(monsterId, ArielMonsterId, StringComparison.OrdinalIgnoreCase))
             {
@@ -518,7 +518,7 @@ namespace Pakuri.InGame
         /*
          * 직렬화된 적 프리팹 목록에서 ID와 일치하는 필수 프리팹을 반환한다.
          */
-        private GameObject ResolveEnemyPrefab(string enemyId)
+        private GameObject ResolveEnemyPrefab(string enemyId /* 적 식별자 */)
         {
             for (var i = 0; i < enemyPrefabBindings.Length; i++)
             {
@@ -535,7 +535,7 @@ namespace Pakuri.InGame
         /*
          * 필수 프리팹 참조를 반환하고 누락되면 즉시 오류를 낸다.
          */
-        private static GameObject RequirePrefab(GameObject prefab, string unitId)
+        private static GameObject RequirePrefab(GameObject prefab /* 생성할 프리팹 */, string unitId /* 유닛 식별자 */)
         {
             return prefab != null
                 ? prefab
@@ -545,7 +545,7 @@ namespace Pakuri.InGame
         /*
          * 적의 최대 체력과 현재 체력에 인카운터 체력 배율을 적용한다.
          */
-        private static void ApplyEnemyHealthMultiplier(EnemyCombatState model, float healthMultiplier)
+        private static void ApplyEnemyHealthMultiplier(EnemyCombatState model /* 처리할 상태 모델 */, float healthMultiplier /* 체력 배율 */)
         {
             if (healthMultiplier <= 0f)
             {
@@ -565,7 +565,7 @@ namespace Pakuri.InGame
         /*
          * 파티 슬롯 번호에 대응하는 씬 생성 지점을 반환한다.
          */
-        private static Transform ResolveManifestSpawnPoint(int partySlotIndex)
+        private static Transform ResolveManifestSpawnPoint(int partySlotIndex /* 파티 슬롯 순서 번호 */)
         {
             return GameObject.Find($"{partySlotIndex + 1}PSpawnPoint").transform;
         }

@@ -78,7 +78,7 @@ namespace Pakuri.InGame
         /*
          * TryGetRecord 작업을 시도하고 성공 여부를 반환한다.
          */
-        public bool TryGetRecord(string monsterId, out MonsterDamageRecord record)
+        public bool TryGetRecord(string monsterId /* 몬스터 식별자 */, out MonsterDamageRecord record /* 읽거나 갱신할 기록 */)
         {
             if (string.IsNullOrWhiteSpace(monsterId))
             {
@@ -92,7 +92,7 @@ namespace Pakuri.InGame
         /*
          * Record 작업을 수행한다.
          */
-        private void Record(DamageApplicationOptions options, InGameResourceChangeResult result)
+        private void Record(DamageApplicationOptions options /* 처리에 사용할 추가 설정 */, InGameResourceChangeResult result /* 처리 결과 */)
         {
             // Code Builder: 피해 통계는 전투 결과 이벤트를 받아 이 Tracker가 기록한다.
             var source = options.Source;
@@ -141,7 +141,7 @@ namespace Pakuri.InGame
         /*
          * MonsterDamageRecord에 필요한 값을 초기화한다.
          */
-        public MonsterDamageRecord(string monsterId)
+        public MonsterDamageRecord(string monsterId /* 몬스터 식별자 */)
         {
             MonsterId = monsterId;
         }
@@ -153,7 +153,7 @@ namespace Pakuri.InGame
         /*
          * AddDamage 작업을 수행한다.
          */
-        public void AddDamage(string sourceId, float amount)
+        public void AddDamage(string sourceId /* 효과를 발생시킨 대상의 식별자 */, float amount /* 적용할 수치 */)
         {
             if (!sources.TryGetValue(sourceId, out var source))
             {
@@ -172,7 +172,7 @@ namespace Pakuri.InGame
         /*
          * SkillDamageRecord에 필요한 값을 초기화한다.
          */
-        public SkillDamageRecord(string sourceId)
+        public SkillDamageRecord(string sourceId /* 효과를 발생시킨 대상의 식별자 */)
         {
             SourceId = sourceId;
         }
@@ -183,7 +183,7 @@ namespace Pakuri.InGame
         /*
          * AddDamage 작업을 수행한다.
          */
-        public void AddDamage(float amount)
+        public void AddDamage(float amount /* 적용할 수치 */)
         {
             Damage += amount;
         }

@@ -14,9 +14,9 @@ namespace Pakuri.InGame
          * CreateSelectedMonster에 필요한 결과를 만들어 반환한다.
          */
         public UnitCombatState CreateSelectedMonster(
-            MonsterDefinition definition,
-            RunSession.RunMonsterState runState = null,
-            int slotIndex = 0)
+            MonsterDefinition definition /* 변환하거나 검사할 정의 */,
+            RunSession.RunMonsterState runState = null /* 게임 진행 상태 */,
+            int slotIndex = 0 /* 배치할 슬롯 순서 번호 */)
         {
             return CreateMonster(definition, UnitSide.Player, UnitRole.Monster, slotIndex, "player", runState);
         }
@@ -25,9 +25,9 @@ namespace Pakuri.InGame
          * CreateManifestedMonster에 필요한 결과를 만들어 반환한다.
          */
         public UnitCombatState CreateManifestedMonster(
-            MonsterDefinition definition,
-            RunSession.RunMonsterState runState,
-            int slotIndex)
+            MonsterDefinition definition /* 변환하거나 검사할 정의 */,
+            RunSession.RunMonsterState runState /* 게임 진행 상태 */,
+            int slotIndex /* 배치할 슬롯 순서 번호 */)
         {
             return CreateMonster(definition, UnitSide.Player, UnitRole.Monster, slotIndex, "party", runState);
         }
@@ -35,7 +35,7 @@ namespace Pakuri.InGame
         /*
          * CreateEnemy에 필요한 결과를 만들어 반환한다.
          */
-        public EnemyCombatState CreateEnemy(EnemyDefinition definition, int slotIndex = 0, bool isBoss = false)
+        public EnemyCombatState CreateEnemy(EnemyDefinition definition /* 변환하거나 검사할 정의 */, int slotIndex = 0 /* 배치할 슬롯 순서 번호 */, bool isBoss = false /* 여부 보스 여부 */)
         {
             var stats = definition.Stats;
             var maxHealth = stats.MaxHealth;
@@ -53,7 +53,7 @@ namespace Pakuri.InGame
                 Attribute = definition.Attribute,
                 NexusDamage = definition.NexusDamage,
                 Stats = MapStats(stats, maxHealth),
-                Defenses = MapDefenses(definition.Defenses),
+                Defenses = CreateRuntimeDefenses(definition.Defenses),
                 Resources = new UnitCombatResources
                 {
                     CurrentHealth = maxHealth,
@@ -72,7 +72,7 @@ namespace Pakuri.InGame
         /*
          * 전투에서 사용하는 Nexus 기본 상태를 만든다.
          */
-        public UnitCombatState CreateNexus(float maxHealth)
+        public UnitCombatState CreateNexus(float maxHealth /* 최대 체력 */)
         {
             return new UnitCombatState
             {
@@ -103,12 +103,12 @@ namespace Pakuri.InGame
          * CreateMonster에 필요한 결과를 만들어 반환한다.
          */
         private static UnitCombatState CreateMonster(
-            MonsterDefinition definition,
-            UnitSide side,
-            UnitRole role,
-            int slotIndex,
-            string unitIdPrefix,
-            RunSession.RunMonsterState runState)
+            MonsterDefinition definition /* 변환하거나 검사할 정의 */,
+            UnitSide side /* 진영 */,
+            UnitRole role /* 역할 */,
+            int slotIndex /* 배치할 슬롯 순서 번호 */,
+            string unitIdPrefix /* 유닛 식별자 접두어 */,
+            RunSession.RunMonsterState runState /* 게임 진행 상태 */)
         {
             var maxHealthBonus = 0f;
             if (runState != null)
@@ -129,7 +129,7 @@ namespace Pakuri.InGame
                     SlotIndex = slotIndex
                 },
                 Stats = MapStats(definition.BaseStats, maxHealth),
-                Defenses = MapDefenses(definition.Defenses),
+                Defenses = CreateRuntimeDefenses(definition.Defenses),
                 Resources = new UnitCombatResources
                 {
                     CurrentHealth = maxHealth,
@@ -147,7 +147,7 @@ namespace Pakuri.InGame
         /*
          * MapStats에 필요한 형식으로 변환해 반환한다.
          */
-        private static UnitCombatStats MapStats(UnitCombatStats source, float maxHealth)
+        private static UnitCombatStats MapStats(UnitCombatStats source /* 복사할 전투 능력치 */, float maxHealth /* 최대 체력 */)
         {
             return new UnitCombatStats
             {
@@ -162,9 +162,9 @@ namespace Pakuri.InGame
         }
 
         /*
-         * MapDefenses에 필요한 형식으로 변환해 반환한다.
+         * 정의 데이터와 분리된 런타임 방어력을 만든다.
          */
-        private static UnitDefenseStats MapDefenses(DamageCalculator.AttributeDefenseSet source)
+        private static UnitDefenseStats CreateRuntimeDefenses(UnitDefenseStats source /* 원본 방어력 */)
         {
             return new UnitDefenseStats
             {
@@ -180,7 +180,7 @@ namespace Pakuri.InGame
         /*
          * ApplyRunState 처리를 대상에 적용한다.
          */
-        private static void ApplyRunState(UnitSkillProgress target, RunSession.RunMonsterState runState)
+        private static void ApplyRunState(UnitSkillProgress target /* 변경할 스킬 성장 정보 */, RunSession.RunMonsterState runState /* 게임 진행 상태 */)
         {
             if (runState == null)
             {
@@ -195,7 +195,7 @@ namespace Pakuri.InGame
         /*
          * AddRange 작업을 수행한다.
          */
-        private static void AddRange(HashSet<string> target, IReadOnlyList<string> source)
+        private static void AddRange(HashSet<string> target /* 처리할 대상 */, IReadOnlyList<string> source /* 효과를 발생시킨 원본 */)
         {
             for (var i = 0; i < source.Count; i++)
             {
@@ -209,7 +209,7 @@ namespace Pakuri.InGame
         /*
          * BuildUnitId에 필요한 결과를 만들어 반환한다.
          */
-        private static string BuildUnitId(string prefix, string definitionId, int slotIndex)
+        private static string BuildUnitId(string prefix /* 접두어 */, string definitionId /* 정의 식별자 */, int slotIndex /* 배치할 슬롯 순서 번호 */)
         {
             return $"{prefix}-{definitionId}-{slotIndex}";
         }

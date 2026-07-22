@@ -10,7 +10,7 @@ namespace Pakuri.InGame
         /*
          * IsTargetInsideHitbox 조건을 만족하는지 확인한다.
          */
-        public static bool IsTargetInsideHitbox(Collider2D[] hitboxColliders, CombatUnitEntry target)
+        public static bool IsTargetInsideHitbox(Collider2D[] hitboxColliders /* 피격 판정 콜라이더 목록 */, CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */)
         {
             if (hitboxColliders == null || target == null || target.Model == null || !target.IsAlive)
             {

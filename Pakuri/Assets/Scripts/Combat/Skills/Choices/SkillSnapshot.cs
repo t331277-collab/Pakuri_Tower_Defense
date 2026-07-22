@@ -30,7 +30,7 @@ public class SkillSnapshot
 		/*
 		 * ConditionalDamageRule에 필요한 값을 초기화한다.
 		 */
-		public ConditionalDamageRule(float damageMultiplier, StatusEffectKind statusKind, int minStacks)
+		public ConditionalDamageRule(float damageMultiplier /* 피해량에 곱할 배율 */, StatusEffectKind statusKind /* 상태 효과 종류 */, int minStacks /* 최소 중첩 수 */)
 		{
 			DamageMultiplier = damageMultiplier;
 			StatusKind = statusKind;
@@ -52,7 +52,7 @@ public class SkillSnapshot
 		/*
 		 * ConditionalCritChanceRule에 필요한 값을 초기화한다.
 		 */
-		public ConditionalCritChanceRule(float critChanceBonus, StatusEffectKind statusKind, int minStacks)
+		public ConditionalCritChanceRule(float critChanceBonus /* 추가 치명타 확률 */, StatusEffectKind statusKind /* 상태 효과 종류 */, int minStacks /* 최소 중첩 수 */)
 		{
 			CritChanceBonus = critChanceBonus;
 			StatusKind = statusKind;
@@ -72,7 +72,7 @@ public class SkillSnapshot
 		/*
 		 * BurstDamageRule에 필요한 값을 초기화한다.
 		 */
-		public BurstDamageRule(int projectileIndex, float damageMultiplier)
+		public BurstDamageRule(int projectileIndex /* 투사체 순서 번호 */, float damageMultiplier /* 피해량에 곱할 배율 */)
 		{
 			ProjectileIndex = projectileIndex;
 			DamageMultiplier = damageMultiplier;
@@ -91,7 +91,7 @@ public class SkillSnapshot
 		/*
 		 * BurstStatusRule에 필요한 값을 초기화한다.
 		 */
-		public BurstStatusRule(int projectileIndex, int stacksBonus)
+		public BurstStatusRule(int projectileIndex /* 투사체 순서 번호 */, int stacksBonus /* 중첩 수 추가값 */)
 		{
 			ProjectileIndex = projectileIndex;
 			StacksBonus = stacksBonus;
@@ -473,7 +473,7 @@ public class SkillSnapshot
 	/*
 	 * 원본 스킬의 식별자, 기본 배율, 이펙트와 노드를 사용해 최초 실행 계획을 만든다.
 	 */
-	public SkillSnapshot(SkillRuntimeData source)
+	public SkillSnapshot(SkillRuntimeData source /* 복사하거나 변환할 스킬 실행 데이터 */)
 	{
 		Source = source;
 		SkillId = string.Empty;
@@ -505,7 +505,7 @@ public class SkillSnapshot
 	/*
 	 * 선택지의 정규화된 노드를 현재 수치와 실행 계획에 반영한다.
 	 */
-	public void ApplyChoiceSpec(SkillChoiceRuntimeData spec)
+	public void ApplyChoiceSpec(SkillChoiceRuntimeData spec /* 처리에 사용할 설정 */)
 	{
 		if (spec == null || !HasNormalizedPlanNodes(spec.Source))
 		{
@@ -517,7 +517,7 @@ public class SkillSnapshot
 	/*
 	 * 전투 중 전달된 피해 배율을 현재 피해 배율에 추가로 곱한다.
 	 */
-	public void ApplyDynamicDamageMultiplier(float multiplier)
+	public void ApplyDynamicDamageMultiplier(float multiplier /* 값에 곱할 배율 */)
 	{
 		DamageMultiplier *= PositiveOrDefault(multiplier, 1f);
 	}
@@ -525,7 +525,7 @@ public class SkillSnapshot
 	/*
 	 * 현재 스냅샷을 복사하고 복사본에만 별도 피해 배율을 적용한다.
 	 */
-	internal SkillSnapshot CopyWithDamageMultiplier(float multiplier)
+	internal SkillSnapshot CopyWithDamageMultiplier(float multiplier /* 값에 곱할 배율 */)
 	{
 		SkillSnapshot copy = (SkillSnapshot)MemberwiseClone();
 		copy.DamageMultiplier *= Mathf.Max(0f, multiplier);
@@ -535,7 +535,7 @@ public class SkillSnapshot
 	/*
 	 * 선택지 노드를 현재 스킬 대상으로 한정한 뒤 필드와 행동 노드에 반영한다.
 	 */
-	private void ApplyNodeBackedChoiceDefinition(SkillChoiceDefinition choice)
+	private void ApplyNodeBackedChoiceDefinition(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */)
 	{
 		if (choice.SkillEffectPrefab != null)
 		{
@@ -558,7 +558,7 @@ public class SkillSnapshot
 	/*
 	 * 선택지 컴파일 결과 중 개별 속성으로 표현되는 특수 강화 값을 누적한다.
 	 */
-	private void ApplyNodeBackedChoiceFields(SkillChoiceRuntimeData spec)
+	private void ApplyNodeBackedChoiceFields(SkillChoiceRuntimeData spec /* 처리에 사용할 설정 */)
 	{
 		SkillChoiceDefinition source = spec.Source;
 		CritChanceBonus += source.CritChanceBonus;
@@ -663,7 +663,7 @@ public class SkillSnapshot
 	/*
 	 * 선택지에 적용할 정규화 노드가 하나 이상 있는지 확인한다.
 	 */
-	private static bool HasNormalizedPlanNodes(SkillChoiceDefinition choice)
+	private static bool HasNormalizedPlanNodes(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */)
 	{
 		if (choice != null && choice.NormalizedPlanNodes != null)
 		{
@@ -673,9 +673,9 @@ public class SkillSnapshot
 	}
 
 	/*
-	 * 선택지 노드에서 일반 수치 변경 행동만 찾아 현재 스냅샷에 적용한다.
+	 * 선택지 노드의 단순 행동과 복합 행동을 현재 스냅샷에 적용한다.
 	 */
-	private void ApplyPlanActionNodes(IReadOnlyList<SkillNode> nodes)
+	private void ApplyPlanActionNodes(IReadOnlyList<SkillNode> nodes /* 노드 목록 */)
 	{
 		if (nodes == null || nodes.Count == 0)
 		{
@@ -688,10 +688,34 @@ public class SkillSnapshot
 				continue;
 			}
 
-			var skillActionOp = nodes[i].Action;
+			SkillActionOp? skillActionOp = nodes[i].Action;
 			if (skillActionOp.HasValue)
 			{
 				ApplyPlanAction(skillActionOp.Value);
+			}
+
+			ConsecutiveHitActionOp? consecutiveHitAction = nodes[i].ConsecutiveHitAction;
+			if (consecutiveHitAction.HasValue)
+			{
+				ApplyConsecutiveHitAction(consecutiveHitAction.Value);
+			}
+
+			BranchDamageActionOp? branchDamageAction = nodes[i].BranchDamageAction;
+			if (branchDamageAction.HasValue)
+			{
+				ApplyBranchDamageAction(branchDamageAction.Value);
+			}
+
+			ConditionalDamageActionOp? conditionalDamageAction = nodes[i].ConditionalDamageAction;
+			if (conditionalDamageAction.HasValue)
+			{
+				ApplyConditionalDamageAction(conditionalDamageAction.Value);
+			}
+
+			StatusConditionalDamageTakenActionOp? statusDamageTakenAction = nodes[i].StatusConditionalDamageTakenAction;
+			if (statusDamageTakenAction.HasValue)
+			{
+				ApplyStatusConditionalDamageTakenAction(statusDamageTakenAction.Value);
 			}
 		}
 	}
@@ -699,161 +723,179 @@ public class SkillSnapshot
 	/*
 	 * 행동 종류에 맞는 스냅샷 속성이나 상태별 보너스에 값을 누적한다.
 	 */
-	private void ApplyPlanAction(SkillActionOp action)
+	private void ApplyPlanAction(SkillActionOp action /* 동작 */)
 	{
 		switch (action.Kind)
 		{
 		case SkillActionOpKind.DamageMultiplier:
-			DamageMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+			DamageMultiplier *= PositiveOrDefault(action.Amount, 1f);
 			break;
 		case SkillActionOpKind.ShieldAmountMultiplier:
-			ShieldAmountMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+			ShieldAmountMultiplier *= PositiveOrDefault(action.Amount, 1f);
 			break;
 		case SkillActionOpKind.CooldownMultiplier:
-			CooldownMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+			CooldownMultiplier *= PositiveOrDefault(action.Amount, 1f);
 			break;
 		case SkillActionOpKind.MagazineBonus:
-			MagazineBonus += action.IntValue;
+			MagazineBonus += action.Count;
 			break;
 		case SkillActionOpKind.ReloadTimeMultiplier:
-			ReloadTimeMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+			ReloadTimeMultiplier *= PositiveOrDefault(action.Amount, 1f);
 			break;
 		case SkillActionOpKind.PierceBonus:
-			PierceBonus += action.IntValue;
+			PierceBonus += action.Count;
 			break;
 		case SkillActionOpKind.RadiusMultiplier:
-			RadiusMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+			RadiusMultiplier *= PositiveOrDefault(action.Amount, 1f);
 			break;
 		case SkillActionOpKind.RadiusBonus:
-			RadiusBonus += action.FloatValue;
+			RadiusBonus += action.Amount;
 			break;
 		case SkillActionOpKind.DurationBonus:
-			DurationBonus += action.FloatValue;
+			DurationBonus += action.Amount;
 			break;
 		case SkillActionOpKind.DurationMultiplier:
-			DurationMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+			DurationMultiplier *= PositiveOrDefault(action.Amount, 1f);
 			break;
 		case SkillActionOpKind.DamageDelayMultiplier:
-			DamageDelayMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
+			DamageDelayMultiplier *= PositiveOrDefault(action.Amount, 1f);
 			break;
 		case SkillActionOpKind.AdditionalProjectileBonus:
-			AdditionalProjectileBonus += action.IntValue;
+			AdditionalProjectileBonus += action.Count;
 			break;
 		case SkillActionOpKind.ShotIntervalMultiplier:
-			ShotIntervalMultiplier *= PositiveOrDefault(action.FloatValue, 1f);
-			break;
-		case SkillActionOpKind.ConsecutiveHitDamageBonus:
-			ConsecutiveHitBonusRate += Mathf.Max(0f, action.FloatValue);
-			ConsecutiveHitMax += Mathf.Max(0f, action.SecondaryFloatValue);
-			break;
-		case SkillActionOpKind.BranchDamage:
-			BranchChanceBonus += action.FloatValue;
-			if (action.IntValue > 0)
-			{
-				HasBranchCount = true;
-				BranchCount = action.IntValue;
-			}
-			if (action.SecondaryFloatValue > 0f)
-			{
-				HasBranchDamageMultiplier = true;
-				BranchDamageMultiplier = action.SecondaryFloatValue;
-			}
-			if (action.ThirdFloatValue > 0f)
-			{
-				HasBranchSearchRadius = true;
-				BranchSearchRadius = action.ThirdFloatValue;
-			}
+			ShotIntervalMultiplier *= PositiveOrDefault(action.Amount, 1f);
 			break;
 		case SkillActionOpKind.StatusStackAmountBonus:
-			StatusStacksBonus += action.IntValue;
+			StatusStacksBonus += action.Count;
 			break;
 		case SkillActionOpKind.StatusStackAmountSet:
 			HasStatusStacksSet = true;
-			StatusStacksSet = Mathf.Max(0, action.IntValue);
+			StatusStacksSet = Mathf.Max(0, action.Count);
 			break;
 		case SkillActionOpKind.StatusMaxStacksBonus:
-			if (!string.IsNullOrWhiteSpace(action.StringValue) && action.IntValue != 0)
+			if (!string.IsNullOrWhiteSpace(action.ReferenceId) && action.Count != 0)
 			{
-				statusMaxStacksBonuses.TryGetValue(action.StringValue, out var value3);
-				statusMaxStacksBonuses[action.StringValue] = value3 + action.IntValue;
+				statusMaxStacksBonuses.TryGetValue(action.ReferenceId, out var value3);
+				statusMaxStacksBonuses[action.ReferenceId] = value3 + action.Count;
 			}
 			break;
-		case SkillActionOpKind.ConditionalDamageMultiplier:
-			AddConditionalDamageRule(action.FloatValue, action.StatusKind, action.IntValue);
-			break;
 		case SkillActionOpKind.TargetStatusStackDamageRateBonus:
-			if (!string.IsNullOrWhiteSpace(action.StringValue) && !Mathf.Approximately(action.FloatValue, 0f))
+			if (!string.IsNullOrWhiteSpace(action.ReferenceId) && !Mathf.Approximately(action.Amount, 0f))
 			{
-				targetStatusStackDamageRateBonuses.TryGetValue(action.StringValue, out var value2);
-				targetStatusStackDamageRateBonuses[action.StringValue] = value2 + action.FloatValue;
+				targetStatusStackDamageRateBonuses.TryGetValue(action.ReferenceId, out var value2);
+				targetStatusStackDamageRateBonuses[action.ReferenceId] = value2 + action.Amount;
 			}
 			break;
 		case SkillActionOpKind.TriggerProcChanceBonus:
-			if (!string.IsNullOrWhiteSpace(action.StringValue) && !Mathf.Approximately(action.FloatValue, 0f))
+			if (!string.IsNullOrWhiteSpace(action.ReferenceId) && !Mathf.Approximately(action.Amount, 0f))
 			{
-				triggerProcChanceBonuses.TryGetValue(action.StringValue, out var value);
-				triggerProcChanceBonuses[action.StringValue] = value + action.FloatValue;
+				triggerProcChanceBonuses.TryGetValue(action.ReferenceId, out var value);
+				triggerProcChanceBonuses[action.ReferenceId] = value + action.Amount;
 			}
 			break;
 		case SkillActionOpKind.HitTargetCountBonus:
-			HitTargetCountBonus += action.IntValue;
+			HitTargetCountBonus += action.Count;
 			break;
 		case SkillActionOpKind.StatusActionSpeedBonus:
-			ApplyStatusActionSpeedBonus(action.StringValue, action.FloatValue);
+			ApplyStatusActionSpeedBonus(action.ReferenceId, action.Amount);
 			break;
 		case SkillActionOpKind.StatusAttackPowerBonus:
 			HasStatusAttackPowerBonus = true;
-			StatusAttackPowerBonus += action.FloatValue;
+			StatusAttackPowerBonus += action.Amount;
 			break;
 		case SkillActionOpKind.StatusAilmentResistanceBonus:
 			HasStatusAilmentResistanceBonus = true;
-			StatusAilmentResistanceBonus += action.FloatValue;
+			StatusAilmentResistanceBonus += action.Amount;
 			break;
 		case SkillActionOpKind.StatusDamageBonusRate:
 			HasStatusDamageBonusRate = true;
-			StatusDamageBonusRate += action.FloatValue;
+			StatusDamageBonusRate += action.Amount;
 			break;
 		case SkillActionOpKind.StatusShieldReceivedBonus:
 			HasStatusShieldReceivedBonus = true;
-			StatusShieldReceivedBonus += action.FloatValue;
+			StatusShieldReceivedBonus += action.Amount;
 			break;
 		case SkillActionOpKind.StatusCriticalChanceBonus:
 			HasStatusCriticalChanceBonus = true;
-			StatusCriticalChanceBonus += action.FloatValue;
+			StatusCriticalChanceBonus += action.Amount;
 			break;
 		case SkillActionOpKind.StatusDamageTakenBonus:
 			HasStatusDamageTakenBonus = true;
-			StatusDamageTakenBonus += action.FloatValue;
+			StatusDamageTakenBonus += action.Amount;
 			break;
 		case SkillActionOpKind.StatusFlatElementResistReduction:
 			HasStatusFlatElementResistReduction = true;
-			StatusFlatElementResistReduction += action.FloatValue;
+			StatusFlatElementResistReduction += action.Amount;
 			break;
 		case SkillActionOpKind.StatusDurationBonus:
-			ApplyStatusDurationBonus(action.StringValue, action.FloatValue);
-			break;
-		case SkillActionOpKind.StatusConditionalDamageTakenBonus:
-			HasStatusConditionalDamageTakenBonus = true;
-			StatusConditionalDamageTakenBonus += action.FloatValue;
-			StatusConditionalSourceStatusKind = action.StatusKind;
+			ApplyStatusDurationBonus(action.ReferenceId, action.Amount);
 			break;
 		case SkillActionOpKind.StatusElementDamageTakenBonus:
 			HasStatusElementDamageTakenBonus = true;
-			StatusElementDamageTakenBonus += action.FloatValue;
+			StatusElementDamageTakenBonus += action.Amount;
 			break;
 		case SkillActionOpKind.StatusCriticalDamageTakenBonus:
 			HasStatusCriticalDamageTakenBonus = true;
-			StatusCriticalDamageTakenBonus += action.FloatValue;
-			break;
-		case SkillActionOpKind.CountStatusDamageMultiplier:
+			StatusCriticalDamageTakenBonus += action.Amount;
 			break;
 		}
 	}
 
 	/*
+	 * 연속 적중 피해 증가값을 현재 스냅샷에 누적한다.
+	 */
+	private void ApplyConsecutiveHitAction(ConsecutiveHitActionOp action /* 연속 적중 피해 동작 */)
+	{
+		ConsecutiveHitBonusRate += Mathf.Max(0f, action.BonusRate);
+		ConsecutiveHitMax += Mathf.Max(0f, action.MaxBonus);
+	}
+
+	/*
+	 * 분기 공격 값을 현재 스냅샷에 적용한다.
+	 */
+	private void ApplyBranchDamageAction(BranchDamageActionOp action /* 분기 피해 동작 */)
+	{
+		BranchChanceBonus += action.ChanceBonus;
+		if (action.BranchCount > 0)
+		{
+			HasBranchCount = true;
+			BranchCount = action.BranchCount;
+		}
+		if (action.DamageMultiplier > 0f)
+		{
+			HasBranchDamageMultiplier = true;
+			BranchDamageMultiplier = action.DamageMultiplier;
+		}
+		if (action.SearchRadius > 0f)
+		{
+			HasBranchSearchRadius = true;
+			BranchSearchRadius = action.SearchRadius;
+		}
+	}
+
+	/*
+	 * 상태 효과 조건을 만족할 때 사용할 피해 배율을 등록한다.
+	 */
+	private void ApplyConditionalDamageAction(ConditionalDamageActionOp action /* 상태 조건 피해 동작 */)
+	{
+		AddConditionalDamageRule(action.DamageMultiplier, action.RequiredStatus, action.MinimumStacks);
+	}
+
+	/*
+	 * 공격자 상태 효과 조건에 따른 받는 피해 증가값을 현재 스냅샷에 적용한다.
+	 */
+	private void ApplyStatusConditionalDamageTakenAction(StatusConditionalDamageTakenActionOp action /* 공격자 상태 조건 받는 피해 동작 */)
+	{
+		HasStatusConditionalDamageTakenBonus = true;
+		StatusConditionalDamageTakenBonus += action.Bonus;
+		StatusConditionalSourceStatusKind = action.RequiredSourceStatus;
+	}
+
+	/*
 	 * 전체 상태 또는 지정한 상태의 행동 속도 보너스를 누적한다.
 	 */
-	private void ApplyStatusActionSpeedBonus(string statusId, float bonus)
+	private void ApplyStatusActionSpeedBonus(string statusId /* 상태 효과 식별자 */, float bonus /* 추가로 더할 수치 */)
 	{
 		HasStatusActionSpeedBonus = true;
 		if (string.IsNullOrWhiteSpace(statusId))
@@ -873,7 +915,7 @@ public class SkillSnapshot
 	/*
 	 * 지정한 상태 효과의 지속시간 보너스를 누적한다.
 	 */
-	private void ApplyStatusDurationBonus(string statusId, float bonus)
+	private void ApplyStatusDurationBonus(string statusId /* 상태 효과 식별자 */, float bonus /* 추가로 더할 수치 */)
 	{
 		if (!string.IsNullOrWhiteSpace(statusId) && !Mathf.Approximately(bonus, 0f))
 		{
@@ -889,7 +931,7 @@ public class SkillSnapshot
 	/*
 	 * 상태 종류와 최소 중첩 조건을 만족할 때 사용할 피해 배율 규칙을 추가한다.
 	 */
-	private void AddConditionalDamageRule(float multiplier, StatusEffectKind statusKind, int minStacks)
+	private void AddConditionalDamageRule(float multiplier /* 값에 곱할 배율 */, StatusEffectKind statusKind /* 상태 효과 종류 */, int minStacks /* 최소 중첩 수 */)
 	{
 		if (statusKind != StatusEffectKind.None && !(multiplier <= 0f))
 		{
@@ -900,7 +942,7 @@ public class SkillSnapshot
 	/*
 	 * 현재 스냅샷에 적용된 선택지 식별자를 기록한다.
 	 */
-	public void AddActiveChoiceId(string choiceId)
+	public void AddActiveChoiceId(string choiceId /* 스킬 선택지 식별자 */)
 	{
 		if (!string.IsNullOrWhiteSpace(choiceId))
 		{
@@ -911,7 +953,7 @@ public class SkillSnapshot
 	/*
 	 * 지정한 선택지가 현재 스냅샷에 적용되었는지 확인한다.
 	 */
-	public bool HasActiveChoice(string choiceId)
+	public bool HasActiveChoice(string choiceId /* 스킬 선택지 식별자 */)
 	{
 		if (!string.IsNullOrWhiteSpace(choiceId))
 		{
@@ -923,7 +965,7 @@ public class SkillSnapshot
 	/*
 	 * 지정한 상태 효과에 누적된 지속시간 보너스를 반환한다.
 	 */
-	public float ResolveStatusDurationBonus(string statusId)
+	public float ResolveStatusDurationBonus(string statusId /* 상태 효과 식별자 */)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
 		{
@@ -939,7 +981,7 @@ public class SkillSnapshot
 	/*
 	 * 전체 상태 보너스와 지정한 상태의 행동 속도 보너스를 합산한다.
 	 */
-	public float ResolveStatusActionSpeedBonus(string statusId)
+	public float ResolveStatusActionSpeedBonus(string statusId /* 상태 효과 식별자 */)
 	{
 		float num = StatusActionSpeedBonus;
 		if (!string.IsNullOrWhiteSpace(statusId) && statusActionSpeedBonuses.TryGetValue(statusId, out var value))
@@ -952,7 +994,7 @@ public class SkillSnapshot
 	/*
 	 * 지정한 상태 효과의 최대 중첩 보너스를 반환한다.
 	 */
-	public int ResolveStatusMaxStacksBonus(string statusId)
+	public int ResolveStatusMaxStacksBonus(string statusId /* 상태 효과 식별자 */)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
 		{
@@ -968,7 +1010,7 @@ public class SkillSnapshot
 	/*
 	 * 대상 상태 중첩 하나당 추가되는 피해 비율을 반환한다.
 	 */
-	public float ResolveTargetStatusStackDamageRateBonus(string statusId)
+	public float ResolveTargetStatusStackDamageRateBonus(string statusId /* 상태 효과 식별자 */)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
 		{
@@ -984,7 +1026,7 @@ public class SkillSnapshot
 	/*
 	 * 지정한 Trigger에 누적된 발동 확률 보너스를 반환한다.
 	 */
-	public float ResolveTriggerProcChanceBonus(string triggerId)
+	public float ResolveTriggerProcChanceBonus(string triggerId /* 트리거 식별자 */)
 	{
 		if (string.IsNullOrWhiteSpace(triggerId))
 		{
@@ -1000,7 +1042,7 @@ public class SkillSnapshot
 	/*
 	 * 대상이 만족하는 상태 중첩 규칙의 피해 배율을 모두 곱해 반환한다.
 	 */
-	public float ResolveConditionalDamageMultiplier(UnitCombatState target)
+	public float ResolveConditionalDamageMultiplier(UnitCombatState target /* 효과를 받을 대상 유닛 */)
 	{
 		if (target == null || conditionalDamageRules.Count == 0)
 		{
@@ -1021,7 +1063,7 @@ public class SkillSnapshot
 	/*
 	 * 대상이 만족하는 상태 중첩 규칙의 치명타 확률 보너스를 모두 더해 반환한다.
 	 */
-	public float ResolveConditionalCritChanceBonus(UnitCombatState target)
+	public float ResolveConditionalCritChanceBonus(UnitCombatState target /* 효과를 받을 대상 유닛 */)
 	{
 		if (target == null || conditionalCritChanceRules.Count == 0)
 		{
@@ -1042,7 +1084,7 @@ public class SkillSnapshot
 	/*
 	 * 현재 투사체 순서에 맞는 연속 발사 피해 배율을 모두 곱해 반환한다.
 	 */
-	public float ResolveBurstDamageMultiplier(int projectileIndex, int burstProjectileCount)
+	public float ResolveBurstDamageMultiplier(int projectileIndex /* 투사체 순서 번호 */, int burstProjectileCount /* 연속 발사 투사체 개수 */)
 	{
 		if (projectileIndex <= 0 || burstDamageRules.Count == 0)
 		{
@@ -1063,7 +1105,7 @@ public class SkillSnapshot
 	/*
 	 * 현재 투사체 순서에 맞는 연속 발사 상태 중첩 보너스를 모두 더해 반환한다.
 	 */
-	public int ResolveBurstStatusStacksBonus(int projectileIndex, int burstProjectileCount)
+	public int ResolveBurstStatusStacksBonus(int projectileIndex /* 투사체 순서 번호 */, int burstProjectileCount /* 연속 발사 투사체 개수 */)
 	{
 		if (projectileIndex <= 0 || burstStatusRules.Count == 0)
 		{
@@ -1084,7 +1126,7 @@ public class SkillSnapshot
 	/*
 	 * 대상이 지정한 상태 또는 보호막의 최소 중첩 조건을 만족하는지 확인한다.
 	 */
-	private static bool HasRequiredStacks(UnitCombatState target, StatusEffectKind statusKind, int minimumStacks)
+	private static bool HasRequiredStacks(UnitCombatState target /* 효과를 받을 대상 유닛 */, StatusEffectKind statusKind /* 상태 효과 종류 */, int minimumStacks /* 최소 중첩 수 */)
 	{
 		if (target == null || minimumStacks <= 0 || statusKind == StatusEffectKind.None)
 		{
@@ -1108,7 +1150,7 @@ public class SkillSnapshot
 	/*
 	 * 설정한 순서가 현재 투사체와 같은지 확인하며 0은 마지막 투사체로 처리한다.
 	 */
-	private static bool MatchesBurstProjectileIndex(int configuredIndex, int projectileIndex, int burstProjectileCount)
+	private static bool MatchesBurstProjectileIndex(int configuredIndex /* 설정된 순서 번호 */, int projectileIndex /* 투사체 순서 번호 */, int burstProjectileCount /* 연속 발사 투사체 개수 */)
 	{
 		if (configuredIndex == 0)
 		{
@@ -1124,7 +1166,7 @@ public class SkillSnapshot
 	/*
 	 * 양수인 값만 사용하고 그렇지 않으면 전달받은 기본값을 반환한다.
 	 */
-	private static float PositiveOrDefault(float value, float fallback)
+	private static float PositiveOrDefault(float value /* 처리할 값 */, float fallback /* 기본 결과가 없을 때 사용할 값 */)
 	{
 		if (!(value > 0f))
 		{
@@ -1175,7 +1217,7 @@ public class SkillSnapshot
 	/*
 	 * null이 아닌 정규화 노드만 현재 실행 계획 원본 목록에 추가한다.
 	 */
-	private void AddNormalizedPlanNodes(IReadOnlyList<SkillNode> nodes)
+	private void AddNormalizedPlanNodes(IReadOnlyList<SkillNode> nodes /* 노드 목록 */)
 	{
 		if (nodes == null || nodes.Count == 0)
 		{

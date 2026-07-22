@@ -17,10 +17,10 @@ namespace Pakuri.InGame
          * 재시전을 실행한다.
          */
         internal static bool ExecuteRecast(
-            SkillExecutionContext context,
-            SkillSnapshot inheritedSnapshot,
-            SkillEffectDefinition effect,
-            Vector2 center)
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillSnapshot inheritedSnapshot /* 앞 실행에서 이어받은 스킬 강화 정보 */,
+            SkillEffectDefinition effect /* 실행하거나 변환할 효과 */,
+            Vector2 center /* 효과가 적용될 중심 위치 */)
         {
             var skill = context != null && context.Runtime != null
                 ? context.Runtime.Data as ZoneSkillRuntimeData
@@ -50,7 +50,7 @@ namespace Pakuri.InGame
             var duration = Mathf.Max(0.05f, effect.RecastDurationSeconds);
             var tickInterval = ResolveTickInterval(skill, snapshot);
             var hitTargetCount = ResolveHitTargetCount(skill, snapshot);
-            var damage = DamageCalculator.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
             var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnTickStatus, snapshot);
             var planEffects = SkillNodeAction.ResolveEffects(snapshot, skill.MultiEffects);
@@ -64,21 +64,28 @@ namespace Pakuri.InGame
             {
                 prefab = snapshot.SkillEffectPrefab;
             }
-            var instance = effects.CreateEffectObject(
+            var objectName = "InGameRecastZone";
+            if (!string.IsNullOrWhiteSpace(skill.SkillId))
+            {
+                objectName = "InGameRecastZone_" + skill.SkillId;
+            }
+
+            var instance = effects.CreateEffect(
                 runtimeVisual,
                 prefab,
-                string.IsNullOrWhiteSpace(skill.SkillId)
-                    ? "InGameRecastZone"
-                    : $"InGameRecastZone_{skill.SkillId}",
+                objectName,
                 center,
-                Quaternion.identity,
-                createEmptyObject: true);
-            effects.ConfigureAreaEffect(
+                Quaternion.identity);
+            if (instance == null)
+            {
+                instance = effects.CreateSkillActorObject(objectName, center, Quaternion.identity);
+            }
+
+            EffectVisualBuilder.ConfigureAreaEffect(
                 instance,
                 SkillTargeting.ResolveBaseRadius(skill.Targeting, skill.Area),
                 snapshot,
-                effect.RecastRadiusMultiplier,
-                requireHitbox: true);
+                effect.RecastRadiusMultiplier);
 
             var actor = instance.GetComponent<ZoneSkillActor>();
             if (actor == null)
@@ -115,9 +122,9 @@ namespace Pakuri.InGame
          * 요청받은 지속 범위 스킬을 실행한다.
          */
         internal static bool Execute(
-            SkillExecutionContext context,
-            SkillSnapshot snapshot,
-            ZoneSkillRuntimeData skill)
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            ZoneSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
         {
             var deploymentCount = ResolveDeploymentCount(snapshot);
             var centers = ResolveAreaCenters(context, skill.Targeting, skill.Area, deploymentCount);
@@ -125,7 +132,7 @@ namespace Pakuri.InGame
             var duration = ResolveDuration(skill, snapshot);
             var tickInterval = ResolveTickInterval(skill, snapshot);
             var hitTargetCount = ResolveHitTargetCount(skill, snapshot);
-            var damage = DamageCalculator.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
             var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnTickStatus, snapshot);
             var planEffects = SkillNodeAction.ResolveEffects(snapshot, skill.MultiEffects);
@@ -144,20 +151,27 @@ namespace Pakuri.InGame
             for (var i = 0; i < centers.Count; i++)
             {
                 var center = centers[i];
-                var instance = effects.CreateEffectObject(
+                var objectName = "ZoneSkill";
+                if (!string.IsNullOrWhiteSpace(skill.SkillId))
+                {
+                    objectName = "ZoneSkill_" + skill.SkillId;
+                }
+
+                var instance = effects.CreateEffect(
                     runtimeVisual,
                     prefab,
-                    string.IsNullOrWhiteSpace(skill.SkillId)
-                        ? "ZoneSkill"
-                        : $"ZoneSkill_{skill.SkillId}",
+                    objectName,
                     center,
-                    Quaternion.identity,
-                    createEmptyObject: true);
-                effects.ConfigureAreaEffect(
+                    Quaternion.identity);
+                if (instance == null)
+                {
+                    instance = effects.CreateSkillActorObject(objectName, center, Quaternion.identity);
+                }
+
+                EffectVisualBuilder.ConfigureAreaEffect(
                     instance,
                     SkillTargeting.ResolveBaseRadius(skill.Targeting, skill.Area),
-                    snapshot,
-                    requireHitbox: true);
+                    snapshot);
 
                 var actor = instance.GetComponent<ZoneSkillActor>();
                 if (actor == null)
@@ -196,7 +210,7 @@ namespace Pakuri.InGame
         /*
          * 배치 횟수를 결정한다.
          */
-        private static int ResolveDeploymentCount(SkillSnapshot snapshot)
+        private static int ResolveDeploymentCount(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             return 1 + (snapshot != null && snapshot.HasBranchCount ? Math.Max(0, snapshot.BranchCount) : 0);
         }
@@ -204,7 +218,7 @@ namespace Pakuri.InGame
         /*
          * 적중 대상 횟수를 결정한다.
          */
-        private static int ResolveHitTargetCount(ZoneSkillRuntimeData skill, SkillSnapshot snapshot)
+        private static int ResolveHitTargetCount(ZoneSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             if (skill == null || skill.HitAllTargets || !skill.UsesHitTargetCount)
             {
@@ -220,10 +234,10 @@ namespace Pakuri.InGame
          * 범위 중심점을 결정한다.
          */
         private static List<Vector2> ResolveAreaCenters(
-            SkillExecutionContext context,
-            SkillTargetingSpec targeting,
-            AreaBlueprintSpec area,
-            int deploymentCount)
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */,
+            AreaBlueprintSpec area /* 범위 */,
+            int deploymentCount /* 배치 개수 */)
         {
             var primaryCenter = ResolveAreaCenter(context, targeting, area);
             var coverAll = (area != null && area.CoverAll)
@@ -241,9 +255,9 @@ namespace Pakuri.InGame
          * 범위 중심점을 결정한다.
          */
         private static Vector2 ResolveAreaCenter(
-            SkillExecutionContext context,
-            SkillTargetingSpec targeting,
-            AreaBlueprintSpec area)
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */,
+            AreaBlueprintSpec area /* 범위 */)
         {
             return SkillTargeting.ResolveAreaCenter(context, targeting, area);
         }
@@ -251,7 +265,7 @@ namespace Pakuri.InGame
         /*
          * 반경을 결정한다.
          */
-        private static float ResolveRadius(ZoneSkillRuntimeData skill, SkillSnapshot snapshot)
+        private static float ResolveRadius(ZoneSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var area = skill != null ? skill.Area : null;
             var targeting = skill != null ? skill.Targeting : null;
@@ -261,7 +275,7 @@ namespace Pakuri.InGame
         /*
          * 지속시간을 결정한다.
          */
-        private static float ResolveDuration(ZoneSkillRuntimeData skill, SkillSnapshot snapshot)
+        private static float ResolveDuration(ZoneSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var area = skill != null ? skill.Area : null;
             var timing = skill != null ? skill.Timing : null;
@@ -284,7 +298,7 @@ namespace Pakuri.InGame
         /*
          * 주기 간격을 결정한다.
          */
-        private static float ResolveTickInterval(ZoneSkillRuntimeData skill, SkillSnapshot snapshot)
+        private static float ResolveTickInterval(ZoneSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var area = skill != null ? skill.Area : null;
             var timing = skill != null ? skill.Timing : null;
@@ -303,9 +317,9 @@ namespace Pakuri.InGame
          * 종료 효과를 결정한다.
          */
         private static SkillEffectDefinition[] ResolveOnExpireEffects(
-            SkillExecutionContext context,
-            SkillSnapshot snapshot,
-            SkillEffectDefinition[] effects)
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillEffectDefinition[] effects /* 실행할 효과 목록 */)
         {
             if (effects == null || effects.Length == 0)
             {

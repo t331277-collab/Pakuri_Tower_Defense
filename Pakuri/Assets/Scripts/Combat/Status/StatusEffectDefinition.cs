@@ -103,7 +103,7 @@ namespace Pakuri.Data
         /*
          * TryParse 작업을 시도하고 성공 여부를 반환한다.
          */
-        public static bool TryParse(string value, out StatusEffectKind kind)
+        public static bool TryParse(string value /* 처리할 값 */, out StatusEffectKind kind /* 처리할 종류 */)
         {
             kind = StatusEffectKind.None;
             if (string.IsNullOrWhiteSpace(value))
@@ -123,7 +123,7 @@ namespace Pakuri.Data
         /*
          * GetDefinition에 해당하는 값을 찾아 반환한다.
          */
-        public static StatusEffectDefinition GetDefinition(StatusEffectKind kind)
+        public static StatusEffectDefinition GetDefinition(StatusEffectKind kind /* 처리할 종류 */)
         {
             var catalog = GameDataLoader.CurrentCatalog;
             if (catalog != null)
@@ -145,7 +145,7 @@ namespace Pakuri.Data
         /*
          * ToDisplayName 작업 결과를 반환한다.
          */
-        public static string ToDisplayName(StatusEffectKind kind)
+        public static string ToDisplayName(StatusEffectKind kind /* 처리할 종류 */)
         {
             return GetDefinition(kind).DisplayName;
         }

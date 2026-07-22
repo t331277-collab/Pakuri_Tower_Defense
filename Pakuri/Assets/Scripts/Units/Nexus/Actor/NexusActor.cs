@@ -20,7 +20,7 @@ namespace Pakuri.InGame
         /*
          * Initialize에 필요한 값을 설정한다.
          */
-        public void Initialize(UnitCombatState model)
+        public void Initialize(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             Model = model;
             GetComponent<BoxCollider2D>().isTrigger = true;
@@ -38,7 +38,7 @@ namespace Pakuri.InGame
         /*
          * SetCurrentHealth에 필요한 값을 설정한다.
          */
-        public void SetCurrentHealth(float currentHealth)
+        public void SetCurrentHealth(float currentHealth /* 현재 체력 */)
         {
             Model.Resources.CurrentHealth = Mathf.Clamp(
                 Mathf.Round(currentHealth),

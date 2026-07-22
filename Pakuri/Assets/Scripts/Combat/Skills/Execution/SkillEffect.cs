@@ -21,7 +21,7 @@ static class SkillEffect
 	/*
 	 * 일반 시전 시점에 실행할 효과 목록을 처리한다.
 	 */
-	public static bool Execute(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition[] effects, Vector2 fallbackCenter)
+	public static bool Execute(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition[] effects /* 실행할 효과 목록 */, Vector2 fallbackCenter /* 중심을 정하지 못했을 때 사용할 위치 */)
 	{
 		return ExecuteFiltered(context, snapshot, effects, fallbackCenter, false, SkillMultiEffectTiming.OnCast, false);
 	}
@@ -29,7 +29,7 @@ static class SkillEffect
 	/*
 	 * 단일 효과를 실행 시점 검사 없이 바로 실행한다.
 	 */
-	public static bool ExecuteDirect(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition effect, Vector2 fallbackCenter, bool scaleStatusDurationWithSnapshot = false)
+	public static bool ExecuteDirect(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */, Vector2 fallbackCenter /* 중심을 정하지 못했을 때 사용할 위치 */, bool scaleStatusDurationWithSnapshot = false /* 강화 배율을 상태 효과 지속 시간에 적용할지 여부 */)
 	{
 		if (effect == null)
 		{
@@ -41,7 +41,7 @@ static class SkillEffect
 	/*
 	 * 일반 시전 효과를 처리하면서 상태 지속시간에 Snapshot 배율과 보너스를 적용한다.
 	 */
-	public static bool ExecuteWithStatusDurationScaling(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition[] effects, Vector2 fallbackCenter)
+	public static bool ExecuteWithStatusDurationScaling(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition[] effects /* 실행할 효과 목록 */, Vector2 fallbackCenter /* 중심을 정하지 못했을 때 사용할 위치 */)
 	{
 		return ExecuteFiltered(context, snapshot, effects, fallbackCenter, false, SkillMultiEffectTiming.OnCast, true);
 	}
@@ -49,7 +49,7 @@ static class SkillEffect
 	/*
 	 * 스킬이나 상태가 만료될 때 실행하도록 설정된 효과만 처리한다.
 	 */
-	public static bool ExecuteOnExpire(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition[] effects, Vector2 fallbackCenter)
+	public static bool ExecuteOnExpire(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition[] effects /* 실행할 효과 목록 */, Vector2 fallbackCenter /* 중심을 정하지 못했을 때 사용할 위치 */)
 	{
 		return ExecuteFiltered(context, snapshot, effects, fallbackCenter, true, SkillMultiEffectTiming.OnExpire, false);
 	}
@@ -57,7 +57,7 @@ static class SkillEffect
 	/*
 	 * 배치형 스킬이 시전될 때 실행하도록 설정된 효과만 처리한다.
 	 */
-	public static bool ExecuteOnDeploymentCast(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition[] effects, Vector2 fallbackCenter)
+	public static bool ExecuteOnDeploymentCast(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition[] effects /* 실행할 효과 목록 */, Vector2 fallbackCenter /* 중심을 정하지 못했을 때 사용할 위치 */)
 	{
 		return ExecuteFiltered(context, snapshot, effects, fallbackCenter, true, SkillMultiEffectTiming.OnDeploymentCast, false);
 	}
@@ -65,7 +65,7 @@ static class SkillEffect
 	/*
 	 * 적중 대상을 실행 문맥에 넣고 적중 시점 효과만 처리한다.
 	 */
-	public static bool ExecuteOnHit(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition[] effects, Vector2 fallbackCenter, UnitCombatState eventTarget)
+	public static bool ExecuteOnHit(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition[] effects /* 실행할 효과 목록 */, Vector2 fallbackCenter /* 중심을 정하지 못했을 때 사용할 위치 */, UnitCombatState eventTarget /* 사건 대상 */)
 	{
 		if (context == null)
 		{
@@ -77,7 +77,7 @@ static class SkillEffect
 	/*
 	 * 현재 적중 횟수를 기준으로 적중 횟수 시점 효과를 처리한다.
 	 */
-	public static bool ExecuteOnHitCount(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition[] effects, Vector2 fallbackCenter, int hitCount)
+	public static bool ExecuteOnHitCount(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition[] effects /* 실행할 효과 목록 */, Vector2 fallbackCenter /* 중심을 정하지 못했을 때 사용할 위치 */, int hitCount /* 적중한 횟수 */)
 	{
 		return ExecuteFiltered(context, snapshot, effects, fallbackCenter, true, SkillMultiEffectTiming.OnHitCount, false, hitCount);
 	}
@@ -85,7 +85,7 @@ static class SkillEffect
 	/*
 	 * 효과 목록에서 요구 조건, 실행 시점과 적중 횟수가 맞는 항목만 실행한다.
 	 */
-	private static bool ExecuteFiltered(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition[] effects, Vector2 fallbackCenter, bool hasRequiredTiming, SkillMultiEffectTiming requiredTiming, bool scaleStatusDurationWithSnapshot, int eventHitCount = 0)
+	private static bool ExecuteFiltered(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition[] effects /* 실행할 효과 목록 */, Vector2 fallbackCenter /* 중심을 정하지 못했을 때 사용할 위치 */, bool hasRequiredTiming /* 보유 필수 실행 시점 여부 */, SkillMultiEffectTiming requiredTiming /* 필수 실행 시점 여부 */, bool scaleStatusDurationWithSnapshot /* 강화 배율을 상태 효과 지속 시간에 적용할지 여부 */, int eventHitCount = 0 /* 사건 적중 개수 */)
 	{
 		if (context == null || context.CombatManager == null || effects == null || effects.Length == 0)
 		{
@@ -128,7 +128,7 @@ static class SkillEffect
 	/*
 	 * 설정된 지연시간이 지난 뒤 단일 효과를 실행한다.
 	 */
-	private static IEnumerator ExecuteDelayed(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition effect, Vector2 fallbackCenter, bool scaleStatusDurationWithSnapshot)
+	private static IEnumerator ExecuteDelayed(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */, Vector2 fallbackCenter /* 중심을 정하지 못했을 때 사용할 위치 */, bool scaleStatusDurationWithSnapshot /* 강화 배율을 상태 효과 지속 시간에 적용할지 여부 */)
 	{
 		float num = Mathf.Max(0f, effect.DelaySeconds);
 		if (num > 0f)
@@ -145,7 +145,7 @@ static class SkillEffect
 	/*
 	 * 효과가 요구하거나 제외하는 Choice, 패시브와 시전자 상태 조건을 확인한다.
 	 */
-	public static bool ShouldRun(SkillExecutionContext context, SkillEffectDefinition effect, SkillSnapshot snapshot)
+	public static bool ShouldRun(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
 	{
 		if (effect == null)
 		{
@@ -177,7 +177,7 @@ static class SkillEffect
 	/*
 	 * 피해 효과의 공격 계수와 대상을 계산해 직접 피해, 범위 피해 또는 지속 영역으로 실행한다.
 	 */
-	public static bool ExecuteDamageEffectAction(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition effect, Vector2 fallbackCenter)
+	public static bool ExecuteDamageEffectAction(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */, Vector2 fallbackCenter /* 중심을 정하지 못했을 때 사용할 위치 */)
 	{
 		SkillTargetingSpec skillTargetingSpec = BuildTargeting(effect);
 		Vector2 vector = ResolveEffectCenter(context, effect, skillTargetingSpec, fallbackCenter);
@@ -197,7 +197,7 @@ static class SkillEffect
 			StatSource = statSource,
 			CriticalAllowed = true
 		};
-		float num = DamageCalculator.ResolveDamage(context.Caster, skillDamageSpec, snapshot) * Mathf.Max(0f, effect.DamageMultiplier);
+		float num = DamageCalculator.CalculateRawDamage(context.Caster, skillDamageSpec, snapshot) * Mathf.Max(0f, effect.DamageMultiplier);
 		ProjectileStatusHitSpec projectileStatusHitSpec = ResolveStatusSpec(effect, snapshot);
 		if (HasPersistentZone(effect))
 		{
@@ -224,7 +224,12 @@ static class SkillEffect
 
 		if (unitState != null)
 		{
-			float baseDamage = DamageCalculator.ResolveDamageAgainstTarget(num, snapshot, unitState);
+			float baseDamage = num;
+			if (snapshot != null)
+			{
+				baseDamage *= snapshot.ResolveConditionalDamageMultiplier(unitState);
+			}
+			baseDamage = Mathf.Max(0f, baseDamage);
 			InGameResourceChangeResult damageResult = context.CombatManager.ApplyDamage(unitState, baseDamage, effect.Attribute, context.Caster, skillDamageSpec.CriticalAllowed, criticalChanceBonus, criticalDamageBonus, effectId);
 			if (!damageResult.IsDead)
 			{
@@ -233,7 +238,7 @@ static class SkillEffect
 			EffectManager effects = context.CombatManager.Effects;
 			if (effects != null)
 			{
-				effects.SpawnEffectVisual(effect, vector, 1f);
+				ShowTimedEffectVisual(effects, effect, vector, 1f);
 			}
 			return true;
 		}
@@ -243,7 +248,7 @@ static class SkillEffect
 			EffectManager effects2 = context.CombatManager.Effects;
 			if (effects2 != null)
 			{
-				effects2.SpawnEffectVisual(effect, vector, 1f);
+				ShowTimedEffectVisual(effects2, effect, vector, 1f);
 			}
 		}
 		return num2;
@@ -252,7 +257,7 @@ static class SkillEffect
 	/*
 	 * 런타임 비주얼에 충돌체가 있으면 그 실제 모양을 사용해 범위 피해를 적용한다.
 	 */
-	private static bool TryExecuteRuntimeHitboxDamageEffect(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition effect, SkillTargetingSpec targeting, Vector2 center, float damage, ProjectileStatusHitSpec statusSpec, bool criticalAllowed, out bool routed)
+	private static bool TryExecuteRuntimeHitboxDamageEffect(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */, SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */, Vector2 center /* 효과가 적용될 중심 위치 */, float damage /* 적용하거나 전달할 피해량 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, bool criticalAllowed /* 치명타 허용 여부 */, out bool routed /* 경로 결정 여부 */)
 	{
 		routed = false;
 		RuntimeSkillVisualSpec runtimeSkillVisualSpec = effect.RuntimeVisual;
@@ -280,12 +285,14 @@ static class SkillEffect
 		{
 			objectName = "SkillEffectVisual_" + effect.EffectId;
 		}
-		GameObject gameObject = context.CombatManager.Effects.SpawnAreaEffect(runtimeSkillVisualSpec, null, objectName, center, effect.Radius, snapshot, 1f, requireHitbox: true);
+		GameObject gameObject = context.CombatManager.Effects.CreateEffect(runtimeSkillVisualSpec, null, objectName, center, Quaternion.identity);
 		if (gameObject == null)
 		{
 			Debug.LogError("Runtime hitbox effect '" + text + "' failed to create its RuntimeEffectVisual.");
 			return true;
 		}
+		EffectVisualBuilder.ConfigureAreaEffect(gameObject, effect.Radius, snapshot);
+		SingleSkillActor.Attach(gameObject).InitializeTimed(context.CombatManager.Effects, 1f);
 		Collider2D[] componentsInChildren = gameObject.GetComponentsInChildren<Collider2D>();
 		if (componentsInChildren == null || componentsInChildren.Length == 0)
 		{
@@ -306,7 +313,7 @@ static class SkillEffect
 	/*
 	 * 설정된 대상들이 가진 지정 상태 효과의 지속시간을 늘린다.
 	 */
-	public static bool ExecuteExtendStatusDurationEffectAction(SkillExecutionContext context, SkillEffectDefinition effect)
+	public static bool ExecuteExtendStatusDurationEffectAction(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */)
 	{
 		if (context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null || effect == null)
 		{
@@ -335,7 +342,7 @@ static class SkillEffect
 	/*
 	 * 상태 적용 설정을 대상에게 적용하고 성공한 위치에 시각 효과를 생성한다.
 	 */
-	public static bool ExecuteStatusEffectAction(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition effect, Vector2 fallbackCenter, bool scaleStatusDurationWithSnapshot)
+	public static bool ExecuteStatusEffectAction(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */, Vector2 fallbackCenter /* 중심을 정하지 못했을 때 사용할 위치 */, bool scaleStatusDurationWithSnapshot /* 강화 배율을 상태 효과 지속 시간에 적용할지 여부 */)
 	{
 		ProjectileStatusHitSpec projectileStatusHitSpec = ResolveStatusSpec(effect, snapshot, scaleStatusDurationWithSnapshot);
 		if (projectileStatusHitSpec == null || !projectileStatusHitSpec.Enabled)
@@ -377,7 +384,7 @@ static class SkillEffect
 				EffectManager effects = context.CombatManager.Effects;
 				if (effects != null)
 				{
-					effects.SpawnEffectVisualOnTargets(effect, list, projectileStatusHitSpec.DurationSeconds);
+					ShowFollowingEffectVisuals(effects, effect, list, projectileStatusHitSpec.DurationSeconds);
 				}
 			}
 			else
@@ -385,7 +392,7 @@ static class SkillEffect
 				EffectManager effects2 = context.CombatManager.Effects;
 				if (effects2 != null)
 				{
-					effects2.SpawnEffectVisual(effect, ResolveEffectCenter(context, effect, targeting, fallbackCenter), 1f);
+					ShowTimedEffectVisual(effects2, effect, ResolveEffectCenter(context, effect, targeting, fallbackCenter), 1f);
 				}
 			}
 		}
@@ -395,7 +402,7 @@ static class SkillEffect
 	/*
 	 * 지속 패시브 상태를 적용할 수 있는 살아 있는 대상 목록을 반환한다.
 	 */
-	public static List<CombatUnitEntry> ResolvePassiveStatusTargets(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition effect)
+	public static List<CombatUnitEntry> ResolvePassiveStatusTargets(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */)
 	{
 		List<CombatUnitEntry> list = new List<CombatUnitEntry>();
 		if (context == null || effect == null || effect.EffectKind != SkillMultiEffectKind.Status || !ShouldRun(context, effect, snapshot))
@@ -418,7 +425,7 @@ static class SkillEffect
 	/*
 	 * 패시브가 유지되는 동안 대상에게 영구 상태 또는 보호막 상태를 적용한다.
 	 */
-	public static bool ApplyPersistentPassiveStatus(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition effect, CombatUnitEntry target, Vector2 fallbackCenter)
+	public static bool ApplyPersistentPassiveStatus(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */, CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */, Vector2 fallbackCenter /* 중심을 정하지 못했을 때 사용할 위치 */)
 	{
 		if (context == null || context.CombatManager == null || effect == null || target == null || !target.IsAlive || target.Model == null || !TargetMatchesCondition(target.Model, effect))
 		{
@@ -452,7 +459,7 @@ static class SkillEffect
 			EffectManager effects = context.CombatManager.Effects;
 			if (effects != null)
 			{
-				effects.SpawnEffectVisualOnTargets(effect, new CombatUnitEntry[1] { target }, durationSeconds);
+				ShowFollowingEffectVisuals(effects, effect, new CombatUnitEntry[1] { target }, durationSeconds);
 			}
 		}
 		else
@@ -461,7 +468,7 @@ static class SkillEffect
 			EffectManager effects2 = context.CombatManager.Effects;
 			if (effects2 != null)
 			{
-				effects2.SpawnEffectVisual(effect, ResolveEffectCenter(context, effect, targeting, fallbackCenter), 1f);
+				ShowTimedEffectVisual(effects2, effect, ResolveEffectCenter(context, effect, targeting, fallbackCenter), 1f);
 			}
 		}
 		return true;
@@ -470,7 +477,7 @@ static class SkillEffect
 	/*
 	 * 명시된 사건 대상이 있으면 그 대상을 사용하고 없으면 일반 대상 지정 결과를 반환한다.
 	 */
-	private static IReadOnlyList<CombatUnitEntry> ResolveStatusTargets(SkillExecutionContext context, SkillEffectDefinition effect, SkillTargetingSpec targeting)
+	private static IReadOnlyList<CombatUnitEntry> ResolveStatusTargets(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */, SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */)
 	{
 		UnitCombatState unitState = ResolveExplicitEventTarget(context, effect);
 		CombatUnitEntry unitEntry = null;
@@ -488,7 +495,7 @@ static class SkillEffect
 	/*
 	 * 대상의 상태, 보유 스킬 속성과 체력 비율이 효과 조건을 모두 만족하는지 확인한다.
 	 */
-	public static bool TargetMatchesCondition(UnitCombatState target, SkillEffectDefinition effect)
+	public static bool TargetMatchesCondition(UnitCombatState target /* 효과를 받을 대상 유닛 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */)
 	{
 		if (effect == null)
 		{
@@ -515,7 +522,7 @@ static class SkillEffect
 	/*
 	 * 현재 적중 횟수가 효과에 설정된 최소 횟수 이상인지 확인한다.
 	 */
-	private static bool MatchesHitCountCondition(SkillEffectDefinition effect, int hitCount)
+	private static bool MatchesHitCountCondition(SkillEffectDefinition effect /* 실행하거나 변환할 효과 */, int hitCount /* 적중한 횟수 */)
 	{
 		if (effect != null && effect.ConditionHitCountMin > 0)
 		{
@@ -527,7 +534,7 @@ static class SkillEffect
 	/*
 	 * 대상의 현재 체력 비율이 설정된 최대 비율 이하인지 확인한다.
 	 */
-	private static bool IsWithinHealthRatio(UnitCombatState target, float maxRatio)
+	private static bool IsWithinHealthRatio(UnitCombatState target /* 효과를 받을 대상 유닛 */, float maxRatio /* 최대 비율 */)
 	{
 		UnitCombatResources unitResourceRuntime = null;
 		UnitCombatStats unitStatsRuntime = null;
@@ -546,7 +553,7 @@ static class SkillEffect
 	/*
 	 * 상태 태그에 연결된 Snapshot 지속시간 보너스를 반환한다.
 	 */
-	private static float ResolveStatusDurationBonus(SkillSnapshot snapshot, StatusRuntimeData statusData, StatusEffectKind kind)
+	private static float ResolveStatusDurationBonus(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, StatusRuntimeData statusData /* 상태 효과 실행 데이터 */, StatusEffectKind kind /* 처리할 종류 */)
 	{
 		if (snapshot == null)
 		{
@@ -559,7 +566,7 @@ static class SkillEffect
 	/*
 	 * 효과의 컴파일된 상태 데이터에 지속시간과 상태 보정을 적용해 적중 설정을 만든다.
 	 */
-	public static ProjectileStatusHitSpec ResolveStatusSpec(SkillEffectDefinition effect, SkillSnapshot snapshot = null, bool scaleDurationWithSnapshot = false)
+	public static ProjectileStatusHitSpec ResolveStatusSpec(SkillEffectDefinition effect /* 실행하거나 변환할 효과 */, SkillSnapshot snapshot = null /* 적용할 스킬 강화 정보 */, bool scaleDurationWithSnapshot = false /* 강화 배율을 지속 시간에 적용할지 여부 */)
 	{
 		StatusRuntimeData runtimeStatusData = effect.CompiledStatusData;
 		runtimeStatusData = SkillStatus.ResolveStatusData(runtimeStatusData, runtimeStatusData.Kind, snapshot);
@@ -590,7 +597,7 @@ static class SkillEffect
 	/*
 	 * 대상이 지정한 피해 속성의 액티브 스킬을 하나 이상 가지고 있는지 확인한다.
 	 */
-	private static bool HasActiveSkillAttribute(UnitCombatState target, string rawAttribute)
+	private static bool HasActiveSkillAttribute(UnitCombatState target /* 효과를 받을 대상 유닛 */, string rawAttribute /* 변환 전 속성 */)
 	{
 		if (target == null || target.SkillRuntime == null || string.IsNullOrWhiteSpace(rawAttribute) || !Enum.TryParse<DamageAttribute>(rawAttribute.Trim(), ignoreCase: true, out var result))
 		{
@@ -611,7 +618,7 @@ static class SkillEffect
 	/*
 	 * 효과의 기본값과 시전자 능력치 계수, Snapshot 보정으로 보호막 수치를 계산한다.
 	 */
-	private static float ResolveStatusEffectShieldAmount(UnitCombatState caster, SkillEffectDefinition effect, SkillSnapshot snapshot)
+	private static float ResolveStatusEffectShieldAmount(UnitCombatState caster /* 스킬을 사용하는 유닛 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
 	{
 		if (effect == null)
 		{
@@ -651,7 +658,7 @@ static class SkillEffect
 	/*
 	 * 효과 정의의 대상 진영, 선택 방식과 범위 형태를 실행용 대상 설정으로 변환한다.
 	 */
-	private static SkillTargetingSpec BuildTargeting(SkillEffectDefinition effect)
+	private static SkillTargetingSpec BuildTargeting(SkillEffectDefinition effect /* 실행하거나 변환할 효과 */)
 	{
 		return new SkillTargetingSpec
 		{
@@ -666,7 +673,7 @@ static class SkillEffect
 	/*
 	 * 효과 정의의 대상 진영을 실행용 대상 진영으로 변환한다.
 	 */
-	private static SkillTargetSide MapTargetSide(SkillMultiEffectTargetSide side)
+	private static SkillTargetSide MapTargetSide(SkillMultiEffectTargetSide side /* 진영 */)
 	{
 		return side switch
 		{
@@ -679,7 +686,7 @@ static class SkillEffect
 	/*
 	 * 효과 정의의 대상 선택 방식을 실행용 선택 방식으로 변환한다.
 	 */
-	private static SkillTargetSelection MapTargetSelection(SkillMultiEffectTargetSelection selection)
+	private static SkillTargetSelection MapTargetSelection(SkillMultiEffectTargetSelection selection /* 선택 방식 */)
 	{
 		return selection switch
 		{
@@ -692,7 +699,7 @@ static class SkillEffect
 	/*
 	 * 효과 정의의 범위 형태를 실행용 범위 형태로 변환한다.
 	 */
-	private static SkillTargetShape MapTargetShape(SkillMultiEffectTargetShape shape)
+	private static SkillTargetShape MapTargetShape(SkillMultiEffectTargetShape shape /* 형태 */)
 	{
 		return shape switch
 		{
@@ -705,7 +712,7 @@ static class SkillEffect
 	/*
 	 * 중심점 설정에 따라 사건 대상, 시전자, 가까운 적 또는 기본 위치를 반환한다.
 	 */
-	private static Vector2 ResolveEffectCenter(SkillExecutionContext context, SkillEffectDefinition effect, SkillTargetingSpec targeting, Vector2 fallbackCenter)
+	private static Vector2 ResolveEffectCenter(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */, SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */, Vector2 fallbackCenter /* 중심을 정하지 못했을 때 사용할 위치 */)
 	{
 		if (effect != null)
 		{
@@ -763,7 +770,7 @@ static class SkillEffect
 	/*
 	 * 효과에 지속시간과 Tick 간격이 모두 설정되어 있는지 확인한다.
 	 */
-	private static bool HasPersistentZone(SkillEffectDefinition effect)
+	private static bool HasPersistentZone(SkillEffectDefinition effect /* 실행하거나 변환할 효과 */)
 	{
 		if (effect != null && effect.ActiveDurationSeconds > 0f)
 		{
@@ -775,7 +782,7 @@ static class SkillEffect
 	/*
 	 * 효과가 사건 대상을 직접 지정한 경우 실행 문맥의 사건 대상을 반환한다.
 	 */
-	private static UnitCombatState ResolveExplicitEventTarget(SkillExecutionContext context, SkillEffectDefinition effect)
+	private static UnitCombatState ResolveExplicitEventTarget(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */)
 	{
 		if (effect == null || effect.TargetSelection != SkillMultiEffectTargetSelection.EventTarget)
 		{
@@ -792,7 +799,7 @@ static class SkillEffect
 	/*
 	 * 지속시간과 Tick 간격을 적용한 ZoneSkillActor를 생성한다.
 	 */
-	private static bool SpawnPersistentDamageZone(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition effect, SkillTargetingSpec targeting, Vector2 center, float damage, ProjectileStatusHitSpec statusSpec)
+	private static bool SpawnPersistentDamageZone(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, SkillEffectDefinition effect /* 실행하거나 변환할 효과 */, SkillTargetingSpec targeting /* 스킬 대상 선택 규칙 */, Vector2 center /* 효과가 적용될 중심 위치 */, float damage /* 적용하거나 전달할 피해량 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */)
 	{
 		if (context == null || context.CombatManager == null || context.CombatManager.Effects == null || context.CasterEntry == null || context.Roster == null)
 		{
@@ -817,7 +824,15 @@ static class SkillEffect
 		{
 			objectName = "SkillEffectZone_" + effect.EffectId;
 		}
-		GameObject gameObject = context.CombatManager.Effects.CreateAreaEffectObject(effect.RuntimeVisual, effect.SkillEffectPrefab, objectName, center, effect.Radius, snapshot, createEmptyObject: true);
+		GameObject gameObject = context.CombatManager.Effects.CreateEffect(effect.RuntimeVisual, effect.SkillEffectPrefab, objectName, center, Quaternion.identity);
+		if (gameObject != null)
+		{
+			EffectVisualBuilder.ConfigureAreaEffect(gameObject, effect.Radius, snapshot);
+		}
+		else
+		{
+			gameObject = context.CombatManager.Effects.CreateSkillActorObject(objectName, center, Quaternion.identity);
+		}
 		ZoneSkillActor zoneSkillActor = gameObject.GetComponent<ZoneSkillActor>();
 		if (zoneSkillActor == null)
 		{
@@ -837,7 +852,7 @@ static class SkillEffect
 	/*
 	 * 효과의 기본 반경에 Snapshot의 범위 보정을 적용한다.
 	 */
-	private static float ResolveRadius(SkillEffectDefinition effect, SkillSnapshot snapshot)
+	private static float ResolveRadius(SkillEffectDefinition effect /* 실행하거나 변환할 효과 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
 	{
 		var radius = 0f;
 		if (effect != null)
@@ -846,6 +861,73 @@ static class SkillEffect
 		}
 
 		return SkillTargeting.ResolveRadius(radius, snapshot);
+	}
+
+	/*
+	 * 스킬 추가 효과 비주얼을 생성하고 지정한 시간이 지나면 제거되도록 설정한다.
+	 */
+	private static void ShowTimedEffectVisual(
+		EffectManager effects /* 효과 생성과 제거를 담당하는 관리자 */,
+		SkillEffectDefinition effect /* 표시할 스킬 추가 효과 */,
+		Vector3 position /* 효과를 표시할 위치 */,
+		float durationSeconds /* 지속 시간(초) */)
+	{
+		var objectName = "SkillEffectVisual";
+		if (!string.IsNullOrWhiteSpace(effect.EffectId))
+		{
+			objectName = "SkillEffectVisual_" + effect.EffectId;
+		}
+
+		var visualInstance = effects.CreateEffect(
+			effect.RuntimeVisual,
+			effect.SkillEffectPrefab,
+			objectName,
+			position,
+			Quaternion.identity);
+		if (visualInstance != null)
+		{
+			SingleSkillActor.Attach(visualInstance).InitializeTimed(effects, durationSeconds);
+		}
+	}
+
+	/*
+	 * 스킬 추가 효과 비주얼을 적용 대상에게 각각 붙인다.
+	 */
+	private static void ShowFollowingEffectVisuals(
+		EffectManager effects /* 효과 생성과 제거를 담당하는 관리자 */,
+		SkillEffectDefinition effect /* 표시할 스킬 추가 효과 */,
+		IReadOnlyList<CombatUnitEntry> targets /* 효과를 표시할 대상 목록 */,
+		float durationSeconds /* 지속 시간(초) */)
+	{
+		var objectName = "SkillEffectVisual";
+		if (!string.IsNullOrWhiteSpace(effect.EffectId))
+		{
+			objectName = "SkillEffectVisual_" + effect.EffectId;
+		}
+
+		for (var i = 0; i < targets.Count; i++)
+		{
+			var target = targets[i];
+			if (target == null || target.Transform == null)
+			{
+				continue;
+			}
+
+			var visualInstance = effects.CreateEffect(
+				effect.RuntimeVisual,
+				effect.SkillEffectPrefab,
+				objectName,
+				target.Transform.position,
+				Quaternion.identity);
+			if (visualInstance != null)
+			{
+				BuffSkillActor.Attach(visualInstance).Initialize(
+					effects,
+					target.Transform,
+					durationSeconds,
+					Vector3.zero);
+			}
+		}
 	}
 }
 
@@ -861,7 +943,7 @@ static class SkillOnHitEffect
 	/*
 	 * 적중 횟수를 갱신하고 현재 Snapshot에 설정된 적중 후 행동을 한 번 적용한다.
 	 */
-	public static void TryApply(InGameCombatManager manager, CombatUnitRegistry roster, SkillRuntimeInstance runtime, SkillSnapshot snapshot, CombatUnitEntry sourceEntry, UnitCombatState source, string sourceSkillId, CombatUnitEntry hitTarget, Vector2 hitPosition, float primaryBaseDamage)
+	public static void TryApply(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, CombatUnitEntry hitTarget /* 적중 대상 */, Vector2 hitPosition /* 적중 위치 */, float primaryBaseDamage /* 주 대상 기본 피해 */)
 	{
 		if (manager == null || roster == null || snapshot == null || (!snapshot.HasOnHitAdditionalDamageBehavior && !HasReloadReductionBehavior(snapshot)) || source == null || hitTarget == null || hitTarget.Model == null || primaryBaseDamage <= 0f || applyingAdditionalDamage)
 		{
@@ -888,7 +970,7 @@ static class SkillOnHitEffect
 	/*
 	 * 확률과 대상 설정을 만족하면 처음 적중한 대상에게 추가 피해를 적용한다.
 	 */
-	private static void ApplyHitTargetDamage(InGameCombatManager manager, SkillSnapshot snapshot, UnitCombatState source, string sourceSkillId, CombatUnitEntry hitTarget, float primaryBaseDamage)
+	private static void ApplyHitTargetDamage(InGameCombatManager manager /* 전투 진행 관리자 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, CombatUnitEntry hitTarget /* 적중 대상 */, float primaryBaseDamage /* 주 대상 기본 피해 */)
 	{
 		if (snapshot.HasOnHitAdditionalDamage && !(snapshot.OnHitAdditionalDamageMultiplier <= 0f) && TargetsHitTarget(snapshot.OnHitAdditionalDamageTarget) && hitTarget != null && hitTarget.IsAlive && hitTarget.Model != null && !(UnityEngine.Random.value > Mathf.Clamp01(snapshot.OnHitAdditionalDamageChance)))
 		{
@@ -899,7 +981,7 @@ static class SkillOnHitEffect
 	/*
 	 * 설정된 적중 주기마다 가까운 다른 대상들에게 연쇄 피해를 적용한다.
 	 */
-	private static void ApplyChainDamage(InGameCombatManager manager, CombatUnitRegistry roster, SkillSnapshot snapshot, CombatUnitEntry sourceEntry, UnitCombatState source, string sourceSkillId, CombatUnitEntry hitTarget, Vector2 hitPosition, float primaryBaseDamage, int hitIndex)
+	private static void ApplyChainDamage(InGameCombatManager manager /* 전투 진행 관리자 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, string sourceSkillId /* 효과를 발생시킨 스킬 식별자 */, CombatUnitEntry hitTarget /* 적중 대상 */, Vector2 hitPosition /* 적중 위치 */, float primaryBaseDamage /* 주 대상 기본 피해 */, int hitIndex /* 적중 순서 번호 */)
 	{
 		if (!snapshot.HasOnHitChainDamageBehavior || hitIndex <= 0 || hitIndex % snapshot.OnHitChainHitPeriod != 0)
 		{
@@ -920,7 +1002,7 @@ static class SkillOnHitEffect
 	/*
 	 * 최초 적중 대상과 Nexus를 제외한 적을 거리순으로 찾아 반환한다.
 	 */
-	private static List<CombatUnitEntry> ResolveChainTargets(CombatUnitRegistry roster, CombatUnitEntry sourceEntry, UnitCombatState source, CombatUnitEntry hitTarget, Vector2 hitPosition, float searchRadius)
+	private static List<CombatUnitEntry> ResolveChainTargets(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, UnitCombatState source /* 효과를 발생시킨 유닛 */, CombatUnitEntry hitTarget /* 적중 대상 */, Vector2 hitPosition /* 적중 위치 */, float searchRadius /* 검색 반지름 */)
 	{
 		List<CombatUnitEntry> list = new List<CombatUnitEntry>();
 		if (roster == null || source == null || searchRadius <= 0f)
@@ -964,7 +1046,7 @@ static class SkillOnHitEffect
 	/*
 	 * 시전자의 진영과 반대되는 로스터 목록을 반환한다.
 	 */
-	private static IReadOnlyList<CombatUnitEntry> ResolveOpposingEntries(CombatUnitRegistry roster, CombatUnitEntry sourceEntry, UnitCombatState source)
+	private static IReadOnlyList<CombatUnitEntry> ResolveOpposingEntries(CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */, CombatUnitEntry sourceEntry /* 효과를 발생시킨 유닛의 등록 정보 */, UnitCombatState source /* 효과를 발생시킨 유닛 */)
 	{
 		var sourceSide = UnitSide.Player;
 		if (source.Identity != null)
@@ -985,7 +1067,7 @@ static class SkillOnHitEffect
 	/*
 	 * 유닛 모델의 식별자를 반환한다.
 	 */
-	private static string ResolveUnitId(UnitCombatState model)
+	private static string ResolveUnitId(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
 	{
 		if (model == null || model.Identity == null)
 		{
@@ -997,7 +1079,7 @@ static class SkillOnHitEffect
 	/*
 	 * 추가 피해 대상 설정이 최초 적중 대상을 가리키는지 확인한다.
 	 */
-	private static bool TargetsHitTarget(string target)
+	private static bool TargetsHitTarget(string target /* 처리할 대상 */)
 	{
 		if (!string.IsNullOrWhiteSpace(target))
 		{
@@ -1009,7 +1091,7 @@ static class SkillOnHitEffect
 	/*
 	 * 적중 시 다른 스킬의 재장전 시간을 줄일 설정이 있는지 확인한다.
 	 */
-	private static bool HasReloadReductionBehavior(SkillSnapshot snapshot)
+	private static bool HasReloadReductionBehavior(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
 	{
 		if (snapshot != null && !string.IsNullOrWhiteSpace(snapshot.ReloadReduceTargetSkillId))
 		{
@@ -1021,7 +1103,7 @@ static class SkillOnHitEffect
 	/*
 	 * 지정한 스킬이 재장전 중이면 남은 시간을 설정값만큼 줄인다.
 	 */
-	private static void ApplyReloadReduction(SkillRuntimeInstance runtime, SkillSnapshot snapshot)
+	private static void ApplyReloadReduction(SkillRuntimeInstance runtime /* 실행 중인 스킬 정보 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
 	{
 		if (runtime != null && runtime.Owner != null && runtime.Owner.SkillRuntime != null && HasReloadReductionBehavior(snapshot))
 		{
@@ -1043,8 +1125,8 @@ static class SkillStatus
      * 스킬의 기본 상태 설정과 Snapshot 보정을 합쳐 투사체 적중 설정을 만든다.
      */
     public static ProjectileStatusHitSpec ResolveStatusSpec(
-        StatusApplicationSpec baseStatus,
-        SkillSnapshot snapshot)
+        StatusApplicationSpec baseStatus /* 기본 상태 효과 */,
+        SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
     {
         StatusRuntimeData statusData = null;
         if (baseStatus != null)
@@ -1151,9 +1233,9 @@ static class SkillStatus
      * 상태 종류와 중첩 수만으로 즉시 적용할 상태 적중 설정을 만든다.
      */
     public static ProjectileStatusHitSpec CreateDirectStatusSpec(
-        StatusEffectKind kind,
-        int stacks,
-        SkillSnapshot snapshot)
+        StatusEffectKind kind /* 처리할 종류 */,
+        int stacks /* 중첩 수 */,
+        SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
     {
         if (kind == StatusEffectKind.None || stacks <= 0)
         {
@@ -1194,9 +1276,9 @@ static class SkillStatus
      * Snapshot의 상태 능력치 보너스를 복사한 상태 데이터에 적용한다.
      */
     public static StatusRuntimeData ResolveStatusData(
-        StatusRuntimeData statusData,
-        StatusEffectKind kind,
-        SkillSnapshot snapshot)
+        StatusRuntimeData statusData /* 상태 효과 실행 데이터 */,
+        StatusEffectKind kind /* 처리할 종류 */,
+        SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
     {
         if (snapshot == null)
         {
@@ -1284,7 +1366,7 @@ static class SkillStatus
     /*
      * 상태 태그에 연결된 Snapshot 지속시간 보너스를 반환한다.
      */
-    private static float ResolveStatusDurationBonus(SkillSnapshot snapshot, StatusRuntimeData statusData)
+    private static float ResolveStatusDurationBonus(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, StatusRuntimeData statusData /* 상태 효과 실행 데이터 */)
     {
         if (snapshot == null)
         {
@@ -1297,7 +1379,7 @@ static class SkillStatus
     /*
      * 상태 태그에 연결된 Snapshot 최대 중첩 보너스를 반환한다.
      */
-    private static int ResolveStatusMaxStacksBonus(SkillSnapshot snapshot, StatusRuntimeData statusData)
+    private static int ResolveStatusMaxStacksBonus(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */, StatusRuntimeData statusData /* 상태 효과 실행 데이터 */)
     {
         if (snapshot == null)
         {
@@ -1310,7 +1392,7 @@ static class SkillStatus
     /*
      * 임계 중첩에 도달했을 때 추가로 적용할 상태 설정을 만든다.
      */
-    private static ProjectileStatusHitSpec ResolveThresholdStatusSpec(SkillSnapshot snapshot)
+    private static ProjectileStatusHitSpec ResolveThresholdStatusSpec(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
     {
         if (snapshot == null || snapshot.ThresholdApplyStatusKind == StatusEffectKind.None)
         {

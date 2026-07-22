@@ -10,7 +10,7 @@ namespace Pakuri.InGame
         /*
          * 한 전투에서만 유지되는 상태 효과, 보호막, 스킬 실행 상태를 초기화한다.
          */
-        public static void ResetTransient(UnitCombatState model)
+        public static void ResetTransient(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             model.Statuses.Clear();
             model.Resources.DirectShield = 0f;
@@ -26,7 +26,7 @@ namespace Pakuri.InGame
         /*
          * Restore 작업을 수행한다.
          */
-        public static void Restore(UnitCombatState model)
+        public static void Restore(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             model.AutoAttackEnabled = true;
             if (!IsSelectedPlayerMonster(model))
@@ -41,7 +41,7 @@ namespace Pakuri.InGame
         /*
          * IsSelectedPlayerMonster 조건을 만족하는지 확인한다.
          */
-        private static bool IsSelectedPlayerMonster(UnitCombatState model)
+        private static bool IsSelectedPlayerMonster(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             return model.Identity.Side == UnitSide.Player
                 && model.Identity.Role == UnitRole.Monster

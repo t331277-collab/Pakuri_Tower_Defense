@@ -27,7 +27,7 @@ namespace Pakuri.InGame
         /*
          * UnitWorldDisplay에 필요한 값을 초기화한다.
          */
-        public UnitWorldDisplay(Component owner)
+        public UnitWorldDisplay(Component owner /* 정보를 소유한 유닛 */)
         {
             nameLabel = FindTextMesh(owner, NameLabelObjectName);
             hpLabel = FindTextMesh(owner, HpLabelObjectName);
@@ -51,7 +51,7 @@ namespace Pakuri.InGame
         /*
          * 현재 모델의 이름, 상태 효과, 체력과 보호막을 월드 표시에 반영한다.
          */
-        public void Refresh(UnitCombatState model)
+        public void Refresh(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             var displayName = model.Identity.DisplayName;
             if (string.IsNullOrWhiteSpace(displayName))
@@ -91,7 +91,7 @@ namespace Pakuri.InGame
         /*
          * ShowDamage 작업을 수행한다.
          */
-        public void ShowDamage(float damageAmount)
+        public void ShowDamage(float damageAmount /* 표시하거나 적용할 피해량 */)
         {
             if (damagePopup != null)
             {
@@ -102,7 +102,7 @@ namespace Pakuri.InGame
         /*
          * SetResourceFillSegments에 필요한 값을 설정한다.
          */
-        private void SetResourceFillSegments(float currentHealth, float currentShield, float maxHealth)
+        private void SetResourceFillSegments(float currentHealth /* 현재 체력 */, float currentShield /* 현재 보호막 */, float maxHealth /* 최대 체력 */)
         {
             var totalVisibleResource = Mathf.Max(maxHealth, currentHealth + currentShield);
             var safeTotal = Mathf.Max(1f, totalVisibleResource);
@@ -116,7 +116,7 @@ namespace Pakuri.InGame
         /*
          * SetSegmentScaleAndPosition에 필요한 값을 설정한다.
          */
-        private void SetSegmentScaleAndPosition(Transform target, float leftRatio, float widthRatio)
+        private void SetSegmentScaleAndPosition(Transform target /* 효과가 따라갈 위치 정보 */, float leftRatio /* 왼쪽 비율 */, float widthRatio /* 너비 비율 */)
         {
             if (target == null)
             {
@@ -141,7 +141,7 @@ namespace Pakuri.InGame
         /*
          * FindChild에 해당하는 값을 찾아 반환한다.
          */
-        private static Transform FindChild(Component owner, string objectName)
+        private static Transform FindChild(Component owner /* 정보를 소유한 유닛 */, string objectName /* 게임 오브젝트 이름 */)
         {
             var children = owner.GetComponentsInChildren<Transform>(true);
             for (var i = 0; i < children.Length; i++)
@@ -158,7 +158,7 @@ namespace Pakuri.InGame
         /*
          * FindTextMesh에 해당하는 값을 찾아 반환한다.
          */
-        private static TextMesh FindTextMesh(Component owner, string objectName)
+        private static TextMesh FindTextMesh(Component owner /* 정보를 소유한 유닛 */, string objectName /* 게임 오브젝트 이름 */)
         {
             var target = FindChild(owner, objectName);
             if (target != null)
@@ -172,7 +172,7 @@ namespace Pakuri.InGame
         /*
          * ResolveLocalRenderedWidth 결과를 계산해 반환한다.
          */
-        private static float ResolveLocalRenderedWidth(Transform target, float defaultWidth)
+        private static float ResolveLocalRenderedWidth(Transform target /* 효과가 따라갈 위치 정보 */, float defaultWidth /* 기본 너비 */)
         {
             if (target == null)
             {
@@ -191,7 +191,7 @@ namespace Pakuri.InGame
         /*
          * ResolveScaleXForRenderedWidth 결과를 계산해 반환한다.
          */
-        private static float ResolveScaleXForRenderedWidth(Transform target, float renderedWidth, float defaultSignSource)
+        private static float ResolveScaleXForRenderedWidth(Transform target /* 효과가 따라갈 위치 정보 */, float renderedWidth /* 화면 표시 너비 */, float defaultSignSource /* 기본 부호 발생 원본 */)
         {
             var spriteRenderer = target.GetComponent<SpriteRenderer>();
             var unitWidth = 1f;
@@ -213,7 +213,7 @@ namespace Pakuri.InGame
         /*
          * FormatValue에 맞는 문자열을 만들어 반환한다.
          */
-        private static string FormatValue(float value)
+        private static string FormatValue(float value /* 처리할 값 */)
         {
             if (Mathf.Approximately(value, Mathf.Round(value)))
             {
@@ -226,7 +226,7 @@ namespace Pakuri.InGame
         /*
          * AppendStatusDisplay 작업 결과를 반환한다.
          */
-        private static string AppendStatusDisplay(string displayName, IReadOnlyList<StatusRuntimeInstance> statuses)
+        private static string AppendStatusDisplay(string displayName /* 표시 이름 */, IReadOnlyList<StatusRuntimeInstance> statuses /* 상태 효과 목록 */)
         {
             var suffix = BuildStatusDisplaySuffix(statuses);
             if (string.IsNullOrWhiteSpace(suffix))
@@ -240,7 +240,7 @@ namespace Pakuri.InGame
         /*
          * 같은 상태 종류의 중첩을 합산해 이름표 뒤에 붙일 문자열을 만든다.
          */
-        private static string BuildStatusDisplaySuffix(IReadOnlyList<StatusRuntimeInstance> statuses)
+        private static string BuildStatusDisplaySuffix(IReadOnlyList<StatusRuntimeInstance> statuses /* 상태 효과 목록 */)
         {
             if (statuses == null || statuses.Count == 0)
             {

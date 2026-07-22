@@ -13,7 +13,7 @@ namespace Pakuri.InGame
         /*
          * CombatUnitEntry에 필요한 값을 초기화한다.
          */
-        public CombatUnitEntry(UnitCombatState model, Component actor, Transform hitboxRoot = null)
+        public CombatUnitEntry(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, Component actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot = null /* 피격 판정의 기준 위치 */)
         {
             Model = model;
             SetActor(actor);
@@ -29,7 +29,7 @@ namespace Pakuri.InGame
         /*
          * SetActor에 필요한 값을 설정한다.
          */
-        internal void SetActor(Component actor)
+        internal void SetActor(Component actor /* 화면에서 유닛을 표현하는 컴포넌트 */)
         {
             Actor = actor;
             Transform = actor.transform;
@@ -44,7 +44,7 @@ namespace Pakuri.InGame
         /*
          * SetHitboxRoot에 필요한 값을 설정한다.
          */
-        internal void SetHitboxRoot(Transform hitboxRoot)
+        internal void SetHitboxRoot(Transform hitboxRoot /* 피격 판정의 기준 위치 */)
         {
             HitboxRoot = hitboxRoot;
             if (HitboxRoot == null)
@@ -79,7 +79,7 @@ namespace Pakuri.InGame
         /*
          * ContainsTransform 조건을 만족하는지 확인한다.
          */
-        public bool ContainsTransform(Transform candidate)
+        public bool ContainsTransform(Transform candidate /* 후보 여부 */)
         {
             if (candidate == null)
             {
@@ -97,7 +97,7 @@ namespace Pakuri.InGame
         /*
          * ShowDamage 작업을 수행한다.
          */
-        internal void ShowDamage(float damageAmount, bool isDead)
+        internal void ShowDamage(float damageAmount /* 표시하거나 적용할 피해량 */, bool isDead /* 여부 사망 여부 */)
         {
             if (damageAmount <= 0f)
             {
@@ -182,7 +182,7 @@ namespace Pakuri.InGame
         /*
          * Register 작업 결과를 반환한다.
          */
-        public CombatUnitEntry Register(UnitCombatState model, Component actor, Transform hitboxRoot = null)
+        public CombatUnitEntry Register(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, Component actor /* 화면에서 유닛을 표현하는 컴포넌트 */, Transform hitboxRoot = null /* 피격 판정의 기준 위치 */)
         {
             var existing = Find(model, actor);
             if (existing != null)
@@ -210,7 +210,7 @@ namespace Pakuri.InGame
         /*
          * Unregister 작업 결과를 반환한다.
          */
-        public bool Unregister(UnitCombatState model)
+        public bool Unregister(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             var entry = Find(model, null);
             if (entry == null)
@@ -237,7 +237,7 @@ namespace Pakuri.InGame
         /*
          * Find에 해당하는 값을 찾아 반환한다.
          */
-        public CombatUnitEntry Find(UnitCombatState model)
+        public CombatUnitEntry Find(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             return Find(model, null);
         }
@@ -245,7 +245,7 @@ namespace Pakuri.InGame
         /*
          * FindByCollider에 해당하는 값을 찾아 반환한다.
          */
-        public CombatUnitEntry FindByCollider(Collider2D collider)
+        public CombatUnitEntry FindByCollider(Collider2D collider /* 충돌을 검사할 콜라이더 */)
         {
             for (var i = 0; i < entries.Count; i++)
             {
@@ -262,7 +262,7 @@ namespace Pakuri.InGame
         /*
          * RefreshDisplay 대상의 현재 상태를 갱신하고 결과를 반환한다.
          */
-        public bool RefreshDisplay(UnitCombatState model)
+        public bool RefreshDisplay(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             var entry = Find(model);
             if (entry == null)
@@ -276,7 +276,7 @@ namespace Pakuri.InGame
         /*
          * Find에 해당하는 값을 찾아 반환한다.
          */
-        private CombatUnitEntry Find(UnitCombatState model, Component actor)
+        private CombatUnitEntry Find(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, Component actor /* 화면에서 유닛을 표현하는 컴포넌트 */)
         {
             var unitId = model.Identity.UnitId;
             for (var i = 0; i < entries.Count; i++)

@@ -11,7 +11,7 @@ namespace Pakuri.InGame
         /*
          * Refresh 대상의 현재 상태를 갱신한다.
          */
-        public static void Refresh(TextMeshProUGUI label, UnitCombatState model)
+        public static void Refresh(TextMeshProUGUI label /* 표시 문구 */, UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
             var current = Mathf.CeilToInt(Mathf.Max(0f, model.Resources.CurrentHealth));
             var maximum = Mathf.CeilToInt(Mathf.Max(0f, model.Stats.MaxHealth));

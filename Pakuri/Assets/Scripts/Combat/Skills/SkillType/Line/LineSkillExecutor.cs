@@ -19,9 +19,9 @@ namespace Pakuri.InGame
          * 요청받은 Line 스킬을 실행한다.
          */
         internal static bool Execute(
-            SkillExecutionContext context,
-            SkillSnapshot snapshot,
-            LineSkillRuntimeData skill)
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            LineSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
         {
             var origin = context.CasterEntry.Transform != null
                 ? context.CasterEntry.Transform.position
@@ -39,7 +39,7 @@ namespace Pakuri.InGame
             }
 
             direction.Normalize();
-            var damage = DamageCalculator.ResolveDamage(context.Caster, skill.DamagePerTick, snapshot);
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
             var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnHitStatus, snapshot);
             var length = ResolveLineLength(skill);
@@ -59,7 +59,7 @@ namespace Pakuri.InGame
                 prefab = snapshot.SkillEffectPrefab;
             }
             var hasEffectVisual = effects != null
-                && (EffectManager.HasVisual(runtimeVisual) || prefab != null);
+                && ((runtimeVisual != null && runtimeVisual.HasVisual()) || prefab != null);
 
             if (!hasEffectVisual)
             {
@@ -91,13 +91,17 @@ namespace Pakuri.InGame
                 return true;
             }
 
-            var rotation = EffectManager.ResolveRotation(direction);
-            var instance = effects.CreateEffectObject(
+            var rotation = EffectVisualBuilder.ResolveRotation(direction);
+            var objectName = "LineSkill";
+            if (!string.IsNullOrWhiteSpace(skill.SkillId))
+            {
+                objectName = "LineSkill_" + skill.SkillId;
+            }
+
+            var instance = effects.CreateEffect(
                 runtimeVisual,
                 prefab,
-                string.IsNullOrWhiteSpace(skill.SkillId)
-                    ? "LineSkill"
-                    : $"LineSkill_{skill.SkillId}",
+                objectName,
                 center,
                 rotation);
             if (instance == null)
@@ -144,7 +148,7 @@ namespace Pakuri.InGame
         /*
          * Line 길이를 결정한다.
          */
-        private static float ResolveLineLength(LineSkillRuntimeData skill)
+        private static float ResolveLineLength(LineSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
         {
             if (skill != null && skill.LineLength > 0f)
             {
@@ -158,7 +162,7 @@ namespace Pakuri.InGame
         /*
          * 지속시간을 결정한다.
          */
-        private static float ResolveDuration(LineSkillRuntimeData skill, SkillSnapshot snapshot)
+        private static float ResolveDuration(LineSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var timing = skill != null ? skill.Timing : null;
             var duration = timing != null && timing.ActiveDuration > 0f
@@ -175,7 +179,7 @@ namespace Pakuri.InGame
         /*
          * Line 너비를 결정한다.
          */
-        private static float ResolveLineWidth(LineSkillRuntimeData skill, SkillSnapshot snapshot)
+        private static float ResolveLineWidth(LineSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var width = skill != null ? skill.LineWidth : 0f;
             if (snapshot != null)
@@ -189,7 +193,7 @@ namespace Pakuri.InGame
         /*
          * 밀쳐내기 거리를 결정한다.
          */
-        private static float ResolveKnockbackDistance(LineSkillRuntimeData skill, SkillSnapshot snapshot)
+        private static float ResolveKnockbackDistance(LineSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var distance = skill != null ? Mathf.Max(0f, skill.KnockbackDistance) : 0f;
             if (snapshot != null)
@@ -203,7 +207,7 @@ namespace Pakuri.InGame
         /*
          * Line 비주얼 너비 크기를 결정한다.
          */
-        private static float ResolveLineVisualWidthScale(SkillSnapshot snapshot)
+        private static float ResolveLineVisualWidthScale(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             return snapshot != null
                 ? Mathf.Max(0.01f, 1f + snapshot.BeamWidthBonus)
@@ -213,7 +217,7 @@ namespace Pakuri.InGame
         /*
          * 주기 간격을 결정한다.
          */
-        private static float ResolveTickInterval(LineSkillRuntimeData skill, SkillSnapshot snapshot)
+        private static float ResolveTickInterval(LineSkillRuntimeData skill /* 실행하거나 검사할 스킬 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var interval = ResolveTickInterval(skill);
             if (snapshot != null)
@@ -227,7 +231,7 @@ namespace Pakuri.InGame
         /*
          * 주기 간격을 결정한다.
          */
-        private static float ResolveTickInterval(LineSkillRuntimeData skill)
+        private static float ResolveTickInterval(LineSkillRuntimeData skill /* 실행하거나 검사할 스킬 */)
         {
             var timing = skill != null ? skill.Timing : null;
             return timing != null && timing.TickInterval > 0f
@@ -239,9 +243,9 @@ namespace Pakuri.InGame
          * 적중 상태 효과를 결정한다.
          */
         private static SkillEffectDefinition[] ResolveOnHitStatusEffects(
-            SkillExecutionContext context,
-            SkillSnapshot snapshot,
-            SkillEffectDefinition[] effects)
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillEffectDefinition[] effects /* 실행할 효과 목록 */)
         {
             if (effects == null || effects.Length == 0)
             {
@@ -271,9 +275,9 @@ namespace Pakuri.InGame
          * 시전 효과를 결정한다.
          */
         private static SkillEffectDefinition[] ResolveCastEffects(
-            SkillExecutionContext context,
-            SkillSnapshot snapshot,
-            SkillEffectDefinition[] effects)
+            SkillExecutionContext context /* 스킬 실행에 필요한 정보 */,
+            SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */,
+            SkillEffectDefinition[] effects /* 실행할 효과 목록 */)
         {
             if (effects == null || effects.Length == 0)
             {

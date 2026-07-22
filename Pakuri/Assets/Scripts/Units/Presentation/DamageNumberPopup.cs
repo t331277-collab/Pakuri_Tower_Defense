@@ -27,7 +27,7 @@ namespace Pakuri.InGame
         /*
          * Initialize에 필요한 값을 설정한다.
          */
-        public void Initialize(TextMesh textMesh)
+        public void Initialize(TextMesh textMesh /* 텍스트 메시 */)
         {
             damageText = textMesh != null ? textMesh : GetComponent<TextMesh>();
             if (damageText == null)
@@ -49,7 +49,7 @@ namespace Pakuri.InGame
         /*
          * Show 작업을 수행한다.
          */
-        public void Show(float damageAmount)
+        public void Show(float damageAmount /* 표시하거나 적용할 피해량 */)
         {
             if (!initialized)
             {
@@ -115,7 +115,7 @@ namespace Pakuri.InGame
         /*
          * SpawnPopup 작업을 수행한다.
          */
-        private void SpawnPopup(float damageAmount)
+        private void SpawnPopup(float damageAmount /* 표시하거나 적용할 피해량 */)
         {
             damageText.text = string.Empty;
             var hiddenColor = startColor;
@@ -184,11 +184,11 @@ namespace Pakuri.InGame
              * ActiveDamagePopup에 필요한 값을 초기화한다.
              */
             public ActiveDamagePopup(
-                GameObject instance,
-                TextMesh text,
-                Vector3 startLocalPosition,
-                Color startColor,
-                float durationSeconds)
+                GameObject instance /* 생성된 게임 오브젝트 */,
+                TextMesh text /* 텍스트 */,
+                Vector3 startLocalPosition /* 시작 로컬 위치 */,
+                Color startColor /* 시작 색상 */,
+                float durationSeconds /* 지속 시간(초) */)
             {
                 Instance = instance;
                 Text = text;

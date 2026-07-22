@@ -15,7 +15,7 @@ namespace Pakuri.InGame
         /*
          * 스킬 런타임 인스턴스에 필요한 값을 초기화한다.
          */
-        public SkillRuntimeInstance(UnitCombatState owner, SkillRuntimeData data)
+        public SkillRuntimeInstance(UnitCombatState owner /* 정보를 소유한 유닛 */, SkillRuntimeData data /* 처리할 실행 데이터 */)
         {
             Owner = owner;
             Data = data;
@@ -114,7 +114,7 @@ namespace Pakuri.InGame
         /*
          * 같은 대상을 연속으로 적중했을 때 적용할 피해 배율을 결정한다.
          */
-        public float ResolveConsecutiveHitDamageMultiplier(UnitCombatState target, SkillSnapshot snapshot)
+        public float ResolveConsecutiveHitDamageMultiplier(UnitCombatState target /* 효과를 받을 대상 유닛 */, SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             if (target == null)
             {
@@ -173,7 +173,7 @@ namespace Pakuri.InGame
         /*
          * 스킬의 시전, 지속시간, 재사용 대기시간을 갱신한다.
          */
-        public void Tick(float deltaTime)
+        public void Tick(float deltaTime /* 이전 갱신 이후 지난 시간 */)
         {
             if (deltaTime <= 0f)
             {
@@ -200,7 +200,7 @@ namespace Pakuri.InGame
         /*
          * 시전 포함 실행 정보를 가능한 상태인지 확인한다.
          */
-        public bool CanCastWithSnapshot(SkillSnapshot snapshot)
+        public bool CanCastWithSnapshot(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             RefreshRuntimeModifiers(snapshot);
             if (Data == null
@@ -232,7 +232,7 @@ namespace Pakuri.InGame
         /*
          * 시전을 시작하고 성공 여부를 반환한다.
          */
-        public bool TryBeginCast(SkillSnapshot snapshot)
+        public bool TryBeginCast(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             RefreshRuntimeModifiers(snapshot);
             if (IsBursting)
@@ -314,7 +314,7 @@ namespace Pakuri.InGame
         /*
          * 남은 재장전 시간을 감소시킨다.
          */
-        public bool ReduceReloadRemaining(float seconds)
+        public bool ReduceReloadRemaining(float seconds /* 초 */)
         {
             if (seconds <= 0f || ReloadRemaining <= 0f)
             {
@@ -333,7 +333,7 @@ namespace Pakuri.InGame
         /*
          * 남은 재사용 대기시간을 감소시킨다.
          */
-        public bool ReduceCooldownRemaining(float seconds)
+        public bool ReduceCooldownRemaining(float seconds /* 초 */)
         {
             if (seconds <= 0f || CooldownRemaining <= 0f)
             {
@@ -364,7 +364,7 @@ namespace Pakuri.InGame
         /*
          * 남은 시간을 0 이하로 내려가지 않게 감소시킨다.
          */
-        private static float TickDown(float value, float deltaTime)
+        private static float TickDown(float value /* 처리할 값 */, float deltaTime /* 이전 갱신 이후 지난 시간 */)
         {
             if (value > 0f)
             {
@@ -385,7 +385,7 @@ namespace Pakuri.InGame
         /*
          * 현재 선택지에 맞춰 스킬 런타임 보정값을 다시 계산한다.
          */
-        private void RefreshRuntimeModifiers(SkillSnapshot snapshot)
+        private void RefreshRuntimeModifiers(SkillSnapshot snapshot /* 적용할 스킬 강화 정보 */)
         {
             var previousMax = effectiveMaxMagazineSize;
             var nextMax = ResolveMaxMagazineSize(Data);
@@ -440,7 +440,7 @@ namespace Pakuri.InGame
         /*
          * 최대 탄창 크기를 결정한다.
          */
-        private static int ResolveMaxMagazineSize(SkillRuntimeData data)
+        private static int ResolveMaxMagazineSize(SkillRuntimeData data /* 처리할 실행 데이터 */)
         {
             return Math.Max(0, data.MagazineCapacity);
         }
@@ -448,7 +448,7 @@ namespace Pakuri.InGame
         /*
          * 연속 발사 투사체 횟수를 결정한다.
          */
-        private static int ResolveBurstProjectileCount(SkillRuntimeData data)
+        private static int ResolveBurstProjectileCount(SkillRuntimeData data /* 처리할 실행 데이터 */)
         {
             var projectile = data as ProjectileSkillRuntimeData;
             if (projectile != null && projectile.Projectile != null)
@@ -462,7 +462,7 @@ namespace Pakuri.InGame
         /*
          * 재장전 지속시간을 결정한다.
          */
-        private static float ResolveReloadDuration(SkillRuntimeData data)
+        private static float ResolveReloadDuration(SkillRuntimeData data /* 처리할 실행 데이터 */)
         {
             return Mathf.Max(0f, data.ReloadSeconds);
         }
@@ -470,7 +470,7 @@ namespace Pakuri.InGame
         /*
          * 주기 간격을 결정한다.
          */
-        private static float ResolveTickInterval(SkillRuntimeData data)
+        private static float ResolveTickInterval(SkillRuntimeData data /* 처리할 실행 데이터 */)
         {
             return Mathf.Max(0f, data.Timing.TickInterval);
         }
@@ -478,7 +478,7 @@ namespace Pakuri.InGame
         /*
          * 연속 발사 간격을 결정한다.
          */
-        private static float ResolveBurstInterval(SkillRuntimeData data)
+        private static float ResolveBurstInterval(SkillRuntimeData data /* 처리할 실행 데이터 */)
         {
             var projectile = data as ProjectileSkillRuntimeData;
             if (projectile != null && projectile.Projectile != null)
@@ -496,7 +496,7 @@ namespace Pakuri.InGame
         /*
          * 재사용 대기시간 지속시간을 결정한다.
          */
-        private static float ResolveCooldownDuration(SkillRuntimeData data)
+        private static float ResolveCooldownDuration(SkillRuntimeData data /* 처리할 실행 데이터 */)
         {
             return Mathf.Max(0f, data.Timing.Cooldown);
         }
@@ -559,7 +559,7 @@ namespace Pakuri.InGame
         /*
          * 같은 ID의 스킬을 교체하거나 새 스킬을 추가한다.
          */
-        public void AddOrReplace(SkillRuntimeInstance instance)
+        public void AddOrReplace(SkillRuntimeInstance instance /* 생성된 게임 오브젝트 */)
         {
             var skills = passiveSkills;
             if (instance.Data.IsActive)
@@ -579,7 +579,7 @@ namespace Pakuri.InGame
         /*
          * 스킬 ID가 일치하는 런타임을 찾는다.
          */
-        public SkillRuntimeInstance FindBySkillId(string skillId)
+        public SkillRuntimeInstance FindBySkillId(string skillId /* 스킬 식별자 */)
         {
             var index = FindIndexBySkillId(activeSkills, skillId);
             if (index >= 0)
@@ -599,7 +599,7 @@ namespace Pakuri.InGame
         /*
          * 선택지 ID가 일치하는 컴파일 결과를 찾는다.
          */
-        public SkillChoiceRuntimeData FindChoice(string choiceId)
+        public SkillChoiceRuntimeData FindChoice(string choiceId /* 스킬 선택지 식별자 */)
         {
             for (var i = 0; i < activeSkills.Count; i++)
             {
@@ -625,7 +625,7 @@ namespace Pakuri.InGame
         /*
          * 스킬 슬롯이 일치하는 런타임을 찾는다.
          */
-        public SkillRuntimeInstance FindBySlot(SkillSlot slot)
+        public SkillRuntimeInstance FindBySlot(SkillSlot slot /* 스킬이나 유닛이 배치될 슬롯 */)
         {
             for (var i = 0; i < activeSkills.Count; i++)
             {
@@ -641,7 +641,7 @@ namespace Pakuri.InGame
         /*
          * 유닛이 보유한 모든 스킬 런타임 시간을 갱신한다.
          */
-        public void Tick(float deltaTime)
+        public void Tick(float deltaTime /* 이전 갱신 이후 지난 시간 */)
         {
             if (deltaTime <= 0f)
             {
@@ -657,7 +657,7 @@ namespace Pakuri.InGame
         /*
          * 스킬 ID가 일치하는 런타임의 목록 위치를 찾는다.
          */
-        private static int FindIndexBySkillId(List<SkillRuntimeInstance> skills, string skillId)
+        private static int FindIndexBySkillId(List<SkillRuntimeInstance> skills /* 스킬 목록 */, string skillId /* 스킬 식별자 */)
         {
             for (var i = 0; i < skills.Count; i++)
             {
@@ -674,7 +674,7 @@ namespace Pakuri.InGame
         /*
          * FindChoice에 해당하는 값을 찾아 반환한다.
          */
-        private static SkillChoiceRuntimeData FindChoice(SkillRuntimeData skill, string choiceId)
+        private static SkillChoiceRuntimeData FindChoice(SkillRuntimeData skill /* 실행하거나 검사할 스킬 */, string choiceId /* 스킬 선택지 식별자 */)
         {
             var choice = FindChoice(skill.EnhancementChoices, choiceId);
             if (choice != null)
@@ -700,7 +700,7 @@ namespace Pakuri.InGame
         /*
          * FindChoice에 해당하는 값을 찾아 반환한다.
          */
-        private static SkillChoiceRuntimeData FindChoice(SkillChoiceRuntimeData[] choices, string choiceId)
+        private static SkillChoiceRuntimeData FindChoice(SkillChoiceRuntimeData[] choices /* 선택지 목록 */, string choiceId /* 스킬 선택지 식별자 */)
         {
             for (var i = 0; i < choices.Length; i++)
             {
@@ -736,7 +736,7 @@ namespace Pakuri.InGame
         /*
          * 학습한 활성 스킬과 패시브 목록을 다시 구성한다.
          */
-        public static void RebuildLearnedSkillSet(UnitCombatState owner)
+        public static void RebuildLearnedSkillSet(UnitCombatState owner /* 정보를 소유한 유닛 */)
         {
             if (owner == null)
             {
@@ -751,9 +751,9 @@ namespace Pakuri.InGame
          * 지정된 활성 목록을 다시 구성한다.
          */
         public static void RebuildAssignedActiveSet(
-            UnitCombatState owner,
-            SkillDefinition[] definitions,
-            SkillTriggerDefinition[] triggers)
+            UnitCombatState owner /* 정보를 소유한 유닛 */,
+            SkillDefinition[] definitions /* 정의 목록 */,
+            SkillTriggerDefinition[] triggers /* 트리거 목록 */)
         {
             if (owner == null)
             {
@@ -782,8 +782,8 @@ namespace Pakuri.InGame
          * 학습한 활성 스킬과 패시브를 목록에 채운다.
          */
         private static void PopulateLearnedSkillSet(
-            UnitCombatState owner,
-            UnitSkillRuntimeSet target)
+            UnitCombatState owner /* 정보를 소유한 유닛 */,
+            UnitSkillRuntimeSet target /* 실행 스킬을 저장할 목록 */)
         {
             if (owner == null || target == null)
             {
@@ -830,7 +830,7 @@ namespace Pakuri.InGame
         /*
          * ID를 포함하는지 확인한다.
          */
-        private static bool ContainsId(IEnumerable<string> ids, string targetId)
+        private static bool ContainsId(IEnumerable<string> ids /* 식별자 목록 */, string targetId /* 대상 식별자 */)
         {
             if (ids == null || string.IsNullOrWhiteSpace(targetId))
             {
