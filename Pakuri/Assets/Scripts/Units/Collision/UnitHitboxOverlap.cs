@@ -7,6 +7,9 @@ namespace Pakuri.InGame
 {
     internal static class UnitHitboxOverlap
     {
+        /*
+         * IsTargetInsideHitbox 조건을 만족하는지 확인한다.
+         */
         public static bool IsTargetInsideHitbox(Collider2D[] hitboxColliders, CombatUnitEntry target)
         {
             if (hitboxColliders == null || target == null || target.Model == null || !target.IsAlive)

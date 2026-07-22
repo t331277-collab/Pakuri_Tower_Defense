@@ -42,6 +42,9 @@ namespace Pakuri.Data
 
             public List<string> Errors { get; }
 
+            /*
+             * FormatMessage에 맞는 문자열을 만들어 반환한다.
+             */
             private static string FormatMessage(string message, List<string> errors)
             {
                 if (errors == null || errors.Count == 0)

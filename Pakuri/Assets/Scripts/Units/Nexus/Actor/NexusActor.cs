@@ -17,6 +17,9 @@ namespace Pakuri.InGame
         public float MaxHealth => maxHealth;
         public UnitCombatState Model { get; private set; }
 
+        /*
+         * Initialize에 필요한 값을 설정한다.
+         */
         public void Initialize(UnitCombatState model)
         {
             Model = model;
@@ -24,11 +27,17 @@ namespace Pakuri.InGame
             RefreshDisplay();
         }
 
+        /*
+         * RefreshDisplay 대상의 현재 상태를 갱신한다.
+         */
         public void RefreshDisplay()
         {
             NexusHealthDisplay.Refresh(nexusHpInfo, Model);
         }
 
+        /*
+         * SetCurrentHealth에 필요한 값을 설정한다.
+         */
         public void SetCurrentHealth(float currentHealth)
         {
             Model.Resources.CurrentHealth = Mathf.Clamp(

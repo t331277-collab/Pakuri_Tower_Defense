@@ -1,12 +1,22 @@
 using Pakuri.Data;
 using UnityEngine;
 
+/*
+ * EffectManager가 생성한 런타임 효과에 스프라이트, 애니메이터, 크기와 충돌 영역을 적용한다.
+ * 공격 방향과 범위에 맞는 회전·크기를 계산하고 효과 오브젝트의 유지 시간을 결정한다.
+ */
 namespace Pakuri.InGame
 {
+    /*
+     * 스킬 시각 오브젝트를 런타임 설정에 맞게 구성한다.
+     */
     static class EffectVisualBuilder
     {
         private const float DefaultSingleAttackLineLength = 31f;
 
+        /*
+         * 진행 방향을 2D 회전값으로 바꾼다.
+         */
         public static Quaternion ResolveRotation(Vector2 direction)
         {
             if (direction.sqrMagnitude <= 0.0001f)
@@ -18,6 +28,9 @@ namespace Pakuri.InGame
             return Quaternion.Euler(0f, 0f, angle);
         }
 
+        /*
+         * 런타임 시각 설정에 따라 크기, 스프라이트, 애니메이터와 충돌 영역을 구성한다.
+         */
         public static void Configure(
             GameObject instance,
             RuntimeSkillVisualSpec visual,
@@ -68,6 +81,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 최소 유지 시간과 애니메이션 길이 중 더 긴 값을 반환한다.
+         */
         public static float ResolveLifetime(GameObject instance, float minimumLifetimeSeconds)
         {
             var minimum = Mathf.Max(0.01f, minimumLifetimeSeconds);
@@ -75,6 +91,9 @@ namespace Pakuri.InGame
             return Mathf.Max(minimum, animationLength);
         }
 
+        /*
+         * 효과 오브젝트 또는 자식에 2D 충돌 영역이 있는지 확인한다.
+         */
         public static bool HasHitbox(GameObject instance)
         {
             if (instance == null)
@@ -86,6 +105,9 @@ namespace Pakuri.InGame
             return colliders.Length > 0;
         }
 
+        /*
+         * 범위 반경과 스킬 강화 배율을 효과 오브젝트 크기에 적용한다.
+         */
         public static void ConfigureAreaScale(
             Transform target,
             float baseRadius,
@@ -101,6 +123,9 @@ namespace Pakuri.InGame
             target.localScale *= Mathf.Max(0f, radiusMultiplier);
         }
 
+        /*
+         * 단일 공격 효과를 시전자에서 대상 방향으로 회전하고 공격 폭에 맞게 조정한다.
+         */
         public static void ConfigureSingleAttackLine(
             Transform target,
             SkillExecutionContext context,
@@ -166,6 +191,9 @@ namespace Pakuri.InGame
             target.localScale = scale;
         }
 
+        /*
+         * 기본 반경과 스킬 강화에서 계산한 프리팹 크기 배율을 적용한다.
+         */
         private static void ApplyPrefabScale(Transform target, float baseRadius, SkillSnapshot snapshot)
         {
             if (target == null || snapshot == null)
@@ -180,6 +208,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 런타임 충돌 영역의 크기, 중심과 Trigger 사용 여부를 설정한다.
+         */
         private static void ConfigureHitbox(
             GameObject instance,
             RuntimeSkillHitboxSpec hitbox,
@@ -196,6 +227,9 @@ namespace Pakuri.InGame
             collider.isTrigger = hitboxIsTrigger;
         }
 
+        /*
+         * Animator와 Animation에 등록된 클립 중 가장 긴 재생 시간을 반환한다.
+         */
         private static float ResolveAnimationLength(GameObject instance)
         {
             if (instance == null)

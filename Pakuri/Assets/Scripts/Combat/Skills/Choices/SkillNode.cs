@@ -65,6 +65,9 @@ namespace Pakuri.InGame
      */
     public readonly struct CastConditionOp
     {
+        /*
+         * CastConditionOp에 필요한 값을 초기화한다.
+         */
         public CastConditionOp(float targetHealthRatioBonus)
         {
             TargetHealthRatioBonus = targetHealthRatioBonus;
@@ -75,6 +78,9 @@ namespace Pakuri.InGame
 
     public readonly struct DamageModifierOp
     {
+        /*
+         * DamageModifierOp에 필요한 값을 초기화한다.
+         */
         public DamageModifierOp(DamageModifierOpKind kind, float multiplier)
         {
             Kind = kind;
@@ -87,6 +93,9 @@ namespace Pakuri.InGame
 
     public readonly struct CritModifierOp
     {
+        /*
+         * CritModifierOp에 필요한 값을 초기화한다.
+         */
         public CritModifierOp(float chanceBonus)
         {
             ChanceBonus = chanceBonus;
@@ -97,6 +106,9 @@ namespace Pakuri.InGame
 
     public readonly struct KillActionOp
     {
+        /*
+         * KillActionOp에 필요한 값을 초기화한다.
+         */
         public KillActionOp(KillActionOpKind kind, float ratioBonus, bool requiresExecute)
         {
             Kind = kind;
@@ -111,6 +123,9 @@ namespace Pakuri.InGame
 
     public readonly struct SkillActionOp
     {
+        /*
+         * SkillActionOp에 필요한 값을 초기화한다.
+         */
         public SkillActionOp(
             SkillActionOpKind kind,
             float floatValue = 0f,

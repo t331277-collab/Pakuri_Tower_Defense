@@ -3,6 +3,10 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+/*
+ * 인트로, 메인 메뉴와 몬스터 선택 화면을 전환하고 선택한 몬스터로 새 Run을 시작한다.
+ * 씬 UI 참조와 버튼 동작을 연결한 뒤 StartContext를 설정하고 NewRunScene을 불러온다.
+ */
 public class MainMenuUIManager : MonoBehaviour
 {
     [Header("Panels")]
@@ -26,17 +30,26 @@ public class MainMenuUIManager : MonoBehaviour
 
     private string selectedMonsterId;
 
+    /*
+     * 씬 UI 참조를 확인하고 버튼 동작을 연결한다.
+     */
     private void Awake()
     {
         ResolveSceneReferences();
         BindButtons();
     }
 
+    /*
+     * 첫 화면으로 인트로 패널을 표시한다.
+     */
     private void Start()
     {
         ShowIntro();
     }
 
+    /*
+     * Inspector 참조가 비어 있으면 현재 씬의 이름과 계층에서 UI를 찾는다.
+     */
     private void ResolveSceneReferences()
     {
         introPanel = ResolveGameObject(introPanel, "Intro");
@@ -54,6 +67,9 @@ public class MainMenuUIManager : MonoBehaviour
         rinButton = ResolveButton(rinButton, monsterSelectPanel, "Rin");
     }
 
+    /*
+     * 메뉴 이동, 몬스터 선택과 게임 시작 동작을 각 버튼에 연결한다.
+     */
     private void BindButtons()
     {
         Bind(introGameStartButton, ShowMainMenu);
@@ -67,6 +83,9 @@ public class MainMenuUIManager : MonoBehaviour
         Bind(rinButton, () => SelectMonster("rin"));
     }
 
+    /*
+     * 버튼과 동작이 모두 있을 때 클릭 동작을 등록한다.
+     */
     private static void Bind(Button button, UnityEngine.Events.UnityAction action)
     {
         if (button == null || action == null)
@@ -77,26 +96,41 @@ public class MainMenuUIManager : MonoBehaviour
         button.onClick.AddListener(action);
     }
 
+    /*
+     * 인트로 패널만 표시한다.
+     */
     private void ShowIntro()
     {
         SetOnlyActive(introPanel);
     }
 
+    /*
+     * 메인 메뉴 패널만 표시한다.
+     */
     private void ShowMainMenu()
     {
         SetOnlyActive(mainMenuPanel);
     }
 
+    /*
+     * 몬스터 선택 패널만 표시한다.
+     */
     private void ShowMonsterSelect()
     {
         SetOnlyActive(monsterSelectPanel);
     }
 
+    /*
+     * 다음 Run에서 사용할 몬스터 식별자를 저장한다.
+     */
     private void SelectMonster(string monsterId)
     {
         selectedMonsterId = monsterId;
     }
 
+    /*
+     * 선택한 몬스터를 시작 정보에 저장하고 NewRunScene으로 이동한다.
+     */
     private void StartSelectedMonsterRun()
     {
         var monsterId = string.IsNullOrWhiteSpace(selectedMonsterId) ? defaultMonsterId : selectedMonsterId;
@@ -111,6 +145,9 @@ public class MainMenuUIManager : MonoBehaviour
         SceneManager.LoadScene(newRunScenePath);
     }
 
+    /*
+     * 지정한 패널만 켜고 나머지 메뉴 패널을 끈다.
+     */
     private void SetOnlyActive(GameObject activePanel)
     {
         SetActive(introPanel, introPanel == activePanel);
@@ -118,6 +155,9 @@ public class MainMenuUIManager : MonoBehaviour
         SetActive(monsterSelectPanel, monsterSelectPanel == activePanel);
     }
 
+    /*
+     * UI 오브젝트가 있을 때 활성 상태를 변경한다.
+     */
     private static void SetActive(GameObject target, bool active)
     {
         if (target != null)
@@ -126,6 +166,9 @@ public class MainMenuUIManager : MonoBehaviour
         }
     }
 
+    /*
+     * 현재 참조를 사용하거나 전달받은 이름 순서대로 씬 오브젝트를 찾는다.
+     */
     private static GameObject ResolveGameObject(GameObject current, params string[] names)
     {
         if (current != null)
@@ -145,6 +188,9 @@ public class MainMenuUIManager : MonoBehaviour
         return null;
     }
 
+    /*
+     * 현재 버튼을 사용하거나 지정한 UI 아래에서 버튼을 찾는다.
+     */
     private static Button ResolveButton(Button current, GameObject root, string childName)
     {
         if (current != null)
@@ -161,6 +207,9 @@ public class MainMenuUIManager : MonoBehaviour
         return target != null ? target.GetComponent<Button>() : null;
     }
 
+    /*
+     * 지정한 계층에서 이름이 같은 자식 오브젝트를 재귀적으로 찾는다.
+     */
     private static GameObject FindChild(Transform root, string childName)
     {
         if (root == null || string.IsNullOrWhiteSpace(childName))
@@ -185,6 +234,9 @@ public class MainMenuUIManager : MonoBehaviour
         return null;
     }
 
+    /*
+     * 현재 씬에 속한 오브젝트 중 이름이 같은 오브젝트를 찾는다.
+     */
     private static GameObject FindSceneGameObject(string objectName)
     {
         if (string.IsNullOrWhiteSpace(objectName))

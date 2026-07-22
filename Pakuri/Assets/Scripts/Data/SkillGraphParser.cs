@@ -155,6 +155,9 @@ namespace Pakuri.Data
 			public string HandlerId { get; }
 			public SkillNodeKind NodeKind { get; }
 
+			/*
+			 * SkillNodeHandlerSchema에 필요한 값을 초기화한다.
+			 */
 			public SkillNodeHandlerSchema(string handlerId, SkillNodeKind nodeKind)
 			{
 				HandlerId = handlerId;
@@ -164,6 +167,9 @@ namespace Pakuri.Data
 
 		internal static readonly Dictionary<string, SkillNodeHandlerSchema> SkillNodeHandlerSchemas = BuildSkillNodeHandlerSchemas();
 
+		/*
+		 * ParseSkillNodeTypeRow에 필요한 데이터를 읽어 변환한다.
+		 */
 		internal static SkillNodeTypeRow ParseSkillNodeTypeRow(CsvParser.CsvRecord record)
 		{
 			return new SkillNodeTypeRow
@@ -176,6 +182,9 @@ namespace Pakuri.Data
 			};
 		}
 
+		/*
+		 * ParseSkillNodeTypeParamRow에 필요한 데이터를 읽어 변환한다.
+		 */
 		internal static SkillNodeTypeParamRow ParseSkillNodeTypeParamRow(CsvParser.CsvRecord record)
 		{
 			return new SkillNodeTypeParamRow
@@ -189,6 +198,9 @@ namespace Pakuri.Data
 			};
 		}
 
+		/*
+		 * ParseSkillGraphNodeRow에 필요한 데이터를 읽어 변환한다.
+		 */
 		internal static SkillGraphNodeRow ParseSkillGraphNodeRow(CsvParser.CsvRecord record)
 		{
 			SkillGraphNodeRow skillGraphNodeRow = new SkillGraphNodeRow
@@ -210,6 +222,9 @@ namespace Pakuri.Data
 			return skillGraphNodeRow;
 		}
 
+		/*
+		 * ParseSkillNodeValueType에 필요한 데이터를 읽어 변환한다.
+		 */
 		internal static SkillNodeValueType ParseSkillNodeValueType(string rawValue, CsvParser.CsvRecord record)
 		{
 			return rawValue.Trim().Replace("-", "_").ToLowerInvariant() switch
@@ -227,6 +242,9 @@ namespace Pakuri.Data
 			};
 		}
 
+		/*
+		 * BuildSkillNodeHandlerSchemas에 필요한 결과를 만들어 반환한다.
+		 */
 		internal static Dictionary<string, SkillNodeHandlerSchema> BuildSkillNodeHandlerSchemas()
 		{
 			Dictionary<string, SkillNodeHandlerSchema> dictionary = new Dictionary<string, SkillNodeHandlerSchema>(StringComparer.OrdinalIgnoreCase);
@@ -329,6 +347,9 @@ namespace Pakuri.Data
 			return dictionary;
 		}
 
+		/*
+		 * AddSkillNodeHandler 작업을 수행한다.
+		 */
 		internal static void AddSkillNodeHandler(
 			Dictionary<string, SkillNodeHandlerSchema> schemas,
 			string handlerId,
@@ -337,6 +358,9 @@ namespace Pakuri.Data
 			schemas.Add(handlerId, new SkillNodeHandlerSchema(handlerId, nodeKind));
 		}
 
+		/*
+		 * ValidateNormalizedSkillAuthoringRows 데이터가 올바른지 검사한다.
+		 */
 		internal static void ValidateNormalizedSkillAuthoringRows(CsvSourceModel.SourceModel model, CsvRuntimeCatalog assetCatalog, List<string> errors)
 		{
 			if (model == null)
@@ -386,6 +410,9 @@ namespace Pakuri.Data
 			}
 		}
 
+		/*
+		 * ValidateSkillNodeOwner 데이터가 올바른지 검사한다.
+		 */
 		internal static void ValidateSkillNodeOwner(SkillNodeRow node, CsvSourceModel.SourceModel model, List<string> errors)
 		{
 			switch (node.OwnerKind)
@@ -437,6 +464,9 @@ namespace Pakuri.Data
 			}
 		}
 
+		/*
+		 * ValidateSkillNodeGateReferences 데이터가 올바른지 검사한다.
+		 */
 		internal static void ValidateSkillNodeGateReferences(SkillNodeRow node, CsvSourceModel.SourceModel model, List<string> errors)
 		{
 			ValidateChoiceGate(node.Id, "requires_active_choice_id", node.RequiresActiveChoiceId, model, errors);
@@ -445,6 +475,9 @@ namespace Pakuri.Data
 			ValidatePassiveGate(node.Id, "excludes_passive_skill_id", node.ExcludesPassiveSkillId, model, errors);
 		}
 
+		/*
+		 * ValidateChoiceGate 데이터가 올바른지 검사한다.
+		 */
 		internal static void ValidateChoiceGate(string nodeId, string columnName, string choiceId, CsvSourceModel.SourceModel model, List<string> errors)
 		{
 			if (!string.IsNullOrWhiteSpace(choiceId) && !model.SkillChoices.ContainsKey(choiceId))
@@ -453,6 +486,9 @@ namespace Pakuri.Data
 			}
 		}
 
+		/*
+		 * ValidatePassiveGate 데이터가 올바른지 검사한다.
+		 */
 		internal static void ValidatePassiveGate(string nodeId, string columnName, string passiveId, CsvSourceModel.SourceModel model, List<string> errors)
 		{
 			if (!string.IsNullOrWhiteSpace(passiveId) && (!model.Skills.TryGetValue(passiveId, out var value) || value.SkillKind != PakuriCsvSkillKind.Passive))
@@ -461,6 +497,9 @@ namespace Pakuri.Data
 			}
 		}
 
+		/*
+		 * ValidateSkillNodeParamValue 데이터가 올바른지 검사한다.
+		 */
 		internal static void ValidateSkillNodeParamValue(SkillNodeParamRow param, CsvSourceModel.SourceModel model, CsvRuntimeCatalog assetCatalog, List<string> errors)
 		{
 			string text = string.Empty;
@@ -535,6 +574,9 @@ namespace Pakuri.Data
 			}
 		}
 
+		/*
+		 * IsEffectSourceSkillNodeParam 조건을 만족하는지 확인한다.
+		 */
 		internal static bool IsEffectSourceSkillNodeParam(SkillNodeParamRow param)
 		{
 			if (param != null)
@@ -544,6 +586,9 @@ namespace Pakuri.Data
 			return false;
 		}
 
+		/*
+		 * ValidateSkillNodeEnumParam 데이터가 올바른지 검사한다.
+		 */
 		internal static void ValidateSkillNodeEnumParam(SkillNodeParamRow param, string value, List<string> errors)
 		{
 			if (string.IsNullOrWhiteSpace(value))
@@ -552,6 +597,9 @@ namespace Pakuri.Data
 			}
 		}
 
+		/*
+		 * MaterializeSkillGraphRows 작업을 수행한다.
+		 */
 		internal static void MaterializeSkillGraphRows(CsvSourceModel.SourceModel model)
 		{
 			if (model == null || model.SkillGraphNodes.Count == 0)
@@ -714,6 +762,9 @@ namespace Pakuri.Data
 			model.SkillNodeParams.AddRange(list3);
 		}
 
+		/*
+		 * BuildSkillNodeTypeParamLookup에 필요한 결과를 만들어 반환한다.
+		 */
 		internal static Dictionary<string, List<SkillNodeTypeParamRow>> BuildSkillNodeTypeParamLookup(CsvSourceModel.SourceModel model, List<string> errors)
 		{
 			Dictionary<string, List<SkillNodeTypeParamRow>> dictionary = new Dictionary<string, List<SkillNodeTypeParamRow>>(StringComparer.OrdinalIgnoreCase);
@@ -754,6 +805,9 @@ namespace Pakuri.Data
 			return dictionary;
 		}
 
+		/*
+		 * ValidateSkillNodeTypeDefinitions 데이터가 올바른지 검사한다.
+		 */
 		internal static void ValidateSkillNodeTypeDefinitions(
 			CsvSourceModel.SourceModel model,
 			List<string> errors)
@@ -772,6 +826,9 @@ namespace Pakuri.Data
 			}
 		}
 
+		/*
+		 * ResolveSkillGraphTargetSkillId 결과를 계산해 반환한다.
+		 */
 		internal static string ResolveSkillGraphTargetSkillId(CsvSourceModel.SourceModel model, SkillGraphNodeRow graph, List<string> errors)
 		{
 			string text;
@@ -838,6 +895,9 @@ namespace Pakuri.Data
 			return text;
 		}
 
+		/*
+		 * ResolveGeneratedEffectPassiveSkillId 결과를 계산해 반환한다.
+		 */
 		internal static string ResolveGeneratedEffectPassiveSkillId(CsvSourceModel.SourceModel model, SkillGraphNodeRow graph)
 		{
 			if (model == null || graph == null || graph.GraphKind != SkillGraphKind.Effect)
@@ -855,6 +915,9 @@ namespace Pakuri.Data
 			return string.Empty;
 		}
 
+		/*
+		 * ValidateSkillGraphAllowedValue 데이터가 올바른지 검사한다.
+		 */
 		internal static void ValidateSkillGraphAllowedValue(string graphNodeKey, SkillNodeTypeParamRow param, string value, List<string> errors)
 		{
 			if (string.IsNullOrWhiteSpace(param.AllowedValues))
@@ -872,6 +935,9 @@ namespace Pakuri.Data
 			errors.Add("Skill graph node '" + graphNodeKey + "' param '" + param.ParamKey + "' has invalid value '" + value + "'. Allowed: " + param.AllowedValues + ".");
 		}
 
+		/*
+		 * IsEffectOperationHandler 조건을 만족하는지 확인한다.
+		 */
 		internal static bool IsEffectOperationHandler(string handlerId)
 		{
 			return string.Equals(handlerId, "ApplyStatus", StringComparison.OrdinalIgnoreCase)
@@ -895,16 +961,25 @@ namespace Pakuri.Data
 			return true;
 		}
 
+		/*
+		 * BuildSkillGraphKey에 필요한 결과를 만들어 반환한다.
+		 */
 		internal static string BuildSkillGraphKey(SkillGraphNodeRow graph)
 		{
 			return $"{graph.MonsterId}:{graph.OwnerKind}:{graph.OwnerId}:{graph.GraphKind}:{graph.GraphIndex}";
 		}
 
+		/*
+		 * BuildGeneratedSkillGraphNodeId에 필요한 결과를 만들어 반환한다.
+		 */
 		internal static string BuildGeneratedSkillGraphNodeId(SkillGraphNodeRow graph)
 		{
 			return $"{graph.OwnerKind}:{graph.OwnerId}:{graph.GraphKind}:{graph.GraphIndex}:{graph.NodeOrder}";
 		}
 
+		/*
+		 * BuildGeneratedSkillGraphEffectId에 필요한 결과를 만들어 반환한다.
+		 */
 		internal static string BuildGeneratedSkillGraphEffectId(SkillNodeOwnerKind ownerKind, string ownerId, int graphIndex)
 		{
 			if (ownerKind == SkillNodeOwnerKind.Choice || ownerKind == SkillNodeOwnerKind.Trigger)
@@ -918,6 +993,9 @@ namespace Pakuri.Data
 			return $"{ownerId}@effect{graphIndex + 1}";
 		}
 
+		/*
+		 * HasSkillGraphReference 조건을 만족하는지 확인한다.
+		 */
 		internal static bool HasSkillGraphReference(CsvRowParser.SkillTriggerRow trigger)
 		{
 			if (trigger != null)
@@ -927,6 +1005,9 @@ namespace Pakuri.Data
 			return false;
 		}
 
+		/*
+		 * ResolveTriggeredEffectId 결과를 계산해 반환한다.
+		 */
 		internal static string ResolveTriggeredEffectId(CsvRowParser.SkillTriggerRow trigger)
 		{
 			if (!HasSkillGraphReference(trigger))

@@ -64,18 +64,27 @@ namespace Pakuri.Data
         private Dictionary<string, GameObject> prefabLookup;
         private Dictionary<string, RuntimeAnimatorController> animatorControllerLookup;
 
+        /*
+         * TryGetSprite 작업을 시도하고 성공 여부를 반환한다.
+         */
         public bool TryGetSprite(string assetPath, out Sprite sprite)
         {
             EnsureLookups();
             return spriteLookup.TryGetValue(Normalize(assetPath), out sprite);
         }
 
+        /*
+         * TryGetPrefab 작업을 시도하고 성공 여부를 반환한다.
+         */
         public bool TryGetPrefab(string assetPath, out GameObject prefab)
         {
             EnsureLookups();
             return prefabLookup.TryGetValue(Normalize(assetPath), out prefab);
         }
 
+        /*
+         * TryGetAnimatorController 작업을 시도하고 성공 여부를 반환한다.
+         */
         public bool TryGetAnimatorController(
             string assetPath,
             out RuntimeAnimatorController animatorController)
@@ -84,24 +93,36 @@ namespace Pakuri.Data
             return animatorControllerLookup.TryGetValue(Normalize(assetPath), out animatorController);
         }
 
+        /*
+         * HasSprite 조건을 만족하는지 확인한다.
+         */
         public bool HasSprite(string assetPath)
         {
             EnsureLookups();
             return spriteLookup.ContainsKey(Normalize(assetPath));
         }
 
+        /*
+         * HasPrefab 조건을 만족하는지 확인한다.
+         */
         public bool HasPrefab(string assetPath)
         {
             EnsureLookups();
             return prefabLookup.ContainsKey(Normalize(assetPath));
         }
 
+        /*
+         * HasAnimatorController 조건을 만족하는지 확인한다.
+         */
         public bool HasAnimatorController(string assetPath)
         {
             EnsureLookups();
             return animatorControllerLookup.ContainsKey(Normalize(assetPath));
         }
 
+        /*
+         * ResetLookups 작업을 수행한다.
+         */
         public void ResetLookups()
         {
             spriteLookup = null;
@@ -109,11 +130,17 @@ namespace Pakuri.Data
             animatorControllerLookup = null;
         }
 
+        /*
+         * 컴포넌트가 활성화될 때 이벤트와 표시 상태를 연결한다.
+         */
         private void OnEnable()
         {
             ResetLookups();
         }
 
+        /*
+         * EnsureLookups에 필요한 상태가 준비되어 있는지 확인하고 구성한다.
+         */
         private void EnsureLookups()
         {
             if (spriteLookup != null && prefabLookup != null && animatorControllerLookup != null)
@@ -134,6 +161,9 @@ namespace Pakuri.Data
                 entry => entry.Asset);
         }
 
+        /*
+         * AddEntries 작업을 수행한다.
+         */
         private static void AddEntries<TEntry, TAsset>(
             TEntry[] entries,
             Dictionary<string, TAsset> lookup,
@@ -159,6 +189,9 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * Normalize 작업 결과를 반환한다.
+         */
         private static string Normalize(string assetPath)
         {
             if (string.IsNullOrWhiteSpace(assetPath))

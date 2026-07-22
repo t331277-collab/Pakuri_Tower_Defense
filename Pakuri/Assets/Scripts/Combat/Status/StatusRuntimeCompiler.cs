@@ -11,6 +11,9 @@ namespace Pakuri.Data
 {
     public static class StatusRuntimeCompiler
     {
+        /*
+         * CompileSkillEffects 작업을 수행한다.
+         */
         public static void CompileSkillEffects(SkillEffectDefinition[] effects)
         {
             if (effects == null)
@@ -47,6 +50,9 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * CompileTriggers 작업을 수행한다.
+         */
         public static void CompileTriggers(SkillTriggerDefinition[] triggers)
         {
             if (triggers == null)
@@ -74,6 +80,9 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * ParseStatusKind에 필요한 데이터를 읽어 변환한다.
+         */
         public static StatusEffectKind ParseStatusKind(string value)
         {
             if (StatusEffectLookup.TryParse(value, out var kind))
@@ -84,6 +93,9 @@ namespace Pakuri.Data
             throw new InvalidOperationException($"Unsupported status id '{value}'.");
         }
 
+        /*
+         * ParseStatusKinds에 필요한 데이터를 읽어 변환한다.
+         */
         public static StatusEffectKind[] ParseStatusKinds(string rawValue)
         {
             var statusIds = ParseIdList(rawValue);
@@ -96,6 +108,9 @@ namespace Pakuri.Data
             return kinds;
         }
 
+        /*
+         * Create에 필요한 결과를 만들어 반환한다.
+         */
         public static StatusRuntimeData Create(StatusEffectKind kind, string label)
         {
             if (kind == StatusEffectKind.None)
@@ -149,6 +164,9 @@ namespace Pakuri.Data
             return status;
         }
 
+        /*
+         * Create에 필요한 결과를 만들어 반환한다.
+         */
         public static StatusRuntimeData Create(StatusEffectKind kind, string label, SkillDefinition source)
         {
             var status = Create(kind, label);
@@ -264,6 +282,9 @@ namespace Pakuri.Data
             return status;
         }
 
+        /*
+         * Create에 필요한 결과를 만들어 반환한다.
+         */
         public static StatusRuntimeData Create(SkillEffectDefinition effect)
         {
             var kind = ParseStatusKind(effect.StatusEffectId);
@@ -358,6 +379,9 @@ namespace Pakuri.Data
             return status;
         }
 
+        /*
+         * TryParseConditionStatusExpression 작업을 시도하고 성공 여부를 반환한다.
+         */
         public static bool TryParseConditionStatusExpression(
             string rawValue,
             out StatusConditionGroup[] groups)
@@ -433,6 +457,9 @@ namespace Pakuri.Data
             return groups.Length > 0;
         }
 
+        /*
+         * ParseConditionStatusExpression에 필요한 데이터를 읽어 변환한다.
+         */
         public static StatusConditionGroup[] ParseConditionStatusExpression(string rawValue)
         {
             if (TryParseConditionStatusExpression(rawValue, out var groups))
@@ -443,6 +470,9 @@ namespace Pakuri.Data
             throw new InvalidOperationException($"Unsupported status condition '{rawValue}'.");
         }
 
+        /*
+         * ParseSkillRuntimeKindConditions에 필요한 데이터를 읽어 변환한다.
+         */
         public static SkillRuntimeKindCondition[] ParseSkillRuntimeKindConditions(string rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
@@ -474,6 +504,9 @@ namespace Pakuri.Data
             return conditions.ToArray();
         }
 
+        /*
+         * ParseIdList에 필요한 데이터를 읽어 변환한다.
+         */
         public static string[] ParseIdList(string rawValue)
         {
             if (string.IsNullOrWhiteSpace(rawValue))
@@ -495,6 +528,9 @@ namespace Pakuri.Data
             return ids.ToArray();
         }
 
+        /*
+         * TryParseTargetScope 작업을 시도하고 성공 여부를 반환한다.
+         */
         public static bool TryParseTargetScope(string rawValue, out StatusTargetScope scope)
         {
             scope = StatusTargetScope.Unspecified;
@@ -516,6 +552,9 @@ namespace Pakuri.Data
             return false;
         }
 
+        /*
+         * TryParseMergePolicy 작업을 시도하고 성공 여부를 반환한다.
+         */
         public static bool TryParseMergePolicy(string rawValue, out StatusMergePolicy policy)
         {
             policy = StatusMergePolicy.Unspecified;
@@ -540,6 +579,9 @@ namespace Pakuri.Data
             return false;
         }
 
+        /*
+         * TryParseShieldRefreshRule 작업을 시도하고 성공 여부를 반환한다.
+         */
         public static bool TryParseShieldRefreshRule(string rawValue, out ShieldRefreshRule rule)
         {
             rule = ShieldRefreshRule.TakeHighest;
@@ -564,6 +606,9 @@ namespace Pakuri.Data
             return false;
         }
 
+        /*
+         * ParseTargetScope에 필요한 데이터를 읽어 변환한다.
+         */
         public static StatusTargetScope ParseTargetScope(string rawValue)
         {
             if (TryParseTargetScope(rawValue, out var scope))
@@ -574,6 +619,9 @@ namespace Pakuri.Data
             throw new InvalidOperationException($"Unsupported status target scope '{rawValue}'.");
         }
 
+        /*
+         * ParseMergePolicy에 필요한 데이터를 읽어 변환한다.
+         */
         public static StatusMergePolicy ParseMergePolicy(string rawValue)
         {
             if (TryParseMergePolicy(rawValue, out var policy))
@@ -584,6 +632,9 @@ namespace Pakuri.Data
             throw new InvalidOperationException($"Unsupported status merge policy '{rawValue}'.");
         }
 
+        /*
+         * ParseShieldRefreshRule에 필요한 데이터를 읽어 변환한다.
+         */
         public static ShieldRefreshRule ParseShieldRefreshRule(string rawValue)
         {
             if (TryParseShieldRefreshRule(rawValue, out var rule))

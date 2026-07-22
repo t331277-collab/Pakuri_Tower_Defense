@@ -10,6 +10,9 @@ namespace Pakuri.InGame
 {
     public class UnitCombatStateFactory
     {
+        /*
+         * CreateSelectedMonster에 필요한 결과를 만들어 반환한다.
+         */
         public UnitCombatState CreateSelectedMonster(
             MonsterDefinition definition,
             RunSession.RunMonsterState runState = null,
@@ -18,6 +21,9 @@ namespace Pakuri.InGame
             return CreateMonster(definition, UnitSide.Player, UnitRole.Monster, slotIndex, "player", runState);
         }
 
+        /*
+         * CreateManifestedMonster에 필요한 결과를 만들어 반환한다.
+         */
         public UnitCombatState CreateManifestedMonster(
             MonsterDefinition definition,
             RunSession.RunMonsterState runState,
@@ -26,6 +32,9 @@ namespace Pakuri.InGame
             return CreateMonster(definition, UnitSide.Player, UnitRole.Monster, slotIndex, "party", runState);
         }
 
+        /*
+         * CreateEnemy에 필요한 결과를 만들어 반환한다.
+         */
         public EnemyCombatState CreateEnemy(EnemyDefinition definition, int slotIndex = 0, bool isBoss = false)
         {
             var stats = definition.Stats;
@@ -90,6 +99,9 @@ namespace Pakuri.InGame
             };
         }
 
+        /*
+         * CreateMonster에 필요한 결과를 만들어 반환한다.
+         */
         private static UnitCombatState CreateMonster(
             MonsterDefinition definition,
             UnitSide side,
@@ -132,6 +144,9 @@ namespace Pakuri.InGame
             return model;
         }
 
+        /*
+         * MapStats에 필요한 형식으로 변환해 반환한다.
+         */
         private static UnitCombatStats MapStats(UnitCombatStats source, float maxHealth)
         {
             return new UnitCombatStats
@@ -146,6 +161,9 @@ namespace Pakuri.InGame
             };
         }
 
+        /*
+         * MapDefenses에 필요한 형식으로 변환해 반환한다.
+         */
         private static UnitDefenseStats MapDefenses(DamageCalculator.AttributeDefenseSet source)
         {
             return new UnitDefenseStats
@@ -159,6 +177,9 @@ namespace Pakuri.InGame
             };
         }
 
+        /*
+         * ApplyRunState 처리를 대상에 적용한다.
+         */
         private static void ApplyRunState(UnitSkillProgress target, RunSession.RunMonsterState runState)
         {
             if (runState == null)
@@ -171,6 +192,9 @@ namespace Pakuri.InGame
             AddRange(target.ChosenChoiceIds, runState.ChosenChoiceIds);
         }
 
+        /*
+         * AddRange 작업을 수행한다.
+         */
         private static void AddRange(HashSet<string> target, IReadOnlyList<string> source)
         {
             for (var i = 0; i < source.Count; i++)
@@ -182,6 +206,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * BuildUnitId에 필요한 결과를 만들어 반환한다.
+         */
         private static string BuildUnitId(string prefix, string definitionId, int slotIndex)
         {
             return $"{prefix}-{definitionId}-{slotIndex}";

@@ -10,8 +10,15 @@ using UnityEngine;
 namespace Pakuri.InGame
 {
 
+/*
+ * 원본 스킬과 선택한 강화 노드를 합쳐 한 번의 스킬 실행에 사용할 값을 만든다.
+ * 실행기는 이 객체에 저장된 최종 수치와 SkillNodePlan을 읽어 같은 강화 결과를 사용한다.
+ */
 public class SkillSnapshot
 {
+	/*
+	 * 대상이 필요한 상태 중첩을 가지고 있을 때 적용할 피해 배율을 보관한다.
+	 */
 	private readonly struct ConditionalDamageRule
 	{
 		public float DamageMultiplier { get; }
@@ -20,6 +27,9 @@ public class SkillSnapshot
 
 		public int MinStacks { get; }
 
+		/*
+		 * ConditionalDamageRule에 필요한 값을 초기화한다.
+		 */
 		public ConditionalDamageRule(float damageMultiplier, StatusEffectKind statusKind, int minStacks)
 		{
 			DamageMultiplier = damageMultiplier;
@@ -28,6 +38,9 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 대상의 상태 중첩 조건에 따라 추가할 치명타 확률을 보관한다.
+	 */
 	private readonly struct ConditionalCritChanceRule
 	{
 		public float CritChanceBonus { get; }
@@ -36,6 +49,9 @@ public class SkillSnapshot
 
 		public int MinStacks { get; }
 
+		/*
+		 * ConditionalCritChanceRule에 필요한 값을 초기화한다.
+		 */
 		public ConditionalCritChanceRule(float critChanceBonus, StatusEffectKind statusKind, int minStacks)
 		{
 			CritChanceBonus = critChanceBonus;
@@ -44,12 +60,18 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 연속 발사 중 특정 투사체에 적용할 피해 배율을 보관한다.
+	 */
 	private readonly struct BurstDamageRule
 	{
 		public int ProjectileIndex { get; }
 
 		public float DamageMultiplier { get; }
 
+		/*
+		 * BurstDamageRule에 필요한 값을 초기화한다.
+		 */
 		public BurstDamageRule(int projectileIndex, float damageMultiplier)
 		{
 			ProjectileIndex = projectileIndex;
@@ -57,12 +79,18 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 연속 발사 중 특정 투사체가 추가할 상태 중첩을 보관한다.
+	 */
 	private readonly struct BurstStatusRule
 	{
 		public int ProjectileIndex { get; }
 
 		public int StacksBonus { get; }
 
+		/*
+		 * BurstStatusRule에 필요한 값을 초기화한다.
+		 */
 		public BurstStatusRule(int projectileIndex, int stacksBonus)
 		{
 			ProjectileIndex = projectileIndex;
@@ -70,6 +98,9 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 적용한 선택지와 상태, Trigger별 누적 보너스를 이름으로 관리한다.
+	 */
 	private readonly HashSet<string> activeChoiceIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 	private readonly Dictionary<string, float> statusActionSpeedBonuses = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
@@ -82,6 +113,9 @@ public class SkillSnapshot
 
 	private readonly Dictionary<string, float> triggerProcChanceBonuses = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 
+	/*
+	 * 대상 조건과 연속 발사 순서에 따라 실행 중 계산할 규칙을 보관한다.
+	 */
 	private readonly List<ConditionalDamageRule> conditionalDamageRules = new List<ConditionalDamageRule>();
 
 	private readonly List<ConditionalCritChanceRule> conditionalCritChanceRules = new List<ConditionalCritChanceRule>();
@@ -90,6 +124,9 @@ public class SkillSnapshot
 
 	private readonly List<BurstStatusRule> burstStatusRules = new List<BurstStatusRule>();
 
+	/*
+	 * 선택지 값에서 만든 조건, 보정, 처치 행동과 정규화된 노드를 보관한다.
+	 */
 	private readonly List<CastConditionOp> castConditionOps = new List<CastConditionOp>();
 
 	private readonly List<DamageModifierOp> damageModifierOps = new List<DamageModifierOp>();
@@ -100,12 +137,18 @@ public class SkillSnapshot
 
 	private readonly List<SkillNode> normalizedPlanNodes = new List<SkillNode>();
 
+	/*
+	 * 스냅샷의 원본 스킬과 현재 조합된 실행 계획을 나타낸다.
+	 */
 	public SkillRuntimeData Source { get; }
 
 	public string SkillId { get; }
 
 	public SkillNodePlan Plan { get; private set; }
 
+	/*
+	 * 피해, 보호막, 재사용 대기시간과 투사체에 적용할 기본 강화 수치를 보관한다.
+	 */
 	public float DamageMultiplier { get; private set; }
 
 	public float ShieldAmountMultiplier { get; private set; }
@@ -142,6 +185,9 @@ public class SkillSnapshot
 
 	public float DamageDelayMultiplier { get; private set; }
 
+	/*
+	 * 처형, 분기 공격, 치명타와 처치 후 행동에 필요한 값을 보관한다.
+	 */
 	public float ExecuteHealthRatioBonus { get; private set; }
 
 	public float DurationBonus { get; private set; }
@@ -190,6 +236,9 @@ public class SkillSnapshot
 
 	public bool KillResetsCooldownRequiresExecute { get; private set; }
 
+	/*
+	 * 상태 효과의 적용 확률, 중첩과 전투 능력치 보너스를 보관한다.
+	 */
 	public string StatusTag { get; private set; }
 
 	public float StatusChanceBonus { get; private set; }
@@ -248,6 +297,9 @@ public class SkillSnapshot
 
 	public StatusEffectKind StatusConditionalSourceStatusKind { get; private set; }
 
+	/*
+	 * 적중 시 추가 피해와 연쇄 공격에 필요한 값을 보관한다.
+	 */
 	public bool HasOnHitAdditionalDamage { get; private set; }
 
 	public float OnHitAdditionalDamageChance { get; private set; }
@@ -268,6 +320,9 @@ public class SkillSnapshot
 
 	public DamageAttribute OnHitChainDamageAttribute { get; private set; }
 
+	/*
+	 * 재장전·핵심 부위·적중 횟수에 연결되는 특수 강화 값을 보관한다.
+	 */
 	public string ReloadReduceTargetSkillId { get; private set; }
 
 	public float ReloadReduceSecondsPerHit { get; private set; }
@@ -292,6 +347,9 @@ public class SkillSnapshot
 
 	public float HitCountCooldownRefundRatio { get; private set; }
 
+	/*
+	 * 대상별 반복 공격과 상태 임계치·소모·재분배에 필요한 값을 보관한다.
+	 */
 	public int RepeatCountPerTarget { get; private set; }
 
 	public float RepeatIntervalSeconds { get; private set; }
@@ -322,6 +380,9 @@ public class SkillSnapshot
 
 	public int RedistributeConsumedStatusTargetCount { get; private set; }
 
+	/*
+	 * 최종 이펙트와 실행 계획을 구성하는 읽기 전용 목록을 제공한다.
+	 */
 	public GameObject SkillEffectPrefab { get; private set; }
 
 	public IReadOnlyList<CastConditionOp> CastConditionOps => castConditionOps;
@@ -334,6 +395,9 @@ public class SkillSnapshot
 
 	public IReadOnlyList<SkillNode> NormalizedPlanNodes => normalizedPlanNodes;
 
+	/*
+	 * 분기 공격에 필요한 확률, 횟수, 피해 또는 발사 주기가 하나라도 있는지 확인한다.
+	 */
 	public bool HasBranchBehavior
 	{
 		get
@@ -346,6 +410,9 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 분기 공격을 주기적으로 발사할 조건이 완성되었는지 확인한다.
+	 */
 	public bool HasBranchLaunchTrigger
 	{
 		get
@@ -358,6 +425,9 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 단일 추가 피해 또는 연쇄 추가 피해를 실행할 수 있는지 확인한다.
+	 */
 	public bool HasOnHitAdditionalDamageBehavior
 	{
 		get
@@ -370,6 +440,9 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 연쇄 공격에 필요한 주기, 대상 수, 탐색 범위와 피해 배율이 있는지 확인한다.
+	 */
 	public bool HasOnHitChainDamageBehavior
 	{
 		get
@@ -382,6 +455,9 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 후속 투사체의 개수와 피해 배율이 실행 가능한 값인지 확인한다.
+	 */
 	public bool HasFollowUpProjectile
 	{
 		get
@@ -394,6 +470,9 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 원본 스킬의 식별자, 기본 배율, 이펙트와 노드를 사용해 최초 실행 계획을 만든다.
+	 */
 	public SkillSnapshot(SkillRuntimeData source)
 	{
 		Source = source;
@@ -423,6 +502,9 @@ public class SkillSnapshot
 		RebuildExecutionPlan();
 	}
 
+	/*
+	 * 선택지의 정규화된 노드를 현재 수치와 실행 계획에 반영한다.
+	 */
 	public void ApplyChoiceSpec(SkillChoiceRuntimeData spec)
 	{
 		if (spec == null || !HasNormalizedPlanNodes(spec.Source))
@@ -432,11 +514,17 @@ public class SkillSnapshot
 		ApplyNodeBackedChoiceDefinition(spec.Source);
 	}
 
+	/*
+	 * 전투 중 전달된 피해 배율을 현재 피해 배율에 추가로 곱한다.
+	 */
 	public void ApplyDynamicDamageMultiplier(float multiplier)
 	{
 		DamageMultiplier *= PositiveOrDefault(multiplier, 1f);
 	}
 
+	/*
+	 * 현재 스냅샷을 복사하고 복사본에만 별도 피해 배율을 적용한다.
+	 */
 	internal SkillSnapshot CopyWithDamageMultiplier(float multiplier)
 	{
 		SkillSnapshot copy = (SkillSnapshot)MemberwiseClone();
@@ -444,6 +532,9 @@ public class SkillSnapshot
 		return copy;
 	}
 
+	/*
+	 * 선택지 노드를 현재 스킬 대상으로 한정한 뒤 필드와 행동 노드에 반영한다.
+	 */
 	private void ApplyNodeBackedChoiceDefinition(SkillChoiceDefinition choice)
 	{
 		if (choice.SkillEffectPrefab != null)
@@ -464,6 +555,9 @@ public class SkillSnapshot
 		RebuildExecutionPlan();
 	}
 
+	/*
+	 * 선택지 컴파일 결과 중 개별 속성으로 표현되는 특수 강화 값을 누적한다.
+	 */
 	private void ApplyNodeBackedChoiceFields(SkillChoiceRuntimeData spec)
 	{
 		SkillChoiceDefinition source = spec.Source;
@@ -566,6 +660,9 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 선택지에 적용할 정규화 노드가 하나 이상 있는지 확인한다.
+	 */
 	private static bool HasNormalizedPlanNodes(SkillChoiceDefinition choice)
 	{
 		if (choice != null && choice.NormalizedPlanNodes != null)
@@ -575,6 +672,9 @@ public class SkillSnapshot
 		return false;
 	}
 
+	/*
+	 * 선택지 노드에서 일반 수치 변경 행동만 찾아 현재 스냅샷에 적용한다.
+	 */
 	private void ApplyPlanActionNodes(IReadOnlyList<SkillNode> nodes)
 	{
 		if (nodes == null || nodes.Count == 0)
@@ -596,6 +696,9 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 행동 종류에 맞는 스냅샷 속성이나 상태별 보너스에 값을 누적한다.
+	 */
 	private void ApplyPlanAction(SkillActionOp action)
 	{
 		switch (action.Kind)
@@ -747,6 +850,9 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 전체 상태 또는 지정한 상태의 행동 속도 보너스를 누적한다.
+	 */
 	private void ApplyStatusActionSpeedBonus(string statusId, float bonus)
 	{
 		HasStatusActionSpeedBonus = true;
@@ -764,6 +870,9 @@ public class SkillSnapshot
 		statusActionSpeedBonuses[statusId] = total;
 	}
 
+	/*
+	 * 지정한 상태 효과의 지속시간 보너스를 누적한다.
+	 */
 	private void ApplyStatusDurationBonus(string statusId, float bonus)
 	{
 		if (!string.IsNullOrWhiteSpace(statusId) && !Mathf.Approximately(bonus, 0f))
@@ -777,6 +886,9 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 상태 종류와 최소 중첩 조건을 만족할 때 사용할 피해 배율 규칙을 추가한다.
+	 */
 	private void AddConditionalDamageRule(float multiplier, StatusEffectKind statusKind, int minStacks)
 	{
 		if (statusKind != StatusEffectKind.None && !(multiplier <= 0f))
@@ -785,6 +897,9 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 현재 스냅샷에 적용된 선택지 식별자를 기록한다.
+	 */
 	public void AddActiveChoiceId(string choiceId)
 	{
 		if (!string.IsNullOrWhiteSpace(choiceId))
@@ -793,6 +908,9 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 지정한 선택지가 현재 스냅샷에 적용되었는지 확인한다.
+	 */
 	public bool HasActiveChoice(string choiceId)
 	{
 		if (!string.IsNullOrWhiteSpace(choiceId))
@@ -802,6 +920,9 @@ public class SkillSnapshot
 		return false;
 	}
 
+	/*
+	 * 지정한 상태 효과에 누적된 지속시간 보너스를 반환한다.
+	 */
 	public float ResolveStatusDurationBonus(string statusId)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
@@ -815,6 +936,9 @@ public class SkillSnapshot
 		return value;
 	}
 
+	/*
+	 * 전체 상태 보너스와 지정한 상태의 행동 속도 보너스를 합산한다.
+	 */
 	public float ResolveStatusActionSpeedBonus(string statusId)
 	{
 		float num = StatusActionSpeedBonus;
@@ -825,6 +949,9 @@ public class SkillSnapshot
 		return num;
 	}
 
+	/*
+	 * 지정한 상태 효과의 최대 중첩 보너스를 반환한다.
+	 */
 	public int ResolveStatusMaxStacksBonus(string statusId)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
@@ -838,6 +965,9 @@ public class SkillSnapshot
 		return value;
 	}
 
+	/*
+	 * 대상 상태 중첩 하나당 추가되는 피해 비율을 반환한다.
+	 */
 	public float ResolveTargetStatusStackDamageRateBonus(string statusId)
 	{
 		if (string.IsNullOrWhiteSpace(statusId))
@@ -851,6 +981,9 @@ public class SkillSnapshot
 		return value;
 	}
 
+	/*
+	 * 지정한 Trigger에 누적된 발동 확률 보너스를 반환한다.
+	 */
 	public float ResolveTriggerProcChanceBonus(string triggerId)
 	{
 		if (string.IsNullOrWhiteSpace(triggerId))
@@ -864,6 +997,9 @@ public class SkillSnapshot
 		return value;
 	}
 
+	/*
+	 * 대상이 만족하는 상태 중첩 규칙의 피해 배율을 모두 곱해 반환한다.
+	 */
 	public float ResolveConditionalDamageMultiplier(UnitCombatState target)
 	{
 		if (target == null || conditionalDamageRules.Count == 0)
@@ -882,6 +1018,9 @@ public class SkillSnapshot
 		return num;
 	}
 
+	/*
+	 * 대상이 만족하는 상태 중첩 규칙의 치명타 확률 보너스를 모두 더해 반환한다.
+	 */
 	public float ResolveConditionalCritChanceBonus(UnitCombatState target)
 	{
 		if (target == null || conditionalCritChanceRules.Count == 0)
@@ -900,6 +1039,9 @@ public class SkillSnapshot
 		return num;
 	}
 
+	/*
+	 * 현재 투사체 순서에 맞는 연속 발사 피해 배율을 모두 곱해 반환한다.
+	 */
 	public float ResolveBurstDamageMultiplier(int projectileIndex, int burstProjectileCount)
 	{
 		if (projectileIndex <= 0 || burstDamageRules.Count == 0)
@@ -918,6 +1060,9 @@ public class SkillSnapshot
 		return num;
 	}
 
+	/*
+	 * 현재 투사체 순서에 맞는 연속 발사 상태 중첩 보너스를 모두 더해 반환한다.
+	 */
 	public int ResolveBurstStatusStacksBonus(int projectileIndex, int burstProjectileCount)
 	{
 		if (projectileIndex <= 0 || burstStatusRules.Count == 0)
@@ -936,6 +1081,9 @@ public class SkillSnapshot
 		return num;
 	}
 
+	/*
+	 * 대상이 지정한 상태 또는 보호막의 최소 중첩 조건을 만족하는지 확인한다.
+	 */
 	private static bool HasRequiredStacks(UnitCombatState target, StatusEffectKind statusKind, int minimumStacks)
 	{
 		if (target == null || minimumStacks <= 0 || statusKind == StatusEffectKind.None)
@@ -957,6 +1105,9 @@ public class SkillSnapshot
 		return false;
 	}
 
+	/*
+	 * 설정한 순서가 현재 투사체와 같은지 확인하며 0은 마지막 투사체로 처리한다.
+	 */
 	private static bool MatchesBurstProjectileIndex(int configuredIndex, int projectileIndex, int burstProjectileCount)
 	{
 		if (configuredIndex == 0)
@@ -970,6 +1121,9 @@ public class SkillSnapshot
 		return configuredIndex == projectileIndex;
 	}
 
+	/*
+	 * 양수인 값만 사용하고 그렇지 않으면 전달받은 기본값을 반환한다.
+	 */
 	private static float PositiveOrDefault(float value, float fallback)
 	{
 		if (!(value > 0f))
@@ -979,6 +1133,9 @@ public class SkillSnapshot
 		return value;
 	}
 
+	/*
+	 * 누적된 단일 속성 값을 실행기가 사용하는 조건·보정·처치 행동 목록으로 다시 만든다.
+	 */
 	private void RefreshSingleOperationBridges()
 	{
 		castConditionOps.Clear();
@@ -1007,11 +1164,17 @@ public class SkillSnapshot
 		}
 	}
 
+	/*
+	 * 원본 스킬, 현재 스냅샷과 정규화 노드로 최종 실행 계획을 다시 만든다.
+	 */
 	private void RebuildExecutionPlan()
 	{
 		Plan = SkillNodeCompiler.Compile(Source, this, normalizedPlanNodes);
 	}
 
+	/*
+	 * null이 아닌 정규화 노드만 현재 실행 계획 원본 목록에 추가한다.
+	 */
 	private void AddNormalizedPlanNodes(IReadOnlyList<SkillNode> nodes)
 	{
 		if (nodes == null || nodes.Count == 0)

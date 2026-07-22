@@ -195,6 +195,9 @@ namespace Pakuri.InGame
             combatManager.DespawnUnit(enemyModel);
         }
 
+        /*
+         * IsTouchingNexus 조건을 만족하는지 확인한다.
+         */
         private static bool IsTouchingNexus(CombatUnitEntry enemyEntry, CombatUnitEntry nexusTarget)
         {
             var enemyPoint = enemyEntry.ResolveTargetPoint();

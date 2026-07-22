@@ -10,6 +10,9 @@ namespace Pakuri.InGame
     {
         private Collider2D[] cachedHitboxColliders;
 
+        /*
+         * CombatUnitEntry에 필요한 값을 초기화한다.
+         */
         public CombatUnitEntry(UnitCombatState model, Component actor, Transform hitboxRoot = null)
         {
             Model = model;
@@ -23,6 +26,9 @@ namespace Pakuri.InGame
         public Transform HitboxRoot { get; private set; }
         public bool IsAlive => Model.Resources.CurrentHealth > 0f;
 
+        /*
+         * SetActor에 필요한 값을 설정한다.
+         */
         internal void SetActor(Component actor)
         {
             Actor = actor;
@@ -35,6 +41,9 @@ namespace Pakuri.InGame
             cachedHitboxColliders = null;
         }
 
+        /*
+         * SetHitboxRoot에 필요한 값을 설정한다.
+         */
         internal void SetHitboxRoot(Transform hitboxRoot)
         {
             HitboxRoot = hitboxRoot;
@@ -46,11 +55,17 @@ namespace Pakuri.InGame
             cachedHitboxColliders = null;
         }
 
+        /*
+         * ResolveTargetPoint 결과를 계산해 반환한다.
+         */
         public Vector3 ResolveTargetPoint()
         {
             return HitboxRoot.position;
         }
 
+        /*
+         * GetHitboxColliders에 해당하는 값을 찾아 반환한다.
+         */
         public Collider2D[] GetHitboxColliders()
         {
             if (cachedHitboxColliders == null)
@@ -61,6 +76,9 @@ namespace Pakuri.InGame
             return cachedHitboxColliders;
         }
 
+        /*
+         * ContainsTransform 조건을 만족하는지 확인한다.
+         */
         public bool ContainsTransform(Transform candidate)
         {
             if (candidate == null)
@@ -76,6 +94,9 @@ namespace Pakuri.InGame
             return candidate == HitboxRoot || candidate.IsChildOf(HitboxRoot);
         }
 
+        /*
+         * ShowDamage 작업을 수행한다.
+         */
         internal void ShowDamage(float damageAmount, bool isDead)
         {
             if (damageAmount <= 0f)
@@ -100,6 +121,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * RefreshDisplay 대상의 현재 상태를 갱신하고 결과를 반환한다.
+         */
         internal bool RefreshDisplay()
         {
             if (Actor is MonsterActor monster)
@@ -123,6 +147,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * HandleDefeat 작업을 수행한다.
+         */
         internal void HandleDefeat()
         {
             if (Actor is NexusActor nexus)
@@ -152,6 +179,9 @@ namespace Pakuri.InGame
         public IReadOnlyList<CombatUnitEntry> Enemies => enemies;
         public int EnemyCount => enemies.Count;
 
+        /*
+         * Register 작업 결과를 반환한다.
+         */
         public CombatUnitEntry Register(UnitCombatState model, Component actor, Transform hitboxRoot = null)
         {
             var existing = Find(model, actor);
@@ -177,6 +207,9 @@ namespace Pakuri.InGame
             return entry;
         }
 
+        /*
+         * Unregister 작업 결과를 반환한다.
+         */
         public bool Unregister(UnitCombatState model)
         {
             var entry = Find(model, null);
@@ -191,6 +224,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * Clear 작업을 수행한다.
+         */
         public void Clear()
         {
             entries.Clear();
@@ -198,11 +234,17 @@ namespace Pakuri.InGame
             enemies.Clear();
         }
 
+        /*
+         * Find에 해당하는 값을 찾아 반환한다.
+         */
         public CombatUnitEntry Find(UnitCombatState model)
         {
             return Find(model, null);
         }
 
+        /*
+         * FindByCollider에 해당하는 값을 찾아 반환한다.
+         */
         public CombatUnitEntry FindByCollider(Collider2D collider)
         {
             for (var i = 0; i < entries.Count; i++)
@@ -217,6 +259,9 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * RefreshDisplay 대상의 현재 상태를 갱신하고 결과를 반환한다.
+         */
         public bool RefreshDisplay(UnitCombatState model)
         {
             var entry = Find(model);
@@ -228,6 +273,9 @@ namespace Pakuri.InGame
             return entry.RefreshDisplay();
         }
 
+        /*
+         * Find에 해당하는 값을 찾아 반환한다.
+         */
         private CombatUnitEntry Find(UnitCombatState model, Component actor)
         {
             var unitId = model.Identity.UnitId;

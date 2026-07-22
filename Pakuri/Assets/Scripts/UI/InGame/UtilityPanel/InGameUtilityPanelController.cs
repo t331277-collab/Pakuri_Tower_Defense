@@ -20,6 +20,9 @@ namespace Pakuri.InGame
         private float baseFixedDeltaTime;
         private int timeScaleIndex;
 
+        /*
+         * Unity가 컴포넌트를 초기화할 때 필요한 참조와 상태를 준비한다.
+         */
         private void Awake()
         {
             ResolveReferences();
@@ -27,6 +30,9 @@ namespace Pakuri.InGame
             ApplyTimeScale(0);
         }
 
+        /*
+         * 컴포넌트가 활성화될 때 이벤트와 표시 상태를 연결한다.
+         */
         private void OnEnable()
         {
             ResolveReferences();
@@ -44,6 +50,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 컴포넌트가 비활성화될 때 연결된 이벤트를 해제한다.
+         */
         private void OnDisable()
         {
             if (autoButton != null)
@@ -57,6 +66,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 컴포넌트가 제거될 때 남아 있는 연결과 상태를 정리한다.
+         */
         private void OnDestroy()
         {
             Time.timeScale = 1f;
@@ -66,6 +78,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * ResolveReferences에 필요한 값을 계산해 현재 상태에 반영한다.
+         */
         private void ResolveReferences()
         {
             if (playerCombatControl == null)
@@ -99,11 +114,17 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * CycleTimeScale 작업을 수행한다.
+         */
         private void CycleTimeScale()
         {
             ApplyTimeScale((timeScaleIndex + 1) % TimeScales.Length);
         }
 
+        /*
+         * ApplyTimeScale 처리를 대상에 적용한다.
+         */
         private void ApplyTimeScale(int index)
         {
             timeScaleIndex = Mathf.Clamp(index, 0, TimeScales.Length - 1);
@@ -122,6 +143,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * ToggleSelectedPlayerAutoSkillMode 작업을 수행한다.
+         */
         private void ToggleSelectedPlayerAutoSkillMode()
         {
             if (playerCombatControl != null)

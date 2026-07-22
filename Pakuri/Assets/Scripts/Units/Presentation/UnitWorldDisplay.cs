@@ -24,6 +24,9 @@ namespace Pakuri.InGame
         private readonly Transform shieldFill;
         private readonly DamageNumberPopup damagePopup;
 
+        /*
+         * UnitWorldDisplay에 필요한 값을 초기화한다.
+         */
         public UnitWorldDisplay(Component owner)
         {
             nameLabel = FindTextMesh(owner, NameLabelObjectName);
@@ -85,6 +88,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * ShowDamage 작업을 수행한다.
+         */
         public void ShowDamage(float damageAmount)
         {
             if (damagePopup != null)
@@ -93,6 +99,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * SetResourceFillSegments에 필요한 값을 설정한다.
+         */
         private void SetResourceFillSegments(float currentHealth, float currentShield, float maxHealth)
         {
             var totalVisibleResource = Mathf.Max(maxHealth, currentHealth + currentShield);
@@ -104,6 +113,9 @@ namespace Pakuri.InGame
             SetSegmentScaleAndPosition(shieldFill, healthRatio, shieldRatio);
         }
 
+        /*
+         * SetSegmentScaleAndPosition에 필요한 값을 설정한다.
+         */
         private void SetSegmentScaleAndPosition(Transform target, float leftRatio, float widthRatio)
         {
             if (target == null)
@@ -126,6 +138,9 @@ namespace Pakuri.InGame
             target.localPosition = position;
         }
 
+        /*
+         * FindChild에 해당하는 값을 찾아 반환한다.
+         */
         private static Transform FindChild(Component owner, string objectName)
         {
             var children = owner.GetComponentsInChildren<Transform>(true);
@@ -140,6 +155,9 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * FindTextMesh에 해당하는 값을 찾아 반환한다.
+         */
         private static TextMesh FindTextMesh(Component owner, string objectName)
         {
             var target = FindChild(owner, objectName);
@@ -151,6 +169,9 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * ResolveLocalRenderedWidth 결과를 계산해 반환한다.
+         */
         private static float ResolveLocalRenderedWidth(Transform target, float defaultWidth)
         {
             if (target == null)
@@ -167,6 +188,9 @@ namespace Pakuri.InGame
             return Mathf.Abs(target.localScale.x) * Mathf.Max(0.0001f, spriteRenderer.sprite.bounds.size.x);
         }
 
+        /*
+         * ResolveScaleXForRenderedWidth 결과를 계산해 반환한다.
+         */
         private static float ResolveScaleXForRenderedWidth(Transform target, float renderedWidth, float defaultSignSource)
         {
             var spriteRenderer = target.GetComponent<SpriteRenderer>();
@@ -186,6 +210,9 @@ namespace Pakuri.InGame
             return sign * Mathf.Max(0f, renderedWidth) / unitWidth;
         }
 
+        /*
+         * FormatValue에 맞는 문자열을 만들어 반환한다.
+         */
         private static string FormatValue(float value)
         {
             if (Mathf.Approximately(value, Mathf.Round(value)))
@@ -196,6 +223,9 @@ namespace Pakuri.InGame
             return value.ToString("0.##");
         }
 
+        /*
+         * AppendStatusDisplay 작업 결과를 반환한다.
+         */
         private static string AppendStatusDisplay(string displayName, IReadOnlyList<StatusRuntimeInstance> statuses)
         {
             var suffix = BuildStatusDisplaySuffix(statuses);

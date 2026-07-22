@@ -19,6 +19,9 @@ internal static class SingleSkillExecutor
 
 		public bool CastCommitted { get; }
 
+		/*
+		 * SingleExecutionOutcome에 필요한 값을 초기화한다.
+		 */
 		public SingleExecutionOutcome(bool routed, bool castCommitted)
 		{
 			Routed = routed;
@@ -38,6 +41,9 @@ internal static class SingleSkillExecutor
 
 		public GameObject Prefab { get; }
 
+		/*
+		 * SingleFollowUpSpec에 필요한 값을 초기화한다.
+		 */
 		public SingleFollowUpSpec(StatusEffectKind requiredStatusKind, int repeatCount, float intervalSeconds, float damageMultiplier, GameObject prefab)
 		{
 			RequiredStatusKind = requiredStatusKind;
@@ -54,6 +60,9 @@ internal static class SingleSkillExecutor
 
 		public Vector2 Center { get; }
 
+		/*
+		 * SingleFollowUpTarget에 필요한 값을 초기화한다.
+		 */
 		public SingleFollowUpTarget(UnitCombatState model, Vector2 center)
 		{
 			Model = model;
@@ -71,6 +80,9 @@ internal static class SingleSkillExecutor
 
 		public int PlannedConsumedStacks { get; }
 
+		/*
+		 * TargetDamageResolution에 필요한 값을 초기화한다.
+		 */
 		public TargetDamageResolution(float damage, float critChanceBonus, bool isExecute, int plannedConsumedStacks)
 		{
 			Damage = damage;
@@ -84,6 +96,9 @@ internal static class SingleSkillExecutor
 
 	private const float PostDamageLifetimePaddingSeconds = 0.05f;
 
+	/*
+	 * Execute 실행 결과를 반환한다.
+	 */
 	internal static bool Execute(SkillExecutionContext context, SkillSnapshot snapshot, SingleChainSkillRuntimeData skill)
 	{
 		CombatUnitEntry unitEntry = SkillTargeting.FindNearestTarget(context.CasterEntry, context.Roster, skill.Targeting);
@@ -103,6 +118,9 @@ internal static class SingleSkillExecutor
 		return true;
 	}
 
+	/*
+	 * Execute 실행 결과를 반환한다.
+	 */
 	internal static bool Execute(SkillExecutionContext context, SkillSnapshot snapshot, SingleChargeSkillRuntimeData skill)
 	{
 		CombatUnitEntry unitEntry = SkillTargeting.FindNearestTarget(context.CasterEntry, context.Roster, skill.Targeting);
@@ -123,12 +141,18 @@ internal static class SingleSkillExecutor
 		return true;
 	}
 
+	/*
+	 * ExecuteChainAfterDelay 실행 결과를 반환한다.
+	 */
 	private static IEnumerator ExecuteChainAfterDelay(SkillExecutionContext context, SkillSnapshot snapshot, SingleChainSkillRuntimeData skill, UnitCombatState primary)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, skill.ChainDelaySeconds));
 		ExecuteChain(context, snapshot, skill, primary);
 	}
 
+	/*
+	 * ExecuteChain 실행을 처리한다.
+	 */
 	private static void ExecuteChain(SkillExecutionContext context, SkillSnapshot snapshot, SingleChainSkillRuntimeData skill, UnitCombatState primary)
 	{
 		List<CombatUnitEntry> list = SkillTargeting.ResolveOrderedTargets(context.CasterEntry, context.Roster, skill.Targeting);
@@ -160,6 +184,9 @@ internal static class SingleSkillExecutor
 		}
 	}
 
+	/*
+	 * ApplyChainHit 처리를 대상에 적용한다.
+	 */
 	private static void ApplyChainHit(SkillExecutionContext context, SkillSnapshot snapshot, SingleChainSkillRuntimeData skill, CombatUnitEntry target, float multiplier)
 	{
 		float baseDamage = DamageCalculator.ResolveDamage(context.Caster, skill.Damage, snapshot) * Mathf.Max(0f, multiplier);
@@ -171,6 +198,9 @@ internal static class SingleSkillExecutor
 		}
 	}
 
+	/*
+	 * Execute 실행 결과를 반환한다.
+	 */
 	internal static bool Execute(SkillExecutionContext context, SkillSnapshot snapshot, SingleSkillRuntimeData skill)
 	{
 		if (SingleSkillRules.ShouldRejectCastForExecuteThreshold(context, snapshot, skill))
@@ -199,17 +229,26 @@ internal static class SingleSkillExecutor
 		return true;
 	}
 
+	/*
+	 * ResolveAreaCenter 결과를 계산해 반환한다.
+	 */
 	private static Vector2 ResolveAreaCenter(SkillExecutionContext context, SkillTargetingSpec targeting, AreaBlueprintSpec area)
 	{
 		return SkillTargeting.ResolveAreaCenter(context, targeting, area);
 	}
 
+	/*
+	 * ResolveRadius 결과를 계산해 반환한다.
+	 */
 	private static float ResolveRadius(SingleSkillRuntimeData skill, SkillSnapshot snapshot)
 	{
 		AreaBlueprintSpec area = skill?.Area;
 		return SkillTargeting.ResolveRadius(SkillTargeting.ResolveBaseRadius(skill?.Targeting, area), snapshot);
 	}
 
+	/*
+	 * ResolvePrefabHitboxCenter 결과를 계산해 반환한다.
+	 */
 	private static Vector2 ResolvePrefabHitboxCenter(SkillExecutionContext context, Vector2 fallbackCenter, SingleSkillRuntimeData skill)
 	{
 		if (skill != null && skill.HitAllTargets && !UsesStatusFilteredDeployments(skill))
@@ -223,6 +262,9 @@ internal static class SingleSkillExecutor
 		return fallbackCenter;
 	}
 
+	/*
+	 * ResolveDeploymentCount 결과를 계산해 반환한다.
+	 */
 	private static int ResolveDeploymentCount(SingleSkillRuntimeData skill, SkillSnapshot snapshot)
 	{
 		if (skill == null || !skill.UseMultiDeployment)
@@ -233,6 +275,9 @@ internal static class SingleSkillExecutor
 		return Mathf.Max(1, skill.DeploymentCount + num);
 	}
 
+	/*
+	 * UsesStatusFilteredDeployments 조건을 만족하는지 확인한다.
+	 */
 	private static bool UsesStatusFilteredDeployments(SingleSkillRuntimeData skill)
 	{
 		if (skill != null)
@@ -242,6 +287,9 @@ internal static class SingleSkillExecutor
 		return false;
 	}
 
+	/*
+	 * UsesSingleLineVisual 조건을 만족하는지 확인한다.
+	 */
 	private static bool UsesSingleLineVisual(SingleSkillRuntimeData skill)
 	{
 		if (skill == null || !skill.UseMultiDeployment)
@@ -252,6 +300,9 @@ internal static class SingleSkillExecutor
 		return string.IsNullOrWhiteSpace(skill.DeploymentRequiredTargetStatusId);
 	}
 
+	/*
+	 * ResolveEffectiveHitTargetCount 결과를 계산해 반환한다.
+	 */
 	private static int ResolveEffectiveHitTargetCount(SingleSkillRuntimeData skill, SkillSnapshot snapshot)
 	{
 		if (skill == null)
@@ -266,6 +317,9 @@ internal static class SingleSkillExecutor
 		return Mathf.Max(1, skill.HitTargetCount + num);
 	}
 
+	/*
+	 * UsesResolvedDeployments 조건을 만족하는지 확인한다.
+	 */
 	private static bool UsesResolvedDeployments(SingleSkillRuntimeData skill)
 	{
 		if (skill != null)
@@ -279,6 +333,9 @@ internal static class SingleSkillExecutor
 		return false;
 	}
 
+	/*
+	 * ResolveDeploymentCenters 결과를 계산해 반환한다.
+	 */
 	private static List<Vector2> ResolveDeploymentCenters(SkillExecutionContext context, SingleSkillRuntimeData skill, Vector2 primaryCenter, int deploymentCount)
 	{
 		if (UsesStatusFilteredDeployments(skill))
@@ -312,6 +369,9 @@ internal static class SingleSkillExecutor
 		return SkillTargeting.ResolveTargetAnchoredCenters(context, targeting, primaryCenter, deploymentCount, coverAll, SkillDeploymentRepeatMode.RepeatNearest);
 	}
 
+	/*
+	 * ExecuteResolvedDeployments 실행 결과를 반환한다.
+	 */
 	private static SingleExecutionOutcome ExecuteResolvedDeployments(SkillExecutionContext context, SkillSnapshot snapshot, SingleSkillRuntimeData skill, Vector2 primaryCenter, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab)
 	{
 		int deploymentCount = ResolveDeploymentCount(skill, snapshot);
@@ -330,6 +390,9 @@ internal static class SingleSkillExecutor
 		return new SingleExecutionOutcome(flag, flag2);
 	}
 
+	/*
+	 * ScheduleRepeatedDeployments 작업을 수행한다.
+	 */
 	private static void ScheduleRepeatedDeployments(SkillExecutionContext context, SkillSnapshot snapshot, SingleSkillRuntimeData skill, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab)
 	{
 		if (context == null || context.CombatManager == null || skill == null || snapshot == null || snapshot.RepeatCountPerTarget <= 0)
@@ -352,6 +415,9 @@ internal static class SingleSkillExecutor
 		}
 	}
 
+	/*
+	 * ExecuteRepeatedDeploymentAfterDelay 실행 결과를 반환한다.
+	 */
 	private static IEnumerator ExecuteRepeatedDeploymentAfterDelay(SkillExecutionContext context, SkillSnapshot snapshot, SingleSkillRuntimeData skill, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab, float delaySeconds)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
@@ -362,6 +428,9 @@ internal static class SingleSkillExecutor
 		}
 	}
 
+	/*
+	 * ExecuteAtCenter 실행 결과를 반환한다.
+	 */
 	private static SingleExecutionOutcome ExecuteAtCenter(SkillExecutionContext context, SkillSnapshot snapshot, SingleSkillRuntimeData skill, Vector2 center, RuntimeSkillVisualSpec runtimeVisual, GameObject prefab, bool allowConditionalFollowUp)
 	{
 		float radius = ResolveRadius(skill, snapshot);
@@ -439,6 +508,9 @@ internal static class SingleSkillExecutor
 		return new SingleExecutionOutcome(flag2, castCommitted);
 	}
 
+	/*
+	 * ApplyNonPrefabTargets 처리를 대상에 적용한다.
+	 */
 	private static bool ApplyNonPrefabTargets(SkillExecutionContext context, SkillSnapshot snapshot, SingleSkillRuntimeData skill, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, ProjectileStatusHitSpec statusSpec, SkillEffectDefinition[] onHitStatusEffects, SkillRuntimeInstance onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets)
 	{
 		if (context == null || context.CombatManager == null || context.CasterEntry == null || context.Roster == null || skill == null)
@@ -452,6 +524,9 @@ internal static class SingleSkillExecutor
 		return ApplyAreaTargets(context.CombatManager, context.CasterEntry, context.Roster, skill, skill.Targeting, center, radius, coverAll, damage, attribute, statusSpec, onHitStatusEffects, context.Caster, skill.SkillId, onHitRuntime, criticalAllowed, critChanceBonus, critDamageBonus, snapshot, followUpSpec, followUpTargets);
 	}
 
+	/*
+	 * ApplyNonPrefabTargetsAfterDelay 처리를 대상에 적용한다.
+	 */
 	private static IEnumerator ApplyNonPrefabTargetsAfterDelay(SkillExecutionContext context, SkillSnapshot snapshot, SingleSkillRuntimeData skill, Vector2 center, float radius, bool coverAll, int effectiveHitTargetCount, float damage, DamageAttribute attribute, ProjectileStatusHitSpec statusSpec, SkillEffectDefinition[] onHitStatusEffects, SkillRuntimeInstance onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, float delaySeconds, bool allowConditionalFollowUp)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
@@ -462,6 +537,9 @@ internal static class SingleSkillExecutor
 		}
 	}
 
+	/*
+	 * ApplyPrefabHitboxAfterDelay 처리를 대상에 적용한다.
+	 */
 	private static IEnumerator ApplyPrefabHitboxAfterDelay(SkillExecutionContext context, SkillSnapshot snapshot, SingleSkillRuntimeData skill, GameObject instance, int effectiveHitTargetCount, float damage, DamageAttribute attribute, ProjectileStatusHitSpec statusSpec, SkillEffectDefinition[] onHitStatusEffects, SkillRuntimeInstance onHitRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets, float delaySeconds, bool allowConditionalFollowUp)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
@@ -476,6 +554,9 @@ internal static class SingleSkillExecutor
 		}
 	}
 
+	/*
+	 * ApplyPrefabHitbox 처리를 대상에 적용한다.
+	 */
 	private static bool ApplyPrefabHitbox(InGameCombatManager manager, CombatUnitEntry sourceEntry, CombatUnitRegistry unitRoster, SingleSkillRuntimeData skill, SkillTargetingSpec targetingSpec, GameObject hitboxObject, int maxTargets, float damage, DamageAttribute attribute, ProjectileStatusHitSpec statusSpec, SkillEffectDefinition[] onHitStatusEffects, UnitCombatState source, string sourceSkillId, SkillRuntimeInstance sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillSnapshot snapshot, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null || hitboxObject == null || maxTargets <= 0)
@@ -524,6 +605,9 @@ internal static class SingleSkillExecutor
 		return result;
 	}
 
+	/*
+	 * ApplyLimitedTargets 처리를 대상에 적용한다.
+	 */
 	private static bool ApplyLimitedTargets(InGameCombatManager manager, CombatUnitEntry sourceEntry, CombatUnitRegistry unitRoster, SingleSkillRuntimeData skill, SkillTargetingSpec targetingSpec, int maxTargets, float damage, DamageAttribute attribute, ProjectileStatusHitSpec statusSpec, SkillEffectDefinition[] onHitStatusEffects, UnitCombatState source, string sourceSkillId, SkillRuntimeInstance sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillSnapshot snapshot, Vector2 center, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null || maxTargets <= 0)
@@ -561,6 +645,9 @@ internal static class SingleSkillExecutor
 		return result;
 	}
 
+	/*
+	 * ApplyAreaTargets 처리를 대상에 적용한다.
+	 */
 	private static bool ApplyAreaTargets(InGameCombatManager manager, CombatUnitEntry sourceEntry, CombatUnitRegistry unitRoster, SingleSkillRuntimeData skill, SkillTargetingSpec targetingSpec, Vector2 center, float radius, bool coverAll, float damage, DamageAttribute attribute, ProjectileStatusHitSpec statusSpec, SkillEffectDefinition[] onHitStatusEffects, UnitCombatState source, string sourceSkillId, SkillRuntimeInstance sourceRuntime, bool criticalAllowed, float critChanceBonus, float critDamageBonus, SkillSnapshot snapshot, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets)
 	{
 		if (manager == null || sourceEntry == null || unitRoster == null)
@@ -622,11 +709,17 @@ internal static class SingleSkillExecutor
 		return result2;
 	}
 
+	/*
+	 * IsTargetInsideHitbox 조건을 만족하는지 확인한다.
+	 */
 	private static bool IsTargetInsideHitbox(Collider2D[] hitboxColliders, CombatUnitEntry target)
 	{
 		return UnitHitboxOverlap.IsTargetInsideHitbox(hitboxColliders, target);
 	}
 
+	/*
+	 * ResolveCoreHitboxColliders 결과를 계산해 반환한다.
+	 */
 	private static Collider2D[] ResolveCoreHitboxColliders(GameObject hitboxObject, SkillSnapshot snapshot)
 	{
 		if (hitboxObject == null || snapshot == null || string.IsNullOrWhiteSpace(snapshot.CoreHitboxName))
@@ -653,6 +746,9 @@ internal static class SingleSkillExecutor
 		return list.ToArray();
 	}
 
+	/*
+	 * ResolveOnHitStatusEffects 결과를 계산해 반환한다.
+	 */
 	private static SkillEffectDefinition[] ResolveOnHitStatusEffects(SkillExecutionContext context, SkillSnapshot snapshot, SkillEffectDefinition[] effects)
 	{
 		if (effects == null || effects.Length == 0)
@@ -674,6 +770,9 @@ internal static class SingleSkillExecutor
 		return list.ToArray();
 	}
 
+	/*
+	 * TryApplyOnHitStatusEffects 작업을 시도하고 성공 여부를 반환한다.
+	 */
 	private static void TryApplyOnHitStatusEffects(InGameCombatManager manager, UnitCombatState target, SkillEffectDefinition[] effects, UnitCombatState source)
 	{
 		if (manager == null || target == null || effects == null || effects.Length == 0)
@@ -693,6 +792,9 @@ internal static class SingleSkillExecutor
 		}
 	}
 
+	/*
+	 * TryApplyCoreOnHitAdditionalDamage 작업을 시도하고 성공 여부를 반환한다.
+	 */
 	private static void TryApplyCoreOnHitAdditionalDamage(InGameCombatManager manager, SkillSnapshot snapshot, UnitCombatState source, string sourceSkillId, CombatUnitEntry target, float primaryDamage, bool isCoreHit)
 	{
 		if (isCoreHit && !(manager == null) && snapshot != null && snapshot.HasCoreOnHitAdditionalDamage && !(snapshot.CoreOnHitAdditionalDamageMultiplier <= 0f) && source != null && target != null && target.IsAlive && target.Model != null && !(primaryDamage <= 0f) && !(UnityEngine.Random.value > Mathf.Clamp01(snapshot.CoreOnHitAdditionalDamageChance)))
@@ -701,6 +803,9 @@ internal static class SingleSkillExecutor
 		}
 	}
 
+	/*
+	 * TryApplyHitCountCooldownRefund 작업을 시도하고 성공 여부를 반환한다.
+	 */
 	private static void TryApplyHitCountCooldownRefund(SkillRuntimeInstance sourceRuntime, SkillSnapshot snapshot, int hitCount)
 	{
 		if (sourceRuntime != null && sourceRuntime.Owner != null && sourceRuntime.Owner.SkillRuntime != null && snapshot != null && hitCount >= snapshot.HitCountCooldownRefundMinTargets && !string.IsNullOrWhiteSpace(snapshot.HitCountCooldownRefundTargetSkillId) && !(snapshot.HitCountCooldownRefundRatio <= 0f))
@@ -710,6 +815,9 @@ internal static class SingleSkillExecutor
 		}
 	}
 
+	/*
+	 * TryExecuteOnHitCountEffects 작업을 시도하고 성공 여부를 반환한다.
+	 */
 	private static void TryExecuteOnHitCountEffects(InGameCombatManager manager, CombatUnitRegistry roster, CombatUnitEntry sourceEntry, SkillRuntimeInstance sourceRuntime, SingleSkillRuntimeData skill, SkillSnapshot snapshot, int hitCount, Vector2 center)
 	{
 		if (!(manager == null) && roster != null && sourceEntry != null && skill != null && hitCount > 0)
@@ -718,6 +826,9 @@ internal static class SingleSkillExecutor
 		}
 	}
 
+	/*
+	 * ResolveFollowUpSpec 결과를 계산해 반환한다.
+	 */
 	private static SingleFollowUpSpec? ResolveFollowUpSpec(SkillSnapshot snapshot, ProjectileStatusHitSpec statusSpec, GameObject prefab)
 	{
 		if (snapshot == null || !snapshot.HasBranchCount || snapshot.BranchCount <= 0 || !snapshot.HasBranchDamageMultiplier || snapshot.BranchDamageMultiplier <= 0f || !snapshot.HasBranchSearchRadius || snapshot.BranchSearchRadius <= 0f)
@@ -731,6 +842,9 @@ internal static class SingleSkillExecutor
 		return new SingleFollowUpSpec(statusSpec.Kind, snapshot.BranchCount, snapshot.BranchSearchRadius, snapshot.BranchDamageMultiplier, prefab);
 	}
 
+	/*
+	 * RegisterFollowUpTarget 작업을 수행한다.
+	 */
 	private static void RegisterFollowUpTarget(List<SingleFollowUpTarget> followUpTargets, SingleFollowUpSpec? followUpSpec, CombatUnitEntry target, Vector2 center)
 	{
 		if (followUpTargets == null || !followUpSpec.HasValue || target == null || target.Model == null || !HasStatus(target.Model, followUpSpec.Value.RequiredStatusKind))
@@ -747,6 +861,9 @@ internal static class SingleSkillExecutor
 		followUpTargets.Add(new SingleFollowUpTarget(target.Model, center));
 	}
 
+	/*
+	 * ScheduleConditionalFollowUps 작업을 수행한다.
+	 */
 	private static void ScheduleConditionalFollowUps(SkillExecutionContext context, SkillSnapshot snapshot, SingleSkillRuntimeData skill, SingleFollowUpSpec? followUpSpec, List<SingleFollowUpTarget> followUpTargets)
 	{
 		if (context == null || context.CombatManager == null || context.Roster == null || context.CasterEntry == null || context.Caster == null || skill == null || !followUpSpec.HasValue || followUpTargets == null || followUpTargets.Count == 0)
@@ -764,6 +881,9 @@ internal static class SingleSkillExecutor
 		}
 	}
 
+	/*
+	 * ExecuteConditionalFollowUpAfterDelay 실행 결과를 반환한다.
+	 */
 	private static IEnumerator ExecuteConditionalFollowUpAfterDelay(SkillExecutionContext context, SkillSnapshot snapshot, SingleSkillRuntimeData skill, SingleFollowUpTarget followUpTarget, SingleFollowUpSpec followUpSpec, float delaySeconds)
 	{
 		yield return new WaitForSeconds(Mathf.Max(0f, delaySeconds));
@@ -777,6 +897,9 @@ internal static class SingleSkillExecutor
 	}
 
 
+	/*
+	 * ResolveTargetDamage 결과를 계산해 반환한다.
+	 */
 	private static TargetDamageResolution ResolveTargetDamage(UnitCombatState caster, SingleSkillRuntimeData skill, SkillSnapshot snapshot, float baseDamage, UnitCombatState target, float baseCritChanceBonus, bool isCoreHit)
 	{
 		float num = Mathf.Max(0f, baseDamage + ResolveTargetStatusStackAdditionalDamage(caster, skill, snapshot, target, baseDamage));
@@ -795,6 +918,9 @@ internal static class SingleSkillExecutor
 		return new TargetDamageResolution(Mathf.Max(0f, num * Mathf.Max(0f, num2)), critChanceBonus, flag, plannedConsumedStacks);
 	}
 
+	/*
+	 * ResolveTargetStatusStackAdditionalDamage 결과를 계산해 반환한다.
+	 */
 	private static float ResolveTargetStatusStackAdditionalDamage(UnitCombatState caster, SingleSkillRuntimeData skill, SkillSnapshot snapshot, UnitCombatState target, float baseDamage)
 	{
 		if (caster == null || skill == null || target == null || skill.TargetStatusStackDamage == null || skill.TargetStatusStackStatusKind == StatusEffectKind.None)
@@ -822,6 +948,9 @@ internal static class SingleSkillExecutor
 		return Mathf.Max(0f, (float)num * num4);
 	}
 
+	/*
+	 * ResolvePlannedConsumedStacks 결과를 계산해 반환한다.
+	 */
 	private static int ResolvePlannedConsumedStacks(SingleSkillRuntimeData skill, SkillSnapshot snapshot, UnitCombatState target)
 	{
 		if (skill == null || target == null || skill.ConsumeTargetStatusKind == StatusEffectKind.None)
@@ -853,6 +982,9 @@ internal static class SingleSkillExecutor
 		return Mathf.Clamp(Mathf.FloorToInt((float)num * Mathf.Clamp01(num2)), 0, num);
 	}
 
+	/*
+	 * ConsumePlannedTargetStatusStacks 작업 결과를 반환한다.
+	 */
 	private static int ConsumePlannedTargetStatusStacks(InGameCombatManager manager, UnitCombatState target, SingleSkillRuntimeData skill, TargetDamageResolution damageResolution)
 	{
 		if (manager == null || target == null || skill == null || damageResolution.PlannedConsumedStacks <= 0 || skill.ConsumeTargetStatusKind == StatusEffectKind.None)
@@ -862,6 +994,9 @@ internal static class SingleSkillExecutor
 		return manager.ConsumeStatusStacks(target, skill.ConsumeTargetStatusKind, damageResolution.PlannedConsumedStacks);
 	}
 
+	/*
+	 * TryRedistributeConsumedStatusOnKill 작업을 시도하고 성공 여부를 반환한다.
+	 */
 	private static void TryRedistributeConsumedStatusOnKill(InGameCombatManager manager, CombatUnitEntry sourceEntry, CombatUnitRegistry roster, UnitCombatState source, SkillSnapshot snapshot, CombatUnitEntry defeatedTarget, InGameResourceChangeResult result, int consumedStacks)
 	{
 		if (manager == null || sourceEntry == null || roster == null || source == null || snapshot == null || defeatedTarget == null || defeatedTarget.Transform == null || !result.IsDead || consumedStacks <= 0 || snapshot.RedistributeConsumedStatusRatioOnKill <= 0f || snapshot.RedistributeConsumedStatusKind == StatusEffectKind.None || snapshot.RedistributeConsumedStatusSearchRadius <= 0f)
@@ -899,6 +1034,9 @@ internal static class SingleSkillExecutor
 		}
 	}
 
+	/*
+	 * ResolveRedistributionTargets 결과를 계산해 반환한다.
+	 */
 	private static List<CombatUnitEntry> ResolveRedistributionTargets(CombatUnitEntry sourceEntry, CombatUnitRegistry roster, Vector2 center, float radius, UnitCombatState excludedModel, int maxTargetCount)
 	{
 		List<CombatUnitEntry> list = new List<CombatUnitEntry>();
@@ -935,6 +1073,9 @@ internal static class SingleSkillExecutor
 		return list;
 	}
 
+	/*
+	 * ResolveStatusStacks 결과를 계산해 반환한다.
+	 */
 	private static int ResolveStatusStacks(UnitCombatState target, StatusEffectKind kind)
 	{
 		if (target == null || kind == StatusEffectKind.None)
@@ -956,6 +1097,9 @@ internal static class SingleSkillExecutor
 		return target.Statuses.GetStacks(kind);
 	}
 
+	/*
+	 * HasStatus 조건을 만족하는지 확인한다.
+	 */
 	private static bool HasStatus(UnitCombatState target, StatusEffectKind kind)
 	{
 		if (target != null && target.Statuses != null && kind != StatusEffectKind.None)
@@ -965,6 +1109,9 @@ internal static class SingleSkillExecutor
 		return false;
 	}
 
+	/*
+	 * TryApplyStatus 작업을 시도하고 성공 여부를 반환한다.
+	 */
 	private static void TryApplyStatus(InGameCombatManager manager, UnitCombatState target, ProjectileStatusHitSpec statusSpec, UnitCombatState source)
 	{
 		StatusCombatRules.ApplyStatus(manager, target, statusSpec, source);

@@ -9,6 +9,9 @@ namespace Pakuri.InGame
 {
     internal static class EnemyPassiveModifiers
     {
+        /*
+         * Apply 처리를 대상에 적용한다.
+         */
         public static void Apply(
             EnemyCombatState enemy,
             EnemyPassiveDefinition passive)
@@ -64,6 +67,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * ResolveOutgoingDamageMultiplier 결과를 계산해 반환한다.
+         */
         public static float ResolveOutgoingDamageMultiplier(
             EnemyCombatState enemy,
             DamageAttribute attribute)
@@ -92,6 +98,9 @@ namespace Pakuri.InGame
             throw new InvalidOperationException("Unsupported damage attribute: " + attribute);
         }
 
+        /*
+         * MultiplyOutgoingDamage 작업을 수행한다.
+         */
         private static void MultiplyOutgoingDamage(
             EnemyCombatState enemy,
             DamageAttribute attribute,
@@ -120,6 +129,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * MultiplyDefenses 작업을 수행한다.
+         */
         private static void MultiplyDefenses(UnitDefenseStats defenses, float multiplier)
         {
             if (defenses == null)
@@ -135,6 +147,9 @@ namespace Pakuri.InGame
             defenses.Holy *= multiplier;
         }
 
+        /*
+         * MultiplyDefense 작업을 수행한다.
+         */
         private static void MultiplyDefense(
             UnitDefenseStats defenses,
             DamageAttribute attribute,

@@ -24,48 +24,75 @@ namespace Pakuri.Data
             lookup.RegisterCatalog(this);
         }
 
+        /*
+         * GetData에 해당하는 값을 찾아 반환한다.
+         */
         public T GetData<T>(string id)
             where T : class
         {
             return lookup.GetData<T>(id);
         }
 
+        /*
+         * TryGetData 작업을 시도하고 성공 여부를 반환한다.
+         */
         public bool TryGetData<T>(string id, out T value)
             where T : class
         {
             return lookup.TryGetData(id, out value);
         }
 
+        /*
+         * GetMonsters에 해당하는 값을 찾아 반환한다.
+         */
         public MonsterDefinition[] GetMonsters()
         {
             return Monsters;
         }
 
+        /*
+         * ResolveMonster 결과를 계산해 반환한다.
+         */
         public MonsterDefinition ResolveMonster(string id)
         {
             return lookup.ResolveMonster(id);
         }
 
+        /*
+         * GetActiveSkills에 해당하는 값을 찾아 반환한다.
+         */
         public SkillDefinition[] GetActiveSkills(string monsterId)
         {
             return lookup.GetActiveSkills(monsterId);
         }
 
+        /*
+         * GetPassiveSkills에 해당하는 값을 찾아 반환한다.
+         */
         public PassiveDefinition[] GetPassiveSkills(string monsterId)
         {
             return lookup.GetPassiveSkills(monsterId);
         }
 
+        /*
+         * GetRewardChoices에 해당하는 값을 찾아 반환한다.
+         */
         public MonsterDefinition.RewardChoiceDefinition[] GetRewardChoices(string monsterId)
         {
             return lookup.GetRewardChoices(monsterId);
         }
 
+        /*
+         * ResolveActiveSkill 결과를 계산해 반환한다.
+         */
         public SkillDefinition ResolveActiveSkill(string monsterId, SkillSlot slot)
         {
             return lookup.ResolveActiveSkill(monsterId, slot);
         }
 
+        /*
+         * ResolvePassiveSkill 결과를 계산해 반환한다.
+         */
         public PassiveDefinition ResolvePassiveSkill(string monsterId, SkillSlot slot)
         {
             return lookup.ResolvePassiveSkill(monsterId, slot);

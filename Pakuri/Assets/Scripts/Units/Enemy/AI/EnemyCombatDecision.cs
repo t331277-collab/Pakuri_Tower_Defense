@@ -153,6 +153,9 @@ namespace Pakuri.InGame
             return runtime;
         }
 
+        /*
+         * IsSupportSkill 조건을 만족하는지 확인한다.
+         */
         public static bool IsSupportSkill(SkillRuntimeInstance runtime)
         {
             return runtime != null && runtime.Data.Targeting.TargetSide != SkillTargetSide.Enemy;
@@ -171,6 +174,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * HasCombatStartTrigger 조건을 만족하는지 확인한다.
+         */
         private static bool HasCombatStartTrigger(SkillRuntimeInstance runtime)
         {
             if (runtime == null)

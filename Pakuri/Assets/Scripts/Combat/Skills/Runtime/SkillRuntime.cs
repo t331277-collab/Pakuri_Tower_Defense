@@ -671,6 +671,9 @@ namespace Pakuri.InGame
             return -1;
         }
 
+        /*
+         * FindChoice에 해당하는 값을 찾아 반환한다.
+         */
         private static SkillChoiceRuntimeData FindChoice(SkillRuntimeData skill, string choiceId)
         {
             var choice = FindChoice(skill.EnhancementChoices, choiceId);
@@ -694,6 +697,9 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * FindChoice에 해당하는 값을 찾아 반환한다.
+         */
         private static SkillChoiceRuntimeData FindChoice(SkillChoiceRuntimeData[] choices, string choiceId)
         {
             for (var i = 0; i < choices.Length; i++)

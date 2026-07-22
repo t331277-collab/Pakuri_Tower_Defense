@@ -8,6 +8,9 @@ namespace Pakuri.InGame
 {
     internal static class NexusHealthDisplay
     {
+        /*
+         * Refresh 대상의 현재 상태를 갱신한다.
+         */
         public static void Refresh(TextMeshProUGUI label, UnitCombatState model)
         {
             var current = Mathf.CeilToInt(Mathf.Max(0f, model.Resources.CurrentHealth));

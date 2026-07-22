@@ -22,6 +22,9 @@ namespace Pakuri.InGame
     [Serializable]
     public readonly struct RunDayModel
     {
+        /*
+         * RunDayModel에 필요한 값을 초기화한다.
+         */
         public RunDayModel(int stageIndex, int dayIndex, RunCombatType combatType, bool hasEliteOption, bool hasShopOption)
         {
             StageIndex = Math.Max(1, Math.Min(stageIndex, 4));
@@ -37,6 +40,9 @@ namespace Pakuri.InGame
         public bool HasEliteOption { get; }
         public bool HasShopOption { get; }
 
+        /*
+         * Resolve 결과를 계산해 반환한다.
+         */
         public static RunDayModel Resolve(int stageIndex, int dayIndex)
         {
             var clampedDay = Math.Max(1, Math.Min(dayIndex, 11));
@@ -108,6 +114,9 @@ namespace Pakuri.InGame
         public readonly List<string> ManifestedMonsterIds = new List<string>();
         public readonly List<RunMonsterState> PartyMembers = new List<RunMonsterState>();
 
+        /*
+         * Begin 작업 결과를 반환한다.
+         */
         public static RunSession Begin(MonsterDefinition monster)
         {
             var session = new RunSession
@@ -132,6 +141,9 @@ namespace Pakuri.InGame
             return session;
         }
 
+        /*
+         * ResolveDefaultActiveSkillId 결과를 계산해 반환한다.
+         */
         private static string ResolveDefaultActiveSkillId(MonsterDefinition monster)
         {
             if (monster == null || monster.ActiveSkills == null)
@@ -160,6 +172,9 @@ namespace Pakuri.InGame
             return string.Empty;
         }
 
+        /*
+         * ResolveDefaultPassiveSkillId 결과를 계산해 반환한다.
+         */
         private static string ResolveDefaultPassiveSkillId(MonsterDefinition monster)
         {
             if (monster == null || monster.PassiveSkills == null)
@@ -182,11 +197,17 @@ namespace Pakuri.InGame
             return string.Empty;
         }
 
+        /*
+         * HasChosenReward 조건을 만족하는지 확인한다.
+         */
         public bool HasChosenReward(string rewardId)
         {
             return HasChosenReward(SelectedMonsterId, rewardId);
         }
 
+        /*
+         * HasChosenReward 조건을 만족하는지 확인한다.
+         */
         public bool HasChosenReward(string monsterId, string rewardId)
         {
             if (string.IsNullOrWhiteSpace(rewardId))
@@ -207,11 +228,17 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * RecordOfferingChoice 작업을 수행한다.
+         */
         public void RecordOfferingChoice(string rewardId, string linkedChoiceId, string activeSkillId, string passiveSkillId)
         {
             RecordOfferingChoice(SelectedMonsterId, rewardId, linkedChoiceId, activeSkillId, passiveSkillId);
         }
 
+        /*
+         * RecordOfferingChoice 작업을 수행한다.
+         */
         public void RecordOfferingChoice(
             string monsterId,
             string rewardId,
@@ -241,11 +268,17 @@ namespace Pakuri.InGame
             AddLearnedPassive(monsterId, passiveSkillId);
         }
 
+        /*
+         * AddLearnedActive 작업을 수행한다.
+         */
         public void AddLearnedActive(string activeSkillId)
         {
             AddLearnedActive(SelectedMonsterId, activeSkillId);
         }
 
+        /*
+         * AddLearnedActive 작업을 수행한다.
+         */
         public void AddLearnedActive(string monsterId, string activeSkillId)
         {
             var member = GetPartyMemberState(monsterId);
@@ -256,11 +289,17 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * AddLearnedPassive 작업을 수행한다.
+         */
         public void AddLearnedPassive(string passiveSkillId)
         {
             AddLearnedPassive(SelectedMonsterId, passiveSkillId);
         }
 
+        /*
+         * AddLearnedPassive 작업을 수행한다.
+         */
         public void AddLearnedPassive(string monsterId, string passiveSkillId)
         {
             var member = GetPartyMemberState(monsterId);
@@ -271,28 +310,43 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * HasLearnedActive 조건을 만족하는지 확인한다.
+         */
         public bool HasLearnedActive(string activeSkillId)
         {
             return HasLearnedActive(SelectedMonsterId, activeSkillId);
         }
 
+        /*
+         * HasLearnedActive 조건을 만족하는지 확인한다.
+         */
         public bool HasLearnedActive(string monsterId, string activeSkillId)
         {
             var member = GetPartyMemberState(monsterId);
             return ContainsText(member != null ? member.LearnedActives : LearnedActives, activeSkillId);
         }
 
+        /*
+         * HasLearnedPassive 조건을 만족하는지 확인한다.
+         */
         public bool HasLearnedPassive(string passiveSkillId)
         {
             return HasLearnedPassive(SelectedMonsterId, passiveSkillId);
         }
 
+        /*
+         * HasLearnedPassive 조건을 만족하는지 확인한다.
+         */
         public bool HasLearnedPassive(string monsterId, string passiveSkillId)
         {
             var member = GetPartyMemberState(monsterId);
             return ContainsText(member != null ? member.LearnedPassives : LearnedPassives, passiveSkillId);
         }
 
+        /*
+         * AddUniqueText 작업을 수행한다.
+         */
         private static void AddUniqueText(List<string> values, string value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -306,6 +360,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * ContainsText 조건을 만족하는지 확인한다.
+         */
         private static bool ContainsText(IReadOnlyList<string> values, string target)
         {
             if (string.IsNullOrWhiteSpace(target))
@@ -324,11 +381,17 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * ApplyPostCombatSummary 처리를 대상에 적용한다.
+         */
         public void ApplyPostCombatSummary(int goldReward, int darkTraceReward, int prisonerCount)
         {
             ApplyPostCombatSummary(goldReward, darkTraceReward, prisonerCount, null);
         }
 
+        /*
+         * ApplyPostCombatSummary 처리를 대상에 적용한다.
+         */
         public void ApplyPostCombatSummary(int goldReward, int darkTraceReward, int prisonerCount, IReadOnlyList<string> prisonerNames)
         {
             Gold += goldReward;
@@ -349,12 +412,18 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * ClaimMaterialReward 작업을 수행한다.
+         */
         public void ClaimMaterialReward(int goldReward, int darkTraceReward)
         {
             Gold += Math.Max(0, goldReward);
             DarkTrace += Math.Max(0, darkTraceReward);
         }
 
+        /*
+         * ClaimPrisonerReward 작업을 수행한다.
+         */
         public void ClaimPrisonerReward(string prisonerName)
         {
             if (string.IsNullOrWhiteSpace(prisonerName))
@@ -366,6 +435,9 @@ namespace Pakuri.InGame
             PrisonerNames.Add(prisonerName);
         }
 
+        /*
+         * HasManifestedMonster 조건을 만족하는지 확인한다.
+         */
         public bool HasManifestedMonster(string monsterId)
         {
             if (string.IsNullOrWhiteSpace(monsterId))
@@ -376,6 +448,9 @@ namespace Pakuri.InGame
             return ContainsText(ManifestedMonsterIds, monsterId);
         }
 
+        /*
+         * RecordManifestedMonster 작업을 수행한다.
+         */
         public void RecordManifestedMonster(string monsterId)
         {
             if (string.IsNullOrWhiteSpace(monsterId)
@@ -388,6 +463,9 @@ namespace Pakuri.InGame
             ManifestedMonsterIds.Add(monsterId);
         }
 
+        /*
+         * RecordManifestedMonster 작업을 수행한다.
+         */
         public void RecordManifestedMonster(MonsterDefinition monster)
         {
             if (monster == null
@@ -402,6 +480,9 @@ namespace Pakuri.InGame
             EnsurePartyMemberState(monster);
         }
 
+        /*
+         * AccumulateReward 작업을 수행한다.
+         */
         public void AccumulateReward(
             float damageMultiplier,
             int magazineBonus,
@@ -418,6 +499,9 @@ namespace Pakuri.InGame
             StatusChanceBonus += statusChanceBonus;
         }
 
+        /*
+         * AccumulateReward 작업을 수행한다.
+         */
         public void AccumulateReward(
             string monsterId,
             float damageMultiplier,
@@ -447,6 +531,9 @@ namespace Pakuri.InGame
             member.StatusChanceBonus += statusChanceBonus;
         }
 
+        /*
+         * EnsurePartyMemberState에 필요한 상태가 준비되어 있는지 확인하고 구성한다.
+         */
         public RunMonsterState EnsurePartyMemberState(MonsterDefinition monster)
         {
             if (monster == null || string.IsNullOrWhiteSpace(monster.MonsterId))
@@ -480,6 +567,9 @@ namespace Pakuri.InGame
             return state;
         }
 
+        /*
+         * GetPartyMemberState에 해당하는 값을 찾아 반환한다.
+         */
         public RunMonsterState GetPartyMemberState(string monsterId)
         {
             if (string.IsNullOrWhiteSpace(monsterId))
@@ -499,12 +589,18 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * IsSelectedMonster 조건을 만족하는지 확인한다.
+         */
         private bool IsSelectedMonster(string monsterId)
         {
             return !string.IsNullOrWhiteSpace(monsterId)
                 && string.Equals(SelectedMonsterId, monsterId, StringComparison.OrdinalIgnoreCase);
         }
 
+        /*
+         * CopyUnique에 필요한 값을 복사한다.
+         */
         private static void CopyUnique(IReadOnlyList<string> source, List<string> target)
         {
             if (source == null || target == null)
@@ -518,6 +614,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * AdvanceDay 작업을 수행한다.
+         */
         public void AdvanceDay()
         {
             DayIndex += 1;
@@ -532,6 +631,9 @@ namespace Pakuri.InGame
             RefreshDayModel();
         }
 
+        /*
+         * RefreshDayModel 대상의 현재 상태를 갱신한다.
+         */
         public void RefreshDayModel()
         {
             CurrentDayModel = RunDayModel.Resolve(StageIndex, DayIndex);

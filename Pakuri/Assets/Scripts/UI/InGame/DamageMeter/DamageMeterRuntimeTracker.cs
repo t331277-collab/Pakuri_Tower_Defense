@@ -16,12 +16,18 @@ namespace Pakuri.InGame
         public static DamageMeterRuntimeTracker Active { get; private set; }
         public int Version { get; private set; }
 
+        /*
+         * Unity가 컴포넌트를 초기화할 때 필요한 참조와 상태를 준비한다.
+         */
         private void Awake()
         {
             Active = this;
             ResetMeter();
         }
 
+        /*
+         * 컴포넌트가 활성화될 때 이벤트와 표시 상태를 연결한다.
+         */
         private void OnEnable()
         {
             Active = this;
@@ -33,6 +39,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 컴포넌트가 비활성화될 때 연결된 이벤트를 해제한다.
+         */
         private void OnDisable()
         {
             if (combatManager != null)
@@ -46,6 +55,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * ResolveCombatManager에 필요한 값을 계산해 현재 상태에 반영한다.
+         */
         private void ResolveCombatManager()
         {
             if (combatManager == null)
@@ -54,12 +66,18 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * ResetMeter 작업을 수행한다.
+         */
         public void ResetMeter()
         {
             records.Clear();
             Version++;
         }
 
+        /*
+         * TryGetRecord 작업을 시도하고 성공 여부를 반환한다.
+         */
         public bool TryGetRecord(string monsterId, out MonsterDamageRecord record)
         {
             if (string.IsNullOrWhiteSpace(monsterId))
@@ -71,6 +89,9 @@ namespace Pakuri.InGame
             return records.TryGetValue(monsterId, out record);
         }
 
+        /*
+         * Record 작업을 수행한다.
+         */
         private void Record(DamageApplicationOptions options, InGameResourceChangeResult result)
         {
             // Code Builder: 피해 통계는 전투 결과 이벤트를 받아 이 Tracker가 기록한다.
@@ -117,6 +138,9 @@ namespace Pakuri.InGame
         private readonly Dictionary<string, SkillDamageRecord> sources = new Dictionary<string, SkillDamageRecord>(StringComparer.OrdinalIgnoreCase);
         private readonly List<SkillDamageRecord> orderedSources = new List<SkillDamageRecord>();
 
+        /*
+         * MonsterDamageRecord에 필요한 값을 초기화한다.
+         */
         public MonsterDamageRecord(string monsterId)
         {
             MonsterId = monsterId;
@@ -126,6 +150,9 @@ namespace Pakuri.InGame
         public float TotalDamage { get; private set; }
         public IReadOnlyList<SkillDamageRecord> OrderedSources => orderedSources;
 
+        /*
+         * AddDamage 작업을 수행한다.
+         */
         public void AddDamage(string sourceId, float amount)
         {
             if (!sources.TryGetValue(sourceId, out var source))
@@ -142,6 +169,9 @@ namespace Pakuri.InGame
 
     public class SkillDamageRecord
     {
+        /*
+         * SkillDamageRecord에 필요한 값을 초기화한다.
+         */
         public SkillDamageRecord(string sourceId)
         {
             SourceId = sourceId;
@@ -150,6 +180,9 @@ namespace Pakuri.InGame
         public string SourceId { get; }
         public float Damage { get; private set; }
 
+        /*
+         * AddDamage 작업을 수행한다.
+         */
         public void AddDamage(float amount)
         {
             Damage += amount;

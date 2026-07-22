@@ -33,7 +33,7 @@ namespace Pakuri.Combat
          * 공격력 계수와 스킬 강화, 공격자의 주는 피해 보정을 적용한다.
          */
         internal static float ResolveDamage(
-            UnitCombatState caster,
+            UnitCombatState caster, // 스킬을 사용하는 유닛 
             SkillDamageSpec damage,
             SkillSnapshot snapshot)
         {

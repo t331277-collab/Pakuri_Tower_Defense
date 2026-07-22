@@ -16,6 +16,9 @@ namespace Pakuri.InGame
         public UnitCombatState Model { get; private set; }
         public bool IsDefeated => defeated;
 
+        /*
+         * Initialize에 필요한 값을 설정한다.
+         */
         public void Initialize(UnitCombatState model)
         {
             Model = model;
@@ -24,11 +27,17 @@ namespace Pakuri.InGame
             RefreshDisplay();
         }
 
+        /*
+         * ShowDamage 작업을 수행한다.
+         */
         public void ShowDamage(float damageAmount)
         {
             display.ShowDamage(damageAmount);
         }
 
+        /*
+         * TryPlayActiveSkillAnimation 작업을 시도하고 성공 여부를 반환한다.
+         */
         public void TryPlayActiveSkillAnimation()
         {
             if (defeated)
@@ -39,6 +48,9 @@ namespace Pakuri.InGame
             ResolveAnimationController()?.PlayRandomAttack();
         }
 
+        /*
+         * TryPlayHitAnimation 작업을 시도하고 성공 여부를 반환한다.
+         */
         public void TryPlayHitAnimation()
         {
             if (defeated)
@@ -49,6 +61,9 @@ namespace Pakuri.InGame
             ResolveAnimationController()?.PlayHit();
         }
 
+        /*
+         * Defeat 작업을 수행한다.
+         */
         public void Defeat()
         {
             if (defeated)
@@ -61,6 +76,9 @@ namespace Pakuri.InGame
             ResolveAnimationController()?.PlayDeath();
         }
 
+        /*
+         * Revive 작업을 수행한다.
+         */
         public void Revive()
         {
             defeated = false;
@@ -69,11 +87,17 @@ namespace Pakuri.InGame
             RefreshDisplay();
         }
 
+        /*
+         * RefreshDisplay 대상의 현재 상태를 갱신한다.
+         */
         public void RefreshDisplay()
         {
             display.Refresh(Model);
         }
 
+        /*
+         * ResolveAnimationController 결과를 계산해 반환한다.
+         */
         private AnimationController ResolveAnimationController()
         {
             if (animationController == null)
@@ -84,6 +108,9 @@ namespace Pakuri.InGame
             return animationController;
         }
 
+        /*
+         * SetTargetCollidersEnabled에 필요한 값을 설정한다.
+         */
         private void SetTargetCollidersEnabled(bool enabled)
         {
             var colliders = GetComponentsInChildren<Collider2D>();

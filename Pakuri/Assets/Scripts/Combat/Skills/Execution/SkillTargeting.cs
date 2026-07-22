@@ -17,6 +17,9 @@ namespace Pakuri.InGame
 
     internal static class SkillTargeting
     {
+        /*
+         * ResolveOrderedTargets 결과를 계산해 반환한다.
+         */
         public static List<CombatUnitEntry> ResolveOrderedTargets(
             CombatUnitEntry sourceEntry,
             CombatUnitRegistry unitRoster,
@@ -25,6 +28,9 @@ namespace Pakuri.InGame
             return ResolveOrderedTargets(sourceEntry, unitRoster, targetingSpec, StatusEffectKind.None, 0);
         }
 
+        /*
+         * ResolveOrderedTargets 결과를 계산해 반환한다.
+         */
         public static List<CombatUnitEntry> ResolveOrderedTargets(
             CombatUnitEntry sourceEntry,
             CombatUnitRegistry unitRoster,
@@ -496,6 +502,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * CompareTargets 작업 결과를 반환한다.
+         */
         private static int CompareTargets(
             CombatUnitEntry sourceEntry,
             SkillTargetingSpec targetingSpec,
@@ -555,6 +564,9 @@ namespace Pakuri.InGame
             return leftDistance.CompareTo(rightDistance);
         }
 
+        /*
+         * ResolveDistanceSquared 결과를 계산해 반환한다.
+         */
         private static float ResolveDistanceSquared(CombatUnitEntry sourceEntry, CombatUnitEntry target)
         {
             if (sourceEntry == null || sourceEntry.Transform == null || target == null || target.Transform == null)

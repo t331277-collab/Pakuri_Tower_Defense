@@ -1188,6 +1188,9 @@ namespace Pakuri.Data
             return false;
         }
 
+        /*
+         * ValidateStatusIdList 데이터가 올바른지 검사한다.
+         */
         internal static void ValidateStatusIdList(
             string ownerId,
             string rawValue,
@@ -1213,6 +1216,9 @@ namespace Pakuri.Data
             }
         }
 
+        /*
+         * ValidateStatusConditionExpression 데이터가 올바른지 검사한다.
+         */
         private static void ValidateStatusConditionExpression(
             string ownerId,
             string rawValue,

@@ -405,6 +405,9 @@ namespace Pakuri.InGame
             return ResolveChoices(owner, skillId, false);
         }
 
+        /*
+         * ResolveChoices 결과를 계산해 반환한다.
+         */
         private static SkillSnapshot ResolveChoices(UnitCombatState owner, string skillId, bool useTargetSkillId)
         {
             var snapshot = new SkillSnapshot(null);

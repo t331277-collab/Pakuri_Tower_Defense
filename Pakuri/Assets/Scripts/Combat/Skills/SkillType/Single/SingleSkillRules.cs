@@ -9,6 +9,9 @@ namespace Pakuri.InGame
 {
     internal struct SingleDamageModifierState
     {
+        /*
+         * SingleDamageModifierState에 필요한 값을 초기화한다.
+         */
         public SingleDamageModifierState(float damageMultiplier, float critChanceBonus)
         {
             DamageMultiplier = damageMultiplier;
@@ -84,6 +87,9 @@ namespace Pakuri.InGame
             TryRefundCooldown(sourceRuntime, skill, snapshot);
         }
 
+        /*
+         * TryResolveThreshold 작업을 시도하고 성공 여부를 반환한다.
+         */
         private static bool TryResolveThreshold(
             SingleSkillRuntimeData skill,
             SkillSnapshot snapshot,
@@ -103,6 +109,9 @@ namespace Pakuri.InGame
             return threshold > 0f;
         }
 
+        /*
+         * IsWithinThreshold 조건을 만족하는지 확인한다.
+         */
         private static bool IsWithinThreshold(UnitCombatState target, float threshold)
         {
             var resources = target.Resources;
@@ -115,6 +124,9 @@ namespace Pakuri.InGame
             return resources.CurrentHealth / stats.MaxHealth <= threshold;
         }
 
+        /*
+         * ApplyExecuteDamageModifier 처리를 대상에 적용한다.
+         */
         private static void ApplyExecuteDamageModifier(
             SingleSkillRuntimeData skill,
             SkillSnapshot snapshot,
@@ -155,6 +167,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * ApplyBossDamageModifier 처리를 대상에 적용한다.
+         */
         private static void ApplyBossDamageModifier(
             SingleSkillRuntimeData skill,
             SkillSnapshot snapshot,
@@ -187,6 +202,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * TryResetCooldown 작업을 시도하고 성공 여부를 반환한다.
+         */
         private static bool TryResetCooldown(
             SkillRuntimeInstance sourceRuntime,
             SkillSnapshot snapshot,
@@ -214,6 +232,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * TryRefundCooldown 작업을 시도하고 성공 여부를 반환한다.
+         */
         private static bool TryRefundCooldown(
             SkillRuntimeInstance sourceRuntime,
             SingleSkillRuntimeData skill,

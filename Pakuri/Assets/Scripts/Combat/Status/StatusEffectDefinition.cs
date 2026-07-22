@@ -100,6 +100,9 @@ namespace Pakuri.Data
 
     public static class StatusEffectLookup
     {
+        /*
+         * TryParse 작업을 시도하고 성공 여부를 반환한다.
+         */
         public static bool TryParse(string value, out StatusEffectKind kind)
         {
             kind = StatusEffectKind.None;
@@ -117,6 +120,9 @@ namespace Pakuri.Data
             return kind != StatusEffectKind.None;
         }
 
+        /*
+         * GetDefinition에 해당하는 값을 찾아 반환한다.
+         */
         public static StatusEffectDefinition GetDefinition(StatusEffectKind kind)
         {
             var catalog = GameDataLoader.CurrentCatalog;
@@ -136,6 +142,9 @@ namespace Pakuri.Data
             throw new KeyNotFoundException($"Status definition '{kind}' is not registered.");
         }
 
+        /*
+         * ToDisplayName 작업 결과를 반환한다.
+         */
         public static string ToDisplayName(StatusEffectKind kind)
         {
             return GetDefinition(kind).DisplayName;
@@ -211,6 +220,9 @@ namespace Pakuri.Data
         public DamageAttribute OutgoingAdditionalDamageTriggerAttribute;
         public DamageAttribute OutgoingAdditionalDamageAttribute;
 
+        /*
+         * Clone에 필요한 복사본을 반환한다.
+         */
         public StatusRuntimeData Clone()
         {
             var clone = (StatusRuntimeData)MemberwiseClone();

@@ -691,6 +691,9 @@ namespace Pakuri.InGame
             return resolved.Count > 0 ? resolved.ToArray() : Array.Empty<SkillEffectDefinition>();
         }
 
+        /*
+         * ResolveProjectileLifetime 결과를 계산해 반환한다.
+         */
         private static float ResolveProjectileLifetime(ProjectileSkillRuntimeData skill)
         {
             var projectile = skill.Projectile;

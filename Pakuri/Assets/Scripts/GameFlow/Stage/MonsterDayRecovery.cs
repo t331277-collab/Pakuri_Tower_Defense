@@ -23,6 +23,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * Restore 작업을 수행한다.
+         */
         public static void Restore(UnitCombatState model)
         {
             model.AutoAttackEnabled = true;
@@ -35,6 +38,9 @@ namespace Pakuri.InGame
             model.Resources.CurrentHealth = Mathf.Max(0f, model.Stats.MaxHealth);
         }
 
+        /*
+         * IsSelectedPlayerMonster 조건을 만족하는지 확인한다.
+         */
         private static bool IsSelectedPlayerMonster(UnitCombatState model)
         {
             return model.Identity.Side == UnitSide.Player

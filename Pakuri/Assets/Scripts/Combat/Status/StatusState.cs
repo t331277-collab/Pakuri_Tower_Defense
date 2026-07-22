@@ -15,6 +15,9 @@ namespace Pakuri.InGame
         public IReadOnlyList<StatusRuntimeInstance> ActiveStatuses => statuses;
         public int Count => statuses.Count;
 
+        /*
+         * Apply 처리를 대상에 적용한다.
+         */
         public StatusRuntimeInstance Apply(
             StatusRuntimeData statusData,
             int stacks,
@@ -90,11 +93,17 @@ namespace Pakuri.InGame
             return status;
         }
 
+        /*
+         * Tick 작업 결과를 반환한다.
+         */
         public bool Tick(float deltaTime)
         {
             return Tick(deltaTime, null);
         }
 
+        /*
+         * Tick 작업 결과를 반환한다.
+         */
         public bool Tick(float deltaTime, ICollection<StatusRuntimeInstance> removedStatuses)
         {
             if (deltaTime <= 0f)
@@ -121,6 +130,9 @@ namespace Pakuri.InGame
             return changed;
         }
 
+        /*
+         * Has 조건을 만족하는지 확인한다.
+         */
         public bool Has(StatusEffectKind kind)
         {
             for (var i = 0; i < statuses.Count; i++)
@@ -144,6 +156,9 @@ namespace Pakuri.InGame
             return status != null && status.Stacks > 0;
         }
 
+        /*
+         * GetStacks에 해당하는 값을 찾아 반환한다.
+         */
         public int GetStacks(StatusEffectKind kind)
         {
             var total = 0;
@@ -159,6 +174,9 @@ namespace Pakuri.InGame
             return total;
         }
 
+        /*
+         * ConsumeStacks 작업 결과를 반환한다.
+         */
         public int ConsumeStacks(StatusEffectKind kind, int stacks)
         {
             var remaining = System.Math.Max(0, stacks);
@@ -193,6 +211,9 @@ namespace Pakuri.InGame
             return consumed;
         }
 
+        /*
+         * Remove 작업 결과를 반환한다.
+         */
         public bool Remove(StatusEffectKind kind)
         {
             return Remove(kind, null, null);
@@ -229,11 +250,17 @@ namespace Pakuri.InGame
             return removed;
         }
 
+        /*
+         * Clear 작업을 수행한다.
+         */
         public void Clear()
         {
             statuses.Clear();
         }
 
+        /*
+         * GetTotalShieldAmount에 해당하는 값을 찾아 반환한다.
+         */
         public float GetTotalShieldAmount()
         {
             var total = 0f;
@@ -249,16 +276,25 @@ namespace Pakuri.InGame
             return total;
         }
 
+        /*
+         * ConsumeShield 작업 결과를 반환한다.
+         */
         public float ConsumeShield(float amount)
         {
             return ConsumeShield(amount, null);
         }
 
+        /*
+         * ConsumeShield 작업 결과를 반환한다.
+         */
         public float ConsumeShield(float amount, ICollection<StatusRuntimeInstance> depletedStatuses)
         {
             return ConsumeShield(amount, depletedStatuses, null);
         }
 
+        /*
+         * ConsumeShield 작업 결과를 반환한다.
+         */
         public float ConsumeShield(
             float amount,
             ICollection<StatusRuntimeInstance> depletedStatuses,
@@ -300,6 +336,9 @@ namespace Pakuri.InGame
             return Math.Max(0f, amount - remaining);
         }
 
+        /*
+         * ExtendDurations 작업 결과를 반환한다.
+         */
         public bool ExtendDurations(StatusEffectKind kind, float durationDelta, Func<StatusRuntimeInstance, bool> predicate = null)
         {
             if (durationDelta <= 0f)
@@ -327,6 +366,9 @@ namespace Pakuri.InGame
             return changed;
         }
 
+        /*
+         * RecordIncomingDamage 작업을 수행한다.
+         */
         public void RecordIncomingDamage(DamageAttribute attribute, float amount)
         {
             if (amount <= 0f)
@@ -344,6 +386,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * Find에 해당하는 값을 찾아 반환한다.
+         */
         private StatusRuntimeInstance Find(StatusEffectKind kind, string sourceSkillId = null)
         {
             var hasSourceSkillId = !string.IsNullOrWhiteSpace(sourceSkillId);
@@ -364,6 +409,9 @@ namespace Pakuri.InGame
             return null;
         }
 
+        /*
+         * HasSourceAwareIdentity 조건을 만족하는지 확인한다.
+         */
         private static bool HasSourceAwareIdentity(StatusRuntimeData statusData)
         {
             return statusData != null
@@ -371,6 +419,9 @@ namespace Pakuri.InGame
                 && statusData.MergePolicy != StatusMergePolicy.Unspecified;
         }
 
+        /*
+         * ShouldReplaceSourceData 조건을 만족하는지 확인한다.
+         */
         private static bool ShouldReplaceSourceData(StatusRuntimeData current, StatusRuntimeData incoming)
         {
             if (incoming == null)
@@ -392,6 +443,9 @@ namespace Pakuri.InGame
      */
     public class StatusRuntimeInstance
     {
+        /*
+         * StatusRuntimeInstance에 필요한 값을 초기화한다.
+         */
         public StatusRuntimeInstance(StatusEffectKind kind)
         {
             Kind = kind;
@@ -441,11 +495,17 @@ namespace Pakuri.InGame
         public bool IsTimed => !Permanent && DurationRemaining > 0f;
         public bool IsShieldStatus => Kind == StatusEffectKind.Shield;
 
+        /*
+         * SetSourceData에 필요한 값을 설정한다.
+         */
         public void SetSourceData(StatusRuntimeData sourceData)
         {
             SourceData = sourceData;
         }
 
+        /*
+         * SetSourceMetadata에 필요한 값을 설정한다.
+         */
         public void SetSourceMetadata(StatusRuntimeData sourceData)
         {
             SourceSkillId = sourceData.SourceSkillId;
@@ -454,6 +514,9 @@ namespace Pakuri.InGame
             ShieldAmountRefreshPolicy = sourceData.ShieldAmountRefreshPolicy;
         }
 
+        /*
+         * SetSourceUnit에 필요한 값을 설정한다.
+         */
         public void SetSourceUnit(UnitCombatState source)
         {
             SourceUnitId = string.Empty;
@@ -467,6 +530,9 @@ namespace Pakuri.InGame
             SourceDefinitionId = source.Identity.DefinitionId;
         }
 
+        /*
+         * AddStacks 작업을 수행한다.
+         */
         public void AddStacks(int stacks, int maxStacks)
         {
             var nextStacks = Stacks + Math.Max(0, stacks);
@@ -477,6 +543,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * RefreshStacks 대상의 현재 상태를 갱신한다.
+         */
         public void RefreshStacks(int stacks, int maxStacks)
         {
             var incomingStacks = Math.Max(0, stacks);
@@ -493,6 +562,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * ConsumeStacks 작업 결과를 반환한다.
+         */
         public int ConsumeStacks(int stacks)
         {
             var consumed = Math.Min(Math.Max(0, stacks), Math.Max(0, Stacks));
@@ -500,11 +572,17 @@ namespace Pakuri.InGame
             return consumed;
         }
 
+        /*
+         * SetDuration에 필요한 값을 설정한다.
+         */
         public void SetDuration(float durationSeconds)
         {
             DurationRemaining = Math.Max(0f, durationSeconds);
         }
 
+        /*
+         * ExtendDuration 작업 결과를 반환한다.
+         */
         public bool ExtendDuration(float durationDelta)
         {
             if (Permanent || durationDelta <= 0f)
@@ -516,6 +594,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * SetPermanent에 필요한 값을 설정한다.
+         */
         public void SetPermanent(bool permanent)
         {
             Permanent = permanent;
@@ -525,6 +606,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * ApplyShield 처리를 대상에 적용한다.
+         */
         public void ApplyShield(float amount, ShieldRefreshRule refreshRule, bool mergedExisting)
         {
             var resolvedAmount = Math.Max(0f, amount);
@@ -554,6 +638,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * ConsumeShield 작업 결과를 반환한다.
+         */
         public float ConsumeShield(float amount)
         {
             if (!IsShieldStatus || RemainingShieldAmount <= 0f || amount <= 0f)
@@ -566,6 +653,9 @@ namespace Pakuri.InGame
             return consumed;
         }
 
+        /*
+         * RecordIncomingDamage 작업을 수행한다.
+         */
         public void RecordIncomingDamage(DamageAttribute attribute, float amount)
         {
             if (amount <= 0f)
@@ -582,6 +672,9 @@ namespace Pakuri.InGame
             trackedIncomingDamageTotals[index] += amount;
         }
 
+        /*
+         * GetTrackedIncomingDamage에 해당하는 값을 찾아 반환한다.
+         */
         public float GetTrackedIncomingDamage(DamageAttribute attribute)
         {
             var index = (int)attribute;
@@ -593,6 +686,9 @@ namespace Pakuri.InGame
             return trackedIncomingDamageTotals[index];
         }
 
+        /*
+         * Tick 작업 결과를 반환한다.
+         */
         public bool Tick(float deltaTime)
         {
             if (IsShieldStatus && RemainingShieldAmount <= 0f)
@@ -620,6 +716,9 @@ namespace Pakuri.InGame
      */
     public struct ShieldAbsorptionRecord
     {
+        /*
+         * ShieldAbsorptionRecord에 필요한 값을 초기화한다.
+         */
         public ShieldAbsorptionRecord(StatusRuntimeInstance status, float absorbedAmount)
         {
             Status = status;

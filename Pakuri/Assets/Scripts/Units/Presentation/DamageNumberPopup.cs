@@ -24,6 +24,9 @@ namespace Pakuri.InGame
         private readonly List<ActiveDamagePopup> activePopups = new List<ActiveDamagePopup>();
         private bool initialized;
 
+        /*
+         * Initialize에 필요한 값을 설정한다.
+         */
         public void Initialize(TextMesh textMesh)
         {
             damageText = textMesh != null ? textMesh : GetComponent<TextMesh>();
@@ -43,6 +46,9 @@ namespace Pakuri.InGame
             enabled = false;
         }
 
+        /*
+         * Show 작업을 수행한다.
+         */
         public void Show(float damageAmount)
         {
             if (!initialized)
@@ -60,6 +66,9 @@ namespace Pakuri.InGame
             enabled = true;
         }
 
+        /*
+         * 매 프레임 현재 상태를 갱신한다.
+         */
         private void Update()
         {
             if (damageText == null)
@@ -103,6 +112,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * SpawnPopup 작업을 수행한다.
+         */
         private void SpawnPopup(float damageAmount)
         {
             damageText.text = string.Empty;
@@ -168,6 +180,9 @@ namespace Pakuri.InGame
 
         private class ActiveDamagePopup
         {
+            /*
+             * ActiveDamagePopup에 필요한 값을 초기화한다.
+             */
             public ActiveDamagePopup(
                 GameObject instance,
                 TextMesh text,

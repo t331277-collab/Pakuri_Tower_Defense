@@ -57,6 +57,9 @@ namespace Pakuri.InGame
             return true;
         }
 
+        /*
+         * ResolveApplicationChance 결과를 계산해 반환한다.
+         */
         public static float ResolveApplicationChance(
             UnitCombatState target,
             ProjectileStatusHitSpec status,
@@ -77,6 +80,9 @@ namespace Pakuri.InGame
             return Mathf.Clamp01(chance - ResolveAilmentResistanceBonus(target));
         }
 
+        /*
+         * ResolveDurationSeconds 결과를 계산해 반환한다.
+         */
         private static float ResolveDurationSeconds(ProjectileStatusHitSpec status, UnitCombatState source)
         {
             var duration = Mathf.Max(0f, status.DurationSeconds);
@@ -90,11 +96,17 @@ namespace Pakuri.InGame
             return duration;
         }
 
+        /*
+         * IsDebuff 조건을 만족하는지 확인한다.
+         */
         private static bool IsDebuff(StatusRuntimeData statusData)
         {
             return statusData.Definition.Classification == StatusEffectClassification.Debuff;
         }
 
+        /*
+         * ApplyThresholdStatus 처리를 대상에 적용한다.
+         */
         private static void ApplyThresholdStatus(
             InGameCombatManager manager,
             UnitCombatState target,
@@ -597,6 +609,9 @@ namespace Pakuri.InGame
      */
     static class StatusConditionRules
     {
+        /*
+         * MatchesConditionStatus 조건을 만족하는지 확인한다.
+         */
         public static bool MatchesConditionStatus(
             UnitCombatState target,
             StatusConditionGroup[] groups,
@@ -649,6 +664,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * MatchesConditionStatus 조건을 만족하는지 확인한다.
+         */
         public static bool MatchesConditionStatus(
             UnitCombatState target,
             StatusConditionGroup[] groups)
@@ -656,6 +674,9 @@ namespace Pakuri.InGame
             return MatchesConditionStatus(target, groups, Array.Empty<string>());
         }
 
+        /*
+         * MatchesConditionStatus 조건을 만족하는지 확인한다.
+         */
         public static bool MatchesConditionStatus(
             StatusRuntimeInstance status,
             StatusConditionGroup[] groups)
@@ -693,6 +714,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * MatchesSkillRuntimeKinds 조건을 만족하는지 확인한다.
+         */
         public static bool MatchesSkillRuntimeKinds(
             SkillRuntimeKindCondition[] conditions,
             string sourceSkillId)
@@ -732,6 +756,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * MatchesRequiredSourceSkill 조건을 만족하는지 확인한다.
+         */
         private static bool MatchesRequiredSourceSkill(
             UnitCombatState target,
             StatusEffectKind kind,
@@ -771,6 +798,9 @@ namespace Pakuri.InGame
             return false;
         }
 
+        /*
+         * IsAreaLikeSkill 조건을 만족하는지 확인한다.
+         */
         private static bool IsAreaLikeSkill(SkillDefinition skill)
         {
             if (skill.RuntimeKind == SkillRuntimeKind.AreaAttack

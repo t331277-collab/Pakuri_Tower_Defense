@@ -12,6 +12,9 @@ namespace Pakuri.InGame
 
         public EnemyCombatState Model { get; private set; }
 
+        /*
+         * Initialize에 필요한 값을 설정한다.
+         */
         public void Initialize(EnemyCombatState model)
         {
             Model = model;
@@ -19,11 +22,17 @@ namespace Pakuri.InGame
             RefreshDisplay();
         }
 
+        /*
+         * ShowDamage 작업을 수행한다.
+         */
         public void ShowDamage(float damageAmount)
         {
             display.ShowDamage(damageAmount);
         }
 
+        /*
+         * RefreshDisplay 대상의 현재 상태를 갱신한다.
+         */
         public void RefreshDisplay()
         {
             display.Refresh(Model);

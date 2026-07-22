@@ -14,6 +14,9 @@ namespace Pakuri.InGame
 
 public static class SkillRuntimeCompiler
 {
+	/*
+	 * CompileActive 작업 결과를 반환한다.
+	 */
 	public static SkillRuntimeData CompileActive(MonsterDefinition monster, SkillDefinition source)
 	{
 		SkillRuntimeData skillRuntimeData = CreateConcreteActiveSkill(source);
@@ -29,11 +32,17 @@ public static class SkillRuntimeCompiler
 		return skillRuntimeData;
 	}
 
+	/*
+	 * CompileActive 작업 결과를 반환한다.
+	 */
 	public static SkillRuntimeData CompileActive(string monsterId, SkillDefinition source)
 	{
 		return CompileActive(monsterId, source, null);
 	}
 
+	/*
+	 * CompileActive 작업 결과를 반환한다.
+	 */
 	public static SkillRuntimeData CompileActive(string ownerId, SkillDefinition source, SkillTriggerDefinition[] triggers)
 	{
 		SkillRuntimeData skillRuntimeData = CreateConcreteActiveSkill(source);
@@ -42,6 +51,9 @@ public static class SkillRuntimeCompiler
 		return skillRuntimeData;
 	}
 
+	/*
+	 * CompilePassive 작업 결과를 반환한다.
+	 */
 	public static PassiveSkillRuntimeData CompilePassive(MonsterDefinition monster, PassiveDefinition source)
 	{
 		PassiveSkillRuntimeData passiveSkillRuntimeData = CreateRuntimeData<PassiveSkillRuntimeData>();
@@ -73,6 +85,9 @@ public static class SkillRuntimeCompiler
 		return passiveSkillRuntimeData;
 	}
 
+	/*
+	 * CreateConcreteActiveSkill에 필요한 결과를 만들어 반환한다.
+	 */
 	private static SkillRuntimeData CreateConcreteActiveSkill(SkillDefinition source)
 	{
 		if (MatchesProfile(source, "DamageArea"))
@@ -118,11 +133,17 @@ public static class SkillRuntimeCompiler
 		}
 	}
 
+	/*
+	 * CreateRuntimeData에 필요한 결과를 만들어 반환한다.
+	 */
 	private static T CreateRuntimeData<T>() where T : SkillRuntimeData, new()
 	{
 		return new T();
 	}
 
+	/*
+	 * MapCommonFields에 필요한 값을 변환해 현재 상태에 반영한다.
+	 */
 	private static void MapCommonFields(SkillRuntimeData skill, string monsterId, SkillDefinition source, SkillTriggerDefinition[] monsterTriggers = null)
 	{
 		skill.SkillId = source.SkillId;
@@ -168,6 +189,9 @@ public static class SkillRuntimeCompiler
 		skill.Targeting.CoverAll = source.RuntimeKind == SkillRuntimeKind.SingleAttack && source.Radius <= 0f && string.IsNullOrWhiteSpace(source.TargetSelection);
 	}
 
+	/*
+	 * FilterSkillTriggersForSkill에 해당하는 값을 찾아 반환한다.
+	 */
 	private static SkillTriggerDefinition[] FilterSkillTriggersForSkill(SkillTriggerDefinition[] triggers, string skillId)
 	{
 		if (triggers == null || triggers.Length == 0 || string.IsNullOrWhiteSpace(skillId))
@@ -199,6 +223,9 @@ public static class SkillRuntimeCompiler
 		return array;
 	}
 
+	/*
+	 * IsTriggerOwnedBySkill 조건을 만족하는지 확인한다.
+	 */
 	private static bool IsTriggerOwnedBySkill(SkillTriggerDefinition trigger, string skillId)
 	{
 		if (trigger != null && !string.IsNullOrWhiteSpace(trigger.SourceSkillId))
@@ -208,6 +235,9 @@ public static class SkillRuntimeCompiler
 		return false;
 	}
 
+	/*
+	 * MapActiveFields에 필요한 값을 변환해 현재 상태에 반영한다.
+	 */
 	private static void MapActiveFields(SkillRuntimeData skill, MonsterDefinition monster, SkillDefinition source)
 	{
 		if (skill is ProjectileSkillRuntimeData projectileSkillRuntimeData)
@@ -408,6 +438,9 @@ public static class SkillRuntimeCompiler
 		}
 	}
 
+	/*
+	 * MapDamage에 필요한 값을 변환해 현재 상태에 반영한다.
+	 */
 	private static void MapDamage(SkillDamageSpec damage, SkillDefinition source)
 	{
 		damage.SkillId = source.SkillId;
@@ -421,6 +454,9 @@ public static class SkillRuntimeCompiler
 		damage.CriticalAllowed = source.CriticalAllowed;
 	}
 
+	/*
+	 * MapEnemyTargetSide에 필요한 형식으로 변환해 반환한다.
+	 */
 	private static SkillTargetSide MapEnemyTargetSide(string targetScope)
 	{
 		if (string.IsNullOrWhiteSpace(targetScope))
@@ -438,11 +474,17 @@ public static class SkillRuntimeCompiler
 		return SkillTargetSide.Enemy;
 	}
 
+	/*
+	 * MatchesProfile 조건을 만족하는지 확인한다.
+	 */
 	private static bool MatchesProfile(SkillDefinition source, string profile)
 	{
 		return string.Equals(source.ExecutionProfile, profile, StringComparison.OrdinalIgnoreCase);
 	}
 
+	/*
+	 * GetDominantCoefficient에 해당하는 값을 찾아 반환한다.
+	 */
 	private static float GetDominantCoefficient(SkillDefinition source, out StatSource statSource)
 	{
 		if (Mathf.Abs(source.SpellPowerCoefficient) >= Mathf.Abs(source.AttackPowerCoefficient))
@@ -454,6 +496,9 @@ public static class SkillRuntimeCompiler
 		return source.AttackPowerCoefficient;
 	}
 
+	/*
+	 * GetDominantCoefficient에 해당하는 값을 찾아 반환한다.
+	 */
 	private static float GetDominantCoefficient(float attackPowerCoefficient, float spellPowerCoefficient, out StatSource statSource)
 	{
 		if (Mathf.Abs(spellPowerCoefficient) >= Mathf.Abs(attackPowerCoefficient))
@@ -465,6 +510,9 @@ public static class SkillRuntimeCompiler
 		return attackPowerCoefficient;
 	}
 
+	/*
+	 * CreateStatusApplication에 필요한 결과를 만들어 반환한다.
+	 */
 	private static StatusApplicationSpec CreateStatusApplication(SkillDefinition source)
 	{
 		StatusApplicationSpec statusApplicationSpec = new StatusApplicationSpec();
@@ -479,6 +527,9 @@ public static class SkillRuntimeCompiler
 		return statusApplicationSpec;
 	}
 
+	/*
+	 * CreateStatusRuntimeData에 필요한 결과를 만들어 반환한다.
+	 */
 	private static StatusRuntimeData CreateStatusRuntimeData(SkillDefinition source)
 	{
 		if (string.IsNullOrWhiteSpace(source.StatusEffectId))
@@ -494,6 +545,9 @@ public static class SkillRuntimeCompiler
 		return runtimeStatusData;
 	}
 
+	/*
+	 * TryResolveHitTargetCount 작업을 시도하고 성공 여부를 반환한다.
+	 */
 	private static bool TryResolveHitTargetCount(string rawValue, out bool hitAllTargets, out int hitTargetCount)
 	{
 		hitAllTargets = false;
@@ -513,6 +567,9 @@ public static class SkillRuntimeCompiler
 		return true;
 	}
 
+	/*
+	 * MapBuffTarget에 필요한 형식으로 변환해 반환한다.
+	 */
 	private static SkillTargetSide MapBuffTarget(SkillDefinition source)
 	{
 		StatusRuntimeCompiler.TryParseTargetScope(source.StatusTargetScope, out var scope);
@@ -524,6 +581,9 @@ public static class SkillRuntimeCompiler
 		return SkillTargetSide.AllAllies;
 	}
 
+	/*
+	 * ResolveStatusDuration 결과를 계산해 반환한다.
+	 */
 	private static float ResolveStatusDuration(SkillDefinition source)
 	{
 		if (source.StatusDurationSeconds > 0f)
@@ -538,6 +598,9 @@ public static class SkillRuntimeCompiler
 	}
 
 
+	/*
+	 * ApplySingleBasePlanNodes 처리를 대상에 적용한다.
+	 */
 	private static void ApplySingleBasePlanNodes(SingleSkillRuntimeData single, SkillNodeDefinition[] nodes, DamageAttribute attribute)
 	{
 		foreach (SkillNodeDefinition skillNodeDefinition in nodes)
@@ -571,6 +634,9 @@ public static class SkillRuntimeCompiler
 	}
 
 
+	/*
+	 * MapShape에 필요한 형식으로 변환해 반환한다.
+	 */
 	private static SkillTargetShape MapShape(SkillRuntimeKind runtimeKind)
 	{
 		switch (runtimeKind)
@@ -600,6 +666,9 @@ namespace Pakuri.InGame
 {
     public static class SkillNodeMapper
     {
+	/*
+	 * MapSkillNodeDefinitions에 필요한 형식으로 변환해 반환한다.
+	 */
 	public static SkillNode[] MapSkillNodeDefinitions(SkillNodeDefinition[] source)
 	{
 		if (source.Length == 0)
@@ -622,6 +691,9 @@ namespace Pakuri.InGame
 		return Array.Empty<SkillNode>();
 	}
 
+	/*
+	 * FilterSkillNodeDefinitionsForTarget에 해당하는 값을 찾아 반환한다.
+	 */
 	public static SkillNodeDefinition[] FilterSkillNodeDefinitionsForTarget(SkillNodeDefinition[] source, string targetSkillId)
 	{
 		if (source == null || source.Length == 0)
@@ -647,6 +719,9 @@ namespace Pakuri.InGame
 		return Array.Empty<SkillNodeDefinition>();
 	}
 
+	/*
+	 * HasSkillNodeForTarget 조건을 만족하는지 확인한다.
+	 */
 	public static bool HasSkillNodeForTarget(SkillNodeDefinition[] source, string targetSkillId)
 	{
 		if (source == null || source.Length == 0 || string.IsNullOrWhiteSpace(targetSkillId))
@@ -663,6 +738,9 @@ namespace Pakuri.InGame
 		return false;
 	}
 
+	/*
+	 * CanProcessPlanNode 조건을 만족하는지 확인한다.
+	 */
 	internal static bool CanProcessPlanNode(string ownerKind, string handlerId)
 	{
 		if (string.Equals(ownerKind, "Choice", StringComparison.OrdinalIgnoreCase)
@@ -678,6 +756,9 @@ namespace Pakuri.InGame
 		return IsRuntimePlanHandler(handlerId);
 	}
 
+	/*
+	 * MapSkillNodeDefinition에 필요한 형식으로 변환해 반환한다.
+	 */
 	private static SkillNode MapSkillNodeDefinition(SkillNodeDefinition node)
 	{
 		if (node == null || !node.EnabledByDefault)
@@ -739,6 +820,9 @@ namespace Pakuri.InGame
 		return SkillNode.FromAction(skillActionOp);
 	}
 
+	/*
+	 * IsSingleBaseFieldHandler 조건을 만족하는지 확인한다.
+	 */
 	private static bool IsSingleBaseFieldHandler(string handlerId)
 	{
 		if (string.Equals(handlerId, "StatusFilteredDeployment", StringComparison.OrdinalIgnoreCase))
@@ -748,6 +832,9 @@ namespace Pakuri.InGame
 		return string.Equals(handlerId, "TargetStatusStackDamage", StringComparison.OrdinalIgnoreCase);
 	}
 
+	/*
+	 * IsRuntimePlanHandler 조건을 만족하는지 확인한다.
+	 */
 	private static bool IsRuntimePlanHandler(string handlerId)
 	{
 		if (string.Equals(handlerId, "TargetHealthRatioCondition", StringComparison.OrdinalIgnoreCase)
@@ -807,6 +894,9 @@ namespace Pakuri.InGame
 		return false;
 	}
 
+	/*
+	 * MapSkillActionOp에 필요한 형식으로 변환해 반환한다.
+	 */
 	private static SkillActionOp MapSkillActionOp(SkillNodeDefinition node, string handlerId)
 	{
 		if (string.Equals(handlerId, "DamageMultiplier", StringComparison.OrdinalIgnoreCase))
@@ -966,6 +1056,9 @@ namespace Pakuri.InGame
 		throw new InvalidOperationException("Unsupported skill node handler: " + handlerId);
 	}
 
+	/*
+	 * GetParam에 해당하는 값을 찾아 반환한다.
+	 */
 	internal static string GetParam(SkillNodeDefinition node, string key)
 	{
 		if (node == null || node.Params == null || string.IsNullOrWhiteSpace(key))
@@ -987,6 +1080,9 @@ namespace Pakuri.InGame
 		return string.Empty;
 	}
 
+	/*
+	 * GetFloatParam에 해당하는 값을 찾아 반환한다.
+	 */
 	internal static float GetFloatParam(SkillNodeDefinition node, string key, float defaultValue)
 	{
 		string param = GetParam(node, key);
@@ -997,6 +1093,9 @@ namespace Pakuri.InGame
 		return result;
 	}
 
+	/*
+	 * GetIntParam에 해당하는 값을 찾아 반환한다.
+	 */
 	internal static int GetIntParam(SkillNodeDefinition node, string key, int defaultValue)
 	{
 		string param = GetParam(node, key);
@@ -1007,6 +1106,9 @@ namespace Pakuri.InGame
 		return result;
 	}
 
+	/*
+	 * GetBoolParam에 해당하는 값을 찾아 반환한다.
+	 */
 	internal static bool GetBoolParam(SkillNodeDefinition node, string key, bool defaultValue)
 	{
 		string param = GetParam(node, key);
@@ -1025,6 +1127,9 @@ namespace Pakuri.InGame
 		return true;
 	}
 
+	/*
+	 * GetEnumParam에 해당하는 값을 찾아 반환한다.
+	 */
 	internal static T GetEnumParam<T>(SkillNodeDefinition node, string key, T defaultValue) where T : struct
 	{
 		string param = GetParam(node, key);
@@ -1046,6 +1151,9 @@ namespace Pakuri.InGame
 {
     internal static class SkillChoiceCompiler
     {
+	/*
+	 * Compile 작업 결과를 반환한다.
+	 */
 	internal static SkillChoiceRuntimeData[] Compile(SkillChoiceDefinition[] source)
 	{
 		SkillChoiceRuntimeData[] array = new SkillChoiceRuntimeData[source.Length];
@@ -1075,6 +1183,9 @@ namespace Pakuri.InGame
 		return array;
 	}
 
+	/*
+	 * ApplyChoiceFieldNodes 처리를 대상에 적용한다.
+	 */
 	internal static void ApplyChoiceFieldNodes(SkillChoiceRuntimeData spec, SkillNodeDefinition[] nodes)
 	{
 		if (spec == null || nodes == null || nodes.Length == 0)
@@ -1090,6 +1201,9 @@ namespace Pakuri.InGame
 		}
 	}
 
+	/*
+	 * UsesChoiceFields 조건을 만족하는지 확인한다.
+	 */
 	internal static bool UsesChoiceFields(string handlerId)
 	{
 		if (string.Equals(handlerId, "BurstDamageRule", StringComparison.OrdinalIgnoreCase)
@@ -1121,6 +1235,9 @@ namespace Pakuri.InGame
 		return false;
 	}
 
+	/*
+	 * ApplyNormalizedChoiceNode 처리를 대상에 적용한다.
+	 */
 	private static void ApplyNormalizedChoiceNode(SkillChoiceRuntimeData spec, SkillNodeDefinition node)
 	{
 		SkillChoiceDefinition source = spec.Source;

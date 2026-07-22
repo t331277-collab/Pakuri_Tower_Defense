@@ -524,7 +524,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3ab96406b52c3454daa4c602c0b81989, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.Animation_Controller
+  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.AnimationController
   animator: {fileID: 900100000000001}
   idleState: Anim_Ariel_Idle
   deadState: Anim_Ariel_Dead_1

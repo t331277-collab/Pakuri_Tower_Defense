@@ -368,6 +368,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * ResolveStatusSourceId 결과를 계산해 반환한다.
+         */
         private static string ResolveStatusSourceId(StatusRuntimeInstance status, StatusRuntimeData statusData)
         {
             if (!string.IsNullOrWhiteSpace(status.SourceSkillId))
@@ -378,6 +381,9 @@ namespace Pakuri.InGame
             return statusData.SourceSkillId;
         }
 
+        /*
+         * CreateStatusVisualKey에 필요한 결과를 만들어 반환한다.
+         */
         private static string CreateStatusVisualKey(
             UnitCombatState target,
             StatusRuntimeData statusData,
@@ -564,6 +570,9 @@ namespace Pakuri.InGame
         private float lifetime;
         private bool hasLifetime;
 
+        /*
+         * Initialize에 필요한 값을 설정한다.
+         */
         public void Initialize(Transform followTarget, float durationSeconds, Vector3 localOffset)
         {
             target = followTarget;
@@ -580,6 +589,9 @@ namespace Pakuri.InGame
             }
         }
 
+        /*
+         * 매 프레임 현재 상태를 갱신한다.
+         */
         private void Update()
         {
             if (target == null)
