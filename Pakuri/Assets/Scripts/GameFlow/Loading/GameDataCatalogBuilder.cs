@@ -662,8 +662,6 @@ namespace Pakuri.Data
                 ExcludesActiveChoiceId = node.ExcludesActiveChoiceId,
                 RequiresPassiveSkillId = node.RequiresPassiveSkillId,
                 ExcludesPassiveSkillId = node.ExcludesPassiveSkillId,
-                RuntimeSupportState = node.RuntimeSupportState,
-                RuntimeSupportNotes = node.RuntimeSupportNotes,
                 DamageMultiplier = 1f,
                 StatusChance = 1f,
                 StatusMaxStacks = 1,
@@ -1131,9 +1129,7 @@ namespace Pakuri.Data
                     CooldownRefundRatio = trigger.CooldownRefundRatio,
                     ReloadReduceRatio = trigger.ReloadReduceRatio,
                     SkillEffectPrefab = LoadPrefab(trigger.SkillEffectPrefabPath),
-                    RuntimeVisual = BuildRuntimeVisual(trigger),
-                    RuntimeSupportState = trigger.RuntimeSupportState,
-                    RuntimeSupportNotes = trigger.RuntimeSupportNotes
+                    RuntimeVisual = BuildRuntimeVisual(trigger)
                 };
             }
 
@@ -1208,7 +1204,6 @@ namespace Pakuri.Data
                     MonsterId = choice.MonsterId,
                     SkillId = choice.SkillId,
                     TargetSkillId = targetSkillId,
-                    RuntimeTargetSkillIds = choice.RuntimeTargetSkillIds,
                     ChoiceGroup = choice.ChoiceGroup,
                     Title = choice.Title,
                     SkillIcon = LoadSprite(choice.SkillIconPath),
@@ -1217,152 +1212,7 @@ namespace Pakuri.Data
                         "EffectVisual",
                         "skill_effect_prefab_path")),
                     DescriptionText = choice.DescriptionText,
-                    HasDamageMultiplier = choice.HasDamageMultiplier,
-                    DamageMultiplier = choice.DamageMultiplier,
-                    BaseDamageBonus = choice.BaseDamageBonus,
-                    HasCooldownMultiplier = choice.HasCooldownMultiplier,
-                    CooldownMultiplier = choice.CooldownMultiplier,
-                    HasMagazineBonus = choice.HasMagazineBonus,
-                    MagazineBonus = choice.MagazineBonus,
-                    AdditionalProjectileBonus = choice.AdditionalProjectileBonus,
-                    PierceBonus = choice.PierceBonus,
-                    HasShotIntervalMultiplier = choice.HasShotIntervalMultiplier,
-                    ShotIntervalMultiplier = choice.ShotIntervalMultiplier,
-                    HasBurstDamageProjectileIndex = choice.HasBurstDamageProjectileIndex,
-                    BurstDamageProjectileIndex = choice.BurstDamageProjectileIndex,
-                    HasBurstDamageMultiplier = choice.HasBurstDamageMultiplier,
-                    BurstDamageMultiplier = choice.BurstDamageMultiplier,
-                    HasBurstStatusProjectileIndex = choice.HasBurstStatusProjectileIndex,
-                    BurstStatusProjectileIndex = choice.BurstStatusProjectileIndex,
-                    BurstStatusStacksBonus = choice.BurstStatusStacksBonus,
-                    FollowUpProjectileCount = choice.FollowUpProjectileCount,
-                    FollowUpProjectileDelaySeconds = choice.FollowUpProjectileDelaySeconds,
-                    FollowUpProjectileDamageMultiplier = choice.FollowUpProjectileDamageMultiplier,
-                    HasReloadTimeMultiplier = choice.HasReloadTimeMultiplier,
-                    ReloadTimeMultiplier = choice.ReloadTimeMultiplier,
-                    HasRadiusMultiplier = choice.HasRadiusMultiplier,
-                    RadiusMultiplier = choice.RadiusMultiplier,
-                    RadiusBonus = choice.RadiusBonus,
-                    BeamWidthBonus = choice.BeamWidthBonus,
-                    HasKnockbackDistanceMultiplier = choice.HasKnockbackDistanceMultiplier,
-                    KnockbackDistanceMultiplier = choice.KnockbackDistanceMultiplier,
-                    HasDamageDelayMultiplier = choice.HasDamageDelayMultiplier,
-                    DamageDelayMultiplier = choice.DamageDelayMultiplier,
-                    HasExecuteHealthRatioBonus = choice.HasExecuteHealthRatioBonus,
-                    ExecuteHealthRatioBonus = choice.ExecuteHealthRatioBonus,
-                    HasDurationMultiplier = choice.HasDurationMultiplier,
-                    DurationMultiplier = choice.DurationMultiplier,
-                    DurationBonus = choice.DurationBonus,
-                    BranchChanceBonus = choice.BranchChanceBonus,
-                    HasBranchChanceSet = choice.HasBranchChanceSet,
-                    BranchChanceSet = choice.BranchChanceSet,
-                    HasBranchCount = choice.HasBranchCount,
-                    BranchCount = choice.BranchCount,
-                    HasBranchDamageMultiplier = choice.HasBranchDamageMultiplier,
-                    BranchDamageMultiplier = choice.BranchDamageMultiplier,
-                    HasBranchSearchRadius = choice.HasBranchSearchRadius,
-                    BranchSearchRadius = choice.BranchSearchRadius,
-                    BranchLaunchPeriod = choice.BranchLaunchPeriod,
-                    HasBranchLaunchChanceSet = choice.HasBranchLaunchChanceSet,
-                    BranchLaunchChanceSet = choice.BranchLaunchChanceSet,
-                    HasMaxHealthBonus = choice.HasMaxHealthBonus,
-                    MaxHealthBonus = choice.MaxHealthBonus,
-                    HitTargetCountBonus = choice.HitTargetCountBonus,
-                    CritChanceBonus = choice.CritChanceBonus,
-                    CritDamageBonus = choice.CritDamageBonus,
-                    ExecuteCritChanceBonus = choice.ExecuteCritChanceBonus,
-                    HasBossDamageMultiplier = choice.HasBossDamageMultiplier,
-                    BossDamageMultiplier = choice.BossDamageMultiplier,
-                    HasKillCooldownRefundRatioBonus = choice.HasKillCooldownRefundRatioBonus,
-                    KillCooldownRefundRatioBonus = choice.KillCooldownRefundRatioBonus,
-                    KillResetsCooldown = choice.KillResetsCooldown,
-                    KillResetsCooldownRequiresExecute = choice.KillResetsCooldownRequiresExecute,
-                    StatusTag = choice.StatusTag,
-                    HasStatusChanceBonus = choice.HasStatusChanceBonus,
-                    StatusChanceBonus = choice.StatusChanceBonus,
-                    HasStatusActionSpeedBonus = choice.HasStatusActionSpeedBonus,
-                    StatusActionSpeedBonus = choice.StatusActionSpeedBonus,
-                    HasStatusAttackPowerBonus = choice.HasStatusAttackPowerBonus,
-                    StatusAttackPowerBonus = choice.StatusAttackPowerBonus,
-                    StatusStacksBonus = choice.StatusStacksBonus,
-                    HasStatusStacksSet = choice.HasStatusStacksSet,
-                    StatusStacksSet = choice.StatusStacksSet,
-                    HasStatusElementDamageTakenBonus = choice.HasStatusElementDamageTakenBonus,
-                    StatusElementDamageTakenBonus = choice.StatusElementDamageTakenBonus,
-                    HasStatusCriticalDamageTakenBonus = choice.HasStatusCriticalDamageTakenBonus,
-                    StatusCriticalDamageTakenBonus = choice.StatusCriticalDamageTakenBonus,
-                    HasStatusAilmentResistanceBonus = choice.HasStatusAilmentResistanceBonus,
-                    StatusAilmentResistanceBonus = choice.StatusAilmentResistanceBonus,
-                    StatusMaxStacksBonusStatusId = choice.StatusMaxStacksBonusStatusId,
-                    StatusMaxStacksBonus = choice.StatusMaxStacksBonus,
-                    StatusDurationBonusStatusId = choice.StatusDurationBonusStatusId,
-                    StatusDurationBonus = choice.StatusDurationBonus,
-                    ThresholdStatusId = choice.ThresholdStatusId,
-                    ThresholdStatusMinStacks = choice.ThresholdStatusMinStacks,
-                    ThresholdApplyStatusId = choice.ThresholdApplyStatusId,
-                    HasConditionalDamageMultiplier = choice.HasConditionalDamageMultiplier,
-                    ConditionalDamageMultiplier = choice.ConditionalDamageMultiplier,
-                    ConditionalTargetStatusId = choice.ConditionalTargetStatusId,
-                    ConditionalTargetStatusMinStacks = choice.ConditionalTargetStatusMinStacks,
-                    HasTargetStatusStackDamageMultiplier = choice.HasTargetStatusStackDamageMultiplier,
-                    TargetStatusStackDamageMultiplier = choice.TargetStatusStackDamageMultiplier,
-                    HasConsumeTargetStatusRatioOverride = choice.HasConsumeTargetStatusRatioOverride,
-                    ConsumeTargetStatusRatioOverride = choice.ConsumeTargetStatusRatioOverride,
-                    HasConsumeTargetStatusStacksOverride = choice.HasConsumeTargetStatusStacksOverride,
-                    ConsumeTargetStatusStacksOverride = choice.ConsumeTargetStatusStacksOverride,
-                    ConditionalCritChanceBonus = choice.ConditionalCritChanceBonus,
-                    ConditionalCritTargetStatusId = choice.ConditionalCritTargetStatusId,
-                    ConditionalCritTargetStatusMinStacks = choice.ConditionalCritTargetStatusMinStacks,
-                    RedistributeConsumedStatusRatioOnKill = choice.RedistributeConsumedStatusRatioOnKill,
-                    RedistributeConsumedStatusId = choice.RedistributeConsumedStatusId,
-                    RedistributeConsumedStatusSearchRadius = choice.RedistributeConsumedStatusSearchRadius,
-                    RedistributeConsumedStatusTargetCount = choice.RedistributeConsumedStatusTargetCount,
-                    CountStatusId = choice.CountStatusId,
-                    CountTargetSide = choice.CountTargetSide,
-                    DamageMultiplierPerCount = choice.DamageMultiplierPerCount,
-                    CountMax = choice.CountMax,
-                    ConsecutiveHitBonusRate = choice.ConsecutiveHitBonusRate,
-                    ConsecutiveHitMax = choice.ConsecutiveHitMax,
-                    HasStatusConditionalDamageTakenBonus = choice.HasStatusConditionalDamageTakenBonus,
-                    StatusConditionalDamageTakenBonus = choice.StatusConditionalDamageTakenBonus,
-                    StatusConditionalSourceStatusId = choice.StatusConditionalSourceStatusId,
-                    RequiredSourceStatusId = GetChoicePlanNodeParam(
-                        normalizedPlanNodes,
-                        "RequiredSourceStatus",
-                        "status_id"),
-                    RequiredSourceStatusMinStacks = GetChoicePlanNodeIntParam(
-                        normalizedPlanNodes,
-                        "RequiredSourceStatus",
-                        "min_stacks",
-                        1),
-                    HasOnHitAdditionalDamage = choice.HasOnHitAdditionalDamage,
-                    OnHitAdditionalDamageChance = choice.OnHitAdditionalDamageChance,
-                    OnHitAdditionalDamageMultiplier = choice.OnHitAdditionalDamageMultiplier,
-                    OnHitAdditionalDamageAttribute = choice.OnHitAdditionalDamageAttribute,
-                    OnHitAdditionalDamageTarget = choice.OnHitAdditionalDamageTarget,
-                    OnHitChainHitPeriod = choice.OnHitChainHitPeriod,
-                    OnHitChainTargetCount = choice.OnHitChainTargetCount,
-                    OnHitChainSearchRadius = choice.OnHitChainSearchRadius,
-                    OnHitChainDamageMultiplier = choice.OnHitChainDamageMultiplier,
-                    OnHitChainDamageAttribute = choice.OnHitChainDamageAttribute,
-                    ReloadReduceTargetSkillId = choice.ReloadReduceTargetSkillId,
-                    ReloadReduceSecondsPerHit = choice.ReloadReduceSecondsPerHit,
-                    CoreHitboxName = choice.CoreHitboxName,
-                    HasCoreDamageMultiplier = choice.HasCoreDamageMultiplier,
-                    CoreDamageMultiplier = choice.CoreDamageMultiplier,
-                    HasCoreOnHitAdditionalDamage = choice.HasCoreOnHitAdditionalDamage,
-                    CoreOnHitAdditionalDamageChance = choice.CoreOnHitAdditionalDamageChance,
-                    CoreOnHitAdditionalDamageMultiplier = choice.CoreOnHitAdditionalDamageMultiplier,
-                    CoreOnHitAdditionalDamageAttribute = choice.CoreOnHitAdditionalDamageAttribute,
-                    HitCountCooldownRefundTargetSkillId = choice.HitCountCooldownRefundTargetSkillId,
-                    HitCountCooldownRefundMinTargets = choice.HitCountCooldownRefundMinTargets,
-                    HitCountCooldownRefundRatio = choice.HitCountCooldownRefundRatio,
-                    RepeatCountPerTarget = choice.RepeatCountPerTarget,
-                    RepeatIntervalSeconds = choice.RepeatIntervalSeconds,
-                    RepeatDamageMultiplier = choice.RepeatDamageMultiplier,
-                    NormalizedPlanNodes = normalizedPlanNodes,
-                    RuntimeSupportState = choice.RuntimeSupportState,
-                    RuntimeSupportNotes = choice.RuntimeSupportNotes
+                    NormalizedPlanNodes = normalizedPlanNodes
                 };
             }
 
@@ -1413,24 +1263,6 @@ namespace Pakuri.Data
         }
 
         /*
-         * 계산에 필요한 값을 반환한다.
-         */
-        internal static int GetChoicePlanNodeIntParam(
-            SkillNodeDefinition[] nodes /* 노드 목록 */,
-            string handlerId /* 처리기 식별자 */,
-            string paramKey /* 매개변수 조회 키 */,
-            int defaultValue /* 값이 없을 때 사용할 기본값 */)
-        {
-            var raw = GetChoicePlanNodeParam(nodes, handlerId, paramKey);
-            if (string.IsNullOrWhiteSpace(raw))
-            {
-                return defaultValue;
-            }
-
-            return int.Parse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture);
-        }
-
-        /*
          * 원본 값으로 런타임 자료를 만든다.
          */
         internal static SkillNodeDefinition[] BuildSkillNodeDefinitions(
@@ -1462,20 +1294,10 @@ namespace Pakuri.Data
 
                 definitions[i] = new SkillNodeDefinition
                 {
-                    NodeId = node.Id,
                     OwnerKind = node.OwnerKind.ToString(),
-                    OwnerId = node.OwnerId,
                     TargetSkillId = targetSkillId,
-                    NodeKind = node.NodeKind.ToString(),
                     HandlerId = node.HandlerId,
-                    SortOrder = node.SortOrder,
                     EnabledByDefault = node.EnabledByDefault,
-                    RequiresActiveChoiceId = node.RequiresActiveChoiceId,
-                    ExcludesActiveChoiceId = node.ExcludesActiveChoiceId,
-                    RequiresPassiveSkillId = node.RequiresPassiveSkillId,
-                    ExcludesPassiveSkillId = node.ExcludesPassiveSkillId,
-                    RuntimeSupportState = node.RuntimeSupportState,
-                    RuntimeSupportNotes = node.RuntimeSupportNotes,
                     Params = BuildSkillNodeParamDefinitions(model, node.Id)
                 };
             }
@@ -1504,9 +1326,7 @@ namespace Pakuri.Data
                 var param = nodeParams[i];
                 definitions[i] = new SkillNodeParamDefinition
                 {
-                    NodeId = param.NodeId,
                     ParamKey = param.ParamKey,
-                    ValueType = param.ValueType.ToString(),
                     Value = param.Value
                 };
             }

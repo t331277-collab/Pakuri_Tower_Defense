@@ -724,7 +724,6 @@ namespace Pakuri.InGame
             }
 
             var timing = Data.Timing;
-            CastRemaining = Mathf.Max(0f, timing.CastTime);
             ActiveDurationRemaining = Mathf.Max(0f, timing.ActiveDuration);
             queuedBurstShotsRemaining = Math.Max(0, effectiveBurstProjectileCount - 1);
             TickRemaining = effectiveTickInterval;
@@ -1299,7 +1298,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                CountStatusDamageActionOp? action = nodes[i].CountStatusDamageAction;
+                CountStatusDamageActionOp? action = nodes[i].GetOperation<CountStatusDamageActionOp>();
                 if (!action.HasValue)
                 {
                     continue;

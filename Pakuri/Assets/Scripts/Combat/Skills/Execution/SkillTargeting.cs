@@ -1069,19 +1069,6 @@ namespace Pakuri.InGame
         }
 
         /*
-         * Choice가 요구하는 시전자 상태 중첩 조건을 만족하는지 확인한다.
-         */
-        public static bool MeetsSourceStatus(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */, UnitCombatState owner /* 정보를 소유한 유닛 */)
-        {
-            if (choice == null)
-            {
-                return true;
-            }
-
-            return HasSourceStatus(owner, choice.RequiredSourceStatusKind, choice.RequiredSourceStatusMinStacks);
-        }
-
-        /*
          * 시전자가 지정한 상태 또는 보호막 조건을 만족하는지 확인한다.
          */
         public static bool HasSourceStatus(UnitCombatState owner /* 정보를 소유한 유닛 */, StatusEffectKind statusKind /* 상태 효과 종류 */, int minimumStacks /* 최소 중첩 수 */)

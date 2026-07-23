@@ -156,7 +156,8 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (!session.CanLearnActive(monster, sourceSkill))
+            var state = session.GetPartyMemberState(monster.MonsterId);
+            if (!session.CanLearnActive(state, monster, sourceSkill))
             {
                 return;
             }
@@ -197,7 +198,8 @@ namespace Pakuri.InGame
                 return;
             }
 
-            if (!session.CanLearnPassive(monster, passive))
+            var state = session.GetPartyMemberState(monster.MonsterId);
+            if (!session.CanLearnPassive(state, monster, passive))
             {
                 return;
             }
@@ -281,6 +283,9 @@ namespace Pakuri.InGame
             }
             var monsterId = ResolveMonsterId(session, model);
             var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId);
+            var state = session != null && monster != null
+                ? session.GetPartyMemberState(monster.MonsterId)
+                : null;
 
             for (var i = 0; i < skillButtons.Length && i < DebugSlots.Length; i++)
             {
@@ -302,9 +307,9 @@ namespace Pakuri.InGame
                 var hasSkill = isPassiveSlot
                     ? passiveSkill != null && !string.IsNullOrWhiteSpace(passiveSkill.PassiveId)
                     : activeSkill != null && !string.IsNullOrWhiteSpace(activeSkill.SkillId);
-                var learned = hasSkill && session != null && monster != null && (isPassiveSlot
-                    ? session.HasLearnedPassive(monster.MonsterId, passiveSkill.PassiveId)
-                    : session.HasLearnedActive(monster.MonsterId, activeSkill.SkillId));
+                var learned = hasSkill && state != null && (isPassiveSlot
+                    ? state.LearnedPassives.Contains(passiveSkill.PassiveId)
+                    : state.LearnedActives.Contains(activeSkill.SkillId));
 
                 button.interactable = hasSkill && !learned;
                 if (label != null)
@@ -739,10 +744,12 @@ namespace Pakuri.InGame
                 return;
             }
 
+            var state = monster != null ? session.GetPartyMemberState(monster.MonsterId) : null;
             if (sourceSkill == null
                 || string.IsNullOrWhiteSpace(sourceSkill.SkillId)
                 || monster == null
-                || !session.HasLearnedActive(monster.MonsterId, sourceSkill.SkillId))
+                || state == null
+                || !state.LearnedActives.Contains(sourceSkill.SkillId))
             {
                 SetModifiedPanelVisible(false);
                 SetPassiveModifiedPanelVisible(false);
@@ -768,10 +775,12 @@ namespace Pakuri.InGame
                 return;
             }
 
+            var state = monster != null ? session.GetPartyMemberState(monster.MonsterId) : null;
             if (passive == null
                 || string.IsNullOrWhiteSpace(passive.PassiveId)
                 || monster == null
-                || !session.HasLearnedPassive(monster.MonsterId, passive.PassiveId))
+                || state == null
+                || !state.LearnedPassives.Contains(passive.PassiveId))
             {
                 SetModifiedPanelVisible(false);
                 SetPassiveModifiedPanelVisible(false);
@@ -795,7 +804,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var state = session.EnsurePartyMemberState(monster);
+            var state = session.GetPartyMemberState(monster.MonsterId);
             if (state == null || sourceSkill == null || string.IsNullOrWhiteSpace(sourceSkill.SkillId))
             {
                 return;
@@ -808,7 +817,7 @@ namespace Pakuri.InGame
             }
 
             var choice = choices[choiceIndex];
-            if (!session.CanChooseSkillChoice(state.MonsterId, sourceSkill.SkillId, choice))
+            if (!session.CanChooseSkillChoice(state, sourceSkill.SkillId, choice))
             {
                 return;
             }
@@ -828,7 +837,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var state = session.EnsurePartyMemberState(monster);
+            var state = session.GetPartyMemberState(monster.MonsterId);
             if (state == null || passive == null || string.IsNullOrWhiteSpace(passive.PassiveId))
             {
                 return;
@@ -841,7 +850,7 @@ namespace Pakuri.InGame
             }
 
             var choice = choices[choiceIndex];
-            if (!session.CanChooseSkillChoice(state.MonsterId, passive.PassiveId, choice))
+            if (!session.CanChooseSkillChoice(state, passive.PassiveId, choice))
             {
                 return;
             }
@@ -875,7 +884,15 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var state = session.EnsurePartyMemberState(monster);
+            var state = session.GetPartyMemberState(monster.MonsterId);
+            if (state == null)
+            {
+                SetModifierButtonsInactive(traitButtons);
+                SetModifierButtonsInactive(masterButtons);
+                SetModifierButtonsInactive(passiveTraitButtons);
+                return;
+            }
+
             var enhancementChoices = sourceSkill != null && sourceSkill.EnhancementChoices != null
                 ? sourceSkill.EnhancementChoices
                 : Array.Empty<SkillChoiceDefinition>();
@@ -907,7 +924,15 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var state = session.EnsurePartyMemberState(monster);
+            var state = session.GetPartyMemberState(monster.MonsterId);
+            if (state == null)
+            {
+                SetModifierButtonsInactive(passiveTraitButtons);
+                SetModifierButtonsInactive(traitButtons);
+                SetModifierButtonsInactive(masterButtons);
+                return;
+            }
+
             var enhancementChoices = passive != null && passive.EnhancementChoices != null
                 ? passive.EnhancementChoices
                 : Array.Empty<SkillChoiceDefinition>();
@@ -942,7 +967,7 @@ namespace Pakuri.InGame
 
                 var hasChoice = choices != null && i < choices.Length && choices[i] != null;
                 button.gameObject.SetActive(hasChoice);
-                button.interactable = hasChoice && session.CanChooseSkillChoice(state.MonsterId, sourceSkillId, choices[i]);
+                button.interactable = hasChoice && session.CanChooseSkillChoice(state, sourceSkillId, choices[i]);
 
                 var label = button.GetComponentInChildren<TMP_Text>(true);
                 if (label != null)
@@ -1092,15 +1117,13 @@ namespace Pakuri.InGame
             {
                 choiceId = choice.ChoiceId;
             }
-            session.EnsurePartyMemberState(monster);
-            session.RecordOfferingChoice(monster.MonsterId, rewardId, choiceId, activeSkillId, passiveSkillId);
-
-            if (choice != null && choice.HasMaxHealthBonus)
+            var state = session.GetPartyMemberState(monster.MonsterId);
+            if (state == null)
             {
-                session.AddMaxHealthBonus(
-                    monster.MonsterId,
-                    choice.MaxHealthBonus);
+                return;
             }
+
+            session.RecordOfferingChoice(state, rewardId, choiceId, activeSkillId, passiveSkillId);
 
             RefreshRuntimeSkillModels(session);
             RefreshButtonLabels();

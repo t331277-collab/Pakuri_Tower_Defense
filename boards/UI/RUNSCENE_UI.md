@@ -14,6 +14,94 @@ When doing related work, follow `MDTREE.md` routing and update this file togethe
 - This active file now keeps only the current `NewRunScene` UI behavior still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-23 Party UI Direct Roster Binding
+
+### Task title
+
+Bind PrisonPanel and DamageMeter directly to the ordered deployed-party ID list.
+
+### Goals
+
+- Render occupied PrisonPanel slots from `RunSession.PartyMonsterIds`.
+- Enable manifestation only at the next list index.
+- Build DamageMeter party order from the same list without reconstructing selected and manifested IDs.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Existing five authored slots, portraits, labels, buttons, popup flow, and visual layout remain unchanged.
+- No scene or prefab file changes.
+- Unity Play Mode gameplay and visual verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, solution-build verified, and Unity console checked.
+
+### Next Actions
+
+- User verifies PrisonPanel 1P-5P order, next-slot activation, and DamageMeter panel order in Play Mode.
+
+### Evidence
+
+- `InGameUIManager.cs` reads `PartyMonsterIds` directly for occupied count, slot IDs, next manifestation slot, and candidate exclusion.
+- The former `ResolvePrisonPartyMonsterIds(...)` selected-plus-manifested reconstruction helper is removed.
+- `DamageMeterUIController.cs` copies `PartyMonsterIds` in order and retains its spawned-player fallback only when no active session party exists.
+- No UGUI object, serialized field, scene, or prefab changed.
+- `git diff --check` passed.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 `MSB3277` warning groups.
+- Unity 6000.3.14f1 instance `Pakuri@0c8eeeb5` reported 0 console error entries.
+
+### History
+
+- 2026-07-23: Code Builder removed duplicated party-list reconstruction from PrisonPanel and DamageMeter.
+
+## Task: 2026-07-23 Remove Dormant Offering Health Field
+
+### Task title
+
+Remove the inactive maximum-health value from Offering and Debug UI commit paths.
+
+### Goals
+
+- Keep Offering presentation and selection flow free of an unauthored view value.
+- Preserve reward consumption, UI completion callbacks, Choice recording, and skill-model refresh.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No UGUI object, serialized field, prefab, scene, icon, label, or button binding changes.
+- Unity Play Mode gameplay and visual verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, solution-build verified, and Unity console checked.
+
+### Next Actions
+
+- User verifies Offering and Debug UI acquisition flows in Play Mode.
+
+### Evidence
+
+- `InGameUIManager.cs` removes `OfferingChoiceView.MaxHealthBonus`, its Choice-data copy, and its commit branch.
+- `DebugUI.cs` removes the matching maximum-health commit branch.
+- Offering continues to call `RecordOfferingChoice(...)`, refresh runtime skills, consume the prisoner button, close the panel, refresh information, and complete the prison action.
+- No scene or asset file changed.
+- `git diff --check` passed.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 `MSB3277` warning groups.
+- Unity 6000.3.14f1 instance `Pakuri@0c8eeeb5` reported 0 console error entries.
+
+### History
+
+- 2026-07-23: Code Builder removed the dormant UI value without changing visible Offering or Debug UI behavior.
+
 ## Task: 2026-07-17 PrisonPanel Party And Prisoner UI
 
 ### Task title
@@ -147,3 +235,48 @@ Implemented and compile/editor validated.
 
 - 2026-07-15: User requested Code Builder implementation of shared Auto and game-speed controls under `UtilPanel`.
 - 2026-07-15: Code Builder renamed the script, centralized both button bindings on `UtilPanel`, wired the live scene, and saved `NewRunScene`.
+
+## Task: 2026-07-23 Party State Consumer Consolidation
+
+### Task title
+
+Read one RunSession party-member collection from run UI, Debug UI, and DamageMeter.
+
+### Goals
+
+- Remove UI-side party ID reconstruction and duplicate RunSession state lookups.
+- Render and target party slots from ordered `RunSession.PartyMembers`.
+- Preserve existing manifestation, reinforcement, Debug, and meter behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No scene, prefab, or serialized UI hierarchy change.
+- Unity Play Mode visual and interaction verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated. Play Mode UI verification remains.
+
+### Next Actions
+
+- User verifies PrisonPanel slot order, next-empty-slot manifestation, per-slot reinforcement target, and DamageMeter order.
+- User verifies normal Offering and Debug acquisition controls against all active/passive/Enhancement/Master limits.
+
+### Evidence
+
+- `InGameUIManager.cs` reads `session.PartyMembers` for occupied slots and uses `GetPartyMemberState(...)` for candidate exclusion and reward targeting.
+- `DamageMeterUIController.cs` copies ordered monster IDs from `PartyMembers`; its no-session spawned-player fallback remains.
+- `DebugUI.cs` resolves one `RunMonsterState` per acquisition operation and passes it to RunSession eligibility/recording methods.
+- No scene or prefab file was modified by this consolidation.
+- Related removed-symbol search returned 0 matches; `git diff --check` passed.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 `MSB3277` warning groups.
+- Unity 6000.3.14f1 instance `Pakuri@0c8eeeb5` returned 0 console error entries.
+
+### History
+
+- 2026-07-23: Code Builder migrated UI consumers from the interim ID list to the unified party-member state collection.

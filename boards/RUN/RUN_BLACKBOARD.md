@@ -9,6 +9,100 @@
 - This active file now keeps only the current `NewRunScene` authority split and the surviving new-scene flow baseline.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-23 Unified Deployed Party Ownership
+
+### Task title
+
+Replace selected-plus-manifested party storage with one ordered deployed-party ID list.
+
+### Goals
+
+- Make `RunSession.PartyMonsterIds` the sole authority for the current run's deployed party composition.
+- Keep slot 0 as the starting Monster and slots 1-4 as later party additions.
+- Let spawning, restoration, UI, damage metering, and manifestation eligibility read the same ordered list.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Party size remains five Monsters.
+- Combat death does not remove a Monster from the deployed-party list; `CombatUnitRegistry.Players` remains the live registered-unit authority.
+- `PartyMembers` remains the per-Monster learned-skill and Choice progression store.
+- No CSV, prefab, scene, or Monster-specific behavior changes.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, solution-build verified, and Unity console checked.
+
+### Next Actions
+
+- User verifies 1P start, sequential 2P-5P manifestation, next-day party restoration, and no duplicate manifestation in Play Mode.
+
+### Evidence
+
+- `RunSession.cs` replaces `ManifestedMonsterIds` with ordered `PartyMonsterIds`; `SelectedMonsterId` derives from index 0.
+- `TryAddPartyMonster(...)` rejects null, blank, duplicate, and sixth-Monster additions and returns the assigned slot index.
+- `UnitSpawnManager.cs` restores additional party members directly from `PartyMonsterIds` indices 1-4.
+- `InGameUIManager.cs` and `DamageMeterUIController.cs` read `PartyMonsterIds` directly instead of rebuilding selected-plus-manifested lists.
+- Active source search found zero `ManifestedMonsterIds`, `HasManifestedMonster`, `RecordManifestedMonster`, `IsSelectedMonster`, `ResolvePrisonPartyMonsterIds`, or `RestoreManifestedPlayersFromSession` references.
+- `git diff --check` passed.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 `MSB3277` warning groups.
+- Unity 6000.3.14f1 instance `Pakuri@0c8eeeb5` reported 0 console error entries.
+
+### History
+
+- 2026-07-23: Code Builder consolidated deployed-party ownership into one ordered ID list and removed the split selected/manifested helper path.
+
+## Task: 2026-07-23 Remove Inactive Run Maximum-Health Bonus
+
+### Task title
+
+Remove the inactive per-monster maximum-health bonus from run state and unit creation.
+
+### Goals
+
+- Keep `RunSession` focused on active run, party, learned-skill, and Choice progression.
+- Create player Monster combat models from authored base maximum health without a dormant run bonus.
+- Preserve active party lookup, acquisition-limit, Choice-target, and manifestation duplicate checks.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Active Offering, learned skills, Choice limits, party restoration, and manifestation behavior remain unchanged.
+- `EnsurePartyMemberState`, `GetPartyMemberState`, `ChoiceTargetsSkill`, `IsDefaultActiveSkill`, and `IsSelectedMonster` remain because inspected callers still use them.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, solution-build verified, and Unity console checked.
+
+### Next Actions
+
+- User verifies Offering selection and selected/manifested party restoration in Play Mode.
+- Future maximum-health growth requires a new active design and authoring contract instead of restoring the removed dormant path.
+
+### Evidence
+
+- `Pakuri/Assets/Scripts/GameFlow/RunSession.cs` removes `RunMonsterState.MaxHealthBonus` and `AddMaxHealthBonus(...)`.
+- `Pakuri/Assets/Scripts/GameFlow/Spawn/UnitCombatStateFactory.cs` now creates Monster models directly from `definition.BaseStats.MaxHealth`.
+- Active source and authoring search found zero `AddMaxHealthBonus`, `MaxHealthBonus`, `HasMaxHealthBonus`, or `max_health_bonus` references.
+- Repository search found live callers for all five requested helper methods, including `UnitSpawnManager`, Offering/Debug UI, Choice counting, active-skill limits, and manifestation duplicate prevention.
+- `git diff --check` passed.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 `MSB3277` warning groups.
+- Unity 6000.3.14f1 instance `Pakuri@0c8eeeb5` reported 0 console error entries.
+
+### History
+
+- 2026-07-23: Code Builder removed the inactive maximum-health bonus path and retained the five helpers proven active by source references.
+
 ## Task: 2026-07-22 Stage Day Ownership And RunSession Helper Cleanup
 
 ### Task title
@@ -628,3 +722,48 @@ Implemented and solution-build verified.
 ### History
 
 - 2026-07-22: Code Builder removed the duplicated plan/action wrappers and connected Executors directly to the SkillNode blueprint.
+
+## Task: 2026-07-23 RunSession Party State Consolidation
+
+### Task title
+
+Remove duplicated and write-only RunSession state and keep one current-party authority.
+
+### Goals
+
+- Use `RunSession.PartyMembers` as the ordered current-field party and per-monster progression authority.
+- Remove duplicated monster ID collections, write-only snapshots, and silent party-state creation.
+- Make callers reuse the already resolved `RunMonsterState`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Party order and maximum count remain unchanged.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated. Play Mode run verification remains.
+
+### Next Actions
+
+- User verifies start monster, sequential manifestation through slots 2-5, and next-day party restoration in Play Mode.
+- User verifies party order in PrisonPanel and DamageMeter.
+
+### Evidence
+
+- `RunSession.cs` now stores the party only in private `partyMembers`; `SelectedMonsterId` and read-only `PartyMembers` derive from it.
+- `PartyMonsterIds`, `ManifestedMonsterIds`, manifestation duplicate helpers, and `EnsurePartyMemberState` have zero references in the related C# scope.
+- Only `Begin(...)` and `TryAddPartyMonster(...)` create a `RunMonsterState`; spawn and UI consumers require an existing state through `GetPartyMemberState(...)`.
+- Write-only selected-monster/skill name snapshots and prisoner-history collections were removed.
+- `UnitSpawnManager.cs`, `InGameUIManager.cs`, and `DamageMeterUIController.cs` consume ordered `PartyMembers`.
+- `git diff --check` passed; `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 `MSB3277` warning groups.
+- Unity 6000.3.14f1 instance `Pakuri@0c8eeeb5` completed script compilation and returned 0 console error entries.
+
+### History
+
+- 2026-07-23: Code Builder superseded the interim `PartyMonsterIds` authority with `PartyMembers`, combining party identity and per-monster run progression in one collection.

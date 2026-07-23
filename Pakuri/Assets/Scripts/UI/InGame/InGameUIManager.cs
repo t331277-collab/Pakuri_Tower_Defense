@@ -351,43 +351,22 @@ namespace Pakuri.InGame
             RefreshInfo();
 
             var session = ResolveSession();
-            var partyMonsterIds = ResolvePrisonPartyMonsterIds(session);
+            var partyMembers = session != null ? session.PartyMembers : null;
+            var occupiedCount = partyMembers != null
+                ? Math.Min(partyMembers.Count, PrisonPartySlotCount)
+                : 0;
             for (var i = 0; i < prisonPartySlots.Length; i++)
             {
-                var isOccupied = i < partyMonsterIds.Count;
-                var isNextManifestSlot = partyMonsterIds.Count > 0
-                    && partyMonsterIds.Count < PrisonPartySlotCount
-                    && i == partyMonsterIds.Count;
-                var monsterId = isOccupied ? partyMonsterIds[i] : string.Empty;
+                var isOccupied = i < occupiedCount;
+                var isNextManifestSlot = occupiedCount > 0
+                    && occupiedCount < PrisonPartySlotCount
+                    && i == occupiedCount;
+                var monsterId = isOccupied ? partyMembers[i].MonsterId : string.Empty;
                 prisonSlotMonsterIds[i] = monsterId;
                 RefreshPrisonPartySlot(prisonPartySlots[i], monsterId, isOccupied, isNextManifestSlot);
             }
 
             RefreshSelectedPrisoner();
-        }
-
-        /*
-         * ResolvePrisonPartyMonsterIds 결과를 계산해 반환한다.
-         */
-        private List<string> ResolvePrisonPartyMonsterIds(RunSession session /* 현재 게임 진행 상태 */)
-        {
-            var monsterIds = new List<string>(PrisonPartySlotCount);
-            if (session == null || string.IsNullOrWhiteSpace(session.SelectedMonsterId))
-            {
-                return monsterIds;
-            }
-
-            monsterIds.Add(session.SelectedMonsterId);
-            for (var i = 0; i < session.ManifestedMonsterIds.Count && monsterIds.Count < PrisonPartySlotCount; i++)
-            {
-                var monsterId = session.ManifestedMonsterIds[i];
-                if (!string.IsNullOrWhiteSpace(monsterId))
-                {
-                    monsterIds.Add(monsterId);
-                }
-            }
-
-            return monsterIds;
         }
 
         /*
@@ -529,7 +508,9 @@ namespace Pakuri.InGame
             }
 
             var session = ResolveSession();
-            var occupiedCount = ResolvePrisonPartyMonsterIds(session).Count;
+            var occupiedCount = session != null
+                ? Math.Min(session.PartyMembers.Count, PrisonPartySlotCount)
+                : 0;
             if (slotIndex != occupiedCount || menifestUI == null || !menifestUI.TryManifestPrisoner())
             {
                 return;
@@ -1011,19 +992,18 @@ namespace Pakuri.InGame
             }
 
             var choice = offeringChoices[choiceIndex];
-            session.ClaimPrisonerReward(activePrisonerButton.PrisonerId);
+            var state = session.GetPartyMemberState(choice.MonsterId);
+            if (state == null)
+            {
+                return;
+            }
+
             session.RecordOfferingChoice(
-                choice.MonsterId,
+                state,
                 choice.RewardId,
                 choice.ChoiceId,
                 choice.ActiveSkillId,
                 choice.PassiveSkillId);
-            if (choice.MaxHealthBonus != 0f)
-            {
-                session.AddMaxHealthBonus(
-                    choice.MonsterId,
-                    choice.MaxHealthBonus);
-            }
 
             RefreshRuntimeSkillModels();
             consumePrisonerButton?.Invoke();
@@ -1050,7 +1030,12 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var state = session.EnsurePartyMemberState(monster);
+            var state = session.GetPartyMemberState(monster.MonsterId);
+            if (state == null)
+            {
+                return;
+            }
+
             AddActiveSkillChoices(session, monster, state);
             AddPassiveSkillChoices(session, monster, state);
             AddEnhancementChoices(session, monster, state);
@@ -1076,7 +1061,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < skills.Length; i++)
             {
                 var skill = skills[i];
-                if (!session.CanLearnActive(monster, skill))
+                if (!session.CanLearnActive(state, monster, skill))
                 {
                     continue;
                 }
@@ -1109,7 +1094,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < passives.Length; i++)
             {
                 var passive = passives[i];
-                if (!session.CanLearnPassive(monster, passive))
+                if (!session.CanLearnPassive(state, monster, passive))
                 {
                     continue;
                 }
@@ -1142,14 +1127,16 @@ namespace Pakuri.InGame
             for (var i = 0; i < rewards.Length; i++)
             {
                 var reward = rewards[i];
-                if (reward == null || string.IsNullOrWhiteSpace(reward.RewardId) || session.HasChosenReward(state.MonsterId, reward.RewardId))
+                if (reward == null
+                    || string.IsNullOrWhiteSpace(reward.RewardId)
+                    || state.ChosenRewardIds.Contains(reward.RewardId))
                 {
                     continue;
                 }
 
                 var choiceData = ResolveChoice(reward.RewardId);
                 if (choiceData == null
-                    || !session.CanChooseSkillChoice(state.MonsterId, reward, choiceData))
+                    || !session.CanChooseSkillChoice(state, reward, choiceData))
                 {
                     continue;
                 }
@@ -1166,8 +1153,7 @@ namespace Pakuri.InGame
                     SkillName = skillName,
                     Title = $"{monster.DisplayName} · {skillName}",
                     Description = ResolveDescription(null, choiceData.DescriptionText, choiceData.ChoiceId),
-                    Icon = ResolveChoiceIcon(choiceData),
-                    MaxHealthBonus = choiceData.MaxHealthBonus
+                    Icon = ResolveChoiceIcon(choiceData)
                 });
             }
         }
@@ -1533,7 +1519,6 @@ namespace Pakuri.InGame
             public string Title;
             public string Description;
             public Sprite Icon;
-            public float MaxHealthBonus;
         }
 
         private class OfferingButtonView
@@ -1676,7 +1661,6 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            session.ClaimPrisonerReward(activePrisonerButton.PrisonerId);
             consumePrisonerButton?.Invoke();
 
             pendingManifestMonster = ResolveNextManifestCandidate(session);
@@ -1762,8 +1746,11 @@ namespace Pakuri.InGame
                 return;
             }
 
-            session.RecordManifestedMonster(pendingManifestMonster);
-            var slotIndex = Mathf.Clamp(session.ManifestedMonsterIds.Count, 1, 4);
+            if (!session.TryAddPartyMonster(pendingManifestMonster, out var slotIndex))
+            {
+                return;
+            }
+
             var unitSpawnManager = resolveUnitSpawnManager?.Invoke();
             if (unitSpawnManager != null)
             {
@@ -1788,8 +1775,7 @@ namespace Pakuri.InGame
                 var monster = monsters[i];
                 if (monster == null
                     || string.IsNullOrWhiteSpace(monster.MonsterId)
-                    || string.Equals(monster.MonsterId, session.SelectedMonsterId, StringComparison.OrdinalIgnoreCase)
-                    || session.HasManifestedMonster(monster.MonsterId))
+                    || session.GetPartyMemberState(monster.MonsterId) != null)
                 {
                     continue;
                 }

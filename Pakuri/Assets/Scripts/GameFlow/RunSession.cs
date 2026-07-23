@@ -4,7 +4,7 @@ using Pakuri.Data;
 
 /*
  * 한 번의 런에서 유지되는 진행 상태와 파티별 성장 상태를 보관한다.
- * 스테이지·일차, 재화·포로, 선택 및 현현 몬스터,
+ * 스테이지·일차, 재화, 배치 파티,
  * 몬스터별 학습 스킬과 Choice를 기록한다.
  */
 namespace Pakuri.InGame
@@ -14,52 +14,42 @@ namespace Pakuri.InGame
     {
         private const int MaxAdditionalActiveSkillCount = 2;
         private const int MaxPassiveSkillCount = 5;
+        private const int MaxPartyMonsterCount = 5;
+        private const int MaxActiveEnhancementCount = 3;
+        private const int MaxActiveMasterCount = 1;
+        private const int MaxPassiveEnhancementCount = 1;
 
         [Serializable]
         public class RunMonsterState
         {
             public string MonsterId;
-            public string MonsterName;
             public readonly List<string> LearnedActives = new List<string>();
             public readonly List<string> LearnedPassives = new List<string>();
             public readonly List<string> ChosenRewardIds = new List<string>();
             public readonly List<string> ChosenChoiceIds = new List<string>();
-            public float MaxHealthBonus;
         }
 
-        public string SelectedMonsterId;
-        public string SelectedMonsterName;
-        public string ActiveSkillId;
-        public string PassiveSkillId;
-        public string ActiveSkillName;
-        public string PassiveSkillName;
+        private readonly List<RunMonsterState> partyMembers = new List<RunMonsterState>();
+
+        public string SelectedMonsterId => partyMembers.Count > 0 ? partyMembers[0].MonsterId : string.Empty;
+        public IReadOnlyList<RunMonsterState> PartyMembers => partyMembers;
         public int StageIndex = 1;
         public int DayIndex = 1;
         public int Gold;
         public int DarkTrace;
-        public int PrisonersSeen;
-        public readonly List<string> PrisonerNames = new List<string>();
-        public readonly List<string> ManifestedMonsterIds = new List<string>();
-        public readonly List<RunMonsterState> PartyMembers = new List<RunMonsterState>();
 
         /*
          * 선택한 몬스터로 첫 스테이지의 런 진행 상태를 만든다.
          */
         public static RunSession Begin(MonsterDefinition monster /* 몬스터 */)
         {
-            var session = new RunSession
+            if (monster == null || string.IsNullOrWhiteSpace(monster.MonsterId))
             {
-                SelectedMonsterId = monster.MonsterId,
-                SelectedMonsterName = monster.DisplayName,
-                ActiveSkillId = ResolveDefaultActiveSkillId(monster),
-                PassiveSkillId = ResolveDefaultPassiveSkillId(monster),
-                ActiveSkillName = monster.ActiveSkillName,
-                PassiveSkillName = monster.PassiveSkillName,
-                StageIndex = 1,
-                DayIndex = 1
-            };
+                throw new ArgumentException("A Monster with a non-empty ID is required.", nameof(monster));
+            }
 
-            session.EnsurePartyMemberState(monster);
+            var session = new RunSession();
+            session.AddPartyMemberState(monster);
             return session;
         }
 
@@ -89,51 +79,21 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 런 시작 시 사용할 F 슬롯 기본 패시브를 찾는다.
-         */
-        private static string ResolveDefaultPassiveSkillId(MonsterDefinition monster /* 몬스터 */)
-        {
-            if (monster == null || monster.PassiveSkills == null)
-            {
-                return string.Empty;
-            }
-
-            for (var i = 0; i < monster.PassiveSkills.Length; i++)
-            {
-                var passive = monster.PassiveSkills[i];
-                if (passive != null
-                    && passive.Slot == SkillSlot.F
-                    && passive.IsAvailableWithoutActiveRequirement
-                    && !string.IsNullOrWhiteSpace(passive.PassiveId))
-                {
-                    return passive.PassiveId;
-                }
-            }
-
-            return string.Empty;
-        }
-
-        /*
-         * 지정한 파티원이 이미 선택한 보상인지 확인한다.
-         */
-        public bool HasChosenReward(string monsterId /* 몬스터 식별자 */, string rewardId /* 보상 식별자 */)
-        {
-            RunMonsterState member = GetPartyMemberState(monsterId);
-            return member.ChosenRewardIds.Contains(rewardId);
-        }
-
-        /*
          * 지정한 파티원이 선택한 Offering 보상과 습득 스킬을 기록한다.
          */
         public void RecordOfferingChoice(
-            string monsterId /* 몬스터 식별자 */,
+            RunMonsterState member /* 보상을 받을 파티원 상태 */,
             string rewardId /* 보상 식별자 */,
             string linkedChoiceId /* 연결된 선택지 식별자 */,
             string activeSkillId /* 액티브 스킬 식별자 */,
             string passiveSkillId /* 패시브 스킬 식별자 */)
         {
-            RunMonsterState member = GetPartyMemberState(monsterId);
-            if (!string.IsNullOrWhiteSpace(rewardId) && !HasChosenReward(monsterId, rewardId))
+            if (member == null)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(rewardId) && !member.ChosenRewardIds.Contains(rewardId))
             {
                 member.ChosenRewardIds.Add(rewardId);
             }
@@ -143,57 +103,42 @@ namespace Pakuri.InGame
                 member.ChosenChoiceIds.Add(linkedChoiceId);
             }
 
-            if (!string.IsNullOrWhiteSpace(activeSkillId) && !HasLearnedActive(monsterId, activeSkillId))
+            if (!string.IsNullOrWhiteSpace(activeSkillId) && !member.LearnedActives.Contains(activeSkillId))
             {
                 member.LearnedActives.Add(activeSkillId);
             }
 
-            if (!string.IsNullOrWhiteSpace(passiveSkillId) && !HasLearnedPassive(monsterId, passiveSkillId))
+            if (!string.IsNullOrWhiteSpace(passiveSkillId) && !member.LearnedPassives.Contains(passiveSkillId))
             {
                 member.LearnedPassives.Add(passiveSkillId);
             }
         }
 
         /*
-         * 지정한 파티원이 액티브 스킬을 습득했는지 확인한다.
-         */
-        public bool HasLearnedActive(string monsterId /* 몬스터 식별자 */, string activeSkillId /* 액티브 스킬 식별자 */)
-        {
-            RunMonsterState member = GetPartyMemberState(monsterId);
-            return member.LearnedActives.Contains(activeSkillId);
-        }
-
-        /*
-         * 지정한 파티원이 패시브 스킬을 습득했는지 확인한다.
-         */
-        public bool HasLearnedPassive(string monsterId /* 몬스터 식별자 */, string passiveSkillId /* 패시브 스킬 식별자 */)
-        {
-            RunMonsterState member = GetPartyMemberState(monsterId);
-            return member.LearnedPassives.Contains(passiveSkillId);
-        }
-
-        /*
          * 파티원이 지정한 액티브 스킬을 새로 학습할 수 있는지 확인한다.
          */
         public bool CanLearnActive(
+            RunMonsterState member /* 스킬을 학습할 파티원 상태 */,
             MonsterDefinition monster /* 스킬을 학습할 몬스터 */,
             SkillSourceDefinition skill /* 학습 후보 액티브 스킬 */)
         {
-            if (monster == null || skill == null || string.IsNullOrWhiteSpace(skill.SkillId))
+            if (member == null
+                || monster == null
+                || skill == null
+                || string.IsNullOrWhiteSpace(skill.SkillId)
+                || member.LearnedActives.Contains(skill.SkillId))
             {
                 return false;
             }
 
-            var member = GetPartyMemberState(monster.MonsterId);
-            if (member == null || member.LearnedActives.Contains(skill.SkillId))
-            {
-                return false;
-            }
-
+            var defaultActiveSkillId = ResolveDefaultActiveSkillId(monster);
             var additionalCount = 0;
             for (var i = 0; i < member.LearnedActives.Count; i++)
             {
-                if (!IsDefaultActiveSkill(monster, member.LearnedActives[i]))
+                if (!string.Equals(
+                    member.LearnedActives[i],
+                    defaultActiveSkillId,
+                    StringComparison.OrdinalIgnoreCase))
                 {
                     additionalCount++;
                 }
@@ -206,16 +151,14 @@ namespace Pakuri.InGame
          * 파티원이 요구 액티브 스킬을 갖추고 패시브를 새로 학습할 수 있는지 확인한다.
          */
         public bool CanLearnPassive(
+            RunMonsterState member /* 스킬을 학습할 파티원 상태 */,
             MonsterDefinition monster /* 스킬을 학습할 몬스터 */,
             PassiveDefinition passive /* 학습 후보 패시브 스킬 */)
         {
-            if (monster == null || passive == null || string.IsNullOrWhiteSpace(passive.PassiveId))
-            {
-                return false;
-            }
-
-            var member = GetPartyMemberState(monster.MonsterId);
             if (member == null
+                || monster == null
+                || passive == null
+                || string.IsNullOrWhiteSpace(passive.PassiveId)
                 || member.LearnedPassives.Contains(passive.PassiveId)
                 || member.LearnedPassives.Count >= MaxPassiveSkillCount)
             {
@@ -225,6 +168,11 @@ namespace Pakuri.InGame
             if (passive.IsAvailableWithoutActiveRequirement)
             {
                 return true;
+            }
+
+            if (monster.ActiveSkills == null)
+            {
+                return false;
             }
 
             for (var i = 0; i < monster.ActiveSkills.Length; i++)
@@ -245,11 +193,10 @@ namespace Pakuri.InGame
          * 파티원이 요구 스킬과 선행 강화를 갖추고 Choice를 선택할 수 있는지 확인한다.
          */
         public bool CanChooseSkillChoice(
-            string monsterId /* 몬스터 식별자 */,
+            RunMonsterState member /* Choice를 선택할 파티원 상태 */,
             MonsterDefinition.RewardChoiceDefinition reward /* Choice와 연결된 보상 */,
             SkillChoiceDefinition choice /* 선택 후보 강화 효과 */)
         {
-            var member = GetPartyMemberState(monsterId);
             if (member == null || reward == null || choice == null)
             {
                 return false;
@@ -279,18 +226,17 @@ namespace Pakuri.InGame
                 sourceSkillId = reward.PassiveSkillId;
             }
 
-            return CanChooseSkillChoice(monsterId, sourceSkillId, choice);
+            return CanChooseSkillChoice(member, sourceSkillId, choice);
         }
 
         /*
          * 파티원의 선택 기록과 성장 단계 제한을 기준으로 Choice를 선택할 수 있는지 확인한다.
          */
         public bool CanChooseSkillChoice(
-            string monsterId /* 몬스터 식별자 */,
+            RunMonsterState member /* Choice를 선택할 파티원 상태 */,
             string sourceSkillId /* Choice가 연결된 원본 스킬 식별자 */,
             SkillChoiceDefinition choice /* 선택 후보 강화 효과 */)
         {
-            var member = GetPartyMemberState(monsterId);
             if (member == null || choice == null || string.IsNullOrWhiteSpace(choice.ChoiceId))
             {
                 return false;
@@ -301,31 +247,24 @@ namespace Pakuri.InGame
                 return false;
             }
 
-            var targetSkillId = choice.SkillId;
-            if (string.IsNullOrWhiteSpace(targetSkillId))
-            {
-                targetSkillId = choice.TargetSkillId;
-            }
-            if (string.IsNullOrWhiteSpace(targetSkillId))
-            {
-                targetSkillId = sourceSkillId;
-            }
-
-            var enhancementCount = CountChosenChoices(member, targetSkillId, SkillChoiceGroup.ActiveEnhancement);
-            var masterCount = CountChosenChoices(member, targetSkillId, SkillChoiceGroup.ActiveMaster);
-            var passiveEnhancementCount = CountChosenChoices(member, targetSkillId, SkillChoiceGroup.PassiveEnhancement);
+            var targetSkillId = ResolveChoiceTargetSkillId(choice, sourceSkillId);
 
             if (choice.ChoiceGroup == SkillChoiceGroup.ActiveEnhancement)
             {
-                return enhancementCount < 3;
+                return CountChosenChoices(member, targetSkillId, SkillChoiceGroup.ActiveEnhancement)
+                    < MaxActiveEnhancementCount;
             }
             if (choice.ChoiceGroup == SkillChoiceGroup.ActiveMaster)
             {
-                return enhancementCount >= 3 && masterCount < 1;
+                return CountChosenChoices(member, targetSkillId, SkillChoiceGroup.ActiveEnhancement)
+                        >= MaxActiveEnhancementCount
+                    && CountChosenChoices(member, targetSkillId, SkillChoiceGroup.ActiveMaster)
+                        < MaxActiveMasterCount;
             }
             if (choice.ChoiceGroup == SkillChoiceGroup.PassiveEnhancement)
             {
-                return passiveEnhancementCount < 1;
+                return CountChosenChoices(member, targetSkillId, SkillChoiceGroup.PassiveEnhancement)
+                    < MaxPassiveEnhancementCount;
             }
 
             return true;
@@ -341,80 +280,43 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 선택한 포로를 획득 목록에 추가한다.
+         * 새 몬스터를 다음 파티 슬롯과 진행 상태에 등록한다.
          */
-        public void ClaimPrisonerReward(string prisonerName /* 수감자 이름 */)
+        public bool TryAddPartyMonster(
+            MonsterDefinition monster /* 파티에 추가할 몬스터 */,
+            out int slotIndex /* 추가된 파티 슬롯 순서 번호 */)
         {
-            if (string.IsNullOrWhiteSpace(prisonerName))
-            {
-                return;
-            }
-
-            PrisonersSeen += 1;
-            PrisonerNames.Add(prisonerName);
-        }
-
-        /*
-         * 지정한 몬스터가 이미 현현했는지 확인한다.
-         */
-        public bool HasManifestedMonster(string monsterId /* 몬스터 식별자 */)
-        {
-            return ManifestedMonsterIds.Contains(monsterId);
-        }
-
-        /*
-         * 새로 현현한 몬스터를 파티 목록과 진행 상태에 등록한다.
-         */
-        public void RecordManifestedMonster(MonsterDefinition monster /* 몬스터 */)
-        {
+            slotIndex = -1;
             if (monster == null
                 || string.IsNullOrWhiteSpace(monster.MonsterId)
-                || IsSelectedMonster(monster.MonsterId)
-                || HasManifestedMonster(monster.MonsterId))
+                || partyMembers.Count >= MaxPartyMonsterCount
+                || GetPartyMemberState(monster.MonsterId) != null)
             {
-                return;
+                return false;
             }
 
-            ManifestedMonsterIds.Add(monster.MonsterId);
-            EnsurePartyMemberState(monster);
+            AddPartyMemberState(monster);
+            slotIndex = partyMembers.Count - 1;
+            return true;
         }
 
         /*
-         * 지정한 파티원의 영구 최대 체력 증가값을 기록한다.
+         * 새 파티 진행 상태를 기본 액티브 스킬과 함께 추가한다.
          */
-        public void AddMaxHealthBonus(
-            string monsterId /* 몬스터 식별자 */,
-            float maxHealthBonus /* 최대 체력 추가값 */)
+        private RunMonsterState AddPartyMemberState(MonsterDefinition monster /* 추가할 몬스터 */)
         {
-            RunMonsterState member = GetPartyMemberState(monsterId);
-            member.MaxHealthBonus += maxHealthBonus;
-        }
-
-        /*
-         * 몬스터의 파티 진행 상태가 없으면 기본 스킬과 함께 새로 만든다.
-         */
-        public RunMonsterState EnsurePartyMemberState(MonsterDefinition monster /* 몬스터 */)
-        {
-            if (monster == null || string.IsNullOrWhiteSpace(monster.MonsterId))
-            {
-                return null;
-            }
-
-            var existing = GetPartyMemberState(monster.MonsterId);
-            if (existing != null)
-            {
-                return existing;
-            }
-
             var state = new RunMonsterState
             {
-                MonsterId = monster.MonsterId,
-                MonsterName = monster.DisplayName
+                MonsterId = monster.MonsterId
             };
 
-            state.LearnedActives.Add(ResolveDefaultActiveSkillId(monster));
-            PartyMembers.Add(state);
+            var defaultActiveSkillId = ResolveDefaultActiveSkillId(monster);
+            if (!string.IsNullOrWhiteSpace(defaultActiveSkillId))
+            {
+                state.LearnedActives.Add(defaultActiveSkillId);
+            }
 
+            partyMembers.Add(state);
             return state;
         }
 
@@ -428,9 +330,9 @@ namespace Pakuri.InGame
                 return null;
             }
 
-            for (var i = 0; i < PartyMembers.Count; i++)
+            for (var i = 0; i < partyMembers.Count; i++)
             {
-                var member = PartyMembers[i];
+                var member = partyMembers[i];
                 if (member != null && string.Equals(member.MonsterId, monsterId, StringComparison.OrdinalIgnoreCase))
                 {
                     return member;
@@ -460,7 +362,10 @@ namespace Pakuri.InGame
                 if (GameDataLoader.CurrentCatalog.TryGetData(choiceId, out SkillChoiceDefinition choice)
                     && choice != null
                     && choice.ChoiceGroup == group
-                    && ChoiceTargetsSkill(choice, skillId))
+                    && string.Equals(
+                        ResolveChoiceTargetSkillId(choice, string.Empty),
+                        skillId,
+                        StringComparison.OrdinalIgnoreCase))
                 {
                     count++;
                 }
@@ -470,52 +375,28 @@ namespace Pakuri.InGame
         }
 
         /*
-         * Choice가 지정한 스킬 ID와 검사할 스킬 ID가 같은지 확인한다.
+         * Choice가 적용될 스킬 ID를 명시값과 대체값 순서로 찾는다.
          */
-        private static bool ChoiceTargetsSkill(
+        private static string ResolveChoiceTargetSkillId(
             SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */,
-            string skillId /* 검사할 스킬 식별자 */)
+            string fallbackSkillId /* Choice에 대상이 없을 때 사용할 스킬 식별자 */)
         {
-            var targetSkillId = choice.SkillId;
-            if (string.IsNullOrWhiteSpace(targetSkillId))
+            if (choice == null)
             {
-                targetSkillId = choice.TargetSkillId;
+                return fallbackSkillId;
             }
 
-            return string.Equals(targetSkillId, skillId, StringComparison.OrdinalIgnoreCase);
-        }
-
-        /*
-         * 지정한 액티브 스킬이 몬스터의 런 시작 기본 스킬인지 확인한다.
-         */
-        private static bool IsDefaultActiveSkill(MonsterDefinition monster /* 몬스터 */, string skillId /* 스킬 식별자 */)
-        {
-            if (monster == null || string.IsNullOrWhiteSpace(skillId))
+            if (!string.IsNullOrWhiteSpace(choice.SkillId))
             {
-                return false;
+                return choice.SkillId;
             }
 
-            for (var i = 0; i < monster.ActiveSkills.Length; i++)
+            if (!string.IsNullOrWhiteSpace(choice.TargetSkillId))
             {
-                var skill = monster.ActiveSkills[i];
-                if (skill != null
-                    && skill.IsDefaultLearned
-                    && string.Equals(skill.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
+                return choice.TargetSkillId;
             }
 
-            return false;
-        }
-
-        /*
-         * 지정한 몬스터가 런 시작 시 선택한 몬스터인지 확인한다.
-         */
-        private bool IsSelectedMonster(string monsterId /* 몬스터 식별자 */)
-        {
-            return !string.IsNullOrWhiteSpace(monsterId)
-                && string.Equals(SelectedMonsterId, monsterId, StringComparison.OrdinalIgnoreCase);
+            return fallbackSkillId;
         }
 
     }

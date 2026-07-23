@@ -9,6 +9,51 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-23 Remove Duplicate Choice And BuffShield Status Fields
+
+### Task title
+
+Keep normalized Choice nodes and `ShieldStatus` as the status-condition and shield-refresh authorities.
+
+### Goals
+
+- Remove the flat `RequiredSourceStatus*` Choice round trip.
+- Keep `RequiredSourceStatus` conversion and runtime checks through normalized nodes.
+- Remove duplicate or unimplemented BuffShield refresh and reflection fields.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Status CSV, status definitions, active graph rows, and status runtime behavior remain unchanged.
+- No new status kind, handler, or gameplay behavior is added.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compile-verified, Unity-console verified, and Code Reviewer passed.
+
+### Next Actions
+
+- User verifies Vega source-status-gated Choices and shield refresh behavior in Unity Play Mode.
+
+### Evidence
+
+- `SkillChoiceDefinition`, `SkillChoiceRow`, catalog building, compilation, and the flat `SkillRequirement.MeetsSourceStatus` overload no longer contain the flat `RequiredSourceStatus*` path.
+- `SkillDefinitionCompiler` still maps the `RequiredSourceStatus` handler to `SourceStatusRequirementOp`; `SkillExecutionRuleResolver` evaluates that operation from `NormalizedPlanNodes`.
+- `SkillGraphParser.ValidateSkillNodeParamValue` continues validating `StatusId` parameters against `model.StatusEffects`.
+- Active Choice graph CSV rows for Vega still author `RequiredSourceStatus` nodes; no CSV row changed.
+- `BuffShieldSkillDefinition` retains `ShieldStatus`; refresh policy remains in the shared status runtime, while duplicate `RefreshRule` and unimplemented reflection fields and compiler assignments were removed.
+- Solution build completed with 0 errors, and Unity console returned 0 error entries after forced script refresh.
+
+### History
+
+- 2026-07-23: Code Builder consolidated Choice source-status checks and BuffShield refresh ownership.
+- 2026-07-23: Code Reviewer returned PASS with no status-runtime fix request.
+
 ## Task: 2026-07-17 OpeningCharge Buff Classification And Contact Freeze
 
 ### Task title

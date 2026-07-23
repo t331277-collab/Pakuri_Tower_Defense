@@ -65,14 +65,17 @@ The default role is Designer.
 
 When performing a role, read and follow that role file:
 
-- Common role rules: read `AGENTS_ROLE/COMMON.md` before Designer, Code Builder, Skill Builder, or Code Reviewer role files.
+- Common role rules: read `AGENTS_ROLE/COMMON.md` before Designer, Code Builder, Skill Builder, Code Reviewer, or Naive Code Filter role files.
 - Designer: read `AGENTS_ROLE/GAMEDESIGNER.md`.
 - Code Builder: read `AGENTS_ROLE/GAMEBULIDER.md`.
 - Skill Builder: read `AGENTS_ROLE/GAMEBULIDER.md`, then `AGENTS_ROLE/GAMEBULIDER_SKILL.md`.
 - Code Reviewer: read `AGENTS_ROLE/GAMEREVIWER.md`.
+- Naive Code Filter: read `AGENTS_ROLE/NAIVE_CODE_FILTER.md`.
 - SimpelWorker: read `AGENTS_ROLE/SIMPELWORKER.md`.
 
 `Skill Builder` is the Code Builder track for Reference-driven Base authoring on an existing runtime/schema and Enhancement/Master node authoring.
+
+`Naive Code Filter` is an inspection-only role. It audits one exact user-provided script or folder for deletion and consolidation candidates and does not implement changes.
 
 `SimpelWorker` is for very simple work such as file renames or information extraction. After the required startup reads of `AGENTS.md` and `MDTREE.md`, `SimpelWorker` does not read additional markdown files, including `AGENTS_ROLE/COMMON.md`.
 

@@ -466,14 +466,7 @@ public static class SkillDefinitionCompiler
 			buffShieldSkillExecutionDefinition.ShieldCoefficient = GetDominantCoefficient(source, out var statSource2);
 			buffShieldSkillExecutionDefinition.ShieldStatSource = statSource2;
 			buffShieldSkillExecutionDefinition.ShieldDuration = ResolveStatusDuration(source);
-			ShieldRefreshRule rule;
-		if (!StatusRuntimeCompiler.TryParseShieldRefreshRule(source.ShieldAmountRefreshPolicy, out rule))
-			{
-				rule = ShieldRefreshRule.TakeHighest;
-			}
-			buffShieldSkillExecutionDefinition.RefreshRule = rule;
 			buffShieldSkillExecutionDefinition.ShieldStatus = CreateStatusRuntimeData(source);
-			buffShieldSkillExecutionDefinition.ReflectElement = source.Attribute;
 		}
 	}
 
@@ -835,45 +828,45 @@ namespace Pakuri.InGame
 		}
 		if (string.Equals(text, "TargetHealthRatioCondition", StringComparison.OrdinalIgnoreCase))
 		{
-			return SkillNode.FromCastCondition(new CastConditionOp(GetFloatParam(node, "threshold", 0f)));
+			return SkillNode.FromOperation(new CastConditionOp(GetFloatParam(node, "threshold", 0f)));
 		}
 		if (string.Equals(text, "TargetHealthRatioThresholdBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return SkillNode.FromCastCondition(new CastConditionOp(GetFloatParam(node, "threshold_bonus", 0f)));
+			return SkillNode.FromOperation(new CastConditionOp(GetFloatParam(node, "threshold_bonus", 0f)));
 		}
 		if (string.Equals(text, "ExecuteDamageMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
-			return SkillNode.FromDamageModifier(new DamageModifierOp(DamageModifierOpKind.ExecuteMultiplier, GetFloatParam(node, "multiplier", 1f)));
+			return SkillNode.FromOperation(new DamageModifierOp(DamageModifierOpKind.ExecuteMultiplier, GetFloatParam(node, "multiplier", 1f)));
 		}
 		if (string.Equals(text, "TargetPredicateDamageMultiplier", StringComparison.OrdinalIgnoreCase) && string.Equals(GetParam(node, "predicate"), "is_boss", StringComparison.OrdinalIgnoreCase))
 		{
-			return SkillNode.FromDamageModifier(new DamageModifierOp(DamageModifierOpKind.BossMultiplier, GetFloatParam(node, "multiplier", 1f)));
+			return SkillNode.FromOperation(new DamageModifierOp(DamageModifierOpKind.BossMultiplier, GetFloatParam(node, "multiplier", 1f)));
 		}
 		if (string.Equals(text, "BossDamageMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
-			return SkillNode.FromDamageModifier(new DamageModifierOp(DamageModifierOpKind.BossMultiplier, GetFloatParam(node, "multiplier", 1f)));
+			return SkillNode.FromOperation(new DamageModifierOp(DamageModifierOpKind.BossMultiplier, GetFloatParam(node, "multiplier", 1f)));
 		}
 		if (string.Equals(text, "ExecuteCritChanceBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return SkillNode.FromCritModifier(new CritModifierOp(GetFloatParam(node, "crit_chance_bonus", 0f)));
+			return SkillNode.FromOperation(new CritModifierOp(GetFloatParam(node, "crit_chance_bonus", 0f)));
 		}
 		if (string.Equals(text, "CooldownReset", StringComparison.OrdinalIgnoreCase) || string.Equals(text, "CooldownResetOnKill", StringComparison.OrdinalIgnoreCase))
 		{
-			return SkillNode.FromKillAction(new KillActionOp(KillActionOpKind.CooldownReset, 0f, GetBoolParam(node, "requires_execute", defaultValue: false)));
+			return SkillNode.FromOperation(new KillActionOp(KillActionOpKind.CooldownReset, 0f, GetBoolParam(node, "requires_execute", defaultValue: false)));
 		}
 		if (string.Equals(text, "CooldownRefund", StringComparison.OrdinalIgnoreCase))
 		{
-			return SkillNode.FromKillAction(new KillActionOp(KillActionOpKind.CooldownRefundBonus, GetFloatParam(node, "ratio", 0f), requiresExecute: false));
+			return SkillNode.FromOperation(new KillActionOp(KillActionOpKind.CooldownRefundBonus, GetFloatParam(node, "ratio", 0f), requiresExecute: false));
 		}
 		if (string.Equals(text, "CooldownRefundBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return SkillNode.FromKillAction(new KillActionOp(KillActionOpKind.CooldownRefundBonus, GetFloatParam(node, "ratio_bonus", 0f), requiresExecute: false));
+			return SkillNode.FromOperation(new KillActionOp(KillActionOpKind.CooldownRefundBonus, GetFloatParam(node, "ratio_bonus", 0f), requiresExecute: false));
 		}
 		if (string.Equals(text, "CountStatusDamageMultiplier", StringComparison.OrdinalIgnoreCase))
 		{
 			string statusId = GetParam(node, "status_id");
 			StatusEffectKind statusKind = StatusRuntimeCompiler.ParseStatusKind(statusId);
-			return SkillNode.FromCountStatusDamageAction(new CountStatusDamageActionOp(
+			return SkillNode.FromOperation(new CountStatusDamageActionOp(
 				GetEnumParam(node, "target_side", SkillMultiEffectTargetSide.AllAllies),
 				statusKind,
 				GetFloatParam(node, "amount_per_count", 0f),
@@ -881,13 +874,13 @@ namespace Pakuri.InGame
 		}
 		if (string.Equals(text, "ConsecutiveHitDamageBonus", StringComparison.OrdinalIgnoreCase))
 		{
-			return SkillNode.FromConsecutiveHitAction(new ConsecutiveHitActionOp(
+			return SkillNode.FromOperation(new ConsecutiveHitActionOp(
 				GetFloatParam(node, "bonus_rate", 0f),
 				GetFloatParam(node, "max_bonus", 0f)));
 		}
 		if (string.Equals(text, "BranchDamage", StringComparison.OrdinalIgnoreCase))
 		{
-			return SkillNode.FromBranchDamageAction(new BranchDamageActionOp(
+			return SkillNode.FromOperation(new BranchDamageActionOp(
 				GetFloatParam(node, "chance_bonus", 0f),
 				GetIntParam(node, "count", 0),
 				GetFloatParam(node, "damage_multiplier", 0f),
@@ -897,7 +890,7 @@ namespace Pakuri.InGame
 		{
 			string statusId = GetParam(node, "status_id");
 			StatusEffectKind statusKind = StatusRuntimeCompiler.ParseStatusKind(statusId);
-			return SkillNode.FromConditionalDamageAction(new ConditionalDamageActionOp(
+			return SkillNode.FromOperation(new ConditionalDamageActionOp(
 				GetFloatParam(node, "multiplier", 1f),
 				statusKind,
 				GetIntParam(node, "min_stacks", 1)));
@@ -906,7 +899,7 @@ namespace Pakuri.InGame
 		{
 			string sourceStatusId = GetParam(node, "source_status_id");
 			StatusEffectKind sourceStatusKind = StatusRuntimeCompiler.ParseStatusKind(sourceStatusId);
-			return SkillNode.FromStatusConditionalDamageTakenAction(new StatusConditionalDamageTakenActionOp(
+			return SkillNode.FromOperation(new StatusConditionalDamageTakenActionOp(
 				GetFloatParam(node, "bonus", 0f),
 				sourceStatusKind));
 		}
@@ -1019,7 +1012,7 @@ namespace Pakuri.InGame
 				GetIntParam(node, "min_stacks", 1)));
 		}
 		var skillActionOp = MapSkillActionOp(node, text);
-		return SkillNode.FromAction(skillActionOp);
+		return SkillNode.FromOperation(skillActionOp);
 	}
 
 	/*
@@ -1375,21 +1368,6 @@ namespace Pakuri.InGame
 		for (int i = 0; i < source.Length; i++)
 		{
 			SkillChoiceDefinition skillChoiceDefinition = source[i];
-			if (!string.IsNullOrWhiteSpace(skillChoiceDefinition.CountStatusId))
-			{
-				skillChoiceDefinition.CountStatusKind = StatusRuntimeCompiler.ParseStatusKind(
-					skillChoiceDefinition.CountStatusId);
-			}
-			if (!string.IsNullOrWhiteSpace(skillChoiceDefinition.ConditionalCritTargetStatusId))
-			{
-				skillChoiceDefinition.ConditionalCritTargetStatusKind = StatusRuntimeCompiler.ParseStatusKind(
-					skillChoiceDefinition.ConditionalCritTargetStatusId);
-			}
-			if (!string.IsNullOrWhiteSpace(skillChoiceDefinition.RequiredSourceStatusId))
-			{
-				skillChoiceDefinition.RequiredSourceStatusKind = StatusRuntimeCompiler.ParseStatusKind(
-					skillChoiceDefinition.RequiredSourceStatusId);
-			}
 			array[i] = new SkillChoice
 			{
 				Source = skillChoiceDefinition

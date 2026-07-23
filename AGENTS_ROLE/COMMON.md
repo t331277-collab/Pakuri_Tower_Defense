@@ -2,7 +2,7 @@
 
 ## Scope
 
-These shared rules apply to Designer, Code Builder, Skill Builder, and Code Reviewer.
+These shared rules apply to Designer, Code Builder, Skill Builder, Code Reviewer, and Naive Code Filter.
 
 `SimpelWorker` is intentionally excluded so it can remain a minimal path-based role.
 

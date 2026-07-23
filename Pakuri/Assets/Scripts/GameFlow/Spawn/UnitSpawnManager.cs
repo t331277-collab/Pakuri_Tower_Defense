@@ -119,8 +119,8 @@ namespace Pakuri.InGame
         {
             var prefab = ResolveMonsterPrefab(monster.MonsterId);
 
-            // 현현 유닛은 세션 파티 상태를 먼저 확보한 뒤 학습 스킬 런타임을 복원한다.
-            var runState = activeSession.EnsurePartyMemberState(monster);
+            var runState = activeSession.GetPartyMemberState(monster.MonsterId)
+                ?? throw new InvalidOperationException($"Party state '{monster.MonsterId}' is required before spawning.");
             var model = unitStateFactory.CreateManifestedMonster(monster, runState, partySlotIndex);
             SkillExecution.RebuildLearnedSkillState(model);
 
@@ -146,8 +146,8 @@ namespace Pakuri.InGame
             var monster = ResolveMonsterDefinition(activeSession.SelectedMonsterId);
             var prefab = ResolveMonsterPrefab(monster.MonsterId);
 
-            // 저장된 파티 상태가 없으면 현재 몬스터 정의로 새 상태를 만든다.
-            var runState = activeSession.GetPartyMemberState(monster.MonsterId) ?? activeSession.EnsurePartyMemberState(monster);
+            var runState = activeSession.GetPartyMemberState(monster.MonsterId)
+                ?? throw new InvalidOperationException($"Party state '{monster.MonsterId}' is required before respawning.");
             model = unitStateFactory.CreateSelectedMonster(monster, runState, 0);
             SkillExecution.RebuildLearnedSkillState(model);
 
@@ -185,7 +185,7 @@ namespace Pakuri.InGame
                 activeSession,
                 out selectedPlayerUnit,
                 out selectedPlayerModel);
-            RestoreManifestedPlayersFromSession(activeSession);
+            RestoreAdditionalPlayersFromSession(activeSession);
         }
 
         /*
@@ -233,14 +233,12 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 세션의 현현 몬스터를 슬롯별로 부활하거나 다시 생성한다.
+         * 세션 파티의 2P 이후 몬스터를 슬롯별로 부활하거나 다시 생성한다.
          */
-        private void RestoreManifestedPlayersFromSession(RunSession activeSession /* 현재 활성화된 게임 진행 상태 */)
+        private void RestoreAdditionalPlayersFromSession(RunSession activeSession /* 현재 활성화된 게임 진행 상태 */)
         {
-            for (var i = 0; i < activeSession.ManifestedMonsterIds.Count; i++)
+            for (var slotIndex = 1; slotIndex < activeSession.PartyMembers.Count; slotIndex++)
             {
-                // 선택 몬스터가 1P이므로 현현 목록은 순서대로 2P부터 배치한다.
-                var slotIndex = Mathf.Clamp(i + 1, 1, 4);
                 if (FindPlayerEntryBySlot(slotIndex) != null)
                 {
                     continue;
@@ -251,9 +249,9 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var monsterId = activeSession.ManifestedMonsterIds[i];
+                var monsterId = activeSession.PartyMembers[slotIndex].MonsterId;
                 var monster = GameDataLoader.CurrentCatalog.ResolveMonster(monsterId)
-                    ?? throw new InvalidOperationException($"Manifested monster data '{monsterId}' is required.");
+                    ?? throw new InvalidOperationException($"Party monster data '{monsterId}' is required.");
 
                 CreateManifestedMonster(monster, activeSession, slotIndex);
             }
@@ -324,7 +322,9 @@ namespace Pakuri.InGame
             RunSession activeSession /* 현재 활성화된 게임 진행 상태 */,
             UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
-            var state = activeSession.GetPartyMemberState(model.Identity.DefinitionId);
+            var state = activeSession.GetPartyMemberState(model.Identity.DefinitionId)
+                ?? throw new InvalidOperationException(
+                    $"Party state '{model.Identity.DefinitionId}' is required before restoring.");
             SkillDefinitionCompiler.ApplyLearnedSkills(
                 model.Skills,
                 state.LearnedActives,
@@ -368,7 +368,9 @@ namespace Pakuri.InGame
         private UnitCombatState CreateSelectedModel(RunSession session /* 현재 게임 진행 상태 */)
         {
             var monster = ResolveMonsterDefinition(session.SelectedMonsterId);
-            var model = unitStateFactory.CreateSelectedMonster(monster, session.GetPartyMemberState(monster.MonsterId), 0);
+            var runState = session.GetPartyMemberState(monster.MonsterId)
+                ?? throw new InvalidOperationException($"Party state '{monster.MonsterId}' is required before spawning.");
+            var model = unitStateFactory.CreateSelectedMonster(monster, runState, 0);
             SkillExecution.RebuildLearnedSkillState(model);
             return model;
         }

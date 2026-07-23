@@ -33,7 +33,7 @@ Examples of exclusions:
 - `AGENTS.md`: startup, evidence, routing, and role entry-point rules.
 - `MDTREE.md`: this routing tree.
 - `BLACKBOARD.md`: root index and current global status only.
-- `AGENTS_ROLE/COMMON.md`: shared role rules inherited by Designer, Code Builder, Skill Builder, and Code Reviewer.
+- `AGENTS_ROLE/COMMON.md`: shared role rules inherited by Designer, Code Builder, Skill Builder, Code Reviewer, and Naive Code Filter.
 - `boards/ARCHIVE/BLACKBOARD_2026-04-30_PRE_HIERARCHY.md`: full pre-hierarchy archive.
 - `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-07-18.md`: non-July task history moved from active COMBAT, DATA, MON, OPS, RUN, and UI boards.
 
@@ -56,6 +56,7 @@ Role entry points and track files:
 - Code Builder UI: `AGENTS_ROLE/GAMEBULIDER_UI.md`
 - Code Builder verification: `AGENTS_ROLE/GAMEBULIDER_VERIFICATION.md`
 - Code Reviewer: `AGENTS_ROLE/GAMEREVIWER.md`
+- Naive Code Filter: `AGENTS_ROLE/NAIVE_CODE_FILTER.md`
 - SimpelWorker: `AGENTS_ROLE/SIMPELWORKER.md`
 
 Skill Builder active blueprints:
@@ -173,6 +174,19 @@ Use archives only when older transition history is needed:
 - `boards/ARCHIVE/CSV_BLACKBOARD_ARCHIVE_2026-05-14.md`
 - `boards/ARCHIVE/DATA_BLACKBOARD_ARCHIVE_2026-05-18.md`
 - `boards/ARCHIVE/GAMEDATA_ASSET_BLACKBOARD_ARCHIVE_2026-05-18.md`
+
+### Naive Code Filter Work
+
+Read:
+- `AGENTS_ROLE/COMMON.md`
+- `AGENTS_ROLE/NAIVE_CODE_FILTER.md`
+- the exact user-provided script or every C# script under the exact user-provided folder
+
+Use related domain boards only when the inspected code path requires current behavior, compatibility, or ownership context from that domain.
+
+Expand into referenced source files only as required to settle a finding from the original target. Do not treat expanded references as permission for an unrelated full-project audit.
+
+Naive Code Filter does not implement. Route an approved deletion or consolidation handoff to Code Builder only after the user explicitly requests implementation.
 
 ### Reviewer / Codex / Unity-MCP / Automation Work
 

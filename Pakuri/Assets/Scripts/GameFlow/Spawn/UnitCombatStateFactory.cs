@@ -109,13 +109,7 @@ namespace Pakuri.InGame
             string unitIdPrefix /* 유닛 식별자 접두어 */,
             RunSession.RunMonsterState runState /* 게임 진행 상태 */)
         {
-            var maxHealthBonus = 0f;
-            if (runState != null)
-            {
-                maxHealthBonus = runState.MaxHealthBonus;
-            }
-
-            var maxHealth = definition.BaseStats.MaxHealth + maxHealthBonus;
+            var maxHealth = definition.BaseStats.MaxHealth;
             var model = new UnitCombatState
             {
                 Identity = new UnitIdentity

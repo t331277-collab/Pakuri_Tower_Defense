@@ -486,133 +486,133 @@ public class SkillExecutionData
 			 * 평탄화하지 않고 Op 목록에 보존한다. 이전 코드는 이 네 payload를 건너뛰어
 			 * 정규화 노드가 실제 Single 규칙까지 전달되지 않았다.
 			 */
-			CastConditionOp? castCondition = nodes[i].CastCondition;
+			CastConditionOp? castCondition = nodes[i].GetOperation<CastConditionOp>();
 			if (castCondition.HasValue)
 			{
 				castConditionOps.Add(castCondition.Value);
 			}
 
-			DamageModifierOp? damageModifier = nodes[i].DamageModifier;
+			DamageModifierOp? damageModifier = nodes[i].GetOperation<DamageModifierOp>();
 			if (damageModifier.HasValue)
 			{
 				damageModifierOps.Add(damageModifier.Value);
 			}
 
-			CritModifierOp? critModifier = nodes[i].CritModifier;
+			CritModifierOp? critModifier = nodes[i].GetOperation<CritModifierOp>();
 			if (critModifier.HasValue)
 			{
 				critModifierOps.Add(critModifier.Value);
 			}
 
-			KillActionOp? killAction = nodes[i].KillAction;
+			KillActionOp? killAction = nodes[i].GetOperation<KillActionOp>();
 			if (killAction.HasValue)
 			{
 				killActionOps.Add(killAction.Value);
 			}
 
-			SkillActionOp? skillActionOp = nodes[i].Action;
+			SkillActionOp? skillActionOp = nodes[i].GetOperation<SkillActionOp>();
 			if (skillActionOp.HasValue)
 			{
 				ApplyPlanAction(skillActionOp.Value);
 			}
 
-			ConsecutiveHitActionOp? consecutiveHitAction = nodes[i].ConsecutiveHitAction;
+			ConsecutiveHitActionOp? consecutiveHitAction = nodes[i].GetOperation<ConsecutiveHitActionOp>();
 			if (consecutiveHitAction.HasValue)
 			{
 				ApplyConsecutiveHitAction(consecutiveHitAction.Value);
 			}
 
-			BranchDamageActionOp? branchDamageAction = nodes[i].BranchDamageAction;
+			BranchDamageActionOp? branchDamageAction = nodes[i].GetOperation<BranchDamageActionOp>();
 			if (branchDamageAction.HasValue)
 			{
 				ApplyBranchDamageAction(branchDamageAction.Value);
 			}
 
-			ConditionalDamageActionOp? conditionalDamageAction = nodes[i].ConditionalDamageAction;
+			ConditionalDamageActionOp? conditionalDamageAction = nodes[i].GetOperation<ConditionalDamageActionOp>();
 			if (conditionalDamageAction.HasValue)
 			{
 				ApplyConditionalDamageAction(conditionalDamageAction.Value);
 			}
 
-			ConditionalCritChanceActionOp? conditionalCritAction = nodes[i].ConditionalCritChanceAction;
+			ConditionalCritChanceActionOp? conditionalCritAction = nodes[i].GetOperation<ConditionalCritChanceActionOp>();
 			if (conditionalCritAction.HasValue)
 			{
 				ApplyConditionalCritChanceAction(conditionalCritAction.Value);
 			}
 
-			BurstDamageActionOp? burstDamageAction = nodes[i].BurstDamageAction;
+			BurstDamageActionOp? burstDamageAction = nodes[i].GetOperation<BurstDamageActionOp>();
 			if (burstDamageAction.HasValue)
 			{
 				ApplyBurstDamageAction(burstDamageAction.Value);
 			}
 
-			BurstStatusActionOp? burstStatusAction = nodes[i].BurstStatusAction;
+			BurstStatusActionOp? burstStatusAction = nodes[i].GetOperation<BurstStatusActionOp>();
 			if (burstStatusAction.HasValue)
 			{
 				ApplyBurstStatusAction(burstStatusAction.Value);
 			}
 
-			StatusConditionalDamageTakenActionOp? statusDamageTakenAction = nodes[i].StatusConditionalDamageTakenAction;
+			StatusConditionalDamageTakenActionOp? statusDamageTakenAction = nodes[i].GetOperation<StatusConditionalDamageTakenActionOp>();
 			if (statusDamageTakenAction.HasValue)
 			{
 				ApplyStatusConditionalDamageTakenAction(statusDamageTakenAction.Value);
 			}
 
-			FollowUpProjectileActionOp? followUpAction = nodes[i].FollowUpProjectileAction;
+			FollowUpProjectileActionOp? followUpAction = nodes[i].GetOperation<FollowUpProjectileActionOp>();
 			if (followUpAction.HasValue)
 			{
 				ApplyFollowUpProjectileAction(followUpAction.Value);
 			}
 
-			ThresholdStatusActionOp? thresholdStatusAction = nodes[i].ThresholdStatusAction;
+			ThresholdStatusActionOp? thresholdStatusAction = nodes[i].GetOperation<ThresholdStatusActionOp>();
 			if (thresholdStatusAction.HasValue)
 			{
 				ApplyThresholdStatusAction(thresholdStatusAction.Value);
 			}
 
-			RepeatPerTargetActionOp? repeatAction = nodes[i].RepeatPerTargetAction;
+			RepeatPerTargetActionOp? repeatAction = nodes[i].GetOperation<RepeatPerTargetActionOp>();
 			if (repeatAction.HasValue)
 			{
 				ApplyRepeatPerTargetAction(repeatAction.Value);
 			}
 
-			RedistributeConsumedStatusActionOp? redistributeAction = nodes[i].RedistributeConsumedStatusAction;
+			RedistributeConsumedStatusActionOp? redistributeAction = nodes[i].GetOperation<RedistributeConsumedStatusActionOp>();
 			if (redistributeAction.HasValue)
 			{
 				ApplyRedistributeConsumedStatusAction(redistributeAction.Value);
 			}
 
-			AdditionalDamageActionOp? additionalDamageAction = nodes[i].AdditionalDamageAction;
+			AdditionalDamageActionOp? additionalDamageAction = nodes[i].GetOperation<AdditionalDamageActionOp>();
 			if (additionalDamageAction.HasValue)
 			{
 				ApplyAdditionalDamageAction(additionalDamageAction.Value);
 			}
 
-			CoreDamageActionOp? coreDamageAction = nodes[i].CoreDamageAction;
+			CoreDamageActionOp? coreDamageAction = nodes[i].GetOperation<CoreDamageActionOp>();
 			if (coreDamageAction.HasValue)
 			{
 				ApplyCoreDamageAction(coreDamageAction.Value);
 			}
 
-			CoreAdditionalDamageActionOp? coreAdditionalDamageAction = nodes[i].CoreAdditionalDamageAction;
+			CoreAdditionalDamageActionOp? coreAdditionalDamageAction = nodes[i].GetOperation<CoreAdditionalDamageActionOp>();
 			if (coreAdditionalDamageAction.HasValue)
 			{
 				ApplyCoreAdditionalDamageAction(coreAdditionalDamageAction.Value);
 			}
 
-			HitChainDamageActionOp? hitChainAction = nodes[i].HitChainDamageAction;
+			HitChainDamageActionOp? hitChainAction = nodes[i].GetOperation<HitChainDamageActionOp>();
 			if (hitChainAction.HasValue)
 			{
 				ApplyHitChainDamageAction(hitChainAction.Value);
 			}
 
-			HitCountCooldownRefundActionOp? hitCountRefundAction = nodes[i].HitCountCooldownRefundAction;
+			HitCountCooldownRefundActionOp? hitCountRefundAction = nodes[i].GetOperation<HitCountCooldownRefundActionOp>();
 			if (hitCountRefundAction.HasValue)
 			{
 				ApplyHitCountCooldownRefundAction(hitCountRefundAction.Value);
 			}
 
-			ReloadReducePerHitActionOp? reloadReduceAction = nodes[i].ReloadReducePerHitAction;
+			ReloadReducePerHitActionOp? reloadReduceAction = nodes[i].GetOperation<ReloadReducePerHitActionOp>();
 			if (reloadReduceAction.HasValue)
 			{
 				ApplyReloadReducePerHitAction(reloadReduceAction.Value);
@@ -798,8 +798,8 @@ public class SkillExecutionData
 	 */
 	private void ApplyConditionalDamageAction(ConditionalDamageActionOp action /* 상태 조건 피해 동작 */)
 	{
-		if (action.RequiredStatus != StatusEffectKind.None
-			&& action.MinimumStacks > 0
+		if (action.Condition.StatusKind != StatusEffectKind.None
+			&& action.Condition.MinimumStacks > 0
 			&& action.DamageMultiplier > 0f)
 		{
 			conditionalDamageActions.Add(action);

@@ -9,6 +9,103 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-23 Consolidate Choice Runtime Data Around Normalized Nodes
+
+### Task title
+
+Remove the obsolete flat Choice contract and keep normalized graph nodes as the runtime behavior authority.
+
+### Goals
+
+- Reduce `SkillChoiceRow` and `SkillChoiceDefinition` to identity, presentation, target, and normalized-plan data.
+- Remove obsolete Choice CSV parsing, validation, and catalog-copy branches.
+- Keep `RequiredSourceStatus` validation and execution through normalized node parameters and runtime operations.
+- Remove write-only runtime metadata and duplicate runtime-support copies.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- This is deletion and consolidation only; no new gameplay feature, CSV column, prefab, scene, or asset is added.
+- Active Choice CSV data and graph rows remain unchanged.
+- Pre-existing user changes in overlapping scripts remain preserved.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, locally verified, and passed one explicitly requested Code Reviewer pass.
+
+### Next Actions
+
+- User verifies Choice effects, `RequiredSourceStatus` gates, BuffShield refresh behavior, and zero-cast-time execution in Unity Play Mode.
+
+### Evidence
+
+- `SkillDefinition.cs` now keeps ten `SkillChoiceDefinition` fields and removes the flat modifier/status contract, flat `RequiredSourceStatus*`, legacy passive fields, `AllyEffectSpec`, write-only node metadata, duplicate runtime-support copies, dead standalone fields, duplicate BuffShield fields, and `SkillTimingSpec.CastTime`.
+- `CsvRowParser.cs` now parses only the nine active Choice row fields; `CsvDataValidator.cs` retains Choice identity/group checks and normalized graph validation while removing obsolete flat-column branches.
+- `GameDataCatalogBuilder.cs` now builds Choice behavior from `NormalizedPlanNodes`, copies only runtime-used node fields, and no longer copies Trigger/Effect runtime-support metadata.
+- `SkillDefinitionCompiler.cs`, `SkillExecutionRuleResolver.cs`, `SkillTargeting.cs`, and `SkillExecution.cs` remove the obsolete BuffShield, flat source-status, and cast-time paths.
+- All six active `skill_choices_*.csv` files use only the retained identity/presentation columns; the header audit reported `FILES=6; UNEXPECTED_HEADERS=0`.
+- `git status --short -- Pakuri/Assets/CSVdata` reported no CSV changes.
+- Repository searches found no remaining script references to the removed contracts.
+- `git diff --check` passed.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 `MSB3277` warning groups.
+- Unity 6000.3.14f1 instance `Pakuri@0c8eeeb5` completed a forced script refresh, reported ready/not compiling, and returned 0 console error entries.
+
+### History
+
+- 2026-07-23: Code Builder removed the nine approved obsolete or duplicate data paths without adding functionality.
+- 2026-07-23: Code Reviewer completed one pass and returned PASS with no fix requests.
+
+## Task: 2026-07-23 Remove Unauthored Maximum-Health Choice Contract
+
+### Task title
+
+Remove the unused optional maximum-health field from the active Choice data pipeline.
+
+### Goals
+
+- Remove source-row, runtime-definition, validation, and catalog-copy fields with no active authoring column.
+- Leave active Choice CSV files and their current behavior unchanged.
+- Preserve Legacy CSV as inactive historical data.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No active CSV file, column, row, prefab, scene, or generated catalog asset is edited.
+- Existing Choice graph and modifier fields remain unchanged.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, solution-build verified, and Unity console checked.
+
+### Next Actions
+
+- Future maximum-health Choice work requires an explicit active schema and runtime design.
+
+### Evidence
+
+- `CsvRowParser.cs` removes `HasMaxHealthBonus`, `MaxHealthBonus`, and optional `max_health_bonus` parsing.
+- `SkillDefinition.cs`, `CsvDataValidator.cs`, and `GameDataCatalogBuilder.cs` remove the corresponding runtime fields, validation, and copy operations.
+- Active authoring Choice CSV headers contain no `max_health_bonus` column; no active CSV was changed.
+- `Pakuri/Assets/Legacy/CSVdata/source/monster_reward_choices.csv` remains untouched as inactive historical data.
+- Active source and authoring search found zero maximum-health bonus contract references.
+- `git diff --check` passed.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 `MSB3277` warning groups.
+- Unity 6000.3.14f1 instance `Pakuri@0c8eeeb5` reported 0 console error entries.
+
+### History
+
+- 2026-07-23: Code Builder removed the unauthored optional field from the active Choice parser-to-catalog pipeline.
+
 ## Task: 2026-07-22 Damage And Defense Type Simplification
 
 ### Task title

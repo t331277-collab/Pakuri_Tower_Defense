@@ -9,6 +9,53 @@ Older OPS automation and role-policy task blocks were archived to `boards/ARCHIV
 
 - Non-July task blocks from `boards\OPS\AUTOMATION_GUIDE.md` were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-07-18.md` on 2026-07-18.
 
+## Task: 2026-07-23 Naive Code Filter Role
+
+### Task title
+
+Add an evidence-based inspection role for removing or consolidating naive code.
+
+### Goals
+
+- Audit every declaration in one exact user-provided C# script or folder.
+- Detect unnecessary indirection, multiple authorities, repeated internal fallback, dead code, and garbage variables.
+- Expand into reference sites only when required to settle a finding.
+- Separate inspection findings from Code Builder implementation.
+
+### Constraints
+
+- Role Owner is Code Builder for documentation implementation.
+- Naive Code Filter does not edit source code, scenes, prefabs, assets, or data.
+- The role must not create new features, state owners, fields, fallbacks, schemas, or assets.
+- Unity dynamic references must be checked before dead-code classification.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and documentation-validated.
+
+### Next Actions
+
+- Invoke the role by explicitly naming `Naive Code Filter` and providing one exact script or folder path.
+- After reviewing its evidence-backed handoff, explicitly invoke Code Builder for approved deletions or consolidation.
+
+### Evidence
+
+- Added `AGENTS_ROLE/NAIVE_CODE_FILTER.md` with exact-path input, complete declaration coverage, bounded reference expansion, six finding criteria, four decisions, and a fixed output contract.
+- `AGENTS.md` now exposes the role entry point and states its inspection-only boundary.
+- `MDTREE.md` routes the role to the exact target and limits cross-file expansion to evidence needed for original-target findings.
+- `AGENTS_ROLE/COMMON.md` now includes Naive Code Filter under shared evidence, Unity, Git, and board rules.
+- UTF-8 reads succeeded for all five policy files; the new role contains 6 criteria, 4 decisions, and 9 required output items.
+- Targeted trailing-whitespace search returned 0 matches, and `git diff --check` passed for the tracked policy files.
+- No gameplay code, CSV, scene, prefab, or asset file was changed by this role-policy task.
+
+### History
+
+- 2026-07-23: User defined the Naive criteria and approved Code Builder creation of the inspection role.
+
 ## Task: 2026-07-18 July-Only Active Board Compaction
 
 ### Task title

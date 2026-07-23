@@ -129,26 +129,21 @@ namespace Pakuri.InGame
             Array.Clear(partyMonsterIds, 0, partyMonsterIds.Length);
 
             var session = stageManager != null ? stageManager.ActiveSession : null;
-            if (session != null && !string.IsNullOrWhiteSpace(session.SelectedMonsterId))
+            if (session != null && session.PartyMembers.Count > 0)
             {
-                partyMonsterIds[0] = session.SelectedMonsterId;
+                for (var i = 0; i < session.PartyMembers.Count && i < partyMonsterIds.Length; i++)
+                {
+                    partyMonsterIds[i] = session.PartyMembers[i].MonsterId;
+                }
+
+                return;
             }
-            else if (unitSpawnManager != null
+
+            if (unitSpawnManager != null
                 && unitSpawnManager.SpawnedPlayerModel != null
                 && unitSpawnManager.SpawnedPlayerModel.Identity != null)
             {
                 partyMonsterIds[0] = unitSpawnManager.SpawnedPlayerModel.Identity.DefinitionId;
-            }
-
-            var manifested = session != null ? session.ManifestedMonsterIds : null;
-            if (manifested == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < manifested.Count && i + 1 < partyMonsterIds.Length; i++)
-            {
-                partyMonsterIds[i + 1] = manifested[i];
             }
         }
 

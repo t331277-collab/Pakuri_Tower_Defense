@@ -275,7 +275,6 @@ namespace Pakuri.InGame
     public class SkillTimingSpec
     {
         [Min(0f)] public float Cooldown;
-        [Min(0f)] public float CastTime;
         [Min(0f)] public float ActiveDuration;
         [Min(0f)] public float TickInterval;
     }
@@ -351,25 +350,10 @@ namespace Pakuri.InGame
     [Serializable]
     public class AreaBlueprintSpec
     {
-        [Min(0f)] public float DeployDelay;
         [Min(0f)] public float Radius;
         [Min(0f)] public float Duration;
         [Min(0f)] public float TickInterval;
         public bool CoverAll;
-    }
-
-    /*
-     * 아군 효과 설정에 필요한 값을 보관한다.
-     */
-    [Serializable]
-    public class AllyEffectSpec
-    {
-        public bool Enabled;
-        [Min(0f)] public float ShieldBase;
-        public float ShieldCoefficient;
-        public StatSource ShieldStatSource;
-        public string BuffTag;
-        [Min(0f)] public float BuffDuration;
     }
 
     /*
@@ -448,7 +432,6 @@ namespace Pakuri.InGame
     public class BuffHealSkillDefinition : SkillDefinition
     {
         public SkillDamageSpec Healing = new SkillDamageSpec();
-        public bool AttachVisualToTarget = true;
     }
 
     /*
@@ -483,7 +466,6 @@ namespace Pakuri.InGame
         public float LineWidth;
         public float LineLength;
         public float KnockbackDistance;
-        public bool StopAtFirstTarget;
 
         [Header("Tick Damage")]
         public SkillDamageSpec DamagePerTick = new SkillDamageSpec();
@@ -551,9 +533,6 @@ namespace Pakuri.InGame
         public SkillDamageSpec Damage = new SkillDamageSpec();
         public SkillDamageSpec TargetStatusStackDamage = new SkillDamageSpec();
         public StatusApplicationSpec OnHitStatus = new StatusApplicationSpec();
-
-        [Header("Ally Effect")]
-        public AllyEffectSpec AllyEffect = new AllyEffectSpec();
     }
 
     /*
@@ -570,9 +549,6 @@ namespace Pakuri.InGame
         [Header("Enemy Effect")]
         public SkillDamageSpec DamagePerTick = new SkillDamageSpec();
         public StatusApplicationSpec OnTickStatus = new StatusApplicationSpec();
-
-        [Header("Ally Effect")]
-        public AllyEffectSpec AllyEffect = new AllyEffectSpec();
     }
 
     /*
@@ -588,13 +564,7 @@ namespace Pakuri.InGame
         public float ShieldCoefficient;
         public StatSource ShieldStatSource;
         public float ShieldDuration;
-        public ShieldRefreshRule RefreshRule;
         public StatusRuntimeData ShieldStatus;
-
-        [Header("Reflect")]
-        public bool CanReflectDamage;
-        public float ReflectDamageRate;
-        public DamageAttribute ReflectElement;
     }
 
     /*
@@ -604,31 +574,6 @@ namespace Pakuri.InGame
     {
         [Header("Choices")]
         public SkillChoice[] BaseModifierChoices = Array.Empty<SkillChoice>();
-
-        [Header("Trigger")]
-        public string ConditionTag;
-        public int ConditionMinStacks;
-        [Range(0f, 1f)] public float TriggerChance = 1f;
-        public int TriggerHitCount;
-        public float InternalCooldown;
-
-        [Header("Target")]
-        public DamageAttribute TargetElement;
-
-        [Header("Modifiers")]
-        public BuffModifierSpec Modifiers = new BuffModifierSpec();
-        public float BuffDuration;
-
-        [Header("Linked Skill")]
-        public string LinkedSkillId;
-        public float LinkedSkillPowerRate;
-
-        [Header("Secondary Trigger")]
-        public bool HasSecondaryTrigger;
-        public string SecondaryConditionTag;
-        public int SecondaryConditionMinStacks;
-        [Range(0f, 1f)] public float SecondaryTriggerChance = 1f;
-        public int SecondaryTriggerHitCount;
     }
 }
 
@@ -713,169 +658,16 @@ namespace Pakuri.Data
     [Serializable]
     public class SkillChoiceDefinition
     {
-        // 선택지 식별과 표시 정보
         public string ChoiceId;
         public string MonsterId;
         public string SkillId;
         public string TargetSkillId;
-        public string RuntimeTargetSkillIds;
         public SkillChoiceGroup ChoiceGroup;
         public string Title;
         public Sprite SkillIcon;
         public GameObject SkillEffectPrefab;
         [TextArea(2, 5)] public string DescriptionText;
-        // 기본 피해, 재사용 대기시간, 탄창 변경
-        public bool HasDamageMultiplier;
-        public float DamageMultiplier = 1f;
-        public float BaseDamageBonus;
-        public bool HasCooldownMultiplier;
-        public float CooldownMultiplier = 1f;
-        public bool HasMagazineBonus;
-        public int MagazineBonus;
-        // 투사체와 연속 발사 변경
-        public int AdditionalProjectileBonus;
-        public int PierceBonus;
-        public bool HasShotIntervalMultiplier;
-        public float ShotIntervalMultiplier = 1f;
-        public bool HasBurstDamageProjectileIndex;
-        public int BurstDamageProjectileIndex;
-        public bool HasBurstDamageMultiplier;
-        public float BurstDamageMultiplier = 1f;
-        public bool HasBurstStatusProjectileIndex;
-        public int BurstStatusProjectileIndex;
-        public int BurstStatusStacksBonus;
-        public int FollowUpProjectileCount;
-        public float FollowUpProjectileDelaySeconds;
-        public float FollowUpProjectileDamageMultiplier = 1f;
-        public bool HasReloadTimeMultiplier;
-        public float ReloadTimeMultiplier = 1f;
-        // 범위, 지속시간, 분기 공격 변경
-        public bool HasRadiusMultiplier;
-        public float RadiusMultiplier = 1f;
-        public float RadiusBonus;
-        public float BeamWidthBonus;
-        public bool HasKnockbackDistanceMultiplier;
-        public float KnockbackDistanceMultiplier = 1f;
-        public bool HasDamageDelayMultiplier;
-        public float DamageDelayMultiplier = 1f;
-        public bool HasExecuteHealthRatioBonus;
-        public float ExecuteHealthRatioBonus;
-        public bool HasDurationMultiplier;
-        public float DurationMultiplier = 1f;
-        public float DurationBonus;
-        public float BranchChanceBonus;
-        public bool HasBranchChanceSet;
-        public float BranchChanceSet;
-        public bool HasBranchCount;
-        public int BranchCount;
-        public bool HasBranchDamageMultiplier;
-        public float BranchDamageMultiplier = 1f;
-        public bool HasBranchSearchRadius;
-        public float BranchSearchRadius;
-        public int BranchLaunchPeriod;
-        public bool HasBranchLaunchChanceSet;
-        public float BranchLaunchChanceSet;
-        public bool HasMaxHealthBonus;
-        public float MaxHealthBonus;
-        public int HitTargetCountBonus;
-        public float CritChanceBonus;
-        public float CritDamageBonus;
-        public float ExecuteCritChanceBonus;
-        public bool HasBossDamageMultiplier;
-        public float BossDamageMultiplier = 1f;
-        public bool HasKillCooldownRefundRatioBonus;
-        public float KillCooldownRefundRatioBonus;
-        public bool KillResetsCooldown;
-        public bool KillResetsCooldownRequiresExecute;
-        // 상태 적용과 조건부 피해 변경
-        public string StatusTag;
-        public bool HasStatusChanceBonus;
-        public float StatusChanceBonus;
-        public bool HasStatusActionSpeedBonus;
-        public float StatusActionSpeedBonus;
-        public bool HasStatusAttackPowerBonus;
-        public float StatusAttackPowerBonus;
-        public int StatusStacksBonus;
-        public bool HasStatusStacksSet;
-        public int StatusStacksSet;
-        public bool HasStatusElementDamageTakenBonus;
-        public float StatusElementDamageTakenBonus;
-        public bool HasStatusCriticalDamageTakenBonus;
-        public float StatusCriticalDamageTakenBonus;
-        public bool HasStatusAilmentResistanceBonus;
-        public float StatusAilmentResistanceBonus;
-        public string StatusMaxStacksBonusStatusId;
-        public int StatusMaxStacksBonus;
-        public string StatusDurationBonusStatusId;
-        public float StatusDurationBonus;
-        public string ThresholdStatusId;
-        public StatusEffectKind ThresholdStatusKind;
-        public int ThresholdStatusMinStacks;
-        public string ThresholdApplyStatusId;
-        public StatusEffectKind ThresholdApplyStatusKind;
-        public bool HasConditionalDamageMultiplier;
-        public float ConditionalDamageMultiplier = 1f;
-        public string ConditionalTargetStatusId;
-        public int ConditionalTargetStatusMinStacks;
-        public bool HasTargetStatusStackDamageMultiplier;
-        public float TargetStatusStackDamageMultiplier = 1f;
-        public bool HasConsumeTargetStatusRatioOverride;
-        public float ConsumeTargetStatusRatioOverride;
-        public bool HasConsumeTargetStatusStacksOverride;
-        public int ConsumeTargetStatusStacksOverride;
-        public float ConditionalCritChanceBonus;
-        public string ConditionalCritTargetStatusId;
-        public StatusEffectKind ConditionalCritTargetStatusKind;
-        public int ConditionalCritTargetStatusMinStacks;
-        public float RedistributeConsumedStatusRatioOnKill;
-        public string RedistributeConsumedStatusId;
-        public StatusEffectKind RedistributeConsumedStatusKind;
-        public float RedistributeConsumedStatusSearchRadius;
-        public int RedistributeConsumedStatusTargetCount;
-        public string CountStatusId;
-        public StatusEffectKind CountStatusKind;
-        public SkillMultiEffectTargetSide CountTargetSide;
-        public float DamageMultiplierPerCount;
-        public int CountMax;
-        public float ConsecutiveHitBonusRate;
-        public float ConsecutiveHitMax;
-        public bool HasStatusConditionalDamageTakenBonus;
-        public float StatusConditionalDamageTakenBonus;
-        public string StatusConditionalSourceStatusId;
-        public StatusEffectKind StatusConditionalSourceStatusKind;
-        public string RequiredSourceStatusId;
-        public StatusEffectKind RequiredSourceStatusKind;
-        public int RequiredSourceStatusMinStacks;
-        // 추가 타격, 연쇄 공격, 핵심 충돌 영역 변경
-        public bool HasOnHitAdditionalDamage;
-        public float OnHitAdditionalDamageChance;
-        public float OnHitAdditionalDamageMultiplier = 1f;
-        public DamageAttribute OnHitAdditionalDamageAttribute;
-        public string OnHitAdditionalDamageTarget;
-        public int OnHitChainHitPeriod;
-        public int OnHitChainTargetCount;
-        public float OnHitChainSearchRadius;
-        public float OnHitChainDamageMultiplier = 1f;
-        public DamageAttribute OnHitChainDamageAttribute;
-        public string ReloadReduceTargetSkillId;
-        public float ReloadReduceSecondsPerHit;
-        public string CoreHitboxName;
-        public bool HasCoreDamageMultiplier;
-        public float CoreDamageMultiplier = 1f;
-        public bool HasCoreOnHitAdditionalDamage;
-        public float CoreOnHitAdditionalDamageChance;
-        public float CoreOnHitAdditionalDamageMultiplier = 1f;
-        public DamageAttribute CoreOnHitAdditionalDamageAttribute;
-        public string HitCountCooldownRefundTargetSkillId;
-        public int HitCountCooldownRefundMinTargets;
-        public float HitCountCooldownRefundRatio;
-        public int RepeatCountPerTarget;
-        public float RepeatIntervalSeconds;
-        public float RepeatDamageMultiplier = 1f;
-        // 정규화 그래프와 런타임 지원 상태
         public SkillNodeDefinition[] NormalizedPlanNodes = Array.Empty<SkillNodeDefinition>();
-        public string RuntimeSupportState;
-        [TextArea(2, 5)] public string RuntimeSupportNotes;
     }
 }
 
@@ -1050,8 +842,6 @@ namespace Pakuri.Data
         // Trigger 표시와 런타임 지원 상태
         public GameObject SkillEffectPrefab;
         public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
-        public string RuntimeSupportState;
-        [TextArea(2, 5)] public string RuntimeSupportNotes;
     }
 
     /*
@@ -1145,9 +935,6 @@ namespace Pakuri.Data
         public DamageAttribute StatusOutgoingAdditionalDamageAttribute;
         public GameObject SkillEffectPrefab;
         public RuntimeSkillVisualSpec RuntimeVisual = new RuntimeSkillVisualSpec();
-        // 런타임 지원 여부와 진단 설명
-        public string RuntimeSupportState;
-        [TextArea(2, 5)] public string RuntimeSupportNotes;
     }
 
     /*
@@ -1156,9 +943,7 @@ namespace Pakuri.Data
     [Serializable]
     public class SkillNodeParamDefinition
     {
-        public string NodeId;
         public string ParamKey;
-        public string ValueType;
         public string Value;
     }
 
@@ -1168,20 +953,10 @@ namespace Pakuri.Data
     [Serializable]
     public class SkillNodeDefinition
     {
-        public string NodeId;
         public string OwnerKind;
-        public string OwnerId;
         public string TargetSkillId;
-        public string NodeKind;
         public string HandlerId;
-        public int SortOrder;
         public bool EnabledByDefault;
-        public string RequiresActiveChoiceId;
-        public string ExcludesActiveChoiceId;
-        public string RequiresPassiveSkillId;
-        public string ExcludesPassiveSkillId;
-        public string RuntimeSupportState;
-        [TextArea(2, 5)] public string RuntimeSupportNotes;
         public SkillNodeParamDefinition[] Params = Array.Empty<SkillNodeParamDefinition>();
     }
 }

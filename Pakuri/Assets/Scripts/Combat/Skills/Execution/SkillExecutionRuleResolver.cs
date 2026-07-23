@@ -111,8 +111,7 @@ namespace Pakuri.InGame
             string targetSkillId,
             UnitCombatState owner)
         {
-            if (choice == null || choice.Source == null
-                || !SkillRequirement.MeetsSourceStatus(choice.Source, owner))
+            if (choice == null || choice.Source == null)
             {
                 return false;
             }
@@ -120,16 +119,21 @@ namespace Pakuri.InGame
             SkillNode[] nodes = SkillNodeMapper.ResolveChoiceRuntimePlan(choice, targetSkillId).Nodes;
             for (var i = 0; i < nodes.Length; i++)
             {
-                if (nodes[i] == null || !nodes[i].SourceStatusRequirement.HasValue)
+                if (nodes[i] == null)
                 {
                     continue;
                 }
 
-                SourceStatusRequirementOp requirement = nodes[i].SourceStatusRequirement.Value;
+                SourceStatusRequirementOp? requirement = nodes[i].GetOperation<SourceStatusRequirementOp>();
+                if (!requirement.HasValue)
+                {
+                    continue;
+                }
+
                 if (!SkillRequirement.HasSourceStatus(
                     owner,
-                    requirement.Condition.StatusKind,
-                    requirement.Condition.MinimumStacks))
+                    requirement.Value.Condition.StatusKind,
+                    requirement.Value.Condition.MinimumStacks))
                 {
                     return false;
                 }

@@ -9,8 +9,8 @@ using Pakuri.Data;
  * 보관한다. 각 struct가 생성자에서 모든 값을 초기화하는 이유는 변환이 끝난 실행 계획을 불변 값으로
  * 유지하고, 시전 중 원본 작성 데이터가 바뀌어도 이미 만들어진 계산 규칙이 흔들리지 않게 하기 위함이다.
  *
- * SkillNode는 C#에서 구분 공용체(discriminated union)를 흉내 낸 형태다. 한 인스턴스에는 Action,
- * DamageModifier 같은 payload 하나만 들어가며 나머지 nullable payload는 비어 있다. 실제 수치 누적과
+ * SkillNode는 C#에서 구분 공용체(discriminated union)를 흉내 낸 형태다. 한 인스턴스에는 SkillActionOp,
+ * DamageModifierOp 같은 payload 하나만 들어간다. 실제 수치 누적과
  * 조건 평가는 SkillExecutionData와 각 스킬 규칙이 담당하고, 이 파일은 실행 가능한 값의 형태만 정의한다.
  */
 namespace Pakuri.InGame
@@ -284,8 +284,6 @@ namespace Pakuri.InGame
 
         public float DamageMultiplier { get; }
         public StatusStackCondition Condition { get; }
-        public StatusEffectKind RequiredStatus => Condition.StatusKind;
-        public int MinimumStacks => Condition.MinimumStacks;
     }
 
     /* 대상 상태 중첩 조건을 만족할 때 더할 치명타 확률을 보관한다. */
@@ -553,32 +551,7 @@ namespace Pakuri.InGame
             this.operation = operation;
         }
 
-        public CastConditionOp? CastCondition => GetOperation<CastConditionOp>();
-        public SkillActionOp? Action => GetOperation<SkillActionOp>();
-        public DamageModifierOp? DamageModifier => GetOperation<DamageModifierOp>();
-        public CritModifierOp? CritModifier => GetOperation<CritModifierOp>();
-        public KillActionOp? KillAction => GetOperation<KillActionOp>();
-        public ConsecutiveHitActionOp? ConsecutiveHitAction => GetOperation<ConsecutiveHitActionOp>();
-        public BranchDamageActionOp? BranchDamageAction => GetOperation<BranchDamageActionOp>();
-        public ConditionalDamageActionOp? ConditionalDamageAction => GetOperation<ConditionalDamageActionOp>();
-        public ConditionalCritChanceActionOp? ConditionalCritChanceAction => GetOperation<ConditionalCritChanceActionOp>();
-        public BurstDamageActionOp? BurstDamageAction => GetOperation<BurstDamageActionOp>();
-        public BurstStatusActionOp? BurstStatusAction => GetOperation<BurstStatusActionOp>();
-        public CountStatusDamageActionOp? CountStatusDamageAction => GetOperation<CountStatusDamageActionOp>();
-        public StatusConditionalDamageTakenActionOp? StatusConditionalDamageTakenAction => GetOperation<StatusConditionalDamageTakenActionOp>();
-        public FollowUpProjectileActionOp? FollowUpProjectileAction => GetOperation<FollowUpProjectileActionOp>();
-        public ThresholdStatusActionOp? ThresholdStatusAction => GetOperation<ThresholdStatusActionOp>();
-        public RepeatPerTargetActionOp? RepeatPerTargetAction => GetOperation<RepeatPerTargetActionOp>();
-        public RedistributeConsumedStatusActionOp? RedistributeConsumedStatusAction => GetOperation<RedistributeConsumedStatusActionOp>();
-        public AdditionalDamageActionOp? AdditionalDamageAction => GetOperation<AdditionalDamageActionOp>();
-        public CoreDamageActionOp? CoreDamageAction => GetOperation<CoreDamageActionOp>();
-        public CoreAdditionalDamageActionOp? CoreAdditionalDamageAction => GetOperation<CoreAdditionalDamageActionOp>();
-        public HitChainDamageActionOp? HitChainDamageAction => GetOperation<HitChainDamageActionOp>();
-        public HitCountCooldownRefundActionOp? HitCountCooldownRefundAction => GetOperation<HitCountCooldownRefundActionOp>();
-        public ReloadReducePerHitActionOp? ReloadReducePerHitAction => GetOperation<ReloadReducePerHitActionOp>();
-        public SourceStatusRequirementOp? SourceStatusRequirement => GetOperation<SourceStatusRequirementOp>();
-
-        private T? GetOperation<T>() where T : struct
+        internal T? GetOperation<T>() where T : struct
         {
             if (operation is T value)
             {
@@ -587,97 +560,6 @@ namespace Pakuri.InGame
 
             return null;
         }
-
-        /*
-         * 시전 조건을 실행 계획 노드로 변환한다.
-         */
-        public static SkillNode FromCastCondition(
-            CastConditionOp op /* 동작 */)
-        {
-            return new SkillNode(op);
-        }
-
-        /*
-         * 피해 보정값을 실행 계획 노드로 변환한다.
-         */
-        public static SkillNode FromDamageModifier(
-            DamageModifierOp op /* 동작 */)
-        {
-            return new SkillNode(op);
-        }
-
-        /*
-         * 행동을 실행 계획 노드로 변환한다.
-         */
-        public static SkillNode FromAction(
-            SkillActionOp op /* 동작 */)
-        {
-            return new SkillNode(op);
-        }
-
-        /*
-         * 연속 적중 피해 행동을 실행 계획 노드로 변환한다.
-         */
-        public static SkillNode FromConsecutiveHitAction(
-            ConsecutiveHitActionOp op /* 연속 적중 피해 동작 */)
-        {
-            return new SkillNode(op);
-        }
-
-        /*
-         * 분기 피해 행동을 실행 계획 노드로 변환한다.
-         */
-        public static SkillNode FromBranchDamageAction(
-            BranchDamageActionOp op /* 분기 피해 동작 */)
-        {
-            return new SkillNode(op);
-        }
-
-        /*
-         * 상태 조건 피해 행동을 실행 계획 노드로 변환한다.
-         */
-        public static SkillNode FromConditionalDamageAction(
-            ConditionalDamageActionOp op /* 상태 조건 피해 동작 */)
-        {
-            return new SkillNode(op);
-        }
-
-        /*
-         * 상태 효과 개수 피해 행동을 실행 계획 노드로 변환한다.
-         */
-        public static SkillNode FromCountStatusDamageAction(
-            CountStatusDamageActionOp op /* 상태 효과 개수 피해 동작 */)
-        {
-            return new SkillNode(op);
-        }
-
-        /*
-         * 공격자 상태 조건 받는 피해 행동을 실행 계획 노드로 변환한다.
-         */
-        public static SkillNode FromStatusConditionalDamageTakenAction(
-            StatusConditionalDamageTakenActionOp op /* 공격자 상태 조건 받는 피해 동작 */)
-        {
-            return new SkillNode(op);
-        }
-
-        /*
-         * 치명타 보정값을 실행 계획 노드로 변환한다.
-         */
-        public static SkillNode FromCritModifier(
-            CritModifierOp op /* 동작 */)
-        {
-            return new SkillNode(op);
-        }
-
-        /*
-         * 처치 행동을 실행 계획 노드로 변환한다.
-         */
-        public static SkillNode FromKillAction(
-            KillActionOp op /* 동작 */)
-        {
-            return new SkillNode(op);
-        }
-
         public static SkillNode FromOperation<T>(T op) where T : struct => new SkillNode(op);
 
     }

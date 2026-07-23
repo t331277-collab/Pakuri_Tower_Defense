@@ -212,84 +212,6 @@ namespace Pakuri.Data
                     errors.Add($"Skill choice '{choice.Id}' uses active choice group on passive skill '{choice.SkillId}'.");
                 }
 
-                if (choice.HasMaxHealthBonus && choice.MaxHealthBonus < 0f)
-                {
-                    errors.Add($"Skill choice '{choice.Id}' has negative max_health_bonus.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(choice.CountStatusId)
-                    && !model.StatusEffects.ContainsKey(choice.CountStatusId))
-                {
-                    errors.Add($"Skill choice '{choice.Id}' uses unsupported count_status_id '{choice.CountStatusId}'.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(choice.StatusConditionalSourceStatusId)
-                    && !model.StatusEffects.ContainsKey(choice.StatusConditionalSourceStatusId))
-                {
-                    errors.Add($"Skill choice '{choice.Id}' uses unsupported status_conditional_source_status_id '{choice.StatusConditionalSourceStatusId}'.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(choice.StatusDurationBonusStatusId)
-                    && !model.StatusEffects.ContainsKey(choice.StatusDurationBonusStatusId))
-                {
-                    errors.Add($"Skill choice '{choice.Id}' uses unsupported status_duration_bonus_status_id '{choice.StatusDurationBonusStatusId}'.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(choice.StatusMaxStacksBonusStatusId)
-                    && !model.StatusEffects.ContainsKey(choice.StatusMaxStacksBonusStatusId))
-                {
-                    errors.Add($"Skill choice '{choice.Id}' uses unsupported status_max_stacks_bonus_status_id '{choice.StatusMaxStacksBonusStatusId}'.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(choice.ThresholdStatusId)
-                    && !model.StatusEffects.ContainsKey(choice.ThresholdStatusId))
-                {
-                    errors.Add($"Skill choice '{choice.Id}' uses unsupported threshold_status_id '{choice.ThresholdStatusId}'.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(choice.ThresholdApplyStatusId)
-                    && !model.StatusEffects.ContainsKey(choice.ThresholdApplyStatusId))
-                {
-                    errors.Add($"Skill choice '{choice.Id}' uses unsupported threshold_apply_status_id '{choice.ThresholdApplyStatusId}'.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(choice.ConditionalTargetStatusId)
-                    && !model.StatusEffects.ContainsKey(choice.ConditionalTargetStatusId))
-                {
-                    errors.Add($"Skill choice '{choice.Id}' uses unsupported conditional_target_status_id '{choice.ConditionalTargetStatusId}'.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(choice.ConditionalCritTargetStatusId)
-                    && !model.StatusEffects.ContainsKey(choice.ConditionalCritTargetStatusId))
-                {
-                    errors.Add($"Skill choice '{choice.Id}' uses unsupported conditional_crit_target_status_id '{choice.ConditionalCritTargetStatusId}'.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(choice.RedistributeConsumedStatusId)
-                    && !model.StatusEffects.ContainsKey(choice.RedistributeConsumedStatusId))
-                {
-                    errors.Add($"Skill choice '{choice.Id}' uses unsupported redistribute_consumed_status_id '{choice.RedistributeConsumedStatusId}'.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(choice.RequiredSourceStatusId)
-                    && !model.StatusEffects.ContainsKey(choice.RequiredSourceStatusId))
-                {
-                    errors.Add($"Skill choice '{choice.Id}' uses unsupported required_source_status_id '{choice.RequiredSourceStatusId}'.");
-                }
-
-                if (choice.HasBurstStatusProjectileIndex && choice.BurstStatusStacksBonus <= 0)
-                {
-                    errors.Add($"Skill choice '{choice.Id}' requires positive burst_status_stacks_bonus when burst_status_projectile_index is set.");
-                }
-
-                if (!ChoiceTargetsKnownSkills(choice, model, out var unknownRuntimeTargetSkillId))
-                {
-                    errors.Add($"Skill choice '{choice.Id}' references unknown runtime target skill '{unknownRuntimeTargetSkillId}'.");
-                }
-                else if (!ChoiceTargetsOnlyMonsterSkills(choice, model, out var foreignRuntimeTargetSkillId))
-                {
-                    errors.Add($"Skill choice '{choice.Id}' runtime target skill '{foreignRuntimeTargetSkillId}' belongs to another monster.");
-                }
             }
 
             ValidateNormalizedSkillAuthoringRows(model, assetCatalog, errors);
@@ -1078,114 +1000,12 @@ namespace Pakuri.Data
                 return false;
             }
 
-            if (MatchesDelimitedValue(choice.RuntimeTargetSkillIds, skillId))
-            {
-                return true;
-            }
-
             if (string.Equals(choice.SkillId, skillId, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
 
             return string.Equals(choice.TargetSkillId, skillId, StringComparison.OrdinalIgnoreCase);
-        }
-
-        /*
-         * 선택지가 해당 스킬에 적용되는지 확인한다.
-         */
-        internal static bool ChoiceTargetsKnownSkills(SkillChoiceRow choice /* 적용하거나 검사할 스킬 선택지 */, SourceModel model /* CSV에서 읽은 원본 데이터 */, out string unknownSkillId /* 알 수 없는 스킬 식별자 */)
-        {
-            unknownSkillId = string.Empty;
-            if (choice == null || model == null || string.IsNullOrWhiteSpace(choice.RuntimeTargetSkillIds))
-            {
-                return true;
-            }
-
-            var targets = choice.RuntimeTargetSkillIds.Split(';', ',');
-            for (var i = 0; i < targets.Length; i++)
-            {
-                var skillId = string.Empty;
-                if (targets[i] != null)
-                {
-                    skillId = targets[i].Trim();
-                }
-                if (string.IsNullOrWhiteSpace(skillId))
-                {
-                    continue;
-                }
-
-                if (!model.Skills.ContainsKey(skillId))
-                {
-                    unknownSkillId = skillId;
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        /*
-         * 선택지가 해당 스킬에 적용되는지 확인한다.
-         */
-        internal static bool ChoiceTargetsOnlyMonsterSkills(SkillChoiceRow choice /* 적용하거나 검사할 스킬 선택지 */, SourceModel model /* CSV에서 읽은 원본 데이터 */, out string foreignSkillId /* 다른 유닛의 스킬 식별자 */)
-        {
-            foreignSkillId = string.Empty;
-            if (choice == null || model == null || string.IsNullOrWhiteSpace(choice.RuntimeTargetSkillIds))
-            {
-                return true;
-            }
-
-            var targets = choice.RuntimeTargetSkillIds.Split(';', ',');
-            for (var i = 0; i < targets.Length; i++)
-            {
-                var skillId = string.Empty;
-                if (targets[i] != null)
-                {
-                    skillId = targets[i].Trim();
-                }
-                if (string.IsNullOrWhiteSpace(skillId)
-                    || !model.Skills.TryGetValue(skillId, out var skill))
-                {
-                    continue;
-                }
-
-                if (!string.Equals(skill.MonsterId, choice.MonsterId, StringComparison.OrdinalIgnoreCase))
-                {
-                    foreignSkillId = skillId;
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        /*
-         * 필요한 조건을 만족하는지 확인한다.
-         */
-        internal static bool MatchesDelimitedValue(string rawValues /* 변환 전 원본 값 목록 */, string expected /* 기대값 */)
-        {
-            if (string.IsNullOrWhiteSpace(rawValues) || string.IsNullOrWhiteSpace(expected))
-            {
-                return false;
-            }
-
-            var split = rawValues.Split(';', ',');
-            for (var i = 0; i < split.Length; i++)
-            {
-                var candidate = string.Empty;
-                if (split[i] != null)
-                {
-                    candidate = split[i].Trim();
-                }
-                if (!string.IsNullOrWhiteSpace(candidate)
-                    && string.Equals(candidate, expected, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         /*
@@ -1546,7 +1366,6 @@ namespace Pakuri.Data
             foreach (var choice in model.SkillChoices.Values)
             {
                 assets.AddSprite(choice.SkillIconPath, $"Skill choice '{choice.Id}' skill_icon_path");
-                assets.AddPrefab(choice.SkillEffectPrefabPath, $"Skill choice '{choice.Id}' skill_effect_prefab_path");
             }
 
             foreach (var param in model.SkillNodeParams)
