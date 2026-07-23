@@ -9,6 +9,148 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-23 Consolidate Damage Calculator Range Authorities
+
+### Task title
+
+Remove overwritten critical defaults and duplicate damage-calculation range guards.
+
+### Goals
+
+- Remove the two unused shared critical defaults and their four definition initializer assignments.
+- Use the existing execution-data and status-rule range authorities directly.
+- Preserve the separate raw-damage and final-damage stages and their calculation order.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV, Unity asset, public damage method, damage stage, or gameplay feature is added or changed.
+- Existing serialized critical values and CSV-authored critical values remain untouched.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, solution-build verified, and Unity script-compile verified.
+
+### Next Actions
+
+- User verifies representative raw damage, critical, resistance-reduction, incoming-damage, and enemy-passive cases in Unity Play Mode.
+
+### Evidence
+
+- `DamageCalculator.BaseCriticalChance` and `BaseCriticalMultiplier` plus the four `MonsterDefinition`/`EnemyDefinition` initializer assignments were removed.
+- `CalculateRawDamage` now multiplies by the already-normalized `SkillExecutionData.DamageMultiplier` directly and returns the result after the existing nonnegative outgoing-status and enemy-passive multipliers.
+- `CalculateFinalDamage` now uses the already-clamped element-resistance reduction and incoming-damage multiplier directly; its public input clamp, defense floor, enemy passive clamp, and final result floor remain.
+- Searches found no remaining `DamageCalculator.BaseCritical*` or removed duplicate guard expressions. CSV and Unity asset status checks returned no changed files.
+- `git diff --check` returned no whitespace errors. `dotnet build Pakuri/Pakuri.sln --no-restore /clp:ErrorsOnly /v:minimal` completed with 0 errors and the existing 2 warnings.
+- Unity 6000.3.14f1 instance `Pakuri@0c8eeeb5` returned to idle/ready after forced script compilation; Console contained 0 errors, and all three modified scripts validated with 0 warnings and 0 errors.
+
+### History
+
+- 2026-07-23: Code Builder completed the approved deletion and consolidation handoff without changing CSV or assets.
+
+## Task: 2026-07-23 Consolidate Skill Execution Data Dead Contracts
+
+### Task title
+
+Remove unreachable execution-data contracts and keep normalized runtime values authoritative.
+
+### Goals
+
+- Remove always-zero damage/status fields and their consumer indirection.
+- Remove unreachable target-status stack and branch set/launch paths.
+- Replace duplicate branch presence flags with the actual branch values.
+- Inline the single-call Choice helpers while preserving normalized-node validation.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- `activeChoiceIds`, `AddActiveChoiceId`, `HasActiveChoice`, and their two recording calls remain unchanged.
+- `ResolvePassiveChoices`, `ResolveActiveChoices`, `ResolveChoices`, and `ApplyResolvedChoices` remain unchanged until Designer decides target-filter semantics.
+- No gameplay feature, schema, CSV, prefab, scene, or asset is added.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, solution-build verified, and Unity script-compile verified.
+
+### Next Actions
+
+- User verifies representative raw damage, shield, status chance/stack, projectile branch, Single follow-up, and Zone deployment flows in Unity Play Mode.
+- Designer decides target-filter semantics before the deferred Choice ID cache and stopped Choice-resolution methods are changed.
+
+### Evidence
+
+- `BaseDamageBonus` and the always-zero `CalculateRawDamage` argument were removed; all nine callers now pass only the damage multiplier.
+- Shield calculations retain their existing base amount and multiply it directly by the surviving execution multipliers.
+- `SkillExecutionData.StatusTag`, `StatusChanceBonus`, the target-status stack override pair, and their unreachable consumer branches were removed.
+- Branch chance-set and launch properties, presence flags, derived branch properties, `ResolveBranchChance`, and the now-unreferenced projectile launch counter were removed.
+- Projectile, Single follow-up, and Zone deployment paths now use `BranchChanceBonus`, `BranchCount`, `BranchDamageMultiplier`, and `BranchSearchRadius` directly.
+- Write-only action-speed metadata was removed; `StatusActionSpeedBonus`, its per-status dictionary, and `ResolveStatusActionSpeedBonus` remain authoritative.
+- `ApplyNodeBackedChoice` and `HasNormalizedPlanNodes` were merged into `ApplyChoiceSpec` with the same null and empty-node guard.
+- Repository residue searches returned no removed execution-contract references. The deferred Choice ID cache and all four stopped Choice-resolution methods remain present.
+- `git diff --check` passed. `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 `MSB3277` warning groups.
+- Unity 6000.3.14f1 instance `Pakuri@0c8eeeb5` returned to idle/ready after forced script compilation, and the Unity console returned 0 error entries.
+
+### History
+
+- 2026-07-23: Code Builder implemented the seven approved deletion and consolidation steps and preserved the explicitly deferred Choice ID cache.
+
+## Task: 2026-07-23 Consolidate Skill Execution Runtime State
+
+### Task title
+
+Remove unused cast/active-duration state and reuse shared skill runtime authorities.
+
+### Goals
+
+- Remove the approved dead runtime state, public members, methods, and local timing alias.
+- Move the `BuildExecutionData` body into `CreateExecutionData`.
+- Replace local status, targetability, and registry lookup helpers with the existing shared authorities.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- `ResolvePassiveChoices`, `ResolveActiveChoices`, `ResolveChoices`, and `ApplyResolvedChoices` remain unchanged until Designer decides target-filter semantics.
+- No new gameplay behavior, schema, CSV, prefab, scene, or asset is added.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compile-verified, and Code Reviewer passed.
+
+### Next Actions
+
+- Designer decides target-filter semantics before any separate consolidation of the four stopped `Resolve*Choices` methods.
+- User verifies representative active, burst, magazine, and status-count Choice flows in Unity Play Mode.
+
+### Evidence
+
+- `SkillUseState` no longer exposes `CastRemaining`, `ActiveDurationRemaining`, `IsCasting`, `IsActive`, `EffectiveBurstProjectileCount`, or `CanCast`; `SkillExecutionState.Count` was also removed.
+- The no-argument `TryBeginCast`, `IsTickReady`, `ResetTickInterval`, and the local `timing` alias were removed.
+- `CreateExecutionData` now contains the former `BuildExecutionData` body, and the private wrapper no longer exists.
+- Local `HasStatus`, `IsSkillTarget`, and `FindEntryForModel` were replaced by `SkillRequirement.HasSourceStatus`, `SkillTargeting.IsSkillTargetable`, and `CombatUnitRegistry.Find`.
+- Repository residue searches found no remaining references to the removed contracts; all four stopped Choice-resolution methods remain present.
+- `git diff --check` passed. `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 `MSB3277` warning groups.
+- Unity 6000.3.14f1 instance `Pakuri@0c8eeeb5` returned to idle/ready after forced script compilation. The only console error was an MCP transport `NetworkStream` disposal error from `com.coplaydev.unity-mcp`, not a C# compilation error.
+
+### History
+
+- 2026-07-23: Code Builder completed only the approved deletion and consolidation scope.
+- 2026-07-23: Code Reviewer completed the single requested pass and returned PASS with no fix request.
+
 ## Task: 2026-07-23 Remove Duplicate Choice And BuffShield Status Fields
 
 ### Task title
@@ -129,13 +271,13 @@ Implemented and compile/editor validated.
 ### Next Actions
 
 - User verifies no old projectile, zone, beam, impact, status visual, or delayed skill hit survives a day transition.
-- User verifies magazine, reload, queued burst, hit count, cast, active duration, tick timer, and cooldown begin from fresh runtime state.
+- User verifies magazine, reload, queued burst, hit count, tick timer, and cooldown begin from fresh runtime state.
 
 ### Evidence
 
 - `Pakuri/Assets/Scripts2/InGame/Core/EffectManager.cs` now exposes `ClearRuntimeSkillObjects()` and clears all children of the same root used by `InstantiateSkillPrefab()` and `CreateRuntimeSkillObject()`.
 - `Pakuri/Assets/Scripts2/InGame/Core/InGameCombatManager.cs` calls `StopAllCoroutines()`; inspected `StartCoroutine` call sites on this manager are skill projectile, repeated deployment, delayed hit, multi-effect, and trigger paths.
-- `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs` `ResetRuntimeState()` clears cooldown, cast, active duration, tick, reload, magazine, queued burst shots, projectile count, hit count, and consecutive-hit state.
+- `Pakuri/Assets/Scripts2/InGame/Skills/Runtime/SkillRuntimeInstance.cs` `ResetRuntimeState()` clears cooldown, tick, reload, magazine, queued burst shots, projectile count, hit count, and consecutive-hit state.
 - `Pakuri/Assets/Scripts2/InGame/Units/MonsterUnitRuntimeStateService.cs` invokes that full runtime reset while leaving model metadata untouched.
 - Runtime C# build passed with 0 errors, Unity console reported 0 errors, and `NewRunScene` validation reported no missing scripts or broken prefabs.
 

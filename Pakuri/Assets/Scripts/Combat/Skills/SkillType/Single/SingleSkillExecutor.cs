@@ -442,7 +442,7 @@ internal static class SingleSkillExecutor
 	 */
 	private static void ApplyChainHit(SkillExecutionContext context /* 스킬 실행에 필요한 정보 */, SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, SingleChainSkillDefinition skill /* 실행하거나 검사할 스킬 */, CombatUnitEntry target /* 효과를 받을 대상의 등록 정보 */, float multiplier /* 값에 곱할 배율 */)
 	{
-		float baseDamage = DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage, snapshot.BaseDamageBonus, snapshot.DamageMultiplier) * Mathf.Max(0f, multiplier);
+		float baseDamage = DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage, snapshot.DamageMultiplier) * Mathf.Max(0f, multiplier);
 		context.CombatManager.ApplyDamage(target.Model, baseDamage, skill.Damage.Element, context.Caster, skill.Damage.CriticalAllowed, 0f, 0f, skill.SkillId);
 		EffectManager effects = context.CombatManager.Effects;
 		if (effects != null)
@@ -720,7 +720,7 @@ internal static class SingleSkillExecutor
 	{
 		float radius = ResolveRadius(skill, snapshot);
 		bool coverAll = (skill.Area != null && skill.Area.CoverAll) || (skill.Targeting != null && skill.Targeting.CoverAll);
-		float damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
+		float damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage, snapshot.DamageMultiplier);
 		DamageAttribute attribute = (skill.Damage != null) ? skill.Damage.Element : skill.Element;
 		ProjectileStatusHitSpec statusSpec = SkillStatus.ResolveStatusSpec(skill.OnHitStatus, snapshot);
 		SkillEffectDefinition[] onHitStatusEffects = ResolveOnHitStatusEffects(context, snapshot, skill.MultiEffects);
@@ -1146,7 +1146,7 @@ internal static class SingleSkillExecutor
 	 */
 	private static SingleFollowUpSpec? ResolveFollowUpSpec(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, ProjectileStatusHitSpec statusSpec /* 상태 효과 적용 설정 */, GameObject prefab /* 생성할 프리팹 */)
 	{
-		if (snapshot == null || !snapshot.HasBranchCount || snapshot.BranchCount <= 0 || !snapshot.HasBranchDamageMultiplier || snapshot.BranchDamageMultiplier <= 0f || !snapshot.HasBranchSearchRadius || snapshot.BranchSearchRadius <= 0f)
+		if (snapshot == null || snapshot.BranchCount <= 0 || snapshot.BranchDamageMultiplier <= 0f || snapshot.BranchSearchRadius <= 0f)
 		{
 			return null;
 		}
@@ -1260,7 +1260,7 @@ internal static class SingleSkillExecutor
 		{
 			num = Mathf.Min(num, skill.TargetStatusStackMaxStacks);
 		}
-		float num2 = DamageCalculator.CalculateRawDamage(caster, skill.TargetStatusStackDamage, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
+		float num2 = DamageCalculator.CalculateRawDamage(caster, skill.TargetStatusStackDamage, snapshot.DamageMultiplier);
 		float b = 1f;
 		float num3 = 0f;
 		if (snapshot != null)
@@ -1285,10 +1285,6 @@ internal static class SingleSkillExecutor
 		if (num <= 0)
 		{
 			return 0;
-		}
-		if (snapshot != null && snapshot.HasConsumeTargetStatusStacksOverride)
-		{
-			return Mathf.Clamp(snapshot.ConsumeTargetStatusStacksOverride, 0, num);
 		}
 		if (skill.ConsumeTargetStatusStacks > 0)
 		{

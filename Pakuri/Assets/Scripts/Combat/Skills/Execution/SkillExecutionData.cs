@@ -73,8 +73,6 @@ public class SkillExecutionData
 
 	public float DurationMultiplier { get; private set; }
 
-	public float BaseDamageBonus { get; private set; }
-
 	public int MagazineBonus { get; private set; }
 
 	public int AdditionalProjectileBonus { get; private set; }
@@ -106,27 +104,11 @@ public class SkillExecutionData
 
 	public float BranchChanceBonus { get; private set; }
 
-	public bool HasBranchChanceSet { get; private set; }
-
-	public float BranchChanceSet { get; private set; }
-
-	public bool HasBranchCount { get; private set; }
-
 	public int BranchCount { get; private set; }
-
-	public bool HasBranchDamageMultiplier { get; private set; }
 
 	public float BranchDamageMultiplier { get; private set; }
 
-	public bool HasBranchSearchRadius { get; private set; }
-
 	public float BranchSearchRadius { get; private set; }
-
-	public int BranchLaunchPeriod { get; private set; }
-
-	public bool HasBranchLaunchChanceSet { get; private set; }
-
-	public float BranchLaunchChanceSet { get; private set; }
 
 	public int HitTargetCountBonus { get; private set; }
 
@@ -141,14 +123,6 @@ public class SkillExecutionData
 	/*
 	 * 상태 효과의 적용 확률, 중첩과 전투 능력치 보너스를 보관한다.
 	 */
-	public string StatusTag { get; private set; }
-
-	public float StatusChanceBonus { get; private set; }
-
-	public bool HasStatusActionSpeedBonus { get; private set; }
-
-	public string StatusActionSpeedBonusStatusId { get; private set; }
-
 	public float StatusActionSpeedBonus { get; private set; }
 
 	public bool HasStatusAttackPowerBonus { get; private set; }
@@ -270,10 +244,6 @@ public class SkillExecutionData
 
 	public float ConsumeTargetStatusRatioOverride { get; private set; }
 
-	public bool HasConsumeTargetStatusStacksOverride { get; private set; }
-
-	public int ConsumeTargetStatusStacksOverride { get; private set; }
-
 	public float RedistributeConsumedStatusRatioOnKill { get; private set; }
 
 	public StatusEffectKind RedistributeConsumedStatusKind { get; private set; }
@@ -302,36 +272,6 @@ public class SkillExecutionData
 	internal IReadOnlyList<BurstDamageActionOp> BurstDamageActions => burstDamageActions;
 
 	internal IReadOnlyList<BurstStatusActionOp> BurstStatusActions => burstStatusActions;
-
-	/*
-	 * 분기 공격에 필요한 확률, 횟수, 피해 또는 발사 주기가 하나라도 있는지 확인한다.
-	 */
-	public bool HasBranchBehavior
-	{
-		get
-		{
-			if (!(BranchChanceBonus > 0f) && !HasBranchChanceSet && !HasBranchCount && !HasBranchDamageMultiplier && !HasBranchSearchRadius)
-			{
-				return HasBranchLaunchTrigger;
-			}
-			return true;
-		}
-	}
-
-	/*
-	 * 분기 공격을 주기적으로 발사할 조건이 완성되었는지 확인한다.
-	 */
-	public bool HasBranchLaunchTrigger
-	{
-		get
-		{
-			if (BranchLaunchPeriod > 0)
-			{
-				return HasBranchLaunchChanceSet;
-			}
-			return false;
-		}
-	}
 
 	/*
 	 * 단일 추가 피해 또는 연쇄 추가 피해를 실행할 수 있는지 확인한다.
@@ -413,11 +353,22 @@ public class SkillExecutionData
 	 */
 	public void ApplyChoiceSpec(SkillChoice spec /* 처리에 사용할 설정 */)
 	{
-		if (spec == null || !HasNormalizedPlanNodes(spec.Source))
+		if (spec == null
+			|| spec.Source == null
+			|| spec.Source.NormalizedPlanNodes == null
+			|| spec.Source.NormalizedPlanNodes.Length == 0)
 		{
 			return;
 		}
-		ApplyNodeBackedChoice(spec);
+
+		SkillChoiceDefinition choice = spec.Source;
+		if (choice.SkillEffectPrefab != null)
+		{
+			SkillEffectPrefab = choice.SkillEffectPrefab;
+		}
+
+		SkillChoiceRuntimePlan plan = SkillNodeMapper.ResolveChoiceRuntimePlan(spec, SkillId);
+		ApplyPlanNodes(plan.Nodes);
 	}
 
 	/*
@@ -436,33 +387,6 @@ public class SkillExecutionData
 		SkillExecutionData copy = (SkillExecutionData)MemberwiseClone();
 		copy.DamageMultiplier *= Mathf.Max(0f, multiplier);
 		return copy;
-	}
-
-	/*
-	 * 선택지 노드를 현재 스킬 대상으로 한정한 뒤 필드와 행동 노드에 반영한다.
-	 */
-	private void ApplyNodeBackedChoice(SkillChoice choiceSpec /* 적용하거나 검사할 스킬 선택지 */)
-	{
-		SkillChoiceDefinition choice = choiceSpec.Source;
-		if (choice.SkillEffectPrefab != null)
-		{
-			SkillEffectPrefab = choice.SkillEffectPrefab;
-		}
-		SkillChoiceRuntimePlan plan = SkillNodeMapper.ResolveChoiceRuntimePlan(choiceSpec, SkillId);
-		SkillNode[] nodes = plan.Nodes;
-		ApplyPlanNodes(nodes);
-	}
-
-	/*
-	 * 선택지에 적용할 정규화 노드가 하나 이상 있는지 확인한다.
-	 */
-	private static bool HasNormalizedPlanNodes(SkillChoiceDefinition choice /* 적용하거나 검사할 스킬 선택지 */)
-	{
-		if (choice != null && choice.NormalizedPlanNodes != null)
-		{
-			return choice.NormalizedPlanNodes.Length != 0;
-		}
-		return false;
 	}
 
 	/*
@@ -778,17 +702,14 @@ public class SkillExecutionData
 		BranchChanceBonus += action.ChanceBonus;
 		if (action.BranchCount > 0)
 		{
-			HasBranchCount = true;
 			BranchCount = action.BranchCount;
 		}
 		if (action.DamageMultiplier > 0f)
 		{
-			HasBranchDamageMultiplier = true;
 			BranchDamageMultiplier = action.DamageMultiplier;
 		}
 		if (action.SearchRadius > 0f)
 		{
-			HasBranchSearchRadius = true;
 			BranchSearchRadius = action.SearchRadius;
 		}
 	}
@@ -963,13 +884,11 @@ public class SkillExecutionData
 	 */
 	private void ApplyStatusActionSpeedBonus(string statusId /* 상태 효과 식별자 */, float bonus /* 추가로 더할 수치 */)
 	{
-		HasStatusActionSpeedBonus = true;
 		if (string.IsNullOrWhiteSpace(statusId))
 		{
 			StatusActionSpeedBonus += bonus;
 			return;
 		}
-		StatusActionSpeedBonusStatusId = statusId;
 		float total = bonus;
 		if (statusActionSpeedBonuses.TryGetValue(statusId, out var value))
 		{

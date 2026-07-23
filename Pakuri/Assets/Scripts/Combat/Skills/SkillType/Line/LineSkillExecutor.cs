@@ -292,7 +292,7 @@ namespace Pakuri.InGame
             }
 
             direction.Normalize();
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot.DamageMultiplier);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
             var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnHitStatus, snapshot);
             var length = ResolveLineLength(skill);

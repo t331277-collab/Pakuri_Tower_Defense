@@ -296,7 +296,7 @@ namespace Pakuri.InGame
                 direction = Vector2.right;
             }
 
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.Damage, snapshot.DamageMultiplier);
             var attribute = skill.Damage != null ? skill.Damage.Element : skill.Element;
             var currentBurstProjectileIndex = context.Runtime != null
                 ? context.Runtime.ResolveCurrentBurstProjectileIndex()
@@ -372,10 +372,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var projectileLaunchIndex = context.Runtime != null
-                    ? context.Runtime.AdvanceProjectileLaunchCount()
-                    : 0;
-                var branchSpec = ResolveBranchDamageSpec(snapshot, projectileLaunchIndex);
+                var branchSpec = ResolveBranchDamageSpec(snapshot);
                 var rotation = EffectVisualBuilder.ResolveRotation(spreadDirection);
                 var objectName = "Projectile";
                 if (!string.IsNullOrWhiteSpace(skill.SkillId))
@@ -515,17 +512,16 @@ namespace Pakuri.InGame
          * 분기 피해 설정을 결정한다.
          */
         private static ProjectileBranchDamageSpec ResolveBranchDamageSpec(
-            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
-            int projectileLaunchIndex /* 투사체 발사 순서 번호 */)
+            SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
-            if (snapshot == null || !snapshot.HasBranchBehavior)
+            if (snapshot == null)
             {
                 return null;
             }
 
-            var chance = ResolveBranchChance(snapshot, projectileLaunchIndex);
-            var count = snapshot.HasBranchCount ? snapshot.BranchCount : chance > 0f ? 1 : 0;
-            var radius = snapshot.HasBranchSearchRadius ? snapshot.BranchSearchRadius : 4.5f;
+            var chance = snapshot.BranchChanceBonus;
+            var count = snapshot.BranchCount > 0 ? snapshot.BranchCount : chance > 0f ? 1 : 0;
+            var radius = snapshot.BranchSearchRadius > 0f ? snapshot.BranchSearchRadius : 4.5f;
             if (chance <= 0f || count <= 0 || radius <= 0f)
             {
                 return null;
@@ -536,25 +532,9 @@ namespace Pakuri.InGame
                 Enabled = true,
                 Chance = Mathf.Clamp01(chance),
                 Count = Math.Max(1, count),
-                DamageMultiplier = snapshot.HasBranchDamageMultiplier ? Mathf.Max(0f, snapshot.BranchDamageMultiplier) : 1f,
+                DamageMultiplier = Mathf.Max(0f, snapshot.BranchDamageMultiplier),
                 SearchRadius = Mathf.Max(0f, radius)
             };
-        }
-
-        /*
-         * 분기 확률을 결정한다.
-         */
-        private static float ResolveBranchChance(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */, int projectileLaunchIndex /* 투사체 발사 순서 번호 */)
-        {
-            var chance = snapshot.HasBranchChanceSet ? snapshot.BranchChanceSet : snapshot.BranchChanceBonus;
-            if (snapshot.HasBranchLaunchTrigger
-                && projectileLaunchIndex > 0
-                && projectileLaunchIndex % snapshot.BranchLaunchPeriod == 0)
-            {
-                chance = snapshot.BranchLaunchChanceSet;
-            }
-
-            return chance;
         }
 
         /*
@@ -748,10 +728,7 @@ namespace Pakuri.InGame
                 return;
             }
 
-            var projectileLaunchIndex = context.Runtime != null
-                ? context.Runtime.AdvanceProjectileLaunchCount()
-                : 0;
-            var branchSpec = ResolveBranchDamageSpec(snapshot, projectileLaunchIndex);
+            var branchSpec = ResolveBranchDamageSpec(snapshot);
             var rotation = EffectVisualBuilder.ResolveRotation(direction);
             var objectName = "Projectile";
             if (!string.IsNullOrWhiteSpace(skill.SkillId))

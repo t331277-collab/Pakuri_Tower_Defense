@@ -1294,7 +1294,7 @@ internal static class SkillTrigger
 				StatSource = (flag ? StatSource.Intelligence : StatSource.Attack),
 				CriticalAllowed = true
 			};
-			return DamageCalculator.CalculateRawDamage(source, damage, 0f, 1f) * Mathf.Max(0f, trigger.DamageMultiplier);
+			return DamageCalculator.CalculateRawDamage(source, damage, 1f) * Mathf.Max(0f, trigger.DamageMultiplier);
 		}
 		}
 	}

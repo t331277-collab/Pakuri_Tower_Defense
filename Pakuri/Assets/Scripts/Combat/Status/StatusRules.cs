@@ -1099,7 +1099,7 @@ static class SkillStatus
         var amount = (effect.BaseDamage + power * coefficient) * Mathf.Max(0f, effect.DamageMultiplier);
         if (skillData != null)
         {
-            amount = (amount + skillData.BaseDamageBonus) * Mathf.Max(0f, skillData.ShieldAmountMultiplier);
+            amount *= Mathf.Max(0f, skillData.ShieldAmountMultiplier);
         }
         return Mathf.Max(0f, amount);
     }
@@ -1135,7 +1135,6 @@ static class SkillStatus
 
         if (snapshot != null)
         {
-            chance = Mathf.Clamp01(chance + snapshot.StatusChanceBonus);
             if (snapshot.HasStatusStacksSet)
             {
                 stacks = Math.Max(0, snapshot.StatusStacksSet);

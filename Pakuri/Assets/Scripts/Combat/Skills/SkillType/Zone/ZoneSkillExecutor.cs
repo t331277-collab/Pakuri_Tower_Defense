@@ -183,7 +183,7 @@ namespace Pakuri.InGame
                 StatSource = statSource,
                 CriticalAllowed = true
             };
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, damageSpec, skillData.BaseDamageBonus, skillData.DamageMultiplier)
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, damageSpec, skillData.DamageMultiplier)
                 * Mathf.Max(0f, effect.DamageMultiplier);
             var statusSpec = SkillStatus.ResolveEffectStatusSpec(effect, skillData);
 
@@ -586,7 +586,7 @@ namespace Pakuri.InGame
             var duration = Mathf.Max(0.05f, effect.RecastDurationSeconds);
             var tickInterval = ResolveTickInterval(skill, snapshot);
             var hitTargetCount = ResolveHitTargetCount(skill, snapshot);
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot.DamageMultiplier);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
             var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnTickStatus, snapshot);
             var planEffects = skill.MultiEffects;
@@ -669,7 +669,7 @@ namespace Pakuri.InGame
             var duration = ResolveDuration(skill, snapshot);
             var tickInterval = ResolveTickInterval(skill, snapshot);
             var hitTargetCount = ResolveHitTargetCount(skill, snapshot);
-            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot.BaseDamageBonus, snapshot.DamageMultiplier);
+            var damage = DamageCalculator.CalculateRawDamage(context.Caster, skill.DamagePerTick, snapshot.DamageMultiplier);
             var attribute = skill.DamagePerTick != null ? skill.DamagePerTick.Element : skill.Element;
             var statusSpec = SkillStatus.ResolveStatusSpec(skill.OnTickStatus, snapshot);
             var planEffects = skill.MultiEffects;
@@ -750,7 +750,7 @@ namespace Pakuri.InGame
          */
         private static int ResolveDeploymentCount(SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */)
         {
-            return 1 + (snapshot != null && snapshot.HasBranchCount ? Math.Max(0, snapshot.BranchCount) : 0);
+            return 1 + (snapshot != null ? Math.Max(0, snapshot.BranchCount) : 0);
         }
 
         /*

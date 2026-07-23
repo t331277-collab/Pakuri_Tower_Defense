@@ -491,12 +491,9 @@ namespace Pakuri.InGame
         public string SkillId => Data.SkillId;
         public SkillSlot Slot => Data.Slot;
         public float CooldownRemaining { get; private set; }
-        public float CastRemaining { get; private set; }
-        public float ActiveDurationRemaining { get; private set; }
         public float TickRemaining { get; private set; }
         public float ReloadRemaining { get; private set; }
         public int MagazineRemaining { get; private set; }
-        public int ProjectileLaunchCount { get; private set; }
         public int SkillHitCount { get; private set; }
 
         private int effectiveMaxMagazineSize;
@@ -509,17 +506,13 @@ namespace Pakuri.InGame
         private string consecutiveHitTargetUnitId;
         private int consecutiveHitRepeatCount;
 
-        public bool IsCasting => CastRemaining > 0f;
-        public bool IsActive => ActiveDurationRemaining > 0f;
         public bool IsReloading => ReloadRemaining > 0f;
         public bool IsBursting => queuedBurstShotsRemaining > 0;
         public int MaxMagazineSize => effectiveMaxMagazineSize;
         public float ReloadDuration => effectiveReloadDuration;
         public float EffectiveCooldownDuration => effectiveCooldownDuration;
-        public int EffectiveBurstProjectileCount => effectiveBurstProjectileCount;
         public bool UsesMagazine => MaxMagazineSize > 0;
         public bool HasMagazine => !UsesMagazine || MagazineRemaining > 0;
-        public bool CanCast => CanCastWithData(null);
 
         /*
          * 재사용 대기시간, 탄창, 연속 적중 상태를 초기화한다.
@@ -533,30 +526,13 @@ namespace Pakuri.InGame
             effectiveBurstInterval = ResolveBurstInterval(Data);
             effectiveCooldownDuration = ResolveCooldownDuration(Data);
             CooldownRemaining = 0f;
-            CastRemaining = 0f;
-            ActiveDurationRemaining = 0f;
             TickRemaining = 0f;
             ReloadRemaining = 0f;
             MagazineRemaining = MaxMagazineSize;
             queuedBurstShotsRemaining = 0;
-            ProjectileLaunchCount = 0;
             SkillHitCount = 0;
             consecutiveHitTargetUnitId = string.Empty;
             consecutiveHitRepeatCount = 0;
-        }
-
-        /*
-         * 투사체 발사 횟수를 증가시키고 현재 횟수를 반환한다.
-         */
-        public int AdvanceProjectileLaunchCount()
-        {
-            if (ProjectileLaunchCount == int.MaxValue)
-            {
-                ProjectileLaunchCount = 0;
-            }
-
-            ProjectileLaunchCount++;
-            return ProjectileLaunchCount;
         }
 
         /*
@@ -644,8 +620,6 @@ namespace Pakuri.InGame
 
             var actionDeltaTime = deltaTime * StatusCombatRules.ResolveActionSpeedMultiplier(Owner);
             CooldownRemaining = TickDown(CooldownRemaining, actionDeltaTime);
-            CastRemaining = TickDown(CastRemaining, actionDeltaTime);
-            ActiveDurationRemaining = TickDown(ActiveDurationRemaining, deltaTime);
             TickRemaining = TickDown(TickRemaining, actionDeltaTime);
             ReloadRemaining = TickDown(ReloadRemaining, deltaTime);
 
@@ -667,7 +641,6 @@ namespace Pakuri.InGame
             RefreshRuntimeModifiers(snapshot);
             if (Data == null
                 || !Data.IsActive
-                || IsCasting
                 || !IsCastIntervalReady())
             {
                 return false;
@@ -681,14 +654,6 @@ namespace Pakuri.InGame
             return CooldownRemaining <= 0f
                 && !IsReloading
                 && HasMagazine;
-        }
-
-        /*
-         * 시전을 시작하고 성공 여부를 반환한다.
-         */
-        public bool TryBeginCast()
-        {
-            return TryBeginCast(null);
         }
 
         /*
@@ -723,8 +688,6 @@ namespace Pakuri.InGame
                 MagazineRemaining = Math.Max(0, MagazineRemaining - 1);
             }
 
-            var timing = Data.Timing;
-            ActiveDurationRemaining = Mathf.Max(0f, timing.ActiveDuration);
             queuedBurstShotsRemaining = Math.Max(0, effectiveBurstProjectileCount - 1);
             TickRemaining = effectiveTickInterval;
             if (IsBursting)
@@ -738,22 +701,6 @@ namespace Pakuri.InGame
             }
 
             return true;
-        }
-
-        /*
-         * 다음 주기 효과를 실행할 시간이 되었는지 확인한다.
-         */
-        public bool IsTickReady()
-        {
-            return Data.Timing.TickInterval > 0f && TickRemaining <= 0f;
-        }
-
-        /*
-         * 주기 간격을 초기화한다.
-         */
-        public void ResetTickInterval()
-        {
-            TickRemaining = effectiveTickInterval;
         }
 
         /*
@@ -1005,7 +952,6 @@ namespace Pakuri.InGame
 
         public IReadOnlyList<SkillUseState> ActiveSkills => activeSkills;
         public IReadOnlyList<SkillUseState> PassiveSkills => passiveSkills;
-        public int Count => activeSkills.Count + passiveSkills.Count;
 
         /*
          * 현재 학습 상태와 전투 상황을 반영한 스킬 실행 데이터를 만든다.
@@ -1015,7 +961,21 @@ namespace Pakuri.InGame
             SkillUseState skill /* 실행할 스킬 상태 */,
             CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
         {
-            return BuildExecutionData(owner, skill, roster);
+            SkillDefinition skillData = null;
+            if (skill != null)
+            {
+                skillData = skill.Data;
+            }
+            var snapshot = new SkillExecutionData(skillData);
+            ApplyPassiveBaseModifiers(snapshot, owner, skillData);
+            if (skillData == null || owner == null || owner.Skills == null)
+            {
+                return snapshot;
+            }
+
+            ApplyChoices(snapshot, owner.Skills.ChosenEnhancementIds, skillData, owner, roster);
+            ApplyChoices(snapshot, owner.Skills.ChosenMasterSkillIds, skillData, owner, roster);
+            return snapshot;
         }
 
         /*
@@ -1184,28 +1144,6 @@ namespace Pakuri.InGame
             return null;
         }
         /*
-         * 유닛이 학습한 선택지를 현재 스킬 실행 정보에 적용한다.
-         */
-        private SkillExecutionData BuildExecutionData(UnitCombatState owner /* 정보를 소유한 유닛 */, SkillUseState runtime /* 실행 중인 스킬 정보 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
-        {
-            SkillDefinition skillData = null;
-            if (runtime != null)
-            {
-                skillData = runtime.Data;
-            }
-            var snapshot = new SkillExecutionData(skillData);
-            ApplyPassiveBaseModifiers(snapshot, owner, skillData);
-            if (skillData == null || owner == null || owner.Skills == null)
-            {
-                return snapshot;
-            }
-
-            ApplyChoices(snapshot, owner.Skills.ChosenEnhancementIds, skillData, owner, roster);
-            ApplyChoices(snapshot, owner.Skills.ChosenMasterSkillIds, skillData, owner, roster);
-            return snapshot;
-        }
-
-        /*
          * 패시브 기본 보정값을 적용한다.
          */
         private static void ApplyPassiveBaseModifiers(
@@ -1373,7 +1311,7 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                if (HasStatus(entry.Model, statusKind))
+                if (SkillRequirement.HasSourceStatus(entry.Model, statusKind, 1))
                 {
                     count++;
                 }
@@ -1399,13 +1337,8 @@ namespace Pakuri.InGame
             switch (side)
             {
                 case SkillMultiEffectTargetSide.Self:
-                    var allies = roster.Players;
-                    if (ownerIsEnemy)
-                    {
-                        allies = roster.Enemies;
-                    }
-                    var self = FindEntryForModel(owner, allies);
-                    if (IsSkillTarget(self))
+                    var self = roster.Find(owner);
+                    if (self != null && SkillTargeting.IsSkillTargetable(self))
                     {
                         return new[] { self };
                     }
@@ -1440,7 +1373,7 @@ namespace Pakuri.InGame
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
-                if (!IsSkillTarget(entry))
+                if (entry == null || !SkillTargeting.IsSkillTargetable(entry))
                 {
                     continue;
                 }
@@ -1449,60 +1382,6 @@ namespace Pakuri.InGame
             }
 
             return filtered;
-        }
-
-        /*
-         * 유닛이 선택지 효과의 적용 대상인지 확인한다.
-         */
-        private static bool IsSkillTarget(CombatUnitEntry entry /* 처리할 등록 정보 */)
-        {
-            UnitIdentity identity = null;
-            if (entry != null && entry.Model != null)
-            {
-                identity = entry.Model.Identity;
-            }
-            return entry != null && (identity == null || identity.Role != UnitRole.Nexus);
-        }
-
-        /*
-         * 유닛 항목 대상 모델을 찾는다.
-         */
-        private static CombatUnitEntry FindEntryForModel(
-            UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */,
-            System.Collections.Generic.IReadOnlyList<CombatUnitEntry> entries /* 등록 정보 목록 */)
-        {
-            if (model == null || entries == null)
-            {
-                return null;
-            }
-
-            for (var i = 0; i < entries.Count; i++)
-            {
-                if (entries[i] != null && object.ReferenceEquals(entries[i].Model, model))
-                {
-                    return entries[i];
-                }
-            }
-
-            return null;
-        }
-
-        /*
-         * 상태를 보유하고 있는지 확인한다.
-         */
-        private static bool HasStatus(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */, StatusEffectKind statusKind /* 상태 효과 종류 */, int minimumStacks = 1 /* 최소 중첩 수 */)
-        {
-            if (model == null || statusKind == StatusEffectKind.None || minimumStacks <= 0)
-            {
-                return false;
-            }
-
-            if (statusKind == StatusEffectKind.Shield)
-            {
-                return model.Resources != null && model.Resources.CurrentShield > 0f;
-            }
-
-            return model.Statuses != null && model.Statuses.GetStacks(statusKind) >= minimumStacks;
         }
 
         /*

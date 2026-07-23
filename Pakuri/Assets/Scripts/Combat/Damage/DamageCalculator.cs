@@ -23,16 +23,12 @@ namespace Pakuri.Combat
      */
     public static class DamageCalculator
     {
-        public const float BaseCriticalChance = 0.05f;
-        public const float BaseCriticalMultiplier = 1.5f;
-
         /*
          * 공격력 계수, 스킬 강화와 공격자의 주는 피해 보정으로 원본 피해량을 계산한다.
          */
         internal static float CalculateRawDamage(
             UnitCombatState caster, /* 스킬을 사용하는 유닛 */
             SkillDamageSpec damage /* 피해량 */,
-            float baseDamageBonus /* 강화로 추가할 기본 피해 */,
             float damageMultiplier /* 강화로 적용할 피해 배율 */)
         {
             var rawDamage = damage.BaseDamage;
@@ -59,7 +55,7 @@ namespace Pakuri.Combat
             }
             rawDamage = Mathf.Max(0f, rawDamage);
 
-            rawDamage = (rawDamage + baseDamageBonus) * Mathf.Max(0f, damageMultiplier);
+            rawDamage *= damageMultiplier;
 
             rawDamage *= StatusCombatRules.ResolveOutgoingDamageMultiplier(caster, damage.Element, damage.SkillId);
             if (caster is EnemyCombatState enemy)
@@ -69,7 +65,7 @@ namespace Pakuri.Combat
                     damage.Element);
             }
 
-            return Mathf.Max(0f, rawDamage);
+            return rawDamage;
         }
 
         /*
@@ -85,7 +81,7 @@ namespace Pakuri.Combat
             var defense = target.Defenses.Get(attribute);
             defense -= StatusCombatRules.ResolveFlatElementResistReduction(target, attribute);
             var defenseReduction = StatusCombatRules.ResolveElementResistReduction(target, attribute);
-            defense *= 1f - Mathf.Clamp01(defenseReduction);
+            defense *= 1f - defenseReduction;
             defense = Mathf.Max(0f, defense);
             damage *= 100f / (100f + defense);
 
@@ -117,7 +113,7 @@ namespace Pakuri.Combat
                 incomingDamageMultiplier *= Mathf.Max(0f, enemy.PassiveIncomingDamageMultiplier);
             }
 
-            damage *= Mathf.Max(0f, incomingDamageMultiplier);
+            damage *= incomingDamageMultiplier;
             return Mathf.Round(Mathf.Max(0f, damage));
         }
 

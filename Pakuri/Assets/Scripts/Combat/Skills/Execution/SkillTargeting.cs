@@ -578,7 +578,7 @@ namespace Pakuri.InGame
         /*
          * 유닛이 현재 스킬의 대상으로 지정될 수 있는지 확인한다.
          */
-        private static bool IsSkillTargetable(CombatUnitEntry entry /* 처리할 등록 정보 */)
+        internal static bool IsSkillTargetable(CombatUnitEntry entry /* 처리할 등록 정보 */)
         {
             var identity = entry != null && entry.Model != null ? entry.Model.Identity : null;
             return identity == null || identity.Role != UnitRole.Nexus;

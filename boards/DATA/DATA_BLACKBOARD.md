@@ -9,6 +9,49 @@
 - This active file now keeps only the current runtime CSV authority, cleanup decisions, and archive destinations still needed for ongoing work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-23 Remove Overwritten Critical Definition Defaults
+
+### Task title
+
+Keep CSV and serialized definition values authoritative for critical chance and damage.
+
+### Goals
+
+- Remove the two `DamageCalculator` critical constants used only by definition initializers.
+- Remove the corresponding `MonsterDefinition` and `EnemyDefinition` initializer assignments.
+- Leave CSV fields, catalog mapping, and serialized Unity assets unchanged.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No CSV schema, CSV row, prefab, scene, or Unity asset is changed.
+- Runtime catalog construction continues assigning authored critical values before definitions are consumed.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, solution-build verified, and Unity script-compile verified.
+
+### Next Actions
+
+- User verifies CSV-built monster and enemy critical values in Unity Play Mode.
+
+### Evidence
+
+- Repository creation search found `MonsterDefinition` and `EnemyDefinition` are instantiated by `GameDataCatalogBuilder`, which assigns complete `UnitCombatStats` values from parsed source rows.
+- The four definition initializer references to `DamageCalculator.BaseCriticalChance` and `BaseCriticalMultiplier` and both constants were removed.
+- The parsed `BaseCriticalChance` source field and catalog assignments remain; search residue for `DamageCalculator.BaseCritical*` is zero.
+- Scoped Git status found no changed CSV or Unity asset. Existing legacy definition assets already contain serialized `CriticalChance` and `CriticalDamage` values and were not edited.
+- The solution build completed with 0 errors and the existing 2 warnings. Unity forced compilation returned to idle/ready, Console contained 0 errors, and the three modified scripts each validated with 0 warnings and 0 errors.
+
+### History
+
+- 2026-07-23: Code Builder removed only the overwritten default assignments and preserved active data and asset authorities.
+
 ## Task: 2026-07-23 Consolidate Choice Runtime Data Around Normalized Nodes
 
 ### Task title
