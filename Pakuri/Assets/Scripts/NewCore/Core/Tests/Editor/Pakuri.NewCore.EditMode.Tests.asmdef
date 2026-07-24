@@ -1,0 +1,25 @@
+{
+    "name": "Pakuri.NewCore.EditMode.Tests",
+    "rootNamespace": "Pakuri.NewCore.Tests",
+    "references": [
+        "Pakuri.NewCore",
+        "Pakuri.NewCore.Runtime",
+        "Pakuri.NewCore.Presentation",
+        "Unity.TextMeshPro",
+        "Unity.ugui"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}

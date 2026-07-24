@@ -37,7 +37,7 @@ Designer
 
 ## Status
 
-Implementation v0.8. The full blueprint has been translated to English without changing its structure. Phase 0 passed Code Reviewer loop 3, Phase 1 passed loop 2, Phase 2 passed loop 2, Phase 3 passed loop 4, and Phase 4 passed loop 2. Phase 5 is in progress; Phase 6 has not started.
+Implementation v0.9. The full blueprint has been translated to English without changing its structure. Phase 0 passed Code Reviewer loop 3, Phase 1 passed loop 2, Phase 2 passed loop 2, Phase 3 passed loop 4, and Phase 4 passed loop 2. Phase 5-1 passed the Code Builder and independent Code Reviewer static, EditMode, compilation, and Console gates, but the next user Play Mode run exposed the Phase 5-2 compatibility defects defined below. Phase 5 remains in progress; Phase 6 has not started.
 
 ## Next Actions
 
@@ -1373,10 +1373,10 @@ Disconnecting existing `.cs` files from scenes alone does not remove compile-tim
 
 ## 19. Final Target Folder and Script Structure
 
-The structure below is the target state after implementation. It does not mean this structure already exists in the current repository.
+The active replacement source is physically grouped under `Pakuri/Assets/Scripts/NewCore`. The structure below remains the responsibility target inside that root.
 
 ```text
-Pakuri/Assets/Scripts/
+Pakuri/Assets/Scripts/NewCore/
 ├─ Core/
 │  ├─ Bootstrap/
 │  │  └─ GameBootstrap.cs
@@ -1490,6 +1490,8 @@ Pakuri/Assets/Scripts/
       └─ Debug/
          └─ Reuse and modify the existing Debug UI scripts
 ```
+
+`Pakuri/Assets/Scripts/Legacy` is the intermediate holding area for the 69 previous-runtime C# files classified as later removal targets. This folder is not the Phase 6 final state: because it remains under `Assets`, Unity still compiles it. Actual deletion or movement outside Unity's compilation scope still requires the Phase 6 exact-target approval and acceptance gates.
 
 ### 19.1 Core
 
@@ -2013,9 +2015,9 @@ Even when a Phase requires Play Mode, the compilation and Console gates must pas
 
 **Role Owner:** The Code Builder performs asset connections, and the user verifies gameplay in Play Mode.
 
-**Status:** Code Builder static gates passed; submitted to Code Reviewer. User Play Mode verification remains required.
+**Status:** Phase 5-1 Code Builder and independent Code Reviewer gates passed. User Play Mode exposed the Phase 5-2 compatibility defects; Phase 5 remains open.
 
-**Next Actions:** Code Reviewer independently verifies the Phase 5 code, serialized mappings, tests, Unity compilation, and Console. After Reviewer PASS, request the exact user-owned integrated Play Mode scenario.
+**Next Actions:** Implement and verify Phase 5-2. Do not begin Phase 6 until every Phase 5-2 acceptance criterion passes Code Reviewer and user Play Mode.
 
 **Evidence:** Scene, prefab, and `.asset` reference checks; Missing Script checks; Inspector mapping table; Unity recompilation; and Console results.
 
@@ -2024,6 +2026,513 @@ Even when a Phase requires Play Mode, the compilation and Console gates must pas
 **Play Mode:** Required. After compilation and static connection checks succeed, request from the user an exact integrated scenario combining input, combat, UI, effects, and stage transitions.
 
 **Exit Gate:** The active game flow must execute using only the new Core and new components, and current resources must display correctly.
+
+### 21.9.1 Phase 5-1 — User Play Mode Compatibility Repairs
+
+**Task title:** Manual Spatial Casting, Enemy Support Skills, Runtime Visuals, Developer UI, Offering Descriptions, and Damage Meter Compatibility
+
+**Trigger:** The user completed an integrated run and confirmed that the overall run flow works, but reported the eight defects and the LineAttack visual-size requirement recorded in this section.
+
+**Goals:**
+
+- Make manual spatial skills use the exact pointer world position or pointer direction without requiring the pointer to overlap an Enemy.
+- Make projectile pierce continue in the original firing direction instead of homing or bouncing to another target.
+- Restore the retained developer-mode entry and Debug UI behavior against new Core authorities.
+- Display exact CSV `description_text` values in each Offering candidate's `Desc`.
+- Make `stage1-priest` heal an eligible damaged ally and convert `stage1-shieldbearer` `ShieldUp` from shield creation to a timed incoming-damage reduction Buff.
+- Restore the retained per-monster and per-source DamageMeter presentation.
+- Make the Ariel `ariel-e` base visual visible and place Eve `eve-e` at its resolved cast center.
+- Keep every LineAttack visual at the CSV-authored visual scale; do not stretch it from target distance, line length, `radius`, or hitbox dimensions.
+- Define exactly which CSV runtime-visual fields are applied directly and which fields control collision rather than Transform scale.
+
+**Inspected current evidence:**
+
+| Defect | Current inspected behavior | Required owner |
+|---|---|---|
+| Manual spatial cast | `NewCoreInputController.Capture` computes a pointer world point and direction, but submits every active skill to a queue. `InGameActionManager` consumes only one queued request per central Tick. `AreaAttackExecutor` and `LineAttackExecutor` reject the cast when no Enemy is already inside the clicked geometry. `ProjectileExecutor` resolves a target list before creating a projectile. | `NewCoreInputController`, `PlayerInputController`, `SkillExecutionRequest`, and each spatial Executor |
+| Pierce | `ProjectileActor` stores an ordered target list, moves toward `targets[targetIndex]`, and changes direction after each hit. This is homing/chain movement, not pierce. | `ProjectileActor`, `ProjectileExecutor`, and a deterministic collision-geometry query |
+| Developer mode | `NewCoreDebugUIController` only opens and closes panels. It has no `Keyboard.current.digit8Key` or `numpad8Key` path and no new-Core skill/Choice operations. The retained scene contains `Canvas/DebugPanel/DebugUIBtn`, A–J buttons, modifier buttons, five active traits, two masters, and three passive traits. | `NewCoreDebugUIController` |
+| Offering description | `NewCoreInGameUIController.ResolveOfferingLabel` returns only a Skill display name or Choice title. The retained scene contains `OfferingPanel/Choice1..3/SkillName`, `Summary`, and `Desc`, but the current controller never writes `Desc`. | `NewCoreInGameUIController` |
+| Priest heal | Enemy CSV `Heal` is `Friendly` / `LowestHealthFriendly`, `cast_range=5`, `flat_value=50`, and `spell_power_coefficient=1.2`. `EnemyActionController` selects the support skill but performs its range and movement check against the nearest player Monster rather than the resolved friendly heal target. | `EnemyActionController`, `SkillTargeting`, and `HealExecutor` |
+| Shield bearer | `ShieldUp` currently resides in `skills_shield.csv`, so `CsvParser` constructs `ShieldDefinition` and `ShieldExecutor` converts `flat_value=0.25` into a shield equal to 25% of maximum health. Existing compatibility code instead treats `execution_profile=ApplySelfIncomingDamageMultiplier` as a Buff and converts `incoming_damage_multiplier=0.25` to `StatusDamageTakenBonus=-0.75`. | Enemy Buff CSV row, `CsvParser` path classification, `BuffExecutor`, and combat runtime modifiers |
+| DamageMeter | The new UI creates one `Total` segment per Monster. The retained implementation creates colored segments per damage source, resolves Skill/Passive/Choice/Trigger names, sorts base active skills before first-seen extra sources, and sizes each segment against the party leader's total damage. | `NewCoreDamageMeterTracker` and `NewCoreDamageMeterUIController` |
+| Ariel visual | `ariel-e` has mapped sprite and AnimatorController assets, scale `0.72071654`, sorting order `0`, and hitbox values `24.060738` by `12.51`. `SingleAttackExecutor` gives its base visual Actor only `0.00001` seconds; the previous compatible runtime kept instantaneous SingleAttack visuals for at least one second. | `SingleAttackExecutor` and visual Actor lifetime policy |
+| Eve plasma position | `AreaAttackExecutor` correctly resolves `center = request.TargetPoint ?? ordered[0].Position`, but common `SkillExecutor.CreateEffect` always creates the effect at `request.Caster.Position`. | `AreaAttackExecutor` and position-explicit effect creation |
+| LineAttack visual size | Current new presentation applies uniform CSV `runtime_visual_scale` and rotation, and contains no line-length stretching code. This exact-scale behavior must remain explicit while position, direction, and lifetime are repaired. | `LineAttackExecutor`, `EffectVisualSpec`, and `NewCoreEffectView` |
+
+#### 21.9.1.1 Manual Cast Intent Contract
+
+Use one pointer sample as one frame-scoped manual cast intent.
+
+```text
+Pointer world position
+    -> aim direction from selected Monster
+    -> one frame-scoped batch for all currently usable learned active skills
+    -> one ManualInput step consumes the complete batch
+    -> no request from that click survives into a later frame
+```
+
+- `NewCoreInputController` samples the pointer once and passes the same `AimDirection` and `TargetPoint` to every currently usable learned active skill.
+- `PlayerInputController` must drain the whole frame batch during the single `ManualInput` step. It must not process only one skill and leave the rest as stale clicks.
+- Manual and automatic targeting remain separate:
+  - manual spatial skills use the supplied point or direction;
+  - automatic skills continue using CSV `target_selection`;
+  - Buff, Heal, and Shield support skills keep their CSV `target_scope` and `target_selection` and do not require an Enemy under the pointer.
+- A valid manual spatial cast commits its cooldown or magazine use when its Actor is created, even when it hits zero targets.
+- Pointer-over-UI rejection, zero-length aim rejection, projectile burst aim retention, combat-end input clearing, and central Tick order remain unchanged.
+
+Manual placement by runtime family:
+
+| Runtime family | Manual placement |
+|---|---|
+| Projectile | Spawn at caster position and move along normalized caster-to-pointer direction. An Enemy under the pointer is not required. |
+| LineAttack | Origin is caster position; direction is caster-to-pointer. Create the Line Actor even when the line initially contains no Enemy. Re-evaluate line intersections while the Actor is active. |
+| AreaAttack / Field | Center is the exact pointer world position. Create the Area Actor and visual even when the area initially contains no Enemy. Re-evaluate occupants on every scheduled tick. |
+| Spatial SingleAttack | If the Skill has spatial radius/hitbox behavior and no explicit unit selector, use the exact pointer point as its center and do not require a clicked Enemy. |
+| Explicit unit-selector SingleAttack | `HighestHealth`, `LowestHealth`, `HighestStacks`, and other nonblank unit selectors retain their CSV selector. Manual point may order equal candidates but does not replace the declared selector. |
+| Global SingleAttack | `hit_target_count=global` retains battlefield-wide semantics. |
+| Buff / Heal / Shield | Ignore spatial aim for target selection and use the CSV support scope/selector. |
+
+#### 21.9.1.2 Fixed-Direction Projectile And Pierce Contract
+
+`pierce_count` means additional targets crossed in the same trajectory.
+
+```text
+InitialDirection = normalize(pointer - caster) in manual mode
+InitialDirection = normalize(initial target - caster) in automatic mode
+Position += InitialDirection * projectile_speed * deltaTime
+```
+
+- Direction is immutable after spawn. No homing, bounce, chain, or retarget is allowed.
+- Each Tick tests the swept segment from previous position to new position.
+- Intersections are ordered by forward distance along the immutable direction.
+- A projectile can hit a given unit at most once.
+- Total hit budget is `1 + pierce_count + learned PierceBonus`.
+- Off-axis targets and targets behind the projectile do not consume the hit budget.
+- Impact effects occur at the actual collision position.
+- The Actor ends when the hit budget is exhausted, combat ends, or the lifetime/battlefield boundary is reached.
+- Monster Projectile CSV has no `projectile_lifetime` column. Preserve the inspected previous fallback only for that missing-data case:
+
+```text
+max(0.25 seconds, 31 world units / projectile_speed + 0.5 seconds)
+```
+
+- Do not use guessed unit radii. A Unity presentation adapter reads retained `Collider2D.bounds` and supplies engine-independent combat footprints to the collision query. Deterministic tests inject footprints directly. Core projectile logic must not reference `Collider2D` or Unity types.
+
+#### 21.9.1.3 Enemy Support Skill Contract
+
+`EnemyActionController` must resolve the intended Skill target before movement and range checks.
+
+- Hostile skills move toward and check range against their hostile target.
+- Friendly or Self support skills move toward and check range against the resolved support target.
+- `LowestHealthFriendly` uses lowest current-health ratio, not lowest absolute health, and Heal excludes full-health allies.
+- `stage1-priest` uses slot-B `Heal` when any living Enemy ally is damaged, moves within its `cast_range=5` of that ally if required, and heals the selected ally by:
+
+```text
+flat_value 50 + caster spell_power * 1.2
+```
+
+- Heal visual position is the healed target, not the nearest player Monster or the priest unless the priest is the resolved target.
+
+`ShieldUp` data migration:
+
+- Remove only the `ShieldUp` row from `Pakuri/Assets/CSVdata/authoring/enemy/skills/base/shield/skills_shield.csv`.
+- Add the same row to `Pakuri/Assets/CSVdata/authoring/enemy/skills/base/buff/skills_buff.csv`.
+- Change only `runtime_kind` from `Shield` to `Buff`. Keep the exact `skill_id`, cooldown, duration, target, execution profile, status, visual paths, and numeric values unless the user later changes them.
+- Because `CsvParser` classifies enemy skill Definitions by the source folder, the moved row must parse as `BuffDefinition`.
+- `BuffExecutor` handles `ApplySelfIncomingDamageMultiplier` by applying:
+
+```text
+StatusDamageTakenBonus = incoming_damage_multiplier - 1
+                       = 0.25 - 1
+                       = -0.75
+```
+
+- Result: `stage1-shieldbearer` takes 25% of normal post-defense damage for four seconds, then returns to normal damage. It gains zero shield.
+- If the intended design is instead “reduce damage by 25%,” the CSV value must be changed from `0.25` to `0.75`; the inspected retained compatibility meaning is currently 25% damage taken.
+- Phase 0 manifests remain immutable before-state evidence. Phase 5-1 records the before/after SHA-256 values for the two intentionally changed CSV files and proves the other 40 retained CSV files are unchanged.
+
+#### 21.9.1.4 Runtime Visual Placement, Lifetime, And Exact-Value Contract
+
+Add position-explicit effect creation. Do not make every Executor use caster position.
+
+```text
+CreateEffectAt(request, position, direction)
+```
+
+- Projectile visual: projectile Actor position and immutable direction.
+- Projectile impact visual: actual collision position.
+- LineAttack visual: caster position plus immutable line direction.
+- AreaAttack/Field visual: exact resolved area center.
+- Unit-target SingleAttack visual: resolved target position unless its CSV anchor says otherwise.
+- Global SingleAttack visual: its resolved battlefield center.
+- Buff/Heal/Shield visual: resolved affected unit or explicitly declared center.
+- `runtime_visual_anchor=StatusTarget` must be honored; the inspected Base CSV use is `ariel-d`.
+
+Instantaneous visuals:
+
+- A non-empty base visual must survive long enough to be synchronized and displayed.
+- For an instantaneous SingleAttack with no authored duration, retain the inspected previous minimum visual lifetime of one second.
+- `ariel-e` must show its base sprite and AnimatorController for at least that lifetime.
+- Its Skill-owned shield Effect graph remains separate and retains the authored `EffectLifetime=6` and its own `RuntimeEffectVisual`.
+
+LineAttack rule:
+
+- Never multiply visual Transform scale by line length, target distance, `radius`, `runtime_hitbox_size_x`, or `runtime_hitbox_size_y`.
+- Apply only the authored `runtime_visual_scale`, or authored `runtime_visual_scale_x/y/z` when those axis fields exist.
+- Rotation may align the visual with cast direction; rotation must not mutate local scale.
+- Hit geometry and visual size remain separate.
+
+Current CSV-runtime-visual answer:
+
+- The current code does apply mapped sprite path, AnimatorController path, positive uniform scale, populated axis scale, and sorting order directly.
+- The inspected 82 Base skill rows contain 39 explicit positive uniform scales, one explicit axis-scale row, one explicit anchor row, 33 explicit hitbox rows, and no explicit zero scale.
+- Therefore current `<= 0 -> 1` and blank-axis `0 -> 1` fallbacks do not alter an explicitly authored scale in the current Base rows.
+- It is still not correct to say that every runtime-visual value is applied: New Core currently ignores `runtime_visual_anchor` and `runtime_hitbox_size_x/y`. Phase 5-1 must apply anchor semantics and use hitbox values only for collision geometry, never as visual stretching.
+
+#### 21.9.1.5 Developer Mode And UI Contract
+
+`NewCoreDebugUIController` becomes the sole new-Core developer UI owner.
+
+- `Keyboard.current.digit8Key` and `Keyboard.current.numpad8Key` toggle `Canvas/DebugPanel`.
+- Initial state is hidden. Pressing 8 reveals the retained `DebugUIBtn`; pressing 8 again hides the complete root.
+- `DebugUIBtn` opens `DebugUI`; Close returns to the root-button state.
+- Bind the retained A–J skill buttons, A–J modifier buttons, five active Trait buttons, two Master buttons, three passive Trait buttons, and both modifier Close buttons.
+- Read available Skills and Choices from `NewCoreSceneRuntime.Catalog`.
+- Mutate learning state only through the selected `MonsterModel.SkillBucket` public `CanLearn*`, `TryLearn*`, `CanSelectChoice`, and `TrySelectChoice` methods.
+- Do not duplicate learned state in the UI and do not call any previous DebugUI, RunSession, catalog, or runtime type.
+- Refresh button label/interactable state and `NewCoreMonsterPanelUI` after every successful debug operation.
+
+Offering:
+
+- Bind `OfferingPanel/Choice1..3/SkillName` and `Desc` explicitly instead of using the first descendant text component.
+- Base active/passive Skill candidate:
+  - `SkillName = SkillDefinition.display_name`, falling back to candidate id;
+  - `Desc = SkillDefinition.description_text` exactly.
+- Enhancement/Master Choice candidate:
+  - `SkillName = SkillChoiceDefinition.title`, falling back to candidate id;
+  - `Desc = SkillChoiceDefinition.description_text` exactly.
+- Preserve embedded newlines and punctuation. Do not substitute `summary` for `description_text`.
+
+DamageMeter:
+
+- `NewCoreDamageMeterTracker` remains the damage-event authority and stores total damage plus ordered per-source records.
+- `NewCoreDamageMeterUIController` restores the retained presentation:
+  - party roster order;
+  - maximum party-member total as the leader reference;
+  - compact total and percentage text;
+  - one colored segment per positive damage source;
+  - segment width = source damage / leader total;
+  - cumulative left-to-right placement without exceeding background width;
+  - Base active Skills first in slot order, then other sources by first-seen order;
+  - display-name resolution for active Skill, Passive, Choice, Trigger source, then source id fallback;
+  - open button hidden while the overlay is open;
+  - refresh on tracker `Version` change or the retained 0.2-second interval, not unconditional reconstruction every frame.
+- Reuse the retained `1PDamagePanel` through `5PDamagePanel`, `Skill-Meter`, `MeterBG`, `SkillName`, portrait, total, and percentage objects. Do not replace the UI hierarchy.
+
+#### 21.9.1.6 Implementation Order And Verification
+
+Implementation order:
+
+1. Repair frame-scoped manual input and position-explicit Executor contracts.
+2. Replace target-list projectile movement with fixed-direction swept collision and pierce.
+3. Repair Enemy support target/range behavior and migrate `ShieldUp` to Buff.
+4. Repair effect placement/lifetime and exact visual-scale/anchor contract.
+5. Restore Debug UI, Offering descriptions, and DamageMeter presentation.
+6. Run focused EditMode tests, the complete new-Core EditMode assembly, forced Unity compilation, scene/prefab checks, CSV contract checks, and Console checks.
+7. Submit once to Code Reviewer.
+8. After Reviewer PASS, request one user-owned Phase 5-1 Play Mode scenario. Do not begin Phase 6 before user PASS.
+
+Required focused tests:
+
+- One manual click is consumed as one frame batch; no stale skill request survives into the next frame.
+- Projectile, LineAttack, AreaAttack, and spatial SingleAttack create their Actor at an empty clicked point/direction without an Enemy under the pointer.
+- Area effect handle position equals the exact manual point; a target entering later is hit.
+- Line direction equals the manual aim; a target entering the line later is hit; visual scale equals the exact CSV value before and after rotation.
+- Fixed-direction projectile hits only forward swept intersections, never turns after a hit, never hits one Model twice, and respects the total pierce hit budget.
+- A projectile with no initial target remains alive until its evidence-defined lifetime/boundary.
+- Priest moves/checks range against the damaged friendly target and applies `50 + spell_power * 1.2` healing.
+- `ShieldUp` parses as `BuffDefinition`, adds zero shield, applies a `0.25` incoming-damage multiplier for four seconds, and expires cleanly.
+- `ariel-e` base visual remains active for the one-second minimum; its shield graph visual uses its separate six-second lifetime.
+- `eve-e` Actor, hit center, and effect handle all use the exact manual or automatic resolved center rather than Eve's position.
+- Offering Choice1–3 `Desc` values equal exact Skill or Choice CSV `description_text`.
+- Debug root visibility toggles through both keyboard 8 keys; debug learning mutates only the selected Monster's Bucket.
+- DamageMeter renders ordered per-source segments, source names, compact totals, percentages, colors, and widths against the leader total.
+- All 42 CSV files parse; only the two authorized `ShieldUp` source files differ from Phase 0 hashes.
+- Both retained scenes and all active prefabs have zero Missing Scripts and zero previous-runtime authority references.
+- Final forced compilation and Unity Console contain zero project errors and warnings.
+
+**Role Owner:** Designer defines this contract. Code Builder implements it. Code Reviewer performs one independent review after Builder evidence passes. User owns final Play Mode verification.
+
+**Status:** CODE BUILDER PASS — CODE REVIEWER PASS — USER PLAY MODE EXPOSED PHASE 5-2 DEFECTS
+
+**Next Actions:** Continue with Phase 5-2. Keep Phase 5 open and do not begin Phase 6 until Phase 5-2 passes Code Reviewer and user Play Mode.
+
+**Play Mode:** Required after static and Reviewer PASS.
+
+**Exit Gate:** Every required focused test passes; complete EditMode suite passes; compilation and Console are clean; user confirms manual point casting, developer mode, Offering descriptions, fixed-direction pierce, priest heal, shield-bearer damage reduction, DamageMeter presentation, Ariel visual, Eve plasma placement, and un-stretched LineAttack visuals.
+
+### 21.9.2 Phase 5-2 — Full Skill Logic And Gameplay Feedback Compatibility
+
+**Task title:** Full Monster Skill Parity, Shield And Unlock Repairs, Immediate Enemy Retargeting, And Retained Presentation Feedback
+
+**Trigger:** After the Phase 5-1 Builder and Reviewer gates passed, the user performed another Play Mode run and reported nine additional defects: AreaAttack rotation, missing Offering owner Summary, incomplete Passive/Enhancement/Master behavior, Monster death-frame reset, missing `ariel-b` and `eve-f` shields, invalid Passive unlock eligibility, non-stacking damage popups, delayed Enemy retargeting after Monster death, and missing Guardian Captain Slash or Priest heal presentation.
+
+**Goals:**
+
+- Keep every AreaAttack visual at its authored rotation instead of rotating it toward the cast direction.
+- Write the owning Monster's display name into each Offering candidate's `Summary`.
+- Audit and restore the complete current monster-skill behavior represented by every Base, Choice, graph-node, and trigger CSV row.
+- Use the previous runtime only as inspected behavior evidence; implement the repaired behavior through the current New Core responsibilities and code conventions.
+- Freeze a defeated Monster on the last death-animation frame until explicit revival.
+- Restore `ariel-b` and `eve-f` shield behavior while preserving the working `ariel-e` shield as a regression.
+- Prevent a Passive from appearing or being learned before its required active Skill is learned.
+- Restore independent, overlapping, rising, fading damage-number popups.
+- Make each living Enemy select a new living Monster or begin Nexus movement on the next central Tick after its current Monster target dies.
+- Make `stage1-guardian-captain` execute and present `Slash`, and make the `stage1-priest` heal visual visible at the healed ally.
+
+**Constraints:**
+
+- This section is a design and implementation handoff. It does not authorize Designer code, scene, prefab, asset, or CSV edits.
+- `Pakuri/Assets/CSVdata` remains the data authority. Do not alter CSV bytes merely to fit an incomplete runtime. If the parity audit proves that a required value is absent or contradictory, stop that exact row, record the evidence, and request a user decision before changing schema or data.
+- Previous files under `Pakuri/Assets/Scripts` may be read only as observable-behavior references for this Phase. New Core code must not call, inherit, instantiate, serialize, or retain a fallback dependency on a previous runtime type.
+- Do not copy the previous code convention or reproduce its large per-skill branches. Extend the current `MonsterSkillBucket`, `SkillExecutionPlan`, family Executors, `SkillEffectGraphRuntime`, `SkillTriggerDispatcher`, model, and presentation boundaries.
+- Do not add `skill_id` or `monster_id` special cases when a CSV field, slot relation, node handler, or generic target/effect rule can express the behavior.
+- A node is not considered implemented merely because `SkillNodeSupport.Resolve` classifies its `handler_id`. The selected node must produce the authored state change under a deterministic test.
+- Keep engine-independent combat and run code free of `UnityEngine` types. Animation, TextMesh cloning, and Transform rotation remain presentation responsibilities.
+- Preserve Phase 5-1 manual targeting, fixed-direction pierce, exact LineAttack scale, developer UI, Offering `Desc`, enemy heal targeting, ShieldBearer damage reduction, DamageMeter, and Ariel/Eve placement repairs.
+- Preserve existing scene hierarchy, prefab references, serialized field names, visual resources, and CSV-authored numeric values unless inspected evidence proves an exact migration is required.
+- Do not start Phase 6 or remove previous sources. Play Mode remains user-owned.
+
+**Inspected current evidence:**
+
+| Defect | Current inspected behavior | Required New Core owner |
+|---|---|---|
+| AreaAttack rotation | `AreaAttackExecutor` passes `request.AimDirection` into `CreateEffectAt`. `NewCoreEffectView.SyncTransform` assigns `instance.transform.right` whenever `EffectHandle.Direction` is nonzero. | `AreaAttackExecutor`, `EffectVisualSpec`/`EffectHandle`, and `NewCoreEffectView` |
+| Offering Summary | `NewCoreInGameUIController.BindOfferingCandidate` writes only `SkillName` and `Desc`. `OfferingOffer.Monster` already owns the selected Monster. The previous `InGameUIManager` wrote `Summary = monster.DisplayName`. | `NewCoreInGameUIController`; owner data remains `OfferingOffer.Monster` |
+| Full skill behavior | The current authoring set contains 50 Base rows in six files, 252 Choice rows in six files, 772 graph-node rows in six files, and 57 trigger rows in five files. Current tests exercise selected skills and node combinations, but they do not constitute one behavior assertion for every authored Base, Choice, and Trigger row. | `SkillExecutionPlan`, family Executors, `SkillEffectGraphRuntime`, `SkillTriggerDispatcher`, and data-driven tests |
+| Death frame | Previous `AnimationController.FreezeDeathOnLastFrame` plays `deadState` at normalized time `0.999f`, calls `animator.Update(0f)`, and then sets speed to zero. `MonsterAnimationBehaviour.FreezeDeath` plays at `1f` and sets speed to zero without forcing an Animator update, allowing a looping or transition boundary to show another frame. | `MonsterAnimationBehaviour`; `MonsterActorBehaviour` remains the model-to-presentation transition owner |
+| `ariel-b` shield | The Base row has `runtime_kind=Shield` and `status_target_scope=all_allies`. `SkillExecutionRuntime` correctly routes runtime kind `Shield` to `ShieldExecutor`, but `SkillTargeting.BuildCandidates` reads `target_scope`, not `status_target_scope`; the row therefore does not identify friendly recipients through the current target contract. | `SkillTargeting` and `ShieldExecutor`; use generic support-scope resolution |
+| `eve-f` shield | Its graph encodes `ApplyShield(0, 1.2)`, `AllAllies`, `ConditionSkillAttribute=Lightning`, and lifetime 12. Current graph `ApplyShield` multiplies `combat.CalculateRawValue` for the Passive Definition, whose Base row has no damage or coefficient fields, so the amount resolves to zero. Current `ConditionSkillAttribute` compares the Passive's own `request.Skill.attribute`, not each candidate ally's learned Skill attributes. | `SkillEffectGraphRuntime` plus a model/bucket query for learned Skill attributes |
+| Passive unlock | `MonsterSkillBucket.HasLearnedPassivePrerequisite` enforces a prerequisite only when a `PassiveBase` Choice exists. The current passive Choice CSV has only two `PassiveBase` rows, so `ariel-g` has no configured prerequisite and is accepted without `ariel-b`. Previous `CsvRowParser.GetRequiredActiveSlot` maps `G→B`, `H→C`, `I→D`, and `J→E`, while its old fallback treated F as freely available. The user explicitly overrides that fallback for New Core: F requires A. | `PassiveDefinition`/slot policy and `MonsterSkillBucket`; `OfferingService` and Debug UI continue consuming Bucket eligibility |
+| Damage popup | `UnitActorBehaviour.ShowDamage` stops the prior coroutine and reuses one `Damage` TextMesh. Previous `DamageNumberPopup` creates one clone per hit, allows up to 12 active popups, offsets concurrent popups vertically, moves each upward, fades each independently, and destroys only the expired/oldest popup. | A new-Core presentation popup component used by `UnitActorBehaviour` |
+| Enemy retarget delay | `EnemyActionController.Tick` resolves a usable Skill first and returns immediately when none is ready. Nexus routing occurs only after that return point, so Enemies may stand still for a cooldown interval after all Monsters die. | `EnemyActionController`; target/Nexus routing must precede Skill availability |
+| Guardian Slash | `stage1-guardian-captain` is configured with slot A `Slash` and slot B `GuardianFlag`. Current `ResolveSkill` always considers slot B before slot A, while `NewCoreSceneRuntime.HandleSkillActivated` sends attack animation only to `MonsterActorBehaviour`, not `EnemyActorBehaviour`. The reported failure must be traced across selection, cooldown, range, Executor return, damage, effect, and Enemy presentation rather than assumed to be only one of these paths. | `EnemyActionController`, `AreaAttackExecutor`, combat event evidence, `EnemyActorBehaviour`, and scene runtime presentation |
+| Priest heal effect | `HealExecutor` creates the correctly positioned effect but gives its `BuffActor` a lifetime of `0.00001` seconds, which can end before a rendered frame. | `HealExecutor` and the shared minimum visible-effect lifetime policy |
+
+#### 21.9.2.1 Area, Offering, Death, And Damage Feedback Contract
+
+AreaAttack orientation:
+
+- AreaAttack/Field position remains the exact resolved center.
+- AreaAttack passes no cast direction into its visual handle, or explicitly declares a no-rotation orientation policy.
+- `NewCoreEffectView` must not rotate an AreaAttack instance from pointer direction, automatic target direction, caster facing, or a later occupant.
+- Retain the prefab's authored rotation when a prefab exists; a sprite-only effect retains its creation rotation.
+- Projectile and LineAttack direction alignment remains unchanged. Rotation policy must be family-specific rather than globally disabled.
+
+Offering:
+
+- Bind `OfferingPanel/Choice1..3/Summary` explicitly.
+- For Base Skill, Passive, Enhancement, and Master candidates:
+
+```text
+Summary = activeOffer.Monster.MonsterDefinition.display_name
+fallback = activeOffer.Monster.MonsterDefinition.id
+```
+
+- Example: an Eve-owned Prism Ray candidate shows `이브` in `Summary`.
+- Do not infer owner from the candidate id, title, description, current selected input actor, or party index.
+- Preserve the Phase 5-1 `SkillName` and exact `description_text` `Desc` bindings.
+
+Death animation:
+
+- `PlayDeath` is idempotent and blocks later Attack/Hit/Idle changes while dead.
+- Resolve the configured death clip length, wait for it, then play the configured dead state at normalized time `0.999f`, force `Animator.Update(0f)`, and set `Animator.speed=0`.
+- Missing Animator, controller, state name, or clip must produce bounded behavior and explicit diagnostic evidence; do not silently return the Monster to Idle.
+- Only `ReviveToIdle` clears the dead state, restores speed, and plays Idle.
+
+Damage popup:
+
+- Every positive damage event creates an independent popup instance. A newer hit must not stop, overwrite, hide, or reuse an older active popup.
+- Reuse the retained `Damage` TextMesh as an inactive template; clone presentation instances under the same parent.
+- Preserve the inspected retained defaults unless serialized values override them: one-second duration, one-world-unit rise, maximum 12 active popups, and 0.18 vertical spacing.
+- Each popup starts opaque, rises over its own lifetime, fades to zero, and destroys only itself at expiry.
+- When the configured maximum is exceeded, remove only the oldest popup.
+- Cleanup all remaining clones when the owning Actor is destroyed or rebound.
+
+#### 21.9.2.2 Complete Skill Parity Audit Contract
+
+Before changing skill behavior, generate a deterministic parity inventory from the exact current CSV files:
+
+| Inventory | Current inspected count |
+|---|---:|
+| Monster Base definitions | 50 |
+| Skill/Passive Choices | 252 |
+| Choice/Skill graph nodes | 772 |
+| Skill triggers | 57 |
+
+For every Base Skill and Passive, record:
+
+- `monster_id`, `skill_id`, slot, runtime family, and learned prerequisite;
+- exact Base CSV file and row;
+- every owned Enhancement, Master, PassiveBase, and PassiveEnhancement;
+- every Skill-owned and Choice-owned graph;
+- every trigger sourced by or targeting the Skill;
+- previous behavior-reference files and the observable rule extracted from them;
+- current New Core owner and handler path;
+- deterministic setup, expected state delta, actual state delta, and PASS/FIX status.
+
+Reference routing:
+
+- Active family behavior: inspect only the matching previous family under `Combat/Skills/SkillType/{Projectile,Line,Zone,Single,Buff}` and the shared previous `SkillExecution`/targeting path required by that Skill.
+- Passive behavior: inspect the matching paths in `Combat/Skills/SkillType/Passive/PassiveSkill.cs`, previous `SkillExecution.cs`, and only the referenced effects.
+- Trigger behavior: inspect only the matching previous `SkillTrigger.cs` event path and the exact trigger row.
+- Animation, popup, Enemy AI, and Offering use only the explicit previous files named in this section.
+- The previous runtime is evidence, not an authority dependency. If previous behavior and current CSV disagree, do not guess; record the exact disagreement and request a decision for that row.
+
+Runtime ownership:
+
+- `MonsterSkillBucket`: learned Skills, selected Choices, limits, and prerequisite eligibility only.
+- `SkillExecutionPlan`: pure numeric, condition, cooldown, targeting-count, timing, and family-plan modifiers.
+- Family Executor/Actor: Base family lifecycle, geometry, application cadence, and hit callbacks.
+- `SkillEffectGraphRuntime`: Skill/Choice-owned effect graphs and graph target/condition semantics.
+- `SkillTriggerDispatcher`: event subscription, ancestry, proc/condition filtering, and triggered execution.
+- `InGameCombatManager` and models: damage, healing, shield, status, modifier, and defeat state mutation.
+- Presentation: Unity objects, visuals, Animator, TextMesh, and effect transforms only.
+
+Implementation quality:
+
+- One generic node behavior has one implementation owner. Do not duplicate the same handler across Plan, EffectGraph, and Trigger paths.
+- If a switch or method would gain unrelated responsibilities, extract a cohesive handler rather than adding another per-skill branch.
+- Reject unknown reachable node/trigger behavior at parse/bootstrap validation. Do not parse successfully and then silently ignore it during combat.
+- Do not treat description text as executable data. Use authored columns and node arguments; previous observable behavior resolves only semantics that the existing data format already intends to express.
+- Use parameterized/data-driven EditMode tests so all rows are covered without copy-pasted test bodies.
+
+Parity acceptance:
+
+- Every one of the 50 Base definitions has a deterministic Base-behavior test.
+- Every one of the 25 Passive Definition rows changes its intended runtime state or registers its intended trigger/effect when learned.
+- Every one of the 252 Choice rows is either selected in a deterministic state-delta test or explicitly linked to a graph/plan test proving its effect.
+- Every one of the 772 graph-node rows maps to an executed graph contract; no reachable row is unconsumed or silently skipped.
+- Every one of the 57 trigger rows is fired with a matching event and rejected by at least one nonmatching condition.
+- Learning a Choice or Passive changes only its intended Skill, targets, timing, or stats and does not mutate Definition data.
+
+#### 21.9.2.3 Shield And Passive Prerequisite Contract
+
+`ariel-b`:
+
+- Generic target resolution must recognize the authored `status_target_scope=all_allies` for Shield/Buff status application when `target_scope` is absent.
+- Apply `35 + caster spell_power * 1.4`, then apply the selected shield multiplier.
+- Apply to every living allied Monster, including Ariel, for the authored five seconds.
+- Use the authored `same_source_refresh` and `take_highest` policies through the model shield/status owner.
+- It must never shield an Enemy because of a missing `target_scope`.
+
+`eve-f`:
+
+- At combat start, identify each living allied Monster that has at least one learned Lightning-attributed active Skill.
+- Apply a shield equal to Eve's spell power times `1.2`, for 12 seconds.
+- `ConditionSkillAttribute=Lightning` filters candidate allies by their learned active Skills; it must not compare the Passive Definition's blank attribute.
+- The `eve-f-trait-1` shield multiplier, `eve-f-trait-2` shocked-target damage modifier, and `eve-f-trait-3` shielded-target action-speed modifier remain separate graph effects and must each receive a parity test.
+
+`ariel-e` regression:
+
+- Preserve its working all-allies shield, visual, six-second graph lifetime, and Phase 5-1 base-visual lifetime.
+- The parity audit must verify the exact shield formula against its graph arguments. Do not reuse a generic raw-damage calculation if it adds Base damage to a coefficient that is authored to use only spell power.
+
+Passive unlock relation:
+
+| Passive slot | Eligibility |
+|---|---|
+| F | Requires learned active slot A |
+| G | Requires learned active slot B |
+| H | Requires learned active slot C |
+| I | Requires learned active slot D |
+| J | Requires learned active slot E |
+
+- Derive this relation from slots and learned definitions, not from `ariel-g` or another hard-coded id.
+- `MonsterSkillBucket.CanLearnPassive` and `TryLearnPassive` are the single eligibility authority.
+- `OfferingService.BuildEligible`, Offering confirmation, and Debug UI must continue calling the Bucket APIs and may not bypass the prerequisite.
+- Passive Enhancement eligibility still requires the Passive itself, plus its authored `target_skill_id` when nonblank.
+- The authoritative pair rule is `A→F`, `B→G`, `C→H`, `D→I`, and `E→J`; expressed as prerequisites, F requires A, G requires B, H requires C, I requires D, and J requires E.
+- Required regressions include: `ariel-g` is unavailable before `ariel-b`, becomes available after `ariel-b`, and another Monster cannot satisfy Ariel's prerequisite.
+
+#### 21.9.2.4 Enemy Retarget, Guardian Slash, And Priest Visual Contract
+
+Enemy decision order per central Tick:
+
+```text
+Is the Enemy active?
+    -> resolve nearest living Monster
+    -> if none: move toward Nexus immediately
+    -> else: evaluate support/offensive Skill availability
+    -> move toward the selected Skill target or execute the Skill
+```
+
+- Nexus movement must not depend on any Skill cooldown, magazine, target selection, or Executor result.
+- A Monster defeated earlier in the same central Tick is excluded by `IsAlive` on the Enemy step. Each Enemy begins moving toward the Nexus in that next Enemy step without a cooldown-sized idle gap.
+- When another Monster remains alive, the Enemy immediately selects that living Monster instead of retaining the defeated target.
+- Preserve status-based movement/act restrictions; “immediate” means the next allowed central Tick, not bypassing stun/freeze rules.
+
+Guardian Captain:
+
+- Trace `stage1-guardian-captain` slot B `GuardianFlag` and slot A `Slash` independently.
+- After `GuardianFlag` starts its cooldown, `Slash` must be selectable, move into its authored range, commit its own cooldown only after successful Actor creation, apply its authored AreaAttack damage, create its authored visual, and report Skill activation.
+- Add Enemy attack-presentation handling only through `EnemyActorBehaviour` or a dedicated Enemy animation adapter. Do not route it through `MonsterActorBehaviour`.
+- A deterministic trace must assert selection, cooldown, target, range movement, Executor success, damage, effect handle, and presentation notification so the reported “does not use Slash” failure cannot be hidden by testing damage alone.
+
+Priest:
+
+- Preserve the Phase 5-1 lowest-health-ratio friendly selection and healing formula.
+- A non-empty heal visual must survive at least one rendered second, matching the retained instantaneous-visual minimum used for visible SingleAttack effects.
+- The effect handle position is the healed ally and must remain independent from the priest's position and the nearest hostile Monster.
+
+#### 21.9.2.5 Implementation Order And Verification
+
+Implementation order:
+
+1. Freeze the exact 50/252/772/57 parity inventory and current failure baselines before production edits.
+2. Repair AreaAttack orientation, Offering Summary, Monster death freeze, and independent damage popups.
+3. Centralize Passive slot prerequisites in `MonsterSkillBucket` and prove Offering/Debug callers cannot bypass them.
+4. Repair generic Shield target/formula/condition semantics, then pass `ariel-b`, `eve-f`, and `ariel-e` regressions.
+5. Reorder Enemy target/Nexus decisions and trace Guardian Captain Slash plus Priest heal visual.
+6. Complete the full Base/Choice/graph/trigger parity matrix by comparing each exact current row to its narrow previous behavior reference and implementing only through New Core owners.
+7. Run focused tests, all data-driven parity tests, the complete New Core EditMode assembly, forced Unity compilation, scene/prefab previous-authority checks, CSV hash/contract checks, and final Console checks.
+8. Submit once to Code Reviewer. Repair and repeat only if the Reviewer returns an acceptance blocker under the user's existing pass-until-PASS instruction.
+9. After Reviewer PASS, request one user-owned Phase 5-2 Play Mode scenario. Do not begin Phase 6 before user PASS.
+
+Required focused tests:
+
+- AreaAttack effect position equals its resolved center and its rotation remains authored/unchanged for both manual and automatic casts.
+- Projectile and LineAttack still rotate toward direction and retain their Phase 5-1 scale contract.
+- Offering Base, Passive, Enhancement, and Master candidates show the owning Monster display name in `Summary`, correct label in `SkillName`, and exact CSV description in `Desc`.
+- Death animation samples the configured dead state at `0.999f`, forces the Animator update, remains frozen, ignores Attack/Hit/Idle, and revives only through `ReviveToIdle`.
+- Three rapid damage events create three simultaneous popup objects; each has an independent position, alpha, lifetime, and cleanup.
+- `ariel-b` shields all living allies, shields no Enemy, uses the authored formula/duration/policies, and applies selected enhancements.
+- `eve-f` shields only allies with a learned Lightning active Skill using Eve spell power, and all three Passive Enhancements change only their authored result.
+- `ariel-e` remains functional and its shield formula is proven against the graph arguments.
+- `ariel-g` is absent from eligible Offering candidates and rejected by Bucket/Debug before `ariel-b`, then accepted after `ariel-b`.
+- After the last Monster dies, an Enemy with every Skill on cooldown moves toward the Nexus on the next Enemy step.
+- After one of multiple Monsters dies, the Enemy targets a surviving Monster on the next Enemy step.
+- Guardian Captain uses `GuardianFlag` and then `Slash`; the Slash trace proves cooldown, movement/range, AreaAttack damage, effect, and Enemy presentation.
+- Priest heal changes health and produces a visible effect at the healed ally for at least one second.
+- All 50 Base, 252 Choice, 772 graph-node, and 57 trigger rows satisfy the parity acceptance matrix.
+- The complete New Core EditMode suite passes; final forced compilation and Unity Console contain zero project errors and warnings.
+- Both retained scenes and every active prefab have zero Missing Scripts and zero previous-runtime authority references.
+- CSV hashes remain unchanged unless an exact separately approved data migration is recorded with before/after rows and hashes.
+
+**Role Owner:** Designer defines this contract. Code Builder implements it using the narrow previous behavior references named above. Code Reviewer performs one independent review after Builder evidence passes. User owns final Play Mode verification.
+
+**Status:** DESIGN COMPLETE — implementation not started
+
+**Next Actions:** Run Phase 5-2 as Code Builder. Record the frozen parity inventory, changed paths, focused/parity/full test job ids, compilation, Console, scene/prefab boundaries, CSV hashes, Reviewer result, and user Play Mode request in a new Phase execution record.
+
+**Evidence:** The inspected files and exact CSV row counts in this section, Code Builder parity matrix, deterministic tests, Unity compilation/Console, scene/prefab checks, and user Play Mode result.
+
+**History:** 2026-07-24 user Play Mode reported nine additional compatibility defects. Designer inspected the current New Core owners, exact related CSV rows, and narrow previous behavior implementations and created this Phase 5-2 handoff. No production code, scene, prefab, asset, or CSV was changed by Designer.
+
+**Play Mode:** Required only after Code Builder and Code Reviewer PASS. The user verifies Area rotation, Offering owner Summary, learned Passive/Enhancement/Master effects, death-frame freeze, Ariel/Eve shields, Passive unlock order, overlapping rising damage popups, immediate Enemy retarget/Nexus movement, Guardian Slash, and Priest heal visual.
+
+**Exit Gate:** Every required focused and full-parity test passes; compilation, Console, CSV, scene, prefab, and previous-authority gates are clean; Code Reviewer passes; and the user confirms the complete Phase 5-2 Play Mode scenario.
 
 ### 21.10 Phase 6 — Remove Existing Scripts and Complete the Final Transition
 
@@ -2059,6 +2568,146 @@ Even when a Phase requires Play Mode, the compilation and Console gates must pas
 
 Add the newest record first under this section.
 
+## Script Structure Classification Record — 2026-07-25 02:15 +09:00
+
+Task title: Blueprint-Aligned New Core And Legacy Script Separation
+
+Goals: Group every retained New Core source under one `Scripts/NewCore` root following the blueprint responsibility folders, and isolate every previous-runtime source classified for later deletion under `Scripts/Legacy`.
+
+Constraints: This is a behavior-preserving mechanical move. No C#, asmdef, asmref, or existing `.meta` file content was changed by the move. No previous source was deleted. `Scripts/Legacy` remains inside `Assets` and therefore remains in Unity's compilation scope; this is not final Phase 6 removal. No CSV, scene, prefab, runtime asset, or visual resource was changed for this task. Play Mode was not invoked by Code Builder.
+
+Role Owner: Code Builder
+
+Status: CODE BUILDER PASS — STRUCTURE CLASSIFIED
+
+Next Actions: Keep active implementation work under `Pakuri/Assets/Scripts/NewCore`. Treat `Pakuri/Assets/Scripts/Legacy` as removal candidates only. Do not claim Phase 6 completion or delete those files until Phase 5 user Play Mode succeeds and the exact Phase 6 target list receives separate approval.
+
+Changed Paths:
+
+- `Pakuri/Assets/Scripts/NewCore/**`
+- `Pakuri/Assets/Scripts/Legacy/**`
+- `Pakuri/reference/Work/new-core-architecture-blueprint.md`
+
+Evidence:
+
+- The pre-move inventory contained 176 C# files. The inspected New Core assembly folders contained 107 C# files; the remaining 69 C# files exactly match the Phase 0 previous-Script count.
+- The move preserved all 453 existing files under `Pakuri/Assets/Scripts`: the complete SHA-256 multiset before and after the move is identical.
+- New Core now contains 107 C# files under `Core`, `Run`, `Units/Models`, `Combat`, `Spawn`, and the Phase 5 Unity `Presentation` adapter boundary. Legacy contains 69 C# files under `Combat`, `Data`, `GameFlow`, `InGame`, `UI`, and `Units`.
+- Static namespace inspection found zero New Core production references to previous `Pakuri.*` namespaces. The only matched previous namespace text is an intentional forbidden-namespace assertion string in `NewCorePresentationTests`.
+- All 189 C#, asmdef, and asmref source artifacts have matching `.meta` files after Unity import.
+- No C# source contains a hard-coded reference to the previous New Core script paths.
+- `dotnet build Pakuri.NewCore.EditMode.Tests.csproj --no-restore --nologo` completed with zero warnings and zero errors.
+- Complete EditMode job `8dd83ec0a4994f3d898dc6497fcb382b` passed 117 of 117 tests with zero failures and zero skips.
+- `git diff --check -- Pakuri/Assets/Scripts` returned exit code 0.
+
+Unity Before Log: Zero Errors and Warnings. The Editor initially reported an already-running Play Mode session while external filesystem changes were dirty.
+
+Unity Compile Result: Unity 6000.3.14f1 automatically imported `Scripts/NewCore` and `Scripts/Legacy`, regenerated project files with only the new paths, compiled, performed one domain reload, and returned to idle with no pending compilation or reload.
+
+Unity Error/Exception: The passing test run intentionally emitted one `MissingAnimator` error from its fallback diagnostic regression and the Test Runner result-path message classified as an Exception. After recording and clearing those test-owned entries, the final Console gate contains 0 Errors and Exceptions.
+
+Unity Warning: The passing test run emitted its intentional missing-controller fallback warning and the package-owned Performance Testing setup/cleanup warnings. After recording and clearing those entries, the final Console gate contains 0 Warnings.
+
+Play Mode: Not Run
+
+Play Mode Reason: Code Builder did not invoke Play Mode or a Play/Stop command. Unity's automatic script recompile and domain reload ended the already-running external Play Mode session and returned to `NewMainMenu`. Gameplay verification remains user-owned.
+
+User Result: Not requested for this mechanical structure pass.
+
+History: Code Builder inspected the actual 176-file source inventory and the blueprint Phase 0 count before moving anything. It classified the 107 files owned by the three New Core assemblies and their tests, confirmed zero previous-namespace production dependencies, moved each source together with its `.meta`, and placed the remaining exact 69 previous scripts under Legacy. Unity then imported the new paths automatically. Compilation, Console, and all 117 EditMode tests passed. No Code Reviewer run was requested for this structure-only task.
+
+## Phase 5-2 Design Record — 2026-07-24 23:54 +09:00
+
+Task title: Full Skill Logic And Gameplay Feedback Compatibility Design
+
+Goals: Define evidence-backed repair contracts for the nine user-reported Phase 5-2 defects and require complete parity coverage for every current monster Base Skill, Passive, Enhancement, Master, graph node, and trigger.
+
+Constraints: Designer changed only this blueprint. No production code, test code, scene, prefab, asset, CSV, BLACKBOARD-family file, or other project Markdown was changed. Previous scripts were inspected only as narrow behavior references and are forbidden as New Core runtime dependencies. Play Mode was not started by Designer. Phase 6 remains unstarted.
+
+Role Owner: Designer complete. Code Builder implementation, Code Reviewer verification, and user-owned Play Mode remain pending.
+
+Status: DESIGN COMPLETE — IMPLEMENTATION NOT STARTED
+
+Next Actions: Code Builder implements section 21.9.2 in the recorded order, builds the exact parity matrix, passes focused/parity/full static gates, and submits once to Code Reviewer. After Reviewer PASS, request user-owned Phase 5-2 Play Mode. Do not begin Phase 6.
+
+Changed Paths:
+
+- `Pakuri/reference/Work/new-core-architecture-blueprint.md`
+
+Evidence:
+
+- `AreaAttackExecutor` currently forwards aim direction and `NewCoreEffectView` rotates every nonzero effect direction.
+- `NewCoreInGameUIController` currently writes Offering `SkillName` and `Desc` but not `Summary`; previous `InGameUIManager` used the Monster display name.
+- CSV inventory command found 50 Base rows, 252 Choice rows, 772 graph-node rows, and 57 trigger rows.
+- Previous `AnimationController` freezes at `0.999f` with `Animator.Update(0f)`; current `MonsterAnimationBehaviour` uses `1f` without the forced update.
+- `ariel-b` uses `status_target_scope=all_allies`, while current generic candidate construction reads `target_scope`.
+- `eve-f` graph uses `ApplyShield(0, 1.2)` with a Lightning candidate condition; current graph code calculates from the zero-valued Passive Definition and compares the condition against the Passive itself.
+- `MonsterSkillBucket` enforces Passive prerequisites only through configured `PassiveBase` Choices; only two such rows exist, and `ariel-g` has none. Previous parser and retained Ariel data prove the `G→B` requirement; the user explicitly requires the complete New Core pair rule `A→F`, `B→G`, `C→H`, `D→I`, and `E→J`.
+- Current `UnitActorBehaviour` stops the old damage coroutine and reuses one label; previous `DamageNumberPopup` creates independent rising/fading clones.
+- Current `EnemyActionController` returns on unavailable Skills before its Nexus-routing branch.
+- Current `HealExecutor` visual lifetime is `0.00001` seconds.
+- Guardian Captain exact data is slot A `Slash` and slot B `GuardianFlag`; the current presentation activation path handles Monster actors only.
+
+Play Mode: Not started. This record is Designer evidence and implementation handoff only.
+
+History: User supplied nine Play Mode defects. Designer routed only to the Phase blueprint, inspected each directly connected current and previous code path plus exact CSV rows, counted the complete authored skill surface, and added section 21.9.2. No implementation or gameplay verification was performed.
+
+## Phase 5-1 Record — 2026-07-24 22:50 +09:00
+
+Task title: User Play Mode Compatibility Repairs
+
+Goals: Restore manual point casting, fixed-direction piercing projectiles, enemy Priest healing and ShieldBearer damage reduction, developer-mode UI, Offering descriptions, DamageMeter presentation, Ariel and Eve visual placement, and exact authored LineAttack visual scale under the New Core runtime.
+
+Constraints: Phase 5-1 did not start Play Mode, edit a scene or prefab, start Phase 6, remove previous sources, or change retained visual assets. `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity` was already dirty before this task and was preserved. The only authorized CSV change is moving the exact `ShieldUp` row from enemy Shield parsing to enemy Buff parsing by changing only `runtime_kind` from `Shield` to `Buff`. Other project Markdown and BLACKBOARD-family files were not used or changed.
+
+Role Owner: Code Builder and Code Reviewer complete. Final Play Mode verification is user-owned.
+
+Status: CODE BUILDER PASS — CODE REVIEWER PASS — USER PLAY MODE EXPOSED PHASE 5-2 DEFECTS
+
+Next Actions: Implement and verify Phase 5-2. Keep Phase 5 open and do not begin Phase 6 until Phase 5-2 passes Code Reviewer and user Play Mode.
+
+Changed Paths:
+
+- `Pakuri/Assets/CSVdata/authoring/enemy/skills/base/buff/skills_buff.csv`
+- `Pakuri/Assets/CSVdata/authoring/enemy/skills/base/shield/skills_shield.csv`
+- `Pakuri/Assets/Scripts/Combat/Actions/NewCore/{EnemyActionController,MonsterActionController,PlayerInputController}.cs`
+- `Pakuri/Assets/Scripts/Combat/NewCore/InGameCombatManager.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Actors/ProjectileActor.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/{AreaAttackExecutor,BuffExecutor,HealExecutor,LineAttackExecutor,ProjectileExecutor,ShieldExecutor,SingleAttackExecutor,SkillExecutor,SkillTargeting}.cs`
+- `Pakuri/Assets/Scripts/Presentation/NewCore/Scene/{NewCoreInputController,NewCoreSceneRuntime,NewCoreSpawnController}.cs`
+- `Pakuri/Assets/Scripts/Presentation/NewCore/UI/{NewCoreDamageMeterTracker,NewCoreDamageMeterUIController,NewCoreDebugUIController,NewCoreInGameUIController}.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/{NewCoreCombatLoopTests,NewCorePresentationTests}.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/Pakuri.NewCore.EditMode.Tests.asmdef`
+- `Pakuri/reference/Work/new-core-architecture-blueprint.md`
+
+Evidence:
+
+- Builder baseline EditMode job `5273c04cfb3e4f90935eb44331e2ae41`: 86 passed, 0 failed.
+- Builder focused Phase 5-1 job `d78d4aa9a6d249949528ac97b25a6bac`: 13 passed, 0 failed.
+- Builder final full `Pakuri.NewCore.EditMode.Tests` job `51c8b6b0643440598c725c79410c8ef9`: 98 passed, 0 failed.
+- Forced Unity refresh and compile completed with `is_compiling=false` and `is_domain_reload_pending=false`; the final Unity Console query returned 0 errors and 0 warnings.
+- Enemy Buff CSV SHA-256 changed from `C3E7849F0A49497443A96EE94E2CF18AF36DD041889C335989DD54E1CCDEC31F` to `4503F44F7E062D6A85D7A139EB7930C47E0C974093BDE86C7A576D316F03352D`.
+- Enemy Shield CSV SHA-256 changed from `DF49D1770FEADF8591F43B44435589B84D1D78883C78A3299585F28AE9604E15` to `18224AEF9CA8DA46948FB4C2440F27B4AAE1A83ADCA7B0E5849E832FB884059A`.
+- CSV contract comparison: 42 retained CSV files checked, 2 authorized changes, 0 unauthorized mismatches. The exact `ShieldUp` row is unchanged except for `runtime_kind=Shield` becoming `runtime_kind=Buff`.
+- Phase 0 evidence artifact hashes remain exact: CSV contract `37A9D131EFC61EA20EEA13AF3C3BCA693DB6BE2524B8AFE44D80AA2DF64A0788`; inspector snapshot `2E12342D4C45AC1D4A67D68ED20561F584DD60BA56F0AEDB9CAE50229AFDA604`; generator `6AFD7D0916B6AA14E4A5F881FCCE47EAD0364930D58EB1EF37428DEBFC92F07C`; retained resources `D201C258DE6BD5346E0132E3FCE579B875C689977ED3FE24E8AEC92F3B07AD90`; script references `832BD377E1CCC468B4FE2D2B197F8603F21B4923D185A193B12267D68C153654`.
+- `git diff --check` returned no whitespace errors. Static scans found no new previous-runtime type dependency in the changed New Core source paths.
+- Independent Code Reviewer focused EditMode job `62e62492245948d0aa99fff09abc1d61`: 13 passed, 0 failed or skipped.
+- Independent Code Reviewer full `Pakuri.NewCore.EditMode.Tests` job `858e05205bd6450a814248c5637000c1`: 98 passed, 0 failed or skipped.
+- Independent Code Reviewer forced Unity refresh and compilation twice; final editor state had Play Mode false, `is_compiling=false`, and `is_domain_reload_pending=false`. A transient MCP PackageCache `NetworkStream disposed` transport message was cleared as ephemeral tool noise; the final error and warning query returned 0 project entries.
+- Independent Code Reviewer recomputed all five Phase 0 artifact hashes exactly, confirmed only the two authorized CSV files differ, parsed one old and one current `ShieldUp` row with exactly one changed field (`runtime_kind: Shield -> Buff`), passed scene/prefab Missing Script and previous-authority regressions, and passed `git diff --check`.
+
+Unity Before Log: The baseline EditMode suite passed 86/86. Existing transient MCP/Test Runner messages were cleared before the final forced compilation gate and were not project compilation errors.
+
+Compile: PASS for both Code Builder and independent Code Reviewer gates.
+
+Error/Warning: Final Builder and Reviewer Unity Console queries returned 0 project entries for error and warning filters.
+
+Play Mode: Not started by Codex. The user owns verification after Code Reviewer PASS.
+
+Play Mode Request: With manual mode active, cast projectile, LineAttack, AreaAttack, and spatial SingleAttack at empty ground and confirm all usable learned skills fire in the same frame without stale requests. Confirm a piercing projectile keeps one direction and passes through targets. Open and close developer UI with both main-keyboard 8 and numpad 8, then verify learning changes only the selected Monster. Verify Offering Choice1–3 descriptions, Priest lowest-health-ratio healing, ShieldBearer timed incoming-damage reduction without shield points, ordered DamageMeter segments and labels, Ariel base/graph visual lifetimes, Eve manual and automatic field centers, and unchanged CSV-authored LineAttack visual scale.
+
+History: Code Builder implemented the Phase 5-1 contracts, added deterministic runtime and presentation regressions, passed focused and complete EditMode suites, and preserved the pre-existing dirty scene without editing it. Code Reviewer independently passed focused and complete suites, compilation, Console, CSV, Phase 0 artifact, scene/prefab, static dependency, whitespace, and execution-record checks. The next user Play Mode run exposed the nine Phase 5-2 defects recorded in section 21.9.2. Phase 5 remains open and Phase 6 has not started.
+
 ## Phase Record — 2026-07-24 19:16 +09:00
 
 Task title: Scene, Prefab, UI, and Visual Resource Migration
@@ -2069,9 +2718,9 @@ Constraints: Phase 5 changed presentation adapters, the production combat-lifecy
 
 Role Owner: Code Builder and Code Reviewer complete. Integrated Play Mode verification remains user-owned.
 
-Status: CODE REVIEWER PASS — user Play Mode pending
+Status: USER PLAY MODE FAILED — Phase 5-1 implementation required
 
-Next Actions: The user runs the exact integrated Phase 5 Play Mode scenario recorded below and reports PASS or the first failing step with Console output. Do not begin Phase 6 or remove previous sources before Phase 5 acceptance and explicit removal approval.
+Next Actions: Implement the Phase 5-1 contract in section 21.9.1, pass focused/full tests, compilation, Console, and one Code Reviewer pass, then request the user-owned Phase 5-1 Play Mode scenario. Do not begin Phase 6 or remove previous sources before Phase 5 acceptance and explicit removal approval.
 
 Changed Paths:
 
@@ -2176,9 +2825,9 @@ Unity Error/Exception: 0 project-code entries after the final compile gate.
 
 Unity Warning: 0 after the final compile gate. Test Runner package-owned result and performance messages are cleared before final handoff.
 
-Play Mode: Not Run
+Play Mode: Failed By User Evidence
 
-Play Mode Reason: Deterministic EditMode tests cannot prove actual Unity scene transition, Input System delivery, Animator playback, end-of-frame GameObject destruction, Canvas interaction, or player-visible visual timing. Phase 5 therefore requires one integrated user-owned run. Codex has not started Play Mode.
+Play Mode Reason: The user completed an integrated run and confirmed that the overall run flow works, but identified manual spatial-cast, developer UI, Offering description, pierce, enemy support-skill, DamageMeter, Ariel visual, Eve area-placement, and LineAttack visual defects. Inspected code and CSV evidence for each defect is recorded in section 21.9.1.
 
 Play Mode Scene: `Pakuri/Assets/Scenes/NewScene/NewMainMenu.unity`
 
@@ -2198,9 +2847,9 @@ Play Mode Failure: Any Console error or warning, stuck panel or day transition, 
 
 Play Mode LogCheck: On the first failure, stop Play Mode and report the failed action number plus the complete Unity Console error/warning and stack trace. If all actions complete and the Console remains empty, report `Phase 5 Play Mode PASS`.
 
-User Result: Pending.
+User Result: Failed. Overall run progression is functional, but Phase 5 cannot exit until all Phase 5-1 defects pass the new acceptance criteria.
 
-History: Code Builder replaced the active scene and prefab Script GUIDs with new presentation types, preserved the inspected resource and Inspector values, created a new-type runtime catalog through a one-time Unity Editor migration, removed that temporary migration tool, and connected missing UI references found by the first deterministic test run. The runtime catalog initially exposed a retained duplicate-path condition; lookup now merges only identical mappings and rejects conflicts. Code Reviewer loop 1 passed compilation and the existing 77 tests but found four untested production-wiring blockers. Code Builder connected exactly-once/later-spawn CombatStart and pre-reward EndCombat, added defeated-Enemy presentation cleanup, centralized positive damage reporting and living-Monster hit reactions, and replaced the one-path visual handle with complete prefab/sprite/Animator/scale/sorting plus impact and Trigger visual data. Reviewer loop 2 then found reentrant combat cleanup, Nexus-contact Actor retention, cross-boundary input state, auto-skill state drift, and an active-prefab evidence error. Code Builder deferred cleanup to the post-callback central-Tick boundary, cleared input state at combat end, synchronized the retained auto-skill switch after day reset, treated Nexus contact as terminal presentation state, and corrected the runtime-prefab inventory. Reviewer loop 2's final code-path pass found that a retained spawn record could recreate the pruned terminal Actor; Builder added a pre-instantiation terminal guard and a two-pass no-regrowth regression. Code Reviewer loop 3 independently passed focused, full-suite, compilation, Console, CSV, GUID, metadata, static-boundary, and Phase 0 artifact checks. Phase 5 static/reviewer gates pass; user Play Mode remains pending and Phase 6 has not started.
+History: Code Builder replaced the active scene and prefab Script GUIDs with new presentation types, preserved the inspected resource and Inspector values, created a new-type runtime catalog through a one-time Unity Editor migration, removed that temporary migration tool, and connected missing UI references found by the first deterministic test run. The runtime catalog initially exposed a retained duplicate-path condition; lookup now merges only identical mappings and rejects conflicts. Code Reviewer loop 1 passed compilation and the existing 77 tests but found four untested production-wiring blockers. Code Builder connected exactly-once/later-spawn CombatStart and pre-reward EndCombat, added defeated-Enemy presentation cleanup, centralized positive damage reporting and living-Monster hit reactions, and replaced the one-path visual handle with complete prefab/sprite/Animator/scale/sorting plus impact and Trigger visual data. Reviewer loop 2 then found reentrant combat cleanup, Nexus-contact Actor retention, cross-boundary input state, auto-skill state drift, and an active-prefab evidence error. Code Builder deferred cleanup to the post-callback central-Tick boundary, cleared input state at combat end, synchronized the retained auto-skill switch after day reset, treated Nexus contact as terminal presentation state, and corrected the runtime-prefab inventory. Reviewer loop 2's final code-path pass found that a retained spawn record could recreate the pruned terminal Actor; Builder added a pre-instantiation terminal guard and a two-pass no-regrowth regression. Code Reviewer loop 3 independently passed focused, full-suite, compilation, Console, CSV, GUID, metadata, static-boundary, and Phase 0 artifact checks. User Play Mode then confirmed the overall run but exposed the Phase 5-1 compatibility defects. Designer inspected the exact current call paths, related CSV rows, retained scene hierarchy, and narrow previous compatibility implementations and added section 21.9.1. Phase 5 remains open and Phase 6 has not started.
 
 ## Phase Record — 2026-07-24 18:13 +09:00
 
@@ -2794,3 +3443,92 @@ Failed By User Evidence
 ```
 
 If Play Mode was not run, record in `Play Mode Reason` why static checks were sufficient. If it was requested, also record the Reason, Scene, Setup, Actions, Expected, Failure, and LogCheck fields from section 21.3.
+
+## Phase Record — 2026-07-25 00:30 +09:00
+
+Task title: Phase 5-2 Full Skill Logic And Gameplay Feedback Compatibility
+
+Goals: Repair AreaAttack orientation, Offering owner Summary, Monster death-frame freeze, independent damage popups, Passive slot prerequisites, Ariel/Eve shield behavior, immediate Enemy retargeting, Guardian Captain Slash presentation, Priest heal visual lifetime, and the current monster Base/Choice/node/trigger parity gates.
+
+Constraints: `Pakuri/Assets/CSVdata` remained authoritative. No Phase 5-2 CSV, scene, prefab, visual asset, or previous-runtime dependency was added or changed. Previous code was used only for the behavior references explicitly authorized by section 21.9.2. Play Mode remained user-owned and was not run.
+
+Role Owner: Code Builder; submitted to Code Reviewer.
+
+Status: CODE BUILDER PASS — CODE REVIEWER PENDING
+
+Next Actions: Code Reviewer independently verifies the Phase 5-2 diff, focused contracts, complete EditMode assembly, CSV hashes, previous-authority boundaries, compilation, and Console. If Reviewer returns FIX REQUIRED, Code Builder repairs and resubmits until PASS. After Reviewer PASS, request the user-owned Phase 5-2 Play Mode scenario.
+
+Changed Paths:
+
+- `Pakuri/Assets/Scripts/Combat/Actions/NewCore/EnemyActionController.cs`
+- `Pakuri/Assets/Scripts/Combat/NewCore/InGameCombatManager.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/AreaAttackExecutor.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/HealExecutor.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/ShieldExecutor.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillEffectGraphRuntime.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillExecutionPlan.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillTargeting.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Runtime/MonsterSkillBucket.cs`
+- `Pakuri/Assets/Scripts/Units/Models/UnitBaseModel.cs`
+- `Pakuri/Assets/Scripts/Presentation/NewCore/Actors/DamageNumberPopupBehaviour.cs`
+- `Pakuri/Assets/Scripts/Presentation/NewCore/Actors/DamageNumberPopupBehaviour.cs.meta`
+- `Pakuri/Assets/Scripts/Presentation/NewCore/Actors/EnemyActorBehaviour.cs`
+- `Pakuri/Assets/Scripts/Presentation/NewCore/Actors/MonsterAnimationBehaviour.cs`
+- `Pakuri/Assets/Scripts/Presentation/NewCore/Actors/UnitActorBehaviour.cs`
+- `Pakuri/Assets/Scripts/Presentation/NewCore/Scene/NewCoreSceneRuntime.cs`
+- `Pakuri/Assets/Scripts/Presentation/NewCore/UI/NewCoreInGameUIController.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCoreCombatLoopTests.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCorePresentationTests.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCoreRunFlowTests.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCoreRuntimeStateTests.cs`
+- `Pakuri/reference/Work/new-core-architecture-blueprint.md`
+
+Evidence:
+
+- Frozen current authoring inventory: 50 Monster Base Definitions, 252 Choices, 772 graph-node rows, and 57 Monster Trigger rows.
+- `AreaAttackExecutor` now creates its Effect handle with zero direction, while the retained Projectile and LineAttack direction paths remain unchanged.
+- Offering binds `Summary` from `activeOffer.Monster.MonsterDefinition.display_name`, with owner id fallback, while preserving dedicated `SkillName` and exact `description_text` `Desc`.
+- Monster death freeze samples normalized time `0.999f`, forces `Animator.Update(0f)`, and then sets speed to zero.
+- `DamageNumberPopupBehaviour` clones the retained `Damage` TextMesh per positive hit, preserves independent one-second rise/fade state, caps at 12, removes only the oldest overflow, and clears clones on rebind/destruction.
+- `MonsterSkillBucket` is the single Passive eligibility authority for `A→F`, `B→G`, `C→H`, `D→I`, and `E→J`. Bucket, Offering, and Debug regressions prove `ariel-g` is rejected before `ariel-b` and accepted after it.
+- Shield targeting recognizes `status_target_scope=all_allies`; Ariel-B uses `35 + spell power × 1.4`, selected shield multipliers, and `status_duration_seconds=5`. Eve-F filters allies by learned active Skill attribute, uses spell power × 1.2, applies the selected shield multiplier, and executes its three Enhancement graphs separately. Ariel-E uses graph flat value plus spell-power coefficient without adding Base damage.
+- Skill-owned graphs execute before selected Choice graphs. Target status and learned-attribute conditions filter each candidate rather than accepting or rejecting an entire multi-target group from only its first member. The shield pseudo-status is resolved consistently by Plan, Effect graph, and combat modifier conditions; graph-created shield layers retain the exact `<skill_id>@effectN` source selector used by authored conditions.
+- Enemy Nexus routing now precedes Skill availability. Deterministic regressions prove cooldown-blocked Nexus movement, next-step living-Monster retargeting, GuardianFlag-to-Slash cooldown fallthrough/damage/effect/activation, Enemy presentation notification, and a one-second Priest heal visual at the healed ally.
+- Data-driven Base test executes or registers all 50 Monster Base Definitions. Data-driven Choice test selects all 252 Choices through `MonsterSkillBucket`, preserves Definition values and unrelated learned counts, and links every Choice to its owned graph-node or Trigger contract. Reachability validation covers all 772 current graph rows and all 57 current Monster Trigger rows.
+- Focused death-freeze job `218acdb585ec4a04acbf2a44a1fc6915`: 1 passed, 0 failed.
+- Focused all-Choice job `cd7964f269d8479e9c29428606466f0b`: all 252 rows passed inside one data-driven test.
+- Complete EditMode job `11f52fe7d11d4e448705a4f3aa6b91c2`: 112 passed, 0 failed, 0 skipped, result `Passed`.
+- `git diff --check`: exit 0; only line-ending conversion notices.
+- Phase 5-2 changed zero Monster authoring CSV bytes. All 23 frozen Monster Base/Choice/graph/Trigger SHA-256 values match the Phase 5-2 before-state values.
+- Static scan of the Phase 5-2 production paths found zero previous-runtime namespaces or Legacy/Scripts2 references. `UnityEngine` occurs only in presentation owners.
+- Phase 5-2 changed no scene or prefab. The complete EditMode presentation suite retained its scene wiring, active prefab, missing-script, runtime catalog, and New Core authority checks.
+
+Unity Before Log: Baseline Console contained zero Errors and Warnings. Baseline complete EditMode job `6d586c8702584c148260717d88b92fbb` passed 98 of 98.
+
+Unity Compile Result: Forced script refresh and requested compilation completed under Unity 6000.3.14f1. The final complete EditMode assembly loaded 112 tests and passed all 112.
+
+Unity Error/Exception: 0 project entries after the final compilation and cleared final Console gate. A bridge-owned `System.Net.Sockets.NetworkStream` disposal log occurred only while the MCP transport reconnected across one forced domain reload; it originated under `Library/PackageCache/com.coplaydev.unity-mcp`, not project code, and was cleared after the Editor returned to running state.
+
+Unity Warning: 0 after the final Console gate. Test Runner package setup/cleanup warnings and its result-path message were recorded after tests and cleared before the final gate.
+
+Play Mode: Requested From User
+
+Play Mode Reason: The user explicitly owns Phase 5-2 integrated gameplay verification. Code Builder and Code Reviewer use static inspection, forced compilation, Console, and EditMode tests only.
+
+Reason: Verify integrated runtime visuals, UI feedback, animation, input-independent Enemy decisions, and timing in the retained gameplay scene.
+
+Scene: `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity`
+
+Setup: Start a normal run with Ariel and Eve available; use Offering and Debug flows to learn the required active/passive pairs and Enhancements; reach encounters containing Guardian Captain and Priest.
+
+Actions: Cast manual and automatic AreaAttack; inspect Offering Summary; defeat and revive a Monster; cause rapid repeated hits; test Ariel-B, Eve-F, and Ariel-E shields; inspect locked/unlocked Passive candidates; kill one and then all Monsters while Enemies remain; observe GuardianFlag then Slash; damage an Enemy ally and observe Priest Heal.
+
+Expected: Area visuals keep authored rotation; Summary shows the owner; death remains on the last frame until revival; damage numbers overlap and rise independently; all three shield paths use the authored targets/formulas/durations; Passive slots follow the authoritative pair rule; Enemies retarget or move to Nexus on the next allowed Tick; Guardian Slash damages and presents; Priest Heal presents at its healed ally for at least one second.
+
+Failure: Record the exact Skill id, learned Choices, units and positions, automatic/manual mode, expected versus actual state or visual, frame/timing context, and a screenshot or video when visual.
+
+LogCheck: Capture Unity Console Errors and Warnings immediately after the scenario.
+
+User Result: Pending.
+
+History: Builder first repaired the nine reported defects. The initial complete regression run exposed Ariel-B reading the blank `active_duration_seconds` instead of authored `status_duration_seconds=5`; the generic Shield duration fallback was corrected. A later Eve-F Enhancement regression exposed lexicographic Choice-before-Base graph ordering and first-target-only status conditions; Base-before-Choice ordering and per-target filters were added. The final 112-test suite passed. Play Mode was not run.
