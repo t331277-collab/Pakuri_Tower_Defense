@@ -39,6 +39,9 @@ namespace Pakuri.NewCore.Combat
 
         public float ShieldChanged { get; }
 
+        public float DamageAmount =>
+            Math.Max(0f, -HealthChanged - ShieldChanged);
+
         public bool IsCritical { get; }
 
         public bool IsDefeated { get; }
@@ -166,7 +169,9 @@ namespace Pakuri.NewCore.Combat
             float criticalChanceBonus = 0f,
             float criticalDamageBonus = 0f,
             bool eventExecuted = false,
-            IReadOnlyCollection<string> triggerAncestry = null)
+            IReadOnlyCollection<string> triggerAncestry = null,
+            float baseDamageBonus = 0f,
+            float attackPowerCoefficientBonus = 0f)
         {
             RequireLiving(source, nameof(source));
             if (target == null)
@@ -180,7 +185,16 @@ namespace Pakuri.NewCore.Combat
             }
 
             ValidateNonNegativeFinite(damageMultiplier, nameof(damageMultiplier));
-            float rawDamage = CalculateRawValue(source, skill) * damageMultiplier;
+            ValidateNonNegativeFinite(baseDamageBonus, nameof(baseDamageBonus));
+            ValidateNonNegativeFinite(
+                attackPowerCoefficientBonus,
+                nameof(attackPowerCoefficientBonus));
+            float rawDamage = (
+                CalculateRawValue(source, skill)
+                + baseDamageBonus
+                + (ResolveAttackPower(source)
+                    * attackPowerCoefficientBonus))
+                * damageMultiplier;
             rawDamage *= Math.Max(
                 0f,
                 1f + source.ResolveRuntimeModifier(
@@ -495,7 +509,8 @@ namespace Pakuri.NewCore.Combat
             StatusDefinition status,
             float? duration,
             int? stacks,
-            string sourceSkillId = null)
+            string sourceSkillId = null,
+            int? maximumStacks = null)
         {
             RequireLiving(source, nameof(source));
             if (target == null || status == null)
@@ -508,7 +523,8 @@ namespace Pakuri.NewCore.Combat
                 source,
                 duration,
                 stacks,
-                sourceSkillId);
+                sourceSkillId,
+                maximumStacks);
             StatusApplied?.Invoke(source, target, status);
         }
 
@@ -522,7 +538,13 @@ namespace Pakuri.NewCore.Combat
 
             float amount = source.EnemyDefinition.nexus_damage
                 ?? throw new InvalidOperationException("Enemy has no nexus_damage.");
-            return nexus.ApplyNexusDamage(amount);
+            bool wasAlive = nexus.IsAlive;
+            float applied = nexus.ApplyNexusDamage(amount);
+            if (wasAlive && !nexus.IsAlive)
+            {
+                UnitDefeated?.Invoke(nexus);
+            }
+            return applied;
         }
 
         public float CalculateRawValue(UnitBaseModel source, SkillDefinition skill)
@@ -540,7 +562,11 @@ namespace Pakuri.NewCore.Combat
             return Math.Max(0f, value);
         }
 
-        public void NotifySkillActivated(UnitBaseModel source, SkillDefinition skill)
+        public void NotifySkillActivated(
+            UnitBaseModel source,
+            SkillDefinition skill,
+            string eventSourceSkillId = null,
+            IReadOnlyCollection<string> triggerAncestry = null)
         {
             RequireLiving(source, nameof(source));
             SkillActivated?.Invoke(
@@ -552,7 +578,9 @@ namespace Pakuri.NewCore.Combat
                 skill,
                 null,
                 registeredUnits,
-                this);
+                this,
+                eventSourceSkillId: eventSourceSkillId,
+                triggerAncestry: triggerAncestry);
         }
 
         private void ObserveUnits(IReadOnlyList<UnitBaseModel> units)

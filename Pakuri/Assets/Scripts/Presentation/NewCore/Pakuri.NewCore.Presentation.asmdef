@@ -1,0 +1,20 @@
+{
+    "name": "Pakuri.NewCore.Presentation",
+    "rootNamespace": "Pakuri.NewCore.Presentation",
+    "references": [
+        "Pakuri.NewCore",
+        "Pakuri.NewCore.Runtime",
+        "Unity.InputSystem",
+        "Unity.TextMeshPro",
+        "Unity.ugui"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

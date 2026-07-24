@@ -3,7 +3,8 @@
     "rootNamespace": "Pakuri.NewCore.Tests",
     "references": [
         "Pakuri.NewCore",
-        "Pakuri.NewCore.Runtime"
+        "Pakuri.NewCore.Runtime",
+        "Pakuri.NewCore.Presentation"
     ],
     "includePlatforms": [
         "Editor"

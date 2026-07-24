@@ -445,6 +445,242 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
+        public void ActionManagerStartsEachUnitOnceAndResetsTheBoundary()
+        {
+            RuntimeFixture fixture = CreateFixture("ariel");
+            EnemyModel first = CreateEnemy("stage2-drake");
+            fixture.Stage.TryRegisterFieldUnit(first);
+
+            fixture.Actions.BeginOrExtendCombat(
+                fixture.Stage.FieldUnits);
+            Assert.That(fixture.Actors.PendingAddCount, Is.EqualTo(1));
+
+            fixture.Actions.BeginOrExtendCombat(
+                fixture.Stage.FieldUnits);
+            Assert.That(fixture.Actors.PendingAddCount, Is.EqualTo(1));
+
+            EnemyModel laterSpawn = CreateEnemy("stage2-drake");
+            fixture.Stage.TryRegisterFieldUnit(laterSpawn);
+            fixture.Actions.BeginOrExtendCombat(
+                fixture.Stage.FieldUnits);
+            Assert.That(fixture.Actors.PendingAddCount, Is.EqualTo(2));
+
+            fixture.Actions.EndCombat();
+            Assert.That(fixture.Actors.PendingAddCount, Is.Zero);
+            Assert.That(fixture.Effects.ActiveEffects, Is.Empty);
+
+            fixture.Actions.BeginOrExtendCombat(
+                fixture.Stage.FieldUnits);
+            Assert.That(fixture.Actors.PendingAddCount, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void ManualInputQueueAndProjectileAimEndWithCombat()
+        {
+            RuntimeFixture fixture = CreateFixture("ariel");
+            fixture.Input.SetAutoSkillEnabled(false);
+            var skill = catalog.GetSkill("ariel-a");
+            Assert.That(
+                fixture.Input.SubmitManualSkillRequest(
+                    skill,
+                    new CombatVector2(1f, 0f),
+                    new CombatVector2(2f, 0f),
+                    ManualInputPhase.Pressed,
+                    false),
+                Is.True);
+
+            fixture.Actions.EndCombat();
+
+            Assert.That(
+                fixture.Input.Process(fixture.Stage.FieldUnits),
+                Is.False);
+            Assert.That(
+                fixture.Input.ContinueProjectileBurst(skill),
+                Is.False);
+        }
+
+        [Test]
+        public void CombatResultExposesPositiveHealthShieldAndLethalDamage()
+        {
+            RuntimeFixture fixture = CreateFixture("ariel");
+            var skill = catalog.GetSkill("ariel-a");
+
+            EnemyModel healthTarget =
+                CreateEnemy("stage1-swordsman");
+            CombatResult health = fixture.Combat.ApplySkillDamage(
+                fixture.Selected,
+                healthTarget,
+                skill,
+                0.1f);
+            Assert.That(health.HealthChanged, Is.LessThan(0f));
+            Assert.That(health.DamageAmount, Is.GreaterThan(0f));
+            Assert.That(
+                health.DamageAmount,
+                Is.EqualTo(-health.HealthChanged)
+                    .Within(0.0001f));
+
+            EnemyModel shieldTarget =
+                CreateEnemy("stage1-swordsman");
+            shieldTarget.TryAddShield(10000f);
+            CombatResult shield = fixture.Combat.ApplySkillDamage(
+                fixture.Selected,
+                shieldTarget,
+                skill,
+                0.1f);
+            Assert.That(shield.HealthChanged, Is.Zero);
+            Assert.That(shield.ShieldChanged, Is.LessThan(0f));
+            Assert.That(
+                shield.DamageAmount,
+                Is.EqualTo(-shield.ShieldChanged)
+                    .Within(0.0001f));
+
+            EnemyModel lethalTarget =
+                CreateEnemy("stage1-swordsman");
+            CombatResult lethal = fixture.Combat.ApplySkillDamage(
+                fixture.Selected,
+                lethalTarget,
+                skill,
+                100000f);
+            Assert.That(lethal.IsDefeated, Is.True);
+            Assert.That(
+                lethal.DamageAmount,
+                Is.EqualTo(-lethal.HealthChanged)
+                    .Within(0.0001f));
+        }
+
+        [Test]
+        public void ReachableSkillsCarryCompleteVisualSpecifications()
+        {
+            RuntimeFixture projectile = CreateFixture("ariel");
+            EnemyModel projectileTarget =
+                CreateEnemy("stage1-swordsman");
+            projectileTarget.SetPosition(
+                new CombatVector2(1f, 0f));
+            projectile.Stage.TryRegisterFieldUnit(projectileTarget);
+            Assert.That(
+                projectile.Combat.TryExecuteSkill(
+                    new SkillExecutionRequest(
+                        projectile.Selected,
+                        catalog.GetSkill("ariel-a"),
+                        projectile.Stage.FieldUnits)),
+                Is.True);
+            projectile.Actors.Tick(0f);
+            projectile.Actors.Tick(0f);
+            EffectHandle projectileEffect =
+                projectile.Effects.ActiveEffects.Single();
+            Assert.That(
+                projectileEffect.Visual.SpritePath,
+                Is.EqualTo(
+                    ReadStringColumn(
+                        catalog.GetSkill("ariel-a"),
+                        "runtime_visual_sprite_path")));
+            Assert.That(
+                projectileEffect.Visual.AnimatorControllerPath,
+                Is.EqualTo(
+                    ReadStringColumn(
+                        catalog.GetSkill("ariel-a"),
+                        "runtime_visual_animator_controller_path")));
+            Assert.That(
+                projectileEffect.Visual.Scale,
+                Is.EqualTo(
+                    ReadFloatColumn(
+                        catalog.GetSkill("ariel-a"),
+                        "runtime_visual_scale"))
+                    .Within(0.0001f));
+
+            RuntimeFixture prefab = CreateFixture("rin");
+            Assert.That(
+                prefab.Selected.SkillBucket.TryLearnActive(
+                    catalog.GetSkill("rin-e")),
+                Is.True);
+            EnemyModel prefabTarget =
+                CreateEnemy("stage1-swordsman");
+            prefabTarget.SetPosition(new CombatVector2(1f, 0f));
+            prefab.Stage.TryRegisterFieldUnit(prefabTarget);
+            Assert.That(
+                prefab.Combat.TryExecuteSkill(
+                    new SkillExecutionRequest(
+                        prefab.Selected,
+                        catalog.GetSkill("rin-e"),
+                        prefab.Stage.FieldUnits,
+                        targetPoint: prefabTarget.Position)),
+                Is.True);
+            Assert.That(
+                prefab.Effects.ActiveEffects.Single()
+                    .Visual.PrefabPath,
+                Is.EqualTo("Assets/Prefab/Skill/Rin/Rin_E.prefab"));
+
+            RuntimeFixture impact = CreateFixture("sein");
+            Assert.That(
+                impact.Selected.SkillBucket.TryLearnActive(
+                    catalog.GetSkill("sein-c")),
+                Is.True);
+            EnemyModel impactTarget =
+                CreateEnemy("stage1-swordsman");
+            impactTarget.SetPosition(new CombatVector2(1f, 0f));
+            impact.Stage.TryRegisterFieldUnit(impactTarget);
+            Assert.That(
+                impact.Combat.TryExecuteSkill(
+                    new SkillExecutionRequest(
+                        impact.Selected,
+                        catalog.GetSkill("sein-c"),
+                        impact.Stage.FieldUnits)),
+                Is.True);
+            EffectHandle impactEffect = null;
+            for (int tick = 0;
+                tick < 30 && impactEffect == null;
+                tick++)
+            {
+                impact.Actors.Tick(0.1f);
+                impactEffect = impact.Effects.ActiveEffects
+                    .FirstOrDefault(effect =>
+                        effect.Visual.SpritePath
+                        == "Assets/Image/Monster/Sein/SkillEffect/Sprite/B-1.png");
+            }
+
+            Assert.That(impactEffect, Is.Not.Null);
+            Assert.That(
+                impactEffect.Visual.AnimatorControllerPath,
+                Is.EqualTo(
+                    "Assets/Image/Monster/Sein/SkillEffect/Sprite/B-1.controller"));
+
+            RuntimeFixture trigger = CreateFixture("sein");
+            SelectEnhancementsAndMaster(
+                trigger,
+                "sein-a",
+                "sein-a-master-2");
+            EnemyModel triggerTarget =
+                CreateEnemy("stage1-swordsman");
+            triggerTarget.SetPosition(new CombatVector2(1f, 0f));
+            triggerTarget.TryAddShield(10000f);
+            trigger.Stage.TryRegisterFieldUnit(triggerTarget);
+            Assert.That(
+                trigger.Combat.TryExecuteSkill(
+                    new SkillExecutionRequest(
+                        trigger.Selected,
+                        catalog.GetSkill("sein-a"),
+                        trigger.Stage.FieldUnits)),
+                Is.True);
+            EffectHandle triggerEffect = null;
+            for (int tick = 0;
+                tick < 30 && triggerEffect == null;
+                tick++)
+            {
+                trigger.Actors.Tick(0.1f);
+                triggerEffect = trigger.Effects.ActiveEffects
+                    .FirstOrDefault(effect =>
+                        effect.Visual.SpritePath
+                        == "Assets/Image/Monster/Sein/SkillEffect/Sprite/1.png");
+            }
+
+            Assert.That(triggerEffect, Is.Not.Null);
+            Assert.That(
+                triggerEffect.Visual.AnimatorControllerPath,
+                Is.EqualTo(
+                    "Assets/Image/Monster/Sein/SkillEffect/Sprite/1.controller"));
+        }
+
+        [Test]
         public void ChoicePlanAndGraphsStayScopedToTheirTargetSkill()
         {
             RuntimeFixture baseline = CreateFixture("ariel");
@@ -793,7 +1029,10 @@ namespace Pakuri.NewCore.Tests
                 fixture.Actors.Tick(0f);
             }
 
-            Assert.That(CountStatus(target, "name-mark"), Is.EqualTo(2));
+            Assert.That(
+                CountStatus(target, "name-mark"),
+                Is.EqualTo(1),
+                "The retained trigger payload has max_stacks=1 and stack_amount=2.");
             Assert.That(CountStatus(fixture.Selected, "name-mark"), Is.Zero);
         }
 
@@ -881,6 +1120,292 @@ namespace Pakuri.NewCore.Tests
             Assert.That(
                 fixture.Combat.GetOutgoingHitCount(fixture.Selected),
                 Is.LessThan(50));
+        }
+
+        [Test]
+        public void VegaTargetingAndDeploymentUseOnlyTheConfiguredNameMark()
+        {
+            RuntimeFixture fixture = CreateFixture("vega");
+            Assert.That(
+                fixture.Selected.SkillBucket.TryLearnActive(
+                    catalog.GetSkill("vega-d")),
+                Is.True);
+            EnemyModel manyOtherStacks = CreateEnemy("stage2-arsen");
+            EnemyModel marked = CreateEnemy("stage2-arsen");
+            manyOtherStacks.SetPosition(new CombatVector2(1f, 0f));
+            marked.SetPosition(new CombatVector2(2f, 0f));
+            manyOtherStacks.ApplyStatus(
+                catalog.GetStatus("shock"),
+                fixture.Selected,
+                null,
+                10,
+                "setup");
+            marked.ApplyStatus(
+                catalog.GetStatus("name-mark"),
+                fixture.Selected,
+                null,
+                2,
+                "setup");
+            fixture.Stage.TryRegisterFieldUnit(manyOtherStacks);
+            fixture.Stage.TryRegisterFieldUnit(marked);
+
+            Assert.That(
+                fixture.Targeting.Resolve(
+                    fixture.Selected,
+                    catalog.GetSkill("vega-e"),
+                    fixture.Stage.FieldUnits)[0],
+                Is.SameAs(marked));
+
+            float unmarkedBefore = manyOtherStacks.CurrentHealth;
+            float markedBefore = marked.CurrentHealth;
+            Assert.That(
+                fixture.Combat.TryExecuteSkill(new SkillExecutionRequest(
+                    fixture.Selected,
+                    catalog.GetSkill("vega-d"),
+                    fixture.Stage.FieldUnits)),
+                Is.True);
+            Assert.That(manyOtherStacks.CurrentHealth, Is.EqualTo(unmarkedBefore));
+            Assert.That(marked.CurrentHealth, Is.LessThan(markedBefore));
+        }
+
+        [Test]
+        public void VegaFinalSentenceAddsConfiguredDamageForEachNameMarkStack()
+        {
+            float oneStackDamage = ExecuteVegaEAndReadDamage(1);
+            float fourStackDamage = ExecuteVegaEAndReadDamage(4);
+
+            Assert.That(fourStackDamage, Is.GreaterThan(oneStackDamage));
+        }
+
+        [Test]
+        public void RinExecuteCastAndCooldownRewardsRequireThresholdAndKill()
+        {
+            RuntimeFixture blocked = CreateFixture("rin");
+            Assert.That(
+                blocked.Selected.SkillBucket.TryLearnActive(
+                    catalog.GetSkill("rin-d")),
+                Is.True);
+            EnemyModel healthy = CreateEnemy("stage2-arsen");
+            blocked.Stage.TryRegisterFieldUnit(healthy);
+            Assert.That(
+                blocked.Combat.TryExecuteSkill(new SkillExecutionRequest(
+                    blocked.Selected,
+                    catalog.GetSkill("rin-d"),
+                    blocked.Stage.FieldUnits)),
+                Is.False);
+
+            RuntimeFixture survived = CreateFixture("rin");
+            Assert.That(
+                survived.Selected.SkillBucket.TryLearnActive(
+                    catalog.GetSkill("rin-d")),
+                Is.True);
+            EnemyModel shielded = CreateEnemy("stage2-arsen");
+            shielded.ApplyDamage(shielded.MaximumHealth * 0.75f);
+            shielded.TryAddShield(10000f);
+            survived.Stage.TryRegisterFieldUnit(shielded);
+            Assert.That(
+                survived.Combat.TryExecuteSkill(new SkillExecutionRequest(
+                    survived.Selected,
+                    catalog.GetSkill("rin-d"),
+                    survived.Stage.FieldUnits)),
+                Is.True);
+            Assert.That(shielded.IsAlive, Is.True);
+            Assert.That(
+                survived.Selected.SkillBucket.GetCooldown("rin-d")
+                    .RemainingCooldown,
+                Is.EqualTo(9f).Within(0.0001f));
+
+            RuntimeFixture killed = CreateFixture("rin");
+            Assert.That(
+                killed.Selected.SkillBucket.TryLearnActive(
+                    catalog.GetSkill("rin-d")),
+                Is.True);
+            EnemyModel victim = CreateEnemy("stage1-swordsman");
+            victim.ApplyDamage(victim.MaximumHealth - 1f);
+            killed.Stage.TryRegisterFieldUnit(victim);
+            Assert.That(
+                killed.Combat.TryExecuteSkill(new SkillExecutionRequest(
+                    killed.Selected,
+                    catalog.GetSkill("rin-d"),
+                    killed.Stage.FieldUnits)),
+                Is.True);
+            Assert.That(victim.IsAlive, Is.False);
+            Assert.That(
+                killed.Selected.SkillBucket.GetCooldown("rin-d")
+                    .RemainingCooldown,
+                Is.EqualTo(5.85f).Within(0.0001f));
+        }
+
+        [Test]
+        public void RinExecuteFiltersCandidatesBeforeLowestHealthSelection()
+        {
+            RuntimeFixture fixture = CreateFixture("rin");
+            Assert.That(
+                fixture.Selected.SkillBucket.TryLearnActive(
+                    catalog.GetSkill("rin-d")),
+                Is.True);
+            EnemyModel healthyLowerAbsoluteHealth =
+                CreateEnemy("stage1-swordsman");
+            EnemyModel qualifyingHigherAbsoluteHealth =
+                CreateEnemy("stage2-arsen");
+            qualifyingHigherAbsoluteHealth.ApplyDamage(
+                qualifyingHigherAbsoluteHealth.MaximumHealth * 0.75f);
+            fixture.Stage.TryRegisterFieldUnit(healthyLowerAbsoluteHealth);
+            fixture.Stage.TryRegisterFieldUnit(
+                qualifyingHigherAbsoluteHealth);
+
+            float healthyBefore = healthyLowerAbsoluteHealth.CurrentHealth;
+            float qualifyingBefore =
+                qualifyingHigherAbsoluteHealth.CurrentHealth;
+            Assert.That(
+                fixture.Combat.TryExecuteSkill(new SkillExecutionRequest(
+                    fixture.Selected,
+                    catalog.GetSkill("rin-d"),
+                    fixture.Stage.FieldUnits)),
+                Is.True);
+
+            Assert.That(
+                healthyLowerAbsoluteHealth.CurrentHealth,
+                Is.EqualTo(healthyBefore));
+            Assert.That(
+                qualifyingHigherAbsoluteHealth.CurrentHealth,
+                Is.LessThan(qualifyingBefore));
+        }
+
+        [Test]
+        public void SkillStatusMaximumStacksCapsRepeatedSeinEApplications()
+        {
+            RuntimeFixture fixture = CreateFixture("sein");
+            Assert.That(
+                fixture.Selected.SkillBucket.TryLearnActive(
+                    catalog.GetSkill("sein-e")),
+                Is.True);
+            EnemyModel target = CreateEnemy("stage2-arsen");
+            target.SetPosition(new CombatVector2(1f, 0f));
+            fixture.Stage.TryRegisterFieldUnit(target);
+
+            for (int cast = 0; cast < 2; cast++)
+            {
+                Assert.That(
+                    fixture.Combat.TryExecuteSkill(new SkillExecutionRequest(
+                        fixture.Selected,
+                        catalog.GetSkill("sein-e"),
+                        fixture.Stage.FieldUnits)),
+                    Is.True);
+                fixture.Selected.SkillBucket.GetCooldown("sein-e")
+                    .ResetCooldown();
+            }
+
+            Assert.That(CountStatus(target, "fire-resist-down"), Is.EqualTo(1));
+            Assert.That(
+                target.StatusEffects.Single(status =>
+                    status.Definition.status_effect_id == "fire-resist-down")
+                    .MaximumStacks,
+                Is.EqualTo(1));
+        }
+
+        [Test]
+        public void AreaRuntimeKindTriggersVegaICooldownRefund()
+        {
+            RuntimeFixture fixture = CreateFixture("vega");
+            Assert.That(
+                fixture.Selected.SkillBucket.TryLearnActive(
+                    catalog.GetSkill("vega-d")),
+                Is.True);
+            Assert.That(
+                fixture.Selected.SkillBucket.TryLearnPassive(
+                    (PassiveDefinition)catalog.GetSkill("vega-i")),
+                Is.True);
+            MonsterModel ally = CreateMonster("eve", false);
+            EnemyModel target = CreateEnemy("stage2-arsen");
+            target.ApplyStatus(
+                catalog.GetStatus("name-mark"),
+                fixture.Selected,
+                null,
+                1,
+                "setup");
+            fixture.Stage.TryRegisterFieldUnit(ally);
+            fixture.Stage.TryRegisterFieldUnit(target);
+            Assert.That(
+                fixture.Combat.TryExecuteSkill(new SkillExecutionRequest(
+                    fixture.Selected,
+                    catalog.GetSkill("vega-d"),
+                    fixture.Stage.FieldUnits)),
+                Is.True);
+            float before = fixture.Selected.SkillBucket.GetCooldown("vega-d")
+                .RemainingCooldown;
+
+            fixture.Combat.ApplySkillDamage(
+                ally,
+                target,
+                catalog.GetSkill("eve-c"),
+                0.1f);
+            fixture.Actors.Tick(0f);
+            fixture.Actors.Tick(0f);
+
+            Assert.That(
+                fixture.Selected.SkillBucket.GetCooldown("vega-d")
+                    .RemainingCooldown,
+                Is.LessThan(before));
+        }
+
+        [Test]
+        public void TriggeredSeinBCastUsesSeinGOriginForReloadReduction()
+        {
+            RuntimeFixture fixture = CreateFixture("sein", () => 0f);
+            Assert.That(
+                fixture.Selected.SkillBucket.TryLearnActive(
+                    catalog.GetSkill("sein-b")),
+                Is.True);
+            Assert.That(
+                fixture.Selected.SkillBucket.TryLearnPassive(
+                    (PassiveDefinition)catalog.GetSkill("sein-g")),
+                Is.True);
+            Assert.That(
+                fixture.Selected.SkillBucket.TrySelectChoice(
+                    catalog.GetChoice("sein-g-trait-3")),
+                Is.True);
+            EnemyModel target = CreateEnemy("stage2-arsen");
+            target.SetPosition(new CombatVector2(1f, 0f));
+            target.TryAddShield(100000f);
+            fixture.Stage.TryRegisterFieldUnit(target);
+            fixture.Combat.NotifyCombatStart(
+                fixture.Selected,
+                fixture.Stage.FieldUnits);
+            var seinACooldown =
+                fixture.Selected.SkillBucket.GetCooldown("sein-a");
+            for (int shot = 0; shot < 8; shot++)
+            {
+                Assert.That(seinACooldown.TryUse(), Is.True);
+                seinACooldown.Tick(0.32f);
+            }
+            float before = seinACooldown.RemainingReload;
+            Assert.That(before, Is.GreaterThan(0f));
+            Assert.That(fixture.Selected.IsAlive, Is.True);
+            Assert.That(fixture.Selected.CanAct, Is.True);
+            Assert.That(
+                fixture.Targeting.ResolveOrderedAll(
+                    fixture.Selected,
+                    catalog.GetSkill("sein-b"),
+                    fixture.Stage.FieldUnits,
+                    target.Position),
+                Is.Not.Empty);
+            List<string> activatedSkills = new List<string>();
+            fixture.Combat.SkillActivated += (_, skill) =>
+                activatedSkills.Add(skill.skill_id);
+
+            fixture.Combat.ApplySkillDamage(
+                fixture.Selected,
+                target,
+                catalog.GetSkill("sein-a"),
+                0.1f);
+            for (int tick = 0; tick < 5; tick++)
+            {
+                fixture.Actors.Tick(0f);
+            }
+
+            CollectionAssert.Contains(activatedSkills, "sein-b");
+            Assert.That(seinACooldown.RemainingReload, Is.LessThan(before));
         }
 
         private void AssertFamilyExecutes(string monsterId, string skillId)
@@ -1043,6 +1568,29 @@ namespace Pakuri.NewCore.Tests
                 .Sum(status => status.CurrentStacks);
         }
 
+        private static string ReadStringColumn(
+            SkillDefinition definition,
+            string column)
+        {
+            return definition.Columns.TryGetValue(
+                    column,
+                    out object value)
+                ? value as string
+                : null;
+        }
+
+        private static float ReadFloatColumn(
+            SkillDefinition definition,
+            string column)
+        {
+            return definition.Columns.TryGetValue(
+                    column,
+                    out object value)
+                && value is float number
+                    ? number
+                    : 0f;
+        }
+
         private float ExecuteVegaBAndReadSilenceDuration(int nameMarkStacks)
         {
             RuntimeFixture fixture = CreateFixture("vega");
@@ -1089,6 +1637,32 @@ namespace Pakuri.NewCore.Tests
             return target.StatusEffects.Single(status =>
                 status.Definition.status_effect_id == "silence")
                 .RemainingDuration.Value;
+        }
+
+        private float ExecuteVegaEAndReadDamage(int nameMarkStacks)
+        {
+            RuntimeFixture fixture = CreateFixture("vega");
+            Assert.That(
+                fixture.Selected.SkillBucket.TryLearnActive(
+                    catalog.GetSkill("vega-e")),
+                Is.True);
+            EnemyModel target = CreateEnemy("stage2-arsen");
+            target.ApplyStatus(
+                catalog.GetStatus("name-mark"),
+                fixture.Selected,
+                null,
+                nameMarkStacks,
+                "setup");
+            fixture.Stage.TryRegisterFieldUnit(target);
+            float before = target.CurrentHealth;
+
+            Assert.That(
+                fixture.Combat.TryExecuteSkill(new SkillExecutionRequest(
+                    fixture.Selected,
+                    catalog.GetSkill("vega-e"),
+                    fixture.Stage.FieldUnits)),
+                Is.True);
+            return before - target.CurrentHealth;
         }
 
         private static Dictionary<string, string> LoadSources()

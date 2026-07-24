@@ -441,9 +441,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 4596420534878418281}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 865f6a2c8780ea04fa1965d473b8f92f, type: 3}
+  m_Script: {fileID: 11500000, guid: 563a47fcaccf140499efb7f222c0c006, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.MonsterActor
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterActorBehaviour
   animationController: {fileID: 900100000000002}
 --- !u!61 &2125345698689039103
 BoxCollider2D:
@@ -522,9 +522,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 4596420534878418281}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3ab96406b52c3454daa4c602c0b81989, type: 3}
+  m_Script: {fileID: 11500000, guid: ac027aa8c5506d5488ec4c797833239d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.AnimationController
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterAnimationBehaviour
   animator: {fileID: 900100000000001}
   idleState: Anim_Ariel_Idle
   deadState: Anim_Ariel_Dead_1

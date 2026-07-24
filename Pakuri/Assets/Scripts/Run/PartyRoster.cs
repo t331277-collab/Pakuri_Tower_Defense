@@ -70,5 +70,17 @@ namespace Pakuri.NewCore.Run
 
             return null;
         }
+
+        internal bool TryRemoveManifestedMonster(MonsterModel monster)
+        {
+            if (monster == null
+                || members.Count <= 1
+                || ReferenceEquals(members[0], monster))
+            {
+                return false;
+            }
+
+            return members.Remove(monster);
+        }
     }
 }

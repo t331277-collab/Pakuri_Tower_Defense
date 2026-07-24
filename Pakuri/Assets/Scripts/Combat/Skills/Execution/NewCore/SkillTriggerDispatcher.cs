@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Pakuri.NewCore.Catalog;
+using Pakuri.NewCore.Combat.Effects;
 using Pakuri.NewCore.Combat.Skills.Actors;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Units.Models;
@@ -11,6 +12,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
     {
         private readonly GameDefinitionCatalog catalog;
         private readonly SkillActorManager actors;
+        private readonly EffectManager effects;
         private readonly Func<float> randomValue;
         private readonly SkillEffectGraphRuntime effectGraphs;
         private readonly Dictionary<string, float> cooldowns =
@@ -23,11 +25,13 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         public SkillTriggerDispatcher(
             GameDefinitionCatalog catalog,
             SkillActorManager actors,
+            EffectManager effects,
             Func<float> randomValue,
             SkillEffectGraphRuntime effectGraphs)
         {
             this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
             this.actors = actors ?? throw new ArgumentNullException(nameof(actors));
+            this.effects = effects ?? throw new ArgumentNullException(nameof(effects));
             this.randomValue = randomValue ?? throw new ArgumentNullException(nameof(randomValue));
             this.effectGraphs =
                 effectGraphs ?? throw new ArgumentNullException(nameof(effectGraphs));
@@ -71,6 +75,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             float trackedIncomingDamage = 0f,
             string trackedAttribute = null,
             bool eventExecuted = true,
+            string eventSourceSkillId = null,
             IReadOnlyCollection<string> triggerAncestry = null)
         {
             int executedCount = 0;
@@ -101,7 +106,8 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                             eventTarget,
                             eventStatusId,
                             trackedAttribute,
-                            eventExecuted)
+                            eventExecuted,
+                            eventSourceSkillId)
                         || !PassesGates(triggerOwner, trigger))
                     {
                         continue;
@@ -316,7 +322,8 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 triggeredRequest.SetEventTarget(eventTarget);
                 triggeredRequest.InheritTriggerAncestry(
                     triggerAncestry,
-                    trigger.trigger_id);
+                    trigger.trigger_id,
+                    trigger.source_skill_id);
                 combat.TryExecuteSkill(triggeredRequest);
                 return;
             }
@@ -346,6 +353,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                         null,
                         trigger.source_skill_id);
                 }
+                CreateTriggerVisual(
+                    trigger,
+                    owner,
+                    targets[0],
+                    graphSkill);
                 return;
             }
 
@@ -394,13 +406,21 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 || attackCoefficient > 0f
                 || spellCoefficient > 0f)
             {
+                string damageAttribute =
+                    SkillTriggerSupport.Read(trigger, "attribute");
+                if (string.IsNullOrEmpty(damageAttribute))
+                {
+                    damageAttribute = SkillTriggerSupport.Read(
+                        trigger,
+                        "tracked_attribute");
+                }
                 for (int index = 0; index < targets.Count; index++)
                 {
                     combat.ApplyTriggeredDamage(
                         owner,
                         targets[index],
                         trigger.trigger_id,
-                        SkillTriggerSupport.Read(trigger, "attribute"),
+                        damageAttribute,
                         baseDamage,
                         attackCoefficient,
                         spellCoefficient,
@@ -421,6 +441,52 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                         multiplier);
                 }
             }
+
+            CreateTriggerVisual(
+                trigger,
+                owner,
+                targets[0],
+                graphSkill);
+        }
+
+        private void CreateTriggerVisual(
+            SkillTriggerDefinition trigger,
+            UnitBaseModel owner,
+            UnitBaseModel target,
+            SkillDefinition definition)
+        {
+            var visual = new EffectVisualSpec(
+                SkillTriggerSupport.Read(
+                    trigger,
+                    "skill_effect_prefab_path"),
+                SkillTriggerSupport.Read(
+                    trigger,
+                    "runtime_visual_sprite_path"),
+                SkillTriggerSupport.Read(
+                    trigger,
+                    "runtime_visual_animator_controller_path"),
+                SkillTriggerSupport.Float(
+                    trigger,
+                    "runtime_visual_scale"),
+                0f,
+                0f,
+                0f,
+                SkillTriggerSupport.Int(
+                    trigger,
+                    "runtime_visual_sorting_order"));
+            if (!visual.HasResource)
+            {
+                return;
+            }
+
+            var effect = effects.Create(
+                visual,
+                target.Position,
+                (target.Position - owner.Position).Normalized);
+            actors.Register(new BuffActor(
+                definition,
+                1f,
+                effect));
         }
 
         private bool PassesGates(UnitBaseModel owner, SkillTriggerDefinition trigger)
@@ -549,7 +615,8 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             UnitBaseModel eventTarget,
             string eventStatusId,
             string trackedAttribute,
-            bool eventExecuted)
+            bool eventExecuted,
+            string eventSourceSkillId)
         {
             string eventSkillIds = SkillTriggerSupport.Read(trigger, "event_skill_id");
             if (!string.IsNullOrEmpty(eventSkillIds)
@@ -563,7 +630,9 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 SkillTriggerSupport.Read(trigger, "event_skill_runtime_kinds");
             if (!string.IsNullOrEmpty(runtimeKinds)
                 && (eventSkill == null
-                    || !Contains(runtimeKinds, eventSkill.runtime_kind)))
+                    || !MatchesRuntimeKind(
+                        runtimeKinds,
+                        eventSkill.runtime_kind)))
             {
                 return false;
             }
@@ -583,7 +652,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
 
             string requiredTrackedAttribute =
                 SkillTriggerSupport.Read(trigger, "tracked_attribute");
-            if (!string.IsNullOrEmpty(requiredTrackedAttribute)
+            if (string.Equals(
+                    SkillTriggerSupport.Read(trigger, "damage_source"),
+                    "TrackedIncomingDamage",
+                    StringComparison.Ordinal)
+                && !string.IsNullOrEmpty(requiredTrackedAttribute)
                 && requiredTrackedAttribute != trackedAttribute)
             {
                 return false;
@@ -610,19 +683,46 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 trigger,
                 "condition_status_source_skill_id");
             if (!string.IsNullOrEmpty(conditionSourceSkill)
-                && !HasStatusFromSkill(
-                    eventTarget,
-                    conditionStatus,
-                    conditionSourceSkill,
-                    Math.Max(
-                        1,
-                        SkillTriggerSupport.Int(
-                            trigger,
-                            "required_source_status_min_stacks"))))
+                && (string.IsNullOrEmpty(conditionStatus)
+                    ? !string.Equals(
+                        eventSourceSkillId,
+                        conditionSourceSkill,
+                        StringComparison.Ordinal)
+                    : !HasStatusFromSkill(
+                        eventTarget,
+                        conditionStatus,
+                        conditionSourceSkill,
+                        Math.Max(
+                            1,
+                            SkillTriggerSupport.Int(
+                                trigger,
+                                "required_source_status_min_stacks")))))
             {
                 return false;
             }
             return true;
+        }
+
+        private static bool MatchesRuntimeKind(
+            string configuredKinds,
+            string runtimeKind)
+        {
+            if (Contains(configuredKinds, runtimeKind))
+            {
+                return true;
+            }
+            if (!Contains(configuredKinds, "Area"))
+            {
+                return false;
+            }
+            return string.Equals(
+                    runtimeKind,
+                    "AreaAttack",
+                    StringComparison.Ordinal)
+                || string.Equals(
+                    runtimeKind,
+                    "Field",
+                    StringComparison.Ordinal);
         }
 
         private static List<UnitBaseModel> ResolveTargets(

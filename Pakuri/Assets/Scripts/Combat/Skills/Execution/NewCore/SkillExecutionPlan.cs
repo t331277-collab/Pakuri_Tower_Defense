@@ -130,7 +130,16 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                         }
                         break;
                     case "TargetStatusStackDamageMultiplier":
-                        if (HasStatus(target, skill.status_effect_id, 1))
+                        string targetStackStatusId = SkillTargeting.ReadString(
+                            skill,
+                            "target_status_stack_status_id");
+                        if (string.IsNullOrEmpty(targetStackStatusId))
+                        {
+                            targetStackStatusId = SkillTargeting.ReadString(
+                                skill,
+                                "target_selection_status_id");
+                        }
+                        if (HasStatus(target, targetStackStatusId, 1))
                         {
                             multiplier *= FirstNumber(node, 1f);
                         }
@@ -178,14 +187,38 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     return false;
                 }
             }
+
+            if (RequiresExecuteThreshold())
+            {
+                bool casterIsEnemy = caster is EnemyModel;
+                for (int index = 0; index < units.Count; index++)
+                {
+                    UnitBaseModel target = units[index];
+                    if (target != null
+                        && target.IsAlive
+                        && !(target is NexusModel)
+                        && (target is EnemyModel) != casterIsEnemy
+                        && MatchesExecuteHealth(target))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
             return true;
         }
 
         public IReadOnlyList<UnitBaseModel> FilterTargets(
             IReadOnlyList<UnitBaseModel> candidates)
         {
-            string statusId = null;
-            int minimum = 1;
+            string statusId = SkillTargeting.ReadString(
+                skill,
+                "deployment_required_target_status_id");
+            int minimum = Math.Max(
+                1,
+                SkillTargeting.ReadInt(
+                    skill,
+                    "deployment_required_target_status_min_stacks"));
             for (int index = 0; index < nodes.Count; index++)
             {
                 if (nodes[index].node_type_id == "StatusFilteredDeployment")
@@ -196,16 +229,22 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                         (int)Number(nodes[index].arg_2, 1f));
                 }
             }
-            if (string.IsNullOrEmpty(statusId))
+            bool requiresStatus = !string.IsNullOrEmpty(statusId);
+            bool requiresExecute = RequiresExecuteThreshold();
+            if (!requiresStatus && !requiresExecute)
             {
                 return candidates;
             }
             List<UnitBaseModel> result = new List<UnitBaseModel>();
             for (int index = 0; index < candidates.Count; index++)
             {
-                if (HasStatus(candidates[index], statusId, minimum))
+                UnitBaseModel candidate = candidates[index];
+                if ((!requiresStatus
+                        || HasStatus(candidate, statusId, minimum))
+                    && (!requiresExecute
+                        || MatchesExecuteHealth(candidate)))
                 {
-                    result.Add(candidates[index]);
+                    result.Add(candidate);
                 }
             }
             return result.AsReadOnly();
@@ -585,6 +624,15 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
             return threshold > 0f
                 && target.CurrentHealth / target.MaximumHealth <= threshold;
+        }
+
+        private bool RequiresExecuteThreshold()
+        {
+            return skill.Columns.TryGetValue(
+                    "require_execute_threshold_to_cast",
+                    out object requireValue)
+                && requireValue is bool requireExecute
+                && requireExecute;
         }
 
         public bool IsExecuteConditionMet(UnitBaseModel target)

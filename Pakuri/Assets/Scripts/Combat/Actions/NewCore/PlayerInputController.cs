@@ -113,6 +113,13 @@ namespace Pakuri.NewCore.Combat.Actions
                 request.TargetPoint);
         }
 
+        public void ResetCombatInput()
+        {
+            pending.Clear();
+            lastProjectileAim = null;
+            lastProjectileTarget = null;
+        }
+
         private readonly struct ManualSkillRequest
         {
             public ManualSkillRequest(

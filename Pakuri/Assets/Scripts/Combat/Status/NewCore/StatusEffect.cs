@@ -12,7 +12,8 @@ namespace Pakuri.NewCore.Combat.Status
             UnitBaseModel affectedUnit,
             float? durationSeconds,
             int? stackAmount,
-            string sourceSkillId)
+            string sourceSkillId,
+            int? maximumStacks)
         {
             Definition = definition ?? throw new ArgumentNullException(nameof(definition));
             ApplyingUnit =
@@ -20,6 +21,7 @@ namespace Pakuri.NewCore.Combat.Status
             AffectedUnit =
                 affectedUnit ?? throw new ArgumentNullException(nameof(affectedUnit));
             SourceSkillId = sourceSkillId;
+            MaximumStacks = NormalizeMaximum(maximumStacks);
             CurrentStacks = ResolveStackAmount(stackAmount);
             RemainingDuration = ResolveDuration(durationSeconds);
         }
@@ -36,6 +38,8 @@ namespace Pakuri.NewCore.Combat.Status
 
         public string SourceSkillId { get; }
 
+        public int? MaximumStacks { get; private set; }
+
         public float TrackedIncomingDamage { get; private set; }
 
         public string LastTrackedAttribute { get; private set; }
@@ -45,12 +49,22 @@ namespace Pakuri.NewCore.Combat.Status
         public bool IsExpired =>
             !IsPermanent && RemainingDuration.HasValue && RemainingDuration.Value <= 0f;
 
-        internal void Refresh(float? durationSeconds, int? stackAmount)
+        internal void Refresh(
+            float? durationSeconds,
+            int? stackAmount,
+            int? maximumStacks)
         {
+            int? refreshedMaximum = maximumStacks.HasValue
+                ? NormalizeMaximum(maximumStacks)
+                : MaximumStacks;
             int refreshedStacks =
-                AddStacks(CurrentStacks, ResolveStackAmount(stackAmount));
+                AddStacks(
+                    CurrentStacks,
+                    ResolveStackAmount(stackAmount, refreshedMaximum),
+                    refreshedMaximum);
             float? refreshedDuration = ResolveDuration(durationSeconds);
 
+            MaximumStacks = refreshedMaximum;
             CurrentStacks = refreshedStacks;
             RemainingDuration = refreshedDuration;
         }
@@ -97,7 +111,9 @@ namespace Pakuri.NewCore.Combat.Status
             LastTrackedAttribute = attribute;
         }
 
-        private int ResolveStackAmount(int? stackAmount)
+        private int ResolveStackAmount(
+            int? stackAmount,
+            int? maximumStacks = null)
         {
             int resolved = stackAmount
                 ?? Definition.base_stack_amount
@@ -109,17 +125,30 @@ namespace Pakuri.NewCore.Combat.Status
                 throw new ArgumentOutOfRangeException(nameof(stackAmount));
             }
 
-            return AddStacks(0, resolved);
+            return AddStacks(0, resolved, maximumStacks ?? MaximumStacks);
         }
 
-        private int AddStacks(int current, int amount)
+        private int AddStacks(int current, int amount, int? maximumStacks)
         {
             int updated = checked(current + amount);
-            int maximum = (Definition.max_stacks ?? 0)
+            int maximum = (maximumStacks ?? Definition.max_stacks ?? 0)
                 + (int)AffectedUnit.ResolveRuntimeModifier(
                     "StatusMaxStacksBonus",
                     Definition.status_effect_id);
             return maximum > 0 ? Math.Min(updated, maximum) : updated;
+        }
+
+        private static int? NormalizeMaximum(int? maximumStacks)
+        {
+            if (!maximumStacks.HasValue || maximumStacks.Value == 0)
+            {
+                return null;
+            }
+            if (maximumStacks.Value < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maximumStacks));
+            }
+            return maximumStacks;
         }
 
         private float? ResolveDuration(float? durationSeconds)

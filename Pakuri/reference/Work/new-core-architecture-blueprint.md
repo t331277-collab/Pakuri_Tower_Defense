@@ -37,7 +37,7 @@ Designer
 
 ## Status
 
-Implementation v0.8. The full blueprint has been translated to English without changing its structure. Phase 0 passed Code Reviewer loop 3, Phase 1 passed loop 2, and Phase 2 passed loop 2. Phase 3 is Builder-complete and pending Code Reviewer; Phases 4 through 6 have not started.
+Implementation v0.8. The full blueprint has been translated to English without changing its structure. Phase 0 passed Code Reviewer loop 3, Phase 1 passed loop 2, Phase 2 passed loop 2, Phase 3 passed loop 4, and Phase 4 passed loop 2. Phase 5 is in progress; Phase 6 has not started.
 
 ## Next Actions
 
@@ -1952,13 +1952,13 @@ Even when a Phase requires Play Mode, the compilation and Console gates must pas
 
 **Role Owner:** Code Builder
 
-**Status:** Pending Code Reviewer loop 2
+**Status:** PASS — Code Reviewer loop 4
 
-**Next Actions:** Run Phase 3 Code Reviewer loop 2. If the Reviewer returns FIX REQUIRED, keep Phase 4 untouched and continue repairing Phase 3 until the Reviewer returns PASS.
+**Next Actions:** Begin Phase 4 from the verified Phase 2 state authorities and Phase 3 combat-completion boundary. Preserve all retained CSV hashes and Phase 0 artifact hashes.
 
-**Evidence:** The isolated pure-C# runtime adds the exact eight-step central Tick, result coordination, targeting, action and movement Controllers, manual-input request boundary, eight skill-family Executors, centralized Actor pending lists, Effect handles, scheduled burst/pierce/repeat execution, retained Effect graph execution, and dispatch for all eight retained Trigger events. Reviewer loop 1 exposed retained-row semantic gaps in Choice ownership, Effect/Trigger targeting, projectile and repeated attacks, Trigger context and lifecycle, geometry, passive execution, shield ownership, Nexus cleanup, and deterministic ordering. Code Builder repaired those exact paths and added deterministic regressions. Runtime construction still audits all 88 reachable node types and all 59 Trigger rows with unsupported counts of zero. EditMode job `ce06dd99c06f41fdb82766e32549a3d3` passed 55 of 55 tests, including all retained Phase 1 and Phase 2 tests. All 42 retained CSV hashes have zero mismatches, the 49-file isolated runtime scan has zero forbidden engine/previous-runtime markers and zero missing `.meta` pairs, and the final Unity recompilation gate has zero Errors, Exceptions, and Warnings.
+**Evidence:** The isolated pure-C# runtime adds the exact eight-step central Tick, result coordination, targeting, action and movement Controllers, manual-input request boundary, eight skill-family Executors, centralized Actor pending lists, Effect handles, scheduled burst/pierce/repeat execution, retained Effect graph execution, and dispatch for all eight retained Trigger events. Reviewer loop 1 exposed retained-row semantic gaps in Choice ownership, Effect/Trigger targeting, projectile and repeated attacks, Trigger context and lifecycle, geometry, passive execution, shield ownership, Nexus cleanup, and deterministic ordering. Reviewer loop 2 exposed six narrower retained-contract gaps, which Code Builder repaired with exact regressions. Reviewer loop 3 then found that Rin-D tested execute eligibility globally but selected `LowestHealth` before restricting candidates to the execute threshold. Candidate filtering now occurs before target ordering and limiting. Unity focused job `dfe1d931595249fd83257957f9e4abfe` passed the mixed-health regression, Phase 3 class job `342a695d25a04d8094cbe5419da0caca` passed 35 of 35, and complete EditMode job `b34466d30a5d42f4a9302c146fa33a03` passed 62 of 62. All 42 retained CSV hashes have zero mismatches, the 49-file/7,841-line isolated runtime scan has zero forbidden engine/previous-runtime markers and zero missing `.meta` pairs, and the final Unity Console gate has zero Errors and Warnings.
 
-**History:** 2026-07-23 Phase plan created. 2026-07-24 Code Builder implemented the engine-agnostic Phase 3 combat loop, closed the initial node/Trigger coverage gaps, passed the complete deterministic suite and final Console gate, and submitted Phase 3 to Code Reviewer. Reviewer loop 1 returned FIX REQUIRED with 20 exact blockers. Code Builder repaired all listed Phase 3 paths, expanded the combat test class from 15 to 27 tests, passed the 54-test complete suite, and resubmitted Phase 3 for reviewer loop 2 without starting Phase 4.
+**History:** 2026-07-23 Phase plan created. 2026-07-24 Code Builder implemented the engine-agnostic Phase 3 combat loop and submitted it to Code Reviewer. Reviewer loop 1 returned FIX REQUIRED with 20 exact blockers. Code Builder repaired all listed paths and resubmitted. Reviewer loop 2 returned FIX REQUIRED with six retained-contract groups. Code Builder repaired all six and resubmitted. Reviewer loop 3 returned FIX REQUIRED for one mixed-target Rin-D eligibility hole. Code Builder moved eligibility filtering before target selection and added the exact regression. Reviewer loop 4 independently passed focused job `62e686c17ef74e2d9537532eac16b9c6` and complete job `07690a5a7ba04061bf42462ccbd0c26b`, confirmed all hashes and static gates, and returned PASS. Phase 4 may begin.
 
 **Play Mode:** Conditional. Request a limited scene scenario from the user only for items that cannot be proven by static or deterministic tests, such as physics collisions, frame timing, and mouse aiming.
 
@@ -1982,13 +1982,13 @@ Even when a Phase requires Play Mode, the compilation and Console gates must pas
 
 **Role Owner:** Code Builder
 
-**Status:** Not Started
+**Status:** PASS — Code Reviewer loop 2
 
-**Next Actions:** Confirm public APIs that connect the Phase 2 state authorities to the Phase 3 combat-completion signal.
+**Next Actions:** Begin Phase 5 resource reconnection from the verified Phase 0 manifests and Phase 1-through-4 runtime APIs. Do not activate Phase 6 deletion.
 
-**Evidence:** Day and stage state transitions, reward-candidate and prisoner-consumption tests, Unity recompilation, and Console results.
+**Evidence:** `RunSessionModel` exposes only internal transition commands used by `StageManager` and Services. `StageManager` owns currencies, field membership, active day/combat state, Phase 3 defeat-signal observation, reward entry, round reset, next-day/stage progression, victory, and defeat. The pure-C# `SpawnManager` expands ordered encounter rows, honors `interval_sec`, selects one normal boss candidate, applies CSV boss-health multipliers and spawn positions, creates immutable-definition-backed Models, and registers them through `StageManager`. Reviewer loop 1 found three gaps despite the first 69-test pass: guaranteed reward source values were not interpreted, `StartCurrentDay` could bypass active/reward states, and RewardService accepted a foreign SpawnManager. Code Builder now resolves `EncounterBoss`, `GuaranteedBoss`, and `GuaranteedBossPool` from actual spawned boss records; rejects Active/Pending/Processing day reentry before mutation; and verifies the supplied SpawnManager is the StageManager-owned source. Phase 4 job `51ce77704ed944959e08a7761ee01ade` passed 10 of 10 tests and complete job `f98b7172a31d43369b180a257e280e91` passed 72 of 72. All 42 CSV hashes matched, the eight-file/1,867-line Run-and-Spawn scan found zero forbidden markers and zero missing `.meta`, and the final Console gate had zero Errors and Warnings.
 
-**History:** 2026-07-23 Phase plan created.
+**History:** 2026-07-23 Phase plan created. 2026-07-24 Code Builder implemented the engine-independent Phase 4 run progression, spawn scheduling, reward, offering, and manifestation boundaries and submitted Phase 4. Reviewer loop 1 returned FIX REQUIRED for three exact ownership/state gaps. Code Builder repaired all three and resubmitted. Reviewer loop 2 independently passed Phase 4 job `8f03e466a8c444c3a5d5a554ffb280cd` and complete job `ba159fa38aed412584e0a9ff49a39a23`, verified every hash/static/Console gate, and returned PASS. Phase 5 may begin.
 
 **Play Mode:** Do not run by default. If an issue remains that occurs only in the actual scene lifecycle across multiple systems, combine it with Phase 5 integrated verification and run it once.
 
@@ -2013,9 +2013,9 @@ Even when a Phase requires Play Mode, the compilation and Console gates must pas
 
 **Role Owner:** The Code Builder performs asset connections, and the user verifies gameplay in Play Mode.
 
-**Status:** Not Started
+**Status:** Code Builder static gates passed; submitted to Code Reviewer. User Play Mode verification remains required.
 
-**Next Actions:** Convert the Phase 0 asset-connection table into a migration checklist for each new component.
+**Next Actions:** Code Reviewer independently verifies the Phase 5 code, serialized mappings, tests, Unity compilation, and Console. After Reviewer PASS, request the exact user-owned integrated Play Mode scenario.
 
 **Evidence:** Scene, prefab, and `.asset` reference checks; Missing Script checks; Inspector mapping table; Unity recompilation; and Console results.
 
@@ -2058,6 +2058,376 @@ Even when a Phase requires Play Mode, the compilation and Console gates must pas
 ### 21.11 Phase Execution Records
 
 Add the newest record first under this section.
+
+## Phase Record — 2026-07-24 19:16 +09:00
+
+Task title: Scene, Prefab, UI, and Visual Resource Migration
+
+Goals: Connect the retained scenes, active unit and skill prefabs, UI hierarchy, sprites, animations, AnimatorControllers, CSV TextAssets, and Inspector values to the new Core production startup path without allowing a previous component to remain an active gameplay authority.
+
+Constraints: Phase 5 changed presentation adapters, the production combat-lifecycle and immutable visual-spec boundaries required by those adapters, the positive combat-result damage projection, the new runtime catalog and run-selection assets, deterministic runtime/presentation tests, the two retained scenes, 23 active unit/skill prefabs, the EditMode test assembly reference, and this Phase record. Retained CSV bytes, visual source assets, Phase 0 manifests, BLACKBOARD-family files, and Phase 6 removal targets were not changed. Previous source and Legacy data assets remain compiled or retained only until the Phase 6 approval boundary; no new presentation code calls or inherits a previous runtime type. Play Mode was not started by Codex.
+
+Role Owner: Code Builder and Code Reviewer complete. Integrated Play Mode verification remains user-owned.
+
+Status: CODE REVIEWER PASS — user Play Mode pending
+
+Next Actions: The user runs the exact integrated Phase 5 Play Mode scenario recorded below and reports PASS or the first failing step with Console output. Do not begin Phase 6 or remove previous sources before Phase 5 acceptance and explicit removal approval.
+
+Changed Paths:
+
+- `Pakuri/Assets/Scripts/Presentation/NewCore/**`
+- `Pakuri/Assets/Scripts/Combat/Actions/NewCore/InGameActionManager.cs`
+- `Pakuri/Assets/Scripts/Combat/Actions/NewCore/PlayerInputController.cs`
+- `Pakuri/Assets/Scripts/Combat/Effects/NewCore/EffectManager.cs`
+- `Pakuri/Assets/Scripts/Combat/NewCore/InGameCombatManager.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/ProjectileExecutor.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillEffectGraphRuntime.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillExecutionRuntime.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillExecutor.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillTriggerDispatcher.cs`
+- `Pakuri/Assets/Scripts/Presentation.meta`
+- `Pakuri/Assets/Resources/Pakuri/NewCore/RuntimeCatalog.asset`
+- `Pakuri/Assets/Resources/Pakuri/NewCore/RunStartSelection.asset`
+- `Pakuri/Assets/Resources/Pakuri/NewCore.meta`
+- `Pakuri/Assets/Resources/Pakuri/NewCore/**.meta`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCorePresentationTests.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCorePresentationTests.cs.meta`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCoreCombatLoopTests.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCoreRunFlowTests.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/Pakuri.NewCore.EditMode.Tests.asmdef`
+- `Pakuri/Assets/Scenes/NewScene/NewRunScene.unity`
+- `Pakuri/Assets/Scenes/NewScene/NewMainMenu.unity`
+- `Pakuri/Assets/Prefab/Monster/*.prefab` — five active monster prefabs
+- `Pakuri/Assets/Prefab/Enemy/Stage1/*.prefab` — eight active Stage 1 enemy prefabs
+- `Pakuri/Assets/Prefab/Enemy/Stage2/*.prefab` — eight active Stage 2 enemy prefabs
+- `Pakuri/Assets/Prefab/Skill/Rin/Rin_D.prefab` — active catalog-reachable visual prefab
+- `Pakuri/Assets/Prefab/Skill/Rin/Rin_E.prefab` — active catalog-reachable visual prefab
+- `Pakuri/Assets/Legacy/Skill 1/Ariel/Airel_A.prefab` — migrated retained inventory with no active serialized caller
+- `Pakuri/Assets/Legacy/Skill 1/Eve/Eve_A.prefab` — migrated retained inventory with no active serialized caller
+- `Pakuri/reference/Work/new-core-architecture-blueprint.md`
+
+Serialized Before-And-After Mapping:
+
+| Retained object or asset | Previous owner | New owner | Retained or added serialized values |
+|---|---|---|---|
+| `NewRunScene/GameManager` | `InGameCombatManager` | `NewCoreSceneRuntime` | enemy-combat and skill-execution switches; explicit input and effect-view references |
+| `NewRunScene/GameManager` | `StageManager` | `NewCoreStageController` | three stage CSVs; start-flow and clear interval; health reset rule; Nexus; result panels and buttons; main-menu path; final stage 2/day 11 |
+| `NewRunScene/GameManager` | `UnitSpawnManager` | `NewCoreSpawnController` | player/enemy spawn points; runtime monster/enemy roots; five monster prefabs; 16 exact `enemy_id` prefab bindings |
+| `NewRunScene/GameManager` | `EffectManager` | `NewCoreEffectView` | retained runtime skill root; catalog-resolved prefab or sprite visual creation |
+| `NewRunScene/GameManager` | `PlayerCombatInputController` | `NewCoreInputController` | retained input camera and auto-skill state |
+| `NewRunScene/Canvas` | `InGameUIManager` | `NewCoreInGameUIController` | five prison portraits; reward button layout values; explicit Stage, Spawn, and scene-runtime references; existing hierarchy names retained |
+| `NewRunScene/Canvas` | `DebugUI` | `NewCoreDebugUIController` | existing debug panel hierarchy retained |
+| `NewRunScene/Canvas` | `MonsterPanelUI` | `NewCoreMonsterPanelUI` | monster panel root and explicit Stage, Spawn, and scene-runtime references |
+| `NewRunScene/Canvas` | `DamageMeterRuntimeTracker` | `NewCoreDamageMeterTracker` | explicit scene-runtime reference |
+| `NewRunScene/Canvas` | `DamageMeterUIController` | `NewCoreDamageMeterUIController` | retained open/close buttons and meter root; explicit Stage, Spawn, and tracker references |
+| `NewRunScene/UtilPanel` | `InGameUtilityPanelController` | `NewCoreUtilityPanelController` | input controller, auto/time buttons, and 1.5x/2x indicators |
+| `NewRunScene/Nexus` | `NexusActor` | `NexusActorBehaviour` | max health 20 and retained Nexus HP UI reference |
+| `NewMainMenu/Manager` | `UIManager` | `NewCoreMainMenuController` | three panels; intro/run/start and five monster buttons; retained run-scene path and default monster `eve` |
+| Five active monster prefabs | `MonsterActor` and animation controller | `MonsterActorBehaviour` and `MonsterAnimationBehaviour` | existing Transform, Collider, Animator, controller, idle/death state names, and attack-count values retained |
+| Sixteen active enemy prefabs | `EnemyActor` | `EnemyActorBehaviour` | existing Transform, Collider, Animator, and visual hierarchy retained |
+| Two active catalog-reachable skill visual prefabs, `Rin_D` and `Rin_E` | scriptless retained visual roots | `NewCoreEffectView` runtime instances | existing prefab hierarchy and visual resources retained; root-transform fallback is used when no visual actor exists |
+| Two retained but unreferenced Legacy visual prefabs, `Airel_A` and `Eve_A` | previous projectile visual actor | `SkillVisualActorBehaviour` | migration inventory retained and previous owner removed; zero active serialized callers |
+| Previous `CsvRuntimeCatalog.asset` runtime role | `Pakuri.Data.CsvRuntimeCatalog` | `Pakuri.NewCore.Presentation.Assets.NewCoreRuntimeCatalogAsset` at `Resources/Pakuri/NewCore/RuntimeCatalog.asset` | copied CSV, sprite, prefab, and AnimatorController references; added the three retained stage CSV references; production loader now uses only the new resource path |
+| Run-start static context | previous menu-to-run state | `RunStartSelectionAsset` | default monster `eve`; selected id is consumed once on new-run initialization |
+
+Evidence:
+
+- Production startup: `NewCoreSceneRuntime` loads only `Pakuri/NewCore/RuntimeCatalog` and `Pakuri/NewCore/RunStartSelection`, creates the immutable 42-source Catalog, Models, Stage, Spawn, Combat, actions, Services, Actors, and one central Unity `Update` that delegates the deterministic Core Tick.
+- Catalog migration: Unity AssetDatabase identifies `RuntimeCatalog.asset` as `Pakuri.NewCore.Presentation.Assets.NewCoreRuntimeCatalogAsset`; its bootstrap yields 42 source files, 1,836 Definitions, five monsters, and 16 enemies. The old catalog resource path has zero callers under the new presentation assembly.
+- Retained visual lookup contains 76 serialized path rows and 11 duplicate path keys. Identical path-to-object duplicates are merged; a conflicting duplicate throws instead of silently selecting a resource. The focused regression initializes sprite, prefab, and AnimatorController lookups.
+- Focused EditMode job `0a1ec07350ab4b8e92945f80f20a4b72`: five tests, three passed and two failed. Exact failures were missing explicit `stageManager` serialization on the run UI and missing main-menu panel serialization.
+- The two failure mappings were repaired in Unity: all required NewRun UI runtime references and damage-meter controls were explicitly connected; all three main-menu panels, three flow buttons, and five monster buttons were explicitly connected and both scenes were saved.
+- Focused re-run job `ae1c715c0d18403596bb231da2cf2c0b`: five passed, zero failed.
+- Resource-lookup regression job `b0fb4406ffac42dabe71f1dad4522e20`: five passed, zero failed.
+- Complete EditMode job `5ec9ba7c96bb4a55986b435c6c7502ad`: 77 completed, 77 passed, zero failures.
+- Both retained scenes passed Unity scene validation with zero issues, zero Missing Scripts, and zero broken prefabs.
+- Presentation tests load both scenes through the verified preview-scene API, all 23 active runtime prefabs, and the two retained but unreferenced Legacy visual prefabs through the verified prefab-contents API. They assert the exact new component types or clean scriptless runtime-visual roots, required serialized references, and zero Missing Scripts.
+- The 27 active serialized migration targets comprise two scenes, five monster prefabs, 16 enemy prefabs, the active catalog-reachable `Rin_D` and `Rin_E` visual prefabs, the new runtime catalog, and the run-selection asset. Previous Script GUID hits = 0 and previous active component identifier hits = 0. The retained Legacy `Airel_A` and `Eve_A` prefabs are separately classified as migrated but unreferenced inventory, not active runtime targets.
+- All 42 retained CSV size and SHA-256 values match the Phase 0 contract; mismatches = 0.
+- Presentation inventory: 46 files including generated metadata; missing `.meta` pairs = 0. Forbidden previous namespaces/loaders, `StartContext`, `SendMessage`, `TODO`, and `FIXME` matches = 0.
+- Empty visual fallback was removed. A non-empty unmapped runtime visual path now throws; a blank path creates no visual object.
+- The previous `CsvRuntimeCatalog.asset` and Legacy definition assets remain retained for the Phase 6 approval boundary, but no new runtime component loads or references them.
+- Code Reviewer loop 1 independently compiled the project, passed focused job `27d924f736b84638bf4caa36d38a7f69` at five of five and full job `4d9d4ab230194b65a7f75f68c90a15b5` at 77 of 77, then returned `FIX REQUIRED`: production lacked CombatStart and combat-end boundaries, defeated Enemy Actors remained registered and visible, signed damage deltas broke popups and the meter while hit reactions were unreachable, and runtime execution carried only a sprite path instead of the retained visual specification.
+- `InGameActionManager.BeginOrExtendCombat` now dispatches CombatStart exactly once for each current or later-spawned living unit, and `EndCombat` clears that set, all active or pending Skill Actors, Effects, observed-unit subscriptions, passives, and Trigger state. `NewCoreSceneRuntime` calls the start boundary after initial, delayed, and next-day spawns and calls the end boundary before reward or defeat presentation. Central Tick stops immediately if combat resolves during a monster, manual, enemy, or Skill Actor step.
+- `EnemyActorBehaviour` now owns its defeat visual boundary, disables every child Collider, and schedules its GameObject for destruction after the retained 0.95-second presentation delay in Play Mode. `NewCoreSpawnController` removes the defeated Model-to-Actor dictionary entry during the same synchronization pass.
+- `CombatResult.DamageAmount` is the single positive damage projection for health, shield, and lethal results. Both popup and meter consume it; the runtime invokes the Monster hit reaction only when the damaged Monster remains alive.
+- `EffectVisualSpec` is an immutable engine-independent boundary carrying prefab, sprite, AnimatorController, uniform or axis scale, and sorting order paths/values. Base skills, Trigger visuals, Effect graph visuals, and projectile impact visuals create handles with that complete data. `NewCoreEffectView` resolves and applies each retained mapping and throws on a non-empty unmapped resource.
+- Reviewer-repair focused job `47d510d75d6b47039e8e0d767d83d74b`: four passed and one failed because the test selected execute-threshold-gated `rin-d`; inspected CSV confirms `require_execute_threshold_to_cast=true`. The prefab regression was corrected to reachable non-threshold `rin-e`.
+- Final Reviewer-repair focused job `fa40a71aa1b54b60b1e583a35f28fe4f`: five passed, zero failed. It covers exactly-once/later-spawn CombatStart with reset, positive health/shield/lethal damage, reachable sprite/Animator/scale, prefab, and impact visual specifications, applied Unity sprite/controller/scale/sorting/prefab presentation, and defeated-Enemy collider shutdown. The subsequent real `sein-a-master-2` Trigger-visual assertion passed in job `e76edb38b2194e3ab7516692febfeebc`.
+- Two-day lifecycle regression job `b7ef6afa620b4b2f8f10f6dc1077f4d4`: one passed, zero failed. It proves active/pending effect cleanup at day-one resolution and a clean day-two combat boundary.
+- Final complete EditMode job `49d2eb5a2f8a407f88363636db3a257d`: 83 completed, 83 passed, zero failures or skips.
+- Code Reviewer loop 2 independently found four remaining integration blockers: synchronous Stage resolution could invoke combat cleanup before the lethal callback finished and then permit the callback to recreate actors/effects; an Enemy that contacted the Nexus remained registered because it was still alive; manual requests and projectile aim could cross the reward boundary; and the persisted UI auto-skill switch could disagree with the day-reset Model. The same inspection also corrected the active-prefab evidence: runtime lookup reaches `Rin_D` and `Rin_E`, while retained Legacy `Airel_A` and `Eve_A` have no active serialized caller.
+- `NewCoreSceneRuntime` now records synchronous combat resolution and performs `EndCombat` only after the current central Tick/callback boundary returns. Input capture runs only during active combat. `PlayerInputController.ResetCombatInput` clears queued manual requests and projectile aim at `EndCombat`. `NewCoreInputController.SynchronizeAutoSkillState` reapplies the retained UI switch after each Stage day reset.
+- `EnemyActorBehaviour` and `NewCoreSpawnController` now classify either defeat or Nexus contact as terminal presentation state; colliders are disabled and the Actor dictionary entry is pruned for both paths.
+- Reviewer-loop-2 repair job `653cf78452f345a092052400a01b5aa5`: four completed, four passed. It proves deferred lethal-callback cleanup with no actor/effect resurrection, input/aim clearing at combat end, Nexus-contact Actor shutdown, and corrected active/unreferenced prefab classification.
+- Latest complete EditMode job `592326c92d374cf99c30c6a4cea0fe47`: 85 completed, 85 passed, zero failures or skips.
+- Latest Phase 0 contract recomputation: all 42 retained CSV sizes and SHA-256 values match, the 27 active serialized targets contain zero previous Script GUID hits, the new Presentation and runtime-resource roots have zero missing `.meta` pairs, and retained Legacy `Airel_A` and `Eve_A` each have zero non-`.meta` GUID reference files under `Pakuri/Assets`.
+- Code Reviewer loop 2 independently passed focused job `e604f64d23ac46a58a15433ed4a39a0e` at five of five, full job `d8557ab5a0ae4fb38a6a45086274b489` at 85 of 85, forced compilation, Console, CSV, GUID, metadata, and static-boundary checks, then found one late code-path blocker: pruning a terminal Enemy Actor removed only the presentation dictionary entry while its retained `SpawnedEnemyRecord` caused `SyncNewSpawns` to instantiate and register the same terminal Model again on the next frame.
+- `NewCoreSpawnController.SyncNewSpawns` now rejects dead or Nexus-contacted Models before prefab resolution, instantiation, dictionary insertion, or `EnemyActionController` registration. Spawn records remain retained as run evidence and are not presentation authority.
+- Terminal-respawn regression job `66301310eccd42cf85ea9936d9b74605`: one completed, one passed. It executes initial spawn, Nexus-contact prune, Actor destruction, and two subsequent `SyncNewSpawns`/`SyncActors` passes while asserting that runtime-root child count, Actor lookup, and registered Enemy Controller count do not regrow.
+- Latest complete EditMode job `62b15aa3752144dfb34953a8c750ca7f`: 86 completed, 86 passed, zero failures or skips.
+- Code Reviewer loop 3 PASS: independent focused job `5fbb6da6581b4a6db5ed8efc842da2f8` completed six of six and independent full job `e8c3d1f9f2684926902724075a09ddf3` completed 86 of 86. Reviewer forced compilation and found zero Console errors or warnings; 42 CSV contracts, 27 active serialized targets, 46 Presentation files including 20 C# files, metadata pairs, forbidden-reference checks, and all five Phase 0 artifact hashes passed.
+
+Unity Before Log: Error/Exception/Warning entries = 0 before the Phase 5 presentation compilation and focused tests. One earlier MCP package bridge failure reported a disposed `NetworkStream`; the Editor remained responsive, was closed normally without force, and was relaunched. After reconnect, compilation and all project checks continued normally.
+
+Unity Compile Result: Unity 6000.3.14f1 imported `Pakuri.NewCore.Presentation.dll`, the new assets, both scene mappings, all 23 prefab mappings, and `Pakuri.NewCore.EditMode.Tests.dll`. The final requested script compilation returned with zero project compilation errors.
+
+Unity Error/Exception: 0 project-code entries after the final compile gate.
+
+Unity Warning: 0 after the final compile gate. Test Runner package-owned result and performance messages are cleared before final handoff.
+
+Play Mode: Not Run
+
+Play Mode Reason: Deterministic EditMode tests cannot prove actual Unity scene transition, Input System delivery, Animator playback, end-of-frame GameObject destruction, Canvas interaction, or player-visible visual timing. Phase 5 therefore requires one integrated user-owned run. Codex has not started Play Mode.
+
+Play Mode Scene: `Pakuri/Assets/Scenes/NewScene/NewMainMenu.unity`
+
+Play Mode Setup: Open the exact scene above, clear the Unity Console, keep the Game view focused for manual pointer input, then enter Play Mode.
+
+Play Mode Actions:
+
+1. Click `Intro/GameStart`, `MainMenuUI/RunBtn`, one monster button, and `MosterSelectUI/GameStart`. Confirm transition to `NewRunScene`.
+2. During day-one combat, use `AutoBtn` to turn automatic skill use off, press/hold/release the pointer on the battlefield for one manual action, turn automatic use on again, and cycle `TimeBtn`.
+3. Observe damage popup, damage meter, living-Monster hit reaction, spawned skill visuals/animation, Enemy defeat disappearance, and—if an Enemy reaches the Nexus—its disappearance without reappearing.
+4. After combat resolution, select one displayed reward. If a prisoner reward exists, exercise its manifestation popup and either `ChoiceBtn`, `DontChoiceBtn`, or the failure `Back` button. Use an occupied party slot once to open Offering and choose one of its three displayed candidates when available.
+5. Click `RewardPanel/NextBtn`. During day two, verify that no day-one manual request, projectile, Actor, or Effect fires or reappears and that the automatic-skill switch remains in its last selected state.
+
+Play Mode Expected: Both scenes transition without Missing Script or null-reference failures; the selected monster and enemies spawn; combat, movement, damage, skill visuals, Actor cleanup, reward, Offering, optional Manifestation, and next-day transition remain interactive; terminal Enemies and previous-day runtime objects do not regrow.
+
+Play Mode Failure: Any Console error or warning, stuck panel or day transition, missing selected unit/enemy/visual, negative or absent damage display, unreachable hit reaction, terminal Enemy reappearance, stale action/effect on day two, or auto-switch state drift is a failure.
+
+Play Mode LogCheck: On the first failure, stop Play Mode and report the failed action number plus the complete Unity Console error/warning and stack trace. If all actions complete and the Console remains empty, report `Phase 5 Play Mode PASS`.
+
+User Result: Pending.
+
+History: Code Builder replaced the active scene and prefab Script GUIDs with new presentation types, preserved the inspected resource and Inspector values, created a new-type runtime catalog through a one-time Unity Editor migration, removed that temporary migration tool, and connected missing UI references found by the first deterministic test run. The runtime catalog initially exposed a retained duplicate-path condition; lookup now merges only identical mappings and rejects conflicts. Code Reviewer loop 1 passed compilation and the existing 77 tests but found four untested production-wiring blockers. Code Builder connected exactly-once/later-spawn CombatStart and pre-reward EndCombat, added defeated-Enemy presentation cleanup, centralized positive damage reporting and living-Monster hit reactions, and replaced the one-path visual handle with complete prefab/sprite/Animator/scale/sorting plus impact and Trigger visual data. Reviewer loop 2 then found reentrant combat cleanup, Nexus-contact Actor retention, cross-boundary input state, auto-skill state drift, and an active-prefab evidence error. Code Builder deferred cleanup to the post-callback central-Tick boundary, cleared input state at combat end, synchronized the retained auto-skill switch after day reset, treated Nexus contact as terminal presentation state, and corrected the runtime-prefab inventory. Reviewer loop 2's final code-path pass found that a retained spawn record could recreate the pruned terminal Actor; Builder added a pre-instantiation terminal guard and a two-pass no-regrowth regression. Code Reviewer loop 3 independently passed focused, full-suite, compilation, Console, CSV, GUID, metadata, static-boundary, and Phase 0 artifact checks. Phase 5 static/reviewer gates pass; user Play Mode remains pending and Phase 6 has not started.
+
+## Phase Record — 2026-07-24 18:13 +09:00
+
+Task title: New Run Progression Flow — Code Reviewer Loop 1 Repairs
+
+Goals: Implement all three Reviewer loop-1 blockers: interpret retained guaranteed-prisoner source values from actual spawned bosses, protect the public day-start state transition, and bind RewardService to the current StageManager-owned SpawnManager.
+
+Constraints: Only Phase 4 Stage/Reward runtime paths, deterministic run-flow tests, the Phase 4 status, and this newest record changed. No UI, scene, prefab, `.asset`, visual resource, input, physics, retained CSV, Phase 0 artifact, BLACKBOARD-family file, or Phase 5/6 implementation changed. No other project Markdown was read or modified. Play Mode was not run.
+
+Role Owner: Code Builder; resubmitted to Code Reviewer loop 2.
+
+Status: PASS — Code Reviewer loop 2
+
+Next Actions: Code Reviewer independently rerun the three exact regressions, inspect their mutation ordering and retained source meanings, then rerun complete tests, hashes, static gates, compilation, and Console. Keep Phase 5 untouched until PASS.
+
+Changed Paths:
+
+- `Pakuri/Assets/Scripts/Run/StageManager.cs`
+- `Pakuri/Assets/Scripts/Run/Services/RewardService.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCoreRunFlowTests.cs`
+- `Pakuri/reference/Work/new-core-architecture-blueprint.md`
+
+Evidence:
+
+- Guaranteed source semantics: `EncounterBoss` selects the actual spawned record that is both `IsBoss` and from an `is_boss_candidate` row. `GuaranteedBoss` and `GuaranteedBossPool` select actual `IsBoss` records from `is_guaranteed_boss` rows. One record is selected uniformly from the resolved guaranteed pool and removed before the remaining prisoner slots are sampled.
+- Non-first boss regression: Spawn random index 1 selects `stage1-shieldbearer`, while the CSV row carrying the prior direct guarantee flag remains `stage1-swordsman`. The granted first prisoner is now the actual `stage1-shieldbearer` encounter boss.
+- State transition guard: `StartCurrentDay` rejects before mutation when combat is active or RewardState is Pending/Processing. Tests preserve the active field object, pending state, processing state, and granted Gold across rejected calls.
+- Spawn ownership: `StageManager` exposes only internal identity validation/current-source access. The compatibility overload of `RewardService.GenerateAndGrant(stage, spawns)` rejects a foreign SpawnManager before any reward mutation; the primary overload reads the StageManager-owned source directly.
+- Foreign-source regression proves Gold 0, DarkTrace 0, empty PrisonerInventory, and Pending state after rejection.
+- Phase 4 job `51ce77704ed944959e08a7761ee01ade`: 10 passed, 0 failed, 0 skipped.
+- Complete EditMode job `f98b7172a31d43369b180a257e280e91`: 72 passed, 0 failed, 0 skipped, duration 1.919 seconds, result `Passed`.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false`: 0 errors; only the known MCP assembly-version warning groups.
+- Retained CSV manifest: 42 rows, size/SHA-256 mismatches = 0.
+- Phase 4 isolation: 8 Run/Spawn C# files and 1,867 lines; forbidden engine, previous-runtime, scene-search, TODO/FIXME, and independent-Update matches = 0; missing `.meta` pairs = 0.
+- `git diff --check`: no whitespace errors.
+
+Unity Before Log: Unity was idle and not in Play Mode.
+
+Unity Compile Result: Forced script compilation completed successfully.
+
+Unity Error/Exception: 0 at the final Console gate.
+
+Unity Warning: 0 at the final Console gate.
+
+Play Mode: Not Run
+
+Play Mode Reason: All three blockers are pure retained-data interpretation, state-machine, and dependency-identity contracts. The exact deterministic regressions reproduce each failure without scene lifecycle behavior.
+
+User Result: Not requested for Phase 4.
+
+History: Reviewer loop 1 returned FIX REQUIRED after independently passing the original 7 Phase 4 and 69 complete tests. Code Builder changed the guarantee authority from the static encounter flag to the actual spawned boss set selected by each retained `guaranteed_prisoner_source`, blocked public day-start reentry during combat and reward handling, and bound reward input to the StageManager-owned SpawnManager. Code Reviewer loop 2 independently passed Phase 4 job `8f03e466a8c444c3a5d5a554ffb280cd` and complete job `ba159fa38aed412584e0a9ff49a39a23`, verified 42 retained hashes, five Phase 0 hashes, static isolation, metadata, diff, forced compile, and final Console zero, and returned PASS. Play Mode remains Phase 5 user-owned verification.
+
+## Phase Record — 2026-07-24 18:03 +09:00
+
+Task title: New Run Progression Flow
+
+Goals: Implement stage/day transitions, encounter spawn sequencing, combat victory and defeat, round reset, Reward, Offering, and Manifestation using only the verified Phase 1 Definitions, Phase 2 state authorities, and Phase 3 combat-completion signal.
+
+Constraints: Phase 4 is pure engine-independent runtime code and deterministic EditMode tests. No existing StageManager, RunSession, SpawnManager, UI Manager, or previous runtime type is called as a fallback. No UI, scene, prefab, `.asset`, visual resource, input polling, physics, retained CSV, Phase 0 artifact, BLACKBOARD-family file, or Phase 5/6 implementation changed. No other project Markdown was read or modified. Play Mode was not run.
+
+Role Owner: Code Builder; submitted to Code Reviewer.
+
+Status: FIX REQUIRED — Code Reviewer loop 1
+
+Next Actions: Code Reviewer independently inspect Stage/Spawn/Service ownership, exact retained row behavior, transition atomicity, equal candidate selection, consumption timing, recruit/skip flow, immediate placement, tests, hashes, compilation, and Console. Keep Phase 5 untouched until PASS.
+
+Changed Paths:
+
+- `Pakuri/Assets/Scripts/Run/RunSessionModel.cs`
+- `Pakuri/Assets/Scripts/Run/StageManager.cs`
+- `Pakuri/Assets/Scripts/Run/PartyRoster.cs`
+- `Pakuri/Assets/Scripts/Run/Services/RewardService.cs`
+- `Pakuri/Assets/Scripts/Run/Services/OfferingService.cs`
+- `Pakuri/Assets/Scripts/Run/Services/ManifestationService.cs`
+- `Pakuri/Assets/Scripts/Spawn/SpawnManager.cs`
+- `Pakuri/Assets/Scripts/Spawn/Pakuri.NewCore.Runtime.asmref`
+- `Pakuri/Assets/Scripts/Units/Models/EnemyModel.cs`
+- `Pakuri/Assets/Scripts/Combat/NewCore/InGameCombatManager.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCoreRunFlowTests.cs`
+- Unity-generated `.meta` files for the new Phase 4 directory and files
+- `Pakuri/reference/Work/new-core-architecture-blueprint.md`
+
+Evidence:
+
+- Run authority: only `RunSessionModel` stores current stage/day/encounter, reward state, and run result; its mutation commands are internal. `StageManager` is the only Gold/DarkTrace writer and owns current field membership and progression coordination.
+- Combat boundary: `StageManager.ConnectCombat` observes the Phase 3 `UnitDefeated` event. `InGameCombatManager.ApplyNexusDamage` now emits that same event exactly when a living Nexus becomes defeated. Pending spawns prevent premature victory.
+- Spawn sequence: encounter rows are sorted by `spawn_order`, expanded by required CSV `count`, and advanced with the exact `interval_sec`. The first entry spawns at day start; later entries are centrally Ticked. One normal `is_boss_candidate` row is selected uniformly, every `is_guaranteed_boss` row is a boss, and required CSV min/max multipliers and x/y ranges create the Model state.
+- Spawn ownership: `SpawnManager` resolves immutable Enemy/Monster Definitions and skill references, creates Models, and registers them through `StageManager`. It does not choose the day, calculate combat damage, or modify learning.
+- Reward flow: after all pending spawns are exhausted and all enemies are defeated, the session enters `Pending`. `RewardService` validates the active day/rule match, exact probabilities, currency values, and guaranteed-prisoner row before atomically entering `Processing`, granting through `StageManager`, and replacing `PrisonerInventory` rewards.
+- Offering flow: all currently eligible active, passive, enhancement, and master candidates are combined before one Fisher-Yates uniform shuffle; at most three are retained as one pending offer. There is no reroll API. Opening does not consume; confirming an eligible candidate mutates only its `MonsterSkillBucket` and then consumes the exact prisoner. An empty eligible list creates no pending offer and consumes nothing.
+- Manifestation flow: the exact held prisoner is consumed on a valid attempt before its result is exposed. Candidate monsters are every catalog player monster not already in the party, sorted only before uniform random selection. Failure keeps the prisoner consumed. Success remains pending for the existing recruit/skip UI decision; skip adds nothing, while confirmation creates the Model, appends the next `PartyRoster` slot, and immediately places it through `StageManager`→`SpawnManager`.
+- Round flow: reward completion clears remaining prisoners. The party is reset through each `MonsterModel.ResetForNextDay`, the next retained StageDay is selected, and its encounter begins. After stage 2 day 11, no next StageDay exists and the session becomes Victory.
+- Phase 4 job `409fe89caa214a39a19e918adf76e9f3`: 7 passed, 0 failed, 0 skipped.
+- Complete EditMode job `f86d57fa71bc466e8f48d1bd977a7a84`: 69 passed, 0 failed, 0 skipped, duration 1.776 seconds, result `Passed`.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false`: 0 errors; only the known MCP assembly-version warning groups.
+- Retained CSV contract: 42 rows, size/SHA-256 mismatches = 0.
+- Phase 4 isolation: 8 Run/Spawn C# files and 1,799 lines; forbidden `UnityEngine`, `MonoBehaviour`, `ScriptableObject`, `GameObject`, `SendMessage`, previous `Pakuri.InGame`, scene search, `TODO`, `FIXME`, or independent `Update()` matches = 0; missing `.meta` pairs = 0.
+- `git diff --check`: no whitespace errors.
+
+Unity Before Log: Unity 6000.3.14f1 was idle in `Assets/Scenes/NewScene/NewMainMenu.unity` and not in Play Mode.
+
+Unity Compile Result: Forced Asset refresh imported the new Runtime asmref and generated metadata, then a final forced script compilation completed.
+
+Unity Error/Exception: 0 at the final Console gate.
+
+Unity Warning: 0 at the final Console gate.
+
+Play Mode: Not Run
+
+Play Mode Reason: Phase 4 contains only deterministic run-state, scheduling, candidate-selection, and Service contracts. Scene objects, current UI, Actors, and visual resource connections remain Phase 5, so Play Mode would not prove an additional Phase 4 contract.
+
+User Result: Not requested for Phase 4.
+
+History: Code Builder first extended the verified Phase 2 state owners and added the Phase 3 Nexus-defeat signal. The initial command-line build could not see the newly added Spawn folder because Unity had not yet imported its asmref; a forced Asset refresh generated the project entries, after which compilation passed with zero errors. Seven Phase 4 tests then passed on their first run, and the complete suite passed 69 of 69. All retained hashes, metadata, isolation, diff, and final Console gates passed. Phase 4 is submitted to Code Reviewer; Phase 5 has not started.
+
+## Phase Record — 2026-07-24 17:46 +09:00
+
+Task title: New Combat Execution Loop — Code Reviewer Loop 3 Repair
+
+Goals: Ensure Rin-D applies its retained execute-health condition to target eligibility before `LowestHealth` ordering and target-count limiting, while preserving cast rejection and defeat-only cooldown behavior.
+
+Constraints: Only `SkillExecutionPlan`, the common Executor target-resolution boundary, the deterministic Phase 3 test class, the Phase 3 plan status, and this newest record changed. No Phase 4 implementation or retained data changed. No other project Markdown was read or modified. Play Mode was not run.
+
+Role Owner: Code Builder; resubmitted to Code Reviewer loop 4.
+
+Status: PASS — Code Reviewer loop 4
+
+Next Actions: Code Reviewer independently verify that target eligibility is applied before selection, rerun the mixed-target regression and complete EditMode suite, and return PASS or an exact remaining blocker. Keep Phase 4 untouched until PASS.
+
+Changed Paths:
+
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillExecutionPlan.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillExecutor.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCoreCombatLoopTests.cs`
+- `Pakuri/reference/Work/new-core-architecture-blueprint.md`
+
+Evidence:
+
+- Retained source rows: `rin-d` uses `LowestHealth` and `require_execute_threshold_to_cast=true`; its Plan owns `TargetHealthRatioCondition(0.30, true)`.
+- `SkillExecutionPlan.FilterTargets` now combines deployment-status and execute-health eligibility.
+- `SkillExecutor.ResolveTargets(request, plan)` now filters the registered candidate set before `SkillTargeting.Resolve` orders and limits it.
+- The new mixed-target regression registers a healthy `stage1-swordsman` at 100/100 and a qualifying `stage2-arsen` at 2000/8000. Rin-D leaves the lower absolute-health healthy target unchanged and damages the qualifying target.
+- Focused job `dfe1d931595249fd83257957f9e4abfe`: 1 passed, 0 failed.
+- Phase 3 class job `342a695d25a04d8094cbe5419da0caca`: 35 passed, 0 failed.
+- Complete EditMode job `b34466d30a5d42f4a9302c146fa33a03`: 62 passed, 0 failed, 0 skipped, duration 1.865 seconds, result `Passed`.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false`: 0 errors; two known MCP assembly-version conflict warning groups.
+- Retained CSV manifest: 42 rows, 0 size/hash mismatches.
+- Static isolation: 49 runtime C# files and 7,841 lines; 0 forbidden markers and 0 missing `.meta` files.
+- `git diff --check`: no whitespace errors.
+
+Unity Before Log: Unity was idle and not in Play Mode. A forced script compile briefly reloaded the MCP domain, after which the single `Pakuri@0c8eeeb5` instance reconnected normally.
+
+Unity Compile Result: Unity forced script compilation completed; compiler-filtered `CS` entries = 0.
+
+Unity Error/Exception: 0 at the final Console gate.
+
+Unity Warning: 0 at the final Console gate.
+
+Play Mode: Not Run
+
+Play Mode Reason: The blocker is a deterministic pure-runtime ordering contract. The mixed-target EditMode test directly reproduces the failure geometry and proves the repair; scene presentation and physics are unrelated.
+
+User Result: Not requested for Phase 3.
+
+History: Reviewer loop 3 returned FIX REQUIRED because the global cast gate could be opened by one execute-eligible enemy while `LowestHealth` selected a different healthy enemy with lower absolute HP. Code Builder applied the same eligibility predicate to the registered candidate set before target ordering, added the exact two-enemy regression, and retained the existing no-threshold, survivor cooldown, and kill cooldown assertions. Code Reviewer loop 4 independently passed focused job `62e686c17ef74e2d9537532eac16b9c6` and full EditMode job `07690a5a7ba04061bf42462ccbd0c26b` (62/62), verified retained hashes, static isolation, compilation, and final Console zero, and returned PASS. User-only integrated gameplay verification remains Phase 5 scope.
+
+## Phase Record — 2026-07-24 17:36 +09:00
+
+Task title: New Combat Execution Loop — Code Reviewer Loop 2 Repairs
+
+Goals: Close all six Phase 3 Reviewer loop-2 finding groups without widening into Phase 4: Vega status-qualified targeting, deployment, and per-stack damage; Rin execute threshold and defeat-only cooldown handling; per-skill status maximum stacks; retained `Area` runtime-kind matching; triggered Sein source-origin propagation; and movement-controller authority for knockback.
+
+Constraints: Only Phase 3 pure runtime code, the minimum existing model/status boundaries required by those findings, deterministic EditMode tests, the Phase 3 plan status, and this newest record changed. No Stage progression, Spawn, Reward, Offering, Manifestation, scene, prefab, `.asset`, UI, Unity input polling, Unity physics, retained CSV, Phase 0 artifact, BLACKBOARD-family file, or Phase 4 through Phase 6 implementation changed. No other project Markdown was read or modified. Play Mode was not run.
+
+Role Owner: Code Builder; resubmitted to Code Reviewer loop 3.
+
+Status: FIX REQUIRED — Code Reviewer loop 3
+
+Next Actions: Code Reviewer independently inspect the six repaired retained contracts, rerun the complete EditMode suite, verify retained CSV hashes and isolation, and inspect the Unity compile/Console gate. Keep Phase 4 untouched until Phase 3 receives PASS. If any blocker remains, return to Code Builder and continue the loop.
+
+Changed Paths:
+
+- `Pakuri/Assets/Scripts/Combat/Actions/NewCore/UnitMovementController.cs`
+- `Pakuri/Assets/Scripts/Combat/NewCore/InGameCombatManager.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillEffectGraphRuntime.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillExecutionPlan.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillExecutionRequest.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillExecutionRuntime.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillExecutor.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillTargeting.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/SkillTriggerDispatcher.cs`
+- `Pakuri/Assets/Scripts/Combat/Status/NewCore/StatusEffect.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCoreCombatLoopTests.cs`
+- `Pakuri/Assets/Scripts/Units/Models/UnitBaseModel.cs`
+- `Pakuri/reference/Work/new-core-architecture-blueprint.md`
+
+Evidence:
+
+- Vega status contracts: `HighestStacks` filters by the retained status id and minimum stacks; deployment filters require the configured target status; target-status stack damage consumes the retained base-damage and attack-power coefficients and resolves the configured status id.
+- Rin contracts: execute-required casts reject when no opposing non-Nexus target satisfies the retained health threshold. Cooldown refund/reset nodes execute only after a target is actually defeated, including delayed Actor damage.
+- Status stack cap: the skill-owned `status_max_stacks` value flows through combat and graph status application into `StatusEffect`; refresh remains atomic and clamps repeated applications to the effective cap.
+- Trigger contracts: retained `event_skill_runtime_kinds=Area` matches `AreaAttack` and `Field`; triggered skills notify activation with trigger ancestry and original source skill id, so Sein-G-triggered Sein-B activates the retained Sein-A reload trait without recursion.
+- Movement authority: knockback no longer writes `UnitBaseModel.SetPosition` from `SkillExecutor`; the only execution path is `UnitMovementController.Displace`.
+- Six exact regressions cover Vega qualified selection/deployment and stack damage, Rin execute/defeat-only cooldown behavior, Sein-E maximum stacks, Area-kind Vega-I cooldown refund, and triggered Sein source propagation.
+- Focused triggered-Sein job `fbc244840e4043ad84f877522498eb3b`: 1 passed, 0 failed.
+- Phase 3 combat-class job `3bd7b1714e7443aca50c58bf4480d349`: 34 passed, 0 failed.
+- Complete EditMode job `c77fe76efe4a42a7aca1718151fb4001`: 61 passed, 0 failed, 0 skipped, duration 1.863 seconds, result `Passed`.
+- Retained CSV contract: 42 manifest rows checked; size or SHA-256 mismatches = 0. The five Phase 0 artifact hashes remain `37A9D131...788`, `2E12342D...654`, `6AFD7D09...07C`, `D201C258...D90`, and `832BD377...654`.
+- Static isolation: 49 runtime C# files and 7,831 lines checked; forbidden `UnityEngine`, `MonoBehaviour`, `ScriptableObject`, `GameObject`, `SendMessage`, previous `Pakuri.InGame`, `TODO`, `FIXME`, and independent `Update()` matches = 0; missing `.meta` pairs = 0.
+- Knockback static gate: direct `SetPosition` matches in `SkillExecutor` = 0; controller `Displace` definition/call references = 2.
+- Temporary MCP recovery artifacts = 0. `git diff --check` reported no whitespace errors.
+
+Unity Before Log: Unity 6000.3.14f1 was idle in `Assets/Scenes/NewScene/NewMainMenu.unity`, not in Play Mode, with no test job active.
+
+Unity Compile Result: Forced Asset/Script refresh and requested compilation completed. The Editor returned to idle with no pending domain reload.
+
+Unity Error/Exception: Compiler-filtered Console entries matching `CS` = 0. The Unity-MCP package itself intermittently logged `Client handler error: Cannot access a disposed object`; this is transport-tool evidence, not a project script compiler diagnostic.
+
+Unity Warning: The complete test run emitted only Unity Test Framework/Performance Testing setup, result-save, and cleanup messages. No project-script warning was reported.
+
+Play Mode: Not Run
+
+Play Mode Reason: Every loop-2 finding is an engine-independent targeting, status, cooldown, Trigger-context, or movement-authority contract covered by deterministic EditMode tests and static ownership checks. Integrated scene presentation, real mouse polling, and Unity physics remain later-phase work, so Play Mode would not add evidence for this repair.
+
+User Result: Not requested for Phase 3.
+
+History: Reviewer loop 2 returned FIX REQUIRED after the previous 55-test pass. Code Builder kept Phase 4 untouched, repaired all six finding groups, and added exact regressions. An initial triggered-Sein regression exposed that a direct test damage call had not registered field units with the combat manager; the test now starts combat through the real registration boundary. A stale Unity-MCP test-job record was cleared through a temporary Editor-only recovery script, then that script and its generated metadata were removed. The focused regression, 34-test Phase 3 class, and 61-test complete suite all passed. All 42 retained CSV hashes matched, static isolation had zero forbidden markers and zero missing metadata, and the forced compile had zero `CS` diagnostics. Phase 3 is resubmitted for Code Reviewer loop 3.
 
 ## Phase Record — 2026-07-24 03:13 +09:00
 

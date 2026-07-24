@@ -32,6 +32,8 @@ namespace Pakuri.NewCore.Combat.Actions
             new List<MonsterActionController>();
         private readonly List<EnemyActionController> enemies =
             new List<EnemyActionController>();
+        private readonly HashSet<UnitBaseModel> combatStartedUnits =
+            new HashSet<UnitBaseModel>();
 
         public InGameActionManager(
             StageManager stageManager,
@@ -133,15 +135,27 @@ namespace Pakuri.NewCore.Combat.Actions
             for (int index = 0; index < monsters.Count; index++)
             {
                 monsters[index].TickAutomatic(units);
+                if (!canProgressCombat())
+                {
+                    return;
+                }
             }
             StepCompleted?.Invoke(CombatTickStep.AutomaticMonsters);
 
             playerInput.Process(units);
+            if (!canProgressCombat())
+            {
+                return;
+            }
             StepCompleted?.Invoke(CombatTickStep.ManualInput);
 
             for (int index = 0; index < enemies.Count; index++)
             {
                 enemies[index].Tick(deltaTime, units);
+                if (!canProgressCombat())
+                {
+                    return;
+                }
             }
             for (int index = enemies.Count - 1; index >= 0; index--)
             {
@@ -153,6 +167,10 @@ namespace Pakuri.NewCore.Combat.Actions
             StepCompleted?.Invoke(CombatTickStep.Enemies);
 
             skillActors.Tick(deltaTime);
+            if (!canProgressCombat())
+            {
+                return;
+            }
             StepCompleted?.Invoke(CombatTickStep.SkillActors);
 
             for (int index = 0; index < units.Count; index++)
@@ -166,8 +184,30 @@ namespace Pakuri.NewCore.Combat.Actions
             StepCompleted?.Invoke(CombatTickStep.PassiveAfter);
         }
 
+        public void BeginOrExtendCombat(
+            IReadOnlyList<UnitBaseModel> units)
+        {
+            if (units == null)
+            {
+                throw new ArgumentNullException(nameof(units));
+            }
+
+            for (int index = 0; index < units.Count; index++)
+            {
+                UnitBaseModel unit = units[index];
+                if (unit != null
+                    && unit.IsAlive
+                    && combatStartedUnits.Add(unit))
+                {
+                    combatManager.NotifyCombatStart(unit, units);
+                }
+            }
+        }
+
         public void EndCombat()
         {
+            combatStartedUnits.Clear();
+            playerInput.ResetCombatInput();
             skillActors.Clear();
             combatManager.EndCombat();
         }

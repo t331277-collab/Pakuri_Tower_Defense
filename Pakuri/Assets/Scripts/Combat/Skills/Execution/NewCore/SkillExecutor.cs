@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Pakuri.NewCore.Catalog;
+using Pakuri.NewCore.Combat.Actions;
 using Pakuri.NewCore.Combat.Effects;
 using Pakuri.NewCore.Combat.Skills.Actors;
 using Pakuri.NewCore.Definitions.Skills;
@@ -36,6 +37,9 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
 
         protected Func<float> RandomValue { get; }
 
+        private readonly UnitMovementController movement =
+            new UnitMovementController();
+
         public abstract bool Execute(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -54,26 +58,87 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             SkillExecutionRequest request,
             SkillExecutionPlan plan)
         {
-            return plan.FilterTargets(Targeting.Resolve(
+            return Targeting.Resolve(
                 request.Caster,
                 request.Skill,
-                request.RegisteredUnits,
+                plan.FilterTargets(request.RegisteredUnits),
                 request.TargetPoint,
-                plan.ResolveHitTargetCountBonus()));
+                plan.ResolveHitTargetCountBonus());
         }
 
         protected EffectHandle CreateEffect(
             SkillExecutionRequest request,
             UnitBaseModel target)
         {
-            string path = SkillTargeting.ReadString(
-                request.Skill,
-                "runtime_visual_sprite_path");
+            var visual = new EffectVisualSpec(
+                SkillTargeting.ReadString(
+                    request.Skill,
+                    "skill_effect_prefab_path"),
+                SkillTargeting.ReadString(
+                    request.Skill,
+                    "runtime_visual_sprite_path"),
+                SkillTargeting.ReadString(
+                    request.Skill,
+                    "runtime_visual_animator_controller_path"),
+                SkillTargeting.ReadFloat(
+                    request.Skill,
+                    "runtime_visual_scale"),
+                SkillTargeting.ReadFloat(
+                    request.Skill,
+                    "runtime_visual_scale_x"),
+                SkillTargeting.ReadFloat(
+                    request.Skill,
+                    "runtime_visual_scale_y"),
+                SkillTargeting.ReadFloat(
+                    request.Skill,
+                    "runtime_visual_scale_z"),
+                SkillTargeting.ReadInt(
+                    request.Skill,
+                    "runtime_visual_sorting_order"));
             CombatVector2 direction = request.AimDirection
                 ?? (target != null
                     ? target.Position - request.Caster.Position
                     : default);
-            return Effects.Create(path, request.Caster.Position, direction.Normalized);
+            return Effects.Create(
+                visual,
+                request.Caster.Position,
+                direction.Normalized);
+        }
+
+        protected void RegisterImpactEffect(
+            SkillExecutionRequest request,
+            UnitBaseModel target)
+        {
+            var visual = new EffectVisualSpec(
+                string.Empty,
+                SkillTargeting.ReadString(
+                    request.Skill,
+                    "runtime_impact_visual_sprite_path"),
+                SkillTargeting.ReadString(
+                    request.Skill,
+                    "runtime_impact_visual_animator_controller_path"),
+                SkillTargeting.ReadFloat(
+                    request.Skill,
+                    "runtime_impact_visual_scale"),
+                0f,
+                0f,
+                0f,
+                SkillTargeting.ReadInt(
+                    request.Skill,
+                    "runtime_impact_visual_sorting_order"));
+            if (!visual.HasResource)
+            {
+                return;
+            }
+
+            var effect = Effects.Create(
+                visual,
+                target.Position,
+                default);
+            Actors.Register(new BuffActor(
+                request.Skill,
+                0.1f,
+                effect));
         }
 
         protected void ApplyStatuses(
@@ -135,7 +200,23 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             bool isLastHit)
         {
             request.RecordAppliedTarget(target);
-            combat.ApplySkillDamage(
+            string stackStatusId = SkillTargeting.ReadString(
+                request.Skill,
+                "target_status_stack_status_id");
+            int stackCount = CountStatus(target, stackStatusId);
+            float stackBaseDamage = Math.Max(
+                0f,
+                SkillTargeting.ReadFloat(
+                    request.Skill,
+                    "target_status_stack_base_damage"))
+                * stackCount;
+            float stackAttackCoefficient = Math.Max(
+                0f,
+                SkillTargeting.ReadFloat(
+                    request.Skill,
+                    "target_status_stack_attack_power_coefficient"))
+                * stackCount;
+            CombatResult result = combat.ApplySkillDamage(
                 request.Caster,
                 target,
                 request.Skill,
@@ -143,7 +224,13 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 plan.ResolveCriticalChanceBonus(target),
                 plan.ResolveCriticalDamageBonus(target),
                 plan.IsExecuteConditionMet(target),
-                request.TriggerAncestry);
+                request.TriggerAncestry,
+                stackBaseDamage,
+                stackAttackCoefficient);
+            if (result.IsDefeated)
+            {
+                request.NotifyTargetDefeated(target);
+            }
 
             for (int index = 0; index < plan.Nodes.Count; index++)
             {
@@ -414,7 +501,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
-        private static void ApplyKnockback(
+        private void ApplyKnockback(
             SkillExecutionRequest request,
             SkillExecutionPlan plan,
             UnitBaseModel target)
@@ -426,7 +513,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             if (distance <= 0f || !target.CanMove) return;
             CombatVector2 direction =
                 (target.Position - request.Caster.Position).Normalized;
-            target.SetPosition(target.Position + (direction * distance));
+            movement.Displace(target, direction * distance);
         }
 
         private static void ReduceReload(
@@ -496,6 +583,9 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 1,
                 SkillTargeting.ReadInt(request.Skill, "status_stack_amount"));
             int stacks = plan.ResolveStatusStacks(statusId, baseStacks);
+            int maximumStacks = Math.Max(
+                0,
+                SkillTargeting.ReadInt(request.Skill, "status_max_stacks"));
             float duration = plan.ResolveStatusDuration(
                 statusId,
                 SkillTargeting.ReadFloat(request.Skill, "status_duration_seconds"));
@@ -505,7 +595,8 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 status,
                 duration > 0f ? duration : null,
                 stacks,
-                request.Skill.skill_id);
+                request.Skill.skill_id,
+                maximumStacks > 0 ? maximumStacks : (int?)null);
             request.RecordAppliedTarget(target);
             ApplyPlanStatusModifiers(
                 request,

@@ -39,6 +39,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             Triggers = new SkillTriggerDispatcher(
                 catalog,
                 actors,
+                effects,
                 randomValue,
                 effectGraphs);
             projectile = new ProjectileExecutor(catalog, targeting, actors, effects, randomValue);
@@ -157,6 +158,16 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
 
             SkillExecutor executor = ResolveExecutor(request.Skill);
+            Pakuri.NewCore.Combat.Skills.Runtime.SkillCooldown activeCooldown =
+                null;
+            bool cooldownStarted = false;
+            request.TargetDefeated = _ =>
+            {
+                if (cooldownStarted && activeCooldown != null)
+                {
+                    ApplyKillCooldownPlan(activeCooldown, plan);
+                }
+            };
             request.HitCompleted = _ =>
                 effectGraphs.ExecuteOwnedGraphs(
                     combat,
@@ -183,7 +194,13 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     throw new InvalidOperationException(
                         "A skill executed after its cooldown became unavailable.");
                 }
+                activeCooldown = cooldown;
                 ApplyCooldownPlan(cooldown, plan);
+                cooldownStarted = true;
+                if (request.DefeatedTargetCount > 0)
+                {
+                    ApplyKillCooldownPlan(cooldown, plan);
+                }
             }
             else if (!request.IsTriggered
                 && !(request.Skill is PassiveDefinition)
@@ -195,12 +212,22 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     throw new InvalidOperationException(
                         "A skill executed after its cooldown became unavailable.");
                 }
+                activeCooldown = cooldown;
                 ApplyCooldownPlan(cooldown, plan);
+                cooldownStarted = true;
+                if (request.DefeatedTargetCount > 0)
+                {
+                    ApplyKillCooldownPlan(cooldown, plan);
+                }
             }
 
-            if (!request.IsTriggered)
+            if (!(request.Skill is PassiveDefinition))
             {
-                combat.NotifySkillActivated(request.Caster, request.Skill);
+                combat.NotifySkillActivated(
+                    request.Caster,
+                    request.Skill,
+                    request.TriggerSourceSkillId,
+                    request.TriggerAncestry);
             }
             return true;
         }
@@ -230,6 +257,12 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             cooldown.ScaleCooldown(plan.ResolveCooldownMultiplier());
             cooldown.ScaleReload(plan.ResolveReloadMultiplier());
             cooldown.ScaleShotInterval(plan.ResolveShotIntervalMultiplier());
+        }
+
+        private static void ApplyKillCooldownPlan(
+            Pakuri.NewCore.Combat.Skills.Runtime.SkillCooldown cooldown,
+            SkillExecutionPlan plan)
+        {
             cooldown.ReduceCooldown(plan.ResolveCooldownRefundRatio());
             if (plan.ShouldResetCooldown())
             {

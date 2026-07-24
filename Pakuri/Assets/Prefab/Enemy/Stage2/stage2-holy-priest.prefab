@@ -462,9 +462,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 5070576057754673694}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c05d861bf6fd7644b8181d2145054c0a, type: 3}
+  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.EnemyActor
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour
 --- !u!61 &-3661308996850433528
 BoxCollider2D:
   m_ObjectHideFlags: 0

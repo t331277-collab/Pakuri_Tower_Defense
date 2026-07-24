@@ -190,7 +190,8 @@ namespace Pakuri.NewCore.Units.Models
             UnitBaseModel applyingUnit,
             float? durationSeconds = null,
             int? stackAmount = null,
-            string sourceSkillId = null)
+            string sourceSkillId = null,
+            int? maximumStacks = null)
         {
             if (definition == null)
             {
@@ -212,7 +213,10 @@ namespace Pakuri.NewCore.Units.Models
                         sourceSkillId,
                         StringComparison.Ordinal))
                 {
-                    existing.Refresh(durationSeconds, stackAmount);
+                    existing.Refresh(
+                        durationSeconds,
+                        stackAmount,
+                        maximumStacks);
                     return existing;
                 }
             }
@@ -224,7 +228,8 @@ namespace Pakuri.NewCore.Units.Models
                     this,
                     durationSeconds,
                     stackAmount,
-                    sourceSkillId);
+                    sourceSkillId,
+                    maximumStacks);
             statusEffects.Add(effect);
             return effect;
         }

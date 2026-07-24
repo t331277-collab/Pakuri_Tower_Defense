@@ -12,9 +12,26 @@ namespace Pakuri.NewCore.Units.Models
             SkillDefinition slotASkill,
             SkillDefinition slotBSkill,
             PassiveDefinition passiveSkill)
+            : this(
+                definition,
+                slotASkill,
+                slotBSkill,
+                passiveSkill,
+                1f)
+        {
+        }
+
+        public EnemyModel(
+            EnemyDefinition definition,
+            SkillDefinition slotASkill,
+            SkillDefinition slotBSkill,
+            PassiveDefinition passiveSkill,
+            float maximumHealthMultiplier)
             : base(
                 definition ?? throw new ArgumentNullException(nameof(definition)),
-                RequiredMaximumHealth(definition))
+                RequiredMaximumHealth(
+                    definition,
+                    maximumHealthMultiplier))
         {
             EnemyDefinition = definition;
             SkillBucket = new EnemySkillBucket(
@@ -51,17 +68,27 @@ namespace Pakuri.NewCore.Units.Models
             HasContactedNexus = false;
         }
 
-        private static float RequiredMaximumHealth(EnemyDefinition definition)
+        private static float RequiredMaximumHealth(
+            EnemyDefinition definition,
+            float multiplier)
         {
             if (definition == null)
             {
                 throw new ArgumentNullException(nameof(definition));
             }
 
-            return definition.max_health
+            if (multiplier <= 0f
+                || float.IsNaN(multiplier)
+                || float.IsInfinity(multiplier))
+            {
+                throw new ArgumentOutOfRangeException(nameof(multiplier));
+            }
+
+            return (definition.max_health
                 ?? throw new ArgumentException(
                     "Enemy definition has no max_health.",
-                    nameof(definition));
+                    nameof(definition)))
+                * multiplier;
         }
     }
 }

@@ -43,8 +43,9 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                         : skill == null ? nameof(skill) : nameof(registeredUnits));
             }
 
-            List<UnitBaseModel> candidates = BuildCandidates(source, skill, registeredUnits);
             string selection = ReadString(skill, "target_selection");
+            List<UnitBaseModel> candidates = BuildCandidates(source, skill, registeredUnits);
+            FilterBySelectionStatus(candidates, skill, selection);
             if (string.Equals(selection, "Self", StringComparison.Ordinal))
             {
                 return new[] { source };
@@ -57,7 +58,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
             else
             {
-                Sort(source, candidates, selection);
+                Sort(source, skill, candidates, selection);
             }
 
             if (string.Equals(selection, "RandomHostile", StringComparison.Ordinal)
@@ -131,6 +132,8 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             CombatVector2? manualTargetPoint = null)
         {
             List<UnitBaseModel> candidates = BuildCandidates(source, skill, registeredUnits);
+            string selection = ReadString(skill, "target_selection");
+            FilterBySelectionStatus(candidates, skill, selection);
             if (manualTargetPoint.HasValue)
             {
                 StableSort(candidates, (left, right) =>
@@ -138,7 +141,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
             else
             {
-                Sort(source, candidates, ReadString(skill, "target_selection"));
+                Sort(source, skill, candidates, selection);
             }
             return candidates.AsReadOnly();
         }
@@ -213,6 +216,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
 
         private static void Sort(
             UnitBaseModel source,
+            SkillDefinition skill,
             List<UnitBaseModel> candidates,
             string selection)
         {
@@ -244,7 +248,15 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 StableSort(candidates, (left, right) =>
                     CompareWithDistance(
                         source,
-                        CountStacks(right).CompareTo(CountStacks(left)),
+                        CountStacks(
+                            right,
+                            ReadString(skill, "target_selection_status_id"))
+                            .CompareTo(
+                                CountStacks(
+                                    left,
+                                    ReadString(
+                                        skill,
+                                        "target_selection_status_id"))),
                         left,
                         right));
                 return;
@@ -301,12 +313,47 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 (right.Position - center).SqrMagnitude);
         }
 
-        private static int CountStacks(UnitBaseModel unit)
+        private static void FilterBySelectionStatus(
+            List<UnitBaseModel> candidates,
+            SkillDefinition skill,
+            string selection)
+        {
+            if (!string.Equals(selection, "HighestStacks", StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            string statusId = ReadString(skill, "target_selection_status_id");
+            int minimum = Math.Max(
+                0,
+                ReadInt(skill, "target_selection_status_min_stacks"));
+            if (string.IsNullOrEmpty(statusId) || minimum <= 0)
+            {
+                return;
+            }
+
+            for (int index = candidates.Count - 1; index >= 0; index--)
+            {
+                if (CountStacks(candidates[index], statusId) < minimum)
+                {
+                    candidates.RemoveAt(index);
+                }
+            }
+        }
+
+        private static int CountStacks(UnitBaseModel unit, string statusId)
         {
             int stacks = 0;
             for (int index = 0; index < unit.StatusEffects.Count; index++)
             {
-                stacks += unit.StatusEffects[index].CurrentStacks;
+                if (string.IsNullOrEmpty(statusId)
+                    || string.Equals(
+                        unit.StatusEffects[index].Definition.status_effect_id,
+                        statusId,
+                        StringComparison.Ordinal))
+                {
+                    stacks += unit.StatusEffects[index].CurrentStacks;
+                }
             }
 
             return stacks;

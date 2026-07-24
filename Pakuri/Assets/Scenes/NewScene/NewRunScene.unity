@@ -365,7 +365,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties:
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -8780,7 +8780,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties:
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -11100,7 +11100,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties:
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -13896,12 +13896,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 876113828}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d22fb9398e834f6a9a6e679d07ce8d3a, type: 3}
+  m_Script: {fileID: 11500000, guid: a29b50b3033957d438458097cb36ab39, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.InGameUIManager
-  stageManager: {fileID: 0}
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.UI.NewCoreInGameUIController
+  stageManager: {fileID: 1427799829}
   unitSpawnManager: {fileID: 1427799830}
-  combatManager: {fileID: 0}
+  combatManager: {fileID: 1427799828}
   arielPrisonPortrait: {fileID: 21300000, guid: a2e16c5de6059e64bb11895b285e8b11, type: 3}
   evePrisonPortrait: {fileID: 21300000, guid: de0e751ccbfda1a458f5f515a15608d8, type: 3}
   rinPrisonPortrait: {fileID: 21300000, guid: b4fb27f479f6d8944af93a2bbf8fe325, type: 3}
@@ -13920,46 +13920,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 876113828}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9151dbd9ffdff0843af0f5520c32c3e6, type: 3}
+  m_Script: {fileID: 11500000, guid: 2bce5e2c5b698e14cae1e4849e349d9d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.DebugUI
-  debugRootPanel: {fileID: 0}
-  debugPanel: {fileID: 0}
-  debugModifiedPanel: {fileID: 0}
-  debugPassiveModifiedPanel: {fileID: 0}
-  openButton: {fileID: 0}
-  closeButton: {fileID: 0}
-  skillButtons:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  modifierOpenButtons:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  modifierCloseButton: {fileID: 0}
-  passiveModifierCloseButton: {fileID: 0}
-  traitButtons:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  masterButtons:
-  - {fileID: 0}
-  - {fileID: 0}
-  passiveTraitButtons:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  stageManager: {fileID: 0}
-  unitSpawnManager: {fileID: 1427799830}
-  combatManager: {fileID: 0}
-  monsterPanelUI: {fileID: 0}
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.UI.NewCoreDebugUIController
 --- !u!114 &876113835
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13969,26 +13932,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 876113828}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6d6960060ede04c418ac9f3f66dd9c40, type: 3}
+  m_Script: {fileID: 11500000, guid: 2f44f2a0207642e4c855b7ef2f79fdde, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.MonsterPanelUI
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.UI.NewCoreMonsterPanelUI
   monsterPanelRoot: {fileID: 1757950000}
-  monsterSlots:
-  - root: {fileID: 0}
-    monsterImage: {fileID: 0}
-    activeSlots: []
-  - root: {fileID: 0}
-    monsterImage: {fileID: 0}
-    activeSlots: []
-  - root: {fileID: 0}
-    monsterImage: {fileID: 0}
-    activeSlots: []
-  - root: {fileID: 0}
-    monsterImage: {fileID: 0}
-    activeSlots: []
-  - root: {fileID: 0}
-    monsterImage: {fileID: 0}
-    activeSlots: []
   stageManager: {fileID: 1427799829}
   unitSpawnManager: {fileID: 1427799830}
   combatManager: {fileID: 1427799828}
@@ -14001,50 +13948,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 876113828}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c5f0b359223168647a934e081f9b53e1, type: 3}
+  m_Script: {fileID: 11500000, guid: fe27bd183c0d2764d81180df525dbe02, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.DamageMeterUIController
-  openButton: {fileID: 0}
-  meterRoot: {fileID: 0}
-  closeButton: {fileID: 0}
-  panels:
-  - root: {fileID: 0}
-    monsterImage: {fileID: 0}
-    monsterNameText: {fileID: 0}
-    totalDamageText: {fileID: 0}
-    totalDamagePercentText: {fileID: 0}
-    meterBackground: {fileID: 0}
-    meterTemplate: {fileID: 0}
-  - root: {fileID: 0}
-    monsterImage: {fileID: 0}
-    monsterNameText: {fileID: 0}
-    totalDamageText: {fileID: 0}
-    totalDamagePercentText: {fileID: 0}
-    meterBackground: {fileID: 0}
-    meterTemplate: {fileID: 0}
-  - root: {fileID: 0}
-    monsterImage: {fileID: 0}
-    monsterNameText: {fileID: 0}
-    totalDamageText: {fileID: 0}
-    totalDamagePercentText: {fileID: 0}
-    meterBackground: {fileID: 0}
-    meterTemplate: {fileID: 0}
-  - root: {fileID: 0}
-    monsterImage: {fileID: 0}
-    monsterNameText: {fileID: 0}
-    totalDamageText: {fileID: 0}
-    totalDamagePercentText: {fileID: 0}
-    meterBackground: {fileID: 0}
-    meterTemplate: {fileID: 0}
-  - root: {fileID: 0}
-    monsterImage: {fileID: 0}
-    monsterNameText: {fileID: 0}
-    totalDamageText: {fileID: 0}
-    totalDamagePercentText: {fileID: 0}
-    meterBackground: {fileID: 0}
-    meterTemplate: {fileID: 0}
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.UI.NewCoreDamageMeterUIController
+  openButton: {fileID: 1864507816}
+  meterRoot: {fileID: 1317592848}
+  closeButton: {fileID: 1245565942}
+  stageManager: {fileID: 1427799829}
   unitSpawnManager: {fileID: 1427799830}
-  tracker: {fileID: 0}
+  tracker: {fileID: 876113837}
 --- !u!114 &876113837
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14054,9 +13966,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 876113828}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8474f78509600a145be3ca0cf353f6b7, type: 3}
+  m_Script: {fileID: 11500000, guid: c5941ffe8ee82574d86feeb206b24003, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.DamageMeterRuntimeTracker
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.UI.NewCoreDamageMeterTracker
   combatManager: {fileID: 1427799828}
 --- !u!1 &876894091
 GameObject:
@@ -14242,9 +14154,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 884072281}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b1158f7e84cec17449b6b904dd152208, type: 3}
+  m_Script: {fileID: 11500000, guid: 54c99cf97c7c1254e8f171e928b4f75d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.InGameUtilityPanelController
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.UI.NewCoreUtilityPanelController
   playerCombatControl: {fileID: 1427799832}
   autoButton: {fileID: 2022552815}
   timeButton: {fileID: 1183382878}
@@ -23559,12 +23471,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1427799825}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e5cf78d9a8db4994f8aeb5777b434ca4, type: 3}
+  m_Script: {fileID: 11500000, guid: 5bc74f204a88b16499661050ce2eee8b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.InGameCombatManager
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Scene.NewCoreSceneRuntime
   enemyCombatSimulationEnabled: 1
   skillExecutionEnabled: 1
-  logEnemyAttackAttempts: 0
   playerCombatControl: {fileID: 1427799832}
   effectManager: {fileID: 1427799831}
 --- !u!114 &1427799829
@@ -23576,9 +23487,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1427799825}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c2fbcf1f36342aca23eac2221b2c1e8, type: 3}
+  m_Script: {fileID: 11500000, guid: fa9a3193209459a4d9b2e27b12b3e0e8, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.StageManager
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Scene.NewCoreStageController
   combatManager: {fileID: 1427799828}
   unitSpawnManager: {fileID: 1427799830}
   stageDayCsv: {fileID: 4900000, guid: 1f0de32c2b7b4d2da2e4b9340af2db31, type: 3}
@@ -23604,13 +23515,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1427799825}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fa013f8b8851bec4882efe505f98b801, type: 3}
+  m_Script: {fileID: 11500000, guid: 119dd9f412ed3074ab18f6e8ac562b9d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.UnitSpawnManager
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Scene.NewCoreSpawnController
   combatManager: {fileID: 1427799828}
   playerSpawnPoint: {fileID: 1137822058}
   enemySpawnPoint: {fileID: 1902957069}
-  runtimeObjectRoot: {fileID: 1773081075}
   runtimeEnemyRoot: {fileID: 727702651}
   runtimeMonsterRoot: {fileID: 1094400654}
   arielUnitPrefab: {fileID: 4596420534878418281, guid: 6cab17e3f2f1775429ecb9a204438d9a, type: 3}
@@ -23660,9 +23570,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1427799825}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6fec4b2c224aa0446865c1fdfbe54db2, type: 3}
+  m_Script: {fileID: 11500000, guid: 748fd1c9d9b75de40b51291026eb4180, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.EffectManager
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Scene.NewCoreEffectView
   runtimeSkillRoot: {fileID: 502722560}
 --- !u!114 &1427799832
 MonoBehaviour:
@@ -23673,9 +23583,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1427799825}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 41ecde25977bf7845bc0a35ca15d7982, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.PlayerCombatControl
+  m_Script: {fileID: 11500000, guid: 4717eeab25417eb4eba081006c884d45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Scene.NewCoreInputController
   inputCamera: {fileID: 1824280075}
   autoSkillEnabled: 0
 --- !u!1 &1437384833
@@ -26955,7 +26865,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties:
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -28555,9 +28465,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1747029712}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62b7ebc9d88913a42a508dc290bb8200, type: 3}
+  m_Script: {fileID: 11500000, guid: dde153838e2141945aa1f7cc523f7717, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.NexusActor
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.NexusActorBehaviour
   maxHealth: 20
   nexusHpInfo: {fileID: 1017704295}
 --- !u!61 &1747029716
@@ -29075,7 +28985,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties:
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:

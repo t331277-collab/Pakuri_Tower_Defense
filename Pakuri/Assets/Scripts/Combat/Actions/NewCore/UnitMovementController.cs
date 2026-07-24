@@ -39,6 +39,28 @@ namespace Pakuri.NewCore.Combat.Actions
             return CombatVector2.Distance(unit.Position, target) <= stopDistance;
         }
 
+        public bool Displace(UnitBaseModel unit, CombatVector2 displacement)
+        {
+            if (unit == null)
+            {
+                throw new ArgumentNullException(nameof(unit));
+            }
+            if (float.IsNaN(displacement.X)
+                || float.IsInfinity(displacement.X)
+                || float.IsNaN(displacement.Y)
+                || float.IsInfinity(displacement.Y))
+            {
+                throw new ArgumentOutOfRangeException(nameof(displacement));
+            }
+            if (!unit.IsAlive || !unit.CanMove || displacement.SqrMagnitude <= 0f)
+            {
+                return false;
+            }
+
+            unit.SetPosition(unit.Position + displacement);
+            return true;
+        }
+
         private static void ValidateNonNegativeFinite(float value, string parameterName)
         {
             if (value < 0f || float.IsNaN(value) || float.IsInfinity(value))

@@ -171,6 +171,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 3285557362087739772}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4cb11314ef724784ca84aca6623f5d29, type: 3}
+  m_Script: {fileID: 11500000, guid: c29622d2ef50bc34e953b2cd9876644f, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::Pakuri.InGame.InGameProjectileActor
+  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.SkillVisualActorBehaviour

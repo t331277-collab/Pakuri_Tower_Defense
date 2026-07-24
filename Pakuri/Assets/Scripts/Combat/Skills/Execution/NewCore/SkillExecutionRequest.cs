@@ -51,8 +51,14 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
 
         internal Action<UnitBaseModel> HitCompleted { get; set; }
 
+        internal Action<UnitBaseModel> TargetDefeated { get; set; }
+
+        internal int DefeatedTargetCount { get; private set; }
+
         internal IReadOnlyCollection<string> TriggerAncestry =>
             triggerAncestry;
+
+        internal string TriggerSourceSkillId { get; private set; }
 
         public void SetEventTarget(UnitBaseModel target)
         {
@@ -74,9 +80,16 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             HitCompleted?.Invoke(target);
         }
 
+        internal void NotifyTargetDefeated(UnitBaseModel target)
+        {
+            DefeatedTargetCount++;
+            TargetDefeated?.Invoke(target);
+        }
+
         internal void InheritTriggerAncestry(
             IReadOnlyCollection<string> ancestors,
-            string triggerId)
+            string triggerId,
+            string sourceSkillId = null)
         {
             if (ancestors != null)
             {
@@ -91,6 +104,10 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             if (!string.IsNullOrEmpty(triggerId))
             {
                 triggerAncestry.Add(triggerId);
+            }
+            if (!string.IsNullOrEmpty(sourceSkillId))
+            {
+                TriggerSourceSkillId = sourceSkillId;
             }
         }
     }

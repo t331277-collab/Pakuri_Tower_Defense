@@ -193,7 +193,8 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                                 targets,
                                 node.arg_1,
                                 NullableNumber(node.arg_4),
-                                NullableInt(node.arg_6));
+                                NullableInt(node.arg_6),
+                                NullableInt(node.arg_5));
                         }
                         break;
                     case "ApplyShield":
@@ -220,6 +221,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     case "RecastZone":
                         ScheduleRecast(combat, request, node);
                         break;
+                    case "EffectVisual":
                     case "RuntimeEffectVisual":
                         CreateVisual(request, targets, node, lifetime);
                         break;
@@ -353,7 +355,8 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             List<UnitBaseModel> targets,
             string statusId,
             float? duration,
-            int? stacks)
+            int? stacks,
+            int? maximumStacks = null)
         {
             if (string.IsNullOrEmpty(statusId)
                 || !catalog.Statuses.TryGetValue(statusId, out var status))
@@ -370,7 +373,8 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                         status,
                         duration,
                         stacks,
-                        request.Skill.skill_id);
+                        request.Skill.skill_id,
+                        maximumStacks);
                 }
             }
         }
@@ -463,8 +467,24 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             float lifetime)
         {
             UnitBaseModel target = targets.Count > 0 ? targets[0] : null;
+            if (target == null)
+            {
+                return;
+            }
+
+            bool prefabVisual =
+                node.node_type_id == "EffectVisual";
+            var visual = new EffectVisualSpec(
+                prefabVisual ? node.arg_1 : string.Empty,
+                prefabVisual ? string.Empty : node.arg_1,
+                prefabVisual ? string.Empty : node.arg_2,
+                prefabVisual ? 1f : Number(node.arg_3, 1f),
+                0f,
+                0f,
+                0f,
+                prefabVisual ? 0 : Integer(node.arg_4, 0));
             EffectHandle effect = effects.Create(
-                node.arg_1,
+                visual,
                 target.Position,
                 (target.Position - request.Caster.Position).Normalized);
             actors.Register(new BuffActor(
@@ -744,6 +764,17 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 NumberStyles.Float,
                 CultureInfo.InvariantCulture,
                 out float parsed)
+                ? parsed
+                : fallback;
+        }
+
+        private static int Integer(string value, int fallback)
+        {
+            return int.TryParse(
+                value,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out int parsed)
                 ? parsed
                 : fallback;
         }

@@ -95,6 +95,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                                 isLastProjectile);
                             ApplyStatuses(combat, request, plan, hitTarget);
                             CompleteHit(request, hitTarget);
+                            RegisterImpactEffect(request, hitTarget);
                             if (isLastProjectile
                                 && !lastHitNotified
                                 && IsMagazineEmpty(request))
@@ -143,6 +144,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                                 followUpIndex == followUpCount - 1);
                             ApplyStatuses(combat, request, plan, hitTarget);
                             CompleteHit(request, hitTarget);
+                            RegisterImpactEffect(request, hitTarget);
                         },
                         CreateEffect(request, target),
                         Effects)),
