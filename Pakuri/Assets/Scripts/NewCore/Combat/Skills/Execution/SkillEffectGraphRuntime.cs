@@ -8,6 +8,7 @@ using Pakuri.NewCore.Definitions.Choices;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Units.Models;
 
+/* 선택지와 트리거가 소유한 효과 그래프를 해석해 전투 효과로 실행한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
     public sealed class SkillEffectGraphRuntime
@@ -18,6 +19,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         private readonly Func<float> randomValue;
         private readonly Action<ChoiceNodeDefinition> nodeConsumed;
 
+        /* 효과 그래프 실행에 필요한 카탈로그와 런타임 서비스를 저장한다. */
         public SkillEffectGraphRuntime(
             GameDefinitionCatalog catalog,
             SkillActorManager actors,
@@ -32,6 +34,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             this.nodeConsumed = nodeConsumed;
         }
 
+        /* 시전자가 학습한 선택지 중 현재 스킬 소유 효과 그래프를 실행한다. */
         public void ExecuteOwnedGraphs(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -69,6 +72,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 effectTiming: effectTiming);
         }
 
+        /* 선택지의 대상 스킬 식별자가 현재 실행 스킬과 일치하는지 확인한다. */
         private bool ChoiceTargetsSkill(
             string choiceId,
             string skillId)
@@ -89,6 +93,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return false;
         }
 
+        /* 지정 트리거가 소유한 효과 그래프를 실행한다. */
         public void ExecuteTriggerGraph(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -107,6 +112,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 requiredOwnerKind: ownerKind);
         }
 
+        /* 소유자 종류와 식별자가 일치하는 노드를 그래프별로 묶어 실행한다. */
         private void ExecuteGraphs(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -168,6 +174,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 하나의 정렬된 효과 그래프를 조건, 대상, 효과 순서로 해석한다. */
         private void ExecuteGraph(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -357,6 +364,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 효과 피해 노드의 수치와 지연을 계산해 대상들에게 피해를 적용한다. */
         private void ApplyEffectDamage(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -397,6 +405,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 Math.Max(0f, delay)));
         }
 
+        /* 보호막 노드의 대상, 양, 지속시간을 계산해 적용한다. */
         private void ApplyShield(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -478,6 +487,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 상태 노드와 연결된 수정 노드를 해석해 대상에게 상태를 적용한다. */
         private void ApplyStatus(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -563,6 +573,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 상태 수정 노드의 값을 상태 효과 인스턴스에 추가한다. */
         private static void AddModifier(
             SkillExecutionRequest request,
             List<UnitBaseModel> targets,
@@ -582,6 +593,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 상태 수정 노드의 값을 대상 기준 수정치로 추가한다. */
         private static void AddModifierToTarget(
             SkillExecutionRequest request,
             UnitBaseModel target,
@@ -614,6 +626,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 node.arg_3);
         }
 
+        /* 노드의 대상 진영 설정이 아군을 가리키는지 확인한다. */
         private static bool TargetsAllies(
             IReadOnlyList<ChoiceNodeDefinition> graph)
         {
@@ -633,6 +646,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return false;
         }
 
+        /* 대상의 지정 상태 지속시간을 노드 값만큼 연장한다. */
         private static void ExtendStatus(
             List<UnitBaseModel> targets,
             string statusId,
@@ -656,6 +670,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 재시전 노드가 지정한 지연 후 같은 스킬 요청을 다시 실행한다. */
         private void ScheduleRecast(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -682,6 +697,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 Math.Max(0f, Number(node.arg_2, 0f))));
         }
 
+        /* 런타임 비주얼 노드의 이펙트를 만들고 생명주기를 등록한다. */
         private void CreateVisual(
             SkillExecutionRequest request,
             List<UnitBaseModel> targets,
@@ -715,6 +731,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 effect));
         }
 
+        /* 그래프에 포함된 모든 조건 노드가 현재 실행 문맥을 통과하는지 확인한다. */
         private static bool PassesConditions(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -755,6 +772,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return true;
         }
 
+        /* 스킬 속성 조건과 일치하는 경우에만 대상 목록을 유지한다. */
         private static bool FilterTargetsBySkillAttribute(
             List<ChoiceNodeDefinition> graph,
             List<UnitBaseModel> targets)
@@ -788,6 +806,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return targets.Count > 0;
         }
 
+        /* 상태 조건식과 일치하는 대상만 목록에 남긴다. */
         private static bool FilterTargetsByStatusConditions(
             List<ChoiceNodeDefinition> graph,
             List<UnitBaseModel> targets)
@@ -823,6 +842,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return !hasTargetCondition || targets.Count > 0;
         }
 
+        /* 단일 상태 조건 노드가 대상의 상태와 일치하는지 확인한다. */
         private static bool MatchesStatusCondition(
             UnitBaseModel target,
             ChoiceNodeDefinition node)
@@ -868,6 +888,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return true;
         }
 
+        /* 시전자가 지정 속성을 가진 활성 스킬을 학습했는지 확인한다. */
         private static bool HasLearnedActiveAttribute(
             UnitBaseModel unit,
             string attribute)
@@ -897,6 +918,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return false;
         }
 
+        /* 대상이 지정 상태를 최소 스택 이상 보유하는지 확인한다. */
         private static bool HasStatus(
             UnitBaseModel unit,
             string statusId,
@@ -926,6 +948,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return stacks >= minimumStacks;
         }
 
+        /* 효과 대상 규칙과 중심점, 범위, 최대 수를 사용해 대상을 선정한다. */
         private static List<UnitBaseModel> ResolveTargets(
             SkillExecutionRequest request,
             List<ChoiceNodeDefinition> graph)
@@ -1001,6 +1024,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return targets;
         }
 
+        /* 원래 순서를 보조 기준으로 유지하며 중심점 거리순으로 정렬한다. */
         private static void StableSortByDistance(
             List<UnitBaseModel> targets,
             CombatVector2 center)
@@ -1021,6 +1045,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 유닛이 제외 대상 목록에 들어 있는지 확인한다. */
         private static bool IsExcluded(
             UnitBaseModel caster,
             string excludedChoiceId)
@@ -1043,6 +1068,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return false;
         }
 
+        /* 그래프 노드에서 이펙트 생존시간을 읽는다. */
         private static float ReadLifetime(
             List<ChoiceNodeDefinition> graph)
         {
@@ -1056,6 +1082,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return 0f;
         }
 
+        /* 그래프 노드에서 대상별 적용 지연을 읽는다. */
         private static float ReadTargetDelay(
             List<ChoiceNodeDefinition> graph)
         {
@@ -1069,6 +1096,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return 0f;
         }
 
+        /* 그래프 노드에서 이펙트 생성 시점 설정을 읽는다. */
         private static string ReadEffectTiming(
             List<ChoiceNodeDefinition> graph)
         {
@@ -1082,6 +1110,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return null;
         }
 
+        /* 그래프 노드에서 런타임 종류 필터를 읽는다. */
         private static string ReadRuntimeKindFilter(
             List<ChoiceNodeDefinition> graph)
         {
@@ -1095,6 +1124,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return null;
         }
 
+        /* 문자열을 고정 문화권 실수로 변환하고 실패하면 기본값을 반환한다. */
         private static float Number(string value, float fallback)
         {
             return float.TryParse(
@@ -1106,6 +1136,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 : fallback;
         }
 
+        /* 문자열을 고정 문화권 정수로 변환하고 실패하면 기본값을 반환한다. */
         private static int Integer(string value, int fallback)
         {
             return int.TryParse(
@@ -1117,6 +1148,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 : fallback;
         }
 
+        /* 문자열을 실수로 변환하고 실패하면 null을 반환한다. */
         private static float? NullableNumber(string value)
         {
             return float.TryParse(
@@ -1128,6 +1160,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 : (float?)null;
         }
 
+        /* 문자열을 정수로 변환하고 실패하면 null을 반환한다. */
         private static int? NullableInt(string value)
         {
             return int.TryParse(

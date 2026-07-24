@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Units.Models;
 
+/* 한 번의 스킬 실행에 필요한 시전자, 대상, 트리거 문맥과 실행 결과를 운반한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
     public sealed class SkillExecutionRequest
     {
+        /* 스킬 실행에 필요한 불변 입력값을 저장한다. */
         public SkillExecutionRequest(
             UnitBaseModel caster,
             SkillDefinition skill,
@@ -60,11 +62,13 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
 
         internal string TriggerSourceSkillId { get; private set; }
 
+        /* 현재 전투 이벤트가 가리키는 대상을 지정한다. */
         public void SetEventTarget(UnitBaseModel target)
         {
             EventTarget = target;
         }
 
+        /* 효과가 적용된 대상을 중복 없이 실행 결과에 기록한다. */
         internal void RecordAppliedTarget(UnitBaseModel target)
         {
             if (target != null && !appliedTargets.Contains(target))
@@ -73,6 +77,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 적중 대상을 기록하고 적중 완료 콜백을 호출한다. */
         internal void NotifyHitCompleted(UnitBaseModel target)
         {
             RecordAppliedTarget(target);
@@ -80,12 +85,14 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             HitCompleted?.Invoke(target);
         }
 
+        /* 처치 수를 증가시키고 대상 처치 콜백을 호출한다. */
         internal void NotifyTargetDefeated(UnitBaseModel target)
         {
             DefeatedTargetCount++;
             TargetDefeated?.Invoke(target);
         }
 
+        /* 상위 트리거 경로와 발동 원본 스킬을 현재 요청에 상속한다. */
         internal void InheritTriggerAncestry(
             IReadOnlyCollection<string> ancestors,
             string triggerId,

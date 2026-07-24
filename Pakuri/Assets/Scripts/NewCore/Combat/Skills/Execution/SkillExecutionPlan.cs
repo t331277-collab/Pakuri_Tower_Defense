@@ -6,6 +6,7 @@ using Pakuri.NewCore.Definitions.Choices;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Units.Models;
 
+/* 학습한 선택 노드를 스킬 실행에 사용할 수치, 조건, 대상 규칙으로 해석한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
     internal sealed class SkillExecutionPlan
@@ -16,6 +17,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         private readonly IReadOnlyList<UnitBaseModel> units;
         private readonly Action<ChoiceNodeDefinition> nodeConsumed;
 
+        /* 선택 노드와 실행 문맥을 하나의 실행 계획으로 저장한다. */
         private SkillExecutionPlan(
             List<ChoiceNodeDefinition> nodes,
             UnitBaseModel caster,
@@ -30,6 +32,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             this.nodeConsumed = nodeConsumed;
         }
 
+        /* 시전자가 학습한 선택지에서 현재 스킬에 속한 계획 노드를 수집한다. */
         public static SkillExecutionPlan Create(
             GameDefinitionCatalog catalog,
             UnitBaseModel caster,
@@ -106,6 +109,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 nodeConsumed);
         }
 
+        /* 선택지의 대상 스킬 식별자가 현재 스킬과 일치하는지 확인한다. */
         private static bool ChoiceTargetsSkill(
             GameDefinitionCatalog catalog,
             string choiceId,
@@ -127,6 +131,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return false;
         }
 
+        /* 대상과 현재 적중 문맥에 맞는 모든 피해 배율 노드를 계산한다. */
         public float ResolveDamageMultiplier(
             UnitBaseModel target,
             int hitIndex = 0,
@@ -216,6 +221,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return multiplier;
         }
 
+        /* 실행 전제 조건 노드가 현재 시전자 상태에서 충족되는지 확인한다. */
         public bool CanExecute()
         {
             for (int index = 0; index < nodes.Count; index++)
@@ -255,6 +261,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return true;
         }
 
+        /* 대상 조건과 실행 체력 조건을 충족하는 유닛만 남긴다. */
         public IReadOnlyList<UnitBaseModel> FilterTargets(
             IReadOnlyList<UnitBaseModel> candidates)
         {
@@ -298,21 +305,25 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return result.AsReadOnly();
         }
 
+        /* 피해 지연시간 배율 노드의 누적 곱을 반환한다. */
         public float ResolveDamageDelayMultiplier()
         {
             return Product("DamageDelayMultiplier");
         }
 
+        /* 넉백 거리 배율 노드의 누적 곱을 반환한다. */
         public float ResolveKnockbackMultiplier()
         {
             return Product("KnockbackDistanceMultiplier");
         }
 
+        /* 탄창 증가 노드의 정수 합을 반환한다. */
         public int ResolveMagazineBonus()
         {
             return IntegerSum("MagazineBonus");
         }
 
+        /* 기본 반경에 반경 보너스와 배율 노드를 적용한다. */
         public float ResolveRadius(float baseRadius)
         {
             float multiplier = 1f;
@@ -336,6 +347,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return Math.Max(0f, (baseRadius * multiplier) + bonus);
         }
 
+        /* 기본 지속시간에 지속시간 보너스와 배율 노드를 적용한다. */
         public float ResolveDuration(float baseDuration)
         {
             float result = baseDuration;
@@ -358,6 +370,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return Math.Max(0f, result);
         }
 
+        /* 지정 상태의 기본 지속시간에 관련 선택 노드를 적용한다. */
         public float ResolveStatusDuration(
             string statusId,
             float baseDuration)
@@ -376,6 +389,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return Math.Max(0f, result);
         }
 
+        /* 지정 상태의 기본 스택에 설정값과 보너스 노드를 적용한다. */
         public int ResolveStatusStacks(string statusId, int baseStacks)
         {
             int result = baseStacks;
@@ -402,6 +416,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return Math.Max(1, result);
         }
 
+        /* 연사 문맥에 맞는 상태 스택 보너스를 기본 스택에 적용한다. */
         public int ResolveBurstStatusStacks(
             int baseStacks,
             int projectileIndex,
@@ -433,6 +448,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return Math.Max(1, result);
         }
 
+        /* 선택 노드가 추가로 부여하도록 지정한 상태 식별자를 열거한다. */
         public IEnumerable<string> AdditionalStatusIds()
         {
             var yielded = new HashSet<string>(StringComparer.Ordinal);
@@ -467,6 +483,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 일반, 처형, 대상 상태 조건에 맞는 치명타 확률 보너스를 합산한다. */
         public float ResolveCriticalChanceBonus(UnitBaseModel target)
         {
             float result = Sum("CritChanceBonus");
@@ -490,6 +507,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return result;
         }
 
+        /* 일반 및 대상 상태 조건에 맞는 치명타 피해 보너스를 합산한다. */
         public float ResolveCriticalDamageBonus(UnitBaseModel target)
         {
             float result = Sum("CritDamageBonus");
@@ -509,26 +527,31 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return result;
         }
 
+        /* 추가 투사체 수 노드의 정수 합을 반환한다. */
         public int ResolveAdditionalProjectiles()
         {
             return IntegerSum("AdditionalProjectileBonus");
         }
 
+        /* 후속 투사체 노드가 지정한 발사 수를 반환한다. */
         public int ResolveFollowUpProjectileCount()
         {
             return Math.Max(0, (int)LastFor("FollowUpProjectile", 1, 0f));
         }
 
+        /* 후속 투사체 노드가 지정한 발사 지연을 반환한다. */
         public float ResolveFollowUpProjectileDelay()
         {
             return Math.Max(0f, LastFor("FollowUpProjectile", 2, 0f));
         }
 
+        /* 후속 투사체 노드가 지정한 피해 배율을 반환한다. */
         public float ResolveFollowUpProjectileMultiplier()
         {
             return Math.Max(0f, LastFor("FollowUpProjectile", 3, 1f));
         }
 
+        /* 대상의 지정 상태 스택에 비례하는 피해율 보너스를 계산한다. */
         public float ResolveTargetStatusStackDamageRateBonus(string statusId)
         {
             float result = 0f;
@@ -545,46 +568,55 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return result;
         }
 
+        /* 관통 횟수 보너스 노드의 정수 합을 반환한다. */
         public int ResolvePierceBonus()
         {
             return IntegerSum("PierceBonus");
         }
 
+        /* 적중 대상 수 보너스 노드의 정수 합을 반환한다. */
         public int ResolveHitTargetCountBonus()
         {
             return IntegerSum("HitTargetCountBonus");
         }
 
+        /* 대상별 반복 실행 횟수를 반환한다. */
         public int ResolveRepeatCount()
         {
             return IntegerSum("RepeatPerTarget");
         }
 
+        /* 대상별 반복 실행 사이의 간격을 반환한다. */
         public float ResolveRepeatInterval()
         {
             return LastFor("RepeatPerTarget", 2, 0f);
         }
 
+        /* 대상별 반복 실행에 사용할 피해 배율을 반환한다. */
         public float ResolveRepeatDamageMultiplier()
         {
             return LastFor("RepeatPerTarget", 3, 1f);
         }
 
+        /* 발사 간격 배율 노드의 누적 곱을 반환한다. */
         public float ResolveShotIntervalMultiplier()
         {
             return Product("ShotIntervalMultiplier");
         }
 
+        /* 재사용 대기시간 배율 노드의 누적 곱을 반환한다. */
         public float ResolveCooldownMultiplier()
         {
             return Product("CooldownMultiplier");
         }
 
+        /* 재장전 시간 배율 노드의 누적 곱을 반환한다. */
         public float ResolveReloadMultiplier()
         {
             return Product("ReloadTimeMultiplier");
         }
 
+        /* 재사용 대기시간 환급 노드의 비율을 합산해 유효 범위로 제한한다. */
         public float ResolveCooldownRefundRatio()
         {
             return Math.Min(
@@ -594,6 +626,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     Sum("CooldownRefund") + Sum("CooldownRefundBonus")));
         }
 
+        /* 조건을 충족한 재사용 대기시간 초기화 노드가 있는지 확인한다. */
         public bool ShouldResetCooldown()
         {
             for (int index = 0; index < nodes.Count; index++)
@@ -611,11 +644,13 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return false;
         }
 
+        /* 보호막 양 배율 노드의 누적 곱을 반환한다. */
         public float ResolveShieldMultiplier()
         {
             return Product("ShieldAmountMultiplier");
         }
 
+        /* 지정 트리거에 적용되는 발동 확률 보너스를 합산한다. */
         public float ResolveTriggerProcChanceBonus(string triggerId)
         {
             float result = 0f;
@@ -633,6 +668,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
 
         internal IReadOnlyList<ChoiceNodeDefinition> Nodes => nodes;
 
+        /* 지정 노드 타입의 첫 번째 인자를 정수로 변환해 합산한다. */
         private int IntegerSum(string nodeTypeId)
         {
             int result = 0;
@@ -647,6 +683,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return result;
         }
 
+        /* 지정 노드 타입의 첫 번째 수치 인자를 모두 곱한다. */
         private float Product(string nodeTypeId)
         {
             float result = 1f;
@@ -661,6 +698,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return result;
         }
 
+        /* 지정 노드 타입에서 마지막으로 발견된 인자 값을 반환한다. */
         private float LastFor(string nodeTypeId, int argument, float fallback)
         {
             for (int index = nodes.Count - 1; index >= 0; index--)
@@ -678,6 +716,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return fallback;
         }
 
+        /* 지정 노드 타입의 첫 번째 수치 인자를 모두 더한다. */
         private float Sum(string nodeTypeId)
         {
             float result = 0f;
@@ -693,6 +732,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return result;
         }
 
+        /* 선택 노드의 대상 조건이 지정 유닛 상태와 일치하는지 확인한다. */
         private static bool MatchesCondition(ChoiceNodeDefinition node, UnitBaseModel target)
         {
             if (!string.Equals(node.node_type_id, "ConditionalDamageMultiplier", StringComparison.Ordinal)
@@ -719,6 +759,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return stacks >= minimum;
         }
 
+        /* 대상 체력 비율이 처형 조건 노드의 임계값을 충족하는지 확인한다. */
         private bool MatchesExecuteHealth(UnitBaseModel target)
         {
             float threshold = 0f;
@@ -740,6 +781,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 && target.CurrentHealth / target.MaximumHealth <= threshold;
         }
 
+        /* 현재 계획에 대상 체력 임계값 조건이 포함됐는지 확인한다. */
         private bool RequiresExecuteThreshold()
         {
             return skill.Columns.TryGetValue(
@@ -749,11 +791,13 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 && requireExecute;
         }
 
+        /* 지정 대상이 현재 계획의 실행 체력 조건을 충족하는지 반환한다. */
         public bool IsExecuteConditionMet(UnitBaseModel target)
         {
             return MatchesExecuteHealth(target);
         }
 
+        /* 대상 술어 이름을 실제 유닛 상태와 비교한다. */
         private static bool MatchesPredicate(
             UnitBaseModel target,
             string predicate)
@@ -769,6 +813,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return false;
         }
 
+        /* 시전자와 같은 진영 유닛이 보유한 지정 상태 수를 합산한다. */
         private int CountSideStatus(string statusId)
         {
             int count = 0;
@@ -786,6 +831,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return count;
         }
 
+        /* 유닛의 상태 효과 목록에 지정 상태가 존재하는지 확인한다. */
         private static bool HasStatus(
             UnitBaseModel target,
             string statusId,
@@ -814,17 +860,20 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return stacks >= minimum;
         }
 
+        /* 노드의 첫 번째 인자를 실수로 읽는다. */
         private static float FirstNumber(ChoiceNodeDefinition node, float fallback)
         {
             return Number(node.arg_1, fallback);
         }
 
+        /* 노드 인자 중 마지막 양수 값을 반환한다. */
         private static float LastPositiveNumber(ChoiceNodeDefinition node, float fallback)
         {
             float value = LastNumber(node, fallback);
             return value > 0f ? value : fallback;
         }
 
+        /* 노드 인자 중 마지막 유효 수치 값을 반환한다. */
         private static float LastNumber(ChoiceNodeDefinition node, float fallback)
         {
             string[] values =
@@ -848,6 +897,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return fallback;
         }
 
+        /* 문자열을 고정 문화권 실수로 변환하고 실패하면 기본값을 반환한다. */
         private static float Number(string text, float fallback)
         {
             return float.TryParse(
@@ -859,6 +909,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 : fallback;
         }
 
+        /* 실제 사용된 선택 노드를 계약 검증 콜백에 보고한다. */
         internal void ReportConsumed(ChoiceNodeDefinition node)
         {
             nodeConsumed?.Invoke(node);

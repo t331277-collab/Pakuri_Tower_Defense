@@ -5,6 +5,7 @@ using Pakuri.NewCore.Combat.Effects;
 using Pakuri.NewCore.Combat.Skills.Actors;
 using Pakuri.NewCore.Definitions.Skills;
 
+/* 스킬 요청을 검증하고 실행 계획, 계열별 실행기, 쿨다운 처리를 조정한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
     public sealed class SkillExecutionRuntime
@@ -22,6 +23,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         private readonly HashSet<string> appliedPassives =
             new HashSet<string>(StringComparer.Ordinal);
 
+        /* 카탈로그와 런타임 서비스 의존성을 저장하고 실행기를 구성한다. */
         public SkillExecutionRuntime(
             GameDefinitionCatalog catalog,
             SkillTargeting targeting,
@@ -59,6 +61,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         public event Action<Definitions.Choices.ChoiceNodeDefinition>
             NodeContractExecuted;
 
+        /* 유닛이 학습한 패시브의 효과 그래프와 전투 시작 트리거를 적용한다. */
         public void ApplyPassives(
             InGameCombatManager combat,
             IReadOnlyList<Units.Models.UnitBaseModel> units)
@@ -99,12 +102,14 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 전투별 트리거 예약 상태를 초기화한다. */
         public void ResetCombat()
         {
             appliedPassives.Clear();
             Triggers.Reset();
         }
 
+        /* 카탈로그에서 도달 가능한 선택 노드의 handler와 런타임 소유자를 검증한다. */
         private static void ValidateReachableNodes(GameDefinitionCatalog catalog)
         {
             for (int index = 0; index < catalog.ChoiceNodes.Count; index++)
@@ -121,6 +126,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 실행 가능 조건을 검사하고 스킬 계열 실행기와 후속 그래프를 순서대로 실행한다. */
         public bool TryExecute(InGameCombatManager combat, SkillExecutionRequest request)
         {
             if (combat == null || request == null)
@@ -240,12 +246,14 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return true;
         }
 
+        /* 선택 노드가 소비되었다는 계약 검증 정보를 카탈로그에 보고한다. */
         private void ReportNodeContract(
             Definitions.Choices.ChoiceNodeDefinition node)
         {
             NodeContractExecuted?.Invoke(node);
         }
 
+        /* 실행 계획의 탄창 보너스를 시전자 스킬 버킷에 반영한다. */
         private static void ConfigureMagazine(
             SkillExecutionRequest request,
             SkillExecutionPlan plan)
@@ -264,6 +272,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 실행 계획의 재사용 대기시간 감소와 초기화 규칙을 적용한다. */
         private static void ApplyCooldownPlan(
             Pakuri.NewCore.Combat.Skills.Runtime.SkillCooldown cooldown,
             SkillExecutionPlan plan)
@@ -273,6 +282,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             cooldown.ScaleShotInterval(plan.ResolveShotIntervalMultiplier());
         }
 
+        /* 처치 결과에 따른 재사용 대기시간 감소와 초기화 규칙을 적용한다. */
         private static void ApplyKillCooldownPlan(
             Pakuri.NewCore.Combat.Skills.Runtime.SkillCooldown cooldown,
             SkillExecutionPlan plan)
@@ -284,6 +294,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 스킬 정의 타입에 대응하는 계열별 실행기를 반환한다. */
         private SkillExecutor ResolveExecutor(SkillDefinition definition)
         {
             if (definition is ProjectileDefinition)

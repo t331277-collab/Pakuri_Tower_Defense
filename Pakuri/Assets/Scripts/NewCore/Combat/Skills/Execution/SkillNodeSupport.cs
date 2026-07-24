@@ -1,6 +1,7 @@
 using System;
 using Pakuri.NewCore.Definitions.Choices;
 
+/* 선택 노드의 handler와 node_type을 런타임 동작 및 책임 영역으로 분류한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
     public enum SkillNodeBehavior
@@ -17,6 +18,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
 
     public static class SkillNodeSupport
     {
+        /* handler_id 접두어와 포함 문자열을 기준으로 노드 동작 분류를 반환한다. */
         public static SkillNodeBehavior Resolve(string handlerId)
         {
             if (string.IsNullOrWhiteSpace(handlerId))
@@ -101,6 +103,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 $"Reachable node handler '{handlerId}' is not implemented.");
         }
 
+        /* 그래프 종류와 노드 타입을 기준으로 실제 소비 런타임을 결정한다. */
         public static SkillNodeRuntimeOwner ResolveRuntimeOwner(
             ChoiceNodeDefinition node)
         {
@@ -135,6 +138,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 + $"'{node.node_type_id}' has no runtime consumer.");
         }
 
+        /* 노드 타입이 효과 그래프에서 처리되는 타입인지 확인한다. */
         private static bool IsEffectGraphNode(string nodeTypeId)
         {
             switch (nodeTypeId)
@@ -178,6 +182,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 노드 타입이 실행 계획에서 사용할 수 있는 타입인지 확인한다. */
         private static bool IsPlanNode(string nodeTypeId)
         {
             switch (nodeTypeId)
@@ -250,6 +255,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 실행 계획 노드 중 스킬 계열 실행기가 직접 처리할 타입인지 확인한다. */
         private static bool IsExecutorOwnedPlanNode(
             string nodeTypeId)
         {

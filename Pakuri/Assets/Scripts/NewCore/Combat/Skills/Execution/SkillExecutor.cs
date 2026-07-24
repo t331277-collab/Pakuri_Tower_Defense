@@ -9,10 +9,12 @@ using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Definitions.Status;
 using Pakuri.NewCore.Units.Models;
 
+/* 스킬 계열 실행기가 공유하는 대상 선정, 피해, 상태, 후속 효과 기능을 제공한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
     internal abstract class SkillExecutor
     {
+        /* 공통 실행에 필요한 카탈로그와 전투 런타임 서비스를 저장한다. */
         protected SkillExecutor(
             GameDefinitionCatalog catalog,
             SkillTargeting targeting,
@@ -40,11 +42,13 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         private readonly UnitMovementController movement =
             new UnitMovementController();
 
+        /* 스킬 계열별 실행 절차를 파생 실행기에 위임한다. */
         public abstract bool Execute(
             InGameCombatManager combat,
             SkillExecutionRequest request,
             SkillExecutionPlan plan);
 
+        /* 요청의 조준 정보와 스킬 정의를 사용해 기본 대상을 선정한다. */
         protected IReadOnlyList<UnitBaseModel> ResolveTargets(SkillExecutionRequest request)
         {
             return Targeting.Resolve(
@@ -54,6 +58,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 request.TargetPoint);
         }
 
+        /* 명시한 스킬 정의와 최대 대상 수를 사용해 대상을 선정한다. */
         protected IReadOnlyList<UnitBaseModel> ResolveTargets(
             SkillExecutionRequest request,
             SkillExecutionPlan plan)
@@ -66,6 +71,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 plan.ResolveHitTargetCountBonus());
         }
 
+        /* 지정 위치에 스킬 이펙트를 만들고 생명주기 Actor에 등록한다. */
         protected EffectHandle CreateEffectAt(
             SkillExecutionRequest request,
             CombatVector2 position,
@@ -114,6 +120,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 direction.Normalized);
         }
 
+        /* 적중 이펙트를 대상 위치에 만들도록 지연 또는 즉시 실행을 등록한다. */
         protected void RegisterImpactEffect(
             SkillExecutionRequest request,
             CombatVector2 collisionPosition)
@@ -150,6 +157,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 effect));
         }
 
+        /* 스킬과 실행 계획이 지정한 상태 효과를 대상에게 적용한다. */
         protected void ApplyStatuses(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -204,6 +212,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 요청에 적중 완료를 통지한다. */
         protected static void CompleteHit(
             SkillExecutionRequest request,
             UnitBaseModel target)
@@ -211,6 +220,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             request.NotifyHitCompleted(target);
         }
 
+        /* 실행 계획의 피해, 치명타, 반복, 후속 효과 노드를 포함해 피해를 처리한다. */
         protected void ApplyDamageWithNodes(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -367,6 +377,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             ApplyKnockback(request, plan, target);
         }
 
+        /* 추가 피해와 코어 추가 피해 노드를 대상에게 적용한다. */
         private void ApplySupplemental(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -406,6 +417,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 Math.Max(0f, multiplier));
         }
 
+        /* 연쇄 피해 노드에 따라 다음 유효 대상에게 피해를 전달한다. */
         private void ApplyChain(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -463,6 +475,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 대상 상태를 소비하고 계산된 양을 다른 대상에게 재분배한다. */
         private void ConsumeAndRedistribute(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -531,6 +544,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 시전자 반대 방향으로 계산한 넉백 이동을 대상에게 적용한다. */
         private void ApplyKnockback(
             SkillExecutionRequest request,
             SkillExecutionPlan plan,
@@ -546,6 +560,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             movement.Displace(target, direction * distance);
         }
 
+        /* 적중 횟수에 비례해 시전자의 재장전 시간을 줄인다. */
         private static void ReduceReload(
             UnitBaseModel caster,
             string skillId,
@@ -561,6 +576,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 적중 횟수에 비례해 지정 스킬의 재사용 대기시간을 줄인다. */
         private static void ReduceCooldown(
             UnitBaseModel caster,
             string skillId,
@@ -576,6 +592,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 대상에게 적용된 지정 상태의 전체 스택 수를 계산한다. */
         private static int CountStatus(UnitBaseModel target, string statusId)
         {
             int result = 0;
@@ -590,6 +607,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return result;
         }
 
+        /* 문자열을 고정 문화권 실수로 변환하고 실패하면 기본값을 반환한다. */
         private static float Number(string text, float fallback)
         {
             return float.TryParse(
@@ -601,6 +619,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 : fallback;
         }
 
+        /* 상태 정의와 실행 계획의 수치 보정을 사용해 상태 효과를 생성한다. */
         private void ApplyStatus(
             InGameCombatManager combat,
             SkillExecutionRequest request,
@@ -647,6 +666,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 duration > 0f ? duration : 0.00001f);
         }
 
+        /* 실행 계획의 상태 수정 노드를 새 상태 효과 인스턴스에 반영한다. */
         protected void ApplyPlanStatusModifiers(
             SkillExecutionRequest request,
             SkillExecutionPlan plan,
@@ -690,6 +710,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 상태 적용 확률과 대상 조건을 검사해 적용 여부를 결정한다. */
         private bool ShouldApplyStatus(
             UnitBaseModel caster,
             UnitBaseModel target,
@@ -719,6 +740,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return RandomValue() <= Math.Max(0f, Math.Min(1f, chance));
         }
 
+        /* 대상이 구분자로 나열된 상태 중 하나라도 보유하는지 확인한다. */
         private static bool HasAnyStatus(
             UnitBaseModel target,
             string statusIds)

@@ -6,6 +6,7 @@ using Pakuri.NewCore.Combat.Skills.Actors;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Units.Models;
 
+/* 전투 이벤트와 학습 노드를 검사해 스킬 트리거를 예약하고 실행한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
     public enum SkillTriggerEvaluationResult
@@ -33,6 +34,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         private readonly HashSet<string> executing =
             new HashSet<string>(StringComparer.Ordinal);
 
+        /* 트리거 실행에 필요한 카탈로그와 런타임 서비스를 저장한다. */
         public SkillTriggerDispatcher(
             GameDefinitionCatalog catalog,
             SkillActorManager actors,
@@ -61,6 +63,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             SkillTriggerEvaluationResult>
             TriggerEvaluated;
 
+        /* 경과 시간만큼 트리거별 내부 재사용 대기시간을 갱신한다. */
         public void Tick(float deltaTime)
         {
             if (deltaTime < 0f || float.IsNaN(deltaTime) || float.IsInfinity(deltaTime))
@@ -74,6 +77,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 전투별 트리거 재사용 대기시간, 횟수, 실행 중 상태를 초기화한다. */
         public void Reset()
         {
             cooldowns.Clear();
@@ -81,6 +85,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             executing.Clear();
         }
 
+        /* 전투 이벤트와 일치하는 소유 트리거를 평가하고 예약하며 개수를 반환한다. */
         public int Dispatch(
             string eventName,
             UnitBaseModel owner,
@@ -196,6 +201,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return executedCount;
         }
 
+        /* 트리거 지연과 반복 설정에 따라 실행 콜백을 Actor에 등록한다. */
         private void Schedule(
             SkillTriggerDefinition trigger,
             UnitBaseModel owner,
@@ -251,6 +257,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 delay));
         }
 
+        /* 트리거 동작 종류에 맞춰 효과, 공격, 자원 조정 또는 스킬 발동을 수행한다. */
         private void Execute(
             SkillTriggerDefinition trigger,
             UnitBaseModel owner,
@@ -497,6 +504,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 graphSkill);
         }
 
+        /* 트리거가 지정한 런타임 비주얼을 생성하고 생명주기를 등록한다. */
         private void CreateTriggerVisual(
             SkillTriggerDefinition trigger,
             UnitBaseModel owner,
@@ -537,6 +545,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 effect));
         }
 
+        /* 트리거 횟수, 재사용 대기시간, 확률 제한을 검사하고 상태를 갱신한다. */
         private bool PassesGates(UnitBaseModel owner, SkillTriggerDefinition trigger)
         {
             string key = owner.GetHashCode() + ":" + trigger.trigger_id;
@@ -565,6 +574,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return true;
         }
 
+        /* 소유자의 실행 계획에서 지정 트리거 발동 확률 보너스를 계산한다. */
         private float ResolveProcChanceBonus(
             UnitBaseModel owner,
             string triggerId)
@@ -597,6 +607,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return bonus;
         }
 
+        /* 문자열을 고정 문화권 실수로 변환하고 실패하면 0을 반환한다. */
         private static float ParseFloat(string value)
         {
             return float.TryParse(
@@ -608,6 +619,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 : 0f;
         }
 
+        /* 유닛의 스킬 버킷이 트리거 원본 스킬을 보유하는지 확인한다. */
         private static bool OwnsTrigger(UnitBaseModel owner, SkillTriggerDefinition trigger)
         {
             if (owner is MonsterModel monster)
@@ -627,6 +639,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return false;
         }
 
+        /* 트리거가 요구하는 선택 노드를 유닛이 학습했는지 확인한다. */
         private static bool MatchesChoices(UnitBaseModel owner, SkillTriggerDefinition trigger)
         {
             if (!(owner is MonsterModel monster)) return true;
@@ -658,6 +671,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return true;
         }
 
+        /* 트리거 정의가 현재 전투 이벤트와 전달된 문맥에 일치하는지 확인한다. */
         private static bool MatchesEvent(
             SkillTriggerDefinition trigger,
             SkillDefinition eventSkill,
@@ -752,6 +766,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return true;
         }
 
+        /* 이벤트 스킬의 런타임 종류가 트리거 필터와 일치하는지 확인한다. */
         private static bool MatchesRuntimeKind(
             string configuredKinds,
             string runtimeKind)
@@ -774,6 +789,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     StringComparison.Ordinal);
         }
 
+        /* 트리거 대상 규칙과 범위, 최대 수를 사용해 실행 대상을 선정한다. */
         private static List<UnitBaseModel> ResolveTargets(
             SkillTriggerDefinition trigger,
             UnitBaseModel owner,
@@ -850,6 +866,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return result;
         }
 
+        /* 이벤트 소유자 규칙에 맞는 트리거 평가 주체 목록을 만든다. */
         private static List<UnitBaseModel> ResolveEventOwners(
             SkillTriggerDefinition trigger,
             UnitBaseModel eventOwner,
@@ -877,6 +894,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return owners;
         }
 
+        /* 트리거 중심점 규칙에 따라 시전자, 이벤트 대상 또는 지정 위치를 선택한다. */
         private static CombatVector2 ResolveCenter(
             SkillTriggerDefinition trigger,
             UnitBaseModel owner,
@@ -918,6 +936,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return owner.Position;
         }
 
+        /* 트리거 열에서 적중 대상 수를 읽고 기본값과 최소값을 적용한다. */
         private static int ReadHitTargetCount(
             SkillTriggerDefinition trigger)
         {
@@ -939,6 +958,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     : 1;
         }
 
+        /* 원래 순서를 보조 기준으로 유지하며 중심점 거리순으로 정렬한다. */
         private static void StableSortByDistance(
             List<UnitBaseModel> units,
             CombatVector2 center)
@@ -959,6 +979,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
         }
 
+        /* 대상이 특정 원본 스킬에서 부여된 상태를 보유하는지 확인한다. */
         private static bool HasStatusFromSkill(
             UnitBaseModel unit,
             string statusId,
@@ -980,6 +1001,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return stacks >= minimumStacks;
         }
 
+        /* 기존 트리거 경로에 현재 트리거 식별자를 추가해 새 집합을 만든다. */
         private static IReadOnlyCollection<string> ExtendTriggerAncestry(
             IReadOnlyCollection<string> ancestors,
             string triggerId)
@@ -1000,6 +1022,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return result;
         }
 
+        /* 트리거 경로에 지정 식별자가 이미 포함됐는지 확인한다. */
         private static bool ContainsTrigger(
             IReadOnlyCollection<string> ancestors,
             string triggerId)
@@ -1018,6 +1041,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             return false;
         }
 
+        /* 트리거 열의 논리값을 읽고 값이 없으면 기본값을 반환한다. */
         private static bool ReadBool(
             SkillTriggerDefinition trigger,
             string column)
@@ -1027,6 +1051,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 && flag;
         }
 
+        /* 트리거 열의 정수값을 읽고 값이 없으면 null을 반환한다. */
         private static int? NullableInt(
             SkillTriggerDefinition trigger,
             string column)
@@ -1037,6 +1062,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     : (int?)null;
         }
 
+        /* 구분자로 나열된 문자열에 지정 값이 포함됐는지 확인한다. */
         private static bool Contains(string values, string value)
         {
             string[] split = values.Split(';', ',');
