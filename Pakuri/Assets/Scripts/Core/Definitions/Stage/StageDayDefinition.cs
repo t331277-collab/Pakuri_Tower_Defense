@@ -1,0 +1,35 @@
+namespace Pakuri.NewCore.Definitions.Stage
+{
+    public sealed class StageDayDefinition : StageDefinition
+    {
+        internal StageDayDefinition(CsvDefinitionData data)
+            : base(data)
+        {
+            ValidateRequired(
+                nameof(day_key),
+                nameof(combat_type),
+                nameof(encounter_id),
+                nameof(reward_rule_id));
+        }
+
+        public int? stage => OptionalInt(nameof(stage));
+
+        public int? day => OptionalInt(nameof(day));
+
+        public string day_key => RequiredString(nameof(day_key));
+
+        public string combat_type => RequiredString(nameof(combat_type));
+
+        public string encounter_id => RequiredString(nameof(encounter_id));
+
+        public string reward_rule_id => RequiredString(nameof(reward_rule_id));
+
+        public float? elite_option_chance => OptionalFloat(nameof(elite_option_chance));
+
+        public bool? shop_option_enabled => OptionalBool(nameof(shop_option_enabled));
+
+        public bool? event_roll_enabled => OptionalBool(nameof(event_roll_enabled));
+
+        public string notes => OptionalString(nameof(notes));
+    }
+}

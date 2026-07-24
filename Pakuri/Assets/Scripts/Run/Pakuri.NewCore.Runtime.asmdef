@@ -1,0 +1,16 @@
+{
+    "name": "Pakuri.NewCore.Runtime",
+    "rootNamespace": "Pakuri.NewCore",
+    "references": [
+        "Pakuri.NewCore"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

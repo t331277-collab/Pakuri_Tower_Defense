@@ -2,34 +2,34 @@
 
 ## Task title
 
-새 Core 구조 청사진
+New Core Architecture Blueprint
 
 ## Goals
 
-- 기존 코드 구조를 설계 기준으로 사용하지 않고 새로운 Core 구조를 정의한다.
-- `Pakuri/Assets/CSVdata`와 각 CSV의 열 이름 및 용어를 그대로 유지한다.
-- 게임 시작 시 CSV를 Definition으로 한 번 파싱한다.
-- Definition, 런타임 Model, 스킬 학습 상태, 전투 실행, 스킬 생명주기, 시각 효과, 런 진행 책임을 분리한다.
-- 각 몬스터가 자신의 스킬 학습 정도를 직접 관리하도록 한다.
-- 현재 CSV, 프리팹, 씬, 스프라이트, 애니메이션, AnimatorController 리소스를 새 Core에 다시 연결한다.
-- 최종 전환 뒤 `Pakuri/Assets/Scripts`의 이전 타입에 대한 런타임, 직렬화, 컴파일 의존을 0으로 만든다.
+- Define a new Core architecture without using the existing code structure as a design standard.
+- Preserve `Pakuri/Assets/CSVdata` and the column names and terminology of each CSV exactly as they are.
+- Parse the CSV files into Definitions once when the game starts.
+- Separate responsibilities for Definitions, runtime Models, skill-learning state, combat execution, skill lifecycles, visual effects, and run progression.
+- Make each monster directly manage its own skill-learning progress.
+- Reconnect the current CSV, prefab, scene, sprite, animation, and AnimatorController resources to the new Core.
+- After the final transition, reduce runtime, serialization, and compilation dependencies on legacy types under `Pakuri/Assets/Scripts` to zero.
 
 ## Constraints
 
-- 현재 문서는 청사진 초안이다.
-- 기존 게임 코드, CSV, 프리팹, 씬에는 적용하지 않는다.
-- 기존 구조는 새 구조의 설계 기준으로 사용하지 않는다.
-- 실제 존재 여부와 유지할 CSV 계약은 검사한 파일을 근거로 한다.
-- CSV Definition 계층에서는 CSV 열 이름을 임의로 바꾸지 않는다.
-- 기존 `Pakuri/Assets/Scripts`의 폴더·클래스 분리는 새 구조의 설계 기준으로 복사하지 않는다.
-- 사용자가 확정하지 않은 플레이 규칙은 기존 `Pakuri/Assets/Scripts`의 실제 동작을 호환성 근거로 검사한다.
-- 기존 Scripts를 검사해도 의미가 하나로 확정되지 않으면 구현자가 임의로 정하지 않고 사용자에게 질문한다.
-- 기존 Scripts는 전환 전 동작과 자산 연결을 확인하는 읽기 전용 근거일 뿐 새 코드의 호출 대상, 상속 대상, fallback 또는 호환성 계층이 아니다.
-- 최종 구조는 기존 Scripts의 타입, namespace, Script GUID, 정적 상태, 런타임 객체를 참조하지 않는다.
-- 이 완전 교체 작업의 진행 상태와 검증 근거는 이 문서의 Phase 실행 기록에만 남기고 `BLACKBOARD.md`와 `boards/**/*BLACKBOARD.md`에는 기록하지 않는다.
-- 모든 Phase는 Unity 재컴파일과 Console 로그 확인을 통과해야 다음 Phase로 진행한다.
-- Play Mode는 정적 검사와 비실행 검증으로 증명할 수 없는 동작에만 사용하며 사용자에게 실행 목적과 검증 시나리오를 먼저 제시한다.
-- 근거 없는 클래스, 기능, 필드, 수치를 추가하지 않는다.
+- This document is a draft blueprint.
+- Do not apply it to the existing game code, CSV files, prefabs, or scenes.
+- Do not use the existing structure as a design standard for the new structure.
+- Base claims about actual existence and the CSV contracts to retain on inspected files.
+- Do not arbitrarily rename CSV columns in the CSV Definition layer.
+- Do not copy the folder and class division under the existing `Pakuri/Assets/Scripts` as a design standard for the new structure.
+- For gameplay rules the user has not confirmed, inspect the actual behavior under the existing `Pakuri/Assets/Scripts` as compatibility evidence.
+- If inspecting the existing Scripts still does not establish a single meaning, the implementer must ask the user instead of deciding arbitrarily.
+- The existing Scripts are read-only evidence for pre-transition behavior and asset wiring; they are not call targets, inheritance targets, fallbacks, or compatibility layers for the new code.
+- The final structure must not reference types, namespaces, Script GUIDs, static state, or runtime objects from the existing Scripts.
+- Record progress and verification evidence for this complete replacement only in this document's Phase execution records, not in `BLACKBOARD.md` or `boards/**/*BLACKBOARD.md`.
+- Every Phase must pass Unity recompilation and Console-log checks before the next Phase begins.
+- Use Play Mode only for behavior that cannot be proven through static inspection and non-runtime verification, and first present the execution purpose and verification scenario to the user.
+- Do not add classes, features, fields, or numeric values without evidence.
 
 ## Role Owner
 
@@ -37,20 +37,20 @@ Designer
 
 ## Status
 
-Draft v0.6. 완전 교체 작업을 7개 Phase로 나누고, 청사진 내부 전용 기록, Phase별 Unity Console 확인, 최소 Play Mode 검증 규칙을 확정했다. 문서 기록만 완료했으며 구현은 시작하지 않았다.
+Implementation v0.8. The full blueprint has been translated to English without changing its structure. Phase 0 passed Code Reviewer loop 3, Phase 1 passed loop 2, and Phase 2 passed loop 2. Phase 3 is Builder-complete and pending Code Reviewer; Phases 4 through 6 have not started.
 
 ## Next Actions
 
-- 사용자 지시에 따라 새 Core 구성요소를 추가하거나 기존 초안을 수정한다.
-- 각 클래스의 공개 API, 소유 상태, 입력, 출력, 금지 책임을 확정한다.
-- Definition 간 ID 참조와 게임 시작 초기화 순서를 상세화한다.
-- 구현 전 각 새 타입의 직접 소유자, 호출자, 상태 권위, 삭제 조건을 확정한다.
-- 기존 Script GUID를 참조하는 모든 씬, 프리팹, `.asset`의 전환 목록과 새 소유자를 확정한다.
-- 활성 리소스 재연결과 불필요한 Legacy 직렬화 자산 처리 방침을 구현 전에 확정한다.
-- Phase 0부터 순서대로 진행하며 각 Phase의 종료 조건과 Unity Console 게이트를 통과한다.
-- 구현 중 상태, 변경 경로, 로그 근거, Play Mode 여부는 이 문서의 Phase 실행 기록만 갱신한다.
-- Code Builder handoff에서 공개 API와 로컬 검증 절차를 확정한다.
-- 최종 청사진이 확정되기 전에는 코드에 적용하지 않는다.
+- Add new Core components or revise the existing draft according to user instructions.
+- Establish each class's public API, owned state, inputs, outputs, and prohibited responsibilities.
+- Detail ID references among Definitions and the startup initialization order.
+- Before implementation, establish each new type's direct owner, caller, state authority, and deletion condition.
+- Establish the migration inventory and new owner for every scene, prefab, and `.asset` that references a legacy Script GUID.
+- Before implementation, establish policies for reconnecting active resources and handling unnecessary Legacy serialized assets.
+- Proceed sequentially from Phase 0 and pass each Phase's exit conditions and Unity Console gate.
+- During implementation, update state, changed paths, log evidence, and Play Mode status only in this document's Phase execution records.
+- Establish public APIs and local verification procedures in the Code Builder handoff.
+- Do not apply the blueprint to code before the final blueprint is confirmed.
 
 ## Evidence
 
@@ -79,63 +79,73 @@ Draft v0.6. 완전 교체 작업을 7개 Phase로 나누고, 청사진 내부 �
 - `Pakuri/Assets/Scenes/NewScene/NewMainMenu.unity`
 - `Pakuri/Assets/Resources/Pakuri/CSVRuntime/CsvRuntimeCatalog.asset`
 - `Pakuri/Assets/Legacy/Data/GameData/`
+- `Pakuri/reference/Work/new-core-phase0-manifest-generator.ps1`
+- `Pakuri/reference/Work/new-core-phase0-csv-contract-manifest.csv`
+- `Pakuri/reference/Work/new-core-phase0-script-reference-manifest.csv`
+- `Pakuri/reference/Work/new-core-phase0-retained-resource-manifest.csv`
+- `Pakuri/reference/Work/new-core-phase0-inspector-snapshot.csv`
 - `boards/UI/UI_BLACKBOARD.md`
 - `boards/UI/RUNSCENE_UI.md`
 
 ## History
 
-- 2026-07-23: 사용자가 기존 구조를 적용하거나 참고하지 않고 새로운 객체지향 Core 구조의 청사진만 작성하도록 요청했다.
-- 2026-07-23: 유지 대상 CSV 계약과 `MonsterDayRecovery.cs`의 회차 초기화 동작을 검사했다.
-- 2026-07-23: Definition, 런타임 Model, SkillBucket, Manager, Executor, Actor, 상태효과, 시각효과 책임 초안을 기록했다.
-- 2026-07-23: `RunSessionModel`, `PartyRoster`, `PrisonerInventory`, `RewardService`, `OfferingService`, `ManifestationService`, 행동·이동 구조를 추가하고 `StageRunManager` 명칭을 `StageManager`로 통합했다.
-- 2026-07-23: 현재 `NewRunScene` UI 구조를 유지하되 새 Core의 Model과 Service API에 맞게 바인딩을 개조하는 경계를 추가했다.
-- 2026-07-23: 현현 후보, 수감자 소비, 공양 균등 추첨, 수동 마우스 조준, 전투 Manager 내부 실행 순서를 기존 Scripts의 실제 코드로 확정했다.
-- 2026-07-23: 구현 중 미정 의미는 기존 `Pakuri/Assets/Scripts`를 먼저 검사하고, 그래도 불명확하면 사용자에게 질문하는 호환성 원칙과 최종 목표 폴더 트리를 추가했다.
-- 2026-07-23: 모든 Skill Actor를 중앙 Tick으로 통합하고, 기존 현현 성공 팝업의 영입·넘기기 흐름을 유지하며, Save/Load는 만들지 않는 것으로 확정했다.
-- 2026-07-23: 기존 Scripts의 코드 작성 형식을 참고하되 청사진의 책임 경계를 우선하고 Naive Code Filter의 불필요한 우회·다중 권위·중복 검증·dead code 기준에 걸리지 않도록 구현 컨벤션을 추가했다.
-- 2026-07-23: 사용자가 현재 리소스는 유지하되 기존 Scripts의 모든 의존을 끊고 새 청사진 구현으로 완전히 교체하는 최종 목표를 확정했다.
-- 2026-07-23: Unity 직렬화 파일 239개를 검사해 기존 Script 21종이 40개 자산에서 56회 참조되는 것을 확인했고, 씬·프리팹뿐 아니라 런타임 카탈로그와 Legacy `.asset`까지 전환 또는 제거 판정 대상에 포함했다.
-- 2026-07-23: 사용자가 완전 교체 작업을 Phase로 나누고, 이 작업을 BLACKBOARD 계열 파일에 기록하지 않으며, 매 Phase Unity 로그를 확인하고 꼭 필요한 경우에만 Play Mode로 검증하도록 요청했다.
+- 2026-07-23: The user requested a blueprint for a new object-oriented Core architecture without applying or referring to the existing structure.
+- 2026-07-23: Inspected the CSV contracts to retain and the round-reset behavior in `MonsterDayRecovery.cs`.
+- 2026-07-23: Recorded draft responsibilities for Definitions, runtime Models, SkillBuckets, Managers, Executors, Actors, status effects, and visual effects.
+- 2026-07-23: Added `RunSessionModel`, `PartyRoster`, `PrisonerInventory`, `RewardService`, `OfferingService`, `ManifestationService`, and the action/movement structure, and consolidated the name `StageRunManager` into `StageManager`.
+- 2026-07-23: Added a boundary for retaining the current `NewRunScene` UI structure while adapting its bindings to the new Core's Model and Service APIs.
+- 2026-07-23: Established manifestation candidates, prisoner consumption, uniform offering draws, manual mouse aiming, and the execution order inside the combat Manager from actual existing Scripts.
+- 2026-07-23: Added a compatibility principle and final target folder tree: inspect the existing `Pakuri/Assets/Scripts` first for unresolved meanings during implementation, then ask the user if they remain unclear.
+- 2026-07-23: Established that all Skill Actors use a central Tick, the existing recruit/skip flow of the manifestation-success popup remains, and Save/Load will not be created.
+- 2026-07-23: Added implementation conventions that reference the existing Scripts' coding format while prioritizing the blueprint's responsibility boundaries and avoiding Naive Code Filter findings for unnecessary indirection, multiple authorities, duplicate validation, and dead code.
+- 2026-07-23: The user established the final goal of retaining current resources while severing every dependency on existing Scripts and fully replacing them with the new blueprint implementation.
+- 2026-07-23: Inspected 239 Unity serialization files and confirmed that 21 legacy Scripts are referenced 56 times across 40 assets; included the runtime catalog and Legacy `.asset` files, not only scenes and prefabs, as migration-or-removal decision targets.
+- 2026-07-23: The user requested dividing the complete replacement into Phases, recording none of this work in BLACKBOARD-family files, checking Unity logs in every Phase, and using Play Mode only when essential.
+- 2026-07-23: Translated the entire blueprint to English while preserving all headings, code fences, code identifiers, CSV terms, paths, and Phase structure.
+- 2026-07-23: Code Builder completed the Phase 0 baseline manifests and repeatable Unity and filesystem checks; Code Reviewer validation is pending.
+- 2026-07-23: Phase 0 Reviewer loop 1 returned FIX REQUIRED for an incomplete retained-resource inventory, stale post-record document counts, and an undefined serialization-extension scope. Code Builder added a reproducible generator, transitive retained-resource inventory, exact Inspector payload snapshots, and `.scenetemplate` coverage for re-review.
+- 2026-07-23: Phase 0 Reviewer loop 2 verified every requested fix but returned FIX REQUIRED for the unsupported word `materials`; the manifest contains no reachable `.mat` row, so the claim was removed.
+- 2026-07-23: Phase 0 Code Reviewer loop 3 returned PASS with no remaining blocker or user-only verification gap.
 
 ---
 
-## 1. Core 설계 원칙
+## 1. Core Design Principles
 
-핵심 책임은 다음과 같이 구분한다.
-
-```text
-Definition       = 무엇인가
-Model            = 현재 어떤 상태인가
-SkillBucket      = 무엇을 배웠는가
-SkillCooldown    = 지금 사용할 수 있는가
-SkillTargeting   = 누구에게 사용할 것인가
-Executor         = 무엇을 실행할 것인가
-Actor            = 생성된 스킬이 언제 끝나는가
-CombatManager    = 결과를 전투에 어떻게 반영하는가
-EffectManager    = 어떻게 보이는가
-StageManager     = 런이 어디까지 진행됐고 재화가 얼마인가
-```
-
-Definition은 게임 시작 시 CSV에서 생성한 뒤 불변 데이터로 취급한다.
-
-각 `MonsterModel`은 자신의 `MonsterSkillBucket`을 소유한다. 몬스터의 액티브, 패시브, 강화, 마스터 학습 상태를 다른 Manager가 대신 소유하지 않는다.
-
-### 1.1 구현 중 미확정 동작의 근거 우선순위
+Separate the core responsibilities as follows.
 
 ```text
-1. 사용자가 이 청사진에서 직접 확정한 규칙
-2. 유지 대상 CSV의 실제 열과 데이터
-3. Pakuri/Assets/Scripts의 실제 플레이 동작
-4. 그래도 하나로 정해지지 않으면 구현 중단 후 사용자 질문
+Definition       = What it is
+Model            = What state it is currently in
+SkillBucket      = What it has learned
+SkillCooldown    = Whether it can be used now
+SkillTargeting   = Who it will be used on
+Executor         = What will be executed
+Actor            = When the created skill ends
+CombatManager    = How results are applied to combat
+EffectManager    = How it appears
+StageManager     = How far the run has progressed and how much currency is held
 ```
 
-기존 `Pakuri/Assets/Scripts`는 새 폴더 구조나 클래스 책임을 복사하기 위한 기준이 아니다. 새 구조에서 의미가 빠진 플레이 동작을 확인하고 기존 게임과의 행동 호환성을 유지하기 위한 근거다.
+Create Definitions from CSV at game startup, then treat them as immutable data.
 
-구현자는 기존 Scripts에 없는 숫자, 매핑, 우선순위, 실패 처리, 대상 규칙을 임의로 만들지 않는다.
+Each `MonsterModel` owns its own `MonsterSkillBucket`. No other Manager owns a monster's active, passive, enhancement, or master learning state on its behalf.
 
-기존 Scripts를 검사하는 행위는 새 구현이 기존 타입을 참조한다는 뜻이 아니다. 새 구현에는 이전 타입을 매개변수, 필드, 상속, 인터페이스, 이벤트, reflection 문자열, 어댑터 또는 fallback으로 연결하지 않는다.
+### 1.1 Evidence Priority for Unresolved Behavior During Implementation
 
-## 2. Definition 계층
+```text
+1. Rules directly confirmed by the user in this blueprint
+2. Actual columns and data in the CSV files to retain
+3. Actual gameplay behavior in Pakuri/Assets/Scripts
+4. If these still do not establish one answer, stop implementation and ask the user
+```
+
+The existing `Pakuri/Assets/Scripts` is not a standard for copying a new folder structure or class responsibilities. It is evidence for identifying gameplay behavior whose meaning is missing from the new structure and preserving behavioral compatibility with the existing game.
+
+The implementer must not invent numbers, mappings, priorities, failure handling, or targeting rules absent from the existing Scripts.
+
+Inspecting the existing Scripts does not mean the new implementation references legacy types. Do not connect legacy types to the new implementation through parameters, fields, inheritance, interfaces, events, reflection strings, adapters, or fallbacks.
+
+## 2. Definition Layer
 
 ### 2.1 Skill Definition
 
@@ -151,9 +161,9 @@ SkillDefinition
 └─ PassiveDefinition
 ```
 
-`SkillDefinition`은 스킬의 공통 기본정보를 정의한다.
+`SkillDefinition` defines common basic skill information.
 
-공통 후보 필드:
+Common candidate fields:
 
 - `skill_id`
 - `monster_id`
@@ -163,9 +173,9 @@ SkillDefinition
 - `description_text`
 - `summary`
 
-각 하위 Definition은 담당 CSV에 실제 존재하는 열 이름을 그대로 사용한다.
+Each derived Definition uses the exact column names that actually exist in its corresponding CSV.
 
-예를 들어 `ProjectileDefinition`은 다음과 같은 투사체 CSV 용어를 사용한다.
+For example, `ProjectileDefinition` uses the following projectile CSV terminology.
 
 - `base_damage`
 - `spell_power_coefficient`
@@ -181,11 +191,11 @@ SkillDefinition
 - `runtime_visual_sprite_path`
 - `runtime_impact_visual_sprite_path`
 
-적 스킬 CSV에는 별도 `heal` 및 `shield` 스킬 파일이 존재한다. 따라서 전체 CSV를 유지하려면 `HealDefinition`과 `ShieldDefinition`이 필요하다.
+The enemy-skill CSV set contains separate `heal` and `shield` skill files. Therefore, retaining the full CSV set requires `HealDefinition` and `ShieldDefinition`.
 
-### 2.2 Choice 및 Node Definition
+### 2.2 Choice and Node Definitions
 
-실제 CSV 계약은 Choice, 그래프 노드, 노드 종류, 노드 파라미터로 분리되어 있다.
+The actual CSV contract is divided into Choices, graph nodes, node types, and node parameters.
 
 ```text
 SkillChoiceDefinition
@@ -246,17 +256,17 @@ NodeParamDefinition
 - `required`
 - `allowed_values`
 
-`handler_id`와 `param_key`는 서로 다른 CSV에 존재한다. 원본 CSV 계약을 유지하기 위해 하나의 `ChoiceNodeDefinition`에 강제로 합치지 않는다.
+`handler_id` and `param_key` exist in separate CSV files. Do not force them into a single `ChoiceNodeDefinition`, so the original CSV contract remains intact.
 
 ### 2.3 Trigger Definition
 
-몬스터와 적의 Trigger CSV를 파싱하기 위해 다음 Definition이 필요하다.
+The following Definition is required to parse monster and enemy Trigger CSV files.
 
 ```text
 SkillTriggerDefinition
 ```
 
-`SkillTriggerDefinition`은 실제 Trigger CSV의 다음 용어를 기반으로 한다.
+`SkillTriggerDefinition` is based on the following terminology from the actual Trigger CSV files.
 
 - `trigger_id`
 - `source_skill_id`
@@ -272,11 +282,11 @@ SkillTriggerDefinition
 - `trigger_action`
 - `internal_cooldown_seconds`
 
-Trigger CSV마다 실제 열 구성이 다르므로 각 파일에 없는 필드를 있다고 가정하지 않는다.
+Because actual column sets differ among Trigger CSV files, do not assume that a field absent from a given file exists.
 
 ### 2.4 Unit Definition
 
-클래스 이름은 `UnitDefinotion`이 아니라 `UnitDefinition`으로 기록한다.
+Record the class name as `UnitDefinition`, not `UnitDefinotion`.
 
 ```text
 UnitDefinition
@@ -284,23 +294,23 @@ UnitDefinition
 └─ EnemyDefinition
 ```
 
-`UnitDefinition`은 유닛 공통 내용을 정의한다.
+`UnitDefinition` defines common unit data.
 
-- 최대 체력
-- 공격력
-- 주문력
-- 이동속도
-- 치명타 확률
-- 치명타 피해
-- 치명타 저항
-- 물리 방어력
-- 화염 방어력
-- 번개 방어력
-- 얼음 방어력
-- 어둠 방어력
-- 신성 방어력
+- Maximum health
+- Attack power
+- Spell power
+- Movement speed
+- Critical-hit chance
+- Critical-hit damage
+- Critical-hit resistance
+- Physical defense
+- Fire defense
+- Lightning defense
+- Ice defense
+- Darkness defense
+- Holy defense
 
-`MonsterDefinition`은 몬스터 CSV 용어를 사용한다.
+`MonsterDefinition` uses monster CSV terminology.
 
 - `id`
 - `display_name`
@@ -325,7 +335,7 @@ UnitDefinition
 - `def_holy`
 - `MonsterIconImage`
 
-`EnemyDefinition`은 적 CSV 용어를 사용한다.
+`EnemyDefinition` uses enemy CSV terminology.
 
 - `enemy_id`
 - `stage_id`
@@ -354,7 +364,7 @@ UnitDefinition
 
 ### 2.5 Stage Definition
 
-스테이지 데이터는 실제 CSV 세 개에 맞춰 구성한다.
+Structure stage data according to the three actual CSV files.
 
 ```text
 StageDefinition
@@ -365,28 +375,28 @@ StageDefinition
 
 `StageDayDefinition`:
 
-- 일차와 전투 종류 정의
-- 조우 및 보상 규칙 연결
-- 상점, 이벤트, 엘리트 선택 필드 보관
+- Define the day and battle type
+- Link encounter and reward rules
+- Retain shop, event, and elite-choice fields
 
 `StageEncounterDefinition`:
 
-- 적 생성 순서
-- 적 종류와 수량
-- 생성 간격과 위치
-- 보스 후보 및 확정 보스
-- 확정 수감자
+- Enemy spawn order
+- Enemy types and counts
+- Spawn intervals and positions
+- Boss candidates and confirmed boss
+- Confirmed prisoners
 
 `StageRewardDefinition`:
 
-- 골드
-- 어둠의 흔적
-- 수감자 수 확률
-- 현현 성공 확률
-- 엘리트 추가 수감자
-- 유물 선택 수
+- Gold
+- Dark Trace
+- Prisoner-count probabilities
+- Manifestation success probability
+- Additional elite prisoners
+- Number of relic choices
 
-## 3. CSV 시작 파싱
+## 3. Startup CSV Parsing
 
 ```text
 CsvParser.cs
@@ -396,37 +406,37 @@ GameDefinitionCatalog
 
 ### 3.1 CsvParser
 
-`CsvParser` 책임:
+`CsvParser` responsibilities:
 
-- 게임 시작 시 CSV를 한 번 파싱한다.
-- 각 CSV의 열 이름을 그대로 읽는다.
-- CSV 종류에 맞는 Definition을 생성한다.
-- ID 참조를 연결한다.
-- 중복 ID를 검사한다.
-- 누락 참조를 검사한다.
-- 잘못된 enum과 숫자를 검사한다.
-- 오류가 있는 Definition을 조용히 추측하거나 보정하지 않는다.
+- Parse the CSV files once at game startup.
+- Read each CSV's column names unchanged.
+- Create Definitions appropriate to each CSV type.
+- Resolve ID references.
+- Check for duplicate IDs.
+- Check for missing references.
+- Validate invalid enums and numbers.
+- Do not silently guess or correct erroneous Definitions.
 
-`CsvParser`는 다음 런타임 책임을 갖지 않는다.
+`CsvParser` does not have the following runtime responsibilities.
 
-- 피해 계산
-- 스킬 실행
-- 유닛 생성
-- 런 진행
-- 스킬 학습 상태
-- 시각 효과 생성
+- Damage calculation
+- Skill execution
+- Unit creation
+- Run progression
+- Skill-learning state
+- Visual-effect creation
 
 ### 3.2 GameDefinitionCatalog
 
-`GameDefinitionCatalog` 책임:
+`GameDefinitionCatalog` responsibilities:
 
-- 파싱 완료된 Definition 보관
-- ID 기반 Definition 조회
-- 참조가 연결된 불변 게임 데이터 제공
+- Store parsed Definitions
+- Retrieve Definitions by ID
+- Provide immutable game data with resolved references
 
-`GameDefinitionCatalog`는 런타임의 현재 체력, 상태효과, 쿨다운, 학습 상태를 보관하지 않는다.
+`GameDefinitionCatalog` does not store current runtime health, status effects, cooldowns, or learning state.
 
-### 3.3 초기화 순서
+### 3.3 Initialization Order
 
 ```text
 Status Definition
@@ -434,11 +444,11 @@ Status Definition
 → Skill / Choice / ChoiceNode / Trigger Definition
 → Monster / Enemy Definition
 → Stage Definition
-→ 전체 ID 참조 검증
-→ GameDefinitionCatalog 확정
+→ Validate all ID references
+→ Finalize GameDefinitionCatalog
 ```
 
-## 4. 런타임 Model 계층
+## 4. Runtime Model Layer
 
 ```text
 UnitBaseModel
@@ -449,109 +459,109 @@ UnitBaseModel
 
 ### 4.1 UnitBaseModel
 
-각 유닛의 공통 런타임 수치를 보유한다.
+Holds common runtime values for each unit.
 
-- Definition 참조
-- 현재 체력
-- 현재 방어막
-- 현재 능력치
-- 생존 여부
-- 현재 위치
-- 현재 상태효과
-- 현재 쿨다운 상태
+- Definition reference
+- Current health
+- Current shield
+- Current stats
+- Survival state
+- Current position
+- Current status effects
+- Current cooldown state
 
 ### 4.2 MonsterModel
 
-`MonsterModel` 책임:
+`MonsterModel` responsibilities:
 
-- `MonsterDefinition` 참조
-- `MonsterSkillBucket` 소유
-- 자동 공격 상태
-- 자동 스킬 상태
-- 자신의 상태효과와 자원 상태
-- 다음 회차를 위한 자신의 상태 초기화
+- Reference `MonsterDefinition`
+- Own `MonsterSkillBucket`
+- Auto-attack state
+- Auto-skill state
+- Its own status-effect and resource state
+- Reset its own state for the next round
 
-다른 Manager가 몬스터의 학습 목록을 대신 소유하지 않는다.
+No other Manager owns the monster's learned-skill list on its behalf.
 
 ### 4.3 EnemyModel
 
-`EnemyModel` 책임:
+`EnemyModel` responsibilities:
 
-- `EnemyDefinition` 참조
-- `EnemySkillBucket` 소유
-- 적에게 배정된 액티브와 패시브 상태
-- 자신의 상태효과와 자원 상태
-- 생존 및 넥서스 접촉 상태
+- Reference `EnemyDefinition`
+- Own `EnemySkillBucket`
+- State for active and passive skills assigned to the enemy
+- Its own status-effect and resource state
+- Survival and Nexus-contact state
 
 ### 4.4 NexusModel
 
-`NexusModel` 책임:
+`NexusModel` responsibilities:
 
-- 현재 체력
-- 최대 체력
-- 생존 여부
-- 받은 넥서스 피해 반영
+- Current health
+- Maximum health
+- Survival state
+- Apply received Nexus damage
 
 ### 4.5 RunSessionModel
 
-한 번의 런에서 전투 사이에 유지되는 진행 상태를 보관한다.
+Stores progression state retained between battles in a single run.
 
-`RunSessionModel` 책임:
+`RunSessionModel` responsibilities:
 
-- 현재 스테이지 식별자
-- 현재 일차
-- 현재 조우 식별자
-- `PartyRoster` 참조
-- `PrisonerInventory` 참조
-- 현재 보상 처리 상태
-- 런 승리 및 패배 상태
+- Current stage identifier
+- Current day
+- Current encounter identifier
+- Reference `PartyRoster`
+- Reference `PrisonerInventory`
+- Current reward-processing state
+- Run victory and defeat state
 
-플레이어의 `Gold`와 `DarkTrace`는 사용자 지정에 따라 `RunSessionModel`이 아니라 `StageManager`가 관리한다.
+Per the user's specification, `StageManager`, not `RunSessionModel`, manages the player's `Gold` and `DarkTrace`.
 
-`RunSessionModel`은 다음 책임을 갖지 않는다.
+`RunSessionModel` does not have the following responsibilities.
 
-- 피해 계산
-- 유닛 행동
-- 스킬 실행
-- UI 표시
-- CSV 파싱
+- Damage calculation
+- Unit actions
+- Skill execution
+- UI presentation
+- CSV parsing
 
 ### 4.6 PartyRoster
 
-한 런에서 플레이어가 보유한 순서 있는 몬스터 파티를 관리한다.
+Manages the player's ordered monster party within a run.
 
-`PartyRoster` 책임:
+`PartyRoster` responsibilities:
 
-- 최초 선택 몬스터를 첫 슬롯에 등록
-- 현현된 몬스터를 다음 빈 슬롯에 등록
-- 파티원 순서 보존
-- 최대 파티 슬롯 제한
-- 중복 몬스터 등록 방지
-- 파티원 추가 가능 여부 반환
-- 몬스터 식별자로 파티원 조회
+- Register the initially selected monster in the first slot
+- Register a manifested monster in the next empty slot
+- Preserve party-member order
+- Enforce the maximum party-slot limit
+- Prevent duplicate monster registration
+- Report whether a party member can be added
+- Retrieve a party member by monster identifier
 
-`PartyRoster`는 파티원이 현재 필드에서 살아 있는지 판단하지 않는다. 현재 필드의 전체 유닛과 생존 유닛은 `StageManager`가 관리한다.
+`PartyRoster` does not determine whether a party member is alive on the current field. `StageManager` manages all units and surviving units on the current field.
 
-현재 UI에서 사용하는 1P부터 5P까지의 순서는 `PartyRoster` 순서를 그대로 사용한다. UI가 선택 몬스터와 현현 몬스터 목록을 다시 조합하지 않는다.
+The current UI's 1P-through-5P order uses `PartyRoster` order unchanged. The UI must not recombine the selected monster and manifested-monster lists.
 
 ### 4.7 PrisonerInventory
 
-전투 보상으로 획득한 수감자를 관리한다.
+Manages prisoners acquired as battle rewards.
 
-`PrisonerInventory` 책임:
+`PrisonerInventory` responsibilities:
 
-- `enemy_id` 기반 수감자 등록
-- 보유 수감자 조회
-- 현현 또는 공양 대상 수감자 선택
-- 수감자 소비 가능 여부 확인
-- 수감자 소비
-- 이미 소비한 수감자의 재사용 방지
-- 새 전투 보상 생성 시 이전 목록 초기화
-- 다음 일차로 넘어갈 때 남은 수감자 초기화
+- Register prisoners by `enemy_id`
+- Retrieve held prisoners
+- Select a prisoner for manifestation or offering
+- Check whether a prisoner can be consumed
+- Consume a prisoner
+- Prevent reuse of an already consumed prisoner
+- Clear the previous list when new battle rewards are generated
+- Clear remaining prisoners when advancing to the next day
 
-`PrisonerInventory`는 현현 성공 판정이나 공양 후보 생성을 하지 않는다.
+`PrisonerInventory` does not determine manifestation success or generate offering candidates.
 
-기존 Scripts의 수감자는 런 전체 누적 자원이 아니라 현재 전투의 보상 단계에서만 유지된다. 사용하지 않은 수감자는 다음 일차에 이월하지 않는다.
+In the existing Scripts, prisoners are retained only during the current battle's reward stage, not accumulated as a run-wide resource. Unused prisoners do not carry over to the next day.
 
 ## 5. SkillBucket
 
@@ -561,85 +571,85 @@ SkillBucket
 └─ EnemySkillBucket
 ```
 
-클래스 이름은 `Skillbucket`이 아니라 `SkillBucket`으로 기록한다.
+Record the class name as `SkillBucket`, not `Skillbucket`.
 
 ### 5.1 MonsterSkillBucket
 
-각 `MonsterModel`이 하나씩 소유한다.
+Each `MonsterModel` owns one.
 
-- 학습한 액티브 스킬
-- 학습한 패시브 스킬
-- 선택한 강화
-- 선택한 마스터
-- 스킬별 획득 제한
-- 중복 학습 방지
-- 스킬 사용 시 적용할 Choice와 Node 제공
+- Learned active skills
+- Learned passive skills
+- Selected enhancements
+- Selected masters
+- Per-skill acquisition limits
+- Prevention of duplicate learning
+- Provide Choices and Nodes to apply when using a skill
 
-몬스터의 학습 상태를 변경하는 최종 주체는 해당 몬스터의 `MonsterSkillBucket`이다.
+The final authority that changes a monster's learning state is that monster's `MonsterSkillBucket`.
 
 ### 5.2 EnemySkillBucket
 
-각 `EnemyModel`이 하나씩 소유한다.
+Each `EnemyModel` owns one.
 
-- 적에게 배정된 액티브 스킬
-- 적에게 배정된 패시브
-- 사용 가능한 스킬
-- 적 스킬 슬롯 제한
+- Active skills assigned to the enemy
+- Passives assigned to the enemy
+- Available skills
+- Enemy skill-slot limits
 
 ## 6. SkillCooldown
 
-각 Model이 참조하는 스킬 사용 조건 판정 객체다.
+An object referenced by each Model that evaluates skill-use conditions.
 
-`SkillCooldown` 책임:
+`SkillCooldown` responsibilities:
 
-- 현재 쿨다운
-- 탄창
-- 재장전
-- 발사 간격
-- 사용 가능 여부 판정
-- `CanUse()` 결과 반환
-- 스킬 사용 후 런타임 상태 갱신
-- 다음 회차 초기화
+- Current cooldown
+- Magazine
+- Reloading
+- Shot interval
+- Determine availability
+- Return the `CanUse()` result
+- Update runtime state after skill use
+- Reset for the next round
 
-`SkillCooldown`은 다음 책임을 갖지 않는다.
+`SkillCooldown` does not have the following responsibilities.
 
-- 대상 탐색
-- 피해 계산
-- 상태효과 적용
-- 시각 효과 생성
-- 스킬 학습 상태 변경
+- Target search
+- Damage calculation
+- Status-effect application
+- Visual-effect creation
+- Changing skill-learning state
 
 ## 7. SkillTargeting
 
-자동 상태에서 스킬 대상을 찾는다.
+Finds skill targets in automatic mode.
 
-`SkillTargeting` 책임:
+`SkillTargeting` responsibilities:
 
-- `target_selection` 적용
-- `target_scope` 적용
-- `radius` 적용
-- 현재 살아 있는 유닛 후보 사용
-- 최종 대상 또는 대상 목록 반환
+- Apply `target_selection`
+- Apply `target_scope`
+- Apply `radius`
+- Use candidates among currently living units
+- Return the final target or target list
 
-`SkillTargeting`은 피해 계산이나 스킬 실행을 하지 않는다.
+`SkillTargeting` does not calculate damage or execute skills.
 
-수동 대상 지정은 아직 사용자 요구에 포함되지 않았으므로 현재 초안에서 확정하지 않는다.
+Manual targeting is established in section 8.6 from the user's confirmed requirements and the inspected compatibility behavior.
 
-## 8. 행동·이동 구조
+## 8. Action and Movement Structure
 
 ### 8.1 InGameActionManager
 
-전투 중 행동 Controller의 실행 순서를 조율한다.
+Coordinates the execution order of action Controllers during combat.
 
-`InGameActionManager` 책임:
+`InGameActionManager` responsibilities:
 
-- `StageManager`의 전투 진행 상태 확인
-- 살아 있는 유닛의 행동 Controller 갱신
-- 플레이어 입력 처리 순서와 자동 행동 처리 순서 조율
-- 행동 불가 상태인 유닛의 실행 차단
-- `SkillCooldown`, `SkillTargeting`, Executor 호출 흐름 연결
+- Check `StageManager` combat-progression state
+- Update action Controllers for living units
+- Coordinate player-input processing order and automatic-action processing order
+- Block execution for units unable to act
+- Connect the call flow among `SkillCooldown`, `SkillTargeting`, and Executors
 
-`InGameActionManager`는 피해 계산이나 스킬 학습 상태를 소유하지 않는다.
+`InGameActionManager` owns neither damage calculation nor skill-learning state.
 
 ### 8.2 UnitActionController
 
@@ -649,120 +659,120 @@ UnitActionController
 └─ EnemyActionController
 ```
 
-공통 책임:
+Common responsibilities:
 
-- 담당 `UnitBaseModel` 참조
-- 유닛 생존 여부 확인
-- 이동·행동·특수 스킬 가능 상태 확인
-- 사용 가능한 스킬 조회
-- `SkillCooldown.CanUse()` 호출
-- 대상이 준비되면 Executor 실행 요청
+- Reference the assigned `UnitBaseModel`
+- Check unit survival state
+- Check whether movement, actions, and special skills are available
+- Retrieve available skills
+- Call `SkillCooldown.CanUse()`
+- Request Executor execution when a target is ready
 
 ### 8.3 MonsterActionController
 
-`MonsterActionController` 책임:
+`MonsterActionController` responsibilities:
 
-- `MonsterModel`과 `MonsterSkillBucket` 참조
-- 선택 몬스터의 수동 또는 자동 스킬 상태 확인
-- 현현 몬스터의 자동 행동 처리
-- 자동 상태일 때 `SkillTargeting`으로 대상 선택
-- 사용 가능한 스킬의 Executor 실행 요청
+- Reference `MonsterModel` and `MonsterSkillBucket`
+- Check the selected monster's manual or automatic skill state
+- Process automatic actions for manifested monsters
+- Select a target through `SkillTargeting` in automatic mode
+- Request the Executor for an available skill
 
-수동 입력은 `PlayerInputController`가 전달한다. `MonsterActionController`가 직접 UI 버튼을 찾지 않는다.
+`PlayerInputController` delivers manual input. `MonsterActionController` does not directly find UI buttons.
 
 ### 8.4 EnemyActionController
 
-`EnemyActionController` 책임:
+`EnemyActionController` responsibilities:
 
-- `EnemyModel`과 `EnemySkillBucket` 참조
-- 공격 가능한 플레이어 유닛 탐색
-- 공격 가능한 대상이 없을 때 넥서스 목표 사용
-- 공격 범위 밖이면 `UnitMovementController`에 이동 요청
-- 공격 범위 안이면 사용 가능한 스킬 실행
-- 넥서스 접촉 조건에서 `nexus_damage` 적용 요청
+- Reference `EnemyModel` and `EnemySkillBucket`
+- Find attackable player units
+- Use the Nexus as the target when no attackable target exists
+- Request movement from `UnitMovementController` when outside attack range
+- Execute an available skill when inside attack range
+- Request application of `nexus_damage` when the Nexus-contact condition is met
 
-적 생성 시점과 적 종류는 결정하지 않는다. 이는 `StageManager`와 `SpawnManager` 책임이다.
+It does not determine enemy spawn timing or enemy type. Those are the responsibilities of `StageManager` and `SpawnManager`.
 
 ### 8.5 UnitMovementController
 
-이동 가능한 유닛의 위치 변경만 담당한다.
+Handles only position changes for movable units.
 
-`UnitMovementController` 책임:
+`UnitMovementController` responsibilities:
 
-- 현재 위치와 목표 위치 확인
-- 이동속도 적용
-- 상태효과의 이동 가능 여부 적용
-- `deltaTime`에 따른 위치 갱신
-- 목표 도달 여부 반환
+- Check current and target positions
+- Apply movement speed
+- Apply movement availability from status effects
+- Update position according to `deltaTime`
+- Return whether the target has been reached
 
-`UnitMovementController`는 대상 선정, 공격, 피해 계산, 스킬 실행을 하지 않는다.
+`UnitMovementController` does not select targets, attack, calculate damage, or execute skills.
 
-현재 게임에서 적의 목표 접근 이동을 담당한다. 몬스터 이동 규칙은 아직 사용자 요구에 없으므로 기본 이동 대상으로 확정하지 않는다.
+It handles enemy movement toward targets in the current game. Monster movement rules are not yet in the user's requirements, so monsters are not established as default movement subjects.
 
 ### 8.6 PlayerInputController
 
-선택 플레이어 몬스터의 수동 입력과 자동 상태 변경을 담당한다.
+Handles manual input and automatic-state changes for the selected player monster.
 
-`PlayerInputController` 책임:
+`PlayerInputController` responsibilities:
 
-- 선택 몬스터 식별
-- 자동 스킬 상태 변경
-- 수동 스킬 사용 요청
-- UI 입력을 `MonsterActionController`에 전달
+- Identify the selected monster
+- Change automatic skill state
+- Request manual skill use
+- Deliver UI input to `MonsterActionController`
 
-수동 스킬 대상 지정 규칙:
+Manual skill-targeting rules:
 
-- 파티 슬롯 0의 선택 몬스터만 수동 입력을 받는다.
-- 선택 몬스터의 Auto 스킬 상태가 꺼져 있을 때만 수동 입력을 처리한다.
-- 마우스 왼쪽 버튼 입력을 사용한다.
-- 포인터가 UI 위에 있으면 전투 입력을 무시한다.
-- 마우스 화면 좌표를 전투 월드 좌표로 변환한다.
-- 선택 몬스터 위치에서 월드 조준점까지의 방향을 `aimDirection`으로 사용한다.
-- 월드 조준점을 `targetPoint`로 사용한다.
-- 비투사체 스킬은 버튼을 누른 프레임의 조준점으로 한 번 실행을 시도한다.
-- 투사체 스킬은 버튼을 누르고 있는 동안 최신 조준을 사용한다.
-- 연속 발사 중인 투사체는 버튼을 놓아도 마지막 저장 조준으로 남은 발사를 계속한다.
-- 범위 중심이 필요한 스킬은 수동 `targetPoint`를 우선 사용한다.
-- 수동 조준점이 없을 때만 해당 스킬의 자동 `target_selection` 규칙을 사용한다.
+- Only the selected monster in party slot 0 receives manual input.
+- Process manual input only while the selected monster's Auto-skill state is off.
+- Use left-mouse-button input.
+- Ignore combat input while the pointer is over the UI.
+- Convert mouse screen coordinates into combat-world coordinates.
+- Use the direction from the selected monster's position to the world aim point as `aimDirection`.
+- Use the world aim point as `targetPoint`.
+- A non-projectile skill attempts execution once using the aim point from the frame in which the button was pressed.
+- A projectile skill uses the latest aim while the button is held.
+- A projectile in a burst continues its remaining shots with the last stored aim even after the button is released.
+- Skills requiring an area center prioritize the manual `targetPoint`.
+- Use that skill's automatic `target_selection` rule only when no manual aim point exists.
 
-수동 입력은 조준 방향과 목표 지점만 전달한다. 최종 적중 대상과 범위 포함 여부는 각 Executor와 `SkillTargeting`이 판정한다.
+Manual input provides only the aim direction and target point. Each Executor and `SkillTargeting` determine the final hit targets and whether they fall within the area.
 
-### 8.7 행동 실행 순서
-
-```text
-1. 패시브 변경 반영
-2. 모든 등록 유닛의 쿨다운·탄창·재장전 상태 Tick
-3. 플레이어 및 현현 몬스터 자동 스킬을 등록 순서와 액티브 스킬 목록 순서로 시도
-4. 선택 몬스터 수동 입력 처리
-5. 적 행동을 적 등록 순서로 처리
-6. `SkillActorManager`가 현재 활성 Skill Actor를 등록 순서로 Tick
-7. 모든 유닛의 상태효과 지속시간과 만료 처리
-8. 상태 변경으로 발생한 패시브 변경 최종 반영
-```
-
-적 한 유닛의 프레임 내부 행동 순서:
+### 8.7 Action Execution Order
 
 ```text
-1. 사망 및 AutoAttackEnabled 확인
-2. 진행 중인 돌진 행동 Tick
-3. 가장 가까운 살아 있는 플레이어 탐색
-4. 플레이어가 없으면 넥서스 선택
-5. 사용 가능한 지원형 B 스킬 우선 시도
-6. 공격형 B 스킬 우선, 사용할 수 없으면 A 스킬 선택
-7. 사거리 밖이면 이동
-8. 사거리 안이고 행동 가능하면 선택 스킬 실행
-9. 넥서스 접촉 시 nexus_damage 적용 후 적 제거
+1. Apply passive changes
+2. Tick cooldown, magazine, and reload states for all registered units
+3. Attempt automatic skills for player and manifested monsters in registration order, then active-skill-list order
+4. Process manual input for the selected monster
+5. Process enemy actions in enemy registration order
+6. `SkillActorManager` Ticks currently active Skill Actors in registration order
+7. Process status-effect durations and expiration for all units
+8. Apply final passive changes caused by state changes
 ```
 
-위 순서는 기존 `InGameCombatManager.Update()`, `SkillExecution.TryExecuteAutomaticSkills(...)`, `PlayerCombatInputController.HandleManualInput(...)`, `EnemyActionController.Tick(...)`의 실제 호출 순서를 호환성 기준으로 사용한다.
+Within-frame action order for one enemy unit:
 
-새 구조에서는 모든 Skill Actor의 독립 Unity `Update()`를 제거한다. `InGameActionManager`가 한 프레임에 한 번 위 순서대로 Tick하고, 6단계에서 `SkillActorManager.Tick(deltaTime)`을 호출한다.
+```text
+1. Check death and AutoAttackEnabled
+2. Tick any active charge action
+3. Find the nearest living player
+4. Select the Nexus if no player exists
+5. First attempt an available support-type B skill
+6. Prefer an offensive B skill; select the A skill if B cannot be used
+7. Move when outside range
+8. Execute the selected skill when inside range and able to act
+9. On Nexus contact, apply nexus_damage and then remove the enemy
+```
 
-현재 프레임의 스킬 실행으로 새로 생성된 Skill Actor는 `pendingAdd`에 등록하고 다음 프레임부터 Tick한다. Tick 중 종료된 Actor는 `pendingRemove`에 등록하고 현재 Actor 순회가 끝난 뒤 제거한다. 이 규칙으로 컬렉션 변경과 생성 프레임의 중복 Tick을 방지한다.
+This order uses the actual call order in the existing `InGameCombatManager.Update()`, `SkillExecution.TryExecuteAutomaticSkills(...)`, `PlayerCombatInputController.HandleManualInput(...)`, and `EnemyActionController.Tick(...)` as its compatibility standard.
+
+The new structure removes independent Unity `Update()` methods from every Skill Actor. `InGameActionManager` Ticks once per frame in the order above and calls `SkillActorManager.Tick(deltaTime)` at step 6.
+
+Register Skill Actors created by skill execution in the current frame in `pendingAdd`; begin Ticking them in the next frame. Register Actors that end during a Tick in `pendingRemove`; remove them after the current Actor iteration finishes. This rule prevents collection mutation and duplicate Ticks in the creation frame.
 
 ## 9. Skill Executor
 
-스킬 종류별 Executor를 둔다.
+Provide an Executor for each skill type.
 
 ```text
 ProjectileExecutor
@@ -775,25 +785,25 @@ ShieldExecutor
 PassiveExecutor
 ```
 
-Executor 책임:
+Executor responsibilities:
 
-- 스킬 Definition 읽기
-- 시전자 `SkillBucket`의 학습 내용 읽기
-- 적용 가능한 Choice와 Node 결합
-- Trigger 조건 반영
-- 실제 스킬 실행 결과 생성
-- 필요한 Actor 생성 요청
-- `InGameCombatManager`에 피해, 회복, 방어막, 상태효과 적용 요청
+- Read the skill Definition
+- Read learned content from the caster's `SkillBucket`
+- Combine applicable Choices and Nodes
+- Apply Trigger conditions
+- Produce actual skill-execution results
+- Request creation of required Actors
+- Request damage, healing, shield, and status-effect application from `InGameCombatManager`
 
-Executor는 스킬 학습 상태를 직접 변경하지 않는다.
+Executors do not directly change skill-learning state.
 
-Executor는 스테이지 진행이나 시각 효과 삭제를 담당하지 않는다.
+Executors do not handle stage progression or visual-effect deletion.
 
 ## 10. Skill Actor
 
-각 소환된 스킬의 런타임 생명주기를 감시한다.
+Tracks the runtime lifecycle of each spawned skill.
 
-예시:
+Examples:
 
 ```text
 ProjectileActor
@@ -803,22 +813,22 @@ SingleAttackActor
 BuffActor
 ```
 
-Actor 책임:
+Actor responsibilities:
 
-- 생성 시점 기록
-- 이동
-- 지속시간
-- 충돌
-- 적중
-- 종료 조건
-- 종료 시 스킬 효과 종료 신호
-- `EffectManager`에 시각 효과 삭제 신호
+- Record creation time
+- Movement
+- Duration
+- Collision
+- Hit handling
+- End conditions
+- Signal skill-effect termination when ending
+- Signal visual-effect deletion to `EffectManager`
 
-Actor는 피해 공식을 소유하지 않는다.
+Actors do not own damage formulas.
 
-Actor는 몬스터의 학습 상태를 소유하지 않는다.
+Actors do not own a monster's learning state.
 
-Actor는 독립 Unity `Update()`를 갖지 않는다. 다음 공통 메서드로만 갱신한다.
+Actors do not have independent Unity `Update()` methods. Update them only through the following common method.
 
 ```text
 Tick(float deltaTime)
@@ -826,93 +836,93 @@ Tick(float deltaTime)
 
 ### 10.1 SkillActorManager
 
-현재 활성 Skill Actor의 중앙 생명주기를 관리한다.
+Manages the centralized lifecycle of currently active Skill Actors.
 
-`SkillActorManager` 책임:
+`SkillActorManager` responsibilities:
 
-- 생성된 Skill Actor 등록 요청 수신
-- 다음 프레임 등록을 위한 `pendingAdd` 관리
-- 활성 Actor를 등록 순서로 Tick
-- 종료 Actor의 `pendingRemove` 관리
-- 순회 종료 뒤 Actor 제거
-- Actor 제거 시 `EffectManager`에 시각 효과 삭제 요청
-- 전투 종료와 다음 회차 전환 시 모든 Actor 정리
+- Receive registration requests for created Skill Actors
+- Manage `pendingAdd` for next-frame registration
+- Tick active Actors in registration order
+- Manage `pendingRemove` for ending Actors
+- Remove Actors after iteration
+- Request visual-effect deletion from `EffectManager` when removing an Actor
+- Clear all Actors when combat ends and when transitioning to the next round
 
-`SkillActorManager`는 피해 계산, 대상 선정, 스킬 학습 상태를 담당하지 않는다.
+`SkillActorManager` does not handle damage calculation, target selection, or skill-learning state.
 
-`InGameActionManager`만 `SkillActorManager.Tick(deltaTime)`을 호출한다. 다른 Manager나 UI가 Skill Actor를 직접 Tick하지 않는다.
+Only `InGameActionManager` calls `SkillActorManager.Tick(deltaTime)`. No other Manager or UI directly Ticks Skill Actors.
 
 ## 11. InGameCombatManager
 
-게임 내 전투 결과를 조율한다.
+Coordinates in-game combat results.
 
-책임:
+Responsibilities:
 
-- 스킬 실행 요청 접수
-- 해당 Executor 호출
-- 최종 피해 계산
-- 피해 할당
-- 회복 할당
-- 방어막 할당
-- 상태효과 적용 요청
-- 피격, 처치, 스킬 발동 이벤트 전달
+- Receive skill execution requests
+- Invoke the appropriate Executor
+- Calculate final damage
+- Apply damage
+- Apply healing
+- Apply shields
+- Request status effect application
+- Dispatch hit, kill, and skill activation events
 
-금지 책임:
+Prohibited responsibilities:
 
-- 스킬 학습 상태 소유
-- 적 스폰
-- 현현 몬스터 스폰
-- 스테이지와 일차 진행
-- 프리팹 생명주기
-- 런 보상 소유
+- Own skill learning state
+- Spawn enemies
+- Spawn manifested monsters
+- Progress stages and days
+- Manage prefab lifecycles
+- Own run rewards
 
-`InGameCombatManager`는 모든 로직을 직접 구현하는 거대 객체가 아니라 전투 실행을 연결하는 조정자다.
+`InGameCombatManager` is not a monolithic object that directly implements all logic. It is a coordinator that connects combat execution.
 
 ## 12. SpawnManager
 
-게임 내 유닛 생성을 담당한다.
+Responsible for creating in-game units.
 
-책임:
+Responsibilities:
 
-- 적 스폰
-- 현현 몬스터 스폰
-- Definition을 기반으로 Model 생성
-- Model과 씬 Actor 연결
-- 생성된 유닛을 `StageManager`의 필드 유닛 목록에 등록
+- Spawn enemies
+- Spawn manifested monsters
+- Create Models from Definitions
+- Connect Models to scene Actors
+- Register created units in the `StageManager` field-unit list
 
-금지 책임:
+Prohibited responsibilities:
 
-- 어떤 적이 어느 일차에 나올지 결정
-- 피해 계산
-- 스킬 학습
-- 다음 스테이지 결정
+- Decide which enemies appear on which day
+- Calculate damage
+- Learn skills
+- Decide the next stage
 
 ## 13. StageManager
 
-`RunSessionModel`, 플레이어 재화, 현재 필드 진행을 담당한다.
+Responsible for the `RunSessionModel`, player currencies, and current field progression.
 
-책임:
+Responsibilities:
 
-- 활성 `RunSessionModel` 소유
-- 현재 스테이지
-- 현재 일차
-- 현재 조우
-- 플레이어 `Gold` 관리
-- 플레이어 `DarkTrace` 관리
-- 재화 추가와 사용 가능 여부 검사
-- 재화 소비
-- 전체 필드 유닛
-- 현재 살아 있는 유닛
-- 일차 시작
-- 적 생성 순서 진행
-- 전투 종료 판단
-- 다음 일차
-- 다음 스테이지
-- 승리와 패배
-- 회차 전환 시 유닛 초기화 요청
-- `SpawnManager`에 생성 명령
+- Own the active `RunSessionModel`
+- Current stage
+- Current day
+- Current encounter
+- Manage player `Gold`
+- Manage player `DarkTrace`
+- Add currencies and check whether they can be spent
+- Spend currencies
+- All field units
+- Currently living units
+- Start a day
+- Progress the enemy spawn sequence
+- Determine combat completion
+- Advance to the next day
+- Advance to the next stage
+- Victory and defeat
+- Request unit resets when transitioning between rounds
+- Command `SpawnManager` to create units
 
-재화 변경은 `StageManager`의 메서드를 통해서만 수행한다.
+Currency changes are performed only through `StageManager` methods.
 
 ```text
 AddGold(amount)
@@ -923,125 +933,125 @@ CanSpendDarkTrace(amount)
 SpendDarkTrace(amount)
 ```
 
-`RewardService`, `OfferingService`, `ManifestationService`, UI는 Gold와 DarkTrace 필드를 직접 변경하지 않는다.
+`RewardService`, `OfferingService`, `ManifestationService`, and UI do not directly modify the Gold and DarkTrace fields.
 
-`StageManager`는 `PartyRoster`와 `PrisonerInventory`를 직접 구현하지 않는다. 활성 `RunSessionModel`을 통해 두 객체에 접근하고, 실제 파티·수감자 규칙은 각 객체와 Service에 맡긴다.
+`StageManager` does not implement `PartyRoster` or `PrisonerInventory` itself. It accesses both objects through the active `RunSessionModel`, while each object and Service owns the actual party and prisoner rules.
 
-`StageManager`가 유닛의 내부 상태 필드를 직접 초기화하지 않는다.
+`StageManager` does not directly reset a unit's internal state fields.
 
-각 Model에 다음과 같은 초기화 요청을 전달한다.
+It sends each Model a reset request such as:
 
 ```text
 monsterModel.ResetForNextDay()
 enemyModel.ResetForNextDay()
 ```
 
-검사한 `MonsterDayRecovery.cs` 기준 회차 초기화 대상:
+Round-reset targets based on the inspected `MonsterDayRecovery.cs`:
 
-- 상태효과 제거
-- 직접 방어막 제거
-- 현재 방어막 제거
-- 스킬 런타임 상태 초기화
-- 체력 완전 회복
-- 자동 공격 활성화
-- 선택 몬스터가 아닌 경우 자동 스킬 활성화
+- Remove status effects
+- Remove direct shields
+- Remove current shields
+- Reset skill runtime state
+- Fully restore health
+- Enable automatic attacks
+- Enable automatic skills when the monster is not selected
 
-새 구조에서는 이 동작을 `StageManager`가 순회 요청하고, 실제 초기화는 각 Model이 자기 상태에 수행한다.
+In the new structure, `StageManager` requests these operations while iterating over units, and each Model performs the actual reset on its own state.
 
 ### 13.1 RewardService
 
-전투 종료 후 `StageRewardDefinition`을 실제 런 보상으로 변환하고 지급한다.
+After combat ends, converts `StageRewardDefinition` into actual run rewards and grants them.
 
-`RewardService` 책임:
+`RewardService` responsibilities:
 
-- 현재 스테이지와 전투 종류에 맞는 `StageRewardDefinition` 조회
-- Gold와 DarkTrace 보상 계산
-- 수감자 수 결정
-- 보스·확정 수감자 규칙 적용
-- `StageManager`를 통한 Gold와 DarkTrace 지급
-- `PrisonerInventory`에 수감자 등록
-- UI가 표시할 보상 결과 반환
+- Look up the `StageRewardDefinition` matching the current stage and combat type
+- Calculate Gold and DarkTrace rewards
+- Determine the prisoner count
+- Apply boss and guaranteed-prisoner rules
+- Grant Gold and DarkTrace through `StageManager`
+- Register prisoners in `PrisonerInventory`
+- Return reward results for the UI to display
 
-`RewardService`는 UI 버튼을 생성하지 않고 현현 또는 공양을 실행하지 않는다.
+`RewardService` does not create UI buttons and does not execute manifestation or offering.
 
 ### 13.2 OfferingService
 
-선택한 파티 몬스터의 공양 후보를 만들고 선택 결과를 적용한다.
+Creates offering candidates for the selected party monster and applies the selection result.
 
-`OfferingService` 책임:
+`OfferingService` responsibilities:
 
-- 대상 몬스터가 `PartyRoster`에 있는지 확인
-- 대상 `MonsterSkillBucket` 조회
-- 기존 등장 규칙에 따라 학습 가능한 액티브 후보 생성
-- 기존 등장 규칙에 따라 학습 가능한 패시브 후보 생성
-- 기존 등장 규칙에 따라 선택 가능한 강화 및 마스터 후보 생성
-- 모든 자격 후보를 하나의 목록에 합치기
-- 모든 후보를 동일한 가중치로 균등 셔플
-- 셔플 결과의 앞 3개만 반환
-- 한 번 생성한 후보 세트는 선택이 끝날 때까지 보관
-- 재추첨 제공 금지
-- 선택 결과를 해당 `MonsterSkillBucket`에 적용
-- 사용한 수감자를 `PrisonerInventory`에서 소비
+- Verify that the target monster is in `PartyRoster`
+- Look up the target `MonsterSkillBucket`
+- Generate learnable active candidates according to the existing appearance rules
+- Generate learnable passive candidates according to the existing appearance rules
+- Generate selectable enhancement and master candidates according to the existing appearance rules
+- Combine all eligible candidates into one list
+- Uniformly shuffle all candidates with equal weight
+- Return only the first three shuffled results
+- Retain a generated candidate set until selection is complete
+- Do not offer rerolls
+- Apply the selection result to the corresponding `MonsterSkillBucket`
+- Consume the used prisoner from `PrisonerInventory`
 
-`OfferingService`는 스킬 전투 효과를 실행하지 않는다. 학습 결과만 변경한다.
+`OfferingService` does not execute skill combat effects. It changes learning results only.
 
-기존 등장 자격 규칙:
+Existing appearance eligibility rules:
 
-- 기본 A 액티브 외 추가 액티브는 최대 2개
-- 패시브는 최대 5개
-- 선행 액티브가 필요한 패시브는 해당 액티브를 배운 뒤에만 후보가 된다.
-- 액티브 강화는 대상 스킬당 최대 3개
-- 액티브 마스터는 대상 스킬의 액티브 강화 3개를 선택한 뒤에만 후보가 되며 최대 1개
-- 패시브 강화는 대상 패시브당 최대 1개
-- 이미 학습하거나 선택한 항목은 후보에서 제외
+- A maximum of two additional active skills beyond the default A active skill
+- A maximum of five passives
+- A passive that requires a prerequisite active becomes eligible only after that active has been learned.
+- A maximum of three active enhancements per target skill
+- An active master becomes eligible only after selecting all three active enhancements for the target skill, and is limited to one
+- A maximum of one passive enhancement per target passive
+- Exclude items already learned or selected
 
-공양 버튼을 누르면 위 규칙을 통과한 모든 후보를 같은 확률로 섞고 최대 3개를 표시한다. 종류별 추가 가중치나 고정 비율은 없다.
+When the offering button is pressed, uniformly shuffle all candidates that pass the rules above and display up to three. There are no additional per-type weights or fixed ratios.
 
-공양 패널을 열었지만 자격 후보가 하나도 없으면 수감자를 소비하지 않는다. 후보 중 하나를 확정했을 때만 수감자를 소비한다.
+If the offering panel opens with no eligible candidates, do not consume a prisoner. Consume the prisoner only when one candidate is confirmed.
 
 ### 13.3 ManifestationService
 
-수감자를 사용해 새 몬스터를 파티에 추가하는 규칙을 담당한다.
+Owns the rules for using a prisoner to add a new monster to the party.
 
-`ManifestationService` 책임:
+`ManifestationService` responsibilities:
 
-- 선택한 수감자의 보유 여부 확인
-- `PartyRoster`의 다음 빈 슬롯 확인
-- 중복 몬스터와 최대 파티 제한 확인
-- 현현 시도를 시작할 때 수감자 즉시 소비
-- `enemy_id`와 무관하게 현재 파티에 없는 전체 플레이어 몬스터를 후보로 구성
-- 모든 현현 후보를 동일한 확률로 무작위 선택
-- 현재 보상의 `manifest_success_chance` 적용
-- 실패해도 소비한 수감자를 반환하지 않음
-- 성공 시 `PartyRoster`에 현현 몬스터 등록
-- 성공·실패 결과 반환
-- 성공 몬스터 영입을 확정하면 `StageManager`를 통해 `SpawnManager`에 즉시 배치 요청
-- 다음 회차를 기다리지 않고 현재 필드의 다음 파티 슬롯에 배치
+- Verify ownership of the selected prisoner
+- Find the next empty slot in `PartyRoster`
+- Check for duplicate monsters and the maximum party limit
+- Immediately consume the prisoner when a manifestation attempt begins
+- Build candidates from all player monsters not currently in the party, regardless of `enemy_id`
+- Randomly select from all manifestation candidates with equal probability
+- Apply the current reward's `manifest_success_chance`
+- Do not return the consumed prisoner on failure
+- Register the manifested monster in `PartyRoster` on success
+- Return the success or failure result
+- When recruitment of a successfully manifested monster is confirmed, immediately request placement from `SpawnManager` through `StageManager`
+- Place it in the next party slot on the current field without waiting for the next round
 
-`ManifestationService`는 직접 프리팹을 생성하지 않는다.
+`ManifestationService` does not instantiate prefabs directly.
 
-수감자 `enemy_id`와 현현 가능한 `monster_id` 사이에는 직접 매핑을 두지 않는다. 수감자의 `enemy_id`는 UI 표시와 재료 식별에 사용하며 현현 후보 선정에는 사용하지 않는다.
+There is no direct mapping between a prisoner's `enemy_id` and an eligible manifestation `monster_id`. The prisoner's `enemy_id` is used for UI display and material identification, not for manifestation candidate selection.
 
-현현 성공 후 기존 UI에는 성공 몬스터를 영입하거나 넘길 수 있는 선택이 존재한다. 영입을 확정하면 같은 흐름에서 파티 등록과 씬 스폰을 즉시 수행한다. 넘기면 수감자는 이미 소비된 상태로 유지되고 몬스터는 파티에 추가하지 않는다.
+After manifestation succeeds, the existing UI offers a choice to recruit or skip the successful monster. Confirming recruitment immediately registers the monster in the party and spawns it in the scene within the same flow. If skipped, the prisoner remains consumed and the monster is not added to the party.
 
-### 13.4 런 보상 흐름
+### 13.4 Run Reward Flow
 
 ```text
-전투 종료
-→ StageManager가 Reward 상태 진입
-→ RewardService가 보상 생성
-→ StageManager에 Gold·DarkTrace 지급
-→ PrisonerInventory에 수감자 등록
-→ 사용자가 수감자 선택
-→ OfferingService 또는 ManifestationService 실행
-→ 다음 일차 진행
+Combat ends
+→ StageManager enters the Reward state
+→ RewardService generates rewards
+→ Gold and DarkTrace are granted through StageManager
+→ Prisoners are registered in PrisonerInventory
+→ User selects a prisoner
+→ OfferingService or ManifestationService executes
+→ Proceed to the next day
 ```
 
-## 14. StatusDefinition과 StatusEffect
+## 14. StatusDefinition and StatusEffect
 
 ### 14.1 StatusDefinition
 
-`status_effects.csv`의 상태이상 원본 정의를 보관한다.
+Stores source definitions for status effects from `status_effects.csv`.
 
 - `status_effect_id`
 - `status_effect_label`
@@ -1066,293 +1076,304 @@ enemyModel.ResetForNextDay()
 
 ### 14.2 StatusEffect
 
-특정 유닛에게 실제 적용된 상태를 보관하고 실행한다.
+Stores and executes the state actually applied to a specific unit.
 
-- `StatusDefinition` 참조
-- 남은 지속시간
-- 현재 중첩
-- 적용한 유닛
-- 적용받은 유닛
-- 효과 적용
-- 효과 갱신
-- 효과 중첩
-- 효과 해제
+- `StatusDefinition` reference
+- Remaining duration
+- Current stacks
+- Applying unit
+- Affected unit
+- Apply effect
+- Refresh effect
+- Stack effect
+- Remove effect
 
-`StatusDefinition`은 불변 데이터다. `StatusEffect`는 전투 중 변하는 상태다.
+`StatusDefinition` is immutable data. `StatusEffect` is state that changes during combat.
 
 ## 15. EffectManager
 
-스킬의 런타임 시각 효과와 프리팹 시각 효과를 관리한다.
+Manages skill runtime visual effects and prefab visual effects.
 
-책임:
+Responsibilities:
 
-- 시각 효과 생성
-- 프리팹 생성
-- Actor별 Effect handle 반환
-- 위치와 방향 갱신
-- Actor 또는 Executor의 종료 신호 처리
-- 시각 효과 삭제
+- Create visual effects
+- Instantiate prefabs
+- Return an Effect handle for each Actor
+- Update position and direction
+- Handle termination signals from an Actor or Executor
+- Remove visual effects
 
-금지 책임:
+Prohibited responsibilities:
 
-- 피해 판정
-- 상태효과 판정
-- 스킬 사용 가능 여부
-- 대상 선정
-- 스킬 학습 상태
+- Determine damage
+- Determine status effects
+- Determine skill availability
+- Select targets
+- Own skill learning state
 
-## 16. 기존 UI 구조 재사용과 개조 경계
+## 16. Existing UI Structure Reuse and Modification Boundary
 
-현재 `NewRunScene`의 UI 계층과 시각 배치는 재사용한다. 새 청사진은 UI를 새로 설계하지 않고, 기존 UI가 읽고 호출하는 대상을 새 Core API로 교체한다.
+Reuse the current `NewRunScene` UI hierarchy and visual layout. This new blueprint does not redesign the UI; it replaces the objects read and called by the existing UI with the new Core APIs.
 
-재사용 대상:
+Reuse targets:
 
-- 메인 메뉴와 런 진입 흐름
+- Main menu and run-entry flow
 - RewardPanel
 - PrisonPanel
-- 1P부터 5P까지의 파티 슬롯
-- 공양 UI
-- 현현 성공·실패 UI
-- 몬스터 패널
-- 넥서스 체력 표시
-- 데미지 미터
-- Auto 버튼
-- 게임 속도 버튼
+- Party slots from 1P through 5P
+- Offering UI
+- Manifestation success and failure UI
+- Monster panel
+- Nexus health display
+- Damage meter
+- Auto button
+- Game speed button
 - DebugPanel
 
-UI 개조 원칙:
+UI modification principles:
 
-- UI는 `UnitBaseModel`, `MonsterSkillBucket`, 재화 필드를 직접 변경하지 않는다.
-- Gold와 DarkTrace는 `StageManager`의 읽기 전용 값으로 표시한다.
-- 파티 슬롯은 `RunSessionModel.PartyRoster` 순서를 그대로 표시한다.
-- 수감자 목록은 `RunSessionModel.PrisonerInventory`를 표시한다.
-- 보상 UI는 `RewardService`가 반환한 결과를 표시한다.
-- 공양 UI는 `OfferingService`에서 후보를 받고 선택 명령만 전달한다.
-- 현현 UI는 `ManifestationService`에 실행 명령을 전달하고 성공·실패 결과를 표시한다.
-- Auto UI는 `PlayerInputController`를 통해 선택 몬스터 상태를 변경한다.
-- 데미지 미터는 `InGameCombatManager`의 피해 확정 이벤트를 구독한다.
-- 넥서스 UI는 `NexusModel` 상태를 표시한다.
-- `EffectManager`는 스킬 시각 효과만 관리하며 패널 UI를 관리하지 않는다.
+- UI does not directly modify `UnitBaseModel`, `MonsterSkillBucket`, or currency fields.
+- Display Gold and DarkTrace as read-only values from `StageManager`.
+- Display party slots in the exact order of `RunSessionModel.PartyRoster`.
+- Display the prisoner list from `RunSessionModel.PrisonerInventory`.
+- The reward UI displays results returned by `RewardService`.
+- The offering UI receives candidates from `OfferingService` and only sends selection commands.
+- The manifestation UI sends execution commands to `ManifestationService` and displays success or failure results.
+- The Auto UI changes the selected monster's state through `PlayerInputController`.
+- The damage meter subscribes to confirmed-damage events from `InGameCombatManager`.
+- The Nexus UI displays `NexusModel` state.
+- `EffectManager` manages only skill visual effects, not panel UI.
 
-기존 씬 오브젝트 이름과 레이아웃을 유지할 수 있다. 기존 UI 스크립트가 이전 상태 객체나 Manager의 내부 필드를 직접 읽는 부분은 새 `StageManager`, `RunSessionModel`, `PartyRoster`, Service API에 맞게 개조해야 한다.
+Existing scene object names and layouts may be retained. Any existing UI script that directly reads previous state objects or internal Manager fields must be modified to use the new `StageManager`, `RunSessionModel`, `PartyRoster`, and Service APIs.
 
 ### 16.1 GameBootstrap
 
-게임 시작과 새 Core 연결을 담당하는 진입점이 필요하다.
+An entry point is required to start the game and connect the new Core.
 
-`GameBootstrap` 책임:
+`GameBootstrap` responsibilities:
 
-- `CsvParser` 실행
-- `GameDefinitionCatalog` 생성
-- `RunSessionModel` 생성
-- `StageManager` 초기화
-- `InGameCombatManager`와 `InGameActionManager` 초기화
-- `RewardService`, `OfferingService`, `ManifestationService` 생성 및 연결
-- 기존 UI Controller에 새 Core 조회·명령 API 연결
+- Execute `CsvParser`
+- Create `GameDefinitionCatalog`
+- Create `RunSessionModel`
+- Initialize `StageManager`
+- Initialize `InGameCombatManager` and `InGameActionManager`
+- Create and connect `RewardService`, `OfferingService`, and `ManifestationService`
+- Connect new Core query and command APIs to existing UI Controllers
 
-`GameBootstrap`은 게임 규칙을 직접 구현하지 않는다.
+`GameBootstrap` does not directly implement game rules.
 
-## 17. 전체 실행 흐름
+## 17. Complete Execution Flow
 
-### 17.1 게임 시작
+### 17.1 Game Start
 
 ```text
-게임 시작
+Game starts
 → CsvParser
-→ Definition 생성
-→ ID 참조 검증
-→ GameDefinitionCatalog 확정
+→ Create Definitions
+→ Validate ID references
+→ Finalize GameDefinitionCatalog
 → GameBootstrap
-→ RunSessionModel 생성
-→ StageManager와 Service 초기화
-→ 기존 UI를 새 Core API에 연결
+→ Create RunSessionModel
+→ Initialize StageManager and Services
+→ Connect existing UI to the new Core APIs
 ```
 
-### 17.2 유닛 생성
+### 17.2 Unit Creation
 
 ```text
 StageManager
 → SpawnManager
-→ UnitDefinition 조회
-→ UnitBaseModel 하위 Model 생성
-→ SkillBucket 생성
-→ 필드 유닛 등록
+→ Look up UnitDefinition
+→ Create a UnitBaseModel-derived Model
+→ Create SkillBucket
+→ Register field unit
 ```
 
-### 17.3 자동 스킬 실행
+### 17.3 Automatic Skill Execution
 
 ```text
 InGameActionManager
-→ MonsterActionController 또는 EnemyActionController
-→ SkillBucket에서 사용 스킬 조회
+→ MonsterActionController or EnemyActionController
+→ Look up the skill to use from SkillBucket
 → SkillCooldown.CanUse()
-→ SkillTargeting으로 대상 조회
-→ 스킬 종류별 Executor 실행
-→ InGameCombatManager가 전투 결과 반영
-→ 필요한 Actor 생성
-→ EffectManager가 시각 효과 생성
+→ Select targets through SkillTargeting
+→ Execute the Executor for the skill type
+→ InGameCombatManager applies combat results
+→ Create required Actors
+→ EffectManager creates visual effects
 ```
 
-### 17.4 적 이동과 넥서스 공격
+### 17.4 Enemy Movement and Nexus Attacks
 
 ```text
-EnemyActionController가 공격 대상 확인
-→ 공격 범위 밖이면 UnitMovementController 호출
-→ 공격 범위 안이면 적 스킬 Executor 실행
-→ 플레이어 유닛이 없으면 넥서스로 이동
-→ 넥서스 접촉 시 InGameCombatManager에 nexus_damage 적용 요청
+EnemyActionController checks its attack target
+→ If outside attack range, invoke UnitMovementController
+→ If inside attack range, execute the enemy skill Executor
+→ If there are no player units, move toward the Nexus
+→ On Nexus contact, request InGameCombatManager to apply nexus_damage
 ```
 
-### 17.5 스킬 종료
+### 17.5 Skill Termination
 
 ```text
-Actor가 종료 조건 감지
-→ 전투 효과 종료 신호
-→ EffectManager에 삭제 신호
-→ Actor 제거
+Actor detects its termination condition
+→ Signal combat-effect termination
+→ Signal EffectManager to remove the effect
+→ Remove Actor
 ```
 
-### 17.6 보상·공양·현현
+### 17.6 Rewards, Offering, and Manifestation
 
 ```text
-전투 종료
-→ RewardService가 보상 생성
-→ StageManager가 Gold·DarkTrace 갱신
-→ PrisonerInventory가 수감자 등록
-→ 기존 PrisonPanel에 PartyRoster와 수감자 표시
-→ OfferingService 또는 ManifestationService 실행
-→ MonsterSkillBucket 또는 PartyRoster 변경
+Combat ends
+→ RewardService generates rewards
+→ StageManager updates Gold and DarkTrace
+→ PrisonerInventory registers prisoners
+→ Existing PrisonPanel displays PartyRoster and prisoners
+→ OfferingService or ManifestationService executes
+→ MonsterSkillBucket or PartyRoster changes
 ```
 
-### 17.7 다음 회차
+### 17.7 Next Round
 
 ```text
-StageManager가 전투 종료 확인
-→ 전체 필드 유닛에 ResetForNextDay() 요청
-→ 현재 일차 갱신
-→ 다음 StageDefinition 조회
-→ SpawnManager에 다음 조우 생성 요청
+StageManager confirms combat completion
+→ Request ResetForNextDay() from all field units
+→ Update the current day
+→ Look up the next StageDefinition
+→ Request SpawnManager to create the next encounter
 ```
 
-## 18. 구현 가능성 판정
+## 18. Implementation Feasibility Assessment
 
-### 18.1 현재 활성 게임 요소
+### 18.1 Currently Active Game Elements
 
-이 청사진 v0.2는 다음 활성 요소에 모두 명시적인 책임 주체를 제공한다.
+This blueprint provides an explicit owner for every active element below.
 
-- 몬스터, 적, 넥서스
-- 파티와 현현 몬스터
-- 액티브, 패시브, 강화, 마스터
+- Monsters, enemies, and the Nexus
+- Party and manifested monsters
+- Active, passive, enhancement, and master
 - Skill Choice, Node, Trigger
-- 피해, 회복, 방어막, 상태효과
-- 투사체, 직선, 범위, 단일 공격, 버프
-- 자동 행동, 수동 스킬 요청
-- 적 이동과 넥서스 공격
-- 스테이지, 일차, 조우, 스폰
-- 승리, 패배, 회차 초기화
+- Damage, healing, shields, and status effects
+- Projectile, line, area, single-target attack, and buff
+- Automatic actions and manual skill requests
+- Enemy movement and Nexus attacks
+- Stages, days, encounters, and spawning
+- Victory, defeat, and round reset
 - Gold, DarkTrace
-- 수감자
-- 보상
-- 공양
-- 현현
-- 기존 파티, 보상, 수감자, 공양, 현현, 넥서스, 데미지 미터, Auto UI
+- Prisoners
+- Rewards
+- Offering
+- Manifestation
+- Existing party, reward, prisoner, offering, manifestation, Nexus, damage meter, and Auto UI
 
-따라서 현재 확인된 활성 게임 요소는 이 구조로 구현할 수 있다.
+Therefore, the currently identified active game elements can be implemented with this structure.
 
-### 18.2 확정된 호환성 규칙
+### 18.2 Confirmed Compatibility Rules
 
-다음 규칙은 사용자 지시와 기존 Scripts 검사로 확정됐다.
+The following rules are confirmed by user instructions and inspection of the existing Scripts.
 
-- 수감자 `enemy_id`와 현현 `monster_id`는 직접 연결하지 않는다.
-- 현현 후보는 현재 파티에 없는 플레이어 몬스터 전체에서 동일 확률로 선택한다.
-- 현현 시도 시작 시 수감자를 소비하며 실패해도 반환하지 않는다.
-- 현현 몬스터 영입을 확정하면 현재 필드에 즉시 배치한다.
-- 공양 후보는 기존 학습·선행·개수 제한을 통과한 전체 후보에서 동일 확률로 최대 3개를 뽑는다.
-- 공양 종류별 별도 가중치와 재추첨은 없다.
-- 공양 선택을 확정할 때 수감자를 소비한다.
-- 수동 스킬은 선택 몬스터의 마우스 월드 조준점과 방향을 사용한다.
-- 중앙 전투 프레임 내부 순서는 쿨다운 Tick, 자동 스킬, 수동 입력, 적 행동, 상태효과 Tick 순서다.
+- Do not directly connect a prisoner's `enemy_id` to a manifestation `monster_id`.
+- Select manifestation candidates with equal probability from all player monsters not currently in the party.
+- Consume the prisoner when a manifestation attempt begins and do not return it on failure.
+- Immediately place a manifested monster on the current field when its recruitment is confirmed.
+- Select up to three offering candidates with equal probability from all candidates that pass the existing learning, prerequisite, and count limits.
+- There are no separate per-offering-type weights and no rerolls.
+- Consume the prisoner when an offering selection is confirmed.
+- A manual skill uses the selected monster's mouse world-space aim point and direction.
+- The order within the central combat frame is cooldown Tick, automatic skills, manual input, enemy actions, and status-effect Tick.
 
-### 18.3 추가 확정 사항
+### 18.3 Additional Confirmed Decisions
 
-- 모든 Skill Actor는 독립 Unity `Update()`를 사용하지 않고 중앙 `SkillActorManager` Tick을 사용한다.
-- 현현 성공 팝업은 기존 UI 흐름을 유지한다.
-- 사용자는 성공한 몬스터를 영입하거나 넘길 수 있다.
-- 영입하면 즉시 파티 등록과 필드 배치를 수행한다.
-- 넘기면 수감자는 소비된 상태로 유지되고 몬스터는 추가하지 않는다.
-- Save/Load는 현재 존재하지 않으며 이번 구조에서 만들지 않는다.
-- Gold, DarkTrace, PartyRoster, PrisonerInventory는 실행 중인 현재 런의 메모리 상태만 담당한다.
+- Every Skill Actor uses the central `SkillActorManager` Tick rather than an independent Unity `Update()`.
+- The manifestation-success popup retains the existing UI flow.
+- The user may recruit or skip a successfully manifested monster.
+- Recruiting immediately registers the monster in the party and places it on the field.
+- Skipping keeps the prisoner consumed and does not add the monster.
+- Save/Load does not currently exist and will not be created as part of this structure.
+- Gold, DarkTrace, PartyRoster, and PrisonerInventory own only the in-memory state of the current active run.
 
-현재 활성 게임 요소 구현을 막는 추가 정보 부족은 없다. 구현 중 새 의미 공백이 발견되면 1.1절 근거 우선순위를 적용한다.
+No additional information is missing that would block implementation of the currently active game elements. If a new semantic gap is discovered during implementation, apply the evidence priority from section 1.1.
 
-### 18.4 현재 비활성 또는 데이터 전용 요소
+### 18.4 Currently Inactive or Data-Only Elements
 
-CSV에 필드는 있으나 현재 활성 요소로 확인되지 않은 상점, 이벤트, 엘리트 선택, 유물 UI는 이 청사진에서 런타임 구현 대상으로 확정하지 않는다.
+Although the CSV contains fields for them, shops, events, elite selection, and relic UI have not been identified as active elements and are not confirmed as runtime implementation targets in this blueprint.
 
-이 요소를 활성화하려면 별도 Service, 상태 Model, UI 책임을 추가해야 한다.
+Activating these elements requires adding separate Service, state Model, and UI responsibilities.
 
-### 18.5 완전 교체와 리소스 재연결 경계
+### 18.5 Complete Replacement and Resource Reconnection Boundary
 
-최종 목표는 기존 Scripts 위에 새 구조를 덧씌우는 공존 구조가 아니다.
+The final goal is not a coexistence structure that overlays the new structure on top of the existing Scripts.
 
 ```text
-유지
+Retain
 ├─ Pakuri/Assets/CSVdata
-├─ 현재 사용하는 씬 계층과 UI 오브젝트
-├─ 현재 사용하는 프리팹
-├─ 스프라이트
-├─ 애니메이션과 AnimatorController
-└─ Inspector에서 사용하는 리소스 값
+├─ Currently used scene hierarchy and UI objects
+├─ Currently used prefabs
+├─ Sprites
+├─ Animations and AnimatorControllers
+└─ Resource values used in the Inspector
 
-교체
-├─ 기존 MonoBehaviour 연결
-├─ 기존 ScriptableObject 타입 연결
-├─ 기존 런타임 Manager와 정적 상태
-├─ 기존 코드 사이의 호출 관계
-└─ 기존 Scripts를 요구하는 초기화 경로
+Replace
+├─ Existing MonoBehaviour connections
+├─ Existing ScriptableObject type connections
+├─ Existing runtime Managers and static state
+├─ Call relationships between existing code
+└─ Initialization paths that require existing Scripts
 ```
 
-청사진의 Markdown 파일 자체를 Unity 리소스에 연결할 수는 없다. Code Builder가 청사진을 근거로 새 C# 타입을 구현한 뒤 새 타입의 Script GUID와 직렬화 필드에 현재 리소스를 다시 연결해야 한다.
+The blueprint Markdown file itself cannot be connected to Unity resources. After the Code Builder implements new C# types based on the blueprint, current resources must be reconnected to the new types' Script GUIDs and serialized fields.
 
-전환 기간에는 기존 Scripts를 동작·연결 비교용으로 읽을 수 있다. 그러나 새 런타임과 기존 런타임을 동시에 게임 상태의 권위로 실행하지 않는다. 기능 단위 전환이 완료되면 해당 기존 컴포넌트를 씬과 프리팹에서 제거하고 새 컴포넌트만 연결한다.
+During the transition, existing Scripts may be read to compare behavior and connections. However, the new and existing runtimes must not simultaneously execute as authorities over game state. Once a feature-level transition is complete, remove the corresponding existing components from scenes and prefabs and connect only the new components.
 
-현재 검사에서 확인한 전환 범위:
+Transition scope confirmed by the current inspection:
 
-- Unity 직렬화 파일 239개를 검사했다.
-- 기존 Script 21종이 40개 직렬화 자산에서 총 56회 참조된다.
-- 참조 위치에는 씬, 프리팹, `CsvRuntimeCatalog.asset`, `Legacy/Data/GameData/*.asset`이 포함된다.
-- `.anim` 파일에서 직렬화된 Animation Event 함수 이름은 확인되지 않았다.
-- 현재 씬·프리팹의 `m_Script: {fileID: 0}` 누락 연결은 0개다.
+- 240 Unity serialized files were inspected using the explicit whitelist `.unity`, `.prefab`, `.asset`, `.controller`, `.overrideController`, `.anim`, `.playable`, `.mat`, and `.scenetemplate`.
+- 21 existing Script types are referenced 56 times in total across 40 serialized assets.
+- Reference locations include scenes, prefabs, `CsvRuntimeCatalog.asset`, and `Legacy/Data/GameData/*.asset`.
+- No serialized Animation Event function names were found in `.anim` files.
+- There are zero missing `m_Script: {fileID: 0}` connections in current scenes and prefabs.
 
-따라서 새 구현 완료만으로 전환이 끝나지 않는다. 모든 기존 Script GUID 참조를 분류해 다음 중 하나로 처리해야 한다.
+The retained-resource inventory uses an evidence-defined reachability boundary rather than assuming that every file under `Assets` is active:
 
-1. 현재 플레이에 필요한 자산은 새 컴포넌트 또는 새 ScriptableObject 타입으로 재연결한다.
-2. CSV 파싱으로 대체되어 더 이상 필요 없는 Legacy 데이터 자산은 실제 참조 여부를 확인한 뒤 제거 또는 `Assets` 밖 보관 대상으로 사용자 승인을 받는다.
-3. 새 구조에서도 필요한 Inspector 값은 의미가 같은 새 직렬화 필드로 명시적으로 이전한다.
-4. 이전 타입을 요구하는 자산이 남으면 완전 교체 미완료로 판정한다.
+1. Start with the 24 non-Legacy serialized assets that currently host existing Script components.
+2. Add all non-schema CSV values from columns ending in `_path`.
+3. Recursively follow serialized GUID references from those roots to project assets under `Pakuri/Assets`.
+4. Exclude existing `.cs`, `.asmdef`, and `.dll` code dependencies because the Script-reference manifest and final dependency-removal gate track them separately.
 
-최종 전환은 준비와 검증을 단계적으로 마친 뒤 한 번에 활성화할 수 있다. 구현, 자산 재연결, 컴파일, 플레이 검증을 근거 없이 한 번의 변경으로 완료됐다고 판정하지 않는다.
+This reproducible boundary yields 781 resource-reference rows and 593 unique retained project assets. It includes current scenes, prefabs, sprites, animations, AnimatorControllers, fonts, shaders, CSV TextAssets, and referenced data assets. All recorded retained paths exist.
 
-### 18.6 완전 교체 완료 조건
+The Inspector snapshot stores the exact serialized MonoBehaviour YAML payload for all 56 existing Script references as UTF-8 Base64 plus SHA-256. This preserves pre-migration Inspector values for the Phase 5 before-and-after mapping without treating the previous component as a runtime dependency.
 
-다음 조건을 모두 만족해야 정상적인 게임 플레이가 가능한 완전 교체로 판정한다.
+Therefore, completing the new implementation alone does not finish the transition. Every existing Script GUID reference must be classified and handled in one of the following ways.
 
-- 새 코드에서 기존 Scripts의 타입과 namespace 참조가 0개다.
-- 새 코드에서 기존 Scripts를 reflection 문자열, `SendMessage`, fallback 또는 어댑터로 호출하는 경로가 0개다.
-- `Pakuri/Assets`의 Unity 직렬화 자산에서 이전 Script GUID 참조가 0개다.
-- 씬과 프리팹의 Missing Script가 0개다.
-- 유지 대상 CSV 파일과 열 이름은 변경되지 않는다.
-- 활성 프리팹, 스프라이트, 애니메이션, AnimatorController가 새 소유자에 연결된다.
-- 전투, 행동·이동, 스테이지, 보상, 공양, 현현, UI 흐름이 새 Core만으로 실행된다.
-- 중앙 Tick 밖에서 전투 상태를 변경하는 이전 컴포넌트가 없다.
-- 컴파일 오류와 Unity Console 오류가 없다.
-- 사용자가 Unity Play Mode에서 정상 게임 플레이를 확인한다.
+1. Reconnect assets required for current gameplay to new components or new ScriptableObject types.
+2. For Legacy data assets replaced by CSV parsing and no longer required, verify actual references and obtain user approval either to remove them or archive them outside `Assets`.
+3. Explicitly migrate Inspector values still required by the new structure to new serialized fields with equivalent meaning.
+4. If any asset still requires a previous type, classify the complete replacement as incomplete.
 
-기존 `.cs` 파일을 씬에서 분리하는 것만으로는 컴파일 의존이 제거되지 않는다. 최종 단계에서 이전 소스가 `Assets` 아래 남아 있으면 Unity 컴파일 대상이다. 모든 새 자산 연결과 플레이 검증이 끝난 뒤, 이전 소스는 사용자 승인하에 삭제하거나 Unity 컴파일 대상이 아닌 보관 위치로 이동해야 한다.
+The final transition may be activated all at once after preparation and verification are completed incrementally. Do not claim that implementation, asset reconnection, compilation, and gameplay verification were completed in a single change without evidence.
 
-## 19. 최종 목표 폴더·스크립트 구조
+### 18.6 Complete Replacement Completion Conditions
 
-아래 구조는 구현 후 목표 상태다. 현재 저장소에 이 구조가 이미 존재한다는 뜻이 아니다.
+All of the following conditions must be satisfied to classify the replacement as complete and capable of normal gameplay.
+
+- New code has zero references to types and namespaces from the existing Scripts.
+- New code has zero paths that invoke the existing Scripts through reflection strings, `SendMessage`, fallbacks, or adapters.
+- Unity serialized assets under `Pakuri/Assets` have zero references to previous Script GUIDs.
+- Scenes and prefabs have zero Missing Scripts.
+- Retained CSV files and column names remain unchanged.
+- Active prefabs, sprites, animations, and AnimatorControllers are connected to their new owners.
+- Combat, actions and movement, stages, rewards, offering, manifestation, and UI flows execute using only the new Core.
+- No previous component changes combat state outside the central Tick.
+- There are no compilation errors or Unity Console errors.
+- The user confirms normal gameplay in Unity Play Mode.
+
+Disconnecting existing `.cs` files from scenes alone does not remove compile-time dependencies. If previous source files remain under `Assets` in the final phase, Unity still compiles them. After all new asset connections and gameplay verification are complete, previous sources must either be deleted with user approval or moved to an archive location outside Unity's compilation scope.
+
+## 19. Final Target Folder and Script Structure
+
+The structure below is the target state after implementation. It does not mean this structure already exists in the current repository.
 
 ```text
 Pakuri/Assets/Scripts/
@@ -1451,7 +1472,7 @@ Pakuri/Assets/Scripts/
 │  └─ SpawnManager.cs
 └─ UI/
    ├─ MainMenu/
-   │  └─ 기존 MainMenu UI 스크립트 재사용·개조
+   │  └─ Reuse and modify the existing MainMenu UI scripts
    └─ InGame/
       ├─ InGameUIManager.cs
       ├─ RewardPanelController.cs
@@ -1459,575 +1480,918 @@ Pakuri/Assets/Scripts/
       ├─ OfferingPanelController.cs
       ├─ ManifestationPanelController.cs
       ├─ MonsterPanel/
-      │  └─ 기존 MonsterPanel UI 스크립트 재사용·개조
+      │  └─ Reuse and modify the existing MonsterPanel UI scripts
       ├─ Nexus/
-      │  └─ 기존 Nexus UI 스크립트 재사용·개조
+      │  └─ Reuse and modify the existing Nexus UI scripts
       ├─ DamageMeter/
-      │  └─ 기존 DamageMeter UI 스크립트 재사용·개조
+      │  └─ Reuse and modify the existing DamageMeter UI scripts
       ├─ UtilityPanel/
-      │  └─ 기존 Auto·시간 배속 UI 스크립트 재사용·개조
+      │  └─ Reuse and modify the existing Auto and time-scale UI scripts
       └─ Debug/
-         └─ 기존 Debug UI 스크립트 재사용·개조
+         └─ Reuse and modify the existing Debug UI scripts
 ```
 
 ### 19.1 Core
 
-게임 시작 데이터 계층이다.
+The data layer for game startup.
 
-- `CsvParser`가 유지 대상 CSV를 읽는다.
-- Definition은 CSV 용어를 그대로 보관한다.
-- `GameDefinitionCatalog`가 검증 완료 Definition을 제공한다.
-- `GameBootstrap`이 Manager, Service, 기존 UI를 연결한다.
+- `CsvParser` reads the retained CSV files.
+- Definitions preserve CSV terminology exactly.
+- `GameDefinitionCatalog` provides validated Definitions.
+- `GameBootstrap` connects Managers, Services, and the existing UI.
 
 ### 19.2 Run
 
-전투 사이에 유지되는 런 진행 계층이다.
+The run-progression layer retained between combats.
 
-- `RunSessionModel`이 현재 런 상태를 묶는다.
-- `StageManager`가 스테이지, 일차, 필드 유닛, Gold, DarkTrace를 관리한다.
-- `PartyRoster`가 1P부터 5P까지의 파티 순서를 관리한다.
-- `PrisonerInventory`가 수감자를 관리한다.
-- 세 Service가 보상, 공양, 현현 규칙을 각각 실행한다.
+- `RunSessionModel` groups the current run state.
+- `StageManager` manages the stage, day, field units, Gold, and DarkTrace.
+- `PartyRoster` manages party order from 1P through 5P.
+- `PrisonerInventory` manages prisoners.
+- The three Services respectively execute reward, offering, and manifestation rules.
 
 ### 19.3 Units
 
-Definition과 씬 GameObject 사이의 유닛 계층이다.
+The unit layer between Definitions and scene GameObjects.
 
-- Model은 현재 체력, 상태, 스킬 상태를 소유한다.
-- Actor는 Transform, Collider, Animation, 씬 표시를 연결한다.
-- Model은 UI나 프리팹을 직접 찾지 않는다.
+- A Model owns current health, status, and skill state.
+- An Actor connects Transform, Collider, Animation, and scene presentation.
+- A Model does not directly find UI or prefabs.
 
 ### 19.4 Combat
 
-전투 판단과 실행 계층이다.
+The combat decision and execution layer.
 
-- `InGameCombatManager`가 피해, 회복, 방어막, 상태 적용 결과를 조율한다.
-- Actions 폴더가 자동 행동, 수동 입력, 적 판단, 이동을 담당한다.
-- Skill Runtime은 유닛별 학습·쿨다운 상태를 담당한다.
-- Executor는 스킬 종류별 게임 효과를 실행한다.
-- Skill Actor는 생성된 스킬의 생명주기를 담당한다.
-- `EffectManager`는 시각 효과만 담당한다.
+- `InGameCombatManager` coordinates the results of damage, healing, shields, and status application.
+- The Actions folder handles automatic actions, manual input, enemy decisions, and movement.
+- Skill Runtime owns per-unit learning and cooldown state.
+- Executors execute game effects by skill type.
+- Skill Actors own the lifecycles of instantiated skills.
+- `EffectManager` handles only visual effects.
 
 ### 19.5 Spawn
 
-Definition을 이용해 유닛 Model과 Actor를 생성하고 `StageManager`에 등록한다.
+Creates unit Models and Actors from Definitions and registers them with `StageManager`.
 
-스테이지 선택, 현현 성공 판정, 파티 제한, 피해 계산은 담당하지 않는다.
+It does not own stage selection, manifestation success determination, party limits, or damage calculation.
 
 ### 19.6 UI
 
-현재 씬 계층과 시각 배치를 재사용한다.
+Reuses the current scene hierarchy and visual layout.
 
-UI 스크립트는 새 Core의 읽기 전용 상태를 표시하고 Service 또는 Controller에 명령을 전달한다. Model 필드, 재화, SkillBucket을 직접 변경하지 않는다.
+UI scripts display read-only state from the new Core and send commands to Services or Controllers. They do not directly modify Model fields, currencies, or SkillBuckets.
 
-## 20. 코드 작성 요령과 컨벤션
+## 20. Coding Guidelines and Conventions
 
-### 20.1 구현 참고 기준
+### 20.1 Implementation Reference Standards
 
-새 코드는 전환 전 `Pakuri/Assets/Scripts`의 실제 코드를 읽기 전용 근거로 검사하고 다음 내용을 참고한다.
+Before the transition, inspect the actual code under `Pakuri/Assets/Scripts` as read-only evidence and use it as a reference for the following:
 
-- 현재 플레이 동작
-- Unity 컴포넌트 연결 방식
-- 입력 처리 방식
-- 전투 결과 전달 방식
-- 기존 UI 오브젝트와 이벤트 연결
-- 명명 방식과 중괄호·들여쓰기 형식
-- 오류 처리와 Unity 직렬화 경계
+- Current gameplay behavior
+- Unity component connection patterns
+- Input handling patterns
+- Combat-result delivery patterns
+- Existing UI object and event connections
+- Naming, braces, and indentation style
+- Error handling and Unity serialization boundaries
 
-기존 Scripts의 거대한 클래스, 중복 상태, 임시 fallback, 우회 호출 구조를 그대로 복사하지 않는다. 동작과 작성 형식을 참고하고 책임 배치는 이 청사진을 따른다.
+Do not copy the existing Scripts' massive classes, duplicated state, temporary fallbacks, or indirect call structures as-is. Reference their behavior and writing style, while following this blueprint for responsibility allocation.
 
-참고는 소스 의존을 뜻하지 않는다. 새 코드가 기존 타입을 호출, 상속, 래핑하거나 기존 Manager에 결과를 되돌려 보내면 완전 교체 조건을 위반한다.
+Using them as a reference does not imply source dependency. If new code invokes, inherits, or wraps existing types, or sends results back to an existing Manager, it violates the complete replacement conditions.
 
-구현 우선순위:
+Implementation priority:
 
 ```text
-청사진의 책임 경계
-→ 사용자 확정 플레이 규칙
-→ CSV 계약
-→ 기존 Scripts의 동작과 코드 작성 형식
+Responsibility boundaries in the blueprint
+→ User-confirmed gameplay rules
+→ CSV contracts
+→ Behavior and coding style of the existing Scripts
 ```
 
-### 20.2 파일과 이름
+### 20.2 Files and Names
 
-- 한 파일의 기본 공개 타입 이름과 파일 이름을 일치시킨다.
-- 타입, 메서드, 프로퍼티는 `PascalCase`를 사용한다.
-- private 필드와 지역 변수는 `camelCase`를 사용한다.
-- CSV Definition의 CSV-backed 필드는 사용자 요구에 따라 실제 CSV 열 이름을 그대로 사용한다.
-- `UnitDefinotion`, `Skillbucket`, `CSVparser` 같은 오타 이름을 만들지 않는다.
-- `Manager`, `Service`, `Controller`, `Model`, `Definition`, `Actor` 접미사는 이 문서의 책임 의미와 일치할 때만 사용한다.
-- 의미가 불명확한 `Helper`, `Util`, `Common`, `Temp`, `Data2`, `New` 이름을 사용하지 않는다.
+- Match the primary public type name in a file to the file name.
+- Use `PascalCase` for types, methods, and properties.
+- Use `camelCase` for private fields and local variables.
+- As required by the user, CSV-backed fields in CSV Definitions use the exact actual CSV column names.
+- Do not create misspelled names such as `UnitDefinotion`, `Skillbucket`, or `CSVparser`.
+- Use the `Manager`, `Service`, `Controller`, `Model`, `Definition`, and `Actor` suffixes only when they match the responsibility meanings defined in this document.
+- Do not use semantically unclear names such as `Helper`, `Util`, `Common`, `Temp`, `Data2`, or `New`.
 
-### 20.3 책임 분리
+### 20.3 Separation of Responsibilities
 
-- 클래스 하나는 하나의 상태 권위 또는 하나의 실행 책임을 갖는다.
-- Manager는 흐름을 조율하고 하위 객체의 세부 규칙을 다시 구현하지 않는다.
-- Model은 자신의 가변 상태를 소유하고 UI나 프리팹을 찾지 않는다.
-- Definition은 불변 데이터이며 런타임 상태를 소유하지 않는다.
-- Service는 하나의 도메인 규칙을 실행하고 씬 오브젝트를 직접 생성하지 않는다.
-- Executor는 스킬 효과를 실행하고 학습 상태나 시각 효과 목록을 소유하지 않는다.
-- Actor는 생명주기와 씬 표현을 담당하고 피해 공식이나 스킬 학습 상태를 소유하지 않는다.
-- UI는 상태를 표시하고 명령을 전달하며 Core 상태를 직접 변경하지 않는다.
+- One class has one state authority or one execution responsibility.
+- A Manager coordinates flow and does not reimplement the detailed rules of subordinate objects.
+- A Model owns its mutable state and does not find UI or prefabs.
+- A Definition is immutable data and does not own runtime state.
+- A Service executes one domain rule and does not directly instantiate scene objects.
+- An Executor executes skill effects and does not own learning state or a visual-effect list.
+- An Actor handles lifecycle and scene presentation and does not own damage formulas or skill learning state.
+- UI displays state and delivers commands; it does not directly modify Core state.
 
-두 번째 독립 책임이 필요해지면 기존 책임과의 경계를 먼저 설명한 뒤 분리한다. 단순히 메서드가 길다는 이유만으로 전달만 하는 wrapper 클래스를 추가하지 않는다.
+When a second independent responsibility becomes necessary, first explain its boundary with the existing responsibility and then separate it. Do not add a pass-through wrapper class merely because a method is long.
 
-### 20.4 단일 권위
+### 20.4 Single Authority
 
-같은 사실을 둘 이상의 독립적으로 수정 가능한 위치에 저장하지 않는다.
+Do not store the same fact in two or more independently mutable locations.
 
-권위 예시:
+Examples of authority:
 
-- Gold와 DarkTrace: `StageManager`
-- 파티 순서: `PartyRoster`
-- 현재 보상 단계 수감자: `PrisonerInventory`
-- 몬스터 학습 상태: 해당 `MonsterSkillBucket`
-- 적 스킬 상태: 해당 `EnemySkillBucket`
-- 유닛 체력·방어막·상태: 해당 `UnitBaseModel`
-- 쿨다운·탄창·재장전: 해당 `SkillCooldown`
-- 활성 Skill Actor 목록: `SkillActorManager`
-- 불변 게임 데이터: `GameDefinitionCatalog`
+- Gold and DarkTrace: `StageManager`
+- Party order: `PartyRoster`
+- Prisoners in the current reward phase: `PrisonerInventory`
+- Monster learning state: the corresponding `MonsterSkillBucket`
+- Enemy skill state: the corresponding `EnemySkillBucket`
+- Unit health, shields, and statuses: the corresponding `UnitBaseModel`
+- Cooldowns, magazines, and reloads: the corresponding `SkillCooldown`
+- Active Skill Actor list: `SkillActorManager`
+- Immutable game data: `GameDefinitionCatalog`
 
-UI 표시용 값은 위 권위에서 읽은 projection이어야 한다. UI에 별도 쓰기 가능한 복사본을 만들지 않는다.
+UI display values must be projections read from the authorities above. Do not create separately writable copies in the UI.
 
-### 20.5 직접 경로와 불필요한 우회 금지
+### 20.5 Direct Paths and Prohibition of Unnecessary Indirection
 
-다음 구조는 필요한 변환, 생명주기, 의존성 경계가 없다면 만들지 않는다.
+Do not create the following structures unless they provide a necessary transformation, lifecycle, or dependency boundary.
 
 ```text
 A → B → A
-A → Wrapper → 실제 A 메서드
-Model → 임시 DTO → 같은 Model 복원
-Service → Manager → 같은 Service 재호출
+A → Wrapper → Actual A method
+Model → Temporary DTO → Restore the same Model
+Service → Manager → Invoke the same Service again
 ```
 
-메서드가 단순 전달만 한다면 해당 경계가 필요한 이유를 코드와 청사진에서 증명해야 한다.
+If a method only forwards a call, the code and blueprint must demonstrate why that boundary is necessary.
 
-이벤트는 실제 다중 구독, UI 분리, 비동기 생명주기, 재진입 차단이 필요한 경우에만 사용한다.
+Use events only when actual multi-subscriber delivery, UI separation, asynchronous lifecycle, or re-entry prevention is required.
 
-### 20.6 검증과 fallback
+### 20.6 Validation and Fallbacks
 
-검증은 신뢰할 수 없는 경계에서 한 번 수행한다.
+Perform validation once at untrusted boundaries.
 
-- CSV 입력: `CsvParser`
-- ID 연결과 중복: `GameDefinitionCatalog` 생성 전
-- Unity Inspector·씬 참조: `GameBootstrap` 또는 해당 Actor 초기화
-- 사용자 UI 입력: 해당 UI Controller와 Service 공개 진입점
-- 외부 호출 가능한 공개 API: 해당 API 진입점
+- CSV input: `CsvParser`
+- ID connections and duplicates: before creating `GameDefinitionCatalog`
+- Unity Inspector and scene references: `GameBootstrap` or initialization of the relevant Actor
+- User UI input: the public entry point of the relevant UI Controller and Service
+- Externally callable public API: that API's entry point
 
-초기화가 성공한 뒤 내부 호출마다 같은 null, ID, enum, 컬렉션 검사를 반복하지 않는다.
+After initialization succeeds, do not repeat the same null, ID, enum, and collection checks on every internal call.
 
-필수 데이터가 없을 때 임의 기본값, 임시 객체, 이전 시스템 fallback으로 조용히 계속하지 않는다. 명확한 오류를 반환하거나 초기화를 실패시킨다.
+When required data is missing, do not silently continue with arbitrary defaults, temporary objects, or fallbacks to the previous system. Return an explicit error or fail initialization.
 
-`manifest_success_chance`, 스킬 수치, 상태효과 수치처럼 CSV가 권위인 값에 코드 fallback 숫자를 추가하지 않는다.
+Do not add numeric code fallbacks for values whose authority is the CSV, such as `manifest_success_chance`, skill values, or status-effect values.
 
-### 20.7 Dead code와 추측성 확장 금지
+### 20.7 Prohibition of Dead Code and Speculative Expansion
 
-- 현재 호출자가 없는 공개 API를 미리 만들지 않는다.
-- 미래 Save/Load용 인터페이스, 필드, 빈 메서드를 만들지 않는다.
-- 현재 활성화되지 않은 상점, 이벤트, 유물 구현용 stub을 만들지 않는다.
-- 빈 Executor, 빈 Actor, 빈 Service를 등록하지 않는다.
-- 읽는 곳이 없는 필드와 쓰기 전용 상태를 만들지 않는다.
-- 사용하지 않는 overload와 범용 문자열 조회 메서드를 만들지 않는다.
-- 단 한 번도 실행되지 않는 compatibility branch를 남기지 않는다.
-- `TODO`만 있는 실행 경로를 완료된 기능처럼 연결하지 않는다.
+- Do not create public APIs in advance when they have no current caller.
+- Do not create interfaces, fields, or empty methods for future Save/Load.
+- Do not create stubs for shops, events, or relics that are not currently active.
+- Do not register empty Executors, Actors, or Services.
+- Do not create fields with no reader or write-only state.
+- Do not create unused overloads or general-purpose string lookup methods.
+- Do not leave compatibility branches that never execute.
+- Do not connect an execution path containing only a `TODO` as though it were complete functionality.
 
-새 타입을 추가할 때 다음 네 항목을 먼저 기록한다.
+Before adding a new type, first record these four items.
 
 ```text
-Owner   = 누가 이 타입의 생명주기를 소유하는가
-Caller  = 누가 이 타입을 실제 호출하는가
-State   = 어떤 상태의 유일한 권위인가
-Delete  = 어떤 조건이면 이 타입이 불필요해지는가
+Owner   = Who owns this type's lifecycle
+Caller  = Who actually invokes this type
+State   = Which state this type uniquely owns
+Delete  = Under what condition this type becomes unnecessary
 ```
 
-네 항목 중 하나라도 답이 없으면 타입을 추가하지 않는다.
+Do not add the type if any one of the four items has no answer.
 
-### 20.8 접근 범위와 의존 방향
+### 20.8 Access Scope and Dependency Direction
 
-- 필드는 기본 `private`.
-- 외부 읽기가 필요하면 읽기 전용 프로퍼티나 명확한 조회 메서드를 제공한다.
-- 변경은 해당 상태 권위의 명령 메서드로만 수행한다.
-- 구현 전용 타입은 `internal`을 우선한다.
-- Unity Inspector 연결이 필요한 필드만 `[SerializeField] private`을 사용한다.
-- Core Definition은 Unity 씬과 UI에 의존하지 않는다.
-- Run은 UI에 의존하지 않는다.
-- Combat은 UI 패널에 의존하지 않는다.
-- UI는 Core와 Run의 공개 조회·명령 API에 의존한다.
-- 서로 참조하는 순환 의존을 만들지 않는다.
+- Fields are `private` by default.
+- When external reading is required, provide a read-only property or an explicit query method.
+- Changes are made only through command methods on the relevant state authority.
+- Prefer `internal` for implementation-only types.
+- Use `[SerializeField] private` only for fields that require Unity Inspector connections.
+- Core Definitions do not depend on Unity scenes or UI.
+- Run does not depend on UI.
+- Combat does not depend on UI panels.
+- UI depends on public query and command APIs from Core and Run.
+- Do not create circular dependencies.
 
-### 20.9 중앙 Tick과 Unity 생명주기
+### 20.9 Central Tick and Unity Lifecycle
 
-- 전투 Tick 진입점은 하나만 둔다.
-- `InGameActionManager`가 정해진 순서로 Cooldown, 자동 스킬, 수동 입력, 적 행동, Skill Actor, Status를 Tick한다.
-- 각 Skill Actor는 독립 `Update()`를 갖지 않는다.
-- `SkillActorManager`만 Skill Actor를 Tick한다.
-- Tick 중 컬렉션을 직접 추가·삭제하지 않고 `pendingAdd`, `pendingRemove`를 사용한다.
-- 새 Actor는 다음 프레임부터 Tick한다.
-- 전투 종료와 다음 일차 전환 시 중앙 Actor 목록과 pending 목록을 모두 비운다.
-- UI의 표시용 `Update()`가 Core 게임 상태를 변경하지 않도록 한다.
+- Provide exactly one combat Tick entry point.
+- `InGameActionManager` Ticks Cooldown, automatic skills, manual input, enemy actions, Skill Actors, and Status in the defined order.
+- Each Skill Actor does not have an independent `Update()`.
+- Only `SkillActorManager` Ticks Skill Actors.
+- During Tick, use `pendingAdd` and `pendingRemove` rather than directly adding to or removing from collections.
+- New Actors begin Ticking on the next frame.
+- Clear both the central Actor list and pending lists when combat ends or the next day begins.
+- Ensure that a UI display `Update()` does not change Core game state.
 
-### 20.10 메서드 작성
+### 20.10 Method Design
 
-- 메서드 하나는 하나의 행동 또는 판정을 수행한다.
-- 예상 가능한 실패는 `Try...` 또는 `Can...` 결과로 표현한다.
-- 초기화 불변식 위반은 조용히 무시하지 않는다.
-- 의미 있는 중간값과 생명주기 캡처는 지역 변수로 유지할 수 있다.
-- 기존 값을 이름만 바꿔 복사하는 지역 변수는 만들지 않는다.
-- 매 프레임 전체 씬 검색이나 `FindObjectsOfType`를 사용하지 않는다.
-- 목록 순서가 게임 규칙이면 정렬·등록 순서를 명시한다.
-- 무작위 선택은 후보 목록과 균등·가중 규칙을 호출부에서 명확히 드러낸다.
+- One method performs one action or decision.
+- Express expected failures with `Try...` or `Can...` results.
+- Do not silently ignore initialization invariant violations.
+- Meaningful intermediate values and lifecycle captures may be retained as local variables.
+- Do not create a local variable that merely copies an existing value under a different name.
+- Do not search the entire scene or use `FindObjectsOfType` every frame.
+- If list order is a game rule, explicitly define sort or registration order.
+- At the call site, make the candidate list and uniform or weighted random-selection rules explicit.
 
-### 20.11 주석
+### 20.11 Comments
 
-기존 Scripts처럼 책임과 실행 이유가 필요한 곳에 짧은 한국어 주석을 사용한다.
+As in the existing Scripts, use short Korean comments where responsibilities and execution rationale need explanation.
 
-주석 대상:
+Comment targets:
 
-- 프레임 실행 순서
-- 상태 권위
-- 실패 시 소비 여부
-- 후보 제외 조건
-- 다음 프레임 등록 같은 생명주기 결정
-- CSV 필드와 런타임 의미가 다르게 보일 수 있는 지점
+- Frame execution order
+- State authority
+- Whether a resource is consumed on failure
+- Candidate exclusion conditions
+- Lifecycle decisions such as next-frame registration
+- Places where a CSV field and its runtime meaning may appear different
 
-코드를 그대로 한국어로 다시 읽는 주석은 만들지 않는다.
+Do not write comments that merely restate the code in Korean.
 
-### 20.12 Naive Code Filter 대응 체크
+### 20.12 Naive Code Filter Readiness Check
 
-구현자는 각 파일을 다음 기준으로 자체 점검한다.
+The implementer self-checks each file against the following criteria.
 
-- 모든 타입과 메서드에 실제 호출자가 있는가
-- 모든 필드에 필요한 writer와 reader가 있는가
-- 같은 상태가 두 곳에서 수정되지 않는가
-- 다른 객체로 갔다가 원래 객체로 되돌아오는 불필요한 왕복이 없는가
-- 초기화 뒤에도 같은 validation과 fallback을 반복하지 않는가
-- 전달만 하는 wrapper가 필요한 경계를 실제로 제공하는가
-- 사용하지 않는 overload, 임시 변수, 캐시, compatibility branch가 없는가
-- UnityEvent, Inspector, scene, prefab, animation event 같은 동적 참조를 확인했는가
-- 삭제 가능한 이전 권위가 새 권위와 함께 영구적으로 남아 있지 않은가
+- Does every type and method have an actual caller?
+- Does every field have the required writer and reader?
+- Is the same state modified in more than one place?
+- Is there any unnecessary round trip that enters another object and returns to the original object?
+- Are the same validation and fallback checks repeated after initialization?
+- Does a pass-through wrapper actually provide a necessary boundary?
+- Are there unused overloads, temporary variables, caches, or compatibility branches?
+- Were dynamic references such as UnityEvent, Inspector, scene, prefab, and animation event checked?
+- Does a removable previous authority remain permanently alongside the new authority?
 
-Naive Code Filter는 검사 전용 역할이다. 실제 구현을 자동 승인하거나 수정하지 않는다. 별도 검사 요청이 있을 때 정확한 스크립트 또는 폴더를 대상으로 실행한다.
+Naive Code Filter is an inspection-only role. It neither automatically approves nor modifies the actual implementation. When separately requested, run it against the exact script or folder.
 
-### 20.13 기존 Scripts 의존 제거 검사
+### 20.13 Existing Scripts Dependency Removal Check
 
-최종 전환 전 다음 검사를 별도 게이트로 수행한다.
+Before the final transition, perform the following checks as a separate gate.
 
-- 새 `.cs` 파일의 기존 namespace와 타입 참조 검사
-- 씬, 프리팹, `.asset`, AnimatorController를 포함한 Unity 직렬화 파일의 이전 Script GUID 검사
-- Missing Script 검사
-- Inspector 직렬화 값 이전 전후 비교
-- 기존 Manager와 새 Manager의 동시 실행 여부 검사
-- 이전 소스를 제거한 상태의 Unity 재컴파일 검사
-- 사용자 Play Mode 전체 흐름 검사
+- Check new `.cs` files for references to existing namespaces and types
+- Check Unity serialized files, including scenes, prefabs, `.asset` files, and AnimatorControllers, for previous Script GUIDs
+- Check for Missing Scripts
+- Compare Inspector serialized values before and after migration
+- Check whether existing and new Managers execute simultaneously
+- Check Unity recompilation with previous sources removed
+- User Play Mode full-flow check
 
-이 중 하나라도 실패하면 이전 Scripts 의존 제거와 정상 게임 플레이 구현은 완료되지 않은 상태다.
+If any one of these checks fails, removal of dependencies on the previous Scripts and implementation of normal gameplay remain incomplete.
 
-## 21. 완전 교체 작업 Phase 계획
+## 21. Complete Replacement Work Phase Plan
 
-### 21.1 작업 기록의 단일 위치
+### 21.1 Single Location for Work Records
 
-이 완전 교체 작업은 다른 활성 작업 보드와 상태를 섞지 않는다.
+This complete replacement work does not mix its state with other active work boards.
 
-- 진행 상태, 막힌 이유, 다음 행동, 검사 결과는 이 문서만 갱신한다.
-- 루트 `BLACKBOARD.md`를 수정하지 않는다.
-- `boards/` 아래 이름에 `BLACKBOARD.md`가 포함된 파일을 수정하지 않는다.
-- Phase 진행을 이유로 MON, COMBAT, DATA, RUN, UI, OPS 보드에 중복 기록하지 않는다.
-- 프롬프트 초기화, 세션 재시작, 재부팅 뒤에는 이 문서의 `21.11 Phase 실행 기록`에서 마지막 미완료 Phase와 다음 행동을 확인한다.
-- 사용자가 별도로 보드 갱신을 명시적으로 요청하면 그 요청 범위만 다시 판단한다.
+- Update progress, blockers, next actions, and check results only in this document.
+- Do not modify the root `BLACKBOARD.md`.
+- Do not modify files under `boards/` whose names contain `BLACKBOARD.md`.
+- Do not duplicate records in MON, COMBAT, DATA, RUN, UI, or OPS boards because of Phase progress.
+- After prompt reset, session restart, or reboot, check `21.11 Phase Execution Records` in this document for the last incomplete Phase and its next action.
+- If the user separately and explicitly requests a board update, reassess only the scope of that request.
 
-이 규칙은 `new-core-architecture-blueprint.md` 완전 교체 작업에만 적용한다. 다른 독립 작업의 기록 정책을 변경하지 않는다.
+This rule applies only to the complete replacement work governed by `new-core-architecture-blueprint.md`. It does not change the recording policy for other independent work.
 
-### 21.2 모든 Phase의 공통 실행 게이트
+### 21.2 Common Execution Gate for Every Phase
 
-각 Phase는 다음 순서로 진행한다.
+Proceed through each Phase in this order.
 
 ```text
-Phase 범위 확인
-→ 변경 전 Unity Console 상태 확인
-→ 해당 Phase 범위만 구현
-→ Unity Refresh·재컴파일
-→ 컴파일 완료 대기
-→ Unity Console Error·Exception·Warning 확인
-→ 정적 파일·참조·테스트 검사
-→ 필요한 경우에만 사용자 Play Mode 검증
-→ Phase 실행 기록 갱신
-→ 종료 조건 충족 시 다음 Phase
+Confirm Phase scope
+→ Check Unity Console state before changes
+→ Implement only the current Phase scope
+→ Unity Refresh and recompile
+→ Wait for compilation to complete
+→ Check Unity Console Errors, Exceptions, and Warnings
+→ Perform static file, reference, and test checks
+→ Request user Play Mode verification only when required
+→ Update the Phase execution record
+→ Proceed to the next Phase when exit conditions are satisfied
 ```
 
-공통 종료 조건:
+Common exit conditions:
 
-- Unity 컴파일 오류가 0개다.
-- 해당 Phase 변경으로 발생한 새로운 Error와 Exception이 0개다.
-- Warning은 원인과 처리 여부를 실행 기록에 남긴다.
-- Inspector, 씬, 프리팹 또는 `.asset`을 변경한 Phase는 Missing Script와 필수 참조 누락을 검사한다.
-- 실행한 테스트 또는 검사 명령과 실제 결과를 Evidence에 기록한다.
-- 실패한 검사를 숨기기 위해 임시 fallback, 빈 컴포넌트 또는 이전 Manager 호출을 추가하지 않는다.
-- 종료 조건을 통과하지 못하면 다음 Phase로 넘어가지 않는다.
+- There are zero Unity compilation errors.
+- There are zero new Errors and Exceptions caused by the current Phase changes.
+- Record the cause and disposition of Warnings in the execution record.
+- A Phase that changes the Inspector, scenes, prefabs, or `.asset` files checks for Missing Scripts and missing required references.
+- Record executed tests or check commands and their actual results in Evidence.
+- Do not add temporary fallbacks, empty components, or calls to previous Managers to conceal failed checks.
+- Do not proceed to the next Phase until the exit conditions pass.
 
-Console 확인 절차:
+Console check procedure:
 
-1. 변경 전에 현재 Error, Exception, Warning을 읽어 기존 로그 기준선을 기록한다.
-2. 이전 로그와 새 로그를 구분할 수 있도록 Console을 정리한다.
-3. Asset Refresh와 재컴파일을 실행하고 Unity의 컴파일 완료 상태를 기다린다.
-4. Error와 Exception을 먼저 확인하고 Warning을 별도로 확인한다.
-5. 오류가 있으면 정확한 스택과 연결된 파일을 근거로 현재 Phase 안에서 해결한다.
-6. 해결 뒤 같은 절차로 다시 확인한다.
+1. Before changes, read current Errors, Exceptions, and Warnings and record the existing log baseline.
+2. Clear the Console so previous and new logs can be distinguished.
+3. Run Asset Refresh and recompilation, then wait for Unity compilation to complete.
+4. Check Errors and Exceptions first, then check Warnings separately.
+5. If errors exist, resolve them within the current Phase based on the exact stack and associated files.
+6. After resolving them, repeat the same procedure.
 
-### 21.3 Play Mode 최소 실행 규칙
+### 21.3 Minimal Play Mode Execution Rules
 
-Unity Play Mode 게임 플레이 검증은 사용자 소유다. Codex는 임의로 Play Mode를 시작하지 않는다.
+Unity Play Mode gameplay verification belongs to the user. Codex does not start Play Mode on its own.
 
-Play Mode를 요청할 수 있는 조건:
+Conditions under which Play Mode may be requested:
 
-- 프레임 실행 순서 또는 `Time.deltaTime` 동작을 확인해야 한다.
-- Collider, Rigidbody, 충돌 또는 투사체 이동을 확인해야 한다.
-- 실제 키보드·마우스 입력과 자동 전투 전환을 확인해야 한다.
-- Animator, 이펙트, UI 표시와 버튼 흐름을 실제 씬에서 확인해야 한다.
-- 일차 전환, 보상, 공양, 현현처럼 여러 시스템을 통과하는 통합 흐름을 확인해야 한다.
-- 최종 기존 Scripts 제거 뒤 전체 게임 플레이를 확인해야 한다.
+- Frame execution order or `Time.deltaTime` behavior must be verified.
+- Collider, Rigidbody, collision, or projectile movement must be verified.
+- Actual keyboard and mouse input and automatic-combat transitions must be verified.
+- Animator, effects, UI display, and button flow must be verified in the actual scene.
+- An integrated flow crossing multiple systems, such as day transition, reward, offering, or manifestation, must be verified.
+- Full gameplay must be verified after final removal of the existing Scripts.
 
-Play Mode를 요청하지 않는 경우:
+Cases that do not require requesting Play Mode:
 
-- C# 컴파일 오류 확인
-- CSV 열, ID, 중복, 참조 무결성 검사
-- 새 코드의 기존 namespace와 타입 참조 검사
-- Unity 직렬화 파일의 Script GUID 검사
-- Missing Script 정적 검사
-- 순수 Model, Definition, Service의 결정적 테스트
+- C# compilation error checks
+- CSV column, ID, duplicate, and referential-integrity checks
+- Checks for references to existing namespaces and types in new code
+- Script GUID checks in Unity serialized files
+- Static Missing Script checks
+- Deterministic tests of pure Models, Definitions, and Services
 
-Play Mode 요청 전 반드시 기록할 내용:
+Required record before requesting Play Mode:
 
 ```text
-Reason        = 정적 검사로 증명할 수 없는 이유
-Scene         = 실행할 정확한 씬
-Setup         = 필요한 시작 상태
-Actions       = 사용자가 수행할 입력
-Expected      = 기대 결과
-Failure       = 실패 판정
-LogCheck      = 종료 뒤 확인할 Console 로그
+Reason        = Why static checks cannot prove the behavior
+Scene         = Exact scene to run
+Setup         = Required starting state
+Actions       = Inputs the user must perform
+Expected      = Expected result
+Failure       = Failure criteria
+LogCheck      = Console logs to check after completion
 ```
 
-Play Mode가 필요한 Phase라도 컴파일과 Console 게이트가 먼저 통과해야 한다. 인접 Phase의 검증 시나리오를 하나의 짧은 통합 실행으로 합칠 수 있으면 중복 실행하지 않는다.
+Even when a Phase requires Play Mode, the compilation and Console gates must pass first. If verification scenarios from adjacent Phases can be combined into one short integrated run, do not run them redundantly.
 
-### 21.4 Phase 0 — 기준선과 전환 목록 고정
+### 21.4 Phase 0 — Freeze the Baseline and Transition Inventory
 
-**Task title:** 기존 Scripts 완전 교체 기준선
+**Task title:** Existing Scripts Complete Replacement Baseline
 
 **Goals:**
 
-- 유지할 CSV와 활성 리소스 목록을 고정한다.
-- 기존 Script GUID를 참조하는 씬, 프리팹, `.asset` 전체 목록을 만든다.
-- 기존 플레이에서 보존할 동작과 사용자 확정 규칙을 인수 조건으로 고정한다.
+- Freeze the list of retained CSVs and active resources.
+- Create a complete list of scenes, prefabs, and `.asset` files that reference existing Script GUIDs.
+- Freeze behavior preserved from existing gameplay and user-confirmed rules as acceptance conditions.
 
 **Constraints:**
 
-- 게임 코드, CSV, 씬, 프리팹을 변경하지 않는다.
-- 기존 Scripts는 읽기 전용 동작·연결 근거로만 검사한다.
-- 현재 집계값 239개 직렬화 파일, 기존 Script 21종, 40개 자산, 56회 참조를 반복 가능한 검사로 재확인한다.
+- Do not change game code, CSVs, scenes, or prefabs.
+- Inspect the existing Scripts only as read-only evidence of behavior and connections.
+- Reconfirm the current counts—240 serialized files in the explicit extension scope, 21 existing Script types, 40 assets, and 56 references—with a repeatable check.
 
-**Role Owner:** Designer가 기준을 확정하고 Code Builder가 반복 가능한 검사 결과를 제공한다.
+**Role Owner:** The Designer confirms the baseline, and the Code Builder provides repeatable check results.
 
-**Status:** Not Started
+**Status:** PASS — Code Reviewer loop 3
 
 **Next Actions:**
 
-- 정확한 이전 Script GUID별 자산 연결표를 작성한다.
-- 활성 자산과 Legacy 자산을 분류하되 제거 여부는 근거와 사용자 승인 없이 결정하지 않는다.
-- 다음 Phase에서 만들 타입의 Owner, Caller, State, Delete를 확정한다.
+- Begin Phase 1 without changing the retained CSV files.
+- Use the CSV contract manifest to detect accidental data changes.
+- Preserve the Phase 0 migration and Inspector manifests unchanged as the before-state baseline.
 
-**Evidence:** 현재 청사진 18.5절의 직렬화 자산 검사 결과. Phase 실행 시 실제 명령과 출력으로 교체한다.
+**Evidence:**
 
-**History:** 2026-07-23 Phase 계획 생성.
+- `new-core-phase0-csv-contract-manifest.csv`: 42 retained CSV files; every recorded SHA-256 and byte count matches the current file; zero mismatches.
+- `new-core-phase0-script-reference-manifest.csv`: 56 serialized references, 21 unique existing Script GUIDs, and 40 unique assets; 16 rows are under a Legacy path and 40 rows are outside a Legacy path.
+- `new-core-phase0-retained-resource-manifest.csv`: 781 evidence rows and 593 unique retained project assets reachable from 24 non-Legacy migration roots, 86 concrete CSV path references, and recursive serialized GUID edges; zero missing retained paths.
+- `new-core-phase0-inspector-snapshot.csv`: 56 exact component payloads; all Base64 payloads decode and match their recorded SHA-256.
+- `new-core-phase0-manifest-generator.ps1`: repeatably regenerates all four Phase 0 manifests from the inspected project state.
+- Repeatable serialization scan: 240 files in the explicit extension scope, 56 matching references, 21 unique existing Script types, and 40 unique assets.
+- Existing code baseline: 69 C# files and 38,083 lines under `Pakuri/Assets/Scripts`.
+- Unity 6000.3.14f1 project `Pakuri`; Asset Refresh and requested recompilation completed; Editor returned to idle and ready state.
+- Unity Console after refresh and recompilation: zero Errors, Exceptions, and Warnings.
+- Blueprint translation-only snapshot before Phase execution records were appended: 2,063 split lines, 107 headings, and 72 code-fence lines. The current document intentionally grows as records are appended; current-file QA separately requires balanced fences, zero Hangul characters, zero trailing-whitespace lines, and all Phase 0 through Phase 6 headings.
 
-**Play Mode:** 기본 실행하지 않는다. 정적 검사로 확정할 수 없는 기존 플레이 동작이 발견될 때만 사용자에게 기준선 확인을 요청한다.
+**History:** 2026-07-23 Phase plan created. 2026-07-23 Code Builder completed the baseline and submitted it to Code Reviewer. Reviewer loop 1 returned FIX REQUIRED; the requested resource, Inspector, QA-scope, and serialization-scope fixes were applied. Reviewer loop 2 found only an unsupported material-coverage word; it was removed. Reviewer loop 3 returned PASS.
 
-**Exit Gate:** 유지 자산 목록, 이전 Script 참조 목록, 플레이 호환성 목록이 서로 모순 없이 확정돼야 한다.
+**Play Mode:** Do not run by default. Request baseline confirmation from the user only if existing gameplay behavior is discovered that cannot be confirmed through static checks.
 
-### 21.5 Phase 1 — CSV Definition과 Bootstrap 기반
+**Exit Gate:** The retained-asset list, previous-Script reference list, and gameplay-compatibility list must be confirmed without contradictions.
 
-**Task title:** 새 Core 데이터 기반
+### 21.5 Phase 1 — CSV Definition and Bootstrap Foundation
+
+**Task title:** New Core Data Foundation
 
 **Goals:**
 
-- CSV 열 이름을 유지하는 Definition 계층을 구현한다.
-- `CsvParser`, `GameDefinitionCatalog`, `GameBootstrap`의 초기화 경계를 구현한다.
-- 잘못된 CSV, 중복 ID, 누락 참조가 초기화 단계에서 명확히 실패하게 한다.
+- Implement a Definition layer that preserves CSV column names.
+- Implement the initialization boundaries of `CsvParser`, `GameDefinitionCatalog`, and `GameBootstrap`.
+- Ensure invalid CSVs, duplicate IDs, and missing references fail explicitly during initialization.
 
 **Constraints:**
 
-- `Pakuri/Assets/CSVdata`의 파일, 열 이름, 값을 변경하지 않는다.
-- 기존 데이터 타입이나 Parser를 호출하지 않는다.
-- 런타임 Model, 전투, UI를 미리 구현하지 않는다.
+- Do not change files, column names, or values under `Pakuri/Assets/CSVdata`.
+- Do not call existing data types or Parsers.
+- Do not preimplement runtime Models, combat, or UI.
+
+**Role Owner:** Code Builder
+
+**Status:** PASS — Code Reviewer loop 2
+
+**Next Actions:** Begin Phase 2 using the immutable Definitions and Catalog as inputs. Preserve all 42 retained CSV files and Phase 0 manifests.
+
+**Evidence:** The new `Pakuri.NewCore` and `Pakuri.NewCore.EditMode.Tests` assemblies compile. All 42 retained CSVs parse into 1,836 immutable Definitions, including 39 schema rows and the empty enemy single-attack Trigger CSV. EditMode job `e47a8c682bfd4609979c2060f1c0b8b7` passed 13 of 13 tests covering the retained-data success path, quoted and actual-CRLF multiline fields, immutability, eager rejection of blank required Monster fields, duplicate IDs, invalid int/float/bool/enum values, missing references, missing retained sources, and malformed quotes. The final Unity Console gate has zero Errors, Exceptions, and Warnings.
+
+**History:** 2026-07-23 Phase plan created. 2026-07-24 Code Builder implemented the isolated data foundation and submitted it to Code Reviewer after all deterministic checks passed. Reviewer loop 1 returned FIX REQUIRED for lazy required-field checks, missing actual-newline quoted-field coverage, and inaccurate top-status and production-caller wording. Code Builder added eager construction validation, blank-required-field and CRLF tests, and corrected the Phase records. Reviewer loop 2 returned PASS with 13 of 13 independent EditMode tests passing and no user-only verification gap.
+
+**Play Mode:** Do not run. Verify parsing and the catalog through non-runtime or deterministic tests.
+
+**Exit Gate:** Retained CSVs must parse into new Definitions, and both success and failure paths must be verified without existing types.
+
+### 21.6 Phase 2 — Run State and Unit Models
+
+**Task title:** Establish New State Authorities
+
+**Goals:**
+
+- Implement `RunSessionModel`, `StageManager`, `PartyRoster`, and `PrisonerInventory`.
+- Implement `UnitBaseModel`, `MonsterModel`, `EnemyModel`, and `NexusModel`.
+- Implement ownership and lifecycles for SkillBuckets, SkillCooldowns, and status effects.
+
+**Constraints:**
+
+- Models do not search scenes, prefabs, or UI.
+- Gold, DarkTrace, party, prisoners, health, and skill learning state are not modified by more than one object.
+- Do not replace existing scene components yet.
+
+**Role Owner:** Code Builder
+
+**Status:** PASS — Code Reviewer loop 2
+
+**Next Actions:** Begin Phase 3 using the verified state authorities and immutable Definitions. Preserve the Phase 0 artifacts and all retained CSV hashes.
+
+**Evidence:** The isolated `Pakuri.NewCore.Runtime` assembly compiles without Unity Engine or previous-Script references. Its 13 runtime C# files implement the Run, Model, SkillBucket, SkillCooldown, and StatusEffect authorities. After Code Reviewer loop 1 requested two fixes, EditMode job `9bd4afbde4f24aaaa8d93c9569e75ad8` passed all 27 tests: the 13 retained Phase 1 tests and 14 Phase 2 state-transition, edge-case, ownership, compatibility, PassiveBase-prerequisite, and atomic-refresh tests. All 42 retained CSV hashes match the Phase 0 contract manifest, every Phase 0 artifact hash is unchanged, and the final forced Asset Refresh and compilation gate has zero Errors, Exceptions, and Warnings.
+
+**History:** 2026-07-23 Phase plan created. 2026-07-24 Code Builder implemented and locally verified Phase 2, then submitted it to Code Reviewer. Reviewer loop 1 returned FIX REQUIRED because PassiveBase prerequisites were not enforced during both learning and selection, and StatusEffect refresh could partially mutate stacks before rejecting an invalid duration. Code Builder applied both exact fixes. Reviewer loop 2 independently passed 27 of 27 EditMode tests and returned PASS with no user-only verification gap. Phase 3 was not started.
+
+**Play Mode:** Do not run. Verify pure state transitions with deterministic tests.
+
+**Exit Gate:** Each mutable state has exactly one writer, and new Models operate without existing runtime types.
+
+### 21.7 Phase 3 — Central Combat, Actions, and Movement
+
+**Task title:** New Combat Execution Loop
+
+**Goals:**
+
+- Implement the central `InGameActionManager` Tick.
+- Implement the execution order for damage, targeting, automatic and manual skills, enemy actions, movement, and status effects.
+- Implement responsibilities among Executors, SkillActorManager, Skill Actors, and EffectManager.
+
+**Constraints:**
+
+- Skill Actors do not use independent `Update()` methods.
+- Do not call existing Combat Managers, Executors, Actors, or input Controllers.
+- Use pending lists for collection changes during Tick.
+
+**Role Owner:** Code Builder
+
+**Status:** Pending Code Reviewer loop 2
+
+**Next Actions:** Run Phase 3 Code Reviewer loop 2. If the Reviewer returns FIX REQUIRED, keep Phase 4 untouched and continue repairing Phase 3 until the Reviewer returns PASS.
+
+**Evidence:** The isolated pure-C# runtime adds the exact eight-step central Tick, result coordination, targeting, action and movement Controllers, manual-input request boundary, eight skill-family Executors, centralized Actor pending lists, Effect handles, scheduled burst/pierce/repeat execution, retained Effect graph execution, and dispatch for all eight retained Trigger events. Reviewer loop 1 exposed retained-row semantic gaps in Choice ownership, Effect/Trigger targeting, projectile and repeated attacks, Trigger context and lifecycle, geometry, passive execution, shield ownership, Nexus cleanup, and deterministic ordering. Code Builder repaired those exact paths and added deterministic regressions. Runtime construction still audits all 88 reachable node types and all 59 Trigger rows with unsupported counts of zero. EditMode job `ce06dd99c06f41fdb82766e32549a3d3` passed 55 of 55 tests, including all retained Phase 1 and Phase 2 tests. All 42 retained CSV hashes have zero mismatches, the 49-file isolated runtime scan has zero forbidden engine/previous-runtime markers and zero missing `.meta` pairs, and the final Unity recompilation gate has zero Errors, Exceptions, and Warnings.
+
+**History:** 2026-07-23 Phase plan created. 2026-07-24 Code Builder implemented the engine-agnostic Phase 3 combat loop, closed the initial node/Trigger coverage gaps, passed the complete deterministic suite and final Console gate, and submitted Phase 3 to Code Reviewer. Reviewer loop 1 returned FIX REQUIRED with 20 exact blockers. Code Builder repaired all listed Phase 3 paths, expanded the combat test class from 15 to 27 tests, passed the 54-test complete suite, and resubmitted Phase 3 for reviewer loop 2 without starting Phase 4.
+
+**Play Mode:** Conditional. Request a limited scene scenario from the user only for items that cannot be proven by static or deterministic tests, such as physics collisions, frame timing, and mouse aiming.
+
+**Exit Gate:** Only one central Tick changes combat state, and the execution and termination of every active skill family must be verified without existing types.
+
+### 21.8 Phase 4 — Stage, Spawn, and Reward Services
+
+**Task title:** New Run Progression Flow
+
+**Goals:**
+
+- Implement stage and day transitions, enemy spawning, victory and defeat, and round resets.
+- Implement Reward, Offering, and Manifestation flows.
+- Implement the confirmed rules for prisoner consumption, uniform candidate selection, recruitment, and skipping.
+
+**Constraints:**
+
+- Run state is changed only through the authorities from Phase 2.
+- Services do not directly find scene objects or modify UI.
+- Do not invoke existing StageManager, RunSession, SpawnManager, or UI Manager as fallbacks.
 
 **Role Owner:** Code Builder
 
 **Status:** Not Started
 
-**Next Actions:** Phase 0 종료 뒤 구체적인 파일 단위 구현 목록을 확정한다.
+**Next Actions:** Confirm public APIs that connect the Phase 2 state authorities to the Phase 3 combat-completion signal.
 
-**Evidence:** 구현 파일, CSV별 파싱 검사, ID 연결 검사, Unity 재컴파일과 Console 결과.
+**Evidence:** Day and stage state transitions, reward-candidate and prisoner-consumption tests, Unity recompilation, and Console results.
 
-**History:** 2026-07-23 Phase 계획 생성.
+**History:** 2026-07-23 Phase plan created.
 
-**Play Mode:** 실행하지 않는다. 파싱과 카탈로그는 비실행 또는 결정적 테스트로 검증한다.
+**Play Mode:** Do not run by default. If an issue remains that occurs only in the actual scene lifecycle across multiple systems, combine it with Phase 5 integrated verification and run it once.
 
-**Exit Gate:** 유지 대상 CSV가 새 Definition으로 파싱되고, 성공·실패 경로가 기존 타입 없이 검증돼야 한다.
+**Exit Gate:** State transitions from combat start through reward completion and entry into the next day must be verified without UI.
 
-### 21.6 Phase 2 — 런 상태와 유닛 Model
+### 21.9 Phase 5 — Reconnect Current Resources
 
-**Task title:** 새 상태 권위 구성
-
-**Goals:**
-
-- `RunSessionModel`, `StageManager`, `PartyRoster`, `PrisonerInventory`를 구현한다.
-- `UnitBaseModel`, `MonsterModel`, `EnemyModel`, `NexusModel`을 구현한다.
-- SkillBucket, SkillCooldown, 상태효과의 소유권과 수명주기를 구현한다.
-
-**Constraints:**
-
-- Model은 씬, 프리팹, UI를 탐색하지 않는다.
-- Gold, DarkTrace, 파티, 수감자, 체력, 스킬 학습 상태를 둘 이상의 객체가 수정하지 않는다.
-- 아직 기존 씬 컴포넌트를 교체하지 않는다.
-
-**Role Owner:** Code Builder
-
-**Status:** Not Started
-
-**Next Actions:** Phase 1의 Definition과 공개 조회 API를 입력으로 파일 단위 구현 범위를 확정한다.
-
-**Evidence:** 상태 전이 테스트, 상태 권위 검사, Unity 재컴파일과 Console 결과.
-
-**History:** 2026-07-23 Phase 계획 생성.
-
-**Play Mode:** 실행하지 않는다. 순수 상태 전이는 결정적 테스트로 검증한다.
-
-**Exit Gate:** 각 가변 상태의 writer가 하나이며 새 Model이 기존 런타임 타입 없이 동작해야 한다.
-
-### 21.7 Phase 3 — 중앙 전투와 행동·이동
-
-**Task title:** 새 전투 실행 루프
+**Task title:** Scene, Prefab, UI, and Visual Resource Migration
 
 **Goals:**
 
-- `InGameActionManager` 중앙 Tick을 구현한다.
-- 피해, 대상 지정, 자동·수동 스킬, 적 행동, 이동, 상태효과 실행 순서를 구현한다.
-- Executor, SkillActorManager, Skill Actor, EffectManager 사이의 책임을 구현한다.
+- Connect the current scene hierarchy and UI objects to new Controller and Service APIs.
+- Connect active unit and skill prefabs to new Actors and visual boundaries.
+- Migrate sprites, animations, AnimatorControllers, and Inspector values to their new owners.
+- Replace `CsvRuntimeCatalog.asset` to match the new initialization boundary.
 
 **Constraints:**
 
-- Skill Actor는 독립 `Update()`를 사용하지 않는다.
-- 기존 Combat Manager, Executor, Actor 또는 입력 Controller를 호출하지 않는다.
-- Tick 중 컬렉션 변경은 pending 목록을 사용한다.
+- Do not create or replace visual resources required for current gameplay without evidence.
+- Do not simultaneously execute existing and new components as authorities over the same state.
+- Record a before-and-after mapping table for serialized field values.
 
-**Role Owner:** Code Builder
+**Role Owner:** The Code Builder performs asset connections, and the user verifies gameplay in Play Mode.
 
 **Status:** Not Started
 
-**Next Actions:** 스킬 family별 최소 수직 경로와 행동·이동 호출 순서를 구현 단위로 확정한다.
+**Next Actions:** Convert the Phase 0 asset-connection table into a migration checklist for each new component.
 
-**Evidence:** Tick 순서 검사, 피해·쿨다운·대상 결정 테스트, Unity 재컴파일과 Console 결과.
+**Evidence:** Scene, prefab, and `.asset` reference checks; Missing Script checks; Inspector mapping table; Unity recompilation; and Console results.
 
-**History:** 2026-07-23 Phase 계획 생성.
+**History:** 2026-07-23 Phase plan created.
 
-**Play Mode:** 조건부다. 물리 충돌, 프레임 시간, 마우스 조준처럼 정적·결정적 테스트로 증명할 수 없는 항목만 사용자에게 제한된 씬 시나리오를 요청한다.
+**Play Mode:** Required. After compilation and static connection checks succeed, request from the user an exact integrated scenario combining input, combat, UI, effects, and stage transitions.
 
-**Exit Gate:** 중앙 Tick 하나만 전투 상태를 변경하며 각 활성 스킬 family의 실행과 종료가 기존 타입 없이 검증돼야 한다.
+**Exit Gate:** The active game flow must execute using only the new Core and new components, and current resources must display correctly.
 
-### 21.8 Phase 4 — 스테이지·스폰·보상 Service
+### 21.10 Phase 6 — Remove Existing Scripts and Complete the Final Transition
 
-**Task title:** 새 런 진행 흐름
+**Task title:** Zero Existing Dependencies and Final Acceptance
 
 **Goals:**
 
-- 스테이지와 일차 전환, 적 스폰, 승리·패배, 회차 초기화를 구현한다.
-- Reward, Offering, Manifestation 흐름을 구현한다.
-- 확정된 수감자 소비, 후보 균등 선택, 영입·넘기기 규칙을 구현한다.
+- Reduce all references to previous Script GUIDs to zero.
+- Remove obsolete existing `.cs` files and Legacy serialized assets through an approved method, or move them outside Unity's compilation scope.
+- Accept full gameplay with only the new Core remaining.
 
 **Constraints:**
 
-- 런 상태는 Phase 2의 권위만 변경한다.
-- Service가 씬 오브젝트를 직접 찾거나 UI를 직접 변경하지 않는다.
-- 기존 StageManager, RunSession, SpawnManager, UI Manager를 fallback으로 호출하지 않는다.
+- Delete source files or move them outside `Assets` only after presenting an exact target list and obtaining user approval.
+- Do not retain previous-code fallbacks, compatibility components, or empty replacement components.
+- Completion must satisfy both sections 18.6 and 20.13.
 
-**Role Owner:** Code Builder
-
-**Status:** Not Started
-
-**Next Actions:** Phase 2 상태 권위와 Phase 3 전투 종료 신호를 연결하는 공개 API를 확정한다.
-
-**Evidence:** 일차·스테이지 상태 전이, 보상 후보, 수감자 소비 테스트, Unity 재컴파일과 Console 결과.
-
-**History:** 2026-07-23 Phase 계획 생성.
-
-**Play Mode:** 기본 실행하지 않는다. 여러 시스템의 실제 씬 생명주기에서만 발생하는 문제가 남으면 Phase 5 통합 검증과 합쳐 한 번 실행한다.
-
-**Exit Gate:** 전투 시작부터 보상 종료와 다음 일차 진입까지의 상태 전이가 UI 없이 검증돼야 한다.
-
-### 21.9 Phase 5 — 현재 리소스 재연결
-
-**Task title:** 씬·프리팹·UI·시각 리소스 마이그레이션
-
-**Goals:**
-
-- 현재 씬 계층과 UI 오브젝트를 새 Controller와 Service API에 연결한다.
-- 활성 유닛과 스킬 프리팹을 새 Actor와 시각 경계에 연결한다.
-- 스프라이트, 애니메이션, AnimatorController, Inspector 값을 새 소유자에게 이전한다.
-- `CsvRuntimeCatalog.asset`을 새 초기화 경계에 맞게 교체한다.
-
-**Constraints:**
-
-- 현재 플레이에 필요한 시각 리소스를 근거 없이 새로 만들거나 교체하지 않는다.
-- 기존 컴포넌트와 새 컴포넌트를 동일 상태 권위로 동시에 실행하지 않는다.
-- 직렬화 필드 값은 이전 전후 대응표를 남긴다.
-
-**Role Owner:** Code Builder가 자산 연결을 수행하고 사용자가 Play Mode 게임 플레이를 검증한다.
+**Role Owner:** The Code Builder provides static-transition and log evidence, and the user performs final Play Mode verification.
 
 **Status:** Not Started
 
-**Next Actions:** Phase 0의 자산 연결표를 새 컴포넌트별 이전 체크리스트로 변환한다.
+**Next Actions:** After Phase 5 succeeds, present exact paths for removal and retention targets and obtain approval.
 
-**Evidence:** 씬·프리팹·`.asset` 참조 검사, Missing Script 검사, Inspector 대응표, Unity 재컴파일과 Console 결과.
+**Evidence:** Zero existing-type references, zero previous Script GUID references, zero Missing Scripts, Unity recompilation, Console results, and final user Play Mode results.
 
-**History:** 2026-07-23 Phase 계획 생성.
+**History:** 2026-07-23 Phase plan created.
 
-**Play Mode:** 필요하다. 컴파일과 정적 연결 검사가 성공한 뒤 사용자에게 입력, 전투, UI, 이펙트, 스테이지 전환을 묶은 정확한 통합 시나리오를 요청한다.
+**Play Mode:** Required. After removal of previous sources and recompilation succeed, request the final full-run scenario from the user.
 
-**Exit Gate:** 활성 게임 흐름이 새 Core와 새 컴포넌트만으로 실행되고 현재 리소스가 정상 표시돼야 한다.
+**Exit Gate:** The project must compile without existing Scripts, have no Console errors, and receive user confirmation of normal gameplay.
 
-### 21.10 Phase 6 — 기존 Scripts 제거와 최종 전환
+### 21.11 Phase Execution Records
 
-**Task title:** 기존 의존 0과 최종 인수
+Add the newest record first under this section.
 
-**Goals:**
+## Phase Record — 2026-07-24 03:13 +09:00
 
-- 모든 이전 Script GUID 참조를 0으로 만든다.
-- 불필요해진 기존 `.cs`와 Legacy 직렬화 자산을 승인된 방식으로 제거하거나 Unity 컴파일 대상 밖으로 이동한다.
-- 새 Core만 남긴 상태에서 전체 게임 플레이를 인수한다.
+Task title: New Combat Execution Loop — Code Reviewer Loop 1 Repairs
 
-**Constraints:**
+Goals: Close every Phase 3 Reviewer loop-1 blocker without widening into Phase 4: exact retained Choice/graph ownership, status thresholds and stack scaling, repeated and follow-up attacks, Trigger context and graph routing, real EventTarget/AppliedTargets timing, Area/Line geometry reevaluation, source-specific shields, built-in passives, Nexus one-shot removal, combat cleanup, stable ordering, and validation-before-mutation.
 
-- 소스 삭제나 `Assets` 밖 이동은 정확한 대상 목록과 사용자 승인 뒤 수행한다.
-- 이전 코드 fallback, compatibility component, 빈 대체 컴포넌트를 남기지 않는다.
-- 완료 판정은 18.6절과 20.13절을 모두 만족해야 한다.
+Constraints: Only Phase 3 pure runtime code, deterministic EditMode tests, the Phase 3 plan status, and this newest record changed. No Stage progression, Spawn, Reward, Offering, Manifestation, scene, prefab, `.asset`, UI, Unity input polling, Unity physics, retained CSV, Phase 0 artifact, BLACKBOARD-family file, or Phase 4 through Phase 6 implementation changed. No other Markdown was read or modified. Play Mode was not run.
 
-**Role Owner:** Code Builder가 정적 전환과 로그 증거를 제공하고 사용자가 최종 Play Mode를 검증한다.
+Role Owner: Code Builder; resubmitted to Code Reviewer loop 2.
 
-**Status:** Not Started
+Status: Pending Code Reviewer loop 2
 
-**Next Actions:** Phase 5 성공 뒤 제거 대상과 보존 대상의 정확한 경로를 제시하고 승인을 받는다.
+Next Actions: Code Reviewer independently inspect the repaired retained-row semantics and rerun the full EditMode suite and final Console gate. Keep Phase 4 untouched until Phase 3 receives PASS. If any blocker remains, return to Code Builder and continue the loop.
 
-**Evidence:** 기존 타입 참조 0, 이전 Script GUID 참조 0, Missing Script 0, Unity 재컴파일, Console, 최종 사용자 Play Mode 결과.
+Changed Paths:
 
-**History:** 2026-07-23 Phase 계획 생성.
+- `Pakuri/Assets/Scripts/Units/Models/UnitBaseModel.cs`
+- `Pakuri/Assets/Scripts/Combat/Actions/NewCore/`
+- `Pakuri/Assets/Scripts/Combat/NewCore/InGameCombatManager.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCoreCombatLoopTests.cs`
+- `Pakuri/reference/Work/new-core-architecture-blueprint.md`
 
-**Play Mode:** 필요하다. 이전 소스 제거와 재컴파일이 성공한 뒤 최종 전체 런 시나리오를 사용자에게 요청한다.
+Evidence:
 
-**Exit Gate:** 기존 Scripts 없이 컴파일되고, Console 오류가 없으며, 사용자가 정상 게임 플레이를 확인해야 한다.
+- Choice and graph ownership: plans include the current Skill owner and only selected Choices whose effective target is that Skill. Effect graphs use the same scope; Trigger graphs use the exact retained `triggered_graph_owner_id`, kind, and index without incorrectly applying the event-Skill target filter.
+- Hit timing and targets: OnCast and OnHit Effect graphs execute separately. Each completed damage hit records its real EventTarget and AppliedTargets; EventTarget and AppliedTargets resolution has no caster fallback. `visual_anchor_mode=AppliedTargets` no longer overrides an explicit AllAllies effect target.
+- Retained node semantics: `ThresholdApplyStatus(name-mark,10,silence)` runs after the base status, Eve-D target-status-stack damage receives its retained per-stack rate bonus, SingleAttack executes `RepeatPerTarget`, projectile burst index 0 is exact, and `FollowUpProjectile` is a distinct scheduled shot rather than an ordinary projectile-count increase.
+- Status payloads: an Effect graph containing ApplyStatus plus AttachStatusPayload performs the attached payload application once. `ConditionStatus` reads its retained minimum stacks from `arg_4`.
+- Trigger semantics: dispatcher context now carries applied damage, per-source absorbed shield amount, expired shield amount, tracked incoming damage and attribute, event-execute state, source-status skill and stacks, source scope, geometry, count, shape, center, and exact triggered graph identity. Blank retained physical attributes normalize to Physical for matching. Combat reset clears count, cooldown, and recursion state.
+- Trigger recursion: every Trigger-created Skill request and Effect-damage request carries its Trigger ancestry through delayed Actors. A Trigger whose ID is already in that ancestry cannot dispatch again, including after the originating Actor callback has completed. Dedicated job `bdcd77da13c64426bf8395efb7b1ce2b` passed the retained Sein auto-barrage recursion regression.
+- Shield ownership and reflection: shields are stored and removed as source-and-skill-specific layers. Absorption reports each consumed layer's owner, so `ariel-b-master-2` reflects the retained 35% of the amount absorbed even when Ariel shielded another ally; one shield expiry cannot erase another source's shield.
+- Geometry and lifecycle: Area and Line attacks query the full registered candidate set and reevaluate positions every scheduled tick; Line applies its forward half-plane and full width. Nexus contact is terminal and the controller is removed after exactly one damage request. EndCombat clears Actors and Trigger state and unsubscribes every observed status-expiry handler.
+- Passive and deterministic flow: learned monster passives and assigned enemy passives have a built-in central caller. Enemy DamageUp, DefenseUp, CritChanceUp, CritDamageUp, HealingUp, and IncomingDamageDown values are read by combat calculations. Equal-distance targeting preserves registration order, and invalid selected-monster registration validates before collection mutation.
+- Phase 3 combat regression job `cbff5c430cb04cadbddb661c8638f001`: 27 passed, 0 failed, 0 skipped.
+- Complete EditMode job `ce06dd99c06f41fdb82766e32549a3d3`: 55 passed, 0 failed, 0 skipped, result `Passed`; this includes all retained Phase 1 and Phase 2 tests.
+- Retained CSV contract: 42 manifest rows checked, SHA-256 mismatches = 0.
+- Static isolation: 49 runtime C# files and 7,560 lines checked; forbidden `UnityEngine`, `MonoBehaviour`, `ScriptableObject`, `GameObject`, `SendMessage`, previous `Pakuri.InGame`, `TODO`, `FIXME`, and independent `Update()` matches = 0; missing `.meta` pairs = 0.
 
-### 21.11 Phase 실행 기록
+Unity Before Log: The Editor was idle and not in Play Mode. The prior test and tool session had no new-runtime compile error.
 
-구현이 시작되면 이 절 아래에 최신 기록을 위로 추가한다. 아직 구현이 시작되지 않았으므로 실행 기록은 없다.
+Unity Compile Result: A final forced Script Refresh and requested compilation completed in Unity 6000.3.14f1; the Editor returned to idle with no pending domain reload.
 
-기록 형식:
+Unity Error/Exception: 0 after clearing the Unity-MCP transport's own disposed-client diagnostic and reading the final Console gate.
+
+Unity Warning: 0 at the final Console gate.
+
+Play Mode: Not Run
+
+Play Mode Reason: All Reviewer loop-1 blockers are pure deterministic Phase 3 ownership, scheduling, state, geometry-math, and lifecycle contracts. The 54-test EditMode suite, static isolation scan, retained hashes, forced compilation, and final Console gate prove this scope. Phase 5 presentation, real mouse polling, Unity physics, and integrated scene wiring still do not exist, so Play Mode would not add evidence for these repairs.
+
+User Result: Not requested for Phase 3.
+
+History: Reviewer loop 1 returned FIX REQUIRED with 20 exact blockers despite the earlier 42-test pass. Code Builder kept Phase 4 untouched, repaired each retained-row behavior, and used successive Unity compilations and focused test runs to expose two additional mistakes: lowercase `global` target counts were parsed as integers, and `visual_anchor_mode=AppliedTargets` was incorrectly treated as effect-target selection. Both were corrected. A final static recursion audit added ancestry propagation for delayed Trigger-created skills and effects and an exact Sein regression. The complete suite passed 55 of 55, all 42 retained CSV hashes matched, the isolated runtime scan found zero forbidden markers and zero missing `.meta` pairs, and the final Console gate was zero. Phase 3 is resubmitted for Code Reviewer loop 2.
+
+## Phase Record — 2026-07-24 02:05 +09:00
+
+Task title: New Combat Execution Loop
+
+Goals: Establish one central combat Tick; deterministic damage, healing, shield, status, cooldown, targeting, automatic, manual-request, enemy, movement, Actor, and effect-handle paths; and an Executor for every retained active skill family.
+
+Constraints: Only Phase 3 pure runtime code, the minimum Phase 2 commands required for current position and cooldown reduction, deterministic EditMode tests, this Phase 3 plan status, and this newest record were changed. No Stage progression, Spawn, Reward, Offering, Manifestation, scene, prefab, `.asset`, UI, Unity input polling, Unity physics, retained CSV, Phase 0 artifact, BLACKBOARD-family file, or Phase 4 through Phase 6 implementation was added or modified. Existing Scripts were restored byte-for-byte after an initial path collision and remain read-only compatibility evidence.
+
+Role Owner: Code Builder; ready for Code Reviewer.
+
+Status: Pending Code Reviewer
+
+Next Actions: Run the Phase 3 Code Reviewer loop. Keep Phase 4 untouched until Phase 3 receives PASS, and repair every exact Reviewer finding before resubmission.
+
+Changed Paths:
+
+- `Pakuri/Assets/Scripts/Units/Models/CombatVector2.cs`
+- `Pakuri/Assets/Scripts/Units/Models/UnitBaseModel.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Runtime/SkillCooldown.cs`
+- `Pakuri/Assets/Scripts/Combat/NewCore/`
+- `Pakuri/Assets/Scripts/Combat/Actions/NewCore/`
+- `Pakuri/Assets/Scripts/Combat/Effects/NewCore/`
+- `Pakuri/Assets/Scripts/Combat/Skills/Execution/NewCore/`
+- `Pakuri/Assets/Scripts/Combat/Skills/Actors/`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCoreCombatLoopTests.cs`
+- Unity-generated `.meta` files for all new Phase 3 assets and directories
+- `Pakuri/reference/Work/new-core-architecture-blueprint.md`
+
+Evidence:
+
+- Central Tick: `InGameActionManager.Tick` is the sole combat-frame entry and executes Passive-before, all registered cooldowns, automatic monsters in registration order, the selected monster's queued manual request, enemies in registration order, `SkillActorManager`, all registered statuses, and Passive-after in the blueprint order.
+- Manual boundary: `PlayerInputController` contains no Unity input API. It accepts Pressed, Held, Released, pointer-over-UI, aim direction, and target point values from a future Phase 5 adapter; non-projectiles accept Pressed only, projectiles retain the latest aim for explicit burst continuation, and only the first registered selected monster is accepted.
+- Model authority: `CombatVector2` and `UnitBaseModel.Position` provide an engine-independent current-position authority. `UnitMovementController` is the only Phase 3 movement writer and honors `can_move`, status move-speed bonuses, delta time, and an explicit stop distance.
+- Combat results: raw skill value is `base_damage + flat_value + attack_power * attack_power_coefficient + spell_power * spell_power_coefficient`; defense applies `100 / (100 + defense)`; critical chance and resistance are evaluated through the injected deterministic random source; results are rounded; Model shield absorption precedes health damage; healing, shield, status, skill-activation, and defeat events expose confirmed results.
+- Targeting: living non-Nexus candidates are selected by side and retained `target_scope`; Nearest, CurrentTarget, HighestHealth, LowestHealth, HighestStacks, Farthest, Random, All, Self, and manual target-point ordering are deterministic with registration-order tie preservation.
+- Skill families: `ProjectileExecutor`, `LineAttackExecutor`, `AreaAttackExecutor`, `SingleAttackExecutor`, `BuffExecutor`, `HealExecutor`, `ShieldExecutor`, and `PassiveExecutor` all have actual dispatch callers through `SkillExecutionRuntime`. Selected retained Choice nodes project damage, radius, duration, status-stack, additional-status, and critical modifiers without mutating Definitions.
+- Reachable coverage: runtime construction resolves every one of the 88 distinct reachable retained node types to Plan or Effect execution behavior; unsupported reachable node types = 0. Plan execution covers conditions, damage/critical/core/execute/stack/count/burst/consecutive rules, additional/branch/chain damage, cooldown/reload/magazine, status stacks/duration/chance/max stacks, consume/redistribute, targeting/radius/knockback, projectile/pierce/burst/repeat, shield, and proc modifiers. Effect execution groups retained graphs by owner and index and applies their conditions, targets, lifetime/delay, damage, shield, status payload, runtime modifier, visual-handle, status-extension, and recast operations.
+- Trigger coverage: `SkillTriggerDispatcher` validates all 59 retained Trigger rows and dispatches CombatStart, OnSkillCast, OnOutgoingDamage, OnMagazineLastProjectileHit, OnKill, OnStatusExpire, OnShieldExpire, and OnShieldAbsorb. It enforces event-skill/runtime/status filters, all required and excluded Choices, count/proc/internal-cooldown gates, delay/repeat scheduling, target resolution, Effect graphs, triggered skills, coefficient damage, cooldown refunds, and reload reductions; unsupported Trigger rows = 0.
+- Projectile and repeated fields: burst shots are scheduled at retained intervals, new projectile Actors begin on the next Actor Tick, pierce walks ordered living targets, magazine bonuses and reload/shot-interval modifiers update runtime cooldown authority, damage delays are scheduled, and Area/Line repeat fields execute through `ScheduledSkillActor`.
+- Actor lifecycle: no Phase 3 Actor contains `Update`. `SkillActorManager` alone Ticks Actors in registration order, removes completed Actors after iteration, promotes `pendingAdd` after the current iteration so new Actors first Tick next frame, and clears active and pending lists plus Effect handles at combat end.
+- Effect lifecycle: `EffectManager` owns engine-independent Effect handles and only creates, updates, removes, or clears position/direction/resource-path projections. Prefab instantiation remains Phase 5.
+- Enemy flow: each enemy first resolves support B when a damaged ally exists, then offensive B, then A; it moves when outside CSV range, targets the nearest living Monster, falls back to the Nexus, requests exact CSV `nexus_damage` at the explicit contact boundary, marks contact, and unregisters itself from the verified `StageManager` field list.
+- Static scan: 36 Phase 3 runtime C# files and 5,015 lines; zero `UnityEngine`, `MonoBehaviour`, `ScriptableObject`, `GameObject`, scene search, `SendMessage`, reflection, previous `Pakuri.InGame` namespace, `TODO`, or `FIXME` matches; zero `Update()` methods; zero missing `.meta` pairs.
+- First full EditMode job `c30948a5aa3f46e2b24a08519cfbefbc`: 37 total, 36 passed, one targeting-test expectation failed because the retained HighestHealth rule compares absolute current health, not health ratio. The implementation already matched the inspected behavior; the test expectation was corrected to compare actual current health.
+- Final EditMode job `e3913c482eb84d2a8d71a8fe4760d7f3`: 42 total, 42 passed, 0 failed, 0 skipped, result `Passed`; includes all retained Phase 1 and Phase 2 tests.
+- Phase 3 tests cover exact Tick order, Actor next-frame registration and post-iteration removal, scheduled initial delay and repeat count, damage/heal/shield/status authority, cooldown blocking and completion, automatic target selections and manual target point, every active skill family, retained Choice and Effect graphs, all 88 reachable node and 59 Trigger contracts, projectile burst plus ordered pierce, a real CombatStart Trigger, manual aim/request rules, movement/status blocking, and the enemy-to-Nexus request.
+- Retained CSV contract: all 42 current byte counts and SHA-256 values match `new-core-phase0-csv-contract-manifest.csv`; mismatches = 0.
+- Phase 0 artifact hashes remain exactly `37A9D131EFC61EA20EEA13AF3C3BCA693DB6BE2524B8AFE44D80AA2DF64A0788`, `2E12342D4C45AC1D4A67D68ED20561F584DD60BA56F0AEDB9CAE50229AFDA604`, `6AFD7D0916B6AA14E4A5F881FCCE47EAD0364930D58EB1EF37428DEBFC92F07C`, `D201C258DE6BD5346E0132E3FCE579B875C689977ED3FE24E8AEC92F3B07AD90`, and `832BD377E1CCC468B4FE2D2B197F8603F21B4923D185A193B12267D68C153654`.
+
+Unity Before Log: Error/Exception/Warning entries = 0. Editor was idle, not compiling, not in Play Mode, and the active scene was `NewMainMenu`.
+
+Unity Compile Result: Unity 6000.3.14f1 generated all required `.meta` files and compiled `Pakuri.NewCore.dll`, `Pakuri.NewCore.Runtime.dll`, the unchanged existing runtime, and `Pakuri.NewCore.EditMode.Tests.dll`. The Editor returned to idle with no pending domain reload.
+
+Unity Error/Exception: 0 after the final forced Asset Refresh and compilation gate.
+
+Unity Warning: 0 after the final forced Asset Refresh and compilation gate. The package-owned Performance Testing setup and cleanup Warnings and results-path message emitted after the successful test job were recorded, cleared, and did not contain a new-runtime stack.
+
+Play Mode: Not Run
+
+Play Mode Reason: Phase 3 deliberately exposes engine-independent position, aim, collision-result, and manual-input request boundaries. Exact ordering, delta-time movement math, target selection, damage, all Executor families, Actor next-frame lifecycle, and Effect-handle cleanup are proven by deterministic EditMode tests. Actual mouse polling, Rigidbody/Collider collision, prefab visuals, and frame integration do not exist until Phase 5 connects presentation, so starting Play Mode in Phase 3 would not prove an integrated new-Core scene path.
+
+User Result: Not requested for Phase 3.
+
+History: Code Builder read only the mandatory role files and the English blueprint among Markdown inputs. The first compile exposed that the legacy `EffectManager.cs` path had been displaced while adding the new same-named type; the existing file and GUID were restored byte-for-byte and the new type was isolated under `Combat/Effects/NewCore`. The next forced compile passed. The initial full test run found one incorrect HighestHealth test assumption; inspected existing targeting compares absolute current health, so the implementation was retained and the assertion was corrected. A subsequent coverage audit found 66 reachable specialized node paths and all 59 Trigger rows still missing from execution, so Phase 3 remained In Progress while the Builder implemented Plan and Effect graph execution, Trigger dispatch, burst, pierce, delay, repeat, runtime status modifiers, follow-up damage, resource mutation, and exact contract-audit tests. Final EditMode job `e3913c482eb84d2a8d71a8fe4760d7f3` passed 42 of 42 tests. Unsupported reachable node and Trigger counts are both zero. Phase 3 is pending Code Reviewer; Phase 4 was not started.
+
+## Phase Record — 2026-07-24 01:18 +09:00
+
+Task title: Establish New State Authorities
+
+Goals: Establish one writer for run currencies, field-unit registration, party order, reward-phase prisoners, unit health and shields, status lifecycles, monster learning state, enemy assigned skills, and per-skill cooldown, magazine, reload, and shot-interval state.
+
+Constraints: Only Phase 2 pure runtime state, its deterministic EditMode tests, the Phase 2 plan section, and this newest record were changed. No Actor, combat execution, action Controller, movement, Service, Spawn, scene, prefab, `.asset`, UI, CSV, Phase 0 artifact, BLACKBOARD-family file, or Phase 3 through Phase 6 implementation was added or modified. No Play Mode was used. Existing Scripts were not called, inherited, wrapped, or used as fallbacks.
+
+Role Owner: Code Builder; submitted to Code Reviewer.
+
+Status: PASS — Code Reviewer loop 2
+
+Next Actions: Begin Phase 3. Use only the verified Phase 2 state authorities and retain all Phase 0 and CSV hash baselines.
+
+Changed Paths:
+
+- `Pakuri/Assets/Scripts/Run/Pakuri.NewCore.Runtime.asmdef`
+- `Pakuri/Assets/Scripts/Run/RunSessionModel.cs`
+- `Pakuri/Assets/Scripts/Run/StageManager.cs`
+- `Pakuri/Assets/Scripts/Run/PartyRoster.cs`
+- `Pakuri/Assets/Scripts/Run/PrisonerInventory.cs`
+- `Pakuri/Assets/Scripts/Units/Models/Pakuri.NewCore.Runtime.asmref`
+- `Pakuri/Assets/Scripts/Units/Models/UnitBaseModel.cs`
+- `Pakuri/Assets/Scripts/Units/Models/MonsterModel.cs`
+- `Pakuri/Assets/Scripts/Units/Models/EnemyModel.cs`
+- `Pakuri/Assets/Scripts/Units/Models/NexusModel.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Runtime/Pakuri.NewCore.Runtime.asmref`
+- `Pakuri/Assets/Scripts/Combat/Skills/Runtime/SkillBucket.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Runtime/MonsterSkillBucket.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Runtime/EnemySkillBucket.cs`
+- `Pakuri/Assets/Scripts/Combat/Skills/Runtime/SkillCooldown.cs`
+- `Pakuri/Assets/Scripts/Combat/Status/NewCore/Pakuri.NewCore.Runtime.asmref`
+- `Pakuri/Assets/Scripts/Combat/Status/NewCore/StatusEffect.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/Pakuri.NewCore.EditMode.Tests.asmdef`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCoreRuntimeStateTests.cs`
+- Unity-generated `.meta` files for the four new runtime directories, 17 runtime assets, and the new test file
+- `Pakuri/reference/Work/new-core-architecture-blueprint.md`
+
+Evidence:
+
+- Assembly boundary: `Pakuri.NewCore.Runtime` references only `Pakuri.NewCore`, has `noEngineReferences: true`, and uses `.asmref` files to include only the new Phase 2 folders. `StatusEffect` is placed under `Combat/Status/NewCore` so the existing files already present in `Combat/Status` are not pulled into the new assembly.
+- Static runtime scan: 13 C# files and 1,076 lines; zero `UnityEngine`, `MonoBehaviour`, `ScriptableObject`, `GameObject`, scene-wide search, `SendMessage`, reflection, `Legacy`, previous-Script namespace marker, `TODO`, or `FIXME` matches.
+- Type ownership: `StageManager` owns the active `RunSessionModel`, currency fields, and field-unit list; `RunSessionModel` owns immutable run-location inputs plus its `PartyRoster` and `PrisonerInventory` references; `PartyRoster` owns the ordered one-through-five party list; `PrisonerInventory` creates and owns exact `Prisoner` handles; each unit Model owns its health, shield, survival projection, and applied-status list; each `MonsterModel` creates and owns its `MonsterSkillBucket`; each `EnemyModel` creates and owns its `EnemySkillBucket`; each Bucket owns its learned or assigned Definition references and cooldown objects; each `SkillCooldown` owns one skill's use-state; and each `StatusEffect` owns the duration and stack state for one applying-unit, affected-unit, and immutable `StatusDefinition` tuple.
+- Current callers: deterministic Phase 2 tests construct the bootstrap-independent state graph; Models directly construct their owned Buckets; Buckets construct `SkillCooldown`; `UnitBaseModel.ApplyStatus` constructs, refreshes, Ticks, removes, and clears `StatusEffect`; `StageManager`, future Phase 3 Controllers, and future Phase 4 Services use only the exposed query and command boundaries. Production creation by `GameBootstrap` and `SpawnManager` remains Phase 4 or Phase 5 scope and was not preimplemented.
+- Deletion conditions: Run authorities become unnecessary only if the active-run flow is removed; Models and their Buckets become unnecessary only if their corresponding unit runtime is removed; `SkillCooldown` becomes unnecessary only if skill-use cadence is removed; `StatusEffect` becomes unnecessary only if applied status runtime is removed; the assembly references become unnecessary only if these files are later consolidated under one isolated new-runtime assembly without including previous Scripts.
+- `PartyRoster`: slot 0 is established only by the constructor; manifested additions preserve registration order; maximum slots are five; duplicate `monster_id` additions and full-roster additions fail without mutation.
+- `PrisonerInventory`: duplicate enemy types remain distinct handles; consumption removes the exact held handle; repeat consumption fails; replacing rewards validates the entire replacement before clearing; both reward replacement and explicit clear prevent previous prisoners from carrying forward.
+- Unit state: health and shield writes are private to `UnitBaseModel`; survival is derived from current health rather than duplicated; shield absorption precedes health damage; dead units cannot be healed or shielded; round reset restores health, clears shields and statuses, resets skill runtime, enables AutoAttack, and enables AutoSkill only for a non-selected monster.
+- Status lifecycle: immutable `StatusDefinition`, applying-unit, and affected-unit references are retained; same-source reapplication refreshes duration and adds stacks; positive `max_stacks` is enforced; permanent statuses have no countdown; expired statuses are removed by the owning Model; explicit removal and round clear are verified.
+- Monster learning: the immutable slot-A skill is required at construction; no more than two additional active skills and five passives can be learned; duplicate and foreign-monster skills fail; active enhancements are capped at three per skill; a master requires three enhancements and is capped at one; passive enhancement is capped at one per learned passive; duplicate Choices fail.
+- Reviewer loop 1: FIX REQUIRED. `MonsterSkillBucket` allowed learning and selecting a PassiveBase without checking a non-empty `target_skill_id` prerequisite, and `StatusEffect.Refresh` assigned refreshed stacks before validating the requested duration.
+- PassiveBase fix: each `MonsterModel` now provides its immutable retained PassiveBase Choices when creating its Bucket. When a PassiveBase has a non-empty `target_skill_id`, `CanLearnPassive`, `TryLearnPassive`, `CanSelectChoice`, and `TrySelectChoice` all require that active skill to be learned. The retained `sein-i-base-shot-interval` Choice is verified to require `sein-d`; both learning and selection reject before learning `sein-d`, accept after learning it, and reject duplicate selection.
+- Atomic refresh fix: `StatusEffect.Refresh` resolves and validates both the new stack count and duration in locals before assigning either field. A regression test proves that an invalid negative refresh duration throws while preserving the original stacks, remaining duration, and owned status list.
+- Enemy skills: exactly two Definition-backed active slots and one passive are validated against `EnemyDefinition`; duplicate A/B skill assignments remain two ordered slots while sharing one `SkillCooldown` authority for the same `skill_id`.
+- Cooldown lifecycle: non-magazine cooldown, magazine count, shot interval, reload block, refill, invalid negative delta, and next-round reset are deterministic. A technical `0.00001f` completion tolerance prevents accumulated `float` frame deltas from leaving a nominally completed timer infinitesimally positive; it does not change any CSV tuning value.
+- Initial EditMode job `90d2b5a8b7e14715a2d4e582ace9d68b`: total 25, passed 24, failed 1. The exact failure was the `6.49f + 0.01f` timer boundary. The completion tolerance fixed that numeric edge without changing a Definition or CSV.
+- Final EditMode job `a522f9f8baaf414e81da2bba99702786`: total 25, passed 25, failed 0, skipped 0, result `Passed`, including all 13 Phase 1 tests and 12 new Phase 2 tests.
+- Re-review EditMode job `9bd4afbde4f24aaaa8d93c9569e75ad8`: total 27, passed 27, failed 0, skipped 0, result `Passed`, including all 13 Phase 1 tests and 14 Phase 2 tests after both Reviewer loop-1 fixes.
+- Retained CSV contract: all 42 current byte counts and SHA-256 values match `new-core-phase0-csv-contract-manifest.csv`; mismatches = 0.
+- Phase 0 artifact hashes remain exactly `37A9D131EFC61EA20EEA13AF3C3BCA693DB6BE2524B8AFE44D80AA2DF64A0788`, `2E12342D4C45AC1D4A67D68ED20561F584DD60BA56F0AEDB9CAE50229AFDA604`, `6AFD7D0916B6AA14E4A5F881FCCE47EAD0364930D58EB1EF37428DEBFC92F07C`, `D201C258DE6BD5346E0132E3FCE579B875C689977ED3FE24E8AEC92F3B07AD90`, and `832BD377E1CCC468B4FE2D2B197F8603F21B4923D185A193B12267D68C153654` for the CSV contract, Inspector snapshot, generator, retained-resource manifest, and Script-reference manifest respectively.
+- Unity generated every required `.meta`; missing asset-to-meta pairs = 0.
+- The Test Runner emitted its package-owned Performance Testing setup and cleanup Warnings and a results-path message classified as an Exception after the successful test job. They originate under Unity package/editor paths and contain no new-runtime stack. The Console was cleared, then the final forced Asset Refresh and requested compilation returned to idle with zero Errors, Exceptions, and Warnings.
+
+Unity Before Log: Error/Exception/Warning entries = 0. Editor was idle, not compiling, not in Play Mode, and the active scene was `NewMainMenu`.
+
+Unity Compile Result: Unity 6000.3.14f1 imported the new runtime assembly, assembly references, C# files, tests, and generated `.meta` files. `Pakuri.NewCore.dll`, `Pakuri.NewCore.Runtime.dll`, and `Pakuri.NewCore.EditMode.Tests.dll` compiled, and the Editor returned to idle with no pending domain reload.
+
+Unity Error/Exception: 0 after the final forced Asset Refresh and compilation gate.
+
+Unity Warning: 0 after the final forced Asset Refresh and compilation gate. The two package-owned Test Runner warnings were recorded and cleared before this gate.
+
+Play Mode: Not Run
+
+Play Mode Reason: Phase 2 changes only pure Models and state authorities. Deterministic EditMode transitions, assembly isolation, retained-hash checks, compilation, editor state, and Console evidence prove the requested scope without scene lifecycle or gameplay input.
+
+User Result: Not requested for Phase 2.
+
+History: Code Builder read only the mandatory role files and the English blueprint among Markdown inputs. The initial implementation compiled with zero Console errors. The first full test job exposed one floating-point timer completion edge; the timer reduction was made tolerant only at the numeric completion boundary. The second full job passed 25 of 25 tests. Code Reviewer loop 1 then returned FIX REQUIRED for missing PassiveBase prerequisite enforcement and non-atomic StatusEffect refresh. Code Builder added immutable PassiveBase rule input to each MonsterSkillBucket, enforced the retained `sein-i-base-shot-interval` to `sein-d` prerequisite in both learning and selection paths, made refresh assignment atomic, and added two regression tests. The re-review job passed 27 of 27 tests. Reviewer loop 2 independently ran job `3248fa6ffdf54249910223fc57641b8f`, passed all 27 tests, verified final Console zero and retained hashes, and returned PASS with no user-only verification gap. Phase 3 was not started.
+
+## Phase Record — 2026-07-24 00:37 +09:00
+
+Task title: New Core Data Foundation
+
+Goals: Parse every retained CSV into immutable Definitions while preserving exact CSV column names, validate startup invariants explicitly, expose a read-only `GameDefinitionCatalog`, and provide a concrete data-only `GameBootstrap` initialization boundary.
+
+Constraints: Only Phase 1 code under `Pakuri/Assets/Scripts/Core` and this Phase record were changed. Retained CSVs, runtime Models, Combat, UI, scenes, prefabs, `.asset` files, Phase 0 manifests, BLACKBOARD-family files, and Phase 2 through Phase 6 implementation were not changed. No legacy type is called, inherited, wrapped, or used as a fallback.
+
+Role Owner: Code Builder; submitted to Code Reviewer.
+
+Status: PASS — Code Reviewer loop 2
+
+Next Actions: Begin Phase 2. Preserve the immutable data foundation, retained CSV hashes, and Phase 0 before-state manifests.
+
+Changed Paths:
+
+- `Pakuri/Assets/Scripts/Core.meta`
+- `Pakuri/Assets/Scripts/Core/Pakuri.NewCore.asmdef`
+- `Pakuri/Assets/Scripts/Core/Bootstrap/GameBootstrap.cs`
+- `Pakuri/Assets/Scripts/Core/Parsing/CsvParser.cs`
+- `Pakuri/Assets/Scripts/Core/Catalog/GameDefinitionCatalog.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/CsvDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Skills/SkillDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Skills/ProjectileDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Skills/LineAttackDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Skills/AreaAttackDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Skills/SingleAttackDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Skills/BuffDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Skills/HealDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Skills/ShieldDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Skills/PassiveDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Skills/SkillTriggerDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Choices/SkillChoiceDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Choices/MonsterModifierSkillChoiceDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Choices/ChoiceNodeDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Choices/NodeTypeDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Choices/NodeParamDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Units/UnitDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Units/MonsterDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Units/EnemyDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Units/CatalogMonsterDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Stage/StageDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Stage/StageDayDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Stage/StageEncounterDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Stage/StageRewardDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Definitions/Status/StatusDefinition.cs`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/Pakuri.NewCore.EditMode.Tests.asmdef`
+- `Pakuri/Assets/Scripts/Core/Tests/Editor/NewCoreDataFoundationTests.cs`
+- `Pakuri/Assets/Scripts/Core/**/*.meta` generated by Unity for 42 new files and directories
+- `Pakuri/reference/Work/new-core-architecture-blueprint.md`
+
+Evidence:
+
+- Type ownership: `GameBootstrap` owns the initialized Catalog and is currently invoked by deterministic Phase 1 tests as the concrete data-bootstrap boundary. It is not yet called by a production scene, serialized component, or runtime startup path; that wiring remains Phase 5 scope. `CsvParser` is owned and called by Bootstrap and owns only the startup parse operation; `GameDefinitionCatalog` owns all immutable Definitions and is read by later Core layers; concrete Definitions are created by Parser and owned by Catalog; `CsvDefinitionData` is an internal construction payload owned and consumed by Parser during Definition creation. These types become unnecessary only if the retained CSV startup boundary itself is removed or replaced.
+- Retained inputs: 42 required CSV paths are explicit and deterministic; 39 authoring files parse their schema/type row; three `stage_flow` files use exact typed contracts because the inspected files contain no schema row; the empty enemy single-attack Trigger CSV is counted and validated.
+- Successful Catalog: 1,836 immutable Definition rows, 82 unique skills, five monsters, and 16 enemies. Quoted commas and escaped quotes remain intact.
+- Explicit validation: RFC-style quoted fields and escaped quotes, row widths, duplicate headers, schema types, finite invariant-culture floats, integers, booleans, evidence-defined enum domains, unique IDs and composite keys, node parameter types and allowed values, and required cross-file references.
+- Reference distinctions proven by retained data: semicolon-delimited Trigger references are validated individually; synthetic `triggered_skill_id` and `condition_status_source_skill_id` values are not misclassified as base-skill references; the observed `baseSkill@effect1` node reference validates its base skill and exact selector.
+- Every property declared through `RequiredString(...)` is validated eagerly by the matching Definition constructor through `ValidateRequired(...)`. `GameBootstrap` therefore fails during initialization rather than waiting for a later property read.
+- EditMode test job `e47a8c682bfd4609979c2060f1c0b8b7`: total 13, passed 13, failed 0, skipped 0, result `Passed`.
+- Test coverage: all retained CSV success path and Catalog immutability; quoted and escaped fields; a quoted field containing actual CRLF; blank required Monster `display_name` and `primary_attribute`; duplicate ID; invalid int, float, bool, and enum; missing cross-file reference; missing retained CSV; unterminated quote.
+- Retained CSV contract check: all 42 current byte counts and SHA-256 values match `new-core-phase0-csv-contract-manifest.csv`; mismatches = 0.
+- Static new-code scan: 29 C# files and two asmdefs; zero `TODO`, `FIXME`, `SendMessage`, reflection, scene-wide search, or Legacy markers; runtime assembly references only `System` and `Pakuri.NewCore`.
+- No Runtime Model, Combat, UI, scene, prefab, or `.asset` implementation was added or modified.
+- Unity Test Runner emitted its package-owned Performance Testing setup/cleanup warnings and a `Saving results to ... TestResults.xml` message classified as an Exception after test execution. These entries originate under Unity package/editor paths, not the new Core. The Console was cleared and the final forced Asset Refresh and compilation gate returned zero Errors, Exceptions, and Warnings.
+
+Unity Before Log: Error/Exception/Warning entries = 0. Editor was idle, not compiling, not in Play Mode, and ready for tools.
+
+Unity Compile Result: Unity 6000.3.14f1 imported the new files, generated their `.meta` files, built `Pakuri.NewCore.dll` and `Pakuri.NewCore.EditMode.Tests.dll`, and returned to idle with no pending domain reload.
+
+Unity Error/Exception: 0 after the final forced Asset Refresh and compilation gate.
+
+Unity Warning: 0 after the final forced Asset Refresh and compilation gate. The two package-owned Test Runner warnings were recorded and cleared before the final gate.
+
+Play Mode: Not Run
+
+Play Mode Reason: Phase 1 contains only deterministic CSV parsing, immutable Definitions and Catalog state, and a data-only Bootstrap boundary. Compilation, static contract checks, and EditMode tests prove the requested behavior without gameplay execution.
+
+User Result: Not requested for Phase 1.
+
+History: The first script-only refresh did not import new assets, so a full Asset Refresh was used. The first discovered test run exposed semicolon-delimited Trigger references. Later runs exposed synthetic source identifiers and the `baseSkill@effect1` node selector. Validation was narrowed to the inspected contracts rather than guessing. The initial final run passed all 10 tests and was submitted to Code Reviewer. Reviewer loop 1 returned FIX REQUIRED because required string fields were checked only when their getters were read, quoted multiline parsing lacked an actual-newline test, and the top status and `GameBootstrap` production-caller wording were inaccurate. Code Builder added eager validation for every declared required string, two blank Monster required-field tests, an actual-CRLF quoted-field test, and corrected the records. Re-review job `e47a8c682bfd4609979c2060f1c0b8b7` passed all 13 tests. Reviewer loop 2 independently ran job `cdcb6938b53d409685c1dcf16f2be5dd`, passed all 13 tests, verified final Console zero, and returned PASS with no user-only verification gap. Phase 2 was not started.
+
+## Phase Record — 2026-07-23 23:56 +09:00
+
+Task title: Existing Scripts Complete Replacement Baseline
+
+Goals: Freeze the retained CSV contract, existing Script GUID migration inventory, compatibility rules, and pre-change Unity baseline.
+
+Constraints: No game code, retained CSV, scene, prefab, `.asset`, or BLACKBOARD-family file was changed. Existing Scripts were inspected only as read-only evidence. Play Mode was not used.
+
+Role Owner: Code Builder; submitted to Code Reviewer.
+
+Status: PASS — Code Reviewer loop 3
+
+Next Actions: Begin Phase 1. Keep all four Phase 0 manifests as immutable before-state evidence.
+
+Changed Paths:
+
+- `Pakuri/reference/Work/new-core-architecture-blueprint.md`
+- `Pakuri/reference/Work/new-core-phase0-manifest-generator.ps1`
+- `Pakuri/reference/Work/new-core-phase0-csv-contract-manifest.csv`
+- `Pakuri/reference/Work/new-core-phase0-script-reference-manifest.csv`
+- `Pakuri/reference/Work/new-core-phase0-retained-resource-manifest.csv`
+- `Pakuri/reference/Work/new-core-phase0-inspector-snapshot.csv`
+
+Evidence:
+
+- Blueprint translation-only snapshot before Phase records: strict UTF-8 PASS; 2,063 split lines; 107 headings; 72 code-fence lines. Current-file QA: balanced fences; zero Hangul; zero trailing whitespace; all Phase headings retained.
+- Retained CSV contract: 42 rows; current path, byte count, and SHA-256 mismatches = 0.
+- Existing Script references: 56 rows; unique Script GUIDs = 21; unique assets = 40; required-column omissions = 0.
+- Serialized-file scan: 240 files across `.unity`, `.prefab`, `.asset`, `.controller`, `.overrideController`, `.anim`, `.playable`, `.mat`, and `.scenetemplate`; Legacy-path reference rows = 16; non-Legacy-path reference rows = 40.
+- Retained resources: 781 reference rows; 593 unique project assets; 24 non-Legacy migration roots; 86 concrete CSV path rows; zero missing retained paths.
+- Retained-resource kinds include 514 PNG edges, 89 AnimatorController edges, 75 animation-clip edges, 46 prefab edges, 42 CSV TextAsset edges, 6 data-asset edges, 4 shader edges, 3 font edges, and 2 scene roots.
+- Inspector baseline: 56 exact serialized component payloads; Base64 decode failures = 0; SHA-256 mismatches = 0.
+- Existing Scripts baseline: 69 `.cs` files; 38,083 lines.
+- Unity project: `Pakuri`, Unity 6000.3.14f1, StandaloneWindows64.
+
+Unity Before Log: Error/Exception/Warning entries = 0.
+
+Unity Compile Result: Forced Asset Refresh and requested script compilation completed. Editor state returned to idle, not compiling, no domain reload pending, and ready for tools.
+
+Unity Error/Exception: 0.
+
+Unity Warning: 0.
+
+Play Mode: Not Run
+
+Play Mode Reason: Phase 0 changes only documentation and generated baseline manifests outside `Assets`; filesystem, serialization, compilation, editor-state, and Console checks are sufficient.
+
+User Result: Not requested for Phase 0.
+
+History: Phase 0 completed by Code Builder and submitted to Code Reviewer. Reviewer loop 1 returned FIX REQUIRED for retained-resource coverage, QA-count scope, and serialized-file scope. Code Builder applied all three fixes. Reviewer loop 2 verified those fixes and found only an unsupported material-coverage claim; Code Builder removed it. Reviewer loop 3 returned PASS with no remaining blocker or user-only verification gap. No Phase 1 work has started.
+
+Record format:
 
 ```text
 ## Phase Record — YYYY-MM-DD HH:mm
@@ -2050,7 +2414,7 @@ User Result:
 History:
 ```
 
-`Play Mode` 값은 다음 중 하나만 사용한다.
+Use exactly one of the following values for `Play Mode`.
 
 ```text
 Not Run
@@ -2059,4 +2423,4 @@ Completed By User
 Failed By User Evidence
 ```
 
-실행하지 않았다면 `Play Mode Reason`에 정적 검사만으로 충분했던 이유를 기록한다. 요청했다면 21.3절의 Reason, Scene, Setup, Actions, Expected, Failure, LogCheck를 함께 기록한다.
+If Play Mode was not run, record in `Play Mode Reason` why static checks were sufficient. If it was requested, also record the Reason, Scene, Setup, Actions, Expected, Failure, and LogCheck fields from section 21.3.
