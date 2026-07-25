@@ -1069,3 +1069,44 @@ Implemented and asset-reference validated.
 ### History
 
 - 2026-07-18: Code Builder replaced the asymmetric Stage 1 dedicated Scene fields with the shared binding array already used by Stage 2.
+
+## Task: 2026-07-25 NewCore No-Op Residue Removal
+
+### Task title
+
+Remove dead StageManager serialization from NewRunScene.
+
+### Goals
+
+- Keep scene YAML aligned with the reduced StageManager serialized field set.
+- Remove only serialized entries whose fields had no runtime readers.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- No prefab, CSV, GUID, GameObject hierarchy, or retained scene reference is changed.
+- Unity Play Mode verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and Unity compile-verified.
+
+### Next Actions
+
+- User verifies NewRunScene stage start, day transition, reward, victory, and defeat paths in Play Mode.
+
+### Evidence
+
+- Removed `stageDayCsv`, `stageEncounterCsv`, `stageRewardCsv`, `restorePlayerHealthOnDayAdvance`, `winStageIndex`, and `winDayIndex` from `StageManager.cs`.
+- Removed the matching six YAML properties from `Assets/Scenes/NewScene/NewRunScene.unity`.
+- Repository search across NewCore and NewRunScene returned zero references to all six names.
+- Unity script compilation completed with 0 compile errors; focused EditMode suites passed 73/73.
+- `git diff --check` passed.
+
+### History
+
+- 2026-07-25: Code Builder removed the six code-and-scene serialization residues after confirming no runtime reader existed.

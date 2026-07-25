@@ -23477,15 +23477,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Pakuri.NewCore::Pakuri.NewCore.Run.StageManager
   combatManager: {fileID: 1427799828}
   unitSpawnManager: {fileID: 1427799830}
-  stageDayCsv: {fileID: 4900000, guid: 1f0de32c2b7b4d2da2e4b9340af2db31, type: 3}
-  stageEncounterCsv: {fileID: 4900000, guid: e14b38c9a5164e69a8e0325cc6ad5180, type: 3}
-  stageRewardCsv: {fileID: 4900000, guid: c9708f3d0fbd4ed88b6c9f681d472ea1, type: 3}
   startFlowOnStart: 1
   clearCheckInterval: 0.25
-  restorePlayerHealthOnDayAdvance: 1
   nexusActor: {fileID: 1747029715}
-  winStageIndex: 2
-  winDayIndex: 11
 --- !u!114 &1427799830
 MonoBehaviour:
   m_ObjectHideFlags: 0

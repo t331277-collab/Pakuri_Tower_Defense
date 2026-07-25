@@ -767,3 +767,47 @@ Implemented and compile/editor validated. Play Mode run verification remains.
 ### History
 
 - 2026-07-23: Code Builder superseded the interim `PartyMonsterIds` authority with `PartyMembers`, combining party identity and per-monster run progression in one collection.
+
+## Task: 2026-07-25 NewCore No-Op Residue Removal
+
+### Task title
+
+Remove no-op validation residue and dead run APIs.
+
+### Goals
+
+- Remove empty run-session, offering, manifestation, reward, stage, and spawn validation helpers.
+- Remove ignored overload parameters and runtime-unread StageManager configuration.
+- Preserve reward, offering, manifestation, spawn, day progression, and combat-completion behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not change authored CSV data or reward probabilities.
+- Catch rethrows that protect rollback behavior remain.
+- Unity Play Mode run verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, solution-build verified, Unity-compiled, and focused EditMode tests passed.
+
+### Next Actions
+
+- User verifies reward generation, Offering, Manifestation, next-day transition, spawn ordering, victory, and defeat in Play Mode.
+
+### Evidence
+
+- Removed empty `RequireActive`, `RequireOwnedInputs`, `RequireProgression`, `ValidateWinBoundary`, and spawn/reward pass-through validation helpers.
+- Removed the ignored two-argument `RewardService.GenerateAndGrant(stage, spawns)` overload; all callers use the active stage-owned spawn manager path.
+- Removed runtime-unread StageManager CSV and win/restore serialized fields and their six `NewRunScene.unity` entries.
+- Focused Unity EditMode suites `NewCoreCombatLoopTests`, `NewCoreDataFoundationTests`, and `NewCoreRunFlowTests` passed 73/73.
+- Solution build passed with 0 errors and the existing 2 `MSB3277` warning groups; Unity compilation reported 0 compile errors.
+- `git diff --check` passed.
+
+### History
+
+- 2026-07-25: Code Builder completed the NewCore-wide no-op audit and removed run-path residue proven unused by code and scene reference searches.

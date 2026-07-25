@@ -684,3 +684,49 @@ Implemented, solution-build verified, and Unity Editor compile-verified. Play Mo
 
 - 2026-07-19: User rejected the three helper boundaries as unnecessary and explicitly requested Code Builder reintegration.
 - 2026-07-19: Code Builder merged each responsibility into the existing manager, model, and roster owners without changing public combat behavior.
+
+## Task: 2026-07-25 NewCore No-Op Residue Removal
+
+### Task title
+
+Remove no-op validation residue and dead combat-only helpers from NewCore.
+
+### Goals
+
+- Delete the empty methods identified in `InGameCombatManager`.
+- Remove equivalent empty validators, pass-through validation helpers, dead node classifiers, and unused arguments under NewCore combat.
+- Preserve base-constructor chaining, override/event signatures, and the two behavior-bearing catch rethrows.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Remove only code proven effectless or unreferenced by repository search.
+- Do not remove inherited constructor bodies, empty test callbacks, or catch rethrows with rollback behavior.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, solution-build verified, Unity-compiled, and focused EditMode tests passed.
+
+### Next Actions
+
+- User verifies automatic/manual skills, cooldowns, triggers, projectile/line/area actors, defeat handling, and Nexus damage in Play Mode.
+
+### Evidence
+
+- `InGameCombatManager.cs` no longer contains `RequireLiving`, `ValidateNonNegativeFinite`, their calls, or the empty methods at the former tail.
+- Empty validation residue was removed from action controllers, skill buckets, cooldown, execution runtime, trigger dispatcher, actor manager, and unit model.
+- Repository search returned zero `RequireLiving|ValidateNonNegativeFinite|ValidateReachableNodes|SkillTriggerSupport.Validate|SkillNodeSupport` references.
+- `dotnet build Pakuri/Pakuri.sln --no-restore /p:UseSharedCompilation=false -v:minimal` passed with 0 errors and the existing 2 `MSB3277` warning groups.
+- Unity 6000.3.14f1 script compilation completed with 0 compile errors.
+- Focused Unity EditMode suites `NewCoreCombatLoopTests`, `NewCoreDataFoundationTests`, and `NewCoreRunFlowTests` passed 73/73.
+- `git diff --check` passed.
+
+### History
+
+- 2026-07-25: User requested Code Builder deletion of the previously identified no-op methods and a NewCore-wide cleanup of equivalent meaningless residue.
+- 2026-07-25: Code Builder removed code-only residue, retained behavior-bearing contracts, and completed compile and focused regression verification.

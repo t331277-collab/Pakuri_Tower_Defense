@@ -6,7 +6,7 @@ Task title: Section 19 Script Move And Consolidation
 
 Goals:
 
-- Make the production source under `Pakuri/Assets/Scripts/NewCore` follow section 19 of `new-core-architecture-blueprint.md`.
+- Make the production source directly under `Pakuri/Assets/Scripts` follow section 19 of `new-core-architecture-blueprint.md`.
 - Do not add folders or production script names that section 19 does not define.
 - Consolidate five previously unclassified Skill support scripts into their nearest section 19 owners.
 - Keep the remaining six Skill Execution scripts independent because each has a separate execution responsibility.
@@ -39,7 +39,7 @@ Next Actions:
 Evidence:
 
 - `new-core-architecture-blueprint.md` section 19 defines the allowed production roots as `Core`, `Run`, `Units`, `Combat`, `Spawn`, and `UI`.
-- Current `Pakuri/Assets/Scripts/NewCore` production inventory contains section 19 files, Presentation adapters, ten consolidatable support files, and six independent Skill Execution files.
+- The pre-migration `Pakuri/Assets/Scripts/NewCore` production inventory contained section 19 files, Presentation adapters, ten consolidatable support files, and six independent Skill Execution files.
 - Current production references prove that `SkillActor`, `TimedSkillActor`, and `ScheduledSkillActor` share the lifecycle controlled by `SkillActorManager`.
 - Current production references prove that only `SkillTriggerDispatcher` consumes `SkillTriggerSupport`, and only `SkillExecutionRuntime` consumes `SkillNodeSupport`.
 - Current production paths prove all six independent Skill Execution files exist.
@@ -129,7 +129,7 @@ The final structure is section 19, not the previous expanded migration tree.
 Allowed production folders:
 
 ```text
-Pakuri/Assets/Scripts/NewCore/
+Pakuri/Assets/Scripts/
 ├─ Core/
 │  ├─ Bootstrap/
 │  ├─ Parsing/

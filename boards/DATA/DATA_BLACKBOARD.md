@@ -2100,3 +2100,47 @@ Implemented and compile-verified.
 ### History
 
 - 2026-07-17: User approved deletion of the legacy modifier scripts, folder, metadata, and remaining empty APIs; Code Builder completed removal and compile verification.
+
+## Task: 2026-07-25 NewCore No-Op Residue Removal
+
+### Task title
+
+Remove effectless NewCore CSV validation residue.
+
+### Goals
+
+- Remove validators and reference-check chains whose exception bodies had already been deleted.
+- Remove the pass-through `RequiredString` accessor and use the actual nullable string accessor directly.
+- Retain CSV parsing, type conversion, definition construction, catalog lookup, and immutable collections.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- CSV files, columns, numeric values, and generated runtime catalog assets remain unchanged.
+- Remove only effectless or unreferenced code proven by source search.
+- Missing catalog assets are reported as missing; they are not invented or regenerated in this task.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compile-verified, and focused data tests passed.
+
+### Next Actions
+
+- Restore or regenerate `Assets/Resources/Pakuri/NewCore/RuntimeCatalog.asset` and `RunStartSelection.asset` only as a separate authorized asset task.
+
+### Evidence
+
+- `CsvParser.cs` no longer contains empty width/schema/enum validation, the effectless reference-validation chain, dead exception factories, enum domains, or unused source metadata parameters.
+- Definition accessors now call `OptionalString` directly; repository search returned zero `RequiredString` references.
+- `GameDefinitionCatalog` retains immutable lookup construction while dead uniqueness checks and misleading required-value naming were removed.
+- Focused Unity EditMode suites passed 73/73, including `NewCoreDataFoundationTests`.
+- Full Unity EditMode output recorded 94 passed and 10 Presentation failures; the failing chain loads repository-missing `Assets/Resources/Pakuri/NewCore/RuntimeCatalog.asset` or `RunStartSelection.asset`.
+- Solution build passed with 0 errors and the existing 2 `MSB3277` warning groups.
+
+### History
+
+- 2026-07-25: Code Builder traced parser/definition residue created by the earlier throw removal and deleted only paths with no remaining behavior.
