@@ -9,6 +9,188 @@
 - This active file now keeps only the current shared status runtime baseline and the resource-display rule still relevant to active work.
 - 2026-05-26 cleanup: non-core task details older than 2026-05-24 were moved to `boards/ARCHIVE/BOARD_CLEANUP_ARCHIVE_2026-05-26.md`.
 
+## Task: 2026-07-25 Target-Attached Effect Visual Unification
+
+### Task title
+
+Unify status and timed target visuals through target-child attachment.
+
+### Goals
+
+- Create target-bound visuals through one `EffectManager.CreateTargetVisual` path.
+- Attach status, following-skill, buff, shield, and support visuals as children of their targets.
+- Remove `BuffSkillActor` per-frame position copying while preserving each effect's existing lifetime owner.
+- Keep target-attached effects reachable by `EffectManager.ClearEffects`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Preserve status-instance refresh/removal, timed-duration removal, hitbox policy, authored visual/prefab selection, and object names.
+- Do not change CSV, prefabs, scenes, status rules, damage, targeting, or duration values.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compile-verified, and Unity Editor validated. User Play Mode verification remains.
+
+### Next Actions
+
+- User verifies status and timed target visuals move with a moving target and stay under that target in the runtime hierarchy.
+- User verifies status visuals disappear on status removal, timed visuals disappear at duration end, and combat reset clears both kinds.
+
+### Evidence
+
+- `EffectManager.CreateTargetVisual` creates through the general `CreateEffect`, parents the result with `Transform.SetParent(target, true)`, centers it on the target, and registers it for global cleanup.
+- `ShowOrRefreshStatusEffect`, `ShowFollowingSkillEffects`, and the three direct Buff/Shield/Support creation paths now call `CreateTargetVisual`.
+- Status visuals still use `statusEffectVisuals` and `includeHitbox: false`; following and Buff/Shield/Support visuals still use `BuffSkillActor` duration cleanup.
+- `BuffSkillActor` no longer stores a target or offset and no longer copies target position in `Update`; it now manages duration only.
+- `EffectManager.ClearEffects` removes registered target children as well as remaining runtime-root children. Destroyed target-child references are pruned when another target visual is created.
+- `git diff --check` passed for the three changed scripts with line-ending notices only.
+- Runtime and Editor C# builds completed with 0 errors. Existing `MSB3277` assembly-conflict warning groups and Editor `CS2008` empty-source warning remain.
+- Unity 6000.3.14f1 completed script compilation and domain reload. All three scripts validated with 0 errors; `BuffSkillActor` reported one advisory to null-check `GetComponent`, and Unity Console returned 0 error entries.
+
+### History
+
+- 2026-07-25: Designer compared status and following-effect logic and identified shared creation/attachment with separate lifetime ownership.
+- 2026-07-25: User selected Code Builder and requested target following be unified through target-child attachment.
+- 2026-07-25: Code Builder added the shared path, migrated five callers, reduced `BuffSkillActor` to lifetime management, preserved global cleanup, and completed local and Unity Editor verification.
+
+## Task: 2026-07-25 Combat Skills Implementation Comments
+
+### Task title
+
+Add concise implementation-responsibility comments across the current `Combat/Skills` runtime.
+
+### Goals
+
+- Mark the actual code points that store compiled SkillNode operations, assemble execution snapshots, route Definitions, resolve targets, and execute each skill family.
+- Keep comments short and use the requested “what this implements” style.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Change comments only; preserve gameplay behavior, APIs, CSV, prefabs, scenes, and existing uncommitted work.
+- Unity Play Mode gameplay verification remains user-owned and is not required for comment-only changes.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated.
+
+### Next Actions
+
+- Keep these comments aligned when runtime ownership or skill-family execution boundaries change.
+
+### Evidence
+
+- Added 25 concise implementation comments across 22 scripts under `Pakuri/Assets/Scripts/Combat/Skills`.
+- Covered `SkillNode`, Definition fields, learned-ID ownership, execution snapshot assembly, runtime rule evaluation, targeting, family Executors, Actors, Passive, and Trigger ownership.
+- Existing uncommitted edits in 11 overlapping Skill files were inspected and preserved.
+- `git diff --check -- Pakuri/Assets/Scripts/Combat/Skills` passed with line-ending notices only.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` completed with 0 errors and the existing 2 `MSB3277` warning groups.
+- Unity 6000.3.14f1 accepted a script compilation request; the Console error query returned 0 entries.
+
+### History
+
+- 2026-07-25: User switched to Code Builder and requested short implementation comments based on the preceding CSV-to-runtime skill explanation.
+
+## Task: 2026-07-25 Remove Skill Inspector Limit Attributes
+
+### Task title
+
+Remove manually authored `Min` and `Range` Inspector limits while retaining CSV validation.
+
+### Goals
+
+- Remove all `[Min(...)]` and `[Range(...)]` attributes from scripts under `Pakuri/Assets/Scripts`.
+- Preserve field declarations, default values, runtime guards, and `CsvDataValidator`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not change CSV schema, parsing, validation rules, runtime clamps, or gameplay behavior.
+- Preserve existing uncommitted changes in `SkillDefinition.cs` and the wider worktree.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated.
+
+### Next Actions
+
+- Keep numeric authoring constraints in `CsvDataValidator` rather than reintroducing Inspector-only `Min` or `Range` attributes.
+
+### Evidence
+
+- Repository search initially found 38 `[Min(...)]` or `[Range(...)]` occurrences, all in `Pakuri/Assets/Scripts/Combat/Skills/Definitions/SkillDefinition.cs`.
+- All 38 attributes were removed while their field declarations and default values were retained; a full Scripts search now returns 0 matching attributes.
+- `Pakuri/Assets/Scripts/Data/CsvDataValidator.cs` remained unchanged and still checks negative cooldown values, non-positive active cooldowns, and status chances outside 0..1.
+- `git diff --check` passed with line-ending notices only.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` passed with 0 errors and the existing 2 `MSB3277` warning groups.
+- Unity 6000.3.14f1 completed script compilation and returned to idle; the `error CS` Console query returned 0 entries. One unrelated MCP transport `NetworkStream` disposal error remains in the Console.
+
+### History
+
+- 2026-07-25: User selected Code Builder and requested removal of manually authored `Min` and `Range` limits while retaining Validator behavior.
+- 2026-07-25: Code Builder removed the 38 Inspector attributes, confirmed Validator preservation, and completed local and Unity compilation checks.
+
+## Task: 2026-07-25 Timed Skill Effect Creation Overload
+
+### Task title
+
+Unify timed additional-effect creation under the `EffectManager.CreateEffect` API.
+
+### Goals
+
+- Remove the separate `ShowTimedSkillEffect` API.
+- Preserve additional-effect visual selection, object naming, one-second display, and `SingleSkillActor` cleanup.
+- Keep target-following effect creation separate.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not change skill CSV, prefabs, scenes, damage, status application, hitbox behavior, or effect duration values.
+- Preserve the user's existing `EffectManager` comment changes.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented, compile-verified, and Unity Editor validated.
+
+### Next Actions
+
+- User verifies Sein C Master 2 and Vega A Master 2 timed visuals still appear at the resolved effect center and disappear after one second.
+- User verifies center-anchored status-effect paths remain visually unchanged when an authored visual exists.
+
+### Evidence
+
+- `EffectManager.CreateEffect(SkillEffectDefinition, Vector3, float)` now owns the former timed-effect object naming, runtime-visual/prefab selection, `SingleSkillActor.InitializeTimed(...)`, and created-object return.
+- `ZoneSkillExecutor` and `StatusRules` contain the four migrated `CreateEffect(effect, center, 1f)` calls.
+- Repository search found zero remaining `ShowTimedSkillEffect` references and four migrated timed-effect calls.
+- `ShowFollowingSkillEffects` remains unchanged and continues using `BuffSkillActor` for target-following visuals.
+- `git diff --check` passed for the three changed code files with line-ending notices only.
+- Runtime and Editor C# builds passed with 0 errors; the existing two `MSB3277` warning groups and Editor empty-source `CS2008` warning remained.
+- Unity 6000.3.14f1 completed a forced script compilation and domain reload; all three changed scripts validated with 0 warnings and 0 errors, and the Unity Console returned 0 error entries.
+
+### History
+
+- 2026-07-25: Designer inspected the timed and following effect responsibilities and proposed the dedicated `CreateEffect` overload.
+- 2026-07-25: Code Builder moved the timed creation behavior, replaced four callers, preserved following-effect ownership, and completed local and Unity Editor verification.
+
 ## Task: 2026-07-23 Remove Duplicate Choice And BuffShield Status Fields
 
 ### Task title
@@ -464,3 +646,50 @@ Implemented and compile-verified. User Play Mode verification remains.
 
 - 2026-07-22: Initial Code Builder pass incorrectly replaced `SkillEffect.cs` with another central `SkillNodeEffectExecutor.cs`.
 - 2026-07-22: Corrective Code Builder pass deleted the central executor, moved timing and hit enhancement execution to family Executors, and kept only target, status, and visual rules in their owning systems.
+
+## Task: 2026-07-25 Remove Unused Effect Visual Branches And Hitbox Offset
+
+### Task title
+
+Remove the approved unused `EffectVisualBuilder` branches and the centered hitbox offset contract.
+
+### Goals
+
+- Simplify runtime effect component creation, scaling, and animation-duration inspection.
+- Remove the unused hitbox offset from runtime definitions and collider construction.
+- Preserve sprite, Animator, hitbox size, local-scale, visual-anchor, and impact-visual behavior.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not add a Skill Graph scale Validator.
+- Preserve unrelated user changes already present in the working tree.
+- Unity Play Mode gameplay verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated. User Play Mode verification remains.
+
+### Next Actions
+
+- User verifies representative sprite-only, Animator, line-width, area-radius, and hitbox effects in Play Mode.
+- User verifies effect objects are newly created without preattached `SpriteRenderer`, `Animator`, or `BoxCollider2D` components.
+
+### Evidence
+
+- `EffectVisualBuilder.cs` now adds `SpriteRenderer`, `Animator`, and `BoxCollider2D` directly, always multiplies the resolved prefab scale, and no longer preserves negative scale signs.
+- `EffectVisualBuilder.cs` no longer replaces non-positive visual scale with `1`, scans legacy `Animation` components, or assigns a collider offset.
+- `RuntimeSkillHitboxSpec` now stores only `Size`; repository search found zero remaining `RuntimeHitboxOffset`, `runtime_hitbox_offset`, `hitbox.Offset`, or matching `Vector2` offset construction references.
+- `CsvDataValidator.cs` has no working-tree change, and no Skill Graph scale Validator was added.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` passed with 0 errors and the existing 2 `MSB3277` assembly-version warnings.
+- Unity 6000.3.14f1 completed a forced asset refresh and script compilation; Unity Console contained 0 errors.
+- `Pakuri/Validate CSV Source Data` completed without `CsvFatalException` and loaded 5 monsters, 8 stage-one enemies, and 8 stage-two enemies.
+
+### History
+
+- 2026-07-25: User approved deletion of every previously identified candidate and explicitly prohibited adding a Graph Validator.
+- 2026-07-25: Code Builder removed the branches and centered-hitbox offset contract, then completed static, solution-build, Unity compile, and CSV source validation.

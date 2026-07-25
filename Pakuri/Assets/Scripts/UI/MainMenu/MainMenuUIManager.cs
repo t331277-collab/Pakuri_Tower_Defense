@@ -4,8 +4,8 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /*
- * 인트로, 메인 메뉴와 몬스터 선택 화면을 전환하고 선택한 몬스터로 새 Run을 시작한다.
- * 씬 UI 참조와 버튼 동작을 연결한 뒤 StartContext를 설정하고 NewRunScene을 불러온다.
+ * 인트로, 메인 메뉴와 몬스터 선택 화면을 전환하고 선택한 몬스터로 새 게임을 시작한다.
+ * 화면 참조와 버튼 동작을 연결한 뒤 StartContext를 설정하고 NewRunScene을 불러온다.
  */
 public class MainMenuUIManager : MonoBehaviour
 {

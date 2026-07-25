@@ -308,3 +308,37 @@ Implemented and compile/editor validated. Play Mode reward verification remains.
 ### History
 
 - 2026-07-23: Code Builder consolidated reward acquisition around the party-member state and removed unused prisoner and wrapper APIs.
+
+## Task: 2026-07-25 Base Skill Offering Choice-ID Repair
+
+### Goals
+
+- Record base active/passive rewards as learned skills only.
+- Keep Enhancement/Master rewards as valid Choice IDs.
+
+### Constraints
+
+- Role Owner: Code Builder.
+- Modify no reward data or Choice definitions.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and verified.
+
+### Next Actions
+
+- User verifies Vega E basic-skill acquisition in Play Mode.
+
+### Evidence
+
+- Base active/passive Offering views now leave `ChoiceId` empty, so `RecordOfferingChoice(...)` does not add `vega-e` to `ChosenChoiceIds`.
+- The Enhancement/Master Offering path continues to pass its `reward.RewardId` as `ChoiceId`.
+- C# build completed with 0 errors; Unity Console error query returned 0 entries after script refresh.
+
+### History
+
+- 2026-07-25: Code Builder fixed the invalid base-skill-to-Choice-ID mapping found through the Vega E Offering exception.

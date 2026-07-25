@@ -7,7 +7,7 @@ using UnityEngine;
 
 /*
  * 투사체 스킬의 발사 수, 분기, 연속 발사와 후속 투사체를 구성한다.
- * 스킬 실행 데이터에서 피해와 상태 효과를 해석해 Projectile Actor에 전달하고
+ * 스킬 실행 데이터에서 피해와 상태 효과를 해석해 ProjectileSkillActor에 전달하고
  * 직접 적중 형식과 지연 충돌, 발사체별 보정도 함께 처리한다.
  */
 namespace Pakuri.InGame
@@ -15,6 +15,7 @@ namespace Pakuri.InGame
 
     internal static class ProjectileSkillExecutor
     {
+        // 발사 수, 확산, 연속 발사, 후속 투사체를 조립하고 Actor 생성을 구현.
         /*
          * 현재 스킬의 노드 효과 중 요청한 실행 시점에 맞는 효과를 적용한다.
          */

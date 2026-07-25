@@ -3,7 +3,6 @@ using UnityEngine;
 
 /*
  * EffectManager가 생성한 런타임 효과에 스프라이트, 애니메이터, 크기와 충돌 영역을 적용한다.
- * 공격 방향과 범위에 맞는 회전·크기를 계산하고 효과 오브젝트의 유지 시간을 결정한다.
  */
 namespace Pakuri.InGame
 {
@@ -16,16 +15,17 @@ namespace Pakuri.InGame
 
         /*
          * 진행 방향을 2D 회전값으로 바꾼다.
+         * 직선·투사체·트리거 효과가 함께 사용한다.
          */
         public static Quaternion ResolveRotation(Vector2 direction /* 진행하거나 발사할 방향 */)
         {
             if (direction.sqrMagnitude <= 0.0001f)
             {
-                return Quaternion.identity;
+                return Quaternion.identity; // 회전 없음
             }
 
-            var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            return Quaternion.Euler(0f, 0f, angle);
+            var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg; // 각도 계산
+            return Quaternion.Euler(0f, 0f, angle); // 계산 된 값으로 발사 방향으로 각도 회전
         }
 
         /*
@@ -44,34 +44,19 @@ namespace Pakuri.InGame
             else
             {
                 var scale = visual.Scale;
-                if (scale <= 0f)
-                {
-                    scale = 1f;
-                }
-
                 instance.transform.localScale = new Vector3(scale, scale, scale);
             }
 
             if (visual.Sprite != null)
             {
-                var renderer = instance.GetComponent<SpriteRenderer>();
-                if (renderer == null)
-                {
-                    renderer = instance.AddComponent<SpriteRenderer>();
-                }
-
+                var renderer = instance.AddComponent<SpriteRenderer>();
                 renderer.sprite = visual.Sprite;
                 renderer.sortingOrder = visual.SortingOrder;
             }
 
             if (visual.AnimatorController != null)
             {
-                var animator = instance.GetComponent<Animator>();
-                if (animator == null)
-                {
-                    animator = instance.AddComponent<Animator>();
-                }
-
+                var animator = instance.AddComponent<Animator>();
                 animator.runtimeAnimatorController = visual.AnimatorController;
             }
 
@@ -170,24 +155,12 @@ namespace Pakuri.InGame
             var scale = target.localScale;
             if (size.x > 0.0001f)
             {
-                var xSign = 1f;
-                if (scale.x < 0f)
-                {
-                    xSign = -1f;
-                }
-
-                scale.x = xSign * (DefaultSingleAttackLineLength / size.x);
+                scale.x = DefaultSingleAttackLineLength / size.x;
             }
 
             if (size.y > 0.0001f)
             {
-                var ySign = 1f;
-                if (scale.y < 0f)
-                {
-                    ySign = -1f;
-                }
-
-                scale.y = ySign * (width / size.y);
+                scale.y = width / size.y;
             }
 
             target.localScale = scale;
@@ -208,10 +181,7 @@ namespace Pakuri.InGame
             }
 
             var scaleFactor = SkillTargeting.ResolvePrefabScaleFactor(baseRadius, radiusMultiplier, radiusBonus);
-            if (!Mathf.Approximately(scaleFactor, 1f))
-            {
-                target.localScale *= scaleFactor;
-            }
+            target.localScale *= scaleFactor;
         }
 
         /*
@@ -222,14 +192,8 @@ namespace Pakuri.InGame
             RuntimeSkillHitboxSpec hitbox /* 피격 판정 */,
             bool hitboxIsTrigger /* 피격 판정 여부 트리거 여부 */)
         {
-            var collider = instance.GetComponent<BoxCollider2D>();
-            if (collider == null)
-            {
-                collider = instance.AddComponent<BoxCollider2D>();
-            }
-
+            var collider = instance.AddComponent<BoxCollider2D>();
             collider.size = hitbox.Size;
-            collider.offset = hitbox.Offset;
             collider.isTrigger = hitboxIsTrigger;
         }
 
@@ -265,23 +229,6 @@ namespace Pakuri.InGame
                     if (clip != null)
                     {
                         maxLength = Mathf.Max(maxLength, clip.length);
-                    }
-                }
-            }
-
-            var animations = instance.GetComponentsInChildren<Animation>(true);
-            for (var i = 0; i < animations.Length; i++)
-            {
-                if (animations[i] == null)
-                {
-                    continue;
-                }
-
-                foreach (AnimationState state in animations[i])
-                {
-                    if (state != null)
-                    {
-                        maxLength = Mathf.Max(maxLength, state.length);
                     }
                 }
             }

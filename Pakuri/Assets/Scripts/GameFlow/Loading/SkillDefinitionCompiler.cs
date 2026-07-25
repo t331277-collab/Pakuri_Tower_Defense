@@ -6,8 +6,8 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * 작성된 Active와 Passive 스킬 데이터를 전투용 SkillDefinition으로 변환한다.
- * Choice 변환은 SkillChoiceCompiler, 노드 정의 변환은 SkillNodeMapper에 맡긴다.
+ * 작성된 액티브·패시브 스킬 데이터를 전투용 SkillDefinition으로 변환한다.
+ * 선택지는 SkillChoiceCompiler, 노드는 SkillNodeMapper에 맡긴다.
  */
 namespace Pakuri.InGame
 {
@@ -692,7 +692,7 @@ public static class SkillDefinitionCompiler
 
 /*
  * 작성 데이터의 SkillNodeDefinition을 전투 실행용 SkillNode로 변환한다.
- * 노드 종류와 파라미터를 해석해 SkillNode 설계 데이터로 옮긴다.
+ * 노드 종류와 값을 해석해 SkillNode 전투 실행 값으로 옮긴다.
  */
 namespace Pakuri.InGame
 {
@@ -724,8 +724,8 @@ namespace Pakuri.InGame
 	}
 
 	/*
-	 * Choice의 정규화 노드를 대상 스킬별 실행 계획으로 한 번만 변환해 반환한다.
-	 * 모든 Handler는 typed SkillNode로 컴파일되므로 별도 임시 SkillChoice 필드 객체를 만들지 않는다.
+	 * 선택지의 정리된 노드를 대상 스킬별 실행 값으로 한 번만 변환해 반환한다.
+	 * 모든 처리기는 SkillNode로 변환하므로 별도 임시 SkillChoice 객체를 만들지 않는다.
 	 */
 	internal static SkillChoiceRuntimePlan ResolveChoiceRuntimePlan(SkillChoice choice /* 적용할 선택지 */, string targetSkillId /* 적용 대상 스킬 식별자 */)
 	{

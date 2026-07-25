@@ -10,6 +10,7 @@ namespace Pakuri.InGame
 {
     public class LineSkillActor : MonoBehaviour
     {
+        // 생성된 직선 공격의 충돌 판정, 주기 피해, 상태, 수명을 구현.
         private InGameCombatManager combatManager;
         private EffectManager effectManager;
         private CombatUnitEntry casterEntry;

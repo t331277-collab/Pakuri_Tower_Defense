@@ -1069,7 +1069,6 @@ namespace Pakuri.InGame
                 offeringChoices.Add(new OfferingChoiceView
                 {
                     MonsterId = state.MonsterId,
-                    ChoiceId = skill.SkillId,
                     ActiveSkillId = skill.SkillId,
                     Summary = monster.DisplayName,
                     SkillName = ResolveChoiceDisplayName(skill.DisplayName, skill.SkillId),
@@ -1102,7 +1101,6 @@ namespace Pakuri.InGame
                 offeringChoices.Add(new OfferingChoiceView
                 {
                     MonsterId = state.MonsterId,
-                    ChoiceId = passive.PassiveId,
                     PassiveSkillId = passive.PassiveId,
                     Summary = monster.DisplayName,
                     SkillName = ResolveChoiceDisplayName(passive.DisplayName, passive.PassiveId),

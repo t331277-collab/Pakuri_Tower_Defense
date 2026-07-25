@@ -4,7 +4,7 @@ using Pakuri.Combat;
 using Pakuri.Data;
 
 /*
- * 정의 데이터와 런 상태를 이용해 아군·적 런타임 모델을 만드는 팩토리.
+ * 정의 데이터와 런 상태를 이용해 아군·적 런타임 모델을 만든다
  */
 namespace Pakuri.InGame
 {

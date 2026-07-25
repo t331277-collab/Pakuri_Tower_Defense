@@ -13,6 +13,7 @@ namespace Pakuri.InGame
 
 internal static class SkillTrigger
 {
+	// 전투 사건을 조건·확률·횟수로 판정하고 후속 행동을 실행하는 부분을 구현.
 	/*
 	 * null 항목을 제외한 기본 Trigger 실행 목록을 만든다.
 	 */

@@ -725,3 +725,86 @@ Implemented and structurally validated.
 ### History
 
 - 2026-07-18: User directed Code Builder to leave only July work in the active domain boards and archive everything else.
+
+## Recent Task: 2026-07-25 Scripts Structure Documentation
+
+### Task title
+
+Document the complete current structure under `Pakuri/Assets/Scripts`.
+
+### Goals
+
+- Show the folder hierarchy with tree symbols.
+- Record a short responsibility description directly below every C# script.
+- Explain the main dependency direction and runtime lifecycle.
+
+### Constraints
+
+- Role Owner is Designer.
+- Every description must be based on inspected current code.
+- Unity `.meta` files, Prefab/Scene wiring, and Play Mode behavior are outside the script inventory.
+
+### Role Owner
+
+Designer
+
+### Status
+
+Completed and structurally validated.
+
+### Next Actions
+
+- Refresh the report when scripts are added, removed, moved, or their responsibilities materially change.
+
+### Evidence
+
+- Added `Pakuri/reference/Report/2026-07-25-scripts-structure.md`.
+- `rg --files Pakuri/Assets/Scripts -g '*.cs'` found 69 scripts.
+- The report inventory was compared with the filesystem and contains every current script exactly once.
+
+### History
+
+- 2026-07-25: User requested a Markdown explanation of the entire `Pakuri/Assets/Scripts` folder and each script's responsibility.
+
+## Recent Task: 2026-07-25 Scripts Comment Audit
+
+### Task title
+
+Verify and simplify comments under `Pakuri/Assets/Scripts`.
+
+### Goals
+
+- Correct comments that disagree with current code.
+- Replace English explanations and difficult wording with concise Korean.
+- Make important relationships between scripts visible, especially the `SkillNode` data path.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Change comments only; do not change executable code, CSV, prefabs, or scenes.
+- Keep exact code identifiers when they help trace relationships between scripts.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Completed and validated.
+
+### Next Actions
+
+- Keep comments aligned when responsibilities or call paths change.
+
+### Evidence
+
+- Audited all 69 C# files under `Pakuri/Assets/Scripts`.
+- Changed comments in 25 files; comparison with a pre-edit snapshot found no executable-code changes.
+- Corrected `KillActionOp` from an incorrect recovery description to cooldown reset/refund behavior.
+- Documented the `GameDataCatalogBuilder` -> `SkillNodeMapper` -> `SkillNode` -> `SkillExecutionData` and rule-code relationship.
+- `Assembly-CSharp.csproj` and `Assembly-CSharp-Editor.csproj` built with 0 errors.
+- Unity 6000.3.14f1 completed script compilation; standard validation of all 25 changed scripts returned 0 errors.
+
+### History
+
+- 2026-07-25: User requested a Code Builder audit and simplification of comments under `Pakuri/Assets/Scripts`.

@@ -13,8 +13,8 @@ using UnityEditor;
 
 
 /*
- * Scene 로드 전에 CSV 런타임 데이터를 한 번 초기화하는 진입점.
- * Resources 원본을 파싱하고 카탈로그 조회를 등록한 뒤 참조와 스킬 컴파일 결과를
+ * 씬을 불러오기 전에 CSV 런타임 데이터를 한 번 초기화하는 진입점.
+ * Resources 원본을 읽고 카탈로그 조회를 등록한 뒤 참조와 스킬 변환 결과를
  * 한 번 검증해 완성된 GameDataCatalog를 전역 조회 대상으로 제공한다.
  */
 namespace Pakuri.Data

@@ -3,8 +3,8 @@ using Pakuri.InGame;
 using UnityEngine;
 
 /*
- * 시전자의 능력치와 스킬 데이터로 원본 피해량을 계산한다.
- * 대상의 방어력, 상태 효과, 치명타와 적 패시브를 반영해 최종 피해량을 반환한다.
+ * 시전자의 능력치와 스킬 데이터로 원본 피해량을 계산
+ * 대상의 방어력, 상태 효과, 치명타와 적 패시브를 반영해 최종 피해량을 반환
  */
 namespace Pakuri.Combat
 {
@@ -19,7 +19,7 @@ namespace Pakuri.Combat
     }
 
     /*
-     * 공격자의 능력치로 원본 피해량을 만들고 대상 조건으로 최종 피해량을 계산한다.
+     * 공격자의 능력치로 원본 피해량(CalculateRawDamage)을 만들고 대상 조건으로 최종 피해량(CalculateFinalDamage)을 계산한다.
      */
     public static class DamageCalculator
     {
@@ -27,7 +27,7 @@ namespace Pakuri.Combat
         public const float BaseCriticalMultiplier = 1.5f;
 
         /*
-         * 공격력 계수, 스킬 강화와 공격자의 주는 피해 보정으로 원본 피해량을 계산한다.
+         * 공격력 계수, 스킬 강화와 공격자의 주는 피해 보정으로 원본 피해량을 계산
          */
         internal static float CalculateRawDamage(
             UnitCombatState caster, /* 스킬을 사용하는 유닛 */
@@ -36,7 +36,7 @@ namespace Pakuri.Combat
             float damageMultiplier /* 강화로 적용할 피해 배율 */)
         {
             var rawDamage = damage.BaseDamage;
-            if (damage.UseCombinedStatCoefficients)
+            if (damage.UseCombinedStatCoefficients) //공격력, 주문력이 섞였는지
             {
                 var attack = caster.Stats.AttackPower;
                 attack *= StatusCombatRules.ResolveAttackPowerMultiplier(caster);
@@ -45,13 +45,13 @@ namespace Pakuri.Combat
                 rawDamage += attack * damage.AttackPowerCoefficient;
                 rawDamage += spell * damage.SpellPowerCoefficient;
             }
-            else if (damage.StatSource == StatSource.Attack)
+            else if (damage.StatSource == StatSource.Attack) //공격력 기반
             {
                 var attack = caster.Stats.AttackPower;
                 attack *= StatusCombatRules.ResolveAttackPowerMultiplier(caster);
                 rawDamage += attack * damage.StatCoefficient;
             }
-            else
+            else //마법 피해
             {
                 var spell = caster.Stats.SpellPower;
                 spell *= StatusCombatRules.ResolveSpellPowerMultiplier(caster);
@@ -62,7 +62,7 @@ namespace Pakuri.Combat
             rawDamage = (rawDamage + baseDamageBonus) * Mathf.Max(0f, damageMultiplier);
 
             rawDamage *= StatusCombatRules.ResolveOutgoingDamageMultiplier(caster, damage.Element, damage.SkillId);
-            if (caster is EnemyCombatState enemy)
+            if (caster is EnemyCombatState enemy) // 공격자가 적인 경우 -> 패시브 참조
             {
                 rawDamage *= EnemyPassiveModifiers.ResolveOutgoingDamageMultiplier(
                     enemy,
@@ -73,7 +73,7 @@ namespace Pakuri.Combat
         }
 
         /*
-         * 대상의 방어력, 상태 효과, 치명타와 적 패시브를 반영해 최종 피해량을 계산한다.
+         * 대상의 방어력, 상태 효과, 치명타와 적 패시브를 반영해 최종 피해량을 계산
          */
         public static float CalculateFinalDamage(
             UnitCombatState target /* 효과를 받을 대상 유닛 */,
@@ -89,7 +89,7 @@ namespace Pakuri.Combat
             defense = Mathf.Max(0f, defense);
             damage *= 100f / (100f + defense);
 
-            if (options.CriticalAllowed)
+            if (options.CriticalAllowed) // 치명타 확률 계산
             {
                 var criticalChance = options.Source.Stats.CriticalChance;
                 criticalChance += StatusCombatRules.ResolveCriticalChanceBonus(options.Source);
@@ -97,7 +97,7 @@ namespace Pakuri.Combat
                 criticalChance -= target.Stats.CriticalResistance;
                 criticalChance -= StatusCombatRules.ResolveCriticalResistanceBonus(target);
 
-                if (UnityEngine.Random.value < Mathf.Clamp01(criticalChance))
+                if (UnityEngine.Random.value < Mathf.Clamp01(criticalChance)) //치명타 성공
                 {
                     var criticalDamage = options.Source.Stats.CriticalDamage;
                     criticalDamage += StatusCombatRules.ResolveCriticalDamageBonus(options.Source);
@@ -112,7 +112,7 @@ namespace Pakuri.Combat
                 options.Source,
                 attribute,
                 options.SourceSkillId);
-            if (target is EnemyCombatState enemy)
+            if (target is EnemyCombatState enemy) // 대상이 적 -> 받는 피해 감소 패시브 검사
             {
                 incomingDamageMultiplier *= Mathf.Max(0f, enemy.PassiveIncomingDamageMultiplier);
             }

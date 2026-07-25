@@ -2057,3 +2057,52 @@ Implemented and compile-verified.
 ### History
 
 - 2026-07-17: User approved deletion of the legacy modifier scripts, folder, metadata, and remaining empty APIs; Code Builder completed removal and compile verification.
+
+## Task: 2026-07-25 Remove Runtime Hitbox Offset CSV Contract
+
+### Task title
+
+Delete the unused `runtime_hitbox_offset_x/y` authoring and parsing contract.
+
+### Goals
+
+- Remove the two unused hitbox offset columns from their active trigger CSV tables.
+- Remove the matching parser row fields and catalog-builder parameters.
+- Keep runtime hitboxes centered and retain their authored size.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Do not add a Skill Graph scale Validator.
+- Preserve all CSV values outside the removed final two columns.
+- Preserve unrelated working-tree changes.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and validated.
+
+### Next Actions
+
+- Future trigger authoring uses `runtime_hitbox_size_x/y` only; runtime hitboxes remain centered.
+- If non-centered hitboxes become a real requirement, introduce a newly reviewed data/runtime contract instead of restoring unused columns implicitly.
+
+### Evidence
+
+- Removed `runtime_hitbox_offset_x` and `runtime_hitbox_offset_y` from `single_attack_skill_triger.csv` and `passive_skill_triger.csv`.
+- UTF-8 CSV parsing found 45 columns across all 4 single-attack rows and 53 columns across all 50 passive rows, with 0 width mismatches; both files retain their UTF-8 BOM.
+- `CsvRowParser.SkillRow` and `SkillTriggerRow` no longer store or parse the offsets, and the obsolete Enemy parser offset-column rejection was removed.
+- `GameDataCatalogBuilder.BuildRuntimeVisual(...)` no longer accepts or constructs hitbox offsets; `RuntimeSkillHitboxSpec` stores only hitbox size.
+- Repository search across `Pakuri/Assets/Scripts` and `Pakuri/Assets/CSVdata/authoring` found 0 remaining offset-contract references.
+- `CsvDataValidator.cs` has no working-tree change, and no Skill Graph scale Validator was added.
+- `dotnet build Pakuri/Pakuri.sln --no-restore` passed with 0 errors and the existing 2 `MSB3277` warnings.
+- Unity CSV source validation completed without an error and loaded 5 monsters, 8 stage-one enemies, and 8 stage-two enemies; Unity Console error count was 0.
+- The validation menu resaved `CsvRuntimeCatalog.asset`, but `git diff` found no content change in that generated asset.
+
+### History
+
+- 2026-07-25: User approved deleting every identified candidate and explicitly requested no Graph Validator.
+- 2026-07-25: Code Builder removed the offset columns and end-to-end runtime contract, then validated CSV widths, references, compilation, and Unity source loading.

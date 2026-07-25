@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /*
- * 하루가 끝난 뒤 Monster의 임시 전투 상태, 체력, 자동 행동 설정을 다음 전투 상태로 회복한다.
+ * 하루가 끝나면 몬스터의 임시 상태를 지우고 체력과 자동 행동 설정을 다음 전투용으로 복구한다.
  */
 namespace Pakuri.InGame
 {
@@ -24,7 +24,7 @@ namespace Pakuri.InGame
         }
 
         /*
-         * Restore 작업을 수행한다.
+         * 다음 전투를 위해 자동 행동, 임시 상태, 체력을 복구한다.
          */
         public static void Restore(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {
@@ -39,7 +39,7 @@ namespace Pakuri.InGame
         }
 
         /*
-         * IsSelectedPlayerMonster 조건을 만족하는지 확인한다.
+         * 플레이어가 직접 조작하는 선두 몬스터인지 확인한다.
          */
         private static bool IsSelectedPlayerMonster(UnitCombatState model /* 전투 상태를 읽거나 변경할 유닛 */)
         {

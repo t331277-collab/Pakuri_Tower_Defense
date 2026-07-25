@@ -6,13 +6,14 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * Line 스킬을 실행한다.
+ * 직선 공격을 준비하고 생성한 오브젝트의 처리를 LineSkillActor에 맡긴다.
  */
 namespace Pakuri.InGame
 {
 
     internal static class LineSkillExecutor
     {
+        // 직선 공격의 방향, 길이, 폭, 지속시간을 조립하고 Actor 생성을 구현.
         /*
          * 현재 스킬의 노드 효과 중 요청한 실행 시점에 맞는 효과를 적용한다.
          */

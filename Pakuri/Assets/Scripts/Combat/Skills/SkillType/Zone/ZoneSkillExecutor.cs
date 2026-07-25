@@ -6,13 +6,14 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * 지속 범위 스킬을 실행한다.
+ * 지속 범위 공격을 준비하고 생성한 오브젝트의 처리를 ZoneSkillActor에 맡긴다.
  */
 namespace Pakuri.InGame
 {
 
     internal static class ZoneSkillExecutor
     {
+        // 범위 중심, 반지름, 배치 수, 지속시간을 조립하고 Actor 생성을 구현.
         /*
          * 현재 스킬의 노드 효과 중 요청한 실행 시점에 맞는 효과를 적용한다.
          */
@@ -241,7 +242,7 @@ namespace Pakuri.InGame
                 }
                 if (context.CombatManager.Effects != null)
                 {
-                    context.CombatManager.Effects.ShowTimedSkillEffect(effect, center, 1f);
+                    context.CombatManager.Effects.CreateEffect(effect, center, 1f);
                 }
                 return true;
             }
@@ -265,7 +266,7 @@ namespace Pakuri.InGame
                 criticalDamageBonus);
             if (hit && context.CombatManager.Effects != null)
             {
-                context.CombatManager.Effects.ShowTimedSkillEffect(effect, center, 1f);
+                context.CombatManager.Effects.CreateEffect(effect, center, 1f);
             }
             return hit;
         }

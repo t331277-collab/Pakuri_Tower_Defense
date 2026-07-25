@@ -6,8 +6,8 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /*
- * 선택 몬스터의 스킬 학습과 Choice 적용을 직접 시험하는 디버그 UI 컴포넌트.
- * 활성·패시브 슬롯과 강화·Master 버튼을 실제 카탈로그 기준으로 구성하고
+ * 선택 몬스터의 스킬 학습과 선택지 적용을 직접 시험하는 디버그 UI 컴포넌트.
+ * 활성·패시브 슬롯과 강화·최종 강화 버튼을 실제 카탈로그 기준으로 구성하고
  * 선택 결과를 RunSession과 현재 전투 모델에 동기화해 런타임 스킬을 다시 만든다.
  */
 namespace Pakuri.InGame

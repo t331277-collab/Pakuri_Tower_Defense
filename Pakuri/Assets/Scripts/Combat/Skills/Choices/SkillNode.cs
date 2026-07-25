@@ -2,16 +2,9 @@ using Pakuri.Combat;
 using Pakuri.Data;
 
 /*
- * 작성 데이터의 문자열 Handler와 Params를 전투 코드가 읽을 수 있는 강타입 실행 계획으로 바꾼다.
- *
- * CSV에서 만들어진 SkillNodeDefinition은 값이 모두 문자열이므로 그대로 전투 계산에 사용하지 않는다.
- * SkillNodeMapper가 Handler 종류에 맞는 아래 readonly struct를 만들고, SkillNode가 그중 정확히 하나를
- * 보관한다. 각 struct가 생성자에서 모든 값을 초기화하는 이유는 변환이 끝난 실행 계획을 불변 값으로
- * 유지하고, 시전 중 원본 작성 데이터가 바뀌어도 이미 만들어진 계산 규칙이 흔들리지 않게 하기 위함이다.
- *
- * SkillNode는 C#에서 구분 공용체(discriminated union)를 흉내 낸 형태다. 한 인스턴스에는 SkillActionOp,
- * DamageModifierOp 같은 payload 하나만 들어간다. 실제 수치 누적과
- * 조건 평가는 SkillExecutionData와 각 스킬 규칙이 담당하고, 이 파일은 실행 가능한 값의 형태만 정의한다.
+ * GameDataCatalogBuilder가 만든 SkillNodeDefinition을 SkillNodeMapper가 전투용 값으로 바꾼다.
+ * SkillNode는 값 하나를 보관하고, SkillExecutionData가 필요한 값을 읽어서 최종 스킬을 만들고 Executor 에 넘겨준다.
+ 즉 언제든 꺼내 쓸 수 있는 실행 가능한 규칙 값 보관
  */
 namespace Pakuri.InGame
 {
@@ -67,11 +60,7 @@ namespace Pakuri.InGame
         ConsumeTargetStatusRatioOverride
     }
 
-    /*
-     * 상태 종류와 최소 중첩 수를 함께 전달하는 공통 조건 값이다.
-     * 조건을 사용하는 각 Op가 같은 두 필드를 반복 정의하지 않도록 한다. 최소 중첩의 유효성은 조립 단계에서
-     * 검사한다. 일부 기존 Handler는 값이 없을 때 0으로 두어 해당 규칙을 비활성화하므로 여기서 1로 보정하지 않는다.
-     */
+    /* 상태 종류와 필요한 최소 중첩 수를 함께 보관한다. */
     public readonly struct StatusStackCondition
     {
         public StatusStackCondition(StatusEffectKind statusKind, int minimumStacks)
@@ -84,15 +73,9 @@ namespace Pakuri.InGame
         public int MinimumStacks { get; }
     }
 
-    /*
-     * 대상 체력 비율을 사용하는 시전 조건의 추가값을 보관한다.
-     * SingleSkillRules가 기본 처형 기준과 합산해 실제 시전 가능 여부를 판정한다.
-     */
+    /* 단일 공격의 체력 비율 시전 조건에 더할 값을 보관한다. */
     public readonly struct CastConditionOp
     {
-        /*
-         * 작성 데이터에서 파싱한 체력 비율 추가값을 불변 실행 값으로 확정한다.
-         */
         public CastConditionOp(float targetHealthRatioBonus /* 대상 체력 비율 추가값 */)
         {
             TargetHealthRatioBonus = targetHealthRatioBonus;
@@ -101,12 +84,9 @@ namespace Pakuri.InGame
         public float TargetHealthRatioBonus { get; }
     }
 
+    /* 보스·처형 조건에 적용할 피해 배율을 보관한다. */
     public readonly struct DamageModifierOp
     {
-        /*
-         * 피해 보정이 적용될 조건과 곱연산 배율을 함께 확정한다.
-         * Kind가 BossMultiplier면 보스 대상, ExecuteMultiplier면 처형 조건 대상에만 적용된다.
-         */
         public DamageModifierOp(DamageModifierOpKind kind /* 처리할 종류 */, float multiplier /* 값에 곱할 배율 */)
         {
             Kind = kind;
@@ -117,11 +97,9 @@ namespace Pakuri.InGame
         public float Multiplier { get; }
     }
 
+    /* 조건을 만족했을 때 더할 치명타 확률을 보관한다. */
     public readonly struct CritModifierOp
     {
-        /*
-         * 처형 조건 등 별도 규칙이 만족됐을 때 더할 치명타 확률을 확정한다.
-         */
         public CritModifierOp(float chanceBonus /* 확률 추가값 */)
         {
             ChanceBonus = chanceBonus;
@@ -130,12 +108,9 @@ namespace Pakuri.InGame
         public float ChanceBonus { get; }
     }
 
+    /* 처치 후 재사용 대기시간을 초기화하거나 일부 돌려주는 규칙을 보관한다. */
     public readonly struct KillActionOp
     {
-        /*
-         * 처치 후 실행할 회복 종류와 회복량, 처형 요구 여부를 하나의 불변 규칙으로 확정한다.
-         * CooldownReset은 RequiresExecute를 사용하고 CooldownRefundBonus는 RatioBonus를 사용한다.
-         */
         public KillActionOp(KillActionOpKind kind /* 처리할 종류 */, float ratioBonus /* 비율 추가값 */, bool requiresExecute /* 필요 처형 여부 */)
         {
             Kind = kind;
@@ -149,11 +124,8 @@ namespace Pakuri.InGame
     }
 
     /*
-     * 대부분의 단순 강화 수치를 공통 형식으로 보관한다.
-     *
-     * Kind에 따라 Amount(float), Count(int), ReferenceId 중 필요한 값만 소비한다. 구조체는 모든 필드를
-     * 항상 가져야 하므로 각 생성자는 사용하지 않는 필드를 0 또는 string.Empty로 명시 초기화한다.
-     * 이 초기값은 실제 강화값이 아니라 "이 Kind에서는 사용하지 않는 payload"라는 sentinel이다.
+     * 단순 강화 하나의 종류와 값을 보관한다.
+     * 강화 종류에 따라 Amount, Count, ReferenceId 중 필요한 값만 사용한다.
      */
     public readonly struct SkillActionOp
     {
@@ -179,7 +151,7 @@ namespace Pakuri.InGame
             ReferenceId = string.Empty;
         }
 
-        /* 특정 상태나 Trigger ID에 귀속되는 소수 보너스 행동을 만든다. */
+        /* 특정 상태나 트리거 ID에 연결된 소수 보너스 행동을 만든다. */
         public SkillActionOp(
             SkillActionOpKind kind /* 처리할 종류 */,
             string referenceId /* 참조할 데이터 식별자 */,
@@ -224,9 +196,6 @@ namespace Pakuri.InGame
      */
     public readonly struct ConsecutiveHitActionOp
     {
-        /*
-         * 적중당 피해 증가율과 최대 증가율을 초기화한다.
-         */
         public ConsecutiveHitActionOp(
             float bonusRate /* 적중당 피해 증가율 */,
             float maxBonus /* 최대 피해 증가율 */)
@@ -244,9 +213,6 @@ namespace Pakuri.InGame
      */
     public readonly struct BranchDamageActionOp
     {
-        /*
-         * 분기 확률, 횟수, 피해 배율, 탐색 반경을 초기화한다.
-         */
         public BranchDamageActionOp(
             float chanceBonus /* 분기 확률 추가값 */,
             int branchCount /* 분기 횟수 */,
@@ -270,9 +236,6 @@ namespace Pakuri.InGame
      */
     public readonly struct ConditionalDamageActionOp
     {
-        /*
-         * 피해 배율과 필요한 상태 효과 중첩 수를 초기화한다.
-         */
         public ConditionalDamageActionOp(
             float damageMultiplier /* 조건을 만족했을 때 적용할 피해 배율 */,
             StatusEffectKind requiredStatus /* 대상에게 필요한 상태 효과 */,
@@ -402,7 +365,7 @@ namespace Pakuri.InGame
         public string Target { get; }
     }
 
-    /* 지정한 핵심 Hitbox에 적용할 피해 배율을 보관한다. */
+    /* 지정한 핵심 충돌 영역에 적용할 피해 배율을 보관한다. */
     public readonly struct CoreDamageActionOp
     {
         public CoreDamageActionOp(string hitboxName, float multiplier)
@@ -415,7 +378,7 @@ namespace Pakuri.InGame
         public float Multiplier { get; }
     }
 
-    /* 지정한 핵심 Hitbox 적중 시 발생할 추가 피해 규칙을 보관한다. */
+    /* 지정한 핵심 충돌 영역 적중 시 발생할 추가 피해 규칙을 보관한다. */
     public readonly struct CoreAdditionalDamageActionOp
     {
         public CoreAdditionalDamageActionOp(string hitboxName, float chance, float multiplier, DamageAttribute attribute)
@@ -495,11 +458,8 @@ namespace Pakuri.InGame
      */
     public readonly struct CountStatusDamageActionOp
     {
-        /*
-         * 셀 대상, 상태 효과, 개수당 증가량, 최대 계산 개수를 초기화한다.
-         */
         public CountStatusDamageActionOp(
-            SkillMultiEffectTargetSide targetSide /* 상태 효과를 셀 대상 진영 */,
+            SkillMultiEffectTargetSide targetSide /* 상태 효과를 확인할 대상 진영 */,
             StatusEffectKind statusKind /* 셀 상태 효과 종류 */,
             float amountPerCount /* 상태 효과 하나당 피해 증가량 */,
             int maximumCount /* 피해 계산에 사용할 최대 개수 */)
@@ -521,9 +481,6 @@ namespace Pakuri.InGame
      */
     public readonly struct StatusConditionalDamageTakenActionOp
     {
-        /*
-         * 받는 피해 증가값과 공격자에게 필요한 상태 효과를 초기화한다.
-         */
         public StatusConditionalDamageTakenActionOp(
             float bonus /* 받는 피해 증가값 */,
             StatusEffectKind requiredSourceStatus /* 공격자에게 필요한 상태 효과 */)
@@ -537,20 +494,20 @@ namespace Pakuri.InGame
     }
 
     /*
-     * 실행 계획 payload 하나를 공통 목록에 넣기 위한 컨테이너다.
-     * 단일 object 슬롯에는 readonly struct 하나만 저장한다. 실행 계획은 카탈로그 컴파일 때 한 번 생성되고
-     * Choice에 캐시되므로 이때 발생하는 boxing은 시전 반복 비용이 아니다. nullable 필드를 Op 종류마다
-     * 계속 추가하던 수동 union보다 새 Op 확장 시 중복 상태와 생성자 초기화를 만들지 않는다.
+     * 전투용 실행 값 하나를 보관한다.
+     * SkillNodeMapper가 만들고 SkillExecutionData와 스킬 규칙 코드가 필요한 형식으로 꺼낸다.
      */
     public class SkillNode
     {
         private readonly object operation;
 
+        // CSV Graph Handler에서 변환된 강타입 실행 값 하나를 보관하는 부분을 구현.
         private SkillNode(object operation)
         {
             this.operation = operation;
         }
 
+        /* 저장된 실행 값이 요청한 형식이면 반환한다. */
         internal T? GetOperation<T>() where T : struct
         {
             if (operation is T value)
@@ -560,6 +517,7 @@ namespace Pakuri.InGame
 
             return null;
         }
+        /* 실행 값 하나를 SkillNode로 감싼다. */
         public static SkillNode FromOperation<T>(T op) where T : struct => new SkillNode(op);
 
     }

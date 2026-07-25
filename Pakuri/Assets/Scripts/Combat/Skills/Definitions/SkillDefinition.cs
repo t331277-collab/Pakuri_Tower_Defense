@@ -5,7 +5,8 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * 스킬 슬롯, 기본 정의, 상태 적용, 실행 계획을 포함한 스킬 정의 형식을 제공한다.
+ * 스킬 슬롯, 기본 정의, 상태 적용, 실행 계획을 포함한 스킬 정의 형식을 제공
+ CSV에서 만들어진 스킬을 런타임이 이해하는 형식으로 제공 모든 스킬 종류(투사체, 장판, 단일 공격등.. 여러 스킬 정의)
  */
 namespace Pakuri.Data
 {
@@ -24,7 +25,7 @@ namespace Pakuri.Data
     }
 
     /*
-     * 스킬 데이터가 런타임에서 지원되는 단계를 구분한다.
+     * 스킬 데이터가 런타임에서 지원되는 단계를 구분
      */
     public enum SkillImplementationState
     {
@@ -34,7 +35,7 @@ namespace Pakuri.Data
     }
 
     /*
-     * 스킬을 실행할 공용 런타임 종류를 구분한다.
+     * 스킬을 실행할 공용 런타임 종류를 구분
      */
     public enum SkillRuntimeKind
     {
@@ -96,10 +97,10 @@ namespace Pakuri.Data
         public float ChargeMoveSpeedMultiplier = 2.5f;
         public float KnockbackDistance;
         public float DamageDelaySeconds;
-        [Range(0f, 1f)] public float ExecuteHealthRatioThreshold;
+        public float ExecuteHealthRatioThreshold;
         public bool RequireExecuteThresholdToCast;
         public float ExecuteDamageMultiplier = 1f;
-        [Range(0f, 1f)] public float KillCooldownRefundRatio;
+        public float KillCooldownRefundRatio;
         public float BossDamageMultiplier = 1f;
         // 명중 대상 수와 대상 선택
         public string HitTargetCount;
@@ -129,11 +130,11 @@ namespace Pakuri.Data
         public float TargetStatusStackAttackPowerCoefficient;
         public float TargetStatusStackSpellPowerCoefficient;
         public string ConsumeTargetStatusId;
-        [Range(0f, 1f)] public float ConsumeTargetStatusRatio;
+        public float ConsumeTargetStatusRatio;
         public int ConsumeTargetStatusStacks;
         // 스킬이 적용할 상태와 능력치 변경값
         public string StatusEffectId;
-        [Range(0f, 1f)] public float StatusChance;
+        public float StatusChance;
         public string StatusEffectLabel;
         public GameObject StatusEffectPrefab;
         public float StatusDurationSeconds;
@@ -274,9 +275,9 @@ namespace Pakuri.InGame
     [Serializable]
     public class SkillTimingSpec
     {
-        [Min(0f)] public float Cooldown;
-        [Min(0f)] public float ActiveDuration;
-        [Min(0f)] public float TickInterval;
+        public float Cooldown;
+        public float ActiveDuration;
+        public float TickInterval;
     }
 
     /*
@@ -289,11 +290,11 @@ namespace Pakuri.InGame
         public SkillTargetSelection Selection = SkillTargetSelection.Nearest;
         public string SelectionStatusId;
         public StatusEffectKind SelectionStatusKind;
-        [Min(0)] public int SelectionStatusMinStacks;
+        public int SelectionStatusMinStacks;
         public SkillTargetShape Shape = SkillTargetShape.Single;
         [Tooltip("Deprecated. InGame skills target the whole battlefield; runtime ignores this value.")]
-        [Min(0f)] public float Range;
-        [Min(0f)] public float Radius;
+        public float Range;
+        public float Radius;
         public bool CoverAll;
     }
 
@@ -305,7 +306,7 @@ namespace Pakuri.InGame
     {
         public string SkillId;
         public DamageAttribute Element;
-        [Min(0f)] public float BaseDamage;
+        public float BaseDamage;
         public float StatCoefficient;
         public StatSource StatSource;
         public bool UseCombinedStatCoefficients;
@@ -321,8 +322,8 @@ namespace Pakuri.InGame
     public class StatusApplicationSpec
     {
         public StatusRuntimeData Status;
-        [Range(0f, 1f)] public float Chance = 1f;
-        [Min(0)] public int Stacks = 1;
+        public float Chance = 1f;
+        public int Stacks = 1;
         public bool RefreshDuration = true;
     }
 
@@ -332,16 +333,16 @@ namespace Pakuri.InGame
     [Serializable]
     public class ProjectileBlueprintSpec
     {
-        [Min(0)] public int MagazineSize;
-        [Min(0f)] public float ReloadTime;
-        [Min(1)] public int BurstProjectileCount = 1;
-        [Min(0f)] public float BurstIntervalSeconds;
-        [Min(0)] public int BurstDamageProjectileIndex;
-        [Min(0f)] public float BurstDamageMultiplier = 1f;
-        [Min(1)] public int ProjectilesPerShot = 1;
-        [Min(0)] public int PierceCount;
-        [Min(0f)] public float ProjectileSpeed;
-        [Min(0f)] public float LifetimeSeconds;
+        public int MagazineSize;
+        public float ReloadTime;
+        public int BurstProjectileCount = 1;
+        public float BurstIntervalSeconds;
+        public int BurstDamageProjectileIndex;
+        public float BurstDamageMultiplier = 1f;
+        public int ProjectilesPerShot = 1;
+        public int PierceCount;
+        public float ProjectileSpeed;
+        public float LifetimeSeconds;
     }
 
     /*
@@ -350,9 +351,9 @@ namespace Pakuri.InGame
     [Serializable]
     public class AreaBlueprintSpec
     {
-        [Min(0f)] public float Radius;
-        [Min(0f)] public float Duration;
-        [Min(0f)] public float TickInterval;
+        public float Radius;
+        public float Duration;
+        public float TickInterval;
         public bool CoverAll;
     }
 
@@ -378,6 +379,7 @@ namespace Pakuri.InGame
      */
     public class SkillDefinition
     {
+        // 모든 스킬 계열이 공유하는 런타임 Definition의 기본 필드를 구현.
         [Header("Identity")]
         public string SkillId;
         public string SkillName;
@@ -491,7 +493,7 @@ namespace Pakuri.InGame
         [Header("Impact Area")]
         public bool ContactDamageEnabled = true;
         public bool StopOnFirstHit;
-        [Min(0f)] public float ImpactDelaySeconds;
+        public float ImpactDelaySeconds;
         public RuntimeSkillVisualSpec ImpactRuntimeVisual = new RuntimeSkillVisualSpec();
         public bool HasImpactArea;
         public AreaBlueprintSpec ImpactArea = new AreaBlueprintSpec();
@@ -510,23 +512,23 @@ namespace Pakuri.InGame
         public bool UsePrefabHitbox;
         public bool UseMultiDeployment;
         public bool HitAllTargets;
-        [Min(1)] public int HitTargetCount = 1;
-        [Min(1)] public int DeploymentCount = 1;
+        public int HitTargetCount = 1;
+        public int DeploymentCount = 1;
         public string DeploymentRequiredTargetStatusId;
         public StatusEffectKind DeploymentRequiredTargetStatusKind;
-        [Min(0)] public int DeploymentRequiredTargetStatusMinStacks;
+        public int DeploymentRequiredTargetStatusMinStacks;
         public string TargetStatusStackStatusId;
         public StatusEffectKind TargetStatusStackStatusKind;
-        [Min(0)] public int TargetStatusStackMaxStacks;
+        public int TargetStatusStackMaxStacks;
         public string ConsumeTargetStatusId;
         public StatusEffectKind ConsumeTargetStatusKind;
-        [Range(0f, 1f)] public float ConsumeTargetStatusRatio;
-        [Min(0)] public int ConsumeTargetStatusStacks;
-        [Min(0f)] public float DamageDelaySeconds;
-        [Range(0f, 1f)] public float ExecuteHealthRatioThreshold;
+        public float ConsumeTargetStatusRatio;
+        public int ConsumeTargetStatusStacks;
+        public float DamageDelaySeconds;
+        public float ExecuteHealthRatioThreshold;
         public bool RequireExecuteThresholdToCast;
         public float ExecuteDamageMultiplier = 1f;
-        [Range(0f, 1f)] public float KillCooldownRefundRatio;
+        public float KillCooldownRefundRatio;
         public float BossDamageMultiplier = 1f;
 
         [Header("Enemy Effect")]
@@ -544,7 +546,7 @@ namespace Pakuri.InGame
         public AreaBlueprintSpec Area = new AreaBlueprintSpec();
         public bool UsesHitTargetCount;
         public bool HitAllTargets;
-        [Min(1)] public int HitTargetCount = 1;
+        public int HitTargetCount = 1;
 
         [Header("Enemy Effect")]
         public SkillDamageSpec DamagePerTick = new SkillDamageSpec();
@@ -899,7 +901,7 @@ namespace Pakuri.Data
         public string StatusEffectId;
         public StatusEffectKind StatusKind;
         public StatusRuntimeData CompiledStatusData;
-        [Range(0f, 1f)] public float StatusChance;
+        public float StatusChance;
         public string StatusEffectLabel;
         public GameObject StatusEffectPrefab;
         public float StatusDurationSeconds;
@@ -983,13 +985,12 @@ namespace Pakuri.Data
     }
 
     /*
-     * 런타임 스킬 충돌 영역의 크기와 중심 보정값을 보관한다.
+     * 런타임 스킬 충돌 영역의 크기를 보관한다.
      */
     [Serializable]
     public class RuntimeSkillHitboxSpec
     {
         public Vector2 Size;
-        public Vector2 Offset;
 
         /*
          * 너비와 높이가 모두 설정됐는지 확인한다.

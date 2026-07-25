@@ -7,12 +7,13 @@ using UnityEngine;
 /*
  * 로스터·체력·보호막·상태 변화를 받아 학습된 패시브 효과를 갱신한다.
  * 변경 통지를 모아 한 번에 처리하고 활성 조건에 맞는 지속 상태를 적용·제거하며
- * 일회성 효과와 Trigger 재사용 대기시간·누적 횟수도 전투 단위로 관리한다.
+ * 일회성 효과와 트리거 재사용 대기시간·누적 횟수도 전투 단위로 관리한다.
  */
 namespace Pakuri.InGame
 {
     internal class PassiveSkill
     {
+        // 전투 변화 통지를 모아 지속·일회성 패시브 효과를 갱신하는 부분을 구현.
         private const int MaxRefreshPasses = 8;
 
         private readonly HashSet<string> appliedOneShotEffectKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -96,13 +97,13 @@ namespace Pakuri.InGame
             NotifyShieldChanged(result.Target, result.PreviousShield, result.CurrentShield);
         }
 
-        // Code Builder: 로스터나 학습 구성이 바뀌면 다음 조율 시점에 전체 패시브 관계를 다시 만든다.
+        // 유닛 목록이나 습득 구성이 바뀌면 다음 갱신 때 모든 패시브 관계를 다시 만든다.
         public void NotifyRosterChanged()
         {
             refreshRequested = true;
         }
 
-        // Code Builder: 상태 추가·중첩·제거·만료 시 조건형 패시브만 다시 계산하도록 표시한다.
+        // 상태가 추가·중첩·제거·만료되면 조건형 패시브만 다시 계산하도록 표시한다.
         public void NotifyStatusChanged(UnitCombatState target /* 효과를 받을 대상 유닛 */)
         {
             if (target != null)
@@ -111,7 +112,7 @@ namespace Pakuri.InGame
             }
         }
 
-        // Code Builder: 보호막 보유 여부가 바뀐 경우에만 보호막 조건 패시브를 다시 계산한다.
+        // 보호막 보유 여부가 바뀐 경우에만 보호막 조건 패시브를 다시 계산한다.
         public void NotifyShieldChanged(UnitCombatState target /* 효과를 받을 대상 유닛 */, float previousShield /* 이전 보호막 */, float currentShield /* 현재 보호막 */)
         {
             if (target != null && (previousShield > 0f) != (currentShield > 0f))
@@ -120,7 +121,7 @@ namespace Pakuri.InGame
             }
         }
 
-        // Code Builder: 피해·회복 자체가 아니라 실제 체력 조건 경계를 통과할 때만 갱신을 요청한다.
+        // 피해·회복 때마다가 아니라 체력이 조건 기준을 넘을 때만 갱신을 요청한다.
         public void NotifyHealthChanged(UnitCombatState target /* 효과를 받을 대상 유닛 */, float previousHealth /* 이전 체력 */, float currentHealth /* 현재 체력 */)
         {
             var maxHealth = target != null && target.Stats != null ? target.Stats.MaxHealth : 0f;
@@ -141,7 +142,7 @@ namespace Pakuri.InGame
             }
         }
 
-        // Code Builder: 관리자는 호출 순서만 정하고 실제 조건 검사와 효과 수명은 패시브 런타임이 소유한다.
+        // 관리자는 호출 순서만 정하고, 조건 검사와 효과 수명은 각 패시브가 관리한다.
         public void FlushPendingChanges(InGameCombatManager combatManager /* 전투 진행 관리자 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
         {
             if (!refreshRequested || isRefreshing || combatManager == null || roster == null)

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Pakuri.Data;
 
 /*
- * 한 번의 런에서 유지되는 진행 상태와 파티별 성장 상태를 보관한다.
+ * 한 번의 런에서 유지되는 진행 상태보관
  * 스테이지·일차, 재화, 배치 파티,
  * 몬스터별 학습 스킬과 Choice를 기록한다.
  */
@@ -43,10 +43,6 @@ namespace Pakuri.InGame
          */
         public static RunSession Begin(MonsterDefinition monster /* 몬스터 */)
         {
-            if (monster == null || string.IsNullOrWhiteSpace(monster.MonsterId))
-            {
-                throw new ArgumentException("A Monster with a non-empty ID is required.", nameof(monster));
-            }
 
             var session = new RunSession();
             session.AddPartyMemberState(monster);
@@ -54,7 +50,7 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 런 시작 시 기본 습득할 A 슬롯 액티브 스킬을 찾는다.
+         * 기본 스킬 학습
          */
         private static string ResolveDefaultActiveSkillId(MonsterDefinition monster /* 몬스터 */)
         {

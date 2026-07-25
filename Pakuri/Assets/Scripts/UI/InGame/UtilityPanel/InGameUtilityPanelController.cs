@@ -10,7 +10,7 @@ namespace Pakuri.InGame
     {
         private static readonly float[] TimeScales = { 1f, 1.5f, 2f };
 
-        // Code Builder: 자동 스킬 입력 상태는 PlayerCombatControl에 직접 요청한다.
+        // 자동 스킬 입력 상태는 PlayerCombatControl에 직접 요청한다.
         [SerializeField] private PlayerCombatInputController playerCombatControl;
         [SerializeField] private Button autoButton;
         [SerializeField] private Button timeButton;

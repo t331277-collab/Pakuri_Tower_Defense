@@ -13,6 +13,7 @@ namespace Pakuri.InGame
 
 internal static class SingleSkillExecutor
 {
+	// 단일·연쇄·돌진 공격의 대상 선정, 피해, 상태, 후속 효과를 구현.
 	/*
 	 * 현재 스킬의 노드 효과 중 요청한 실행 시점에 맞는 효과를 적용한다.
 	 */

@@ -767,3 +767,40 @@ Implemented and compile/editor validated. Play Mode run verification remains.
 ### History
 
 - 2026-07-23: Code Builder superseded the interim `PartyMonsterIds` authority with `PartyMembers`, combining party identity and per-monster run progression in one collection.
+
+## Task: 2026-07-25 Basic Offering Choice-ID Repair
+
+### Goals
+
+- Keep learned base active/passive skill IDs out of `ChosenChoiceIds`.
+- Preserve Enhancement/Master Choice recording and runtime rebuild.
+
+### Constraints
+
+- Role Owner: Code Builder.
+- Change only the two base-skill Offering view assignments.
+- No CSV, prefab, scene, or runtime data change.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor-console verified.
+
+### Next Actions
+
+- User verifies a Vega E basic-skill Offering selection in Play Mode.
+
+### Evidence
+
+- `InGameUIManager.cs` no longer assigns `skill.SkillId` or `passive.PassiveId` to `OfferingChoiceView.ChoiceId`; `RunSession.RecordOfferingChoice(...)` therefore records them only as learned skills.
+- The Enhancement/Master path still assigns `ChoiceId = reward.RewardId`.
+- Git comparison showed the two incorrect base assignments were already present in `HEAD`; no corresponding working-tree deletion existed.
+- `git diff --check` passed; `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal` completed with 0 errors and the existing 2 `MSB3277` warning groups.
+- Unity script refresh completed; Unity Console error query returned 0 entries.
+
+### History
+
+- 2026-07-25: Code Builder repaired the base-skill Offering record path that caused `Unknown learned skill choice 'vega-e'`.

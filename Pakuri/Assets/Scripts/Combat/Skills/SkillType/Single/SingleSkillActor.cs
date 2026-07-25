@@ -8,6 +8,7 @@ namespace Pakuri.InGame
 {
     public class SingleSkillActor : MonoBehaviour
     {
+        // 단일 공격 시각 효과의 대상 추적과 수명 종료를 구현.
         private EffectManager effectManager;
         private Transform target;
         private Vector3 offset;

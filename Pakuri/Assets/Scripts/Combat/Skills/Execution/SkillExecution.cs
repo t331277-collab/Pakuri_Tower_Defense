@@ -5,9 +5,7 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * 모든 유닛의 스킬 상태 갱신과 실행 요청 라우팅을 담당하는 전투 시스템.
- * 자동·수동·Trigger 요청에 Choice 실행 데이터을 적용하고 스킬 형식에 맞는
- * Executor 실행과 시전 Trigger를 연결한다.
+ * 자동·수동·Trigger 스킬 요청을 받고, 스킬 종류에 맞는 Executor로 보냄
  */
 namespace Pakuri.InGame
 {
@@ -235,7 +233,7 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 일반·수동·Trigger 요청의 실행 데이터과 실행 정보를 준비해 스킬 종류별 실행기로 전달한다.
+         * 일반·수동·트리거 요청의 실행 데이터와 실행 정보를 준비해 스킬 종류별 실행기로 전달한다.
          */
         private bool TryExecuteSkill(
             CombatUnitEntry entry /* 처리할 등록 정보 */,
@@ -337,6 +335,7 @@ namespace Pakuri.InGame
             SkillExecutionData snapshot /* 적용할 스킬 강화 정보 */,
             SkillDefinition skillData /* 스킬 실행 데이터 */)
         {
+            // 컴파일된 Definition의 실제 타입을 계열별 Executor로 전달하는 부분을 구현.
             if (skillData is ProjectileSkillDefinition projectile)
             {
                 return ProjectileSkillExecutor.Execute(context, snapshot, projectile);
@@ -1188,6 +1187,7 @@ namespace Pakuri.InGame
          */
         private SkillExecutionData BuildExecutionData(UnitCombatState owner /* 정보를 소유한 유닛 */, SkillUseState runtime /* 실행 중인 스킬 정보 */, CombatUnitRegistry roster /* 전투에 등록된 유닛 목록 */)
         {
+            // Base, 패시브, 강화, 마스터를 한 번의 실행 스냅샷으로 조립하는 부분을 구현.
             SkillDefinition skillData = null;
             if (runtime != null)
             {

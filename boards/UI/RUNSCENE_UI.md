@@ -280,3 +280,36 @@ Implemented and compile/editor validated. Play Mode UI verification remains.
 ### History
 
 - 2026-07-23: Code Builder migrated UI consumers from the interim ID list to the unified party-member state collection.
+
+## Task: 2026-07-25 Offering Basic Skill Record Repair
+
+### Goals
+
+- Prevent the Offering UI from presenting a base skill ID as a Choice ID during commit.
+
+### Constraints
+
+- Role Owner: Code Builder.
+- No visual, button binding, scene, or prefab change.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and verified.
+
+### Next Actions
+
+- User verifies Vega E basic-skill Offering selection in Play Mode.
+
+### Evidence
+
+- `InGameUIManager.cs` base active/passive `OfferingChoiceView` creation no longer fills `ChoiceId`; `CommitOfferingChoice(...)` passes no linked Choice for those two reward kinds.
+- Enhancement/Master UI behavior remains unchanged because its view still fills `ChoiceId` from `reward.RewardId`.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore -v:minimal` completed with 0 errors; Unity Console error query returned 0 entries.
+
+### History
+
+- 2026-07-25: Code Builder corrected the UI-to-run-state ID handoff that threw `Unknown learned skill choice 'vega-e'`.

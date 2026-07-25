@@ -5,7 +5,7 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * 스킬 실행에 사용할 능력치, 강화 선택, 노드 결과를 보관한다.
+ * 기본 스킬 에다가 선택한 강화 노드를 합쳐 이번 시전에 쓸 최종 피해, 범위, 지속시간, 조건 값을 만들어 Executor 에 넘긴다.
  */
 namespace Pakuri.InGame
 {
@@ -470,6 +470,7 @@ public class SkillExecutionData
 	 */
 	private void ApplyPlanNodes(IReadOnlyList<SkillNode> nodes /* 노드 목록 */)
 	{
+		// SkillNode를 즉시 누적할 수치와 실행 시점에 판정할 규칙으로 나누어 적용하는 부분을 구현.
 		if (nodes == null || nodes.Count == 0)
 		{
 			return;
@@ -482,9 +483,8 @@ public class SkillExecutionData
 			}
 
 			/*
-			 * SingleSkillRules가 시전·대상·처치 시점에 평가해야 하는 규칙은 여기서 계산 결과로
-			 * 평탄화하지 않고 Op 목록에 보존한다. 이전 코드는 이 네 payload를 건너뛰어
-			 * 정규화 노드가 실제 Single 규칙까지 전달되지 않았다.
+             * SingleSkillRules가 시전·대상·처치 시점에 확인할 규칙은 여기서 미리 계산하지 않고
+             * 실행 값 목록에 보관한다. 그래야 정리된 노드가 단일 공격 규칙까지 전달된다.
 			 */
 			CastConditionOp? castCondition = nodes[i].GetOperation<CastConditionOp>();
 			if (castCondition.HasValue)

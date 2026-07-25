@@ -3,9 +3,7 @@ using Pakuri.Combat;
 using Pakuri.Data;
 
 /*
- * 조립된 SkillExecutionData와 실행 시점의 대상·투사체 정보를 함께 사용해 조건부 규칙을 평가한다.
- * SkillNode는 규칙 값만 정의하고 SkillExecutionData는 규칙 목록을 조립하므로, 전투 상태를 읽는 판정은
- * 이 클래스에만 둔다. 이를 통해 실행 스냅샷이 전투 대상 조회까지 책임지는 구조를 막는다.
+ * 스킬의 주체가 지금 발사 가능한가? 를 계산
  */
 namespace Pakuri.InGame
 {
@@ -15,6 +13,7 @@ namespace Pakuri.InGame
             SkillExecutionData data,
             UnitCombatState target)
         {
+            // SkillNode가 보관한 상태 중첩 조건을 현재 대상 상태와 비교하는 부분을 구현.
             if (data == null || target == null)
             {
                 return 1f;

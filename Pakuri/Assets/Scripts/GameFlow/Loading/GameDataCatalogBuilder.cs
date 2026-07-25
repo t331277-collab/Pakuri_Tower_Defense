@@ -13,8 +13,8 @@ using static Pakuri.Data.SkillGraphParser;
 
 /*
  * 검증된 SourceModel을 게임이 직접 사용하는 GameDataCatalog로 변환한다.
- * 몬스터·적·상태·스킬·Choice 정의를 만들고 노드, 효과, Trigger, 상태 Payload를 연결하며
- * 각 정의가 참조하는 Sprite, Prefab, Animator 자산도 함께 해석한다.
+ * 몬스터·적·상태·스킬·선택지 정의를 만들고 노드, 효과, 트리거, 상태 부가값을 연결하며
+ * 각 정의가 참조하는 스프라이트, 프리팹, 애니메이터 자산도 함께 해석한다.
  */
 namespace Pakuri.Data
 {
@@ -1480,9 +1480,7 @@ namespace Pakuri.Data
                 row.RuntimeVisualSortingOrder,
                 row.RuntimeHitboxSizeX,
                 row.RuntimeHitboxSizeY,
-                row.RuntimeVisualAnchor,
-                row.RuntimeHitboxOffsetX,
-                row.RuntimeHitboxOffsetY);
+                row.RuntimeVisualAnchor);
         }
 
         /*
@@ -1505,9 +1503,7 @@ namespace Pakuri.Data
                 row.RuntimeVisualSortingOrder,
                 row.RuntimeHitboxSizeX,
                 row.RuntimeHitboxSizeY,
-                row.RuntimeVisualAnchor,
-                row.RuntimeHitboxOffsetX,
-                row.RuntimeHitboxOffsetY);
+                row.RuntimeVisualAnchor);
         }
 
         /*
@@ -1545,9 +1541,7 @@ namespace Pakuri.Data
             int sortingOrder /* 시각 효과의 정렬 순서 */,
             float hitboxSizeX /* 피격 판정 크기 X축 */,
             float hitboxSizeY /* 피격 판정 크기 Y축 */,
-            string visualAnchor = null /* 시각 효과를 배치할 기준점 */,
-            float hitboxOffsetX = 0f /* 피격 판정 위치 보정 X축 */,
-            float hitboxOffsetY = 0f /* 피격 판정 위치 보정 Y축 */)
+            string visualAnchor = null /* 시각 효과를 배치할 기준점 */)
         {
             var anchor = RuntimeSkillVisualAnchor.Skill;
             if (!string.IsNullOrWhiteSpace(visualAnchor))
@@ -1589,8 +1583,7 @@ namespace Pakuri.Data
                 Anchor = anchor,
                 Hitbox = new RuntimeSkillHitboxSpec
                 {
-                    Size = new Vector2(Mathf.Max(0f, hitboxSizeX), Mathf.Max(0f, hitboxSizeY)),
-                    Offset = new Vector2(hitboxOffsetX, hitboxOffsetY)
+                    Size = new Vector2(Mathf.Max(0f, hitboxSizeX), Mathf.Max(0f, hitboxSizeY))
                 }
             };
         }

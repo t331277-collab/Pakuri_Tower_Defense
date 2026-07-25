@@ -10,6 +10,7 @@ namespace Pakuri.InGame
 {
     public class ZoneSkillActor : MonoBehaviour
     {
+        // 생성된 지속 범위의 대상 판정, 주기 피해, 상태, 만료 효과를 구현.
         private InGameCombatManager combatManager;
         private CombatUnitEntry casterEntry;
         private CombatUnitRegistry roster;

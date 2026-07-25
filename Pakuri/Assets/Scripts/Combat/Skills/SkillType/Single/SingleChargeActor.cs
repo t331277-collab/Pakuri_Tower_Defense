@@ -11,6 +11,7 @@ namespace Pakuri.InGame
 {
     public static class SingleChargeActor
     {
+        // 진행 중인 돌진의 이동, 접촉 판정, 피해와 상태 적용을 구현.
         /*
          * 돌진 이동과 대상 접촉을 갱신하고 돌진 처리 여부를 반환한다.
          */

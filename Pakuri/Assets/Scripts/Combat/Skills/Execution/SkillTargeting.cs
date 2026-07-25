@@ -25,6 +25,7 @@ namespace Pakuri.InGame
             CombatUnitRegistry unitRoster /* 전투에 등록된 유닛 목록 */,
             SkillTargetingSpec targetingSpec /* 스킬 대상 선택 설정 */)
         {
+            // 시전자와 Targeting 설정을 기준으로 유효 대상을 정렬하는 부분을 구현.
             return ResolveOrderedTargets(sourceEntry, unitRoster, targetingSpec, StatusEffectKind.None, 0);
         }
 

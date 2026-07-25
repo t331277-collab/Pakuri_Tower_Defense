@@ -84,8 +84,6 @@ namespace Pakuri.Data
             public string RuntimeVisualAnchor;
             public float RuntimeHitboxSizeX;
             public float RuntimeHitboxSizeY;
-            public float RuntimeHitboxOffsetX;
-            public float RuntimeHitboxOffsetY;
             public string RuntimeImpactVisualSpritePath;
             public string RuntimeImpactVisualAnimatorControllerPath;
             public float RuntimeImpactVisualScale = 1f;
@@ -211,8 +209,6 @@ namespace Pakuri.Data
             public string RuntimeVisualAnchor;
             public float RuntimeHitboxSizeX;
             public float RuntimeHitboxSizeY;
-            public float RuntimeHitboxOffsetX;
-            public float RuntimeHitboxOffsetY;
             public string RuntimeSupportState;
             public string RuntimeSupportNotes;
         }
@@ -309,8 +305,6 @@ namespace Pakuri.Data
                 RuntimeVisualAnchor = ReadOptionalStringIfColumnExists(record, "runtime_visual_anchor"),
                 RuntimeHitboxSizeX = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_x"),
                 RuntimeHitboxSizeY = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_y"),
-                RuntimeHitboxOffsetX = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_offset_x"),
-                RuntimeHitboxOffsetY = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_offset_y"),
                 RuntimeImpactVisualSpritePath = ReadOptionalStringIfColumnExists(record, "runtime_impact_visual_sprite_path"),
                 RuntimeImpactVisualAnimatorControllerPath = ReadOptionalStringIfColumnExists(record, "runtime_impact_visual_animator_controller_path"),
                 RuntimeImpactVisualScale = ReadOptionalFloat(record, "runtime_impact_visual_scale", 1f),
@@ -446,8 +440,6 @@ namespace Pakuri.Data
                 RuntimeVisualAnchor = ReadOptionalStringIfColumnExists(record, "runtime_visual_anchor"),
                 RuntimeHitboxSizeX = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_x"),
                 RuntimeHitboxSizeY = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_size_y"),
-                RuntimeHitboxOffsetX = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_offset_x"),
-                RuntimeHitboxOffsetY = ReadOptionalFloatIfColumnExists(record, "runtime_hitbox_offset_y"),
                 RuntimeSupportState = ReadOptionalStringIfColumnExists(record, "runtime_support_state"),
                 RuntimeSupportNotes = ReadOptionalStringIfColumnExists(record, "runtime_support_notes")
             };
@@ -820,12 +812,6 @@ namespace Pakuri.Data
             if (string.Equals(tableName, "skills_passive.csv", StringComparison.OrdinalIgnoreCase))
             {
                 return ParseEnemyPassiveSkillRow(record);
-            }
-
-            if (record.HasColumn("runtime_hitbox_offset_x") || record.HasColumn("runtime_hitbox_offset_y"))
-            {
-                throw new CsvFatalException(
-                    $"CSV table '{tableName}' must not define runtime hitbox offset columns. Enemy runtime hitboxes are centered at (0,0).");
             }
 
             var row = new EnemyBaseSkillRow

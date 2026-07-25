@@ -6,13 +6,14 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * Buff 계열 스킬의 세부 실행기를 정의한다.
+ * 강화 계열 스킬의 세부 실행기를 정의한다.
  * 일반 버프와 보호막·회복 처리를 각 전용 실행기로 전달한다.
  */
 namespace Pakuri.InGame
 {
     internal static class BuffSkillExecutor
     {
+        // 일반 Buff의 대상 선정, 상태 적용, 추가 효과 실행을 구현.
         /*
          * 현재 스킬의 노드 효과 중 요청한 실행 시점에 맞는 효과를 적용한다.
          */
@@ -222,19 +223,16 @@ namespace Pakuri.InGame
                         visualName = "RuntimeBuffVisual_" + skill.SkillId;
                     }
 
-                    visualInstance = effects.CreateEffect(
+                    visualInstance = effects.CreateTargetVisual(
                         runtimeVisual,
                         prefab,
                         visualName,
-                        visualTarget.position,
-                        Quaternion.identity);
+                        visualTarget);
                     if (visualInstance != null)
                     {
                         BuffSkillActor.Attach(visualInstance).Initialize(
                             effects,
-                            visualTarget,
-                            statusSpec.DurationSeconds,
-                            Vector3.zero);
+                            statusSpec.DurationSeconds);
                     }
                 }
 
@@ -327,6 +325,7 @@ namespace Pakuri.InGame
      */
     internal static class BuffShieldSkillExecutor
     {
+        // 보호막 수치 계산, 대상 적용, 보호막 시각 효과 생성을 구현.
         /*
          * 요청받은 보호막 스킬을 실행한다.
          */
@@ -423,19 +422,16 @@ namespace Pakuri.InGame
                         visualName = $"RuntimeShieldVisual_{skill.SkillId}";
                     }
 
-                    visualInstance = effects.CreateEffect(
+                    visualInstance = effects.CreateTargetVisual(
                         runtimeVisual,
                         prefab,
                         visualName,
-                        visualTarget.position,
-                        Quaternion.identity);
+                        visualTarget);
                     if (visualInstance != null)
                     {
                         BuffSkillActor.Attach(visualInstance).Initialize(
                             effects,
-                            visualTarget,
-                            duration,
-                            Vector3.zero);
+                            duration);
                     }
                 }
 
@@ -468,6 +464,7 @@ namespace Pakuri.InGame
      */
     internal static class BuffHealSkillExecutor
     {
+        // 회복 수치 계산과 대상 체력 회복을 구현.
         /*
          * 요청받은 회복 스킬을 실행한다.
          */
@@ -526,19 +523,16 @@ namespace Pakuri.InGame
                     visualName = "RuntimeSupportVisual_" + skill.SkillId;
                 }
 
-                var visualInstance = effects.CreateEffect(
+                var visualInstance = effects.CreateTargetVisual(
                     skill.RuntimeVisual,
                     null,
                     visualName,
-                    target.Transform.position,
-                    Quaternion.identity);
+                    target.Transform);
                 if (visualInstance != null)
                 {
                     BuffSkillActor.Attach(visualInstance).Initialize(
                         effects,
-                        target.Transform,
-                        0.8f,
-                        Vector3.zero);
+                        0.8f);
                 }
             }
             return true;

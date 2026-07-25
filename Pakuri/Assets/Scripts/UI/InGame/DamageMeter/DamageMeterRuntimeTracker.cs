@@ -94,7 +94,7 @@ namespace Pakuri.InGame
          */
         private void Record(DamageApplicationOptions options /* 처리에 사용할 추가 설정 */, InGameResourceChangeResult result /* 처리 결과 */)
         {
-            // Code Builder: 피해 통계는 전투 결과 이벤트를 받아 이 Tracker가 기록한다.
+            // 피해 통계는 전투 결과 이벤트를 받아 이 기록기가 저장한다.
             var source = options.Source;
             var identity = source != null ? source.Identity : null;
             if (identity == null
@@ -127,7 +127,7 @@ namespace Pakuri.InGame
                 records.Add(identity.DefinitionId, record);
             }
 
-            // Code Builder: 표시명은 UI가 sourceId로 해석하므로 런타임에는 피해량만 저장한다.
+            // 표시명은 UI가 sourceId로 찾으므로 여기에는 피해량만 저장한다.
             record.AddDamage(sourceId, actualDamage);
             Version++;
         }

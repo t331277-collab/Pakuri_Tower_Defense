@@ -27,6 +27,7 @@ namespace Pakuri.InGame
 
     internal static class SingleSkillRules
     {
+        // 처형 조건, 보스 피해 보정, 처치 후 쿨다운 회복 규칙을 구현.
         /*
          * 처형 전용 스킬의 대상 체력이 시전 기준을 벗어났는지 확인한다.
          */

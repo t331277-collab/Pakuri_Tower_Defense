@@ -3,9 +3,8 @@ using Pakuri.Data;
 using UnityEngine;
 
 /*
- * 전투 효과 오브젝트의 생성, 상태 효과 등록, 제거를 한곳에서 관리한다.
- * 각 스킬 Actor가 수명과 대상 추적을 담당하고 종료 시 제거를 요청한다.
- * 모든 효과 오브젝트의 실제 삭제는 RemoveEffect 한 곳에서만 수행한다.
+ * 전투 효과 오브젝트의 생성, 상태 비주얼 연결, 제거를 한곳에서 관리한다.
+ * 대상 부착 효과는 대상의 자식으로 연결하고, 각 스킬 Actor는 수명이 끝나면 제거를 요청한다.
  */
 namespace Pakuri.InGame
 {
@@ -13,9 +12,10 @@ namespace Pakuri.InGame
     {
         [SerializeField] private Transform runtimeSkillRoot;
         private readonly Dictionary<StatusRuntimeInstance, GameObject> statusEffectVisuals = new Dictionary<StatusRuntimeInstance, GameObject>();
+        private readonly HashSet<GameObject> targetAttachedEffects = new HashSet<GameObject>();
 
         /*
-         * 런타임 비주얼 또는 프리팹으로 효과 오브젝트를 생성한다.
+         * 런타임 비주얼 또는 프리팹으로 효과 오브젝트만 생성
          */
         public GameObject CreateEffect(
             RuntimeSkillVisualSpec visual /* 런타임 시각 효과 설정 */,
@@ -26,14 +26,14 @@ namespace Pakuri.InGame
             bool hitboxIsTrigger = false /* 피격 판정 트리거 여부 */,
             bool includeHitbox = true /* 피격 판정 포함 여부 */)
         {
-            if (visual != null && visual.HasVisual())
+            if (visual != null && visual.HasVisual()) // 런타임 비주얼 생성
             {
                 var instance = CreateSkillActorObject(objectName, position, rotation);
                 EffectVisualBuilder.Configure(instance, visual, hitboxIsTrigger, includeHitbox);
                 return instance;
             }
 
-            if (prefab != null)
+            if (prefab != null) // 프리팹 생성
             {
                 return Instantiate(prefab, position, rotation, runtimeSkillRoot);
             }
@@ -42,7 +42,47 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 비주얼이 없어도 실행되어야 하는 스킬 Actor용 빈 오브젝트를 생성한다.
+         * 비주얼을 생성해 대상의 자식으로 연결한다.
+         */
+        public GameObject CreateTargetVisual(
+            RuntimeSkillVisualSpec visual /* 런타임 시각 효과 설정 */,
+            GameObject prefab /* 생성할 프리팹 */,
+            string objectName /* 게임 오브젝트 이름 */,
+            Transform targetTransform /* 비주얼을 붙일 대상 */,
+            bool hitboxIsTrigger = false /* 피격 판정 트리거 여부 */,
+            bool includeHitbox = true /* 피격 판정 포함 여부 */)
+        {
+
+            var instance = CreateEffect(
+                visual,
+                prefab,
+                objectName,
+                targetTransform.position,
+                Quaternion.identity,
+                hitboxIsTrigger,
+                includeHitbox);
+            if (instance == null)
+            {
+                return null;
+            }
+
+            AttachVisualToTarget(instance, targetTransform);
+            targetAttachedEffects.RemoveWhere(effectObject => effectObject == null);
+            targetAttachedEffects.Add(instance);
+            return instance;
+        }
+
+        /*
+         * 생성한 비주얼(버프, 상태이상)을 대상에 자식으로 붙인다.
+         */
+        private static void AttachVisualToTarget(GameObject instance, Transform targetTransform)
+        {
+            instance.transform.SetParent(targetTransform, true);
+            instance.transform.position = targetTransform.position;
+        }
+
+        /*
+         * 비주얼이나 프리팹이 없을 때 스킬 Actor를 붙일 빈 오브젝트를 생성
          */
         public GameObject CreateSkillActorObject(
             string objectName /* 게임 오브젝트 이름 */,
@@ -56,13 +96,13 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 상태 효과 비주얼을 처음 생성하거나 이미 생성된 비주얼을 대상에게 다시 연결한다.
+         * 상태 효과 비주얼을 생성 현재 아리엘 - D 만 구현되어있고 나중에 상태이상 공통 비쥬얼 이펙트로 사용할 예정
          */
         public void ShowOrRefreshStatusEffect(
             Transform targetTransform /* 상태 효과를 표시할 대상 */,
             StatusRuntimeInstance status /* 실행 중인 상태 효과 */)
         {
-            if (targetTransform == null || status == null || status.SourceData == null)
+            if (targetTransform == null || status == null || status.SourceData == null) // 이펙트 생성하지 않음
             {
                 return;
             }
@@ -84,12 +124,11 @@ namespace Pakuri.InGame
                     objectName = "RuntimeStatusVisual_" + status.SourceSkillId;
                 }
 
-                instance = CreateEffect(
+                instance = CreateTargetVisual(
                     statusData.RuntimeVisual,
                     statusData.StatusEffectPrefab,
                     objectName,
-                    targetTransform.position,
-                    Quaternion.identity,
+                    targetTransform,
                     includeHitbox: false);
                 if (instance == null)
                 {
@@ -99,20 +138,19 @@ namespace Pakuri.InGame
                 statusEffectVisuals[status] = instance;
             }
 
-            instance.transform.SetParent(targetTransform, true);
-            instance.transform.position = targetTransform.position;
+            AttachVisualToTarget(instance, targetTransform);
         }
 
         /*
-         * 추가 효과 비주얼을 만들고 지정한 시간이 지나면 제거하도록 Actor에 전달한다.
+         * 비주얼을 생성하고 지정한 시간이 지나면 제거하도록 Actor에 전달
          */
-        public void ShowTimedSkillEffect(
-            SkillEffectDefinition effect /* 표시할 추가 효과 */,
-            Vector3 position /* 표시할 위치 */,
+        public GameObject CreateEffect(
+            SkillEffectDefinition effect /* 생성할 추가 효과 */,
+            Vector3 position /* 배치할 위치 */,
             float durationSeconds /* 표시 시간 */)
         {
             var objectName = "SkillEffectVisual";
-            if (!string.IsNullOrWhiteSpace(effect.EffectId))
+            if (!string.IsNullOrWhiteSpace(effect.EffectId)) // 이름 추가
             {
                 objectName = "SkillEffectVisual_" + effect.EffectId;
             }
@@ -127,10 +165,12 @@ namespace Pakuri.InGame
             {
                 SingleSkillActor.Attach(instance).InitializeTimed(this, durationSeconds);
             }
+
+            return instance;
         }
 
         /*
-         * 추가 효과 비주얼을 적용 대상에게 붙이고 수명 관리를 Actor에 전달한다.
+         * 이펙트 비주얼을 적용 대상에게 붙이고 수명 관리를 Actor에 전달한다.
          */
         public void ShowFollowingSkillEffects(
             SkillEffectDefinition effect /* 표시할 추가 효과 */,
@@ -138,7 +178,7 @@ namespace Pakuri.InGame
             float durationSeconds /* 표시 시간 */)
         {
             var objectName = "SkillEffectVisual";
-            if (!string.IsNullOrWhiteSpace(effect.EffectId))
+            if (!string.IsNullOrWhiteSpace(effect.EffectId)) // 이름 추가
             {
                 objectName = "SkillEffectVisual_" + effect.EffectId;
             }
@@ -151,19 +191,16 @@ namespace Pakuri.InGame
                     continue;
                 }
 
-                var instance = CreateEffect(
+                var instance = CreateTargetVisual(
                     effect.RuntimeVisual,
                     effect.SkillEffectPrefab,
                     objectName,
-                    target.Transform.position,
-                    Quaternion.identity);
+                    target.Transform);
                 if (instance != null)
                 {
                     BuffSkillActor.Attach(instance).Initialize(
                         this,
-                        target.Transform,
-                        durationSeconds,
-                        Vector3.zero);
+                        durationSeconds);
                 }
             }
         }
@@ -185,6 +222,7 @@ namespace Pakuri.InGame
                 statusEffectVisuals.Remove(status);
             }
 
+            targetAttachedEffects.Remove(instance);
             if (instance == null)
             {
                 return;
@@ -198,15 +236,19 @@ namespace Pakuri.InGame
          */
         public void ClearEffects()
         {
-            foreach (var statusVisual in statusEffectVisuals.Values)
+            var attachedEffects = new List<GameObject>(targetAttachedEffects);
+            for (var i = 0; i < attachedEffects.Count; i++)
             {
-                if (statusVisual != null)
+                var attachedEffect = attachedEffects[i];
+                if (attachedEffect != null)
                 {
-                    statusVisual.SetActive(false);
-                    RemoveEffect(statusVisual);
+                    attachedEffect.SetActive(false);
                 }
+
+                RemoveEffect(attachedEffect);
             }
 
+            targetAttachedEffects.Clear();
             statusEffectVisuals.Clear();
             for (var i = runtimeSkillRoot.childCount - 1; i >= 0; i--)
             {

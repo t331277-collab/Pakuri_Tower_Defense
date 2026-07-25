@@ -10,6 +10,7 @@ namespace Pakuri.InGame
 {
     public class ProjectileSkillActor : MonoBehaviour
     {
+        // 생성된 투사체의 이동, 충돌, 적중 효과, 소멸을 구현.
         private readonly HashSet<string> hitUnitIds = new HashSet<string>();
 
         private InGameCombatManager combatManager;
@@ -801,8 +802,7 @@ namespace Pakuri.InGame
             body.gravityScale = 0f;
             body.simulated = true;
 
-            // Canvas/AutoBtn switches the selected 1P A skill from mouse-held manual fire
-            // to automatic combat fire. This projectile only relays movement and hits.
+            // 중력 없이 충돌만 감지하도록 물리 설정을 맞춘다.
         }
 
         /*

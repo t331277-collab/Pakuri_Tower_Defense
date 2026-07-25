@@ -8,7 +8,7 @@ using UnityEngine.UI;
 /*
  * DamageMeterRuntimeTracker의 기록을 파티원별 피해량 패널로 표현하는 UI 컴포넌트.
  * 파티 순서와 선두 피해량을 기준으로 표시 값을 계산하고
- * 스킬·패시브·Trigger 출처 이름과 비율 구간을 카탈로그 정보로 구성한다.
+ * 스킬·패시브·트리거 출처 이름과 비율 구간을 카탈로그 정보로 구성한다.
  */
 namespace Pakuri.InGame
 {
@@ -205,7 +205,7 @@ namespace Pakuri.InGame
                 return choice.Title;
             }
 
-            // Code Builder: 저장된 별칭 없이 sourceId를 최종 표시명으로 사용한다.
+            // 저장된 별칭이 없으면 sourceId를 표시명으로 사용한다.
             return string.IsNullOrWhiteSpace(sourceId) ? "Unknown" : sourceId;
         }
 

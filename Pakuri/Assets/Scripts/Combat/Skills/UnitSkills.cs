@@ -4,12 +4,13 @@ using System.Collections.Generic;
 /*
  * 유닛이 학습한 액티브·패시브 스킬과 선택한 강화·마스터 ID를 보관한다.
  * 전투 실행 상태나 스킬 효과를 계산하지 않고 확정된 학습 결과의
- * 추가, 조회, 삭제만 담당한다.
+ * 추가, 조회, 삭제만 담당
  */
 namespace Pakuri.InGame
 {
     public class UnitSkills
     {
+        // 유닛이 학습하거나 선택한 스킬·강화 ID 저장소를 구현.
         private readonly HashSet<string> learnedActiveSkillIds = new HashSet<string>();
         private readonly HashSet<string> learnedPassiveSkillIds = new HashSet<string>();
         private readonly HashSet<string> chosenEnhancementIds = new HashSet<string>();
@@ -50,7 +51,7 @@ namespace Pakuri.InGame
         /*
          * 학습한 액티브 스킬 ID를 삭제한다.
          */
-        public void RemoveActiveSkill(string skillId /* 삭제할 액티브 스킬 식별자 */)
+        public void RemoveActiveSkill(string skillId)
         {
             if (!string.IsNullOrWhiteSpace(skillId))
             {
@@ -61,7 +62,7 @@ namespace Pakuri.InGame
         /*
          * 학습한 패시브 스킬 ID를 추가한다.
          */
-        public void AddPassiveSkill(string skillId /* 학습한 패시브 스킬 식별자 */)
+        public void AddPassiveSkill(string skillId )
         {
             if (!string.IsNullOrWhiteSpace(skillId))
             {
@@ -72,7 +73,7 @@ namespace Pakuri.InGame
         /*
          * 패시브 스킬을 학습했는지 확인한다.
          */
-        public bool HasPassiveSkill(string skillId /* 확인할 패시브 스킬 식별자 */)
+        public bool HasPassiveSkill(string skillId )
         {
             foreach (var learnedSkillId in learnedPassiveSkillIds)
             {
@@ -88,7 +89,7 @@ namespace Pakuri.InGame
         /*
          * 학습한 패시브 스킬 ID를 삭제한다.
          */
-        public void RemovePassiveSkill(string skillId /* 삭제할 패시브 스킬 식별자 */)
+        public void RemovePassiveSkill(string skillId )
         {
             if (!string.IsNullOrWhiteSpace(skillId))
             {
@@ -108,7 +109,7 @@ namespace Pakuri.InGame
         }
 
         /*
-         * 강화 효과를 선택했는지 확인한다.
+         * 강화 효과를 학습했는지 확인
          */
         public bool HasEnhancement(string choiceId /* 확인할 강화 효과 식별자 */)
         {
