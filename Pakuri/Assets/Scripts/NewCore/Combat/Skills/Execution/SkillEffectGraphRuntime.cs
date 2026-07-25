@@ -11,7 +11,7 @@ using Pakuri.NewCore.Units.Models;
 /* 선택지와 트리거가 소유한 효과 그래프를 해석해 전투 효과로 실행한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
-    public sealed class SkillEffectGraphRuntime
+    public class SkillEffectGraphRuntime
     {
         private readonly GameDefinitionCatalog catalog;
         private readonly SkillActorManager actors;
@@ -52,10 +52,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 {
                     SkillChoiceDefinition choice =
                         monster.SkillBucket.SelectedChoices[index];
-                    string effectiveSkillId =
-                        string.IsNullOrEmpty(choice.target_skill_id)
-                            ? choice.skill_id
-                            : choice.target_skill_id;
+                    string effectiveSkillId = choice.target_skill_id;
+                    if (string.IsNullOrEmpty(effectiveSkillId))
+                    {
+                        effectiveSkillId = choice.skill_id;
+                    }
                     if (effectiveSkillId == request.Skill.skill_id
                         || ChoiceTargetsSkill(
                             choice.choice_id,
@@ -142,12 +143,14 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 {
                     continue;
                 }
-                string ownerOrder = string.Equals(
-                    node.owner_id,
-                    request.Skill.skill_id,
-                    StringComparison.Ordinal)
-                        ? "0:"
-                        : "1:";
+                string ownerOrder = "1:";
+                if (string.Equals(
+                        node.owner_id,
+                        request.Skill.skill_id,
+                        StringComparison.Ordinal))
+                {
+                    ownerOrder = "0:";
+                }
                 string key = ownerOrder
                     + node.owner_id
                     + ":"
@@ -182,11 +185,14 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             string requiredEffectTiming)
         {
             string graphTiming = ReadEffectTiming(graph);
+            string effectiveGraphTiming = graphTiming;
+            if (string.IsNullOrEmpty(effectiveGraphTiming))
+            {
+                effectiveGraphTiming = "OnCast";
+            }
             if (!string.IsNullOrEmpty(requiredEffectTiming)
                 && !string.Equals(
-                    string.IsNullOrEmpty(graphTiming)
-                        ? "OnCast"
-                        : graphTiming,
+                    effectiveGraphTiming,
                     requiredEffectTiming,
                     StringComparison.Ordinal))
             {
@@ -318,9 +324,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                                 runtimeKindFilter);
                             break;
                         }
-                        throw new NotSupportedException(
-                            $"Effect graph node '{node.node_type_id}' "
-                            + "has no runtime consumer.");
+                        break;
                 }
             }
             if (hasStatusModifier && !hasStatusApplication)
@@ -374,9 +378,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             float delay)
         {
             float interval = Number(node.arg_7, 0f);
-            int count = interval > 0f && lifetime > 0f
-                ? Math.Max(1, (int)Math.Ceiling(lifetime / interval))
-                : 1;
+            int count = 1;
+            if (interval > 0f && lifetime > 0f)
+            {
+                count = Math.Max(1, (int)Math.Ceiling(lifetime / interval));
+            }
             actors.Register(new ScheduledSkillActor(
                 request.Skill,
                 count,
@@ -525,18 +531,24 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             {
                 if (targets[index].IsAlive)
                 {
+                    float? statusDuration = null;
+                    if (resolvedDuration > 0f)
+                    {
+                        statusDuration = resolvedDuration;
+                    }
+                    int? appliedMaximumStacks = null;
+                    if (resolvedMaximum > 0)
+                    {
+                        appliedMaximumStacks = resolvedMaximum;
+                    }
                     combat.ApplyStatus(
                         request.Caster,
                         targets[index],
                         status,
-                        resolvedDuration > 0f
-                            ? resolvedDuration
-                            : (float?)null,
+                        statusDuration,
                         resolvedStacks,
                         request.Skill.skill_id,
-                        resolvedMaximum > 0
-                            ? resolvedMaximum
-                            : (int?)null);
+                        appliedMaximumStacks);
                     for (var planIndex = 0;
                         planIndex < plan.Nodes.Count;
                         planIndex++)
@@ -560,13 +572,16 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                             continue;
                         }
                         plan.ReportConsumed(modifier);
+                        float modifierDuration = 0.00001f;
+                        if (resolvedDuration > 0f)
+                        {
+                            modifierDuration = resolvedDuration;
+                        }
                         AddModifierToTarget(
                             request,
                             targets[index],
                             modifier,
-                            resolvedDuration > 0f
-                                ? resolvedDuration
-                                : 0.00001f,
+                            modifierDuration,
                             null);
                     }
                 }
@@ -581,7 +596,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             float lifetime,
             string runtimeKindFilter)
         {
-            float duration = lifetime > 0f ? lifetime : 0.00001f;
+            float duration = 0.00001f;
+            if (lifetime > 0f)
+            {
+                duration = lifetime;
+            }
             for (int index = 0; index < targets.Count; index++)
             {
                 AddModifierToTarget(
@@ -609,14 +628,17 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     == "StatusConditionalStatusChanceBonus"
                 || node.node_type_id
                     == "StatusDurationBonus";
-            float value = valueInSecondArgument
-                ? Number(node.arg_2, 0f)
-                : Number(node.arg_1, 0f);
-            string filter = valueInSecondArgument
-                ? node.arg_1
-                : !string.IsNullOrEmpty(runtimeKindFilter)
-                    ? runtimeKindFilter
-                    : node.arg_2;
+            float value = Number(node.arg_1, 0f);
+            string filter = node.arg_2;
+            if (valueInSecondArgument)
+            {
+                value = Number(node.arg_2, 0f);
+                filter = node.arg_1;
+            }
+            else if (!string.IsNullOrEmpty(runtimeKindFilter))
+            {
+                filter = runtimeKindFilter;
+            }
             target.AddRuntimeModifier(
                 node.node_type_id,
                 value,
@@ -704,7 +726,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             ChoiceNodeDefinition node,
             float lifetime)
         {
-            UnitBaseModel target = targets.Count > 0 ? targets[0] : null;
+            UnitBaseModel target = null;
+            if (targets.Count > 0)
+            {
+                target = targets[0];
+            }
             if (target == null)
             {
                 return;
@@ -712,15 +738,28 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
 
             bool prefabVisual =
                 node.node_type_id == "EffectVisual";
+            string prefabKey = string.Empty;
+            string spriteKey = node.arg_1;
+            string animatorKey = node.arg_2;
+            float scale = Number(node.arg_3, 1f);
+            int sortingOrder = Integer(node.arg_4, 0);
+            if (prefabVisual)
+            {
+                prefabKey = node.arg_1;
+                spriteKey = string.Empty;
+                animatorKey = string.Empty;
+                scale = 1f;
+                sortingOrder = 0;
+            }
             var visual = new EffectVisualRequest(
-                prefabVisual ? node.arg_1 : string.Empty,
-                prefabVisual ? string.Empty : node.arg_1,
-                prefabVisual ? string.Empty : node.arg_2,
-                prefabVisual ? 1f : Number(node.arg_3, 1f),
+                prefabKey,
+                spriteKey,
+                animatorKey,
+                scale,
                 0f,
                 0f,
                 0f,
-                prefabVisual ? 0 : Integer(node.arg_4, 0));
+                sortingOrder);
             EffectHandle effect = effects.Create(
                 visual,
                 target.Position,
@@ -738,7 +777,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             List<ChoiceNodeDefinition> graph,
             List<UnitBaseModel> targets)
         {
-            UnitBaseModel target = targets.Count > 0 ? targets[0] : request.Caster;
+            UnitBaseModel target = request.Caster;
+            if (targets.Count > 0)
+            {
+                target = targets[0];
+            }
             for (int index = 0; index < graph.Count; index++)
             {
                 ChoiceNodeDefinition node = graph[index];
@@ -858,10 +901,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     node.arg_3);
             }
 
-            char separator = node.node_type_id
-                == "ConditionStatusExpression"
-                    ? '&'
-                    : ';';
+            char separator = ';';
+            if (node.node_type_id == "ConditionStatusExpression")
+            {
+                separator = '&';
+            }
             string[] ids = (node.arg_1 ?? string.Empty)
                 .Split(separator);
             if (node.node_type_id == "ConditionAnyStatus")
@@ -893,12 +937,15 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             UnitBaseModel unit,
             string attribute)
         {
-            IReadOnlyList<SkillDefinition> skills =
-                unit is MonsterModel monster
-                    ? monster.SkillBucket.ActiveSkills
-                    : unit is EnemyModel enemy
-                        ? enemy.SkillBucket.ActiveSkills
-                        : null;
+            IReadOnlyList<SkillDefinition> skills = null;
+            if (unit is MonsterModel monster)
+            {
+                skills = monster.SkillBucket.ActiveSkills;
+            }
+            else if (unit is EnemyModel enemy)
+            {
+                skills = enemy.SkillBucket.ActiveSkills;
+            }
             if (skills == null)
             {
                 return false;
@@ -1127,49 +1174,57 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         /* 문자열을 고정 문화권 실수로 변환하고 실패하면 기본값을 반환한다. */
         private static float Number(string value, float fallback)
         {
-            return float.TryParse(
-                value,
-                NumberStyles.Float,
-                CultureInfo.InvariantCulture,
-                out float parsed)
-                ? parsed
-                : fallback;
+            if (float.TryParse(
+                    value,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out float parsed))
+            {
+                return parsed;
+            }
+            return fallback;
         }
 
         /* 문자열을 고정 문화권 정수로 변환하고 실패하면 기본값을 반환한다. */
         private static int Integer(string value, int fallback)
         {
-            return int.TryParse(
-                value,
-                NumberStyles.Integer,
-                CultureInfo.InvariantCulture,
-                out int parsed)
-                ? parsed
-                : fallback;
+            if (int.TryParse(
+                    value,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out int parsed))
+            {
+                return parsed;
+            }
+            return fallback;
         }
 
         /* 문자열을 실수로 변환하고 실패하면 null을 반환한다. */
         private static float? NullableNumber(string value)
         {
-            return float.TryParse(
-                value,
-                NumberStyles.Float,
-                CultureInfo.InvariantCulture,
-                out float parsed)
-                ? parsed
-                : (float?)null;
+            if (float.TryParse(
+                    value,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out float parsed))
+            {
+                return parsed;
+            }
+            return null;
         }
 
         /* 문자열을 정수로 변환하고 실패하면 null을 반환한다. */
         private static int? NullableInt(string value)
         {
-            return int.TryParse(
-                value,
-                NumberStyles.Integer,
-                CultureInfo.InvariantCulture,
-                out int parsed)
-                ? parsed
-                : (int?)null;
+            if (int.TryParse(
+                    value,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out int parsed))
+            {
+                return parsed;
+            }
+            return null;
         }
     }
 }

@@ -66,7 +66,12 @@ namespace Pakuri.NewCore.Combat.Effects
             SpritePath = spritePath ?? string.Empty;
             AnimatorControllerPath =
                 animatorControllerPath ?? string.Empty;
-            Scale = scale > 0f ? scale : 1f;
+            Scale = 1f;
+            if (scale > 0f)
+            {
+                Scale = scale;
+            }
+
             ScaleX = scaleX;
             ScaleY = scaleY;
             ScaleZ = scaleZ;
@@ -98,7 +103,7 @@ namespace Pakuri.NewCore.Combat.Effects
             || !string.IsNullOrWhiteSpace(AnimatorControllerPath);
     }
 
-    public sealed class EffectHandle
+    public class EffectHandle
     {
         /* Manager가 확정한 식별자·사양·배치를 활성 핸들로 저장한다. */
         internal EffectHandle(
@@ -118,10 +123,19 @@ namespace Pakuri.NewCore.Combat.Effects
 
         public EffectVisualSpec Visual { get; }
 
-        public string ResourcePath =>
-            !string.IsNullOrWhiteSpace(Visual.PrefabPath)
-                ? Visual.PrefabPath
-                : Visual.SpritePath;
+        public string ResourcePath
+        {
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(
+                        Visual.PrefabPath))
+                {
+                    return Visual.PrefabPath;
+                }
+
+                return Visual.SpritePath;
+            }
+        }
 
         public CombatVector2 Position { get; internal set; }
 
@@ -130,7 +144,7 @@ namespace Pakuri.NewCore.Combat.Effects
         public bool IsActive { get; internal set; }
     }
 
-    public sealed class EffectManager : MonoBehaviour
+    public class EffectManager : MonoBehaviour
     {
         private readonly List<EffectHandle> handles = new List<EffectHandle>();
         private readonly Dictionary<int, GameObject> instances =
@@ -155,14 +169,10 @@ namespace Pakuri.NewCore.Combat.Effects
             Func<string, Sprite> resolveSprite,
             Func<string, RuntimeAnimatorController> resolveAnimator)
         {
-            runtimeSkillRoot = visualRoot
-                ?? throw new ArgumentNullException(nameof(visualRoot));
-            prefabResolver = resolvePrefab
-                ?? throw new ArgumentNullException(nameof(resolvePrefab));
-            spriteResolver = resolveSprite
-                ?? throw new ArgumentNullException(nameof(resolveSprite));
-            animatorResolver = resolveAnimator
-                ?? throw new ArgumentNullException(nameof(resolveAnimator));
+            runtimeSkillRoot = visualRoot;
+            prefabResolver = resolvePrefab;
+            spriteResolver = resolveSprite;
+            animatorResolver = resolveAnimator;
         }
 
         /* serialized 시각 루트와 bootstrap resource resolver를 연결한다. */
@@ -328,43 +338,30 @@ namespace Pakuri.NewCore.Combat.Effects
         private GameObject CreateInstance(EffectHandle handle)
         {
             EffectVisualSpec visual = handle.Visual;
-            GameObject instance;
+            GameObject instance = null;
             if (!string.IsNullOrWhiteSpace(visual.PrefabPath))
             {
                 GameObject prefab = prefabResolver(visual.PrefabPath);
-                if (prefab == null)
-                {
-                    throw new InvalidOperationException(
-                        $"No visual prefab is mapped for '{visual.PrefabPath}'.");
-                }
 
                 instance = Object.Instantiate(prefab, runtimeSkillRoot);
             }
             else if (!string.IsNullOrWhiteSpace(visual.SpritePath))
             {
                 Sprite sprite = spriteResolver(visual.SpritePath);
-                if (sprite == null)
+
+                string instanceName = sprite.name;
+                if (string.IsNullOrWhiteSpace(instanceName))
                 {
-                    throw new InvalidOperationException(
-                        $"No visual sprite is mapped for '{visual.SpritePath}'.");
+                    instanceName = "NewCoreSkillVisual";
                 }
 
-                instance = new GameObject(
-                    string.IsNullOrWhiteSpace(sprite.name)
-                        ? "NewCoreSkillVisual"
-                        : sprite.name);
+                instance = new GameObject(instanceName);
                 instance.transform.SetParent(runtimeSkillRoot, false);
                 instance.AddComponent<SpriteRenderer>().sprite = sprite;
             }
             else
             {
-                if (!visual.HasResource)
-                {
-                    return null;
-                }
-
-                throw new InvalidOperationException(
-                    "The effect visual has no creatable prefab or sprite.");
+                return null;
             }
 
             ConfigureRuntimeVisual(instance, visual);
@@ -379,11 +376,6 @@ namespace Pakuri.NewCore.Combat.Effects
             if (!string.IsNullOrWhiteSpace(visual.SpritePath))
             {
                 Sprite sprite = spriteResolver(visual.SpritePath);
-                if (sprite == null)
-                {
-                    throw new InvalidOperationException(
-                        $"No visual sprite is mapped for '{visual.SpritePath}'.");
-                }
 
                 SpriteRenderer renderer = instance.GetComponent<SpriteRenderer>();
                 if (renderer == null)
@@ -400,12 +392,6 @@ namespace Pakuri.NewCore.Combat.Effects
             {
                 RuntimeAnimatorController controller =
                     animatorResolver(visual.AnimatorControllerPath);
-                if (controller == null)
-                {
-                    throw new InvalidOperationException(
-                        "No visual AnimatorController is mapped for "
-                        + $"'{visual.AnimatorControllerPath}'.");
-                }
 
                 Animator animator = instance.GetComponent<Animator>();
                 if (animator == null)
@@ -418,10 +404,26 @@ namespace Pakuri.NewCore.Combat.Effects
 
             if (visual.UsesLocalScale)
             {
+                float scaleX = visual.ScaleX;
+                float scaleY = visual.ScaleY;
+                float scaleZ = visual.ScaleZ;
+                if (scaleX == 0f)
+                {
+                    scaleX = 1f;
+                }
+                if (scaleY == 0f)
+                {
+                    scaleY = 1f;
+                }
+                if (scaleZ == 0f)
+                {
+                    scaleZ = 1f;
+                }
+
                 instance.transform.localScale = new Vector3(
-                    visual.ScaleX == 0f ? 1f : visual.ScaleX,
-                    visual.ScaleY == 0f ? 1f : visual.ScaleY,
-                    visual.ScaleZ == 0f ? 1f : visual.ScaleZ);
+                    scaleX,
+                    scaleY,
+                    scaleZ);
             }
             else if (!string.IsNullOrWhiteSpace(visual.SpritePath)
                 || !string.IsNullOrWhiteSpace(

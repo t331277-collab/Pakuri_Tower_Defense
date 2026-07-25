@@ -6,7 +6,7 @@ using UnityEngine.UI;
 /* MainMenu panel 전환과 선택 Monster run 시작 command를 소유한다. */
 namespace Pakuri.NewCore.UI.MainMenu
 {
-    public sealed class NewCoreMainMenuController : MonoBehaviour
+    public class NewCoreMainMenuController : MonoBehaviour
     {
         [SerializeField] private GameObject introPanel;
         [SerializeField] private GameObject mainMenuPanel;
@@ -43,10 +43,13 @@ namespace Pakuri.NewCore.UI.MainMenu
         /* 선택 Monster id를 run 시작 상태에 기록하고 NewRun scene을 연다. */
         private void StartRun()
         {
-            GameBootstrap.PrepareRun(
-                string.IsNullOrWhiteSpace(selectedMonsterId)
-                    ? defaultMonsterId
-                    : selectedMonsterId);
+            string monsterId = selectedMonsterId;
+            if (string.IsNullOrWhiteSpace(monsterId))
+            {
+                monsterId = defaultMonsterId;
+            }
+
+            GameBootstrap.PrepareRun(monsterId);
             SceneManager.LoadScene(newRunScenePath);
         }
 
@@ -128,10 +131,19 @@ namespace Pakuri.NewCore.UI.MainMenu
                 return current;
             }
 
-            var child = FindChild(
-                root != null ? root.transform : null,
-                childName);
-            return child != null ? child.GetComponent<Button>() : null;
+            Transform rootTransform = null;
+            if (root != null)
+            {
+                rootTransform = root.transform;
+            }
+
+            var child = FindChild(rootTransform, childName);
+            if (child == null)
+            {
+                return null;
+            }
+
+            return child.GetComponent<Button>();
         }
 
         /* 지정 이름의 Transform을 hierarchy에서 재귀 탐색한다. */

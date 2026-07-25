@@ -22,11 +22,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             EffectManager effects,
             Func<float> randomValue)
         {
-            Catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
-            Targeting = targeting ?? throw new ArgumentNullException(nameof(targeting));
-            Actors = actors ?? throw new ArgumentNullException(nameof(actors));
-            Effects = effects ?? throw new ArgumentNullException(nameof(effects));
-            RandomValue = randomValue ?? throw new ArgumentNullException(nameof(randomValue));
+            Catalog = catalog;
+            Targeting = targeting;
+            Actors = actors;
+            Effects = effects;
+            RandomValue = randomValue;
         }
 
         protected GameDefinitionCatalog Catalog { get; }
@@ -310,9 +310,10 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                         if (stacks > 0)
                         {
                             int maximum = (int)Number(node.arg_2, stacks);
-                            stacks = maximum > 0
-                                ? Math.Min(stacks, maximum)
-                                : stacks;
+                            if (maximum > 0)
+                            {
+                                stacks = Math.Min(stacks, maximum);
+                            }
                             ApplySupplemental(
                                 combat,
                                 request,
@@ -407,13 +408,16 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     request.Skill,
                     "spell_power_coefficient");
             }
+            string resolvedAttribute = attribute;
+            if (string.IsNullOrEmpty(resolvedAttribute))
+            {
+                resolvedAttribute = request.Skill.attribute;
+            }
             combat.ApplyTriggeredDamage(
                 request.Caster,
                 target,
                 request.Skill.skill_id + ":" + suffix,
-                string.IsNullOrEmpty(attribute)
-                    ? request.Skill.attribute
-                    : attribute,
+                resolvedAttribute,
                 Math.Max(0f, baseDamage * coefficientMultiplier),
                 Math.Max(0f, attackCoefficient * coefficientMultiplier),
                 Math.Max(0f, spellCoefficient * coefficientMultiplier),
@@ -613,13 +617,15 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         /* 문자열을 고정 문화권 실수로 변환하고 실패하면 기본값을 반환한다. */
         private static float Number(string text, float fallback)
         {
-            return float.TryParse(
-                text,
-                NumberStyles.Float,
-                CultureInfo.InvariantCulture,
-                out float value)
-                ? value
-                : fallback;
+            if (float.TryParse(
+                    text,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out float value))
+            {
+                return value;
+            }
+            return fallback;
         }
 
         /* 상태 정의와 실행 계획의 수치 보정을 사용해 상태 효과를 생성한다. */
@@ -653,20 +659,35 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     SkillTargeting.ReadFloat(
                         request.Skill,
                         "status_duration_seconds")));
+            float? statusDuration = null;
+            if (duration > 0f)
+            {
+                statusDuration = duration;
+            }
+            int? statusMaximumStacks = null;
+            if (maximumStacks > 0)
+            {
+                statusMaximumStacks = maximumStacks;
+            }
             combat.ApplyStatus(
                 request.Caster,
                 target,
                 status,
-                duration > 0f ? duration : null,
+                statusDuration,
                 stacks,
                 request.Skill.skill_id,
-                maximumStacks > 0 ? maximumStacks : (int?)null);
+                statusMaximumStacks);
             request.RecordAppliedTarget(target);
+            float modifierDuration = 0.00001f;
+            if (duration > 0f)
+            {
+                modifierDuration = duration;
+            }
             ApplyPlanStatusModifiers(
                 request,
                 plan,
                 target,
-                duration > 0f ? duration : 0.00001f);
+                modifierDuration);
         }
 
         /* 실행 계획의 상태 수정 노드를 새 상태 효과 인스턴스에 반영한다. */
@@ -697,12 +718,14 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                         == "StatusConditionalDamageTakenBonus"
                     || node.node_type_id
                         == "StatusConditionalStatusChanceBonus";
-                float modifierValue = Number(
-                    valueInSecondArgument ? node.arg_2 : node.arg_1,
-                    0f);
-                string filter = valueInSecondArgument
-                    ? node.arg_1
-                    : node.arg_2;
+                string valueArgument = node.arg_1;
+                string filter = node.arg_2;
+                if (valueInSecondArgument)
+                {
+                    valueArgument = node.arg_2;
+                    filter = node.arg_1;
+                }
+                float modifierValue = Number(valueArgument, 0f);
                 target.AddRuntimeModifier(
                     node.node_type_id,
                     modifierValue,

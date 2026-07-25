@@ -8,7 +8,7 @@ using Pakuri.NewCore.Units.Models;
 /* 투사체의 이동, 교차 대상 적중, 관통 한도 생명주기를 표현한다. */
 namespace Pakuri.NewCore.Combat.Skills.Actors
 {
-    public sealed class ProjectileActor : SkillActor
+    public class ProjectileActor : SkillActor
     {
         private readonly UnitBaseModel source;
         private readonly IReadOnlyList<UnitBaseModel> registeredUnits;
@@ -39,29 +39,17 @@ namespace Pakuri.NewCore.Combat.Skills.Actors
             EffectManager effectManager)
             : base(definition, effect)
         {
-            this.source = source ?? throw new ArgumentNullException(nameof(source));
-            this.registeredUnits = registeredUnits
-                ?? throw new ArgumentNullException(nameof(registeredUnits));
-            this.targeting = targeting
-                ?? throw new ArgumentNullException(nameof(targeting));
-            if (direction.SqrMagnitude <= 0.0001f)
-            {
-                throw new ArgumentException(
-                    "Projectile requires a non-zero direction.",
-                    nameof(direction));
-            }
-            if (speed <= 0f || lifetime <= 0f || hitBudget <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(speed));
-            }
+            this.source = source;
+            this.registeredUnits = registeredUnits;
+            this.targeting = targeting;
 
             this.direction = direction.Normalized;
             this.speed = speed;
             this.lifetime = lifetime;
             this.hitBudget = hitBudget;
-            this.hit = hit ?? throw new ArgumentNullException(nameof(hit));
+            this.hit = hit;
             this.effectManager =
-                effectManager ?? throw new ArgumentNullException(nameof(effectManager));
+                effectManager;
             position = start;
         }
 

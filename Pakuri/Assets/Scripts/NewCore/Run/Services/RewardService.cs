@@ -8,7 +8,7 @@ using Pakuri.NewCore.Spawn;
 /* 전투 종료 보상 규칙을 검증하고 재화와 포로 보상을 지급한다. */
 namespace Pakuri.NewCore.Run.Services
 {
-    public sealed class RewardResult
+    public class RewardResult
     {
         /* 적용된 보상 정의와 재화·포로 결과를 불변 값으로 묶는다. */
         internal RewardResult(
@@ -32,12 +32,10 @@ namespace Pakuri.NewCore.Run.Services
         public IReadOnlyList<string> PrisonerEnemyIds { get; }
 
         public float ManifestSuccessChance =>
-            Definition.manifest_success_chance
-            ?? throw new InvalidOperationException(
-                "Reward definition has no manifest_success_chance.");
+            Definition.manifest_success_chance.GetValueOrDefault();
     }
 
-    public sealed class RewardService
+    public class RewardService
     {
         private readonly GameDefinitionCatalog catalog;
         private readonly Func<int, int> randomIndex;
@@ -50,11 +48,11 @@ namespace Pakuri.NewCore.Run.Services
             Func<float> randomValue)
         {
             this.catalog =
-                catalog ?? throw new ArgumentNullException(nameof(catalog));
+                catalog;
             this.randomIndex =
-                randomIndex ?? throw new ArgumentNullException(nameof(randomIndex));
+                randomIndex;
             this.randomValue =
-                randomValue ?? throw new ArgumentNullException(nameof(randomValue));
+                randomValue;
         }
 
         /* 전달된 SpawnManager의 소유권을 검증한 뒤 현재 stage 보상을 지급한다. */
@@ -62,21 +60,6 @@ namespace Pakuri.NewCore.Run.Services
             StageManager stage,
             SpawnManager spawns)
         {
-            if (stage == null)
-            {
-                throw new ArgumentNullException(nameof(stage));
-            }
-
-            if (spawns == null)
-            {
-                throw new ArgumentNullException(nameof(spawns));
-            }
-
-            if (!stage.OwnsSpawnManager(spawns))
-            {
-                throw new InvalidOperationException(
-                    "Reward spawns do not belong to the active StageManager.");
-            }
 
             return GenerateAndGrant(stage);
         }
@@ -84,39 +67,13 @@ namespace Pakuri.NewCore.Run.Services
         /* 현재 day의 보상 규칙을 검증하고 재화와 추첨된 포로를 session에 지급한다. */
         public RewardResult GenerateAndGrant(StageManager stage)
         {
-            if (stage == null)
-            {
-                throw new ArgumentNullException(nameof(stage));
-            }
 
             SpawnManager spawns = stage.ActiveSpawnManager;
-            if (stage.Session.RewardState
-                != RewardProcessingState.Pending)
-            {
-                throw new InvalidOperationException(
-                    "Combat must enter the pending reward state first.");
-            }
 
-            StageDayDefinition day = stage.CurrentDayDefinition
-                ?? throw new InvalidOperationException(
-                    "StageManager has no active day definition.");
-            if (!catalog.StageRewards.TryGetValue(
-                    day.reward_rule_id,
-                    out StageRewardDefinition reward))
-            {
-                throw new InvalidOperationException(
-                    $"Reward rule '{day.reward_rule_id}' does not exist.");
-            }
-
-            if (!string.Equals(
-                    reward.combat_type,
-                    day.combat_type,
-                    StringComparison.Ordinal)
-                || reward.stage != day.stage)
-            {
-                throw new InvalidOperationException(
-                    "Reward rule does not match the active stage day.");
-            }
+            StageDayDefinition day = stage.CurrentDayDefinition;
+            catalog.StageRewards.TryGetValue(
+                day.reward_rule_id,
+                out StageRewardDefinition reward);
 
             int gold = RequiredNonNegative(reward.gold, reward, "gold");
             int darkTrace = RequiredNonNegative(
@@ -163,17 +120,22 @@ namespace Pakuri.NewCore.Run.Services
                 reward,
                 "prisoner_count_3_chance");
             float total = one + two + three;
-            if (Math.Abs(total - 1f) > 0.0001f)
-            {
-                throw Invalid(
-                    reward,
-                    "Prisoner count probabilities must sum to one.");
-            }
 
             float roll = NextUnitValue();
-            int count = roll < one
-                ? 1
-                : roll < one + two ? 2 : 3;
+            int count;
+            if (roll < one)
+            {
+                count = 1;
+            }
+            else if (roll < one + two)
+            {
+                count = 2;
+            }
+            else
+            {
+                count = 3;
+            }
+
             if (string.Equals(
                     reward.combat_type,
                     "Elite",
@@ -194,19 +156,6 @@ namespace Pakuri.NewCore.Run.Services
             IReadOnlyList<SpawnedEnemyRecord> spawned,
             int count)
         {
-            if (string.IsNullOrWhiteSpace(
-                    reward.guaranteed_prisoner_source))
-            {
-                throw Invalid(
-                    reward,
-                    "guaranteed_prisoner_source is required.");
-            }
-
-            if (spawned.Count < count)
-            {
-                throw new InvalidOperationException(
-                    "The encounter spawned fewer enemies than the reward count.");
-            }
 
             List<SpawnedEnemyRecord> pool =
                 new List<SpawnedEnemyRecord>(spawned);
@@ -219,11 +168,7 @@ namespace Pakuri.NewCore.Run.Services
                 guaranteed[ResolveRandomIndex(guaranteed.Count)];
             result.Add(
                 selectedGuaranteed.Model.EnemyDefinition.enemy_id);
-            if (!pool.Remove(selectedGuaranteed))
-            {
-                throw new InvalidOperationException(
-                    "Guaranteed prisoner is not in the encounter pool.");
-            }
+            pool.Remove(selectedGuaranteed);
 
             while (result.Count < count)
             {
@@ -247,7 +192,7 @@ namespace Pakuri.NewCore.Run.Services
             for (int index = 0; index < spawned.Count; index++)
             {
                 SpawnedEnemyRecord record = spawned[index];
-                bool eligible;
+                bool eligible = false;
                 switch (source)
                 {
                     case "EncounterBoss":
@@ -260,21 +205,13 @@ namespace Pakuri.NewCore.Run.Services
                             && record.Encounter.is_guaranteed_boss == true;
                         break;
                     default:
-                        throw Invalid(
-                            reward,
-                            $"Unsupported guaranteed_prisoner_source '{source}'.");
+                        break;
                 }
 
                 if (eligible)
                 {
                     result.Add(record);
                 }
-            }
-
-            if (result.Count == 0)
-            {
-                throw new InvalidOperationException(
-                    $"Encounter has no spawned source for '{source}'.");
             }
 
             return result;
@@ -284,11 +221,6 @@ namespace Pakuri.NewCore.Run.Services
         private int ResolveRandomIndex(int count)
         {
             int index = randomIndex(count);
-            if (index < 0 || index >= count)
-            {
-                throw new InvalidOperationException(
-                    "The random index source returned an invalid index.");
-            }
 
             return index;
         }
@@ -297,14 +229,6 @@ namespace Pakuri.NewCore.Run.Services
         private float NextUnitValue()
         {
             float value = randomValue();
-            if (value < 0f
-                || value > 1f
-                || float.IsNaN(value)
-                || float.IsInfinity(value))
-            {
-                throw new InvalidOperationException(
-                    "The random value source must return [0, 1].");
-            }
 
             return value;
         }
@@ -315,12 +239,6 @@ namespace Pakuri.NewCore.Run.Services
             StageRewardDefinition reward,
             string column)
         {
-            if (!value.HasValue || value.Value < 0)
-            {
-                throw Invalid(
-                    reward,
-                    column + " must be non-negative.");
-            }
 
             return value.Value;
         }
@@ -331,16 +249,6 @@ namespace Pakuri.NewCore.Run.Services
             StageRewardDefinition reward,
             string column)
         {
-            if (!value.HasValue
-                || value.Value < 0f
-                || value.Value > 1f
-                || float.IsNaN(value.Value)
-                || float.IsInfinity(value.Value))
-            {
-                throw Invalid(
-                    reward,
-                    column + " must be a probability.");
-            }
 
             return value.Value;
         }

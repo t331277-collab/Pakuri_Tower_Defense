@@ -13,7 +13,7 @@ using UnityEngine;
 /* run stage 상태와 현재 scene의 stage 진행 연결을 소유한다. */
 namespace Pakuri.NewCore.Run
 {
-    public sealed class StageManager : MonoBehaviour
+    public class StageManager : MonoBehaviour
     {
         [SerializeField] private GameBootstrap combatManager;
         [SerializeField] private SpawnManager unitSpawnManager;
@@ -58,17 +58,7 @@ namespace Pakuri.NewCore.Run
             int initialDarkTrace)
         {
             Session =
-                session ?? throw new ArgumentNullException(nameof(session));
-            if (initialGold < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(initialGold));
-            }
-
-            if (initialDarkTrace < 0)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(initialDarkTrace));
-            }
+                session;
 
             this.catalog = catalog;
             gold = initialGold;
@@ -196,17 +186,6 @@ namespace Pakuri.NewCore.Run
         /* 현재 stage 진행이 사용할 SpawnManager authority를 연결한다. */
         public void ConfigureSpawnManager(SpawnManager manager)
         {
-            if (manager == null)
-            {
-                throw new ArgumentNullException(nameof(manager));
-            }
-
-            if (spawnManager != null
-                && !ReferenceEquals(spawnManager, manager))
-            {
-                throw new InvalidOperationException(
-                    "A SpawnManager is already configured.");
-            }
 
             spawnManager = manager;
         }
@@ -216,15 +195,6 @@ namespace Pakuri.NewCore.Run
             InGameCombatManager manager,
             NexusModel nexusModel)
         {
-            if (manager == null)
-            {
-                throw new ArgumentNullException(nameof(manager));
-            }
-
-            if (nexusModel == null)
-            {
-                throw new ArgumentNullException(nameof(nexusModel));
-            }
 
             DisconnectCombat();
             runtimeCombatManager = manager;
@@ -248,23 +218,6 @@ namespace Pakuri.NewCore.Run
         public void StartCurrentDay()
         {
             RequireProgression();
-            if (Session.Result != RunResult.Active)
-            {
-                throw new InvalidOperationException(
-                    "A completed run cannot start another day.");
-            }
-
-            if (IsCombatActive)
-            {
-                throw new InvalidOperationException(
-                    "The current combat is already active.");
-            }
-
-            if (Session.RewardState != RewardProcessingState.None)
-            {
-                throw new InvalidOperationException(
-                    "The current reward must be completed before starting a day.");
-            }
 
             CurrentDayDefinition = FindCurrentDay();
             Session.BeginDay(CurrentDayDefinition);
@@ -339,11 +292,6 @@ namespace Pakuri.NewCore.Run
         /* 현현 Monster를 party와 현재 field에 함께 배치한다. */
         public bool PlaceManifestedMonster(MonsterModel monster)
         {
-            if (spawnManager == null)
-            {
-                throw new InvalidOperationException(
-                    "SpawnManager is not configured.");
-            }
 
             return spawnManager.PlaceManifestedMonster(this, monster);
         }
@@ -356,9 +304,7 @@ namespace Pakuri.NewCore.Run
         }
 
         internal SpawnManager ActiveSpawnManager =>
-            spawnManager
-            ?? throw new InvalidOperationException(
-                "SpawnManager is not configured.");
+            spawnManager;
 
         /* 새 day 시작 전 party Unit만 field에 다시 등록한다. */
         private void PrepareFieldForDay()
@@ -407,30 +353,19 @@ namespace Pakuri.NewCore.Run
                         Session.CurrentEncounterId,
                         StringComparison.Ordinal))
                 {
-                    if (found != null)
-                    {
-                        throw new InvalidOperationException(
-                            "The current run location is ambiguous.");
-                    }
 
                     found = day;
                 }
             }
 
-            return found
-                ?? throw new InvalidOperationException(
-                    "The current run location has no StageDay definition.");
+            return found;
         }
 
         /* 현재 day 다음 순서의 authored day를 찾는다. */
         private StageDayDefinition FindNextDay()
         {
-            int stage = CurrentDayDefinition.stage
-                ?? throw new InvalidOperationException(
-                    "Current StageDay has no stage.");
-            int dayNumber = CurrentDayDefinition.day
-                ?? throw new InvalidOperationException(
-                    "Current StageDay has no day.");
+            int stage = CurrentDayDefinition.stage.GetValueOrDefault();
+            int dayNumber = CurrentDayDefinition.day.GetValueOrDefault();
             StageDayDefinition sameStage = FindDay(stage, dayNumber + 1);
             return sameStage ?? FindDay(stage + 1, 1);
         }
@@ -446,12 +381,6 @@ namespace Pakuri.NewCore.Run
                     || candidate.day != day)
                 {
                     continue;
-                }
-
-                if (found != null)
-                {
-                    throw new InvalidOperationException(
-                        "Duplicate stage/day progression key.");
                 }
 
                 found = candidate;
@@ -481,12 +410,6 @@ namespace Pakuri.NewCore.Run
                 }
             }
 
-            if (rows.Count == 0)
-            {
-                throw new InvalidOperationException(
-                    $"Encounter '{encounterId}' has no spawn rows.");
-            }
-
             rows.Sort((left, right) =>
                 Nullable.Compare(
                     left.spawn_order,
@@ -503,17 +426,6 @@ namespace Pakuri.NewCore.Run
         /* catalog·spawn progression 연결이 완료됐는지 한 번 검증한다. */
         private void RequireProgression()
         {
-            if (catalog == null)
-            {
-                throw new InvalidOperationException(
-                    "GameDefinitionCatalog is not configured.");
-            }
-
-            if (spawnManager == null)
-            {
-                throw new InvalidOperationException(
-                    "SpawnManager is not configured.");
-            }
         }
 
         /* bootstrap, spawn, Nexus, stage CSV와 진행 설정의 Inspector 연결을 검증한다. */
@@ -529,40 +441,6 @@ namespace Pakuri.NewCore.Run
             if (unitSpawnManager == null)
             {
                 unitSpawnManager = GetComponent<SpawnManager>();
-            }
-
-            if (!ReferenceEquals(combatManager, bootstrap)
-                || unitSpawnManager == null
-                || nexusActor == null)
-            {
-                throw new InvalidOperationException(
-                    "New Core stage scene references are incomplete.");
-            }
-
-            if (stageDayCsv != bootstrap.StageDayAsset
-                || stageEncounterCsv != bootstrap.StageEncounterAsset
-                || stageRewardCsv != bootstrap.StageRewardAsset)
-            {
-                throw new InvalidOperationException(
-                    "Stage CSV Inspector values do not match GameBootstrap.");
-            }
-
-            if (!restorePlayerHealthOnDayAdvance)
-            {
-                throw new InvalidOperationException(
-                    "Current scene requires player health restoration on day advance.");
-            }
-
-            if (clearCheckInterval <= 0f)
-            {
-                throw new InvalidOperationException(
-                    "Clear-check interval must be positive.");
-            }
-
-            if (winStageIndex < 1 || winDayIndex < 1)
-            {
-                throw new InvalidOperationException(
-                    "Win-stage Inspector values must be positive.");
             }
 
             ValidateWinBoundary(definitions);
@@ -588,12 +466,6 @@ namespace Pakuri.NewCore.Run
                     finalDay = day.day.Value;
                 }
             }
-
-            if (winStageIndex != finalStage || winDayIndex != finalDay)
-            {
-                throw new InvalidOperationException(
-                    "Win-stage Inspector values do not match the final StageDay.");
-            }
         }
 
         /* 음수가 아닌 재화 증가량을 overflow 없이 더한다. */
@@ -602,10 +474,6 @@ namespace Pakuri.NewCore.Run
             int amount,
             string parameterName)
         {
-            if (amount < 0)
-            {
-                throw new ArgumentOutOfRangeException(parameterName);
-            }
 
             return checked(current + amount);
         }

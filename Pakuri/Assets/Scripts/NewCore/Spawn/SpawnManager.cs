@@ -19,7 +19,7 @@ using UnityEngine;
 /* encounter Model 생성과 Monster/Enemy prefab Actor 생성을 한 spawn authority에서 소유한다. */
 namespace Pakuri.NewCore.Spawn
 {
-    public sealed class SpawnedEnemyRecord
+    public class SpawnedEnemyRecord
     {
         /* 생성된 Enemy Model과 authored spawn 위치를 한 record로 저장한다. */
         internal SpawnedEnemyRecord(
@@ -42,7 +42,7 @@ namespace Pakuri.NewCore.Spawn
             Encounter.guaranteed_prisoner == true;
     }
 
-    public sealed class SpawnManager : MonoBehaviour
+    public class SpawnManager : MonoBehaviour
     {
         [Serializable]
         public struct EnemyPrefabBinding
@@ -96,11 +96,11 @@ namespace Pakuri.NewCore.Spawn
             Func<float> randomValue)
         {
             this.catalog =
-                catalog ?? throw new ArgumentNullException(nameof(catalog));
+                catalog;
             this.randomIndex =
-                randomIndex ?? throw new ArgumentNullException(nameof(randomIndex));
+                randomIndex;
             this.randomValue =
-                randomValue ?? throw new ArgumentNullException(nameof(randomValue));
+                randomValue;
             readOnlySpawned =
                 new ReadOnlyCollection<SpawnedEnemyRecord>(spawned);
         }
@@ -117,17 +117,6 @@ namespace Pakuri.NewCore.Spawn
             StageManager stage,
             IReadOnlyList<StageEncounterDefinition> encounterRows)
         {
-            if (stage == null)
-            {
-                throw new ArgumentNullException(nameof(stage));
-            }
-
-            if (encounterRows == null || encounterRows.Count == 0)
-            {
-                throw new ArgumentException(
-                    "Encounter rows are required.",
-                    nameof(encounterRows));
-            }
 
             stageManager = stage;
             pending.Clear();
@@ -144,15 +133,6 @@ namespace Pakuri.NewCore.Spawn
             List<int> bossCandidates = new List<int>();
             for (int index = 0; index < rows.Count; index++)
             {
-                if (!string.Equals(
-                        rows[index].encounter_id,
-                        encounterId,
-                        StringComparison.Ordinal))
-                {
-                    throw new ArgumentException(
-                        "Encounter rows must share one encounter id.",
-                        nameof(encounterRows));
-                }
 
                 if (rows[index].is_boss_candidate == true)
                 {
@@ -160,10 +140,13 @@ namespace Pakuri.NewCore.Spawn
                 }
             }
 
-            int selectedBossRow = bossCandidates.Count == 0
-                ? -1
-                : bossCandidates[
+            int selectedBossRow = -1;
+            if (bossCandidates.Count > 0)
+            {
+                selectedBossRow = bossCandidates[
                     ResolveRandomIndex(bossCandidates.Count)];
+            }
+
             for (int rowIndex = 0;
                 rowIndex < rows.Count;
                 rowIndex++)
@@ -182,10 +165,16 @@ namespace Pakuri.NewCore.Spawn
                     bool isBoss = row.is_guaranteed_boss == true
                         || (rowIndex == selectedBossRow
                             && instance == 0);
+                    float delay = interval;
+                    if (pending.Count == 0)
+                    {
+                        delay = 0f;
+                    }
+
                     pending.Add(new SpawnEntry(
                         row,
                         isBoss,
-                        pending.Count == 0 ? 0f : interval));
+                        delay));
                 }
             }
 
@@ -209,9 +198,14 @@ namespace Pakuri.NewCore.Spawn
                 SpawnEntry entry = pending[nextIndex++];
                 Spawn(entry);
                 created++;
-                nextDelay = HasPendingSpawns
-                    ? pending[nextIndex].Delay - carry
-                    : 0f;
+                if (HasPendingSpawns)
+                {
+                    nextDelay = pending[nextIndex].Delay - carry;
+                }
+                else
+                {
+                    nextDelay = 0f;
+                }
             }
 
             return created;
@@ -222,10 +216,6 @@ namespace Pakuri.NewCore.Spawn
             MonsterDefinition definition,
             bool autoSkillEnabled)
         {
-            if (definition == null)
-            {
-                throw new ArgumentNullException(nameof(definition));
-            }
 
             IEnumerable<SkillChoiceDefinition> passiveBases =
                 catalog.Choices.Values
@@ -250,15 +240,6 @@ namespace Pakuri.NewCore.Spawn
             StageManager stage,
             MonsterModel monster)
         {
-            if (stage == null)
-            {
-                throw new ArgumentNullException(nameof(stage));
-            }
-
-            if (monster == null)
-            {
-                throw new ArgumentNullException(nameof(monster));
-            }
 
             return stage.TryRegisterFieldUnit(monster);
         }
@@ -268,9 +249,12 @@ namespace Pakuri.NewCore.Spawn
         {
             EnemyDefinition definition =
                 catalog.GetEnemy(entry.Encounter.enemy_id);
-            float multiplier = entry.IsBoss
-                ? ResolveBossHealthMultiplier(entry.Encounter)
-                : 1f;
+            float multiplier = 1f;
+            if (entry.IsBoss)
+            {
+                multiplier = ResolveBossHealthMultiplier(entry.Encounter);
+            }
+
             EnemyModel model = new EnemyModel(
                 definition,
                 catalog.GetSkill(definition.skill_slot_a_id),
@@ -290,22 +274,12 @@ namespace Pakuri.NewCore.Spawn
                 entry.Encounter.spawn_y_max,
                 entry.Encounter,
                 "spawn_y_max");
-            if (yMaximum < yMinimum)
-            {
-                throw Invalid(
-                    entry.Encounter,
-                    "spawn_y_max is less than spawn_y_min.");
-            }
 
             model.SetPosition(new CombatVector2(
                 x,
                 yMinimum
                     + ((yMaximum - yMinimum) * NextUnitValue())));
-            if (!stageManager.TryRegisterFieldUnit(model))
-            {
-                throw new InvalidOperationException(
-                    "Spawned enemy registration failed.");
-            }
+            stageManager.TryRegisterFieldUnit(model);
 
             spawned.Add(new SpawnedEnemyRecord(
                 model,
@@ -325,12 +299,6 @@ namespace Pakuri.NewCore.Spawn
                 encounter.boss_health_multiplier_max,
                 encounter,
                 "boss_health_multiplier_max");
-            if (maximum < minimum)
-            {
-                throw Invalid(
-                    encounter,
-                    "boss_health_multiplier_max is less than minimum.");
-            }
 
             return minimum + ((maximum - minimum) * NextUnitValue());
         }
@@ -339,11 +307,6 @@ namespace Pakuri.NewCore.Spawn
         private int ResolveRandomIndex(int count)
         {
             int index = randomIndex(count);
-            if (index < 0 || index >= count)
-            {
-                throw new InvalidOperationException(
-                    "The random index source returned an invalid index.");
-            }
 
             return index;
         }
@@ -352,14 +315,6 @@ namespace Pakuri.NewCore.Spawn
         private float NextUnitValue()
         {
             float value = randomValue();
-            if (value < 0f
-                || value > 1f
-                || float.IsNaN(value)
-                || float.IsInfinity(value))
-            {
-                throw new InvalidOperationException(
-                    "The random value source must return [0, 1].");
-            }
 
             return value;
         }
@@ -370,10 +325,6 @@ namespace Pakuri.NewCore.Spawn
             StageEncounterDefinition row,
             string column)
         {
-            if (!value.HasValue || value.Value <= 0)
-            {
-                throw Invalid(row, column + " must be positive.");
-            }
 
             return value.Value;
         }
@@ -385,10 +336,6 @@ namespace Pakuri.NewCore.Spawn
             string column)
         {
             float result = RequiredFinite(value, row, column);
-            if (result <= 0f)
-            {
-                throw Invalid(row, column + " must be positive.");
-            }
 
             return result;
         }
@@ -400,10 +347,6 @@ namespace Pakuri.NewCore.Spawn
             string column)
         {
             float result = RequiredFinite(value, row, column);
-            if (result < 0f)
-            {
-                throw Invalid(row, column + " cannot be negative.");
-            }
 
             return result;
         }
@@ -414,12 +357,6 @@ namespace Pakuri.NewCore.Spawn
             StageEncounterDefinition row,
             string column)
         {
-            if (!value.HasValue
-                || float.IsNaN(value.Value)
-                || float.IsInfinity(value.Value))
-            {
-                throw Invalid(row, column + " must be finite.");
-            }
 
             return value.Value;
         }
@@ -438,32 +375,15 @@ namespace Pakuri.NewCore.Spawn
             float value,
             string parameterName)
         {
-            if (value < 0f
-                || float.IsNaN(value)
-                || float.IsInfinity(value))
-            {
-                throw new ArgumentOutOfRangeException(parameterName);
-            }
         }
 
         /* scene bootstrap과 Inspector spawn/prefab 참조를 검증해 Actor 생성 경계를 연결한다. */
         public void BindScene(GameBootstrap sceneRuntime)
         {
-            runtime = sceneRuntime
-                ?? throw new ArgumentNullException(nameof(sceneRuntime));
+            runtime = sceneRuntime;
             if (combatManager == null)
             {
                 combatManager = GetComponent<GameBootstrap>();
-            }
-
-            if (!ReferenceEquals(combatManager, runtime)
-                || playerSpawnPoint == null
-                || enemySpawnPoint == null
-                || runtimeEnemyRoot == null
-                || runtimeMonsterRoot == null)
-            {
-                throw new InvalidOperationException(
-                    "New Core spawn scene references are incomplete.");
             }
 
             BuildEnemyLookup();
@@ -481,11 +401,6 @@ namespace Pakuri.NewCore.Spawn
                 ResolveMonsterPrefab(model.MonsterDefinition.id);
             int slot =
                 runtime.Stage.Session.PartyRoster.Members.IndexOf(model);
-            if (slot < 0)
-            {
-                throw new InvalidOperationException(
-                    $"Monster '{model.MonsterDefinition.id}' is not in the party roster.");
-            }
 
             Transform point = ResolvePartySpawnPoint(slot);
             GameObject instance = Instantiate(
@@ -494,11 +409,6 @@ namespace Pakuri.NewCore.Spawn
                 prefab.transform.rotation,
                 runtimeMonsterRoot);
             actor = instance.GetComponent<MonsterActor>();
-            if (actor == null)
-            {
-                throw new InvalidOperationException(
-                    $"Monster prefab '{prefab.name}' has no New Core actor.");
-            }
 
             actor.Bind(model);
             monsters.Add(model, actor);
@@ -539,11 +449,6 @@ namespace Pakuri.NewCore.Spawn
                     prefab.transform.rotation,
                     runtimeEnemyRoot);
                 EnemyActor actor = instance.GetComponent<EnemyActor>();
-                if (actor == null)
-                {
-                    throw new InvalidOperationException(
-                        $"Enemy prefab '{prefab.name}' has no New Core actor.");
-                }
 
                 actor.Bind(model);
                 enemies.Add(model, actor);
@@ -648,12 +553,6 @@ namespace Pakuri.NewCore.Spawn
                 index++)
             {
                 EnemyPrefabBinding binding = enemyPrefabBindings[index];
-                if (string.IsNullOrWhiteSpace(binding.EnemyId)
-                    || binding.Prefab == null)
-                {
-                    throw new InvalidOperationException(
-                        "Enemy prefab binding is incomplete.");
-                }
 
                 enemyPrefabs.Add(binding.EnemyId, binding.Prefab);
             }
@@ -670,22 +569,16 @@ namespace Pakuri.NewCore.Spawn
                 case "sein": return Require(seinUnitPrefab, monsterId);
                 case "vega": return Require(vegaUnitPrefab, monsterId);
                 default:
-                    throw new InvalidOperationException(
-                        $"No monster prefab is mapped for '{monsterId}'.");
+                    break;
             }
+
+            return null;
         }
 
         /* Enemy id runtime lookup에서 대응 prefab을 반환한다. */
         private GameObject ResolveEnemyPrefab(string enemyId)
         {
-            if (!enemyPrefabs.TryGetValue(
-                    enemyId,
-                    out GameObject prefab))
-            {
-                throw new InvalidOperationException(
-                    $"No enemy prefab is mapped for '{enemyId}'.");
-            }
-
+            enemyPrefabs.TryGetValue(enemyId, out GameObject prefab);
             return prefab;
         }
 
@@ -699,11 +592,6 @@ namespace Pakuri.NewCore.Spawn
 
             GameObject target =
                 GameObject.Find($"{slot + 1}PSpawnPoint");
-            if (target == null)
-            {
-                throw new InvalidOperationException(
-                    $"Party spawn point {slot + 1}PSpawnPoint is missing.");
-            }
 
             return target.transform;
         }
@@ -713,13 +601,11 @@ namespace Pakuri.NewCore.Spawn
             GameObject prefab,
             string unitId)
         {
-            return prefab != null
-                ? prefab
-                : throw new InvalidOperationException(
-                    $"Unit prefab '{unitId}' is missing.");
+
+            return prefab;
         }
 
-        private sealed class SpawnEntry
+        private class SpawnEntry
         {
             /* authored spawn 시각·순서·위치를 runtime queue 항목으로 저장한다. */
             public SpawnEntry(

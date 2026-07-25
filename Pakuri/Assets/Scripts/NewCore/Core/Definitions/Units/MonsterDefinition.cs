@@ -1,7 +1,7 @@
 /* 몬스터 런타임 정의와 카탈로그 순서 매핑의 CSV 데이터를 소유한다. */
 namespace Pakuri.NewCore.Definitions.Units
 {
-    public sealed class MonsterDefinition : UnitDefinition
+    public class MonsterDefinition : UnitDefinition
     {
         /* 몬스터 행의 필수 표시·역할·속성 필드를 검증한다. */
         internal MonsterDefinition(CsvDefinitionData data)
@@ -60,7 +60,7 @@ namespace Pakuri.NewCore.Definitions.Units
         public string MonsterIconImage => OptionalString(nameof(MonsterIconImage));
     }
 
-    public sealed class CatalogMonsterDefinition : CsvDefinition
+    public class CatalogMonsterDefinition : CsvDefinition
     {
         /* 카탈로그 행의 필수 카탈로그와 몬스터 식별자를 검증한다. */
         internal CatalogMonsterDefinition(CsvDefinitionData data)

@@ -8,7 +8,7 @@ using Pakuri.NewCore.Definitions.Units;
 /* 몬스터의 스킬 학습, 선택지 제한, 패시브 선행 조건을 관리한다. */
 namespace Pakuri.NewCore.Combat.Skills.Runtime
 {
-    public sealed class MonsterSkillBucket : SkillBucket
+    public class MonsterSkillBucket : SkillBucket
     {
         public const int MaximumActiveSkills = 3;
         public const int MaximumPassiveSkills = 5;
@@ -29,14 +29,8 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             IEnumerable<SkillChoiceDefinition> availablePassiveBaseChoices)
         {
             OwnerDefinition =
-                ownerDefinition ?? throw new ArgumentNullException(nameof(ownerDefinition));
+                ownerDefinition;
             ValidateOwnedSkill(defaultActiveSkill);
-            if (!string.Equals(defaultActiveSkill.slot, "A", StringComparison.Ordinal))
-            {
-                throw new ArgumentException(
-                    "The initial monster skill must use slot A.",
-                    nameof(defaultActiveSkill));
-            }
 
             RegisterActive(defaultActiveSkill);
             RegisterPassiveBaseChoices(availablePassiveBaseChoices);
@@ -168,34 +162,10 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
         private void RegisterPassiveBaseChoices(
             IEnumerable<SkillChoiceDefinition> availablePassiveBaseChoices)
         {
-            if (availablePassiveBaseChoices == null)
-            {
-                throw new ArgumentNullException(nameof(availablePassiveBaseChoices));
-            }
 
             foreach (SkillChoiceDefinition choice in availablePassiveBaseChoices)
             {
-                if (choice == null
-                    || !string.Equals(
-                        choice.monster_id,
-                        OwnerDefinition.id,
-                        StringComparison.Ordinal)
-                    || !string.Equals(
-                        choice.choice_group,
-                        "PassiveBase",
-                        StringComparison.Ordinal))
-                {
-                    throw new ArgumentException(
-                        "Passive Base Choices must belong to this monster.",
-                        nameof(availablePassiveBaseChoices));
-                }
-
-                if (!passiveBaseChoices.TryAdd(choice.skill_id, choice))
-                {
-                    throw new ArgumentException(
-                        $"Duplicate Passive Base Choice for skill '{choice.skill_id}'.",
-                        nameof(availablePassiveBaseChoices));
-                }
+                passiveBaseChoices.TryAdd(choice.skill_id, choice);
             }
         }
 
@@ -248,9 +218,12 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
             }
 
             char normalized = char.ToUpperInvariant(passiveSlot[0]);
-            return normalized >= 'F' && normalized <= 'J'
-                ? ((char)('A' + normalized - 'F')).ToString()
-                : null;
+            if (normalized < 'F' || normalized > 'J')
+            {
+                return null;
+            }
+
+            return ((char)('A' + normalized - 'F')).ToString();
         }
 
         /* Choice가 현재 몬스터에 구성된 PassiveBase인지 확인한다. */
@@ -284,12 +257,6 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
         /* 스킬 정의가 현재 몬스터 소유인지 검증한다. */
         private void ValidateOwnedSkill(SkillDefinition definition)
         {
-            if (!IsOwnedSkill(definition))
-            {
-                throw new ArgumentException(
-                    "The skill does not belong to this monster.",
-                    nameof(definition));
-            }
         }
 
         /* 스킬 정의의 monster id가 현재 버킷 소유자와 일치하는지 확인한다. */

@@ -7,7 +7,7 @@ using Pakuri.NewCore.Definitions.Skills;
 /* 버프 스킬의 대상 선정과 상태 효과 적용을 실행한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
-    internal sealed class BuffExecutor : SkillExecutor
+    internal class BuffExecutor : SkillExecutor
     {
         /* 공통 카탈로그·대상 선정·Actor·이펙트 서비스를 버프 실행기에 연결한다. */
         public BuffExecutor(GameDefinitionCatalog catalog, SkillTargeting targeting, SkillActorManager actors, EffectManager effects, Func<float> randomValue)

@@ -8,7 +8,7 @@ using Pakuri.NewCore.Units.Models;
 /* 투사체 스킬의 이동 Actor 생성과 충돌 효과 적용을 실행한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
-    internal sealed class ProjectileExecutor : SkillExecutor
+    internal class ProjectileExecutor : SkillExecutor
     {
         /* 공통 카탈로그·대상 선정·Actor·이펙트 서비스를 투사체 실행기에 연결한다. */
         public ProjectileExecutor(
@@ -31,27 +31,32 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 request.Caster,
                 request.Skill,
                 request.RegisteredUnits));
-            CombatVector2 direction = request.AimDirection.HasValue
-                ? request.AimDirection.Value.Normalized
-                : ordered.Count > 0
-                    ? (ordered[0].Position - request.Caster.Position).Normalized
-                    : default;
+            CombatVector2 direction = default;
+            if (request.AimDirection.HasValue)
+            {
+                direction = request.AimDirection.Value.Normalized;
+            }
+            else if (ordered.Count > 0)
+            {
+                direction =
+                    (ordered[0].Position - request.Caster.Position).Normalized;
+            }
             if (direction.SqrMagnitude <= 0.0001f)
             {
                 return false;
             }
 
             ProjectileDefinition definition = (ProjectileDefinition)request.Skill;
-            float speed = definition.projectile_speed
-                ?? throw new InvalidOperationException(
-                    $"Projectile '{definition.skill_id}' has no projectile_speed.");
-            float lifetime = definition.Columns.TryGetValue(
+            float speed = definition.projectile_speed.GetValueOrDefault();
+            float lifetime = Math.Max(0.25f, (31f / speed) + 0.5f);
+            if (definition.Columns.TryGetValue(
                     "projectile_lifetime",
                     out object lifetimeValue)
                 && lifetimeValue is float seconds
-                && seconds > 0f
-                    ? seconds
-                    : Math.Max(0.25f, (31f / speed) + 0.5f);
+                && seconds > 0f)
+            {
+                lifetime = seconds;
+            }
             int projectileCount = Math.Max(
                 1,
                 definition.projectile_burst_count ?? 1)
@@ -194,12 +199,14 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             float damageMultiplier)
         {
             System.Collections.Generic.IReadOnlyList<UnitBaseModel> targets =
-                impactRadius > 0f
-                    ? Targeting.InRadius(
-                        eligibleUnits,
-                        collisionPosition,
-                        impactRadius)
-                    : new[] { collisionTarget };
+                new[] { collisionTarget };
+            if (impactRadius > 0f)
+            {
+                targets = Targeting.InRadius(
+                    eligibleUnits,
+                    collisionPosition,
+                    impactRadius);
+            }
             for (var index = 0; index < targets.Count; index++)
             {
                 UnitBaseModel target = targets[index];

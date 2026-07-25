@@ -8,7 +8,7 @@ using Pakuri.NewCore.Units.Models;
 /* 선형 공격 범위의 대상 선정과 피해 적용을 실행한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
-    internal sealed class LineAttackExecutor : SkillExecutor
+    internal class LineAttackExecutor : SkillExecutor
     {
         /* 공통 카탈로그·대상 선정·Actor·이펙트 서비스를 선형 공격 실행기에 연결한다. */
         public LineAttackExecutor(GameDefinitionCatalog catalog, SkillTargeting targeting, SkillActorManager actors, EffectManager effects, Func<float> randomValue)
@@ -22,11 +22,16 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 request.Skill,
                 request.RegisteredUnits,
                 request.TargetPoint));
-            CombatVector2 direction = request.AimDirection.HasValue
-                ? request.AimDirection.Value.Normalized
-                : ordered.Count > 0
-                    ? (ordered[0].Position - request.Caster.Position).Normalized
-                    : default;
+            CombatVector2 direction = default;
+            if (request.AimDirection.HasValue)
+            {
+                direction = request.AimDirection.Value.Normalized;
+            }
+            else if (ordered.Count > 0)
+            {
+                direction =
+                    (ordered[0].Position - request.Caster.Position).Normalized;
+            }
             if (direction.SqrMagnitude <= 0.0001f) return false;
             float width = plan.ResolveRadius(
                 SkillTargeting.ReadFloat(request.Skill, "radius"));
@@ -34,9 +39,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 SkillTargeting.ReadFloat(request.Skill, "active_duration_seconds"));
             float interval = SkillTargeting.ReadFloat(request.Skill, "shot_interval_seconds")
                 * plan.ResolveShotIntervalMultiplier();
-            int count = interval > 0f
-                ? Math.Max(1, (int)Math.Ceiling(duration / interval))
-                : 1;
+            int count = 1;
+            if (interval > 0f)
+            {
+                count = Math.Max(1, (int)Math.Ceiling(duration / interval));
+            }
             count += plan.ResolveRepeatCount();
             Actors.Register(new ScheduledSkillActor(
                 request.Skill,
@@ -55,9 +62,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                         currentOrdered,
                         direction,
                         width);
-                    float repeatMultiplier = tick == 0
-                        ? 1f
-                        : plan.ResolveRepeatDamageMultiplier();
+                    float repeatMultiplier = plan.ResolveRepeatDamageMultiplier();
+                    if (tick == 0)
+                    {
+                        repeatMultiplier = 1f;
+                    }
                     for (int index = 0;
                         index < currentTargets.Count;
                         index++)

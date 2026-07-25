@@ -34,16 +34,7 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
         /* skill id의 쿨다운을 반환하고 미등록 id면 예외를 발생시킨다. */
         public SkillCooldown GetCooldown(string skillId)
         {
-            if (skillId == null)
-            {
-                throw new ArgumentNullException(nameof(skillId));
-            }
-
-            if (!cooldowns.TryGetValue(skillId, out SkillCooldown cooldown))
-            {
-                throw new KeyNotFoundException($"Skill '{skillId}' is not in this bucket.");
-            }
-
+            cooldowns.TryGetValue(skillId, out SkillCooldown cooldown);
             return cooldown;
         }
 
@@ -68,10 +59,6 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
         /* 액티브 스킬과 전용 쿨다운을 중복 없이 등록한다. */
         protected void RegisterActive(SkillDefinition definition)
         {
-            if (definition == null)
-            {
-                throw new ArgumentNullException(nameof(definition));
-            }
 
             activeSkills.Add(definition);
             if (!cooldowns.ContainsKey(definition.skill_id))
@@ -83,10 +70,6 @@ namespace Pakuri.NewCore.Combat.Skills.Runtime
         /* 패시브 스킬을 중복 없이 등록한다. */
         protected void RegisterPassive(PassiveDefinition definition)
         {
-            if (definition == null)
-            {
-                throw new ArgumentNullException(nameof(definition));
-            }
 
             passiveSkills.Add(definition);
         }

@@ -10,7 +10,7 @@ using UnityEngine.UI;
 /* Reward panel의 지급 결과, 포로 버튼, 다음 진행 command를 소유한다. */
 namespace Pakuri.NewCore.UI.InGame
 {
-    public sealed class RewardPanelController : MonoBehaviour
+    public class RewardPanelController : MonoBehaviour
     {
         [SerializeField] private GameBootstrap combatManager;
         [SerializeField] private Vector2 rewardButtonFirstColumnPosition =
@@ -38,9 +38,7 @@ namespace Pakuri.NewCore.UI.InGame
             UnityEngine.Events.UnityAction onContinue)
         {
             combatManager ??= runtime;
-            prisonerSelected = onPrisonerSelected
-                ?? throw new ArgumentNullException(
-                    nameof(onPrisonerSelected));
+            prisonerSelected = onPrisonerSelected;
             ResolveSceneUi();
             Bind(nextButton, onContinue);
             Hide();
@@ -49,10 +47,6 @@ namespace Pakuri.NewCore.UI.InGame
         /* 지급 결과와 현재 inventory 포로를 순서대로 Reward button에 표시한다. */
         public void Show(RewardResult reward)
         {
-            if (reward == null)
-            {
-                throw new ArgumentNullException(nameof(reward));
-            }
 
             ClearPrisonerButtons();
             ConfigureRewardButton(
@@ -69,9 +63,18 @@ namespace Pakuri.NewCore.UI.InGame
                 combatManager.Stage.Session.PrisonerInventory.Prisoners;
             for (int index = 0; index < prisoners.Count; index++)
             {
-                Button button = index == 0
-                    ? prisonerTemplate
-                    : Instantiate(prisonerTemplate, rewardContainer);
+                Button button;
+                if (index == 0)
+                {
+                    button = prisonerTemplate;
+                }
+                else
+                {
+                    button = Instantiate(
+                        prisonerTemplate,
+                        rewardContainer);
+                }
+
                 prisonerButtons.Add(button);
                 ConfigureRewardButton(
                     button,
@@ -176,16 +179,24 @@ namespace Pakuri.NewCore.UI.InGame
         private string ResolveEnemyName(string enemyId)
         {
             var definition = combatManager.Catalog.GetEnemy(enemyId);
-            return string.IsNullOrWhiteSpace(definition.display_name)
-                ? enemyId
-                : definition.display_name;
+            if (string.IsNullOrWhiteSpace(definition.display_name))
+            {
+                return enemyId;
+            }
+
+            return definition.display_name;
         }
 
         /* 현재 Canvas 아래 path에 대응하는 GameObject를 반환한다. */
         private GameObject FindObject(string path)
         {
             Transform target = FindTransform(path);
-            return target != null ? target.gameObject : null;
+            if (target == null)
+            {
+                return null;
+            }
+
+            return target.gameObject;
         }
 
         /* 현재 Canvas 아래 path에서 지정 UGUI component를 반환한다. */
@@ -193,7 +204,12 @@ namespace Pakuri.NewCore.UI.InGame
             where T : Component
         {
             Transform target = FindTransform(path);
-            return target != null ? target.GetComponent<T>() : null;
+            if (target == null)
+            {
+                return null;
+            }
+
+            return target.GetComponent<T>();
         }
 
         /* 현재 Canvas 아래 authored hierarchy path를 찾는다. */

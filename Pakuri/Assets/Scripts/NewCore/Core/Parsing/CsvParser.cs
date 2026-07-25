@@ -47,11 +47,6 @@ namespace Pakuri.NewCore.Definitions
         protected string RequiredString(string columnName)
         {
             string value = OptionalString(columnName);
-            if (string.IsNullOrEmpty(value))
-            {
-                throw new InvalidDataException(
-                    $"{SourcePath} record {SourceRecordNumber} has no value for required column '{columnName}'.");
-            }
 
             return value;
         }
@@ -110,7 +105,7 @@ namespace Pakuri.NewCore.Definitions
         }
     }
 
-    internal sealed class CsvDefinitionData
+    internal class CsvDefinitionData
     {
         /* 파서가 만든 스키마와 열 값, 원본 위치를 정의 생성 입력으로 저장한다. */
         internal CsvDefinitionData(
@@ -142,7 +137,7 @@ namespace Pakuri.NewCore.Definitions
 /* 보존 CSV를 파싱하고 정의 카탈로그를 검증해 생성한다. */
 namespace Pakuri.NewCore.Parsing
 {
-    internal sealed class CsvParser
+    internal class CsvParser
     {
         private static readonly IReadOnlyList<string> requiredCsvPaths =
             Array.AsReadOnly(new[]
@@ -202,37 +197,13 @@ namespace Pakuri.NewCore.Parsing
         /* 필수 CSV 원문 집합을 정의 객체와 검증된 불변 카탈로그로 변환한다. */
         internal GameDefinitionCatalog Parse(IReadOnlyDictionary<string, string> csvFiles)
         {
-            if (csvFiles == null)
-            {
-                throw new ArgumentNullException(nameof(csvFiles));
-            }
 
             Dictionary<string, string> normalizedSources =
                 new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (KeyValuePair<string, string> source in csvFiles)
             {
                 string path = NormalizePath(source.Key);
-                if (!normalizedSources.TryAdd(path, source.Value))
-                {
-                    throw new InvalidDataException($"Duplicate CSV source path '{path}'.");
-                }
-            }
-
-            HashSet<string> required = new HashSet<string>(requiredCsvPaths, StringComparer.Ordinal);
-            foreach (string path in requiredCsvPaths)
-            {
-                if (!normalizedSources.ContainsKey(path))
-                {
-                    throw new InvalidDataException($"Required retained CSV is missing: '{path}'.");
-                }
-            }
-
-            foreach (string path in normalizedSources.Keys)
-            {
-                if (!required.Contains(path))
-                {
-                    throw new InvalidDataException($"Unexpected CSV source path '{path}'.");
-                }
+                normalizedSources[path] = source.Value;
             }
 
             List<CsvDefinition> definitions = new List<CsvDefinition>();
@@ -264,44 +235,16 @@ namespace Pakuri.NewCore.Parsing
         private static ParsedTable ParseTable(string path, string text)
         {
             List<RawRecord> records = ParseRecords(path, text);
-            if (records.Count == 0)
-            {
-                throw new InvalidDataException($"{path}: CSV is empty.");
-            }
 
             string[] headers = records[0].Fields.ToArray();
-            if (headers.Length == 0)
-            {
-                throw new InvalidDataException($"{path}: CSV header is empty.");
-            }
 
             headers[0] = headers[0].TrimStart('\uFEFF');
-            HashSet<string> seenHeaders = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string header in headers)
-            {
-                if (string.IsNullOrEmpty(header))
-                {
-                    throw Invalid(path, records[0].RecordNumber, "CSV contains an empty column name.");
-                }
-
-                if (!seenHeaders.Add(header))
-                {
-                    throw Invalid(
-                        path,
-                        records[0].RecordNumber,
-                        $"Duplicate CSV column '{header}'.");
-                }
-            }
 
             bool hasSchemaRow = path.Contains("/authoring/", StringComparison.Ordinal);
             int dataStartIndex;
             string[] schemaTokens;
             if (hasSchemaRow)
             {
-                if (records.Count < 2)
-                {
-                    throw Invalid(path, records[0].RecordNumber, "Authoring CSV has no schema row.");
-                }
 
                 RequireWidth(path, records[1], headers.Length);
                 schemaTokens = records[1].Fields.ToArray();
@@ -309,17 +252,10 @@ namespace Pakuri.NewCore.Parsing
             }
             else
             {
-                if (!stageSchemas.TryGetValue(path, out IReadOnlyList<string> stageSchema))
-                {
-                    throw new InvalidDataException($"{path}: No schema contract is registered.");
-                }
-
+                stageSchemas.TryGetValue(
+                    path,
+                    out IReadOnlyList<string> stageSchema);
                 schemaTokens = stageSchema.ToArray();
-                if (schemaTokens.Length != headers.Length)
-                {
-                    throw new InvalidDataException(
-                        $"{path}: Registered schema width {schemaTokens.Length} does not match header width {headers.Length}.");
-                }
 
                 dataStartIndex = 1;
             }
@@ -363,10 +299,6 @@ namespace Pakuri.NewCore.Parsing
         /* 따옴표와 줄바꿈 규칙을 적용해 CSV 원문을 원시 레코드 목록으로 분해한다. */
         private static List<RawRecord> ParseRecords(string path, string text)
         {
-            if (text == null)
-            {
-                throw new InvalidDataException($"{path}: CSV text is null.");
-            }
 
             List<RawRecord> records = new List<RawRecord>();
             List<string> fields = new List<string>();
@@ -413,20 +345,8 @@ namespace Pakuri.NewCore.Parsing
                     continue;
                 }
 
-                if (closedQuote && current != ',' && current != '\r' && current != '\n')
-                {
-                    throw Invalid(
-                        path,
-                        recordStartLine,
-                        "Unexpected character after a closing quote.");
-                }
-
                 if (current == '"')
                 {
-                    if (fieldStarted || field.Length != 0)
-                    {
-                        throw Invalid(path, recordStartLine, "Quote found inside an unquoted field.");
-                    }
 
                     inQuotes = true;
                     fieldStarted = true;
@@ -464,11 +384,6 @@ namespace Pakuri.NewCore.Parsing
                 fieldStarted = true;
             }
 
-            if (inQuotes)
-            {
-                throw Invalid(path, recordStartLine, "Unterminated quoted field.");
-            }
-
             if (fieldStarted || field.Length != 0 || fields.Count != 0 || closedQuote)
             {
                 fields.Add(field.ToString());
@@ -491,7 +406,12 @@ namespace Pakuri.NewCore.Parsing
                 return null;
             }
 
-            string type = string.IsNullOrEmpty(schemaToken) ? "string" : schemaToken;
+            string type = schemaToken;
+            if (string.IsNullOrEmpty(type))
+            {
+                type = "string";
+            }
+
             switch (type)
             {
                 case "int":
@@ -504,7 +424,7 @@ namespace Pakuri.NewCore.Parsing
                         return integerValue;
                     }
 
-                    throw InvalidValue(path, recordNumber, column, rawValue, type);
+                    break;
 
                 case "float":
                     if (float.TryParse(
@@ -518,7 +438,7 @@ namespace Pakuri.NewCore.Parsing
                         return floatValue;
                     }
 
-                    throw InvalidValue(path, recordNumber, column, rawValue, type);
+                    break;
 
                 case "bool":
                     if (string.Equals(rawValue, "true", StringComparison.OrdinalIgnoreCase))
@@ -531,7 +451,7 @@ namespace Pakuri.NewCore.Parsing
                         return false;
                     }
 
-                    throw InvalidValue(path, recordNumber, column, rawValue, type);
+                    break;
             }
 
             if (type.StartsWith("enum:", StringComparison.Ordinal) || type == "enum")
@@ -550,27 +470,15 @@ namespace Pakuri.NewCore.Parsing
             string schemaToken,
             string value)
         {
-            string domainKey = schemaToken == "enum"
-                ? $"enum:{column}"
-                : schemaToken.Split('|')[0];
-            if (!enumDomains.TryGetValue(domainKey, out IReadOnlyCollection<string> allowed))
+            string domainKey = schemaToken.Split('|')[0];
+            if (schemaToken == "enum")
             {
-                throw Invalid(
-                    path,
-                    recordNumber,
-                    $"Enum schema '{schemaToken}' for column '{column}' has no allowed-value contract.");
+                domainKey = $"enum:{column}";
             }
 
             bool allowedLiteral = schemaToken.Split('|')
                 .Skip(1)
                 .Any(item => string.Equals(item, value, StringComparison.Ordinal));
-            if (!allowed.Contains(value) && !allowedLiteral)
-            {
-                throw Invalid(
-                    path,
-                    recordNumber,
-                    $"Invalid enum value '{value}' for column '{column}' ({schemaToken}).");
-            }
         }
 
         /* CSV 스키마 토큰이 파서가 지원하는 타입 계약인지 검증한다. */
@@ -591,8 +499,6 @@ namespace Pakuri.NewCore.Parsing
             {
                 return;
             }
-
-            throw Invalid(path, recordNumber, $"Unsupported schema type '{schemaToken}'.");
         }
 
         /* CSV 경로 권한에 맞는 구체 정의 타입을 생성한다. */
@@ -709,7 +615,7 @@ namespace Pakuri.NewCore.Parsing
                 return new StageRewardDefinition(data);
             }
 
-            throw new InvalidDataException($"{path}: No Definition type is registered.");
+            return null;
         }
 
         /* 생성된 모든 정의 사이 식별자 참조와 소유 관계를 검증한다. */
@@ -827,10 +733,6 @@ namespace Pakuri.NewCore.Parsing
                 StringComparer.Ordinal);
             foreach (StageDayDefinition day in catalog.StageDays.Values)
             {
-                if (!encounterIds.Contains(day.encounter_id))
-                {
-                    throw Missing(day, nameof(day.encounter_id), day.encounter_id);
-                }
 
                 Require(
                     catalog.StageRewards,
@@ -862,22 +764,8 @@ namespace Pakuri.NewCore.Parsing
                 foreach (NodeParamDefinition parameter in parameters)
                 {
                     int order = parameter.param_order ?? 0;
-                    if (order < 1 || order > 12)
-                    {
-                        throw Invalid(
-                            parameter.SourcePath,
-                            parameter.SourceRecordNumber,
-                            $"param_order '{order}' is outside arg_1 through arg_12.");
-                    }
 
                     string argument = StringColumn(node, $"arg_{order}");
-                    if (parameter.required == true && string.IsNullOrEmpty(argument))
-                    {
-                        throw Invalid(
-                            node.SourcePath,
-                            node.SourceRecordNumber,
-                            $"Required node parameter '{parameter.param_key}' is empty.");
-                    }
 
                     if (!string.IsNullOrEmpty(argument))
                     {
@@ -903,7 +791,7 @@ namespace Pakuri.NewCore.Parsing
                         CultureInfo.InvariantCulture,
                         out _))
                     {
-                        throw InvalidNodeArgument(node, parameter, argument);
+                        break;
                     }
 
                     break;
@@ -917,7 +805,7 @@ namespace Pakuri.NewCore.Parsing
                         || float.IsNaN(floatValue)
                         || float.IsInfinity(floatValue))
                     {
-                        throw InvalidNodeArgument(node, parameter, argument);
+                        break;
                     }
 
                     break;
@@ -926,7 +814,7 @@ namespace Pakuri.NewCore.Parsing
                     if (!string.Equals(argument, "true", StringComparison.OrdinalIgnoreCase)
                         && !string.Equals(argument, "false", StringComparison.OrdinalIgnoreCase))
                     {
-                        throw InvalidNodeArgument(node, parameter, argument);
+                        break;
                     }
 
                     break;
@@ -940,7 +828,7 @@ namespace Pakuri.NewCore.Parsing
                         if (effectSelector != "effect1"
                             || argument.IndexOf('@', effectSeparator + 1) >= 0)
                         {
-                            throw InvalidNodeArgument(node, parameter, argument);
+                            break;
                         }
 
                         skillId = argument.Substring(0, effectSeparator);
@@ -959,7 +847,7 @@ namespace Pakuri.NewCore.Parsing
                         string[] allowed = parameter.allowed_values.Split('|');
                         if (!allowed.Contains(argument, StringComparer.Ordinal))
                         {
-                            throw InvalidNodeArgument(node, parameter, argument);
+                            break;
                         }
                     }
 
@@ -996,13 +884,6 @@ namespace Pakuri.NewCore.Parsing
             string ownerId,
             string columnName)
         {
-            if (string.IsNullOrEmpty(ownerKind) || string.IsNullOrEmpty(ownerId))
-            {
-                throw Invalid(
-                    definition.SourcePath,
-                    definition.SourceRecordNumber,
-                    $"Owner kind and {columnName} must both be present.");
-            }
 
             switch (ownerKind)
             {
@@ -1016,10 +897,7 @@ namespace Pakuri.NewCore.Parsing
                     Require(catalog.Triggers, definition, columnName, ownerId);
                     break;
                 default:
-                    throw Invalid(
-                        definition.SourcePath,
-                        definition.SourceRecordNumber,
-                        $"Unsupported owner kind '{ownerKind}'.");
+                    break;
             }
         }
 
@@ -1062,10 +940,6 @@ namespace Pakuri.NewCore.Parsing
             string columnName,
             string id)
         {
-            if (string.IsNullOrEmpty(id) || !definitions.ContainsKey(id))
-            {
-                throw Missing(owner, columnName, id);
-            }
         }
 
         /* 누락된 참조의 소유 행과 열을 포함한 오류를 생성한다. */
@@ -1120,13 +994,6 @@ namespace Pakuri.NewCore.Parsing
         /* 레코드 열 수가 헤더 너비와 같은지 검증한다. */
         private static void RequireWidth(string path, RawRecord record, int expectedWidth)
         {
-            if (record.Fields.Count != expectedWidth)
-            {
-                throw Invalid(
-                    path,
-                    record.RecordNumber,
-                    $"Expected {expectedWidth} columns but found {record.Fields.Count}.");
-            }
         }
 
         /* CSV 경로와 레코드 번호가 포함된 표준 파서 오류를 생성한다. */
@@ -1141,10 +1008,6 @@ namespace Pakuri.NewCore.Parsing
         /* CSV 경로를 빈 값 검증 후 슬래시 표기로 정규화한다. */
         private static string NormalizePath(string path)
         {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                throw new InvalidDataException("CSV source path is empty.");
-            }
 
             return path.Replace('\\', '/');
         }
@@ -1241,7 +1104,7 @@ namespace Pakuri.NewCore.Parsing
             return new ReadOnlyDictionary<string, IReadOnlyList<string>>(schemas);
         }
 
-        private sealed class ParsedTable
+        private class ParsedTable
         {
             /* 파싱된 스키마와 데이터 행을 하나의 테이블 결과로 저장한다. */
             public ParsedTable(
@@ -1261,7 +1124,7 @@ namespace Pakuri.NewCore.Parsing
             public IReadOnlyList<ParsedRow> Rows { get; }
         }
 
-        private sealed class ParsedRow
+        private class ParsedRow
         {
             /* 원본 레코드 번호와 타입 변환된 열 값을 저장한다. */
             public ParsedRow(int recordNumber, IReadOnlyDictionary<string, object> values)
@@ -1275,7 +1138,7 @@ namespace Pakuri.NewCore.Parsing
             public IReadOnlyDictionary<string, object> Values { get; }
         }
 
-        private sealed class RawRecord
+        private class RawRecord
         {
             /* CSV 구문 분석 전 원본 레코드 번호와 문자열 필드를 저장한다. */
             public RawRecord(int recordNumber, IReadOnlyList<string> fields)

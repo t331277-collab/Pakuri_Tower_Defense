@@ -5,7 +5,7 @@ using UnityEngine;
 /* Monster Model의 scene 결합과 공격·피격·사망 animation 생명주기를 소유한다. */
 namespace Pakuri.NewCore.Units.Actors
 {
-    public sealed class MonsterActor : UnitActor
+    public class MonsterActor : UnitActor
     {
         private static readonly int Attack =
             Animator.StringToHash("Attack");

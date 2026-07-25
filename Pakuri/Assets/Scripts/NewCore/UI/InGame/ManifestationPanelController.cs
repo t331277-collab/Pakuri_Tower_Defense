@@ -10,7 +10,7 @@ using UnityEngine.UI;
 /* 현현 시도 결과 popup과 모집·건너뛰기 command를 소유한다. */
 namespace Pakuri.NewCore.UI.InGame
 {
-    public sealed class ManifestationPanelController : MonoBehaviour
+    public class ManifestationPanelController : MonoBehaviour
     {
         [SerializeField] private GameBootstrap combatManager;
         [SerializeField] private Sprite arielPrisonPortrait;
@@ -32,8 +32,7 @@ namespace Pakuri.NewCore.UI.InGame
             Action onCompleted)
         {
             combatManager ??= runtime;
-            completed = onCompleted
-                ?? throw new ArgumentNullException(nameof(onCompleted));
+            completed = onCompleted;
             ResolveSceneUi();
             ResolveButtons();
             HideAll();
@@ -132,9 +131,15 @@ namespace Pakuri.NewCore.UI.InGame
                 Sprite portrait =
                     ResolveMonsterPortrait(definition.id);
                 manifestImage.sprite = portrait;
-                manifestImage.color = portrait != null
-                    ? Color.white
-                    : new Color(0f, 0f, 0f, 0.3f);
+                if (portrait != null)
+                {
+                    manifestImage.color = Color.white;
+                }
+                else
+                {
+                    manifestImage.color =
+                        new Color(0f, 0f, 0f, 0.3f);
+                }
             }
         }
 
@@ -171,7 +176,12 @@ namespace Pakuri.NewCore.UI.InGame
         private GameObject FindObject(string path)
         {
             Transform target = transform.Find(path);
-            return target != null ? target.gameObject : null;
+            if (target == null)
+            {
+                return null;
+            }
+
+            return target.gameObject;
         }
 
         /* 현재 Canvas 아래 path에서 지정 UGUI component를 반환한다. */
@@ -179,7 +189,12 @@ namespace Pakuri.NewCore.UI.InGame
             where T : Component
         {
             Transform target = transform.Find(path);
-            return target != null ? target.GetComponent<T>() : null;
+            if (target == null)
+            {
+                return null;
+            }
+
+            return target.GetComponent<T>();
         }
 
         /* button에 manifestation command callback 하나를 연결한다. */

@@ -5,7 +5,7 @@ using UnityEngine;
 /* Nexus Model의 scene 결합과 Inspector 체력 설정·화면 HP 표시를 소유한다. */
 namespace Pakuri.NewCore.Units.Actors
 {
-    public sealed class NexusActor : UnitActor
+    public class NexusActor : UnitActor
     {
         [SerializeField] private float maxHealth = 20f;
         [SerializeField] private TextMeshProUGUI nexusHpInfo;

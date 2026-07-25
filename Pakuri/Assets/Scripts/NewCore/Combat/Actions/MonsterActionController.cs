@@ -6,7 +6,7 @@ using Pakuri.NewCore.Units.Models;
 /* 몬스터의 자동 행동과 수동 스킬 실행 조건을 중재한다. */
 namespace Pakuri.NewCore.Combat.Actions
 {
-    public sealed class MonsterActionController : UnitActionController
+    public class MonsterActionController : UnitActionController
     {
         /* 몬스터 모델과 공통 전투 실행 경계를 연결한다. */
         public MonsterActionController(

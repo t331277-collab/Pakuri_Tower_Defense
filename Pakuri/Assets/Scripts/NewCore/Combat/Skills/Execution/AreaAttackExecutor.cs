@@ -7,7 +7,7 @@ using Pakuri.NewCore.Definitions.Skills;
 /* 범위 공격과 지속 필드의 대상 재평가 및 피해 적용을 실행한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
-    internal sealed class AreaAttackExecutor : SkillExecutor
+    internal class AreaAttackExecutor : SkillExecutor
     {
         /* 공통 카탈로그·대상 선정·Actor·이펙트 서비스를 범위 공격 실행기에 연결한다. */
         public AreaAttackExecutor(GameDefinitionCatalog catalog, SkillTargeting targeting, SkillActorManager actors, EffectManager effects, Func<float> randomValue)
@@ -28,9 +28,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 SkillTargeting.ReadFloat(request.Skill, "active_duration_seconds"));
             float interval = SkillTargeting.ReadFloat(request.Skill, "shot_interval_seconds")
                 * plan.ResolveShotIntervalMultiplier();
-            int count = interval > 0f
-                ? Math.Max(1, (int)Math.Ceiling(duration / interval))
-                : 1;
+            int count = 1;
+            if (interval > 0f)
+            {
+                count = Math.Max(1, (int)Math.Ceiling(duration / interval));
+            }
             count += plan.ResolveRepeatCount();
             Actors.Register(new ScheduledSkillActor(
                 request.Skill,
@@ -48,9 +50,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                         currentOrdered,
                         center,
                         radius);
-                    float repeatMultiplier = tick == 0
-                        ? 1f
-                        : plan.ResolveRepeatDamageMultiplier();
+                    float repeatMultiplier = plan.ResolveRepeatDamageMultiplier();
+                    if (tick == 0)
+                    {
+                        repeatMultiplier = 1f;
+                    }
                     for (int index = 0;
                         index < currentTargets.Count;
                         index++)

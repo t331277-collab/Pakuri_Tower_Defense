@@ -12,9 +12,9 @@ namespace Pakuri.NewCore.Combat.Actions
             UnitBaseModel model,
             InGameCombatManager combatManager)
         {
-            Model = model ?? throw new ArgumentNullException(nameof(model));
+            Model = model;
             CombatManager =
-                combatManager ?? throw new ArgumentNullException(nameof(combatManager));
+                combatManager;
         }
 
         public UnitBaseModel Model { get; }
@@ -29,10 +29,21 @@ namespace Pakuri.NewCore.Combat.Actions
                 return false;
             }
 
-            return Model is MonsterModel monster
-                ? monster.SkillBucket.GetCooldown(skillId).CanUse()
-                : Model is EnemyModel enemy
-                    && enemy.SkillBucket.GetCooldown(skillId).CanUse();
+            if (Model is MonsterModel monster)
+            {
+                return monster.SkillBucket
+                    .GetCooldown(skillId)
+                    .CanUse();
+            }
+
+            if (Model is EnemyModel enemy)
+            {
+                return enemy.SkillBucket
+                    .GetCooldown(skillId)
+                    .CanUse();
+            }
+
+            return false;
         }
 
         /* 스킬 사용 가능 여부를 확인한 뒤 전투 관리자에 실행을 요청한다. */

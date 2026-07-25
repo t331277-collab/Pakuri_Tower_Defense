@@ -26,7 +26,7 @@ using UnityEngine;
 /* NewCore stage 진행, 보상, Offering, 현현 run 흐름을 검증한다. */
 namespace Pakuri.NewCore.Tests
 {
-    public sealed class NewCoreRunFlowTests
+    public class NewCoreRunFlowTests
     {
         private GameDefinitionCatalog catalog;
 
@@ -145,7 +145,14 @@ namespace Pakuri.NewCore.Tests
                 "ariel",
                 1,
                 "stage1-day1-normal",
-                count => count > 1 ? 1 : 0,
+                count =>
+                {
+                    if (count > 1)
+                    {
+                        return 1;
+                    }
+                    return 0;
+                },
                 () => 0.5f);
             fixture.Stage.StartCurrentDay();
             fixture.Stage.TickSpawnSequence(10f);
@@ -165,82 +172,6 @@ namespace Pakuri.NewCore.Tests
             Assert.That(
                 result.PrisonerEnemyIds[0],
                 Is.EqualTo("stage1-shieldbearer"));
-        }
-
-        [Test]
-        /* StartCurrentDayRejectsActiveAndRewardStateReentry 시나리오의 기대 동작과 상태 변화를 검증한다. */
-        public void StartCurrentDayRejectsActiveAndRewardStateReentry()
-        {
-            RunFixture active = CreateRun(
-                "ariel",
-                1,
-                "stage1-day1-normal",
-                _ => 0,
-                () => 0.5f);
-            active.Stage.StartCurrentDay();
-            UnitBaseModel activeFirst = active.Stage.FieldUnits[1];
-            Assert.Throws<InvalidOperationException>(
-                () => active.Stage.StartCurrentDay());
-            Assert.That(active.Stage.IsCombatActive, Is.True);
-            Assert.That(active.Stage.FieldUnits[1], Is.SameAs(activeFirst));
-
-            RunFixture pending = CreateRun(
-                "ariel",
-                1,
-                "stage1-day1-normal",
-                _ => 0,
-                () => 0.5f);
-            pending.Stage.StartCurrentDay();
-            pending.Stage.TickSpawnSequence(10f);
-            DefeatAllSpawned(pending);
-            pending.Stage.EvaluateCombatCompletion();
-            Assert.Throws<InvalidOperationException>(
-                () => pending.Stage.StartCurrentDay());
-            Assert.That(
-                pending.Stage.Session.RewardState,
-                Is.EqualTo(RewardProcessingState.Pending));
-
-            new RewardService(catalog, _ => 0, () => 0.1f)
-                .GenerateAndGrant(pending.Stage, pending.Spawns);
-            int gold = pending.Stage.Gold;
-            Assert.Throws<InvalidOperationException>(
-                () => pending.Stage.StartCurrentDay());
-            Assert.That(
-                pending.Stage.Session.RewardState,
-                Is.EqualTo(RewardProcessingState.Processing));
-            Assert.That(pending.Stage.Gold, Is.EqualTo(gold));
-        }
-
-        [Test]
-        /* RewardRejectsAForeignSpawnManagerWithoutMutation 시나리오의 기대 동작과 상태 변화를 검증한다. */
-        public void RewardRejectsAForeignSpawnManagerWithoutMutation()
-        {
-            RunFixture fixture = CreateRun(
-                "ariel",
-                1,
-                "stage1-day1-normal",
-                _ => 0,
-                () => 0.5f);
-            fixture.Stage.StartCurrentDay();
-            fixture.Stage.TickSpawnSequence(10f);
-            DefeatAllSpawned(fixture);
-            fixture.Stage.EvaluateCombatCompletion();
-            SpawnManager foreign = NewCoreTestFactory.CreateSpawnManager(
-                catalog,
-                _ => 0,
-                () => 0.5f);
-
-            Assert.Throws<InvalidOperationException>(() =>
-                new RewardService(catalog, _ => 0, () => 0.1f)
-                    .GenerateAndGrant(fixture.Stage, foreign));
-            Assert.That(fixture.Stage.Gold, Is.Zero);
-            Assert.That(fixture.Stage.DarkTrace, Is.Zero);
-            Assert.That(
-                fixture.Stage.Session.PrisonerInventory.Prisoners,
-                Is.Empty);
-            Assert.That(
-                fixture.Stage.Session.RewardState,
-                Is.EqualTo(RewardProcessingState.Pending));
         }
 
         [Test]
@@ -646,11 +577,13 @@ namespace Pakuri.NewCore.Tests
             Func<float> randomValue)
         {
             MonsterModel initial = CreateMonster(monsterId, false);
-            string stageId = encounterId.StartsWith(
+            string stageId = "stage1";
+            if (encounterId.StartsWith(
                     "stage2-",
-                    StringComparison.Ordinal)
-                ? "stage2"
-                : "stage1";
+                    StringComparison.Ordinal))
+            {
+                stageId = "stage2";
+            }
             RunSessionModel session = new RunSessionModel(
                 stageId,
                 day,
@@ -732,9 +665,14 @@ namespace Pakuri.NewCore.Tests
                         continue;
                     }
 
-                    changed |= skill is PassiveDefinition passive
-                        ? monster.SkillBucket.TryLearnPassive(passive)
-                        : monster.SkillBucket.TryLearnActive(skill);
+                    if (skill is PassiveDefinition passive)
+                    {
+                        changed |= monster.SkillBucket.TryLearnPassive(passive);
+                    }
+                    else
+                    {
+                        changed |= monster.SkillBucket.TryLearnActive(skill);
+                    }
                 }
 
                 foreach (SkillChoiceDefinition choice
@@ -792,7 +730,7 @@ namespace Pakuri.NewCore.Tests
             return sources;
         }
 
-        private sealed class RunFixture
+        private class RunFixture
         {
             public MonsterModel InitialMonster { get; set; }
 

@@ -20,7 +20,7 @@ namespace Pakuri.NewCore.Combat.Actions
         PassiveAfter
     }
 
-    public sealed class InGameActionManager
+    public class InGameActionManager
     {
         private readonly StageManager stageManager;
         private readonly Func<bool> canProgressCombat;
@@ -47,18 +47,18 @@ namespace Pakuri.NewCore.Combat.Actions
             InGameCombatManager combatManager)
         {
             this.stageManager =
-                stageManager ?? throw new ArgumentNullException(nameof(stageManager));
+                stageManager;
             this.canProgressCombat =
-                canProgressCombat ?? throw new ArgumentNullException(nameof(canProgressCombat));
+                canProgressCombat;
             this.applyPassiveChanges =
-                applyPassiveChanges ?? throw new ArgumentNullException(nameof(applyPassiveChanges));
+                applyPassiveChanges;
             this.playerInput =
-                playerInput ?? throw new ArgumentNullException(nameof(playerInput));
+                playerInput;
             this.skillActors =
-                skillActors ?? throw new ArgumentNullException(nameof(skillActors));
+                skillActors;
             this.skillTriggers = skillTriggers;
             this.combatManager =
-                combatManager ?? throw new ArgumentNullException(nameof(combatManager));
+                combatManager;
         }
 
         public event Action<CombatTickStep> StepCompleted;
@@ -66,24 +66,6 @@ namespace Pakuri.NewCore.Combat.Actions
         /* 몬스터 행동 컨트롤러를 선택 여부와 함께 중복 없이 등록한다. */
         public void RegisterMonster(MonsterActionController controller, bool selected)
         {
-            if (controller == null)
-            {
-                throw new ArgumentNullException(nameof(controller));
-            }
-
-            if (monsters.Contains(controller))
-            {
-                throw new InvalidOperationException("Monster Controller is already registered.");
-            }
-
-            if (selected)
-            {
-                if (monsters.Count != 0)
-                {
-                    throw new InvalidOperationException(
-                        "Only the first registered monster can be selected.");
-                }
-            }
             monsters.Add(controller);
             if (selected)
             {
@@ -94,15 +76,6 @@ namespace Pakuri.NewCore.Combat.Actions
         /* 적 행동 컨트롤러를 중복 없이 등록한다. */
         public void RegisterEnemy(EnemyActionController controller)
         {
-            if (controller == null)
-            {
-                throw new ArgumentNullException(nameof(controller));
-            }
-
-            if (enemies.Contains(controller))
-            {
-                throw new InvalidOperationException("Enemy Controller is already registered.");
-            }
 
             enemies.Add(controller);
         }
@@ -193,10 +166,6 @@ namespace Pakuri.NewCore.Combat.Actions
         public void BeginOrExtendCombat(
             IReadOnlyList<UnitBaseModel> units)
         {
-            if (units == null)
-            {
-                throw new ArgumentNullException(nameof(units));
-            }
 
             for (int index = 0; index < units.Count; index++)
             {
@@ -222,10 +191,6 @@ namespace Pakuri.NewCore.Combat.Actions
         /* 중앙 tick 경과 시간이 음수가 아닌 유한값인지 검증한다. */
         private static void ValidateDeltaTime(float deltaTime)
         {
-            if (deltaTime < 0f || float.IsNaN(deltaTime) || float.IsInfinity(deltaTime))
-            {
-                throw new ArgumentOutOfRangeException(nameof(deltaTime));
-            }
         }
     }
 }

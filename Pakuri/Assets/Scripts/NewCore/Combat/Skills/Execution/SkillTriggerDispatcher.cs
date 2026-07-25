@@ -18,7 +18,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         GateRejected
     }
 
-    public sealed class SkillTriggerDispatcher
+    public class SkillTriggerDispatcher
     {
         private readonly GameDefinitionCatalog catalog;
         private readonly SkillActorManager actors;
@@ -44,12 +44,12 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             Action<Definitions.Choices.ChoiceNodeDefinition>
                 nodeConsumed = null)
         {
-            this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
-            this.actors = actors ?? throw new ArgumentNullException(nameof(actors));
-            this.effects = effects ?? throw new ArgumentNullException(nameof(effects));
-            this.randomValue = randomValue ?? throw new ArgumentNullException(nameof(randomValue));
+            this.catalog = catalog;
+            this.actors = actors;
+            this.effects = effects;
+            this.randomValue = randomValue;
             this.effectGraphs =
-                effectGraphs ?? throw new ArgumentNullException(nameof(effectGraphs));
+                effectGraphs;
             this.nodeConsumed = nodeConsumed;
             foreach (SkillTriggerDefinition trigger in catalog.Triggers.Values)
             {
@@ -66,10 +66,6 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         /* 경과 시간만큼 트리거별 내부 재사용 대기시간을 갱신한다. */
         public void Tick(float deltaTime)
         {
-            if (deltaTime < 0f || float.IsNaN(deltaTime) || float.IsInfinity(deltaTime))
-            {
-                throw new ArgumentOutOfRangeException(nameof(deltaTime));
-            }
             string[] keys = new List<string>(cooldowns.Keys).ToArray();
             for (int index = 0; index < keys.Length; index++)
             {
@@ -276,21 +272,28 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             string action = SkillTriggerSupport.Read(trigger, "trigger_action");
             if (string.IsNullOrEmpty(action))
             {
-                action = trigger.runtime_kind == "LineAttack"
-                    ? "LineAttack"
-                    : trigger.runtime_kind == "SingleAttack"
-                        ? "SingleAttack"
-                        : "TriggeredSkill";
+                action = "TriggeredSkill";
+                if (trigger.runtime_kind == "LineAttack")
+                {
+                    action = "LineAttack";
+                }
+                else if (trigger.runtime_kind == "SingleAttack")
+                {
+                    action = "SingleAttack";
+                }
             }
             SkillDefinition graphSkill = eventSkill
                 ?? catalog.GetSkill(trigger.source_skill_id);
+            CombatVector2? aimDirection = null;
+            if (eventTarget != null)
+            {
+                aimDirection = eventTarget.Position - owner.Position;
+            }
             var graphRequest = new SkillExecutionRequest(
                     owner,
                     graphSkill,
                     units,
-                    eventTarget == null
-                        ? (CombatVector2?)null
-                        : eventTarget.Position - owner.Position,
+                    aimDirection,
                     eventTarget?.Position,
                     true);
             graphRequest.SetEventTarget(eventTarget);
@@ -325,11 +328,26 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 {
                     targetSkillId = eventSkill?.skill_id;
                 }
-                var cooldowns = owner is MonsterModel monster
-                    ? monster.SkillBucket.Cooldowns
-                    : ((EnemyModel)owner).SkillBucket.Cooldowns;
-                if (string.IsNullOrEmpty(targetSkillId)
-                    || !cooldowns.TryGetValue(targetSkillId, out var cooldown))
+                if (string.IsNullOrEmpty(targetSkillId))
+                {
+                    return;
+                }
+                Runtime.SkillCooldown cooldown = null;
+                bool foundCooldown;
+                if (owner is MonsterModel monster)
+                {
+                    foundCooldown = monster.SkillBucket.Cooldowns.TryGetValue(
+                        targetSkillId,
+                        out cooldown);
+                }
+                else
+                {
+                    foundCooldown = ((EnemyModel)owner)
+                        .SkillBucket.Cooldowns.TryGetValue(
+                            targetSkillId,
+                            out cooldown);
+                }
+                if (!foundCooldown)
                 {
                     return;
                 }
@@ -367,11 +385,17 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             if (!string.IsNullOrEmpty(trigger.triggered_skill_id)
                 && catalog.Skills.TryGetValue(trigger.triggered_skill_id, out SkillDefinition skill))
             {
+                CombatVector2? triggeredAimDirection = null;
+                if (eventTarget != null)
+                {
+                    triggeredAimDirection =
+                        eventTarget.Position - owner.Position;
+                }
                 var triggeredRequest = new SkillExecutionRequest(
                         owner,
                         skill,
                         units,
-                        eventTarget == null ? (CombatVector2?)null : eventTarget.Position - owner.Position,
+                        triggeredAimDirection,
                         eventTarget?.Position,
                         true);
                 triggeredRequest.SetEventTarget(eventTarget);
@@ -562,7 +586,14 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             }
 
             float chance = SkillTriggerSupport.Float(trigger, "proc_chance");
-            chance = chance > 0f ? Math.Min(1f, chance) : 1f;
+            if (chance > 0f)
+            {
+                chance = Math.Min(1f, chance);
+            }
+            else
+            {
+                chance = 1f;
+            }
             chance = Math.Min(
                 1f,
                 chance + ResolveProcChanceBonus(owner, trigger.trigger_id));
@@ -613,13 +644,15 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         /* 문자열을 고정 문화권 실수로 변환하고 실패하면 0을 반환한다. */
         private static float ParseFloat(string value)
         {
-            return float.TryParse(
-                value,
-                System.Globalization.NumberStyles.Float,
-                System.Globalization.CultureInfo.InvariantCulture,
-                out float parsed)
-                ? parsed
-                : 0f;
+            if (float.TryParse(
+                    value,
+                    System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out float parsed))
+            {
+                return parsed;
+            }
+            return 0f;
         }
 
         /* 유닛의 스킬 버킷이 트리거 원본 스킬을 보유하는지 확인한다. */
@@ -705,13 +738,18 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
 
             string triggerAttributes =
                 SkillTriggerSupport.Read(trigger, "trigger_attribute");
+            string eventAttribute = null;
+            if (eventSkill != null)
+            {
+                eventAttribute = eventSkill.attribute;
+                if (string.IsNullOrEmpty(eventAttribute))
+                {
+                    eventAttribute = "Physical";
+                }
+            }
             if (!string.IsNullOrEmpty(triggerAttributes)
                 && (eventSkill == null
-                    || !Contains(
-                        triggerAttributes,
-                        string.IsNullOrEmpty(eventSkill.attribute)
-                            ? "Physical"
-                            : eventSkill.attribute)))
+                    || !Contains(triggerAttributes, eventAttribute)))
             {
                 return false;
             }
@@ -748,13 +786,19 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             string conditionSourceSkill = SkillTriggerSupport.Read(
                 trigger,
                 "condition_status_source_skill_id");
-            if (!string.IsNullOrEmpty(conditionSourceSkill)
-                && (string.IsNullOrEmpty(conditionStatus)
-                    ? !string.Equals(
+            bool sourceConditionFailed = false;
+            if (!string.IsNullOrEmpty(conditionSourceSkill))
+            {
+                if (string.IsNullOrEmpty(conditionStatus))
+                {
+                    sourceConditionFailed = !string.Equals(
                         eventSourceSkillId,
                         conditionSourceSkill,
-                        StringComparison.Ordinal)
-                    : !HasStatusFromSkill(
+                        StringComparison.Ordinal);
+                }
+                else
+                {
+                    sourceConditionFailed = !HasStatusFromSkill(
                         eventTarget,
                         conditionStatus,
                         conditionSourceSkill,
@@ -762,7 +806,10 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                             1,
                             SkillTriggerSupport.Int(
                                 trigger,
-                                "required_source_status_min_stacks")))))
+                                "required_source_status_min_stacks")));
+                }
+            }
+            if (sourceConditionFailed)
             {
                 return false;
             }
@@ -954,11 +1001,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             {
                 return int.MaxValue;
             }
-            return int.TryParse(
-                value,
-                out int parsed)
-                    ? Math.Max(0, parsed)
-                    : 1;
+            if (int.TryParse(value, out int parsed))
+            {
+                return Math.Max(0, parsed);
+            }
+            return 1;
         }
 
         /* 원래 순서를 보조 기준으로 유지하며 중심점 거리순으로 정렬한다. */
@@ -1059,10 +1106,12 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             SkillTriggerDefinition trigger,
             string column)
         {
-            return trigger.Columns.TryGetValue(column, out object value)
-                && value is int number
-                    ? number
-                    : (int?)null;
+            if (trigger.Columns.TryGetValue(column, out object value)
+                && value is int number)
+            {
+                return number;
+            }
+            return null;
         }
 
         /* 구분자로 나열된 문자열에 지정 값이 포함됐는지 확인한다. */
@@ -1092,18 +1141,21 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 case "OnShieldAbsorb":
                     break;
                 default:
-                    throw new NotSupportedException(
-                        $"Trigger event '{trigger.trigger_event}' is not implemented.");
+                    break;
             }
 
             string action = Read(trigger, "trigger_action");
             if (string.IsNullOrEmpty(action))
             {
-                action = trigger.runtime_kind == "LineAttack"
-                    ? "LineAttack"
-                    : trigger.runtime_kind == "SingleAttack"
-                        ? "SingleAttack"
-                        : "TriggeredSkill";
+                action = "TriggeredSkill";
+                if (trigger.runtime_kind == "LineAttack")
+                {
+                    action = "LineAttack";
+                }
+                else if (trigger.runtime_kind == "SingleAttack")
+                {
+                    action = "SingleAttack";
+                }
             }
 
             switch (action)
@@ -1116,35 +1168,40 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 case "TriggeredSkill":
                     return;
                 default:
-                    throw new NotSupportedException(
-                        $"Trigger action '{action}' is not implemented.");
+                    break;
             }
         }
 
         /* 트리거의 지정 열에서 문자열 값을 읽는다. */
         internal static string Read(SkillTriggerDefinition trigger, string column)
         {
-            return trigger.Columns.TryGetValue(column, out object value)
-                ? value as string
-                : null;
+            if (trigger.Columns.TryGetValue(column, out object value))
+            {
+                return value as string;
+            }
+            return null;
         }
 
         /* 트리거의 지정 열에서 실수 값을 읽고 없으면 0을 반환한다. */
         internal static float Float(SkillTriggerDefinition trigger, string column)
         {
-            return trigger.Columns.TryGetValue(column, out object value)
-                && value is float number
-                    ? number
-                    : 0f;
+            if (trigger.Columns.TryGetValue(column, out object value)
+                && value is float number)
+            {
+                return number;
+            }
+            return 0f;
         }
 
         /* 트리거의 지정 열에서 정수 값을 읽고 없으면 0을 반환한다. */
         internal static int Int(SkillTriggerDefinition trigger, string column)
         {
-            return trigger.Columns.TryGetValue(column, out object value)
-                && value is int number
-                    ? number
-                    : 0;
+            if (trigger.Columns.TryGetValue(column, out object value)
+                && value is int number)
+            {
+                return number;
+            }
+            return 0;
         }
     }
 }

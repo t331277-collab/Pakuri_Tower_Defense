@@ -18,7 +18,7 @@ namespace Pakuri.NewCore.Run.Services
         PassiveEnhancement
     }
 
-    public sealed class OfferingCandidate
+    public class OfferingCandidate
     {
         /* Offering에 표시할 선택지 종류와 정의를 하나의 후보 값으로 묶는다. */
         internal OfferingCandidate(
@@ -29,7 +29,14 @@ namespace Pakuri.NewCore.Run.Services
             Kind = kind;
             Skill = skill;
             Choice = choice;
-            Id = skill != null ? skill.skill_id : choice.choice_id;
+            if (skill != null)
+            {
+                Id = skill.skill_id;
+            }
+            else
+            {
+                Id = choice.choice_id;
+            }
         }
 
         public string Id { get; }
@@ -41,7 +48,7 @@ namespace Pakuri.NewCore.Run.Services
         public SkillChoiceDefinition Choice { get; }
     }
 
-    public sealed class OfferingOffer
+    public class OfferingOffer
     {
         /* 대상 몬스터·포로와 화면에 노출할 후보 목록을 하나의 offer로 묶는다. */
         internal OfferingOffer(
@@ -61,7 +68,7 @@ namespace Pakuri.NewCore.Run.Services
         public IReadOnlyList<OfferingCandidate> Candidates { get; }
     }
 
-    public sealed class OfferingService
+    public class OfferingService
     {
         private readonly GameDefinitionCatalog catalog;
         private readonly StageManager stage;
@@ -74,11 +81,11 @@ namespace Pakuri.NewCore.Run.Services
             Func<int, int> randomIndex)
         {
             this.catalog =
-                catalog ?? throw new ArgumentNullException(nameof(catalog));
+                catalog;
             this.stage =
-                stage ?? throw new ArgumentNullException(nameof(stage));
+                stage;
             this.randomIndex =
-                randomIndex ?? throw new ArgumentNullException(nameof(randomIndex));
+                randomIndex;
         }
 
         public OfferingOffer PendingOffer { get; private set; }
@@ -88,11 +95,6 @@ namespace Pakuri.NewCore.Run.Services
             MonsterModel monster,
             Prisoner prisoner)
         {
-            if (PendingOffer != null)
-            {
-                throw new InvalidOperationException(
-                    "The current offering must be completed.");
-            }
 
             RequireOwnedInputs(monster, prisoner);
             List<OfferingCandidate> eligible =
@@ -145,13 +147,8 @@ namespace Pakuri.NewCore.Run.Services
                 return false;
             }
 
-            if (!stage.Session.PrisonerInventory.TryConsume(
-                    PendingOffer.Prisoner))
-            {
-                throw new InvalidOperationException(
-                    "Validated prisoner consumption failed.");
-            }
-
+            stage.Session.PrisonerInventory.TryConsume(
+                PendingOffer.Prisoner);
             PendingOffer = null;
             return true;
         }
@@ -247,8 +244,7 @@ namespace Pakuri.NewCore.Run.Services
                         && !monster.SkillBucket.TrySelectChoice(
                             passiveBase))
                     {
-                        throw new InvalidOperationException(
-                            "Configured PassiveBase selection failed.");
+                        break;
                     }
 
                     return true;
@@ -257,6 +253,8 @@ namespace Pakuri.NewCore.Run.Services
                     return monster.SkillBucket.TrySelectChoice(
                         candidate.Choice);
             }
+
+            return false;
         }
 
         /* 몬스터와 패시브 skill id에 정확히 일치하는 PassiveBase Choice를 찾는다. */
@@ -284,12 +282,6 @@ namespace Pakuri.NewCore.Run.Services
                     continue;
                 }
 
-                if (found != null)
-                {
-                    throw new InvalidOperationException(
-                        "Multiple PassiveBase choices target one passive.");
-                }
-
                 found = choice;
             }
 
@@ -301,30 +293,6 @@ namespace Pakuri.NewCore.Run.Services
             MonsterModel monster,
             Prisoner prisoner)
         {
-            if (monster == null)
-            {
-                throw new ArgumentNullException(nameof(monster));
-            }
-
-            if (prisoner == null)
-            {
-                throw new ArgumentNullException(nameof(prisoner));
-            }
-
-            if (!ReferenceEquals(
-                    stage.Session.PartyRoster.GetByMonsterId(
-                        monster.MonsterDefinition.id),
-                    monster))
-            {
-                throw new InvalidOperationException(
-                    "Offering target is not in the active party.");
-            }
-
-            if (!stage.Session.PrisonerInventory.CanConsume(prisoner))
-            {
-                throw new InvalidOperationException(
-                    "Offering prisoner is not held.");
-            }
         }
 
         /* Offering 후보 순서를 난수 공급원으로 섞는다. */
@@ -345,11 +313,6 @@ namespace Pakuri.NewCore.Run.Services
         private int ResolveRandomIndex(int count)
         {
             int index = randomIndex(count);
-            if (index < 0 || index >= count)
-            {
-                throw new InvalidOperationException(
-                    "The random index source returned an invalid index.");
-            }
 
             return index;
         }

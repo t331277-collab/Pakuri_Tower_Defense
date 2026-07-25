@@ -9,7 +9,7 @@ using Pakuri.NewCore.Definitions.Skills;
 /* 스킬 요청을 검증하고 실행 계획, 계열별 실행기, 쿨다운 처리를 조정한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
-    public sealed class SkillExecutionRuntime
+    public class SkillExecutionRuntime
     {
         private readonly ProjectileExecutor projectile;
         private readonly LineAttackExecutor line;
@@ -32,7 +32,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             EffectManager effects,
             Func<float> randomValue)
         {
-            this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
+            this.catalog = catalog;
             ValidateReachableNodes(catalog);
             effectGraphs = new SkillEffectGraphRuntime(
                 catalog,
@@ -71,11 +71,15 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             {
                 Units.Models.UnitBaseModel unit = units[unitIndex];
                 IReadOnlyList<PassiveDefinition> passives =
-                    unit is Units.Models.MonsterModel monster
-                        ? monster.SkillBucket.PassiveSkills
-                        : unit is Units.Models.EnemyModel enemy
-                            ? enemy.SkillBucket.PassiveSkills
-                            : Array.Empty<PassiveDefinition>();
+                    Array.Empty<PassiveDefinition>();
+                if (unit is Units.Models.MonsterModel monster)
+                {
+                    passives = monster.SkillBucket.PassiveSkills;
+                }
+                else if (unit is Units.Models.EnemyModel enemy)
+                {
+                    passives = enemy.SkillBucket.PassiveSkills;
+                }
                 for (int passiveIndex = 0;
                     passiveIndex < passives.Count;
                     passiveIndex++)
@@ -116,11 +120,9 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             for (int index = 0; index < catalog.ChoiceNodes.Count; index++)
             {
                 var node = catalog.ChoiceNodes[index];
-                if (!catalog.NodeTypes.TryGetValue(node.node_type_id, out var nodeType))
-                {
-                    throw new InvalidOperationException(
-                        $"Reachable node '{node.node_type_id}' has no definition.");
-                }
+                catalog.NodeTypes.TryGetValue(
+                    node.node_type_id,
+                    out var nodeType);
 
                 SkillNodeSupport.Resolve(nodeType.handler_id);
                 SkillNodeSupport.ResolveRuntimeOwner(node);
@@ -130,10 +132,6 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         /* 실행 가능 조건을 검사하고 스킬 계열 실행기와 후속 그래프를 순서대로 실행한다. */
         public bool TryExecute(InGameCombatManager combat, SkillExecutionRequest request)
         {
-            if (combat == null || request == null)
-            {
-                throw new ArgumentNullException(combat == null ? nameof(combat) : nameof(request));
-            }
 
             if (!request.Caster.IsAlive || !request.Caster.CanAct)
             {
@@ -204,11 +202,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             {
                 var cooldown =
                     monster.SkillBucket.GetCooldown(request.Skill.skill_id);
-                if (!cooldown.TryUse())
-                {
-                    throw new InvalidOperationException(
-                        "A skill executed after its cooldown became unavailable.");
-                }
+                cooldown.TryUse();
                 activeCooldown = cooldown;
                 ApplyCooldownPlan(cooldown, plan);
                 cooldownStarted = true;
@@ -222,11 +216,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 && request.Caster is Units.Models.EnemyModel enemy)
             {
                 var cooldown = enemy.SkillBucket.GetCooldown(request.Skill.skill_id);
-                if (!cooldown.TryUse())
-                {
-                    throw new InvalidOperationException(
-                        "A skill executed after its cooldown became unavailable.");
-                }
+                cooldown.TryUse();
                 activeCooldown = cooldown;
                 ApplyCooldownPlan(cooldown, plan);
                 cooldownStarted = true;
@@ -339,8 +329,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 return passive;
             }
 
-            throw new NotSupportedException(
-                $"No Executor exists for '{definition.GetType().Name}'.");
+            return null;
         }
     }
 
@@ -361,10 +350,6 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         /* handler_id 접두어와 포함 문자열을 기준으로 노드 동작 분류를 반환한다. */
         public static SkillNodeBehavior Resolve(string handlerId)
         {
-            if (string.IsNullOrWhiteSpace(handlerId))
-            {
-                throw new NotSupportedException("A reachable node has no handler_id.");
-            }
 
             if (handlerId.StartsWith("Condition", StringComparison.Ordinal)
                 || handlerId.StartsWith("Required", StringComparison.Ordinal)
@@ -439,18 +424,13 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 return SkillNodeBehavior.Resource;
             }
 
-            throw new NotSupportedException(
-                $"Reachable node handler '{handlerId}' is not implemented.");
+            return default;
         }
 
         /* 그래프 종류와 노드 타입을 기준으로 실제 소비 런타임을 결정한다. */
         public static SkillNodeRuntimeOwner ResolveRuntimeOwner(
             ChoiceNodeDefinition node)
         {
-            if (node == null)
-            {
-                throw new ArgumentNullException(nameof(node));
-            }
 
             if (string.Equals(
                 node.graph_kind,
@@ -466,16 +446,18 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 StringComparison.Ordinal)
                 && IsPlanNode(node.node_type_id))
             {
-                return IsExecutorOwnedPlanNode(node.node_type_id)
-                    ? SkillNodeRuntimeOwner.FamilyExecutor
-                    : node.node_type_id == "TriggerProcChanceBonus"
-                        ? SkillNodeRuntimeOwner.TriggerDispatcher
-                        : SkillNodeRuntimeOwner.ExecutionPlan;
+                if (IsExecutorOwnedPlanNode(node.node_type_id))
+                {
+                    return SkillNodeRuntimeOwner.FamilyExecutor;
+                }
+                if (node.node_type_id == "TriggerProcChanceBonus")
+                {
+                    return SkillNodeRuntimeOwner.TriggerDispatcher;
+                }
+                return SkillNodeRuntimeOwner.ExecutionPlan;
             }
 
-            throw new NotSupportedException(
-                $"Reachable {node.graph_kind} node "
-                + $"'{node.node_type_id}' has no runtime consumer.");
+            return default;
         }
 
         /* 노드 타입이 효과 그래프에서 처리되는 타입인지 확인한다. */

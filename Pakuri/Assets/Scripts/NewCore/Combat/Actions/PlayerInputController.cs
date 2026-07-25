@@ -17,7 +17,7 @@ namespace Pakuri.NewCore.Combat.Actions
         Released
     }
 
-    public sealed class PlayerInputController : MonoBehaviour
+    public class PlayerInputController : MonoBehaviour
     {
         [SerializeField] private Camera inputCamera;
         [SerializeField] private bool autoSkillEnabled;
@@ -39,7 +39,7 @@ namespace Pakuri.NewCore.Combat.Actions
         public void Select(MonsterActionController controller)
         {
             selectedController =
-                controller ?? throw new ArgumentNullException(nameof(controller));
+                controller;
             pending.Clear();
             lastProjectileAim = null;
             lastProjectileTarget = null;
@@ -48,8 +48,7 @@ namespace Pakuri.NewCore.Combat.Actions
         /* 선택 Monster scene Actor를 입력 원점으로 연결하고 Inspector 자동 상태를 적용한다. */
         public void BindActor(MonsterActor actor)
         {
-            selectedActor = actor
-                ?? throw new ArgumentNullException(nameof(actor));
+            selectedActor = actor;
             SetAutoSkillEnabled(autoSkillEnabled);
         }
 
@@ -74,9 +73,12 @@ namespace Pakuri.NewCore.Combat.Actions
                 return;
             }
 
-            Camera camera = inputCamera != null
-                ? inputCamera
-                : Camera.main;
+            Camera camera = inputCamera;
+            if (camera == null)
+            {
+                camera = Camera.main;
+            }
+
             if (camera == null)
             {
                 return;
@@ -93,11 +95,16 @@ namespace Pakuri.NewCore.Combat.Actions
                 world.x - origin.x,
                 world.y - origin.y);
             var target = new CombatVector2(world.x, world.y);
-            ManualInputPhase phase = pressed
-                ? ManualInputPhase.Pressed
-                : released
-                    ? ManualInputPhase.Released
-                    : ManualInputPhase.Held;
+            ManualInputPhase phase = ManualInputPhase.Held;
+            if (pressed)
+            {
+                phase = ManualInputPhase.Pressed;
+            }
+            else if (released)
+            {
+                phase = ManualInputPhase.Released;
+            }
+
             bool pointerOverUi = EventSystem.current != null
                 && EventSystem.current.IsPointerOverGameObject();
             IReadOnlyList<SkillDefinition> skills =
@@ -135,10 +142,6 @@ namespace Pakuri.NewCore.Combat.Actions
         /* 선택 Monster의 자동 전투 상태를 바꾸고 필요하면 대기 요청을 비운다. */
         public void SetAutoSkillEnabled(bool enabled)
         {
-            if (selectedController == null)
-            {
-                throw new InvalidOperationException("No selected monster is registered.");
-            }
 
             selectedController.Monster.SetAutoSkillEnabled(enabled);
             if (enabled)
@@ -249,7 +252,7 @@ namespace Pakuri.NewCore.Combat.Actions
                 CombatVector2 aimDirection,
                 CombatVector2 targetPoint)
             {
-                Skill = skill ?? throw new ArgumentNullException(nameof(skill));
+                Skill = skill;
                 AimDirection = aimDirection;
                 TargetPoint = targetPoint;
             }

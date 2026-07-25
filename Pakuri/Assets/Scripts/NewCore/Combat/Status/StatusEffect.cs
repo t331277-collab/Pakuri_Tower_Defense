@@ -5,7 +5,7 @@ using Pakuri.NewCore.Units.Models;
 /* 상태 효과와 시간 제한 전투 수정치의 생명주기 상태를 소유한다. */
 namespace Pakuri.NewCore.Combat.Status
 {
-    public sealed class StatusEffect
+    public class StatusEffect
     {
         /* 상태 정의와 적용·피적용 유닛을 결합해 초기 스택과 지속시간을 계산한다. */
         internal StatusEffect(
@@ -17,11 +17,11 @@ namespace Pakuri.NewCore.Combat.Status
             string sourceSkillId,
             int? maximumStacks)
         {
-            Definition = definition ?? throw new ArgumentNullException(nameof(definition));
+            Definition = definition;
             ApplyingUnit =
-                applyingUnit ?? throw new ArgumentNullException(nameof(applyingUnit));
+                applyingUnit;
             AffectedUnit =
-                affectedUnit ?? throw new ArgumentNullException(nameof(affectedUnit));
+                affectedUnit;
             SourceSkillId = sourceSkillId;
             MaximumStacks = NormalizeMaximum(maximumStacks);
             CurrentStacks = ResolveStackAmount(stackAmount);
@@ -57,9 +57,13 @@ namespace Pakuri.NewCore.Combat.Status
             int? stackAmount,
             int? maximumStacks)
         {
-            int? refreshedMaximum = maximumStacks.HasValue
-                ? NormalizeMaximum(maximumStacks)
-                : MaximumStacks;
+            int? refreshedMaximum = MaximumStacks;
+            if (maximumStacks.HasValue)
+            {
+                refreshedMaximum =
+                    NormalizeMaximum(maximumStacks);
+            }
+
             int refreshedStacks =
                 AddStacks(
                     CurrentStacks,
@@ -86,12 +90,6 @@ namespace Pakuri.NewCore.Combat.Status
         /* public 연장 입력을 검증하고 만료 가능한 상태의 지속시간을 늘린다. */
         public void Extend(float durationSeconds)
         {
-            if (durationSeconds < 0f
-                || float.IsNaN(durationSeconds)
-                || float.IsInfinity(durationSeconds))
-            {
-                throw new ArgumentOutOfRangeException(nameof(durationSeconds));
-            }
             if (!IsPermanent && RemainingDuration.HasValue)
             {
                 RemainingDuration += durationSeconds;
@@ -101,10 +99,6 @@ namespace Pakuri.NewCore.Combat.Status
         /* 지정 수만큼 현재 상태 스택을 제거하고 실제 제거량을 반환한다. */
         internal int RemoveStacks(int amount)
         {
-            if (amount < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(amount));
-            }
             int removed = Math.Min(CurrentStacks, amount);
             CurrentStacks -= removed;
             return removed;
@@ -123,15 +117,8 @@ namespace Pakuri.NewCore.Combat.Status
             int? stackAmount,
             int? maximumStacks = null)
         {
-            int resolved = stackAmount
-                ?? Definition.base_stack_amount
-                ?? throw new ArgumentException(
-                    "Status Definition has no base_stack_amount.",
-                    nameof(Definition));
-            if (resolved < 1)
-            {
-                throw new ArgumentOutOfRangeException(nameof(stackAmount));
-            }
+            int resolved = stackAmount.GetValueOrDefault(
+                Definition.base_stack_amount.GetValueOrDefault());
 
             return AddStacks(0, resolved, maximumStacks ?? MaximumStacks);
         }
@@ -144,7 +131,12 @@ namespace Pakuri.NewCore.Combat.Status
                 + (int)AffectedUnit.ResolveRuntimeModifier(
                     "StatusMaxStacksBonus",
                     Definition.status_effect_id);
-            return maximum > 0 ? Math.Min(updated, maximum) : updated;
+            if (maximum > 0)
+            {
+                return Math.Min(updated, maximum);
+            }
+
+            return updated;
         }
 
         /* 최대 스택 0을 무제한으로 정규화하고 음수 입력을 거부한다. */
@@ -153,10 +145,6 @@ namespace Pakuri.NewCore.Combat.Status
             if (!maximumStacks.HasValue || maximumStacks.Value == 0)
             {
                 return null;
-            }
-            if (maximumStacks.Value < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(maximumStacks));
             }
             return maximumStacks;
         }
@@ -169,21 +157,14 @@ namespace Pakuri.NewCore.Combat.Status
                 return null;
             }
 
-            float duration = durationSeconds
-                ?? Definition.default_duration_seconds
-                ?? throw new ArgumentException(
-                    "Status Definition has no default_duration_seconds.",
-                    nameof(Definition));
-            if (duration < 0f || float.IsNaN(duration) || float.IsInfinity(duration))
-            {
-                throw new ArgumentOutOfRangeException(nameof(durationSeconds));
-            }
+            float duration = durationSeconds.GetValueOrDefault(
+                Definition.default_duration_seconds.GetValueOrDefault());
 
             return duration;
         }
     }
 
-    public sealed class RuntimeCombatModifier
+    public class RuntimeCombatModifier
     {
         /* public 소유 경계에서 검증된 수정치 값을 시간 제한 런타임 상태로 저장한다. */
         internal RuntimeCombatModifier(

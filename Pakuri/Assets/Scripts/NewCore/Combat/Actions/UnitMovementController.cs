@@ -4,7 +4,7 @@ using Pakuri.NewCore.Units.Models;
 /* 전투 좌표에서 유닛 이동과 강제 변위를 계산해 모델에 반영한다. */
 namespace Pakuri.NewCore.Combat.Actions
 {
-    public sealed class UnitMovementController
+    public class UnitMovementController
     {
         /* 유닛 이동 목표까지의 이동량을 계산해 위치에 반영한다. */
         public bool MoveTowards(
@@ -14,10 +14,6 @@ namespace Pakuri.NewCore.Combat.Actions
             float deltaTime,
             float stopDistance)
         {
-            if (unit == null)
-            {
-                throw new ArgumentNullException(nameof(unit));
-            }
 
             ValidateNonNegativeFinite(moveSpeed, nameof(moveSpeed));
             ValidateNonNegativeFinite(deltaTime, nameof(deltaTime));
@@ -44,17 +40,6 @@ namespace Pakuri.NewCore.Combat.Actions
         /* 유닛 이동 강제 변위를 검증해 위치에 반영한다. */
         public bool Displace(UnitBaseModel unit, CombatVector2 displacement)
         {
-            if (unit == null)
-            {
-                throw new ArgumentNullException(nameof(unit));
-            }
-            if (float.IsNaN(displacement.X)
-                || float.IsInfinity(displacement.X)
-                || float.IsNaN(displacement.Y)
-                || float.IsInfinity(displacement.Y))
-            {
-                throw new ArgumentOutOfRangeException(nameof(displacement));
-            }
             if (!unit.IsAlive || !unit.CanMove || displacement.SqrMagnitude <= 0f)
             {
                 return false;
@@ -67,10 +52,6 @@ namespace Pakuri.NewCore.Combat.Actions
         /* 유닛 이동 입력과 상태의 필수 조건을 검증한다. */
         private static void ValidateNonNegativeFinite(float value, string parameterName)
         {
-            if (value < 0f || float.IsNaN(value) || float.IsInfinity(value))
-            {
-                throw new ArgumentOutOfRangeException(parameterName);
-            }
         }
     }
 }

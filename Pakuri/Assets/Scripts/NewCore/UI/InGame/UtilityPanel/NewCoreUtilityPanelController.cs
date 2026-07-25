@@ -5,7 +5,7 @@ using UnityEngine.UI;
 /* Auto 전투 command와 공통 Time.timeScale 순환 표시를 소유한다. */
 namespace Pakuri.NewCore.UI.InGame.UtilityPanel
 {
-    public sealed class NewCoreUtilityPanelController : MonoBehaviour
+    public class NewCoreUtilityPanelController : MonoBehaviour
     {
         private static readonly float[] TimeScales = { 1f, 1.5f, 2f };
 
@@ -63,15 +63,19 @@ namespace Pakuri.NewCore.UI.InGame.UtilityPanel
             if (onePointFiveIndicator == null && time != null)
             {
                 var child = time.Find("1.5");
-                onePointFiveIndicator =
-                    child != null ? child.gameObject : null;
+                if (child != null)
+                {
+                    onePointFiveIndicator = child.gameObject;
+                }
             }
 
             if (twoTimesIndicator == null && time != null)
             {
                 var child = time.Find("2");
-                twoTimesIndicator =
-                    child != null ? child.gameObject : null;
+                if (child != null)
+                {
+                    twoTimesIndicator = child.gameObject;
+                }
             }
         }
 

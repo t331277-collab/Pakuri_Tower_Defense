@@ -10,7 +10,7 @@ using UnityEngine.UI;
 /* 인게임 panel 전환과 stage 결과 표시를 runtime command 경계에 연결한다. */
 namespace Pakuri.NewCore.UI.InGame
 {
-    public sealed class InGameUIManager : MonoBehaviour
+    public class InGameUIManager : MonoBehaviour
     {
         [SerializeField] private GameBootstrap combatManager;
         [SerializeField] private RewardPanelController rewardPanelController;
@@ -134,15 +134,6 @@ namespace Pakuri.NewCore.UI.InGame
                 GetComponent<OfferingPanelController>();
             manifestationPanelController ??=
                 GetComponent<ManifestationPanelController>();
-            if (combatManager == null
-                || rewardPanelController == null
-                || prisonPanelController == null
-                || offeringPanelController == null
-                || manifestationPanelController == null)
-            {
-                throw new InvalidOperationException(
-                    "New Core in-game UI references are incomplete.");
-            }
         }
 
         /* authored main menu scene으로 결과 flow를 복귀시킨다. */

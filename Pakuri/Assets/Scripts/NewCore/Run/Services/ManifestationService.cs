@@ -9,7 +9,7 @@ using Pakuri.NewCore.Units.Models;
 /* 포로 현현 시도와 성공 후보의 파티 영입 절차를 관리한다. */
 namespace Pakuri.NewCore.Run.Services
 {
-    public sealed class ManifestationAttemptResult
+    public class ManifestationAttemptResult
     {
         /* 현현 성공 여부와 성공 시 선택된 몬스터 정의를 묶는다. */
         internal ManifestationAttemptResult(
@@ -25,7 +25,7 @@ namespace Pakuri.NewCore.Run.Services
         public MonsterDefinition Candidate { get; }
     }
 
-    public sealed class ManifestationService
+    public class ManifestationService
     {
         private readonly GameDefinitionCatalog catalog;
         private readonly StageManager stage;
@@ -43,15 +43,15 @@ namespace Pakuri.NewCore.Run.Services
             Func<float> randomValue)
         {
             this.catalog =
-                catalog ?? throw new ArgumentNullException(nameof(catalog));
+                catalog;
             this.stage =
-                stage ?? throw new ArgumentNullException(nameof(stage));
+                stage;
             this.spawns =
-                spawns ?? throw new ArgumentNullException(nameof(spawns));
+                spawns;
             this.randomIndex =
-                randomIndex ?? throw new ArgumentNullException(nameof(randomIndex));
+                randomIndex;
             this.randomValue =
-                randomValue ?? throw new ArgumentNullException(nameof(randomValue));
+                randomValue;
         }
 
         public MonsterDefinition PendingCandidate => pendingCandidate;
@@ -61,89 +61,43 @@ namespace Pakuri.NewCore.Run.Services
             Prisoner prisoner,
             StageRewardDefinition reward)
         {
-            if (pendingCandidate != null)
-            {
-                throw new InvalidOperationException(
-                    "The successful manifestation must be recruited or skipped.");
-            }
 
-            if (!stage.Session.PrisonerInventory.CanConsume(prisoner))
-            {
-                throw new InvalidOperationException(
-                    "Manifestation prisoner is not held.");
-            }
-
-            if (reward == null)
-            {
-                throw new ArgumentNullException(nameof(reward));
-            }
-
-            float successChance = reward.manifest_success_chance
-                ?? throw Invalid(
-                    reward,
-                    "manifest_success_chance is required.");
-            if (successChance < 0f
-                || successChance > 1f
-                || float.IsNaN(successChance)
-                || float.IsInfinity(successChance))
-            {
-                throw Invalid(
-                    reward,
-                    "manifest_success_chance must be a probability.");
-            }
+            float successChance =
+                reward.manifest_success_chance.GetValueOrDefault();
 
             List<MonsterDefinition> candidates =
                 BuildCandidates();
-            if (candidates.Count == 0)
-            {
-                throw new InvalidOperationException(
-                    "No manifestation candidate can enter the party.");
-            }
 
             MonsterDefinition selected =
                 candidates[ResolveRandomIndex(candidates.Count)];
             bool success = NextUnitValue() < successChance;
-            if (!stage.Session.PrisonerInventory.TryConsume(prisoner))
-            {
-                throw new InvalidOperationException(
-                    "Validated prisoner consumption failed.");
-            }
+            stage.Session.PrisonerInventory.TryConsume(prisoner);
 
             if (success)
             {
                 pendingCandidate = selected;
             }
 
+            MonsterDefinition resultDefinition = null;
+            if (success)
+            {
+                resultDefinition = selected;
+            }
+
             return new ManifestationAttemptResult(
                 success,
-                success ? selected : null);
+                resultDefinition);
         }
 
         /* 성공한 현현 후보를 모델로 만들고 파티와 전장에 원자적으로 등록한다. */
         public MonsterModel ConfirmRecruitment()
         {
-            if (pendingCandidate == null)
-            {
-                throw new InvalidOperationException(
-                    "There is no successful manifestation to recruit.");
-            }
-
-            if (!stage.Session.PartyRoster.CanAdd(
-                    pendingCandidate.id))
-            {
-                throw new InvalidOperationException(
-                    "The manifested monster can no longer enter the party.");
-            }
 
             MonsterModel monster = spawns.CreateMonsterModel(
                 pendingCandidate,
                 true);
-            if (!stage.Session.PartyRoster.TryAddManifestedMonster(
-                    monster))
-            {
-                throw new InvalidOperationException(
-                    "Manifested party registration failed.");
-            }
+            stage.Session.PartyRoster.TryAddManifestedMonster(
+                monster);
 
             try
             {
@@ -151,8 +105,6 @@ namespace Pakuri.NewCore.Run.Services
                 {
                     stage.Session.PartyRoster
                         .TryRemoveManifestedMonster(monster);
-                    throw new InvalidOperationException(
-                        "Manifested field placement failed.");
                 }
             }
             catch
@@ -201,11 +153,6 @@ namespace Pakuri.NewCore.Run.Services
         private int ResolveRandomIndex(int count)
         {
             int index = randomIndex(count);
-            if (index < 0 || index >= count)
-            {
-                throw new InvalidOperationException(
-                    "The random index source returned an invalid index.");
-            }
 
             return index;
         }
@@ -214,14 +161,6 @@ namespace Pakuri.NewCore.Run.Services
         private float NextUnitValue()
         {
             float value = randomValue();
-            if (value < 0f
-                || value > 1f
-                || float.IsNaN(value)
-                || float.IsInfinity(value))
-            {
-                throw new InvalidOperationException(
-                    "The random value source must return [0, 1].");
-            }
 
             return value;
         }

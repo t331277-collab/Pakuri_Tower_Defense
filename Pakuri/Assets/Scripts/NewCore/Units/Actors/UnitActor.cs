@@ -36,8 +36,7 @@ namespace Pakuri.NewCore.Units.Actors
         /* Model을 Actor에 연결하고 초기 Transform과 월드 표시를 동기화한다. */
         public void Bind(UnitBaseModel model)
         {
-            Model = model
-                ?? throw new System.ArgumentNullException(nameof(model));
+            Model = model;
             Model.SetPosition(ToModel(transform.position));
             worldView = new UnitWorldView(this);
             InitializeDamagePopups(worldView.DamageTemplate);
@@ -114,13 +113,6 @@ namespace Pakuri.NewCore.Units.Actors
         /* public 경과 시간을 검증하고 popup 상승·투명도·삭제를 처리한다. */
         public void TickDamagePopups(float deltaTime)
         {
-            if (deltaTime < 0f
-                || float.IsNaN(deltaTime)
-                || float.IsInfinity(deltaTime))
-            {
-                throw new System.ArgumentOutOfRangeException(
-                    nameof(deltaTime));
-            }
 
             for (int index = damagePopups.Count - 1; index >= 0; index--)
             {
@@ -224,7 +216,7 @@ namespace Pakuri.NewCore.Units.Actors
             return new CombatVector2(value.x, value.y);
         }
 
-        private sealed class UnitWorldView
+        private class UnitWorldView
         {
             private const string NameObject = "MonsterNameLabel";
             private const string HealthObject = "MonsterHpLabel";
@@ -263,9 +255,16 @@ namespace Pakuri.NewCore.Units.Actors
 
                 if (healthLabel != null)
                 {
-                    healthLabel.text = model.CurrentShield > 0f
-                        ? $"HP {Format(model.CurrentHealth)}/{Format(model.MaximumHealth)} +{Format(model.CurrentShield)}"
-                        : $"HP {Format(model.CurrentHealth)}/{Format(model.MaximumHealth)}";
+                    if (model.CurrentShield > 0f)
+                    {
+                        healthLabel.text =
+                            $"HP {Format(model.CurrentHealth)}/{Format(model.MaximumHealth)} +{Format(model.CurrentShield)}";
+                    }
+                    else
+                    {
+                        healthLabel.text =
+                            $"HP {Format(model.CurrentHealth)}/{Format(model.MaximumHealth)}";
+                    }
                 }
 
                 var visible = Mathf.Max(
@@ -293,25 +292,41 @@ namespace Pakuri.NewCore.Units.Actors
                     return;
                 }
 
-                var baseScale = background != null
-                    ? background.localScale.x
-                    : target.localScale.x;
+                float baseScale = target.localScale.x;
+                if (background != null)
+                {
+                    baseScale = background.localScale.x;
+                }
+
                 var width = RenderedWidth(background, Mathf.Abs(baseScale));
                 var segmentWidth = width * Mathf.Clamp01(widthRatio);
                 var renderer = target.GetComponent<SpriteRenderer>();
-                var unitWidth = renderer != null && renderer.sprite != null
-                    ? Mathf.Max(0.0001f, renderer.sprite.bounds.size.x)
-                    : 1f;
+                float unitWidth = 1f;
+                if (renderer != null && renderer.sprite != null)
+                {
+                    unitWidth = Mathf.Max(
+                        0.0001f,
+                        renderer.sprite.bounds.size.x);
+                }
+
                 var scale = target.localScale;
-                var sign = scale.x < 0f || (Mathf.Approximately(scale.x, 0f) && baseScale < 0f)
-                    ? -1f
-                    : 1f;
+                float sign = 1f;
+                if (scale.x < 0f
+                    || (Mathf.Approximately(scale.x, 0f)
+                        && baseScale < 0f))
+                {
+                    sign = -1f;
+                }
+
                 scale.x = sign * segmentWidth / unitWidth;
                 target.localScale = scale;
 
-                var center = background != null
-                    ? background.localPosition.x
-                    : 0f;
+                float center = 0f;
+                if (background != null)
+                {
+                    center = background.localPosition.x;
+                }
+
                 var position = target.localPosition;
                 position.x = center - width * 0.5f
                     + width * Mathf.Clamp01(leftRatio)
@@ -324,16 +339,22 @@ namespace Pakuri.NewCore.Units.Actors
             {
                 if (model.Definition is MonsterDefinition monster)
                 {
-                    return string.IsNullOrWhiteSpace(monster.display_name)
-                        ? monster.id
-                        : monster.display_name;
+                    if (string.IsNullOrWhiteSpace(monster.display_name))
+                    {
+                        return monster.id;
+                    }
+
+                    return monster.display_name;
                 }
 
                 if (model.Definition is EnemyDefinition enemy)
                 {
-                    return string.IsNullOrWhiteSpace(enemy.display_name)
-                        ? enemy.enemy_id
-                        : enemy.display_name;
+                    if (string.IsNullOrWhiteSpace(enemy.display_name))
+                    {
+                        return enemy.enemy_id;
+                    }
+
+                    return enemy.display_name;
                 }
 
                 return "Nexus";
@@ -350,10 +371,15 @@ namespace Pakuri.NewCore.Units.Actors
                 }
 
                 var renderer = target.GetComponent<SpriteRenderer>();
-                return renderer != null && renderer.sprite != null
-                    ? Mathf.Abs(target.localScale.x)
-                        * Mathf.Max(0.0001f, renderer.sprite.bounds.size.x)
-                    : Mathf.Abs(target.localScale.x);
+                if (renderer != null && renderer.sprite != null)
+                {
+                    return Mathf.Abs(target.localScale.x)
+                        * Mathf.Max(
+                            0.0001f,
+                            renderer.sprite.bounds.size.x);
+                }
+
+                return Mathf.Abs(target.localScale.x);
             }
 
             /* Actor 자식에서 고정 이름 Transform을 찾는다. */
@@ -380,19 +406,27 @@ namespace Pakuri.NewCore.Units.Actors
                 where T : Component
             {
                 var target = Find(owner, objectName);
-                return target != null ? target.GetComponent<T>() : null;
+                if (target == null)
+                {
+                    return null;
+                }
+
+                return target.GetComponent<T>();
             }
 
             /* 정수는 정수로, 소수는 두 자리 이하로 체력 값을 표시한다. */
             private static string Format(float value)
             {
-                return Mathf.Approximately(value, Mathf.Round(value))
-                    ? Mathf.RoundToInt(value).ToString()
-                    : value.ToString("0.##");
+                if (Mathf.Approximately(value, Mathf.Round(value)))
+                {
+                    return Mathf.RoundToInt(value).ToString();
+                }
+
+                return value.ToString("0.##");
             }
         }
 
-        private sealed class DamagePopup
+        private class DamagePopup
         {
             /* popup 인스턴스의 시작 표시 상태와 지속시간을 저장한다. */
             public DamagePopup(

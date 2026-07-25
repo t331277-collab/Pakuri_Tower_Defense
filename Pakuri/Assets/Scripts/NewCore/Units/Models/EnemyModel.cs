@@ -6,7 +6,7 @@ using Pakuri.NewCore.Definitions.Units;
 /* 적 유닛의 정의, 스킬 버킷, 넥서스 접촉 상태를 소유한다. */
 namespace Pakuri.NewCore.Units.Models
 {
-    public sealed class EnemyModel : UnitBaseModel
+    public class EnemyModel : UnitBaseModel
     {
         /* 기본 체력 배율로 적 정의와 고정 스킬 슬롯을 구성한다. */
         public EnemyModel(
@@ -31,7 +31,7 @@ namespace Pakuri.NewCore.Units.Models
             PassiveDefinition passiveSkill,
             float maximumHealthMultiplier)
             : base(
-                definition ?? throw new ArgumentNullException(nameof(definition)),
+                definition,
                 RequiredMaximumHealth(
                     definition,
                     maximumHealthMultiplier))
@@ -79,22 +79,8 @@ namespace Pakuri.NewCore.Units.Models
             EnemyDefinition definition,
             float multiplier)
         {
-            if (definition == null)
-            {
-                throw new ArgumentNullException(nameof(definition));
-            }
 
-            if (multiplier <= 0f
-                || float.IsNaN(multiplier)
-                || float.IsInfinity(multiplier))
-            {
-                throw new ArgumentOutOfRangeException(nameof(multiplier));
-            }
-
-            return (definition.max_health
-                ?? throw new ArgumentException(
-                    "Enemy definition has no max_health.",
-                    nameof(definition)))
+            return definition.max_health.GetValueOrDefault()
                 * multiplier;
         }
     }

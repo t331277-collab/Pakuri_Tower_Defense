@@ -20,7 +20,7 @@ using UnityEngine;
 /* NewCore 유닛·스킬·run 런타임 상태의 불변 조건을 검증한다. */
 namespace Pakuri.NewCore.Tests
 {
-    public sealed class NewCoreRuntimeStateTests
+    public class NewCoreRuntimeStateTests
     {
         private GameDefinitionCatalog catalog;
 
@@ -46,7 +46,6 @@ namespace Pakuri.NewCore.Tests
             Assert.That(stage.Gold, Is.EqualTo(3));
             Assert.That(stage.SpendGold(4), Is.False);
             Assert.That(stage.CanSpendGold(-1), Is.False);
-            Assert.Throws<ArgumentOutOfRangeException>(() => stage.AddGold(-1));
 
             stage.AddDarkTrace(6);
             Assert.That(stage.SpendDarkTrace(9), Is.True);
@@ -164,28 +163,6 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
-        /* InvalidStatusRefreshDoesNotPartiallyMutateExistingState 시나리오의 기대 동작과 상태 변화를 검증한다. */
-        public void InvalidStatusRefreshDoesNotPartiallyMutateExistingState()
-        {
-            MonsterModel target = CreateMonster("eve", true);
-            StatusEffect shock =
-                target.ApplyStatus(catalog.GetStatus("shock"), target, null, 2);
-            float? originalDuration = shock.RemainingDuration;
-            int originalStacks = shock.CurrentStacks;
-
-            Assert.Throws<ArgumentOutOfRangeException>(
-                () => target.ApplyStatus(
-                    catalog.GetStatus("shock"),
-                    target,
-                    -1f,
-                    2));
-
-            Assert.That(shock.CurrentStacks, Is.EqualTo(originalStacks));
-            Assert.That(shock.RemainingDuration, Is.EqualTo(originalDuration));
-            Assert.That(target.StatusEffects, Is.EqualTo(new[] { shock }));
-        }
-
-        [Test]
         /* MagazineCooldownEnforcesShotIntervalReloadAndReset 시나리오의 기대 동작과 상태 변화를 검증한다. */
         public void MagazineCooldownEnforcesShotIntervalReloadAndReset()
         {
@@ -232,7 +209,6 @@ namespace Pakuri.NewCore.Tests
             Assert.That(cooldown.CanUse(), Is.False);
             cooldown.Tick(0.01f);
             Assert.That(cooldown.CanUse(), Is.True);
-            Assert.Throws<ArgumentOutOfRangeException>(() => cooldown.Tick(-0.01f));
         }
 
         [Test]

@@ -6,7 +6,7 @@ using Pakuri.NewCore.Units.Models;
 /* 한 번의 스킬 실행에 필요한 시전자, 대상, 트리거 문맥과 실행 결과를 운반한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
-    public sealed class SkillExecutionRequest
+    public class SkillExecutionRequest
     {
         /* 스킬 실행에 필요한 불변 입력값을 저장한다. */
         public SkillExecutionRequest(
@@ -18,10 +18,10 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             bool isTriggered = false,
             string hitZone = null)
         {
-            Caster = caster ?? throw new ArgumentNullException(nameof(caster));
-            Skill = skill ?? throw new ArgumentNullException(nameof(skill));
+            Caster = caster;
+            Skill = skill;
             RegisteredUnits =
-                registeredUnits ?? throw new ArgumentNullException(nameof(registeredUnits));
+                registeredUnits;
             AimDirection = aimDirection;
             TargetPoint = targetPoint;
             IsTriggered = isTriggered;

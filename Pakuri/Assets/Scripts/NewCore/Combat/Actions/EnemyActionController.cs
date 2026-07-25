@@ -8,7 +8,7 @@ using Pakuri.NewCore.Units.Models;
 /* 적의 대상 선정, 스킬 사용, 이동, 넥서스 공격 행동을 진행한다. */
 namespace Pakuri.NewCore.Combat.Actions
 {
-    public sealed class EnemyActionController : UnitActionController
+    public class EnemyActionController : UnitActionController
     {
         private readonly SkillTargeting targeting;
         private readonly UnitMovementController movement;
@@ -28,17 +28,11 @@ namespace Pakuri.NewCore.Combat.Actions
             : base(enemy, combatManager)
         {
             Enemy = enemy;
-            this.targeting = targeting ?? throw new ArgumentNullException(nameof(targeting));
-            this.movement = movement ?? throw new ArgumentNullException(nameof(movement));
+            this.targeting = targeting;
+            this.movement = movement;
             this.stageManager =
-                stageManager ?? throw new ArgumentNullException(nameof(stageManager));
-            this.nexus = nexus ?? throw new ArgumentNullException(nameof(nexus));
-            if (nexusContactDistance < 0f
-                || float.IsNaN(nexusContactDistance)
-                || float.IsInfinity(nexusContactDistance))
-            {
-                throw new ArgumentOutOfRangeException(nameof(nexusContactDistance));
-            }
+                stageManager;
+            this.nexus = nexus;
 
             this.nexusContactDistance = nexusContactDistance;
         }
@@ -99,7 +93,12 @@ namespace Pakuri.NewCore.Combat.Actions
         {
             IReadOnlyList<UnitBaseModel> targets =
                 targeting.Resolve(Enemy, skill, registeredUnits);
-            return targets.Count > 0 ? targets[0] : null;
+            if (targets.Count == 0)
+            {
+                return null;
+            }
+
+            return targets[0];
         }
 
         /* 적 행동 조건에 맞는 대상을 탐색해 반환한다. */
@@ -135,9 +134,12 @@ namespace Pakuri.NewCore.Combat.Actions
                 }
             }
 
-            return CanUse(Enemy.SkillBucket.SlotASkill.skill_id)
-                ? Enemy.SkillBucket.SlotASkill
-                : null;
+            if (CanUse(Enemy.SkillBucket.SlotASkill.skill_id))
+            {
+                return Enemy.SkillBucket.SlotASkill;
+            }
+
+            return null;
         }
 
         /* 등록 유닛 중 체력이 감소한 생존 아군이 있는지 확인한다. */

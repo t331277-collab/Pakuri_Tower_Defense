@@ -13723,7 +13723,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ef6bc3cf6355f784386ec14838b95907, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Pakuri.NewCore::Pakuri.NewCore.UI.InGame.ManifestationPanelController
   combatManager: {fileID: 1427799828}
   arielPrisonPortrait: {fileID: 21300000, guid: a2e16c5de6059e64bb11895b285e8b11, type: 3}
@@ -13741,7 +13741,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a21ed6261c64e2a40a84c1c3278cad60, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Pakuri.NewCore::Pakuri.NewCore.UI.InGame.OfferingPanelController
   combatManager: {fileID: 1427799828}
 --- !u!114 &876113840
@@ -13754,7 +13754,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b7d220d22fce8ff43aa44def0f3091e2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Pakuri.NewCore::Pakuri.NewCore.UI.InGame.PrisonPanelController
   combatManager: {fileID: 1427799828}
   arielPrisonPortrait: {fileID: 21300000, guid: a2e16c5de6059e64bb11895b285e8b11, type: 3}
@@ -13772,7 +13772,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cece438d32343c34da8fcc2cba16f986, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Pakuri.NewCore::Pakuri.NewCore.UI.InGame.RewardPanelController
   combatManager: {fileID: 1427799828}
   rewardButtonFirstColumnPosition: {x: -321.97855, y: 295}

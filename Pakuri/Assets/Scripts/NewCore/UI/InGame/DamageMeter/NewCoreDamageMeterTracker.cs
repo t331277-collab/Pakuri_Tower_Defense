@@ -8,7 +8,7 @@ using UnityEngine;
 /* Monster별 누적 피해와 skill source별 피해 record를 combat event에서 집계한다. */
 namespace Pakuri.NewCore.UI.InGame.DamageMeter
 {
-    public sealed class NewCoreDamageMeterTracker : MonoBehaviour
+    public class NewCoreDamageMeterTracker : MonoBehaviour
     {
         [SerializeField] private GameBootstrap combatManager;
 
@@ -82,7 +82,7 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
         }
     }
 
-    public sealed class DamageRecord
+    public class DamageRecord
     {
         private readonly Dictionary<string, DamageSourceRecord> sources =
             new Dictionary<string, DamageSourceRecord>(StringComparer.Ordinal);
@@ -103,9 +103,12 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
         /* skill source 피해와 Monster 총 피해를 함께 누적한다. */
         internal void Add(string skillId, float amount)
         {
-            var key = string.IsNullOrWhiteSpace(skillId)
-                ? "Direct"
-                : skillId;
+            string key = skillId;
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                key = "Direct";
+            }
+
             if (!sources.TryGetValue(
                     key,
                     out DamageSourceRecord source))
@@ -120,7 +123,7 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
         }
     }
 
-    public sealed class DamageSourceRecord
+    public class DamageSourceRecord
     {
         /* 지정 source id의 피해 record를 만든다. */
         internal DamageSourceRecord(string sourceId)

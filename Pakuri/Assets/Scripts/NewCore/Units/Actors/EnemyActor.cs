@@ -4,7 +4,7 @@ using UnityEngine;
 /* Enemy Model의 scene 결합과 공격·Nexus 접촉·패배 표현 생명주기를 소유한다. */
 namespace Pakuri.NewCore.Units.Actors
 {
-    public sealed class EnemyActor : UnitActor
+    public class EnemyActor : UnitActor
     {
         private const float DefeatVisualSeconds = 0.95f;
         private static readonly int Attack =

@@ -44,7 +44,7 @@ using NexusActorBehaviour = Pakuri.NewCore.Units.Actors.NexusActor;
 /* NewCore scene·prefab·UI·effect 표현 연결을 검증한다. */
 namespace Pakuri.NewCore.Tests
 {
-    public sealed class NewCorePresentationTests
+    public class NewCorePresentationTests
     {
         private const string CatalogPath =
             "Assets/Resources/Pakuri/NewCore/RuntimeCatalog.asset";
@@ -380,17 +380,32 @@ namespace Pakuri.NewCore.Tests
 
                 view.BindVisualRuntime(
                     effectRoot.transform,
-                    path => catalog.TryGetPrefab(path, out var asset)
-                        ? asset
-                        : null,
-                    path => catalog.TryGetSprite(path, out var asset)
-                        ? asset
-                        : null,
-                    path => catalog.TryGetAnimatorController(
-                        path,
-                        out var asset)
-                        ? asset
-                        : null);
+                    path =>
+                    {
+                        if (catalog.TryGetPrefab(path, out var asset))
+                        {
+                            return asset;
+                        }
+                        return null;
+                    },
+                    path =>
+                    {
+                        if (catalog.TryGetSprite(path, out var asset))
+                        {
+                            return asset;
+                        }
+                        return null;
+                    },
+                    path =>
+                    {
+                        if (catalog.TryGetAnimatorController(
+                                path,
+                                out var asset))
+                        {
+                            return asset;
+                        }
+                        return null;
+                    });
                 view.SyncVisuals();
 
                 Assert.That(

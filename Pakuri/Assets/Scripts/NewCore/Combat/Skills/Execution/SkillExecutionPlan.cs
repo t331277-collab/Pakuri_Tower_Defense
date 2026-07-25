@@ -9,7 +9,7 @@ using Pakuri.NewCore.Units.Models;
 /* 학습한 선택 노드를 스킬 실행에 사용할 수치, 조건, 대상 규칙으로 해석한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
-    internal sealed class SkillExecutionPlan
+    internal class SkillExecutionPlan
     {
         private readonly List<ChoiceNodeDefinition> nodes;
         private readonly UnitBaseModel caster;
@@ -51,10 +51,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 {
                     SkillChoiceDefinition choice =
                         monster.SkillBucket.SelectedChoices[index];
-                    string effectiveSkillId =
-                        string.IsNullOrEmpty(choice.target_skill_id)
-                            ? choice.skill_id
-                            : choice.target_skill_id;
+                    string effectiveSkillId = choice.target_skill_id;
+                    if (string.IsNullOrEmpty(effectiveSkillId))
+                    {
+                        effectiveSkillId = choice.skill_id;
+                    }
                     if (effectiveSkillId == skill.skill_id
                         || ChoiceTargetsSkill(
                             catalog,
@@ -97,9 +98,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             result.Sort((left, right) =>
             {
                 int graph = Nullable.Compare(left.graph_index, right.graph_index);
-                return graph != 0
-                    ? graph
-                    : Nullable.Compare(left.node_order, right.node_order);
+                if (graph != 0)
+                {
+                    return graph;
+                }
+                return Nullable.Compare(left.node_order, right.node_order);
             });
             return new SkillExecutionPlan(
                 result,
@@ -432,10 +435,16 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 }
 
                 int configuredIndex = (int)Number(node.arg_1, 0f);
-                bool matches = configuredIndex == 0
-                    ? burstProjectileCount > 0
-                        && projectileIndex == burstProjectileCount - 1
-                    : projectileIndex + 1 == configuredIndex;
+                bool matches;
+                if (configuredIndex == 0)
+                {
+                    matches = burstProjectileCount > 0
+                        && projectileIndex == burstProjectileCount - 1;
+                }
+                else
+                {
+                    matches = projectileIndex + 1 == configuredIndex;
+                }
                 if (!matches)
                 {
                     continue;
@@ -870,7 +879,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         private static float LastPositiveNumber(ChoiceNodeDefinition node, float fallback)
         {
             float value = LastNumber(node, fallback);
-            return value > 0f ? value : fallback;
+            if (value > 0f)
+            {
+                return value;
+            }
+            return fallback;
         }
 
         /* 노드 인자 중 마지막 유효 수치 값을 반환한다. */
@@ -900,13 +913,15 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         /* 문자열을 고정 문화권 실수로 변환하고 실패하면 기본값을 반환한다. */
         private static float Number(string text, float fallback)
         {
-            return float.TryParse(
-                text,
-                NumberStyles.Float,
-                CultureInfo.InvariantCulture,
-                out float number)
-                ? number
-                : fallback;
+            if (float.TryParse(
+                    text,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out float number))
+            {
+                return number;
+            }
+            return fallback;
         }
 
         /* 실제 사용된 선택 노드를 계약 검증 콜백에 보고한다. */

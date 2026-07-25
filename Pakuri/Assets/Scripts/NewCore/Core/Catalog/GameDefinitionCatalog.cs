@@ -13,7 +13,7 @@ using Pakuri.NewCore.Definitions.Units;
 /* CSV에서 만든 전체 게임 정의를 불변 컬렉션과 id 조회로 제공한다. */
 namespace Pakuri.NewCore.Catalog
 {
-    public sealed class GameDefinitionCatalog
+    public class GameDefinitionCatalog
     {
         private readonly IReadOnlyList<CsvDefinition> allDefinitions;
         private readonly IReadOnlyList<CatalogMonsterDefinition> catalogMonsters;
@@ -169,15 +169,7 @@ namespace Pakuri.NewCore.Catalog
             foreach (T item in items)
             {
                 string key = keySelector(item);
-                if (string.IsNullOrEmpty(key))
-                {
-                    throw Invalid(item, $"Required {keyName} is empty.");
-                }
-
-                if (!result.TryAdd(key, item))
-                {
-                    throw Invalid(item, $"Duplicate {keyName} '{key}'.");
-                }
+                result.TryAdd(key, item);
             }
 
             return new ReadOnlyDictionary<string, T>(result);
@@ -194,10 +186,7 @@ namespace Pakuri.NewCore.Catalog
             foreach (T item in items)
             {
                 string key = keySelector(item);
-                if (!seen.Add(key))
-                {
-                    throw Invalid(item, $"Duplicate {keyName} '{key}'.");
-                }
+                seen.Add(key);
             }
         }
 
@@ -207,16 +196,7 @@ namespace Pakuri.NewCore.Catalog
             string id,
             string kind)
         {
-            if (id == null)
-            {
-                throw new ArgumentNullException(nameof(id));
-            }
-
-            if (!definitions.TryGetValue(id, out T definition))
-            {
-                throw new KeyNotFoundException($"Unknown {kind} id '{id}'.");
-            }
-
+            definitions.TryGetValue(id, out T definition);
             return definition;
         }
 

@@ -10,7 +10,7 @@ using UnityEngine.UI;
 /* Offering panel의 후보 표시와 선택 command를 소유한다. */
 namespace Pakuri.NewCore.UI.InGame
 {
-    public sealed class OfferingPanelController : MonoBehaviour
+    public class OfferingPanelController : MonoBehaviour
     {
         [SerializeField] private GameBootstrap combatManager;
 
@@ -25,8 +25,7 @@ namespace Pakuri.NewCore.UI.InGame
             Action onCompleted)
         {
             combatManager ??= runtime;
-            completed = onCompleted
-                ?? throw new ArgumentNullException(nameof(onCompleted));
+            completed = onCompleted;
             offeringPanel = FindObject("OfferingPanel");
             for (int index = 0; index < offeringButtons.Length; index++)
             {
@@ -71,10 +70,12 @@ namespace Pakuri.NewCore.UI.InGame
                     activeOffer.Candidates[index];
                 var ownerDefinition =
                     activeOffer.Monster.MonsterDefinition;
-                string ownerName = string.IsNullOrWhiteSpace(
-                    ownerDefinition.display_name)
-                        ? ownerDefinition.id
-                        : ownerDefinition.display_name;
+                string ownerName = ownerDefinition.display_name;
+                if (string.IsNullOrWhiteSpace(ownerName))
+                {
+                    ownerName = ownerDefinition.id;
+                }
+
                 BindCandidate(button, candidate, ownerName);
                 button.onClick.AddListener(
                     () => Confirm(candidate.Id));
@@ -126,24 +127,33 @@ namespace Pakuri.NewCore.UI.InGame
         {
             if (candidate.Skill != null)
             {
-                return string.IsNullOrWhiteSpace(
-                    candidate.Skill.display_name)
-                        ? candidate.Id
-                        : candidate.Skill.display_name;
+                if (string.IsNullOrWhiteSpace(
+                        candidate.Skill.display_name))
+                {
+                    return candidate.Id;
+                }
+
+                return candidate.Skill.display_name;
             }
 
-            return string.IsNullOrWhiteSpace(candidate.Choice.title)
-                ? candidate.Id
-                : candidate.Choice.title;
+            if (string.IsNullOrWhiteSpace(candidate.Choice.title))
+            {
+                return candidate.Id;
+            }
+
+            return candidate.Choice.title;
         }
 
         /* Skill 또는 Choice candidate의 authored 설명을 반환한다. */
         private static string ResolveDescription(
             OfferingCandidate candidate)
         {
-            return candidate.Skill != null
-                ? candidate.Skill.description_text
-                : candidate.Choice.description_text;
+            if (candidate.Skill != null)
+            {
+                return candidate.Skill.description_text;
+            }
+
+            return candidate.Choice.description_text;
         }
 
         /* button 자식 path의 TMP label에 안전한 text를 쓴다. */
@@ -153,9 +163,12 @@ namespace Pakuri.NewCore.UI.InGame
             string text)
         {
             Transform target = root.Find(path);
-            TMP_Text label = target != null
-                ? target.GetComponent<TMP_Text>()
-                : null;
+            TMP_Text label = null;
+            if (target != null)
+            {
+                label = target.GetComponent<TMP_Text>();
+            }
+
             if (label != null)
             {
                 label.text = text ?? string.Empty;
@@ -166,7 +179,12 @@ namespace Pakuri.NewCore.UI.InGame
         private GameObject FindObject(string path)
         {
             Transform target = transform.Find(path);
-            return target != null ? target.gameObject : null;
+            if (target == null)
+            {
+                return null;
+            }
+
+            return target.gameObject;
         }
 
         /* 현재 Canvas 아래 path에서 지정 UGUI component를 반환한다. */
@@ -174,7 +192,12 @@ namespace Pakuri.NewCore.UI.InGame
             where T : Component
         {
             Transform target = transform.Find(path);
-            return target != null ? target.GetComponent<T>() : null;
+            if (target == null)
+            {
+                return null;
+            }
+
+            return target.GetComponent<T>();
         }
 
         /* 선택 panel의 활성 상태를 존재하는 경우에만 바꾼다. */

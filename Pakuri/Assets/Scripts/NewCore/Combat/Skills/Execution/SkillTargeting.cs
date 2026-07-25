@@ -20,15 +20,6 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             float halfWidth,
             float halfHeight)
         {
-            if (halfWidth < 0f
-                || halfHeight < 0f
-                || float.IsNaN(halfWidth)
-                || float.IsNaN(halfHeight)
-                || float.IsInfinity(halfWidth)
-                || float.IsInfinity(halfHeight))
-            {
-                throw new ArgumentOutOfRangeException(nameof(halfWidth));
-            }
 
             CenterOffset = centerOffset;
             HalfWidth = halfWidth;
@@ -50,7 +41,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             float segmentFraction,
             CombatVector2 position)
         {
-            Target = target ?? throw new ArgumentNullException(nameof(target));
+            Target = target;
             SegmentFraction = segmentFraction;
             Position = position;
         }
@@ -62,7 +53,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         public CombatVector2 Position { get; }
     }
 
-    public sealed class SkillTargeting
+    public class SkillTargeting
     {
         private readonly Func<int, int> randomIndex;
         private readonly Func<UnitBaseModel, CombatFootprint> footprintResolver;
@@ -72,7 +63,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             Func<int, int> randomIndex,
             Func<UnitBaseModel, CombatFootprint> footprintResolver = null)
         {
-            this.randomIndex = randomIndex ?? throw new ArgumentNullException(nameof(randomIndex));
+            this.randomIndex = randomIndex;
             this.footprintResolver =
                 footprintResolver ?? (_ => default);
         }
@@ -100,13 +91,6 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             CombatVector2? manualTargetPoint,
             int hitTargetCountBonus)
         {
-            if (source == null || skill == null || registeredUnits == null)
-            {
-                throw new ArgumentNullException(
-                    source == null
-                        ? nameof(source)
-                        : skill == null ? nameof(skill) : nameof(registeredUnits));
-            }
 
             string selection = ReadString(skill, "target_selection");
             List<UnitBaseModel> candidates = BuildCandidates(source, skill, registeredUnits);
@@ -131,9 +115,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             if (string.Equals(selection, "RandomHostile", StringComparison.Ordinal)
                 || string.Equals(selection, "Random", StringComparison.Ordinal))
             {
-                return candidates.Count == 0
-                    ? Array.Empty<UnitBaseModel>()
-                    : new[] { candidates[ResolveRandomIndex(candidates.Count)] };
+                if (candidates.Count == 0)
+                {
+                    return Array.Empty<UnitBaseModel>();
+                }
+                return new[] { candidates[ResolveRandomIndex(candidates.Count)] };
             }
 
             bool all = string.Equals(selection, "AllHostiles", StringComparison.Ordinal)
@@ -144,11 +130,17 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     ReadString(skill, "status_target_scope"),
                     "all_allies",
                     StringComparison.OrdinalIgnoreCase);
-            int maximum = all
-                ? candidates.Count
-                : Math.Max(
+            int maximum;
+            if (all)
+            {
+                maximum = candidates.Count;
+            }
+            else
+            {
+                maximum = Math.Max(
                     0,
                     ResolveHitTargetCount(skill) + hitTargetCountBonus);
+            }
             if (maximum <= 0 || candidates.Count == 0)
             {
                 return Array.Empty<UnitBaseModel>();
@@ -168,10 +160,6 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             IReadOnlyList<UnitBaseModel> candidates,
             bool includeNexus)
         {
-            if (source == null || candidates == null)
-            {
-                throw new ArgumentNullException(source == null ? nameof(source) : nameof(candidates));
-            }
 
             UnitBaseModel nearest = null;
             float nearestDistance = float.MaxValue;
@@ -227,15 +215,6 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             CombatVector2 center,
             float radius)
         {
-            if (candidates == null)
-            {
-                throw new ArgumentNullException(nameof(candidates));
-            }
-
-            if (radius < 0f || float.IsNaN(radius) || float.IsInfinity(radius))
-            {
-                throw new ArgumentOutOfRangeException(nameof(radius));
-            }
 
             float radiusSquared = radius * radius;
             List<UnitBaseModel> result = new List<UnitBaseModel>();
@@ -263,13 +242,6 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             CombatVector2 segmentEnd,
             ISet<UnitBaseModel> alreadyHit)
         {
-            if (source == null || skill == null || registeredUnits == null)
-            {
-                throw new ArgumentNullException(
-                    source == null
-                        ? nameof(source)
-                        : skill == null ? nameof(skill) : nameof(registeredUnits));
-            }
 
             float projectileHalfWidth = Math.Max(
                 0f,
@@ -418,9 +390,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             {
                 float leftDistance = (left.Position - source.Position).SqrMagnitude;
                 float rightDistance = (right.Position - source.Position).SqrMagnitude;
-                return farthest
-                    ? rightDistance.CompareTo(leftDistance)
-                    : leftDistance.CompareTo(rightDistance);
+                if (farthest)
+                {
+                    return rightDistance.CompareTo(leftDistance);
+                }
+                return leftDistance.CompareTo(rightDistance);
             });
         }
 
@@ -450,10 +424,12 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             UnitBaseModel left,
             UnitBaseModel right)
         {
-            return primary != 0
-                ? primary
-                : (left.Position - source.Position).SqrMagnitude.CompareTo(
-                    (right.Position - source.Position).SqrMagnitude);
+            if (primary != 0)
+            {
+                return primary;
+            }
+            return (left.Position - source.Position).SqrMagnitude.CompareTo(
+                (right.Position - source.Position).SqrMagnitude);
         }
 
         /* 두 후보의 시전자 기준 제곱거리를 비교한다. */
@@ -525,12 +501,16 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             UnitBaseModel left,
             UnitBaseModel right)
         {
-            float leftRatio = left.MaximumHealth <= 0f
-                ? 1f
-                : left.CurrentHealth / left.MaximumHealth;
-            float rightRatio = right.MaximumHealth <= 0f
-                ? 1f
-                : right.CurrentHealth / right.MaximumHealth;
+            float leftRatio = 1f;
+            if (left.MaximumHealth > 0f)
+            {
+                leftRatio = left.CurrentHealth / left.MaximumHealth;
+            }
+            float rightRatio = 1f;
+            if (right.MaximumHealth > 0f)
+            {
+                rightRatio = right.CurrentHealth / right.MaximumHealth;
+            }
             return leftRatio.CompareTo(rightRatio);
         }
 
@@ -620,10 +600,6 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
         private int ResolveRandomIndex(int count)
         {
             int index = randomIndex(count);
-            if (index < 0 || index >= count)
-            {
-                throw new InvalidOperationException("The random index source returned an invalid index.");
-            }
 
             return index;
         }
@@ -646,35 +622,47 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             {
                 return int.MaxValue;
             }
-            return int.TryParse(
-                text,
-                System.Globalization.NumberStyles.Integer,
-                System.Globalization.CultureInfo.InvariantCulture,
-                out int parsed)
-                    ? parsed
-                    : 1;
+            if (int.TryParse(
+                    text,
+                    System.Globalization.NumberStyles.Integer,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out int parsed))
+            {
+                return parsed;
+            }
+            return 1;
         }
 
         /* 스킬 정의의 지정 열이 float면 반환하고 아니면 0을 반환한다. */
         internal static float ReadFloat(SkillDefinition skill, string column)
         {
-            return skill.Columns.TryGetValue(column, out object value) && value is float number
-                ? number
-                : 0f;
+            if (skill.Columns.TryGetValue(column, out object value)
+                && value is float number)
+            {
+                return number;
+            }
+            return 0f;
         }
 
         /* 스킬 정의의 지정 열이 int면 반환하고 아니면 0을 반환한다. */
         internal static int ReadInt(SkillDefinition skill, string column)
         {
-            return skill.Columns.TryGetValue(column, out object value) && value is int number
-                ? number
-                : 0;
+            if (skill.Columns.TryGetValue(column, out object value)
+                && value is int number)
+            {
+                return number;
+            }
+            return 0;
         }
 
         /* 스킬 정의의 지정 열이 문자열이면 반환하고 아니면 null을 반환한다. */
         internal static string ReadString(SkillDefinition skill, string column)
         {
-            return skill.Columns.TryGetValue(column, out object value) ? value as string : null;
+            if (skill.Columns.TryGetValue(column, out object value))
+            {
+                return value as string;
+            }
+            return null;
         }
     }
 }

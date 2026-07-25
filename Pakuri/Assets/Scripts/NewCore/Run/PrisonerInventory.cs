@@ -5,7 +5,7 @@ using System.Collections.ObjectModel;
 /* run 보상으로 획득한 포로 항목의 등록·교체·소비를 관리한다. */
 namespace Pakuri.NewCore.Run
 {
-    public sealed class Prisoner
+    public class Prisoner
     {
         /* 보상 적 id를 소비 가능한 포로 항목으로 저장한다. */
         internal Prisoner(string enemyId)
@@ -16,7 +16,7 @@ namespace Pakuri.NewCore.Run
         public string EnemyId { get; }
     }
 
-    public sealed class PrisonerInventory
+    public class PrisonerInventory
     {
         private readonly List<Prisoner> prisoners = new List<Prisoner>();
         private readonly IReadOnlyList<Prisoner> readOnlyPrisoners;
@@ -32,10 +32,6 @@ namespace Pakuri.NewCore.Run
         /* 유효한 적 id로 새 포로를 만들고 현재 보상 목록에 추가한다. */
         public Prisoner Register(string enemyId)
         {
-            if (string.IsNullOrWhiteSpace(enemyId))
-            {
-                throw new ArgumentException("Enemy id is required.", nameof(enemyId));
-            }
 
             Prisoner prisoner = new Prisoner(enemyId);
             prisoners.Add(prisoner);
@@ -45,20 +41,10 @@ namespace Pakuri.NewCore.Run
         /* 입력 적 id를 모두 검증한 뒤 현재 보상 포로 목록 전체를 교체한다. */
         public void ReplaceRewards(IEnumerable<string> enemyIds)
         {
-            if (enemyIds == null)
-            {
-                throw new ArgumentNullException(nameof(enemyIds));
-            }
 
             List<string> replacement = new List<string>();
             foreach (string enemyId in enemyIds)
             {
-                if (string.IsNullOrWhiteSpace(enemyId))
-                {
-                    throw new ArgumentException(
-                        "Reward prisoner enemy ids cannot be empty.",
-                        nameof(enemyIds));
-                }
 
                 replacement.Add(enemyId);
             }

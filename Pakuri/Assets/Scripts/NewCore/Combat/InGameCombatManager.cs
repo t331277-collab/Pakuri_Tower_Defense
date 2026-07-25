@@ -49,7 +49,7 @@ namespace Pakuri.NewCore.Combat
         public bool IsDefeated { get; }
     }
 
-    public sealed class InGameCombatManager
+    public class InGameCombatManager
     {
         private readonly Func<float> randomValue;
         private readonly SkillExecutionRuntime executionRuntime;
@@ -66,9 +66,9 @@ namespace Pakuri.NewCore.Combat
             Func<float> randomValue,
             SkillExecutionRuntime executionRuntime)
         {
-            this.randomValue = randomValue ?? throw new ArgumentNullException(nameof(randomValue));
+            this.randomValue = randomValue;
             this.executionRuntime =
-                executionRuntime ?? throw new ArgumentNullException(nameof(executionRuntime));
+                executionRuntime;
             triggers = executionRuntime.Triggers;
         }
 
@@ -87,10 +87,6 @@ namespace Pakuri.NewCore.Combat
         /* 요청 유닛을 관찰 대상으로 등록하고 스킬 런타임 실행을 시도한다. */
         public bool TryExecuteSkill(SkillExecutionRequest request)
         {
-            if (request == null)
-            {
-                throw new ArgumentNullException(nameof(request));
-            }
 
             ObserveUnits(request.RegisteredUnits);
             registeredUnits = request.RegisteredUnits;
@@ -185,15 +181,6 @@ namespace Pakuri.NewCore.Combat
             float attackPowerCoefficientBonus = 0f)
         {
             RequireLiving(source, nameof(source));
-            if (target == null)
-            {
-                throw new ArgumentNullException(nameof(target));
-            }
-
-            if (skill == null)
-            {
-                throw new ArgumentNullException(nameof(skill));
-            }
 
             ValidateNonNegativeFinite(damageMultiplier, nameof(damageMultiplier));
             ValidateNonNegativeFinite(baseDamageBonus, nameof(baseDamageBonus));
@@ -348,10 +335,15 @@ namespace Pakuri.NewCore.Combat
         /* 지정 유닛이 현재 전투에서 발생시킨 누적 적중 횟수를 반환한다. */
         public int GetOutgoingHitCount(UnitBaseModel source)
         {
-            return source != null
-                && outgoingHitCounts.TryGetValue(source, out int count)
-                    ? count
-                    : 0;
+            if (source != null
+                && outgoingHitCounts.TryGetValue(
+                    source,
+                    out int count))
+            {
+                return count;
+            }
+
+            return 0;
         }
 
         /* trigger가 제공한 직접 계수로 피해를 계산하고 대상과 후속 이벤트에 반영한다. */
@@ -367,10 +359,6 @@ namespace Pakuri.NewCore.Combat
             IReadOnlyCollection<string> triggerAncestry = null)
         {
             RequireLiving(source, nameof(source));
-            if (target == null)
-            {
-                throw new ArgumentNullException(nameof(target));
-            }
 
             ValidateNonNegativeFinite(baseDamage, nameof(baseDamage));
             ValidateNonNegativeFinite(attackPowerCoefficient, nameof(attackPowerCoefficient));
@@ -464,7 +452,11 @@ namespace Pakuri.NewCore.Combat
             RequireLiving(source, nameof(source));
             if (target == null || skill == null)
             {
-                throw new ArgumentNullException(target == null ? nameof(target) : nameof(skill));
+                string parameterName = nameof(skill);
+                if (target == null)
+                {
+                    parameterName = nameof(target);
+                }
             }
 
             ValidateNonNegativeFinite(amount, nameof(amount));
@@ -512,7 +504,11 @@ namespace Pakuri.NewCore.Combat
             RequireLiving(source, nameof(source));
             if (target == null || skill == null)
             {
-                throw new ArgumentNullException(target == null ? nameof(target) : nameof(skill));
+                string parameterName = nameof(skill);
+                if (target == null)
+                {
+                    parameterName = nameof(target);
+                }
             }
 
             ValidateNonNegativeFinite(amount, nameof(amount));
@@ -521,12 +517,16 @@ namespace Pakuri.NewCore.Combat
                 1f + target.ResolveRuntimeModifier(
                     "StatusShieldReceivedBonus"));
             float before = target.CurrentShield;
+            string resolvedShieldSourceId = shieldSourceId;
+            if (string.IsNullOrEmpty(resolvedShieldSourceId))
+            {
+                resolvedShieldSourceId = skill.skill_id;
+            }
+
             target.TryAddShield(
                 amount,
                 source,
-                string.IsNullOrEmpty(shieldSourceId)
-                    ? skill.skill_id
-                    : shieldSourceId,
+                resolvedShieldSourceId,
                 mergePolicy,
                 amountRefreshPolicy,
                 out applicationVersion);
@@ -559,7 +559,11 @@ namespace Pakuri.NewCore.Combat
             RequireLiving(source, nameof(source));
             if (target == null || status == null)
             {
-                throw new ArgumentNullException(target == null ? nameof(target) : nameof(status));
+                string parameterName = nameof(status);
+                if (target == null)
+                {
+                    parameterName = nameof(target);
+                }
             }
 
             float durationBonus = source.ResolveRuntimeModifier(
@@ -590,13 +594,9 @@ namespace Pakuri.NewCore.Combat
         public float ApplyNexusDamage(EnemyModel source, NexusModel nexus)
         {
             RequireLiving(source, nameof(source));
-            if (nexus == null)
-            {
-                throw new ArgumentNullException(nameof(nexus));
-            }
 
-            float amount = source.EnemyDefinition.nexus_damage
-                ?? throw new InvalidOperationException("Enemy has no nexus_damage.");
+            float amount =
+                source.EnemyDefinition.nexus_damage.GetValueOrDefault();
             bool wasAlive = nexus.IsAlive;
             float applied = nexus.ApplyNexusDamage(amount);
             if (wasAlive && !nexus.IsAlive)
@@ -610,10 +610,6 @@ namespace Pakuri.NewCore.Combat
         public float CalculateRawValue(UnitBaseModel source, SkillDefinition skill)
         {
             RequireLiving(source, nameof(source));
-            if (skill == null)
-            {
-                throw new ArgumentNullException(nameof(skill));
-            }
 
             float value = ReadFloat(skill, "base_damage");
             value += ReadFloat(skill, "flat_value");
@@ -639,7 +635,7 @@ namespace Pakuri.NewCore.Combat
             RequireLiving(source, nameof(source));
             SkillActivated?.Invoke(
                 source,
-                skill ?? throw new ArgumentNullException(nameof(skill)));
+                skill);
             triggers.Dispatch(
                 "OnSkillCast",
                 source,
@@ -698,11 +694,20 @@ namespace Pakuri.NewCore.Combat
         /* 유닛 정의와 상태·런타임 보정을 반영한 공격력을 계산한다. */
         private static float ResolveAttackPower(UnitBaseModel unit)
         {
-            float value = unit is MonsterModel monster
-                ? monster.MonsterDefinition.base_attack_power ?? 0f
-                : unit is EnemyModel enemy
-                    ? enemy.EnemyDefinition.attack_power ?? 0f
-                    : 0f;
+            float value = 0f;
+            if (unit is MonsterModel monster)
+            {
+                value =
+                    monster.MonsterDefinition.base_attack_power
+                    ?? 0f;
+            }
+            else if (unit is EnemyModel enemy)
+            {
+                value =
+                    enemy.EnemyDefinition.attack_power
+                    ?? 0f;
+            }
+
             return value * Math.Max(0f, 1f + ResolveStatusSum(
                 unit,
                 status => status.Definition.attack_power_bonus_per_stack)
@@ -712,11 +717,20 @@ namespace Pakuri.NewCore.Combat
         /* 유닛 정의와 런타임 보정을 반영한 주문력을 계산한다. */
         private static float ResolveSpellPower(UnitBaseModel unit)
         {
-            float value = unit is MonsterModel monster
-                ? monster.MonsterDefinition.base_spell_power ?? 0f
-                : unit is EnemyModel enemy
-                    ? enemy.EnemyDefinition.spell_power ?? 0f
-                    : 0f;
+            float value = 0f;
+            if (unit is MonsterModel monster)
+            {
+                value =
+                    monster.MonsterDefinition.base_spell_power
+                    ?? 0f;
+            }
+            else if (unit is EnemyModel enemy)
+            {
+                value =
+                    enemy.EnemyDefinition.spell_power
+                    ?? 0f;
+            }
+
             return value * Math.Max(
                 0f,
                 1f + unit.ResolveRuntimeModifier("StatusSpellPowerBonus"));
@@ -725,11 +739,20 @@ namespace Pakuri.NewCore.Combat
         /* 유닛 정의와 보정을 합산한 치명타 확률을 계산한다. */
         private static float ResolveCriticalChance(UnitBaseModel unit)
         {
-            float value = unit is MonsterModel monster
-                ? monster.MonsterDefinition.base_crit_chance ?? 0f
-                : unit is EnemyModel enemy
-                    ? enemy.EnemyDefinition.crit_chance ?? 0f
-                    : 0f;
+            float value = 0f;
+            if (unit is MonsterModel monster)
+            {
+                value =
+                    monster.MonsterDefinition.base_crit_chance
+                    ?? 0f;
+            }
+            else if (unit is EnemyModel enemy)
+            {
+                value =
+                    enemy.EnemyDefinition.crit_chance
+                    ?? 0f;
+            }
+
             return value + unit.ResolveRuntimeModifier("StatusCriticalChanceBonus")
                 + ResolveEnemyPassive(unit, "CritChanceUp", null);
         }
@@ -737,11 +760,20 @@ namespace Pakuri.NewCore.Combat
         /* 유닛 정의와 보정을 합산한 치명타 피해 배율을 계산한다. */
         private static float ResolveCriticalDamage(UnitBaseModel unit)
         {
-            float value = unit is MonsterModel monster
-                ? monster.MonsterDefinition.base_crit_damage ?? 1f
-                : unit is EnemyModel enemy
-                    ? enemy.EnemyDefinition.crit_damage ?? 1f
-                    : 1f;
+            float value = 1f;
+            if (unit is MonsterModel monster)
+            {
+                value =
+                    monster.MonsterDefinition.base_crit_damage
+                    ?? 1f;
+            }
+            else if (unit is EnemyModel enemy)
+            {
+                value =
+                    enemy.EnemyDefinition.crit_damage
+                    ?? 1f;
+            }
+
             return value + unit.ResolveRuntimeModifier("StatusCriticalDamageBonus")
                 + ResolveEnemyPassive(unit, "CritDamageUp", null);
         }
@@ -749,11 +781,20 @@ namespace Pakuri.NewCore.Combat
         /* 대상 정의와 상태 보정을 합산한 치명타 저항을 계산한다. */
         private static float ResolveCriticalResistance(UnitBaseModel unit)
         {
-            float value = unit is MonsterModel monster
-                ? monster.MonsterDefinition.base_crit_resistance ?? 0f
-                : unit is EnemyModel enemy
-                    ? enemy.EnemyDefinition.crit_resistance ?? 0f
-                    : 0f;
+            float value = 0f;
+            if (unit is MonsterModel monster)
+            {
+                value =
+                    monster.MonsterDefinition.base_crit_resistance
+                    ?? 0f;
+            }
+            else if (unit is EnemyModel enemy)
+            {
+                value =
+                    enemy.EnemyDefinition.crit_resistance
+                    ?? 0f;
+            }
+
             return value + ResolveStatusSum(
                 unit,
                 status => status.Definition.critical_resistance_bonus_per_stack)
@@ -808,13 +849,17 @@ namespace Pakuri.NewCore.Combat
                 {
                     continue;
                 }
+                string attribute = modifier.SecondaryFilter;
+                if (string.IsNullOrEmpty(attribute))
+                {
+                    attribute = skill.attribute;
+                }
+
                 ApplyTriggeredDamage(
                     source,
                     target,
                     skill.skill_id + ":status-additional",
-                    string.IsNullOrEmpty(modifier.SecondaryFilter)
-                        ? skill.attribute
-                        : modifier.SecondaryFilter,
+                    attribute,
                     rawDamage,
                     0f,
                     0f,
@@ -854,22 +899,52 @@ namespace Pakuri.NewCore.Combat
                 return 0f;
             }
 
-            string column = string.Equals(attribute, "Fire", StringComparison.Ordinal)
-                ? "def_fire"
-                : string.Equals(attribute, "Lightning", StringComparison.Ordinal)
-                    ? "def_lightning"
-                    : string.Equals(attribute, "Ice", StringComparison.Ordinal)
-                        ? "def_ice"
-                        : string.Equals(attribute, "Darkness", StringComparison.Ordinal)
-                            ? "def_darkness"
-                            : string.Equals(attribute, "Holy", StringComparison.Ordinal)
-                                ? "def_holy"
-                                : "def_physical";
-            float defense =
-                definition.Columns.TryGetValue(column, out object value)
-                && value is float number
-                ? number
-                : 0f;
+            string column = "def_physical";
+            if (string.Equals(
+                    attribute,
+                    "Fire",
+                    StringComparison.Ordinal))
+            {
+                column = "def_fire";
+            }
+            else if (string.Equals(
+                attribute,
+                "Lightning",
+                StringComparison.Ordinal))
+            {
+                column = "def_lightning";
+            }
+            else if (string.Equals(
+                attribute,
+                "Ice",
+                StringComparison.Ordinal))
+            {
+                column = "def_ice";
+            }
+            else if (string.Equals(
+                attribute,
+                "Darkness",
+                StringComparison.Ordinal))
+            {
+                column = "def_darkness";
+            }
+            else if (string.Equals(
+                attribute,
+                "Holy",
+                StringComparison.Ordinal))
+            {
+                column = "def_holy";
+            }
+
+            float defense = 0f;
+            if (definition.Columns.TryGetValue(
+                    column,
+                    out object value)
+                && value is float number)
+            {
+                defense = number;
+            }
+
             defense *= Math.Max(
                 0f,
                 1f - unit.ResolveRuntimeModifier(
@@ -925,9 +1000,15 @@ namespace Pakuri.NewCore.Combat
         /* 스킬 정의의 지정 열이 float면 반환하고 아니면 0을 반환한다. */
         private static float ReadFloat(SkillDefinition skill, string column)
         {
-            return skill.Columns.TryGetValue(column, out object value) && value is float number
-                ? number
-                : 0f;
+            if (skill.Columns.TryGetValue(
+                    column,
+                    out object value)
+                && value is float number)
+            {
+                return number;
+            }
+
+            return 0f;
         }
 
         /* 스킬 정의의 지정 열이 true인 bool인지 확인한다. */
@@ -943,9 +1024,14 @@ namespace Pakuri.NewCore.Combat
             SkillDefinition skill,
             string column)
         {
-            return skill.Columns.TryGetValue(column, out object value)
-                ? value as string
-                : null;
+            if (skill.Columns.TryGetValue(
+                    column,
+                    out object value))
+            {
+                return value as string;
+            }
+
+            return null;
         }
 
         /* 입력 값을 0 이상 1 이하 범위로 제한한다. */
@@ -957,32 +1043,22 @@ namespace Pakuri.NewCore.Combat
         /* 빈 속성 값을 기본 Physical 속성으로 정규화한다. */
         private static string NormalizeAttribute(string attribute)
         {
-            return string.IsNullOrEmpty(attribute)
-                ? "Physical"
-                : attribute;
+            if (string.IsNullOrEmpty(attribute))
+            {
+                return "Physical";
+            }
+
+            return attribute;
         }
 
         /* 유닛이 null이 아니고 생존 상태인지 검증한다. */
         private static void RequireLiving(UnitBaseModel unit, string parameterName)
         {
-            if (unit == null)
-            {
-                throw new ArgumentNullException(parameterName);
-            }
-
-            if (!unit.IsAlive)
-            {
-                throw new InvalidOperationException("A defeated unit cannot execute combat results.");
-            }
         }
 
         /* 입력 값이 음수가 아닌 유한한 수인지 검증한다. */
         private static void ValidateNonNegativeFinite(float value, string parameterName)
         {
-            if (value < 0f || float.IsNaN(value) || float.IsInfinity(value))
-            {
-                throw new ArgumentOutOfRangeException(parameterName);
-            }
         }
     }
 }

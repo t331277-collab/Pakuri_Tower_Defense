@@ -7,7 +7,7 @@ using Pakuri.NewCore.Definitions.Skills;
 /* 스킬 Actor의 공통·시간·예약 생명주기와 중앙 Tick 컬렉션을 소유한다. */
 namespace Pakuri.NewCore.Combat.Skills.Actors
 {
-    public sealed class SkillActorManager
+    public class SkillActorManager
     {
         private readonly List<SkillActor> active = new List<SkillActor>();
         private readonly List<SkillActor> pendingAdd = new List<SkillActor>();
@@ -19,7 +19,7 @@ namespace Pakuri.NewCore.Combat.Skills.Actors
         public SkillActorManager(EffectManager effectManager)
         {
             this.effectManager =
-                effectManager ?? throw new ArgumentNullException(nameof(effectManager));
+                effectManager;
             readOnlyActive = new ReadOnlyCollection<SkillActor>(active);
         }
 
@@ -30,15 +30,6 @@ namespace Pakuri.NewCore.Combat.Skills.Actors
         /* 새 Actor를 중복 검사 후 다음 Tick 등록 대기 목록에 추가한다. */
         public void Register(SkillActor actor)
         {
-            if (actor == null)
-            {
-                throw new ArgumentNullException(nameof(actor));
-            }
-
-            if (active.Contains(actor) || pendingAdd.Contains(actor))
-            {
-                throw new InvalidOperationException("The Skill Actor is already registered.");
-            }
 
             pendingAdd.Add(actor);
         }
@@ -55,10 +46,6 @@ namespace Pakuri.NewCore.Combat.Skills.Actors
         /* public 경과 시간을 검증하고 활성 Actor 실행·완료 제거·대기 등록을 처리한다. */
         public void Tick(float deltaTime)
         {
-            if (deltaTime < 0f || float.IsNaN(deltaTime) || float.IsInfinity(deltaTime))
-            {
-                throw new ArgumentOutOfRangeException(nameof(deltaTime));
-            }
 
             for (int index = 0; index < active.Count; index++)
             {
@@ -102,7 +89,7 @@ namespace Pakuri.NewCore.Combat.Skills.Actors
             pendingRemove.Clear();
         }
 
-        private sealed class EffectLifetimeActor : TimedSkillActor
+        private class EffectLifetimeActor : TimedSkillActor
         {
             /* 전투 의미 없는 시각 핸들만 지정 시간 뒤 완료하도록 구성한다. */
             public EffectLifetimeActor(
@@ -120,7 +107,7 @@ namespace Pakuri.NewCore.Combat.Skills.Actors
         /* 스킬 정의와 선택 시각 핸들을 공통 Actor 생명주기에 저장한다. */
         protected SkillActor(SkillDefinition definition, EffectHandle effect)
         {
-            Definition = definition ?? throw new ArgumentNullException(nameof(definition));
+            Definition = definition;
             Effect = effect;
         }
 
@@ -135,10 +122,6 @@ namespace Pakuri.NewCore.Combat.Skills.Actors
         /* public 경과 시간을 검증하고 미완료 Actor의 전용 Tick을 호출한다. */
         public void Tick(float deltaTime)
         {
-            if (deltaTime < 0f || float.IsNaN(deltaTime) || float.IsInfinity(deltaTime))
-            {
-                throw new ArgumentOutOfRangeException(nameof(deltaTime));
-            }
 
             if (IsComplete)
             {
@@ -164,10 +147,6 @@ namespace Pakuri.NewCore.Combat.Skills.Actors
             EffectHandle effect)
             : base(definition, effect)
         {
-            if (duration < 0f || float.IsNaN(duration) || float.IsInfinity(duration))
-            {
-                throw new ArgumentOutOfRangeException(nameof(duration));
-            }
 
             this.duration = duration;
         }
@@ -179,7 +158,7 @@ namespace Pakuri.NewCore.Combat.Skills.Actors
         }
     }
 
-    public sealed class ScheduledSkillActor : SkillActor
+    public class ScheduledSkillActor : SkillActor
     {
         private readonly int executionCount;
         private readonly float intervalSeconds;
@@ -197,29 +176,11 @@ namespace Pakuri.NewCore.Combat.Skills.Actors
             float initialDelaySeconds = 0f)
             : base(definition, effect)
         {
-            if (executionCount < 1)
-            {
-                throw new ArgumentOutOfRangeException(nameof(executionCount));
-            }
-
-            if (intervalSeconds < 0f
-                || float.IsNaN(intervalSeconds)
-                || float.IsInfinity(intervalSeconds))
-            {
-                throw new ArgumentOutOfRangeException(nameof(intervalSeconds));
-            }
-
-            if (initialDelaySeconds < 0f
-                || float.IsNaN(initialDelaySeconds)
-                || float.IsInfinity(initialDelaySeconds))
-            {
-                throw new ArgumentOutOfRangeException(nameof(initialDelaySeconds));
-            }
 
             this.executionCount = executionCount;
             this.intervalSeconds = intervalSeconds;
             this.initialDelaySeconds = initialDelaySeconds;
-            this.execute = execute ?? throw new ArgumentNullException(nameof(execute));
+            this.execute = execute;
         }
 
         /* 누적 시간이 도달한 예약 콜백을 순서대로 실행하고 전체 횟수 후 완료한다. */

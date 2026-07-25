@@ -12,7 +12,7 @@ using UnityEngine.UI;
 /* party 피해 합계와 skill source 구간을 authored DamageMeter panel에 표시한다. */
 namespace Pakuri.NewCore.UI.InGame.DamageMeter
 {
-    public sealed class NewCoreDamageMeterUIController : MonoBehaviour
+    public class NewCoreDamageMeterUIController : MonoBehaviour
     {
         private const int MaximumPartySlots = 5;
         private const float RefreshIntervalSeconds = 0.2f;
@@ -61,7 +61,12 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
             }
 
             refreshRemaining -= Time.deltaTime;
-            int version = tracker != null ? tracker.Version : -1;
+            int version = -1;
+            if (tracker != null)
+            {
+                version = tracker.Version;
+            }
+
             if (refreshRemaining <= 0f
                 || version != lastTrackerVersion)
             {
@@ -117,9 +122,20 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
                 tracker.TryGet(
                     monster.MonsterDefinition.id,
                     out DamageRecord record);
-                float total = record != null
-                    ? record.TotalDamage
-                    : 0f;
+                float total = 0f;
+                if (record != null)
+                {
+                    total = record.TotalDamage;
+                }
+
+                string percentage = "0%";
+                if (leaderDamage > 0f)
+                {
+                    percentage = Mathf.RoundToInt(
+                        Mathf.Clamp01(total / leaderDamage)
+                        * 100f) + "%";
+                }
+
                 SetText(
                     panel,
                     "Monster_Name_Text",
@@ -128,11 +144,7 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
                 SetText(
                     panel,
                     "Total_Damage_Persent",
-                    leaderDamage > 0f
-                        ? Mathf.RoundToInt(
-                            Mathf.Clamp01(total / leaderDamage)
-                            * 100f) + "%"
-                        : "0%");
+                    percentage);
                 SetPortrait(
                     panel,
                     monster.MonsterDefinition.MonsterIconImage);
@@ -208,9 +220,14 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
                 return;
             }
 
-            float totalWidth = background.rect.width > 0f
-                ? background.rect.width
-                : Mathf.Max(1f, template.rect.width);
+            float totalWidth = Mathf.Max(
+                1f,
+                template.rect.width);
+            if (background.rect.width > 0f)
+            {
+                totalWidth = background.rect.width;
+            }
+
             Vector2 templateSize = template.rect.size;
             if (templateSize.x <= 0f || templateSize.y <= 0f)
             {
@@ -309,10 +326,13 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
             {
                 int sort = left.SortKey.CompareTo(
                     right.SortKey);
-                return sort != 0
-                    ? sort
-                    : left.FirstSeenIndex.CompareTo(
-                        right.FirstSeenIndex);
+                if (sort != 0)
+                {
+                    return sort;
+                }
+
+                return left.FirstSeenIndex.CompareTo(
+                    right.FirstSeenIndex);
             });
         }
 
@@ -348,18 +368,24 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
                     baseId,
                     out SkillDefinition skill))
             {
-                return string.IsNullOrWhiteSpace(skill.display_name)
-                    ? sourceId
-                    : skill.display_name;
+                if (string.IsNullOrWhiteSpace(skill.display_name))
+                {
+                    return sourceId;
+                }
+
+                return skill.display_name;
             }
 
             if (runtime.Catalog.Choices.TryGetValue(
                     sourceId,
                     out var choice))
             {
-                return string.IsNullOrWhiteSpace(choice.title)
-                    ? sourceId
-                    : choice.title;
+                if (string.IsNullOrWhiteSpace(choice.title))
+                {
+                    return sourceId;
+                }
+
+                return choice.title;
             }
 
             if (runtime.Catalog.Triggers.TryGetValue(
@@ -367,9 +393,12 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
                     out SkillTriggerDefinition trigger))
             {
                 string triggerSkillId =
-                    string.IsNullOrEmpty(trigger.triggered_skill_id)
-                        ? trigger.source_skill_id
-                        : trigger.triggered_skill_id;
+                    trigger.triggered_skill_id;
+                if (string.IsNullOrEmpty(triggerSkillId))
+                {
+                    triggerSkillId = trigger.source_skill_id;
+                }
+
                 if (runtime.Catalog.Skills.TryGetValue(
                         triggerSkillId,
                         out SkillDefinition triggerSkill)
@@ -380,9 +409,12 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
                 }
             }
 
-            return string.IsNullOrWhiteSpace(sourceId)
-                ? "Unknown"
-                : sourceId;
+            if (string.IsNullOrWhiteSpace(sourceId))
+            {
+                return "Unknown";
+            }
+
+            return sourceId;
         }
 
         /* 파생 source id의 구분자 앞 Base skill id를 반환한다. */
@@ -397,9 +429,12 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
             int separator = sourceId.IndexOf(
                 ':',
                 StringComparison.Ordinal);
-            return separator > 0
-                ? sourceId.Substring(0, separator)
-                : sourceId;
+            if (separator > 0)
+            {
+                return sourceId.Substring(0, separator);
+            }
+
+            return sourceId;
         }
 
         /* panel에 속한 재사용 meter segment 목록을 구한다. */
@@ -473,24 +508,27 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
             if (openButton == null)
             {
                 Transform target = transform.Find("DamageMeterUIBtn");
-                openButton = target != null
-                    ? target.GetComponent<Button>()
-                    : null;
+                if (target != null)
+                {
+                    openButton = target.GetComponent<Button>();
+                }
             }
             if (meterRoot == null)
             {
                 Transform target = transform.Find("DamageMeterUI");
-                meterRoot = target != null
-                    ? target.gameObject
-                    : null;
+                if (target != null)
+                {
+                    meterRoot = target.gameObject;
+                }
             }
             if (closeButton == null && meterRoot != null)
             {
                 Transform target =
                     meterRoot.transform.Find("Close");
-                closeButton = target != null
-                    ? target.GetComponent<Button>()
-                    : null;
+                if (target != null)
+                {
+                    closeButton = target.GetComponent<Button>();
+                }
             }
         }
 
@@ -500,9 +538,12 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
             string path)
         {
             Transform target = panel.Find("Image");
-            Image image = target != null
-                ? target.GetComponent<Image>()
-                : null;
+            Image image = null;
+            if (target != null)
+            {
+                image = target.GetComponent<Image>();
+            }
+
             if (image == null)
             {
                 return;
@@ -529,9 +570,12 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
             string value)
         {
             Transform target = root.Find(path);
-            TMP_Text text = target != null
-                ? target.GetComponent<TMP_Text>()
-                : null;
+            TMP_Text text = null;
+            if (target != null)
+            {
+                text = target.GetComponent<TMP_Text>();
+            }
+
             if (text != null)
             {
                 text.text = value;
@@ -544,17 +588,25 @@ namespace Pakuri.NewCore.UI.InGame.DamageMeter
             float clamped = Mathf.Max(0f, value);
             if (clamped >= 1000000f)
             {
-                return clamped < 10000000f
-                    ? (clamped / 1000000f).ToString("0.##") + "M"
-                    : Mathf.RoundToInt(
-                        clamped / 1000000f) + "M";
+                if (clamped < 10000000f)
+                {
+                    return (clamped / 1000000f)
+                        .ToString("0.##") + "M";
+                }
+
+                return Mathf.RoundToInt(
+                    clamped / 1000000f) + "M";
             }
             if (clamped >= 1000f)
             {
-                return clamped < 100000f
-                    ? (clamped / 1000f).ToString("0.#") + "K"
-                    : Mathf.RoundToInt(
-                        clamped / 1000f) + "K";
+                if (clamped < 100000f)
+                {
+                    return (clamped / 1000f)
+                        .ToString("0.#") + "K";
+                }
+
+                return Mathf.RoundToInt(
+                    clamped / 1000f) + "K";
             }
             return Mathf.RoundToInt(clamped).ToString();
         }

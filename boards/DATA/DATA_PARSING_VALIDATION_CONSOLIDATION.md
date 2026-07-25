@@ -162,3 +162,117 @@ CSV TextAsset
 - 2026-07-22: Code Builder가 Data를 5개 파싱·검증 스크립트로 축소하고 나머지 정의·로딩·컴파일 파일을 실제 사용 경로로 이동했다.
 - 2026-07-22: Unity 컴파일, CSV 경계 검증, Runtime·Editor 빌드, 정적 검색을 완료했다.
 - 2026-07-22: Code Reviewer가 문서와 실제 변경을 한 번 대조해 PASS 판정을 내렸다.
+
+---
+
+## Task title
+
+NewCore `sealed` 및 조건부 삼항 연산자 정리
+
+## Goals
+
+- `Pakuri/Assets/Scripts/NewCore` 아래 C# 클래스의 `sealed` 한정자를 제거한다.
+- 같은 범위의 조건부 삼항 연산자 `?:`를 명시적인 `if`/`else` 흐름으로 바꾼다.
+
+## Constraints
+
+- `abstract` 클래스는 유지한다.
+- `throw new`, `?? throw` 등 예외 계약은 제거하거나 완화하지 않는다.
+- 공개 멤버, Unity 직렬화 필드, 실행 결과를 바꾸지 않는다.
+- Scene, Prefab, CSV, `.meta`는 수정하지 않는다.
+- Code Reviewer와 Unity Play Mode는 실행하지 않는다.
+
+## Role Owner
+
+Code Builder
+
+## Status
+
+구현 및 컴파일 검증 완료. EditMode 117개 중 Presentation 10개 실패가 남아 있다.
+
+## Next Actions
+
+- 사용자가 원하면 `NewCorePresentationTests`의 asset/catalog null 실패 10개를 별도 진단한다.
+- Unity Play Mode 동작은 사용자가 확인한다.
+
+## Evidence
+
+- 작업 전 `git grep -P -o '\bsealed\s+class\b' HEAD -- Pakuri/Assets/Scripts/NewCore`: 107건.
+- 현재 `rg -n -g "*.cs" "\bsealed\s+class\b" Pakuri/Assets/Scripts/NewCore`: 0건.
+- 작업 전 조건부 삼항 검색 일치 줄: 231줄.
+- 현재 `rg -n -g "*.cs" "\s\?\s|\?\s*$" Pakuri/Assets/Scripts/NewCore`: 0건.
+- 현재 `rg -n -g "*.cs" "\?[^?\r\n]*:" Pakuri/Assets/Scripts/NewCore`: 0건.
+- `abstract class`: 11건 유지.
+- `throw new`: 310건 유지.
+- 변경 범위: C# 87개(런타임 82개, Editor 테스트 5개).
+- `dotnet build Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false`: 오류 0건, 기존 어셈블리 참조 충돌 경고 2건.
+- `dotnet build Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false`: 오류 0건, 경고 3건.
+- `dotnet build Pakuri.NewCore.EditMode.Tests.csproj --no-restore /p:UseSharedCompilation=false`: 오류 0건, 경고 0건.
+- Unity EditMode `Pakuri.NewCore.EditMode.Tests`: 117개 실행, 107개 통과, 10개 실패.
+- 실패 10개는 모두 `NewCorePresentationTests`이며 8개는 `NullReferenceException`, 2개는 asset null assertion이다.
+- 실패한 10개만 재실행해 같은 10개 실패를 재현했다.
+- `git diff --check -- Pakuri/Assets/Scripts/NewCore`: 오류 0건.
+
+## History
+
+- 2026-07-25: 사용자가 Code Builder에게 `sealed`와 조건부 삼항 정리를 지시했다.
+- 2026-07-25: NewCore C# 전체에서 `sealed`를 제거하고 조건부 삼항을 `if`/`else`로 치환했다.
+- 2026-07-25: 정적 검색, Runtime·Editor·EditMode Tests 어셈블리 빌드, Unity EditMode 테스트를 수행했다.
+
+---
+
+## Task title
+
+NewCore 검사 `throw` 제거
+
+## Goals
+
+- `Pakuri/Assets/Scripts/NewCore`의 입력·상태·CSV 검사 실패를 명시적으로 던지는 `throw` 문을 제거한다.
+- `?? throw` 생성자 대입은 직접 대입으로 바꾼다.
+- 검사 제거 과정에서 함께 사라질 수 있는 `TryAdd`, `TryGetValue`, `TryConsume`, `TryUse`, `TryRegisterFieldUnit` 등의 정상 경로 부수 효과는 유지한다.
+- 기존 예외 발생을 기대하는 EditMode 검사 계약 테스트를 제거한다.
+
+## Constraints
+
+- Role Owner는 Code Builder다.
+- catch에서 상태를 되돌린 뒤 원래 예외를 다시 전달하는 `throw;`는 검사 `throw`가 아니므로 유지한다.
+- Scene, Prefab, CSV, `.meta`는 수정하지 않는다.
+- Code Reviewer와 Unity Play Mode는 실행하지 않는다.
+
+## Role Owner
+
+Code Builder
+
+## Status
+
+구현과 Runtime·Editor·EditMode Tests 어셈블리 빌드 검증 완료. Unity EditMode Presentation 실패 10개는 이전 작업과 동일하게 남아 있다.
+
+## Next Actions
+
+- 사용자가 Unity Play Mode에서 정상 CSV와 정상 scene 연결을 사용하는 실제 전투·보상·현현·Offering 흐름을 확인한다.
+- 사용자가 원하면 기존 Presentation asset/catalog null 실패 10개를 별도 진단한다.
+
+## Evidence
+
+- 작업 전 `throw new`: 310건.
+- 작업 전 전체 `throw`: 352건.
+- 현재 `throw new`: 0건.
+- 현재 `?? throw`: 0건.
+- 현재 `throw Invalid(...)`, `throw Missing(...)`, `throw InvalidValue(...)`, `throw InvalidNodeArgument(...)`: 0건.
+- 현재 전체 `throw`: 2건. `ManifestationService`와 `SkillTriggerDispatcher` catch의 상태 복구 후 재던지기 `throw;`만 유지했다.
+- 런타임 스크립트 41개와 EditMode 테스트 4개를 변경했다.
+- 예외 발생 자체를 기대하던 검사 계약 테스트 13개를 제거했다.
+- 읽기 전용 카탈로그 변경 시 .NET 불변 컬렉션이 거부하는 `Assert.Throws<NotSupportedException>` 1건은 NewCore 검사 `throw`가 아니므로 유지했다.
+- `dotnet build Pakuri/Assembly-CSharp.csproj --no-restore /p:UseSharedCompilation=false`: 오류 0건, 경고 8건.
+- `dotnet build Pakuri/Assembly-CSharp-Editor.csproj --no-restore /p:UseSharedCompilation=false`: 오류 0건, 기존 어셈블리 버전 충돌 경고 2건.
+- `dotnet build Pakuri/Pakuri.NewCore.EditMode.Tests.csproj --no-restore /p:UseSharedCompilation=false`: 오류 0건, 경고 0건.
+- Unity script 강제 컴파일 후 `Assets/Scripts/NewCore` 필터 Console 오류: 0건.
+- Unity EditMode `Pakuri.NewCore.EditMode.Tests`: 104개 실행, 94개 통과, Presentation 10개 실패.
+- 실패 10개는 이전 작업에서 확인된 동일한 `NewCorePresentationTests` asset/catalog null 실패다.
+- `git diff --check -- Pakuri/Assets/Scripts/NewCore`: 오류 0건. 줄바꿈 변환 안내만 출력됐다.
+
+## History
+
+- 2026-07-25: 사용자가 Code Builder에게 NewCore 전체의 검사 `throw` 제거를 지시했다.
+- 2026-07-25: `throw new`, `?? throw`, 검사 helper throw를 제거하고 정상 경로의 등록·소비·쿨다운·조회 부수 효과를 복구했다.
+- 2026-07-25: 예외 계약 테스트를 정리하고 Runtime·Editor·EditMode Tests 빌드와 Unity 컴파일·EditMode 테스트를 수행했다.

@@ -8,7 +8,7 @@ using Pakuri.NewCore.Units.Models;
 /* 단일 공격 스킬의 대상 피해, 배치, 부가 상태 실행을 담당한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
-    internal sealed class SingleAttackExecutor : SkillExecutor
+    internal class SingleAttackExecutor : SkillExecutor
     {
         /* 공통 카탈로그·대상 선정·Actor·이펙트 서비스를 단일 공격 실행기에 연결한다. */
         public SingleAttackExecutor(GameDefinitionCatalog catalog, SkillTargeting targeting, SkillActorManager actors, EffectManager effects, Func<float> randomValue)
@@ -83,6 +83,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     plan,
                     targets[targetIndex]);
             }
+            UnitBaseModel visualTarget = null;
+            if (targets.Count > 0)
+            {
+                visualTarget = targets[0];
+            }
             Actors.Register(new SingleAttackActor(
                 (SingleAttackDefinition)request.Skill,
                 1f,
@@ -90,7 +95,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                     request,
                     visualCenter,
                     request.AimDirection ?? default,
-                    targets.Count > 0 ? targets[0] : null)));
+                    visualTarget)));
             return true;
         }
 

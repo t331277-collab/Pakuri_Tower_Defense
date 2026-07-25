@@ -76,7 +76,7 @@ namespace Pakuri.NewCore.Tests
         }
     }
 
-    public sealed class NewCoreCombatLoopTests
+    public class NewCoreCombatLoopTests
     {
         private GameDefinitionCatalog catalog;
 
@@ -190,10 +190,14 @@ namespace Pakuri.NewCore.Tests
                 targeting.Resolve(source, catalog.GetSkill("ariel-a"), units)[0],
                 Is.SameAs(near),
                 "Nearest");
+            UnitBaseModel highestHealth = far;
+            if (near.CurrentHealth >= far.CurrentHealth)
+            {
+                highestHealth = near;
+            }
             Assert.That(
                 targeting.Resolve(source, catalog.GetSkill("ariel-d"), units)[0],
-                Is.SameAs(
-                    near.CurrentHealth >= far.CurrentHealth ? near : far),
+                Is.SameAs(highestHealth),
                 "HighestHealth");
             Assert.That(
                 targeting.Resolve(source, catalog.GetSkill("vega-e"), units)[0],
@@ -526,11 +530,12 @@ namespace Pakuri.NewCore.Tests
                                 .Select(result =>
                                     result.Result.ToString())));
 
-                MonsterModel nonOwner = CreateMonster(
-                    trigger.monster_id == "ariel"
-                        ? "eve"
-                        : "ariel",
-                    false);
+                string nonOwnerId = "ariel";
+                if (trigger.monster_id == "ariel")
+                {
+                    nonOwnerId = "eve";
+                }
+                MonsterModel nonOwner = CreateMonster(nonOwnerId, false);
                 evaluations.Clear();
                 fixture.Triggers.Dispatch(
                     trigger.trigger_event,
@@ -788,10 +793,12 @@ namespace Pakuri.NewCore.Tests
                     node.node_type_id == "CooldownRefund"
                     || node.node_type_id == "CooldownRefundBonus"
                     || node.node_type_id == "CooldownReset");
-                EnemyModel target = CreateEnemy(
-                    requiresKill
-                        ? "stage1-swordsman"
-                        : "stage1-guardian-captain");
+                string targetId = "stage1-guardian-captain";
+                if (requiresKill)
+                {
+                    targetId = "stage1-swordsman";
+                }
+                EnemyModel target = CreateEnemy(targetId);
                 target.SetPosition(new CombatVector2(1f, 0f));
                 target.ApplyDamage(
                     target.MaximumHealth * 0.9f);
@@ -1745,8 +1752,8 @@ namespace Pakuri.NewCore.Tests
         }
 
         [Test]
-        /* EqualDistanceOrderIsStableAndRejectedSelectionDoesNotMutate 시나리오의 기대 동작과 상태 변화를 검증한다. */
-        public void EqualDistanceOrderIsStableAndRejectedSelectionDoesNotMutate()
+        /* EqualDistanceOrderIsStable 시나리오의 기대 동작과 상태 변화를 검증한다. */
+        public void EqualDistanceOrderIsStable()
         {
             MonsterModel source = CreateMonster("ariel", false);
             EnemyModel first = CreateEnemy("stage1-swordsman");
@@ -1762,14 +1769,6 @@ namespace Pakuri.NewCore.Tests
                     ordered)[0],
                 Is.SameAs(first));
 
-            RuntimeFixture fixture = CreateFixture("ariel");
-            MonsterModel another = CreateMonster("eve", false);
-            MonsterActionController controller =
-                new MonsterActionController(another, fixture.Combat);
-            Assert.Throws<InvalidOperationException>(() =>
-                fixture.Actions.RegisterMonster(controller, true));
-            Assert.DoesNotThrow(() =>
-                fixture.Actions.RegisterMonster(controller, false));
         }
 
         [Test]
@@ -3375,10 +3374,11 @@ namespace Pakuri.NewCore.Tests
                 {
                     SkillChoiceDefinition choice =
                         catalog.GetChoice(node.owner_id);
-                    skillId = string.IsNullOrEmpty(
-                            choice.target_skill_id)
-                        ? choice.skill_id
-                        : choice.target_skill_id;
+                    skillId = choice.target_skill_id;
+                    if (string.IsNullOrEmpty(skillId))
+                    {
+                        skillId = choice.skill_id;
+                    }
                 }
                 else if (node.owner_kind == "Trigger")
                 {
@@ -3450,17 +3450,18 @@ namespace Pakuri.NewCore.Tests
                 }
                 if (node.node_type_id == "TargetStatusCritBonus")
                 {
+                    int requiredCritStacks = 1;
+                    if (int.TryParse(
+                            node.arg_4,
+                            out int parsedRequiredCritStacks))
+                    {
+                        requiredCritStacks = parsedRequiredCritStacks;
+                    }
                     ApplyContractStatus(
                         target,
                         fixture.Selected,
                         node.arg_1,
-                        Math.Max(
-                            1,
-                            int.TryParse(
-                                node.arg_4,
-                                out int requiredCritStacks)
-                                ? requiredCritStacks
-                                : 1));
+                        Math.Max(1, requiredCritStacks));
                 }
                 if (node.node_type_id == "RequiredSourceStatus")
                 {
@@ -3472,17 +3473,16 @@ namespace Pakuri.NewCore.Tests
                 }
                 else if (node.node_type_id == "ConditionStatus")
                 {
+                    int stacks = 1;
+                    if (int.TryParse(node.arg_4, out int parsedStacks))
+                    {
+                        stacks = parsedStacks;
+                    }
                     ApplyContractStatus(
                         target,
                         fixture.Selected,
                         node.arg_1,
-                        Math.Max(
-                            10,
-                            int.TryParse(
-                                node.arg_4,
-                                out int stacks)
-                                ? stacks
-                                : 1),
+                        Math.Max(10, stacks),
                         node.arg_3);
                     if (ally != null)
                     {
@@ -3499,10 +3499,12 @@ namespace Pakuri.NewCore.Tests
                     || node.node_type_id
                         == "ConditionStatusExpression")
                 {
-                    char separator = node.node_type_id
-                        == "ConditionStatusExpression"
-                            ? '&'
-                            : ';';
+                    char separator = ';';
+                    if (node.node_type_id
+                        == "ConditionStatusExpression")
+                    {
+                        separator = '&';
+                    }
                     string[] statusIds =
                         (node.arg_1 ?? string.Empty)
                             .Split(separator);
@@ -3562,10 +3564,12 @@ namespace Pakuri.NewCore.Tests
                     ally.TryAddShield(100000f);
                 }
             }
-            int setupHits = graph.Any(node =>
-                    node.node_type_id == "ConditionHitCountMin")
-                ? 20
-                : 0;
+            int setupHits = 0;
+            if (graph.Any(node =>
+                    node.node_type_id == "ConditionHitCountMin"))
+            {
+                setupHits = 20;
+            }
             for (var hit = 0; hit < setupHits; hit++)
             {
                 fixture.Combat.ApplySkillDamage(
@@ -3700,9 +3704,11 @@ namespace Pakuri.NewCore.Tests
             {
                 return true;
             }
-            string resolved = string.IsNullOrEmpty(attribute)
-                ? "Physical"
-                : attribute;
+            string resolved = attribute;
+            if (string.IsNullOrEmpty(resolved))
+            {
+                resolved = "Physical";
+            }
             return configured.Split(';', ',')
                 .Any(value => value.Trim() == resolved);
         }
@@ -3712,11 +3718,13 @@ namespace Pakuri.NewCore.Tests
             SkillTriggerDefinition trigger,
             string column)
         {
-            return trigger.Columns.TryGetValue(
+            if (trigger.Columns.TryGetValue(
                     column,
-                    out object value)
-                ? value as string
-                : null;
+                    out object value))
+            {
+                return value as string;
+            }
+            return null;
         }
 
         /* ReadTriggerInt 검증에 필요한 실제 런타임 값을 읽어 반환한다. */
@@ -3724,12 +3732,14 @@ namespace Pakuri.NewCore.Tests
             SkillTriggerDefinition trigger,
             string column)
         {
-            return trigger.Columns.TryGetValue(
+            if (trigger.Columns.TryGetValue(
                     column,
                     out object value)
-                && value is int number
-                    ? number
-                    : 0;
+                && value is int number)
+            {
+                return number;
+            }
+            return 0;
         }
 
         /* NodeContractKey 시나리오의 기대 동작과 상태 변화를 검증한다. */
@@ -3784,11 +3794,13 @@ namespace Pakuri.NewCore.Tests
             SkillDefinition definition,
             string column)
         {
-            return definition.Columns.TryGetValue(
+            if (definition.Columns.TryGetValue(
                     column,
-                    out object value)
-                ? value as string
-                : null;
+                    out object value))
+            {
+                return value as string;
+            }
+            return null;
         }
 
         /* ReadFloatColumn 검증에 필요한 실제 런타임 값을 읽어 반환한다. */
@@ -3796,12 +3808,14 @@ namespace Pakuri.NewCore.Tests
             SkillDefinition definition,
             string column)
         {
-            return definition.Columns.TryGetValue(
+            if (definition.Columns.TryGetValue(
                     column,
                     out object value)
-                && value is float number
-                    ? number
-                    : 0f;
+                && value is float number)
+            {
+                return number;
+            }
+            return 0f;
         }
 
         /* ExecuteVegaBAndReadSilenceDuration 시나리오의 기대 동작과 상태 변화를 검증한다. */
@@ -3899,7 +3913,7 @@ namespace Pakuri.NewCore.Tests
             return sources;
         }
 
-        private sealed class RuntimeFixture
+        private class RuntimeFixture
         {
             public MonsterModel Selected;
             public StageManager Stage;

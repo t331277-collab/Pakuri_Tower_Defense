@@ -19,7 +19,7 @@ namespace Pakuri.NewCore.Run
         Defeat
     }
 
-    public sealed class RunSessionModel
+    public class RunSessionModel
     {
         /* 초기 stage·day·encounter와 파티·포로 저장소를 활성 run 상태로 구성한다. */
         public RunSessionModel(
@@ -29,29 +29,13 @@ namespace Pakuri.NewCore.Run
             PartyRoster partyRoster,
             PrisonerInventory prisonerInventory)
         {
-            if (string.IsNullOrWhiteSpace(currentStageId))
-            {
-                throw new ArgumentException("Current stage id is required.", nameof(currentStageId));
-            }
-
-            if (currentDay < 1)
-            {
-                throw new ArgumentOutOfRangeException(nameof(currentDay));
-            }
-
-            if (string.IsNullOrWhiteSpace(currentEncounterId))
-            {
-                throw new ArgumentException(
-                    "Current encounter id is required.",
-                    nameof(currentEncounterId));
-            }
 
             CurrentStageId = currentStageId;
             CurrentDay = currentDay;
             CurrentEncounterId = currentEncounterId;
-            PartyRoster = partyRoster ?? throw new ArgumentNullException(nameof(partyRoster));
+            PartyRoster = partyRoster;
             PrisonerInventory =
-                prisonerInventory ?? throw new ArgumentNullException(nameof(prisonerInventory));
+                prisonerInventory;
             RewardState = RewardProcessingState.None;
             Result = RunResult.Active;
         }
@@ -74,14 +58,6 @@ namespace Pakuri.NewCore.Run
         internal void BeginDay(StageDayDefinition day)
         {
             RequireActive();
-            if (day == null
-                || !day.stage.HasValue
-                || !day.day.HasValue)
-            {
-                throw new ArgumentException(
-                    "A stage and day definition is required.",
-                    nameof(day));
-            }
 
             CurrentStageId = "stage" + day.stage.Value;
             CurrentDay = day.day.Value;
@@ -93,11 +69,6 @@ namespace Pakuri.NewCore.Run
         internal void BeginReward()
         {
             RequireActive();
-            if (RewardState != RewardProcessingState.None)
-            {
-                throw new InvalidOperationException(
-                    "Reward processing has already started.");
-            }
 
             RewardState = RewardProcessingState.Pending;
         }
@@ -106,11 +77,6 @@ namespace Pakuri.NewCore.Run
         internal void BeginRewardProcessing()
         {
             RequireActive();
-            if (RewardState != RewardProcessingState.Pending)
-            {
-                throw new InvalidOperationException(
-                    "A pending reward is required.");
-            }
 
             RewardState = RewardProcessingState.Processing;
         }
@@ -119,11 +85,6 @@ namespace Pakuri.NewCore.Run
         internal void CompleteReward()
         {
             RequireActive();
-            if (RewardState != RewardProcessingState.Processing)
-            {
-                throw new InvalidOperationException(
-                    "A processing reward is required.");
-            }
 
             RewardState = RewardProcessingState.Completed;
         }
@@ -145,11 +106,6 @@ namespace Pakuri.NewCore.Run
         /* run 결과가 아직 Active인지 확인하고 종료 상태면 예외를 발생시킨다. */
         private void RequireActive()
         {
-            if (Result != RunResult.Active)
-            {
-                throw new InvalidOperationException(
-                    "The run is no longer active.");
-            }
         }
     }
 }

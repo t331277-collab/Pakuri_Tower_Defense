@@ -10,7 +10,7 @@ using UnityEngine.UI;
 /* Prison panel의 포로 표시, party slot 상태, Offering·현현 분기를 소유한다. */
 namespace Pakuri.NewCore.UI.InGame
 {
-    public sealed class PrisonPanelController : MonoBehaviour
+    public class PrisonPanelController : MonoBehaviour
     {
         private const int PartySlots = 5;
 
@@ -45,12 +45,8 @@ namespace Pakuri.NewCore.UI.InGame
             Action<Prisoner> onManifestationRequested)
         {
             combatManager ??= runtime;
-            offeringRequested = onOfferingRequested
-                ?? throw new ArgumentNullException(
-                    nameof(onOfferingRequested));
-            manifestationRequested = onManifestationRequested
-                ?? throw new ArgumentNullException(
-                    nameof(onManifestationRequested));
+            offeringRequested = onOfferingRequested;
+            manifestationRequested = onManifestationRequested;
             ResolveSceneUi();
             ResolvePartyButtons();
             CloseFlow();
@@ -229,9 +225,12 @@ namespace Pakuri.NewCore.UI.InGame
         private string ResolveEnemyName(string enemyId)
         {
             var definition = combatManager.Catalog.GetEnemy(enemyId);
-            return string.IsNullOrWhiteSpace(definition.display_name)
-                ? enemyId
-                : definition.display_name;
+            if (string.IsNullOrWhiteSpace(definition.display_name))
+            {
+                return enemyId;
+            }
+
+            return definition.display_name;
         }
 
         /* 고정 Monster id에 대응하는 Inspector portrait를 반환한다. */
@@ -252,7 +251,12 @@ namespace Pakuri.NewCore.UI.InGame
         private GameObject FindObject(string path)
         {
             Transform target = transform.Find(path);
-            return target != null ? target.gameObject : null;
+            if (target == null)
+            {
+                return null;
+            }
+
+            return target.gameObject;
         }
 
         /* 현재 Canvas 아래 path에서 지정 UGUI component를 반환한다. */
@@ -260,7 +264,12 @@ namespace Pakuri.NewCore.UI.InGame
             where T : Component
         {
             Transform target = transform.Find(path);
-            return target != null ? target.GetComponent<T>() : null;
+            if (target == null)
+            {
+                return null;
+            }
+
+            return target.GetComponent<T>();
         }
 
         /* button에 party-slot command callback 하나를 연결한다. */

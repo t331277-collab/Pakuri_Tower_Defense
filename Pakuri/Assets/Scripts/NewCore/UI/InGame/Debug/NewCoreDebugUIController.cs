@@ -13,7 +13,7 @@ using UnityEngine.UI;
 /* 개발자 skill 학습·Choice 선택 panel과 숫자 8 표시 전환을 소유한다. */
 namespace Pakuri.NewCore.UI.InGame.Debug
 {
-    public sealed class NewCoreDebugUIController : MonoBehaviour
+    public class NewCoreDebugUIController : MonoBehaviour
     {
         private const int ActiveSlotCount = 5;
         private const int PassiveSlotCount = 5;
@@ -279,10 +279,13 @@ namespace Pakuri.NewCore.UI.InGame.Debug
                     continue;
                 }
 
-                if (choice.choice_group
-                    == (passive
-                        ? "PassiveEnhancement"
-                        : "ActiveEnhancement"))
+                string enhancementGroup = "ActiveEnhancement";
+                if (passive)
+                {
+                    enhancementGroup = "PassiveEnhancement";
+                }
+
+                if (choice.choice_group == enhancementGroup)
                 {
                     visibleTraits.Add(choice);
                 }
@@ -302,8 +305,12 @@ namespace Pakuri.NewCore.UI.InGame.Debug
             int index,
             bool master)
         {
-            List<SkillChoiceDefinition> choices =
-                master ? visibleMasters : visibleTraits;
+            List<SkillChoiceDefinition> choices = visibleTraits;
+            if (master)
+            {
+                choices = visibleMasters;
+            }
+
             MonsterModel monster = SelectedMonster;
             if (monster == null
                 || index < 0
@@ -373,15 +380,25 @@ namespace Pakuri.NewCore.UI.InGame.Debug
                 return;
             }
 
-            SetButtonLabel(
-                skillButton,
-                string.IsNullOrWhiteSpace(skill.display_name)
-                    ? skill.skill_id
-                    : skill.display_name);
-            bool canLearn = passive
-                ? monster.SkillBucket.CanLearnPassive(
-                    (PassiveDefinition)skill)
-                : monster.SkillBucket.CanLearnActive(skill);
+            string label = skill.display_name;
+            if (string.IsNullOrWhiteSpace(label))
+            {
+                label = skill.skill_id;
+            }
+
+            SetButtonLabel(skillButton, label);
+            bool canLearn;
+            if (passive)
+            {
+                canLearn = monster.SkillBucket.CanLearnPassive(
+                    (PassiveDefinition)skill);
+            }
+            else
+            {
+                canLearn =
+                    monster.SkillBucket.CanLearnActive(skill);
+            }
+
             skillButton.interactable = canLearn;
             if (modifierButton != null)
             {
@@ -397,18 +414,26 @@ namespace Pakuri.NewCore.UI.InGame.Debug
             {
                 RefreshChoiceSet(
                     passiveTraitButtons,
-                    visibleTraits);
+                    visibleTraits,
+                    false);
                 return;
             }
 
-            RefreshChoiceSet(activeTraitButtons, visibleTraits);
-            RefreshChoiceSet(activeMasterButtons, visibleMasters);
+            RefreshChoiceSet(
+                activeTraitButtons,
+                visibleTraits,
+                true);
+            RefreshChoiceSet(
+                activeMasterButtons,
+                visibleMasters,
+                true);
         }
 
-        /* Choice 목록을 button 표시와 선택 가능 상태에 반영한다. */
+        /* Choice 목록을 button 표시·문구·선택 가능 상태에 반영한다. */
         private void RefreshChoiceSet(
             Button[] buttons,
-            IReadOnlyList<SkillChoiceDefinition> choices)
+            IReadOnlyList<SkillChoiceDefinition> choices,
+            bool showDescription)
         {
             MonsterModel monster = SelectedMonster;
             for (int index = 0; index < buttons.Length; index++)
@@ -427,11 +452,17 @@ namespace Pakuri.NewCore.UI.InGame.Debug
                 }
 
                 SkillChoiceDefinition choice = choices[index];
-                SetButtonLabel(
-                    button,
-                    string.IsNullOrWhiteSpace(choice.title)
-                        ? choice.choice_id
-                        : choice.title);
+                string label = choice.title;
+                if (showDescription)
+                {
+                    label = choice.description_text;
+                }
+                if (string.IsNullOrWhiteSpace(label))
+                {
+                    label = choice.choice_id;
+                }
+
+                SetButtonLabel(button, label);
                 button.interactable = monster != null
                     && monster.SkillBucket.CanSelectChoice(choice);
             }
@@ -454,8 +485,14 @@ namespace Pakuri.NewCore.UI.InGame.Debug
                 return null;
             }
 
-            string slot = ((char)(
-                (passive ? 'F' : 'A') + slotIndex)).ToString();
+            char firstSlot = 'A';
+            if (passive)
+            {
+                firstSlot = 'F';
+            }
+
+            string slot =
+                ((char)(firstSlot + slotIndex)).ToString();
             MonsterModel monster = SelectedMonster;
             if (monster == null)
             {
@@ -477,8 +514,18 @@ namespace Pakuri.NewCore.UI.InGame.Debug
             return null;
         }
 
-        private MonsterModel SelectedMonster =>
-            runtime != null ? runtime.SelectedMonster : null;
+        private MonsterModel SelectedMonster
+        {
+            get
+            {
+                if (runtime == null)
+                {
+                    return null;
+                }
+
+                return runtime.SelectedMonster;
+            }
+        }
 
         /* 지정 skill이 현재 Monster bucket에 학습되었는지 확인한다. */
         private static bool ContainsLearnedSkill(
@@ -520,25 +567,38 @@ namespace Pakuri.NewCore.UI.InGame.Debug
             int order = Nullable.Compare(
                 left.sort_order,
                 right.sort_order);
-            return order != 0
-                ? order
-                : string.CompareOrdinal(
-                    left.choice_id,
-                    right.choice_id);
+            if (order != 0)
+            {
+                return order;
+            }
+
+            return string.CompareOrdinal(
+                left.choice_id,
+                right.choice_id);
         }
 
         /* controller Transform 아래의 지정 경로 GameObject를 찾는다. */
         private GameObject FindObject(string path)
         {
             Transform target = transform.Find(path);
-            return target != null ? target.gameObject : null;
+            if (target == null)
+            {
+                return null;
+            }
+
+            return target.gameObject;
         }
 
         /* controller Transform 아래의 지정 경로 Button을 찾는다. */
         private Button FindButton(string path)
         {
             Transform target = transform.Find(path);
-            return target != null ? target.GetComponent<Button>() : null;
+            if (target == null)
+            {
+                return null;
+            }
+
+            return target.GetComponent<Button>();
         }
 
         /* Button 자체에 속한 첫 TMP label의 문자열을 바꾼다. */

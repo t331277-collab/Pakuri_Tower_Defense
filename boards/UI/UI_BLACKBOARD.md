@@ -93,3 +93,48 @@ Implemented and compile/editor validated.
 
 - 2026-07-15: User requested a Code Builder implementation that toggles `Canvas/DebugPanel` with keyboard number 8.
 - 2026-07-15: Code Builder implemented runtime hide/toggle behavior in the existing `DebugUI` owner.
+
+## Task: 2026-07-25 Debug Modifier Description Labels
+
+### Task title
+
+Show Enhancement and Master effect descriptions in `DebugModifiedUI`.
+
+### Goals
+
+- Render `description_text` on `Trait1` through `Trait5`.
+- Render `description_text` on `Master1` and `Master2`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- `DebugPassiveModifiedUI` keeps its existing title labels.
+- The existing button hierarchy, click commands, visibility, and interactable rules remain unchanged.
+- The scene was already Git-modified before this task and is not edited by this implementation.
+- Unity Play Mode visual verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated.
+
+### Next Actions
+
+- User verifies Enhancement and Master button descriptions in Play Mode.
+
+### Evidence
+
+- Unity-MCP inspected `Canvas/DebugPanel/DebugModifiedUI` and returned `Trait1`-`Trait5`, `Master1`, and `Master2`, each with a `Button`.
+- `NewCoreDebugUIController.RefreshChoiceButtons(...)` passes description mode only for the active Trait and Master button sets.
+- `RefreshChoiceSet(...)` reads `choice.description_text` in description mode and retains `choice.title` for the passive Trait set.
+- `Pakuri.NewCore.csproj` and `Pakuri.NewCore.EditMode.Tests.csproj` built with 0 errors and 0 warnings.
+- Unity script refresh completed and the error-only Console query returned 0 entries.
+- `git diff --check` passed for `NewCoreDebugUIController.cs`.
+
+### History
+
+- 2026-07-25: User requested description labels for the seven active modifier buttons.
+- 2026-07-25: Code Builder separated active description labels from passive title labels without changing the scene.

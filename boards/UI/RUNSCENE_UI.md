@@ -280,3 +280,45 @@ Implemented and compile/editor validated. Play Mode UI verification remains.
 ### History
 
 - 2026-07-23: Code Builder migrated UI consumers from the interim ID list to the unified party-member state collection.
+
+## Task: 2026-07-25 DebugModifiedUI Effect Descriptions
+
+### Task title
+
+Display effect descriptions on the active modifier buttons in `NewRunScene`.
+
+### Goals
+
+- Use each Enhancement Choice's `description_text` for `Trait1`-`Trait5`.
+- Use each Master Choice's `description_text` for `Master1`-`Master2`.
+
+### Constraints
+
+- Role Owner is Code Builder.
+- Passive modifier labels remain title-based because the request names only `DebugModifiedUI`.
+- No RunSession, Choice selection, button command, scene hierarchy, or serialized field changes.
+- Unity Play Mode visual verification remains user-owned.
+
+### Role Owner
+
+Code Builder
+
+### Status
+
+Implemented and compile/editor validated.
+
+### Next Actions
+
+- User opens an active skill's modifier panel and verifies all visible Trait and Master buttons show descriptions.
+
+### Evidence
+
+- Unity-MCP confirmed the loaded active scene is `Assets/Scenes/NewScene/NewRunScene.unity`.
+- Unity-MCP hierarchy inspection confirmed the seven requested Button objects under `Canvas/DebugPanel/DebugModifiedUI`.
+- `Pakuri/Assets/Scripts/NewCore/UI/InGame/Debug/NewCoreDebugUIController.cs` selects `description_text` for active Trait/Master sets and keeps the existing `choice_id` fallback.
+- Runtime and EditMode Tests assemblies compiled with 0 errors and 0 warnings.
+- Unity Console returned 0 error entries after script compilation.
+
+### History
+
+- 2026-07-25: Code Builder changed only the active modifier label source from Choice title to Choice description.

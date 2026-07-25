@@ -13,10 +13,6 @@ namespace Pakuri.NewCore.Units.Models
         /* 외부 좌표 입력이 유한한지 검증하고 엔진 독립 전투 좌표로 저장한다. */
         public CombatVector2(float x, float y)
         {
-            if (!IsFinite(x) || !IsFinite(y))
-            {
-                throw new ArgumentOutOfRangeException(nameof(x));
-            }
 
             X = x;
             Y = y;
@@ -35,9 +31,12 @@ namespace Pakuri.NewCore.Units.Models
             get
             {
                 float magnitude = Magnitude;
-                return magnitude <= 0.00001f
-                    ? default
-                    : new CombatVector2(X / magnitude, Y / magnitude);
+                if (magnitude <= 0.00001f)
+                {
+                    return default;
+                }
+
+                return new CombatVector2(X / magnitude, Y / magnitude);
             }
         }
 
@@ -104,10 +103,6 @@ namespace Pakuri.NewCore.Units.Models
         /* 정의와 유효한 최대 체력으로 유닛의 초기 생명·상태 컬렉션을 구성한다. */
         protected UnitBaseModel(UnitDefinition definition, float maximumHealth)
         {
-            if (!IsFinitePositive(maximumHealth))
-            {
-                throw new ArgumentOutOfRangeException(nameof(maximumHealth));
-            }
 
             Definition = definition;
             MaximumHealth = maximumHealth;
@@ -270,10 +265,6 @@ namespace Pakuri.NewCore.Units.Models
                         amountRefreshPolicy);
                     float updatedShield =
                         CurrentShield - existing.Amount + refreshedAmount;
-                    if (float.IsInfinity(updatedShield))
-                    {
-                        throw new OverflowException("Shield value overflowed.");
-                    }
 
                     existing.Amount = refreshedAmount;
                     existing.Version = version;
@@ -284,10 +275,6 @@ namespace Pakuri.NewCore.Units.Models
             }
 
             float updated = CurrentShield + amount;
-            if (float.IsInfinity(updated))
-            {
-                throw new OverflowException("Shield value overflowed.");
-            }
 
             CurrentShield = updated;
             shieldLayers.Add(new ShieldLayer(
@@ -382,15 +369,6 @@ namespace Pakuri.NewCore.Units.Models
             string sourceSkillId = null,
             int? maximumStacks = null)
         {
-            if (definition == null)
-            {
-                throw new ArgumentNullException(nameof(definition));
-            }
-
-            if (applyingUnit == null)
-            {
-                throw new ArgumentNullException(nameof(applyingUnit));
-            }
 
             for (int index = 0; index < statusEffects.Count; index++)
             {
@@ -436,13 +414,6 @@ namespace Pakuri.NewCore.Units.Models
             {
                 return 0;
             }
-            if (ratio < 0f
-                || ratio > 1f
-                || float.IsNaN(ratio)
-                || float.IsInfinity(ratio))
-            {
-                throw new ArgumentOutOfRangeException(nameof(ratio));
-            }
             int removed = 0;
             for (int index = statusEffects.Count - 1; index >= 0; index--)
             {
@@ -467,19 +438,7 @@ namespace Pakuri.NewCore.Units.Models
             float durationSeconds,
             string secondaryFilter = null)
         {
-            if (string.IsNullOrEmpty(kind))
-            {
-                throw new ArgumentException("Modifier kind is required.", nameof(kind));
-            }
-            if (float.IsNaN(value) || float.IsInfinity(value))
-            {
-                throw new ArgumentOutOfRangeException(nameof(value));
-            }
             ValidateNonNegativeFinite(durationSeconds, nameof(durationSeconds));
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
 
             RuntimeCombatModifier modifier = new RuntimeCombatModifier(
                 kind,
@@ -554,7 +513,7 @@ namespace Pakuri.NewCore.Units.Models
             runtimeModifiers.Clear();
         }
 
-        private sealed class ShieldLayer
+        private class ShieldLayer
         {
             /* 보호막 출처·스킬·양·적용 버전을 하나의 소모 레이어로 저장한다. */
             public ShieldLayer(
@@ -673,10 +632,6 @@ namespace Pakuri.NewCore.Units.Models
         /* public 수치 입력이 유한한 0 이상 값인지 검증한다. */
         private static void ValidateNonNegativeFinite(float value, string parameterName)
         {
-            if (value < 0f || float.IsNaN(value) || float.IsInfinity(value))
-            {
-                throw new ArgumentOutOfRangeException(parameterName);
-            }
         }
     }
 }

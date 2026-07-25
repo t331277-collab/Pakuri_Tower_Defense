@@ -8,7 +8,7 @@ using UnityEngine.UI;
 /* party Monster portrait와 active skill cooldown을 authored panel에 표시한다. */
 namespace Pakuri.NewCore.UI.InGame.MonsterPanel
 {
-    public sealed class NewCoreMonsterPanelUI : MonoBehaviour
+    public class NewCoreMonsterPanelUI : MonoBehaviour
     {
         private const int MaximumPartySlots = 5;
         private const int MaximumVisibleSkills = 3;
@@ -41,9 +41,13 @@ namespace Pakuri.NewCore.UI.InGame.MonsterPanel
             var party = combatManager.Stage.Session.PartyRoster.Members;
             for (var index = 0; index < MaximumPartySlots; index++)
             {
-                var slot = monsterPanelRoot != null
-                    ? monsterPanelRoot.Find($"{index + 1}PMonster")
-                    : null;
+                Transform slot = null;
+                if (monsterPanelRoot != null)
+                {
+                    slot = monsterPanelRoot.Find(
+                        $"{index + 1}PMonster");
+                }
+
                 if (slot == null)
                 {
                     continue;
@@ -58,9 +62,12 @@ namespace Pakuri.NewCore.UI.InGame.MonsterPanel
 
                 var monster = party[index];
                 var imageTransform = slot.Find("Monster Image");
-                var image = imageTransform != null
-                    ? imageTransform.GetComponent<Image>()
-                    : null;
+                Image image = null;
+                if (imageTransform != null)
+                {
+                    image = imageTransform.GetComponent<Image>();
+                }
+
                 if (image != null
                     && combatManager.RuntimeCatalog.TryGetSprite(
                         monster.MonsterDefinition.MonsterIconImage,
@@ -112,29 +119,43 @@ namespace Pakuri.NewCore.UI.InGame.MonsterPanel
                 var cooldown =
                     monster.SkillBucket.GetCooldown(skill.skill_id);
                 var overlayTransform = slot.Find("CooldownOverlay");
-                var overlay = overlayTransform != null
-                    ? overlayTransform.GetComponent<Image>()
-                    : null;
+                Image overlay = null;
+                if (overlayTransform != null)
+                {
+                    overlay =
+                        overlayTransform.GetComponent<Image>();
+                }
+
                 if (overlay != null)
                 {
                     var duration = skill.cooldown_seconds ?? 0f;
-                    var remaining = cooldown.IsReloading
-                        ? cooldown.RemainingReload
-                        : cooldown.RemainingCooldown;
+                    float remaining = cooldown.RemainingCooldown;
+                    if (cooldown.IsReloading)
+                    {
+                        remaining = cooldown.RemainingReload;
+                    }
+
                     overlay.type = Image.Type.Filled;
                     overlay.fillMethod = Image.FillMethod.Vertical;
-                    overlay.fillAmount = duration > 0f
-                        ? Mathf.Clamp01(remaining / duration)
-                        : 0f;
+                    overlay.fillAmount = 0f;
+                    if (duration > 0f)
+                    {
+                        overlay.fillAmount =
+                            Mathf.Clamp01(remaining / duration);
+                    }
+
                     overlay.gameObject.SetActive(remaining > 0f);
                 }
 
                 var label = slot.GetComponentInChildren<TMP_Text>(true);
                 if (label != null)
                 {
-                    label.text = cooldown.CurrentMagazine.HasValue
-                        ? cooldown.CurrentMagazine.Value.ToString()
-                        : string.Empty;
+                    label.text = string.Empty;
+                    if (cooldown.CurrentMagazine.HasValue)
+                    {
+                        label.text =
+                            cooldown.CurrentMagazine.Value.ToString();
+                    }
                 }
             }
         }

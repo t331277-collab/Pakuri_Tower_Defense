@@ -1,7 +1,7 @@
 /* ChoiceNodeDefinition CSV 레코드를 형식화된 불변 런타임 정의로 표현한다. */
 namespace Pakuri.NewCore.Definitions.Choices
 {
-    public sealed class ChoiceNodeDefinition : CsvDefinition
+    public class ChoiceNodeDefinition : CsvDefinition
     {
         /* CSV 레코드의 열 값을 읽어 ChoiceNodeDefinition 불변 정의를 구성한다. */
         internal ChoiceNodeDefinition(CsvDefinitionData data)

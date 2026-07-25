@@ -6,7 +6,7 @@ using Pakuri.NewCore.Combat.Skills.Actors;
 /* 보호막 스킬의 대상 선정과 보호막 적용을 실행한다. */
 namespace Pakuri.NewCore.Combat.Skills.Execution
 {
-    internal sealed class ShieldExecutor : SkillExecutor
+    internal class ShieldExecutor : SkillExecutor
     {
         /* 공통 카탈로그·대상 선정·Actor·이펙트 서비스를 보호막 실행기에 연결한다. */
         public ShieldExecutor(GameDefinitionCatalog catalog, SkillTargeting targeting, SkillActorManager actors, EffectManager effects, Func<float> randomValue)
@@ -40,9 +40,11 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 "shield_amount_refresh_policy");
             for (int index = 0; index < targets.Count; index++)
             {
-                float targetAmount = flat > 0f && flat <= 1f && amount == flat
-                    ? targets[index].MaximumHealth * flat
-                    : amount;
+                float targetAmount = amount;
+                if (flat > 0f && flat <= 1f && amount == flat)
+                {
+                    targetAmount = targets[index].MaximumHealth * flat;
+                }
                 combat.AddShield(
                     request.Caster,
                     targets[index],

@@ -6,7 +6,7 @@ using Pakuri.NewCore.Units.Models;
 /* run 파티의 순서, 정원, 중복 없는 몬스터 구성을 관리한다. */
 namespace Pakuri.NewCore.Run
 {
-    public sealed class PartyRoster
+    public class PartyRoster
     {
         public const int MaximumPartySlots = 5;
 
@@ -16,10 +16,6 @@ namespace Pakuri.NewCore.Run
         /* 최초 몬스터를 첫 파티원으로 넣고 최대 5칸의 읽기 전용 roster를 구성한다. */
         public PartyRoster(MonsterModel initialMonster)
         {
-            if (initialMonster == null)
-            {
-                throw new ArgumentNullException(nameof(initialMonster));
-            }
 
             members = new List<MonsterModel>(MaximumPartySlots)
             {
@@ -56,10 +52,6 @@ namespace Pakuri.NewCore.Run
         /* monster id가 일치하는 파티원을 반환하고 없으면 null을 반환한다. */
         public MonsterModel GetByMonsterId(string monsterId)
         {
-            if (monsterId == null)
-            {
-                throw new ArgumentNullException(nameof(monsterId));
-            }
 
             for (int index = 0; index < members.Count; index++)
             {
