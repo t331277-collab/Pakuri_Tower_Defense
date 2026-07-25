@@ -16,6 +16,7 @@ using Pakuri.NewCore.Definitions.Choices;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Definitions.Stage;
 using Pakuri.NewCore.Definitions.Units;
+using Pakuri.NewCore.Parsing;
 using Pakuri.NewCore.Run;
 using Pakuri.NewCore.Run.Services;
 using Pakuri.NewCore.Spawn;
@@ -31,7 +32,7 @@ namespace Pakuri.NewCore.Tests
         [SetUp]
         public void SetUp()
         {
-            catalog = new GameBootstrap(LoadSources()).Catalog;
+            catalog = GameBootstrap.CreateCatalog(LoadSources());
         }
 
         [Test]
@@ -217,7 +218,7 @@ namespace Pakuri.NewCore.Tests
             fixture.Stage.TickSpawnSequence(10f);
             DefeatAllSpawned(fixture);
             fixture.Stage.EvaluateCombatCompletion();
-            SpawnManager foreign = new SpawnManager(
+            SpawnManager foreign = NewCoreTestFactory.CreateSpawnManager(
                 catalog,
                 _ => 0,
                 () => 0.5f);
@@ -471,7 +472,8 @@ namespace Pakuri.NewCore.Tests
                 "stage1-day1-normal",
                 _ => 0,
                 () => 0.5f);
-            var effects = new EffectManager();
+            var effects =
+                NewCoreTestFactory.CreateComponent<EffectManager>();
             var actors = new SkillActorManager(effects);
             var targeting = new SkillTargeting(_ => 0);
             var execution = new SkillExecutionRuntime(
@@ -483,7 +485,8 @@ namespace Pakuri.NewCore.Tests
             var combat = new InGameCombatManager(
                 () => 1f,
                 execution);
-            var input = new PlayerInputController();
+            var input =
+                NewCoreTestFactory.CreateComponent<PlayerInputController>();
             var actions = new InGameActionManager(
                 fixture.Stage,
                 () => fixture.Stage.IsCombatActive,
@@ -639,12 +642,12 @@ namespace Pakuri.NewCore.Tests
                 encounterId,
                 new PartyRoster(initial),
                 new PrisonerInventory());
-            StageManager stage = new StageManager(
+            StageManager stage = NewCoreTestFactory.CreateStageManager(
                 session,
                 catalog,
                 0,
                 0);
-            SpawnManager spawns = new SpawnManager(
+            SpawnManager spawns = NewCoreTestFactory.CreateSpawnManager(
                 catalog,
                 randomIndex,
                 randomValue);
@@ -660,7 +663,8 @@ namespace Pakuri.NewCore.Tests
         private InGameCombatManager CreateCombat(
             Func<float> randomValue)
         {
-            EffectManager effects = new EffectManager();
+            EffectManager effects =
+                NewCoreTestFactory.CreateComponent<EffectManager>();
             SkillActorManager actors = new SkillActorManager(effects);
             SkillExecutionRuntime execution = new SkillExecutionRuntime(
                 catalog,

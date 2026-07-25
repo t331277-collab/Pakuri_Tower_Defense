@@ -511,7 +511,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             UnitBaseModel target,
             SkillDefinition definition)
         {
-            var visual = new EffectVisualSpec(
+            var visual = new EffectVisualRequest(
                 SkillTriggerSupport.Read(
                     trigger,
                     "skill_effect_prefab_path"),
@@ -530,7 +530,10 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 SkillTriggerSupport.Int(
                     trigger,
                     "runtime_visual_sorting_order"));
-            if (!visual.HasResource)
+            if (string.IsNullOrWhiteSpace(visual.PrefabPath)
+                && string.IsNullOrWhiteSpace(visual.SpritePath)
+                && string.IsNullOrWhiteSpace(
+                    visual.AnimatorControllerPath))
             {
                 return;
             }
@@ -539,10 +542,10 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 visual,
                 target.Position,
                 (target.Position - owner.Position).Normalized);
-            actors.Register(new BuffActor(
+            actors.RegisterEffectLifetime(
                 definition,
                 1f,
-                effect));
+                effect);
         }
 
         /* 트리거 횟수, 재사용 대기시간, 확률 제한을 검사하고 상태를 갱신한다. */
@@ -1069,6 +1072,79 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             for (int index = 0; index < split.Length; index++)
                 if (split[index].Trim() == value) return true;
             return false;
+        }
+    }
+
+    public static class SkillTriggerSupport
+    {
+        /* 트리거 이벤트와 실행 동작이 현재 런타임에서 지원되는지 검증한다. */
+        public static void Validate(SkillTriggerDefinition trigger)
+        {
+            switch (trigger.trigger_event)
+            {
+                case "CombatStart":
+                case "OnSkillCast":
+                case "OnOutgoingDamage":
+                case "OnMagazineLastProjectileHit":
+                case "OnKill":
+                case "OnStatusExpire":
+                case "OnShieldExpire":
+                case "OnShieldAbsorb":
+                    break;
+                default:
+                    throw new NotSupportedException(
+                        $"Trigger event '{trigger.trigger_event}' is not implemented.");
+            }
+
+            string action = Read(trigger, "trigger_action");
+            if (string.IsNullOrEmpty(action))
+            {
+                action = trigger.runtime_kind == "LineAttack"
+                    ? "LineAttack"
+                    : trigger.runtime_kind == "SingleAttack"
+                        ? "SingleAttack"
+                        : "TriggeredSkill";
+            }
+
+            switch (action)
+            {
+                case "Effect":
+                case "SingleAttack":
+                case "LineAttack":
+                case "CooldownRefund":
+                case "ReloadReduce":
+                case "TriggeredSkill":
+                    return;
+                default:
+                    throw new NotSupportedException(
+                        $"Trigger action '{action}' is not implemented.");
+            }
+        }
+
+        /* 트리거의 지정 열에서 문자열 값을 읽는다. */
+        internal static string Read(SkillTriggerDefinition trigger, string column)
+        {
+            return trigger.Columns.TryGetValue(column, out object value)
+                ? value as string
+                : null;
+        }
+
+        /* 트리거의 지정 열에서 실수 값을 읽고 없으면 0을 반환한다. */
+        internal static float Float(SkillTriggerDefinition trigger, string column)
+        {
+            return trigger.Columns.TryGetValue(column, out object value)
+                && value is float number
+                    ? number
+                    : 0f;
+        }
+
+        /* 트리거의 지정 열에서 정수 값을 읽고 없으면 0을 반환한다. */
+        internal static int Int(SkillTriggerDefinition trigger, string column)
+        {
+            return trigger.Columns.TryGetValue(column, out object value)
+                && value is int number
+                    ? number
+                    : 0;
         }
     }
 }

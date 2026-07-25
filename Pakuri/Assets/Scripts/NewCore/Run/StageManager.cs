@@ -1,39 +1,57 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Pakuri.NewCore.Bootstrap;
 using Pakuri.NewCore.Catalog;
 using Pakuri.NewCore.Combat;
 using Pakuri.NewCore.Definitions.Stage;
 using Pakuri.NewCore.Spawn;
+using Pakuri.NewCore.Units.Actors;
 using Pakuri.NewCore.Units.Models;
+using UnityEngine;
 
+/* run stage 상태와 현재 scene의 stage 진행 연결을 소유한다. */
 namespace Pakuri.NewCore.Run
 {
-    public sealed class StageManager
+    public sealed class StageManager : MonoBehaviour
     {
+        [SerializeField] private GameBootstrap combatManager;
+        [SerializeField] private SpawnManager unitSpawnManager;
+        [SerializeField] private TextAsset stageDayCsv;
+        [SerializeField] private TextAsset stageEncounterCsv;
+        [SerializeField] private TextAsset stageRewardCsv;
+        [SerializeField] private bool startFlowOnStart = true;
+        [SerializeField] private float clearCheckInterval = 0.25f;
+        [SerializeField] private bool restorePlayerHealthOnDayAdvance = true;
+        [SerializeField] private NexusActor nexusActor;
+        [SerializeField] private int winStageIndex = 2;
+        [SerializeField] private int winDayIndex = 11;
+
         private readonly List<UnitBaseModel> fieldUnits =
             new List<UnitBaseModel>();
-        private readonly IReadOnlyList<UnitBaseModel> readOnlyFieldUnits;
-        private readonly GameDefinitionCatalog catalog;
+        private IReadOnlyList<UnitBaseModel> readOnlyFieldUnits;
+        private GameDefinitionCatalog catalog;
         private SpawnManager spawnManager;
-        private InGameCombatManager combatManager;
+        private InGameCombatManager runtimeCombatManager;
         private NexusModel nexus;
         private int gold;
         private int darkTrace;
 
-        public StageManager(
+        /* catalog 없는 test/runtime session과 초기 재화를 연결한다. */
+        public void Initialize(
             RunSessionModel session,
             int initialGold,
             int initialDarkTrace)
-            : this(
+        {
+            Initialize(
                 session,
                 null,
                 initialGold,
-                initialDarkTrace)
-        {
+                initialDarkTrace);
         }
 
-        public StageManager(
+        /* session, catalog, 초기 재화를 stage 상태에 검증해 연결한다. */
+        public void Initialize(
             RunSessionModel session,
             GameDefinitionCatalog catalog,
             int initialGold,
@@ -59,7 +77,7 @@ namespace Pakuri.NewCore.Run
                 new ReadOnlyCollection<UnitBaseModel>(fieldUnits);
         }
 
-        public RunSessionModel Session { get; }
+        public RunSessionModel Session { get; private set; }
 
         public int Gold => gold;
 
@@ -70,7 +88,15 @@ namespace Pakuri.NewCore.Run
         public StageDayDefinition CurrentDayDefinition { get; private set; }
 
         public IReadOnlyList<UnitBaseModel> FieldUnits =>
-            readOnlyFieldUnits;
+            readOnlyFieldUnits
+            ?? (readOnlyFieldUnits =
+                new ReadOnlyCollection<UnitBaseModel>(fieldUnits));
+
+        public bool StartFlowOnStart => startFlowOnStart;
+
+        public float ClearCheckInterval => clearCheckInterval;
+
+        public NexusActor NexusActor => nexusActor;
 
         public IReadOnlyList<UnitBaseModel> LivingFieldUnits
         {
@@ -92,16 +118,19 @@ namespace Pakuri.NewCore.Run
 
         public event Action<bool> CombatResolved;
 
+        /* gameplay 보상으로 Gold를 증가시킨다. */
         public void AddGold(int amount)
         {
             gold = AddCurrency(gold, amount, nameof(amount));
         }
 
+        /* 현재 Gold로 요청 비용을 지불할 수 있는지 확인한다. */
         public bool CanSpendGold(int amount)
         {
             return CanSpend(gold, amount);
         }
 
+        /* 지불 가능한 Gold를 차감하고 성공 여부를 반환한다. */
         public bool SpendGold(int amount)
         {
             if (!CanSpendGold(amount))
@@ -113,6 +142,7 @@ namespace Pakuri.NewCore.Run
             return true;
         }
 
+        /* gameplay 보상으로 DarkTrace를 증가시킨다. */
         public void AddDarkTrace(int amount)
         {
             darkTrace = AddCurrency(
@@ -121,11 +151,13 @@ namespace Pakuri.NewCore.Run
                 nameof(amount));
         }
 
+        /* 현재 DarkTrace로 요청 비용을 지불할 수 있는지 확인한다. */
         public bool CanSpendDarkTrace(int amount)
         {
             return CanSpend(darkTrace, amount);
         }
 
+        /* 지불 가능한 DarkTrace를 차감하고 성공 여부를 반환한다. */
         public bool SpendDarkTrace(int amount)
         {
             if (!CanSpendDarkTrace(amount))
@@ -137,6 +169,7 @@ namespace Pakuri.NewCore.Run
             return true;
         }
 
+        /* 활성 stage field에 중복 없는 Unit을 등록한다. */
         public bool TryRegisterFieldUnit(UnitBaseModel unit)
         {
             if (unit == null || fieldUnits.Contains(unit))
@@ -148,16 +181,19 @@ namespace Pakuri.NewCore.Run
             return true;
         }
 
+        /* 활성 stage field에서 지정 Unit을 제거한다. */
         public bool TryUnregisterFieldUnit(UnitBaseModel unit)
         {
             return unit != null && fieldUnits.Remove(unit);
         }
 
+        /* 활성 stage field Unit 목록을 비운다. */
         public void ClearFieldUnits()
         {
             fieldUnits.Clear();
         }
 
+        /* 현재 stage 진행이 사용할 SpawnManager authority를 연결한다. */
         public void ConfigureSpawnManager(SpawnManager manager)
         {
             if (manager == null)
@@ -175,6 +211,7 @@ namespace Pakuri.NewCore.Run
             spawnManager = manager;
         }
 
+        /* combat 결과와 Nexus 상태를 stage 진행에 연결한다. */
         public void ConnectCombat(
             InGameCombatManager manager,
             NexusModel nexusModel)
@@ -190,22 +227,24 @@ namespace Pakuri.NewCore.Run
             }
 
             DisconnectCombat();
-            combatManager = manager;
+            runtimeCombatManager = manager;
             nexus = nexusModel;
-            combatManager.UnitDefeated += HandleUnitDefeated;
+            runtimeCombatManager.UnitDefeated += HandleUnitDefeated;
         }
 
+        /* stage가 구독한 combat와 Nexus 연결을 해제한다. */
         public void DisconnectCombat()
         {
-            if (combatManager != null)
+            if (runtimeCombatManager != null)
             {
-                combatManager.UnitDefeated -= HandleUnitDefeated;
+                runtimeCombatManager.UnitDefeated -= HandleUnitDefeated;
             }
 
-            combatManager = null;
+            runtimeCombatManager = null;
             nexus = null;
         }
 
+        /* 현재 session day의 encounter queue와 field 상태를 시작한다. */
         public void StartCurrentDay()
         {
             RequireProgression();
@@ -239,6 +278,7 @@ namespace Pakuri.NewCore.Run
             EvaluateCombatCompletion();
         }
 
+        /* 현재 encounter spawn queue를 경과 시간만큼 진행한다. */
         public void TickSpawnSequence(float deltaTime)
         {
             if (!IsCombatActive)
@@ -250,6 +290,7 @@ namespace Pakuri.NewCore.Run
             EvaluateCombatCompletion();
         }
 
+        /* spawn 종료·생존 적·Nexus 상태로 현재 전투 결과를 판정한다. */
         public void EvaluateCombatCompletion()
         {
             if (!IsCombatActive)
@@ -276,6 +317,7 @@ namespace Pakuri.NewCore.Run
             CombatResolved?.Invoke(true);
         }
 
+        /* 보상 완료 뒤 다음 authored day로 session을 진행한다. */
         public bool CompleteRewardAndAdvance()
         {
             RequireProgression();
@@ -294,6 +336,7 @@ namespace Pakuri.NewCore.Run
             return true;
         }
 
+        /* 현현 Monster를 party와 현재 field에 함께 배치한다. */
         public bool PlaceManifestedMonster(MonsterModel monster)
         {
             if (spawnManager == null)
@@ -305,6 +348,7 @@ namespace Pakuri.NewCore.Run
             return spawnManager.PlaceManifestedMonster(this, monster);
         }
 
+        /* 전달된 SpawnManager가 현재 stage authority인지 확인한다. */
         internal bool OwnsSpawnManager(SpawnManager manager)
         {
             return manager != null
@@ -316,6 +360,7 @@ namespace Pakuri.NewCore.Run
             ?? throw new InvalidOperationException(
                 "SpawnManager is not configured.");
 
+        /* 새 day 시작 전 party Unit만 field에 다시 등록한다. */
         private void PrepareFieldForDay()
         {
             fieldUnits.Clear();
@@ -335,6 +380,7 @@ namespace Pakuri.NewCore.Run
             }
         }
 
+        /* 현재 field에 전투 가능한 Enemy가 남았는지 확인한다. */
         private bool HasLivingEnemy()
         {
             for (int index = 0; index < fieldUnits.Count; index++)
@@ -349,6 +395,7 @@ namespace Pakuri.NewCore.Run
             return false;
         }
 
+        /* session stage/day에 대응하는 authored day를 찾는다. */
         private StageDayDefinition FindCurrentDay()
         {
             StageDayDefinition found = null;
@@ -375,6 +422,7 @@ namespace Pakuri.NewCore.Run
                     "The current run location has no StageDay definition.");
         }
 
+        /* 현재 day 다음 순서의 authored day를 찾는다. */
         private StageDayDefinition FindNextDay()
         {
             int stage = CurrentDayDefinition.stage
@@ -387,6 +435,7 @@ namespace Pakuri.NewCore.Run
             return sameStage ?? FindDay(stage + 1, 1);
         }
 
+        /* 지정 stage/day와 정확히 일치하는 authored day를 찾는다. */
         private StageDayDefinition FindDay(int stage, int day)
         {
             StageDayDefinition found = null;
@@ -411,6 +460,7 @@ namespace Pakuri.NewCore.Run
             return found;
         }
 
+        /* encounter id에 속한 authored spawn 행을 sequence 순서로 반환한다. */
         private IReadOnlyList<StageEncounterDefinition> GetEncounterRows(
             string encounterId)
         {
@@ -444,11 +494,13 @@ namespace Pakuri.NewCore.Run
             return rows.AsReadOnly();
         }
 
+        /* 패배한 Unit을 현재 stage field에서 제거한다. */
         private void HandleUnitDefeated(UnitBaseModel unit)
         {
             EvaluateCombatCompletion();
         }
 
+        /* catalog·spawn progression 연결이 완료됐는지 한 번 검증한다. */
         private void RequireProgression()
         {
             if (catalog == null)
@@ -464,6 +516,87 @@ namespace Pakuri.NewCore.Run
             }
         }
 
+        /* bootstrap, spawn, Nexus, stage CSV와 진행 설정의 Inspector 연결을 검증한다. */
+        public void ValidateConnections(
+            GameBootstrap bootstrap,
+            GameDefinitionCatalog definitions)
+        {
+            if (combatManager == null)
+            {
+                combatManager = GetComponent<GameBootstrap>();
+            }
+
+            if (unitSpawnManager == null)
+            {
+                unitSpawnManager = GetComponent<SpawnManager>();
+            }
+
+            if (!ReferenceEquals(combatManager, bootstrap)
+                || unitSpawnManager == null
+                || nexusActor == null)
+            {
+                throw new InvalidOperationException(
+                    "New Core stage scene references are incomplete.");
+            }
+
+            if (stageDayCsv != bootstrap.StageDayAsset
+                || stageEncounterCsv != bootstrap.StageEncounterAsset
+                || stageRewardCsv != bootstrap.StageRewardAsset)
+            {
+                throw new InvalidOperationException(
+                    "Stage CSV Inspector values do not match GameBootstrap.");
+            }
+
+            if (!restorePlayerHealthOnDayAdvance)
+            {
+                throw new InvalidOperationException(
+                    "Current scene requires player health restoration on day advance.");
+            }
+
+            if (clearCheckInterval <= 0f)
+            {
+                throw new InvalidOperationException(
+                    "Clear-check interval must be positive.");
+            }
+
+            if (winStageIndex < 1 || winDayIndex < 1)
+            {
+                throw new InvalidOperationException(
+                    "Win-stage Inspector values must be positive.");
+            }
+
+            ValidateWinBoundary(definitions);
+        }
+
+        /* Inspector 승리 경계가 catalog 최종 stage/day와 일치하는지 검증한다. */
+        private void ValidateWinBoundary(GameDefinitionCatalog definitions)
+        {
+            int finalStage = 0;
+            int finalDay = 0;
+            foreach (StageDayDefinition day in definitions.StageDays.Values)
+            {
+                if (!day.stage.HasValue || !day.day.HasValue)
+                {
+                    continue;
+                }
+
+                if (day.stage.Value > finalStage
+                    || (day.stage.Value == finalStage
+                        && day.day.Value > finalDay))
+                {
+                    finalStage = day.stage.Value;
+                    finalDay = day.day.Value;
+                }
+            }
+
+            if (winStageIndex != finalStage || winDayIndex != finalDay)
+            {
+                throw new InvalidOperationException(
+                    "Win-stage Inspector values do not match the final StageDay.");
+            }
+        }
+
+        /* 음수가 아닌 재화 증가량을 overflow 없이 더한다. */
         private static int AddCurrency(
             int current,
             int amount,
@@ -477,6 +610,7 @@ namespace Pakuri.NewCore.Run
             return checked(current + amount);
         }
 
+        /* 음수가 아닌 비용이 현재 재화 이하인지 확인한다. */
         private static bool CanSpend(int current, int amount)
         {
             return amount >= 0 && current >= amount;

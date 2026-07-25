@@ -5,8 +5,91 @@ using Pakuri.NewCore.Combat.Status;
 using Pakuri.NewCore.Definitions.Status;
 using Pakuri.NewCore.Definitions.Units;
 
+/* 전투 좌표 값과 유닛의 체력·보호막·상태 런타임 권한을 정의한다. */
 namespace Pakuri.NewCore.Units.Models
 {
+    public readonly struct CombatVector2 : IEquatable<CombatVector2>
+    {
+        /* 외부 좌표 입력이 유한한지 검증하고 엔진 독립 전투 좌표로 저장한다. */
+        public CombatVector2(float x, float y)
+        {
+            if (!IsFinite(x) || !IsFinite(y))
+            {
+                throw new ArgumentOutOfRangeException(nameof(x));
+            }
+
+            X = x;
+            Y = y;
+        }
+
+        public float X { get; }
+
+        public float Y { get; }
+
+        public float SqrMagnitude => (X * X) + (Y * Y);
+
+        public float Magnitude => (float)Math.Sqrt(SqrMagnitude);
+
+        public CombatVector2 Normalized
+        {
+            get
+            {
+                float magnitude = Magnitude;
+                return magnitude <= 0.00001f
+                    ? default
+                    : new CombatVector2(X / magnitude, Y / magnitude);
+            }
+        }
+
+        /* 두 전투 좌표의 성분별 합을 반환한다. */
+        public static CombatVector2 operator +(CombatVector2 left, CombatVector2 right)
+        {
+            return new CombatVector2(left.X + right.X, left.Y + right.Y);
+        }
+
+        /* 두 전투 좌표의 성분별 차를 반환한다. */
+        public static CombatVector2 operator -(CombatVector2 left, CombatVector2 right)
+        {
+            return new CombatVector2(left.X - right.X, left.Y - right.Y);
+        }
+
+        /* 전투 좌표를 지정 배율로 확장한 값을 반환한다. */
+        public static CombatVector2 operator *(CombatVector2 value, float multiplier)
+        {
+            return new CombatVector2(value.X * multiplier, value.Y * multiplier);
+        }
+
+        /* 두 전투 좌표 사이의 유클리드 거리를 반환한다. */
+        public static float Distance(CombatVector2 left, CombatVector2 right)
+        {
+            return (left - right).Magnitude;
+        }
+
+        /* 두 전투 좌표의 성분 값이 같은지 비교한다. */
+        public bool Equals(CombatVector2 other)
+        {
+            return X.Equals(other.X) && Y.Equals(other.Y);
+        }
+
+        /* 객체가 같은 전투 좌표 값을 나타내는지 비교한다. */
+        public override bool Equals(object obj)
+        {
+            return obj is CombatVector2 other && Equals(other);
+        }
+
+        /* 두 좌표 성분에서 값 기반 해시 코드를 만든다. */
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(X, Y);
+        }
+
+        /* 실수가 NaN이나 무한대가 아닌지 확인한다. */
+        private static bool IsFinite(float value)
+        {
+            return !float.IsNaN(value) && !float.IsInfinity(value);
+        }
+    }
+
     public abstract class UnitBaseModel
     {
         private readonly List<StatusEffect> statusEffects = new List<StatusEffect>();
@@ -18,6 +101,7 @@ namespace Pakuri.NewCore.Units.Models
         private readonly IReadOnlyList<RuntimeCombatModifier> readOnlyRuntimeModifiers;
         private long nextShieldVersion;
 
+        /* 정의와 유효한 최대 체력으로 유닛의 초기 생명·상태 컬렉션을 구성한다. */
         protected UnitBaseModel(UnitDefinition definition, float maximumHealth)
         {
             if (!IsFinitePositive(maximumHealth))
@@ -75,16 +159,19 @@ namespace Pakuri.NewCore.Units.Models
                     effect => effect.Definition.move_speed_bonus_per_stack)
                 + ResolveRuntimeModifier("StatusMoveSpeedBonus"));
 
+        /* 유닛의 엔진 독립 전투 좌표를 새 값으로 설정한다. */
         public void SetPosition(CombatVector2 position)
         {
             Position = position;
         }
 
+        /* 보호막 흡수 통지 없이 유닛에 피해를 적용한다. */
         public float ApplyDamage(float amount)
         {
             return ApplyDamage(amount, null);
         }
 
+        /* 보호막 레이어를 먼저 소모하고 남은 피해를 체력에 적용한다. */
         public float ApplyDamage(
             float amount,
             Action<UnitBaseModel, string, float> shieldAbsorbed)
@@ -120,6 +207,7 @@ namespace Pakuri.NewCore.Units.Models
             return healthDamage;
         }
 
+        /* public 회복량을 검증하고 최대 체력까지 실제 회복량을 적용한다. */
         public float Heal(float amount)
         {
             ValidateNonNegativeFinite(amount, nameof(amount));
@@ -133,11 +221,13 @@ namespace Pakuri.NewCore.Units.Models
             return applied;
         }
 
+        /* 출처 없는 단순 보호막을 현재 유닛에 추가한다. */
         public bool TryAddShield(float amount)
         {
             return TryAddShield(amount, null, null);
         }
 
+        /* 출처와 스킬 식별자가 있는 보호막을 기본 병합 규칙으로 추가한다. */
         public bool TryAddShield(
             float amount,
             UnitBaseModel source,
@@ -152,6 +242,7 @@ namespace Pakuri.NewCore.Units.Models
                 out _);
         }
 
+        /* public 보호막 입력과 병합 정책을 적용해 레이어 버전을 생성하거나 갱신한다. */
         public bool TryAddShield(
             float amount,
             UnitBaseModel source,
@@ -208,17 +299,20 @@ namespace Pakuri.NewCore.Units.Models
             return true;
         }
 
+        /* 전체 보호막 값과 출처별 레이어를 함께 제거한다. */
         public void ClearShield()
         {
             CurrentShield = 0f;
             shieldLayers.Clear();
         }
 
+        /* 지정 출처와 스킬의 모든 보호막 레이어를 제거한다. */
         public float RemoveShield(UnitBaseModel source, string skillId)
         {
             return RemoveShield(source, skillId, null);
         }
 
+        /* 지정 적용 버전과 일치하는 보호막 레이어만 제거한다. */
         public float RemoveShield(
             UnitBaseModel source,
             string skillId,
@@ -230,6 +324,7 @@ namespace Pakuri.NewCore.Units.Models
                 (long?)applicationVersion);
         }
 
+        /* 출처·스킬·선택 버전 조건으로 보호막 레이어를 찾아 실제 제거량을 계산한다. */
         private float RemoveShield(
             UnitBaseModel source,
             string skillId,
@@ -255,6 +350,7 @@ namespace Pakuri.NewCore.Units.Models
             return removed;
         }
 
+        /* 현재 보호막 또는 지정 스킬 출처의 활성 보호막 존재 여부를 반환한다. */
         public bool HasShieldFrom(string skillId)
         {
             if (string.IsNullOrEmpty(skillId))
@@ -277,6 +373,7 @@ namespace Pakuri.NewCore.Units.Models
             return false;
         }
 
+        /* public 상태 적용 요청을 기존 인스턴스 갱신 또는 새 상태 생성으로 처리한다. */
         public StatusEffect ApplyStatus(
             StatusDefinition definition,
             UnitBaseModel applyingUnit,
@@ -326,11 +423,13 @@ namespace Pakuri.NewCore.Units.Models
             return effect;
         }
 
+        /* 지정 상태 인스턴스를 현재 활성 목록에서 제거한다. */
         public bool RemoveStatus(StatusEffect effect)
         {
             return effect != null && statusEffects.Remove(effect);
         }
 
+        /* public 소비 비율을 검증하고 지정 상태 스택 일부를 제거한다. */
         public int ConsumeStatus(string statusId, float ratio)
         {
             if (string.IsNullOrEmpty(statusId))
@@ -359,6 +458,7 @@ namespace Pakuri.NewCore.Units.Models
             return removed;
         }
 
+        /* public 런타임 수정치 입력을 검증하고 지속 상태 목록에 추가한다. */
         public RuntimeCombatModifier AddRuntimeModifier(
             string kind,
             float value,
@@ -367,6 +467,20 @@ namespace Pakuri.NewCore.Units.Models
             float durationSeconds,
             string secondaryFilter = null)
         {
+            if (string.IsNullOrEmpty(kind))
+            {
+                throw new ArgumentException("Modifier kind is required.", nameof(kind));
+            }
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                throw new ArgumentOutOfRangeException(nameof(value));
+            }
+            ValidateNonNegativeFinite(durationSeconds, nameof(durationSeconds));
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
             RuntimeCombatModifier modifier = new RuntimeCombatModifier(
                 kind,
                 value,
@@ -378,6 +492,7 @@ namespace Pakuri.NewCore.Units.Models
             return modifier;
         }
 
+        /* 종류와 선택 필터가 일치하는 활성 런타임 수정치 합을 반환한다. */
         public float ResolveRuntimeModifier(string kind, string filter = null)
         {
             float result = 0f;
@@ -398,6 +513,7 @@ namespace Pakuri.NewCore.Units.Models
             return result;
         }
 
+        /* public 경과 시간을 검증하고 상태·수정치 만료 생명주기를 진행한다. */
         public void TickStatusEffects(float deltaTime)
         {
             ValidateNonNegativeFinite(deltaTime, nameof(deltaTime));
@@ -421,12 +537,14 @@ namespace Pakuri.NewCore.Units.Models
             }
         }
 
+        /* 모든 활성 상태 효과와 런타임 수정치를 제거한다. */
         public void ClearStatusEffects()
         {
             statusEffects.Clear();
             runtimeModifiers.Clear();
         }
 
+        /* 파생 유닛의 재초기화를 위해 체력·보호막·상태를 초기값으로 복원한다. */
         protected void ResetVitalsAndStatuses()
         {
             CurrentHealth = MaximumHealth;
@@ -438,6 +556,7 @@ namespace Pakuri.NewCore.Units.Models
 
         private sealed class ShieldLayer
         {
+            /* 보호막 출처·스킬·양·적용 버전을 하나의 소모 레이어로 저장한다. */
             public ShieldLayer(
                 UnitBaseModel source,
                 string skillId,
@@ -459,6 +578,7 @@ namespace Pakuri.NewCore.Units.Models
             public long Version { get; set; }
         }
 
+        /* 동일 출처와 스킬 식별자를 가진 최신 보호막 레이어를 찾는다. */
         private ShieldLayer FindShieldLayer(
             UnitBaseModel source,
             string skillId)
@@ -479,6 +599,7 @@ namespace Pakuri.NewCore.Units.Models
             return null;
         }
 
+        /* 보호막 병합 정책이 동일 출처 레이어 갱신을 요구하는지 확인한다. */
         private static bool UsesSameSourceMerge(string mergePolicy)
         {
             return string.Equals(
@@ -491,6 +612,7 @@ namespace Pakuri.NewCore.Units.Models
                     StringComparison.OrdinalIgnoreCase);
         }
 
+        /* 보호막 양 갱신 정책에 따라 누적·교체·최댓값 결과를 계산한다. */
         private static float ResolveRefreshedShieldAmount(
             float currentAmount,
             float incomingAmount,
@@ -515,6 +637,7 @@ namespace Pakuri.NewCore.Units.Models
             return Math.Max(currentAmount, incomingAmount);
         }
 
+        /* 활성 상태 중 하나라도 권한을 금지하면 false를 반환한다. */
         private bool ResolveStatusPermission(Func<StatusEffect, bool?> selector)
         {
             for (int index = 0; index < statusEffects.Count; index++)
@@ -528,6 +651,7 @@ namespace Pakuri.NewCore.Units.Models
             return true;
         }
 
+        /* 활성 상태별 스택이 반영된 선택 수치의 합을 계산한다. */
         private float ResolveStatusValue(
             Func<StatusEffect, float?> selector)
         {
@@ -540,11 +664,13 @@ namespace Pakuri.NewCore.Units.Models
             return value;
         }
 
+        /* 값이 유한한 양수인지 확인한다. */
         private static bool IsFinitePositive(float value)
         {
             return value > 0f && !float.IsNaN(value) && !float.IsInfinity(value);
         }
 
+        /* public 수치 입력이 유한한 0 이상 값인지 검증한다. */
         private static void ValidateNonNegativeFinite(float value, string parameterName)
         {
             if (value < 0f || float.IsNaN(value) || float.IsInfinity(value))

@@ -311,7 +311,6 @@ GameObject:
   - component: {fileID: 4863817759397753600}
   - component: {fileID: -1863941469834791775}
   - component: {fileID: -6977149475641408437}
-  - component: {fileID: 6169519153641302405}
   - component: {fileID: 7825346336125063102}
   m_Layer: 0
   m_Name: Rin_Unit
@@ -409,8 +408,14 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 563a47fcaccf140499efb7f222c0c006, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterActorBehaviour
-  animationController: {fileID: 0}
+  m_EditorClassIdentifier: Pakuri.NewCore::Pakuri.NewCore.Units.Actors.MonsterActor
+  damagePopupDurationSeconds: 1
+  damagePopupRiseDistance: 1
+  maximumActiveDamagePopups: 12
+  damagePopupVerticalSpacing: 0.18
+  idleState: Anim_Rin_Idle
+  deadState: Anim_Rin_Dead_1
+  attackStateCount: 3
 --- !u!95 &-6977149475641408437
 Animator:
   serializedVersion: 7
@@ -433,22 +438,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &6169519153641302405
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4596420534878418281}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac027aa8c5506d5488ec4c797833239d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterAnimationBehaviour
-  animator: {fileID: 0}
-  idleState: Anim_Rin_Idle
-  deadState: Anim_Rin_Dead_1
-  attackStateCount: 3
 --- !u!61 &7825346336125063102
 BoxCollider2D:
   m_ObjectHideFlags: 0

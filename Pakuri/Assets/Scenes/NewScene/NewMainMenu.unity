@@ -436,7 +436,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 911e7b0e2aa03f5458d7e1f3eb8ba0b8, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.UI.NewCoreMainMenuController
+  m_EditorClassIdentifier: Pakuri.NewCore::Pakuri.NewCore.UI.MainMenu.NewCoreMainMenuController
   introPanel: {fileID: 1303273200}
   mainMenuPanel: {fileID: 350811723}
   monsterSelectPanel: {fileID: 1780514917}

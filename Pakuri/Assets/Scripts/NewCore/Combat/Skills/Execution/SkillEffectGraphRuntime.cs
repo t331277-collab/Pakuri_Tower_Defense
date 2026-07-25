@@ -285,7 +285,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                         break;
                     case "EffectVisual":
                     case "RuntimeEffectVisual":
-                        CreateVisual(request, targets, node, lifetime);
+                        RequestVisual(request, targets, node, lifetime);
                         break;
                     case "ConditionAnyStatus":
                     case "ConditionHealthRatioMax":
@@ -697,8 +697,8 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 Math.Max(0f, Number(node.arg_2, 0f))));
         }
 
-        /* 런타임 비주얼 노드의 이펙트를 만들고 생명주기를 등록한다. */
-        private void CreateVisual(
+        /* 일치한 시각 노드의 중립 값과 배치만 EffectManager에 요청한다. */
+        private void RequestVisual(
             SkillExecutionRequest request,
             List<UnitBaseModel> targets,
             ChoiceNodeDefinition node,
@@ -712,7 +712,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
 
             bool prefabVisual =
                 node.node_type_id == "EffectVisual";
-            var visual = new EffectVisualSpec(
+            var visual = new EffectVisualRequest(
                 prefabVisual ? node.arg_1 : string.Empty,
                 prefabVisual ? string.Empty : node.arg_1,
                 prefabVisual ? string.Empty : node.arg_2,
@@ -725,10 +725,10 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 visual,
                 target.Position,
                 (target.Position - request.Caster.Position).Normalized);
-            actors.Register(new BuffActor(
+            actors.RegisterEffectLifetime(
                 request.Skill,
                 Math.Max(0.00001f, lifetime),
-                effect));
+                effect);
         }
 
         /* 그래프에 포함된 모든 조건 노드가 현재 실행 문맥을 통과하는지 확인한다. */

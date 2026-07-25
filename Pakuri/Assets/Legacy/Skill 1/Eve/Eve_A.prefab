@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 2074114688455033395}
   - component: {fileID: 3838313821674715821}
   - component: {fileID: 8769439685205404164}
-  - component: {fileID: 4663787437823732165}
   m_Layer: 0
   m_Name: Eve_A
   m_TagString: Untagged
@@ -162,15 +161,3 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.97, y: 1.0134144}
   m_EdgeRadius: 0
---- !u!114 &4663787437823732165
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3046447516185771510}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c29622d2ef50bc34e953b2cd9876644f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.SkillVisualActorBehaviour

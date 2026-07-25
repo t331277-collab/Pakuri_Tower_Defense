@@ -11,13 +11,15 @@ using Pakuri.NewCore.Combat.Skills.Actors;
 using Pakuri.NewCore.Combat.Skills.Execution;
 using Pakuri.NewCore.Definitions.Choices;
 using Pakuri.NewCore.Definitions.Skills;
-using Pakuri.NewCore.Presentation.Actors;
-using Pakuri.NewCore.Presentation.Assets;
-using Pakuri.NewCore.Presentation.Scene;
-using Pakuri.NewCore.Presentation.UI;
 using Pakuri.NewCore.Run;
 using Pakuri.NewCore.Run.Services;
 using Pakuri.NewCore.Spawn;
+using Pakuri.NewCore.UI.InGame;
+using Pakuri.NewCore.UI.InGame.DamageMeter;
+using Pakuri.NewCore.UI.InGame.Debug;
+using Pakuri.NewCore.UI.InGame.MonsterPanel;
+using Pakuri.NewCore.UI.InGame.UtilityPanel;
+using Pakuri.NewCore.UI.MainMenu;
 using Pakuri.NewCore.Units.Models;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -26,6 +28,18 @@ using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 using TMPro;
+using NewCoreRuntimeCatalogAsset = Pakuri.NewCore.Bootstrap.GameBootstrap;
+using RunStartSelectionAsset = Pakuri.NewCore.Bootstrap.GameBootstrap;
+using NewCoreSceneRuntime = Pakuri.NewCore.Bootstrap.GameBootstrap;
+using NewCoreInputController = Pakuri.NewCore.Combat.Actions.PlayerInputController;
+using NewCoreEffectView = Pakuri.NewCore.Combat.Effects.EffectManager;
+using NewCoreSpawnController = Pakuri.NewCore.Spawn.SpawnManager;
+using NewCoreStageController = Pakuri.NewCore.Run.StageManager;
+using UnitActorBehaviour = Pakuri.NewCore.Units.Actors.UnitActor;
+using MonsterActorBehaviour = Pakuri.NewCore.Units.Actors.MonsterActor;
+using MonsterAnimationBehaviour = Pakuri.NewCore.Units.Actors.MonsterActor;
+using EnemyActorBehaviour = Pakuri.NewCore.Units.Actors.EnemyActor;
+using NexusActorBehaviour = Pakuri.NewCore.Units.Actors.NexusActor;
 
 namespace Pakuri.NewCore.Tests
 {
@@ -95,7 +109,7 @@ namespace Pakuri.NewCore.Tests
             Assert.That(catalog.StageEncounter, Is.Not.Null);
             Assert.That(catalog.StageReward, Is.Not.Null);
 
-            var definitions = catalog.CreateBootstrap().Catalog;
+            var definitions = catalog.Catalog;
             Assert.That(definitions.SourceFileCount, Is.EqualTo(42));
             Assert.That(definitions.AllDefinitions.Count, Is.EqualTo(1836));
             Assert.That(definitions.Monsters.Count, Is.EqualTo(5));
@@ -151,7 +165,12 @@ namespace Pakuri.NewCore.Tests
                 var spawn = Single<NewCoreSpawnController>(scene);
                 var effects = Single<NewCoreEffectView>(scene);
                 var input = Single<NewCoreInputController>(scene);
-                var ui = Single<NewCoreInGameUIController>(scene);
+                var ui = Single<InGameUIManager>(scene);
+                var reward = Single<RewardPanelController>(scene);
+                var prison = Single<PrisonPanelController>(scene);
+                var offering = Single<OfferingPanelController>(scene);
+                var manifestation =
+                    Single<ManifestationPanelController>(scene);
                 var monsterPanel = Single<NewCoreMonsterPanelUI>(scene);
                 var meter = Single<NewCoreDamageMeterUIController>(scene);
                 var tracker = Single<NewCoreDamageMeterTracker>(scene);
@@ -186,8 +205,25 @@ namespace Pakuri.NewCore.Tests
                 AssertRequiredReferences(effects, "runtimeSkillRoot");
                 AssertRequiredReferences(
                     ui,
-                    "stageManager",
-                    "unitSpawnManager",
+                    "combatManager",
+                    "rewardPanelController",
+                    "prisonPanelController",
+                    "offeringPanelController",
+                    "manifestationPanelController",
+                    "winPanel",
+                    "defeatPanel");
+                AssertRequiredReferences(reward, "combatManager");
+                AssertRequiredReferences(
+                    prison,
+                    "combatManager",
+                    "arielPrisonPortrait",
+                    "evePrisonPortrait",
+                    "rinPrisonPortrait",
+                    "seinPrisonPortrait",
+                    "vegaPrisonPortrait");
+                AssertRequiredReferences(offering, "combatManager");
+                AssertRequiredReferences(
+                    manifestation,
                     "combatManager",
                     "arielPrisonPortrait",
                     "evePrisonPortrait",
@@ -283,7 +319,7 @@ namespace Pakuri.NewCore.Tests
                 index < MigratedUnreferencedSkillVisualPrefabPaths.Length;
                 index++)
             {
-                AssertPrefabHas<SkillVisualActorBehaviour>(
+                AssertPrefabIsClean(
                     MigratedUnreferencedSkillVisualPrefabPaths[index]);
             }
         }
@@ -303,7 +339,7 @@ namespace Pakuri.NewCore.Tests
                     .objectReferenceValue = effectRoot.transform;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
 
-                var effects = new EffectManager();
+                var effects = view;
                 var spritePath =
                     "Assets/Image/Monster/ariel/SkillEffect/"
                     + "ChatGPT Image 2026년 5월 15일 오후 05_37_22-Photoroom 1.png";
@@ -335,8 +371,20 @@ namespace Pakuri.NewCore.Tests
                     default,
                     default);
 
-                view.Bind(catalog, effects);
-                view.Sync();
+                view.BindVisualRuntime(
+                    effectRoot.transform,
+                    path => catalog.TryGetPrefab(path, out var asset)
+                        ? asset
+                        : null,
+                    path => catalog.TryGetSprite(path, out var asset)
+                        ? asset
+                        : null,
+                    path => catalog.TryGetAnimatorController(
+                        path,
+                        out var asset)
+                        ? asset
+                        : null);
+                view.SyncVisuals();
 
                 Assert.That(
                     effectRoot.transform.childCount,
@@ -380,7 +428,7 @@ namespace Pakuri.NewCore.Tests
         {
             var runtimeCatalog = AssetDatabase.LoadAssetAtPath<
                 NewCoreRuntimeCatalogAsset>(CatalogPath);
-            var catalog = runtimeCatalog.CreateBootstrap().Catalog;
+            var catalog = runtimeCatalog.Catalog;
             var definition = catalog.GetEnemy("stage1-swordsman");
             var model = new EnemyModel(
                 definition,
@@ -414,7 +462,7 @@ namespace Pakuri.NewCore.Tests
         {
             var runtimeCatalog = AssetDatabase.LoadAssetAtPath<
                 NewCoreRuntimeCatalogAsset>(CatalogPath);
-            var catalog = runtimeCatalog.CreateBootstrap().Catalog;
+            var catalog = runtimeCatalog.Catalog;
             var definition =
                 catalog.GetEnemy("stage1-guardian-captain");
             var enemy = new EnemyModel(
@@ -451,7 +499,7 @@ namespace Pakuri.NewCore.Tests
         {
             var runtimeCatalog = AssetDatabase.LoadAssetAtPath<
                 NewCoreRuntimeCatalogAsset>(CatalogPath);
-            var catalog = runtimeCatalog.CreateBootstrap().Catalog;
+            var catalog = runtimeCatalog.Catalog;
             var definition = catalog.GetEnemy("stage1-swordsman");
             var model = new EnemyModel(
                 definition,
@@ -485,8 +533,11 @@ namespace Pakuri.NewCore.Tests
         {
             var runtimeCatalog = AssetDatabase.LoadAssetAtPath<
                 NewCoreRuntimeCatalogAsset>(CatalogPath);
-            var catalog = runtimeCatalog.CreateBootstrap().Catalog;
-            var spawns = new SpawnManager(catalog, _ => 0, () => 0f);
+            var catalog = runtimeCatalog.Catalog;
+            var spawns = NewCoreTestFactory.CreateSpawnManager(
+                catalog,
+                _ => 0,
+                () => 0f);
             var initialMonster = spawns.CreateMonsterModel(
                 catalog.GetMonster("ariel"),
                 false);
@@ -501,7 +552,11 @@ namespace Pakuri.NewCore.Tests
                 firstDay.encounter_id,
                 new PartyRoster(initialMonster),
                 new PrisonerInventory());
-            var stage = new StageManager(session, catalog, 0, 0);
+            var stage = NewCoreTestFactory.CreateStageManager(
+                session,
+                catalog,
+                0,
+                0);
             stage.ConfigureSpawnManager(spawns);
             stage.StartCurrentDay();
             var enemy = spawns.SpawnedEnemies[0].Model;
@@ -516,12 +571,13 @@ namespace Pakuri.NewCore.Tests
             try
             {
                 var runtime = host.AddComponent<NewCoreSceneRuntime>();
-                var spawnView = host.AddComponent<NewCoreSpawnController>();
+                var spawnView = spawns;
                 monsterTemplate.AddComponent<MonsterActorBehaviour>();
                 enemyTemplate.AddComponent<BoxCollider2D>();
                 enemyTemplate.AddComponent<EnemyActorBehaviour>();
 
-                var effects = new EffectManager();
+                var effects =
+                    NewCoreTestFactory.CreateComponent<EffectManager>();
                 var actors = new SkillActorManager(effects);
                 var targeting = new SkillTargeting(_ => 0);
                 var execution = new SkillExecutionRuntime(
@@ -531,7 +587,8 @@ namespace Pakuri.NewCore.Tests
                     effects,
                     () => 0f);
                 var combat = new InGameCombatManager(() => 0f, execution);
-                var input = new PlayerInputController();
+                var input = NewCoreTestFactory
+                    .CreateComponent<PlayerInputController>();
                 var actions = new InGameActionManager(
                     stage,
                     () => true,
@@ -583,7 +640,7 @@ namespace Pakuri.NewCore.Tests
                     enemyTemplate;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
 
-                spawnView.Bind(runtime, spawns);
+                spawnView.BindScene(runtime);
                 spawnView.SyncNewSpawns();
                 Assert.That(enemyRoot.transform.childCount, Is.EqualTo(1));
                 Assert.That(
@@ -636,7 +693,7 @@ namespace Pakuri.NewCore.Tests
         {
             var runtimeCatalog = AssetDatabase.LoadAssetAtPath<
                 NewCoreRuntimeCatalogAsset>(CatalogPath);
-            var catalog = runtimeCatalog.CreateBootstrap().Catalog;
+            var catalog = runtimeCatalog.Catalog;
             var root = new GameObject(
                 "Choice",
                 typeof(RectTransform),
@@ -660,9 +717,9 @@ namespace Pakuri.NewCore.Tests
                         },
                         null);
                 Assert.That(constructor, Is.Not.Null);
-                MethodInfo bind = typeof(NewCoreInGameUIController)
+                MethodInfo bind = typeof(OfferingPanelController)
                     .GetMethod(
-                        "BindOfferingCandidate",
+                        "BindCandidate",
                         BindingFlags.Static | BindingFlags.NonPublic);
                 Assert.That(bind, Is.Not.Null);
 
@@ -732,15 +789,21 @@ namespace Pakuri.NewCore.Tests
             var template = templateObject.GetComponent<TextMesh>();
             template.color = Color.red;
             var popups =
-                root.AddComponent<DamageNumberPopupBehaviour>();
+                root.AddComponent<MonsterActorBehaviour>();
             try
             {
-                popups.Initialize(template);
-                popups.Show(10f);
-                popups.Show(20f);
-                popups.Show(30f);
+                typeof(UnitActorBehaviour)
+                    .GetMethod(
+                        "InitializeDamagePopups",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(popups, new object[] { template });
+                popups.ShowDamage(10f);
+                popups.ShowDamage(20f);
+                popups.ShowDamage(30f);
 
-                Assert.That(popups.ActivePopupCount, Is.EqualTo(3));
+                Assert.That(
+                    popups.ActiveDamagePopupCount,
+                    Is.EqualTo(3));
                 TextMesh[] active = root.GetComponentsInChildren<
                     TextMesh>(true)
                     .Where(text =>
@@ -764,7 +827,7 @@ namespace Pakuri.NewCore.Tests
                 float[] startingY = active
                     .Select(text => text.transform.localPosition.y)
                     .ToArray();
-                popups.Tick(0.5f);
+                popups.TickDamagePopups(0.5f);
                 active = root.GetComponentsInChildren<TextMesh>(true)
                     .Where(text =>
                         text.gameObject.name == "Damage_Popup")
@@ -782,25 +845,31 @@ namespace Pakuri.NewCore.Tests
                         Is.EqualTo(0.5f).Within(0.003f));
                 }
 
-                popups.Show(40f);
+                popups.ShowDamage(40f);
                 TextMesh newest = root.GetComponentsInChildren<
                         TextMesh>(true)
                     .Single(text => text.text == "40(Damage)");
                 Assert.That(newest.color.a, Is.EqualTo(1f));
-                popups.Tick(0.51f);
-                Assert.That(popups.ActivePopupCount, Is.EqualTo(1));
+                popups.TickDamagePopups(0.51f);
+                Assert.That(
+                    popups.ActiveDamagePopupCount,
+                    Is.EqualTo(1));
                 Assert.That(newest, Is.Not.Null);
                 Assert.That(
                     newest.color.a,
                     Is.EqualTo(0.49f).Within(0.003f));
-                popups.Tick(0.5f);
-                Assert.That(popups.ActivePopupCount, Is.Zero);
+                popups.TickDamagePopups(0.5f);
+                Assert.That(
+                    popups.ActiveDamagePopupCount,
+                    Is.Zero);
 
                 for (var index = 0; index < 13; index++)
                 {
-                    popups.Show(40f + index);
+                    popups.ShowDamage(40f + index);
                 }
-                Assert.That(popups.ActivePopupCount, Is.EqualTo(12));
+                Assert.That(
+                    popups.ActiveDamagePopupCount,
+                    Is.EqualTo(12));
                 Assert.That(
                     root.GetComponentsInChildren<TextMesh>(true)
                         .Count(text =>
@@ -988,8 +1057,11 @@ namespace Pakuri.NewCore.Tests
 
                 var runtimeCatalog = AssetDatabase.LoadAssetAtPath<
                     NewCoreRuntimeCatalogAsset>(CatalogPath);
-                var catalog = runtimeCatalog.CreateBootstrap().Catalog;
-                var spawns = new SpawnManager(
+                var catalog = runtimeCatalog.Catalog;
+                NewCoreSceneRuntime runtime =
+                    Single<NewCoreSceneRuntime>(scene);
+                SetProperty(runtime, "Catalog", catalog);
+                var spawns = NewCoreTestFactory.CreateSpawnManager(
                     catalog,
                     _ => 0,
                     () => 0f);
@@ -999,21 +1071,11 @@ namespace Pakuri.NewCore.Tests
                 MonsterModel other = spawns.CreateMonsterModel(
                     catalog.GetMonster("eve"),
                     false);
-                MethodInfo learn = typeof(NewCoreDebugUIController)
-                    .GetMethod(
-                        "TryLearnSkill",
-                        BindingFlags.Static | BindingFlags.NonPublic);
-                Assert.That(learn, Is.Not.Null);
                 Assert.That(
-                    learn.Invoke(
-                        null,
-                        new object[]
-                        {
-                            selected,
-                            catalog.GetSkill("ariel-b"),
-                            catalog.Choices.Values
-                        }),
-                    Is.EqualTo(true));
+                    runtime.TryLearnSkill(
+                        selected,
+                        catalog.GetSkill("ariel-b")),
+                    Is.True);
                 Assert.That(
                     selected.SkillBucket.ActiveSkills.Any(
                         skill => skill.skill_id == "ariel-b"),
@@ -1027,35 +1089,20 @@ namespace Pakuri.NewCore.Tests
                     catalog.GetMonster("ariel"),
                     false);
                 Assert.That(
-                    learn.Invoke(
-                        null,
-                        new object[]
-                        {
-                            locked,
-                            catalog.GetSkill("ariel-g"),
-                            catalog.Choices.Values
-                        }),
-                    Is.EqualTo(false));
+                    runtime.TryLearnSkill(
+                        locked,
+                        catalog.GetSkill("ariel-g")),
+                    Is.False);
                 Assert.That(
-                    learn.Invoke(
-                        null,
-                        new object[]
-                        {
-                            locked,
-                            catalog.GetSkill("ariel-b"),
-                            catalog.Choices.Values
-                        }),
-                    Is.EqualTo(true));
+                    runtime.TryLearnSkill(
+                        locked,
+                        catalog.GetSkill("ariel-b")),
+                    Is.True);
                 Assert.That(
-                    learn.Invoke(
-                        null,
-                        new object[]
-                        {
-                            locked,
-                            catalog.GetSkill("ariel-g"),
-                            catalog.Choices.Values
-                        }),
-                    Is.EqualTo(true));
+                    runtime.TryLearnSkill(
+                        locked,
+                        catalog.GetSkill("ariel-g")),
+                    Is.True);
             }
             finally
             {
@@ -1068,8 +1115,11 @@ namespace Pakuri.NewCore.Tests
         {
             var runtimeCatalog = AssetDatabase.LoadAssetAtPath<
                 NewCoreRuntimeCatalogAsset>(CatalogPath);
-            var catalog = runtimeCatalog.CreateBootstrap().Catalog;
-            var spawns = new SpawnManager(catalog, _ => 0, () => 0f);
+            var catalog = runtimeCatalog.Catalog;
+            var spawns = NewCoreTestFactory.CreateSpawnManager(
+                catalog,
+                _ => 0,
+                () => 0f);
             MonsterModel ariel = spawns.CreateMonsterModel(
                 catalog.GetMonster("ariel"),
                 false);
@@ -1084,7 +1134,11 @@ namespace Pakuri.NewCore.Tests
                 "encounter",
                 roster,
                 new PrisonerInventory());
-            var stage = new StageManager(session, catalog, 0, 0);
+            var stage = NewCoreTestFactory.CreateStageManager(
+                session,
+                catalog,
+                0,
+                0);
             var runtimeObject = new GameObject("Runtime");
             var canvas = new GameObject(
                 "Canvas",

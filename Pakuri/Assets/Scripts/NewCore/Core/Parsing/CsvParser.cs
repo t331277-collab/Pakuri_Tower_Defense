@@ -13,6 +13,133 @@ using Pakuri.NewCore.Definitions.Stage;
 using Pakuri.NewCore.Definitions.Status;
 using Pakuri.NewCore.Definitions.Units;
 
+/* CSV 행 메타데이터와 타입 변환된 열 접근 계약을 정의한다. */
+namespace Pakuri.NewCore.Definitions
+{
+    public abstract class CsvDefinition
+    {
+        private readonly IReadOnlyDictionary<string, string> schema;
+        private readonly IReadOnlyDictionary<string, object> columns;
+
+        /* 파서가 검증한 행 데이터와 출처 메타데이터를 불변 상태로 저장한다. */
+        internal CsvDefinition(CsvDefinitionData data)
+        {
+            SourcePath = data.SourcePath;
+            SourceRecordNumber = data.SourceRecordNumber;
+            HasSchemaRow = data.HasSchemaRow;
+            schema = new ReadOnlyDictionary<string, string>(
+                new Dictionary<string, string>(data.Schema, StringComparer.Ordinal));
+            columns = new ReadOnlyDictionary<string, object>(
+                new Dictionary<string, object>(data.Columns, StringComparer.Ordinal));
+        }
+
+        public string SourcePath { get; }
+
+        public int SourceRecordNumber { get; }
+
+        public bool HasSchemaRow { get; }
+
+        public IReadOnlyDictionary<string, string> Schema => schema;
+
+        public IReadOnlyDictionary<string, object> Columns => columns;
+
+        /* 필수 문자열 열을 반환하고 비어 있으면 CSV 출처가 포함된 오류를 발생시킨다. */
+        protected string RequiredString(string columnName)
+        {
+            string value = OptionalString(columnName);
+            if (string.IsNullOrEmpty(value))
+            {
+                throw new InvalidDataException(
+                    $"{SourcePath} record {SourceRecordNumber} has no value for required column '{columnName}'.");
+            }
+
+            return value;
+        }
+
+        /* 지정된 모든 필수 열이 현재 행에 존재하는지 검증한다. */
+        protected void ValidateRequired(params string[] columnNames)
+        {
+            foreach (string columnName in columnNames)
+            {
+                RequiredString(columnName);
+            }
+        }
+
+        /* 선택 문자열 열을 반환하고 열이나 값이 없으면 null을 반환한다. */
+        protected string OptionalString(string columnName)
+        {
+            if (!columns.TryGetValue(columnName, out object value))
+            {
+                return null;
+            }
+
+            return value as string;
+        }
+
+        /* 선택 정수 열을 반환하고 값이 없으면 null을 반환한다. */
+        protected int? OptionalInt(string columnName)
+        {
+            if (!columns.TryGetValue(columnName, out object value) || value == null)
+            {
+                return null;
+            }
+
+            return (int)value;
+        }
+
+        /* 선택 실수 열을 반환하고 값이 없으면 null을 반환한다. */
+        protected float? OptionalFloat(string columnName)
+        {
+            if (!columns.TryGetValue(columnName, out object value) || value == null)
+            {
+                return null;
+            }
+
+            return (float)value;
+        }
+
+        /* 선택 논리값 열을 반환하고 값이 없으면 null을 반환한다. */
+        protected bool? OptionalBool(string columnName)
+        {
+            if (!columns.TryGetValue(columnName, out object value) || value == null)
+            {
+                return null;
+            }
+
+            return (bool)value;
+        }
+    }
+
+    internal sealed class CsvDefinitionData
+    {
+        /* 파서가 만든 스키마와 열 값, 원본 위치를 정의 생성 입력으로 저장한다. */
+        internal CsvDefinitionData(
+            string sourcePath,
+            int sourceRecordNumber,
+            bool hasSchemaRow,
+            IReadOnlyDictionary<string, string> schema,
+            IReadOnlyDictionary<string, object> columns)
+        {
+            SourcePath = sourcePath;
+            SourceRecordNumber = sourceRecordNumber;
+            HasSchemaRow = hasSchemaRow;
+            Schema = schema;
+            Columns = columns;
+        }
+
+        public string SourcePath { get; }
+
+        public int SourceRecordNumber { get; }
+
+        public bool HasSchemaRow { get; }
+
+        public IReadOnlyDictionary<string, string> Schema { get; }
+
+        public IReadOnlyDictionary<string, object> Columns { get; }
+    }
+}
+
+/* 보존 CSV를 파싱하고 정의 카탈로그를 검증해 생성한다. */
 namespace Pakuri.NewCore.Parsing
 {
     internal sealed class CsvParser
@@ -72,6 +199,7 @@ namespace Pakuri.NewCore.Parsing
 
         internal static IReadOnlyList<string> RequiredCsvPaths => requiredCsvPaths;
 
+        /* 필수 CSV 원문 집합을 정의 객체와 검증된 불변 카탈로그로 변환한다. */
         internal GameDefinitionCatalog Parse(IReadOnlyDictionary<string, string> csvFiles)
         {
             if (csvFiles == null)
@@ -132,6 +260,7 @@ namespace Pakuri.NewCore.Parsing
             return catalog;
         }
 
+        /* 한 CSV의 헤더·스키마·데이터 행을 검증하고 타입 변환된 테이블로 만든다. */
         private static ParsedTable ParseTable(string path, string text)
         {
             List<RawRecord> records = ParseRecords(path, text);
@@ -231,6 +360,7 @@ namespace Pakuri.NewCore.Parsing
                 parsedRows);
         }
 
+        /* 따옴표와 줄바꿈 규칙을 적용해 CSV 원문을 원시 레코드 목록으로 분해한다. */
         private static List<RawRecord> ParseRecords(string path, string text)
         {
             if (text == null)
@@ -348,6 +478,7 @@ namespace Pakuri.NewCore.Parsing
             return records;
         }
 
+        /* 스키마 토큰에 따라 CSV 문자열을 런타임 기본 타입으로 변환한다. */
         private static object ConvertValue(
             string path,
             int recordNumber,
@@ -411,6 +542,7 @@ namespace Pakuri.NewCore.Parsing
             return rawValue;
         }
 
+        /* 열거형 스키마 값이 등록된 허용 집합에 포함되는지 검증한다. */
         private static void ValidateEnum(
             string path,
             int recordNumber,
@@ -441,6 +573,7 @@ namespace Pakuri.NewCore.Parsing
             }
         }
 
+        /* CSV 스키마 토큰이 파서가 지원하는 타입 계약인지 검증한다. */
         private static void ValidateSchemaToken(string path, int recordNumber, string schemaToken)
         {
             if (string.IsNullOrEmpty(schemaToken)
@@ -462,6 +595,7 @@ namespace Pakuri.NewCore.Parsing
             throw Invalid(path, recordNumber, $"Unsupported schema type '{schemaToken}'.");
         }
 
+        /* CSV 경로 권한에 맞는 구체 정의 타입을 생성한다. */
         private static CsvDefinition CreateDefinition(string path, CsvDefinitionData data)
         {
             if (path.EndsWith("/catalog/catalog_monsters.csv", StringComparison.Ordinal))
@@ -578,6 +712,7 @@ namespace Pakuri.NewCore.Parsing
             throw new InvalidDataException($"{path}: No Definition type is registered.");
         }
 
+        /* 생성된 모든 정의 사이 식별자 참조와 소유 관계를 검증한다. */
         private static void ValidateReferences(GameDefinitionCatalog catalog)
         {
             foreach (CatalogMonsterDefinition entry in catalog.CatalogMonsters)
@@ -707,6 +842,7 @@ namespace Pakuri.NewCore.Parsing
             ValidateNodeArguments(catalog);
         }
 
+        /* 선택 노드 인수가 노드 정의의 파라미터 계약과 일치하는지 검증한다. */
         private static void ValidateNodeArguments(GameDefinitionCatalog catalog)
         {
             Dictionary<string, NodeParamDefinition[]> parametersByType =
@@ -751,6 +887,7 @@ namespace Pakuri.NewCore.Parsing
             }
         }
 
+        /* 단일 노드 인수를 선언된 값 타입과 참조 도메인에 맞춰 검증한다. */
         private static void ValidateNodeArgument(
             GameDefinitionCatalog catalog,
             ChoiceNodeDefinition node,
@@ -830,6 +967,7 @@ namespace Pakuri.NewCore.Parsing
             }
         }
 
+        /* 정의의 상태 식별자 열들이 상태 카탈로그를 참조하는지 검증한다. */
         private static void ValidateStatusColumns(
             GameDefinitionCatalog catalog,
             CsvDefinition definition)
@@ -850,6 +988,7 @@ namespace Pakuri.NewCore.Parsing
             }
         }
 
+        /* 노드 소유자 종류에 따라 선택지·스킬·트리거 참조를 검증한다. */
         private static void ValidateOwnerReference(
             GameDefinitionCatalog catalog,
             CsvDefinition definition,
@@ -884,6 +1023,7 @@ namespace Pakuri.NewCore.Parsing
             }
         }
 
+        /* 값이 있는 선택 열만 지정 카탈로그 식별자 집합과 대조한다. */
         private static void RequireOptionalColumn<T>(
             IReadOnlyDictionary<string, T> definitions,
             CsvDefinition owner,
@@ -902,6 +1042,7 @@ namespace Pakuri.NewCore.Parsing
             }
         }
 
+        /* 선택 식별자가 존재할 때 지정 카탈로그에 포함되는지 검증한다. */
         private static void RequireOptional<T>(
             IReadOnlyDictionary<string, T> definitions,
             CsvDefinition owner,
@@ -914,6 +1055,7 @@ namespace Pakuri.NewCore.Parsing
             }
         }
 
+        /* 필수 식별자가 지정 카탈로그에 포함되는지 검증한다. */
         private static void Require<T>(
             IReadOnlyDictionary<string, T> definitions,
             CsvDefinition owner,
@@ -926,6 +1068,7 @@ namespace Pakuri.NewCore.Parsing
             }
         }
 
+        /* 누락된 참조의 소유 행과 열을 포함한 오류를 생성한다. */
         private static InvalidDataException Missing(
             CsvDefinition owner,
             string columnName,
@@ -937,6 +1080,7 @@ namespace Pakuri.NewCore.Parsing
                 $"Missing reference '{id ?? string.Empty}' from column '{columnName}'.");
         }
 
+        /* 정의의 원시 열 사전에서 문자열 값을 읽는다. */
         private static string StringColumn(CsvDefinition definition, string columnName)
         {
             if (!definition.Columns.TryGetValue(columnName, out object value))
@@ -947,6 +1091,7 @@ namespace Pakuri.NewCore.Parsing
             return value as string;
         }
 
+        /* 노드 인수와 파라미터 계약을 포함한 검증 오류를 생성한다. */
         private static InvalidDataException InvalidNodeArgument(
             ChoiceNodeDefinition node,
             NodeParamDefinition parameter,
@@ -958,6 +1103,7 @@ namespace Pakuri.NewCore.Parsing
                 $"Node argument '{argument}' is invalid for parameter '{parameter.param_key}' ({parameter.value_type}).");
         }
 
+        /* 타입 변환에 실패한 CSV 값의 출처와 기대 타입을 포함한 오류를 생성한다. */
         private static InvalidDataException InvalidValue(
             string path,
             int recordNumber,
@@ -971,6 +1117,7 @@ namespace Pakuri.NewCore.Parsing
                 $"Value '{value}' in column '{column}' is not a valid {type}.");
         }
 
+        /* 레코드 열 수가 헤더 너비와 같은지 검증한다. */
         private static void RequireWidth(string path, RawRecord record, int expectedWidth)
         {
             if (record.Fields.Count != expectedWidth)
@@ -982,6 +1129,7 @@ namespace Pakuri.NewCore.Parsing
             }
         }
 
+        /* CSV 경로와 레코드 번호가 포함된 표준 파서 오류를 생성한다. */
         private static InvalidDataException Invalid(
             string path,
             int recordNumber,
@@ -990,6 +1138,7 @@ namespace Pakuri.NewCore.Parsing
             return new InvalidDataException($"{path} record {recordNumber}: {message}");
         }
 
+        /* CSV 경로를 빈 값 검증 후 슬래시 표기로 정규화한다. */
         private static string NormalizePath(string path)
         {
             if (string.IsNullOrWhiteSpace(path))
@@ -1000,6 +1149,7 @@ namespace Pakuri.NewCore.Parsing
             return path.Replace('\\', '/');
         }
 
+        /* CSV enum 스키마 토큰별 허용 문자열 도메인을 만든다. */
         private static IReadOnlyDictionary<string, IReadOnlyCollection<string>>
             CreateEnumDomains()
         {
@@ -1060,11 +1210,13 @@ namespace Pakuri.NewCore.Parsing
             return new ReadOnlyDictionary<string, IReadOnlyCollection<string>>(domains);
         }
 
+        /* 허용 열거형 값 집합을 대소문자 구분 불변 컬렉션으로 만든다. */
         private static IReadOnlyCollection<string> Domain(params string[] values)
         {
             return new HashSet<string>(values, StringComparer.Ordinal);
         }
 
+        /* 스키마 행이 없는 Stage CSV의 고정 열 타입 계약을 만든다. */
         private static IReadOnlyDictionary<string, IReadOnlyList<string>> CreateStageSchemas()
         {
             Dictionary<string, IReadOnlyList<string>> schemas =
@@ -1091,6 +1243,7 @@ namespace Pakuri.NewCore.Parsing
 
         private sealed class ParsedTable
         {
+            /* 파싱된 스키마와 데이터 행을 하나의 테이블 결과로 저장한다. */
             public ParsedTable(
                 bool hasSchemaRow,
                 IReadOnlyDictionary<string, string> schema,
@@ -1110,6 +1263,7 @@ namespace Pakuri.NewCore.Parsing
 
         private sealed class ParsedRow
         {
+            /* 원본 레코드 번호와 타입 변환된 열 값을 저장한다. */
             public ParsedRow(int recordNumber, IReadOnlyDictionary<string, object> values)
             {
                 RecordNumber = recordNumber;
@@ -1123,6 +1277,7 @@ namespace Pakuri.NewCore.Parsing
 
         private sealed class RawRecord
         {
+            /* CSV 구문 분석 전 원본 레코드 번호와 문자열 필드를 저장한다. */
             public RawRecord(int recordNumber, IReadOnlyList<string> fields)
             {
                 RecordNumber = recordNumber;

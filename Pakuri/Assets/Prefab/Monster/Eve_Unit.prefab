@@ -242,7 +242,6 @@ GameObject:
   - component: {fileID: 5336572932229569786}
   - component: {fileID: 9142028381468429901}
   - component: {fileID: 900200000000001}
-  - component: {fileID: 900200000000002}
   m_Layer: 0
   m_Name: Eve_Unit
   m_TagString: Untagged
@@ -339,8 +338,14 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 563a47fcaccf140499efb7f222c0c006, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterActorBehaviour
-  animationController: {fileID: 900200000000002}
+  m_EditorClassIdentifier: Pakuri.NewCore::Pakuri.NewCore.Units.Actors.MonsterActor
+  damagePopupDurationSeconds: 1
+  damagePopupRiseDistance: 1
+  maximumActiveDamagePopups: 12
+  damagePopupVerticalSpacing: 0.18
+  idleState: Anim_Eve_Idle
+  deadState: Anim_Eve_Dead_1
+  attackStateCount: 3
 --- !u!61 &9142028381468429901
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -409,22 +414,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &900200000000002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4596420534878418281}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac027aa8c5506d5488ec4c797833239d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterAnimationBehaviour
-  animator: {fileID: 900200000000001}
-  idleState: Anim_Eve_Idle
-  deadState: Anim_Eve_Dead_1
-  attackStateCount: 3
 --- !u!1 &4783075541203403525
 GameObject:
   m_ObjectHideFlags: 0

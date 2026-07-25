@@ -1,0 +1,393 @@
+﻿{
+    "schema":  "new-core-migration-m0-serialized-components@1",
+    "git_head":  "41fa0a5445b3950967dcb75144f3d15e2b93d209",
+    "components":  [
+                       {
+                           "asset_path":  "Pakuri/Assets/Resources/Pakuri/NewCore/RuntimeCatalog.asset",
+                           "asset_sha256":  "6dea2672aaa1d8c935bf729dc0a3ef10112af447172e9b27aff9ffcc38f9953a",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Assets/NewCoreRuntimeCatalogAsset.cs",
+                           "guid":  "6d9b293472613b242b8a3c359d02a496",
+                           "start_line":  3,
+                           "end_line":  267,
+                           "yaml":  "--- !u!114 \u002611400000\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 0}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: 6d9b293472613b242b8a3c359d02a496, type: 3}\n  m_Name: RuntimeCatalog\n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Assets.NewCoreRuntimeCatalogAsset\n  CatalogMonsters: {fileID: 4900000, guid: cdbdbe4e32ac3784aa7948bdf22f8bac, type: 3}\n  Monsters: {fileID: 4900000, guid: 3dce2014d8aeb774db75ef4d8d8575da, type: 3}\n  MonsterRewardChoices: {fileID: 4900000, guid: 2f9229f6de8506a4fae1fad9c093e347, type: 3}\n  MonsterSkillsProjectileFiles:\n  - {fileID: 4900000, guid: 4a9010aa06374e7a94659742e6d02f6f, type: 3}\n  MonsterSkillsLineAttackFiles:\n  - {fileID: 4900000, guid: 956740468100401ea475614791edaa49, type: 3}\n  MonsterSkillsAreaAttackFiles:\n  - {fileID: 4900000, guid: 9567dad34b5e49c9b9cda8f02cd04eb4, type: 3}\n  MonsterSkillsSingleAttackFiles:\n  - {fileID: 4900000, guid: d0d7430fc6d34538b30c8e712f1714b1, type: 3}\n  MonsterSkillsBuffFiles:\n  - {fileID: 4900000, guid: 108ac3ff5d6f402fb739aed2db75c846, type: 3}\n  MonsterSkillsPassiveFiles:\n  - {fileID: 4900000, guid: 045d6352ab144f428cf1a19a86291d5b, type: 3}\n  MonsterSkillNodeDefinitions: {fileID: 4900000, guid: 1280beeb031fbe549abb95b4c85ffd3a, type: 3}\n  MonsterSkillNodeDefinitionParams: {fileID: 4900000, guid: 5ca5bc924d237e749b25e8faaec9852b, type: 3}\n  MonsterSkillGraphNodeFiles:\n  - {fileID: 4900000, guid: 7832fdad2dbfdd94ab8e1ce9c9ef05ee, type: 3}\n  - {fileID: 4900000, guid: 7dae69c58981f4d4ab1a25fdf77ae3a8, type: 3}\n  - {fileID: 4900000, guid: e05f372561a857b47b1bdaf2bbfe2cae, type: 3}\n  - {fileID: 4900000, guid: ea256f2cc3b8c884783de3f1adddeef8, type: 3}\n  - {fileID: 4900000, guid: 858fc6e682fb67a4eb6ff40e358a0a31, type: 3}\n  - {fileID: 4900000, guid: 50be6ecc0f3b7c9489a75ebb22576821, type: 3}\n  MonsterSkillTriggerFiles:\n  - {fileID: 4900000, guid: 07f24eaa552c4ee580ce2cf7c8a6c496, type: 3}\n  - {fileID: 4900000, guid: f9a42d902d7b48cc867717f94cfcadb2, type: 3}\n  - {fileID: 4900000, guid: 1b1c9747b868440faa77cee9a93b12c0, type: 3}\n  - {fileID: 4900000, guid: 4f62344bdd414f659b4b56ba7306c567, type: 3}\n  - {fileID: 4900000, guid: d8a3ec0f5f944713a300b80ba465d3d1, type: 3}\n  MonsterSkillChoicesProjectileFiles:\n  - {fileID: 4900000, guid: 4237ea4871c84607b2dca87b183927ef, type: 3}\n  MonsterSkillChoicesLineAttackFiles:\n  - {fileID: 4900000, guid: 882ece33c10f4580bdc2c393a2a937e1, type: 3}\n  MonsterSkillChoicesAreaAttackFiles:\n  - {fileID: 4900000, guid: da1433c9f2484eceba62fa2251f0f3fa, type: 3}\n  MonsterSkillChoicesSingleAttackFiles:\n  - {fileID: 4900000, guid: 801f9a94d5d549f8ae75532e7b152b68, type: 3}\n  MonsterSkillChoicesBuffFiles:\n  - {fileID: 4900000, guid: 0ba41621a9bc4cc1b0241361895a040c, type: 3}\n  MonsterSkillChoicesPassiveFiles:\n  - {fileID: 4900000, guid: 03c5868f092b449fbf9c9ecde8b42198, type: 3}\n  StatusEffects: {fileID: 4900000, guid: 416f4448310d2b04380faadda26e468a, type: 3}\n  Enemies: {fileID: 4900000, guid: 911dc2cae6894e76ac5a31c8ca579f51, type: 3}\n  EnemySkillBaseFiles:\n  - {fileID: 4900000, guid: 49d8a91883b9449ca3eb3760f746b9b1, type: 3}\n  - {fileID: 4900000, guid: f703fb9b5af2427fadc196316620018e, type: 3}\n  - {fileID: 4900000, guid: f00db90083dd4701b32c2c5302c296e3, type: 3}\n  - {fileID: 4900000, guid: 7ffdb20f69d1449d83ea68a3801eec8b, type: 3}\n  - {fileID: 4900000, guid: 8c4c800298724953b6839ce4aaec7969, type: 3}\n  - {fileID: 4900000, guid: 5b75068070084994b9c1e8356c43fba0, type: 3}\n  - {fileID: 4900000, guid: 2ebf66bd020147b3a77c489538c43aff, type: 3}\n  EnemySkillTriggerFiles:\n  - {fileID: 4900000, guid: 53048d2ee69041b380baa5dbfd184912, type: 3}\n  - {fileID: 4900000, guid: 95e0cc44f6e342298c2e3f5dd6c16470, type: 3}\n  StageDay: {fileID: 4900000, guid: 1f0de32c2b7b4d2da2e4b9340af2db31, type: 3}\n  StageEncounter: {fileID: 4900000, guid: e14b38c9a5164e69a8e0325cc6ad5180, type: 3}\n  StageReward: {fileID: 4900000, guid: c9708f3d0fbd4ed88b6c9f681d472ea1, type: 3}\n  Sprites:\n  - AssetPath: \"Assets/Enemy/Stage1/Enemy/Stage1/Achor/ChatGPT Image 2026\\uB144 5\\uC6D4\n      15\\uC77C \\uC624\\uD6C4 07_37_41 1.png\"\n    Asset: {fileID: 21300000, guid: 36a465a8e68bc1048aeaee89f14bba4b, type: 3}\n  - AssetPath: \"Assets/Enemy/Stage1/Enemy/Stage1/Karin/ChatGPT Image 2026\\uB144 5\\uC6D4\n      16\\uC77C \\uC624\\uC804 01_32_22-Photoroom 1.png\"\n    Asset: {fileID: 21300000, guid: 6d8e56c2f1195b24090e6838d46f3927, type: 3}\n  - AssetPath: \"Assets/Enemy/Stage1/Enemy/Stage1/Preist/ChatGPT Image 2026\\uB144\n      5\\uC6D4 15\\uC77C \\uC624\\uD6C4 07_43_34-Photoroom 1.png\"\n    Asset: {fileID: 21300000, guid: 22d7d618afc0ac04b8a5180e83ade844, type: 3}\n  - AssetPath: \"Assets/Enemy/Stage1/Enemy/Stage1/Shield/ChatGPT Image 2026\\uB144\n      5\\uC6D4 16\\uC77C \\uC624\\uC804 01_33_45-Photoroom 1.png\"\n    Asset: {fileID: -4406097972065725354, guid: 920e1af41d651d643914a42765a4e2ff, type: 3}\n  - AssetPath: \"Assets/Enemy/Stage1/Enemy/Stage1/shield_King/ChatGPT Image 2026\\uB144\n      5\\uC6D4 16\\uC77C \\uC624\\uC804 01_39_04-Photoroom 1.png\"\n    Asset: {fileID: -4871535039512559577, guid: 9de87d17ab47da445a9ede28d1e047bb, type: 3}\n  - AssetPath: \"Assets/Enemy/Stage1/Enemy/Stage1/Warrior/ChatGPT Image 2026\\uB144\n      5\\uC6D4 15\\uC77C \\uC624\\uD6C4 07_34_03-Photoroom (1) 1.png\"\n    Asset: {fileID: 21300000, guid: 50ac20857de2edc41841a7054881284f, type: 3}\n  - AssetPath: Assets/Enemy/Stage2/Skill/arsen_1.png\n    Asset: {fileID: 21300000, guid: 1fb2a83c6b841ab47bc7e46797284539, type: 3}\n  - AssetPath: Assets/Enemy/Stage2/Skill/dark-assassin_1.png\n    Asset: {fileID: 21300000, guid: da4169affddaf884ba6194c7cf9178b9, type: 3}\n  - AssetPath: Assets/Enemy/Stage2/Skill/ethan_1.png\n    Asset: {fileID: 21300000, guid: f4108c7d32982ac4f8783f24c0a981b2, type: 3}\n  - AssetPath: Assets/Enemy/Stage2/Skill/fire-dragon-slayer_!.png\n    Asset: {fileID: 21300000, guid: 2845dd6426a0c6e43b392b9ab0261e00, type: 3}\n  - AssetPath: Assets/Enemy/Stage2/Skill/lightning-scout_1.png\n    Asset: {fileID: 21300000, guid: e1173e38ff670294d8d9d329e64f1c4b, type: 3}\n  - AssetPath: Assets/Image/Monster/ariel/SkillEffect/1.png\n    Asset: {fileID: 21300000, guid: 3476df253a7be994c9586a7baed1b9be, type: 3}\n  - AssetPath: \"Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\\uB144 5\\uC6D4\n      15\\uC77C \\uC624\\uD6C4 05_27_46-Photoroom 1.png\"\n    Asset: {fileID: 21300000, guid: b4635bf7bb7f06d498f12cde25a2c586, type: 3}\n  - AssetPath: \"Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\\uB144 5\\uC6D4\n      15\\uC77C \\uC624\\uD6C4 05_37_22-Photoroom 1.png\"\n    Asset: {fileID: 21300000, guid: 1b8a9fbe74e502a45b4caddef70bf134, type: 3}\n  - AssetPath: \"Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\\uB144 5\\uC6D4\n      22\\uC77C \\uC624\\uC804 01_06_44-Photoroom 1.png\"\n    Asset: {fileID: 21300000, guid: 3c2a4a372ae34bf42a3f35348ba45478, type: 3}\n  - AssetPath: \"Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\\uB144 5\\uC6D4\n      22\\uC77C \\uC624\\uC804 12_15_03-Photoroom 1.png\"\n    Asset: {fileID: 21300000, guid: 2eda7ef196190804baa452114008d4b2, type: 3}\n  - AssetPath: \"Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\\uB144 5\\uC6D4\n      22\\uC77C \\uC624\\uC804 12_25_00-Photoroom 2.png\"\n    Asset: {fileID: 21300000, guid: 60c0a1f02add52d47b5f2154560f8f04, type: 3}\n  - AssetPath: \"Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\\uB144 5\\uC6D4\n      22\\uC77C \\uC624\\uC804 12_31_35-Photoroom 1.png\"\n    Asset: {fileID: 21300000, guid: 73386185b646dc14d9c0e9fd5b9830a5, type: 3}\n  - AssetPath: \"Assets/Image/Monster/Eve/SkillEffect/ChatGPT Image 2026\\uB144 5\\uC6D4\n      23\\uC77C \\uC624\\uD6C4 11_27_11-Photoroom 1.png\"\n    Asset: {fileID: 21300000, guid: f4a8099030e8c26408ff2b94f8803724, type: 3}\n  - AssetPath: Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/1.png\n    Asset: {fileID: -7780656566647862641, guid: 8ed6dde2bbaf1214b832cbddcf9b5257, type: 3}\n  - AssetPath: \"Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image\n      2026\\uB144 5\\uC6D4 15\\uC77C \\uC624\\uD6C4 05_38_31-Photoroom 1.png\"\n    Asset: {fileID: 21300000, guid: 150e1751ae042d64994a4cb068504983, type: 3}\n  - AssetPath: \"Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image\n      2026\\uB144 5\\uC6D4 18\\uC77C \\uC624\\uD6C4 03_03_31-Photoroom 1.png\"\n    Asset: {fileID: 21300000, guid: 84916919d7fb4aa4693c751464d9e922, type: 3}\n  - AssetPath: \"Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image\n      2026\\uB144 5\\uC6D4 18\\uC77C \\uC624\\uD6C4 04_30_10-Photoroom 1.png\"\n    Asset: {fileID: 8971745245780726277, guid: 46c7ce89c95aac74a8c77f02de6a9322, type: 3}\n  - AssetPath: \"Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image\n      2026\\uB144 5\\uC6D4 7\\uC77C \\uC624\\uD6C4 09_55_44-Photoroom 1 (1).png\"\n    Asset: {fileID: 21300000, guid: 32b483e360d00d84595519ce97016e07, type: 3}\n  - AssetPath: Assets/Image/Monster/Rin/Legacy/Effect_Sprite/1.png\n    Asset: {fileID: 21300000, guid: 2f4302a88af1e5541a36857991410656, type: 3}\n  - AssetPath: Assets/Image/Monster/Rin/Legacy/Effect_Sprite/2-5-1.png\n    Asset: {fileID: -1994424207337404346, guid: 6c3dbde4109d7dd4bbbceecc307314f9, type: 3}\n  - AssetPath: Assets/Image/Monster/Rin/Legacy/Effect_Sprite/5-1.png\n    Asset: {fileID: 6089031415840852981, guid: 6e018c5c32c2bed429bca4d1ad1eb3fd, type: 3}\n  - AssetPath: \"Assets/Image/Monster/Rin/Legacy/Effect_Sprite/ChatGPT Image 2026\\uB144\n      5\\uC6D4 8\\uC77C \\uC624\\uD6C4 06_12_43-Photoroom 1.png\"\n    Asset: {fileID: 21300000, guid: 40a75a4674638ba4c89d1c09f721302b, type: 3}\n  - AssetPath: Assets/Image/Monster/Rin/Legacy/Rin_Shoot.png\n    Asset: {fileID: 21300000, guid: 910fd4f0185802b44bd67baedc519844, type: 3}\n  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sein_Shoot.png\n    Asset: {fileID: 21300000, guid: 9f975ebffed428b4ab2b35f00b5c45d4, type: 3}\n  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/1.png\n    Asset: {fileID: 21300000, guid: 9260ee84c3be4fb4cb561fa1d8001b4b, type: 3}\n  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/B-1.png\n    Asset: {fileID: 21300000, guid: afa54ca00617afa439470ed8c1f66a9e, type: 3}\n  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/C-1.png\n    Asset: {fileID: 21300000, guid: 9ee6c41e93c20ca4696a0c35a4fe786d, type: 3}\n  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/E-1.png\n    Asset: {fileID: 21300000, guid: 5afdaa6480ea77a41a37ef3b7773549b, type: 3}\n  - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Sprite/B_1.png\n    Asset: {fileID: 21300000, guid: 7ce5da5652fb00d4c8d97d8a5ddce12e, type: 3}\n  - AssetPath: \"Assets/Image/Monster/Vega/SkillEffect/Sprite/ChatGPT Image 2026\\uB144\n      5\\uC6D4 28\\uC77C \\uC624\\uD6C4 10_11_00-Photoroom 1.png\"\n    Asset: {fileID: 21300000, guid: 809d294b352cce842a176df6a98374c9, type: 3}\n  - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Sprite/D_1.png\n    Asset: {fileID: 21300000, guid: d68ccca1cdf0b6b45b1fa3849f669724, type: 3}\n  - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Sprite/E_1.png\n    Asset: {fileID: 21300000, guid: f7fba0dc8867c484bb37cb09224e7c51, type: 3}\n  - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Vega_Shoot2.png\n    Asset: {fileID: -6777606773706237578, guid: 725f2fe8f2a299540b099f2e8469f36e, type: 3}\n  Prefabs:\n  - AssetPath: Assets/Prefab/Skill/Rin/Rin_D.prefab\n    Asset: {fileID: 4571567099965563202, guid: 4fb536ec34e06544ab6226bf8f02cb08, type: 3}\n  - AssetPath: Assets/Prefab/Skill/Rin/Rin_E.prefab\n    Asset: {fileID: 6357067641262685288, guid: 896e086a136a4ef4a8054935eef3cfc1, type: 3}\n  AnimatorControllers:\n  - AssetPath: \"Assets/Enemy/Stage1/Enemy/Stage1/Achor/ChatGPT Image 2026\\uB144 5\\uC6D4\n      15\\uC77C \\uC624\\uD6C4 07_37_41 1.controller\"\n    Asset: {fileID: 9100000, guid: fbee638e4996b2b499b14f08c80d2ad5, type: 2}\n  - AssetPath: \"Assets/Enemy/Stage1/Enemy/Stage1/Karin/ChatGPT Image 2026\\uB144 5\\uC6D4\n      16\\uC77C \\uC624\\uC804 01_32_22-Photoroom 1.controller\"\n    Asset: {fileID: 9100000, guid: 89b9a05ed810aaa448bff1ebe7c0d87c, type: 2}\n  - AssetPath: \"Assets/Enemy/Stage1/Enemy/Stage1/Preist/ChatGPT Image 2026\\uB144\n      5\\uC6D4 15\\uC77C \\uC624\\uD6C4 07_43_34-Photoroom 1.controller\"\n    Asset: {fileID: 9100000, guid: 3363f29e1551e864da65ac68cd1b8b58, type: 2}\n  - AssetPath: \"Assets/Enemy/Stage1/Enemy/Stage1/Shield/ChatGPT Image 2026\\uB144\n      5\\uC6D4 16\\uC77C \\uC624\\uC804 01_33_45-Photoroom 1_0.controller\"\n    Asset: {fileID: 9100000, guid: 41ee22c3c0470de45892cc4161bf0dcb, type: 2}\n  - AssetPath: \"Assets/Enemy/Stage1/Enemy/Stage1/shield_King/ChatGPT Image 2026\\uB144\n      5\\uC6D4 16\\uC77C \\uC624\\uC804 01_39_04-Photoroom 1_0.controller\"\n    Asset: {fileID: 9100000, guid: fef6d7db96aec1c4087e18443196de01, type: 2}\n  - AssetPath: \"Assets/Enemy/Stage1/Enemy/Stage1/Warrior/ChatGPT Image 2026\\uB144\n      5\\uC6D4 15\\uC77C \\uC624\\uD6C4 07_34_03-Photoroom (1) 1.controller\"\n    Asset: {fileID: 9100000, guid: 3002088aba3600a4489ef77352d8935a, type: 2}\n  - AssetPath: Assets/Enemy/Stage2/Skill/arsen_1.controller\n    Asset: {fileID: 9100000, guid: ee2f1d22cc70f3440a879cb355f33de5, type: 2}\n  - AssetPath: Assets/Enemy/Stage2/Skill/dark-assassin_1.controller\n    Asset: {fileID: 9100000, guid: 93c6692d3f4f1174eb8081b321e5e76e, type: 2}\n  - AssetPath: Assets/Enemy/Stage2/Skill/ethan_1.controller\n    Asset: {fileID: 9100000, guid: 2049186cdaf07be48a2ca73ab6092b6b, type: 2}\n  - AssetPath: Assets/Enemy/Stage2/Skill/fire-dragon-slayer_!.controller\n    Asset: {fileID: 9100000, guid: 6dd19bd4fe4ddc3458b50b207acf6b38, type: 2}\n  - AssetPath: Assets/Enemy/Stage2/Skill/lightning-scout_1.controller\n    Asset: {fileID: 9100000, guid: 702a62a867a2f904dbd5a8201d8647c7, type: 2}\n  - AssetPath: Assets/Image/Monster/ariel/SkillEffect/1.controller\n    Asset: {fileID: 9100000, guid: 3547e90223db8fb4893a84732a1e3bb7, type: 2}\n  - AssetPath: \"Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\\uB144 5\\uC6D4\n      15\\uC77C \\uC624\\uD6C4 05_27_46-Photoroom 1.controller\"\n    Asset: {fileID: 9100000, guid: f9568907de19d4a4b92cbc99dadbc855, type: 2}\n  - AssetPath: \"Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\\uB144 5\\uC6D4\n      15\\uC77C \\uC624\\uD6C4 05_37_22-Photoroom 1.controller\"\n    Asset: {fileID: 9100000, guid: 5807496f41cc3194ea713684c395202b, type: 2}\n  - AssetPath: \"Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\\uB144 5\\uC6D4\n      22\\uC77C \\uC624\\uC804 01_06_44-Photoroom 1.controller\"\n    Asset: {fileID: 9100000, guid: d8ff7d9468bd57f45b70d20cd756601d, type: 2}\n  - AssetPath: \"Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\\uB144 5\\uC6D4\n      22\\uC77C \\uC624\\uC804 12_15_03-Photoroom 1.controller\"\n    Asset: {fileID: 9100000, guid: c6c50bf91cc59d44f9e89207c63d2e9a, type: 2}\n  - AssetPath: \"Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\\uB144 5\\uC6D4\n      22\\uC77C \\uC624\\uC804 12_25_00-Photoroom 2.controller\"\n    Asset: {fileID: 9100000, guid: 89134930bd86bcc4390a46b491a933d6, type: 2}\n  - AssetPath: \"Assets/Image/Monster/ariel/SkillEffect/ChatGPT Image 2026\\uB144 5\\uC6D4\n      22\\uC77C \\uC624\\uC804 12_31_35-Photoroom 1.controller\"\n    Asset: {fileID: 9100000, guid: 77d7cb47f47128549bcb48757316087e, type: 2}\n  - AssetPath: \"Assets/Image/Monster/Eve/SkillEffect/ChatGPT Image 2026\\uB144 5\\uC6D4\n      23\\uC77C \\uC624\\uD6C4 11_27_11-Photoroom 1.controller\"\n    Asset: {fileID: 9100000, guid: 36db9da2f77b0eb439263c2989084867, type: 2}\n  - AssetPath: \"Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image\n      2026\\uB144 5\\uC6D4 15\\uC77C \\uC624\\uD6C4 05_38_31-Photoroom 1.controller\"\n    Asset: {fileID: 9100000, guid: 22aebecf2b853c942a994af31cf07c30, type: 2}\n  - AssetPath: \"Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image\n      2026\\uB144 5\\uC6D4 18\\uC77C \\uC624\\uD6C4 03_03_31-Photoroom 1.controller\"\n    Asset: {fileID: 9100000, guid: 7a65e10f8d7d38d43ae4725ecb80d304, type: 2}\n  - AssetPath: \"Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image\n      2026\\uB144 5\\uC6D4 18\\uC77C \\uC624\\uD6C4 04_30_10-Photoroom 1_0.controller\"\n    Asset: {fileID: 9100000, guid: 03bfd1b50f25a944d8ec0c16780e19f7, type: 2}\n  - AssetPath: \"Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image\n      2026\\uB144 5\\uC6D4 23\\uC77C \\uC624\\uC804 12_11_01-Photoroom 1_0.controller\"\n    Asset: {fileID: 9100000, guid: 2bc6ec8679aa3944ea94a9225f8f0578, type: 2}\n  - AssetPath: \"Assets/Image/Monster/Eve/SkillEffect/Effect_Sprite/ChatGPT Image\n      2026\\uB144 5\\uC6D4 7\\uC77C \\uC624\\uD6C4 09_55_44-Photoroom 1 (1).controller\"\n    Asset: {fileID: 9100000, guid: 4a6ab63398936764284eed7143f2e9ab, type: 2}\n  - AssetPath: Assets/Image/Monster/Rin/Legacy/Effect_Sprite/1.controller\n    Asset: {fileID: 9100000, guid: 2f0912fbf58619540ad4f690bd8bf1c2, type: 2}\n  - AssetPath: \"Assets/Image/Monster/Rin/Legacy/Effect_Sprite/ChatGPT Image 2026\\uB144\n      5\\uC6D4 24\\uC77C \\uC624\\uD6C4 12_53_20-Photoroom 2_0.controller\"\n    Asset: {fileID: 9100000, guid: 8ff4b5ad6838f664c95a91277b6de2e8, type: 2}\n  - AssetPath: \"Assets/Image/Monster/Rin/Legacy/Effect_Sprite/ChatGPT Image 2026\\uB144\n      5\\uC6D4 8\\uC77C \\uC624\\uD6C4 06_12_43-Photoroom 1.controller\"\n    Asset: {fileID: 9100000, guid: 5c33b427ce5bcc54eb95c45fb92f71c2, type: 2}\n  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/1.controller\n    Asset: {fileID: 9100000, guid: deb6e0769172f624299e895b875ae2a5, type: 2}\n  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/B-1.controller\n    Asset: {fileID: 9100000, guid: b25d7952d1bd8374582bfb5b121fa112, type: 2}\n  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/C-1.controller\n    Asset: {fileID: 9100000, guid: 5cd3e62057a25f64386a9719c9c7b8fc, type: 2}\n  - AssetPath: Assets/Image/Monster/Sein/SkillEffect/Sprite/E-1.controller\n    Asset: {fileID: 9100000, guid: 3043ba2ee29640f4fb83076cce1b33db, type: 2}\n  - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Sprite/B_1.controller\n    Asset: {fileID: 9100000, guid: 62b71b3b63061af4bb07d121fc5e6448, type: 2}\n  - AssetPath: \"Assets/Image/Monster/Vega/SkillEffect/Sprite/ChatGPT Image 2026\\uB144\n      5\\uC6D4 28\\uC77C \\uC624\\uD6C4 10_11_00-Photoroom 1.controller\"\n    Asset: {fileID: 9100000, guid: 0967077254bcfa94882c33ea9da4c71d, type: 2}\n  - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Sprite/D_1.controller\n    Asset: {fileID: 9100000, guid: a531fdbb2a677224889af5cab37a8d76, type: 2}\n  - AssetPath: Assets/Image/Monster/Vega/SkillEffect/Sprite/E_1.controller\n    Asset: {fileID: 9100000, guid: 8da98440a7061014aac80c79f58be8a8, type: 2}"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Resources/Pakuri/NewCore/RunStartSelection.asset",
+                           "asset_sha256":  "5eaee5d04fa9581a0699c74fbe31deaf746eb9c3b05dcc42419deb21f25ed6df",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Assets/RunStartSelectionAsset.cs",
+                           "guid":  "da22dc09447e20c4ea34d3d04f395c38",
+                           "start_line":  3,
+                           "end_line":  15,
+                           "yaml":  "--- !u!114 \u002611400000\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 0}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: da22dc09447e20c4ea34d3d04f395c38, type: 3}\n  m_Name: RunStartSelection\n  m_EditorClassIdentifier: \n  defaultMonsterId: eve"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Monster/Vega_Unit.prefab",
+                           "asset_sha256":  "9ad298bed443fa56c2b279cfc9cbb3347b4483f70800a97f075b9e6978ccbea2",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/MonsterActorBehaviour.cs",
+                           "guid":  "563a47fcaccf140499efb7f222c0c006",
+                           "start_line":  227,
+                           "end_line":  239,
+                           "yaml":  "--- !u!114 \u00264911891060645327678\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 4596420534878418281}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: 563a47fcaccf140499efb7f222c0c006, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterActorBehaviour\n  animationController: {fileID: 900400000000002}"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Monster/Vega_Unit.prefab",
+                           "asset_sha256":  "9ad298bed443fa56c2b279cfc9cbb3347b4483f70800a97f075b9e6978ccbea2",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/MonsterAnimationBehaviour.cs",
+                           "guid":  "ac027aa8c5506d5488ec4c797833239d",
+                           "start_line":  308,
+                           "end_line":  323,
+                           "yaml":  "--- !u!114 \u0026900400000000002\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 4596420534878418281}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: ac027aa8c5506d5488ec4c797833239d, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterAnimationBehaviour\n  animator: {fileID: 900400000000001}\n  idleState: Anim_Vega_Idle\n  deadState: Anim_Vega_Dead_1\n  attackStateCount: 3"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Monster/Sein_Unit.prefab",
+                           "asset_sha256":  "e006edbd607b6a9a7c44a4e8618740e209a64c76574253aba3a15459f975a20a",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/MonsterActorBehaviour.cs",
+                           "guid":  "563a47fcaccf140499efb7f222c0c006",
+                           "start_line":  227,
+                           "end_line":  239,
+                           "yaml":  "--- !u!114 \u00268438492334222702380\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 4596420534878418281}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: 563a47fcaccf140499efb7f222c0c006, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterActorBehaviour\n  animationController: {fileID: 900300000000002}"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Monster/Sein_Unit.prefab",
+                           "asset_sha256":  "e006edbd607b6a9a7c44a4e8618740e209a64c76574253aba3a15459f975a20a",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/MonsterAnimationBehaviour.cs",
+                           "guid":  "ac027aa8c5506d5488ec4c797833239d",
+                           "start_line":  308,
+                           "end_line":  323,
+                           "yaml":  "--- !u!114 \u0026900300000000002\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 4596420534878418281}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: ac027aa8c5506d5488ec4c797833239d, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterAnimationBehaviour\n  animator: {fileID: 900300000000001}\n  idleState: Anim_Sein_Idle\n  deadState: Anim_Sein_Dead_1\n  attackStateCount: 3"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Monster/Rin_Unit.prefab",
+                           "asset_sha256":  "51a4471b059dbbf2ed52d03670732507151cd31c79269550b09ec048a698508c",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/MonsterActorBehaviour.cs",
+                           "guid":  "563a47fcaccf140499efb7f222c0c006",
+                           "start_line":  401,
+                           "end_line":  413,
+                           "yaml":  "--- !u!114 \u0026-1863941469834791775\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 4596420534878418281}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: 563a47fcaccf140499efb7f222c0c006, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterActorBehaviour\n  animationController: {fileID: 0}"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Monster/Rin_Unit.prefab",
+                           "asset_sha256":  "51a4471b059dbbf2ed52d03670732507151cd31c79269550b09ec048a698508c",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/MonsterAnimationBehaviour.cs",
+                           "guid":  "ac027aa8c5506d5488ec4c797833239d",
+                           "start_line":  436,
+                           "end_line":  451,
+                           "yaml":  "--- !u!114 \u00266169519153641302405\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 4596420534878418281}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: ac027aa8c5506d5488ec4c797833239d, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterAnimationBehaviour\n  animator: {fileID: 0}\n  idleState: Anim_Rin_Idle\n  deadState: Anim_Rin_Dead_1\n  attackStateCount: 3"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage2/stage2-lightning-scout.prefab",
+                           "asset_sha256":  "67dfac20a4b91f0efcfe1598d63d46b837e169c6ec123f29652b2aa5f509f31e",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  123,
+                           "end_line":  134,
+                           "yaml":  "--- !u!114 \u00267496652596157952227\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 555655491228033923}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Monster/Eve_Unit.prefab",
+                           "asset_sha256":  "a6f7d2d1f73c7e95fd0d1f1523a2a0ae0c0edb8039d428fe9d2c5f937748dc0a",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/MonsterActorBehaviour.cs",
+                           "guid":  "563a47fcaccf140499efb7f222c0c006",
+                           "start_line":  331,
+                           "end_line":  343,
+                           "yaml":  "--- !u!114 \u00265336572932229569786\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 4596420534878418281}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: 563a47fcaccf140499efb7f222c0c006, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterActorBehaviour\n  animationController: {fileID: 900200000000002}"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Monster/Eve_Unit.prefab",
+                           "asset_sha256":  "a6f7d2d1f73c7e95fd0d1f1523a2a0ae0c0edb8039d428fe9d2c5f937748dc0a",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/MonsterAnimationBehaviour.cs",
+                           "guid":  "ac027aa8c5506d5488ec4c797833239d",
+                           "start_line":  412,
+                           "end_line":  427,
+                           "yaml":  "--- !u!114 \u0026900200000000002\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 4596420534878418281}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: ac027aa8c5506d5488ec4c797833239d, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterAnimationBehaviour\n  animator: {fileID: 900200000000001}\n  idleState: Anim_Eve_Idle\n  deadState: Anim_Eve_Dead_1\n  attackStateCount: 3"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage2/stage2-ice-guard.prefab",
+                           "asset_sha256":  "87a23ca8288f15e0508db8196154beeb85ad65beb5004ba051efb0c40b3e2ed3",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  489,
+                           "end_line":  500,
+                           "yaml":  "--- !u!114 \u00266376216031631857857\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 5203276214274935459}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Monster/Ariel_Unit.prefab",
+                           "asset_sha256":  "108e8ca7e8b5349acc111d77297d2ffb7d113ca8d95bd76cfd5b1520c2dee2a0",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/MonsterActorBehaviour.cs",
+                           "guid":  "563a47fcaccf140499efb7f222c0c006",
+                           "start_line":  435,
+                           "end_line":  447,
+                           "yaml":  "--- !u!114 \u00263481893476099238780\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 4596420534878418281}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: 563a47fcaccf140499efb7f222c0c006, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterActorBehaviour\n  animationController: {fileID: 900100000000002}"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Monster/Ariel_Unit.prefab",
+                           "asset_sha256":  "108e8ca7e8b5349acc111d77297d2ffb7d113ca8d95bd76cfd5b1520c2dee2a0",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/MonsterAnimationBehaviour.cs",
+                           "guid":  "ac027aa8c5506d5488ec4c797833239d",
+                           "start_line":  516,
+                           "end_line":  531,
+                           "yaml":  "--- !u!114 \u0026900100000000002\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 4596420534878418281}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: ac027aa8c5506d5488ec4c797833239d, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.MonsterAnimationBehaviour\n  animator: {fileID: 900100000000001}\n  idleState: Anim_Ariel_Idle\n  deadState: Anim_Ariel_Dead_1\n  attackStateCount: 3"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage2/stage2-holy-priest.prefab",
+                           "asset_sha256":  "a1484ea9450a9ae08d067cf3579dc263a85dcb88313294da7c707a4d10363deb",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  456,
+                           "end_line":  467,
+                           "yaml":  "--- !u!114 \u00261661135989689545406\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 5070576057754673694}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage2/stage2-fire-dragon-slayer.prefab",
+                           "asset_sha256":  "25f58780afc757712d4884a22a0931d1f47ae89bc69487bf1fdc3ef8990c0b7d",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  489,
+                           "end_line":  500,
+                           "yaml":  "--- !u!114 \u0026-2123300382256000718\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 5195311948756499146}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage2/stage2-ethan.prefab",
+                           "asset_sha256":  "50454231d07a3ce363d09d7630a6960419533a47578066bdb2732bb5aa399d45",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  203,
+                           "end_line":  214,
+                           "yaml":  "--- !u!114 \u00266704637599733736084\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 3292185792058007014}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage2/stage2-drake.prefab",
+                           "asset_sha256":  "69f25b3b7d95a10abaa0ae4e852cf0e069f5387e77aaf289ec6ed1930490ea06",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  123,
+                           "end_line":  134,
+                           "yaml":  "--- !u!114 \u00262750501324265871304\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 2901641940831284134}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Legacy/Skill 1/Ariel/Airel_A.prefab",
+                           "asset_sha256":  "ff10466a9619a0dd4970a4fd7dbeed995c1a1e07f49f57ecba51710d59ced25c",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/SkillVisualActorBehaviour.cs",
+                           "guid":  "c29622d2ef50bc34e953b2cd9876644f",
+                           "start_line":  165,
+                           "end_line":  176,
+                           "yaml":  "--- !u!114 \u00266821149853442025107\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 3285557362087739772}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c29622d2ef50bc34e953b2cd9876644f, type: 3}\n  m_Name:\n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.SkillVisualActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage2/stage2-dark-assassin.prefab",
+                           "asset_sha256":  "f5f6b22ff14d1f637d94ae8e6e8bcade19cc2bc565ca2d6b6294498b5226d912",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  261,
+                           "end_line":  272,
+                           "yaml":  "--- !u!114 \u00262114193871213698025\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 2261757788458218692}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage2/stage2-arsen.prefab",
+                           "asset_sha256":  "88eeda9e4ebca255b4c25bd8d1e4b0afcc42f322e211f171c88687abf0caee53",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  559,
+                           "end_line":  570,
+                           "yaml":  "--- !u!114 \u00264970333288663771015\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 7149419201978181015}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage1/Stage1_Warrior_Unit.prefab",
+                           "asset_sha256":  "6220d12a5a97b0342fe8eee7585a3c65b6bf13f74f9527c9184c4268a6601bb1",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  615,
+                           "end_line":  626,
+                           "yaml":  "--- !u!114 \u00268772129247559387269\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 6219452113495756200}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage1/Stage1_Warrior_King.prefab",
+                           "asset_sha256":  "c5cb22ce0f03cc24c591c785f30d120fc13649c6868880f09da2017501c5a063",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  615,
+                           "end_line":  626,
+                           "yaml":  "--- !u!114 \u00268772129247559387269\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 6219452113495756200}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage1/Stage1_ShieldKing.prefab",
+                           "asset_sha256":  "4a2ac31a647ced8f31be5a69be904169225e46765892dc11b1505a93dc4df5a0",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  615,
+                           "end_line":  626,
+                           "yaml":  "--- !u!114 \u00268772129247559387269\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 6219452113495756200}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage1/Stage1_Shield.prefab",
+                           "asset_sha256":  "befeb263a3b52d8bf1f29d85c240664a86c50966ff01f2de7ed89a139b3da0ec",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  615,
+                           "end_line":  626,
+                           "yaml":  "--- !u!114 \u00268772129247559387269\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 6219452113495756200}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage1/Stage1_Rogue_Unit.prefab",
+                           "asset_sha256":  "5e7e151180dbdc4417600e7fccc49b83162e820a43fbb8627af4283f83cbf81d",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  615,
+                           "end_line":  626,
+                           "yaml":  "--- !u!114 \u00268772129247559387269\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 6219452113495756200}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage1/Stage1_Priest_Unit.prefab",
+                           "asset_sha256":  "70e3a0863d5cafcad8ffc067d95bff74410e940f098292af0a77e05e82ca6a39",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  615,
+                           "end_line":  626,
+                           "yaml":  "--- !u!114 \u00268772129247559387269\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 6219452113495756200}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage1/Stage1_Karin.prefab",
+                           "asset_sha256":  "32aa47353f3fa1af077b0806142d5cc3e04719eac29012dab9529e72b7544e12",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  615,
+                           "end_line":  626,
+                           "yaml":  "--- !u!114 \u00268772129247559387269\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 6219452113495756200}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Prefab/Enemy/Stage1/Stage1_Achor.prefab",
+                           "asset_sha256":  "886ee8b34894968ab447572492d6cad951a6c11bf44b2289326bda1eeca66038",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/EnemyActorBehaviour.cs",
+                           "guid":  "c82c4da6aacba674f864c62da59bf109",
+                           "start_line":  615,
+                           "end_line":  626,
+                           "yaml":  "--- !u!114 \u00268772129247559387269\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 6219452113495756200}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Legacy/Skill 1/Eve/Eve_A.prefab",
+                           "asset_sha256":  "88b1e3eff09816cd96376d71e625c05f35a925565a981efbf77325a3d1c5f506",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/SkillVisualActorBehaviour.cs",
+                           "guid":  "c29622d2ef50bc34e953b2cd9876644f",
+                           "start_line":  165,
+                           "end_line":  176,
+                           "yaml":  "--- !u!114 \u00264663787437823732165\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 3046447516185771510}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c29622d2ef50bc34e953b2cd9876644f, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.SkillVisualActorBehaviour"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Scenes/NewScene/NewMainMenu.unity",
+                           "asset_sha256":  "2f91132e0bc5550878818c6121bacbfdb1544277fc52708f9cc32bbd1644261e",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/UI/NewCoreMainMenuController.cs",
+                           "guid":  "911e7b0e2aa03f5458d7e1f3eb8ba0b8",
+                           "start_line":  428,
+                           "end_line":  452,
+                           "yaml":  "--- !u!114 \u0026188470102\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 188470100}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: 911e7b0e2aa03f5458d7e1f3eb8ba0b8, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.UI.NewCoreMainMenuController\n  introPanel: {fileID: 1303273200}\n  mainMenuPanel: {fileID: 350811723}\n  monsterSelectPanel: {fileID: 1780514917}\n  introGameStartButton: {fileID: 601940485}\n  runButton: {fileID: 911148571}\n  monsterSelectGameStartButton: {fileID: 914212244}\n  arielButton: {fileID: 1228248153}\n  eveButton: {fileID: 2079252401}\n  seinButton: {fileID: 1795505320}\n  vegaButton: {fileID: 1242855126}\n  rinButton: {fileID: 203769927}\n  newRunScenePath: Assets/Scenes/NewScene/NewRunScene.unity\n  defaultMonsterId: eve"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Scenes/NewScene/NewRunScene.unity",
+                           "asset_sha256":  "2006d5dda23054932a6ae4bd439114ba63e9690e54e73ba12f53eb142241f96d",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/UI/NewCoreInGameUIController.cs",
+                           "guid":  "a29b50b3033957d438458097cb36ab39",
+                           "start_line":  13631,
+                           "end_line":  13654,
+                           "yaml":  "--- !u!114 \u0026876113833\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 876113828}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: a29b50b3033957d438458097cb36ab39, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.UI.NewCoreInGameUIController\n  stageManager: {fileID: 1427799829}\n  unitSpawnManager: {fileID: 1427799830}\n  combatManager: {fileID: 1427799828}\n  arielPrisonPortrait: {fileID: 21300000, guid: a2e16c5de6059e64bb11895b285e8b11, type: 3}\n  evePrisonPortrait: {fileID: 21300000, guid: de0e751ccbfda1a458f5f515a15608d8, type: 3}\n  rinPrisonPortrait: {fileID: 21300000, guid: b4fb27f479f6d8944af93a2bbf8fe325, type: 3}\n  seinPrisonPortrait: {fileID: 21300000, guid: 34698a49fc290fc4f9a2598937498b51, type: 3}\n  vegaPrisonPortrait: {fileID: 21300000, guid: 020a5759ff09ff549b6250eae989dcf1, type: 3}\n  rewardButtonFirstColumnPosition: {x: -321.97855, y: 295}\n  rewardButtonColumnSpacingX: 533.9786\n  rewardButtonRowSpacingY: 122\n  rewardButtonRowsPerColumn: 3"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Scenes/NewScene/NewRunScene.unity",
+                           "asset_sha256":  "2006d5dda23054932a6ae4bd439114ba63e9690e54e73ba12f53eb142241f96d",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/UI/NewCoreDebugUIController.cs",
+                           "guid":  "2bce5e2c5b698e14cae1e4849e349d9d",
+                           "start_line":  13655,
+                           "end_line":  13666,
+                           "yaml":  "--- !u!114 \u0026876113834\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 876113828}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: 2bce5e2c5b698e14cae1e4849e349d9d, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.UI.NewCoreDebugUIController"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Scenes/NewScene/NewRunScene.unity",
+                           "asset_sha256":  "2006d5dda23054932a6ae4bd439114ba63e9690e54e73ba12f53eb142241f96d",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/UI/NewCoreMonsterPanelUI.cs",
+                           "guid":  "2f44f2a0207642e4c855b7ef2f79fdde",
+                           "start_line":  13667,
+                           "end_line":  13682,
+                           "yaml":  "--- !u!114 \u0026876113835\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 876113828}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: 2f44f2a0207642e4c855b7ef2f79fdde, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.UI.NewCoreMonsterPanelUI\n  monsterPanelRoot: {fileID: 1757950000}\n  stageManager: {fileID: 1427799829}\n  unitSpawnManager: {fileID: 1427799830}\n  combatManager: {fileID: 1427799828}"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Scenes/NewScene/NewRunScene.unity",
+                           "asset_sha256":  "2006d5dda23054932a6ae4bd439114ba63e9690e54e73ba12f53eb142241f96d",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/UI/NewCoreDamageMeterUIController.cs",
+                           "guid":  "fe27bd183c0d2764d81180df525dbe02",
+                           "start_line":  13683,
+                           "end_line":  13700,
+                           "yaml":  "--- !u!114 \u0026876113836\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 876113828}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: fe27bd183c0d2764d81180df525dbe02, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.UI.NewCoreDamageMeterUIController\n  openButton: {fileID: 1864507816}\n  meterRoot: {fileID: 1317592848}\n  closeButton: {fileID: 1245565942}\n  stageManager: {fileID: 1427799829}\n  unitSpawnManager: {fileID: 1427799830}\n  tracker: {fileID: 876113837}"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Scenes/NewScene/NewRunScene.unity",
+                           "asset_sha256":  "2006d5dda23054932a6ae4bd439114ba63e9690e54e73ba12f53eb142241f96d",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/UI/NewCoreDamageMeterTracker.cs",
+                           "guid":  "c5941ffe8ee82574d86feeb206b24003",
+                           "start_line":  13701,
+                           "end_line":  13713,
+                           "yaml":  "--- !u!114 \u0026876113837\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 876113828}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: c5941ffe8ee82574d86feeb206b24003, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.UI.NewCoreDamageMeterTracker\n  combatManager: {fileID: 1427799828}"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Scenes/NewScene/NewRunScene.unity",
+                           "asset_sha256":  "2006d5dda23054932a6ae4bd439114ba63e9690e54e73ba12f53eb142241f96d",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/UI/NewCoreUtilityPanelController.cs",
+                           "guid":  "54c99cf97c7c1254e8f171e928b4f75d",
+                           "start_line":  13889,
+                           "end_line":  13905,
+                           "yaml":  "--- !u!114 \u0026884072283\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 884072281}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: 54c99cf97c7c1254e8f171e928b4f75d, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.UI.NewCoreUtilityPanelController\n  playerCombatControl: {fileID: 1427799832}\n  autoButton: {fileID: 2022552815}\n  timeButton: {fileID: 1183382878}\n  onePointFiveIndicator: {fileID: 968101817}\n  twoTimesIndicator: {fileID: 1707270434}"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Scenes/NewScene/NewRunScene.unity",
+                           "asset_sha256":  "2006d5dda23054932a6ae4bd439114ba63e9690e54e73ba12f53eb142241f96d",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Scene/NewCoreSceneRuntime.cs",
+                           "guid":  "5bc74f204a88b16499661050ce2eee8b",
+                           "start_line":  23128,
+                           "end_line":  23143,
+                           "yaml":  "--- !u!114 \u00261427799828\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 1427799825}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: 5bc74f204a88b16499661050ce2eee8b, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Scene.NewCoreSceneRuntime\n  enemyCombatSimulationEnabled: 1\n  skillExecutionEnabled: 1\n  playerCombatControl: {fileID: 1427799832}\n  effectManager: {fileID: 1427799831}"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Scenes/NewScene/NewRunScene.unity",
+                           "asset_sha256":  "2006d5dda23054932a6ae4bd439114ba63e9690e54e73ba12f53eb142241f96d",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Scene/NewCoreStageController.cs",
+                           "guid":  "fa9a3193209459a4d9b2e27b12b3e0e8",
+                           "start_line":  23144,
+                           "end_line":  23171,
+                           "yaml":  "--- !u!114 \u00261427799829\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 1427799825}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: fa9a3193209459a4d9b2e27b12b3e0e8, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Scene.NewCoreStageController\n  combatManager: {fileID: 1427799828}\n  unitSpawnManager: {fileID: 1427799830}\n  stageDayCsv: {fileID: 4900000, guid: 1f0de32c2b7b4d2da2e4b9340af2db31, type: 3}\n  stageEncounterCsv: {fileID: 4900000, guid: e14b38c9a5164e69a8e0325cc6ad5180, type: 3}\n  stageRewardCsv: {fileID: 4900000, guid: c9708f3d0fbd4ed88b6c9f681d472ea1, type: 3}\n  startFlowOnStart: 1\n  clearCheckInterval: 0.25\n  restorePlayerHealthOnDayAdvance: 1\n  nexusActor: {fileID: 1747029715}\n  winPanel: {fileID: 62221266}\n  defeatPanel: {fileID: 1873636679}\n  winButton: {fileID: 0}\n  defeatButton: {fileID: 0}\n  mainMenuScenePath: Assets/Scenes/NewScene/NewMainMenu.unity\n  winStageIndex: 2\n  winDayIndex: 11"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Scenes/NewScene/NewRunScene.unity",
+                           "asset_sha256":  "2006d5dda23054932a6ae4bd439114ba63e9690e54e73ba12f53eb142241f96d",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Scene/NewCoreSpawnController.cs",
+                           "guid":  "119dd9f412ed3074ab18f6e8ac562b9d",
+                           "start_line":  23172,
+                           "end_line":  23226,
+                           "yaml":  "--- !u!114 \u00261427799830\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 1427799825}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: 119dd9f412ed3074ab18f6e8ac562b9d, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Scene.NewCoreSpawnController\n  combatManager: {fileID: 1427799828}\n  playerSpawnPoint: {fileID: 1137822058}\n  enemySpawnPoint: {fileID: 1902957069}\n  runtimeEnemyRoot: {fileID: 727702651}\n  runtimeMonsterRoot: {fileID: 1094400654}\n  arielUnitPrefab: {fileID: 4596420534878418281, guid: 6cab17e3f2f1775429ecb9a204438d9a, type: 3}\n  eveUnitPrefab: {fileID: 4596420534878418281, guid: 768bb9d217c3cc64a84cd7059fe5e154, type: 3}\n  rinUnitPrefab: {fileID: 4596420534878418281, guid: 45d446ad22f4f2f4d94f4ab1039c5b0a, type: 3}\n  seinUnitPrefab: {fileID: 4596420534878418281, guid: d827bb1e48cabef4abeed838d6bb8e05, type: 3}\n  vegaUnitPrefab: {fileID: 4596420534878418281, guid: a1e586738d1b9b64a97d0caba4cd449c, type: 3}\n  enemyPrefabBindings:\n  - enemyId: stage1-swordsman\n    prefab: {fileID: 6219452113495756200, guid: f2892daa44e860e49b1ea2b17f8682dc, type: 3}\n  - enemyId: stage1-shieldbearer\n    prefab: {fileID: 6219452113495756200, guid: 134892515805b3848858777fbb9c2892, type: 3}\n  - enemyId: stage1-archer\n    prefab: {fileID: 6219452113495756200, guid: bffcd0db2ede5a34a9297596966f6697, type: 3}\n  - enemyId: stage1-rogue\n    prefab: {fileID: 6219452113495756200, guid: 41679be8164df3d4fa09bc87aa4c1fb7, type: 3}\n  - enemyId: stage1-priest\n    prefab: {fileID: 6219452113495756200, guid: 1fd46dd360e001847b2d0e89ded130d9, type: 3}\n  - enemyId: stage1-guardian-captain\n    prefab: {fileID: 6219452113495756200, guid: 4dbb60015bf26c445abc28930bee2cec, type: 3}\n  - enemyId: stage1-attack-captain\n    prefab: {fileID: 6219452113495756200, guid: f7f5b002997b494478c4744a6d3f3fef, type: 3}\n  - enemyId: stage1-hero-karin\n    prefab: {fileID: 6219452113495756200, guid: 078cea88ffc67744e8f02da371344665, type: 3}\n  - enemyId: stage2-fire-dragon-slayer\n    prefab: {fileID: 5195311948756499146, guid: d38697eb45dd1e545a70f50c2f1271c5, type: 3}\n  - enemyId: stage2-lightning-scout\n    prefab: {fileID: 555655491228033923, guid: 9775c4f15a895ee4d908adf3d4d60e0f, type: 3}\n  - enemyId: stage2-ice-guard\n    prefab: {fileID: 5203276214274935459, guid: 11493774af27ab04b9bb68b8a81e818c, type: 3}\n  - enemyId: stage2-dark-assassin\n    prefab: {fileID: 2261757788458218692, guid: 24a588c20e65bda43aaf8ae0f686e7fd, type: 3}\n  - enemyId: stage2-holy-priest\n    prefab: {fileID: 5070576057754673694, guid: 6e297186b69d483408ca8b4b97acea25, type: 3}\n  - enemyId: stage2-ethan\n    prefab: {fileID: 3292185792058007014, guid: 1077e6a3c9701b842ac08178aa2bce7c, type: 3}\n  - enemyId: stage2-drake\n    prefab: {fileID: 2901641940831284134, guid: 4ca246702baa4fd45b4921ba449d94a9, type: 3}\n  - enemyId: stage2-arsen\n    prefab: {fileID: 7149419201978181015, guid: 352837e4f845dc54ab09d08e639b5f66, type: 3}"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Scenes/NewScene/NewRunScene.unity",
+                           "asset_sha256":  "2006d5dda23054932a6ae4bd439114ba63e9690e54e73ba12f53eb142241f96d",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Scene/NewCoreEffectView.cs",
+                           "guid":  "748fd1c9d9b75de40b51291026eb4180",
+                           "start_line":  23227,
+                           "end_line":  23239,
+                           "yaml":  "--- !u!114 \u00261427799831\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 1427799825}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: 748fd1c9d9b75de40b51291026eb4180, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Scene.NewCoreEffectView\n  runtimeSkillRoot: {fileID: 502722560}"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Scenes/NewScene/NewRunScene.unity",
+                           "asset_sha256":  "2006d5dda23054932a6ae4bd439114ba63e9690e54e73ba12f53eb142241f96d",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Scene/NewCoreInputController.cs",
+                           "guid":  "4717eeab25417eb4eba081006c884d45",
+                           "start_line":  23240,
+                           "end_line":  23253,
+                           "yaml":  "--- !u!114 \u00261427799832\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 1427799825}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: 4717eeab25417eb4eba081006c884d45, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Scene.NewCoreInputController\n  inputCamera: {fileID: 1824280075}\n  autoSkillEnabled: 0"
+                       },
+                       {
+                           "asset_path":  "Pakuri/Assets/Scenes/NewScene/NewRunScene.unity",
+                           "asset_sha256":  "2006d5dda23054932a6ae4bd439114ba63e9690e54e73ba12f53eb142241f96d",
+                           "script_path":  "Pakuri/Assets/Scripts/NewCore/Presentation/Actors/NexusActorBehaviour.cs",
+                           "guid":  "dde153838e2141945aa1f7cc523f7717",
+                           "start_line":  28001,
+                           "end_line":  28014,
+                           "yaml":  "--- !u!114 \u00261747029715\nMonoBehaviour:\n  m_ObjectHideFlags: 0\n  m_CorrespondingSourceObject: {fileID: 0}\n  m_PrefabInstance: {fileID: 0}\n  m_PrefabAsset: {fileID: 0}\n  m_GameObject: {fileID: 1747029712}\n  m_Enabled: 1\n  m_EditorHideFlags: 0\n  m_Script: {fileID: 11500000, guid: dde153838e2141945aa1f7cc523f7717, type: 3}\n  m_Name: \n  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.NexusActorBehaviour\n  maxHealth: 20\n  nexusHpInfo: {fileID: 1017704295}"
+                       }
+                   ]
+}

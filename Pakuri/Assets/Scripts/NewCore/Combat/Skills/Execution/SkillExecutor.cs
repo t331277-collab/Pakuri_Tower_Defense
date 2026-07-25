@@ -78,7 +78,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             CombatVector2 direction,
             UnitBaseModel statusTarget = null)
         {
-            var visual = new EffectVisualSpec(
+            var visual = new EffectVisualRequest(
                 SkillTargeting.ReadString(
                     request.Skill,
                     "skill_effect_prefab_path"),
@@ -125,7 +125,7 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
             SkillExecutionRequest request,
             CombatVector2 collisionPosition)
         {
-            var visual = new EffectVisualSpec(
+            var visual = new EffectVisualRequest(
                 string.Empty,
                 SkillTargeting.ReadString(
                     request.Skill,
@@ -142,7 +142,10 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 SkillTargeting.ReadInt(
                     request.Skill,
                     "runtime_impact_visual_sorting_order"));
-            if (!visual.HasResource)
+            if (string.IsNullOrWhiteSpace(visual.PrefabPath)
+                && string.IsNullOrWhiteSpace(visual.SpritePath)
+                && string.IsNullOrWhiteSpace(
+                    visual.AnimatorControllerPath))
             {
                 return;
             }
@@ -151,10 +154,10 @@ namespace Pakuri.NewCore.Combat.Skills.Execution
                 visual,
                 collisionPosition,
                 default);
-            Actors.Register(new BuffActor(
+            Actors.RegisterEffectLifetime(
                 request.Skill,
                 0.1f,
-                effect));
+                effect);
         }
 
         /* 스킬과 실행 계획이 지정한 상태 효과를 대상에게 적용한다. */

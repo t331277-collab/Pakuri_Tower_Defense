@@ -12,6 +12,7 @@ using Pakuri.NewCore.Combat.Status;
 using Pakuri.NewCore.Definitions.Choices;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Definitions.Units;
+using Pakuri.NewCore.Parsing;
 using Pakuri.NewCore.Run;
 using Pakuri.NewCore.Units.Models;
 using UnityEngine;
@@ -25,7 +26,7 @@ namespace Pakuri.NewCore.Tests
         [SetUp]
         public void SetUp()
         {
-            catalog = new GameBootstrap(LoadSources()).Catalog;
+            catalog = GameBootstrap.CreateCatalog(LoadSources());
         }
 
         [Test]
@@ -33,7 +34,8 @@ namespace Pakuri.NewCore.Tests
         {
             MonsterModel monster = CreateMonster("ariel", false);
             RunSessionModel session = CreateSession(monster);
-            StageManager stage = new StageManager(session, 10, 4);
+            StageManager stage =
+                NewCoreTestFactory.CreateStageManager(session, 10, 4);
 
             Assert.That(stage.Gold, Is.EqualTo(10));
             stage.AddGold(5);

@@ -16,12 +16,61 @@ using Pakuri.NewCore.Combat.Skills.Runtime;
 using Pakuri.NewCore.Definitions.Choices;
 using Pakuri.NewCore.Definitions.Skills;
 using Pakuri.NewCore.Definitions.Units;
+using Pakuri.NewCore.Parsing;
 using Pakuri.NewCore.Run;
+using Pakuri.NewCore.Spawn;
 using Pakuri.NewCore.Units.Models;
 using UnityEngine;
 
 namespace Pakuri.NewCore.Tests
 {
+    internal static class NewCoreTestFactory
+    {
+        public static T CreateComponent<T>()
+            where T : Component
+        {
+            return new GameObject(typeof(T).Name).AddComponent<T>();
+        }
+
+        public static StageManager CreateStageManager(
+            RunSessionModel session,
+            int initialGold,
+            int initialDarkTrace)
+        {
+            StageManager manager = CreateComponent<StageManager>();
+            manager.Initialize(
+                session,
+                initialGold,
+                initialDarkTrace);
+            return manager;
+        }
+
+        public static StageManager CreateStageManager(
+            RunSessionModel session,
+            GameDefinitionCatalog catalog,
+            int initialGold,
+            int initialDarkTrace)
+        {
+            StageManager manager = CreateComponent<StageManager>();
+            manager.Initialize(
+                session,
+                catalog,
+                initialGold,
+                initialDarkTrace);
+            return manager;
+        }
+
+        public static SpawnManager CreateSpawnManager(
+            GameDefinitionCatalog catalog,
+            Func<int, int> randomIndex,
+            Func<float> randomValue)
+        {
+            SpawnManager manager = CreateComponent<SpawnManager>();
+            manager.Initialize(catalog, randomIndex, randomValue);
+            return manager;
+        }
+    }
+
     public sealed class NewCoreCombatLoopTests
     {
         private GameDefinitionCatalog catalog;
@@ -29,7 +78,7 @@ namespace Pakuri.NewCore.Tests
         [SetUp]
         public void SetUp()
         {
-            catalog = new GameBootstrap(LoadSources()).Catalog;
+            catalog = GameBootstrap.CreateCatalog(LoadSources());
         }
 
         [Test]
@@ -60,7 +109,8 @@ namespace Pakuri.NewCore.Tests
         [Test]
         public void ActorRegistrationStartsNextTickAndRemovalWaitsForIterationEnd()
         {
-            EffectManager effects = new EffectManager();
+            EffectManager effects =
+                NewCoreTestFactory.CreateComponent<EffectManager>();
             SkillActorManager actors = new SkillActorManager(effects);
             EffectHandle effect = effects.Create(string.Empty, default, default);
             SingleAttackActor actor =
@@ -928,7 +978,8 @@ namespace Pakuri.NewCore.Tests
         [Test]
         public void ScheduledActorHonorsInitialDelayAndExactRepeatCount()
         {
-            EffectManager effects = new EffectManager();
+            EffectManager effects =
+                NewCoreTestFactory.CreateComponent<EffectManager>();
             SkillActorManager actors = new SkillActorManager(effects);
             int executions = 0;
             actors.Register(new ScheduledSkillActor(
@@ -2246,7 +2297,8 @@ namespace Pakuri.NewCore.Tests
             SkillTargeting targeting = new SkillTargeting(
                 _ => 0,
                 _ => new CombatFootprint(0.1f, 0.1f));
-            EffectManager effects = new EffectManager();
+            EffectManager effects =
+                NewCoreTestFactory.CreateComponent<EffectManager>();
             EffectHandle effect = effects.Create(
                 string.Empty,
                 default,
@@ -3032,9 +3084,11 @@ namespace Pakuri.NewCore.Tests
                 "encounter",
                 new PartyRoster(monster),
                 new PrisonerInventory());
-            StageManager stage = new StageManager(session, 0, 0);
+            StageManager stage =
+                NewCoreTestFactory.CreateStageManager(session, 0, 0);
             stage.TryRegisterFieldUnit(monster);
-            EffectManager effects = new EffectManager();
+            EffectManager effects =
+                NewCoreTestFactory.CreateComponent<EffectManager>();
             SkillActorManager actors = new SkillActorManager(effects);
             SkillTargeting targeting = new SkillTargeting(_ => 0);
             SkillExecutionRuntime execution =
@@ -3048,7 +3102,8 @@ namespace Pakuri.NewCore.Tests
                 new InGameCombatManager(randomValue, execution);
             MonsterActionController monsterController =
                 new MonsterActionController(monster, combat);
-            PlayerInputController input = new PlayerInputController();
+            PlayerInputController input =
+                NewCoreTestFactory.CreateComponent<PlayerInputController>();
             RuntimeFixture fixture = new RuntimeFixture
             {
                 Selected = monster,

@@ -623,7 +623,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c82c4da6aacba674f864c62da59bf109, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Pakuri.NewCore.Presentation::Pakuri.NewCore.Presentation.Actors.EnemyActorBehaviour
+  m_EditorClassIdentifier: Pakuri.NewCore::Pakuri.NewCore.Units.Actors.EnemyActor
+  damagePopupDurationSeconds: 1
+  damagePopupRiseDistance: 1
+  maximumActiveDamagePopups: 12
+  damagePopupVerticalSpacing: 0.18
 --- !u!61 &4415685687197162262
 BoxCollider2D:
   m_ObjectHideFlags: 0

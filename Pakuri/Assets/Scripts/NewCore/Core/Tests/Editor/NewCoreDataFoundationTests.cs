@@ -7,6 +7,7 @@ using NUnit.Framework;
 using Pakuri.NewCore.Bootstrap;
 using Pakuri.NewCore.Catalog;
 using Pakuri.NewCore.Definitions.Skills;
+using Pakuri.NewCore.Parsing;
 using UnityEngine;
 
 namespace Pakuri.NewCore.Tests
@@ -53,7 +54,8 @@ namespace Pakuri.NewCore.Tests
             const string replacement = "\"파티 강화, \"\"인용\"\"과 쉼표를 보존한다.\"";
             sources[MonstersPath] = ReplaceOnce(sources[MonstersPath], original, replacement);
 
-            GameDefinitionCatalog catalog = new GameBootstrap(sources).Catalog;
+            GameDefinitionCatalog catalog =
+                GameBootstrap.CreateCatalog(sources);
 
             Assert.That(
                 catalog.GetMonster("ariel").role_summary,
@@ -69,7 +71,8 @@ namespace Pakuri.NewCore.Tests
             const string replacement = "\"첫 줄\r\n둘째 줄\"";
             sources[MonstersPath] = ReplaceOnce(sources[MonstersPath], original, replacement);
 
-            GameDefinitionCatalog catalog = new GameBootstrap(sources).Catalog;
+            GameDefinitionCatalog catalog =
+                GameBootstrap.CreateCatalog(sources);
 
             Assert.That(catalog.GetMonster("ariel").role_summary, Is.EqualTo("첫 줄\n둘째 줄"));
         }
@@ -84,7 +87,7 @@ namespace Pakuri.NewCore.Tests
                 "\"ariel\",\"\"");
 
             InvalidDataException exception = Assert.Throws<InvalidDataException>(
-                () => new GameBootstrap(sources));
+                () => GameBootstrap.CreateCatalog(sources));
 
             Assert.That(exception.Message, Does.Contain("display_name"));
             Assert.That(exception.Message, Does.Contain("required column"));
@@ -100,7 +103,7 @@ namespace Pakuri.NewCore.Tests
                 "\"신성\",\"\",\"240\"");
 
             InvalidDataException exception = Assert.Throws<InvalidDataException>(
-                () => new GameBootstrap(sources));
+                () => GameBootstrap.CreateCatalog(sources));
 
             Assert.That(exception.Message, Does.Contain("primary_attribute"));
             Assert.That(exception.Message, Does.Contain("required column"));
@@ -116,7 +119,7 @@ namespace Pakuri.NewCore.Tests
                 "catalog-monster-ariel,vega,4");
 
             InvalidDataException exception = Assert.Throws<InvalidDataException>(
-                () => new GameBootstrap(sources));
+                () => GameBootstrap.CreateCatalog(sources));
 
             Assert.That(exception.Message, Does.Contain("Duplicate catalog monster id"));
         }
@@ -131,7 +134,7 @@ namespace Pakuri.NewCore.Tests
                 "catalog-monster-ariel,ariel,not-an-int");
 
             InvalidDataException exception = Assert.Throws<InvalidDataException>(
-                () => new GameBootstrap(sources));
+                () => GameBootstrap.CreateCatalog(sources));
 
             Assert.That(exception.Message, Does.Contain("not a valid int"));
         }
@@ -146,7 +149,7 @@ namespace Pakuri.NewCore.Tests
                 "reward-stage1-normal,Normal,1,10,10,not-a-float");
 
             InvalidDataException exception = Assert.Throws<InvalidDataException>(
-                () => new GameBootstrap(sources));
+                () => GameBootstrap.CreateCatalog(sources));
 
             Assert.That(exception.Message, Does.Contain("not a valid float"));
         }
@@ -161,7 +164,7 @@ namespace Pakuri.NewCore.Tests
                 "stage1-day1-normal,reward-stage1-normal,0,not-a-bool,false,Stage 1 opening");
 
             InvalidDataException exception = Assert.Throws<InvalidDataException>(
-                () => new GameBootstrap(sources));
+                () => GameBootstrap.CreateCatalog(sources));
 
             Assert.That(exception.Message, Does.Contain("not a valid bool"));
         }
@@ -176,7 +179,7 @@ namespace Pakuri.NewCore.Tests
                 "\"UnknownAttribute\",\"240\"");
 
             InvalidDataException exception = Assert.Throws<InvalidDataException>(
-                () => new GameBootstrap(sources));
+                () => GameBootstrap.CreateCatalog(sources));
 
             Assert.That(exception.Message, Does.Contain("Invalid enum value"));
             Assert.That(exception.Message, Does.Contain("primary_attribute"));
@@ -192,7 +195,7 @@ namespace Pakuri.NewCore.Tests
                 "catalog-monster-vega,missing-monster,4");
 
             InvalidDataException exception = Assert.Throws<InvalidDataException>(
-                () => new GameBootstrap(sources));
+                () => GameBootstrap.CreateCatalog(sources));
 
             Assert.That(exception.Message, Does.Contain("Missing reference 'missing-monster'"));
             Assert.That(exception.Message, Does.Contain("monster_id"));
@@ -205,7 +208,7 @@ namespace Pakuri.NewCore.Tests
             sources.Remove(CatalogPath);
 
             InvalidDataException exception = Assert.Throws<InvalidDataException>(
-                () => new GameBootstrap(sources));
+                () => GameBootstrap.CreateCatalog(sources));
 
             Assert.That(exception.Message, Does.Contain("Required retained CSV is missing"));
             Assert.That(exception.Message, Does.Contain(CatalogPath));
@@ -218,14 +221,14 @@ namespace Pakuri.NewCore.Tests
             sources[CatalogPath] += "\"";
 
             InvalidDataException exception = Assert.Throws<InvalidDataException>(
-                () => new GameBootstrap(sources));
+                () => GameBootstrap.CreateCatalog(sources));
 
             Assert.That(exception.Message, Does.Contain("Unterminated quoted field"));
         }
 
         private static GameDefinitionCatalog BootstrapCurrentData()
         {
-            return new GameBootstrap(LoadSources()).Catalog;
+            return GameBootstrap.CreateCatalog(LoadSources());
         }
 
         private static Dictionary<string, string> LoadSources()
